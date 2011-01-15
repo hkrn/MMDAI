@@ -1,0 +1,34 @@
+MMDAI - MMDAI is a fork project of MMDAgent (http://www.mmdagent.jp)
+
+* What's this?
+MMDAI とは MMDAgent からフォークしたプロジェクトです。
+主な目的はクロスプラットフォームで動かせるようにすることです。
+(MMDAgent は Win32 API に強く依存する設計になっているため)
+
+現在プラグインの移植中のため、モデル表示とモーションの動作は可能ですが、
+音声を認識して喋らせることは出来ません。
+
+* Supported OS
+以下は開発者の環境で保証されている環境です。32bit でもおそらく動作するはずですが、
+未検証です。また、Windows は開発環境を整えていないため、まだサポートしていません。
+MacOSX 10.6 64bit
+Ubuntu 10.10 64bit
+
+* How to use?
+オリジナルの MMDAgent とあわせています。
+TODO: fill this
+
+* How to build?
+ビルドには cmake が必要です。また、アプリケーションは Qt に依存するため、
+Qt SDK をインストールする必要があります。
+TODO: fill this
+
+* License
+オリジナルのMMDAgentと同じく、修正BSDライセンスの元で配布されます。
+
+* Authors
+- original MMDAgent
+Nagoya Institute of Technology Department of Computer Science
+
+- from MMDAI
+hkrn (Twitter:@hikarincl2)
