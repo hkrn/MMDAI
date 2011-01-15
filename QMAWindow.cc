@@ -148,7 +148,14 @@ void QMAWindow::setBackground()
 
 void QMAWindow::about()
 {
-  QMessageBox::about(this, tr("About Application"), tr("QMA"));
+  QMessageBox::about(this, tr("About Application"), tr("<strong>QtMMDAI</strong> 0.1 (CodeName: 40mP)<br>"
+        "<small><br>"
+        "Copyright 2010-2011<br><br>"
+        "Nagoya Institute of Technology Department of Computer Science<br>"
+        "hkrn (@hikarincl2)<br>"
+        "<br>"
+        "All rights reserved"
+        "</small>"));
 }
 
 void QMAWindow::receiveEvent(SceneController */*controller*/,
