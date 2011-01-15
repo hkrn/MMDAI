@@ -1,6 +1,10 @@
-QMA.pro.user
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
+install_manifest.txt
 Makefile
+*.dll
 *.dylib
+*.pro.user
+*.so
+
