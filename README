@@ -18,14 +18,54 @@ Ubuntu 10.10 64bit
 オリジナルの MMDAgent とあわせていますが、現時点で一部の動作のみ実装しています。
 
 ** メニューからの操作
-- Add Motion
--- Insert to the all models -> 全てのモデルに対してモーションを適用
--- Insert to the selected model -> 選択されたモデルに対してモーションを適用。選択されていなければ何もしない
-- Add Model -> モデルを追加
-- Set Stage -> ステージを変更
-- Set Floor -> フロアーを変更
-- Set Background -> 背景を変更
-- Exit -> アプリケーションの終了
+キーボード、マウス、及びドラッグアンドドロップの操作は基本的にここでも可能です。
+
+- File
+-- Add Motion
+--- Insert to the all models -> 全てのモデルに対してモーションを適用
+--- Insert to the selected model -> 選択されたモデルに対してモーションを適用。選択されていなければ何もしない
+-- Add Model -> モデルを追加
+-- Set Stage -> ステージを変更
+-- Set Floor -> フロアーを変更
+-- Set Background -> 背景を変更
+-- Exit -> アプリケーションの終了
+- Stage
+-- Increase edge thin
+-- Decrease edge thin
+-- Toggle display bone
+-- Toggle rigid body
+-- Toggle physic simulation
+-- Toggle shadow mapping
+-- Toggle shadow mapping light first
+- Model
+-- Zoom in
+-- Zoom out
+-- Rotate up
+-- Rotate down
+-- Rotate left
+-- Rotate right
+-- Translate up
+-- Translate down
+-- Translate left
+-- Translate right
+-- Delete selected model
+
+** キーボードでの操作
+- ↑  -> カメラビューを上に回転
+- ↓  -> カメラビューを下に回転
+- ← -> カメラビューを左に回転
+- →  -> カメラビューを右に回転
+- CTRL + ↑  -> カメラビューを上に移動
+- CTRL + ↓  -> カメラビューを下に移動
+- CTRL + ← -> カメラビューを左に移動
+- CTRL +  → -> カメラビュー右に移動
+- B -> 全てのモデルのボーンの表示
+- P -> 物理エンジンの有効/無効
+- ALT + ? or ALT + / -> アプリケーションについてのダイアログの表示
+- + -> カメラビューの拡大
+- - -> カメラビューの縮小
+- DELETE -> 選択されたモデルの削除。選択されていなければなにもしない
+- ESCAPE -> アプリケーションの終了
 
 ** マウスを使った操作
 
@@ -36,7 +76,7 @@ Ubuntu 10.10 64bit
 - CTRL を押しながらモデルをドラッグ -> モデルの平行移動
 - モデルのダブルクリック -> モデルの選択
 
-* ドラッグ and ドロップ
+** ドラッグ and ドロップ
 
 - PMD ファイル -> モーションを維持しながら選択されたモデルを変更
 - CTRL を押しながら PMD ファイル -> モデルを追加(最大20まで)
