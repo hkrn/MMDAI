@@ -15,7 +15,6 @@ macx {
 HEADERS += \
     QMAJuliusPlugin.h \
     Julius_Thread.h \
-    CommandDispatcher.h \
     QMAJuliusInitializer.h
 
 SOURCES += \

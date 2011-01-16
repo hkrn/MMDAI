@@ -81,10 +81,10 @@ void QMAJuliusPlugin::initialize(SceneController * /* controller */, const QStri
         }
       }
     }
+    m_initializer = new QMAJuliusInitializer(conf);
+    connect(m_initializer, SIGNAL(finished()), this, SLOT(startJuliusEngine()));
+    m_initializer->start();
   }
-  m_initializer = new QMAJuliusInitializer(conf);
-  connect(m_initializer, SIGNAL(finished()), this, SLOT(startJuliusEngine()));
-  m_initializer->start();
 }
 
 void QMAJuliusPlugin::start(SceneController * /* controller */)

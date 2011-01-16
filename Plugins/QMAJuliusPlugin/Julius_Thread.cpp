@@ -40,8 +40,6 @@
 
 #include "Julius_Thread.h"
 
-#include <QProcess>
-
 /* callback_recog_begin: callback for beginning of recognition */
 static void callback_recog_begin(Recog * /* recog */, void *data)
 {
