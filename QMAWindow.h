@@ -77,6 +77,7 @@ private slots:
   void toggleShadowMappingLightFirst();
   void zoomIn();
   void zoomOut();
+  void changeSelectedObject();
   void deleteSelectedObject();
   void about();
   void receiveEvent(SceneController *controller,
@@ -120,6 +121,7 @@ private:
   QAction *m_translateDownAction;
   QAction *m_translateLeftAction;
   QAction *m_translateRightAction;
+  QAction *m_changeSelectedObjectAction;
   QAction *m_deleteSelectedObjectAction;
   QAction *m_exitAction;
   QAction *m_aboutAction;

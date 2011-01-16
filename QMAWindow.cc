@@ -340,6 +340,21 @@ void QMAWindow::zoomOut()
   m_widget->update();
 }
 
+void QMAWindow::changeSelectedObject()
+{
+  QString path = m_settings->value("window/lastPMDDirectory").toString();
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
+  if (!fileName.isEmpty()) {
+    QDir dir(fileName);
+    dir.cdUp();
+    m_settings->value("window/lastPMDDirectory", dir.absolutePath());
+    SceneController *controller = m_widget->getSceneController();
+    PMDObject *selectedObject = controller->getSelectedPMDObject();
+    if (selectedObject != NULL)
+      controller->changeModel(selectedObject, fileName.toUtf8().constData());
+  }
+}
+
 void QMAWindow::deleteSelectedObject()
 {
   SceneController *controller = m_widget->getSceneController();
@@ -493,8 +508,13 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), this, SLOT(translateRight()));
   m_translateRightAction = action;
 
+  action = new QAction(tr("Change selected model"), this);
+  action->setStatusTip("Change selected model to the specified model. If an object is not selected, do nothing.");
+  connect(action, SIGNAL(triggered()), this, SLOT(changeSelectedObject()));
+  m_changeSelectedObjectAction = action;
+
   action = new QAction(tr("Delete selected model"), this);
-  action->setStatusTip("Delete the selected model from the scene. If an object is not selected, do nothing.");
+  action->setStatusTip("Delete selected model from the scene. If an object is not selected, do nothing.");
   connect(action, SIGNAL(triggered()), this, SLOT(deleteSelectedObject()));
   m_deleteSelectedObjectAction = action;
 
@@ -544,6 +564,16 @@ void QMAWindow::createMenu()
 
   menuBar()->addSeparator();
   m_sceneMenu = menuBar()->addMenu("&Scene");
+  m_sceneMenu->addAction(m_zoomInAction);
+  m_sceneMenu->addAction(m_zoomOutAction);
+  m_sceneMenu->addAction(m_rotateUpAction);
+  m_sceneMenu->addAction(m_rotateDownAction);
+  m_sceneMenu->addAction(m_rotateLeftAction);
+  m_sceneMenu->addAction(m_rotateRightAction);
+  m_sceneMenu->addAction(m_translateUpAction);
+  m_sceneMenu->addAction(m_translateDownAction);
+  m_sceneMenu->addAction(m_translateLeftAction);
+  m_sceneMenu->addAction(m_translateRightAction);
   m_sceneMenu->addAction(m_increaseEdgeThinAction);
   m_sceneMenu->addAction(m_decreaseEdgeThinAction);
   m_sceneMenu->addAction(m_togglePhysicSimulationAction);
@@ -554,16 +584,7 @@ void QMAWindow::createMenu()
 
   menuBar()->addSeparator();
   m_modelMenu = menuBar()->addMenu("&Model");
-  m_sceneMenu->addAction(m_zoomInAction);
-  m_sceneMenu->addAction(m_zoomOutAction);
-  m_modelMenu->addAction(m_rotateUpAction);
-  m_modelMenu->addAction(m_rotateDownAction);
-  m_modelMenu->addAction(m_rotateLeftAction);
-  m_modelMenu->addAction(m_rotateRightAction);
-  m_modelMenu->addAction(m_translateUpAction);
-  m_modelMenu->addAction(m_translateDownAction);
-  m_modelMenu->addAction(m_translateLeftAction);
-  m_modelMenu->addAction(m_translateRightAction);
+  m_modelMenu->addAction(m_changeSelectedObjectAction);
   m_modelMenu->addAction(m_deleteSelectedObjectAction);
 
   menuBar()->addSeparator();
