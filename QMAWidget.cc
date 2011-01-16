@@ -325,8 +325,13 @@ void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 
 void QMAWidget::wheelEvent(QWheelEvent *event)
 {
+  Qt::KeyboardModifiers modifiers = event->modifiers();
   float delta = m_controller->getOption()->getScaleStep();
   float scale = m_controller->getScale();
+  if (modifiers & Qt::ControlModifier) /* faster */
+    delta = (delta - 1.0f) * 5.0f + 1.0f;
+  else if (modifiers & Qt::ShiftModifier) /* slower */
+    delta = (delta - 1.0f) * 0.2f + 1.0f;
   if (event->delta() > 0)
     scale *= delta;
   else
