@@ -87,9 +87,33 @@ Ubuntu 10.10 64bit
 - CTRL を押しながら BMP/TGA/PNG ファイル -> 背景のテクスチャを変更
 
 * How to build?
-ビルドには cmake が必要です。また、アプリケーションは Qt に依存するため、
-Qt SDK をインストールする必要があります。
-TODO: fill this
+まず必要なライブラリが入っているかどうかを確認して下さい。
+- Bullet Physics
+- libpng
+- OpenGL Easy Extension
+- Qt
+- zlib
+
+MMDAI 及び MMDFiles のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
+Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
+
+MacOSX の場合 OpenGL Easy Extension が正しくビルド出来無い問題があるため、
+libGLEE に入っている CMakeList.txt を入れて cmake を使ってビルドする必要があります。
+インストール先は /usr または /usr/local にインストールする必要があります。
+Ubuntu Linux の場合、apt-get でインストールした方が楽です。
+
+** Linux or MacOSX
+$ cd ./libMMDFiles
+$ cmake .
+$ make 
+$ sudo make install
+$ cd ../libMMDAI
+$ cmake .
+$ make
+$ sudo make install
+$ cd ..
+$ qmake
+$ make # MacOSX の場合は xcodebuild
 
 * License
 オリジナルのMMDAgentと同じく、修正BSDライセンスの元で配布されます。
