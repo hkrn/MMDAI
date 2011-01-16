@@ -804,6 +804,11 @@ void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
   m_scene.getScreenPointPosition(dst, src);
 }
 
+void SceneController::setShadowMapping(bool value)
+{
+  m_scene.setShadowMapping(value, m_option.getShadowMappingTextureSize(), m_option.getShadowMappingLightFirst());
+}
+
 float SceneController::getScale()
 {
   return m_scene.getScale();
@@ -923,7 +928,12 @@ void SceneController::renderScene()
   m_scene.render(&m_option, &m_stage, m_objects, m_numModel);
 }
 
-void SceneController::renderDebugPMDObjects()
+void SceneController::renderBulletForDebug()
+{
+  m_bullet.debugDisplay();
+}
+
+void SceneController::renderPMDObjectsForDebug()
 {
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *object = &m_objects[i];

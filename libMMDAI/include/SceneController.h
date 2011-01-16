@@ -127,6 +127,7 @@ public:
   void rotate(float x, float y, float z);
   void translate(float x, float y, float z);
   void setRect(int width, int height);
+  void setShadowMapping(bool value);
 
   void selectPMDObject(int x, int y);
   void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
@@ -138,7 +139,8 @@ public:
   void updateModelPositionAndRotation(double fps);
   void updateAfterSimulation();
   void renderScene();
-  void renderDebugPMDObjects();
+  void renderBulletForDebug();
+  void renderPMDObjectsForDebug();
   void renderLogger();
 
   const char *getConfigPath();
