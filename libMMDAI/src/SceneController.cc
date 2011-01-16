@@ -859,8 +859,8 @@ PMDObject *SceneController::getSelectedPMDObject()
 
 void SceneController::updateMotion(double procFrame, double adjustFrame)
 {
-  for (int j = 0; j < m_numModel; j++) {
-    PMDObject *object = &m_objects[j];
+  for (int i = 0; i < m_numModel; i++) {
+    PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
       object->updateRootBone();
       if (object->updateMotion(procFrame + adjustFrame)) {
@@ -880,11 +880,23 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
         }
       }
       if (object->updateAlpha(procFrame + adjustFrame)) {
-        //
+        deleteAssociatedModels(object);
       }
     }
   }
   m_bullet.update((float)procFrame);
+}
+
+void SceneController::deleteAssociatedModels(PMDObject *object)
+{
+  /* remove assigned accessories */
+  for (int i = 0; i < m_numModel; i++) {
+    PMDObject *assoc = &m_objects[i];
+    if (assoc->isEnable() && assoc->getAssignedModel() == object)
+      deleteAssociatedModels(assoc);
+  }
+  /* remove model */
+  object->deleteModel();
 }
 
 void SceneController::updateAfterSimulation()

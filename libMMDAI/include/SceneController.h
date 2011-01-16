@@ -150,6 +150,8 @@ public:
   int getHeight();
 
 private:
+  void deleteAssociatedModels(PMDObject *object);
+
   BulletPhysics m_bullet;
   MotionStocker m_motion;
   Option m_option;
@@ -159,7 +161,6 @@ private:
   SystemTexture m_systex;
   Stage m_stage;
   TextRenderer *m_text;
-
   int m_numModel;
   int m_selectedModel;
   bool m_enablePhysicsSimulation;
