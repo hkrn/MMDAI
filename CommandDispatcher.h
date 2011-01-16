@@ -42,7 +42,8 @@ class CommandDispatcher
 public:
   virtual ~CommandDispatcher() {}
 
-  virtual void sendCommand(const char *command, const char *arguments) = 0;
+  virtual void sendCommand(const char *command, char *arguments) = 0;
+  virtual void sendEvent(const char *type, char *arguments) = 0;
 };
 
 #endif // COMMANDDISPATCHER_H
