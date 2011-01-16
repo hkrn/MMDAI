@@ -921,14 +921,17 @@ void SceneController::updateModelPositionAndRotation(double fps)
     PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
       if (object->updateModelRootOffset(fps)) {
-        // send event message
+        if (m_handler != NULL)
+          m_handler->handleEventMessage(MMDAGENT_EVENT_MOVE_STOP, "%s", object->getAlias());
       }
       if (object->updateModelRootRotation(fps)) {
         if (object->isTurning()) {
-          // send event message
+          if (m_handler != NULL)
+            m_handler->handleEventMessage(MMDAGENT_EVENT_TURN_STOP, "%s", object->getAlias());
           object->setTurningFlag(false);
         } else {
-          // send event message
+          if (m_handler != NULL)
+            m_handler->handleEventMessage(MMDAGENT_EVENT_ROTATE_STOP, "%s", object->getAlias());
         }
       }
     }
