@@ -340,8 +340,8 @@ bool SceneController::addModel(const char *modelAlias,
   btVector3 offsetPos = btVector3(0.0f, 0.0f, 0.0f);
   btQuaternion offsetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
   bool forcedPosition = false;
-  PMDBone *bone = NULL;
-  PMDObject *object = NULL;
+  PMDBone *assignBone = NULL;
+  PMDObject *assignObject = NULL, *newObject = NULL;
   float *l = m_option.getLightDirection();
   btVector3 light = btVector3(l[0], l[1], l[2]);
 
@@ -353,18 +353,18 @@ bool SceneController::addModel(const char *modelAlias,
   if (pos || rot)
     forcedPosition = true;
   if (baseModelAlias) {
-    object = findPMDObjectByAlias(baseModelAlias);
-    if (object == NULL) {
+    assignObject = findPMDObjectByAlias(baseModelAlias);
+    if (assignObject == NULL) {
       g_logger.log("!Error: addModel: model alias \"%s\" is not found", baseModelAlias);
       return false;
     }
-    PMDModel *model = object->getPMDModel();
+    PMDModel *model = assignObject->getPMDModel();
     if (baseBoneName) {
-      bone = model->getBone(baseBoneName);
+      assignBone = model->getBone(baseBoneName);
     } else {
-      bone = model->getCenterBone();
+      assignBone = model->getCenterBone();
     }
-    if (bone == NULL) {
+    if (assignBone == NULL) {
       if (baseBoneName)
         g_logger.log("!Error: addModel: bone \"%s\" is not exist on %s.", baseBoneName, baseModelAlias);
       else
@@ -374,8 +374,8 @@ bool SceneController::addModel(const char *modelAlias,
   }
 
   /* ID */
-  object = allocatePMDObject();
-  if (object == NULL) {
+  newObject = allocatePMDObject();
+  if (newObject == NULL) {
     g_logger.log("! Error: addModel: too many models.");
     return false;
   }
@@ -403,26 +403,26 @@ bool SceneController::addModel(const char *modelAlias,
   }
 
   /* add model */
-  if (!object->load(fileName,
-                    &offsetPos,
-                    &offsetRot,
-                    forcedPosition,
-                    bone,
-                    object,
-                    &m_bullet,
-                    &m_systex,
-                    m_option.getUseCartoonRendering(),
-                    m_option.getCartoonEdgeWidth(),
-                    &light)) {
+  if (!newObject->load(fileName,
+                       &offsetPos,
+                       &offsetRot,
+                       forcedPosition,
+                       assignBone,
+                       assignObject,
+                       &m_bullet,
+                       &m_systex,
+                       m_option.getUseCartoonRendering(),
+                       m_option.getCartoonEdgeWidth(),
+                       &light)) {
     g_logger.log("! Error: addModel: failed to load %s.", fileName);
-    object->deleteModel();
+    newObject->deleteModel();
     free(name);
     return false;
   }
 
   /* initialize motion manager */
-  object->resetMotionManager();
-  object->setAlias(name);
+  newObject->resetMotionManager();
+  newObject->setAlias(name);
   m_numModel++;
 
   /* send event message */
@@ -479,7 +479,7 @@ bool SceneController::changeModel(PMDObject *object, const char *fileName)
   /* delete accessories  */
   for (i = 0; i < m_numModel; i++) {
     PMDObject *assoc = &m_objects[i];
-    if (assoc->isEnable() && object->getAssignedModel() == assoc)
+    if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteModel(assoc);
   }
 
@@ -497,7 +497,7 @@ void SceneController::deleteModel(PMDObject *object)
   /* delete accessories  */
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *assoc = &m_objects[i];
-    if (assoc->isEnable() && object->getAssignedModel() == assoc)
+    if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteModel(assoc);
   }
 
