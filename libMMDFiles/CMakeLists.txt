@@ -100,7 +100,7 @@ endif()
 
 # find OpenGL Easy Extension
 find_path(GLEE_INCLUDE GLee.h /usr/local/include /usr/include)
-find_library(GLEE_LIBRARY GLee /usr/local/lib /usr/lib)
+find_library(GLEE_LIBRARY glee /usr/local/lib /usr/lib)
 if(GLEE_INCLUDE AND GLEE_LIBRARY)
   target_link_libraries(MMDFiles ${GLEE_LIBRARY})
 else()
