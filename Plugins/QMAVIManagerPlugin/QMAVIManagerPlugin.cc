@@ -53,7 +53,7 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 
 void QMAVIManagerPlugin::initialize(SceneController * /* controller */, const QString &path)
 {
-  QFile config(path + "/MMDAgent.fst");
+  QFile config(path + "/MMDAI.fst");
   if (config.exists())
     m_thread.load(config.fileName().toUtf8().constData());
 }
@@ -95,9 +95,15 @@ void QMAVIManagerPlugin::render(SceneController * /* controller */)
   /* do nothing */
 }
 
-void QMAVIManagerPlugin::sendCommand(const char *type, const char *arguments)
+void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
 {
-  emit commandPost(QString(type), QString(arguments));
+  emit commandPost(QString(command), QString(arguments));
+  free(arguments);
+}
+
+void QMAVIManagerPlugin::sendEvent(const char */*type*/, char */*arguments*/)
+{
+  /* do nothing */
 }
 
 Q_EXPORT_PLUGIN2("QMAVIManagerPlugin", QMAVIManagerPlugin)

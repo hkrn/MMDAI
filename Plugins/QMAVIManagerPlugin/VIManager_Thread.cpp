@@ -222,5 +222,5 @@ void VIManager_Thread::run()
 /* VIManager_Thread::sendMessage: send message to MMDAgent */
 void VIManager_Thread::sendMessage(const char *str1, const char *str2)
 {
-  m_dispathcer->sendCommand(str1, str2);
+  m_dispathcer->sendCommand(str1, strdup(str2));
 }

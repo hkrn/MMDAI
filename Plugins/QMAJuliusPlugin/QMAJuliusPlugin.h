@@ -53,7 +53,8 @@ public:
   QMAJuliusPlugin(QObject *parent = 0);
   ~QMAJuliusPlugin();
 
-  void sendCommand(const char *command, const char *arguments);
+  void sendCommand(const char *command, char *arguments);
+  void sendEvent(const char *type, char *arguments);
 
 public slots:
   void initialize(SceneController *controller, const QString &path);

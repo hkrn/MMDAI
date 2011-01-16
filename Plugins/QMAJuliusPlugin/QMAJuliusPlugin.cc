@@ -128,9 +128,15 @@ void QMAJuliusPlugin::startJuliusEngine()
   m_thread->start();
 }
 
-void QMAJuliusPlugin::sendCommand(const char *command, const char *arguments)
+void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)
 {
   emit commandPost(QString(command), QString(arguments));
+  free(arguments);
+}
+
+void QMAJuliusPlugin::sendEvent(const char */*type*/, char */*arguments*/)
+{
+  /* do nothing */
 }
 
 Q_EXPORT_PLUGIN2("QMAJuliusPlugin", QMAJuliusPlugin)
