@@ -47,7 +47,8 @@ QMAWidget::QMAWidget(QWidget *parent)
   m_y(0),
   m_doubleClicked(false),
   m_showLog(true),
-  m_showDebugModel(true),
+  m_displayBone(false),
+  m_displayRigidBody(false),
   m_frameAdjust(0.0),
   m_frameCue(0.0)
 {
@@ -70,6 +71,16 @@ void QMAWidget::handleEventMessage(const char *eventType, const char *format, ..
   //qDebug("event=%s arguments=%s", eventType, arguments);
   va_end(argv);
   emit pluginEventPost(m_controller, eventType, (const char *)arguments);
+}
+
+void QMAWidget::toggleDisplayBone()
+{
+  m_displayBone = !m_displayBone;
+}
+
+void QMAWidget::toggleDisplayRigidBody()
+{
+  m_displayRigidBody = !m_displayRigidBody;
 }
 
 SceneController *QMAWidget::getSceneController()
@@ -122,8 +133,11 @@ void QMAWidget::loadPlugins()
     }
   }
   QDir::setCurrent(appDir.absolutePath());
-  QString configPath = appDir.absoluteFilePath("MMDAgent.mdf");
-  m_controller->getOption()->load(configPath.toUtf8().constData());
+  int size[2];
+  size[0] = width();
+  size[1] = height();
+  m_controller->init(size, appDir.absoluteFilePath("AppData").toUtf8().constData());
+  m_controller->getOption()->load(appDir.absoluteFilePath("MMDAgent.mdf").toUtf8().constData());
   emit pluginInitialized(m_controller, appDir.absolutePath());
 }
 
@@ -204,10 +218,6 @@ void QMAWidget::changeBaseMotion(PMDObject *object, const char *filename)
 
 void QMAWidget::initializeGL()
 {
-  int size[2];
-  size[0] = width();
-  size[1] = height();
-  m_controller->init(size, "/Users/hkrn/src/svn/mmdagent/MMDAgent/Release/AppData");
   loadPlugins();
   m_controller->updateLight();
   emit pluginStarted(m_controller);
@@ -225,7 +235,10 @@ void QMAWidget::paintGL()
   double fps = m_timer.getFPS();
   m_controller->updateModelPositionAndRotation(fps);
   m_controller->renderScene();
-  //m_controller->renderDebugPMDObjects();
+  if (m_displayBone)
+    m_controller->renderPMDObjectsForDebug();
+  if (m_displayRigidBody)
+    m_controller->renderBulletForDebug();
   m_controller->renderLogger();
   m_timer.count();
   emit pluginRendered(m_controller);
@@ -320,20 +333,6 @@ void QMAWidget::wheelEvent(QWheelEvent *event)
     scale /= delta;
   m_controller->setScale(scale);
   update();
-}
-
-void QMAWidget::keyPressEvent(QKeyEvent *event)
-{
-  switch (event->key()) {
-  case Qt::Key_Up:
-    break;
-  case Qt::Key_Down:
-    break;
-  case Qt::Key_Left:
-    break;
-  case Qt::Key_Right:
-    break;
-  }
 }
 
 void QMAWidget::timerEvent(QTimerEvent * /* event */)

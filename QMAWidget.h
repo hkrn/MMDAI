@@ -60,6 +60,8 @@ public:
   void handleEventMessage(const char *eventType, const char *format, ...);
   SceneController *getSceneController();
 
+  void toggleDisplayBone();
+  void toggleDisplayRigidBody();
   void changeBaseMotion(PMDObject *object, const char *filename);
 
 public slots:
@@ -85,7 +87,6 @@ protected:
   void mouseReleaseEvent(QMouseEvent *event);
   void mouseDoubleClickEvent(QMouseEvent *event);
   void wheelEvent(QWheelEvent *event);
-  void keyPressEvent(QKeyEvent *event);
   void timerEvent(QTimerEvent *event);
   void dragEnterEvent(QDragEnterEvent *event);
   void dragMoveEvent(QDragMoveEvent *event);
@@ -111,7 +112,8 @@ private:
 
   bool m_doubleClicked;
   bool m_showLog;
-  bool m_showDebugModel;
+  bool m_displayBone;
+  bool m_displayRigidBody;
 
   double m_frameAdjust;
   double m_frameCue;
