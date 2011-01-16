@@ -612,9 +612,6 @@ void PMDObject::renderDebug(TextRenderer * text)
 {
    btVector3 pos;
 
-   if (text == NULL)
-     return;
-
    /* render debug */
    m_pmd.renderDebug();
    /* render model name */
@@ -624,7 +621,8 @@ void PMDObject::renderDebug(TextRenderer * text)
    pos = m_pmd.getCenterBone()->getTransform()->getOrigin();
    pos.setY(m_pmd.getMaxHeight() + 1.0f);
    glTranslatef(pos.x(), pos.y(), pos.z());
-   text->drawString(m_pmd.getName());
+   /* FIXME: implement TextRenderer */
+   /* text->drawString(m_pmd.getName()); */
    glEnable(GL_LIGHTING);
    glPopMatrix();
 }
