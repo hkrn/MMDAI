@@ -62,6 +62,7 @@ public:
 
   void toggleDisplayBone();
   void toggleDisplayRigidBody();
+  void sendKeyEvent(const QString &text);
   void changeBaseMotion(PMDObject *object, const char *filename);
 
 public slots:

@@ -83,6 +83,11 @@ void QMAWidget::toggleDisplayRigidBody()
   m_displayRigidBody = !m_displayRigidBody;
 }
 
+void QMAWidget::sendKeyEvent(const QString &text)
+{
+  emit pluginEventPost(m_controller, QString(MMDAGENT_EVENT_KEY), text);
+}
+
 SceneController *QMAWidget::getSceneController()
 {
   return m_controller;

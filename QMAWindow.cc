@@ -142,6 +142,7 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
     close();
     break;
   }
+  m_widget->sendKeyEvent(event->text());
 }
 
 void QMAWindow::insertMotionToAllModels()
