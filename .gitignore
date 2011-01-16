@@ -6,5 +6,5 @@ Makefile
 *.dll
 *.dylib
 *.pro.user
-*.so
+*.so*
 
