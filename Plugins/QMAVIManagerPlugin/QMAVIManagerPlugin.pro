@@ -12,8 +12,7 @@ unix {
 HEADERS += \
     QMAVIManagerPlugin.h \
     VIManager.h \
-    VIManager_Thread.h \
-    CommandDispatcher.h
+    VIManager_Thread.h
 
 SOURCES += \
     QMAVIManagerPlugin.cc \
