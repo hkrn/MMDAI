@@ -38,13 +38,26 @@
 
 #include "QMAOpenJTalkPlugin.h"
 
+#define PLUGINOPENJTALK_STARTCOMMAND "SYNTH_START"
+#define PLUGINOPENJTALK_STOPCOMMAND  "SYNTH_STOP"
+
 QMAOpenJTalkPlugin::QMAOpenJTalkPlugin(QObject *parent)
-  : QMAPlugin(parent)
+  : QMAPlugin(parent),
+    m_thread(new Open_JTalk_Thread(this))
 {
 }
 
-void QMAOpenJTalkPlugin::initialize(SceneController * /*controller*/, const QString & /*path*/)
+QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 {
+  delete m_thread;
+}
+
+void QMAOpenJTalkPlugin::initialize(SceneController * /*controller*/, const QString &path)
+{
+  QString dir = path + "/AppData/Open_JTalk";
+  QString config = path + "/MMDAI.ojt";
+  m_thread->load(dir.toUtf8().constData(), config.toUtf8().constData());
+  m_thread->start();
 }
 
 void QMAOpenJTalkPlugin::start(SceneController * /* controller */)
@@ -59,8 +72,14 @@ void QMAOpenJTalkPlugin::createWindow(SceneController * /* controller */)
 {
 }
 
-void QMAOpenJTalkPlugin::receiveCommand(SceneController */*controller*/, const QString &/*command*/, const QString &/*arguments*/)
+void QMAOpenJTalkPlugin::receiveCommand(SceneController */*controller*/, const QString &command, const QString &arguments)
 {
+  if (command == PLUGINOPENJTALK_STARTCOMMAND) {
+    m_thread->setSynthParameter(arguments.toUtf8().constData());
+  }
+  else if (command == PLUGINOPENJTALK_STOPCOMMAND) {
+    m_thread->stop();
+  }
 }
 
 void QMAOpenJTalkPlugin::receiveEvent(SceneController */*controller*/, const QString &/*type*/, const QString &/*arguments*/)
@@ -73,6 +92,18 @@ void QMAOpenJTalkPlugin::update(SceneController * /* controller */, const QRect 
 
 void QMAOpenJTalkPlugin::render(SceneController * /* controller */)
 {
+}
+
+void QMAOpenJTalkPlugin::sendCommand(const char *command, char *arguments)
+{
+  emit commandPost(QString(command), QString(arguments));
+  free(arguments);
+}
+
+void QMAOpenJTalkPlugin::sendEvent(const char *type, char *arguments)
+{
+  emit eventPost(QString(type), QString(arguments));
+  free(arguments);
 }
 
 Q_EXPORT_PLUGIN2("QMAOpenJTalkPlugin", QMAOpenJTalkPlugin)

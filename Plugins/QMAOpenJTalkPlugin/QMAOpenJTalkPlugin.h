@@ -41,14 +41,20 @@
 
 #include "QMAPlugin.h"
 
-class QMAOpenJTalkPlugin : public QMAPlugin
+#include "Open_JTalk.h"
+#include "Open_JTalk_Thread.h"
+
+class QMAOpenJTalkPlugin : public QMAPlugin, public CommandDispatcher
 {
   Q_OBJECT
   Q_INTERFACES(QMAPlugin)
 
 public:
   QMAOpenJTalkPlugin(QObject *parent = 0);
-  virtual ~QMAOpenJTalkPlugin() {}
+  ~QMAOpenJTalkPlugin();
+
+  void sendCommand(const char *command, char *arguments);
+  void sendEvent(const char *type, char *arguments);
 
 public slots:
   void initialize(SceneController *controller, const QString &path);
@@ -63,6 +69,9 @@ public slots:
 signals:
   void commandPost(const QString &command, const QString &arguments);
   void eventPost(const QString &type, const QString &arguments);
+
+private:
+  Open_JTalk_Thread *m_thread;
 };
 
 #endif // QMAOPENJTALKPLUGIN_H
