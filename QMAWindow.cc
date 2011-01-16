@@ -37,7 +37,8 @@
 #include "QMAWindow.h"
 
 QMAWindow::QMAWindow(QWidget *parent) :
-    QMainWindow(parent)
+    QMainWindow(parent),
+    m_enablePhysicsSimulation(true)
 {
   m_settings = new QSettings(parent);
   m_widget = new QMAWidget(parent);
@@ -62,6 +63,85 @@ void QMAWindow::closeEvent(QCloseEvent *event)
 {
   writeSetting();
   event->accept();
+}
+
+void QMAWindow::keyPressEvent(QKeyEvent *event)
+{
+  const Qt::KeyboardModifiers modifiers = event->modifiers();
+  switch (event->key()) {
+  case Qt::Key_Up: /* rotate or translate up */
+    if (modifiers & Qt::ShiftModifier)
+      translateUp();
+    else
+      rotateUp();
+    break;
+  case Qt::Key_Down: /* rotate or translate down */
+    if (modifiers & Qt::ShiftModifier)
+      translateDown();
+    else
+      rotateDown();
+    break;
+  case Qt::Key_Left: /* rotate or translate left */
+    if (modifiers & Qt::ShiftModifier)
+      translateLeft();
+    else
+      rotateLeft();
+    break;
+  case Qt::Key_Right: /* rotate or translate right */
+    if (modifiers & Qt::ShiftModifier)
+      translateRight();
+    else
+      rotateRight();
+    break;
+  case Qt::Key_B: /* Bone */
+    toggleDisplayBone();
+    break;
+  case Qt::Key_D: /* Debug */
+    break;
+  case Qt::Key_E: /* Edge */
+    if (modifiers & Qt::ShiftModifier)
+      decreaseEdgeThin();
+    else
+      increaseEdgeThin();
+    break;
+  case Qt::Key_F: /* Fullscreen */
+    /* not implemented, so it doesn't support */
+    break;
+  case Qt::Key_P: /* Physics */
+    togglePhysicSimulation();
+    break;
+  case Qt::Key_S: /* info String */
+    break;
+  case Qt::Key_V: /* test command / Vsync */
+    break;
+  case Qt::Key_W: /* Wire / rigitbody */
+    if (modifiers & Qt::ShiftModifier)
+      toggleDisplayRigidBody();
+    break;
+  case Qt::Key_X: /* toggle shadowmap */
+    if (modifiers & Qt::ShiftModifier)
+      toggleShadowMapping();
+    else
+      toggleShadowMappingLightFirst();
+    break;
+  case Qt::Key_Slash: /* show about config */
+  case Qt::Key_Question:
+    if (modifiers & Qt::AltModifier)
+      about();
+    break;
+  case Qt::Key_Plus: /* zoom in */
+    zoomIn();
+    break;
+  case Qt::Key_Minus: /* zoom out */
+    zoomOut();
+    break;
+  case Qt::Key_Delete: /* delete selected model */
+    deleteSelectedObject();
+    break;
+  case Qt::Key_Escape: /* close the application */
+    close();
+    break;
+  }
 }
 
 void QMAWindow::insertMotionToAllModels()
@@ -146,16 +226,146 @@ void QMAWindow::setBackground()
   }
 }
 
+void QMAWindow::rotateUp()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->rotate(0.0f, -controller->getOption()->getRotateStep(), 0.0f);
+}
+
+void QMAWindow::rotateDown()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->rotate(0.0f, controller->getOption()->getRotateStep(), 0.0f);
+}
+
+void QMAWindow::rotateLeft()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->rotate(-controller->getOption()->getRotateStep(), 0.0f, 0.0f);
+}
+
+void QMAWindow::rotateRight()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->rotate(controller->getOption()->getRotateStep(), 0.0f, 0.0f);
+}
+
+void QMAWindow::translateUp()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->translate(0.0f, -controller->getOption()->getTranslateStep(), 0.0f);
+}
+
+void QMAWindow::translateDown()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->translate(0.0f, controller->getOption()->getTranslateStep(), 0.0f);
+}
+
+void QMAWindow::translateLeft()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->translate(controller->getOption()->getTranslateStep(), 0.0f, 0.0f);
+}
+
+void QMAWindow::translateRight()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->translate(-controller->getOption()->getTranslateStep(), 0.0f, 0.0f);
+}
+
+void QMAWindow::toggleDisplayBone()
+{
+  m_widget->toggleDisplayBone();
+}
+
+void QMAWindow::toggleDisplayRigidBody()
+{
+  m_widget->toggleDisplayRigidBody();
+}
+
+void QMAWindow::increaseEdgeThin()
+{
+  setEdgeThin(1);
+}
+
+void QMAWindow::decreaseEdgeThin()
+{
+  setEdgeThin(-1);
+}
+
+void QMAWindow::togglePhysicSimulation()
+{
+  SceneController *controller = m_widget->getSceneController();
+  int count = controller->countPMDObjects();
+  m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
+  for (int i = 0; i < count; i++)
+    controller->getPMDObject(i)->getPMDModel()->setPhysicsControl(m_enablePhysicsSimulation);
+}
+
+void QMAWindow::toggleShadowMapping()
+{
+  SceneController *controller = m_widget->getSceneController();
+  Option *option = controller->getOption();
+  if (option->getUseShadowMapping()) {
+    option->setUseShadowMapping(false);
+    controller->setShadowMapping(false);
+  }
+  else {
+    option->setUseShadowMapping(true);
+    controller->setShadowMapping(true);
+  }
+}
+
+void QMAWindow::toggleShadowMappingLightFirst()
+{
+  Option *option = m_widget->getSceneController()->getOption();
+  if (option->getShadowMappingLightFirst())
+    option->setShadowMappingLightFirst(false);
+  else
+    option->setShadowMappingLightFirst(true);
+}
+
+void QMAWindow::zoomIn()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->setScale(controller->getOption()->getScaleStep() * controller->getScale());
+  m_widget->update();
+}
+
+void QMAWindow::zoomOut()
+{
+  SceneController *controller = m_widget->getSceneController();
+  controller->setScale(controller->getOption()->getScaleStep() / controller->getScale());
+  m_widget->update();
+}
+
+void QMAWindow::deleteSelectedObject()
+{
+  SceneController *controller = m_widget->getSceneController();
+  PMDObject *selectedObject = controller->getSelectedPMDObject();
+  if (selectedObject != NULL)
+    controller->deleteModel(selectedObject);
+}
+
 void QMAWindow::about()
 {
-  QMessageBox::about(this, tr("About Application"), tr("<strong>QtMMDAI</strong> 0.1 (CodeName: 40mP)<br>"
-        "<small><br>"
-        "Copyright 2010-2011<br><br>"
-        "Nagoya Institute of Technology Department of Computer Science<br>"
-        "hkrn (@hikarincl2)<br>"
-        "<br>"
-        "All rights reserved"
-        "</small>"));
+  QMessageBox::about(this, tr("About QtMMDAI"), tr("<h2>QtMMDAI 0.1 <small>(CodeName: 40mP)</small></h2>"
+                                                   "<p>Copyright (C) 2010-2011<br>"
+                                                   "Nagoya Institute of Technology Department of Computer Science, "
+                                                   "hkrn (@hikarincl2)<br>"
+                                                   "All rights reserved.</p>"
+                                                   "<p>This application uses following libraries<ul>"
+                                                   "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDFiles</a></li>"
+                                                   "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDAI</a></li>"
+                                                   "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
+                                                   "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
+                                                   "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
+                                                   "<li><a href='http://www.libpng.org'>libpng</a></li>"
+                                                   "<li><a href='http://zlib.net'>zlib</a></li>"
+                                                   "</ul></p>"
+                                                   "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
+                                                   "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>"));
 }
 
 void QMAWindow::receiveEvent(SceneController */*controller*/,
@@ -169,53 +379,154 @@ void QMAWindow::createActions()
   QAction *action = NULL;
 
   action = new QAction(tr("Insert to the all models"), this);
-  action->setStatusTip(tr("Insert the motion to the all models"));
+  action->setStatusTip(tr("Insert a motion to the all models."));
   connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToAllModels()));
   m_insertMotionToAllAction = action;
 
   action = new QAction(tr("Insert to the selected model"), this);
-  action->setStatusTip(tr("Insert the motion to the selected model"));
+  action->setStatusTip(tr("Insert a motion to the selected model. If an object is not selected, do nothing."));
   connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToSelectedModel()));
   m_insertMotionToSelectedAction = action;
 
-  action = new QAction(tr("Add &Model"), this);
-  action->setStatusTip(tr("Add a PMD model to the scene"));
+  action = new QAction(tr("Add Model"), this);
+  action->setStatusTip(tr("Add a PMD model to the scene (Maximum is 20)."));
   connect(action, SIGNAL(triggered()), this, SLOT(addModel()));
   m_addModelAction = action;
 
-  action = new QAction(tr("Set &Stage"), this);
-  action->setStatusTip(tr("Set a stage to the scene"));
+  action = new QAction(tr("Set Stage"), this);
+  action->setStatusTip(tr("Set or replace a stage to the scene."));
   connect(action, SIGNAL(triggered()), this, SLOT(setStage()));
   m_setStageAction = action;
 
-  action = new QAction(tr("Set &Floor"), this);
-  action->setStatusTip(tr("Set a floor to the scene"));
+  action = new QAction(tr("Set Floor"), this);
+  action->setStatusTip(tr("Set or replace a floor to the scene."));
   connect(action, SIGNAL(triggered()), this, SLOT(setFloor()));
   m_setFloorAction = action;
 
-  action = new QAction(tr("Set &Background"), this);
-  action->setStatusTip(tr("Set a floor to the scene"));
+  action = new QAction(tr("Set Background"), this);
+  action->setStatusTip(tr("Set or replace a floor to the scene."));
   connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
   m_setBackgroundAction = action;
 
+  action = new QAction(tr("Increase edge thin"), this);
+  action->setStatusTip(tr("Increase light edge thin."));
+  connect(action, SIGNAL(triggered()), this, SLOT(increaseEdgeThin()));
+  m_increaseEdgeThinAction = action;
+
+  action = new QAction(tr("Decrease edge thin"), this);
+  action->setStatusTip(tr("Decrease light edge thin."));
+  connect(action, SIGNAL(triggered()), this, SLOT(decreaseEdgeThin()));
+  m_decreaseEdgeThinAction = action;
+
+  action = new QAction(tr("Toggle display bone"), this);
+  action->setStatusTip(tr("Enable / Disable displaying bones of the models."));
+  connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayBone()));
+  m_toggleDisplayBone = action;
+
+  action = new QAction(tr("Toggle rigid body"), this);
+  action->setStatusTip(tr("Enable / Disable displaying rigid body of the models."));
+  connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayRigidBody()));
+  m_toggleDisplayRigidBody = action;
+
+  action = new QAction(tr("Toggle physic simulation"), this);
+  action->setStatusTip(tr("Enable / Disable physic simulation using Bullet."));
+  connect(action, SIGNAL(triggered()), this, SLOT(togglePhysicSimulation()));
+  m_togglePhysicSimulationAction = action;
+
+  action = new QAction(tr("Toggle shadow mapping"), this);
+  action->setStatusTip(tr("Enable / Disable shadow mapping."));
+  connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMapping()));
+  m_toggleShadowMapping = action;
+
+  action = new QAction(tr("Toggle shadow mapping light first"), this);
+  action->setStatusTip(tr("Enable / Disable shadow mapping light first."));
+  connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMappingLightFirst()));
+  m_toggleShadowMappingFirst = action;
+
+  action = new QAction(tr("Zoom in"), this);
+  action->setStatusTip(tr("Zoom in the scene."));
+  connect(action, SIGNAL(triggered()), this, SLOT(zoomIn()));
+  m_zoomInAction = action;
+
+  action = new QAction(tr("Zoom out"), this);
+  action->setStatusTip(tr("Zoom out the scene."));
+  connect(action, SIGNAL(triggered()), this, SLOT(zoomOut()));
+  m_zoomOutAction = action;
+
+  action = new QAction(tr("Rotate up"), this);
+  action->setStatusTip("Rotate a model up.");
+  connect(action, SIGNAL(triggered()), this, SLOT(rotateUp()));
+  m_rotateUpAction = action;
+
+  action = new QAction(tr("Rotate down"), this);
+  action->setStatusTip("Rotate a model down.");
+  connect(action, SIGNAL(triggered()), this, SLOT(rotateDown()));
+  m_rotateDownAction = action;
+
+  action = new QAction(tr("Rotate Left"), this);
+  action->setStatusTip("Rotate a model left.");
+  connect(action, SIGNAL(triggered()), this, SLOT(rotateLeft()));
+  m_rotateLeftAction = action;
+
+  action = new QAction(tr("Rotate right"), this);
+  action->setStatusTip("Rotate a model right.");
+  connect(action, SIGNAL(triggered()), this, SLOT(rotateRight()));
+  m_rotateRightAction = action;
+
+  action = new QAction(tr("Translate up"), this);
+  action->setStatusTip("Translate a model up.");
+  connect(action, SIGNAL(triggered()), this, SLOT(translateUp()));
+  m_translateUpAction = action;
+
+  action = new QAction(tr("Translate down"), this);
+  action->setStatusTip("Rotate a model down.");
+  connect(action, SIGNAL(triggered()), this, SLOT(translateDown()));
+  m_translateDownAction = action;
+
+  action = new QAction(tr("Translate left"), this);
+  action->setStatusTip("Rotate a model left.");
+  connect(action, SIGNAL(triggered()), this, SLOT(translateLeft()));
+  m_translateLeftAction = action;
+
+  action = new QAction(tr("Translate right"), this);
+  action->setStatusTip("Rotate a model right.");
+  connect(action, SIGNAL(triggered()), this, SLOT(translateRight()));
+  m_translateRightAction = action;
+
+  action = new QAction(tr("Delete selected model"), this);
+  action->setStatusTip("Delete the selected model from the scene. If an object is not selected, do nothing.");
+  connect(action, SIGNAL(triggered()), this, SLOT(deleteSelectedObject()));
+  m_deleteSelectedObjectAction = action;
+
   action = new QAction(tr("E&xit"), this);
   action->setShortcuts(QKeySequence::Quit);
-  action->setStatusTip(tr("Exit the application"));
+  action->setStatusTip(tr("Exit the application."));
   connect(action, SIGNAL(triggered()), this, SLOT(close()));
   m_exitAction = action;
 
   action = new QAction(tr("&About"), this);
-  action->setStatusTip(tr("Show the application's About box"));
+  action->setStatusTip(tr("Show the application's About box."));
   connect(action, SIGNAL(triggered()), this, SLOT(about()));
   m_aboutAction = action;
 
   action = new QAction(tr("About &Qt"), this);
-  action->setStatusTip(tr("Show the Qt library's About box"));
+  action->setStatusTip(tr("Show the Qt library's About box."));
   connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
   m_aboutQtAction = action;
 
   connect(m_widget, SIGNAL(pluginEventPost(SceneController*,QString,QString)),
           this, SLOT(receiveEvent(SceneController*,QString,QString)));
+}
+
+void QMAWindow::setEdgeThin(int n)
+{
+  SceneController *controller = m_widget->getSceneController();
+  Option *option = controller->getOption();
+  int count = controller->countPMDObjects();
+  float thin = option->getCartoonEdgeWidth() * option->getCartoonEdgeStep() * n;
+  option->setCartoonEdgeWidth(thin);
+  for (int i = 0; i < count; i++)
+    controller->getPMDObject(i)->getPMDModel()->setEdgeThin(thin);
 }
 
 void QMAWindow::createMenu()
@@ -232,7 +543,30 @@ void QMAWindow::createMenu()
   m_fileMenu->addAction(m_exitAction);
 
   menuBar()->addSeparator();
+  m_sceneMenu = menuBar()->addMenu("&Scene");
+  m_sceneMenu->addAction(m_increaseEdgeThinAction);
+  m_sceneMenu->addAction(m_decreaseEdgeThinAction);
+  m_sceneMenu->addAction(m_togglePhysicSimulationAction);
+  m_sceneMenu->addAction(m_toggleShadowMapping);
+  m_sceneMenu->addAction(m_toggleShadowMappingFirst);
+  m_sceneMenu->addAction(m_toggleDisplayBone);
+  m_sceneMenu->addAction(m_toggleDisplayRigidBody);
 
+  menuBar()->addSeparator();
+  m_modelMenu = menuBar()->addMenu("&Model");
+  m_sceneMenu->addAction(m_zoomInAction);
+  m_sceneMenu->addAction(m_zoomOutAction);
+  m_modelMenu->addAction(m_rotateUpAction);
+  m_modelMenu->addAction(m_rotateDownAction);
+  m_modelMenu->addAction(m_rotateLeftAction);
+  m_modelMenu->addAction(m_rotateRightAction);
+  m_modelMenu->addAction(m_translateUpAction);
+  m_modelMenu->addAction(m_translateDownAction);
+  m_modelMenu->addAction(m_translateLeftAction);
+  m_modelMenu->addAction(m_translateRightAction);
+  m_modelMenu->addAction(m_deleteSelectedObjectAction);
+
+  menuBar()->addSeparator();
   m_helpMenu = menuBar()->addMenu(tr("&Help"));
   m_helpMenu->addAction(m_aboutAction);
   m_helpMenu->addAction(m_aboutQtAction);

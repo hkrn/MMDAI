@@ -51,6 +51,7 @@ public:
 
 protected:
   void closeEvent(QCloseEvent *event);
+  void keyPressEvent(QKeyEvent *event);
 
 private slots:
   void insertMotionToAllModels();
@@ -59,12 +60,31 @@ private slots:
   void setStage();
   void setFloor();
   void setBackground();
+  void rotateUp();
+  void rotateDown();
+  void rotateLeft();
+  void rotateRight();
+  void translateUp();
+  void translateDown();
+  void translateLeft();
+  void translateRight();
+  void toggleDisplayBone();
+  void toggleDisplayRigidBody();
+  void increaseEdgeThin();
+  void decreaseEdgeThin();
+  void togglePhysicSimulation();
+  void toggleShadowMapping();
+  void toggleShadowMappingLightFirst();
+  void zoomIn();
+  void zoomOut();
+  void deleteSelectedObject();
   void about();
   void receiveEvent(SceneController *controller,
                     const QString &type,
                     const QString &arguments);
 
 private:
+  void setEdgeThin(int n);
   void createMenu();
   void createActions();
   void readSetting();
@@ -73,6 +93,8 @@ private:
   QSettings *m_settings;
   QMAWidget *m_widget;
   QMenu *m_fileMenu;
+  QMenu *m_sceneMenu;
+  QMenu *m_modelMenu;
   QMenu *m_helpMenu;
   QMenu *m_motionMenu;
   QAction *m_insertMotionToAllAction;
@@ -81,9 +103,29 @@ private:
   QAction *m_setStageAction;
   QAction *m_setFloorAction;
   QAction *m_setBackgroundAction;
+  QAction *m_increaseEdgeThinAction;
+  QAction *m_decreaseEdgeThinAction;
+  QAction *m_toggleDisplayBone;
+  QAction *m_toggleDisplayRigidBody;
+  QAction *m_togglePhysicSimulationAction;
+  QAction *m_toggleShadowMapping;
+  QAction *m_toggleShadowMappingFirst;
+  QAction *m_zoomInAction;
+  QAction *m_zoomOutAction;
+  QAction *m_rotateUpAction;
+  QAction *m_rotateDownAction;
+  QAction *m_rotateLeftAction;
+  QAction *m_rotateRightAction;
+  QAction *m_translateUpAction;
+  QAction *m_translateDownAction;
+  QAction *m_translateLeftAction;
+  QAction *m_translateRightAction;
+  QAction *m_deleteSelectedObjectAction;
   QAction *m_exitAction;
   QAction *m_aboutAction;
   QAction *m_aboutQtAction;
+
+  bool m_enablePhysicsSimulation;
 };
 
 #endif // QMAWINDOW_H
