@@ -63,4 +63,5 @@ SOURCES += main.cc\
 HEADERS  += QMAWidget.h \
     QMAPlugin.h \
     QMATimer.h \
-    QMAWindow.h
+    QMAWindow.h \
+    CommandDispatcher.h
