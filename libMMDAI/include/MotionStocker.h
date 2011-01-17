@@ -43,7 +43,7 @@
 
 #include "btBulletDynamicsCommon.h"
 
-#include "MMDFiles.h"
+#include "MMDFiles/MMDFiles.h"
 
 /* VMDList: VMD list */
 typedef struct _VMDList {

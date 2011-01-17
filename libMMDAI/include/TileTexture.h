@@ -41,7 +41,7 @@
 #ifndef TILETEXTURE_H
 #define TILETEXTURE_H
 
-#include "MMDFiles.h"
+#include "MMDFiles/MMDFiles.h"
 
 class TileTexture
 {

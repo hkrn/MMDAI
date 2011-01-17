@@ -43,7 +43,8 @@
 
 #include "btBulletDynamicsCommon.h"
 
-#include "MMDFiles.h"
+#include "MMDFiles/MMDFiles.h"
+
 #include "TileTexture.h"
 
 /* Stage: stage */

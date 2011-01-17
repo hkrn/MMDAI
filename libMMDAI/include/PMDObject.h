@@ -43,8 +43,9 @@
 
 #include "btBulletDynamicsCommon.h"
 
+#include "MMDFiles/MMDFiles.h"
+
 #include "LipSync.h"
-#include "MMDFiles.h"
 #include "TextRenderer.h"
 
 /* PMDObject: object of PMD */
