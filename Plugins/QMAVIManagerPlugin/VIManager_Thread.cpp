@@ -41,6 +41,8 @@
 #include "VIManager.h"
 #include "VIManager_Thread.h"
 
+#include <stdlib.h>
+
 /* VIManager_Event_initialize: initialize input message buffer */
 void VIManager_Event_initialize(VIManager_Event *e, const char *type, const char *args)
 {
