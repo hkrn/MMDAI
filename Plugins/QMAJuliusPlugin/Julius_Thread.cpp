@@ -40,6 +40,8 @@
 
 #include "Julius_Thread.h"
 
+#include <julius/julius.h>
+
 /* callback_recog_begin: callback for beginning of recognition */
 static void callback_recog_begin(Recog * /* recog */, void *data)
 {
@@ -84,7 +86,7 @@ static void callback_result_final(Recog *recog, void *data)
   }
 
   if (first == 0) {
-    j->sendMessage(JULIUSTHREAD_EVENTSTOP, str);
+    j->sendMessage(JULIUSTHREAD_EVENTSTOP, strdup(str)); /* free at QMAJuliusPlugin */
   }
 }
 
@@ -118,7 +120,7 @@ void Julius_Thread::run()
 }
 
 /* Julius_Thread::sendMessage: send message to MMDAgent */
-void Julius_Thread::sendMessage(const char *str1, const char *str2)
+void Julius_Thread::sendMessage(const char *str1, char *str2)
 {
   m_dispatcher->sendCommand(str1, str2);
 }

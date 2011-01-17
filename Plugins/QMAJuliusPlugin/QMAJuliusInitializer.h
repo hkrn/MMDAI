@@ -39,8 +39,8 @@
 #ifndef QMAJULIUSINITIALIZER_H
 #define QMAJULIUSINITIALIZER_H
 
-#include <QStringList>
 #include <QThread>
+#include <QStringList>
 
 #include <julius/julius.h>
 

@@ -36,6 +36,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef JULIUS_THREAD_H_
+#define JULIUS_THREAD_H_
+
 #include <QThread>
 
 #include "CommandDispatcher.h"
@@ -61,7 +64,7 @@ public:
   ~Julius_Thread();
 
   /* sendMessage: send message to MMDAgent */
-  void sendMessage(const char *str1, const char *str2);
+  void sendMessage(const char *str1, char *str2);
 
 protected:
   void run();
@@ -78,3 +81,5 @@ private:
   /* clear: free thread */
   void clear();
 };
+
+#endif

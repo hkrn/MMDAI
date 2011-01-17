@@ -38,10 +38,6 @@
 
 #include "QMAJuliusPlugin.h"
 
-#include <QDir>
-#include <QFile>
-#include <QTextStream>
-
 QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
   : QMAPlugin(parent),
   m_initializer(NULL),
@@ -131,7 +127,8 @@ void QMAJuliusPlugin::startJuliusEngine()
 void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)
 {
   emit commandPost(QString(command), QString(arguments));
-  free(arguments);
+  if (arguments != NULL)
+    free(arguments);
 }
 
 void QMAJuliusPlugin::sendEvent(const char */*type*/, char */*arguments*/)
