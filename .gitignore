@@ -3,6 +3,7 @@ CMakeFiles
 cmake_install.cmake
 install_manifest.txt
 Makefile
+*-build-desktop
 *.dll
 *.dylib
 *.pro.user
