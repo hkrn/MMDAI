@@ -108,8 +108,7 @@ void QMAWidget::loadPlugins()
   }
 #endif
   QDir pluginsDir = appDir;
-  pluginsDir.cdUp();
-  pluginsDir.cd("plugins");
+  pluginsDir.cd("Plugins");
   foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
     QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
     QObject *instance = loader.instance();
