@@ -39,7 +39,6 @@
 #include "QMAVIManagerPlugin.h"
 
 #include <QFile>
-#include <QString>
 
 QMAVIManagerPlugin::QMAVIManagerPlugin(QObject *parent)
   : QMAPlugin(parent),

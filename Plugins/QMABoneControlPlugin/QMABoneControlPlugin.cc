@@ -38,8 +38,6 @@
 
 #include "QMABoneControlPlugin.h"
 
-#include <QEvent>
-
 QMABoneControlPlugin::QMABoneControlPlugin(QObject *parent)
   : QMAPlugin(parent),
     m_num(2)
