@@ -39,9 +39,9 @@
 
 #include <QtGui/QtGui>
 
-#include "CommandParser.h"
-#include "SceneController.h"
-#include "TextRenderer.h"
+#include "MMDAI/CommandParser.h"
+#include "MMDAI/SceneController.h"
+#include "MMDAI/TextRenderer.h"
 
 #include "QMATimer.h"
 

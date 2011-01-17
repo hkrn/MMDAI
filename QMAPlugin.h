@@ -40,7 +40,7 @@
 #include <QRect>
 #include <QtPlugin>
 
-#include "SceneController.h"
+#include "MMDAI/SceneController.h"
 
 class QMAPlugin : public QObject
 {
