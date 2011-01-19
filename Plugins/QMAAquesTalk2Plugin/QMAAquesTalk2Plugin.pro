@@ -7,7 +7,7 @@ DESTDIR = ../plugins
 
 unix {
     LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
-    INCLUDEPATH += /usr/local/include/bullet
+    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet /usr/local/include
 }
 macx {
     LIBS += -framework AquesTalk2

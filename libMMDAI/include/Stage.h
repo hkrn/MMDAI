@@ -41,8 +41,6 @@
 #ifndef STAGE_H
 #define STAGE_H
 
-#include "btBulletDynamicsCommon.h"
-
 #include "MMDFiles/MMDFiles.h"
 
 #include "TileTexture.h"

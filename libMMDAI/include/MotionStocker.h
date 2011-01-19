@@ -41,8 +41,6 @@
 #ifndef MOTIONSTOCKER_H
 #define MOTIONSTOCKER_H
 
-#include "btBulletDynamicsCommon.h"
-
 #include "MMDFiles/MMDFiles.h"
 
 /* VMDList: VMD list */

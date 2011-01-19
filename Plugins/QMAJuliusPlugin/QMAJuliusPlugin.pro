@@ -6,7 +6,7 @@ DESTDIR = ../plugins
 
 unix {
     LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -ljulius -lsent -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lz
-    INCLUDEPATH += /usr/local/include/MMDFiles /usr/local/include/bullet
+    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet /usr/local/include
 }
 macx {
     # depends on libjulis

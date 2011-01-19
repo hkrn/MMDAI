@@ -41,7 +41,7 @@ TEMPLATE = app
 
 unix {
     LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -lglee -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
-    INCLUDEPATH += /usr/local/include/bullet
+    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
 }
 
 # unused (using framework)

@@ -41,8 +41,6 @@
 #ifndef PMDOBJECT_H
 #define PMDOBJECT_H
 
-#include "btBulletDynamicsCommon.h"
-
 #include "MMDFiles/MMDFiles.h"
 
 #include "LipSync.h"

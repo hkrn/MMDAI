@@ -41,7 +41,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 project(glee)
-add_library(glee SHARED glee.c glee.h)
+add_library(glee SHARED glee.c GLee.h)
 
 # link against Foundation.framework
 if(APPLE)
