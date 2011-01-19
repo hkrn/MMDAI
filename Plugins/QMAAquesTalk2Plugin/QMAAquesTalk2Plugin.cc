@@ -1,6 +1,10 @@
 #include "QMAAquesTalk2Plugin.h"
 
+#ifdef Q_OS_DARWIN
 #include <AquesTalk2/AquesTalk2.h>
+#else
+#include "AquesTalk2.h"
+#endif
 
 QMAAquesTalk2Plugin::QMAAquesTalk2Plugin(QObject *parent) :
     QMAPlugin(parent)
