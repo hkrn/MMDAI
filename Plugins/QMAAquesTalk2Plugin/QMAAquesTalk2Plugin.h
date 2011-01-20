@@ -28,6 +28,9 @@ public slots:
   void update(SceneController *controller, const QRect &rect, double delta);
   void render(SceneController *controller);
 
+  void finished();
+  void stateChanged(Phonon::State newState, Phonon::State oldState);
+
 signals:
   void commandPost(const QString &command, const QString &arguments);
   void eventPost(const QString &type, const QString &arguments);
@@ -35,6 +38,7 @@ signals:
 private:
   Phonon::AudioOutput *m_output;
   Phonon::MediaObject *m_object;
+  QBuffer *m_buffer;
 };
 
 #endif // QMAAQUESTALK2PLUGIN_H
