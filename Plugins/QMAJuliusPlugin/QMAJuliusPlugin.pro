@@ -5,12 +5,10 @@ TARGET = $$qtLibraryTarget(QMAJuliusPlugin)
 DESTDIR = ../plugins
 
 unix {
-    LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -ljulius -lsent -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lz
     INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet /usr/local/include
-}
-macx {
-    # depends on libjulis
-    LIBS += -framework AudioToolbox -framework AudioUnit -framework CoreAudio -framework CoreServices
+    LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+    LIBS += $$system(libsent-config --libs) $$system(libjulius-config --libs)
+    QMAKE_CXXFLAGS += $$system(libsent-config --cflags) $$system(libjulius-config --libs)
 }
 
 HEADERS += \
