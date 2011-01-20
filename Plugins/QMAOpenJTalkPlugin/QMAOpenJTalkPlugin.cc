@@ -52,7 +52,7 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
   delete m_thread;
 }
 
-void QMAOpenJTalkPlugin::initialize(SceneController * /*controller*/, const QString &path)
+void QMAOpenJTalkPlugin::initialize(const QString &path)
 {
   QString dir = path + "/AppData/Open_JTalk";
   QString config = path + "/MMDAI.ojt";
@@ -60,49 +60,59 @@ void QMAOpenJTalkPlugin::initialize(SceneController * /*controller*/, const QStr
   m_thread->start();
 }
 
-void QMAOpenJTalkPlugin::start(SceneController * /* controller */)
+void QMAOpenJTalkPlugin::start()
 {
+  /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::stop(SceneController * /* controller */)
+void QMAOpenJTalkPlugin::stop()
 {
+  /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::createWindow(SceneController * /* controller */)
+void QMAOpenJTalkPlugin::createWindow()
 {
+  /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::receiveCommand(SceneController */*controller*/, const QString &command, const QString &arguments)
+void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
   if (command == PLUGINOPENJTALK_STARTCOMMAND) {
-    m_thread->setSynthParameter(arguments.toUtf8().constData());
+    m_thread->setSynthParameter(arguments.join("|").toAscii().constData());
   }
   else if (command == PLUGINOPENJTALK_STOPCOMMAND) {
     m_thread->stop();
   }
 }
 
-void QMAOpenJTalkPlugin::receiveEvent(SceneController */*controller*/, const QString &/*type*/, const QString &/*arguments*/)
+void QMAOpenJTalkPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
+  Q_UNUSED(type);
+  Q_UNUSED(arguments);
+  /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::update(SceneController * /* controller */, const QRect & /* rect */, const double /* delta */)
+void QMAOpenJTalkPlugin::update(const QRect &rect, const double delta)
 {
+  Q_UNUSED(rect);
+  Q_UNUSED(delta);
+  /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::render(SceneController * /* controller */)
+void QMAOpenJTalkPlugin::render()
 {
+  /* do nothing */
 }
 
 void QMAOpenJTalkPlugin::sendCommand(const char *command, char *arguments)
 {
-  emit commandPost(QString(command), QString(arguments));
+  emit commandPost(QString(command), QString(arguments).split('|'));
   free(arguments);
 }
 
 void QMAOpenJTalkPlugin::sendEvent(const char *type, char *arguments)
 {
-  emit eventPost(QString(type), QString(arguments));
+  emit eventPost(QString(type), QString(arguments).split('|'));
   free(arguments);
 }
 

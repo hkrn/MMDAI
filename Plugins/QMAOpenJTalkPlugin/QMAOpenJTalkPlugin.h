@@ -57,18 +57,18 @@ public:
   void sendEvent(const char *type, char *arguments);
 
 public slots:
-  void initialize(SceneController *controller, const QString &path);
-  void start(SceneController *controller);
-  void stop(SceneController *controller);
-  void createWindow(SceneController *controller);
-  void receiveCommand(SceneController *controller, const QString &command, const QString &arguments);
-  void receiveEvent(SceneController *controller, const QString &type, const QString &arguments);
-  void update(SceneController *controller, const QRect &rect, double delta);
-  void render(SceneController *controller);
+  void initialize(const QString &path);
+  void start();
+  void stop();
+  void createWindow();
+  void receiveCommand(const QString &command, const QStringList &arguments);
+  void receiveEvent(const QString &type, const QStringList &arguments);
+  void update(const QRect &rect, const double delta);
+  void render();
 
 signals:
-  void commandPost(const QString &command, const QString &arguments);
-  void eventPost(const QString &type, const QString &arguments);
+  void commandPost(const QString &command, const QStringList &arguments);
+  void eventPost(const QString &type, const QStringList &arguments);
 
 private:
   Open_JTalk_Thread *m_thread;
