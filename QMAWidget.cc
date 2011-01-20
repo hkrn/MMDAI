@@ -138,6 +138,9 @@ void QMAWidget::loadPlugins()
       connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
               this, SLOT(delegateEvent(const QString&, const QStringList&)));
     }
+    else {
+      qWarning() << fileName << "was not loaded by an error:" << loader.errorString();
+    }
   }
   QDir::setCurrent(appDir.absolutePath());
   int size[2];
