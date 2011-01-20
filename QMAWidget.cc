@@ -14,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -64,13 +64,14 @@ QMAWidget::~QMAWidget()
 
 void QMAWidget::handleEventMessage(const char *eventType, const char *format, ...)
 {
-  char arguments[BUFSIZ];
+  char args[BUFSIZ];
   va_list argv;
   va_start(argv, format);
-  vsnprintf(arguments, sizeof(arguments), format, argv);
-  //qDebug("event=%s arguments=%s", eventType, arguments);
+  vsnprintf(args, sizeof(args), format, argv);
+  //qDebug("event=%s arguments=%s", eventType, args);
   va_end(argv);
-  emit pluginEventPost(m_controller, eventType, (const char *)arguments);
+  QStringList arguments = QString(args).split("/");
+  emit pluginEventPost(eventType, arguments);
 }
 
 void QMAWidget::toggleDisplayBone()
@@ -85,7 +86,9 @@ void QMAWidget::toggleDisplayRigidBody()
 
 void QMAWidget::sendKeyEvent(const QString &text)
 {
-  emit pluginEventPost(m_controller, QString(MMDAGENT_EVENT_KEY), text);
+  QStringList arguments;
+  arguments << text;
+  emit pluginEventPost(QString(MMDAGENT_EVENT_KEY), arguments);
 }
 
 SceneController *QMAWidget::getSceneController()
@@ -114,26 +117,26 @@ void QMAWidget::loadPlugins()
     QObject *instance = loader.instance();
     QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
     if (plugin != NULL) {
-      connect(this, SIGNAL(pluginInitialized(SceneController*,const QString)),
-              plugin, SLOT(initialize(SceneController*,const QString)));
-      connect(this, SIGNAL(pluginStarted(SceneController*)),
-              plugin, SLOT(start(SceneController*)));
-      connect(this, SIGNAL(pluginStopped(SceneController*)),
-              plugin, SLOT(stop(SceneController*)));
-      connect(this, SIGNAL(pluginWindowCreated(SceneController*)),
-              plugin, SLOT(createWindow(SceneController*)));
-      connect(this, SIGNAL(pluginCommandPost(SceneController*,const QString&, const QString&)),
-              plugin, SLOT(receiveCommand(SceneController*,const QString&, const QString&)));
-      connect(this, SIGNAL(pluginEventPost(SceneController*,const QString&, const QString&)),
-              plugin, SLOT(receiveEvent(SceneController*,const QString&, const QString&)));
-      connect(this, SIGNAL(pluginUpdated(SceneController*,QRect,double)),
-              plugin, SLOT(update(SceneController*,QRect,double)));
-      connect(this, SIGNAL(pluginRendered(SceneController*)),
-              plugin, SLOT(render(SceneController*)));
-      connect(plugin, SIGNAL(commandPost(const QString&, const QString&)),
-              this, SLOT(delegateCommand(const QString&, const QString&)));
-      connect(plugin, SIGNAL(eventPost(const QString&, const QString&)),
-              this, SLOT(delegateEvent(const QString&, const QString&)));
+      connect(this, SIGNAL(pluginInitialized(const QString)),
+              plugin, SLOT(initialize(const QString)));
+      connect(this, SIGNAL(pluginStarted()),
+              plugin, SLOT(start()));
+      connect(this, SIGNAL(pluginStopped()),
+              plugin, SLOT(stop()));
+      connect(this, SIGNAL(pluginWindowCreated()),
+              plugin, SLOT(createWindow()));
+      connect(this, SIGNAL(pluginCommandPost(const QString&, const QStringList&)),
+              plugin, SLOT(receiveCommand(const QString&, const QStringList&)));
+      connect(this, SIGNAL(pluginEventPost(const QString&, const QStringList&)),
+              plugin, SLOT(receiveEvent(const QString&, const QStringList&)));
+      connect(this, SIGNAL(pluginUpdated(QRect,double)),
+              plugin, SLOT(update(QRect,double)));
+      connect(this, SIGNAL(pluginRendered()),
+              plugin, SLOT(render()));
+      connect(plugin, SIGNAL(commandPost(const QString&, const QStringList&)),
+              this, SLOT(delegateCommand(const QString&, const QStringList&)));
+      connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
+              this, SLOT(delegateEvent(const QString&, const QStringList&)));
     }
   }
   QDir::setCurrent(appDir.absolutePath());
@@ -142,20 +145,20 @@ void QMAWidget::loadPlugins()
   size[1] = height();
   m_controller->init(size, appDir.absoluteFilePath("AppData").toUtf8().constData());
   m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
-  emit pluginInitialized(m_controller, appDir.absolutePath());
+  emit pluginInitialized(appDir.absolutePath());
 }
 
-void QMAWidget::delegateCommand(const QString &command, const QString &arguments)
+void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
 {
   // qDebug() << "command=" << command << ", arguments="  << arguments;
-  m_parser.parse(command.toUtf8().constData(), arguments.toUtf8().constData());
-  emit pluginCommandPost(m_controller, command, arguments);
+  m_parser.parse(command.toUtf8().constData(), arguments.join("|").toUtf8().constData());
+  emit pluginCommandPost(command, arguments);
 }
 
-void QMAWidget::delegateEvent(const QString &type, const QString &arguments)
+void QMAWidget::delegateEvent(const QString &type, const QStringList &arguments)
 {
   // qDebug() << "type=" << type << ", arguments=" << arguments;
-  emit pluginEventPost(m_controller, type, arguments);
+  emit pluginEventPost(type, arguments);
 }
 
 void QMAWidget::updateScene()
@@ -181,7 +184,7 @@ void QMAWidget::updateScene()
     if (adjustFrame != 0.0)
       m_frameCue = 90.0;
     m_controller->updateMotion(procFrame, adjustFrame);
-    emit pluginUpdated(m_controller, rectangle, procFrame + adjustFrame);
+    emit pluginUpdated(rectangle, procFrame + adjustFrame);
   }
 
   m_controller->updateAfterSimulation();
@@ -224,7 +227,7 @@ void QMAWidget::initializeGL()
 {
   loadPlugins();
   m_controller->updateLight();
-  emit pluginStarted(m_controller);
+  emit pluginStarted();
   m_timer.start();
   startTimer(10);
 }
@@ -245,7 +248,7 @@ void QMAWidget::paintGL()
     m_controller->renderBulletForDebug();
   m_controller->renderLogger();
   m_timer.count();
-  emit pluginRendered(m_controller);
+  emit pluginRendered();
 }
 
 void QMAWidget::mouseDoubleClickEvent(QMouseEvent *event)
@@ -464,5 +467,5 @@ void QMAWidget::dragLeaveEvent(QDragLeaveEvent *event)
 
 void QMAWidget::closeEvent(QCloseEvent * /* event */)
 {
-  emit pluginStopped(m_controller);
+  emit pluginStopped();
 }

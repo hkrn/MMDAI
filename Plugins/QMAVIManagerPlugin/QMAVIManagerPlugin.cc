@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -50,58 +50,64 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 {
 }
 
-void QMAVIManagerPlugin::initialize(SceneController * /* controller */, const QString &path)
+void QMAVIManagerPlugin::initialize(const QString &path)
 {
   QFile config(path + "/MMDAI.fst");
   if (config.exists())
     m_thread.load(config.fileName().toUtf8().constData());
 }
 
-void QMAVIManagerPlugin::start(SceneController * /* controller */)
+void QMAVIManagerPlugin::start()
 {
   m_thread.start();
 }
 
-void QMAVIManagerPlugin::stop(SceneController * /* controller */)
+void QMAVIManagerPlugin::stop()
 {
   /* do nothing */
 }
 
-void QMAVIManagerPlugin::createWindow(SceneController * /* controller */)
+void QMAVIManagerPlugin::createWindow()
 {
   /* do nothing */
 }
 
-void QMAVIManagerPlugin::receiveCommand(SceneController */*controller*/, const QString &/*command*/, const QString &/*arguments*/)
+void QMAVIManagerPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
+  Q_UNUSED(command);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 
-void QMAVIManagerPlugin::receiveEvent(SceneController */*controller*/, const QString &type, const QString &arguments)
+void QMAVIManagerPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
   if (m_thread.isStarted()) {
-    m_thread.enqueueBuffer(type.toUtf8().constData(), arguments.toUtf8().constData());
+    m_thread.enqueueBuffer(type.toUtf8().constData(), arguments.join("/").toUtf8().constData());
   }
 }
 
-void QMAVIManagerPlugin::update(SceneController * /* controller */, const QRect & /* rect */, const double /* delta */)
+void QMAVIManagerPlugin::update(const QRect &rect, const double delta)
 {
+  Q_UNUSED(rect);
+  Q_UNUSED(delta);
   /* do nothing */
 }
 
-void QMAVIManagerPlugin::render(SceneController * /* controller */)
+void QMAVIManagerPlugin::render()
 {
   /* do nothing */
 }
 
 void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
 {
-  emit commandPost(QString(command), QString(arguments));
+  emit commandPost(QString(command), QString(arguments).split('|'));
   free(arguments);
 }
 
-void QMAVIManagerPlugin::sendEvent(const char */*type*/, char */*arguments*/)
+void QMAVIManagerPlugin::sendEvent(const char *type, char *arguments)
 {
+  Q_UNUSED(type);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 

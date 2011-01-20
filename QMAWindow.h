@@ -14,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -80,9 +80,7 @@ private slots:
   void changeSelectedObject();
   void deleteSelectedObject();
   void about();
-  void receiveEvent(SceneController *controller,
-                    const QString &type,
-                    const QString &arguments);
+  void receiveEvent(const QString &type, const QStringList &arguments);
 
 private:
   void setEdgeThin(int n);

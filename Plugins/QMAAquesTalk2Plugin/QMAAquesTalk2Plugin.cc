@@ -61,31 +61,34 @@ QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
   delete m_object;
 }
 
-void QMAAquesTalk2Plugin::initialize(SceneController */*controller*/, const QString &/*path*/)
+void QMAAquesTalk2Plugin::initialize(const QString &path)
+{
+  Q_UNUSED(path);
+  /* do nothing */
+}
+
+void QMAAquesTalk2Plugin::start()
 {
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::start(SceneController */*controller*/)
+void QMAAquesTalk2Plugin::stop()
 {
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::stop(SceneController */*controller*/)
+void QMAAquesTalk2Plugin::createWindow()
 {
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::createWindow(SceneController */*controller*/)
+void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
-  /* do nothing */
-}
-
-void QMAAquesTalk2Plugin::receiveCommand(SceneController */*controller*/, const QString &command, const QString &arguments)
-{
-  if (command == "MMDAI_AQTK2_START") {
+  int argc = arguments.count();
+  if (command == "MMDAI_AQTK2_START" && argc > 0) {
     int size = 0;
-    unsigned char *data = AquesTalk2_Synthe_Utf8(arguments.toAscii().constData(), 100, &size, NULL);
+    const char *text = arguments.at(0).toAscii().constData();
+    unsigned char *data = AquesTalk2_Synthe_Utf8(text, 100, &size, NULL);
     if (data != NULL) {
       delete m_buffer;
       m_buffer = new QBuffer();
@@ -98,28 +101,34 @@ void QMAAquesTalk2Plugin::receiveCommand(SceneController */*controller*/, const 
   }
 }
 
-void QMAAquesTalk2Plugin::receiveEvent(SceneController */*controller*/, const QString &/*type*/, const QString &/*arguments*/)
+void QMAAquesTalk2Plugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
+  Q_UNUSED(type);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::update(SceneController */*controller*/, const QRect &/*rect*/, double /*delta*/)
+void QMAAquesTalk2Plugin::update(const QRect &rect, double delta)
 {
+  Q_UNUSED(rect);
+  Q_UNUSED(delta);
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::render(SceneController */*controller*/)
+void QMAAquesTalk2Plugin::render()
 {
   /* do nothing */
 }
 
 void QMAAquesTalk2Plugin::finished()
 {
-  emit eventPost("MMDAI_AQTK2_STOP", "");
+  QStringList arguments;
+  emit eventPost(QString("MMDAI_AQTK2_STOP"), arguments);
 }
 
-void QMAAquesTalk2Plugin::stateChanged(Phonon::State newState, Phonon::State /*oldState*/)
+void QMAAquesTalk2Plugin::stateChanged(Phonon::State newState, Phonon::State oldState)
 {
+  Q_UNUSED(oldState);
   if (newState == Phonon::ErrorState)
     qWarning("Phonon error: %s", m_object->errorString().toAscii().constData());
 }

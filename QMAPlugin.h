@@ -14,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -38,6 +38,8 @@
 #define PLUGININTERFACE_H
 
 #include <QRect>
+#include <QString>
+#include <QStringList>
 #include <QtPlugin>
 
 #include "MMDAI/SceneController.h"
@@ -49,18 +51,18 @@ public:
   virtual ~QMAPlugin() {}
 
   /* slots */
-  virtual void initialize(SceneController *controller, const QString &path) = 0;
-  virtual void start(SceneController *controller) = 0;
-  virtual void stop(SceneController *controller) = 0;
-  virtual void createWindow(SceneController *controller) = 0;
-  virtual void receiveCommand(SceneController *controller, const QString &command, const QString &arguments) = 0;
-  virtual void receiveEvent(SceneController *controller, const QString &type, const QString &arguments) = 0;
-  virtual void update(SceneController *controller, const QRect &  rect, const double delta) = 0;
-  virtual void render(SceneController *controller) = 0;
+  virtual void initialize(const QString &path) = 0;
+  virtual void start() = 0;
+  virtual void stop() = 0;
+  virtual void createWindow() = 0;
+  virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;
+  virtual void receiveEvent(const QString &type, const QStringList &arguments) = 0;
+  virtual void update(const QRect &rect, const double delta) = 0;
+  virtual void render() = 0;
 
   /* signals */
-  virtual void commandPost(const QString &command, const QString &arguments) = 0;
-  virtual void eventPost(const QString &type, const QString &arguments) = 0;
+  virtual void commandPost(const QString &command, const QStringList &arguments) = 0;
+  virtual void eventPost(const QString &type, const QStringList &arguments) = 0;
 
 private:
   Q_DISABLE_COPY(QMAPlugin);

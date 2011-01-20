@@ -14,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -66,18 +66,18 @@ public:
   void changeBaseMotion(PMDObject *object, const char *filename);
 
 public slots:
-  void delegateCommand(const QString &command, const QString &arguments);
-  void delegateEvent(const QString &type, const QString &arguments);
+  void delegateCommand(const QString &command, const QStringList &arguments);
+  void delegateEvent(const QString &type, const QStringList &arguments);
 
 signals:
-  void pluginInitialized(SceneController*,const QString);
-  void pluginStarted(SceneController*);
-  void pluginStopped(SceneController*);
-  void pluginWindowCreated(SceneController*);
-  void pluginCommandPost(SceneController*, const QString&, const QString&);
-  void pluginEventPost(SceneController*, const QString&, const QString&);
-  void pluginUpdated(SceneController*, const QRect, const double);
-  void pluginRendered(SceneController*);
+  void pluginInitialized(const QString);
+  void pluginStarted();
+  void pluginStopped();
+  void pluginWindowCreated();
+  void pluginCommandPost(const QString&, const QStringList&);
+  void pluginEventPost(const QString&, const QStringList&);
+  void pluginUpdated(const QRect, const double);
+  void pluginRendered();
 
 protected:
   void initializeGL();

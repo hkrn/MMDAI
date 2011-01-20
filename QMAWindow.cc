@@ -14,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -384,10 +384,11 @@ void QMAWindow::about()
                                                    "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>"));
 }
 
-void QMAWindow::receiveEvent(SceneController */*controller*/,
-                             const QString &/*type*/,
-                             const QString &/*arguments*/)
+void QMAWindow::receiveEvent(const QString &type,
+                             const QStringList &arguments)
 {
+  Q_UNUSED(type);
+  Q_UNUSED(arguments);
 }
 
 void QMAWindow::createActions()
@@ -535,8 +536,8 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
   m_aboutQtAction = action;
 
-  connect(m_widget, SIGNAL(pluginEventPost(SceneController*,QString,QString)),
-          this, SLOT(receiveEvent(SceneController*,QString,QString)));
+  connect(m_widget, SIGNAL(pluginEventPost(QString,QStringList)),
+          this, SLOT(receiveEvent(QString,QStringList)));
 }
 
 void QMAWindow::setEdgeThin(int n)

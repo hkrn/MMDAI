@@ -51,7 +51,7 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
   delete m_thread;
 }
 
-void QMAJuliusPlugin::initialize(SceneController * /* controller */, const QString &path)
+void QMAJuliusPlugin::initialize(const QString &path)
 {
   QDir dir = QDir(QString(path) + "/AppData/Julius");
   QString filename = dir.absoluteFilePath("jconf.txt");
@@ -83,37 +83,43 @@ void QMAJuliusPlugin::initialize(SceneController * /* controller */, const QStri
   }
 }
 
-void QMAJuliusPlugin::start(SceneController * /* controller */)
+void QMAJuliusPlugin::start()
 {
   /* do nothing */
 }
 
-void QMAJuliusPlugin::stop(SceneController * /* controller */)
+void QMAJuliusPlugin::stop()
 {
   /* do nothing */
 }
 
-void QMAJuliusPlugin::createWindow(SceneController * /* controller */)
+void QMAJuliusPlugin::createWindow()
 {
   /* do nothing */
 }
 
-void QMAJuliusPlugin::receiveCommand(SceneController */*controller*/, const QString &/*command*/, const QString &/*arguments*/)
+void QMAJuliusPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
+  Q_UNUSED(command);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 
-void QMAJuliusPlugin::receiveEvent(SceneController */*controller*/, const QString &/*type*/, const QString &/*arguments*/)
+void QMAJuliusPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
+  Q_UNUSED(type);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 
-void QMAJuliusPlugin::update(SceneController * /* controller */, const QRect & /* rect */, const double /* delta */)
+void QMAJuliusPlugin::update(const QRect &rect, double delta)
 {
+  Q_UNUSED(rect);
+  Q_UNUSED(delta);
   /* do nothing */
 }
 
-void QMAJuliusPlugin::render(SceneController * /* controller */)
+void QMAJuliusPlugin::render()
 {
   /* do nothing */
 }
@@ -126,7 +132,7 @@ void QMAJuliusPlugin::startJuliusEngine()
 
 void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)
 {
-  emit commandPost(QString(command), QString(arguments));
+  emit commandPost(QString(command), QString(arguments).split('|'));
   if (arguments != NULL)
     free(arguments);
 }
