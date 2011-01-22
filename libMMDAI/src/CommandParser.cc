@@ -46,59 +46,6 @@
 #define MMDAGENT_MAXCOMMANDBUFLEN 1024
 #define MMDAGENT_MAXLIPSYNCBUFLEN MMDAGENT_MAXCOMMANDBUFLEN
 
-/* strtokWithPattern: strtok with given pattern */
-static char *strtokWithPattern(char *str,
-                               const char *delim,
-                               char left_paren,
-                               char right_paren,
-                               int mode,
-                               char **strsave)
-{
-  char *p = NULL, *from = NULL, c;
-
-  if (str != NULL) {
-    *strsave = str;
-  }
-
-  /* find start point */
-  p = *strsave;
-  while (*p != '\0' && strchr(delim, *p)) p++;
-  if (*p == '\0') return NULL; /* no token left */
-
-  /* if mode == 1, exit here */
-  if (mode == 1) {
-    *strsave = p;
-    return p;
-  }
-
-  /* copy to ret_buf until end point is found */
-  c = *p;
-  if (c == left_paren) {
-    p++;
-    if (*p == '\0') return NULL;
-    from = p;
-    while ((c = *p) != '\0' &&
-           ((c != right_paren) || (*(p + 1) != '\0' && !strchr(delim, *(p + 1))))) p++;
-    /* if quotation not terminated, allow the rest as one token */
-  } else {
-    from = p;
-    while ((c = *p) != '\0' && (!strchr(delim, c))) p++;
-  }
-  if (*p != '\0') {
-    *p = '\0';
-    p++;
-  }
-  *strsave = p;
-
-  return from;
-}
-
-/* strtokWithDoubleQuotation: strtok with double quotation */
-static char *strtokWithDoubleQuotation(char *str, const char *delim, char **strsave)
-{
-  return strtokWithPattern(str, delim, '\"', '\"', 0, strsave);
-}
-
 /* arg2floatArray: parse float array from string */
 static bool arg2floatArray(float *dst, int len, const char *arg)
 {
@@ -106,7 +53,10 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
   char *buf = NULL, *p = NULL, *psave = NULL;
 
   allocated = sizeof(char) * strlen(arg);
-  buf = (char *) malloc(allocated + 1);
+  buf = static_cast<char *>(malloc(allocated + 1));
+  if (buf == NULL)
+    return false;
+
   strncpy(buf, arg, allocated);
   n = 0;
   for (p = strtok_r(buf, "(,)", &psave); p != NULL ; p = strtok_r(NULL, "(,)", &psave)) {
@@ -116,10 +66,7 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
   }
   free(buf);
 
-  if (n != len)
-    return false;
-  else
-    return true;
+  return n == len;
 }
 
 /* arg2pos: get position from string */
@@ -158,72 +105,44 @@ CommandParser::~CommandParser()
 {
 }
 
-bool CommandParser::parse(const char *command, const char *arguments)
+bool CommandParser::parse(const char *command, const char **argv, int argc)
 {
   PMDObject *object = NULL;
-  static char argv[MMDAGENT_MAXNUMCOMMAND][MMDAGENT_MAXCOMMANDBUFLEN]; /* static buffer */
-  int argc = 0, allocated = 0;
-  char *buf = NULL, *tmpStr1 = NULL, *tmpStr2 = NULL;
-  bool tmpBool1 = false, tmpBool2 = false, tmpBool3 = false, tmpBool4 = false;
-  float tmpFloat = 0.0f, tmpFloatList[3] = { 0.0f, 0.0f, 0.0f };
-  btVector3 tmpPos;
-  btQuaternion tmpRot;
+  float tmpFloat = 0.0f, float3[3] = { 0.0f, 0.0f, 0.0f };
+  btVector3 pos;
+  btQuaternion rot;
 
   /* divide string into arguments */
-  if (arguments == NULL) {
-    g_logger.log("<%s>", command);
-    argc = 0;
-  }
-  else {
-    g_logger.log("<%s|%s>", command, arguments);
-    buf = strdup(arguments);
-    for (tmpStr1 = strtokWithDoubleQuotation(buf, "|", &tmpStr2);
-      tmpStr1 != NULL;
-      tmpStr1 = strtokWithDoubleQuotation(NULL, "|", &tmpStr2)) {
-      if (argc >= MMDAGENT_MAXNUMCOMMAND) {
-        g_logger.log("! Error: too many argument in command %s: %s", command, arguments);
-        free(buf);
-        return false;
-      }
-      memset(argv[argc], 0, MMDAGENT_MAXCOMMANDBUFLEN);
-      strncpy(argv[argc], tmpStr1, MMDAGENT_MAXCOMMANDBUFLEN - 1);
-      argc++;
-    }
-    free(buf);
+  if (argc >= MMDAGENT_MAXNUMCOMMAND) {
+    g_logger.log("! Error: too many argument in command %s: %d", command, argc);
+    return false;
   }
 
   if (strcmp(command, MMDAGENT_COMMAND_MODEL_ADD) == 0) {
-    tmpStr1 = NULL;
-    tmpStr2 = NULL;
     if (argc < 2 || argc > 6) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
     if (argc >= 3) {
-      if (arg2pos(&tmpPos, argv[2]) == false) {
+      if (arg2pos(&pos, argv[2]) == false) {
         g_logger.log("! Error: %s: not a position string: %s", command, argv[2]);
         return false;
       }
     }
     else {
-      tmpPos = btVector3(0.0, 0.0, 0.0);
+      pos = btVector3(0.0, 0.0, 0.0);
     }
     if (argc >= 4) {
-      if (arg2rot(&tmpRot, argv[3]) == false) {
+      if (arg2rot(&rot, argv[3]) == false) {
         g_logger.log("! Error: %s: not a rotation string: %s", command, argv[3]);
         return false;
       }
     }
     else {
-      tmpRot.setEulerZYX(0.0, 0.0, 0.0);
+      rot.setEulerZYX(0.0, 0.0, 0.0);
     }
-    if (argc >= 5) {
-      tmpStr1 = argv[4];
-    }
-    if (argc >= 6) {
-      tmpStr2 = argv[5];
-    }
-    return m_controller->addModel(argv[0], argv[1], &tmpPos, &tmpRot, tmpStr1, tmpStr2);
+    return m_controller->addModel(argv[0], argv[1], &pos, &rot,
+        argc >= 5 ? argv[4] : NULL, argc >= 6 ? argv[5] : NULL);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_CHANGE) == 0) {
     /* change model */
@@ -245,20 +164,20 @@ bool CommandParser::parse(const char *command, const char *arguments)
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOTION_ADD) == 0) {
     /* add motion */
-    tmpBool1 = true; /* full */
-    tmpBool2 = true; /* once */
-    tmpBool3 = true; /* enableSmooth */
-    tmpBool4 = true; /* enableRePos */
+    bool full = true; /* full */
+    bool once = true; /* once */
+    bool enableSmooth = true; /* enableSmooth */
+    bool enableRepos = true; /* enableRePos */
     if (argc < 3 || argc > 7) {
       g_logger.log("! Error: %s: too few arguments", command);
       return false;
     }
     if (argc >= 4) {
       if (strcmp(argv[3], "FULL") == 0) {
-        tmpBool1 = true;
+        full = true;
       }
       else if (strcmp(argv[3], "PART") == 0) {
-        tmpBool1 = false;
+        full = false;
       }
       else {
         g_logger.log("! Error: %s: 4th argument should be \"FULL\" or \"PART\"", command);
@@ -267,10 +186,10 @@ bool CommandParser::parse(const char *command, const char *arguments)
     }
     if (argc >= 5) {
       if (strcmp(argv[4], "ONCE") == 0) {
-        tmpBool2 = true;
+        once = true;
       }
       else if (strcmp(argv[4], "LOOP") == 0) {
-        tmpBool2 = false;
+        once = false;
       }
       else {
         g_logger.log("! Error: %s: 5th argument should be \"ONCE\" or \"LOOP\"", command);
@@ -279,10 +198,10 @@ bool CommandParser::parse(const char *command, const char *arguments)
     }
     if (argc >= 6) {
       if (strcmp(argv[5], "ON") == 0) {
-        tmpBool3 = true;
+        enableSmooth = true;
       }
       else if (strcmp(argv[5], "OFF") == 0) {
-        tmpBool3 = false;
+        enableSmooth = false;
       }
       else {
         g_logger.log("! Error: %s: 6th argument should be \"ON\" or \"OFF\"", command);
@@ -291,10 +210,10 @@ bool CommandParser::parse(const char *command, const char *arguments)
     }
     if (argc >= 7) {
       if (strcmp(argv[6], "ON") == 0) {
-        tmpBool4 = true;
+        enableRepos = true;
       }
       else if (strcmp(argv[6], "OFF") == 0) {
-        tmpBool4 = false;
+        enableRepos = false;
       }
       else {
         g_logger.log("! Error: %s: 7th argument should be \"ON\" or \"OFF\"", command);
@@ -302,7 +221,7 @@ bool CommandParser::parse(const char *command, const char *arguments)
       }
     }
     object = m_controller->findPMDObjectByAlias(argv[0]);
-    return m_controller->addMotion(object, argv[1] , argv[2], tmpBool1, tmpBool2, tmpBool3, tmpBool4);
+    return m_controller->addMotion(object, argv[1] , argv[2], full, once, enableSmooth, enableRepos);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOTION_CHANGE) == 0) {
     /* change motion */
@@ -323,22 +242,22 @@ bool CommandParser::parse(const char *command, const char *arguments)
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOVE_START) == 0) {
     /* start moving */
-    tmpBool1 = false;
+    bool local = false;
     tmpFloat = -1.0;
     if (argc < 2 || argc > 4) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    if (arg2pos(&tmpPos, argv[1]) == false) {
+    if (arg2pos(&pos, argv[1]) == false) {
       g_logger.log("! Error: %s: not a position string: %s", command, argv[1]);
       return false;
     }
     if (argc >= 3) {
       if (strcmp(argv[2], "LOCAL") == 0) {
-        tmpBool1 = true;
+        local = true;
       }
       else if (strcmp(argv[2], "GLOBAL") == 0) {
-        tmpBool1 = false;
+        local = false;
       }
       else {
         g_logger.log("! Error: %s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
@@ -348,7 +267,7 @@ bool CommandParser::parse(const char *command, const char *arguments)
     if (argc >= 4)
       tmpFloat = atof(argv[3]);
     object = m_controller->findPMDObjectByAlias(argv[0]);
-    m_controller->startMove(object, &tmpPos, tmpBool1, tmpFloat);
+    m_controller->startMove(object, &pos, local, tmpFloat);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOVE_STOP) == 0) {
     /* stop moving */
@@ -361,22 +280,22 @@ bool CommandParser::parse(const char *command, const char *arguments)
   }
   else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_START) == 0) {
     /* start rotation */
-    tmpBool1 = false;
+    bool local = false;
     tmpFloat = -1.0;
     if (argc < 2 || argc > 4) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    if (arg2rot(&tmpRot, argv[1]) == false) {
+    if (arg2rot(&rot, argv[1]) == false) {
       g_logger.log("! Error: %s: not a rotation string: %s", command, argv[1]);
       return false;
     }
     if (argc >= 3) {
       if (strcmp(argv[2], "LOCAL") == 0) {
-        tmpBool1 = true;
+        local = true;
       }
       else if (strcmp(argv[2], "GLOBAL") == 0) {
-        tmpBool1 = false;
+        local = false;
       }
       else {
         g_logger.log("! Error: %s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
@@ -386,7 +305,7 @@ bool CommandParser::parse(const char *command, const char *arguments)
     if (argc >= 4)
       tmpFloat = (float) atof(argv[3]);
     object = m_controller->findPMDObjectByAlias(argv[0]);
-    m_controller->startRotation(object, &tmpRot, tmpBool1, tmpFloat);
+    m_controller->startRotation(object, &rot, local, tmpFloat);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_STOP) == 0) {
     /* stop rotation */
@@ -399,22 +318,22 @@ bool CommandParser::parse(const char *command, const char *arguments)
   }
   else if (strcmp(command, MMDAGENT_COMMAND_TURN_START) == 0) {
     /* turn start */
-    tmpBool1 = false;
+    bool local = false;
     tmpFloat = -1.0;
     if (argc < 2 || argc > 4) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    if (arg2pos(&tmpPos, argv[1]) == false) {
+    if (arg2pos(&pos, argv[1]) == false) {
       g_logger.log("! Error: %s: not a position string: %s", command, argv[1]);
       return false;
     }
     if (argc >= 3) {
       if (strcmp(argv[2], "LOCAL") == 0) {
-        tmpBool1 = true;
+        local = true;
       }
       else if (strcmp(argv[2], "GLOBAL") == 0) {
-        tmpBool1 = false;
+        local = false;
       }
       else {
         g_logger.log("! Error: %s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
@@ -424,7 +343,7 @@ bool CommandParser::parse(const char *command, const char *arguments)
     if (argc >= 4)
       tmpFloat = atof(argv[3]);
     object = m_controller->findPMDObjectByAlias(argv[0]);
-    m_controller->startTurn(object, &tmpPos, tmpBool1, tmpFloat);
+    m_controller->startTurn(object, &pos, local, tmpFloat);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_TURN_STOP) == 0) {
     /* stop turn */
@@ -458,17 +377,21 @@ bool CommandParser::parse(const char *command, const char *arguments)
       return false;
     }
     /* pmd or bitmap */
-    tmpStr1 = strstr(argv[0], ",");
-    if (tmpStr1 == NULL) {
-      return m_controller->loadStage(argv[0]);
+    char *filename = strdup(argv[0]);
+    if (filename == NULL) {
+      return false;
+    }
+    bool ret = false;
+    char *background = strstr(filename, ",");
+    if (background == NULL) {
+      ret = m_controller->loadStage(filename);
     }
     else {
-      (*tmpStr1) = '\0';
-      tmpStr1++;
-      if (m_controller->loadFloor(argv[0]) && m_controller->loadBackground(tmpStr1))
-        return true;
-      else
-        return false;
+      *background = '\0';
+      *background++;
+      ret = m_controller->loadFloor(filename) && m_controller->loadBackground(background);
+      free(filename);
+      return ret;
     }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_LIGHTCOLOR) == 0) {
@@ -477,11 +400,11 @@ bool CommandParser::parse(const char *command, const char *arguments)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    if (arg2floatArray(tmpFloatList, 3, argv[0]) == false) {
+    if (arg2floatArray(float3, 3, argv[0]) == false) {
       g_logger.log("! Error: %s: not \"R,G,B\" value: %s", command, argv[0]);
       return false;
     }
-    m_controller->changeLightColor(tmpFloatList[0], tmpFloatList[1], tmpFloatList[2]);
+    m_controller->changeLightColor(float3[0], float3[1], float3[2]);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_LIGHTDIRECTION) == 0) {
     /* change light direction */
@@ -489,11 +412,11 @@ bool CommandParser::parse(const char *command, const char *arguments)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    if (arg2floatArray(tmpFloatList, 3, argv[0]) == false) {
+    if (arg2floatArray(float3, 3, argv[0]) == false) {
       g_logger.log("! Error: %s: not \"x,y,z\" value: %s", command, argv[0]);
       return false;
     }
-    m_controller->changeLightDirection(tmpFloatList[0], tmpFloatList[1], tmpFloatList[2]);
+    m_controller->changeLightDirection(float3[0], float3[1], float3[2]);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_LIPSYNC_START) == 0) {
     /* start lip sync */

@@ -72,7 +72,7 @@ public:
   explicit CommandParser(SceneController *controller);
   ~CommandParser();
 
-  bool parse(const char *command, const char *arguments);
+  bool parse(const char *command, const char **argv, int argc);
 
 private:
   SceneController *m_controller;
