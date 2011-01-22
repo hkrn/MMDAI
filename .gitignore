@@ -4,7 +4,7 @@ cmake_install.cmake
 install_manifest.txt
 Makefile
 *-build-desktop
-*.dll
+*.dll*
 *.dylib
 *.pro.user
 *.so*
