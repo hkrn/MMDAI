@@ -39,9 +39,9 @@
 #ifndef QMAVIMANAGERPLUGIN_H
 #define QMAVIMANAGERPLUGIN_H
 
-#include "QMAPlugin.h"
-
 #include "VIManager_Thread.h"
+
+#include "QMAPlugin.h"
 
 class VIManager_Thread;
 

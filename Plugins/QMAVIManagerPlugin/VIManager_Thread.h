@@ -107,6 +107,8 @@ public:
   /* loadAndStart: load FST and start thread */
   void load(const char *filename);
 
+  void stop();
+
   /* isStarted: check running */
   bool isStarted();
 

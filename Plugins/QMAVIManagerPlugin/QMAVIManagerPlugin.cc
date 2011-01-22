@@ -65,7 +65,7 @@ void QMAVIManagerPlugin::start()
 
 void QMAVIManagerPlugin::stop()
 {
-  /* do nothing */
+  m_thread.stop();
 }
 
 void QMAVIManagerPlugin::createWindow()

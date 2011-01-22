@@ -162,6 +162,11 @@ void VIManager_Thread::load(const char *filename)
     return;
 }
 
+void VIManager_Thread::stop()
+{
+  m_running = false;
+}
+
 /* VIManager_Thread::isStarted: check running */
 bool VIManager_Thread::isStarted()
 {
