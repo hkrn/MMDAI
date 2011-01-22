@@ -68,7 +68,7 @@ void QMAWidget::handleEventMessage(const char *eventType, const char *format, ..
   va_list argv;
   va_start(argv, format);
   vsnprintf(args, sizeof(args), format, argv);
-  //qDebug("event=%s arguments=%s", eventType, args);
+  qDebug() << "Event:" << eventType << "Arguments:" << args;
   va_end(argv);
   QStringList arguments = QString(args).split("/");
   emit pluginEventPost(eventType, arguments);
@@ -153,14 +153,36 @@ void QMAWidget::loadPlugins()
 
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
 {
-  // qDebug() << "command=" << command << ", arguments="  << arguments;
-  m_parser.parse(command.toUtf8().constData(), arguments.join("|").toUtf8().constData());
-  emit pluginCommandPost(command, arguments);
+  qDebug().nospace() << "delegateCommand command=" << command << ", arguments="  << arguments;
+  int argc = arguments.count();
+  const char *cmd = strdup(command.toUtf8().constData());
+  const char **argv = static_cast<const char **>(calloc(sizeof(char *), argc));
+  if (cmd != NULL) {
+    if (argv != NULL) {
+      bool err = false;
+      for (int i = 0; i < argc; i++) {
+        if ((argv[i] = strdup(arguments.at(i).toUtf8().constData())) == NULL) {
+          err = true;
+          break;
+        }
+      }
+      if (!err)
+        m_parser.parse(cmd, argv, argc);
+      for (int i = 0; i < argc; i++) {
+        if (argv[i] != NULL)
+          free(const_cast<char *>(argv[i]));
+      }
+      free(argv);
+      if (!err)
+        emit pluginCommandPost(command, arguments);
+    }
+    free(const_cast<char *>(cmd));
+  }
 }
 
 void QMAWidget::delegateEvent(const QString &type, const QStringList &arguments)
 {
-  // qDebug() << "type=" << type << ", arguments=" << arguments;
+  qDebug().nospace() << "delegateEvent type=" << type << ", arguments=" << arguments;
   emit pluginEventPost(type, arguments);
 }
 

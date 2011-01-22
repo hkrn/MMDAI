@@ -387,8 +387,7 @@ void QMAWindow::about()
 void QMAWindow::receiveEvent(const QString &type,
                              const QStringList &arguments)
 {
-  Q_UNUSED(type);
-  Q_UNUSED(arguments);
+  qDebug() << "Received Event:" << type << "arguments:" << arguments;
 }
 
 void QMAWindow::createActions()
