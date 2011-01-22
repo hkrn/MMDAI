@@ -1,8 +1,10 @@
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
+debug
 install_manifest.txt
-Makefile
+Makefile*
+release
 *-build-desktop
 *.dll*
 *.dylib
