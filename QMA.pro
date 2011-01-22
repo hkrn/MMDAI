@@ -40,9 +40,11 @@ TARGET = QtMMDAI
 TEMPLATE = app
 
 unix {
-    LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -lglee -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+    LIBS += -L/usr/local/lib
     INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
 }
+
+LIBS += -lMMDAI -lMMDFiles -lglee -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
 
 # unused (using framework)
 #
