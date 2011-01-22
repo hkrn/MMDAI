@@ -62,15 +62,18 @@ QMAWidget::~QMAWidget()
   delete m_controller;
 }
 
-void QMAWidget::handleEventMessage(const char *eventType, const char *format, ...)
+void QMAWidget::handleEventMessage(const char *eventType, int argc, ...)
 {
-  char args[BUFSIZ];
-  va_list argv;
-  va_start(argv, format);
-  vsnprintf(args, sizeof(args), format, argv);
-  qDebug() << "Event:" << eventType << "Arguments:" << args;
-  va_end(argv);
-  QStringList arguments = QString(args).split("/");
+  QStringList arguments;
+  QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+  va_list ap;
+  va_start(ap, argc);
+  for (int i = 0; i < argc; i++) {
+    char *argv = va_arg(ap, char*);
+    arguments << codec->toUnicode(argv, strlen(argv));
+  }
+  va_end(ap);
+  qDebug().nospace() << "handleEventMessage event=" << eventType << ", arguments=" << arguments;
   emit pluginEventPost(eventType, arguments);
 }
 

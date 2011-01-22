@@ -57,7 +57,7 @@ public:
   explicit QMAWidget(QWidget *parent = 0);
   ~QMAWidget();
 
-  void handleEventMessage(const char *eventType, const char *format, ...);
+  void handleEventMessage(const char *eventType, int argc, ...);
   SceneController *getSceneController();
 
   void toggleDisplayBone();
