@@ -71,7 +71,8 @@ class SceneEventHandler
 public:
   virtual ~SceneEventHandler() {}
 
-  virtual void handleEventMessage(const char *eventType, const char *format, ...) = 0;
+  virtual void handleEventMessage(const char *eventType, int argc, ...) = 0;
 };
 
 #endif // SCENEEVENTHANDLER_H
+

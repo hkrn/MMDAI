@@ -151,6 +151,8 @@ public:
 
 private:
   void deleteAssociatedModels(PMDObject *object);
+  void sendEvent1(const char *type, const char *arg1);
+  void sendEvent2(const char *type, const char *arg1, const char *arg2);
 
   BulletPhysics m_bullet;
   MotionStocker m_motion;

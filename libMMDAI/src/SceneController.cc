@@ -101,9 +101,7 @@ bool SceneController::loadFloor(const char *fileName)
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_FLOOR, "%s", fileName);
-  }
+  sendEvent1(MMDAGENT_EVENT_FLOOR, fileName);
 
   return true;
 }
@@ -118,9 +116,7 @@ bool SceneController::loadBackground(const char *fileName)
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_BACKGROUND, "%s", fileName);
-  }
+  sendEvent1(MMDAGENT_EVENT_BACKGROUND, fileName);
 
   return true;
 }
@@ -135,9 +131,7 @@ bool SceneController::loadStage(const char *fileName)
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_STAGE, "%s", fileName);
-  }
+  sendEvent1(MMDAGENT_EVENT_STAGE, fileName);
 
   return true;
 }
@@ -249,9 +243,7 @@ bool SceneController::addMotion(PMDObject *object,
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MOTION_ADD, "%s|%s", object->getAlias(), name);
-  }
+  sendEvent2(MMDAGENT_EVENT_MOTION_ADD, object->getAlias(), name);
 
   free(name);
   return true;
@@ -298,9 +290,7 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, c
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MOTION_CHANGE, "%s|%s", object->getAlias(), motionAlias);
-  }
+  sendEvent2(MMDAGENT_EVENT_MOTION_CHANGE, object->getAlias(), motionAlias);
 
   /* unload old motion from motion stocker */
   m_motion.unload(old);
@@ -426,9 +416,7 @@ bool SceneController::addModel(const char *modelAlias,
   m_numModel++;
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MODEL_ADD, "%s", name);
-  }
+  sendEvent1(MMDAGENT_EVENT_MODEL_ADD, name);
 
   free(name);
   return true;
@@ -484,9 +472,7 @@ bool SceneController::changeModel(PMDObject *object, const char *fileName)
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MODEL_CHANGE, "%s", modelAlias);
-  }
+  sendEvent1(MMDAGENT_EVENT_MODEL_CHANGE, modelAlias);
 
   return true;
 }
@@ -506,9 +492,7 @@ void SceneController::deleteModel(PMDObject *object)
   m_numModel--;
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MODEL_DELETE, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_MODEL_DELETE, object->getAlias());
 }
 
 /* SceneController::changeLightDirection: change light direction */
@@ -525,7 +509,9 @@ void SceneController::changeLightDirection(float x, float y, float z)
 
   /* send event message */
   if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_LIGHTDIRECTION, "%.2f,%.2f,%.2f", x, y, z);
+    char buf[BUFSIZ];
+    snprintf(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
+    sendEvent1(MMDAGENT_EVENT_LIGHTDIRECTION, buf);
   }
 }
 
@@ -542,7 +528,9 @@ void SceneController::changeLightColor(float r, float g, float b)
 
   /* send event message */
   if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_LIGHTCOLOR, "%.2f,%.2f,%.2f", r, g, b);
+    char buf[BUFSIZ];
+    snprintf(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
+    sendEvent1(MMDAGENT_EVENT_LIGHTCOLOR, buf);
   }
 }
 
@@ -573,9 +561,7 @@ void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, f
   object->setPosition(targetPos);
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MOVE_START, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_MOVE_START, object->getAlias());
 }
 
 /* SceneController::stopMove: stop moving */
@@ -595,9 +581,7 @@ void SceneController::stopMove(PMDObject *object)
   object->setPosition(targetPos);
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_MOVE_STOP, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_MOVE_STOP, object->getAlias());
 }
 
 /* SceneController::startRotation: start rotation */
@@ -622,9 +606,7 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
   object->setRotation(targetRot);
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_ROTATE_START, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_ROTATE_START, object->getAlias());
 }
 
 /* SceneController::stopRotation: stop rotation */
@@ -645,9 +627,7 @@ void SceneController::stopRotation(PMDObject *object)
   object->setRotation(targetRot);
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_ROTATE_STOP, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_ROTATE_STOP, object->getAlias());
 }
 
 /* SceneController::startTurn: start turn */
@@ -694,9 +674,7 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
   object->setTurningFlag(true);
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_TURN_START, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_TURN_START, object->getAlias());
 }
 
 /* SceneController::stopTurn: stop turn */
@@ -720,9 +698,7 @@ void SceneController::stopTurn(PMDObject *object)
   object->setRotation(targetRot);
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_TURN_START, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_TURN_START, object->getAlias());
 }
 
 /* SceneController::startLipSync: start lip sync */
@@ -767,9 +743,7 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
   }
 
   /* send event message */
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(MMDAGENT_EVENT_LIPSYNC_START, "%s", object->getAlias());
-  }
+  sendEvent1(MMDAGENT_EVENT_LIPSYNC_START, object->getAlias());
 
   return true;
 }
@@ -868,12 +842,10 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
         for (; player != NULL; player = player->next) {
           if (player->statusFlag == MOTION_STATUS_DELETED) {
             if (strcmp(player->name, LIPSYNC_MOTION_NAME) == 0) {
-              if (m_handler != NULL)
-                m_handler->handleEventMessage(MMDAGENT_EVENT_LIPSYNC_STOP, "%s", object->getAlias());
+              sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
             }
             else {
-              if (m_handler != NULL)
-                m_handler->handleEventMessage(MMDAGENT_EVENT_MOTION_DELETE, "%s|%s", object->getAlias(), player->name);
+              sendEvent2(MMDAGENT_EVENT_MOTION_DELETE, object->getAlias(), player->name);
             }
             m_motion.unload(player->vmd);
           }
@@ -921,20 +893,31 @@ void SceneController::updateModelPositionAndRotation(double fps)
     PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
       if (object->updateModelRootOffset(fps)) {
-        if (m_handler != NULL)
-          m_handler->handleEventMessage(MMDAGENT_EVENT_MOVE_STOP, "%s", object->getAlias());
+        sendEvent1(MMDAGENT_EVENT_MOVE_STOP, object->getAlias());
       }
       if (object->updateModelRootRotation(fps)) {
         if (object->isTurning()) {
-          if (m_handler != NULL)
-            m_handler->handleEventMessage(MMDAGENT_EVENT_TURN_STOP, "%s", object->getAlias());
+          sendEvent1(MMDAGENT_EVENT_TURN_STOP, object->getAlias());
           object->setTurningFlag(false);
         } else {
-          if (m_handler != NULL)
-            m_handler->handleEventMessage(MMDAGENT_EVENT_ROTATE_STOP, "%s", object->getAlias());
+          sendEvent1(MMDAGENT_EVENT_ROTATE_STOP, object->getAlias());
         }
       }
     }
+  }
+}
+
+inline void SceneController::sendEvent1(const char *type, const char *arg1)
+{
+  if (m_handler != NULL) {
+    m_handler->handleEventMessage(type, 1, arg1);
+  }
+}
+
+inline void SceneController::sendEvent2(const char *type, const char *arg1, const char *arg2)
+{
+  if (m_handler != NULL) {
+    m_handler->handleEventMessage(type, 2, arg1, arg2);
   }
 }
 

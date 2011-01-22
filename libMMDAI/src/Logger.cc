@@ -161,6 +161,8 @@ void Logger::log(const char *format, ...)
    va_start(args, format);
    if (m_textBufArray) {
       snprintf(buff, LOG_MAXBUFLEN - 1, format, args);
+      printf("%s\n", buff);
+      fflush(stdout);
       buff[LOG_MAXBUFLEN - 1] = '\0';
       for (p = strtok_r(buff, "\n", &psave); p; p = strtok_r(NULL, "\n", &psave)) {
          strncpy(m_textBufArray[m_textLine], p, m_textWidth - 1);
