@@ -44,10 +44,10 @@
 
 QMAAquesTalk2Plugin::QMAAquesTalk2Plugin(QObject *parent)
   : QMAPlugin(parent),
+    m_output(new Phonon::AudioOutput(Phonon::GameCategory, this)),
+    m_object(new Phonon::MediaObject(this)),
     m_buffer(0)
 {
-  m_object = new Phonon::MediaObject(this);
-  m_output = new Phonon::AudioOutput(Phonon::GameCategory, this);
   Phonon::createPath(m_object, m_output);
   connect(m_object, SIGNAL(finished()), this, SLOT(finished()));
   connect(m_object, SIGNAL(stateChanged(Phonon::State,Phonon::State)),
@@ -74,7 +74,7 @@ void QMAAquesTalk2Plugin::start()
 
 void QMAAquesTalk2Plugin::stop()
 {
-  /* do nothing */
+  m_object->stop();
 }
 
 void QMAAquesTalk2Plugin::createWindow()
