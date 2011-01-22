@@ -39,6 +39,7 @@
 #include "QMAVIManagerPlugin.h"
 
 #include <QFile>
+#include <QTextCodec>
 
 QMAVIManagerPlugin::QMAVIManagerPlugin(QObject *parent)
   : QMAPlugin(parent),
@@ -100,7 +101,9 @@ void QMAVIManagerPlugin::render()
 
 void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
 {
-  emit commandPost(QString(command), QString(arguments).split('|'));
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  QString argv = codec->toUnicode(arguments, strlen(arguments));
+  emit commandPost(QString(command), argv.split("|"));
   free(arguments);
 }
 
