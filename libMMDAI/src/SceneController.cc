@@ -153,7 +153,12 @@ PMDObject *SceneController::allocatePMDObject()
   return object;
 }
 
-PMDObject *SceneController::findPMDObjectByAlias(const char *alias)
+PMDObject *SceneController::findPMDObject(PMDObject *object)
+{
+  findPMDObject(object->getAlias());
+}
+
+PMDObject *SceneController::findPMDObject(const char *alias)
 {
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *object = &m_objects[i];
@@ -343,7 +348,7 @@ bool SceneController::addModel(const char *modelAlias,
   if (pos || rot)
     forcedPosition = true;
   if (baseModelAlias) {
-    assignObject = findPMDObjectByAlias(baseModelAlias);
+    assignObject = findPMDObject(baseModelAlias);
     if (assignObject == NULL) {
       g_logger.log("!Error: addModel: model alias \"%s\" is not found", baseModelAlias);
       return false;
@@ -374,7 +379,7 @@ bool SceneController::addModel(const char *modelAlias,
   if (modelAlias && strlen(modelAlias) > 0) {
     /* check the same alias */
     name = strdup(modelAlias);
-    if (findPMDObjectByAlias(name) != NULL) {
+    if (findPMDObject(name) != NULL) {
       g_logger.log("! Error: addModel: model alias \"%s\" is already used.", name);
       free(name);
       return false;
@@ -385,7 +390,7 @@ bool SceneController::addModel(const char *modelAlias,
       size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
       name = (char *) malloc(allocSize);
       snprintf(name, allocSize, "%d", i);
-      if (findPMDObjectByAlias(name) != NULL)
+      if (findPMDObject(name) != NULL)
         free(name);
       else
         break;
@@ -806,6 +811,18 @@ void SceneController::translate(float x, float y, float z)
 void SceneController::setRect(int width, int height)
 {
   m_scene.setSize(width, height);
+}
+
+void SceneController::selectPMDObject(PMDObject *object)
+{
+  const char *alias = object->getAlias();
+  for (int i = 0; i < m_numModel; i++) {
+    PMDObject *o = &m_objects[i];
+    if (o->isEnable() && strcmp(o->getAlias(), alias) == 0) {
+      m_selectedModel = i;
+      break;
+    }
+  }
 }
 
 void SceneController::selectPMDObject(int x, int y)

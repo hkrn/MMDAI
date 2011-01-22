@@ -150,7 +150,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     return m_controller->changeModel(object, argv[1]);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_DELETE) == 0) {
@@ -159,7 +159,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->deleteModel(object);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOTION_ADD) == 0) {
@@ -220,7 +220,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         return false;
       }
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     return m_controller->addMotion(object, argv[1] , argv[2], full, once, enableSmooth, enableRepos);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOTION_CHANGE) == 0) {
@@ -229,7 +229,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     return m_controller->changeMotion(object, argv[1], argv[2]);
   } else if (strcmp(command, MMDAGENT_COMMAND_MOTION_DELETE) == 0) {
     /* delete motion */
@@ -237,7 +237,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     return m_controller->deleteMotion(object, argv[1]);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOVE_START) == 0) {
@@ -266,7 +266,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     if (argc >= 4)
       tmpFloat = atof(argv[3]);
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->startMove(object, &pos, local, tmpFloat);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOVE_STOP) == 0) {
@@ -275,7 +275,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->stopMove(object);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_START) == 0) {
@@ -304,7 +304,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     if (argc >= 4)
       tmpFloat = (float) atof(argv[3]);
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->startRotation(object, &rot, local, tmpFloat);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_STOP) == 0) {
@@ -313,7 +313,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->stopRotation(object);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_TURN_START) == 0) {
@@ -342,7 +342,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     if (argc >= 4)
       tmpFloat = atof(argv[3]);
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->startTurn(object, &pos, local, tmpFloat);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_TURN_STOP) == 0) {
@@ -351,7 +351,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     m_controller->stopTurn(object);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_SOUND_START) == 0) {
@@ -424,7 +424,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     return m_controller->startLipSync(object, argv[1]);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_LIPSYNC_STOP) == 0) {
@@ -433,7 +433,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
-    object = m_controller->findPMDObjectByAlias(argv[0]);
+    object = m_controller->findPMDObject(argv[0]);
     return m_controller->stopLipSync(object);
   }
   return true;

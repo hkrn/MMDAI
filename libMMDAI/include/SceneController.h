@@ -57,7 +57,8 @@ public:
   void init(int *size, const char *systexPath);
 
   PMDObject *allocatePMDObject();
-  PMDObject *findPMDObjectByAlias(const char *alias);
+  PMDObject *findPMDObject(PMDObject *object);
+  PMDObject *findPMDObject(const char *alias);
   PMDObject *getPMDObject(int index);
   int countPMDObjects() const;
 
@@ -129,6 +130,7 @@ public:
   void setRect(int width, int height);
   void setShadowMapping(bool value);
 
+  void selectPMDObject(PMDObject *object);
   void selectPMDObject(int x, int y);
   void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
   void hightlightPMDObject();
