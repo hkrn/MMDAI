@@ -99,23 +99,43 @@ else()
 endif()
 
 # find OpenGL Easy Extension
-find_path(GLEE_INCLUDE GLee.h /usr/local/include /usr/include)
-find_library(GLEE_LIBRARY glee /usr/local/lib /usr/lib)
+find_path(GLEE_INCLUDE GLee.h)
+find_library(GLEE_LIBRARY glee)
 if(GLEE_INCLUDE AND GLEE_LIBRARY)
   target_link_libraries(MMDFiles ${GLEE_LIBRARY})
 else()
   message(FATAL_ERROR "Required OpenGL Easy Extension is not found.")
 endif()
 
-# find Bullet Physics via pkg-config
-find_package(PkgConfig)
-pkg_search_module(BULLET REQUIRED bullet)
-if(BULLET_FOUND)
-  include_directories(${BULLET_INCLUDE_DIRS})
-  target_link_libraries(MMDFiles ${BULLET_LIBRARIES})
-  link_directories(${BULLET_LIBRARY_DIRS})
+if (MINGW)
+  # find Bullet Physics
+  find_path(BULLET_INCLUDE_DIR btBulletDynamicsCommon.h)
+  find_library(BULLET_LIB_COLLISION BulletCollision)
+  find_library(BULLET_LIB_DYNAMICS BulletDynamics)
+  find_library(BULLET_LIB_SOFT_BODY BulletSoftBody)
+  find_library(BULLET_LIB_LINEAR_MATH LinearMath)
+  if (BULLET_INCLUDE_DIR)
+    include_directories(${BULLET_INCLUDE_DIRS})
+    target_link_libraries(MMDFiles
+      ${BULLET_LIB_COLLISION}
+      ${BULLET_LIB_DYNAMICS}
+      ${BULLET_LIB_SOFT_BODY}
+      ${BULLET_LIB_LINEAR_MATH}
+    )
+  else()
+    message(FATAL_ERROR "Required Bullet Physics is not found.")
+  endif()
 else()
-  message(FATAL_ERROR "Required Bullet Physics is not found.")
+  # find Bullet Physics via pkg-config
+  find_package(PkgConfig)
+  pkg_search_module(BULLET REQUIRED bullet)
+  if(BULLET_FOUND)
+    include_directories(${BULLET_INCLUDE_DIRS})
+    target_link_libraries(MMDFiles ${BULLET_LIBRARIES})
+    link_directories(${BULLET_LIBRARY_DIRS})
+  else()
+    message(FATAL_ERROR "Required Bullet Physics is not found.")
+  endif()
 endif()
 
 # create as a framework if build on darwin environment
@@ -128,7 +148,6 @@ if(APPLE)
   set_target_properties(MMDFiles PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
-install(TARGETS MMDFiles EXPORT MMDFiles LIBRARY DESTINATION lib)
-install(EXPORT MMDFiles DESTINATION lib/MMDFiles)
+install(TARGETS MMDFiles DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include/MMDFiles PATTERN "*.h" PATTERN ".svn" EXCLUDE)
 
