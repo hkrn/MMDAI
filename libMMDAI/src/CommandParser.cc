@@ -59,7 +59,12 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
 
   strncpy(buf, arg, allocated);
   n = 0;
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
   for (p = strtok_r(buf, "(,)", &psave); p != NULL ; p = strtok_r(NULL, "(,)", &psave)) {
+#else
+  (void)psave;
+  for (p = strtok(buf, "(,)"); p != NULL ; p = strtok(NULL, "(,)")) {
+#endif
     if (n < len)
       dst[n] = atof(p);
     n++;

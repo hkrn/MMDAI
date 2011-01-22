@@ -164,7 +164,12 @@ void Logger::log(const char *format, ...)
       printf("%s\n", buff);
       fflush(stdout);
       buff[LOG_MAXBUFLEN - 1] = '\0';
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       for (p = strtok_r(buff, "\n", &psave); p; p = strtok_r(NULL, "\n", &psave)) {
+#else
+      (void)psave;
+      for (p = strtok(buff, "\n"); p; p = strtok(NULL, "\n")) {
+#endif
          strncpy(m_textBufArray[m_textLine], p, m_textWidth - 1);
          m_textBufArray[m_textLine][m_textWidth - 1] = L'\0';
          m_updated[m_textLine] = true;

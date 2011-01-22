@@ -178,7 +178,12 @@ bool LipSync::setup(PMDModel *pmd)
         g_logger.log("! Warning: LipSync: \"%s\" already defined", faceNames[n]);
         continue;
       }
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       for (p = strtok_r(q + 1, "+¥r¥n", &psave); p; p = strtok_r(NULL, "+¥r¥n", &psave)) {
+#else
+      (void)psave;
+      for (p = strtok(q + 1, "+¥r¥n"); p; p = strtok(NULL, "+¥r¥n")) {
+#endif
         pp = strchr(p, '*');
         if (pp) {
           *pp = '\0';
@@ -523,7 +528,12 @@ bool LipSync::createMotion(const char *seq, unsigned char **rawData, unsigned lo
   strncpy(buf1, seq, len);
   buf1[len] = '\0';
   seqlen = 0;
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
   for (p = strtok_r(buf1, LIPSYNC_SEPARATOR, &p_save); p; p = strtok_r(NULL, LIPSYNC_SEPARATOR, &p_save)) {
+#else
+  (void)p_save;
+  for (p = strtok(buf1, LIPSYNC_SEPARATOR); p; p = strtok(NULL, LIPSYNC_SEPARATOR)) {
+#endif
     if (seqlen >= MAXPNUM) {
       g_logger.log("! Error: LipSync: too long phone sequence (>%d)", MAXPNUM);
       ret = false;
