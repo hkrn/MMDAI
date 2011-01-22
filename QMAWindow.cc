@@ -341,6 +341,20 @@ void QMAWindow::zoomOut()
   m_widget->update();
 }
 
+void QMAWindow::selectObject()
+{
+  QAction *action = qobject_cast<QAction *>(sender());
+  if (action) {
+    const char *name = action->text().toUtf8().constData();
+    SceneController *controller = m_widget->getSceneController();
+    PMDObject *object = controller->findPMDObject(name);
+    if (object != NULL) {
+      controller->selectPMDObject(object);
+      controller->hightlightPMDObject();
+    }
+  }
+}
+
 void QMAWindow::changeSelectedObject()
 {
   QString path = m_settings->value("window/lastPMDDirectory").toString();
@@ -366,7 +380,7 @@ void QMAWindow::deleteSelectedObject()
 
 void QMAWindow::about()
 {
-  QMessageBox::about(this, tr("About QtMMDAI"), tr("<h2>QtMMDAI 0.1 <small>(CodeName: 40mP)</small></h2>"
+  QMessageBox::about(this, tr("About QtMMDAI"), tr("<h2>QtMMDAI 0.2 <small>(CodeName: 40mP)</small></h2>"
                                                    "<p>Copyright (C) 2010-2011<br>"
                                                    "Nagoya Institute of Technology Department of Computer Science, "
                                                    "hkrn (@hikarincl2)<br>"
@@ -387,7 +401,25 @@ void QMAWindow::about()
 void QMAWindow::receiveEvent(const QString &type,
                              const QStringList &arguments)
 {
-  qDebug() << "Received Event:" << type << "arguments:" << arguments;
+  if (type == MMDAGENT_EVENT_MODEL_ADD) {
+    QString name = arguments.at(0);
+    QAction *action = new QAction(name, this);
+    action->setStatusTip(tr("Select a model %1").arg(name));
+    connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
+    m_selectModelMenu->addAction(action);
+  }
+  else if (type == MMDAGENT_EVENT_MODEL_DELETE) {
+    QString name = arguments.at(0);
+    QAction *actionToRemove = NULL;
+    foreach (QAction *action, m_selectModelMenu->actions()) {
+      if (action->text() == name) {
+        actionToRemove = action;
+        break;
+      }
+    }
+    if (actionToRemove != NULL)
+      m_selectModelMenu->removeAction(actionToRemove);
+  }
 }
 
 void QMAWindow::createActions()
@@ -553,7 +585,7 @@ void QMAWindow::setEdgeThin(int n)
 void QMAWindow::createMenu()
 {
   m_fileMenu = menuBar()->addMenu(tr("&File"));
-  m_motionMenu = m_fileMenu->addMenu(tr("Add Motion"));
+  m_motionMenu = m_fileMenu->addMenu(tr("Add motion"));
   m_motionMenu->addAction(m_insertMotionToAllAction);
   m_motionMenu->addAction(m_insertMotionToSelectedAction);
   m_fileMenu->addAction(m_addModelAction);
@@ -585,6 +617,7 @@ void QMAWindow::createMenu()
 
   menuBar()->addSeparator();
   m_modelMenu = menuBar()->addMenu("&Model");
+  m_selectModelMenu = m_modelMenu->addMenu("Select model");
   m_modelMenu->addAction(m_changeSelectedObjectAction);
   m_modelMenu->addAction(m_deleteSelectedObjectAction);
 

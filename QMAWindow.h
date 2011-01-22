@@ -77,6 +77,7 @@ private slots:
   void toggleShadowMappingLightFirst();
   void zoomIn();
   void zoomOut();
+  void selectObject();
   void changeSelectedObject();
   void deleteSelectedObject();
   void about();
@@ -94,8 +95,9 @@ private:
   QMenu *m_fileMenu;
   QMenu *m_sceneMenu;
   QMenu *m_modelMenu;
-  QMenu *m_helpMenu;
   QMenu *m_motionMenu;
+  QMenu *m_selectModelMenu;
+  QMenu *m_helpMenu;
   QAction *m_insertMotionToAllAction;
   QAction *m_insertMotionToSelectedAction;
   QAction *m_addModelAction;
