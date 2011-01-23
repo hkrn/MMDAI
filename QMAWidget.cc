@@ -99,7 +99,8 @@ void QMAWidget::sendKeyEvent(const QString &text)
 
 PMDModelLoader *QMAWidget::createModelLoader(const char *filename)
 {
-  QMAModelLoader *loader = new QMAModelLoader(filename);
+  QString path = QDir(QDir::currentPath()).absoluteFilePath("AppData");
+  QMAModelLoader *loader = new QMAModelLoader(path, filename);
   m_loaders.insert(loader);
   return loader;
 }

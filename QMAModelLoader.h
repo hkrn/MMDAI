@@ -46,7 +46,7 @@
 class QMAModelLoader : public PMDModelLoader
 {
 public:
-  QMAModelLoader(const char *filename);
+  QMAModelLoader(const QString &system, const char *filename);
   ~QMAModelLoader();
 
   bool loadModelData(unsigned char **ptr, size_t *size);
@@ -57,6 +57,7 @@ public:
   const char *getLocation();
 
 private:
+  QDir m_dir;
   QFile *m_file;
   Q_DISABLE_COPY(QMAModelLoader);
 };

@@ -107,13 +107,16 @@ static bool QMAModelLoaderLoadBMP(QString path, QSize &size, unsigned char **ptr
 
   /* parse TGA */
   QFile file(path);
-  if (!file.open(QFile::ReadOnly))
+  if (!file.open(QFile::ReadOnly | QFile::Unbuffered))
     return false;
   int s = file.size();
   char *data = static_cast<char *>(calloc(1, s));
-  if (data == NULL)
+  if (data == NULL) {
+    file.close();
     return false;
+  }
   if (file.read(data, s) != s) {
+    file.close();
     free(data);
     return false;
   }
@@ -251,13 +254,16 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
 {
   /* parse TGA */
   QFile file(path);
-  if (!file.open(QFile::ReadOnly))
+  if (!file.open(QFile::ReadOnly | QFile::Unbuffered))
     return false;
   int s = file.size();
   char *data = static_cast<char *>(calloc(1, s));
-  if (data == NULL)
+  if (data == NULL) {
+    file.close();
     return false;
+  }
   if (file.read(data, s) != s) {
+    file.close();
     free(data);
     return false;
   }
@@ -405,7 +411,8 @@ static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
   return false;
 }
 
-QMAModelLoader::QMAModelLoader(const char *filename)
+QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
+  : m_dir(system)
 {
   QDir dir(filename);
   QString path = dir.absolutePath();
@@ -424,7 +431,7 @@ QMAModelLoader::~QMAModelLoader()
 bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
 {
   *size = 0;
-  if (m_file->exists() && m_file->open(QFile::ReadOnly)) {
+  if (m_file->exists() && m_file->open(QFile::ReadOnly | QFile::Unbuffered)) {
     int s = m_file->size();
     char *p = static_cast<char *>(calloc(1, s));
     if (p != NULL && m_file->read(p, s) == s) {
@@ -461,8 +468,10 @@ bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
 
 bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
 {
-  Q_UNUSED(index);
+  QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, 2, 10, QChar('0')));
+  Q_UNUSED(path);
   Q_UNUSED(texture);
+  //QMAModelLoaderLoadImage(path, texture);
   return true;
 }
 
