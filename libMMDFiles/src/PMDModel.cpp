@@ -294,9 +294,9 @@ bool PMDModel::load(const char *file, BulletPhysics *bullet, SystemTexture *syst
 
    /* initialize and load from the data memories */
 #if defined(__linux) || defined(__linux__) || defined(linux)
-   ret = parse(data, (unsigned long) size.__pos, bullet, systex, dir);
+   ret = parse(data, (unsigned int) size.__pos, bullet, systex, dir);
 #else
-   ret = parse(data, (unsigned long) size, bullet, systex, dir);
+   ret = parse(data, (unsigned int) size, bullet, systex, dir);
 #endif
 
    /* release memory for reading */
@@ -381,7 +381,7 @@ int PMDModel::getChildBoneList(PMDBone **bone, unsigned short boneNum, PMDBone *
 /* PMDModel::setPhysicsControl switch bone control by physics simulation */
 void PMDModel::setPhysicsControl(bool flag)
 {
-   unsigned long i;
+   unsigned int i;
 
    m_enableSimulation = flag;
    /* when true, align all rigid bodies to corresponding bone by setting Kinematics flag */
@@ -454,19 +454,19 @@ const char *PMDModel::getName()
 }
 
 /* PMDModel::getNumVertex: get number of vertics */
-unsigned long PMDModel::getNumVertex()
+unsigned int PMDModel::getNumVertex()
 {
    return m_numVertex;
 }
 
 /* PMDModel::getNumSurface: get number of surface definitions */
-unsigned long PMDModel::getNumSurface()
+unsigned int PMDModel::getNumSurface()
 {
    return m_numSurface;
 }
 
 /* PMDModel::getNumMaterial: get number of material definitions */
-unsigned long PMDModel::getNumMaterial()
+unsigned int PMDModel::getNumMaterial()
 {
    return m_numMaterial;
 }
@@ -490,13 +490,13 @@ unsigned short PMDModel::getNumFace()
 }
 
 /* PMDModel::getNumRigidBody: get number of rigid bodies */
-unsigned long PMDModel::getNumRigidBody()
+unsigned int PMDModel::getNumRigidBody()
 {
    return m_numRigidBody;
 }
 
 /* PMDModel::getNumConstraint: get number of constraints */
-unsigned long PMDModel::getNumConstraint()
+unsigned int PMDModel::getNumConstraint()
 {
    return m_numConstraint;
 }

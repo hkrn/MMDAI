@@ -470,7 +470,7 @@ bool SceneController::changeModel(PMDObject *object, const char *fileName)
   object->setAlias(modelAlias);
 
   /* delete accessories  */
-  for (i = 0; i < m_numModel; i++) {
+  for (i = 0; i < MAX_MODEL; i++) {
     PMDObject *assoc = &m_objects[i];
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteModel(assoc);
@@ -486,7 +486,7 @@ bool SceneController::changeModel(PMDObject *object, const char *fileName)
 void SceneController::deleteModel(PMDObject *object)
 {
   /* delete accessories  */
-  for (int i = 0; i < m_numModel; i++) {
+  for (int i = 0; i < MAX_MODEL; i++) {
     PMDObject *assoc = &m_objects[i];
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteModel(assoc);
@@ -879,7 +879,7 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
 void SceneController::deleteAssociatedModels(PMDObject *object)
 {
   /* remove assigned accessories */
-  for (int i = 0; i < m_numModel; i++) {
+  for (int i = 0; i < MAX_MODEL; i++) {
     PMDObject *assoc = &m_objects[i];
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteAssociatedModels(assoc);

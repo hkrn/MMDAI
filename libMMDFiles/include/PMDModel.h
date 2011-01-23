@@ -55,7 +55,7 @@ private:
    char *m_modelDir; /* where this model is located */
    char *m_comment;  /* comment string */
 
-   unsigned long m_numVertex; /* number of vertices */
+   unsigned int m_numVertex; /* number of vertices */
    btVector3 *m_vertexList;   /* vertex list */
    btVector3 *m_normalList;   /* normal list */
    TexCoord *m_texCoordList;  /* texture coordinate list */
@@ -64,10 +64,10 @@ private:
    float *m_boneWeight1;      /* weight list for m_Bone1List */
    bool *m_noEdgeFlag;        /* true if no edge should be drawn for this vertex */
 
-   unsigned long m_numSurface;    /* number of surface definitions */
+   unsigned int m_numSurface;    /* number of surface definitions */
    unsigned short *m_surfaceList; /* list of surface definitions (index to 3 vertices per surface) */
 
-   unsigned long m_numMaterial; /* number of material definitions */
+   unsigned int m_numMaterial; /* number of material definitions */
    PMDMaterial *m_material;     /* material list */
 
    unsigned short m_numBone; /* number of bones */
@@ -79,10 +79,10 @@ private:
    unsigned short m_numFace; /* number of face definitions */
    PMDFace *m_faceList;      /* face definition list */
 
-   unsigned long m_numRigidBody;  /* number of rigid bodies (Bullet Physics) */
+   unsigned int m_numRigidBody;  /* number of rigid bodies (Bullet Physics) */
    PMDRigidBody *m_rigidBodyList; /* rigid body list */
 
-   unsigned long m_numConstraint;   /* number of constraints (Bullet Physics) */
+   unsigned int m_numConstraint;   /* number of constraints (Bullet Physics) */
    PMDConstraint *m_constraintList; /* rigid body list */
 
    /* work area for toon renderling */
@@ -96,7 +96,7 @@ private:
    btVector3 *m_skinnedNormalList;           /* normal list after skinning */
    TexCoord *m_toonTexCoordList;             /* texture coordination list for toon shading */
    btVector3 *m_edgeVertexList;              /* vertex list for edge drawing */
-   unsigned long m_numSurfaceForEdge;        /* number of edge-drawing surface list */
+   unsigned int m_numSurfaceForEdge;        /* number of edge-drawing surface list */
    unsigned short *m_surfaceListForEdge;     /* surface list on which toon edge will be drawn per material */
    TexCoord *m_toonTexCoordListForShadowMap; /* texture coordinates for toon shading on shadow mapping */
 
@@ -126,7 +126,7 @@ private:
    PTree m_name2face;              /* name-to-face index for fast lookup */
 
    /* parse: initialize and load from data memories */
-   bool parse(unsigned char *data, unsigned long size, BulletPhysics *bullet, SystemTexture *systex, char *dir);
+   bool parse(const unsigned char *data, unsigned long size, BulletPhysics *bullet, SystemTexture *systex, char *dir);
 
    /* initialize: initialize PMDModel */
    void initialize();
@@ -188,13 +188,13 @@ public:
    const char *getName();
 
    /* getNumVertex: get number of vertics */
-   unsigned long getNumVertex();
+   unsigned int getNumVertex();
 
    /* getNumSurface: get number of surface definitions */
-   unsigned long getNumSurface();
+   unsigned int getNumSurface();
 
    /* getNumMaterial: get number of material definitions */
-   unsigned long getNumMaterial();
+   unsigned int getNumMaterial();
 
    /* getNumBone: get number of bones */
    unsigned short getNumBone();
@@ -206,10 +206,10 @@ public:
    unsigned short getNumFace();
 
    /* getNumRigidBody: get number of rigid bodies */
-   unsigned long getNumRigidBody();
+   unsigned int getNumRigidBody();
 
    /* getNumConstraint: get number of constraints */
-   unsigned long getNumConstraint();
+   unsigned int getNumConstraint();
 
    /* getErrorTextureList: get error texture list */
    void getErrorTextureList(char *buf, int maxLen);

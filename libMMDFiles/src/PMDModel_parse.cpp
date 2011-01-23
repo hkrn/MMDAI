@@ -40,45 +40,20 @@
 
 #include "MMDFiles.h"
 
-/* PMDModel::parse: initialize and load from data memories */
-bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bullet, SystemTexture *systex, char *dir)
+/* PMDModel::parse: initialize and load from ptr memories */
+bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysics *bullet, SystemTexture *systex, char *dir)
 {
-   unsigned char *start = data;
+   const unsigned char *start = data;
+   unsigned char *ptr = const_cast<unsigned char *>(data);
    FILE *fp;
    bool ret = true;
-   unsigned long i;
    btQuaternion defaultRot;
-
-   PMDFile_Header *fileHeader;
-   PMDFile_Vertex *fileVertex;
-   PMDFile_Material *fileMaterial;
-   PMDFile_Bone *fileBone;
-   PMDFile_IK *fileIK;
-   PMDFile_Face *fileFace;
-
-   unsigned char numFaceDisp;
-   unsigned char numBoneFrameDisp;
-   unsigned long numBoneDisp;
 
    char buf[MMDFILES_MAXBUFLEN]; /* for toon texture */
    const char centerBoneName[] = MOTIONCONTROLLER_CENTERBONENAME;
 
-   unsigned char englishNameExist;
-   char *exToonBMPName;
-
-   btVector3 modelOffset;
-   PMDFile_RigidBody *fileRigidBody;
-   PMDFile_Constraint *fileConstraint;
-
-   unsigned short j, k;
-   unsigned short *surfaceFrom, *surfaceTo;
-   unsigned char type;
-   char *name;
-   PMDBone *bMatch;
-   PMDFace *fMatch;
-
-   /* clear memory */
-   clear();
+   /* release internal variables */
+   release();
    m_hasSingleSphereMap = false;
    m_hasMultipleSphereMap = false;
    m_baseFace = NULL;
@@ -89,21 +64,22 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
    m_rootBone.setCurrentRotation(&defaultRot);
    m_rootBone.update();
 
-   /* set Bullet Physics */
    m_bulletPhysics = bullet;
 
    /* reset toon texture IDs by system default textures */
-   for (j = 0; j < SYSTEMTEXTURE_NUMFILES; j++)
-      m_toonTextureID[j] = systex->getTextureID(j);
+   for (int i = 0; i < SYSTEMTEXTURE_NUMFILES; i++)
+      m_toonTextureID[i] = systex->getTextureID(i);
 
    /* header */
-   fileHeader = (PMDFile_Header *) data;
+   PMDFile_Header *fileHeader = (PMDFile_Header *) ptr;
    if (fileHeader->magic[0] != 'P' || fileHeader->magic[1] != 'm' || fileHeader->magic[2] != 'd')
       return false;
    if (fileHeader->version != 1.0f)
       return false;
    /* name */
    m_name = (char *) malloc(sizeof(char) * (20 + 1));
+   if (m_name == NULL)
+     return false;
    strncpy(m_name, fileHeader->name, 20);
    m_name[20] = '\0';
 
@@ -111,128 +87,145 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
    m_modelDir = strdup(dir);
    /* comment */
    m_comment = (char *) malloc(sizeof(char) * (256 + 1));
+   if (m_comment == NULL)
+     return false;
    strncpy(m_comment, fileHeader->comment, 256);
    m_comment[256] = '\0';
-   data += sizeof(PMDFile_Header);
+   ptr += sizeof(PMDFile_Header);
 
-   /* vertex data and bone weights */
+   /* vertex ptr and bone weights */
    /* relocate as separated list for later OpenGL calls */
-   // FIXME: unsigned long is 64bit under 64bit environment
-   m_numVertex = *((unsigned int *) data);
-   data += sizeof(unsigned int);
+   m_numVertex = *((unsigned int *) ptr);
+   ptr += sizeof(unsigned int);
    m_vertexList = new btVector3[m_numVertex];
    m_normalList = new btVector3[m_numVertex];
    m_texCoordList = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
+   if (m_texCoordList == NULL)
+     return false;
    m_bone1List = (short *) malloc(sizeof(short) * m_numVertex);
+   if (m_bone1List == NULL)
+     return false;
    m_bone2List = (short *) malloc(sizeof(short) * m_numVertex);
+   if (m_bone2List == NULL)
+     return false;
    m_boneWeight1 = (float *) malloc(sizeof(float) * m_numVertex);
+   if (m_boneWeight1 == NULL)
+     return false;
    m_noEdgeFlag = (bool *) malloc(sizeof(bool) * m_numVertex);
-   fileVertex = (PMDFile_Vertex *) data;
-   for (i = 0; i < m_numVertex; i++) {
-      m_vertexList[i].setValue(fileVertex[i].pos[0], fileVertex[i].pos[1], fileVertex[i].pos[2]);
-      m_normalList[i].setValue(fileVertex[i].normal[0], fileVertex[i].normal[1], fileVertex[i].normal[2]);
-      m_texCoordList[i].u = fileVertex[i].uv[0];
-      m_texCoordList[i].v = fileVertex[i].uv[1];
-      m_bone1List[i] = fileVertex[i].boneID[0];
-      m_bone2List[i] = fileVertex[i].boneID[1];
-      m_boneWeight1[i] = fileVertex[i].boneWeight1 * 0.01f;
-      m_noEdgeFlag[i] = fileVertex[i].noEdgeFlag ? true : false;
+   if (m_noEdgeFlag == NULL)
+     return false;
+
+   PMDFile_Vertex *fileVertex = (PMDFile_Vertex *) ptr;
+   for (unsigned int i = 0; i < m_numVertex; i++) {
+      PMDFile_Vertex *fv = &fileVertex[i];
+      m_vertexList[i].setValue(fv->pos[0], fv->pos[1], fv->pos[2]);
+      m_normalList[i].setValue(fv->normal[0], fv->normal[1], fv->normal[2]);
+      m_texCoordList[i].u = fv->uv[0];
+      m_texCoordList[i].v = fv->uv[1];
+      m_bone1List[i] = fv->boneID[0];
+      m_bone2List[i] = fv->boneID[1];
+      m_boneWeight1[i] = fv->boneWeight1 * 0.01f;
+      m_noEdgeFlag[i] = fv->noEdgeFlag;
    }
-   data += sizeof(PMDFile_Vertex) * m_numVertex;
+   ptr += sizeof(PMDFile_Vertex) * m_numVertex;
 
-   /* surface data, 3 vertex indices for each */
-   m_numSurface = *((unsigned int *) data);
-   data += sizeof(unsigned int);
+   /* surface ptr, 3 vertex indices for each */
+   m_numSurface = *((unsigned int *) ptr);
+   ptr += sizeof(unsigned int);
    m_surfaceList = (unsigned short *) malloc(sizeof(unsigned short) * m_numSurface);
-   memcpy(m_surfaceList, data, sizeof(unsigned short) * m_numSurface);
-   data += sizeof(unsigned short) * m_numSurface;
+   if (m_surfaceList == NULL)
+     return false;
+   memcpy(m_surfaceList, ptr, sizeof(unsigned short) * m_numSurface);
+   ptr += sizeof(unsigned short) * m_numSurface;
 
-   /* material data (color, texture, toon parameter, edge flag) */
-   m_numMaterial = *((unsigned int *) data);
-   data += sizeof(unsigned int);
+   /* material ptr (color, texture, toon parameter, edge flag) */
+   m_numMaterial = *((unsigned int *) ptr);
+   ptr += sizeof(unsigned int);
    m_material = new PMDMaterial[m_numMaterial];
-   fileMaterial = (PMDFile_Material *) data;
-   for (i = 0; i < m_numMaterial; i++) {
+   PMDFile_Material *fileMaterial = (PMDFile_Material *) ptr;
+   for (unsigned int i = 0; i < m_numMaterial; i++) {
       if (!m_material[i].setup(&fileMaterial[i], &m_textureLoader, dir)) {
          /* ret = false; */
       }
    }
-   data += sizeof(PMDFile_Material) * m_numMaterial;
+   ptr += sizeof(PMDFile_Material) * m_numMaterial;
 
-   /* bone data */
-   m_numBone = *((unsigned short *) data);
-   data += sizeof(unsigned short);
+   /* bone ptr */
+   m_numBone = *((unsigned short *) ptr);
+   ptr += sizeof(unsigned short);
    m_boneList = new PMDBone[m_numBone];
-   fileBone = (PMDFile_Bone *) data;
-   for (i = 0; i < m_numBone; i++) {
-      if (!m_boneList[i].setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
+   PMDFile_Bone *fileBone = (PMDFile_Bone *) ptr;
+   for (unsigned int i = 0; i < m_numBone; i++) {
+      PMDBone *bone = &m_boneList[i];
+      if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
          ret = false;
-      if (strcmp(m_boneList[i].getName(), centerBoneName) == 0)
-         m_centerBone = &(m_boneList[i]);
+      if (strcmp(bone->getName(), centerBoneName) == 0)
+         m_centerBone = bone;
    }
    if (!m_centerBone && m_numBone >= 1) {
       /* if no bone is named "center," use the first bone as center */
       m_centerBone = &(m_boneList[0]);
    }
-   data += sizeof(PMDFile_Bone) * m_numBone;
+   ptr += sizeof(PMDFile_Bone) * m_numBone;
    /* calculate bone offset after all bone positions are loaded */
-   for (i = 0; i < m_numBone; i++)
+   for (unsigned int i = 0; i < m_numBone; i++)
       m_boneList[i].computeOffset();
 
-   /* IK data */
-   m_numIK = *((unsigned short *) data);
-   data += sizeof(unsigned short);
+   /* IK ptr */
+   m_numIK = *((unsigned short *) ptr);
+   ptr += sizeof(unsigned short);
    if (m_numIK > 0) {
       m_IKList = new PMDIK[m_numIK];
-      for (i = 0; i < m_numIK; i++) {
-         fileIK = (PMDFile_IK *) data;
-         data += sizeof(PMDFile_IK);
-         m_IKList[i].setup(fileIK, (short *)data, m_boneList);
-         data += sizeof(short) * fileIK->numLink;
+      for (unsigned int i = 0; i < m_numIK; i++) {
+         PMDFile_IK *fileIK = (PMDFile_IK *) ptr;
+         ptr += sizeof(PMDFile_IK);
+         m_IKList[i].setup(fileIK, (short *)ptr, m_boneList);
+         ptr += sizeof(short) * fileIK->numLink;
       }
    }
 
-   /* face data */
-   m_numFace = *((unsigned short *) data);
-   data += sizeof(unsigned short);
+   /* face ptr */
+   m_numFace = *((unsigned short *) ptr);
+   ptr += sizeof(unsigned short);
    if (m_numFace > 0) {
       m_faceList = new PMDFace[m_numFace];
-      for (i = 0; i < m_numFace; i++) {
-         fileFace = (PMDFile_Face *)data;
-         data += sizeof(PMDFile_Face);
-         m_faceList[i].setup(fileFace, (PMDFile_Face_Vertex *) data);
+      for (unsigned int i = 0; i < m_numFace; i++) {
+         PMDFace *face = &m_faceList[i];
+         PMDFile_Face *fileFace = (PMDFile_Face *)ptr;
+         ptr += sizeof(PMDFile_Face);
+         face->setup(fileFace, (PMDFile_Face_Vertex *) ptr);
          if (fileFace->type == PMD_FACE_BASE)
-            m_baseFace = &(m_faceList[i]); /* store base face */
-         data += sizeof(PMDFile_Face_Vertex) * fileFace->numVertex;
+            m_baseFace = face; /* store base face */
+         ptr += sizeof(PMDFile_Face_Vertex) * fileFace->numVertex;
       }
       if (m_baseFace == NULL) {
          ret = false;
       } else {
          /* convert base-relative index to the index of original vertices */
-         for (i = 0; i < m_numFace; i++)
+         for (unsigned int i = 0; i < m_numFace; i++)
             m_faceList[i].convertIndex(m_baseFace);
       }
    }
 
    /* display names (skip) */
    /* indices for faces which should be displayed in "face" region */
-   numFaceDisp = *((unsigned char *) data);
-   data += sizeof(unsigned char) + sizeof(unsigned short) * numFaceDisp;
+   unsigned char numFaceDisp = *((unsigned char *) ptr);
+   ptr += sizeof(unsigned char) + sizeof(unsigned short) * numFaceDisp;
    /* bone frame names */
-   numBoneFrameDisp = *((unsigned char *) data);
-   data += sizeof(unsigned char) + 50 * numBoneFrameDisp;
+   unsigned char numBoneFrameDisp = *((unsigned char *) ptr);
+   ptr += sizeof(unsigned char) + 50 * numBoneFrameDisp;
    /* indices for bones which should be displayed in each bone region */
-   numBoneDisp = *((unsigned int *) data);
-   data += sizeof(unsigned int) + (sizeof(short) + sizeof(unsigned char)) * numBoneDisp;
+   unsigned int numBoneDisp = *((unsigned int *) ptr);
+   ptr += sizeof(unsigned int) + (sizeof(short) + sizeof(unsigned char)) * numBoneDisp;
 
    /* end of base format */
-   /* check for remaining data */
-   if ((unsigned long) data - (unsigned long) start >= size) {
-      /* no extension data remains */
+   /* check for remaining ptr */
+   if ((unsigned long) ptr - (unsigned long) start >= size) {
+      /* no extension ptr remains */
       m_numRigidBody = 0;
       m_numConstraint = 0;
       /* assign default toon textures for toon shading */
-      for (i = 0; i <= 10; i++) {
+      for (int i = 0; i <= 10; i++) {
          if (i == 0)
             sprintf(buf, "%s%ctoon0.bmp", dir, MMDFILES_DIRSEPARATOR);
          else
@@ -248,17 +241,17 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
       }
    } else {
       /* English display names (skip) */
-      englishNameExist = *((unsigned char *) data);
-      data += sizeof(unsigned char);
+      unsigned char englishNameExist = *((unsigned char *) ptr);
+      ptr += sizeof(unsigned char);
       if (englishNameExist != 0) {
          /* model name and comments in English */
-         data += 20 + 256;
+         ptr += 20 + 256;
          /* bone names in English */
-         data += 20 * m_numBone;
+         ptr += 20 * m_numBone;
          /* face names in English */
-         if (m_numFace > 0) data += 20 * (m_numFace - 1); /* "base" not included in English list */
+         if (m_numFace > 0) ptr += 20 * (m_numFace - 1); /* "base" not included in English list */
          /* bone frame names in English */
-         data += 50 * numBoneFrameDisp;
+         ptr += 50 * numBoneFrameDisp;
       }
 
       /* toon texture file list (replace toon01.bmp - toon10.bmp) */
@@ -270,8 +263,8 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
          if (m_localToonTexture[0].load(buf) == true)
             m_toonTextureID[0] = m_localToonTexture[0].getID();
       }
-      for (i = 1; i <= 10; i++) {
-         exToonBMPName = (char *) data;
+      for (int i = 1; i <= 10; i++) {
+         char *exToonBMPName = (char *) ptr;
          sprintf(buf, "%s%c%s", dir, MMDFILES_DIRSEPARATOR, exToonBMPName);
          fp = fopen(buf, "rb");
          if (fp != NULL) {
@@ -279,49 +272,48 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
             if (m_localToonTexture[i].load(buf) == true)
                m_toonTextureID[i] = m_localToonTexture[i].getID();
          }
-         data += 100;
+         ptr += 100;
       }
 
-      /* check for remaining data */
-      if ((unsigned long) data - (unsigned long) start >= size) {
-         /* no rigid body / constraint data exist */
-      } else if (!m_bulletPhysics) {
-         /* check if we have given a bulletphysics engine */
+      /* check for remaining ptr */
+      if ((unsigned long) ptr - (unsigned long) start >= size) {
+         /* no rigid body / constraint ptr exist */
       } else {
-         modelOffset = (*(m_rootBone.getOffset()));
+         btVector3 modelOffset = (*(m_rootBone.getOffset()));
          /* update bone matrix to apply root bone offset to bone position */
-         for (i = 0; i < m_numBone; i++)
+         for (unsigned int i = 0; i < m_numBone; i++)
             m_boneList[i].update();
 
-         /* Bullet Physics rigidbody data */
-         m_numRigidBody = *((unsigned int *) data);
-         data += sizeof(unsigned int);
+         /* Bullet Physics rigidbody ptr */
+         m_numRigidBody = *((unsigned int *) ptr);
+         ptr += sizeof(unsigned int);
          if (m_numRigidBody > 0) {
             m_rigidBodyList = new PMDRigidBody[m_numRigidBody];
-            fileRigidBody = (PMDFile_RigidBody *) data;
-            for (i = 0; i < m_numRigidBody; i++) {
-               if (! m_rigidBodyList[i].setup(&fileRigidBody[i], (fileRigidBody[i].boneID == 0xFFFF) ? m_centerBone : &(m_boneList[fileRigidBody[i].boneID])))
+            PMDFile_RigidBody *fileRigidBody = (PMDFile_RigidBody *) ptr;
+            for (unsigned int i = 0; i < m_numRigidBody; i++) {
+              PMDFile_RigidBody *rb = &fileRigidBody[i];
+               if (! m_rigidBodyList[i].setup(rb, (rb->boneID == 0xFFFF) ? m_centerBone : &(m_boneList[rb->boneID])))
                   ret = false;
                m_rigidBodyList[i].joinWorld(m_bulletPhysics->getWorld());
                /* flag the bones under simulation in order to skip IK solving for those bones */
-               if (fileRigidBody[i].type != 0 && fileRigidBody[i].boneID != 0xFFFF)
-                  m_boneList[fileRigidBody[i].boneID].setSimulatedFlag(true);
+               if (rb->type != 0 && rb->boneID != 0xFFFF)
+                  m_boneList[rb->boneID].setSimulatedFlag(true);
             }
-            data += sizeof(PMDFile_RigidBody) * m_numRigidBody;
+            ptr += sizeof(PMDFile_RigidBody) * m_numRigidBody;
          }
 
-         /* BulletPhysics constraint data */
-         m_numConstraint = *((unsigned int *) data);
-         data += sizeof(unsigned int);
+         /* BulletPhysics constraint ptr */
+         m_numConstraint = *((unsigned int *) ptr);
+         ptr += sizeof(unsigned int);
          if (m_numConstraint > 0) {
             m_constraintList = new PMDConstraint[m_numConstraint];
-            fileConstraint = (PMDFile_Constraint *) data;
-            for (i = 0; i < m_numConstraint; i++) {
+            PMDFile_Constraint *fileConstraint = (PMDFile_Constraint *) ptr;
+            for (unsigned int i = 0; i < m_numConstraint; i++) {
                if (!m_constraintList[i].setup(&fileConstraint[i], m_rigidBodyList, &modelOffset))
                   ret = false;
                m_constraintList[i].joinWorld(m_bulletPhysics->getWorld());
             }
-            data += sizeof(PMDFile_Constraint) * m_numConstraint;
+            ptr += sizeof(PMDFile_Constraint) * m_numConstraint;
          }
       }
    }
@@ -336,13 +328,13 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
    /* 2. rotation should be (-rx, -ry, z) */
    /* 3. surfaces should be reversed */
    /* reverse Z value on vertices */
-   for (i = 0; i < m_numVertex; i++) {
+   for (unsigned int i = 0; i < m_numVertex; i++) {
       m_vertexList[i].setZ(-m_vertexList[i].z());
       m_normalList[i].setZ(-m_normalList[i].z());
    }
    /* reverse surface, swapping vartex order [0] and [1] in a triangle surface */
-   for (i = 0; i < m_numSurface; i += 3) {
-      j = m_surfaceList[i];
+   for (unsigned int i = 0; i < m_numSurface; i += 3) {
+      unsigned int j = m_surfaceList[i];
       m_surfaceList[i] = m_surfaceList[i+1];
       m_surfaceList[i+1] = j;
    }
@@ -356,82 +348,101 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
    m_skinnedNormalList = new btVector3[m_numVertex];
    /* calculated Texture coordinates for toon shading */
    m_toonTexCoordList = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
+   if (m_toonTexCoordList == NULL)
+     return false;
    /* calculated Vertex positions for toon edge drawing */
    m_edgeVertexList = new btVector3[m_numVertex];
    /* surface list to be rendered at edge drawing (skip non-edge materials) */
    m_numSurfaceForEdge = 0;
-   for (i = 0; i < m_numMaterial; i++)
-      if (m_material[i].getEdgeFlag())
-         m_numSurfaceForEdge += m_material[i].getNumSurface();
+
+   for (unsigned int i = 0; i < m_numMaterial; i++) {
+      PMDMaterial *m = &m_material[i];
+      if (m->getEdgeFlag())
+         m_numSurfaceForEdge += m->getNumSurface();
+   }
    if (m_numSurfaceForEdge > 0) {
       m_surfaceListForEdge = (unsigned short *) malloc(sizeof(unsigned short) * m_numSurfaceForEdge);
-      surfaceFrom = m_surfaceList;
-      surfaceTo = m_surfaceListForEdge;
-      for (i = 0; i < m_numMaterial; i++) {
-         if (m_material[i].getEdgeFlag()) {
-            memcpy(surfaceTo, surfaceFrom, sizeof(unsigned short) * m_material[i].getNumSurface());
-            surfaceTo += m_material[i].getNumSurface();
+      if (m_surfaceList == NULL)
+        return false;
+      unsigned short *surfaceFrom = m_surfaceList;
+      unsigned short *surfaceTo = m_surfaceListForEdge;
+      for (unsigned int i = 0; i < m_numMaterial; i++) {
+         PMDMaterial *m = &m_material[i];
+         unsigned int n = m->getNumSurface();
+         if (m->getEdgeFlag()) {
+            memcpy(surfaceTo, surfaceFrom, sizeof(unsigned short) * n);
+            surfaceTo += n;
          }
-         surfaceFrom += m_material[i].getNumSurface();
+         surfaceFrom += n;
       }
    }
+
    /* check if spheremap is used (single or multiple) */
-   for (i = 0; i < m_numMaterial; i++) {
-      if (m_material[i].hasSingleSphereMap())
+   for (unsigned int i = 0; i < m_numMaterial; i++) {
+      PMDMaterial *m = &m_material[i];
+      if (m->hasSingleSphereMap())
          m_hasSingleSphereMap = true;
-      if (m_material[i].hasMultipleSphereMap())
+      if (m->hasMultipleSphereMap())
          m_hasMultipleSphereMap = true;
    }
 
    /* make index of rotation-subjective bones (type == UNDER_ROTATE or FOLLOW_RORATE) */
    m_numRotateBone = 0;
-   for (j = 0; j < m_numBone; j++) {
-      type = m_boneList[j].getType();
+   for (unsigned int i = 0; i < m_numBone; i++) {
+      unsigned char type = m_boneList[i].getType();
       if (type == UNDER_ROTATE || type == FOLLOW_ROTATE)
          m_numRotateBone++;
    }
    if (m_numRotateBone > 0) {
       m_rotateBoneIDList = (unsigned short *) malloc(sizeof(unsigned short) * m_numRotateBone);
-      for (j = 0, k = 0; j < m_numBone; j++) {
-         type = m_boneList[j].getType();
+      if (m_rotateBoneIDList == NULL)
+        return false;
+      for (unsigned int i = 0, j = 0; i < m_numBone; i++) {
+         unsigned char type = m_boneList[i].getType();
          if (type == UNDER_ROTATE || type == FOLLOW_ROTATE)
-            m_rotateBoneIDList[k++] = j;
+            m_rotateBoneIDList[j++] = i;
       }
    }
 
    /* check if some IK solvers can be disabled since the bones are simulated by physics */
    if (m_numIK > 0) {
       m_IKSimulated = (bool *) malloc(sizeof(bool) * m_numIK);
-      for (j = 0; j < m_numIK; j++) {
+      if (m_IKSimulated == NULL)
+        return false;
+      for (unsigned int i = 0; i < m_numIK; i++) {
          /* this IK will be disabled when the leaf bone is controlled by physics simulation */
-         m_IKSimulated[j] = m_IKList[j].isSimulated();
+         m_IKSimulated[i] = m_IKList[i].isSimulated();
       }
    }
 
    /* mark motion independency for each bone */
-   for (j = 0; j < m_numBone; j++)
-      m_boneList[j].setMotionIndependency();
+   for (unsigned int i = 0; i < m_numBone; i++)
+      m_boneList[i].setMotionIndependency();
 
    /* build name->entity index for fast lookup */
-   for (j = 0; j < m_numBone; j++) {
-      name = m_boneList[j].getName();
-      bMatch = (PMDBone *) m_name2bone.findNearest(name);
+   for (unsigned int i = 0; i < m_numBone; i++) {
+      PMDBone *bone = &m_boneList[i];
+      const char *name = bone->getName();
+      PMDBone *bMatch = (PMDBone *) m_name2bone.findNearest(name);
       if (bMatch == NULL || strcmp(bMatch->getName(), name) != 0)
-         m_name2bone.add(name, &(m_boneList[j]), (bMatch) ? bMatch->getName() : NULL); /* add */
+         m_name2bone.add(name, bone, (bMatch) ? bMatch->getName() : NULL); /* add */
    }
-   for (j = 0; j < m_numFace; j++) {
-      name = m_faceList[j].getName();
-      fMatch = (PMDFace *) m_name2face.findNearest(name);
+   for (unsigned int i = 0; i < m_numFace; i++) {
+      PMDFace *face = &m_faceList[i];
+      const char *name = face->getName();
+      PMDFace *fMatch = (PMDFace *) m_name2face.findNearest(name);
       if (fMatch == NULL || strcmp(fMatch->getName(), name) != 0)
-         m_name2face.add(name, &(m_faceList[j]), (fMatch) ? fMatch->getName() : NULL); /* add */
+         m_name2face.add(name, face, (fMatch) ? fMatch->getName() : NULL); /* add */
    }
 
    /* get maximum height */
    if (m_numVertex > 0) {
       m_maxHeight = m_vertexList[0].y();
-      for (i = 1; i < m_numVertex; i++)
-         if (m_maxHeight < m_vertexList[i].y())
-            m_maxHeight = m_vertexList[i].y();
+      for (unsigned int i = 1; i < m_numVertex; i++) {
+         float y = m_vertexList[i].y();
+         if (m_maxHeight < y)
+            m_maxHeight = y;
+      }
    }
 
    /* simulation is currently off, so change bone status */
@@ -440,3 +451,4 @@ bool PMDModel::parse(unsigned char *data, unsigned long size, BulletPhysics *bul
 
    return true;
 }
+
