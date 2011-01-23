@@ -62,8 +62,8 @@ public:
   PMDObject *getPMDObject(int index);
   int countPMDObjects() const;
 
-  bool loadFloor(const char *fileName);
-  bool loadBackground(const char *fileName);
+  bool loadFloor(PMDModelLoader *loader);
+  bool loadBackground(PMDModelLoader *loader);
   bool loadStage(PMDModelLoader *loader);
 
   void updateLight();

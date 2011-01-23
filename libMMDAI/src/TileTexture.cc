@@ -92,19 +92,10 @@ TileTexture::~TileTexture()
 }
 
 /* TileTexture::load: load a texture from file name (wide char) */
-bool TileTexture::load(const char *fileName)
+bool TileTexture::load(PMDModelLoader *loader)
 {
   bool ret = true;
-  /*
-    char buf[MAX_PATH];
-    size_t len;
-
-    if (fileName == NULL) return false;
-    if (wcslen(fileName) <= 0) return false;
-
-    wcstombs_s(&len, buf, MAX_PATH, fileName, _TRUNCATE);
-    */
-  if (m_texture.load(fileName) == false)
+  if (loader->loadTileTexture(&m_texture) == false)
     ret = false;
 
   m_isLoaded = true;

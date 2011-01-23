@@ -191,42 +191,42 @@ void Stage::setSize(float *size, float numx, float numy)
 }
 
 /* Stage::loadFloor: load floor image */
-bool Stage::loadFloor(const char *fileName, BulletPhysics *bullet)
+bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_floor.load(fileName);
+  ret = m_floor.load(loader);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
       m_hasPMD = false;
     }
   } else {
-    g_logger.log("! Error: Stage: unable to load floor \"%s\"", fileName);
+    g_logger.log("! Error: Stage: unable to load floor \"%s\"", loader->getLocation());
   }
 
   return ret;
 }
 
 /* Stage::loadBackground: load background image */
-bool Stage::loadBackground(const char *fileName, BulletPhysics *bullet)
+bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_background.load(fileName);
+  ret = m_background.load(loader);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
       m_hasPMD = false;
     }
   } else {
-    g_logger.log("! Error: Stage: unable to load background \"%s\"", fileName);
+    g_logger.log("! Error: Stage: unable to load background \"%s\"", loader->getLocation());
   }
   return ret;
 }

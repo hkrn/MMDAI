@@ -41,7 +41,8 @@
 #ifndef TILETEXTURE_H
 #define TILETEXTURE_H
 
-#include "MMDFiles/MMDFiles.h"
+#include "MMDFiles/PMDModelLoader.h"
+#include "MMDFiles/PMDTexture.h"
 
 class TileTexture
 {
@@ -74,7 +75,7 @@ public:
   ~TileTexture();
 
   /* load: load a texture from file name (wide char) */
-  bool load(const char *fileName);
+  bool load(PMDModelLoader *loader);
 
   /* render: render the textures */
   void render(bool cullFace, const float normal[3]);

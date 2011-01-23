@@ -449,7 +449,9 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     else {
       *background = '\0';
       *background++;
-      ret = m_controller->loadFloor(filename) && m_controller->loadBackground(background);
+      PMDModelLoader *floorLoader = m_factory->createModelLoader(filename);
+      PMDModelLoader *backgroundLoader = m_factory->createModelLoader(background);
+      ret = m_controller->loadFloor(floorLoader) && m_controller->loadBackground(backgroundLoader);
       free(filename);
       return ret;
     }

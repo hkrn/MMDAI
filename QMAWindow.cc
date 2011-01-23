@@ -213,7 +213,8 @@ void QMAWindow::setFloor()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastFloorDirectory", dir.absolutePath());
-    m_widget->getSceneController()->loadFloor(fileName.toUtf8().constData());
+    PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+    m_widget->getSceneController()->loadFloor(loader);
   }
 }
 
@@ -225,7 +226,8 @@ void QMAWindow::setBackground()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastBackgroundDirectory", dir.absolutePath());
-    m_widget->getSceneController()->loadBackground(fileName.toUtf8().constData());
+    PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+    m_widget->getSceneController()->loadBackground(loader);
   }
 }
 

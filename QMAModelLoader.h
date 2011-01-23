@@ -51,12 +51,13 @@ public:
 
   bool loadModelData(unsigned char **ptr, size_t *size);
   void unloadModelData(unsigned char *ptr);
+  bool loadImageTexture(PMDTexture *texture);
   bool loadModelTexture(const char *name, PMDTexture *texture);
   bool loadSystemTexture(int index, PMDTexture *texture);
   const char *getLocation();
 
 private:
-  QFile m_file;
+  QFile *m_file;
   Q_DISABLE_COPY(QMAModelLoader);
 };
 

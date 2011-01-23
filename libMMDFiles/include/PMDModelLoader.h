@@ -50,6 +50,8 @@ public:
    
    virtual void unloadModelData(unsigned char *ptr) = 0;
 
+   virtual bool loadImageTexture(PMDTexture *texture) = 0;
+
    virtual bool loadModelTexture(const char *name, PMDTexture *texture) = 0;
 
    virtual bool loadSystemTexture(int index, PMDTexture *texture) = 0;

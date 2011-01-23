@@ -406,23 +406,28 @@ static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
 }
 
 QMAModelLoader::QMAModelLoader(const char *filename)
-  : m_file(filename)
 {
+  QDir dir(filename);
+  QString path = dir.absolutePath();
+  m_file = new QFile(path);
 }
 
 QMAModelLoader::~QMAModelLoader()
 {
-  if (m_file.isOpen())
-    m_file.close();
+  if (m_file->isOpen()) {
+    qWarning() << "Leaked:" << m_file->fileName();
+    m_file->close();
+  }
+  delete m_file;
 }
 
 bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
 {
   *size = 0;
-  if (m_file.exists() && m_file.open(QFile::ReadOnly)) {
-    int s = m_file.size();
+  if (m_file->exists() && m_file->open(QFile::ReadOnly)) {
+    int s = m_file->size();
     char *p = static_cast<char *>(calloc(1, s));
-    if (p != NULL && m_file.read(p, s) == s) {
+    if (p != NULL && m_file->read(p, s) == s) {
       *ptr = reinterpret_cast<unsigned char *>(p);
       *size = s;
       return true;
@@ -435,15 +440,22 @@ bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
 
 void QMAModelLoader::unloadModelData(unsigned char *ptr)
 {
-  m_file.close();
+  m_file->close();
   free(ptr);
+}
+
+bool QMAModelLoader::loadImageTexture(PMDTexture *texture)
+{
+  QString path = m_file->fileName();
+  return QMAModelLoaderLoadImage(path, texture);
 }
 
 bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
 {
-  QDir dir(m_file.fileName());
+  QString path(name);
+  QDir dir(m_file->fileName());
   dir.cdUp();
-  QString path = dir.absoluteFilePath(name);
+  path = dir.absoluteFilePath(name);
   return QMAModelLoaderLoadImage(path, texture);
 }
 
@@ -456,5 +468,5 @@ bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
 
 const char *QMAModelLoader::getLocation()
 {
-  return m_file.fileName().toUtf8().constData();
+  return m_file->fileName().toUtf8().constData();
 }

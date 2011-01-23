@@ -60,10 +60,10 @@ public:
   void setSize(float *size, float numx, float numy);
 
   /* loadFloor: load floor image */
-  bool loadFloor(const char *fileName, BulletPhysics *bullet);
+  bool loadFloor(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* loadBackground: load background image */
-  bool loadBackground(const char *fileName, BulletPhysics *bullet);
+  bool loadBackground(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* loadStagePMD: load stage pmd */
   bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);

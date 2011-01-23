@@ -485,10 +485,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
         }
         else if (path.endsWith(".bmp") || path.endsWith(".tga") || path.endsWith(".png")) {
           /* floor or background */
+          PMDModelLoader *loader = createModelLoader(filename);
           if (modifiers & Qt::ControlModifier)
-            m_controller->loadFloor(filename);
+            m_controller->loadFloor(loader);
           else
-            m_controller->loadBackground(filename);
+            m_controller->loadBackground(loader);
         }
         else {
           g_logger.log("Warning: dropped file is not supported: %s", filename);
