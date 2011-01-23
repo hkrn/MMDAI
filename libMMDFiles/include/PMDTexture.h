@@ -64,17 +64,8 @@ private:
 
 private:
 
-   /* loadBMP: load BMP texture */
-   bool loadBMP(const char *fileName);
-
-   /* loadTGA: load TGA texture */
-   bool loadTGA(const char *fileName);
-
    /* loadPNG: load PNG texture */
    bool loadPNG(const char *fileName);
-
-   /* loadJPG: load JPG texture */
-   bool loadJPG(const char *fileName);
 
    /* initialize: initialize texture */
    void initialize();
@@ -89,9 +80,6 @@ public:
 
    /* ~PMDTexture: destructor */
    ~PMDTexture();
-
-   /* load: load from file name */
-   bool load(const char *fileName);
 
    void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
 
