@@ -102,14 +102,13 @@ public:
    void release();
 
    /* PMDObject::load: load model */
-   bool load(const char *fileName,
+   bool load(PMDModelLoader *loader,
              btVector3 *offsetPos,
              btQuaternion *offsetRot,
              bool forcedPosition,
              PMDBone *assignBone,
              PMDObject *assignObject,
              BulletPhysics *bullet,
-             SystemTexture *systex,
              bool useCartoonRendering,
              float cartoonEdgeWidth,
              btVector3 *light);

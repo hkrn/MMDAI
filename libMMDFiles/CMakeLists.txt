@@ -54,11 +54,10 @@ set(libMMDFiles_public_headers
   include/PMDIK.h
   include/PMDMaterial.h 
   include/PMDModel.h 
+  include/PMDModelLoader.h 
   include/PMDRigidBody.h 
   include/PMDTexture.h 
-  include/PMDTextureLoader.h 
   include/PTree.h 
-  include/SystemTexture.h 
   include/VMD.h 
   include/VMDFile.h
 )

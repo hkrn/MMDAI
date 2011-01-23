@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDRigidBody.h"
 #include "KinematicMotionState.h"
 #include "AlignedMotionState.h"
 

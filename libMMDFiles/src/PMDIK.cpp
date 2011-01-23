@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDIK.h"
 
 /* PMDIK::initialize: initialize IK */
 void PMDIK::initialize()

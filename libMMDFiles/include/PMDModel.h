@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,8 +36,26 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_PMDMODEL_H_
+#define MMDAI_PMDMODEL_H_
+
+#include <btBulletDynamicsCommon.h>
+
+#include "BulletPhysics.h"
+#include "PMDBone.h"
+#include "PMDConstraint.h"
+#include "PMDFace.h"
+#include "PMDIK.h"
+#include "PMDMaterial.h"
+#include "PMDModelLoader.h"
+#include "PMDRigidBody.h"
+#include "PMDTexture.h"
+#include "PTree.h"
+
 #define PMDMODEL_MINBONEWEIGHT 0.0001f
 #define PMDMODEL_MINFACEWEIGHT 0.001f
+
+#define SYSTEMTEXTURE_NUMFILES 10
 
 /* TexCoord: texture coordinaiton */
 typedef struct {
@@ -86,7 +104,6 @@ private:
    PMDConstraint *m_constraintList; /* rigid body list */
 
    /* work area for toon renderling */
-   PMDTextureLoader m_textureLoader;                      /* texture loader for this model */
    unsigned int m_toonTextureID[SYSTEMTEXTURE_NUMFILES];  /* texture ID for toon shading */
    PMDTexture m_localToonTexture[SYSTEMTEXTURE_NUMFILES]; /* toon textures for this model only */
 
@@ -126,7 +143,7 @@ private:
    PTree m_name2face;              /* name-to-face index for fast lookup */
 
    /* parse: initialize and load from data memories */
-   bool parse(const unsigned char *data, unsigned long size, BulletPhysics *bullet, SystemTexture *systex, char *dir);
+   bool parse(PMDModelLoader *loader, BulletPhysics *bullet);
 
    /* initialize: initialize PMDModel */
    void initialize();
@@ -143,7 +160,7 @@ public:
    ~PMDModel();
 
    /* load: load from file name */
-   bool load(const char *file, BulletPhysics *bullet, SystemTexture *systex);
+   bool load(PMDModelLoader *loader, BulletPhysics *bullet);
 
    /* getBone: find bone data by name */
    PMDBone *getBone(const char *name);
@@ -259,3 +276,6 @@ public:
    /* renderDebug: render for debug view */
    void renderDebug();
 };
+
+#endif
+

@@ -101,8 +101,9 @@ static bool arg2rot(btQuaternion *dst, const char *arg)
   return true;
 }
 
-CommandParser::CommandParser(SceneController *controller)
-  : m_controller(controller)
+CommandParser::CommandParser(SceneController *controller, PMDModelLoaderFactory *factory)
+  : m_controller(controller),
+    m_factory(factory)
 {
 }
 
@@ -113,6 +114,7 @@ CommandParser::~CommandParser()
 bool CommandParser::parse(const char *command, const char **argv, int argc)
 {
   PMDObject *object = NULL;
+  PMDModelLoader *loader = NULL;
   float tmpFloat = 0.0f, float3[3] = { 0.0f, 0.0f, 0.0f };
   btVector3 pos;
   btQuaternion rot;
@@ -146,7 +148,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     else {
       rot.setEulerZYX(0.0, 0.0, 0.0);
     }
-    return m_controller->addModel(argv[0], argv[1], &pos, &rot,
+    loader = m_factory->createModelLoader(argv[1]);
+    return m_controller->addModel(argv[0], loader, &pos, &rot,
         argc >= 5 ? argv[4] : NULL, argc >= 6 ? argv[5] : NULL);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_CHANGE) == 0) {
@@ -156,7 +159,14 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    return m_controller->changeModel(object, argv[1]);
+    if (object != NULL) {
+      loader = m_factory->createModelLoader(argv[1]);
+      return m_controller->changeModel(object, loader);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_DELETE) == 0) {
     /* delete model */
@@ -165,7 +175,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->deleteModel(object);
+    if (object != NULL) {
+      m_controller->deleteModel(object);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOTION_ADD) == 0) {
     /* add motion */
@@ -226,7 +242,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       }
     }
     object = m_controller->findPMDObject(argv[0]);
-    return m_controller->addMotion(object, argv[1] , argv[2], full, once, enableSmooth, enableRepos);
+    if (object != NULL) {
+      return m_controller->addMotion(object, argv[1] , argv[2], full, once, enableSmooth, enableRepos);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOTION_CHANGE) == 0) {
     /* change motion */
@@ -235,7 +257,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    return m_controller->changeMotion(object, argv[1], argv[2]);
+    if (object != NULL) {
+      return m_controller->changeMotion(object, argv[1], argv[2]);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   } else if (strcmp(command, MMDAGENT_COMMAND_MOTION_DELETE) == 0) {
     /* delete motion */
     if (argc != 2) {
@@ -243,7 +271,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    return m_controller->deleteMotion(object, argv[1]);
+    if (object != NULL) {
+      return m_controller->deleteMotion(object, argv[1]);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOVE_START) == 0) {
     /* start moving */
@@ -272,7 +306,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     if (argc >= 4)
       tmpFloat = atof(argv[3]);
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->startMove(object, &pos, local, tmpFloat);
+    if (object != NULL) {
+      m_controller->startMove(object, &pos, local, tmpFloat);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MOVE_STOP) == 0) {
     /* stop moving */
@@ -281,7 +321,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->stopMove(object);
+    if (object != NULL) {
+      m_controller->stopMove(object);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_START) == 0) {
     /* start rotation */
@@ -310,7 +356,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     if (argc >= 4)
       tmpFloat = (float) atof(argv[3]);
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->startRotation(object, &rot, local, tmpFloat);
+    if (object != NULL) {
+      m_controller->startRotation(object, &rot, local, tmpFloat);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_STOP) == 0) {
     /* stop rotation */
@@ -319,7 +371,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->stopRotation(object);
+    if (object != NULL) {
+      m_controller->stopRotation(object);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_TURN_START) == 0) {
     /* turn start */
@@ -348,7 +406,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     if (argc >= 4)
       tmpFloat = atof(argv[3]);
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->startTurn(object, &pos, local, tmpFloat);
+    if (object != NULL) {
+      m_controller->startTurn(object, &pos, local, tmpFloat);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_TURN_STOP) == 0) {
     /* stop turn */
@@ -357,23 +421,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    m_controller->stopTurn(object);
-  }
-  else if (strcmp(command, MMDAGENT_COMMAND_SOUND_START) == 0) {
-    /* start sound */
-    if (argc != 2) {
-      g_logger.log("! Error: %s: wrong number of arguments", command);
+    if (object != NULL) {
+      m_controller->stopTurn(object);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
       return false;
     }
-    //m_controller->startSound(argv[0], argv[1], true);
-  }
-  else if (strcmp(command, MMDAGENT_COMMAND_SOUND_STOP) == 0) {
-    /* stop sound */
-    if (argc < 1) {
-      g_logger.log("! Error: %s: wrong number of arguments", command);
-      return false;
-    }
-    //m_controller->stopSound(argv[0]);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_STAGE) == 0) {
     /* change stage */
@@ -389,7 +443,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     bool ret = false;
     char *background = strstr(filename, ",");
     if (background == NULL) {
-      ret = m_controller->loadStage(filename);
+      loader = m_factory->createModelLoader(filename);
+      ret = m_controller->loadStage(loader);
     }
     else {
       *background = '\0';
@@ -430,7 +485,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    return m_controller->startLipSync(object, argv[1]);
+    if (object != NULL) {
+      return m_controller->startLipSync(object, argv[1]);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   else if (strcmp(command, MMDAGENT_COMMAND_LIPSYNC_STOP) == 0) {
     /* stop lip sync */
@@ -439,7 +500,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
-    return m_controller->stopLipSync(object);
+    if (object != NULL) {
+      return m_controller->stopLipSync(object);
+    }
+    else {
+      g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
+      return false;
+    }
   }
   return true;
 }

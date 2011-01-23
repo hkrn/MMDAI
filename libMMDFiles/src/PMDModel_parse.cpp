@@ -38,19 +38,30 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDModel.h"
+#include "PMDTexture.h"
+#include "PMDModelLoader.h"
 
 /* PMDModel::parse: initialize and load from ptr memories */
-bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysics *bullet, SystemTexture *systex, char *dir)
+bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 {
-   const unsigned char *start = data;
-   unsigned char *ptr = const_cast<unsigned char *>(data);
-   FILE *fp;
    bool ret = true;
    btQuaternion defaultRot;
+   const char centerBoneName[] = "";//MOTIONCONTROLLER_CENTERBONENAME;
 
-   char buf[MMDFILES_MAXBUFLEN]; /* for toon texture */
-   const char centerBoneName[] = MOTIONCONTROLLER_CENTERBONENAME;
+   PMDFile_Vertex *fileVertex = NULL;
+   PMDFile_Material *fileMaterial = NULL;
+   PMDFile_Bone *fileBone = NULL;
+   unsigned char numFaceDisp = 0;
+   unsigned char numBoneFrameDisp = 0;
+   unsigned int numBoneDisp = 0;
+
+   size_t size = 0;
+   unsigned char *data = NULL;
+   if (!loader->loadModelData(&data, &size))
+      return false;
+
+   unsigned char *start = data, *ptr = data;
 
    /* release internal variables */
    release();
@@ -67,28 +78,31 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    m_bulletPhysics = bullet;
 
    /* reset toon texture IDs by system default textures */
-   for (int i = 0; i < SYSTEMTEXTURE_NUMFILES; i++)
-      m_toonTextureID[i] = systex->getTextureID(i);
+   for (int i = 0; i < SYSTEMTEXTURE_NUMFILES; i++) {
+      PMDTexture texture;
+      m_toonTextureID[i] = 0;
+      if (loader->loadSystemTexture(i, &texture)) {
+         m_toonTextureID[i] = texture.getID();
+      }
+   }
 
    /* header */
    PMDFile_Header *fileHeader = (PMDFile_Header *) ptr;
    if (fileHeader->magic[0] != 'P' || fileHeader->magic[1] != 'm' || fileHeader->magic[2] != 'd')
-      return false;
+      goto error;
    if (fileHeader->version != 1.0f)
-      return false;
+      goto error;
    /* name */
    m_name = (char *) malloc(sizeof(char) * (20 + 1));
    if (m_name == NULL)
-     return false;
+     goto error;
    strncpy(m_name, fileHeader->name, 20);
    m_name[20] = '\0';
 
-   /* directory */
-   m_modelDir = strdup(dir);
    /* comment */
    m_comment = (char *) malloc(sizeof(char) * (256 + 1));
    if (m_comment == NULL)
-     return false;
+     goto error;
    strncpy(m_comment, fileHeader->comment, 256);
    m_comment[256] = '\0';
    ptr += sizeof(PMDFile_Header);
@@ -101,21 +115,21 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    m_normalList = new btVector3[m_numVertex];
    m_texCoordList = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
    if (m_texCoordList == NULL)
-     return false;
+     goto error;
    m_bone1List = (short *) malloc(sizeof(short) * m_numVertex);
    if (m_bone1List == NULL)
-     return false;
+     goto error;
    m_bone2List = (short *) malloc(sizeof(short) * m_numVertex);
    if (m_bone2List == NULL)
-     return false;
+     goto error;
    m_boneWeight1 = (float *) malloc(sizeof(float) * m_numVertex);
    if (m_boneWeight1 == NULL)
-     return false;
+     goto error;
    m_noEdgeFlag = (bool *) malloc(sizeof(bool) * m_numVertex);
    if (m_noEdgeFlag == NULL)
-     return false;
+     goto error;
 
-   PMDFile_Vertex *fileVertex = (PMDFile_Vertex *) ptr;
+   fileVertex  = (PMDFile_Vertex *) ptr;
    for (unsigned int i = 0; i < m_numVertex; i++) {
       PMDFile_Vertex *fv = &fileVertex[i];
       m_vertexList[i].setValue(fv->pos[0], fv->pos[1], fv->pos[2]);
@@ -134,7 +148,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    ptr += sizeof(unsigned int);
    m_surfaceList = (unsigned short *) malloc(sizeof(unsigned short) * m_numSurface);
    if (m_surfaceList == NULL)
-     return false;
+     goto error;
    memcpy(m_surfaceList, ptr, sizeof(unsigned short) * m_numSurface);
    ptr += sizeof(unsigned short) * m_numSurface;
 
@@ -142,9 +156,9 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    m_numMaterial = *((unsigned int *) ptr);
    ptr += sizeof(unsigned int);
    m_material = new PMDMaterial[m_numMaterial];
-   PMDFile_Material *fileMaterial = (PMDFile_Material *) ptr;
+   fileMaterial = (PMDFile_Material *) ptr;
    for (unsigned int i = 0; i < m_numMaterial; i++) {
-      if (!m_material[i].setup(&fileMaterial[i], &m_textureLoader, dir)) {
+      if (!m_material[i].setup(&fileMaterial[i], loader)) {
          /* ret = false; */
       }
    }
@@ -154,7 +168,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    m_numBone = *((unsigned short *) ptr);
    ptr += sizeof(unsigned short);
    m_boneList = new PMDBone[m_numBone];
-   PMDFile_Bone *fileBone = (PMDFile_Bone *) ptr;
+   fileBone = (PMDFile_Bone *) ptr;
    for (unsigned int i = 0; i < m_numBone; i++) {
       PMDBone *bone = &m_boneList[i];
       if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
@@ -209,13 +223,13 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
 
    /* display names (skip) */
    /* indices for faces which should be displayed in "face" region */
-   unsigned char numFaceDisp = *((unsigned char *) ptr);
+   numFaceDisp = *((unsigned char *) ptr);
    ptr += sizeof(unsigned char) + sizeof(unsigned short) * numFaceDisp;
    /* bone frame names */
-   unsigned char numBoneFrameDisp = *((unsigned char *) ptr);
+   numBoneFrameDisp = *((unsigned char *) ptr);
    ptr += sizeof(unsigned char) + 50 * numBoneFrameDisp;
    /* indices for bones which should be displayed in each bone region */
-   unsigned int numBoneDisp = *((unsigned int *) ptr);
+   numBoneDisp = *((unsigned int *) ptr);
    ptr += sizeof(unsigned int) + (sizeof(short) + sizeof(unsigned char)) * numBoneDisp;
 
    /* end of base format */
@@ -226,18 +240,11 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
       m_numConstraint = 0;
       /* assign default toon textures for toon shading */
       for (int i = 0; i <= 10; i++) {
-         if (i == 0)
-            sprintf(buf, "%s%ctoon0.bmp", dir, MMDFILES_DIRSEPARATOR);
-         else
-            sprintf(buf, "%s%ctoon%02d.bmp", dir, MMDFILES_DIRSEPARATOR, i);
-         /* if "toon??.bmp" exist at the same directory as PMD file, use it */
-         /* if not exist or failed to read, use system default toon textures */
-         fp = fopen(buf, "rb");
-         if (fp != NULL) {
-            fclose(fp);
-            if (m_localToonTexture[i].load(buf) == true)
-               m_toonTextureID[i] = m_localToonTexture[i].getID();
-         }
+        PMDTexture texture;
+        m_toonTextureID[i] = 0;
+        if (loader->loadSystemTexture(i, &texture)) {
+          m_toonTextureID[i] = texture.getID();
+        }
       }
    } else {
       /* English display names (skip) */
@@ -256,21 +263,14 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
 
       /* toon texture file list (replace toon01.bmp - toon10.bmp) */
       /* the "toon0.bmp" should be loaded separatedly */
-      sprintf(buf, "%s%ctoon0.bmp", dir, MMDFILES_DIRSEPARATOR);
-      fp = fopen(buf, "rb");
-      if (fp != NULL) {
-         fclose(fp);
-         if (m_localToonTexture[0].load(buf) == true)
-            m_toonTextureID[0] = m_localToonTexture[0].getID();
+      PMDTexture texture;
+      if (loader->loadSystemTexture(0, &texture)) {
+        m_toonTextureID[0] = texture.getID();
       }
       for (int i = 1; i <= 10; i++) {
-         char *exToonBMPName = (char *) ptr;
-         sprintf(buf, "%s%c%s", dir, MMDFILES_DIRSEPARATOR, exToonBMPName);
-         fp = fopen(buf, "rb");
-         if (fp != NULL) {
-            fclose(fp);
-            if (m_localToonTexture[i].load(buf) == true)
-               m_toonTextureID[i] = m_localToonTexture[i].getID();
+         const char *exToonBMPName = (const char *)ptr;
+         if (loader->loadModelTexture(exToonBMPName, &texture)) {
+           m_toonTextureID[i] = texture.getID();
          }
          ptr += 100;
       }
@@ -318,7 +318,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
       }
    }
 
-   if (ret == false) return false;
+   if (ret == false) goto error;
 
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
    /* left-handed system: PMD, DirectX */
@@ -349,7 +349,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    /* calculated Texture coordinates for toon shading */
    m_toonTexCoordList = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
    if (m_toonTexCoordList == NULL)
-     return false;
+     goto error;
    /* calculated Vertex positions for toon edge drawing */
    m_edgeVertexList = new btVector3[m_numVertex];
    /* surface list to be rendered at edge drawing (skip non-edge materials) */
@@ -363,7 +363,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    if (m_numSurfaceForEdge > 0) {
       m_surfaceListForEdge = (unsigned short *) malloc(sizeof(unsigned short) * m_numSurfaceForEdge);
       if (m_surfaceList == NULL)
-        return false;
+        goto error;
       unsigned short *surfaceFrom = m_surfaceList;
       unsigned short *surfaceTo = m_surfaceListForEdge;
       for (unsigned int i = 0; i < m_numMaterial; i++) {
@@ -396,7 +396,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    if (m_numRotateBone > 0) {
       m_rotateBoneIDList = (unsigned short *) malloc(sizeof(unsigned short) * m_numRotateBone);
       if (m_rotateBoneIDList == NULL)
-        return false;
+        goto error;
       for (unsigned int i = 0, j = 0; i < m_numBone; i++) {
          unsigned char type = m_boneList[i].getType();
          if (type == UNDER_ROTATE || type == FOLLOW_ROTATE)
@@ -408,7 +408,7 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
    if (m_numIK > 0) {
       m_IKSimulated = (bool *) malloc(sizeof(bool) * m_numIK);
       if (m_IKSimulated == NULL)
-        return false;
+        goto error;
       for (unsigned int i = 0; i < m_numIK; i++) {
          /* this IK will be disabled when the leaf bone is controlled by physics simulation */
          m_IKSimulated[i] = m_IKList[i].isSimulated();
@@ -450,5 +450,10 @@ bool PMDModel::parse(const unsigned char *data, unsigned long size, BulletPhysic
       setPhysicsControl(false);
 
    return true;
+
+error:
+   loader->unloadModelData(start);
+   release();
+   return false;
 }
 

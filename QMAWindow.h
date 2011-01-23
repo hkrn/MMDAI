@@ -128,6 +128,8 @@ private:
   QAction *m_aboutQtAction;
 
   bool m_enablePhysicsSimulation;
+
+  Q_DISABLE_COPY(QMAWindow);
 };
 
 #endif // QMAWINDOW_H

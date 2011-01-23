@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -35,6 +35,11 @@
 /* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
+
+#ifndef MMDAI_MOTIONMANAGER_H_
+#define MMDAI_MOTIONMANAGER_H_
+
+#include <btBulletDynamicsCommon.h>
 
 #define MOTIONMANAGER_DEFAULTPRIORITY    0    /* motion priority */
 #define MOTIONMANAGER_DEFAULTLOOPATFRAME 0.0f /* when specified with loop, motion will rewind at this frame when reached end */
@@ -123,3 +128,5 @@ public:
    /* getMotionPlayerList: get list of motion players */
    MotionPlayer *getMotionPlayerList();
 };
+
+#endif

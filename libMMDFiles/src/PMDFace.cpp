@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDFace.h"
 
 /* PMDFace::initialize: initialize face */
 void PMDFace::initialize()

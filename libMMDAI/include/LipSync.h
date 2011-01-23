@@ -77,7 +77,7 @@ public:
    ~LipSync();
 
    /* setup: initialize and setup LipSync */
-   bool setup(PMDModel *pmd);
+   bool setup(PMDModel *pmd, const char *dir);
 
    /* composeMotion: create motion from phoneme sequence */
    bool createMotion(const char *lipSequence, unsigned char **vmdData, unsigned long *vmdSize);

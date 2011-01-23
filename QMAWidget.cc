@@ -34,15 +34,15 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "QMAWidget.h"
 #include "QMAPlugin.h"
+#include "QMAWidget.h"
 
 #include "btBulletDynamicsCommon.h"
 
 QMAWidget::QMAWidget(QWidget *parent)
   : QGLWidget(parent),
   m_controller(new SceneController(this)),
-  m_parser(m_controller),
+  m_parser(m_controller, this),
   m_x(0),
   m_y(0),
   m_doubleClicked(false),
@@ -59,6 +59,9 @@ QMAWidget::QMAWidget(QWidget *parent)
 
 QMAWidget::~QMAWidget()
 {
+  foreach (QMAModelLoader *loader, m_loaders) {
+    delete loader;
+  }
   delete m_controller;
 }
 
@@ -92,6 +95,13 @@ void QMAWidget::sendKeyEvent(const QString &text)
   QStringList arguments;
   arguments << text;
   emit pluginEventPost(QString(MMDAGENT_EVENT_KEY), arguments);
+}
+
+PMDModelLoader *QMAWidget::createModelLoader(const char *filename)
+{
+  QMAModelLoader *loader = new QMAModelLoader(filename);
+  m_loaders.insert(loader);
+  return loader;
 }
 
 SceneController *QMAWidget::getSceneController()
@@ -449,12 +459,14 @@ void QMAWidget::dropEvent(QDropEvent *event)
         }
         else if (path.endsWith(".xpmd")) {
           /* stage */
-          m_controller->loadStage(filename);
+          PMDModelLoader *loader = createModelLoader(filename);
+          m_controller->loadStage(loader);
         }
         else if (path.endsWith(".pmd")) {
           /* model */
           if (modifiers & Qt::ControlModifier) {
-            m_controller->addModel(filename);
+            PMDModelLoader *loader = createModelLoader(filename);
+            m_controller->addModel(loader);
           }
           else {
             PMDObject *selectedObject = m_controller->getSelectedPMDObject();
@@ -463,8 +475,10 @@ void QMAWidget::dropEvent(QDropEvent *event)
               m_controller->selectPMDObject(pos.x(), pos.y());
               selectedObject = m_controller->getSelectedPMDObject();
             }
-            if (selectedObject != NULL)
-              m_controller->changeModel(selectedObject, filename);
+            if (selectedObject != NULL) {
+              PMDModelLoader *loader = createModelLoader(filename);
+              m_controller->changeModel(selectedObject, loader);
+            }
             else
               g_logger.log("Warning: pmd file dropped but no model at the point");
           }

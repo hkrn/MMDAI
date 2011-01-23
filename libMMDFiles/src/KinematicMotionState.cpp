@@ -38,7 +38,6 @@
 
 /* headers */
 
-#include "MMDFiles.h"
 #include "KinematicMotionState.h"
 
 /* KinematicMotionState::KinematicMotionState: constructor */

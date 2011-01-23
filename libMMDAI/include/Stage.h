@@ -66,7 +66,7 @@ public:
   bool loadBackground(const char *fileName, BulletPhysics *bullet);
 
   /* loadStagePMD: load stage pmd */
-  bool loadStagePMD(const char *fileName, BulletPhysics *bullet, SystemTexture *systex);
+  bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* renderFloor: render the floor */
   void renderFloor();

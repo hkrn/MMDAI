@@ -122,10 +122,11 @@ bool SceneController::loadBackground(const char *fileName)
 }
 
 /* SceneController::setStage: set stage */
-bool SceneController::loadStage(const char *fileName)
+bool SceneController::loadStage(PMDModelLoader *loader)
 {
   /* load stage */
-  if (m_stage.loadStagePMD(fileName, &m_bullet, &m_systex) == false) {
+  const char *fileName = loader->getLocation();
+  if (m_stage.loadStagePMD(loader, &m_bullet) == false) {
     g_logger.log("Error: setStage: cannot set stage %s.", fileName);
     return false;
   }
@@ -317,14 +318,14 @@ bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
 }
 
 /* SceneController::addModel: add model */
-bool SceneController::addModel(const char *fileName)
+bool SceneController::addModel(PMDModelLoader *loader)
 {
-  return addModel(NULL, fileName, NULL, NULL, NULL, NULL);
+  return addModel(NULL, loader, NULL, NULL, NULL, NULL);
 }
 
 /* SceneController::addModel: add model */
 bool SceneController::addModel(const char *modelAlias,
-                               const char *fileName,
+                               PMDModelLoader *loader,
                                btVector3 *pos,
                                btQuaternion *rot,
                                const char *baseModelAlias,
@@ -398,18 +399,17 @@ bool SceneController::addModel(const char *modelAlias,
   }
 
   /* add model */
-  if (!newObject->load(fileName,
+  if (!newObject->load(loader,
                        &offsetPos,
                        &offsetRot,
                        forcedPosition,
                        assignBone,
                        assignObject,
                        &m_bullet,
-                       &m_systex,
                        m_option.getUseCartoonRendering(),
                        m_option.getCartoonEdgeWidth(),
                        &light)) {
-    g_logger.log("! Error: addModel: failed to load %s.", fileName);
+    g_logger.log("! Error: addModel: failed to load %s.", loader->getLocation());
     newObject->deleteModel();
     free(name);
     return false;
@@ -428,7 +428,7 @@ bool SceneController::addModel(const char *modelAlias,
 }
 
 /* SceneController::changeModel: change model */
-bool SceneController::changeModel(PMDObject *object, const char *fileName)
+bool SceneController::changeModel(PMDObject *object, PMDModelLoader *loader)
 {
   int i;
   MotionPlayer *motionPlayer;
@@ -438,18 +438,17 @@ bool SceneController::changeModel(PMDObject *object, const char *fileName)
   btVector3 light = btVector3(l[0], l[1], l[2]);
 
   /* load model */
-  if (!object->load(fileName,
+  if (!object->load(loader,
                     NULL,
                     NULL,
                     false,
                     NULL,
                     NULL,
                     &m_bullet,
-                    &m_systex,
                     m_option.getUseCartoonRendering(),
                     m_option.getCartoonEdgeWidth(),
                     &light)) {
-    g_logger.log("! Error: changeModel: failed to load model %s.", fileName);
+    g_logger.log("! Error: changeModel: failed to load model %s.", loader->getLocation());
     return false;
   }
 
@@ -774,7 +773,6 @@ void SceneController::init(int *size, const char *systexPath)
                 m_option.getUseShadowMapping(),
                 m_option.getShadowMappingTextureSize(),
                 m_option.getShadowMappingLightFirst());
-  m_systex.load(systexPath);
   m_stage.setSize(m_option.getStageSize(), 1.0f, 1.0f);
 }
 

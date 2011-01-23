@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -16,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,37 +34,28 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#define SYSTEMTEXTURE_FILENAMES "toon0.bmp","toon01.bmp","toon02.bmp","toon03.bmp","toon04.bmp","toon05.bmp","toon06.bmp","toon07.bmp","toon08.bmp","toon09.bmp","toon10.bmp"
-#define SYSTEMTEXTURE_NUMFILES  11
+#ifndef MMDAI_PMDMODELLOADER_H_
+#define MMDAI_PMDMODELLOADER_H_
 
-/* SystemTexture: system default texture */
-class SystemTexture
+#include "PMDTexture.h"
+
+#include <stdio.h>
+
+class PMDModelLoader
 {
-private:
-
-   unsigned int m_toonTextureID[SYSTEMTEXTURE_NUMFILES];
-   PMDTexture m_toonTexture[SYSTEMTEXTURE_NUMFILES];
-
-   /* SystemTexture::initialize: initialize SystemTexture */
-   void initialize();
-
-   /* SystemTexture::clear: free SystemTexutre */
-   void clear();
-
 public:
+   virtual ~PMDModelLoader() {}
 
-   /* SystemTexture: constructor */
-   SystemTexture();
+   virtual bool loadModelData(unsigned char **ptr, size_t *size) = 0;
+   
+   virtual void unloadModelData(unsigned char *ptr) = 0;
 
-   /* ~SystemTexutre: destructor */
-   ~SystemTexture();
+   virtual bool loadModelTexture(const char *name, PMDTexture *texture) = 0;
 
-   /* load: load system texture from current directory */
-   bool load(const char *dir);
+   virtual bool loadSystemTexture(int index, PMDTexture *texture) = 0;
 
-   /* getTextureID: get toon texture ID */
-   unsigned int getTextureID(int i);
-
-   /* release: free SystemTexture */
-   void release();
+   virtual const char *getLocation() = 0;
 };
+
+#endif
+

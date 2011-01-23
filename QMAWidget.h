@@ -39,17 +39,23 @@
 
 #include <QtGui/QtGui>
 
+#include "MMDFiles/MMDFiles.h"
+
+#include "MMDAI/PMDModelLoaderFactory.h"
 #include "MMDAI/CommandParser.h"
 #include "MMDAI/SceneController.h"
 #include "MMDAI/TextRenderer.h"
 
+#include "QMAModelLoader.h"
 #include "QMATimer.h"
 
 #include <qgl.h>
 
 #define MAX_MODEL 20
 
-class QMAWidget : public QGLWidget, public SceneEventHandler
+class QMAWidget : public QGLWidget,
+                  public SceneEventHandler,
+                  public PMDModelLoaderFactory
 {
   Q_OBJECT
 
@@ -64,6 +70,7 @@ public:
   void toggleDisplayRigidBody();
   void sendKeyEvent(const QString &text);
   void changeBaseMotion(PMDObject *object, const char *filename);
+  PMDModelLoader *createModelLoader(const char *filename);
 
 public slots:
   void delegateCommand(const QString &command, const QStringList &arguments);
@@ -104,6 +111,7 @@ private:
   void renderDebugModel();
   void renderLogger();
 
+  QSet<QMAModelLoader *> m_loaders;
   QMATimer m_timer;
   SceneController *m_controller;
   CommandParser m_parser;

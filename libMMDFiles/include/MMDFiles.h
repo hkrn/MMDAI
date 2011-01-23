@@ -46,14 +46,6 @@
 #define MMDFILES_RAD(a) (a * (3.1415926f / 180.0f))
 #define MMDFILES_DEG(a) (a * (180.0f / 3.1415926f))
 
-#define MMDFILES_MAXBUFLEN    1024
-
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-#define MMDFILES_DIRSEPARATOR '\\'
-#else
-#define MMDFILES_DIRSEPARATOR '/'
-#endif
-
 #include "btBulletDynamicsCommon.h"
 
 #include "GLee.h"
@@ -68,12 +60,11 @@
 #include "PMDBone.h"
 #include "PMDFace.h"
 #include "PMDTexture.h"
-#include "PMDTextureLoader.h"
+#include "PMDModelLoader.h"
 #include "PMDMaterial.h"
 #include "PMDIK.h"
 #include "PMDRigidBody.h"
 #include "PMDConstraint.h"
-#include "SystemTexture.h"
 #include "PMDModel.h"
 
 #include "MotionController.h"

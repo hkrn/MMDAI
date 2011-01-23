@@ -38,37 +38,8 @@
 
 /* headers */
 
-#include "MMDFiles.h"
-
-/* getDirectory: get directory from file path */
-static bool getDirectory(const char *file, char *dir)
-{
-
-   int i, len;
-   bool found = false;
-   char ch;
-
-   if (file == NULL)
-      return false;
-   len = strlen(file);
-   if (len <= 0)
-      return false;
-
-   for (i = len; i >= 0; i--) {
-      ch = file[i];
-      if (found == true) {
-         dir[i] = ch;
-      } else {
-         if (ch == MMDFILES_DIRSEPARATOR)
-            found = true;
-         dir[i] = '\0';
-      }
-   }
-
-   if (dir[0] == '\0')
-      strcpy(dir, ".");
-   return true;
-}
+#include "PMDModel.h"
+#include "PMDMaterial.h"
 
 /* PMDModel::initialize: initialize PMDModel */
 void PMDModel::initialize()
@@ -158,11 +129,6 @@ void PMDModel::clear()
       delete [] m_material;
       m_material = NULL;
    }
-   m_textureLoader.release();
-   if (m_boneList) {
-      delete [] m_boneList;
-      m_boneList = NULL;
-   }
    if (m_IKList) {
       delete [] m_IKList;
       m_IKList = NULL;
@@ -248,61 +214,9 @@ PMDModel::~PMDModel()
 }
 
 /* PMDModel::load: load from file name */
-bool PMDModel::load(const char *file, BulletPhysics *bullet, SystemTexture *systex)
+bool PMDModel::load(PMDModelLoader *loader, BulletPhysics *bullet)
 {
-   int len;
-   FILE *fp;
-   fpos_t size;
-   unsigned char *data;
-   char *dir;
-   bool ret;
-
-   if(file == NULL || bullet == NULL || systex == NULL) return false;
-   len = strlen(file);
-   if(len <= 0) return false;
-
-   /* get model directory */
-   dir = (char *) malloc(sizeof(char) * (len + 1));
-   getDirectory(file, dir);
-
-   /* open file */
-   fp = fopen(file, "rb");
-   if (!fp)
-      return false;
-
-   /* get file size */
-   fseek(fp, 0, SEEK_END);
-   fgetpos(fp, &size);
-
-   /* allocate memory for reading data */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-   data = (unsigned char *) malloc((size_t) size.__pos);
-#else
-   data = (unsigned char *) malloc((size_t) size);
-#endif
-
-   /* read all data */
-   fseek(fp, 0, SEEK_SET);
-#if defined(__linux) || defined(__linux__) || defined(linux)
-   fread(data, 1, (size_t) size.__pos, fp);
-#else
-   fread(data, 1, (size_t) size, fp);
-#endif
-
-   /* close file */
-   fclose(fp);
-
-   /* initialize and load from the data memories */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-   ret = parse(data, (unsigned int) size.__pos, bullet, systex, dir);
-#else
-   ret = parse(data, (unsigned int) size, bullet, systex, dir);
-#endif
-
-   /* release memory for reading */
-   free(data);
-
-   free(dir);
+   bool ret = parse(loader, bullet);
    return ret;
 }
 
@@ -504,7 +418,7 @@ unsigned int PMDModel::getNumConstraint()
 /* PMDModel::getErrorTextureList: get error texture list */
 void PMDModel::getErrorTextureList(char *buf, int maxLen)
 {
-   m_textureLoader.getErrorTextureString(buf, maxLen);
+   //m_textureLoader.getErrorTextureString(buf, maxLen);
 }
 
 /* PMDModel::getMaxHeight: get max height */

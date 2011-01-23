@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,6 +36,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_PMDMATERIAL_H_
+#define MMDAI_PMDMATERIAL_H_
+
+#include "PMDFile.h"
+#include "PMDModelLoader.h"
+#include "PMDTexture.h"
+
 /* PMDMaterial: material of PMD */
 class PMDMaterial
 {
@@ -53,7 +60,7 @@ private:
    unsigned char m_toonID; /* toon index */
    bool m_edgeFlag;        /* true if edge should be drawn */
 
-   PMDTexture *m_texture;           /* pointer to texture */
+   PMDTexture m_texture;            /* pointer to texture */
    PMDTexture *m_additionalTexture; /* pointer to additional sphere map */
 
    /* initialize: initialize material */
@@ -71,7 +78,7 @@ public:
    ~PMDMaterial();
 
    /* setup: initialize and setup material */
-   bool setup(PMDFile_Material *m, PMDTextureLoader *textureLoader, char *dir);
+   bool setup(PMDFile_Material *m, PMDModelLoader *loader);
 
    /* hasSingleSphereMap: return if it has single sphere maps */
    bool hasSingleSphereMap();
@@ -112,3 +119,6 @@ public:
    /* getAdditionalTexture: get additional sphere map */
    PMDTexture *getAdditionalTexture();
 };
+
+#endif
+

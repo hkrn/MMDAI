@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDConstraint.h"
 
 /* PMDConstraint::initialize: initialize constraint */
 void PMDConstraint::initialize()

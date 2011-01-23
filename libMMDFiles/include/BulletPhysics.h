@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,7 +36,19 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_BULLETPHYSICS_H_
+#define MMDAI_BULLETPHYSICS_H_
+
 #define BULLETPHYSICS_PI 3.1415926535897932384626433832795
+
+#include <BulletCollision/CollisionShapes/btShapeHull.h>
+#include <btBulletDynamicsCommon.h>
+
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 
 /* BulletPhysics: Bullet Physics engine */
 class BulletPhysics
@@ -82,3 +94,6 @@ public:
 
    void debugDisplay();
 };
+
+#endif
+

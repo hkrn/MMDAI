@@ -38,7 +38,10 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PTree.h"
+
+#include <string.h>
+#include <stdlib.h>
 
 /* testBit: test a bit */
 static int testBit(const char *str, int slen, int bitplace)

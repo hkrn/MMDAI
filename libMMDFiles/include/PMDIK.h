@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -35,6 +35,12 @@
 /* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
+
+#ifndef MMDAI_PMDIK_H_
+#define MMDAI_PMDIK_H_
+
+#include "PMDBone.h"
+#include "PMDFile.h"
 
 #define PMDIK_PI          3.1415926f
 #define PMDIK_MINDISTANCE 0.0001f
@@ -78,3 +84,6 @@ public:
    /* solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
    void solve();
 };
+
+#endif
+

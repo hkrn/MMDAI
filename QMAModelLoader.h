@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,47 +36,28 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* TextureLink: list of textures */
-typedef struct _TextureLink {
-   char *name;                /* source file name */
-   PMDTexture *texture;       /* texture data and information */
-   struct _TextureLink *next;
-} TextureLink;
+#ifndef QMAMODELLOADER_H
+#define QMAMODELLOADER_H
 
-/* PMDTextureLoader: texture loader of PMD */
-class PMDTextureLoader
+#include <QtGui>
+
+#include "MMDFiles/PMDModelLoader.h"
+
+class QMAModelLoader : public PMDModelLoader
 {
-private:
-
-   TextureLink *m_root; /* linked list of textures currently loaded */
-   bool m_hasError;     /* true then some error occured at texture loading */
-
-   /* lookup: lookup texture in cache */
-   PMDTexture *lookup(const char *fileName, bool *alreadyFailRet);
-
-   /* store: add a texture to cache */
-   void store(PMDTexture *tex, const char *fileName);
-
-   /* initialize: initialize texture loader */
-   void initialize();
-
-   /* clear: free texture loader */
-   void clear();
-
 public:
+  QMAModelLoader(const char *filename);
+  ~QMAModelLoader();
 
-   /* PMDTextureLoader: constructor */
-   PMDTextureLoader();
+  bool loadModelData(unsigned char **ptr, size_t *size);
+  void unloadModelData(unsigned char *ptr);
+  bool loadModelTexture(const char *name, PMDTexture *texture);
+  bool loadSystemTexture(int index, PMDTexture *texture);
+  const char *getLocation();
 
-   /* ~PMDTextureLoader: destructor */
-   ~PMDTextureLoader();
-
-   /* load: load texture from file name (multi-byte char) */
-   PMDTexture *load(const char *fileName);
-
-   /* getErrorTextureString: get newline-separated list of error textures */
-   void getErrorTextureString(char *buf, int maxlen);
-
-   /* release: free texture loader */
-   void release();
+private:
+  QFile m_file;
+  Q_DISABLE_COPY(QMAModelLoader);
 };
+
+#endif // QMAMODELLOADER_H

@@ -38,7 +38,8 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "VMD.h"
+#include "VMDFile.h"
 
 /* compareKeyFrameBone: qsort function for bone key frames */
 static int compareKeyFrameBone(const void *x, const void *y)

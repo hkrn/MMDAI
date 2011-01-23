@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -35,6 +35,14 @@
 /* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
+
+#ifndef MMDAI_PMDCONSTRAINT_H_
+#define MMDAI_PMDCONSTRAINT_H_
+
+#include <btBulletDynamicsCommon.h>
+
+#include "PMDFile.h"
+#include "PMDRigidBody.h"
 
 /* PMDConstrant: constraint of PMD */
 class PMDConstraint
@@ -64,3 +72,6 @@ public:
    /* joinWorld: add the constraint to simulation world */
    void joinWorld(btDiscreteDynamicsWorld *btWorld);
 };
+
+#endif
+

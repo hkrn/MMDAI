@@ -38,115 +38,18 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#ifndef PMDMODELLOADERFACTORY_H
+#define PMDMODELLOADERFACTORY_H
 
-/* PMDTextureLoader:lookup: lookup texture in cache */
-PMDTexture *PMDTextureLoader::lookup(const char *fileName, bool *alreadyFailRet)
+#include "MMDFiles/MMDFiles.h"
+
+class PMDModelLoaderFactory
 {
-   TextureLink *tmp = m_root;
+public:
+  virtual ~PMDModelLoaderFactory() {}
 
-   while (tmp) {
-      if (strcmp(tmp->name, fileName) == 0) {
-         /* if exist but texture is NULL, it has been failed */
-         *alreadyFailRet = (tmp->texture == NULL) ? true : false;
-         return tmp->texture;
-      }
-      tmp = tmp->next;
-   }
-   *alreadyFailRet = false;
+  virtual PMDModelLoader *createModelLoader(const char *filename) = 0;
+};
 
-   return NULL;
-}
+#endif // SCENEEVENTHANDLER_H
 
-/* PMDTextureLoader::store: add a texture to cache */
-void PMDTextureLoader::store(PMDTexture *tex, const char *fileName)
-{
-   TextureLink *newLink = new TextureLink;
-
-   newLink->name = strdup(fileName);
-   newLink->texture = tex;
-   newLink->next = m_root;
-   m_root = newLink;
-}
-
-/* PMDTextureLoader::initialize: initialize texture loader  */
-void PMDTextureLoader::initialize()
-{
-   m_root = NULL;
-   m_hasError = false;
-}
-
-/* PMDTextureLoader::clear: free texture loader  */
-void PMDTextureLoader::clear()
-{
-   TextureLink *tmp = m_root;
-   TextureLink *next;
-
-   while (tmp) {
-      next = tmp->next;
-      free(tmp->name);
-      if(tmp->texture != NULL)
-         delete tmp->texture;
-      delete tmp;
-      tmp = next;
-   }
-   initialize();
-}
-
-/* PMDTextureLoader::PMDTextureLoader: constructor */
-PMDTextureLoader::PMDTextureLoader()
-{
-   initialize();
-}
-
-/* PMDTextureLoader::~PMDTextureLoader: destructor */
-PMDTextureLoader::~PMDTextureLoader()
-{
-   clear();
-}
-
-/* PMDTextureLoader::load: load texture from file name (multi-byte char) */
-PMDTexture *PMDTextureLoader::load(const char *fileName)
-{
-   PMDTexture *tex;
-   bool already_fail;
-
-   /* consult cache */
-   tex = lookup(fileName, &already_fail);
-   /* when exist but has failed, return error without trying to load */
-   if (already_fail) return NULL;
-   if (tex == NULL) {
-      /* not exist, try to load */
-      tex = new PMDTexture;
-      if (tex->load(fileName) == false) {
-         /* failed, store with failed status */
-         store(NULL, fileName);
-         m_hasError = true;
-         return NULL;
-      }
-      /* succeeded, store it */
-      store(tex, fileName);
-   }
-   return tex;
-}
-
-/* PMDTextureLoader::getErrorTextureString: get newline-separated list of error textures */
-void PMDTextureLoader::getErrorTextureString(char *buf, int maxlen)
-{
-   TextureLink *tmp = m_root;
-
-   strcpy(buf, "");
-   if (!m_hasError) return;
-   for (tmp = m_root; tmp; tmp = tmp->next) {
-      if (tmp->texture == NULL) {
-         strncat(buf, tmp->name, maxlen);
-         strncat(buf, "\n", maxlen);
-      }
-   }
-}
-
-/* PMDTextureLoader::release: free texture loader */
-void PMDTextureLoader::release()
-{
-   clear();
-}

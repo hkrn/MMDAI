@@ -60,10 +60,12 @@ LIBS += -lMMDAI -lMMDFiles -lglee -lBulletSoftBody -lBulletDynamics -lBulletColl
 SOURCES += main.cc\
         QMAWidget.cc \
         QMATimer.cc \
-    QMAWindow.cc
+    QMAWindow.cc \
+    QMAModelLoader.cc
 
 HEADERS  += QMAWidget.h \
     QMAPlugin.h \
     QMATimer.h \
     QMAWindow.h \
-    CommandDispatcher.h
+    CommandDispatcher.h \
+    QMAModelLoader.h

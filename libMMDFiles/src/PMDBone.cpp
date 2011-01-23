@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDBone.h"
 
 /* PMDBone::initialize: initialize bone */
 void PMDBone::initialize()

@@ -38,8 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
-#include "BulletCollision/CollisionShapes/btShapeHull.h"
+#include "BulletPhysics.h"
 
 /* BulletPhysics::initialize: initialize BulletPhysics */
 void BulletPhysics::initialize()

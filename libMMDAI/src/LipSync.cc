@@ -96,7 +96,7 @@ LipSync::~LipSync()
 }
 
 /* LipSync::setup: initialize and setup LipSync */
-bool LipSync::setup(PMDModel *pmd)
+bool LipSync::setup(PMDModel *pmd, const char *dir)
 {
   static const char vowelA[] = { 0x82, 0xA0, 0x0 }; /* あ in Shift_JIS */
   static const char vowelI[] = { 0x82, 0xA2, 0x0 }; /* い in Shift_JIS */
@@ -150,9 +150,9 @@ bool LipSync::setup(PMDModel *pmd)
         g_logger.log("! Warning: face \"%s\" not in model", faceNames[i]);
 
   /* read lip.txt if any */
-  buf = (char *) malloc(sizeof(char) * (strlen(pmd->getModelDir()) + 9));
+  buf = (char *) malloc(sizeof(char) * (strlen(dir) + 9));
 
-  strcpy(buf, pmd->getModelDir());
+  strcpy(buf, dir);
   strcat(buf, "/Lip.txt");
   fp = fopen(buf, "r");
   free(buf);

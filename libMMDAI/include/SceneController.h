@@ -64,7 +64,7 @@ public:
 
   bool loadFloor(const char *fileName);
   bool loadBackground(const char *fileName);
-  bool loadStage(const char *fileName);
+  bool loadStage(PMDModelLoader *loader);
 
   void updateLight();
 
@@ -82,15 +82,14 @@ public:
   bool deleteMotion(PMDObject *object,
                     const char *motionAlias);
 
-  bool addModel(const char *fileName);
+  bool addModel(PMDModelLoader *loader);
   bool addModel(const char *modelAlias,
-                const char *fileName,
+                PMDModelLoader *loader,
                 btVector3 *pos,
                 btQuaternion *rot,
                 const char *baseModelAlias,
                 const char *baseBoneName);
-  bool changeModel(PMDObject *object,
-                   const char *fileName);
+  bool changeModel(PMDObject *object, PMDModelLoader *loader);
   void deleteModel(PMDObject *object);
 
   void changeLightDirection(float x,
@@ -162,7 +161,6 @@ private:
   PMDObject m_objects[MAX_MODEL];
   SceneEventHandler *m_handler;
   SceneRenderer m_scene;
-  SystemTexture m_systex;
   Stage m_stage;
   TextRenderer *m_text;
   int m_numModel;

@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "MotionController.h"
 
 /* MotionController::calcBoneAt: calculate bone pos/rot at the given frame */
 void MotionController::calcBoneAt(MotionControllerBoneElement *mc, float frameNow)

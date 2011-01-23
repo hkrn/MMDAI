@@ -38,7 +38,6 @@
 
 /* headers */
 
-#include "MMDFiles.h"
 #include "AlignedMotionState.h"
 
 /* AlignedMotionState::AlignedMotionState: constructor */

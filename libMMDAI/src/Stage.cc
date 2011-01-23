@@ -232,14 +232,14 @@ bool Stage::loadBackground(const char *fileName, BulletPhysics *bullet)
 }
 
 /* Stage::loadStagePMD: load stage pmd */
-bool Stage::loadStagePMD(const char *fileName, BulletPhysics *bullet, SystemTexture *systex)
+bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_pmd.load(fileName, bullet, systex);
+  ret = m_pmd.load(loader, bullet);
   if (ret) {
     m_pmd.setToonFlag(false);
     m_pmd.updateSkin();
@@ -249,7 +249,7 @@ bool Stage::loadStagePMD(const char *fileName, BulletPhysics *bullet, SystemText
       m_listIndexPMDValid = false;
     }
   } else {
-    g_logger.log("! Error: Stage: unable to load stage PMD \"%s\"", fileName);
+    g_logger.log("! Error: Stage: unable to load stage PMD \"%s\"", loader->getLocation());
   }
 
   return ret;

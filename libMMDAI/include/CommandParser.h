@@ -42,6 +42,7 @@
 #define COMMANDPARSER_H
 
 #include "SceneController.h"
+#include "PMDModelLoaderFactory.h"
 
 /* command names */
 #define MMDAGENT_COMMAND_MODEL_ADD      "MODEL_ADD"
@@ -69,13 +70,14 @@
 class CommandParser
 {
 public:
-  explicit CommandParser(SceneController *controller);
+  explicit CommandParser(SceneController *controller, PMDModelLoaderFactory *factory);
   ~CommandParser();
 
   bool parse(const char *command, const char **argv, int argc);
 
 private:
   SceneController *m_controller;
+  PMDModelLoaderFactory *m_factory;
 };
 
 #endif // COMMANDPARSER_H

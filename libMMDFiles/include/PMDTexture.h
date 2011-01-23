@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -35,6 +35,17 @@
 /* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
+
+#ifndef MMDAI_PMDTEXTURE_H_
+#define MMDAI_PMDTEXTURE_H_
+
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
+
+#include <stdio.h>
 
 #define PMDTEXTURE_UNINITIALIZEDID 0xFFFFFFFF
 
@@ -82,6 +93,8 @@ public:
    /* load: load from file name */
    bool load(const char *fileName);
 
+   void loadBytes(const unsigned char *data, size_t size, int width, int height, int components);
+
    /* getID: get OpenGL texture ID */
    GLuint getID();
 
@@ -94,3 +107,6 @@ public:
    /* release: free texture */
    void release();
 };
+
+#endif
+

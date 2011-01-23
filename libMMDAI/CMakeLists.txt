@@ -48,6 +48,7 @@ set(libMMDAI_public_headers
   include/Logger.h
   include/MotionStocker.h
   include/Option.h
+  include/PMDModelLoaderFactory.h
   include/PMDObject.h
   include/SceneController.h
   include/SceneEventHandler.h

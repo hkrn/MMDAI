@@ -100,14 +100,13 @@ void PMDObject::release()
 }
 
 /* PMDObject::load: load model */
-bool PMDObject::load(const char *fileName,
+bool PMDObject::load(PMDModelLoader *loader,
                      btVector3 *offsetPos,
                      btQuaternion *offsetRot,
                      bool forcedPosition,
                      PMDBone *assignBone,
                      PMDObject *assignObject,
                      BulletPhysics *bullet,
-                     SystemTexture *systex,
                      bool useCartoonRendering,
                      float cartoonEdgeWidth,
                      btVector3 *light)
@@ -115,7 +114,7 @@ bool PMDObject::load(const char *fileName,
 
   int i;
 
-  if (fileName == NULL)
+  if (loader == NULL)
     return false;
 
   /* apply given parameters */
@@ -168,13 +167,14 @@ bool PMDObject::load(const char *fileName,
   m_isEnable = true;
 
   /* load model */
-  if (m_pmd.load(fileName, bullet, systex) == false) {
+  if (m_pmd.load(loader, bullet) == false) {
     clear();
     return false;
   }
 
   /* set up lip sync */
-  m_lipSync.setup(&m_pmd);
+  // FIXME: loading lipsync
+  m_lipSync.setup(&m_pmd, "FIXME");
   /* set initial alias name as the same as model name */
   setAlias(m_pmd.getName());
 

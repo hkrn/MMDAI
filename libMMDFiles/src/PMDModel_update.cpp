@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDModel.h"
 
 /* PMDModel::updateBone: update bones */
 void PMDModel::updateBone()

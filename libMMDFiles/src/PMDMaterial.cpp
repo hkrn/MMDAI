@@ -38,7 +38,11 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDMaterial.h"
+#include "PMDModelLoader.h"
+#include "PMDTexture.h"
+
+#include <string.h>
 
 /* PMDMaterial::initialize: initialize material */
 void PMDMaterial::initialize()
@@ -56,7 +60,6 @@ void PMDMaterial::initialize()
    m_numSurface = 0;
    m_toonID = 0;
    m_edgeFlag = false;
-   m_texture = NULL;
    m_additionalTexture = NULL;
 }
 
@@ -80,18 +83,16 @@ PMDMaterial::~PMDMaterial()
 }
 
 /* PMDMaterial::setup: initialize and setup material */
-bool PMDMaterial::setup(PMDFile_Material *m, PMDTextureLoader *textureLoader, char *dir)
+bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
 {
-   int i, len;
    char *p;
-   char buf[MMDFILES_MAXBUFLEN];
    bool ret = true;
    char name[21];
 
    clear();
 
    /* colors */
-   for (i = 0; i < 3; i++) {
+   for (int i = 0; i < 3; i++) {
       m_diffuse[i] = m->diffuse[i];
       m_ambient[i] = m->ambient[i];
       /* calculate average color of diffuse and ambient for toon rendering */
@@ -119,6 +120,8 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDTextureLoader *textureLoader, ch
       p = strchr(name, '*');
       if (p) {
          /* has extra sphere map */
+         /*
+         char buf[MMDFILES_MAXBUFLEN];
          len = p - &(name[0]);
          sprintf(buf, "%s%c", dir, MMDFILES_DIRSEPARATOR);
          strncat(buf, name, len);
@@ -129,10 +132,10 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDTextureLoader *textureLoader, ch
          m_additionalTexture = textureLoader->load(buf);
          if (!m_additionalTexture)
             ret = false;
+         */
+        ret = false;
       } else {
-         sprintf(buf, "%s%c%s", dir, MMDFILES_DIRSEPARATOR, name);
-         m_texture = textureLoader->load(buf);
-         if (!m_texture)
+         if (!loader->loadModelTexture(name, &m_texture))
             ret = false;
       }
    }
@@ -143,7 +146,7 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDTextureLoader *textureLoader, ch
 /* PMDMaterial::hasSingleSphereMap: return if it has single sphere maps */
 bool PMDMaterial::hasSingleSphereMap()
 {
-   if (m_texture && m_texture->isSphereMap() && m_additionalTexture == NULL)
+   if (m_texture.isSphereMap() && m_additionalTexture == NULL)
       return true;
    else
       return false;
@@ -227,7 +230,7 @@ bool PMDMaterial::getEdgeFlag()
 /* PMDMaterial::getTexture: get texture */
 PMDTexture *PMDMaterial::getTexture()
 {
-   return m_texture;
+   return &m_texture;
 }
 
 /* getAdditionalTexture: get additional sphere map */

@@ -39,10 +39,12 @@
 /* headers */
 
 #include "png.h"
-#include "MMDFiles.h"
+#include "PMDTexture.h"
 
 #if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 // XXX: "#pragma pack" seems MSVC specific but gcc understand this and works correctly.
 //      should use "#pragma pack"?
@@ -595,6 +597,53 @@ bool PMDTexture::load(const char *fileName)
    glPrioritizeTextures(1, &m_id, &priority);
 
    return true;
+}
+
+void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, int height, int components)
+{
+   clear();
+
+   m_width = width;
+   m_height = height;
+   m_components = components;
+   m_textureData = static_cast<unsigned char *>(malloc(size));
+   if (m_textureData == NULL)
+     return;
+   memcpy(m_textureData, data, size);
+
+   if (m_isSphereMap || m_isSphereMapAdd) {
+      /* swap vertically */
+      for (int h = 0; h < m_height / 2; h++) {
+         unsigned char *l1 = m_textureData + h * m_width * m_components;
+         unsigned char *l2 = m_textureData + (m_height - 1 - h) * m_width * m_components;
+         for (int w = 0 ; w < m_width * m_components; w++) {
+            unsigned char tmp = l1[w];
+            l1[w] = l2[w];
+            l2[w] = tmp;
+         }
+      }
+   }
+
+   /* generate texture */
+   GLuint format = 0;
+   glGenTextures(1, &m_id);
+   glBindTexture(GL_TEXTURE_2D, m_id);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+   if (m_components == 3) {
+      format = GL_RGB;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   } else {
+      format = GL_RGBA;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+   }
+   glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, m_textureData);
+
+   /* set highest priority to this texture to tell OpenGL to keep textures in GPU memory */
+   GLfloat priority = 1.0f;
+   glPrioritizeTextures(1, &m_id, &priority);
 }
 
 /* PMDTexture::getID: get OpenGL texture ID */

@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "PMDModel.h"
 
 /* PMDModel::renderModel: render the model */
 /* needs multi-texture function on OpenGL: */
