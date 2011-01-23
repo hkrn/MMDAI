@@ -350,6 +350,61 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   return true;
 }
 
+static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
+{
+  QImage image;
+  if (QFile::exists(path)) {
+    bool isSphereMap = false;
+    bool isSphereMapAdd = false;
+    isSphereMapAdd = path.endsWith(".spa");
+    isSphereMap = isSphereMapAdd || path.endsWith(".sph");
+    if (path.endsWith(".bmp") || isSphereMap || isSphereMapAdd) {
+      QSize size;
+      unsigned char *ptr = NULL;
+      if (QMAModelLoaderLoadBMP(path, size, &ptr)) {
+        int w = size.width();
+        int h = size.height();
+        int c = 4;
+        int size = w * h * c;
+        texture->loadBytes(ptr, size, w, h, c, isSphereMap, isSphereMapAdd);
+        free(ptr);
+        return true;
+      }
+      qWarning() << "Cannot load BMP image:" << path;
+
+    }
+    else if (path.endsWith(".tga")) {
+      QSize size;
+      unsigned char *ptr = NULL;
+      if (QMAModelLoaderLoadTGA(path, size, &ptr)) {
+        int w = size.width();
+        int h = size.height();
+        int c = 4;
+        int size = w * h * c;
+        texture->loadBytes(ptr, size, w, h, c, isSphereMap, isSphereMapAdd);
+        free(ptr);
+        return true;
+      }
+      qWarning() << "Cannot load TGA image:" << path;
+    }
+    else if (image.load(path)) {
+      int w = image.width();
+      int h = image.height();
+      int c = image.depth() / 8;
+      int size = w * h * c;
+      texture->loadBytes(image.constBits(), size, w, h, c, isSphereMap, isSphereMapAdd);
+      return true;
+    }
+    else {
+      qWarning() << "Cannot load TGA image:" << path;
+    }
+  }
+  else {
+    qDebug() << "Image not found:" << path;
+  }
+  return false;
+}
+
 QMAModelLoader::QMAModelLoader(const char *filename)
   : m_file(filename)
 {
@@ -389,53 +444,7 @@ bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
   QDir dir(m_file.fileName());
   dir.cdUp();
   QString path = dir.absoluteFilePath(name);
-  QImage image;
-  if (QFile::exists(path)) {
-    if (path.endsWith(".bmp")) {
-      QSize size;
-      unsigned char *ptr = NULL;
-      if (QMAModelLoaderLoadBMP(path, size, &ptr)) {
-        int w = size.width();
-        int h = size.height();
-        int c = 4;
-        int size = w * h * c;
-        texture->loadBytes(ptr, size, w, h, c);
-        free(ptr);
-        return true;
-      }
-      qWarning() << "Cannot load BMP image:" << path;
-
-    }
-    else if (path.endsWith(".tga")) {
-      QSize size;
-      unsigned char *ptr = NULL;
-      if (QMAModelLoaderLoadTGA(path, size, &ptr)) {
-        int w = size.width();
-        int h = size.height();
-        int c = 4;
-        int size = w * h * c;
-        texture->loadBytes(ptr, size, w, h, c);
-        free(ptr);
-        return true;
-      }
-      qWarning() << "Cannot load TGA image:" << path;
-    }
-    else if (image.load(path)) {
-      int w = image.width();
-      int h = image.height();
-      int c = image.depth() / 8;
-      int size = w * h * c;
-      texture->loadBytes(image.constBits(), size, w, h, c);
-      return true;
-    }
-    else {
-      qWarning() << "Cannot load TGA image:" << path;
-    }
-  }
-  else {
-    qDebug() << "Image not found:" << path;
-  }
-  return false;
+  return QMAModelLoaderLoadImage(path, texture);
 }
 
 bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
