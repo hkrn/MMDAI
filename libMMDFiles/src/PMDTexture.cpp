@@ -599,7 +599,7 @@ bool PMDTexture::load(const char *fileName)
    return true;
 }
 
-void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, int height, int components)
+void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd)
 {
    clear();
 
@@ -607,6 +607,8 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
    m_height = height;
    m_components = components;
    m_textureData = static_cast<unsigned char *>(malloc(size));
+   m_isSphereMap = isSphereMap;
+   m_isSphereMapAdd = isSphereMapAdd;
    if (m_textureData == NULL)
      return;
    memcpy(m_textureData, data, size);

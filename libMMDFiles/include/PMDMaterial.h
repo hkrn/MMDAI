@@ -61,7 +61,7 @@ private:
    bool m_edgeFlag;        /* true if edge should be drawn */
 
    PMDTexture m_texture;            /* pointer to texture */
-   PMDTexture *m_additionalTexture; /* pointer to additional sphere map */
+   PMDTexture m_additionalTexture;  /* pointer to additional sphere map */
 
    /* initialize: initialize material */
    void initialize();

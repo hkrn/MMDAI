@@ -60,7 +60,6 @@ void PMDMaterial::initialize()
    m_numSurface = 0;
    m_toonID = 0;
    m_edgeFlag = false;
-   m_additionalTexture = NULL;
 }
 
 /* PMDMaterial::clear: free material */
@@ -86,7 +85,6 @@ PMDMaterial::~PMDMaterial()
 bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
 {
    char *p;
-   bool ret = true;
    char name[21];
 
    clear();
@@ -120,45 +118,32 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
       p = strchr(name, '*');
       if (p) {
          /* has extra sphere map */
-         /*
-         char buf[MMDFILES_MAXBUFLEN];
-         len = p - &(name[0]);
-         sprintf(buf, "%s%c", dir, MMDFILES_DIRSEPARATOR);
-         strncat(buf, name, len);
-         m_texture = textureLoader->load(buf);
-         if (!m_texture)
-            ret = false;
-         sprintf(buf, "%s%c%s", dir, MMDFILES_DIRSEPARATOR, p + 1);
-         m_additionalTexture = textureLoader->load(buf);
-         if (!m_additionalTexture)
-            ret = false;
-         */
-        ret = false;
+         *p = '\0';
+         printf("%s %s\n", name,  p + 1);
+         fflush(stdout);
+         if (!loader->loadModelTexture(name, &m_texture))
+           return false;
+         if (!loader->loadModelTexture(p + 1, &m_additionalTexture))
+           return false;
       } else {
          if (!loader->loadModelTexture(name, &m_texture))
-            ret = false;
+            return false;
       }
    }
 
-   return ret;
+   return true;
 }
 
 /* PMDMaterial::hasSingleSphereMap: return if it has single sphere maps */
 bool PMDMaterial::hasSingleSphereMap()
 {
-   if (m_texture.isSphereMap() && m_additionalTexture == NULL)
-      return true;
-   else
-      return false;
+   return m_texture.isSphereMap() && !m_additionalTexture.isSphereMapAdd();
 }
 
 /* PMDMaterial::hasMultipleSphereMap: return if it has multiple sphere map */
 bool PMDMaterial::hasMultipleSphereMap()
 {
-   if (m_additionalTexture)
-      return true;
-   else
-      return false;
+   return m_additionalTexture.isSphereMapAdd();
 }
 
 /* PMDMaterial::copyDiffuse: get diffuse colors */
@@ -236,5 +221,5 @@ PMDTexture *PMDMaterial::getTexture()
 /* getAdditionalTexture: get additional sphere map */
 PMDTexture *PMDMaterial::getAdditionalTexture()
 {
-   return m_additionalTexture;
+   return &m_additionalTexture;
 }

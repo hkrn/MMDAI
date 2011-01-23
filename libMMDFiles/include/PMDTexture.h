@@ -93,7 +93,7 @@ public:
    /* load: load from file name */
    bool load(const char *fileName);
 
-   void loadBytes(const unsigned char *data, size_t size, int width, int height, int components);
+   void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
 
    /* getID: get OpenGL texture ID */
    GLuint getID();
