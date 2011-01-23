@@ -448,6 +448,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
    /* simulation is currently off, so change bone status */
    if (!m_enableSimulation)
       setPhysicsControl(false);
+   loader->unloadModelData(start);
 
    return true;
 
