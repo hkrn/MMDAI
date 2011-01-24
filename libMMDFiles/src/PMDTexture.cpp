@@ -40,6 +40,9 @@
 
 #include "PMDTexture.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 /* PMDTexture::initialize: initialize texture */
 void PMDTexture::initialize()
 {
