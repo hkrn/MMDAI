@@ -187,7 +187,7 @@ static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
 QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
   : m_dir(system)
 {
-  QDir dir(filename);
+  QDir dir(QFile::decodeName(filename));
   QString path = dir.absolutePath();
   m_file = new QFile(path);
 }
@@ -230,10 +230,11 @@ bool QMAModelLoader::loadImageTexture(PMDTexture *texture)
 
 bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
 {
-  QString path(name);
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  QString textureName = codec->toUnicode(name, strlen(name));
   QDir dir(m_file->fileName());
   dir.cdUp();
-  path = dir.absoluteFilePath(name);
+  QString path = dir.absoluteFilePath(textureName);
   return QMAModelLoaderLoadImage(path, texture);
 }
 
