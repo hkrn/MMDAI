@@ -46,7 +46,7 @@
 #include "MMDAI/SceneController.h"
 #include "MMDAI/TextRenderer.h"
 
-#include "QMAModelLoader.h"
+#include "QMAModelLoaderFactory.h"
 #include "QMATimer.h"
 
 #include <qgl.h>
@@ -54,8 +54,7 @@
 #define MAX_MODEL 20
 
 class QMAWidget : public QGLWidget,
-                  public SceneEventHandler,
-                  public PMDModelLoaderFactory
+                  public SceneEventHandler
 {
   Q_OBJECT
 
@@ -64,13 +63,13 @@ public:
   ~QMAWidget();
 
   void handleEventMessage(const char *eventType, int argc, ...);
+  QMAModelLoaderFactory *getModelLoaderFactory();
   SceneController *getSceneController();
 
   void toggleDisplayBone();
   void toggleDisplayRigidBody();
   void sendKeyEvent(const QString &text);
   void changeBaseMotion(PMDObject *object, const char *filename);
-  PMDModelLoader *createModelLoader(const char *filename);
 
 public slots:
   void delegateCommand(const QString &command, const QStringList &arguments);
@@ -111,7 +110,7 @@ private:
   void renderDebugModel();
   void renderLogger();
 
-  QSet<QMAModelLoader *> m_loaders;
+  QMAModelLoaderFactory m_factory;
   QMATimer m_timer;
   SceneController *m_controller;
   CommandParser m_parser;

@@ -61,11 +61,13 @@ SOURCES += main.cc\
         QMAWidget.cc \
         QMATimer.cc \
     QMAWindow.cc \
-    QMAModelLoader.cc
+    QMAModelLoader.cc \
+    QMAModelLoaderFactory.cc
 
 HEADERS  += QMAWidget.h \
     QMAPlugin.h \
     QMATimer.h \
     QMAWindow.h \
     CommandDispatcher.h \
-    QMAModelLoader.h
+    QMAModelLoader.h \
+    QMAModelLoaderFactory.h

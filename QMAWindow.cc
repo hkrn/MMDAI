@@ -187,7 +187,7 @@ void QMAWindow::addModel()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastPMDDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->addModel(loader);
   }
 }
@@ -200,7 +200,7 @@ void QMAWindow::setStage()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastStageDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->loadStage(loader);
   }
 }
@@ -213,7 +213,7 @@ void QMAWindow::setFloor()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastFloorDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->loadFloor(loader);
   }
 }
@@ -226,7 +226,7 @@ void QMAWindow::setBackground()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastBackgroundDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->loadBackground(loader);
   }
 }
@@ -370,7 +370,7 @@ void QMAWindow::changeSelectedObject()
     SceneController *controller = m_widget->getSceneController();
     PMDObject *selectedObject = controller->getSelectedPMDObject();
     if (selectedObject != NULL){
-      PMDModelLoader *loader = m_widget->createModelLoader(fileName.toUtf8().constData());
+      PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
       controller->changeModel(selectedObject, loader);
     }
   }

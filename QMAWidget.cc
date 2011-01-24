@@ -42,7 +42,7 @@
 QMAWidget::QMAWidget(QWidget *parent)
   : QGLWidget(parent),
   m_controller(new SceneController(this)),
-  m_parser(m_controller, this),
+  m_parser(m_controller, &m_factory),
   m_x(0),
   m_y(0),
   m_doubleClicked(false),
@@ -59,9 +59,6 @@ QMAWidget::QMAWidget(QWidget *parent)
 
 QMAWidget::~QMAWidget()
 {
-  foreach (QMAModelLoader *loader, m_loaders) {
-    delete loader;
-  }
   delete m_controller;
 }
 
@@ -97,12 +94,9 @@ void QMAWidget::sendKeyEvent(const QString &text)
   emit pluginEventPost(QString(MMDAGENT_EVENT_KEY), arguments);
 }
 
-PMDModelLoader *QMAWidget::createModelLoader(const char *filename)
+QMAModelLoaderFactory *QMAWidget::getModelLoaderFactory()
 {
-  QString path = QDir(QDir::currentPath()).absoluteFilePath("AppData");
-  QMAModelLoader *loader = new QMAModelLoader(path, filename);
-  m_loaders.insert(loader);
-  return loader;
+  return &m_factory;
 }
 
 SceneController *QMAWidget::getSceneController()
@@ -460,13 +454,13 @@ void QMAWidget::dropEvent(QDropEvent *event)
         }
         else if (path.endsWith(".xpmd")) {
           /* stage */
-          PMDModelLoader *loader = createModelLoader(filename);
+          PMDModelLoader *loader = m_factory.createModelLoader(filename);
           m_controller->loadStage(loader);
         }
         else if (path.endsWith(".pmd")) {
           /* model */
           if (modifiers & Qt::ControlModifier) {
-            PMDModelLoader *loader = createModelLoader(filename);
+            PMDModelLoader *loader = m_factory.createModelLoader(filename);
             m_controller->addModel(loader);
           }
           else {
@@ -477,7 +471,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
               selectedObject = m_controller->getSelectedPMDObject();
             }
             if (selectedObject != NULL) {
-              PMDModelLoader *loader = createModelLoader(filename);
+              PMDModelLoader *loader = m_factory.createModelLoader(filename);
               m_controller->changeModel(selectedObject, loader);
             }
             else
@@ -486,7 +480,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
         }
         else if (path.endsWith(".bmp") || path.endsWith(".tga") || path.endsWith(".png")) {
           /* floor or background */
-          PMDModelLoader *loader = createModelLoader(filename);
+          PMDModelLoader *loader = m_factory.createModelLoader(filename);
           if (modifiers & Qt::ControlModifier)
             m_controller->loadFloor(loader);
           else
