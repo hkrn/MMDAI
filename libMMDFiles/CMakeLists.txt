@@ -69,25 +69,6 @@ set_target_properties(MMDFiles PROPERTIES SO_VERSION ${MMDFILES_VERSION})
 # project include directories
 include_directories(include)
 
-# find zlib package
-find_package(ZLIB)
-if(ZLIB_FOUND)
-  include_directories(${ZLIB_INCLUDE_DIR})
-  target_link_libraries(MMDFiles ${ZLIB_LIBRARIES})
-else()
-  message(FATAL_ERROR "Required zlib is not found.")
-endif()
-
-# find libpng package
-find_package(PNG)
-if(PNG_FOUND)
-  include_directories(${PNG_INCLUDE_DIR})
-  add_definitions(${PNG_DEFINITIONS})
-  target_link_libraries(MMDFiles ${PNG_LIBRARIES})
-else()
-  message(FATAL_ERROR "Required libpng is not found.")
-endif()
-
 # find OpenGL package
 find_package(OpenGL)
 if(OPENGL_FOUND)
