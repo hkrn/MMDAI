@@ -9,10 +9,14 @@ MMDAI とは MMDAgent からフォークしたプロジェクトです。
 音声を認識して喋らせることは出来ません。
 
 * Supported OS
-以下は開発者の環境で保証されている環境です。32bit でもおそらく動作するはずですが、
-未検証です。また、Windows は開発環境を整えていないため、まだサポートしていません。
+以下は開発者の環境で保証されている環境です。
 MacOSX 10.6 64bit
+Fedora 14 32bit
 Ubuntu 10.10 64bit
+
+Windows に関して MinGW を使うことでビルドすることが出来ますが、
+まだ本物の Windows で実行していないため、未検証です。
+(Fedora14 のクロスコンパイル環境を使ってビルドし、wineで一応実行可能なことは確認)
 
 * How to use?
 オリジナルの MMDAgent とあわせていますが、現時点で一部の動作のみ実装しています。
@@ -91,10 +95,8 @@ Ubuntu 10.10 64bit
 * How to build?
 まず必要なライブラリが入っているかどうかを確認して下さい。
 - Bullet Physics
-- libpng
 - OpenGL Easy Extension
 - Qt
-- zlib
 
 MMDAI 及び MMDFiles のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
 Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
