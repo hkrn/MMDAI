@@ -432,23 +432,21 @@ bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
 {
   *size = 0;
   if (m_file->exists() && m_file->open(QFile::ReadOnly | QFile::Unbuffered)) {
-    int s = m_file->size();
-    char *p = static_cast<char *>(calloc(1, s));
-    if (p != NULL && m_file->read(p, s) == s) {
-      *ptr = reinterpret_cast<unsigned char *>(p);
+    size_t s = m_file->size();
+    unsigned char *p = m_file->map(0, s);
+    if (p != NULL) {
+      *ptr = p;
       *size = s;
       return true;
     }
-    if (p != NULL)
-      free(p);
   }
   return false;
 }
 
 void QMAModelLoader::unloadModelData(unsigned char *ptr)
 {
+  m_file->unmap(ptr);
   m_file->close();
-  free(ptr);
 }
 
 bool QMAModelLoader::loadImageTexture(PMDTexture *texture)
@@ -468,11 +466,11 @@ bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
 
 bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
 {
-  QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, 2, 10, QChar('0')));
+  int fill = index == 0 ? 1 : 2;
+  QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
   Q_UNUSED(path);
   Q_UNUSED(texture);
-  //QMAModelLoaderLoadImage(path, texture);
-  return true;
+  return QMAModelLoaderLoadImage(path, texture);
 }
 
 const char *QMAModelLoader::getLocation()
