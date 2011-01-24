@@ -468,8 +468,6 @@ bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
 {
   int fill = index == 0 ? 1 : 2;
   QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
-  Q_UNUSED(path);
-  Q_UNUSED(texture);
   return QMAModelLoaderLoadImage(path, texture);
 }
 
