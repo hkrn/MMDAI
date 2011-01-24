@@ -39,6 +39,7 @@
 /* headers */
 
 #include "PMDConstraint.h"
+#include "PMDInternal.h"
 
 /* PMDConstraint::initialize: initialize constraint */
 void PMDConstraint::initialize()

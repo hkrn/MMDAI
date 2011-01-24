@@ -38,6 +38,7 @@
 
 /* headers */
 
+#include "PMDInternal.h"
 #include "VMD.h"
 #include "VMDFile.h"
 

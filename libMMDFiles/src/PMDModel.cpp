@@ -129,6 +129,10 @@ void PMDModel::clear()
       delete [] m_material;
       m_material = NULL;
    }
+   if (m_boneList) {
+      delete [] m_boneList;
+      m_boneList = NULL;
+   }
    if (m_IKList) {
       delete [] m_IKList;
       m_IKList = NULL;

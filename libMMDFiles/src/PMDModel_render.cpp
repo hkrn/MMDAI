@@ -39,6 +39,7 @@
 /* headers */
 
 #include "PMDModel.h"
+#include "PMDInternal.h"
 
 /* PMDModel::renderModel: render the model */
 /* needs multi-texture function on OpenGL: */

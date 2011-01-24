@@ -38,6 +38,8 @@
 
 /* headers */
 
+#include "MotionController.h"
+#include "PMDInternal.h"
 #include "PMDModel.h"
 #include "PMDTexture.h"
 #include "PMDModelLoader.h"
@@ -47,7 +49,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 {
    bool ret = true;
    btQuaternion defaultRot;
-   const char centerBoneName[] = "";//MOTIONCONTROLLER_CENTERBONENAME;
+   const char centerBoneName[] = MOTIONCONTROLLER_CENTERBONENAME;
 
    PMDFile_Vertex *fileVertex = NULL;
    PMDFile_Material *fileMaterial = NULL;
@@ -79,10 +81,10 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
    /* reset toon texture IDs by system default textures */
    for (int i = 0; i < SYSTEMTEXTURE_NUMFILES; i++) {
-      PMDTexture texture;
+      PMDTexture *texture = &m_localToonTexture[i];
       m_toonTextureID[i] = 0;
-      if (loader->loadSystemTexture(i, &texture)) {
-         m_toonTextureID[i] = texture.getID();
+      if (loader->loadSystemTexture(i, texture)) {
+         m_toonTextureID[i] = texture->getID();
       }
    }
 
@@ -240,10 +242,10 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       m_numConstraint = 0;
       /* assign default toon textures for toon shading */
       for (int i = 0; i <= 10; i++) {
-        PMDTexture texture;
+        PMDTexture *texture = &m_localToonTexture[i];
         m_toonTextureID[i] = 0;
-        if (loader->loadSystemTexture(i, &texture)) {
-          m_toonTextureID[i] = texture.getID();
+        if (loader->loadSystemTexture(i, texture)) {
+          m_toonTextureID[i] = texture->getID();
         }
       }
    } else {
@@ -263,14 +265,15 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
       /* toon texture file list (replace toon01.bmp - toon10.bmp) */
       /* the "toon0.bmp" should be loaded separatedly */
-      PMDTexture texture;
-      if (loader->loadSystemTexture(0, &texture)) {
-        m_toonTextureID[0] = texture.getID();
+      PMDTexture *texture = &m_localToonTexture[0];
+      if (loader->loadSystemTexture(0, texture)) {
+        m_toonTextureID[0] = texture->getID();
       }
       for (int i = 1; i <= 10; i++) {
          const char *exToonBMPName = (const char *)ptr;
-         if (loader->loadModelTexture(exToonBMPName, &texture)) {
-           m_toonTextureID[i] = texture.getID();
+         texture = &m_localToonTexture[i];
+         if (loader->loadModelTexture(exToonBMPName, texture)) {
+           m_toonTextureID[i] = texture->getID();
          }
          ptr += 100;
       }

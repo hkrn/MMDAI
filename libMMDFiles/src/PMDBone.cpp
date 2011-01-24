@@ -39,6 +39,7 @@
 /* headers */
 
 #include "PMDBone.h"
+#include "PMDInternal.h"
 
 /* PMDBone::initialize: initialize bone */
 void PMDBone::initialize()

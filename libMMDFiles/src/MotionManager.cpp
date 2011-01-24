@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDFiles.h"
+#include "MotionManager.h"
 
 /* MotionPlayer_initialize: initialize MotionPlayer */
 void MotionPlayer_initialize(MotionPlayer *m)

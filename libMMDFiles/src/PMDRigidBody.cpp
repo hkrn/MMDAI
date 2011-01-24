@@ -38,9 +38,10 @@
 
 /* headers */
 
-#include "PMDRigidBody.h"
-#include "KinematicMotionState.h"
 #include "AlignedMotionState.h"
+#include "KinematicMotionState.h"
+#include "PMDInternal.h"
+#include "PMDRigidBody.h"
 
 /* PMDRigidBody::initialize: initialize PMDRigidBody */
 void PMDRigidBody::initialize()

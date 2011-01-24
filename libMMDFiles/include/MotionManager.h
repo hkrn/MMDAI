@@ -41,6 +41,10 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "MotionController.h"
+#include "PMDModel.h"
+#include "VMD.h"
+
 #define MOTIONMANAGER_DEFAULTPRIORITY    0    /* motion priority */
 #define MOTIONMANAGER_DEFAULTLOOPATFRAME 0.0f /* when specified with loop, motion will rewind at this frame when reached end */
 

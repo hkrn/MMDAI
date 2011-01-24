@@ -39,6 +39,7 @@
 /* headers */
 
 #include "PMDFace.h"
+#include "PMDInternal.h"
 
 /* PMDFace::initialize: initialize face */
 void PMDFace::initialize()
