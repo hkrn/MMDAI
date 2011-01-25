@@ -59,6 +59,6 @@ else()
   message(FATAL_ERROR "Required OpenGL is not found.")
 endif()
 
-install(TARGETS glee LIBRARY DESTINATION lib)
+install(TARGETS glee DESTINATION lib)
 install(FILES GLee.h DESTINATION include)
 
