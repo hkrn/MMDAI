@@ -95,7 +95,7 @@ TileTexture::~TileTexture()
 bool TileTexture::load(PMDModelLoader *loader)
 {
   bool ret = true;
-  if (loader->loadTileTexture(&m_texture) == false)
+  if (loader->loadImageTexture(&m_texture) == false)
     ret = false;
 
   m_isLoaded = true;
