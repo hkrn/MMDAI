@@ -38,6 +38,8 @@
 
 /* headers */
 
+#include <GLee.h>
+
 #include "PMDModel.h"
 #include "PMDInternal.h"
 
