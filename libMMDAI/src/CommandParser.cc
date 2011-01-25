@@ -40,7 +40,7 @@
 
 #include "CommandParser.h"
 
-#include "btBulletDynamicsCommon.h"
+#include <MMDFiles/MMDFiles.h>
 
 #define MMDAGENT_MAXNUMCOMMAND    10
 #define MMDAGENT_MAXCOMMANDBUFLEN 1024

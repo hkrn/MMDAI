@@ -34,12 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "QMAModelLoaderFactory.h"
-
 #include <QDir>
 #include <QString>
 
 #include "QMAModelLoader.h"
+#include "QMAModelLoaderFactory.h"
 
 QMAModelLoaderFactory::QMAModelLoaderFactory()
 {

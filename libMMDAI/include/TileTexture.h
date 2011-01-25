@@ -41,8 +41,8 @@
 #ifndef TILETEXTURE_H
 #define TILETEXTURE_H
 
-#include "MMDFiles/PMDModelLoader.h"
-#include "MMDFiles/PMDTexture.h"
+#include <MMDFiles/PMDModelLoader.h>
+#include <MMDFiles/PMDTexture.h>
 
 class TileTexture
 {

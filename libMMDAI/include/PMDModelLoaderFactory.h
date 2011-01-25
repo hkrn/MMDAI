@@ -41,7 +41,7 @@
 #ifndef PMDMODELLOADERFACTORY_H
 #define PMDMODELLOADERFACTORY_H
 
-#include "MMDFiles/MMDFiles.h"
+#include <MMDFiles/PMDModelLoader.h>
 
 class PMDModelLoaderFactory
 {

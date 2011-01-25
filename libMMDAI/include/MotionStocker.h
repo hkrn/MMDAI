@@ -41,7 +41,7 @@
 #ifndef MOTIONSTOCKER_H
 #define MOTIONSTOCKER_H
 
-#include "MMDFiles/MMDFiles.h"
+#include <MMDFiles/VMD.h>
 
 /* VMDList: VMD list */
 typedef struct _VMDList {

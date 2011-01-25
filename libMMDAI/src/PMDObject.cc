@@ -40,6 +40,8 @@
 
 #include "PMDObject.h"
 
+#include "MMDFiles/MMDFiles.h"
+
 #define PMDOBJECT_ALPHAFRAME    15.0   /* number of frames for appear/disappear alpha blending */
 #define PMDOBJECT_COMMENTFRAME  150.0
 #define PMDOBJECT_ALIASNAMELEN  50

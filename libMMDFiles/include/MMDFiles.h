@@ -46,9 +46,7 @@
 #define MMDFILES_RAD(a) (a * (3.1415926f / 180.0f))
 #define MMDFILES_DEG(a) (a * (180.0f / 3.1415926f))
 
-#include "btBulletDynamicsCommon.h"
-
-#include "GLee.h"
+#include <btBulletDynamicsCommon.h>
 
 #include "BulletPhysics.h"
 

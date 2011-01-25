@@ -41,6 +41,8 @@
 #include "Option.h"
 #include "LipSync.h"
 
+#include <MMDFiles/VMDFile.h>
+
 #define MAXPNUM 2048 /* maximum number of phoneme sequence */
 #define LIPSYNC_SEPARATOR ","
 

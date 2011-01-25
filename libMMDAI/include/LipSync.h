@@ -43,7 +43,7 @@
 
 #define LIPSYNC_MOTION_NAME "LipSync" /* motion name of lip sync */
 
-#include "MMDFiles/MMDFiles.h"
+#include <MMDFiles/PMDModel.h>
 
 /* LibDef: lip definition */
 typedef struct _LipDef {

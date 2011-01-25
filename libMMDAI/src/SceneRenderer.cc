@@ -38,13 +38,15 @@
 
 /* headers */
 
-#include "SceneRenderer.h"
+#include <GLee.h>
 
 #if defined(__APPLE__)
 #include <OpenGL/glu.h>
 #else
 #include <GL/glu.h>
 #endif
+
+#include "SceneRenderer.h"
 
 #define SHADOW_PCF                   /* use hardware PCF for shadow mapping */
 #define SHADOW_AUTO_VIEW             /* automatically define depth frustum */

@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "QMAPlugin.h"
 #include "QMAWidget.h"
+#include "QMAPlugin.h"
 
 #include "btBulletDynamicsCommon.h"
 

@@ -37,11 +37,10 @@
 #ifndef QMAMODELLOADERFACTORY_H
 #define QMAMODELLOADERFACTORY_H
 
-#include <QSet>
-
 #include "MMDAI/PMDModelLoaderFactory.h"
-
 #include "QMAModelLoader.h"
+
+#include <QSet>
 
 class QMAModelLoaderFactory : public PMDModelLoaderFactory
 {

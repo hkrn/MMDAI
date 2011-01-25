@@ -41,7 +41,8 @@
 #ifndef STAGE_H
 #define STAGE_H
 
-#include "MMDFiles/MMDFiles.h"
+#include <MMDFiles/PMDModel.h>
+#include <MMDFiles/PMDModelLoader.h>
 
 #include "TileTexture.h"
 
