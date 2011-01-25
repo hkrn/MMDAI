@@ -96,7 +96,7 @@ Windows に関して MinGW を使うことでビルドすることが出来ま�
 まず必要なライブラリが入っているかどうかを確認して下さい。
 - Bullet Physics
 - OpenGL Easy Extension
-- Qt
+- Qt 4.7 以降
 
 MMDAI 及び MMDFiles のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
 Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
@@ -106,8 +106,15 @@ libGLEE に入っている CMakeList.txt を入れて cmake を使ってビル�
 インストール先は /usr または /usr/local にインストールする必要があります。
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
 
+** building OpenGL Easy Extension using cmake
+$ cp $MMDAI/libGLEE/CMakeFiles.txt $GLEE_SRC_DIR
+$ mv GLee.c glee.c
+$ cmake .
+$ make
+$ sudo make install
+
 ** Linux or MacOSX
-$ cd ./libMMDFiles
+$ cd libMMDFiles
 $ cmake .
 $ make 
 $ sudo make install
@@ -119,6 +126,40 @@ $ cd ..
 $ qmake
 $ make # MacOSX の場合は xcodebuild
 
+** MinGW
+Linux 上でクロスコンパイルを行います。yum で MinGW の開発環境が揃えられる
+Fedora Linux でビルドしたほうがよいかもしれません。
+以下の解説は Fedora Linux 14 を使った場合でのビルド方法です。
+
+*** OpenGL Easy Extension
+cmake を使います。mingw32-cmake を使うこと以外方法は同じです。
+
+*** Bullet Physics
+一旦トップディレクトリで mingw32-cmake を実行します。その後 src ディレクトリに移動し、
+make を実行します。ビルド出来たら make install を実行します。
+
+*** MMDFiles / MMDAI
+mingw32-cmake を使うこと以外方法は同じです。OpenGL Easy Extension と
+Bullet Physics の二つがインストールされていることが前提条件です。
+
+*** QtMMDAI
+qmake-qt4 の代わりに mingw32-qmake-qt4 を使う必要があります。
+mingw32-qmake-qt4 を実行し、make すればバイナリが作成されます。
+生成されたバイナリは debug または release の QtMMDAI.exe になります。
+
+実行する際 dll が必要なため、以下で dll をシンボリックリンクで配置します。
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/libgcc_s_sjlj-1.dll .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/libstdc++-6.dll .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/libpng14-14.dll .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/zlib1.dll .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/Qt*.dll
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libglee.dll .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libBullet* .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libLinearMath.dll .
+$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libMMD* .
+$ rm *.a
+$ wine QtMMDAI.exe
+
 * License
 オリジナルのMMDAgentと同じく、修正BSDライセンスの元で配布されます。
 
@@ -128,3 +169,4 @@ Nagoya Institute of Technology Department of Computer Science
 
 - from MMDAI
 hkrn (Twitter:@hikarincl2)
+
