@@ -171,7 +171,7 @@ static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
       int h = image.height();
       int c = image.depth() / 8;
       int size = w * h * c;
-      texture->loadBytes(image.rgbSwapped().constBits(), size, w, h, c, isSphereMap, isSphereMapAdd);
+      texture->loadBytes(image.rgbSwapped().bits(), size, w, h, c, isSphereMap, isSphereMapAdd);
       return true;
     }
     else {
