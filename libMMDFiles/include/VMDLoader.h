@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -16,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,23 +34,22 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
+#ifndef MMDAI_VMDLOADER_H_
+#define MMDAI_VMDLOADER_H_
 
-#ifndef PMDMODELLOADERFACTORY_H
-#define PMDMODELLOADERFACTORY_H
+#include <stdio.h>
 
-#include <MMDFiles/PMDModelLoader.h>
-#include <MMDFiles/VMDLoader.h>
-
-class PMDModelLoaderFactory
+class VMDLoader
 {
 public:
-  virtual ~PMDModelLoaderFactory() {}
+   virtual ~VMDLoader() {}
 
-  virtual PMDModelLoader *createModelLoader(const char *filename) = 0;
+   virtual bool loadMotionData(unsigned char **ptr, size_t *size) = 0;
 
-  virtual VMDLoader *createMotionLoader(const char *filename) = 0;
+   virtual void unloadMotionData(unsigned char *ptr) = 0;
+
+   virtual const char *getLocation() = 0;
 };
 
-#endif // SCENEEVENTHANDLER_H
+#endif
 

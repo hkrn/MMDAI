@@ -114,7 +114,8 @@ CommandParser::~CommandParser()
 bool CommandParser::parse(const char *command, const char **argv, int argc)
 {
   PMDObject *object = NULL;
-  PMDModelLoader *loader = NULL;
+  PMDModelLoader *pmd = NULL;
+  VMDLoader *vmd = NULL;
   float tmpFloat = 0.0f, float3[3] = { 0.0f, 0.0f, 0.0f };
   btVector3 pos;
   btQuaternion rot;
@@ -148,8 +149,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     else {
       rot.setEulerZYX(0.0, 0.0, 0.0);
     }
-    loader = m_factory->createModelLoader(argv[1]);
-    return m_controller->addModel(argv[0], loader, &pos, &rot,
+    pmd = m_factory->createModelLoader(argv[1]);
+    return m_controller->addModel(argv[0], pmd, &pos, &rot,
         argc >= 5 ? argv[4] : NULL, argc >= 6 ? argv[5] : NULL);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_CHANGE) == 0) {
@@ -160,8 +161,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
-      loader = m_factory->createModelLoader(argv[1]);
-      return m_controller->changeModel(object, loader);
+      pmd = m_factory->createModelLoader(argv[1]);
+      return m_controller->changeModel(object, pmd);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
@@ -243,7 +244,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
-      return m_controller->addMotion(object, argv[1] , argv[2], full, once, enableSmooth, enableRepos);
+      vmd = m_factory->createMotionLoader(argv[2]);
+      return m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
@@ -258,7 +260,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
-      return m_controller->changeMotion(object, argv[1], argv[2]);
+      vmd = m_factory->createMotionLoader(argv[2]);
+      return m_controller->changeMotion(object, argv[1], vmd);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
@@ -443,15 +446,15 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     bool ret = false;
     char *background = strstr(filename, ",");
     if (background == NULL) {
-      loader = m_factory->createModelLoader(filename);
-      ret = m_controller->loadStage(loader);
+      pmd = m_factory->createModelLoader(filename);
+      ret = m_controller->loadStage(pmd);
     }
     else {
       *background = '\0';
       *background++;
-      PMDModelLoader *floorLoader = m_factory->createModelLoader(filename);
-      PMDModelLoader *backgroundLoader = m_factory->createModelLoader(background);
-      ret = m_controller->loadFloor(floorLoader) && m_controller->loadBackground(backgroundLoader);
+      PMDModelLoader *floorPMD = m_factory->createModelLoader(filename);
+      PMDModelLoader *backgroundPMD = m_factory->createModelLoader(background);
+      ret = m_controller->loadFloor(floorPMD) && m_controller->loadBackground(backgroundPMD);
       free(filename);
       return ret;
     }

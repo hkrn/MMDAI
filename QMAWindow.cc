@@ -158,8 +158,10 @@ void QMAWindow::insertMotionToAllModels()
     int count = controller->countPMDObjects();
     for (int i = 0; i < count; i++) {
       PMDObject *object = controller->getPMDObject(i);
-      if (object->isEnable() && object->allowMotionFileDrop())
-        controller->addMotion(object, filename);
+      if (object->isEnable() && object->allowMotionFileDrop()) {
+        VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
+        controller->addMotion(object, loader);
+      }
     }
   }
 }
@@ -174,8 +176,10 @@ void QMAWindow::insertMotionToSelectedModel()
     m_settings->value("window/lastVMDDirectory", dir.absolutePath());
     SceneController *controller = m_widget->getSceneController();
     PMDObject *selectedObject = controller->getSelectedPMDObject();
-    if (selectedObject != NULL)
-      controller->addMotion(selectedObject, fileName.toUtf8().constData());
+    if (selectedObject != NULL) {
+      VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(fileName.toUtf8().constData());
+      controller->addMotion(selectedObject, loader);
+    }
   }
 }
 

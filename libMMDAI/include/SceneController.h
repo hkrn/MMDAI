@@ -68,17 +68,17 @@ public:
 
   void updateLight();
 
-  bool addMotion(PMDObject *object, const char *fileName);
+  bool addMotion(PMDObject *object, VMDLoader *loader);
   bool addMotion(PMDObject *object,
                  const char *motionAlias,
-                 const char *fileName,
+                 VMDLoader *loader,
                  bool full,
                  bool once,
                  bool enableSmooth,
                  bool enableRePos);
   bool changeMotion(PMDObject *object,
                     const char *motionAlias,
-                    const char *fileName);
+                    VMDLoader *loader);
   bool deleteMotion(PMDObject *object,
                     const char *motionAlias);
 

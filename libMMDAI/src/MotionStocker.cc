@@ -78,10 +78,11 @@ MotionStocker::~MotionStocker()
   clear();
 }
 
-/* MotionStocker::loadFromFile: load VMD from file or return cached one */
-VMD * MotionStocker::loadFromFile(const char *fileName)
+/* MotionStocker::loadFromLoader: load VMD from file or return cached one */
+VMD * MotionStocker::loadFromLoader(VMDLoader *loader)
 {
   VMDList *vl, *tmp;
+  const char *fileName = loader->getLocation();
 
   /* search cache from tail to head */
   for(vl = m_tail; vl; vl = tmp) {
@@ -107,7 +108,7 @@ VMD * MotionStocker::loadFromFile(const char *fileName)
 
   /* load VMD */
   vl = new VMDList;
-  if(vl->vmd.load(fileName) == false) {
+  if(vl->vmd.load(loader) == false) {
     delete vl;
     g_logger.log("! Error: failed to load vmd from file: %s", fileName);
     return NULL;

@@ -243,17 +243,18 @@ void QMAWidget::updateScene()
   update();
 }
 
-void QMAWidget::changeBaseMotion(PMDObject *object, const char *filename)
+void QMAWidget::changeBaseMotion(PMDObject *object, VMDLoader *loader)
 {
   MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
   for (; player != NULL; player = player->next) {
     if (player->active && strncmp(player->name, "base", 4) == 0) {
-      m_controller->changeMotion(object, "base", filename);
+      m_controller->changeMotion(object, "base", loader);
       break;
     }
   }
-  if (player == NULL)
-    m_controller->addMotion(object, "base", filename, true, false, true, true);
+  if (player == NULL) {
+    m_controller->addMotion(object, "base", loader, true, false, true, true);
+  }
 }
 
 void QMAWidget::initializeGL()
@@ -415,8 +416,10 @@ void QMAWidget::dropEvent(QDropEvent *event)
               /* insert a motion to the all objects */
               for (int i = 0; i < count; i++) {
                 PMDObject *object = m_controller->getPMDObject(i);
-                if (object->isEnable() && object->allowMotionFileDrop())
-                  m_controller->addMotion(object, filename);
+                if (object->isEnable() && object->allowMotionFileDrop()) {
+                  VMDLoader *loader = m_factory.createMotionLoader(filename);
+                  m_controller->addMotion(object, loader);
+                }
               }
             }
             else {
@@ -424,7 +427,8 @@ void QMAWidget::dropEvent(QDropEvent *event)
               for (int i = 0; i < count; i++) {
                 PMDObject *object = m_controller->getPMDObject(i);
                 if (object->isEnable() && object->allowMotionFileDrop()) {
-                  changeBaseMotion(object, filename);
+                  VMDLoader *loader = m_factory.createMotionLoader(filename);
+                  changeBaseMotion(object, loader);
                 }
               }
             }
@@ -442,11 +446,13 @@ void QMAWidget::dropEvent(QDropEvent *event)
             if (selectedObject != NULL) {
               if (modifiers & Qt::ShiftModifier) {
                 /* insert a motion to the model */
-                m_controller->addMotion(selectedObject, filename);
+                VMDLoader *loader = m_factory.createMotionLoader(filename);
+                m_controller->addMotion(selectedObject, loader);
               }
               else {
                 /* change base motion to the model */
-                changeBaseMotion(selectedObject, filename);
+                VMDLoader *loader = m_factory.createMotionLoader(filename);
+                changeBaseMotion(selectedObject, loader);
               }
             }
           }

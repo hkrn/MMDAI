@@ -53,6 +53,16 @@ QMAModelLoaderFactory::~QMAModelLoaderFactory()
 
 PMDModelLoader *QMAModelLoaderFactory::createModelLoader(const char *filename)
 {
+  return createLoader(filename);
+}
+
+VMDLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename)
+{
+  return createLoader(filename);
+}
+
+inline QMAModelLoader *QMAModelLoaderFactory::createLoader(const char *filename)
+{
   QString path = QDir(QDir::currentPath()).absoluteFilePath("AppData");
   QMAModelLoader *loader = new QMAModelLoader(path, filename);
   m_loaders.insert(loader);

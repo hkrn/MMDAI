@@ -42,6 +42,7 @@
 #include <btBulletDynamicsCommon.h>
 
 #include "PTree.h"
+#include "VMDLoader.h"
 
 #define VMD_INTERPOLATIONTABLESIZE 64 /* motion interpolation table size */
 
@@ -135,7 +136,7 @@ public:
    ~VMD();
 
    /* load: initialize and load from file name */
-   bool load(const char *file);
+   bool load(VMDLoader *loader);
 
    /* parse: initialize and load from data memories */
    bool parse(unsigned char *data, size_t size);

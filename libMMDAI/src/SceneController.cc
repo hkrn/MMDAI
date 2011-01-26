@@ -196,15 +196,15 @@ int SceneController::countPMDObjects() const
 }
 
 /* SceneController::addMotion: add motion */
-bool SceneController::addMotion(PMDObject *object, const char *fileName)
+bool SceneController::addMotion(PMDObject *object, VMDLoader *loader)
 {
-  return addMotion(object, NULL, fileName, false, true, true, true);
+  return addMotion(object, NULL, loader, false, true, true, true);
 }
 
 /* SceneController::addMotion: add motion */
 bool SceneController::addMotion(PMDObject *object,
                                 const char *motionAlias,
-                                const char *fileName,
+                                VMDLoader *loader,
                                 bool full,
                                 bool once,
                                 bool enableSmooth,
@@ -218,9 +218,9 @@ bool SceneController::addMotion(PMDObject *object,
   size_t allocSize;
 
   /* motion file */
-  vmd = m_motion.loadFromFile(fileName);
+  vmd = m_motion.loadFromLoader(loader);
   if (vmd == NULL) {
-    g_logger.log("! Error: addMotion: failed to load %s.", fileName);
+    g_logger.log("! Error: addMotion: failed to load %s.", loader->getLocation());
     return false;
   }
 
@@ -270,7 +270,7 @@ bool SceneController::addMotion(PMDObject *object,
 }
 
 /* SceneController::changeMotion: change motion */
-bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, const char *fileName)
+bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, VMDLoader *loader)
 {
   VMD *vmd, *old = NULL;
   MotionPlayer *motionPlayer;
@@ -282,9 +282,9 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, c
   }
 
   /* motion file */
-  vmd = m_motion.loadFromFile(fileName);
+  vmd = m_motion.loadFromLoader(loader);
   if (vmd == NULL) {
-    g_logger.log("! Error: changeMotion: failed to load %s.", fileName);
+    g_logger.log("! Error: changeMotion: failed to load %s.", loader->getLocation());
     return false;
   }
 

@@ -37,7 +37,7 @@
 #ifndef QMAMODELLOADERFACTORY_H
 #define QMAMODELLOADERFACTORY_H
 
-#include "MMDAI/PMDModelLoaderFactory.h"
+#include <MMDAI/PMDModelLoaderFactory.h>
 #include "QMAModelLoader.h"
 
 #include <QSet>
@@ -50,8 +50,12 @@ public:
 
   PMDModelLoader *createModelLoader(const char *filename);
 
+  VMDLoader *createMotionLoader(const char *filename);
+
 private:
   QSet<QMAModelLoader *> m_loaders;
+
+  QMAModelLoader *createLoader(const char *filename);
 };
 
 #endif // QMAMODELLOADERFACTORY_H

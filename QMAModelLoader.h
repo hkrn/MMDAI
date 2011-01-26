@@ -41,9 +41,10 @@
 
 #include <QtGui>
 
-#include "MMDFiles/PMDModelLoader.h"
+#include <MMDFiles/PMDModelLoader.h>
+#include <MMDFiles/VMDLoader.h>
 
-class QMAModelLoader : public PMDModelLoader
+class QMAModelLoader : public PMDModelLoader, public VMDLoader
 {
 public:
   QMAModelLoader(const QString &system, const char *filename);
@@ -51,6 +52,10 @@ public:
 
   bool loadModelData(unsigned char **ptr, size_t *size);
   void unloadModelData(unsigned char *ptr);
+
+  bool loadMotionData(unsigned char **ptr, size_t *size);
+  void unloadMotionData(unsigned char *ptr);
+
   bool loadImageTexture(PMDTexture *texture);
   bool loadModelTexture(const char *name, PMDTexture *texture);
   bool loadSystemTexture(int index, PMDTexture *texture);

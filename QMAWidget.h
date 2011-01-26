@@ -39,12 +39,12 @@
 
 #include <QtGui/QtGui>
 
-#include "MMDFiles/MMDFiles.h"
+#include <MMDFiles/MMDFiles.h>
 
-#include "MMDAI/PMDModelLoaderFactory.h"
-#include "MMDAI/CommandParser.h"
-#include "MMDAI/SceneController.h"
-#include "MMDAI/TextRenderer.h"
+#include <MMDAI/PMDModelLoaderFactory.h>
+#include <MMDAI/CommandParser.h>
+#include <MMDAI/SceneController.h>
+#include <MMDAI/TextRenderer.h>
 
 #include "QMAModelLoaderFactory.h"
 #include "QMATimer.h"
@@ -69,7 +69,7 @@ public:
   void toggleDisplayBone();
   void toggleDisplayRigidBody();
   void sendKeyEvent(const QString &text);
-  void changeBaseMotion(PMDObject *object, const char *filename);
+  void changeBaseMotion(PMDObject *object, VMDLoader *loader);
 
 public slots:
   void delegateCommand(const QString &command, const QStringList &arguments);

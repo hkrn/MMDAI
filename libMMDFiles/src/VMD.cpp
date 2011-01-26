@@ -253,44 +253,14 @@ VMD::~VMD()
 }
 
 /* VMD::load: initialize and load from file name */
-bool VMD::load(const char *file)
+bool VMD::load(VMDLoader *loader)
 {
-   FILE *fp;
-   fpos_t fpos;
-   size_t size;
-   unsigned char *data;
-   bool ret;
-
-   /* open file */
-   fp = fopen(file, "rb");
-   if (!fp)
-      return false;
-
-   /* get file size */
-   fseek(fp, 0, SEEK_END);
-   fgetpos(fp, &fpos);
-#if defined(__linux__)
-   size = (size_t) fpos.__pos;
-#else
-   size = (size_t) fpos;
-#endif
-
-   /* allocate memory for reading data */
-   data = (unsigned char *) malloc(size);
-
-   /* read all data */
-   fseek(fp, 0, SEEK_SET);
-   fread(data, 1, size, fp);
-
-   /* close file */
-   fclose(fp);
-
-   /* initialize and load from data memories */
-   ret = parse(data, (unsigned long) size);
-
-   /* release memory for reading */
-   free(data);
-
+   unsigned char *ptr = NULL;
+   size_t size = 0;
+   if (!loader->loadMotionData(&ptr, &size))
+     return false;
+   bool ret = parse(ptr, size);
+   loader->unloadMotionData(ptr);
    return ret;
 }
 

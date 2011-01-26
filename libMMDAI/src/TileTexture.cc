@@ -94,12 +94,11 @@ TileTexture::~TileTexture()
 /* TileTexture::load: load a texture from file name (wide char) */
 bool TileTexture::load(PMDModelLoader *loader)
 {
-  bool ret = true;
-  if (loader->loadImageTexture(&m_texture) == false)
-    ret = false;
-
-  m_isLoaded = true;
-  resetDisplayList();
+  bool ret = loader->loadImageTexture(&m_texture);
+  if (ret) {
+    m_isLoaded = true;
+    resetDisplayList();
+  }
   return ret;
 }
 

@@ -42,7 +42,7 @@
 #include <QStringList>
 #include <QtPlugin>
 
-#include "MMDAI/SceneController.h"
+#include <MMDAI/SceneController.h>
 
 class QMAPlugin : public QObject
 {

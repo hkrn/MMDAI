@@ -171,7 +171,11 @@ static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
       int h = image.height();
       int c = image.depth() / 8;
       int size = w * h * c;
+#if QT_VERSION >= QT_VERSION_CHECK(4, 7, 0)
+      texture->loadBytes(image.rgbSwapped().constBits(), size, w, h, c, isSphereMap, isSphereMapAdd);
+#else
       texture->loadBytes(image.rgbSwapped().bits(), size, w, h, c, isSphereMap, isSphereMapAdd);
+#endif
       return true;
     }
     else {
@@ -220,6 +224,16 @@ void QMAModelLoader::unloadModelData(unsigned char *ptr)
 {
   m_file->unmap(ptr);
   m_file->close();
+}
+
+bool QMAModelLoader::loadMotionData(unsigned char **ptr, size_t *size)
+{
+  return loadModelData(ptr, size);
+}
+
+void QMAModelLoader::unloadMotionData(unsigned char *ptr)
+{
+  unloadModelData(ptr);
 }
 
 bool QMAModelLoader::loadImageTexture(PMDTexture *texture)
