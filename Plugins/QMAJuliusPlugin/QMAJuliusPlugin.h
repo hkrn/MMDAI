@@ -72,7 +72,7 @@ public slots:
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);
   void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, double delta);
+  void update(const QRect &rect, const QPoint &pos, const double delta);
   void render();
 
 private slots:

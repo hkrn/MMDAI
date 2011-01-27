@@ -61,8 +61,9 @@ QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
   delete m_object;
 }
 
-void QMAAquesTalk2Plugin::initialize(SceneController */*controller*/, const QString &path)
+void QMAAquesTalk2Plugin::initialize(SceneController *controller, const QString &path)
 {
+  Q_UNUSED(controller);
   Q_UNUSED(path);
   /* do nothing */
 }
@@ -103,9 +104,10 @@ void QMAAquesTalk2Plugin::receiveEvent(const QString &type, const QStringList &a
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::update(const QRect &rect, double delta)
+void QMAAquesTalk2Plugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
   Q_UNUSED(rect);
+  Q_UNUSED(pos);
   Q_UNUSED(delta);
   /* do nothing */
 }

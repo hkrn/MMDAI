@@ -51,8 +51,9 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 {
 }
 
-void QMAVIManagerPlugin::initialize(SceneController */*controller*/, const QString &path)
+void QMAVIManagerPlugin::initialize(SceneController *controller, const QString &path)
 {
+  Q_UNUSED(controller);
   QFile config(path + "/MMDAI.fst");
   if (config.exists())
     m_thread.load(config.fileName().toUtf8().constData());
@@ -82,9 +83,10 @@ void QMAVIManagerPlugin::receiveEvent(const QString &type, const QStringList &ar
   }
 }
 
-void QMAVIManagerPlugin::update(const QRect &rect, const double delta)
+void QMAVIManagerPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
   Q_UNUSED(rect);
+  Q_UNUSED(pos);
   Q_UNUSED(delta);
   /* do nothing */
 }

@@ -58,8 +58,9 @@ QMAAudioPlugin::~QMAAudioPlugin()
   delete m_audioObject;
 }
 
-void QMAAudioPlugin::initialize(SceneController */*controller*/, const QString &path)
+void QMAAudioPlugin::initialize(SceneController *controller, const QString &path)
 {
+  Q_UNUSED(controller);
   m_path = QDir(path);
 }
 
@@ -98,13 +99,18 @@ void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &a
   }
 }
 
-void QMAAudioPlugin::receiveEvent(const QString &/*type*/, const QStringList &/*arguments*/)
+void QMAAudioPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
+  Q_UNUSED(type);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 
-void QMAAudioPlugin::update(const QRect &/*rect*/, const double /*delta*/)
+void QMAAudioPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
+  Q_UNUSED(rect);
+  Q_UNUSED(pos);
+  Q_UNUSED(delta);
   /* do nothing */
 }
 

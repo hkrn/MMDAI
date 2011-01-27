@@ -135,8 +135,8 @@ void QMAWidget::loadPlugins()
               plugin, SLOT(receiveCommand(const QString&, const QStringList&)));
       connect(this, SIGNAL(pluginEventPost(const QString&, const QStringList&)),
               plugin, SLOT(receiveEvent(const QString&, const QStringList&)));
-      connect(this, SIGNAL(pluginUpdated(QRect,double)),
-              plugin, SLOT(update(QRect,double)));
+      connect(this, SIGNAL(pluginUpdated(const QRect&, const QPoint&, double)),
+              plugin, SLOT(update(const QRect&, const QPoint&, double)));
       connect(this, SIGNAL(pluginRendered()),
               plugin, SLOT(render()));
       connect(plugin, SIGNAL(commandPost(const QString&, const QStringList&)),
@@ -200,7 +200,8 @@ void QMAWidget::delegateEvent(const QString &type, const QStringList &arguments)
 
 void QMAWidget::updateScene()
 {
-  const QRect rectangle = rect();
+  const QRect rectangle(geometry());
+  const QPoint point = mapFromGlobal(QCursor::pos());
   Option *option = m_controller->getOption();
   double intervalFrame = m_timer.getInterval();
   double stepMax = option->getBulletFps();
@@ -221,7 +222,7 @@ void QMAWidget::updateScene()
     if (adjustFrame != 0.0)
       m_frameCue = 90.0;
     m_controller->updateMotion(procFrame, adjustFrame);
-    emit pluginUpdated(rectangle, procFrame + adjustFrame);
+    emit pluginUpdated(rectangle, point, procFrame + adjustFrame);
   }
 
   m_controller->updateAfterSimulation();

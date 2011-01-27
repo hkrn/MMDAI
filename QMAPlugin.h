@@ -56,7 +56,7 @@ public:
   virtual void stop() = 0;
   virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;
   virtual void receiveEvent(const QString &type, const QStringList &arguments) = 0;
-  virtual void update(const QRect &rect, const double delta) = 0;
+  virtual void update(const QRect &rect, const QPoint &pos, const double delta) = 0;
   virtual void render() = 0;
 
   /* signals */

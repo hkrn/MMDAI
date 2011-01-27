@@ -51,8 +51,9 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
   delete m_thread;
 }
 
-void QMAJuliusPlugin::initialize(SceneController */*controller*/, const QString &path)
+void QMAJuliusPlugin::initialize(SceneController *controller, const QString &path)
 {
+  Q_UNUSED(controller);
   QDir dir = QDir(QString(path) + "/AppData/Julius");
   QString filename = dir.absoluteFilePath("jconf.txt");
   QFile jconf(filename);
@@ -107,9 +108,10 @@ void QMAJuliusPlugin::receiveEvent(const QString &type, const QStringList &argum
   /* do nothing */
 }
 
-void QMAJuliusPlugin::update(const QRect &rect, double delta)
+void QMAJuliusPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
   Q_UNUSED(rect);
+  Q_UNUSED(pos);
   Q_UNUSED(delta);
   /* do nothing */
 }

@@ -81,7 +81,7 @@ signals:
   void pluginStopped();
   void pluginCommandPost(const QString&, const QStringList&);
   void pluginEventPost(const QString&, const QStringList&);
-  void pluginUpdated(const QRect, const double);
+  void pluginUpdated(const QRect&, const QPoint&, const double);
   void pluginRendered();
 
 protected:
