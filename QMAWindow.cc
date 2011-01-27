@@ -401,8 +401,6 @@ void QMAWindow::about()
                                                    "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
                                                    "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
                                                    "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
-                                                   "<li><a href='http://www.libpng.org'>libpng</a></li>"
-                                                   "<li><a href='http://zlib.net'>zlib</a></li>"
                                                    "</ul></p>"
                                                    "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
                                                    "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>"));
