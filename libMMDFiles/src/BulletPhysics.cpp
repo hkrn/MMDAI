@@ -58,34 +58,25 @@ void BulletPhysics::initialize()
 /* BulletPhysics::clear: free BulletPhysics */
 void BulletPhysics::clear()
 {
-#if 0
-   int i, numObject;
-   btCollisionObject *obj;
-   btRigidBody *body;
-
    if (m_world) {
       /* release remaining objects within the world */
-      numObject = m_world->getNumCollisionObjects();
-      for (i = 0; i < numObject; i++) {
-         obj = m_world->getCollisionObjectArray()[i];
-         body = btRigidBody::upcast(obj);
+      int numObject = m_world->getNumCollisionObjects();
+      for (int i = 0; i < numObject; i++) {
+         btCollisionObject *obj = m_world->getCollisionObjectArray()[i];
+         btRigidBody *body = btRigidBody::upcast(obj);
          if (body && body->getMotionState())
             delete body->getMotionState();
          m_world->removeCollisionObject(obj);
          delete obj;
       }
    }
-   if (m_world)
-      delete m_world;
-   if (m_solver)
-      delete m_solver;
-   if (m_overlappingPairCache)
-      delete m_overlappingPairCache;
-   if (m_dispatcher)
-      delete m_dispatcher;
-   if (m_collisionConfig)
-      delete m_collisionConfig;
-#endif
+
+   delete m_world;
+   delete m_solver;
+   delete m_overlappingPairCache;
+   delete m_dispatcher;
+   delete m_collisionConfig;
+
    initialize();
 }
 
