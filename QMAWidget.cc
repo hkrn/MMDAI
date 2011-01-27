@@ -162,6 +162,12 @@ void QMAWidget::loadPlugins()
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
 {
   qDebug().nospace() << "delegateCommand command=" << command << ", arguments="  << arguments;
+#if 0
+  if (command == "MMDAI_EXIT") {
+    QApplication::closeAllWindows();
+    return;
+  }
+#endif
   int argc = arguments.count();
   const char *cmd = strdup(command.toUtf8().constData());
   const char **argv = static_cast<const char **>(calloc(sizeof(char *), argc));
