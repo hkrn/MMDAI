@@ -58,7 +58,7 @@ QMAAudioPlugin::~QMAAudioPlugin()
   delete m_audioObject;
 }
 
-void QMAAudioPlugin::initialize(const QString &path)
+void QMAAudioPlugin::initialize(SceneController */*controller*/, const QString &path)
 {
   m_path = QDir(path);
 }
@@ -72,11 +72,6 @@ void QMAAudioPlugin::stop()
 {
   m_audioObject->clear();
   m_audioSources.clear();
-}
-
-void QMAAudioPlugin::createWindow()
-{
-  /* do nothing */
 }
 
 void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &arguments)

@@ -51,7 +51,7 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 {
 }
 
-void QMAVIManagerPlugin::initialize(const QString &path)
+void QMAVIManagerPlugin::initialize(SceneController */*controller*/, const QString &path)
 {
   QFile config(path + "/MMDAI.fst");
   if (config.exists())
@@ -66,11 +66,6 @@ void QMAVIManagerPlugin::start()
 void QMAVIManagerPlugin::stop()
 {
   m_thread.stop();
-}
-
-void QMAVIManagerPlugin::createWindow()
-{
-  /* do nothing */
 }
 
 void QMAVIManagerPlugin::receiveCommand(const QString &command, const QStringList &arguments)

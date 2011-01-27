@@ -54,10 +54,9 @@ public:
   ~QMAAudioPlugin();
 
 public slots:
-  void initialize(const QString &path);
+  void initialize(SceneController *controller, const QString &path);
   void start();
   void stop();
-  void createWindow();
   void receiveCommand(const QString &command, const QStringList &arguments);
   void receiveEvent(const QString &type, const QStringList &arguments);
   void update(const QRect &rect, const double delta);

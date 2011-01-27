@@ -61,7 +61,7 @@ QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
   delete m_object;
 }
 
-void QMAAquesTalk2Plugin::initialize(const QString &path)
+void QMAAquesTalk2Plugin::initialize(SceneController */*controller*/, const QString &path)
 {
   Q_UNUSED(path);
   /* do nothing */
@@ -75,11 +75,6 @@ void QMAAquesTalk2Plugin::start()
 void QMAAquesTalk2Plugin::stop()
 {
   m_object->stop();
-}
-
-void QMAAquesTalk2Plugin::createWindow()
-{
-  /* do nothing */
 }
 
 void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringList &arguments)

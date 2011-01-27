@@ -51,7 +51,7 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
   delete m_thread;
 }
 
-void QMAJuliusPlugin::initialize(const QString &path)
+void QMAJuliusPlugin::initialize(SceneController */*controller*/, const QString &path)
 {
   QDir dir = QDir(QString(path) + "/AppData/Julius");
   QString filename = dir.absoluteFilePath("jconf.txt");
@@ -89,11 +89,6 @@ void QMAJuliusPlugin::start()
 }
 
 void QMAJuliusPlugin::stop()
-{
-  /* do nothing */
-}
-
-void QMAJuliusPlugin::createWindow()
 {
   /* do nothing */
 }
