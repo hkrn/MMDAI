@@ -51,10 +51,9 @@ public:
   virtual ~QMAPlugin() {}
 
   /* slots */
-  virtual void initialize(const QString &path) = 0;
+  virtual void initialize(SceneController *controller, const QString &path) = 0;
   virtual void start() = 0;
   virtual void stop() = 0;
-  virtual void createWindow() = 0;
   virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;
   virtual void receiveEvent(const QString &type, const QStringList &arguments) = 0;
   virtual void update(const QRect &rect, const double delta) = 0;

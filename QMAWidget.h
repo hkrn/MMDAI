@@ -76,10 +76,9 @@ public slots:
   void delegateEvent(const QString &type, const QStringList &arguments);
 
 signals:
-  void pluginInitialized(const QString);
+  void pluginInitialized(SceneController *, const QString);
   void pluginStarted();
   void pluginStopped();
-  void pluginWindowCreated();
   void pluginCommandPost(const QString&, const QStringList&);
   void pluginEventPost(const QString&, const QStringList&);
   void pluginUpdated(const QRect, const double);

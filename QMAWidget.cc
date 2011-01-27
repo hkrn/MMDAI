@@ -125,14 +125,12 @@ void QMAWidget::loadPlugins()
     QObject *instance = loader.instance();
     QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
     if (plugin != NULL) {
-      connect(this, SIGNAL(pluginInitialized(const QString)),
-              plugin, SLOT(initialize(const QString)));
+      connect(this, SIGNAL(pluginInitialized(SceneController *, const QString)),
+              plugin, SLOT(initialize(SceneController *, const QString)));
       connect(this, SIGNAL(pluginStarted()),
               plugin, SLOT(start()));
       connect(this, SIGNAL(pluginStopped()),
               plugin, SLOT(stop()));
-      connect(this, SIGNAL(pluginWindowCreated()),
-              plugin, SLOT(createWindow()));
       connect(this, SIGNAL(pluginCommandPost(const QString&, const QStringList&)),
               plugin, SLOT(receiveCommand(const QString&, const QStringList&)));
       connect(this, SIGNAL(pluginEventPost(const QString&, const QStringList&)),
@@ -156,7 +154,7 @@ void QMAWidget::loadPlugins()
   size[1] = height();
   m_controller->init(size, appDir.absoluteFilePath("AppData").toUtf8().constData());
   m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
-  emit pluginInitialized(appDir.absolutePath());
+  emit pluginInitialized(m_controller, appDir.absolutePath());
 }
 
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
