@@ -72,7 +72,7 @@ public:
 
    ~BoneController();
 
-   void setup(PMDModel *model, char **boneName, int numBone, float rateOn, float rateOff,
+   void setup(PMDModel *model, const char **boneName, int numBone, float rateOn, float rateOff,
               float baseVectorX, float baseVectorY, float baseVectorZ,
               float upperAngLimitX, float upperAngLimitY, float upperAngLimitZ,
               float lowerAngLimitX, float lowerAngLimitY, float lowerAngLimitZ,

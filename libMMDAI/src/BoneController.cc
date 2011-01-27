@@ -91,7 +91,7 @@ BoneController::~BoneController()
 }
 
 /* BoneController::setup: initialize and setup bone controller */
-void BoneController::setup(PMDModel *model, char **boneName, int numBone, float rateOn, float rateOff,
+void BoneController::setup(PMDModel *model, const char **boneName, int numBone, float rateOn, float rateOff,
                            float baseVectorX, float baseVectorY, float baseVectorZ,
                            float upperAngLimitX, float upperAngLimitY, float upperAngLimitZ,
                            float lowerAngLimitX, float lowerAngLimitY, float lowerAngLimitZ,
