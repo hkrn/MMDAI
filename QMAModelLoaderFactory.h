@@ -45,16 +45,18 @@
 class QMAModelLoaderFactory : public PMDModelLoaderFactory
 {
 public:
-  QMAModelLoaderFactory();
-  ~QMAModelLoaderFactory();
+  QMAModelLoaderFactory() {}
+  ~QMAModelLoaderFactory() {}
 
   PMDModelLoader *createModelLoader(const char *filename);
 
   VMDLoader *createMotionLoader(const char *filename);
 
-private:
-  QSet<QMAModelLoader *> m_loaders;
+  void releaseModelLoader(PMDModelLoader *loader);
 
+  void releaseMotionLoader(VMDLoader *loader);
+
+private:
   QMAModelLoader *createLoader(const char *filename);
 };
 

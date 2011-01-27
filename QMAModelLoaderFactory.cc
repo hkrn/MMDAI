@@ -40,17 +40,6 @@
 #include "QMAModelLoader.h"
 #include "QMAModelLoaderFactory.h"
 
-QMAModelLoaderFactory::QMAModelLoaderFactory()
-{
-}
-
-QMAModelLoaderFactory::~QMAModelLoaderFactory()
-{
-  foreach (QMAModelLoader *loader, m_loaders) {
-    delete loader;
-  }
-}
-
 PMDModelLoader *QMAModelLoaderFactory::createModelLoader(const char *filename)
 {
   return createLoader(filename);
@@ -61,10 +50,18 @@ VMDLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename)
   return createLoader(filename);
 }
 
+void QMAModelLoaderFactory::releaseModelLoader(PMDModelLoader *loader)
+{
+  delete loader;
+}
+
+void QMAModelLoaderFactory::releaseMotionLoader(VMDLoader *loader)
+{
+  delete loader;
+}
+
 inline QMAModelLoader *QMAModelLoaderFactory::createLoader(const char *filename)
 {
   QString path = QDir(QDir::currentPath()).absoluteFilePath("AppData");
-  QMAModelLoader *loader = new QMAModelLoader(path, filename);
-  m_loaders.insert(loader);
-  return loader;
+  return new QMAModelLoader(path, filename);
 }
