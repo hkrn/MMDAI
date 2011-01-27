@@ -40,7 +40,7 @@ cmake_minimum_required(VERSION 2.6)
 set(MMDFILES_VERSION 1.0)
 
 # project configuration
-project(Library_MMDFiles)
+project(libMMDFiles)
 aux_source_directory(src libMMDFiles_sources)
 set(libMMDFiles_public_headers
   include/BulletPhysics.h
@@ -83,6 +83,7 @@ find_path(GLEE_INCLUDE GLee.h)
 find_library(GLEE_LIBRARY glee)
 if(GLEE_INCLUDE AND GLEE_LIBRARY)
   target_link_libraries(MMDFiles ${GLEE_LIBRARY})
+  include_directories(${GLEE_INCLUDE})
 else()
   message(FATAL_ERROR "Required OpenGL Easy Extension is not found.")
 endif()
