@@ -1,5 +1,6 @@
 CMakeCache.txt
 CMakeFiles
+CMakeScripts
 cmake_install.cmake
 debug
 install_manifest.txt
@@ -7,10 +8,12 @@ Makefile*
 moc_*
 QtMMDAI*
 release
+*.build
 *-build-desktop
 *.dll*
 *.dylib
 *.o
 *.pro.user
 *.so*
+*.xcodeproj
 
