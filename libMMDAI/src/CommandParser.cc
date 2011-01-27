@@ -117,6 +117,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   PMDModelLoader *pmd = NULL;
   VMDLoader *vmd = NULL;
   float tmpFloat = 0.0f, float3[3] = { 0.0f, 0.0f, 0.0f };
+  bool ret = true;
   btVector3 pos;
   btQuaternion rot;
 
@@ -150,8 +151,9 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       rot.setEulerZYX(0.0, 0.0, 0.0);
     }
     pmd = m_factory->createModelLoader(argv[1]);
-    return m_controller->addModel(argv[0], pmd, &pos, &rot,
+    ret = m_controller->addModel(argv[0], pmd, &pos, &rot,
         argc >= 5 ? argv[4] : NULL, argc >= 6 ? argv[5] : NULL);
+    m_factory->releaseModelLoader(pmd);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_CHANGE) == 0) {
     /* change model */
@@ -162,7 +164,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
       pmd = m_factory->createModelLoader(argv[1]);
-      return m_controller->changeModel(object, pmd);
+      ret = m_controller->changeModel(object, pmd);
+      m_factory->releaseModelLoader(pmd);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
@@ -245,7 +248,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
       vmd = m_factory->createMotionLoader(argv[2]);
-      return m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos);
+      ret = m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos);
+      m_factory->releaseMotionLoader(vmd);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
@@ -261,7 +265,8 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
       vmd = m_factory->createMotionLoader(argv[2]);
-      return m_controller->changeMotion(object, argv[1], vmd);
+      ret = m_controller->changeMotion(object, argv[1], vmd);
+      m_factory->releaseMotionLoader(vmd);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
@@ -513,5 +518,5 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  return true;
+  return ret;
 }

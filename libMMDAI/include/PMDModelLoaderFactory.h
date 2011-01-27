@@ -52,6 +52,10 @@ public:
   virtual PMDModelLoader *createModelLoader(const char *filename) = 0;
 
   virtual VMDLoader *createMotionLoader(const char *filename) = 0;
+
+  virtual void releaseModelLoader(PMDModelLoader *loader) = 0;
+
+  virtual void releaseMotionLoader(VMDLoader *loader) = 0;
 };
 
 #endif // SCENEEVENTHANDLER_H
