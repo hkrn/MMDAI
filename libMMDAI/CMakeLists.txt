@@ -43,6 +43,7 @@ set(MMDAGENT_VERSION 1.0)
 project(libMMDAI)
 aux_source_directory(src libMMDAI_sources)
 set(libMMDAI_public_headers
+  include/BoneController.h
   include/CommandParser.h
   include/LipSync.h
   include/Logger.h
