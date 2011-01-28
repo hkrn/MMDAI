@@ -83,7 +83,7 @@ void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringLi
   int argc = arguments.count();
   if (command == "MMDAI_AQTK2_START" && argc > 0) {
     int size = 0;
-    const char *text = arguments.at(0).toAscii().constData();
+    const char *text = arguments.at(0).toUtf8().constData();
     unsigned char *data = AquesTalk2_Synthe_Utf8(text, 100, &size, NULL);
     if (data != NULL) {
       delete m_buffer;
