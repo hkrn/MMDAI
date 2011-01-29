@@ -160,6 +160,73 @@ $ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libMMD* .
 $ rm *.a
 $ wine QtMMDAI.exe
 
+* プラグインについて
+
+現在以下のプラグインが入っています。
+
+** QMAAquesTalk2Plugin
+
+音声合成ライブラリである AquesTalk2 を使って喋らせるプラグインです。
+以下が利用可能です。喋らせる文字列は AquesTalk2 に渡す文字列と同様です。
+
+- Command
+-- MMDAI_AQTK2_START(喋らせる文字列)
+
+** QMAAudioPlugin
+
+BGM または SE を流すためのプラグインです。以下が利用可能です。
+MMDAgent のコマンド及びイベントと互換性があります。
+
+- Command
+-- SOUND_START(エイリアス, ファイル名)
+-- SOUND_STOP(エイリアス)
+- Event
+-- SOUND_EVENT_STOP
+
+** QMAJuliusPlugin
+
+音声認識エンジンである Julius を用いて音声認識を行うプラグインです。
+以下が利用可能です。MMDAgent のコマンド及びイベントと互換性があります。
+
+- EVENT
+-- RECOG_EVENT_START
+-- RECOG_EVENT_STOP
+
+** QMALookAtPlugin
+
+マウスのカーソルに合わせてモデルの顔が動くプラグインです。
+キーボードの "L" を押すことによって有効無効を切り替えることが出来ます。
+
+** QMAVILuaPlugin
+
+Lua を用いてコマンド及びイベントを制御するプラグインです。
+アプリケーションディレクトリの MMDAI.lua を読み込んで実行します。
+
+Lua に以下の拡張が行われます。
+
+- mmdai.command(command, arg1, ...)
+コマンドを実行します。第一引数にコマンド名を渡します。必須です。
+第二引数以降の引数は任意であり、可変です。
+
+- mmdai.event(type, arg1, ...)
+イベントを実行します。第一引数にイベント名を渡します。必須です。
+第二引数以降の引数は任意であり、可変です。
+
+- mmdai_handle_command(command, ...)
+プラグインが呼び出すコマンドを取り扱うコールバック関数です。
+第一引数にコマンド名が渡されます。第二引数に可変引数が入ります。
+
+- mmdai_handle_event(event, ...)
+プラグインが呼び出すイベントを取り扱うコールバック関数です。
+第一引数にイベント名が渡されます。第二引数に可変引数が入ります。
+
+mmdai.command 及び mmdai.event はすぐに実行されません。
+関数の実行が終了してからはじめて実行されます。
+
+** QMAVIManagerPlugin
+
+MMDAgent の fst を取り扱ってイベント及びコマンドを制御するプラグインです。
+
 * License
 オリジナルのMMDAgentと同じく、修正BSDライセンスの元で配布されます。
 
