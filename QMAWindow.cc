@@ -69,77 +69,14 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
 {
   const Qt::KeyboardModifiers modifiers = event->modifiers();
   switch (event->key()) {
-  case Qt::Key_Up: /* rotate or translate up */
-    if (modifiers & Qt::ShiftModifier)
-      translateUp();
-    else
-      rotateUp();
-    break;
-  case Qt::Key_Down: /* rotate or translate down */
-    if (modifiers & Qt::ShiftModifier)
-      translateDown();
-    else
-      rotateDown();
-    break;
-  case Qt::Key_Left: /* rotate or translate left */
-    if (modifiers & Qt::ShiftModifier)
-      translateLeft();
-    else
-      rotateLeft();
-    break;
-  case Qt::Key_Right: /* rotate or translate right */
-    if (modifiers & Qt::ShiftModifier)
-      translateRight();
-    else
-      rotateRight();
-    break;
-  case Qt::Key_B: /* Bone */
-    toggleDisplayBone();
-    break;
   case Qt::Key_D: /* Debug */
-    break;
-  case Qt::Key_E: /* Edge */
-    if (modifiers & Qt::ShiftModifier)
-      decreaseEdgeThin();
-    else
-      increaseEdgeThin();
     break;
   case Qt::Key_F: /* Fullscreen */
     /* not implemented, so it doesn't support */
     break;
-  case Qt::Key_P: /* Physics */
-    togglePhysicSimulation();
-    break;
   case Qt::Key_S: /* info String */
     break;
   case Qt::Key_V: /* test command / Vsync */
-    break;
-  case Qt::Key_W: /* Wire / rigitbody */
-    if (modifiers & Qt::ShiftModifier)
-      toggleDisplayRigidBody();
-    break;
-  case Qt::Key_X: /* toggle shadowmap */
-    if (modifiers & Qt::ShiftModifier)
-      toggleShadowMapping();
-    else
-      toggleShadowMappingLightFirst();
-    break;
-  case Qt::Key_Slash: /* show about config */
-  case Qt::Key_Question:
-    if (modifiers & Qt::AltModifier)
-      about();
-    break;
-  case Qt::Key_Plus: /* zoom in */
-    zoomIn();
-    break;
-  case Qt::Key_Minus: /* zoom out */
-    zoomOut();
-    break;
-  case Qt::Key_Delete: /* delete selected model */
-    deleteSelectedObject();
-    break;
-  case Qt::Key_Escape: /* close the application */
-    close();
     break;
   }
   m_widget->sendKeyEvent(event->text());
@@ -433,129 +370,155 @@ void QMAWindow::receiveEvent(const QString &type,
 void QMAWindow::createActions()
 {
   QAction *action = NULL;
+  QList<QKeySequence> shortcuts;
 
   action = new QAction(tr("Insert to the all models"), this);
   action->setStatusTip(tr("Insert a motion to the all models."));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_V));
   connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToAllModels()));
   m_insertMotionToAllAction = action;
 
   action = new QAction(tr("Insert to the selected model"), this);
   action->setStatusTip(tr("Insert a motion to the selected model. If an object is not selected, do nothing."));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_V));
   connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToSelectedModel()));
   m_insertMotionToSelectedAction = action;
 
   action = new QAction(tr("Add Model"), this);
   action->setStatusTip(tr("Add a PMD model to the scene (Maximum is 20)."));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
   connect(action, SIGNAL(triggered()), this, SLOT(addModel()));
   m_addModelAction = action;
 
   action = new QAction(tr("Set Stage"), this);
   action->setStatusTip(tr("Set or replace a stage to the scene."));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_S));
   connect(action, SIGNAL(triggered()), this, SLOT(setStage()));
   m_setStageAction = action;
 
   action = new QAction(tr("Set Floor"), this);
   action->setStatusTip(tr("Set or replace a floor to the scene."));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F));
   connect(action, SIGNAL(triggered()), this, SLOT(setFloor()));
   m_setFloorAction = action;
 
   action = new QAction(tr("Set Background"), this);
   action->setStatusTip(tr("Set or replace a floor to the scene."));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
   connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
   m_setBackgroundAction = action;
 
   action = new QAction(tr("Increase edge thin"), this);
   action->setStatusTip(tr("Increase light edge thin."));
+  action->setShortcut(Qt::Key_E);
   connect(action, SIGNAL(triggered()), this, SLOT(increaseEdgeThin()));
   m_increaseEdgeThinAction = action;
 
   action = new QAction(tr("Decrease edge thin"), this);
   action->setStatusTip(tr("Decrease light edge thin."));
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_E));
   connect(action, SIGNAL(triggered()), this, SLOT(decreaseEdgeThin()));
   m_decreaseEdgeThinAction = action;
 
   action = new QAction(tr("Toggle display bone"), this);
   action->setStatusTip(tr("Enable / Disable displaying bones of the models."));
+  action->setShortcut(Qt::Key_B);
   connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayBone()));
   m_toggleDisplayBone = action;
 
   action = new QAction(tr("Toggle rigid body"), this);
   action->setStatusTip(tr("Enable / Disable displaying rigid body of the models."));
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_W));
   connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayRigidBody()));
   m_toggleDisplayRigidBody = action;
 
   action = new QAction(tr("Toggle physic simulation"), this);
   action->setStatusTip(tr("Enable / Disable physic simulation using Bullet."));
+  action->setShortcut(Qt::Key_P);
   connect(action, SIGNAL(triggered()), this, SLOT(togglePhysicSimulation()));
   m_togglePhysicSimulationAction = action;
 
   action = new QAction(tr("Toggle shadow mapping"), this);
   action->setStatusTip(tr("Enable / Disable shadow mapping."));
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_X));
   connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMapping()));
   m_toggleShadowMapping = action;
 
   action = new QAction(tr("Toggle shadow mapping light first"), this);
   action->setStatusTip(tr("Enable / Disable shadow mapping light first."));
+  action->setShortcut(Qt::Key_X);
   connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMappingLightFirst()));
   m_toggleShadowMappingFirst = action;
 
   action = new QAction(tr("Zoom in"), this);
   action->setStatusTip(tr("Zoom in the scene."));
+  action->setShortcut(Qt::Key_Plus);
   connect(action, SIGNAL(triggered()), this, SLOT(zoomIn()));
   m_zoomInAction = action;
 
   action = new QAction(tr("Zoom out"), this);
   action->setStatusTip(tr("Zoom out the scene."));
+  action->setShortcut(Qt::Key_Minus);
   connect(action, SIGNAL(triggered()), this, SLOT(zoomOut()));
   m_zoomOutAction = action;
 
   action = new QAction(tr("Rotate up"), this);
   action->setStatusTip("Rotate a model up.");
+  action->setShortcut(Qt::Key_Up);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateUp()));
   m_rotateUpAction = action;
 
   action = new QAction(tr("Rotate down"), this);
   action->setStatusTip("Rotate a model down.");
+  action->setShortcut(Qt::Key_Down);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateDown()));
   m_rotateDownAction = action;
 
   action = new QAction(tr("Rotate Left"), this);
   action->setStatusTip("Rotate a model left.");
+  action->setShortcut(Qt::Key_Left);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateLeft()));
   m_rotateLeftAction = action;
 
   action = new QAction(tr("Rotate right"), this);
   action->setStatusTip("Rotate a model right.");
+  action->setShortcut(Qt::Key_Right);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateRight()));
   m_rotateRightAction = action;
 
   action = new QAction(tr("Translate up"), this);
   action->setStatusTip("Translate a model up.");
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Up));
   connect(action, SIGNAL(triggered()), this, SLOT(translateUp()));
   m_translateUpAction = action;
 
   action = new QAction(tr("Translate down"), this);
   action->setStatusTip("Rotate a model down.");
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Down));
   connect(action, SIGNAL(triggered()), this, SLOT(translateDown()));
   m_translateDownAction = action;
 
   action = new QAction(tr("Translate left"), this);
   action->setStatusTip("Rotate a model left.");
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Left));
   connect(action, SIGNAL(triggered()), this, SLOT(translateLeft()));
   m_translateLeftAction = action;
 
   action = new QAction(tr("Translate right"), this);
   action->setStatusTip("Rotate a model right.");
+  action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Right));
   connect(action, SIGNAL(triggered()), this, SLOT(translateRight()));
   m_translateRightAction = action;
 
   action = new QAction(tr("Change selected model"), this);
   action->setStatusTip("Change selected model to the specified model. If an object is not selected, do nothing.");
+  action->setShortcut(QKeySequence(Qt::ALT + Qt::Key_M));
   connect(action, SIGNAL(triggered()), this, SLOT(changeSelectedObject()));
   m_changeSelectedObjectAction = action;
 
   action = new QAction(tr("Delete selected model"), this);
   action->setStatusTip("Delete selected model from the scene. If an object is not selected, do nothing.");
+  action->setShortcut(Qt::Key_Delete);
   connect(action, SIGNAL(triggered()), this, SLOT(deleteSelectedObject()));
   m_deleteSelectedObjectAction = action;
 
@@ -565,8 +528,11 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), this, SLOT(close()));
   m_exitAction = action;
 
+  shortcuts.append(QKeySequence(Qt::ALT + Qt::Key_Question));
+  shortcuts.append(QKeySequence(Qt::ALT + Qt::Key_Slash));
   action = new QAction(tr("&About"), this);
   action->setStatusTip(tr("Show the application's About box."));
+  action->setShortcuts(shortcuts);
   connect(action, SIGNAL(triggered()), this, SLOT(about()));
   m_aboutAction = action;
 
