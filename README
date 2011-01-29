@@ -226,6 +226,7 @@ mmdai.command 及び mmdai.event はすぐに実行されません。
 ** QMAVIManagerPlugin
 
 MMDAgent の fst を取り扱ってイベント及びコマンドを制御するプラグインです。
+アプリケーションディレクトリにある MMDAI.fst を読み込んで実行します。
 
 * License
 オリジナルのMMDAgentと同じく、修正BSDライセンスの元で配布されます。
