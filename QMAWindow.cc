@@ -272,6 +272,11 @@ void QMAWindow::toggleShadowMappingLightFirst()
     option->setShadowMappingLightFirst(true);
 }
 
+void QMAWindow::toggleFullScreen()
+{
+  m_widget->setWindowState(m_widget->windowState() ^ Qt::WindowFullScreen);
+}
+
 void QMAWindow::zoomIn()
 {
   SceneController *controller = m_widget->getSceneController();
@@ -424,13 +429,13 @@ void QMAWindow::createActions()
   action->setStatusTip(tr("Enable / Disable displaying bones of the models."));
   action->setShortcut(Qt::Key_B);
   connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayBone()));
-  m_toggleDisplayBone = action;
+  m_toggleDisplayBoneAction = action;
 
   action = new QAction(tr("Toggle rigid body"), this);
   action->setStatusTip(tr("Enable / Disable displaying rigid body of the models."));
   action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_W));
   connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayRigidBody()));
-  m_toggleDisplayRigidBody = action;
+  m_toggleDisplayRigidBodyAction = action;
 
   action = new QAction(tr("Toggle physic simulation"), this);
   action->setStatusTip(tr("Enable / Disable physic simulation using Bullet."));
@@ -442,13 +447,19 @@ void QMAWindow::createActions()
   action->setStatusTip(tr("Enable / Disable shadow mapping."));
   action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_X));
   connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMapping()));
-  m_toggleShadowMapping = action;
+  m_toggleShadowMappingAction = action;
 
   action = new QAction(tr("Toggle shadow mapping light first"), this);
   action->setStatusTip(tr("Enable / Disable shadow mapping light first."));
   action->setShortcut(Qt::Key_X);
   connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMappingLightFirst()));
-  m_toggleShadowMappingFirst = action;
+  m_toggleShadowMappingFirstAction = action;
+
+  action = new QAction(tr("Toggle Fullscreen"), this);
+  action->setStatusTip("Enable / Disable fullscreen");
+  action->setShortcut(Qt::Key_F);
+  connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
+  m_toggleFullScreenAction = action;
 
   action = new QAction(tr("Zoom in"), this);
   action->setStatusTip(tr("Zoom in the scene."));
@@ -571,6 +582,7 @@ void QMAWindow::createMenu()
 
   menuBar()->addSeparator();
   m_sceneMenu = menuBar()->addMenu("&Scene");
+  m_sceneMenu->addAction(m_toggleFullScreenAction);
   m_sceneMenu->addAction(m_zoomInAction);
   m_sceneMenu->addAction(m_zoomOutAction);
   m_sceneMenu->addAction(m_rotateUpAction);
@@ -584,10 +596,10 @@ void QMAWindow::createMenu()
   m_sceneMenu->addAction(m_increaseEdgeThinAction);
   m_sceneMenu->addAction(m_decreaseEdgeThinAction);
   m_sceneMenu->addAction(m_togglePhysicSimulationAction);
-  m_sceneMenu->addAction(m_toggleShadowMapping);
-  m_sceneMenu->addAction(m_toggleShadowMappingFirst);
-  m_sceneMenu->addAction(m_toggleDisplayBone);
-  m_sceneMenu->addAction(m_toggleDisplayRigidBody);
+  m_sceneMenu->addAction(m_toggleShadowMappingAction);
+  m_sceneMenu->addAction(m_toggleShadowMappingFirstAction);
+  m_sceneMenu->addAction(m_toggleDisplayBoneAction);
+  m_sceneMenu->addAction(m_toggleDisplayRigidBodyAction);
 
   menuBar()->addSeparator();
   m_modelMenu = menuBar()->addMenu("&Model");

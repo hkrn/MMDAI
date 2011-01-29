@@ -70,6 +70,7 @@ private slots:
   void translateRight();
   void toggleDisplayBone();
   void toggleDisplayRigidBody();
+  void toggleFullScreen();
   void increaseEdgeThin();
   void decreaseEdgeThin();
   void togglePhysicSimulation();
@@ -106,11 +107,12 @@ private:
   QAction *m_setBackgroundAction;
   QAction *m_increaseEdgeThinAction;
   QAction *m_decreaseEdgeThinAction;
-  QAction *m_toggleDisplayBone;
-  QAction *m_toggleDisplayRigidBody;
+  QAction *m_toggleDisplayBoneAction;
+  QAction *m_toggleDisplayRigidBodyAction;
   QAction *m_togglePhysicSimulationAction;
-  QAction *m_toggleShadowMapping;
-  QAction *m_toggleShadowMappingFirst;
+  QAction *m_toggleShadowMappingAction;
+  QAction *m_toggleShadowMappingFirstAction;
+  QAction *m_toggleFullScreenAction;
   QAction *m_zoomInAction;
   QAction *m_zoomOutAction;
   QAction *m_rotateUpAction;
