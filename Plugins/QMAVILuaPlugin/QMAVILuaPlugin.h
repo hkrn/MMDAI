@@ -1,0 +1,46 @@
+#ifndef QMAVILUAPLUGIN_H
+#define QMAVILUAPLUGIN_H
+
+#include <lua.hpp>
+#include <QDir>
+#include <QMap>
+
+#include "QMAPlugin.h"
+#include "CommandDispatcher.h"
+
+class QMAVILuaPlugin : public QMAPlugin
+{
+  Q_OBJECT
+  Q_INTERFACES(QMAPlugin)
+
+public:
+  QMAVILuaPlugin();
+  ~QMAVILuaPlugin();
+
+public slots:
+  void initialize(SceneController *controller, const QString &path);
+  void start();
+  void stop();
+  void receiveCommand(const QString &command, const QStringList &arguments);
+  void receiveEvent(const QString &type, const QStringList &arguments);
+  void update(const QRect &rect, const QPoint &pos, const double delta);
+  void render();
+
+  void pushCommand(const QString &command, const QStringList &arguments);
+  void pushEvent(const QString &command, const QStringList &arguments);
+  void broadcast();
+
+signals:
+  void commandPost(const QString &command, const QStringList &arguments);
+  void eventPost(const QString &type, const QStringList &arguments);
+
+private:
+  void handleInvoke(const QString &command, const QStringList &arguments, const char *invoke);
+
+  QMap<QString, QStringList> m_commands;
+  QMap<QString, QStringList> m_events;
+  QString m_path;
+  lua_State *m_state;
+};
+
+#endif // QMAVILUAPLUGIN_H
