@@ -41,9 +41,11 @@ TARGET = $$qtLibraryTarget(QMAJuliusPlugin)
 DESTDIR = ../plugins
 
 unix {
+    JULIUS_PATHS  = /usr/local/bin /usr/bin
+    for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
+        LIBS += $$system($${path}/libsent-config --libs) $$system($${path}/libjulius-config --libs)
+    }
     INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet /usr/local/include
-    LIBS += $$system(libsent-config --libs) $$system(libjulius-config --libs)
-    QMAKE_CXXFLAGS += $$system(libsent-config --cflags) $$system(libjulius-config --libs)
 }
 
 LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
