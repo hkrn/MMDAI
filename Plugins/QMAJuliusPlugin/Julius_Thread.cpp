@@ -45,7 +45,6 @@
 /* callback_recog_begin: callback for beginning of recognition */
 static void callback_recog_begin(Recog * /* recog */, void *data)
 {
-  qDebug("recog_begin called");
   Julius_Thread *j = (Julius_Thread *) data;
   j->sendMessage(JULIUSTHREAD_EVENTSTART, NULL);
 }
@@ -62,7 +61,6 @@ static void callback_result_final(Recog *recog, void *data)
   static char str[JULIUSTHREAD_MAXBUFLEN];
   Julius_Thread *j = (Julius_Thread *) data;
 
-  qDebug("recog_result_final called");
   /* get status */
   r = recog->process_list;
   if (!r->live)
@@ -122,5 +120,5 @@ void Julius_Thread::run()
 /* Julius_Thread::sendMessage: send message to MMDAgent */
 void Julius_Thread::sendMessage(const char *str1, char *str2)
 {
-  m_dispatcher->sendCommand(str1, str2);
+  m_dispatcher->sendEvent(str1, str2);
 }

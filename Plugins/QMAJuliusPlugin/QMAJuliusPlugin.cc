@@ -36,12 +36,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <QTextCodec>
 #include "QMAJuliusPlugin.h"
 
 QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
   : QMAPlugin(parent),
-  m_initializer(NULL),
-  m_thread(NULL)
+    m_initializer(NULL),
+    m_thread(NULL)
 {
 }
 
@@ -127,16 +128,19 @@ void QMAJuliusPlugin::startJuliusEngine()
   m_thread->start();
 }
 
-void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)
+void QMAJuliusPlugin::sendCommand(const char */*command*/, char */*arguments*/)
 {
-  emit commandPost(QString(command), QString(arguments).split('|'));
-  if (arguments != NULL)
-    free(arguments);
 }
 
-void QMAJuliusPlugin::sendEvent(const char */*type*/, char */*arguments*/)
+void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
 {
-  /* do nothing */
+  if (arguments != NULL) {
+    QTextCodec *codec = QTextCodec::codecForName("EUC-JP");
+    QStringList argv;
+    argv << codec->toUnicode(arguments, strlen(arguments));
+    emit commandPost(QString(type), argv);
+    free(arguments);
+  }
 }
 
 Q_EXPORT_PLUGIN2("QMAJuliusPlugin", QMAJuliusPlugin)
