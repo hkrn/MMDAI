@@ -129,6 +129,7 @@ private:
   QAction *m_aboutAction;
   QAction *m_aboutQtAction;
 
+  bool m_isFullScreen;
   bool m_enablePhysicsSimulation;
 
   Q_DISABLE_COPY(QMAWindow);

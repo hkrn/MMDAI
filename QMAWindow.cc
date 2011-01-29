@@ -38,6 +38,7 @@
 
 QMAWindow::QMAWindow(QWidget *parent) :
     QMainWindow(parent),
+    m_isFullScreen(false),
     m_enablePhysicsSimulation(true)
 {
   m_settings = new QSettings(parent);
@@ -274,7 +275,14 @@ void QMAWindow::toggleShadowMappingLightFirst()
 
 void QMAWindow::toggleFullScreen()
 {
-  m_widget->setWindowState(m_widget->windowState() ^ Qt::WindowFullScreen);
+  if (m_isFullScreen) {
+    this->showNormal();
+    m_isFullScreen = false;
+  }
+  else {
+    this->showFullScreen();
+    m_isFullScreen = true;
+  }
 }
 
 void QMAWindow::zoomIn()
