@@ -276,11 +276,13 @@ void QMAWindow::toggleShadowMappingLightFirst()
 void QMAWindow::toggleFullScreen()
 {
   if (m_isFullScreen) {
-    this->showNormal();
+    showNormal();
+    statusBar()->show();
     m_isFullScreen = false;
   }
   else {
-    this->showFullScreen();
+    statusBar()->hide();
+    showFullScreen();
     m_isFullScreen = true;
   }
 }
