@@ -12,6 +12,7 @@ release
 *-build-desktop
 *.dll*
 *.dylib
+*.qm
 *.o
 *.pro.user
 *.so*

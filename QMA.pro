@@ -35,6 +35,7 @@
 # /* ----------------------------------------------------------------- */
 
 QT += core gui opengl
+# CONFIG += x86 x86_64
 
 TARGET = QtMMDAI
 TEMPLATE = app
@@ -71,3 +72,7 @@ HEADERS  += QMAWidget.h \
     CommandDispatcher.h \
     QMAModelLoader.h \
     QMAModelLoaderFactory.h
+
+TRANSLATIONS += res/translations/QMA_ja.ts
+
+CODECFORTR = UTF-8

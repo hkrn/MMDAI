@@ -50,7 +50,6 @@ QMAWindow::QMAWindow(QWidget *parent) :
   setWindowTitle("QtMMDAI");
 
   readSetting();
-  setUnifiedTitleAndToolBarOnMac(true);
   statusBar()->showMessage("Ready");
 }
 
@@ -338,20 +337,21 @@ void QMAWindow::deleteSelectedObject()
 
 void QMAWindow::about()
 {
-  QMessageBox::about(this, tr("About QtMMDAI"), tr("<h2>QtMMDAI 0.3 <small>(CodeName: 40mP)</small></h2>"
-                                                   "<p>Copyright (C) 2010-2011<br>"
-                                                   "Nagoya Institute of Technology Department of Computer Science, "
-                                                   "hkrn (@hikarincl2)<br>"
-                                                   "All rights reserved.</p>"
-                                                   "<p>This application uses following libraries<ul>"
-                                                   "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDME</a></li>"
-                                                   "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDAI</a></li>"
-                                                   "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
-                                                   "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
-                                                   "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
-                                                   "</ul></p>"
-                                                   "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
-                                                   "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>"));
+  QMessageBox::about(this, tr("About QtMMDAI"),
+                     tr("<h2>QtMMDAI %1 <small>(CodeName: 40mP)</small></h2>"
+                        "<p>Copyright (C) 2010-2011<br>"
+                        "Nagoya Institute of Technology Department of Computer Science, "
+                        "hkrn (@hikarincl2)<br>"
+                        "All rights reserved.</p>"
+                        "<p>This application uses following libraries<ul>"
+                        "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDME</a></li>"
+                        "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDAI</a></li>"
+                        "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
+                        "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
+                        "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
+                        "</ul></p>"
+                        "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
+                        "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>").arg(qApp->applicationVersion()));
 }
 
 void QMAWindow::receiveEvent(const QString &type,
