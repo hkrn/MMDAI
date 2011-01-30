@@ -125,8 +125,8 @@ void QMAWidget::loadPlugins()
     QObject *instance = loader.instance();
     QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
     if (plugin != NULL) {
-      connect(this, SIGNAL(pluginInitialized(SceneController *, const QString)),
-              plugin, SLOT(initialize(SceneController *, const QString)));
+      connect(this, SIGNAL(pluginInitialized(SceneController *)),
+              plugin, SLOT(initialize(SceneController *)));
       connect(this, SIGNAL(pluginStarted()),
               plugin, SLOT(start()));
       connect(this, SIGNAL(pluginStopped()),
@@ -149,12 +149,13 @@ void QMAWidget::loadPlugins()
     }
   }
   QDir::setCurrent(appDir.absolutePath());
+  QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
   int size[2];
   size[0] = width();
   size[1] = height();
   m_controller->init(size, appDir.absoluteFilePath("AppData").toUtf8().constData());
   m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
-  emit pluginInitialized(m_controller, appDir.absolutePath());
+  emit pluginInitialized(m_controller);
 }
 
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
