@@ -40,6 +40,7 @@
 
 #include <QFile>
 #include <QTextCodec>
+#include <stdlib.h>
 
 QMAVIManagerPlugin::QMAVIManagerPlugin(QObject *parent)
   : QMAPlugin(parent),

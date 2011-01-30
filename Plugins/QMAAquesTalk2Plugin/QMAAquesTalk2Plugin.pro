@@ -42,14 +42,11 @@ TARGET = $$qtLibraryTarget(QMAAquesTalk2Plugin)
 DESTDIR = ../plugins
 
 unix {
-    LIBS += -L/usr/local/lib -lAquesTalk2
-    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet /usr/local/include
+    LIBS += -lAquesTalk2
 }
 macx {
     LIBS += -framework AquesTalk2
 }
-
-LIBS += -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
 
 HEADERS += \
     QMAAquesTalk2Plugin.h
