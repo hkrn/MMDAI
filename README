@@ -147,17 +147,11 @@ qmake-qt4 の代わりに mingw32-qmake-qt4 を使う必要があります。
 mingw32-qmake-qt4 を実行し、make すればバイナリが作成されます。
 生成されたバイナリは debug または release の QtMMDAI.exe になります。
 
-実行する際 dll が必要なため、以下で dll をシンボリックリンクで配置します。
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/libgcc_s_sjlj-1.dll .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/libstdc++-6.dll .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/libpng14-14.dll .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/zlib1.dll .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/bin/Qt*.dll
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libglee.dll .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libBullet* .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libLinearMath.dll .
-$ ln -s /usr/i686-pc-mingw32/sys-root/mingw/lib/libMMD* .
-$ rm *.a
+実行する際 dll が必要なため、配置スクリプトを実行します。
+配置スクリプトの第一引数に "-release" つけることで Qt のリリースビルドをリンクします。
+さらに第二引数に "-deploy" つけることで dll をコピーしてパッケージを作成します。
+$ cd debug # or release
+$ perl ../scripts/mingw_deloy.pl
 $ wine QtMMDAI.exe
 
 * プラグインについて

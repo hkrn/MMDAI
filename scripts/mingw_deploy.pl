@@ -7,8 +7,8 @@ my $mingw_root = '/usr/i686-pc-mingw32/sys-root/mingw';
 my $mingw_bin = $mingw_root . '/bin';
 my $mingw_lib = $mingw_root . '/lib';
 
-my $deploy = $ARGV[0] eq '-deploy' ? 1 : 0;
-my $release = $ARGV[1] eq '-release' ? 1 : 0;
+my $release = $ARGV[0] eq '-release' ? 1 : 0;
+my $deploy = $ARGV[1] eq '-deploy' ? 1 : 0;
 
 system('rm -f *.dll');
 
