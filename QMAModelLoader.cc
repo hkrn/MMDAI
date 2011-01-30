@@ -191,11 +191,12 @@ static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
 QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
   : m_dir(system)
 {
-  QString path = QFile::decodeName(filename);
+  /* YEN SIGN (0x5c -> 0xa5) to SLASH */
+  QString path = QFile::decodeName(filename).replace(QChar(0xa5), QChar('/'));
   if (QDir::isAbsolutePath(path))
     m_file = new QFile(path);
   else
-    m_file = new QFile("mmdai:/" + path);
+    m_file = new QFile("mmdai:" + path);
 }
 
 QMAModelLoader::~QMAModelLoader()
