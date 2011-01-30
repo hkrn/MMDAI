@@ -41,12 +41,12 @@
 #ifndef PMDOBJECT_H
 #define PMDOBJECT_H
 
-#include <MMDFiles/BulletPhysics.h>
-#include <MMDFiles/MotionManager.h>
-#include <MMDFiles/PMDBone.h>
-#include <MMDFiles/PMDModel.h>
-#include <MMDFiles/PMDModelLoader.h>
-#include <MMDFiles/VMD.h>
+#include <MMDME/BulletPhysics.h>
+#include <MMDME/MotionManager.h>
+#include <MMDME/PMDBone.h>
+#include <MMDME/PMDModel.h>
+#include <MMDME/PMDModelLoader.h>
+#include <MMDME/VMD.h>
 
 #include "MMDAI/LipSync.h"
 #include "MMDAI/TextRenderer.h"

@@ -40,7 +40,7 @@
 
 #include "MMDAI/CommandParser.h"
 
-#include <MMDFiles/MMDFiles.h>
+#include <MMDME/MMDME.h>
 
 #define MMDAGENT_MAXNUMCOMMAND    10
 #define MMDAGENT_MAXCOMMANDBUFLEN 1024

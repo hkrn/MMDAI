@@ -41,7 +41,7 @@
 #include "MMDAI/Option.h"
 #include "MMDAI/LipSync.h"
 
-#include <MMDFiles/VMDFile.h>
+#include <MMDME/VMDFile.h>
 
 #define MAXPNUM 2048 /* maximum number of phoneme sequence */
 #define LIPSYNC_SEPARATOR ","

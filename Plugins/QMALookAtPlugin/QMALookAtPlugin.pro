@@ -45,7 +45,7 @@ unix {
     INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
 }
 
-LIBS += -lMMDAI -lMMDFiles -lBulletDynamics -lBulletCollision -lLinearMath
+LIBS += -lMMDAI -lMMDME -lBulletDynamics -lBulletCollision -lLinearMath
 
 HEADERS += \
     QMALookAtPlugin.h

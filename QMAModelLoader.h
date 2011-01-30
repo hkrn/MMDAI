@@ -41,8 +41,8 @@
 
 #include <QtGui>
 
-#include <MMDFiles/PMDModelLoader.h>
-#include <MMDFiles/VMDLoader.h>
+#include <MMDME/PMDModelLoader.h>
+#include <MMDME/VMDLoader.h>
 
 class QMAModelLoader : public PMDModelLoader, public VMDLoader
 {

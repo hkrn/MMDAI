@@ -44,7 +44,7 @@ unix {
     INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
 }
 
-LIBS += -lMMDAI -lMMDFiles -lglee -lBulletDynamics -lBulletCollision -lLinearMath
+LIBS += -lMMDAI -lMMDME -lglee -lBulletDynamics -lBulletCollision -lLinearMath
 
 # unused (using framework)
 #

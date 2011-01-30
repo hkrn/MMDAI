@@ -38,8 +38,8 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include <MMDFiles/PMDBone.h>
-#include <MMDFiles/PMDModel.h>
+#include <MMDME/PMDBone.h>
+#include <MMDME/PMDModel.h>
 
 /* BoneController: control bone */
 class BoneController

@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include <MMDFiles/MMDFiles.h> /* MMDFILES_RAD */
+#include <MMDME/MMDME.h> /* MMDFILES_RAD */
 
 #include "MMDAI/BoneController.h"
 

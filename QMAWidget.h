@@ -39,8 +39,6 @@
 
 #include <QtGui/QtGui>
 
-#include <MMDFiles/MMDFiles.h>
-
 #include <MMDAI/PMDModelLoaderFactory.h>
 #include <MMDAI/CommandParser.h>
 #include <MMDAI/SceneController.h>

@@ -117,11 +117,11 @@ else()
 endif()
 
 # find libMMDFiles
-find_path(MMDFILES_INCLUDE MMDFiles/PMDModel.h)
-find_library(MMDFILES_LIBRARY MMDFiles)
-if(MMDFILES_INCLUDE AND MMDFILES_LIBRARY)
-  target_link_libraries(MMDAI ${MMDFILES_LIBRARY})
-  include_directories(MMDAI ${MMDFILES_INCLUDE})
+find_path(MMDME_INCLUDE MMDME/PMDModel.h)
+find_library(MMDME_LIBRARY MMDME)
+if(MMDME_INCLUDE AND MMDME_LIBRARY)
+  target_link_libraries(MMDAI ${MMDME_LIBRARY})
+  include_directories(MMDAI ${MMDME_INCLUDE})
 else()
   message(FATAL_ERROR "Required MMDFiles is not found.")
 endif()
@@ -137,5 +137,5 @@ if(APPLE)
 endif()
 
 install(TARGETS MMDAI DESTINATION lib)
-install(DIRECTORY include/MMDAI DESTINATION include PATTERN ".svn" EXCLUDE)
+install(DIRECTORY include/MMDAI DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
 
