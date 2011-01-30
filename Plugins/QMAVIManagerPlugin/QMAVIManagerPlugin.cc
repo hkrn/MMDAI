@@ -51,10 +51,10 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 {
 }
 
-void QMAVIManagerPlugin::initialize(SceneController *controller, const QString &path)
+void QMAVIManagerPlugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  QFile config(path + "/MMDAI.fst");
+  QFile config("mmdai:/MMDAI.fst");
   if (config.exists())
     m_thread.load(config.fileName().toUtf8().constData());
 }

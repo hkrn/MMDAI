@@ -52,10 +52,10 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
   delete m_thread;
 }
 
-void QMAJuliusPlugin::initialize(SceneController *controller, const QString &path)
+void QMAJuliusPlugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  QDir dir = QDir(QString(path) + "/AppData/Julius");
+  QDir dir = QDir("mmdai:/AppData/Julius");
   QString filename = dir.absoluteFilePath("jconf.txt");
   QFile jconf(filename);
   QStringList conf;

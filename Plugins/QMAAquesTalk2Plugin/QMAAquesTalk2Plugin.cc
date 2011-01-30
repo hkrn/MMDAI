@@ -61,10 +61,9 @@ QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
   delete m_object;
 }
 
-void QMAAquesTalk2Plugin::initialize(SceneController *controller, const QString &path)
+void QMAAquesTalk2Plugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  Q_UNUSED(path);
   /* do nothing */
 }
 

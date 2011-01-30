@@ -54,7 +54,7 @@ public:
   ~QMAAudioPlugin();
 
 public slots:
-  void initialize(SceneController *controller, const QString &path);
+  void initialize(SceneController *controller);
   void start();
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);
@@ -74,7 +74,6 @@ signals:
 private:
   Phonon::AudioOutput *m_audioOutput;
   Phonon::MediaObject *m_audioObject;
-  QDir m_path;
   QMap<QString, Phonon::MediaSource> m_audioSources;
 };
 

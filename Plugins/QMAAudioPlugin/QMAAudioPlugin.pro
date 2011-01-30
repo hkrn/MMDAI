@@ -41,13 +41,6 @@ INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAAudioPlugin)
 DESTDIR = ../plugins
 
-unix {
-    LIBS += -L/usr/local/lib
-    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
-}
-
-LIBS += -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
-
 HEADERS += \
     QMAAudioPlugin.h
 

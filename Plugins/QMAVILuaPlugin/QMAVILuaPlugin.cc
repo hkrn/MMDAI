@@ -47,7 +47,7 @@ QMAVILuaPlugin::~QMAVILuaPlugin()
   m_state = 0;
 }
 
-void QMAVILuaPlugin::initialize(SceneController *controller, const QString &path)
+void QMAVILuaPlugin::initialize(SceneController *controller)
 {
   static struct luaL_reg funcs[] = {
     { "command", mmdai_command },
@@ -62,13 +62,13 @@ void QMAVILuaPlugin::initialize(SceneController *controller, const QString &path
     lua_settable(m_state, -3);
   }
   lua_setglobal(m_state, "mmdai");
-  m_path = QString(path + "/MMDAI.lua");
 }
 
 void QMAVILuaPlugin::start()
 {
+  QString path = QFile("mmdai:/MMDAI.lua").fileName();
   int top = lua_gettop(m_state);
-  int ret = luaL_dofile(m_state, m_path.toUtf8().constData());
+  int ret = luaL_dofile(m_state, path.toUtf8().constData());
   if (ret != 0) {
     qWarning("Executing a lua script error: %s", lua_tostring(m_state, -1));
     lua_pop(m_state, 1);

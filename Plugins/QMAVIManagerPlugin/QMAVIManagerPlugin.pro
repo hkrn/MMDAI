@@ -40,13 +40,6 @@ INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAVIManagerPlugin)
 DESTDIR = ../plugins
 
-unix {
-    LIBS += -L/usr/local/lib
-    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
-}
-
-LIBS += -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
-
 HEADERS += \
     QMAVIManagerPlugin.h \
     VIManager.h \

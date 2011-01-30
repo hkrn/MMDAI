@@ -45,10 +45,7 @@ unix {
     for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
         LIBS += $$system($${path}/libsent-config --libs) $$system($${path}/libjulius-config --libs)
     }
-    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet /usr/local/include
 }
-
-LIBS += -L/usr/local/lib -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
 
 HEADERS += \
     QMAJuliusPlugin.h \

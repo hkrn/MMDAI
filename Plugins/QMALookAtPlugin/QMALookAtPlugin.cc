@@ -64,7 +64,7 @@ QMALookAtPlugin::~QMALookAtPlugin()
 {
 }
 
-void QMALookAtPlugin::initialize(SceneController *controller, const QString &/*path*/)
+void QMALookAtPlugin::initialize(SceneController *controller)
 {
   m_controller = controller;
 }
@@ -79,8 +79,10 @@ void QMALookAtPlugin::stop()
   /* do nothing */
 }
 
-void QMALookAtPlugin::receiveCommand(const QString &/*command*/, const QStringList &/*arguments*/)
+void QMALookAtPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
+  Q_UNUSED(command);
+  Q_UNUSED(arguments);
   /* do nothing */
 }
 

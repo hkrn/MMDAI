@@ -18,7 +18,7 @@ public:
   ~QMAVILuaPlugin();
 
 public slots:
-  void initialize(SceneController *controller, const QString &path);
+  void initialize(SceneController *controller);
   void start();
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);
@@ -39,7 +39,6 @@ private:
 
   QMap<QString, QStringList> m_commands;
   QMap<QString, QStringList> m_events;
-  QString m_path;
   lua_State *m_state;
 };
 

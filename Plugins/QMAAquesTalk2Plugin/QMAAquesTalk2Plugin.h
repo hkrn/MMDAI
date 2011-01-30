@@ -19,7 +19,7 @@ public:
   ~QMAAquesTalk2Plugin();
 
 public slots:
-  void initialize(SceneController *controller, const QString &path);
+  void initialize(SceneController *controller);
   void start();
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);

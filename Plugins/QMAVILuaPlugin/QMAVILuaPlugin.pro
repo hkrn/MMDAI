@@ -40,12 +40,7 @@ INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAVILuaPlugin)
 DESTDIR = ../plugins
 
-unix {
-    LIBS += -L/usr/local/lib
-    INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
-}
-
-LIBS += -lMMDAI -lMMDFiles -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -llua
+LIBS += -llua
 
 HEADERS += \
     QMAVILuaPlugin.h

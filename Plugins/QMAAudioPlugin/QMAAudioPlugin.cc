@@ -58,10 +58,9 @@ QMAAudioPlugin::~QMAAudioPlugin()
   delete m_audioObject;
 }
 
-void QMAAudioPlugin::initialize(SceneController *controller, const QString &path)
+void QMAAudioPlugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  m_path = QDir(path);
 }
 
 void QMAAudioPlugin::start()
@@ -82,7 +81,7 @@ void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &a
     QString alias = arguments.at(0);
     QString filename = arguments.at(1);
     if (!QDir::isAbsolutePath(filename))
-      filename = m_path.absoluteFilePath(arguments.at(1));
+      filename = QDir("mmdai:/").absoluteFilePath(arguments.at(1));
     Phonon::MediaSource source(filename);
     m_audioSources[alias] = source;
     m_audioObject->enqueue(source);

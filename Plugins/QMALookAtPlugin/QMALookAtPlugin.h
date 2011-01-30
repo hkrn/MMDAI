@@ -42,6 +42,7 @@
 #include "QMAPlugin.h"
 
 #include <MMDAI/BoneController.h>
+#include <MMDAI/SceneController.h>
 
 class QMALookAtPlugin : public QMAPlugin
 {
@@ -53,7 +54,7 @@ public:
   ~QMALookAtPlugin();
 
 public slots:
-  void initialize(SceneController *controller, const QString &path);
+  void initialize(SceneController *controller);
   void start();
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);
