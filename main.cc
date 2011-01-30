@@ -41,29 +41,30 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QMAWindow window;
-  QTranslator translator, qtTranslator;
+  QTranslator appTranslator, qtTranslator;
   const QString locale = QLocale::system().name();
 
-  qtTranslator.load("qt_" + locale);
+  qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
   app.installTranslator(&qtTranslator);
+
 
 #ifdef Q_OS_MAC
   QString path = QString("%1/../Resources/QMA_%2")
                  .arg(app.applicationDirPath())
                  .arg(locale);
-  translator.load(path);
+  appTranslator.load(path);
 #else
   const QString path = QString("%1/locales/QMA_%2")
                        .arg(app.applicationDirPath())
                        .arg(locale);
-  translator.load();
+  appTranslator.load(path);
 #endif
+  app.installTranslator(&appTranslator);
 
   app.setOrganizationDomain("com.github.hkrn.mmdai");
   app.setOrganizationName("MMDAI Project");
   app.setApplicationName("QtMMDAI");
   app.setApplicationVersion("0.3");
-  app.installTranslator(&translator);
   window.show();
 
   return app.exec();
