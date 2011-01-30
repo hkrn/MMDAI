@@ -38,6 +38,10 @@
 
 #include "QMAOpenJTalkPlugin.h"
 
+#include <QDir>
+#include <QTextCodec>
+#include <stdlib.h>
+
 #define PLUGINOPENJTALK_STARTCOMMAND "SYNTH_START"
 #define PLUGINOPENJTALK_STOPCOMMAND  "SYNTH_STOP"
 
@@ -52,10 +56,11 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
   delete m_thread;
 }
 
-void QMAOpenJTalkPlugin::initialize(const QString &path)
+void QMAOpenJTalkPlugin::initialize(SceneController *controller)
 {
-  QString dir = path + "/AppData/Open_JTalk";
-  QString config = path + "/MMDAI.ojt";
+  Q_UNUSED(controller);
+  QString dir = QDir("mmdai:AppData/Open_JTalk").absolutePath();
+  QString config = QFile("mmdai:MMDAI.ojt").fileName();
   m_thread->load(dir.toUtf8().constData(), config.toUtf8().constData());
   m_thread->start();
 }
@@ -78,7 +83,10 @@ void QMAOpenJTalkPlugin::createWindow()
 void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
   if (command == PLUGINOPENJTALK_STARTCOMMAND) {
-    m_thread->setSynthParameter(arguments.join("|").toAscii().constData());
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    QString str = arguments.join("|");
+    const char *argv = codec->fromUnicode(str).constData();
+    m_thread->setSynthParameter(argv);
   }
   else if (command == PLUGINOPENJTALK_STOPCOMMAND) {
     m_thread->stop();
@@ -92,9 +100,10 @@ void QMAOpenJTalkPlugin::receiveEvent(const QString &type, const QStringList &ar
   /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::update(const QRect &rect, const double delta)
+void QMAOpenJTalkPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
   Q_UNUSED(rect);
+  Q_UNUSED(pos);
   Q_UNUSED(delta);
   /* do nothing */
 }
