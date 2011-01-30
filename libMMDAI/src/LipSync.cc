@@ -38,8 +38,8 @@
 
 /* headers */
 
-#include "Option.h"
-#include "LipSync.h"
+#include "MMDAI/Option.h"
+#include "MMDAI/LipSync.h"
 
 #include <MMDFiles/VMDFile.h>
 

@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "CommandParser.h"
+#include "MMDAI/CommandParser.h"
 
 #include <MMDFiles/MMDFiles.h>
 

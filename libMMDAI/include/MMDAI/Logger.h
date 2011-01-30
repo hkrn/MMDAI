@@ -41,7 +41,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include "TextRenderer.h"
+#include "MMDAI/TextRenderer.h"
 
 /* Log: log text area behind character */
 class Logger

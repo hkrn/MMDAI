@@ -40,7 +40,7 @@
 
 #include <MMDFiles/MMDFiles.h> /* MMDFILES_RAD */
 
-#include "BoneController.h"
+#include "MMDAI/BoneController.h"
 
 #define BONECONTROLLER_MINLENGTH 0.0000001f
 

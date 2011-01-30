@@ -38,8 +38,8 @@
 
 /* headers */
 
-#include "Option.h"
-#include "MotionStocker.h"
+#include "MMDAI/Option.h"
+#include "MMDAI/MotionStocker.h"
 
 #define VMDGRIDSIZE       10    /* number of cache VMD files */
 #define VMDGRID_MAXBUFLEN 2048

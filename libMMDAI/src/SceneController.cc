@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "SceneController.h"
+#include "MMDAI/SceneController.h"
 
 // from util.h
 static int getNumDigit(int in)

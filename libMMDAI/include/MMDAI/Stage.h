@@ -44,7 +44,7 @@
 #include <MMDFiles/PMDModel.h>
 #include <MMDFiles/PMDModelLoader.h>
 
-#include "TileTexture.h"
+#include "MMDAI/TileTexture.h"
 
 /* Stage: stage */
 class Stage

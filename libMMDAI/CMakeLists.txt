@@ -43,20 +43,20 @@ set(MMDAGENT_VERSION 1.0)
 project(libMMDAI)
 aux_source_directory(src libMMDAI_sources)
 set(libMMDAI_public_headers
-  include/BoneController.h
-  include/CommandParser.h
-  include/LipSync.h
-  include/Logger.h
-  include/MotionStocker.h
-  include/Option.h
-  include/PMDModelLoaderFactory.h
-  include/PMDObject.h
-  include/SceneController.h
-  include/SceneEventHandler.h
-  include/SceneRenderer.h
-  include/Stage.h
-  include/TextRenderer.h
-  include/TileTexture.h
+  include/MMDAI/BoneController.h
+  include/MMDAI/CommandParser.h
+  include/MMDAI/LipSync.h
+  include/MMDAI/Logger.h
+  include/MMDAI/MotionStocker.h
+  include/MMDAI/Option.h
+  include/MMDAI/PMDModelLoaderFactory.h
+  include/MMDAI/PMDObject.h
+  include/MMDAI/SceneController.h
+  include/MMDAI/SceneEventHandler.h
+  include/MMDAI/SceneRenderer.h
+  include/MMDAI/Stage.h
+  include/MMDAI/TextRenderer.h
+  include/MMDAI/TileTexture.h
 )
 
 add_library(MMDAI SHARED ${libMMDAI_sources} ${libMMDAI_public_headers})
@@ -137,5 +137,5 @@ if(APPLE)
 endif()
 
 install(TARGETS MMDAI DESTINATION lib)
-install(DIRECTORY include/ DESTINATION include/MMDAI PATTERN "*.h" PATTERN ".svn" EXCLUDE)
+install(DIRECTORY include/MMDAI DESTINATION include PATTERN ".svn" EXCLUDE)
 

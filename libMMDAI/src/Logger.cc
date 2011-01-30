@@ -56,8 +56,8 @@
 #include <string.h>
 #endif
 
-#include "Logger.h"
-#include "TextRenderer.h"
+#include "MMDAI/Logger.h"
+#include "MMDAI/TextRenderer.h"
 
 #define LOG_MAXBUFLEN 1024
 #define LOG_COLOR     1.0f,0.7f,0.0f,0.7f /* text color */

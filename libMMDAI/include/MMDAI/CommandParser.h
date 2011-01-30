@@ -41,8 +41,8 @@
 #ifndef COMMANDPARSER_H
 #define COMMANDPARSER_H
 
-#include "SceneController.h"
-#include "PMDModelLoaderFactory.h"
+#include "MMDAI/SceneController.h"
+#include "MMDAI/PMDModelLoaderFactory.h"
 
 /* command names */
 #define MMDAGENT_COMMAND_MODEL_ADD      "MODEL_ADD"

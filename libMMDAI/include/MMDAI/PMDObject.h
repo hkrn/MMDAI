@@ -48,8 +48,8 @@
 #include <MMDFiles/PMDModelLoader.h>
 #include <MMDFiles/VMD.h>
 
-#include "LipSync.h"
-#include "TextRenderer.h"
+#include "MMDAI/LipSync.h"
+#include "MMDAI/TextRenderer.h"
 
 /* PMDObject: object of PMD */
 class PMDObject

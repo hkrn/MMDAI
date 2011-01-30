@@ -41,10 +41,9 @@
 #ifndef SCENECONTROLLER_H
 #define SCENECONTROLLER_H
 
-#include "LipSync.h"
-#include "MotionStocker.h"
-#include "SceneEventHandler.h"
-#include "SceneRenderer.h"
+#include "MMDAI/MotionStocker.h"
+#include "MMDAI/SceneEventHandler.h"
+#include "MMDAI/SceneRenderer.h"
 
 #define MAX_MODEL 20
 

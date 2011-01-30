@@ -38,10 +38,8 @@
 
 /* headers */
 
-#include "btBulletDynamicsCommon.h"
-
-#include "Option.h"
-#include "Stage.h"
+#include "MMDAI/Option.h"
+#include "MMDAI/Stage.h"
 
 /* findPlane: calculate plane */
 static void findPlane(GLfloat plane[4], TileTexture *t)

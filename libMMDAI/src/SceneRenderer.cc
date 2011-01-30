@@ -46,7 +46,7 @@
 #include <GL/glu.h>
 #endif
 
-#include "SceneRenderer.h"
+#include "MMDAI/SceneRenderer.h"
 
 #define SHADOW_PCF                   /* use hardware PCF for shadow mapping */
 #define SHADOW_AUTO_VIEW             /* automatically define depth frustum */

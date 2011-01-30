@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "TileTexture.h"
+#include "MMDAI/TileTexture.h"
 
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>

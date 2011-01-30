@@ -177,7 +177,7 @@
 #define OPTION_SHADOWMAPPINGLIGHTFIRST_DEF true
 
 /* FIXME: should not be here */
-#include "Logger.h"
+#include "MMDAI/Logger.h"
 extern Logger g_logger;
 
 class Option
