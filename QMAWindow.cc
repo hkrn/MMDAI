@@ -68,12 +68,8 @@ void QMAWindow::closeEvent(QCloseEvent *event)
 
 void QMAWindow::keyPressEvent(QKeyEvent *event)
 {
-  const Qt::KeyboardModifiers modifiers = event->modifiers();
   switch (event->key()) {
   case Qt::Key_D: /* Debug */
-    break;
-  case Qt::Key_F: /* Fullscreen */
-    /* not implemented, so it doesn't support */
     break;
   case Qt::Key_S: /* info String */
     break;
@@ -342,13 +338,13 @@ void QMAWindow::deleteSelectedObject()
 
 void QMAWindow::about()
 {
-  QMessageBox::about(this, tr("About QtMMDAI"), tr("<h2>QtMMDAI 0.2 <small>(CodeName: 40mP)</small></h2>"
+  QMessageBox::about(this, tr("About QtMMDAI"), tr("<h2>QtMMDAI 0.3 <small>(CodeName: 40mP)</small></h2>"
                                                    "<p>Copyright (C) 2010-2011<br>"
                                                    "Nagoya Institute of Technology Department of Computer Science, "
                                                    "hkrn (@hikarincl2)<br>"
                                                    "All rights reserved.</p>"
                                                    "<p>This application uses following libraries<ul>"
-                                                   "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDFiles</a></li>"
+                                                   "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDME</a></li>"
                                                    "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDAI</a></li>"
                                                    "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
                                                    "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
