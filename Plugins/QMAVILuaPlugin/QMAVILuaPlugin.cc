@@ -1,3 +1,6 @@
+#include <QDir>
+#include <QTextCodec>
+
 #include "QMAVILuaPlugin.h"
 
 static int mmdai_command(lua_State *state)
@@ -7,9 +10,10 @@ static int mmdai_command(lua_State *state)
   const char *command = lua_tostring(state, 1);
   if (plugin != NULL && command != NULL) {
     QStringList arguments;
+    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     for (int i = 2; i <= top; i++) {
       const char *s = lua_tostring(state, i);
-      arguments << QString(s);
+      arguments << codec->toUnicode(s, strlen(s));
     }
     plugin->pushCommand(QString(command), arguments);
   }
@@ -24,9 +28,10 @@ static int mmdai_event(lua_State *state)
   const char *type = lua_tostring(state, 1);
   if (plugin != NULL && type != NULL) {
     QStringList arguments;
+    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     for (int i = 2; i <= top; i++) {
       const char *s = lua_tostring(state, i);
-      arguments << QString(s);
+      arguments << codec->toUnicode(s, strlen(s));
     }
     plugin->pushEvent(QString(type), arguments);
   }

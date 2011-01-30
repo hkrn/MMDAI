@@ -2,7 +2,6 @@
 #define QMAVILUAPLUGIN_H
 
 #include <lua.hpp>
-#include <QDir>
 #include <QMap>
 
 #include "QMAPlugin.h"
