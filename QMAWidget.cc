@@ -148,7 +148,6 @@ void QMAWidget::loadPlugins()
       qWarning() << fileName << "was not loaded by an error:" << loader.errorString();
     }
   }
-  QDir::setCurrent(appDir.absolutePath());
   QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
   int size[2];
   size[0] = width();
