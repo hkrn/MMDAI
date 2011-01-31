@@ -310,18 +310,6 @@ void PMDObject::startDisappear()
   m_alphaDisappearFrame = PMDOBJECT_ALPHAFRAME;
 }
 
-/* PMDObject::deleteModel: disable model */
-void PMDObject::deleteModel()
-{
-  /* free and initialize values */
-  clear();
-  /* reset also root bone */
-  m_pmd.getRootBone()->setOffset(&m_offsetPos);
-  m_pmd.getRootBone()->update();
-  m_pmd.getRootBone()->reset();
-  m_pmd.getRootBone()->update();
-}
-
 /* PMDModel::setLightForToon: set light direction for ton shading */
 void PMDObject::setLightForToon(btVector3 * v)
 {

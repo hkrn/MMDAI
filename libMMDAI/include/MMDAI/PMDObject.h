@@ -139,9 +139,6 @@ public:
    /* PMDObject::startDisppear: set disapper timer */
    void startDisappear();
 
-   /* PMDModel::deleteModel: disable model */
-   void deleteModel();
-
    /* PMDModel::setLightForToon: set light direction for ton shading */
    void setLightForToon(btVector3 *v);
 

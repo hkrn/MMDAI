@@ -424,7 +424,7 @@ bool SceneController::addModel(const char *modelAlias,
                        m_option.getCartoonEdgeWidth(),
                        &light)) {
     g_logger.log("! Error: addModel: failed to load %s.", loader->getLocation());
-    newObject->deleteModel();
+    newObject->release();
     free(name);
     return false;
   }
@@ -896,8 +896,18 @@ void SceneController::deleteAssociatedModels(PMDObject *object)
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteAssociatedModels(assoc);
   }
+  MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
+  for (; player != NULL; player = player->next) {
+    if (strcmp(player->name, LIPSYNC_MOTION_NAME) == 0) {
+      sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
+    }
+    else {
+      sendEvent2(MMDAGENT_EVENT_MOTION_DELETE, object->getAlias(), player->name);
+    }
+    m_motion.unload(player->vmd);
+  }
   /* remove model */
-  object->deleteModel();
+  object->release();
 }
 
 void SceneController::updateAfterSimulation()
