@@ -329,8 +329,10 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
       fy = -y / (float) m_controller->getHeight();
       fx = (float)(fx * (fz - RENDER_VIEWPOINT_CAMERA_Z) / RENDER_VIEWPOINT_FRUSTUM_NEAR);
       fy = (float)(fy * (fz - RENDER_VIEWPOINT_CAMERA_Z) / RENDER_VIEWPOINT_FRUSTUM_NEAR);
-      fx /= scale;
-      fy /= scale;
+      if (scale != 0) {
+        fx /= scale;
+        fy /= scale;
+      }
       fz = 0.0f;
       m_controller->translate(fx, fy, fz);
     }
@@ -378,10 +380,12 @@ void QMAWidget::wheelEvent(QWheelEvent *event)
     delta = (delta - 1.0f) * 5.0f + 1.0f;
   else if (modifiers & Qt::ShiftModifier) /* slower */
     delta = (delta - 1.0f) * 0.2f + 1.0f;
-  if (event->delta() > 0)
-    scale *= delta;
-  else
-    scale /= delta;
+  if (delta != 0) {
+    if (event->delta() > 0)
+      scale *= delta;
+    else
+      scale /= delta;
+  }
   m_controller->setScale(scale);
   update();
 }

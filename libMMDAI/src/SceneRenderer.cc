@@ -897,7 +897,8 @@ void SceneRenderer::updateDepthTextureViewParam(PMDObject *objects, int num)
     r[i] = object->getPMDModel()->calculateBoundingSphereRange(&(c[i]));
     cc += c[i];
   }
-  cc /= (float) num;
+  if (num != 0)
+    cc /= (float) num;
 
   dmax = 0.0f;
   for (i = 0; i < num; i++) {
@@ -914,3 +915,4 @@ void SceneRenderer::updateDepthTextureViewParam(PMDObject *objects, int num)
   delete [] r;
   delete [] c;
 }
+
