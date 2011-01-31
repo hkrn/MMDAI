@@ -51,6 +51,12 @@
 
 #define MAX_MODEL 20
 
+enum QMAWidgetZoomOption {
+  Normal = 0x0,
+  Faster = 0x1,
+  Slower = 0x2
+};
+
 class QMAWidget : public QGLWidget,
                   public SceneEventHandler
 {
@@ -68,6 +74,7 @@ public:
   void toggleDisplayRigidBody();
   void sendKeyEvent(const QString &text);
   void changeBaseMotion(PMDObject *object, VMDLoader *loader);
+  void zoom(bool up, enum QMAWidgetZoomOption option);
 
 public slots:
   void delegateCommand(const QString &command, const QStringList &arguments);

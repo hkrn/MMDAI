@@ -284,16 +284,12 @@ void QMAWindow::toggleFullScreen()
 
 void QMAWindow::zoomIn()
 {
-  SceneController *controller = m_widget->getSceneController();
-  controller->setScale(controller->getOption()->getScaleStep() * controller->getScale());
-  m_widget->update();
+  m_widget->zoom(true, Normal);
 }
 
 void QMAWindow::zoomOut()
 {
-  SceneController *controller = m_widget->getSceneController();
-  controller->setScale(controller->getOption()->getScaleStep() / controller->getScale());
-  m_widget->update();
+  m_widget->zoom(false, Normal);
 }
 
 void QMAWindow::selectObject()

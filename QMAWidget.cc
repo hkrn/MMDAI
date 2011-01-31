@@ -87,6 +87,24 @@ void QMAWidget::toggleDisplayRigidBody()
   m_displayRigidBody = !m_displayRigidBody;
 }
 
+void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
+{
+  float delta = m_controller->getOption()->getScaleStep();
+  float scale = m_controller->getScale();
+  if (option & Faster) /* faster */
+    delta = (delta - 1.0f) * 5.0f + 1.0f;
+  else if (option & Slower) /* slower */
+    delta = (delta - 1.0f) * 0.2f + 1.0f;
+  if (delta != 0) {
+    if (up)
+      scale *= delta;
+    else
+      scale /= delta;
+  }
+  m_controller->setScale(scale);
+  update();
+}
+
 void QMAWidget::sendKeyEvent(const QString &text)
 {
   QStringList arguments;
@@ -374,20 +392,12 @@ void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 void QMAWidget::wheelEvent(QWheelEvent *event)
 {
   Qt::KeyboardModifiers modifiers = event->modifiers();
-  float delta = m_controller->getOption()->getScaleStep();
-  float scale = m_controller->getScale();
+  QMAWidgetZoomOption option = Normal;
   if (modifiers & Qt::ControlModifier) /* faster */
-    delta = (delta - 1.0f) * 5.0f + 1.0f;
+    option = Faster;
   else if (modifiers & Qt::ShiftModifier) /* slower */
-    delta = (delta - 1.0f) * 0.2f + 1.0f;
-  if (delta != 0) {
-    if (event->delta() > 0)
-      scale *= delta;
-    else
-      scale /= delta;
-  }
-  m_controller->setScale(scale);
-  update();
+    option = Slower;
+  zoom(event->delta() > 0, option);
 }
 
 void QMAWidget::timerEvent(QTimerEvent * /* event */)
