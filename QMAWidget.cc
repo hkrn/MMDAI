@@ -293,7 +293,7 @@ void QMAWidget::paintGL()
 void QMAWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
   m_controller->selectPMDObject(event->x(), event->y());
-  m_controller->hightlightPMDObject();
+  m_controller->setHighlightPMDObject(m_controller->getSelectedPMDObject());
   m_doubleClicked = true;
 }
 
@@ -338,7 +338,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
       PMDObject *selectedObject = m_controller->getSelectedPMDObject();
       if (selectedObject != NULL) {
         btVector3 pos;
-        m_controller->hightlightPMDObject();
+        m_controller->setHighlightPMDObject(selectedObject);
         selectedObject->getPosition(pos);
         pos.setX(pos.x() + x / 20.0f);
         pos.setZ(pos.z() + y / 20.0f);
@@ -366,7 +366,7 @@ void QMAWidget::mousePressEvent(QMouseEvent *event)
 void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 {
   if (!m_doubleClicked)
-    m_controller->hightlightPMDObject();
+    m_controller->setHighlightPMDObject(NULL);
 }
 
 void QMAWidget::wheelEvent(QWheelEvent *event)

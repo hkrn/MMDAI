@@ -131,7 +131,7 @@ public:
   void selectPMDObject(PMDObject *object);
   void selectPMDObject(int x, int y);
   void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
-  void hightlightPMDObject();
+  void setHighlightPMDObject(PMDObject *object);
   PMDObject *getSelectedPMDObject();
 
   void updateMotion(double procFrame, double adjustFrame);
@@ -158,6 +158,7 @@ private:
   MotionStocker m_motion;
   Option m_option;
   PMDObject m_objects[MAX_MODEL];
+  PMDObject *m_highlightModel;
   SceneEventHandler *m_handler;
   SceneRenderer m_scene;
   Stage m_stage;

@@ -75,7 +75,6 @@ void SceneRenderer::initialize()
 
   m_transMatrix.setIdentity();
   updateModelViewMatrix();
-  m_highlightingModel = -1;
 
   m_enableShadowMapping = false;
   m_shadowMapInitialized = false;
@@ -741,30 +740,6 @@ int SceneRenderer::pickModel(PMDObject *objects, int size, int x, int y, int *al
     *allowDropPicked = minIDAllowDrop;
 
   return minID;
-}
-
-/* SceneRenderer::hilightModel: highlight selected model */
-void SceneRenderer::highlightModel(PMDObject *objects, int id)
-{
-  float col[4];
-
-  if (m_highlightingModel == id) return;
-
-  if (m_highlightingModel != -1) {
-    /* reset current highlighted model */
-    col[0] = col[1] = col[2] = 0.0f;
-    col[3] = 1.0f;
-    objects[m_highlightingModel].getPMDModel()->setEdgeColor(col);
-  }
-  if (id != -1) {
-    /* set highlight to the specified model */
-    col[0] = 1.0f;
-    col[1] = col[2] = 0.0f;
-    col[3] = 1.0f;
-    objects[id].getPMDModel()->setEdgeColor(col);
-  }
-
-  m_highlightingModel = id;
 }
 
 /* SceneRenderer::update: update scale */

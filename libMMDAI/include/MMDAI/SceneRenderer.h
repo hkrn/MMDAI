@@ -69,7 +69,6 @@ private:
   btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
   btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
   btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
-  int m_highlightingModel;      /* highlighting model */
 
   float m_backgroundColor[3]; /* background color */
 
@@ -148,9 +147,6 @@ public:
 
   /* pickModel: pick up a model at the screen position */
   int pickModel(PMDObject *objects, int size, int x, int y, int *allowDropPicked);
-
-  /* hilightModel: highlight selected model */
-  void highlightModel(PMDObject *objects, int id);
 
   /* updateLigithing: update light */
   void updateLighting(bool useCartoonRendering, bool useMMDLikeCartoon, float *lightDirection, float lightIntensy, float *lightColor);

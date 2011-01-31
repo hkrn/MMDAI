@@ -305,7 +305,7 @@ void QMAWindow::selectObject()
     PMDObject *object = controller->findPMDObject(name);
     if (object != NULL) {
       controller->selectPMDObject(object);
-      controller->hightlightPMDObject();
+      controller->setHighlightPMDObject(object);
     }
   }
 }

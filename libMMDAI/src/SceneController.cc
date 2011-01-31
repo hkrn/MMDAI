@@ -58,6 +58,7 @@ static int getNumDigit(int in)
 SceneController::SceneController(SceneEventHandler *handler)
   : m_handler(handler),
     m_text(NULL),
+    m_highlightModel(0),
     m_numModel(0),
     m_selectedModel(-1),
     m_enablePhysicsSimulation(true)
@@ -850,9 +851,27 @@ void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel
     *dropAllowedModel = getPMDObject(dropAllowedModelID);
 }
 
-void SceneController::hightlightPMDObject()
+void SceneController::setHighlightPMDObject(PMDObject *object)
 {
-  m_scene.highlightModel(m_objects, m_selectedModel);
+  float col[4];
+
+  if (m_highlightModel != NULL) {
+    /* reset current highlighted model */
+    col[0] = PMDMODEL_EDGECOLORR;
+    col[1] = PMDMODEL_EDGECOLORG;
+    col[2] = PMDMODEL_EDGECOLORB;
+    col[3] = PMDMODEL_EDGECOLORA;
+    m_highlightModel->getPMDModel()->setEdgeColor(col);
+  }
+  if (object != NULL) {
+    /* set highlight to the specified model */
+    col[0] = 1.0f;
+    col[1] = col[2] = 0.0f;
+    col[3] = 1.0f;
+    object->getPMDModel()->setEdgeColor(col);
+  }
+
+  m_highlightModel = object;
 }
 
 PMDObject *SceneController::getSelectedPMDObject()
