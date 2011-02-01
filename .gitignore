@@ -2,19 +2,26 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 cmake_install.cmake
+Debug
 debug
 install_manifest.txt
 Makefile*
 moc_*
 QtMMDAI*
 release
+Win32
 *.build
 *-build-desktop
 *.dll*
 *.dylib
 *.qm
 *.o
+*.opensdf
 *.pro.user
+*.sdf
+*.sln
+*.suo
 *.so*
+*.vcxproj*
 *.xcodeproj
 

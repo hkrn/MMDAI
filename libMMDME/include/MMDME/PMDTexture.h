@@ -42,6 +42,9 @@
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #else
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 #endif
 

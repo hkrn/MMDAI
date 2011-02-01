@@ -37,7 +37,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # set library version
-set(MMDFILES_VERSION 1.0)
+set(MMDME_VERSION 1.0)
 
 # project configuration
 project(libMMDME)
@@ -63,8 +63,8 @@ set(libMMDME_public_headers
 )
 
 add_library(MMDME SHARED ${libMMDME_sources} ${libMMDME_public_headers})
-set_target_properties(MMDME PROPERTIES VERSION ${MMDFILES_VERSION})
-set_target_properties(MMDME PROPERTIES SO_VERSION ${MMDFILES_VERSION})
+set_target_properties(MMDME PROPERTIES VERSION ${MMDME_VERSION})
+set_target_properties(MMDME PROPERTIES SO_VERSION ${MMDME_VERSION})
 
 # project include directories
 include_directories(include)
@@ -79,8 +79,13 @@ else()
 endif()
 
 # find OpenGL Easy Extension
-find_path(GLEE_INCLUDE GLee.h)
-find_library(GLEE_LIBRARY glee)
+if (MSVC)
+  find_path(GLEE_INCLUDE GLee.h PATH $ENV{MMDAI_GLEE_DIR})
+  find_library(GLEE_LIBRARY glee PATH $ENV{MMDAI_GLEE_DIR})
+else()
+  find_path(GLEE_INCLUDE GLee.h)
+  find_library(GLEE_LIBRARY glee)
+endif()
 if(GLEE_INCLUDE AND GLEE_LIBRARY)
   target_link_libraries(MMDME ${GLEE_LIBRARY})
   include_directories(${GLEE_INCLUDE})
@@ -88,14 +93,36 @@ else()
   message(FATAL_ERROR "Required OpenGL Easy Extension is not found.")
 endif()
 
-if (MINGW)
+# find Bullet Physics
+OPTION(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
+if (FIND_BULLET_BY_PKGCONFIG)
+  find_package(PkgConfig)
+  pkg_search_module(BULLET REQUIRED bullet)
+endif()
+if(BULLET_FOUND)
+  include_directories(${BULLET_INCLUDE_DIRS})
+  target_link_libraries(MMDME ${BULLET_LIBRARIES})
+  link_directories(${BULLET_LIBRARY_DIRS})
+else()
   # find Bullet Physics
-  find_path(BULLET_INCLUDE_DIR btBulletDynamicsCommon.h)
-  find_library(BULLET_LIB_COLLISION BulletCollision)
-  find_library(BULLET_LIB_DYNAMICS BulletDynamics)
-  find_library(BULLET_LIB_SOFT_BODY BulletSoftBody)
-  find_library(BULLET_LIB_LINEAR_MATH LinearMath)
-  if (BULLET_INCLUDE_DIR)
+  if (MSVC)
+    # $ENV{MMDAI_BULLET_INCLUDE_DIR}) should be ${BULLET_TOP_DIR}\src
+    find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATH $ENV{MMDAI_BULLET_INCLUDE_DIR})
+	# $ENV{MMDAI_BULLET_LIB_DIR}) should be ${BULLET_TOP_DIR}\lib\Debug or ${BULLET_TOP_DIR}\lib\Release
+    find_library(BULLET_LIB_COLLISION BulletCollision PATH $ENV{MMDAI_BULLET_LIB_DIR})
+    find_library(BULLET_LIB_DYNAMICS BulletDynamics PATH $ENV{MMDAI_BULLET_LIB_DIR})
+    find_library(BULLET_LIB_SOFT_BODY BulletSoftBody PATH $ENV{MMDAI_BULLET_LIB_DIR})
+    find_library(BULLET_LIB_LINEAR_MATH LinearMath PATH $ENV{MMDAI_BULLET_LIB_DIR})
+  else()
+    find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h)
+    find_library(BULLET_LIB_COLLISION BulletCollision)
+    find_library(BULLET_LIB_DYNAMICS BulletDynamics)
+    find_library(BULLET_LIB_SOFT_BODY BulletSoftBody)
+    find_library(BULLET_LIB_LINEAR_MATH LinearMath)
+  endif()
+  if (BULLET_INCLUDE_DIRS AND BULLET_LIB_COLLISION AND
+	  BULLET_LIB_DYNAMICS AND BULLET_LIB_SOFT_BODY AND
+	  BULLET_LIB_LINEAR_MATH)
     include_directories(${BULLET_INCLUDE_DIRS})
     target_link_libraries(MMDME
       ${BULLET_LIB_COLLISION}
@@ -103,17 +130,6 @@ if (MINGW)
       ${BULLET_LIB_SOFT_BODY}
       ${BULLET_LIB_LINEAR_MATH}
     )
-  else()
-    message(FATAL_ERROR "Required Bullet Physics is not found.")
-  endif()
-else()
-  # find Bullet Physics via pkg-config
-  find_package(PkgConfig)
-  pkg_search_module(BULLET REQUIRED bullet)
-  if(BULLET_FOUND)
-    include_directories(${BULLET_INCLUDE_DIRS})
-    target_link_libraries(MMDME ${BULLET_LIBRARIES})
-    link_directories(${BULLET_LIBRARY_DIRS})
   else()
     message(FATAL_ERROR "Required Bullet Physics is not found.")
   endif()
@@ -129,6 +145,7 @@ if(APPLE)
   set_target_properties(MMDME PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
-install(TARGETS MMDME DESTINATION lib)
-install(DIRECTORY include/MMDME DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
-
+if(NOT MSVC)
+  install(TARGETS MMDME DESTINATION lib)
+  install(DIRECTORY include/MMDME DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
+endif()
