@@ -59,7 +59,14 @@ set(libMMDAI_public_headers
   include/MMDAI/TileTexture.h
 )
 
-add_library(MMDAI SHARED ${libMMDAI_sources} ${libMMDAI_public_headers})
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+if(BUILD_SHARED_LIBS)
+  set(MMDAI_LIB_TYPE SHARED)
+else()
+  set(MMDAI_LIB_TYPE STATIC)
+endif()
+
+add_library(MMDAI ${MMDAI_LIB_TYPE} ${libMMDAI_sources} ${libMMDAI_public_headers})
 set_target_properties(MMDAI PROPERTIES VERSION ${MMDAGENT_VERSION})
 set_target_properties(MMDAI PROPERTIES SO_VERSION ${MMDAGENT_VERSION})
 
@@ -132,7 +139,7 @@ else()
   endif()
 endif()
 
-# find libMMDFiles
+# find libMMDME
 if (MSVC)
   find_path(MMDME_INCLUDE MMDME/PMDModel.h PATH $ENV{MMDAI_ME_INCLUDE_DIR})
   find_library(MMDME_LIBRARY MMDME PATH $ENV{MMDAI_ME_LIB_DIR})

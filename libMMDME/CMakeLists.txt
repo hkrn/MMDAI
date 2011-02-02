@@ -62,7 +62,14 @@ set(libMMDME_public_headers
   include/MMDME/VMDFile.h
 )
 
-add_library(MMDME SHARED ${libMMDME_sources} ${libMMDME_public_headers})
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+if(BUILD_SHARED_LIBS)
+  set(MMDME_LIB_TYPE SHARED)
+else()
+  set(MMDME_LIB_TYPE STATIC)
+endif()
+
+add_library(MMDME ${MMDME_LIB_TYPE} ${libMMDME_sources} ${libMMDME_public_headers})
 set_target_properties(MMDME PROPERTIES VERSION ${MMDME_VERSION})
 set_target_properties(MMDME PROPERTIES SO_VERSION ${MMDME_VERSION})
 
@@ -143,6 +150,12 @@ if(APPLE)
     set_target_properties(MMDME PROPERTIES PUBLIC_HEADER "${libMMDME_public_headers}")
   endif()
   set_target_properties(MMDME PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+if(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 if(NOT MSVC)
