@@ -168,7 +168,11 @@ void Logger::log(const char *format, ...)
 
    va_start(args, format);
    if (m_textBufArray) {
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       snprintf(buff, LOG_MAXBUFLEN - 1, format, args);
+#else
+     _snprintf_s(buff, LOG_MAXBUFLEN - 1, format, args);
+#endif
       printf("%s\n", buff);
       fflush(stdout);
       buff[LOG_MAXBUFLEN - 1] = '\0';

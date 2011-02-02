@@ -171,7 +171,7 @@ PMDObject *SceneController::allocatePMDObject()
 
 PMDObject *SceneController::findPMDObject(PMDObject *object)
 {
-  findPMDObject(object->getAlias());
+  return findPMDObject(object->getAlias());
 }
 
 PMDObject *SceneController::findPMDObject(const char *alias)
@@ -243,7 +243,11 @@ bool SceneController::addMotion(PMDObject *object,
       find = false;
       allocSize = sizeof(char) * (getNumDigit(i) + 1);
       name = (char *) malloc(allocSize);
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       snprintf(name, allocSize, "%d", i);
+#else
+      _snprintf(name, allocSize, "%d", i);
+#endif
       motionPlayer = object->getMotionManager()->getMotionPlayerList();
       for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
         if (motionPlayer->active && strcmp(motionPlayer->name, name) == 0) {
@@ -405,7 +409,11 @@ bool SceneController::addModel(const char *modelAlias,
     for(i = 0;; i++) {
       size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
       name = (char *) malloc(allocSize);
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       snprintf(name, allocSize, "%d", i);
+#else
+      _snprintf(name, allocSize, "%d", i);
+#endif
       if (findPMDObject(name) != NULL)
         free(name);
       else
@@ -529,7 +537,11 @@ void SceneController::changeLightDirection(float x, float y, float z)
   /* send event message */
   if (m_handler != NULL) {
     char buf[BUFSIZ];
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
     snprintf(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
+#else
+    _snprintf_s(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
+#endif
     sendEvent1(MMDAGENT_EVENT_LIGHTDIRECTION, buf);
   }
 }
@@ -548,7 +560,11 @@ void SceneController::changeLightColor(float r, float g, float b)
   /* send event message */
   if (m_handler != NULL) {
     char buf[BUFSIZ];
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
     snprintf(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
+#else
+    _snprintf_s(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
+#endif
     sendEvent1(MMDAGENT_EVENT_LIGHTCOLOR, buf);
   }
 }
@@ -631,13 +647,12 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
 /* SceneController::stopRotation: stop rotation */
 void SceneController::stopRotation(PMDObject *object)
 {
-  int id;
   btQuaternion currentRot;
   btQuaternion targetRot;
 
   /* set */
   targetRot = (*(object->getPMDModel()->getRootBone()->getCurrentRotation()));
-  m_objects[id].getRotation(currentRot);
+  object->getRotation(currentRot);
 
   /* not need to rotate */
   if (currentRot == targetRot)
