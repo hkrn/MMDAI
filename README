@@ -115,7 +115,9 @@ $ sudo make install
 
 ** Linux or MacOSX
 $ cd libMMDFiles
-$ cmake .
+# 共有ライブラリを作成する場合。共有ライブラリではなく、静的ライブラリを作成する場合は
+# -DBUILD_SHARED_LIBS=OFF にするか、または単純に "cmake ." とするだけでよい。
+$ cmake -DBUILD_SHARED_LIBS=ON .
 $ make 
 $ sudo make install
 $ cd ../libMMDAI
