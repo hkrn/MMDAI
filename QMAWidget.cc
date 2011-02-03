@@ -420,12 +420,12 @@ void QMAWidget::dropEvent(QDropEvent *event)
   const QMimeData *mimeData = event->mimeData();
   if (mimeData->hasUrls()) {
     Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
-    qDebug() << "modifiers: " << modifiers;
     foreach (QUrl url, mimeData->urls()) {
       /* load only a local file */
       if (url.scheme() == "file") {
         const QString path = url.toLocalFile();
-        const char *filename = path.toUtf8().constData();
+		const QByteArray encodedPath = QFile::encodeName(path);
+		const char *filename = encodedPath.constData();
         if (path.endsWith(".vmd")) {
           /* motion */
           if (modifiers & Qt::ControlModifier) {
