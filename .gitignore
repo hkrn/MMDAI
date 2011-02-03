@@ -9,11 +9,16 @@ Makefile*
 moc_*
 QtMMDAI*
 release
+UpgradeLog.XML
+_UpgradeReport_Files
 Win32
 *.build
 *-build-desktop
 *.dll*
 *.dylib
+*.idb
+*.ncb
+*.pdb
 *.qm
 *.o
 *.opensdf
@@ -22,6 +27,7 @@ Win32
 *.sln
 *.suo
 *.so*
+*.vcproj*
 *.vcxproj*
 *.xcodeproj
 
