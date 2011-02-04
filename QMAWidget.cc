@@ -191,7 +191,8 @@ void QMAWidget::delegateCommand(const QString &command, const QStringList &argum
     if (argv != NULL) {
       bool err = false;
       for (int i = 0; i < argc; i++) {
-        if ((argv[i] = strdup(arguments.at(i).toUtf8().constData())) == NULL) {
+        QString arg = arguments.at(i);
+        if ((argv[i] = strdup(arg.toUtf8().constData())) == NULL) {
           err = true;
           break;
         }
