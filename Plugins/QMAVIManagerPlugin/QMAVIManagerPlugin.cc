@@ -80,7 +80,8 @@ void QMAVIManagerPlugin::receiveCommand(const QString &command, const QStringLis
 void QMAVIManagerPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
   if (m_thread.isStarted()) {
-    m_thread.enqueueBuffer(type.toUtf8().constData(), arguments.join("/").toUtf8().constData());
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    m_thread.enqueueBuffer(type.toUtf8().constData(), codec->fromUnicode(arguments.join("|")).constData());
   }
 }
 
