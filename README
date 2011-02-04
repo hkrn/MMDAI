@@ -164,9 +164,11 @@ $ wine QtMMDAI.exe
 
 音声合成ライブラリである AquesTalk2 を使って喋らせるプラグインです。
 以下が利用可能です。喋らせる文字列は AquesTalk2 に渡す文字列と同様です。
+引数は MMDAgent の OpenJTalk プラグインにあわせています。
 
 - Command
--- MMDAI_AQTK2_START(喋らせる文字列)
+-- MMDAI_AQTK2_START(モデルエイリアス,phontファイルのパス,テキスト)
+-- MMDAI_AQTK2_STOP(モデルエイリアス)
 
 ** QMAAudioPlugin
 
