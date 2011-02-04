@@ -43,7 +43,7 @@ DESTDIR = ../plugins
 unix {
     JULIUS_PATHS  = /usr/local/bin /usr/bin
     for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
-        LIBS += $$system($${path}/libsent-config --libs) $$system($${path}/libjulius-config --libs)
+        LIBS += $$system($${path}/libjulius-config --libs) $$system($${path}/libsent-config --libs)
     }
 }
 
