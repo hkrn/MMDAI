@@ -197,6 +197,7 @@ QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
     m_file = new QFile(path);
   else
     m_file = new QFile("mmdai:" + path);
+  m_filename = strdup(m_file->fileName().toUtf8().constData());
 }
 
 QMAModelLoader::~QMAModelLoader()
@@ -205,6 +206,7 @@ QMAModelLoader::~QMAModelLoader()
     qWarning() << "Leaked:" << m_file->fileName();
     m_file->close();
   }
+  free(const_cast<char *>(m_filename));
   delete m_file;
 }
 
@@ -264,5 +266,5 @@ bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
 
 const char *QMAModelLoader::getLocation()
 {
-  return m_file->fileName().toUtf8().constData();
+  return m_filename;
 }

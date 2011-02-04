@@ -64,6 +64,7 @@ public:
 private:
   QDir m_dir;
   QFile *m_file;
+  const char *m_filename;
   Q_DISABLE_COPY(QMAModelLoader);
 };
 
