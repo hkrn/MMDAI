@@ -96,18 +96,16 @@ void SceneController::updateLight()
 bool SceneController::loadFloor(PMDModelLoader *loader)
 {
   /* load floor */
-  char *fileName = strdup(loader->getLocation());
+  const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
   if (m_stage.loadFloor(loader, &m_bullet) == false) {
     g_logger.log("Error: setFloor: cannot set floor %s.", fileName);
-    free(fileName);
     return false;
   }
 
   /* send event message */
   sendEvent1(MMDAGENT_EVENT_FLOOR, fileName);
-  free(fileName);
 
   return true;
 }
@@ -116,18 +114,16 @@ bool SceneController::loadFloor(PMDModelLoader *loader)
 bool SceneController::loadBackground(PMDModelLoader *loader)
 {
   /* load background */
-  char *fileName = strdup(loader->getLocation());
+  const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
   if (m_stage.loadBackground(loader, &m_bullet) == false) {
     g_logger.log("Error: setBackground: cannot set background %s.", fileName);
-    free(fileName);
     return false;
   }
 
   /* send event message */
   sendEvent1(MMDAGENT_EVENT_BACKGROUND, fileName);
-  free(fileName);
 
   return true;
 }
@@ -136,18 +132,16 @@ bool SceneController::loadBackground(PMDModelLoader *loader)
 bool SceneController::loadStage(PMDModelLoader *loader)
 {
   /* load stage */
-  char *fileName = strdup(loader->getLocation());
+  const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
   if (m_stage.loadStagePMD(loader, &m_bullet) == false) {
     g_logger.log("Error: setStage: cannot set stage %s.", fileName);
-    free(fileName);
     return false;
   }
 
   /* send event message */
   sendEvent1(MMDAGENT_EVENT_STAGE, fileName);
-  free(fileName);
 
   return true;
 }
