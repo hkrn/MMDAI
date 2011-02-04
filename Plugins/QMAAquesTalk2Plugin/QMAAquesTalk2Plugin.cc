@@ -36,6 +36,8 @@
 
 #include "QMAAquesTalk2Plugin.h"
 
+#include <QDir>
+#include <QFile>
 #include <QTextCodec>
 
 #ifdef Q_OS_DARWIN
@@ -85,12 +87,21 @@ void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringLi
   if (command == "MMDAI_AQTK2_START" && argc >= 3) {
     int size = 0;
     QString text = arguments.at(2);
+    QString phontPath = arguments.at(1);
     m_modelName = arguments.at(0);
+    phontPath = QDir::isAbsolutePath(phontPath) ? phontPath : ("mmdai:" + phontPath);
+    QFile phontFile(phontPath);
+    QByteArray phont;
+    char *ptr = 0;
+    if (phontFile.exists() && phontFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
+      phont = phontFile.readAll();
+      ptr = phont.data();
+    }
 #ifdef Q_OS_WIN32
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    unsigned char *data = AquesTalk2_Synthe(codec->fromUnicode(text).constData(), 100, &size, NULL);
+    unsigned char *data = AquesTalk2_Synthe(codec->fromUnicode(text).constData(), 100, &size, ptr);
 #else
-    unsigned char *data = AquesTalk2_Synthe_Utf8(text.toUtf8().constData(), 100, &size, NULL);
+    unsigned char *data = AquesTalk2_Synthe_Utf8(text.toUtf8().constData(), 100, &size, ptr);
 #endif
     if (data != NULL) {
       delete m_buffer;
