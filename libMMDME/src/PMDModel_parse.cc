@@ -242,7 +242,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       m_numRigidBody = 0;
       m_numConstraint = 0;
       /* assign default toon textures for toon shading */
-      for (int i = 0; i <= 10; i++) {
+      for (int i = 0; i <= SYSTEMTEXTURE_NUMFILES; i++) {
         PMDTexture *texture = &m_localToonTexture[i];
         m_toonTextureID[i] = 0;
         if (loader->loadSystemTexture(i, texture)) {
@@ -270,7 +270,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       if (loader->loadSystemTexture(0, texture)) {
         m_toonTextureID[0] = texture->getID();
       }
-      for (int i = 1; i <= 10; i++) {
+      for (int i = 1; i <= SYSTEMTEXTURE_NUMFILES; i++) {
          const char *exToonBMPName = (const char *)ptr;
          texture = &m_localToonTexture[i];
          if (loader->loadModelTexture(exToonBMPName, texture)) {

@@ -110,8 +110,8 @@ private:
    PMDConstraint *m_constraintList; /* rigid body list */
 
    /* work area for toon renderling */
-   unsigned int m_toonTextureID[SYSTEMTEXTURE_NUMFILES];  /* texture ID for toon shading */
-   PMDTexture m_localToonTexture[SYSTEMTEXTURE_NUMFILES]; /* toon textures for this model only */
+   unsigned int m_toonTextureID[SYSTEMTEXTURE_NUMFILES + 1];  /* texture ID for toon shading */
+   PMDTexture m_localToonTexture[SYSTEMTEXTURE_NUMFILES + 1]; /* toon textures for this model only */
 
    /* work area for OpenGL rendering */
    btTransform *m_boneSkinningTrans;         /* transform matrices of bones for skinning */
