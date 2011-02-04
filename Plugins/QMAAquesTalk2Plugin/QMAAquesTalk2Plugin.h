@@ -38,6 +38,7 @@ private:
   Phonon::AudioOutput *m_output;
   Phonon::MediaObject *m_object;
   QBuffer *m_buffer;
+  QString m_modelName;
 };
 
 #endif // QMAAQUESTALK2PLUGIN_H

@@ -36,6 +36,8 @@
 
 #include "QMAAquesTalk2Plugin.h"
 
+#include <QTextCodec>
+
 #ifdef Q_OS_DARWIN
 #include <AquesTalk2/AquesTalk2.h>
 #else
@@ -80,10 +82,16 @@ void QMAAquesTalk2Plugin::stop()
 void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
   int argc = arguments.count();
-  if (command == "MMDAI_AQTK2_START" && argc > 0) {
+  if (command == "MMDAI_AQTK2_START" && argc >= 3) {
     int size = 0;
-    const char *text = arguments.at(0).toUtf8().constData();
-    unsigned char *data = AquesTalk2_Synthe_Utf8(text, 100, &size, NULL);
+    QString text = arguments.at(2);
+    m_modelName = arguments.at(0);
+#ifdef Q_OS_WIN32
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    unsigned char *data = AquesTalk2_Synthe(codec->fromUnicode(text).constData(), 100, &size, NULL);
+#else
+    unsigned char *data = AquesTalk2_Synthe_Utf8(text.toUtf8().constData(), 100, &size, NULL);
+#endif
     if (data != NULL) {
       delete m_buffer;
       m_buffer = new QBuffer();
@@ -119,6 +127,7 @@ void QMAAquesTalk2Plugin::render()
 void QMAAquesTalk2Plugin::finished()
 {
   QStringList arguments;
+  arguments << m_modelName;
   emit eventPost(QString("MMDAI_AQTK2_STOP"), arguments);
 }
 
