@@ -40,6 +40,10 @@ INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAVILuaPlugin)
 DESTDIR = ../plugins
 
+macx {
+    CONFIG += x86 x86_64
+}
+
 LIBS += -llua
 
 HEADERS += \

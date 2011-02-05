@@ -44,6 +44,9 @@ unix {
     LIBS += -L/usr/local/lib
     INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
 }
+macx {
+    CONFIG += x86 x86_64
+}
 
 LIBS += -lMMDAI -lMMDME -lglee -lBulletDynamics -lBulletCollision -lLinearMath
 
