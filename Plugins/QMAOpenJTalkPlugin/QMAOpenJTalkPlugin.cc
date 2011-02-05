@@ -59,7 +59,7 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 void QMAOpenJTalkPlugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  QString dir = QDir("mmdai:AppData/Open_JTalk").absolutePath();
+  QString dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Open_JTalk";
   QString config = QFile("mmdai:MMDAI.ojt").fileName();
   m_thread->load(dir.toUtf8().constData(), config.toUtf8().constData());
   m_thread->start();
@@ -85,8 +85,7 @@ void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QStringLis
   if (command == PLUGINOPENJTALK_STARTCOMMAND) {
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     QString str = arguments.join("|");
-    const char *argv = codec->fromUnicode(str).constData();
-    m_thread->setSynthParameter(argv);
+    m_thread->setSynthParameter(codec->fromUnicode(str).constData());
   }
   else if (command == PLUGINOPENJTALK_STOPCOMMAND) {
     m_thread->stop();
@@ -115,13 +114,15 @@ void QMAOpenJTalkPlugin::render()
 
 void QMAOpenJTalkPlugin::sendCommand(const char *command, char *arguments)
 {
-  emit commandPost(QString(command), QString(arguments).split('|'));
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  emit commandPost(QString(command), codec->toUnicode(arguments).split('|'));
   free(arguments);
 }
 
 void QMAOpenJTalkPlugin::sendEvent(const char *type, char *arguments)
 {
-  emit eventPost(QString(type), QString(arguments).split('|'));
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  emit eventPost(QString(type), codec->toUnicode(arguments).split('|'));
   free(arguments);
 }
 

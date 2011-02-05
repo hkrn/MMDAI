@@ -395,7 +395,7 @@ void Open_JTalk_Thread::sendStopEventMessage(const char *str)
   if(str == NULL)
     return;
 
-  mes = strdup(OPENJTALKTHREAD_EVENTSTOP);
+  mes = strdup(str);
   m_dispathcer->sendEvent(OPENJTALKTHREAD_EVENTSTOP, mes);
 }
 
