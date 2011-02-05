@@ -43,15 +43,6 @@
 #include "QMAJuliusInitializer.h"
 #include "Julius_Thread.h"
 
-/*
-  X11 defines "Status" as int, it causes an error at compile time.
-  We must load qdatastream.h before X11 headers.
-  see http://qt.nokia.com/developer/task-tracker/index_html?method=entry&id=96943
-*/
-#include <QDir>
-#include <QFile>
-#include <QTextStream>
-
 #include "QMAPlugin.h"
 
 class QMAJuliusPlugin : public QMAPlugin, public CommandDispatcher

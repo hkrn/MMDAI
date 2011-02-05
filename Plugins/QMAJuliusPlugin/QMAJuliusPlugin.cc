@@ -36,8 +36,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <QDir>
+#include <QFile>
 #include <QTextCodec>
+#include <QTextStream>
 #include "QMAJuliusPlugin.h"
+#undef open // undef stddef.h in Julius
 
 QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
   : QMAPlugin(parent),
@@ -55,7 +59,7 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
 void QMAJuliusPlugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  QDir dir = QDir("mmdai:/AppData/Julius");
+  QDir dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Julius";
   QString filename = dir.absoluteFilePath("jconf.txt");
   QFile jconf(filename);
   QStringList conf;
@@ -68,8 +72,7 @@ void QMAJuliusPlugin::initialize(SceneController *controller)
         QString key = pair[0];
         QString value = pair[1];
         if (key == "-d" || key == "-v" || key == "-h" || key == "-hlist") {
-          QDir path(dir);
-          value = path.absoluteFilePath(value);
+          value = dir.absoluteFilePath(value);
         }
         conf << key << value;
       }
@@ -128,8 +131,10 @@ void QMAJuliusPlugin::startJuliusEngine()
   m_thread->start();
 }
 
-void QMAJuliusPlugin::sendCommand(const char */*command*/, char */*arguments*/)
+void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)
 {
+  Q_UNUSED(command);
+  Q_UNUSED(arguments);
 }
 
 void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
