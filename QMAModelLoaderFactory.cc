@@ -62,6 +62,6 @@ void QMAModelLoaderFactory::releaseMotionLoader(VMDLoader *loader)
 
 inline QMAModelLoader *QMAModelLoaderFactory::createLoader(const char *filename)
 {
-  QString path = QDir(QDir::currentPath()).absoluteFilePath("AppData");
+  QString path = QDir::searchPaths("mmdai").at(0) + "/AppData";
   return new QMAModelLoader(path, filename);
 }
