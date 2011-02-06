@@ -64,6 +64,7 @@ macx {
     # $ sudo gfind $OPEN_JTALK_SRC_DIR -name '*.h' -exec ln -s {} \;
     # $ cd /usr/local/lib
     # $ sudo gfind $OPEN_JTALK_SRC_DIR -name '*.a' -exec ln -s {} \;
+    # $ sudo mv libmecab.a libmecab_custom.a
     #
     # on MacOSX, mecab has been installed in /usr, we use jtalk's mecab as libmecab_custom.a
     LIBS += -liconv -lmecab_custom
@@ -72,9 +73,11 @@ macx {
 HEADERS += \
     QMAOpenJTalkPlugin.h \
     Open_JTalk.h \
-    Open_JTalk_Thread.h
+    Open_JTalk_Thread.h \
+    Open_JTalk_Manager.h
 
 SOURCES += \
     QMAOpenJTalkPlugin.cc \
     Open_JTalk.cpp \
-    Open_JTalk_Thread.cpp
+    Open_JTalk_Thread.cpp \
+    Open_JTalk_Manager.cpp

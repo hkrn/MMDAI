@@ -42,27 +42,30 @@
 #include <QTextCodec>
 #include <stdlib.h>
 
-#define PLUGINOPENJTALK_STARTCOMMAND "SYNTH_START"
-#define PLUGINOPENJTALK_STOPCOMMAND  "SYNTH_STOP"
+const QString kOpenJTalkStartCommand = "SYNTH_START";
+const QString kOpenJTalkStopCommand =  "SYNTH_STOP";
+const QByteArray kOpenJTalkCodecName = "Shift-JIS";
 
 QMAOpenJTalkPlugin::QMAOpenJTalkPlugin(QObject *parent)
   : QMAPlugin(parent),
-    m_thread(new Open_JTalk_Thread(this))
+    m_manager(new Open_JTalk_Manager(this))
 {
 }
 
 QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 {
-  delete m_thread;
+  delete m_manager;
+  m_manager = 0;
 }
 
 void QMAOpenJTalkPlugin::initialize(SceneController *controller)
 {
   Q_UNUSED(controller);
-  QString dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Open_JTalk";
+  QString base = QDir::searchPaths("mmdai").at(0);
+  QString dir = base + "/AppData/Open_JTalk";
   QString config = QFile("mmdai:MMDAI.ojt").fileName();
-  m_thread->load(dir.toUtf8().constData(), config.toUtf8().constData());
-  m_thread->start();
+  m_manager->load(base.toUtf8().constData(), dir.toUtf8().constData(), config.toUtf8().constData());
+  m_manager->start();
 }
 
 void QMAOpenJTalkPlugin::start()
@@ -75,20 +78,15 @@ void QMAOpenJTalkPlugin::stop()
   /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::createWindow()
-{
-  /* do nothing */
-}
-
 void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
-  if (command == PLUGINOPENJTALK_STARTCOMMAND) {
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    QString str = arguments.join("|");
-    m_thread->setSynthParameter(codec->fromUnicode(str).constData());
+  QTextCodec *codec = QTextCodec::codecForName(kOpenJTalkCodecName);
+  QString str = arguments.join("|");
+  if (command == kOpenJTalkStartCommand) {
+    m_manager->synthesis(codec->fromUnicode(str).constData());
   }
-  else if (command == PLUGINOPENJTALK_STOPCOMMAND) {
-    m_thread->stop();
+  else if (command == kOpenJTalkStopCommand) {
+    m_manager->stop(codec->fromUnicode(str).constData());
   }
 }
 
@@ -114,14 +112,14 @@ void QMAOpenJTalkPlugin::render()
 
 void QMAOpenJTalkPlugin::sendCommand(const char *command, char *arguments)
 {
-  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  QTextCodec *codec = QTextCodec::codecForName(kOpenJTalkCodecName);
   emit commandPost(QString(command), codec->toUnicode(arguments).split('|'));
   free(arguments);
 }
 
 void QMAOpenJTalkPlugin::sendEvent(const char *type, char *arguments)
 {
-  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  QTextCodec *codec = QTextCodec::codecForName(kOpenJTalkCodecName);
   emit eventPost(QString(type), codec->toUnicode(arguments).split('|'));
   free(arguments);
 }

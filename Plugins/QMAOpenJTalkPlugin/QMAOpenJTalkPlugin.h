@@ -41,8 +41,8 @@
 
 #include "QMAPlugin.h"
 
-#include "Open_JTalk.h"
-#include "Open_JTalk_Thread.h"
+#include "CommandDispatcher.h"
+#include "Open_JTalk_Manager.h"
 
 class QMAOpenJTalkPlugin : public QMAPlugin, public CommandDispatcher
 {
@@ -60,7 +60,6 @@ public slots:
   void initialize(SceneController *controller);
   void start();
   void stop();
-  void createWindow();
   void receiveCommand(const QString &command, const QStringList &arguments);
   void receiveEvent(const QString &type, const QStringList &arguments);
   void update(const QRect &rect, const QPoint &pos, const double delta);
@@ -71,7 +70,7 @@ signals:
   void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  Open_JTalk_Thread *m_thread;
+  Open_JTalk_Manager *m_manager;
 };
 
 #endif // QMAOPENJTALKPLUGIN_H

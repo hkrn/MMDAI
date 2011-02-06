@@ -36,91 +36,89 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef OPEN_JTALK_THREAD_H_
-#define OPEN_JTALK_THREAD_H_
+#ifndef OPEN_JTALK_MANAGER_H_
+#define OPEN_JTALK_MANAGER_H_
 
 #include <QMutex>
 #include <QThread>
 #include <QWaitCondition>
 
 #include "CommandDispatcher.h"
-#include "Open_JTalk.h"
+#include "Open_JTalk_Thread.h"
 
 /* definitions */
 
-#define OPENJTALKTHREAD_WAITMS     10000               /* 10 sec */
-#define OPENJTALKTHREAD_EVENTSTART "SYNTH_EVENT_START"
-#define OPENJTALKTHREAD_EVENTSTOP  "SYNTH_EVENT_STOP"
-#define OPENJTALKTHREAD_COMMANDLIP "LIPSYNC_START"
+#define OPENJTALKMANAGER_WAITMS         10000 /* 10 sec */
+#define OPENJTALKMANAGER_INITIALNTHREAD 1     /* initial number of thread */
 
-/* Open_JTalk_Thread: thread for Open JTalk */
-class Open_JTalk_Thread : public QThread
+/* Open_JTalk_Link: thread list for Open JTalk */
+typedef struct _Open_JTalk_Link {
+  Open_JTalk_Thread open_jtalk_thread;
+  struct _Open_JTalk_Link *next;
+} Open_JTalk_Link;
+
+/* Open_JTalk_Event: input message buffer */
+typedef struct _Open_JTalk_Event {
+  char *event;
+  struct _Open_JTalk_Event *next;
+} Open_JTalk_Event;
+
+/* Open_JTalk_EventQueue: queue of Open_JTalk_Event */
+typedef struct _Open_JTalk_EventQueue {
+  Open_JTalk_Event *head;
+  Open_JTalk_Event *tail;
+} Open_JTalk_EventQueue;
+
+/* Open_JTalk_Manager: multi thread manager for Open JTalk */
+class Open_JTalk_Manager : public QThread
 {
 private:
 
-  Open_JTalk m_openJTalk; /* Japanese TTS system */
-  CommandDispatcher *m_dispathcer;
+  Open_JTalk_Link *m_list;
+  CommandDispatcher *m_dispatcher;
   QMutex m_mutex;
   QWaitCondition m_cond;
 
-  bool m_speaking;
+  char *m_baseDir;
+  char *m_dicDir;
+  char *m_config;
+
   volatile bool m_kill;
 
-  char *m_charaBuff;
-  char *m_styleBuff;
-  char *m_textBuff;
+  Open_JTalk_EventQueue m_bufferQueue;
 
-  int m_numModels;     /* number of models */
-  char **m_modelNames; /* model names */
-  int m_numStyles;     /* number of styles */
-  char **m_styleNames; /* style names */
-
-  /* initialize: initialize thread */
+  /* initialize: initialize */
   void initialize();
 
-  /* clear: free thread */
+  /* clear: clear */
   void clear();
 
 public:
 
-  /* Open_JTalk_Thraed: thread constructor */
-  Open_JTalk_Thread();
+  /* Open_JTalk_Manager: constructor */
+  Open_JTalk_Manager(CommandDispatcher *dispatcher);
 
-  /* ~Open_JTalk_Thread: thread destructor */
-  ~Open_JTalk_Thread();
+  /* ~Open_JTalk_Manager: destructor */
+  ~Open_JTalk_Manager();
 
-  /* loadAndStart: load models and start thread */
-  void load(CommandDispatcher *dispatcher, const char *baseDir, const char *dicDir, const char *config);
+  /* loadAndStart: load and start thread */
+  void load(const char *baseDir, const char *dicDir, const char *config);
 
-  /* stopAndRelease: stop thread and free Open JTalk */
+  /* stopAndRelease: stop and release thread */
   void stopAndRelease();
 
   /* isRunning: check running */
   bool isRunning();
 
-  /* isSpeaking: check speaking */
-  bool isSpeaking();
-
-  /* checkCharacter: check speaking character */
-  bool checkCharacter(const char *chara);
-
   /* synthesis: start synthesis */
-  void synthesis(const char *chara, const char *style, const char *text);
+  void synthesis(const char *str);
 
   /* stop: stop synthesis */
-  void stop();
-
-  /* sendStartEventMessage: send start event message to MMDAgent */
-  void sendStartEventMessage(const char *str);
-
-  /* sendStopEventMessage: send stop event message to MMDAgent */
-  void sendStopEventMessage(const char *str);
-
-  /* sendLipCommandMessage: send lipsync command message to MMDAgent */
-  void sendLipCommandMessage(const char *chara, const char *lip);
+  void stop(const char *str);
 
 protected:
-  /* start: main thread loop for TTS */
+
+  /* start: main loop */
   void run();
 };
 

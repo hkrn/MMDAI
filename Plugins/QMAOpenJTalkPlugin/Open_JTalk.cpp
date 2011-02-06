@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -38,23 +38,18 @@
 
 /* headers */
 
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "Open_JTalk.h"
-#include "mecab.h"
 
-#ifdef OPENJTALK_DEBUG
-void dprint(char *str)
-{
-  FILE *fp = fopen("C:/cygwin/home/uratec/SRC/MMDAgentTask/MMDAgentExample/log.txt", "a");
-  fprintf(fp, "[");
-  fprintf(fp, str);
-  fprintf(fp, "]/n");
-  fclose(fp);
-}
-#endif
+#include "njd_set_pronunciation.h"
+#include "njd_set_digit.h"
+#include "njd_set_accent_phrase.h"
+#include "njd_set_accent_type.h"
+#include "njd_set_unvoiced_vowel.h"
+#include "njd_set_long_vowel.h"
 
 /* Open_JTalk::initialize: initialize system */
 void Open_JTalk::initialize()
@@ -250,7 +245,7 @@ bool Open_JTalk::load(const char *dicDir, char **modelDir, int numModels, double
 }
 
 /* Open_JTalk::prepare: text analysis, decision of state durations, and parameter generation */
-void Open_JTalk::prepare(char *str)
+void Open_JTalk::prepare(const char *str)
 {
   char *buff;
   char **label_feature = NULL;
@@ -329,8 +324,8 @@ void Open_JTalk::getPhonemeSequence(char *str)
     if (i > 0)
       strcat(str, ",");
     /* get phoneme from full-context label */
-    start = strstr(feature[i], "-");
-    end = strstr(feature[i], "+");
+    start = strchr(feature[i], '-');
+    end = strchr(feature[i], '+');
     if (start != NULL && end != NULL) {
       for (ch = start + 1; ch != end; ch++)
         sprintf(str, "%s%c", str, *ch);
@@ -340,7 +335,7 @@ void Open_JTalk::getPhonemeSequence(char *str)
     /* get ms */
     for (j = 0, k = 0; j < nstate; j++)
       k += (HTS_Engine_get_state_duration(&m_engine, i * nstate + j) * fperiod * 1000) / sampling_rate;
-    sprintf(str, "%s%d", str, k);
+    sprintf(str, "%s,%d", str, k);
   }
 }
 
@@ -385,26 +380,39 @@ bool Open_JTalk::setStyle(int val)
 
   /* speed */
   f = OPENJTALK_FPERIOD / m_styleWeights[index + m_numModels * 3 + 0];
-  if (f < 1.0) f = 1.0;
-  if (f > 48000.0) f = 48000.0;
-  HTS_Engine_set_fperiod(&m_engine, (int) f);
+  if(f > OPENJTALK_MAXFPERIOD)
+    HTS_Engine_set_fperiod(&m_engine, OPENJTALK_MAXFPERIOD);
+  else if(f < OPENJTALK_MINFPERIOD)
+    HTS_Engine_set_fperiod(&m_engine, OPENJTALK_MINFPERIOD);
+  else
+    HTS_Engine_set_fperiod(&m_engine, (int) f);
 
   /* pitch */
   f = m_styleWeights[index + m_numModels * 3 + 1];
-  if (f < -24.0) f = -24.0;
-  if (f > 24.0)  f = 24.0;
-  m_f0Shift = f;
+  if(f > OPENJTALK_MAXHALFTONE)
+    m_f0Shift = OPENJTALK_MAXHALFTONE;
+  else if(f < OPENJTALK_MINHALFTONE)
+    m_f0Shift = OPENJTALK_MINHALFTONE;
+  else
+    m_f0Shift = f;
 
   /* alpha */
   f = m_styleWeights[index + m_numModels * 3 + 2];
-  if (f < 0.0) f = 0.0;
-  if (f > 1.0) f = 1.0;
-  HTS_Engine_set_alpha(&m_engine, f);
+  if(f > OPENJTALK_MAXALPHA)
+    HTS_Engine_set_alpha(&m_engine, OPENJTALK_MAXALPHA);
+  else if(f < OPENJTALK_MINALPHA)
+    HTS_Engine_set_alpha(&m_engine, OPENJTALK_MINALPHA);
+  else
+    HTS_Engine_set_alpha(&m_engine, f);
 
   /* volume */
   f = m_styleWeights[index + m_numModels * 3 + 3];
-  if (f < 0.0) f = 0.0;
-  HTS_Engine_set_volume(&m_engine, f);
+  if(f > OPENJTALK_MAXVOLUME)
+    HTS_Engine_set_volume(&m_engine, OPENJTALK_MAXVOLUME);
+  else if(f < OPENJTALK_MINVOLUME)
+    HTS_Engine_set_volume(&m_engine, OPENJTALK_MINVOLUME);
+  else
+    HTS_Engine_set_volume(&m_engine, f);
 
   return true;
 }
