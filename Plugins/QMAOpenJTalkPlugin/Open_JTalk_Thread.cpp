@@ -38,62 +38,46 @@
 
 /* headers */
 
+#include <QBuffer>
 #include <QDebug>
 #include <QtGlobal>
 
-#include "mecab.h"
-#include "njd.h"
-#include "jpcommon.h"
-#include "HTS_engine.h"
-
-#include "text2mecab.h"
-#include "mecab2njd.h"
-#include "njd2jpcommon.h"
-
-#include "njd_set_pronunciation.h"
-#include "njd_set_digit.h"
-#include "njd_set_accent_phrase.h"
-#include "njd_set_accent_type.h"
-#include "njd_set_unvoiced_vowel.h"
-#include "njd_set_long_vowel.h"
-
-#include "Open_JTalk.h"
 #include "Open_JTalk_Thread.h"
 
 /* MMDAgent_fgettoken: get token from file pointer (copied from MMDAgent_util.c) */
 static int MMDAgent_fgettoken(FILE *fp, char *buff)
 {
-   int i;
-   char c;
+  int i;
+  char c;
 
-   c = fgetc(fp);
-   if(c == EOF) {
-      buff[0] = '\0';
-      return 0;
-   }
+  c = fgetc(fp);
+  if(c == EOF) {
+    buff[0] = '\0';
+    return 0;
+  }
 
-   if(c == '#') {
-      for(c = fgetc(fp); c != EOF; c = fgetc(fp))
-         if(c == '\n')
-            return MMDAgent_fgettoken(fp, buff);
-      buff[0] = '\0';
-      return 0;
-   }
+  if(c == '#') {
+    for(c = fgetc(fp); c != EOF; c = fgetc(fp))
+      if(c == '\n')
+        return MMDAgent_fgettoken(fp, buff);
+    buff[0] = '\0';
+    return 0;
+  }
 
-   if(c == ' ' || c == '\t' || c == '\r' || c == '\n')
-      return MMDAgent_fgettoken(fp, buff);
+  if(c == ' ' || c == '\t' || c == '\r' || c == '\n')
+    return MMDAgent_fgettoken(fp, buff);
 
-   buff[0] = c;
-   for(i = 1, c = fgetc(fp); c != EOF && c != '#' && c != ' ' && c != '\t' && c != '\r' && c != '\n'; c = fgetc(fp))
-      buff[i++] = c;
-   buff[i] = '\0';
+  buff[0] = c;
+  for(i = 1, c = fgetc(fp); c != EOF && c != '#' && c != ' ' && c != '\t' && c != '\r' && c != '\n'; c = fgetc(fp))
+    buff[i++] = c;
+  buff[i] = '\0';
 
-   if(c == '#')
-      fseek(fp, -1, SEEK_CUR);
-   if(c == EOF)
-      fseek(fp, 0, SEEK_END);
+  if(c == '#')
+    fseek(fp, -1, SEEK_CUR);
+  if(c == EOF)
+    fseek(fp, 0, SEEK_END);
 
-   return i;
+  return i;
 }
 
 /* Open_JTalk_Thread::initialize: initialize thread */
@@ -101,6 +85,11 @@ void Open_JTalk_Thread::initialize()
 {
   m_speaking = false;
   m_kill = false;
+
+  m_buffer = 0;
+  m_output = new Phonon::AudioOutput(Phonon::CommunicationCategory, this);
+  m_object = new Phonon::MediaObject(this);
+  Phonon::createPath(m_object, m_output);
 
   m_charaBuff = NULL;
   m_styleBuff = NULL;
@@ -140,6 +129,10 @@ void Open_JTalk_Thread::clear()
       free(m_styleNames[i]);
     free(m_styleNames);
   }
+
+  delete m_object;
+  delete m_output;
+  delete m_buffer;
 
   initialize();
 }
@@ -299,16 +292,19 @@ void Open_JTalk_Thread::run()
     m_openJTalk.getPhonemeSequence(lip);
     if (strlen(lip) > 0) {
       sendLipCommandMessage(chara, lip);
-      m_openJTalk.synthesis();
+      delete m_buffer;
+      m_buffer = new QBuffer();
+      m_buffer->open(QBuffer::ReadWrite);
+      m_openJTalk.synthesis(m_buffer);
+      m_object->setCurrentSource(m_buffer);
+      m_object->play();
+      msleep(m_object->totalTime());
     }
-
-    /* send SYNTH_EVENT_STOP */
     sendStopEventMessage(chara);
 
     if(chara) free(chara);
     if(style) free(style);
     if(text) free(text);
-    m_speaking = false;
   }
 }
 

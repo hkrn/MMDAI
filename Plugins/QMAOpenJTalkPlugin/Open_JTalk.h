@@ -39,6 +39,8 @@
 #ifndef OPEN_JTALK_H_
 #define OPEN_JTALK_H_
 
+#include <QBuffer>
+
 #include "mecab.h"
 #include "njd.h"
 #include "jpcommon.h"
@@ -111,7 +113,7 @@ public:
   void getPhonemeSequence(char *str);
 
   /* synthesis: speech synthesis */
-  void synthesis();
+  void synthesis(QIODevice *buffer);
 
   /* stop: stop speech synthesis */
   void stop();

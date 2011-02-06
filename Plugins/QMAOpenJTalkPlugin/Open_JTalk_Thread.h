@@ -39,9 +39,13 @@
 #ifndef OPEN_JTALK_THREAD_H_
 #define OPEN_JTALK_THREAD_H_
 
+#include <QIODevice>
 #include <QMutex>
 #include <QThread>
 #include <QWaitCondition>
+
+#include <phonon/AudioOutput>
+#include <phonon/MediaObject>
 
 #include "CommandDispatcher.h"
 #include "Open_JTalk.h"
@@ -56,12 +60,18 @@
 /* Open_JTalk_Thread: thread for Open JTalk */
 class Open_JTalk_Thread : public QThread
 {
+  Q_OBJECT
+
 private:
 
   Open_JTalk m_openJTalk; /* Japanese TTS system */
   CommandDispatcher *m_dispathcer;
   QMutex m_mutex;
   QWaitCondition m_cond;
+
+  QIODevice *m_buffer;
+  Phonon::AudioOutput *m_output;
+  Phonon::MediaObject *m_object;
 
   bool m_speaking;
   volatile bool m_kill;
@@ -83,7 +93,7 @@ private:
 
 public:
 
-  /* Open_JTalk_Thraed: thread constructor */
+  /* Open_JTalk_Thread: thread constructor */
   Open_JTalk_Thread();
 
   /* ~Open_JTalk_Thread: thread destructor */

@@ -36,6 +36,7 @@
 
 TEMPLATE = lib
 CONFIG += plugin
+QT += phonon
 INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAOpenJTalkPlugin)
 DESTDIR = ../plugins
