@@ -50,12 +50,11 @@
 
 #include <stdio.h>
 
-#define PMDTEXTURE_UNINITIALIZEDID 0xFFFFFFFF
-
 /* PMDTexture: texture of PMD */
 class PMDTexture
 {
 private:
+   static const unsigned int kUninitializedID = 0xFFFFFFFF;
 
    GLuint m_id;                  /* OpenGL texture id */
    bool m_isSphereMap;           /* true if this texture is sphere map (.sph or .spa) */

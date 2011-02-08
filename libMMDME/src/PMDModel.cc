@@ -80,10 +80,10 @@ void PMDModel::initialize()
    m_edgeOffset = 0.03f;
    m_selfShadowDrawing = false;
    m_selfShadowDensityCoef = 0.0f;
-   m_edgeColor[0] = PMDMODEL_EDGECOLORR;
-   m_edgeColor[1] = PMDMODEL_EDGECOLORG;
-   m_edgeColor[2] = PMDMODEL_EDGECOLORB;
-   m_edgeColor[3] = PMDMODEL_EDGECOLORA;
+   m_edgeColor[0] = kEdgeColorR;
+   m_edgeColor[1] = kEdgeColorG;
+   m_edgeColor[2] = kEdgeColorB;
+   m_edgeColor[3] = kEdgeColorA;
    m_rootBone.reset();
 }
 
@@ -194,7 +194,7 @@ void PMDModel::clear()
       m_name = NULL;
    }
 
-   for (i = 0; i < SYSTEMTEXTURE_NUMFILES; i++)
+   for (i = 0; i < kNSystemTextureFiles; i++)
       m_localToonTexture[i].release();
    m_name2bone.release();
    m_name2face.release();

@@ -102,7 +102,7 @@ void MotionController::calcBoneAt(MotionControllerBoneElement *mc, float frameNo
          pos2 = bm->keyFrameList[k2].pos;
          rot2 = bm->keyFrameList[k2].rot;
       } else if (frameNow - time1 < m_noBoneSmearFrame) {
-         /* when this motion has only one key frame at the first frame, or has more than two key frames and the second key frame is further than 60 frames, replace the first frame with snap and go to the original pos/rot specified at the motion within the MOTIONCONTROLLER_BONESTARTMARGINFRAME frames */
+         /* when this motion has only one key frame at the first frame, or has more than two key frames and the second key frame is further than 60 frames, replace the first frame with snap and go to the original pos/rot specified at the motion within the kBoneStartMarginFrame frames */
          time1 = m_lastLoopStartFrame;
          time2 = m_lastLoopStartFrame + m_noBoneSmearFrame;
          frame = frameNow;
@@ -145,26 +145,26 @@ void MotionController::calcBoneAt(MotionControllerBoneElement *mc, float frameNo
          if (keyFrameForInterpolation->linear[0]) {
             x = pos1.x() * (1.0f - w) + pos2.x() * w;
          } else {
-            ww = keyFrameForInterpolation->interpolationTable[0][(int)(w * VMD_INTERPOLATIONTABLESIZE)];
+            ww = keyFrameForInterpolation->interpolationTable[0][(int)(w * VMD::kInterpolationTableSize)];
             x = pos1.x() * (1.0f - ww) + pos2.x() * ww;
          }
          if (keyFrameForInterpolation->linear[1]) {
             y = pos1.y() * (1.0f - w) + pos2.y() * w;
          } else {
-            ww = keyFrameForInterpolation->interpolationTable[1][(int)(w * VMD_INTERPOLATIONTABLESIZE)];
+            ww = keyFrameForInterpolation->interpolationTable[1][(int)(w * VMD::kInterpolationTableSize)];
             y = pos1.y() * (1.0f - ww) + pos2.y() * ww;
          }
          if (keyFrameForInterpolation->linear[2]) {
             z = pos1.z() * (1.0f - w) + pos2.z() * w;
          } else {
-            ww = keyFrameForInterpolation->interpolationTable[2][(int)(w * VMD_INTERPOLATIONTABLESIZE)];
+            ww = keyFrameForInterpolation->interpolationTable[2][(int)(w * VMD::kInterpolationTableSize)];
             z = pos1.z() * (1.0f - ww) + pos2.z() * ww;
          }
          mc->pos.setValue(x, y, z);
          if (keyFrameForInterpolation->linear[3]) {
             mc->rot = rot1.slerp(rot2, w);
          } else {
-            ww = keyFrameForInterpolation->interpolationTable[3][(int)(w * VMD_INTERPOLATIONTABLESIZE)];
+            ww = keyFrameForInterpolation->interpolationTable[3][(int)(w * VMD::kInterpolationTableSize)];
             mc->rot = rot1.slerp(rot2, ww);
          }
       }
@@ -229,7 +229,7 @@ void MotionController::calcFaceAt(MotionControllerFaceElement *mc, float frameNo
          weight1 = mc->snapWeight;
          weight2 = fm->keyFrameList[k2].weight;
       } else if (frameNow - time1 < m_noFaceSmearFrame) {
-         /* when this motion has only one key frame at the first frame, or has more than two key frames and the second key frame is further than 60 frames, replace the first frame with snap and go to the original pos/rot specified at the motion within the MOTIONCONTROLLER_BONESTARTMARGINFRAME frames */
+         /* when this motion has only one key frame at the first frame, or has more than two key frames and the second key frame is further than 60 frames, replace the first frame with snap and go to the original pos/rot specified at the motion within the kBoneStartMarginFrame frames */
          time1 = m_lastLoopStartFrame;
          time2 = m_lastLoopStartFrame + m_noFaceSmearFrame;
          frame = frameNow;
@@ -346,8 +346,8 @@ void MotionController::initialize()
    m_currentFrame = 0.0;
    m_previousFrame = 0.0;
    m_lastLoopStartFrame = 0.0f;
-   m_noBoneSmearFrame = MOTIONCONTROLLER_BONESTARTMARGINFRAME;
-   m_noFaceSmearFrame = MOTIONCONTROLLER_FACESTARTMARGINFRAME;
+   m_noBoneSmearFrame = kBoneStartMarginFrame;
+   m_noFaceSmearFrame = kFaceStartMarginFrame;
 }
 
 /* MotionController::clear: free controller */
@@ -381,7 +381,6 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
    FaceMotionLink *fmlink;
    FaceMotion *fm;
    PMDFace *f;
-   const char centerBoneName[] = MOTIONCONTROLLER_CENTERBONENAME;
 
    clear();
    m_hasCenterBoneMotion = false;
@@ -403,7 +402,7 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
          m_boneCtrlList[m_numBoneCtrl].bone = b;
          m_boneCtrlList[m_numBoneCtrl].motion = bm;
          m_numBoneCtrl++;
-         if (bm->numKeyFrame > 1 && strcmp(bm->name, centerBoneName) == 0) {
+         if (bm->numKeyFrame > 1 && strcmp(bm->name, kCenterBoneName) == 0) {
             /* This motion has more than 1 key frames for Center Bone, so need re-location */
             m_hasCenterBoneMotion = true;
          }
@@ -439,8 +438,8 @@ void MotionController::reset()
    m_currentFrame = 0.0;
    m_previousFrame = 0.0;
    m_lastLoopStartFrame = 0.0f;
-   m_noBoneSmearFrame = MOTIONCONTROLLER_BONESTARTMARGINFRAME;
-   m_noFaceSmearFrame = MOTIONCONTROLLER_FACESTARTMARGINFRAME;
+   m_noBoneSmearFrame = kBoneStartMarginFrame;
+   m_noFaceSmearFrame = kFaceStartMarginFrame;
    m_boneBlendRate = 1.0f;
    m_faceBlendRate = 1.0f;
    m_ignoreSingleMotion = false;
@@ -479,15 +478,15 @@ void MotionController::rewind(float targetFrame, float frame)
       /* take a snap shot of current pose to be used as initial status of this motion at frame 0 */
       takeSnap(NULL); /* not move the center position */
       m_lastLoopStartFrame = targetFrame;
-      if (m_maxFrame >= MOTIONCONTROLLER_BONESTARTMARGINFRAME) {
-         m_noBoneSmearFrame = MOTIONCONTROLLER_BONESTARTMARGINFRAME;
+      if (m_maxFrame >= kBoneStartMarginFrame) {
+         m_noBoneSmearFrame = kBoneStartMarginFrame;
       } else {
          m_noBoneSmearFrame -= m_maxFrame + 1.0f;
          if (m_noBoneSmearFrame < 0.0f)
             m_noBoneSmearFrame = 0.0f;
       }
-      if (m_maxFrame >= MOTIONCONTROLLER_FACESTARTMARGINFRAME) {
-         m_noFaceSmearFrame = MOTIONCONTROLLER_FACESTARTMARGINFRAME;
+      if (m_maxFrame >= kFaceStartMarginFrame) {
+         m_noFaceSmearFrame = kFaceStartMarginFrame;
       } else {
          m_noFaceSmearFrame -= m_maxFrame + 1.0f;
          if (m_noFaceSmearFrame < 0.0f)
@@ -503,8 +502,8 @@ void MotionController::setOverrideFirst(btVector3 *centerPos)
    takeSnap(centerPos);
    /* tell controller that we have snapshot, and should take snap at loop */
    m_overrideFirst = true;
-   m_noBoneSmearFrame = MOTIONCONTROLLER_BONESTARTMARGINFRAME;
-   m_noFaceSmearFrame = MOTIONCONTROLLER_FACESTARTMARGINFRAME;
+   m_noBoneSmearFrame = kBoneStartMarginFrame;
+   m_noFaceSmearFrame = kFaceStartMarginFrame;
 }
 
 /* MotionController::setBoneBlendRate: set bone blend rate */

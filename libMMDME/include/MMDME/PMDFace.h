@@ -43,8 +43,6 @@
 
 #include "MMDME/PMDFile.h"
 
-#define PMDFACE_MAXVERTEXID 65536
-
 /* PMDFaceVertex: vertex of this model */
 typedef struct _PMDFaceVertex {
    unsigned long id; /* vertex index of this model to be controlled */
@@ -55,6 +53,8 @@ typedef struct _PMDFaceVertex {
 class PMDFace
 {
 private:
+
+   static const unsigned int kMaxVertexID = 65536;
 
    char *m_name;              /* name of this face */
    unsigned char m_type;      /* face type (PMD_FACE_TYPE) */

@@ -82,7 +82,7 @@ void PMDModel::updateFace()
    if (m_faceList) {
       m_baseFace->apply(m_vertexList);
       for (i = 0; i < m_numFace; i++)
-         if (m_faceList[i].getWeight() > PMDMODEL_MINFACEWEIGHT)
+         if (m_faceList[i].getWeight() > kMinFaceWeight)
             m_faceList[i].add(m_vertexList, m_faceList[i].getWeight());
    }
 }
@@ -100,11 +100,11 @@ void PMDModel::updateSkin()
 
    /* do skinning */
    for (j = 0; j < m_numVertex; j++) {
-      if (m_boneWeight1[j] >= 1.0f - PMDMODEL_MINBONEWEIGHT) {
+      if (m_boneWeight1[j] >= 1.0f - kMinBoneWeight) {
          /* bone 1 */
          m_skinnedVertexList[j] = m_boneSkinningTrans[m_bone1List[j]] * m_vertexList[j];
          m_skinnedNormalList[j] = m_boneSkinningTrans[m_bone1List[j]].getBasis() * m_normalList[j];
-      } else if (m_boneWeight1[j] <= PMDMODEL_MINBONEWEIGHT) {
+      } else if (m_boneWeight1[j] <= kMinBoneWeight) {
          /* bone 2 */
          m_skinnedVertexList[j] = m_boneSkinningTrans[m_bone2List[j]] * m_vertexList[j];
          m_skinnedNormalList[j] = m_boneSkinningTrans[m_bone2List[j]].getBasis() * m_normalList[j];

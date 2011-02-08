@@ -48,9 +48,9 @@ void MotionPlayer_initialize(MotionPlayer *m)
    m->vmd = NULL;
 
    m->onEnd = 2;
-   m->priority = MOTIONMANAGER_DEFAULTPRIORITY;
+   m->priority = MotionManager::kDefaultPriority;
    m->ignoreStatic = false;
-   m->loopAt = MOTIONMANAGER_DEFAULTLOOPATFRAME;
+   m->loopAt = MotionManager::kDefaultLoopAtFrame;;
    m->enableSmooth = true;
    m->enableRePos = true;
    m->endingBoneBlendFrames = 20.0f;

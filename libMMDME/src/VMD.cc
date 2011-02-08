@@ -167,13 +167,13 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
          bf->interpolationTable[i] = NULL;
          continue;
       }
-      bf->interpolationTable[i] = (float *) malloc(sizeof(float) * VMD_INTERPOLATIONTABLESIZE);
+      bf->interpolationTable[i] = (float *) malloc(sizeof(float) * kInterpolationTableSize);
       x1 = ip[   i] / 127.0f;
       y1 = ip[ 4+i] / 127.0f;
       x2 = ip[ 8+i] / 127.0f;
       y2 = ip[12+i] / 127.0f;
-      for (d = 0; d < VMD_INTERPOLATIONTABLESIZE; d++) {
-         inval = ((float) d + 0.5f) / (float) VMD_INTERPOLATIONTABLESIZE;
+      for (d = 0; d < kInterpolationTableSize; d++) {
+         inval = ((float) d + 0.5f) / (float) kInterpolationTableSize;
          /* get Y value for given inval */
          t = inval;
          while (1) {

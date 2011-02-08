@@ -87,7 +87,7 @@ void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
          m_boneList[i] = &(boneList[ikBoneIDList[i]]);
    }
    m_iteration = ik->numIteration;
-   m_angleConstraint = ik->angleConstraint * PMDIK_PI;
+   m_angleConstraint = ik->angleConstraint * kPI;
 }
 
 /* PMDIK::solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
@@ -141,7 +141,7 @@ void PMDIK::solve()
          localDestVec = tr * destPos;
          localTargetVec = tr * targetPos;
          /* exit if they are close enough */
-         if (localDestVec.distance2(localTargetVec) < PMDIK_MINDISTANCE) {
+         if (localDestVec.distance2(localTargetVec) < kMinDistance) {
             ite = m_iteration;
             break;
          }
@@ -154,7 +154,7 @@ void PMDIK::solve()
             continue;
          angle = acosf(dot);
          /* if angle is small enough, skip to next bone */
-         if (fabsf(angle) < PMDIK_MINANGLE)
+         if (fabsf(angle) < kMinAngle)
             continue;
          /* limit angle per step */
          if (angle < - m_angleConstraint)
@@ -164,7 +164,7 @@ void PMDIK::solve()
          /* get rotation axis */
          axis = localTargetVec.cross(localDestVec);
          /* if the axis is too small (= direction of destination and target is so close) and this is not a first iteration, skip to next bone */
-         if (axis.length2() < PMDIK_MINAXIS && ite > 0)
+         if (axis.length2() < kMinAxis && ite > 0)
             continue;
          /* normalize rotation axis */
          axis.normalize();
@@ -186,17 +186,17 @@ void PMDIK::solve()
                mat.setRotation(tmpRot);
                mat.getEulerZYX(cz, cy, cx);
                /* y and z should be zero, x should be over 0 */
-               if (x + cx > PMDIK_PI)
-                  x = PMDIK_PI - cx;
-               if (PMDIK_MINROTSUM > x + cx)
-                  x = PMDIK_MINROTSUM - cx;
+               if (x + cx > kPI)
+                  x = kPI - cx;
+               if (kMinRotSum > x + cx)
+                  x = kMinRotSum - cx;
                /* apply the rotation limit factor */
                if (x < -m_angleConstraint)
                   x = -m_angleConstraint;
                if (x > m_angleConstraint)
                   x = m_angleConstraint;
                /* if rotation becomes minimal by the limitation, skip to next bone */
-               if (fabsf(x) < PMDIK_MINROTATION)
+               if (fabsf(x) < kMinRotation)
                   continue;
                /* get rotation quaternion from the limited euler angles */
                rot.setEulerZYX(0.0f, 0.0f, x);

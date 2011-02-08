@@ -46,7 +46,7 @@
 /* PMDTexture::initialize: initialize texture */
 void PMDTexture::initialize()
 {
-   m_id = PMDTEXTURE_UNINITIALIZEDID;
+   m_id = kUninitializedID;
    m_isSphereMap = false;
    m_isSphereMapAdd = false;
    m_width = 0;
@@ -58,7 +58,7 @@ void PMDTexture::initialize()
 /* PMDTexture::clear: free texture */
 void PMDTexture::clear()
 {
-   if (m_id != PMDTEXTURE_UNINITIALIZEDID)
+   if (m_id != kUninitializedID)
       glDeleteTextures(1, &m_id);
    if (m_textureData)
       free(m_textureData);

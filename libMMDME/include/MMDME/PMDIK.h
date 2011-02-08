@@ -42,17 +42,16 @@
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFile.h"
 
-#define PMDIK_PI          3.1415926f
-#define PMDIK_MINDISTANCE 0.0001f
-#define PMDIK_MINANGLE    0.00000001f
-#define PMDIK_MINAXIS     0.0000001f
-#define PMDIK_MINROTSUM   0.002f
-#define PMDIK_MINROTATION 0.00001f
-
 /* PMDIK: IK for PMD */
 class PMDIK
 {
 private:
+   static const float kPI          = 3.1415926f;
+   static const float kMinDistance = 0.0001f;
+   static const float kMinAngle    = 0.00000001f;
+   static const float kMinAxis     = 0.0000001f;
+   static const float kMinRotSum   = 0.002f;
+   static const float kMinRotation = 0.00001f;
 
    PMDBone *m_destBone;        /* Destination bone. IK tries to move the targetBone to this position */
    PMDBone *m_targetBone;      /* Target bone. IK tries move this bone to the position of destBone */

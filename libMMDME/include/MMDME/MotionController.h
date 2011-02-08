@@ -46,10 +46,7 @@
 #include "MMDME/PMDModel.h"
 #include "MMDME/VMD.h"
 
-#define MOTIONCONTROLLER_BONESTARTMARGINFRAME 20.0f /* frame lengths for bone motion smoothing at loop head */
-#define MOTIONCONTROLLER_FACESTARTMARGINFRAME 6.0f  /* frame lengths for face motion smoothing at loop head */
-
-#define MOTIONCONTROLLER_CENTERBONENAME { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b }
+const char kCenterBoneName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
 
 /* MotionControllerBoneElement: motion control element for bone */
 typedef struct _MotionControllerBoneElement {
@@ -120,6 +117,10 @@ private:
    void clear();
 
 public:
+
+   static const float kBoneStartMarginFrame = 20.0f; /* frame lengths for bone motion smoothing at loop head */
+
+   static const float kFaceStartMarginFrame = 6.0f;  /* frame lengths for face motion smoothing at loop head */
 
    /* MotionController: constructor */
    MotionController();

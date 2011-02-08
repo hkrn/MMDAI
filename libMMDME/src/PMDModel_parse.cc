@@ -50,7 +50,6 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 {
    bool ret = true;
    btQuaternion defaultRot;
-   const char centerBoneName[] = MOTIONCONTROLLER_CENTERBONENAME;
 
    PMDFile_Vertex *fileVertex = NULL;
    PMDFile_Material *fileMaterial = NULL;
@@ -81,7 +80,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
    m_bulletPhysics = bullet;
 
    /* reset toon texture IDs by system default textures */
-   for (int i = 0; i < SYSTEMTEXTURE_NUMFILES; i++) {
+   for (int i = 0; i < kNSystemTextureFiles; i++) {
       PMDTexture *texture = &m_localToonTexture[i];
       m_toonTextureID[i] = 0;
       if (loader->loadSystemTexture(i, texture)) {
@@ -176,7 +175,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       PMDBone *bone = &m_boneList[i];
       if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
          ret = false;
-      if (strcmp(bone->getName(), centerBoneName) == 0)
+      if (strcmp(bone->getName(), kCenterBoneName) == 0)
          m_centerBone = bone;
    }
    if (!m_centerBone && m_numBone >= 1) {
@@ -242,7 +241,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       m_numRigidBody = 0;
       m_numConstraint = 0;
       /* assign default toon textures for toon shading */
-      for (int i = 0; i <= SYSTEMTEXTURE_NUMFILES; i++) {
+      for (int i = 0; i <= kNSystemTextureFiles; i++) {
         PMDTexture *texture = &m_localToonTexture[i];
         m_toonTextureID[i] = 0;
         if (loader->loadSystemTexture(i, texture)) {
@@ -270,7 +269,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       if (loader->loadSystemTexture(0, texture)) {
         m_toonTextureID[0] = texture->getID();
       }
-      for (int i = 1; i <= SYSTEMTEXTURE_NUMFILES; i++) {
+      for (int i = 1; i <= kNSystemTextureFiles; i++) {
          const char *exToonBMPName = (const char *)ptr;
          texture = &m_localToonTexture[i];
          if (loader->loadModelTexture(exToonBMPName, texture)) {

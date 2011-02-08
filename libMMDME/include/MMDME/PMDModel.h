@@ -52,16 +52,7 @@
 #include "MMDME/PMDTexture.h"
 #include "MMDME/PTree.h"
 
-#define PMDMODEL_MINBONEWEIGHT 0.0001f
-#define PMDMODEL_MINFACEWEIGHT 0.001f
-
-#define PMDMODEL_EDGECOLORR 0.0f
-#define PMDMODEL_EDGECOLORG 0.0f
-#define PMDMODEL_EDGECOLORB 0.0f
-#define PMDMODEL_EDGECOLORA 1.0f
-
-
-#define SYSTEMTEXTURE_NUMFILES 10
+#define kNSystemTextureFiles 10
 
 /* TexCoord: texture coordinaiton */
 typedef struct {
@@ -109,8 +100,8 @@ private:
    PMDConstraint *m_constraintList; /* rigid body list */
 
    /* work area for toon renderling */
-   unsigned int m_toonTextureID[SYSTEMTEXTURE_NUMFILES + 1];  /* texture ID for toon shading */
-   PMDTexture m_localToonTexture[SYSTEMTEXTURE_NUMFILES + 1]; /* toon textures for this model only */
+   unsigned int m_toonTextureID[kNSystemTextureFiles + 1];  /* texture ID for toon shading */
+   PMDTexture m_localToonTexture[kNSystemTextureFiles + 1]; /* toon textures for this model only */
 
    /* work area for OpenGL rendering */
    btTransform *m_boneSkinningTrans;         /* transform matrices of bones for skinning */
@@ -157,6 +148,14 @@ private:
    void clear();
 
 public:
+
+   static const float kMinBoneWeight = 0.0001f;
+   static const float kMinFaceWeight = 0.001f;
+
+   static const float kEdgeColorR = 0.0f;
+   static const float kEdgeColorG = 0.0f;
+   static const float kEdgeColorB = 0.0f;
+   static const float kEdgeColorA = 1.0f;
 
    /* PMDModel: constructor */
    PMDModel();

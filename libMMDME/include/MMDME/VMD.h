@@ -44,8 +44,6 @@
 #include "MMDME/PTree.h"
 #include "MMDME/VMDLoader.h"
 
-#define VMD_INTERPOLATIONTABLESIZE 64 /* motion interpolation table size */
-
 /* BoneKeyFrame: bone key frame */
 typedef struct _BoneKeyFrame {
    float keyFrame;               /* key frame */
@@ -128,6 +126,9 @@ private:
    void clear();
 
 public:
+
+   /* motion interpolation table size */
+   static const int kInterpolationTableSize = 64;
 
    /* VMD: constructor */
    VMD();

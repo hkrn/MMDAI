@@ -45,9 +45,6 @@
 #include "MMDME/PMDModel.h"
 #include "MMDME/VMD.h"
 
-#define MOTIONMANAGER_DEFAULTPRIORITY    0    /* motion priority */
-#define MOTIONMANAGER_DEFAULTLOOPATFRAME 0.0f /* when specified with loop, motion will rewind at this frame when reached end */
-
 /* motions's status at last call */
 enum {
    MOTION_STATUS_RUNNING, /* running */
@@ -107,6 +104,12 @@ private:
    void clear();
 
 public:
+
+   /* motion priority */
+   static const int kDefaultPriority = 0; 
+
+   /* when specified with loop, motion will rewind at this frame when reached end */
+   static const float kDefaultLoopAtFrame = 0.0f;
 
    /* MotionManager: constructor */
    MotionManager(PMDModel *pmd);
