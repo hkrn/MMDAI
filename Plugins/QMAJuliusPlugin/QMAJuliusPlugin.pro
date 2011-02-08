@@ -46,6 +46,12 @@ unix {
         LIBS += $$system($${path}/libjulius-config --libs) $$system($${path}/libsent-config --libs)
     }
 }
+win32 {
+    # use MMDAgent's Julius and related libraries
+    # located in MMDAgent/Library_Julius/lib
+    CONFIG(debug, debug|release):LIBS += -lJulius_D -lPortAudio_D -lws2_32
+    CONFIG(release, debug|release):LIBS += -lJulius -lPortAudio -lws2_32
+}
 
 HEADERS += \
     QMAJuliusPlugin.h \
@@ -56,4 +62,3 @@ SOURCES += \
     QMAJuliusPlugin.cc \
     Julius_Thread.cpp \
     QMAJuliusInitializer.cc
-
