@@ -52,8 +52,6 @@
 #include "MMDME/PMDTexture.h"
 #include "MMDME/PTree.h"
 
-#define kNSystemTextureFiles 10
-
 /* TexCoord: texture coordinaiton */
 typedef struct {
    float u;
@@ -63,6 +61,9 @@ typedef struct {
 /* PMDModel: model of PMD */
 class PMDModel
 {
+public:
+   static const int  kNSystemTextureFiles = 10;
+
 private:
 
    /* model definition */
