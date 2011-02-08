@@ -41,13 +41,9 @@ INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAAquesTalk2Plugin)
 DESTDIR = ../plugins
 
-!macx {
-    LIBS += -lAquesTalk2
-}
-macx {
-    CONFIG += x86
-    LIBS += -framework AquesTalk2
-}
+!macx:LIBS += -lAquesTalk2
+macx:CONFIG += x86
+macx:LIBS += -framework AquesTalk2
 
 HEADERS += \
     QMAAquesTalk2Plugin.h

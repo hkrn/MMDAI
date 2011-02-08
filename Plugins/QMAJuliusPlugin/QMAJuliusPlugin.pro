@@ -49,8 +49,8 @@ unix {
 win32 {
     # use MMDAgent's Julius and related libraries
     # located in MMDAgent/Library_Julius/lib
-    CONFIG(debug, debug|release):LIBS += -lJulius_D -lPortAudio_D -lws2_32
-    CONFIG(release, debug|release):LIBS += -lJulius -lPortAudio -lws2_32
+    LIBS:debug += -lJulius_D -lPortAudio_D -lws2_32
+    LIBS:release += -lJulius -lPortAudio -lws2_32
 }
 
 HEADERS += \

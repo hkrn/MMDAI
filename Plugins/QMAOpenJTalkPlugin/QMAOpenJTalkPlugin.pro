@@ -70,8 +70,8 @@ macx:LIBS += -liconv -lmecab_custom
 win32 {
     # use MMDAgent's OpenJTalk and related libraries
     # located in MMDAgent/Library_hts_engine_API/lib
-    CONFIG(debug, debug|release):LIBS += -lOpenJTalk_D -lhts_engine_API_D -lwinmm
-    CONFIG(release, debug|release):LIBS += -lOpenJTalk -lhts_engine_API -lwinmm
+    LIBS:debug += -lOpenJTalk_D -lhts_engine_API_D -lwinmm
+    LIBS:release += -lOpenJTalk -lhts_engine_API -lwinmm
 }
 
 HEADERS += \
