@@ -59,7 +59,7 @@ public:
   bool loadImageTexture(PMDTexture *texture);
   bool loadModelTexture(const char *name, PMDTexture *texture);
   bool loadSystemTexture(int index, PMDTexture *texture);
-  const char *getLocation();
+  const char *getLocation() const;
 
 private:
   QDir m_dir;

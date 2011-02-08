@@ -264,7 +264,7 @@ bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
   return QMAModelLoaderLoadImage(path, texture);
 }
 
-const char *QMAModelLoader::getLocation()
+const char *QMAModelLoader::getLocation() const
 {
   return m_filename;
 }
