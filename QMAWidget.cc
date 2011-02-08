@@ -170,7 +170,7 @@ void QMAWidget::loadPlugins()
   int size[2];
   size[0] = width();
   size[1] = height();
-  m_controller->init(size, appDir.absoluteFilePath("AppData").toUtf8().constData());
+  m_controller->init(size);
   m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
   emit pluginInitialized(m_controller);
 }
@@ -425,8 +425,8 @@ void QMAWidget::dropEvent(QDropEvent *event)
       /* load only a local file */
       if (url.scheme() == "file") {
         const QString path = url.toLocalFile();
-		const QByteArray encodedPath = QFile::encodeName(path);
-		const char *filename = encodedPath.constData();
+        const QByteArray encodedPath = QFile::encodeName(path);
+        const char *filename = encodedPath.constData();
         if (path.endsWith(".vmd")) {
           /* motion */
           if (modifiers & Qt::ControlModifier) {
