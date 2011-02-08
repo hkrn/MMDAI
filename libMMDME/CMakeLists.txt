@@ -86,13 +86,8 @@ else()
 endif()
 
 # find OpenGL Easy Extension
-if (MSVC)
-  find_path(GLEE_INCLUDE GLee.h PATH $ENV{MMDAI_GLEE_DIR})
-  find_library(GLEE_LIBRARY glee PATH $ENV{MMDAI_GLEE_DIR})
-else()
-  find_path(GLEE_INCLUDE GLee.h)
-  find_library(GLEE_LIBRARY glee)
-endif()
+find_path(GLEE_INCLUDE GLee.h PATH $ENV{MMDAI_GLEE_DIR})
+find_library(GLEE_LIBRARY glee PATH $ENV{MMDAI_GLEE_DIR})
 if(GLEE_INCLUDE AND GLEE_LIBRARY)
   target_link_libraries(MMDME ${GLEE_LIBRARY})
   include_directories(${GLEE_INCLUDE})
@@ -111,30 +106,16 @@ if(BULLET_FOUND)
   target_link_libraries(MMDME ${BULLET_LIBRARIES})
   link_directories(${BULLET_LIBRARY_DIRS})
 else()
-  # find Bullet Physics
-  if (MSVC)
-    # $ENV{MMDAI_BULLET_INCLUDE_DIR}) should be ${BULLET_TOP_DIR}\src
-    find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATH $ENV{MMDAI_BULLET_INCLUDE_DIR})
-	# $ENV{MMDAI_BULLET_LIB_DIR}) should be ${BULLET_TOP_DIR}\lib\Debug or ${BULLET_TOP_DIR}\lib\Release
-    find_library(BULLET_LIB_COLLISION BulletCollision PATH $ENV{MMDAI_BULLET_LIB_DIR})
-    find_library(BULLET_LIB_DYNAMICS BulletDynamics PATH $ENV{MMDAI_BULLET_LIB_DIR})
-    find_library(BULLET_LIB_SOFT_BODY BulletSoftBody PATH $ENV{MMDAI_BULLET_LIB_DIR})
-    find_library(BULLET_LIB_LINEAR_MATH LinearMath PATH $ENV{MMDAI_BULLET_LIB_DIR})
-  else()
-    find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h)
-    find_library(BULLET_LIB_COLLISION BulletCollision)
-    find_library(BULLET_LIB_DYNAMICS BulletDynamics)
-    find_library(BULLET_LIB_SOFT_BODY BulletSoftBody)
-    find_library(BULLET_LIB_LINEAR_MATH LinearMath)
-  endif()
+  find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATH $ENV{MMDAI_BULLET_INCLUDE_DIR})
+  find_library(BULLET_LIB_COLLISION BulletCollision PATH $ENV{MMDAI_BULLET_LIB_DIR})
+  find_library(BULLET_LIB_DYNAMICS BulletDynamics PATH $ENV{MMDAI_BULLET_LIB_DIR})
+  find_library(BULLET_LIB_LINEAR_MATH LinearMath PATH $ENV{MMDAI_BULLET_LIB_DIR})
   if (BULLET_INCLUDE_DIRS AND BULLET_LIB_COLLISION AND
-	  BULLET_LIB_DYNAMICS AND BULLET_LIB_SOFT_BODY AND
-	  BULLET_LIB_LINEAR_MATH)
+	  BULLET_LIB_DYNAMICS AND BULLET_LIB_LINEAR_MATH)
     include_directories(${BULLET_INCLUDE_DIRS})
     target_link_libraries(MMDME
       ${BULLET_LIB_COLLISION}
       ${BULLET_LIB_DYNAMICS}
-      ${BULLET_LIB_SOFT_BODY}
       ${BULLET_LIB_LINEAR_MATH}
     )
   else()
@@ -162,3 +143,4 @@ if(NOT MSVC)
   install(TARGETS MMDME DESTINATION lib)
   install(DIRECTORY include/MMDME DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
 endif()
+
