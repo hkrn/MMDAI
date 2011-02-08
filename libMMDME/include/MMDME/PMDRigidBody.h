@@ -91,7 +91,7 @@ public:
    void setKinematic(bool flag);
 
    /* getBody: get rigid body */
-   btRigidBody *getBody();
+   btRigidBody *getBody() const;
 };
 
 #endif

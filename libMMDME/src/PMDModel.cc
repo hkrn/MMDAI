@@ -45,7 +45,6 @@
 void PMDModel::initialize()
 {
    m_name = NULL;
-   m_modelDir = NULL;
    m_comment = NULL;
    m_bulletPhysics = NULL;
 
@@ -194,10 +193,6 @@ void PMDModel::clear()
       free(m_name);
       m_name = NULL;
    }
-   if(m_modelDir) {
-      free(m_modelDir);
-      m_modelDir = NULL;
-   }
 
    for (i = 0; i < SYSTEMTEXTURE_NUMFILES; i++)
       m_localToonTexture[i].release();
@@ -225,7 +220,7 @@ bool PMDModel::load(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* PMDModel::getBone: find bone data by name */
-PMDBone *PMDModel::getBone(const char *name)
+PMDBone *PMDModel::getBone(const char *name) 
 {
    PMDBone *match = (PMDBone *) m_name2bone.findNearest(name);
 
@@ -327,7 +322,7 @@ void PMDModel::setToonFlag(bool flag)
 }
 
 /* PMDModel::getToonFlag: return true when enable toon rendering */
-bool PMDModel::getToonFlag()
+bool PMDModel::getToonFlag() const
 {
    return m_toon;
 }
@@ -360,61 +355,61 @@ PMDBone *PMDModel::getRootBone()
 }
 
 /* PMDModel::getCenterBone: get center bone */
-PMDBone *PMDModel::getCenterBone()
+PMDBone *PMDModel::getCenterBone() const
 {
    return m_centerBone;
 }
 
 /* PMDModel::getName: get name */
-const char *PMDModel::getName()
+const char *PMDModel::getName() const
 {
    return m_name;
 }
 
 /* PMDModel::getNumVertex: get number of vertics */
-unsigned int PMDModel::getNumVertex()
+unsigned int PMDModel::getNumVertex() const
 {
    return m_numVertex;
 }
 
 /* PMDModel::getNumSurface: get number of surface definitions */
-unsigned int PMDModel::getNumSurface()
+unsigned int PMDModel::getNumSurface() const
 {
    return m_numSurface;
 }
 
 /* PMDModel::getNumMaterial: get number of material definitions */
-unsigned int PMDModel::getNumMaterial()
+unsigned int PMDModel::getNumMaterial() const
 {
    return m_numMaterial;
 }
 
 /* PMDModel::getNumBone: get number of bones */
-unsigned short PMDModel::getNumBone()
+unsigned short PMDModel::getNumBone() const
 {
    return m_numBone;
 }
 
 /* PMDModel::getNumIK: get number of IK chains */
-unsigned short PMDModel::getNumIK()
+unsigned short PMDModel::getNumIK() const
 {
    return m_numIK;
 }
 
 /* PMDModel::getNumFace: get number of faces */
-unsigned short PMDModel::getNumFace()
+unsigned short PMDModel::getNumFace() const
 {
    return m_numFace;
 }
 
 /* PMDModel::getNumRigidBody: get number of rigid bodies */
-unsigned int PMDModel::getNumRigidBody()
+unsigned int PMDModel::getNumRigidBody() const
 {
    return m_numRigidBody;
 }
 
 /* PMDModel::getNumConstraint: get number of constraints */
-unsigned int PMDModel::getNumConstraint()
+unsigned int PMDModel::getNumConstraint() const
 {
    return m_numConstraint;
 }
@@ -422,23 +417,20 @@ unsigned int PMDModel::getNumConstraint()
 /* PMDModel::getErrorTextureList: get error texture list */
 void PMDModel::getErrorTextureList(char *buf, int maxLen)
 {
+   (void)buf;
+   (void)maxLen;
    //m_textureLoader.getErrorTextureString(buf, maxLen);
 }
 
 /* PMDModel::getMaxHeight: get max height */
-float PMDModel::getMaxHeight()
+float PMDModel::getMaxHeight() const
 {
    return m_maxHeight;
 }
 
 /* PMDModel::getComment: get comment of PMD */
-const char *PMDModel::getComment()
+const char *PMDModel::getComment() const
 {
    return m_comment;
 }
 
-/* PMDModel::getModelDir: get model directory */
-const char *PMDModel::getModelDir()
-{
-   return m_modelDir;
-}

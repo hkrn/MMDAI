@@ -82,7 +82,7 @@ public:
   void updateShadowMatrix(float lightDirection[4]);
 
   /* getShadowMatrix: get shadow projection matrix */
-  GLfloat *getShadowMatrix();
+  GLfloat *getShadowMatrix() const;
 
 private:
   TileTexture m_floor; /* floor texture */

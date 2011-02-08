@@ -130,7 +130,7 @@ public:
    bool update(double frame);
 
    /* getMotionPlayerList: get list of motion players */
-   MotionPlayer *getMotionPlayerList();
+   MotionPlayer *getMotionPlayerList() const;
 };
 
 #endif

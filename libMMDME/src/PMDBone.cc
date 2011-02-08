@@ -251,13 +251,13 @@ void PMDBone::calcSkinningTrans(btTransform *b)
 }
 
 /* PMDBone;:getName: get bone name */
-char *PMDBone::getName()
+const char *PMDBone::getName() const
 {
    return m_name;
 }
 
 /* PMDBone::getType: get bone type */
-unsigned char PMDBone::getType()
+unsigned char PMDBone::getType() const
 {
    return m_type;
 }
@@ -281,13 +281,13 @@ btVector3 *PMDBone::getOriginPosition()
 }
 
 /* PMDBone::isLimitAngleX: return true if this bone can be bended for X axis only at IK process */
-bool PMDBone::isLimitAngleX()
+bool PMDBone::isLimitAngleX() const
 {
    return m_limitAngleX;
 }
 
 /* PMDBone::hasMotionIndependency: return true if this bone is not affected by other controller bones */
-bool PMDBone::hasMotionIndependency()
+bool PMDBone::hasMotionIndependency() const
 {
    return m_motionIndependent;
 }
@@ -298,7 +298,7 @@ void PMDBone::setSimulatedFlag(bool flag)
    m_simulated = flag;
 }
 /* PMDBone::isSimulated: return true if this bone is controlled under physics */
-bool PMDBone::isSimulated()
+bool PMDBone::isSimulated() const
 {
    return m_simulated;
 }
@@ -316,7 +316,7 @@ void PMDBone::setOffset(btVector3 *v)
 }
 
 /* PMDBone::getParentBone: get parent bone */
-PMDBone *PMDBone::getParentBone()
+PMDBone *PMDBone::getParentBone() const
 {
    return m_parentBone;
 }

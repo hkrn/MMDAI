@@ -300,7 +300,7 @@ void Stage::updateShadowMatrix(float lightDirection[4])
 }
 
 /* Stage::getShadowMatrix: get shadow projection matrix */
-GLfloat *Stage::getShadowMatrix()
+GLfloat *Stage::getShadowMatrix() const
 {
   return (GLfloat *) m_floorShadow;
 }

@@ -93,7 +93,7 @@ public:
    void update(float deltaFrame);
 
    /* getWorld: get simulation world */
-   btDiscreteDynamicsWorld *getWorld();
+   btDiscreteDynamicsWorld *getWorld() const;
 
    void debugDisplay();
 };

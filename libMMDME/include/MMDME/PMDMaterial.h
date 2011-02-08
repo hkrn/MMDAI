@@ -55,7 +55,7 @@ private:
    float m_alpha;       /* alpha color */
    float m_shiness;     /* shiness intensity */
 
-   unsigned long m_numSurface; /* number of surface indices for this material */
+   unsigned int m_numSurface; /* number of surface indices for this material */
 
    unsigned char m_toonID; /* toon index */
    bool m_edgeFlag;        /* true if edge should be drawn */
@@ -81,10 +81,10 @@ public:
    bool setup(PMDFile_Material *m, PMDModelLoader *loader);
 
    /* hasSingleSphereMap: return if it has single sphere maps */
-   bool hasSingleSphereMap();
+   bool hasSingleSphereMap() const;
 
    /* hasMultipleSphereMap: return if it has multiple sphere map */
-   bool hasMultipleSphereMap();
+   bool hasMultipleSphereMap() const;
 
    /* copyDiffuse: get diffuse colors */
    void copyDiffuse(float *c);
@@ -99,19 +99,19 @@ public:
    void copySpecular(float *c);
 
    /* getAlpha: get alpha color */
-   float getAlpha();
+   float getAlpha() const;
 
    /* getShiness: get shiness intensity */
-   float getShiness();
+   float getShiness() const;
 
    /* getNumSurface: get number of surface */
-   unsigned long getNumSurface();
+   unsigned int getNumSurface() const;
 
    /* getToonID: get toon index */
-   unsigned char getToonID();
+   unsigned char getToonID() const;
 
    /* getEdgeFlag: get edge flag */
-   bool getEdgeFlag();
+   bool getEdgeFlag() const;
 
    /* getTexture: get texture */
    PMDTexture *getTexture();

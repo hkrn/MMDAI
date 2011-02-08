@@ -79,7 +79,7 @@ public:
    void setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList);
 
    /* isSimulated: check if this IK is under simulation, in case no need to calculate this IK */
-   bool isSimulated();
+   bool isSimulated() const;
 
    /* solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
    void solve();

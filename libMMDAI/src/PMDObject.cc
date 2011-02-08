@@ -421,12 +421,9 @@ bool PMDObject::updateModelRootRotation(float fps)
 }
 
 /* PMDObject::getAlias: get alias name */
-const char *PMDObject::getAlias()
+const char *PMDObject::getAlias() const
 {
-  if(m_alias)
-    return m_alias;
-  else
-    return NULL;
+  return m_alias;
 }
 
 /* PMDObject::setAlias: set alias name */
@@ -446,7 +443,7 @@ PMDModel *PMDObject::getPMDModel()
 }
 
 /* PMDObject::getMotionManager: get MotionManager */
-MotionManager *PMDObject::getMotionManager()
+MotionManager *PMDObject::getMotionManager() const
 {
   return m_motionManager;
 }
@@ -466,7 +463,7 @@ LipSync *PMDObject::getLipSync()
 }
 
 /* PMDObject::getPosition: get root bone offset */
-void PMDObject::getPosition(btVector3 & pos)
+void PMDObject::getPosition(btVector3 & pos) const
 {
   pos = m_offsetPos;
 }
@@ -478,7 +475,7 @@ void PMDObject::setPosition(btVector3 & pos)
 }
 
 /* PMDObject::getRotation: get root bone rotation */
-void PMDObject::getRotation(btQuaternion & rot)
+void PMDObject::getRotation(btQuaternion & rot) const
 {
   rot = m_offsetRot;
 }
@@ -502,19 +499,19 @@ void PMDObject::setSpinSpeed(float speed)
 }
 
 /* PMDObject::isMoving: return true when model move */
-bool PMDObject::isMoving()
+bool PMDObject::isMoving() const
 {
   return m_isMoving;
 }
 
 /* PMDObject::isRotating: return true when model spin */
-bool PMDObject::isRotating()
+bool PMDObject::isRotating() const
 {
   return m_isRotating;
 }
 
 /* PMDObject::isTruning: return true when model turn */
-bool PMDObject::isTurning()
+bool PMDObject::isTurning() const
 {
   return m_underTurn;
 }
@@ -526,7 +523,7 @@ void PMDObject::setTurningFlag(bool flag)
 }
 
 /* PMDObject::isEnable: get enable flag */
-bool PMDObject::isEnable()
+bool PMDObject::isEnable() const
 {
   return m_isEnable;
 }
@@ -538,13 +535,13 @@ void PMDObject::setEnableFlag(bool flag)
 }
 
 /* PMDObject::allowMotionFileDrop: return true if motion file drop is allowed */
-bool PMDObject::allowMotionFileDrop()
+bool PMDObject::allowMotionFileDrop() const
 {
   return m_allowMotionFileDrop;
 }
 
 /* PMDObject::getAssignedModel: get parent model */
-PMDObject *PMDObject::getAssignedModel()
+PMDObject *PMDObject::getAssignedModel() const
 {
   return m_assignTo;
 }
@@ -606,6 +603,7 @@ void PMDObject::renderComment(TextRenderer * text)
 void PMDObject::renderDebug(TextRenderer * text)
 {
    btVector3 pos;
+   (void)text;
 
    /* render debug */
    m_pmd.renderDebug();
@@ -675,3 +673,4 @@ void PMDObject::renderError(TextRenderer * text)
    }
    glEnable(GL_LIGHTING);
 }
+

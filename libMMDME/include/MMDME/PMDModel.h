@@ -76,7 +76,6 @@ private:
 
    /* model definition */
    char *m_name;     /* model name */
-   char *m_modelDir; /* where this model is located */
    char *m_comment;  /* comment string */
 
    unsigned int m_numVertex; /* number of vertices */
@@ -190,7 +189,7 @@ public:
    void setToonFlag(bool flag);
 
    /* getToonFlag: return true when enable toon rendering */
-   bool getToonFlag();
+   bool getToonFlag() const;
 
    /* setSelfShadowDrawing: set self shadow drawing flag */
    void setSelfShadowDrawing(bool flag);
@@ -205,46 +204,43 @@ public:
    PMDBone *getRootBone();
 
    /* getCenterBone: get center bone */
-   PMDBone *getCenterBone();
+   PMDBone *getCenterBone() const;
 
    /* getName: get model name */
-   const char *getName();
+   const char *getName() const;
 
    /* getNumVertex: get number of vertics */
-   unsigned int getNumVertex();
+   unsigned int getNumVertex() const;
 
    /* getNumSurface: get number of surface definitions */
-   unsigned int getNumSurface();
+   unsigned int getNumSurface() const;
 
    /* getNumMaterial: get number of material definitions */
-   unsigned int getNumMaterial();
+   unsigned int getNumMaterial() const;
 
    /* getNumBone: get number of bones */
-   unsigned short getNumBone();
+   unsigned short getNumBone() const;
 
    /* getNumIK: get number of IK chains */
-   unsigned short getNumIK();
+   unsigned short getNumIK() const;
 
    /* getNumFace: get number of faces */
-   unsigned short getNumFace();
+   unsigned short getNumFace() const;
 
    /* getNumRigidBody: get number of rigid bodies */
-   unsigned int getNumRigidBody();
+   unsigned int getNumRigidBody() const;
 
    /* getNumConstraint: get number of constraints */
-   unsigned int getNumConstraint();
+   unsigned int getNumConstraint() const;
 
    /* getErrorTextureList: get error texture list */
    void getErrorTextureList(char *buf, int maxLen);
 
    /* getMaxHeight: get max height */
-   float getMaxHeight();
+   float getMaxHeight() const;
 
    /* getComment: get comment of PMD */
-   const char *getComment();
-
-   /* getModelDir: get model directory */
-   const char *getModelDir();
+   const char *getComment() const;
 
    /* updateBone: update bones */
    void updateBone();

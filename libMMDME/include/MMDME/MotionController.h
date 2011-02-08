@@ -152,13 +152,13 @@ public:
    void setIgnoreSingleMotion(bool val);
 
    /* hasCenter: return true if the motion has more than 1 key frames for center bone */
-   bool hasCenter();
+   bool hasCenter() const;
 
    /* getMaxFrame: get max frame */
-   float getMaxFrame();
+   float getMaxFrame() const;
 
    /* getCurrentFrame: get current frame */
-   double getCurrentFrame();
+   double getCurrentFrame() const;
 
    /* setCurrentFrame: set current frame */
    void setCurrentFrame(double frame);

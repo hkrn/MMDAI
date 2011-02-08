@@ -237,7 +237,7 @@ void PMDRigidBody::setKinematic(bool flag)
 }
 
 /* PMDRigidBody::getBody: get rigid body */
-btRigidBody *PMDRigidBody::getBody()
+btRigidBody *PMDRigidBody::getBody() const
 {
    return m_body;
 }

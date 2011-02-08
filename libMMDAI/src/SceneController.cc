@@ -56,9 +56,9 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler)
-  : m_handler(handler),
+  : m_highlightModel(0),
+    m_handler(handler),
     m_text(NULL),
-    m_highlightModel(0),
     m_numModel(0),
     m_selectedModel(-1),
     m_enablePhysicsSimulation(true)
@@ -789,7 +789,7 @@ bool SceneController::stopLipSync(PMDObject *object)
   return true;
 }
 
-void SceneController::init(int *size, const char *systexPath)
+void SceneController::init(int *size)
 {
   m_bullet.setup(m_option.getBulletFps());
   m_scene.setup(size,

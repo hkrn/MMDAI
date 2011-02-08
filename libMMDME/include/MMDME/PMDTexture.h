@@ -87,13 +87,13 @@ public:
    void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
 
    /* getID: get OpenGL texture ID */
-   GLuint getID();
+   GLuint getID() const;
 
    /* isSphereMap: return true if this texture is sphere map */
-   bool isSphereMap();
+   bool isSphereMap() const;
 
    /* isSphereMapAdd: return true if this is sphere map to add */
-   bool isSphereMapAdd();
+   bool isSphereMapAdd() const;
 
    /* release: free texture */
    void release();

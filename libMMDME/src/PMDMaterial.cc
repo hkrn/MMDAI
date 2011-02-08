@@ -135,13 +135,13 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
 }
 
 /* PMDMaterial::hasSingleSphereMap: return if it has single sphere maps */
-bool PMDMaterial::hasSingleSphereMap()
+bool PMDMaterial::hasSingleSphereMap() const
 {
    return m_texture.isSphereMap() && !m_additionalTexture.isSphereMapAdd();
 }
 
 /* PMDMaterial::hasMultipleSphereMap: return if it has multiple sphere map */
-bool PMDMaterial::hasMultipleSphereMap()
+bool PMDMaterial::hasMultipleSphereMap() const
 {
    return m_additionalTexture.isSphereMapAdd();
 }
@@ -183,31 +183,31 @@ void PMDMaterial::copySpecular(float *c)
 }
 
 /* PMDMaterial::getAlpha: get alpha */
-float PMDMaterial::getAlpha()
+float PMDMaterial::getAlpha() const
 {
    return m_alpha;
 }
 
 /* PMDMaterial::getShiness: get shiness */
-float PMDMaterial::getShiness()
+float PMDMaterial::getShiness() const
 {
    return m_shiness;
 }
 
 /* PMDMaterial::getNumSurface: get number of surface */
-unsigned long PMDMaterial::getNumSurface()
+unsigned int PMDMaterial::getNumSurface() const
 {
    return m_numSurface;
 }
 
 /* PMDMaterial::getToonID: get toon index */
-unsigned char PMDMaterial::getToonID()
+unsigned char PMDMaterial::getToonID() const
 {
    return m_toonID;
 }
 
 /* PMDMaterial::getEdgeFlag: get edge flag */
-bool PMDMaterial::getEdgeFlag()
+bool PMDMaterial::getEdgeFlag() const
 {
    return m_edgeFlag;
 }

@@ -162,13 +162,13 @@ void PMDFace::add(btVector3 *vertexList, float rate)
 }
 
 /* PMDFace::getName: get name */
-char *PMDFace::getName()
+const char *PMDFace::getName() const
 {
    return m_name;
 }
 
 /* PMDFace::getWeight: get weight */
-float PMDFace::getWeight()
+float PMDFace::getWeight() const
 {
    return m_weight;
 }

@@ -113,10 +113,10 @@ public:
    void calcSkinningTrans(btTransform *b);
 
    /* getName: get bone name */
-   char *getName();
+   const char *getName() const;
 
    /* getType: get bone type */
-   unsigned char getType();
+   unsigned char getType() const;
 
    /* getTransform: get transform */
    btTransform *getTransform();
@@ -128,16 +128,16 @@ public:
    btVector3 *getOriginPosition();
 
    /* isLimitAngleX: return true if this bone can be bended for X axis only at IK process */
-   bool isLimitAngleX();
+   bool isLimitAngleX() const;
 
    /* hasMotionIndependency: return true if this bone is not affected by other controller bones */
-   bool hasMotionIndependency();
+   bool hasMotionIndependency() const;
 
    /* setSimlatedFlag: set flag whether bone is controlled under phsics or not */
    void setSimulatedFlag(bool flag);
 
    /* isSimulated: return true if this bone is controlled under physics */
-   bool isSimulated();
+   bool isSimulated() const;
 
    /* getOffset: get offset */
    btVector3 *getOffset();
@@ -146,7 +146,7 @@ public:
    void setOffset(btVector3 *v);
 
    /* getParentBone: get parent bone */
-   PMDBone *getParentBone();
+   PMDBone *getParentBone() const;
 
    /* getCurrentPosition: get current position */
    btVector3 *getCurrentPosition();

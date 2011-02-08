@@ -125,16 +125,16 @@ public:
   void setSize(int w, int h);
 
   /* getWidth: get width */
-  int getWidth();
+  int getWidth() const;
 
   /* getHeight: get height */
-  int getHeight();
+  int getHeight() const;
 
   /* setScale: set scale */
   void setScale(float scale);
 
   /* getScale: get scale */
-  float getScale();
+  float getScale() const;
 
   /* translate: translate */
   void translate(float x, float y, float z);

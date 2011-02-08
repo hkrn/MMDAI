@@ -224,7 +224,7 @@ void PMDIK::solve()
 }
 
 /* PMDIK::isSimulated: check if this IK is under simulation, in case no need to calculate this IK */
-bool PMDIK::isSimulated()
+bool PMDIK::isSimulated() const
 {
    return m_boneList[0]->isSimulated();
 }

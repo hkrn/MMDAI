@@ -526,19 +526,19 @@ void MotionController::setIgnoreSingleMotion(bool val)
 }
 
 /* MotionController::hasCenter: return true if the motion has more than 1 key frames for center bone */
-bool MotionController::hasCenter()
+bool MotionController::hasCenter() const
 {
    return m_hasCenterBoneMotion;
 }
 
 /* MotionController::getMaxFrame: get max frame */
-float MotionController::getMaxFrame()
+float MotionController::getMaxFrame() const
 {
    return m_maxFrame;
 }
 
 /* MotionController::getCurrentFrame: get current frame */
-double MotionController::getCurrentFrame()
+double MotionController::getCurrentFrame() const
 {
    return m_currentFrame;
 }

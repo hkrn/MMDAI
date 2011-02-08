@@ -53,7 +53,7 @@ public:
   explicit SceneController(SceneEventHandler *handler);
   ~SceneController();
 
-  void init(int *size, const char *systexPath);
+  void init(int *size);
 
   PMDObject *allocatePMDObject();
   PMDObject *findPMDObject(PMDObject *object);

@@ -58,7 +58,7 @@ private:
 
    char *m_name;              /* name of this face */
    unsigned char m_type;      /* face type (PMD_FACE_TYPE) */
-   unsigned long m_numVertex; /* number of vertices controlled by this face */
+   unsigned int m_numVertex;  /* number of vertices controlled by this face */
    PMDFaceVertex *m_vertex;   /* vertices controlled by this face */
    float m_weight;            /* current weight of this face */
 
@@ -89,10 +89,10 @@ public:
    void add(btVector3 *vertexList, float rate);
 
    /* getName: get name */
-   char *getName();
+   const char *getName() const;
 
    /* getWeight: get weight */
-   float getWeight();
+   float getWeight() const;
 
    /* setWeight: set weight */
    void setWeight(float f);

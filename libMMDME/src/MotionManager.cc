@@ -358,7 +358,7 @@ bool MotionManager::update(double frame)
 }
 
 /* MotionManager::getMotionPlayerList: get list of motion players */
-MotionPlayer * MotionManager::getMotionPlayerList()
+MotionPlayer * MotionManager::getMotionPlayerList() const
 {
    return m_playerList;
 }

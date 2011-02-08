@@ -142,22 +142,22 @@ public:
    bool parse(unsigned char *data, size_t size);
 
    /* getTotalKeyFrame: get total number of key frames */
-   unsigned long getTotalKeyFrame();
+   unsigned long getTotalKeyFrame() const;
 
    /* getBoneMotionLink: get list of bone motions */
-   BoneMotionLink * getBoneMotionLink();
+   BoneMotionLink * getBoneMotionLink() const;
 
    /* getFaceMotionLink: get list of face motions */
-   FaceMotionLink * getFaceMotionLink();
+   FaceMotionLink * getFaceMotionLink() const;
 
    /* getNumBoneKind: get number of bone motions */
-   unsigned long getNumBoneKind();
+   unsigned int getNumBoneKind() const;
 
    /* getNumFaceKind: get number of face motions */
-   unsigned long getNumFaceKind();
+   unsigned int getNumFaceKind() const;
 
    /* getMaxFrame: get max frame */
-   float getMaxFrame();
+   float getMaxFrame() const;
 };
 
 #endif

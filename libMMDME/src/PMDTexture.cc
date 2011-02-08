@@ -127,19 +127,19 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
 }
 
 /* PMDTexture::getID: get OpenGL texture ID */
-GLuint PMDTexture::getID()
+GLuint PMDTexture::getID() const
 {
    return m_id;
 }
 
 /* PMDTexture::isSphereMap: return true if this texture is sphere map */
-bool PMDTexture::isSphereMap()
+bool PMDTexture::isSphereMap() const
 {
    return m_isSphereMap;
 }
 
 /* PMDTexture::isSphereMapAdd: return true if this is sphere map to add */
-bool PMDTexture::isSphereMapAdd()
+bool PMDTexture::isSphereMapAdd() const
 {
    return m_isSphereMapAdd;
 }

@@ -88,7 +88,7 @@ public:
                float x, float y);
 
   /* getSize: get texture size */
-  GLfloat getSize(int i, int j);
+  GLfloat getSize(int i, int j) const;
 };
 
 #endif // TILETEXTURE_H

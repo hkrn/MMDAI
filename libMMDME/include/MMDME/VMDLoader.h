@@ -48,7 +48,7 @@ public:
 
    virtual void unloadMotionData(unsigned char *ptr) = 0;
 
-   virtual const char *getLocation() = 0;
+   virtual const char *getLocation() const = 0;
 };
 
 #endif

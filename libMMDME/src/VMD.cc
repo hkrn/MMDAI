@@ -269,7 +269,6 @@ bool VMD::load(VMDLoader *loader)
 bool VMD::parse(unsigned char *data, size_t size)
 {
    unsigned long i;
-   size_t len = 0;
    BoneMotion *bm;
    BoneMotionLink *bl;
    FaceMotion *fm;
@@ -280,6 +279,7 @@ bool VMD::parse(unsigned char *data, size_t size)
    VMDFile_FaceFrame *faceFrame;
 
    char name[16];
+   (void)size;
 
    /* free VMD */
    clear();
@@ -390,37 +390,37 @@ bool VMD::parse(unsigned char *data, size_t size)
 }
 
 /* VMD::getTotalKeyFrame: get total number of key frames */
-unsigned long VMD::getTotalKeyFrame()
+unsigned long VMD::getTotalKeyFrame() const
 {
    return m_numTotalBoneKeyFrame + m_numTotalFaceKeyFrame;
 }
 
 /* VMD::getBoneMotionLink: get list of bone motions */
-BoneMotionLink *VMD::getBoneMotionLink()
+BoneMotionLink *VMD::getBoneMotionLink() const
 {
    return m_boneLink;
 }
 
 /* VMD::getFaceMotionLink: get list of face motions */
-FaceMotionLink *VMD::getFaceMotionLink()
+FaceMotionLink *VMD::getFaceMotionLink() const
 {
    return m_faceLink;
 }
 
 /* VMD::getNumBoneKind: get number of bone motions */
-unsigned long VMD::getNumBoneKind()
+unsigned int VMD::getNumBoneKind() const
 {
    return m_numBoneKind;
 }
 
 /* VMD::getNumFaceKind: get number of face motions */
-unsigned long VMD::getNumFaceKind()
+unsigned int VMD::getNumFaceKind() const
 {
    return m_numFaceKind;
 }
 
 /* VMD::getMaxFrame: get max frame */
-float VMD::getMaxFrame()
+float VMD::getMaxFrame() const
 {
    return m_maxFrame;
 }

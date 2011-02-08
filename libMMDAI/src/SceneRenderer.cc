@@ -153,13 +153,13 @@ void SceneRenderer::setSize(int w, int h)
 }
 
 /* SceneRenderer::getWidth: get width */
-int SceneRenderer::getWidth()
+int SceneRenderer::getWidth() const
 {
   return m_width;
 }
 
 /* SceneRenderer::getHeight: get height */
-int SceneRenderer::getHeight()
+int SceneRenderer::getHeight() const
 {
   return m_height;
 }
@@ -171,7 +171,7 @@ void SceneRenderer::setScale(float scale)
 }
 
 /* SceneRenderer::getScale: get scale */
-float SceneRenderer::getScale()
+float SceneRenderer::getScale() const
 {
   return m_scale;
 }

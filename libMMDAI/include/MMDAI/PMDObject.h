@@ -149,7 +149,7 @@ public:
    bool updateModelRootRotation(float fps);
 
    /* PMDObject::getAlias: get alias name */
-   const char *getAlias();
+   const char *getAlias() const;
 
    /* PMDObject::setAlias: set alias name */
    void setAlias(const char *alias);
@@ -158,7 +158,7 @@ public:
    PMDModel *getPMDModel();
 
    /* PMDObject::getMotionManager: get MotionManager */
-   MotionManager *getMotionManager();
+   MotionManager *getMotionManager() const;
 
    /* PMDObject::resetMotionManager: reset MotionManager */
    void resetMotionManager();
@@ -167,13 +167,13 @@ public:
    LipSync *getLipSync();
 
    /* PMDObject::getPosition: get root bone offset */
-   void getPosition(btVector3 &pos);
+   void getPosition(btVector3 &pos) const;
 
    /* PMDObject::setPosition: set root bone offset */
    void setPosition(btVector3 &pos);
 
    /* PMDObject::getRotation: get root bone rotation */
-   void getRotation(btQuaternion &rot);
+   void getRotation(btQuaternion &rot) const;
 
    /* PMDObject::setRotation: set root bone rotation */
    void setRotation(btQuaternion &rot);
@@ -185,28 +185,28 @@ public:
    void setSpinSpeed(float speed);
 
    /* PMDObject::isMoving: return true when model move */
-   bool isMoving();
+   bool isMoving() const;
 
    /* PMDObject::isRotating: return true when model spin */
-   bool isRotating();
+   bool isRotating() const;
 
    /* PMDObject::isTruning: return true when model turn */
-   bool isTurning();
+   bool isTurning() const;
 
    /* PMDObject::setTurnFlag: set turnning flag */
    void setTurningFlag(bool flag);
 
    /* PMDObject::isEnable: get enable flag */
-   bool isEnable();
+   bool isEnable() const;
 
    /* PMDObject::setEnableFlag: set enable flag */
    void setEnableFlag(bool flag);
 
    /* PMDObject::allowMotionFileDrop: return true if motion file drop is allowed */
-   bool allowMotionFileDrop();
+   bool allowMotionFileDrop() const;
 
    /* PMDObject::getAssignedModel: get parent model */
-   PMDObject *getAssignedModel();
+   PMDObject *getAssignedModel() const;
 
    /* renderComment: render model comment */
    void renderComment(TextRenderer *text);

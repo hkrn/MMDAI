@@ -60,7 +60,7 @@ public:
 
    virtual bool loadSystemTexture(int index, PMDTexture *texture) = 0;
 
-   virtual const char *getLocation() = 0;
+   virtual const char *getLocation() const = 0;
 };
 
 #endif

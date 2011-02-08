@@ -150,7 +150,7 @@ void TileTexture::render(bool cullFace, const float normal[3])
 }
 
 /* TileTexture::getSize: get texture size */
-GLfloat TileTexture::getSize(int i, int j)
+GLfloat TileTexture::getSize(int i, int j) const
 {
   return m_vertices[i][j];
 }
