@@ -143,7 +143,7 @@ void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
     QTextCodec *codec = QTextCodec::codecForName("EUC-JP");
     QStringList argv;
     argv << codec->toUnicode(arguments, strlen(arguments));
-    emit commandPost(QString(type), argv);
+    emit eventPost(QString(type), argv);
     free(arguments);
   }
 }
