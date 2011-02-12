@@ -98,6 +98,14 @@ Windows に関して MinGW を使うことでビルドすることが出来ま�
 - OpenGL Easy Extension
 - Qt 4.7 以降
 
+プラグインをビルドする際以下が必要です。Phonon は Qt に含まれれます。
+- Phonon (QMAAquesTalk2Plugin / QMAAudioPlugin / QMAOpenJTalkPlugin)
+- AquesTalk2 (QMAAquesTalk2Plugin)
+- Julius (QMAJuliusPlugin)
+- OpenJTalk (QMAOpenJTalkPlugin)
+- hts_engine (QMAOpenJTalkPlugin)
+- Lua (QMAVILuaPlugin)
+
 MMDAI 及び MMDFiles のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
 Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
 
@@ -155,6 +163,14 @@ mingw32-qmake-qt4 を実行し、make すればバイナリが作成されます
 $ cd debug # or release
 $ perl ../scripts/mingw_deloy.pl
 $ wine QtMMDAI.exe
+
+** ビルドの注意点
+OpenJTalk について取り扱いに注意が必要です。まず、OpenJTalk のビルドが終わっても
+そのままビルドすることは出来ません。QMAOpenJTalkPlugin.pro にある手順を行う必要があります。
+また、以下を行わないと実行時に SEGFAULT を起こします。
+- CXXFLAGS に -DMECAB_WITHOUT_SHARE_DIC をつける
+- "./configure --with-charset=SHIFT_JIS" で実行する
+-- 一行でおさめると export CXXFLAGS="-DMECAB_WITHOUT_SHARE_DIC"; ./configure --with-charset=SHIFT_JIS
 
 * プラグインについて
 
