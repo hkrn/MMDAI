@@ -81,14 +81,17 @@ public:
   bool deleteMotion(PMDObject *object,
                     const char *motionAlias);
 
-  bool addModel(PMDModelLoader *loader);
+  bool addModel(PMDModelLoader *loader, LipSyncLoader *lipSyncLoader);
   bool addModel(const char *modelAlias,
-                PMDModelLoader *loader,
+                PMDModelLoader *modelLoader,
+                LipSyncLoader *lipSyncLoader,
                 btVector3 *pos,
                 btQuaternion *rot,
                 const char *baseModelAlias,
                 const char *baseBoneName);
-  bool changeModel(PMDObject *object, PMDModelLoader *loader);
+  bool changeModel(PMDObject *object,
+                   PMDModelLoader *loader,
+                   LipSyncLoader *lipSyncLoader);
   void deleteModel(PMDObject *object);
 
   void changeLightDirection(float x,

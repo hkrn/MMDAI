@@ -59,7 +59,8 @@ private:
    char *m_alias;               /* alias */
    PMDModel m_pmd;                 /* model */
    MotionManager *m_motionManager; /* motion manager */
-   LipSync m_lipSync;              /* lip sync */
+   LipSync *m_globalLipSync;
+   LipSync m_localLipSync;
 
    bool m_isEnable; /* true if this model is enabled */
 
@@ -107,7 +108,8 @@ public:
    void release();
 
    /* PMDObject::load: load model */
-   bool load(PMDModelLoader *loader,
+   bool load(PMDModelLoader *modelLoader,
+             LipSyncLoader *lipSyncLoader,
              btVector3 *offsetPos,
              btQuaternion *offsetRot,
              bool forcedPosition,
@@ -163,8 +165,8 @@ public:
    /* PMDObject::resetMotionManager: reset MotionManager */
    void resetMotionManager();
 
-   /* PMDObject::getLipSync: get LipSync */
-   LipSync *getLipSync();
+   /* PMDObject::getLipSync: create LipSync motion */
+   bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
 
    /* PMDObject::getPosition: get root bone offset */
    void getPosition(btVector3 &pos) const;

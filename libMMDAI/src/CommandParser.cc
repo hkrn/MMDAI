@@ -115,6 +115,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
 {
   PMDObject *object = NULL;
   PMDModelLoader *pmd = NULL;
+  LipSyncLoader *lip = NULL;
   VMDLoader *vmd = NULL;
   float tmpFloat = 0.0f, float3[3] = { 0.0f, 0.0f, 0.0f };
   bool ret = true;
@@ -151,9 +152,11 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       rot.setEulerZYX(0.0, 0.0, 0.0);
     }
     pmd = m_factory->createModelLoader(argv[1]);
-    ret = m_controller->addModel(argv[0], pmd, &pos, &rot,
+    lip = m_factory->createLipSyncLoader(argv[1]);
+    ret = m_controller->addModel(argv[0], pmd, lip, &pos, &rot,
         argc >= 5 ? argv[4] : NULL, argc >= 6 ? argv[5] : NULL);
     m_factory->releaseModelLoader(pmd);
+    m_factory->releaseLipSyncLoader(lip);
   }
   else if (strcmp(command, MMDAGENT_COMMAND_MODEL_CHANGE) == 0) {
     /* change model */
@@ -164,8 +167,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
       pmd = m_factory->createModelLoader(argv[1]);
-      ret = m_controller->changeModel(object, pmd);
+      lip = m_factory->createLipSyncLoader(argv[1]);
+      ret = m_controller->changeModel(object, pmd, lip);
       m_factory->releaseModelLoader(pmd);
+      m_factory->releaseLipSyncLoader(lip);
     }
     else {
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);

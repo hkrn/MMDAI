@@ -331,14 +331,15 @@ bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
 }
 
 /* SceneController::addModel: add model */
-bool SceneController::addModel(PMDModelLoader *loader)
+bool SceneController::addModel(PMDModelLoader *modelLoader, LipSyncLoader *lipSyncLoader)
 {
-  return addModel(NULL, loader, NULL, NULL, NULL, NULL);
+  return addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
 }
 
 /* SceneController::addModel: add model */
 bool SceneController::addModel(const char *modelAlias,
-                               PMDModelLoader *loader,
+                               PMDModelLoader *modelLoader,
+                               LipSyncLoader *lipSyncLoader,
                                btVector3 *pos,
                                btQuaternion *rot,
                                const char *baseModelAlias,
@@ -416,7 +417,8 @@ bool SceneController::addModel(const char *modelAlias,
   }
 
   /* add model */
-  if (!newObject->load(loader,
+  if (!newObject->load(modelLoader,
+                       lipSyncLoader,
                        &offsetPos,
                        &offsetRot,
                        forcedPosition,
@@ -426,7 +428,7 @@ bool SceneController::addModel(const char *modelAlias,
                        m_option.getUseCartoonRendering(),
                        m_option.getCartoonEdgeWidth(),
                        &light)) {
-    g_logger.log("! Error: addModel: failed to load %s.", loader->getLocation());
+    g_logger.log("! Error: addModel: failed to load %s.", modelLoader->getLocation());
     newObject->release();
     free(name);
     return false;
@@ -445,7 +447,9 @@ bool SceneController::addModel(const char *modelAlias,
 }
 
 /* SceneController::changeModel: change model */
-bool SceneController::changeModel(PMDObject *object, PMDModelLoader *loader)
+bool SceneController::changeModel(PMDObject *object,
+                                  PMDModelLoader *modelLoader,
+                                  LipSyncLoader *lipSyncLoader)
 {
   int i;
   MotionPlayer *motionPlayer;
@@ -455,7 +459,8 @@ bool SceneController::changeModel(PMDObject *object, PMDModelLoader *loader)
   btVector3 light = btVector3(l[0], l[1], l[2]);
 
   /* load model */
-  if (!object->load(loader,
+  if (!object->load(modelLoader,
+                    lipSyncLoader,
                     NULL,
                     NULL,
                     false,
@@ -465,7 +470,7 @@ bool SceneController::changeModel(PMDObject *object, PMDModelLoader *loader)
                     m_option.getUseCartoonRendering(),
                     m_option.getCartoonEdgeWidth(),
                     &light)) {
-    g_logger.log("! Error: changeModel: failed to load model %s.", loader->getLocation());
+    g_logger.log("! Error: changeModel: failed to load model %s.", modelLoader->getLocation());
     return false;
   }
 
@@ -733,13 +738,14 @@ void SceneController::stopTurn(PMDObject *object)
 bool SceneController::startLipSync(PMDObject *object, const char *seq)
 {
   unsigned char *vmdData;
-  unsigned long vmdSize;
+  size_t vmdSize;
   VMD *vmd;
   bool found = false;
   MotionPlayer *motionPlayer;
+  const char *name = LipSync::getMotionName();
 
   /* create motion */
-  if(object->getLipSync()->createMotion(seq, &vmdData, &vmdSize) == false) {
+  if(object->createLipSyncMotion(seq, &vmdData, &vmdSize) == false) {
     g_logger.log("! Error: startLipSync: cannot create lip motion.");
     return false;
   }
@@ -749,7 +755,7 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
   /* search running lip motion */
   motionPlayer = object->getMotionManager()->getMotionPlayerList();
   for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-    if (motionPlayer->active && strcmp(motionPlayer->name, LIPSYNC_MOTION_NAME) == 0) {
+    if (motionPlayer->active && strcmp(motionPlayer->name, name) == 0) {
       found = true;
       break;
     }
@@ -757,13 +763,13 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
 
   /* start lip sync */
   if (found) {
-    if (!object->swapMotion(vmd, LIPSYNC_MOTION_NAME)) {
+    if (!object->swapMotion(vmd, name)) {
       g_logger.log("! Error: startLipSync: cannot start lip sync.");
       m_motion.unload(vmd);
       return false;
     }
   } else {
-    if (!object->startMotion(vmd, LIPSYNC_MOTION_NAME, false, true, true, true)) {
+    if (!object->startMotion(vmd, name, false, true, true, true)) {
       g_logger.log("! Error: startLipSync: cannot start lip sync.");
       m_motion.unload(vmd);
       return false;
@@ -780,7 +786,7 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
 bool SceneController::stopLipSync(PMDObject *object)
 {
   /* stop lip sync */
-  if (object->getMotionManager()->deleteMotion(LIPSYNC_MOTION_NAME) == false) {
+  if (object->getMotionManager()->deleteMotion(LipSync::getMotionName()) == false) {
     g_logger.log("! Error: stopLipSync: lipsync motion not found");
     return false;
   }
@@ -890,6 +896,7 @@ PMDObject *SceneController::getSelectedPMDObject()
 
 void SceneController::updateMotion(double procFrame, double adjustFrame)
 {
+  const char *lipSyncMotion = LipSync::getMotionName();
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
@@ -898,7 +905,7 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
         MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
         for (; player != NULL; player = player->next) {
           if (player->statusFlag == MOTION_STATUS_DELETED) {
-            if (strcmp(player->name, LIPSYNC_MOTION_NAME) == 0) {
+            if (strcmp(player->name, lipSyncMotion) == 0) {
               sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
             }
             else {
@@ -924,9 +931,10 @@ void SceneController::deleteAssociatedModels(PMDObject *object)
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteAssociatedModels(assoc);
   }
+  const char *lipSyncMotion = LipSync::getMotionName();
   MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
   for (; player != NULL; player = player->next) {
-    if (strcmp(player->name, LIPSYNC_MOTION_NAME) == 0) {
+    if (strcmp(player->name, lipSyncMotion) == 0) {
       sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
     }
     else {

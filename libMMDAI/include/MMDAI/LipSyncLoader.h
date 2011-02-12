@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -36,57 +36,28 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <stdio.h>
-#include "MMDAI/LipSyncLoader.h"
+/* headers */
 
-/* definitions */
+#ifndef LIPSYNCLOADER_H
+#define LIPSYNCLOADER_H
 
-#define LIPSYNC_CONFIGFILE          "lip.txt"
-#define LIPSYNC_MAXBUFLEN           1024
-
-/* LipKeyFrame: key frame for lip motion */
-typedef struct _LipKeyFrame {
-   int phone;
-   int duration;
-   float rate;
-   struct _LipKeyFrame *next;
-} LipKeyFrame;
-
-/* LipSync: lipsync */
-class LipSync
+class LipSyncLoader
 {
-private:
-
-   int m_numMotion; /* number of expression */
-   char **m_motion;
-
-   int m_numPhone; /* number of phoneme */
-   char **m_phone;
-   float **m_blendRate;
-
-   /* initialize: initialize lipsync */
-   void initialize();
-
-   /* clear: free lipsync */
-   void clear();
-
 public:
+  virtual ~LipSyncLoader() {}
 
-   static const float kInterpolationRate = 0.8f;
-   static const int kInterpolationMargin = 2;
+  virtual bool load() = 0;
 
-   /* LipSync: constructor */
-   LipSync();
+  virtual int getNExpressions() = 0;
 
-   /* ~LipSync: destructor */
-   ~LipSync();
+  virtual const char *getExpressionName(int i) = 0;
 
-   /* load: initialize and load lip setting */
-   bool load(LipSyncLoader *loader);
+  virtual int getNPhonemes() = 0;
 
-   /* createMotion: create motion from phoneme sequence */
-   bool createMotion(const char *str, unsigned char **rawData, size_t *rawSize);
+  virtual const char *getPhoneName(int i) = 0;
 
-   static const char *getMotionName();
+  virtual float getInterpolationWeight(int i, int j) = 0;
 };
+
+#endif // LIPSYNCLOADER_H
 

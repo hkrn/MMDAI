@@ -70,6 +70,7 @@ void PMDObject::initialize()
   m_baseBone = NULL;
   m_needResetKinematic = false;
   m_alias = NULL;
+  m_globalLipSync = NULL;
 }
 
 /* PMDOjbect::clear: free PMDObject */
@@ -102,7 +103,8 @@ void PMDObject::release()
 }
 
 /* PMDObject::load: load model */
-bool PMDObject::load(PMDModelLoader *loader,
+bool PMDObject::load(PMDModelLoader *modelLoader,
+                     LipSyncLoader *lipSyncLoader,
                      btVector3 *offsetPos,
                      btQuaternion *offsetRot,
                      bool forcedPosition,
@@ -116,7 +118,7 @@ bool PMDObject::load(PMDModelLoader *loader,
 
   int i;
 
-  if (loader == NULL)
+  if (modelLoader == NULL || lipSyncLoader == NULL)
     return false;
 
   /* apply given parameters */
@@ -169,14 +171,14 @@ bool PMDObject::load(PMDModelLoader *loader,
   m_isEnable = true;
 
   /* load model */
-  if (m_pmd.load(loader, bullet) == false) {
+  if (m_pmd.load(modelLoader, bullet) == false) {
     clear();
     return false;
   }
 
   /* set up lip sync */
-  // FIXME: loading lipsync
-  m_lipSync.setup(&m_pmd, "FIXME");
+  m_localLipSync.load(lipSyncLoader);
+
   /* set initial alias name as the same as model name */
   setAlias(m_pmd.getName());
 
@@ -456,10 +458,13 @@ void PMDObject::resetMotionManager()
   m_motionManager = new MotionManager(&m_pmd);
 }
 
-/* PMDObject::getLipSync: get LipSync */
-LipSync *PMDObject::getLipSync()
+/* PMDObject::createLipSyncMotion: create LipSync motion */
+bool PMDObject::createLipSyncMotion(const char *str, unsigned char **data, size_t *size)
 {
-  return &m_lipSync;;
+  bool ret = m_localLipSync.createMotion(str, data, size);
+  if (!ret && m_globalLipSync != NULL)
+    ret = m_globalLipSync->createMotion(str, data, size);
+  return ret;
 }
 
 /* PMDObject::getPosition: get root bone offset */

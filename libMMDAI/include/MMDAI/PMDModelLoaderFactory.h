@@ -43,6 +43,7 @@
 
 #include <MMDME/PMDModelLoader.h>
 #include <MMDME/VMDLoader.h>
+#include "MMDAI/LipSyncLoader.h"
 
 class PMDModelLoaderFactory
 {
@@ -53,9 +54,13 @@ public:
 
   virtual VMDLoader *createMotionLoader(const char *filename) = 0;
 
+  virtual LipSyncLoader *createLipSyncLoader(const char *filename) = 0;
+
   virtual void releaseModelLoader(PMDModelLoader *loader) = 0;
 
   virtual void releaseMotionLoader(VMDLoader *loader) = 0;
+
+  virtual void releaseLipSyncLoader(LipSyncLoader *loader) = 0;
 };
 
 #endif // SCENEEVENTHANDLER_H
