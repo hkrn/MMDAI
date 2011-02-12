@@ -88,6 +88,7 @@ private:
   bool m_loaded;          /* check load flag */
   double *m_styleWeights; /* weights of speaking styles */
   int m_numStyles;        /* number of speaking styles */
+  int m_duration;
 
   /* initialize: initialize system */
   void initialize();
@@ -120,6 +121,8 @@ public:
 
   /* setStyle: set style interpolation weight */
   bool setStyle(int val);
+
+  int getDuration();
 };
 
 #endif

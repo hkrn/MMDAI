@@ -235,7 +235,7 @@ void Open_JTalk_Manager::run()
     style = strtok_r(NULL, "|", &save);
     text = strtok_r(NULL, "|", &save);
 
-    if(chara != NULL && style != NULL || text != NULL) {
+    if(chara != NULL && style != NULL && text != NULL) {
       /* check character */
       for(i = 0, link = m_list; link; link = link->next, i++)
         if(link->open_jtalk_thread.checkCharacter(chara))

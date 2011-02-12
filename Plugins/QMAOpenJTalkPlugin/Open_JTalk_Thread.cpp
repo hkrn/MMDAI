@@ -298,7 +298,7 @@ void Open_JTalk_Thread::run()
       m_openJTalk.synthesis(m_buffer);
       m_object->setCurrentSource(m_buffer);
       m_object->play();
-      msleep(m_object->totalTime());
+      msleep(m_openJTalk.getDuration());
     }
     sendStopEventMessage(chara);
 

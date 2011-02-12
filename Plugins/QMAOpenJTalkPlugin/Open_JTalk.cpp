@@ -91,6 +91,7 @@ void Open_JTalk::clear()
     free(m_styleWeights);
   m_styleWeights = NULL;
   m_numStyles = 0;
+  m_duration = 0;
 }
 
 /* Open_JTalk::Open_JTalk: constructor */
@@ -249,7 +250,7 @@ bool Open_JTalk::load(const char *dicDir, char **modelDir, int numModels, double
 /* Open_JTalk::prepare: text analysis, decision of state durations, and parameter generation */
 void Open_JTalk::prepare(const char *str)
 {
-  char *buff;
+  char *buff, *s;
   char **label_feature = NULL;
   int label_size = 0;
   int i;
@@ -261,8 +262,12 @@ void Open_JTalk::prepare(const char *str)
   /* text analysis */
   HTS_Engine_set_stop_flag(&m_engine, false);
   buff = (char *) calloc(2 * strlen(str) + 1, sizeof(char));
-  text2mecab(buff, str);
+  s = strdup(str);
+  if (buff == NULL || s == NULL)
+    return;
+  text2mecab(buff, s);
   Mecab_analysis(&m_mecab, buff);
+  free(s);
   free(buff);
   mecab2njd(&m_njd, Mecab_get_feature(&m_mecab), Mecab_get_size(&m_mecab));
   njd_set_pronunciation(&m_njd);
@@ -384,6 +389,7 @@ void Open_JTalk::synthesis(QIODevice *buffer)
       short sample = HTS_GStreamSet_get_speech(gss, i);
       buffer->write(reinterpret_cast<const char *>(&sample), sizeof(sample));
     }
+    m_duration = ((double) HTS_PStreamSet_get_total_frame(&m_engine.pss) * global->fperiod / global->sampling_rate) * 1000;
     HTS_Engine_refresh(&m_engine);
   }
   JPCommon_refresh(&m_jpcommon);
@@ -453,4 +459,9 @@ bool Open_JTalk::setStyle(int val)
     HTS_Engine_set_volume(&m_engine, f);
 
   return true;
+}
+
+int Open_JTalk::getDuration()
+{
+  return m_duration;
 }
