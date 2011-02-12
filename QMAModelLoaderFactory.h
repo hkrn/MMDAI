@@ -40,8 +40,6 @@
 #include <MMDAI/PMDModelLoaderFactory.h>
 #include "QMAModelLoader.h"
 
-#include <QSet>
-
 class QMAModelLoaderFactory : public PMDModelLoaderFactory
 {
 public:
@@ -52,9 +50,13 @@ public:
 
   VMDLoader *createMotionLoader(const char *filename);
 
+  LipSyncLoader *createLipSyncLoader(const char *filename);
+
   void releaseModelLoader(PMDModelLoader *loader);
 
   void releaseMotionLoader(VMDLoader *loader);
+
+  void releaseLipSyncLoader(LipSyncLoader *loader);
 
 private:
   QMAModelLoader *createLoader(const char *filename);

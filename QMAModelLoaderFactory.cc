@@ -37,6 +37,7 @@
 #include <QDir>
 #include <QString>
 
+#include "QMALipSyncLoder.h"
 #include "QMAModelLoader.h"
 #include "QMAModelLoaderFactory.h"
 
@@ -50,12 +51,22 @@ VMDLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename)
   return createLoader(filename);
 }
 
+LipSyncLoader *QMAModelLoaderFactory::createLipSyncLoader(const char *filename)
+{
+  return new QMALipSyncLoder(filename);
+}
+
 void QMAModelLoaderFactory::releaseModelLoader(PMDModelLoader *loader)
 {
   delete loader;
 }
 
 void QMAModelLoaderFactory::releaseMotionLoader(VMDLoader *loader)
+{
+  delete loader;
+}
+
+void QMAModelLoaderFactory::releaseLipSyncLoader(LipSyncLoader *loader)
 {
   delete loader;
 }

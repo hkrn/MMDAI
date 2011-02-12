@@ -486,8 +486,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
         else if (path.endsWith(".pmd")) {
           /* model */
           if (modifiers & Qt::ControlModifier) {
-            PMDModelLoader *loader = m_factory.createModelLoader(filename);
-            m_controller->addModel(loader);
+            PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
+            LipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
+            m_controller->addModel(modelLoader, lipSyncLoader);
+            m_factory.releaseModelLoader(modelLoader);
+            m_factory.releaseLipSyncLoader(lipSyncLoader);
           }
           else {
             PMDObject *selectedObject = m_controller->getSelectedPMDObject();
@@ -497,8 +500,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
               selectedObject = m_controller->getSelectedPMDObject();
             }
             if (selectedObject != NULL) {
-              PMDModelLoader *loader = m_factory.createModelLoader(filename);
-              m_controller->changeModel(selectedObject, loader);
+              PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
+              LipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
+              m_controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
+              m_factory.releaseModelLoader(modelLoader);
+              m_factory.releaseLipSyncLoader(lipSyncLoader);
             }
             else
               g_logger.log("Warning: pmd file dropped but no model at the point");

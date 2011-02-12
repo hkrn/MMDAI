@@ -124,8 +124,13 @@ void QMAWindow::addModel()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastPMDDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
-    m_widget->getSceneController()->addModel(loader);
+    const char *filename = fileName.toUtf8().constData();
+    PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
+    PMDModelLoader *modelLoader = factory->createModelLoader(filename);
+    LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
+    m_widget->getSceneController()->addModel(modelLoader, lipSyncLoader);
+    factory->releaseModelLoader(modelLoader);
+    factory->releaseLipSyncLoader(lipSyncLoader);
   }
 }
 
@@ -317,8 +322,13 @@ void QMAWindow::changeSelectedObject()
     SceneController *controller = m_widget->getSceneController();
     PMDObject *selectedObject = controller->getSelectedPMDObject();
     if (selectedObject != NULL){
-      PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
-      controller->changeModel(selectedObject, loader);
+      const char *filename = fileName.toUtf8().constData();
+      PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
+      PMDModelLoader *modelLoader = factory->createModelLoader(filename);
+      LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
+      controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
+      factory->releaseModelLoader(modelLoader);
+      factory->releaseLipSyncLoader(lipSyncLoader);
     }
   }
 }

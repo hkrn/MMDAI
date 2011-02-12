@@ -61,7 +61,8 @@ SOURCES += main.cc\
         QMATimer.cc \
     QMAWindow.cc \
     QMAModelLoader.cc \
-    QMAModelLoaderFactory.cc
+    QMAModelLoaderFactory.cc \
+    QMALipSyncLoder.cc
 
 HEADERS  += QMAWidget.h \
     QMAPlugin.h \
@@ -69,7 +70,8 @@ HEADERS  += QMAWidget.h \
     QMAWindow.h \
     CommandDispatcher.h \
     QMAModelLoader.h \
-    QMAModelLoaderFactory.h
+    QMAModelLoaderFactory.h \
+    QMALipSyncLoder.h
 
 TRANSLATIONS += res/translations/QMA_ja.ts
 
