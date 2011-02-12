@@ -318,20 +318,22 @@ bool VMD::parse(unsigned char *data, size_t size)
       strncpy(name, boneFrame[i].name, 15);
       name[15] = '\0';
       bm = getBoneMotion(name);
-      bm->keyFrameList[bm->numKeyFrame].keyFrame = (float) boneFrame[i].keyFrame;
-      if (m_maxFrame < bm->keyFrameList[bm->numKeyFrame].keyFrame)
-         m_maxFrame = bm->keyFrameList[bm->numKeyFrame].keyFrame;
-      /* convert from left-hand coordinates to right-hand coordinates */
+      if (bm) {
+         bm->keyFrameList[bm->numKeyFrame].keyFrame = (float) boneFrame[i].keyFrame;
+         if (m_maxFrame < bm->keyFrameList[bm->numKeyFrame].keyFrame)
+            m_maxFrame = bm->keyFrameList[bm->numKeyFrame].keyFrame;
+         /* convert from left-hand coordinates to right-hand coordinates */
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-      bm->keyFrameList[bm->numKeyFrame].pos = btVector3(boneFrame[i].pos[0], boneFrame[i].pos[1], -boneFrame[i].pos[2]);
-      bm->keyFrameList[bm->numKeyFrame].rot = btQuaternion(-boneFrame[i].rot[0], -boneFrame[i].rot[1], boneFrame[i].rot[2], boneFrame[i].rot[3]);
+         bm->keyFrameList[bm->numKeyFrame].pos = btVector3(boneFrame[i].pos[0], boneFrame[i].pos[1], -boneFrame[i].pos[2]);
+         bm->keyFrameList[bm->numKeyFrame].rot = btQuaternion(-boneFrame[i].rot[0], -boneFrame[i].rot[1], boneFrame[i].rot[2], boneFrame[i].rot[3]);
 #else
-      bm->keyFrameList[bm->numKeyFrame].pos = btVector3(boneFrame[i].pos[0], boneFrame[i].pos[1], boneFrame[i].pos[2]);
-      bm->keyFrameList[bm->numKeyFrame].rot = btQuaternion(boneFrame[i].rot[0], boneFrame[i].rot[1], boneFrame[i].rot[2], boneFrame[i].rot[3]);
+         bm->keyFrameList[bm->numKeyFrame].pos = btVector3(boneFrame[i].pos[0], boneFrame[i].pos[1], boneFrame[i].pos[2]);
+         bm->keyFrameList[bm->numKeyFrame].rot = btQuaternion(boneFrame[i].rot[0], boneFrame[i].rot[1], boneFrame[i].rot[2], boneFrame[i].rot[3]);
 #endif
-      /* set interpolation table */
-      setInterpolationTable(&(bm->keyFrameList[bm->numKeyFrame]), boneFrame[i].interpolation);
-      bm->numKeyFrame++;
+         /* set interpolation table */
+         setInterpolationTable(&(bm->keyFrameList[bm->numKeyFrame]), boneFrame[i].interpolation);
+         bm->numKeyFrame++;
+      }
    }
    /* sort the key frames in each boneMotion by frame */
    for (bl = m_boneLink; bl; bl = bl->next)
@@ -369,11 +371,13 @@ bool VMD::parse(unsigned char *data, size_t size)
       strncpy(name, faceFrame[i].name, 15);
       name[15] = '\0';
       fm = getFaceMotion(faceFrame[i].name);
-      fm->keyFrameList[fm->numKeyFrame].keyFrame = (float) faceFrame[i].keyFrame;
-      if (m_maxFrame < fm->keyFrameList[fm->numKeyFrame].keyFrame)
-         m_maxFrame = fm->keyFrameList[fm->numKeyFrame].keyFrame;
-      fm->keyFrameList[fm->numKeyFrame].weight = faceFrame[i].weight;
-      fm->numKeyFrame++;
+      if (fm) {
+         fm->keyFrameList[fm->numKeyFrame].keyFrame = (float) faceFrame[i].keyFrame;
+         if (m_maxFrame < fm->keyFrameList[fm->numKeyFrame].keyFrame)
+            m_maxFrame = fm->keyFrameList[fm->numKeyFrame].keyFrame;
+         fm->keyFrameList[fm->numKeyFrame].weight = faceFrame[i].weight;
+         fm->numKeyFrame++;
+      }
    }
    /* sort the key frames in each faceMotion by frame */
    for (fl = m_faceLink; fl; fl = fl->next)
