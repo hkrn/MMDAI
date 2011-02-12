@@ -119,8 +119,6 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
       if (p) {
          /* has extra sphere map */
          *p = '\0';
-         printf("%s %s\n", name,  p + 1);
-         fflush(stdout);
          if (!loader->loadModelTexture(name, &m_texture))
            return false;
          if (!loader->loadModelTexture(p + 1, &m_additionalTexture))
