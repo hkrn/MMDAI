@@ -866,10 +866,10 @@ void SceneController::setHighlightPMDObject(PMDObject *object)
 
   if (m_highlightModel != NULL) {
     /* reset current highlighted model */
-    col[0] = PMDMODEL_EDGECOLORR;
-    col[1] = PMDMODEL_EDGECOLORG;
-    col[2] = PMDMODEL_EDGECOLORB;
-    col[3] = PMDMODEL_EDGECOLORA;
+    col[0] = PMDModel::kEdgeColorR;
+    col[1] = PMDModel::kEdgeColorG;
+    col[2] = PMDModel::kEdgeColorB;
+    col[3] = PMDModel::kEdgeColorA;
     m_highlightModel->getPMDModel()->setEdgeColor(col);
   }
   if (object != NULL) {
