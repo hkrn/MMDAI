@@ -41,6 +41,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 
 /* PMDFaceVertex: vertex of this model */
@@ -67,6 +68,8 @@ private:
 
    /* clear: free face */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDFace);
 
 public:
 

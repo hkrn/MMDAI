@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include <MMDME/MMDME.h> /* MMDFILES_RAD */
+#include <MMDME/MMDME.h> /* MMDME_RAD */
 
 #include "MMDAI/BoneController.h"
 
@@ -130,8 +130,8 @@ void BoneController::setup(PMDModel *model, const char **boneName, int numBone, 
    m_rateOn = rateOn;
    m_rateOff = rateOff;
    m_baseVector = btVector3(baseVectorX, baseVectorY, baseVectorZ);
-   m_upperAngLimit = btVector3(MMDFILES_RAD(upperAngLimitX), MMDFILES_RAD(upperAngLimitY), MMDFILES_RAD(upperAngLimitZ));
-   m_lowerAngLimit = btVector3(MMDFILES_RAD(lowerAngLimitX), MMDFILES_RAD(lowerAngLimitY), MMDFILES_RAD(lowerAngLimitZ));
+   m_upperAngLimit = btVector3(MMDME_RAD(upperAngLimitX), MMDME_RAD(upperAngLimitY), MMDME_RAD(upperAngLimitZ));
+   m_lowerAngLimit = btVector3(MMDME_RAD(lowerAngLimitX), MMDME_RAD(lowerAngLimitY), MMDME_RAD(lowerAngLimitZ));
    m_adjustPos = btVector3(adjustPosX, adjustPosY, adjustPosZ);
 
    /* set child bones */

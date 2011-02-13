@@ -39,13 +39,6 @@
 #ifndef MMDME_MMDME_H_
 #define MMDME_MMDME_H_
 
-/* convert model coordinates from left-handed to right-handed */
-#define MMDFILES_CONVERTCOORDINATESYSTEM
-
-/* convert from/to radian */
-#define MMDFILES_RAD(a) (a * (3.1415926f / 180.0f))
-#define MMDFILES_DEG(a) (a * (180.0f / 3.1415926f))
-
 #include <btBulletDynamicsCommon.h>
 
 #include "MMDME/BulletPhysics.h"

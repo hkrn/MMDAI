@@ -41,6 +41,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFace.h"
 #include "MMDME/PMDModel.h"
@@ -115,6 +116,8 @@ private:
 
    /* clear: free controller */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(MotionController);
 
 public:
 

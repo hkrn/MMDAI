@@ -36,6 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <MMDME/Common.h>
+
 #define OPTION_MAXBUFLEN 1024
 
 #define OPTION_USECARTOONRENDERING_STR "use_cartoon_rendering"
@@ -239,6 +241,8 @@ private:
 
    /* initialize: initialize options */
    void initialize();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(Option);
 
 public:
 

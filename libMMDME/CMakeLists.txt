@@ -44,6 +44,7 @@ project(libMMDME)
 aux_source_directory(src libMMDME_sources)
 set(libMMDME_public_headers
   include/MMDME/BulletPhysics.h
+  include/MMDME/Common.h
   include/MMDME/MotionController.h
   include/MMDME/MotionManager.h
   include/MMDME/MMDME.h

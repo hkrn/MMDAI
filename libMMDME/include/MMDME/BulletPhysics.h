@@ -53,6 +53,8 @@
 #include <GL/gl.h>
 #endif
 
+#include "MMDME/Common.h"
+
 /* BulletPhysics: Bullet Physics engine */
 class BulletPhysics
 {
@@ -77,6 +79,8 @@ private:
 
    /* clear: free BulletPhysics */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(BulletPhysics);
 
 public:
 

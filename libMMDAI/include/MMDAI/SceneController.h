@@ -41,6 +41,8 @@
 #ifndef SCENECONTROLLER_H
 #define SCENECONTROLLER_H
 
+#include <MMDME/Common.h>
+
 #include "MMDAI/MotionStocker.h"
 #include "MMDAI/SceneEventHandler.h"
 #include "MMDAI/SceneRenderer.h"
@@ -169,6 +171,8 @@ private:
   int m_numModel;
   int m_selectedModel;
   bool m_enablePhysicsSimulation;
+
+  MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
 };
 
 #endif // SCENECONTROLLER_H

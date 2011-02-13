@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <stdio.h>
+#include <MMDME/Common.h>
 #include "MMDAI/LipSyncLoader.h"
 
 /* definitions */
@@ -69,6 +70,8 @@ private:
 
    /* clear: free lipsync */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(LipSync);
 
 public:
 

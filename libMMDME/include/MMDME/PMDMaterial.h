@@ -39,6 +39,7 @@
 #ifndef MMDME_PMDMATERIAL_H_
 #define MMDME_PMDMATERIAL_H_
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 #include "MMDME/PMDModelLoader.h"
 #include "MMDME/PMDTexture.h"
@@ -68,6 +69,8 @@ private:
 
    /* clear: free material */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDMaterial);
 
 public:
 

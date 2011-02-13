@@ -48,6 +48,7 @@
 #include <GL/gl.h>
 #endif
 
+#include "MMDME/Common.h"
 #include <stdio.h>
 
 /* PMDTexture: texture of PMD */
@@ -64,16 +65,13 @@ private:
    unsigned char m_components;   /* number of components (3 for RGB, 4 for RGBA) */
    unsigned char *m_textureData; /* texel data */
 
-private:
-
-   /* loadPNG: load PNG texture */
-   bool loadPNG(const char *fileName);
-
    /* initialize: initialize texture */
    void initialize();
 
    /* clear: free texture */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDTexture);
 
 public:
 

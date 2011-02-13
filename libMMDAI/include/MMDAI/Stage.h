@@ -41,6 +41,7 @@
 #ifndef STAGE_H
 #define STAGE_H
 
+#include <MMDME/Common.h>
 #include <MMDME/PMDModel.h>
 #include <MMDME/PMDModelLoader.h>
 
@@ -110,6 +111,8 @@ private:
 
   /* clear: free stage */
   void clear();
+
+  MMDME_DISABLE_COPY_AND_ASSIGN(Stage);
 };
 
 #endif // STAGE_H

@@ -42,6 +42,7 @@
 #define PMDOBJECT_H
 
 #include <MMDME/BulletPhysics.h>
+#include <MMDME/Common.h>
 #include <MMDME/MotionManager.h>
 #include <MMDME/PMDBone.h>
 #include <MMDME/PMDModel.h>
@@ -95,6 +96,8 @@ private:
 
    /* PMDOjbect::clear: free PMDObject */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDObject);
 
 public:
 

@@ -38,6 +38,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include <MMDME/Common.h>
 #include <MMDME/PMDBone.h>
 #include <MMDME/PMDModel.h>
 
@@ -65,6 +66,8 @@ private:
 
    void initialize();
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(BoneController);
 
 public:
 

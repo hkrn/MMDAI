@@ -41,6 +41,7 @@
 #ifndef COMMANDPARSER_H
 #define COMMANDPARSER_H
 
+#include <MMDME/Common.h>
 #include "MMDAI/SceneController.h"
 #include "MMDAI/PMDModelLoaderFactory.h"
 
@@ -78,6 +79,8 @@ public:
 private:
   SceneController *m_controller;
   PMDModelLoaderFactory *m_factory;
+
+  MMDME_DISABLE_COPY_AND_ASSIGN(CommandParser);
 };
 
 #endif // COMMANDPARSER_H

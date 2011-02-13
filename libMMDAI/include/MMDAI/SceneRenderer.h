@@ -41,6 +41,8 @@
 #ifndef SCENERENDERER_H
 #define SCENERENDERER_H
 
+#include <MMDME/Common.h>
+
 #include "MMDAI/Option.h"
 #include "MMDAI/PMDObject.h"
 #include "MMDAI/Stage.h"
@@ -109,6 +111,8 @@ private:
 
   /* Render::clear: free Render */
   void clear();
+
+  MMDME_DISABLE_COPY_AND_ASSIGN(SceneRenderer);
 
 public:
 

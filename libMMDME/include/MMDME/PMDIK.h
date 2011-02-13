@@ -39,6 +39,7 @@
 #ifndef MMDME_PMDIK_H_
 #define MMDME_PMDIK_H_
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFile.h"
 
@@ -65,6 +66,8 @@ private:
 
    /* clear: free IK */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDIK);
 
 public:
 

@@ -36,62 +36,26 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
+#ifndef MMDME_COMMON_H_
+#define MMDME_COMMON_H_
 
-#ifndef TILETEXTURE_H
-#define TILETEXTURE_H
+/* convert model coordinates from left-handed to right-handed */
+#define MMDFILES_CONVERTCOORDINATESYSTEM
 
-#include <MMDME/Common.h>
-#include <MMDME/PMDModelLoader.h>
-#include <MMDME/PMDTexture.h>
-
-class TileTexture
+/* convert from/to radian */
+inline float MMDME_RAD(float a)
 {
-private:
+  return a * (3.1415926f / 180.0f);
+}
 
-  PMDTexture m_texture;     /* texture */
-  bool m_isLoaded;
-  GLuint m_listIndex;       /* display list */
-  bool m_listIndexValid;    /* true if m_listIndex was registered */
+inline float MMDME_DEG(float a)
+{
+  return a * (180.0f / 3.1415926f);
+}
 
-  GLfloat m_vertices[4][3]; /* position */
-  GLfloat m_numx;
-  GLfloat m_numy;
+#define MMDME_DISABLE_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName &); \
+  void operator=(const TypeName &);
 
-  /* resetDisplayList: reset display list */
-  void resetDisplayList();
+#endif
 
-  /* initialize: initialize texture */
-  void initialize();
-
-  /* clear: free texture */
-  void clear();
-
-  MMDME_DISABLE_COPY_AND_ASSIGN(TileTexture);
-
-public:
-
-  /* TileTexture: constructor */
-  TileTexture();
-
-  /* TileTexture: destructor */
-  ~TileTexture();
-
-  /* load: load a texture from file name (wide char) */
-  bool load(PMDModelLoader *loader);
-
-  /* render: render the textures */
-  void render(bool cullFace, const float normal[3]);
-
-  /* setSize: set texture size */
-  void setSize(float v00, float v01, float v02,
-               float v10, float v11, float v12,
-               float v20, float v21, float v22,
-               float v30, float v31, float v32,
-               float x, float y);
-
-  /* getSize: get texture size */
-  GLfloat getSize(int i, int j) const;
-};
-
-#endif // TILETEXTURE_H

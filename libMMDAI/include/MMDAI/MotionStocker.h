@@ -41,6 +41,7 @@
 #ifndef MOTIONSTOCKER_H
 #define MOTIONSTOCKER_H
 
+#include <MMDME/Common.h>
 #include <MMDME/VMD.h>
 
 /* VMDList: VMD list */
@@ -65,6 +66,8 @@ private:
 
   /* clear: free MotionStocker */
   void clear();
+
+  MMDME_DISABLE_COPY_AND_ASSIGN(MotionStocker);
 
 public:
 

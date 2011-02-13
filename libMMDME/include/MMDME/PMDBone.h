@@ -41,6 +41,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 
 #define PMDBONE_KNEENAME "‚Ð‚´"
@@ -75,13 +76,13 @@ private:
    btVector3 m_pos;                 /* current position from parent bone, given by motion */
    btQuaternion m_rot;              /* current rotation, given by motion */
 
-private:
-
    /* initialize: initialize bone */
    void initialize();
 
    /* clear: free bone */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDBone);
 
 public:
 

@@ -41,6 +41,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 #include "MMDME/PMDRigidBody.h"
 
@@ -57,6 +58,8 @@ private:
 
    /* clear: free constraint */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDConstraint);
 
 public:
 

@@ -41,6 +41,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "MMDME/Common.h"
 #include "MMDME/MotionController.h"
 #include "MMDME/PMDModel.h"
 #include "MMDME/VMD.h"
@@ -102,6 +103,8 @@ private:
 
    /* clear: free motion manager */
    void clear();
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(MotionManager);
 
 public:
 
