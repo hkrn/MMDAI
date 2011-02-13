@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   app.setOrganizationDomain("com.github.hkrn.mmdai");
   app.setOrganizationName("MMDAI Project");
   app.setApplicationName("QtMMDAI");
-  app.setApplicationVersion("0.3");
+  app.setApplicationVersion("0.4");
   window.show();
 
   return app.exec();
