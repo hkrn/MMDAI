@@ -153,13 +153,13 @@ private:
 
 public:
 
-   static const float kMinBoneWeight = 0.0001f;
-   static const float kMinFaceWeight = 0.001f;
+   static const float kMinBoneWeight;
+   static const float kMinFaceWeight;
 
-   static const float kEdgeColorR = 0.0f;
-   static const float kEdgeColorG = 0.0f;
-   static const float kEdgeColorB = 0.0f;
-   static const float kEdgeColorA = 1.0f;
+   static const float kEdgeColorR;
+   static const float kEdgeColorG;
+   static const float kEdgeColorB;
+   static const float kEdgeColorA;
 
    /* PMDModel: constructor */
    PMDModel();

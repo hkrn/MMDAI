@@ -112,7 +112,7 @@ public:
    static const int kDefaultPriority = 0; 
 
    /* when specified with loop, motion will rewind at this frame when reached end */
-   static const float kDefaultLoopAtFrame = 0.0f;
+   static const float kDefaultLoopAtFrame;
 
    /* MotionManager: constructor */
    MotionManager(PMDModel *pmd);

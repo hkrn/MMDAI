@@ -40,6 +40,8 @@
 
 #include "MMDME/MotionManager.h"
 
+const float MotionManager::kDefaultLoopAtFrame = 0.0f;
+
 /* MotionPlayer_initialize: initialize MotionPlayer */
 void MotionPlayer_initialize(MotionPlayer *m)
 {

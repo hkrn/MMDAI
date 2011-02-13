@@ -121,9 +121,9 @@ private:
 
 public:
 
-   static const float kBoneStartMarginFrame = 20.0f; /* frame lengths for bone motion smoothing at loop head */
+   static const float kBoneStartMarginFrame; /* frame lengths for bone motion smoothing at loop head */
 
-   static const float kFaceStartMarginFrame = 6.0f;  /* frame lengths for face motion smoothing at loop head */
+   static const float kFaceStartMarginFrame;  /* frame lengths for face motion smoothing at loop head */
 
    /* MotionController: constructor */
    MotionController();

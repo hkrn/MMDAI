@@ -75,7 +75,7 @@ private:
 
 public:
 
-   static const float kInterpolationRate = 0.8f;
+   static const float kInterpolationRate;
    static const int kInterpolationMargin = 2;
 
    /* LipSync: constructor */

@@ -40,6 +40,9 @@
 
 #include "MMDME/MotionController.h"
 
+const float MotionController::kBoneStartMarginFrame = 20.0f;
+const float MotionController::kFaceStartMarginFrame = 6.0f;
+
 /* MotionController::calcBoneAt: calculate bone pos/rot at the given frame */
 void MotionController::calcBoneAt(MotionControllerBoneElement *mc, float frameNow)
 {

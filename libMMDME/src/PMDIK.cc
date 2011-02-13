@@ -40,6 +40,13 @@
 
 #include "MMDME/PMDIK.h"
 
+const float PMDIK::kPI          = 3.1415926f;
+const float PMDIK::kMinDistance = 0.0001f;
+const float PMDIK::kMinAngle    = 0.00000001f;
+const float PMDIK::kMinAxis     = 0.0000001f;
+const float PMDIK::kMinRotSum   = 0.002f;
+const float PMDIK::kMinRotation = 0.00001f;
+
 /* PMDIK::initialize: initialize IK */
 void PMDIK::initialize()
 {

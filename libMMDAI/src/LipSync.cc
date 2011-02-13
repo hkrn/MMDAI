@@ -45,6 +45,8 @@
 #include "MMDAI/LipSync.h"
 #include "MMDAI/LipSyncLoader.h"
 
+const float LipSync::kInterpolationRate = 0.8f;
+
 /* LipSync::initialize: initialize lipsync */
 void LipSync::initialize()
 {
@@ -177,7 +179,12 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    head = NULL;
    tail = NULL;
    diff = 0.0f;
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
    for(i = 0, k = 0, p = strtok_r(buf, ",", &save); p; i++, p = strtok_r(NULL, ",", &save)) {
+#else
+   (void)save;
+   for(i = 0, k = 0, p = strtok(buf, ","); p; i++, p = strtok(NULL, ",")) {
+#endif
       if(i % 2 == 0) {
          for(j = 0; j < m_numPhone; j++) {
             if (strcmp(m_phone[j], p) == 0) {

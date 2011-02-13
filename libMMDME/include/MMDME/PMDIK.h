@@ -47,12 +47,12 @@
 class PMDIK
 {
 private:
-   static const float kPI          = 3.1415926f;
-   static const float kMinDistance = 0.0001f;
-   static const float kMinAngle    = 0.00000001f;
-   static const float kMinAxis     = 0.0000001f;
-   static const float kMinRotSum   = 0.002f;
-   static const float kMinRotation = 0.00001f;
+   static const float kPI;
+   static const float kMinDistance;
+   static const float kMinAngle;
+   static const float kMinAxis;
+   static const float kMinRotSum;
+   static const float kMinRotation;
 
    PMDBone *m_destBone;        /* Destination bone. IK tries to move the targetBone to this position */
    PMDBone *m_targetBone;      /* Target bone. IK tries move this bone to the position of destBone */

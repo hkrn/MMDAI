@@ -41,6 +41,14 @@
 #include "MMDME/PMDModel.h"
 #include "MMDME/PMDMaterial.h"
 
+const float PMDModel::kMinBoneWeight = 0.0001f;
+const float PMDModel::kMinFaceWeight = 0.001f;
+
+const float PMDModel::kEdgeColorR = 0.0f;
+const float PMDModel::kEdgeColorG = 0.0f;
+const float PMDModel::kEdgeColorB = 0.0f;
+const float PMDModel::kEdgeColorA = 1.0f;
+
 /* PMDModel::initialize: initialize PMDModel */
 void PMDModel::initialize()
 {
