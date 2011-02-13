@@ -113,4 +113,4 @@ void QMAVIManagerPlugin::sendEvent(const char *type, char *arguments)
   /* do nothing */
 }
 
-Q_EXPORT_PLUGIN2("QMAVIManagerPlugin", QMAVIManagerPlugin)
+Q_EXPORT_PLUGIN2(qma_vimanager_plugin, QMAVIManagerPlugin)

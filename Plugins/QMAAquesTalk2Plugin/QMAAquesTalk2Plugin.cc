@@ -149,4 +149,4 @@ void QMAAquesTalk2Plugin::stateChanged(Phonon::State newState, Phonon::State old
     qWarning("Phonon error: %s", m_object->errorString().toAscii().constData());
 }
 
-Q_EXPORT_PLUGIN2("QMAAquesTalk2Plugin", QMAAquesTalk2Plugin)
+Q_EXPORT_PLUGIN2(qma_aquestalk2_plugin, QMAAquesTalk2Plugin)

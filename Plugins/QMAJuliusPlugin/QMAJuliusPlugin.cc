@@ -158,4 +158,4 @@ void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
   }
 }
 
-Q_EXPORT_PLUGIN2("QMAJuliusPlugin", QMAJuliusPlugin)
+Q_EXPORT_PLUGIN2(qma_julius_plugin, QMAJuliusPlugin)

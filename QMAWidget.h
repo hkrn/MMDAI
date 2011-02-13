@@ -45,6 +45,7 @@
 #include <MMDAI/TextRenderer.h>
 
 #include "QMAModelLoaderFactory.h"
+#include "QMAPlugin.h"
 #include "QMATimer.h"
 
 #include <qgl.h>
@@ -109,6 +110,7 @@ private:
   void updateScene();
   void loadModel();
   void loadPlugins();
+  void addPlugin(QMAPlugin *plugin);
 
   void updateModelPositionAndRotation(double fps);
   void renderDebugModel();

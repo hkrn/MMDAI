@@ -37,6 +37,12 @@
 #include <QtGui/QApplication>
 #include "QMAWindow.h"
 
+Q_IMPORT_PLUGIN(qma_audio_plugin);
+Q_IMPORT_PLUGIN(qma_julius_plugin);
+Q_IMPORT_PLUGIN(qma_lookat_plugin);
+Q_IMPORT_PLUGIN(qma_openjtalk_plugin);
+Q_IMPORT_PLUGIN(qma_vimanager_plugin);
+
 int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);

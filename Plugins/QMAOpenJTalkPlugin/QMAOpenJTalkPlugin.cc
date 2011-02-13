@@ -124,4 +124,4 @@ void QMAOpenJTalkPlugin::sendEvent(const char *type, char *arguments)
   free(arguments);
 }
 
-Q_EXPORT_PLUGIN2("QMAOpenJTalkPlugin", QMAOpenJTalkPlugin)
+Q_EXPORT_PLUGIN2(qma_openjtalk_plugin, QMAOpenJTalkPlugin)

@@ -155,4 +155,4 @@ void QMAVILuaPlugin::broadcast()
   }
 }
 
-Q_EXPORT_PLUGIN2("QMAVILuaPlugin", QMAVILuaPlugin);
+Q_EXPORT_PLUGIN2(qma_vilua_plugin, QMAVILuaPlugin);

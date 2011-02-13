@@ -152,4 +152,4 @@ void QMALookAtPlugin::render()
   /* do nothing */
 }
 
-Q_EXPORT_PLUGIN2("QMALookAtPlugin", QMALookAtPlugin);
+Q_EXPORT_PLUGIN2(qma_lookat_plugin, QMALookAtPlugin);

@@ -144,4 +144,4 @@ void QMAAudioPlugin::changeState(Phonon::State newState, Phonon::State oldState)
   }
 }
 
-Q_EXPORT_PLUGIN2("QMAAudioPlugin", QMAAudioPlugin)
+Q_EXPORT_PLUGIN2(qma_audio_plugin, QMAAudioPlugin)

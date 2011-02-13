@@ -35,7 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "QMAWidget.h"
-#include "QMAPlugin.h"
 
 #include "btBulletDynamicsCommon.h"
 
@@ -137,33 +136,27 @@ void QMAWidget::loadPlugins()
   }
 #endif
   QDir pluginsDir = appDir;
-  pluginsDir.cd("Plugins");
-  foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-    QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-    QObject *instance = loader.instance();
+  foreach (QObject *instance, QPluginLoader::staticInstances()) {
     QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
     if (plugin != NULL) {
-      connect(this, SIGNAL(pluginInitialized(SceneController *)),
-              plugin, SLOT(initialize(SceneController *)));
-      connect(this, SIGNAL(pluginStarted()),
-              plugin, SLOT(start()));
-      connect(this, SIGNAL(pluginStopped()),
-              plugin, SLOT(stop()));
-      connect(this, SIGNAL(pluginCommandPost(const QString&, const QStringList&)),
-              plugin, SLOT(receiveCommand(const QString&, const QStringList&)));
-      connect(this, SIGNAL(pluginEventPost(const QString&, const QStringList&)),
-              plugin, SLOT(receiveEvent(const QString&, const QStringList&)));
-      connect(this, SIGNAL(pluginUpdated(const QRect&, const QPoint&, double)),
-              plugin, SLOT(update(const QRect&, const QPoint&, double)));
-      connect(this, SIGNAL(pluginRendered()),
-              plugin, SLOT(render()));
-      connect(plugin, SIGNAL(commandPost(const QString&, const QStringList&)),
-              this, SLOT(delegateCommand(const QString&, const QStringList&)));
-      connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
-              this, SLOT(delegateEvent(const QString&, const QStringList&)));
+      addPlugin(plugin);
     }
     else {
-      qWarning() << fileName << "was not loaded by an error:" << loader.errorString();
+      qWarning() << plugin->metaObject()->className() << "was not loaded";
+    }
+  }
+  if (pluginsDir.exists("Plugins")) {
+    pluginsDir.cd("Plugins");
+    foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+      QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+      QObject *instance = loader.instance();
+      QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
+      if (plugin != NULL) {
+        addPlugin(plugin);
+      }
+      else {
+        qWarning() << fileName << "was not loaded by an error:" << loader.errorString();
+      }
     }
   }
   QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
@@ -173,6 +166,29 @@ void QMAWidget::loadPlugins()
   m_controller->init(size);
   m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
   emit pluginInitialized(m_controller);
+}
+
+void QMAWidget::addPlugin(QMAPlugin *plugin)
+{
+  connect(this, SIGNAL(pluginInitialized(SceneController *)),
+          plugin, SLOT(initialize(SceneController *)));
+  connect(this, SIGNAL(pluginStarted()),
+          plugin, SLOT(start()));
+  connect(this, SIGNAL(pluginStopped()),
+          plugin, SLOT(stop()));
+  connect(this, SIGNAL(pluginCommandPost(const QString&, const QStringList&)),
+          plugin, SLOT(receiveCommand(const QString&, const QStringList&)));
+  connect(this, SIGNAL(pluginEventPost(const QString&, const QStringList&)),
+          plugin, SLOT(receiveEvent(const QString&, const QStringList&)));
+  connect(this, SIGNAL(pluginUpdated(const QRect&, const QPoint&, double)),
+          plugin, SLOT(update(const QRect&, const QPoint&, double)));
+  connect(this, SIGNAL(pluginRendered()),
+          plugin, SLOT(render()));
+  connect(plugin, SIGNAL(commandPost(const QString&, const QStringList&)),
+          this, SLOT(delegateCommand(const QString&, const QStringList&)));
+  connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
+          this, SLOT(delegateEvent(const QString&, const QStringList&)));
+  qDebug() << plugin->metaObject()->className() << "was loaded successfully";
 }
 
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
