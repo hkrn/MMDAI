@@ -355,6 +355,14 @@ void QMAWindow::about()
                         "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
                         "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
                         "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
+#ifdef QMA_BUNDLE_PLUGINS
+                        /* TODO: should split this */
+                        "<li><a href='http://julius.sourceforge.jp'>Julius</a></li>"
+                        "<li><a href='http://open-jtalk.sf.net'>Open JTalk</a></li>"
+                        "<li><a href='http://hts-engine.sf.net/'>hts_engine API</a></li>"
+                        "<li><a href='http://mecab.sf.net/'>MeCab</a></li>"
+                        "<li><a href='http://www.portaudio.com'>PortAudio</a></li>"
+#endif
                         "</ul></p>"
                         "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
                         "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>").arg(qApp->applicationVersion()));
