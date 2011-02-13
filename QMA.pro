@@ -41,7 +41,9 @@ TEMPLATE = app
 
 unix:LIBS += -L/usr/local/lib
 unix:INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
-macx:CONFIG:release += x86 x86_64
+CONFIG(release, debug|release) {
+    macx:CONFIG += x86 x86_64
+}
 
 LIBS += -lMMDAI -lMMDME -lglee -lBulletDynamics -lBulletCollision -lLinearMath
 

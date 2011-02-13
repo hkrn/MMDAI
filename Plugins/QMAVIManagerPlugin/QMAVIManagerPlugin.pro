@@ -40,7 +40,9 @@ INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAVIManagerPlugin)
 DESTDIR = ../plugins
 
-macx:CONFIG:release += x86 x86_64
+CONFIG(release, debug|release) {
+    macx:CONFIG += x86 x86_64
+}
 
 HEADERS += \
     QMAVIManagerPlugin.h \
