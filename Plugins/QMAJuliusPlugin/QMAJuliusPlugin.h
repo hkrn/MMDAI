@@ -39,6 +39,8 @@
 #ifndef QMAJULIUSPLUGIN_H
 #define QMAJULIUSPLUGIN_H
 
+#include <QSystemTrayIcon>
+
 #include "CommandDispatcher.h"
 #include "QMAJuliusInitializer.h"
 #include "Julius_Thread.h"
@@ -75,6 +77,7 @@ signals:
 
 private:
   QMAJuliusInitializer *m_initializer;
+  QSystemTrayIcon m_tray;
   Julius_Thread *m_thread;
 };
 

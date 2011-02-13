@@ -45,13 +45,15 @@
 
 QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
   : QMAPlugin(parent),
-    m_initializer(NULL),
-    m_thread(NULL)
+  m_initializer(NULL),
+  m_thread(NULL)
 {
+  m_tray.show();
 }
 
 QMAJuliusPlugin::~QMAJuliusPlugin()
 {
+  m_tray.hide();
   delete m_initializer;
   delete m_thread;
 }
@@ -65,6 +67,7 @@ void QMAJuliusPlugin::initialize(SceneController *controller)
   QStringList conf;
   if (jconf.open(QFile::ReadOnly)) {
     QTextStream stream(&jconf);
+    /* make some relative file paths be absolute not to depend on current directory */
     while (!stream.atEnd()) {
       QString line = stream.readLine();
       QStringList pair = line.split(QRegExp("\\s+"));
@@ -85,6 +88,10 @@ void QMAJuliusPlugin::initialize(SceneController *controller)
     m_initializer = new QMAJuliusInitializer(conf);
     connect(m_initializer, SIGNAL(finished()), this, SLOT(startJuliusEngine()));
     m_initializer->start();
+    if (QSystemTrayIcon::supportsMessages())
+      m_tray.showMessage(tr("Started initialization of Julius"),
+                         tr("Please wait a moment until end of initialization of Julius engine."
+                            "This process takes about 10-20 seconds."));
   }
 }
 
@@ -129,6 +136,9 @@ void QMAJuliusPlugin::startJuliusEngine()
 {
   m_thread = new Julius_Thread(this, m_initializer);
   m_thread->start();
+  if (QSystemTrayIcon::supportsMessages())
+    m_tray.showMessage(tr("Completed initialization of Julius"),
+                       tr("You can now talk with the models."));
 }
 
 void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)
