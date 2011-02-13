@@ -55,15 +55,21 @@ int main(int argc, char *argv[])
   qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
   app.installTranslator(&qtTranslator);
 
-
+  QDir appDir = QDir(app.applicationDirPath());
+#if defined(Q_OS_WIN)
+  QString dirName = appDir.dirName().toLower();
+  if (dirName == "debug" || dirName == "release")
+    appDir.cdUp();
+  app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
+#endif
 #ifdef Q_OS_MAC
   QString path = QString("%1/../Resources/QMA_%2")
-                 .arg(app.applicationDirPath())
+                 .arg(appDir.absolutePath())
                  .arg(locale);
   appTranslator.load(path);
 #else
   const QString path = QString("%1/locales/QMA_%2")
-                       .arg(app.applicationDirPath())
+                       .arg(appDir.absolutePath())
                        .arg(locale);
   appTranslator.load(path);
 #endif
