@@ -46,7 +46,6 @@ set(libMMDAI_public_headers
   include/MMDAI/BoneController.h
   include/MMDAI/CommandParser.h
   include/MMDAI/LipSync.h
-  include/MMDAI/Logger.h
   include/MMDAI/MotionStocker.h
   include/MMDAI/Option.h
   include/MMDAI/PMDModelLoaderFactory.h

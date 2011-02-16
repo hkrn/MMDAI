@@ -42,8 +42,6 @@
 
 #include "MMDAI/Option.h"
 
-Logger g_logger;
-
 /* str2bool: convert string to boolean */
 static bool str2bool(char *str)
 {

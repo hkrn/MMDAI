@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <QtGui/QApplication>
+#include "QMALogger.h"
 #include "QMAWindow.h"
 
 #ifdef QMA_BUNDLE_PLUGINS
@@ -74,6 +75,8 @@ int main(int argc, char *argv[])
   appTranslator.load(path);
 #endif
   app.installTranslator(&appTranslator);
+
+  QMALogger::initialize();
 
   app.setOrganizationDomain("com.github.hkrn.mmdai");
   app.setOrganizationName("MMDAI Project");

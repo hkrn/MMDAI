@@ -155,7 +155,9 @@ void QMAWidget::loadPlugins()
         addPlugin(plugin);
       }
       else {
-        qWarning() << fileName << "was not loaded by an error:" << loader.errorString();
+        MMDAILogWarn("%s was not loaded by an error: %s",
+                     fileName.toUtf8().constData(),
+                     loader.errorString().toUtf8().constData());
       }
     }
   }
@@ -188,7 +190,7 @@ void QMAWidget::addPlugin(QMAPlugin *plugin)
           this, SLOT(delegateCommand(const QString&, const QStringList&)));
   connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
           this, SLOT(delegateEvent(const QString&, const QStringList&)));
-  qDebug() << plugin->metaObject()->className() << "was loaded successfully";
+  MMDAILogDebug("%s was loaded successfully", plugin->metaObject()->className());
 }
 
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
@@ -522,8 +524,9 @@ void QMAWidget::dropEvent(QDropEvent *event)
               m_factory.releaseModelLoader(modelLoader);
               m_factory.releaseLipSyncLoader(lipSyncLoader);
             }
-            else
-              g_logger.log("Warning: pmd file dropped but no model at the point");
+            else {
+              MMDAILogInfo("Warning: pmd file dropped but no model at the point");
+            }
           }
         }
         else if (path.endsWith(".bmp") || path.endsWith(".tga") || path.endsWith(".png")) {
@@ -535,11 +538,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
             m_controller->loadBackground(loader);
         }
         else {
-          g_logger.log("Warning: dropped file is not supported: %s", filename);
+          MMDAILogInfo("Warning: dropped file is not supported: %s", filename);
         }
       }
       else {
-        g_logger.log("Warning: doesn't support except file scheme");
+        MMDAILogInfo("Warning: doesn't support except file scheme");
       }
     }
   }

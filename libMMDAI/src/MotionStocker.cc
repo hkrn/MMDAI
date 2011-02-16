@@ -38,6 +38,7 @@
 
 /* headers */
 
+#include "MMDME/Common.h"
 #include "MMDAI/Option.h"
 #include "MMDAI/MotionStocker.h"
 
@@ -110,7 +111,7 @@ VMD * MotionStocker::loadFromLoader(VMDLoader *loader)
   vl = new VMDList;
   if(vl->vmd.load(loader) == false) {
     delete vl;
-    g_logger.log("! Error: failed to load vmd from file: %s", fileName);
+    MMDAILogInfo("! Error: failed to load vmd from file: %s", fileName);
     return NULL;
   }
 
@@ -141,7 +142,7 @@ VMD * MotionStocker::loadFromData(unsigned char *rawData, size_t rawSize)
   vl = new VMDList;
   if(vl->vmd.parse(rawData, rawSize) == false) {
     delete vl;
-    g_logger.log("! Error: failed to load vmd from memories");
+    MMDAILogInfo("! Error: failed to load vmd from memories");
     return NULL;
   }
 

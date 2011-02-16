@@ -41,10 +41,34 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 
 /* convert model coordinates from left-handed to right-handed */
 #define MMDFILES_CONVERTCOORDINATESYSTEM
+
+enum MMDAILogLevel
+{
+  MMDAILogLevelDebug,
+  MMDAILogLevelInfo,
+  MMDAILogLevelWarning,
+  MMDAILogLevelError,
+};
+
+typedef void (MMDAILoggingHandler)(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list va);
+
+void MMDAILogSetHandler(MMDAILoggingHandler *handler);
+void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const char *format, ...);
+
+/* FIXME: gcc own macro: ##__VA_ARGS__ */
+#define MMDAILogDebug(format, ...) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), ##__VA_ARGS__)
+#define MMDAILogInfo(format, ...) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), ##__VA_ARGS__)
+#define MMDAILogWarn(format, ...) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), ##__VA_ARGS__)
+#define MMDAILogError(format, ...) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format), ##__VA_ARGS__)
 
 /* convert from/to radian */
 inline float MMDME_RAD(float a)

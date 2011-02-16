@@ -286,7 +286,7 @@ void SceneRenderer::setShadowMapping(bool flag, int shadowMapTextureSize, bool s
     }
     glDisable(GL_TEXTURE_2D);
     glActiveTextureARB(GL_TEXTURE0_ARB);
-    g_logger.log("Shadow mapping enabled");
+    MMDAILogInfo("Shadow mapping enabled");
   } else {
     /* disabled */
     if (m_shadowMapInitialized) {
@@ -295,7 +295,7 @@ void SceneRenderer::setShadowMapping(bool flag, int shadowMapTextureSize, bool s
       glDisable(GL_TEXTURE_2D);
       glActiveTextureARB(GL_TEXTURE0_ARB);
     }
-    g_logger.log("Shadow mapping disabled");
+    MMDAILogInfo("Shadow mapping disabled");
   }
 }
 

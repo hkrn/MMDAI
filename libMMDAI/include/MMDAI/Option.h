@@ -178,10 +178,6 @@
 #define OPTION_SHADOWMAPPINGLIGHTFIRST_STR "shadow_mapping_light_first"
 #define OPTION_SHADOWMAPPINGLIGHTFIRST_DEF true
 
-/* FIXME: should not be here */
-#include "MMDAI/Logger.h"
-extern Logger g_logger;
-
 class Option
 {
 private:

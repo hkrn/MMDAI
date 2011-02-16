@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -16,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,53 +34,30 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
+#include "MMDME/Common.h"
 
-#ifndef LOGGER_H
-#define LOGGER_H
+static MMDAILoggingHandler MMDAILogWriteNull, *g_handler = MMDAILogWriteNull;
 
-#include "MMDAI/TextRenderer.h"
-
-/* Log: log text area behind character */
-class Logger
+static void MMDAILogWriteNull(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list va)
 {
-private:
+  /* do nothing */
+  (void) file;
+  (void) line;
+  (void) level;
+  (void) format;
+  (void) va;
+}
 
-   int m_textHeight;
-   int m_textWidth;
-   float m_textX;
-   float m_textY;
-   float m_textZ;
-   float m_textScale;
+void MMDAILogSetHandler(MMDAILoggingHandler *handler)
+{
+  g_handler = handler;
+}
 
-   char **m_textBufArray;            /* text list */
-   unsigned int **m_displayListIdArray; /* display list index for rendering */
-   int *m_length;                       /* length of each line */
-   bool *m_updated;                     /* true when line is uploaded */
-   int m_textLine;                      /* current position */
+void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const char *format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  g_handler(file, line, level, format, args);
+  va_end(args);
+}
 
-   /* Log: initialize logger */
-   void initialize();
-
-   /* Log: free logger */
-   void clear();
-
-public:
-
-   /* Log: constructor */
-   Logger();
-
-   /* ~Log: destructor */
-   ~Logger();
-
-   /* setup: initialize and setup logger with args */
-   void setup(int *size, float *position, float scale);
-
-   /* log: store log text */
-   void log(const char *format, ...);
-
-   /* render: render text area */
-   void render(TextRenderer *text);
-};
-
-#endif // LOG_H
