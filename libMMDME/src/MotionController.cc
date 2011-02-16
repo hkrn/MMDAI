@@ -357,9 +357,9 @@ void MotionController::initialize()
 void MotionController::clear()
 {
    if (m_boneCtrlList)
-      free(m_boneCtrlList);
+      MMDAIMemoryRelease(m_boneCtrlList);
    if (m_faceCtrlList)
-      free(m_faceCtrlList);
+      MMDAIMemoryRelease(m_faceCtrlList);
    initialize();
 }
 
@@ -396,7 +396,7 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
    m_numBoneCtrl = vmd->getNumBoneKind();
    if (m_numBoneCtrl > pmd->getNumBone()) /* their maximum will be smaller one between pmd and vmd */
       m_numBoneCtrl = pmd->getNumBone();
-   m_boneCtrlList = (MotionControllerBoneElement *) malloc(sizeof(MotionControllerBoneElement) * m_numBoneCtrl);
+   m_boneCtrlList = static_cast<MotionControllerBoneElement *>(MMDAIMemoryAllocate(sizeof(MotionControllerBoneElement) * m_numBoneCtrl));
    /* check all bone definitions in vmd to match the pmd, and store if match */
    m_numBoneCtrl = 0;
    for (bmlink = vmd->getBoneMotionLink(); bmlink; bmlink = bmlink->next) {
@@ -405,7 +405,7 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
          m_boneCtrlList[m_numBoneCtrl].bone = b;
          m_boneCtrlList[m_numBoneCtrl].motion = bm;
          m_numBoneCtrl++;
-         if (bm->numKeyFrame > 1 && strcmp(bm->name, kCenterBoneName) == 0) {
+         if (bm->numKeyFrame > 1 && MMDAIStringEquals(bm->name, kCenterBoneName)) {
             /* This motion has more than 1 key frames for Center Bone, so need re-location */
             m_hasCenterBoneMotion = true;
          }
@@ -416,7 +416,7 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
    m_numFaceCtrl = vmd->getNumFaceKind();
    if (m_numFaceCtrl > pmd->getNumFace()) /* their maximum will be smaller one between pmd and vmd */
       m_numFaceCtrl = pmd->getNumFace();
-   m_faceCtrlList = (MotionControllerFaceElement *) malloc(sizeof(MotionControllerFaceElement) * m_numFaceCtrl);
+   m_faceCtrlList = static_cast<MotionControllerFaceElement *>(MMDAIMemoryAllocate(sizeof(MotionControllerFaceElement) * m_numFaceCtrl));
    /* check all face definitions in vmd to match the pmd, and store if match */
    m_numFaceCtrl = 0;
    for (fmlink = vmd->getFaceMotionLink(); fmlink; fmlink = fmlink->next) {

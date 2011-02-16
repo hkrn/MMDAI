@@ -59,7 +59,7 @@ void MotionStocker::clear()
   for(vl = m_head; vl; vl = tmp) {
     tmp = vl->next;
     if(vl->name)
-      free(vl->name);
+      MMDAIMemoryRelease(vl->name);
     delete vl;
   }
 
@@ -87,7 +87,7 @@ VMD * MotionStocker::loadFromLoader(VMDLoader *loader)
   /* search cache from tail to head */
   for(vl = m_tail; vl; vl = tmp) {
     tmp = vl->prev;
-    if(vl->name && strcmp(vl->name, fileName) == 0) {
+    if(vl->name && MMDAIStringEquals(vl->name, fileName)) {
       if(vl != m_tail) {
         if(vl == m_head) {
           m_head = vl->next;
@@ -115,7 +115,7 @@ VMD * MotionStocker::loadFromLoader(VMDLoader *loader)
   }
 
   /* save name */
-  vl->name = strdup(fileName);
+  vl->name = MMDAIStringClone(fileName);
   vl->use = 1;
   vl->next = NULL;
 
@@ -204,7 +204,7 @@ void MotionStocker::unload(VMD *vmd)
         vl->next->prev = vl->prev;
       }
       if(vl->name)
-        free(vl->name);
+        MMDAIMemoryRelease(vl->name);
       delete vl;
       count--;
     }

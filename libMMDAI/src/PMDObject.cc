@@ -80,7 +80,7 @@ void PMDObject::clear()
   if (m_motionManager)
     delete m_motionManager;
   if(m_alias)
-    free(m_alias);
+    MMDAIMemoryRelease(m_alias);
   initialize();
 }
 
@@ -431,10 +431,10 @@ const char *PMDObject::getAlias() const
 /* PMDObject::setAlias: set alias name */
 void PMDObject::setAlias(const char *alias)
 {
-  if(alias && strlen(alias) > 0) {
+  if(alias && MMDAIStringLength(alias) > 0) {
     if(m_alias)
-      free(m_alias);
-    m_alias = strdup(alias);
+      MMDAIMemoryRelease(m_alias);
+    m_alias = MMDAIStringClone(alias);
   }
 }
 
@@ -562,7 +562,7 @@ void PMDObject::renderComment(TextRenderer * text)
    if (text == NULL || m_displayCommentFrame == 0.0)
       return;
 
-   char *comment = strdup(m_pmd.getComment());
+   char *comment = MMDAIStringClone(m_pmd.getComment());
    if(comment == NULL)
       return;
 
@@ -601,7 +601,7 @@ void PMDObject::renderComment(TextRenderer * text)
       glPopMatrix();
    }
    glEnable(GL_LIGHTING);
-   free(comment);
+   MMDAIMemoryRelease(comment);
 }
 
 /* PMDObject::renderDebug: render model debug */
@@ -635,7 +635,7 @@ void PMDObject::renderError(TextRenderer * text)
    char *p, *psave;
 
    m_pmd.getErrorTextureList(buf, 256);
-   if (text == NULL || strlen(buf) <= 0)
+   if (text == NULL || MMDAIStringLength(buf) <= 0)
       return;
 
    pos = m_pmd.getCenterBone()->getTransform()->getOrigin();

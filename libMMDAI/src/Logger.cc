@@ -47,15 +47,9 @@
 #endif
 
 #include <stdarg.h>
-
-#include <stdlib.h>
 #include <stdio.h>
-#ifdef WIN32_
-#include <malloc.h>
-#else
-#include <string.h>
-#endif
 
+#include "MMDME/Common.h"
 #include "MMDAI/Logger.h"
 #include "MMDAI/TextRenderer.h"
 
@@ -86,18 +80,18 @@ void Logger::clear()
 
    if (m_textBufArray) {
       for (i = 0; i < m_textHeight; i++)
-         free(m_textBufArray[i]);
-      free(m_textBufArray);
+         MMDAIMemoryRelease(m_textBufArray[i]);
+      MMDAIMemoryRelease(m_textBufArray);
    }
    if (m_displayListIdArray) {
       for (i = 0; i < m_textHeight; i++)
-         free(m_displayListIdArray[i]);
-      free(m_displayListIdArray);
+         MMDAIMemoryRelease(m_displayListIdArray[i]);
+      MMDAIMemoryRelease(m_displayListIdArray);
    }
    if (m_length)
-      free(m_length);
+      MMDAIMemoryRelease(m_length);
    if (m_updated)
-      free(m_updated);
+      MMDAIMemoryRelease(m_updated);
    initialize();
 }
 
@@ -135,21 +129,21 @@ void Logger::setup(int *size, float *pos, float scale)
    m_textZ = z;
    m_textScale = scale;
 
-   m_textBufArray = (char **) malloc(sizeof(char *) * m_textHeight);
+   m_textBufArray = (char **) MMDAIMemoryAllocate(sizeof(char *) * m_textHeight);
    for (i = 0; i < m_textHeight; i++) {
-      m_textBufArray[i] = (char *) malloc(sizeof(char) * m_textWidth);
+      m_textBufArray[i] = (char *) MMDAIMemoryAllocate(sizeof(char) * m_textWidth);
       m_textBufArray[i][0] = L'\0';
    }
 
-   m_displayListIdArray = (unsigned int **) malloc(sizeof(unsigned int *) * m_textHeight);
+   m_displayListIdArray = (unsigned int **) MMDAIMemoryAllocate(sizeof(unsigned int *) * m_textHeight);
    for (i = 0; i < m_textHeight; i++)
-      m_displayListIdArray[i] = (unsigned int *) malloc(sizeof(unsigned int) * m_textWidth);
+      m_displayListIdArray[i] = (unsigned int *) MMDAIMemoryAllocate(sizeof(unsigned int) * m_textWidth);
 
-   m_length = (int *) malloc(sizeof(int) * m_textHeight);
+   m_length = (int *) MMDAIMemoryAllocate(sizeof(int) * m_textHeight);
    for (i = 0; i < m_textHeight; i++)
       m_length[i] = -1;
 
-   m_updated = (bool *) malloc(sizeof(bool) * m_textHeight);
+   m_updated = (bool *) MMDAIMemoryAllocate(sizeof(bool) * m_textHeight);
    for (i = 0; i < m_textHeight; i++)
       m_updated[i] = false;
 
@@ -182,7 +176,7 @@ void Logger::log(const char *format, ...)
       (void)psave;
       for (p = strtok(buff, "\n"); p; p = strtok(NULL, "\n")) {
 #endif
-         strncpy(m_textBufArray[m_textLine], p, m_textWidth - 1);
+         MMDAIStringCopy(m_textBufArray[m_textLine], p, m_textWidth - 1);
          m_textBufArray[m_textLine][m_textWidth - 1] = L'\0';
          m_updated[m_textLine] = true;
          if (++m_textLine >= m_textHeight)

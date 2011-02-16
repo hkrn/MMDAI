@@ -81,7 +81,7 @@ void MotionManager::purgeMotion()
          else
             m_playerList = m->next;
          tmp2 = m->next;
-         if(m->name) free(m->name);
+         if(m->name) MMDAIMemoryRelease(m->name);
          delete m;
          m = tmp2;
       } else {
@@ -114,7 +114,7 @@ void MotionManager::clear()
 
    while (player) {
       tmp = player->next;
-      if(player->name) free(player->name);
+      if(player->name) MMDAIMemoryRelease(player->name);
       delete player;
       player = tmp;
    }
@@ -148,7 +148,7 @@ bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool onc
    m = new MotionPlayer;
    MotionPlayer_initialize(m);
 
-   m->name = strdup(name);
+   m->name = MMDAIStringClone(name);
    m->onEnd = once ? 2 : 1; /* if loop is not specified, this motion will be deleted */
    m->ignoreStatic = full ? false : true;
    m->enableSmooth = enableSmooth;
@@ -252,7 +252,7 @@ bool MotionManager::swapMotion(VMD * vmd, const char * name)
 
    /* find the motion player to change */
    for (m = m_playerList; m; m = m->next)
-      if (strcmp(m->name, name) == 0)
+      if (MMDAIStringEquals(m->name, name))
          break;
    if (!m)
       return false; /* not found */
@@ -274,7 +274,7 @@ bool MotionManager::deleteMotion(const char *name)
    if(name == NULL) return false;
 
    for (m = m_playerList; m; m = m->next) {
-      if (m->active && strcmp(m->name, name) == 0) {
+      if (m->active && MMDAIStringEquals(m->name, name)) {
          /* enter the ending status, gradually decreasing the blend rate */
          m->endingBoneBlend = m->endingBoneBlendFrames;
          m->endingFaceBlend = m->endingFaceBlendFrames;

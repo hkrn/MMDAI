@@ -42,8 +42,6 @@
 #include "MMDME/PMDModelLoader.h"
 #include "MMDME/PMDTexture.h"
 
-#include <string.h>
-
 /* PMDMaterial::initialize: initialize material */
 void PMDMaterial::initialize()
 {
@@ -112,9 +110,9 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
    m_edgeFlag = m->edgeFlag ? true : false;
 
    /* load model texture */
-   strncpy(name, m->textureFile, 20);
+   MMDAIStringCopy(name, m->textureFile, 20);
    name[20] = '\0';
-   if (strlen(name) > 0) {
+   if (MMDAIStringLength(name) > 0) {
       p = strchr(name, '*');
       if (p) {
          /* has extra sphere map */

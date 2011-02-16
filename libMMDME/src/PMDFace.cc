@@ -56,9 +56,9 @@ void PMDFace::initialize()
 void PMDFace::clear()
 {
    if(m_name)
-      free(m_name);
+      MMDAIMemoryRelease(m_name);
    if (m_vertex)
-      free(m_vertex);
+      MMDAIMemoryRelease(m_vertex);
 
    initialize();
 }
@@ -84,9 +84,9 @@ void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
    clear();
 
    /* name */
-   strncpy(name, face->name, 20);
+   MMDAIStringCopy(name, face->name, 20);
    name[20] = '\0';
-   m_name = strdup(name);
+   m_name = MMDAIStringClone(name);
 
    /* type */
    m_type = face->type;
@@ -96,7 +96,7 @@ void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
 
    if (m_numVertex) {
       /* vertex list */
-      m_vertex = (PMDFaceVertex *) malloc(sizeof(PMDFaceVertex) * m_numVertex);
+      m_vertex = (PMDFaceVertex *) MMDAIMemoryAllocate(sizeof(PMDFaceVertex) * m_numVertex);
       for (i = 0; i < m_numVertex; i++) {
          m_vertex[i].id = faceVertexList[i].vertexID;
          m_vertex[i].pos.setValue(faceVertexList[i].pos[0], faceVertexList[i].pos[1], faceVertexList[i].pos[2]);

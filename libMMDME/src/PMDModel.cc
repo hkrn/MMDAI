@@ -109,27 +109,27 @@ void PMDModel::clear()
       m_normalList = NULL;
    }
    if (m_texCoordList) {
-      free(m_texCoordList);
+      MMDAIMemoryRelease(m_texCoordList);
       m_texCoordList = NULL;
    }
    if (m_bone1List) {
-      free(m_bone1List);
+      MMDAIMemoryRelease(m_bone1List);
       m_bone1List = NULL;
    }
    if (m_bone2List) {
-      free(m_bone2List);
+      MMDAIMemoryRelease(m_bone2List);
       m_bone2List = NULL;
    }
    if (m_boneWeight1) {
-      free(m_boneWeight1);
+      MMDAIMemoryRelease(m_boneWeight1);
       m_boneWeight1 = NULL;
    }
    if (m_noEdgeFlag) {
-      free(m_noEdgeFlag);
+      MMDAIMemoryRelease(m_noEdgeFlag);
       m_noEdgeFlag = NULL;
    }
    if (m_surfaceList) {
-      free(m_surfaceList);
+      MMDAIMemoryRelease(m_surfaceList);
       m_surfaceList = NULL;
    }
    if (m_material) {
@@ -170,7 +170,7 @@ void PMDModel::clear()
       m_skinnedNormalList = NULL;
    }
    if (m_toonTexCoordList) {
-      free(m_toonTexCoordList);
+      MMDAIMemoryRelease(m_toonTexCoordList);
       m_toonTexCoordList = NULL;
    }
    if (m_edgeVertexList) {
@@ -178,27 +178,27 @@ void PMDModel::clear()
       m_edgeVertexList = NULL;
    }
    if (m_surfaceListForEdge) {
-      free(m_surfaceListForEdge);
+      MMDAIMemoryRelease(m_surfaceListForEdge);
       m_surfaceListForEdge = NULL;
    }
    if (m_toonTexCoordListForShadowMap) {
-      free(m_toonTexCoordListForShadowMap);
+      MMDAIMemoryRelease(m_toonTexCoordListForShadowMap);
       m_toonTexCoordListForShadowMap = NULL;
    }
    if (m_rotateBoneIDList) {
-      free(m_rotateBoneIDList);
+      MMDAIMemoryRelease(m_rotateBoneIDList);
       m_rotateBoneIDList = NULL;
    }
    if (m_IKSimulated) {
-      free(m_IKSimulated);
+      MMDAIMemoryRelease(m_IKSimulated);
       m_IKSimulated = NULL;
    }
    if(m_comment) {
-      free(m_comment);
+      MMDAIMemoryRelease(m_comment);
       m_comment = NULL;
    }
    if(m_name) {
-      free(m_name);
+      MMDAIMemoryRelease(m_name);
       m_name = NULL;
    }
 
@@ -232,7 +232,7 @@ PMDBone *PMDModel::getBone(const char *name)
 {
    PMDBone *match = (PMDBone *) m_name2bone.findNearest(name);
 
-   if (match && strcmp(match->getName(), name) == 0)
+   if (match && MMDAIStringEquals(match->getName(), name))
       return match;
    else
       return NULL;
@@ -243,7 +243,7 @@ PMDFace *PMDModel::getFace(const char *name)
 {
    PMDFace *match = (PMDFace *) m_name2face.findNearest(name);
 
-   if (match && strcmp(match->getName(), name) == 0)
+   if (match && MMDAIStringEquals(match->getName(), name))
       return match;
    else
       return NULL;

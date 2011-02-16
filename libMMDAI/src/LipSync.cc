@@ -38,9 +38,6 @@
 
 /* headers */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "MMDME/VMDFile.h"
 #include "MMDAI/LipSync.h"
 #include "MMDAI/LipSyncLoader.h"
@@ -65,18 +62,18 @@ void LipSync::clear()
 
    if(m_motion != NULL) {
       for(i = 0; i < m_numMotion; i++)
-         free(m_motion[i]);
-      free(m_motion);
+         MMDAIMemoryRelease(m_motion[i]);
+      MMDAIMemoryRelease(m_motion);
    }
    if(m_phone != NULL) {
       for(i = 0; i < m_numPhone; i++)
-         free(m_phone[i]);
-      free(m_phone);
+         MMDAIMemoryRelease(m_phone[i]);
+      MMDAIMemoryRelease(m_phone);
    }
    if(m_blendRate != NULL) {
       for(i = 0; i < m_numPhone; i++)
-         free(m_blendRate[i]);
-      free(m_blendRate);
+         MMDAIMemoryRelease(m_blendRate[i]);
+      MMDAIMemoryRelease(m_blendRate);
    }
 
    initialize();
@@ -103,7 +100,7 @@ bool LipSync::load(LipSyncLoader *loader)
      return false;
 
    m_numMotion = len = loader->getNExpressions();
-   m_motion = static_cast<char **>(malloc(sizeof(char *) * m_numMotion));
+   m_motion = static_cast<char **>(MMDAIMemoryAllocate(sizeof(char *) * m_numMotion));
    if (m_motion == NULL) {
      clear();
      return false;
@@ -111,7 +108,7 @@ bool LipSync::load(LipSyncLoader *loader)
    for (int i = 0; i < len; i++) {
      const char *name = loader->getExpressionName(i);
      char *s = NULL;
-     if (name == NULL || (s = strdup(name)) == NULL) {
+     if (name == NULL || (s = MMDAIStringClone(name)) == NULL) {
        clear();
        return false;
      }
@@ -119,8 +116,8 @@ bool LipSync::load(LipSyncLoader *loader)
    }
 
    m_numPhone = len = loader->getNPhonemes();
-   m_phone = static_cast<char **>(malloc(sizeof(char *) * m_numPhone));
-   m_blendRate = static_cast<float **>(malloc(sizeof(float *) * m_numPhone));
+   m_phone = static_cast<char **>(MMDAIMemoryAllocate(sizeof(char *) * m_numPhone));
+   m_blendRate = static_cast<float **>(MMDAIMemoryAllocate(sizeof(float *) * m_numPhone));
    if (m_phone == NULL || m_blendRate == NULL) {
      clear();
      return false;
@@ -128,12 +125,12 @@ bool LipSync::load(LipSyncLoader *loader)
    for (int i = 0; i < len; i++) {
      const char *name = loader->getPhoneName(i);
      char *s = NULL;
-     if (name == NULL || (s = strdup(name)) == NULL) {
+     if (name == NULL || (s = MMDAIStringClone(name)) == NULL) {
        clear();
        return false;
      }
      m_phone[i] = s;
-     m_blendRate[i] = static_cast<float *>(malloc(sizeof(float) * m_numMotion));
+     m_blendRate[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * m_numMotion));
      if (m_blendRate[i] == NULL) {
        clear();
        return false;
@@ -175,7 +172,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    (*rawSize) = 0;
 
    /* get phone index and duration */
-   buf = strdup(str);
+   buf = MMDAIStringClone(str);
    head = NULL;
    tail = NULL;
    diff = 0.0f;
@@ -187,7 +184,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
 #endif
       if(i % 2 == 0) {
          for(j = 0; j < m_numPhone; j++) {
-            if (strcmp(m_phone[j], p) == 0) {
+            if (MMDAIStringEquals(m_phone[j], p)) {
                k = j;
                break;
             }
@@ -195,7 +192,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
          if(m_numPhone <= j)
             k = 0;
       } else {
-         tmp1 = static_cast<LipKeyFrame *>(malloc(sizeof(LipKeyFrame)));
+         tmp1 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
          if (tmp1 == NULL)
            goto finally;
          tmp1->phone = k;
@@ -215,7 +212,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    }
 
    /* add final closed lip */
-   tmp1 = static_cast<LipKeyFrame *>(malloc(sizeof(LipKeyFrame)));
+   tmp1 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
    if (tmp1 == NULL)
      goto finally;
    tmp1->phone = 0;
@@ -231,7 +228,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    /* insert interpolation lip motion */
    for(tmp1 = head; tmp1; tmp1 = tmp1->next) {
       if(tmp1->next && tmp1->duration > kInterpolationMargin) {
-         tmp2 = static_cast<LipKeyFrame *>(malloc(sizeof(LipKeyFrame)));
+         tmp2 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
          if (tmp2 == NULL)
            goto finally;
          tmp2->phone = tmp1->phone;
@@ -255,14 +252,14 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    (*rawSize) = sizeof(VMDFile_Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(VMDFile_FaceFrame) * totalNumKey;
    i = (*rawSize);
    i = sizeof(unsigned char) * (*rawSize);
-   (*rawData) = static_cast<unsigned char *>(malloc(i));
+   (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(i));
    if (*rawData == NULL)
      goto finally;
 
    data = (*rawData);
    /* header */
    header = (VMDFile_Header *) data;
-   strncpy(header->header, "Vocaloid Motion Data 0002", 30);
+   MMDAIStringCopy(header->header, "Vocaloid Motion Data 0002", 30);
    data += sizeof(VMDFile_Header);
    /* number of key frame for bone */
    numBoneKeyFrames = (unsigned int *) data;
@@ -277,7 +274,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
       currentFrame = 0;
       for(tmp1 = head; tmp1; tmp1 = tmp1->next) {
          face = (VMDFile_FaceFrame *) data;
-         strncpy(face->name, m_motion[i], 15);
+         MMDAIStringCopy(face->name, m_motion[i], 15);
          face->keyFrame = currentFrame;
          face->weight = m_blendRate[tmp1->phone][i] * tmp1->rate;
          data += sizeof(VMDFile_FaceFrame);
@@ -289,11 +286,11 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
 finally:
    /* free */
    if (buf != NULL)
-     free(buf);
+     MMDAIMemoryRelease(buf);
    for(tmp1 = head; tmp1; tmp1 = tmp2) {
       tmp2 = tmp1->next;
       if (tmp1 != NULL)
-        free(tmp1);
+        MMDAIMemoryRelease(tmp1);
    }
    return ret;
 }

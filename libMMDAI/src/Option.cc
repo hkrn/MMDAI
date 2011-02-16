@@ -39,8 +39,6 @@
 /* headers */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "MMDAI/Option.h"
 
@@ -49,7 +47,7 @@ Logger g_logger;
 /* str2bool: convert string to boolean */
 static bool str2bool(char *str)
 {
-   if(strcmp(str, "TRUE") == 0 || strcmp(str, "True") == 0 || strcmp(str, "true") == 0)
+   if(MMDAIStringEquals(str, "TRUE") || MMDAIStringEquals(str, "True") || MMDAIStringEquals(str, "true"))
       return true;
    else
       return false;
@@ -191,7 +189,7 @@ bool Option::load(const char *file)
       return false;
 
    while (fgets(buf, OPTION_MAXBUFLEN, fp)) {
-      p1 = &(buf[strlen(buf)-1]);
+      p1 = &(buf[MMDAIStringLength(buf)-1]);
       while (p1 >= &(buf[0]) && (*p1 == '\n' || *p1 == '\r' || *p1 == '\t' || *p1 == ' ')) {
          *p1 = L'\0';
          p1--;
@@ -204,71 +202,71 @@ bool Option::load(const char *file)
       p1++;
 
       /* overwrite option values */
-      if(strcmp(buf, OPTION_USECARTOONRENDERING_STR) == 0) {
+      if(MMDAIStringEquals(buf, OPTION_USECARTOONRENDERING_STR)) {
          setUseCartoonRendering(str2bool(p1));
-      } else if(strcmp(buf, OPTION_USEMMDLIKECARTOON_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_USEMMDLIKECARTOON_STR)) {
          setUseMMDLikeCartoon(str2bool(p1));
-      } else if(strcmp(buf, OPTION_CARTOONEDGEWIDTH_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_CARTOONEDGEWIDTH_STR)) {
          setCartoonEdgeWidth(str2float(p1));
-      } else if(strcmp(buf, OPTION_CARTOONEDGESTEP_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_CARTOONEDGESTEP_STR)) {
          setCartoonEdgeStep(str2float(p1));
-      } else if(strcmp(buf, OPTION_STAGESIZE_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_STAGESIZE_STR)) {
          if(str2fvec3(p1, fvec3))
             setStageSize(fvec3);
-      } else if(strcmp(buf, OPTION_SHOWFPS_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_SHOWFPS_STR)) {
          setShowFps(str2bool(p1));
-      } else if(strcmp(buf, OPTION_FPSPOSITION_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_FPSPOSITION_STR)) {
          if(str2fvec3(p1, fvec3))
             setFpsPosition(fvec3);
-      } else if(strcmp(buf, OPTION_WINDOWSIZE_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_WINDOWSIZE_STR)) {
          if(str2ivec2(p1, ivec2))
             setWindowSize(ivec2);
-      } else if(strcmp(buf, OPTION_TOPMOST_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_TOPMOST_STR)) {
          setTopMost(str2bool(p1));
-      } else if(strcmp(buf, OPTION_FULLSCREEN_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_FULLSCREEN_STR)) {
          setFullScreen(str2bool(p1));
-      } else if(strcmp(buf, OPTION_LOGSIZE_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_LOGSIZE_STR)) {
          if(str2ivec2(p1, ivec2))
             setLogSize(ivec2);
-      } else if(strcmp(buf, OPTION_LOGPOSITION_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_LOGPOSITION_STR)) {
          if(str2fvec3(p1, fvec3))
             setLogPosition(fvec3);
-      } else if(strcmp(buf, OPTION_LOGSCALE_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_LOGSCALE_STR)) {
          setLogScale(str2float(p1));
-      } else if(strcmp(buf, OPTION_LIGHTDIRECTION_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_LIGHTDIRECTION_STR)) {
          if(str2fvec4(p1, fvec4))
             setLightDirection(fvec4);
-      } else if(strcmp(buf, OPTION_LIGHTINTENSITY_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_LIGHTINTENSITY_STR)) {
          setLightIntensity(str2float(p1));
-      } else if(strcmp(buf, OPTION_LIGHTCOLOR_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_LIGHTCOLOR_STR)) {
          if(str2fvec3(p1, fvec3))
             setLightColor(fvec3);
-      } else if(strcmp(buf, OPTION_CAMPUSCOLOR_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_CAMPUSCOLOR_STR)) {
          if(str2fvec3(p1, fvec3))
             setCampusColor(fvec3);
-      } else if(strcmp(buf, OPTION_MAXMULTISAMPLING_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_MAXMULTISAMPLING_STR)) {
          setMaxMultiSampling(str2int(p1));
-      } else if(strcmp(buf, OPTION_MAXMULTISAMPLINGCOLOR_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_MAXMULTISAMPLINGCOLOR_STR)) {
          setMaxMultiSamplingColor(str2int(p1));
-      } else if(strcmp(buf, OPTION_MOTIONADJUSTFRAME_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_MOTIONADJUSTFRAME_STR)) {
          setMotionAdjustFrame(str2int(p1));
-      } else if(strcmp(buf, OPTION_BULLETFPS_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_BULLETFPS_STR)) {
          setBulletFps(str2int(p1));
-      } else if(strcmp(buf, OPTION_ROTATESTEP_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_ROTATESTEP_STR)) {
          setRotateStep(str2float(p1));
-      } else if(strcmp(buf, OPTION_TRANSLATESTEP_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_TRANSLATESTEP_STR)) {
          setTranslateStep(str2float(p1));
-      } else if(strcmp(buf, OPTION_SCALESTEP_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_SCALESTEP_STR)) {
          setScaleStep(str2float(p1));
-      } else if(strcmp(buf, OPTION_USESHADOWMAPPING_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_USESHADOWMAPPING_STR)) {
          setUseShadowMapping(str2bool(p1));
-      } else if(strcmp(buf, OPTION_SHADOWMAPPINGTEXTURESIZE_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_SHADOWMAPPINGTEXTURESIZE_STR)) {
          setShadowMappingTextureSize(str2int(p1));
-      } else if(strcmp(buf, OPTION_SHADOWMAPPINGSELFDENSITY_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_SHADOWMAPPINGSELFDENSITY_STR)) {
          setShadowMappingSelfDensity(str2float(p1));
-      } else if(strcmp(buf, OPTION_SHADOWMAPPINGFLOORDENSITY_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_SHADOWMAPPINGFLOORDENSITY_STR)) {
          setShadowMappingFloorDensity(str2float(p1));
-      } else if(strcmp(buf, OPTION_SHADOWMAPPINGLIGHTFIRST_STR) == 0) {
+      } else if(MMDAIStringEquals(buf, OPTION_SHADOWMAPPINGLIGHTFIRST_STR)) {
          setShadowMappingLightFirst(str2bool(p1));
       }
    }

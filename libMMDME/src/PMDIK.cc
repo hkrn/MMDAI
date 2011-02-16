@@ -62,7 +62,7 @@ void PMDIK::initialize()
 void PMDIK::clear()
 {
    if (m_boneList)
-      free(m_boneList);
+      MMDAIMemoryRelease(m_boneList);
    initialize();
 }
 
@@ -89,9 +89,11 @@ void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
    m_targetBone = &(boneList[ik->targetBoneID]);
    m_numBone = ik->numLink;
    if (m_numBone) {
-      m_boneList = (PMDBone **) malloc(sizeof(PMDBone *) * m_numBone);
-      for (i = 0; i < m_numBone; i++)
-         m_boneList[i] = &(boneList[ikBoneIDList[i]]);
+      m_boneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numBone));
+      if (m_boneList != NULL) {
+         for (i = 0; i < m_numBone; i++)
+            m_boneList[i] = &(boneList[ikBoneIDList[i]]);
+      }
    }
    m_iteration = ik->numIteration;
    m_angleConstraint = ik->angleConstraint * kPI;

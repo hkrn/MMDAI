@@ -40,9 +40,6 @@
 
 #include "MMDME/PMDTexture.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 /* PMDTexture::initialize: initialize texture */
 void PMDTexture::initialize()
 {
@@ -61,7 +58,7 @@ void PMDTexture::clear()
    if (m_id != kUninitializedID)
       glDeleteTextures(1, &m_id);
    if (m_textureData)
-      free(m_textureData);
+      MMDAIMemoryRelease(m_textureData);
    initialize();
 }
 
@@ -84,7 +81,7 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
    m_width = width;
    m_height = height;
    m_components = components;
-   m_textureData = static_cast<unsigned char *>(malloc(size));
+   m_textureData = static_cast<unsigned char *>(MMDAIMemoryAllocate(size));
    m_isSphereMap = isSphereMap;
    m_isSphereMapAdd = isSphereMapAdd;
    if (m_textureData == NULL)
@@ -149,3 +146,4 @@ void PMDTexture::release()
 {
    clear();
 }
+

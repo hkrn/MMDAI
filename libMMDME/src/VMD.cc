@@ -38,6 +38,7 @@
 
 /* headers */
 
+#include "MMDME/Common.h"
 #include "MMDME/VMD.h"
 #include "MMDME/VMDFile.h"
 
@@ -82,9 +83,11 @@ void VMD::addBoneMotion(const char *name)
 
    if(name == NULL) return;
 
-   link = (BoneMotionLink *) malloc(sizeof(BoneMotionLink));
+   link = static_cast<BoneMotionLink *>(MMDAIMemoryAllocate(sizeof(BoneMotionLink)));
+   if (link == NULL)
+      return;
    bmNew = &(link->boneMotion);
-   bmNew->name = strdup(name);
+   bmNew->name = MMDAIStringClone(name);
    bmNew->numKeyFrame = 1;
    bmNew->keyFrameList = NULL;
 
@@ -92,7 +95,7 @@ void VMD::addBoneMotion(const char *name)
    m_boneLink = link;
 
    bmMatch = (BoneMotion *) m_name2bone.findNearest(name);
-   if (!bmMatch || strcmp(bmMatch->name, name) != 0)
+   if (!bmMatch || !MMDAIStringEquals(bmMatch->name, name))
       m_name2bone.add(name, bmNew, (bmMatch) ? bmMatch->name : NULL);
 }
 
@@ -105,9 +108,11 @@ void VMD::addFaceMotion(const char *name)
 
    if(name == NULL) return;
 
-   link = (FaceMotionLink *) malloc(sizeof(FaceMotionLink));
+   link = static_cast<FaceMotionLink *>(MMDAIMemoryAllocate(sizeof(FaceMotionLink)));
+   if (link == NULL)
+      return;
    fmNew = &(link->faceMotion);
-   fmNew->name = strdup(name);
+   fmNew->name = MMDAIStringClone(name);
    fmNew->numKeyFrame = 1;
    fmNew->keyFrameList = NULL;
 
@@ -115,7 +120,7 @@ void VMD::addFaceMotion(const char *name)
    m_faceLink = link;
 
    fmMatch = (FaceMotion *) m_name2face.findNearest(name);
-   if (!fmMatch || strcmp(fmMatch->name, name) != 0)
+   if (!fmMatch || !MMDAIStringEquals(fmMatch->name, name))
       m_name2face.add(name, fmNew, (fmMatch) ? fmMatch->name : NULL);
 }
 
@@ -128,7 +133,7 @@ BoneMotion* VMD::getBoneMotion(const char *name)
       return NULL;
 
    bm = (BoneMotion *) m_name2bone.findNearest(name);
-   if (bm && strcmp(bm->name, name) == 0)
+   if (bm && MMDAIStringEquals(bm->name, name))
       return bm;
 
    return NULL;
@@ -143,7 +148,7 @@ FaceMotion* VMD::getFaceMotion(const char *name)
       return NULL;
 
    fm = (FaceMotion *) m_name2face.findNearest(name);
-   if (fm && strcmp(fm->name, name) == 0)
+   if (fm && MMDAIStringEquals(fm->name, name))
       return fm;
 
    return NULL;
@@ -167,7 +172,9 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
          bf->interpolationTable[i] = NULL;
          continue;
       }
-      bf->interpolationTable[i] = (float *) malloc(sizeof(float) * kInterpolationTableSize);
+      bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * kInterpolationTableSize));
+      if (bf->interpolationTable[i] == NULL)
+         return;
       x1 = ip[   i] / 127.0f;
       y1 = ip[ 4+i] / 127.0f;
       x2 = ip[ 8+i] / 127.0f;
@@ -217,24 +224,24 @@ void VMD::clear()
          for (i = 0; i < bl->boneMotion.numKeyFrame; i++)
             for (j = 0; j < 4; j++)
                if (bl->boneMotion.keyFrameList[i].linear[j] == false)
-                  free(bl->boneMotion.keyFrameList[i].interpolationTable[j]);
-         free(bl->boneMotion.keyFrameList);
+                  MMDAIMemoryRelease(bl->boneMotion.keyFrameList[i].interpolationTable[j]);
+         MMDAIMemoryRelease(bl->boneMotion.keyFrameList);
       }
       if(bl->boneMotion.name)
-         free(bl->boneMotion.name);
+         MMDAIMemoryRelease(bl->boneMotion.name);
       bl_tmp = bl->next;
-      free(bl);
+      MMDAIMemoryRelease(bl);
       bl = bl_tmp;
    }
 
    fl = m_faceLink;
    while (fl) {
       if (fl->faceMotion.keyFrameList)
-         free(fl->faceMotion.keyFrameList);
+         MMDAIMemoryRelease(fl->faceMotion.keyFrameList);
       if(fl->faceMotion.name)
-         free(fl->faceMotion.name);
+         MMDAIMemoryRelease(fl->faceMotion.name);
       fl_tmp = fl->next;
-      free(fl);
+      MMDAIMemoryRelease(fl);
       fl = fl_tmp;
    }
 
@@ -286,7 +293,7 @@ bool VMD::parse(unsigned char *data, size_t size)
 
    /* header */
    header = (VMDFile_Header *) data;
-   if (strncmp(header->header, "Vocaloid Motion Data 0002", sizeof(header->header)) != 0)
+   if (!MMDAIStringEqualsIn(header->header, "Vocaloid Motion Data 0002", sizeof(header->header)))
       return false;
 
    data += sizeof(VMDFile_Header);
@@ -300,7 +307,7 @@ bool VMD::parse(unsigned char *data, size_t size)
 
    /* list bones that exists in the data and count the number of defined key frames for each */
    for (i = 0; i < m_numTotalBoneKeyFrame; i++) {
-      strncpy(name, boneFrame[i].name, 15);
+      MMDAIStringCopy(name, boneFrame[i].name, 15);
       name[15] = '\0';
       bm = getBoneMotion(name);
       if (bm)
@@ -310,12 +317,12 @@ bool VMD::parse(unsigned char *data, size_t size)
    }
    /* allocate memory to store the key frames, and reset count again */
    for (bl = m_boneLink; bl; bl = bl->next) {
-      bl->boneMotion.keyFrameList = (BoneKeyFrame *) malloc(sizeof(BoneKeyFrame) * bl->boneMotion.numKeyFrame);
+      bl->boneMotion.keyFrameList = static_cast<BoneKeyFrame *>(MMDAIMemoryAllocate(sizeof(BoneKeyFrame) * bl->boneMotion.numKeyFrame));
       bl->boneMotion.numKeyFrame = 0;
    }
    /* store the key frames, parsing the data again. also compute max frame */
    for (i = 0; i < m_numTotalBoneKeyFrame; i++) {
-      strncpy(name, boneFrame[i].name, 15);
+      MMDAIStringCopy(name, boneFrame[i].name, 15);
       name[15] = '\0';
       bm = getBoneMotion(name);
       if (bm) {
@@ -353,7 +360,7 @@ bool VMD::parse(unsigned char *data, size_t size)
 
    /* list faces that exists in the data and count the number of defined key frames for each */
    for (i = 0; i < m_numTotalFaceKeyFrame; i++) {
-      strncpy(name, faceFrame[i].name, 15);
+      MMDAIStringCopy(name, faceFrame[i].name, 15);
       name[15] = '\0';
       fm = getFaceMotion(name);
       if (fm)
@@ -363,12 +370,12 @@ bool VMD::parse(unsigned char *data, size_t size)
    }
    /* allocate memory to store the key frames, and reset count again */
    for (fl = m_faceLink; fl; fl = fl->next) {
-      fl->faceMotion.keyFrameList = (FaceKeyFrame *) malloc(sizeof(FaceKeyFrame) * fl->faceMotion.numKeyFrame);
+      fl->faceMotion.keyFrameList = static_cast<FaceKeyFrame *>(MMDAIMemoryAllocate(sizeof(FaceKeyFrame) * fl->faceMotion.numKeyFrame));
       fl->faceMotion.numKeyFrame = 0;
    }
    /* store the key frames, parsing the data again. also compute max frame */
    for (i = 0; i < m_numTotalFaceKeyFrame; i++) {
-      strncpy(name, faceFrame[i].name, 15);
+      MMDAIStringCopy(name, faceFrame[i].name, 15);
       name[15] = '\0';
       fm = getFaceMotion(faceFrame[i].name);
       if (fm) {

@@ -172,7 +172,7 @@ PMDObject *SceneController::findPMDObject(const char *alias)
 {
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *object = &m_objects[i];
-    if (object->isEnable() && strcmp(object->getAlias(), alias) == 0)
+    if (object->isEnable() && MMDAIStringEquals(object->getAlias(), alias))
       return object;
   }
   return NULL;
@@ -220,14 +220,14 @@ bool SceneController::addMotion(PMDObject *object,
   }
 
   /* alias */
-  if (motionAlias && strlen(motionAlias) > 0) {
+  if (motionAlias && MMDAIStringLength(motionAlias) > 0) {
     /* check the same alias */
-    name = strdup(motionAlias);
+    name = MMDAIStringClone(motionAlias);
     motionPlayer = object->getMotionManager()->getMotionPlayerList();
     for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-      if (motionPlayer->active && strcmp(motionPlayer->name, name) == 0) {
+      if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
         g_logger.log("! Error: addMotion: motion alias \"%s\" is already used.", name);
-        free(name);
+        MMDAIMemoryRelease(name);
         return false;
       }
     }
@@ -236,7 +236,9 @@ bool SceneController::addMotion(PMDObject *object,
     for (i = 0;; i++) {
       find = false;
       allocSize = sizeof(char) * (getNumDigit(i) + 1);
-      name = (char *) malloc(allocSize);
+      name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
+      if (name == NULL)
+        return false;
 #if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       snprintf(name, allocSize, "%d", i);
 #else
@@ -244,27 +246,27 @@ bool SceneController::addMotion(PMDObject *object,
 #endif
       motionPlayer = object->getMotionManager()->getMotionPlayerList();
       for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-        if (motionPlayer->active && strcmp(motionPlayer->name, name) == 0) {
+        if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
           find = true;
           break;
         }
       }
       if(find == false)
         break;
-      free(name);
+      MMDAIMemoryRelease(name);
     }
   }
 
   /* start motion */
   if (!object->startMotion(vmd, name, full, once, enableSmooth, enableRePos)) {
-    free(name);
+    MMDAIMemoryRelease(name);
     return false;
   }
 
   /* send event message */
   sendEvent2(MMDAGENT_EVENT_MOTION_ADD, object->getAlias(), name);
 
-  free(name);
+  MMDAIMemoryRelease(name);
   return true;
 }
 
@@ -290,7 +292,7 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, V
   /* get motion before change */
   motionPlayer = object->getMotionManager()->getMotionPlayerList();
   for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-    if (motionPlayer->active && strcmp(motionPlayer->name, motionAlias) == 0) {
+    if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, motionAlias)) {
       old = motionPlayer->vmd;
       break;
     }
@@ -391,26 +393,28 @@ bool SceneController::addModel(const char *modelAlias,
   }
 
   /* determine name */
-  if (modelAlias && strlen(modelAlias) > 0) {
+  if (modelAlias && MMDAIStringLength(modelAlias) > 0) {
     /* check the same alias */
-    name = strdup(modelAlias);
+    name = MMDAIStringClone(modelAlias);
     if (findPMDObject(name) != NULL) {
       g_logger.log("! Error: addModel: model alias \"%s\" is already used.", name);
-      free(name);
+      MMDAIMemoryRelease(name);
       return false;
     }
   } else {
     /* if model alias is not specified, unused digit is used */
     for(i = 0;; i++) {
       size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
-      name = (char *) malloc(allocSize);
+      name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
+      if (name == NULL)
+        return false;
 #if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
       snprintf(name, allocSize, "%d", i);
 #else
       _snprintf(name, allocSize, "%d", i);
 #endif
       if (findPMDObject(name) != NULL)
-        free(name);
+        MMDAIMemoryRelease(name);
       else
         break;
     }
@@ -430,7 +434,7 @@ bool SceneController::addModel(const char *modelAlias,
                        &light)) {
     g_logger.log("! Error: addModel: failed to load %s.", modelLoader->getLocation());
     newObject->release();
-    free(name);
+    MMDAIMemoryRelease(name);
     return false;
   }
 
@@ -442,7 +446,7 @@ bool SceneController::addModel(const char *modelAlias,
   /* send event message */
   sendEvent1(MMDAGENT_EVENT_MODEL_ADD, name);
 
-  free(name);
+  MMDAIMemoryRelease(name);
   return true;
 }
 
@@ -750,12 +754,12 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
     return false;
   }
   vmd = m_motion.loadFromData(vmdData, vmdSize);
-  free(vmdData);
+  MMDAIMemoryRelease(vmdData);
 
   /* search running lip motion */
   motionPlayer = object->getMotionManager()->getMotionPlayerList();
   for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-    if (motionPlayer->active && strcmp(motionPlayer->name, name) == 0) {
+    if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
       found = true;
       break;
     }
@@ -846,7 +850,7 @@ void SceneController::selectPMDObject(PMDObject *object)
   const char *alias = object->getAlias();
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *o = &m_objects[i];
-    if (o->isEnable() && strcmp(o->getAlias(), alias) == 0) {
+    if (o->isEnable() && MMDAIStringEquals(o->getAlias(), alias)) {
       m_selectedModel = i;
       break;
     }
@@ -905,7 +909,7 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
         MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
         for (; player != NULL; player = player->next) {
           if (player->statusFlag == MOTION_STATUS_DELETED) {
-            if (strcmp(player->name, lipSyncMotion) == 0) {
+            if (MMDAIStringEquals(player->name, lipSyncMotion)) {
               sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
             }
             else {
@@ -934,7 +938,7 @@ void SceneController::deleteAssociatedModels(PMDObject *object)
   const char *lipSyncMotion = LipSync::getMotionName();
   MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
   for (; player != NULL; player = player->next) {
-    if (strcmp(player->name, lipSyncMotion) == 0) {
+    if (MMDAIStringEquals(player->name, lipSyncMotion)) {
       sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
     }
     else {

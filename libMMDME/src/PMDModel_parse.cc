@@ -95,17 +95,17 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
    if (fileHeader->version != 1.0f)
       goto error;
    /* name */
-   m_name = (char *) malloc(sizeof(char) * (20 + 1));
+   m_name = static_cast<char *>(MMDAIMemoryAllocate(sizeof(char) * (20 + 1)));
    if (m_name == NULL)
      goto error;
-   strncpy(m_name, fileHeader->name, 20);
+   MMDAIStringCopy(m_name, fileHeader->name, 20);
    m_name[20] = '\0';
 
    /* comment */
-   m_comment = (char *) malloc(sizeof(char) * (256 + 1));
+   m_comment = static_cast<char *>(MMDAIMemoryAllocate(sizeof(char) * (256 + 1)));
    if (m_comment == NULL)
      goto error;
-   strncpy(m_comment, fileHeader->comment, 256);
+   MMDAIStringCopy(m_comment, fileHeader->comment, 256);
    m_comment[256] = '\0';
    ptr += sizeof(PMDFile_Header);
 
@@ -115,19 +115,19 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
    ptr += sizeof(unsigned int);
    m_vertexList = new btVector3[m_numVertex];
    m_normalList = new btVector3[m_numVertex];
-   m_texCoordList = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
+   m_texCoordList = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * m_numVertex));
    if (m_texCoordList == NULL)
      goto error;
-   m_bone1List = (short *) malloc(sizeof(short) * m_numVertex);
+   m_bone1List = static_cast<short *>(MMDAIMemoryAllocate(sizeof(short) * m_numVertex));
    if (m_bone1List == NULL)
      goto error;
-   m_bone2List = (short *) malloc(sizeof(short) * m_numVertex);
+   m_bone2List = static_cast<short *>(MMDAIMemoryAllocate(sizeof(short) * m_numVertex));
    if (m_bone2List == NULL)
      goto error;
-   m_boneWeight1 = (float *) malloc(sizeof(float) * m_numVertex);
+   m_boneWeight1 = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * m_numVertex));
    if (m_boneWeight1 == NULL)
      goto error;
-   m_noEdgeFlag = (bool *) malloc(sizeof(bool) * m_numVertex);
+   m_noEdgeFlag = static_cast<bool *>(MMDAIMemoryAllocate(sizeof(bool) * m_numVertex));
    if (m_noEdgeFlag == NULL)
      goto error;
 
@@ -148,7 +148,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
    /* surface ptr, 3 vertex indices for each */
    m_numSurface = *((unsigned int *) ptr);
    ptr += sizeof(unsigned int);
-   m_surfaceList = (unsigned short *) malloc(sizeof(unsigned short) * m_numSurface);
+   m_surfaceList = static_cast<unsigned short *>(MMDAIMemoryAllocate(sizeof(unsigned short) * m_numSurface));
    if (m_surfaceList == NULL)
      goto error;
    memcpy(m_surfaceList, ptr, sizeof(unsigned short) * m_numSurface);
@@ -175,7 +175,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       PMDBone *bone = &m_boneList[i];
       if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
          ret = false;
-      if (strcmp(bone->getName(), kCenterBoneName) == 0)
+      if (MMDAIStringEquals(bone->getName(), kCenterBoneName))
          m_centerBone = bone;
    }
    if (!m_centerBone && m_numBone >= 1) {
@@ -350,7 +350,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
    m_skinnedVertexList = new btVector3[m_numVertex];
    m_skinnedNormalList = new btVector3[m_numVertex];
    /* calculated Texture coordinates for toon shading */
-   m_toonTexCoordList = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
+   m_toonTexCoordList = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * m_numVertex));
    if (m_toonTexCoordList == NULL)
      goto error;
    /* calculated Vertex positions for toon edge drawing */
@@ -364,7 +364,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
          m_numSurfaceForEdge += m->getNumSurface();
    }
    if (m_numSurfaceForEdge > 0) {
-      m_surfaceListForEdge = (unsigned short *) malloc(sizeof(unsigned short) * m_numSurfaceForEdge);
+      m_surfaceListForEdge = static_cast<unsigned short *>(MMDAIMemoryAllocate(sizeof(unsigned short) * m_numSurfaceForEdge));
       if (m_surfaceList == NULL)
         goto error;
       unsigned short *surfaceFrom = m_surfaceList;
@@ -397,7 +397,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
          m_numRotateBone++;
    }
    if (m_numRotateBone > 0) {
-      m_rotateBoneIDList = (unsigned short *) malloc(sizeof(unsigned short) * m_numRotateBone);
+      m_rotateBoneIDList = static_cast<unsigned short *>(MMDAIMemoryAllocate(sizeof(unsigned short) * m_numRotateBone));
       if (m_rotateBoneIDList == NULL)
         goto error;
       for (unsigned int i = 0, j = 0; i < m_numBone; i++) {
@@ -409,7 +409,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
    /* check if some IK solvers can be disabled since the bones are simulated by physics */
    if (m_numIK > 0) {
-      m_IKSimulated = (bool *) malloc(sizeof(bool) * m_numIK);
+      m_IKSimulated = static_cast<bool *>(MMDAIMemoryAllocate(sizeof(bool) * m_numIK));
       if (m_IKSimulated == NULL)
         goto error;
       for (unsigned int i = 0; i < m_numIK; i++) {
@@ -427,14 +427,14 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
       PMDBone *bone = &m_boneList[i];
       const char *name = bone->getName();
       PMDBone *bMatch = (PMDBone *) m_name2bone.findNearest(name);
-      if (bMatch == NULL || strcmp(bMatch->getName(), name) != 0)
+      if (bMatch == NULL || !MMDAIStringEquals(bMatch->getName(), name))
          m_name2bone.add(name, bone, (bMatch) ? bMatch->getName() : NULL); /* add */
    }
    for (unsigned int i = 0; i < m_numFace; i++) {
       PMDFace *face = &m_faceList[i];
       const char *name = face->getName();
       PMDFace *fMatch = (PMDFace *) m_name2face.findNearest(name);
-      if (fMatch == NULL || strcmp(fMatch->getName(), name) != 0)
+      if (fMatch == NULL || !MMDAIStringEquals(fMatch->getName(), name))
          m_name2face.add(name, face, (fMatch) ? fMatch->getName() : NULL); /* add */
    }
 

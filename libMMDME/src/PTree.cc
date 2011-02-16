@@ -38,10 +38,8 @@
 
 /* headers */
 
+#include "MMDME/Common.h"
 #include "MMDME/PTree.h"
-
-#include <string.h>
-#include <stdlib.h>
 
 /* testBit: test a bit */
 static int testBit(const char *str, int slen, int bitplace)
@@ -74,8 +72,8 @@ static int getDiffPoint(const char *str1, const char *str2)
    while (str1[p] == str2[p])
       p++;
    bitloc = p * 8;
-   slen1 = strlen( str1 );
-   slen2 = strlen( str2 );
+   slen1 = MMDAIStringLength( str1 );
+   slen2 = MMDAIStringLength( str2 );
    while (testBit( str1, slen1, bitloc) == testBit(str2, slen2, bitloc))
       bitloc++;
 
@@ -89,9 +87,11 @@ PTreeNode * PTree::newNode()
    PTreeNode *tmp;
 
    if (m_stocker == NULL || m_stocker->current == m_stocker->size) {
-      newlist = (PTreeNodeList *) malloc(sizeof(PTreeNodeList));
+      newlist = static_cast<PTreeNodeList *>(MMDAIMemoryAllocate(sizeof(PTreeNodeList)));
+      if (newlist == NULL)
+        return NULL;
       newlist->size = 200;
-      newlist->list = (PTreeNode *) malloc(sizeof(PTreeNode) * newlist->size);
+      newlist->list = static_cast<PTreeNode *>(MMDAIMemoryAllocate(sizeof(PTreeNode) * newlist->size));
       newlist->current = 0;
       newlist->next = m_stocker;
       m_stocker = newlist;
@@ -120,8 +120,8 @@ void PTree::clear()
    tmp1 = m_stocker;
    while (tmp1) {
       tmp2 = tmp1->next;
-      free(tmp1->list);
-      free(tmp1);
+      MMDAIMemoryRelease(tmp1->list);
+      MMDAIMemoryRelease(tmp1);
       tmp1 = tmp2;
    }
    initialize();
@@ -156,7 +156,7 @@ void PTree::add(const char *str, void *data, const char *matchstr)
       m_root = newNode();
       m_root->value.data = data;
    } else {
-      slen = strlen(str);
+      slen = MMDAIStringLength(str);
       bitloc = getDiffPoint(str, matchstr);
 
       p = &m_root;
@@ -196,7 +196,7 @@ void * PTree::findNearest(const char *str)
 
    n = m_root;
    branch = NULL;
-   maxbitplace = strlen(str) * 8 + 8;
+   maxbitplace = MMDAIStringLength(str) * 8 + 8;
    while (n->left0 != NULL || n->right1 != NULL) {
       branch = n;
       if (testBitMax(str, n->value.thres_bit, maxbitplace) != 0)

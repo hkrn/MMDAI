@@ -69,11 +69,11 @@ void BoneController::initialize()
 void BoneController::clear()
 {
    if (m_boneList)
-      free(m_boneList);
+      MMDAIMemoryRelease(m_boneList);
    if (m_rotList)
-      free(m_rotList);
+      MMDAIMemoryRelease(m_rotList);
    if (m_childBoneList)
-      free(m_childBoneList);
+      MMDAIMemoryRelease(m_childBoneList);
 
    initialize();
 }
@@ -108,23 +108,29 @@ void BoneController::setup(PMDModel *model, const char **boneName, int numBone, 
    clear();
 
    /* set bones */
-   tmpBoneList = (PMDBone **) malloc(sizeof(PMDBone *) * numBone);
+   tmpBoneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * numBone));
+   if (tmpBoneList == NULL)
+     return;
    for(i = 0, j = 0; i < numBone; i++) {
       tmpBoneList[i] = model->getBone(boneName[i]);
       if(tmpBoneList[i] != NULL)
          j++;
    }
    if(j <= 0) {
-      free(tmpBoneList);
+      MMDAIMemoryRelease(tmpBoneList);
       return;
    }
    m_numBone = j;
-   m_boneList = (PMDBone **) malloc(sizeof(PMDBone *) * m_numBone);
+   m_boneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numBone));
+   if (m_boneList == NULL)
+     return;
    for(i = 0, j = 0; i < numBone; i++)
       if(tmpBoneList[i] != NULL)
          m_boneList[j++] = tmpBoneList[i];
-   free(tmpBoneList);
-   m_rotList = (btQuaternion *) malloc(sizeof(btQuaternion) * m_numBone);
+   MMDAIMemoryRelease(tmpBoneList);
+   m_rotList = static_cast<btQuaternion *>(MMDAIMemoryAllocate(sizeof(btQuaternion) * m_numBone));
+   if (m_rotList == NULL)
+     return;
 
    /* set parameters */
    m_rateOn = rateOn;
@@ -136,7 +142,9 @@ void BoneController::setup(PMDModel *model, const char **boneName, int numBone, 
 
    /* set child bones */
    if(model->getNumBone() > 0) {
-      tmpBoneList = (PMDBone **) malloc(sizeof(PMDBone *) * model->getNumBone());
+      tmpBoneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * model->getNumBone()));
+      if (tmpBoneList == NULL)
+        return;
       k = model->getChildBoneList(m_boneList, m_numBone, tmpBoneList, model->getNumBone());
       for(i = 0, j = 0; i < k; i++) {
          if(tmpBoneList[i]->isSimulated() == true)
@@ -144,12 +152,14 @@ void BoneController::setup(PMDModel *model, const char **boneName, int numBone, 
       }
       if(j > 0) {
          m_numChildBone = j;
-         m_childBoneList = (PMDBone **) malloc(sizeof(PMDBone *) * m_numChildBone);
+         m_childBoneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numChildBone));
+         if (m_childBoneList == NULL)
+           return;
          for(i = 0, j = 0; i < k; i++)
             if(tmpBoneList[i]->isSimulated() == true)
                m_childBoneList[j++] = tmpBoneList[i];
       }
-      free(tmpBoneList);
+      MMDAIMemoryRelease(tmpBoneList);
    }
 }
 

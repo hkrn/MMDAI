@@ -72,7 +72,7 @@ void PMDBone::initialize()
 void PMDBone::clear()
 {
    if(m_name)
-      free(m_name);
+      MMDAIMemoryRelease(m_name);
 
    initialize();
 }
@@ -98,9 +98,9 @@ bool PMDBone::setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones,
    clear();
 
    /* name */
-   strncpy(name, b->name, 20);
+   MMDAIStringCopy(name, b->name, 20);
    name[20] = '\0';
-   m_name = strdup(name);
+   m_name = MMDAIStringClone(name);
 
    /* mark if this bone should be treated as angle-constrained bone in IK process */
    if (strstr(m_name, PMDBONE_KNEENAME))
@@ -203,7 +203,7 @@ void PMDBone::setMotionIndependency()
 
    /* some models has additional model root bone or offset bones, they should be treated specially */
    for (i = 0; i < PMDBONE_NADDITIONALROOTNAME; i++) {
-      if (strcmp(m_parentBone->m_name, names[i]) == 0) {
+      if (MMDAIStringEquals(m_parentBone->m_name, names[i])) {
          m_motionIndependent = true;
          return;
       }

@@ -151,13 +151,13 @@ void PMDModel::updateShadowColorTexCoord(float coef)
    if (!m_toon) return;
 
    if (m_toonTexCoordListForShadowMap == NULL) {
-      m_toonTexCoordListForShadowMap = (TexCoord *) malloc(sizeof(TexCoord) * m_numVertex);
+      m_toonTexCoordListForShadowMap = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * m_numVertex));
       update = true;
    } else if (m_selfShadowDensityCoef != coef) {
       update = true;
    }
 
-   if (update) {
+   if (update && m_toonTexCoordListForShadowMap != NULL) {
       for (i = 0 ; i < m_numVertex ; i++) {
          m_toonTexCoordListForShadowMap[i].u = 0.0f;
          m_toonTexCoordListForShadowMap[i].v = coef;

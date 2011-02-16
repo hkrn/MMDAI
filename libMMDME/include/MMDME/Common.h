@@ -39,6 +39,10 @@
 #ifndef MMDME_COMMON_H_
 #define MMDME_COMMON_H_
 
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+
 /* convert model coordinates from left-handed to right-handed */
 #define MMDFILES_CONVERTCOORDINATESYSTEM
 
@@ -51,6 +55,47 @@ inline float MMDME_RAD(float a)
 inline float MMDME_DEG(float a)
 {
   return a * (180.0f / 3.1415926f);
+}
+
+inline void *MMDAIMemoryAllocate(size_t size)
+{
+  return malloc(size);
+}
+
+inline void MMDAIMemoryRelease(void *ptr)
+{
+  if (ptr != NULL)
+    free(ptr);
+}
+
+inline int MMDAIStringLength(const char *str)
+{
+  assert(str != NULL);
+  return strlen(str);
+}
+
+inline char *MMDAIStringClone(const char *str)
+{
+  assert(str != NULL);
+  return strdup(str);
+}
+
+inline char *MMDAIStringCopy(char *dst, const char *src, int max)
+{
+  assert(dst != NULL && src != NULL && max != 0);
+  return strncpy(dst, src, max);
+}
+
+inline bool MMDAIStringEquals(const char *s1, const char *s2)
+{
+  assert(s1 != NULL && s2 != NULL);
+  return strcmp(s1, s2) == 0;
+}
+
+inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, int max)
+{
+  assert(s1 != NULL && s2 != NULL && max != 0);
+  return strncmp(s1, s2, max) == 0;
 }
 
 #define MMDME_DISABLE_COPY_AND_ASSIGN(TypeName) \

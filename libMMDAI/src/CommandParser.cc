@@ -52,12 +52,12 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
   int n = 0, allocated = 0;
   char *buf = NULL, *p = NULL, *psave = NULL;
 
-  allocated = sizeof(char) * strlen(arg);
-  buf = static_cast<char *>(malloc(allocated + 1));
+  allocated = sizeof(char) * MMDAIStringLength(arg);
+  buf = static_cast<char *>(MMDAIMemoryAllocate(allocated + 1));
   if (buf == NULL)
     return false;
 
-  strncpy(buf, arg, allocated);
+  MMDAIStringCopy(buf, arg, allocated);
   n = 0;
 #if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
   for (p = strtok_r(buf, "(,)", &psave); p != NULL ; p = strtok_r(NULL, "(,)", &psave)) {
@@ -69,7 +69,7 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
       dst[n] = atof(p);
     n++;
   }
-  free(buf);
+  MMDAIMemoryRelease(buf);
 
   return n == len;
 }
@@ -128,7 +128,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     return false;
   }
 
-  if (strcmp(command, MMDAGENT_COMMAND_MODEL_ADD) == 0) {
+  if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MODEL_ADD)) {
     if (argc < 2 || argc > 6) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
@@ -158,7 +158,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     m_factory->releaseModelLoader(pmd);
     m_factory->releaseLipSyncLoader(lip);
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_MODEL_CHANGE) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MODEL_CHANGE)) {
     /* change model */
     if (argc != 2) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -177,7 +177,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_MODEL_DELETE) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MODEL_DELETE)) {
     /* delete model */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -192,7 +192,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_MOTION_ADD) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOTION_ADD)) {
     /* add motion */
     bool full = true; /* full */
     bool once = true; /* once */
@@ -203,10 +203,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     if (argc >= 4) {
-      if (strcmp(argv[3], "FULL") == 0) {
+      if (MMDAIStringEquals(argv[3], "FULL")) {
         full = true;
       }
-      else if (strcmp(argv[3], "PART") == 0) {
+      else if (MMDAIStringEquals(argv[3], "PART")) {
         full = false;
       }
       else {
@@ -215,10 +215,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       }
     }
     if (argc >= 5) {
-      if (strcmp(argv[4], "ONCE") == 0) {
+      if (MMDAIStringEquals(argv[4], "ONCE")) {
         once = true;
       }
-      else if (strcmp(argv[4], "LOOP") == 0) {
+      else if (MMDAIStringEquals(argv[4], "LOOP")) {
         once = false;
       }
       else {
@@ -227,10 +227,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       }
     }
     if (argc >= 6) {
-      if (strcmp(argv[5], "ON") == 0) {
+      if (MMDAIStringEquals(argv[5], "ON")) {
         enableSmooth = true;
       }
-      else if (strcmp(argv[5], "OFF") == 0) {
+      else if (MMDAIStringEquals(argv[5], "OFF")) {
         enableSmooth = false;
       }
       else {
@@ -239,10 +239,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       }
     }
     if (argc >= 7) {
-      if (strcmp(argv[6], "ON") == 0) {
+      if (MMDAIStringEquals(argv[6], "ON")) {
         enableRepos = true;
       }
-      else if (strcmp(argv[6], "OFF") == 0) {
+      else if (MMDAIStringEquals(argv[6], "OFF")) {
         enableRepos = false;
       }
       else {
@@ -261,7 +261,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_MOTION_CHANGE) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOTION_CHANGE)) {
     /* change motion */
     if (argc != 3) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -277,7 +277,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       g_logger.log("! Error: specified PMD object not found: %s", argv[0]);
       return false;
     }
-  } else if (strcmp(command, MMDAGENT_COMMAND_MOTION_DELETE) == 0) {
+  } else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOTION_DELETE)) {
     /* delete motion */
     if (argc != 2) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -292,7 +292,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_MOVE_START) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOVE_START)) {
     /* start moving */
     bool local = false;
     tmpFloat = -1.0;
@@ -305,10 +305,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     if (argc >= 3) {
-      if (strcmp(argv[2], "LOCAL") == 0) {
+      if (MMDAIStringEquals(argv[2], "LOCAL")) {
         local = true;
       }
-      else if (strcmp(argv[2], "GLOBAL") == 0) {
+      else if (MMDAIStringEquals(argv[2], "GLOBAL")) {
         local = false;
       }
       else {
@@ -327,7 +327,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_MOVE_STOP) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOVE_STOP)) {
     /* stop moving */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -342,7 +342,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_START) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_ROTATE_START)) {
     /* start rotation */
     bool local = false;
     tmpFloat = -1.0;
@@ -355,10 +355,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     if (argc >= 3) {
-      if (strcmp(argv[2], "LOCAL") == 0) {
+      if (MMDAIStringEquals(argv[2], "LOCAL")) {
         local = true;
       }
-      else if (strcmp(argv[2], "GLOBAL") == 0) {
+      else if (MMDAIStringEquals(argv[2], "GLOBAL")) {
         local = false;
       }
       else {
@@ -377,7 +377,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_ROTATE_STOP) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_ROTATE_STOP)) {
     /* stop rotation */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -392,7 +392,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_TURN_START) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_TURN_START)) {
     /* turn start */
     bool local = false;
     tmpFloat = -1.0;
@@ -405,10 +405,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
     if (argc >= 3) {
-      if (strcmp(argv[2], "LOCAL") == 0) {
+      if (MMDAIStringEquals(argv[2], "LOCAL")) {
         local = true;
       }
-      else if (strcmp(argv[2], "GLOBAL") == 0) {
+      else if (MMDAIStringEquals(argv[2], "GLOBAL")) {
         local = false;
       }
       else {
@@ -427,7 +427,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_TURN_STOP) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_TURN_STOP)) {
     /* stop turn */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -442,14 +442,14 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_STAGE) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_STAGE)) {
     /* change stage */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
       return false;
     }
     /* pmd or bitmap */
-    char *filename = strdup(argv[0]);
+    char *filename = MMDAIStringClone(argv[0]);
     if (filename == NULL) {
       return false;
     }
@@ -465,11 +465,11 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       PMDModelLoader *floorPMD = m_factory->createModelLoader(filename);
       PMDModelLoader *backgroundPMD = m_factory->createModelLoader(background);
       ret = m_controller->loadFloor(floorPMD) && m_controller->loadBackground(backgroundPMD);
-      free(filename);
+      MMDAIMemoryRelease(filename);
       return ret;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_LIGHTCOLOR) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIGHTCOLOR)) {
     /* change light color */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -481,7 +481,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     m_controller->changeLightColor(float3[0], float3[1], float3[2]);
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_LIGHTDIRECTION) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIGHTDIRECTION)) {
     /* change light direction */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -493,7 +493,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     m_controller->changeLightDirection(float3[0], float3[1], float3[2]);
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_LIPSYNC_START) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIPSYNC_START)) {
     /* start lip sync */
     if (argc != 2) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
@@ -508,7 +508,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (strcmp(command, MMDAGENT_COMMAND_LIPSYNC_STOP) == 0) {
+  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIPSYNC_STOP)) {
     /* stop lip sync */
     if (argc != 1) {
       g_logger.log("! Error: %s: wrong number of arguments", command);
