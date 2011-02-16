@@ -22,7 +22,8 @@ static void LogHandler(const char *file, int line, enum MMDAILogLevel level, con
     ls = "[ERROR]";
     break;
   }
-  qDebug().nospace() << ls << " " << file << ":" << line << " " << buf;
+  QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+  qDebug().nospace() << ls << " " << file << ":" << line << " " << codec->toUnicode(buf, strlen(buf));
 }
 
 QMALogger::QMALogger()
