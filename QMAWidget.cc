@@ -172,8 +172,8 @@ void QMAWidget::loadPlugins()
 
 void QMAWidget::addPlugin(QMAPlugin *plugin)
 {
-  connect(this, SIGNAL(pluginInitialized(SceneController *)),
-          plugin, SLOT(initialize(SceneController *)));
+  connect(this, SIGNAL(pluginInitialized(MMDAI::SceneController*)),
+          plugin, SLOT(initialize(MMDAI::SceneController*)));
   connect(this, SIGNAL(pluginStarted()),
           plugin, SLOT(start()));
   connect(this, SIGNAL(pluginStopped()),
