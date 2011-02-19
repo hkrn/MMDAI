@@ -125,7 +125,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     return false;
   }
 
-  if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MODEL_ADD)) {
+  if (MMDAIStringEquals(command, SceneEventHandler::kModelAddCommand)) {
     if (argc < 2 || argc > 6) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
       return false;
@@ -155,7 +155,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     m_factory->releaseModelLoader(pmd);
     m_factory->releaseLipSyncLoader(lip);
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MODEL_CHANGE)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kModelChangeCommand)) {
     /* change model */
     if (argc != 2) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -174,7 +174,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MODEL_DELETE)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kModelDeleteCommand)) {
     /* delete model */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -189,7 +189,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOTION_ADD)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kMotionAddCommand)) {
     /* add motion */
     bool full = true; /* full */
     bool once = true; /* once */
@@ -258,7 +258,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOTION_CHANGE)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kMotionChangeCommand)) {
     /* change motion */
     if (argc != 3) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -274,7 +274,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
       return false;
     }
-  } else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOTION_DELETE)) {
+  } else if (MMDAIStringEquals(command, SceneEventHandler::kMotionDeleteCommand)) {
     /* delete motion */
     if (argc != 2) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -289,7 +289,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOVE_START)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kMoveStartCommand)) {
     /* start moving */
     bool local = false;
     tmpFloat = -1.0;
@@ -324,7 +324,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_MOVE_STOP)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kMoveStopCommand)) {
     /* stop moving */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -339,7 +339,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_ROTATE_START)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kRotateStartCommand)) {
     /* start rotation */
     bool local = false;
     tmpFloat = -1.0;
@@ -374,7 +374,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_ROTATE_STOP)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kRotateStopCommand)) {
     /* stop rotation */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -389,7 +389,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_TURN_START)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kTurnStartCommand)) {
     /* turn start */
     bool local = false;
     tmpFloat = -1.0;
@@ -424,7 +424,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_TURN_STOP)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kTurnStopCommand)) {
     /* stop turn */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -439,7 +439,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_STAGE)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kStageCommand)) {
     /* change stage */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -462,11 +462,10 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       PMDModelLoader *floorPMD = m_factory->createModelLoader(filename);
       PMDModelLoader *backgroundPMD = m_factory->createModelLoader(background);
       ret = m_controller->loadFloor(floorPMD) && m_controller->loadBackground(backgroundPMD);
-      MMDAIMemoryRelease(filename);
-      return ret;
     }
+    MMDAIMemoryRelease(filename);
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIGHTCOLOR)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kLightColorCommand)) {
     /* change light color */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -478,7 +477,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     m_controller->changeLightColor(float3[0], float3[1], float3[2]);
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIGHTDIRECTION)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kLightDirectionCommand)) {
     /* change light direction */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -490,7 +489,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     m_controller->changeLightDirection(float3[0], float3[1], float3[2]);
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIPSYNC_START)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kLipSyncStartCommand)) {
     /* start lip sync */
     if (argc != 2) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);
@@ -505,7 +504,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return false;
     }
   }
-  else if (MMDAIStringEquals(command, MMDAGENT_COMMAND_LIPSYNC_STOP)) {
+  else if (MMDAIStringEquals(command, SceneEventHandler::kLipSyncStopCommand)) {
     /* stop lip sync */
     if (argc != 1) {
       MMDAILogInfo("! Error: %s: wrong number of arguments", command);

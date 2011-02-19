@@ -42,6 +42,53 @@
 
 namespace MMDAI {
 
+/* command names */
+const char *SceneEventHandler::kModelAddCommand = "MODEL_ADD";
+const char *SceneEventHandler::kModelChangeCommand = "MODEL_CHANGE";
+const char *SceneEventHandler::kModelDeleteCommand = "MODEL_DELETE";
+const char *SceneEventHandler::kMotionAddCommand = "MOTION_ADD";
+const char *SceneEventHandler::kMotionChangeCommand = "MOTION_CHANGE";
+const char *SceneEventHandler::kMotionDeleteCommand = "MOTION_DELETE";
+const char *SceneEventHandler::kMoveStartCommand = "MOVE_START";
+const char *SceneEventHandler::kMoveStopCommand = "MOVE_STOP";
+const char *SceneEventHandler::kTurnStartCommand = "TURN_START";
+const char *SceneEventHandler::kTurnStopCommand = "TURN_STOP";
+const char *SceneEventHandler::kRotateStartCommand = "ROTATE_START";
+const char *SceneEventHandler::kRotateStopCommand = "ROTATE_STOP";
+// const char *SceneEventHandler::kSoundStartCommand = "SOUND_START";
+// const char *SceneEventHandler::kSoundStopCommand = "SOUND_STOP";
+const char *SceneEventHandler::kStageCommand = "STAGE";
+const char *SceneEventHandler::kFloorCommand = "FLOOR";
+const char *SceneEventHandler::kBackgroundCommand = "BACKGROUND";
+const char *SceneEventHandler::kLightColorCommand = "LIGHTCOLOR";
+const char *SceneEventHandler::kLightDirectionCommand = "LIGHTDIRECTION";
+const char *SceneEventHandler::kLipSyncStartCommand = "LIPSYNC_START";
+const char *SceneEventHandler::kLipSyncStopCommand = "LIPSYNC_STOP";
+
+const char *SceneEventHandler::kModelAddEvent = "MODEL_EVENT_ADD";
+const char *SceneEventHandler::kModelChangeEvent = "MODEL_EVENT_CHANGE";
+const char *SceneEventHandler::kModelDeleteEvent = "MODEL_EVENT_DELETE";
+const char *SceneEventHandler::kMotionAddEvent = "MOTION_EVENT_ADD";
+const char *SceneEventHandler::kMotionDeleteEvent = "MOTION_EVENT_DELETE";
+const char *SceneEventHandler::kMotionChangeEvent = "MOTION_EVENT_CHANGE";
+const char *SceneEventHandler::kMotionLoopEvent = "MOTION_EVENT_LOOP";
+const char *SceneEventHandler::kMoveStartEvent = "MOVE_EVENT_START";
+const char *SceneEventHandler::kMoveStopEvent = "MOVE_EVENT_STOP";
+const char *SceneEventHandler::kTurnStartEvent = "TURN_EVENT_START";
+const char *SceneEventHandler::kTurnStopEvent = "TURN_EVENT_STOP";
+const char *SceneEventHandler::kRotateStartEvent = "ROTATE_EVENT_START";
+const char *SceneEventHandler::kRotateStopEvent = "ROTATE_EVENT_STOP";
+// const char *SceneEventHandler::kSoundStartEvent = "SOUND_EVENT_START";
+// const char *SceneEventHandler::kSoundStopEvent = "SOUND_EVENT_STOP";
+const char *SceneEventHandler::kStageEvent = "STAGE";
+const char *SceneEventHandler::kFloorEvent = "FLOOR";
+const char *SceneEventHandler::kBackgroundEvent = "BACKGROUND";
+const char *SceneEventHandler::kLightColorEvent = "LIGHTCOLOR";
+const char *SceneEventHandler::kLightDirectionEvent = "LIGHTDIRECTION";
+const char *SceneEventHandler::kLipSyncStartEvent = "LIPSYNC_EVENT_START";
+const char *SceneEventHandler::kLipSyncStopEvent = "LIPSYNC_EVENT_STOP";
+const char *SceneEventHandler::kKeyEvent = "KEY";
+
 // from util.h
 static int getNumDigit(int in)
 {
@@ -107,7 +154,7 @@ bool SceneController::loadFloor(PMDModelLoader *loader)
   }
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_FLOOR, fileName);
+  sendEvent1(SceneEventHandler::kFloorEvent, fileName);
 
   return true;
 }
@@ -125,7 +172,7 @@ bool SceneController::loadBackground(PMDModelLoader *loader)
   }
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_BACKGROUND, fileName);
+  sendEvent1(SceneEventHandler::kBackgroundEvent, fileName);
 
   return true;
 }
@@ -143,7 +190,7 @@ bool SceneController::loadStage(PMDModelLoader *loader)
   }
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_STAGE, fileName);
+  sendEvent1(SceneEventHandler::kStageEvent, fileName);
 
   return true;
 }
@@ -262,7 +309,7 @@ bool SceneController::addMotion(PMDObject *object,
   }
 
   /* send event message */
-  sendEvent2(MMDAGENT_EVENT_MOTION_ADD, object->getAlias(), name);
+  sendEvent2(SceneEventHandler::kMotionAddEvent, object->getAlias(), name);
 
   MMDAIMemoryRelease(name);
   return true;
@@ -309,7 +356,7 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, V
   }
 
   /* send event message */
-  sendEvent2(MMDAGENT_EVENT_MOTION_CHANGE, object->getAlias(), motionAlias);
+  sendEvent2(SceneEventHandler::kMotionChangeEvent, object->getAlias(), motionAlias);
 
   /* unload old motion from motion stocker */
   m_motion.unload(old);
@@ -438,7 +485,7 @@ bool SceneController::addModel(const char *modelAlias,
   m_numModel++;
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_MODEL_ADD, name);
+  sendEvent1(SceneEventHandler::kModelAddEvent, name);
 
   MMDAIMemoryRelease(name);
   return true;
@@ -496,7 +543,7 @@ bool SceneController::changeModel(PMDObject *object,
   }
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_MODEL_CHANGE, modelAlias);
+  sendEvent1(SceneEventHandler::kModelChangeEvent, modelAlias);
 
   return true;
 }
@@ -516,7 +563,7 @@ void SceneController::deleteModel(PMDObject *object)
   m_numModel--;
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_MODEL_DELETE, object->getAlias());
+  sendEvent1(SceneEventHandler::kModelDeleteEvent, object->getAlias());
 }
 
 /* SceneController::changeLightDirection: change light direction */
@@ -535,7 +582,7 @@ void SceneController::changeLightDirection(float x, float y, float z)
   if (m_handler != NULL) {
     char buf[BUFSIZ];
     MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
-    sendEvent1(MMDAGENT_EVENT_LIGHTDIRECTION, buf);
+    sendEvent1(SceneEventHandler::kLightDirectionEvent, buf);
   }
 }
 
@@ -554,7 +601,7 @@ void SceneController::changeLightColor(float r, float g, float b)
   if (m_handler != NULL) {
     char buf[BUFSIZ];
     MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
-    sendEvent1(MMDAGENT_EVENT_LIGHTCOLOR, buf);
+    sendEvent1(SceneEventHandler::kLightColorEvent, buf);
   }
 }
 
@@ -585,7 +632,7 @@ void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, f
   object->setPosition(targetPos);
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_MOVE_START, object->getAlias());
+  sendEvent1(SceneEventHandler::kMoveStartEvent, object->getAlias());
 }
 
 /* SceneController::stopMove: stop moving */
@@ -605,7 +652,7 @@ void SceneController::stopMove(PMDObject *object)
   object->setPosition(targetPos);
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_MOVE_STOP, object->getAlias());
+  sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
 }
 
 /* SceneController::startRotation: start rotation */
@@ -630,7 +677,7 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
   object->setRotation(targetRot);
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_ROTATE_START, object->getAlias());
+  sendEvent1(SceneEventHandler::kRotateStartEvent, object->getAlias());
 }
 
 /* SceneController::stopRotation: stop rotation */
@@ -650,7 +697,7 @@ void SceneController::stopRotation(PMDObject *object)
   object->setRotation(targetRot);
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_ROTATE_STOP, object->getAlias());
+  sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
 }
 
 /* SceneController::startTurn: start turn */
@@ -697,7 +744,7 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
   object->setTurningFlag(true);
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_TURN_START, object->getAlias());
+  sendEvent1(SceneEventHandler::kTurnStartEvent, object->getAlias());
 }
 
 /* SceneController::stopTurn: stop turn */
@@ -721,7 +768,7 @@ void SceneController::stopTurn(PMDObject *object)
   object->setRotation(targetRot);
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_TURN_START, object->getAlias());
+  sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
 }
 
 /* SceneController::startLipSync: start lip sync */
@@ -767,7 +814,7 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
   }
 
   /* send event message */
-  sendEvent1(MMDAGENT_EVENT_LIPSYNC_START, object->getAlias());
+  sendEvent1(SceneEventHandler::kLipSyncStartEvent, object->getAlias());
 
   return true;
 }
@@ -896,10 +943,10 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
         for (; player != NULL; player = player->next) {
           if (player->statusFlag == MOTION_STATUS_DELETED) {
             if (MMDAIStringEquals(player->name, lipSyncMotion)) {
-              sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
+              sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
             }
             else {
-              sendEvent2(MMDAGENT_EVENT_MOTION_DELETE, object->getAlias(), player->name);
+              sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
             }
             m_motion.unload(player->vmd);
           }
@@ -925,10 +972,10 @@ void SceneController::deleteAssociatedModels(PMDObject *object)
   MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
   for (; player != NULL; player = player->next) {
     if (MMDAIStringEquals(player->name, lipSyncMotion)) {
-      sendEvent1(MMDAGENT_EVENT_LIPSYNC_STOP, object->getAlias());
+      sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
     }
     else {
-      sendEvent2(MMDAGENT_EVENT_MOTION_DELETE, object->getAlias(), player->name);
+      sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
     }
     m_motion.unload(player->vmd);
   }
@@ -958,14 +1005,14 @@ void SceneController::updateModelPositionAndRotation(double fps)
     PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
       if (object->updateModelRootOffset(fps)) {
-        sendEvent1(MMDAGENT_EVENT_MOVE_STOP, object->getAlias());
+        sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
       }
       if (object->updateModelRootRotation(fps)) {
         if (object->isTurning()) {
-          sendEvent1(MMDAGENT_EVENT_TURN_STOP, object->getAlias());
+          sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
           object->setTurningFlag(false);
         } else {
-          sendEvent1(MMDAGENT_EVENT_ROTATE_STOP, object->getAlias());
+          sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
         }
       }
     }

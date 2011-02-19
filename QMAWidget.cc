@@ -108,7 +108,7 @@ void QMAWidget::sendKeyEvent(const QString &text)
 {
   QStringList arguments;
   arguments << text;
-  emit pluginEventPost(QString(MMDAGENT_EVENT_KEY), arguments);
+  emit pluginEventPost(QString(MMDAI::SceneEventHandler::kKeyEvent), arguments);
 }
 
 QMAModelLoaderFactory *QMAWidget::getModelLoaderFactory()

@@ -371,14 +371,14 @@ void QMAWindow::about()
 void QMAWindow::receiveEvent(const QString &type,
                              const QStringList &arguments)
 {
-  if (type == MMDAGENT_EVENT_MODEL_ADD) {
+  if (type == MMDAI::SceneEventHandler::kModelAddEvent) {
     QString name = arguments.at(0);
     QAction *action = new QAction(name, this);
     action->setStatusTip(tr("Select a model %1").arg(name));
     connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
     m_selectModelMenu->addAction(action);
   }
-  else if (type == MMDAGENT_EVENT_MODEL_DELETE) {
+  else if (type == MMDAI::SceneEventHandler::kModelDeleteEvent) {
     QString name = arguments.at(0);
     QAction *actionToRemove = NULL;
     foreach (QAction *action, m_selectModelMenu->actions()) {

@@ -44,33 +44,52 @@
 namespace MMDAI {
 
 /* event names */
-#define MMDAGENT_EVENT_MODEL_ADD      "MODEL_EVENT_ADD"
-#define MMDAGENT_EVENT_MODEL_DELETE   "MODEL_EVENT_DELETE"
-#define MMDAGENT_EVENT_MODEL_CHANGE   "MODEL_EVENT_CHANGE"
-#define MMDAGENT_EVENT_MOTION_ADD     "MOTION_EVENT_ADD"
-#define MMDAGENT_EVENT_MOTION_DELETE  "MOTION_EVENT_DELETE"
-#define MMDAGENT_EVENT_MOTION_CHANGE  "MOTION_EVENT_CHANGE"
-#define MMDAGENT_EVENT_MOTION_LOOP    "MOTION_EVENT_LOOP"
-#define MMDAGENT_EVENT_MOVE_START     "MOVE_EVENT_START"
-#define MMDAGENT_EVENT_MOVE_STOP      "MOVE_EVENT_STOP"
-#define MMDAGENT_EVENT_TURN_START     "TURN_EVENT_START"
-#define MMDAGENT_EVENT_TURN_STOP      "TURN_EVENT_STOP"
-#define MMDAGENT_EVENT_ROTATE_START   "ROTATE_EVENT_START"
-#define MMDAGENT_EVENT_ROTATE_STOP    "ROTATE_EVENT_STOP"
-#define MMDAGENT_EVENT_SOUND_START    "SOUND_EVENT_START"
-#define MMDAGENT_EVENT_SOUND_STOP     "SOUND_EVENT_STOP"
-#define MMDAGENT_EVENT_STAGE          "STAGE"
-#define MMDAGENT_EVENT_FLOOR          "FLOOR"
-#define MMDAGENT_EVENT_BACKGROUND     "BACKGROUND"
-#define MMDAGENT_EVENT_LIGHTCOLOR     "LIGHTCOLOR"
-#define MMDAGENT_EVENT_LIGHTDIRECTION "LIGHTDIRECTION"
-#define MMDAGENT_EVENT_LIPSYNC_START  "LIPSYNC_EVENT_START"
-#define MMDAGENT_EVENT_LIPSYNC_STOP   "LIPSYNC_EVENT_STOP"
-#define MMDAGENT_EVENT_KEY            "KEY"
 
 class SceneEventHandler
 {
 public:
+  static const char *kModelAddCommand;
+  static const char *kModelChangeCommand;
+  static const char *kModelDeleteCommand;
+  static const char *kMotionAddCommand;
+  static const char *kMotionChangeCommand;
+  static const char *kMotionDeleteCommand;
+  static const char *kMoveStartCommand;
+  static const char *kMoveStopCommand;
+  static const char *kTurnStartCommand;
+  static const char *kTurnStopCommand;
+  static const char *kRotateStartCommand;
+  static const char *kRotateStopCommand;
+  static const char *kStageCommand;
+  static const char *kFloorCommand;
+  static const char *kBackgroundCommand;
+  static const char *kLightColorCommand;
+  static const char *kLightDirectionCommand;
+  static const char *kLipSyncStartCommand;
+  static const char *kLipSyncStopCommand;
+
+  static const char *kModelAddEvent;
+  static const char *kModelChangeEvent;
+  static const char *kModelDeleteEvent;
+  static const char *kMotionAddEvent;
+  static const char *kMotionChangeEvent;
+  static const char *kMotionDeleteEvent;
+  static const char *kMotionLoopEvent;
+  static const char *kMoveStartEvent;
+  static const char *kMoveStopEvent;
+  static const char *kTurnStartEvent;
+  static const char *kTurnStopEvent;
+  static const char *kRotateStartEvent;
+  static const char *kRotateStopEvent;
+  static const char *kStageEvent;
+  static const char *kFloorEvent;
+  static const char *kBackgroundEvent;
+  static const char *kLightColorEvent;
+  static const char *kLightDirectionEvent;
+  static const char *kLipSyncStartEvent;
+  static const char *kLipSyncStopEvent;
+  static const char *kKeyEvent;
+
   virtual ~SceneEventHandler() {}
 
   virtual void handleEventMessage(const char *eventType, int argc, ...) = 0;

@@ -38,6 +38,7 @@
 
 #include <QTextCodec>
 
+#include <MMDAI/SceneEventHandler.h>
 #include "QMALookAtPlugin.h"
 
 static void setNeckController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
@@ -88,7 +89,7 @@ void QMALookAtPlugin::receiveCommand(const QString &command, const QStringList &
 
 void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
-  if (type == MMDAGENT_EVENT_KEY && arguments.at(0) == "L") {
+  if (type == MMDAI::SceneEventHandler::kKeyEvent && arguments.at(0) == "L") {
     int count = m_controller->countPMDObjects();
     for (int i = 0; i < count; i++) {
       MMDAI::PMDObject *object = m_controller->getPMDObject(i);
@@ -105,7 +106,7 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &argum
     }
     m_enable = !m_enable;
   }
-  else if (type == MMDAGENT_EVENT_MODEL_CHANGE || type == MMDAGENT_EVENT_MODEL_ADD) {
+  else if (type == MMDAI::SceneEventHandler::kModelChangeEvent || type == MMDAI::SceneEventHandler::kModelAddEvent) {
     QTextCodec *codec = QTextCodec::codecForName("UTF8");
     QString target = arguments.at(0);
     int count = m_controller->countPMDObjects();
