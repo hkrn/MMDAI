@@ -344,7 +344,7 @@ void QMAWindow::deleteSelectedObject()
 void QMAWindow::about()
 {
   QMessageBox::about(this, tr("About QtMMDAI"),
-                     tr("<h2>QtMMDAI %1 <small>(CodeName: 40mP)</small></h2>"
+                     tr("<h2>QtMMDAI %1 (Aloe)</h2>"
                         "<p>Copyright (C) 2010-2011<br>"
                         "Nagoya Institute of Technology Department of Computer Science, "
                         "hkrn (@hikarincl2)<br>"
