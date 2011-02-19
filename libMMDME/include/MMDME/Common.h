@@ -40,6 +40,7 @@
 #define MMDME_COMMON_H_
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -55,7 +56,7 @@ enum MMDAILogLevel
   MMDAILogLevelError,
 };
 
-typedef void (MMDAILoggingHandler)(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list va);
+typedef void (MMDAILoggingHandler)(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list ap);
 
 void MMDAILogSetHandler(MMDAILoggingHandler *handler);
 void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const char *format, ...);
@@ -120,6 +121,22 @@ inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, int max)
 {
   assert(s1 != NULL && s2 != NULL && max != 0);
   return strncmp(s1, s2, max) == 0;
+}
+
+inline char *MMDAIStringGetToken(char *str, const char *delim, char **ptr)
+{
+  assert(delim != NULL);
+  return strtok_r(str, delim, ptr);
+}
+
+inline int MMDAIStringFormat(char *str, size_t n, const char *format, ...)
+{
+  assert(str != NULL && n != 0 && format != NULL);
+  va_list ap;
+  va_start(ap, format);
+  int len = vsnprintf(str, n, format, ap);
+  va_end(ap);
+  return len;
 }
 
 #define MMDME_DISABLE_COPY_AND_ASSIGN(TypeName) \

@@ -38,14 +38,14 @@
 
 static MMDAILoggingHandler MMDAILogWriteNull, *g_handler = MMDAILogWriteNull;
 
-static void MMDAILogWriteNull(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list va)
+static void MMDAILogWriteNull(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list ap)
 {
   /* do nothing */
   (void) file;
   (void) line;
   (void) level;
   (void) format;
-  (void) va;
+  (void) ap;
 }
 
 void MMDAILogSetHandler(MMDAILoggingHandler *handler)
@@ -55,9 +55,9 @@ void MMDAILogSetHandler(MMDAILoggingHandler *handler)
 
 void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const char *format, ...)
 {
-  va_list args;
-  va_start(args, format);
-  g_handler(file, line, level, format, args);
-  va_end(args);
+  va_list ap;
+  va_start(ap, format);
+  g_handler(file, line, level, format, ap);
+  va_end(ap);
 }
 

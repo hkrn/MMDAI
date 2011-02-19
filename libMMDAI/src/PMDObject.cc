@@ -589,12 +589,7 @@ void PMDObject::renderComment(TextRenderer * text)
    tpos[0] = pos.x();
    tpos[1] = pos.y() + 4.5f;
    tpos[2] = pos.z();
-#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
-   for (p = strtok_r(comment, "\n", &psave); p; p = strtok_r(NULL, "\n", &psave)) {
-#else
-   (void)psave;
-   for (p = strtok(comment, "\n"); p; p = strtok(NULL, "\n")) {
-#endif
+   for (p = MMDAIStringGetToken(comment, "\n", &psave); p; p = MMDAIStringGetToken(NULL, "\n", &psave)) {
       tpos[1] -= 0.65f;
       glPushMatrix();
       glTranslatef(tpos[0], tpos[1], tpos[2]);
@@ -666,12 +661,7 @@ void PMDObject::renderError(TextRenderer * text)
    text->drawAsciiStringOutline("[Texture Errors]");
    glPopMatrix();
 
-#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
-   for (p = strtok_r(buf, "\n", &psave); p; p = strtok_r(NULL, "\n", &psave)) {
-#else
-   (void)psave;
-   for (p = strtok(buf, "\n"); p; p = strtok(NULL, "\n")) {
-#endif
+   for (p = MMDAIStringGetToken(buf, "\n", &psave); p; p = MMDAIStringGetToken(NULL, "\n", &psave)) {
       tpos[1] -= 0.7f;
       glPushMatrix();
       glTranslatef(tpos[0], tpos[1], tpos[2]);

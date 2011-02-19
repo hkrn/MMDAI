@@ -36,7 +36,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <stdio.h>
 #include <MMDME/Common.h>
 #include "MMDAI/LipSyncLoader.h"
 
