@@ -45,6 +45,8 @@
 
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* PMDModel::parse: initialize and load from ptr memories */
 bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 {
@@ -460,4 +462,6 @@ error:
    release();
    return false;
 }
+
+} /* namespace */
 

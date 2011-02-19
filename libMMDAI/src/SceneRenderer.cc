@@ -48,6 +48,8 @@
 
 #include "MMDAI/SceneRenderer.h"
 
+namespace MMDAI {
+
 #define SHADOW_PCF                   /* use hardware PCF for shadow mapping */
 #define SHADOW_AUTO_VIEW             /* automatically define depth frustum */
 #define SHADOW_AUTO_VIEW_ANGLE 15.0f /* view angle for automatic depth frustum */
@@ -915,4 +917,6 @@ void SceneRenderer::updateDepthTextureViewParam(PMDObject *objects, int num)
   delete [] r;
   delete [] c;
 }
+
+} /* namespace */
 

@@ -58,7 +58,7 @@ public:
   void sendEvent(const char *type, char *arguments);
 
 public slots:
-  void initialize(SceneController *controller);
+  void initialize(MMDAI::SceneController *controller);
   void start();
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);

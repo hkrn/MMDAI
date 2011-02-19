@@ -43,6 +43,8 @@
 
 #include "MMDME/PMDBone.h"
 
+namespace MMDAI {
+
 /* AlignedMotionState: MotionState for bullet physics, to align rigid body to the position of corresponding bone for rigid body type 2 */
 class AlignedMotionState : public btMotionState
 {
@@ -67,6 +69,8 @@ public:
    /* setWorldTransform: set world transform */
    virtual void setWorldTransform(const btTransform &worldTrans);
 };
+
+} /* namespace */
 
 #endif
 

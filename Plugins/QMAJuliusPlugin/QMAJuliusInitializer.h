@@ -50,7 +50,7 @@ public:
   QMAJuliusInitializer(QStringList &conf);
   ~QMAJuliusInitializer();
 
-  Recog *getRecognizeEngine();
+  Recog *getRecognizeEngine() const;
 
 protected:
   void run();

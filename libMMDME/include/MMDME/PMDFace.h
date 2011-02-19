@@ -44,6 +44,8 @@
 #include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 
+namespace MMDAI {
+
 /* PMDFaceVertex: vertex of this model */
 typedef struct _PMDFaceVertex {
    unsigned long id; /* vertex index of this model to be controlled */
@@ -100,6 +102,8 @@ public:
    /* setWeight: set weight */
    void setWeight(float f);
 };
+
+} /* namespace */
 
 #endif
 

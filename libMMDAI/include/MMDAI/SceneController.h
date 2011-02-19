@@ -47,6 +47,8 @@
 #include "MMDAI/SceneEventHandler.h"
 #include "MMDAI/SceneRenderer.h"
 
+namespace MMDAI {
+
 #define MAX_MODEL 20
 
 class SceneController
@@ -175,4 +177,7 @@ private:
   MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
 };
 
+} /* namespace */
+
 #endif // SCENECONTROLLER_H
+

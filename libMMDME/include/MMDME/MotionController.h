@@ -47,6 +47,8 @@
 #include "MMDME/PMDModel.h"
 #include "MMDME/VMD.h"
 
+namespace MMDAI {
+
 const char kCenterBoneName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
 
 /* MotionControllerBoneElement: motion control element for bone */
@@ -168,4 +170,7 @@ public:
    void setCurrentFrame(double frame);
 };
 
+} /* namespace */
+
 #endif
+

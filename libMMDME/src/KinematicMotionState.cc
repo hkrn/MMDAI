@@ -40,6 +40,8 @@
 
 #include "KinematicMotionState.h"
 
+namespace MMDAI {
+
 /* KinematicMotionState::KinematicMotionState: constructor */
 KinematicMotionState::KinematicMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone)
 {
@@ -65,3 +67,6 @@ void KinematicMotionState::setWorldTransform(const btTransform &worldTrans)
 {
    /* kinematic objects will not be controlled by physics simulation, just ignore this */
 }
+
+} /* namespace */
+

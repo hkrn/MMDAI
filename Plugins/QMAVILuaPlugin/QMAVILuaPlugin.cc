@@ -52,7 +52,7 @@ QMAVILuaPlugin::~QMAVILuaPlugin()
   m_state = 0;
 }
 
-void QMAVILuaPlugin::initialize(SceneController *controller)
+void QMAVILuaPlugin::initialize(MMDAI::SceneController *controller)
 {
   static struct luaL_reg funcs[] = {
     { "command", mmdai_command },

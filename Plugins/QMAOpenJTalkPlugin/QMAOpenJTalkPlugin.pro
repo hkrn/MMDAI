@@ -66,6 +66,7 @@ linux-g++:LIBS += -lmecab
 #
 # on MacOSX, mecab has been installed in /usr, we use jtalk's mecab as libmecab_custom.a
 macx:LIBS += -liconv -lmecab_custom
+macx:CONFIG += x86
 
 win32 {
     # use MMDAgent's OpenJTalk and related libraries

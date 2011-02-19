@@ -40,14 +40,14 @@
 
 #include "QMALookAtPlugin.h"
 
-static void setNeckController(BoneController *controller, PMDModel *model)
+static void setNeckController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
 {
   const char head[] = { 0x93, 0xaa, 0x0 }; /* 頭 in Shift_JIS */
   const char *bone[] = { head };
   controller->setup(model, bone, 1, 0.150f, 0.008f, 0.0f, 0.0f, 1.0f, 20.0f, 60.0f, 0.0f, -45.0f, -60.0f, 0.0f, 0.0f, -1.0f, 0.0f);
 }
 
-static void setEyeController(BoneController *controller, PMDModel *model)
+static void setEyeController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
 {
   const char rightEye[] = { 0x89, 0x45, 0x96, 0xda, 0x0 }; /* 右目 in Shift_JIS */
   const char leftEye[] = { 0x8d, 0xb6, 0x96, 0xda, 0x0 };  /* 左目 in Shift_JIS */
@@ -64,7 +64,7 @@ QMALookAtPlugin::~QMALookAtPlugin()
 {
 }
 
-void QMALookAtPlugin::initialize(SceneController *controller)
+void QMALookAtPlugin::initialize(MMDAI::SceneController *controller)
 {
   m_controller = controller;
 }
@@ -91,7 +91,7 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &argum
   if (type == MMDAGENT_EVENT_KEY && arguments.at(0) == "L") {
     int count = m_controller->countPMDObjects();
     for (int i = 0; i < count; i++) {
-      PMDObject *object = m_controller->getPMDObject(i);
+      MMDAI::PMDObject *object = m_controller->getPMDObject(i);
       if(object->isEnable()) {
         if(m_enable == true) {
           m_neckController[i].setEnableFlag(false);
@@ -110,12 +110,12 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &argum
     QString target = arguments.at(0);
     int count = m_controller->countPMDObjects();
     for (int i = 0; i < count; i++) {
-      PMDObject *object = m_controller->getPMDObject(i);
+      MMDAI::PMDObject *object = m_controller->getPMDObject(i);
       const char *a = object->getAlias();
       if (a) {
         QString alias = codec->toUnicode(a, strlen(a));
         if (alias == target) {
-          PMDModel *model = object->getPMDModel();
+          MMDAI::PMDModel *model = object->getPMDModel();
           setNeckController(&m_neckController[i], model);
           setEyeController(&m_eyeController[i], model);
         }
@@ -139,7 +139,7 @@ void QMALookAtPlugin::update(const QRect &rect, const QPoint &pos, const double 
   /* calculate direction of all controlled bones */
   int count = m_controller->countPMDObjects();
   for (int i = 0; i < count; i++) {
-    PMDObject *object = m_controller->getPMDObject(i);
+    MMDAI::PMDObject *object = m_controller->getPMDObject(i);
     if (object->isEnable()) {
       m_neckController[i].update(&targetPos, static_cast<float>(delta));
       m_eyeController[i].update(&targetPos, static_cast<float>(delta));

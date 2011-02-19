@@ -41,6 +41,8 @@
 #ifndef TEXTRENDERER_H
 #define TEXTRENDERER_H
 
+namespace MMDAI {
+
 class TextRenderer
 {
 public:
@@ -63,4 +65,7 @@ public:
    virtual void drawString(const char *wstr) = 0;
 };
 
+} /* namespace */
+
 #endif // TEXTRENDERER_H
+

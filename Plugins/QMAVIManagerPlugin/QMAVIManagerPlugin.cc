@@ -52,7 +52,7 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 {
 }
 
-void QMAVIManagerPlugin::initialize(SceneController *controller)
+void QMAVIManagerPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
   QFile config("mmdai:/MMDAI.fst");

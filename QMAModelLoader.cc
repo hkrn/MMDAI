@@ -144,7 +144,7 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   return true;
 }
 
-static bool QMAModelLoaderLoadImage(QString &path, PMDTexture *texture)
+static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
 {
   QImage image;
   if (QFile::exists(path)) {
@@ -241,13 +241,13 @@ void QMAModelLoader::unloadMotionData(unsigned char *ptr)
   unloadModelData(ptr);
 }
 
-bool QMAModelLoader::loadImageTexture(PMDTexture *texture)
+bool QMAModelLoader::loadImageTexture(MMDAI::PMDTexture *texture)
 {
   QString path = m_file->fileName();
   return QMAModelLoaderLoadImage(path, texture);
 }
 
-bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
+bool QMAModelLoader::loadModelTexture(const char *name, MMDAI::PMDTexture *texture)
 {
   QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
   QString textureName = codec->toUnicode(name, strlen(name));
@@ -257,7 +257,7 @@ bool QMAModelLoader::loadModelTexture(const char *name, PMDTexture *texture)
   return QMAModelLoaderLoadImage(path, texture);
 }
 
-bool QMAModelLoader::loadSystemTexture(int index, PMDTexture *texture)
+bool QMAModelLoader::loadSystemTexture(int index, MMDAI::PMDTexture *texture)
 {
   int fill = index == 0 ? 1 : 2;
   QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));

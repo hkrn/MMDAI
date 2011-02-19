@@ -58,7 +58,7 @@ QMAAudioPlugin::~QMAAudioPlugin()
   delete m_audioObject;
 }
 
-void QMAAudioPlugin::initialize(SceneController *controller)
+void QMAAudioPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
 }

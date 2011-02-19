@@ -44,6 +44,8 @@
 
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* compareKeyFrameBone: qsort function for bone key frames */
 static int compareKeyFrameBone(const void *x, const void *y)
 {
@@ -435,3 +437,6 @@ float VMD::getMaxFrame() const
 {
    return m_maxFrame;
 }
+
+} /* namespace */
+

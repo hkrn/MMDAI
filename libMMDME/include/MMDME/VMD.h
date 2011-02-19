@@ -44,6 +44,8 @@
 #include "MMDME/PTree.h"
 #include "MMDME/VMDLoader.h"
 
+namespace MMDAI {
+
 /* BoneKeyFrame: bone key frame */
 typedef struct _BoneKeyFrame {
    float keyFrame;               /* key frame */
@@ -160,6 +162,8 @@ public:
    /* getMaxFrame: get max frame */
    float getMaxFrame() const;
 };
+
+} /* namespace */
 
 #endif
 

@@ -42,7 +42,11 @@
 #include <QStringList>
 #include <QtPlugin>
 
+namespace MMDAI {
+
 class SceneController;
+
+} /* namespace */
 
 class QMAPlugin : public QObject
 {
@@ -51,7 +55,7 @@ public:
   virtual ~QMAPlugin() {}
 
   /* slots */
-  virtual void initialize(SceneController *controller) = 0;
+  virtual void initialize(MMDAI::SceneController *controller) = 0;
   virtual void start() = 0;
   virtual void stop() = 0;
   virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;

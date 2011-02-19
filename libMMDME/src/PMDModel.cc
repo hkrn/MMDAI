@@ -41,6 +41,8 @@
 #include "MMDME/PMDModel.h"
 #include "MMDME/PMDMaterial.h"
 
+namespace MMDAI {
+
 const float PMDModel::kMinBoneWeight = 0.0001f;
 const float PMDModel::kMinFaceWeight = 0.001f;
 
@@ -441,4 +443,6 @@ const char *PMDModel::getComment() const
 {
    return m_comment;
 }
+
+} /* namespace */
 

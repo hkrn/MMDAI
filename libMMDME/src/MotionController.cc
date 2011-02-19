@@ -40,6 +40,8 @@
 
 #include "MMDME/MotionController.h"
 
+namespace MMDAI {
+
 const float MotionController::kBoneStartMarginFrame = 20.0f;
 const float MotionController::kFaceStartMarginFrame = 6.0f;
 
@@ -550,3 +552,6 @@ void MotionController::setCurrentFrame(double frame)
 {
    m_currentFrame = frame;
 }
+
+} /* namespace */
+

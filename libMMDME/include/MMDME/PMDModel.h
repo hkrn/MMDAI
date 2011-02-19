@@ -53,6 +53,8 @@
 #include "MMDME/PMDTexture.h"
 #include "MMDME/PTree.h"
 
+namespace MMDAI {
+
 /* TexCoord: texture coordinaiton */
 typedef struct {
    float u;
@@ -281,6 +283,8 @@ public:
    /* renderDebug: render for debug view */
    void renderDebug();
 };
+
+} /* namespace */
 
 #endif
 

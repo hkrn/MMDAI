@@ -65,7 +65,7 @@ QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
   delete m_object;
 }
 
-void QMAAquesTalk2Plugin::initialize(SceneController *controller)
+void QMAAquesTalk2Plugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
   /* do nothing */

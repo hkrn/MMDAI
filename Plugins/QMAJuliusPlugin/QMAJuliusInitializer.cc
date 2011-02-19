@@ -94,7 +94,7 @@ void QMAJuliusInitializer::run()
   }
 }
 
-Recog *QMAJuliusInitializer::getRecognizeEngine()
+Recog *QMAJuliusInitializer::getRecognizeEngine() const
 {
   return m_recog;
 }

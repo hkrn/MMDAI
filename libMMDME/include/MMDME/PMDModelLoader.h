@@ -39,7 +39,7 @@
 
 #include "MMDME/PMDTexture.h"
 
-#include <stdio.h>
+namespace MMDAI {
 
 class PMDModelLoader
 {
@@ -62,6 +62,8 @@ public:
 
    virtual const char *getLocation() const = 0;
 };
+
+} /* namespace */
 
 #endif
 

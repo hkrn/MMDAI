@@ -40,6 +40,8 @@
 
 #include "MMDME/PMDIK.h"
 
+namespace MMDAI {
+
 const float PMDIK::kPI          = 3.1415926f;
 const float PMDIK::kMinDistance = 0.0001f;
 const float PMDIK::kMinAngle    = 0.00000001f;
@@ -237,3 +239,6 @@ bool PMDIK::isSimulated() const
 {
    return m_boneList[0]->isSimulated();
 }
+
+} /* namespace */
+

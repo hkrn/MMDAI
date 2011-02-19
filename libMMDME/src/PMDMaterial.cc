@@ -42,6 +42,8 @@
 #include "MMDME/PMDModelLoader.h"
 #include "MMDME/PMDTexture.h"
 
+namespace MMDAI {
+
 /* PMDMaterial::initialize: initialize material */
 void PMDMaterial::initialize()
 {
@@ -219,3 +221,6 @@ PMDTexture *PMDMaterial::getAdditionalTexture()
 {
    return &m_additionalTexture;
 }
+
+} /* namespace */
+

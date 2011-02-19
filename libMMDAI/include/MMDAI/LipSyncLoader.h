@@ -41,6 +41,8 @@
 #ifndef LIPSYNCLOADER_H
 #define LIPSYNCLOADER_H
 
+namespace MMDAI {
+
 class LipSyncLoader
 {
 public:
@@ -58,6 +60,8 @@ public:
 
   virtual float getInterpolationWeight(int i, int j) = 0;
 };
+
+} /* namespace */
 
 #endif // LIPSYNCLOADER_H
 

@@ -46,6 +46,8 @@
 #include "MMDME/PMDModel.h"
 #include "MMDME/VMD.h"
 
+namespace MMDAI {
+
 /* motions's status at last call */
 enum {
    MOTION_STATUS_RUNNING, /* running */
@@ -139,4 +141,7 @@ public:
    MotionPlayer *getMotionPlayerList() const;
 };
 
+} /* namespace */
+
 #endif
+

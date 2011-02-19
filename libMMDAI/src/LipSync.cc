@@ -42,6 +42,8 @@
 #include "MMDAI/LipSync.h"
 #include "MMDAI/LipSyncLoader.h"
 
+namespace MMDAI {
+
 const float LipSync::kInterpolationRate = 0.8f;
 
 /* LipSync::initialize: initialize lipsync */
@@ -299,4 +301,6 @@ const char *LipSync::getMotionName()
 {
   return "LipSync";
 }
+
+} /* namespace */
 

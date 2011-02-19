@@ -43,6 +43,8 @@
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFile.h"
 
+namespace MMDAI {
+
 /* PMDIK: IK for PMD */
 class PMDIK
 {
@@ -86,6 +88,8 @@ public:
    /* solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
    void solve();
 };
+
+} /* namespace */
 
 #endif
 

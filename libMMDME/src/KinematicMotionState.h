@@ -43,6 +43,8 @@
 
 #include "MMDME/PMDBone.h"
 
+namespace MMDAI {
+
 /* KinematicMotionState: kinematic MotionState for bullet physics, to move kinematic rigid bodies according to bone motions for rigid body type 0 */
 class KinematicMotionState : public btMotionState
 {
@@ -65,6 +67,8 @@ public:
    /* setWorldTransform: set world transform */
    virtual void setWorldTransform(const btTransform &worldTrans);
 };
+
+} /* namespace */
 
 #endif
 

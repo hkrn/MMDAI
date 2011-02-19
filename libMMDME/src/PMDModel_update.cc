@@ -40,6 +40,8 @@
 
 #include "MMDME/PMDModel.h"
 
+namespace MMDAI {
+
 /* PMDModel::updateBone: update bones */
 void PMDModel::updateBone()
 {
@@ -210,3 +212,6 @@ void PMDModel::smearAllBonesToDefault(float rate)
       m_faceList[i].setWeight(m_faceList[i].getWeight() * rate);
    }
 }
+
+} /* namespace */
+

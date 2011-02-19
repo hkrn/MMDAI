@@ -42,6 +42,8 @@
 
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* PMDBone::initialize: initialize bone */
 void PMDBone::initialize()
 {
@@ -477,3 +479,6 @@ void PMDBone::renderDebug()
 
    glPopMatrix();
 }
+
+} /* namespace */
+

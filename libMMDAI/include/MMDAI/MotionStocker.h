@@ -44,6 +44,8 @@
 #include <MMDME/Common.h>
 #include <MMDME/VMD.h>
 
+namespace MMDAI {
+
 /* VMDList: VMD list */
 typedef struct _VMDList {
   VMD vmd;
@@ -87,4 +89,7 @@ public:
   void unload(VMD *vmd);
 };
 
+} /* namespace */
+
 #endif // MOTIONSTOCKER_H
+

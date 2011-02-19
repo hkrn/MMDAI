@@ -42,6 +42,8 @@
 
 /* definitions */
 
+namespace MMDAI {
+
 #define LIPSYNC_CONFIGFILE          "lip.txt"
 #define LIPSYNC_MAXBUFLEN           1024
 
@@ -92,4 +94,6 @@ public:
 
    static const char *getMotionName();
 };
+
+} /* namespace */
 

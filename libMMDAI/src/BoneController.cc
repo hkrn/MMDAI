@@ -42,6 +42,8 @@
 
 #include "MMDAI/BoneController.h"
 
+namespace MMDAI {
+
 #define BONECONTROLLER_MINLENGTH 0.0000001f
 
 /* BoneController::initialize: initialize bone controller */
@@ -249,4 +251,6 @@ void BoneController::update(btVector3 *pos, float deltaFrame)
       }
    }
 }
+
+} /* namespace */
 

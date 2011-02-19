@@ -45,6 +45,8 @@
 #include "MMDAI/SceneController.h"
 #include "MMDAI/PMDModelLoaderFactory.h"
 
+namespace MMDAI {
+
 /* command names */
 #define MMDAGENT_COMMAND_MODEL_ADD      "MODEL_ADD"
 #define MMDAGENT_COMMAND_MODEL_DELETE   "MODEL_DELETE"
@@ -83,4 +85,7 @@ private:
   MMDME_DISABLE_COPY_AND_ASSIGN(CommandParser);
 };
 
+} /* namespace */
+
 #endif // COMMANDPARSER_H
+

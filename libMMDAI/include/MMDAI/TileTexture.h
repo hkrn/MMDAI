@@ -45,6 +45,8 @@
 #include <MMDME/PMDModelLoader.h>
 #include <MMDME/PMDTexture.h>
 
+namespace MMDAI {
+
 class TileTexture
 {
 private:
@@ -94,4 +96,7 @@ public:
   GLfloat getSize(int i, int j) const;
 };
 
+} /* namespace */
+
 #endif // TILETEXTURE_H
+

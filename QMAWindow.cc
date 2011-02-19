@@ -86,13 +86,13 @@ void QMAWindow::insertMotionToAllModels()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastVMDDirectory", dir.absolutePath());
-    SceneController *controller = m_widget->getSceneController();
+    MMDAI::SceneController *controller = m_widget->getSceneController();
     const char *filename = fileName.toUtf8().constData();
     int count = controller->countPMDObjects();
     for (int i = 0; i < count; i++) {
-      PMDObject *object = controller->getPMDObject(i);
+      MMDAI::PMDObject *object = controller->getPMDObject(i);
       if (object->isEnable() && object->allowMotionFileDrop()) {
-        VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
+        MMDAI::VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
         controller->addMotion(object, loader);
       }
     }
@@ -107,10 +107,10 @@ void QMAWindow::insertMotionToSelectedModel()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastVMDDirectory", dir.absolutePath());
-    SceneController *controller = m_widget->getSceneController();
-    PMDObject *selectedObject = controller->getSelectedPMDObject();
+    MMDAI::SceneController *controller = m_widget->getSceneController();
+    MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
     if (selectedObject != NULL) {
-      VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(fileName.toUtf8().constData());
+      MMDAI::VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(fileName.toUtf8().constData());
       controller->addMotion(selectedObject, loader);
     }
   }
@@ -125,9 +125,9 @@ void QMAWindow::addModel()
     dir.cdUp();
     m_settings->value("window/lastPMDDirectory", dir.absolutePath());
     const char *filename = fileName.toUtf8().constData();
-    PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
-    PMDModelLoader *modelLoader = factory->createModelLoader(filename);
-    LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
+    MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
+    MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
+    MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
     m_widget->getSceneController()->addModel(modelLoader, lipSyncLoader);
     factory->releaseModelLoader(modelLoader);
     factory->releaseLipSyncLoader(lipSyncLoader);
@@ -142,7 +142,7 @@ void QMAWindow::setStage()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastStageDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
+    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->loadStage(loader);
   }
 }
@@ -155,7 +155,7 @@ void QMAWindow::setFloor()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastFloorDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
+    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->loadFloor(loader);
   }
 }
@@ -168,56 +168,56 @@ void QMAWindow::setBackground()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastBackgroundDirectory", dir.absolutePath());
-    PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
+    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
     m_widget->getSceneController()->loadBackground(loader);
   }
 }
 
 void QMAWindow::rotateUp()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->rotate(0.0f, -controller->getOption()->getRotateStep(), 0.0f);
 }
 
 void QMAWindow::rotateDown()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->rotate(0.0f, controller->getOption()->getRotateStep(), 0.0f);
 }
 
 void QMAWindow::rotateLeft()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->rotate(-controller->getOption()->getRotateStep(), 0.0f, 0.0f);
 }
 
 void QMAWindow::rotateRight()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->rotate(controller->getOption()->getRotateStep(), 0.0f, 0.0f);
 }
 
 void QMAWindow::translateUp()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->translate(0.0f, -controller->getOption()->getTranslateStep(), 0.0f);
 }
 
 void QMAWindow::translateDown()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->translate(0.0f, controller->getOption()->getTranslateStep(), 0.0f);
 }
 
 void QMAWindow::translateLeft()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->translate(controller->getOption()->getTranslateStep(), 0.0f, 0.0f);
 }
 
 void QMAWindow::translateRight()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   controller->translate(-controller->getOption()->getTranslateStep(), 0.0f, 0.0f);
 }
 
@@ -243,7 +243,7 @@ void QMAWindow::decreaseEdgeThin()
 
 void QMAWindow::togglePhysicSimulation()
 {
-  SceneController *controller = m_widget->getSceneController();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
   int count = controller->countPMDObjects();
   m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
   for (int i = 0; i < count; i++)
@@ -252,8 +252,8 @@ void QMAWindow::togglePhysicSimulation()
 
 void QMAWindow::toggleShadowMapping()
 {
-  SceneController *controller = m_widget->getSceneController();
-  Option *option = controller->getOption();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
+  MMDAI::Option *option = controller->getOption();
   if (option->getUseShadowMapping()) {
     option->setUseShadowMapping(false);
     controller->setShadowMapping(false);
@@ -266,7 +266,7 @@ void QMAWindow::toggleShadowMapping()
 
 void QMAWindow::toggleShadowMappingLightFirst()
 {
-  Option *option = m_widget->getSceneController()->getOption();
+  MMDAI::Option *option = m_widget->getSceneController()->getOption();
   if (option->getShadowMappingLightFirst())
     option->setShadowMappingLightFirst(false);
   else
@@ -302,8 +302,8 @@ void QMAWindow::selectObject()
   QAction *action = qobject_cast<QAction *>(sender());
   if (action) {
     const char *name = action->text().toUtf8().constData();
-    SceneController *controller = m_widget->getSceneController();
-    PMDObject *object = controller->findPMDObject(name);
+    MMDAI::SceneController *controller = m_widget->getSceneController();
+    MMDAI::PMDObject *object = controller->findPMDObject(name);
     if (object != NULL) {
       controller->selectPMDObject(object);
       controller->setHighlightPMDObject(object);
@@ -319,13 +319,13 @@ void QMAWindow::changeSelectedObject()
     QDir dir(fileName);
     dir.cdUp();
     m_settings->value("window/lastPMDDirectory", dir.absolutePath());
-    SceneController *controller = m_widget->getSceneController();
-    PMDObject *selectedObject = controller->getSelectedPMDObject();
+    MMDAI::SceneController *controller = m_widget->getSceneController();
+    MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
     if (selectedObject != NULL){
       const char *filename = fileName.toUtf8().constData();
-      PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
-      PMDModelLoader *modelLoader = factory->createModelLoader(filename);
-      LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
+      MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
+      MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
+      MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
       controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
       factory->releaseModelLoader(modelLoader);
       factory->releaseLipSyncLoader(lipSyncLoader);
@@ -335,8 +335,8 @@ void QMAWindow::changeSelectedObject()
 
 void QMAWindow::deleteSelectedObject()
 {
-  SceneController *controller = m_widget->getSceneController();
-  PMDObject *selectedObject = controller->getSelectedPMDObject();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
+  MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
   if (selectedObject != NULL)
     controller->deleteModel(selectedObject);
 }
@@ -578,8 +578,8 @@ void QMAWindow::createActions()
 
 void QMAWindow::setEdgeThin(int n)
 {
-  SceneController *controller = m_widget->getSceneController();
-  Option *option = controller->getOption();
+  MMDAI::SceneController *controller = m_widget->getSceneController();
+  MMDAI::Option *option = controller->getOption();
   int count = controller->countPMDObjects();
   float thin = option->getCartoonEdgeWidth() * option->getCartoonEdgeStep() * n;
   option->setCartoonEdgeWidth(thin);

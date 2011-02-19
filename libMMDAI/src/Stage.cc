@@ -41,6 +41,8 @@
 #include "MMDAI/Option.h"
 #include "MMDAI/Stage.h"
 
+namespace MMDAI {
+
 /* findPlane: calculate plane */
 static void findPlane(GLfloat plane[4], TileTexture *t)
 {
@@ -304,3 +306,6 @@ GLfloat *Stage::getShadowMatrix() const
 {
   return (GLfloat *) m_floorShadow;
 }
+
+} /* namespace */
+

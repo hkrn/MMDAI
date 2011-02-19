@@ -47,6 +47,8 @@
 #include "MMDAI/PMDObject.h"
 #include "MMDAI/Stage.h"
 
+namespace MMDAI {
+
 #define RENDER_VIEWPOINT_CAMERA_Z     -100.0f
 #define RENDER_VIEWPOINT_Y_OFFSET     -13.0f
 #define RENDER_VIEWPOINT_FRUSTUM_NEAR 5.0f
@@ -165,4 +167,7 @@ public:
   void getScreenPointPosition(btVector3 *dst, btVector3 *src);
 };
 
+} /* namespace */
+
 #endif // SCENERENDERER_H
+

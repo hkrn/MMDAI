@@ -39,6 +39,8 @@
 #ifndef MMDME_VMDFILE_H_
 #define MMDME_VMDFILE_H_
 
+namespace MMDAI {
+
 /* disable alignment in this header */
 #pragma pack(push, 1)
 
@@ -66,6 +68,8 @@ typedef struct _VMDFile_FaceFrame {
 
 /* restore alignment */
 #pragma pack(pop)
+
+} /* namespace */
 
 #endif
 

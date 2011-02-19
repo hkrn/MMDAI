@@ -41,6 +41,8 @@
 #ifndef SCENEEVENTHANDLER_H
 #define SCENEEVENTHANDLER_H
 
+namespace MMDAI {
+
 /* event names */
 #define MMDAGENT_EVENT_MODEL_ADD      "MODEL_EVENT_ADD"
 #define MMDAGENT_EVENT_MODEL_DELETE   "MODEL_EVENT_DELETE"
@@ -73,6 +75,8 @@ public:
 
   virtual void handleEventMessage(const char *eventType, int argc, ...) = 0;
 };
+
+} /* namespace */
 
 #endif // SCENEEVENTHANDLER_H
 

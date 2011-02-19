@@ -46,6 +46,8 @@
 #include <GL/gl.h>
 #endif
 
+namespace MMDAI {
+
 /* TileTexture::resetDisplayList: reset display list */
 void TileTexture::resetDisplayList()
 {
@@ -180,3 +182,6 @@ void TileTexture::setSize(float v00, float v01, float v02,
 
   resetDisplayList();
 }
+
+} /* namespace */
+

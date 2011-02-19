@@ -40,6 +40,8 @@
 
 #include "MMDAI/SceneController.h"
 
+namespace MMDAI {
+
 // from util.h
 static int getNumDigit(int in)
 {
@@ -1044,3 +1046,6 @@ int SceneController::getHeight()
 {
   return m_scene.getHeight();
 }
+
+} /* namespace */
+

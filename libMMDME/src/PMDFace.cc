@@ -42,6 +42,8 @@
 
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* PMDFace::initialize: initialize face */
 void PMDFace::initialize()
 {
@@ -178,3 +180,6 @@ void PMDFace::setWeight(float f)
 {
    m_weight = f;
 }
+
+} /* namespace */
+

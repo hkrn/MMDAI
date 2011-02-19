@@ -40,6 +40,8 @@
 
 #include "MMDME/BulletPhysics.h"
 
+namespace MMDAI {
+
 /* BulletPhysics::initialize: initialize BulletPhysics */
 void BulletPhysics::initialize()
 {
@@ -364,3 +366,6 @@ void BulletPhysics::debugDisplay()
       glPolygonMode(GL_FRONT_AND_BACK, polygonMode[1]);
    }
 }
+
+} /* namespace */
+

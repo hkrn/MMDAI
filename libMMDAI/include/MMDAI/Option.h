@@ -38,6 +38,8 @@
 
 #include <MMDME/Common.h>
 
+namespace MMDAI {
+
 #define OPTION_MAXBUFLEN 1024
 
 #define OPTION_USECARTOONRENDERING_STR "use_cartoon_rendering"
@@ -422,3 +424,6 @@ public:
    /* setShadowMappingLightFirst: set first light flag */
    void setShadowMappingLightFirst(bool b);
 };
+
+} /* namespace */
+

@@ -58,7 +58,7 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
   m_manager = 0;
 }
 
-void QMAOpenJTalkPlugin::initialize(SceneController *controller)
+void QMAOpenJTalkPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
   QString base = QDir::searchPaths("mmdai").at(0);

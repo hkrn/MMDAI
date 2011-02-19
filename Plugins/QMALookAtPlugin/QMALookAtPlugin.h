@@ -54,7 +54,7 @@ public:
   ~QMALookAtPlugin();
 
 public slots:
-  void initialize(SceneController *controller);
+  void initialize(MMDAI::SceneController *controller);
   void start();
   void stop();
   void receiveCommand(const QString &command, const QStringList &arguments);
@@ -68,9 +68,9 @@ signals:
 
 private:
   bool m_enable;
-  SceneController *m_controller;
-  BoneController m_neckController[MAX_MODEL];
-  BoneController m_eyeController[MAX_MODEL];
+  MMDAI::SceneController *m_controller;
+  MMDAI::BoneController m_neckController[MAX_MODEL];
+  MMDAI::BoneController m_eyeController[MAX_MODEL];
 };
 
 #endif // QMALOOKATPLUGIN_H

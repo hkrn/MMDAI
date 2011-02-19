@@ -42,6 +42,8 @@
 
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* PMDConstraint::initialize: initialize constraint */
 void PMDConstraint::initialize()
 {
@@ -151,3 +153,6 @@ void PMDConstraint::joinWorld(btDiscreteDynamicsWorld *btWorld)
    btWorld->addConstraint(m_constraint);
    m_world = btWorld;
 }
+
+} /* namespace */
+

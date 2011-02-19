@@ -58,7 +58,7 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
   delete m_thread;
 }
 
-void QMAJuliusPlugin::initialize(SceneController *controller)
+void QMAJuliusPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
   QDir dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Julius";
@@ -134,11 +134,18 @@ void QMAJuliusPlugin::render()
 
 void QMAJuliusPlugin::startJuliusEngine()
 {
-  m_thread = new Julius_Thread(this, m_initializer);
-  m_thread->start();
-  if (QSystemTrayIcon::supportsMessages())
-    m_tray.showMessage(tr("Completed initialization of Julius"),
-                       tr("You can now talk with the models."));
+  if (m_initializer->getRecognizeEngine() != NULL) {
+    m_thread = new Julius_Thread(this, m_initializer);
+    m_thread->start();
+    if (QSystemTrayIcon::supportsMessages())
+      m_tray.showMessage(tr("Completed initialization of Julius"),
+                         tr("You can now talk with the models."));
+  }
+  else {
+    if (QSystemTrayIcon::supportsMessages())
+      m_tray.showMessage(tr("Failed initialization of Julius"),
+                         tr("Recognization feature is disabled."));
+  }
 }
 
 void QMAJuliusPlugin::sendCommand(const char *command, char *arguments)

@@ -52,6 +52,8 @@
 #include "MMDAI/LipSync.h"
 #include "MMDAI/TextRenderer.h"
 
+namespace MMDAI {
+
 /* PMDObject: object of PMD */
 class PMDObject
 {
@@ -221,6 +223,9 @@ public:
 
    /* renderError: render model error */
    void renderError(TextRenderer *text);
- };
+};
+
+} /* namespace */
 
 #endif // PMDOBJECT_H
+

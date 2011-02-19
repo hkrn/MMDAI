@@ -44,7 +44,7 @@
 #include <MMDME/PMDModelLoader.h>
 #include <MMDME/VMDLoader.h>
 
-class QMAModelLoader : public PMDModelLoader, public VMDLoader
+class QMAModelLoader : public MMDAI::PMDModelLoader, public MMDAI::VMDLoader
 {
 public:
   QMAModelLoader(const QString &system, const char *filename);
@@ -56,9 +56,9 @@ public:
   bool loadMotionData(unsigned char **ptr, size_t *size);
   void unloadMotionData(unsigned char *ptr);
 
-  bool loadImageTexture(PMDTexture *texture);
-  bool loadModelTexture(const char *name, PMDTexture *texture);
-  bool loadSystemTexture(int index, PMDTexture *texture);
+  bool loadImageTexture(MMDAI::PMDTexture *texture);
+  bool loadModelTexture(const char *name, MMDAI::PMDTexture *texture);
+  bool loadSystemTexture(int index, MMDAI::PMDTexture *texture);
   const char *getLocation() const;
 
 private:

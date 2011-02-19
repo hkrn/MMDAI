@@ -44,6 +44,8 @@
 #include "KinematicMotionState.h"
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* PMDRigidBody::initialize: initialize PMDRigidBody */
 void PMDRigidBody::initialize()
 {
@@ -241,3 +243,6 @@ btRigidBody *PMDRigidBody::getBody() const
 {
    return m_body;
 }
+
+} /* namespace */
+

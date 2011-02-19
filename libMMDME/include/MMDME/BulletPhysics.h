@@ -55,6 +55,8 @@
 
 #include "MMDME/Common.h"
 
+namespace MMDAI {
+
 /* BulletPhysics: Bullet Physics engine */
 class BulletPhysics
 {
@@ -101,6 +103,8 @@ public:
 
    void debugDisplay();
 };
+
+} /* namespace */
 
 #endif
 

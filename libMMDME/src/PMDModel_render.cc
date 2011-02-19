@@ -44,6 +44,8 @@
 
 #include "PMDInternal.h"
 
+namespace MMDAI {
+
 /* PMDModel::renderModel: render the model */
 /* needs multi-texture function on OpenGL: */
 /* texture unit 0: model texture */
@@ -337,3 +339,6 @@ void PMDModel::renderDebug()
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHTING);
 }
+
+} /* namespace */
+

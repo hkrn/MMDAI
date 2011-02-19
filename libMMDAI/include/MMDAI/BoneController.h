@@ -42,6 +42,8 @@
 #include <MMDME/PMDBone.h>
 #include <MMDME/PMDModel.h>
 
+namespace MMDAI {
+
 /* BoneController: control bone */
 class BoneController
 {
@@ -85,4 +87,6 @@ public:
 
    void update(btVector3 *pos, float deltaFrame);
 };
+
+} /* namespace */
 

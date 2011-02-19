@@ -39,6 +39,8 @@
 #ifndef MMDME_PTREE_H_
 #define MMDME_PTREE_H_
 
+namespace MMDAI {
+
 /* PTreeNode: data pointer tree */
 typedef struct _PTreeNode {
    union {
@@ -91,6 +93,8 @@ public:
    /* findNearest: return the nearest entry */
    void *findNearest(const char *str);
 };
+
+} /* namespace */
 
 #endif
 

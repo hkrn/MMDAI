@@ -40,23 +40,23 @@
 #include <MMDAI/PMDModelLoaderFactory.h>
 #include "QMAModelLoader.h"
 
-class QMAModelLoaderFactory : public PMDModelLoaderFactory
+class QMAModelLoaderFactory : public MMDAI::PMDModelLoaderFactory
 {
 public:
   QMAModelLoaderFactory() {}
   ~QMAModelLoaderFactory() {}
 
-  PMDModelLoader *createModelLoader(const char *filename);
+  MMDAI::PMDModelLoader *createModelLoader(const char *filename);
 
-  VMDLoader *createMotionLoader(const char *filename);
+  MMDAI::VMDLoader *createMotionLoader(const char *filename);
 
-  LipSyncLoader *createLipSyncLoader(const char *filename);
+  MMDAI::LipSyncLoader *createLipSyncLoader(const char *filename);
 
-  void releaseModelLoader(PMDModelLoader *loader);
+  void releaseModelLoader(MMDAI::PMDModelLoader *loader);
 
-  void releaseMotionLoader(VMDLoader *loader);
+  void releaseMotionLoader(MMDAI::VMDLoader *loader);
 
-  void releaseLipSyncLoader(LipSyncLoader *loader);
+  void releaseLipSyncLoader(MMDAI::LipSyncLoader *loader);
 
 private:
   QMAModelLoader *createLoader(const char *filename);

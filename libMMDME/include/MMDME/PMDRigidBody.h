@@ -45,6 +45,8 @@
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFile.h"
 
+namespace MMDAI {
+
 /* PMDRigidBody: rigid body */
 class PMDRigidBody
 {
@@ -96,6 +98,8 @@ public:
    /* getBody: get rigid body */
    btRigidBody *getBody() const;
 };
+
+} /* namespace */
 
 #endif
 

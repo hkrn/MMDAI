@@ -49,7 +49,8 @@
 #endif
 
 #include "MMDME/Common.h"
-#include <stdio.h>
+
+namespace MMDAI {
 
 /* PMDTexture: texture of PMD */
 class PMDTexture
@@ -95,6 +96,8 @@ public:
    /* release: free texture */
    void release();
 };
+
+} /* namespace */
 
 #endif
 

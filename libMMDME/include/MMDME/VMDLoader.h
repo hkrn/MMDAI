@@ -39,6 +39,8 @@
 
 #include <stdio.h>
 
+namespace MMDAI {
+
 class VMDLoader
 {
 public:
@@ -50,6 +52,8 @@ public:
 
    virtual const char *getLocation() const = 0;
 };
+
+} /* namespace */
 
 #endif
 

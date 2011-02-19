@@ -59,7 +59,7 @@ enum QMAWidgetZoomOption {
 };
 
 class QMAWidget : public QGLWidget,
-                  public SceneEventHandler
+                  public MMDAI::SceneEventHandler
 {
   Q_OBJECT
 
@@ -69,12 +69,12 @@ public:
 
   void handleEventMessage(const char *eventType, int argc, ...);
   QMAModelLoaderFactory *getModelLoaderFactory();
-  SceneController *getSceneController();
+  MMDAI::SceneController *getSceneController();
 
   void toggleDisplayBone();
   void toggleDisplayRigidBody();
   void sendKeyEvent(const QString &text);
-  void changeBaseMotion(PMDObject *object, VMDLoader *loader);
+  void changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader);
   void zoom(bool up, enum QMAWidgetZoomOption option);
 
 public slots:
@@ -82,7 +82,7 @@ public slots:
   void delegateEvent(const QString &type, const QStringList &arguments);
 
 signals:
-  void pluginInitialized(SceneController *);
+  void pluginInitialized(MMDAI::SceneController *);
   void pluginStarted();
   void pluginStopped();
   void pluginCommandPost(const QString&, const QStringList&);
@@ -118,8 +118,8 @@ private:
 
   QMAModelLoaderFactory m_factory;
   QMATimer m_timer;
-  SceneController *m_controller;
-  CommandParser m_parser;
+  MMDAI::SceneController *m_controller;
+  MMDAI::CommandParser m_parser;
 
   int m_x;
   int m_y;

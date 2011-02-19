@@ -45,6 +45,8 @@
 #include "MMDME/PMDFile.h"
 #include "MMDME/PMDRigidBody.h"
 
+namespace MMDAI {
+
 /* PMDConstrant: constraint of PMD */
 class PMDConstraint
 {
@@ -75,6 +77,8 @@ public:
    /* joinWorld: add the constraint to simulation world */
    void joinWorld(btDiscreteDynamicsWorld *btWorld);
 };
+
+} /* namespace */
 
 #endif
 

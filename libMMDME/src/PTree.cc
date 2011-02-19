@@ -41,6 +41,8 @@
 #include "MMDME/Common.h"
 #include "MMDME/PTree.h"
 
+namespace MMDAI {
+
 /* testBit: test a bit */
 static int testBit(const char *str, int slen, int bitplace)
 {
@@ -206,3 +208,6 @@ void * PTree::findNearest(const char *str)
    }
    return n->value.data;
 }
+
+} /* namespace */
+

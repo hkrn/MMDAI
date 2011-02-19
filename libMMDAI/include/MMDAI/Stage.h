@@ -47,6 +47,8 @@
 
 #include "MMDAI/TileTexture.h"
 
+namespace MMDAI {
+
 /* Stage: stage */
 class Stage
 {
@@ -115,4 +117,7 @@ private:
   MMDME_DISABLE_COPY_AND_ASSIGN(Stage);
 };
 
+} /* namespace */
+
 #endif // STAGE_H
+

@@ -40,6 +40,8 @@
 
 #include "MMDME/PMDTexture.h"
 
+namespace MMDAI {
+
 /* PMDTexture::initialize: initialize texture */
 void PMDTexture::initialize()
 {
@@ -146,4 +148,6 @@ void PMDTexture::release()
 {
    clear();
 }
+
+} /* namespace */
 

@@ -42,6 +42,8 @@
 
 #include "MMDAI/Option.h"
 
+namespace MMDAI {
+
 /* str2bool: convert string to boolean */
 static bool str2bool(char *str)
 {
@@ -773,3 +775,6 @@ void Option::setShadowMappingLightFirst(bool b)
 {
    m_shadowMapLightFirst = b;
 }
+
+} /* namespace */
+

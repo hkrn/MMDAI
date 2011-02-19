@@ -40,6 +40,8 @@
 
 #include "MMDME/MotionManager.h"
 
+namespace MMDAI {
+
 const float MotionManager::kDefaultLoopAtFrame = 0.0f;
 
 /* MotionPlayer_initialize: initialize MotionPlayer */
@@ -364,3 +366,6 @@ MotionPlayer * MotionManager::getMotionPlayerList() const
 {
    return m_playerList;
 }
+
+} /* namespace */
+

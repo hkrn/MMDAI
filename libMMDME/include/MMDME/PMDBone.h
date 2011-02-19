@@ -44,6 +44,8 @@
 #include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 
+namespace MMDAI {
+
 #define PMDBONE_KNEENAME "ひざ"
 
 #define PMDBONE_ADDITIONALROOTNAME  "全ての親", "両足オフセ", "右足オフセ", "左足オフセ"
@@ -164,4 +166,7 @@ public:
    void renderDebug();
 };
 
+} /* namespace */
+
 #endif
+

@@ -42,6 +42,8 @@
 
 #include <MMDME/MMDME.h>
 
+namespace MMDAI {
+
 #define MMDAGENT_MAXNUMCOMMAND    10
 #define MMDAGENT_MAXCOMMANDBUFLEN 1024
 #define MMDAGENT_MAXLIPSYNCBUFLEN MMDAGENT_MAXCOMMANDBUFLEN
@@ -525,3 +527,6 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   }
   return ret;
 }
+
+} /* namespace */
+

@@ -40,6 +40,8 @@
 
 #include "AlignedMotionState.h"
 
+namespace MMDAI {
+
 /* AlignedMotionState::AlignedMotionState: constructor */
 AlignedMotionState::AlignedMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone)
 {
@@ -72,3 +74,6 @@ void AlignedMotionState::setWorldTransform(const btTransform &worldTrans)
    m_graphicsWorldTrans.setOrigin(m_graphicsWorldTrans.getOrigin() + m_bone->getTransform()->getOrigin());
    m_graphicsWorldTrans.setBasis(bm);
 }
+
+} /* namespace */
+

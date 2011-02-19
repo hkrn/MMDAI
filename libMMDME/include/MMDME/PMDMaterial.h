@@ -44,6 +44,8 @@
 #include "MMDME/PMDModelLoader.h"
 #include "MMDME/PMDTexture.h"
 
+namespace MMDAI {
+
 /* PMDMaterial: material of PMD */
 class PMDMaterial
 {
@@ -122,6 +124,8 @@ public:
    /* getAdditionalTexture: get additional sphere map */
    PMDTexture *getAdditionalTexture();
 };
+
+} /* namespace */
 
 #endif
 

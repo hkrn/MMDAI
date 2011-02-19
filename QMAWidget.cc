@@ -40,7 +40,7 @@
 
 QMAWidget::QMAWidget(QWidget *parent)
   : QGLWidget(parent),
-  m_controller(new SceneController(this)),
+  m_controller(new MMDAI::SceneController(this)),
   m_parser(m_controller, &m_factory),
   m_x(0),
   m_y(0),
@@ -116,7 +116,7 @@ QMAModelLoaderFactory *QMAWidget::getModelLoaderFactory()
   return &m_factory;
 }
 
-SceneController *QMAWidget::getSceneController()
+MMDAI::SceneController *QMAWidget::getSceneController()
 {
   return m_controller;
 }
@@ -203,14 +203,14 @@ void QMAWidget::delegateCommand(const QString &command, const QStringList &argum
   }
 #endif
   int argc = arguments.count();
-  const char *cmd = strdup(command.toUtf8().constData());
+  const char *cmd = MMDAIStringClone(command.toUtf8().constData());
   const char **argv = static_cast<const char **>(calloc(sizeof(char *), argc));
   if (cmd != NULL) {
     if (argv != NULL) {
       bool err = false;
       for (int i = 0; i < argc; i++) {
         QString arg = arguments.at(i);
-        if ((argv[i] = strdup(arg.toUtf8().constData())) == NULL) {
+        if ((argv[i] = MMDAIStringClone(arg.toUtf8().constData())) == NULL) {
           err = true;
           break;
         }
@@ -221,7 +221,7 @@ void QMAWidget::delegateCommand(const QString &command, const QStringList &argum
         if (argv[i] != NULL)
           free(const_cast<char *>(argv[i]));
       }
-      free(argv);
+      MMDAIMemoryRelease(argv);
       if (!err)
         emit pluginCommandPost(command, arguments);
     }
@@ -237,9 +237,9 @@ void QMAWidget::delegateEvent(const QString &type, const QStringList &arguments)
 
 void QMAWidget::updateScene()
 {
+  MMDAI::Option *option = m_controller->getOption();
   const QRect rectangle(geometry());
   const QPoint point = mapFromGlobal(QCursor::pos());
-  Option *option = m_controller->getOption();
   double intervalFrame = m_timer.getInterval();
   double stepMax = option->getBulletFps();
   double stepFrame = 30.0 / stepMax;
@@ -271,7 +271,7 @@ void QMAWidget::updateScene()
     m_frameCue -= intervalFrame;
   int size = m_controller->countPMDObjects();
   for (int i = 0; i < size; i++) {
-    PMDObject *object = m_controller->getPMDObject(i);
+    MMDAI::PMDObject *object = m_controller->getPMDObject(i);
     if (object->isEnable()) {
       if (object->isMoving()) {
         m_movings[i] = 15.0;
@@ -285,9 +285,9 @@ void QMAWidget::updateScene()
   update();
 }
 
-void QMAWidget::changeBaseMotion(PMDObject *object, VMDLoader *loader)
+void QMAWidget::changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader)
 {
-  MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
+  MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
   for (; player != NULL; player = player->next) {
     if (player->active && strncmp(player->name, "base", 4) == 0) {
       m_controller->changeMotion(object, "base", loader);
@@ -374,7 +374,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
       m_controller->translate(fx, fy, fz);
     }
     else if (modifiers & Qt::ControlModifier) {
-      PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+      MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
       if (selectedObject != NULL) {
         btVector3 pos;
         m_controller->setHighlightPMDObject(selectedObject);
@@ -453,9 +453,9 @@ void QMAWidget::dropEvent(QDropEvent *event)
             if (modifiers & Qt::ShiftModifier) {
               /* insert a motion to the all objects */
               for (int i = 0; i < count; i++) {
-                PMDObject *object = m_controller->getPMDObject(i);
+                MMDAI::PMDObject *object = m_controller->getPMDObject(i);
                 if (object->isEnable() && object->allowMotionFileDrop()) {
-                  VMDLoader *loader = m_factory.createMotionLoader(filename);
+                  MMDAI::VMDLoader *loader = m_factory.createMotionLoader(filename);
                   m_controller->addMotion(object, loader);
                 }
               }
@@ -463,19 +463,19 @@ void QMAWidget::dropEvent(QDropEvent *event)
             else {
               /* change base motion to the all objects */
               for (int i = 0; i < count; i++) {
-                PMDObject *object = m_controller->getPMDObject(i);
+                MMDAI::PMDObject *object = m_controller->getPMDObject(i);
                 if (object->isEnable() && object->allowMotionFileDrop()) {
-                  VMDLoader *loader = m_factory.createMotionLoader(filename);
+                  MMDAI::VMDLoader *loader = m_factory.createMotionLoader(filename);
                   changeBaseMotion(object, loader);
                 }
               }
             }
           }
           else {
-            PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+            MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
             if (!m_doubleClicked || selectedObject == NULL || !selectedObject->allowMotionFileDrop()) {
               const QPoint pos = event->pos();
-              PMDObject *dropAllowed = NULL;
+              MMDAI::PMDObject *dropAllowed = NULL;
               m_controller->selectPMDObject(pos.x(), pos.y(), &dropAllowed);
               selectedObject = m_controller->getSelectedPMDObject();
               if (selectedObject == NULL)
@@ -484,12 +484,12 @@ void QMAWidget::dropEvent(QDropEvent *event)
             if (selectedObject != NULL) {
               if (modifiers & Qt::ShiftModifier) {
                 /* insert a motion to the model */
-                VMDLoader *loader = m_factory.createMotionLoader(filename);
+                MMDAI::VMDLoader *loader = m_factory.createMotionLoader(filename);
                 m_controller->addMotion(selectedObject, loader);
               }
               else {
                 /* change base motion to the model */
-                VMDLoader *loader = m_factory.createMotionLoader(filename);
+                MMDAI::VMDLoader *loader = m_factory.createMotionLoader(filename);
                 changeBaseMotion(selectedObject, loader);
               }
             }
@@ -498,28 +498,28 @@ void QMAWidget::dropEvent(QDropEvent *event)
         }
         else if (path.endsWith(".xpmd")) {
           /* stage */
-          PMDModelLoader *loader = m_factory.createModelLoader(filename);
+          MMDAI::PMDModelLoader *loader = m_factory.createModelLoader(filename);
           m_controller->loadStage(loader);
         }
         else if (path.endsWith(".pmd")) {
           /* model */
           if (modifiers & Qt::ControlModifier) {
-            PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
-            LipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
+            MMDAI::PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
+            MMDAI::LipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
             m_controller->addModel(modelLoader, lipSyncLoader);
             m_factory.releaseModelLoader(modelLoader);
             m_factory.releaseLipSyncLoader(lipSyncLoader);
           }
           else {
-            PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+            MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
             if (!m_doubleClicked || selectedObject == NULL) {
               const QPoint pos = event->pos();
               m_controller->selectPMDObject(pos.x(), pos.y());
               selectedObject = m_controller->getSelectedPMDObject();
             }
             if (selectedObject != NULL) {
-              PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
-              LipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
+              MMDAI::PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
+              MMDAI::LipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
               m_controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
               m_factory.releaseModelLoader(modelLoader);
               m_factory.releaseLipSyncLoader(lipSyncLoader);
@@ -531,7 +531,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
         }
         else if (path.endsWith(".bmp") || path.endsWith(".tga") || path.endsWith(".png")) {
           /* floor or background */
-          PMDModelLoader *loader = m_factory.createModelLoader(filename);
+          MMDAI::PMDModelLoader *loader = m_factory.createModelLoader(filename);
           if (modifiers & Qt::ControlModifier)
             m_controller->loadFloor(loader);
           else

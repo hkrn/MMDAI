@@ -39,6 +39,8 @@
 #ifndef MMDME_PMDFILE_H_
 #define MMDME_PMDFILE_H_
 
+namespace MMDAI {
+
 /* disable alignment in this header */
 #pragma pack(push, 1)
 
@@ -166,6 +168,8 @@ typedef struct _PMDFile_Constraint {
 
 /* restore alignment */
 #pragma pack(pop)
+
+} /* namespace */
 
 #endif
 
