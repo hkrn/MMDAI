@@ -44,8 +44,8 @@ LIBS += -lMMDAI -lMMDME -lBulletDynamics -lBulletCollision -lLinearMath
 
 unix:LIBS += -L/usr/local/lib
 unix:INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
-LIBS += -L$$(MMDME_LIBRARY_DIR) -L$$(MMDAI_LIBRARY_DIR) -L$$(BULLET_LIBRARY_DIR)
-INCLUDEPATH += $$(MMDME_INCLUDE_DIR) $$(MMDAI_INCLUDE_DIR) $$(BULLET_INCLUDE_DIR)
+win32:LIBS += -L$$(MMDME_LIBRARY_DIR) -L$$(MMDAI_LIBRARY_DIR) -L$$(BULLET_LIBRARY_DIR)
+win32:INCLUDEPATH += $$(MMDME_INCLUDE_DIR) $$(MMDAI_INCLUDE_DIR) $$(BULLET_INCLUDE_DIR)
 
 CONFIG(release, debug|release) {
     macx:CONFIG += x86 x86_64
