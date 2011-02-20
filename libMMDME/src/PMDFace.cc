@@ -113,6 +113,8 @@ void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
       m_vertex[i].pos.setZ(- m_vertex[i].pos.z());
    }
 #endif
+
+   MMDAILogDebug("name=\"%s\", type=%d, numVertex=%d", m_name, m_type, m_numVertex);
 }
 
 /* PMDFace::convertIndex: convert base-relative index to model vertex index */

@@ -129,6 +129,11 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
       }
    }
 
+   MMDAILogDebug("name=\"%s\", ambient=(%.2f, %.2f, %.2f), diffuse=(%.2f, %.2f, %.2f), specular=(%.2f, %.2f, %.2f), "
+       "alpha=%.2f, shiness=%.2f, numSurface=%d, toonID=%d, edge=%d", name, m_ambient[0], m_ambient[1], m_ambient[2],
+       m_diffuse[0], m_diffuse[1], m_diffuse[2], m_specular[0], m_specular[1], m_specular[2], m_alpha, m_shiness,
+       m_numSurface, m_toonID, m_edgeFlag);
+
    return true;
 }
 

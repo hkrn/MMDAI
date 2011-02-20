@@ -162,6 +162,8 @@ bool PMDBone::setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones,
 #else
    m_originPosition = btVector3(b->pos[0], b->pos[1], b->pos[2]);
 #endif
+   MMDAILogDebug("name=\"%s\", parentID=%d, childID=%d, type=%d, position=(%.2f, %.2f, %.2f)",
+       m_name, b->parentBoneID, b->childBoneID, m_type, b->pos[0], b->pos[1], b->pos[2]);
 
    /* reset current transform values */
    m_trans.setOrigin(m_originPosition);
