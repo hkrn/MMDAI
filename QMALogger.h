@@ -1,16 +1,17 @@
 #ifndef QMALOGGER_H
 #define QMALOGGER_H
 
+#include <QString>
+
 class QMALogger
 {
 public:
-  ~QMALogger();
-
   static void initialize();
-  QMALogger *getLogger();
+  static const QString &getText();
 
 private:
   QMALogger();
+  ~QMALogger();
 };
 
 #endif // QMALOGGER_H

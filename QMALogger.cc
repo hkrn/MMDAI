@@ -1,40 +1,61 @@
 #include "QMALogger.h"
 
-#include <QtGui>
+#include <QDateTime>
+#include <QString>
+#include <QStringList>
+#include <QTextCodec>
+#include <QTextStream>
 #include <MMDME/Common.h>
+
+namespace {
+  QString g_text;
+  QTextStream g_output(&g_text, QIODevice::WriteOnly);
+}
 
 static void LogHandler(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list ap)
 {
-  char buf[BUFSIZ];
-  const char *ls;
-  qvsnprintf(buf, sizeof(buf), format, ap);
   switch (level) {
   case MMDAILogLevelDebug:
-    ls = "[DEBUG]";
+    g_output << "[DEBUG]";
     break;
   case MMDAILogLevelInfo:
-    ls = "[INFO]";
+    g_output << "[INFO]";
     break;
   case MMDAILogLevelWarning:
-    ls = "[WARNING]";
+    g_output << "[WARNING]";
     break;
   case MMDAILogLevelError:
-    ls = "[ERROR]";
+    g_output << "[ERROR]";
     break;
   }
-  QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-  qDebug().nospace() << ls << " " << file << ":" << line << " " << codec->toUnicode(buf, strlen(buf));
-}
-
-QMALogger::QMALogger()
-{
-}
-
-QMALogger::~QMALogger()
-{
+  g_output << " " << QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss");
+  QString name = QString(file).split("/").last();
+  g_output << " " << name << ":" << line << " ";
+  char buf[BUFSIZ];
+  qvsnprintf(buf, sizeof(buf), format, ap);
+  if (name == "PMDBone.cc"
+      || name == "PMDFace.cc"
+      || name == "PMDModel_parse.cc"
+      || name == "PMDRigidBody.cc") {
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    g_output << codec->toUnicode(QByteArray(buf));
+  }
+  else {
+    g_output << buf;
+  }
+  g_output << "\n";
 }
 
 void QMALogger::initialize()
 {
-  MMDAILogSetHandler(LogHandler);
+  static volatile bool initialized = false;
+  if (!initialized) {
+    MMDAILogSetHandler(LogHandler);
+    initialized = true;
+  }
+}
+
+const QString &QMALogger::getText()
+{
+  return g_text;
 }

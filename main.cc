@@ -50,9 +50,15 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QMAWindow window;
+
+  QMALogger::initialize();
+  app.setOrganizationDomain("com.github.hkrn.mmdai");
+  app.setOrganizationName("MMDAI Project");
+  app.setApplicationName("QtMMDAI");
+  app.setApplicationVersion("0.4");
+
   QTranslator appTranslator, qtTranslator;
   const QString locale = QLocale::system().name();
-
   qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
   app.installTranslator(&qtTranslator);
 
@@ -76,12 +82,6 @@ int main(int argc, char *argv[])
 #endif
   app.installTranslator(&appTranslator);
 
-  QMALogger::initialize();
-
-  app.setOrganizationDomain("com.github.hkrn.mmdai");
-  app.setOrganizationName("MMDAI Project");
-  app.setApplicationName("QtMMDAI");
-  app.setApplicationVersion("0.4");
   window.show();
 
   return app.exec();
