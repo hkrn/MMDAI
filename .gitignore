@@ -12,6 +12,7 @@ release
 UpgradeLog.XML
 _UpgradeReport_Files
 Win32
+*.a
 *.build
 *-build-desktop
 *.dll*
