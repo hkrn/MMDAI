@@ -36,6 +36,9 @@
 
 #include "QMAWindow.h"
 
+#include "QMAWidget.h"
+#include "QMALogViewWidget.h"
+
 QMAWindow::QMAWindow(QWidget *parent) :
     QMainWindow(parent),
     m_isFullScreen(false),
@@ -43,6 +46,7 @@ QMAWindow::QMAWindow(QWidget *parent) :
 {
   m_settings = new QSettings(parent);
   m_widget = new QMAWidget(parent);
+  m_logView = new QMALogViewWidget(parent);
   setCentralWidget(m_widget);
 
   createActions();
@@ -61,6 +65,8 @@ QMAWindow::~QMAWindow()
 
 void QMAWindow::closeEvent(QCloseEvent *event)
 {
+  m_widget->close();
+  m_logView->close();
   writeSetting();
   event->accept();
 }
@@ -351,6 +357,16 @@ void QMAWindow::deleteSelectedObject()
     controller->deleteModel(selectedObject);
 }
 
+void QMAWindow::showLogWindow()
+{
+  QPoint pos = m_logView->pos();
+  if (pos.x() < 0)
+      pos.setX(0);
+  if (pos.y() < 0)
+      pos.setY(0);
+  m_logView->show();
+}
+
 void QMAWindow::about()
 {
   QMessageBox::about(this, tr("About QtMMDAI"),
@@ -442,6 +458,12 @@ void QMAWindow::createActions()
   action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
   connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
   m_setBackgroundAction = action;
+
+  action = new QAction(tr("Show log"), this);
+  action->setStatusTip(tr("Open log window"));
+  action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_L));
+  connect(action, SIGNAL(triggered()), this, SLOT(showLogWindow()));
+  m_showLogAction = action;
 
   action = new QAction(tr("Increase edge thin"), this);
   action->setStatusTip(tr("Increase light edge thin."));
@@ -607,6 +629,7 @@ void QMAWindow::createMenu()
   m_fileMenu->addAction(m_setStageAction);
   m_fileMenu->addAction(m_setFloorAction);
   m_fileMenu->addAction(m_setBackgroundAction);
+  m_fileMenu->addAction(m_showLogAction);
   m_fileMenu->addSeparator();
   m_fileMenu->addAction(m_exitAction);
 

@@ -34,110 +34,29 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef QMAWINDOW_H
-#define QMAWINDOW_H
+#ifndef QMALOGVIEWWIDGET_H
+#define QMALOGVIEWWIDGET_H
 
-#include <QMainWindow>
-#include <QSettings>
+#include <QWidget>
 
-class QMAWidget;
-class QMALogViewWidget;
+class QTextEdit;
 
-class QMAWindow : public QMainWindow
+class QMALogViewWidget : public QWidget
 {
   Q_OBJECT
-
 public:
-  explicit QMAWindow(QWidget *parent = 0);
-  ~QMAWindow();
+  explicit QMALogViewWidget(QWidget *parent = 0);
 
 protected:
   void closeEvent(QCloseEvent *event);
-  void keyPressEvent(QKeyEvent *event);
+  void showEvent(QShowEvent *event);
 
 private slots:
-  void insertMotionToAllModels();
-  void insertMotionToSelectedModel();
-  void addModel();
-  void setStage();
-  void setFloor();
-  void setBackground();
-  void rotateUp();
-  void rotateDown();
-  void rotateLeft();
-  void rotateRight();
-  void translateUp();
-  void translateDown();
-  void translateLeft();
-  void translateRight();
-  void toggleDisplayBone();
-  void toggleDisplayRigidBody();
-  void toggleFullScreen();
-  void increaseEdgeThin();
-  void decreaseEdgeThin();
-  void togglePhysicSimulation();
-  void toggleShadowMapping();
-  void toggleShadowMappingLightFirst();
-  void zoomIn();
-  void zoomOut();
-  void selectObject();
-  void changeSelectedObject();
-  void deleteSelectedObject();
-  void showLogWindow();
-  void about();
-  void receiveEvent(const QString &type, const QStringList &arguments);
+  void addLine(const QString &line);
 
 private:
-  void setEdgeThin(int n);
-  void createMenu();
-  void createActions();
-  void readSetting();
-  void writeSetting();
-
-  QSettings *m_settings;
-  QMAWidget *m_widget;
-  QMALogViewWidget *m_logView;
-  QMenu *m_fileMenu;
-  QMenu *m_sceneMenu;
-  QMenu *m_modelMenu;
-  QMenu *m_motionMenu;
-  QMenu *m_selectModelMenu;
-  QMenu *m_helpMenu;
-  QAction *m_insertMotionToAllAction;
-  QAction *m_insertMotionToSelectedAction;
-  QAction *m_addModelAction;
-  QAction *m_setStageAction;
-  QAction *m_setFloorAction;
-  QAction *m_setBackgroundAction;
-  QAction *m_showLogAction;
-  QAction *m_increaseEdgeThinAction;
-  QAction *m_decreaseEdgeThinAction;
-  QAction *m_toggleDisplayBoneAction;
-  QAction *m_toggleDisplayRigidBodyAction;
-  QAction *m_togglePhysicSimulationAction;
-  QAction *m_toggleShadowMappingAction;
-  QAction *m_toggleShadowMappingFirstAction;
-  QAction *m_toggleFullScreenAction;
-  QAction *m_zoomInAction;
-  QAction *m_zoomOutAction;
-  QAction *m_rotateUpAction;
-  QAction *m_rotateDownAction;
-  QAction *m_rotateLeftAction;
-  QAction *m_rotateRightAction;
-  QAction *m_translateUpAction;
-  QAction *m_translateDownAction;
-  QAction *m_translateLeftAction;
-  QAction *m_translateRightAction;
-  QAction *m_changeSelectedObjectAction;
-  QAction *m_deleteSelectedObjectAction;
-  QAction *m_exitAction;
-  QAction *m_aboutAction;
-  QAction *m_aboutQtAction;
-
-  bool m_isFullScreen;
-  bool m_enablePhysicsSimulation;
-
-  Q_DISABLE_COPY(QMAWindow);
+  QStringList m_contents;
+  QTextEdit *m_text;
 };
 
-#endif // QMAWINDOW_H
+#endif // QMALOGVIEWWIDGET_H
