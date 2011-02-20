@@ -45,14 +45,18 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   if (!file.open(QFile::ReadOnly | QFile::Unbuffered))
     return false;
   int s = file.size();
-  char *data = static_cast<char *>(calloc(1, s));
+  char *data = static_cast<char *>(MMDAIMemoryAllocate(s));
   if (data == NULL) {
+    MMDAILogWarnString("Failed allocating memory");
     file.close();
     return false;
   }
+  memset(data, 0, s);
   if (file.read(data, s) != s) {
+    QByteArray reason = file.errorString().toUtf8();
+    MMDAILogWarn("Failed reading a TGA file", reason.constData());
+    MMDAIMemoryRelease(data);
     file.close();
-    free(data);
     return false;
   }
   file.close();
@@ -60,7 +64,8 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   /* support only Full-color images */
   unsigned char type = *((unsigned char *) (data + 2));
   if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-    free(data);
+    MMDAILogWarnString("Loaded TGA is not full color");
+    MMDAIMemoryRelease(data);
     return false;
   }
   short width = *((short *) (data + 12));
@@ -74,9 +79,10 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   unsigned char *uncompressed = NULL;
   if (type == 10) {
     unsigned int datalen = width * height * stride;
-    uncompressed = (unsigned char *)malloc(datalen);
+    uncompressed = static_cast<unsigned char *>(MMDAIMemoryAllocate(datalen));
     if (uncompressed == NULL) {
-      free(data);
+      MMDAILogErrorString("Failed allocating memory");
+      MMDAIMemoryRelease(data);
       return false;
     }
     unsigned char *src = body;
@@ -102,11 +108,11 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   }
 
   /* prepare texture data area */
-  unsigned char *textureData = (unsigned char *) malloc(width * height * 4);
+  unsigned char *textureData = static_cast<unsigned char *>(MMDAIMemoryAllocate(width * height * 4));
   if (textureData == NULL) {
-    free(data);
-    if (uncompressed != NULL)
-      free(uncompressed);
+    MMDAILogErrorString("Failed allocating memory");
+    MMDAIMemoryRelease(data);
+    MMDAIMemoryRelease(uncompressed);
     return false;
   }
   unsigned char *ptmp = textureData;
@@ -133,9 +139,8 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
     }
   }
 
-  free(data);
-  if (uncompressed)
-    free(uncompressed);
+  MMDAIMemoryRelease(data);
+  MMDAIMemoryRelease(uncompressed);
 
   *ptr = textureData;
   size.setWidth(width);
@@ -147,6 +152,7 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
 static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
 {
   QImage image;
+  QByteArray filename = path.toUtf8();
   if (QFile::exists(path)) {
     bool isSphereMap = false;
     bool isSphereMapAdd = false;
@@ -164,7 +170,7 @@ static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
         free(ptr);
         return true;
       }
-      qWarning() << "Cannot load TGA image:" << path;
+      MMDAILogWarn("Cannot load TGA image: %s", filename.constData());
     }
     else if (image.load(path)) {
       int w = image.width();
@@ -179,11 +185,11 @@ static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
       return true;
     }
     else {
-      qWarning() << "Cannot load TGA image:" << path;
+      MMDAILogWarn("Cannot load TGA image: %s", filename.constData());
     }
   }
   else {
-    qDebug() << "Image not found:" << path;
+    MMDAILogDebug("Image not found: %s", filename.constData());
   }
   return false;
 }
@@ -203,7 +209,7 @@ QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
 QMAModelLoader::~QMAModelLoader()
 {
   if (m_file->isOpen()) {
-    qWarning() << "Leaked:" << m_file->fileName();
+    MMDAILogWarn("File is still open, it just leaked: %s", m_filename);
     m_file->close();
   }
   MMDAIMemoryRelease(const_cast<char *>(m_filename));
@@ -221,6 +227,13 @@ bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
       *size = s;
       return true;
     }
+    else {
+      QByteArray reason = m_file->errorString().toUtf8();
+      MMDAILogDebug("Failed mapping file: %s", reason.constData());
+    }
+  }
+  else {
+    MMDAILogDebug("Model is not found: %s", m_filename);
   }
   return false;
 }
