@@ -61,15 +61,25 @@ typedef void (MMDAILoggingHandler)(const char *file, int line, enum MMDAILogLeve
 void MMDAILogSetHandler(MMDAILoggingHandler *handler);
 void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const char *format, ...);
 
-/* FIXME: gcc own macro: ##__VA_ARGS__ */
+/* log with variable arguments */
 #define MMDAILogDebug(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), ##__VA_ARGS__)
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
 #define MMDAILogInfo(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), ##__VA_ARGS__)
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), __VA_ARGS__)
 #define MMDAILogWarn(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), ##__VA_ARGS__)
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), __VA_ARGS__)
 #define MMDAILogError(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format), ##__VA_ARGS__)
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format), __VA_ARGS__)
+
+/* log with single string */
+#define MMDAILogDebugString(format) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format))
+#define MMDAILogInfoString(format) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format))
+#define MMDAILogWarnString(format) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
+#define MMDAILogErrorString(format) \
+  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format))
 
 /* convert from/to radian */
 inline float MMDME_RAD(float a)
@@ -93,7 +103,12 @@ inline void MMDAIMemoryRelease(void *ptr)
     free(ptr);
 }
 
-inline int MMDAIStringLength(const char *str)
+/* disable _CRT_SECURE_NO_WARNINGS for MSVC */
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE 
+#endif
+
+inline size_t MMDAIStringLength(const char *str)
 {
   assert(str != NULL);
   return strlen(str);
@@ -102,10 +117,14 @@ inline int MMDAIStringLength(const char *str)
 inline char *MMDAIStringClone(const char *str)
 {
   assert(str != NULL);
+#if defined(WIN32)
+  return _strdup(str);
+#else
   return strdup(str);
+#endif
 }
 
-inline char *MMDAIStringCopy(char *dst, const char *src, int max)
+inline char *MMDAIStringCopy(char *dst, const char *src, size_t max)
 {
   assert(dst != NULL && src != NULL && max != 0);
   return strncpy(dst, src, max);
@@ -117,7 +136,7 @@ inline bool MMDAIStringEquals(const char *s1, const char *s2)
   return strcmp(s1, s2) == 0;
 }
 
-inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, int max)
+inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, size_t max)
 {
   assert(s1 != NULL && s2 != NULL && max != 0);
   return strncmp(s1, s2, max) == 0;
@@ -126,8 +145,15 @@ inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, int max)
 inline char *MMDAIStringGetToken(char *str, const char *delim, char **ptr)
 {
   assert(delim != NULL);
+#if defined(WIN32)
+  (void)ptr;
+  return strtok(str, delim);
+#else
   return strtok_r(str, delim, ptr);
+#endif
 }
+
+#undef _CRT_SECURE_NO_DEPRECATE
 
 inline int MMDAIStringFormat(char *str, size_t n, const char *format, ...)
 {
@@ -137,6 +163,17 @@ inline int MMDAIStringFormat(char *str, size_t n, const char *format, ...)
   int len = vsnprintf(str, n, format, ap);
   va_end(ap);
   return len;
+}
+
+inline double MMDAIStringToDouble(const char *str)
+{
+  assert(str != NULL);
+  return atof(str);
+}
+
+inline float MMDAIStringToFloat(const char *str)
+{
+  return (float) MMDAIStringToDouble(str);
 }
 
 #define MMDME_DISABLE_COPY_AND_ASSIGN(TypeName) \
