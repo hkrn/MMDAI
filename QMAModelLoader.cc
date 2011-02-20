@@ -197,7 +197,7 @@ QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
     m_file = new QFile(path);
   else
     m_file = new QFile("mmdai:" + path);
-  m_filename = strdup(m_file->fileName().toUtf8().constData());
+  m_filename = MMDAIStringClone(m_file->fileName().toUtf8().constData());
 }
 
 QMAModelLoader::~QMAModelLoader()
@@ -206,7 +206,7 @@ QMAModelLoader::~QMAModelLoader()
     qWarning() << "Leaked:" << m_file->fileName();
     m_file->close();
   }
-  free(const_cast<char *>(m_filename));
+  MMDAIMemoryRelease(const_cast<char *>(m_filename));
   delete m_file;
 }
 
