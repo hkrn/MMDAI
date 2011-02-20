@@ -322,13 +322,12 @@ void PMDObject::setLightForToon(btVector3 * v)
 }
 
 /* PMDObject::updateModel: update model position of root bone */
-bool PMDObject::updateModelRootOffset(float fps)
+bool PMDObject::updateModelRootOffset(double fps)
 {
-  bool ret = false;
   PMDBone *b;
   btVector3 pos, pos2;
-  float diff;
-  float maxStep;
+  double diff = 0, maxStep = 0;
+  bool ret = false;
 
   if (m_isEnable == false) return false;
 
@@ -371,14 +370,13 @@ bool PMDObject::updateModelRootOffset(float fps)
 }
 
 /* PMDObject::updateModelRootRotation: update model rotation of root bone */
-bool PMDObject::updateModelRootRotation(float fps)
+bool PMDObject::updateModelRootRotation(double fps)
 {
   btQuaternion tmpRot;
   PMDBone *b;
   bool ret = false;
   btQuaternion r;
-  float diff;
-  float maxStep;
+  double diff = 0, maxStep = 0;
 
   if (m_isEnable == false) return false;
 

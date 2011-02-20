@@ -149,7 +149,7 @@ bool SceneController::loadFloor(PMDModelLoader *loader)
   if (fileName == NULL)
     return false;
   if (m_stage.loadFloor(loader, &m_bullet) == false) {
-    MMDAILogInfo("Error: setFloor: cannot set floor %s.", fileName);
+    MMDAILogWarn("cannot set floor %s.", fileName);
     return false;
   }
 
@@ -167,7 +167,7 @@ bool SceneController::loadBackground(PMDModelLoader *loader)
   if (fileName == NULL)
     return false;
   if (m_stage.loadBackground(loader, &m_bullet) == false) {
-    MMDAILogInfo("Error: setBackground: cannot set background %s.", fileName);
+    MMDAILogWarn("cannot set background %s.", fileName);
     return false;
   }
 
@@ -185,7 +185,7 @@ bool SceneController::loadStage(PMDModelLoader *loader)
   if (fileName == NULL)
     return false;
   if (m_stage.loadStagePMD(loader, &m_bullet) == false) {
-    MMDAILogInfo("Error: setStage: cannot set stage %s.", fileName);
+    MMDAILogWarn("cannot set stage %s.", fileName);
     return false;
   }
 
@@ -264,7 +264,7 @@ bool SceneController::addMotion(PMDObject *object,
   /* motion file */
   vmd = m_motion.loadFromLoader(loader);
   if (vmd == NULL) {
-    MMDAILogInfo("! Error: addMotion: failed to load %s.", loader->getLocation());
+    MMDAILogWarn("addMotion: failed to load %s.", loader->getLocation());
     return false;
   }
 
@@ -275,7 +275,7 @@ bool SceneController::addMotion(PMDObject *object,
     motionPlayer = object->getMotionManager()->getMotionPlayerList();
     for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
       if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
-        MMDAILogInfo("! Error: addMotion: motion alias \"%s\" is already used.", name);
+        MMDAILogWarn("addMotion: motion alias \"%s\" is already used.", name);
         MMDAIMemoryRelease(name);
         return false;
       }
@@ -323,14 +323,14 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, V
 
   /* check */
   if (!motionAlias) {
-    MMDAILogInfo("! Error: changeMotion: not specified %s.", motionAlias);
+    MMDAILogWarn("changeMotion: not specified %s.", motionAlias);
     return false;
   }
 
   /* motion file */
   vmd = m_motion.loadFromLoader(loader);
   if (vmd == NULL) {
-    MMDAILogInfo("! Error: changeMotion: failed to load %s.", loader->getLocation());
+    MMDAILogWarn("changeMotion: failed to load %s.", loader->getLocation());
     return false;
   }
 
@@ -343,14 +343,14 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, V
     }
   }
   if (old == NULL) {
-    MMDAILogInfo("! Error: changeMotion: motion alias \"%s\"is not found.", motionAlias);
+    MMDAILogWarn("changeMotion: motion alias \"%s\"is not found.", motionAlias);
     m_motion.unload(vmd);
     return false;
   }
 
   /* change motion */
   if (object->swapMotion(vmd, motionAlias) == false) {
-    MMDAILogInfo("! Error: changeMotion: motion alias \"%s\"is not found.", motionAlias);
+    MMDAILogWarn("changeMotion: motion alias \"%s\"is not found.", motionAlias);
     m_motion.unload(vmd);
     return false;
   }
@@ -369,7 +369,7 @@ bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
 {
   /* delete motion */
   if (!object->getMotionManager()->deleteMotion(motionAlias)) {
-    MMDAILogInfo("! Error: deleteMotion: motion alias \"%s\"is not found.", motionAlias);
+    MMDAILogWarn("deleteMotion: motion alias \"%s\"is not found.", motionAlias);
     return false;
   }
 
@@ -412,7 +412,7 @@ bool SceneController::addModel(const char *modelAlias,
   if (baseModelAlias) {
     assignObject = findPMDObject(baseModelAlias);
     if (assignObject == NULL) {
-      MMDAILogInfo("!Error: addModel: model alias \"%s\" is not found", baseModelAlias);
+      MMDAILogWarn("model alias \"%s\" is not found", baseModelAlias);
       return false;
     }
     PMDModel *model = assignObject->getPMDModel();
@@ -423,9 +423,9 @@ bool SceneController::addModel(const char *modelAlias,
     }
     if (assignBone == NULL) {
       if (baseBoneName)
-        MMDAILogInfo("!Error: addModel: bone \"%s\" is not exist on %s.", baseBoneName, baseModelAlias);
+        MMDAILogWarn("bone \"%s\" is not exist on %s.", baseBoneName, baseModelAlias);
       else
-        MMDAILogInfo("!Error: addModel: cannot assign to bone of %s.", baseModelAlias);
+        MMDAILogWarn("cannot assign to bone of %s.", baseModelAlias);
       return false;
     }
   }
@@ -433,7 +433,7 @@ bool SceneController::addModel(const char *modelAlias,
   /* ID */
   newObject = allocatePMDObject();
   if (newObject == NULL) {
-    MMDAILogInfo("! Error: addModel: too many models.");
+    MMDAILogWarnString("addModel: too many models.");
     return false;
   }
 
@@ -442,7 +442,7 @@ bool SceneController::addModel(const char *modelAlias,
     /* check the same alias */
     name = MMDAIStringClone(modelAlias);
     if (findPMDObject(name) != NULL) {
-      MMDAILogInfo("! Error: addModel: model alias \"%s\" is already used.", name);
+      MMDAILogWarn("addModel: model alias \"%s\" is already used.", name);
       MMDAIMemoryRelease(name);
       return false;
     }
@@ -473,7 +473,7 @@ bool SceneController::addModel(const char *modelAlias,
                        m_option.getUseCartoonRendering(),
                        m_option.getCartoonEdgeWidth(),
                        &light)) {
-    MMDAILogInfo("! Error: addModel: failed to load %s.", modelLoader->getLocation());
+    MMDAILogWarn("addModel: failed to load %s.", modelLoader->getLocation());
     newObject->release();
     MMDAIMemoryRelease(name);
     return false;
@@ -515,7 +515,7 @@ bool SceneController::changeModel(PMDObject *object,
                     m_option.getUseCartoonRendering(),
                     m_option.getCartoonEdgeWidth(),
                     &light)) {
-    MMDAILogInfo("! Error: changeModel: failed to load model %s.", modelLoader->getLocation());
+    MMDAILogWarn("changeModel: failed to load model %s.", modelLoader->getLocation());
     return false;
   }
 
@@ -783,7 +783,7 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
 
   /* create motion */
   if(object->createLipSyncMotion(seq, &vmdData, &vmdSize) == false) {
-    MMDAILogInfo("! Error: startLipSync: cannot create lip motion.");
+    MMDAILogWarnString("cannot create lip motion.");
     return false;
   }
   vmd = m_motion.loadFromData(vmdData, vmdSize);
@@ -801,13 +801,13 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
   /* start lip sync */
   if (found) {
     if (!object->swapMotion(vmd, name)) {
-      MMDAILogInfo("! Error: startLipSync: cannot start lip sync.");
+      MMDAILogWarnString("cannot start lip sync.");
       m_motion.unload(vmd);
       return false;
     }
   } else {
     if (!object->startMotion(vmd, name, false, true, true, true)) {
-      MMDAILogInfo("! Error: startLipSync: cannot start lip sync.");
+      MMDAILogWarnString("cannot start lip sync.");
       m_motion.unload(vmd);
       return false;
     }
@@ -824,7 +824,7 @@ bool SceneController::stopLipSync(PMDObject *object)
 {
   /* stop lip sync */
   if (object->getMotionManager()->deleteMotion(LipSync::getMotionName()) == false) {
-    MMDAILogInfo("! Error: stopLipSync: lipsync motion not found");
+    MMDAILogWarnString("lipsync motion not found");
     return false;
   }
 

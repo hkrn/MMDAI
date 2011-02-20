@@ -149,21 +149,15 @@ bool LipSync::load(LipSyncLoader *loader)
 /* LipSync::createMotion: create motion from phoneme sequence */
 bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *rawSize)
 {
-   int i, j, k;
-   int len;
-   char *buf, *p, *save;
+   LipKeyFrame *head = NULL, *tail = NULL, *tmp1 = NULL, *tmp2 = NULL;
+   VMDFile_Header *header = NULL;
+   VMDFile_FaceFrame *face = NULL;
+   int i = 0, j = 0, k = 0, len = 0, totalNumKey = 0;
+   char *buf = NULL, *p = NULL, *save = NULL;
    bool ret = false;
-
-   LipKeyFrame *head, *tail, *tmp1, *tmp2;
-   float f, diff;
-
-   int totalNumKey;
-   unsigned int currentFrame;
-   unsigned char *data;
-   VMDFile_Header *header;
-   unsigned int *numBoneKeyFrames;
-   unsigned int *numFaceKeyFrames;
-   VMDFile_FaceFrame *face;
+   double f = 0.0f, diff = 0.0f;
+   unsigned int currentFrame = 0, *numBoneKeyFrames = NULL, *numFaceKeyFrames = NULL;
+   unsigned char *data = NULL;
 
    /* check */
    if(str == NULL || m_numMotion <= 0 || m_numPhone <= 0)
@@ -175,9 +169,6 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
 
    /* get phone index and duration */
    buf = MMDAIStringClone(str);
-   head = NULL;
-   tail = NULL;
-   diff = 0.0f;
    for(i = 0, k = 0, p = MMDAIStringGetToken(buf, ",", &save); p; i++, p = MMDAIStringGetToken(NULL, ",", &save)) {
       if(i % 2 == 0) {
          for(j = 0; j < m_numPhone; j++) {
@@ -193,7 +184,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
          if (tmp1 == NULL)
            goto finally;
          tmp1->phone = k;
-         f = 0.03f * atof(p) + diff; /* convert ms to frame */
+         f = 0.03f * MMDAIStringToDouble(p) + diff; /* convert ms to frame */
          tmp1->duration = (int) (f + 0.5);
          if(tmp1->duration < 1)
             tmp1->duration = 1;
@@ -247,8 +238,8 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
 
    /* create memories */
    (*rawSize) = sizeof(VMDFile_Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(VMDFile_FaceFrame) * totalNumKey;
-   i = (*rawSize);
-   i = sizeof(unsigned char) * (*rawSize);
+   size_t s = (*rawSize);
+   s = sizeof(unsigned char) * (*rawSize);
    (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(i));
    if (*rawData == NULL)
      goto finally;

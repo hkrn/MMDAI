@@ -51,10 +51,10 @@ namespace MMDAI {
 /* arg2floatArray: parse float array from string */
 static bool arg2floatArray(float *dst, int len, const char *arg)
 {
-  int n = 0, allocated = 0;
+  int n = 0;
   char *buf = NULL, *p = NULL, *psave = NULL;
 
-  allocated = sizeof(char) * MMDAIStringLength(arg);
+  size_t allocated = sizeof(char) * MMDAIStringLength(arg);
   buf = static_cast<char *>(MMDAIMemoryAllocate(allocated + 1));
   if (buf == NULL)
     return false;
@@ -63,7 +63,7 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
   n = 0;
   for (p = MMDAIStringGetToken(buf, "(,)", &psave); p != NULL ; p = MMDAIStringGetToken(NULL, "(,)", &psave)) {
     if (n < len)
-      dst[n] = atof(p);
+      dst[n] = MMDAIStringToFloat(p);
     n++;
   }
   MMDAIMemoryRelease(buf);
@@ -114,25 +114,25 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   PMDModelLoader *pmd = NULL;
   LipSyncLoader *lip = NULL;
   VMDLoader *vmd = NULL;
-  float tmpFloat = 0.0f, float3[3] = { 0.0f, 0.0f, 0.0f };
+  float float3[3] = { 0.0f, 0.0f, 0.0f };
   bool ret = true;
   btVector3 pos;
   btQuaternion rot;
 
   /* divide string into arguments */
   if (argc >= MMDAGENT_MAXNUMCOMMAND) {
-    MMDAILogInfo("! Error: too many argument in command %s: %d", command, argc);
+    MMDAILogWarn("too many argument in command %s: %d", command, argc);
     return false;
   }
 
   if (MMDAIStringEquals(command, SceneEventHandler::kModelAddCommand)) {
     if (argc < 2 || argc > 6) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     if (argc >= 3) {
       if (arg2pos(&pos, argv[2]) == false) {
-        MMDAILogInfo("! Error: %s: not a position string: %s", command, argv[2]);
+        MMDAILogWarn("%s: not a position string: %s", command, argv[2]);
         return false;
       }
     }
@@ -141,7 +141,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     }
     if (argc >= 4) {
       if (arg2rot(&rot, argv[3]) == false) {
-        MMDAILogInfo("! Error: %s: not a rotation string: %s", command, argv[3]);
+        MMDAILogWarn("%s: not a rotation string: %s", command, argv[3]);
         return false;
       }
     }
@@ -158,7 +158,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   else if (MMDAIStringEquals(command, SceneEventHandler::kModelChangeCommand)) {
     /* change model */
     if (argc != 2) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -170,14 +170,14 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_factory->releaseLipSyncLoader(lip);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kModelDeleteCommand)) {
     /* delete model */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -185,7 +185,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_controller->deleteModel(object);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
@@ -196,7 +196,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
     bool enableSmooth = true; /* enableSmooth */
     bool enableRepos = true; /* enableRePos */
     if (argc < 3 || argc > 7) {
-      MMDAILogInfo("! Error: %s: too few arguments", command);
+      MMDAILogWarn("%s: too few arguments", command);
       return false;
     }
     if (argc >= 4) {
@@ -207,7 +207,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         full = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 4th argument should be \"FULL\" or \"PART\"", command);
+        MMDAILogWarn("%s: 4th argument should be \"FULL\" or \"PART\"", command);
         return false;
       }
     }
@@ -219,7 +219,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         once = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 5th argument should be \"ONCE\" or \"LOOP\"", command);
+        MMDAILogWarn("%s: 5th argument should be \"ONCE\" or \"LOOP\"", command);
         return false;
       }
     }
@@ -231,7 +231,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         enableSmooth = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 6th argument should be \"ON\" or \"OFF\"", command);
+        MMDAILogWarn("%s: 6th argument should be \"ON\" or \"OFF\"", command);
         return false;
       }
     }
@@ -243,7 +243,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         enableRepos = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 7th argument should be \"ON\" or \"OFF\"", command);
+        MMDAILogWarn("%s: 7th argument should be \"ON\" or \"OFF\"", command);
         return false;
       }
     }
@@ -254,14 +254,14 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_factory->releaseMotionLoader(vmd);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kMotionChangeCommand)) {
     /* change motion */
     if (argc != 3) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -271,13 +271,13 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_factory->releaseMotionLoader(vmd);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   } else if (MMDAIStringEquals(command, SceneEventHandler::kMotionDeleteCommand)) {
     /* delete motion */
     if (argc != 2) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -285,20 +285,20 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return m_controller->deleteMotion(object, argv[1]);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kMoveStartCommand)) {
     /* start moving */
     bool local = false;
-    tmpFloat = -1.0;
+    float speed = -1.0;
     if (argc < 2 || argc > 4) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     if (arg2pos(&pos, argv[1]) == false) {
-      MMDAILogInfo("! Error: %s: not a position string: %s", command, argv[1]);
+      MMDAILogWarn("%s: not a position string: %s", command, argv[1]);
       return false;
     }
     if (argc >= 3) {
@@ -309,25 +309,25 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         local = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
+        MMDAILogWarn("%s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
         return false;
       }
     }
     if (argc >= 4)
-      tmpFloat = atof(argv[3]);
+      speed = MMDAIStringToFloat(argv[3]);
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
-      m_controller->startMove(object, &pos, local, tmpFloat);
+      m_controller->startMove(object, &pos, local, speed);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kMoveStopCommand)) {
     /* stop moving */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -335,20 +335,20 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_controller->stopMove(object);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kRotateStartCommand)) {
     /* start rotation */
     bool local = false;
-    tmpFloat = -1.0;
+    float speed = -1.0;
     if (argc < 2 || argc > 4) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     if (arg2rot(&rot, argv[1]) == false) {
-      MMDAILogInfo("! Error: %s: not a rotation string: %s", command, argv[1]);
+      MMDAILogWarn("%s: not a rotation string: %s", command, argv[1]);
       return false;
     }
     if (argc >= 3) {
@@ -359,25 +359,25 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         local = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
+        MMDAILogWarn("%s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
         return false;
       }
     }
     if (argc >= 4)
-      tmpFloat = (float) atof(argv[3]);
+      speed = MMDAIStringToFloat(argv[3]);
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
-      m_controller->startRotation(object, &rot, local, tmpFloat);
+      m_controller->startRotation(object, &rot, local, speed);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kRotateStopCommand)) {
     /* stop rotation */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -385,20 +385,20 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_controller->stopRotation(object);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kTurnStartCommand)) {
     /* turn start */
     bool local = false;
-    tmpFloat = -1.0;
+    float speed = -1.0;
     if (argc < 2 || argc > 4) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     if (arg2pos(&pos, argv[1]) == false) {
-      MMDAILogInfo("! Error: %s: not a position string: %s", command, argv[1]);
+      MMDAILogWarn("%s: not a position string: %s", command, argv[1]);
       return false;
     }
     if (argc >= 3) {
@@ -409,25 +409,25 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
         local = false;
       }
       else {
-        MMDAILogInfo("! Error: %s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
+        MMDAILogWarn("%s: 3rd argument should be \"GLOBAL\" or \"LOCAL\"", command);
         return false;
       }
     }
     if (argc >= 4)
-      tmpFloat = atof(argv[3]);
+      speed = MMDAIStringToFloat(argv[3]);
     object = m_controller->findPMDObject(argv[0]);
     if (object != NULL) {
-      m_controller->startTurn(object, &pos, local, tmpFloat);
+      m_controller->startTurn(object, &pos, local, speed);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kTurnStopCommand)) {
     /* stop turn */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -435,14 +435,14 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       m_controller->stopTurn(object);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kStageCommand)) {
     /* change stage */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     /* pmd or bitmap */
@@ -468,11 +468,11 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   else if (MMDAIStringEquals(command, SceneEventHandler::kLightColorCommand)) {
     /* change light color */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     if (arg2floatArray(float3, 3, argv[0]) == false) {
-      MMDAILogInfo("! Error: %s: not \"R,G,B\" value: %s", command, argv[0]);
+      MMDAILogWarn("%s: not \"R,G,B\" value: %s", command, argv[0]);
       return false;
     }
     m_controller->changeLightColor(float3[0], float3[1], float3[2]);
@@ -480,11 +480,11 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   else if (MMDAIStringEquals(command, SceneEventHandler::kLightDirectionCommand)) {
     /* change light direction */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     if (arg2floatArray(float3, 3, argv[0]) == false) {
-      MMDAILogInfo("! Error: %s: not \"x,y,z\" value: %s", command, argv[0]);
+      MMDAILogWarn("%s: not \"x,y,z\" value: %s", command, argv[0]);
       return false;
     }
     m_controller->changeLightDirection(float3[0], float3[1], float3[2]);
@@ -492,7 +492,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
   else if (MMDAIStringEquals(command, SceneEventHandler::kLipSyncStartCommand)) {
     /* start lip sync */
     if (argc != 2) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -500,14 +500,14 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return m_controller->startLipSync(object, argv[1]);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }
   else if (MMDAIStringEquals(command, SceneEventHandler::kLipSyncStopCommand)) {
     /* stop lip sync */
     if (argc != 1) {
-      MMDAILogInfo("! Error: %s: wrong number of arguments", command);
+      MMDAILogWarn("%s: wrong number of arguments", command);
       return false;
     }
     object = m_controller->findPMDObject(argv[0]);
@@ -515,7 +515,7 @@ bool CommandParser::parse(const char *command, const char **argv, int argc)
       return m_controller->stopLipSync(object);
     }
     else {
-      MMDAILogInfo("! Error: specified PMD object not found: %s", argv[0]);
+      MMDAILogWarn("specified PMD object not found: %s", argv[0]);
       return false;
     }
   }

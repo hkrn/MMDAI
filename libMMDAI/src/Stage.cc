@@ -205,7 +205,7 @@ bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
       m_hasPMD = false;
     }
   } else {
-    MMDAILogInfo("! Error: Stage: unable to load floor \"%s\"", loader->getLocation());
+    MMDAILogWarn("unable to load floor \"%s\"", loader->getLocation());
   }
 
   return ret;
@@ -226,7 +226,7 @@ bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
       m_hasPMD = false;
     }
   } else {
-    MMDAILogInfo("! Error: Stage: unable to load background \"%s\"", loader->getLocation());
+    MMDAILogWarn("unable to load background \"%s\"", loader->getLocation());
   }
   return ret;
 }
@@ -249,7 +249,7 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
       m_listIndexPMDValid = false;
     }
   } else {
-    MMDAILogInfo("! Error: Stage: unable to load stage PMD \"%s\"", loader->getLocation());
+    MMDAILogWarn("unable to load stage PMD \"%s\"", loader->getLocation());
   }
 
   return ret;
