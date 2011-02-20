@@ -34,7 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QtGui/QApplication>
+#include <QApplication>
+#include <QDir>
+#include <QLibraryInfo>
+#include <QLocale>
+#include <QTranslator>
+
 #include "QMALogger.h"
 #include "QMAWindow.h"
 
@@ -49,9 +54,9 @@ Q_IMPORT_PLUGIN(qma_vimanager_plugin);
 int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
+  QMALogger::initialize();
   QMAWindow window;
 
-  QMALogger::initialize();
   app.setOrganizationDomain("com.github.hkrn.mmdai");
   app.setOrganizationName("MMDAI Project");
   app.setApplicationName("QtMMDAI");
