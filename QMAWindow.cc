@@ -85,9 +85,10 @@ void QMAWindow::insertMotionToAllModels()
   if (!fileName.isEmpty()) {
     QDir dir(fileName);
     dir.cdUp();
+    QByteArray encodedPath = QFile::encodeName(fileName);
+    const char *filename = encodedPath.constData();
     m_settings->value("window/lastVMDDirectory", dir.absolutePath());
     MMDAI::SceneController *controller = m_widget->getSceneController();
-    const char *filename = fileName.toUtf8().constData();
     int count = controller->countPMDObjects();
     for (int i = 0; i < count; i++) {
       MMDAI::PMDObject *object = controller->getPMDObject(i);
@@ -110,7 +111,9 @@ void QMAWindow::insertMotionToSelectedModel()
     MMDAI::SceneController *controller = m_widget->getSceneController();
     MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
     if (selectedObject != NULL) {
-      MMDAI::VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(fileName.toUtf8().constData());
+      QByteArray encodedPath = QFile::encodeName(fileName);
+      const char *filename = encodedPath.constData();
+      MMDAI::VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
       controller->addMotion(selectedObject, loader);
     }
   }
@@ -123,8 +126,9 @@ void QMAWindow::addModel()
   if (!fileName.isEmpty()) {
     QDir dir(fileName);
     dir.cdUp();
+    QByteArray encodedPath = QFile::encodeName(fileName);
+    const char *filename = encodedPath.constData();
     m_settings->value("window/lastPMDDirectory", dir.absolutePath());
-    const char *filename = fileName.toUtf8().constData();
     MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
     MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
     MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
@@ -141,8 +145,10 @@ void QMAWindow::setStage()
   if (!fileName.isEmpty()) {
     QDir dir(fileName);
     dir.cdUp();
+    QByteArray encodedPath = QFile::encodeName(fileName);
+    const char *filename = encodedPath.constData();
     m_settings->value("window/lastStageDirectory", dir.absolutePath());
-    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
+    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
     m_widget->getSceneController()->loadStage(loader);
   }
 }
@@ -154,8 +160,10 @@ void QMAWindow::setFloor()
   if (!fileName.isEmpty()) {
     QDir dir(fileName);
     dir.cdUp();
+    QByteArray encodedPath = QFile::encodeName(fileName);
+    const char *filename = encodedPath.constData();
     m_settings->value("window/lastFloorDirectory", dir.absolutePath());
-    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
+    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
     m_widget->getSceneController()->loadFloor(loader);
   }
 }
@@ -167,8 +175,10 @@ void QMAWindow::setBackground()
   if (!fileName.isEmpty()) {
     QDir dir(fileName);
     dir.cdUp();
+    QByteArray encodedPath = QFile::encodeName(fileName);
+    const char *filename = encodedPath.constData();
     m_settings->value("window/lastBackgroundDirectory", dir.absolutePath());
-    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(fileName.toUtf8().constData());
+    MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
     m_widget->getSceneController()->loadBackground(loader);
   }
 }
@@ -409,25 +419,25 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToSelectedModel()));
   m_insertMotionToSelectedAction = action;
 
-  action = new QAction(tr("Add Model"), this);
+  action = new QAction(tr("Add model"), this);
   action->setStatusTip(tr("Add a PMD model to the scene (Maximum is 20)."));
   action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
   connect(action, SIGNAL(triggered()), this, SLOT(addModel()));
   m_addModelAction = action;
 
-  action = new QAction(tr("Set Stage"), this);
+  action = new QAction(tr("Set stage"), this);
   action->setStatusTip(tr("Set or replace a stage to the scene."));
   action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_S));
   connect(action, SIGNAL(triggered()), this, SLOT(setStage()));
   m_setStageAction = action;
 
-  action = new QAction(tr("Set Floor"), this);
+  action = new QAction(tr("Set floor"), this);
   action->setStatusTip(tr("Set or replace a floor to the scene."));
   action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F));
   connect(action, SIGNAL(triggered()), this, SLOT(setFloor()));
   m_setFloorAction = action;
 
-  action = new QAction(tr("Set Background"), this);
+  action = new QAction(tr("Set background"), this);
   action->setStatusTip(tr("Set or replace a floor to the scene."));
   action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
   connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
