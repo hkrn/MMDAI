@@ -445,7 +445,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
         const QString path = url.toLocalFile();
         const QByteArray encodedPath = QFile::encodeName(path);
         const char *filename = encodedPath.constData();
-        if (path.endsWith(".vmd")) {
+        if (path.endsWith(".vmd", Qt::CaseInsensitive)) {
           /* motion */
           if (modifiers & Qt::ControlModifier) {
             /* select all objects */
@@ -496,12 +496,12 @@ void QMAWidget::dropEvent(QDropEvent *event)
           }
           /* timer resume */
         }
-        else if (path.endsWith(".xpmd")) {
+        else if (path.endsWith(".xpmd", Qt::CaseInsensitive)) {
           /* stage */
           MMDAI::PMDModelLoader *loader = m_factory.createModelLoader(filename);
           m_controller->loadStage(loader);
         }
-        else if (path.endsWith(".pmd")) {
+        else if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
           /* model */
           if (modifiers & Qt::ControlModifier) {
             MMDAI::PMDModelLoader *modelLoader = m_factory.createModelLoader(filename);
@@ -525,11 +525,13 @@ void QMAWidget::dropEvent(QDropEvent *event)
               m_factory.releaseLipSyncLoader(lipSyncLoader);
             }
             else {
-              MMDAILogInfo("Warning: pmd file dropped but no model at the point");
+              MMDAILogWarnString("pmd file dropped but no model at the point");
             }
           }
         }
-        else if (path.endsWith(".bmp") || path.endsWith(".tga") || path.endsWith(".png")) {
+        else if (path.endsWith(".bmp", Qt::CaseInsensitive)
+          || path.endsWith(".tga", Qt::CaseInsensitive)
+          || path.endsWith(".png", Qt::CaseInsensitive)) {
           /* floor or background */
           MMDAI::PMDModelLoader *loader = m_factory.createModelLoader(filename);
           if (modifiers & Qt::ControlModifier)
@@ -538,11 +540,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
             m_controller->loadBackground(loader);
         }
         else {
-          MMDAILogInfo("Warning: dropped file is not supported: %s", filename);
+          MMDAILogInfo("dropped file is not supported: %s", filename);
         }
       }
       else {
-        MMDAILogInfo("Warning: doesn't support except file scheme");
+        MMDAILogWarnString("doesn't support except file scheme");
       }
     }
   }
