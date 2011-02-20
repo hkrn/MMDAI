@@ -19,14 +19,29 @@ libGLEE に入っている CMakeList.txt を入れて cmake を使ってビル�
 インストール先は /usr または /usr/local にインストールする必要があります。
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
 
-* building OpenGL Easy Extension using cmake
+* 環境変数の設定
+以下の環境変数を指定するとその値からライブラリ及びヘッダーの検出を行います。
+MSVC でビルドする場合は必須です。
+
+- MMDAI_LIBRARY_DIR: libMMDAI がインストールされているパスを指定
+- MMDME_LIBRARY_DIR: libMMDME がインストールされているパスを指定
+- BULLET_LIBRARY_DIR: libBullet* がインストールされているパスを指定
+- MMDAI_INCLUDE_DIR: MMDAI/PMDObject.h があるパスを指定 (この場合 MMDAI のディレクトリがあるパスを指定)
+- MMDME_INCLUDE_DIR: MMDME/MMDME.h があるパスを指定 (この場合 MMDME のディレクトリがあるパスを指定)
+- BULLET_INCLUDE_DIR: btBulletDynamicsCommon.h があるパスを指定
+
+MSVC でビルドする場合 BULLET_INCLUDE_DIR は Bullet のトップディレクトリ以下の src を指定します。
+MMDAI_INCLUDE_DIR 及び MMDME_INCLUDE_DIR ディレクトリはトップディレクトリ以下の MMDAI/include と
+MMDME/include を指定します。
+
+* OpenGL Easy Extension を CMake でビルドする場合
 $ cp $MMDAI/libGLEE/CMakeFiles.txt $GLEE_SRC_DIR
 $ mv GLee.c glee.c
 $ cmake .
 $ make
 $ sudo make install
 
-* Linux or MacOSX
+* Linux か MacOSX でビルドする場合
 $ cd libMMDFiles
 # 共有ライブラリを作成する場合。共有ライブラリではなく、静的ライブラリを作成する場合は
 # -DBUILD_SHARED_LIBS=OFF にするか、または単純に "cmake ." とするだけでよい。
@@ -40,6 +55,22 @@ $ sudo make install
 $ cd ..
 $ qmake
 $ make # MacOSX の場合は xcodebuild
+
+* MSVC でビルドする場合 (暫定。記述が間違っている箇所があると思われる)
+まずは Visual Studio 2008 をインストールする必要があります。Express C++ でも可能です。
+(Visual Studio 2010 は Qt ライブラリの関係でビルドが正しく行えない)
+
+次に Qt の Visual Studio ビルド版と CMake をインストールし、Bullet のソースコードを入手します。
+両者をインストールしたら CMake を立ち上げ、先程の Bullet のトップディレクトリ上を指定して
+"Visual Studio 9 2008" 形式でプロジェクトファイルを生成します。
+デモアプリの生成を行わないように設定しておくとビルド時間を短縮することが可能です。
+
+ビルドした Bullet のパスを上記の環境変数を設定し、同じように MMDME を CMake で
+プロジェクトファイルを生成します。生成したら MMDME のパスを環境変数に設定し、
+MMDAI のプロジェクトファイルを生成、ビルドを行います。
+
+QtMMDAI のファイル生成は qmake で行います。コマンドラインから "qmake -tp vc" を実行し、
+プロジェクトファイルを生成します。これを用いてビルドしてください。
 
 * MinGW
 Linux 上でクロスコンパイルを行います。yum で MinGW の開発環境が揃えられる
