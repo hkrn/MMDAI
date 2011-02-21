@@ -48,7 +48,8 @@
 #include "QMAPlugin.h"
 #include "QMATimer.h"
 
-#include <qgl.h>
+/* to load glee correctly, should include QtOpenGL after MMDAI/MMDME */
+#include <QtOpenGL>
 
 #define MAX_MODEL 20
 
@@ -93,21 +94,23 @@ signals:
 protected:
   void initializeGL();
   void resizeGL(int width, int height);
+  void showEvent(QShowEvent *event);
   void paintGL();
   void mousePressEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);
   void mouseReleaseEvent(QMouseEvent *event);
   void mouseDoubleClickEvent(QMouseEvent *event);
   void wheelEvent(QWheelEvent *event);
-  void timerEvent(QTimerEvent *event);
   void dragEnterEvent(QDragEnterEvent *event);
   void dragMoveEvent(QDragMoveEvent *event);
   void dropEvent(QDropEvent *event);
   void dragLeaveEvent(QDragLeaveEvent *event);
   void closeEvent(QCloseEvent *event);
 
-private:
+private slots:
   void updateScene();
+
+private:
   void loadModel();
   void loadPlugins();
   void addPlugin(QMAPlugin *plugin);
@@ -117,7 +120,8 @@ private:
   void renderLogger();
 
   QMAModelLoaderFactory m_factory;
-  QMATimer m_timer;
+  QMATimer m_sceneFrameTimer;
+  QTimer m_sceneUpdateTimer;
   MMDAI::SceneController *m_controller;
   MMDAI::CommandParser m_parser;
 

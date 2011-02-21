@@ -39,7 +39,8 @@
 #include "btBulletDynamicsCommon.h"
 
 QMAWidget::QMAWidget(QWidget *parent)
-  : QGLWidget(parent),
+  : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+  m_sceneUpdateTimer(this),
   m_controller(new MMDAI::SceneController(this)),
   m_parser(m_controller, &m_factory),
   m_x(0),
@@ -51,8 +52,11 @@ QMAWidget::QMAWidget(QWidget *parent)
   m_frameAdjust(0.0),
   m_frameCue(0.0)
 {
+  m_sceneUpdateTimer.setSingleShot(false);
+  connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
   memset(m_movings, 0, sizeof(double) * MAX_MODEL);
   setAcceptDrops(true);
+  setAutoFillBackground(false);
   setWindowTitle("QtMMDAI");
 }
 
@@ -162,10 +166,6 @@ void QMAWidget::loadPlugins()
     }
   }
   QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
-  int size[2];
-  size[0] = width();
-  size[1] = height();
-  m_controller->init(size);
   m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
   emit pluginInitialized(m_controller);
 }
@@ -240,7 +240,7 @@ void QMAWidget::updateScene()
   MMDAI::Option *option = m_controller->getOption();
   const QRect rectangle(geometry());
   const QPoint point = mapFromGlobal(QCursor::pos());
-  double intervalFrame = m_timer.getInterval();
+  double intervalFrame = m_sceneFrameTimer.getInterval();
   double stepMax = option->getBulletFps();
   double stepFrame = 30.0 / stepMax;
   double restFrame = intervalFrame;
@@ -255,7 +255,7 @@ void QMAWidget::updateScene()
       procFrame = stepFrame;
       restFrame -= stepFrame;
     }
-    adjustFrame = m_timer.getAuxFrame(procFrame);
+    adjustFrame = m_sceneFrameTimer.getAuxFrame(procFrame);
     if (adjustFrame != 0.0)
       m_frameCue = 90.0;
     m_controller->updateMotion(procFrame, adjustFrame);
@@ -301,11 +301,22 @@ void QMAWidget::changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loa
 
 void QMAWidget::initializeGL()
 {
-  loadPlugins();
-  m_controller->updateLight();
-  emit pluginStarted();
-  m_timer.start();
-  startTimer(10);
+  int size[2];
+  size[0] = width();
+  size[1] = height();
+  m_controller->init(size);
+}
+
+void QMAWidget::showEvent(QShowEvent *event)
+{
+  Q_UNUSED(event);
+  if (!m_sceneUpdateTimer.isActive()) {
+    m_controller->updateLight();
+    loadPlugins();
+    emit pluginStarted();
+    m_sceneFrameTimer.start();
+    m_sceneUpdateTimer.start(10);
+  }
 }
 
 void QMAWidget::resizeGL(int width, int height)
@@ -315,15 +326,14 @@ void QMAWidget::resizeGL(int width, int height)
 
 void QMAWidget::paintGL()
 {
-  double fps = m_timer.getFPS();
+  double fps = m_sceneFrameTimer.getFPS();
   m_controller->updateModelPositionAndRotation(fps);
   m_controller->renderScene();
   if (m_displayBone)
     m_controller->renderPMDObjectsForDebug();
   if (m_displayRigidBody)
     m_controller->renderBulletForDebug();
-  m_controller->renderLogger();
-  m_timer.count();
+  m_sceneFrameTimer.count();
   emit pluginRendered();
 }
 
@@ -417,11 +427,6 @@ void QMAWidget::wheelEvent(QWheelEvent *event)
   else if (modifiers & Qt::ShiftModifier) /* slower */
     option = Slower;
   zoom(event->delta() > 0, option);
-}
-
-void QMAWidget::timerEvent(QTimerEvent * /* event */)
-{
-  updateScene();
 }
 
 void QMAWidget::dragEnterEvent(QDragEnterEvent *event)
@@ -558,5 +563,6 @@ void QMAWidget::dragLeaveEvent(QDragLeaveEvent *event)
 
 void QMAWidget::closeEvent(QCloseEvent * /* event */)
 {
+  m_sceneUpdateTimer.stop();
   emit pluginStopped();
 }
