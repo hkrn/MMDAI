@@ -34,12 +34,9 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-TEMPLATE = lib
-CONFIG += plugin
+include(../QMAPlugin.pri)
 QT += phonon
-INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAAudioPlugin)
-DESTDIR = ../plugins
 
 CONFIG(release, debug|release) {
     macx:CONFIG += x86 x86_64

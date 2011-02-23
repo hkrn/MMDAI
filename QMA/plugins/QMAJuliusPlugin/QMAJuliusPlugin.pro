@@ -34,11 +34,8 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-TEMPLATE = lib
-CONFIG += plugin
-INCLUDEPATH += ../..
+include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAJuliusPlugin)
-DESTDIR = ../plugins
 
 unix {
     JULIUS_PATHS  = /usr/local/bin /usr/bin

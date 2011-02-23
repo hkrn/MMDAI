@@ -34,13 +34,9 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-TEMPLATE = lib
-CONFIG += plugin
-QT += phonon
-INCLUDEPATH += ../..
+include(../QMAPlugin.pri)
+QT += multimedia
 TARGET = $$qtLibraryTarget(QMAOpenJTalkPlugin)
-DESTDIR = ../plugins
-
 
 # $ cd /usr/local/include
 # $ sudo mkdir jtabbbk
@@ -77,12 +73,14 @@ win32 {
 
 HEADERS += \
     QMAOpenJTalkPlugin.h \
-    Open_JTalk.h \
-    Open_JTalk_Thread.h \
-    Open_JTalk_Manager.h
+#    Open_JTalk.h \
+#    Open_JTalk_Thread.h \
+#    Open_JTalk_Manager.h \
+    QMAOpenJTalkModel.h
 
 SOURCES += \
     QMAOpenJTalkPlugin.cc \
-    Open_JTalk.cpp \
-    Open_JTalk_Thread.cpp \
-    Open_JTalk_Manager.cpp
+#    Open_JTalk.cpp \
+#    Open_JTalk_Thread.cpp \
+#    Open_JTalk_Manager.cpp \
+    QMAOpenJTalkModel.cc

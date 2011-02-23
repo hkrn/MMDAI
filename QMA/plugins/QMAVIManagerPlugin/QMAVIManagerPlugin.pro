@@ -34,11 +34,8 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-TEMPLATE = lib
-CONFIG += plugin
-INCLUDEPATH += ../..
+include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAVIManagerPlugin)
-DESTDIR = ../plugins
 
 CONFIG(release, debug|release) {
     macx:CONFIG += x86 x86_64

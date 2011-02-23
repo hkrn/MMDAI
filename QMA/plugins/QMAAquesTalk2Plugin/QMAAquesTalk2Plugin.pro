@@ -34,12 +34,9 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-TEMPLATE = lib
-CONFIG += plugin
+include(../QMAPlugin.pri)
 QT += phonon
-INCLUDEPATH += ../..
 TARGET = $$qtLibraryTarget(QMAAquesTalk2Plugin)
-DESTDIR = ../plugins
 
 !macx:LIBS += -lAquesTalk2
 macx:CONFIG += x86

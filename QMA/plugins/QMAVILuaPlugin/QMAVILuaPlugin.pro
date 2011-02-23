@@ -34,11 +34,8 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-TEMPLATE = lib
-CONFIG += plugin
-INCLUDEPATH += ../..
+include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAVILuaPlugin)
-DESTDIR = ../plugins
 
 unix:LIBS += -llua
 CONFIG(release, debug|release) {
