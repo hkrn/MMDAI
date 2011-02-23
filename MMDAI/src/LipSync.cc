@@ -156,7 +156,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    int i = 0, j = 0, k = 0, len = 0, totalNumKey = 0;
    char *buf = NULL, *p = NULL, *save = NULL;
    bool ret = false;
-   double f = 0.0f, diff = 0.0f;
+   float f = 0.0f, diff = 0.0f;
    unsigned int currentFrame = 0, *numBoneKeyFrames = NULL, *numFaceKeyFrames = NULL;
    unsigned char *data = NULL;
 
@@ -185,7 +185,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
          if (tmp1 == NULL)
            goto finally;
          tmp1->phone = k;
-         f = 0.03f * MMDAIStringToDouble(p) + diff; /* convert ms to frame */
+         f = 0.03f * MMDAIStringToFloat(p) + diff; /* convert ms to frame */
          tmp1->duration = (int) (f + 0.5);
          if(tmp1->duration < 1)
             tmp1->duration = 1;

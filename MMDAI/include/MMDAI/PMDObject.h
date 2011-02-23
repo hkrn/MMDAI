@@ -150,10 +150,10 @@ public:
    void setLightForToon(btVector3 *v);
 
    /* PMDObject::updateModel: update model position of root bone */
-   bool updateModelRootOffset(double fps);
+   bool updateModelRootOffset(float fps);
 
    /* PMDObject::updateModelRootRotation: update model rotation of root bone */
-   bool updateModelRootRotation(double fps);
+   bool updateModelRootRotation(float fps);
 
    /* PMDObject::getAlias: get alias name */
    const char *getAlias() const;
