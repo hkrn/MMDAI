@@ -36,11 +36,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "QMAOpenJTalkPlugin.h"
-
+#include <QtConcurrentRun>
+#include <QBuffer>
+#include <QByteArray>
 #include <QDir>
-#include <QTextCodec>
-#include <stdlib.h>
+#include <QDebug>
+#include <QFuture>
+
+#include "QMAOpenJTalkPlugin.h"
 
 const QString kOpenJTalkStartCommand = "SYNTH_START";
 const QString kOpenJTalkStopCommand =  "SYNTH_STOP";
@@ -48,24 +51,39 @@ const QByteArray kOpenJTalkCodecName = "Shift-JIS";
 
 QMAOpenJTalkPlugin::QMAOpenJTalkPlugin(QObject *parent)
   : QMAPlugin(parent),
-    m_manager(new Open_JTalk_Manager(this))
+  m_audioOutput(0),
+  m_buffer(0)
 {
+  m_format.setFrequency(48000);
+  m_format.setChannels(1);
+  m_format.setSampleSize(16);
+  m_format.setCodec("audio/pcm");
+  m_format.setByteOrder(QAudioFormat::LittleEndian);
+  m_format.setSampleType(QAudioFormat::SignedInt);
+  QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+  if (!info.isFormatSupported(m_format)) {
+    qWarning() << "Default format not supported - trying to use nearest";
+    m_format = info.nearestFormat(m_format);
+  }
+  m_audioOutput = new QAudioOutput(m_format, this);
+  connect(m_audioOutput, SIGNAL(stateChanged(QAudio::State)), this, SLOT(stateChanged(QAudio::State)));
+  connect(&m_watcher, SIGNAL(finished()), this, SLOT(play()));
 }
 
 QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 {
-  delete m_manager;
-  m_manager = 0;
+  foreach (QMAOpenJTalkModel *model, m_models)
+    delete model;
+  delete m_audioOutput;
+  delete m_buffer;
 }
 
 void QMAOpenJTalkPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
-  QString base = QDir::searchPaths("mmdai").at(0);
-  QString dir = base + "/AppData/Open_JTalk";
-  QString config = QFile("mmdai:MMDAI.ojt").fileName();
-  m_manager->load(base.toUtf8().constData(), dir.toUtf8().constData(), config.toUtf8().constData());
-  m_manager->start();
+  m_base = QDir::searchPaths("mmdai").at(0);
+  m_dir = m_base + "/AppData/Open_JTalk";
+  m_config = QFile("mmdai:MMDAI.ojt").fileName();
 }
 
 void QMAOpenJTalkPlugin::start()
@@ -80,13 +98,15 @@ void QMAOpenJTalkPlugin::stop()
 
 void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
-  QTextCodec *codec = QTextCodec::codecForName(kOpenJTalkCodecName);
-  QString str = arguments.join("|");
-  if (command == kOpenJTalkStartCommand) {
-    m_manager->synthesis(codec->fromUnicode(str).constData());
+  if (command == kOpenJTalkStartCommand && arguments.count() == 3) {
+    QString name = arguments[0];
+    QString style = arguments[1];
+    QString text = arguments[2];
+    m_watcher.setFuture(QtConcurrent::run(this, &QMAOpenJTalkPlugin::run, name, style, text));
   }
-  else if (command == kOpenJTalkStopCommand) {
-    m_manager->stop(codec->fromUnicode(str).constData());
+  else if (command == kOpenJTalkStopCommand && arguments.count() == 1) {
+    QString name = arguments[0];
+    Q_UNUSED(name);
   }
 }
 
@@ -110,18 +130,59 @@ void QMAOpenJTalkPlugin::render()
   /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::sendCommand(const char *command, char *arguments)
+void QMAOpenJTalkPlugin::stateChanged(QAudio::State state)
 {
-  QTextCodec *codec = QTextCodec::codecForName(kOpenJTalkCodecName);
-  emit commandPost(QString(command), codec->toUnicode(arguments).split('|'));
-  free(arguments);
+  if (state == QAudio::IdleState) {
+    QMAOpenJTalkModelData result = m_watcher.future();
+    QStringList arguments;
+    arguments << result.name;
+    m_buffer->close();
+    m_audioOutput->stop();
+    eventPost("SYNTH_EVENT_STOP", arguments);
+  }
+  qDebug() << "stateChanged:" << state;
 }
 
-void QMAOpenJTalkPlugin::sendEvent(const char *type, char *arguments)
+void QMAOpenJTalkPlugin::play()
 {
-  QTextCodec *codec = QTextCodec::codecForName(kOpenJTalkCodecName);
-  emit eventPost(QString(type), codec->toUnicode(arguments).split('|'));
-  free(arguments);
+  QMAOpenJTalkModelData result = m_watcher.future();
+  QString sequence = result.sequence;
+  m_bytes = result.bytes;
+  delete m_buffer;
+  m_buffer = new QBuffer(&m_bytes);
+  m_buffer->open(QBuffer::ReadOnly);
+  m_audioOutput->start(m_buffer);
+  QStringList arguments;
+  QString name = result.name;
+  arguments << name;
+  eventPost("SYNTH_EVENT_START", arguments);
+  arguments.clear();
+  arguments << name << sequence;
+  //commandPost("LIPSYNC_START", arguments);
+}
+
+struct QMAOpenJTalkModelData QMAOpenJTalkPlugin::run(const QString &name,
+                                                     const QString &style,
+                                                     const QString &text)
+{
+  QMAOpenJTalkModel *model;
+  if (m_models.contains(name)) {
+    model = m_models[name];
+  }
+  else {
+    model = new QMAOpenJTalkModel(this);
+    model->loadSetting(m_base, m_config);
+    model->loadDictionary(m_dir);
+    m_models[name] = model;
+  }
+  model->setStyle(style);
+  model->setText(text);
+  struct QMAOpenJTalkModelData data;
+  data.bytes = model->finalize();
+  data.name = name;
+  data.sequence = model->getPhonemeSequence();
+  data.duration = model->getDuration();
+  return data;
 }
 
 Q_EXPORT_PLUGIN2(qma_openjtalk_plugin, QMAOpenJTalkPlugin)

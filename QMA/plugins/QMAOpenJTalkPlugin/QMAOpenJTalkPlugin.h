@@ -39,22 +39,33 @@
 #ifndef QMAOPENJTALKPLUGIN_H
 #define QMAOPENJTALKPLUGIN_H
 
+#include <QAudioOutput>
+#include <QByteArray>
+#include <QFutureWatcher>
+#include <QIODevice>
+#include <QTimer>
+
 #include "QMAPlugin.h"
 
-#include "CommandDispatcher.h"
-#include "Open_JTalk_Manager.h"
+#include "QMAOpenJTalkModel.h"
 
-class QMAOpenJTalkPlugin : public QMAPlugin, public CommandDispatcher
+struct QMAOpenJTalkModelData
+{
+  QByteArray bytes;
+  QString name;
+  QString sequence;
+  int duration;
+};
+Q_DECLARE_METATYPE(QMAOpenJTalkModelData);
+
+class QMAOpenJTalkPlugin : public QMAPlugin
 {
   Q_OBJECT
   Q_INTERFACES(QMAPlugin)
 
 public:
-  QMAOpenJTalkPlugin(QObject *parent = 0);
+      QMAOpenJTalkPlugin(QObject *parent = 0);
   ~QMAOpenJTalkPlugin();
-
-  void sendCommand(const char *command, char *arguments);
-  void sendEvent(const char *type, char *arguments);
 
 public slots:
   void initialize(MMDAI::SceneController *controller);
@@ -69,8 +80,25 @@ signals:
   void commandPost(const QString &command, const QStringList &arguments);
   void eventPost(const QString &type, const QStringList &arguments);
 
+private slots:
+  void stateChanged(QAudio::State state);
+  void play();
+
 private:
-  Open_JTalk_Manager *m_manager;
+  struct QMAOpenJTalkModelData run(const QString &name,
+                                   const QString &style,
+                                   const QString &text);
+
+  QHash<QString, QMAOpenJTalkModel*> m_models;
+  QFutureWatcher<QMAOpenJTalkModelData> m_watcher;
+  QAudioFormat m_format;
+  QAudioOutput *m_audioOutput;
+  QIODevice *m_buffer;
+  QByteArray m_bytes;
+  QTimer m_timer;
+  QString m_base;
+  QString m_dir;
+  QString m_config;
 };
 
 #endif // QMAOPENJTALKPLUGIN_H
