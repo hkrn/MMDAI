@@ -72,6 +72,7 @@ void QMAOpenJTalkModel::loadSetting(const QString &path, const QString &config)
   QFile file(config);
   if (file.open(QFile::ReadOnly)) {
     QTextStream stream(&file);
+    stream.setCodec("Shift-JIS");
     int nmodels = stream.readLine().toInt();
     for (int i = 0; i < nmodels; i++) {
       QString model = stream.readLine();
