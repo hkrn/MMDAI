@@ -241,7 +241,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
    (*rawSize) = sizeof(VMDFile_Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(VMDFile_FaceFrame) * totalNumKey;
    size = (*rawSize);
    size = sizeof(unsigned char) * (*rawSize);
-   (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(i));
+   (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(size));
    if (*rawData == NULL)
      goto finally;
 
