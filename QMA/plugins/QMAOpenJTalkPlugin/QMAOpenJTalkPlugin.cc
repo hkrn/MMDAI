@@ -160,7 +160,7 @@ void QMAOpenJTalkPlugin::play()
   eventPost("SYNTH_EVENT_START", arguments);
   arguments.clear();
   arguments << name << sequence;
-  //commandPost("LIPSYNC_START", arguments);
+  commandPost("LIPSYNC_START", arguments);
 }
 
 struct QMAOpenJTalkModelData QMAOpenJTalkPlugin::run(const QString &name,
@@ -180,10 +180,10 @@ struct QMAOpenJTalkModelData QMAOpenJTalkPlugin::run(const QString &name,
   model->setStyle(style);
   model->setText(text);
   struct QMAOpenJTalkModelData data;
-  data.bytes = model->finalize();
   data.name = name;
   data.sequence = model->getPhonemeSequence();
   data.duration = model->getDuration();
+  data.bytes = model->finalize();
   return data;
 }
 
