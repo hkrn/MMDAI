@@ -132,15 +132,17 @@ void QMAOpenJTalkPlugin::render()
 
 void QMAOpenJTalkPlugin::stateChanged(QAudio::State state)
 {
+  qDebug() << "stateChanged:" << state;
   if (state == QAudio::IdleState) {
+    m_buffer->close();
+    m_audioOutput->stop();
+  }
+  else if (state == QAudio::StoppedState) {
     QMAOpenJTalkModelData result = m_watcher.future();
     QStringList arguments;
     arguments << result.name;
-    m_buffer->close();
-    m_audioOutput->stop();
     eventPost("SYNTH_EVENT_STOP", arguments);
   }
-  qDebug() << "stateChanged:" << state;
 }
 
 void QMAOpenJTalkPlugin::play()
