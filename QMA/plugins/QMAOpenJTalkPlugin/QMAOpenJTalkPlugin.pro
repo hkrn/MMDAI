@@ -73,14 +73,8 @@ win32 {
 
 HEADERS += \
     QMAOpenJTalkPlugin.h \
-#    Open_JTalk.h \
-#    Open_JTalk_Thread.h \
-#    Open_JTalk_Manager.h \
     QMAOpenJTalkModel.h
 
 SOURCES += \
     QMAOpenJTalkPlugin.cc \
-#    Open_JTalk.cpp \
-#    Open_JTalk_Thread.cpp \
-#    Open_JTalk_Manager.cpp \
     QMAOpenJTalkModel.cc
