@@ -190,7 +190,7 @@ void QMAWidget::addPlugin(QMAPlugin *plugin)
           this, SLOT(delegateCommand(const QString&, const QStringList&)));
   connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
           this, SLOT(delegateEvent(const QString&, const QStringList&)));
-  MMDAILogDebug("%s was loaded successfully", plugin->metaObject()->className());
+  MMDAILogInfo("%s was loaded successfully", plugin->metaObject()->className());
 }
 
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
