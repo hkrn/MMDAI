@@ -39,20 +39,25 @@
 #ifndef QMAJULIUSPLUGIN_H
 #define QMAJULIUSPLUGIN_H
 
+#include <QFutureWatcher>
 #include <QSystemTrayIcon>
 
-#include "CommandDispatcher.h"
-#include "QMAJuliusInitializer.h"
-#include "Julius_Thread.h"
+#include <julius/juliuslib.h>
 
 #include "QMAPlugin.h"
 
-class QMAJuliusPlugin : public QMAPlugin, public CommandDispatcher
+class QMAJuliusPluginThread;
+
+class QMAJuliusPlugin : public QMAPlugin
 {
   Q_OBJECT
-  Q_INTERFACES(QMAPlugin)
+  Q_INTERFACES(QMAPlugin);
+
+  friend void QMAJuliusPluginBeginRecognition(Recog *recog, void *ptr);
+  friend void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr);
 
 public:
+
   QMAJuliusPlugin(QObject *parent = 0);
   ~QMAJuliusPlugin();
 
@@ -69,16 +74,21 @@ public slots:
   void render();
 
 private slots:
-  void startJuliusEngine();
+  void initialized();
 
 signals:
   void commandPost(const QString &command, const QStringList &arguments);
   void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  QMAJuliusInitializer *m_initializer;
+  bool initializeRecognitionEngine(const QStringList &conf);
+  void startRecognition();
+
+  QMAJuliusPluginThread *m_thread;
+  QFutureWatcher<bool> m_watcher;
   QSystemTrayIcon m_tray;
-  Julius_Thread *m_thread;
+  Jconf *m_jconf;
+  Recog *m_recog;
 };
 
 #endif // QMAJULIUSPLUGIN_H

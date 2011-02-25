@@ -53,11 +53,7 @@ win32 {
 macx:CONFIG += x86
 
 HEADERS += \
-    QMAJuliusPlugin.h \
-    Julius_Thread.h \
-    QMAJuliusInitializer.h
+    QMAJuliusPlugin.h
 
 SOURCES += \
-    QMAJuliusPlugin.cc \
-    Julius_Thread.cpp \
-    QMAJuliusInitializer.cc
+    QMAJuliusPlugin.cc
