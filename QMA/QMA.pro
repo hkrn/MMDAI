@@ -67,17 +67,6 @@ CONFIG(release, debug|release) {
 
 macx:CONFIG += x86
 
-# unused (using framework)
-#
-# deploy command is macdeployqt
-#
-# macx {
-#     QMAKE_LFLAGS += -F../Library_MMDFiles
-#     LIBS = -framework MMDFiles \
-#            -L/usr/local/lib -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath -lglee
-#     INCLUDEPATH += ../Library_MMDFiles/include /usr/local/include/bullet
-# }
-
 SOURCES += main.cc\
         QMAWidget.cc \
         QMATimer.cc \
