@@ -97,7 +97,7 @@ void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr)
     }
   }
 
-  if (first) {
+  if (!first) {
     QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
     QStringList arguments;
     arguments << ret;
