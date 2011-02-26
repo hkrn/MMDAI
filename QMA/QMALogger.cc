@@ -43,6 +43,10 @@
 #include <QTextStream>
 #include <MMDME/Common.h>
 
+#ifndef NDEBUG
+#include <QDebug>
+#endif
+
 namespace {
   QMALogger *g_instance;
 }
@@ -82,6 +86,9 @@ static void LogHandler(const char *file, int line, enum MMDAILogLevel level, con
   }
   text += "\n";
   QMALogger::getInstance()->sendLineWritten(text);
+#ifndef NDEBUG
+  qDebug() << text;
+#endif
 }
 
 QMALogger::QMALogger() : QObject()
