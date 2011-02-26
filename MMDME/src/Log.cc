@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "MMDME/Common.h"
+#include "MMDME/MMDME.h"
 
 static MMDAILoggingHandler MMDAILogWriteNull, *g_handler = MMDAILogWriteNull;
 

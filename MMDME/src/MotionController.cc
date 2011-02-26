@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDME/MotionController.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 

@@ -38,12 +38,7 @@
 
 /* headers */
 
-#include "MMDME/MotionController.h"
-#include "MMDME/PMDModel.h"
-#include "MMDME/PMDTexture.h"
-#include "MMDME/PMDModelLoader.h"
-
-#include "PMDInternal.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 

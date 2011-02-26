@@ -38,11 +38,7 @@
 
 /* headers */
 
-#include <GLee.h>
-
-#include "MMDME/PMDModel.h"
-
-#include "PMDInternal.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 

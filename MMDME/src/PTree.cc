@@ -38,8 +38,7 @@
 
 /* headers */
 
-#include "MMDME/Common.h"
-#include "MMDME/PTree.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 

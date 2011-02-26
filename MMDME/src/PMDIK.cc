@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDME/PMDIK.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 

@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include "MMDME/PMDBone.h"
-
-#include "PMDInternal.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 
@@ -348,8 +346,6 @@ void PMDBone::setCurrentRotation(btQuaternion *q)
 {
    m_rot = (*q);
 }
-
-#include "GLee.h"
 
 static void drawCube()
 {

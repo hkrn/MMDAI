@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDME/BulletPhysics.h"
+#include "MMDME/MMDME.h"
 
 namespace MMDAI {
 

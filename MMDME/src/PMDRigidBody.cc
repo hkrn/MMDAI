@@ -38,11 +38,10 @@
 
 /* headers */
 
-#include "MMDME/PMDRigidBody.h"
+#include "MMDME/MMDME.h"
 
 #include "AlignedMotionState.h"
 #include "KinematicMotionState.h"
-#include "PMDInternal.h"
 
 namespace MMDAI {
 
