@@ -50,7 +50,6 @@
 #include <MMDME/VMD.h>
 
 #include "MMDAI/LipSync.h"
-#include "MMDAI/TextRenderer.h"
 
 namespace MMDAI {
 
@@ -215,14 +214,8 @@ public:
    /* PMDObject::getAssignedModel: get parent model */
    PMDObject *getAssignedModel() const;
 
-   /* renderComment: render model comment */
-   void renderComment(TextRenderer *text);
-
    /* renderDebug: render model debug */
-   void renderDebug(TextRenderer *text);
-
-   /* renderError: render model error */
-   void renderError(TextRenderer *text);
+   void renderDebug();
 };
 
 } /* namespace */

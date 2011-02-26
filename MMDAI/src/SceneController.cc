@@ -107,7 +107,6 @@ static int getNumDigit(int in)
 SceneController::SceneController(SceneEventHandler *handler)
   : m_highlightModel(0),
     m_handler(handler),
-    m_text(NULL),
     m_numModel(0),
     m_selectedModel(-1),
     m_enablePhysicsSimulation(true)
@@ -1048,14 +1047,13 @@ void SceneController::renderPMDObjectsForDebug()
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
-      object->renderDebug(m_text);
+      object->renderDebug();
     }
   }
 }
 
 void SceneController::renderLogger()
 {
-  /* g_logger.render(m_text); */
 }
 
 Option *SceneController::getOption()
