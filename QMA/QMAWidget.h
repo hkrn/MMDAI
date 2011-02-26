@@ -70,7 +70,8 @@ public:
 
   void handleEventMessage(const char *eventType, int argc, ...);
   QMAModelLoaderFactory *getModelLoaderFactory();
-  MMDAI::SceneController *getSceneController();
+  QMATimer *getSceneFrameTimer();
+  MMDAI::SceneController *getSceneController() const;
 
   void toggleDisplayBone();
   void toggleDisplayRigidBody();

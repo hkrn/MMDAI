@@ -85,6 +85,7 @@ private slots:
   void deleteSelectedObject();
   void showLogWindow();
   void about();
+  void updateWindowTitle();
   void receiveEvent(const QString &type, const QStringList &arguments);
 
 private:

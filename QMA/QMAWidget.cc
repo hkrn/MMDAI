@@ -36,8 +36,6 @@
 
 #include "QMAWidget.h"
 
-#include "btBulletDynamicsCommon.h"
-
 QMAWidget::QMAWidget(QWidget *parent)
   : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
   m_sceneUpdateTimer(this),
@@ -120,7 +118,12 @@ QMAModelLoaderFactory *QMAWidget::getModelLoaderFactory()
   return &m_factory;
 }
 
-MMDAI::SceneController *QMAWidget::getSceneController()
+QMATimer *QMAWidget::getSceneFrameTimer()
+{
+  return &m_sceneFrameTimer;
+}
+
+MMDAI::SceneController *QMAWidget::getSceneController() const
 {
   return m_controller;
 }
@@ -196,12 +199,6 @@ void QMAWidget::addPlugin(QMAPlugin *plugin)
 void QMAWidget::delegateCommand(const QString &command, const QStringList &arguments)
 {
   qDebug().nospace() << "delegateCommand command=" << command << ", arguments="  << arguments;
-#if 0
-  if (command == "MMDAI_EXIT") {
-    QApplication::closeAllWindows();
-    return;
-  }
-#endif
   int argc = arguments.count();
   const char *cmd = MMDAIStringClone(command.toUtf8().constData());
   const char **argv = static_cast<const char **>(calloc(sizeof(char *), argc));
@@ -327,6 +324,7 @@ void QMAWidget::resizeGL(int width, int height)
 void QMAWidget::paintGL()
 {
   double fps = m_sceneFrameTimer.getFPS();
+  glColor3f(1, 0, 0);
   m_controller->updateModelPositionAndRotation(fps);
   m_controller->renderScene();
   if (m_displayBone)

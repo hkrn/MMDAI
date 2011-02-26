@@ -51,10 +51,9 @@ QMAWindow::QMAWindow(QWidget *parent) :
 
   createActions();
   createMenu();
-  setWindowTitle("QtMMDAI");
+  setWindowTitle(qAppName());
 
   readSetting();
-  statusBar()->showMessage("Ready");
 }
 
 QMAWindow::~QMAWindow()
@@ -367,6 +366,12 @@ void QMAWindow::showLogWindow()
   m_logView->show();
 }
 
+void QMAWindow::updateWindowTitle()
+{
+  double fps = m_widget->getSceneFrameTimer()->getFPS();
+  setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
+}
+
 void QMAWindow::about()
 {
   QMessageBox::about(this, tr("About QtMMDAI"),
@@ -604,6 +609,8 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
   m_aboutQtAction = action;
 
+  connect(m_widget, SIGNAL(pluginRendered()),
+          this, SLOT(updateWindowTitle()));
   connect(m_widget, SIGNAL(pluginEventPost(QString,QStringList)),
           this, SLOT(receiveEvent(QString,QStringList)));
 }
