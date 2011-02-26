@@ -47,6 +47,7 @@ set(libMMDAI_public_headers
   include/MMDAI/CommandParser.h
   include/MMDAI/LipSync.h
   include/MMDAI/MotionStocker.h
+  include/MMDAI/MMDAI.h
   include/MMDAI/Option.h
   include/MMDAI/PMDModelLoaderFactory.h
   include/MMDAI/PMDObject.h
@@ -54,7 +55,6 @@ set(libMMDAI_public_headers
   include/MMDAI/SceneEventHandler.h
   include/MMDAI/SceneRenderer.h
   include/MMDAI/Stage.h
-  include/MMDAI/TextRenderer.h
   include/MMDAI/TileTexture.h
 )
 
