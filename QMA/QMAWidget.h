@@ -42,7 +42,6 @@
 #include <MMDAI/PMDModelLoaderFactory.h>
 #include <MMDAI/CommandParser.h>
 #include <MMDAI/SceneController.h>
-#include <MMDAI/TextRenderer.h>
 
 #include "QMAModelLoaderFactory.h"
 #include "QMAPlugin.h"
