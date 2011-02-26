@@ -83,8 +83,8 @@ endif()
 
 # find OpenGL Easy Extension
 if (MSVC)
-  find_path(GLEE_INCLUDE GLee.h PATH $ENV{MMDAI_GLEE_DIR})
-  find_library(GLEE_LIBRARY glee PATH $ENV{MMDAI_GLEE_DIR})
+  find_path(GLEE_INCLUDE GLee.h PATH $ENV{GLEE_DIR})
+  find_library(GLEE_LIBRARY glee PATH $ENV{GLEE_DIR})
 else()
   find_path(GLEE_INCLUDE GLee.h)
   find_library(GLEE_LIBRARY glee)

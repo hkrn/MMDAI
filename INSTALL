@@ -20,12 +20,13 @@ libGLEE に入っている CMakeList.txt を入れて cmake を使ってビル�
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
 
 * 環境変数の設定
-以下の環境変数を指定するとその値からライブラリ及びヘッダーの検出を行います。
-MSVC でビルドする場合は必須です。
+以下の環境変数を指定するとその値からライブラリ及びヘッダーの検出を行います。MSVC でビルドする場合は必須です。
+Windows で環境設定する際はユーザの環境変数を用いるとよいでしょう(注意点として更新の反映は一度ログオフして再度ログインする必要がある)。
 
-- MMDAI_LIBRARY_DIR: libMMDAI がインストールされているパスを指定
-- MMDME_LIBRARY_DIR: libMMDME がインストールされているパスを指定
-- BULLET_LIBRARY_DIR: libBullet* がインストールされているパスを指定
+- GLEE_DIR: GLee.lib のソースがあるパス指定
+- MMDAI_LIBRARY_DIR: libMMDAI.(dylib|so) または MMDAI.lib がインストールされているパスを指定
+- MMDME_LIBRARY_DIR: libMMDME.(dylib|so) または MMDME.lib がインストールされているパスを指定
+- BULLET_LIBRARY_DIR: libBullet*.(dylib|so) または Bullet*.lib がインストールされているパスを指定
 - MMDAI_INCLUDE_DIR: MMDAI/PMDObject.h があるパスを指定 (この場合 MMDAI のディレクトリがあるパスを指定)
 - MMDME_INCLUDE_DIR: MMDME/MMDME.h があるパスを指定 (この場合 MMDME のディレクトリがあるパスを指定)
 - BULLET_INCLUDE_DIR: btBulletDynamicsCommon.h があるパスを指定
