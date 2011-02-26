@@ -44,6 +44,7 @@
 #include "QMAWindow.h"
 
 #ifdef QMA_BUNDLE_PLUGINS
+#include <QtPlugin>
 Q_IMPORT_PLUGIN(qma_audio_plugin);
 Q_IMPORT_PLUGIN(qma_julius_plugin);
 Q_IMPORT_PLUGIN(qma_lookat_plugin);
