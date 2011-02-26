@@ -1,7 +1,7 @@
 TEMPLATE = lib
 CONFIG += plugin
 INCLUDEPATH += ../../
-DESTDIR = ../plugins
+DESTDIR = ../Plugins
 
 unix:LIBS += -L/usr/lib -L/usr/local/lib
 unix:INCLUDEPATH += /usr/include /usr/local/include /usr/include/bullet /usr/local/include/bullet
@@ -17,6 +17,7 @@ CONFIG(debug, debug|release) {
 CONFIG(release, debug|release) {
     macx {
         CONFIG += x86 static
+        DESTDIR = ../StaticPlugins
     }
 }
 
