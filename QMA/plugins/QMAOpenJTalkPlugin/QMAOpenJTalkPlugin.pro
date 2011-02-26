@@ -35,7 +35,7 @@
 # /* ----------------------------------------------------------------- */
 
 include(../QMAPlugin.pri)
-QT += multimedia
+QT += phonon
 TARGET = $$qtLibraryTarget(QMAOpenJTalkPlugin)
 
 # $ cd /usr/local/include

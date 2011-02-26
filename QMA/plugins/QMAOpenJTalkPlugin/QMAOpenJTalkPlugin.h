@@ -39,11 +39,13 @@
 #ifndef QMAOPENJTALKPLUGIN_H
 #define QMAOPENJTALKPLUGIN_H
 
-#include <QAudioOutput>
 #include <QByteArray>
 #include <QFutureWatcher>
 #include <QIODevice>
 #include <QTimer>
+
+#include <phonon/AudioOutput>
+#include <phonon/MediaObject>
 
 #include "QMAPlugin.h"
 
@@ -75,13 +77,14 @@ public slots:
   void receiveEvent(const QString &type, const QStringList &arguments);
   void update(const QRect &rect, const QPoint &pos, const double delta);
   void render();
+  void finished();
+  void stateChanged(Phonon::State newState, Phonon::State oldState);
 
 signals:
   void commandPost(const QString &command, const QStringList &arguments);
   void eventPost(const QString &type, const QStringList &arguments);
 
 private slots:
-  void stateChanged(QAudio::State state);
   void play();
 
 private:
@@ -89,10 +92,10 @@ private:
                                    const QString &style,
                                    const QString &text);
 
+  Phonon::MediaObject m_object;
+  Phonon::AudioOutput m_output;
   QHash<QString, QMAOpenJTalkModel*> m_models;
   QFutureWatcher<QMAOpenJTalkModelData> m_watcher;
-  QAudioFormat m_format;
-  QAudioOutput *m_audioOutput;
   QIODevice *m_buffer;
   QByteArray m_bytes;
   QTimer m_timer;

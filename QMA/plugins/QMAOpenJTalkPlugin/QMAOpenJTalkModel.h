@@ -25,7 +25,7 @@ public:
   void setStyle(const QString &style);
   const int getDuration() const;
   const QString getPhonemeSequence();
-  QByteArray finalize();
+  QByteArray finalize(bool withHeader);
 
   Mecab m_mecab;
   NJD m_njd;

@@ -226,7 +226,7 @@ void QMAOpenJTalkModel::loadDictionary(const QString &mecab)
   free(fn_ms_gvl);
 }
 
-QByteArray QMAOpenJTalkModel::finalize()
+QByteArray QMAOpenJTalkModel::finalize(bool withHeader)
 {
   QByteArray ret;
   if (JPCommon_get_label_size(&m_jpcommon) > 2) {
@@ -236,6 +236,35 @@ QByteArray QMAOpenJTalkModel::finalize()
     HTS_GStreamSet *gss = &m_engine.gss;
     HTS_Global *global = &m_engine.global;
     int nsamples = HTS_GStreamSet_get_total_nsample(gss);
+    if (withHeader) {
+      int samplingRate = global->sampling_rate;
+      char data_01_04[] = { 'R', 'I', 'F', 'F' };
+      int data_05_08 = nsamples * sizeof(short) + 36;
+      char data_09_12[] = { 'W', 'A', 'V', 'E' };
+      char data_13_16[] = { 'f', 'm', 't', ' ' };
+      int data_17_20 = 16;
+      short data_21_22 = 1;
+      short data_23_24 = 1;
+      int data_25_28 = samplingRate;
+      int data_29_32 = samplingRate * sizeof(short);
+      short data_33_34 = sizeof(short);
+      short data_35_36 = (short) (sizeof(short) * 8);
+      char data_37_40[] = { 'd', 'a', 't', 'a' };
+      int data_41_44 = nsamples * sizeof(short);
+      buffer.write(reinterpret_cast<const char *>(data_01_04), sizeof(data_01_04));
+      buffer.write(reinterpret_cast<const char *>(&data_05_08), sizeof(data_05_08));
+      buffer.write(reinterpret_cast<const char *>(data_09_12), sizeof(data_09_12));
+      buffer.write(reinterpret_cast<const char *>(data_13_16), sizeof(data_13_16));
+      buffer.write(reinterpret_cast<const char *>(&data_17_20), sizeof(data_17_20));
+      buffer.write(reinterpret_cast<const char *>(&data_21_22), sizeof(data_21_22));
+      buffer.write(reinterpret_cast<const char *>(&data_23_24), sizeof(data_23_24));
+      buffer.write(reinterpret_cast<const char *>(&data_25_28), sizeof(data_25_28));
+      buffer.write(reinterpret_cast<const char *>(&data_29_32), sizeof(data_29_32));
+      buffer.write(reinterpret_cast<const char *>(&data_33_34), sizeof(data_33_34));
+      buffer.write(reinterpret_cast<const char *>(&data_35_36), sizeof(data_35_36));
+      buffer.write(reinterpret_cast<const char *>(data_37_40), sizeof(data_37_40));
+      buffer.write(reinterpret_cast<const char *>(&data_41_44), sizeof(data_41_44));
+    }
     for (int i = 0; i < nsamples; i++) {
       short sample = HTS_GStreamSet_get_speech(gss, i);
       buffer.write(reinterpret_cast<const char *>(&sample), sizeof(sample));
