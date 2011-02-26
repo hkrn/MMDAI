@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include <stdio.h>
-
-#include "MMDAI/Option.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

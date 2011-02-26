@@ -36,6 +36,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_OPTION_H_
+#define MMDAI_OPTION_H_
+
 #include <MMDME/Common.h>
 
 namespace MMDAI {
@@ -426,4 +429,6 @@ public:
 };
 
 } /* namespace */
+
+#endif
 

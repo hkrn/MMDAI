@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,36 +36,23 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
+#ifndef MMDAI_MMDAI_H_
+#define MMDAI_MMDAI_H_
 
-#ifndef TEXTRENDERER_H
-#define TEXTRENDERER_H
+#include <MMDME/MMDME.h>
+#include "MMDAI/BoneController.h"
+#include "MMDAI/CommandParser.h"
+#include "MMDAI/LipSync.h"
+#include "MMDAI/LipSyncLoader.h"
+#include "MMDAI/MotionStocker.h"
+#include "MMDAI/Option.h"
+#include "MMDAI/PMDModelLoaderFactory.h"
+#include "MMDAI/PMDObject.h"
+#include "MMDAI/SceneController.h"
+#include "MMDAI/SceneEventHandler.h"
+#include "MMDAI/SceneRenderer.h"
+#include "MMDAI/Stage.h"
+#include "MMDAI/TileTexture.h"
 
-namespace MMDAI {
-
-class TextRenderer
-{
-public:
-   /* setup: initialize and setup text renderer */
-   virtual void setup(const char *fontName) = 0;
-
-   /* draw ascii string (bitmap) */
-   virtual void drawAsciiStringBitmap(const char *str) = 0;
-
-   /* TextRenderer::drawAsciiStringOutline: draw ascii string (outline) */
-   virtual void drawAsciiStringOutline(const char *str) = 0;
-
-   /* TextRenderer::getDisplayListArrayOfString: get array of display list indices draw any string (outline) */
-   virtual int getDisplayListArrayOfString(const char *wstr, unsigned int *idList, int maxlen) = 0;
-
-   /* TextRenderer::renderSispayListArrayOfString: render the obtained array of display lists for a string */
-   virtual void renderDisplayListArrayOfString(unsigned int *idList, int n) = 0;
-
-   /* drawString: draw any string (outline, wide char, slow) */
-   virtual void drawString(const char *wstr) = 0;
-};
-
-} /* namespace */
-
-#endif // TEXTRENDERER_H
+#endif
 

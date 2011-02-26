@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include <MMDME/MMDME.h> /* MMDME_RAD */
-
-#include "MMDAI/BoneController.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include "MMDME/Common.h"
-#include "MMDAI/Option.h"
-#include "MMDAI/MotionStocker.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

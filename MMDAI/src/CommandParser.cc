@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include "MMDAI/CommandParser.h"
-
-#include <MMDME/MMDME.h>
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

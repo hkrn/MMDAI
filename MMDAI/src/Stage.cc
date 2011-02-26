@@ -38,8 +38,7 @@
 
 /* headers */
 
-#include "MMDAI/Option.h"
-#include "MMDAI/Stage.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

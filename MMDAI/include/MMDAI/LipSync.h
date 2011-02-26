@@ -36,6 +36,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_LIPSYNC_H_
+#define MMDAI_LIPSYNC_H_
+
 #include <MMDME/Common.h>
 #include "MMDAI/LipSyncLoader.h"
 
@@ -95,4 +98,6 @@ public:
 };
 
 } /* namespace */
+
+#endif
 

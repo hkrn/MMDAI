@@ -38,7 +38,7 @@
 
 /* headers */
 
-#include "MMDAI/SceneController.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

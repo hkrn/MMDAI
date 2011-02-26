@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include "MMDAI/PMDObject.h"
-
-#include <MMDME/MMDME.h>
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 

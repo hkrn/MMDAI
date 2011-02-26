@@ -38,9 +38,7 @@
 
 /* headers */
 
-#include "MMDME/VMDFile.h"
-#include "MMDAI/LipSync.h"
-#include "MMDAI/LipSyncLoader.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 
