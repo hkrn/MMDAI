@@ -38,10 +38,6 @@ include(../QMAPlugin.pri)
 QT += phonon
 TARGET = $$qtLibraryTarget(QMAAudioPlugin)
 
-CONFIG(release, debug|release) {
-    macx:CONFIG += x86 x86_64
-}
-
 HEADERS += \
     QMAAudioPlugin.h
 

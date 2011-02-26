@@ -37,10 +37,6 @@
 include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAVIManagerPlugin)
 
-CONFIG(release, debug|release) {
-    macx:CONFIG += x86 x86_64
-}
-
 HEADERS += \
     QMAVIManagerPlugin.h \
     VIManager.h \

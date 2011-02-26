@@ -46,30 +46,32 @@ win32:LIBS += -L$$(MMDME_LIBRARY_DIR) -L$$(MMDAI_LIBRARY_DIR) -L$$(BULLET_LIBRAR
 win32:INCLUDEPATH += $$(MMDME_INCLUDE_DIR) $$(MMDAI_INCLUDE_DIR) $$(BULLET_INCLUDE_DIR)
 
 CONFIG(release, debug|release) {
-    #macx:CONFIG += x86 x86_64
-    macx:LIBS += -lportaudio
-    macx:QT += phonon
-
-#    DEFINES += QMA_BUNDLE_PLUGINS
-#    CONFIG += x86_64 static
-#    JULIUS_PATHS  = /usr/local/bin /usr/bin
-#    for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
-#        LIBS += $$system($${path}/libjulius-config --libs) $$system($${path}/libsent-config --libs)
-#    }
-#    macx:LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_accent_phrase \
-#                 -lnjd_set_accent_type -lnjd_set_digit -lnjd_set_long_vowel -lnjd_set_pronunciation \
-#                 -lnjd_set_unvoiced_vowel -ltext2mecab -lmecab_custom \
-#                 -framework CoreAudio -framework CoreFoundation -framework CoreServices \
-#                 -framework AudioToolbox -framework AudioUnit
-#    macx:INCLUDEPATH += /usr/local/include/jtalk
-#    macx:LIBS += -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin
+    macx {
+        LIBS += -lportaudio
+        QT += phonon
+        DEFINES += QMA_BUNDLE_PLUGINS
+        CONFIG += static
+        # QMAJuliusPlugin
+        JULIUS_PATHS  = /usr/local/bin /usr/bin
+        for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
+            LIBS += $$system($${path}/libjulius-config --libs) $$system($${path}/libsent-config --libs)
+        }
+        # QMAOpenJTalkPlugin
+        LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_accent_phrase \
+                -lnjd_set_accent_type -lnjd_set_digit -lnjd_set_long_vowel -lnjd_set_pronunciation \
+                -lnjd_set_unvoiced_vowel -ltext2mecab -lmecab_custom \
+                -framework CoreAudio -framework CoreFoundation -framework CoreServices \
+                -framework AudioToolbox -framework AudioUnit -lportaudio
+        INCLUDEPATH += /usr/local/include/jtalk
+        LIBS += -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin
+    }
 }
 
 macx:CONFIG += x86
 
 SOURCES += main.cc\
-        QMAWidget.cc \
-        QMATimer.cc \
+    QMAWidget.cc \
+    QMATimer.cc \
     QMAWindow.cc \
     QMAModelLoader.cc \
     QMAModelLoaderFactory.cc \

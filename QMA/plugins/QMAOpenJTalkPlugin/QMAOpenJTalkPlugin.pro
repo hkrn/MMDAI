@@ -49,8 +49,7 @@ unix:LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_a
              -lnjd_set_unvoiced_vowel -ltext2mecab
 unix:INCLUDEPATH += /usr/local/include/jtalk
 
-linux-g++:LIBS += -lmecab
-
+linux:LIBS += -lmecab
 
 # $ cd /usr/local/include
 # $ sudo mkdir jtalk
@@ -62,7 +61,6 @@ linux-g++:LIBS += -lmecab
 #
 # on MacOSX, mecab has been installed in /usr, we use jtalk's mecab as libmecab_custom.a
 macx:LIBS += -liconv -lmecab_custom
-macx:CONFIG += x86
 
 win32 {
     # use MMDAgent's OpenJTalk and related libraries

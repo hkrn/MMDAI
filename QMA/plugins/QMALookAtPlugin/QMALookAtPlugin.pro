@@ -37,10 +37,6 @@
 include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMALookAtPlugin)
 
-CONFIG(release, debug|release) {
-    macx:CONFIG += x86 x86_64
-}
-
 HEADERS += \
     QMALookAtPlugin.h
 

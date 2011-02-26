@@ -50,8 +50,6 @@ win32 {
     LIBS:release += -lJulius -lPortAudio -lws2_32
 }
 
-macx:CONFIG += x86
-
 HEADERS += \
     QMAJuliusPlugin.h
 
