@@ -90,7 +90,7 @@ void SceneRenderer::clear()
 }
 
 /* SceneRenderer::SceneRenderer: constructor */
-SceneRenderer::SceneRenderer(GLPMDRenderEngine *engine)
+SceneRenderer::SceneRenderer(GLSceneRenderEngine *engine)
   : m_engine(engine)
 {
   initialize();
@@ -301,7 +301,7 @@ void SceneRenderer::setShadowMapping(bool flag, int shadowMapTextureSize, bool s
 }
 
 /* SceneRenderer::RendererSceneShadowMap: shadow mapping */
-void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject *objects, int size)
+void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject **objects, int size)
 {
   short i;
   GLint viewport[4]; /* store viewport */
@@ -387,7 +387,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
   /* Renderer objects for depth */
   /* only objects that wants to drop shadow should be Renderered here */
   for (i = 0; i < size; i++) {
-    PMDObject *object = &objects[i];
+    PMDObject *object = objects[i];
     if (!object->isEnable())
       continue;
     glPushMatrix();
@@ -425,7 +425,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     stage->renderBackground();
     stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
-      PMDObject *object = &objects[i];
+      PMDObject *object = objects[i];
       if (!object->isEnable())
         continue;
       PMDModel *model = object->getPMDModel();
@@ -444,7 +444,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     stage->renderBackground();
     stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
-      PMDObject *object = &objects[i];
+      PMDObject *object = objects[i];
       if (!object->isEnable())
         continue;
       PMDModel *model = object->getPMDModel();
@@ -459,7 +459,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
       updateLighting(true, option->getUseMMDLikeCartoon(), option->getLightDirection(), option->getLightIntensity(), option->getLightColor());
     /* Renderer the toon objects */
     for (i = 0; i < size; i++) {
-      PMDObject *object = &objects[i];
+      PMDObject *object = objects[i];
       if (!object->isEnable())
         continue;
       PMDModel *model = object->getPMDModel();
@@ -527,7 +527,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     stage->renderBackground();
     stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
-      PMDObject *object = &objects[i];
+      PMDObject *object = objects[i];
       if (!object->isEnable())
         continue;
       PMDModel *model = object->getPMDModel();
@@ -542,7 +542,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
       updateLighting(true, option->getUseMMDLikeCartoon(), option->getLightDirection(), option->getLightIntensity(), option->getLightColor());
     /* Renderer the toon objects */
     for (i = 0; i < size; i++) {
-      PMDObject *object = &objects[i];
+      PMDObject *object = objects[i];
       if (!object->isEnable())
         continue;
       PMDModel *model = object->getPMDModel();
@@ -565,7 +565,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     stage->renderBackground();
     stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
-      PMDObject *object = &objects[i];
+      PMDObject *object = objects[i];
       if (!object->isEnable())
         continue;
       m_engine->renderModel(object->getPMDModel());
@@ -586,7 +586,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
 }
 
 /* SceneRenderer::RendererScene: Renderer scene */
-void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects, int size)
+void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject **objects, int size)
 {
   short i;
   /* clear Renderering buffer */
@@ -620,7 +620,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
   /* Render model */
   glDisable(GL_DEPTH_TEST);
   for (i = 0; i < size; i++) {
-    PMDObject *object = &objects[i];
+    PMDObject *object = objects[i];
     if (!object->isEnable())
       continue;
     glPushMatrix();
@@ -644,7 +644,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
 
   /* Render model */
   for (i = 0; i < size; i++) {
-    PMDObject *object = &objects[i];
+    PMDObject *object = objects[i];
     if (!object->isEnable())
       continue;
     PMDModel *model = object->getPMDModel();
@@ -654,7 +654,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
 }
 
 /* SceneRenderer::render: Render all */
-void SceneRenderer::render(Option *option, Stage *stage, PMDObject *objects, int size)
+void SceneRenderer::render(Option *option, Stage *stage, PMDObject **objects, int size)
 {
   /* update scale */
   updateScale();
@@ -668,7 +668,7 @@ void SceneRenderer::render(Option *option, Stage *stage, PMDObject *objects, int
 }
 
 /* SceneRenderer::pickModel: pick up a model at the screen position */
-int SceneRenderer::pickModel(PMDObject *objects, int size, int x, int y, int *allowDropPicked)
+int SceneRenderer::pickModel(PMDObject **objects, int size, int x, int y, int *allowDropPicked)
 {
   int i;
 
@@ -704,7 +704,7 @@ int SceneRenderer::pickModel(PMDObject *objects, int size, int x, int y, int *al
   glPushName(0);
   /* draw models with selection names */
   for (i = 0; i < size; i++) {
-    PMDObject *object = &objects[i];
+    PMDObject *object = objects[i];
     if (!object->isEnable())
       continue;
     glLoadName(i);
@@ -729,7 +729,7 @@ int SceneRenderer::pickModel(PMDObject *objects, int size, int x, int y, int *al
       minDepth = depth;
       minID = id;
     }
-    if (allowDropPicked && objects[id].allowMotionFileDrop()) {
+    if (allowDropPicked && objects[id]->allowMotionFileDrop()) {
       if (minIDAllowDrop == -1 || minDepthAllowDrop > depth) {
         minDepthAllowDrop = depth;
         minIDAllowDrop = id;
@@ -883,7 +883,7 @@ void SceneRenderer::updateModelViewMatrix()
 }
 
 /* SceneRenderer::updateDepthTextureViewParam: update center and radius information to get required range for shadow mapping */
-void SceneRenderer::updateDepthTextureViewParam(PMDObject *objects, int num)
+void SceneRenderer::updateDepthTextureViewParam(PMDObject **objects, int num)
 {
   int i;
   float d, dmax;
@@ -892,7 +892,7 @@ void SceneRenderer::updateDepthTextureViewParam(PMDObject *objects, int num)
   btVector3 cc = btVector3(0.0f, 0.0f, 0.0f);
 
   for (i = 0; i < num; i++) {
-    PMDObject *object = &objects[i];
+    PMDObject *object = objects[i];
     if (!object->isEnable())
       continue;
     r[i] = object->getPMDModel()->calculateBoundingSphereRange(&(c[i]));
@@ -903,7 +903,7 @@ void SceneRenderer::updateDepthTextureViewParam(PMDObject *objects, int num)
 
   dmax = 0.0f;
   for (i = 0; i < num; i++) {
-    if (!objects[i].isEnable())
+    if (!objects[i]->isEnable())
       continue;
     d = cc.distance(c[i]) + r[i];
     if (dmax < d)

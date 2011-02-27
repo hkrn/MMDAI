@@ -36,15 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDAI_GLPMDRENDERENGINE_H_
-#define MMDAI_GLPMDRENDERENGINE_H_
-
-/* headers */
-#include "GLee.h"
-
-#include <BulletCollision/CollisionShapes/btShapeHull.h>
-
-class btConvexShape;
+#ifndef MMDAI_PMDRENDERENGINE_H_
+#define MMDAI_PMDRENDERENGINE_H_
 
 namespace MMDAI {
 
@@ -52,35 +45,24 @@ class BulletPhysics;
 class PMDBone;
 class PMDModel;
 
-typedef GLuint PMDTextureNative;
+typedef struct PMDTextureNative PMDTextureNative;
 
-class GLPMDRenderEngine {
+class PMDRenderEngine {
 public:
-  GLPMDRenderEngine();
-  ~GLPMDRenderEngine();
+  virtual ~PMDRenderEngine() {}
 
-  void renderRigidBodies(BulletPhysics *bullet);
-  void renderBone(PMDBone *bone);
-  void renderBones(PMDModel *model);
-  void renderModel(PMDModel *model);
-  void renderEdge(PMDModel *model);
-  void renderShadow(PMDModel *model);
-  void bindTexture(const unsigned char *data,
-                   const int width,
-                   const int height,
-                   const int components,
-                   PMDTextureNative *native);
-  void deleteTexture(PMDTextureNative *native);
-
-private:
-  void drawCube();
-  void drawSphere(int lats, int longs);
-  void drawConvex(btConvexShape *shape);
-
-   GLuint m_boxList;
-   GLuint m_sphereList;
-   bool m_boxListEnabled;
-   bool m_sphereListEnabled;
+  virtual void renderRigidBodies(BulletPhysics *bullet) = 0;
+  virtual void renderBone(PMDBone *bone) = 0;
+  virtual void renderBones(PMDModel *model) = 0;
+  virtual void renderModel(PMDModel *model) = 0;
+  virtual void renderEdge(PMDModel *model) = 0;
+  virtual void renderShadow(PMDModel *model) = 0;
+  virtual void bindTexture(const unsigned char *data,
+                           const int width,
+                           const int height,
+                           const int components,
+                           PMDTextureNative **native) = 0;
+  virtual void deleteTexture(PMDTextureNative **native) = 0;
 };
 
 } /* namespace */

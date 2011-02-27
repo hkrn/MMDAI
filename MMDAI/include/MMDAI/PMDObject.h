@@ -48,7 +48,7 @@
 
 namespace MMDAI {
 
-class GLPMDRenderEngine;
+class GLSceneRenderEngine;
 class LipSyncLoader;
 class MotionManager;
 class PMDBone;
@@ -66,6 +66,7 @@ private:
    MotionManager *m_motionManager; /* motion manager */
    LipSync *m_globalLipSync;
    LipSync m_localLipSync;
+   GLSceneRenderEngine *m_engine;
 
    bool m_isEnable; /* true if this model is enabled */
 
@@ -106,7 +107,7 @@ private:
 public:
 
    /* PMDObject::PMDObject: constructor */
-   PMDObject();
+   PMDObject(GLSceneRenderEngine *engine);
 
    /* PMDObject::PMDObject: destructor */
    ~PMDObject();
@@ -117,7 +118,6 @@ public:
    /* PMDObject::load: load model */
    bool load(PMDModelLoader *modelLoader,
              LipSyncLoader *lipSyncLoader,
-             GLPMDRenderEngine *engine,
              btVector3 *offsetPos,
              btQuaternion *offsetRot,
              bool forcedPosition,
@@ -219,7 +219,7 @@ public:
    PMDObject *getAssignedModel() const;
 
    /* renderDebug: render model debug */
-   void renderDebug(GLPMDRenderEngine *engine);
+   void renderDebug();
 };
 
 } /* namespace */

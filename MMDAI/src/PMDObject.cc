@@ -85,7 +85,8 @@ void PMDObject::clear()
 }
 
 /* PMDObject::PMDObject: constructor */
-PMDObject::PMDObject()
+PMDObject::PMDObject(GLSceneRenderEngine *engine)
+  : m_engine(engine)
 {
   initialize();
 }
@@ -105,7 +106,6 @@ void PMDObject::release()
 /* PMDObject::load: load model */
 bool PMDObject::load(PMDModelLoader *modelLoader,
                      LipSyncLoader *lipSyncLoader,
-                     GLPMDRenderEngine *engine,
                      btVector3 *offsetPos,
                      btQuaternion *offsetRot,
                      bool forcedPosition,
@@ -172,7 +172,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   m_isEnable = true;
 
   /* load model */
-  if (m_pmd.load(modelLoader, engine, bullet) == false) {
+  if (m_pmd.load(modelLoader, m_engine, bullet) == false) {
     clear();
     return false;
   }
@@ -551,10 +551,10 @@ PMDObject *PMDObject::getAssignedModel() const
 }
 
 /* PMDObject::renderDebug: render model debug */
-void PMDObject::renderDebug(GLPMDRenderEngine *engine)
+void PMDObject::renderDebug()
 {
    /* render debug */
-  engine->renderBones(&m_pmd);
+  m_engine->renderBones(&m_pmd);
 }
 
 } /* namespace */

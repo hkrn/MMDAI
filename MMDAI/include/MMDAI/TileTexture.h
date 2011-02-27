@@ -47,7 +47,7 @@
 
 namespace MMDAI {
 
-class GLPMDRenderEngine;
+class GLSceneRenderEngine;
 
 class TileTexture
 {
@@ -82,7 +82,7 @@ public:
   ~TileTexture();
 
   /* load: load a texture from file name (wide char) */
-  bool load(PMDModelLoader *loader, GLPMDRenderEngine *engine);
+  bool load(PMDModelLoader *loader, GLSceneRenderEngine *engine);
 
   /* render: render the textures */
   void render(bool cullFace, const float normal[3]);

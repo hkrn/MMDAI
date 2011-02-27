@@ -43,7 +43,7 @@
 namespace MMDAI {
 
 /* PMDModel::parse: initialize and load from ptr memories */
-bool PMDModel::parse(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
+bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet)
 {
    bool ret = true;
    btQuaternion defaultRot;

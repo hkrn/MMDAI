@@ -49,12 +49,12 @@
 namespace MMDAI {
 
 class BulletPhysics;
-class GLPMDRenderEngine;
 class PMDConstraint;
 class PMDFace;
 class PMDIK;
 class PMDMaterial;
 class PMDModelLoader;
+class PMDRenderEngine;
 class PMDRigidBody;
 
 /* TexCoord: texture coordinaiton */
@@ -144,7 +144,7 @@ private:
    PTree m_name2face;              /* name-to-face index for fast lookup */
 
    /* parse: initialize and load from data memories */
-   bool parse(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
+   bool parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet);
 
    /* initialize: initialize PMDModel */
    void initialize();
@@ -171,7 +171,7 @@ public:
    ~PMDModel();
 
    /* load: load from file name */
-   bool load(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
+   bool load(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet);
 
    /* getBone: find bone data by name */
    PMDBone *getBone(const char *name);

@@ -57,7 +57,7 @@ class SceneRenderer
 {
 private:
 
-  GLPMDRenderEngine *m_engine;
+  GLSceneRenderEngine *m_engine;
 
   int m_width;             /* window width */
   int m_height;            /* winodw height */
@@ -103,10 +103,10 @@ private:
   void initializeShadowMap(int shadowMapTextureSize);
 
   /* renderSceneShadowMap: shadow mapping */
-  void renderSceneShadowMap(Option *option, Stage *stage, PMDObject *objects, int size);
+  void renderSceneShadowMap(Option *option, Stage *stage, PMDObject **objects, int size);
 
   /* renderScene: render scene */
-  void renderScene(Option *option, Stage *stage, PMDObject *objects, int size);
+  void renderScene(Option *option, Stage *stage, PMDObject **objects, int size);
 
   /* Render::initialize: initialzie Render */
   void initialize();
@@ -119,7 +119,7 @@ private:
 public:
 
   /* SceneRender: constructor */
-  SceneRenderer(GLPMDRenderEngine *engine);
+  SceneRenderer(GLSceneRenderEngine *engine);
 
   /* ~SceneRender: destructor */
   ~SceneRenderer();
@@ -149,16 +149,16 @@ public:
   void setShadowMapping(bool flag, int shadowMapTextureSize, bool shadowMapLightFirst);
 
   /* render: render all */
-  void render(Option *option, Stage *stage, PMDObject *objects, int size);
+  void render(Option *option, Stage *stage, PMDObject **objects, int size);
 
   /* pickModel: pick up a model at the screen position */
-  int pickModel(PMDObject *objects, int size, int x, int y, int *allowDropPicked);
+  int pickModel(PMDObject **objects, int size, int x, int y, int *allowDropPicked);
 
   /* updateLigithing: update light */
   void updateLighting(bool useCartoonRendering, bool useMMDLikeCartoon, float *lightDirection, float lightIntensy, float *lightColor);
 
   /* updateDepthTextureViewParam: update center and radius information to get required range for shadow mapping */
-  void updateDepthTextureViewParam(PMDObject *objList, int num);
+  void updateDepthTextureViewParam(PMDObject **objects, int num);
 
   /* rotate: rotate scene */
   void rotate(float x, float y, float z);

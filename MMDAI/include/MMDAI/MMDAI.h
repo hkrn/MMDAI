@@ -42,6 +42,7 @@
 #include <MMDME/MMDME.h>
 #include "MMDAI/BoneController.h"
 #include "MMDAI/CommandParser.h"
+#include "MMDAI/GLSceneRenderEngine.h"
 #include "MMDAI/LipSync.h"
 #include "MMDAI/LipSyncLoader.h"
 #include "MMDAI/MotionStocker.h"

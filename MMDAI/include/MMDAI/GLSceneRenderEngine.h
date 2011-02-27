@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,95 +36,54 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDME_PMDMATERIAL_H_
-#define MMDME_PMDMATERIAL_H_
+#ifndef MMDAI_GLPMDRENDERENGINE_H_
+#define MMDAI_GLPMDRENDERENGINE_H_
 
-#include "MMDME/Common.h"
-#include "MMDME/PMDFile.h"
-#include "MMDME/PMDTexture.h"
+/* headers */
+#include "GLee.h"
+
+#include <BulletCollision/CollisionShapes/btShapeHull.h>
+#include <MMDME/PMDRenderEngine.h>
+
+class btConvexShape;
 
 namespace MMDAI {
 
-class PMDModelLoader;
-class PMDRenderEngine;
+class BulletPhysics;
+class PMDBone;
+class PMDModel;
 
-/* PMDMaterial: material of PMD */
-class PMDMaterial
-{
-private:
+struct PMDTextureNative {
+  GLuint id;
+};
 
-   float m_diffuse[3];  /* diffuse color */
-   float m_ambient[3];  /* ambient color */
-   float m_avgcol[3];   /* average of diffuse and ambient */
-   float m_specular[3]; /* specular color */
-   float m_alpha;       /* alpha color */
-   float m_shiness;     /* shiness intensity */
-
-   unsigned int m_numSurface; /* number of surface indices for this material */
-
-   unsigned char m_toonID; /* toon index */
-   bool m_edgeFlag;        /* true if edge should be drawn */
-
-   PMDTexture m_texture;            /* pointer to texture */
-   PMDTexture m_additionalTexture;  /* pointer to additional sphere map */
-
-   /* initialize: initialize material */
-   void initialize();
-
-   /* clear: free material */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDMaterial);
-
+class GLSceneRenderEngine : public PMDRenderEngine {
 public:
+  GLSceneRenderEngine();
+  ~GLSceneRenderEngine();
 
-   /* PMDMaterial: constructor */
-   PMDMaterial();
+  void renderRigidBodies(BulletPhysics *bullet);
+  void renderBone(PMDBone *bone);
+  void renderBones(PMDModel *model);
+  void renderModel(PMDModel *model);
+  void renderEdge(PMDModel *model);
+  void renderShadow(PMDModel *model);
+  void bindTexture(const unsigned char *data,
+                   const int width,
+                   const int height,
+                   const int components,
+                   PMDTextureNative **native);
+  void deleteTexture(PMDTextureNative **native);
 
-   /* ~PMDMaterial: destructor */
-   ~PMDMaterial();
+private:
+  void drawCube();
+  void drawSphere(int lats, int longs);
+  void drawConvex(btConvexShape *shape);
 
-   /* setup: initialize and setup material */
-   bool setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEngine *engine);
-
-   /* hasSingleSphereMap: return if it has single sphere maps */
-   bool hasSingleSphereMap() const;
-
-   /* hasMultipleSphereMap: return if it has multiple sphere map */
-   bool hasMultipleSphereMap() const;
-
-   /* copyDiffuse: get diffuse colors */
-   void copyDiffuse(float *c);
-
-   /* copyAvgcol: get average colors of diffuse and ambient */
-   void copyAvgcol(float *c);
-
-   /* copyAmbient: get ambient colors */
-   void copyAmbient(float *c);
-
-   /* copySpecular: get specular colors */
-   void copySpecular(float *c);
-
-   /* getAlpha: get alpha color */
-   float getAlpha() const;
-
-   /* getShiness: get shiness intensity */
-   float getShiness() const;
-
-   /* getNumSurface: get number of surface */
-   unsigned int getNumSurface() const;
-
-   /* getToonID: get toon index */
-   unsigned char getToonID() const;
-
-   /* getEdgeFlag: get edge flag */
-   bool getEdgeFlag() const;
-
-   /* getTexture: get texture */
-   PMDTexture *getTexture();
-
-   /* getAdditionalTexture: get additional sphere map */
-   PMDTexture *getAdditionalTexture();
+   GLuint m_boxList;
+   GLuint m_sphereList;
+   bool m_boxListEnabled;
+   bool m_sphereListEnabled;
 };
 
 } /* namespace */

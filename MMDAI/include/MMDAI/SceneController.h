@@ -51,7 +51,7 @@ namespace MMDAI {
 
 #define MAX_MODEL 20
 
-class GLPMDRenderEngine;
+class GLSceneRenderEngine;
 class SceneEventHandler;
 
 class SceneController
@@ -165,14 +165,14 @@ private:
   void sendEvent2(const char *type, const char *arg1, const char *arg2);
 
   BulletPhysics m_bullet;
-  GLPMDRenderEngine *m_engine;
+  GLSceneRenderEngine *m_engine;
   MotionStocker m_motion;
   Option m_option;
-  PMDObject m_objects[MAX_MODEL];
+  PMDObject **m_objects;
   PMDObject *m_highlightModel;
   SceneEventHandler *m_handler;
   SceneRenderer m_scene;
-  Stage m_stage;
+  Stage *m_stage;
   int m_numModel;
   int m_selectedModel;
   bool m_enablePhysicsSimulation;

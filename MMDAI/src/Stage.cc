@@ -96,7 +96,8 @@ static void shadowMatrix(GLfloat shadowMat[4][4], GLfloat groundplane[4], GLfloa
 }
 
 /* Stage::Stage: constructor */
-Stage::Stage()
+Stage::Stage(GLSceneRenderEngine *engine)
+  : m_engine(engine)
 {
   initialize();
 }
@@ -190,14 +191,14 @@ void Stage::setSize(float *size, float numx, float numy)
 }
 
 /* Stage::loadFloor: load floor image */
-bool Stage::loadFloor(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
+bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_floor.load(loader, engine);
+  ret = m_floor.load(loader, m_engine);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
@@ -211,14 +212,14 @@ bool Stage::loadFloor(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletP
 }
 
 /* Stage::loadBackground: load background image */
-bool Stage::loadBackground(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
+bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_background.load(loader, engine);
+  ret = m_background.load(loader, m_engine);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
@@ -231,14 +232,14 @@ bool Stage::loadBackground(PMDModelLoader *loader, GLPMDRenderEngine *engine, Bu
 }
 
 /* Stage::loadStagePMD: load stage pmd */
-bool Stage::loadStagePMD(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
+bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_pmd.load(loader, engine, bullet);
+  ret = m_pmd.load(loader, m_engine, bullet);
   if (ret) {
     m_pmd.setToonFlag(false);
     m_pmd.updateSkin();
@@ -255,7 +256,7 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, GLPMDRenderEngine *engine, Bull
 }
 
 /* Stage::renderFloor: render the floor */
-void Stage::renderFloor(GLPMDRenderEngine *engine)
+void Stage::renderFloor(GLSceneRenderEngine *engine)
 {
   const float normal[3] = {0.0f, 1.0f, 0.0f};
 
@@ -275,7 +276,7 @@ void Stage::renderBackground()
 }
 
 /* Stage::renderPMD: render the stage pmd */
-void Stage::renderPMD(GLPMDRenderEngine *engine)
+void Stage::renderPMD(GLSceneRenderEngine *engine)
 {
   if (m_listIndexPMDValid) {
     glCallList(m_listIndexPMD);

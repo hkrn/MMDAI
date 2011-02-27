@@ -222,7 +222,7 @@ PMDModel::~PMDModel()
 }
 
 /* PMDModel::load: load from file name */
-bool PMDModel::load(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
+bool PMDModel::load(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet)
 {
    bool ret = parse(loader, engine, bullet);
    return ret;

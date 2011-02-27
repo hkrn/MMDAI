@@ -105,21 +105,28 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler)
-  : m_engine(new GLPMDRenderEngine()),
+  : m_engine(new GLSceneRenderEngine()),
+    m_objects(new PMDObject*[MAX_MODEL]),
     m_highlightModel(0),
     m_handler(handler),
     m_scene(m_engine),
+    m_stage(new Stage(m_engine)),
     m_numModel(0),
     m_selectedModel(-1),
     m_enablePhysicsSimulation(true)
 {
+  for (int i = 0; i < MAX_MODEL; i++) {
+    m_objects[i] = new PMDObject(m_engine);
+  }
 }
 
 SceneController::~SceneController()
 {
-  for (int i = 0; i < m_numModel; i++) {
-    m_objects[i].release();
+  for (int i = 0; i < MAX_MODEL; i++) {
+    delete m_objects[i];
   }
+  delete[] m_objects;
+  delete m_stage;
   delete m_engine;
 }
 
@@ -134,10 +141,10 @@ void SceneController::updateLight()
                          m_option.getLightIntensity(),
                          m_option.getLightColor());
   f = m_option.getLightDirection();
-  m_stage.updateShadowMatrix(f);
+  m_stage->updateShadowMatrix(f);
   l = btVector3(f[0], f[1], f[2]);
   for (i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     if (object->isEnable())
       object->setLightForToon(&l);
   }
@@ -150,7 +157,7 @@ bool SceneController::loadFloor(PMDModelLoader *loader)
   const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
-  if (m_stage.loadFloor(loader, m_engine, &m_bullet) == false) {
+  if (m_stage->loadFloor(loader, &m_bullet) == false) {
     MMDAILogWarn("cannot set floor %s.", fileName);
     return false;
   }
@@ -168,7 +175,7 @@ bool SceneController::loadBackground(PMDModelLoader *loader)
   const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
-  if (m_stage.loadBackground(loader, m_engine, &m_bullet) == false) {
+  if (m_stage->loadBackground(loader, &m_bullet) == false) {
     MMDAILogWarn("cannot set background %s.", fileName);
     return false;
   }
@@ -186,7 +193,7 @@ bool SceneController::loadStage(PMDModelLoader *loader)
   const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
-  if (m_stage.loadStagePMD(loader, m_engine, &m_bullet) == false) {
+  if (m_stage->loadStagePMD(loader, &m_bullet) == false) {
     MMDAILogWarn("cannot set stage %s.", fileName);
     return false;
   }
@@ -202,13 +209,13 @@ PMDObject *SceneController::allocatePMDObject()
 {
   PMDObject *object = NULL;
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     if (!object->isEnable())
       return object; /* re-use it */
   }
   if (m_numModel >= MAX_MODEL)
     return NULL; /* no more room */
-  object = &m_objects[m_numModel];
+  object = m_objects[m_numModel];
   m_numModel++;
   object->setEnableFlag(false); /* model is not loaded yet */
   return object;
@@ -222,7 +229,7 @@ PMDObject *SceneController::findPMDObject(PMDObject *object)
 PMDObject *SceneController::findPMDObject(const char *alias)
 {
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     if (object->isEnable() && MMDAIStringEquals(object->getAlias(), alias))
       return object;
   }
@@ -233,7 +240,7 @@ PMDObject *SceneController::getPMDObject(int index)
 {
   if (index < 0 || index > m_numModel)
     return NULL;
-  return &m_objects[index];
+  return m_objects[index];
 }
 
 int SceneController::countPMDObjects() const
@@ -466,7 +473,6 @@ bool SceneController::addModel(const char *modelAlias,
   /* add model */
   if (!newObject->load(modelLoader,
                        lipSyncLoader,
-                       m_engine,
                        &offsetPos,
                        &offsetRot,
                        forcedPosition,
@@ -509,7 +515,6 @@ bool SceneController::changeModel(PMDObject *object,
   /* load model */
   if (!object->load(modelLoader,
                     lipSyncLoader,
-                    m_engine,
                     NULL,
                     NULL,
                     false,
@@ -541,7 +546,7 @@ bool SceneController::changeModel(PMDObject *object,
 
   /* delete accessories  */
   for (i = 0; i < MAX_MODEL; i++) {
-    PMDObject *assoc = &m_objects[i];
+    PMDObject *assoc = m_objects[i];
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteModel(assoc);
   }
@@ -557,7 +562,7 @@ void SceneController::deleteModel(PMDObject *object)
 {
   /* delete accessories  */
   for (int i = 0; i < MAX_MODEL; i++) {
-    PMDObject *assoc = &m_objects[i];
+    PMDObject *assoc = m_objects[i];
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteModel(assoc);
   }
@@ -844,7 +849,7 @@ void SceneController::init(int *size)
                 m_option.getUseShadowMapping(),
                 m_option.getShadowMappingTextureSize(),
                 m_option.getShadowMappingLightFirst());
-  m_stage.setSize(m_option.getStageSize(), 1.0f, 1.0f);
+  m_stage->setSize(m_option.getStageSize(), 1.0f, 1.0f);
 }
 
 void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
@@ -886,7 +891,7 @@ void SceneController::selectPMDObject(PMDObject *object)
 {
   const char *alias = object->getAlias();
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *o = &m_objects[i];
+    PMDObject *o = m_objects[i];
     if (o->isEnable() && MMDAIStringEquals(o->getAlias(), alias)) {
       m_selectedModel = i;
       break;
@@ -939,7 +944,7 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
 {
   const char *lipSyncMotion = LipSync::getMotionName();
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     if (object->isEnable()) {
       object->updateRootBone();
       if (object->updateMotion(procFrame + adjustFrame)) {
@@ -968,7 +973,7 @@ void SceneController::deleteAssociatedModels(PMDObject *object)
 {
   /* remove assigned accessories */
   for (int i = 0; i < MAX_MODEL; i++) {
-    PMDObject *assoc = &m_objects[i];
+    PMDObject *assoc = m_objects[i];
     if (assoc->isEnable() && assoc->getAssignedModel() == object)
       deleteAssociatedModels(assoc);
   }
@@ -991,7 +996,7 @@ void SceneController::updateAfterSimulation()
 {
   /* update after simulation */
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     object->updateAfterSimulation(m_enablePhysicsSimulation);
   }
 }
@@ -1006,7 +1011,7 @@ void SceneController::updateDepthTextureViewParam()
 void SceneController::updateModelPositionAndRotation(double fps)
 {
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     if (object->isEnable()) {
       if (object->updateModelRootOffset(fps)) {
         sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
@@ -1039,7 +1044,7 @@ inline void SceneController::sendEvent2(const char *type, const char *arg1, cons
 
 void SceneController::renderScene()
 {
-  m_scene.render(&m_option, &m_stage, m_objects, m_numModel);
+  m_scene.render(&m_option, m_stage, m_objects, m_numModel);
 }
 
 void SceneController::renderBulletForDebug()
@@ -1050,9 +1055,9 @@ void SceneController::renderBulletForDebug()
 void SceneController::renderPMDObjectsForDebug()
 {
   for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = &m_objects[i];
+    PMDObject *object = m_objects[i];
     if (object->isEnable()) {
-      object->renderDebug(m_engine);
+      object->renderDebug();
     }
   }
 }
@@ -1064,7 +1069,7 @@ Option *SceneController::getOption()
 
 Stage *SceneController::getStage()
 {
-  return &m_stage;
+  return m_stage;
 }
 
 int SceneController::getWidth()

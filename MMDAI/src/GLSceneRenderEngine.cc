@@ -38,11 +38,11 @@
 
 /* headers */
 
-#include "MMDME/MMDME.h"
+#include "MMDAI/MMDAI.h"
 
 namespace MMDAI {
 
-GLPMDRenderEngine::GLPMDRenderEngine()
+GLSceneRenderEngine::GLSceneRenderEngine()
   : m_boxList(0),
     m_sphereList(0),
     m_boxListEnabled(false),
@@ -50,11 +50,11 @@ GLPMDRenderEngine::GLPMDRenderEngine()
 {
 }
 
-GLPMDRenderEngine::~GLPMDRenderEngine()
+GLSceneRenderEngine::~GLSceneRenderEngine()
 {
 }
 
-void GLPMDRenderEngine::drawCube()
+void GLSceneRenderEngine::drawCube()
 {
    static GLfloat vertices [8][3] = {
       { -0.5f, -0.5f, 0.5f},
@@ -105,7 +105,7 @@ void GLPMDRenderEngine::drawCube()
    glEnd();
 }
 
-void GLPMDRenderEngine::drawSphere(int lats, int longs)
+void GLSceneRenderEngine::drawSphere(int lats, int longs)
 {
    for (int i = 0; i <= lats; i++) {
       double lat0 = BULLETPHYSICS_PI * (-0.5 + (double) (i - 1) / lats);
@@ -130,7 +130,7 @@ void GLPMDRenderEngine::drawSphere(int lats, int longs)
    }
 }
 
-void GLPMDRenderEngine::drawConvex(btConvexShape *shape)
+void GLSceneRenderEngine::drawConvex(btConvexShape *shape)
 {
    int i;
    int i1, i2, i3;
@@ -182,7 +182,7 @@ void GLPMDRenderEngine::drawConvex(btConvexShape *shape)
    delete hull;
 }
 
-void GLPMDRenderEngine::renderRigidBodies(BulletPhysics *bullet)
+void GLSceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
 {
    GLfloat color[] = {0.8f, 0.8f, 0.0f, 1.0f};
    GLint polygonMode[2] = { 0, 0 };
@@ -258,7 +258,7 @@ void GLPMDRenderEngine::renderRigidBodies(BulletPhysics *bullet)
    }
 }
 
-void GLPMDRenderEngine::renderBone(PMDBone *bone)
+void GLSceneRenderEngine::renderBone(PMDBone *bone)
 {
    btScalar m[16];
    btVector3 a;
@@ -346,7 +346,7 @@ void GLPMDRenderEngine::renderBone(PMDBone *bone)
    glPopMatrix();
 }
 
-void GLPMDRenderEngine::renderBones(PMDModel *model)
+void GLSceneRenderEngine::renderBones(PMDModel *model)
 {
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_LIGHTING);
@@ -366,7 +366,7 @@ void GLPMDRenderEngine::renderBones(PMDModel *model)
 /* texture unit 0: model texture */
 /* texture unit 1: toon texture for toon shading */
 /* texture unit 2: additional sphere map texture, if exist */
-void GLPMDRenderEngine::renderModel(PMDModel *model)
+void GLSceneRenderEngine::renderModel(PMDModel *model)
 {
    const btVector3 *vertices = model->getVerticesPtr();
    if (!vertices)
@@ -486,7 +486,7 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
          PMDTextureNative *native = tex->getNative();
          if (native != NULL) {
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, *native);
+            glBindTexture(GL_TEXTURE_2D, native->id);
             if (hasSingleSphereMap) {
                if (tex->isSphereMap()) {
                   /* this is sphere map */
@@ -513,7 +513,7 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
          PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
          if (native != NULL) {
             glActiveTextureARB(GL_TEXTURE1_ARB);
-            glBindTexture(GL_TEXTURE_2D, *native);
+            glBindTexture(GL_TEXTURE_2D, native->id);
             /* set GL_CLAMP_TO_EDGE for toon texture to avoid texture interpolation at edge */
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -534,7 +534,7 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
             }
             PMDTextureNative *native = addtex->getNative();
             if (native != NULL) {
-               glBindTexture(GL_TEXTURE_2D, *native);
+               glBindTexture(GL_TEXTURE_2D, native->id);
                glEnable(GL_TEXTURE_GEN_S);
                glEnable(GL_TEXTURE_GEN_T);
             }
@@ -615,7 +615,7 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
 #endif
 }
 
-void GLPMDRenderEngine::renderEdge(PMDModel *model)
+void GLSceneRenderEngine::renderEdge(PMDModel *model)
 {
    const btVector3 *vertices = model->getVerticesPtr();
    const bool enableToon = model->getToonFlag();
@@ -653,7 +653,7 @@ void GLPMDRenderEngine::renderEdge(PMDModel *model)
 #endif
 }
 
-void GLPMDRenderEngine::renderShadow(PMDModel *model)
+void GLSceneRenderEngine::renderShadow(PMDModel *model)
 {
    const btVector3 *vertices = model->getVerticesPtr();
    if (!vertices)
@@ -667,16 +667,17 @@ void GLPMDRenderEngine::renderShadow(PMDModel *model)
    glEnable(GL_CULL_FACE);
 }
 
-void GLPMDRenderEngine::bindTexture(const unsigned char *data,
+void GLSceneRenderEngine::bindTexture(const unsigned char *data,
                                     const int width,
                                     const int height,
                                     const int components,
-                                    PMDTextureNative *texture)
+                                    PMDTextureNative **ptr)
 {
    /* generate texture */
    GLuint format = 0;
-   glGenTextures(1, texture);
-   glBindTexture(GL_TEXTURE_2D, *texture);
+   PMDTextureNative *native = new PMDTextureNative;
+   glGenTextures(1, &native->id);
+   glBindTexture(GL_TEXTURE_2D, native->id);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -692,14 +693,17 @@ void GLPMDRenderEngine::bindTexture(const unsigned char *data,
 
    /* set highest priority to this texture to tell OpenGL to keep textures in GPU memory */
    GLfloat priority = 1.0f;
-   glPrioritizeTextures(1, texture, &priority);
+   glPrioritizeTextures(1, &native->id, &priority);
+   *ptr = native;
 }
 
-void GLPMDRenderEngine::deleteTexture(PMDTextureNative *native)
+void GLSceneRenderEngine::deleteTexture(PMDTextureNative **ptr)
 {
+  PMDTextureNative *native = *ptr;
   if (native != NULL) {
-    glDeleteTextures(1, native);
-    *native = 0;
+    glDeleteTextures(1, &native->id);
+    delete native;
+    *ptr = 0;
   }
 }
 

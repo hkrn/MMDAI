@@ -48,7 +48,7 @@
 
 namespace MMDAI {
 
-class GLPMDRenderEngine;
+class GLSceneRenderEngine;
 class PMDModelLoader;
 
 /* Stage: stage */
@@ -57,7 +57,7 @@ class Stage
 public:
 
   /* Stage: constructor */
-  Stage();
+  Stage(GLSceneRenderEngine *engine);
 
   /* ~Stage: destructor */
   ~Stage();
@@ -66,22 +66,22 @@ public:
   void setSize(float *size, float numx, float numy);
 
   /* loadFloor: load floor image */
-  bool loadFloor(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
+  bool loadFloor(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* loadBackground: load background image */
-  bool loadBackground(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
+  bool loadBackground(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* loadStagePMD: load stage pmd */
-  bool loadStagePMD(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
+  bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* renderFloor: render the floor */
-  void renderFloor(GLPMDRenderEngine *engine);
+  void renderFloor(GLSceneRenderEngine *engine);
 
   /* renderBackground: render the background */
   void renderBackground();
 
   /* renderPMD: render the stage pmd */
-  void renderPMD(GLPMDRenderEngine *engine);
+  void renderPMD(GLSceneRenderEngine *engine);
 
   /* updateShadowMatrix: update shadow projection matrix */
   void updateShadowMatrix(float lightDirection[4]);
@@ -93,6 +93,7 @@ private:
   TileTexture m_floor; /* floor texture */
   TileTexture m_background;  /* background texture */
 
+  GLSceneRenderEngine *m_engine;
   PMDModel m_pmd;           /* PMD for background */
   bool m_hasPMD;            /* true if m_pmd is used */
   GLuint m_listIndexPMD;    /* display lst */

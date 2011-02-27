@@ -40,17 +40,15 @@
 #define MMDME_PMDTEXTURE_H_
 
 #include "MMDME/Common.h"
-#include "MMDME/GLPMDRenderEngine.h"
+#include "MMDME/PMDRenderEngine.h"
 
 namespace MMDAI {
-
-class GLPMDRenderEngine;
 
 /* PMDTexture: texture of PMD */
 class PMDTexture
 {
 private:
-   GLPMDRenderEngine *m_engine;
+   PMDRenderEngine *m_engine;
    PMDTextureNative *m_native;
    bool m_isSphereMap;           /* true if this texture is sphere map (.sph or .spa) */
    bool m_isSphereMapAdd;        /* true if this is sphere map to add (.spa) */
@@ -77,7 +75,7 @@ public:
 
    void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
 
-   void setRenderEngine(GLPMDRenderEngine *engine);
+   void setRenderEngine(PMDRenderEngine *engine);
 
    /* getID: get OpenGL texture ID */
    PMDTextureNative *getNative() const;

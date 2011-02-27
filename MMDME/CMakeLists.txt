@@ -56,6 +56,7 @@ set(libMMDME_public_headers
   include/MMDME/PMDMaterial.h 
   include/MMDME/PMDModel.h 
   include/MMDME/PMDModelLoader.h 
+  include/MMDME/PMDRenderEngine.h
   include/MMDME/PMDRigidBody.h 
   include/MMDME/PMDTexture.h 
   include/MMDME/PTree.h 

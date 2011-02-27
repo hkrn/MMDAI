@@ -80,7 +80,7 @@ PMDMaterial::~PMDMaterial()
 }
 
 /* PMDMaterial::setup: initialize and setup material */
-bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, GLPMDRenderEngine *engine)
+bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEngine *engine)
 {
    char *p;
    char name[21];

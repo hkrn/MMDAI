@@ -58,10 +58,10 @@ void PMDTexture::initialize()
 /* PMDTexture::clear: free texture */
 void PMDTexture::clear()
 {
-   m_engine->deleteTexture(m_native);
+   if (m_engine)
+      m_engine->deleteTexture(&m_native);
    if (m_textureData)
       MMDAIMemoryRelease(m_textureData);
-   delete m_native;
    initialize();
 }
 
@@ -80,11 +80,9 @@ PMDTexture::~PMDTexture()
 void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd)
 {
    assert(m_engine);
-   m_engine->deleteTexture(m_native);
+   m_engine->deleteTexture(&m_native);
    if (m_textureData)
       MMDAIMemoryRelease(m_textureData);
-   delete m_native;
-   m_native = new PMDTextureNative;
 
    m_width = width;
    m_height = height;
@@ -109,10 +107,10 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
       }
    }
 
-   m_engine->bindTexture(data, width, height, components, m_native);
+   m_engine->bindTexture(data, width, height, components, &m_native);
 }
 
-void PMDTexture::setRenderEngine(GLPMDRenderEngine *engine)
+void PMDTexture::setRenderEngine(PMDRenderEngine *engine)
 {
   m_engine = engine;
 }
