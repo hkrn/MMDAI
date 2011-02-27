@@ -73,8 +73,15 @@ int main(int argc, char *argv[])
   QString dirName = appDir.dirName().toLower();
   if (dirName == "debug" || dirName == "release")
     appDir.cdUp();
-  app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
+#elif defined(Q_OS_MAC)
+  if (appDir.dirName() == "MacOS") {
+    appDir.cdUp();
+    appDir.cdUp();
+    appDir.cdUp();
+  }
 #endif
+  QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
+
 #ifdef Q_OS_MAC
   QString path = QString("%1/../Resources/QMA_%2")
                  .arg(appDir.absolutePath())

@@ -130,19 +130,6 @@ MMDAI::SceneController *QMAWidget::getSceneController() const
 
 void QMAWidget::loadPlugins()
 {
-  QDir appDir = QDir(qApp->applicationDirPath());
-#if defined(Q_OS_WIN)
-  QString dirName = appDir.dirName().toLower();
-  if (dirName == "debug" || dirName == "release")
-    appDir.cdUp();
-#elif defined(Q_OS_MAC)
-  if (appDir.dirName() == "MacOS") {
-    appDir.cdUp();
-    appDir.cdUp();
-    appDir.cdUp();
-  }
-#endif
-  QDir pluginsDir = appDir;
   foreach (QObject *instance, QPluginLoader::staticInstances()) {
     QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
     if (plugin != NULL) {
@@ -152,6 +139,7 @@ void QMAWidget::loadPlugins()
       qWarning() << plugin->metaObject()->className() << "was not loaded";
     }
   }
+  QDir pluginsDir = QDir::searchPaths("mmdai").at(0);
   if (pluginsDir.exists("Plugins")) {
     pluginsDir.cd("Plugins");
     foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
@@ -168,8 +156,6 @@ void QMAWidget::loadPlugins()
       }
     }
   }
-  QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
-  m_controller->getOption()->load(appDir.absoluteFilePath("MMDAI.mdf").toUtf8().constData());
   emit pluginInitialized(m_controller);
 }
 
@@ -304,6 +290,8 @@ void QMAWidget::showEvent(QShowEvent *event)
 {
   Q_UNUSED(event);
   if (!m_sceneUpdateTimer.isActive()) {
+    QString path = QDir::searchPaths("mmdai").at(0) + "/MMDAI.mdf";
+    m_controller->getOption()->load(path.toUtf8().constData());
     int size[2];
     size[0] = width();
     size[1] = height();
