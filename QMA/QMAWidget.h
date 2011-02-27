@@ -39,9 +39,7 @@
 
 #include <QtGui/QtGui>
 
-#include <MMDAI/PMDModelLoaderFactory.h>
-#include <MMDAI/CommandParser.h>
-#include <MMDAI/SceneController.h>
+#include <MMDAI/MMDAI.h>
 
 #include "QMAModelLoaderFactory.h"
 #include "QMAPlugin.h"
