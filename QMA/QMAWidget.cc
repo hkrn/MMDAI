@@ -298,16 +298,16 @@ void QMAWidget::changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loa
 
 void QMAWidget::initializeGL()
 {
-  int size[2];
-  size[0] = width();
-  size[1] = height();
-  m_controller->init(size);
 }
 
 void QMAWidget::showEvent(QShowEvent *event)
 {
   Q_UNUSED(event);
   if (!m_sceneUpdateTimer.isActive()) {
+    int size[2];
+    size[0] = width();
+    size[1] = height();
+    m_controller->init(size);
     m_controller->updateLight();
     loadPlugins();
     emit pluginStarted();
