@@ -42,10 +42,11 @@
 #define COMMANDPARSER_H
 
 #include <MMDME/Common.h>
-#include "MMDAI/SceneController.h"
-#include "MMDAI/PMDModelLoaderFactory.h"
 
 namespace MMDAI {
+
+class SceneController;
+class PMDModelLoaderFactory;
 
 class CommandParser
 {

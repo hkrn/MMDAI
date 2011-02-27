@@ -44,12 +44,15 @@
 #include <MMDME/Common.h>
 
 #include "MMDAI/MotionStocker.h"
-#include "MMDAI/SceneEventHandler.h"
 #include "MMDAI/SceneRenderer.h"
+#include "MMDAI/Stage.h"
 
 namespace MMDAI {
 
 #define MAX_MODEL 20
+
+class GLPMDRenderEngine;
+class SceneEventHandler;
 
 class SceneController
 {
@@ -162,6 +165,7 @@ private:
   void sendEvent2(const char *type, const char *arg1, const char *arg2);
 
   BulletPhysics m_bullet;
+  GLPMDRenderEngine *m_engine;
   MotionStocker m_motion;
   Option m_option;
   PMDObject m_objects[MAX_MODEL];

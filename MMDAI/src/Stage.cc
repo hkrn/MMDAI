@@ -255,12 +255,12 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* Stage::renderFloor: render the floor */
-void Stage::renderFloor()
+void Stage::renderFloor(GLPMDRenderEngine *engine)
 {
   const float normal[3] = {0.0f, 1.0f, 0.0f};
 
   if (m_hasPMD)
-    renderPMD();
+    renderPMD(engine);
   else
     m_floor.render(false, normal);
 }
@@ -275,7 +275,7 @@ void Stage::renderBackground()
 }
 
 /* Stage::renderPMD: render the stage pmd */
-void Stage::renderPMD()
+void Stage::renderPMD(GLPMDRenderEngine *engine)
 {
   if (m_listIndexPMDValid) {
     glCallList(m_listIndexPMD);
@@ -285,7 +285,7 @@ void Stage::renderPMD()
   m_listIndexPMD = glGenLists(1);
   glNewList(m_listIndexPMD, GL_COMPILE);
   glPushMatrix();
-  m_pmd.renderModel();
+  engine->renderModel(&m_pmd);
   glPopMatrix();
   glEndList();
   m_listIndexPMDValid = true;

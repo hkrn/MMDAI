@@ -41,11 +41,7 @@
 #ifndef SCENERENDERER_H
 #define SCENERENDERER_H
 
-#include <MMDME/Common.h>
-
-#include "MMDAI/Option.h"
-#include "MMDAI/PMDObject.h"
-#include "MMDAI/Stage.h"
+#include <MMDME/MMDME.h>
 
 namespace MMDAI {
 
@@ -54,10 +50,14 @@ namespace MMDAI {
 #define RENDER_VIEWPOINT_FRUSTUM_NEAR 5.0f
 #define RENDER_VIEWPOINT_FRUSTUM_FAR  2000.0f
 
+class Stage;
+
 /* Render: render */
 class SceneRenderer
 {
 private:
+
+  GLPMDRenderEngine *m_engine;
 
   int m_width;             /* window width */
   int m_height;            /* winodw height */
@@ -119,7 +119,7 @@ private:
 public:
 
   /* SceneRender: constructor */
-  SceneRenderer();
+  SceneRenderer(GLPMDRenderEngine *engine);
 
   /* ~SceneRender: destructor */
   ~SceneRenderer();

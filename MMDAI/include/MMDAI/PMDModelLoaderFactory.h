@@ -41,11 +41,11 @@
 #ifndef PMDMODELLOADERFACTORY_H
 #define PMDMODELLOADERFACTORY_H
 
-#include <MMDME/PMDModelLoader.h>
-#include <MMDME/VMDLoader.h>
-#include "MMDAI/LipSyncLoader.h"
-
 namespace MMDAI {
+
+class PMDModelLoader;
+class LipSyncLoader;
+class VMDLoader;
 
 class PMDModelLoaderFactory
 {

@@ -43,11 +43,13 @@
 
 #include <MMDME/Common.h>
 #include <MMDME/PMDModel.h>
-#include <MMDME/PMDModelLoader.h>
 
 #include "MMDAI/TileTexture.h"
 
 namespace MMDAI {
+
+class GLPMDRenderEngine;
+class PMDModelLoader;
 
 /* Stage: stage */
 class Stage
@@ -73,13 +75,13 @@ public:
   bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* renderFloor: render the floor */
-  void renderFloor();
+  void renderFloor(GLPMDRenderEngine *engine);
 
   /* renderBackground: render the background */
   void renderBackground();
 
   /* renderPMD: render the stage pmd */
-  void renderPMD();
+  void renderPMD(GLPMDRenderEngine *engine);
 
   /* updateShadowMatrix: update shadow projection matrix */
   void updateShadowMatrix(float lightDirection[4]);

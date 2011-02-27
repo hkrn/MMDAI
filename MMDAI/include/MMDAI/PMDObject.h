@@ -43,15 +43,18 @@
 
 #include <MMDME/BulletPhysics.h>
 #include <MMDME/Common.h>
-#include <MMDME/MotionManager.h>
-#include <MMDME/PMDBone.h>
-#include <MMDME/PMDModel.h>
-#include <MMDME/PMDModelLoader.h>
-#include <MMDME/VMD.h>
 
 #include "MMDAI/LipSync.h"
 
 namespace MMDAI {
+
+class GLPMDRenderEngine;
+class LipSyncLoader;
+class MotionManager;
+class PMDBone;
+class PMDModel;
+class PMDModelLoader;
+class VMD;
 
 /* PMDObject: object of PMD */
 class PMDObject
@@ -215,7 +218,7 @@ public:
    PMDObject *getAssignedModel() const;
 
    /* renderDebug: render model debug */
-   void renderDebug();
+   void renderDebug(GLPMDRenderEngine *engine);
 };
 
 } /* namespace */

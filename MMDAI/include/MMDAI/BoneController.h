@@ -39,10 +39,11 @@
 #include <btBulletDynamicsCommon.h>
 
 #include <MMDME/Common.h>
-#include <MMDME/PMDBone.h>
-#include <MMDME/PMDModel.h>
 
 namespace MMDAI {
+
+class PMDBone;
+class PMDModel;
 
 /* BoneController: control bone */
 class BoneController

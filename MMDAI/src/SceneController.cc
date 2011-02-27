@@ -105,8 +105,10 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler)
-  : m_highlightModel(0),
+  : m_engine(new GLPMDRenderEngine()),
+    m_highlightModel(0),
     m_handler(handler),
+    m_scene(m_engine),
     m_numModel(0),
     m_selectedModel(-1),
     m_enablePhysicsSimulation(true)
@@ -118,6 +120,7 @@ SceneController::~SceneController()
   for (int i = 0; i < m_numModel; i++) {
     m_objects[i].release();
   }
+  delete m_engine;
 }
 
 void SceneController::updateLight()
@@ -1039,7 +1042,7 @@ void SceneController::renderScene()
 
 void SceneController::renderBulletForDebug()
 {
-  m_bullet.debugDisplay();
+  m_engine->renderRigidBodies(&m_bullet);
 }
 
 void SceneController::renderPMDObjectsForDebug()
@@ -1047,13 +1050,9 @@ void SceneController::renderPMDObjectsForDebug()
   for (int i = 0; i < m_numModel; i++) {
     PMDObject *object = &m_objects[i];
     if (object->isEnable()) {
-      object->renderDebug();
+      object->renderDebug(m_engine);
     }
   }
-}
-
-void SceneController::renderLogger()
-{
 }
 
 Option *SceneController::getOption()

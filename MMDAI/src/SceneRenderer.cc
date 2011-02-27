@@ -90,7 +90,8 @@ void SceneRenderer::clear()
 }
 
 /* SceneRenderer::SceneRenderer: constructor */
-SceneRenderer::SceneRenderer()
+SceneRenderer::SceneRenderer(GLPMDRenderEngine *engine)
+  : m_engine(engine)
 {
   initialize();
 }
@@ -390,7 +391,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     if (!object->isEnable())
       continue;
     glPushMatrix();
-    object->getPMDModel()->renderForShadow();
+    m_engine->renderShadow(object->getPMDModel());
     glPopMatrix();
   }
 
@@ -422,14 +423,14 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
   if (option->getShadowMappingLightFirst()) {
     /* Renderer light setting, later Renderer only the shadow part with dark setting */
     stage->renderBackground();
-    stage->renderFloor();
+    stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
       PMDObject *object = &objects[i];
       if (!object->isEnable())
         continue;
       PMDModel *model = object->getPMDModel();
-      model->renderModel();
-      model->renderEdge();
+      m_engine->renderModel(model);
+      m_engine->renderEdge(model);
     }
   } else {
     /* Renderer in dark setting, later Renderer only the non-shadow part with light setting */
@@ -441,7 +442,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
 
     /* Renderer the non-toon objects (back, floor, non-toon models) */
     stage->renderBackground();
-    stage->renderFloor();
+    stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
       PMDObject *object = &objects[i];
       if (!object->isEnable())
@@ -449,7 +450,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
       PMDModel *model = object->getPMDModel();
       if (model->getToonFlag() == true)
         continue;
-      model->renderModel();
+      m_engine->renderModel(model);
     }
 
     /* for toon objects, they should apply the model-defined toon texture color at texture coordinates (0, 0) for shadow Renderering */
@@ -469,8 +470,8 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
       /* tell model to Renderer with the shadow corrdinates */
       model->setSelfShadowDrawing(true);
       /* Renderer model and edge */
-      model->renderModel();
-      model->renderEdge();
+      m_engine->renderModel(model);
+      m_engine->renderEdge(model);
       /* disable shadow Renderering */
       model->setSelfShadowDrawing(false);
     }
@@ -524,7 +525,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
 
     /* Renderer the non-toon objects (back, floor, non-toon models) */
     stage->renderBackground();
-    stage->renderFloor();
+    stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
       PMDObject *object = &objects[i];
       if (!object->isEnable())
@@ -532,7 +533,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
       PMDModel *model = object->getPMDModel();
       if (!model->getToonFlag())
         continue;
-      model->renderModel();
+      m_engine->renderModel(model);
     }
 
     /* for toon objects, they should apply the model-defined toon texture color at texture coordinates (0, 0) for shadow Renderering */
@@ -552,7 +553,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
       /* tell model to Renderer with the shadow corrdinates */
       model->setSelfShadowDrawing(true);
       /* Renderer model and edge */
-      model->renderModel();
+      m_engine->renderModel(model);
       /* disable shadow Renderering */
       model->setSelfShadowDrawing(false);
     }
@@ -562,12 +563,12 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     /* the area clipped by depth texture by alpha test is light part */
     glAlphaFunc(GL_GEQUAL, 0.001f);
     stage->renderBackground();
-    stage->renderFloor();
+    stage->renderFloor(m_engine);
     for (i = 0; i < size; i++) {
       PMDObject *object = &objects[i];
       if (!object->isEnable())
         continue;
-      object->getPMDModel()->renderModel();
+      m_engine->renderModel(object->getPMDModel());
     }
   }
 
@@ -608,7 +609,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
   /* make stencil tag true */
   glStencilOp(GL_KEEP, GL_KEEP , GL_REPLACE);
   /* Renderer floor */
-  stage->renderFloor();
+  stage->renderFloor(m_engine);
   /* Renderer shadow stencil */
   glColorMask(0, 0, 0, 0) ;
   glDepthMask(0);
@@ -624,7 +625,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
       continue;
     glPushMatrix();
     glMultMatrixf(stage->getShadowMatrix());
-    object->getPMDModel()->renderForShadow();
+    m_engine->renderShadow(object->getPMDModel());
     glPopMatrix();
   }
   glEnable(GL_DEPTH_TEST);
@@ -635,7 +636,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
   glDisable(GL_LIGHTING);
   glColor4f(0.1f, 0.1f, 0.1f, option->getShadowMappingSelfDensity());
   glDisable(GL_DEPTH_TEST);
-  stage->renderFloor();
+  stage->renderFloor(m_engine);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_STENCIL_TEST);
   glEnable(GL_LIGHTING);
@@ -647,8 +648,8 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject *objects
     if (!object->isEnable())
       continue;
     PMDModel *model = object->getPMDModel();
-    model->renderModel();
-    model->renderEdge();
+    m_engine->renderModel(model);
+    m_engine->renderEdge(model);
   }
 }
 
@@ -707,7 +708,7 @@ int SceneRenderer::pickModel(PMDObject *objects, int size, int x, int y, int *al
     if (!object->isEnable())
       continue;
     glLoadName(i);
-    object->getPMDModel()->renderForShadow();
+    m_engine->renderShadow(object->getPMDModel());
   }
 
   /* restore projection matrix */

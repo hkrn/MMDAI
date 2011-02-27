@@ -40,7 +40,6 @@
 #define MMDAI_LIPSYNC_H_
 
 #include <MMDME/Common.h>
-#include "MMDAI/LipSyncLoader.h"
 
 /* definitions */
 
@@ -48,6 +47,8 @@ namespace MMDAI {
 
 #define LIPSYNC_CONFIGFILE          "lip.txt"
 #define LIPSYNC_MAXBUFLEN           1024
+
+class LipSyncLoader;
 
 /* LipKeyFrame: key frame for lip motion */
 typedef struct _LipKeyFrame {

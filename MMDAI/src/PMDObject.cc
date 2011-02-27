@@ -550,10 +550,10 @@ PMDObject *PMDObject::getAssignedModel() const
 }
 
 /* PMDObject::renderDebug: render model debug */
-void PMDObject::renderDebug()
+void PMDObject::renderDebug(GLPMDRenderEngine *engine)
 {
    /* render debug */
-   m_pmd.renderDebug();
+  engine->renderBones(&m_pmd);
 }
 
 } /* namespace */
