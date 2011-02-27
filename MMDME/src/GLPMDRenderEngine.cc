@@ -354,9 +354,9 @@ void GLPMDRenderEngine::renderBones(PMDModel *model)
 
    /* draw bones */
    int nbones = model->getNumBone();
-   PMDBone **bones = model->getBonesPtr();
+   PMDBone *bones = model->getBonesPtr();
    for (int i = 0; i < nbones; i++)
-      renderBone(bones[i]);
+      renderBone(&bones[i]);
 
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHTING);

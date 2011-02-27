@@ -271,7 +271,7 @@ public:
    /* smearAllBonesToDefault: smear all bone pos/rot into default value (rate 1.0 = keep, rate 0.0 = reset) */
    void smearAllBonesToDefault(float rate);
 
-   PMDBone **getBonesPtr();
+   PMDBone *getBonesPtr() const;
    const btVector3 *getVerticesPtr() const;
    const btVector3 *getNormalsPtr() const;
    const TexCoord *getTexCoordsPtr() const;

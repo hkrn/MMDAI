@@ -443,9 +443,9 @@ const char *PMDModel::getComment() const
    return m_comment;
 }
 
-PMDBone **PMDModel::getBonesPtr()
+PMDBone *PMDModel::getBonesPtr() const
 {
-  return &m_boneList;
+  return m_boneList;
 }
 
 const btVector3 *PMDModel::getVerticesPtr() const
