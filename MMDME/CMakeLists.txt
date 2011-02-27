@@ -87,8 +87,8 @@ else()
 endif()
 
 # find OpenGL Easy Extension
-find_path(GLEE_INCLUDE GLee.h PATH $ENV{MMDAI_GLEE_DIR})
-find_library(GLEE_LIBRARY glee PATH $ENV{MMDAI_GLEE_DIR})
+find_path(GLEE_INCLUDE GLee.h PATH $ENV{GLEE_DIR})
+find_library(GLEE_LIBRARY glee PATH $ENV{GLEE_DIR})
 if(GLEE_INCLUDE AND GLEE_LIBRARY)
   target_link_libraries(MMDME ${GLEE_LIBRARY})
   include_directories(${GLEE_INCLUDE})
@@ -116,7 +116,7 @@ else()
       BULLET_LIB_DYNAMICS AND  BULLET_LIB_SOFTBODY AND
       BULLET_LIB_LINEAR_MATH)
     include_directories(${BULLET_INCLUDE_DIRS})
-    target_link_libraries(MMDAI
+    target_link_libraries(MMDME
       ${BULLET_LIB_COLLISION}
       ${BULLET_LIB_DYNAMICS}
       ${BULLET_LIB_SOFTBODY}

@@ -169,7 +169,6 @@ private:
   SceneEventHandler *m_handler;
   SceneRenderer m_scene;
   Stage m_stage;
-  TextRenderer *m_text;
   int m_numModel;
   int m_selectedModel;
   bool m_enablePhysicsSimulation;
