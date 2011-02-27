@@ -271,17 +271,25 @@ public:
    /* smearAllBonesToDefault: smear all bone pos/rot into default value (rate 1.0 = keep, rate 0.0 = reset) */
    void smearAllBonesToDefault(float rate);
 
-   /* renderModel: render the model */
-   void renderModel();
-
-   /* renderEdge: render toon edge */
-   void renderEdge();
-
-   /* renderForShadow: render for shadow */
-   void renderForShadow();
-
-   /* renderDebug: render for debug view */
-   void renderDebug();
+   PMDBone **getBonesPtr();
+   const btVector3 *getVerticesPtr() const;
+   const btVector3 *getNormalsPtr() const;
+   const TexCoord *getTexCoordsPtr() const;
+   const btVector3 *getSkinnedVerticesPtr() const;
+   const btVector3 *getSkinnedNormalsPtr() const;
+   const TexCoord *getToonTexCoordsPtr() const;
+   const TexCoord *getToonTexCoordsForSelfShadowPtr() const;
+   const btVector3 *getEdgeVerticesPtr() const;
+   const unsigned short *getSurfacesPtr() const;
+   const unsigned short *getSurfacesForEdgePtr() const;
+   const float getGlobalAlpha() const;
+   const float *getEdgeColors() const;
+   PMDMaterial *getMaterialAt(unsigned int i);
+   const unsigned int getToonTextureIDAt(unsigned int i) const;
+   const unsigned int getNumSurfaceForEdge() const;
+   const bool isSelfShadowEnabled() const;
+   const bool hasSingleSphereMap() const;
+   const bool hasMultipleSphereMap() const;
 };
 
 } /* namespace */

@@ -443,5 +443,106 @@ const char *PMDModel::getComment() const
    return m_comment;
 }
 
+PMDBone **PMDModel::getBonesPtr()
+{
+  return &m_boneList;
+}
+
+const btVector3 *PMDModel::getVerticesPtr() const
+{
+  return m_vertexList;
+}
+
+const btVector3 *PMDModel::getNormalsPtr() const
+{
+  return m_normalList;
+}
+
+const TexCoord *PMDModel::getTexCoordsPtr() const
+{
+  return m_texCoordList;
+}
+
+const btVector3 *PMDModel::getSkinnedVerticesPtr() const
+{
+  return m_skinnedVertexList;
+}
+
+const btVector3 *PMDModel::getSkinnedNormalsPtr() const
+{
+  return m_skinnedNormalList;
+}
+
+const TexCoord *PMDModel::getToonTexCoordsPtr() const
+{
+  return m_toonTexCoordList;
+}
+
+const TexCoord *PMDModel::getToonTexCoordsForSelfShadowPtr() const
+{
+  return m_toonTexCoordListForShadowMap;
+}
+
+const btVector3 *PMDModel::getEdgeVerticesPtr() const
+{
+  return m_edgeVertexList;
+}
+
+const unsigned short *PMDModel::getSurfacesPtr() const
+{
+  return m_surfaceList;
+}
+
+const unsigned short *PMDModel::getSurfacesForEdgePtr() const
+{
+  return m_surfaceListForEdge;
+}
+
+const float PMDModel::getGlobalAlpha() const
+{
+  return m_globalAlpha;
+}
+
+const float *PMDModel::getEdgeColors() const
+{
+  return m_edgeColor;
+}
+
+PMDMaterial *PMDModel::getMaterialAt(unsigned int i)
+{
+  if ( i >= m_numMaterial)
+    return NULL;
+  else
+    return &m_material[i];
+}
+
+const unsigned int PMDModel::getToonTextureIDAt(unsigned int i) const
+{
+  if (i >= kNSystemTextureFiles + 1)
+    return 0;
+  else
+    return m_toonTextureID[i];
+}
+
+const unsigned int PMDModel::getNumSurfaceForEdge() const
+{
+  return m_numSurfaceForEdge;
+}
+
+const bool PMDModel::isSelfShadowEnabled() const
+{
+  return m_selfShadowDrawing;
+}
+
+const bool PMDModel::hasSingleSphereMap() const
+{
+  return m_hasSingleSphereMap;
+}
+
+const bool PMDModel::hasMultipleSphereMap() const
+{
+  return m_hasMultipleSphereMap;
+}
+
 } /* namespace */
 

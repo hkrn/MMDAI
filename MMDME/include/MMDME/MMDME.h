@@ -60,6 +60,7 @@
 #include "MMDME/PMDRigidBody.h"
 #include "MMDME/PMDConstraint.h"
 #include "MMDME/PMDModel.h"
+#include "MMDME/GLPMDRenderEngine.h"
 
 #include "MMDME/MotionController.h"
 #include "MMDME/MotionManager.h"

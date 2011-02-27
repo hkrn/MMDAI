@@ -162,8 +162,6 @@ public:
 
    /* setCurrentRotation: set current rotation */
    void setCurrentRotation(btQuaternion *q);
-
-   void renderDebug();
 };
 
 } /* namespace */

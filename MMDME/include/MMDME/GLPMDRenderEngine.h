@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,56 +36,42 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDME_BULLETPHYSICS_H_
-#define MMDME_BULLETPHYSICS_H_
+/* headers */
+#include "GLee.h"
 
-#define BULLETPHYSICS_PI 3.1415926535897932384626433832795
+#include <BulletCollision/CollisionShapes/btShapeHull.h>
 
-#include "MMDME/Common.h"
+class btConvexShape;
 
 namespace MMDAI {
 
-/* BulletPhysics: Bullet Physics engine */
-class BulletPhysics
-{
-private:
+class BulletPhysics;
+class PMDBone;
+class PMDModel;
 
-   btDefaultCollisionConfiguration *m_collisionConfig; /* collision configuration */
-   btCollisionDispatcher *m_dispatcher;                /* collision dispatcher */
-   btAxisSweep3 *m_overlappingPairCache;
-   btConstraintSolver *m_solver;                       /* constraint solver */
-   btDiscreteDynamicsWorld *m_world;                   /* the simulation world */
-
-   int m_fps;          /* simulation frame rate (Hz) */
-   btScalar m_subStep; /* sub step to process simulation */
-
-   /* initialize: initialize BulletPhysics */
-   void initialize();
-
-   /* clear: free BulletPhysics */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(BulletPhysics);
-
+class GLPMDRenderEngine {
 public:
+  GLPMDRenderEngine();
+  ~GLPMDRenderEngine();
 
-   /* BulletPhysics: constructor */
-   BulletPhysics();
+  void renderRigidBodies(BulletPhysics *bullet);
+  void renderBone(PMDBone *bone);
+  void renderBones(PMDModel *model);
+  void renderModel(PMDModel *model);
+  void renderEdge(PMDModel *model);
+  void renderShadow(PMDModel *model);
+  void bindTexture();
 
-   /* ~BulletPhysics: destructor */
-   ~BulletPhysics();
+private:
+  void drawCube();
+  void drawSphere(int lats, int longs);
+  void drawConvex(btConvexShape *shape);
 
-   /* setup: initialize and setup BulletPhysics */
-   void setup(int simulationFps);
-
-   /* update: step the simulation world forward */
-   void update(float deltaFrame);
-
-   /* getWorld: get simulation world */
-   btDiscreteDynamicsWorld *getWorld() const;
+   GLuint m_boxList;
+   GLuint m_sphereList;
+   bool m_boxListEnabled;
+   bool m_sphereListEnabled;
 };
 
 } /* namespace */
-
-#endif
 
