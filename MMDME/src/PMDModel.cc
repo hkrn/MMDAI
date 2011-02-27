@@ -222,16 +222,16 @@ PMDModel::~PMDModel()
 }
 
 /* PMDModel::load: load from file name */
-bool PMDModel::load(PMDModelLoader *loader, BulletPhysics *bullet)
+bool PMDModel::load(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
 {
-   bool ret = parse(loader, bullet);
+   bool ret = parse(loader, engine, bullet);
    return ret;
 }
 
 /* PMDModel::getBone: find bone data by name */
 PMDBone *PMDModel::getBone(const char *name) 
 {
-   PMDBone *match = (PMDBone *) m_name2bone.findNearest(name);
+   PMDBone *match = static_cast<PMDBone *>(m_name2bone.findNearest(name));
 
    if (match && MMDAIStringEquals(match->getName(), name))
       return match;
@@ -242,7 +242,7 @@ PMDBone *PMDModel::getBone(const char *name)
 /* PMDModel::getFace: find face data by name */
 PMDFace *PMDModel::getFace(const char *name)
 {
-   PMDFace *match = (PMDFace *) m_name2face.findNearest(name);
+   PMDFace *match = static_cast<PMDFace *>(m_name2face.findNearest(name));
 
    if (match && MMDAIStringEquals(match->getName(), name))
       return match;
@@ -516,12 +516,12 @@ PMDMaterial *PMDModel::getMaterialAt(unsigned int i)
     return &m_material[i];
 }
 
-const unsigned int PMDModel::getToonTextureIDAt(unsigned int i) const
+PMDTexture *PMDModel::getToonTextureAt(unsigned int i)
 {
   if (i >= kNSystemTextureFiles + 1)
     return 0;
   else
-    return m_toonTextureID[i];
+    return &m_localToonTexture[i];
 }
 
 const unsigned int PMDModel::getNumSurfaceForEdge() const

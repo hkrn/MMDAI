@@ -39,26 +39,19 @@
 #ifndef MMDME_PMDTEXTURE_H_
 #define MMDME_PMDTEXTURE_H_
 
-#if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-#include <windows.h>
-#endif
-#include <GL/gl.h>
-#endif
-
 #include "MMDME/Common.h"
+#include "MMDME/GLPMDRenderEngine.h"
 
 namespace MMDAI {
+
+class GLPMDRenderEngine;
 
 /* PMDTexture: texture of PMD */
 class PMDTexture
 {
 private:
-   static const unsigned int kUninitializedID = 0xFFFFFFFF;
-
-   GLuint m_id;                  /* OpenGL texture id */
+   GLPMDRenderEngine *m_engine;
+   PMDTextureNative *m_native;
    bool m_isSphereMap;           /* true if this texture is sphere map (.sph or .spa) */
    bool m_isSphereMapAdd;        /* true if this is sphere map to add (.spa) */
    long m_width;                 /* texture image width */
@@ -84,8 +77,10 @@ public:
 
    void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
 
+   void setRenderEngine(GLPMDRenderEngine *engine);
+
    /* getID: get OpenGL texture ID */
-   GLuint getID() const;
+   PMDTextureNative *getNative() const;
 
    /* isSphereMap: return true if this texture is sphere map */
    bool isSphereMap() const;

@@ -41,10 +41,12 @@
 
 #include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
-#include "MMDME/PMDModelLoader.h"
 #include "MMDME/PMDTexture.h"
 
 namespace MMDAI {
+
+class GLPMDRenderEngine;
+class PMDModelLoader;
 
 /* PMDMaterial: material of PMD */
 class PMDMaterial
@@ -83,7 +85,7 @@ public:
    ~PMDMaterial();
 
    /* setup: initialize and setup material */
-   bool setup(PMDFile_Material *m, PMDModelLoader *loader);
+   bool setup(PMDFile_Material *m, PMDModelLoader *loader, GLPMDRenderEngine *engine);
 
    /* hasSingleSphereMap: return if it has single sphere maps */
    bool hasSingleSphereMap() const;

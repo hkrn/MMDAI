@@ -88,8 +88,9 @@ TileTexture::~TileTexture()
 }
 
 /* TileTexture::load: load a texture from file name (wide char) */
-bool TileTexture::load(PMDModelLoader *loader)
+bool TileTexture::load(PMDModelLoader *loader, GLPMDRenderEngine *engine)
 {
+  m_texture.setRenderEngine(engine);
   bool ret = loader->loadImageTexture(&m_texture);
   if (ret) {
     m_isLoaded = true;
@@ -122,7 +123,7 @@ void TileTexture::render(bool cullFace, const float normal[3])
   glEnable(GL_TEXTURE_2D);
   glPushMatrix();
   glNormal3f(normal[0], normal[1], normal[2]);
-  glBindTexture(GL_TEXTURE_2D, m_texture.getID());
+  glBindTexture(GL_TEXTURE_2D, *m_texture.getNative());
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glBegin(GL_QUADS);
   glTexCoord2f(0.0, m_numy);

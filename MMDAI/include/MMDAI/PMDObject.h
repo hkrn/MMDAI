@@ -117,6 +117,7 @@ public:
    /* PMDObject::load: load model */
    bool load(PMDModelLoader *modelLoader,
              LipSyncLoader *lipSyncLoader,
+             GLPMDRenderEngine *engine,
              btVector3 *offsetPos,
              btQuaternion *offsetRot,
              bool forcedPosition,

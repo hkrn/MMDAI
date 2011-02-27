@@ -150,7 +150,7 @@ bool SceneController::loadFloor(PMDModelLoader *loader)
   const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
-  if (m_stage.loadFloor(loader, &m_bullet) == false) {
+  if (m_stage.loadFloor(loader, m_engine, &m_bullet) == false) {
     MMDAILogWarn("cannot set floor %s.", fileName);
     return false;
   }
@@ -168,7 +168,7 @@ bool SceneController::loadBackground(PMDModelLoader *loader)
   const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
-  if (m_stage.loadBackground(loader, &m_bullet) == false) {
+  if (m_stage.loadBackground(loader, m_engine, &m_bullet) == false) {
     MMDAILogWarn("cannot set background %s.", fileName);
     return false;
   }
@@ -186,7 +186,7 @@ bool SceneController::loadStage(PMDModelLoader *loader)
   const char *fileName = loader->getLocation();
   if (fileName == NULL)
     return false;
-  if (m_stage.loadStagePMD(loader, &m_bullet) == false) {
+  if (m_stage.loadStagePMD(loader, m_engine, &m_bullet) == false) {
     MMDAILogWarn("cannot set stage %s.", fileName);
     return false;
   }
@@ -466,6 +466,7 @@ bool SceneController::addModel(const char *modelAlias,
   /* add model */
   if (!newObject->load(modelLoader,
                        lipSyncLoader,
+                       m_engine,
                        &offsetPos,
                        &offsetRot,
                        forcedPosition,
@@ -508,6 +509,7 @@ bool SceneController::changeModel(PMDObject *object,
   /* load model */
   if (!object->load(modelLoader,
                     lipSyncLoader,
+                    m_engine,
                     NULL,
                     NULL,
                     false,

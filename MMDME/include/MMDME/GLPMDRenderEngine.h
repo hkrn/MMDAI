@@ -36,6 +36,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_GLPMDRENDERENGINE_H_
+#define MMDAI_GLPMDRENDERENGINE_H_
+
 /* headers */
 #include "GLee.h"
 
@@ -49,6 +52,8 @@ class BulletPhysics;
 class PMDBone;
 class PMDModel;
 
+typedef GLuint PMDTextureNative;
+
 class GLPMDRenderEngine {
 public:
   GLPMDRenderEngine();
@@ -60,7 +65,12 @@ public:
   void renderModel(PMDModel *model);
   void renderEdge(PMDModel *model);
   void renderShadow(PMDModel *model);
-  void bindTexture();
+  void bindTexture(const unsigned char *data,
+                   const int width,
+                   const int height,
+                   const int components,
+                   PMDTextureNative *native);
+  void deleteTexture(PMDTextureNative *native);
 
 private:
   void drawCube();
@@ -74,4 +84,6 @@ private:
 };
 
 } /* namespace */
+
+#endif
 

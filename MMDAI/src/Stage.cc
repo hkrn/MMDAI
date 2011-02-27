@@ -190,14 +190,14 @@ void Stage::setSize(float *size, float numx, float numy)
 }
 
 /* Stage::loadFloor: load floor image */
-bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
+bool Stage::loadFloor(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_floor.load(loader);
+  ret = m_floor.load(loader, engine);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
@@ -211,14 +211,14 @@ bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* Stage::loadBackground: load background image */
-bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
+bool Stage::loadBackground(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_background.load(loader);
+  ret = m_background.load(loader, engine);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
@@ -231,14 +231,14 @@ bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* Stage::loadStagePMD: load stage pmd */
-bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
+bool Stage::loadStagePMD(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet)
 {
   bool ret;
 
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_pmd.load(loader, bullet);
+  ret = m_pmd.load(loader, engine, bullet);
   if (ret) {
     m_pmd.setToonFlag(false);
     m_pmd.updateSkin();

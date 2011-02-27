@@ -42,18 +42,20 @@
 #include <btBulletDynamicsCommon.h>
 
 #include "MMDME/Common.h"
-#include "MMDME/BulletPhysics.h"
 #include "MMDME/PMDBone.h"
-#include "MMDME/PMDConstraint.h"
-#include "MMDME/PMDFace.h"
-#include "MMDME/PMDIK.h"
-#include "MMDME/PMDMaterial.h"
-#include "MMDME/PMDModelLoader.h"
-#include "MMDME/PMDRigidBody.h"
 #include "MMDME/PMDTexture.h"
 #include "MMDME/PTree.h"
 
 namespace MMDAI {
+
+class BulletPhysics;
+class GLPMDRenderEngine;
+class PMDConstraint;
+class PMDFace;
+class PMDIK;
+class PMDMaterial;
+class PMDModelLoader;
+class PMDRigidBody;
 
 /* TexCoord: texture coordinaiton */
 typedef struct {
@@ -104,7 +106,6 @@ private:
    PMDConstraint *m_constraintList; /* rigid body list */
 
    /* work area for toon renderling */
-   unsigned int m_toonTextureID[kNSystemTextureFiles + 1];  /* texture ID for toon shading */
    PMDTexture m_localToonTexture[kNSystemTextureFiles + 1]; /* toon textures for this model only */
 
    /* work area for OpenGL rendering */
@@ -143,7 +144,7 @@ private:
    PTree m_name2face;              /* name-to-face index for fast lookup */
 
    /* parse: initialize and load from data memories */
-   bool parse(PMDModelLoader *loader, BulletPhysics *bullet);
+   bool parse(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
 
    /* initialize: initialize PMDModel */
    void initialize();
@@ -170,7 +171,7 @@ public:
    ~PMDModel();
 
    /* load: load from file name */
-   bool load(PMDModelLoader *loader, BulletPhysics *bullet);
+   bool load(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
 
    /* getBone: find bone data by name */
    PMDBone *getBone(const char *name);
@@ -285,7 +286,7 @@ public:
    const float getGlobalAlpha() const;
    const float *getEdgeColors() const;
    PMDMaterial *getMaterialAt(unsigned int i);
-   const unsigned int getToonTextureIDAt(unsigned int i) const;
+   PMDTexture *getToonTextureAt(unsigned int i);
    const unsigned int getNumSurfaceForEdge() const;
    const bool isSelfShadowEnabled() const;
    const bool hasSingleSphereMap() const;

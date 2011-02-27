@@ -80,7 +80,7 @@ PMDMaterial::~PMDMaterial()
 }
 
 /* PMDMaterial::setup: initialize and setup material */
-bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
+bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, GLPMDRenderEngine *engine)
 {
    char *p;
    char name[21];
@@ -114,6 +114,7 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
    name[20] = '\0';
    if (MMDAIStringLength(name) > 0) {
       p = strchr(name, '*');
+      m_texture.setRenderEngine(engine);
       if (p) {
          /* has extra sphere map */
          *p = '\0';

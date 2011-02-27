@@ -66,13 +66,13 @@ public:
   void setSize(float *size, float numx, float numy);
 
   /* loadFloor: load floor image */
-  bool loadFloor(PMDModelLoader *loader, BulletPhysics *bullet);
+  bool loadFloor(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
 
   /* loadBackground: load background image */
-  bool loadBackground(PMDModelLoader *loader, BulletPhysics *bullet);
+  bool loadBackground(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
 
   /* loadStagePMD: load stage pmd */
-  bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
+  bool loadStagePMD(PMDModelLoader *loader, GLPMDRenderEngine *engine, BulletPhysics *bullet);
 
   /* renderFloor: render the floor */
   void renderFloor(GLPMDRenderEngine *engine);

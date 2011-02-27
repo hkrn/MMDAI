@@ -105,6 +105,7 @@ void PMDObject::release()
 /* PMDObject::load: load model */
 bool PMDObject::load(PMDModelLoader *modelLoader,
                      LipSyncLoader *lipSyncLoader,
+                     GLPMDRenderEngine *engine,
                      btVector3 *offsetPos,
                      btQuaternion *offsetRot,
                      bool forcedPosition,
@@ -171,7 +172,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   m_isEnable = true;
 
   /* load model */
-  if (m_pmd.load(modelLoader, bullet) == false) {
+  if (m_pmd.load(modelLoader, engine, bullet) == false) {
     clear();
     return false;
   }

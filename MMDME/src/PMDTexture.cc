@@ -45,7 +45,8 @@ namespace MMDAI {
 /* PMDTexture::initialize: initialize texture */
 void PMDTexture::initialize()
 {
-   m_id = kUninitializedID;
+   m_engine = NULL;
+   m_native = NULL;
    m_isSphereMap = false;
    m_isSphereMapAdd = false;
    m_width = 0;
@@ -57,10 +58,10 @@ void PMDTexture::initialize()
 /* PMDTexture::clear: free texture */
 void PMDTexture::clear()
 {
-   if (m_id != kUninitializedID)
-      glDeleteTextures(1, &m_id);
+   m_engine->deleteTexture(m_native);
    if (m_textureData)
       MMDAIMemoryRelease(m_textureData);
+   delete m_native;
    initialize();
 }
 
@@ -78,7 +79,12 @@ PMDTexture::~PMDTexture()
 
 void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd)
 {
-   clear();
+   assert(m_engine);
+   m_engine->deleteTexture(m_native);
+   if (m_textureData)
+      MMDAIMemoryRelease(m_textureData);
+   delete m_native;
+   m_native = new PMDTextureNative;
 
    m_width = width;
    m_height = height;
@@ -103,32 +109,18 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
       }
    }
 
-   /* generate texture */
-   GLuint format = 0;
-   glGenTextures(1, &m_id);
-   glBindTexture(GL_TEXTURE_2D, m_id);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-   if (m_components == 3) {
-      format = GL_RGB;
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   } else {
-      format = GL_RGBA;
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-   }
-   glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, m_textureData);
+   m_engine->bindTexture(data, width, height, components, m_native);
+}
 
-   /* set highest priority to this texture to tell OpenGL to keep textures in GPU memory */
-   GLfloat priority = 1.0f;
-   glPrioritizeTextures(1, &m_id, &priority);
+void PMDTexture::setRenderEngine(GLPMDRenderEngine *engine)
+{
+  m_engine = engine;
 }
 
 /* PMDTexture::getID: get OpenGL texture ID */
-GLuint PMDTexture::getID() const
+PMDTextureNative *PMDTexture::getNative() const
 {
-   return m_id;
+   return m_native;
 }
 
 /* PMDTexture::isSphereMap: return true if this texture is sphere map */

@@ -483,21 +483,24 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
       PMDTexture *tex = m->getTexture();
       if (tex != NULL) {
          /* bind model texture */
-         glEnable(GL_TEXTURE_2D);
-         glBindTexture(GL_TEXTURE_2D, tex->getID());
-         if (hasSingleSphereMap) {
-            if (tex->isSphereMap()) {
-               /* this is sphere map */
-               /* enable texture coordinate generation */
-               if (tex->isSphereMapAdd())
-                  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-               glEnable(GL_TEXTURE_GEN_S);
-               glEnable(GL_TEXTURE_GEN_T);
-            }
-            else {
-               /* disable generation */
-               glDisable(GL_TEXTURE_GEN_S);
-               glDisable(GL_TEXTURE_GEN_T);
+         PMDTextureNative *native = tex->getNative();
+         if (native != NULL) {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, *native);
+            if (hasSingleSphereMap) {
+               if (tex->isSphereMap()) {
+                  /* this is sphere map */
+                  /* enable texture coordinate generation */
+                  if (tex->isSphereMapAdd())
+                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+                  glEnable(GL_TEXTURE_GEN_S);
+                  glEnable(GL_TEXTURE_GEN_T);
+               }
+               else {
+                  /* disable generation */
+                  glDisable(GL_TEXTURE_GEN_S);
+                  glDisable(GL_TEXTURE_GEN_T);
+               }
             }
          }
       }
@@ -507,11 +510,14 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
 
       if (enableToon) {
          /* set toon texture for texture unit 1 */
-         glActiveTextureARB(GL_TEXTURE1_ARB);
-         glBindTexture(GL_TEXTURE_2D, model->getToonTextureIDAt(m->getToonID()));
-         /* set GL_CLAMP_TO_EDGE for toon texture to avoid texture interpolation at edge */
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+         PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
+         if (native != NULL) {
+            glActiveTextureARB(GL_TEXTURE1_ARB);
+            glBindTexture(GL_TEXTURE_2D, *native);
+            /* set GL_CLAMP_TO_EDGE for toon texture to avoid texture interpolation at edge */
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+         }
       }
 
       if (hasMultipleSphereMap) {
@@ -526,9 +532,12 @@ void GLPMDRenderEngine::renderModel(PMDModel *model)
             else {
                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             }
-            glBindTexture(GL_TEXTURE_2D, addtex->getID());
-            glEnable(GL_TEXTURE_GEN_S);
-            glEnable(GL_TEXTURE_GEN_T);
+            PMDTextureNative *native = addtex->getNative();
+            if (native != NULL) {
+               glBindTexture(GL_TEXTURE_2D, *native);
+               glEnable(GL_TEXTURE_GEN_S);
+               glEnable(GL_TEXTURE_GEN_T);
+            }
          }
          else {
             /* disable generation */
@@ -658,8 +667,40 @@ void GLPMDRenderEngine::renderShadow(PMDModel *model)
    glEnable(GL_CULL_FACE);
 }
 
-void GLPMDRenderEngine::bindTexture()
+void GLPMDRenderEngine::bindTexture(const unsigned char *data,
+                                    const int width,
+                                    const int height,
+                                    const int components,
+                                    PMDTextureNative *texture)
 {
+   /* generate texture */
+   GLuint format = 0;
+   glGenTextures(1, texture);
+   glBindTexture(GL_TEXTURE_2D, *texture);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+   if (components == 3) {
+      format = GL_RGB;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   } else {
+      format = GL_RGBA;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+   }
+   glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+   /* set highest priority to this texture to tell OpenGL to keep textures in GPU memory */
+   GLfloat priority = 1.0f;
+   glPrioritizeTextures(1, texture, &priority);
+}
+
+void GLPMDRenderEngine::deleteTexture(PMDTextureNative *native)
+{
+  if (native != NULL) {
+    glDeleteTextures(1, native);
+    *native = 0;
+  }
 }
 
 } /* namespace */
