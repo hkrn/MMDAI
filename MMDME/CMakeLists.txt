@@ -78,25 +78,6 @@ set_target_properties(MMDME PROPERTIES SO_VERSION ${MMDME_VERSION})
 # project include directories
 include_directories(include)
 
-# find OpenGL package
-find_package(OpenGL)
-if(OPENGL_FOUND)
-  include_directories(${OPENGL_INCLUDE_DIR})
-  target_link_libraries(MMDME ${OPENGL_LIBRARIES})
-else()
-  message(FATAL_ERROR "Required OpenGL is not found.")
-endif()
-
-# find OpenGL Easy Extension
-find_path(GLEE_INCLUDE GLee.h PATH $ENV{GLEE_DIR})
-find_library(GLEE_LIBRARY glee PATH $ENV{GLEE_DIR})
-if(GLEE_INCLUDE AND GLEE_LIBRARY)
-  target_link_libraries(MMDME ${GLEE_LIBRARY})
-  include_directories(${GLEE_INCLUDE})
-else()
-  message(FATAL_ERROR "Required OpenGL Easy Extension is not found.")
-endif()
-
 # find Bullet Physics
 OPTION(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
 if (FIND_BULLET_BY_PKGCONFIG)

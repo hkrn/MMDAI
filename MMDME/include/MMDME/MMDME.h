@@ -39,8 +39,6 @@
 #ifndef MMDME_MMDME_H_
 #define MMDME_MMDME_H_
 
-#include "GLee.h"
-
 #include <btBulletDynamicsCommon.h>
 
 #include "MMDME/BulletPhysics.h"
