@@ -115,6 +115,7 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEn
    if (MMDAIStringLength(name) > 0) {
       p = strchr(name, '*');
       m_texture.setRenderEngine(engine);
+      m_additionalTexture.setRenderEngine(engine);
       if (p) {
          /* has extra sphere map */
          *p = '\0';
