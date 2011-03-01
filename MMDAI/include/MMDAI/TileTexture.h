@@ -45,22 +45,24 @@
 #include <MMDME/PMDModelLoader.h>
 #include <MMDME/PMDTexture.h>
 
-namespace MMDAI {
+#include "MMDAI/GLSceneRenderEngine.h"
 
-class GLSceneRenderEngine;
+namespace MMDAI {
 
 class TileTexture
 {
 private:
 
+  GLSceneRenderEngine *m_engine;
+  PMDRenderCacheNative *m_cache;
   PMDTexture m_texture;     /* texture */
   bool m_isLoaded;
   GLuint m_listIndex;       /* display list */
   bool m_listIndexValid;    /* true if m_listIndex was registered */
 
-  GLfloat m_vertices[4][3]; /* position */
-  GLfloat m_numx;
-  GLfloat m_numy;
+  float m_vertices[4][3]; /* position */
+  float m_numx;
+  float m_numy;
 
   /* resetDisplayList: reset display list */
   void resetDisplayList();
@@ -76,7 +78,7 @@ private:
 public:
 
   /* TileTexture: constructor */
-  TileTexture();
+  TileTexture(GLSceneRenderEngine *engine);
 
   /* TileTexture: destructor */
   ~TileTexture();
@@ -95,7 +97,7 @@ public:
                float x, float y);
 
   /* getSize: get texture size */
-  GLfloat getSize(int i, int j) const;
+  float getSize(int i, int j) const;
 };
 
 } /* namespace */

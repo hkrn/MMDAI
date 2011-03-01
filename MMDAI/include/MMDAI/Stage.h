@@ -44,11 +44,11 @@
 #include <MMDME/Common.h>
 #include <MMDME/PMDModel.h>
 
+#include "MMDAI/GLSceneRenderEngine.h"
 #include "MMDAI/TileTexture.h"
 
 namespace MMDAI {
 
-class GLSceneRenderEngine;
 class PMDModelLoader;
 
 /* Stage: stage */
@@ -75,13 +75,13 @@ public:
   bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
 
   /* renderFloor: render the floor */
-  void renderFloor(GLSceneRenderEngine *engine);
+  void renderFloor();
 
   /* renderBackground: render the background */
   void renderBackground();
 
   /* renderPMD: render the stage pmd */
-  void renderPMD(GLSceneRenderEngine *engine);
+  void renderPMD();
 
   /* updateShadowMatrix: update shadow projection matrix */
   void updateShadowMatrix(float lightDirection[4]);
@@ -90,10 +90,12 @@ public:
   GLfloat *getShadowMatrix() const;
 
 private:
-  TileTexture m_floor; /* floor texture */
-  TileTexture m_background;  /* background texture */
-
   GLSceneRenderEngine *m_engine;
+  PMDRenderCacheNative *m_cache;
+
+  TileTexture *m_floor; /* floor texture */
+  TileTexture *m_background;  /* background texture */
+
   PMDModel m_pmd;           /* PMD for background */
   bool m_hasPMD;            /* true if m_pmd is used */
   GLuint m_listIndexPMD;    /* display lst */

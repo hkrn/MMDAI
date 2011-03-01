@@ -423,7 +423,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
   if (option->getShadowMappingLightFirst()) {
     /* Renderer light setting, later Renderer only the shadow part with dark setting */
     stage->renderBackground();
-    stage->renderFloor(m_engine);
+    stage->renderFloor();
     for (i = 0; i < size; i++) {
       PMDObject *object = objects[i];
       if (!object->isEnable())
@@ -442,7 +442,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
 
     /* Renderer the non-toon objects (back, floor, non-toon models) */
     stage->renderBackground();
-    stage->renderFloor(m_engine);
+    stage->renderFloor();
     for (i = 0; i < size; i++) {
       PMDObject *object = objects[i];
       if (!object->isEnable())
@@ -525,7 +525,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
 
     /* Renderer the non-toon objects (back, floor, non-toon models) */
     stage->renderBackground();
-    stage->renderFloor(m_engine);
+    stage->renderFloor();
     for (i = 0; i < size; i++) {
       PMDObject *object = objects[i];
       if (!object->isEnable())
@@ -563,7 +563,7 @@ void SceneRenderer::renderSceneShadowMap(Option *option, Stage *stage, PMDObject
     /* the area clipped by depth texture by alpha test is light part */
     glAlphaFunc(GL_GEQUAL, 0.001f);
     stage->renderBackground();
-    stage->renderFloor(m_engine);
+    stage->renderFloor();
     for (i = 0; i < size; i++) {
       PMDObject *object = objects[i];
       if (!object->isEnable())
@@ -609,7 +609,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject **object
   /* make stencil tag true */
   glStencilOp(GL_KEEP, GL_KEEP , GL_REPLACE);
   /* Renderer floor */
-  stage->renderFloor(m_engine);
+  stage->renderFloor();
   /* Renderer shadow stencil */
   glColorMask(0, 0, 0, 0) ;
   glDepthMask(0);
@@ -636,7 +636,7 @@ void SceneRenderer::renderScene(Option *option, Stage *stage, PMDObject **object
   glDisable(GL_LIGHTING);
   glColor4f(0.1f, 0.1f, 0.1f, option->getShadowMappingSelfDensity());
   glDisable(GL_DEPTH_TEST);
-  stage->renderFloor(m_engine);
+  stage->renderFloor();
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_STENCIL_TEST);
   glEnable(GL_LIGHTING);

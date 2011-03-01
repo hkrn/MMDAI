@@ -43,9 +43,9 @@
 namespace MMDAI {
 
 /* findPlane: calculate plane */
-static void findPlane(GLfloat plane[4], TileTexture *t)
+static void findPlane(float plane[4], TileTexture *t)
 {
-  GLfloat vec0x, vec0y, vec0z, vec1x, vec1y, vec1z;
+  float vec0x, vec0y, vec0z, vec1x, vec1y, vec1z;
 
   /* need 2 vectors to find cross product */
   vec0x = t->getSize(2, 0) - t->getSize(1, 0);
@@ -64,9 +64,9 @@ static void findPlane(GLfloat plane[4], TileTexture *t)
 }
 
 /* shadowMatrix: calculate shadow projection matrix */
-static void shadowMatrix(GLfloat shadowMat[4][4], GLfloat groundplane[4], GLfloat lightpos[4])
+static void shadowMatrix(float shadowMat[4][4], float groundplane[4], float lightpos[4])
 {
-  GLfloat dot;
+  float dot;
 
   /* find dot product between light position vector and ground plane normal */
   dot = groundplane[0] * lightpos[0] +
@@ -97,7 +97,10 @@ static void shadowMatrix(GLfloat shadowMat[4][4], GLfloat groundplane[4], GLfloa
 
 /* Stage::Stage: constructor */
 Stage::Stage(GLSceneRenderEngine *engine)
-  : m_engine(engine)
+  : m_engine(engine),
+    m_cache(NULL),
+    m_floor(new TileTexture(engine)),
+    m_background(new TileTexture(engine))
 {
   initialize();
 }
@@ -105,6 +108,9 @@ Stage::Stage(GLSceneRenderEngine *engine)
 /* Stage::~Stage: destructor */
 Stage::~Stage()
 {
+  delete m_background;
+  delete m_floor;
+  m_engine->deleteCache(&m_cache);
   clear();
 }
 
@@ -177,28 +183,26 @@ void Stage::setSize(float *size, float numx, float numy)
   float w = size[0]; /* width */
   float d = size[1]; /* depth */
   float h = size[2]; /* height */
-  m_floor.setSize(-w, 0.0f, d,
-                  w, 0.0f, d,
-                  w, 0.0f, -d,
-                  -w, 0.0f, -d,
-                  numx, numy);
-  m_background.setSize(-w, 0.0f, -d,
-                       w, 0.0f, -d,
-                       w, h, -d,
-                       -w, h, -d,
-                       numx, numy);
+  m_floor->setSize(-w, 0.0f, d,
+                   w, 0.0f, d,
+                   w, 0.0f, -d,
+                   -w, 0.0f, -d,
+                   numx, numy);
+  m_background->setSize(-w, 0.0f, -d,
+                        w, 0.0f, -d,
+                         w, h, -d,
+                        -w, h, -d,
+                        numx, numy);
   makeFloorBody(w, d);
 }
 
 /* Stage::loadFloor: load floor image */
 bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
 {
-  bool ret;
-
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_floor.load(loader, m_engine);
+  bool ret = m_floor->load(loader, m_engine);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
@@ -214,12 +218,10 @@ bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
 /* Stage::loadBackground: load background image */
 bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
 {
-  bool ret;
-
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_background.load(loader, m_engine);
+  bool ret = m_background->load(loader, m_engine);
   if (ret) {
     if (m_hasPMD) {
       m_pmd.release();
@@ -234,12 +236,10 @@ bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
 /* Stage::loadStagePMD: load stage pmd */
 bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
 {
-  bool ret;
-
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  ret = m_pmd.load(loader, m_engine, bullet);
+  bool ret = m_pmd.load(loader, m_engine, bullet);
   if (ret) {
     m_pmd.setToonFlag(false);
     m_pmd.updateSkin();
@@ -256,14 +256,14 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* Stage::renderFloor: render the floor */
-void Stage::renderFloor(GLSceneRenderEngine *engine)
+void Stage::renderFloor()
 {
   const float normal[3] = {0.0f, 1.0f, 0.0f};
 
   if (m_hasPMD)
-    renderPMD(engine);
+    renderPMD();
   else
-    m_floor.render(false, normal);
+    m_floor->render(false, normal);
 }
 
 /* Stage::renderBackground: render the background */
@@ -272,39 +272,28 @@ void Stage::renderBackground()
   const float normal[3] = {0.0f, 0.0f, 1.0f};
 
   if (!m_hasPMD)
-    m_background.render(true, normal);
+    m_background->render(true, normal);
 }
 
 /* Stage::renderPMD: render the stage pmd */
-void Stage::renderPMD(GLSceneRenderEngine *engine)
+void Stage::renderPMD()
 {
-  if (m_listIndexPMDValid) {
-    glCallList(m_listIndexPMD);
-    return;
-  }
-
-  m_listIndexPMD = glGenLists(1);
-  glNewList(m_listIndexPMD, GL_COMPILE);
-  glPushMatrix();
-  engine->renderModel(&m_pmd);
-  glPopMatrix();
-  glEndList();
-  m_listIndexPMDValid = true;
+  m_engine->renderModelCached(&m_pmd, &m_cache);
 }
 
 /* Stage::updateShadowMatrix: update shadow projection matrix */
 void Stage::updateShadowMatrix(float lightDirection[4])
 {
-  GLfloat floorPlane[4];
+  float floorPlane[4];
 
-  findPlane(floorPlane, &m_floor);
+  findPlane(floorPlane, m_floor);
   shadowMatrix(m_floorShadow, floorPlane, lightDirection);
 }
 
 /* Stage::getShadowMatrix: get shadow projection matrix */
-GLfloat *Stage::getShadowMatrix() const
+float *Stage::getShadowMatrix() const
 {
-  return (GLfloat *) m_floorShadow;
+  return (float *) m_floorShadow;
 }
 
 } /* namespace */

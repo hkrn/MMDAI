@@ -45,10 +45,7 @@ namespace MMDAI {
 /* TileTexture::resetDisplayList: reset display list */
 void TileTexture::resetDisplayList()
 {
-  if (m_listIndexValid) {
-    glDeleteLists(m_listIndex, 1);
-    m_listIndexValid = false;
-  }
+  m_engine->deleteCache(&m_cache);
 }
 
 /* TileTexture::initialize: initialize texture */
@@ -76,7 +73,8 @@ void TileTexture::clear()
 }
 
 /* TileTexture::TileTexture: constructor */
-TileTexture::TileTexture()
+TileTexture::TileTexture(GLSceneRenderEngine *engine)
+  : m_engine(engine)
 {
   initialize();
 }
@@ -84,6 +82,7 @@ TileTexture::TileTexture()
 /* TileTexture: destructor */
 TileTexture::~TileTexture()
 {
+  resetDisplayList();
   clear();
 }
 
@@ -102,52 +101,24 @@ bool TileTexture::load(PMDModelLoader *loader, GLSceneRenderEngine *engine)
 /* TileTexture::render: render the textures */
 void TileTexture::render(bool cullFace, const float normal[3])
 {
-  static const GLfloat color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
-
-  if (m_isLoaded == false) return;
-
-  if (m_listIndexValid) {
-    /* call display list */
-    glCallList(m_listIndex);
+  static const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
+  if (m_isLoaded == false)
     return;
-  }
-
-  /* create display list  */
-  m_listIndex = glGenLists(1); /* get display list index */
-  glNewList(m_listIndex, GL_COMPILE);
-
-  /* register rendering command */
-  if (!cullFace)
-    glDisable(GL_CULL_FACE);
-
-  glEnable(GL_TEXTURE_2D);
-  glPushMatrix();
-  glNormal3f(normal[0], normal[1], normal[2]);
-  glBindTexture(GL_TEXTURE_2D, m_texture.getNative()->id);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0, m_numy);
-  glVertex3fv(m_vertices[0]);
-  glTexCoord2f(m_numx, m_numy);
-  glVertex3fv(m_vertices[1]);
-  glTexCoord2f(m_numx, 0.0);
-  glVertex3fv(m_vertices[2]);
-  glTexCoord2f(0.0, 0.0);
-  glVertex3fv(m_vertices[3]);
-  glEnd();
-  glPopMatrix();
-  glDisable(GL_TEXTURE_2D);
-
-  if (!cullFace)
-    glEnable(GL_CULL_FACE);
-
-  /* end of regist */
-  glEndList();
-  m_listIndexValid = true;
+  m_engine->renderTileTexture(&m_texture,
+                              color,
+                              normal,
+                              m_vertices[0],
+                              m_vertices[1],
+                              m_vertices[2],
+                              m_vertices[3],
+                              m_numx,
+                              m_numy,
+                              cullFace,
+                              &m_cache);
 }
 
 /* TileTexture::getSize: get texture size */
-GLfloat TileTexture::getSize(int i, int j) const
+float TileTexture::getSize(int i, int j) const
 {
   return m_vertices[i][j];
 }

@@ -57,6 +57,10 @@ struct PMDTextureNative {
   GLuint id;
 };
 
+struct PMDRenderCacheNative {
+  GLuint id;
+};
+
 class GLSceneRenderEngine : public PMDRenderEngine {
 public:
   GLSceneRenderEngine();
@@ -68,12 +72,28 @@ public:
   void renderModel(PMDModel *model);
   void renderEdge(PMDModel *model);
   void renderShadow(PMDModel *model);
+
   void bindTexture(const unsigned char *data,
                    const int width,
                    const int height,
                    const int components,
                    PMDTextureNative **native);
   void deleteTexture(PMDTextureNative **native);
+
+  void renderModelCached(PMDModel *model,
+                         PMDRenderCacheNative **ptr);
+  void renderTileTexture(PMDTexture *texture,
+                         const float *color,
+                         const float *normal,
+                         const float *vertices1,
+                         const float *vertices2,
+                         const float *vertices3,
+                         const float *vertices4,
+                         const float nX,
+                         const float nY,
+                         const bool cullFace,
+                         PMDRenderCacheNative **ptr);
+  void deleteCache(PMDRenderCacheNative **ptr);
 
 private:
   void drawCube();

@@ -694,5 +694,82 @@ void GLSceneRenderEngine::deleteTexture(PMDTextureNative **ptr)
   }
 }
 
+void GLSceneRenderEngine::renderModelCached(PMDModel *model, PMDRenderCacheNative **ptr)
+{
+  PMDRenderCacheNative *native = *ptr;
+  if (native != NULL) {
+    glCallList(native->id);
+  }
+  else {
+    *ptr = native = new PMDRenderCacheNative();
+    native->id = glGenLists(1);
+    glNewList(native->id, GL_COMPILE);
+    glPushMatrix();
+    renderModel(model);
+    glPopMatrix();
+    glEndList();
+  }
+}
+
+void GLSceneRenderEngine::renderTileTexture(PMDTexture *texture,
+                                            const float *color,
+                                            const float *normal,
+                                            const float *vertices1,
+                                            const float *vertices2,
+                                            const float *vertices3,
+                                            const float *vertices4,
+                                            const float nX,
+                                            const float nY,
+                                            const bool cullFace,
+                                            PMDRenderCacheNative **ptr)
+{
+  PMDRenderCacheNative *native = *ptr;
+  if (native != NULL) {
+    glCallList(native->id);
+    return;
+  }
+
+  *ptr = native = new PMDRenderCacheNative();
+  native->id = glGenLists(1);
+  glNewList(native->id, GL_COMPILE);
+
+  /* register rendering command */
+  if (!cullFace)
+    glDisable(GL_CULL_FACE);
+
+  glEnable(GL_TEXTURE_2D);
+  glPushMatrix();
+  glNormal3f(normal[0], normal[1], normal[2]);
+  glBindTexture(GL_TEXTURE_2D, texture->getNative()->id);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0, nY);
+  glVertex3fv(vertices1);
+  glTexCoord2f(nX, nY);
+  glVertex3fv(vertices2);
+  glTexCoord2f(nX, 0.0);
+  glVertex3fv(vertices3);
+  glTexCoord2f(0.0, 0.0);
+  glVertex3fv(vertices4);
+  glEnd();
+  glPopMatrix();
+  glDisable(GL_TEXTURE_2D);
+
+  if (!cullFace)
+    glEnable(GL_CULL_FACE);
+
+  /* end of regist */
+  glEndList();
+}
+
+void GLSceneRenderEngine::deleteCache(PMDRenderCacheNative **ptr)
+{
+  PMDRenderCacheNative *native = *ptr;
+  if (native != NULL) {
+    delete native;
+    *ptr = 0;
+  }
+}
+
 } /* namespace */
 
