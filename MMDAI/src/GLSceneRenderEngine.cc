@@ -56,7 +56,7 @@ GLSceneRenderEngine::~GLSceneRenderEngine()
 
 void GLSceneRenderEngine::drawCube()
 {
-   static GLfloat vertices [8][3] = {
+   static const GLfloat vertices [8][3] = {
       { -0.5f, -0.5f, 0.5f},
       { 0.5f, -0.5f, 0.5f},
       { 0.5f, 0.5f, 0.5f},
@@ -108,18 +108,18 @@ void GLSceneRenderEngine::drawCube()
 void GLSceneRenderEngine::drawSphere(int lats, int longs)
 {
    for (int i = 0; i <= lats; i++) {
-      double lat0 = BULLETPHYSICS_PI * (-0.5 + (double) (i - 1) / lats);
-      double z0 = sin(lat0);
-      double zr0 = cos(lat0);
-      double lat1 = BULLETPHYSICS_PI * (-0.5 + (double) i / lats);
-      double z1 = sin(lat1);
-      double zr1 = cos(lat1);
+      const double lat0 = BULLETPHYSICS_PI * (-0.5 + (double) (i - 1) / lats);
+      const double z0 = sin(lat0);
+      const double zr0 = cos(lat0);
+      const double lat1 = BULLETPHYSICS_PI * (-0.5 + (double) i / lats);
+      const double z1 = sin(lat1);
+      const double zr1 = cos(lat1);
 
       glBegin(GL_QUAD_STRIP);
       for (int j = 0; j <= longs; j++) {
-         double lng = 2 * BULLETPHYSICS_PI * (double) (j - 1) / longs;
-         double x = cos(lng);
-         double y = sin(lng);
+         const double lng = 2 * BULLETPHYSICS_PI * (double) (j - 1) / longs;
+         const double x = cos(lng);
+         const double y = sin(lng);
 
          glNormal3f((GLfloat)(x * zr0), (GLfloat)(y * zr0), (GLfloat)z0);
          glVertex3f((GLfloat)(x * zr0), (GLfloat)(y * zr0), (GLfloat)z0);
@@ -132,43 +132,32 @@ void GLSceneRenderEngine::drawSphere(int lats, int longs)
 
 void GLSceneRenderEngine::drawConvex(btConvexShape *shape)
 {
-   int i;
-   int i1, i2, i3;
-   int index = 0;
-   int index1;
-   int index2;
-   int index3;
-   btVector3 v1, v2, v3;
-   btVector3 normal;
-
-   const unsigned int* idx;
-   const btVector3* vtx;
    btShapeHull *hull = new btShapeHull(shape);
-
    hull->buildHull(shape->getMargin());
+
    if (hull->numTriangles () > 0) {
-      index = 0;
-      idx = hull->getIndexPointer();
-      vtx = hull->getVertexPointer();
+      int index = 0;
+      const unsigned int *idx = hull->getIndexPointer();
+      const btVector3 *vtx = hull->getVertexPointer();
       glBegin (GL_TRIANGLES);
-      for (i = 0; i < hull->numTriangles (); i++) {
-         i1 = index++;
-         i2 = index++;
-         i3 = index++;
+      for (int i = 0; i < hull->numTriangles (); i++) {
+         const int i1 = index++;
+         const int i2 = index++;
+         const int i3 = index++;
          btAssert(i1 < hull->numIndices () &&
                   i2 < hull->numIndices () &&
                   i3 < hull->numIndices ());
 
-         index1 = idx[i1];
-         index2 = idx[i2];
-         index3 = idx[i3];
+         const int index1 = idx[i1];
+         const int index2 = idx[i2];
+         const int index3 = idx[i3];
          btAssert(index1 < hull->numVertices () &&
                   index2 < hull->numVertices () &&
                   index3 < hull->numVertices ());
-         v1 = vtx[index1];
-         v2 = vtx[index2];
-         v3 = vtx[index3];
-         normal = (v3 - v1).cross(v2 - v1);
+         const btVector3 v1 = vtx[index1];
+         const btVector3 v2 = vtx[index2];
+         const btVector3 v3 = vtx[index3];
+         btVector3 normal = (v3 - v1).cross(v2 - v1);
          normal.normalize ();
 
          glNormal3f(normal.getX(), normal.getY(), normal.getZ());
@@ -261,12 +250,10 @@ void GLSceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
 void GLSceneRenderEngine::renderBone(PMDBone *bone)
 {
    btScalar m[16];
-   btVector3 a;
-   btVector3 b;
-   btTransform *trans = bone->getTransform();
    PMDBone *parentBone = bone->getParentBone();
-   unsigned char type = bone->getType();
-   bool isSimulated = bone->isSimulated();
+   const btTransform *trans = bone->getTransform();
+   const unsigned char type = bone->getType();
+   const bool isSimulated = bone->isSimulated();
 
    /* do not draw IK target bones if the IK chain is under simulation */
    if (type == IK_TARGET && parentBone && parentBone->isSimulated())
@@ -337,8 +324,8 @@ void GLSceneRenderEngine::renderBone(PMDBone *bone)
    }
 
    glBegin(GL_LINES);
-   a = parentBone->getTransform()->getOrigin();
-   b = trans->getOrigin();
+   const btVector3 a = parentBone->getTransform()->getOrigin();
+   const btVector3 b = trans->getOrigin();
    glVertex3f(a.x(), a.y(), a.z());
    glVertex3f(b.x(), b.y(), b.z());
    glEnd();
@@ -353,7 +340,7 @@ void GLSceneRenderEngine::renderBones(PMDModel *model)
    glDisable(GL_TEXTURE_2D);
 
    /* draw bones */
-   int nbones = model->getNumBone();
+   const int nbones = model->getNumBone();
    PMDBone *bones = model->getBonesPtr();
    for (int i = 0; i < nbones; i++)
       renderBone(&bones[i]);
@@ -480,10 +467,10 @@ void GLSceneRenderEngine::renderModel(PMDModel *model)
          glActiveTextureARB(GL_TEXTURE0_ARB);
       }
 
-      PMDTexture *tex = m->getTexture();
+      const PMDTexture *tex = m->getTexture();
       if (tex != NULL) {
          /* bind model texture */
-         PMDTextureNative *native = tex->getNative();
+         const PMDTextureNative *native = tex->getNative();
          if (native != NULL) {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, native->id);
@@ -510,7 +497,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *model)
 
       if (enableToon) {
          /* set toon texture for texture unit 1 */
-         PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
+         const PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
          if (native != NULL) {
             glActiveTextureARB(GL_TEXTURE1_ARB);
             glBindTexture(GL_TEXTURE_2D, native->id);
@@ -521,7 +508,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *model)
       }
 
       if (hasMultipleSphereMap) {
-         PMDTexture *addtex = m->getAdditionalTexture();
+         const PMDTexture *addtex = m->getAdditionalTexture();
          if (addtex) {
             /* this material has additional sphere map texture, bind it at texture unit 2 */
             glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -532,7 +519,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *model)
             else {
                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             }
-            PMDTextureNative *native = addtex->getNative();
+            const PMDTextureNative *native = addtex->getNative();
             if (native != NULL) {
                glBindTexture(GL_TEXTURE_2D, native->id);
                glEnable(GL_TEXTURE_GEN_S);
