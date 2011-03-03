@@ -1,5 +1,6 @@
 CMakeCache.txt
 CMakeFiles
+CMakeLists.txt.user
 CMakeScripts
 cmake_install.cmake
 Debug
@@ -15,6 +16,7 @@ Win32
 *.a
 *.build
 *-build-desktop
+*.cbp
 *.dll*
 *.dylib
 *.idb
