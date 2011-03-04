@@ -522,9 +522,12 @@ void GLSceneRenderEngine::renderModel(PMDModel *model)
             const PMDTextureNative *native = addtex->getNative();
             if (native != NULL) {
                glBindTexture(GL_TEXTURE_2D, native->id);
-               glEnable(GL_TEXTURE_GEN_S);
-               glEnable(GL_TEXTURE_GEN_T);
             }
+            else {
+               glBindTexture(GL_TEXTURE_2D, 0);
+            }
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
          }
          else {
             /* disable generation */
