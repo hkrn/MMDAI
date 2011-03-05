@@ -490,6 +490,10 @@ void GLSceneRenderEngine::renderModel(PMDModel *model)
                }
             }
          }
+         else {
+           glEnable(GL_TEXTURE_2D);
+           glBindTexture(GL_TEXTURE_2D, 0);
+         }
       }
       else {
          glDisable(GL_TEXTURE_2D);
