@@ -66,9 +66,9 @@ private:
   btQuaternion m_rot;      /* target rotation */
   btVector3 m_cameraTrans; /* position of camera */
 
-  float m_scaleCurrent;         /* current scale */
-  btVector3 m_transCurrent;     /* current trans vector */
-  btQuaternion m_rotCurrent;    /* current rotation */
+  float m_currentScale;         /* current scale */
+  btVector3 m_currentTrans;     /* current trans vector */
+  btQuaternion m_currentRot;    /* current rotation */
   btTransform m_transMatrix;    /* current trans vector + rotation matrix */
   btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
   btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
@@ -145,6 +145,12 @@ public:
   /* translate: translate */
   void translate(float x, float y, float z);
 
+  /* rotate: rotate scene */
+  void rotate(float x, float y, float z);
+
+  /* Render::resetLocation: reset rotation, transition, and scale */
+  void resetLocation(const float *trans, const float *rot, const float scale);
+
   /* setShadowMapping: switch shadow mapping */
   void setShadowMapping(bool flag, int shadowMapTextureSize, bool shadowMapLightFirst);
 
@@ -159,9 +165,6 @@ public:
 
   /* updateDepthTextureViewParam: update center and radius information to get required range for shadow mapping */
   void updateDepthTextureViewParam(PMDObject **objects, int num);
-
-  /* rotate: rotate scene */
-  void rotate(float x, float y, float z);
 
   /* getScreenPointPosition: convert screen position to object position */
   void getScreenPointPosition(btVector3 *dst, btVector3 *src);

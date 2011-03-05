@@ -69,9 +69,9 @@ void SceneRenderer::initialize()
   m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
   m_cameraTrans = btVector3(0.0f, RENDER_VIEWPOINT_Y_OFFSET, RENDER_VIEWPOINT_CAMERA_Z);
 
-  m_scaleCurrent = m_scale;
-  m_transCurrent = m_trans;
-  m_rotCurrent = m_rot;
+  m_currentScale = m_scale;
+  m_currentTrans = m_trans;
+  m_currentRot = m_rot;
 
   m_transMatrix.setIdentity();
   updateModelViewMatrix();
@@ -133,8 +133,7 @@ bool SceneRenderer::setup(int *size, float *campusColor, bool useShadowMapping, 
   glEnable(GL_LIGHTING);
 
   /* initialization for shadow mapping */
-  if (useShadowMapping)
-    setShadowMapping(true, shadowMapTextureSize, shadowMapLightFirst);
+  setShadowMapping(useShadowMapping, shadowMapTextureSize, shadowMapLightFirst);
 
   setSize(size[0], size[1]);
 
@@ -181,6 +180,16 @@ float SceneRenderer::getScale() const
 void SceneRenderer::translate(float x, float y, float z)
 {
   m_trans += btVector3(x, y, z);
+}
+
+/* Render::resetLocation: reset rotation, transition, and scale */
+void SceneRenderer::resetLocation(const float *trans, const float *rot, const float scale)
+{
+  btMatrix3x3 bm;
+  bm.setEulerZYX(MMDME_RAD(rot[0]), MMDME_RAD(rot[1]), MMDME_RAD(rot[2]));
+  bm.getRotation(m_rot);
+  m_trans = btVector3(trans[0], trans[1], trans[2]);
+  m_scale = scale;
 }
 
 /* SceneRenderer::initializeShadowMap: initialize OpenGL for shadow mapping */
@@ -749,13 +758,14 @@ void SceneRenderer::updateScale()
   float diff;
 
   /* if no difference, return */
-  if (m_scaleCurrent == m_scale) return;
+  if (m_currentScale == m_scale)
+    return;
 
-  diff = fabs(m_scaleCurrent - m_scale);
+  diff = fabs(m_currentScale - m_scale);
   if (diff < RENDER_MINSCALEDIFF) {
-    m_scaleCurrent = m_scale;
+    m_currentScale = m_scale;
   } else {
-    m_scaleCurrent = m_scaleCurrent * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
+    m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
   }
   updateProjectionMatrix();
 }
@@ -768,24 +778,25 @@ void SceneRenderer::updateTransRotMatrix()
   btQuaternion rot;
 
   /* if no difference, return */
-  if (m_rotCurrent == m_rot && m_transCurrent == m_trans) return;
+  if (m_currentRot == m_rot && m_currentTrans == m_trans)
+    return;
 
   /* calculate difference */
   trans = m_trans;
-  trans -= m_transCurrent;
+  trans -= m_currentTrans;
   diff1 = trans.length2();
   rot = m_rot;
-  rot -= m_rotCurrent;
+  rot -= m_currentRot;
   diff2 = rot.length2();
 
   if (diff1 > RENDER_MINMOVEDIFF)
-    m_transCurrent = m_transCurrent.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
+    m_currentTrans = m_currentTrans.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
   else
-    m_transCurrent = m_trans;
+    m_currentTrans = m_trans;
   if (diff2 > RENDER_MINSPINDIFF)
-    m_rotCurrent = m_rotCurrent.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
+    m_currentRot = m_currentRot.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
   else
-    m_rotCurrent = m_rot;
+    m_currentRot = m_rot;
 
   updateModelViewMatrix();
 }
@@ -793,7 +804,7 @@ void SceneRenderer::updateTransRotMatrix()
 /* SceneRenderer::rotate: rotate scene */
 void SceneRenderer::rotate(float x, float y, float z)
 {
-  z = 0;
+  z = 0; /* unused */
   m_rot = m_rot * btQuaternion(x, 0, 0);
   m_rot = btQuaternion(0, y, 0) * m_rot;
 }
@@ -867,7 +878,7 @@ void SceneRenderer::updateProjectionMatrix()
 void SceneRenderer::applyProjectionMatrix()
 {
   double aspect = (double) m_height / (double) m_width;
-  double ratio = (m_scaleCurrent == 0.0f) ? 1.0 : 1.0 / m_scaleCurrent;
+  double ratio = (m_currentScale == 0.0f) ? 1.0 : 1.0 / m_currentScale;
 
   glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
 }
@@ -875,8 +886,8 @@ void SceneRenderer::applyProjectionMatrix()
 /* SceneRenderer::updateModelViewMatrix: update model view matrix */
 void SceneRenderer::updateModelViewMatrix()
 {
-  m_transMatrix.setRotation(m_rotCurrent);
-  m_transMatrix.setOrigin(m_transCurrent + m_cameraTrans);
+  m_transMatrix.setRotation(m_currentRot);
+  m_transMatrix.setOrigin(m_currentTrans + m_cameraTrans);
   m_transMatrixInv = m_transMatrix.inverse();
   m_transMatrix.getOpenGLMatrix(m_rotMatrix);
   m_transMatrixInv.getOpenGLMatrix(m_rotMatrixInv);

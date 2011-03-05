@@ -617,136 +617,146 @@ void SceneController::changeLightColor(float r, float g, float b)
 /* SceneController::startMove: start moving */
 void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, float speed)
 {
-  btVector3 currentPos;
-  btQuaternion currentRot;
-  btVector3 targetPos;
-  btTransform tr;
+  const char *alias = object->getAlias();
 
-  /* set */
-  object->getPosition(currentPos);
-  targetPos = (*pos);
+  if(object->isMoving())
+    sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
+
+  /* get */
+  btVector3 currentPos;
+  object->getCurrentPosition(currentPos);
+  btVector3 targetPos = (*pos);
 
   /* local or global */
+  btQuaternion currentRot;
   if (local) {
-    object->getRotation(currentRot);
-    tr = btTransform(currentRot, currentPos);
+    object->getCurrentRotation(currentRot);
+    btTransform tr = btTransform(currentRot, currentPos);
     targetPos = tr * targetPos;
   }
 
   /* not need to start */
-  if (currentPos == targetPos)
+  if (currentPos == targetPos) {
+    sendEvent1(SceneEventHandler::kMoveStartEvent, alias);
+    sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
     return;
+  }
 
   object->setMoveSpeed(speed);
   object->setPosition(targetPos);
 
   /* send event message */
-  sendEvent1(SceneEventHandler::kMoveStartEvent, object->getAlias());
+  sendEvent1(SceneEventHandler::kMoveStartEvent, alias);
 }
 
 /* SceneController::stopMove: stop moving */
 void SceneController::stopMove(PMDObject *object)
 {
-  btVector3 targetPos;
-  btVector3 currentPos;
+  const char *alias = object->getAlias();
 
-  /* set */
-  targetPos = (*(object->getPMDModel()->getRootBone()->getOffset()));
-  object->getPosition(currentPos);
-
-  /* not need to stop */
-  if (currentPos == targetPos)
+  if (!object->isMoving()) {
+    MMDAILogWarn("stopMove: %s is not moving", alias);
     return;
+  }
 
-  object->setPosition(targetPos);
+  btVector3 currentPos;
+  object->getCurrentPosition(currentPos);
+  object->setPosition(currentPos);
 
   /* send event message */
-  sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
+  sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
 }
 
 /* SceneController::startRotation: start rotation */
 void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool local, float speed)
 {
-  btQuaternion targetRot;
+  const char *alias = object->getAlias();
+
+  if (object->isRotating()) {
+    if (object->isTurning())
+      sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
+    else
+      sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
+  }
+
   btQuaternion currentRot;
-
-  /* set */
-  object->getRotation(currentRot);
-  targetRot = (*rot);
-
-  /* local or global */
-  if (local)
-    targetRot += currentRot;
+  object->getCurrentRotation(currentRot);
+  btQuaternion targetRot = *rot;
+  targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
 
   /* not need to start */
-  if (currentRot == targetRot)
+  if (currentRot == targetRot) {
+    sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
+    sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
     return;
+  }
 
   object->setSpinSpeed(speed);
   object->setRotation(targetRot);
+  object->setTurningFlag(false);
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kRotateStartEvent, object->getAlias());
+  sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
 }
 
 /* SceneController::stopRotation: stop rotation */
 void SceneController::stopRotation(PMDObject *object)
 {
-  btQuaternion currentRot;
-  btQuaternion targetRot;
+  const char *alias = object->getAlias();
 
-  /* set */
-  targetRot = (*(object->getPMDModel()->getRootBone()->getCurrentRotation()));
-  object->getRotation(currentRot);
-
-  /* not need to rotate */
-  if (currentRot == targetRot)
+  if (!object->isRotating() || object->isTurning()) {
+    MMDAILogWarn("stopTurn: %s is not rotating", alias);
     return;
+  }
 
-  object->setRotation(targetRot);
+  btQuaternion currentRot;
+  object->getCurrentRotation(currentRot);
+  object->setRotation(currentRot);
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
+  sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
 }
 
 /* SceneController::startTurn: start turn */
 void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, float speed)
 {
-  btVector3 currentPos;
-  btQuaternion currentRot;
-  btVector3 targetPos;
-  btQuaternion targetRot;
-  btTransform tr;
+  btQuaternion targetRot, currentRot;
+  const char *alias = object->getAlias();
 
-  btVector3 diffPos;
-  float z, rad;
-
-  /* set */
-  targetPos = (*pos);
-  object->getRotation(currentRot);
-
-  /* local or global */
-  if (local) {
-    object->getPosition(currentPos);
-    tr = btTransform(currentRot, currentPos);
-    targetPos = tr * targetPos;
+  if (object->isRotating()) {
+    if (object->isTurning())
+      sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
+    else
+      sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
   }
 
-  /* get vector from current position to target position */
-  diffPos = (*(object->getPMDModel()->getRootBone()->getOffset()));
-  diffPos = targetPos - diffPos;
-  diffPos.normalize();
+  btVector3 currentPos;
+  object->getCurrentPosition(currentPos);
+  object->getCurrentRotation(currentRot);
 
-  z = diffPos.z();
-  if (z > 1.0f) z = 1.0f;
-  if (z < -1.0f) z = -1.0f;
-  rad = acosf(z);
-  if (diffPos.x() < 0.0f) rad = -rad;
-  targetRot.setEulerZYX(0, rad, 0);
+  btVector3 targetPos = local ? *pos : *pos - currentPos;
+  targetPos.normalize();
 
-  /* not need to turn */
-  if (currentRot == targetRot)
+  /* calculate target rotation from (0,0,1) */
+  float z = targetPos.z();
+  if (z > 1.0f)
+    z = 1.0f;
+  if (z < -1.0f)
+    z = -1.0f;
+  float rad = acosf(z);
+  btVector3 axis = btVector3(0.0f, 0.0f, 1.0f).cross(targetPos);
+  if (axis.length2() < PMDOBJECT_MINSPINDIFF) {
+    targetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+  }
+  else {
+    axis.normalize();
+    targetRot = btQuaternion(axis, btScalar(rad));
+  }
+  targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
+
+  if (currentRot == targetRot) {
+    sendEvent1(SceneEventHandler::kTurnStartEvent, alias);
+    sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
     return;
+  }
 
   object->setSpinSpeed(speed);
   object->setRotation(targetRot);
@@ -759,25 +769,19 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
 /* SceneController::stopTurn: stop turn */
 void SceneController::stopTurn(PMDObject *object)
 {
+  const char *alias = object->getAlias();
+
+  if (!object->isRotating() || !object->isTurning()) {
+    MMDAILogWarn("stopTurn: %s is not turning", alias);
+    return;
+  }
+
   btQuaternion currentRot;
-  btQuaternion targetRot;
-
-  /* not need to stop turn */
-  if (!object->isTurning())
-    return;
-
-  /* set */
-  targetRot = (*(object->getPMDModel()->getRootBone()->getCurrentRotation()));
-  object->getRotation(currentRot);
-
-  /* not need to turn */
-  if (currentRot == targetRot)
-    return;
-
-  object->setRotation(targetRot);
+  object->getCurrentRotation(currentRot);
+  object->setRotation(currentRot);
 
   /* send event message */
-  sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
+  sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
 }
 
 /* SceneController::startLipSync: start lip sync */

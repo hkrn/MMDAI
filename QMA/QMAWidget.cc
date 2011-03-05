@@ -46,13 +46,10 @@ QMAWidget::QMAWidget(QWidget *parent)
   m_doubleClicked(false),
   m_showLog(true),
   m_displayBone(false),
-  m_displayRigidBody(false),
-  m_frameAdjust(0.0),
-  m_frameCue(0.0)
+  m_displayRigidBody(false)
 {
   m_sceneUpdateTimer.setSingleShot(false);
   connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
-  memset(m_movings, 0, sizeof(double) * MAX_MODEL);
   setAcceptDrops(true);
   setAutoFillBackground(false);
   setWindowTitle("QtMMDAI");
@@ -239,31 +236,11 @@ void QMAWidget::updateScene()
       restFrame -= stepFrame;
     }
     adjustFrame = m_sceneFrameTimer.getAuxFrame(procFrame);
-    if (adjustFrame != 0.0)
-      m_frameCue = 90.0;
     m_controller->updateMotion(procFrame, adjustFrame);
     emit pluginUpdated(rectangle, point, procFrame + adjustFrame);
   }
 
   m_controller->updateAfterSimulation();
-
-  /* decrement each indicator */
-  if (m_frameAdjust > 0.0)
-    m_frameAdjust -= intervalFrame;
-  if (m_frameCue > 0.0)
-    m_frameCue -= intervalFrame;
-  int size = m_controller->countPMDObjects();
-  for (int i = 0; i < size; i++) {
-    MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-    if (object->isEnable()) {
-      if (object->isMoving()) {
-        m_movings[i] = 15.0;
-      }
-      else if (m_movings[i] > 0.0) {
-        m_movings[i] -= intervalFrame;
-      }
-    }
-  }
 
   update();
 }
@@ -374,7 +351,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
       if (selectedObject != NULL) {
         btVector3 pos;
         m_controller->setHighlightPMDObject(selectedObject);
-        selectedObject->getPosition(pos);
+        selectedObject->getTargetPosition(pos);
         pos.setX(pos.x() + x / 20.0f);
         pos.setZ(pos.z() + y / 20.0f);
         selectedObject->setPosition(pos);

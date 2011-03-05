@@ -95,7 +95,11 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
    /* make global transform of this constraint */
    tr.setIdentity();
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-   bm.setEulerZYX(-c->rot[0], -c->rot[1], c->rot[2]);
+   btMatrix3x3 rx, ry, rz;
+   rx.setEulerZYX(-c->rot[0], 0, 0);
+   ry.setEulerZYX(0, -c->rot[1], 0);
+   rz.setEulerZYX(0, 0, c->rot[2]);
+   bm = ry * rz * rx;
 #else
    bm.setEulerZYX(c->rot[0], c->rot[1], c->rot[2]);
 #endif

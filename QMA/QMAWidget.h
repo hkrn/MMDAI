@@ -131,10 +131,6 @@ private:
   bool m_displayBone;
   bool m_displayRigidBody;
 
-  double m_frameAdjust;
-  double m_frameCue;
-  double m_movings[MAX_MODEL];
-
   Q_DISABLE_COPY(QMAWidget);
 };
 

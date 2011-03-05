@@ -46,6 +46,8 @@
 
 #include "MMDAI/LipSync.h"
 
+#define PMDOBJECT_MINSPINDIFF   0.000001f
+
 namespace MMDAI {
 
 class GLSceneRenderEngine;
@@ -176,14 +178,20 @@ public:
    /* PMDObject::getLipSync: create LipSync motion */
    bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
 
-   /* PMDObject::getPosition: get root bone offset */
-   void getPosition(btVector3 &pos) const;
+   /* getPosition: get current offset */
+   void getCurrentPosition(btVector3 &pos);
+
+   /* getTargetPosition: get target offset */
+   void getTargetPosition(btVector3 &pos);
 
    /* PMDObject::setPosition: set root bone offset */
    void setPosition(btVector3 &pos);
 
    /* PMDObject::getRotation: get root bone rotation */
-   void getRotation(btQuaternion &rot) const;
+   void getCurrentRotation(btQuaternion &rot);
+
+   /* getTargetRotation: get target rotation */
+   void getTargetRotation(btQuaternion &rot);
 
    /* PMDObject::setRotation: set root bone rotation */
    void setRotation(btQuaternion &rot);

@@ -156,7 +156,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   if (m_baseBone)
     m_origBasePos = m_baseBone->getTransform()->getOrigin();
   /* set toon rendering flag */
-    m_pmd.setToonFlag(useCartoonRendering == true && m_allowToonShading == true);
+  m_pmd.setToonFlag(useCartoonRendering == true && m_allowToonShading == true);
 
   /* set edge width */
   m_pmd.setEdgeThin(cartoonEdgeWidth);
@@ -201,8 +201,6 @@ bool PMDObject::startMotion(VMD * vmd, const char * name, bool full, bool once, 
 {
   if (m_motionManager == NULL || m_motionManager->startMotion(vmd, name, full, once, enableSmooth, enableRepos) == false)
     return false;
-  /* update offset because motion may change center */
-  m_offsetPos = (*(m_pmd.getRootBone()->getOffset()));
   return true;
 }
 
@@ -211,8 +209,6 @@ bool PMDObject::swapMotion(VMD * vmd, const char *targetName)
 {
   if (m_motionManager == NULL || m_motionManager->swapMotion(vmd, targetName) == false)
     return false;
-  /* update offset because motion may change center */
-  m_offsetPos = (*(m_pmd.getRootBone()->getOffset()));
   return true;
 }
 
@@ -389,7 +385,7 @@ bool PMDObject::updateModelRootRotation(float fps)
     /* difference calculation */
     r = (*(b->getCurrentRotation()));
     r = r - m_offsetRot;
-    diff = r.length2();
+    diff = r.length();
     if (diff > PMDOBJECT_MINSPINDIFF) {
       if (m_spinSpeed >= 0.0f && fps != 0.0f) {
         /* max turn speed */
@@ -466,20 +462,32 @@ bool PMDObject::createLipSyncMotion(const char *str, unsigned char **data, size_
   return ret;
 }
 
-/* PMDObject::getPosition: get root bone offset */
-void PMDObject::getPosition(btVector3 & pos) const
+/* PMDObject::getCurrentPosition: get current offset */
+void PMDObject::getCurrentPosition(btVector3 &pos)
+{
+  pos = (*(m_pmd.getRootBone()->getOffset()));
+}
+
+/* PMDObject::getTargetPosition: get target offset */
+void PMDObject::getTargetPosition(btVector3 &pos)
 {
   pos = m_offsetPos;
 }
 
 /* PMDObject::setPosition: set root bone offset */
-void PMDObject::setPosition(btVector3 & pos)
+void PMDObject::setPosition(btVector3 &pos)
 {
   m_offsetPos = pos;
 }
 
-/* PMDObject::getRotation: get root bone rotation */
-void PMDObject::getRotation(btQuaternion & rot) const
+/* PMDObject::getCurrentRotation: get current rotation */
+void PMDObject::getCurrentRotation(btQuaternion &rot)
+{
+   rot = (*(m_pmd.getRootBone()->getCurrentRotation()));
+}
+
+/* PMDObject::getTargetRotation: get target rotation */
+void PMDObject::getTargetRotation(btQuaternion &rot)
 {
   rot = m_offsetRot;
 }
@@ -553,7 +561,7 @@ PMDObject *PMDObject::getAssignedModel() const
 /* PMDObject::renderDebug: render model debug */
 void PMDObject::renderDebug()
 {
-   /* render debug */
+  /* render debug */
   m_engine->renderBones(&m_pmd);
 }
 
