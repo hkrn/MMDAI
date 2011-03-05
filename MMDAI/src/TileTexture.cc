@@ -53,6 +53,7 @@ void TileTexture::initialize()
 {
   int i, j;
 
+  m_cache = NULL;
   m_isLoaded = false;
   m_listIndex = 0;
   m_listIndexValid = false;
