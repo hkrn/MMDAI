@@ -75,6 +75,7 @@ static void LogHandler(const char *file, int line, enum MMDAILogLevel level, con
   char buf[BUFSIZ];
   qvsnprintf(buf, sizeof(buf), format, ap);
   if (name == "PMDBone.cc"
+      || name == "PMDConstraint.cc"
       || name == "PMDFace.cc"
       || name == "PMDModel_parse.cc"
       || name == "PMDRigidBody.cc") {
