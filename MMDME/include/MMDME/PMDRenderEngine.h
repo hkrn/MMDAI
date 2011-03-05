@@ -57,12 +57,11 @@ public:
   virtual void renderModel(PMDModel *model) = 0;
   virtual void renderEdge(PMDModel *model) = 0;
   virtual void renderShadow(PMDModel *model) = 0;
-  virtual void bindTexture(const unsigned char *data,
-                           const int width,
-                           const int height,
-                           const int components,
-                           PMDTextureNative **native) = 0;
-  virtual void deleteTexture(PMDTextureNative **native) = 0;
+  virtual PMDTextureNative *allocateTexture(const unsigned char *data,
+                                            const int width,
+                                            const int height,
+                                            const int components) = 0;
+  virtual void releaseTexture(PMDTextureNative *native) = 0;
 };
 
 } /* namespace */

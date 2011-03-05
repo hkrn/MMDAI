@@ -657,11 +657,10 @@ void GLSceneRenderEngine::renderShadow(PMDModel *model)
    glEnable(GL_CULL_FACE);
 }
 
-void GLSceneRenderEngine::bindTexture(const unsigned char *data,
-                                    const int width,
-                                    const int height,
-                                    const int components,
-                                    PMDTextureNative **ptr)
+PMDTextureNative *GLSceneRenderEngine::allocateTexture(const unsigned char *data,
+                                                       const int width,
+                                                       const int height,
+                                                       const int components)
 {
    /* generate texture */
    GLuint format = 0;
@@ -684,16 +683,14 @@ void GLSceneRenderEngine::bindTexture(const unsigned char *data,
    /* set highest priority to this texture to tell OpenGL to keep textures in GPU memory */
    GLfloat priority = 1.0f;
    glPrioritizeTextures(1, &native->id, &priority);
-   *ptr = native;
+   return native;
 }
 
-void GLSceneRenderEngine::deleteTexture(PMDTextureNative **ptr)
+void GLSceneRenderEngine::releaseTexture(PMDTextureNative *native)
 {
-  PMDTextureNative *native = *ptr;
   if (native != NULL) {
     glDeleteTextures(1, &native->id);
     delete native;
-    *ptr = 0;
   }
 }
 

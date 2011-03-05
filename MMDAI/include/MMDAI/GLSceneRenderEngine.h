@@ -73,12 +73,11 @@ public:
   void renderEdge(PMDModel *model);
   void renderShadow(PMDModel *model);
 
-  void bindTexture(const unsigned char *data,
-                   const int width,
-                   const int height,
-                   const int components,
-                   PMDTextureNative **native);
-  void deleteTexture(PMDTextureNative **native);
+  PMDTextureNative *allocateTexture(const unsigned char *data,
+                                    const int width,
+                                    const int height,
+                                    const int components);
+  void releaseTexture(PMDTextureNative *native);
 
   void renderModelCached(PMDModel *model,
                          PMDRenderCacheNative **ptr);
