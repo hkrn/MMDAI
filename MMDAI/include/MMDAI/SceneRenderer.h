@@ -75,18 +75,8 @@ private:
   btQuaternion m_currentRot;    /* current rotation */
   btTransform m_transMatrix;    /* current trans vector + rotation matrix */
   btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
-  btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
-  btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
 
   float m_backgroundColor[3]; /* background color */
-
-  bool m_enableShadowMapping;            /* true if shadow mapping */
-  bool m_shadowMapInitialized;           /* true if initialized */
-  GLuint m_depthTextureID;               /* depth texture for FBO */
-  GLuint m_fboID;                        /* frame buffer object name */
-  btVector3 m_lightVec;                  /* light vector for shadow maapping */
-  btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
-  float m_shadowMapAutoViewRadius;       /* radius from view point */
 
   /* updateProjectionMatrix: update view information */
   void updateProjectionMatrix();
@@ -102,15 +92,6 @@ private:
 
   /* updateTransRotMatrix:  update trans and rotation matrix */
   void updateTransRotMatrix();
-
-  /* initializeShadowMap: initialize OpenGL for shadow mapping */
-  void initializeShadowMap(int shadowMapTextureSize);
-
-  /* renderSceneShadowMap: shadow mapping */
-  void renderSceneShadowMap(Option *option, Stage *stage, PMDObject **objects, int size);
-
-  /* renderScene: render scene */
-  void renderScene(Option *option, Stage *stage, PMDObject **objects, int size);
 
   /* Render::initialize: initialzie Render */
   void initialize();
@@ -129,7 +110,11 @@ public:
   ~SceneRenderer();
 
   /* setup: initialize and setup Render */
-  bool setup(int *size, float *campusColor, bool useShadowMapping, int shadowMapTextureSize, bool shadowMapLightFirst);
+  bool setup(int *size,
+             float *campusColor,
+             bool useShadowMapping,
+             int shadowMapTextureSize,
+             bool shadowMapLightFirst);
 
   /* setSize: set size */
   void setSize(int w, int h);

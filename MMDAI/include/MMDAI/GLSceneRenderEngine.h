@@ -42,6 +42,13 @@
 /* headers */
 #include "GLee.h"
 
+#if defined(__APPLE__)
+#include <OpenGL/glu.h>
+#else
+#include <GL/glu.h>
+#endif
+
+#include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btShapeHull.h>
 #include <MMDME/PMDRenderEngine.h>
 
@@ -49,61 +56,120 @@ class btConvexShape;
 
 namespace MMDAI {
 
-class BulletPhysics;
-class PMDBone;
-class PMDModel;
+  class BulletPhysics;
+  class Option;
+  class PMDBone;
+  class PMDModel;
+  class PMDObject;
+  class PMDTexture;
+  class Stage;
 
-struct PMDTextureNative {
-  GLuint id;
-};
+  struct PMDTextureNative {
+    GLuint id;
+  };
 
-struct PMDRenderCacheNative {
-  GLuint id;
-};
+  struct PMDRenderCacheNative {
+    GLuint id;
+  };
 
-class GLSceneRenderEngine : public PMDRenderEngine {
-public:
-  GLSceneRenderEngine();
-  ~GLSceneRenderEngine();
+  class GLSceneRenderEngine : public PMDRenderEngine {
+  public:
+    GLSceneRenderEngine();
+    ~GLSceneRenderEngine();
 
-  void renderRigidBodies(BulletPhysics *bullet);
-  void renderBone(PMDBone *bone);
-  void renderBones(PMDModel *model);
-  void renderModel(PMDModel *model);
-  void renderEdge(PMDModel *model);
-  void renderShadow(PMDModel *model);
+    void renderRigidBodies(BulletPhysics *bullet);
+    void renderBone(PMDBone *bone);
+    void renderBones(PMDModel *model);
+    void renderModel(PMDModel *model);
+    void renderEdge(PMDModel *model);
+    void renderShadow(PMDModel *model);
 
-  PMDTextureNative *allocateTexture(const unsigned char *data,
-                                    const int width,
-                                    const int height,
-                                    const int components);
-  void releaseTexture(PMDTextureNative *native);
+    PMDTextureNative *allocateTexture(const unsigned char *data,
+                                      const int width,
+                                      const int height,
+                                      const int components);
+    void releaseTexture(PMDTextureNative *native);
 
-  void renderModelCached(PMDModel *model,
-                         PMDRenderCacheNative **ptr);
-  void renderTileTexture(PMDTexture *texture,
-                         const float *color,
-                         const float *normal,
-                         const float *vertices1,
-                         const float *vertices2,
-                         const float *vertices3,
-                         const float *vertices4,
-                         const float nX,
-                         const float nY,
-                         const bool cullFace,
-                         PMDRenderCacheNative **ptr);
-  void deleteCache(PMDRenderCacheNative **ptr);
+    void renderModelCached(PMDModel *model,
+                           PMDRenderCacheNative **ptr);
+    void renderTileTexture(PMDTexture *texture,
+                           const float *color,
+                           const float *normal,
+                           const float *vertices1,
+                           const float *vertices2,
+                           const float *vertices3,
+                           const float *vertices4,
+                           const float nX,
+                           const float nY,
+                           const bool cullFace,
+                           PMDRenderCacheNative **ptr);
+    void deleteCache(PMDRenderCacheNative **ptr);
 
-private:
-  void drawCube();
-  void drawSphere(int lats, int longs);
-  void drawConvex(btConvexShape *shape);
+    bool setup(float *campusColor,
+               bool useShadowMapping,
+               int shadowMapTextureSize,
+               bool shadowMapLightFirst);
+    void initializeShadowMap(int shadowMapTextureSize);
+    void setShadowMapping(bool flag,
+                          int shadowMapTextureSize,
+                          bool shadowMapLightFirst);
+    void render(Option *option,
+                Stage *stage,
+                PMDObject **objects,
+                int size);
+    int pickModel(PMDObject **objects,
+                  int size,
+                  int x,
+                  int y,
+                  int width,
+                  int height,
+                  double scale,
+                  int *allowDropPicked);
+    void updateLighting(bool useCartoonRendering,
+                        bool useMMDLikeCartoon,
+                        float *lightDirection,
+                        float lightIntensy,
+                        float *lightColor);
+    void updateProjectionMatrix(int width,
+                                int height,
+                                double scale);
+    void applyProjectionMatrix(int width,
+                               int height,
+                               double scale);
+    void updateModelViewMatrix(const btTransform &transMatrix,
+                               const btTransform &transMatrixInv);
+    void setShadowMapAutoView(btVector3 eyePoint,
+                              float radius);
 
-   GLuint m_boxList;
-   GLuint m_sphereList;
-   bool m_boxListEnabled;
-   bool m_sphereListEnabled;
-};
+  private:
+    void drawCube();
+    void drawSphere(int lats, int longs);
+    void drawConvex(btConvexShape *shape);
+
+    void renderSceneShadowMap(Option *option,
+                              Stage *stage,
+                              PMDObject **objects,
+                              int size);
+    void renderScene(Option *option,
+                     Stage *stage,
+                     PMDObject **objects,
+                     int size);
+
+    btVector3 m_lightVec;                  /* light vector for shadow maapping */
+    btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
+    btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
+    btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
+    float m_shadowMapAutoViewRadius;       /* radius from view point */
+
+    GLuint m_boxList;
+    GLuint m_sphereList;
+    GLuint m_depthTextureID;
+    GLuint m_fboID;
+    bool m_boxListEnabled;
+    bool m_sphereListEnabled;
+    bool m_enableShadowMapping;            /* true if shadow mapping */
+    bool m_shadowMapInitialized;           /* true if initialized */
+  };
 
 } /* namespace */
 
