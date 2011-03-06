@@ -134,12 +134,6 @@ public:
   /* Render::resetLocation: reset rotation, transition, and scale */
   void resetLocation(const float *trans, const float *rot, const float scale);
 
-  /* setShadowMapping: switch shadow mapping */
-  void setShadowMapping(bool flag, int shadowMapTextureSize, bool shadowMapLightFirst);
-
-  /* render: render all */
-  void render(Option *option, Stage *stage, PMDObject **objects, int size);
-
   /* pickModel: pick up a model at the screen position */
   int pickModel(PMDObject **objects, int size, int x, int y, int *allowDropPicked);
 

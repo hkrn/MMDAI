@@ -113,6 +113,9 @@ namespace MMDAI {
     void setShadowMapping(bool flag,
                           int shadowMapTextureSize,
                           bool shadowMapLightFirst);
+    void prerender(Option *option,
+                   PMDObject **objects,
+                   int size);
     void render(Option *option,
                 Stage *stage,
                 PMDObject **objects,
@@ -160,6 +163,7 @@ namespace MMDAI {
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
     btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
+    GLdouble m_modelView[16];
     float m_shadowMapAutoViewRadius;       /* radius from view point */
 
     GLuint m_boxList;

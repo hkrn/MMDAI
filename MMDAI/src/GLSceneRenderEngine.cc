@@ -945,115 +945,9 @@ void GLSceneRenderEngine::setShadowMapping(bool flag, int shadowMapTextureSize, 
 /* GLSceneRenderEngine::RendererSceneShadowMap: shadow mapping */
 void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMDObject **objects, int size)
 {
-  short i;
-  GLint viewport[4]; /* store viewport */
-  GLdouble modelview[16]; /* store model view transform */
-  GLdouble projection[16]; /* store projection transform */
-
-#ifdef SHADOW_AUTO_VIEW
-  float fovy;
-  float eyeDist;
-  btVector3 v;
-#endif
-
+  int i = 0;
   static GLfloat lightdim[] = { 0.2f, 0.2f, 0.2f, 1.0f };
   static const GLfloat lightblk[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-  /* Renderer the depth texture */
-  /* store the current viewport */
-  glGetIntegerv(GL_VIEWPORT, viewport);
-
-  /* store the current projection matrix */
-  glGetDoublev(GL_PROJECTION_MATRIX, projection);
-
-  /* switch to FBO for depth buffer Renderering */
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboID);
-
-  /* clear the buffer */
-  /* clear only the depth buffer, since other buffers will not be used */
-  glClear(GL_DEPTH_BUFFER_BIT);
-
-  /* set the viewport to the required texture size */
-  glViewport(0, 0, option->getShadowMappingTextureSize(), option->getShadowMappingTextureSize());
-
-  /* reset the projection matrix */
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  /* set the model view matrix to make the light position as eye point and capture the whole scene in the view */
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-#ifdef SHADOW_AUTO_VIEW
-  /* auto-update the view area according to the model */
-  /* the model range and position has been computed at model updates before */
-  /* set the view angle */
-  fovy = SHADOW_AUTO_VIEW_ANGLE;
-  /* set the distance to cover all the model range */
-  eyeDist = m_shadowMapAutoViewRadius / sinf(fovy * 0.5f * 3.1415926f / 180.0f);
-  /* set the perspective */
-  gluPerspective(fovy, 1.0, 1.0, eyeDist + m_shadowMapAutoViewRadius + 50.0f); /* +50.0f is needed to cover the background */
-  /* the viewpoint should be at eyeDist far toward light direction from the model center */
-  v = m_lightVec * eyeDist + m_shadowMapAutoViewEyePoint;
-  gluLookAt(v.x(), v.y(), v.z(), m_shadowMapAutoViewEyePoint.x(), m_shadowMapAutoViewEyePoint.y(), m_shadowMapAutoViewEyePoint.z(), 0.0, 1.0, 0.0);
-#else
-  /* fixed view */
-  gluPerspective(25.0, 1.0, 1.0, 120.0);
-  gluLookAt(30.0, 77.0, 30.0, 0.0, 17.0, 0.0, 0.0, 1.0, 0.0);
-#endif
-
-  /* keep the current model view for later process */
-  glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-
-  /* do not write into frame buffer other than depth information */
-  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-  /* also, lighting is not needed */
-  glDisable(GL_LIGHTING);
-
-  /* disable Renderering the front surface to get the depth of back face */
-  glCullFace(GL_FRONT);
-
-  /* disable alpha test */
-  glDisable(GL_ALPHA_TEST);
-
-  /* we are now writing to depth texture using FBO, so disable the depth texture mapping here */
-  glActiveTextureARB(GL_TEXTURE3_ARB);
-  glDisable(GL_TEXTURE_2D);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-
-  /* set polygon offset to avoid "moire" */
-  glEnable(GL_POLYGON_OFFSET_FILL);
-  glPolygonOffset(4.0, 4.0);
-
-  /* Renderer objects for depth */
-  /* only objects that wants to drop shadow should be Renderered here */
-  for (i = 0; i < size; i++) {
-    PMDObject *object = objects[i];
-    if (!object->isEnable())
-      continue;
-    glPushMatrix();
-    renderShadow(object->getPMDModel());
-    glPopMatrix();
-  }
-
-  /* reset the polygon offset */
-  glDisable(GL_POLYGON_OFFSET_FILL);
-
-  /* switch to default FBO */
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-  /* revert configurations to normal Renderering */
-  glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-  glMatrixMode(GL_PROJECTION);
-  glLoadMatrixd(projection);
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glEnable(GL_LIGHTING);
-  glCullFace(GL_BACK);
-  glEnable(GL_ALPHA_TEST);
-
-  /* clear all the buffers */
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   /* Renderer the full scene */
   /* set model view matrix, as the same as normal Renderering */
@@ -1135,7 +1029,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
   glTranslated(0.5, 0.5, 0.5);
   glScaled(0.5, 0.5, 0.5);
   /* multiply the model view matrix when the depth texture was Renderered */
-  glMultMatrixd(modelview);
+  glMultMatrixd(m_modelView);
   /* multiply the inverse matrix of current model view matrix */
   glMultMatrixf(m_rotMatrixInv);
 
@@ -1244,9 +1138,7 @@ void GLSceneRenderEngine::renderScene(Option *option,
                                       PMDObject **objects,
                                       int size)
 {
-  short i;
-  /* clear Renderering buffer */
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  int i = 0;
 
   glEnable(GL_CULL_FACE);
   glEnable(GL_BLEND);
@@ -1305,6 +1197,122 @@ void GLSceneRenderEngine::renderScene(Option *option,
     PMDModel *model = object->getPMDModel();
     renderModel(model);
     renderEdge(model);
+  }
+}
+
+void GLSceneRenderEngine::prerender(Option *option,
+                                    PMDObject **objects,
+                                    int size)
+{
+  if (m_enableShadowMapping) {
+    int i = 0;
+    GLint viewport[4]; /* store viewport */
+    GLdouble projection[16]; /* store projection transform */
+
+#ifdef SHADOW_AUTO_VIEW
+    float fovy = 0.0, eyeDist = 0.0;
+    btVector3 v;
+#endif
+
+    /* Renderer the depth texture */
+    /* store the current viewport */
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    /* store the current projection matrix */
+    glGetDoublev(GL_PROJECTION_MATRIX, projection);
+
+    /* switch to FBO for depth buffer Renderering */
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboID);
+
+    /* clear the buffer */
+    /* clear only the depth buffer, since other buffers will not be used */
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    /* set the viewport to the required texture size */
+    glViewport(0, 0, option->getShadowMappingTextureSize(), option->getShadowMappingTextureSize());
+
+    /* reset the projection matrix */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    /* set the model view matrix to make the light position as eye point and capture the whole scene in the view */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+#ifdef SHADOW_AUTO_VIEW
+    /* auto-update the view area according to the model */
+    /* the model range and position has been computed at model updates before */
+    /* set the view angle */
+    fovy = SHADOW_AUTO_VIEW_ANGLE;
+    /* set the distance to cover all the model range */
+    eyeDist = m_shadowMapAutoViewRadius / sinf(fovy * 0.5f * 3.1415926f / 180.0f);
+    /* set the perspective */
+    gluPerspective(fovy, 1.0, 1.0, eyeDist + m_shadowMapAutoViewRadius + 50.0f); /* +50.0f is needed to cover the background */
+    /* the viewpoint should be at eyeDist far toward light direction from the model center */
+    v = m_lightVec * eyeDist + m_shadowMapAutoViewEyePoint;
+    gluLookAt(v.x(), v.y(), v.z(), m_shadowMapAutoViewEyePoint.x(), m_shadowMapAutoViewEyePoint.y(), m_shadowMapAutoViewEyePoint.z(), 0.0, 1.0, 0.0);
+#else
+    /* fixed view */
+    gluPerspective(25.0, 1.0, 1.0, 120.0);
+    gluLookAt(30.0, 77.0, 30.0, 0.0, 17.0, 0.0, 0.0, 1.0, 0.0);
+#endif
+
+    /* keep the current model view for later process */
+    glGetDoublev(GL_MODELVIEW_MATRIX, m_modelView);
+
+    /* do not write into frame buffer other than depth information */
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+    /* also, lighting is not needed */
+    glDisable(GL_LIGHTING);
+
+    /* disable Renderering the front surface to get the depth of back face */
+    glCullFace(GL_FRONT);
+
+    /* disable alpha test */
+    glDisable(GL_ALPHA_TEST);
+
+    /* we are now writing to depth texture using FBO, so disable the depth texture mapping here */
+    glActiveTextureARB(GL_TEXTURE3_ARB);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+
+    /* set polygon offset to avoid "moire" */
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(4.0, 4.0);
+
+    /* Renderer objects for depth */
+    /* only objects that wants to drop shadow should be Renderered here */
+    for (i = 0; i < size; i++) {
+      PMDObject *object = objects[i];
+      if (!object->isEnable())
+        continue;
+      glPushMatrix();
+      renderShadow(object->getPMDModel());
+      glPopMatrix();
+    }
+
+    /* reset the polygon offset */
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    /* switch to default FBO */
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+    /* revert configurations to normal Renderering */
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixd(projection);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glEnable(GL_LIGHTING);
+    glCullFace(GL_BACK);
+    glEnable(GL_ALPHA_TEST);
+
+    /* clear all the buffers */
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  }
+  else {
+    /* clear Renderering buffer */
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   }
 }
 

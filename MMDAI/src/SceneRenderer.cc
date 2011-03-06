@@ -255,18 +255,6 @@ void SceneRenderer::updateDepthTextureViewParam(PMDObject **objects, int num)
   delete [] c;
 }
 
-void SceneRenderer::setShadowMapping(bool flag,
-                                     int shadowMapTextureSize,
-                                     bool shadowMapLightFirst)
-{
-  m_engine->setShadowMapping(flag, shadowMapTextureSize, shadowMapLightFirst);
-}
-
-void SceneRenderer::render(Option *option, Stage *stage, PMDObject **objects, int size)
-{
-  m_engine->render(option, stage, objects, size);
-}
-
 int SceneRenderer::pickModel(PMDObject **objects,
                              int size,
                              int x,

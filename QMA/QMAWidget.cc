@@ -292,6 +292,7 @@ void QMAWidget::paintGL()
   glColor3f(1, 0, 0);
   m_controller->updateModelPositionAndRotation(fps);
   m_controller->updateModelViewProjectionMatrix();
+  m_controller->prerenderScene();
   m_controller->renderScene();
   if (m_displayBone)
     m_controller->renderPMDObjectsForDebug();

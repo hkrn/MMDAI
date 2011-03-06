@@ -863,7 +863,9 @@ void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
 
 void SceneController::setShadowMapping(bool value)
 {
-  m_scene.setShadowMapping(value, m_option.getShadowMappingTextureSize(), m_option.getShadowMappingLightFirst());
+  m_engine->setShadowMapping(value,
+                             m_option.getShadowMappingTextureSize(),
+                             m_option.getShadowMappingLightFirst());
 }
 
 float SceneController::getScale()
@@ -1054,9 +1056,14 @@ void SceneController::updateModelViewProjectionMatrix()
   m_scene.updateTransRotMatrix();
 }
 
+void SceneController::prerenderScene()
+{
+  m_engine->prerender(&m_option, m_objects, m_numModel);
+}
+
 void SceneController::renderScene()
 {
-  m_scene.render(&m_option, m_stage, m_objects, m_numModel);
+  m_engine->render(&m_option, m_stage, m_objects, m_numModel);
 }
 
 void SceneController::renderBulletForDebug()
