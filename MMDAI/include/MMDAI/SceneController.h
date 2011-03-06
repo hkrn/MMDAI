@@ -151,6 +151,7 @@ public:
   void updateDepthTextureViewParam();
   void updateModelPositionAndRotation(double fps);
   void updateAfterSimulation();
+  void updateModelViewProjectionMatrix();
   void renderScene();
   void renderBulletForDebug();
   void renderPMDObjectsForDebug();

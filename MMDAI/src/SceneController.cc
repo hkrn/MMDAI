@@ -1046,6 +1046,14 @@ inline void SceneController::sendEvent2(const char *type, const char *arg1, cons
   }
 }
 
+void SceneController::updateModelViewProjectionMatrix()
+{
+  /* update scale */
+  m_scene.updateScale();
+  /* update trans and rotation matrix */
+  m_scene.updateTransRotMatrix();
+}
+
 void SceneController::renderScene()
 {
   m_scene.render(&m_option, m_stage, m_objects, m_numModel);

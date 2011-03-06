@@ -264,10 +264,6 @@ void SceneRenderer::setShadowMapping(bool flag,
 
 void SceneRenderer::render(Option *option, Stage *stage, PMDObject **objects, int size)
 {
-  /* update scale */
-  updateScale();
-  /* update trans and rotation matrix */
-  updateTransRotMatrix();
   m_engine->render(option, stage, objects, size);
 }
 

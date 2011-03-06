@@ -136,6 +136,7 @@ namespace MMDAI {
     void applyProjectionMatrix(int width,
                                int height,
                                double scale);
+    void applyModelViewMatrix();
     void updateModelViewMatrix(const btTransform &transMatrix,
                                const btTransform &transMatrixInv);
     void setShadowMapAutoView(btVector3 eyePoint,

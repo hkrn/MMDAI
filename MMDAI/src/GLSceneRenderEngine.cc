@@ -1058,8 +1058,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
   /* Renderer the full scene */
   /* set model view matrix, as the same as normal Renderering */
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glMultMatrixf(m_rotMatrix);
+  applyModelViewMatrix();
 
   /* Renderer the whole scene */
   if (option->getShadowMappingLightFirst()) {
@@ -1253,8 +1252,7 @@ void GLSceneRenderEngine::renderScene(Option *option,
   glEnable(GL_BLEND);
 
   /* set model viwe matrix */
-  glLoadIdentity();
-  glMultMatrixf(m_rotMatrix);
+  applyModelViewMatrix();
 
   /* stage and shadhow */
   glPushMatrix();
@@ -1479,6 +1477,12 @@ void GLSceneRenderEngine::applyProjectionMatrix(int width,
   double aspect = (double) height / (double) width;
   double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
   glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
+}
+
+void GLSceneRenderEngine::applyModelViewMatrix()
+{
+  glLoadIdentity();
+  glMultMatrixf(m_rotMatrix);
 }
 
 void GLSceneRenderEngine::updateModelViewMatrix(const btTransform &transMatrix,

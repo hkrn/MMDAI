@@ -87,12 +87,6 @@ private:
   /* updateModelViewMatrix: update model view matrix */
   void updateModelViewMatrix();
 
-  /* update: update scale */
-  void updateScale();
-
-  /* updateTransRotMatrix:  update trans and rotation matrix */
-  void updateTransRotMatrix();
-
   /* Render::initialize: initialzie Render */
   void initialize();
 
@@ -157,6 +151,12 @@ public:
 
   /* getScreenPointPosition: convert screen position to object position */
   void getScreenPointPosition(btVector3 *dst, btVector3 *src);
+
+  /* update: update scale */
+  void updateScale();
+
+  /* updateTransRotMatrix:  update trans and rotation matrix */
+  void updateTransRotMatrix();
 };
 
 } /* namespace */
