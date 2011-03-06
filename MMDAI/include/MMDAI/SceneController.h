@@ -44,6 +44,7 @@
 #include <MMDME/Common.h>
 
 #include "MMDAI/MotionStocker.h"
+#include "MMDAI/Option.h"
 #include "MMDAI/SceneRenderer.h"
 #include "MMDAI/Stage.h"
 
@@ -51,6 +52,8 @@ namespace MMDAI {
 
 #define MAX_MODEL 20
 
+class LipSyncLoader;
+class PMDObject;
 class GLSceneRenderEngine;
 class SceneEventHandler;
 

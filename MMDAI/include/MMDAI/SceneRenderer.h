@@ -43,6 +43,8 @@
 
 #include <MMDME/MMDME.h>
 
+#include "MMDAI/GLSceneRenderEngine.h"
+
 namespace MMDAI {
 
 #define RENDER_VIEWPOINT_CAMERA_Z     -100.0f
@@ -50,6 +52,8 @@ namespace MMDAI {
 #define RENDER_VIEWPOINT_FRUSTUM_NEAR 5.0f
 #define RENDER_VIEWPOINT_FRUSTUM_FAR  2000.0f
 
+class PMDObject;
+class Option;
 class Stage;
 
 /* Render: render */
