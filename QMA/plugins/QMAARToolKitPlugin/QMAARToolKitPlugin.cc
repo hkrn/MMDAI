@@ -22,6 +22,7 @@
 
 QMAARToolKitPlugin::QMAARToolKitPlugin()
   : m_controller(NULL),
+  m_image(NULL),
   m_settings(NULL),
   m_patternID(0),
   m_threshold(100),
@@ -115,8 +116,6 @@ void QMAARToolKitPlugin::prerender()
   if (m_enabled) {
     ARUint8 *ptr = NULL;
     if ((ptr = static_cast<ARUint8 *>(arVideoGetImage())) == NULL) {
-      if (!m_image)
-        return;
       ptr = m_image;
     }
     else {
@@ -124,7 +123,7 @@ void QMAARToolKitPlugin::prerender()
     }
     arglDispImage(ptr, &m_cameraParam, 1.0, m_settings);
     arVideoCapNext();
-    ARMarkerInfo *markerInfo;
+    ARMarkerInfo *markerInfo = NULL;
     int nmarkers = 0;
     if (arDetectMarker(ptr, m_threshold, &markerInfo, &nmarkers) < 0) {
       return;
