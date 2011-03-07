@@ -115,7 +115,12 @@ void QMAOpenJTalkPlugin::update(const QRect &rect, const QPoint &pos, const doub
   /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::render()
+void QMAOpenJTalkPlugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMAOpenJTalkPlugin::postrender()
 {
   /* do nothing */
 }

@@ -170,8 +170,10 @@ void QMAWidget::addPlugin(QMAPlugin *plugin)
           plugin, SLOT(receiveEvent(const QString&, const QStringList&)));
   connect(this, SIGNAL(pluginUpdated(const QRect&, const QPoint&, double)),
           plugin, SLOT(update(const QRect&, const QPoint&, double)));
-  connect(this, SIGNAL(pluginRendered()),
-          plugin, SLOT(render()));
+  connect(this, SIGNAL(pluginPreRendered()),
+          plugin, SLOT(prerender()));
+  connect(this, SIGNAL(pluginPostRendered()),
+          plugin, SLOT(postrender()));
   connect(plugin, SIGNAL(commandPost(const QString&, const QStringList&)),
           this, SLOT(delegateCommand(const QString&, const QStringList&)));
   connect(plugin, SIGNAL(eventPost(const QString&, const QStringList&)),
@@ -291,15 +293,16 @@ void QMAWidget::paintGL()
   double fps = m_sceneFrameTimer.getFPS();
   glColor3f(1, 0, 0);
   m_controller->updateModelPositionAndRotation(fps);
-  m_controller->updateModelViewProjectionMatrix();
   m_controller->prerenderScene();
+  emit pluginPreRendered();
+  m_controller->updateModelViewProjectionMatrix();
   m_controller->renderScene();
   if (m_displayBone)
     m_controller->renderPMDObjectsForDebug();
   if (m_displayRigidBody)
     m_controller->renderBulletForDebug();
   m_sceneFrameTimer.count();
-  emit pluginRendered();
+  emit pluginPostRendered();
 }
 
 void QMAWidget::mouseDoubleClickEvent(QMouseEvent *event)

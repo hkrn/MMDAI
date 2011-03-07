@@ -213,7 +213,12 @@ void QMAJuliusPlugin::update(const QRect &rect, const QPoint &pos, const double 
   /* do nothing */
 }
 
-void QMAJuliusPlugin::render()
+void QMAJuliusPlugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMAJuliusPlugin::postrender()
 {
   /* do nothing */
 }

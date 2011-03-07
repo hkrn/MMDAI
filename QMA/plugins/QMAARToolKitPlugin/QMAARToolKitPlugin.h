@@ -44,7 +44,8 @@ public slots:
   void receiveCommand(const QString &command, const QStringList &arguments);
   void receiveEvent(const QString &type, const QStringList &arguments);
   void update(const QRect &rect, const QPoint &pos, const double delta);
-  void render();
+  void prerender();
+  void postrender();
 
 signals:
   void commandPost(const QString &command, const QStringList &arguments);
@@ -52,6 +53,7 @@ signals:
 
 private:
   MMDAI::SceneController *m_controller;
+  ARUint8 *m_image;
   ARParam m_cameraParam;
   ARGL_CONTEXT_SETTINGS_REF m_settings;
   int m_patternID;
@@ -59,7 +61,6 @@ private:
   double m_patternCenter[2];
   double m_patternWidth;
   double m_patternTransform[3][4];
-  bool m_found;
   bool m_enabled;
 };
 

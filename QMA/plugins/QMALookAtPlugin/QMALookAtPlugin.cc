@@ -38,7 +38,7 @@
 
 #include <QTextCodec>
 
-#include <MMDAI/SceneEventHandler.h>
+#include <MMDAI/MMDAI.h>
 #include "QMALookAtPlugin.h"
 
 static void setNeckController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
@@ -148,7 +148,12 @@ void QMALookAtPlugin::update(const QRect &rect, const QPoint &pos, const double 
   }
 }
 
-void QMALookAtPlugin::render()
+void QMALookAtPlugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMALookAtPlugin::postrender()
 {
   /* do nothing */
 }

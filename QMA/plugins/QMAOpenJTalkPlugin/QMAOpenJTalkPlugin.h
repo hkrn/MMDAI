@@ -76,7 +76,8 @@ public slots:
   void receiveCommand(const QString &command, const QStringList &arguments);
   void receiveEvent(const QString &type, const QStringList &arguments);
   void update(const QRect &rect, const QPoint &pos, const double delta);
-  void render();
+  void prerender();
+  void postrender();
   void finished();
   void stateChanged(Phonon::State newState, Phonon::State oldState);
 

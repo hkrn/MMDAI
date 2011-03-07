@@ -26,7 +26,6 @@ QMAARToolKitPlugin::QMAARToolKitPlugin()
   m_patternID(0),
   m_threshold(100),
   m_patternWidth(80.0),
-  m_found(false),
   m_enabled(false)
 {
   m_patternCenter[0] = 0;
@@ -108,20 +107,28 @@ void QMAARToolKitPlugin::update(const QRect &rect, const QPoint &pos, const doub
   Q_UNUSED(rect);
   Q_UNUSED(pos);
   Q_UNUSED(delta);
+  /* do nothing */
+}
+
+void QMAARToolKitPlugin::prerender()
+{
   if (m_enabled) {
     ARUint8 *ptr = NULL;
-    m_found = false;
     if ((ptr = static_cast<ARUint8 *>(arVideoGetImage())) == NULL) {
-      arUtilSleep(2);
-      return;
+      if (!m_image)
+        return;
+      ptr = m_image;
     }
+    else {
+      m_image = ptr;
+    }
+    arglDispImage(ptr, &m_cameraParam, 1.0, m_settings);
+    arVideoCapNext();
     ARMarkerInfo *markerInfo;
     int nmarkers = 0;
     if (arDetectMarker(ptr, m_threshold, &markerInfo, &nmarkers) < 0) {
       return;
     }
-    arglDispImage(ptr, &m_cameraParam, 1.0, m_settings);
-    arVideoCapNext();
     ptr = NULL;
     int found = -1;
     for (int i = 0; i < nmarkers; i++) {
@@ -136,18 +143,16 @@ void QMAARToolKitPlugin::update(const QRect &rect, const QPoint &pos, const doub
       return;
     }
     else {
+      double glParam[16];
       arGetTransMat(&markerInfo[found], m_patternCenter, m_patternWidth, m_patternTransform);
-      m_found = true;
+      arglCameraViewRH(m_patternTransform, glParam, 1.0);
     }
   }
 }
 
-void QMAARToolKitPlugin::render()
+void QMAARToolKitPlugin::postrender()
 {
-  if (m_enabled && m_found) {
-    double glParam[16];
-    arglCameraViewRH(m_patternTransform, glParam, 1.0);
-  }
+  /* do nothing */
 }
 
 Q_EXPORT_PLUGIN2(qma_artoolkit_plugin, QMAARToolKitPlugin);

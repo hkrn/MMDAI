@@ -87,7 +87,8 @@ signals:
   void pluginCommandPost(const QString&, const QStringList&);
   void pluginEventPost(const QString&, const QStringList&);
   void pluginUpdated(const QRect&, const QPoint&, const double);
-  void pluginRendered();
+  void pluginPreRendered();
+  void pluginPostRendered();
 
 protected:
   void initializeGL();

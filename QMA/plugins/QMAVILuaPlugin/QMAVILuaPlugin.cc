@@ -122,7 +122,12 @@ void QMAVILuaPlugin::update(const QRect &rect, const QPoint &pos, const double d
   /* do nothing */
 }
 
-void QMAVILuaPlugin::render()
+void QMAVILuaPlugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMAVILuaPlugin::postrender()
 {
   /* do nothing */
 }

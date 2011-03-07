@@ -609,7 +609,7 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
   m_aboutQtAction = action;
 
-  connect(m_widget, SIGNAL(pluginRendered()),
+  connect(m_widget, SIGNAL(pluginPostRendered()),
           this, SLOT(updateWindowTitle()));
   connect(m_widget, SIGNAL(pluginEventPost(QString,QStringList)),
           this, SLOT(receiveEvent(QString,QStringList)));

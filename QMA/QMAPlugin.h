@@ -61,7 +61,8 @@ public:
   virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;
   virtual void receiveEvent(const QString &type, const QStringList &arguments) = 0;
   virtual void update(const QRect &rect, const QPoint &pos, const double delta) = 0;
-  virtual void render() = 0;
+  virtual void prerender() = 0;
+  virtual void postrender() = 0;
 
   /* signals */
   virtual void commandPost(const QString &command, const QStringList &arguments) = 0;

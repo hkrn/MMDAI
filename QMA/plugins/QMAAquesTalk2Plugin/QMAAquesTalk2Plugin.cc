@@ -130,7 +130,12 @@ void QMAAquesTalk2Plugin::update(const QRect &rect, const QPoint &pos, const dou
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::render()
+void QMAAquesTalk2Plugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMAAquesTalk2Plugin::postrender()
 {
   /* do nothing */
 }

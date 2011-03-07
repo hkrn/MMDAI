@@ -93,7 +93,12 @@ void QMAVIManagerPlugin::update(const QRect &rect, const QPoint &pos, const doub
   /* do nothing */
 }
 
-void QMAVIManagerPlugin::render()
+void QMAVIManagerPlugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMAVIManagerPlugin::postrender()
 {
   /* do nothing */
 }

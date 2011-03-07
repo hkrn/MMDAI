@@ -113,7 +113,12 @@ void QMAAudioPlugin::update(const QRect &rect, const QPoint &pos, const double d
   /* do nothing */
 }
 
-void QMAAudioPlugin::render()
+void QMAAudioPlugin::prerender()
+{
+  /* do nothing */
+}
+
+void QMAAudioPlugin::postrender()
 {
   /* do nothing */
 }
