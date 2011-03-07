@@ -36,6 +36,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef MMDAI_BONECONTROLLER_H_
+#define MMDAI_BONECONTROLLER_H_
+
 #include <btBulletDynamicsCommon.h>
 
 #include <MMDME/Common.h>
@@ -91,3 +94,4 @@ public:
 
 } /* namespace */
 
+#endif
