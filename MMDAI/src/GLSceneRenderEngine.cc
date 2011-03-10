@@ -57,6 +57,8 @@ GLSceneRenderEngine::GLSceneRenderEngine()
     m_boxListEnabled(false),
     m_sphereListEnabled(false),
     m_enableShadowMapping(false),
+    m_overrideModelViewMatrix(false),
+    m_overrideProjectionMatrix(false),
     m_shadowMapInitialized(false)
 {
 }
@@ -1472,7 +1474,6 @@ void GLSceneRenderEngine::updateProjectionMatrix(int width,
   glViewport(0, 0, width, height);
   /* camera setting */
   glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
   applyProjectionMatrix(width, height, scale);
   glMatrixMode(GL_MODELVIEW);
 }
@@ -1482,15 +1483,28 @@ void GLSceneRenderEngine::applyProjectionMatrix(int width,
                                                 int height,
                                                 double scale)
 {
-  double aspect = (double) height / (double) width;
-  double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
-  glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
+  if (m_overrideProjectionMatrix) {
+    glLoadMatrixf(m_newProjectionMatrix);
+    m_overrideProjectionMatrix = false;
+  }
+  else {
+    double aspect = (double) height / (double) width;
+    double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
+    glLoadIdentity();
+    glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
+  }
 }
 
 void GLSceneRenderEngine::applyModelViewMatrix()
 {
   glLoadIdentity();
-  glMultMatrixf(m_rotMatrix);
+  if (m_overrideModelViewMatrix) {
+    glLoadMatrixf(m_newModelViewMatrix);
+    m_overrideModelViewMatrix = false;
+  }
+  else {
+    glMultMatrixf(m_rotMatrix);
+  }
 }
 
 void GLSceneRenderEngine::updateModelViewMatrix(const btTransform &transMatrix,
@@ -1498,6 +1512,18 @@ void GLSceneRenderEngine::updateModelViewMatrix(const btTransform &transMatrix,
 {
   transMatrix.getOpenGLMatrix(m_rotMatrix);
   transMatrixInv.getOpenGLMatrix(m_rotMatrixInv);
+}
+
+void GLSceneRenderEngine::setModelViewMatrix(const btScalar modelView[16])
+{
+  m_overrideModelViewMatrix = true;
+  memcpy(m_newModelViewMatrix, modelView, sizeof(m_newModelViewMatrix));
+}
+
+void GLSceneRenderEngine::setProjectionMatrix(const btScalar projection[16])
+{
+  m_overrideProjectionMatrix = true;
+  memcpy(m_newProjectionMatrix, projection, sizeof(m_newProjectionMatrix));
 }
 
 void GLSceneRenderEngine::setShadowMapAutoView(btVector3 eyePoint,

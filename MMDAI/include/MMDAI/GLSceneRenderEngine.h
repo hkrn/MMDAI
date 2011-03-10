@@ -144,6 +144,8 @@ namespace MMDAI {
                                const btTransform &transMatrixInv);
     void setShadowMapAutoView(btVector3 eyePoint,
                               float radius);
+    void setModelViewMatrix(const btScalar modelView[16]);
+    void setProjectionMatrix(const btScalar projection[16]);
 
   private:
     void drawCube();
@@ -163,6 +165,8 @@ namespace MMDAI {
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
     btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
+    btScalar m_newModelViewMatrix[16];
+    btScalar m_newProjectionMatrix[16];
     GLdouble m_modelView[16];
     float m_shadowMapAutoViewRadius;       /* radius from view point */
 
@@ -173,6 +177,8 @@ namespace MMDAI {
     bool m_boxListEnabled;
     bool m_sphereListEnabled;
     bool m_enableShadowMapping;            /* true if shadow mapping */
+    bool m_overrideModelViewMatrix;
+    bool m_overrideProjectionMatrix;
     bool m_shadowMapInitialized;           /* true if initialized */
   };
 

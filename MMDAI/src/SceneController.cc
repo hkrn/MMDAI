@@ -1056,6 +1056,16 @@ void SceneController::updateModelViewProjectionMatrix()
   m_scene.updateTransRotMatrix();
 }
 
+void SceneController::setProjectionMatrix(float projection[16])
+{
+  m_engine->setProjectionMatrix(projection);
+}
+
+void SceneController::setModelViewMatrix(float modelView[16])
+{
+  m_engine->setModelViewMatrix(modelView);
+}
+
 void SceneController::prerenderScene()
 {
   m_engine->prerender(&m_option, m_objects, m_numModel);

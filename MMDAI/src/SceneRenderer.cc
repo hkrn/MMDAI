@@ -156,8 +156,10 @@ void SceneRenderer::updateScale()
   float diff;
 
   /* if no difference, return */
-  if (m_currentScale == m_scale)
+  if (m_currentScale == m_scale) {
+    updateProjectionMatrix();
     return;
+  }
 
   diff = fabs(m_currentScale - m_scale);
   if (diff < RENDER_MINSCALEDIFF) {

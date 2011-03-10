@@ -152,6 +152,8 @@ public:
   void updateModelPositionAndRotation(double fps);
   void updateAfterSimulation();
   void updateModelViewProjectionMatrix();
+  void setModelViewMatrix(float modelView[16]);
+  void setProjectionMatrix(float projection[16]);
   void prerenderScene();
   void renderScene();
   void renderBulletForDebug();
