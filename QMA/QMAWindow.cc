@@ -52,6 +52,7 @@ QMAWindow::QMAWindow(QWidget *parent) :
   createActions();
   createMenu();
   setWindowTitle(qAppName());
+  statusBar()->showMessage("");
 
   readSetting();
 }
@@ -459,7 +460,7 @@ void QMAWindow::createActions()
   m_setFloorAction = action;
 
   action = new QAction(tr("Set background"), this);
-  action->setStatusTip(tr("Set or replace a floor to the scene."));
+  action->setStatusTip(tr("Set or replace a background to the scene."));
   action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
   connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
   m_setBackgroundAction = action;
@@ -513,7 +514,7 @@ void QMAWindow::createActions()
   m_toggleShadowMappingFirstAction = action;
 
   action = new QAction(tr("Toggle Fullscreen"), this);
-  action->setStatusTip("Enable / Disable fullscreen");
+  action->setStatusTip(tr("Enable / Disable fullscreen."));
   action->setShortcut(Qt::Key_F);
   connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
   m_toggleFullScreenAction = action;
@@ -531,61 +532,61 @@ void QMAWindow::createActions()
   m_zoomOutAction = action;
 
   action = new QAction(tr("Rotate up"), this);
-  action->setStatusTip("Rotate a model up.");
+  action->setStatusTip(tr("Rotate a model up."));
   action->setShortcut(Qt::Key_Up);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateUp()));
   m_rotateUpAction = action;
 
   action = new QAction(tr("Rotate down"), this);
-  action->setStatusTip("Rotate a model down.");
+  action->setStatusTip(tr("Rotate a model down."));
   action->setShortcut(Qt::Key_Down);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateDown()));
   m_rotateDownAction = action;
 
   action = new QAction(tr("Rotate Left"), this);
-  action->setStatusTip("Rotate a model left.");
+  action->setStatusTip(tr("Rotate a model left."));
   action->setShortcut(Qt::Key_Left);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateLeft()));
   m_rotateLeftAction = action;
 
   action = new QAction(tr("Rotate right"), this);
-  action->setStatusTip("Rotate a model right.");
+  action->setStatusTip(tr("Rotate a model right."));
   action->setShortcut(Qt::Key_Right);
   connect(action, SIGNAL(triggered()), this, SLOT(rotateRight()));
   m_rotateRightAction = action;
 
   action = new QAction(tr("Translate up"), this);
-  action->setStatusTip("Translate a model up.");
+  action->setStatusTip(tr("Translate a model up."));
   action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Up));
   connect(action, SIGNAL(triggered()), this, SLOT(translateUp()));
   m_translateUpAction = action;
 
   action = new QAction(tr("Translate down"), this);
-  action->setStatusTip("Rotate a model down.");
+  action->setStatusTip(tr("Translate a model down."));
   action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Down));
   connect(action, SIGNAL(triggered()), this, SLOT(translateDown()));
   m_translateDownAction = action;
 
   action = new QAction(tr("Translate left"), this);
-  action->setStatusTip("Rotate a model left.");
+  action->setStatusTip(tr("Translate a model left."));
   action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Left));
   connect(action, SIGNAL(triggered()), this, SLOT(translateLeft()));
   m_translateLeftAction = action;
 
   action = new QAction(tr("Translate right"), this);
-  action->setStatusTip("Rotate a model right.");
+  action->setStatusTip(tr("Translate a model right."));
   action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Right));
   connect(action, SIGNAL(triggered()), this, SLOT(translateRight()));
   m_translateRightAction = action;
 
   action = new QAction(tr("Change selected model"), this);
-  action->setStatusTip("Change selected model to the specified model. If an object is not selected, do nothing.");
+  action->setStatusTip(tr("Change selected model to the specified model. If an object is not selected, do nothing."));
   action->setShortcut(QKeySequence(Qt::ALT + Qt::Key_M));
   connect(action, SIGNAL(triggered()), this, SLOT(changeSelectedObject()));
   m_changeSelectedObjectAction = action;
 
   action = new QAction(tr("Delete selected model"), this);
-  action->setStatusTip("Delete selected model from the scene. If an object is not selected, do nothing.");
+  action->setStatusTip(tr("Delete selected model from the scene. If an object is not selected, do nothing."));
   action->setShortcut(Qt::Key_Delete);
   connect(action, SIGNAL(triggered()), this, SLOT(deleteSelectedObject()));
   m_deleteSelectedObjectAction = action;
@@ -641,7 +642,7 @@ void QMAWindow::createMenu()
   m_fileMenu->addAction(m_exitAction);
 
   menuBar()->addSeparator();
-  m_sceneMenu = menuBar()->addMenu("&Scene");
+  m_sceneMenu = menuBar()->addMenu(tr("&Scene"));
   m_sceneMenu->addAction(m_toggleFullScreenAction);
   m_sceneMenu->addAction(m_zoomInAction);
   m_sceneMenu->addAction(m_zoomOutAction);
@@ -662,8 +663,8 @@ void QMAWindow::createMenu()
   m_sceneMenu->addAction(m_toggleDisplayRigidBodyAction);
 
   menuBar()->addSeparator();
-  m_modelMenu = menuBar()->addMenu("&Model");
-  m_selectModelMenu = m_modelMenu->addMenu("Select model");
+  m_modelMenu = menuBar()->addMenu(tr("&Model"));
+  m_selectModelMenu = m_modelMenu->addMenu(tr("Select model"));
   m_modelMenu->addAction(m_changeSelectedObjectAction);
   m_modelMenu->addAction(m_deleteSelectedObjectAction);
 
