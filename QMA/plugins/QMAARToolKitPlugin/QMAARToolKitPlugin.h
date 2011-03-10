@@ -23,10 +23,10 @@
 
 #include <MMDAI/SceneController.h>
 
-#include <AR/gsub_lite.h>
-#include <AR/video.h>
-#include <AR/param.h>
 #include <AR/ar.h>
+#include <AR/param.h>
+#include <AR/video.h>
+#include <AR/gsub_lite.h>
 
 class QMAARToolKitPlugin : public QMAPlugin
 {
@@ -60,7 +60,6 @@ private:
   int m_threshold;
   double m_patternCenter[2];
   double m_patternWidth;
-  double m_patternTransform[3][4];
   bool m_enabled;
 };
 

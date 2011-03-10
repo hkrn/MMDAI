@@ -29,8 +29,8 @@ QMAARToolKitPlugin::QMAARToolKitPlugin()
   m_patternWidth(80.0),
   m_enabled(false)
 {
-  m_patternCenter[0] = 0;
-  m_patternCenter[1] = 0;
+  m_patternCenter[0] = 0.0f;
+  m_patternCenter[1] = 0.0f;
 }
 
 QMAARToolKitPlugin::~QMAARToolKitPlugin()
@@ -83,9 +83,9 @@ void QMAARToolKitPlugin::start()
 void QMAARToolKitPlugin::stop()
 {
   if (m_enabled) {
-    arglCleanup(m_settings);
     arVideoCapStop();
     arVideoClose();
+    arglCleanup(m_settings);
   }
 }
 
@@ -126,6 +126,7 @@ void QMAARToolKitPlugin::prerender()
     ARMarkerInfo *markerInfo = NULL;
     int nmarkers = 0;
     if (arDetectMarker(ptr, m_threshold, &markerInfo, &nmarkers) < 0) {
+      MMDAILogWarnString("Failed calling arDetectMarker");
       return;
     }
     ptr = NULL;
@@ -138,13 +139,25 @@ void QMAARToolKitPlugin::prerender()
           found = i;
       }
     }
+    double arProjection[16];
+    float projection[16];
+    arglCameraFrustumRH(&m_cameraParam, 0.1, 100, arProjection);
+    for (int i = 0; i < 16; i++) {
+      projection[i] = arProjection[i];
+    }
+    m_controller->setProjectionMatrix(projection);
     if (found == -1) {
       return;
     }
     else {
-      double glParam[16];
-      arGetTransMat(&markerInfo[found], m_patternCenter, m_patternWidth, m_patternTransform);
-      arglCameraViewRH(m_patternTransform, glParam, 1.0);
+      double arModelView[16], arPatternTransform[3][4];
+      float modelView[16];
+      arGetTransMat(&markerInfo[found], m_patternCenter, m_patternWidth, arPatternTransform);
+      arglCameraViewRH(arPatternTransform, arModelView, 0.1);
+      for (int i = 0; i < 16; i++) {
+        modelView[i] = arModelView[i];
+      }
+      m_controller->setModelViewMatrix(modelView);
     }
   }
 }
