@@ -90,6 +90,6 @@ HEADERS  += QMAWidget.h \
     QMALogger.h \
     QMALogViewWidget.h
 
-TRANSLATIONS += res/translations/QMA_ja.ts
+TRANSLATIONS += res/translations/QMA.ts
 
 CODECFORTR = UTF-8
