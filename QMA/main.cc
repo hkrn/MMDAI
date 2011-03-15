@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   QTranslator appTranslator, qtTranslator;
   const QString locale = QLocale::system().name();
 
-  app.setOrganizationDomain("com.github.hkrn.mmdai");
+  app.setOrganizationDomain("hkrn.github.com");
   app.setOrganizationName("MMDAI Project");
   app.setApplicationName("QtMMDAI");
   app.setApplicationVersion("0.4");
@@ -80,17 +80,13 @@ int main(int argc, char *argv[])
 
 #ifdef Q_OS_MAC
   QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
-  appTranslator.load("QMA", dir);
 #else
-  const QString path = QString("%1/locales/QMA_%2")
-                       .arg(appDir.absolutePath())
-                       .arg(locale);
-  appTranslator.load(path);
+  QString dir = appDir.absoluteFilePath("../locales");
 #endif
-  app.installTranslator(&appTranslator);
-
   qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+  appTranslator.load("QMA_" + locale, dir);
   app.installTranslator(&qtTranslator);
+  app.installTranslator(&appTranslator);
 
   QMAWindow window;
   window.show();

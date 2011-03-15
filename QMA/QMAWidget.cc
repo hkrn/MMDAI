@@ -52,7 +52,6 @@ QMAWidget::QMAWidget(QWidget *parent)
   connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
   setAcceptDrops(true);
   setAutoFillBackground(false);
-  setWindowTitle("QtMMDAI");
 }
 
 QMAWidget::~QMAWidget()

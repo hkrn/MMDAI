@@ -95,7 +95,7 @@ private:
   void readSetting();
   void writeSetting();
 
-  QSettings *m_settings;
+  QSettings m_settings;
   QMAWidget *m_widget;
   QMALogViewWidget *m_logView;
   QMenu *m_fileMenu;
