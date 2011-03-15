@@ -38,6 +38,7 @@
 
 /* headers */
 
+#include "QMAVIManagerPlugin.h"
 #include "VIManager.h"
 #include "VIManager_Thread.h"
 
@@ -140,7 +141,7 @@ void VIManager_Thread::clear()
 }
 
 /* VIManager_Thread::VIManager_Thread: thread constructor */
-VIManager_Thread::VIManager_Thread(CommandDispatcher *dispatcher)
+VIManager_Thread::VIManager_Thread(QMAVIManagerPlugin *dispatcher)
   : m_running(false),
     m_dispathcer(dispatcher)
 {

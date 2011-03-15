@@ -45,7 +45,7 @@
 
 class VIManager_Thread;
 
-class QMAVIManagerPlugin : public QMAPlugin, public CommandDispatcher
+class QMAVIManagerPlugin : public QMAPlugin
 {
   Q_OBJECT
   Q_INTERFACES(QMAPlugin)

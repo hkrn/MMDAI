@@ -43,8 +43,9 @@
 #include <QThread>
 #include <QWaitCondition>
 
-#include "CommandDispatcher.h"
 #include "VIManager.h"
+
+class QMAVIManagerPlugin;
 
 /* VIManager_Event: input message buffer */
 typedef struct _VIManager_Event {
@@ -99,7 +100,7 @@ private:
 
 public:
   /* VIManager_Thraed: thread constructor */
-  VIManager_Thread(CommandDispatcher *dispathcer);
+  VIManager_Thread(QMAVIManagerPlugin *dispathcer);
 
   /* ~VIManager_Thread: thread destructor */
   ~VIManager_Thread();
@@ -125,7 +126,7 @@ protected:
   void run();
 
 private:
-  CommandDispatcher *m_dispathcer;
+  QMAVIManagerPlugin *m_dispathcer;
 };
 
 #endif
