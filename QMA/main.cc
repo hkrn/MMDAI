@@ -52,6 +52,8 @@ Q_IMPORT_PLUGIN(qma_openjtalk_plugin);
 Q_IMPORT_PLUGIN(qma_vimanager_plugin);
 #endif
 
+#include <QDebug>
+
 int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
@@ -81,7 +83,7 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_MAC
   QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
-  QString dir = appDir.absoluteFilePath("../locales");
+  QString dir = appDir.absoluteFilePath("Locales");
 #endif
   qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
   appTranslator.load("QMA_" + locale, dir);
