@@ -133,17 +133,17 @@ namespace MMDAI {
                         float *lightDirection,
                         float lightIntensy,
                         float *lightColor);
-    void updateProjectionMatrix(int width,
-                                int height,
-                                double scale);
-    void applyProjectionMatrix(int width,
-                               int height,
-                               double scale);
+    void updateProjectionMatrix(const int width,
+                                const int height,
+                                const double scale);
+    void applyProjectionMatrix(const int width,
+                               const int height,
+                               const double scale);
     void applyModelViewMatrix();
     void updateModelViewMatrix(const btTransform &transMatrix,
                                const btTransform &transMatrixInv);
-    void setShadowMapAutoView(btVector3 eyePoint,
-                              float radius);
+    void setShadowMapAutoView(const btVector3 &eyePoint,
+                              const float radius);
     void setModelViewMatrix(const btScalar modelView[16]);
     void setProjectionMatrix(const btScalar projection[16]);
 

@@ -1467,9 +1467,9 @@ void GLSceneRenderEngine::updateLighting(bool useCartoonRendering,
 }
 
 /* GLSceneRenderEngine::updateProjectionMatrix: update view information */
-void GLSceneRenderEngine::updateProjectionMatrix(int width,
-                                                 int height,
-                                                 double scale)
+void GLSceneRenderEngine::updateProjectionMatrix(const int width,
+                                                 const int height,
+                                                 const double scale)
 {
   glViewport(0, 0, width, height);
   /* camera setting */
@@ -1479,9 +1479,9 @@ void GLSceneRenderEngine::updateProjectionMatrix(int width,
 }
 
 /* GLSceneRenderEngine::applyProjectionMatirx: update projection matrix */
-void GLSceneRenderEngine::applyProjectionMatrix(int width,
-                                                int height,
-                                                double scale)
+void GLSceneRenderEngine::applyProjectionMatrix(const int width,
+                                                const int height,
+                                                const double scale)
 {
   if (m_overrideProjectionMatrix) {
     glLoadMatrixf(m_newProjectionMatrix);
@@ -1526,10 +1526,10 @@ void GLSceneRenderEngine::setProjectionMatrix(const btScalar projection[16])
   memcpy(m_newProjectionMatrix, projection, sizeof(m_newProjectionMatrix));
 }
 
-void GLSceneRenderEngine::setShadowMapAutoView(btVector3 eyePoint,
-                                               float radius)
+void GLSceneRenderEngine::setShadowMapAutoView(const btVector3 &eyePoint,
+                                               const float radius)
 {
-  m_shadowMapAutoViewEyePoint = eyePoint;
+  m_shadowMapAutoViewEyePoint = btVector3(eyePoint);
   m_shadowMapAutoViewRadius = radius;
 }
 
