@@ -5,12 +5,15 @@ CMakeScripts
 cmake_install.cmake
 Debug
 debug
+*.dir
 install_manifest.txt
+ipch
 Makefile*
 moc_*
 QtMMDAI*
 release
-UpgradeLog.XML
+Release
+UpgradeLog*.XML
 _UpgradeReport_Files
 Win32
 *.a
