@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDAI_GLPMDRENDERENGINE_H_
-#define MMDAI_GLPMDRENDERENGINE_H_
+#ifndef MMDAI_GLSCENERENDERENGINE_H_
+#define MMDAI_GLSCENERENDERENGINE_H_
 
 /* headers */
 #include "GLee.h"
@@ -48,9 +48,8 @@
 #include <GL/glu.h>
 #endif
 
-#include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btShapeHull.h>
-#include <MMDME/PMDRenderEngine.h>
+#include <MMDAI/SceneRenderEngine.h>
 
 class btConvexShape;
 
@@ -72,7 +71,7 @@ namespace MMDAI {
     GLuint id;
   };
 
-  class GLSceneRenderEngine : public PMDRenderEngine {
+  class GLSceneRenderEngine : public SceneRenderEngine {
   public:
     GLSceneRenderEngine();
     ~GLSceneRenderEngine();

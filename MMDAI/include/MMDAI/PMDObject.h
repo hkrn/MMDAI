@@ -50,12 +50,12 @@
 
 namespace MMDAI {
 
-class GLSceneRenderEngine;
 class LipSyncLoader;
 class MotionManager;
 class PMDBone;
 class PMDModel;
 class PMDModelLoader;
+class SceneRenderEngine;
 class VMD;
 
 /* PMDObject: object of PMD */
@@ -68,7 +68,7 @@ private:
    MotionManager *m_motionManager; /* motion manager */
    LipSync *m_globalLipSync;
    LipSync m_localLipSync;
-   GLSceneRenderEngine *m_engine;
+   SceneRenderEngine *m_engine;
 
    bool m_isEnable; /* true if this model is enabled */
 
@@ -109,7 +109,7 @@ private:
 public:
 
    /* PMDObject::PMDObject: constructor */
-   PMDObject(GLSceneRenderEngine *engine);
+   PMDObject(SceneRenderEngine *engine);
 
    /* PMDObject::PMDObject: destructor */
    ~PMDObject();

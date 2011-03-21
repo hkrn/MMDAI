@@ -45,7 +45,6 @@ aux_source_directory(src libMMDAI_sources)
 set(libMMDAI_public_headers
   include/MMDAI/BoneController.h
   include/MMDAI/CommandParser.h
-  include/MMDAI/GLSceneRenderEngine.h
   include/MMDAI/LipSync.h
   include/MMDAI/MotionStocker.h
   include/MMDAI/MMDAI.h
@@ -54,6 +53,7 @@ set(libMMDAI_public_headers
   include/MMDAI/PMDObject.h
   include/MMDAI/SceneController.h
   include/MMDAI/SceneEventHandler.h
+  include/MMDAI/SceneRenderEngine.h
   include/MMDAI/Stage.h
   include/MMDAI/TileTexture.h
 )
@@ -97,7 +97,7 @@ else()
 endif()
 
 # find Bullet Physics
-OPTION(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
+option(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
 if (FIND_BULLET_BY_PKGCONFIG)
   find_package(PkgConfig)
   pkg_search_module(BULLET REQUIRED bullet)
@@ -135,6 +135,11 @@ if(MMDME_INCLUDE AND MMDME_LIBRARY)
   include_directories(MMDAI ${MMDME_INCLUDE})
 else()
   message(FATAL_ERROR "Required MMDME is not found.")
+endif()
+
+option(USE_OPENGL_ES1 "Use OpenGLES 1.x instead of desktop OpenGL" OFF)
+if (USE_OPENGL_ES1)
+  add_definitions(-DOPENGLES1)
 endif()
 
 # create as a framework if build on darwin environment

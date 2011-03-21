@@ -85,7 +85,7 @@ void PMDObject::clear()
 }
 
 /* PMDObject::PMDObject: constructor */
-PMDObject::PMDObject(GLSceneRenderEngine *engine)
+PMDObject::PMDObject(SceneRenderEngine *engine)
   : m_engine(engine)
 {
   initialize();

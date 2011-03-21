@@ -45,7 +45,7 @@
 #include <MMDME/PMDModelLoader.h>
 #include <MMDME/PMDTexture.h>
 
-#include "MMDAI/GLSceneRenderEngine.h"
+#include "MMDAI/SceneRenderEngine.h"
 
 namespace MMDAI {
 
@@ -53,12 +53,10 @@ class TileTexture
 {
 private:
 
-  GLSceneRenderEngine *m_engine;
+  SceneRenderEngine *m_engine;
   PMDRenderCacheNative *m_cache;
   PMDTexture m_texture;     /* texture */
   bool m_isLoaded;
-  GLuint m_listIndex;       /* display list */
-  bool m_listIndexValid;    /* true if m_listIndex was registered */
 
   float m_vertices[4][3]; /* position */
   float m_numx;
@@ -78,13 +76,13 @@ private:
 public:
 
   /* TileTexture: constructor */
-  TileTexture(GLSceneRenderEngine *engine);
+  TileTexture(SceneRenderEngine *engine);
 
   /* TileTexture: destructor */
   ~TileTexture();
 
   /* load: load a texture from file name (wide char) */
-  bool load(PMDModelLoader *loader, GLSceneRenderEngine *engine);
+  bool load(PMDModelLoader *loader, SceneRenderEngine *engine);
 
   /* render: render the textures */
   void render(bool cullFace, const float normal[3]);

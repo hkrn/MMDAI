@@ -44,7 +44,7 @@
 #include <MMDME/Common.h>
 #include <MMDME/PMDModel.h>
 
-#include "MMDAI/GLSceneRenderEngine.h"
+#include "MMDAI/SceneRenderEngine.h"
 #include "MMDAI/TileTexture.h"
 
 namespace MMDAI {
@@ -57,7 +57,7 @@ class Stage
 public:
 
   /* Stage: constructor */
-  Stage(GLSceneRenderEngine *engine);
+  Stage(SceneRenderEngine *engine);
 
   /* ~Stage: destructor */
   ~Stage();
@@ -87,10 +87,10 @@ public:
   void updateShadowMatrix(float lightDirection[4]);
 
   /* getShadowMatrix: get shadow projection matrix */
-  GLfloat *getShadowMatrix() const;
+  float *getShadowMatrix() const;
 
 private:
-  GLSceneRenderEngine *m_engine;
+  SceneRenderEngine *m_engine;
   PMDRenderCacheNative *m_cache;
 
   TileTexture *m_floor; /* floor texture */
@@ -104,7 +104,7 @@ private:
   btRigidBody *m_floorBody; /* body for floor */
 
   /* work area */
-  GLfloat m_floorShadow[4][4]; /* matrix for shadow of floor */
+  float m_floorShadow[4][4]; /* matrix for shadow of floor */
 
   /* makeFloorBody: create a rigid body for floor */
   void makeFloorBody(float width, float depth);

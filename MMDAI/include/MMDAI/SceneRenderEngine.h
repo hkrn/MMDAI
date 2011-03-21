@@ -36,14 +36,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDAI_GLPMDRENDERENGINE_H_
-#define MMDAI_GLPMDRENDERENGINE_H_
+#ifndef MMDAI_SCENERENDERENGINE_H_
+#define MMDAI_SCENERENDERENGINE_H_
 
-/* headers */
-#include <OpenGLES/ES1/gl.h>
-
-#include <BulletCollision/CollisionShapes/btShapeHull.h>
-#include <MMDAI/SceneRenderEngine.h>
+#include <btBulletDynamicsCommon.h>
+#include <MMDME/PMDRenderEngine.h>
 
 class btConvexShape;
 
@@ -57,35 +54,16 @@ namespace MMDAI {
   class PMDTexture;
   class Stage;
 
-  struct PMDTextureNative {
-    GLuint id;
-  };
+  typedef struct PMDTextureNative PMDTextureNative;
+  typedef struct PMDRenderCacheNative PMDRenderCacheNative;
 
-  struct PMDRenderCacheNative {
-    GLuint id;
-  };
-
-  class GLES1SceneRenderEngine : public SceneRenderEngine {
+  class SceneRenderEngine : public PMDRenderEngine {
   public:
-    GLES1SceneRenderEngine();
-    ~GLES1SceneRenderEngine();
+    virtual ~SceneRenderEngine() {}
 
-    void renderRigidBodies(BulletPhysics *bullet);
-    void renderBone(PMDBone *bone);
-    void renderBones(PMDModel *model);
-    void renderModel(PMDModel *model);
-    void renderEdge(PMDModel *model);
-    void renderShadow(PMDModel *model);
-
-    PMDTextureNative *allocateTexture(const unsigned char *data,
-                                      const int width,
-                                      const int height,
-                                      const int components);
-    void releaseTexture(PMDTextureNative *native);
-
-    void renderModelCached(PMDModel *model,
-                           PMDRenderCacheNative **ptr);
-    void renderTileTexture(PMDTexture *texture,
+    virtual void renderModelCached(PMDModel *model,
+                           PMDRenderCacheNative **ptr) = 0;
+    virtual void renderTileTexture(PMDTexture *texture,
                            const float *color,
                            const float *normal,
                            const float *vertices1,
@@ -95,84 +73,46 @@ namespace MMDAI {
                            const float nX,
                            const float nY,
                            const bool cullFace,
-                           PMDRenderCacheNative **ptr);
-    void deleteCache(PMDRenderCacheNative **ptr);
+                           PMDRenderCacheNative **ptr) = 0;
+    virtual void deleteCache(PMDRenderCacheNative **ptr) = 0;
 
-    bool setup(float *campusColor,
+    virtual bool setup(float *campusColor,
                bool useShadowMapping,
                int shadowMapTextureSize,
-               bool shadowMapLightFirst);
-    void initializeShadowMap(int shadowMapTextureSize);
-    void setShadowMapping(bool flag,
+               bool shadowMapLightFirst) = 0;
+    virtual void initializeShadowMap(int shadowMapTextureSize) = 0;
+    virtual void setShadowMapping(bool flag,
                           int shadowMapTextureSize,
-                          bool shadowMapLightFirst);
-    void prerender(Option *option,
+                          bool shadowMapLightFirst) = 0;
+    virtual void prerender(Option *option,
                    PMDObject **objects,
-                   int size);
-    void render(Option *option,
+                   int size) = 0;
+    virtual void render(Option *option,
                 Stage *stage,
                 PMDObject **objects,
-                int size);
-    int pickModel(PMDObject **objects,
+                int size) = 0;
+    virtual int pickModel(PMDObject **objects,
                   int size,
                   int x,
                   int y,
                   int width,
                   int height,
                   double scale,
-                  int *allowDropPicked);
-    void updateLighting(bool useCartoonRendering,
+                  int *allowDropPicked) = 0;
+    virtual void updateLighting(bool useCartoonRendering,
                         bool useMMDLikeCartoon,
                         float *lightDirection,
                         float lightIntensy,
-                        float *lightColor);
-    void updateProjectionMatrix(const int width,
+                        float *lightColor) = 0;
+    virtual void updateProjectionMatrix(const int width,
                                 const int height,
-                                const double scale);
-    void applyProjectionMatrix(const int width,
-                               const int height,
-                               const double scale);
-    void applyModelViewMatrix();
-    void updateModelViewMatrix(const btTransform &transMatrix,
-                               const btTransform &transMatrixInv);
-    void setShadowMapAutoView(const btVector3 &eyePoint,
-                              const float radius);
-    void setModelViewMatrix(const btScalar modelView[16]);
-    void setProjectionMatrix(const btScalar projection[16]);
-
-  private:
-    void drawCube();
-    void drawSphere(int lats, int longs);
-    void drawConvex(btConvexShape *shape);
-
-    void renderSceneShadowMap(Option *option,
-                              Stage *stage,
-                              PMDObject **objects,
-                              int size);
-    void renderScene(Option *option,
-                     Stage *stage,
-                     PMDObject **objects,
-                     int size);
-
-    btVector3 m_lightVec;                  /* light vector for shadow maapping */
-    btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
-    btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
-    btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
-    btScalar m_newModelViewMatrix[16];
-    btScalar m_newProjectionMatrix[16];
-    float m_modelView[16];
-    float m_shadowMapAutoViewRadius;       /* radius from view point */
-
-    GLuint m_boxList;
-    GLuint m_sphereList;
-    GLuint m_depthTextureID;
-    GLuint m_fboID;
-    bool m_boxListEnabled;
-    bool m_sphereListEnabled;
-    bool m_enableShadowMapping;            /* true if shadow mapping */
-    bool m_overrideModelViewMatrix;
-    bool m_overrideProjectionMatrix;
-    bool m_shadowMapInitialized;           /* true if initialized */
+                                const double scale) = 0;
+    virtual void updateModelViewMatrix(const btTransform &transMatrix,
+                               const btTransform &transMatrixInv) = 0;
+    virtual void setShadowMapAutoView(const btVector3 &eyePoint,
+                              const float radius) = 0;
+    virtual void setModelViewMatrix(const btScalar modelView[16]) = 0;
+    virtual void setProjectionMatrix(const btScalar projection[16]) = 0;
   };
 
 } /* namespace */

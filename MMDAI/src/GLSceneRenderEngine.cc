@@ -38,6 +38,8 @@
 
 /* headers */
 
+#if !defined(OPENGLES1)
+
 #include "MMDAI/MMDAI.h"
 
 #define SHADOW_PCF                   /* use hardware PCF for shadow mapping */
@@ -1534,3 +1536,6 @@ void GLSceneRenderEngine::setShadowMapAutoView(const btVector3 &eyePoint,
 }
 
 } /* namespace */
+
+#endif
+

@@ -40,6 +40,12 @@
 
 #include "MMDAI/MMDAI.h"
 
+#if defined(OPENGLES1)
+#include "MMDAI/GLES1SceneRenderEngine.h"
+#else
+#include "MMDAI/GLSceneRenderEngine.h"
+#endif
+
 namespace MMDAI {
 
 /* command names */
@@ -112,7 +118,7 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler)
-#if defined(OpenGLES1)
+#if defined(OPENGLES1)
   : m_engine(new GLES1SceneRenderEngine()),
 #else
   : m_engine(new GLSceneRenderEngine()),

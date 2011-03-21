@@ -55,8 +55,6 @@ void TileTexture::initialize()
 
   m_cache = NULL;
   m_isLoaded = false;
-  m_listIndex = 0;
-  m_listIndexValid = false;
 
   for (i = 0; i < 4; i++)
     for (j = 0; j < 3; j++)
@@ -74,7 +72,7 @@ void TileTexture::clear()
 }
 
 /* TileTexture::TileTexture: constructor */
-TileTexture::TileTexture(GLSceneRenderEngine *engine)
+TileTexture::TileTexture(SceneRenderEngine *engine)
   : m_engine(engine)
 {
   initialize();
@@ -88,7 +86,7 @@ TileTexture::~TileTexture()
 }
 
 /* TileTexture::load: load a texture from file name (wide char) */
-bool TileTexture::load(PMDModelLoader *loader, GLSceneRenderEngine *engine)
+bool TileTexture::load(PMDModelLoader *loader, SceneRenderEngine *engine)
 {
   m_texture.setRenderEngine(engine);
   bool ret = loader->loadImageTexture(&m_texture);

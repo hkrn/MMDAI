@@ -59,12 +59,7 @@ namespace MMDAI {
 class LipSyncLoader;
 class PMDObject;
 class SceneEventHandler;
-
-#if defined(OpenGLES1)
-class GLES1SceneRenderEngine;
-#else
-class GLSceneRenderEngine;
-#endif
+class SceneRenderEngine;
 
 class SceneController
 {
@@ -185,11 +180,7 @@ private:
   void sendEvent2(const char *type, const char *arg1, const char *arg2);
 
   BulletPhysics m_bullet;
-#if defined(OpenGLES1)
-  GLES1SceneRenderEngine *m_engine;
-#else
-  GLSceneRenderEngine *m_engine;
-#endif
+  SceneRenderEngine *m_engine;
   MotionStocker m_motion;
   Option m_option;
   PMDObject **m_objects;

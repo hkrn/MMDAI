@@ -41,12 +41,6 @@
 
 #include <MMDME/MMDME.h>
 
-#if defined(OpenGLES1)
-#include "MMDAI/GLES1SceneRenderEngine.h"
-#else
-#include "MMDAI/GLSceneRenderEngine.h"
-#endif
-
 #include "MMDAI/BoneController.h"
 #include "MMDAI/CommandParser.h"
 #include "MMDAI/LipSync.h"
@@ -57,6 +51,7 @@
 #include "MMDAI/PMDObject.h"
 #include "MMDAI/SceneController.h"
 #include "MMDAI/SceneEventHandler.h"
+#include "MMDAI/SceneRenderEngine.h"
 #include "MMDAI/Stage.h"
 #include "MMDAI/TileTexture.h"
 

@@ -96,7 +96,7 @@ static void shadowMatrix(float shadowMat[4][4], float groundplane[4], float ligh
 }
 
 /* Stage::Stage: constructor */
-Stage::Stage(GLSceneRenderEngine *engine)
+Stage::Stage(SceneRenderEngine *engine)
   : m_engine(engine),
     m_cache(NULL),
     m_floor(new TileTexture(engine)),
