@@ -40,9 +40,15 @@
 #define MMDAI_MMDAI_H_
 
 #include <MMDME/MMDME.h>
+
+#if defined(OpenGLES1)
+#include "MMDAI/GLES1SceneRenderEngine.h"
+#else
+#include "MMDAI/GLSceneRenderEngine.h"
+#endif
+
 #include "MMDAI/BoneController.h"
 #include "MMDAI/CommandParser.h"
-#include "MMDAI/GLSceneRenderEngine.h"
 #include "MMDAI/LipSync.h"
 #include "MMDAI/LipSyncLoader.h"
 #include "MMDAI/MotionStocker.h"

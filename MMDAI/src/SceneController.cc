@@ -112,7 +112,11 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler)
+#if defined(OpenGLES1)
+  : m_engine(new GLES1SceneRenderEngine()),
+#else
   : m_engine(new GLSceneRenderEngine()),
+#endif
     m_objects(new PMDObject*[MAX_MODEL]),
     m_highlightModel(0),
     m_handler(handler),
