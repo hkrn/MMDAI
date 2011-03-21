@@ -61,92 +61,14 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
   }
   file.close();
 
-  /* support only Full-color images */
-  unsigned char type = *((unsigned char *) (data + 2));
-  if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-    MMDAILogWarnString("Loaded TGA is not full color");
-    MMDAIMemoryRelease(data);
-    return false;
-  }
-  short width = *((short *) (data + 12));
-  short height = *((short *) (data + 14));
-  unsigned char bit = *((unsigned char *) (data + 16)); /* 24 or 32 */
-  unsigned char attrib = *((unsigned char *) (data + 17));
-  int stride = bit / 8;
-  unsigned char *body = reinterpret_cast<unsigned char *>(data) + 18;
-
-  /* if RLE compressed, uncompress it */
-  unsigned char *uncompressed = NULL;
-  if (type == 10) {
-    unsigned int datalen = width * height * stride;
-    uncompressed = static_cast<unsigned char *>(MMDAIMemoryAllocate(datalen));
-    if (uncompressed == NULL) {
-      MMDAILogErrorString("Failed allocating memory");
-      MMDAIMemoryRelease(data);
-      return false;
-    }
-    unsigned char *src = body;
-    unsigned char *dst = uncompressed;
-    while ((unsigned long) dst - (unsigned long) uncompressed < datalen) {
-      short len = (*src & 0x7f) + 1;
-      if (*src & 0x80) {
-        src++;
-        for (short i = 0; i < len; i++) {
-          memcpy(dst, src, stride);
-          dst += stride;
-        }
-        src += stride;
-      } else {
-        src++;
-        memcpy(dst, src, stride * len);
-        dst += stride * len;
-        src += stride * len;
-      }
-    }
-    /* will load from uncompressed data */
-    body = uncompressed;
-  }
-
-  /* prepare texture data area */
-  unsigned char *textureData = static_cast<unsigned char *>(MMDAIMemoryAllocate(width * height * 4));
-  if (textureData == NULL) {
-    MMDAILogErrorString("Failed allocating memory");
-    MMDAIMemoryRelease(data);
-    MMDAIMemoryRelease(uncompressed);
-    return false;
-  }
-  unsigned char *ptmp = textureData;
-
-  for (int h = 0; h < height; h++) {
-    unsigned char *pLine = NULL;
-    if (attrib & 0x20) { /* from up to bottom */
-      pLine = body + h * width * stride;
-    } else { /* from bottom to up */
-      pLine = body + (height - 1 - h) * width * stride;
-    }
-    for (int w = 0; w < width; w++) {
-      unsigned int idx = 0;
-      if (attrib & 0x10) { /* from right to left */
-        idx = (width - 1 - w) * stride;
-      } else { /* from left to right */
-        idx = w * stride;
-      }
-      /* BGR or BGRA -> RGBA */
-      *(ptmp++) = pLine[idx + 2];
-      *(ptmp++) = pLine[idx + 1];
-      *(ptmp++) = pLine[idx ];
-      *(ptmp++) = (bit == 32) ? pLine[idx+3] : 255;
-    }
-  }
-
+  int width = 0, height = 0;
+  bool ret = MMDAI::PMDTexture::loadTGAImage(reinterpret_cast<unsigned char *>(data), ptr, &width, &height);
   MMDAIMemoryRelease(data);
-  MMDAIMemoryRelease(uncompressed);
 
-  *ptr = textureData;
   size.setWidth(width);
   size.setHeight(height);
 
-  return true;
+  return ret;
 }
 
 static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
