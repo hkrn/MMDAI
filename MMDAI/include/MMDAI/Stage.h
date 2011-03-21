@@ -98,7 +98,6 @@ private:
 
   PMDModel m_pmd;           /* PMD for background */
   bool m_hasPMD;            /* true if m_pmd is used */
-  GLuint m_listIndexPMD;    /* display lst */
   bool m_listIndexPMDValid; /* true if m_listIndexPMDValid was registered */
 
   BulletPhysics *m_bullet;  /* BulletPhysics */

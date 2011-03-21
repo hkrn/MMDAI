@@ -145,6 +145,7 @@ void Stage::makeFloorBody(float width, float depth)
 /* Stage::releaseFloorBody: release rigid body for floor */
 void Stage::releaseFloorBody()
 {
+  m_engine->deleteCache(&m_cache);
   if (m_floorBody) {
     if (m_floorBody->getMotionState())
       delete m_floorBody->getMotionState();
@@ -161,8 +162,6 @@ void Stage::initialize()
   int i, j;
 
   m_hasPMD = false;
-  m_listIndexPMD = 0;
-  m_listIndexPMDValid = false;
   m_bullet = NULL;
   m_floorBody = NULL;
   for (i = 0; i < 4 ; i++)
@@ -244,10 +243,7 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
     m_pmd.setToonFlag(false);
     m_pmd.updateSkin();
     m_hasPMD = true;
-    if (m_listIndexPMDValid) {
-      glDeleteLists(m_listIndexPMD, 1);
-      m_listIndexPMDValid = false;
-    }
+    m_engine->deleteCache(&m_cache);
   } else {
     MMDAILogWarn("unable to load stage PMD \"%s\"", loader->getLocation());
   }
