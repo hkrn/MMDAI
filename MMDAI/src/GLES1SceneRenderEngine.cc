@@ -38,8 +38,9 @@
 
 /* headers */
 
-#if defined(OpenGLES1)
+#if defined(OPENGLES1)
 #include "MMDAI/MMDAI.h"
+#include "MMDAI/GLES1SceneRenderEngine.h"
 
 #define SHADOW_PCF                   /* use hardware PCF for shadow mapping */
 #define SHADOW_AUTO_VIEW             /* automatically define depth frustum */
@@ -743,6 +744,7 @@ void GLES1SceneRenderEngine::renderTileTexture(PMDTexture *texture,
 
   glEnable(GL_TEXTURE_2D);
   glPushMatrix();
+#if 0
   glNormal3f(normal[0], normal[1], normal[2]);
   glBindTexture(GL_TEXTURE_2D, texture->getNative()->id);
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
@@ -756,6 +758,7 @@ void GLES1SceneRenderEngine::renderTileTexture(PMDTexture *texture,
   glTexCoord2f(0.0, 0.0);
   glVertex3fv(vertices4);
   glEnd();
+#endif
   glPopMatrix();
   glDisable(GL_TEXTURE_2D);
 
@@ -1483,7 +1486,7 @@ void GLES1SceneRenderEngine::applyProjectionMatrix(const int width,
     double aspect = (double) height / (double) width;
     double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
     glLoadIdentity();
-    glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
+    //glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
   }
 }
 
