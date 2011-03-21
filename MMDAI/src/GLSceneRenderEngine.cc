@@ -41,6 +41,7 @@
 #if !defined(OPENGLES1)
 
 #include "MMDAI/MMDAI.h"
+#include "MMDAI/GLSceneRenderEngine.h"
 
 #define SHADOW_PCF                   /* use hardware PCF for shadow mapping */
 #define SHADOW_AUTO_VIEW             /* automatically define depth frustum */
