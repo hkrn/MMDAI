@@ -89,6 +89,13 @@ const char *SceneEventHandler::kLipSyncStartEvent = "LIPSYNC_EVENT_START";
 const char *SceneEventHandler::kLipSyncStopEvent = "LIPSYNC_EVENT_STOP";
 const char *SceneEventHandler::kKeyEvent = "KEY";
 
+#define RENDER_MINSCALEDIFF   0.001f
+#define RENDER_SCALESPEEDRATE 0.9f
+#define RENDER_MINMOVEDIFF    0.000001f
+#define RENDER_MOVESPEEDRATE  0.9f
+#define RENDER_MINSPINDIFF    0.000001f
+#define RENDER_SPINSPEEDRATE  0.9f
+
 // from util.h
 static int getNumDigit(int in)
 {
@@ -109,15 +116,25 @@ SceneController::SceneController(SceneEventHandler *handler)
     m_objects(new PMDObject*[MAX_MODEL]),
     m_highlightModel(0),
     m_handler(handler),
-    m_scene(m_engine),
     m_stage(new Stage(m_engine)),
     m_numModel(0),
     m_selectedModel(-1),
-    m_enablePhysicsSimulation(true)
+    m_width(0),
+    m_height(0),
+    m_enablePhysicsSimulation(true),
+    m_scale(1.0),
+    m_trans(btVector3(0.0f, 0.0f, 0.0f)),
+    m_rot(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f)),
+    m_cameraTrans(btVector3(0.0f, RENDER_VIEWPOINT_Y_OFFSET, RENDER_VIEWPOINT_CAMERA_Z)),
+    m_currentScale(m_scale),
+    m_currentTrans(m_trans),
+    m_currentRot(m_rot)
 {
   for (int i = 0; i < MAX_MODEL; i++) {
     m_objects[i] = new PMDObject(m_engine);
   }
+  m_transMatrix.setIdentity();
+  updateModelViewProjectionMatrix();
 }
 
 SceneController::~SceneController()
@@ -135,11 +152,11 @@ void SceneController::updateLight()
   int i = 0;
   float *f;
   btVector3 l;
-  m_scene.updateLighting(m_option.getUseCartoonRendering(),
-                         m_option.getUseMMDLikeCartoon(),
-                         m_option.getLightDirection(),
-                         m_option.getLightIntensity(),
-                         m_option.getLightColor());
+  m_engine->updateLighting(m_option.getUseCartoonRendering(),
+                           m_option.getUseMMDLikeCartoon(),
+                           m_option.getLightDirection(),
+                           m_option.getLightIntensity(),
+                           m_option.getLightColor());
   f = m_option.getLightDirection();
   m_stage->updateShadowMatrix(f);
   l = btVector3(f[0], f[1], f[2]);
@@ -845,20 +862,30 @@ bool SceneController::stopLipSync(PMDObject *object)
   return true;
 }
 
-void SceneController::init(int *size)
+void SceneController::initializeScreen(int width, int height)
 {
+  m_width = width;
+  m_height = height;
   m_bullet.setup(m_option.getBulletFps());
-  m_scene.setup(size,
-                m_option.getCampusColor(),
-                m_option.getUseShadowMapping(),
-                m_option.getShadowMappingTextureSize(),
-                m_option.getShadowMappingLightFirst());
+  m_engine->setup(m_option.getCampusColor(),
+                  m_option.getUseShadowMapping(),
+                  m_option.getShadowMappingTextureSize(),
+                  m_option.getShadowMappingLightFirst());
   m_stage->setSize(m_option.getStageSize(), 1.0f, 1.0f);
+}
+
+void SceneController::resetLocation(const float *trans, const float *rot, const float scale)
+{
+  btMatrix3x3 bm;
+  bm.setEulerZYX(MMDME_RAD(rot[0]), MMDME_RAD(rot[1]), MMDME_RAD(rot[2]));
+  bm.getRotation(m_rot);
+  m_trans = btVector3(trans[0], trans[1], trans[2]);
+  m_scale = scale;
 }
 
 void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
 {
-  m_scene.getScreenPointPosition(dst, src);
+  *dst = m_transMatrixInv * (*src);
 }
 
 void SceneController::setShadowMapping(bool value)
@@ -868,29 +895,37 @@ void SceneController::setShadowMapping(bool value)
                              m_option.getShadowMappingLightFirst());
 }
 
-float SceneController::getScale()
+float SceneController::getScale() const
 {
-  return m_scene.getScale();
+  return m_scale;
 }
 
 void SceneController::setScale(float value)
 {
-  m_scene.setScale(value);
+  m_scale = value;
 }
 
 void SceneController::rotate(float x, float y, float z)
 {
-  m_scene.rotate(x, y, z);
+  z = 0; /* unused */
+  m_rot = m_rot * btQuaternion(x, 0, 0);
+  m_rot = btQuaternion(0, y, 0) * m_rot;
 }
 
 void SceneController::translate(float x, float y, float z)
 {
-  m_scene.translate(x, y, z);
+  m_trans += btVector3(x, y, z);
 }
 
 void SceneController::setRect(int width, int height)
 {
-  m_scene.setSize(width, height);
+  if (m_width != width || m_height != height) {
+    if (width > 0)
+      m_width = width;
+    if (height > 0)
+      m_height = height;
+    updateProjectionMatrix();
+  }
 }
 
 void SceneController::selectPMDObject(PMDObject *object)
@@ -907,13 +942,27 @@ void SceneController::selectPMDObject(PMDObject *object)
 
 void SceneController::selectPMDObject(int x, int y)
 {
-  m_selectedModel = m_scene.pickModel(m_objects, m_numModel, x, y, NULL);
+  m_selectedModel = m_engine->pickModel(m_objects,
+                                        m_numModel,
+                                        x,
+                                        y,
+                                        m_width,
+                                        m_height,
+                                        m_currentScale,
+                                        NULL);
 }
 
 void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel)
 {
   int dropAllowedModelID = -1;
-  m_selectedModel = m_scene.pickModel(m_objects, m_numModel, x, y, &dropAllowedModelID);
+  m_selectedModel = m_engine->pickModel(m_objects,
+                                        m_numModel,
+                                        x,
+                                        y,
+                                        m_width,
+                                        m_height,
+                                        m_currentScale,
+                                        &dropAllowedModelID);
   if (m_selectedModel == -1)
     *dropAllowedModel = getPMDObject(dropAllowedModelID);
 }
@@ -1010,8 +1059,36 @@ void SceneController::updateAfterSimulation()
 void SceneController::updateDepthTextureViewParam()
 {
   /* calculate rendering range for shadow mapping */
-  if (m_option.getUseShadowMapping())
-    m_scene.updateDepthTextureViewParam(m_objects, m_numModel);
+  if (m_option.getUseShadowMapping()) {
+    int num = m_numModel;
+    float d = 0, dmax = 0;
+    float *r = new float[num];
+    btVector3 *c = new btVector3[num];
+    btVector3 cc = btVector3(0.0f, 0.0f, 0.0f);
+
+    for (int i = 0; i < num; i++) {
+      PMDObject *object = m_objects[i];
+      if (!object->isEnable())
+        continue;
+      r[i] = object->getPMDModel()->calculateBoundingSphereRange(&(c[i]));
+      cc += c[i];
+    }
+    if (num != 0)
+      cc /= (float) num;
+
+    dmax = 0.0f;
+    for (int i = 0; i < num; i++) {
+      if (!m_objects[i]->isEnable())
+        continue;
+      d = cc.distance(c[i]) + r[i];
+      if (dmax < d)
+        dmax = d;
+    }
+    m_engine->setShadowMapAutoView(cc, dmax);
+
+    delete [] r;
+    delete [] c;
+  }
 }
 
 void SceneController::updateModelPositionAndRotation(double fps)
@@ -1048,12 +1125,52 @@ inline void SceneController::sendEvent2(const char *type, const char *arg1, cons
   }
 }
 
+void SceneController::updateProjectionMatrix()
+{
+  if (m_currentScale != m_scale) {
+    float diff = fabs(m_currentScale - m_scale);
+    if (diff < RENDER_MINSCALEDIFF) {
+      m_currentScale = m_scale;
+    } else {
+      m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
+    }
+  }
+  m_engine->updateProjectionMatrix(m_width, m_height, m_currentScale);
+}
+
+void SceneController::updateModelViewMatrix()
+{
+  if (m_currentRot != m_rot || m_currentTrans != m_trans) {
+    /* calculate difference */
+    btVector3 trans = m_trans;
+    trans -= m_currentTrans;
+    float diff1 = trans.length2();
+    btQuaternion rot = m_rot;
+    rot -= m_currentRot;
+    float diff2 = rot.length2();
+    if (diff1 > RENDER_MINMOVEDIFF) {
+      m_currentTrans = m_currentTrans.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
+    }
+    else {
+      m_currentTrans = m_trans;
+    }
+    if (diff2 > RENDER_MINSPINDIFF) {
+      m_currentRot = m_currentRot.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
+    }
+    else {
+      m_currentRot = m_rot;
+    }
+  }
+  m_transMatrix.setRotation(m_currentRot);
+  m_transMatrix.setOrigin(m_currentTrans + m_cameraTrans);
+  m_transMatrixInv = m_transMatrix.inverse();
+  m_engine->updateModelViewMatrix(m_transMatrix, m_transMatrixInv);
+}
+
 void SceneController::updateModelViewProjectionMatrix()
 {
-  /* update scale */
-  m_scene.updateScale();
-  /* update trans and rotation matrix */
-  m_scene.updateTransRotMatrix();
+  updateProjectionMatrix();
+  updateModelViewMatrix();
 }
 
 void SceneController::setProjectionMatrix(float projection[16])
@@ -1101,14 +1218,14 @@ Stage *SceneController::getStage()
   return m_stage;
 }
 
-int SceneController::getWidth()
+int SceneController::getWidth() const
 {
-  return m_scene.getWidth();
+  return m_width;
 }
 
-int SceneController::getHeight()
+int SceneController::getHeight() const
 {
-  return m_scene.getHeight();
+  return m_height;
 }
 
 } /* namespace */

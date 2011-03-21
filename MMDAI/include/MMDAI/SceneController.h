@@ -45,8 +45,12 @@
 
 #include "MMDAI/MotionStocker.h"
 #include "MMDAI/Option.h"
-#include "MMDAI/SceneRenderer.h"
 #include "MMDAI/Stage.h"
+
+#define RENDER_VIEWPOINT_FRUSTUM_NEAR 5.0f
+#define RENDER_VIEWPOINT_FRUSTUM_FAR  2000.0f
+#define RENDER_VIEWPOINT_CAMERA_Z     -100.0f
+#define RENDER_VIEWPOINT_Y_OFFSET     -13.0f
 
 namespace MMDAI {
 
@@ -63,7 +67,7 @@ public:
   explicit SceneController(SceneEventHandler *handler);
   ~SceneController();
 
-  void init(int *size);
+  void initializeScreen(int width, int height);
 
   PMDObject *allocatePMDObject();
   PMDObject *findPMDObject(PMDObject *object);
@@ -133,8 +137,9 @@ public:
                     const char *seq);
   bool stopLipSync(PMDObject *object);
 
+
+  void resetLocation(const float *trans, const float *rot, const float scale);
   void getScreenPointPosition(btVector3 *dst, btVector3 *src);
-  float getScale();
   void setScale(float value);
   void rotate(float x, float y, float z);
   void translate(float x, float y, float z);
@@ -151,6 +156,8 @@ public:
   void updateDepthTextureViewParam();
   void updateModelPositionAndRotation(double fps);
   void updateAfterSimulation();
+  void updateProjectionMatrix();
+  void updateModelViewMatrix();
   void updateModelViewProjectionMatrix();
   void setModelViewMatrix(float modelView[16]);
   void setProjectionMatrix(float projection[16]);
@@ -160,11 +167,12 @@ public:
   void renderPMDObjectsForDebug();
   void renderLogger();
 
-  const char *getConfigPath();
+  const char *getConfigPath() const;
   Option *getOption();
   Stage *getStage();
-  int getWidth();
-  int getHeight();
+  int getWidth() const;
+  int getHeight() const;
+  float getScale() const;
 
 private:
   void deleteAssociatedModels(PMDObject *object);
@@ -178,11 +186,23 @@ private:
   PMDObject **m_objects;
   PMDObject *m_highlightModel;
   SceneEventHandler *m_handler;
-  SceneRenderer m_scene;
   Stage *m_stage;
   int m_numModel;
   int m_selectedModel;
+  int m_width;
+  int m_height;
   bool m_enablePhysicsSimulation;
+
+  float m_scale;           /* target scale */
+  btVector3 m_trans;       /* target trans vector */
+  btQuaternion m_rot;      /* target rotation */
+  btVector3 m_cameraTrans; /* position of camera */
+
+  float m_currentScale;         /* current scale */
+  btVector3 m_currentTrans;     /* current trans vector */
+  btQuaternion m_currentRot;    /* current rotation */
+  btTransform m_transMatrix;    /* current trans vector + rotation matrix */
+  btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
 
   MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
 };

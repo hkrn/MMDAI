@@ -54,7 +54,6 @@ set(libMMDAI_public_headers
   include/MMDAI/PMDObject.h
   include/MMDAI/SceneController.h
   include/MMDAI/SceneEventHandler.h
-  include/MMDAI/SceneRenderer.h
   include/MMDAI/Stage.h
   include/MMDAI/TileTexture.h
 )
