@@ -153,13 +153,14 @@ void QMAARToolKitPlugin::prerender()
       double arModelView[16], arPatternTransform[3][4];
       float modelView[16];
       arGetTransMat(&markerInfo[found], m_patternCenter, m_patternWidth, arPatternTransform);
-      arglCameraViewRH(arPatternTransform, arModelView, 0.2);
+      arglCameraViewRH(arPatternTransform, arModelView, 0.1);
       for (int i = 0; i < 16; i++) {
         modelView[i] = arModelView[i];
       }
       btTransform transform;
+      transform.setIdentity();
       transform.setFromOpenGLMatrix(modelView);
-      transform.setRotation(btQuaternion(btVector3(0.0, 0.1, 0.0), 90.0));
+      transform.setRotation(btQuaternion(btVector3(0.0, 1.0, 0.0), 0.0));
       transform.getOpenGLMatrix(modelView);
       m_controller->setModelViewMatrix(modelView);
     }
