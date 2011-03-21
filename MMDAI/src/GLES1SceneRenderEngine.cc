@@ -1473,20 +1473,41 @@ void GLES1SceneRenderEngine::updateProjectionMatrix(const int width,
   glMatrixMode(GL_MODELVIEW);
 }
 
+static void MMDAIGLFrustum(float *result, float left, float right, float bottom, float top, float near, float far)
+{
+  const float a = (right + left) / (right - left);
+  const float b = (top + bottom) / (top - bottom);
+  const float c = ((far + near) / (far - near)) * -1;
+  const float d = ((-2 * far * near) / (far - near));
+  const float e = (2 * near) / (right - left);
+  const float f = (2 * near) / (top - bottom);
+  const float matrix[16] = {
+    e, 0, 0, 0,
+    0, f, 0, 0,
+    a, b, c, -1,
+    0, 0, d, 0
+  };
+  memcpy(result, matrix, sizeof(matrix));
+}
+
 /* GLES1SceneRenderEngine::applyProjectionMatirx: update projection matrix */
 void GLES1SceneRenderEngine::applyProjectionMatrix(const int width,
                                                 const int height,
                                                 const double scale)
 {
+  if (width == 0 || height == 0)
+    return;
   if (m_overrideProjectionMatrix) {
     glLoadMatrixf(m_newProjectionMatrix);
     m_overrideProjectionMatrix = false;
   }
   else {
-    double aspect = (double) height / (double) width;
-    double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
+    const float aspect = (float) height / (float) width;
+    const float ratio = (scale == 0.0) ? 1.0f : 1.0f / scale;
+    float result[16];
     glLoadIdentity();
-    //glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
+    MMDAIGLFrustum(result, - ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
+    glMultMatrixf(result);
   }
 }
 
