@@ -242,6 +242,7 @@ void QMAWidget::updateScene()
   }
 
   m_controller->updateAfterSimulation();
+  m_controller->updateDepthTextureViewParam();
 
   update();
 }
@@ -270,10 +271,7 @@ void QMAWidget::showEvent(QShowEvent *event)
   if (!m_sceneUpdateTimer.isActive()) {
     QString path = QDir::searchPaths("mmdai").at(0) + "/MMDAI.mdf";
     m_controller->getOption()->load(path.toUtf8().constData());
-    int size[2];
-    size[0] = width();
-    size[1] = height();
-    m_controller->init(size);
+    m_controller->initializeScreen(width(), height());
     m_controller->updateLight();
     loadPlugins();
     emit pluginStarted();
