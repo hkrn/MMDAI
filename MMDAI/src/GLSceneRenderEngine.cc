@@ -1491,7 +1491,7 @@ void GLSceneRenderEngine::applyProjectionMatrix(const int width,
     m_overrideProjectionMatrix = false;
   }
   else {
-    double aspect = (double) height / (double) width;
+    double aspect = (width == 0) ? 1.0 : static_cast<double>(height) / width;
     double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
     glLoadIdentity();
     glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
