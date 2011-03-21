@@ -73,6 +73,8 @@ public:
    /* ~PMDTexture: destructor */
    ~PMDTexture();
 
+  static bool loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight);
+
    void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
 
    void setRenderEngine(PMDRenderEngine *engine);
