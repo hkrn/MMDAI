@@ -374,14 +374,37 @@ void GLES1SceneRenderEngine::renderBones(PMDModel *model)
    glEnable(GL_LIGHTING);
 }
 
+static TexCoord *MMDAIGLGenSphereCoords(const btVector3 *positions,
+                                        const btVector3 *normals,
+                                        const unsigned int count)
+{
+  TexCoord *ptr = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * count));
+  if (ptr == NULL)
+    return NULL;
+  for (unsigned int i = 0; i <  count; i++) {
+    const btVector3 position = positions[i];
+    const btVector3 normal = normals[i];
+    const btVector3 r = position - 2 * normal.dot(position) * normal;
+    const btScalar x = r.x();
+    const btScalar y = r.y();
+    const btScalar z = r.z() + 1.0;
+    const btScalar m = 2.0 * sqrt(x * x + y * y + z * z);
+    ptr[i].u = x / m + 0.5;
+    ptr[i].v = y / m + 0.5;
+  }
+  return ptr;
+}
+
 /* needs multi-texture function on OpenGL: */
 /* texture unit 0: model texture */
 /* texture unit 1: toon texture for toon shading */
 /* texture unit 2: additional sphere map texture, if exist */
 void GLES1SceneRenderEngine::renderModel(PMDModel *model)
 {
-   const btVector3 *vertices = model->getVerticesPtr();
-   if (!vertices)
+  const btVector3 *vertices = model->getSkinnedVerticesPtr();
+  const btVector3 *normals = model->getSkinnedNormalsPtr();
+  const unsigned int nvertices = model->getNumVertex();
+   if (!vertices || !normals)
      return;
 
 #ifndef MMDFILES_CONVERTCOORDINATESYSTEM
@@ -397,8 +420,8 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
    /* set lists */
    glEnableClientState(GL_VERTEX_ARRAY);
    glEnableClientState(GL_NORMAL_ARRAY);
-   glVertexPointer(3, GL_FLOAT, sizeof(btVector3), model->getSkinnedVerticesPtr());
-   glNormalPointer(GL_FLOAT, sizeof(btVector3), model->getSkinnedNormalsPtr());
+   glVertexPointer(3, GL_FLOAT, sizeof(btVector3), vertices);
+   glNormalPointer(GL_FLOAT, sizeof(btVector3), normals);
 
    /* set model texture coordinates to texture unit 0 */
    glClientActiveTexture(GL_TEXTURE0);
@@ -424,26 +447,6 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
       }
       glActiveTexture(GL_TEXTURE0);
       glClientActiveTexture(GL_TEXTURE0);
-   }
-
-   if (hasSingleSphereMap) {
-      /* this model contains single sphere map texture */
-      /* set texture coordinate generation for sphere map on texture unit 0 */
-      glEnable(GL_TEXTURE_2D);
-      //glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-      //glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-      glDisable(GL_TEXTURE_2D);
-   }
-
-   if (hasMultipleSphereMap) {
-      /* this model contains additional sphere map texture */
-      /* set texture coordinate generation for sphere map on texture unit 2 */
-      glActiveTexture(GL_TEXTURE2);
-      glEnable(GL_TEXTURE_2D);
-      //glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-      //glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-      glDisable(GL_TEXTURE_2D);
-      glActiveTexture(GL_TEXTURE0);
    }
 
    /* calculate alpha value, applying model global alpha */
@@ -499,20 +502,16 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
          if (native != NULL) {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, native->id);
-            if (hasSingleSphereMap) {
-               if (tex->isSphereMap()) {
-                  /* this is sphere map */
-                  /* enable texture coordinate generation */
-                  if (tex->isSphereMapAdd())
-                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                  //glEnable(GL_TEXTURE_GEN_S);
-                  //glEnable(GL_TEXTURE_GEN_T);
-               }
-               else {
-                  /* disable generation */
-                  //glDisable(GL_TEXTURE_GEN_S);
-                  //glDisable(GL_TEXTURE_GEN_T);
-               }
+            if (hasSingleSphereMap && tex->isSphereMap()) {
+              /* this is sphere map */
+              /* enable texture coordinate generation */
+              if (tex->isSphereMapAdd())
+                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+              TexCoord *coords = MMDAIGLGenSphereCoords(vertices, normals, nvertices);
+              if (coords != NULL) {
+                glTexCoordPointer(2, GL_FLOAT, 0, coords);
+                MMDAIMemoryRelease(coords);
+              }
             }
          }
          else {
@@ -550,13 +549,18 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
             }
             const PMDTextureNative *native = addtex->getNative();
             if (native != NULL) {
-               glBindTexture(GL_TEXTURE_2D, native->id);
+              glBindTexture(GL_TEXTURE_2D, native->id);
+              TexCoord *coords = MMDAIGLGenSphereCoords(vertices, normals, nvertices);
+              if (coords != NULL) {
+                glClientActiveTexture(GL_TEXTURE2);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, 0, coords);
+                MMDAIMemoryRelease(coords);
+              }
             }
             else {
                glBindTexture(GL_TEXTURE_2D, 0);
             }
-            //glEnable(GL_TEXTURE_GEN_S);
-            //glEnable(GL_TEXTURE_GEN_T);
          }
          else {
             /* disable generation */
@@ -585,37 +589,21 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
    if (enableToon) {
       glClientActiveTexture(GL_TEXTURE0);
       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-      if (hasSingleSphereMap) {
-         glActiveTexture(GL_TEXTURE0);
-         //glDisable(GL_TEXTURE_GEN_S);
-         //glDisable(GL_TEXTURE_GEN_T);
-      }
       glClientActiveTexture(GL_TEXTURE1);
       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
       if (hasMultipleSphereMap) {
-         glActiveTexture(GL_TEXTURE2);
-         //glDisable(GL_TEXTURE_GEN_S);
-         //glDisable(GL_TEXTURE_GEN_T);
+        glClientActiveTexture(GL_TEXTURE2);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
       }
       glActiveTexture(GL_TEXTURE0);
    } else {
       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-      if (hasSingleSphereMap) {
-         //glDisable(GL_TEXTURE_GEN_S);
-         //glDisable(GL_TEXTURE_GEN_T);
-      }
       if (hasMultipleSphereMap) {
-         glActiveTexture(GL_TEXTURE2);
-         //glDisable(GL_TEXTURE_GEN_S);
-         //glDisable(GL_TEXTURE_GEN_T);
-         glActiveTexture(GL_TEXTURE0);
+        glClientActiveTexture(GL_TEXTURE2);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
       }
    }
 
-   if (hasSingleSphereMap || hasMultipleSphereMap) {
-      //glDisable(GL_TEXTURE_GEN_S);
-      //glDisable(GL_TEXTURE_GEN_T);
-   }
    if (enableToon) {
       glActiveTexture(GL_TEXTURE1);
       glDisable(GL_TEXTURE_2D);
@@ -1120,7 +1108,7 @@ void GLES1SceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, 
   //glDisable(GL_TEXTURE_GEN_T);
   //glDisable(GL_TEXTURE_GEN_R);
   //glDisable(GL_TEXTURE_GEN_Q);
-  //glDisable(GL_TEXTURE_2D);
+  glDisable(GL_TEXTURE_2D);
   glActiveTexture(GL_TEXTURE0);
 }
 
