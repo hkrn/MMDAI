@@ -82,8 +82,7 @@ PMDMaterial::~PMDMaterial()
 /* PMDMaterial::setup: initialize and setup material */
 bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEngine *engine)
 {
-   char *p;
-   char name[21];
+   char name[21], raw[21];
 
    clear();
 
@@ -112,16 +111,18 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEn
    /* load model texture */
    MMDAIStringCopy(name, m->textureFile, 20);
    name[20] = '\0';
+   MMDAIStringCopy(raw, name, 20);
+   raw[20] = '\0';
    if (MMDAIStringLength(name) > 0) {
-      p = strchr(name, '*');
+      char *ptr = strchr(name, '*');
       m_texture.setRenderEngine(engine);
       m_additionalTexture.setRenderEngine(engine);
-      if (p) {
+      if (ptr) {
          /* has extra sphere map */
-         *p = '\0';
+         *ptr = '\0';
          if (!loader->loadModelTexture(name, &m_texture))
            return false;
-         if (!loader->loadModelTexture(p + 1, &m_additionalTexture))
+         if (!loader->loadModelTexture(ptr + 1, &m_additionalTexture))
            return false;
       } else {
          if (!loader->loadModelTexture(name, &m_texture))
@@ -130,7 +131,7 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEn
    }
 
    MMDAILogDebug("name=\"%s\", ambient=(%.2f, %.2f, %.2f), diffuse=(%.2f, %.2f, %.2f), specular=(%.2f, %.2f, %.2f), "
-       "alpha=%.2f, shiness=%.2f, numSurface=%d, toonID=%d, edge=%d", name, m_ambient[0], m_ambient[1], m_ambient[2],
+       "alpha=%.2f, shiness=%.2f, numSurface=%d, toonID=%d, edge=%d", raw, m_ambient[0], m_ambient[1], m_ambient[2],
        m_diffuse[0], m_diffuse[1], m_diffuse[2], m_specular[0], m_specular[1], m_specular[2], m_alpha, m_shiness,
        m_numSurface, m_toonID, m_edgeFlag);
 

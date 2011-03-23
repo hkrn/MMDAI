@@ -56,10 +56,27 @@ enum MMDAILogLevel
   MMDAILogLevelError,
 };
 
-typedef void (MMDAILoggingHandler)(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list ap);
+typedef void (MMDAILoggingHandler)(const char *file,
+                                   const int line,
+                                   const enum MMDAILogLevel level,
+                                   const char *format,
+                                   va_list ap);
+typedef void (MMDAILoggingSJISHandler)(const char *file,
+                                       const int line,
+                                       const enum MMDAILogLevel level,
+                                       const char *format,
+                                       va_list ap);
 
 void MMDAILogSetHandler(MMDAILoggingHandler *handler);
-void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const char *format, ...);
+void MMDAILogSetHandlerSJIS(MMDAILoggingSJISHandler *handler);
+void MMDAILogWrite(const char *file,
+                   const int line,
+                   const enum MMDAILogLevel level,
+                   const char *format, ...);
+void MMDAILogWriteSJIS(const char *file,
+                       const int line,
+                       const enum MMDAILogLevel level,
+                       const char *format, ...);
 
 /* log with variable arguments */
 #define MMDAILogDebug(format, ...) \
@@ -80,6 +97,26 @@ void MMDAILogWrite(const char *file, int line, enum MMDAILogLevel level, const c
   MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
 #define MMDAILogErrorString(format) \
   MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format))
+
+/* log with variable arguments for SJIS */
+#define MMDAILogDebugSJIS(format, ...) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
+#define MMDAILogInfoSJIS(format, ...) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), __VA_ARGS__)
+#define MMDAILogWarnSJIS(format, ...) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), __VA_ARGS__)
+#define MMDAILogErrorSJIS(format, ...) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format), __VA_ARGS__)
+
+/* log with single string for SJIS */
+#define MMDAILogDebugStringSJIS(format) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelDebug), (format))
+#define MMDAILogInfoStringSJIS(format) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelInfo), (format))
+#define MMDAILogWarnStringSJIS(format) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
+#define MMDAILogErrorStringSJIS(format) \
+  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format))
 
 /* convert from/to radian */
 inline float MMDME_RAD(float a)

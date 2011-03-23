@@ -143,7 +143,7 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
       }
    }
 
-   MMDAILogDebug("name=\"%s\" bodyA=%d, bodyB=%d position=(%.2f, %.2f, %.2f) rotation=(%.2f, %.2f, %.2f)",
+   MMDAILogDebugSJIS("name=\"%s\" bodyA=%d, bodyB=%d position=(%.2f, %.2f, %.2f) rotation=(%.2f, %.2f, %.2f)",
        c->name, c->bodyIDA, c->bodyIDB, c->pos[0], c->pos[1], c->pos[2], c->rot[0], c->rot[1], c->rot[2]);
 
    return true;

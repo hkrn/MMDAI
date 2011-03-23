@@ -104,7 +104,7 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
    m_comment[256] = '\0';
    ptr += sizeof(PMDFile_Header);
 
-   MMDAILogDebug("name=\"%s\", comment=\"%s\"", m_name, m_comment);
+   MMDAILogDebugSJIS("name=\"%s\", comment=\"%s\"", m_name, m_comment);
 
    /* vertex ptr and bone weights */
    /* relocate as separated list for later OpenGL calls */

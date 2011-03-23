@@ -112,7 +112,7 @@ void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
    }
 #endif
 
-   MMDAILogDebug("name=\"%s\", type=%d, numVertex=%d", m_name, m_type, m_numVertex);
+   MMDAILogDebugSJIS("name=\"%s\", type=%d, numVertex=%d", m_name, m_type, m_numVertex);
 }
 
 /* PMDFace::convertIndex: convert base-relative index to model vertex index */

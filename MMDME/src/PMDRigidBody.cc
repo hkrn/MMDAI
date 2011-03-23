@@ -196,7 +196,7 @@ bool PMDRigidBody::setup(PMDFile_RigidBody *rb, PMDBone *bone)
    /* store inverse matrix of local transform */
    m_transInv = m_trans.inverse();
 
-   MMDAILogDebug("name=%s", rb->name);
+   MMDAILogDebugSJIS("name=%s", rb->name);
 
    return true;
 }
