@@ -146,6 +146,9 @@ void GLES1SceneRenderEngine::drawSphere(int lats, int longs)
       }
       glEnd();
    }
+#else
+  lats = 0;
+  longs = 0;
 #endif
 }
 
@@ -189,6 +192,8 @@ void GLES1SceneRenderEngine::drawConvex(btConvexShape *shape)
    }
 
    delete hull;
+#else
+  shape = NULL;
 #endif
 }
 
@@ -267,12 +272,13 @@ void GLES1SceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
    if (polygonMode[1] != GL_LINE) {
       glPolygonMode(GL_FRONT_AND_BACK, polygonMode[1]);
    }
+#else
+  bullet = NULL;
 #endif
 }
 
 void GLES1SceneRenderEngine::renderBone(PMDBone *bone)
 {
-#if 0
    btScalar m[16];
    PMDBone *parentBone = bone->getParentBone();
    const btTransform *trans = bone->getTransform();
@@ -347,15 +353,19 @@ void GLES1SceneRenderEngine::renderBone(PMDBone *bone)
       glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
    }
 
-   glBegin(GL_LINES);
-   const btVector3 a = parentBone->getTransform()->getOrigin();
-   const btVector3 b = trans->getOrigin();
-   glVertex3f(a.x(), a.y(), a.z());
-   glVertex3f(b.x(), b.y(), b.z());
-   glEnd();
+   const btVector3 vertices[] = {
+     parentBone->getTransform()->getOrigin(),
+     trans->getOrigin()
+   };
+   const int indices[] = {
+     1, 0
+   };
+   glEnableClientState(GL_VERTEX_ARRAY);
+   glVertexPointer(3, GL_FLOAT, sizeof(btVector3), vertices);
+   glDrawElements(GL_LINES, sizeof(indices) / sizeof(int), GL_UNSIGNED_SHORT, indices);
+   glDisableClientState(GL_VERTEX_ARRAY);
 
    glPopMatrix();
-#endif
 }
 
 void GLES1SceneRenderEngine::renderBones(PMDModel *model)
@@ -709,6 +719,7 @@ void GLES1SceneRenderEngine::releaseTexture(PMDTextureNative *native)
 
 void GLES1SceneRenderEngine::renderModelCached(PMDModel *model, PMDRenderCacheNative **ptr)
 {
+  model = NULL;
   *ptr = NULL;
 }
 
@@ -746,6 +757,40 @@ void GLES1SceneRenderEngine::renderTileTexture(PMDTexture *texture,
   glTexCoord2f(0.0, 0.0);
   glVertex3fv(vertices4);
   glEnd();
+#else
+  const float *vertices[] = {
+    vertices1,
+    vertices2,
+    vertices3,
+    vertices4
+  };
+  const float *normals[] = {
+    normal,
+    normal,
+    normal,
+    normal
+  };
+  const float coords[] = {
+    0.0, nY,
+    nX, nY,
+    nX, 0.0,
+    0.0, 0.0
+  };
+  const int indices[] = {
+    0, 1, 2, 2, 1, 3
+  };
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_NORMAL_ARRAY);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glBindTexture(GL_TEXTURE_2D, texture->getNative()->id);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+  glVertexPointer(3, GL_FLOAT, 0, vertices);
+  glNormalPointer(GL_FLOAT, 0, normals);
+  glTexCoordPointer(2, GL_FLOAT, 0, coords);
+  glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_SHORT, indices);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #endif
   glPopMatrix();
   glDisable(GL_TEXTURE_2D);
@@ -1287,6 +1332,10 @@ void GLES1SceneRenderEngine::prerender(Option *option,
     glEnable(GL_LIGHTING);
     glCullFace(GL_BACK);
     glEnable(GL_ALPHA_TEST);
+#else
+    option = NULL;
+    objects = NULL;
+    size = 0;
 #endif
     /* clear all the buffers */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -1395,7 +1444,15 @@ int GLES1SceneRenderEngine::pickModel(PMDObject **objects,
 
   return minID;
 #else
-  return 0;
+  objects = NULL;
+  size = 0;
+  x = 0;
+  y = 0;
+  width = 0;
+  height = 0;
+  scale = 0.0f;
+  allowDropPicked = NULL;
+  return -1;
 #endif
 }
 
