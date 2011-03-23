@@ -43,22 +43,11 @@
 #include <QFutureWatcher>
 #include <QIODevice>
 #include <QTimer>
-
-#include <phonon/AudioOutput>
-#include <phonon/MediaObject>
+#include "portaudio.h"
 
 #include "QMAPlugin.h"
 
 #include "QMAOpenJTalkModel.h"
-
-struct QMAOpenJTalkModelData
-{
-  QByteArray bytes;
-  QString name;
-  QString sequence;
-  int duration;
-};
-Q_DECLARE_METATYPE(QMAOpenJTalkModelData);
 
 class QMAOpenJTalkPlugin : public QMAPlugin
 {
@@ -66,7 +55,7 @@ class QMAOpenJTalkPlugin : public QMAPlugin
   Q_INTERFACES(QMAPlugin)
 
 public:
-      QMAOpenJTalkPlugin(QObject *parent = 0);
+  QMAOpenJTalkPlugin(QObject *parent = 0);
   ~QMAOpenJTalkPlugin();
 
 public slots:
@@ -78,27 +67,17 @@ public slots:
   void update(const QRect &rect, const QPoint &pos, const double delta);
   void prerender();
   void postrender();
-  void finished();
-  void stateChanged(Phonon::State newState, Phonon::State oldState);
 
 signals:
   void commandPost(const QString &command, const QStringList &arguments);
   void eventPost(const QString &type, const QStringList &arguments);
 
-private slots:
-  void play();
-
 private:
-  struct QMAOpenJTalkModelData run(const QString &name,
-                                   const QString &style,
-                                   const QString &text);
+  void run(const QString &name,
+           const QString &style,
+           const QString &text);
 
-  Phonon::MediaObject m_object;
-  Phonon::AudioOutput m_output;
   QHash<QString, QMAOpenJTalkModel*> m_models;
-  QFutureWatcher<QMAOpenJTalkModelData> m_watcher;
-  QIODevice *m_buffer;
-  QByteArray m_bytes;
   QTimer m_timer;
   QString m_base;
   QString m_dir;

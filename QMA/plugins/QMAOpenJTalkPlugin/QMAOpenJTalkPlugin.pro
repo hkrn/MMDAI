@@ -35,7 +35,6 @@
 # /* ----------------------------------------------------------------- */
 
 include(../QMAPlugin.pri)
-QT += phonon
 TARGET = $$qtLibraryTarget(QMAOpenJTalkPlugin)
 
 # $ cd /usr/local/include
@@ -46,7 +45,7 @@ TARGET = $$qtLibraryTarget(QMAOpenJTalkPlugin)
 # $ sudo find $OPEN_JTALK_SRC_DIR -name '*.a' -exec ln -s {} \;
 unix:LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_accent_phrase \
              -lnjd_set_accent_type -lnjd_set_digit -lnjd_set_long_vowel -lnjd_set_pronunciation \
-             -lnjd_set_unvoiced_vowel -ltext2mecab
+             -lnjd_set_unvoiced_vowel -ltext2mecab -lportaudio
 unix:INCLUDEPATH += /usr/local/include/jtalk
 
 linux:LIBS += -lmecab
@@ -60,7 +59,8 @@ linux:LIBS += -lmecab
 # $ sudo mv libmecab.a libmecab_custom.a
 #
 # on MacOSX, mecab has been installed in /usr, we use jtalk's mecab as libmecab_custom.a
-macx:LIBS += -liconv -lmecab_custom
+macx:LIBS += -liconv -lmecab_custom -framework CoreAudio -framework CoreFoundation \
+             -framework CoreServices -framework AudioToolbox -framework AudioUnit
 
 win32 {
     # use MMDAgent's OpenJTalk and related libraries
