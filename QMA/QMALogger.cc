@@ -48,44 +48,64 @@
 #endif
 
 namespace {
-  QMALogger *g_instance;
+  QMALogger *g_instance = NULL;
 }
 
-static void LogHandler(const char *file, int line, enum MMDAILogLevel level, const char *format, va_list ap)
+static const QString LogGetLabel(const enum MMDAILogLevel level)
 {
-  QString text;
   switch (level) {
   case MMDAILogLevelDebug:
-    text += "[DEBUG]";
-    break;
+    return "[DEBUG]";
   case MMDAILogLevelInfo:
-    text += "[INFO]";
-    break;
+    return "[INFO]";
   case MMDAILogLevelWarning:
-    text += "[WARNING]";
-    break;
+    return "[WARNING]";
   case MMDAILogLevelError:
-    text += "[ERROR]";
-    break;
+    return "[ERROR]";
+  default:
+    return "[UNKNOWN]";
   }
-  QString name = QString(file).split("/").last();
-  text += QString(" %1 %2:%3 ")
-          .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
-          .arg(name).arg(line);
+}
+
+static void LogHandlerSJIS(const char *file,
+                           const int line,
+                           const enum MMDAILogLevel level,
+                           const char *format,
+                           va_list ap)
+{
   char buf[BUFSIZ];
-  qvsnprintf(buf, sizeof(buf), format, ap);
-  if (name == "PMDBone.cc"
-      || name == "PMDConstraint.cc"
-      || name == "PMDFace.cc"
-      || name == "PMDModel_parse.cc"
-      || name == "PMDRigidBody.cc") {
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    text += codec->toUnicode(QByteArray(buf));
-  }
-  else {
-    text += buf;
-  }
-  text += "\n";
+  vsnprintf(buf, sizeof(buf), format, ap);
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  QString message = codec->toUnicode(buf, strlen(buf));
+  QString name = QString(file).split("/").last();
+  QString text = QString("%1 %2 %3:%4 %5\n")
+                 .arg(LogGetLabel(level))
+                 .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
+                 .arg(name)
+                 .arg(line)
+                 .arg(message);
+  QMALogger::getInstance()->sendLineWritten(text);
+#ifndef NDEBUG
+  qDebug() << text;
+#endif
+}
+
+static void LogHandler(const char *file,
+                       const int line,
+                       const enum MMDAILogLevel level,
+                       const char *format,
+                       va_list ap)
+{
+  char buf[BUFSIZ];
+  vsnprintf(buf, sizeof(buf), format, ap);
+  QString message = QString(buf);
+  QString name = QString(file).split("/").last();
+  QString text = QString("%1 %2 %3:%4 %5\n")
+                 .arg(LogGetLabel(level))
+                 .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
+                 .arg(name)
+                 .arg(line)
+                 .arg(message);
   QMALogger::getInstance()->sendLineWritten(text);
 #ifndef NDEBUG
   qDebug() << text;
@@ -109,6 +129,7 @@ void QMALogger::initialize()
 {
   if (!g_instance) {
     MMDAILogSetHandler(LogHandler);
+    MMDAILogSetHandlerSJIS(LogHandlerSJIS);
     g_instance = new QMALogger();
   }
 }
