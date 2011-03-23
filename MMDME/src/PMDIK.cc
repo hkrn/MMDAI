@@ -100,8 +100,8 @@ void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
    m_iteration = ik->numIteration;
    m_angleConstraint = ik->angleConstraint * kPI;
 
-   MMDAILogDebug("destBone=%d, targetBone=%d, numBone=%d, numIteration=%d, angleConstraint=%.2f",
-       m_destBone, m_targetBone, m_numBone, m_iteration, m_angleConstraint);
+   MMDAILogDebugSJIS("destBone=\"%s\", targetBone=\"%s\", numBone=%d, numIteration=%d, angleConstraint=%.2f",
+       m_destBone->getName(), m_targetBone->getName(), m_numBone, m_iteration, m_angleConstraint);
 }
 
 /* PMDIK::solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
