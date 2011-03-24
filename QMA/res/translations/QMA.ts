@@ -53,7 +53,7 @@
     <message>
         <location filename="../../QMAWindow.cc" line="323"/>
         <source>Text to speak</source>
-        <translation>喋らせる内容</translation>
+        <translation>会話する内容</translation>
     </message>
     <message>
         <location filename="../../QMAWindow.cc" line="403"/>
@@ -203,17 +203,12 @@
     <message>
         <location filename="../../QMAWindow.cc" line="535"/>
         <source>Toggle shadow mapping light first</source>
-        <translation>シャドウマップライトファーストを切り替える</translation>
+        <translation>シャドウマップを光優先または影優先にする</translation>
     </message>
     <message>
         <location filename="../../QMAWindow.cc" line="536"/>
         <source>Enable / Disable shadow mapping light first.</source>
-        <translation>シャドウマップライトファーストを有効または無効にします。</translation>
-    </message>
-    <message>
-        <location filename="../../QMAWindow.cc" line="541"/>
-        <source>Toggle Fullscreen</source>
-        <translation>フルスクリーン表示を切り替える</translation>
+        <translation>シャドウマップを光優先または影優先にします。</translation>
     </message>
     <message>
         <location filename="../../QMAWindow.cc" line="542"/>
@@ -221,14 +216,19 @@
         <translation>フルスクリーン表示を有効または無効にします。</translation>
     </message>
     <message>
+        <location filename="../../QMAWindow.cc" line="541"/>
+        <source>Toggle fullscreen</source>
+        <translation>フルスクリーンを切り替える</translation>
+    </message>
+    <message>
         <location filename="../../QMAWindow.cc" line="547"/>
-        <source>Emulate Speaking</source>
-        <translation>喋るをエミュレート</translation>
+        <source>Emulate speaking</source>
+        <translation>会話をエミュレートする</translation>
     </message>
     <message>
         <location filename="../../QMAWindow.cc" line="548"/>
         <source>Emulates speaking using input dialog.</source>
-        <translation>入力ダイアログを用いて喋る行為をエミュレートします。</translation>
+        <translation>入力ダイアログを用いて会話をエミュレートします。</translation>
     </message>
     <message>
         <location filename="../../QMAWindow.cc" line="552"/>

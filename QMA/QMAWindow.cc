@@ -538,13 +538,13 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMappingLightFirst()));
   m_toggleShadowMappingFirstAction = action;
 
-  action = new QAction(tr("Toggle Fullscreen"), this);
+  action = new QAction(tr("Toggle fullscreen"), this);
   action->setStatusTip(tr("Enable / Disable fullscreen."));
   action->setShortcut(Qt::Key_F);
   connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
   m_toggleFullScreenAction = action;
 
-  action = new QAction(tr("Emulate Speaking"), this);
+  action = new QAction(tr("Emulate speaking"), this);
   action->setStatusTip(tr("Emulates speaking using input dialog."));
   connect(action, SIGNAL(triggered()), this, SLOT(speak()));
   m_speakAction = action;
