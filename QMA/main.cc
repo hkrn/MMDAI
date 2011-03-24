@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
   QString dirName = appDir.dirName().toLower();
   if (dirName == "debug" || dirName == "release")
     appDir.cdUp();
+  app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
 #elif defined(Q_OS_MAC)
   if (appDir.dirName() == "MacOS") {
     appDir.cdUp();
