@@ -72,7 +72,6 @@ public:
 
   void toggleDisplayBone();
   void toggleDisplayRigidBody();
-  void sendKeyEvent(const QString &text);
   void changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader);
   void zoom(bool up, enum QMAWidgetZoomOption option);
 

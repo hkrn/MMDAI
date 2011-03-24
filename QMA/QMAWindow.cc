@@ -81,7 +81,9 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
   case Qt::Key_V: /* test command / Vsync */
     break;
   }
-  m_widget->sendKeyEvent(event->text());
+  QStringList arguments;
+  arguments << event->text();
+  m_widget->delegateEvent(QString(MMDAI::SceneEventHandler::kKeyEvent), arguments);
 }
 
 void QMAWindow::insertMotionToAllModels()
@@ -315,6 +317,17 @@ void QMAWindow::toggleFullScreen()
   }
 }
 
+void QMAWindow::speak()
+{
+  bool ok = false;
+  QString text = QInputDialog::getText(this, "", tr("Text to speak"), QLineEdit::Normal, "", &ok);
+  if (ok && !text.isEmpty()) {
+    QStringList arguments;
+    arguments << text;
+    m_widget->delegateEvent(QString("RECOG_EVENT_STOP"), arguments);
+  }
+}
+
 void QMAWindow::zoomIn()
 {
   m_widget->zoom(true, Normal);
@@ -531,6 +544,11 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
   m_toggleFullScreenAction = action;
 
+  action = new QAction(tr("Speak"), this);
+  action->setStatusTip(tr("Emulates speaking using input dialog."));
+  connect(action, SIGNAL(triggered()), this, SLOT(speak()));
+  m_speakAction = action;
+
   action = new QAction(tr("Zoom in"), this);
   action->setStatusTip(tr("Zoom in the scene."));
   action->setShortcut(Qt::Key_Plus);
@@ -655,24 +673,30 @@ void QMAWindow::createMenu()
 
   menuBar()->addSeparator();
   m_sceneMenu = menuBar()->addMenu(tr("&Scene"));
-  m_sceneMenu->addAction(m_toggleFullScreenAction);
   m_sceneMenu->addAction(m_zoomInAction);
   m_sceneMenu->addAction(m_zoomOutAction);
+  m_sceneMenu->addSeparator();
   m_sceneMenu->addAction(m_rotateUpAction);
   m_sceneMenu->addAction(m_rotateDownAction);
   m_sceneMenu->addAction(m_rotateLeftAction);
   m_sceneMenu->addAction(m_rotateRightAction);
+  m_sceneMenu->addSeparator();
   m_sceneMenu->addAction(m_translateUpAction);
   m_sceneMenu->addAction(m_translateDownAction);
   m_sceneMenu->addAction(m_translateLeftAction);
   m_sceneMenu->addAction(m_translateRightAction);
+  m_sceneMenu->addSeparator();
   m_sceneMenu->addAction(m_increaseEdgeThinAction);
   m_sceneMenu->addAction(m_decreaseEdgeThinAction);
+  m_sceneMenu->addSeparator();
+  m_sceneMenu->addAction(m_toggleFullScreenAction);
   m_sceneMenu->addAction(m_togglePhysicSimulationAction);
   m_sceneMenu->addAction(m_toggleShadowMappingAction);
   m_sceneMenu->addAction(m_toggleShadowMappingFirstAction);
   m_sceneMenu->addAction(m_toggleDisplayBoneAction);
   m_sceneMenu->addAction(m_toggleDisplayRigidBodyAction);
+  m_sceneMenu->addSeparator();
+  m_sceneMenu->addAction(m_speakAction);
 
   menuBar()->addSeparator();
   m_modelMenu = menuBar()->addMenu(tr("&Model"));

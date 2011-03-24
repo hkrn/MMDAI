@@ -78,6 +78,7 @@ private slots:
   void togglePhysicSimulation();
   void toggleShadowMapping();
   void toggleShadowMappingLightFirst();
+  void speak();
   void zoomIn();
   void zoomOut();
   void selectObject();
@@ -119,6 +120,7 @@ private:
   QAction *m_toggleShadowMappingAction;
   QAction *m_toggleShadowMappingFirstAction;
   QAction *m_toggleFullScreenAction;
+  QAction *m_speakAction;
   QAction *m_zoomInAction;
   QAction *m_zoomOutAction;
   QAction *m_rotateUpAction;

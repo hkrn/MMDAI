@@ -102,13 +102,6 @@ void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
   update();
 }
 
-void QMAWidget::sendKeyEvent(const QString &text)
-{
-  QStringList arguments;
-  arguments << text;
-  emit pluginEventPost(QString(MMDAI::SceneEventHandler::kKeyEvent), arguments);
-}
-
 QMAModelLoaderFactory *QMAWidget::getModelLoaderFactory()
 {
   return &m_factory;
