@@ -41,6 +41,20 @@
 #define OPENJTALK_MAXVOLUME   10.0
 #define OPENJTALK_MINVOLUME   0.0
 
+static int QMAOpenJTalkModelGetCount(QTextStream &stream) {
+  QString line = stream.readLine();
+  int count = line.toInt();
+  if (count == 0) {
+    do {
+      line = stream.readLine();
+      count = line.toInt();
+      if (count > 0)
+        break;
+    } while (!line.isNull());
+  }
+  return count;
+}
+
 QMAOpenJTalkModel::QMAOpenJTalkModel(QObject *parent) :
     QObject(parent),
     m_f0Shift(0.0)
@@ -73,24 +87,29 @@ void QMAOpenJTalkModel::loadSetting(const QString &path, const QString &config)
   if (file.open(QFile::ReadOnly)) {
     QTextStream stream(&file);
     stream.setCodec("Shift-JIS");
-    int nmodels = stream.readLine().toInt();
+    int nmodels = QMAOpenJTalkModelGetCount(stream);
     for (int i = 0; i < nmodels; i++) {
       QString model = stream.readLine();
       if (model.isEmpty())
         break;
       model = model.trimmed();
-      if (model[0] == '#')
+      if (model[0] == '#') {
+        i--;
         continue;
+      }
+      model = model.replace(QChar(0xa5), QChar('/'));
       m_models.append(path + "/" + model);
     }
-    int nstyles = stream.readLine().toInt();
+    int nstyles = QMAOpenJTalkModelGetCount(stream);
     for (int i = 0; i < nstyles; i++) {
-      QString style = stream.readLine();;
+      QString style = stream.readLine();
       if (style.isEmpty())
         break;
       style = style.trimmed();
-      if (style[0] == '#')
+      if (style[0] == '#') {
+        i--;
         continue;
+      }
       QStringList weights = style.split(QRegExp("\\s"), QString::SkipEmptyParts);
       QString name = weights[0];
       weights.removeFirst();
