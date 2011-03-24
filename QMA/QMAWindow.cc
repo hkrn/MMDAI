@@ -263,12 +263,14 @@ void QMAWindow::toggleDisplayRigidBody()
 
 void QMAWindow::increaseEdgeThin()
 {
-  setEdgeThin(1);
+  MMDAI::Option *option = m_widget->getSceneController()->getOption();
+  setEdgeThin(option->getCartoonEdgeWidth() * option->getCartoonEdgeStep());
 }
 
 void QMAWindow::decreaseEdgeThin()
 {
-  setEdgeThin(-1);
+  MMDAI::Option *option = m_widget->getSceneController()->getOption();
+  setEdgeThin(option->getCartoonEdgeWidth() / option->getCartoonEdgeStep());
 }
 
 void QMAWindow::togglePhysicSimulation()
@@ -646,15 +648,15 @@ void QMAWindow::createActions()
           this, SLOT(receiveEvent(QString,QStringList)));
 }
 
-void QMAWindow::setEdgeThin(int n)
+void QMAWindow::setEdgeThin(float value)
 {
   MMDAI::SceneController *controller = m_widget->getSceneController();
   MMDAI::Option *option = controller->getOption();
+  value = qMin(value, 2.0f);
+  option->setCartoonEdgeWidth(value);
   int count = controller->countPMDObjects();
-  float thin = option->getCartoonEdgeWidth() * option->getCartoonEdgeStep() * n;
-  option->setCartoonEdgeWidth(thin);
   for (int i = 0; i < count; i++)
-    controller->getPMDObject(i)->getPMDModel()->setEdgeThin(thin);
+    controller->getPMDObject(i)->getPMDModel()->setEdgeThin(value);
 }
 
 void QMAWindow::createMenu()

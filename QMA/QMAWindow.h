@@ -90,7 +90,7 @@ private slots:
   void receiveEvent(const QString &type, const QStringList &arguments);
 
 private:
-  void setEdgeThin(int n);
+  void setEdgeThin(float value);
   void createMenu();
   void createActions();
   void readSetting();
