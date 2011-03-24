@@ -156,7 +156,7 @@ void QMAOpenJTalkPlugin::run(const QString &name,
   output.sampleFormat = paInt16;
   output.suggestedLatency = Pa_GetDeviceInfo(output.device)->defaultLowOutputLatency;
   output.hostApiSpecificStreamInfo = NULL;
-  err = Pa_OpenStream(&stream, NULL, &output, 48000, 1024, paClipOff, NULL, NULL);
+  err = Pa_OpenStream(&stream, NULL, &output, QMAOpenJTalkModel::kSamplingRate, 1024, paClipOff, NULL, NULL);
   if (err != paNoError) {
     MMDAILogWarn("Pa_OpenStream failed: %s", Pa_GetErrorText(err));
     goto final;

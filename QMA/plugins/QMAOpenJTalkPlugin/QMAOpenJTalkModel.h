@@ -15,7 +15,25 @@
 class QMAOpenJTalkModel : public QObject
 {
   Q_OBJECT
+
 public:
+  static const float kMinLF0Val;
+  static const float kHanfTone;
+  static const float kMaxHanfTone;
+  static const float kMinHanfTone;
+  static const float kAlpha;
+  static const float kMaxAlpha;
+  static const float kMinAlpha;
+  static const float kVolume;
+  static const float kMaxVolume;
+  static const float kMinVolume;
+  static const bool kLogGain;
+  static const int kGamma = 0;
+  static const int kSamplingRate = 48000;
+  static const int kFPeriod = 240;
+  static const int kMaxFPeriod = 48000;
+  static const int kMinFPeriod = 1;
+
   explicit QMAOpenJTalkModel(QObject *parent = 0);
   ~QMAOpenJTalkModel();
 

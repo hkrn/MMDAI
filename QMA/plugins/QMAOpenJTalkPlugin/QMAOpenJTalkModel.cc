@@ -20,26 +20,17 @@
 #include "njd_set_unvoiced_vowel.h"
 #include "njd_set_long_vowel.h"
 
-#define OPENJTALK_MAXBUFLEN     2048
-#define OPENJTALK_MINLF0VAL     log(10.0)
-
-#define OPENJTALK_GAMMA         0
-#define OPENJTALK_LOGGAIN       false
-#define OPENJTALK_SAMPLINGRATE  48000
-#define OPENJTALK_FPERIOD       240
-#define OPENJTALK_HALFTONE      0.0
-#define OPENJTALK_ALPHA         0.55
-#define OPENJTALK_VOLUME        1.0
-#define OPENJTALK_AUDIOBUFFSIZE 4800
-
-#define OPENJTALK_MAXFPERIOD  48000
-#define OPENJTALK_MINFPERIOD  1
-#define OPENJTALK_MAXHALFTONE 24.0
-#define OPENJTALK_MINHALFTONE -24.0
-#define OPENJTALK_MAXALPHA    1.0
-#define OPENJTALK_MINALPHA    0.0
-#define OPENJTALK_MAXVOLUME   10.0
-#define OPENJTALK_MINVOLUME   0.0
+const float QMAOpenJTalkModel::kMinLF0Val = log(10.0);
+const float QMAOpenJTalkModel::kHanfTone = 0.0;
+const float QMAOpenJTalkModel::kMaxHanfTone = 24.0;
+const float QMAOpenJTalkModel::kMinHanfTone = -24.0;
+const float QMAOpenJTalkModel::kAlpha = 0.55;
+const float QMAOpenJTalkModel::kMaxAlpha = 1.0;
+const float QMAOpenJTalkModel::kMinAlpha = 0.0;
+const float QMAOpenJTalkModel::kVolume = 1.0;
+const float QMAOpenJTalkModel::kMaxVolume = 10.0;
+const float QMAOpenJTalkModel::kMinVolume = 0.0;
+const bool QMAOpenJTalkModel::kLogGain = false;
 
 static int QMAOpenJTalkModelGetCount(QTextStream &stream) {
   QString line = stream.readLine();
@@ -63,14 +54,14 @@ QMAOpenJTalkModel::QMAOpenJTalkModel(QObject *parent) :
   NJD_initialize(&m_njd);
   JPCommon_initialize(&m_jpcommon);
   HTS_Engine_initialize(&m_engine, 3);
-  HTS_Engine_set_gamma(&m_engine, OPENJTALK_GAMMA);
-  HTS_Engine_set_log_gain(&m_engine, OPENJTALK_LOGGAIN);
-  HTS_Engine_set_sampling_rate(&m_engine, OPENJTALK_SAMPLINGRATE);
-  HTS_Engine_set_fperiod(&m_engine, OPENJTALK_FPERIOD);
-  HTS_Engine_set_alpha(&m_engine, OPENJTALK_ALPHA);
-  HTS_Engine_set_volume(&m_engine, OPENJTALK_VOLUME);
+  HTS_Engine_set_gamma(&m_engine, kGamma);
+  HTS_Engine_set_log_gain(&m_engine, kLogGain);
+  HTS_Engine_set_sampling_rate(&m_engine, kSamplingRate);
+  HTS_Engine_set_fperiod(&m_engine, kFPeriod);
+  HTS_Engine_set_alpha(&m_engine, kAlpha);
+  HTS_Engine_set_volume(&m_engine, kVolume);
   HTS_Engine_set_audio_buff_size(&m_engine, 0); /* disable direct audio output */
-  m_f0Shift = OPENJTALK_HALFTONE;
+  m_f0Shift = kHanfTone;
 }
 
 QMAOpenJTalkModel::~QMAOpenJTalkModel()
@@ -339,8 +330,8 @@ void QMAOpenJTalkModel::setText(const QString &text)
       for (int i = 0; i < HTS_Engine_get_total_state(&m_engine); i++) {
         double f = HTS_Engine_get_state_mean(&m_engine, 1, i, 0);
         f += m_f0Shift * log(2.0) / 12;
-        if (f < OPENJTALK_MINLF0VAL)
-          f = OPENJTALK_MINLF0VAL;
+        if (f < kMinLF0Val)
+          f = kMinLF0Val;
         HTS_Engine_set_state_mean(&m_engine, 1, i, 0, f);
       }
     }
@@ -412,38 +403,38 @@ void QMAOpenJTalkModel::setStyle(const QString &style)
     value = 1;
 
   /* speed */
-  double speed = OPENJTALK_FPERIOD / value;
-  if(speed > OPENJTALK_MAXFPERIOD)
-    HTS_Engine_set_fperiod(&m_engine, OPENJTALK_MAXFPERIOD);
-  else if(speed < OPENJTALK_MINFPERIOD)
-    HTS_Engine_set_fperiod(&m_engine, OPENJTALK_MINFPERIOD);
+  double speed = kFPeriod / value;
+  if(speed > kMaxFPeriod)
+    HTS_Engine_set_fperiod(&m_engine, kMaxFPeriod);
+  else if(speed < kMinFPeriod)
+    HTS_Engine_set_fperiod(&m_engine, kMinFPeriod);
   else
     HTS_Engine_set_fperiod(&m_engine, (int) speed);
 
   /* pitch */
   double pitch = m_weights[index + nmodels * 3 + 1];
-  if(pitch > OPENJTALK_MAXHALFTONE)
-    m_f0Shift = OPENJTALK_MAXHALFTONE;
-  else if(pitch < OPENJTALK_MINHALFTONE)
-    m_f0Shift = OPENJTALK_MINHALFTONE;
+  if(pitch > kMaxHanfTone)
+    m_f0Shift = kMaxHanfTone;
+  else if(pitch < kMinHanfTone)
+    m_f0Shift = kMinHanfTone;
   else
     m_f0Shift = pitch;
 
   /* alpha */
   double alpha = m_weights[index + nmodels * 3 + 2];
-  if(alpha > OPENJTALK_MAXALPHA)
-    HTS_Engine_set_alpha(&m_engine, OPENJTALK_MAXALPHA);
-  else if(alpha < OPENJTALK_MINALPHA)
-    HTS_Engine_set_alpha(&m_engine, OPENJTALK_MINALPHA);
+  if(alpha > kMaxAlpha)
+    HTS_Engine_set_alpha(&m_engine, kMaxAlpha);
+  else if(alpha < kMinAlpha)
+    HTS_Engine_set_alpha(&m_engine, kMinAlpha);
   else
     HTS_Engine_set_alpha(&m_engine, alpha);
 
   /* volume */
   double volume = m_weights[index + nmodels * 3 + 3];
-  if(volume > OPENJTALK_MAXVOLUME)
-    HTS_Engine_set_volume(&m_engine, OPENJTALK_MAXVOLUME);
-  else if(volume < OPENJTALK_MINVOLUME)
-    HTS_Engine_set_volume(&m_engine, OPENJTALK_MINVOLUME);
+  if(volume > kMaxVolume)
+    HTS_Engine_set_volume(&m_engine, kMaxVolume);
+  else if(volume < kMinVolume)
+    HTS_Engine_set_volume(&m_engine, kMinVolume);
   else
     HTS_Engine_set_volume(&m_engine, volume);
 }
