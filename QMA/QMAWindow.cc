@@ -544,7 +544,7 @@ void QMAWindow::createActions()
   connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
   m_toggleFullScreenAction = action;
 
-  action = new QAction(tr("Speak"), this);
+  action = new QAction(tr("Emulate Speaking"), this);
   action->setStatusTip(tr("Emulates speaking using input dialog."));
   connect(action, SIGNAL(triggered()), this, SLOT(speak()));
   m_speakAction = action;
