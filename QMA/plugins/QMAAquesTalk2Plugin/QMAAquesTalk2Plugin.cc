@@ -36,9 +36,13 @@
 
 #include "QMAAquesTalk2Plugin.h"
 
+#include <QtConcurrentRun>
 #include <QDir>
 #include <QFile>
 #include <QTextCodec>
+
+#include <MMDAI/MMDAI.h>
+#include "portaudio.h"
 
 #ifdef Q_OS_DARWIN
 #include <AquesTalk2/AquesTalk2.h>
@@ -47,22 +51,12 @@
 #endif
 
 QMAAquesTalk2Plugin::QMAAquesTalk2Plugin(QObject *parent)
-  : QMAPlugin(parent),
-    m_output(new Phonon::AudioOutput(Phonon::GameCategory, this)),
-    m_object(new Phonon::MediaObject(this)),
-    m_buffer(0)
+  : QMAPlugin(parent)
 {
-  Phonon::createPath(m_object, m_output);
-  connect(m_object, SIGNAL(finished()), this, SLOT(finished()));
-  connect(m_object, SIGNAL(stateChanged(Phonon::State,Phonon::State)),
-          this, SLOT(stateChanged(Phonon::State,Phonon::State)));
 }
 
 QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
 {
-  delete m_buffer;
-  delete m_output;
-  delete m_object;
 }
 
 void QMAAquesTalk2Plugin::initialize(MMDAI::SceneController *controller)
@@ -73,45 +67,27 @@ void QMAAquesTalk2Plugin::initialize(MMDAI::SceneController *controller)
 
 void QMAAquesTalk2Plugin::start()
 {
-  /* do nothing */
+  PaError err = Pa_Initialize();
+  if (err != paNoError)
+    MMDAILogWarn("Pa_Initialized failed: %s", Pa_GetErrorText(err));
 }
 
 void QMAAquesTalk2Plugin::stop()
 {
-  m_object->stop();
+  PaError err = Pa_Terminate();
+  if (err != paNoError)
+    MMDAILogWarn("Pa_Terminate failed: %s", Pa_GetErrorText(err));
 }
 
 void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
   int argc = arguments.count();
   if (command == "MMDAI_AQTK2_START" && argc >= 3) {
-    int size = 0;
     QString text = arguments.at(2);
     QString phontPath = arguments.at(1);
-    m_modelName = arguments.at(0);
+    QString modelName = arguments.at(0);
     phontPath = QDir::isAbsolutePath(phontPath) ? phontPath : ("mmdai:" + phontPath);
-    QFile phontFile(phontPath);
-    QByteArray phont;
-    char *ptr = 0;
-    if (phontFile.exists() && phontFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
-      phont = phontFile.readAll();
-      ptr = phont.data();
-    }
-#ifdef Q_OS_WIN32
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    unsigned char *data = AquesTalk2_Synthe(codec->fromUnicode(text).constData(), 100, &size, ptr);
-#else
-    unsigned char *data = AquesTalk2_Synthe_Utf8(text.toUtf8().constData(), 100, &size, ptr);
-#endif
-    if (data != NULL) {
-      delete m_buffer;
-      m_buffer = new QBuffer();
-      m_buffer->open(QBuffer::ReadWrite);
-      m_buffer->write((const char *)data, size);
-      m_object->setCurrentSource(m_buffer);
-      m_object->play();
-    }
-    AquesTalk2_FreeWave(data);
+    QtConcurrent::run(this, &QMAAquesTalk2Plugin::run, modelName, phontPath, text);
   }
 }
 
@@ -140,18 +116,67 @@ void QMAAquesTalk2Plugin::postrender()
   /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::finished()
+void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath, const QString &text)
 {
-  QStringList arguments;
-  arguments << m_modelName;
-  emit eventPost(QString("MMDAI_AQTK2_STOP"), arguments);
-}
+  QFile phontFile(phontPath);
+  QByteArray phont;
+  char *ptr = 0;
+  if (phontFile.exists() && phontFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
+    phont = phontFile.readAll();
+    ptr = phont.data();
+  }
 
-void QMAAquesTalk2Plugin::stateChanged(Phonon::State newState, Phonon::State oldState)
-{
-  Q_UNUSED(oldState);
-  if (newState == Phonon::ErrorState)
-    qWarning("Phonon error: %s", m_object->errorString().toAscii().constData());
+#ifdef Q_OS_WIN32
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+  unsigned char *data = AquesTalk2_Synthe(codec->fromUnicode(text).constData(), 100, &size, ptr);
+#else
+  int size = 0;
+  unsigned char *data = AquesTalk2_Synthe_Utf8(text.toUtf8().constData(), 100, &size, ptr);
+#endif
+  if (data != NULL) {
+    PaError err;
+    PaStream *stream;
+    PaStreamParameters output;
+    output.device = Pa_GetDefaultOutputDevice();
+    if (output.device == paNoDevice) {
+      MMDAILogWarnString("No device to output found");
+      goto final;
+    }
+    output.channelCount = 1;
+    output.sampleFormat = paInt16;
+    output.suggestedLatency = Pa_GetDeviceInfo(output.device)->defaultLowOutputLatency;
+    output.hostApiSpecificStreamInfo = NULL;
+    err = Pa_OpenStream(&stream, NULL, &output, 8000, 1024, paClipOff, NULL, NULL);
+    if (err != paNoError) {
+      MMDAILogWarn("Pa_OpenStream failed: %s", Pa_GetErrorText(err));
+      goto final;
+    }
+    if (stream != NULL) {
+      err = Pa_StartStream(stream);
+      if (err != paNoError) {
+        MMDAILogWarn("Pa_StartStream failed: %s", Pa_GetErrorText(err));
+        goto final;
+      }
+      err = Pa_WriteStream(stream, data + 44, (size - 44) / sizeof(short));
+      if (err != paNoError) {
+        MMDAILogWarn("Pa_WriteStream failed: %s", Pa_GetErrorText(err));
+        goto final;
+      }
+      err = Pa_CloseStream(stream);
+      if (err != paNoError) {
+        MMDAILogWarn("Pa_StartStream failed: %s", Pa_GetErrorText(err));
+        goto final;
+      }
+    }
+
+  }
+
+final:
+  AquesTalk2_FreeWave(data);
+
+  QStringList arguments;
+  arguments << modelName;
+  emit eventPost(QString("MMDAI_AQTK2_STOP"), arguments);
 }
 
 Q_EXPORT_PLUGIN2(qma_aquestalk2_plugin, QMAAquesTalk2Plugin)

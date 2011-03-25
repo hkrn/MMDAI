@@ -38,9 +38,11 @@ include(../QMAPlugin.pri)
 QT += phonon
 TARGET = $$qtLibraryTarget(QMAAquesTalk2Plugin)
 
+LIBS += -lportaudio
 !macx:LIBS += -lAquesTalk2
 macx:CONFIG += x86
-macx:LIBS += -framework AquesTalk2
+macx:LIBS += -framework AquesTalk2 -framework CoreAudio -framework CoreFoundation \
+             -framework CoreServices -framework AudioToolbox -framework AudioUnit
 
 HEADERS += \
     QMAAquesTalk2Plugin.h

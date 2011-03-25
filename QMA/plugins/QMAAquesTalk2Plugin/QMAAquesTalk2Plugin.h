@@ -28,17 +28,12 @@ public slots:
   void prerender();
   void postrender();
 
-  void finished();
-  void stateChanged(Phonon::State newState, Phonon::State oldState);
-
 signals:
   void commandPost(const QString &command, const QStringList &arguments);
   void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  Phonon::AudioOutput *m_output;
-  Phonon::MediaObject *m_object;
-  QBuffer *m_buffer;
+  void run(const QString &modelName, const QString &phontPath, const QString &text);
   QString m_modelName;
 };
 
