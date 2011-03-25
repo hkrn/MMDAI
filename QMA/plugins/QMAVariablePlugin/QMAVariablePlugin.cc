@@ -211,7 +211,12 @@ void QMAVariablePlugin::startTimer0(const QString &key, const QString &value)
     return;
   }
   const int seconds = value.toInt();
-  if (!m_timers.contains(key) && seconds > 0) {
+  if (m_timers.contains(key)) {
+    QBasicTimer *timer = m_timers.value(key);
+    timer->stop();
+    delete timer;
+  }
+  if (seconds > 0) {
     const int msec = seconds * 1000;
     QBasicTimer *timer = new QBasicTimer();
     m_timers.insert(key, timer);
@@ -221,8 +226,7 @@ void QMAVariablePlugin::startTimer0(const QString &key, const QString &value)
     emit eventPost(kTimerStartEvent, arguments);
   }
   else {
-    MMDAILogInfo("Timer %s has been started or invalid second: %s",
-                 key.toUtf8().constData(), value.toUtf8().constData());
+    MMDAILogInfo("Invalid second: %s", value.toUtf8().constData());
   }
 }
 
