@@ -1,8 +1,3 @@
-TEMPLATE = lib
-CONFIG += plugin
-INCLUDEPATH += ../../
-DESTDIR = ../Plugins
-
 unix:LIBS += -L/usr/lib -L/usr/local/lib
 unix:INCLUDEPATH += /usr/include /usr/local/include /usr/include/bullet /usr/local/include/bullet
 win32:LIBS += -L$$(MMDME_LIBRARY_DIR) -L$$(MMDAI_LIBRARY_DIR) -L$$(BULLET_LIBRARY_DIR)
@@ -12,12 +7,3 @@ LIBS += -lMMDAI -lMMDME -lglee -lBulletDynamics -lBulletCollision -lBulletSoftBo
 CONFIG(debug, debug|release) {
     macx:CONFIG += x86
 }
-
-# currently same as debug except building plugins
-CONFIG(release, debug|release) {
-    macx {
-        CONFIG += x86 static
-        DESTDIR = ../StaticPlugins
-    }
-}
-
