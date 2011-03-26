@@ -81,7 +81,7 @@ void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr)
     return;
 
   QString ret;
-  QTextCodec *codec = QTextCodec::codecForName("EUC-JP");
+  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
   Sentence *sentence = &process->result.sent[0];
   WORD_ID *words = sentence->word;
   int nwords = sentence->word_num;
@@ -137,48 +137,11 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
 void QMAJuliusPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
-  QDir dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Julius";
-  QString filename = dir.absoluteFilePath("jconf.txt");
-  QFile jconf(filename);
-  QStringList conf;
-  if (jconf.open(QFile::ReadOnly)) {
-    QTextStream stream(&jconf);
-    // language model
-    conf << "-d" << dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz");
-    // dictionary
-    conf << "-v" << dir.absoluteFilePath("lang_m/web.60k.htkdic");
-    // acoustic model
-    conf << "-h" << dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm");
-    // triphone list
-    conf << "-hlist" << dir.absoluteFilePath("phone_m/tri_tied.list.bin");
-    while (!stream.atEnd()) {
-      QString line = stream.readLine();
-      QStringList pair = line.split(QRegExp("\\s+"));
-      if (pair.size() == 2) {
-        QString key = pair[0];
-        QString value = pair[1];
-        conf << key << value;
-      }
-      else {
-        foreach (QString value, pair) {
-          conf << value;
-        }
-      }
-    }
-    m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine, conf));
+    m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine));
     if (QSystemTrayIcon::supportsMessages())
       m_tray.showMessage(tr("Started initialization of Julius"),
                          tr("Please wait a moment until end of initialization of Julius engine."
                             "This process takes about 10-20 seconds."));
-  }
-  else {
-    MMDAILogWarn("Failed open file %s: %s",
-                 jconf.fileName().toUtf8().constData(),
-                 jconf.errorString().toUtf8().constData());
-    m_tray.showMessage(tr("Failed initialization of Julius"),
-                       tr("Cannot read Julius configuration file"),
-                       QSystemTrayIcon::Warning);
-  }
 }
 
 void QMAJuliusPlugin::start()
@@ -252,37 +215,46 @@ void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
   }
 }
 
-bool QMAJuliusPlugin::initializeRecognitionEngine(const QStringList &conf)
+bool QMAJuliusPlugin::initializeRecognitionEngine()
 {
-  int argc = conf.length();
-  if (argc == 0) {
-    MMDAILogWarnString("Julius configuration file is empty");
-    return false;
-  }
+  const char *path = NULL;
+  char buf[BUFSIZ];
+  QDir dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Julius";
 
-  size_t size = sizeof(char *) * (argc + 1);
-  char **argv = static_cast<char **>(MMDAIMemoryAllocate(size));
-  if (argv == NULL) {
-    MMDAILogWarnString("Failed allocating memory");
-    return false;
-  }
-
-  memset(argv, 0, size);
-  for (int i = 0; i < argc; i++) {
-    argv[i + 1] = MMDAIStringClone(conf.at(i).toUtf8().constData());
-  }
-
-  /* load config file */
-  m_jconf = j_config_load_args_new(argc, argv);
-  for (int i = 0; i < argc; i++) {
-    char *arg = argv[i + 1];
-    if (arg != NULL)
-      MMDAIMemoryRelease(arg);
-  }
-  MMDAIMemoryRelease(argv);
-
+  path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8().constData();
+  MMDAIStringFormat(buf, sizeof(buf), "-d %s", path);
+  buf[sizeof(buf) - 1] = 0;
+  m_jconf = j_config_load_string_new(buf);
   if (m_jconf == NULL) {
-    MMDAILogWarnString("Failed loading Julius configuration");
+    MMDAILogWarn("Failed loading language model for Julius: %s", buf);
+    return false;
+  }
+  path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8().constData();
+  MMDAIStringFormat(buf, sizeof(buf), "-v %s", path);
+  buf[sizeof(buf) - 1] = 0;
+  if (j_config_load_string(m_jconf, buf) < 0) {
+    MMDAILogWarn("Failed loading system dictionary for Julius: %s", buf);
+    return false;
+  }
+  path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8().constData();
+  MMDAIStringFormat(buf, sizeof(buf), "-h %s", path);
+  buf[sizeof(buf) - 1] = 0;
+  if (j_config_load_string(m_jconf, buf) < 0) {
+    MMDAILogWarn("Failed loading acoustic model for Julius: %s", buf);
+    return false;
+  }
+  path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8().constData();
+  MMDAIStringFormat(buf, sizeof(buf), "-hlist %s", path);
+  buf[sizeof(buf) - 1] = 0;
+  if (j_config_load_string(m_jconf, buf) < 0) {
+    MMDAILogWarn("Failed loading triphone list for Julius: %s", buf);
+    return false;
+  }
+  path = dir.absoluteFilePath("jconf.txt").toUtf8().constData();
+  MMDAIStringCopy(buf, path, sizeof(buf));
+  buf[sizeof(buf) - 1] = 0;
+  if (j_config_load_file(m_jconf, buf)) {
+    MMDAILogWarn("Failed loading configuration for Julius: %s", path);
     return false;
   }
 

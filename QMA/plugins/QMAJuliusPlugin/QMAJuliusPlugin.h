@@ -82,7 +82,7 @@ signals:
   void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  bool initializeRecognitionEngine(const QStringList &conf);
+  bool initializeRecognitionEngine();
   void startRecognition();
 
   QMAJuliusPluginThread *m_thread;
