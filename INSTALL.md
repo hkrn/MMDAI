@@ -8,14 +8,15 @@
 
 プラグインをビルドする際以下が必要です。Phonon は Qt に含まれれます。
 
-  - Phonon (QMAAquesTalk2Plugin / QMAAudioPlugin / QMAOpenJTalkPlugin)
+  - Phonon (QMAAudioPlugin)
   - AquesTalk2 (QMAAquesTalk2Plugin)
   - Julius (QMAJuliusPlugin)
   - OpenJTalk (QMAOpenJTalkPlugin)
+  - PortAudio (QMAAquesTalk2Plugin / QMAJuliusPlugin / QMAOpenJTalkPlugin)
   - hts_engine (QMAOpenJTalkPlugin)
   - Lua (QMAVILuaPlugin)
 
-MMDAI 及び MMDFiles のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
+MMDAI 及び MMDME のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
 Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
 
 MacOSX の場合 OpenGL Easy Extension が正しくビルド出来無い問題があるため、
@@ -50,7 +51,7 @@ MMDME/include を指定します。
 
 ## Linux か MacOSX でビルドする場合
 
-    $ cd libMMDFiles
+    $ cd libMMDME
     # 共有ライブラリを作成する場合。共有ライブラリではなく、静的ライブラリを作成する場合は
     # -DBUILD_SHARED_LIBS=OFF にするか、または単純に "cmake ." とするだけでよい。
     $ cmake -DBUILD_SHARED_LIBS=ON .
@@ -85,6 +86,28 @@ QtMMDAI のファイル生成は qmake で行います。コマンドライン�
 上記過程を終わったら QtMMDAI をビルドしてください。ビルドが正常に完了すると debug または release ディレクトリの下に
 QtMMDAI.exe が出来上がります。
 
+## iPhone 向けのビルド (まだシミュレータ上のみのため、途中の段階)
+
+前提条件として Xcode4 を用いるため、それ向けの説明を行います。
+まず Bullet を cmake で Xcode プロジェクトファイルを生成するようにします。
+
+    $ cmake -G Xcode
+
+複数のターゲットが表示されますが、使用するターゲットは以下の4つのみです。
+
+  - BulletSoftBody
+  - BulletCollision
+  - BulletDynamics
+  - LinearMath
+
+これらを以下の手順でビルドします。
+
+  - "Base SDK" を "Latest iOS" に変更する
+  - "Architectures" を "Optimized (arm7)" にする
+  - CTRL + B でビルドを実行
+
+MMDAI 及び MMDME も同じように cmake で Xcode を生成し、SDK の選択を変更する流れで同じです。
+
 ## MinGW (現在この方法でビルドは行っていないため、記述が古い)
 
 Linux 上でクロスコンパイルを行います。yum で MinGW の開発環境が揃えられる
@@ -100,7 +123,7 @@ cmake を使います。mingw32-cmake を使うこと以外方法は同じです
 一旦トップディレクトリで mingw32-cmake を実行します。その後 src ディレクトリに移動し、
 make を実行します。ビルド出来たら make install を実行します。
 
-### MMDFiles / MMDAI
+### MMDME / MMDAI
 
 mingw32-cmake を使うこと以外方法は同じです。OpenGL Easy Extension と
 Bullet Physics の二つがインストールされていることが前提条件です。
@@ -128,5 +151,5 @@ OpenJTalk について取り扱いに注意が必要です。まず、OpenJTalk 
   - CXXFLAGS に -DMECAB_WITHOUT_SHARE_DIC をつける
   - "./configure --with-charset=SHIFT_JIS" で実行する
 
-    export CXXFLAGS="-DMECAB_WITHOUT_SHARE_DIC"; ./configure --with-charset=SHIFT_JIS
+    $ export CXXFLAGS="-DMECAB_WITHOUT_SHARE_DIC"; ./configure --with-charset=SHIFT_JIS
 
