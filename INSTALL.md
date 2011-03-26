@@ -49,6 +49,20 @@ MMDME/include を指定します。
     $ make
     $ sudo make install
 
+### MSVC 限定で必要な環境変数
+
+MSVC 上でビルドする場合はさらに以下の環境変数を設定する必要があります。
+
+  - MMDAI_DIRECTX_SDK_LIBRARY_DIR: DirectX SDK に含まれるライブラリのパスを指定 (dsound.lib で必要)
+  - MMDAI_HTS_ENGINE_LIBRARY_DIR: hts_engine_API.lib があるパスを指定
+  - MMDAI_JULIUS_LIBRARY_DIR: hts_engine_API.lib があるパスを指定
+  - MMDAI_OPENJTALK_LIBRARY_DIR: Open_JTalk.lib があるパスを指定
+  - MMDAI_PORTAUDIO_LIBRARY_DIR: PortAudio.lib があるパスを指定
+  - MMDAI_HTS_ENGINE_INCLUDE_DIR: HTS_engine.h があるパスを指定
+  - MMDAI_JULIUS_INCLUDE_DIR: julius/julius.h があるパスを指定
+  - MMDAI_OPENJTALK_INCLUDE_DIR: njd.h / jpcommon.h などがあるパスを指定
+  - MMDAI_PORTAUDIO_INCLUDE_DIR: portaudio.h があるを指定
+
 ## Linux か MacOSX でビルドする場合
 
     $ cd libMMDME
