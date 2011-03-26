@@ -58,7 +58,8 @@ CONFIG(release, debug|release) {
                 -framework CoreAudio -framework CoreFoundation -framework CoreServices \
                 -framework AudioToolbox -framework AudioUnit -lportaudio
         INCLUDEPATH += /usr/local/include/jtalk
-        LIBS += -L../StaticPlugins -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin -lQMAVariablePlugin
+        LIBS += -L../StaticPlugins -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin \
+                -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin -lQMAVariablePlugin
     }
 }
 

@@ -42,6 +42,9 @@ unix {
     for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
         LIBS += $$system($${path}/libjulius-config --libs) $$system($${path}/libsent-config --libs)
     }
+    # for portaudio
+    macx:LIBS += -framework CoreAudio -framework CoreFoundation -framework CoreServices \
+                 -framework AudioToolbox -framework AudioUnit
 }
 win32 {
     # use MMDAgent's Julius and related libraries
