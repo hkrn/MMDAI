@@ -217,44 +217,44 @@ void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
 
 bool QMAJuliusPlugin::initializeRecognitionEngine()
 {
-  const char *path = NULL;
   char buf[BUFSIZ];
+  QByteArray path;
   QDir dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Julius";
 
-  path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8().constData();
-  MMDAIStringFormat(buf, sizeof(buf), "-d %s", path);
+  path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8();
+  MMDAIStringFormat(buf, sizeof(buf), "-d %s", path.constData());
   buf[sizeof(buf) - 1] = 0;
   m_jconf = j_config_load_string_new(buf);
   if (m_jconf == NULL) {
-    MMDAILogWarn("Failed loading language model for Julius: %s", buf);
+    MMDAILogWarn("Failed loading language model for Julius: %s", path.constData());
     return false;
   }
-  path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8().constData();
-  MMDAIStringFormat(buf, sizeof(buf), "-v %s", path);
+  path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8();
+  MMDAIStringFormat(buf, sizeof(buf), "-v %s", path.constData());
   buf[sizeof(buf) - 1] = 0;
   if (j_config_load_string(m_jconf, buf) < 0) {
-    MMDAILogWarn("Failed loading system dictionary for Julius: %s", buf);
+    MMDAILogWarn("Failed loading system dictionary for Julius: %s", path.constData());
     return false;
   }
-  path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8().constData();
-  MMDAIStringFormat(buf, sizeof(buf), "-h %s", path);
+  path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8();
+  MMDAIStringFormat(buf, sizeof(buf), "-h %s", path.constData());
   buf[sizeof(buf) - 1] = 0;
   if (j_config_load_string(m_jconf, buf) < 0) {
-    MMDAILogWarn("Failed loading acoustic model for Julius: %s", buf);
+    MMDAILogWarn("Failed loading acoustic model for Julius: %s", path.constData());
     return false;
   }
-  path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8().constData();
-  MMDAIStringFormat(buf, sizeof(buf), "-hlist %s", path);
+  path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8();
+  MMDAIStringFormat(buf, sizeof(buf), "-hlist %s", path.constData());
   buf[sizeof(buf) - 1] = 0;
   if (j_config_load_string(m_jconf, buf) < 0) {
-    MMDAILogWarn("Failed loading triphone list for Julius: %s", buf);
+    MMDAILogWarn("Failed loading triphone list for Julius: %s", path.constData());
     return false;
   }
-  path = dir.absoluteFilePath("jconf.txt").toUtf8().constData();
-  MMDAIStringCopy(buf, path, sizeof(buf));
+  path = dir.absoluteFilePath("jconf.txt").toUtf8();
+  MMDAIStringCopy(buf, path.constData(), sizeof(buf));
   buf[sizeof(buf) - 1] = 0;
   if (j_config_load_file(m_jconf, buf)) {
-    MMDAILogWarn("Failed loading configuration for Julius: %s", path);
+    MMDAILogWarn("Failed loading configuration for Julius: %s", path.constData());
     return false;
   }
 
