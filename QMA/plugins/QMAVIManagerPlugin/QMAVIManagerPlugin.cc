@@ -107,7 +107,18 @@ void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
 {
   QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
   QString argv = codec->toUnicode(arguments, strlen(arguments));
-  emit commandPost(QString(command), argv.split("|"));
+#if defined(Q_OS_WIN)
+  argv = argv.replace(codec->toUnicode("\\"), "/");
+#endif
+  QRegExp regexp("\\/[^\\.]+\\.\\w+$");
+  QStringList args;
+  // encodes the filename if the value matches the filename suffix
+  foreach (QString value, argv.split("|")) {
+    if (regexp.indexIn(value) != -1)
+      value = QString(QFile::encodeName(value));
+    args << value;
+  }
+  emit commandPost(QString(command), args);
   free(arguments);
 }
 

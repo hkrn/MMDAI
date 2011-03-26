@@ -51,7 +51,7 @@ QMALipSyncLoder::QMALipSyncLoder(const char *filename)
   m_nexpressions(0),
   m_nphonemes(0)
 {
-  QString path = QFile::decodeName(filename).replace(QChar(0xa5), QChar('/')).replace(QRegExp(".pmd$"), ".lip");
+  QString path = QFile::decodeName(filename).replace(QRegExp(".pmd$"), ".lip");
   if (QDir::isAbsolutePath(path))
     m_file = new QFile(path);
   else
