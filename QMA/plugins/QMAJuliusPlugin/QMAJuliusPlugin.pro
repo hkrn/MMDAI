@@ -49,8 +49,8 @@ unix {
 win32 {
     # use MMDAgent's Julius and related libraries
     # located in MMDAgent/Library_Julius/lib
-    LIBS:debug += -lJulius_D -lPortAudio_D -lws2_32
-    LIBS:release += -lJulius -lPortAudio -lws2_32
+    INCLUDEPATH += $$(MMDAI_JULIUS_INCLUDE_DIR) $$(MMDAI_PORTAUDIO_INCLUDE_DIR)
+    LIBS += -L$$(MMDAI_JULIUS_LIBRARY_DIR) -L$$(MMDAI_PORTAUDIO_LIBRARY_DIR) -L$$(MMDAI_DIRECTX_SDK_LIBRARY_DIR) -lJulius -lPortAudio -ldsound -lws2_32
 }
 
 HEADERS += \

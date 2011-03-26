@@ -65,8 +65,8 @@ macx:LIBS += -liconv -lmecab_custom -framework CoreAudio -framework CoreFoundati
 win32 {
     # use MMDAgent's OpenJTalk and related libraries
     # located in MMDAgent/Library_hts_engine_API/lib
-    LIBS:debug += -lOpenJTalk_D -lhts_engine_API_D -lwinmm
-    LIBS:release += -lOpenJTalk -lhts_engine_API -lwinmm
+    INCLUDEPATH += $$(MMDAI_OPENJTALK_INCLUDE_DIR) $$(MMDAI_HTS_ENGINE_INCLUDE_DIR) $$(MMDAI_PORTAUDIO_INCLUDE_DIR)
+    LIBS += -L$$(MMDAI_OPENJTALK_LIBRARY_DIR) -L$$(MMDAI_HTS_ENGINE_LIBRARY_DIR) -L$$(MMDAI_PORTAUDIO_LIBRARY_DIR) -L$$(MMDAI_DIRECTX_SDK_LIBRARY_DIR) -lOpen_JTalk -lhts_engine_API -lPortAudio -lwinmm
 }
 
 HEADERS += \

@@ -35,6 +35,7 @@
 # /* ----------------------------------------------------------------- */
 
 include(../QMAPlugin.pri)
+QT += opengl
 TARGET = $$qtLibraryTarget(QMALookAtPlugin)
 
 HEADERS += \
