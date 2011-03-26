@@ -851,317 +851,39 @@ bool GLES1SceneRenderEngine::setup(float *campusColor,
 void GLES1SceneRenderEngine::initializeShadowMap(int shadowMapTextureSize)
 {
   (void)shadowMapTextureSize;
-#if 0
-  static const GLfloat genfunc[][4] = {
-    { 1.0, 0.0, 0.0, 0.0 },
-    { 0.0, 1.0, 0.0, 0.0 },
-    { 0.0, 0.0, 1.0, 0.0 },
-    { 0.0, 0.0, 0.0, 1.0 },
-  };
-
-  /* initialize model view matrix */
-  glPushMatrix();
-  glLoadIdentity();
-
-  /* use 4th texture unit for depth texture, make it current */
-  glActiveTexture(GL_TEXTURE3);
-
-  /* prepare a texture object for depth texture Renderering in frame buffer object */
-  glGenTextures(1, &m_depthTextureID);
-  glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
-
-  /* assign depth component to the texture */
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapTextureSize, shadowMapTextureSize, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-
-  /* set texture parameters for shadow mapping */
-#ifdef SHADOW_PCF
-  /* use hardware PCF */
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-#endif
-
-  /* tell OpenGL to compare the R texture coordinates to the (depth) texture value */
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-
-  /* also tell OpenGL to get the compasiron result as alpha value */
-  glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_ALPHA);
-
-  /* set texture coordinates generation mode to use the raw texture coordinates (S, T, R, Q) in eye view */
-  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-  glTexGeni(GL_Q, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-  glTexGendv(GL_S, GL_EYE_PLANE, genfunc[0]);
-  glTexGendv(GL_T, GL_EYE_PLANE, genfunc[1]);
-  glTexGendv(GL_R, GL_EYE_PLANE, genfunc[2]);
-  glTexGendv(GL_Q, GL_EYE_PLANE, genfunc[3]);
-
-  /* finished configuration of depth texture: unbind the texture */
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  /* allocate a frame buffer object (FBO) for depth buffer Renderering */
-  glGenFramebuffersEXT(1, &m_fboID);
-  /* switch to the newly allocated FBO */
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboID);
-  /* bind the texture to the FBO, telling that it should Renderer the depth information to the texture */
-  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, m_depthTextureID, 0);
-  /* also tell OpenGL not to draw and read the color buffers */
-  glDrawBuffer(GL_NONE);
-  glReadBuffer(GL_NONE);
-  /* check FBO status */
-  if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
-    /* cannot use FBO */
-  }
-  /* finished configuration of FBO, now switch to default frame buffer */
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-  /* reset the current texture unit to default */
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-
-  /* restore the model view matrix */
-  glPopMatrix();
-#endif
 }
 
 /* GLES1SceneRenderEngine::setShadowMapping: switch shadow mapping */
 void GLES1SceneRenderEngine::setShadowMapping(bool flag, int shadowMapTextureSize, bool shadowMapLightFirst)
 {
+  (void) shadowMapTextureSize;
+  (void) shadowMapLightFirst;
   m_enableShadowMapping = flag;
-
-  if (m_enableShadowMapping) {
-    /* enabled */
-    if (! m_shadowMapInitialized) {
-      /* initialize now */
-      initializeShadowMap(shadowMapTextureSize);
-      m_shadowMapInitialized = true;
-    }
-    /* set how to set the comparison result value of R coordinates and texture (depth) value */
+  /* disabled */
+  if (m_shadowMapInitialized) {
+    /* disable depth texture unit */
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
-    if (shadowMapLightFirst) {
-      /* when Renderering order is light(full) - dark(shadow part), OpenGL should set the shadow part as true */
-      //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
-    } else {
-      /* when Renderering order is dark(full) - light(non-shadow part), OpenGL should set the shadow part as false */
-      //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-    }
     glDisable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
-    MMDAILogInfoString("Shadow mapping enabled");
-  } else {
-    /* disabled */
-    if (m_shadowMapInitialized) {
-      /* disable depth texture unit */
-      glActiveTexture(GL_TEXTURE3);
-      glDisable(GL_TEXTURE_2D);
-      glActiveTexture(GL_TEXTURE0);
-    }
-    MMDAILogInfoString("Shadow mapping disabled");
   }
 }
 
-/* GLES1SceneRenderEngine::RendererSceneShadowMap: shadow mapping */
-void GLES1SceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMDObject **objects, int size)
+void GLES1SceneRenderEngine::prerender(Option *option,
+                                    PMDObject **objects,
+                                    int size)
 {
-  int i = 0;
-  static GLfloat lightdim[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-  static const GLfloat lightblk[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-  /* Renderer the full scene */
-  /* set model view matrix, as the same as normal Renderering */
-  glMatrixMode(GL_MODELVIEW);
-  applyModelViewMatrix();
-
-  /* Renderer the whole scene */
-  if (option->getShadowMappingLightFirst()) {
-    /* Renderer light setting, later Renderer only the shadow part with dark setting */
-    stage->renderBackground();
-    stage->renderFloor();
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      PMDModel *model = object->getPMDModel();
-      renderModel(model);
-      renderEdge(model);
-    }
-  } else {
-    /* Renderer in dark setting, later Renderer only the non-shadow part with light setting */
-    /* light setting for non-toon objects */
-    lightdim[0] = lightdim[1] = lightdim[2] = 0.55f - 0.2f * option->getShadowMappingSelfDensity();
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightdim);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightdim);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightblk);
-
-    /* Renderer the non-toon objects (back, floor, non-toon models) */
-    stage->renderBackground();
-    stage->renderFloor();
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      PMDModel *model = object->getPMDModel();
-      if (model->getToonFlag() == true)
-        continue;
-      renderModel(model);
-    }
-
-    /* for toon objects, they should apply the model-defined toon texture color at texture coordinates (0, 0) for shadow Renderering */
-    /* so restore the light setting */
-    if (option->getUseCartoonRendering())
-      updateLighting(true,
-                     option->getUseMMDLikeCartoon(),
-                     option->getLightDirection(),
-                     option->getLightIntensity(),
-                     option->getLightColor());
-    /* Renderer the toon objects */
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      PMDModel *model = object->getPMDModel();
-      if (!model->getToonFlag())
-        continue;
-      /* set texture coordinates for shadow mapping */
-      model->updateShadowColorTexCoord(option->getShadowMappingSelfDensity());
-      /* tell model to Renderer with the shadow corrdinates */
-      model->setSelfShadowDrawing(true);
-      /* Renderer model and edge */
-      renderModel(model);
-      renderEdge(model);
-      /* disable shadow Renderering */
-      model->setSelfShadowDrawing(false);
-    }
-    if (!option->getUseCartoonRendering())
-      updateLighting(false, option->getUseMMDLikeCartoon(), option->getLightDirection(), option->getLightIntensity(), option->getLightColor());
-  }
-
-  /* Renderer the part clipped by the depth texture */
-  /* activate the texture unit for shadow mapping and make it current */
-  glActiveTexture(GL_TEXTURE3);
-
-  /* set texture matrix (note: matrices should be set in reverse order) */
-  glMatrixMode(GL_TEXTURE);
-  glLoadIdentity();
-  /* move the range from [-1,1] to [0,1] */
-  glTranslatef(0.5, 0.5, 0.5);
-  glScalef(0.5, 0.5, 0.5);
-  /* multiply the model view matrix when the depth texture was Renderered */
-  glMultMatrixf(m_modelView);
-  /* multiply the inverse matrix of current model view matrix */
-  glMultMatrixf(m_rotMatrixInv);
-
-  /* revert to model view matrix mode */
-  glMatrixMode(GL_MODELVIEW);
-
-  /* enable texture mapping with texture coordinate generation */
-  glEnable(GL_TEXTURE_2D);
-  //glEnable(GL_TEXTURE_GEN_S);
-  //glEnable(GL_TEXTURE_GEN_T);
-  //glEnable(GL_TEXTURE_GEN_R);
-  //glEnable(GL_TEXTURE_GEN_Q);
-
-  /* bind the depth texture Renderered at the first step */
-  glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
-
-  /* depth texture set up was done, now switch current texture unit to default */
-  glActiveTexture(GL_TEXTURE0);
-
-  /* set depth func to allow overwrite for the same surface in the following Renderering */
-  glDepthFunc(GL_LEQUAL);
-
-  if (option->getShadowMappingLightFirst()) {
-    /* the area clipped by depth texture by alpha test is dark part */
-    glAlphaFunc(GL_GEQUAL, 0.1f);
-
-    /* light setting for non-toon objects */
-    lightdim[0] = lightdim[1] = lightdim[2] = 0.55f - 0.2f * option->getShadowMappingSelfDensity();
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightdim);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightdim);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightblk);
-
-    /* Renderer the non-toon objects (back, floor, non-toon models) */
-    stage->renderBackground();
-    stage->renderFloor();
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      PMDModel *model = object->getPMDModel();
-      if (!model->getToonFlag())
-        continue;
-      renderModel(model);
-    }
-
-    /* for toon objects, they should apply the model-defined toon texture color at texture coordinates (0, 0) for shadow Renderering */
-    /* so restore the light setting */
-    if (option->getUseCartoonRendering())
-      updateLighting(true,
-                     option->getUseMMDLikeCartoon(),
-                     option->getLightDirection(),
-                     option->getLightIntensity(),
-                     option->getLightColor());
-    /* Renderer the toon objects */
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      PMDModel *model = object->getPMDModel();
-      if (!model->getToonFlag())
-        continue;
-      /* set texture coordinates for shadow mapping */
-      model->updateShadowColorTexCoord(option->getShadowMappingSelfDensity());
-      /* tell model to Renderer with the shadow corrdinates */
-      model->setSelfShadowDrawing(true);
-      /* Renderer model and edge */
-      renderModel(model);
-      /* disable shadow Renderering */
-      model->setSelfShadowDrawing(false);
-    }
-    if (!option->getUseCartoonRendering())
-      updateLighting(false,
-                     option->getUseMMDLikeCartoon(),
-                     option->getLightDirection(),
-                     option->getLightIntensity(),
-                     option->getLightColor());
-  } else {
-    /* the area clipped by depth texture by alpha test is light part */
-    glAlphaFunc(GL_GEQUAL, 0.001f);
-    stage->renderBackground();
-    stage->renderFloor();
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      renderModel(object->getPMDModel());
-    }
-  }
-
-  /* reset settings */
-  glDepthFunc(GL_LESS);
-  glAlphaFunc(GL_GEQUAL, 0.05f);
-
-  glActiveTexture(GL_TEXTURE3);
-  //glDisable(GL_TEXTURE_GEN_S);
-  //glDisable(GL_TEXTURE_GEN_T);
-  //glDisable(GL_TEXTURE_GEN_R);
-  //glDisable(GL_TEXTURE_GEN_Q);
-  glDisable(GL_TEXTURE_2D);
-  glActiveTexture(GL_TEXTURE0);
+  (void) option;
+  (void) objects;
+  (void) size;
+  /* clear Renderering buffer */
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
-/* GLES1SceneRenderEngine::RendererScene: Renderer scene */
-void GLES1SceneRenderEngine::renderScene(Option *option,
-                                      Stage *stage,
-                                      PMDObject **objects,
-                                      int size)
+/* GLES1SceneRenderEngine::render: Render all */
+void GLES1SceneRenderEngine::render(Option *option,
+                                 Stage *stage,
+                                 PMDObject **objects,
+                                 int size)
 {
   int i = 0;
 
@@ -1223,139 +945,7 @@ void GLES1SceneRenderEngine::renderScene(Option *option,
     renderModel(model);
     renderEdge(model);
   }
-}
 
-void GLES1SceneRenderEngine::prerender(Option *option,
-                                    PMDObject **objects,
-                                    int size)
-{
-  if (m_enableShadowMapping) {
-#if 0
-    int i = 0;
-    GLint viewport[4]; /* store viewport */
-    GLfloat projection[16]; /* store projection transform */
-
-#ifdef SHADOW_AUTO_VIEW
-    float fovy = 0.0, eyeDist = 0.0;
-    btVector3 v;
-#endif
-
-    /* Renderer the depth texture */
-    /* store the current viewport */
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    /* store the current projection matrix */
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-
-    /* switch to FBO for depth buffer Renderering */
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboID);
-
-    /* clear the buffer */
-    /* clear only the depth buffer, since other buffers will not be used */
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    /* set the viewport to the required texture size */
-    glViewport(0, 0, option->getShadowMappingTextureSize(), option->getShadowMappingTextureSize());
-
-    /* reset the projection matrix */
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    /* set the model view matrix to make the light position as eye point and capture the whole scene in the view */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-#ifdef SHADOW_AUTO_VIEW
-    /* auto-update the view area according to the model */
-    /* the model range and position has been computed at model updates before */
-    /* set the view angle */
-    fovy = SHADOW_AUTO_VIEW_ANGLE;
-    /* set the distance to cover all the model range */
-    eyeDist = m_shadowMapAutoViewRadius / sinf(fovy * 0.5f * 3.1415926f / 180.0f);
-    /* set the perspective */
-    gluPerspective(fovy, 1.0, 1.0, eyeDist + m_shadowMapAutoViewRadius + 50.0f); /* +50.0f is needed to cover the background */
-    /* the viewpoint should be at eyeDist far toward light direction from the model center */
-    v = m_lightVec * eyeDist + m_shadowMapAutoViewEyePoint;
-    gluLookAt(v.x(), v.y(), v.z(), m_shadowMapAutoViewEyePoint.x(), m_shadowMapAutoViewEyePoint.y(), m_shadowMapAutoViewEyePoint.z(), 0.0, 1.0, 0.0);
-#else
-    /* fixed view */
-    gluPerspective(25.0, 1.0, 1.0, 120.0);
-    gluLookAt(30.0, 77.0, 30.0, 0.0, 17.0, 0.0, 0.0, 1.0, 0.0);
-#endif
-
-    /* keep the current model view for later process */
-    glGetDoublev(GL_MODELVIEW_MATRIX, m_modelView);
-
-    /* do not write into frame buffer other than depth information */
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-    /* also, lighting is not needed */
-    glDisable(GL_LIGHTING);
-
-    /* disable Renderering the front surface to get the depth of back face */
-    glCullFace(GL_FRONT);
-
-    /* disable alpha test */
-    glDisable(GL_ALPHA_TEST);
-
-    /* we are now writing to depth texture using FBO, so disable the depth texture mapping here */
-    glActiveTexture(GL_TEXTURE3);
-    glDisable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0);
-
-    /* set polygon offset to avoid "moire" */
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(4.0, 4.0);
-
-    /* Renderer objects for depth */
-    /* only objects that wants to drop shadow should be Renderered here */
-    for (i = 0; i < size; i++) {
-      PMDObject *object = objects[i];
-      if (!object->isEnable())
-        continue;
-      glPushMatrix();
-      renderShadow(object->getPMDModel());
-      glPopMatrix();
-    }
-
-    /* reset the polygon offset */
-    glDisable(GL_POLYGON_OFFSET_FILL);
-
-    /* switch to default FBO */
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-    /* revert configurations to normal Renderering */
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(projection);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glEnable(GL_LIGHTING);
-    glCullFace(GL_BACK);
-    glEnable(GL_ALPHA_TEST);
-#else
-    option = NULL;
-    objects = NULL;
-    size = 0;
-#endif
-    /* clear all the buffers */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  }
-  else {
-    /* clear Renderering buffer */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  }
-}
-
-/* GLES1SceneRenderEngine::render: Render all */
-void GLES1SceneRenderEngine::render(Option *option,
-                                 Stage *stage,
-                                 PMDObject **objects,
-                                 int size)
-{
-  if (m_enableShadowMapping)
-    renderSceneShadowMap(option, stage, objects, size);
-  else
-    renderScene(option, stage, objects, size);
 }
 
 /* GLES1SceneRenderEngine::pickModel: pick up a model at the screen position */

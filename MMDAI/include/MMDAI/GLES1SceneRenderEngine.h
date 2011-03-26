@@ -145,15 +145,6 @@ namespace MMDAI {
     void drawSphere(int lats, int longs);
     void drawConvex(btConvexShape *shape);
 
-    void renderSceneShadowMap(Option *option,
-                              Stage *stage,
-                              PMDObject **objects,
-                              int size);
-    void renderScene(Option *option,
-                     Stage *stage,
-                     PMDObject **objects,
-                     int size);
-
     btVector3 m_lightVec;                  /* light vector for shadow maapping */
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
