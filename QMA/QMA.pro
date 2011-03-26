@@ -34,23 +34,18 @@
 # /* POSSIBILITY OF SUCH DAMAGE.                                       */
 # /* ----------------------------------------------------------------- */
 
-QT += core gui opengl
+include(QMACommon.pri)
 
+QT += core gui opengl
 TARGET = QtMMDAI
 TEMPLATE = app
-LIBS += -lMMDAI -lMMDME -lglee -lBulletDynamics -lBulletCollision -lBulletSoftBody -lLinearMath
-
-unix:LIBS += -L/usr/local/lib
-unix:INCLUDEPATH += /usr/include/bullet /usr/local/include/bullet
-win32:LIBS += -L$$(MMDME_LIBRARY_DIR) -L$$(MMDAI_LIBRARY_DIR) -L$$(BULLET_LIBRARY_DIR) -L$$(GLEE_DIR)
-win32:INCLUDEPATH += $$(MMDME_INCLUDE_DIR) $$(MMDAI_INCLUDE_DIR) $$(BULLET_INCLUDE_DIR) $$(GLEE_DIR)
 
 CONFIG(release, debug|release) {
     macx {
-        LIBS += -lportaudio
-        QT += phonon
         DEFINES += QMA_BUNDLE_PLUGINS
         CONFIG += static
+        # for QMAAudioPlugin
+        QT += phonon
         # QMAJuliusPlugin
         JULIUS_PATHS  = /usr/local/bin /usr/bin
         for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
@@ -59,11 +54,11 @@ CONFIG(release, debug|release) {
         # QMAOpenJTalkPlugin
         LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_accent_phrase \
                 -lnjd_set_accent_type -lnjd_set_digit -lnjd_set_long_vowel -lnjd_set_pronunciation \
-                -lnjd_set_unvoiced_vowel -ltext2mecab -lmecab_custom \
+                -lnjd_set_unvoiced_vowel -ltext2mecab -lmecab_custom -lportaudio \
                 -framework CoreAudio -framework CoreFoundation -framework CoreServices \
                 -framework AudioToolbox -framework AudioUnit -lportaudio
         INCLUDEPATH += /usr/local/include/jtalk
-        LIBS += -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin
+        LIBS += -L../StaticPlugins -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin -lQMAVariablePlugin
     }
 }
 
@@ -83,7 +78,6 @@ HEADERS  += QMAWidget.h \
     QMAPlugin.h \
     QMATimer.h \
     QMAWindow.h \
-    CommandDispatcher.h \
     QMAModelLoader.h \
     QMAModelLoaderFactory.h \
     QMALipSyncLoder.h \
