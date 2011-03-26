@@ -247,7 +247,7 @@ void QMAVariablePlugin::timerEvent(QTimerEvent *event)
 {
   QMapIterator<QString, QBasicTimer *> iterator(m_timers);
   QString key;
-  QBasicTimer *timer;
+  QBasicTimer *timer = NULL;
   const int id = event->timerId();
   while (iterator.hasNext()) {
     iterator.next();
