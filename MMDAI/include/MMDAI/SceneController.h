@@ -41,7 +41,7 @@
 #ifndef SCENECONTROLLER_H
 #define SCENECONTROLLER_H
 
-#include <MMDME/Common.h>
+#include <MMDME/MMDME.h>
 
 #include "MMDAI/MotionStocker.h"
 #include "MMDAI/Option.h"
