@@ -731,7 +731,7 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
             const PMDTextureNative *native = addtex->getNative();
             if (native != NULL) {
               glBindTexture(GL_TEXTURE_2D, native->id);
-              TexCoord *coords = model->getSphereCoords2At(i + 1);
+              TexCoord *coords = model->getSphereCoords2At(i);
               if (coords != NULL) {
                 MMDAIGLGenSphereCoords(&coords, vertices, normals, nvertices);
                 glClientActiveTexture(GL_TEXTURE2);
