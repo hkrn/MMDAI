@@ -70,6 +70,12 @@ namespace MMDAI {
     GLES1SceneRenderEngine();
     ~GLES1SceneRenderEngine();
 
+    PMDModel *allocateModel();
+    bool loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet);
+    void releaseModel(PMDModel *model);
+    PMDMaterial **allocateMaterials(int size);
+    void releaseMaterials(PMDMaterial **materials, int size);
+
     void renderRigidBodies(BulletPhysics *bullet);
     void renderBone(PMDBone *bone);
     void renderBones(PMDModel *model);

@@ -48,6 +48,134 @@
 
 namespace MMDAI {
 
+enum GLPMDModelBuffer {
+  kEdgeVertices,
+  kEdgeIndices,
+  kShadowVertices,
+  kShadowIndices,
+  kModelVertices,
+  kModelNormals,
+  kModelTexCoords,
+  kModelToonTexCoords,
+  kModelSphereMapCoords,
+  kModelSphereMap2Coords,
+  kModelBufferMax,
+};
+
+class GLPMDModel : public PMDModel {
+public:
+  GLPMDModel(PMDRenderEngine *engine) : PMDModel(engine), m_materialVBO(NULL), m_nmaterials(0) {
+  }
+  ~GLPMDModel() {
+    glDeleteBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
+    if (m_materialVBO != 0) {
+      glDeleteBuffers(m_nmaterials, m_materialVBO);
+      MMDAIMemoryRelease(m_materialVBO);
+    }
+    if (m_spheres) {
+      for (unsigned int i = 0; i < m_nmaterials; i++) {
+        MMDAIMemoryRelease(m_spheres[i]);
+      }
+      MMDAIMemoryRelease(m_spheres);
+    }
+    if (m_spheres2) {
+      for (unsigned int i = 0; i < m_nmaterials; i++) {
+        MMDAIMemoryRelease(m_spheres2[i]);
+      }
+      MMDAIMemoryRelease(m_spheres2);
+    }
+  }
+  bool load(PMDModelLoader *loader, BulletPhysics *bullet) {
+    if (!PMDModel::load(loader, bullet))
+      return false;
+    const unsigned int nvertices = getNumVertex();
+    const unsigned short *surfaceData = getSurfacesPtr();
+    const bool hasSingleSphereMap = this->hasSingleSphereMap();
+    const bool hasMultipleSphereMap = this->hasMultipleSphereMap();
+    m_nmaterials = getNumMaterial();
+    m_materialVBO = static_cast<GLuint *>(MMDAIMemoryAllocate(m_nmaterials * sizeof(GLuint)));
+    if (m_materialVBO == NULL)
+      return false;
+    m_spheres = static_cast<TexCoord **>(MMDAIMemoryAllocate(sizeof(void *) * m_nmaterials));
+    if (m_spheres == NULL)
+      return false;
+    m_spheres2 = static_cast<TexCoord **>(MMDAIMemoryAllocate(sizeof(void *) * m_nmaterials));
+    if (m_spheres2 == NULL)
+      return false;
+    glGenBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
+    glGenBuffers(m_nmaterials, m_materialVBO);
+    // edge buffer
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_modelVBO[kEdgeIndices]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumSurfaceForEdge() * sizeof(GLushort), getSurfacesForEdgePtr(), GL_STATIC_DRAW);
+    // shadow buffer
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_modelVBO[kShadowIndices]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumSurface() * sizeof(GLushort), getSurfacesPtr(), GL_STATIC_DRAW);
+    // texture for model buffer
+    glBindBuffer(GL_ARRAY_BUFFER, m_modelVBO[kModelTexCoords]);
+    glBufferData(GL_ARRAY_BUFFER, getNumVertex() * sizeof(TexCoord), getTexCoordsPtr(), GL_STATIC_DRAW);
+    // material indices
+    for (unsigned int i = 0; i < m_nmaterials; i++) {
+      PMDMaterial *m = getMaterialAt(i);
+      const PMDTexture *tex = m->getTexture();
+      m_spheres[i] = NULL;
+      m_spheres2[i] = NULL;
+      if (tex != NULL) {
+        const PMDTextureNative *native = tex->getNative();
+        if (native != NULL && hasSingleSphereMap && tex->isSphereMap()) {
+          TexCoord *coords = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * nvertices));
+          if (coords != NULL) {
+            memset(coords, 0, sizeof(TexCoord) * nvertices);
+            m_spheres[i] = coords;
+          }
+        }
+      }
+      if (hasMultipleSphereMap) {
+        const PMDTexture *addtex = m->getAdditionalTexture();
+        if (addtex != NULL) {
+          const PMDTextureNative *native = addtex->getNative();
+          if (native != NULL) {
+            TexCoord *coords = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * nvertices));
+            if (coords != NULL) {
+              memset(coords, 0, sizeof(TexCoord) * nvertices);
+              m_spheres2[i] = coords;
+            }
+          }
+        }
+      }
+      const int nsurfaces = getMaterialAt(i)->getNumSurface();
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_materialVBO[i]);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, nsurfaces * sizeof(GLushort), surfaceData, GL_STATIC_DRAW);
+      surfaceData += nsurfaces;
+    }
+    return true;
+  }
+  GLuint getMaterialVBOAt(GLuint index) const {
+    return m_materialVBO[index];
+  }
+  GLuint getModelVBOAt(GLPMDModelBuffer index) const {
+    return m_modelVBO[index];
+  }
+  TexCoord *getSphereCoordsAt(GLuint index) const {
+    return m_spheres[index];
+  }
+  TexCoord *getSphereCoords2At(GLuint index) const {
+    return m_spheres2[index];
+  }
+private:
+  TexCoord **m_spheres;
+  TexCoord **m_spheres2;
+  GLuint *m_materialVBO;
+  GLuint m_modelVBO[kModelBufferMax];
+  GLuint m_nmaterials;
+};
+  
+class GLPMDMaterial : public PMDMaterial {
+public:
+  GLPMDMaterial(PMDRenderEngine *engine) : PMDMaterial(engine) {
+  }
+private:
+};
+
 GLES1SceneRenderEngine::GLES1SceneRenderEngine()
   : m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
     m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
@@ -68,6 +196,39 @@ GLES1SceneRenderEngine::GLES1SceneRenderEngine()
 GLES1SceneRenderEngine::~GLES1SceneRenderEngine()
 {
 }
+
+PMDMaterial **GLES1SceneRenderEngine::allocateMaterials(int size)
+{
+  PMDMaterial **materials = reinterpret_cast<PMDMaterial **>(new GLPMDMaterial*[size]);
+  for (int i = 0; i < size; i++) {
+    materials[i] = new GLPMDMaterial(this);
+  }
+  return materials;
+}
+
+void GLES1SceneRenderEngine::releaseMaterials(PMDMaterial **materials, int size)
+{
+  for (int i = 0; i < size; i++) {
+    delete materials[i];
+  }
+  delete[] materials;
+}
+
+PMDModel *GLES1SceneRenderEngine::allocateModel()
+{
+  return new GLPMDModel(this);
+}
+
+bool GLES1SceneRenderEngine::loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet)
+{
+  return reinterpret_cast<GLPMDModel *>(model)->load(loader, bullet);
+}
+  
+void GLES1SceneRenderEngine::releaseModel(PMDModel *model)
+{
+  delete model;
+}
+
 
 void GLES1SceneRenderEngine::drawCube()
 {
@@ -384,13 +545,12 @@ void GLES1SceneRenderEngine::renderBones(PMDModel *model)
    glEnable(GL_LIGHTING);
 }
 
-static TexCoord *MMDAIGLGenSphereCoords(const btVector3 *positions,
-                                        const btVector3 *normals,
-                                        const unsigned int count)
+static void MMDAIGLGenSphereCoords(TexCoord **ptr,
+                                   const btVector3 *positions,
+                                   const btVector3 *normals,
+                                   const unsigned int count)
 {
-  TexCoord *ptr = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * count));
-  if (ptr == NULL)
-    return NULL;
+  TexCoord *p = *ptr;
   for (unsigned int i = 0; i <  count; i++) {
     const btVector3 position = positions[i];
     const btVector3 normal = normals[i];
@@ -399,18 +559,19 @@ static TexCoord *MMDAIGLGenSphereCoords(const btVector3 *positions,
     const btScalar y = r.y();
     const btScalar z = r.z() + 1.0;
     const btScalar m = 2.0 * sqrt(x * x + y * y + z * z);
-    ptr[i].u = x / m + 0.5;
-    ptr[i].v = y / m + 0.5;
+    TexCoord *coord = &p[i];
+    coord->u = x / m + 0.5;
+    coord->v = y / m + 0.5;
   }
-  return ptr;
 }
 
 /* needs multi-texture function on OpenGL: */
 /* texture unit 0: model texture */
 /* texture unit 1: toon texture for toon shading */
 /* texture unit 2: additional sphere map texture, if exist */
-void GLES1SceneRenderEngine::renderModel(PMDModel *model)
+void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
 {
+  GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
   const btVector3 *vertices = model->getSkinnedVerticesPtr();
   const btVector3 *normals = model->getSkinnedNormalsPtr();
   const unsigned int nvertices = model->getNumVertex();
@@ -428,15 +589,22 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
    glClientActiveTexture(GL_TEXTURE0);
 
    /* set lists */
-   glEnableClientState(GL_VERTEX_ARRAY);
-   glEnableClientState(GL_NORMAL_ARRAY);
-   glVertexPointer(3, GL_FLOAT, sizeof(btVector3), vertices);
-   glNormalPointer(GL_FLOAT, sizeof(btVector3), normals);
+  size_t vsize = nvertices  * sizeof(btVector3);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_NORMAL_ARRAY);
+  glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelVertices));
+  glBufferData(GL_ARRAY_BUFFER, vsize, model->getSkinnedVerticesPtr(), GL_DYNAMIC_DRAW);
+  glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
+  glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelNormals));
+  glBufferData(GL_ARRAY_BUFFER, vsize, model->getSkinnedNormalsPtr(), GL_DYNAMIC_DRAW);
+  glNormalPointer(GL_FLOAT, sizeof(btVector3), NULL);
 
    /* set model texture coordinates to texture unit 0 */
-   glClientActiveTexture(GL_TEXTURE0);
-   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-   glTexCoordPointer(2, GL_FLOAT, 0, model->getTexCoordsPtr());
+  glClientActiveTexture(GL_TEXTURE0);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelTexCoords));
+  glTexCoordPointer(2, GL_FLOAT, 0, NULL);
 
    const bool enableToon = model->getToonFlag();
    const bool hasSingleSphereMap = model->hasSingleSphereMap();
@@ -447,21 +615,22 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
       glActiveTexture(GL_TEXTURE1);
       glEnable(GL_TEXTURE_2D);
       glClientActiveTexture(GL_TEXTURE1);
-      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-      if (model->isSelfShadowEnabled()) {
-         /* when drawing a shadow part in shadow mapping, force toon texture coordinates to (0, 0) */
-         glTexCoordPointer(2, GL_FLOAT, 0, model->getToonTexCoordsForSelfShadowPtr());
-      }
-      else {
-         glTexCoordPointer(2, GL_FLOAT, 0, model->getToonTexCoordsPtr());
-      }
+     glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelToonTexCoords));
+     if (model->isSelfShadowEnabled()) {
+       /* when drawing a shadow part in shadow mapping, force toon texture coordinates to (0, 0) */
+       glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), model->getToonTexCoordsForSelfShadowPtr(), GL_DYNAMIC_DRAW);
+       glTexCoordPointer(2, GL_FLOAT, 0, NULL);
+     }
+     else {
+       glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), model->getToonTexCoordsPtr(), GL_DYNAMIC_DRAW);
+       glTexCoordPointer(2, GL_FLOAT, 0, NULL);
+     }
       glActiveTexture(GL_TEXTURE0);
       glClientActiveTexture(GL_TEXTURE0);
    }
 
    /* calculate alpha value, applying model global alpha */
    const float modelAlpha = model->getGlobalAlpha();
-   const unsigned short *surfaceData = model->getSurfacesPtr();
 
    /* render per material */
    const int nmaterials = model->getNumMaterial();
@@ -517,10 +686,12 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
               /* enable texture coordinate generation */
               if (tex->isSphereMapAdd())
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-              TexCoord *coords = MMDAIGLGenSphereCoords(vertices, normals, nvertices);
+              TexCoord *coords = model->getSphereCoordsAt(i);
               if (coords != NULL) {
-                glTexCoordPointer(2, GL_FLOAT, 0, coords);
-                MMDAIMemoryRelease(coords);
+                MMDAIGLGenSphereCoords(&coords, vertices, normals, nvertices);
+                glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelSphereMapCoords));
+                glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), coords, GL_DYNAMIC_DRAW);
+                glTexCoordPointer(2, GL_FLOAT, 0, NULL);
               }
             }
          }
@@ -560,12 +731,14 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
             const PMDTextureNative *native = addtex->getNative();
             if (native != NULL) {
               glBindTexture(GL_TEXTURE_2D, native->id);
-              TexCoord *coords = MMDAIGLGenSphereCoords(vertices, normals, nvertices);
+              TexCoord *coords = model->getSphereCoords2At(i + 1);
               if (coords != NULL) {
+                MMDAIGLGenSphereCoords(&coords, vertices, normals, nvertices);
                 glClientActiveTexture(GL_TEXTURE2);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, 0, coords);
-                MMDAIMemoryRelease(coords);
+                glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelSphereMap2Coords));
+                glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), coords, GL_DYNAMIC_DRAW);
+                glTexCoordPointer(2, GL_FLOAT, 0, NULL);
               }
             }
             else {
@@ -580,11 +753,8 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
       }
 
       /* draw elements */
-      const int nsurfaces = m->getNumSurface();
-      glDrawElements(GL_TRIANGLES, nsurfaces, GL_UNSIGNED_SHORT, surfaceData);
-
-      /* move surface pointer to next material */
-      surfaceData += nsurfaces;
+     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->getMaterialVBOAt(i));
+     glDrawElements(GL_TRIANGLES, m->getNumSurface(), GL_UNSIGNED_SHORT, NULL);
 
       /* reset some parameters */
       if (tex && tex->isSphereMap() && tex->isSphereMapAdd()) {
@@ -632,8 +802,9 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *model)
 #endif
 }
 
-void GLES1SceneRenderEngine::renderEdge(PMDModel *model)
+void GLES1SceneRenderEngine::renderEdge(PMDModel *ptr)
 {
+   GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
    const btVector3 *vertices = model->getVerticesPtr();
    const bool enableToon = model->getToonFlag();
    const unsigned int nsurfaces = model->getNumSurfaceForEdge();
@@ -654,11 +825,13 @@ void GLES1SceneRenderEngine::renderEdge(PMDModel *model)
    const float *edgeColors = model->getEdgeColors();
 
    glDisable(GL_LIGHTING);
-   glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer(3, GL_FLOAT, sizeof(btVector3), model->getEdgeVerticesPtr());
-   glColor4f(edgeColors[0], edgeColors[1], edgeColors[2], edgeColors[3] * modelAlpha);
-   glDrawElements(GL_TRIANGLES, nsurfaces, GL_UNSIGNED_SHORT, model->getSurfacesForEdgePtr());
-   glDisableClientState(GL_VERTEX_ARRAY);
+  glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kEdgeVertices));
+  glBufferData(GL_ARRAY_BUFFER, model->getNumVertex() * sizeof(btVector3), model->getEdgeVerticesPtr(), GL_DYNAMIC_DRAW);
+  glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
+  glColor4f(edgeColors[0], edgeColors[1], edgeColors[2], edgeColors[3] * modelAlpha);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->getModelVBOAt(kEdgeIndices));
+  glDrawElements(GL_TRIANGLES, nsurfaces, GL_UNSIGNED_SHORT, NULL);
+  glDisableClientState(GL_VERTEX_ARRAY);
    glEnable(GL_LIGHTING);
 
    /* draw front again */
@@ -670,16 +843,20 @@ void GLES1SceneRenderEngine::renderEdge(PMDModel *model)
 #endif
 }
 
-void GLES1SceneRenderEngine::renderShadow(PMDModel *model)
+void GLES1SceneRenderEngine::renderShadow(PMDModel *ptr)
 {
+   GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
    const btVector3 *vertices = model->getVerticesPtr();
    if (!vertices)
      return;
 
    glDisable(GL_CULL_FACE);
    glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer(3, GL_FLOAT, sizeof(btVector3), model->getSkinnedVerticesPtr());
-   glDrawElements(GL_TRIANGLES, model->getNumSurface(), GL_UNSIGNED_SHORT, model->getSurfacesPtr());
+  glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kShadowVertices));
+  glBufferData(GL_ARRAY_BUFFER, model->getNumVertex() * sizeof(btVector3), model->getSkinnedVerticesPtr(), GL_DYNAMIC_DRAW);
+  glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->getModelVBOAt(kShadowIndices));
+  glDrawElements(GL_TRIANGLES, model->getNumSurface(), GL_UNSIGNED_SHORT, NULL);
    glDisableClientState(GL_VERTEX_ARRAY);
    glEnable(GL_CULL_FACE);
 }
