@@ -59,6 +59,7 @@ namespace MMDAI {
   class Option;
   class PMDBone;
   class PMDModel;
+  class PMDModelLoader;
   class PMDObject;
   class PMDTexture;
   class Stage;
@@ -77,6 +78,7 @@ namespace MMDAI {
     ~GLSceneRenderEngine();
 
     PMDModel *allocateModel();
+    bool loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet);
     void releaseModel(PMDModel *model);
     PMDMaterial **allocateMaterials(int size);
     void releaseMaterials(PMDMaterial **materials, int size);

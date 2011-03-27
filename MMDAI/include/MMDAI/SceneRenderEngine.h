@@ -50,6 +50,7 @@ namespace MMDAI {
   class Option;
   class PMDBone;
   class PMDModel;
+  class PMDModelLoader;
   class PMDObject;
   class PMDTexture;
   class Stage;
@@ -62,6 +63,7 @@ namespace MMDAI {
     virtual ~SceneRenderEngine() {}
 
     virtual PMDModel *allocateModel() = 0;
+    virtual bool loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet) = 0;
     virtual void releaseModel(PMDModel *model) = 0;
 
     virtual void renderModelCached(PMDModel *model,

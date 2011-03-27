@@ -174,7 +174,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   m_isEnable = true;
 
   /* load model */
-  if (m_model->load(modelLoader, bullet) == false) {
+  if (m_engine->loadModel(m_model, modelLoader, bullet) == false) {
     clear();
     return false;
   }
