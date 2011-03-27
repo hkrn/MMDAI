@@ -68,6 +68,8 @@ private:
    PMDTexture m_texture;            /* pointer to texture */
    PMDTexture m_additionalTexture;  /* pointer to additional sphere map */
 
+   PMDRenderEngine *m_engine;
+
    /* initialize: initialize material */
    void initialize();
 
@@ -79,13 +81,13 @@ private:
 public:
 
    /* PMDMaterial: constructor */
-   PMDMaterial();
+   PMDMaterial(PMDRenderEngine *engine);
 
    /* ~PMDMaterial: destructor */
-   ~PMDMaterial();
+   virtual ~PMDMaterial();
 
    /* setup: initialize and setup material */
-   bool setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEngine *engine);
+   bool setup(PMDFile_Material *m, PMDModelLoader *loader);
 
    /* hasSingleSphereMap: return if it has single sphere maps */
    bool hasSingleSphereMap() const;

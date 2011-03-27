@@ -64,7 +64,7 @@ class PMDObject
 private:
 
    char *m_alias;               /* alias */
-   PMDModel m_pmd;                 /* model */
+   PMDModel *m_model;           /* model */
    MotionManager *m_motionManager; /* motion manager */
    LipSync *m_globalLipSync;
    LipSync m_localLipSync;

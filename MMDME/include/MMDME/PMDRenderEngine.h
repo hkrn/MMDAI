@@ -43,6 +43,7 @@ namespace MMDAI {
 
 class BulletPhysics;
 class PMDBone;
+class PMDMaterial;
 class PMDModel;
 
 typedef struct PMDTextureNative PMDTextureNative;
@@ -57,6 +58,10 @@ public:
   virtual void renderModel(PMDModel *model) = 0;
   virtual void renderEdge(PMDModel *model) = 0;
   virtual void renderShadow(PMDModel *model) = 0;
+
+  virtual PMDMaterial **allocateMaterials(int size) = 0;
+  virtual void releaseMaterials(PMDMaterial **materials, int size) = 0;
+
   virtual PMDTextureNative *allocateTexture(const unsigned char *data,
                                             const int width,
                                             const int height,

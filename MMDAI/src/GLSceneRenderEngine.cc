@@ -49,6 +49,25 @@
 
 namespace MMDAI {
 
+class GLPMDModel : public PMDModel {
+public:
+  GLPMDModel(PMDRenderEngine *engine) : PMDModel(engine) {
+  }
+  bool load(PMDModelLoader *loader, BulletPhysics *bullet) {
+    bool ret = PMDModel::load(loader, bullet);
+    return ret;
+  }
+private:
+};
+
+class GLPMDMaterial : public PMDMaterial {
+  friend class GLPMDModel;
+public:
+  GLPMDMaterial(PMDRenderEngine *engine) : PMDMaterial(engine) {
+  }
+private:
+};
+
 GLSceneRenderEngine::GLSceneRenderEngine()
   : m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
     m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
@@ -68,6 +87,33 @@ GLSceneRenderEngine::GLSceneRenderEngine()
 
 GLSceneRenderEngine::~GLSceneRenderEngine()
 {
+}
+
+PMDMaterial **GLSceneRenderEngine::allocateMaterials(int size)
+{
+  PMDMaterial **materials = reinterpret_cast<PMDMaterial **>(new GLPMDMaterial*[size]);
+  for (int i = 0; i < size; i++) {
+    materials[i] = new GLPMDMaterial(this);
+  }
+  return materials;
+}
+
+void GLSceneRenderEngine::releaseMaterials(PMDMaterial **materials, int size)
+{
+  for (int i = 0; i < size; i++) {
+    delete materials[i];
+  }
+  delete[] materials;
+}
+
+PMDModel *GLSceneRenderEngine::allocateModel()
+{
+  return new GLPMDModel(this);
+}
+
+void GLSceneRenderEngine::releaseModel(PMDModel *model)
+{
+  delete model;
 }
 
 void GLSceneRenderEngine::drawCube()

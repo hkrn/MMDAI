@@ -121,6 +121,9 @@ QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
 {
   /* YEN SIGN (0x5c -> 0xa5) to SLASH */
   QString path = QFile::decodeName(filename);
+#if !defined(Q_OS_WIN)
+  path = path.replace(QChar(0xa5), QChar('/'));
+#endif
   if (QDir::isAbsolutePath(path))
     m_file = new QFile(path);
   else

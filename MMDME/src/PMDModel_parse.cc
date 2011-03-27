@@ -43,7 +43,7 @@
 namespace MMDAI {
 
 /* PMDModel::parse: initialize and load from ptr memories */
-bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet)
+bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 {
    bool ret = true;
    btQuaternion defaultRot;
@@ -79,7 +79,7 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
    /* reset toon texture IDs by system default textures */
    for (int i = 0; i < kNSystemTextureFiles; i++) {
       PMDTexture *texture = &m_localToonTexture[i];
-      texture->setRenderEngine(engine);
+      texture->setRenderEngine(m_engine);
       loader->loadSystemTexture(i, texture);
    }
 
@@ -154,10 +154,10 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
    /* material ptr (color, texture, toon parameter, edge flag) */
    m_numMaterial = *((unsigned int *) ptr);
    ptr += sizeof(unsigned int);
-   m_material = new PMDMaterial[m_numMaterial];
+   m_material = m_engine->allocateMaterials(m_numMaterial);
    fileMaterial = (PMDFile_Material *) ptr;
    for (unsigned int i = 0; i < m_numMaterial; i++) {
-      if (!m_material[i].setup(&fileMaterial[i], loader, engine)) {
+      if (!m_material[i]->setup(&fileMaterial[i], loader)) {
          /* ret = false; */
       }
    }
@@ -240,7 +240,7 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
       /* assign default toon textures for toon shading */
       for (int i = 0; i <= kNSystemTextureFiles; i++) {
         PMDTexture *texture = &m_localToonTexture[i];
-        texture->setRenderEngine(engine);
+        texture->setRenderEngine(m_engine);
         loader->loadSystemTexture(i, texture);
       }
    } else {
@@ -261,12 +261,12 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
       /* toon texture file list (replace toon01.bmp - toon10.bmp) */
       /* the "toon0.bmp" should be loaded separatedly */
       PMDTexture *texture = &m_localToonTexture[0];
-      texture->setRenderEngine(engine);
+      texture->setRenderEngine(m_engine);
       loader->loadSystemTexture(0, texture);
       for (int i = 1; i <= kNSystemTextureFiles; i++) {
          const char *exToonBMPName = (const char *)ptr;
          texture = &m_localToonTexture[i];
-         texture->setRenderEngine(engine);
+         texture->setRenderEngine(m_engine);
          loader->loadModelTexture(exToonBMPName, texture);
          ptr += 100;
       }
@@ -352,7 +352,7 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
    m_numSurfaceForEdge = 0;
 
    for (unsigned int i = 0; i < m_numMaterial; i++) {
-      PMDMaterial *m = &m_material[i];
+      PMDMaterial *m = m_material[i];
       if (m->getEdgeFlag())
          m_numSurfaceForEdge += m->getNumSurface();
    }
@@ -363,7 +363,7 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
       unsigned short *surfaceFrom = m_surfaceList;
       unsigned short *surfaceTo = m_surfaceListForEdge;
       for (unsigned int i = 0; i < m_numMaterial; i++) {
-         PMDMaterial *m = &m_material[i];
+         PMDMaterial *m = m_material[i];
          unsigned int n = m->getNumSurface();
          if (m->getEdgeFlag()) {
             memcpy(surfaceTo, surfaceFrom, sizeof(unsigned short) * n);
@@ -375,7 +375,7 @@ bool PMDModel::parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhys
 
    /* check if spheremap is used (single or multiple) */
    for (unsigned int i = 0; i < m_numMaterial; i++) {
-      PMDMaterial *m = &m_material[i];
+      PMDMaterial *m = m_material[i];
       if (m->hasSingleSphereMap())
          m_hasSingleSphereMap = true;
       if (m->hasMultipleSphereMap())

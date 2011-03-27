@@ -88,7 +88,7 @@ private:
    unsigned short *m_surfaceList; /* list of surface definitions (index to 3 vertices per surface) */
 
    unsigned int m_numMaterial; /* number of material definitions */
-   PMDMaterial *m_material;     /* material list */
+   PMDMaterial **m_material;     /* material list */
 
    unsigned short m_numBone; /* number of bones */
    PMDBone *m_boneList;      /* bone list */
@@ -143,8 +143,10 @@ private:
    PTree m_name2bone;              /* name-to-bone index for fast lookup */
    PTree m_name2face;              /* name-to-face index for fast lookup */
 
+   PMDRenderEngine *m_engine;
+
    /* parse: initialize and load from data memories */
-   bool parse(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet);
+   bool parse(PMDModelLoader *loader, BulletPhysics *bullet);
 
    /* initialize: initialize PMDModel */
    void initialize();
@@ -165,13 +167,13 @@ public:
    static const float kEdgeColorA;
 
    /* PMDModel: constructor */
-   PMDModel();
+   PMDModel(PMDRenderEngine *engine);
 
    /* ~PMDModel: destructor */
-   ~PMDModel();
+   virtual ~PMDModel();
 
    /* load: load from file name */
-   bool load(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet);
+   bool load(PMDModelLoader *loader, BulletPhysics *bullet);
 
    /* getBone: find bone data by name */
    PMDBone *getBone(const char *name);

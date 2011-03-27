@@ -134,7 +134,7 @@ void PMDModel::clear()
       m_surfaceList = NULL;
    }
    if (m_material) {
-      delete [] m_material;
+      m_engine->releaseMaterials(m_material, m_numMaterial);
       m_material = NULL;
    }
    if (m_boneList) {
@@ -210,7 +210,8 @@ void PMDModel::clear()
 }
 
 /* PMDModel::PMDModel: constructor */
-PMDModel::PMDModel()
+PMDModel::PMDModel(PMDRenderEngine *engine)
+  : m_engine(engine)
 {
    initialize();
 }
@@ -222,9 +223,9 @@ PMDModel::~PMDModel()
 }
 
 /* PMDModel::load: load from file name */
-bool PMDModel::load(PMDModelLoader *loader, PMDRenderEngine *engine, BulletPhysics *bullet)
+bool PMDModel::load(PMDModelLoader *loader, BulletPhysics *bullet)
 {
-   bool ret = parse(loader, engine, bullet);
+   bool ret = parse(loader, bullet);
    return ret;
 }
 
@@ -513,7 +514,7 @@ PMDMaterial *PMDModel::getMaterialAt(unsigned int i)
   if ( i >= m_numMaterial)
     return NULL;
   else
-    return &m_material[i];
+    return m_material[i];
 }
 
 PMDTexture *PMDModel::getToonTextureAt(unsigned int i)

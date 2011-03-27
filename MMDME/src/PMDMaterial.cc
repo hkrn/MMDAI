@@ -68,7 +68,8 @@ void PMDMaterial::clear()
 }
 
 /* PMDMaterial:: constructor */
-PMDMaterial::PMDMaterial()
+PMDMaterial::PMDMaterial(PMDRenderEngine *engine)
+  : m_engine(engine)
 {
    initialize();
 }
@@ -80,7 +81,7 @@ PMDMaterial::~PMDMaterial()
 }
 
 /* PMDMaterial::setup: initialize and setup material */
-bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEngine *engine)
+bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
 {
    char name[21], raw[21];
 
@@ -115,8 +116,8 @@ bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader, PMDRenderEn
    raw[20] = '\0';
    if (MMDAIStringLength(name) > 0) {
       char *ptr = strchr(name, '*');
-      m_texture.setRenderEngine(engine);
-      m_additionalTexture.setRenderEngine(engine);
+      m_texture.setRenderEngine(m_engine);
+      m_additionalTexture.setRenderEngine(m_engine);
       if (ptr) {
          /* has extra sphere map */
          *ptr = '\0';

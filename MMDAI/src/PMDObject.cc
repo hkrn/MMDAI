@@ -53,6 +53,7 @@ namespace MMDAI {
 /* PMDObject::initialize: initialize PMDObject */
 void PMDObject::initialize()
 {
+  m_model = m_engine->allocateModel();
   m_isEnable = false;
   m_motionManager = NULL;
 
@@ -76,7 +77,7 @@ void PMDObject::initialize()
 /* PMDOjbect::clear: free PMDObject */
 void PMDObject::clear()
 {
-  m_pmd.release();
+  m_engine->releaseModel(m_model);
   if (m_motionManager)
     delete m_motionManager;
   if(m_alias)
@@ -126,17 +127,18 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   m_assignTo = assignObject;
   m_baseBone = assignBone;
 
+  PMDBone *bone = m_model->getRootBone();
   if (forcedPosition) {
     /* set offset by given parameters */
     if (offsetPos)
       m_offsetPos = (*offsetPos);
     if (offsetRot)
       m_offsetRot = (*offsetRot);
-    m_pmd.getRootBone()->setOffset(&m_offsetPos);
-    m_pmd.getRootBone()->update();
+    bone->setOffset(&m_offsetPos);
+    bone->update();
   } else {
     /* set offset by root bone */
-    m_offsetPos = (*(m_pmd.getRootBone()->getOffset()));
+    m_offsetPos = (*(bone->getOffset()));
   }
 
   /* copy absolute position flag */
@@ -156,10 +158,10 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   if (m_baseBone)
     m_origBasePos = m_baseBone->getTransform()->getOrigin();
   /* set toon rendering flag */
-  m_pmd.setToonFlag(useCartoonRendering == true && m_allowToonShading == true);
+  m_model->setToonFlag(useCartoonRendering == true && m_allowToonShading == true);
 
   /* set edge width */
-  m_pmd.setEdgeThin(cartoonEdgeWidth);
+  m_model->setEdgeThin(cartoonEdgeWidth);
 
   /* set alpha frame */
   m_alphaAppearFrame = PMDOBJECT_ALPHAFRAME;
@@ -172,7 +174,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   m_isEnable = true;
 
   /* load model */
-  if (m_pmd.load(modelLoader, m_engine, bullet) == false) {
+  if (m_model->load(modelLoader, bullet) == false) {
     clear();
     return false;
   }
@@ -181,7 +183,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   m_localLipSync.load(lipSyncLoader);
 
   /* set initial alias name as the same as model name */
-  setAlias(m_pmd.getName());
+  setAlias(m_model->getName());
 
   /* reset */
   setLightForToon(light);
@@ -191,7 +193,7 @@ bool PMDObject::load(PMDModelLoader *modelLoader,
   /* set temporarily all body to Kinematic */
   /* this is fixed at first simulation */
   m_needResetKinematic = true;
-  m_pmd.setPhysicsControl(false);
+  m_model->setPhysicsControl(false);
 
   return true;
 }
@@ -232,7 +234,7 @@ void PMDObject::updateRootBone()
   if (m_absPosFlag[2]) pos.setZ(posAbs.z());
 
   /* set root bone */
-  b = m_pmd.getRootBone();
+  b = m_model->getRootBone();
   b->setCurrentPosition(&pos);
   b->setCurrentRotation(&m_offsetRot);
   b->update();
@@ -250,8 +252,8 @@ bool PMDObject::updateMotion(double deltaFrame)
 
   /* set rotation and position to bone and face from motion */
   ret = m_motionManager->update(deltaFrame);
-  m_pmd.updateBone(); /* update bone, IK, and rotation */
-  m_pmd.updateFace(); /* update face */
+  m_model->updateBone(); /* update bone, IK, and rotation */
+  m_model->updateFace(); /* update face */
 
   /* update comment frame */
   if (m_displayCommentFrame > 0.0f) {
@@ -270,15 +272,15 @@ void PMDObject::updateAfterSimulation(bool physicsEnabled)
 
   /* if necessary, change state of Bullet Physics */
   if (m_needResetKinematic) {
-    if (physicsEnabled) m_pmd.setPhysicsControl(true);
+    if (physicsEnabled) m_model->setPhysicsControl(true);
     m_needResetKinematic = false;
   }
   /* apply calculation result to bone */
-  m_pmd.updateBoneFromSimulation();
+  m_model->updateBoneFromSimulation();
   /* update skin */
-  m_pmd.updateSkin();
+  m_model->updateSkin();
   /* update toon */
-  m_pmd.updateToon(&m_lightDir);
+  m_model->updateToon(&m_lightDir);
 }
 
 /* PMDObject::updateAlpha: update global model alpha */
@@ -290,7 +292,7 @@ bool PMDObject::updateAlpha(double deltaFrame)
     m_alphaAppearFrame -= deltaFrame;
     if (m_alphaAppearFrame < 0.0f)
       m_alphaAppearFrame = 0.0f;
-    m_pmd.setGlobalAlpha((float)(1.0 - m_alphaAppearFrame / PMDOBJECT_ALPHAFRAME));
+    m_model->setGlobalAlpha((float)(1.0 - m_alphaAppearFrame / PMDOBJECT_ALPHAFRAME));
   }
   if (m_alphaDisappearFrame > 0.0f) {
     m_alphaDisappearFrame -= deltaFrame;
@@ -298,7 +300,7 @@ bool PMDObject::updateAlpha(double deltaFrame)
       m_alphaDisappearFrame = 0.0f;
       ended = true; /* model was deleted */
     }
-    m_pmd.setGlobalAlpha((float) (m_alphaDisappearFrame / PMDOBJECT_ALPHAFRAME));
+    m_model->setGlobalAlpha((float) (m_alphaDisappearFrame / PMDOBJECT_ALPHAFRAME));
   }
   return ended;
 }
@@ -327,7 +329,7 @@ bool PMDObject::updateModelRootOffset(float fps)
   if (m_isEnable == false) return false;
 
   /* get root bone */
-  b = m_pmd.getRootBone();
+  b = m_model->getRootBone();
 
   /* target position is m_offsetPos */
   /* move offset of root bone closer to m_offsetPos */
@@ -357,8 +359,8 @@ bool PMDObject::updateModelRootOffset(float fps)
       pos2 = m_offsetPos;
       ret = true;
     }
-    m_pmd.getRootBone()->setOffset(&pos2);
-    m_pmd.getRootBone()->update();
+    b->setOffset(&pos2);
+    b->update();
   }
 
   return ret;
@@ -378,7 +380,7 @@ bool PMDObject::updateModelRootRotation(float fps)
   m_isRotating = false;
 
   /* get root bone */
-  b = m_pmd.getRootBone();
+  b = m_model->getRootBone();
   /* target rotation is m_offsetRot */
   /* turn rotation of root bone closer to m_offsetRot */
   if (m_offsetRot != (*(b->getCurrentRotation()))) {
@@ -436,7 +438,7 @@ void PMDObject::setAlias(const char *alias)
 /* PMDObject::getPMDModel: get PMDModel */
 PMDModel *PMDObject::getPMDModel()
 {
-  return &m_pmd;
+  return m_model;
 }
 
 /* PMDObject::getMotionManager: get MotionManager */
@@ -450,7 +452,7 @@ void PMDObject::resetMotionManager()
 {
   if (m_motionManager)
     delete m_motionManager;
-  m_motionManager = new MotionManager(&m_pmd);
+  m_motionManager = new MotionManager(m_model);
 }
 
 /* PMDObject::createLipSyncMotion: create LipSync motion */
@@ -465,7 +467,7 @@ bool PMDObject::createLipSyncMotion(const char *str, unsigned char **data, size_
 /* PMDObject::getCurrentPosition: get current offset */
 void PMDObject::getCurrentPosition(btVector3 &pos)
 {
-  pos = (*(m_pmd.getRootBone()->getOffset()));
+  pos = (*(m_model->getRootBone()->getOffset()));
 }
 
 /* PMDObject::getTargetPosition: get target offset */
@@ -483,7 +485,7 @@ void PMDObject::setPosition(btVector3 &pos)
 /* PMDObject::getCurrentRotation: get current rotation */
 void PMDObject::getCurrentRotation(btQuaternion &rot)
 {
-   rot = (*(m_pmd.getRootBone()->getCurrentRotation()));
+   rot = (*(m_model->getRootBone()->getCurrentRotation()));
 }
 
 /* PMDObject::getTargetRotation: get target rotation */
@@ -562,7 +564,7 @@ PMDObject *PMDObject::getAssignedModel() const
 void PMDObject::renderDebug()
 {
   /* render debug */
-  m_engine->renderBones(&m_pmd);
+  m_engine->renderBones(m_model);
 }
 
 } /* namespace */

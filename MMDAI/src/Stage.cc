@@ -102,6 +102,7 @@ Stage::Stage(SceneRenderEngine *engine)
     m_floor(new TileTexture(engine)),
     m_background(new TileTexture(engine))
 {
+  m_model = m_engine->allocateModel();
   initialize();
 }
 
@@ -111,6 +112,7 @@ Stage::~Stage()
   delete m_background;
   delete m_floor;
   m_engine->deleteCache(&m_cache);
+  m_engine->releaseModel(m_model);
   clear();
 }
 
@@ -163,6 +165,7 @@ void Stage::initialize()
 
   m_hasPMD = false;
   m_bullet = NULL;
+  m_model = NULL;
   m_floorBody = NULL;
   for (i = 0; i < 4 ; i++)
     for (j = 0; j < 4; j++)
@@ -204,7 +207,7 @@ bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
   bool ret = m_floor->load(loader, m_engine);
   if (ret) {
     if (m_hasPMD) {
-      m_pmd.release();
+      m_engine->releaseModel(m_model);
       m_hasPMD = false;
     }
   } else {
@@ -223,7 +226,7 @@ bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
   bool ret = m_background->load(loader, m_engine);
   if (ret) {
     if (m_hasPMD) {
-      m_pmd.release();
+      m_engine->releaseModel(m_model);
       m_hasPMD = false;
     }
   } else {
@@ -238,10 +241,10 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
   if (m_bullet == NULL)
     m_bullet = bullet;
 
-  bool ret = m_pmd.load(loader, m_engine, bullet);
+  bool ret = m_model->load(loader, bullet);
   if (ret) {
-    m_pmd.setToonFlag(false);
-    m_pmd.updateSkin();
+    m_model->setToonFlag(false);
+    m_model->updateSkin();
     m_hasPMD = true;
     m_engine->deleteCache(&m_cache);
   } else {
@@ -274,7 +277,7 @@ void Stage::renderBackground()
 /* Stage::renderPMD: render the stage pmd */
 void Stage::renderPMD()
 {
-  m_engine->renderModelCached(&m_pmd, &m_cache);
+  m_engine->renderModelCached(m_model, &m_cache);
 }
 
 /* Stage::updateShadowMatrix: update shadow projection matrix */

@@ -61,6 +61,9 @@ namespace MMDAI {
   public:
     virtual ~SceneRenderEngine() {}
 
+    virtual PMDModel *allocateModel() = 0;
+    virtual void releaseModel(PMDModel *model) = 0;
+
     virtual void renderModelCached(PMDModel *model,
                            PMDRenderCacheNative **ptr) = 0;
     virtual void renderTileTexture(PMDTexture *texture,

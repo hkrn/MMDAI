@@ -76,6 +76,11 @@ namespace MMDAI {
     GLSceneRenderEngine();
     ~GLSceneRenderEngine();
 
+    PMDModel *allocateModel();
+    void releaseModel(PMDModel *model);
+    PMDMaterial **allocateMaterials(int size);
+    void releaseMaterials(PMDMaterial **materials, int size);
+
     void renderRigidBodies(BulletPhysics *bullet);
     void renderBone(PMDBone *bone);
     void renderBones(PMDModel *model);
@@ -103,6 +108,7 @@ namespace MMDAI {
                            const bool cullFace,
                            PMDRenderCacheNative **ptr);
     void deleteCache(PMDRenderCacheNative **ptr);
+    void optimize(PMDModel *model);
 
     bool setup(float *campusColor,
                bool useShadowMapping,

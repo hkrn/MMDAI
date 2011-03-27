@@ -96,8 +96,8 @@ private:
   TileTexture *m_floor; /* floor texture */
   TileTexture *m_background;  /* background texture */
 
-  PMDModel m_pmd;           /* PMD for background */
-  bool m_hasPMD;            /* true if m_pmd is used */
+  PMDModel *m_model;           /* PMD for background */
+  bool m_hasPMD;            /* true if m_model is used */
   bool m_listIndexPMDValid; /* true if m_listIndexPMDValid was registered */
 
   BulletPhysics *m_bullet;  /* BulletPhysics */
