@@ -57,39 +57,39 @@ Q_IMPORT_PLUGIN(qma_variable_plugin);
 
 int main(int argc, char *argv[])
 {
-  QApplication app(argc, argv);
-  QMALogger::initialize();
-  QTranslator appTranslator, qtTranslator;
-  const QString locale = QLocale::system().name();
+    QApplication app(argc, argv);
+    QMALogger::initialize();
+    QTranslator appTranslator, qtTranslator;
+    const QString locale = QLocale::system().name();
 
-  app.setOrganizationDomain("hkrn.github.com");
-  app.setOrganizationName("MMDAI Project");
-  app.setApplicationName("QtMMDAI");
-  app.setApplicationVersion("0.5");
+    app.setOrganizationDomain("hkrn.github.com");
+    app.setOrganizationName("MMDAI Project");
+    app.setApplicationName("QtMMDAI");
+    app.setApplicationVersion("0.5");
 
-  QDir appDir = QDir(app.applicationDirPath());
+    QDir appDir = QDir(app.applicationDirPath());
 #if defined(Q_OS_WIN)
-  app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
+    app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
 #elif defined(Q_OS_MAC)
-  if (appDir.dirName() == "MacOS") {
-    appDir.cdUp();
-    appDir.cdUp();
-    appDir.cdUp();
-  }
+    if (appDir.dirName() == "MacOS") {
+        appDir.cdUp();
+        appDir.cdUp();
+        appDir.cdUp();
+    }
 #endif
-  QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
+    QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
 
 #ifdef Q_OS_MAC
-  QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
+    QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
-  QString dir = appDir.absoluteFilePath("Locales");
+    QString dir = appDir.absoluteFilePath("Locales");
 #endif
-  qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-  appTranslator.load("QMA_" + locale, dir);
-  app.installTranslator(&qtTranslator);
-  app.installTranslator(&appTranslator);
+    qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+    appTranslator.load("QMA_" + locale, dir);
+    app.installTranslator(&qtTranslator);
+    app.installTranslator(&appTranslator);
 
-  QMAWindow window;
-  window.show();
-  return app.exec();
+    QMAWindow window;
+    window.show();
+    return app.exec();
 }

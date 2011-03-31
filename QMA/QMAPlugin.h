@@ -51,25 +51,25 @@ class SceneController;
 class QMAPlugin : public QObject
 {
 public:
-  QMAPlugin(QObject *parent = 0) : QObject(parent) {}
-  virtual ~QMAPlugin() {}
+    QMAPlugin(QObject *parent = 0) : QObject(parent) {}
+    virtual ~QMAPlugin() {}
 
-  /* slots */
-  virtual void initialize(MMDAI::SceneController *controller) = 0;
-  virtual void start() = 0;
-  virtual void stop() = 0;
-  virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;
-  virtual void receiveEvent(const QString &type, const QStringList &arguments) = 0;
-  virtual void update(const QRect &rect, const QPoint &pos, const double delta) = 0;
-  virtual void prerender() = 0;
-  virtual void postrender() = 0;
+    /* slots */
+    virtual void initialize(MMDAI::SceneController *controller) = 0;
+    virtual void start() = 0;
+    virtual void stop() = 0;
+    virtual void receiveCommand(const QString &command, const QStringList &arguments) = 0;
+    virtual void receiveEvent(const QString &type, const QStringList &arguments) = 0;
+    virtual void update(const QRect &rect, const QPoint &pos, const double delta) = 0;
+    virtual void prerender() = 0;
+    virtual void postrender() = 0;
 
-  /* signals */
-  virtual void commandPost(const QString &command, const QStringList &arguments) = 0;
-  virtual void eventPost(const QString &type, const QStringList &arguments) = 0;
+    /* signals */
+    virtual void commandPost(const QString &command, const QStringList &arguments) = 0;
+    virtual void eventPost(const QString &type, const QStringList &arguments) = 0;
 
 private:
-  Q_DISABLE_COPY(QMAPlugin);
+    Q_DISABLE_COPY(QMAPlugin);
 };
 
 Q_DECLARE_INTERFACE(QMAPlugin, "com.github.hkrn.qma.PluginInterface/1.0")

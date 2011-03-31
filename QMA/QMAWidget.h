@@ -51,87 +51,86 @@
 #define MAX_MODEL 20
 
 enum QMAWidgetZoomOption {
-  Normal = 0x0,
-  Faster = 0x1,
-  Slower = 0x2
-};
+    Normal = 0x0,
+    Faster = 0x1,
+    Slower = 0x2
+         };
 
-class QMAWidget : public QGLWidget,
-                  public MMDAI::SceneEventHandler
+class QMAWidget : public QGLWidget, public MMDAI::SceneEventHandler
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  explicit QMAWidget(QWidget *parent = 0);
-  ~QMAWidget();
+    explicit QMAWidget(QWidget *parent = 0);
+    ~QMAWidget();
 
-  void handleEventMessage(const char *eventType, int argc, ...);
-  QMAModelLoaderFactory *getModelLoaderFactory();
-  QMATimer *getSceneFrameTimer();
-  MMDAI::SceneController *getSceneController() const;
+    void handleEventMessage(const char *eventType, int argc, ...);
+    QMAModelLoaderFactory *getModelLoaderFactory();
+    QMATimer *getSceneFrameTimer();
+    MMDAI::SceneController *getSceneController() const;
 
-  void toggleDisplayBone();
-  void toggleDisplayRigidBody();
-  void changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader);
-  void zoom(bool up, enum QMAWidgetZoomOption option);
+    void toggleDisplayBone();
+    void toggleDisplayRigidBody();
+    void changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader);
+    void zoom(bool up, enum QMAWidgetZoomOption option);
 
 public slots:
-  void delegateCommand(const QString &command, const QStringList &arguments);
-  void delegateEvent(const QString &type, const QStringList &arguments);
+    void delegateCommand(const QString &command, const QStringList &arguments);
+    void delegateEvent(const QString &type, const QStringList &arguments);
 
 signals:
-  void pluginInitialized(MMDAI::SceneController *);
-  void pluginStarted();
-  void pluginStopped();
-  void pluginCommandPost(const QString&, const QStringList&);
-  void pluginEventPost(const QString&, const QStringList&);
-  void pluginUpdated(const QRect&, const QPoint&, const double);
-  void pluginPreRendered();
-  void pluginPostRendered();
+    void pluginInitialized(MMDAI::SceneController *);
+    void pluginStarted();
+    void pluginStopped();
+    void pluginCommandPost(const QString&, const QStringList&);
+    void pluginEventPost(const QString&, const QStringList&);
+    void pluginUpdated(const QRect&, const QPoint&, const double);
+    void pluginPreRendered();
+    void pluginPostRendered();
 
 protected:
-  void initializeGL();
-  void resizeGL(int width, int height);
-  void showEvent(QShowEvent *event);
-  void paintGL();
-  void mousePressEvent(QMouseEvent *event);
-  void mouseMoveEvent(QMouseEvent *event);
-  void mouseReleaseEvent(QMouseEvent *event);
-  void mouseDoubleClickEvent(QMouseEvent *event);
-  void wheelEvent(QWheelEvent *event);
-  void dragEnterEvent(QDragEnterEvent *event);
-  void dragMoveEvent(QDragMoveEvent *event);
-  void dropEvent(QDropEvent *event);
-  void dragLeaveEvent(QDragLeaveEvent *event);
-  void closeEvent(QCloseEvent *event);
+    void initializeGL();
+    void resizeGL(int width, int height);
+    void showEvent(QShowEvent *event);
+    void paintGL();
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
+    void wheelEvent(QWheelEvent *event);
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dragMoveEvent(QDragMoveEvent *event);
+    void dropEvent(QDropEvent *event);
+    void dragLeaveEvent(QDragLeaveEvent *event);
+    void closeEvent(QCloseEvent *event);
 
 private slots:
-  void updateScene();
+    void updateScene();
 
 private:
-  void loadModel();
-  void loadPlugins();
-  void addPlugin(QMAPlugin *plugin);
+    void loadModel();
+    void loadPlugins();
+    void addPlugin(QMAPlugin *plugin);
 
-  void updateModelPositionAndRotation(double fps);
-  void renderDebugModel();
-  void renderLogger();
+    void updateModelPositionAndRotation(double fps);
+    void renderDebugModel();
+    void renderLogger();
 
-  QMAModelLoaderFactory m_factory;
-  QMATimer m_sceneFrameTimer;
-  QTimer m_sceneUpdateTimer;
-  MMDAI::SceneController *m_controller;
-  MMDAI::CommandParser m_parser;
+    QMAModelLoaderFactory m_factory;
+    QMATimer m_sceneFrameTimer;
+    QTimer m_sceneUpdateTimer;
+    MMDAI::SceneController *m_controller;
+    MMDAI::CommandParser m_parser;
 
-  int m_x;
-  int m_y;
+    int m_x;
+    int m_y;
 
-  bool m_doubleClicked;
-  bool m_showLog;
-  bool m_displayBone;
-  bool m_displayRigidBody;
+    bool m_doubleClicked;
+    bool m_showLog;
+    bool m_displayBone;
+    bool m_displayRigidBody;
 
-  Q_DISABLE_COPY(QMAWidget);
+    Q_DISABLE_COPY(QMAWidget);
 };
 
 #endif // WIDGET_H

@@ -47,25 +47,25 @@
 class QMAModelLoader : public MMDAI::PMDModelLoader, public MMDAI::VMDLoader
 {
 public:
-  QMAModelLoader(const QString &system, const char *filename);
-  ~QMAModelLoader();
+    QMAModelLoader(const QString &system, const char *filename);
+    ~QMAModelLoader();
 
-  bool loadModelData(unsigned char **ptr, size_t *size);
-  void unloadModelData(unsigned char *ptr);
+    bool loadModelData(unsigned char **ptr, size_t *size);
+    void unloadModelData(unsigned char *ptr);
 
-  bool loadMotionData(unsigned char **ptr, size_t *size);
-  void unloadMotionData(unsigned char *ptr);
+    bool loadMotionData(unsigned char **ptr, size_t *size);
+    void unloadMotionData(unsigned char *ptr);
 
-  bool loadImageTexture(MMDAI::PMDTexture *texture);
-  bool loadModelTexture(const char *name, MMDAI::PMDTexture *texture);
-  bool loadSystemTexture(int index, MMDAI::PMDTexture *texture);
-  const char *getLocation() const;
+    bool loadImageTexture(MMDAI::PMDTexture *texture);
+    bool loadModelTexture(const char *name, MMDAI::PMDTexture *texture);
+    bool loadSystemTexture(int index, MMDAI::PMDTexture *texture);
+    const char *getLocation() const;
 
 private:
-  QDir m_dir;
-  QFile *m_file;
-  const char *m_filename;
-  Q_DISABLE_COPY(QMAModelLoader);
+    QDir m_dir;
+    QFile *m_file;
+    const char *m_filename;
+    Q_DISABLE_COPY(QMAModelLoader);
 };
 
 #endif // QMAMODELLOADER_H

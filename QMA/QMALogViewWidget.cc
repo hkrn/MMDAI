@@ -41,35 +41,35 @@
 #include "QMALogger.h"
 
 QMALogViewWidget::QMALogViewWidget(QWidget *parent) :
-    QWidget(parent)
+        QWidget(parent)
 {
-  QMALogger *logger = QMALogger::getInstance();
-  connect(logger, SIGNAL(lineWritten(QString)), this, SLOT(addLine(QString)));
-  m_text = new QTextEdit();
-  m_text->setReadOnly(true);
-  m_text->setLineWrapMode(QTextEdit::NoWrap);
-  QVBoxLayout *layout = new QVBoxLayout();
-  layout->addWidget(m_text);
-  layout->setMargin(10);
-  setLayout(layout);
-  setWindowTitle("QtMMDAI Log window");
-  resize(QSize(640, 320));
+    QMALogger *logger = QMALogger::getInstance();
+    connect(logger, SIGNAL(lineWritten(QString)), this, SLOT(addLine(QString)));
+    m_text = new QTextEdit();
+    m_text->setReadOnly(true);
+    m_text->setLineWrapMode(QTextEdit::NoWrap);
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(m_text);
+    layout->setMargin(10);
+    setLayout(layout);
+    setWindowTitle("QtMMDAI Log window");
+    resize(QSize(640, 320));
 }
 
 void QMALogViewWidget::closeEvent(QCloseEvent *event)
 {
-  event->accept();
+    event->accept();
 }
 
 void QMALogViewWidget::showEvent(QShowEvent *event)
 {
-  Q_UNUSED(event);
-  m_text->setPlainText(m_contents.join(""));
+    Q_UNUSED(event);
+    m_text->setPlainText(m_contents.join(""));
 }
 
 void QMALogViewWidget::addLine(const QString &line)
 {
-  m_contents.append(line);
-  if (isVisible())
-    m_text->setPlainText(m_contents.join(""));
+    m_contents.append(line);
+    if (isVisible())
+        m_text->setPlainText(m_contents.join(""));
 }

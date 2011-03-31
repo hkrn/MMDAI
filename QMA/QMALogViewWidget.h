@@ -43,20 +43,20 @@ class QTextEdit;
 
 class QMALogViewWidget : public QWidget
 {
-  Q_OBJECT
+    Q_OBJECT
 public:
-  explicit QMALogViewWidget(QWidget *parent = 0);
+    explicit QMALogViewWidget(QWidget *parent = 0);
 
 protected:
-  void closeEvent(QCloseEvent *event);
-  void showEvent(QShowEvent *event);
+    void closeEvent(QCloseEvent *event);
+    void showEvent(QShowEvent *event);
 
 private slots:
-  void addLine(const QString &line);
+    void addLine(const QString &line);
 
 private:
-  QStringList m_contents;
-  QTextEdit *m_text;
+    QStringList m_contents;
+    QTextEdit *m_text;
 };
 
 #endif // QMALOGVIEWWIDGET_H

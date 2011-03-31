@@ -43,23 +43,18 @@
 class QMAModelLoaderFactory : public MMDAI::PMDModelLoaderFactory
 {
 public:
-  QMAModelLoaderFactory() {}
-  ~QMAModelLoaderFactory() {}
+    QMAModelLoaderFactory() {}
+    ~QMAModelLoaderFactory() {}
 
-  MMDAI::PMDModelLoader *createModelLoader(const char *filename);
-
-  MMDAI::VMDLoader *createMotionLoader(const char *filename);
-
-  MMDAI::LipSyncLoader *createLipSyncLoader(const char *filename);
-
-  void releaseModelLoader(MMDAI::PMDModelLoader *loader);
-
-  void releaseMotionLoader(MMDAI::VMDLoader *loader);
-
-  void releaseLipSyncLoader(MMDAI::LipSyncLoader *loader);
+    MMDAI::PMDModelLoader *createModelLoader(const char *filename);
+    MMDAI::VMDLoader *createMotionLoader(const char *filename);
+    MMDAI::LipSyncLoader *createLipSyncLoader(const char *filename);
+    void releaseModelLoader(MMDAI::PMDModelLoader *loader);
+    void releaseMotionLoader(MMDAI::VMDLoader *loader);
+    void releaseLipSyncLoader(MMDAI::LipSyncLoader *loader);
 
 private:
-  QMAModelLoader *createLoader(const char *filename);
+    QMAModelLoader *createLoader(const char *filename);
 };
 
 #endif // QMAMODELLOADERFACTORY_H

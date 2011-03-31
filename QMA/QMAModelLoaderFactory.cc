@@ -43,36 +43,36 @@
 
 MMDAI::PMDModelLoader *QMAModelLoaderFactory::createModelLoader(const char *filename)
 {
-  return createLoader(filename);
+    return createLoader(filename);
 }
 
 MMDAI::VMDLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename)
 {
-  return createLoader(filename);
+    return createLoader(filename);
 }
 
 MMDAI::LipSyncLoader *QMAModelLoaderFactory::createLipSyncLoader(const char *filename)
 {
-  return new QMALipSyncLoder(filename);
+    return new QMALipSyncLoder(filename);
 }
 
 void QMAModelLoaderFactory::releaseModelLoader(MMDAI::PMDModelLoader *loader)
 {
-  delete loader;
+    delete loader;
 }
 
 void QMAModelLoaderFactory::releaseMotionLoader(MMDAI::VMDLoader *loader)
 {
-  delete loader;
+    delete loader;
 }
 
 void QMAModelLoaderFactory::releaseLipSyncLoader(MMDAI::LipSyncLoader *loader)
 {
-  delete loader;
+    delete loader;
 }
 
 inline QMAModelLoader *QMAModelLoaderFactory::createLoader(const char *filename)
 {
-  QString path = QDir::searchPaths("mmdai").at(0) + "/AppData";
-  return new QMAModelLoader(path, filename);
+    QString path = QDir::searchPaths("mmdai").at(0) + "/AppData";
+    return new QMAModelLoader(path, filename);
 }

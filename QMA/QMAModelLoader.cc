@@ -40,169 +40,169 @@
 
 static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr)
 {
-  /* parse TGA */
-  QFile file(path);
-  if (!file.open(QFile::ReadOnly | QFile::Unbuffered))
-    return false;
-  int s = file.size();
-  char *data = static_cast<char *>(MMDAIMemoryAllocate(s));
-  if (data == NULL) {
-    MMDAILogWarnString("Failed allocating memory");
+    /* parse TGA */
+    QFile file(path);
+    if (!file.open(QFile::ReadOnly | QFile::Unbuffered))
+        return false;
+    int s = file.size();
+    char *data = static_cast<char *>(MMDAIMemoryAllocate(s));
+    if (data == NULL) {
+        MMDAILogWarnString("Failed allocating memory");
+        file.close();
+        return false;
+    }
+    memset(data, 0, s);
+    if (file.read(data, s) != s) {
+        QByteArray reason = file.errorString().toUtf8();
+        MMDAILogWarn("Failed reading a TGA file", reason.constData());
+        MMDAIMemoryRelease(data);
+        file.close();
+        return false;
+    }
     file.close();
-    return false;
-  }
-  memset(data, 0, s);
-  if (file.read(data, s) != s) {
-    QByteArray reason = file.errorString().toUtf8();
-    MMDAILogWarn("Failed reading a TGA file", reason.constData());
+
+    int width = 0, height = 0;
+    bool ret = MMDAI::PMDTexture::loadTGAImage(reinterpret_cast<unsigned char *>(data), ptr, &width, &height);
     MMDAIMemoryRelease(data);
-    file.close();
-    return false;
-  }
-  file.close();
 
-  int width = 0, height = 0;
-  bool ret = MMDAI::PMDTexture::loadTGAImage(reinterpret_cast<unsigned char *>(data), ptr, &width, &height);
-  MMDAIMemoryRelease(data);
+    size.setWidth(width);
+    size.setHeight(height);
 
-  size.setWidth(width);
-  size.setHeight(height);
-
-  return ret;
+    return ret;
 }
 
 static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
 {
-  QImage image;
-  QByteArray filename = path.toUtf8();
-  if (QFile::exists(path)) {
-    bool isSphereMap = false;
-    bool isSphereMapAdd = false;
-    isSphereMapAdd = path.endsWith(".spa");
-    isSphereMap = isSphereMapAdd || path.endsWith(".sph");
-    if (path.endsWith(".tga")) {
-      QSize size;
-      unsigned char *ptr = NULL;
-      if (QMAModelLoaderLoadTGA(path, size, &ptr)) {
-        int w = size.width();
-        int h = size.height();
-        int c = 4;
-        int size = w * h * c;
-        texture->loadBytes(ptr, size, w, h, c, isSphereMap, isSphereMapAdd);
-        free(ptr);
-        return true;
-      }
-      MMDAILogWarn("Cannot load TGA image: %s", filename.constData());
-    }
-    else if (image.load(path)) {
-      int w = image.width();
-      int h = image.height();
-      int c = image.depth() / 8;
-      int size = w * h * c;
+    QImage image;
+    QByteArray filename = path.toUtf8();
+    if (QFile::exists(path)) {
+        bool isSphereMap = false;
+        bool isSphereMapAdd = false;
+        isSphereMapAdd = path.endsWith(".spa");
+        isSphereMap = isSphereMapAdd || path.endsWith(".sph");
+        if (path.endsWith(".tga")) {
+            QSize size;
+            unsigned char *ptr = NULL;
+            if (QMAModelLoaderLoadTGA(path, size, &ptr)) {
+                int w = size.width();
+                int h = size.height();
+                int c = 4;
+                int size = w * h * c;
+                texture->loadBytes(ptr, size, w, h, c, isSphereMap, isSphereMapAdd);
+                free(ptr);
+                return true;
+            }
+            MMDAILogWarn("Cannot load TGA image: %s", filename.constData());
+        }
+        else if (image.load(path)) {
+            int w = image.width();
+            int h = image.height();
+            int c = image.depth() / 8;
+            int size = w * h * c;
 #if QT_VERSION >= QT_VERSION_CHECK(4, 7, 0)
-      texture->loadBytes(image.rgbSwapped().constBits(), size, w, h, c, isSphereMap, isSphereMapAdd);
+            texture->loadBytes(image.rgbSwapped().constBits(), size, w, h, c, isSphereMap, isSphereMapAdd);
 #else
-      texture->loadBytes(image.rgbSwapped().bits(), size, w, h, c, isSphereMap, isSphereMapAdd);
+            texture->loadBytes(image.rgbSwapped().bits(), size, w, h, c, isSphereMap, isSphereMapAdd);
 #endif
-      return true;
+            return true;
+        }
+        else {
+            MMDAILogWarn("Cannot load TGA image: %s", filename.constData());
+        }
     }
     else {
-      MMDAILogWarn("Cannot load TGA image: %s", filename.constData());
+        MMDAILogDebug("Image not found: %s", filename.constData());
     }
-  }
-  else {
-    MMDAILogDebug("Image not found: %s", filename.constData());
-  }
-  return false;
+    return false;
 }
 
 QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
-  : m_dir(system)
+    : m_dir(system)
 {
-  /* YEN SIGN (0x5c -> 0xa5) to SLASH */
-  QString path = QFile::decodeName(filename);
+    /* YEN SIGN (0x5c -> 0xa5) to SLASH */
+    QString path = QFile::decodeName(filename);
 #if !defined(Q_OS_WIN)
-  path = path.replace(QChar(0xa5), QChar('/'));
+    path = path.replace(QChar(0xa5), QChar('/'));
 #endif
-  if (QDir::isAbsolutePath(path))
-    m_file = new QFile(path);
-  else
-    m_file = new QFile("mmdai:" + path);
-  m_filename = MMDAIStringClone(m_file->fileName().toUtf8().constData());
+    if (QDir::isAbsolutePath(path))
+        m_file = new QFile(path);
+    else
+        m_file = new QFile("mmdai:" + path);
+    m_filename = MMDAIStringClone(m_file->fileName().toUtf8().constData());
 }
 
 QMAModelLoader::~QMAModelLoader()
 {
-  if (m_file->isOpen()) {
-    MMDAILogWarn("File is still open, it just leaked: %s", m_filename);
-    m_file->close();
-  }
-  MMDAIMemoryRelease(const_cast<char *>(m_filename));
-  delete m_file;
+    if (m_file->isOpen()) {
+        MMDAILogWarn("File is still open, it just leaked: %s", m_filename);
+        m_file->close();
+    }
+    MMDAIMemoryRelease(const_cast<char *>(m_filename));
+    delete m_file;
 }
 
 bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
 {
-  *size = 0;
-  if (m_file->exists() && m_file->open(QFile::ReadOnly | QFile::Unbuffered)) {
-    size_t s = m_file->size();
-    unsigned char *p = m_file->map(0, s);
-    if (p != NULL) {
-      *ptr = p;
-      *size = s;
-      return true;
+    *size = 0;
+    if (m_file->exists() && m_file->open(QFile::ReadOnly | QFile::Unbuffered)) {
+        size_t s = m_file->size();
+        unsigned char *p = m_file->map(0, s);
+        if (p != NULL) {
+            *ptr = p;
+            *size = s;
+            return true;
+        }
+        else {
+            QByteArray reason = m_file->errorString().toUtf8();
+            MMDAILogDebug("Failed mapping file: %s", reason.constData());
+        }
     }
     else {
-      QByteArray reason = m_file->errorString().toUtf8();
-      MMDAILogDebug("Failed mapping file: %s", reason.constData());
+        MMDAILogDebug("Model is not found: %s", m_filename);
     }
-  }
-  else {
-    MMDAILogDebug("Model is not found: %s", m_filename);
-  }
-  return false;
+    return false;
 }
 
 void QMAModelLoader::unloadModelData(unsigned char *ptr)
 {
-  m_file->unmap(ptr);
-  m_file->close();
+    m_file->unmap(ptr);
+    m_file->close();
 }
 
 bool QMAModelLoader::loadMotionData(unsigned char **ptr, size_t *size)
 {
-  return loadModelData(ptr, size);
+    return loadModelData(ptr, size);
 }
 
 void QMAModelLoader::unloadMotionData(unsigned char *ptr)
 {
-  unloadModelData(ptr);
+    unloadModelData(ptr);
 }
 
 bool QMAModelLoader::loadImageTexture(MMDAI::PMDTexture *texture)
 {
-  QString path = m_file->fileName();
-  return QMAModelLoaderLoadImage(path, texture);
+    QString path = m_file->fileName();
+    return QMAModelLoaderLoadImage(path, texture);
 }
 
 bool QMAModelLoader::loadModelTexture(const char *name, MMDAI::PMDTexture *texture)
 {
-  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-  QString textureName = codec->toUnicode(name, strlen(name));
-  QDir dir(m_file->fileName());
-  dir.cdUp();
-  QString path = dir.absoluteFilePath(textureName);
-  return QMAModelLoaderLoadImage(path, texture);
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    QString textureName = codec->toUnicode(name, strlen(name));
+    QDir dir(m_file->fileName());
+    dir.cdUp();
+    QString path = dir.absoluteFilePath(textureName);
+    return QMAModelLoaderLoadImage(path, texture);
 }
 
 bool QMAModelLoader::loadSystemTexture(int index, MMDAI::PMDTexture *texture)
 {
-  int fill = index == 0 ? 1 : 2;
-  QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
-  return QMAModelLoaderLoadImage(path, texture);
+    int fill = index == 0 ? 1 : 2;
+    QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
+    return QMAModelLoaderLoadImage(path, texture);
 }
 
 const char *QMAModelLoader::getLocation() const
 {
-  return m_filename;
+    return m_filename;
 }

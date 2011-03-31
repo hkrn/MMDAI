@@ -44,25 +44,25 @@
 class QMATimer
 {
 public:
-  QMATimer();
-  ~QMATimer();
-  void start();
-  void pause();
-  void resume();
-  void count();
-  double getAuxFrame(double base);
-  double getFPS();
-  double getInterval();
+    QMATimer();
+    ~QMATimer();
+    void start();
+    void pause();
+    void resume();
+    void count();
+    double getAuxFrame(double base);
+    double getFPS();
+    double getInterval();
 
 private:
-  QTime m_timeFPS;
-  QTime m_timeFrame;
-  double m_value;
-  double m_lastFrame;
-  int m_paused;
-  int m_count;
+    QTime m_timeFPS;
+    QTime m_timeFrame;
+    double m_value;
+    double m_lastFrame;
+    int m_paused;
+    int m_count;
 
-  Q_DISABLE_COPY(QMATimer);
+    Q_DISABLE_COPY(QMATimer);
 };
 
 #endif // QMATIMER_H

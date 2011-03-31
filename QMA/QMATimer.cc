@@ -39,7 +39,7 @@
 #include "QMATimer.h"
 
 QMATimer::QMATimer()
-  : m_value(0.0),
+    : m_value(0.0),
     m_lastFrame(0.0),
     m_paused(0),
     m_count(0)
@@ -52,47 +52,47 @@ QMATimer::~QMATimer()
 
 void QMATimer::start()
 {
-  m_timeFPS.start();
-  m_timeFrame.start();
+    m_timeFPS.start();
+    m_timeFrame.start();
 }
 
 void QMATimer::pause()
 {
-  m_paused = m_timeFPS.elapsed();
+    m_paused = m_timeFPS.elapsed();
 }
 
 void QMATimer::resume()
 {
-  m_lastFrame += (m_timeFPS.elapsed() - m_paused) * 0.03;
+    m_lastFrame += (m_timeFPS.elapsed() - m_paused) * 0.03;
 }
 
 double QMATimer::getAuxFrame(double base)
 {
-  base = 0.0;
-  return 0.0;
+    base = 0.0;
+    return 0.0;
 }
 
 void QMATimer::count()
 {
-  m_count++;
-  int t = m_timeFPS.elapsed();
-  if (t >= 1000) {
-    m_value = 1000.0f * (double) m_count / t;
-    m_count = 0;
-    m_timeFPS.restart();
-  }
+    m_count++;
+    int t = m_timeFPS.elapsed();
+    if (t >= 1000) {
+        m_value = 1000.0f * (double) m_count / t;
+        m_count = 0;
+        m_timeFPS.restart();
+    }
 }
 
 double QMATimer::getFPS()
 {
-  return m_value;
+    return m_value;
 }
 
 double QMATimer::getInterval()
 {
-  int elapsed = m_timeFrame.elapsed();
-  double currentFrame = elapsed * 0.03;
-  double intervalFrame = currentFrame - m_lastFrame;
-  m_lastFrame = currentFrame;
-  return intervalFrame;
+    int elapsed = m_timeFrame.elapsed();
+    double currentFrame = elapsed * 0.03;
+    double intervalFrame = currentFrame - m_lastFrame;
+    m_lastFrame = currentFrame;
+    return intervalFrame;
 }

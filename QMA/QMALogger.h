@@ -42,20 +42,20 @@
 
 class QMALogger : public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  ~QMALogger();
-  static void initialize();
-  static QMALogger *getInstance();
+    ~QMALogger();
+    static void initialize();
+    static QMALogger *getInstance();
 
-  void sendLineWritten(const QString &line);
+    void sendLineWritten(const QString &line);
 
 signals:
-  void lineWritten(const QString &line);
+    void lineWritten(const QString &line);
 
 private:
-  QMALogger();
+    QMALogger();
 };
 
 #endif // QMALOGGER_H

@@ -37,29 +37,9 @@
 include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAOpenJTalkPlugin)
 
-# $ cd /usr/local/include
-# $ sudo mkdir jtabbbk
-# $ cd jtalk
-# $ sudo find $OPEN_JTALK_SRC_DIR -name '*.h' -exec ln -s {} \;
-# $ cd /usr/local/lib
-# $ sudo find $OPEN_JTALK_SRC_DIR -name '*.a' -exec ln -s {} \;
-unix:LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_accent_phrase \
-             -lnjd_set_accent_type -lnjd_set_digit -lnjd_set_long_vowel -lnjd_set_pronunciation \
-             -lnjd_set_unvoiced_vowel -ltext2mecab -lportaudio
-unix:INCLUDEPATH += /usr/local/include/jtalk
-
-linux:LIBS += -lmecab
-
-# $ cd /usr/local/include
-# $ sudo mkdir jtalk
-# $ cd jtalk
-# $ sudo gfind $OPEN_JTALK_SRC_DIR -name '*.h' -exec ln -s {} \;
-# $ cd /usr/local/lib
-# $ sudo gfind $OPEN_JTALK_SRC_DIR -name '*.a' -exec ln -s {} \;
-# $ sudo mv libmecab.a libmecab_custom.a
-#
-# on MacOSX, mecab has been installed in /usr, we use jtalk's mecab as libmecab_custom.a
-macx:LIBS += -liconv -lmecab_custom -framework CoreAudio -framework CoreFoundation \
+unix:INCLUDEPATH += /usr/local/include/OpenJTalk
+unix:LIBS += -lHTSEngine -lOpenJTalk -lportaudio
+macx:LIBS += -liconv -framework CoreAudio -framework CoreFoundation \
              -framework CoreServices -framework AudioToolbox -framework AudioUnit
 
 win32 {
