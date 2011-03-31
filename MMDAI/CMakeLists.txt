@@ -37,7 +37,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # set library version
-set(MMDAGENT_VERSION 1.0)
+set(MMDAI_VERSION 1.0)
 
 # project configuration
 project(libMMDAI)
@@ -66,8 +66,8 @@ else()
 endif()
 
 add_library(MMDAI ${MMDAI_LIB_TYPE} ${libMMDAI_sources} ${libMMDAI_public_headers})
-set_target_properties(MMDAI PROPERTIES VERSION ${MMDAGENT_VERSION})
-set_target_properties(MMDAI PROPERTIES SO_VERSION ${MMDAGENT_VERSION})
+set_target_properties(MMDAI PROPERTIES VERSION ${MMDAI_VERSION})
+set_target_properties(MMDAI PROPERTIES SO_VERSION ${MMDAI_VERSION})
 
 # project include directories
 include_directories(include)
