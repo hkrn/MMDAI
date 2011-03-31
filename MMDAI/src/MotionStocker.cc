@@ -48,168 +48,168 @@ namespace MMDAI {
 /* MotionStocker::initialize: initialize MotionStocker */
 void MotionStocker::initialize()
 {
-  m_head = NULL;
-  m_tail = NULL;
+    m_head = NULL;
+    m_tail = NULL;
 }
 
 /* MotionStocker::clear: free MotionStocker */
 void MotionStocker::clear()
 {
-  VMDList *vl, *tmp;
+    VMDList *vl, *tmp;
 
-  for(vl = m_head; vl; vl = tmp) {
-    tmp = vl->next;
-    if(vl->name)
-      MMDAIMemoryRelease(vl->name);
-    delete vl;
-  }
+    for(vl = m_head; vl; vl = tmp) {
+        tmp = vl->next;
+        if(vl->name)
+            MMDAIMemoryRelease(vl->name);
+        delete vl;
+    }
 
-  initialize();
+    initialize();
 }
 
 /* MotionStocker::MotionStocker: constructor */
 MotionStocker::MotionStocker()
 {
-  initialize();
+    initialize();
 }
 
 /* MotionStocker::~MotionStocker: destructor */
 MotionStocker::~MotionStocker()
 {
-  clear();
+    clear();
 }
 
 /* MotionStocker::loadFromLoader: load VMD from file or return cached one */
 VMD * MotionStocker::loadFromLoader(VMDLoader *loader)
 {
-  VMDList *vl, *tmp;
-  const char *fileName = loader->getLocation();
+    VMDList *vl, *tmp;
+    const char *fileName = loader->getLocation();
 
-  /* search cache from tail to head */
-  for(vl = m_tail; vl; vl = tmp) {
-    tmp = vl->prev;
-    if(vl->name && MMDAIStringEquals(vl->name, fileName)) {
-      if(vl != m_tail) {
-        if(vl == m_head) {
-          m_head = vl->next;
-          vl->next->prev = NULL;
-        } else {
-          vl->prev->next = vl->next;
-          vl->next->prev = vl->prev;
+    /* search cache from tail to head */
+    for(vl = m_tail; vl; vl = tmp) {
+        tmp = vl->prev;
+        if(vl->name && MMDAIStringEquals(vl->name, fileName)) {
+            if(vl != m_tail) {
+                if(vl == m_head) {
+                    m_head = vl->next;
+                    vl->next->prev = NULL;
+                } else {
+                    vl->prev->next = vl->next;
+                    vl->next->prev = vl->prev;
+                }
+                m_tail->next = vl;
+                vl->prev = m_tail;
+                vl->next = NULL;
+                m_tail = vl;
+            }
+            vl->use++;
+            return &vl->vmd;
         }
-        m_tail->next = vl;
-        vl->prev = m_tail;
-        vl->next = NULL;
-        m_tail = vl;
-      }
-      vl->use++;
-      return &vl->vmd;
     }
-  }
 
-  /* load VMD */
-  vl = new VMDList;
-  if(vl->vmd.load(loader) == false) {
-    delete vl;
-    MMDAILogWarn("failed to load vmd from file: %s", fileName);
-    return NULL;
-  }
+    /* load VMD */
+    vl = new VMDList;
+    if(vl->vmd.load(loader) == false) {
+        delete vl;
+        MMDAILogWarn("failed to load vmd from file: %s", fileName);
+        return NULL;
+    }
 
-  /* save name */
-  vl->name = MMDAIStringClone(fileName);
-  vl->use = 1;
-  vl->next = NULL;
+    /* save name */
+    vl->name = MMDAIStringClone(fileName);
+    vl->use = 1;
+    vl->next = NULL;
 
-  /* store cache to tail */
-  if(m_head == NULL) {
-    vl->prev = NULL;
-    m_head = vl;
-  } else {
-    vl->prev = m_tail;
-    m_tail->next = vl;
-  }
-  m_tail = vl;
+    /* store cache to tail */
+    if(m_head == NULL) {
+        vl->prev = NULL;
+        m_head = vl;
+    } else {
+        vl->prev = m_tail;
+        m_tail->next = vl;
+    }
+    m_tail = vl;
 
-  return &vl->vmd;
+    return &vl->vmd;
 }
 
 /* MotionStocker::loadFromData: load VMD from data memories*/
 VMD * MotionStocker::loadFromData(unsigned char *rawData, size_t rawSize)
 {
-  VMDList *vl;
+    VMDList *vl;
 
-  /* load VMD  */
-  vl = new VMDList;
-  if(vl->vmd.parse(rawData, rawSize) == false) {
-    delete vl;
-    MMDAILogWarnString("failed to load vmd from memories");
-    return NULL;
-  }
+    /* load VMD  */
+    vl = new VMDList;
+    if(vl->vmd.parse(rawData, rawSize) == false) {
+        delete vl;
+        MMDAILogWarnString("failed to load vmd from memories");
+        return NULL;
+    }
 
-  /* don't save name */
-  vl->name = NULL;
-  vl->use = 1;
-  vl->prev = NULL;
+    /* don't save name */
+    vl->name = NULL;
+    vl->use = 1;
+    vl->prev = NULL;
 
-  /* store cache to head */
-  if(m_head == NULL) {
-    vl->next = NULL;
-    m_tail = vl;
-  } else {
-    vl->next = m_head;
-    m_head->prev = vl;
-  }
-  m_head = vl;
+    /* store cache to head */
+    if(m_head == NULL) {
+        vl->next = NULL;
+        m_tail = vl;
+    } else {
+        vl->next = m_head;
+        m_head->prev = vl;
+    }
+    m_head = vl;
 
-  return &vl->vmd;
+    return &vl->vmd;
 }
 
 /* MotionStocker::unload: unload VMD */
 void MotionStocker::unload(VMD *vmd)
 {
-  int count;
-  VMDList *vl, *tmp;
+    int count;
+    VMDList *vl, *tmp;
 
-  /* set disable flag */
-  for(vl = m_tail; vl; vl = tmp) {
-    tmp = vl->prev;
-    if(&vl->vmd == vmd) {
-      vl->use--;
-      break;
+    /* set disable flag */
+    for(vl = m_tail; vl; vl = tmp) {
+        tmp = vl->prev;
+        if(&vl->vmd == vmd) {
+            vl->use--;
+            break;
+        }
     }
-  }
 
-  /* count unused cache */
-  count = 0;
-  for(vl = m_head; vl; vl = tmp) {
-    tmp = vl->next;
-    if(vl->use <= 0)
-      count++;
-  }
-
-  /* remove unused cache */
-  for(vl = m_head; vl && count > VMDGRIDSIZE; vl = tmp) {
-    tmp = vl->next;
-    if(vl->use <= 0) {
-      if(vl == m_head && vl == m_tail) {
-        m_head = NULL;
-        m_tail = NULL;
-      } else if(vl == m_head) {
-        m_head = vl->next;
-        vl->next->prev = NULL;
-      } else if(vl == m_tail) {
-        m_tail = vl->prev;
-        vl->prev->next = NULL;
-      } else {
-        vl->prev->next = vl->next;
-        vl->next->prev = vl->prev;
-      }
-      if(vl->name)
-        MMDAIMemoryRelease(vl->name);
-      delete vl;
-      count--;
+    /* count unused cache */
+    count = 0;
+    for(vl = m_head; vl; vl = tmp) {
+        tmp = vl->next;
+        if(vl->use <= 0)
+            count++;
     }
-  }
+
+    /* remove unused cache */
+    for(vl = m_head; vl && count > VMDGRIDSIZE; vl = tmp) {
+        tmp = vl->next;
+        if(vl->use <= 0) {
+            if(vl == m_head && vl == m_tail) {
+                m_head = NULL;
+                m_tail = NULL;
+            } else if(vl == m_head) {
+                m_head = vl->next;
+                vl->next->prev = NULL;
+            } else if(vl == m_tail) {
+                m_tail = vl->prev;
+                vl->prev->next = NULL;
+            } else {
+                vl->prev->next = vl->next;
+                vl->next->prev = vl->prev;
+            }
+            if(vl->name)
+                MMDAIMemoryRelease(vl->name);
+            delete vl;
+            count--;
+        }
+    }
 }
 
 } /* namespace */

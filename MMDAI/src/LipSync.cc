@@ -47,244 +47,244 @@ const float LipSync::kInterpolationRate = 0.8f;
 /* LipSync::initialize: initialize lipsync */
 void LipSync::initialize()
 {
-   m_numMotion = 0;
-   m_motion = NULL;
+    m_numMotion = 0;
+    m_motion = NULL;
 
-   m_numPhone = 0;
-   m_phone = NULL;
-   m_blendRate = NULL;
+    m_numPhone = 0;
+    m_phone = NULL;
+    m_blendRate = NULL;
 }
 
 /* LipSync::clear: free lipsync */
 void LipSync::clear()
 {
-   int i;
+    int i;
 
-   if(m_motion != NULL) {
-      for(i = 0; i < m_numMotion; i++)
-         MMDAIMemoryRelease(m_motion[i]);
-      MMDAIMemoryRelease(m_motion);
-   }
-   if(m_phone != NULL) {
-      for(i = 0; i < m_numPhone; i++)
-         MMDAIMemoryRelease(m_phone[i]);
-      MMDAIMemoryRelease(m_phone);
-   }
-   if(m_blendRate != NULL) {
-      for(i = 0; i < m_numPhone; i++)
-         MMDAIMemoryRelease(m_blendRate[i]);
-      MMDAIMemoryRelease(m_blendRate);
-   }
+    if(m_motion != NULL) {
+        for(i = 0; i < m_numMotion; i++)
+            MMDAIMemoryRelease(m_motion[i]);
+        MMDAIMemoryRelease(m_motion);
+    }
+    if(m_phone != NULL) {
+        for(i = 0; i < m_numPhone; i++)
+            MMDAIMemoryRelease(m_phone[i]);
+        MMDAIMemoryRelease(m_phone);
+    }
+    if(m_blendRate != NULL) {
+        for(i = 0; i < m_numPhone; i++)
+            MMDAIMemoryRelease(m_blendRate[i]);
+        MMDAIMemoryRelease(m_blendRate);
+    }
 
-   initialize();
+    initialize();
 }
 
 /* LipSync::LipSync: constructor */
 LipSync::LipSync()
 {
-   initialize();
+    initialize();
 }
 
 /* LipSync::~LipSync: destructor */
 LipSync::~LipSync()
 {
-   clear();
+    clear();
 }
 
 /* LipSync::load: initialize and load lip setting */
 bool LipSync::load(LipSyncLoader *loader)
 {
-   int len = 0;
+    int len = 0;
 
-   if (!loader->load())
-     return false;
+    if (!loader->load())
+        return false;
 
-   m_numMotion = len = loader->getNExpressions();
-   m_motion = static_cast<char **>(MMDAIMemoryAllocate(sizeof(char *) * m_numMotion));
-   if (m_motion == NULL) {
-     clear();
-     return false;
-   }
-   for (int i = 0; i < len; i++) {
-     const char *name = loader->getExpressionName(i);
-     char *s = NULL;
-     if (name == NULL || (s = MMDAIStringClone(name)) == NULL) {
-       clear();
-       return false;
-     }
-     m_motion[i] = s;
-   }
+    m_numMotion = len = loader->getNExpressions();
+    m_motion = static_cast<char **>(MMDAIMemoryAllocate(sizeof(char *) * m_numMotion));
+    if (m_motion == NULL) {
+        clear();
+        return false;
+    }
+    for (int i = 0; i < len; i++) {
+        const char *name = loader->getExpressionName(i);
+        char *s = NULL;
+        if (name == NULL || (s = MMDAIStringClone(name)) == NULL) {
+            clear();
+            return false;
+        }
+        m_motion[i] = s;
+    }
 
-   m_numPhone = len = loader->getNPhonemes();
-   m_phone = static_cast<char **>(MMDAIMemoryAllocate(sizeof(char *) * m_numPhone));
-   m_blendRate = static_cast<float **>(MMDAIMemoryAllocate(sizeof(float *) * m_numPhone));
-   if (m_phone == NULL || m_blendRate == NULL) {
-     clear();
-     return false;
-   }
-   for (int i = 0; i < len; i++) {
-     const char *name = loader->getPhoneName(i);
-     char *s = NULL;
-     if (name == NULL || (s = MMDAIStringClone(name)) == NULL) {
-       clear();
-       return false;
-     }
-     m_phone[i] = s;
-     m_blendRate[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * m_numMotion));
-     if (m_blendRate[i] == NULL) {
-       clear();
-       return false;
-     }
-     for (int j = 0; j < m_numMotion; j++) {
-       float f = loader->getInterpolationWeight(i, j);
-       m_blendRate[i][j] = f;
-     }
-   }
+    m_numPhone = len = loader->getNPhonemes();
+    m_phone = static_cast<char **>(MMDAIMemoryAllocate(sizeof(char *) * m_numPhone));
+    m_blendRate = static_cast<float **>(MMDAIMemoryAllocate(sizeof(float *) * m_numPhone));
+    if (m_phone == NULL || m_blendRate == NULL) {
+        clear();
+        return false;
+    }
+    for (int i = 0; i < len; i++) {
+        const char *name = loader->getPhoneName(i);
+        char *s = NULL;
+        if (name == NULL || (s = MMDAIStringClone(name)) == NULL) {
+            clear();
+            return false;
+        }
+        m_phone[i] = s;
+        m_blendRate[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * m_numMotion));
+        if (m_blendRate[i] == NULL) {
+            clear();
+            return false;
+        }
+        for (int j = 0; j < m_numMotion; j++) {
+            float f = loader->getInterpolationWeight(i, j);
+            m_blendRate[i][j] = f;
+        }
+    }
 
-   return true;
+    return true;
 }
 
 /* LipSync::createMotion: create motion from phoneme sequence */
 bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *rawSize)
 {
-   LipKeyFrame *head = NULL, *tail = NULL, *tmp1 = NULL, *tmp2 = NULL;
-   VMDFile_Header *header = NULL;
-   VMDFile_FaceFrame *face = NULL;
-   size_t size = 0;
-   int i = 0, j = 0, k = 0, len = 0, totalNumKey = 0;
-   char *buf = NULL, *p = NULL, *save = NULL;
-   bool ret = false;
-   float f = 0.0f, diff = 0.0f;
-   unsigned int currentFrame = 0, *numBoneKeyFrames = NULL, *numFaceKeyFrames = NULL;
-   unsigned char *data = NULL;
+    LipKeyFrame *head = NULL, *tail = NULL, *tmp1 = NULL, *tmp2 = NULL;
+    VMDFile_Header *header = NULL;
+    VMDFile_FaceFrame *face = NULL;
+    size_t size = 0;
+    int i = 0, j = 0, k = 0, len = 0, totalNumKey = 0;
+    char *buf = NULL, *p = NULL, *save = NULL;
+    bool ret = false;
+    float f = 0.0f, diff = 0.0f;
+    unsigned int currentFrame = 0, *numBoneKeyFrames = NULL, *numFaceKeyFrames = NULL;
+    unsigned char *data = NULL;
 
-   /* check */
-   if(str == NULL || m_numMotion <= 0 || m_numPhone <= 0)
-      return ret;
+    /* check */
+    if(str == NULL || m_numMotion <= 0 || m_numPhone <= 0)
+        return ret;
 
-   /* initialize */
-   (*rawData) = NULL;
-   (*rawSize) = 0;
+    /* initialize */
+    (*rawData) = NULL;
+    (*rawSize) = 0;
 
-   /* get phone index and duration */
-   buf = MMDAIStringClone(str);
-   for(i = 0, k = 0, p = MMDAIStringGetToken(buf, ",", &save); p; i++, p = MMDAIStringGetToken(NULL, ",", &save)) {
-      if(i % 2 == 0) {
-         for(j = 0; j < m_numPhone; j++) {
-            if (MMDAIStringEquals(m_phone[j], p)) {
-               k = j;
-               break;
+    /* get phone index and duration */
+    buf = MMDAIStringClone(str);
+    for(i = 0, k = 0, p = MMDAIStringGetToken(buf, ",", &save); p; i++, p = MMDAIStringGetToken(NULL, ",", &save)) {
+        if(i % 2 == 0) {
+            for(j = 0; j < m_numPhone; j++) {
+                if (MMDAIStringEquals(m_phone[j], p)) {
+                    k = j;
+                    break;
+                }
             }
-         }
-         if(m_numPhone <= j)
-            k = 0;
-      } else {
-         tmp1 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
-         if (tmp1 == NULL)
-           goto finally;
-         tmp1->phone = k;
-         f = 0.03f * MMDAIStringToFloat(p) + diff; /* convert ms to frame */
-         tmp1->duration = (int) (f + 0.5);
-         if(tmp1->duration < 1)
-            tmp1->duration = 1;
-         diff = f - tmp1->duration;
-         tmp1->rate = 1.0f;
-         tmp1->next = NULL;
-         if(head == NULL)
-            head = tmp1;
-         else
-            tail->next = tmp1;
-         tail = tmp1;
-      }
-   }
+            if(m_numPhone <= j)
+                k = 0;
+        } else {
+            tmp1 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
+            if (tmp1 == NULL)
+                goto finally;
+            tmp1->phone = k;
+            f = 0.03f * MMDAIStringToFloat(p) + diff; /* convert ms to frame */
+            tmp1->duration = (int) (f + 0.5);
+            if(tmp1->duration < 1)
+                tmp1->duration = 1;
+            diff = f - tmp1->duration;
+            tmp1->rate = 1.0f;
+            tmp1->next = NULL;
+            if(head == NULL)
+                head = tmp1;
+            else
+                tail->next = tmp1;
+            tail = tmp1;
+        }
+    }
 
-   /* add final closed lip */
-   tmp1 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
-   if (tmp1 == NULL)
-     goto finally;
-   tmp1->phone = 0;
-   tmp1->duration = 1;
-   tmp1->rate = 0.0f;
-   tmp1->next = NULL;
-   if(head == NULL)
-      head = tmp1;
-   else
-      tail->next = tmp1;
-   tail = tmp1;
+    /* add final closed lip */
+    tmp1 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
+    if (tmp1 == NULL)
+        goto finally;
+    tmp1->phone = 0;
+    tmp1->duration = 1;
+    tmp1->rate = 0.0f;
+    tmp1->next = NULL;
+    if(head == NULL)
+        head = tmp1;
+    else
+        tail->next = tmp1;
+    tail = tmp1;
 
-   /* insert interpolation lip motion */
-   for(tmp1 = head; tmp1; tmp1 = tmp1->next) {
-      if(tmp1->next && tmp1->duration > kInterpolationMargin) {
-         tmp2 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
-         if (tmp2 == NULL)
-           goto finally;
-         tmp2->phone = tmp1->phone;
-         tmp2->duration = kInterpolationMargin;
-         tmp2->rate = tmp1->rate * kInterpolationRate;
-         tmp2->next = tmp1->next;
-         tmp1->duration -= kInterpolationMargin;
-         tmp1->next = tmp2;
-         tmp2 = tmp1;
-      }
-   }
+    /* insert interpolation lip motion */
+    for(tmp1 = head; tmp1; tmp1 = tmp1->next) {
+        if(tmp1->next && tmp1->duration > kInterpolationMargin) {
+            tmp2 = static_cast<LipKeyFrame *>(MMDAIMemoryAllocate(sizeof(LipKeyFrame)));
+            if (tmp2 == NULL)
+                goto finally;
+            tmp2->phone = tmp1->phone;
+            tmp2->duration = kInterpolationMargin;
+            tmp2->rate = tmp1->rate * kInterpolationRate;
+            tmp2->next = tmp1->next;
+            tmp1->duration -= kInterpolationMargin;
+            tmp1->next = tmp2;
+            tmp2 = tmp1;
+        }
+    }
 
-   /* count length of key frame */
-   len = 0;
-   for(tmp1 = head; tmp1; tmp1 = tmp1->next)
-      len++;
+    /* count length of key frame */
+    len = 0;
+    for(tmp1 = head; tmp1; tmp1 = tmp1->next)
+        len++;
 
-   totalNumKey = m_numMotion * len;
+    totalNumKey = m_numMotion * len;
 
-   /* create memories */
-   (*rawSize) = sizeof(VMDFile_Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(VMDFile_FaceFrame) * totalNumKey;
-   size = (*rawSize);
-   size = sizeof(unsigned char) * (*rawSize);
-   (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(size));
-   if (*rawData == NULL)
-     goto finally;
+    /* create memories */
+    (*rawSize) = sizeof(VMDFile_Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(VMDFile_FaceFrame) * totalNumKey;
+    size = (*rawSize);
+    size = sizeof(unsigned char) * (*rawSize);
+    (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(size));
+    if (*rawData == NULL)
+        goto finally;
 
-   data = (*rawData);
-   /* header */
-   header = (VMDFile_Header *) data;
-   MMDAIStringCopy(header->header, "Vocaloid Motion Data 0002", 30);
-   data += sizeof(VMDFile_Header);
-   /* number of key frame for bone */
-   numBoneKeyFrames = (unsigned int *) data;
-   (*numBoneKeyFrames) = 0;
-   data += sizeof(unsigned int);
-   /* number of key frame for expression */
-   numFaceKeyFrames = (unsigned int *) data;
-   (*numFaceKeyFrames) = totalNumKey;
-   data += sizeof(unsigned int);
-   /* set key frame */
-   for (i = 0; i < m_numMotion; i++) {
-      currentFrame = 0;
-      for(tmp1 = head; tmp1; tmp1 = tmp1->next) {
-         face = (VMDFile_FaceFrame *) data;
-         MMDAIStringCopy(face->name, m_motion[i], 15);
-         face->keyFrame = currentFrame;
-         face->weight = m_blendRate[tmp1->phone][i] * tmp1->rate;
-         data += sizeof(VMDFile_FaceFrame);
-         currentFrame += tmp1->duration;
-      }
-   }
-   ret = true;
+    data = (*rawData);
+    /* header */
+    header = (VMDFile_Header *) data;
+    MMDAIStringCopy(header->header, "Vocaloid Motion Data 0002", 30);
+    data += sizeof(VMDFile_Header);
+    /* number of key frame for bone */
+    numBoneKeyFrames = (unsigned int *) data;
+    (*numBoneKeyFrames) = 0;
+    data += sizeof(unsigned int);
+    /* number of key frame for expression */
+    numFaceKeyFrames = (unsigned int *) data;
+    (*numFaceKeyFrames) = totalNumKey;
+    data += sizeof(unsigned int);
+    /* set key frame */
+    for (i = 0; i < m_numMotion; i++) {
+        currentFrame = 0;
+        for(tmp1 = head; tmp1; tmp1 = tmp1->next) {
+            face = (VMDFile_FaceFrame *) data;
+            MMDAIStringCopy(face->name, m_motion[i], 15);
+            face->keyFrame = currentFrame;
+            face->weight = m_blendRate[tmp1->phone][i] * tmp1->rate;
+            data += sizeof(VMDFile_FaceFrame);
+            currentFrame += tmp1->duration;
+        }
+    }
+    ret = true;
 
 finally:
-   /* free */
-   if (buf != NULL)
-     MMDAIMemoryRelease(buf);
-   for(tmp1 = head; tmp1; tmp1 = tmp2) {
-      tmp2 = tmp1->next;
-      if (tmp1 != NULL)
-        MMDAIMemoryRelease(tmp1);
-   }
-   return ret;
+    /* free */
+    if (buf != NULL)
+        MMDAIMemoryRelease(buf);
+    for(tmp1 = head; tmp1; tmp1 = tmp2) {
+        tmp2 = tmp1->next;
+        if (tmp1 != NULL)
+            MMDAIMemoryRelease(tmp1);
+    }
+    return ret;
 }
 
 const char *LipSync::getMotionName()
 {
-  return "LipSync";
+    return "LipSync";
 }
 
 } /* namespace */

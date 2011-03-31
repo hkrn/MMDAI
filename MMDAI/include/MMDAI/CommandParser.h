@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -38,8 +38,8 @@
 
 /* headers */
 
-#ifndef COMMANDPARSER_H
-#define COMMANDPARSER_H
+#ifndef MMDAI_COMMANDPARSER_H_
+#define MMDAI_COMMANDPARSER_H_
 
 #include <MMDME/Common.h>
 
@@ -51,20 +51,19 @@ class PMDModelLoaderFactory;
 class CommandParser
 {
 public:
+    explicit CommandParser(SceneController *controller, PMDModelLoaderFactory *factory);
+    ~CommandParser();
 
-  explicit CommandParser(SceneController *controller, PMDModelLoaderFactory *factory);
-  ~CommandParser();
-
-  bool parse(const char *command, const char **argv, int argc);
+    bool parse(const char *command, const char **argv, int argc);
 
 private:
-  SceneController *m_controller;
-  PMDModelLoaderFactory *m_factory;
+    SceneController *m_controller;
+    PMDModelLoaderFactory *m_factory;
 
-  MMDME_DISABLE_COPY_AND_ASSIGN(CommandParser);
+    MMDME_DISABLE_COPY_AND_ASSIGN(CommandParser);
 };
 
 } /* namespace */
 
-#endif // COMMANDPARSER_H
+#endif // MMDAI_COMMANDPARSER_H_
 

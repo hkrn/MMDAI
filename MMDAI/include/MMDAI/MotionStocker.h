@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -38,58 +38,43 @@
 
 /* headers */
 
-#ifndef MOTIONSTOCKER_H
-#define MOTIONSTOCKER_H
+#ifndef MMDAI_MOTIONSTOCKER_H_
+#define MMDAI_MOTIONSTOCKER_H_
 
 #include <MMDME/Common.h>
 #include <MMDME/VMD.h>
 
 namespace MMDAI {
 
-/* VMDList: VMD list */
 typedef struct _VMDList {
-  VMD vmd;
-  char *name;
-  int use;
-  struct _VMDList *prev;
-  struct _VMDList *next;
+    VMD vmd;
+    char *name;
+    int use;
+    struct _VMDList *prev;
+    struct _VMDList *next;
 } VMDList;
 
-/* MotionStocker: cache list for VMD files */
 class MotionStocker
 {
-private:
-
-  VMDList *m_head;
-  VMDList *m_tail;
-
-  /* initialize: initialize MotionStocker */
-  void initialize();
-
-  /* clear: free MotionStocker */
-  void clear();
-
-  MMDME_DISABLE_COPY_AND_ASSIGN(MotionStocker);
-
 public:
+    MotionStocker();
+    ~MotionStocker();
 
-  /* MotionStocker: constructor */
-  MotionStocker();
+    VMD *loadFromLoader(VMDLoader *loader);
+    VMD *loadFromData(unsigned char *rawData, size_t rawSize);
+    void unload(VMD *vmd);
 
-  /* ~MotionStocker: destructor */
-  ~MotionStocker();
+private:
+    void initialize();
+    void clear();
 
-  /* loadFromFile: load VMD from file or return cached one */
-  VMD *loadFromLoader(VMDLoader *loader);
+    VMDList *m_head;
+    VMDList *m_tail;
 
-  /* loadFromData: load VMD from data memories */
-  VMD *loadFromData(unsigned char *rawData, size_t rawSize);
-
-  /* unload: unload VMD */
-  void unload(VMD *vmd);
+    MMDME_DISABLE_COPY_AND_ASSIGN(MotionStocker);
 };
 
 } /* namespace */
 
-#endif // MOTIONSTOCKER_H
+#endif // MMDAI_MOTIONSTOCKER_H_
 

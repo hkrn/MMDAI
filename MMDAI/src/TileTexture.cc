@@ -45,81 +45,81 @@ namespace MMDAI {
 /* TileTexture::resetDisplayList: reset display list */
 void TileTexture::resetDisplayList()
 {
-  m_engine->deleteCache(&m_cache);
+    m_engine->deleteCache(&m_cache);
 }
 
 /* TileTexture::initialize: initialize texture */
 void TileTexture::initialize()
 {
-  int i, j;
+    int i, j;
 
-  m_cache = NULL;
-  m_isLoaded = false;
+    m_cache = NULL;
+    m_isLoaded = false;
 
-  for (i = 0; i < 4; i++)
-    for (j = 0; j < 3; j++)
-      m_vertices[i][j] = 0.0f;
-  m_numx = 1.0f;
-  m_numy = 1.0f;
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 3; j++)
+            m_vertices[i][j] = 0.0f;
+    m_numx = 1.0f;
+    m_numy = 1.0f;
 }
 
 /* TileTexture::clear: free texture */
 void TileTexture::clear()
 {
-  if (m_isLoaded)
-    m_texture.release();
-  initialize();
+    if (m_isLoaded)
+        m_texture.release();
+    initialize();
 }
 
 /* TileTexture::TileTexture: constructor */
 TileTexture::TileTexture(SceneRenderEngine *engine)
-  : m_engine(engine)
+    : m_engine(engine)
 {
-  initialize();
+    initialize();
 }
 
 /* TileTexture: destructor */
 TileTexture::~TileTexture()
 {
-  resetDisplayList();
-  clear();
+    resetDisplayList();
+    clear();
 }
 
 /* TileTexture::load: load a texture from file name (wide char) */
 bool TileTexture::load(PMDModelLoader *loader, SceneRenderEngine *engine)
 {
-  m_texture.setRenderEngine(engine);
-  bool ret = loader->loadImageTexture(&m_texture);
-  if (ret) {
-    m_isLoaded = true;
-    resetDisplayList();
-  }
-  return ret;
+    m_texture.setRenderEngine(engine);
+    bool ret = loader->loadImageTexture(&m_texture);
+    if (ret) {
+        m_isLoaded = true;
+        resetDisplayList();
+    }
+    return ret;
 }
 
 /* TileTexture::render: render the textures */
 void TileTexture::render(bool cullFace, const float normal[3])
 {
-  static const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
-  if (m_isLoaded == false)
-    return;
-  m_engine->renderTileTexture(&m_texture,
-                              color,
-                              normal,
-                              m_vertices[0],
-                              m_vertices[1],
-                              m_vertices[2],
-                              m_vertices[3],
-                              m_numx,
-                              m_numy,
-                              cullFace,
-                              &m_cache);
+    static const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
+    if (m_isLoaded == false)
+        return;
+    m_engine->renderTileTexture(&m_texture,
+                                color,
+                                normal,
+                                m_vertices[0],
+                                m_vertices[1],
+                                m_vertices[2],
+                                m_vertices[3],
+                                m_numx,
+                                m_numy,
+                                cullFace,
+                                &m_cache);
 }
 
 /* TileTexture::getSize: get texture size */
 float TileTexture::getSize(int i, int j) const
 {
-  return m_vertices[i][j];
+    return m_vertices[i][j];
 }
 
 /* TileTexture::setSize: set texture size */
@@ -129,23 +129,23 @@ void TileTexture::setSize(float v00, float v01, float v02,
                           float v30, float v31, float v32,
                           float numx, float numy)
 {
-  m_vertices[0][0] = v00;
-  m_vertices[0][1] = v01;
-  m_vertices[0][2] = v02;
-  m_vertices[1][0] = v10;
-  m_vertices[1][1] = v11;
-  m_vertices[1][2] = v12;
-  m_vertices[2][0] = v20;
-  m_vertices[2][1] = v21;
-  m_vertices[2][2] = v22;
-  m_vertices[3][0] = v30;
-  m_vertices[3][1] = v31;
-  m_vertices[3][2] = v32;
+    m_vertices[0][0] = v00;
+    m_vertices[0][1] = v01;
+    m_vertices[0][2] = v02;
+    m_vertices[1][0] = v10;
+    m_vertices[1][1] = v11;
+    m_vertices[1][2] = v12;
+    m_vertices[2][0] = v20;
+    m_vertices[2][1] = v21;
+    m_vertices[2][2] = v22;
+    m_vertices[3][0] = v30;
+    m_vertices[3][1] = v31;
+    m_vertices[3][2] = v32;
 
-  m_numx = numx;
-  m_numy = numy;
+    m_numx = numx;
+    m_numy = numy;
 
-  resetDisplayList();
+    resetDisplayList();
 }
 
 } /* namespace */

@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -50,52 +50,38 @@ namespace MMDAI {
 
 class LipSyncLoader;
 
-/* LipKeyFrame: key frame for lip motion */
 typedef struct _LipKeyFrame {
-   int phone;
-   int duration;
-   float rate;
-   struct _LipKeyFrame *next;
+    int phone;
+    int duration;
+    float rate;
+    struct _LipKeyFrame *next;
 } LipKeyFrame;
 
-/* LipSync: lipsync */
 class LipSync
 {
-private:
-
-   int m_numMotion; /* number of expression */
-   char **m_motion;
-
-   int m_numPhone; /* number of phoneme */
-   char **m_phone;
-   float **m_blendRate;
-
-   /* initialize: initialize lipsync */
-   void initialize();
-
-   /* clear: free lipsync */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(LipSync);
-
 public:
+    static const float kInterpolationRate;
+    static const int kInterpolationMargin = 2;
+    static const char *getMotionName();
 
-   static const float kInterpolationRate;
-   static const int kInterpolationMargin = 2;
+    LipSync();
+    ~LipSync();
 
-   /* LipSync: constructor */
-   LipSync();
+    bool load(LipSyncLoader *loader);
+    bool createMotion(const char *str, unsigned char **rawData, size_t *rawSize);
 
-   /* ~LipSync: destructor */
-   ~LipSync();
 
-   /* load: initialize and load lip setting */
-   bool load(LipSyncLoader *loader);
+private:
+    void initialize();
+    void clear();
 
-   /* createMotion: create motion from phoneme sequence */
-   bool createMotion(const char *str, unsigned char **rawData, size_t *rawSize);
+    int m_numMotion;
+    char **m_motion;
+    int m_numPhone;
+    char **m_phone;
+    float **m_blendRate;
 
-   static const char *getMotionName();
+    MMDME_DISABLE_COPY_AND_ASSIGN(LipSync);
 };
 
 } /* namespace */

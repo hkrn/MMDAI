@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -38,8 +38,8 @@
 
 /* headers */
 
-#ifndef SCENECONTROLLER_H
-#define SCENECONTROLLER_H
+#ifndef MMDAI_SCENECONTROLLER_H_
+#define MMDAI_SCENECONTROLLER_H_
 
 #include <MMDME/MMDME.h>
 
@@ -64,150 +64,150 @@ class SceneRenderEngine;
 class SceneController
 {
 public:
-  explicit SceneController(SceneEventHandler *handler);
-  ~SceneController();
+    explicit SceneController(SceneEventHandler *handler);
+    ~SceneController();
 
-  void initializeScreen(int width, int height);
+    void initializeScreen(int width, int height);
 
-  PMDObject *allocatePMDObject();
-  PMDObject *findPMDObject(PMDObject *object);
-  PMDObject *findPMDObject(const char *alias);
-  PMDObject *getPMDObject(int index);
-  int countPMDObjects() const;
+    PMDObject *allocatePMDObject();
+    PMDObject *findPMDObject(PMDObject *object);
+    PMDObject *findPMDObject(const char *alias);
+    PMDObject *getPMDObject(int index);
+    int countPMDObjects() const;
 
-  bool loadFloor(PMDModelLoader *loader);
-  bool loadBackground(PMDModelLoader *loader);
-  bool loadStage(PMDModelLoader *loader);
+    bool loadFloor(PMDModelLoader *loader);
+    bool loadBackground(PMDModelLoader *loader);
+    bool loadStage(PMDModelLoader *loader);
 
-  void updateLight();
+    void updateLight();
 
-  bool addMotion(PMDObject *object, VMDLoader *loader);
-  bool addMotion(PMDObject *object,
-                 const char *motionAlias,
-                 VMDLoader *loader,
-                 bool full,
-                 bool once,
-                 bool enableSmooth,
-                 bool enableRePos);
-  bool changeMotion(PMDObject *object,
-                    const char *motionAlias,
-                    VMDLoader *loader);
-  bool deleteMotion(PMDObject *object,
-                    const char *motionAlias);
+    bool addMotion(PMDObject *object, VMDLoader *loader);
+    bool addMotion(PMDObject *object,
+                   const char *motionAlias,
+                   VMDLoader *loader,
+                   bool full,
+                   bool once,
+                   bool enableSmooth,
+                   bool enableRePos);
+    bool changeMotion(PMDObject *object,
+                      const char *motionAlias,
+                      VMDLoader *loader);
+    bool deleteMotion(PMDObject *object,
+                      const char *motionAlias);
 
-  bool addModel(PMDModelLoader *loader, LipSyncLoader *lipSyncLoader);
-  bool addModel(const char *modelAlias,
-                PMDModelLoader *modelLoader,
-                LipSyncLoader *lipSyncLoader,
-                btVector3 *pos,
-                btQuaternion *rot,
-                const char *baseModelAlias,
-                const char *baseBoneName);
-  bool changeModel(PMDObject *object,
-                   PMDModelLoader *loader,
-                   LipSyncLoader *lipSyncLoader);
-  void deleteModel(PMDObject *object);
+    bool addModel(PMDModelLoader *loader, LipSyncLoader *lipSyncLoader);
+    bool addModel(const char *modelAlias,
+                  PMDModelLoader *modelLoader,
+                  LipSyncLoader *lipSyncLoader,
+                  btVector3 *pos,
+                  btQuaternion *rot,
+                  const char *baseModelAlias,
+                  const char *baseBoneName);
+    bool changeModel(PMDObject *object,
+                     PMDModelLoader *loader,
+                     LipSyncLoader *lipSyncLoader);
+    void deleteModel(PMDObject *object);
 
-  void changeLightDirection(float x,
-                            float y,
-                            float z);
-  void changeLightColor(float r,
-                        float g,
-                        float b);
+    void changeLightDirection(float x,
+                              float y,
+                              float z);
+    void changeLightColor(float r,
+                          float g,
+                          float b);
 
-  void startMove(PMDObject *object,
-                 btVector3 *pos,
-                 bool local,
-                 float speed);
-  void stopMove(PMDObject *object);
+    void startMove(PMDObject *object,
+                   btVector3 *pos,
+                   bool local,
+                   float speed);
+    void stopMove(PMDObject *object);
 
-  void startRotation(PMDObject *object,
-                     btQuaternion *rot,
-                     bool local,
-                     float speed);
-  void stopRotation(PMDObject *object);
+    void startRotation(PMDObject *object,
+                       btQuaternion *rot,
+                       bool local,
+                       float speed);
+    void stopRotation(PMDObject *object);
 
-  void startTurn(PMDObject *object,
-                 btVector3 *pos,
-                 bool local,
-                 float speed);
-  void stopTurn(PMDObject *object);
+    void startTurn(PMDObject *object,
+                   btVector3 *pos,
+                   bool local,
+                   float speed);
+    void stopTurn(PMDObject *object);
 
-  bool startLipSync(PMDObject *object,
-                    const char *seq);
-  bool stopLipSync(PMDObject *object);
+    bool startLipSync(PMDObject *object,
+                      const char *seq);
+    bool stopLipSync(PMDObject *object);
 
 
-  void resetLocation(const float *trans, const float *rot, const float scale);
-  void getScreenPointPosition(btVector3 *dst, btVector3 *src);
-  void setScale(float value);
-  void rotate(float x, float y, float z);
-  void translate(float x, float y, float z);
-  void setRect(int width, int height);
-  void setShadowMapping(bool value);
+    void resetLocation(const float *trans, const float *rot, const float scale);
+    void getScreenPointPosition(btVector3 *dst, btVector3 *src);
+    void setScale(float value);
+    void rotate(float x, float y, float z);
+    void translate(float x, float y, float z);
+    void setRect(int width, int height);
+    void setShadowMapping(bool value);
 
-  void selectPMDObject(PMDObject *object);
-  void selectPMDObject(int x, int y);
-  void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
-  void setHighlightPMDObject(PMDObject *object);
-  PMDObject *getSelectedPMDObject();
+    void selectPMDObject(PMDObject *object);
+    void selectPMDObject(int x, int y);
+    void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
+    void setHighlightPMDObject(PMDObject *object);
+    PMDObject *getSelectedPMDObject();
 
-  void updateMotion(double procFrame, double adjustFrame);
-  void updateDepthTextureViewParam();
-  void updateModelPositionAndRotation(double fps);
-  void updateAfterSimulation();
-  void updateProjectionMatrix();
-  void updateModelViewMatrix();
-  void updateModelViewProjectionMatrix();
-  void setModelViewMatrix(float modelView[16]);
-  void setProjectionMatrix(float projection[16]);
-  void prerenderScene();
-  void renderScene();
-  void renderBulletForDebug();
-  void renderPMDObjectsForDebug();
-  void renderLogger();
+    void updateMotion(double procFrame, double adjustFrame);
+    void updateDepthTextureViewParam();
+    void updateModelPositionAndRotation(double fps);
+    void updateAfterSimulation();
+    void updateProjectionMatrix();
+    void updateModelViewMatrix();
+    void updateModelViewProjectionMatrix();
+    void setModelViewMatrix(float modelView[16]);
+    void setProjectionMatrix(float projection[16]);
+    void prerenderScene();
+    void renderScene();
+    void renderBulletForDebug();
+    void renderPMDObjectsForDebug();
+    void renderLogger();
 
-  const char *getConfigPath() const;
-  Option *getOption();
-  Stage *getStage();
-  int getWidth() const;
-  int getHeight() const;
-  float getScale() const;
+    const char *getConfigPath() const;
+    Option *getOption();
+    Stage *getStage();
+    int getWidth() const;
+    int getHeight() const;
+    float getScale() const;
 
 private:
-  void deleteAssociatedModels(PMDObject *object);
-  void sendEvent1(const char *type, const char *arg1);
-  void sendEvent2(const char *type, const char *arg1, const char *arg2);
+    void deleteAssociatedModels(PMDObject *object);
+    void sendEvent1(const char *type, const char *arg1);
+    void sendEvent2(const char *type, const char *arg1, const char *arg2);
 
-  BulletPhysics m_bullet;
-  SceneRenderEngine *m_engine;
-  MotionStocker m_motion;
-  Option m_option;
-  PMDObject **m_objects;
-  PMDObject *m_highlightModel;
-  SceneEventHandler *m_handler;
-  Stage *m_stage;
-  int m_numModel;
-  int m_selectedModel;
-  int m_width;
-  int m_height;
-  bool m_enablePhysicsSimulation;
+    BulletPhysics m_bullet;
+    SceneRenderEngine *m_engine;
+    MotionStocker m_motion;
+    Option m_option;
+    PMDObject **m_objects;
+    PMDObject *m_highlightModel;
+    SceneEventHandler *m_handler;
+    Stage *m_stage;
+    int m_numModel;
+    int m_selectedModel;
+    int m_width;
+    int m_height;
+    bool m_enablePhysicsSimulation;
 
-  float m_scale;           /* target scale */
-  btVector3 m_trans;       /* target trans vector */
-  btQuaternion m_rot;      /* target rotation */
-  btVector3 m_cameraTrans; /* position of camera */
+    float m_scale;           /* target scale */
+    btVector3 m_trans;       /* target trans vector */
+    btQuaternion m_rot;      /* target rotation */
+    btVector3 m_cameraTrans; /* position of camera */
 
-  float m_currentScale;         /* current scale */
-  btVector3 m_currentTrans;     /* current trans vector */
-  btQuaternion m_currentRot;    /* current rotation */
-  btTransform m_transMatrix;    /* current trans vector + rotation matrix */
-  btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
+    float m_currentScale;         /* current scale */
+    btVector3 m_currentTrans;     /* current trans vector */
+    btQuaternion m_currentRot;    /* current rotation */
+    btTransform m_transMatrix;    /* current trans vector + rotation matrix */
+    btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
 
-  MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
+    MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
 };
 
 } /* namespace */
 
-#endif // SCENECONTROLLER_H
+#endif // MMDAI_SCENECONTROLLER_H_
 

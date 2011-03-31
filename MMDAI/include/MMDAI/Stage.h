@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,10 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
-
-#ifndef STAGE_H
-#define STAGE_H
+#ifndef MMDAI_STAGE_H_
+#define MMDAI_STAGE_H_
 
 #include <MMDME/Common.h>
 #include <MMDME/PMDModel.h>
@@ -51,77 +49,43 @@ namespace MMDAI {
 
 class PMDModelLoader;
 
-/* Stage: stage */
+
 class Stage
 {
 public:
+    Stage(SceneRenderEngine *engine);
+    ~Stage();
 
-  /* Stage: constructor */
-  Stage(SceneRenderEngine *engine);
-
-  /* ~Stage: destructor */
-  ~Stage();
-
-  /* setSize: set size of floor and background */
-  void setSize(float *size, float numx, float numy);
-
-  /* loadFloor: load floor image */
-  bool loadFloor(PMDModelLoader *loader, BulletPhysics *bullet);
-
-  /* loadBackground: load background image */
-  bool loadBackground(PMDModelLoader *loader, BulletPhysics *bullet);
-
-  /* loadStagePMD: load stage pmd */
-  bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
-
-  /* renderFloor: render the floor */
-  void renderFloor();
-
-  /* renderBackground: render the background */
-  void renderBackground();
-
-  /* renderPMD: render the stage pmd */
-  void renderPMD();
-
-  /* updateShadowMatrix: update shadow projection matrix */
-  void updateShadowMatrix(float lightDirection[4]);
-
-  /* getShadowMatrix: get shadow projection matrix */
-  float *getShadowMatrix() const;
+    void setSize(float *size, float numx, float numy);
+    bool loadFloor(PMDModelLoader *loader, BulletPhysics *bullet);
+    bool loadBackground(PMDModelLoader *loader, BulletPhysics *bullet);
+    bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
+    void renderFloor();
+    void renderBackground();
+    void renderPMD();
+    void updateShadowMatrix(float lightDirection[4]);
+    float *getShadowMatrix() const;
 
 private:
-  SceneRenderEngine *m_engine;
-  PMDRenderCacheNative *m_cache;
+    void releaseFloorBody();
+    void initialize();
+    void clear();
+    void makeFloorBody(float width, float depth);
 
-  TileTexture *m_floor; /* floor texture */
-  TileTexture *m_background;  /* background texture */
+    SceneRenderEngine *m_engine;
+    PMDRenderCacheNative *m_cache;
+    TileTexture *m_floor;
+    TileTexture *m_background;
+    PMDModel *m_model;
+    bool m_hasPMD;
+    bool m_listIndexPMDValid;
+    BulletPhysics *m_bullet;
+    btRigidBody *m_floorBody;
+    float m_floorShadow[4][4];
 
-  PMDModel *m_model;           /* PMD for background */
-  bool m_hasPMD;            /* true if m_model is used */
-  bool m_listIndexPMDValid; /* true if m_listIndexPMDValid was registered */
-
-  BulletPhysics *m_bullet;  /* BulletPhysics */
-  btRigidBody *m_floorBody; /* body for floor */
-
-  /* work area */
-  float m_floorShadow[4][4]; /* matrix for shadow of floor */
-
-  /* makeFloorBody: create a rigid body for floor */
-  void makeFloorBody(float width, float depth);
-
-  /* releaseFloorBody: release rigid body for floor */
-  void releaseFloorBody();
-
-  /* initialize: initialize stage */
-  void initialize();
-
-  /* clear: free stage */
-  void clear();
-
-  MMDME_DISABLE_COPY_AND_ASSIGN(Stage);
+    MMDME_DISABLE_COPY_AND_ASSIGN(Stage);
 };
 
 } /* namespace */
 
-#endif // STAGE_H
-
+#endif // MMDAI_STAGE_H_

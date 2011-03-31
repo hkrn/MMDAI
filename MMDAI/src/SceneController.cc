@@ -105,23 +105,23 @@ const char *SceneEventHandler::kKeyEvent = "KEY";
 // from util.h
 static int getNumDigit(int in)
 {
-  int out = 0;
-  if(in == 0)
-    return 1;
-  if (in < 0) {
-    out = 1;
-    in *= -1;
-  }
-  for (; in != 0; out++)
-    in /= 10;
-  return out;
+    int out = 0;
+    if(in == 0)
+        return 1;
+    if (in < 0) {
+        out = 1;
+        in *= -1;
+    }
+    for (; in != 0; out++)
+        in /= 10;
+    return out;
 }
 
 SceneController::SceneController(SceneEventHandler *handler)
 #if defined(OPENGLES1)
-  : m_engine(new GLES1SceneRenderEngine()),
+    : m_engine(new GLES1SceneRenderEngine()),
 #else
-  : m_engine(new GLSceneRenderEngine()),
+    : m_engine(new GLSceneRenderEngine()),
 #endif
     m_objects(new PMDObject*[MAX_MODEL]),
     m_highlightModel(0),
@@ -140,145 +140,145 @@ SceneController::SceneController(SceneEventHandler *handler)
     m_currentTrans(m_trans),
     m_currentRot(m_rot)
 {
-  for (int i = 0; i < MAX_MODEL; i++) {
-    m_objects[i] = new PMDObject(m_engine);
-  }
-  m_transMatrix.setIdentity();
-  updateModelViewProjectionMatrix();
+    for (int i = 0; i < MAX_MODEL; i++) {
+        m_objects[i] = new PMDObject(m_engine);
+    }
+    m_transMatrix.setIdentity();
+    updateModelViewProjectionMatrix();
 }
 
 SceneController::~SceneController()
 {
-  for (int i = 0; i < MAX_MODEL; i++) {
-    delete m_objects[i];
-  }
-  delete[] m_objects;
-  delete m_stage;
-  delete m_engine;
+    for (int i = 0; i < MAX_MODEL; i++) {
+        delete m_objects[i];
+    }
+    delete[] m_objects;
+    delete m_stage;
+    delete m_engine;
 }
 
 void SceneController::updateLight()
 {
-  int i = 0;
-  float *f;
-  btVector3 l;
-  m_engine->updateLighting(m_option.getUseCartoonRendering(),
-                           m_option.getUseMMDLikeCartoon(),
-                           m_option.getLightDirection(),
-                           m_option.getLightIntensity(),
-                           m_option.getLightColor());
-  f = m_option.getLightDirection();
-  m_stage->updateShadowMatrix(f);
-  l = btVector3(f[0], f[1], f[2]);
-  for (i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    if (object->isEnable())
-      object->setLightForToon(&l);
-  }
+    int i = 0;
+    float *f;
+    btVector3 l;
+    m_engine->updateLighting(m_option.getUseCartoonRendering(),
+                             m_option.getUseMMDLikeCartoon(),
+                             m_option.getLightDirection(),
+                             m_option.getLightIntensity(),
+                             m_option.getLightColor());
+    f = m_option.getLightDirection();
+    m_stage->updateShadowMatrix(f);
+    l = btVector3(f[0], f[1], f[2]);
+    for (i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (object->isEnable())
+            object->setLightForToon(&l);
+    }
 }
 
 /* SceneController::setFloor: set floor image */
 bool SceneController::loadFloor(PMDModelLoader *loader)
 {
-  /* load floor */
-  const char *fileName = loader->getLocation();
-  if (fileName == NULL)
-    return false;
-  if (m_stage->loadFloor(loader, &m_bullet) == false) {
-    MMDAILogWarn("cannot set floor %s.", fileName);
-    return false;
-  }
+    /* load floor */
+    const char *fileName = loader->getLocation();
+    if (fileName == NULL)
+        return false;
+    if (m_stage->loadFloor(loader, &m_bullet) == false) {
+        MMDAILogWarn("cannot set floor %s.", fileName);
+        return false;
+    }
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kFloorEvent, fileName);
+    /* send event message */
+    sendEvent1(SceneEventHandler::kFloorEvent, fileName);
 
-  return true;
+    return true;
 }
 
 /* SceneController::setBackground: set background image */
 bool SceneController::loadBackground(PMDModelLoader *loader)
 {
-  /* load background */
-  const char *fileName = loader->getLocation();
-  if (fileName == NULL)
-    return false;
-  if (m_stage->loadBackground(loader, &m_bullet) == false) {
-    MMDAILogWarn("cannot set background %s.", fileName);
-    return false;
-  }
+    /* load background */
+    const char *fileName = loader->getLocation();
+    if (fileName == NULL)
+        return false;
+    if (m_stage->loadBackground(loader, &m_bullet) == false) {
+        MMDAILogWarn("cannot set background %s.", fileName);
+        return false;
+    }
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kBackgroundEvent, fileName);
+    /* send event message */
+    sendEvent1(SceneEventHandler::kBackgroundEvent, fileName);
 
-  return true;
+    return true;
 }
 
 /* SceneController::setStage: set stage */
 bool SceneController::loadStage(PMDModelLoader *loader)
 {
-  /* load stage */
-  const char *fileName = loader->getLocation();
-  if (fileName == NULL)
-    return false;
-  if (m_stage->loadStagePMD(loader, &m_bullet) == false) {
-    MMDAILogWarn("cannot set stage %s.", fileName);
-    return false;
-  }
+    /* load stage */
+    const char *fileName = loader->getLocation();
+    if (fileName == NULL)
+        return false;
+    if (m_stage->loadStagePMD(loader, &m_bullet) == false) {
+        MMDAILogWarn("cannot set stage %s.", fileName);
+        return false;
+    }
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kStageEvent, fileName);
+    /* send event message */
+    sendEvent1(SceneEventHandler::kStageEvent, fileName);
 
-  return true;
+    return true;
 }
 
 /* SceneController::getNewModelId: return new model ID */
 PMDObject *SceneController::allocatePMDObject()
 {
-  PMDObject *object = NULL;
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    if (!object->isEnable())
-      return object; /* re-use it */
-  }
-  if (m_numModel >= MAX_MODEL)
-    return NULL; /* no more room */
-  object = m_objects[m_numModel];
-  m_numModel++;
-  object->setEnableFlag(false); /* model is not loaded yet */
-  return object;
+    PMDObject *object = NULL;
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (!object->isEnable())
+            return object; /* re-use it */
+    }
+    if (m_numModel >= MAX_MODEL)
+        return NULL; /* no more room */
+    object = m_objects[m_numModel];
+    m_numModel++;
+    object->setEnableFlag(false); /* model is not loaded yet */
+    return object;
 }
 
 PMDObject *SceneController::findPMDObject(PMDObject *object)
 {
-  return findPMDObject(object->getAlias());
+    return findPMDObject(object->getAlias());
 }
 
 PMDObject *SceneController::findPMDObject(const char *alias)
 {
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    if (object->isEnable() && MMDAIStringEquals(object->getAlias(), alias))
-      return object;
-  }
-  return NULL;
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (object->isEnable() && MMDAIStringEquals(object->getAlias(), alias))
+            return object;
+    }
+    return NULL;
 }
 
 PMDObject *SceneController::getPMDObject(int index)
 {
-  if (index < 0 || index > m_numModel)
-    return NULL;
-  return m_objects[index];
+    if (index < 0 || index > m_numModel)
+        return NULL;
+    return m_objects[index];
 }
 
 int SceneController::countPMDObjects() const
 {
-  return m_numModel;
+    return m_numModel;
 }
 
 /* SceneController::addMotion: add motion */
 bool SceneController::addMotion(PMDObject *object, VMDLoader *loader)
 {
-  return addMotion(object, NULL, loader, false, true, true, true);
+    return addMotion(object, NULL, loader, false, true, true, true);
 }
 
 /* SceneController::addMotion: add motion */
@@ -290,133 +290,133 @@ bool SceneController::addMotion(PMDObject *object,
                                 bool enableSmooth,
                                 bool enableRePos)
 {
-  int i;
-  bool find;
-  VMD *vmd;
-  MotionPlayer *motionPlayer;
-  char *name;
-  size_t allocSize;
+    int i;
+    bool find;
+    VMD *vmd;
+    MotionPlayer *motionPlayer;
+    char *name;
+    size_t allocSize;
 
-  /* motion file */
-  vmd = m_motion.loadFromLoader(loader);
-  if (vmd == NULL) {
-    MMDAILogWarn("addMotion: failed to load %s.", loader->getLocation());
-    return false;
-  }
+    /* motion file */
+    vmd = m_motion.loadFromLoader(loader);
+    if (vmd == NULL) {
+        MMDAILogWarn("addMotion: failed to load %s.", loader->getLocation());
+        return false;
+    }
 
-  /* alias */
-  if (motionAlias && MMDAIStringLength(motionAlias) > 0) {
-    /* check the same alias */
-    name = MMDAIStringClone(motionAlias);
-    motionPlayer = object->getMotionManager()->getMotionPlayerList();
-    for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-      if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
-        MMDAILogWarn("addMotion: motion alias \"%s\" is already used.", name);
+    /* alias */
+    if (motionAlias && MMDAIStringLength(motionAlias) > 0) {
+        /* check the same alias */
+        name = MMDAIStringClone(motionAlias);
+        motionPlayer = object->getMotionManager()->getMotionPlayerList();
+        for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
+            if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
+                MMDAILogWarn("addMotion: motion alias \"%s\" is already used.", name);
+                MMDAIMemoryRelease(name);
+                return false;
+            }
+        }
+    } else {
+        /* if motion alias is not specified, unused digit is used */
+        for (i = 0;; i++) {
+            find = false;
+            allocSize = sizeof(char) * (getNumDigit(i) + 1);
+            name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
+            if (name == NULL)
+                return false;
+            MMDAIStringFormat(name, allocSize, "%d", i);
+            motionPlayer = object->getMotionManager()->getMotionPlayerList();
+            for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
+                if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
+                    find = true;
+                    break;
+                }
+            }
+            if(find == false)
+                break;
+            MMDAIMemoryRelease(name);
+        }
+    }
+
+    /* start motion */
+    if (!object->startMotion(vmd, name, full, once, enableSmooth, enableRePos)) {
         MMDAIMemoryRelease(name);
         return false;
-      }
     }
-  } else {
-    /* if motion alias is not specified, unused digit is used */
-    for (i = 0;; i++) {
-      find = false;
-      allocSize = sizeof(char) * (getNumDigit(i) + 1);
-      name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
-      if (name == NULL)
-        return false;
-      MMDAIStringFormat(name, allocSize, "%d", i);
-      motionPlayer = object->getMotionManager()->getMotionPlayerList();
-      for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-        if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
-          find = true;
-          break;
-        }
-      }
-      if(find == false)
-        break;
-      MMDAIMemoryRelease(name);
-    }
-  }
 
-  /* start motion */
-  if (!object->startMotion(vmd, name, full, once, enableSmooth, enableRePos)) {
+    /* send event message */
+    sendEvent2(SceneEventHandler::kMotionAddEvent, object->getAlias(), name);
+
     MMDAIMemoryRelease(name);
-    return false;
-  }
-
-  /* send event message */
-  sendEvent2(SceneEventHandler::kMotionAddEvent, object->getAlias(), name);
-
-  MMDAIMemoryRelease(name);
-  return true;
+    return true;
 }
 
 /* SceneController::changeMotion: change motion */
 bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, VMDLoader *loader)
 {
-  VMD *vmd, *old = NULL;
-  MotionPlayer *motionPlayer;
+    VMD *vmd, *old = NULL;
+    MotionPlayer *motionPlayer;
 
-  /* check */
-  if (!motionAlias) {
-    MMDAILogWarn("changeMotion: not specified %s.", motionAlias);
-    return false;
-  }
-
-  /* motion file */
-  vmd = m_motion.loadFromLoader(loader);
-  if (vmd == NULL) {
-    MMDAILogWarn("changeMotion: failed to load %s.", loader->getLocation());
-    return false;
-  }
-
-  /* get motion before change */
-  motionPlayer = object->getMotionManager()->getMotionPlayerList();
-  for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-    if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, motionAlias)) {
-      old = motionPlayer->vmd;
-      break;
+    /* check */
+    if (!motionAlias) {
+        MMDAILogWarn("changeMotion: not specified %s.", motionAlias);
+        return false;
     }
-  }
-  if (old == NULL) {
-    MMDAILogWarn("changeMotion: motion alias \"%s\"is not found.", motionAlias);
-    m_motion.unload(vmd);
-    return false;
-  }
 
-  /* change motion */
-  if (object->swapMotion(vmd, motionAlias) == false) {
-    MMDAILogWarn("changeMotion: motion alias \"%s\"is not found.", motionAlias);
-    m_motion.unload(vmd);
-    return false;
-  }
+    /* motion file */
+    vmd = m_motion.loadFromLoader(loader);
+    if (vmd == NULL) {
+        MMDAILogWarn("changeMotion: failed to load %s.", loader->getLocation());
+        return false;
+    }
 
-  /* send event message */
-  sendEvent2(SceneEventHandler::kMotionChangeEvent, object->getAlias(), motionAlias);
+    /* get motion before change */
+    motionPlayer = object->getMotionManager()->getMotionPlayerList();
+    for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
+        if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, motionAlias)) {
+            old = motionPlayer->vmd;
+            break;
+        }
+    }
+    if (old == NULL) {
+        MMDAILogWarn("changeMotion: motion alias \"%s\"is not found.", motionAlias);
+        m_motion.unload(vmd);
+        return false;
+    }
 
-  /* unload old motion from motion stocker */
-  m_motion.unload(old);
+    /* change motion */
+    if (object->swapMotion(vmd, motionAlias) == false) {
+        MMDAILogWarn("changeMotion: motion alias \"%s\"is not found.", motionAlias);
+        m_motion.unload(vmd);
+        return false;
+    }
 
-  return true;
+    /* send event message */
+    sendEvent2(SceneEventHandler::kMotionChangeEvent, object->getAlias(), motionAlias);
+
+    /* unload old motion from motion stocker */
+    m_motion.unload(old);
+
+    return true;
 }
 
 /* SceneController::deleteMotion: delete motion */
 bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
 {
-  /* delete motion */
-  if (!object->getMotionManager()->deleteMotion(motionAlias)) {
-    MMDAILogWarn("deleteMotion: motion alias \"%s\"is not found.", motionAlias);
-    return false;
-  }
+    /* delete motion */
+    if (!object->getMotionManager()->deleteMotion(motionAlias)) {
+        MMDAILogWarn("deleteMotion: motion alias \"%s\"is not found.", motionAlias);
+        return false;
+    }
 
-  /* don't send event message */
-  return true;
+    /* don't send event message */
+    return true;
 }
 
 /* SceneController::addModel: add model */
 bool SceneController::addModel(PMDModelLoader *modelLoader, LipSyncLoader *lipSyncLoader)
 {
-  return addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
+    return addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
 }
 
 /* SceneController::addModel: add model */
@@ -428,103 +428,103 @@ bool SceneController::addModel(const char *modelAlias,
                                const char *baseModelAlias,
                                const char *baseBoneName)
 {
-  int i;
-  char *name;
-  btVector3 offsetPos = btVector3(0.0f, 0.0f, 0.0f);
-  btQuaternion offsetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
-  bool forcedPosition = false;
-  PMDBone *assignBone = NULL;
-  PMDObject *assignObject = NULL, *newObject = NULL;
-  float *l = m_option.getLightDirection();
-  btVector3 light = btVector3(l[0], l[1], l[2]);
+    int i;
+    char *name;
+    btVector3 offsetPos = btVector3(0.0f, 0.0f, 0.0f);
+    btQuaternion offsetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    bool forcedPosition = false;
+    PMDBone *assignBone = NULL;
+    PMDObject *assignObject = NULL, *newObject = NULL;
+    float *l = m_option.getLightDirection();
+    btVector3 light = btVector3(l[0], l[1], l[2]);
 
-  /* set */
-  if (pos)
-    offsetPos = (*pos);
-  if (rot)
-    offsetRot = (*rot);
-  if (pos || rot)
-    forcedPosition = true;
-  if (baseModelAlias) {
-    assignObject = findPMDObject(baseModelAlias);
-    if (assignObject == NULL) {
-      MMDAILogWarn("model alias \"%s\" is not found", baseModelAlias);
-      return false;
+    /* set */
+    if (pos)
+        offsetPos = (*pos);
+    if (rot)
+        offsetRot = (*rot);
+    if (pos || rot)
+        forcedPosition = true;
+    if (baseModelAlias) {
+        assignObject = findPMDObject(baseModelAlias);
+        if (assignObject == NULL) {
+            MMDAILogWarn("model alias \"%s\" is not found", baseModelAlias);
+            return false;
+        }
+        PMDModel *model = assignObject->getPMDModel();
+        if (baseBoneName) {
+            assignBone = model->getBone(baseBoneName);
+        } else {
+            assignBone = model->getCenterBone();
+        }
+        if (assignBone == NULL) {
+            if (baseBoneName)
+                MMDAILogWarn("bone \"%s\" is not exist on %s.", baseBoneName, baseModelAlias);
+            else
+                MMDAILogWarn("cannot assign to bone of %s.", baseModelAlias);
+            return false;
+        }
     }
-    PMDModel *model = assignObject->getPMDModel();
-    if (baseBoneName) {
-      assignBone = model->getBone(baseBoneName);
-    } else {
-      assignBone = model->getCenterBone();
-    }
-    if (assignBone == NULL) {
-      if (baseBoneName)
-        MMDAILogWarn("bone \"%s\" is not exist on %s.", baseBoneName, baseModelAlias);
-      else
-        MMDAILogWarn("cannot assign to bone of %s.", baseModelAlias);
-      return false;
-    }
-  }
 
-  /* ID */
-  newObject = allocatePMDObject();
-  if (newObject == NULL) {
-    MMDAILogWarnString("addModel: too many models.");
-    return false;
-  }
-
-  /* determine name */
-  if (modelAlias && MMDAIStringLength(modelAlias) > 0) {
-    /* check the same alias */
-    name = MMDAIStringClone(modelAlias);
-    if (findPMDObject(name) != NULL) {
-      MMDAILogWarn("addModel: model alias \"%s\" is already used.", name);
-      MMDAIMemoryRelease(name);
-      return false;
-    }
-  } else {
-    /* if model alias is not specified, unused digit is used */
-    for(i = 0;; i++) {
-      size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
-      name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
-      if (name == NULL)
+    /* ID */
+    newObject = allocatePMDObject();
+    if (newObject == NULL) {
+        MMDAILogWarnString("addModel: too many models.");
         return false;
-      MMDAIStringFormat(name, allocSize, "%d", i);
-      if (findPMDObject(name) != NULL)
-        MMDAIMemoryRelease(name);
-      else
-        break;
     }
-  }
 
-  /* add model */
-  if (!newObject->load(modelLoader,
-                       lipSyncLoader,
-                       &offsetPos,
-                       &offsetRot,
-                       forcedPosition,
-                       assignBone,
-                       assignObject,
-                       &m_bullet,
-                       m_option.getUseCartoonRendering(),
-                       m_option.getCartoonEdgeWidth(),
-                       &light)) {
-    MMDAILogWarn("addModel: failed to load %s.", modelLoader->getLocation());
-    newObject->release();
+    /* determine name */
+    if (modelAlias && MMDAIStringLength(modelAlias) > 0) {
+        /* check the same alias */
+        name = MMDAIStringClone(modelAlias);
+        if (findPMDObject(name) != NULL) {
+            MMDAILogWarn("addModel: model alias \"%s\" is already used.", name);
+            MMDAIMemoryRelease(name);
+            return false;
+        }
+    } else {
+        /* if model alias is not specified, unused digit is used */
+        for(i = 0;; i++) {
+            size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
+            name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
+            if (name == NULL)
+                return false;
+            MMDAIStringFormat(name, allocSize, "%d", i);
+            if (findPMDObject(name) != NULL)
+                MMDAIMemoryRelease(name);
+            else
+                break;
+        }
+    }
+
+    /* add model */
+    if (!newObject->load(modelLoader,
+                         lipSyncLoader,
+                         &offsetPos,
+                         &offsetRot,
+                         forcedPosition,
+                         assignBone,
+                         assignObject,
+                         &m_bullet,
+                         m_option.getUseCartoonRendering(),
+                         m_option.getCartoonEdgeWidth(),
+                         &light)) {
+        MMDAILogWarn("addModel: failed to load %s.", modelLoader->getLocation());
+        newObject->release();
+        MMDAIMemoryRelease(name);
+        return false;
+    }
+
+    /* initialize motion manager */
+    newObject->resetMotionManager();
+    newObject->setAlias(name);
+    m_numModel++;
+
+    /* send event message */
+    sendEvent1(SceneEventHandler::kModelAddEvent, name);
+
     MMDAIMemoryRelease(name);
-    return false;
-  }
-
-  /* initialize motion manager */
-  newObject->resetMotionManager();
-  newObject->setAlias(name);
-  m_numModel++;
-
-  /* send event message */
-  sendEvent1(SceneEventHandler::kModelAddEvent, name);
-
-  MMDAIMemoryRelease(name);
-  return true;
+    return true;
 }
 
 /* SceneController::changeModel: change model */
@@ -532,710 +532,710 @@ bool SceneController::changeModel(PMDObject *object,
                                   PMDModelLoader *modelLoader,
                                   LipSyncLoader *lipSyncLoader)
 {
-  int i;
-  MotionPlayer *motionPlayer;
-  double currentFrame;
-  float *l = m_option.getLightDirection();
-  const char *modelAlias = object->getAlias();
-  btVector3 light = btVector3(l[0], l[1], l[2]);
+    int i;
+    MotionPlayer *motionPlayer;
+    double currentFrame;
+    float *l = m_option.getLightDirection();
+    const char *modelAlias = object->getAlias();
+    btVector3 light = btVector3(l[0], l[1], l[2]);
 
-  /* load model */
-  if (!object->load(modelLoader,
-                    lipSyncLoader,
-                    NULL,
-                    NULL,
-                    false,
-                    NULL,
-                    NULL,
-                    &m_bullet,
-                    m_option.getUseCartoonRendering(),
-                    m_option.getCartoonEdgeWidth(),
-                    &light)) {
-    MMDAILogWarn("changeModel: failed to load model %s.", modelLoader->getLocation());
-    return false;
-  }
-
-  /* update motion manager */
-  MotionManager *manager = object->getMotionManager();
-  if (manager != NULL) {
-    motionPlayer = manager->getMotionPlayerList();
-    for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-      if (motionPlayer->active) {
-        currentFrame = motionPlayer->mc.getCurrentFrame();
-        manager->startMotionSub(motionPlayer->vmd, motionPlayer);
-        motionPlayer->mc.setCurrentFrame(currentFrame);
-      }
+    /* load model */
+    if (!object->load(modelLoader,
+                      lipSyncLoader,
+                      NULL,
+                      NULL,
+                      false,
+                      NULL,
+                      NULL,
+                      &m_bullet,
+                      m_option.getUseCartoonRendering(),
+                      m_option.getCartoonEdgeWidth(),
+                      &light)) {
+        MMDAILogWarn("changeModel: failed to load model %s.", modelLoader->getLocation());
+        return false;
     }
-  }
 
-  /* set alias */
-  object->setAlias(modelAlias);
+    /* update motion manager */
+    MotionManager *manager = object->getMotionManager();
+    if (manager != NULL) {
+        motionPlayer = manager->getMotionPlayerList();
+        for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
+            if (motionPlayer->active) {
+                currentFrame = motionPlayer->mc.getCurrentFrame();
+                manager->startMotionSub(motionPlayer->vmd, motionPlayer);
+                motionPlayer->mc.setCurrentFrame(currentFrame);
+            }
+        }
+    }
 
-  /* delete accessories  */
-  for (i = 0; i < MAX_MODEL; i++) {
-    PMDObject *assoc = m_objects[i];
-    if (assoc->isEnable() && assoc->getAssignedModel() == object)
-      deleteModel(assoc);
-  }
+    /* set alias */
+    object->setAlias(modelAlias);
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kModelChangeEvent, modelAlias);
+    /* delete accessories  */
+    for (i = 0; i < MAX_MODEL; i++) {
+        PMDObject *assoc = m_objects[i];
+        if (assoc->isEnable() && assoc->getAssignedModel() == object)
+            deleteModel(assoc);
+    }
 
-  return true;
+    /* send event message */
+    sendEvent1(SceneEventHandler::kModelChangeEvent, modelAlias);
+
+    return true;
 }
 
 /* SceneController::deleteModel: delete model */
 void SceneController::deleteModel(PMDObject *object)
 {
-  /* delete accessories  */
-  for (int i = 0; i < MAX_MODEL; i++) {
-    PMDObject *assoc = m_objects[i];
-    if (assoc->isEnable() && assoc->getAssignedModel() == object)
-      deleteModel(assoc);
-  }
+    /* delete accessories  */
+    for (int i = 0; i < MAX_MODEL; i++) {
+        PMDObject *assoc = m_objects[i];
+        if (assoc->isEnable() && assoc->getAssignedModel() == object)
+            deleteModel(assoc);
+    }
 
-  /* set frame from now to disappear */
-  object->startDisappear();
-  m_numModel--;
+    /* set frame from now to disappear */
+    object->startDisappear();
+    m_numModel--;
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kModelDeleteEvent, object->getAlias());
+    /* send event message */
+    sendEvent1(SceneEventHandler::kModelDeleteEvent, object->getAlias());
 }
 
 /* SceneController::changeLightDirection: change light direction */
 void SceneController::changeLightDirection(float x, float y, float z)
 {
-  float f[4];
+    float f[4];
 
-  f[0] = x;
-  f[1] = y;
-  f[2] = z;
-  f[3] = 0.0f;
-  m_option.setLightDirection(f);
-  updateLight();
+    f[0] = x;
+    f[1] = y;
+    f[2] = z;
+    f[3] = 0.0f;
+    m_option.setLightDirection(f);
+    updateLight();
 
-  /* send event message */
-  if (m_handler != NULL) {
-    char buf[BUFSIZ];
-    MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
-    sendEvent1(SceneEventHandler::kLightDirectionEvent, buf);
-  }
+    /* send event message */
+    if (m_handler != NULL) {
+        char buf[BUFSIZ];
+        MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
+        sendEvent1(SceneEventHandler::kLightDirectionEvent, buf);
+    }
 }
 
 /* SceneController::changeLightColor: change light color */
 void SceneController::changeLightColor(float r, float g, float b)
 {
-  float f[3];
+    float f[3];
 
-  f[0] = r;
-  f[1] = g;
-  f[2] = b;
-  m_option.setLightColor(f);
-  updateLight();
+    f[0] = r;
+    f[1] = g;
+    f[2] = b;
+    m_option.setLightColor(f);
+    updateLight();
 
-  /* send event message */
-  if (m_handler != NULL) {
-    char buf[BUFSIZ];
-    MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
-    sendEvent1(SceneEventHandler::kLightColorEvent, buf);
-  }
+    /* send event message */
+    if (m_handler != NULL) {
+        char buf[BUFSIZ];
+        MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
+        sendEvent1(SceneEventHandler::kLightColorEvent, buf);
+    }
 }
 
 /* SceneController::startMove: start moving */
 void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, float speed)
 {
-  const char *alias = object->getAlias();
+    const char *alias = object->getAlias();
 
-  if(object->isMoving())
-    sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
+    if(object->isMoving())
+        sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
 
-  /* get */
-  btVector3 currentPos;
-  object->getCurrentPosition(currentPos);
-  btVector3 targetPos = (*pos);
+    /* get */
+    btVector3 currentPos;
+    object->getCurrentPosition(currentPos);
+    btVector3 targetPos = (*pos);
 
-  /* local or global */
-  btQuaternion currentRot;
-  if (local) {
-    object->getCurrentRotation(currentRot);
-    btTransform tr = btTransform(currentRot, currentPos);
-    targetPos = tr * targetPos;
-  }
+    /* local or global */
+    btQuaternion currentRot;
+    if (local) {
+        object->getCurrentRotation(currentRot);
+        btTransform tr = btTransform(currentRot, currentPos);
+        targetPos = tr * targetPos;
+    }
 
-  /* not need to start */
-  if (currentPos == targetPos) {
+    /* not need to start */
+    if (currentPos == targetPos) {
+        sendEvent1(SceneEventHandler::kMoveStartEvent, alias);
+        sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
+        return;
+    }
+
+    object->setMoveSpeed(speed);
+    object->setPosition(targetPos);
+
+    /* send event message */
     sendEvent1(SceneEventHandler::kMoveStartEvent, alias);
-    sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
-    return;
-  }
-
-  object->setMoveSpeed(speed);
-  object->setPosition(targetPos);
-
-  /* send event message */
-  sendEvent1(SceneEventHandler::kMoveStartEvent, alias);
 }
 
 /* SceneController::stopMove: stop moving */
 void SceneController::stopMove(PMDObject *object)
 {
-  const char *alias = object->getAlias();
+    const char *alias = object->getAlias();
 
-  if (!object->isMoving()) {
-    MMDAILogWarn("stopMove: %s is not moving", alias);
-    return;
-  }
+    if (!object->isMoving()) {
+        MMDAILogWarn("stopMove: %s is not moving", alias);
+        return;
+    }
 
-  btVector3 currentPos;
-  object->getCurrentPosition(currentPos);
-  object->setPosition(currentPos);
+    btVector3 currentPos;
+    object->getCurrentPosition(currentPos);
+    object->setPosition(currentPos);
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
+    /* send event message */
+    sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
 }
 
 /* SceneController::startRotation: start rotation */
 void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool local, float speed)
 {
-  const char *alias = object->getAlias();
+    const char *alias = object->getAlias();
 
-  if (object->isRotating()) {
-    if (object->isTurning())
-      sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
-    else
-      sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
-  }
+    if (object->isRotating()) {
+        if (object->isTurning())
+            sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
+        else
+            sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
+    }
 
-  btQuaternion currentRot;
-  object->getCurrentRotation(currentRot);
-  btQuaternion targetRot = *rot;
-  targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
+    btQuaternion currentRot;
+    object->getCurrentRotation(currentRot);
+    btQuaternion targetRot = *rot;
+    targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
 
-  /* not need to start */
-  if (currentRot == targetRot) {
+    /* not need to start */
+    if (currentRot == targetRot) {
+        sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
+        sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
+        return;
+    }
+
+    object->setSpinSpeed(speed);
+    object->setRotation(targetRot);
+    object->setTurningFlag(false);
+
     sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
-    sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
-    return;
-  }
-
-  object->setSpinSpeed(speed);
-  object->setRotation(targetRot);
-  object->setTurningFlag(false);
-
-  sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
 }
 
 /* SceneController::stopRotation: stop rotation */
 void SceneController::stopRotation(PMDObject *object)
 {
-  const char *alias = object->getAlias();
+    const char *alias = object->getAlias();
 
-  if (!object->isRotating() || object->isTurning()) {
-    MMDAILogWarn("stopTurn: %s is not rotating", alias);
-    return;
-  }
+    if (!object->isRotating() || object->isTurning()) {
+        MMDAILogWarn("stopTurn: %s is not rotating", alias);
+        return;
+    }
 
-  btQuaternion currentRot;
-  object->getCurrentRotation(currentRot);
-  object->setRotation(currentRot);
+    btQuaternion currentRot;
+    object->getCurrentRotation(currentRot);
+    object->setRotation(currentRot);
 
-  sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
+    sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
 }
 
 /* SceneController::startTurn: start turn */
 void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, float speed)
 {
-  btQuaternion targetRot, currentRot;
-  const char *alias = object->getAlias();
+    btQuaternion targetRot, currentRot;
+    const char *alias = object->getAlias();
 
-  if (object->isRotating()) {
-    if (object->isTurning())
-      sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
-    else
-      sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
-  }
+    if (object->isRotating()) {
+        if (object->isTurning())
+            sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
+        else
+            sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
+    }
 
-  btVector3 currentPos;
-  object->getCurrentPosition(currentPos);
-  object->getCurrentRotation(currentRot);
+    btVector3 currentPos;
+    object->getCurrentPosition(currentPos);
+    object->getCurrentRotation(currentRot);
 
-  btVector3 targetPos = local ? *pos : *pos - currentPos;
-  targetPos.normalize();
+    btVector3 targetPos = local ? *pos : *pos - currentPos;
+    targetPos.normalize();
 
-  /* calculate target rotation from (0,0,1) */
-  float z = targetPos.z();
-  if (z > 1.0f)
-    z = 1.0f;
-  if (z < -1.0f)
-    z = -1.0f;
-  float rad = acosf(z);
-  btVector3 axis = btVector3(0.0f, 0.0f, 1.0f).cross(targetPos);
-  if (axis.length2() < PMDOBJECT_MINSPINDIFF) {
-    targetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
-  }
-  else {
-    axis.normalize();
-    targetRot = btQuaternion(axis, btScalar(rad));
-  }
-  targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
+    /* calculate target rotation from (0,0,1) */
+    float z = targetPos.z();
+    if (z > 1.0f)
+        z = 1.0f;
+    if (z < -1.0f)
+        z = -1.0f;
+    float rad = acosf(z);
+    btVector3 axis = btVector3(0.0f, 0.0f, 1.0f).cross(targetPos);
+    if (axis.length2() < PMDOBJECT_MINSPINDIFF) {
+        targetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+    else {
+        axis.normalize();
+        targetRot = btQuaternion(axis, btScalar(rad));
+    }
+    targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
 
-  if (currentRot == targetRot) {
-    sendEvent1(SceneEventHandler::kTurnStartEvent, alias);
-    sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
-    return;
-  }
+    if (currentRot == targetRot) {
+        sendEvent1(SceneEventHandler::kTurnStartEvent, alias);
+        sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
+        return;
+    }
 
-  object->setSpinSpeed(speed);
-  object->setRotation(targetRot);
-  object->setTurningFlag(true);
+    object->setSpinSpeed(speed);
+    object->setRotation(targetRot);
+    object->setTurningFlag(true);
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kTurnStartEvent, object->getAlias());
+    /* send event message */
+    sendEvent1(SceneEventHandler::kTurnStartEvent, object->getAlias());
 }
 
 /* SceneController::stopTurn: stop turn */
 void SceneController::stopTurn(PMDObject *object)
 {
-  const char *alias = object->getAlias();
+    const char *alias = object->getAlias();
 
-  if (!object->isRotating() || !object->isTurning()) {
-    MMDAILogWarn("stopTurn: %s is not turning", alias);
-    return;
-  }
+    if (!object->isRotating() || !object->isTurning()) {
+        MMDAILogWarn("stopTurn: %s is not turning", alias);
+        return;
+    }
 
-  btQuaternion currentRot;
-  object->getCurrentRotation(currentRot);
-  object->setRotation(currentRot);
+    btQuaternion currentRot;
+    object->getCurrentRotation(currentRot);
+    object->setRotation(currentRot);
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
+    /* send event message */
+    sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
 }
 
 /* SceneController::startLipSync: start lip sync */
 bool SceneController::startLipSync(PMDObject *object, const char *seq)
 {
-  unsigned char *vmdData;
-  size_t vmdSize;
-  VMD *vmd;
-  bool found = false;
-  MotionPlayer *motionPlayer;
-  const char *name = LipSync::getMotionName();
+    unsigned char *vmdData;
+    size_t vmdSize;
+    VMD *vmd;
+    bool found = false;
+    MotionPlayer *motionPlayer;
+    const char *name = LipSync::getMotionName();
 
-  /* create motion */
-  if(object->createLipSyncMotion(seq, &vmdData, &vmdSize) == false) {
-    MMDAILogWarnString("cannot create lip motion.");
-    return false;
-  }
-  vmd = m_motion.loadFromData(vmdData, vmdSize);
-  MMDAIMemoryRelease(vmdData);
-
-  /* search running lip motion */
-  motionPlayer = object->getMotionManager()->getMotionPlayerList();
-  for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
-    if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
-      found = true;
-      break;
+    /* create motion */
+    if(object->createLipSyncMotion(seq, &vmdData, &vmdSize) == false) {
+        MMDAILogWarnString("cannot create lip motion.");
+        return false;
     }
-  }
+    vmd = m_motion.loadFromData(vmdData, vmdSize);
+    MMDAIMemoryRelease(vmdData);
 
-  /* start lip sync */
-  if (found) {
-    if (!object->swapMotion(vmd, name)) {
-      MMDAILogWarnString("cannot start lip sync.");
-      m_motion.unload(vmd);
-      return false;
+    /* search running lip motion */
+    motionPlayer = object->getMotionManager()->getMotionPlayerList();
+    for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
+        if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
+            found = true;
+            break;
+        }
     }
-  } else {
-    if (!object->startMotion(vmd, name, false, true, true, true)) {
-      MMDAILogWarnString("cannot start lip sync.");
-      m_motion.unload(vmd);
-      return false;
+
+    /* start lip sync */
+    if (found) {
+        if (!object->swapMotion(vmd, name)) {
+            MMDAILogWarnString("cannot start lip sync.");
+            m_motion.unload(vmd);
+            return false;
+        }
+    } else {
+        if (!object->startMotion(vmd, name, false, true, true, true)) {
+            MMDAILogWarnString("cannot start lip sync.");
+            m_motion.unload(vmd);
+            return false;
+        }
     }
-  }
 
-  /* send event message */
-  sendEvent1(SceneEventHandler::kLipSyncStartEvent, object->getAlias());
+    /* send event message */
+    sendEvent1(SceneEventHandler::kLipSyncStartEvent, object->getAlias());
 
-  return true;
+    return true;
 }
 
 /* SceneController::stopLipSync: stop lip sync */
 bool SceneController::stopLipSync(PMDObject *object)
 {
-  /* stop lip sync */
-  if (object->getMotionManager()->deleteMotion(LipSync::getMotionName()) == false) {
-    MMDAILogWarnString("lipsync motion not found");
-    return false;
-  }
+    /* stop lip sync */
+    if (object->getMotionManager()->deleteMotion(LipSync::getMotionName()) == false) {
+        MMDAILogWarnString("lipsync motion not found");
+        return false;
+    }
 
-  /* don't send message */
-  return true;
+    /* don't send message */
+    return true;
 }
 
 void SceneController::initializeScreen(int width, int height)
 {
-  m_width = width;
-  m_height = height;
-  m_bullet.setup(m_option.getBulletFps());
-  m_engine->setup(m_option.getCampusColor(),
-                  m_option.getUseShadowMapping(),
-                  m_option.getShadowMappingTextureSize(),
-                  m_option.getShadowMappingLightFirst());
-  m_stage->setSize(m_option.getStageSize(), 1.0f, 1.0f);
+    m_width = width;
+    m_height = height;
+    m_bullet.setup(m_option.getBulletFps());
+    m_engine->setup(m_option.getCampusColor(),
+                    m_option.getUseShadowMapping(),
+                    m_option.getShadowMappingTextureSize(),
+                    m_option.getShadowMappingLightFirst());
+    m_stage->setSize(m_option.getStageSize(), 1.0f, 1.0f);
 }
 
 void SceneController::resetLocation(const float *trans, const float *rot, const float scale)
 {
-  btMatrix3x3 bm;
-  bm.setEulerZYX(MMDME_RAD(rot[0]), MMDME_RAD(rot[1]), MMDME_RAD(rot[2]));
-  bm.getRotation(m_rot);
-  m_trans = btVector3(trans[0], trans[1], trans[2]);
-  m_scale = scale;
+    btMatrix3x3 bm;
+    bm.setEulerZYX(MMDME_RAD(rot[0]), MMDME_RAD(rot[1]), MMDME_RAD(rot[2]));
+    bm.getRotation(m_rot);
+    m_trans = btVector3(trans[0], trans[1], trans[2]);
+    m_scale = scale;
 }
 
 void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
 {
-  *dst = m_transMatrixInv * (*src);
+    *dst = m_transMatrixInv * (*src);
 }
 
 void SceneController::setShadowMapping(bool value)
 {
-  m_engine->setShadowMapping(value,
-                             m_option.getShadowMappingTextureSize(),
-                             m_option.getShadowMappingLightFirst());
+    m_engine->setShadowMapping(value,
+                               m_option.getShadowMappingTextureSize(),
+                               m_option.getShadowMappingLightFirst());
 }
 
 float SceneController::getScale() const
 {
-  return m_scale;
+    return m_scale;
 }
 
 void SceneController::setScale(float value)
 {
-  m_scale = value;
+    m_scale = value;
 }
 
 void SceneController::rotate(float x, float y, float z)
 {
-  z = 0; /* unused */
-  m_rot = m_rot * btQuaternion(x, 0, 0);
-  m_rot = btQuaternion(0, y, 0) * m_rot;
+    z = 0; /* unused */
+    m_rot = m_rot * btQuaternion(x, 0, 0);
+    m_rot = btQuaternion(0, y, 0) * m_rot;
 }
 
 void SceneController::translate(float x, float y, float z)
 {
-  m_trans += btVector3(x, y, z);
+    m_trans += btVector3(x, y, z);
 }
 
 void SceneController::setRect(int width, int height)
 {
-  if (m_width != width || m_height != height) {
-    if (width > 0)
-      m_width = width;
-    if (height > 0)
-      m_height = height;
-    updateProjectionMatrix();
-  }
+    if (m_width != width || m_height != height) {
+        if (width > 0)
+            m_width = width;
+        if (height > 0)
+            m_height = height;
+        updateProjectionMatrix();
+    }
 }
 
 void SceneController::selectPMDObject(PMDObject *object)
 {
-  const char *alias = object->getAlias();
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *o = m_objects[i];
-    if (o->isEnable() && MMDAIStringEquals(o->getAlias(), alias)) {
-      m_selectedModel = i;
-      break;
+    const char *alias = object->getAlias();
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *o = m_objects[i];
+        if (o->isEnable() && MMDAIStringEquals(o->getAlias(), alias)) {
+            m_selectedModel = i;
+            break;
+        }
     }
-  }
 }
 
 void SceneController::selectPMDObject(int x, int y)
 {
-  m_selectedModel = m_engine->pickModel(m_objects,
-                                        m_numModel,
-                                        x,
-                                        y,
-                                        m_width,
-                                        m_height,
-                                        m_currentScale,
-                                        NULL);
+    m_selectedModel = m_engine->pickModel(m_objects,
+                                          m_numModel,
+                                          x,
+                                          y,
+                                          m_width,
+                                          m_height,
+                                          m_currentScale,
+                                          NULL);
 }
 
 void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel)
 {
-  int dropAllowedModelID = -1;
-  m_selectedModel = m_engine->pickModel(m_objects,
-                                        m_numModel,
-                                        x,
-                                        y,
-                                        m_width,
-                                        m_height,
-                                        m_currentScale,
-                                        &dropAllowedModelID);
-  if (m_selectedModel == -1)
-    *dropAllowedModel = getPMDObject(dropAllowedModelID);
+    int dropAllowedModelID = -1;
+    m_selectedModel = m_engine->pickModel(m_objects,
+                                          m_numModel,
+                                          x,
+                                          y,
+                                          m_width,
+                                          m_height,
+                                          m_currentScale,
+                                          &dropAllowedModelID);
+    if (m_selectedModel == -1)
+        *dropAllowedModel = getPMDObject(dropAllowedModelID);
 }
 
 void SceneController::setHighlightPMDObject(PMDObject *object)
 {
-  float col[4];
+    float col[4];
 
-  if (m_highlightModel != NULL) {
-    /* reset current highlighted model */
-    col[0] = PMDModel::kEdgeColorR;
-    col[1] = PMDModel::kEdgeColorG;
-    col[2] = PMDModel::kEdgeColorB;
-    col[3] = PMDModel::kEdgeColorA;
-    m_highlightModel->getPMDModel()->setEdgeColor(col);
-  }
-  if (object != NULL) {
-    /* set highlight to the specified model */
-    col[0] = 1.0f;
-    col[1] = col[2] = 0.0f;
-    col[3] = 1.0f;
-    object->getPMDModel()->setEdgeColor(col);
-  }
+    if (m_highlightModel != NULL) {
+        /* reset current highlighted model */
+        col[0] = PMDModel::kEdgeColorR;
+        col[1] = PMDModel::kEdgeColorG;
+        col[2] = PMDModel::kEdgeColorB;
+        col[3] = PMDModel::kEdgeColorA;
+        m_highlightModel->getPMDModel()->setEdgeColor(col);
+    }
+    if (object != NULL) {
+        /* set highlight to the specified model */
+        col[0] = 1.0f;
+        col[1] = col[2] = 0.0f;
+        col[3] = 1.0f;
+        object->getPMDModel()->setEdgeColor(col);
+    }
 
-  m_highlightModel = object;
+    m_highlightModel = object;
 }
 
 PMDObject *SceneController::getSelectedPMDObject()
 {
-  return getPMDObject(m_selectedModel);
+    return getPMDObject(m_selectedModel);
 }
 
 void SceneController::updateMotion(double procFrame, double adjustFrame)
 {
-  const char *lipSyncMotion = LipSync::getMotionName();
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    if (object->isEnable()) {
-      object->updateRootBone();
-      if (object->updateMotion(procFrame + adjustFrame)) {
-        MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
-        for (; player != NULL; player = player->next) {
-          if (player->statusFlag == MOTION_STATUS_DELETED) {
-            if (MMDAIStringEquals(player->name, lipSyncMotion)) {
-              sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
+    const char *lipSyncMotion = LipSync::getMotionName();
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (object->isEnable()) {
+            object->updateRootBone();
+            if (object->updateMotion(procFrame + adjustFrame)) {
+                MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
+                for (; player != NULL; player = player->next) {
+                    if (player->statusFlag == MOTION_STATUS_DELETED) {
+                        if (MMDAIStringEquals(player->name, lipSyncMotion)) {
+                            sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
+                        }
+                        else {
+                            sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
+                        }
+                        m_motion.unload(player->vmd);
+                    }
+                }
             }
-            else {
-              sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
+            if (object->updateAlpha(procFrame + adjustFrame)) {
+                deleteAssociatedModels(object);
             }
-            m_motion.unload(player->vmd);
-          }
         }
-      }
-      if (object->updateAlpha(procFrame + adjustFrame)) {
-        deleteAssociatedModels(object);
-      }
     }
-  }
-  m_bullet.update((float)procFrame);
+    m_bullet.update((float)procFrame);
 }
 
 void SceneController::deleteAssociatedModels(PMDObject *object)
 {
-  /* remove assigned accessories */
-  for (int i = 0; i < MAX_MODEL; i++) {
-    PMDObject *assoc = m_objects[i];
-    if (assoc->isEnable() && assoc->getAssignedModel() == object)
-      deleteAssociatedModels(assoc);
-  }
-  const char *lipSyncMotion = LipSync::getMotionName();
-  MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
-  for (; player != NULL; player = player->next) {
-    if (MMDAIStringEquals(player->name, lipSyncMotion)) {
-      sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
+    /* remove assigned accessories */
+    for (int i = 0; i < MAX_MODEL; i++) {
+        PMDObject *assoc = m_objects[i];
+        if (assoc->isEnable() && assoc->getAssignedModel() == object)
+            deleteAssociatedModels(assoc);
     }
-    else {
-      sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
+    const char *lipSyncMotion = LipSync::getMotionName();
+    MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
+    for (; player != NULL; player = player->next) {
+        if (MMDAIStringEquals(player->name, lipSyncMotion)) {
+            sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
+        }
+        else {
+            sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
+        }
+        m_motion.unload(player->vmd);
     }
-    m_motion.unload(player->vmd);
-  }
-  /* remove model */
-  object->release();
+    /* remove model */
+    object->release();
 }
 
 void SceneController::updateAfterSimulation()
 {
-  /* update after simulation */
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    object->updateAfterSimulation(m_enablePhysicsSimulation);
-  }
+    /* update after simulation */
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        object->updateAfterSimulation(m_enablePhysicsSimulation);
+    }
 }
 
 void SceneController::updateDepthTextureViewParam()
 {
-  /* calculate rendering range for shadow mapping */
-  if (m_option.getUseShadowMapping()) {
-    int num = m_numModel;
-    float d = 0, dmax = 0;
-    float *r = new float[num];
-    btVector3 *c = new btVector3[num];
-    btVector3 cc = btVector3(0.0f, 0.0f, 0.0f);
+    /* calculate rendering range for shadow mapping */
+    if (m_option.getUseShadowMapping()) {
+        int num = m_numModel;
+        float d = 0, dmax = 0;
+        float *r = new float[num];
+        btVector3 *c = new btVector3[num];
+        btVector3 cc = btVector3(0.0f, 0.0f, 0.0f);
 
-    for (int i = 0; i < num; i++) {
-      PMDObject *object = m_objects[i];
-      if (!object->isEnable())
-        continue;
-      r[i] = object->getPMDModel()->calculateBoundingSphereRange(&(c[i]));
-      cc += c[i];
+        for (int i = 0; i < num; i++) {
+            PMDObject *object = m_objects[i];
+            if (!object->isEnable())
+                continue;
+            r[i] = object->getPMDModel()->calculateBoundingSphereRange(&(c[i]));
+            cc += c[i];
+        }
+        if (num != 0)
+            cc /= (float) num;
+
+        dmax = 0.0f;
+        for (int i = 0; i < num; i++) {
+            if (!m_objects[i]->isEnable())
+                continue;
+            d = cc.distance(c[i]) + r[i];
+            if (dmax < d)
+                dmax = d;
+        }
+        m_engine->setShadowMapAutoView(cc, dmax);
+
+        delete [] r;
+        delete [] c;
     }
-    if (num != 0)
-      cc /= (float) num;
-
-    dmax = 0.0f;
-    for (int i = 0; i < num; i++) {
-      if (!m_objects[i]->isEnable())
-        continue;
-      d = cc.distance(c[i]) + r[i];
-      if (dmax < d)
-        dmax = d;
-    }
-    m_engine->setShadowMapAutoView(cc, dmax);
-
-    delete [] r;
-    delete [] c;
-  }
 }
 
 void SceneController::updateModelPositionAndRotation(double fps)
 {
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    if (object->isEnable()) {
-      if (object->updateModelRootOffset(fps)) {
-        sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
-      }
-      if (object->updateModelRootRotation(fps)) {
-        if (object->isTurning()) {
-          sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
-          object->setTurningFlag(false);
-        } else {
-          sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (object->isEnable()) {
+            if (object->updateModelRootOffset(fps)) {
+                sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
+            }
+            if (object->updateModelRootRotation(fps)) {
+                if (object->isTurning()) {
+                    sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
+                    object->setTurningFlag(false);
+                } else {
+                    sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
+                }
+            }
         }
-      }
     }
-  }
 }
 
 inline void SceneController::sendEvent1(const char *type, const char *arg1)
 {
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(type, 1, arg1);
-  }
+    if (m_handler != NULL) {
+        m_handler->handleEventMessage(type, 1, arg1);
+    }
 }
 
 inline void SceneController::sendEvent2(const char *type, const char *arg1, const char *arg2)
 {
-  if (m_handler != NULL) {
-    m_handler->handleEventMessage(type, 2, arg1, arg2);
-  }
+    if (m_handler != NULL) {
+        m_handler->handleEventMessage(type, 2, arg1, arg2);
+    }
 }
 
 void SceneController::updateProjectionMatrix()
 {
-  if (m_currentScale != m_scale) {
-    float diff = fabs(m_currentScale - m_scale);
-    if (diff < RENDER_MINSCALEDIFF) {
-      m_currentScale = m_scale;
-    } else {
-      m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
+    if (m_currentScale != m_scale) {
+        float diff = fabs(m_currentScale - m_scale);
+        if (diff < RENDER_MINSCALEDIFF) {
+            m_currentScale = m_scale;
+        } else {
+            m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
+        }
     }
-  }
-  m_engine->updateProjectionMatrix(m_width, m_height, m_currentScale);
+    m_engine->updateProjectionMatrix(m_width, m_height, m_currentScale);
 }
 
 void SceneController::updateModelViewMatrix()
 {
-  if (m_currentRot != m_rot || m_currentTrans != m_trans) {
-    /* calculate difference */
-    btVector3 trans = m_trans;
-    trans -= m_currentTrans;
-    float diff1 = trans.length2();
-    btQuaternion rot = m_rot;
-    rot -= m_currentRot;
-    float diff2 = rot.length2();
-    if (diff1 > RENDER_MINMOVEDIFF) {
-      m_currentTrans = m_currentTrans.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
+    if (m_currentRot != m_rot || m_currentTrans != m_trans) {
+        /* calculate difference */
+        btVector3 trans = m_trans;
+        trans -= m_currentTrans;
+        float diff1 = trans.length2();
+        btQuaternion rot = m_rot;
+        rot -= m_currentRot;
+        float diff2 = rot.length2();
+        if (diff1 > RENDER_MINMOVEDIFF) {
+            m_currentTrans = m_currentTrans.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
+        }
+        else {
+            m_currentTrans = m_trans;
+        }
+        if (diff2 > RENDER_MINSPINDIFF) {
+            m_currentRot = m_currentRot.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
+        }
+        else {
+            m_currentRot = m_rot;
+        }
     }
-    else {
-      m_currentTrans = m_trans;
-    }
-    if (diff2 > RENDER_MINSPINDIFF) {
-      m_currentRot = m_currentRot.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
-    }
-    else {
-      m_currentRot = m_rot;
-    }
-  }
-  m_transMatrix.setRotation(m_currentRot);
-  m_transMatrix.setOrigin(m_currentTrans + m_cameraTrans);
-  m_transMatrixInv = m_transMatrix.inverse();
-  m_engine->updateModelViewMatrix(m_transMatrix, m_transMatrixInv);
+    m_transMatrix.setRotation(m_currentRot);
+    m_transMatrix.setOrigin(m_currentTrans + m_cameraTrans);
+    m_transMatrixInv = m_transMatrix.inverse();
+    m_engine->updateModelViewMatrix(m_transMatrix, m_transMatrixInv);
 }
 
 void SceneController::updateModelViewProjectionMatrix()
 {
-  updateProjectionMatrix();
-  updateModelViewMatrix();
+    updateProjectionMatrix();
+    updateModelViewMatrix();
 }
 
 void SceneController::setProjectionMatrix(float projection[16])
 {
-  m_engine->setProjectionMatrix(projection);
+    m_engine->setProjectionMatrix(projection);
 }
 
 void SceneController::setModelViewMatrix(float modelView[16])
 {
-  m_engine->setModelViewMatrix(modelView);
+    m_engine->setModelViewMatrix(modelView);
 }
 
 void SceneController::prerenderScene()
 {
-  m_engine->prerender(&m_option, m_objects, m_numModel);
+    m_engine->prerender(&m_option, m_objects, m_numModel);
 }
 
 void SceneController::renderScene()
 {
-  m_engine->render(&m_option, m_stage, m_objects, m_numModel);
+    m_engine->render(&m_option, m_stage, m_objects, m_numModel);
 }
 
 void SceneController::renderBulletForDebug()
 {
-  m_engine->renderRigidBodies(&m_bullet);
+    m_engine->renderRigidBodies(&m_bullet);
 }
 
 void SceneController::renderPMDObjectsForDebug()
 {
-  for (int i = 0; i < m_numModel; i++) {
-    PMDObject *object = m_objects[i];
-    if (object->isEnable()) {
-      object->renderDebug();
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (object->isEnable()) {
+            object->renderDebug();
+        }
     }
-  }
 }
 
 Option *SceneController::getOption()
 {
-  return &m_option;
+    return &m_option;
 }
 
 Stage *SceneController::getStage()
 {
-  return m_stage;
+    return m_stage;
 }
 
 int SceneController::getWidth() const
 {
-  return m_width;
+    return m_width;
 }
 
 int SceneController::getHeight() const
 {
-  return m_height;
+    return m_height;
 }
 
 } /* namespace */

@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -39,8 +39,6 @@
 #ifndef MMDAI_BONECONTROLLER_H_
 #define MMDAI_BONECONTROLLER_H_
 
-#include <btBulletDynamicsCommon.h>
-
 #include <MMDME/Common.h>
 
 namespace MMDAI {
@@ -48,48 +46,39 @@ namespace MMDAI {
 class PMDBone;
 class PMDModel;
 
-/* BoneController: control bone */
 class BoneController
 {
-private:
-
-   int m_numBone;           /* number of target bone */
-   PMDBone **m_boneList;
-   btQuaternion *m_rotList;
-
-   float m_rateOn;            /* speed rate when switch on */
-   float m_rateOff;           /* speed rate when switch off */
-   btVector3 m_baseVector;    /* normalized base vector */
-   btVector3 m_upperAngLimit; /* upper angular limit */
-   btVector3 m_lowerAngLimit; /* lower angular limit */
-   btVector3 m_adjustPos;     /* offset to adjust target position */
-
-   int m_numChildBone;
-   PMDBone **m_childBoneList;
-
-   bool m_enable;
-   float m_fadingRate;
-
-   void initialize();
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(BoneController);
-
 public:
+    BoneController();
+    ~BoneController();
 
-   BoneController();
+    void setup(PMDModel *model, const char **boneName, int numBone, float rateOn, float rateOff,
+               float baseVectorX, float baseVectorY, float baseVectorZ,
+               float upperAngLimitX, float upperAngLimitY, float upperAngLimitZ,
+               float lowerAngLimitX, float lowerAngLimitY, float lowerAngLimitZ,
+               float adjustPosX, float adjustPosY, float adjustPosZ);
+    void setEnableFlag(bool b);
+    void update(btVector3 *pos, float deltaFrame);
 
-   ~BoneController();
+private:
+    void initialize();
+    void clear();
 
-   void setup(PMDModel *model, const char **boneName, int numBone, float rateOn, float rateOff,
-              float baseVectorX, float baseVectorY, float baseVectorZ,
-              float upperAngLimitX, float upperAngLimitY, float upperAngLimitZ,
-              float lowerAngLimitX, float lowerAngLimitY, float lowerAngLimitZ,
-              float adjustPosX, float adjustPosY, float adjustPosZ);
+    int m_numBone;
+    PMDBone **m_boneList;
+    btQuaternion *m_rotList;
+    float m_rateOn;
+    float m_rateOff;
+    btVector3 m_baseVector;
+    btVector3 m_upperAngLimit;
+    btVector3 m_lowerAngLimit;
+    btVector3 m_adjustPos;
+    int m_numChildBone;
+    PMDBone **m_childBoneList;
+    bool m_enable;
+    float m_fadingRate;
 
-   void setEnableFlag(bool b);
-
-   void update(btVector3 *pos, float deltaFrame);
+    MMDME_DISABLE_COPY_AND_ASSIGN(BoneController);
 };
 
 } /* namespace */

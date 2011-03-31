@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,10 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
-
-#ifndef TILETEXTURE_H
-#define TILETEXTURE_H
+#ifndef MMDAI_TILETEXTURE_H_
+#define MMDAI_TILETEXTURE_H_
 
 #include <MMDME/Common.h>
 #include <MMDME/PMDModelLoader.h>
@@ -51,54 +49,36 @@ namespace MMDAI {
 
 class TileTexture
 {
-private:
-
-  SceneRenderEngine *m_engine;
-  PMDRenderCacheNative *m_cache;
-  PMDTexture m_texture;     /* texture */
-  bool m_isLoaded;
-
-  float m_vertices[4][3]; /* position */
-  float m_numx;
-  float m_numy;
-
-  /* resetDisplayList: reset display list */
-  void resetDisplayList();
-
-  /* initialize: initialize texture */
-  void initialize();
-
-  /* clear: free texture */
-  void clear();
-
-  MMDME_DISABLE_COPY_AND_ASSIGN(TileTexture);
-
 public:
+    TileTexture(SceneRenderEngine *engine);
+    ~TileTexture();
 
-  /* TileTexture: constructor */
-  TileTexture(SceneRenderEngine *engine);
+    bool load(PMDModelLoader *loader, SceneRenderEngine *engine);
+    void render(bool cullFace, const float normal[3]);
+    void setSize(float v00, float v01, float v02,
+                 float v10, float v11, float v12,
+                 float v20, float v21, float v22,
+                 float v30, float v31, float v32,
+                 float x, float y);
+    float getSize(int i, int j) const;
 
-  /* TileTexture: destructor */
-  ~TileTexture();
+private:
+    void resetDisplayList();
+    void initialize();
+    void clear();
 
-  /* load: load a texture from file name (wide char) */
-  bool load(PMDModelLoader *loader, SceneRenderEngine *engine);
+    SceneRenderEngine *m_engine;
+    PMDRenderCacheNative *m_cache;
+    PMDTexture m_texture;
+    bool m_isLoaded;
+    float m_vertices[4][3];
+    float m_numx;
+    float m_numy;
 
-  /* render: render the textures */
-  void render(bool cullFace, const float normal[3]);
-
-  /* setSize: set texture size */
-  void setSize(float v00, float v01, float v02,
-               float v10, float v11, float v12,
-               float v20, float v21, float v22,
-               float v30, float v31, float v32,
-               float x, float y);
-
-  /* getSize: get texture size */
-  float getSize(int i, int j) const;
+    MMDME_DISABLE_COPY_AND_ASSIGN(TileTexture);
 };
 
 } /* namespace */
 
-#endif // TILETEXTURE_H
+#endif // MMDAI_TILETEXTURE_H_
 

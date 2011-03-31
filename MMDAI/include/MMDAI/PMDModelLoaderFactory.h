@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -38,8 +38,8 @@
 
 /* headers */
 
-#ifndef PMDMODELLOADERFACTORY_H
-#define PMDMODELLOADERFACTORY_H
+#ifndef MMDAI_PMDMODELLOADERFACTORY_H_
+#define MMDAI_PMDMODELLOADERFACTORY_H_
 
 namespace MMDAI {
 
@@ -50,22 +50,16 @@ class VMDLoader;
 class PMDModelLoaderFactory
 {
 public:
-  virtual ~PMDModelLoaderFactory() {}
-
-  virtual PMDModelLoader *createModelLoader(const char *filename) = 0;
-
-  virtual VMDLoader *createMotionLoader(const char *filename) = 0;
-
-  virtual LipSyncLoader *createLipSyncLoader(const char *filename) = 0;
-
-  virtual void releaseModelLoader(PMDModelLoader *loader) = 0;
-
-  virtual void releaseMotionLoader(VMDLoader *loader) = 0;
-
-  virtual void releaseLipSyncLoader(LipSyncLoader *loader) = 0;
+    virtual ~PMDModelLoaderFactory() {}
+    virtual PMDModelLoader *createModelLoader(const char *filename) = 0;
+    virtual VMDLoader *createMotionLoader(const char *filename) = 0;
+    virtual LipSyncLoader *createLipSyncLoader(const char *filename) = 0;
+    virtual void releaseModelLoader(PMDModelLoader *loader) = 0;
+    virtual void releaseMotionLoader(VMDLoader *loader) = 0;
+    virtual void releaseLipSyncLoader(LipSyncLoader *loader) = 0;
 };
 
 } /* namespace */
 
-#endif // SCENEEVENTHANDLER_H
+#endif // MMDAI_PMDMODELLOADERFACTORY_H_
 

@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -185,247 +185,103 @@ namespace MMDAI {
 
 class Option
 {
-private:
-
-   /* cartoon rendering */
-   bool m_useCartoonRendering;
-   bool m_useMMDLikeCartoon;
-   float m_cartoonEdgeWidth;
-   float m_cartoonEdgeStep;
-
-   /* stage */
-   float m_stageSize[3];
-
-   /* fps */
-   bool m_showFps;
-   float m_fpsPosition[3];
-
-   /* window */
-   int m_windowSize[2];
-   bool m_topMost;
-   bool m_fullScreen;
-
-   /* log */
-   int m_logSize[2];
-   float m_logPosition[3];
-   float m_logScale;
-
-   /* light */
-   float m_lightDirection[4];
-   float m_lightIntensity;
-   float m_lightColor[3];
-
-   /* campus */
-   float m_campusColor[3];
-
-   /* OpenGL */
-   int m_maxMultiSampling;
-   int m_maxMultiSamplingColor;
-
-   /* motion */
-   int m_motionAdjustFrame;
-
-   /* bullet physics */
-   int m_bulletFps;
-
-   /* move */
-   float m_rotateStep;
-   float m_translateStep;
-   float m_scaleStep;
-
-   /* shadow mapping */
-   bool m_useShadowMapping;
-   int m_shadowMapTextureSize;
-   float m_shadowMapSelfDensity;
-   float m_shadowMapFloorDensity;
-   bool m_shadowMapLightFirst;
-
-   /* initialize: initialize options */
-   void initialize();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(Option);
-
 public:
+    Option();
 
-   /* Option: constructor */
-   Option();
+    bool load(const char *file);
+    bool getUseCartoonRendering();
+    void setUseCartoonRendering(bool b);
+    bool getUseMMDLikeCartoon();
+    void setUseMMDLikeCartoon(bool b);
+    float getCartoonEdgeWidth();
+    void setCartoonEdgeWidth(float f);
+    float getCartoonEdgeStep();
+    void setCartoonEdgeStep(float f);
+    float *getStageSize();
+    void setStageSize(float *f);
+    bool getShowFps();
+    void setShowFps(bool b);
+    float *getFpsPosition();
+    void setFpsPosition(float *f);
+    int *getWindowSize();
+    void setWindowSize(int *i);
+    bool getTopMost();
+    void setTopMost(bool b);
+    bool getFullScreen();
+    void setFullScreen(bool b);
+    int* getLogSize();
+    void setLogSize(int *i);
+    float *getLogPosition();
+    void setLogPosition(float *f);
+    float getLogScale();
+    void setLogScale(float f);
+    float *getLightDirection();
+    void setLightDirection(float *f);
+    float getLightIntensity();
+    void setLightIntensity(float f);
+    float *getLightColor();
+    void setLightColor(float *f);
+    float *getCampusColor();
+    void setCampusColor(float *f);
+    int getMaxMultiSampling();
+    void setMaxMultiSampling(int i);
+    int getMaxMultiSamplingColor();
+    void setMaxMultiSamplingColor(int i);
+    int getMotionAdjustFrame();
+    void setMotionAdjustFrame(int i);
+    int getBulletFps();
+    void setBulletFps(int i);
+    float getRotateStep();
+    void setRotateStep(float f);
+    float getTranslateStep();
+    void setTranslateStep(float f);
+    float getScaleStep();
+    void setScaleStep(float f);
+    bool getUseShadowMapping();
+    void setUseShadowMapping(bool b);
+    int getShadowMappingTextureSize();
+    void setShadowMappingTextureSize(int i);
+    float getShadowMappingSelfDensity();
+    void setShadowMappingSelfDensity(float f);
+    float getShadowMappingFloorDensity();
+    void setShadowMappingFloorDensity(float f);
+    bool getShadowMappingLightFirst();
+    void setShadowMappingLightFirst(bool b);
 
-   /* load: load options */
-   bool load(const char *file);
+private:
+    void initialize();
 
-   /* getUseCartoonRendering: get cartoon rendering flag */
-   bool getUseCartoonRendering();
+    bool m_useCartoonRendering;
+    bool m_useMMDLikeCartoon;
+    float m_cartoonEdgeWidth;
+    float m_cartoonEdgeStep;
+    float m_stageSize[3];
+    bool m_showFps;
+    float m_fpsPosition[3];
+    int m_windowSize[2];
+    bool m_topMost;
+    bool m_fullScreen;
+    int m_logSize[2];
+    float m_logPosition[3];
+    float m_logScale;
+    float m_lightDirection[4];
+    float m_lightIntensity;
+    float m_lightColor[3];
+    float m_campusColor[3];
+    int m_maxMultiSampling;
+    int m_maxMultiSamplingColor;
+    int m_motionAdjustFrame;
+    int m_bulletFps;
+    float m_rotateStep;
+    float m_translateStep;
+    float m_scaleStep;
+    bool m_useShadowMapping;
+    int m_shadowMapTextureSize;
+    float m_shadowMapSelfDensity;
+    float m_shadowMapFloorDensity;
+    bool m_shadowMapLightFirst;
 
-   /* setUseCartoonRendering: set cartoon rendering flag */
-   void setUseCartoonRendering(bool b);
-
-   /* getUseMMDLikeCartoon: get MMD like cartoon flag */
-   bool getUseMMDLikeCartoon();
-
-   /* setUseMMDLikeCartoon: set MMD like cartoon flag */
-   void setUseMMDLikeCartoon(bool b);
-
-   /* getCartoonEdgeWidth: get edge width for catoon */
-   float getCartoonEdgeWidth();
-
-   /* setCartoonEdgeWidth: set edge width for catoon */
-   void setCartoonEdgeWidth(float f);
-
-   /* getCartoonEdgeStep: get cartoon edge step */
-   float getCartoonEdgeStep();
-
-   /* setCartoonEdgeStep: set cartoon edge step */
-   void setCartoonEdgeStep(float f);
-
-   /* getStageSize: get stage size */
-   float *getStageSize();
-
-   /* setStageSize: set stage size */
-   void setStageSize(float *f);
-
-   /* getShowFps: get fps flag */
-   bool getShowFps();
-
-   /* setShowFps: set fps flag */
-   void setShowFps(bool b);
-
-   /* getFpsPosition: get fps position */
-   float *getFpsPosition();
-
-   /* setFpsPosition: set fps position */
-   void setFpsPosition(float *f);
-
-   /* getWindowSize: get window size */
-   int *getWindowSize();
-
-   /* setWindowSize: set window size */
-   void setWindowSize(int *i);
-
-   /* getTopMost: get top most flag */
-   bool getTopMost();
-
-   /* setTopMost: set top most flag */
-   void setTopMost(bool b);
-
-   /* getFullScreen: get full screen flag */
-   bool getFullScreen();
-
-   /* setFullScreen: set full screen flag */
-   void setFullScreen(bool b);
-
-   /* getLogSize: get log window size */
-   int* getLogSize();
-
-   /* setLogSize: set log window size */
-   void setLogSize(int *i);
-
-   /* getLogPosition: get log window position */
-   float *getLogPosition();
-
-   /* setLogPosition: set log window position */
-   void setLogPosition(float *f);
-
-   /* getLogScale: get log window scale */
-   float getLogScale();
-
-   /* setLogScale: set log window scale */
-   void setLogScale(float f);
-
-   /* getLogDirection: get light direction */
-   float *getLightDirection();
-
-   /* setLogDirection: set light direction */
-   void setLightDirection(float *f);
-
-   /* getLogIntensity: get light intensity */
-   float getLightIntensity();
-
-   /* setLogIntensity: set light intensity */
-   void setLightIntensity(float f);
-
-   /* getLightColor: get light color */
-   float *getLightColor();
-
-   /* setLightColor: set light color */
-   void setLightColor(float *f);
-
-   /* getCampusColor: get campus color */
-   float *getCampusColor();
-
-   /* setCampusColor: set campus color */
-   void setCampusColor(float *f);
-
-   /* getMaxMultiSampling: get max number of multi sampling */
-   int getMaxMultiSampling();
-
-   /* setMaxMultiSampling: set max number of multi sampling */
-   void setMaxMultiSampling(int i);
-
-   /* getMaxMultiSamplingColor: get max number of multi sampling color */
-   int getMaxMultiSamplingColor();
-
-   /* setMaxMultiSamplingColor: set max number of multi sampling color */
-   void setMaxMultiSamplingColor(int i);
-
-   /* getMotionAdjustFrame: get motion adjust frame */
-   int getMotionAdjustFrame();
-
-   /* setMotionAdjustFrame: set motion adjust frame */
-   void setMotionAdjustFrame(int i);
-
-   /* getBulletFps: get bullet fps */
-   int getBulletFps();
-
-   /* setBulletFps: set bullet fps */
-   void setBulletFps(int i);
-
-   /* getRotateStep: get rotate step */
-   float getRotateStep();
-
-   /* setRotateStep: set rotate step */
-   void setRotateStep(float f);
-
-   /* getTranslateStep: get translate step */
-   float getTranslateStep();
-
-   /* setTranslateStep: set translate step */
-   void setTranslateStep(float f);
-
-   /* getScaleStep: get scale step */
-   float getScaleStep();
-
-   /* setScaleStep: set scale step */
-   void setScaleStep(float f);
-
-   /* getUseShadowMapping: get shadow mapping flag */
-   bool getUseShadowMapping();
-
-   /* setUseShadowMapping: set shadow mapping flag */
-   void setUseShadowMapping(bool b);
-
-   /* getShadowMappingTextureSize: get texture size of shadow mapping */
-   int getShadowMappingTextureSize();
-
-   /* setShadowMappingTextureSize: set texture size of shadow mapping */
-   void setShadowMappingTextureSize(int i);
-
-   /* getShadowMappingSelfDensity: get self density of shadow mapping */
-   float getShadowMappingSelfDensity();
-
-   /* setShadowMappingSelfDensity: set self density of shadow mapping */
-   void setShadowMappingSelfDensity(float f);
-
-   /* getShadowMappingFloorDensity: get floor density of shadow mapping */
-   float getShadowMappingFloorDensity();
-
-   /* setShadowMappingFloorDensity: set floor density of shadow mapping */
-   void setShadowMappingFloorDensity(float f);
-
-   /* getShadowMappingLightFirst: get first light flag */
-   bool getShadowMappingLightFirst();
-
-   /* setShadowMappingLightFirst: set first light flag */
-   void setShadowMappingLightFirst(bool b);
+    MMDME_DISABLE_COPY_AND_ASSIGN(Option);
 };
 
 } /* namespace */

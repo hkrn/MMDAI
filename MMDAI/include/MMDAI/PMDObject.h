@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -36,10 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
-
-#ifndef PMDOBJECT_H
-#define PMDOBJECT_H
+#ifndef MMDAI_PMDOBJECT_H_
+#define MMDAI_PMDOBJECT_H_
 
 #include <MMDME/BulletPhysics.h>
 #include <MMDME/Common.h>
@@ -58,176 +56,89 @@ class PMDModelLoader;
 class SceneRenderEngine;
 class VMD;
 
-/* PMDObject: object of PMD */
 class PMDObject
 {
-private:
-
-   char *m_alias;               /* alias */
-   PMDModel *m_model;           /* model */
-   MotionManager *m_motionManager; /* motion manager */
-   LipSync *m_globalLipSync;
-   LipSync m_localLipSync;
-   SceneRenderEngine *m_engine;
-
-   bool m_isEnable; /* true if this model is enabled */
-
-   /* status and work area */
-   btVector3 m_lightDir; /* light direction for toon shading */
-
-   /* model configuration */
-   PMDObject *m_assignTo;   /* parent model when this is accessory */
-   PMDBone *m_baseBone;     /* parent bone when this is accessory */
-   btVector3 m_origBasePos; /* offset when position is fixed */
-
-   btVector3 m_offsetPos;      /* root bone offset for accessory or moving */
-   btQuaternion m_offsetRot;   /* root bone rotation for accessory or moving */
-   bool m_absPosFlag[3];       /* absolute position flag for accessory per each axis */
-   float m_moveSpeed;          /* move speed per second. if negative value, warp to m_offsetPos */
-   float m_spinSpeed;          /* spin speed per second. if negative value, warp to m_offsetRot */
-   bool m_allowToonShading;    /* false if deny toon rendering for accessory or stage */
-   bool m_allowMotionFileDrop; /* true if allow motion file drop or all motion command */
-
-   bool m_isMoving;   /* true when model move */
-   bool m_isRotating; /* true when model spin */
-   bool m_underTurn;  /* true when model turn */
-
-   double m_alphaAppearFrame;    /* number of alpha frame when model appear */
-   double m_alphaDisappearFrame; /* number of alpha frame when model disapper */
-   double m_displayCommentFrame; /* number of frame to show comment ofs model */
-
-   bool m_needResetKinematic; /* flag for reset Kinematic State when base motion is changed */
-
-   /* PMDObject::initialize: initialize PMDObject */
-   void initialize();
-
-   /* PMDOjbect::clear: free PMDObject */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDObject);
-
 public:
+    PMDObject(SceneRenderEngine *engine);
+    ~PMDObject();
 
-   /* PMDObject::PMDObject: constructor */
-   PMDObject(SceneRenderEngine *engine);
+    void release();
+    bool load(PMDModelLoader *modelLoader,
+              LipSyncLoader *lipSyncLoader,
+              btVector3 *offsetPos,
+              btQuaternion *offsetRot,
+              bool forcedPosition,
+              PMDBone *assignBone,
+              PMDObject *assignObject,
+              BulletPhysics *bullet,
+              bool useCartoonRendering,
+              float cartoonEdgeWidth,
+              btVector3 *light);
+    bool startMotion(VMD *vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRepos);
+    bool swapMotion(VMD *vmd, const char *targetName);
+    void updateRootBone();
+    bool updateMotion(double deltaFrame);
+    void updateAfterSimulation(bool physicsEnabled);
+    bool updateAlpha(double deltaFrame);
+    void startDisappear();
+    void setLightForToon(btVector3 *v);
+    bool updateModelRootOffset(float fps);
+    bool updateModelRootRotation(float fps);
+    const char *getAlias() const;
+    void setAlias(const char *alias);
+    PMDModel *getPMDModel();
+    MotionManager *getMotionManager() const;
+    void resetMotionManager();
+    bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
+    void getCurrentPosition(btVector3 &pos);
+    void getTargetPosition(btVector3 &pos);
+    void setPosition(btVector3 &pos);
+    void getCurrentRotation(btQuaternion &rot);
+    void getTargetRotation(btQuaternion &rot);
+    void setRotation(btQuaternion &rot);
+    void setMoveSpeed(float speed);
+    void setSpinSpeed(float speed);
+    bool isMoving() const;
+    bool isRotating() const;
+    bool isTurning() const;
+    void setTurningFlag(bool flag);
+    bool isEnable() const;
+    void setEnableFlag(bool flag);
+    bool allowMotionFileDrop() const;
+    PMDObject *getAssignedModel() const;
+    void renderDebug();
 
-   /* PMDObject::PMDObject: destructor */
-   ~PMDObject();
+private:
+    void initialize();
+    void clear();
 
-   /* PMDOjbect::release: free PMDObject */
-   void release();
+    char *m_alias;
+    PMDModel *m_model;
+    MotionManager *m_motionManager;
+    LipSync *m_globalLipSync;
+    LipSync m_localLipSync;
+    SceneRenderEngine *m_engine;
+    bool m_isEnable;
+    btVector3 m_lightDir;
+    PMDObject *m_assignTo;
+    PMDBone *m_baseBone;
+    btVector3 m_origBasePos;
+    btVector3 m_offsetPos;
+    btQuaternion m_offsetRot;
+    bool m_absPosFlag[3];
+    float m_moveSpeed;
+    float m_spinSpeed;
+    bool m_allowToonShading;
+    bool m_allowMotionFileDrop;
+    bool m_isMoving;
+    bool m_isRotating;
+    bool m_underTurn;
+    double m_alphaAppearFrame;
+    double m_alphaDisappearFrame;
+    double m_displayCommentFrame;
+    bool m_needResetKinematic;
 
-   /* PMDObject::load: load model */
-   bool load(PMDModelLoader *modelLoader,
-             LipSyncLoader *lipSyncLoader,
-             btVector3 *offsetPos,
-             btQuaternion *offsetRot,
-             bool forcedPosition,
-             PMDBone *assignBone,
-             PMDObject *assignObject,
-             BulletPhysics *bullet,
-             bool useCartoonRendering,
-             float cartoonEdgeWidth,
-             btVector3 *light);
-
-   /* PMDObject::setMotion: start a motion */
-   bool startMotion(VMD *vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRepos);
-
-   /* PMDObject::swapMotion: swap a motion */
-   bool swapMotion(VMD *vmd, const char *targetName);
-
-   /* PMDObject::updateRootBone: update root bone if assigned to a base bone */
-   void updateRootBone();
-
-   /* PMDObject::updateMotion: update motions */
-   bool updateMotion(double deltaFrame);
-
-   /* PMDObject::updateAfterSimulation: update bone transforms from simulated rigid bodies */
-   void updateAfterSimulation(bool physicsEnabled);
-
-   /* PMDObject::updateAlpha: update global model alpha */
-   bool updateAlpha(double deltaFrame);
-
-   /* PMDObject::startDisppear: set disapper timer */
-   void startDisappear();
-
-   /* PMDModel::setLightForToon: set light direction for ton shading */
-   void setLightForToon(btVector3 *v);
-
-   /* PMDObject::updateModel: update model position of root bone */
-   bool updateModelRootOffset(float fps);
-
-   /* PMDObject::updateModelRootRotation: update model rotation of root bone */
-   bool updateModelRootRotation(float fps);
-
-   /* PMDObject::getAlias: get alias name */
-   const char *getAlias() const;
-
-   /* PMDObject::setAlias: set alias name */
-   void setAlias(const char *alias);
-
-   /* PMDObject::getPMDModel: get PMDModel */
-   PMDModel *getPMDModel();
-
-   /* PMDObject::getMotionManager: get MotionManager */
-   MotionManager *getMotionManager() const;
-
-   /* PMDObject::resetMotionManager: reset MotionManager */
-   void resetMotionManager();
-
-   /* PMDObject::getLipSync: create LipSync motion */
-   bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
-
-   /* getPosition: get current offset */
-   void getCurrentPosition(btVector3 &pos);
-
-   /* getTargetPosition: get target offset */
-   void getTargetPosition(btVector3 &pos);
-
-   /* PMDObject::setPosition: set root bone offset */
-   void setPosition(btVector3 &pos);
-
-   /* PMDObject::getRotation: get root bone rotation */
-   void getCurrentRotation(btQuaternion &rot);
-
-   /* getTargetRotation: get target rotation */
-   void getTargetRotation(btQuaternion &rot);
-
-   /* PMDObject::setRotation: set root bone rotation */
-   void setRotation(btQuaternion &rot);
-
-   /* PMDObject::setMoveSpeed: set move speed per second */
-   void setMoveSpeed(float speed);
-
-   /* PMDObject::setSpinSpeed: set spin seed per second */
-   void setSpinSpeed(float speed);
-
-   /* PMDObject::isMoving: return true when model move */
-   bool isMoving() const;
-
-   /* PMDObject::isRotating: return true when model spin */
-   bool isRotating() const;
-
-   /* PMDObject::isTruning: return true when model turn */
-   bool isTurning() const;
-
-   /* PMDObject::setTurnFlag: set turnning flag */
-   void setTurningFlag(bool flag);
-
-   /* PMDObject::isEnable: get enable flag */
-   bool isEnable() const;
-
-   /* PMDObject::setEnableFlag: set enable flag */
-   void setEnableFlag(bool flag);
-
-   /* PMDObject::allowMotionFileDrop: return true if motion file drop is allowed */
-   bool allowMotionFileDrop() const;
-
-   /* PMDObject::getAssignedModel: get parent model */
-   PMDObject *getAssignedModel() const;
-
-   /* renderDebug: render model debug */
-   void renderDebug();
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDObject);
 };
 
 } /* namespace */

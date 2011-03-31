@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -38,8 +38,8 @@
 
 /* headers */
 
-#ifndef SCENEEVENTHANDLER_H
-#define SCENEEVENTHANDLER_H
+#ifndef MMDAI_SCENEEVENTHANDLER_H_
+#define MMDAI_SCENEEVENTHANDLER_H_
 
 namespace MMDAI {
 
@@ -48,54 +48,53 @@ namespace MMDAI {
 class SceneEventHandler
 {
 public:
-  static const char *kModelAddCommand;
-  static const char *kModelChangeCommand;
-  static const char *kModelDeleteCommand;
-  static const char *kMotionAddCommand;
-  static const char *kMotionChangeCommand;
-  static const char *kMotionDeleteCommand;
-  static const char *kMoveStartCommand;
-  static const char *kMoveStopCommand;
-  static const char *kTurnStartCommand;
-  static const char *kTurnStopCommand;
-  static const char *kRotateStartCommand;
-  static const char *kRotateStopCommand;
-  static const char *kStageCommand;
-  static const char *kFloorCommand;
-  static const char *kBackgroundCommand;
-  static const char *kLightColorCommand;
-  static const char *kLightDirectionCommand;
-  static const char *kLipSyncStartCommand;
-  static const char *kLipSyncStopCommand;
+    static const char *kModelAddCommand;
+    static const char *kModelChangeCommand;
+    static const char *kModelDeleteCommand;
+    static const char *kMotionAddCommand;
+    static const char *kMotionChangeCommand;
+    static const char *kMotionDeleteCommand;
+    static const char *kMoveStartCommand;
+    static const char *kMoveStopCommand;
+    static const char *kTurnStartCommand;
+    static const char *kTurnStopCommand;
+    static const char *kRotateStartCommand;
+    static const char *kRotateStopCommand;
+    static const char *kStageCommand;
+    static const char *kFloorCommand;
+    static const char *kBackgroundCommand;
+    static const char *kLightColorCommand;
+    static const char *kLightDirectionCommand;
+    static const char *kLipSyncStartCommand;
+    static const char *kLipSyncStopCommand;
 
-  static const char *kModelAddEvent;
-  static const char *kModelChangeEvent;
-  static const char *kModelDeleteEvent;
-  static const char *kMotionAddEvent;
-  static const char *kMotionChangeEvent;
-  static const char *kMotionDeleteEvent;
-  static const char *kMotionLoopEvent;
-  static const char *kMoveStartEvent;
-  static const char *kMoveStopEvent;
-  static const char *kTurnStartEvent;
-  static const char *kTurnStopEvent;
-  static const char *kRotateStartEvent;
-  static const char *kRotateStopEvent;
-  static const char *kStageEvent;
-  static const char *kFloorEvent;
-  static const char *kBackgroundEvent;
-  static const char *kLightColorEvent;
-  static const char *kLightDirectionEvent;
-  static const char *kLipSyncStartEvent;
-  static const char *kLipSyncStopEvent;
-  static const char *kKeyEvent;
+    static const char *kModelAddEvent;
+    static const char *kModelChangeEvent;
+    static const char *kModelDeleteEvent;
+    static const char *kMotionAddEvent;
+    static const char *kMotionChangeEvent;
+    static const char *kMotionDeleteEvent;
+    static const char *kMotionLoopEvent;
+    static const char *kMoveStartEvent;
+    static const char *kMoveStopEvent;
+    static const char *kTurnStartEvent;
+    static const char *kTurnStopEvent;
+    static const char *kRotateStartEvent;
+    static const char *kRotateStopEvent;
+    static const char *kStageEvent;
+    static const char *kFloorEvent;
+    static const char *kBackgroundEvent;
+    static const char *kLightColorEvent;
+    static const char *kLightDirectionEvent;
+    static const char *kLipSyncStartEvent;
+    static const char *kLipSyncStopEvent;
+    static const char *kKeyEvent;
 
-  virtual ~SceneEventHandler() {}
+    virtual ~SceneEventHandler() {}
 
-  virtual void handleEventMessage(const char *eventType, int argc, ...) = 0;
+    virtual void handleEventMessage(const char *eventType, int argc, ...) = 0;
 };
 
 } /* namespace */
 
-#endif // SCENEEVENTHANDLER_H
-
+#endif // MMDAI_SCENEEVENTHANDLER_H_

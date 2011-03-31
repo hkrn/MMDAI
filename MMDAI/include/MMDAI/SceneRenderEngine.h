@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -39,27 +39,26 @@
 #ifndef MMDAI_SCENERENDERENGINE_H_
 #define MMDAI_SCENERENDERENGINE_H_
 
-#include <btBulletDynamicsCommon.h>
 #include <MMDME/PMDRenderEngine.h>
 
 class btConvexShape;
 
 namespace MMDAI {
 
-  class BulletPhysics;
-  class Option;
-  class PMDBone;
-  class PMDModel;
-  class PMDModelLoader;
-  class PMDObject;
-  class PMDTexture;
-  class Stage;
+class BulletPhysics;
+class Option;
+class PMDBone;
+class PMDModel;
+class PMDModelLoader;
+class PMDObject;
+class PMDTexture;
+class Stage;
 
-  typedef struct PMDTextureNative PMDTextureNative;
-  typedef struct PMDRenderCacheNative PMDRenderCacheNative;
+typedef struct PMDTextureNative PMDTextureNative;
+typedef struct PMDRenderCacheNative PMDRenderCacheNative;
 
-  class SceneRenderEngine : public PMDRenderEngine {
-  public:
+class SceneRenderEngine : public PMDRenderEngine {
+public:
     virtual ~SceneRenderEngine() {}
 
     virtual PMDModel *allocateModel() = 0;
@@ -67,60 +66,59 @@ namespace MMDAI {
     virtual void releaseModel(PMDModel *model) = 0;
 
     virtual void renderModelCached(PMDModel *model,
-                           PMDRenderCacheNative **ptr) = 0;
+                                   PMDRenderCacheNative **ptr) = 0;
     virtual void renderTileTexture(PMDTexture *texture,
-                           const float *color,
-                           const float *normal,
-                           const float *vertices1,
-                           const float *vertices2,
-                           const float *vertices3,
-                           const float *vertices4,
-                           const float nX,
-                           const float nY,
-                           const bool cullFace,
-                           PMDRenderCacheNative **ptr) = 0;
+                                   const float *color,
+                                   const float *normal,
+                                   const float *vertices1,
+                                   const float *vertices2,
+                                   const float *vertices3,
+                                   const float *vertices4,
+                                   const float nX,
+                                   const float nY,
+                                   const bool cullFace,
+                                   PMDRenderCacheNative **ptr) = 0;
     virtual void deleteCache(PMDRenderCacheNative **ptr) = 0;
 
     virtual bool setup(float *campusColor,
-               bool useShadowMapping,
-               int shadowMapTextureSize,
-               bool shadowMapLightFirst) = 0;
+                       bool useShadowMapping,
+                       int shadowMapTextureSize,
+                       bool shadowMapLightFirst) = 0;
     virtual void initializeShadowMap(int shadowMapTextureSize) = 0;
     virtual void setShadowMapping(bool flag,
-                          int shadowMapTextureSize,
-                          bool shadowMapLightFirst) = 0;
+                                  int shadowMapTextureSize,
+                                  bool shadowMapLightFirst) = 0;
     virtual void prerender(Option *option,
-                   PMDObject **objects,
-                   int size) = 0;
+                           PMDObject **objects,
+                           int size) = 0;
     virtual void render(Option *option,
-                Stage *stage,
-                PMDObject **objects,
-                int size) = 0;
+                        Stage *stage,
+                        PMDObject **objects,
+                        int size) = 0;
     virtual int pickModel(PMDObject **objects,
-                  int size,
-                  int x,
-                  int y,
-                  int width,
-                  int height,
-                  double scale,
-                  int *allowDropPicked) = 0;
+                          int size,
+                          int x,
+                          int y,
+                          int width,
+                          int height,
+                          double scale,
+                          int *allowDropPicked) = 0;
     virtual void updateLighting(bool useCartoonRendering,
-                        bool useMMDLikeCartoon,
-                        float *lightDirection,
-                        float lightIntensy,
-                        float *lightColor) = 0;
+                                bool useMMDLikeCartoon,
+                                float *lightDirection,
+                                float lightIntensy,
+                                float *lightColor) = 0;
     virtual void updateProjectionMatrix(const int width,
-                                const int height,
-                                const double scale) = 0;
+                                        const int height,
+                                        const double scale) = 0;
     virtual void updateModelViewMatrix(const btTransform &transMatrix,
-                               const btTransform &transMatrixInv) = 0;
+                                       const btTransform &transMatrixInv) = 0;
     virtual void setShadowMapAutoView(const btVector3 &eyePoint,
-                              const float radius) = 0;
+                                      const float radius) = 0;
     virtual void setModelViewMatrix(const btScalar modelView[16]) = 0;
     virtual void setProjectionMatrix(const btScalar projection[16]) = 0;
-  };
+};
 
 } /* namespace */
 
 #endif
-
