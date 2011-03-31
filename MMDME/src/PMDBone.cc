@@ -45,306 +45,306 @@ namespace MMDAI {
 /* PMDBone::initialize: initialize bone */
 void PMDBone::initialize()
 {
-   m_name = NULL;
-   m_parentBone = NULL;
-   m_childBone = NULL;
-   m_type = UNKNOWN;
-   m_targetBone = NULL;
-   m_originPosition.setZero();
-   m_rotateCoef = 0.0f;
+    m_name = NULL;
+    m_parentBone = NULL;
+    m_childBone = NULL;
+    m_type = UNKNOWN;
+    m_targetBone = NULL;
+    m_originPosition.setZero();
+    m_rotateCoef = 0.0f;
 
-   m_offset.setZero();
-   m_parentIsRoot = false;
-   m_limitAngleX = false;
-   m_motionIndependent = false;
+    m_offset.setZero();
+    m_parentIsRoot = false;
+    m_limitAngleX = false;
+    m_motionIndependent = false;
 
-   m_trans.setIdentity();
-   m_trans.setOrigin(m_originPosition);
-   m_transMoveToOrigin.setIdentity();
-   m_transMoveToOrigin.setOrigin(-m_originPosition);
-   m_simulated = false;
+    m_trans.setIdentity();
+    m_trans.setOrigin(m_originPosition);
+    m_transMoveToOrigin.setIdentity();
+    m_transMoveToOrigin.setOrigin(-m_originPosition);
+    m_simulated = false;
 
-   m_pos.setZero();
-   m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    m_pos.setZero();
+    m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 /* PMDBone::clear: free bone */
 void PMDBone::clear()
 {
-   if(m_name)
-      MMDAIMemoryRelease(m_name);
+    if(m_name)
+        MMDAIMemoryRelease(m_name);
 
-   initialize();
+    initialize();
 }
 
 /* PMDBone::PMDBone: constructor */
 PMDBone::PMDBone()
 {
-   initialize();
+    initialize();
 }
 
 /* PMDBone::~PMDBone: destructor */
 PMDBone::~PMDBone()
 {
-   clear();
+    clear();
 }
 
 /* PMDBone::setup: initialize and setup bone */
 bool PMDBone::setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones, PMDBone *rootBone)
 {
-   bool ret = true;
-   char name[21];
+    bool ret = true;
+    char name[21];
 
-   clear();
+    clear();
 
-   /* name */
-   MMDAIStringCopy(name, b->name, 20);
-   name[20] = '\0';
-   m_name = MMDAIStringClone(name);
+    /* name */
+    MMDAIStringCopy(name, b->name, 20);
+    name[20] = '\0';
+    m_name = MMDAIStringClone(name);
 
-   /* mark if this bone should be treated as angle-constrained bone in IK process */
-   if (strstr(m_name, PMDBONE_KNEENAME))
-      m_limitAngleX = true;
-   else
-      m_limitAngleX = false;
+    /* mark if this bone should be treated as angle-constrained bone in IK process */
+    if (strstr(m_name, PMDBONE_KNEENAME))
+        m_limitAngleX = true;
+    else
+        m_limitAngleX = false;
 
-   /* parent bone */
-   if (b->parentBoneID != -1) {
-      /* has parent bone */
-      if (b->parentBoneID >= maxBones) {
-         ret = false;
-      } else {
-         m_parentBone = &(boneList[b->parentBoneID]);
-         m_parentIsRoot = false;
-      }
-   } else {
-      /* no parent bone */
-      if (rootBone) {
-         /* set model root bone as parent */
-         m_parentBone = rootBone;
-         m_parentIsRoot = true;
-      } else {
-         /* no parent, just use it */
-         m_parentIsRoot = false;
-      }
-   }
+    /* parent bone */
+    if (b->parentBoneID != -1) {
+        /* has parent bone */
+        if (b->parentBoneID >= maxBones) {
+            ret = false;
+        } else {
+            m_parentBone = &(boneList[b->parentBoneID]);
+            m_parentIsRoot = false;
+        }
+    } else {
+        /* no parent bone */
+        if (rootBone) {
+            /* set model root bone as parent */
+            m_parentBone = rootBone;
+            m_parentIsRoot = true;
+        } else {
+            /* no parent, just use it */
+            m_parentIsRoot = false;
+        }
+    }
 
-   /* child bone */
-   if (b->childBoneID != -1) {
-      if (b->childBoneID >= maxBones)
-         ret = false;
-      else
-         m_childBone = &(boneList[b->childBoneID]);
-   }
+    /* child bone */
+    if (b->childBoneID != -1) {
+        if (b->childBoneID >= maxBones)
+            ret = false;
+        else
+            m_childBone = &(boneList[b->childBoneID]);
+    }
 
-   /* type */
-   m_type = b->type;
+    /* type */
+    m_type = b->type;
 
-   /* target bone to which this bone is subject to */
-   if (m_type == UNDER_IK || m_type == UNDER_ROTATE) {
-      m_targetBone = &(boneList[b->targetBoneID]);
-      if (b->targetBoneID >= maxBones)
-         ret = false;
-      else
-         m_targetBone = &(boneList[b->targetBoneID]);
-   }
+    /* target bone to which this bone is subject to */
+    if (m_type == UNDER_IK || m_type == UNDER_ROTATE) {
+        m_targetBone = &(boneList[b->targetBoneID]);
+        if (b->targetBoneID >= maxBones)
+            ret = false;
+        else
+            m_targetBone = &(boneList[b->targetBoneID]);
+    }
 
-   /* store the value of targetBoneID as co-rotate coef if kind == FOLLOW_ROTATE */
-   if (m_type == FOLLOW_ROTATE)
-      m_rotateCoef = (float) b->targetBoneID * 0.01f;
+    /* store the value of targetBoneID as co-rotate coef if kind == FOLLOW_ROTATE */
+    if (m_type == FOLLOW_ROTATE)
+        m_rotateCoef = (float) b->targetBoneID * 0.01f;
 
-   /* store absolute bone positions */
-   /* reverse Z value on bone position */
+    /* store absolute bone positions */
+    /* reverse Z value on bone position */
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-   m_originPosition = btVector3(b->pos[0], b->pos[1], -b->pos[2]);
+    m_originPosition = btVector3(b->pos[0], b->pos[1], -b->pos[2]);
 #else
-   m_originPosition = btVector3(b->pos[0], b->pos[1], b->pos[2]);
+    m_originPosition = btVector3(b->pos[0], b->pos[1], b->pos[2]);
 #endif
-   MMDAILogDebugSJIS("name=\"%s\", parentID=%d, childID=%d, type=%d, position=(%.2f, %.2f, %.2f)",
-       m_name, b->parentBoneID, b->childBoneID, m_type, b->pos[0], b->pos[1], b->pos[2]);
+    MMDAILogDebugSJIS("name=\"%s\", parentID=%d, childID=%d, type=%d, position=(%.2f, %.2f, %.2f)",
+                      m_name, b->parentBoneID, b->childBoneID, m_type, b->pos[0], b->pos[1], b->pos[2]);
 
-   /* reset current transform values */
-   m_trans.setOrigin(m_originPosition);
+    /* reset current transform values */
+    m_trans.setOrigin(m_originPosition);
 
-   /* set absolute position->origin transform matrix for skinning */
-   m_transMoveToOrigin.setOrigin(-m_originPosition);
+    /* set absolute position->origin transform matrix for skinning */
+    m_transMoveToOrigin.setOrigin(-m_originPosition);
 
-   return ret;
+    return ret;
 }
 
 /* PMDBone::computeOffset: compute offset position */
 void PMDBone::computeOffset()
 {
-   if (m_parentBone)
-      m_offset = m_originPosition - m_parentBone->m_originPosition;
-   else
-      m_offset = m_originPosition;
+    if (m_parentBone)
+        m_offset = m_originPosition - m_parentBone->m_originPosition;
+    else
+        m_offset = m_originPosition;
 }
 
 /* PMDBone::reset: reset working pos and rot */
 void PMDBone::reset()
 {
-   m_pos.setZero();
-   m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
-   /* default transform will be referred while loading rigid bodies in PMD... */
-   m_trans.setIdentity();
-   m_trans.setOrigin(m_originPosition);
+    m_pos.setZero();
+    m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    /* default transform will be referred while loading rigid bodies in PMD... */
+    m_trans.setIdentity();
+    m_trans.setOrigin(m_originPosition);
 }
 
 /* PMDBone::setMotionIndependency: check if this bone does not be affected by other controller bones */
 void PMDBone::setMotionIndependency()
 {
-   int i;
-   const char *names[] = {PMDBONE_ADDITIONALROOTNAME};
+    int i;
+    const char *names[] = {PMDBONE_ADDITIONALROOTNAME};
 
-   if (! m_parentBone || m_parentIsRoot) {
-      /* if no parent bone in the model, return true */
-      m_motionIndependent = true;
-      return;
-   }
+    if (! m_parentBone || m_parentIsRoot) {
+        /* if no parent bone in the model, return true */
+        m_motionIndependent = true;
+        return;
+    }
 
-   /* some models has additional model root bone or offset bones, they should be treated specially */
-   for (i = 0; i < PMDBONE_NADDITIONALROOTNAME; i++) {
-      if (MMDAIStringEquals(m_parentBone->m_name, names[i])) {
-         m_motionIndependent = true;
-         return;
-      }
-   }
+    /* some models has additional model root bone or offset bones, they should be treated specially */
+    for (i = 0; i < PMDBONE_NADDITIONALROOTNAME; i++) {
+        if (MMDAIStringEquals(m_parentBone->m_name, names[i])) {
+            m_motionIndependent = true;
+            return;
+        }
+    }
 
-   m_motionIndependent = false;
+    m_motionIndependent = false;
 }
 
 /* PMDBone::updateRotate: update internal transform, consulting extra rotation */
 void PMDBone::updateRotate()
 {
-   btQuaternion r;
-   const btQuaternion norot(0.0f, 0.0f, 0.0f, 1.0f);
+    btQuaternion r;
+    const btQuaternion norot(0.0f, 0.0f, 0.0f, 1.0f);
 
-   if (m_type == UNDER_ROTATE) {
-      /* for under-rotate bone, further apply the rotation of target bone */
-      r = m_rot * m_targetBone->m_rot;
-      m_trans.setOrigin(m_pos + m_offset);
-      m_trans.setRotation(r);
-      if (m_parentBone)
-         m_trans = m_parentBone->m_trans * m_trans;
-   } else if (m_type == FOLLOW_ROTATE) {
-      /* for co-rotate bone, further apply the rotation of child bone scaled by the rotation weight */
-      r = m_rot * norot.slerp(m_childBone->m_rot, m_rotateCoef);
-      m_trans.setOrigin(m_pos + m_offset);
-      m_trans.setRotation(r);
-      if (m_parentBone)
-         m_trans = m_parentBone->m_trans * m_trans;
-   }
+    if (m_type == UNDER_ROTATE) {
+        /* for under-rotate bone, further apply the rotation of target bone */
+        r = m_rot * m_targetBone->m_rot;
+        m_trans.setOrigin(m_pos + m_offset);
+        m_trans.setRotation(r);
+        if (m_parentBone)
+            m_trans = m_parentBone->m_trans * m_trans;
+    } else if (m_type == FOLLOW_ROTATE) {
+        /* for co-rotate bone, further apply the rotation of child bone scaled by the rotation weight */
+        r = m_rot * norot.slerp(m_childBone->m_rot, m_rotateCoef);
+        m_trans.setOrigin(m_pos + m_offset);
+        m_trans.setRotation(r);
+        if (m_parentBone)
+            m_trans = m_parentBone->m_trans * m_trans;
+    }
 }
 
 /* PMDBone::update: update internal transform for current position / rotation */
 void PMDBone::update()
 {
-   m_trans.setOrigin(m_pos + m_offset);
-   m_trans.setRotation(m_rot);
-   if (m_parentBone)
-      m_trans = m_parentBone->m_trans * m_trans;
+    m_trans.setOrigin(m_pos + m_offset);
+    m_trans.setRotation(m_rot);
+    if (m_parentBone)
+        m_trans = m_parentBone->m_trans * m_trans;
 }
 
 /* PMDBone::calcSkinningTrans: get internal transform for skinning */
 void PMDBone::calcSkinningTrans(btTransform *b)
 {
-   *b = m_trans * m_transMoveToOrigin;
+    *b = m_trans * m_transMoveToOrigin;
 }
 
 /* PMDBone;:getName: get bone name */
 const char *PMDBone::getName() const
 {
-   return m_name;
+    return m_name;
 }
 
 /* PMDBone::getType: get bone type */
 unsigned char PMDBone::getType() const
 {
-   return m_type;
+    return m_type;
 }
 
 /* PMDBone::getTransform: get transform */
 btTransform *PMDBone::getTransform()
 {
-   return &m_trans;
+    return &m_trans;
 }
 
 /* PMDBone::setTransform: set transform */
 void PMDBone::setTransform(btTransform *tr)
 {
-   m_trans = *tr;
+    m_trans = *tr;
 }
 
 /* PMDBone::getOriginPosition: get position */
 btVector3 *PMDBone::getOriginPosition()
 {
-   return &m_originPosition;
+    return &m_originPosition;
 }
 
 /* PMDBone::isLimitAngleX: return true if this bone can be bended for X axis only at IK process */
 bool PMDBone::isLimitAngleX() const
 {
-   return m_limitAngleX;
+    return m_limitAngleX;
 }
 
 /* PMDBone::hasMotionIndependency: return true if this bone is not affected by other controller bones */
 bool PMDBone::hasMotionIndependency() const
 {
-   return m_motionIndependent;
+    return m_motionIndependent;
 }
 
 /* PMDBone::setSimlatedFlag: set flag whether bone is controlled under phsics or not */
 void PMDBone::setSimulatedFlag(bool flag)
 {
-   m_simulated = flag;
+    m_simulated = flag;
 }
 /* PMDBone::isSimulated: return true if this bone is controlled under physics */
 bool PMDBone::isSimulated() const
 {
-   return m_simulated;
+    return m_simulated;
 }
 
 /* PMDBone::getOffset: get offset */
 btVector3 *PMDBone::getOffset()
 {
-   return &m_offset;
+    return &m_offset;
 }
 
 /* PMDBone::setOffset: set offset */
 void PMDBone::setOffset(btVector3 *v)
 {
-   m_offset = *v;
+    m_offset = *v;
 }
 
 /* PMDBone::getParentBone: get parent bone */
 PMDBone *PMDBone::getParentBone() const
 {
-   return m_parentBone;
+    return m_parentBone;
 }
 
 /* PMDBone::getCurrentPosition: get current position */
 btVector3 *PMDBone::getCurrentPosition()
 {
-   return &m_pos;
+    return &m_pos;
 }
 
 /* PMDBone::setCurrentPosition: set current position */
 void PMDBone::setCurrentPosition(btVector3 *v)
 {
-   m_pos = (*v);
+    m_pos = (*v);
 }
 
 /* PMDBone::getCurrentRotation: get current rotation */
 btQuaternion *PMDBone::getCurrentRotation()
 {
-   return &m_rot;
+    return &m_rot;
 }
 
 /* PMDBone::setCurrentRotation: set current rotation */
 void PMDBone::setCurrentRotation(btQuaternion *q)
 {
-   m_rot = (*q);
+    m_rot = (*q);
 }
 
 } /* namespace */

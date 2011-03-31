@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -39,34 +39,31 @@
 #ifndef MMDME_VMDFILE_H_
 #define MMDME_VMDFILE_H_
 
+#include "MMDME/Common.h"
+
 namespace MMDAI {
 
-/* disable alignment in this header */
 #pragma pack(push, 1)
 
-/* VMDFile_Header: header structure for VMD file reading */
 typedef struct _VMDFile_Header {
-   char header[30]; /* "Vocaloid Motion Data 0002" */
-   char name[20];   /* model name (unused) */
+    char header[30];
+    char name[20];
 } VMDFile_Header;
 
-/* VMDFile_BoneFrame: bone motion element structure for VMD file reading */
 typedef struct _VMDFile_BoneFrame {
-   char name[15];          /* bone name */
-   unsigned int keyFrame; /* key frame */
-   float pos[3];           /* position (x, y, z) */
-   float rot[4];           /* rotation (x, y, z, w) */
-   char interpolation[64]; /* interpolation parameters */
+    char name[15];
+    uint32_t keyFrame;
+    float pos[3];
+    float rot[4];
+    char interpolation[64];
 } VMDFile_BoneFrame;
 
-/* VMDFile_FaceFrame: face motion element structure for VMD file reading */
 typedef struct _VMDFile_FaceFrame {
-   char name[15];          /* face name */
-   unsigned int keyFrame; /* key frame */
-   float weight;           /* weight (0.0 - 1.0) */
+    char name[15];
+    uint32_t keyFrame;
+    float weight;
 } VMDFile_FaceFrame;
 
-/* restore alignment */
 #pragma pack(pop)
 
 } /* namespace */

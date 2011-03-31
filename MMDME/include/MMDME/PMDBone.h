@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -47,124 +47,63 @@
 namespace MMDAI {
 
 #define PMDBONE_KNEENAME "ひざ"
-
 #define PMDBONE_ADDITIONALROOTNAME  "全ての親", "両足オフセ", "右足オフセ", "左足オフセ"
 #define PMDBONE_NADDITIONALROOTNAME 4
 
-/* PMDBone: bone of PMD */
 class PMDBone
 {
-private:
-
-   /* defined data */
-   char *m_name;               /* bone name */
-   PMDBone *m_parentBone;      /* parent bone (NULL = none) */
-   PMDBone *m_childBone;       /* child bone (NULL = none) or co-rotate bone if type == 9 */
-   unsigned char m_type;       /* bone type (PMD_BONE_TYPE) */
-   PMDBone *m_targetBone;      /* bone ID by which this bone if affected: IK bone (type 4), under_rotate bone (type 5) */
-   btVector3 m_originPosition; /* position from origin, defined in model (absolute) */
-   float m_rotateCoef;         /* Effect coef. if type == corotate */
-
-   /* definitions extracted at startup */
-   btVector3 m_offset;       /* Offset position from parent bone */
-   bool m_parentIsRoot;      /* true if parent is root bone, otherwise false */
-   bool m_limitAngleX;       /* true if this bone can be bended for X axis only at IK process */
-   bool m_motionIndependent; /* true if this bone is not affected by other controller bones */
-
-   /* work area */
-   btTransform m_trans;             /* current transform matrix, computed from m_pos and m_rot */
-   btTransform m_transMoveToOrigin; /* transform to move position to origin, for skinning */
-   bool m_simulated;                /* true if this bone is controlled under physics */
-   btVector3 m_pos;                 /* current position from parent bone, given by motion */
-   btQuaternion m_rot;              /* current rotation, given by motion */
-
-   /* initialize: initialize bone */
-   void initialize();
-
-   /* clear: free bone */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDBone);
-
 public:
+    PMDBone();
+    ~PMDBone();
 
-   /* PMDBone: constructor */
-   PMDBone();
+    bool setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones, PMDBone *rootBone);
+    void computeOffset();
+    void reset();
+    void setMotionIndependency();
+    void updateRotate();
+    void update();
+    void calcSkinningTrans(btTransform *b);
+    const char *getName() const;
+    unsigned char getType() const;
+    btTransform *getTransform();
+    void setTransform(btTransform *tr);
+    btVector3 *getOriginPosition();
+    bool isLimitAngleX() const;
+    bool hasMotionIndependency() const;
+    void setSimulatedFlag(bool flag);
+    bool isSimulated() const;
+    btVector3 *getOffset();
+    void setOffset(btVector3 *v);
+    PMDBone *getParentBone() const;
+    btVector3 *getCurrentPosition();
+    void setCurrentPosition(btVector3 *v);
+    btQuaternion *getCurrentRotation();
+    void setCurrentRotation(btQuaternion *q);
 
-   /* ~PMDBone: destructor */
-   ~PMDBone();
+private:
+    void initialize();
+    void clear();
 
-   /* setup: initialize and setup bone */
-   bool setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones, PMDBone *rootBone);
+    char *m_name;
+    PMDBone *m_parentBone;
+    PMDBone *m_childBone;
+    unsigned char m_type;
+    PMDBone *m_targetBone;
+    btVector3 m_originPosition;
+    float m_rotateCoef;
+    btVector3 m_offset;
+    bool m_parentIsRoot;
+    bool m_limitAngleX;
+    bool m_motionIndependent;
+    btTransform m_trans;
+    btTransform m_transMoveToOrigin;
+    bool m_simulated;
+    btVector3 m_pos;
+    btQuaternion m_rot;
 
-   /* computeOffset: compute offset position */
-   void computeOffset();
-
-   /* reset: reset working pos and rot */
-   void reset();
-
-   /* setMotionIndependency: check if this bone does not be affected by other controller bones */
-   void setMotionIndependency();
-
-   /* updateRotate: update internal transform, consulting extra rotation */
-   void updateRotate();
-
-   /* update: update internal transform for current position / rotation */
-   void update();
-
-   /* calcSkinningTrans: get internal transform for skinning */
-   void calcSkinningTrans(btTransform *b);
-
-   /* getName: get bone name */
-   const char *getName() const;
-
-   /* getType: get bone type */
-   unsigned char getType() const;
-
-   /* getTransform: get transform */
-   btTransform *getTransform();
-
-   /* setTransform: set transform */
-   void setTransform(btTransform *tr);
-
-   /* getOriginPosition: get origin position */
-   btVector3 *getOriginPosition();
-
-   /* isLimitAngleX: return true if this bone can be bended for X axis only at IK process */
-   bool isLimitAngleX() const;
-
-   /* hasMotionIndependency: return true if this bone is not affected by other controller bones */
-   bool hasMotionIndependency() const;
-
-   /* setSimlatedFlag: set flag whether bone is controlled under phsics or not */
-   void setSimulatedFlag(bool flag);
-
-   /* isSimulated: return true if this bone is controlled under physics */
-   bool isSimulated() const;
-
-   /* getOffset: get offset */
-   btVector3 *getOffset();
-
-   /* setOffset: set offset */
-   void setOffset(btVector3 *v);
-
-   /* getParentBone: get parent bone */
-   PMDBone *getParentBone() const;
-
-   /* getCurrentPosition: get current position */
-   btVector3 *getCurrentPosition();
-
-   /* setCurrentPosition: set current position */
-   void setCurrentPosition(btVector3 *v);
-
-   /* getCurrentRotation: get current rotation */
-   btQuaternion *getCurrentRotation();
-
-   /* setCurrentRotation: set current rotation */
-   void setCurrentRotation(btQuaternion *q);
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDBone);
 };
 
 } /* namespace */
 
 #endif
-

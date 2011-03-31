@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -39,134 +39,121 @@
 #ifndef MMDME_PMDFILE_H_
 #define MMDME_PMDFILE_H_
 
+#include "MMDME/Common.h"
+
 namespace MMDAI {
 
-/* disable alignment in this header */
 #pragma pack(push, 1)
 
-/* PMD_BONE_TYPE: bone type */
 enum PMD_BONE_TYPE {
-   ROTATE,          /* normal bone, can rotate by motion */
-   ROTATE_AND_MOVE, /* normal bone, can rotate and move by motion */
-   IK_DESTINATION,  /* IK bone, can move by motion */
-   UNKNOWN,         /* unknown */
-   UNDER_IK,        /* controlled under an IK chain */
-   UNDER_ROTATE,    /* controlled by other bone: rotation copied from target bone */
-   IK_TARGET,       /* IK target bone, directly manipulated by IK toward an IK destination */
-   NO_DISP,         /* no display (bone end markers) */
-   TWIST,           /* allow twisting rotation only */
-   FOLLOW_ROTATE    /* follow the child bone's rotation by the specified rate */
+    ROTATE,
+    ROTATE_AND_MOVE,
+    IK_DESTINATION,
+    UNKNOWN,
+    UNDER_IK,
+    UNDER_ROTATE,
+    IK_TARGET,
+    NO_DISP,
+    TWIST,
+    FOLLOW_ROTATE
 };
 
-/* PMD_FACE_TYPE: face type */
 enum PMD_FACE_TYPE {
-   PMD_FACE_BASE,    /* base face, defining all the default vertex positions controlled by the face motions */
-   PMD_FACE_EYEBROW, /* eyebrow faces */
-   PMD_FACE_EYE,     /* eye faces */
-   PMD_FACE_LIP,     /* lip faces */
-   PMD_FACE_OTHER    /* other faces */
+    PMD_FACE_BASE,
+    PMD_FACE_EYEBROW,
+    PMD_FACE_EYE,
+    PMD_FACE_LIP,
+    PMD_FACE_OTHER
 };
 
-/* PMDFile_Header: header */
 typedef struct _PMDFileHeader {
-   char magic[3];     /* magic string, should be "Pmd" */
-   float version;     /* version number */
-   char name[20];     /* model name */
-   char comment[256]; /* model comment string */
+    char magic[3];
+    float version;
+    char name[20];
+    char comment[256];
 } PMDFile_Header;
 
-/* PMDFile_Vertex: vertex element */
 typedef struct _PMDFile_Vertex {
-   float pos[3];              /* position (x, y, z) */
-   float normal[3];           /* normal vector (x, y, z) */
-   float uv[2];               /* texture coordinate (u, v) */
-   short boneID[2];           /* bone IDs for skinning */
-   unsigned char boneWeight1; /* weight for boneID[0], (1-boneWeight1) for boneID[1] */
-   unsigned char noEdgeFlag;  /* 1 if NO edge should be drawn for this vertex */
+    float pos[3];
+    float normal[3];
+    float uv[2];
+    int16_t boneID[2];
+    uint8_t boneWeight1;
+    uint8_t noEdgeFlag;
 } PMDFile_Vertex;
 
-/* PMDFile_Material: material element */
 typedef struct _PMDFile_Material {
-   float diffuse[3];              /* diffuse color */
-   float alpha;                   /* alpha color */
-   float shiness;                 /* shiness intensity */
-   float specular[3];             /* specular color */
-   float ambient[3];              /* ambient color */
-   unsigned char toonID;          /* toon index: 0xff -> toon0.bmp, other -> toon(val+1).bmp */
-   unsigned char edgeFlag;        /* 1 if edge should be drawn */
-   unsigned int numSurfaceIndex;  /* number of surface indices for this material */
-   char textureFile[20];          /* texture file name */
+    float diffuse[3];
+    float alpha;
+    float shiness;
+    float specular[3];
+    float ambient[3];
+    uint8_t toonID;
+    uint8_t edgeFlag;
+    uint32_t numSurfaceIndex;
+    char textureFile[20];
 } PMDFile_Material;
 
-/* PMDFile_Bone: bone element */
 typedef struct _PMDFile_Bone {
-   char name[20];      /* bone name */
-   short parentBoneID; /* parent bone ID (-1 = none) */
-   short childBoneID;  /* child bone ID (-1 = none) */
-   unsigned char type; /* bone type (PMD_BONE_TYPE) */
-   short targetBoneID; /* bone ID by which this bone if affected: IK bone (type 4), under_rotate bone (type 5) or co-rotate coef value (type 9) */
-   float pos[3];       /* position from origin */
+    char name[20];
+    int16_t parentBoneID;
+    int16_t childBoneID;
+    uint8_t type;
+    int16_t targetBoneID;
+    float pos[3];
 } PMDFile_Bone;
 
-/* PMDFile_IK: IK element */
 typedef struct _PMDFile_IK {
-   short destBoneID;            /* bone of destination position */
-   short targetBoneID;          /* bone to be directly manipulated by this IK */
-   unsigned char numLink;       /* length of bone list affected by this IK */
-   unsigned short numIteration; /* number of maximum iteration (IK value 1) */
-   float angleConstraint;       /* maximum angle per IK step in radian (IK value 2) */
+    int16_t destBoneID;
+    int16_t targetBoneID;
+    uint8_t numLink;
+    uint16_t numIteration;
+    float angleConstraint;
 } PMDFile_IK;
 
-/* PMDFile_Face_Vertex: face vertex element */
 typedef struct _PMDFile_Face_Vertex {
-   unsigned int vertexID; /* vertex index of this model to be controlled */
-   /* if base face, this is index for model vertex index */
-   /* if not base, this is index for base face vertices */
-   float pos[3];           /* position to be placed if this face rate is 1.0 */
+    uint32_t vertexID;
+    float pos[3];
 } PMDFile_Face_Vertex;
 
-/* PMDFile_Face: face element */
 typedef struct _PMDFile_Face {
-   char name[20];           /* name of this face */
-   unsigned int numVertex;  /* number of vertices controlled by this face */
-   unsigned char type;      /* face type (PMD_FACE_TYPE) */
+    char name[20];
+    uint32_t numVertex;
+    uint8_t type;
 } PMDFile_Face;
 
-/* PMDFile_RigidBody: Bullet Physics RigidBody element */
 typedef struct _PMDFile_RigidBody {
-   char name[20];                  /* name of this rigid body (unused) */
-   unsigned short boneID;          /* related bone */
-   unsigned char collisionGroupID; /* collision group in which this body belongs to */
-   unsigned short collisionMask;   /* collision group mask */
-   unsigned char shapeType;        /* shape type (0: sphere, 1: box, 2: capsule) */
-   float width;                    /* width of this shape (valid for 0, 1, 2) */
-   float height;                   /* height of this shape (valid for 1, 2) */
-   float depth;                    /* depth of this shape (valied for 1) */
-   float pos[3];                   /* position (x, y, z), relative to related bone */
-   float rot[3];                   /* rotation (x, y, z), in radian */
-   float mass;                     /* weight (valid for type 1 and 2) */
-   float linearDamping;            /* linear damping coefficient */
-   float angularDamping;           /* angular damping coefficient */
-   float restitution;              /* restitution (recoil) coefficient */
-   float friction;                 /* friction coefficient */
-   unsigned char type;             /* type (0: kinematics, 1: simulated, 2: simulated+aligned) */
+    char name[20];
+    uint16_t boneID;
+    uint8_t collisionGroupID;
+    uint16_t collisionMask;
+    uint8_t shapeType;
+    float width;
+    float height;
+    float depth;
+    float pos[3];
+    float rot[3];
+    float mass;
+    float linearDamping;
+    float angularDamping;
+    float restitution;
+    float friction;
+    uint8_t type;
 } PMDFile_RigidBody;
 
-/* Bulletphysics Constraint element */
 typedef struct _PMDFile_Constraint {
-   char name[20];         /* name of this constraint (unused) */
-   unsigned int bodyIDA;  /* ID of body A */
-   unsigned int bodyIDB;  /* ID of body B */
-   float pos[3];          /* position (x, y, z), relative to related bone */
-   float rot[3];          /* rotation (x, y, z), in radian */
-   float limitPosFrom[3]; /* position move limit from (x, y, z) */
-   float limitPosTo[3];   /* position move limit to (x, y, z) */
-   float limitRotFrom[3]; /* rotation angular limit from (x, y, z) (rad) */
-   float limitRotTo[3];   /* rotation angular limit to (x, y, z) (rad) */
-   float stiffness[6];    /* spring stiffness (x,y,z,rx,ry,rz) */
+    char name[20];
+    uint32_t bodyIDA;
+    uint32_t bodyIDB;
+    float pos[3];
+    float rot[3];
+    float limitPosFrom[3];
+    float limitPosTo[3];
+    float limitRotFrom[3];
+    float limitRotTo[3];
+    float stiffness[6];
 } PMDFile_Constraint;
 
-/* restore alignment */
 #pragma pack(pop)
 
 } /* namespace */

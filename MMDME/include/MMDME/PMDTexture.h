@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -44,55 +44,43 @@
 
 namespace MMDAI {
 
-/* PMDTexture: texture of PMD */
 class PMDTexture
 {
-private:
-   PMDRenderEngine *m_engine;
-   PMDTextureNative *m_native;
-   bool m_isSphereMap;           /* true if this texture is sphere map (.sph or .spa) */
-   bool m_isSphereMapAdd;        /* true if this is sphere map to add (.spa) */
-   long m_width;                 /* texture image width */
-   long m_height;                /* texture image height */
-   unsigned char m_components;   /* number of components (3 for RGB, 4 for RGBA) */
-   unsigned char *m_textureData; /* texel data */
-
-   /* initialize: initialize texture */
-   void initialize();
-
-   /* clear: free texture */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDTexture);
-
 public:
+    static bool loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight);
 
-   /* PMDTexture: constructor */
-   PMDTexture();
+    PMDTexture();
+    ~PMDTexture();
 
-   /* ~PMDTexture: destructor */
-   ~PMDTexture();
+    void loadBytes(const unsigned char *data,
+                   size_t size,
+                   int width,
+                   int height,
+                   int components,
+                   bool isSphereMap,
+                   bool isSphereMapAdd);
+    void setRenderEngine(PMDRenderEngine *engine);
+    PMDTextureNative *getNative() const;
+    bool isSphereMap() const;
+    bool isSphereMapAdd() const;
+    void release();
 
-  static bool loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight);
+private:
+    void initialize();
+    void clear();
 
-   void loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd);
+    PMDRenderEngine *m_engine;
+    PMDTextureNative *m_native;
+    bool m_isSphereMap;
+    bool m_isSphereMapAdd;
+    long m_width;
+    long m_height;
+    unsigned char m_components;
+    unsigned char *m_textureData;
 
-   void setRenderEngine(PMDRenderEngine *engine);
-
-   /* getID: get OpenGL texture ID */
-   PMDTextureNative *getNative() const;
-
-   /* isSphereMap: return true if this texture is sphere map */
-   bool isSphereMap() const;
-
-   /* isSphereMapAdd: return true if this is sphere map to add */
-   bool isSphereMapAdd() const;
-
-   /* release: free texture */
-   void release();
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDTexture);
 };
 
 } /* namespace */
 
 #endif
-

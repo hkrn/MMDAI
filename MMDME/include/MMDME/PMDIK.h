@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -45,48 +45,35 @@
 
 namespace MMDAI {
 
-/* PMDIK: IK for PMD */
 class PMDIK
 {
-private:
-   static const float kPI;
-   static const float kMinDistance;
-   static const float kMinAngle;
-   static const float kMinAxis;
-   static const float kMinRotSum;
-   static const float kMinRotation;
-
-   PMDBone *m_destBone;        /* Destination bone. IK tries to move the targetBone to this position */
-   PMDBone *m_targetBone;      /* Target bone. IK tries move this bone to the position of destBone */
-   PMDBone **m_boneList;       /* List of bones under this IK */
-   unsigned char m_numBone;    /* Number of bones under this IK */
-   unsigned short m_iteration; /* IK value 1: maximum iteration count */
-   float m_angleConstraint;    /* IK value 2: maximum angle per one step in radian */
-
-   /* initialize: initialize IK */
-   void initialize();
-
-   /* clear: free IK */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDIK);
-
 public:
+    PMDIK();
+    ~PMDIK();
 
-   /* PMDIK: constructor */
-   PMDIK();
+    void setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList);
+    bool isSimulated() const;
+    void solve();
 
-   /* ~PMDIK: destructor */
-   ~PMDIK();
+private:
+    static const float kPI;
+    static const float kMinDistance;
+    static const float kMinAngle;
+    static const float kMinAxis;
+    static const float kMinRotSum;
+    static const float kMinRotation;
 
-   /* setup: initialize and setup IK */
-   void setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList);
+    void initialize();
+    void clear();
 
-   /* isSimulated: check if this IK is under simulation, in case no need to calculate this IK */
-   bool isSimulated() const;
+    PMDBone *m_destBone;
+    PMDBone *m_targetBone;
+    PMDBone **m_boneList;
+    unsigned char m_numBone;
+    unsigned short m_iteration;
+    float m_angleConstraint;
 
-   /* solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
-   void solve();
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDIK);
 };
 
 } /* namespace */

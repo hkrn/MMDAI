@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /* convert model coordinates from left-handed to right-handed */
@@ -50,10 +51,10 @@
 
 enum MMDAILogLevel
 {
-  MMDAILogLevelDebug,
-  MMDAILogLevelInfo,
-  MMDAILogLevelWarning,
-  MMDAILogLevelError,
+    MMDAILogLevelDebug,
+    MMDAILogLevelInfo,
+    MMDAILogLevelWarning,
+    MMDAILogLevelError,
 };
 
 typedef void (MMDAILoggingHandler)(const char *file,
@@ -80,113 +81,113 @@ void MMDAILogWriteSJIS(const char *file,
 
 /* log with variable arguments */
 #define MMDAILogDebug(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
+MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
 #define MMDAILogInfo(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), __VA_ARGS__)
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), __VA_ARGS__)
 #define MMDAILogWarn(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), __VA_ARGS__)
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), __VA_ARGS__)
 #define MMDAILogError(format, ...) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format), __VA_ARGS__)
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format), __VA_ARGS__)
 
-/* log with single string */
+        /* log with single string */
 #define MMDAILogDebugString(format) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format))
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format))
 #define MMDAILogInfoString(format) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format))
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelInfo), (format))
 #define MMDAILogWarnString(format) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
 #define MMDAILogErrorString(format) \
-  MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format))
+        MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelError), (format))
 
-/* log with variable arguments for SJIS */
+        /* log with variable arguments for SJIS */
 #define MMDAILogDebugSJIS(format, ...) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
 #define MMDAILogInfoSJIS(format, ...) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), __VA_ARGS__)
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelInfo), (format), __VA_ARGS__)
 #define MMDAILogWarnSJIS(format, ...) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), __VA_ARGS__)
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelWarning), (format), __VA_ARGS__)
 #define MMDAILogErrorSJIS(format, ...) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format), __VA_ARGS__)
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format), __VA_ARGS__)
 
-/* log with single string for SJIS */
+        /* log with single string for SJIS */
 #define MMDAILogDebugStringSJIS(format) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelDebug), (format))
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelDebug), (format))
 #define MMDAILogInfoStringSJIS(format) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelInfo), (format))
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelInfo), (format))
 #define MMDAILogWarnStringSJIS(format) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelWarning), (format))
 #define MMDAILogErrorStringSJIS(format) \
-  MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format))
+        MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format))
 
-/* convert from/to radian */
-inline float MMDME_RAD(float a)
+        /* convert from/to radian */
+        inline float MMDME_RAD(float a)
 {
-  return a * (3.1415926f / 180.0f);
+    return a * (3.1415926f / 180.0f);
 }
 
 inline float MMDME_DEG(float a)
 {
-  return a * (180.0f / 3.1415926f);
+    return a * (180.0f / 3.1415926f);
 }
 
 inline void *MMDAIMemoryAllocate(size_t size)
 {
-  return malloc(size);
+    return malloc(size);
 }
 
 inline void MMDAIMemoryRelease(void *ptr)
 {
-  if (ptr != NULL)
-    free(ptr);
+    if (ptr != NULL)
+        free(ptr);
 }
 
 /* disable _CRT_SECURE_NO_WARNINGS for MSVC */
 #ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE 
+#define _CRT_SECURE_NO_DEPRECATE
 #endif
 
 inline size_t MMDAIStringLength(const char *str)
 {
-  assert(str != NULL);
-  return strlen(str);
+    assert(str != NULL);
+    return strlen(str);
 }
 
 inline char *MMDAIStringClone(const char *str)
 {
-  assert(str != NULL);
+    assert(str != NULL);
 #if defined(WIN32)
-  return _strdup(str);
+    return _strdup(str);
 #else
-  return strdup(str);
+    return strdup(str);
 #endif
 }
 
 inline char *MMDAIStringCopy(char *dst, const char *src, size_t max)
 {
-  assert(dst != NULL && src != NULL && max != 0);
-  return strncpy(dst, src, max);
+    assert(dst != NULL && src != NULL && max != 0);
+    return strncpy(dst, src, max);
 }
 
 inline bool MMDAIStringEquals(const char *s1, const char *s2)
 {
-  assert(s1 != NULL && s2 != NULL);
-  return strcmp(s1, s2) == 0;
+    assert(s1 != NULL && s2 != NULL);
+    return strcmp(s1, s2) == 0;
 }
 
 inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, size_t max)
 {
-  assert(s1 != NULL && s2 != NULL && max != 0);
-  return strncmp(s1, s2, max) == 0;
+    assert(s1 != NULL && s2 != NULL && max != 0);
+    return strncmp(s1, s2, max) == 0;
 }
 
 inline char *MMDAIStringGetToken(char *str, const char *delim, char **ptr)
 {
-  assert(delim != NULL);
+    assert(delim != NULL);
 #if defined(WIN32)
-  (void)ptr;
-  return strtok(str, delim);
+    (void)ptr;
+    return strtok(str, delim);
 #else
-  return strtok_r(str, delim, ptr);
+    return strtok_r(str, delim, ptr);
 #endif
 }
 
@@ -194,28 +195,28 @@ inline char *MMDAIStringGetToken(char *str, const char *delim, char **ptr)
 
 inline int MMDAIStringFormat(char *str, size_t n, const char *format, ...)
 {
-  assert(str != NULL && n != 0 && format != NULL);
-  va_list ap;
-  va_start(ap, format);
-  int len = vsnprintf(str, n, format, ap);
-  va_end(ap);
-  return len;
+    assert(str != NULL && n != 0 && format != NULL);
+    va_list ap;
+    va_start(ap, format);
+    int len = vsnprintf(str, n, format, ap);
+    va_end(ap);
+    return len;
 }
 
 inline double MMDAIStringToDouble(const char *str)
 {
-  assert(str != NULL);
-  return atof(str);
+    assert(str != NULL);
+    return atof(str);
 }
 
 inline float MMDAIStringToFloat(const char *str)
 {
-  return (float) MMDAIStringToDouble(str);
+    return (float) MMDAIStringToDouble(str);
 }
 
 #define MMDME_DISABLE_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName &); \
-  void operator=(const TypeName &);
+TypeName(const TypeName &); \
+        void operator=(const TypeName &);
 
 #endif
 

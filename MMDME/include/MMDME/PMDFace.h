@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -46,61 +46,38 @@
 
 namespace MMDAI {
 
-/* PMDFaceVertex: vertex of this model */
 typedef struct _PMDFaceVertex {
-   unsigned long id; /* vertex index of this model to be controlled */
-   btVector3 pos;    /* position to be placed if this face rate is 1.0 */
+    unsigned long id;
+    btVector3 pos;
 } PMDFaceVertex;
 
-/* PMDFace: face of PMD */
 class PMDFace
 {
-private:
-
-   static const unsigned int kMaxVertexID = 65536;
-
-   char *m_name;              /* name of this face */
-   unsigned char m_type;      /* face type (PMD_FACE_TYPE) */
-   unsigned int m_numVertex;  /* number of vertices controlled by this face */
-   PMDFaceVertex *m_vertex;   /* vertices controlled by this face */
-   float m_weight;            /* current weight of this face */
-
-   /* initialize: initialize face */
-   void initialize();
-
-   /* clear: free face */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDFace);
-
 public:
+    PMDFace();
+    ~PMDFace();
 
-   /* PMDFace: constructor */
-   PMDFace();
+    void setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList);
+    void convertIndex(PMDFace *base);
+    void apply(btVector3 *vertexList);
+    void add(btVector3 *vertexList, float rate);
+    const char *getName() const;
+    float getWeight() const;
+    void setWeight(float f);
 
-   /* ~PMDFace: destructor */
-   ~PMDFace();
+private:
+    static const unsigned int kMaxVertexID = 65536;
 
-   /* setup: initialize and setup face */
-   void setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList);
+    void initialize();
+    void clear();
 
-   /* convertIndex: convert base-relative index to model vertex index */
-   void convertIndex(PMDFace *base);
+    char *m_name;
+    unsigned char m_type;
+    unsigned int m_numVertex;
+    PMDFaceVertex *m_vertex;
+    float m_weight;
 
-   /* apply: apply this face morph to model vertices */
-   void apply(btVector3 *vertexList);
-
-   /* add: add this face morph to model vertices with a certain rate */
-   void add(btVector3 *vertexList, float rate);
-
-   /* getName: get name */
-   const char *getName() const;
-
-   /* getWeight: get weight */
-   float getWeight() const;
-
-   /* setWeight: set weight */
-   void setWeight(float f);
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDFace);
 };
 
 } /* namespace */

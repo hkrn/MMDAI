@@ -45,10 +45,10 @@ namespace MMDAI {
 /* AlignedMotionState::AlignedMotionState: constructor */
 AlignedMotionState::AlignedMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone)
 {
-   m_bone = bone;
-   m_boneTrans = boneTrans;
-   m_boneTransInv = boneTrans.inverse();
-   m_graphicsWorldTrans = startTrans;
+    m_bone = bone;
+    m_boneTrans = boneTrans;
+    m_boneTransInv = boneTrans.inverse();
+    m_graphicsWorldTrans = startTrans;
 }
 
 /* AlignedMotionState::~AlignedMotionState: destructor */
@@ -59,20 +59,20 @@ AlignedMotionState::~AlignedMotionState()
 /* AlignedMotionState::getWorldTransform: get world transform */
 void AlignedMotionState::getWorldTransform(btTransform &worldTrans) const
 {
-   worldTrans = m_graphicsWorldTrans;
+    worldTrans = m_graphicsWorldTrans;
 }
 
 /* AlignedMotionState::setWorldTransform: set world transform */
 void AlignedMotionState::setWorldTransform(const btTransform &worldTrans)
 {
-   btMatrix3x3 bm;
+    btMatrix3x3 bm;
 
-   m_graphicsWorldTrans = worldTrans;
-   bm = m_graphicsWorldTrans.getBasis();
-   m_graphicsWorldTrans.setOrigin(btVector3(0.0f, 0.0f, 0.0f));
-   m_graphicsWorldTrans = m_boneTrans * m_graphicsWorldTrans;
-   m_graphicsWorldTrans.setOrigin(m_graphicsWorldTrans.getOrigin() + m_bone->getTransform()->getOrigin());
-   m_graphicsWorldTrans.setBasis(bm);
+    m_graphicsWorldTrans = worldTrans;
+    bm = m_graphicsWorldTrans.getBasis();
+    m_graphicsWorldTrans.setOrigin(btVector3(0.0f, 0.0f, 0.0f));
+    m_graphicsWorldTrans = m_boneTrans * m_graphicsWorldTrans;
+    m_graphicsWorldTrans.setOrigin(m_graphicsWorldTrans.getOrigin() + m_bone->getTransform()->getOrigin());
+    m_graphicsWorldTrans.setBasis(bm);
 }
 
 } /* namespace */

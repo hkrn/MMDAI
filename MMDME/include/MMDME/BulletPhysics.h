@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -45,47 +45,32 @@
 
 namespace MMDAI {
 
-/* BulletPhysics: Bullet Physics engine */
 class BulletPhysics
 {
-private:
-
-   btDefaultCollisionConfiguration *m_collisionConfig; /* collision configuration */
-   btCollisionDispatcher *m_dispatcher;                /* collision dispatcher */
-   btAxisSweep3 *m_overlappingPairCache;
-   btConstraintSolver *m_solver;                       /* constraint solver */
-   btDiscreteDynamicsWorld *m_world;                   /* the simulation world */
-
-   int m_fps;          /* simulation frame rate (Hz) */
-   btScalar m_subStep; /* sub step to process simulation */
-
-   /* initialize: initialize BulletPhysics */
-   void initialize();
-
-   /* clear: free BulletPhysics */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(BulletPhysics);
-
 public:
+    BulletPhysics();
+    ~BulletPhysics();
 
-   /* BulletPhysics: constructor */
-   BulletPhysics();
+    void setup(int simulationFps);
+    void update(float deltaFrame);
+    btDiscreteDynamicsWorld *getWorld() const;
 
-   /* ~BulletPhysics: destructor */
-   ~BulletPhysics();
+private:
+    void initialize();
+    void clear();
 
-   /* setup: initialize and setup BulletPhysics */
-   void setup(int simulationFps);
+    btDefaultCollisionConfiguration *m_collisionConfig;
+    btCollisionDispatcher *m_dispatcher;
+    btAxisSweep3 *m_overlappingPairCache;
+    btConstraintSolver *m_solver;
+    btDiscreteDynamicsWorld *m_world;
+    int m_fps;
+    btScalar m_subStep;
 
-   /* update: step the simulation world forward */
-   void update(float deltaFrame);
+    MMDME_DISABLE_COPY_AND_ASSIGN(BulletPhysics);
 
-   /* getWorld: get simulation world */
-   btDiscreteDynamicsWorld *getWorld() const;
 };
 
 } /* namespace */
 
 #endif
-

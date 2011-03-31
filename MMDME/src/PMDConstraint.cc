@@ -45,118 +45,118 @@ namespace MMDAI {
 /* PMDConstraint::initialize: initialize constraint */
 void PMDConstraint::initialize()
 {
-   m_constraint = NULL;
-   m_world = NULL;
+    m_constraint = NULL;
+    m_world = NULL;
 }
 
 /* PMDConstraint::clear: free constraint */
 void PMDConstraint::clear()
 {
-   if (m_constraint) {
-      m_world->removeConstraint(m_constraint);
-      delete m_constraint;
-   }
+    if (m_constraint) {
+        m_world->removeConstraint(m_constraint);
+        delete m_constraint;
+    }
 
-   initialize();
+    initialize();
 }
 
 /* PMDConstraint::PMDConstraint: constructor */
 PMDConstraint::PMDConstraint()
 {
-   initialize();
+    initialize();
 }
 
 /* PMDConstraint::~PMDConstraint: destructor */
 PMDConstraint::~PMDConstraint()
 {
-   clear();
+    clear();
 }
 
 /* PMDConstraint::setup: initialize and setup constraint */
 bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVector3 *offset)
 {
-   int i;
+    int i;
 
-   btRigidBody *rbA;
-   btRigidBody *rbB;
-   btTransform tr;
-   btMatrix3x3 bm;
-   btTransform trA;
-   btTransform trB;
+    btRigidBody *rbA;
+    btRigidBody *rbB;
+    btTransform tr;
+    btMatrix3x3 bm;
+    btTransform trA;
+    btTransform trB;
 
-   clear();
+    clear();
 
-   /* get pointer to bodies at both end of this constraint */
-   rbA = bodyList[c->bodyIDA].getBody();
-   rbB = bodyList[c->bodyIDB].getBody();
+    /* get pointer to bodies at both end of this constraint */
+    rbA = bodyList[c->bodyIDA].getBody();
+    rbB = bodyList[c->bodyIDB].getBody();
 
-   if (rbA == NULL || rbB == NULL) return false;
+    if (rbA == NULL || rbB == NULL) return false;
 
-   /* make global transform of this constraint */
-   tr.setIdentity();
+    /* make global transform of this constraint */
+    tr.setIdentity();
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-   btMatrix3x3 rx, ry, rz;
-   rx.setEulerZYX(-c->rot[0], 0, 0);
-   ry.setEulerZYX(0, -c->rot[1], 0);
-   rz.setEulerZYX(0, 0, c->rot[2]);
-   bm = ry * rz * rx;
+    btMatrix3x3 rx, ry, rz;
+    rx.setEulerZYX(-c->rot[0], 0, 0);
+    ry.setEulerZYX(0, -c->rot[1], 0);
+    rz.setEulerZYX(0, 0, c->rot[2]);
+    bm = ry * rz * rx;
 #else
-   bm.setEulerZYX(c->rot[0], c->rot[1], c->rot[2]);
+    bm.setEulerZYX(c->rot[0], c->rot[1], c->rot[2]);
 #endif
-   tr.setBasis(bm);
+    tr.setBasis(bm);
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-   tr.setOrigin(btVector3(c->pos[0], c->pos[1], -c->pos[2]) + *offset);
+    tr.setOrigin(btVector3(c->pos[0], c->pos[1], -c->pos[2]) + *offset);
 #else
-   tr.setOrigin(btVector3(c->pos[0], c->pos[1], c->pos[2]) + *offset);
+    tr.setOrigin(btVector3(c->pos[0], c->pos[1], c->pos[2]) + *offset);
 #endif
-   /* make local transforms from both rigid bodies */
-   trA = rbA->getWorldTransform().inverse() * tr;
-   trB = rbB->getWorldTransform().inverse() * tr;
+    /* make local transforms from both rigid bodies */
+    trA = rbA->getWorldTransform().inverse() * tr;
+    trB = rbB->getWorldTransform().inverse() * tr;
 
-   /* create constraint */
-   m_constraint = new btGeneric6DofSpringConstraint(*rbA, *rbB, trA, trB, true);
+    /* create constraint */
+    m_constraint = new btGeneric6DofSpringConstraint(*rbA, *rbB, trA, trB, true);
 
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-   /* set linear translation limits */
-   m_constraint->setLinearLowerLimit(btVector3(c->limitPosFrom[0], c->limitPosFrom[1], -c->limitPosTo[2]));
-   m_constraint->setLinearUpperLimit(btVector3(c->limitPosTo[0], c->limitPosTo[1], -c->limitPosFrom[2]));
+    /* set linear translation limits */
+    m_constraint->setLinearLowerLimit(btVector3(c->limitPosFrom[0], c->limitPosFrom[1], -c->limitPosTo[2]));
+    m_constraint->setLinearUpperLimit(btVector3(c->limitPosTo[0], c->limitPosTo[1], -c->limitPosFrom[2]));
 
-   /* set rotation angle limits */
-   m_constraint->setAngularLowerLimit(btVector3(-c->limitRotTo[0], -c->limitRotTo[1], c->limitRotFrom[2]));
-   m_constraint->setAngularUpperLimit(btVector3(-c->limitRotFrom[0], -c->limitRotFrom[1], c->limitRotTo[2]));
+    /* set rotation angle limits */
+    m_constraint->setAngularLowerLimit(btVector3(-c->limitRotTo[0], -c->limitRotTo[1], c->limitRotFrom[2]));
+    m_constraint->setAngularUpperLimit(btVector3(-c->limitRotFrom[0], -c->limitRotFrom[1], c->limitRotTo[2]));
 #else
-   /* set linear translation limits */
-   m_constraint->setLinearLowerLimit(btVector3(c->limitPosFrom[0], c->limitPosFrom[1], c->limitPosFrom[2]));
-   m_constraint->setLinearUpperLimit(btVector3(c->limitPosTo[0], c->limitPosTo[1], c->limitPosTo[2]));
+    /* set linear translation limits */
+    m_constraint->setLinearLowerLimit(btVector3(c->limitPosFrom[0], c->limitPosFrom[1], c->limitPosFrom[2]));
+    m_constraint->setLinearUpperLimit(btVector3(c->limitPosTo[0], c->limitPosTo[1], c->limitPosTo[2]));
 
-   /* set rotation angle limits */
-   m_constraint->setAngularLowerLimit(btVector3(c->limitRotFrom[0], c->limitRotFrom[1], c->limitRotFrom[2]));
-   m_constraint->setAngularUpperLimit(btVector3(c->limitRotTo[0], c->limitRotTo[1], c->limitRotTo[2]));
+    /* set rotation angle limits */
+    m_constraint->setAngularLowerLimit(btVector3(c->limitRotFrom[0], c->limitRotFrom[1], c->limitRotFrom[2]));
+    m_constraint->setAngularUpperLimit(btVector3(c->limitRotTo[0], c->limitRotTo[1], c->limitRotTo[2]));
 #endif
 
-   /* set spring stiffnesses */
-   for (i = 0; i < 6; i++) {
-      if (i >= 3 || c->stiffness[i] != 0.0f) {
-         /* allow spring always for rotation and only if stiffness is specified for translation */
-         m_constraint->enableSpring(i, true);
-         m_constraint->setStiffness(i, c->stiffness[i]);
-      }
-   }
+    /* set spring stiffnesses */
+    for (i = 0; i < 6; i++) {
+        if (i >= 3 || c->stiffness[i] != 0.0f) {
+            /* allow spring always for rotation and only if stiffness is specified for translation */
+            m_constraint->enableSpring(i, true);
+            m_constraint->setStiffness(i, c->stiffness[i]);
+        }
+    }
 
-   MMDAILogDebugSJIS("name=\"%s\" bodyA=%d, bodyB=%d position=(%.2f, %.2f, %.2f) rotation=(%.2f, %.2f, %.2f)",
-       c->name, c->bodyIDA, c->bodyIDB, c->pos[0], c->pos[1], c->pos[2], c->rot[0], c->rot[1], c->rot[2]);
+    MMDAILogDebugSJIS("name=\"%s\" bodyA=%d, bodyB=%d position=(%.2f, %.2f, %.2f) rotation=(%.2f, %.2f, %.2f)",
+                      c->name, c->bodyIDA, c->bodyIDB, c->pos[0], c->pos[1], c->pos[2], c->rot[0], c->rot[1], c->rot[2]);
 
-   return true;
+    return true;
 }
 
 /* PMDConstraint::joinWorld: add the constraint to simulation world */
 void PMDConstraint::joinWorld(btDiscreteDynamicsWorld *btWorld)
 {
-   if (!m_constraint)
-      return;
+    if (!m_constraint)
+        return;
 
-   btWorld->addConstraint(m_constraint);
-   m_world = btWorld;
+    btWorld->addConstraint(m_constraint);
+    m_world = btWorld;
 }
 
 } /* namespace */

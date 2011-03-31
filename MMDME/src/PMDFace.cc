@@ -45,140 +45,140 @@ namespace MMDAI {
 /* PMDFace::initialize: initialize face */
 void PMDFace::initialize()
 {
-   m_name = NULL;
-   m_type = PMD_FACE_OTHER;
-   m_numVertex = 0;
-   m_vertex = NULL;
-   m_weight = 0.0f;
+    m_name = NULL;
+    m_type = PMD_FACE_OTHER;
+    m_numVertex = 0;
+    m_vertex = NULL;
+    m_weight = 0.0f;
 }
 
 /* PMDFace::clear: free face */
 void PMDFace::clear()
 {
-   if(m_name)
-      MMDAIMemoryRelease(m_name);
-   if (m_vertex)
-      MMDAIMemoryRelease(m_vertex);
+    if(m_name)
+        MMDAIMemoryRelease(m_name);
+    if (m_vertex)
+        MMDAIMemoryRelease(m_vertex);
 
-   initialize();
+    initialize();
 }
 
 /* PMDFace::PMDFace: constructor */
 PMDFace::PMDFace()
 {
-   initialize();
+    initialize();
 }
 
 /* PMDFace::~PMDFace: destructor */
 PMDFace::~PMDFace()
 {
-   clear();
+    clear();
 }
 
 /* PMDFace::setup: initialize and setup face */
 void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
 {
-   unsigned long i;
-   char name[21];
+    unsigned long i;
+    char name[21];
 
-   clear();
+    clear();
 
-   /* name */
-   MMDAIStringCopy(name, face->name, 20);
-   name[20] = '\0';
-   m_name = MMDAIStringClone(name);
+    /* name */
+    MMDAIStringCopy(name, face->name, 20);
+    name[20] = '\0';
+    m_name = MMDAIStringClone(name);
 
-   /* type */
-   m_type = face->type;
+    /* type */
+    m_type = face->type;
 
-   /* number of vertices */
-   m_numVertex = face->numVertex;
+    /* number of vertices */
+    m_numVertex = face->numVertex;
 
-   if (m_numVertex) {
-      /* vertex list */
-      m_vertex = (PMDFaceVertex *) MMDAIMemoryAllocate(sizeof(PMDFaceVertex) * m_numVertex);
-      for (i = 0; i < m_numVertex; i++) {
-         m_vertex[i].id = faceVertexList[i].vertexID;
-         m_vertex[i].pos.setValue(faceVertexList[i].pos[0], faceVertexList[i].pos[1], faceVertexList[i].pos[2]);
-      }
-   }
+    if (m_numVertex) {
+        /* vertex list */
+        m_vertex = (PMDFaceVertex *) MMDAIMemoryAllocate(sizeof(PMDFaceVertex) * m_numVertex);
+        for (i = 0; i < m_numVertex; i++) {
+            m_vertex[i].id = faceVertexList[i].vertexID;
+            m_vertex[i].pos.setValue(faceVertexList[i].pos[0], faceVertexList[i].pos[1], faceVertexList[i].pos[2]);
+        }
+    }
 
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
-   /* left-handed system: PMD, DirectX */
-   /* right-handed system: OpenGL, bulletphysics */
-   /* reverse Z value on vertices */
-   for (i = 0; i < m_numVertex; i++) {
-      m_vertex[i].pos.setZ(- m_vertex[i].pos.z());
-   }
+    /* left-handed system: PMD, DirectX */
+    /* right-handed system: OpenGL, bulletphysics */
+    /* reverse Z value on vertices */
+    for (i = 0; i < m_numVertex; i++) {
+        m_vertex[i].pos.setZ(- m_vertex[i].pos.z());
+    }
 #endif
 
-   MMDAILogDebugSJIS("name=\"%s\", type=%d, numVertex=%d", m_name, m_type, m_numVertex);
+    MMDAILogDebugSJIS("name=\"%s\", type=%d, numVertex=%d", m_name, m_type, m_numVertex);
 }
 
 /* PMDFace::convertIndex: convert base-relative index to model vertex index */
 void PMDFace::convertIndex(PMDFace *base)
 {
-   unsigned long i, relID;
+    unsigned long i, relID;
 
-   if (m_vertex == NULL)
-      return;
+    if (m_vertex == NULL)
+        return;
 
-   if (m_type != PMD_FACE_BASE) {
-      for (i = 0; i < m_numVertex; i++) {
-         relID = m_vertex[i].id;
-         if (relID >= base->m_numVertex) /* a workaround for some models with corrupted face index values... */
-            relID -= kMaxVertexID;
-         m_vertex[i].id = base->m_vertex[relID].id;
-      }
-   } else {
-      /* for base face, just do workaround */
-      for (i = 0; i < m_numVertex; i++) {
-         if (m_vertex[i].id >= kMaxVertexID) /* a workaround for some models with corrupted face index values... */
-            m_vertex[i].id -= kMaxVertexID;
-      }
-   }
+    if (m_type != PMD_FACE_BASE) {
+        for (i = 0; i < m_numVertex; i++) {
+            relID = m_vertex[i].id;
+            if (relID >= base->m_numVertex) /* a workaround for some models with corrupted face index values... */
+                relID -= kMaxVertexID;
+            m_vertex[i].id = base->m_vertex[relID].id;
+        }
+    } else {
+        /* for base face, just do workaround */
+        for (i = 0; i < m_numVertex; i++) {
+            if (m_vertex[i].id >= kMaxVertexID) /* a workaround for some models with corrupted face index values... */
+                m_vertex[i].id -= kMaxVertexID;
+        }
+    }
 }
 
 /* PMDFace::apply: apply this face morph to model vertices */
 void PMDFace::apply(btVector3 *vertexList)
 {
-   unsigned long i;
+    unsigned long i;
 
-   if (m_vertex == NULL)
-      return;
+    if (m_vertex == NULL)
+        return;
 
-   for (i = 0; i < m_numVertex; i++)
-      vertexList[m_vertex[i].id] = m_vertex[i].pos;
+    for (i = 0; i < m_numVertex; i++)
+        vertexList[m_vertex[i].id] = m_vertex[i].pos;
 }
 
 /* PMDFace::add: add this face morph to model vertices with a certain rate */
 void PMDFace::add(btVector3 *vertexList, float rate)
 {
-   unsigned long i;
+    unsigned long i;
 
-   if (m_vertex == NULL)
-      return;
+    if (m_vertex == NULL)
+        return;
 
-   for (i = 0; i < m_numVertex; i++)
-      vertexList[m_vertex[i].id] += m_vertex[i].pos * rate;
+    for (i = 0; i < m_numVertex; i++)
+        vertexList[m_vertex[i].id] += m_vertex[i].pos * rate;
 }
 
 /* PMDFace::getName: get name */
 const char *PMDFace::getName() const
 {
-   return m_name;
+    return m_name;
 }
 
 /* PMDFace::getWeight: get weight */
 float PMDFace::getWeight() const
 {
-   return m_weight;
+    return m_weight;
 }
 
 /* PMDFace::setWeight: set weight */
 void PMDFace::setWeight(float f)
 {
-   m_weight = f;
+    m_weight = f;
 }
 
 } /* namespace */

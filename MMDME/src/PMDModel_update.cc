@@ -45,7 +45,7 @@ namespace MMDAI {
 /* PMDModel::updateBone: update bones */
 void PMDModel::updateBone()
 {
-   unsigned short i;
+   uint16_t i;
 
    /* update bone matrix from current position and rotation */
    for (i = 0; i < m_numBone; i++)
@@ -70,7 +70,7 @@ void PMDModel::updateBone()
 /* PMDModel::updateBoneFromSimulation: update bone transform from rigid body */
 void PMDModel::updateBoneFromSimulation()
 {
-   for (unsigned int i = 0; i < m_numRigidBody; i++)
+   for (uint32_t i = 0; i < m_numRigidBody; i++)
       m_rigidBodyList[i].applyTransformToBone();
 }
 
@@ -79,7 +79,7 @@ void PMDModel::updateFace()
 {
    if (m_faceList) {
       m_baseFace->apply(m_vertexList);
-      for (unsigned short i = 0; i < m_numFace; i++)
+      for (uint16_t i = 0; i < m_numFace; i++)
          if (m_faceList[i].getWeight() > kMinFaceWeight)
             m_faceList[i].add(m_vertexList, m_faceList[i].getWeight());
    }
@@ -89,11 +89,11 @@ void PMDModel::updateFace()
 void PMDModel::updateSkin()
 {
    /* calculate transform matrix for skinning (global -> local) */
-   for (unsigned short i = 0; i < m_numBone; i++)
+   for (uint16_t i = 0; i < m_numBone; i++)
       m_boneList[i].calcSkinningTrans(&(m_boneSkinningTrans[i]));
 
    /* do skinning */
-   for (unsigned int j = 0; j < m_numVertex; j++) {
+   for (uint32_t j = 0; j < m_numVertex; j++) {
       if (m_boneWeight1[j] >= 1.0f - kMinBoneWeight) {
          /* bone 1 */
          m_skinnedVertexList[j] = m_boneSkinningTrans[m_bone1List[j]] * m_vertexList[j];
@@ -119,12 +119,12 @@ void PMDModel::updateToon(btVector3 *light)
 {
    if (m_toon) {
       /* calculate toon texture coordinates for toon shading */
-      for (unsigned int i = 0; i < m_numVertex; i++) {
+      for (uint32_t i = 0; i < m_numVertex; i++) {
          m_toonTexCoordList[i].u = 0.0f;
          m_toonTexCoordList[i].v = (1.0f - light->dot(m_skinnedNormalList[i])) * 0.5f;
       }
       /* calculate vertices for edge drawing */
-      for (unsigned int i = 0; i < m_numVertex; i++) {
+      for (uint32_t i = 0; i < m_numVertex; i++) {
          /* not push vertices with no edge flag */
          if (m_noEdgeFlag[i] == 1)
             m_edgeVertexList[i] = m_skinnedVertexList[i];
@@ -150,7 +150,7 @@ void PMDModel::updateShadowColorTexCoord(float coef)
    }
 
    if (update && m_toonTexCoordListForShadowMap != NULL) {
-      for (unsigned int i = 0 ; i < m_numVertex ; i++) {
+      for (uint32_t i = 0 ; i < m_numVertex ; i++) {
          m_toonTexCoordListForShadowMap[i].u = 0.0f;
          m_toonTexCoordListForShadowMap[i].v = coef;
       }
@@ -166,7 +166,7 @@ float PMDModel::calculateBoundingSphereRange(btVector3 *cpos)
 
    if (m_centerBone) {
       centerPos = m_centerBone->getTransform()->getOrigin();
-      for (unsigned int i = 0; i < m_numVertex; i += 10) {
+      for (uint32_t i = 0; i < m_numVertex; i += 10) {
          const float r2 = centerPos.distance2(m_skinnedVertexList[i]);
          if (maxR < r2)
            maxR = r2;
@@ -188,7 +188,7 @@ void PMDModel::smearAllBonesToDefault(float rate)
    const btVector3 v(0.0f, 0.0f, 0.0f);
    const btQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
 
-   for (unsigned short i = 0; i < m_numBone; i++) {
+   for (uint16_t i = 0; i < m_numBone; i++) {
       const btVector3 tmpv1 = (*(m_boneList[i].getCurrentPosition()));
       btVector3 tmpv2 = v.lerp(tmpv1, rate);
       m_boneList[i].setCurrentPosition(&tmpv2);
@@ -196,7 +196,7 @@ void PMDModel::smearAllBonesToDefault(float rate)
       btQuaternion tmpq2 = q.slerp(tmpq1, rate);
       m_boneList[i].setCurrentRotation(&tmpq2);
    }
-   for (unsigned short i = 0; i < m_numFace; i++) {
+   for (uint16_t i = 0; i < m_numFace; i++) {
       m_faceList[i].setWeight(m_faceList[i].getWeight() * rate);
    }
 }

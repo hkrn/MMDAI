@@ -52,195 +52,195 @@ const float PMDIK::kMinRotation = 0.00001f;
 /* PMDIK::initialize: initialize IK */
 void PMDIK::initialize()
 {
-   m_destBone = NULL;
-   m_targetBone = NULL;
-   m_boneList = NULL;
-   m_numBone = 0;
-   m_iteration = 0;
-   m_angleConstraint = 0.0f;
+    m_destBone = NULL;
+    m_targetBone = NULL;
+    m_boneList = NULL;
+    m_numBone = 0;
+    m_iteration = 0;
+    m_angleConstraint = 0.0f;
 }
 
 /* PMDIK::clear: free IK */
 void PMDIK::clear()
 {
-   if (m_boneList)
-      MMDAIMemoryRelease(m_boneList);
-   initialize();
+    if (m_boneList)
+        MMDAIMemoryRelease(m_boneList);
+    initialize();
 }
 
 /* PMDIK::PMDIK: constructor */
 PMDIK::PMDIK()
 {
-   initialize();
+    initialize();
 }
 
 /* PMDIK::~PMDIK: destructor */
 PMDIK::~PMDIK()
 {
-   clear();
+    clear();
 }
 
 /* PMDIK::setup: initialize and setup IK  */
 void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
 {
-   unsigned char i;
+    unsigned char i;
 
-   clear();
+    clear();
 
-   m_destBone = &(boneList[ik->destBoneID]);
-   m_targetBone = &(boneList[ik->targetBoneID]);
-   m_numBone = ik->numLink;
-   if (m_numBone) {
-      m_boneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numBone));
-      if (m_boneList != NULL) {
-         for (i = 0; i < m_numBone; i++)
-            m_boneList[i] = &(boneList[ikBoneIDList[i]]);
-      }
-   }
-   m_iteration = ik->numIteration;
-   m_angleConstraint = ik->angleConstraint * kPI;
+    m_destBone = &(boneList[ik->destBoneID]);
+    m_targetBone = &(boneList[ik->targetBoneID]);
+    m_numBone = ik->numLink;
+    if (m_numBone) {
+        m_boneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numBone));
+        if (m_boneList != NULL) {
+            for (i = 0; i < m_numBone; i++)
+                m_boneList[i] = &(boneList[ikBoneIDList[i]]);
+        }
+    }
+    m_iteration = ik->numIteration;
+    m_angleConstraint = ik->angleConstraint * kPI;
 
-   MMDAILogDebugSJIS("destBone=\"%s\", targetBone=\"%s\", numBone=%d, numIteration=%d, angleConstraint=%.2f",
-       m_destBone->getName(), m_targetBone->getName(), m_numBone, m_iteration, m_angleConstraint);
+    MMDAILogDebugSJIS("destBone=\"%s\", targetBone=\"%s\", numBone=%d, numIteration=%d, angleConstraint=%.2f",
+                      m_destBone->getName(), m_targetBone->getName(), m_numBone, m_iteration, m_angleConstraint);
 }
 
 /* PMDIK::solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
 void PMDIK::solve()
 {
-   short i;
-   unsigned char j;
-   unsigned short ite;
-   btQuaternion tmpRot;
+    short i;
+    unsigned char j;
+    unsigned short ite;
+    btQuaternion tmpRot;
 
-   btQuaternion origTargetRot;
+    btQuaternion origTargetRot;
 
-   btVector3 destPos; /* destination position */
-   btVector3 targetPos;
+    btVector3 destPos; /* destination position */
+    btVector3 targetPos;
 
-   btTransform tr;
-   btVector3 localDestVec;
-   btVector3 localTargetVec;
+    btTransform tr;
+    btVector3 localDestVec;
+    btVector3 localTargetVec;
 
-   float angle, dot;
+    float angle, dot;
 
-   btVector3 axis;
-   btQuaternion rot;
+    btVector3 axis;
+    btQuaternion rot;
 
-   btScalar x, y, z;
-   btScalar cx, cy, cz;
-   btMatrix3x3 mat;
+    btScalar x, y, z;
+    btScalar cx, cy, cz;
+    btMatrix3x3 mat;
 
-   if (m_boneList == NULL)
-      return;
+    if (m_boneList == NULL)
+        return;
 
-   /* get the global destination point */
-   destPos = m_destBone->getTransform()->getOrigin();
+    /* get the global destination point */
+    destPos = m_destBone->getTransform()->getOrigin();
 
-   /* before begin IK iteration, make sure all the child bones and target bone are up to date update from root to child */
-   for (i = m_numBone - 1; i >= 0; i--)
-      m_boneList[i]->update();
-   m_targetBone->update();
+    /* before begin IK iteration, make sure all the child bones and target bone are up to date update from root to child */
+    for (i = m_numBone - 1; i >= 0; i--)
+        m_boneList[i]->update();
+    m_targetBone->update();
 
-   /* save the current rotation of the target bone. It will be restored at the end of this function */
-   origTargetRot = (*(m_targetBone->getCurrentRotation()));
+    /* save the current rotation of the target bone. It will be restored at the end of this function */
+    origTargetRot = (*(m_targetBone->getCurrentRotation()));
 
-   /* begin IK iteration */
-   for (ite = 0; ite < m_iteration; ite++) {
-      /* solve each step from leaf bone to root bone */
-      for (j = 0; j < m_numBone; j++) {
-         /* get current global target bone location */
-         targetPos = m_targetBone->getTransform()->getOrigin();
-         /* calculate local positions of destination position and target position at current bone */
-         tr = m_boneList[j]->getTransform()->inverse();
-         localDestVec = tr * destPos;
-         localTargetVec = tr * targetPos;
-         /* exit if they are close enough */
-         if (localDestVec.distance2(localTargetVec) < kMinDistance) {
-            ite = m_iteration;
-            break;
-         }
-         /* normalize vectors */
-         localDestVec.normalize();
-         localTargetVec.normalize();
-         /* get angle */
-         dot = localDestVec.dot(localTargetVec);
-         if (dot > 1.0f) /* assume angle = 0.0f, skip to next bone */
-            continue;
-         angle = acosf(dot);
-         /* if angle is small enough, skip to next bone */
-         if (fabsf(angle) < kMinAngle)
-            continue;
-         /* limit angle per step */
-         if (angle < - m_angleConstraint)
-            angle = -m_angleConstraint;
-         else if (angle > m_angleConstraint)
-            angle = m_angleConstraint;
-         /* get rotation axis */
-         axis = localTargetVec.cross(localDestVec);
-         /* if the axis is too small (= direction of destination and target is so close) and this is not a first iteration, skip to next bone */
-         if (axis.length2() < kMinAxis && ite > 0)
-            continue;
-         /* normalize rotation axis */
-         axis.normalize();
-         /* create quaternion for this step, to rotate the target point to the goal point, from the axis and angle */
-         rot = btQuaternion(axis, btScalar(angle));
-         /* if this bone has limitation for rotation, consult the limitation */
-         if (m_boneList[j]->isLimitAngleX()) {
-            if (ite == 0) {
-               /* When this is the first iteration, we force rotating to the maximum angle toward limited direction. This will help convergence the whole IK step earlier for most of models, especially for legs. */
-               if (angle < 0.0f)
-                  angle = - angle;
-               rot = btQuaternion(btVector3(1.0f, 0.0f, 0.0f), btScalar(angle));
-            } else {
-               /* get euler angles of this rotation */
-               mat.setRotation(rot);
-               mat.getEulerZYX(z, y, x);
-               /* get euler angles of current bone rotation (specified by the motion) */
-               tmpRot = (*(m_boneList[j]->getCurrentRotation()));
-               mat.setRotation(tmpRot);
-               mat.getEulerZYX(cz, cy, cx);
-               /* y and z should be zero, x should be over 0 */
-               if (x + cx > kPI)
-                  x = kPI - cx;
-               if (kMinRotSum > x + cx)
-                  x = kMinRotSum - cx;
-               /* apply the rotation limit factor */
-               if (x < -m_angleConstraint)
-                  x = -m_angleConstraint;
-               if (x > m_angleConstraint)
-                  x = m_angleConstraint;
-               /* if rotation becomes minimal by the limitation, skip to next bone */
-               if (fabsf(x) < kMinRotation)
-                  continue;
-               /* get rotation quaternion from the limited euler angles */
-               rot.setEulerZYX(0.0f, 0.0f, x);
+    /* begin IK iteration */
+    for (ite = 0; ite < m_iteration; ite++) {
+        /* solve each step from leaf bone to root bone */
+        for (j = 0; j < m_numBone; j++) {
+            /* get current global target bone location */
+            targetPos = m_targetBone->getTransform()->getOrigin();
+            /* calculate local positions of destination position and target position at current bone */
+            tr = m_boneList[j]->getTransform()->inverse();
+            localDestVec = tr * destPos;
+            localTargetVec = tr * targetPos;
+            /* exit if they are close enough */
+            if (localDestVec.distance2(localTargetVec) < kMinDistance) {
+                ite = m_iteration;
+                break;
             }
-            /* apply the limited rotation to current bone */
-            tmpRot = (*(m_boneList[j]->getCurrentRotation()));
-            tmpRot = rot * tmpRot;
-            m_boneList[j]->setCurrentRotation(&tmpRot);
-         } else {
-            /* apply the rotation to current bone */
-            tmpRot = (*(m_boneList[j]->getCurrentRotation()));
-            tmpRot *= rot;
-            m_boneList[j]->setCurrentRotation(&tmpRot);
-         }
+            /* normalize vectors */
+            localDestVec.normalize();
+            localTargetVec.normalize();
+            /* get angle */
+            dot = localDestVec.dot(localTargetVec);
+            if (dot > 1.0f) /* assume angle = 0.0f, skip to next bone */
+                continue;
+            angle = acosf(dot);
+            /* if angle is small enough, skip to next bone */
+            if (fabsf(angle) < kMinAngle)
+                continue;
+            /* limit angle per step */
+            if (angle < - m_angleConstraint)
+                angle = -m_angleConstraint;
+            else if (angle > m_angleConstraint)
+                angle = m_angleConstraint;
+            /* get rotation axis */
+            axis = localTargetVec.cross(localDestVec);
+            /* if the axis is too small (= direction of destination and target is so close) and this is not a first iteration, skip to next bone */
+            if (axis.length2() < kMinAxis && ite > 0)
+                continue;
+            /* normalize rotation axis */
+            axis.normalize();
+            /* create quaternion for this step, to rotate the target point to the goal point, from the axis and angle */
+            rot = btQuaternion(axis, btScalar(angle));
+            /* if this bone has limitation for rotation, consult the limitation */
+            if (m_boneList[j]->isLimitAngleX()) {
+                if (ite == 0) {
+                    /* When this is the first iteration, we force rotating to the maximum angle toward limited direction. This will help convergence the whole IK step earlier for most of models, especially for legs. */
+                    if (angle < 0.0f)
+                        angle = - angle;
+                    rot = btQuaternion(btVector3(1.0f, 0.0f, 0.0f), btScalar(angle));
+                } else {
+                    /* get euler angles of this rotation */
+                    mat.setRotation(rot);
+                    mat.getEulerZYX(z, y, x);
+                    /* get euler angles of current bone rotation (specified by the motion) */
+                    tmpRot = (*(m_boneList[j]->getCurrentRotation()));
+                    mat.setRotation(tmpRot);
+                    mat.getEulerZYX(cz, cy, cx);
+                    /* y and z should be zero, x should be over 0 */
+                    if (x + cx > kPI)
+                        x = kPI - cx;
+                    if (kMinRotSum > x + cx)
+                        x = kMinRotSum - cx;
+                    /* apply the rotation limit factor */
+                    if (x < -m_angleConstraint)
+                        x = -m_angleConstraint;
+                    if (x > m_angleConstraint)
+                        x = m_angleConstraint;
+                    /* if rotation becomes minimal by the limitation, skip to next bone */
+                    if (fabsf(x) < kMinRotation)
+                        continue;
+                    /* get rotation quaternion from the limited euler angles */
+                    rot.setEulerZYX(0.0f, 0.0f, x);
+                }
+                /* apply the limited rotation to current bone */
+                tmpRot = (*(m_boneList[j]->getCurrentRotation()));
+                tmpRot = rot * tmpRot;
+                m_boneList[j]->setCurrentRotation(&tmpRot);
+            } else {
+                /* apply the rotation to current bone */
+                tmpRot = (*(m_boneList[j]->getCurrentRotation()));
+                tmpRot *= rot;
+                m_boneList[j]->setCurrentRotation(&tmpRot);
+            }
 
-         /* update transform matrices for relevant (child) bones */
-         for (i = j; i >= 0; i--) m_boneList[i]->update();
-         m_targetBone->update();
-      }
-   }
+            /* update transform matrices for relevant (child) bones */
+            for (i = j; i >= 0; i--) m_boneList[i]->update();
+            m_targetBone->update();
+        }
+    }
 
-   /* restore the original rotation of the target bone */
-   m_targetBone->setCurrentRotation(&origTargetRot);
-   m_targetBone->update();
+    /* restore the original rotation of the target bone */
+    m_targetBone->setCurrentRotation(&origTargetRot);
+    m_targetBone->update();
 }
 
 /* PMDIK::isSimulated: check if this IK is under simulation, in case no need to calculate this IK */
 bool PMDIK::isSimulated() const
 {
-   return m_boneList[0]->isSimulated();
+    return m_boneList[0]->isSimulated();
 }
 
 } /* namespace */

@@ -45,188 +45,186 @@ namespace MMDAI {
 /* PMDMaterial::initialize: initialize material */
 void PMDMaterial::initialize()
 {
-   int i;
-
-   for (i = 0; i < 3; i++) {
-      m_diffuse[i] = 0.0f;
-      m_ambient[i] = 0.0f;
-      m_avgcol[i] = 0.0f;
-      m_specular[i] = 0.0f;
-   }
-   m_alpha = 0.0f;
-   m_shiness = 0.0f;
-   m_numSurface = 0;
-   m_toonID = 0;
-   m_edgeFlag = false;
+    for (int i = 0; i < 3; i++) {
+        m_diffuse[i] = 0.0f;
+        m_ambient[i] = 0.0f;
+        m_avgcol[i] = 0.0f;
+        m_specular[i] = 0.0f;
+    }
+    m_alpha = 0.0f;
+    m_shiness = 0.0f;
+    m_numSurface = 0;
+    m_toonID = 0;
+    m_edgeFlag = false;
 }
 
 /* PMDMaterial::clear: free material */
 void PMDMaterial::clear()
 {
-   /* actual texture data will be released inside textureLoader, so just reset pointer here */
-   initialize();
+    /* actual texture data will be released inside textureLoader, so just reset pointer here */
+    initialize();
 }
 
 /* PMDMaterial:: constructor */
 PMDMaterial::PMDMaterial(PMDRenderEngine *engine)
-  : m_engine(engine)
+    : m_engine(engine)
 {
-   initialize();
+    initialize();
 }
 
 /* ~PMDMaterial:: destructor */
 PMDMaterial::~PMDMaterial()
 {
-   clear();
+    clear();
 }
 
 /* PMDMaterial::setup: initialize and setup material */
 bool PMDMaterial::setup(PMDFile_Material *m, PMDModelLoader *loader)
 {
-   char name[21], raw[21];
+    char name[21], raw[21];
 
-   clear();
+    clear();
 
-   /* colors */
-   for (int i = 0; i < 3; i++) {
-      m_diffuse[i] = m->diffuse[i];
-      m_ambient[i] = m->ambient[i];
-      /* calculate average color of diffuse and ambient for toon rendering */
-      m_avgcol[i] = (m_diffuse[i] + m_ambient[i]) * 0.5f;
-      m_specular[i] = m->specular[i];
-   }
-   m_alpha = m->alpha;
-   m_shiness = m->shiness;
+    /* colors */
+    for (int i = 0; i < 3; i++) {
+        m_diffuse[i] = m->diffuse[i];
+        m_ambient[i] = m->ambient[i];
+        /* calculate average color of diffuse and ambient for toon rendering */
+        m_avgcol[i] = (m_diffuse[i] + m_ambient[i]) * 0.5f;
+        m_specular[i] = m->specular[i];
+    }
+    m_alpha = m->alpha;
+    m_shiness = m->shiness;
 
-   /* number of surface indices whose material should be assigned by this */
-   m_numSurface = m->numSurfaceIndex;
+    /* number of surface indices whose material should be assigned by this */
+    m_numSurface = m->numSurfaceIndex;
 
-   /* toon texture ID */
-   if (m->toonID == 0xff)
-      m_toonID = 0;
-   else
-      m_toonID = m->toonID + 1;
-   /* edge drawing flag */
-   m_edgeFlag = m->edgeFlag ? true : false;
+    /* toon texture ID */
+    if (m->toonID == 0xff)
+        m_toonID = 0;
+    else
+        m_toonID = m->toonID + 1;
+    /* edge drawing flag */
+    m_edgeFlag = m->edgeFlag ? true : false;
 
-   /* load model texture */
-   MMDAIStringCopy(name, m->textureFile, 20);
-   name[20] = '\0';
-   MMDAIStringCopy(raw, name, 20);
-   raw[20] = '\0';
-   if (MMDAIStringLength(name) > 0) {
-      char *ptr = strchr(name, '*');
-      m_texture.setRenderEngine(m_engine);
-      m_additionalTexture.setRenderEngine(m_engine);
-      if (ptr) {
-         /* has extra sphere map */
-         *ptr = '\0';
-         if (!loader->loadModelTexture(name, &m_texture))
-           return false;
-         if (!loader->loadModelTexture(ptr + 1, &m_additionalTexture))
-           return false;
-      } else {
-         if (!loader->loadModelTexture(name, &m_texture))
-            return false;
-      }
-   }
+    /* load model texture */
+    MMDAIStringCopy(name, m->textureFile, 20);
+    name[20] = '\0';
+    MMDAIStringCopy(raw, name, 20);
+    raw[20] = '\0';
+    if (MMDAIStringLength(name) > 0) {
+        char *ptr = strchr(name, '*');
+        m_texture.setRenderEngine(m_engine);
+        m_additionalTexture.setRenderEngine(m_engine);
+        if (ptr) {
+            /* has extra sphere map */
+            *ptr = '\0';
+            if (!loader->loadModelTexture(name, &m_texture))
+                return false;
+            if (!loader->loadModelTexture(ptr + 1, &m_additionalTexture))
+                return false;
+        } else {
+            if (!loader->loadModelTexture(name, &m_texture))
+                return false;
+        }
+    }
 
-   MMDAILogDebug("name=\"%s\", ambient=(%.2f, %.2f, %.2f), diffuse=(%.2f, %.2f, %.2f), specular=(%.2f, %.2f, %.2f), "
-       "alpha=%.2f, shiness=%.2f, numSurface=%d, toonID=%d, edge=%d", raw, m_ambient[0], m_ambient[1], m_ambient[2],
-       m_diffuse[0], m_diffuse[1], m_diffuse[2], m_specular[0], m_specular[1], m_specular[2], m_alpha, m_shiness,
-       m_numSurface, m_toonID, m_edgeFlag);
+    MMDAILogDebug("name=\"%s\", ambient=(%.2f, %.2f, %.2f), diffuse=(%.2f, %.2f, %.2f), specular=(%.2f, %.2f, %.2f), "
+                  "alpha=%.2f, shiness=%.2f, numSurface=%d, toonID=%d, edge=%d", raw, m_ambient[0], m_ambient[1], m_ambient[2],
+                  m_diffuse[0], m_diffuse[1], m_diffuse[2], m_specular[0], m_specular[1], m_specular[2], m_alpha, m_shiness,
+                  m_numSurface, m_toonID, m_edgeFlag);
 
-   return true;
+    return true;
 }
 
 /* PMDMaterial::hasSingleSphereMap: return if it has single sphere maps */
 bool PMDMaterial::hasSingleSphereMap() const
 {
-   return m_texture.isSphereMap() && !m_additionalTexture.isSphereMapAdd();
+    return m_texture.isSphereMap() && !m_additionalTexture.isSphereMapAdd();
 }
 
 /* PMDMaterial::hasMultipleSphereMap: return if it has multiple sphere map */
 bool PMDMaterial::hasMultipleSphereMap() const
 {
-   return m_additionalTexture.isSphereMapAdd();
+    return m_additionalTexture.isSphereMapAdd();
 }
 
 /* PMDMaterial::copyDiffuse: get diffuse colors */
 void PMDMaterial::copyDiffuse(float *c)
 {
-   int i;
+    int i;
 
-   for (i = 0; i < 3; i++)
-      c[i] = m_diffuse[i];
+    for (i = 0; i < 3; i++)
+        c[i] = m_diffuse[i];
 }
 
 /* PMDMaterial::copyAvgcol: get average colors of diffuse and ambient */
 void PMDMaterial::copyAvgcol(float *c)
 {
-   int i;
+    int i;
 
-   for (i = 0; i < 3; i++)
-      c[i] = m_avgcol[i];
+    for (i = 0; i < 3; i++)
+        c[i] = m_avgcol[i];
 }
 
 /* PMDMaterial::copyAmbient: get ambient colors */
 void PMDMaterial::copyAmbient(float *c)
 {
-   int i;
+    int i;
 
-   for (i = 0; i < 3; i++)
-      c[i] = m_ambient[i];
+    for (i = 0; i < 3; i++)
+        c[i] = m_ambient[i];
 }
 
 /* PMDMaterial::copySpecular: get specular colors */
 void PMDMaterial::copySpecular(float *c)
 {
-   int i;
+    int i;
 
-   for (i = 0; i < 3; i++)
-      c[i] = m_specular[i];
+    for (i = 0; i < 3; i++)
+        c[i] = m_specular[i];
 }
 
 /* PMDMaterial::getAlpha: get alpha */
 float PMDMaterial::getAlpha() const
 {
-   return m_alpha;
+    return m_alpha;
 }
 
 /* PMDMaterial::getShiness: get shiness */
 float PMDMaterial::getShiness() const
 {
-   return m_shiness;
+    return m_shiness;
 }
 
 /* PMDMaterial::getNumSurface: get number of surface */
 unsigned int PMDMaterial::getNumSurface() const
 {
-   return m_numSurface;
+    return m_numSurface;
 }
 
 /* PMDMaterial::getToonID: get toon index */
 unsigned char PMDMaterial::getToonID() const
 {
-   return m_toonID;
+    return m_toonID;
 }
 
 /* PMDMaterial::getEdgeFlag: get edge flag */
 bool PMDMaterial::getEdgeFlag() const
 {
-   return m_edgeFlag;
+    return m_edgeFlag;
 }
 
 /* PMDMaterial::getTexture: get texture */
 PMDTexture *PMDMaterial::getTexture()
 {
-   return &m_texture;
+    return &m_texture;
 }
 
 /* getAdditionalTexture: get additional sphere map */
 PMDTexture *PMDMaterial::getAdditionalTexture()
 {
-   return &m_additionalTexture;
+    return &m_additionalTexture;
 }
 
 } /* namespace */

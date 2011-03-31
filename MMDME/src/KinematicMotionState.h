@@ -50,22 +50,22 @@ class KinematicMotionState : public btMotionState
 {
 private:
 
-   PMDBone *m_bone;
-   btTransform m_boneTrans;
+    PMDBone *m_bone;
+    btTransform m_boneTrans;
 
 public:
 
-   /* KinematicMotionState: constructor */
-   KinematicMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone);
+    /* KinematicMotionState: constructor */
+    KinematicMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone);
 
-   /* ~KinematicMotionState: destructor */
-   virtual ~KinematicMotionState();
+    /* ~KinematicMotionState: destructor */
+    virtual ~KinematicMotionState();
 
-   /* getWorldTransform: get world transform */
-   virtual void getWorldTransform(btTransform &worldTrans) const;
+    /* getWorldTransform: get world transform */
+    virtual void getWorldTransform(btTransform &worldTrans) const;
 
-   /* setWorldTransform: set world transform */
-   virtual void setWorldTransform(const btTransform &worldTrans);
+    /* setWorldTransform: set world transform */
+    virtual void setWorldTransform(const btTransform &worldTrans);
 };
 
 } /* namespace */

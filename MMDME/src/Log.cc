@@ -45,12 +45,12 @@ static void MMDAILogWriteNull(const char *file,
                               const char *format,
                               va_list ap)
 {
-  /* do nothing */
-  (void) file;
-  (void) line;
-  (void) level;
-  (void) format;
-  (void) ap;
+    /* do nothing */
+    (void) file;
+    (void) line;
+    (void) level;
+    (void) format;
+    (void) ap;
 }
 
 static void MMDAILogWriteNullSJIS(const char *file,
@@ -58,22 +58,22 @@ static void MMDAILogWriteNullSJIS(const char *file,
                                   const enum MMDAILogLevel level,
                                   const char *format, va_list ap)
 {
-  /* do nothing */
-  (void) file;
-  (void) line;
-  (void) level;
-  (void) format;
-  (void) ap;
+    /* do nothing */
+    (void) file;
+    (void) line;
+    (void) level;
+    (void) format;
+    (void) ap;
 }
 
 void MMDAILogSetHandler(MMDAILoggingHandler *handler)
 {
-  g_handler = handler;
+    g_handler = handler;
 }
 
 void MMDAILogSetHandlerSJIS(MMDAILoggingHandler *handler)
 {
-  g_handlerSJIS = handler;
+    g_handlerSJIS = handler;
 }
 
 void MMDAILogWrite(const char *file,
@@ -81,10 +81,10 @@ void MMDAILogWrite(const char *file,
                    const enum MMDAILogLevel level,
                    const char *format, ...)
 {
-  va_list ap;
-  va_start(ap, format);
-  g_handler(file, line, level, format, ap);
-  va_end(ap);
+    va_list ap;
+    va_start(ap, format);
+    g_handler(file, line, level, format, ap);
+    va_end(ap);
 }
 
 void MMDAILogWriteSJIS(const char *file,
@@ -92,9 +92,9 @@ void MMDAILogWriteSJIS(const char *file,
                        const enum MMDAILogLevel level,
                        const char *format, ...)
 {
-  va_list ap;
-  va_start(ap, format);
-  g_handlerSJIS(file, line, level, format, ap);
-  va_end(ap);
+    va_list ap;
+    va_start(ap, format);
+    g_handlerSJIS(file, line, level, format, ap);
+    va_end(ap);
 }
 

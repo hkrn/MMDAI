@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -39,67 +39,44 @@
 #ifndef MMDME_PMDRIGIDBODY_H_
 #define MMDME_PMDRIGIDBODY_H_
 
-#include <btBulletDynamicsCommon.h>
-
 #include "MMDME/Common.h"
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFile.h"
 
 namespace MMDAI {
 
-/* PMDRigidBody: rigid body */
 class PMDRigidBody
 {
-private:
-
-   btCollisionShape *m_shape;    /* collision shape */
-   btRigidBody *m_body;          /* rigid body */
-   btMotionState *m_motionState; /* motion state */
-   unsigned short m_groupID;     /* collition group ID */
-   unsigned short m_groupMask;   /* collision group mask */
-
-   unsigned char m_type;                  /* control type: 0: kinematics, 1: simulated, 2: simulated+aligned */
-   PMDBone *m_bone;                       /* associated bone */
-   bool m_noBone;                         /* true if this bone will be affected from/to the movement of assigned bone */
-   btTransform m_trans;                   /* local transform of position and rotation, local to associated bone */
-   btTransform m_transInv;                /* inverse of m_trans */
-   btMotionState *m_kinematicMotionState; /* kinematic motion state for static moving */
-
-   btDiscreteDynamicsWorld *m_world; /* pointer to the simulation world where this rigid body exists */
-
-   /* initialize: initialize PMDRigidBody */
-   void initialize();
-
-   /* clear: free PMDRigidBody */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDRigidBody);
-
 public:
+    PMDRigidBody();
+    ~PMDRigidBody();
 
-   /* PMDRigidBody: constructor */
-   PMDRigidBody();
+    bool setup(PMDFile_RigidBody *rb, PMDBone *bone);
+    void joinWorld(btDiscreteDynamicsWorld *btWorld);
+    void applyTransformToBone();
+    void setKinematic(bool flag);
+    btRigidBody *getBody() const;
 
-   /* ~PMDRigidBody: destructor */
-   ~PMDRigidBody();
+private:
+    void initialize();
+    void clear();
 
-   /* setup: initialize and setup PMDRigidBody */
-   bool setup(PMDFile_RigidBody *rb, PMDBone *bone);
+    btCollisionShape *m_shape;
+    btRigidBody *m_body;
+    btMotionState *m_motionState;
+    unsigned short m_groupID;
+    unsigned short m_groupMask;
+    unsigned char m_type;
+    PMDBone *m_bone;
+    bool m_noBone;
+    btTransform m_trans;
+    btTransform m_transInv;
+    btMotionState *m_kinematicMotionState;
+    btDiscreteDynamicsWorld *m_world;
 
-   /* joinWorld: add the body to simulation world */
-   void joinWorld(btDiscreteDynamicsWorld *btWorld);
-
-   /* applyTransformToBone: apply the current rigid body transform to bone after simulation (for type 1 and 2) */
-   void applyTransformToBone();
-
-   /* setKinematic: switch between Default and Kinematic body for non-simulated movement */
-   void setKinematic(bool flag);
-
-   /* getBody: get rigid body */
-   btRigidBody *getBody() const;
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDRigidBody);
 };
 
 } /* namespace */
 
 #endif
-

@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -51,123 +51,71 @@ namespace MMDAI {
 
 const char kCenterBoneName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
 
-/* MotionControllerBoneElement: motion control element for bone */
 typedef struct _MotionControllerBoneElement {
-   PMDBone *bone;         /* bone to be controlled */
-   BoneMotion *motion;    /* bone motion to be played */
-   btVector3 pos;         /* calculated position */
-   btQuaternion rot;      /* calculated rotation */
-   unsigned long lastKey; /* last key frame number */
-   btVector3 snapPos;     /* snapped position, to be used as initial position at frame 0 */
-   btQuaternion snapRot;  /* snapped rotation, to be used as initial rotation at frame 0 */
+    PMDBone *bone;
+    BoneMotion *motion;
+    btVector3 pos;
+    btQuaternion rot;
+    unsigned long lastKey;
+    btVector3 snapPos;
+    btQuaternion snapRot;
 } MotionControllerBoneElement;
 
-/* MotionControllerFaceElement: Motion control element for face */
 typedef struct _MotionControllerFaceElement {
-   PMDFace *face;         /* face to be managed */
-   FaceMotion *motion;    /* face motion to be played */
-   float weight;          /* calculated weight */
-   float snapWeight;      /* snapped face weight, to be used as initial weight at frame 0 */
-   unsigned long lastKey; /* last key frame number */
+    PMDFace *face;
+    FaceMotion *motion;
+    float weight;
+    float snapWeight;
+    unsigned long lastKey;
 } MotionControllerFaceElement;
 
-/* MotionController: motion controller class, to handle one motion to a list of bones and faces */
 class MotionController
 {
-private:
-
-   float m_maxFrame; /* maximum key frame */
-
-   unsigned long m_numBoneCtrl;                 /* number of bone control list */
-   MotionControllerBoneElement *m_boneCtrlList; /* bone control list */
-   unsigned long m_numFaceCtrl;                 /* number of face control list */
-   MotionControllerFaceElement *m_faceCtrlList; /* face control list */
-
-   /* values determined by the given PMD and VMD */
-   bool m_hasCenterBoneMotion; /* true if the motion has more than 1 key frames for center bone and need re-location */
-
-   /* configurations */
-   float m_boneBlendRate;     /* if != 1.0f, the resulting bone location will be blended upon the current bone position at this rate, else override it */
-   float m_faceBlendRate;     /* if != 1.0f, the resulting face weight will be blended upon the current face at this rate, else override it */
-   bool m_ignoreSingleMotion; /* if true, motions with only one key frame for the first frame will be disgarded. This is for inserting motions */
-
-   /* internal work area */
-   double m_currentFrame;      /* current frame */
-   double m_previousFrame;     /* current frame at last call to advance() */
-   float m_lastLoopStartFrame; /* m_firstFrame frame where the last motion loop starts, used for motion smoothing at loop head */
-   float m_noBoneSmearFrame;   /* remaining frames for bone motion smoothing at loop head */
-   float m_noFaceSmearFrame;   /* remaining frames for face motion smoothing at loop head */
-
-   /* internal work area for initial pose snapshot */
-   bool m_overrideFirst; /* when true, the initial bone pos/rot and face weights in the motion at the first frame will be replaced by the runtime pose snapshot */
-
-   /* calcBoneAt: calculate bone pos/rot at the given frame */
-   void calcBoneAt(MotionControllerBoneElement *mc, float absFrame);
-
-   /* calcFaceAt: calculate face weight at the given frame */
-   void calcFaceAt(MotionControllerFaceElement *mc, float absFrame);
-
-   /* control: set bone position/rotation and face weights according to the motion to the specified frame */
-   void control(float frameNow);
-
-   /* takeSnap: take a snap shot of current model pose for smooth motion insertion / loop */
-   void takeSnap(btVector3 *centerPos);
-
-   /* initialize: initialize controller */
-   void initialize();
-
-   /* clear: free controller */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(MotionController);
-
 public:
+    static const float kBoneStartMarginFrame;
+    static const float kFaceStartMarginFrame;
 
-   static const float kBoneStartMarginFrame; /* frame lengths for bone motion smoothing at loop head */
+    MotionController();
+    ~MotionController();
 
-   static const float kFaceStartMarginFrame;  /* frame lengths for face motion smoothing at loop head */
+    void setup(PMDModel *model, VMD *motions);
+    void reset();
+    bool advance(double deltaFrame);
+    void rewind(float targetFrame, float frame);
+    void setOverrideFirst(btVector3 *centerPos);
+    void setBoneBlendRate(float rate);
+    void setFaceBlendRate(float rate);
+    void setIgnoreSingleMotion(bool val);
+    bool hasCenter() const;
+    float getMaxFrame() const;
+    double getCurrentFrame() const;
+    void setCurrentFrame(double frame);
 
-   /* MotionController: constructor */
-   MotionController();
+private:
+    void calcBoneAt(MotionControllerBoneElement *mc, float absFrame);
+    void calcFaceAt(MotionControllerFaceElement *mc, float absFrame);
+    void control(float frameNow);
+    void takeSnap(btVector3 *centerPos);
+    void initialize();
+    void clear();
 
-   /* ~MotionController: destructor */
-   ~MotionController();
+    float m_maxFrame;
+    unsigned long m_numBoneCtrl;
+    MotionControllerBoneElement *m_boneCtrlList;
+    unsigned long m_numFaceCtrl;
+    MotionControllerFaceElement *m_faceCtrlList;
+    bool m_hasCenterBoneMotion;
+    float m_boneBlendRate;
+    float m_faceBlendRate;
+    bool m_ignoreSingleMotion;
+    double m_currentFrame;
+    double m_previousFrame;
+    float m_lastLoopStartFrame;
+    float m_noBoneSmearFrame;
+    float m_noFaceSmearFrame;
+    bool m_overrideFirst;
 
-   /* setup: initialize and set up controller */
-   void setup(PMDModel *model, VMD *motions);
-
-   /* reset: reset values */
-   void reset();
-
-   /* advance: advance motion controller by the given frame, return true when reached end */
-   bool advance(double deltaFrame);
-
-   /* rewind: rewind motion controller to the given frame */
-   void rewind(float targetFrame, float frame);
-
-   /* setOverrideFirst: should be called at the first frame, to tell controller to take snapshot */
-   void setOverrideFirst(btVector3 *centerPos);
-
-   /* setBoneBlendRate: set bone blend rate */
-   void setBoneBlendRate(float rate);
-
-   /* setFaceBlendRate: set face blend rate */
-   void setFaceBlendRate(float rate);
-
-   /* setIgnoreSingleMotion: set insert motion flag */
-   void setIgnoreSingleMotion(bool val);
-
-   /* hasCenter: return true if the motion has more than 1 key frames for center bone */
-   bool hasCenter() const;
-
-   /* getMaxFrame: get max frame */
-   float getMaxFrame() const;
-
-   /* getCurrentFrame: get current frame */
-   double getCurrentFrame() const;
-
-   /* setCurrentFrame: set current frame */
-   void setCurrentFrame(double frame);
+    MMDME_DISABLE_COPY_AND_ASSIGN(MotionController);
 };
 
 } /* namespace */

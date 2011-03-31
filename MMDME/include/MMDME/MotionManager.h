@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -48,97 +48,61 @@
 
 namespace MMDAI {
 
-/* motions's status at last call */
 enum {
-   MOTION_STATUS_RUNNING, /* running */
-   MOTION_STATUS_LOOPED,  /* just looped */
-   MOTION_STATUS_DELETED, /* just reached to the end and deleted itself */
+    MOTION_STATUS_RUNNING,
+    MOTION_STATUS_LOOPED,
+    MOTION_STATUS_DELETED,
 };
 
-/* Motion player: hold a bag of data to perform a motion, holding status, manage loop and end of motion */
 typedef struct _MotionPlayer {
-   char *name; /* name */
-
-   MotionController mc; /* motion controller */
-   VMD *vmd;            /* source motion data */
-
-   /* switches which should be set before startMotion() */
-   unsigned char onEnd;         /* switch for end-of-motion: 0=keep last pose forever, 1=loop(rewind), 2=disapper with blending */
-   short priority;              /* priority of this motion, larger value will supercede others default is 0 */
-   bool ignoreStatic;           /* if true, bones / faces which has only the first frame will be ignored */
-   float loopAt;                /* rewind to the frame, used when onEnd==1 */
-   bool enableSmooth;           /* enable "magic" smooth motion transition at start, end, and loop of motion */
-   bool enableRePos;            /* enable moving root bone offset of the model to the current center bone position at motion start */
-   float endingBoneBlendFrames; /* length of ending motion blend */
-   float endingFaceBlendFrames; /* length of ending motion blend */
-   float motionBlendRate;       /* motion blend rate */
-
-   /* work area */
-   bool active;           /* become false when this motion was finished, used for motion-end detection */
-   float endingBoneBlend; /* at blending down at motion end, this value keeps the rest frame */
-   float endingFaceBlend; /* at blending down at motion end, this value keeps the rest frame */
-   int statusFlag;        /* variable to hold status */
-
-   struct _MotionPlayer *next;
+    char *name;
+    MotionController mc;
+    VMD *vmd;
+    unsigned char onEnd;
+    short priority;
+    bool ignoreStatic;
+    float loopAt;
+    bool enableSmooth;
+    bool enableRePos;
+    float endingBoneBlendFrames;
+    float endingFaceBlendFrames;
+    float motionBlendRate;
+    bool active;
+    float endingBoneBlend;
+    float endingFaceBlend;
+    int statusFlag;
+    struct _MotionPlayer *next;
 } MotionPlayer;
 
-/* MotionPlayer_initialize: initialize MotionPlayer */
 void MotionPlayer_initialize(MotionPlayer *m);
 
-/* Motion manager: control all the motion players for multi-track motion handling */
 class MotionManager
 {
-private:
-
-   PMDModel *m_pmd;                     /* assigned model */
-   MotionPlayer *m_playerList;          /* list of motion players running */
-   float m_beginningNonControlledBlend; /* at motion start, bones/faces not controlled in base motion will be reset within this frame */
-
-   /* purgeMotion: purge inactive motions */
-   void purgeMotion();
-
-   /* setup: initialize and setup motion manager */
-   void setup(PMDModel *pmd);
-
-   /* initialize: initialize motion manager */
-   void initialize();
-
-   /* clear: free motion manager */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(MotionManager);
-
 public:
+    static const int kDefaultPriority = 0;
+    static const float kDefaultLoopAtFrame;
 
-   /* motion priority */
-   static const int kDefaultPriority = 0; 
+    MotionManager(PMDModel *pmd);
+    ~MotionManager();
 
-   /* when specified with loop, motion will rewind at this frame when reached end */
-   static const float kDefaultLoopAtFrame;
+    bool startMotion(VMD *vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRePos);
+    void startMotionSub(VMD *vmd, MotionPlayer *m);
+    bool swapMotion(VMD *vmd, const char *name);
+    bool deleteMotion(const char *name);
+    bool update(double frame);
+    MotionPlayer *getMotionPlayerList() const;
 
-   /* MotionManager: constructor */
-   MotionManager(PMDModel *pmd);
+private:
+    void purgeMotion();
+    void setup(PMDModel *pmd);
+    void initialize();
+    void clear();
 
-   /* ~MotionManager: destructor */
-   ~MotionManager();
+    PMDModel *m_pmd;
+    MotionPlayer *m_playerList;
+    float m_beginningNonControlledBlend;
 
-   /* startMotion: start a motion */
-   bool startMotion(VMD *vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRePos);
-
-   /* startMotionSub: initialize a motion */
-   void startMotionSub(VMD *vmd, MotionPlayer *m);
-
-   /* swapMotion: swap a motion, keeping parameters */
-   bool swapMotion(VMD *vmd, const char *name);
-
-   /* deleteMotion: delete a motion */
-   bool deleteMotion(const char *name);
-
-   /* update: apply all motion players */
-   bool update(double frame);
-
-   /* getMotionPlayerList: get list of motion players */
-   MotionPlayer *getMotionPlayerList() const;
+    MMDME_DISABLE_COPY_AND_ASSIGN(MotionManager);
 };
 
 } /* namespace */

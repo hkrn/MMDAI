@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -41,57 +41,39 @@
 
 namespace MMDAI {
 
-/* PTreeNode: data pointer tree */
 typedef struct _PTreeNode {
-   union {
-      void *data;    /* data pointer */
-      int thres_bit; /* or thershold bit */
-   } value;
-   struct _PTreeNode *left0;  /* left child node */
-   struct _PTreeNode *right1; /* right child node */
+    union {
+        void *data;
+        int thres_bit;
+    } value;
+    struct _PTreeNode *left0;
+    struct _PTreeNode *right1;
 } PTreeNode;
 
-/* PTreeNodeList: list of PTreeNode */
 typedef struct _PTreeNodeList {
-   PTreeNode *list; /* list of allocated nodes */
-   int current;     /* current index */
-   int size;        /* size of list */
-   struct _PTreeNodeList *next;  /* pointer to next stocker */
+    PTreeNode *list;
+    int current;
+    int size;
+    struct _PTreeNodeList *next;
 } PTreeNodeList;
 
-/* PTree: Pointer tree */
 class PTree
 {
-private:
-
-   PTreeNodeList *m_stocker; /* node stocker */
-   PTreeNode *m_root;   /* root index node */
-
-   /* newNode: allocate a new node */
-   PTreeNode *newNode();
-
-   /* initialize: initialize PTree */
-   void initialize();
-
-   /* clear: free PTree */
-   void clear();
-
 public:
+    PTree();
+    ~PTree();
 
-   /* PTree: constructor */
-   PTree();
+    void release();
+    void add(const char *str, void *data, const char *matchStr);
+    void *findNearest(const char *str);
 
-   /* PTree: destructor */
-   ~PTree();
+private:
+    PTreeNodeList *m_stocker;
+    PTreeNode *m_root;
+    PTreeNode *newNode();
 
-   /* release: free PTree */
-   void release();
-
-   /* add: add an entry to the tree */
-   void add(const char *str, void *data, const char *matchStr);
-
-   /* findNearest: return the nearest entry */
-   void *findNearest(const char *str);
+    void initialize();
+    void clear();
 };
 
 } /* namespace */

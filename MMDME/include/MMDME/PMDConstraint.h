@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -39,46 +39,31 @@
 #ifndef MMDME_PMDCONSTRAINT_H_
 #define MMDME_PMDCONSTRAINT_H_
 
-#include <btBulletDynamicsCommon.h>
-
 #include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 #include "MMDME/PMDRigidBody.h"
 
 namespace MMDAI {
 
-/* PMDConstrant: constraint of PMD */
 class PMDConstraint
 {
-private:
-
-   btGeneric6DofSpringConstraint *m_constraint; /* generic 6-DOF constraint with spring */
-   btDiscreteDynamicsWorld *m_world;            /* pointer to the simulation world where this rigid body exists */
-
-   /* initialize: inititalize constraint */
-   void initialize();
-
-   /* clear: free constraint */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDConstraint);
-
 public:
+    PMDConstraint();
+    ~PMDConstraint();
 
-   /* PMDConstraint: constructor */
-   PMDConstraint();
+    bool setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVector3 *offset);
+    void joinWorld(btDiscreteDynamicsWorld *btWorld);
 
-   /* ~PMDConstraint: destructor */
-   ~PMDConstraint();
+private:
+    void initialize();
+    void clear();
 
-   /* setup: initialize and setup constraint */
-   bool setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVector3 *offset);
+    btGeneric6DofSpringConstraint *m_constraint;
+    btDiscreteDynamicsWorld *m_world;
 
-   /* joinWorld: add the constraint to simulation world */
-   void joinWorld(btDiscreteDynamicsWorld *btWorld);
+    MMDME_DISABLE_COPY_AND_ASSIGN(PMDConstraint);
 };
 
 } /* namespace */
 
 #endif
-

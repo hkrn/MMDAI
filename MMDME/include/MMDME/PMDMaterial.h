@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -48,85 +48,45 @@ namespace MMDAI {
 class PMDModelLoader;
 class PMDRenderEngine;
 
-/* PMDMaterial: material of PMD */
 class PMDMaterial
 {
-private:
-
-   float m_diffuse[3];  /* diffuse color */
-   float m_ambient[3];  /* ambient color */
-   float m_avgcol[3];   /* average of diffuse and ambient */
-   float m_specular[3]; /* specular color */
-   float m_alpha;       /* alpha color */
-   float m_shiness;     /* shiness intensity */
-
-   unsigned int m_numSurface; /* number of surface indices for this material */
-
-   unsigned char m_toonID; /* toon index */
-   bool m_edgeFlag;        /* true if edge should be drawn */
-
-   PMDTexture m_texture;            /* pointer to texture */
-   PMDTexture m_additionalTexture;  /* pointer to additional sphere map */
-
-   PMDRenderEngine *m_engine;
-
-   /* initialize: initialize material */
-   void initialize();
-
-   /* clear: free material */
-   void clear();
-
-   MMDME_DISABLE_COPY_AND_ASSIGN(PMDMaterial);
-
 public:
-
-   /* PMDMaterial: constructor */
    PMDMaterial(PMDRenderEngine *engine);
-
-   /* ~PMDMaterial: destructor */
    virtual ~PMDMaterial();
 
-   /* setup: initialize and setup material */
    bool setup(PMDFile_Material *m, PMDModelLoader *loader);
-
-   /* hasSingleSphereMap: return if it has single sphere maps */
    bool hasSingleSphereMap() const;
-
-   /* hasMultipleSphereMap: return if it has multiple sphere map */
    bool hasMultipleSphereMap() const;
-
-   /* copyDiffuse: get diffuse colors */
    void copyDiffuse(float *c);
-
-   /* copyAvgcol: get average colors of diffuse and ambient */
    void copyAvgcol(float *c);
-
-   /* copyAmbient: get ambient colors */
    void copyAmbient(float *c);
-
-   /* copySpecular: get specular colors */
    void copySpecular(float *c);
-
-   /* getAlpha: get alpha color */
    float getAlpha() const;
-
-   /* getShiness: get shiness intensity */
    float getShiness() const;
-
-   /* getNumSurface: get number of surface */
    unsigned int getNumSurface() const;
-
-   /* getToonID: get toon index */
    unsigned char getToonID() const;
-
-   /* getEdgeFlag: get edge flag */
    bool getEdgeFlag() const;
-
-   /* getTexture: get texture */
    PMDTexture *getTexture();
-
-   /* getAdditionalTexture: get additional sphere map */
    PMDTexture *getAdditionalTexture();
+
+private:
+   void initialize();
+   void clear();
+
+   float m_diffuse[3];
+   float m_ambient[3];
+   float m_avgcol[3];
+   float m_specular[3];
+   float m_alpha;
+   float m_shiness;
+   unsigned int m_numSurface;
+   unsigned char m_toonID;
+   bool m_edgeFlag;
+   PMDTexture m_texture;
+   PMDTexture m_additionalTexture;
+   PMDRenderEngine *m_engine;
+
+   MMDME_DISABLE_COPY_AND_ASSIGN(PMDMaterial);
 };
 
 } /* namespace */

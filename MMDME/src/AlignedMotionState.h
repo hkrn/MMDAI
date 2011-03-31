@@ -48,26 +48,24 @@ namespace MMDAI {
 /* AlignedMotionState: MotionState for bullet physics, to align rigid body to the position of corresponding bone for rigid body type 2 */
 class AlignedMotionState : public btMotionState
 {
-private:
-
-   PMDBone *m_bone;
-   btTransform m_boneTrans;
-   btTransform m_boneTransInv;
-   btTransform m_graphicsWorldTrans;
-
 public:
+    /* AlignedMotionState: constructor */
+    AlignedMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone);
 
-   /* AlignedMotionState: constructor */
-   AlignedMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone);
+    /* ~AlignedMotionState: destructor */
+    virtual ~AlignedMotionState();
 
-   /* ~AlignedMotionState: destructor */
-   virtual ~AlignedMotionState();
+    /* getWorldTransform: get world transform */
+    virtual void getWorldTransform(btTransform &worldTrans) const;
 
-   /* getWorldTransform: get world transform */
-   virtual void getWorldTransform(btTransform &worldTrans) const;
+    /* setWorldTransform: set world transform */
+    virtual void setWorldTransform(const btTransform &worldTrans);
 
-   /* setWorldTransform: set world transform */
-   virtual void setWorldTransform(const btTransform &worldTrans);
+private:
+    PMDBone *m_bone;
+    btTransform m_boneTrans;
+    btTransform m_boneTransInv;
+    btTransform m_graphicsWorldTrans;
 };
 
 } /* namespace */

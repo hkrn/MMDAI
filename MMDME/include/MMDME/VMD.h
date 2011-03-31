@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
@@ -16,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -39,128 +39,90 @@
 #ifndef MMDME_VMD_H_
 #define MMDME_VMD_H_
 
-#include <btBulletDynamicsCommon.h>
-
+#include "MMDME/Common.h"
 #include "MMDME/PTree.h"
 #include "MMDME/VMDLoader.h"
 
 namespace MMDAI {
 
-/* BoneKeyFrame: bone key frame */
 typedef struct _BoneKeyFrame {
-   float keyFrame;               /* key frame */
-   btVector3 pos;                /* translation position */
-   btQuaternion rot;             /* rotation */
-   bool linear[4];               /* this is liner interpolation, use simpler calculation */
-   float *interpolationTable[4]; /* table for interpolation */
+    float keyFrame;
+    btVector3 pos;
+    btQuaternion rot;
+    bool linear[4];
+    float *interpolationTable[4];
 } BoneKeyFrame;
 
-/* BoneMotion: bone motion unit (list of key frames for a bone defined in a VMD file) */
+
 typedef struct _BoneMotion {
-   char *name;                 /* bone name */
-   unsigned long numKeyFrame;  /* number of defined key frames */
-   BoneKeyFrame *keyFrameList; /* list of key frame data */
+    char *name;
+    unsigned long numKeyFrame;
+    BoneKeyFrame *keyFrameList;
 } BoneMotion;
 
-/* BoneMotionLink: linked list of defined bone motions in a VMD data */
+
 typedef struct _BoneMotionLink {
-   BoneMotion boneMotion; /* bone motion unit */
-   struct _BoneMotionLink *next;
+    BoneMotion boneMotion;
+    struct _BoneMotionLink *next;
 } BoneMotionLink;
 
-/* FaceKeyFrame: face key frame */
+
 typedef struct _FaceKeyFrame {
-   float keyFrame; /* key frame */
-   float weight;   /* face weight */
+    float keyFrame;
+    float weight;
 } FaceKeyFrame;
 
-/* FaceMotion: face motion unit (list of key frames for a face defined in a VMD file) */
+
 typedef struct _FaceMotion {
-   char *name;                 /* face name */
-   unsigned long numKeyFrame;  /* number of defined key frames */
-   FaceKeyFrame *keyFrameList; /* list of key frame data */
+    char *name;
+    unsigned long numKeyFrame;
+    FaceKeyFrame *keyFrameList;
 } FaceMotion;
 
-/* FaceMotionLink: linked list of defined face motions in a VMD data */
+
 typedef struct _FaceMotionLink {
-   FaceMotion faceMotion; /* face motion unit */
-   struct _FaceMotionLink *next;
+    FaceMotion faceMotion;
+    struct _FaceMotionLink *next;
 } FaceMotionLink;
 
-/* VMD: motion file class */
+
 class VMD
 {
-private:
-
-   unsigned long m_numTotalBoneKeyFrame; /* total number of bone frames */
-   unsigned long m_numTotalFaceKeyFrame; /* total number of face frames */
-
-   PTree m_name2bone;
-   PTree m_name2face;
-
-   BoneMotionLink *m_boneLink; /* linked list of bones in the motion */
-   FaceMotionLink *m_faceLink; /* linked list of faces in the motion */
-
-   unsigned long m_numBoneKind; /* number of bones in m_boneLink */
-   unsigned long m_numFaceKind; /* number of faces in m_faceLink */
-
-   float m_maxFrame; /* max frame */
-
-   /* addBoneMotion: add new bone motion to list */
-   void addBoneMotion(const char *name);
-
-   /* addFaceMotion: add new face motion to list */
-   void addFaceMotion(const char *name);
-
-   /* getBoneMotion: find bone motion by name */
-   BoneMotion * getBoneMotion(const char *name);
-
-   /* getFaceMotion: find face motion by name */
-   FaceMotion * getFaceMotion(const char *name);
-
-   /* setInterpolationTable: set up motion interpolation parameter */
-   void setInterpolationTable(BoneKeyFrame *bf, char ip[]);
-
-   /* initialize: initialize VMD */
-   void initialize();
-
-   /* clear: free VMD */
-   void clear();
-
 public:
+    static const int kInterpolationTableSize = 64;
 
-   /* motion interpolation table size */
-   static const int kInterpolationTableSize = 64;
+    VMD();
+    ~VMD();
 
-   /* VMD: constructor */
-   VMD();
+    bool load(VMDLoader *loader);
+    bool parse(unsigned char *data, size_t size);
+    unsigned int getTotalKeyFrame() const;
+    BoneMotionLink * getBoneMotionLink() const;
+    FaceMotionLink * getFaceMotionLink() const;
+    uint32_t getNumBoneKind() const;
+    uint32_t getNumFaceKind() const;
+    float getMaxFrame() const;
 
-   /* ~VMD: destructor */
-   ~VMD();
+private:
+    void addBoneMotion(const char *name);
+    void addFaceMotion(const char *name);
+    BoneMotion * getBoneMotion(const char *name);
+    FaceMotion * getFaceMotion(const char *name);
+    void setInterpolationTable(BoneKeyFrame *bf, char ip[]);
+    void initialize();
+    void clear();
 
-   /* load: initialize and load from file name */
-   bool load(VMDLoader *loader);
+    PTree m_name2bone;
+    PTree m_name2face;
+    BoneMotionLink *m_boneLink;
+    FaceMotionLink *m_faceLink;
+    uint32_t m_numBoneKind;
+    uint32_t m_numFaceKind;
+    uint32_t m_numTotalBoneKeyFrame;
+    uint32_t m_numTotalFaceKeyFrame;
+    float m_maxFrame;
 
-   /* parse: initialize and load from data memories */
-   bool parse(unsigned char *data, size_t size);
-
-   /* getTotalKeyFrame: get total number of key frames */
-   unsigned long getTotalKeyFrame() const;
-
-   /* getBoneMotionLink: get list of bone motions */
-   BoneMotionLink * getBoneMotionLink() const;
-
-   /* getFaceMotionLink: get list of face motions */
-   FaceMotionLink * getFaceMotionLink() const;
-
-   /* getNumBoneKind: get number of bone motions */
-   unsigned int getNumBoneKind() const;
-
-   /* getNumFaceKind: get number of face motions */
-   unsigned int getNumFaceKind() const;
-
-   /* getMaxFrame: get max frame */
-   float getMaxFrame() const;
+    MMDME_DISABLE_COPY_AND_ASSIGN(VMD);
 };
 
 } /* namespace */
