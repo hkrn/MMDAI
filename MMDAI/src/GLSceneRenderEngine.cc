@@ -73,6 +73,8 @@ public:
     }
     bool load(PMDModelLoader *loader, BulletPhysics *bullet) {
         bool ret = PMDModel::load(loader, bullet);
+        if (!ret)
+          return ret;
         m_nmaterials = getNumMaterial();
         m_materialVBO = static_cast<GLuint *>(calloc(sizeof(GLuint), m_nmaterials));
         glGenBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);

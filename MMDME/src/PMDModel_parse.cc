@@ -55,12 +55,13 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     uint8_t numBoneFrameDisp = 0;
     uint32_t numBoneDisp = 0;
 
-    size_t size = 0;
+    size_t size = 0, rest = 0;
     uint8_t *data = NULL;
     if (!loader->loadModelData(&data, &size))
         return false;
 
-    uint8_t *start = data, *ptr = data;
+    rest = size;
+    uint8_t *ptr = data, *start = data;
 
     /* release internal variables */
     release();
@@ -84,51 +85,84 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     }
 
     /* header */
-    PMDFile_Header *fileHeader = (PMDFile_Header *) ptr;
-    if (fileHeader->magic[0] != 'P' || fileHeader->magic[1] != 'm' || fileHeader->magic[2] != 'd')
+    PMDFile_Header *fileHeader = reinterpret_cast<PMDFile_Header *>(ptr);
+    if (sizeof(PMDFile_Header) > rest || fileHeader->magic[0] != 'P' || fileHeader->magic[1] != 'm' || fileHeader->magic[2] != 'd') {
+        MMDAILogWarnString("Invalid signature of PMD");
         goto error;
-    if (fileHeader->version != 1.0f)
+    }
+    if (fileHeader->version != 1.0f) {
+        MMDAILogWarnString("Not supported version of PMD");
         goto error;
+    }
+
     /* name */
     m_name = static_cast<char *>(MMDAIMemoryAllocate(sizeof(char) * (20 + 1)));
-    if (m_name == NULL)
+    if (m_name == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
         goto error;
+    }
+
     MMDAIStringCopy(m_name, fileHeader->name, 20);
     m_name[20] = '\0';
 
     /* comment */
     m_comment = static_cast<char *>(MMDAIMemoryAllocate(sizeof(char) * (256 + 1)));
-    if (m_comment == NULL)
+    if (m_comment == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
         goto error;
+    }
+
     MMDAIStringCopy(m_comment, fileHeader->comment, 256);
     m_comment[256] = '\0';
     ptr += sizeof(PMDFile_Header);
+    rest -= sizeof(PMDFile_Header);
 
     MMDAILogDebugSJIS("name=\"%s\", comment=\"%s\"", m_name, m_comment);
 
     /* vertex ptr and bone weights */
     /* relocate as separated list for later OpenGL calls */
-    m_numVertex = *((uint32_t *) ptr);
+    m_numVertex = *reinterpret_cast<uint32_t *>(ptr);
+    if (m_numVertex * sizeof(PMDFile_Vertex) > rest) {
+        MMDAILogWarnString("Size of vertices exceeds size of PMD");
+        goto error;
+    }
+
     ptr += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
     m_vertexList = new btVector3[m_numVertex];
     m_normalList = new btVector3[m_numVertex];
     m_texCoordList = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * m_numVertex));
-    if (m_texCoordList == NULL)
+    if (m_texCoordList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
         goto error;
-    m_bone1List = static_cast<short *>(MMDAIMemoryAllocate(sizeof(short) * m_numVertex));
-    if (m_bone1List == NULL)
-        goto error;
-    m_bone2List = static_cast<short *>(MMDAIMemoryAllocate(sizeof(short) * m_numVertex));
-    if (m_bone2List == NULL)
-        goto error;
-    m_boneWeight1 = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * m_numVertex));
-    if (m_boneWeight1 == NULL)
-        goto error;
-    m_noEdgeFlag = static_cast<bool *>(MMDAIMemoryAllocate(sizeof(bool) * m_numVertex));
-    if (m_noEdgeFlag == NULL)
-        goto error;
+    }
 
-    fileVertex  = (PMDFile_Vertex *) ptr;
+    m_bone1List = static_cast<int16_t *>(MMDAIMemoryAllocate(sizeof(int16_t) * m_numVertex));
+    if (m_bone1List == NULL) {
+        MMDAILogWarnString("Failed parsing PMD: Cannot allocate memory");
+        goto error;
+    }
+
+    m_bone2List = static_cast<int16_t *>(MMDAIMemoryAllocate(sizeof(int16_t) * m_numVertex));
+    if (m_bone2List == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    m_boneWeight1 = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * m_numVertex));
+    if (m_boneWeight1 == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    m_noEdgeFlag = static_cast<bool *>(MMDAIMemoryAllocate(sizeof(int8_t) * m_numVertex));
+    if (m_noEdgeFlag == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    fileVertex  = reinterpret_cast<PMDFile_Vertex *>(ptr);
     for (uint32_t i = 0; i < m_numVertex; i++) {
         PMDFile_Vertex *fv = &fileVertex[i];
         m_vertexList[i].setValue(fv->pos[0], fv->pos[1], fv->pos[2]);
@@ -141,19 +175,37 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         m_noEdgeFlag[i] = fv->noEdgeFlag;
     }
     ptr += sizeof(PMDFile_Vertex) * m_numVertex;
+    rest -= sizeof(PMDFile_Vertex) * m_numVertex;
 
     /* surface ptr, 3 vertex indices for each */
-    m_numSurface = *((uint32_t *) ptr);
-    ptr += sizeof(uint32_t);
-    m_surfaceList = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numSurface));
-    if (m_surfaceList == NULL)
+    m_numSurface = *reinterpret_cast<uint32_t *>(ptr);
+    if (m_numSurface * sizeof(uint16_t) > rest) {
+        MMDAILogWarnString("Size of indices exceeds size of PMD");
         goto error;
+    }
+    ptr += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
+    m_surfaceList = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numSurface));
+    if (m_surfaceList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
     memcpy(m_surfaceList, ptr, sizeof(uint16_t) * m_numSurface);
     ptr += sizeof(uint16_t) * m_numSurface;
+    rest -= sizeof(uint16_t) * m_numSurface;
 
     /* material ptr (color, texture, toon parameter, edge flag) */
-    m_numMaterial = *((uint32_t *) ptr);
+    m_numMaterial = *reinterpret_cast<uint32_t *>(ptr);
+    if (m_numMaterial * sizeof(PMDFile_Material) > rest) {
+        MMDAILogWarnString("Size of materials exceeds size of PMD");
+        goto error;
+    }
+
     ptr += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
     m_material = m_engine->allocateMaterials(m_numMaterial);
     fileMaterial = (PMDFile_Material *) ptr;
     for (uint32_t i = 0; i < m_numMaterial; i++) {
@@ -161,13 +213,27 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
             /* ret = false; */
         }
     }
+
     ptr += sizeof(PMDFile_Material) * m_numMaterial;
+    rest -= sizeof(PMDFile_Material) * m_numMaterial;
 
     /* bone ptr */
-    m_numBone = *((uint16_t *) ptr);
+    m_numBone = *reinterpret_cast<uint16_t *>(ptr);
+    if (m_numBone * sizeof(PMDFile_Bone) > rest) {
+        MMDAILogWarnString("Size of bones exceeds size of PMD");
+        goto error;
+    }
+
     ptr += sizeof(uint16_t);
+    rest -= sizeof(uint16_t);
+
     m_boneList = new PMDBone[m_numBone];
-    fileBone = (PMDFile_Bone *) ptr;
+    if (m_boneList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    fileBone = reinterpret_cast<PMDFile_Bone *>(ptr);
     for (uint32_t i = 0; i < m_numBone; i++) {
         PMDBone *bone = &m_boneList[i];
         if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
@@ -179,37 +245,66 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         /* if no bone is named "center," use the first bone as center */
         m_centerBone = &(m_boneList[0]);
     }
+
     ptr += sizeof(PMDFile_Bone) * m_numBone;
+    rest -= sizeof(PMDFile_Bone) * m_numBone;
+
     /* calculate bone offset after all bone positions are loaded */
     for (uint32_t i = 0; i < m_numBone; i++)
         m_boneList[i].computeOffset();
 
     /* IK ptr */
-    m_numIK = *((uint16_t *) ptr);
+    m_numIK = *reinterpret_cast<uint16_t *>(ptr);
+    if (m_numIK * sizeof(PMDFile_IK) > rest) {
+        MMDAILogWarnString("Size of IKs exceeds size of PMD");
+        goto error;
+    }
+
     ptr += sizeof(uint16_t);
+    rest -= sizeof(uint16_t);
+
     if (m_numIK > 0) {
         m_IKList = new PMDIK[m_numIK];
+        if (m_IKList == NULL) {
+            MMDAILogWarnString("Cannot allocate memory");
+            goto error;
+        }
         for (uint32_t i = 0; i < m_numIK; i++) {
             PMDFile_IK *fileIK = (PMDFile_IK *) ptr;
             ptr += sizeof(PMDFile_IK);
-            m_IKList[i].setup(fileIK, (short *)ptr, m_boneList);
-            ptr += sizeof(short) * fileIK->numLink;
+            rest -= sizeof(PMDFile_IK);
+            m_IKList[i].setup(fileIK, (int16_t *)ptr, m_boneList);
+            ptr += sizeof(int16_t) * fileIK->numLink;
+            rest -= sizeof(int16_t) * fileIK->numLink;
         }
     }
 
     /* face ptr */
-    m_numFace = *((uint16_t *) ptr);
+    m_numFace = *reinterpret_cast<uint16_t *>(ptr);
+    if (m_numFace * sizeof(PMDFile_Face) > rest) {
+        MMDAILogWarnString("Size of IKs exceeds size of PMD");
+        goto error;
+    }
+
     ptr += sizeof(uint16_t);
+    rest -= sizeof(uint16_t);
+
     if (m_numFace > 0) {
         m_faceList = new PMDFace[m_numFace];
+        if (m_faceList == NULL) {
+            MMDAILogWarnString("Cannot allocate memory");
+            goto error;
+        }
         for (uint32_t i = 0; i < m_numFace; i++) {
             PMDFace *face = &m_faceList[i];
             PMDFile_Face *fileFace = (PMDFile_Face *)ptr;
             ptr += sizeof(PMDFile_Face);
+            rest -= sizeof(PMDFile_Face);
             face->setup(fileFace, (PMDFile_Face_Vertex *) ptr);
             if (fileFace->type == PMD_FACE_BASE)
                 m_baseFace = face; /* store base face */
             ptr += sizeof(PMDFile_Face_Vertex) * fileFace->numVertex;
+            rest -= sizeof(PMDFile_Face_Vertex) * fileFace->numVertex;
         }
         if (m_baseFace == NULL) {
             ret = false;
@@ -222,18 +317,35 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
     /* display names (skip) */
     /* indices for faces which should be displayed in "face" region */
-    numFaceDisp = *((uint8_t *) ptr);
+    numFaceDisp = *reinterpret_cast<uint8_t *>(ptr);
+    if (numFaceDisp * sizeof(uint16_t) > rest) {
+        MMDAILogWarnString("Size of display face names exceeds size of PMD");
+        goto error;
+    }
     ptr += sizeof(uint8_t) + sizeof(uint16_t) * numFaceDisp;
+    rest -= sizeof(uint8_t) + sizeof(uint16_t) * numFaceDisp;
+
     /* bone frame names */
-    numBoneFrameDisp = *((uint8_t *) ptr);
+    numBoneFrameDisp = *reinterpret_cast<uint8_t *>(ptr);
+    if (static_cast<size_t>(numBoneFrameDisp * 50) > rest) {
+        MMDAILogWarnString("Size of display bone frame names exceeds size of PMD");
+        goto error;
+    }
     ptr += sizeof(uint8_t) + 50 * numBoneFrameDisp;
+    rest -= sizeof(uint8_t) + 50 * numBoneFrameDisp;
+
     /* indices for bones which should be displayed in each bone region */
-    numBoneDisp = *((uint32_t *) ptr);
-    ptr += sizeof(uint32_t) + (sizeof(short) + sizeof(uint8_t)) * numBoneDisp;
+    numBoneDisp = *reinterpret_cast<uint32_t *>(ptr);
+    if (numBoneDisp * (sizeof(int16_t) + sizeof(uint8_t)) > rest) {
+        MMDAILogWarnString("Size of display bone names exceeds size of PMD");
+        goto error;
+    }
+    ptr += sizeof(uint32_t) + (sizeof(int16_t) + sizeof(uint8_t)) * numBoneDisp;
+    rest -= sizeof(uint32_t) + (sizeof(int16_t) + sizeof(uint8_t)) * numBoneDisp;
 
     /* end of base format */
     /* check for remaining ptr */
-    if ((unsigned long) ptr - (unsigned long) start >= size) {
+    if (rest == 0) {
         /* no extension ptr remains */
         m_numRigidBody = 0;
         m_numConstraint = 0;
@@ -247,15 +359,23 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         /* English display names (skip) */
         uint8_t englishNameExist = *((uint8_t *) ptr);
         ptr += sizeof(uint8_t);
+        rest -= sizeof(uint8_t);
         if (englishNameExist != 0) {
             /* model name and comments in English */
             ptr += 20 + 256;
+            rest -= 20 + 256;
             /* bone names in English */
             ptr += 20 * m_numBone;
+            rest -= 20 * m_numBone;
             /* face names in English */
-            if (m_numFace > 0) ptr += 20 * (m_numFace - 1); /* "base" not included in English list */
+            if (m_numFace > 0) {
+                 /* "base" not included in English list */
+                ptr += 20 * (m_numFace - 1);
+                rest -= 20 * (m_numFace - 1);
+            }
             /* bone frame names in English */
             ptr += 50 * numBoneFrameDisp;
+            rest -= 50 * numBoneFrameDisp;
         }
 
         /* toon texture file list (replace toon01.bmp - toon10.bmp) */
@@ -264,15 +384,18 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         texture->setRenderEngine(m_engine);
         loader->loadSystemTexture(0, texture);
         for (int i = 1; i <= kNSystemTextureFiles; i++) {
-            const char *exToonBMPName = (const char *)ptr;
+            char exToonBMPName[100];
+            memcpy(exToonBMPName, ptr, sizeof(exToonBMPName));
+            exToonBMPName[sizeof(exToonBMPName) - 1] = 0;
             texture = &m_localToonTexture[i];
             texture->setRenderEngine(m_engine);
             loader->loadModelTexture(exToonBMPName, texture);
-            ptr += 100;
+            ptr += sizeof(exToonBMPName);
+            rest -= sizeof(exToonBMPName);
         }
 
         /* check for remaining ptr */
-        if ((unsigned long) ptr - (unsigned long) start >= size) {
+        if (rest == 0) {
             /* no rigid body / constraint ptr exist */
         } else {
             btVector3 modelOffset = (*(m_rootBone.getOffset()));
@@ -281,11 +404,20 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
                 m_boneList[i].update();
 
             /* Bullet Physics rigidbody ptr */
-            m_numRigidBody = *((uint32_t *) ptr);
+            m_numRigidBody = *reinterpret_cast<uint32_t *>(ptr);
+            if (m_numRigidBody * sizeof(PMDFile_RigidBody) > rest) {
+                MMDAILogWarnString("Size of rigid bodies exceeds size of PMD");
+                goto error;
+            }
             ptr += sizeof(uint32_t);
+            rest -= sizeof(uint32_t);
             if (m_numRigidBody > 0) {
                 m_rigidBodyList = new PMDRigidBody[m_numRigidBody];
-                PMDFile_RigidBody *fileRigidBody = (PMDFile_RigidBody *) ptr;
+                if (m_rigidBodyList == NULL) {
+                    MMDAILogWarnString("Cannot allocate memory");
+                    goto error;
+                }
+                PMDFile_RigidBody *fileRigidBody = reinterpret_cast<PMDFile_RigidBody *>(ptr);
                 for (uint32_t i = 0; i < m_numRigidBody; i++) {
                     PMDFile_RigidBody *rb = &fileRigidBody[i];
                     if (! m_rigidBodyList[i].setup(rb, (rb->boneID == 0xFFFF) ? m_centerBone : &(m_boneList[rb->boneID])))
@@ -296,25 +428,38 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
                         m_boneList[rb->boneID].setSimulatedFlag(true);
                 }
                 ptr += sizeof(PMDFile_RigidBody) * m_numRigidBody;
+                rest -= sizeof(PMDFile_RigidBody) * m_numRigidBody;
             }
 
             /* BulletPhysics constraint ptr */
-            m_numConstraint = *((uint32_t *) ptr);
+            m_numConstraint = *reinterpret_cast<uint32_t *>(ptr);
+            if (m_numConstraint * sizeof(PMDFile_Constraint) > rest) {
+                MMDAILogWarnString("Size of constraints exceeds size of PMD");
+                goto error;
+            }
             ptr += sizeof(uint32_t);
+            rest -= sizeof(uint32_t);
             if (m_numConstraint > 0) {
                 m_constraintList = new PMDConstraint[m_numConstraint];
-                PMDFile_Constraint *fileConstraint = (PMDFile_Constraint *) ptr;
+                if (m_constraintList == NULL) {
+                    MMDAILogWarnString("Cannot allocate memory");
+                    goto error;
+                }
+                PMDFile_Constraint *fileConstraint = reinterpret_cast<PMDFile_Constraint *>(ptr);
                 for (uint32_t i = 0; i < m_numConstraint; i++) {
                     if (!m_constraintList[i].setup(&fileConstraint[i], m_rigidBodyList, &modelOffset))
                         ret = false;
                     m_constraintList[i].joinWorld(m_bulletPhysics->getWorld());
                 }
                 ptr += sizeof(PMDFile_Constraint) * m_numConstraint;
+                rest -= sizeof(PMDFile_Constraint) * m_numConstraint;
             }
+            assert(rest == 0);
         }
     }
 
-    if (ret == false) goto error;
+    if (ret == false)
+        goto error;
 
 #ifdef MMDFILES_CONVERTCOORDINATESYSTEM
     /* left-handed system: PMD, DirectX */
@@ -339,15 +484,38 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     /* prepare work area */
     /* transforms for skinning */
     m_boneSkinningTrans = new btTransform[m_numBone];
+    if (m_boneSkinningTrans == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
     /* calculated Vertex informations for skinning */
     m_skinnedVertexList = new btVector3[m_numVertex];
+    if (m_skinnedVertexList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
     m_skinnedNormalList = new btVector3[m_numVertex];
+    if (m_skinnedNormalList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
     /* calculated Texture coordinates for toon shading */
     m_toonTexCoordList = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * m_numVertex));
-    if (m_toonTexCoordList == NULL)
+    if (m_toonTexCoordList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
         goto error;
+    }
+
     /* calculated Vertex positions for toon edge drawing */
     m_edgeVertexList = new btVector3[m_numVertex];
+    if (m_edgeVertexList == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
     /* surface list to be rendered at edge drawing (skip non-edge materials) */
     m_numSurfaceForEdge = 0;
 
@@ -358,8 +526,10 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     }
     if (m_numSurfaceForEdge > 0) {
         m_surfaceListForEdge = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numSurfaceForEdge));
-        if (m_surfaceList == NULL)
+        if (m_surfaceListForEdge == NULL) {
+            MMDAILogWarnString("Cannot allocate memory");
             goto error;
+        }
         uint16_t *surfaceFrom = m_surfaceList;
         uint16_t *surfaceTo = m_surfaceListForEdge;
         for (uint32_t i = 0; i < m_numMaterial; i++) {
@@ -391,8 +561,10 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     }
     if (m_numRotateBone > 0) {
         m_rotateBoneIDList = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numRotateBone));
-        if (m_rotateBoneIDList == NULL)
+        if (m_rotateBoneIDList == NULL) {
+            MMDAILogWarnString("Cannot allocate memory");
             goto error;
+        }
         for (uint32_t i = 0, j = 0; i < m_numBone; i++) {
             uint8_t type = m_boneList[i].getType();
             if (type == UNDER_ROTATE || type == FOLLOW_ROTATE)
@@ -403,8 +575,10 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     /* check if some IK solvers can be disabled since the bones are simulated by physics */
     if (m_numIK > 0) {
         m_IKSimulated = static_cast<bool *>(MMDAIMemoryAllocate(sizeof(bool) * m_numIK));
-        if (m_IKSimulated == NULL)
+        if (m_IKSimulated == NULL) {
+            MMDAILogWarnString("Cannot allocate memory");
             goto error;
+        }
         for (uint32_t i = 0; i < m_numIK; i++) {
             /* this IK will be disabled when the leaf bone is controlled by physics simulation */
             m_IKSimulated[i] = m_IKList[i].isSimulated();
