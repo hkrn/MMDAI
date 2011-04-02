@@ -336,7 +336,8 @@ void QMAWindow::selectObject()
 {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
-        const char *name = action->text().toUtf8().constData();
+        QByteArray bytes = action->text().toUtf8();
+        const char *name = bytes.constData();
         MMDAI::SceneController *controller = m_widget->getSceneController();
         MMDAI::PMDObject *object = controller->findPMDObject(name);
         if (object != NULL) {
@@ -357,7 +358,8 @@ void QMAWindow::changeSelectedObject()
         MMDAI::SceneController *controller = m_widget->getSceneController();
         MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
         if (selectedObject != NULL){
-            const char *filename = fileName.toUtf8().constData();
+            QByteArray bytes = fileName.toUtf8();
+            const char *filename = bytes.constData();
             MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
             MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
             MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
