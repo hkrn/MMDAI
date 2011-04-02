@@ -80,9 +80,9 @@ class Preference
 public:
     virtual ~Preference() {};
 
-    virtual const bool getBool(const PreferenceKeys key) = 0;
-    virtual const int getInt(const PreferenceKeys key) = 0;
-    virtual const float getFloat(const PreferenceKeys key) = 0;
+    virtual bool getBool(const PreferenceKeys key) = 0;
+    virtual int getInt(const PreferenceKeys key) = 0;
+    virtual float getFloat(const PreferenceKeys key) = 0;
     virtual void  getFloat3(const PreferenceKeys key, float *values) = 0;
     virtual void  getFloat4(const PreferenceKeys key, float *values) = 0;
     virtual void  setBool(const PreferenceKeys key, bool value) = 0;

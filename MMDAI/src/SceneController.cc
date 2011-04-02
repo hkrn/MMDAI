@@ -125,6 +125,7 @@ SceneController::SceneController(SceneEventHandler *handler, Preference *prefere
 #endif
     m_objects(new PMDObject*[MAX_MODEL]),
     m_highlightModel(0),
+    m_preference(preference),
     m_handler(handler),
     m_stage(new Stage(m_engine)),
     m_numModel(0),
@@ -160,10 +161,10 @@ SceneController::~SceneController()
 void SceneController::updateLight()
 {
     int i = 0;
-    float direction[3];
+    float direction[4];
     btVector3 l;
     m_engine->updateLighting();
-    m_preference->getFloat3(kPreferenceLightDirection, direction);
+    m_preference->getFloat4(kPreferenceLightDirection, direction);
     m_stage->updateShadowMatrix(direction);
     l = btVector3(direction[0], direction[1], direction[2]);
     for (i = 0; i < m_numModel; i++) {
@@ -431,9 +432,9 @@ bool SceneController::addModel(const char *modelAlias,
     bool forcedPosition = false;
     PMDBone *assignBone = NULL;
     PMDObject *assignObject = NULL, *newObject = NULL;
-    float direction[3];
+    float direction[4];
     
-    m_preference->getFloat3(kPreferenceLightDirection, direction);
+    m_preference->getFloat4(kPreferenceLightDirection, direction);
     btVector3 light = btVector3(direction[0], direction[1], direction[2]);
 
     /* set */
@@ -534,9 +535,9 @@ bool SceneController::changeModel(PMDObject *object,
     int i = 0;
     double currentFrame = 0;
     const char *modelAlias = object->getAlias();
-    float direction[3];
+    float direction[4];
     
-    m_preference->getFloat3(kPreferenceLightDirection, direction);
+    m_preference->getFloat4(kPreferenceLightDirection, direction);
     btVector3 light = btVector3(direction[0], direction[1], direction[2]);
 
     /* load model */
@@ -621,7 +622,7 @@ void SceneController::changeLightDirection(float x, float y, float z)
 void SceneController::changeLightColor(float r, float g, float b)
 {
     float f[3] = { r, g, b };
-    m_preference->setFloat3(kPreferenceLightDirection, f);
+    m_preference->setFloat3(kPreferenceLightColor, f);
     updateLight();
 
     /* send event message */
