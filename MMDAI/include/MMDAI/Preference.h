@@ -87,7 +87,6 @@ public:
     virtual void  getFloat4(const PreferenceKeys key, float *values) = 0;
     virtual void  setBool(const PreferenceKeys key, bool value) = 0;
     virtual void  setInt(const PreferenceKeys key, int value) = 0;
-    virtual void  setInt2(const PreferenceKeys key, int *values) = 0;
     virtual void  setFloat(const PreferenceKeys key, float value) = 0;
     virtual void  setFloat3(const PreferenceKeys key, float *values) = 0;
     virtual void  setFloat4(const PreferenceKeys key, float *values) = 0;
