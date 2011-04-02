@@ -204,6 +204,7 @@ bool QMAPreference::validateFloatKey(const MMDAI::PreferenceKeys key)
 {
     switch (key) {
     case MMDAI::kPreferenceCartoonEdgeStep:
+    case MMDAI::kPreferenceCartoonEdgeWidth:
     case MMDAI::kPreferenceLogScale:
     case MMDAI::kPreferenceLightIntensity:
     case MMDAI::kPreferenceRotateStep:
@@ -300,7 +301,7 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceShowFPS:
         return QVariant(true);
     case MMDAI::kPreferenceStageSize:
-        return QVariant(-1);
+        return QVariant(QVector3D(25.0f, 25.0f, 40.0f));
     case MMDAI::kPreferenceTopMost:
         return QVariant(false);
     case MMDAI::kPreferenceTranslateStep:
@@ -377,7 +378,11 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         value.setValue(qMin(qMax(value.toInt(), 1), 8192));
         break;
     case MMDAI::kPreferenceStageSize:
-        // TODO
+        vec3 = value.value<QVector3D>();
+        vec3.setX(qMin(qMax(vec3.x(), 0.001), 1000.0));
+        vec3.setY(qMin(qMax(vec3.y(), 0.001), 1000.0));
+        vec3.setZ(qMin(qMax(vec3.z(), 0.001), 1000.0));
+        value.setValue(vec3);
         break;
     case MMDAI::kPreferenceTranslateStep:
         value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
