@@ -39,7 +39,7 @@
 #ifndef MMDAI_BONECONTROLLER_H_
 #define MMDAI_BONECONTROLLER_H_
 
-#include <MMDME/Common.h>
+#include <MMDME/MMDME.h>
 
 namespace MMDAI {
 
