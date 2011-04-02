@@ -48,9 +48,9 @@ set(libMMDAI_public_headers
   include/MMDAI/LipSync.h
   include/MMDAI/MotionStocker.h
   include/MMDAI/MMDAI.h
-  include/MMDAI/Option.h
   include/MMDAI/PMDModelLoaderFactory.h
   include/MMDAI/PMDObject.h
+  include/MMDAI/Preference.h
   include/MMDAI/SceneController.h
   include/MMDAI/SceneEventHandler.h
   include/MMDAI/SceneRenderEngine.h
@@ -83,6 +83,8 @@ endif()
 
 # find OpenGL Easy Extension
 if (MSVC)
+  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from MMDME/Common.h
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
   find_path(GLEE_INCLUDE GLee.h PATH $ENV{GLEE_DIR})
   find_library(GLEE_LIBRARY glee PATH $ENV{GLEE_DIR})
 else()
@@ -128,7 +130,7 @@ else()
 endif()
 
 # find libMMDME
-find_path(MMDME_INCLUDE MMDME/PMDModel.h PATH $ENV{MMDME_INCLUDE_DIR})
+find_path(MMDME_INCLUDE MMDME/MMDME.h PATH $ENV{MMDME_INCLUDE_DIR})
 find_library(MMDME_LIBRARY MMDME PATH $ENV{MMDME_LIBRARY_DIR})
 if(MMDME_INCLUDE AND MMDME_LIBRARY)
   target_link_libraries(MMDAI ${MMDME_LIBRARY})

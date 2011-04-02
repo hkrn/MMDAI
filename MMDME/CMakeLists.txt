@@ -120,9 +120,8 @@ if(APPLE)
 endif()
 
 if(MSVC)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from MMDME/Common.h
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 if(NOT MSVC)
