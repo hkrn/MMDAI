@@ -73,7 +73,8 @@ SOURCES += main.cc\
     QMAModelLoaderFactory.cc \
     QMALipSyncLoder.cc \
     QMALogger.cc \
-    QMALogViewWidget.cc
+    QMALogViewWidget.cc \
+    QMAPreference.cc
 
 HEADERS  += QMAWidget.h \
     QMAPlugin.h \
@@ -83,7 +84,8 @@ HEADERS  += QMAWidget.h \
     QMAModelLoaderFactory.h \
     QMALipSyncLoder.h \
     QMALogger.h \
-    QMALogViewWidget.h
+    QMALogViewWidget.h \
+    QMAPreference.h
 
 TRANSLATIONS += res/translations/QMA.ts
 
