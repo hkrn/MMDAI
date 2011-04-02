@@ -34,8 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "MMDAI/MMDAI.h"
 #include "QMAWindow.h"
 
+#include "QMAPreference.h"
 #include "QMAWidget.h"
 #include "QMALogViewWidget.h"
 
@@ -45,9 +47,10 @@ QMAWindow::QMAWindow(QWidget *parent) :
         m_isFullScreen(false),
         m_enablePhysicsSimulation(true)
 {
-    m_widget = new QMAWidget(parent);
-    m_logView = new QMALogViewWidget(parent);
     m_settings.setIniCodec("UTF-8");
+    m_preference = new QMAPreference(&m_settings);
+    m_widget = new QMAWidget(m_preference, parent);
+    m_logView = new QMALogViewWidget(parent);
     setCentralWidget(m_widget);
 
     createActions();
@@ -60,7 +63,9 @@ QMAWindow::QMAWindow(QWidget *parent) :
 
 QMAWindow::~QMAWindow()
 {
+    delete m_preference;
     delete m_widget;
+    delete m_logView;
 }
 
 void QMAWindow::closeEvent(QCloseEvent *event)
@@ -205,50 +210,42 @@ void QMAWindow::setBackground()
 
 void QMAWindow::rotateUp()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->rotate(0.0f, -controller->getOption()->getRotateStep(), 0.0f);
+    m_widget->getSceneController()->rotate(0.0f, -m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
 }
 
 void QMAWindow::rotateDown()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->rotate(0.0f, controller->getOption()->getRotateStep(), 0.0f);
+    m_widget->getSceneController()->rotate(0.0f, m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
 }
 
 void QMAWindow::rotateLeft()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->rotate(-controller->getOption()->getRotateStep(), 0.0f, 0.0f);
+    m_widget->getSceneController()->rotate(-m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f, 0.0f);
 }
 
 void QMAWindow::rotateRight()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->rotate(controller->getOption()->getRotateStep(), 0.0f, 0.0f);
+    m_widget->getSceneController()->rotate(m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f, 0.0f);
 }
 
 void QMAWindow::translateUp()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->translate(0.0f, -controller->getOption()->getTranslateStep(), 0.0f);
+    m_widget->getSceneController()->translate(0.0f, -m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f);
 }
 
 void QMAWindow::translateDown()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->translate(0.0f, controller->getOption()->getTranslateStep(), 0.0f);
+    m_widget->getSceneController()->translate(0.0f, m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f);
 }
 
 void QMAWindow::translateLeft()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->translate(controller->getOption()->getTranslateStep(), 0.0f, 0.0f);
+    m_widget->getSceneController()->translate(m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f);
 }
 
 void QMAWindow::translateRight()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    controller->translate(-controller->getOption()->getTranslateStep(), 0.0f, 0.0f);
+    m_widget->getSceneController()->translate(-m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f);
 }
 
 void QMAWindow::toggleDisplayBone()
@@ -263,14 +260,12 @@ void QMAWindow::toggleDisplayRigidBody()
 
 void QMAWindow::increaseEdgeThin()
 {
-    MMDAI::Option *option = m_widget->getSceneController()->getOption();
-    setEdgeThin(option->getCartoonEdgeWidth() * option->getCartoonEdgeStep());
+    setEdgeThin(m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeWidth) * m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeStep));
 }
 
 void QMAWindow::decreaseEdgeThin()
 {
-    MMDAI::Option *option = m_widget->getSceneController()->getOption();
-    setEdgeThin(option->getCartoonEdgeWidth() / option->getCartoonEdgeStep());
+    setEdgeThin(m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeWidth) / m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeStep));
 }
 
 void QMAWindow::togglePhysicSimulation()
@@ -284,25 +279,22 @@ void QMAWindow::togglePhysicSimulation()
 
 void QMAWindow::toggleShadowMapping()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    MMDAI::Option *option = controller->getOption();
-    if (option->getUseShadowMapping()) {
-        option->setUseShadowMapping(false);
-        controller->setShadowMapping(false);
+    if (m_preference->getBool(MMDAI::kPreferenceUseShadowMapping)) {
+        m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, false);
+        m_widget->getSceneController()->setShadowMapping(false);
     }
     else {
-        option->setUseShadowMapping(true);
-        controller->setShadowMapping(true);
+        m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, true);
+        m_widget->getSceneController()->setShadowMapping(true);
     }
 }
 
 void QMAWindow::toggleShadowMappingLightFirst()
 {
-    MMDAI::Option *option = m_widget->getSceneController()->getOption();
-    if (option->getShadowMappingLightFirst())
-        option->setShadowMappingLightFirst(false);
+    if (m_preference->getBool(MMDAI::kPreferenceShadowMappingLightFirst))
+        m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, false);
     else
-        option->setShadowMappingLightFirst(true);
+        m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, true);
 }
 
 void QMAWindow::toggleFullScreen()
@@ -651,9 +643,8 @@ void QMAWindow::createActions()
 void QMAWindow::setEdgeThin(float value)
 {
     MMDAI::SceneController *controller = m_widget->getSceneController();
-    MMDAI::Option *option = controller->getOption();
     value = qMin(value, 2.0f);
-    option->setCartoonEdgeWidth(value);
+    m_preference->setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value);
     int count = controller->countPMDObjects();
     for (int i = 0; i < count; i++)
         controller->getPMDObject(i)->getPMDModel()->setEdgeThin(value);

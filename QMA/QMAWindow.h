@@ -40,6 +40,7 @@
 #include <QMainWindow>
 #include <QSettings>
 
+class QMAPreference;
 class QMAWidget;
 class QMALogViewWidget;
 
@@ -97,6 +98,7 @@ private:
     void writeSetting();
 
     QSettings m_settings;
+    QMAPreference *m_preference;
     QMAWidget *m_widget;
     QMALogViewWidget *m_logView;
     QMenu *m_fileMenu;

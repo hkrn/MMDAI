@@ -34,12 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <MMDAI/MMDAI.h>
 #include "QMAWidget.h"
 
-QMAWidget::QMAWidget(QWidget *parent)
+QMAWidget::QMAWidget(MMDAI::Preference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_sceneUpdateTimer(this),
-    m_controller(new MMDAI::SceneController(this)),
+    m_preference(preference),
+    m_controller(new MMDAI::SceneController(this, preference)),
     m_parser(m_controller, &m_factory),
     m_x(0),
     m_y(0),
@@ -86,7 +88,7 @@ void QMAWidget::toggleDisplayRigidBody()
 
 void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
 {
-    float delta = m_controller->getOption()->getScaleStep();
+    float delta = m_preference->getFloat(MMDAI::kPreferenceScaleStep);
     float scale = m_controller->getScale();
     if (option & Faster) /* faster */
         delta = (delta - 1.0f) * 5.0f + 1.0f;
@@ -211,11 +213,10 @@ void QMAWidget::delegateEvent(const QString &type, const QStringList &arguments)
 
 void QMAWidget::updateScene()
 {
-    MMDAI::Option *option = m_controller->getOption();
     const QRect rectangle(geometry());
     const QPoint point = mapFromGlobal(QCursor::pos());
     double intervalFrame = m_sceneFrameTimer.getInterval();
-    double stepMax = option->getBulletFps();
+    double stepMax = m_preference->getInt(MMDAI::kPreferenceBulletFPS);
     double stepFrame = 30.0 / stepMax;
     double restFrame = intervalFrame;
     double adjustFrame = 0.0, procFrame = 0.0;
@@ -262,8 +263,6 @@ void QMAWidget::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event);
     if (!m_sceneUpdateTimer.isActive()) {
-        QString path = QDir::searchPaths("mmdai").at(0) + "/MMDAI.mdf";
-        m_controller->getOption()->load(path.toUtf8().constData());
         m_controller->initializeScreen(width(), height());
         m_controller->updateLight();
         loadPlugins();
@@ -319,12 +318,10 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
             y += (USHRT_MAX + 1);
         Qt::KeyboardModifiers modifiers = event->modifiers();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            float *f = m_controller->getOption()->getLightDirection();
-            btVector3 v = btVector3(f[0], f[1], f[2]);
-            btMatrix3x3 matrix = btMatrix3x3(
-                    btQuaternion(0, y * 0.007f, 0.0) *
-                    btQuaternion(x * 0.007f, 0, 0)
-                    );
+            float direction[4];
+            m_preference->getFloat4(MMDAI::kPreferenceLightDirection, direction);
+            btVector3 v = btVector3(direction[0], direction[1], direction[2]);
+            btMatrix3x3 matrix = btMatrix3x3(btQuaternion(0, y * 0.007f, 0.0) * btQuaternion(x * 0.007f, 0, 0));
             v = v * matrix;
             m_controller->changeLightDirection(v.x(), v.y(), v.z());
         }

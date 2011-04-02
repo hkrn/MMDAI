@@ -39,7 +39,9 @@
 
 #include <QtGui/QtGui>
 
-#include <MMDAI/MMDAI.h>
+#include <MMDAI/CommandParser.h>
+#include <MMDAI/Preference.h>
+#include <MMDAI/SceneEventHandler.h>
 
 #include "QMAModelLoaderFactory.h"
 #include "QMAPlugin.h"
@@ -48,7 +50,11 @@
 /* to load glee correctly, should include QtOpenGL after MMDAI/MMDME */
 #include <QtOpenGL>
 
-#define MAX_MODEL 20
+namespace MMDAI {
+class PMDObject;
+class Preference;
+class SceneController;
+}
 
 enum QMAWidgetZoomOption {
     Normal = 0x0,
@@ -61,7 +67,7 @@ class QMAWidget : public QGLWidget, public MMDAI::SceneEventHandler
     Q_OBJECT
 
 public:
-    explicit QMAWidget(QWidget *parent = 0);
+    explicit QMAWidget(MMDAI::Preference *preference, QWidget *parent = 0);
     ~QMAWidget();
 
     void handleEventMessage(const char *eventType, int argc, ...);
@@ -119,6 +125,7 @@ private:
     QMAModelLoaderFactory m_factory;
     QMATimer m_sceneFrameTimer;
     QTimer m_sceneUpdateTimer;
+    MMDAI::Preference *m_preference;
     MMDAI::SceneController *m_controller;
     MMDAI::CommandParser m_parser;
 

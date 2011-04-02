@@ -41,25 +41,33 @@
 #include <QSettings>
 #include <QVariant>
 
-class QMAPreference : MMDAI::Preference
+class QMAPreference : public MMDAI::Preference
 {
 public:
     QMAPreference(QSettings *settings);
     ~QMAPreference();
 
     void load();
-    const bool getBool(const PreferenceKeys key);
-    const int getInt(const PreferenceKeys key);
-    const float getFloat(const PreferenceKeys key);
-    void  getFloat3(const PreferenceKeys key, float *values);
-    void  getFloat4(const PreferenceKeys key, float *values);
-    void  setBool(const PreferenceKeys key, bool value);
-    void  setInt(const PreferenceKeys key, int value);
-    void  setFloat(const PreferenceKeys key, float value);
-    void  setFloat3(const PreferenceKeys key, float *values);
-    void  setFloat4(const PreferenceKeys key, float *values);
+    bool getBool(const MMDAI::PreferenceKeys key);
+    int getInt(const MMDAI::PreferenceKeys key);
+    float getFloat(const MMDAI::PreferenceKeys key);
+    void  getFloat3(const MMDAI::PreferenceKeys key, float *values);
+    void  getFloat4(const MMDAI::PreferenceKeys key, float *values);
+    void  setBool(const MMDAI::PreferenceKeys key, bool value);
+    void  setInt(const MMDAI::PreferenceKeys key, int value);
+    void  setFloat(const MMDAI::PreferenceKeys key, float value);
+    void  setFloat3(const MMDAI::PreferenceKeys key, float *values);
+    void  setFloat4(const MMDAI::PreferenceKeys key, float *values);
 
 private:
+    bool validateBoolKey(const MMDAI::PreferenceKeys key);
+    bool validateIntKey(const MMDAI::PreferenceKeys key);
+    bool validateFloatKey(const MMDAI::PreferenceKeys key);
+    bool validateFloat3Key(const MMDAI::PreferenceKeys key);
+    bool validateFloat4Key(const MMDAI::PreferenceKeys key);
+    QVariant getDefaultValue(const MMDAI::PreferenceKeys key);
+    void round(const MMDAI::PreferenceKeys key, QVariant &value);
+
     QSettings *m_settings;
     QHash<MMDAI::PreferenceKeys, QVariant> m_values;
 };
