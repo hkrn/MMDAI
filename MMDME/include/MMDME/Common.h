@@ -151,11 +151,6 @@ inline void MMDAIMemoryRelease(void *ptr)
         free(ptr);
 }
 
-/* disable _CRT_SECURE_NO_WARNINGS for MSVC */
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE
-#endif
-
 inline size_t MMDAIStringLength(const char *str)
 {
     assert(str != NULL);
@@ -200,8 +195,6 @@ inline char *MMDAIStringGetToken(char *str, const char *delim, char **ptr)
     return strtok_r(str, delim, ptr);
 #endif
 }
-
-#undef _CRT_SECURE_NO_DEPRECATE
 
 inline int MMDAIStringFormat(char *str, size_t n, const char *format, ...)
 {

@@ -401,13 +401,14 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
     m_boneCtrlList = static_cast<MotionControllerBoneElement *>(MMDAIMemoryAllocate(sizeof(MotionControllerBoneElement) * m_numBoneCtrl));
     /* check all bone definitions in vmd to match the pmd, and store if match */
     m_numBoneCtrl = 0;
+    const char *centerBoneName = getCenterBoneName();
     for (bmlink = vmd->getBoneMotionLink(); bmlink; bmlink = bmlink->next) {
         bm = &(bmlink->boneMotion);
         if ((b = pmd->getBone(bm->name))) {
             m_boneCtrlList[m_numBoneCtrl].bone = b;
             m_boneCtrlList[m_numBoneCtrl].motion = bm;
             m_numBoneCtrl++;
-            if (bm->numKeyFrame > 1 && MMDAIStringEquals(bm->name, kCenterBoneName)) {
+            if (bm->numKeyFrame > 1 && MMDAIStringEquals(bm->name, centerBoneName)) {
                 /* This motion has more than 1 key frames for Center Bone, so need re-location */
                 m_hasCenterBoneMotion = true;
             }
@@ -551,6 +552,12 @@ double MotionController::getCurrentFrame() const
 void MotionController::setCurrentFrame(double frame)
 {
     m_currentFrame = frame;
+}
+
+const char *MotionController::getCenterBoneName()
+{
+    static unsigned const char name[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
+    return reinterpret_cast<const char *>(name);
 }
 
 } /* namespace */

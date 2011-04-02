@@ -49,8 +49,6 @@
 
 namespace MMDAI {
 
-const char kCenterBoneName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
-
 typedef struct _MotionControllerBoneElement {
     PMDBone *bone;
     BoneMotion *motion;
@@ -74,6 +72,7 @@ class MotionController
 public:
     static const float kBoneStartMarginFrame;
     static const float kFaceStartMarginFrame;
+    static const char *getCenterBoneName();
 
     MotionController();
     ~MotionController();

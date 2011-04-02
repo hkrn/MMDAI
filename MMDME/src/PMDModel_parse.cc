@@ -172,7 +172,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         m_bone1List[i] = fv->boneID[0];
         m_bone2List[i] = fv->boneID[1];
         m_boneWeight1[i] = fv->boneWeight1 * 0.01f;
-        m_noEdgeFlag[i] = fv->noEdgeFlag;
+        m_noEdgeFlag[i] = fv->noEdgeFlag == 1;
     }
     ptr += sizeof(PMDFile_Vertex) * m_numVertex;
     rest -= sizeof(PMDFile_Vertex) * m_numVertex;
@@ -234,11 +234,12 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     }
 
     fileBone = reinterpret_cast<PMDFile_Bone *>(ptr);
+    const char *centerBoneName = MotionController::getCenterBoneName();
     for (uint32_t i = 0; i < m_numBone; i++) {
         PMDBone *bone = &m_boneList[i];
         if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
             ret = false;
-        if (MMDAIStringEquals(bone->getName(), kCenterBoneName))
+        if (MMDAIStringEquals(bone->getName(), centerBoneName))
             m_centerBone = bone;
     }
     if (!m_centerBone && m_numBone >= 1) {
