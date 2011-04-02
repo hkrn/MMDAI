@@ -112,8 +112,9 @@ public:
 private:
 };
 
-GLSceneRenderEngine::GLSceneRenderEngine()
-    : m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
+GLSceneRenderEngine::GLSceneRenderEngine(Preference *preference)
+    : m_preference(preference),
+    m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
     m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
     m_shadowMapAutoViewRadius(0.0f),
     m_boxList(0),
@@ -122,7 +123,6 @@ GLSceneRenderEngine::GLSceneRenderEngine()
     m_fboID(0),
     m_boxListEnabled(false),
     m_sphereListEnabled(false),
-    m_enableShadowMapping(false),
     m_overrideModelViewMatrix(false),
     m_overrideProjectionMatrix(false),
     m_shadowMapInitialized(false)
@@ -909,12 +909,11 @@ void GLSceneRenderEngine::deleteCache(PMDRenderCacheNative **ptr)
 }
 
 /* setup: initialize and setup Renderer */
-bool GLSceneRenderEngine::setup(float *campusColor,
-                                bool useShadowMapping,
-                                int shadowMapTextureSize,
-                                bool shadowMapLightFirst)
+bool GLSceneRenderEngine::setup()
 {
     /* set clear color */
+    float campusColor[3];
+    m_preference->getFloat3(kPreferenceCampusColor, campusColor);
     glClearColor(campusColor[0], campusColor[1], campusColor[2], 0.0f);
     glClearStencil(0);
 
@@ -942,13 +941,13 @@ bool GLSceneRenderEngine::setup(float *campusColor,
     glEnable(GL_LIGHTING);
 
     /* initialization for shadow mapping */
-    setShadowMapping(useShadowMapping, shadowMapTextureSize, shadowMapLightFirst);
+    setShadowMapping();
 
     return true;
 }
 
 /* GLSceneRenderEngine::initializeShadowMap: initialize OpenGL for shadow mapping */
-void GLSceneRenderEngine::initializeShadowMap(int shadowMapTextureSize)
+void GLSceneRenderEngine::initializeShadowMap()
 {
     static const GLdouble genfunc[][4] = {
         { 1.0, 0.0, 0.0, 0.0 },
@@ -969,6 +968,7 @@ void GLSceneRenderEngine::initializeShadowMap(int shadowMapTextureSize)
     glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
 
     /* assign depth component to the texture */
+    int shadowMapTextureSize = m_preference->getInt(kPreferenceShadowMappingTextureSize);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapTextureSize, shadowMapTextureSize, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
 
     /* set texture parameters for shadow mapping */
@@ -1028,21 +1028,19 @@ void GLSceneRenderEngine::initializeShadowMap(int shadowMapTextureSize)
 }
 
 /* GLSceneRenderEngine::setShadowMapping: switch shadow mapping */
-void GLSceneRenderEngine::setShadowMapping(bool flag, int shadowMapTextureSize, bool shadowMapLightFirst)
+void GLSceneRenderEngine::setShadowMapping()
 {
-    m_enableShadowMapping = flag;
-
-    if (m_enableShadowMapping) {
+    if (m_preference->getBool(kPreferenceUseShadowMapping)) {
         /* enabled */
-        if (! m_shadowMapInitialized) {
+        if (!m_shadowMapInitialized) {
             /* initialize now */
-            initializeShadowMap(shadowMapTextureSize);
+            initializeShadowMap();
             m_shadowMapInitialized = true;
         }
         /* set how to set the comparison result value of R coordinates and texture (depth) value */
         glActiveTextureARB(GL_TEXTURE3_ARB);
         glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
-        if (shadowMapLightFirst) {
+        if (m_preference->getBool(kPreferenceShadowMappingLightFirst)) {
             /* when Renderering order is light(full) - dark(shadow part), OpenGL should set the shadow part as true */
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
         } else {
@@ -1065,11 +1063,14 @@ void GLSceneRenderEngine::setShadowMapping(bool flag, int shadowMapTextureSize, 
 }
 
 /* GLSceneRenderEngine::RendererSceneShadowMap: shadow mapping */
-void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMDObject **objects, int size)
+void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, Stage *stage)
 {
     int i = 0;
     static GLfloat lightdim[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     static const GLfloat lightblk[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    const float shadowMappingSelfDensity = m_preference->getFloat(kPreferenceShadowMappingSelfDensity);
+    const bool shadowMappingLightFirst = m_preference->getBool(kPreferenceShadowMappingLightFirst);
+    const bool useCartoonRendering = m_preference->getBool(kPreferenceUseCartoonRendering);
 
     /* Renderer the full scene */
     /* set model view matrix, as the same as normal Renderering */
@@ -1077,7 +1078,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
     applyModelViewMatrix();
 
     /* Renderer the whole scene */
-    if (option->getShadowMappingLightFirst()) {
+    if (m_preference->getBool(kPreferenceShadowMappingLightFirst)) {
         /* Renderer light setting, later Renderer only the shadow part with dark setting */
         stage->renderBackground();
         stage->renderFloor();
@@ -1092,7 +1093,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
     } else {
         /* Renderer in dark setting, later Renderer only the non-shadow part with light setting */
         /* light setting for non-toon objects */
-        lightdim[0] = lightdim[1] = lightdim[2] = 0.55f - 0.2f * option->getShadowMappingSelfDensity();
+        lightdim[0] = lightdim[1] = lightdim[2] = 0.55f - 0.2f * shadowMappingSelfDensity;
         glLightfv(GL_LIGHT0, GL_DIFFUSE, lightdim);
         glLightfv(GL_LIGHT0, GL_AMBIENT, lightdim);
         glLightfv(GL_LIGHT0, GL_SPECULAR, lightblk);
@@ -1112,12 +1113,8 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
 
         /* for toon objects, they should apply the model-defined toon texture color at texture coordinates (0, 0) for shadow Renderering */
         /* so restore the light setting */
-        if (option->getUseCartoonRendering())
-            updateLighting(true,
-                           option->getUseMMDLikeCartoon(),
-                           option->getLightDirection(),
-                           option->getLightIntensity(),
-                           option->getLightColor());
+        if (useCartoonRendering)
+            updateLighting();
         /* Renderer the toon objects */
         for (i = 0; i < size; i++) {
             PMDObject *object = objects[i];
@@ -1127,7 +1124,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
             if (!model->getToonFlag())
                 continue;
             /* set texture coordinates for shadow mapping */
-            model->updateShadowColorTexCoord(option->getShadowMappingSelfDensity());
+            model->updateShadowColorTexCoord(shadowMappingSelfDensity);
             /* tell model to Renderer with the shadow corrdinates */
             model->setSelfShadowDrawing(true);
             /* Renderer model and edge */
@@ -1136,8 +1133,8 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
             /* disable shadow Renderering */
             model->setSelfShadowDrawing(false);
         }
-        if (!option->getUseCartoonRendering())
-            updateLighting(false, option->getUseMMDLikeCartoon(), option->getLightDirection(), option->getLightIntensity(), option->getLightColor());
+        if (!useCartoonRendering)
+            updateLighting();
     }
 
     /* Renderer the part clipped by the depth texture */
@@ -1174,12 +1171,12 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
     /* set depth func to allow overwrite for the same surface in the following Renderering */
     glDepthFunc(GL_LEQUAL);
 
-    if (option->getShadowMappingLightFirst()) {
+    if (shadowMappingLightFirst) {
         /* the area clipped by depth texture by alpha test is dark part */
         glAlphaFunc(GL_GEQUAL, 0.1f);
 
         /* light setting for non-toon objects */
-        lightdim[0] = lightdim[1] = lightdim[2] = 0.55f - 0.2f * option->getShadowMappingSelfDensity();
+        lightdim[0] = lightdim[1] = lightdim[2] = 0.55f - 0.2f * shadowMappingSelfDensity;
         glLightfv(GL_LIGHT0, GL_DIFFUSE, lightdim);
         glLightfv(GL_LIGHT0, GL_AMBIENT, lightdim);
         glLightfv(GL_LIGHT0, GL_SPECULAR, lightblk);
@@ -1199,12 +1196,8 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
 
         /* for toon objects, they should apply the model-defined toon texture color at texture coordinates (0, 0) for shadow Renderering */
         /* so restore the light setting */
-        if (option->getUseCartoonRendering())
-            updateLighting(true,
-                           option->getUseMMDLikeCartoon(),
-                           option->getLightDirection(),
-                           option->getLightIntensity(),
-                           option->getLightColor());
+        if (useCartoonRendering)
+            updateLighting();
         /* Renderer the toon objects */
         for (i = 0; i < size; i++) {
             PMDObject *object = objects[i];
@@ -1214,7 +1207,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
             if (!model->getToonFlag())
                 continue;
             /* set texture coordinates for shadow mapping */
-            model->updateShadowColorTexCoord(option->getShadowMappingSelfDensity());
+            model->updateShadowColorTexCoord(shadowMappingSelfDensity);
             /* tell model to Renderer with the shadow corrdinates */
             model->setSelfShadowDrawing(true);
             /* Renderer model and edge */
@@ -1222,12 +1215,8 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
             /* disable shadow Renderering */
             model->setSelfShadowDrawing(false);
         }
-        if (!option->getUseCartoonRendering())
-            updateLighting(false,
-                           option->getUseMMDLikeCartoon(),
-                           option->getLightDirection(),
-                           option->getLightIntensity(),
-                           option->getLightColor());
+        if (!useCartoonRendering)
+            updateLighting();
     } else {
         /* the area clipped by depth texture by alpha test is light part */
         glAlphaFunc(GL_GEQUAL, 0.001f);
@@ -1255,10 +1244,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(Option *option, Stage *stage, PMD
 }
 
 /* GLSceneRenderEngine::RendererScene: Renderer scene */
-void GLSceneRenderEngine::renderScene(Option *option,
-                                      Stage *stage,
-                                      PMDObject **objects,
-                                      int size)
+void GLSceneRenderEngine::renderScene(PMDObject **objects, int size, Stage *stage)
 {
     int i = 0;
 
@@ -1303,7 +1289,7 @@ void GLSceneRenderEngine::renderScene(Option *option,
     /* if stencil is 2, Renderer shadow with blend on */
     glStencilFunc(GL_EQUAL, 2, ~0);
     glDisable(GL_LIGHTING);
-    glColor4f(0.1f, 0.1f, 0.1f, option->getShadowMappingSelfDensity());
+    glColor4f(0.1f, 0.1f, 0.1f, m_preference->getFloat(kPreferenceShadowMappingSelfDensity));
     glDisable(GL_DEPTH_TEST);
     stage->renderFloor();
     glEnable(GL_DEPTH_TEST);
@@ -1322,11 +1308,9 @@ void GLSceneRenderEngine::renderScene(Option *option,
     }
 }
 
-void GLSceneRenderEngine::prerender(Option *option,
-                                    PMDObject **objects,
-                                    int size)
+void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
 {
-    if (m_enableShadowMapping) {
+    if (m_preference->getBool(kPreferenceUseShadowMapping)) {
         int i = 0;
         GLint viewport[4]; /* store viewport */
         GLdouble projection[16]; /* store projection transform */
@@ -1351,7 +1335,8 @@ void GLSceneRenderEngine::prerender(Option *option,
         glClear(GL_DEPTH_BUFFER_BIT);
 
         /* set the viewport to the required texture size */
-        glViewport(0, 0, option->getShadowMappingTextureSize(), option->getShadowMappingTextureSize());
+        const int shadowMappingTextureSize = m_preference->getInt(kPreferenceShadowMappingTextureSize);
+        glViewport(0, 0, shadowMappingTextureSize, shadowMappingTextureSize);
 
         /* reset the projection matrix */
         glMatrixMode(GL_PROJECTION);
@@ -1439,15 +1424,12 @@ void GLSceneRenderEngine::prerender(Option *option,
 }
 
 /* GLSceneRenderEngine::render: Render all */
-void GLSceneRenderEngine::render(Option *option,
-                                 Stage *stage,
-                                 PMDObject **objects,
-                                 int size)
+void GLSceneRenderEngine::render(PMDObject **objects, int size, Stage *stage)
 {
-    if (m_enableShadowMapping)
-        renderSceneShadowMap(option, stage, objects, size);
+    if (m_preference->getBool(kPreferenceUseShadowMapping))
+        renderSceneShadowMap(objects, size, stage);
     else
-        renderScene(option, stage, objects, size);
+        renderScene(objects, size, stage);
 }
 
 /* GLSceneRenderEngine::pickModel: pick up a model at the screen position */
@@ -1537,49 +1519,50 @@ int GLSceneRenderEngine::pickModel(PMDObject **objects,
 }
 
 /* GLSceneRenderEngine::updateLigithing: update light */
-void GLSceneRenderEngine::updateLighting(bool useCartoonRendering,
-                                         bool useMMDLikeCartoon,
-                                         float *lightDirection,
-                                         float lightIntensy,
-                                         float *lightColor)
+void GLSceneRenderEngine::updateLighting()
 {
-    float fLightDif[4];
-    float fLightSpc[4];
-    float fLightAmb[4];
-    int i;
-    float d, a, s;
+    const float lightIntensity = m_preference->getFloat(kPreferenceLightIntensity);
+    float lightColor[3];
+    float lightDirection[4];
+    float lightDiffuse[4];
+    float lightSpecular[4];
+    float lightAmbient[4];
+    int i = 0;
+    float diffuse = 0, ambinet = 0, specular = 0;
 
-    if (!useMMDLikeCartoon) {
+    m_preference->getFloat3(kPreferenceLightColor, lightColor);
+    m_preference->getFloat4(kPreferenceLightDirection, lightDirection);
+    if (!m_preference->getBool(kPreferenceUseMMDLikeCartoon)) {
         /* MMDAgent original cartoon */
-        d = 0.2f;
-        a = lightIntensy * 2.0f;
-        s = 0.4f;
-    } else if (useCartoonRendering) {
+        diffuse = 0.2f;
+        ambinet = lightIntensity * 2.0f;
+        specular = 0.4f;
+    } else if (m_preference->getBool(kPreferenceUseCartoonRendering)) {
         /* like MikuMikuDance */
-        d = 0.0f;
-        a = lightIntensy * 2.0f;
-        s = lightIntensy;
+        diffuse = 0.0f;
+        ambinet = lightIntensity * 2.0f;
+        specular = lightIntensity;
     } else {
         /* no toon */
-        d = lightIntensy;
-        a = 1.0f;
-        s = 1.0f; /* OpenGL default */
+        diffuse = lightIntensity;
+        ambinet = 1.0f;
+        specular = 1.0f; /* OpenGL default */
     }
 
     for (i = 0; i < 3; i++)
-        fLightDif[i] = lightColor[i] * d;
-    fLightDif[3] = 1.0f;
+        lightDiffuse[i] = lightColor[i] * diffuse;
+    lightDiffuse[3] = 1.0f;
     for (i = 0; i < 3; i++)
-        fLightAmb[i] = lightColor[i] * a;
-    fLightAmb[3] = 1.0f;
+        lightAmbient[i] = lightColor[i] * ambinet;
+    lightAmbient[3] = 1.0f;
     for (i = 0; i < 3; i++)
-        fLightSpc[i] = lightColor[i] * s;
-    fLightSpc[3] = 1.0f;
+        lightSpecular[i] = lightColor[i] * specular;
+    lightSpecular[3] = 1.0f;
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightDirection);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, fLightDif);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, fLightAmb);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, fLightSpc);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 
     /* update light direction vector */
     m_lightVec = btVector3(lightDirection[0], lightDirection[1], lightDirection[2]);

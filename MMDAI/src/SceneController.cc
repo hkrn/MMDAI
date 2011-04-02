@@ -117,11 +117,11 @@ static int getNumDigit(int in)
     return out;
 }
 
-SceneController::SceneController(SceneEventHandler *handler)
+SceneController::SceneController(SceneEventHandler *handler, Preference *preference)
 #if defined(OPENGLES1)
-    : m_engine(new GLES1SceneRenderEngine()),
+    : m_engine(new GLES1SceneRenderEngine(preference)),
 #else
-    : m_engine(new GLSceneRenderEngine()),
+    : m_engine(new GLSceneRenderEngine(preference)),
 #endif
     m_objects(new PMDObject*[MAX_MODEL]),
     m_highlightModel(0),
@@ -160,16 +160,12 @@ SceneController::~SceneController()
 void SceneController::updateLight()
 {
     int i = 0;
-    float *f;
+    float direction[3];
     btVector3 l;
-    m_engine->updateLighting(m_option.getUseCartoonRendering(),
-                             m_option.getUseMMDLikeCartoon(),
-                             m_option.getLightDirection(),
-                             m_option.getLightIntensity(),
-                             m_option.getLightColor());
-    f = m_option.getLightDirection();
-    m_stage->updateShadowMatrix(f);
-    l = btVector3(f[0], f[1], f[2]);
+    m_engine->updateLighting();
+    m_preference->getFloat3(kPreferenceLightDirection, direction);
+    m_stage->updateShadowMatrix(direction);
+    l = btVector3(direction[0], direction[1], direction[2]);
     for (i = 0; i < m_numModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable())
@@ -435,8 +431,10 @@ bool SceneController::addModel(const char *modelAlias,
     bool forcedPosition = false;
     PMDBone *assignBone = NULL;
     PMDObject *assignObject = NULL, *newObject = NULL;
-    float *l = m_option.getLightDirection();
-    btVector3 light = btVector3(l[0], l[1], l[2]);
+    float direction[3];
+    
+    m_preference->getFloat3(kPreferenceLightDirection, direction);
+    btVector3 light = btVector3(direction[0], direction[1], direction[2]);
 
     /* set */
     if (pos)
@@ -506,8 +504,8 @@ bool SceneController::addModel(const char *modelAlias,
                          assignBone,
                          assignObject,
                          &m_bullet,
-                         m_option.getUseCartoonRendering(),
-                         m_option.getCartoonEdgeWidth(),
+                         m_preference->getBool(kPreferenceUseCartoonRendering),
+                         m_preference->getFloat(kPreferenceCartoonEdgeWidth),
                          &light)) {
         MMDAILogWarn("addModel: failed to load %s.", modelLoader->getLocation());
         newObject->release();
@@ -532,12 +530,14 @@ bool SceneController::changeModel(PMDObject *object,
                                   PMDModelLoader *modelLoader,
                                   LipSyncLoader *lipSyncLoader)
 {
-    int i;
-    MotionPlayer *motionPlayer;
-    double currentFrame;
-    float *l = m_option.getLightDirection();
+    MotionPlayer *motionPlayer = NULL;
+    int i = 0;
+    double currentFrame = 0;
     const char *modelAlias = object->getAlias();
-    btVector3 light = btVector3(l[0], l[1], l[2]);
+    float direction[3];
+    
+    m_preference->getFloat3(kPreferenceLightDirection, direction);
+    btVector3 light = btVector3(direction[0], direction[1], direction[2]);
 
     /* load model */
     if (!object->load(modelLoader,
@@ -548,8 +548,8 @@ bool SceneController::changeModel(PMDObject *object,
                       NULL,
                       NULL,
                       &m_bullet,
-                      m_option.getUseCartoonRendering(),
-                      m_option.getCartoonEdgeWidth(),
+                      m_preference->getBool(kPreferenceUseCartoonRendering),
+                      m_preference->getFloat(kPreferenceCartoonEdgeWidth),
                       &light)) {
         MMDAILogWarn("changeModel: failed to load model %s.", modelLoader->getLocation());
         return false;
@@ -605,13 +605,8 @@ void SceneController::deleteModel(PMDObject *object)
 /* SceneController::changeLightDirection: change light direction */
 void SceneController::changeLightDirection(float x, float y, float z)
 {
-    float f[4];
-
-    f[0] = x;
-    f[1] = y;
-    f[2] = z;
-    f[3] = 0.0f;
-    m_option.setLightDirection(f);
+    float f[4] = { x, y, z, 0.0f };
+    m_preference->setFloat4(kPreferenceLightDirection, f);
     updateLight();
 
     /* send event message */
@@ -625,12 +620,8 @@ void SceneController::changeLightDirection(float x, float y, float z)
 /* SceneController::changeLightColor: change light color */
 void SceneController::changeLightColor(float r, float g, float b)
 {
-    float f[3];
-
-    f[0] = r;
-    f[1] = g;
-    f[2] = b;
-    m_option.setLightColor(f);
+    float f[3] = { r, g, b };
+    m_preference->setFloat3(kPreferenceLightDirection, f);
     updateLight();
 
     /* send event message */
@@ -874,14 +865,13 @@ bool SceneController::stopLipSync(PMDObject *object)
 
 void SceneController::initializeScreen(int width, int height)
 {
+    float size[3];
     m_width = width;
     m_height = height;
-    m_bullet.setup(m_option.getBulletFps());
-    m_engine->setup(m_option.getCampusColor(),
-                    m_option.getUseShadowMapping(),
-                    m_option.getShadowMappingTextureSize(),
-                    m_option.getShadowMappingLightFirst());
-    m_stage->setSize(m_option.getStageSize(), 1.0f, 1.0f);
+    m_bullet.setup(m_preference->getInt(kPreferenceBulletFPS));
+    m_engine->setup();
+    m_preference->getFloat3(kPreferenceStageSize, size);
+    m_stage->setSize(size, 1.0f, 1.0f);
 }
 
 void SceneController::resetLocation(const float *trans, const float *rot, const float scale)
@@ -900,9 +890,8 @@ void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
 
 void SceneController::setShadowMapping(bool value)
 {
-    m_engine->setShadowMapping(value,
-                               m_option.getShadowMappingTextureSize(),
-                               m_option.getShadowMappingLightFirst());
+    (void) value;
+    m_engine->setShadowMapping();
 }
 
 float SceneController::getScale() const
@@ -1069,7 +1058,7 @@ void SceneController::updateAfterSimulation()
 void SceneController::updateDepthTextureViewParam()
 {
     /* calculate rendering range for shadow mapping */
-    if (m_option.getUseShadowMapping()) {
+    if (m_preference->getBool(kPreferenceUseShadowMapping)) {
         int num = m_numModel;
         float d = 0, dmax = 0;
         float *r = new float[num];
@@ -1195,12 +1184,12 @@ void SceneController::setModelViewMatrix(float modelView[16])
 
 void SceneController::prerenderScene()
 {
-    m_engine->prerender(&m_option, m_objects, m_numModel);
+    m_engine->prerender(m_objects, m_numModel);
 }
 
 void SceneController::renderScene()
 {
-    m_engine->render(&m_option, m_stage, m_objects, m_numModel);
+    m_engine->render(m_objects, m_numModel, m_stage);
 }
 
 void SceneController::renderBulletForDebug()
@@ -1216,11 +1205,6 @@ void SceneController::renderPMDObjectsForDebug()
             object->renderDebug();
         }
     }
-}
-
-Option *SceneController::getOption()
-{
-    return &m_option;
 }
 
 Stage *SceneController::getStage()

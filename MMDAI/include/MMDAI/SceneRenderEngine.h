@@ -41,12 +41,9 @@
 
 #include <MMDME/PMDRenderEngine.h>
 
-class btConvexShape;
-
 namespace MMDAI {
 
 class BulletPhysics;
-class Option;
 class PMDBone;
 class PMDModel;
 class PMDModelLoader;
@@ -80,21 +77,14 @@ public:
                                    PMDRenderCacheNative **ptr) = 0;
     virtual void deleteCache(PMDRenderCacheNative **ptr) = 0;
 
-    virtual bool setup(float *campusColor,
-                       bool useShadowMapping,
-                       int shadowMapTextureSize,
-                       bool shadowMapLightFirst) = 0;
-    virtual void initializeShadowMap(int shadowMapTextureSize) = 0;
-    virtual void setShadowMapping(bool flag,
-                                  int shadowMapTextureSize,
-                                  bool shadowMapLightFirst) = 0;
-    virtual void prerender(Option *option,
-                           PMDObject **objects,
+    virtual bool setup() = 0;
+    virtual void initializeShadowMap() = 0;
+    virtual void setShadowMapping() = 0;
+    virtual void prerender(PMDObject **objects,
                            int size) = 0;
-    virtual void render(Option *option,
-                        Stage *stage,
-                        PMDObject **objects,
-                        int size) = 0;
+    virtual void render(PMDObject **objects,
+                        int size,
+                        Stage *stage) = 0;
     virtual int pickModel(PMDObject **objects,
                           int size,
                           int x,
@@ -103,11 +93,7 @@ public:
                           int height,
                           double scale,
                           int *allowDropPicked) = 0;
-    virtual void updateLighting(bool useCartoonRendering,
-                                bool useMMDLikeCartoon,
-                                float *lightDirection,
-                                float lightIntensy,
-                                float *lightColor) = 0;
+    virtual void updateLighting() = 0;
     virtual void updateProjectionMatrix(const int width,
                                         const int height,
                                         const double scale) = 0;

@@ -56,12 +56,12 @@ class btConvexShape;
 namespace MMDAI {
 
   class BulletPhysics;
-  class Option;
   class PMDBone;
   class PMDModel;
   class PMDModelLoader;
   class PMDObject;
   class PMDTexture;
+  class Preference;
   class Stage;
 
   struct PMDTextureNative {
@@ -74,7 +74,7 @@ namespace MMDAI {
 
   class GLSceneRenderEngine : public SceneRenderEngine {
   public:
-    GLSceneRenderEngine();
+    GLSceneRenderEngine(Preference *preference);
     ~GLSceneRenderEngine();
 
     PMDModel *allocateModel();
@@ -112,21 +112,11 @@ namespace MMDAI {
     void deleteCache(PMDRenderCacheNative **ptr);
     void optimize(PMDModel *model);
 
-    bool setup(float *campusColor,
-               bool useShadowMapping,
-               int shadowMapTextureSize,
-               bool shadowMapLightFirst);
-    void initializeShadowMap(int shadowMapTextureSize);
-    void setShadowMapping(bool flag,
-                          int shadowMapTextureSize,
-                          bool shadowMapLightFirst);
-    void prerender(Option *option,
-                   PMDObject **objects,
-                   int size);
-    void render(Option *option,
-                Stage *stage,
-                PMDObject **objects,
-                int size);
+    bool setup();
+    void initializeShadowMap();
+    void setShadowMapping();
+    void prerender(PMDObject **objects, int size);
+    void render(PMDObject **objects, int size, Stage *stage);
     int pickModel(PMDObject **objects,
                   int size,
                   int x,
@@ -135,11 +125,7 @@ namespace MMDAI {
                   int height,
                   double scale,
                   int *allowDropPicked);
-    void updateLighting(bool useCartoonRendering,
-                        bool useMMDLikeCartoon,
-                        float *lightDirection,
-                        float lightIntensy,
-                        float *lightColor);
+    void updateLighting();
     void updateProjectionMatrix(const int width,
                                 const int height,
                                 const double scale);
@@ -159,15 +145,10 @@ namespace MMDAI {
     void drawSphere(int lats, int longs);
     void drawConvex(btConvexShape *shape);
 
-    void renderSceneShadowMap(Option *option,
-                              Stage *stage,
-                              PMDObject **objects,
-                              int size);
-    void renderScene(Option *option,
-                     Stage *stage,
-                     PMDObject **objects,
-                     int size);
+    void renderSceneShadowMap(PMDObject **objects, int size, Stage * stage);
+    void renderScene(PMDObject **objects, int size, Stage *stage);
 
+    Preference *m_preference;
     btVector3 m_lightVec;                  /* light vector for shadow maapping */
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
@@ -183,7 +164,6 @@ namespace MMDAI {
     GLuint m_fboID;
     bool m_boxListEnabled;
     bool m_sphereListEnabled;
-    bool m_enableShadowMapping;            /* true if shadow mapping */
     bool m_overrideModelViewMatrix;
     bool m_overrideProjectionMatrix;
     bool m_shadowMapInitialized;           /* true if initialized */

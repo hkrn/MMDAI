@@ -44,7 +44,6 @@
 #include <MMDME/MMDME.h>
 
 #include "MMDAI/MotionStocker.h"
-#include "MMDAI/Option.h"
 #include "MMDAI/Stage.h"
 
 #define RENDER_VIEWPOINT_FRUSTUM_NEAR 5.0f
@@ -58,13 +57,14 @@ namespace MMDAI {
 
 class LipSyncLoader;
 class PMDObject;
+class Preference;
 class SceneEventHandler;
 class SceneRenderEngine;
 
 class SceneController
 {
 public:
-    explicit SceneController(SceneEventHandler *handler);
+    SceneController(SceneEventHandler *handler, Preference *preference);
     ~SceneController();
 
     void initializeScreen(int width, int height);
@@ -168,7 +168,6 @@ public:
     void renderLogger();
 
     const char *getConfigPath() const;
-    Option *getOption();
     Stage *getStage();
     int getWidth() const;
     int getHeight() const;
@@ -182,9 +181,9 @@ private:
     BulletPhysics m_bullet;
     SceneRenderEngine *m_engine;
     MotionStocker m_motion;
-    Option m_option;
     PMDObject **m_objects;
     PMDObject *m_highlightModel;
+    Preference *m_preference;
     SceneEventHandler *m_handler;
     Stage *m_stage;
     int m_numModel;

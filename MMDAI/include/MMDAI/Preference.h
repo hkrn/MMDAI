@@ -36,23 +36,63 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDAI_MMDAI_H_
-#define MMDAI_MMDAI_H_
+#ifndef MMDAI_PREFERENCE_H_
+#define MMDAI_PREFERENCE_H_
 
 #include <MMDME/MMDME.h>
 
-#include "MMDAI/BoneController.h"
-#include "MMDAI/CommandParser.h"
-#include "MMDAI/LipSync.h"
-#include "MMDAI/LipSyncLoader.h"
-#include "MMDAI/MotionStocker.h"
-#include "MMDAI/PMDModelLoaderFactory.h"
-#include "MMDAI/PMDObject.h"
-#include "MMDAI/Preference.h"
-#include "MMDAI/SceneController.h"
-#include "MMDAI/SceneEventHandler.h"
-#include "MMDAI/SceneRenderEngine.h"
-#include "MMDAI/Stage.h"
-#include "MMDAI/TileTexture.h"
+namespace MMDAI {
+
+enum PreferenceKeys {
+    kPreferenceUseCartoonRendering,
+    kPreferenceUseMMDLikeCartoon,
+    kPreferenceCartoonEdgeWidth,
+    kPreferenceCartoonEdgeStep,
+    kPreferenceStageSize,
+    kPreferenceShowFPS,
+    kPreferenceFPSPosition,
+    kPreferenceWindowSize,
+    kPreferenceTopMost,
+    kPreferenceFullScreen,
+    kPreferenceLogSize,
+    kPreferenceLogPosition,
+    kPreferenceLogScale,
+    kPreferenceLightDirection,
+    kPreferenceLightIntensity,
+    kPreferenceLightColor,
+    kPreferenceCampusColor,
+    kPreferenceMaxMultiSampling,
+    kPreferenceMaxMultiSamplingColor,
+    kPreferenceMotionAdjustFrame,
+    kPreferenceBulletFPS,
+    kPreferenceRotateStep,
+    kPreferenceTranslateStep,
+    kPreferenceScaleStep,
+    kPreferenceUseShadowMapping,
+    kPreferenceShadowMappingTextureSize,
+    kPreferenceShadowMappingSelfDensity,
+    kPreferenceShadowMappingFloorDensity,
+    kPreferenceShadowMappingLightFirst
+};
+
+class Preference
+{
+public:
+    virtual ~Preference() {};
+
+    virtual const bool getBool(const PreferenceKeys key) = 0;
+    virtual const int getInt(const PreferenceKeys key) = 0;
+    virtual const float getFloat(const PreferenceKeys key) = 0;
+    virtual void  getFloat3(const PreferenceKeys key, float *values) = 0;
+    virtual void  getFloat4(const PreferenceKeys key, float *values) = 0;
+    virtual void  setBool(const PreferenceKeys key, bool value) = 0;
+    virtual void  setInt(const PreferenceKeys key, int value) = 0;
+    virtual void  setInt2(const PreferenceKeys key, int *values) = 0;
+    virtual void  setFloat(const PreferenceKeys key, float value) = 0;
+    virtual void  setFloat3(const PreferenceKeys key, float *values) = 0;
+    virtual void  setFloat4(const PreferenceKeys key, float *values) = 0;
+};
+
+} /* namespace */
 
 #endif
