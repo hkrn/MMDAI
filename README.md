@@ -108,6 +108,8 @@ MMDAI とは MMDAgent からフォークしたプロジェクトです。
 以下が利用可能です。喋らせる文字列は AquesTalk2 に渡す文字列と同様です。
 引数は MMDAgent の OpenJTalk プラグインにあわせています。
 
+※ リップシンクには対応していません
+
 ####  Command
 
   - MMDAI_AQTK2_START(エイリアス名,phontファイルのパス,会話内容)

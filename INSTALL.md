@@ -58,10 +58,14 @@ MSVC 上でビルドする場合はさらに以下の環境変数を設定する
   - MMDAI_JULIUS_LIBRARY_DIR: hts_engine_API.lib があるパスを指定
   - MMDAI_OPENJTALK_LIBRARY_DIR: Open_JTalk.lib があるパスを指定
   - MMDAI_PORTAUDIO_LIBRARY_DIR: PortAudio.lib があるパスを指定
+  - MMDAI_AQUESTALK2_LIBRARY_DIR: AquestTalk2Da.lib があるパスを指定
+  - MMDAI_AQKANJI2KOE_LIBRARY_DIR: AqKanji2Koe.lib があるパスを指定
   - MMDAI_HTS_ENGINE_INCLUDE_DIR: HTS_engine.h があるパスを指定
   - MMDAI_JULIUS_INCLUDE_DIR: julius/julius.h があるパスを指定
   - MMDAI_OPENJTALK_INCLUDE_DIR: njd.h / jpcommon.h などがあるパスを指定
   - MMDAI_PORTAUDIO_INCLUDE_DIR: portaudio.h があるを指定
+  - MMDAI_AQUESTALK2_INCLUDE_DIR: AquestTalk2Da.h があるパスを指定
+  - MMDAI_AQKANJI2KOE_INCLUDE_DIR: AqKanji2Koe.h があるパスを指定
 
 ## Linux か MacOSX でビルドする場合
 
