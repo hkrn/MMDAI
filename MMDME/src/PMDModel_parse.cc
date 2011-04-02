@@ -51,6 +51,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     PMDFile_Vertex *fileVertex = NULL;
     PMDFile_Material *fileMaterial = NULL;
     PMDFile_Bone *fileBone = NULL;
+    const char *centerBoneName = MotionController::getCenterBoneName();
     uint8_t numFaceDisp = 0;
     uint8_t numBoneFrameDisp = 0;
     uint32_t numBoneDisp = 0;
@@ -234,7 +235,6 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     }
 
     fileBone = reinterpret_cast<PMDFile_Bone *>(ptr);
-    const char *centerBoneName = MotionController::getCenterBoneName();
     for (uint32_t i = 0; i < m_numBone; i++) {
         PMDBone *bone = &m_boneList[i];
         if (!bone->setup(&(fileBone[i]), m_boneList, m_numBone, &m_rootBone))
