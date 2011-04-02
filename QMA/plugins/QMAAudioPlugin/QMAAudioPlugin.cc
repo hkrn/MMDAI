@@ -81,7 +81,7 @@ void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &a
     QString alias = arguments.at(0);
     QString filename = arguments.at(1);
     if (!QDir::isAbsolutePath(filename))
-      filename = QDir("mmdai:/").absoluteFilePath(arguments.at(1));
+      filename = QDir("mmdai2resources:/").absoluteFilePath(arguments.at(1));
     Phonon::MediaSource source(filename);
     m_audioSources[alias] = source;
     m_audioObject->enqueue(source);

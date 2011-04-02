@@ -77,12 +77,17 @@ int main(int argc, char *argv[])
         appDir.cdUp();
     }
 #endif
-    QDir::setSearchPaths("mmdai", QStringList(appDir.absolutePath()));
 
-#ifdef Q_OS_MAC
+    const QString applicationPath = appDir.absolutePath();
+    QDir::setSearchPaths("mmdai", QStringList(applicationPath));
+    QDir::setSearchPaths("mmdai2configs", QStringList(applicationPath));
+    QDir::setSearchPaths("mmdai2plugins", QStringList(applicationPath + "/Plugins"));
+    QDir::setSearchPaths("mmdai2resources", QStringList(applicationPath));
+
+#if defined(Q_OS_MAC)
     QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
-    QString dir = appDir.absoluteFilePath("Locales");
+    QString dir = QDir::searchPaths("mmdai2resources")[0] + "/Locales";
 #endif
     qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
     appTranslator.load("QMA_" + locale, dir);

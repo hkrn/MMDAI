@@ -60,9 +60,9 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 void QMAOpenJTalkPlugin::initialize(MMDAI::SceneController *controller)
 {
   Q_UNUSED(controller);
-  m_base = QDir::searchPaths("mmdai").at(0);
+  m_base = QDir::searchPaths("mmdai2resources").at(0);
   m_dir = m_base + "/AppData/Open_JTalk";
-  m_config = QFile("mmdai:MMDAI.ojt").fileName();
+  m_config = QFile("mmdai2configs:MMDAI.ojt").fileName();
 }
 
 void QMAOpenJTalkPlugin::start()

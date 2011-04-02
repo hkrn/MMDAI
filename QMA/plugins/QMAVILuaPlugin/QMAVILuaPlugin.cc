@@ -71,7 +71,7 @@ void QMAVILuaPlugin::initialize(MMDAI::SceneController *controller)
 
 void QMAVILuaPlugin::start()
 {
-  QString path = QFile("mmdai:/MMDAI.lua").fileName();
+  QString path = QFile("mmdai2configs:/MMDAI.lua").fileName();
   int top = lua_gettop(m_state);
   int ret = luaL_dofile(m_state, path.toUtf8().constData());
   if (ret != 0) {

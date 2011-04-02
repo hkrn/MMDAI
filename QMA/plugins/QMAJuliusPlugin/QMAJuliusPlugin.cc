@@ -219,7 +219,7 @@ bool QMAJuliusPlugin::initializeRecognitionEngine()
 {
   char buf[BUFSIZ];
   QByteArray path;
-  QDir dir = QDir::searchPaths("mmdai").at(0) + "/AppData/Julius";
+  QDir dir = QDir::searchPaths("mmdai2resources").at(0) + "/AppData/Julius";
 
   path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8();
   MMDAIStringFormat(buf, sizeof(buf), "-d %s", path.constData());
