@@ -137,9 +137,12 @@ QtMMDAI.exe が出来上がります。
 
   - "Base SDK" を "Latest iOS" に変更する
   - "Architectures" を "Optimized (arm7)" にする
+  - "Other C Flags" と "Other C++ Flags" から "-arch i386" を削除
+    - これを忘れてビルドするとエラー多発で Xcode が固まる危険性大です
   - CTRL + B でビルドを実行
 
-MMDAI 及び MMDME も同じように cmake で Xcode を生成し、SDK の選択を変更する流れで同じです。
+MMDAI 及び MMDME も上記のような流れで同じです。
+使用するアプリケーションで生成した静的ライブラリを組み込んでください。
 
 ## MinGW (現在この方法でビルドは行っていないため、記述が古い)
 
