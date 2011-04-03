@@ -83,6 +83,21 @@ MSVC 上でビルドする場合はさらに以下の環境変数を設定する
     $ qmake
     $ make # MacOSX の場合は xcodebuild
 
+### ディレクトリ構成を変更したい場合 (Linux向け)
+
+QMA/QMACustom.pri.sample を QMA/QMACustom.pri にコピーし、以下の定数を任意のパスに変更します。
+(コンパイルの関係で、定数の値が複雑になっています。値を書き間違えるとコンパイルに失敗します)
+
+  - QMA_CONFIG_PATH
+    - MMDAI.fst や MMDAI.ojt が置かれるディレクトリ
+  - QMA_PLUGIN_PATH
+    - プラグインが置かれるディレクトリ
+  - QMA_RESOURCE_PATH
+    - モデルやモーション、JuliusやOpenJTalkに必要なデータが置かれるディレクトリ
+
+一度 QtMMDAI の Makefile を削除し、qmake を再実行すれば値が反映されます。
+それから再コンパイルを実行してください。
+
 ## MSVC でビルドする場合 (暫定。記述が間違っている箇所があると思われる)
 
 まずは Visual Studio 2008 をインストールする必要があります。Express C++ でも可能です。
