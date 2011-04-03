@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDAI_GLPMDRENDERENGINE_H_
-#define MMDAI_GLPMDRENDERENGINE_H_
+#ifndef MMDAI_GLES1SCENERENDERENGINE_H_
+#define MMDAI_GLES1SCENERENDERENGINE_H_
 
 /* headers */
 #include <OpenGLES/ES1/gl.h>
@@ -49,46 +49,46 @@ class btConvexShape;
 
 namespace MMDAI {
 
-  class BulletPhysics;
-  class Option;
-  class PMDBone;
-  class PMDModel;
-  class PMDObject;
-  class PMDTexture;
-  class Stage;
+class BulletPhysics;
+class Preference;
+class PMDBone;
+class PMDModel;
+class PMDObject;
+class PMDTexture;
+class Stage;
 
-  struct PMDTextureNative {
+struct PMDTextureNative {
     GLuint id;
-  };
+};
 
-  struct PMDRenderCacheNative {
+struct PMDRenderCacheNative {
     GLuint id;
-  };
+};
 
-  class GLES1SceneRenderEngine : public SceneRenderEngine {
-  public:
-    GLES1SceneRenderEngine();
+class GLES1SceneRenderEngine : public SceneRenderEngine {
+public:
+    GLES1SceneRenderEngine(Preference *preference);
     ~GLES1SceneRenderEngine();
-
+    
     PMDModel *allocateModel();
     bool loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet);
     void releaseModel(PMDModel *model);
     PMDMaterial **allocateMaterials(int size);
     void releaseMaterials(PMDMaterial **materials, int size);
-
+    
     void renderRigidBodies(BulletPhysics *bullet);
     void renderBone(PMDBone *bone);
     void renderBones(PMDModel *model);
     void renderModel(PMDModel *model);
     void renderEdge(PMDModel *model);
     void renderShadow(PMDModel *model);
-
+    
     PMDTextureNative *allocateTexture(const unsigned char *data,
                                       const int width,
                                       const int height,
                                       const int components);
     void releaseTexture(PMDTextureNative *native);
-
+    
     void renderModelCached(PMDModel *model,
                            PMDRenderCacheNative **ptr);
     void renderTileTexture(PMDTexture *texture,
@@ -103,22 +103,15 @@ namespace MMDAI {
                            const bool cullFace,
                            PMDRenderCacheNative **ptr);
     void deleteCache(PMDRenderCacheNative **ptr);
-
-    bool setup(float *campusColor,
-               bool useShadowMapping,
-               int shadowMapTextureSize,
-               bool shadowMapLightFirst);
-    void initializeShadowMap(int shadowMapTextureSize);
-    void setShadowMapping(bool flag,
-                          int shadowMapTextureSize,
-                          bool shadowMapLightFirst);
-    void prerender(Option *option,
-                   PMDObject **objects,
+    
+    bool setup();
+    void initializeShadowMap();
+    void setShadowMapping();
+    void prerender(PMDObject **objects,
                    int size);
-    void render(Option *option,
-                Stage *stage,
-                PMDObject **objects,
-                int size);
+    void render(PMDObject **objects,
+                int size,
+                Stage *stage);
     int pickModel(PMDObject **objects,
                   int size,
                   int x,
@@ -127,11 +120,7 @@ namespace MMDAI {
                   int height,
                   double scale,
                   int *allowDropPicked);
-    void updateLighting(bool useCartoonRendering,
-                        bool useMMDLikeCartoon,
-                        float *lightDirection,
-                        float lightIntensy,
-                        float *lightColor);
+    void updateLighting();
     void updateProjectionMatrix(const int width,
                                 const int height,
                                 const double scale);
@@ -145,12 +134,13 @@ namespace MMDAI {
                               const float radius);
     void setModelViewMatrix(const btScalar modelView[16]);
     void setProjectionMatrix(const btScalar projection[16]);
-
-  private:
+    
+private:
     void drawCube();
     void drawSphere(int lats, int longs);
     void drawConvex(btConvexShape *shape);
-
+    
+    Preference *m_preference;
     btVector3 m_lightVec;                  /* light vector for shadow maapping */
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
@@ -159,7 +149,7 @@ namespace MMDAI {
     btScalar m_newProjectionMatrix[16];
     float m_modelView[16];
     float m_shadowMapAutoViewRadius;       /* radius from view point */
-
+    
     GLuint m_boxList;
     GLuint m_sphereList;
     GLuint m_depthTextureID;
@@ -170,7 +160,7 @@ namespace MMDAI {
     bool m_overrideModelViewMatrix;
     bool m_overrideProjectionMatrix;
     bool m_shadowMapInitialized;           /* true if initialized */
-  };
+};
 
 } /* namespace */
 
