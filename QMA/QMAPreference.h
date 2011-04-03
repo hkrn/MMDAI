@@ -60,6 +60,7 @@ public:
     void  setFloat4(const MMDAI::PreferenceKeys key, float *values);
 
 private:
+    void parse(const QString &key, const QString &value);
     bool validateBoolKey(const MMDAI::PreferenceKeys key);
     bool validateIntKey(const MMDAI::PreferenceKeys key);
     bool validateFloatKey(const MMDAI::PreferenceKeys key);

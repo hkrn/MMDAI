@@ -37,6 +37,10 @@
 #include <MMDAI/MMDAI.h>
 #include "QMAPreference.h"
 
+#include <QFile>
+#include <QString>
+#include <QStringList>
+#include <QTextStream>
 #include <QVector3D>
 #include <QVector4D>
 
@@ -51,6 +55,28 @@ QMAPreference::~QMAPreference()
 
 void QMAPreference::load()
 {
+    QFile file("mmdai2configs:/MMDAI.mdf");
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        for (QString line = stream.readLine(); !line.isNull(); line = stream.readLine()) {
+            line = line.trimmed();
+            if (line.isEmpty() || line[0] == '#') {
+                continue;
+            }
+            QStringList pair = line.split('=');
+            if (pair.size() != 2) {
+                continue;
+            }
+            QString key = pair[0];
+            QString value = pair[1];
+            parse(key, value);
+        }
+        file.close();
+    }
+    else {
+        MMDAILogWarn("Cannot open %s: %s", file.fileName().toUtf8().constData(),
+                     file.errorString().toUtf8().constData());
+    }
 }
 
 bool QMAPreference::getBool(const MMDAI::PreferenceKeys key)
@@ -184,6 +210,132 @@ void QMAPreference::setInt(const MMDAI::PreferenceKeys key, int value)
     }
 }
 
+static void QMAPreferenceValue2FloatValues(const QString &value, float *values, int size) {
+    QStringList v = value.split(',');
+    if (v.length() == size) {
+        for (int i = 0; i < size; i++) {
+            values[i] = v[i].toFloat();
+        }
+    }
+    else {
+        memset(values, 0, sizeof(float) * size);
+    }
+}
+
+static void QMAPreferenceValue2Float3(const QString &value, float *values) {
+    QMAPreferenceValue2FloatValues(value, values, 3);
+}
+
+static void QMAPreferenceValue2Float4(const QString &value, float *values) {
+    QMAPreferenceValue2FloatValues(value, values, 4);
+}
+
+void QMAPreference::parse(const QString &key, const QString &value)
+{
+    float vec3[3], vec4[4];
+    if (key == "use_cartoon_rendering") {
+        setBool(MMDAI::kPreferenceUseCartoonRendering, value.toLower() == "true");
+    }
+    else if (key == "use_mmd_like_cartoon") {
+        setBool(MMDAI::kPreferenceUseMMDLikeCartoon, value.toLower() == "true");
+    }
+    else if (key == "cartoon_edge_width") {
+        setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value.toFloat());
+    }
+    else if (key == "cartoon_edge_step") {
+        setFloat(MMDAI::kPreferenceCartoonEdgeStep, value.toFloat());
+    }
+    else if (key == "cartoon_edge_selected_color") {
+        QMAPreferenceValue2Float4(value, vec4);
+        setFloat4(MMDAI::kPreferenceCartoonEdgeSelectedColor, vec4);
+    }
+    else if (key == "rendering_rotation") {
+        QMAPreferenceValue2Float3(value, vec3);
+        setFloat3(MMDAI::kPreferenceRenderingRotation, vec3);
+    }
+    else if (key == "rendering_transition") {
+        QMAPreferenceValue2Float3(value, vec3);
+        setFloat3(MMDAI::kPreferenceRenderingTransition, vec3);
+    }
+    else if (key == "rendering_scale") {
+        setFloat(MMDAI::kPreferenceRenderingScale, value.toFloat());
+    }
+    else if (key == "show_fps") {
+        setBool(MMDAI::kPreferenceShowFPS, value.toLower() == "true");
+    }
+    else if (key == "fps_position") {
+        QMAPreferenceValue2Float3(value, vec3);
+        setFloat3(MMDAI::kPreferenceFPSPosition, vec3);
+    }
+    else if (key == "top_most") {
+        setBool(MMDAI::kPreferenceTopMost, value.toLower() == "true");
+    }
+    else if (key == "full_screen") {
+        setBool(MMDAI::kPreferenceFullScreen, value.toLower() == "true");
+    }
+    else if (key == "log_position") {
+        QMAPreferenceValue2Float3(value, vec3);
+        setFloat3(MMDAI::kPreferenceLogPosition, vec3);
+    }
+    else if (key == "log_scale") {
+        setFloat(MMDAI::kPreferenceLogScale, value.toFloat());
+    }
+    else if (key == "light_direction") {
+        QMAPreferenceValue2Float4(value, vec4);
+        setFloat4(MMDAI::kPreferenceLightDirection, vec4);
+    }
+    else if (key == "light_intensity") {
+        setFloat(MMDAI::kPreferenceLightIntensity, value.toFloat());
+    }
+    else if (key == "light_color") {
+        QMAPreferenceValue2Float3(value, vec3);
+        setFloat3(MMDAI::kPreferenceLightColor, vec3);
+    }
+    else if (key == "campus_color") {
+        QMAPreferenceValue2Float3(value, vec3);
+        setFloat3(MMDAI::kPreferenceCampusColor, vec3);
+    }
+    else if (key == "max_multi_sampling") {
+        setInt(MMDAI::kPreferenceMaxMultiSampling, value.toInt());
+    }
+    else if (key == "max_multi_sampling_color") {
+        setInt(MMDAI::kPreferenceMaxMultiSamplingColor, value.toInt());
+    }
+    else if (key == "motion_adjust_frame") {
+        setInt(MMDAI::kPreferenceMotionAdjustFrame, value.toInt());
+    }
+    else if (key == "bullet_fps") {
+        setInt(MMDAI::kPreferenceBulletFPS, value.toInt());
+    }
+    else if (key == "rotate_step") {
+        setFloat(MMDAI::kPreferenceRotateStep, value.toFloat());
+    }
+    else if (key == "translate_step") {
+        setFloat(MMDAI::kPreferenceTranslateStep, value.toFloat());
+    }
+    else if (key == "scale_step") {
+        setFloat(MMDAI::kPreferenceScaleStep, value.toFloat());
+    }
+    else if (key == "use_shadow_mapping") {
+        setBool(MMDAI::kPreferenceUseShadowMapping, value.toLower() == "true");
+    }
+    else if (key == "shadow_mapping_texture_size") {
+        setInt(MMDAI::kPreferenceShadowMappingTextureSize, value.toInt());
+    }
+    else if (key == "shadow_mapping_self_density") {
+        setFloat(MMDAI::kPreferenceShadowMappingSelfDensity, value.toFloat());
+    }
+    else if (key == "shadow_mapping_floor_density") {
+        setFloat(MMDAI::kPreferenceShadowMappingFloorDensity, value.toFloat());
+    }
+    else if (key == "shadow_mapping_light_first") {
+        setBool(MMDAI::kPreferenceShadowMappingLightFirst, value.toLower() == "true");
+    }
+    else {
+        MMDAILogWarn("unknown key %s: %s", key.toUtf8().constData(), value.toUtf8().constData());
+    }
+}
+
 bool QMAPreference::validateBoolKey(const MMDAI::PreferenceKeys key)
 {
     switch (key) {
@@ -225,6 +377,7 @@ bool QMAPreference::validateFloat3Key(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceCampusColor:
     case MMDAI::kPreferenceFPSPosition:
     case MMDAI::kPreferenceLightColor:
+    case MMDAI::kPreferenceLogPosition:
     case MMDAI::kPreferenceStageSize:
     case MMDAI::kPreferenceRenderingRotation:
     case MMDAI::kPreferenceRenderingTransition:
@@ -251,6 +404,7 @@ bool QMAPreference::validateIntKey(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceBulletFPS:
     case MMDAI::kPreferenceShadowMappingTextureSize:
     case MMDAI::kPreferenceMaxMultiSampling:
+    case MMDAI::kPreferenceMotionAdjustFrame:
         return true;
     default:
         return false;

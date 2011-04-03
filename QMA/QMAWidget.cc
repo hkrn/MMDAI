@@ -35,12 +35,13 @@
 /* ----------------------------------------------------------------- */
 
 #include <MMDAI/MMDAI.h>
+#include "QMAPreference.h"
 #include "QMAWidget.h"
 
-QMAWidget::QMAWidget(MMDAI::Preference *preference, QWidget *parent)
+QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    m_sceneUpdateTimer(this),
     m_preference(preference),
+    m_sceneUpdateTimer(this),
     m_controller(new MMDAI::SceneController(this, preference)),
     m_parser(m_controller, &m_factory),
     m_x(0),
@@ -262,6 +263,7 @@ void QMAWidget::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event);
     if (!m_sceneUpdateTimer.isActive()) {
+        m_preference->load();
         m_controller->initializeScreen(width(), height());
         m_controller->updateLight();
         loadPlugins();

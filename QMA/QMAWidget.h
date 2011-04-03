@@ -52,7 +52,6 @@
 
 namespace MMDAI {
 class PMDObject;
-class Preference;
 class SceneController;
 }
 
@@ -62,12 +61,14 @@ enum QMAWidgetZoomOption {
     Slower = 0x2
          };
 
+class QMAPreference;
+
 class QMAWidget : public QGLWidget, public MMDAI::SceneEventHandler
 {
     Q_OBJECT
 
 public:
-    explicit QMAWidget(MMDAI::Preference *preference, QWidget *parent = 0);
+    explicit QMAWidget(QMAPreference *preference, QWidget *parent = 0);
     ~QMAWidget();
 
     void handleEventMessage(const char *eventType, int argc, ...);
@@ -123,9 +124,9 @@ private:
     void renderLogger();
 
     QMAModelLoaderFactory m_factory;
+    QMAPreference *m_preference;
     QMATimer m_sceneFrameTimer;
     QTimer m_sceneUpdateTimer;
-    MMDAI::Preference *m_preference;
     MMDAI::SceneController *m_controller;
     MMDAI::CommandParser m_parser;
 
