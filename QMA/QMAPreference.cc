@@ -571,7 +571,7 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         vec4.setX(qMin(qMax(vec4.x(), min), max));
         vec4.setY(qMin(qMax(vec4.y(), min), max));
         vec4.setZ(qMin(qMax(vec4.z(), min), max));
-        vec4.setZ(qMin(qMax(vec4.w(), min), max));
+        vec4.setW(qMin(qMax(vec4.w(), min), max));
         value.setValue(vec4);
         break;
     case MMDAI::kPreferenceRenderingRotation:
