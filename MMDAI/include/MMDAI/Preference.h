@@ -72,7 +72,11 @@ enum PreferenceKeys {
     kPreferenceShadowMappingTextureSize,
     kPreferenceShadowMappingSelfDensity,
     kPreferenceShadowMappingFloorDensity,
-    kPreferenceShadowMappingLightFirst
+    kPreferenceShadowMappingLightFirst,
+    kPreferenceCartoonEdgeSelectedColor,
+    kPreferenceRenderingRotation,
+    kPreferenceRenderingTransition,
+    kPreferenceRenderingScale
 };
 
 class Preference

@@ -873,6 +873,13 @@ void SceneController::initializeScreen(int width, int height)
     m_engine->setup();
     m_preference->getFloat3(kPreferenceStageSize, size);
     m_stage->setSize(size, 1.0f, 1.0f);
+    float rot[3], trans[3], scale = 0.0f;
+    scale = m_preference->getFloat(kPreferenceRenderingScale);
+    m_preference->getFloat3(kPreferenceRenderingRotation, rot);
+    m_preference->getFloat3(kPreferenceRenderingTransition, trans);
+    resetLocation(rot, trans, scale);
+    MMDAILogInfo("reset location rot=(%.2f, %.2f, %.2f) trans=(%.2f, %.2f, %.2f) scale=%.2f",
+       rot[0], rot[1], rot[2], trans[0], trans[1], trans[2], scale);
 }
 
 void SceneController::resetLocation(const float *trans, const float *rot, const float scale)
@@ -981,9 +988,7 @@ void SceneController::setHighlightPMDObject(PMDObject *object)
     }
     if (object != NULL) {
         /* set highlight to the specified model */
-        col[0] = 1.0f;
-        col[1] = col[2] = 0.0f;
-        col[3] = 1.0f;
+        m_preference->getFloat4(kPreferenceCartoonEdgeSelectedColor, col);
         object->getPMDModel()->setEdgeColor(col);
     }
 

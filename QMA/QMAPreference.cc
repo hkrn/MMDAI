@@ -212,6 +212,7 @@ bool QMAPreference::validateFloatKey(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceShadowMappingFloorDensity:
     case MMDAI::kPreferenceShadowMappingSelfDensity:
     case MMDAI::kPreferenceTranslateStep:
+    case MMDAI::kPreferenceRenderingScale:
         return true;
     default:
         return false;
@@ -225,6 +226,8 @@ bool QMAPreference::validateFloat3Key(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceFPSPosition:
     case MMDAI::kPreferenceLightColor:
     case MMDAI::kPreferenceStageSize:
+    case MMDAI::kPreferenceRenderingRotation:
+    case MMDAI::kPreferenceRenderingTransition:
         return true;
     default:
         return false;
@@ -235,6 +238,7 @@ bool QMAPreference::validateFloat4Key(const MMDAI::PreferenceKeys key)
 {
     switch (key) {
     case MMDAI::kPreferenceLightDirection:
+    case MMDAI::kPreferenceCartoonEdgeSelectedColor:
         return true;
     default:
         return false;
@@ -314,6 +318,14 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
         return QVariant(false);
     case MMDAI::kPreferenceWindowSize:
         return QVariant(-1);
+    case MMDAI::kPreferenceCartoonEdgeSelectedColor:
+        return QVariant(QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
+    case MMDAI::kPreferenceRenderingRotation:
+        return QVariant(QVector3D(0.0f, 0.0f, 0.0f));
+    case MMDAI::kPreferenceRenderingTransition:
+        return QVariant(QVector3D(0.0f, 0.0f, 0.0f));
+    case MMDAI::kPreferenceRenderingScale:
+        return QVariant(1.0f);
     default:
         MMDAILogWarn("should not reach here: %d", key);
         return QVariant(-1);
@@ -323,15 +335,19 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
 void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
 {
     QVector3D vec3;
+    QVector4D vec4;
+    qreal min = 0, max = 0;
     switch (key) {
     case MMDAI::kPreferenceBulletFPS:
         value.setValue(qMin(qMax(value.toInt(), 1), 120));
         break;
     case MMDAI::kPreferenceCampusColor:
         vec3 = value.value<QVector3D>();
-        vec3.setX(qMin(qMax(vec3.x(), 0.0), 1.0));
-        vec3.setY(qMin(qMax(vec3.y(), 0.0), 1.0));
-        vec3.setZ(qMin(qMax(vec3.z(), 0.0), 1.0));
+        min = 0.0;
+        max = 1.0;
+        vec3.setX(qMin(qMax(vec3.x(), min), max));
+        vec3.setY(qMin(qMax(vec3.y(), min), max));
+        vec3.setZ(qMin(qMax(vec3.z(), min), max));
         value.setValue(vec3);
         break;
     case MMDAI::kPreferenceCartoonEdgeStep:
@@ -342,9 +358,11 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         break;
     case MMDAI::kPreferenceLightColor:
         vec3 = value.value<QVector3D>();
-        vec3.setX(qMin(qMax(vec3.x(), 0.0), 1.0));
-        vec3.setY(qMin(qMax(vec3.y(), 0.0), 1.0));
-        vec3.setZ(qMin(qMax(vec3.z(), 0.0), 1.0));
+        min = 0.0;
+        max = 1.0;
+        vec3.setX(qMin(qMax(vec3.x(), min), max));
+        vec3.setY(qMin(qMax(vec3.y(), min), max));
+        vec3.setZ(qMin(qMax(vec3.z(), min), max));
         value.setValue(vec3);
         break;
     case MMDAI::kPreferenceLightIntensity:
@@ -379,9 +397,11 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         break;
     case MMDAI::kPreferenceStageSize:
         vec3 = value.value<QVector3D>();
-        vec3.setX(qMin(qMax(vec3.x(), 0.001), 1000.0));
-        vec3.setY(qMin(qMax(vec3.y(), 0.001), 1000.0));
-        vec3.setZ(qMin(qMax(vec3.z(), 0.001), 1000.0));
+        min = 0.001;
+        max = 1000.0;
+        vec3.setX(qMin(qMax(vec3.x(), min), max));
+        vec3.setY(qMin(qMax(vec3.y(), min), max));
+        vec3.setZ(qMin(qMax(vec3.z(), min), max));
         value.setValue(vec3);
         break;
     case MMDAI::kPreferenceTranslateStep:
@@ -389,6 +409,36 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         break;
     case MMDAI::kPreferenceWindowSize:
         // TODO
+        break;
+    case MMDAI::kPreferenceCartoonEdgeSelectedColor:
+        vec4 = value.value<QVector4D>();
+        min = 0.0;
+        max = 1.0;
+        vec4.setX(qMin(qMax(vec4.x(), min), max));
+        vec4.setY(qMin(qMax(vec4.y(), min), max));
+        vec4.setZ(qMin(qMax(vec4.z(), min), max));
+        vec4.setZ(qMin(qMax(vec4.w(), min), max));
+        value.setValue(vec4);
+        break;
+    case MMDAI::kPreferenceRenderingRotation:
+        vec3 = value.value<QVector3D>();
+        min = -1000.0;
+        max = 1000.0;
+        vec3.setX(qMin(qMax(vec3.x(), min), max));
+        vec3.setY(qMin(qMax(vec3.y(), min), max));
+        vec3.setZ(qMin(qMax(vec3.z(), min), max));
+        value.setValue(vec3);
+        break;
+    case MMDAI::kPreferenceRenderingTransition:
+        vec3 = value.value<QVector3D>();
+        min = 0.001;
+        max = 1000.0;
+        vec3.setX(qMin(qMax(vec3.x(), min), max));
+        vec3.setY(qMin(qMax(vec3.y(), min), max));
+        vec3.setZ(qMin(qMax(vec3.z(), min), max));
+        break;
+    case MMDAI::kPreferenceRenderingScale:
+        value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
         break;
     default:
         break;
