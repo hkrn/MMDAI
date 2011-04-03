@@ -174,7 +174,7 @@ public:
     float getScale() const;
 
 private:
-    void deleteAssociatedModels(PMDObject *object);
+    void eraseModel(PMDObject *object);
     void sendEvent1(const char *type, const char *arg1);
     void sendEvent2(const char *type, const char *arg1, const char *arg2);
 

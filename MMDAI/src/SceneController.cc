@@ -575,8 +575,9 @@ bool SceneController::changeModel(PMDObject *object,
     /* delete accessories  */
     for (i = 0; i < MAX_MODEL; i++) {
         PMDObject *assoc = m_objects[i];
-        if (assoc->isEnable() && assoc->getAssignedModel() == object)
+        if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             deleteModel(assoc);
+        }
     }
 
     /* send event message */
@@ -591,8 +592,9 @@ void SceneController::deleteModel(PMDObject *object)
     /* delete accessories  */
     for (int i = 0; i < MAX_MODEL; i++) {
         PMDObject *assoc = m_objects[i];
-        if (assoc->isEnable() && assoc->getAssignedModel() == object)
+        if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             deleteModel(assoc);
+        }
     }
 
     /* set frame from now to disappear */
@@ -1022,20 +1024,21 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
                 }
             }
             if (object->updateAlpha(procFrame + adjustFrame)) {
-                deleteAssociatedModels(object);
+                eraseModel(object);
             }
         }
     }
     m_bullet.update((float)procFrame);
 }
 
-void SceneController::deleteAssociatedModels(PMDObject *object)
+void SceneController::eraseModel(PMDObject *object)
 {
     /* remove assigned accessories */
     for (int i = 0; i < MAX_MODEL; i++) {
         PMDObject *assoc = m_objects[i];
-        if (assoc->isEnable() && assoc->getAssignedModel() == object)
-            deleteAssociatedModels(assoc);
+        if (assoc->isEnable() && assoc->getAssignedModel() == object) {
+            eraseModel(assoc);
+        }
     }
     const char *lipSyncMotion = LipSync::getMotionName();
     MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
