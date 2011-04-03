@@ -1119,82 +1119,7 @@ int GLES1SceneRenderEngine::pickModel(PMDObject **objects,
                                       double scale,
                                       int *allowDropPicked)
 {
-#if 0
-    int i;
-
-    GLuint selectionBuffer[512];
-    GLint viewport[4];
-
-    GLint hits;
-    GLuint *data;
-    GLuint minDepth = 0, minDepthAllowDrop = 0;
-    int minID, minIDAllowDrop;
-    GLuint depth;
-    int id;
-
-    /* get current viewport */
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    /* set selection buffer */
-    glSelectBuffer(512, selectionBuffer);
-    /* begin selection mode */
-    glRenderMode(GL_SELECT);
-    /* save projection matrix */
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    /* set projection matrix for picking */
-    glLoadIdentity();
-    /* apply picking matrix */
-    gluPickMatrix(x, viewport[3] - y, 15.0, 15.0, viewport);
-    /* apply normal projection matrix */
-    applyProjectionMatrix(width, height, scale);
-    /* switch to model view mode */
-    glMatrixMode(GL_MODELVIEW);
-    /* initialize name buffer */
-    glInitNames();
-    glPushName(0);
-
-    /* draw models with selection names */
-    for (i = 0; i < size; i++) {
-        PMDObject *object = objects[i];
-        if (!object->isEnable())
-            continue;
-        glLoadName(i);
-        renderShadow(object->getPMDModel());
-    }
-
-    /* restore projection matrix */
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    /* switch to model view mode */
-    glMatrixMode(GL_MODELVIEW);
-    /* end selection mode and get number of hits */
-    hits = glRenderMode(GL_RENDER);
-    if (hits == 0)
-        return -1;
-
-    data = &(selectionBuffer[0]);
-    minID = -1;
-    minIDAllowDrop = -1;
-    for (i = 0; i < hits; i++) {
-        depth = *(data + 1);
-        id = *(data + 3);
-        if (minID == -1 || minDepth > depth) {
-            minDepth = depth;
-            minID = id;
-        }
-        if (allowDropPicked && objects[id]->allowMotionFileDrop()) {
-            if (minIDAllowDrop == -1 || minDepthAllowDrop > depth) {
-                minDepthAllowDrop = depth;
-                minIDAllowDrop = id;
-            }
-        }
-        data += *data + 3;
-    }
-    if (allowDropPicked)
-        *allowDropPicked = minIDAllowDrop;
-
-    return minID;
-#else
+    /* GLES1 does not support picking a model */
     objects = NULL;
     size = 0;
     x = 0;
@@ -1204,7 +1129,6 @@ int GLES1SceneRenderEngine::pickModel(PMDObject **objects,
     scale = 0.0f;
     allowDropPicked = NULL;
     return -1;
-#endif
 }
 
 /* GLES1SceneRenderEngine::updateLigithing: update light */
