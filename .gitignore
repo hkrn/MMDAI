@@ -10,6 +10,7 @@ install_manifest.txt
 ipch
 Makefile*
 moc_*
+QMACustom.pri
 QtMMDAI*
 release
 Release
@@ -28,7 +29,7 @@ Win32
 *.qm
 *.o
 *.opensdf
-*.pro.user
+*.pro.user*
 *.sdf
 *.sln
 *.suo

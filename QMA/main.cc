@@ -39,12 +39,16 @@
 #include <QLibraryInfo>
 #include <QLocale>
 #include <QTranslator>
+#include <QtPlugin>
 
+#include "MMDME/MMDME.h"
 #include "QMALogger.h"
 #include "QMAWindow.h"
 
+#ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
+Q_IMPORT_PLUGIN(qma_aquestalk2_plugin);
+#endif
 #ifdef QMA_BUNDLE_PLUGINS
-#include <QtPlugin>
 Q_IMPORT_PLUGIN(qma_audio_plugin);
 Q_IMPORT_PLUGIN(qma_julius_plugin);
 Q_IMPORT_PLUGIN(qma_lookat_plugin);
@@ -79,21 +83,55 @@ int main(int argc, char *argv[])
 #endif
 
     const QString applicationPath = appDir.absolutePath();
-    QDir::setSearchPaths("mmdai", QStringList(applicationPath));
-    QDir::setSearchPaths("mmdai2configs", QStringList(applicationPath));
-    QDir::setSearchPaths("mmdai2plugins", QStringList(applicationPath + "/Plugins"));
-    QDir::setSearchPaths("mmdai2resources", QStringList(applicationPath));
+    QStringList paths;
+    paths.append(applicationPath);
+    QDir::setSearchPaths("mmdai", paths);
 
+    /* set path to find configurations (e.g. MMDAI.fst) */
+#ifdef QMA_CONFIG_PATH
+    QString configPath(QMA_CONFIG_PATH);
+#else
+    QString configPath(applicationPath);
+#endif
+    paths.clear();
+    paths.append(configPath);
+    QDir::setSearchPaths("mmdai2configs", paths);
+    MMDAILogInfo("mmdai2configs: %s", configPath.toUtf8().constData());
+
+    /* set path to find plugins */
+#ifdef QMA_PLUGIN_PATH
+    QString pluginPath(QMA_PLUGIN_PATH);
+#else
+    QString pluginPath(applicationPath + "/Plugins");
+#endif
+    paths.clear();
+    paths.append(pluginPath);
+    QDir::setSearchPaths("mmdai2plugins", paths);
+    MMDAILogInfo("mmdai2plugins: %s", pluginPath.toUtf8().constData());
+
+    /* set path to find resources such as model, motion etc. */
+#ifdef QMA_RESOURCE_PATH
+    QString resourcePath(QMA_RESOURCE_PATH);
+#else
+    QString resourcePath(applicationPath);
+#endif
+    paths.clear();
+    paths.append(resourcePath);
+    QDir::setSearchPaths("mmdai2resources", paths);
+    MMDAILogInfo("mmdai2resources: %s", resourcePath.toUtf8().constData());
+
+    /* load translation files from Qt's system path and resource path */
 #if defined(Q_OS_MAC)
     QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
-    QString dir = QDir::searchPaths("mmdai2resources")[0] + "/Locales";
+    QString dir = resourcePath + "/Locales";
 #endif
     qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
     appTranslator.load("QMA_" + locale, dir);
     app.installTranslator(&qtTranslator);
     app.installTranslator(&appTranslator);
 
+    /* invoke QMAWindow */
     QMAWindow window;
     window.show();
     return app.exec();

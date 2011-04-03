@@ -1,0 +1,28 @@
+# for creating Linux distribution
+DEFINES += QMA_CONFIG_PATH="\"\\\"/etc\\\"\"" QMA_PLUGIN_PATH="\"\\\"/usr/lib\\\"\"" QMA_RESOURCE_PATH="\"\\\"/usr/share\\\"\""
+
+# for creating MacOSX distribution
+CONFIG(release, debug|release) {
+    DEFINES += QMA_BUNDLE_PLUGINS
+    macx {
+        CONFIG += static
+        # for QMAAudioPlugin
+        QT += phonon
+        # QMAJuliusPlugin
+        JULIUS_PATHS  = /usr/local/bin /usr/bin
+        for(path, JULIUS_PATHS):exists($${path}/libjulius-config):exists($${path}/libsent-config) {
+            LIBS += $$system($${path}/libjulius-config --libs) $$system($${path}/libsent-config --libs)
+        }
+        # QMAOpenJTalkPlugin
+        LIBS += -lHTSEngine -ljpcommon -lmecab2njd -lnjd -lnjd2jpcommon -lnjd_set_accent_phrase \
+                -lnjd_set_accent_type -lnjd_set_digit -lnjd_set_long_vowel -lnjd_set_pronunciation \
+                -lnjd_set_unvoiced_vowel -ltext2mecab -lmecab_custom -lportaudio \
+                -framework CoreAudio -framework CoreFoundation -framework CoreServices \
+                -framework AudioToolbox -framework AudioUnit -lportaudio
+        INCLUDEPATH += /usr/local/include/jtalk
+        LIBS += -L../StaticPlugins -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin \
+                -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin -lQMAVariablePlugin
+    }
+}
+macx:CONFIG += x86
+
