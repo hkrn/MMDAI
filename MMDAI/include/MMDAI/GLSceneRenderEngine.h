@@ -121,24 +121,12 @@ namespace MMDAI {
                   int size,
                   int x,
                   int y,
-                  int width,
-                  int height,
-                  double scale,
                   int *allowDropPicked);
     void updateLighting();
-    void updateProjectionMatrix(const int width,
-                                const int height,
-                                const double scale);
-    void applyProjectionMatrix(const int width,
-                               const int height,
-                               const double scale);
-    void applyModelViewMatrix();
-    void updateModelViewMatrix(const btTransform &transMatrix,
-                               const btTransform &transMatrixInv);
-    void setShadowMapAutoView(const btVector3 &eyePoint,
-                              const float radius);
-    void setModelViewMatrix(const btScalar modelView[16]);
-    void setProjectionMatrix(const btScalar projection[16]);
+    void setViewport(const int width, const int height);
+    void setShadowMapAutoView(const btVector3 &eyePoint, const float radius);
+    void setModelView(const btTransform &modelView);
+    void setProjection(const float projection[16]);
 
   private:
     void drawCube();
@@ -151,11 +139,10 @@ namespace MMDAI {
     Preference *m_preference;
     btVector3 m_lightVec;                  /* light vector for shadow maapping */
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
-    btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
-    btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
-    btScalar m_newModelViewMatrix[16];
-    btScalar m_newProjectionMatrix[16];
-    GLdouble m_modelView[16];
+    GLdouble m_modelView2[16];
+    btScalar m_modelView[16];
+    btScalar m_modelViewInversed[16];
+    btScalar m_projection[16];
     float m_shadowMapAutoViewRadius;       /* radius from view point */
 
     GLuint m_boxList;
@@ -164,8 +151,6 @@ namespace MMDAI {
     GLuint m_fboID;
     bool m_boxListEnabled;
     bool m_sphereListEnabled;
-    bool m_overrideModelViewMatrix;
-    bool m_overrideProjectionMatrix;
     bool m_shadowMapInitialized;           /* true if initialized */
   };
 

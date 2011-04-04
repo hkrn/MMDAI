@@ -123,10 +123,10 @@ GLSceneRenderEngine::GLSceneRenderEngine(Preference *preference)
     m_fboID(0),
     m_boxListEnabled(false),
     m_sphereListEnabled(false),
-    m_overrideModelViewMatrix(false),
-    m_overrideProjectionMatrix(false),
     m_shadowMapInitialized(false)
 {
+    memset(m_modelView, 0, sizeof(m_modelView));
+    memset(m_projection, 0, sizeof(m_projection));
 }
 
 GLSceneRenderEngine::~GLSceneRenderEngine()
@@ -1075,7 +1075,8 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
     /* Renderer the full scene */
     /* set model view matrix, as the same as normal Renderering */
     glMatrixMode(GL_MODELVIEW);
-    applyModelViewMatrix();
+    glLoadIdentity();
+    glMultMatrixf(m_modelView);
 
     /* Renderer the whole scene */
     if (m_preference->getBool(kPreferenceShadowMappingLightFirst)) {
@@ -1148,9 +1149,9 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
     glTranslated(0.5, 0.5, 0.5);
     glScaled(0.5, 0.5, 0.5);
     /* multiply the model view matrix when the depth texture was Renderered */
-    glMultMatrixd(m_modelView);
+    glMultMatrixd(m_modelView2);
     /* multiply the inverse matrix of current model view matrix */
-    glMultMatrixf(m_rotMatrixInv);
+    glMultMatrixf(m_modelViewInversed);
 
     /* revert to model view matrix mode */
     glMatrixMode(GL_MODELVIEW);
@@ -1252,7 +1253,8 @@ void GLSceneRenderEngine::renderScene(PMDObject **objects, int size, Stage *stag
     glEnable(GL_BLEND);
 
     /* set model viwe matrix */
-    applyModelViewMatrix();
+    glLoadIdentity();
+    glMultMatrixf(m_modelView);
 
     /* stage and shadhow */
     glPushMatrix();
@@ -1365,7 +1367,7 @@ void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
 #endif
 
         /* keep the current model view for later process */
-        glGetDoublev(GL_MODELVIEW_MATRIX, m_modelView);
+        glGetDoublev(GL_MODELVIEW_MATRIX, m_modelView2);
 
         /* do not write into frame buffer other than depth information */
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -1437,9 +1439,6 @@ int GLSceneRenderEngine::pickModel(PMDObject **objects,
                                    int size,
                                    int x,
                                    int y,
-                                   int width,
-                                   int height,
-                                   double scale,
                                    int *allowDropPicked)
 {
     int i;
@@ -1468,7 +1467,8 @@ int GLSceneRenderEngine::pickModel(PMDObject **objects,
     /* apply picking matrix */
     gluPickMatrix(x, viewport[3] - y, 15.0, 15.0, viewport);
     /* apply normal projection matrix */
-    applyProjectionMatrix(width, height, scale);
+    glLoadIdentity();
+    glMultMatrixf(m_projection);
     /* switch to model view mode */
     glMatrixMode(GL_MODELVIEW);
     /* initialize name buffer */
@@ -1525,8 +1525,8 @@ void GLSceneRenderEngine::updateLighting()
     float lightColor[3];
     float lightDirection[4];
     float lightDiffuse[4];
-    float lightSpecular[4];
     float lightAmbient[4];
+    float lightSpecular[4];
     int i = 0;
     float diffuse = 0, ambinet = 0, specular = 0;
 
@@ -1569,64 +1569,28 @@ void GLSceneRenderEngine::updateLighting()
     m_lightVec.normalize();
 }
 
-/* GLSceneRenderEngine::updateProjectionMatrix: update view information */
-void GLSceneRenderEngine::updateProjectionMatrix(const int width,
-                                                 const int height,
-                                                 const double scale)
+void GLSceneRenderEngine::setViewport(const int width, const int height)
 {
     glViewport(0, 0, width, height);
     /* camera setting */
     glMatrixMode(GL_PROJECTION);
-    applyProjectionMatrix(width, height, scale);
+    glLoadIdentity();
+    glMultMatrixf(m_projection);
     glMatrixMode(GL_MODELVIEW);
 }
 
-/* GLSceneRenderEngine::applyProjectionMatirx: update projection matrix */
-void GLSceneRenderEngine::applyProjectionMatrix(const int width,
-                                                const int height,
-                                                const double scale)
+void GLSceneRenderEngine::setModelView(const btTransform &modelView)
 {
-    if (m_overrideProjectionMatrix) {
-        glLoadMatrixf(m_newProjectionMatrix);
-        m_overrideProjectionMatrix = false;
-    }
-    else {
-        double aspect = (width == 0) ? 1.0 : static_cast<double>(height) / width;
-        double ratio = (scale == 0.0f) ? 1.0 : 1.0 / scale; /* m_currentScale */
-        glLoadIdentity();
-        glFrustum(- ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
-    }
+    float matrix[16], inverse[16];
+    modelView.getOpenGLMatrix(matrix);
+    modelView.inverse().getOpenGLMatrix(inverse);
+    memcpy(m_modelView, matrix, sizeof(m_modelView));
+    memcpy(m_modelViewInversed, inverse, sizeof(m_modelViewInversed));
 }
 
-void GLSceneRenderEngine::applyModelViewMatrix()
+void GLSceneRenderEngine::setProjection(const float projection[16])
 {
-    glLoadIdentity();
-    if (m_overrideModelViewMatrix) {
-        glLoadMatrixf(m_newModelViewMatrix);
-        m_overrideModelViewMatrix = false;
-    }
-    else {
-        glMultMatrixf(m_rotMatrix);
-    }
-}
-
-void GLSceneRenderEngine::updateModelViewMatrix(const btTransform &transMatrix,
-                                                const btTransform &transMatrixInv)
-{
-    transMatrix.getOpenGLMatrix(m_rotMatrix);
-    transMatrixInv.getOpenGLMatrix(m_rotMatrixInv);
-}
-
-void GLSceneRenderEngine::setModelViewMatrix(const btScalar modelView[16])
-{
-    m_overrideModelViewMatrix = true;
-    memcpy(m_newModelViewMatrix, modelView, sizeof(m_newModelViewMatrix));
-}
-
-void GLSceneRenderEngine::setProjectionMatrix(const btScalar projection[16])
-{
-    m_overrideProjectionMatrix = true;
-    memcpy(m_newProjectionMatrix, projection, sizeof(m_newProjectionMatrix));
+    memcpy(m_projection, projection, sizeof(m_projection));
 }
 
 void GLSceneRenderEngine::setShadowMapAutoView(const btVector3 &eyePoint,
@@ -1639,5 +1603,4 @@ void GLSceneRenderEngine::setShadowMapAutoView(const btVector3 &eyePoint,
 } /* namespace */
 
 #endif
-
 

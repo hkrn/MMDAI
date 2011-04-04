@@ -89,20 +89,13 @@ public:
                           int size,
                           int x,
                           int y,
-                          int width,
-                          int height,
-                          double scale,
                           int *allowDropPicked) = 0;
     virtual void updateLighting() = 0;
-    virtual void updateProjectionMatrix(const int width,
-                                        const int height,
-                                        const double scale) = 0;
-    virtual void updateModelViewMatrix(const btTransform &transMatrix,
-                                       const btTransform &transMatrixInv) = 0;
+    virtual void setViewport(const int width, const int height) = 0;
     virtual void setShadowMapAutoView(const btVector3 &eyePoint,
                                       const float radius) = 0;
-    virtual void setModelViewMatrix(const btScalar modelView[16]) = 0;
-    virtual void setProjectionMatrix(const btScalar projection[16]) = 0;
+    virtual void setModelView(const btTransform &modelView) = 0;
+    virtual void setProjection(const float projection[16]) = 0;
 };
 
 } /* namespace */

@@ -95,6 +95,11 @@ const char *SceneEventHandler::kLipSyncStartEvent = "LIPSYNC_EVENT_START";
 const char *SceneEventHandler::kLipSyncStopEvent = "LIPSYNC_EVENT_STOP";
 const char *SceneEventHandler::kKeyEvent = "KEY";
 
+const float SceneController::kRenderViewPointFrustumNear = 5.0f;
+const float SceneController::kRenderViewPointFrustumFar = 2000.0f;
+const float SceneController::kRenderViewPointCameraZ = -100.0f;
+const float SceneController::kRenderViewPointYOffset = -13.0f;
+
 #define RENDER_MINSCALEDIFF   0.001f
 #define RENDER_SCALESPEEDRATE 0.9f
 #define RENDER_MINMOVEDIFF    0.000001f
@@ -136,7 +141,7 @@ SceneController::SceneController(SceneEventHandler *handler, Preference *prefere
     m_scale(1.0),
     m_trans(btVector3(0.0f, 0.0f, 0.0f)),
     m_rot(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f)),
-    m_cameraTrans(btVector3(0.0f, RENDER_VIEWPOINT_Y_OFFSET, RENDER_VIEWPOINT_CAMERA_Z)),
+    m_cameraTrans(btVector3(0.0f, kRenderViewPointYOffset, kRenderViewPointCameraZ)),
     m_currentScale(m_scale),
     m_currentTrans(m_trans),
     m_currentRot(m_rot)
@@ -145,7 +150,8 @@ SceneController::SceneController(SceneEventHandler *handler, Preference *prefere
         m_objects[i] = new PMDObject(m_engine);
     }
     m_transMatrix.setIdentity();
-    updateModelViewProjectionMatrix();
+    updateModelView();
+    updateProjection();
 }
 
 SceneController::~SceneController()
@@ -895,7 +901,7 @@ void SceneController::resetLocation(const float *trans, const float *rot, const 
 
 void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
 {
-    *dst = m_transMatrixInv * (*src);
+    *dst = m_transMatrix.inverse() * (*src);
 }
 
 void SceneController::setShadowMapping(bool value)
@@ -933,7 +939,7 @@ void SceneController::setRect(int width, int height)
             m_width = width;
         if (height > 0)
             m_height = height;
-        updateProjectionMatrix();
+        updateProjection();
     }
 }
 
@@ -955,9 +961,6 @@ void SceneController::selectPMDObject(int x, int y)
                                           m_numModel,
                                           x,
                                           y,
-                                          m_width,
-                                          m_height,
-                                          m_currentScale,
                                           NULL);
 }
 
@@ -968,9 +971,6 @@ void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel
                                           m_numModel,
                                           x,
                                           y,
-                                          m_width,
-                                          m_height,
-                                          m_currentScale,
                                           &dropAllowedModelID);
     if (m_selectedModel == -1)
         *dropAllowedModel = getPMDObject(dropAllowedModelID);
@@ -1133,7 +1133,24 @@ inline void SceneController::sendEvent2(const char *type, const char *arg1, cons
     }
 }
 
-void SceneController::updateProjectionMatrix()
+static void MMDAIFrustum(float result[16], float left, float right, float bottom, float top, float near, float far)
+{
+    const float a = (right + left) / (right - left);
+    const float b = (top + bottom) / (top - bottom);
+    const float c = ((far + near) / (far - near)) * -1;
+    const float d = ((-2 * far * near) / (far - near));
+    const float e = (2 * near) / (right - left);
+    const float f = (2 * near) / (top - bottom);
+    const float matrix[16] = {
+        e, 0, 0, 0,
+        0, f, 0, 0,
+        a, b, c, -1,
+        0, 0, d, 0
+    };
+    memcpy(result, matrix, sizeof(matrix));
+}
+
+void SceneController::updateProjection()
 {
     if (m_currentScale != m_scale) {
         float diff = fabs(m_currentScale - m_scale);
@@ -1143,10 +1160,14 @@ void SceneController::updateProjectionMatrix()
             m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
         }
     }
-    m_engine->updateProjectionMatrix(m_width, m_height, m_currentScale);
+    float aspect = (m_width == 0) ? 1.0 : static_cast<float>(m_height) / m_width;
+    float ratio = (m_currentScale == 0.0f) ? 1.0 : 1.0 / m_currentScale;
+    float projection[16];
+    MMDAIFrustum(projection, -ratio, ratio, -aspect * ratio, aspect * ratio, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
+    m_engine->setProjection(projection);
 }
 
-void SceneController::updateModelViewMatrix()
+void SceneController::updateModelView()
 {
     if (m_currentRot != m_rot || m_currentTrans != m_trans) {
         /* calculate difference */
@@ -1171,28 +1192,22 @@ void SceneController::updateModelViewMatrix()
     }
     m_transMatrix.setRotation(m_currentRot);
     m_transMatrix.setOrigin(m_currentTrans + m_cameraTrans);
-    m_transMatrixInv = m_transMatrix.inverse();
-    m_engine->updateModelViewMatrix(m_transMatrix, m_transMatrixInv);
+    m_engine->setModelView(m_transMatrix);
 }
 
-void SceneController::updateModelViewProjectionMatrix()
+void SceneController::setProjection(const float projection[16])
 {
-    updateProjectionMatrix();
-    updateModelViewMatrix();
+    m_engine->setProjection(projection);
 }
 
-void SceneController::setProjectionMatrix(float projection[16])
+void SceneController::setModelView(const btTransform &modelView)
 {
-    m_engine->setProjectionMatrix(projection);
-}
-
-void SceneController::setModelViewMatrix(float modelView[16])
-{
-    m_engine->setModelViewMatrix(modelView);
+    m_engine->setModelView(modelView);
 }
 
 void SceneController::prerenderScene()
 {
+    m_engine->setViewport(m_width, m_height);
     m_engine->prerender(m_objects, m_numModel);
 }
 

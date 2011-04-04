@@ -46,11 +46,6 @@
 #include "MMDAI/MotionStocker.h"
 #include "MMDAI/Stage.h"
 
-#define RENDER_VIEWPOINT_FRUSTUM_NEAR 5.0f
-#define RENDER_VIEWPOINT_FRUSTUM_FAR  2000.0f
-#define RENDER_VIEWPOINT_CAMERA_Z     -100.0f
-#define RENDER_VIEWPOINT_Y_OFFSET     -13.0f
-
 namespace MMDAI {
 
 #define MAX_MODEL 20
@@ -64,6 +59,11 @@ class SceneRenderEngine;
 class SceneController
 {
 public:
+    static const float kRenderViewPointFrustumNear;
+    static const float kRenderViewPointFrustumFar;
+    static const float kRenderViewPointCameraZ;
+    static const float kRenderViewPointYOffset;
+
     SceneController(SceneEventHandler *handler, Preference *preference);
     ~SceneController();
 
@@ -156,11 +156,10 @@ public:
     void updateDepthTextureViewParam();
     void updateModelPositionAndRotation(double fps);
     void updateAfterSimulation();
-    void updateProjectionMatrix();
-    void updateModelViewMatrix();
-    void updateModelViewProjectionMatrix();
-    void setModelViewMatrix(float modelView[16]);
-    void setProjectionMatrix(float projection[16]);
+    void updateProjection();
+    void updateModelView();
+    void setModelView(const btTransform &modelView);
+    void setProjection(const float projection[16]);
     void prerenderScene();
     void renderScene();
     void renderBulletForDebug();
@@ -201,7 +200,6 @@ private:
     btVector3 m_currentTrans;     /* current trans vector */
     btQuaternion m_currentRot;    /* current rotation */
     btTransform m_transMatrix;    /* current trans vector + rotation matrix */
-    btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
 
     MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
 };

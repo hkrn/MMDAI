@@ -283,9 +283,10 @@ void QMAWidget::paintGL()
     double fps = m_sceneFrameTimer.getFPS();
     glColor3f(1, 0, 0);
     m_controller->updateModelPositionAndRotation(fps);
+    m_controller->updateModelView();
+    m_controller->updateProjection();
     m_controller->prerenderScene();
     emit pluginPreRendered();
-    m_controller->updateModelViewProjectionMatrix();
     m_controller->renderScene();
     if (m_displayBone)
         m_controller->renderPMDObjectsForDebug();
@@ -327,11 +328,13 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
             m_controller->changeLightDirection(v.x(), v.y(), v.z());
         }
         else if (modifiers & Qt::ShiftModifier) {
+            float cameraZ = MMDAI::SceneController::kRenderViewPointCameraZ;
+            float near = MMDAI::SceneController::kRenderViewPointFrustumNear;
             float fx = 0.0f, fy = 0.0f, fz = 20.0f, scale = m_controller->getScale();
-            fx = x / (float) m_controller->getWidth();
-            fy = -y / (float) m_controller->getHeight();
-            fx = (float)(fx * (fz - RENDER_VIEWPOINT_CAMERA_Z) / RENDER_VIEWPOINT_FRUSTUM_NEAR);
-            fy = (float)(fy * (fz - RENDER_VIEWPOINT_CAMERA_Z) / RENDER_VIEWPOINT_FRUSTUM_NEAR);
+            fx = x / static_cast<float>(m_controller->getWidth());
+            fy = -y / static_cast<float>(m_controller->getHeight());
+            fx = static_cast<float>(fx * (fz - cameraZ) / near);
+            fy = static_cast<float>(fy * (fz - cameraZ) / near);
             if (scale != 0) {
                 fx /= scale;
                 fy /= scale;
