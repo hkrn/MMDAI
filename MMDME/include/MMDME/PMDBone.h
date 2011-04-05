@@ -73,43 +73,43 @@ public:
     inline const btTransform &getTransform() const {
         return m_trans;
     }
-    void setTransform(const btTransform &value) {
+    inline void setTransform(const btTransform &value) {
         m_trans = value;
     }
     inline const btVector3 &getOriginPosition() const {
         return m_originPosition;
     }
-    bool isLimitAngleX() const {
+    inline bool isLimitAngleX() const {
         return m_limitAngleX;
     }
-    bool hasMotionIndependency() const {
+    inline bool hasMotionIndependency() const {
         return m_motionIndependent;
     }
-    void setSimulated(bool value) {
+    inline void setSimulated(bool value) {
         m_simulated = value;
     }
-    bool isSimulated() const {
+    inline bool isSimulated() const {
         return m_simulated;
     }
-    const btVector3 &getOffset() const {
+    inline const btVector3 &getOffset() const {
         return m_offset;
     }
-    void setOffset(const btVector3 &value) {
+    inline void setOffset(const btVector3 &value) {
         m_offset = value;
     }
-    PMDBone *getParentBone() const {
+    inline PMDBone *getParentBone() const {
         return m_parentBone;
     }
-    const btVector3 &getCurrentPosition() const {
+    inline const btVector3 &getCurrentPosition() const {
         return m_pos;
     }
-    void setCurrentPosition(const btVector3 &value) {
+    inline void setCurrentPosition(const btVector3 &value) {
         m_pos = value;
     }
-    const btQuaternion &getCurrentRotation() {
+    inline const btQuaternion &getCurrentRotation() {
         return m_rot;
     }
-    void setCurrentRotation(const btQuaternion &value) {
+    inline void setCurrentRotation(const btQuaternion &value) {
         m_rot = value;
     }
 

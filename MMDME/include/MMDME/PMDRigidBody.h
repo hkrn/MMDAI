@@ -59,7 +59,6 @@ public:
     inline const char *getName() const {
         return m_name;
     }
-
     inline btRigidBody *getBody() const {
         return m_body;
     }

@@ -89,22 +89,22 @@ public:
     inline void setBoneBlendRate(float value) {
         m_boneBlendRate = value;
     }
-    void setFaceBlendRate(float value) {
+    inline void setFaceBlendRate(float value) {
         m_faceBlendRate = value;
     }
-    void setIgnoreSingleMotion(bool value) {
+    inline void setIgnoreSingleMotion(bool value) {
         m_ignoreSingleMotion = value;
     }
-    void setCurrentFrame(double value) {
+    inline void setCurrentFrame(double value) {
         m_currentFrame = value;
     }
-    const bool hasCenter() const {
+    inline const bool hasCenter() const {
         return m_hasCenterBoneMotion;
     }
-    const float getMaxFrame() const {
+    inline const float getMaxFrame() const {
         return m_maxFrame;
     }
-    const double getCurrentFrame() const {
+    inline const double getCurrentFrame() const {
         return m_currentFrame;
     }
 

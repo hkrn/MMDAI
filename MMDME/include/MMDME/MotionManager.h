@@ -91,7 +91,7 @@ public:
     bool deleteMotion(const char *name);
     bool update(double frame);
 
-    MotionPlayer *getMotionPlayerList() const {
+    inline MotionPlayer *getMotionPlayerList() const {
         return m_playerList;
     }
 

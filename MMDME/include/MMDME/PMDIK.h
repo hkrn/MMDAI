@@ -54,7 +54,7 @@ public:
     void setup(const PMDFile_IK *ik, const short *ikBoneIDList, PMDBone *boneList);
     void solve();
 
-    bool isSimulated() const {
+    inline bool isSimulated() const {
         return m_boneList[0]->isSimulated();
     }
 

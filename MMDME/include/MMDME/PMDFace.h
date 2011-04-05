@@ -62,13 +62,13 @@ public:
     void apply(btVector3 *vertexList);
     void add(btVector3 *vertexList, float rate);
 
-    const char *getName() const {
+    inline const char *getName() const {
         return m_name;
     }
-    const float getWeight() const {
+    inline const float getWeight() const {
         return m_weight;
     }
-    void setWeight(const float value) {
+    inline void setWeight(const float value) {
         m_weight = value;
     }
 
