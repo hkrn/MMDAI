@@ -88,11 +88,11 @@ public:
     bool load(PMDModelLoader *loader, BulletPhysics *bullet) {
         if (!PMDModel::load(loader, bullet))
             return false;
-        const unsigned int nvertices = getNumVertex();
+        const unsigned int nvertices = countVertices();
         const unsigned short *surfaceData = getSurfacesPtr();
         const bool hasSingleSphereMap = this->hasSingleSphereMap();
         const bool hasMultipleSphereMap = this->hasMultipleSphereMap();
-        m_nmaterials = getNumMaterial();
+        m_nmaterials = countMaterials();
         m_materialVBO = static_cast<GLuint *>(MMDAIMemoryAllocate(m_nmaterials * sizeof(GLuint)));
         if (m_materialVBO == NULL)
             return false;
@@ -109,10 +109,10 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumSurfaceForEdge() * sizeof(GLushort), getSurfacesForEdgePtr(), GL_STATIC_DRAW);
         // shadow buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_modelVBO[kShadowIndices]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumSurface() * sizeof(GLushort), getSurfacesPtr(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, countSurfaces() * sizeof(GLushort), getSurfacesPtr(), GL_STATIC_DRAW);
         // texture for model buffer
         glBindBuffer(GL_ARRAY_BUFFER, m_modelVBO[kModelTexCoords]);
-        glBufferData(GL_ARRAY_BUFFER, getNumVertex() * sizeof(TexCoord), getTexCoordsPtr(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, countVertices() * sizeof(TexCoord), getTexCoordsPtr(), GL_STATIC_DRAW);
         // material indices
         for (unsigned int i = 0; i < m_nmaterials; i++) {
             PMDMaterial *m = getMaterialAt(i);
@@ -121,7 +121,7 @@ public:
             m_spheres2[i] = NULL;
             if (tex != NULL) {
                 const PMDTextureNative *native = tex->getNative();
-                if (native != NULL && hasSingleSphereMap && tex->isSphereMap()) {
+                if (native != NULL && hasSingleSphereMap && tex->isSPH()) {
                     TexCoord *coords = static_cast<TexCoord *>(MMDAIMemoryAllocate(sizeof(TexCoord) * nvertices));
                     if (coords != NULL) {
                         memset(coords, 0, sizeof(TexCoord) * nvertices);
@@ -142,7 +142,7 @@ public:
                     }
                 }
             }
-            const int nsurfaces = getMaterialAt(i)->getNumSurface();
+            const int nsurfaces = getMaterialAt(i)->countSurfaces();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_materialVBO[i]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, nsurfaces * sizeof(GLushort), surfaceData, GL_STATIC_DRAW);
             surfaceData += nsurfaces;
@@ -177,20 +177,18 @@ private:
 };
 
 GLES1SceneRenderEngine::GLES1SceneRenderEngine(Preference *preference)
-    : m_preference(preference),
-    m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
-    m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
-    m_shadowMapAutoViewRadius(0.0f),
-    m_boxList(0),
-    m_sphereList(0),
-    m_depthTextureID(0),
-    m_fboID(0),
-    m_boxListEnabled(false),
-    m_sphereListEnabled(false),
-    m_enableShadowMapping(false),
-    m_overrideModelViewMatrix(false),
-    m_overrideProjectionMatrix(false),
-    m_shadowMapInitialized(false)
+: m_preference(preference),
+m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
+m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
+m_shadowMapAutoViewRadius(0.0f),
+m_boxList(0),
+m_sphereList(0),
+m_depthTextureID(0),
+m_fboID(0),
+m_boxListEnabled(false),
+m_sphereListEnabled(false),
+m_enableShadowMapping(false),
+m_shadowMapInitialized(false)
 {
 }
 
@@ -244,7 +242,7 @@ void GLES1SceneRenderEngine::drawCube()
         { -0.5f, 0.5f, -0.5f},
         { 0.5f, 0.5f, -0.5f}
     };
-
+    
     glBegin(GL_POLYGON);
     glVertex3fv(vertices[0]);
     glVertex3fv(vertices[1]);
@@ -294,13 +292,13 @@ void GLES1SceneRenderEngine::drawSphere(int lats, int longs)
         const double lat1 = BULLETPHYSICS_PI * (-0.5 + (double) i / lats);
         const double z1 = sin(lat1);
         const double zr1 = cos(lat1);
-
+        
         glBegin(GL_QUAD_STRIP);
         for (int j = 0; j <= longs; j++) {
             const double lng = 2 * BULLETPHYSICS_PI * (double) (j - 1) / longs;
             const double x = cos(lng);
             const double y = sin(lng);
-
+            
             glNormal3f((GLfloat)(x * zr0), (GLfloat)(y * zr0), (GLfloat)z0);
             glVertex3f((GLfloat)(x * zr0), (GLfloat)(y * zr0), (GLfloat)z0);
             glNormal3f((GLfloat)(x * zr1), (GLfloat)(y * zr1), (GLfloat)z1);
@@ -319,7 +317,7 @@ void GLES1SceneRenderEngine::drawConvex(btConvexShape *shape)
 #if 0
     btShapeHull *hull = new btShapeHull(shape);
     hull->buildHull(shape->getMargin());
-
+    
     if (hull->numTriangles () > 0) {
         int index = 0;
         const unsigned int *idx = hull->getIndexPointer();
@@ -332,7 +330,7 @@ void GLES1SceneRenderEngine::drawConvex(btConvexShape *shape)
             btAssert(i1 < hull->numIndices () &&
                      i2 < hull->numIndices () &&
                      i3 < hull->numIndices ());
-
+            
             const int index1 = idx[i1];
             const int index2 = idx[i2];
             const int index3 = idx[i3];
@@ -344,7 +342,7 @@ void GLES1SceneRenderEngine::drawConvex(btConvexShape *shape)
             const btVector3 v3 = vtx[index3];
             btVector3 normal = (v3 - v1).cross(v2 - v1);
             normal.normalize ();
-
+            
             glNormal3f(normal.getX(), normal.getY(), normal.getZ());
             glVertex3f (v1.x(), v1.y(), v1.z());
             glVertex3f (v2.x(), v2.y(), v2.z());
@@ -352,7 +350,7 @@ void GLES1SceneRenderEngine::drawConvex(btConvexShape *shape)
         }
         glEnd ();
     }
-
+    
     delete hull;
 #else
     shape = NULL;
@@ -372,13 +370,13 @@ void GLES1SceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
     const btSphereShape* sphereShape;
     float radius;
     const int numObjects = world->getNumCollisionObjects();
-
+    
     /* draw in wire frame */
     glGetIntegerv(GL_POLYGON_MODE, polygonMode);
     if (polygonMode[1] != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDisable(GL_TEXTURE_2D);
-
+    
     for (int i = 0; i < numObjects; i++) {
         /* set color */
         color[1] = 0.8f / (float) ((i % 5) + 1) + 0.2f;
@@ -391,7 +389,7 @@ void GLES1SceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
             glPushMatrix();
             glMultMatrixf(m);
             switch (shape->getShapeType()) {
-            case BOX_SHAPE_PROXYTYPE: {
+                case BOX_SHAPE_PROXYTYPE: {
                     const btBoxShape* boxShape = static_cast<const btBoxShape*>(shape);
                     halfExtent = boxShape->getHalfExtentsWithMargin();
                     glScalef(2 * halfExtent[0], 2 * halfExtent[1], 2 * halfExtent[2]);
@@ -407,7 +405,7 @@ void GLES1SceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
                     }
                     break;
                 }
-            case SPHERE_SHAPE_PROXYTYPE: {
+                case SPHERE_SHAPE_PROXYTYPE: {
                     sphereShape = static_cast<const btSphereShape*>(shape);
                     radius = sphereShape->getMargin(); /* radius doesn't include the margin, so draw with margin */
                     glScalef(radius, radius, radius);
@@ -423,10 +421,10 @@ void GLES1SceneRenderEngine::renderRigidBodies(BulletPhysics *bullet)
                     }
                     break;
                 }
-            default:
-                if (shape->isConvex()) {
-                    drawConvex(static_cast<btConvexShape*>(shape));
-                }
+                default:
+                    if (shape->isConvex()) {
+                        drawConvex(static_cast<btConvexShape*>(shape));
+                    }
             }
             glPopMatrix();
         }
@@ -443,16 +441,16 @@ void GLES1SceneRenderEngine::renderBone(PMDBone *bone)
 {
     btScalar m[16];
     PMDBone *parentBone = bone->getParentBone();
-    const btTransform *trans = bone->getTransform();
+    const btTransform trans = bone->getTransform();
     const unsigned char type = bone->getType();
     const bool isSimulated = bone->isSimulated();
-
+    
     /* do not draw IK target bones if the IK chain is under simulation */
     if (type == IK_TARGET && parentBone && parentBone->isSimulated())
         return;
-
-    trans->getOpenGLMatrix(m);
-
+    
+    trans.getOpenGLMatrix(m);
+    
     /* draw node */
     glPushMatrix();
     glMultMatrixf(m);
@@ -464,42 +462,42 @@ void GLES1SceneRenderEngine::renderBone(PMDBone *bone)
         }
         else {
             switch (type) {
-            case IK_DESTINATION:
-                glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
-                glScalef(0.25, 0.25, 0.25);
-                break;
-            case UNDER_IK:
-                glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
-                glScalef(0.15, 0.15, 0.15);
-                break;
-            case IK_TARGET:
-                glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-                glScalef(0.15, 0.15, 0.15);
-                break;
-            case UNDER_ROTATE:
-            case TWIST:
-            case FOLLOW_ROTATE:
-                glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
-                glScalef(0.15, 0.15, 0.15);
-                break;
-            default:
-                if (bone->hasMotionIndependency()) {
-                    glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+                case IK_DESTINATION:
+                    glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
                     glScalef(0.25, 0.25, 0.25);
-                } else {
-                    glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
+                    break;
+                case UNDER_IK:
+                    glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
                     glScalef(0.15, 0.15, 0.15);
-                }
-                break;
+                    break;
+                case IK_TARGET:
+                    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+                    glScalef(0.15, 0.15, 0.15);
+                    break;
+                case UNDER_ROTATE:
+                case TWIST:
+                case FOLLOW_ROTATE:
+                    glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
+                    glScalef(0.15, 0.15, 0.15);
+                    break;
+                default:
+                    if (bone->hasMotionIndependency()) {
+                        glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+                        glScalef(0.25, 0.25, 0.25);
+                    } else {
+                        glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
+                        glScalef(0.15, 0.15, 0.15);
+                    }
+                    break;
             }
         }
         drawCube();
     }
     glPopMatrix();
-
+    
     if (!parentBone || type == IK_DESTINATION)
         return;
-
+    
     /* draw line from parent */
     glPushMatrix();
     if (type == NO_DISP) {
@@ -514,19 +512,19 @@ void GLES1SceneRenderEngine::renderBone(PMDBone *bone)
     else {
         glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
     }
-
+    
     const btVector3 vertices[] = {
-        parentBone->getTransform()->getOrigin(),
-        trans->getOrigin()
+        parentBone->getTransform().getOrigin(),
+        trans.getOrigin()
     };
     const int indices[] = {
         1, 0
-            };
+    };
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(3, GL_FLOAT, sizeof(btVector3), vertices);
     glDrawElements(GL_LINES, sizeof(indices) / sizeof(int), GL_UNSIGNED_SHORT, indices);
     glDisableClientState(GL_VERTEX_ARRAY);
-
+    
     glPopMatrix();
 }
 
@@ -535,13 +533,13 @@ void GLES1SceneRenderEngine::renderBones(PMDModel *model)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
-
+    
     /* draw bones */
-    const int nbones = model->getNumBone();
+    const int nbones = model->countBones();
     PMDBone *bones = model->getBonesPtr();
     for (int i = 0; i < nbones; i++)
         renderBone(&bones[i]);
-
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
 }
@@ -575,20 +573,20 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
     GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
     const btVector3 *vertices = model->getSkinnedVerticesPtr();
     const btVector3 *normals = model->getSkinnedNormalsPtr();
-    const unsigned int nvertices = model->getNumVertex();
+    const unsigned int nvertices = model->countVertices();
     if (!vertices || !normals)
         return;
-
+    
 #ifndef MMDFILES_CONVERTCOORDINATESYSTEM
     glPushMatrix();
     glScalef(1.0f, 1.0f, -1.0f); /* from left-hand to right-hand */
     glCullFace(GL_FRONT);
 #endif
-
+    
     /* activate texture unit 0 */
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
-
+    
     /* set lists */
     size_t vsize = nvertices  * sizeof(btVector3);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -600,17 +598,17 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
     glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelNormals));
     glBufferData(GL_ARRAY_BUFFER, vsize, model->getSkinnedNormalsPtr(), GL_DYNAMIC_DRAW);
     glNormalPointer(GL_FLOAT, sizeof(btVector3), NULL);
-
+    
     /* set model texture coordinates to texture unit 0 */
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelTexCoords));
     glTexCoordPointer(2, GL_FLOAT, 0, NULL);
-
-    const bool enableToon = model->getToonFlag();
+    
+    const bool enableToon = model->isToonEnabled();
     const bool hasSingleSphereMap = model->hasSingleSphereMap();
     const bool hasMultipleSphereMap = model->hasMultipleSphereMap();
-
+    
     if (enableToon) {
         /* set toon texture coordinates to texture unit 1 */
         glActiveTexture(GL_TEXTURE1);
@@ -629,12 +627,12 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
     }
-
+    
     /* calculate alpha value, applying model global alpha */
     const float modelAlpha = model->getGlobalAlpha();
-
+    
     /* render per material */
-    const int nmaterials = model->getNumMaterial();
+    const int nmaterials = model->countMaterials();
     for (int i = 0; i < nmaterials; i++) {
         float c[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
         PMDMaterial *m = model->getMaterialAt(i);
@@ -661,7 +659,7 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &(c[0]));
         }
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, m->getShiness());
-
+        
         /* disable face culling for transparent materials */
         if (alpha < 1.0f) {
             glDisable(GL_CULL_FACE);
@@ -669,12 +667,12 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
         else {
             glEnable(GL_CULL_FACE);
         }
-
+        
         /* if using multiple texture units, set current unit to 0 */
         if (enableToon || hasMultipleSphereMap) {
             glActiveTexture(GL_TEXTURE0);
         }
-
+        
         const PMDTexture *tex = m->getTexture();
         if (tex != NULL) {
             /* bind model texture */
@@ -682,10 +680,10 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
             if (native != NULL) {
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, native->id);
-                if (hasSingleSphereMap && tex->isSphereMap()) {
+                if (hasSingleSphereMap && tex->isSPH()) {
                     /* this is sphere map */
                     /* enable texture coordinate generation */
-                    if (tex->isSphereMapAdd())
+                    if (tex->isSPA())
                         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                     TexCoord *coords = model->getSphereCoordsAt(i);
                     if (coords != NULL) {
@@ -704,7 +702,7 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
         else {
             glDisable(GL_TEXTURE_2D);
         }
-
+        
         if (enableToon) {
             /* set toon texture for texture unit 1 */
             const PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
@@ -716,14 +714,14 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             }
         }
-
+        
         if (hasMultipleSphereMap) {
             const PMDTexture *addtex = m->getAdditionalTexture();
             if (addtex) {
                 /* this material has additional sphere map texture, bind it at texture unit 2 */
                 glActiveTexture(GL_TEXTURE2);
                 glEnable(GL_TEXTURE_2D);
-                if (addtex->isSphereMapAdd()) {
+                if (addtex->isSPA()) {
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                 }
                 else {
@@ -752,19 +750,19 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
                 glDisable(GL_TEXTURE_2D);
             }
         }
-
+        
         /* draw elements */
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->getMaterialVBOAt(i));
-        glDrawElements(GL_TRIANGLES, m->getNumSurface(), GL_UNSIGNED_SHORT, NULL);
-
+        glDrawElements(GL_TRIANGLES, m->countSurfaces(), GL_UNSIGNED_SHORT, NULL);
+        
         /* reset some parameters */
-        if (tex && tex->isSphereMap() && tex->isSphereMapAdd()) {
+        if (tex && tex->isSPH() && tex->isSPA()) {
             if (enableToon)
                 glActiveTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
     }
-
+    
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     if (enableToon) {
@@ -784,7 +782,7 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         }
     }
-
+    
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
         glDisable(GL_TEXTURE_2D);
@@ -794,7 +792,7 @@ void GLES1SceneRenderEngine::renderModel(PMDModel *ptr)
         glDisable(GL_TEXTURE_2D);
     }
     glActiveTexture(GL_TEXTURE0);
-
+    
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
 #ifndef MMDFILES_CONVERTCOORDINATESYSTEM
@@ -807,11 +805,11 @@ void GLES1SceneRenderEngine::renderEdge(PMDModel *ptr)
 {
     GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
     const btVector3 *vertices = model->getVerticesPtr();
-    const bool enableToon = model->getToonFlag();
+    const bool enableToon = model->isToonEnabled();
     const unsigned int nsurfaces = model->getNumSurfaceForEdge();
     if (!vertices || !enableToon || nsurfaces == 0)
         return;
-
+    
 #ifndef MMDFILES_CONVERTCOORDINATESYSTEM
     glPushMatrix();
     glScalef(1.0f, 1.0f, -1.0f);
@@ -820,21 +818,21 @@ void GLES1SceneRenderEngine::renderEdge(PMDModel *ptr)
     /* draw back surface only */
     glCullFace(GL_FRONT);
 #endif
-
+    
     /* calculate alpha value */
     const float modelAlpha = model->getGlobalAlpha();
     const float *edgeColors = model->getEdgeColors();
-
+    
     glDisable(GL_LIGHTING);
     glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kEdgeVertices));
-    glBufferData(GL_ARRAY_BUFFER, model->getNumVertex() * sizeof(btVector3), model->getEdgeVerticesPtr(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model->countVertices() * sizeof(btVector3), model->getEdgeVerticesPtr(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
     glColor4f(edgeColors[0], edgeColors[1], edgeColors[2], edgeColors[3] * modelAlpha);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->getModelVBOAt(kEdgeIndices));
     glDrawElements(GL_TRIANGLES, nsurfaces, GL_UNSIGNED_SHORT, NULL);
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_LIGHTING);
-
+    
     /* draw front again */
 #ifndef MMDFILES_CONVERTCOORDINATESYSTEM
     glPopMatrix();
@@ -850,14 +848,14 @@ void GLES1SceneRenderEngine::renderShadow(PMDModel *ptr)
     const btVector3 *vertices = model->getVerticesPtr();
     if (!vertices)
         return;
-
+    
     glDisable(GL_CULL_FACE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kShadowVertices));
-    glBufferData(GL_ARRAY_BUFFER, model->getNumVertex() * sizeof(btVector3), model->getSkinnedVerticesPtr(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model->countVertices() * sizeof(btVector3), model->getSkinnedVerticesPtr(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->getModelVBOAt(kShadowIndices));
-    glDrawElements(GL_TRIANGLES, model->getNumSurface(), GL_UNSIGNED_SHORT, NULL);
+    glDrawElements(GL_TRIANGLES, model->countSurfaces(), GL_UNSIGNED_SHORT, NULL);
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
 }
@@ -914,11 +912,11 @@ void GLES1SceneRenderEngine::renderTileTexture(PMDTexture *texture,
                                                PMDRenderCacheNative **ptr)
 {
     *ptr = NULL;
-
+    
     /* register rendering command */
     if (!cullFace)
         glDisable(GL_CULL_FACE);
-
+    
     glEnable(GL_TEXTURE_2D);
     glPushMatrix();
 #if 0
@@ -956,7 +954,7 @@ void GLES1SceneRenderEngine::renderTileTexture(PMDTexture *texture,
     };
     const int indices[] = {
         0, 1, 2, 2, 1, 3
-            };
+    };
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -972,7 +970,7 @@ void GLES1SceneRenderEngine::renderTileTexture(PMDTexture *texture,
 #endif
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
-
+    
     if (!cullFace)
         glEnable(GL_CULL_FACE);
 }
@@ -994,33 +992,33 @@ bool GLES1SceneRenderEngine::setup()
     m_preference->getFloat3(kPreferenceCampusColor, campusColor);
     glClearColor(campusColor[0], campusColor[1], campusColor[2], 0.0f);
     glClearStencil(0);
-
+    
     /* enable depth test */
     glEnable(GL_DEPTH_TEST);
-
+    
     /* enable texture */
     glEnable(GL_TEXTURE_2D);
-
+    
     /* enable face culling */
     glEnable(GL_CULL_FACE);
     /* not Renderer the back surface */
     glCullFace(GL_BACK);
-
+    
     /* enable alpha blending */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+    
     /* enable alpha test, to avoid zero-alpha surfaces to depend on the Renderering order */
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GEQUAL, 0.05f);
-
+    
     /* enable lighting */
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
-
+    
     /* initialization for shadow mapping */
     setShadowMapping();
-
+    
     return true;
 }
 
@@ -1047,13 +1045,14 @@ void GLES1SceneRenderEngine::prerender(PMDObject **objects,
 void GLES1SceneRenderEngine::render(PMDObject **objects, int size, Stage *stage)
 {
     int i = 0;
-
+    
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-
+    
     /* set model viwe matrix */
-    applyModelViewMatrix();
-
+    glLoadIdentity();
+    glMultMatrixf(m_modelView);
+    
     /* stage and shadhow */
     glPushMatrix();
     /* background */
@@ -1096,7 +1095,7 @@ void GLES1SceneRenderEngine::render(PMDObject **objects, int size, Stage *stage)
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_LIGHTING);
     glPopMatrix();
-
+    
     /* Render model */
     for (i = 0; i < size; i++) {
         PMDObject *object = objects[i];
@@ -1106,7 +1105,7 @@ void GLES1SceneRenderEngine::render(PMDObject **objects, int size, Stage *stage)
         renderModel(model);
         renderEdge(model);
     }
-
+    
 }
 
 /* GLES1SceneRenderEngine::pickModel: pick up a model at the screen position */
@@ -1114,9 +1113,6 @@ int GLES1SceneRenderEngine::pickModel(PMDObject **objects,
                                       int size,
                                       int x,
                                       int y,
-                                      int width,
-                                      int height,
-                                      double scale,
                                       int *allowDropPicked)
 {
     /* GLES1 does not support picking a model */
@@ -1124,9 +1120,6 @@ int GLES1SceneRenderEngine::pickModel(PMDObject **objects,
     size = 0;
     x = 0;
     y = 0;
-    width = 0;
-    height = 0;
-    scale = 0.0f;
     allowDropPicked = NULL;
     return -1;
 }
@@ -1142,7 +1135,7 @@ void GLES1SceneRenderEngine::updateLighting()
     float lightAmbient[4];
     int i = 0;
     float diffuse = 0, ambinet = 0, specular = 0;
-
+    
     m_preference->getFloat3(kPreferenceLightColor, lightColor);
     m_preference->getFloat4(kPreferenceLightDirection, lightDirection);
     if (!m_preference->getBool(kPreferenceUseMMDLikeCartoon)) {
@@ -1161,7 +1154,7 @@ void GLES1SceneRenderEngine::updateLighting()
         ambinet = 1.0f;
         specular = 1.0f; /* OpenGL default */
     }
-
+    
     for (i = 0; i < 3; i++)
         lightDiffuse[i] = lightColor[i] * diffuse;
     lightDiffuse[3] = 1.0f;
@@ -1182,89 +1175,32 @@ void GLES1SceneRenderEngine::updateLighting()
     m_lightVec.normalize();
 }
 
-/* GLES1SceneRenderEngine::updateProjectionMatrix: update view information */
-void GLES1SceneRenderEngine::updateProjectionMatrix(const int width,
-                                                    const int height,
-                                                    const double scale)
+void GLES1SceneRenderEngine::setViewport(const int width, const int height)
 {
     glViewport(0, 0, width, height);
     /* camera setting */
     glMatrixMode(GL_PROJECTION);
-    applyProjectionMatrix(width, height, scale);
+    glLoadIdentity();
+    glMultMatrixf(m_projection);
     glMatrixMode(GL_MODELVIEW);
 }
 
-static void MMDAIGLFrustum(float *result, float left, float right, float bottom, float top, float near, float far)
+void GLES1SceneRenderEngine::setModelView(const btTransform &modelView)
 {
-    const float a = (right + left) / (right - left);
-    const float b = (top + bottom) / (top - bottom);
-    const float c = ((far + near) / (far - near)) * -1;
-    const float d = ((-2 * far * near) / (far - near));
-    const float e = (2 * near) / (right - left);
-    const float f = (2 * near) / (top - bottom);
-    const float matrix[16] = {
-        e, 0, 0, 0,
-        0, f, 0, 0,
-        a, b, c, -1,
-        0, 0, d, 0
-    };
-    memcpy(result, matrix, sizeof(matrix));
+    float matrix[16], inverse[16];
+    modelView.getOpenGLMatrix(matrix);
+    modelView.inverse().getOpenGLMatrix(inverse);
+    memcpy(m_modelView, matrix, sizeof(m_modelView));
+    memcpy(m_modelViewInversed, inverse, sizeof(m_modelViewInversed));
 }
 
-/* GLES1SceneRenderEngine::applyProjectionMatirx: update projection matrix */
-void GLES1SceneRenderEngine::applyProjectionMatrix(const int width,
-                                                   const int height,
-                                                   const double scale)
+void GLES1SceneRenderEngine::setProjection(const float projection[16])
 {
-    if (width == 0 || height == 0)
-        return;
-    if (m_overrideProjectionMatrix) {
-        glLoadMatrixf(m_newProjectionMatrix);
-        m_overrideProjectionMatrix = false;
-    }
-    else {
-        const float aspect = (float) height / (float) width;
-        const float ratio = (scale == 0.0) ? 1.0f : 1.0f / scale;
-        float result[16];
-        glLoadIdentity();
-        MMDAIGLFrustum(result, - ratio, ratio, - aspect * ratio, aspect * ratio, RENDER_VIEWPOINT_FRUSTUM_NEAR, RENDER_VIEWPOINT_FRUSTUM_FAR);
-        glMultMatrixf(result);
-    }
-}
-
-void GLES1SceneRenderEngine::applyModelViewMatrix()
-{
-    glLoadIdentity();
-    if (m_overrideModelViewMatrix) {
-        glLoadMatrixf(m_newModelViewMatrix);
-        m_overrideModelViewMatrix = false;
-    }
-    else {
-        glMultMatrixf(m_rotMatrix);
-    }
-}
-
-void GLES1SceneRenderEngine::updateModelViewMatrix(const btTransform &transMatrix,
-                                                   const btTransform &transMatrixInv)
-{
-    transMatrix.getOpenGLMatrix(m_rotMatrix);
-    transMatrixInv.getOpenGLMatrix(m_rotMatrixInv);
-}
-
-void GLES1SceneRenderEngine::setModelViewMatrix(const btScalar modelView[16])
-{
-    m_overrideModelViewMatrix = true;
-    memcpy(m_newModelViewMatrix, modelView, sizeof(m_newModelViewMatrix));
-}
-
-void GLES1SceneRenderEngine::setProjectionMatrix(const btScalar projection[16])
-{
-    m_overrideProjectionMatrix = true;
-    memcpy(m_newProjectionMatrix, projection, sizeof(m_newProjectionMatrix));
+    memcpy(m_projection, projection, sizeof(m_projection));
 }
 
 void GLES1SceneRenderEngine::setShadowMapAutoView(const btVector3 &eyePoint,
-                                                  const float radius)
+                                               const float radius)
 {
     m_shadowMapAutoViewEyePoint = btVector3(eyePoint);
     m_shadowMapAutoViewRadius = radius;
