@@ -73,7 +73,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
     /* reset root bone's rotation */
     defaultRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
-    m_rootBone.setCurrentRotation(&defaultRot);
+    m_rootBone.setCurrentRotation(defaultRot);
     m_rootBone.update();
 
     m_bulletPhysics = bullet;
@@ -102,9 +102,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         MMDAILogWarnString("Cannot allocate memory");
         goto error;
     }
-
-    MMDAIStringCopy(m_name, fileHeader->name, 20);
-    m_name[20] = '\0';
+    MMDAIStringCopySafe(m_name, fileHeader->name, sizeof(fileHeader->name));
 
     /* comment */
     m_comment = static_cast<char *>(MMDAIMemoryAllocate(sizeof(char) * (256 + 1)));
@@ -113,8 +111,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         goto error;
     }
 
-    MMDAIStringCopy(m_comment, fileHeader->comment, 256);
-    m_comment[256] = '\0';
+    MMDAIStringCopySafe(m_comment, fileHeader->comment, sizeof(fileHeader->comment));
     ptr += sizeof(PMDFile_Header);
     rest -= sizeof(PMDFile_Header);
 
@@ -399,7 +396,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         if (rest == 0) {
             /* no rigid body / constraint ptr exist */
         } else {
-            btVector3 modelOffset = (*(m_rootBone.getOffset()));
+            btVector3 modelOffset = m_rootBone.getOffset();
             /* update bone matrix to apply root bone offset to bone position */
             for (uint32_t i = 0; i < m_numBone; i++)
                 m_boneList[i].update();
@@ -426,7 +423,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
                     m_rigidBodyList[i].joinWorld(m_bulletPhysics->getWorld());
                     /* flag the bones under simulation in order to skip IK solving for those bones */
                     if (rb->type != 0 && rb->boneID != 0xFFFF)
-                        m_boneList[rb->boneID].setSimulatedFlag(true);
+                        m_boneList[rb->boneID].setSimulated(true);
                 }
                 ptr += sizeof(PMDFile_RigidBody) * m_numRigidBody;
                 rest -= sizeof(PMDFile_RigidBody) * m_numRigidBody;
@@ -522,8 +519,8 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
     for (uint32_t i = 0; i < m_numMaterial; i++) {
         PMDMaterial *m = m_material[i];
-        if (m->getEdgeFlag())
-            m_numSurfaceForEdge += m->getNumSurface();
+        if (m->hasEdge())
+            m_numSurfaceForEdge += m->countSurfaces();
     }
     if (m_numSurfaceForEdge > 0) {
         m_surfaceListForEdge = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numSurfaceForEdge));
@@ -535,8 +532,8 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         uint16_t *surfaceTo = m_surfaceListForEdge;
         for (uint32_t i = 0; i < m_numMaterial; i++) {
             PMDMaterial *m = m_material[i];
-            uint32_t n = m->getNumSurface();
-            if (m->getEdgeFlag()) {
+            uint32_t n = m->countSurfaces();
+            if (m->hasEdge()) {
                 memcpy(surfaceTo, surfaceFrom, sizeof(uint16_t) * n);
                 surfaceTo += n;
             }

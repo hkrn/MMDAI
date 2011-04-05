@@ -72,7 +72,10 @@ class MotionController
 public:
     static const float kBoneStartMarginFrame;
     static const float kFaceStartMarginFrame;
-    static const char *getCenterBoneName();
+    static const char *getCenterBoneName() {
+        static unsigned const char name[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
+        return reinterpret_cast<const char *>(name);
+    }
 
     MotionController();
     ~MotionController();
@@ -81,20 +84,35 @@ public:
     void reset();
     bool advance(double deltaFrame);
     void rewind(float targetFrame, float frame);
-    void setOverrideFirst(btVector3 *centerPos);
-    void setBoneBlendRate(float rate);
-    void setFaceBlendRate(float rate);
-    void setIgnoreSingleMotion(bool val);
-    bool hasCenter() const;
-    float getMaxFrame() const;
-    double getCurrentFrame() const;
-    void setCurrentFrame(double frame);
+    void setOverrideFirst(const btVector3 &centerPos);
+
+    inline void setBoneBlendRate(float value) {
+        m_boneBlendRate = value;
+    }
+    void setFaceBlendRate(float value) {
+        m_faceBlendRate = value;
+    }
+    void setIgnoreSingleMotion(bool value) {
+        m_ignoreSingleMotion = value;
+    }
+    void setCurrentFrame(double value) {
+        m_currentFrame = value;
+    }
+    const bool hasCenter() const {
+        return m_hasCenterBoneMotion;
+    }
+    const float getMaxFrame() const {
+        return m_maxFrame;
+    }
+    const double getCurrentFrame() const {
+        return m_currentFrame;
+    }
 
 private:
     void calcBoneAt(MotionControllerBoneElement *mc, float absFrame);
     void calcFaceAt(MotionControllerFaceElement *mc, float absFrame);
     void control(float frameNow);
-    void takeSnap(btVector3 *centerPos);
+    void takeSnap(const btVector3 &centerPos);
     void initialize();
     void clear();
 

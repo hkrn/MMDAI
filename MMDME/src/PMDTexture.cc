@@ -195,29 +195,6 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
     m_native = m_engine->allocateTexture(data, width, height, components);
 }
 
-void PMDTexture::setRenderEngine(PMDRenderEngine *engine)
-{
-    m_engine = engine;
-}
-
-/* PMDTexture::getID: get OpenGL texture ID */
-PMDTextureNative *PMDTexture::getNative() const
-{
-    return m_native;
-}
-
-/* PMDTexture::isSphereMap: return true if this texture is sphere map */
-bool PMDTexture::isSphereMap() const
-{
-    return m_isSphereMap;
-}
-
-/* PMDTexture::isSphereMapAdd: return true if this is sphere map to add */
-bool PMDTexture::isSphereMapAdd() const
-{
-    return m_isSphereMapAdd;
-}
-
 /* PMDTexture::release: free texture */
 void PMDTexture::release()
 {

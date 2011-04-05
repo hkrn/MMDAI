@@ -285,16 +285,16 @@ void MotionController::control(float frameNow)
         /* set the calculated position / rotation to the bone */
         if (m_boneBlendRate == 1.0f) {
             /* override */
-            mcb->bone->setCurrentPosition(&mcb->pos);
-            mcb->bone->setCurrentRotation(&mcb->rot);
+            mcb->bone->setCurrentPosition(mcb->pos);
+            mcb->bone->setCurrentRotation(mcb->rot);
         } else {
             /* lerp */
-            tmpPos = (*(mcb->bone->getCurrentPosition()));
+            tmpPos = mcb->bone->getCurrentPosition();
             tmpPos = tmpPos.lerp(mcb->pos, m_boneBlendRate);
-            mcb->bone->setCurrentPosition(&tmpPos);
-            tmpRot = (*(mcb->bone->getCurrentRotation()));
+            mcb->bone->setCurrentPosition(tmpPos);
+            tmpRot = mcb->bone->getCurrentRotation();
             tmpRot = tmpRot.slerp(mcb->rot, m_boneBlendRate);
-            mcb->bone->setCurrentRotation(&tmpRot);
+            mcb->bone->setCurrentRotation(tmpRot);
         }
     }
     /* update face weights by the correponding motion data */
@@ -315,7 +315,7 @@ void MotionController::control(float frameNow)
 }
 
 /* MotionController::takeSnap: take a snap shot of current model pose for smooth motion insertion / loop */
-void MotionController::takeSnap(btVector3 *centerPos)
+void MotionController::takeSnap(const btVector3 &centerPos)
 {
     unsigned long i;
     MotionControllerBoneElement *mcb;
@@ -323,12 +323,12 @@ void MotionController::takeSnap(btVector3 *centerPos)
 
     for (i = 0; i < m_numBoneCtrl; i++) {
         mcb = &(m_boneCtrlList[i]);
-        mcb->snapPos = (*(mcb->bone->getCurrentPosition()));
+        mcb->snapPos = mcb->bone->getCurrentPosition();
         if (centerPos && mcb->bone->hasMotionIndependency()) {
             /* consider center offset for snapshot */
-            mcb->snapPos -= *centerPos;
+            mcb->snapPos -= centerPos;
         }
-        mcb->snapRot = (*(mcb->bone->getCurrentRotation()));
+        mcb->snapRot = mcb->bone->getCurrentRotation();
     }
     for (i = 0; i < m_numFaceCtrl; i++) {
         mcf = &(m_faceCtrlList[i]);
@@ -395,9 +395,9 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
     m_maxFrame = vmd->getMaxFrame();
 
     /* allocate bone controller */
-    m_numBoneCtrl = vmd->getNumBoneKind();
-    if (m_numBoneCtrl > pmd->getNumBone()) /* their maximum will be smaller one between pmd and vmd */
-        m_numBoneCtrl = pmd->getNumBone();
+    m_numBoneCtrl = vmd->countBoneKind();
+    if (m_numBoneCtrl > pmd->countBones()) /* their maximum will be smaller one between pmd and vmd */
+        m_numBoneCtrl = pmd->countBones();
     m_boneCtrlList = static_cast<MotionControllerBoneElement *>(MMDAIMemoryAllocate(sizeof(MotionControllerBoneElement) * m_numBoneCtrl));
     /* check all bone definitions in vmd to match the pmd, and store if match */
     m_numBoneCtrl = 0;
@@ -416,9 +416,9 @@ void MotionController::setup(PMDModel *pmd, VMD *vmd)
     }
 
     /* allocate face controller */
-    m_numFaceCtrl = vmd->getNumFaceKind();
-    if (m_numFaceCtrl > pmd->getNumFace()) /* their maximum will be smaller one between pmd and vmd */
-        m_numFaceCtrl = pmd->getNumFace();
+    m_numFaceCtrl = vmd->countFaceKind();
+    if (m_numFaceCtrl > pmd->countFaces()) /* their maximum will be smaller one between pmd and vmd */
+        m_numFaceCtrl = pmd->countFaces();
     m_faceCtrlList = static_cast<MotionControllerFaceElement *>(MMDAIMemoryAllocate(sizeof(MotionControllerFaceElement) * m_numFaceCtrl));
     /* check all face definitions in vmd to match the pmd, and store if match */
     m_numFaceCtrl = 0;
@@ -482,7 +482,7 @@ void MotionController::rewind(float targetFrame, float frame)
     m_previousFrame = targetFrame;
     if (m_overrideFirst) {
         /* take a snap shot of current pose to be used as initial status of this motion at frame 0 */
-        takeSnap(NULL); /* not move the center position */
+        takeSnap(btVector3()); /* not move the center position */
         m_lastLoopStartFrame = targetFrame;
         if (m_maxFrame >= kBoneStartMarginFrame) {
             m_noBoneSmearFrame = kBoneStartMarginFrame;
@@ -502,7 +502,7 @@ void MotionController::rewind(float targetFrame, float frame)
 }
 
 /* MotionController::setOverrideFirst: should be called at the first frame, to tell controller to take snapshot */
-void MotionController::setOverrideFirst(btVector3 *centerPos)
+void MotionController::setOverrideFirst(const btVector3 &centerPos)
 {
     /* take snapshot of current pose, to be used as initial values at frame 0 */
     takeSnap(centerPos);
@@ -510,54 +510,6 @@ void MotionController::setOverrideFirst(btVector3 *centerPos)
     m_overrideFirst = true;
     m_noBoneSmearFrame = kBoneStartMarginFrame;
     m_noFaceSmearFrame = kFaceStartMarginFrame;
-}
-
-/* MotionController::setBoneBlendRate: set bone blend rate */
-void MotionController::setBoneBlendRate(float rate)
-{
-    m_boneBlendRate = rate;
-}
-
-/* MotionController::setFaceBlendRate: set face blend rate */
-void MotionController::setFaceBlendRate(float rate)
-{
-    m_faceBlendRate = rate;
-}
-
-/* MotionController::setIgnoreSingleMotion: set insert motion flag */
-void MotionController::setIgnoreSingleMotion(bool val)
-{
-    m_ignoreSingleMotion = val;
-}
-
-/* MotionController::hasCenter: return true if the motion has more than 1 key frames for center bone */
-bool MotionController::hasCenter() const
-{
-    return m_hasCenterBoneMotion;
-}
-
-/* MotionController::getMaxFrame: get max frame */
-float MotionController::getMaxFrame() const
-{
-    return m_maxFrame;
-}
-
-/* MotionController::getCurrentFrame: get current frame */
-double MotionController::getCurrentFrame() const
-{
-    return m_currentFrame;
-}
-
-/* MotionController::setCurrentFrame: set current frame */
-void MotionController::setCurrentFrame(double frame)
-{
-    m_currentFrame = frame;
-}
-
-const char *MotionController::getCenterBoneName()
-{
-    static unsigned const char name[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b };
-    return reinterpret_cast<const char *>(name);
 }
 
 } /* namespace */

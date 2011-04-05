@@ -75,20 +75,16 @@ PMDConstraint::~PMDConstraint()
 /* PMDConstraint::setup: initialize and setup constraint */
 bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVector3 *offset)
 {
-    int i;
-
-    btRigidBody *rbA;
-    btRigidBody *rbB;
     btTransform tr;
     btMatrix3x3 bm;
-    btTransform trA;
-    btTransform trB;
 
     clear();
 
     /* get pointer to bodies at both end of this constraint */
-    rbA = bodyList[c->bodyIDA].getBody();
-    rbB = bodyList[c->bodyIDB].getBody();
+    const PMDRigidBody &bodyA = bodyList[c->bodyIDA];
+    const PMDRigidBody &bodyB = bodyList[c->bodyIDB];
+    btRigidBody *rbA = bodyA.getBody();
+    btRigidBody *rbB = bodyB.getBody();
 
     if (rbA == NULL || rbB == NULL) return false;
 
@@ -110,8 +106,8 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
     tr.setOrigin(btVector3(c->pos[0], c->pos[1], c->pos[2]) + *offset);
 #endif
     /* make local transforms from both rigid bodies */
-    trA = rbA->getWorldTransform().inverse() * tr;
-    trB = rbB->getWorldTransform().inverse() * tr;
+    const btTransform trA = rbA->getWorldTransform().inverse() * tr;
+    const btTransform trB = rbB->getWorldTransform().inverse() * tr;
 
     /* create constraint */
     m_constraint = new btGeneric6DofSpringConstraint(*rbA, *rbB, trA, trB, true);
@@ -135,7 +131,7 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
 #endif
 
     /* set spring stiffnesses */
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         if (i >= 3 || c->stiffness[i] != 0.0f) {
             /* allow spring always for rotation and only if stiffness is specified for translation */
             m_constraint->enableSpring(i, true);
@@ -143,8 +139,8 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
         }
     }
 
-    MMDAILogDebugSJIS("name=\"%s\" bodyA=%d, bodyB=%d position=(%.2f, %.2f, %.2f) rotation=(%.2f, %.2f, %.2f)",
-                      c->name, c->bodyIDA, c->bodyIDB, c->pos[0], c->pos[1], c->pos[2], c->rot[0], c->rot[1], c->rot[2]);
+    MMDAILogDebugSJIS("name=\"%s\" bodyA=\"%s\", bodyB=\"%s\" position=(%.2f, %.2f, %.2f) rotation=(%.2f, %.2f, %.2f)",
+                      c->name, bodyA.getName(), bodyB.getName(), c->pos[0], c->pos[1], c->pos[2], c->rot[0], c->rot[1], c->rot[2]);
 
     return true;
 }

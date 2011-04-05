@@ -59,11 +59,20 @@ public:
                    int components,
                    bool isSphereMap,
                    bool isSphereMapAdd);
-    void setRenderEngine(PMDRenderEngine *engine);
-    PMDTextureNative *getNative() const;
-    bool isSphereMap() const;
-    bool isSphereMapAdd() const;
     void release();
+
+    inline void setRenderEngine(PMDRenderEngine *value) {
+        m_engine = value;
+    }
+    inline PMDTextureNative *getNative() const {
+        return m_native;
+    }
+    inline bool isSPH() const {
+        return m_isSphereMap;
+    }
+    inline bool isSPA() const {
+        return m_isSphereMapAdd;
+    }
 
 private:
     void initialize();

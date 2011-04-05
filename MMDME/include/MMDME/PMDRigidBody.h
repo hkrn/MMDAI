@@ -51,11 +51,18 @@ public:
     PMDRigidBody();
     ~PMDRigidBody();
 
-    bool setup(PMDFile_RigidBody *rb, PMDBone *bone);
+    bool setup(const PMDFile_RigidBody *rb, PMDBone *bone);
     void joinWorld(btDiscreteDynamicsWorld *btWorld);
     void applyTransformToBone();
-    void setKinematic(bool flag);
-    btRigidBody *getBody() const;
+    void setKinematic(const bool value);
+
+    inline const char *getName() const {
+        return m_name;
+    }
+
+    inline btRigidBody *getBody() const {
+        return m_body;
+    }
 
 private:
     void initialize();
@@ -68,6 +75,7 @@ private:
     unsigned short m_groupMask;
     unsigned char m_type;
     PMDBone *m_bone;
+    char *m_name;
     bool m_noBone;
     btTransform m_trans;
     btTransform m_transInv;

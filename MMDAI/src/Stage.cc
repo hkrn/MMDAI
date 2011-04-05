@@ -243,7 +243,7 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
 
     bool ret = m_model->load(loader, bullet);
     if (ret) {
-        m_model->setToonFlag(false);
+        m_model->setToonEnable(false);
         m_model->updateSkin();
         m_hasPMD = true;
         m_engine->deleteCache(&m_cache);

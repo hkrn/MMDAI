@@ -56,29 +56,62 @@ public:
     PMDBone();
     ~PMDBone();
 
-    bool setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones, PMDBone *rootBone);
+    bool setup(const PMDFile_Bone *b, PMDBone *boneList, const uint16_t maxBones, PMDBone *rootBone);
     void computeOffset();
     void reset();
     void setMotionIndependency();
     void updateRotate();
     void update();
     void calcSkinningTrans(btTransform *b);
-    const char *getName() const;
-    unsigned char getType() const;
-    btTransform *getTransform();
-    void setTransform(btTransform *tr);
-    btVector3 *getOriginPosition();
-    bool isLimitAngleX() const;
-    bool hasMotionIndependency() const;
-    void setSimulatedFlag(bool flag);
-    bool isSimulated() const;
-    btVector3 *getOffset();
-    void setOffset(btVector3 *v);
-    PMDBone *getParentBone() const;
-    btVector3 *getCurrentPosition();
-    void setCurrentPosition(btVector3 *v);
-    btQuaternion *getCurrentRotation();
-    void setCurrentRotation(btQuaternion *q);
+
+    inline const char *getName() const {
+        return m_name;
+    }
+    inline unsigned char getType() const {
+        return m_type;
+    }
+    inline const btTransform &getTransform() const {
+        return m_trans;
+    }
+    void setTransform(const btTransform &value) {
+        m_trans = value;
+    }
+    inline const btVector3 &getOriginPosition() const {
+        return m_originPosition;
+    }
+    bool isLimitAngleX() const {
+        return m_limitAngleX;
+    }
+    bool hasMotionIndependency() const {
+        return m_motionIndependent;
+    }
+    void setSimulated(bool value) {
+        m_simulated = value;
+    }
+    bool isSimulated() const {
+        return m_simulated;
+    }
+    const btVector3 &getOffset() const {
+        return m_offset;
+    }
+    void setOffset(const btVector3 &value) {
+        m_offset = value;
+    }
+    PMDBone *getParentBone() const {
+        return m_parentBone;
+    }
+    const btVector3 &getCurrentPosition() const {
+        return m_pos;
+    }
+    void setCurrentPosition(const btVector3 &value) {
+        m_pos = value;
+    }
+    const btQuaternion &getCurrentRotation() {
+        return m_rot;
+    }
+    void setCurrentRotation(const btQuaternion &value) {
+        m_rot = value;
+    }
 
 private:
     void initialize();

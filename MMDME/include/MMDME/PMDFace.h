@@ -57,13 +57,20 @@ public:
     PMDFace();
     ~PMDFace();
 
-    void setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList);
+    void setup(const PMDFile_Face *face, const PMDFile_Face_Vertex *faceVertexList);
     void convertIndex(PMDFace *base);
     void apply(btVector3 *vertexList);
     void add(btVector3 *vertexList, float rate);
-    const char *getName() const;
-    float getWeight() const;
-    void setWeight(float f);
+
+    const char *getName() const {
+        return m_name;
+    }
+    const float getWeight() const {
+        return m_weight;
+    }
+    void setWeight(const float value) {
+        m_weight = value;
+    }
 
 private:
     static const unsigned int kMaxVertexID = 65536;

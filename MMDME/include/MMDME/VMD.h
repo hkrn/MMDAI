@@ -96,12 +96,25 @@ public:
 
     bool load(VMDLoader *loader);
     bool parse(unsigned char *data, size_t size);
-    unsigned int getTotalKeyFrame() const;
-    BoneMotionLink * getBoneMotionLink() const;
-    FaceMotionLink * getFaceMotionLink() const;
-    uint32_t getNumBoneKind() const;
-    uint32_t getNumFaceKind() const;
-    float getMaxFrame() const;
+
+    inline const unsigned int getTotalKeyFrame() const {
+        return m_numTotalBoneKeyFrame + m_numTotalFaceKeyFrame;
+    }
+    inline BoneMotionLink * getBoneMotionLink() const {
+        return m_boneLink;
+    }
+    inline FaceMotionLink * getFaceMotionLink() const {
+        return m_faceLink;
+    }
+    inline const uint32_t countBoneKind() const {
+        return m_numBoneKind;
+    }
+    inline const uint32_t countFaceKind() const {
+        return m_numFaceKind;
+    }
+    inline const float getMaxFrame() const {
+        return m_maxFrame;
+    }
 
 private:
     void addBoneMotion(const char *name);

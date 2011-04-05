@@ -141,11 +141,11 @@ void BoneController::setup(PMDModel *model, const char **boneName, int numBone, 
     m_adjustPos = btVector3(adjustPosX, adjustPosY, adjustPosZ);
 
     /* set child bones */
-    if(model->getNumBone() > 0) {
-        tmpBoneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * model->getNumBone()));
+    if(model->countBones() > 0) {
+        tmpBoneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * model->countBones()));
         if (tmpBoneList == NULL)
             return;
-        k = model->getChildBoneList(m_boneList, m_numBone, tmpBoneList, model->getNumBone());
+        k = model->getChildBoneList(m_boneList, m_numBone, tmpBoneList, model->countBones());
         for(i = 0, j = 0; i < k; i++) {
             if(tmpBoneList[i]->isSimulated() == true)
                 j++;
@@ -171,7 +171,7 @@ void BoneController::setEnableFlag(bool b)
     m_enable = b;
     if(b == true) {
         for(i = 0; i < m_numBone; i++)
-            m_rotList[i] = (*(m_boneList[i]->getCurrentRotation()));
+            m_rotList[i] = m_boneList[i]->getCurrentRotation();
     } else {
         m_fadingRate = 1.0f;
     }
@@ -197,7 +197,7 @@ void BoneController::update(btVector3 *pos, float deltaFrame)
         v = (*pos) + m_adjustPos;
         for(i = 0; i < m_numBone; i++) {
             /* calculate rotation to target position */
-            localDest = m_boneList[i]->getTransform()->inverse() * v;
+            localDest = m_boneList[i]->getTransform().inverse() * v;
             localDest.normalize();
             dot = m_baseVector.dot(localDest);
             if (dot <= 1.0f) {
@@ -218,7 +218,7 @@ void BoneController::update(btVector3 *pos, float deltaFrame)
                     /* slerp from current rotation to target rotation */
                     m_rotList[i] = m_rotList[i].slerp(targetRot, rate);
                     /* set result to current rotation */
-                    m_boneList[i]->setCurrentRotation(&m_rotList[i]);
+                    m_boneList[i]->setCurrentRotation(m_rotList[i]);
                 }
             }
         }
@@ -237,9 +237,9 @@ void BoneController::update(btVector3 *pos, float deltaFrame)
                 m_fadingRate = 0.0f;
             /* rate multiplication for bone rotation */
             for (i = 0; i < m_numBone; i++) {
-                targetRot = (*(m_boneList[i]->getCurrentRotation()));
+                targetRot = m_boneList[i]->getCurrentRotation();
                 m_rotList[i] = targetRot.slerp(m_rotList[i], m_fadingRate);
-                m_boneList[i]->setCurrentRotation(&m_rotList[i]);
+                m_boneList[i]->setCurrentRotation(m_rotList[i]);
             }
             /* update bone transform matrices */
             for (i = 0; i < m_numBone; i++)

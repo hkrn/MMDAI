@@ -90,7 +90,10 @@ public:
     bool swapMotion(VMD *vmd, const char *name);
     bool deleteMotion(const char *name);
     bool update(double frame);
-    MotionPlayer *getMotionPlayerList() const;
+
+    MotionPlayer *getMotionPlayerList() const {
+        return m_playerList;
+    }
 
 private:
     void purgeMotion();

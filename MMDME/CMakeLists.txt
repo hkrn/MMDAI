@@ -71,7 +71,7 @@ else()
   set(MMDME_LIB_TYPE STATIC)
 endif()
 
-add_library(MMDME ${MMDME_LIB_TYPE} ${libMMDME_sources} ${libMMDME_public_headers})
+add_library(MMDME ${MMDME_LIB_TYPE} ${libMMDME_sources})# ${libMMDME_public_headers})
 set_target_properties(MMDME PROPERTIES VERSION ${MMDME_VERSION})
 set_target_properties(MMDME PROPERTIES SO_VERSION ${MMDME_VERSION})
 

@@ -75,7 +75,7 @@ public:
         bool ret = PMDModel::load(loader, bullet);
         if (!ret)
           return ret;
-        m_nmaterials = getNumMaterial();
+        m_nmaterials = countMaterials();
         m_materialVBO = static_cast<GLuint *>(calloc(sizeof(GLuint), m_nmaterials));
         glGenBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
         glGenBuffers(m_nmaterials, m_materialVBO);
@@ -84,14 +84,14 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumSurfaceForEdge() * sizeof(GLushort), getSurfacesForEdgePtr(), GL_STATIC_DRAW);
         // shadow buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_modelVBO[kShadowIndices]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, getNumSurface() * sizeof(GLushort), getSurfacesPtr(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, countSurfaces() * sizeof(GLushort), getSurfacesPtr(), GL_STATIC_DRAW);
         // texture for model buffer
         glBindBuffer(GL_ARRAY_BUFFER, m_modelVBO[kModelTexCoords]);
-        glBufferData(GL_ARRAY_BUFFER, getNumVertex() * sizeof(TexCoord), getTexCoordsPtr(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, countVertices() * sizeof(TexCoord), getTexCoordsPtr(), GL_STATIC_DRAW);
         // material indices
         const unsigned short *surfaceData = getSurfacesPtr();
         for (unsigned int i = 0; i < m_nmaterials; i++) {
-            const int nsurfaces = getMaterialAt(i)->getNumSurface();
+            const int nsurfaces = getMaterialAt(i)->countSurfaces();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_materialVBO[i]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, nsurfaces * sizeof(GLushort), surfaceData, GL_STATIC_DRAW);
             surfaceData += nsurfaces;
@@ -362,7 +362,7 @@ void GLSceneRenderEngine::renderBone(PMDBone *bone)
 {
     btScalar m[16];
     PMDBone *parentBone = bone->getParentBone();
-    const btTransform *trans = bone->getTransform();
+    const btTransform trans = bone->getTransform();
     const unsigned char type = bone->getType();
     const bool isSimulated = bone->isSimulated();
 
@@ -370,7 +370,7 @@ void GLSceneRenderEngine::renderBone(PMDBone *bone)
     if (type == IK_TARGET && parentBone && parentBone->isSimulated())
         return;
 
-    trans->getOpenGLMatrix(m);
+    trans.getOpenGLMatrix(m);
 
     /* draw node */
     glPushMatrix();
@@ -435,8 +435,8 @@ void GLSceneRenderEngine::renderBone(PMDBone *bone)
     }
 
     glBegin(GL_LINES);
-    const btVector3 a = parentBone->getTransform()->getOrigin();
-    const btVector3 b = trans->getOrigin();
+    const btVector3 a = parentBone->getTransform().getOrigin();
+    const btVector3 b = trans.getOrigin();
     glVertex3f(a.x(), a.y(), a.z());
     glVertex3f(b.x(), b.y(), b.z());
     glEnd();
@@ -451,7 +451,7 @@ void GLSceneRenderEngine::renderBones(PMDModel *model)
     glDisable(GL_TEXTURE_2D);
 
     /* draw bones */
-    const int nbones = model->getNumBone();
+    const int nbones = model->countBones();
     PMDBone *bones = model->getBonesPtr();
     for (int i = 0; i < nbones; i++)
         renderBone(&bones[i]);
@@ -482,7 +482,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
     glClientActiveTextureARB(GL_TEXTURE0_ARB);
 
     /* set lists */
-    unsigned int nvertices = model->getNumVertex();
+    const unsigned int nvertices = model->countVertices();
     size_t vsize = nvertices  * sizeof(btVector3);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -500,7 +500,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
     glBindBuffer(GL_ARRAY_BUFFER, model->m_modelVBO[kModelTexCoords]);
     glTexCoordPointer(2, GL_FLOAT, 0, NULL);
 
-    const bool enableToon = model->getToonFlag();
+    const bool enableToon = model->isToonEnabled();
     const bool hasSingleSphereMap = model->hasSingleSphereMap();
     const bool hasMultipleSphereMap = model->hasMultipleSphereMap();
 
@@ -548,7 +548,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
     const float modelAlpha = model->getGlobalAlpha();
 
     /* render per material */
-    const int nmaterials = model->getNumMaterial();
+    const int nmaterials = model->countMaterials();
     for (int i = 0; i < nmaterials; i++) {
         float c[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
         PMDMaterial *m = model->getMaterialAt(i);
@@ -589,18 +589,18 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
             glActiveTextureARB(GL_TEXTURE0_ARB);
         }
 
-        const PMDTexture *tex = m->getTexture();
-        if (tex != NULL) {
+        const PMDTexture *texture = m->getTexture();
+        if (texture != NULL) {
             /* bind model texture */
-            const PMDTextureNative *native = tex->getNative();
+            const PMDTextureNative *native = texture->getNative();
             if (native != NULL) {
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, native->id);
                 if (hasSingleSphereMap) {
-                    if (tex->isSphereMap()) {
+                    if (texture->isSPH()) {
                         /* this is sphere map */
                         /* enable texture coordinate generation */
-                        if (tex->isSphereMapAdd())
+                        if (texture->isSPA())
                             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                         glEnable(GL_TEXTURE_GEN_S);
                         glEnable(GL_TEXTURE_GEN_T);
@@ -635,11 +635,11 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
 
         if (hasMultipleSphereMap) {
             const PMDTexture *addtex = m->getAdditionalTexture();
-            if (addtex) {
+            if (addtex != NULL) {
                 /* this material has additional sphere map texture, bind it at texture unit 2 */
                 glActiveTextureARB(GL_TEXTURE2_ARB);
                 glEnable(GL_TEXTURE_2D);
-                if (addtex->isSphereMapAdd()) {
+                if (addtex->isSPA()) {
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                 }
                 else {
@@ -664,10 +664,10 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
 
         /* draw elements */
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->m_materialVBO[i]);
-        glDrawElements(GL_TRIANGLES, m->getNumSurface(), GL_UNSIGNED_SHORT, NULL);
+        glDrawElements(GL_TRIANGLES, m->countSurfaces(), GL_UNSIGNED_SHORT, NULL);
 
         /* reset some parameters */
-        if (tex && tex->isSphereMap() && tex->isSphereMapAdd()) {
+        if (texture && texture->isSPH() && texture->isSPA()) {
             if (enableToon)
                 glActiveTextureARB(GL_TEXTURE0_ARB);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -733,7 +733,7 @@ void GLSceneRenderEngine::renderEdge(PMDModel *ptr)
 {
     GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
     const btVector3 *vertices = model->getVerticesPtr();
-    const bool enableToon = model->getToonFlag();
+    const bool enableToon = model->isToonEnabled();
     const unsigned int nsurfaces = model->getNumSurfaceForEdge();
     if (!vertices || !enableToon || nsurfaces == 0)
         return;
@@ -754,7 +754,7 @@ void GLSceneRenderEngine::renderEdge(PMDModel *ptr)
     glDisable(GL_LIGHTING);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, model->m_modelVBO[kEdgeVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->getNumVertex() * sizeof(btVector3), model->getEdgeVerticesPtr(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model->countVertices() * sizeof(btVector3), model->getEdgeVerticesPtr(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
     glColor4f(edgeColors[0], edgeColors[1], edgeColors[2], edgeColors[3] * modelAlpha);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->m_modelVBO[kEdgeIndices]);
@@ -777,14 +777,14 @@ void GLSceneRenderEngine::renderShadow(PMDModel *ptr)
 {
     GLPMDModel *model = reinterpret_cast<GLPMDModel *>(ptr);
     const btVector3 *vertices = model->getVerticesPtr();
-    const unsigned int nsurfaces = model->getNumSurface();
+    const unsigned int nsurfaces = model->countSurfaces();
     if (!vertices || nsurfaces == 0)
         return;
 
     glDisable(GL_CULL_FACE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, model->m_modelVBO[kShadowVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->getNumVertex() * sizeof(btVector3), model->getSkinnedVerticesPtr(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model->countVertices() * sizeof(btVector3), model->getSkinnedVerticesPtr(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, sizeof(btVector3), NULL);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->m_modelVBO[kShadowIndices]);
     glDrawElements(GL_TRIANGLES, nsurfaces, GL_UNSIGNED_SHORT, NULL);
@@ -1107,7 +1107,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
-            if (model->getToonFlag() == true)
+            if (model->isToonEnabled())
                 continue;
             renderModel(model);
         }
@@ -1122,7 +1122,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
-            if (!model->getToonFlag())
+            if (!model->isToonEnabled())
                 continue;
             /* set texture coordinates for shadow mapping */
             model->updateShadowColorTexCoord(shadowMappingSelfDensity);
@@ -1190,7 +1190,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
-            if (!model->getToonFlag())
+            if (!model->isToonEnabled())
                 continue;
             renderModel(model);
         }
@@ -1205,7 +1205,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
-            if (!model->getToonFlag())
+            if (!model->isToonEnabled())
                 continue;
             /* set texture coordinates for shadow mapping */
             model->updateShadowColorTexCoord(shadowMappingSelfDensity);

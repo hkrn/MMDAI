@@ -54,20 +54,51 @@ public:
    PMDMaterial(PMDRenderEngine *engine);
    virtual ~PMDMaterial();
 
-   bool setup(PMDFile_Material *m, PMDModelLoader *loader);
-   bool hasSingleSphereMap() const;
-   bool hasMultipleSphereMap() const;
-   void copyDiffuse(float *c);
-   void copyAvgcol(float *c);
-   void copyAmbient(float *c);
-   void copySpecular(float *c);
-   float getAlpha() const;
-   float getShiness() const;
-   unsigned int getNumSurface() const;
-   unsigned char getToonID() const;
-   bool getEdgeFlag() const;
-   PMDTexture *getTexture();
-   PMDTexture *getAdditionalTexture();
+   bool setup(const PMDFile_Material *m, PMDModelLoader *loader);
+
+   inline void copyDiffuse(float c[4]) {
+       for (int i = 0; i < 3; i++)
+           c[i] = m_diffuse[i];
+   }
+   inline void copyAvgcol(float c[4]) {
+       for (int i = 0; i < 3; i++)
+           c[i] = m_avgcol[i];
+   }
+   inline void copyAmbient(float c[4]) {
+       for (int i = 0; i < 3; i++)
+           c[i] = m_ambient[i];
+   }
+   inline void copySpecular(float c[4]) {
+       for (int i = 0; i < 3; i++)
+           c[i] = m_specular[i];
+   }
+   inline const bool hasSingleSphereMap() const {
+       return m_texture.isSPH() && !m_additionalTexture.isSPA();
+   }
+   inline const bool hasMultipleSphereMap() const {
+       return m_additionalTexture.isSPA();
+   }
+   inline const float getAlpha() const {
+       return m_alpha;
+   }
+   inline const float getShiness() const {
+       return m_shiness;
+   }
+   inline const unsigned int countSurfaces() const {
+       return m_numSurface;
+   }
+   inline const unsigned char getToonID() const {
+       return m_toonID;
+   }
+   inline const bool hasEdge() const {
+       return m_edgeFlag;
+   }
+   inline PMDTexture *getTexture() {
+       return &m_texture;
+   }
+   inline PMDTexture *getAdditionalTexture() {
+       return &m_additionalTexture;
+   }
 
 private:
    void initialize();

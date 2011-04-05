@@ -45,29 +45,27 @@ namespace MMDAI {
 /* compareKeyFrameBone: qsort function for bone key frames */
 static int compareKeyFrameBone(const void *x, const void *y)
 {
-    BoneKeyFrame *a = (BoneKeyFrame *) x;
-    BoneKeyFrame *b = (BoneKeyFrame *) y;
-
+    const BoneKeyFrame *a = static_cast<const BoneKeyFrame *>(x);
+    const BoneKeyFrame *b = static_cast<const BoneKeyFrame *>(y);
     return (int) (a->keyFrame - b->keyFrame);
 }
 
 /* compareKeyFrameFace: qsort function for face key frames */
 static int compareKeyFrameFace(const void *x, const void *y)
 {
-    FaceKeyFrame *a = (FaceKeyFrame *) x;
-    FaceKeyFrame *b = (FaceKeyFrame *) y;
-
+    const FaceKeyFrame *a = static_cast<const FaceKeyFrame *>(x);
+    const FaceKeyFrame *b = static_cast<const FaceKeyFrame *>(y);
     return (int) (a->keyFrame - b->keyFrame);
 }
 
 /* ipfunc: t->value for 4-point (3-dim.) bezier curve */
-static float ipfunc(float t, float p1, float p2)
+static float ipfunc(const float t, const float p1,  const float p2)
 {
     return ((1 + 3 * p1 - 3 * p2) * t * t * t + (3 * p2 - 6 * p1) * t * t + 3 * p1 * t);
 }
 
 /* ipfuncd: derivation of ipfunc */
-static float ipfuncd(float t, float p1, float p2)
+static float ipfuncd(const float t, const float p1, const float p2)
 {
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
 }
@@ -92,7 +90,7 @@ void VMD::addBoneMotion(const char *name)
     link->next = m_boneLink;
     m_boneLink = link;
 
-    bmMatch = (BoneMotion *) m_name2bone.findNearest(name);
+    bmMatch = static_cast<BoneMotion *>(m_name2bone.findNearest(name));
     if (!bmMatch || !MMDAIStringEquals(bmMatch->name, name))
         m_name2bone.add(name, bmNew, (bmMatch) ? bmMatch->name : NULL);
 }
@@ -117,7 +115,7 @@ void VMD::addFaceMotion(const char *name)
     link->next = m_faceLink;
     m_faceLink = link;
 
-    fmMatch = (FaceMotion *) m_name2face.findNearest(name);
+    fmMatch = static_cast<FaceMotion *>(m_name2face.findNearest(name));
     if (!fmMatch || !MMDAIStringEquals(fmMatch->name, name))
         m_name2face.add(name, fmNew, (fmMatch) ? fmMatch->name : NULL);
 }
@@ -210,8 +208,6 @@ void VMD::clear()
 {
     BoneMotionLink *bl, *bl_tmp;
     FaceMotionLink *fl, *fl_tmp;
-    unsigned long i;
-    short j;
 
     m_name2bone.release();
     m_name2face.release();
@@ -219,8 +215,8 @@ void VMD::clear()
     bl = m_boneLink;
     while (bl) {
         if (bl->boneMotion.keyFrameList) {
-            for (i = 0; i < bl->boneMotion.numKeyFrame; i++)
-                for (j = 0; j < 4; j++)
+            for (uint32_t i = 0; i < bl->boneMotion.numKeyFrame; i++)
+                for (int j = 0; j < 4; j++)
                     if (bl->boneMotion.keyFrameList[i].linear[j] == false)
                         MMDAIMemoryRelease(bl->boneMotion.keyFrameList[i].interpolationTable[j]);
             MMDAIMemoryRelease(bl->boneMotion.keyFrameList);
@@ -273,7 +269,7 @@ bool VMD::load(VMDLoader *loader)
 /* VMD::parse: initialize and load from data memories */
 bool VMD::parse(unsigned char *data, size_t size)
 {
-    unsigned long i;
+    uint32_t i = 0;
     BoneMotion *bm;
     BoneMotionLink *bl;
     FaceMotion *fm;
@@ -305,8 +301,7 @@ bool VMD::parse(unsigned char *data, size_t size)
 
     /* list bones that exists in the data and count the number of defined key frames for each */
     for (i = 0; i < m_numTotalBoneKeyFrame; i++) {
-        MMDAIStringCopy(name, boneFrame[i].name, 15);
-        name[15] = '\0';
+        MMDAIStringCopySafe(name, boneFrame[i].name, sizeof(name));
         bm = getBoneMotion(name);
         if (bm)
             bm->numKeyFrame++;
@@ -320,8 +315,7 @@ bool VMD::parse(unsigned char *data, size_t size)
     }
     /* store the key frames, parsing the data again. also compute max frame */
     for (i = 0; i < m_numTotalBoneKeyFrame; i++) {
-        MMDAIStringCopy(name, boneFrame[i].name, 15);
-        name[15] = '\0';
+        MMDAIStringCopySafe(name, boneFrame[i].name, sizeof(name));
         bm = getBoneMotion(name);
         if (bm) {
             bm->keyFrameList[bm->numKeyFrame].keyFrame = (float) boneFrame[i].keyFrame;
@@ -358,8 +352,7 @@ bool VMD::parse(unsigned char *data, size_t size)
 
     /* list faces that exists in the data and count the number of defined key frames for each */
     for (i = 0; i < m_numTotalFaceKeyFrame; i++) {
-        MMDAIStringCopy(name, faceFrame[i].name, 15);
-        name[15] = '\0';
+        MMDAIStringCopySafe(name, faceFrame[i].name, sizeof(name));
         fm = getFaceMotion(name);
         if (fm)
             fm->numKeyFrame++;
@@ -373,9 +366,8 @@ bool VMD::parse(unsigned char *data, size_t size)
     }
     /* store the key frames, parsing the data again. also compute max frame */
     for (i = 0; i < m_numTotalFaceKeyFrame; i++) {
-        MMDAIStringCopy(name, faceFrame[i].name, 15);
-        name[15] = '\0';
-        fm = getFaceMotion(faceFrame[i].name);
+        MMDAIStringCopySafe(name, faceFrame[i].name, sizeof(name));
+        fm = getFaceMotion(name);
         if (fm) {
             fm->keyFrameList[fm->numKeyFrame].keyFrame = (float) faceFrame[i].keyFrame;
             if (m_maxFrame < fm->keyFrameList[fm->numKeyFrame].keyFrame)
@@ -396,42 +388,6 @@ bool VMD::parse(unsigned char *data, size_t size)
     data += sizeof(VMDFile_FaceFrame) * m_numTotalFaceKeyFrame;
 
     return true;
-}
-
-/* VMD::getTotalKeyFrame: get total number of key frames */
-unsigned int VMD::getTotalKeyFrame() const
-{
-    return m_numTotalBoneKeyFrame + m_numTotalFaceKeyFrame;
-}
-
-/* VMD::getBoneMotionLink: get list of bone motions */
-BoneMotionLink *VMD::getBoneMotionLink() const
-{
-    return m_boneLink;
-}
-
-/* VMD::getFaceMotionLink: get list of face motions */
-FaceMotionLink *VMD::getFaceMotionLink() const
-{
-    return m_faceLink;
-}
-
-/* VMD::getNumBoneKind: get number of bone motions */
-uint32_t VMD::getNumBoneKind() const
-{
-    return m_numBoneKind;
-}
-
-/* VMD::getNumFaceKind: get number of face motions */
-uint32_t VMD::getNumFaceKind() const
-{
-    return m_numFaceKind;
-}
-
-/* VMD::getMaxFrame: get max frame */
-float VMD::getMaxFrame() const
-{
-    return m_maxFrame;
 }
 
 } /* namespace */

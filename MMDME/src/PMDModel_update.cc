@@ -90,7 +90,7 @@ void PMDModel::updateSkin()
 {
    /* calculate transform matrix for skinning (global -> local) */
    for (uint16_t i = 0; i < m_numBone; i++)
-      m_boneList[i].calcSkinningTrans(&(m_boneSkinningTrans[i]));
+      m_boneList[i].calcSkinningTrans(&m_boneSkinningTrans[i]);
 
    /* do skinning */
    for (uint32_t j = 0; j < m_numVertex; j++) {
@@ -165,7 +165,7 @@ float PMDModel::calculateBoundingSphereRange(btVector3 *cpos)
    btVector3 centerPos;
 
    if (m_centerBone) {
-      centerPos = m_centerBone->getTransform()->getOrigin();
+      centerPos = m_centerBone->getTransform().getOrigin();
       for (uint32_t i = 0; i < m_numVertex; i += 10) {
          const float r2 = centerPos.distance2(m_skinnedVertexList[i]);
          if (maxR < r2)
@@ -189,12 +189,12 @@ void PMDModel::smearAllBonesToDefault(float rate)
    const btQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
 
    for (uint16_t i = 0; i < m_numBone; i++) {
-      const btVector3 tmpv1 = (*(m_boneList[i].getCurrentPosition()));
+      const btVector3 tmpv1 = m_boneList[i].getCurrentPosition();
       btVector3 tmpv2 = v.lerp(tmpv1, rate);
-      m_boneList[i].setCurrentPosition(&tmpv2);
-      const btQuaternion tmpq1 = (*(m_boneList[i].getCurrentRotation()));
+      m_boneList[i].setCurrentPosition(tmpv2);
+      const btQuaternion tmpq1 = m_boneList[i].getCurrentRotation();
       btQuaternion tmpq2 = q.slerp(tmpq1, rate);
-      m_boneList[i].setCurrentRotation(&tmpq2);
+      m_boneList[i].setCurrentRotation(tmpq2);
    }
    for (uint16_t i = 0; i < m_numFace; i++) {
       m_faceList[i].setWeight(m_faceList[i].getWeight() * rate);

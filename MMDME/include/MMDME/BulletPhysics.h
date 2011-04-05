@@ -53,7 +53,9 @@ public:
 
     void setup(int simulationFps);
     void update(float deltaFrame);
-    btDiscreteDynamicsWorld *getWorld() const;
+    inline btDiscreteDynamicsWorld *getWorld() const {
+        return m_world;
+    }
 
 private:
     void initialize();

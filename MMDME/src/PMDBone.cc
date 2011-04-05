@@ -90,7 +90,7 @@ PMDBone::~PMDBone()
 }
 
 /* PMDBone::setup: initialize and setup bone */
-bool PMDBone::setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones, PMDBone *rootBone)
+bool PMDBone::setup(const PMDFile_Bone *b, PMDBone *boneList, const uint16_t maxBones, PMDBone *rootBone)
 {
     bool ret = true;
     char name[21];
@@ -98,8 +98,7 @@ bool PMDBone::setup(PMDFile_Bone *b, PMDBone *boneList, unsigned short maxBones,
     clear();
 
     /* name */
-    MMDAIStringCopy(name, b->name, 20);
-    name[20] = '\0';
+    MMDAIStringCopySafe(name, b->name, sizeof(name));
     m_name = MMDAIStringClone(name);
 
     /* mark if this bone should be treated as angle-constrained bone in IK process */
@@ -194,7 +193,6 @@ void PMDBone::reset()
 /* PMDBone::setMotionIndependency: check if this bone does not be affected by other controller bones */
 void PMDBone::setMotionIndependency()
 {
-    int i;
     const char *names[] = {PMDBONE_ADDITIONALROOTNAME};
 
     if (! m_parentBone || m_parentIsRoot) {
@@ -204,7 +202,7 @@ void PMDBone::setMotionIndependency()
     }
 
     /* some models has additional model root bone or offset bones, they should be treated specially */
-    for (i = 0; i < PMDBONE_NADDITIONALROOTNAME; i++) {
+    for (int i = 0; i < PMDBONE_NADDITIONALROOTNAME; i++) {
         if (MMDAIStringEquals(m_parentBone->m_name, names[i])) {
             m_motionIndependent = true;
             return;
@@ -250,101 +248,6 @@ void PMDBone::update()
 void PMDBone::calcSkinningTrans(btTransform *b)
 {
     *b = m_trans * m_transMoveToOrigin;
-}
-
-/* PMDBone;:getName: get bone name */
-const char *PMDBone::getName() const
-{
-    return m_name;
-}
-
-/* PMDBone::getType: get bone type */
-unsigned char PMDBone::getType() const
-{
-    return m_type;
-}
-
-/* PMDBone::getTransform: get transform */
-btTransform *PMDBone::getTransform()
-{
-    return &m_trans;
-}
-
-/* PMDBone::setTransform: set transform */
-void PMDBone::setTransform(btTransform *tr)
-{
-    m_trans = *tr;
-}
-
-/* PMDBone::getOriginPosition: get position */
-btVector3 *PMDBone::getOriginPosition()
-{
-    return &m_originPosition;
-}
-
-/* PMDBone::isLimitAngleX: return true if this bone can be bended for X axis only at IK process */
-bool PMDBone::isLimitAngleX() const
-{
-    return m_limitAngleX;
-}
-
-/* PMDBone::hasMotionIndependency: return true if this bone is not affected by other controller bones */
-bool PMDBone::hasMotionIndependency() const
-{
-    return m_motionIndependent;
-}
-
-/* PMDBone::setSimlatedFlag: set flag whether bone is controlled under phsics or not */
-void PMDBone::setSimulatedFlag(bool flag)
-{
-    m_simulated = flag;
-}
-/* PMDBone::isSimulated: return true if this bone is controlled under physics */
-bool PMDBone::isSimulated() const
-{
-    return m_simulated;
-}
-
-/* PMDBone::getOffset: get offset */
-btVector3 *PMDBone::getOffset()
-{
-    return &m_offset;
-}
-
-/* PMDBone::setOffset: set offset */
-void PMDBone::setOffset(btVector3 *v)
-{
-    m_offset = *v;
-}
-
-/* PMDBone::getParentBone: get parent bone */
-PMDBone *PMDBone::getParentBone() const
-{
-    return m_parentBone;
-}
-
-/* PMDBone::getCurrentPosition: get current position */
-btVector3 *PMDBone::getCurrentPosition()
-{
-    return &m_pos;
-}
-
-/* PMDBone::setCurrentPosition: set current position */
-void PMDBone::setCurrentPosition(btVector3 *v)
-{
-    m_pos = (*v);
-}
-
-/* PMDBone::getCurrentRotation: get current rotation */
-btQuaternion *PMDBone::getCurrentRotation()
-{
-    return &m_rot;
-}
-
-/* PMDBone::setCurrentRotation: set current rotation */
-void PMDBone::setCurrentRotation(btQuaternion *q)
-{
-    m_rot = (*q);
 }
 
 } /* namespace */

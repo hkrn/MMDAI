@@ -192,12 +192,6 @@ bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool onc
 void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
 {
     btVector3 offset;
-    PMDBone *centerBone;
-    btTransform tr;
-    btVector3 pos;
-
-    btVector3 center_pos;
-    btVector3 root_offset;
 
     /* initialize and setup motion controller */
     m->mc.setup(m_pmd, vmd);
@@ -220,24 +214,25 @@ void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
         if (m->mc.hasCenter() && m->enableRePos) {
             /* when the started motion has center motion, the center position of the model will be moved to the current position */
             /* The current global position of the center bone will become the new offset of the root bone, and the local center position will be reset */
-            centerBone = m_pmd->getCenterBone();
+            PMDBone *rootBone = m_pmd->getRootBone();
+            PMDBone *centerBone = m_pmd->getCenterBone();
             /* calculate relative origin of center bone from model root bone */
-            tr = m_pmd->getRootBone()->getTransform()->inverse();
-            pos = tr * centerBone->getTransform()->getOrigin();
+            btTransform tr = rootBone->getTransform().inverse();
+            btVector3 pos = tr * centerBone->getTransform().getOrigin();
             /* get the translation vector */
-            center_pos = (*(centerBone->getOriginPosition()));
-            offset = pos - center_pos;
+            btVector3 centerPos = centerBone->getOriginPosition();
+            offset = pos - centerPos;
             offset.setY(0.0f); /* Y axis should be set to zero to place model on ground */
             /* save the current pos/rot for smooth motion changing, resetting center location */
-            m->mc.setOverrideFirst(&offset);
+            m->mc.setOverrideFirst(offset);
             /* add the offset to the root bone */
-            root_offset = (*(m_pmd->getRootBone()->getOffset()));
-            root_offset += offset;
-            m_pmd->getRootBone()->setOffset(&root_offset);
-            m_pmd->getRootBone()->update();
+            btVector3 rootOffset = rootBone->getOffset();
+            rootOffset += offset;
+            rootBone->setOffset(rootOffset);
+            rootBone->update();
         } else {
             /* save the current pos/rot for smooth motion changing */
-            m->mc.setOverrideFirst(NULL) ;
+            m->mc.setOverrideFirst(btVector3()) ;
         }
     }
 }
@@ -359,12 +354,6 @@ bool MotionManager::update(double frame)
         if (m->statusFlag != MOTION_STATUS_RUNNING)
             return true;
     return false;
-}
-
-/* MotionManager::getMotionPlayerList: get list of motion players */
-MotionPlayer * MotionManager::getMotionPlayerList() const
-{
-    return m_playerList;
 }
 
 } /* namespace */

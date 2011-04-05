@@ -81,10 +81,8 @@ PMDIK::~PMDIK()
 }
 
 /* PMDIK::setup: initialize and setup IK  */
-void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
+void PMDIK::setup(const PMDFile_IK *ik, const short *ikBoneIDList, PMDBone *boneList)
 {
-    unsigned char i;
-
     clear();
 
     m_destBone = &(boneList[ik->destBoneID]);
@@ -93,7 +91,7 @@ void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
     if (m_numBone) {
         m_boneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numBone));
         if (m_boneList != NULL) {
-            for (i = 0; i < m_numBone; i++)
+            for (uint8_t i = 0; i < m_numBone; i++)
                 m_boneList[i] = &(boneList[ikBoneIDList[i]]);
         }
     }
@@ -107,25 +105,6 @@ void PMDIK::setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList)
 /* PMDIK::solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
 void PMDIK::solve()
 {
-    short i;
-    unsigned char j;
-    unsigned short ite;
-    btQuaternion tmpRot;
-
-    btQuaternion origTargetRot;
-
-    btVector3 destPos; /* destination position */
-    btVector3 targetPos;
-
-    btTransform tr;
-    btVector3 localDestVec;
-    btVector3 localTargetVec;
-
-    float angle, dot;
-
-    btVector3 axis;
-    btQuaternion rot;
-
     btScalar x, y, z;
     btScalar cx, cy, cz;
     btMatrix3x3 mat;
@@ -134,26 +113,26 @@ void PMDIK::solve()
         return;
 
     /* get the global destination point */
-    destPos = m_destBone->getTransform()->getOrigin();
+    const btVector3 destPos = m_destBone->getTransform().getOrigin();
 
     /* before begin IK iteration, make sure all the child bones and target bone are up to date update from root to child */
-    for (i = m_numBone - 1; i >= 0; i--)
+    for (int16_t i = m_numBone - 1; i >= 0; i--)
         m_boneList[i]->update();
     m_targetBone->update();
 
     /* save the current rotation of the target bone. It will be restored at the end of this function */
-    origTargetRot = (*(m_targetBone->getCurrentRotation()));
+    const btQuaternion origTargetRot = m_targetBone->getCurrentRotation();
 
     /* begin IK iteration */
-    for (ite = 0; ite < m_iteration; ite++) {
+    for (uint16_t ite = 0; ite < m_iteration; ite++) {
         /* solve each step from leaf bone to root bone */
-        for (j = 0; j < m_numBone; j++) {
+        for (uint8_t j = 0; j < m_numBone; j++) {
             /* get current global target bone location */
-            targetPos = m_targetBone->getTransform()->getOrigin();
+            const btVector3 targetPos = m_targetBone->getTransform().getOrigin();
             /* calculate local positions of destination position and target position at current bone */
-            tr = m_boneList[j]->getTransform()->inverse();
-            localDestVec = tr * destPos;
-            localTargetVec = tr * targetPos;
+            const btTransform tr = m_boneList[j]->getTransform().inverse();
+            btVector3 localDestVec = tr * destPos;
+            btVector3 localTargetVec = tr * targetPos;
             /* exit if they are close enough */
             if (localDestVec.distance2(localTargetVec) < kMinDistance) {
                 ite = m_iteration;
@@ -163,10 +142,10 @@ void PMDIK::solve()
             localDestVec.normalize();
             localTargetVec.normalize();
             /* get angle */
-            dot = localDestVec.dot(localTargetVec);
+            const float dot = localDestVec.dot(localTargetVec);
             if (dot > 1.0f) /* assume angle = 0.0f, skip to next bone */
                 continue;
-            angle = acosf(dot);
+            float angle = acosf(dot);
             /* if angle is small enough, skip to next bone */
             if (fabsf(angle) < kMinAngle)
                 continue;
@@ -176,14 +155,14 @@ void PMDIK::solve()
             else if (angle > m_angleConstraint)
                 angle = m_angleConstraint;
             /* get rotation axis */
-            axis = localTargetVec.cross(localDestVec);
+            btVector3 axis = localTargetVec.cross(localDestVec);
             /* if the axis is too small (= direction of destination and target is so close) and this is not a first iteration, skip to next bone */
             if (axis.length2() < kMinAxis && ite > 0)
                 continue;
             /* normalize rotation axis */
             axis.normalize();
             /* create quaternion for this step, to rotate the target point to the goal point, from the axis and angle */
-            rot = btQuaternion(axis, btScalar(angle));
+            btQuaternion rot = btQuaternion(axis, btScalar(angle));
             /* if this bone has limitation for rotation, consult the limitation */
             if (m_boneList[j]->isLimitAngleX()) {
                 if (ite == 0) {
@@ -196,7 +175,7 @@ void PMDIK::solve()
                     mat.setRotation(rot);
                     mat.getEulerZYX(z, y, x);
                     /* get euler angles of current bone rotation (specified by the motion) */
-                    tmpRot = (*(m_boneList[j]->getCurrentRotation()));
+                    btQuaternion tmpRot = m_boneList[j]->getCurrentRotation();
                     mat.setRotation(tmpRot);
                     mat.getEulerZYX(cz, cy, cx);
                     /* y and z should be zero, x should be over 0 */
@@ -216,31 +195,26 @@ void PMDIK::solve()
                     rot.setEulerZYX(0.0f, 0.0f, x);
                 }
                 /* apply the limited rotation to current bone */
-                tmpRot = (*(m_boneList[j]->getCurrentRotation()));
+                btQuaternion tmpRot = m_boneList[j]->getCurrentRotation();
                 tmpRot = rot * tmpRot;
-                m_boneList[j]->setCurrentRotation(&tmpRot);
+                m_boneList[j]->setCurrentRotation(tmpRot);
             } else {
                 /* apply the rotation to current bone */
-                tmpRot = (*(m_boneList[j]->getCurrentRotation()));
+                btQuaternion tmpRot = m_boneList[j]->getCurrentRotation();
                 tmpRot *= rot;
-                m_boneList[j]->setCurrentRotation(&tmpRot);
+                m_boneList[j]->setCurrentRotation(tmpRot);
             }
 
             /* update transform matrices for relevant (child) bones */
-            for (i = j; i >= 0; i--) m_boneList[i]->update();
+            for (int16_t i = j; i >= 0; i--)
+                m_boneList[i]->update();
             m_targetBone->update();
         }
     }
 
     /* restore the original rotation of the target bone */
-    m_targetBone->setCurrentRotation(&origTargetRot);
+    m_targetBone->setCurrentRotation(origTargetRot);
     m_targetBone->update();
-}
-
-/* PMDIK::isSimulated: check if this IK is under simulation, in case no need to calculate this IK */
-bool PMDIK::isSimulated() const
-{
-    return m_boneList[0]->isSimulated();
 }
 
 } /* namespace */

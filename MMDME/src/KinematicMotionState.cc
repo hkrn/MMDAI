@@ -45,6 +45,7 @@ namespace MMDAI {
 /* KinematicMotionState::KinematicMotionState: constructor */
 KinematicMotionState::KinematicMotionState(const btTransform &startTrans, const btTransform &boneTrans, PMDBone *bone)
 {
+    (void)startTrans;
     m_bone = bone;
     m_boneTrans = boneTrans;
 }
@@ -57,14 +58,13 @@ KinematicMotionState::~KinematicMotionState()
 /* KinematicMotionState::getWorldTransform: get world transform */
 void KinematicMotionState::getWorldTransform(btTransform &worldTrans) const
 {
-    btTransform *tr = m_bone->getTransform();
-
-    worldTrans = (*tr) * m_boneTrans;
+    worldTrans = m_bone->getTransform() * m_boneTrans;
 }
 
 /* KinematicMotionState::setWorldTransform: set world transform */
 void KinematicMotionState::setWorldTransform(const btTransform &worldTrans)
 {
+    (void)worldTrans;
     /* kinematic objects will not be controlled by physics simulation, just ignore this */
 }
 

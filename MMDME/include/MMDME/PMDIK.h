@@ -51,9 +51,12 @@ public:
     PMDIK();
     ~PMDIK();
 
-    void setup(PMDFile_IK *ik, short *ikBoneIDList, PMDBone *boneList);
-    bool isSimulated() const;
+    void setup(const PMDFile_IK *ik, const short *ikBoneIDList, PMDBone *boneList);
     void solve();
+
+    bool isSimulated() const {
+        return m_boneList[0]->isSimulated();
+    }
 
 private:
     static const float kPI;

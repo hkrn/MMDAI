@@ -140,11 +140,5 @@ void BulletPhysics::update(float deltaFrame)
     }
 }
 
-/* BulletPhysics::getWorld: get simulation world */
-btDiscreteDynamicsWorld *BulletPhysics::getWorld() const
-{
-    return m_world;
-}
-
 } /* namespace */
 

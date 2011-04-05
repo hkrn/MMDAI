@@ -173,6 +173,14 @@ inline char *MMDAIStringCopy(char *dst, const char *src, size_t max)
     return strncpy(dst, src, max);
 }
 
+inline char *MMDAIStringCopySafe(char *dst, const char *src, size_t max)
+{
+    assert(dst != NULL && src != NULL && max != 0);
+    char *ptr = strncpy(dst, src, max - 1);
+    dst[max - 1] = 0;
+    return ptr;
+}
+
 inline bool MMDAIStringEquals(const char *s1, const char *s2)
 {
     assert(s1 != NULL && s2 != NULL);

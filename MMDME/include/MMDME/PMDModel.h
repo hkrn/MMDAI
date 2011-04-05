@@ -79,28 +79,6 @@ public:
     bool load(PMDModelLoader *loader, BulletPhysics *bullet);
     PMDBone *getBone(const char *name);
     PMDFace *getFace(const char *name);
-    int getChildBoneList(PMDBone **bone, uint16_t boneNum, PMDBone **childBoneList, uint16_t childBoneNumMax);
-    void setPhysicsControl(bool flag);
-    void release();
-    void setEdgeThin(float thin);
-    void setToonFlag(bool flag);
-    bool getToonFlag() const;
-    void setSelfShadowDrawing(bool flag);
-    void setEdgeColor(float col[4]);
-    void setGlobalAlpha(float alpha);
-    PMDBone *getRootBone();
-    PMDBone *getCenterBone() const;
-    const char *getName() const;
-    uint32_t getNumVertex() const;
-    uint32_t getNumSurface() const;
-    uint32_t getNumMaterial() const;
-    uint16_t getNumBone() const;
-    uint16_t getNumIK() const;
-    uint16_t getNumFace() const;
-    uint32_t getNumRigidBody() const;
-    uint32_t getNumConstraint() const;
-    float getMaxHeight() const;
-    const char *getComment() const;
     void updateBone();
     void updateBoneFromSimulation();
     void updateFace();
@@ -109,26 +87,132 @@ public:
     void updateShadowColorTexCoord(float coef);
     float calculateBoundingSphereRange(btVector3 *cpos);
     void smearAllBonesToDefault(float rate);
+    int getChildBoneList(PMDBone **bone, uint16_t boneNum, PMDBone **childBoneList, uint16_t childBoneNumMax);
+    void setPhysicsControl(bool flag);
+    void release();
 
-    PMDBone *getBonesPtr() const;
-    const btVector3 *getVerticesPtr() const;
-    const btVector3 *getNormalsPtr() const;
-    const TexCoord *getTexCoordsPtr() const;
-    const btVector3 *getSkinnedVerticesPtr() const;
-    const btVector3 *getSkinnedNormalsPtr() const;
-    const TexCoord *getToonTexCoordsPtr() const;
-    const TexCoord *getToonTexCoordsForSelfShadowPtr() const;
-    const btVector3 *getEdgeVerticesPtr() const;
-    const uint16_t *getSurfacesPtr() const;
-    const uint16_t *getSurfacesForEdgePtr() const;
-    const float getGlobalAlpha() const;
-    const float *getEdgeColors() const;
-    PMDMaterial *getMaterialAt(uint32_t i);
-    PMDTexture *getToonTextureAt(uint32_t i);
-    const uint32_t getNumSurfaceForEdge() const;
-    const bool isSelfShadowEnabled() const;
-    const bool hasSingleSphereMap() const;
-    const bool hasMultipleSphereMap() const;
+    inline void setEdgeThin(const float value) {
+        m_edgeOffset = value * 0.03f;
+    }
+    inline void setToonEnable(const bool value) {
+        m_toon = value;
+    }
+    inline const bool isToonEnabled() const {
+        return m_toon;
+    }
+    inline void setSelfShadowDrawing(const bool value) {
+        m_selfShadowDrawing = value;
+    }
+    inline void setEdgeColor(const float col[4]) {
+        for (int i = 0; i < 4; i++)
+            m_edgeColor[i] = col[i];
+    }
+    inline void setGlobalAlpha(const float value) {
+        m_globalAlpha = value;
+    }
+    inline PMDBone *getRootBone() {
+        return &m_rootBone;
+    }
+    inline PMDBone *getCenterBone() {
+        return m_centerBone;
+    }
+    inline const char *getName() const {
+        return m_name;
+    }
+    inline const uint32_t countVertices() const {
+        return m_numVertex;
+    }
+    inline const uint32_t countSurfaces() const {
+        return m_numSurface;
+    }
+    inline const uint32_t countMaterials() const {
+        return m_numMaterial;
+    }
+    inline const uint16_t countBones() const {
+        return m_numBone;
+    }
+    inline const uint16_t countIKs() const {
+        return m_numIK;
+    }
+    inline const uint16_t countFaces() const {
+        return m_numFace;
+    }
+    inline const uint32_t countRigidBodies() const {
+        return m_numRigidBody;
+    }
+    inline const uint32_t countConstraints() const {
+        return m_numConstraint;
+    }
+    inline const float getMaxHeight() const {
+        return m_maxHeight;
+    }
+    inline const char *getComment() const {
+        return m_comment;
+    }
+
+    inline PMDBone *getBonesPtr() const {
+        return m_boneList;
+    }
+    inline const btVector3 *getVerticesPtr() const {
+        return m_vertexList;
+    }
+    inline const btVector3 *getNormalsPtr() const {
+        return m_normalList;
+    }
+    inline const TexCoord *getTexCoordsPtr() const {
+        return m_texCoordList;
+    }
+    inline const btVector3 *getSkinnedVerticesPtr() const {
+        return m_skinnedVertexList;
+    }
+    inline const btVector3 *getSkinnedNormalsPtr() const {
+        return m_skinnedNormalList;
+    }
+    inline const TexCoord *getToonTexCoordsPtr() const {
+        return m_toonTexCoordList;
+    }
+    inline const TexCoord *getToonTexCoordsForSelfShadowPtr() const {
+        return m_toonTexCoordListForShadowMap;
+    }
+    inline const btVector3 *getEdgeVerticesPtr() const {
+        return m_edgeVertexList;
+    }
+    inline const uint16_t *getSurfacesPtr() const {
+        return m_surfaceList;
+    }
+    inline const uint16_t *getSurfacesForEdgePtr() const {
+        return m_surfaceListForEdge;
+    }
+    inline const float getGlobalAlpha() const {
+        return m_globalAlpha;
+    }
+    inline const float *getEdgeColors() const {
+        return m_edgeColor;
+    }
+    inline const uint32_t getNumSurfaceForEdge() const {
+        return m_numSurfaceForEdge;
+    }
+    inline const bool isSelfShadowEnabled() const {
+        return m_selfShadowDrawing;
+    }
+    inline const bool hasSingleSphereMap() const {
+        return m_hasSingleSphereMap;
+    }
+    inline const bool hasMultipleSphereMap() const {
+        return m_hasMultipleSphereMap;
+    }
+    inline PMDMaterial *getMaterialAt(uint32_t i) {
+        if ( i >= m_numMaterial)
+            return NULL;
+        else
+            return m_material[i];
+    }
+    inline PMDTexture *getToonTextureAt(uint32_t i) {
+        if (i >= kNSystemTextureFiles + 1)
+            return NULL;
+        else
+            return &m_localToonTexture[i];
+    }
 
 private:
     bool parse(PMDModelLoader *loader, BulletPhysics *bullet);

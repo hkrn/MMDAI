@@ -76,16 +76,15 @@ PMDFace::~PMDFace()
 }
 
 /* PMDFace::setup: initialize and setup face */
-void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
+void PMDFace::setup(const PMDFile_Face *face, const PMDFile_Face_Vertex *faceVertexList)
 {
-    unsigned long i;
+    uint32_t i = 0;
     char name[21];
 
     clear();
 
     /* name */
-    MMDAIStringCopy(name, face->name, 20);
-    name[20] = '\0';
+    MMDAIStringCopySafe(name, face->name, sizeof(name));
     m_name = MMDAIStringClone(name);
 
     /* type */
@@ -118,21 +117,19 @@ void PMDFace::setup(PMDFile_Face *face, PMDFile_Face_Vertex *faceVertexList)
 /* PMDFace::convertIndex: convert base-relative index to model vertex index */
 void PMDFace::convertIndex(PMDFace *base)
 {
-    unsigned long i, relID;
-
     if (m_vertex == NULL)
         return;
 
     if (m_type != PMD_FACE_BASE) {
-        for (i = 0; i < m_numVertex; i++) {
-            relID = m_vertex[i].id;
+        for (uint32_t i = 0; i < m_numVertex; i++) {
+            uint32_t relID = m_vertex[i].id;
             if (relID >= base->m_numVertex) /* a workaround for some models with corrupted face index values... */
                 relID -= kMaxVertexID;
             m_vertex[i].id = base->m_vertex[relID].id;
         }
     } else {
         /* for base face, just do workaround */
-        for (i = 0; i < m_numVertex; i++) {
+        for (uint32_t i = 0; i < m_numVertex; i++) {
             if (m_vertex[i].id >= kMaxVertexID) /* a workaround for some models with corrupted face index values... */
                 m_vertex[i].id -= kMaxVertexID;
         }
@@ -142,43 +139,21 @@ void PMDFace::convertIndex(PMDFace *base)
 /* PMDFace::apply: apply this face morph to model vertices */
 void PMDFace::apply(btVector3 *vertexList)
 {
-    unsigned long i;
-
     if (m_vertex == NULL)
         return;
 
-    for (i = 0; i < m_numVertex; i++)
+    for (uint32_t i = 0; i < m_numVertex; i++)
         vertexList[m_vertex[i].id] = m_vertex[i].pos;
 }
 
 /* PMDFace::add: add this face morph to model vertices with a certain rate */
 void PMDFace::add(btVector3 *vertexList, float rate)
 {
-    unsigned long i;
-
     if (m_vertex == NULL)
         return;
 
-    for (i = 0; i < m_numVertex; i++)
+    for (uint32_t i = 0; i < m_numVertex; i++)
         vertexList[m_vertex[i].id] += m_vertex[i].pos * rate;
-}
-
-/* PMDFace::getName: get name */
-const char *PMDFace::getName() const
-{
-    return m_name;
-}
-
-/* PMDFace::getWeight: get weight */
-float PMDFace::getWeight() const
-{
-    return m_weight;
-}
-
-/* PMDFace::setWeight: set weight */
-void PMDFace::setWeight(float f)
-{
-    m_weight = f;
 }
 
 } /* namespace */
