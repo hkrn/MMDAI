@@ -24,6 +24,9 @@ libGLEE に入っている CMakeList.txt を入れて cmake を使ってビル�
 インストール先は /usr または /usr/local にインストールする必要があります。
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
 
+Julius/OpenJTalk/hts_engine は独自の CMake ファイルを用いて作成する必要があるため、
+パッケージからではなく、ソースでビルドする必要があります。
+
 ## 環境変数の設定
 
 以下の環境変数を指定するとその値からライブラリ及びヘッダーの検出を行います。MSVC でビルドする場合は必須です。
@@ -69,16 +72,57 @@ MSVC 上でビルドする場合はさらに以下の環境変数を設定する
 
 ## Linux か MacOSX でビルドする場合
 
-    $ cd libMMDME
-    # 共有ライブラリを作成する場合。共有ライブラリではなく、静的ライブラリを作成する場合は
-    # -DBUILD_SHARED_LIBS=OFF にするか、または単純に "cmake ." とするだけでよい。
+$MMDAI は MMDAI のレポジトリがあるパスを指します。
+cmake でビルドする際に共有ライブラリを作成する場合は
+
     $ cmake -DBUILD_SHARED_LIBS=ON .
-    $ make 
-    $ sudo make install
-    $ cd ../libMMDAI
+
+とすることにより共有ライブラリが作成されます。また、静的ライブラリを作成する場合は
+
+    # cmake . と同じ
+    $ cmake -DBUILD_SHARED_LIBS=OFF
+
+とすることによって静的ライブラリを作成することが出来ます。
+
+    # 最初に MMDAgent のレポジトリをチェックアウトする
+    # 回線次第ではあるものの、時間がかかる
+    $ svn co https://mmdagent.svn.sourceforge.net/svnroot/mmdagent/MMDAgent
+
+    # MMDAgent のレポジトリをチェックアウトしたらまず HTSEngine API をビルド
+    $ cd Library_hts_engine_API/src
+    $ cp $MMDAI/scripts/CMake/HTSEngine.cmake CMakeLists.txt
     $ cmake .
     $ make
     $ sudo make install
+
+    # OpenJTalk をビルド
+    $ cd ../../Library_OpenJTalk/src
+    $ cp $MMDAI/scripts/CMake/OpenJTalk.cmake CMakeLists.txt
+    $ cmake .
+    $ make
+    $ sudo make install
+
+    # Julius をビルド
+    # ※事前に PortAudio を入れる必要があります
+    $ cd ../../Library_Julius/src
+    $ cp $MMDAI/scripts/CMake/Julius.cmake CMakeLists.txt
+    $ cmake .
+    $ make
+    $ sudo make install
+
+    # MMDME をビルド
+    $ cd $MMDAI/MMDME
+    $ cmake .
+    $ make 
+    $ sudo make install
+
+    # MMDAI をビルド
+    $ cd $MMDAI/MMDAI
+    $ cmake .
+    $ make
+    $ sudo make install
+
+    # QMA をビルド
     $ cd ..
     $ qmake
     $ make # MacOSX の場合は xcodebuild
