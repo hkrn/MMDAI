@@ -128,14 +128,14 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &argum
 void QMALookAtPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
   QPoint p = pos;
-  btVector3 targetPos, pointPos;
+  btVector3 pointPos;
 
   /* set target position */
   p.setX(pos.x() - ((rect.left() + rect.right()) / 2));
   p.setY(pos.y() - ((rect.top() + rect.bottom()) / 2));
   float rate = 100.0f / static_cast<float>(rect.right() - rect.left());
   pointPos.setValue(p.x() * rate, -p.y() * rate, 0.0f);
-  m_controller->getScreenPointPosition(&targetPos, &pointPos);
+  btVector3 targetPos = m_controller->getScreenPointPosition(pointPos);
 
   /* calculate direction of all controlled bones */
   int count = m_controller->countPMDObjects();

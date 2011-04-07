@@ -281,11 +281,11 @@ void QMAWindow::toggleShadowMapping()
 {
     if (m_preference->getBool(MMDAI::kPreferenceUseShadowMapping)) {
         m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, false);
-        m_widget->getSceneController()->setShadowMapping(false);
+        m_widget->getSceneController()->setShadowMapping();
     }
     else {
         m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, true);
-        m_widget->getSceneController()->setShadowMapping(true);
+        m_widget->getSceneController()->setShadowMapping();
     }
 }
 
