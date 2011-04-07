@@ -141,8 +141,6 @@ void PMDModel::updateToon(btVector3 *light)
 /* PMDModel::updateShadowColorTexCoord: update / create pseudo toon coordinates for shadow rendering pass on shadow mapping */
 void PMDModel::updateShadowColorTexCoord(float coef)
 {
-    assert(m_toonTexCoordListForShadowMap != NULL);
-
     bool update = false;
 
     if (!m_toon)
