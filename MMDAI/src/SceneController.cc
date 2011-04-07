@@ -247,7 +247,7 @@ PMDObject *SceneController::allocatePMDObject()
         return NULL; /* no more room */
     object = m_objects[m_numModel];
     m_numModel++;
-    object->setEnableFlag(false); /* model is not loaded yet */
+    object->setEnable(false); /* model is not loaded yet */
     return object;
 }
 
@@ -264,18 +264,6 @@ PMDObject *SceneController::findPMDObject(const char *alias)
             return object;
     }
     return NULL;
-}
-
-PMDObject *SceneController::getPMDObject(int index)
-{
-    if (index < 0 || index > m_numModel)
-        return NULL;
-    return m_objects[index];
-}
-
-int SceneController::countPMDObjects() const
-{
-    return m_numModel;
 }
 
 /* SceneController::addMotion: add motion */
@@ -439,7 +427,7 @@ bool SceneController::addModel(const char *modelAlias,
     PMDBone *assignBone = NULL;
     PMDObject *assignObject = NULL, *newObject = NULL;
     float direction[4];
-    
+
     m_preference->getFloat4(kPreferenceLightDirection, direction);
     btVector3 light = btVector3(direction[0], direction[1], direction[2]);
 
@@ -542,7 +530,7 @@ bool SceneController::changeModel(PMDObject *object,
     double currentFrame = 0;
     const char *modelAlias = object->getAlias();
     float direction[4];
-    
+
     m_preference->getFloat4(kPreferenceLightDirection, direction);
     btVector3 light = btVector3(direction[0], direction[1], direction[2]);
 
@@ -720,7 +708,7 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
 
     object->setSpinSpeed(speed);
     object->setRotation(targetRot);
-    object->setTurningFlag(false);
+    object->setTurning(false);
 
     sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
 }
@@ -787,7 +775,7 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
 
     object->setSpinSpeed(speed);
     object->setRotation(targetRot);
-    object->setTurningFlag(true);
+    object->setTurning(true);
 
     /* send event message */
     sendEvent1(SceneEventHandler::kTurnStartEvent, object->getAlias());
@@ -899,27 +887,6 @@ void SceneController::resetLocation(const float *trans, const float *rot, const 
     m_scale = scale;
 }
 
-void SceneController::getScreenPointPosition(btVector3 *dst, btVector3 *src)
-{
-    *dst = m_transMatrix.inverse() * (*src);
-}
-
-void SceneController::setShadowMapping(bool value)
-{
-    (void) value;
-    m_engine->setShadowMapping();
-}
-
-float SceneController::getScale() const
-{
-    return m_scale;
-}
-
-void SceneController::setScale(float value)
-{
-    m_scale = value;
-}
-
 void SceneController::rotate(float x, float y, float z)
 {
     z = 0; /* unused */
@@ -995,11 +962,6 @@ void SceneController::setHighlightPMDObject(PMDObject *object)
     }
 
     m_highlightModel = object;
-}
-
-PMDObject *SceneController::getSelectedPMDObject()
-{
-    return getPMDObject(m_selectedModel);
 }
 
 void SceneController::updateMotion(double procFrame, double adjustFrame)
@@ -1110,7 +1072,7 @@ void SceneController::updateModelPositionAndRotation(double fps)
             if (object->updateModelRootRotation(fps)) {
                 if (object->isTurning()) {
                     sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
-                    object->setTurningFlag(false);
+                    object->setTurning(false);
                 } else {
                     sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
                 }
@@ -1195,16 +1157,6 @@ void SceneController::updateModelView()
     m_engine->setModelView(m_transMatrix);
 }
 
-void SceneController::setProjection(const float projection[16])
-{
-    m_engine->setProjection(projection);
-}
-
-void SceneController::setModelView(const btTransform &modelView)
-{
-    m_engine->setModelView(modelView);
-}
-
 void SceneController::prerenderScene()
 {
     m_engine->setViewport(m_width, m_height);
@@ -1229,21 +1181,6 @@ void SceneController::renderPMDObjectsForDebug()
             object->renderDebug();
         }
     }
-}
-
-Stage *SceneController::getStage()
-{
-    return m_stage;
-}
-
-int SceneController::getWidth() const
-{
-    return m_width;
-}
-
-int SceneController::getHeight() const
-{
-    return m_height;
 }
 
 } /* namespace */

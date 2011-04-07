@@ -39,6 +39,8 @@
 #ifndef MMDAI_SCENERENDERENGINE_H_
 #define MMDAI_SCENERENDERENGINE_H_
 
+#include <LinearMath/btVector3.h>
+#include <LinearMath/btTransform.h>
 #include <MMDME/PMDRenderEngine.h>
 
 namespace MMDAI {

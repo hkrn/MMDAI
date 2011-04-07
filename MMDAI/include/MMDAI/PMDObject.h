@@ -39,6 +39,9 @@
 #ifndef MMDAI_PMDOBJECT_H_
 #define MMDAI_PMDOBJECT_H_
 
+#include <LinearMath/btVector3.h>
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btTransform.h>
 #include <MMDME/BulletPhysics.h>
 #include <MMDME/Common.h>
 
@@ -84,29 +87,76 @@ public:
     void setLightForToon(btVector3 *v);
     bool updateModelRootOffset(float fps);
     bool updateModelRootRotation(float fps);
-    const char *getAlias() const;
-    void setAlias(const char *alias);
-    PMDModel *getPMDModel();
-    MotionManager *getMotionManager() const;
-    void resetMotionManager();
     bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
-    void getCurrentPosition(btVector3 &pos);
-    void getTargetPosition(btVector3 &pos);
-    void setPosition(btVector3 &pos);
-    void getCurrentRotation(btQuaternion &rot);
-    void getTargetRotation(btQuaternion &rot);
-    void setRotation(btQuaternion &rot);
-    void setMoveSpeed(float speed);
-    void setSpinSpeed(float speed);
-    bool isMoving() const;
-    bool isRotating() const;
-    bool isTurning() const;
-    void setTurningFlag(bool flag);
-    bool isEnable() const;
-    void setEnableFlag(bool flag);
-    bool allowMotionFileDrop() const;
-    PMDObject *getAssignedModel() const;
     void renderDebug();
+
+    inline const char *getAlias() const {
+        return m_alias;
+    }
+    inline void setAlias(const char *alias) {
+        if(alias && MMDAIStringLength(alias) > 0) {
+            MMDAIMemoryRelease(m_alias);
+            m_alias = MMDAIStringClone(alias);
+        }
+    }
+    inline PMDModel *getPMDModel() const {
+        return m_model;
+    }
+    inline MotionManager *getMotionManager() const {
+        return m_motionManager;
+    }
+    inline void resetMotionManager() {
+        delete m_motionManager;
+        m_motionManager = new MotionManager(m_model);
+    }
+    inline void getCurrentPosition(btVector3 &pos) {
+        pos = m_model->getRootBone()->getOffset();
+    }
+    inline void getTargetPosition(btVector3 &pos) {
+        pos = m_offsetPos;
+    }
+    inline void setPosition(const btVector3 &pos) {
+        m_offsetPos = pos;
+    }
+    inline void getCurrentRotation(btQuaternion &rot) {
+        rot = m_model->getRootBone()->getCurrentRotation();
+    }
+    inline void getTargetRotation(btQuaternion &rot) {
+        rot = m_offsetRot;
+    }
+    inline void setRotation(const btQuaternion &rot) {
+        m_offsetRot = rot;
+    }
+    inline void setMoveSpeed(float speed) {
+        m_moveSpeed = speed;
+    }
+    inline void setSpinSpeed(float speed) {
+        m_spinSpeed = speed;
+    }
+    inline const bool isMoving() const {
+        return m_isMoving;
+    }
+    inline const bool isRotating() const {
+        return m_isRotating;
+    }
+    inline bool isTurning() const {
+        return m_underTurn;
+    }
+    inline void setTurning(bool flag) {
+        m_underTurn = flag;
+    }
+    inline bool isEnable() const {
+        return m_isEnable;
+    }
+    inline void setEnable(bool flag) {
+        m_isEnable = flag;
+    }
+    inline const bool allowMotionFileDrop() const {
+        return m_allowMotionFileDrop;
+    }
+    inline PMDObject *getAssignedModel() const {
+        return m_assignTo;
+    }
 
 private:
     void initialize();

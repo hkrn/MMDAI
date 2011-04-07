@@ -72,8 +72,6 @@ public:
     PMDObject *allocatePMDObject();
     PMDObject *findPMDObject(PMDObject *object);
     PMDObject *findPMDObject(const char *alias);
-    PMDObject *getPMDObject(int index);
-    int countPMDObjects() const;
 
     bool loadFloor(PMDModelLoader *loader);
     bool loadBackground(PMDModelLoader *loader);
@@ -136,21 +134,16 @@ public:
     bool startLipSync(PMDObject *object,
                       const char *seq);
     bool stopLipSync(PMDObject *object);
-
-
     void resetLocation(const float *trans, const float *rot, const float scale);
-    void getScreenPointPosition(btVector3 *dst, btVector3 *src);
-    void setScale(float value);
+
     void rotate(float x, float y, float z);
     void translate(float x, float y, float z);
-    void setRect(int width, int height);
-    void setShadowMapping(bool value);
 
     void selectPMDObject(PMDObject *object);
     void selectPMDObject(int x, int y);
     void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
     void setHighlightPMDObject(PMDObject *object);
-    PMDObject *getSelectedPMDObject();
+    void setRect(int width, int height);
 
     void updateMotion(double procFrame, double adjustFrame);
     void updateDepthTextureViewParam();
@@ -158,19 +151,50 @@ public:
     void updateAfterSimulation();
     void updateProjection();
     void updateModelView();
-    void setModelView(const btTransform &modelView);
-    void setProjection(const float projection[16]);
     void prerenderScene();
     void renderScene();
     void renderBulletForDebug();
     void renderPMDObjectsForDebug();
     void renderLogger();
 
-    const char *getConfigPath() const;
-    Stage *getStage();
-    int getWidth() const;
-    int getHeight() const;
-    float getScale() const;
+    inline PMDObject *getPMDObject(int index) const {
+        if (index < 0 || index > m_numModel)
+            return NULL;
+        return m_objects[index];
+    }
+    inline PMDObject *getSelectedPMDObject() const {
+        return getPMDObject(m_selectedModel);
+    }
+    inline const int countPMDObjects() const {
+        return m_numModel;
+    }
+    inline const btVector3 getScreenPointPosition(const btVector3 &src) {
+        return m_transMatrix.inverse() * src;
+    }
+    inline const float getScale() const {
+        return m_scale;
+    }
+    inline void setScale(float value) {
+        m_scale = value;
+    }
+    inline void setModelView(const btTransform &modelView) {
+        m_engine->setModelView(modelView);
+    }
+    inline void setProjection(const float projection[16]) {
+        m_engine->setProjection(projection);
+    }
+    inline void setShadowMapping() {
+        m_engine->setShadowMapping();
+    }
+    inline Stage *getStage() const {
+        return m_stage;
+    }
+    inline const int getWidth() const {
+        return m_width;
+    }
+    inline const int getHeight() const {
+        return m_height;
+    }
 
 private:
     void eraseModel(PMDObject *object);
