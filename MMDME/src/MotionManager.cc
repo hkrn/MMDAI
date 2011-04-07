@@ -42,26 +42,6 @@
 
 namespace MMDAI {
 
-struct MotionPlayer {
-    char *name;
-    MotionController mc;
-    VMD *vmd;
-    unsigned char onEnd;
-    short priority;
-    bool ignoreStatic;
-    float loopAt;
-    bool enableSmooth;
-    bool enableRePos;
-    float endingBoneBlendFrames;
-    float endingFaceBlendFrames;
-    float motionBlendRate;
-    bool active;
-    float endingBoneBlend;
-    float endingFaceBlend;
-    int statusFlag;
-    MotionPlayer *next;
-};
-
 const float MotionManager::kDefaultLoopAtFrame = 0.0f;
 
 /* MotionPlayer_initialize: initialize MotionPlayer */
