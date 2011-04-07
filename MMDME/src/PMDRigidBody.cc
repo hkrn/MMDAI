@@ -212,7 +212,7 @@ void PMDRigidBody::joinWorld(btDiscreteDynamicsWorld *btWorld)
 void PMDRigidBody::applyTransformToBone()
 {
     assert(m_bone != NULL);
-    if (m_noBone)
+    if (m_type == 0 || m_noBone)
         return;
 
     m_bone->setTransform(m_body->getCenterOfMassTransform() * m_transInv);
