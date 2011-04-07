@@ -114,8 +114,7 @@ public:
     }
 
 private:
-    void initialize();
-    void clear();
+    void release();
 
     char *m_name;
     PMDBone *m_parentBone;

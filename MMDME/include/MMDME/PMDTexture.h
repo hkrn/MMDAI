@@ -75,15 +75,12 @@ public:
     }
 
 private:
-    void initialize();
-    void clear();
-
     PMDRenderEngine *m_engine;
     PMDTextureNative *m_native;
     bool m_isSphereMap;
     bool m_isSphereMapAdd;
-    long m_width;
-    long m_height;
+    int m_width;
+    int m_height;
     unsigned char m_components;
     unsigned char *m_textureData;
 

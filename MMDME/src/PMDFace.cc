@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -42,9 +42,25 @@
 
 namespace MMDAI {
 
-/* PMDFace::initialize: initialize face */
-void PMDFace::initialize()
+PMDFace::PMDFace()
+    : m_name(NULL),
+    m_type(PMD_FACE_OTHER),
+    m_numVertex(0),
+    m_vertex(NULL),
+    m_weight(0.0f)
 {
+}
+
+PMDFace::~PMDFace()
+{
+    release();
+}
+
+void PMDFace::release()
+{
+    MMDAIMemoryRelease(m_name);
+    MMDAIMemoryRelease(m_vertex);
+
     m_name = NULL;
     m_type = PMD_FACE_OTHER;
     m_numVertex = 0;
@@ -52,36 +68,12 @@ void PMDFace::initialize()
     m_weight = 0.0f;
 }
 
-/* PMDFace::clear: free face */
-void PMDFace::clear()
-{
-    if(m_name)
-        MMDAIMemoryRelease(m_name);
-    if (m_vertex)
-        MMDAIMemoryRelease(m_vertex);
-
-    initialize();
-}
-
-/* PMDFace::PMDFace: constructor */
-PMDFace::PMDFace()
-{
-    initialize();
-}
-
-/* PMDFace::~PMDFace: destructor */
-PMDFace::~PMDFace()
-{
-    clear();
-}
-
-/* PMDFace::setup: initialize and setup face */
 void PMDFace::setup(const PMDFile_Face *face, const PMDFile_Face_Vertex *faceVertexList)
 {
     uint32_t i = 0;
     char name[21];
 
-    clear();
+    release();
 
     /* name */
     MMDAIStringCopySafe(name, face->name, sizeof(name));
@@ -95,7 +87,11 @@ void PMDFace::setup(const PMDFile_Face *face, const PMDFile_Face_Vertex *faceVer
 
     if (m_numVertex) {
         /* vertex list */
-        m_vertex = (PMDFaceVertex *) MMDAIMemoryAllocate(sizeof(PMDFaceVertex) * m_numVertex);
+        m_vertex = static_cast<PMDFaceVertex *>(MMDAIMemoryAllocate(sizeof(PMDFaceVertex) * m_numVertex));
+        if (m_vertex == NULL) {
+            MMDAILogWarnString("cannot allocate memory");
+            return;
+        }
         for (i = 0; i < m_numVertex; i++) {
             m_vertex[i].id = faceVertexList[i].vertexID;
             m_vertex[i].pos.setValue(faceVertexList[i].pos[0], faceVertexList[i].pos[1], faceVertexList[i].pos[2]);
@@ -114,11 +110,9 @@ void PMDFace::setup(const PMDFile_Face *face, const PMDFile_Face_Vertex *faceVer
     MMDAILogDebugSJIS("name=\"%s\", type=%d, numVertex=%d", m_name, m_type, m_numVertex);
 }
 
-/* PMDFace::convertIndex: convert base-relative index to model vertex index */
 void PMDFace::convertIndex(PMDFace *base)
 {
-    if (m_vertex == NULL)
-        return;
+    assert(m_vertex != NULL);
 
     if (m_type != PMD_FACE_BASE) {
         for (uint32_t i = 0; i < m_numVertex; i++) {
@@ -136,25 +130,20 @@ void PMDFace::convertIndex(PMDFace *base)
     }
 }
 
-/* PMDFace::apply: apply this face morph to model vertices */
 void PMDFace::apply(btVector3 *vertexList)
 {
-    if (m_vertex == NULL)
-        return;
+    assert(vertexList != NULL && m_vertex != NULL);
 
     for (uint32_t i = 0; i < m_numVertex; i++)
         vertexList[m_vertex[i].id] = m_vertex[i].pos;
 }
 
-/* PMDFace::add: add this face morph to model vertices with a certain rate */
 void PMDFace::add(btVector3 *vertexList, float rate)
 {
-    if (m_vertex == NULL)
-        return;
+    assert(vertexList != NULL && m_vertex != NULL);
 
     for (uint32_t i = 0; i < m_numVertex; i++)
         vertexList[m_vertex[i].id] += m_vertex[i].pos * rate;
 }
 
 } /* namespace */
-

@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -42,43 +42,34 @@
 
 namespace MMDAI {
 
-/* PMDConstraint::initialize: initialize constraint */
-void PMDConstraint::initialize()
-{
-    m_constraint = NULL;
-    m_world = NULL;
-}
-
-/* PMDConstraint::clear: free constraint */
-void PMDConstraint::clear()
-{
-    if (m_constraint) {
-        m_world->removeConstraint(m_constraint);
-        delete m_constraint;
-    }
-
-    initialize();
-}
-
-/* PMDConstraint::PMDConstraint: constructor */
 PMDConstraint::PMDConstraint()
+    : m_constraint(0),
+      m_world(0)
 {
-    initialize();
 }
 
-/* PMDConstraint::~PMDConstraint: destructor */
 PMDConstraint::~PMDConstraint()
 {
-    clear();
+    release();
 }
 
-/* PMDConstraint::setup: initialize and setup constraint */
+void PMDConstraint::release()
+{
+    if (m_world != 0) {
+       m_world->removeConstraint(m_constraint);
+       m_world = 0;
+    }
+    delete m_constraint;
+    m_constraint = 0;
+}
+
 bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVector3 *offset)
 {
     btTransform tr;
     btMatrix3x3 bm;
 
-    clear();
+    /* reset this constraint */
+    release();
 
     /* get pointer to bodies at both end of this constraint */
     const PMDRigidBody &bodyA = bodyList[c->bodyIDA];
@@ -86,7 +77,8 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
     btRigidBody *rbA = bodyA.getBody();
     btRigidBody *rbB = bodyB.getBody();
 
-    if (rbA == NULL || rbB == NULL) return false;
+    if (rbA == NULL || rbB == NULL)
+        return false;
 
     /* make global transform of this constraint */
     tr.setIdentity();
@@ -145,11 +137,9 @@ bool PMDConstraint::setup(PMDFile_Constraint *c, PMDRigidBody *bodyList, btVecto
     return true;
 }
 
-/* PMDConstraint::joinWorld: add the constraint to simulation world */
 void PMDConstraint::joinWorld(btDiscreteDynamicsWorld *btWorld)
 {
-    if (!m_constraint)
-        return;
+    assert(m_constraint != 0 && btWorld != 0);
 
     btWorld->addConstraint(m_constraint);
     m_world = btWorld;

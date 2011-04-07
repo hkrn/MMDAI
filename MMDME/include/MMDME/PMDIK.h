@@ -66,8 +66,7 @@ private:
     static const float kMinRotSum;
     static const float kMinRotation;
 
-    void initialize();
-    void clear();
+    void release();
 
     PMDBone *m_destBone;
     PMDBone *m_targetBone;

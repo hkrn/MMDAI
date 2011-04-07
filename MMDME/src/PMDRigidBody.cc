@@ -45,53 +45,52 @@
 
 namespace MMDAI {
 
-/* PMDRigidBody::initialize: initialize PMDRigidBody */
-void PMDRigidBody::initialize()
+PMDRigidBody::PMDRigidBody()
+    : m_shape(0),
+    m_body(0),
+    m_motionState(0),
+    m_groupID(0),
+    m_groupMask(0),
+    m_type(0),
+    m_bone(NULL),
+    m_name(NULL),
+    m_noBone(false),
+    m_kinematicMotionState(NULL),
+    m_world(NULL)
 {
-    m_shape = NULL;
-    m_body = NULL;
-    m_motionState = NULL;
-    m_groupID = 0;
-    m_groupMask = 0;
+}
 
-    m_type = 0;
-    m_bone = NULL;
-    m_noBone = false;
-    m_kinematicMotionState = NULL;
-
-    m_name = NULL;
+PMDRigidBody::~PMDRigidBody()
+{
+    release();
     m_world = NULL;
 }
 
-/* PMDRigidBody::clear: free PMDRigidBody */
-void PMDRigidBody::clear()
+void PMDRigidBody::release()
 {
     MMDAIMemoryRelease(m_name);
     /* release motion state */
     delete m_motionState;
     delete m_kinematicMotionState;
     if (m_body) {
-        m_world->removeCollisionObject(m_body); /* release body */
+        if (m_world != NULL)
+            m_world->removeCollisionObject(m_body); /* release body */
         delete m_body;
     }
     delete m_shape;
 
-    initialize();
+    m_shape = NULL;
+    m_body = NULL;
+    m_motionState = NULL;
+    m_groupID = 0;
+    m_groupMask = 0;
+    m_type = 0;
+    m_bone = NULL;
+    m_noBone = false;
+    m_kinematicMotionState = NULL;
+    m_name = NULL;
 }
 
-/* PMDRigidBody::PMDRigidBody: constructor */
-PMDRigidBody::PMDRigidBody()
-{
-    initialize();
-}
-
-/* PMDRigidBody::~PMDRigidBody: destructor */
-PMDRigidBody::~PMDRigidBody()
-{
-    clear();
-}
-
-/* PMDRigidBody::setup: initialize and setup PMDRigidBody */
 bool PMDRigidBody::setup(const PMDFile_RigidBody *rb, PMDBone *bone)
 {
     btScalar mass;
@@ -99,7 +98,7 @@ bool PMDRigidBody::setup(const PMDFile_RigidBody *rb, PMDBone *bone)
     btMatrix3x3 bm;
     btTransform startTrans;
 
-    clear();
+    release();
 
     /* store bone */
     m_bone = bone;
@@ -201,12 +200,10 @@ bool PMDRigidBody::setup(const PMDFile_RigidBody *rb, PMDBone *bone)
     return true;
 }
 
-/* PMDRigidBody::joinWorld: add the body to simulation world */
 void PMDRigidBody::joinWorld(btDiscreteDynamicsWorld *btWorld)
 {
-    if (! m_body) return;
+    assert(m_body != NULL && btWorld != NULL);
 
-    /* add the body to the simulation world, with group id and group mask for collision */
     btWorld->addRigidBody(m_body, m_groupID, m_groupMask);
     m_world = btWorld;
 }
@@ -214,12 +211,11 @@ void PMDRigidBody::joinWorld(btDiscreteDynamicsWorld *btWorld)
 /* PMDRigidBody::applyTransformToBone: apply the current rigid body transform to bone after simulation (for type 1 and 2) */
 void PMDRigidBody::applyTransformToBone()
 {
-    if (m_type == 0 || m_bone == NULL || m_noBone)
+    assert(m_bone != NULL);
+    if (m_noBone)
         return;
 
-    const btTransform tr = m_body->getCenterOfMassTransform();
-    //tr *= m_transInv;
-    m_bone->setTransform(tr * m_transInv);
+    m_bone->setTransform(m_body->getCenterOfMassTransform() * m_transInv);
 }
 
 /* PMDRigidBody::setKinematic: switch between Default and Kinematic body for non-simulated movement */
@@ -227,7 +223,9 @@ void PMDRigidBody::setKinematic(bool value)
 {
     btTransform tr;
 
-    if (m_type == 0) return; /* always kinematic */
+    /* always kinematic */
+    if (m_type == 0)
+        return;
 
     if (value) {
         /* default to kinematic */

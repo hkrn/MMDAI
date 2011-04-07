@@ -42,8 +42,23 @@
 
 namespace MMDAI {
 
-/* PMDMaterial::initialize: initialize material */
-void PMDMaterial::initialize()
+PMDMaterial::PMDMaterial(PMDRenderEngine *engine)
+    : m_alpha(0.0f),
+    m_shiness(0.0f),
+    m_numSurface(0),
+    m_toonID(0),
+    m_edgeFlag(false),
+    m_engine(engine)
+{
+}
+
+PMDMaterial::~PMDMaterial()
+{
+    release();
+    m_engine = NULL;
+}
+
+void PMDMaterial::release()
 {
     for (int i = 0; i < 3; i++) {
         m_diffuse[i] = 0.0f;
@@ -56,34 +71,13 @@ void PMDMaterial::initialize()
     m_numSurface = 0;
     m_toonID = 0;
     m_edgeFlag = false;
+    m_texture.release();
+    m_additionalTexture.release();
 }
 
-/* PMDMaterial::clear: free material */
-void PMDMaterial::clear()
-{
-    /* actual texture data will be released inside textureLoader, so just reset pointer here */
-    initialize();
-}
-
-/* PMDMaterial:: constructor */
-PMDMaterial::PMDMaterial(PMDRenderEngine *engine)
-    : m_engine(engine)
-{
-    initialize();
-}
-
-/* ~PMDMaterial:: destructor */
-PMDMaterial::~PMDMaterial()
-{
-    clear();
-}
-
-/* PMDMaterial::setup: initialize and setup material */
 bool PMDMaterial::setup(const PMDFile_Material *m, PMDModelLoader *loader)
 {
-    char name[21], raw[21];
-
-    clear();
+    release();
 
     /* colors */
     for (int i = 0; i < 3; i++) {
@@ -108,6 +102,7 @@ bool PMDMaterial::setup(const PMDFile_Material *m, PMDModelLoader *loader)
     m_edgeFlag = m->edgeFlag ? true : false;
 
     /* load model texture */
+    char name[21], raw[21];
     MMDAIStringCopySafe(name, m->textureFile, sizeof(name));
     MMDAIStringCopySafe(raw, name, sizeof(raw));
     if (MMDAIStringLength(name) > 0) {

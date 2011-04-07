@@ -54,27 +54,7 @@ enum {
     MOTION_STATUS_DELETED,
 };
 
-typedef struct _MotionPlayer {
-    char *name;
-    MotionController mc;
-    VMD *vmd;
-    unsigned char onEnd;
-    short priority;
-    bool ignoreStatic;
-    float loopAt;
-    bool enableSmooth;
-    bool enableRePos;
-    float endingBoneBlendFrames;
-    float endingFaceBlendFrames;
-    float motionBlendRate;
-    bool active;
-    float endingBoneBlend;
-    float endingFaceBlend;
-    int statusFlag;
-    struct _MotionPlayer *next;
-} MotionPlayer;
-
-void MotionPlayer_initialize(MotionPlayer *m);
+typedef struct MotionPlayer MotionPlayer;
 
 class MotionManager
 {
@@ -97,9 +77,7 @@ public:
 
 private:
     void purgeMotion();
-    void setup(PMDModel *pmd);
-    void initialize();
-    void clear();
+    void release();
 
     PMDModel *m_pmd;
     MotionPlayer *m_playerList;

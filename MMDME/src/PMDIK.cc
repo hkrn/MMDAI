@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -49,9 +49,25 @@ const float PMDIK::kMinAxis     = 0.0000001f;
 const float PMDIK::kMinRotSum   = 0.002f;
 const float PMDIK::kMinRotation = 0.00001f;
 
-/* PMDIK::initialize: initialize IK */
-void PMDIK::initialize()
+PMDIK::PMDIK()
+    : m_destBone(NULL),
+    m_targetBone(NULL),
+    m_boneList(NULL),
+    m_numBone(0),
+    m_iteration(0),
+    m_angleConstraint(0.0f)
 {
+}
+
+PMDIK::~PMDIK()
+{
+    release();
+}
+
+void PMDIK::release()
+{
+    MMDAIMemoryRelease(m_boneList);
+
     m_destBone = NULL;
     m_targetBone = NULL;
     m_boneList = NULL;
@@ -60,30 +76,9 @@ void PMDIK::initialize()
     m_angleConstraint = 0.0f;
 }
 
-/* PMDIK::clear: free IK */
-void PMDIK::clear()
-{
-    if (m_boneList)
-        MMDAIMemoryRelease(m_boneList);
-    initialize();
-}
-
-/* PMDIK::PMDIK: constructor */
-PMDIK::PMDIK()
-{
-    initialize();
-}
-
-/* PMDIK::~PMDIK: destructor */
-PMDIK::~PMDIK()
-{
-    clear();
-}
-
-/* PMDIK::setup: initialize and setup IK  */
 void PMDIK::setup(const PMDFile_IK *ik, const short *ikBoneIDList, PMDBone *boneList)
 {
-    clear();
+    release();
 
     m_destBone = &(boneList[ik->destBoneID]);
     m_targetBone = &(boneList[ik->targetBoneID]);
@@ -102,11 +97,9 @@ void PMDIK::setup(const PMDFile_IK *ik, const short *ikBoneIDList, PMDBone *bone
                       m_destBone->getName(), m_targetBone->getName(), m_numBone, m_iteration, m_angleConstraint);
 }
 
-/* PMDIK::solve: try to move targetBone toward destBone, solving constraint among bones in boneList[] and the targetBone */
 void PMDIK::solve()
 {
-    btScalar x, y, z;
-    btScalar cx, cy, cz;
+    btScalar x = 0, y = 0, z = 0, cx = 0, cy = 0, cz = 0;
     btMatrix3x3 mat;
 
     if (m_boneList == NULL)

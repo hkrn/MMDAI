@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -42,60 +42,63 @@
 
 namespace MMDAI {
 
-/* PMDBone::initialize: initialize bone */
-void PMDBone::initialize()
+PMDBone::PMDBone()
+    : m_name(NULL),
+    m_parentBone(NULL),
+    m_childBone(NULL),
+    m_type(UNKNOWN),
+    m_targetBone(NULL),
+    m_rotateCoef(0.0f),
+    m_parentIsRoot(false),
+    m_limitAngleX(false),
+    m_motionIndependent(false),
+    m_simulated(false),
+    m_rot(0.0f, 0.0f, 0.0f, 1.0f)
+
 {
+    m_originPosition.setZero();
+    m_offset.setZero();
+    m_trans.setIdentity();
+    m_trans.setOrigin(m_originPosition);
+    m_transMoveToOrigin.setIdentity();
+    m_transMoveToOrigin.setOrigin(-m_originPosition);
+    m_pos.setZero();
+}
+
+PMDBone::~PMDBone()
+{
+    release();
+}
+
+void PMDBone::release()
+{
+    MMDAIMemoryRelease(m_name);
     m_name = NULL;
     m_parentBone = NULL;
     m_childBone = NULL;
     m_type = UNKNOWN;
     m_targetBone = NULL;
-    m_originPosition.setZero();
     m_rotateCoef = 0.0f;
-
-    m_offset.setZero();
     m_parentIsRoot = false;
     m_limitAngleX = false;
     m_motionIndependent = false;
-
+    m_simulated = false;
+    m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    m_originPosition.setZero();
+    m_offset.setZero();
     m_trans.setIdentity();
     m_trans.setOrigin(m_originPosition);
     m_transMoveToOrigin.setIdentity();
     m_transMoveToOrigin.setOrigin(-m_originPosition);
-    m_simulated = false;
-
     m_pos.setZero();
-    m_rot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-/* PMDBone::clear: free bone */
-void PMDBone::clear()
-{
-    if(m_name)
-        MMDAIMemoryRelease(m_name);
-
-    initialize();
-}
-
-/* PMDBone::PMDBone: constructor */
-PMDBone::PMDBone()
-{
-    initialize();
-}
-
-/* PMDBone::~PMDBone: destructor */
-PMDBone::~PMDBone()
-{
-    clear();
-}
-
-/* PMDBone::setup: initialize and setup bone */
 bool PMDBone::setup(const PMDFile_Bone *b, PMDBone *boneList, const uint16_t maxBones, PMDBone *rootBone)
 {
     bool ret = true;
     char name[21];
 
-    clear();
+    release();
 
     /* name */
     MMDAIStringCopySafe(name, b->name, sizeof(name));
@@ -171,7 +174,6 @@ bool PMDBone::setup(const PMDFile_Bone *b, PMDBone *boneList, const uint16_t max
     return ret;
 }
 
-/* PMDBone::computeOffset: compute offset position */
 void PMDBone::computeOffset()
 {
     if (m_parentBone)
@@ -180,7 +182,6 @@ void PMDBone::computeOffset()
         m_offset = m_originPosition;
 }
 
-/* PMDBone::reset: reset working pos and rot */
 void PMDBone::reset()
 {
     m_pos.setZero();
@@ -190,7 +191,6 @@ void PMDBone::reset()
     m_trans.setOrigin(m_originPosition);
 }
 
-/* PMDBone::setMotionIndependency: check if this bone does not be affected by other controller bones */
 void PMDBone::setMotionIndependency()
 {
     const char *names[] = {PMDBONE_ADDITIONALROOTNAME};
@@ -212,7 +212,6 @@ void PMDBone::setMotionIndependency()
     m_motionIndependent = false;
 }
 
-/* PMDBone::updateRotate: update internal transform, consulting extra rotation */
 void PMDBone::updateRotate()
 {
     btQuaternion r;
@@ -235,7 +234,6 @@ void PMDBone::updateRotate()
     }
 }
 
-/* PMDBone::update: update internal transform for current position / rotation */
 void PMDBone::update()
 {
     m_trans.setOrigin(m_pos + m_offset);
@@ -244,7 +242,6 @@ void PMDBone::update()
         m_trans = m_parentBone->m_trans * m_trans;
 }
 
-/* PMDBone::calcSkinningTrans: get internal transform for skinning */
 void PMDBone::calcSkinningTrans(btTransform *b)
 {
     *b = m_trans * m_transMoveToOrigin;

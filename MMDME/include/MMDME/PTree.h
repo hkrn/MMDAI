@@ -71,9 +71,6 @@ private:
     PTreeNodeList *m_stocker;
     PTreeNode *m_root;
     PTreeNode *newNode();
-
-    void initialize();
-    void clear();
 };
 
 } /* namespace */

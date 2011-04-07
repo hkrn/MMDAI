@@ -64,8 +64,7 @@ public:
     }
 
 private:
-    void initialize();
-    void clear();
+    void release();
 
     btCollisionShape *m_shape;
     btRigidBody *m_body;

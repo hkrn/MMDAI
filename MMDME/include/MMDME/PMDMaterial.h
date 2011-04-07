@@ -101,8 +101,7 @@ public:
    }
 
 private:
-   void initialize();
-   void clear();
+   void release();
 
    float m_diffuse[3];
    float m_ambient[3];

@@ -122,8 +122,7 @@ private:
     BoneMotion * getBoneMotion(const char *name);
     FaceMotion * getFaceMotion(const char *name);
     void setInterpolationTable(BoneKeyFrame *bf, char ip[]);
-    void initialize();
-    void clear();
+    void release();
 
     PTree m_name2bone;
     PTree m_name2face;

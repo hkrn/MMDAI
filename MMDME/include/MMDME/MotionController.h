@@ -113,13 +113,12 @@ private:
     void calcFaceAt(MotionControllerFaceElement *mc, float absFrame);
     void control(float frameNow);
     void takeSnap(const btVector3 &centerPos);
-    void initialize();
-    void clear();
+    void release();
 
     float m_maxFrame;
-    unsigned long m_numBoneCtrl;
+    uint32_t m_numBoneCtrl;
     MotionControllerBoneElement *m_boneCtrlList;
-    unsigned long m_numFaceCtrl;
+    uint32_t m_numFaceCtrl;
     MotionControllerFaceElement *m_faceCtrlList;
     bool m_hasCenterBoneMotion;
     float m_boneBlendRate;

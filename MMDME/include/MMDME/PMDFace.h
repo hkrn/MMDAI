@@ -75,8 +75,7 @@ public:
 private:
     static const unsigned int kMaxVertexID = 65536;
 
-    void initialize();
-    void clear();
+    void release();
 
     char *m_name;
     unsigned char m_type;

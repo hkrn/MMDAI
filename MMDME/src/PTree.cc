@@ -42,7 +42,6 @@
 
 namespace MMDAI {
 
-/* testBit: test a bit */
 static int testBit(const char *str, int slen, int bitplace)
 {
     int maskptr;
@@ -53,7 +52,6 @@ static int testBit(const char *str, int slen, int bitplace)
     return(str[maskptr] & mbit[bitplace & 7]);
 }
 
-/* testBitMax: test a bit with max bit limit */
 static int testBitMax(const char *str, int bitplace, int maxbitplace)
 {
     const unsigned char mbit[] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
@@ -63,7 +61,6 @@ static int testBitMax(const char *str, int bitplace, int maxbitplace)
     return (str[bitplace >> 3] & mbit[bitplace & 7]);
 }
 
-/* getDiffPoint: return which bit differs first between two strings */
 static int getDiffPoint(const char *str1, const char *str2)
 {
     int p = 0;
@@ -81,7 +78,6 @@ static int getDiffPoint(const char *str1, const char *str2)
     return bitloc;
 }
 
-/* PTree::newNode: allocate a new node */
 PTreeNode * PTree::newNode()
 {
     PTreeNodeList *newlist;
@@ -106,47 +102,31 @@ PTreeNode * PTree::newNode()
     return tmp;
 }
 
-/* PTree::initialize: initialize PTree */
-void PTree::initialize()
+PTree::PTree()
+    : m_stocker(NULL),
+    m_root(NULL)
 {
-    m_stocker = NULL;
-    m_root = NULL;
 }
 
-/* PTree::clear: free PTree */
-void PTree::clear()
+PTree::~PTree()
 {
-    PTreeNodeList *tmp1, *tmp2;
+    release();
+}
 
-    tmp1 = m_stocker;
+void PTree::release()
+{
+    PTreeNodeList *tmp1 = m_stocker;
     while (tmp1) {
-        tmp2 = tmp1->next;
+        PTreeNodeList *tmp2 = tmp1->next;
         MMDAIMemoryRelease(tmp1->list);
         MMDAIMemoryRelease(tmp1);
         tmp1 = tmp2;
     }
-    initialize();
+
+    m_stocker = NULL;
+    m_root = NULL;
 }
 
-/* PTree::PTree: constructor */
-PTree::PTree()
-{
-    initialize();
-}
-
-/* PTree::PTree: destructor */
-PTree::~PTree()
-{
-    clear();
-}
-
-/* PTree::release: free PTree */
-void PTree::release()
-{
-    clear();
-}
-
-/* PTree::add: add an entry to the tree */
 void PTree::add(const char *str, void *data, const char *matchstr)
 {
     int slen, bitloc;
@@ -186,14 +166,14 @@ void PTree::add(const char *str, void *data, const char *matchstr)
     }
 }
 
-/* PTree::findNearest: return the nearest entry */
 void * PTree::findNearest(const char *str)
 {
     PTreeNode *n;
     PTreeNode *branch;
     int maxbitplace;
 
-    if (m_root == NULL) return NULL;
+    if (m_root == NULL)
+        return NULL;
 
     n = m_root;
     branch = NULL;

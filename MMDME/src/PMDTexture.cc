@@ -42,9 +42,31 @@
 
 namespace MMDAI {
 
-/* PMDTexture::initialize: initialize texture */
-void PMDTexture::initialize()
+PMDTexture::PMDTexture()
+    : m_engine(NULL),
+    m_native(NULL),
+    m_isSphereMap(false),
+    m_isSphereMapAdd(false),
+    m_width(0),
+    m_height(0),
+    m_components(3),
+    m_textureData(NULL)
 {
+}
+
+PMDTexture::~PMDTexture()
+{
+    release();
+    m_engine = NULL;
+}
+
+void PMDTexture::release()
+{
+    if (m_engine) {
+        m_engine->releaseTexture(m_native);
+    }
+    MMDAIMemoryRelease(m_textureData);
+
     m_engine = NULL;
     m_native = NULL;
     m_isSphereMap = false;
@@ -53,32 +75,6 @@ void PMDTexture::initialize()
     m_height = 0;
     m_components = 3;
     m_textureData = NULL;
-}
-
-/* PMDTexture::clear: free texture */
-void PMDTexture::clear()
-{
-    if (m_engine) {
-        m_engine->releaseTexture(m_native);
-        m_native = NULL;
-    }
-    if (m_textureData) {
-        MMDAIMemoryRelease(m_textureData);
-        m_textureData = NULL;
-    }
-    initialize();
-}
-
-/* constructor */
-PMDTexture::PMDTexture()
-{
-    initialize();
-}
-
-/* ~PMDTexture: destructor */
-PMDTexture::~PMDTexture()
-{
-    clear();
 }
 
 bool PMDTexture::loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight)
@@ -164,7 +160,8 @@ bool PMDTexture::loadTGAImage(const unsigned char *data, unsigned char **ptr, in
 
 void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, int height, int components, bool isSphereMap, bool isSphereMapAdd)
 {
-    assert(m_engine);
+    assert(m_engine != NULL);
+
     m_engine->releaseTexture(m_native);
     if (m_textureData)
         MMDAIMemoryRelease(m_textureData);
@@ -193,12 +190,6 @@ void PMDTexture::loadBytes(const unsigned char *data, size_t size, int width, in
     }
 
     m_native = m_engine->allocateTexture(data, width, height, components);
-}
-
-/* PMDTexture::release: free texture */
-void PMDTexture::release()
-{
-    clear();
 }
 
 } /* namespace */

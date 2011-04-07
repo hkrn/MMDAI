@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -42,10 +42,30 @@
 
 namespace MMDAI {
 
+struct MotionPlayer {
+    char *name;
+    MotionController mc;
+    VMD *vmd;
+    unsigned char onEnd;
+    short priority;
+    bool ignoreStatic;
+    float loopAt;
+    bool enableSmooth;
+    bool enableRePos;
+    float endingBoneBlendFrames;
+    float endingFaceBlendFrames;
+    float motionBlendRate;
+    bool active;
+    float endingBoneBlend;
+    float endingFaceBlend;
+    int statusFlag;
+    MotionPlayer *next;
+};
+
 const float MotionManager::kDefaultLoopAtFrame = 0.0f;
 
 /* MotionPlayer_initialize: initialize MotionPlayer */
-void MotionPlayer_initialize(MotionPlayer *m)
+static void MotionPlayer_initialize(MotionPlayer *m)
 {
     m->name = NULL;
 
@@ -72,18 +92,15 @@ void MotionPlayer_initialize(MotionPlayer *m)
 /* MotionManager::purgeMotion: purge inactive motions */
 void MotionManager::purgeMotion()
 {
-    MotionPlayer *m, *tmp1, *tmp2;
-
-    tmp1 = NULL;
-    m = m_playerList;
+    MotionPlayer *tmp1 = NULL, *m = m_playerList;
     while (m) {
         if (!m->active) {
             if (tmp1)
                 tmp1->next = m->next;
             else
                 m_playerList = m->next;
-            tmp2 = m->next;
-            if(m->name) MMDAIMemoryRelease(m->name);
+            MotionPlayer *tmp2 = m->next;
+            MMDAIMemoryRelease(m->name);
             delete m;
             m = tmp2;
         } else {
@@ -93,61 +110,50 @@ void MotionManager::purgeMotion()
     }
 }
 
-/* MotionManager::setup: initialize and setup motion manager */
-void MotionManager::setup(PMDModel * pmd)
-{
-    clear();
-    m_pmd = pmd;
-}
-
-/* MotionManager::initialize: initialize motion manager */
-void MotionManager::initialize()
-{
-    m_pmd = NULL;
-    m_playerList = NULL;
-    m_beginningNonControlledBlend = 0.0f;
-}
-
-/* MotionManager::clear: free motion manager */
-void MotionManager::clear()
-{
-    MotionPlayer *player = m_playerList;
-    MotionPlayer *tmp;
-
-    while (player) {
-        tmp = player->next;
-        if(player->name) MMDAIMemoryRelease(player->name);
-        delete player;
-        player = tmp;
-    }
-    initialize();
-}
-
 /* MotionManager::MotionManager: constructor */
-MotionManager::MotionManager(PMDModel * pmd)
+MotionManager::MotionManager(PMDModel *pmd)
+    : m_pmd(pmd),
+    m_playerList(NULL),
+    m_beginningNonControlledBlend(0.0f)
 {
-    initialize();
-    setup(pmd);
 }
 
 /* MotionManager::~MotionManager: destructor */
 MotionManager::~MotionManager()
 {
-    clear();
+    release();
+}
+
+void MotionManager::release()
+{
+    MotionPlayer *player = m_playerList;
+    while (player) {
+        MotionPlayer *tmp = player->next;
+        MMDAIMemoryRelease(player->name);
+        delete player;
+        player = tmp;
+    }
+
+    m_pmd = NULL;
+    m_playerList = NULL;
+    m_beginningNonControlledBlend = 0.0f;
 }
 
 /* MotionManager::startMotion start a motion */
 bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRePos)
 {
-    MotionPlayer *m, *tmp1, *tmp2;
-
-    if(vmd == NULL || name == NULL) return false;
+    assert(vmd != NULL && name != NULL);
 
     /* purge inactive motion managers */
     purgeMotion();
 
     /* allocate new motion */
-    m = new MotionPlayer;
+    MotionPlayer *m = new MotionPlayer();
+    if (m == NULL) {
+        MMDAILogWarnString("cannot allocate memory");
+        return false;
+    }
+
     MotionPlayer_initialize(m);
 
     m->name = MMDAIStringClone(name);
@@ -167,8 +173,8 @@ bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool onc
         m->next = NULL;
         m_playerList = m;
     } else {
-        tmp2 = m_playerList->next; /* skip the base motion */
-        tmp1 = m_playerList;
+        MotionPlayer *tmp2 = m_playerList->next; /* skip the base motion */
+        MotionPlayer *tmp1 = m_playerList;
         while (tmp2) {
             if (tmp2->priority > m->priority) {
                 /* insert here */
@@ -191,6 +197,7 @@ bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool onc
 /* MotionManager::startMotionSub: initialize a motion */
 void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
 {
+    assert(m_pmd != NULL);
     btVector3 offset;
 
     /* initialize and setup motion controller */
@@ -240,14 +247,13 @@ void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
 /* MotionManager::swapMotion: swap a motion, keeping parameters */
 bool MotionManager::swapMotion(VMD * vmd, const char * name)
 {
-    MotionPlayer *m;
-
-    if(vmd == NULL || name == NULL) return false;
+    assert(vmd != NULL && name == NULL && m_playerList != NULL);
 
     /* purge inactive motion managers */
     purgeMotion();
 
     /* find the motion player to change */
+    MotionPlayer *m = NULL;
     for (m = m_playerList; m; m = m->next)
         if (MMDAIStringEquals(m->name, name))
             break;
@@ -266,11 +272,9 @@ bool MotionManager::swapMotion(VMD * vmd, const char * name)
 /* MotionManager::deleteMotion: delete a motion */
 bool MotionManager::deleteMotion(const char *name)
 {
-    MotionPlayer *m;
+    assert(name != NULL && m_playerList != NULL);
 
-    if(name == NULL) return false;
-
-    for (m = m_playerList; m; m = m->next) {
+    for (MotionPlayer *m = m_playerList; m; m = m->next) {
         if (m->active && MMDAIStringEquals(m->name, name)) {
             /* enter the ending status, gradually decreasing the blend rate */
             m->endingBoneBlend = m->endingBoneBlendFrames;
@@ -284,8 +288,6 @@ bool MotionManager::deleteMotion(const char *name)
 /* MotionManager::update: apply all motion players */
 bool MotionManager::update(double frame)
 {
-    MotionPlayer *m;
-
     if (m_beginningNonControlledBlend > 0.0f) {
         /* if this is the beginning of a base motion, the uncontrolled bone/face will be reset */
         m_beginningNonControlledBlend -= (float) frame;
@@ -295,11 +297,11 @@ bool MotionManager::update(double frame)
     }
 
     /* reset status flags */
-    for (m = m_playerList; m; m = m->next)
+    for (MotionPlayer *m = m_playerList; m; m = m->next)
         m->statusFlag = MOTION_STATUS_RUNNING;
 
     /* update the whole motion (the later one will override the other one) */
-    for (m = m_playerList; m; m = m->next) {
+    for (MotionPlayer *m = m_playerList; m; m = m->next) {
         /* skip deactivated motions */
         if (!m->active)
             continue;
@@ -350,7 +352,7 @@ bool MotionManager::update(double frame)
     }
 
     /* return true when any status change has occurred within this call */
-    for (m = m_playerList; m; m = m->next)
+    for (MotionPlayer *m = m_playerList; m; m = m->next)
         if (m->statusFlag != MOTION_STATUS_RUNNING)
             return true;
     return false;

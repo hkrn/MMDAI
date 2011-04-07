@@ -55,8 +55,7 @@ public:
     void joinWorld(btDiscreteDynamicsWorld *btWorld);
 
 private:
-    void initialize();
-    void clear();
+    void release();
 
     btGeneric6DofSpringConstraint *m_constraint;
     btDiscreteDynamicsWorld *m_world;
