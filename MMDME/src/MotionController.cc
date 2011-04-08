@@ -301,14 +301,14 @@ void MotionController::control(float frameNow)
     }
 }
 
-void MotionController::takeSnap(const btVector3 &centerPos)
+void MotionController::takeSnap(btVector3 *centerPos)
 {
     for (uint32_t i = 0; i < m_numBoneCtrl; i++) {
         MotionControllerBoneElement *mcb = &(m_boneCtrlList[i]);
         mcb->snapPos = mcb->bone->getCurrentPosition();
         if (centerPos && mcb->bone->hasMotionIndependency()) {
             /* consider center offset for snapshot */
-            mcb->snapPos -= centerPos;
+            mcb->snapPos -= *centerPos;
         }
         mcb->snapRot = mcb->bone->getCurrentRotation();
     }
@@ -469,7 +469,7 @@ void MotionController::rewind(float targetFrame, float frame)
     m_previousFrame = targetFrame;
     if (m_overrideFirst) {
         /* take a snap shot of current pose to be used as initial status of this motion at frame 0 */
-        takeSnap(btVector3()); /* not move the center position */
+        takeSnap(NULL); /* not move the center position */
         m_lastLoopStartFrame = targetFrame;
         if (m_maxFrame >= kBoneStartMarginFrame) {
             m_noBoneSmearFrame = kBoneStartMarginFrame;
@@ -491,7 +491,8 @@ void MotionController::rewind(float targetFrame, float frame)
 void MotionController::setOverrideFirst(const btVector3 &centerPos)
 {
     /* take snapshot of current pose, to be used as initial values at frame 0 */
-    takeSnap(centerPos);
+    btVector3 centerPosPtr = centerPos;
+    takeSnap(&centerPosPtr);
     /* tell controller that we have snapshot, and should take snap at loop */
     m_overrideFirst = true;
     m_noBoneSmearFrame = kBoneStartMarginFrame;

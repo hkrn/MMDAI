@@ -112,7 +112,7 @@ private:
     void calcBoneAt(MotionControllerBoneElement *mc, float absFrame);
     void calcFaceAt(MotionControllerFaceElement *mc, float absFrame);
     void control(float frameNow);
-    void takeSnap(const btVector3 &centerPos);
+    void takeSnap(btVector3 *centerPos);
     void release();
 
     float m_maxFrame;
