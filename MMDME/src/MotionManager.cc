@@ -227,7 +227,7 @@ void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
 /* MotionManager::swapMotion: swap a motion, keeping parameters */
 bool MotionManager::swapMotion(VMD * vmd, const char * name)
 {
-    assert(vmd != NULL && name == NULL && m_playerList != NULL);
+    assert(vmd != NULL && name != NULL && m_playerList != NULL);
 
     /* purge inactive motion managers */
     purgeMotion();
