@@ -618,6 +618,7 @@ void QMAWindow::createActions()
     m_deleteSelectedObjectAction = action;
 
     action = new QAction(tr("E&xit"), this);
+    action->setMenuRole(QAction::QuitRole);
     action->setShortcuts(QKeySequence::Quit);
     action->setStatusTip(tr("Exit the application."));
     connect(action, SIGNAL(triggered()), this, SLOT(close()));
@@ -626,12 +627,14 @@ void QMAWindow::createActions()
     shortcuts.append(QKeySequence(Qt::ALT + Qt::Key_Question));
     shortcuts.append(QKeySequence(Qt::ALT + Qt::Key_Slash));
     action = new QAction(tr("&About"), this);
+    action->setMenuRole(QAction::AboutRole);
     action->setStatusTip(tr("Show the application's About box."));
     action->setShortcuts(shortcuts);
     connect(action, SIGNAL(triggered()), this, SLOT(about()));
     m_aboutAction = action;
 
     action = new QAction(tr("About &Qt"), this);
+    action->setMenuRole(QAction::AboutQtRole);
     action->setStatusTip(tr("Show the Qt library's About box."));
     connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     m_aboutQtAction = action;
