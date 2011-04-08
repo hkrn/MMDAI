@@ -45,11 +45,11 @@
 
 #include "MMDAI/LipSyncLoader.h"
 
-class QMALipSyncLoder : public MMDAI::LipSyncLoader
+class QMALipSyncLoader : public MMDAI::LipSyncLoader
 {
 public:
-    QMALipSyncLoder(const char *filename);
-    ~QMALipSyncLoder();
+    QMALipSyncLoader(const char *filename);
+    ~QMALipSyncLoader();
 
     bool load();
     int getNExpressions();

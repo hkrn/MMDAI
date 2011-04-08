@@ -47,7 +47,7 @@ SOURCES += main.cc\
     QMAWindow.cc \
     QMAModelLoader.cc \
     QMAModelLoaderFactory.cc \
-    QMALipSyncLoder.cc \
+    QMALipSyncLoader.cc \
     QMALogger.cc \
     QMALogViewWidget.cc \
     QMAPreference.cc
@@ -58,7 +58,7 @@ HEADERS  += QMAWidget.h \
     QMAWindow.h \
     QMAModelLoader.h \
     QMAModelLoaderFactory.h \
-    QMALipSyncLoder.h \
+    QMALipSyncLoader.h \
     QMALogger.h \
     QMALogViewWidget.h \
     QMAPreference.h

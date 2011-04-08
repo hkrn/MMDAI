@@ -37,7 +37,7 @@
 #include <QDir>
 #include <QString>
 
-#include "QMALipSyncLoder.h"
+#include "QMALipSyncLoader.h"
 #include "QMAModelLoader.h"
 #include "QMAModelLoaderFactory.h"
 
@@ -53,7 +53,7 @@ MMDAI::VMDLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename
 
 MMDAI::LipSyncLoader *QMAModelLoaderFactory::createLipSyncLoader(const char *filename)
 {
-    return new QMALipSyncLoder(filename);
+    return new QMALipSyncLoader(filename);
 }
 
 void QMAModelLoaderFactory::releaseModelLoader(MMDAI::PMDModelLoader *loader)

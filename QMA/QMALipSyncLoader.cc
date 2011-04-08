@@ -36,7 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "QMALipSyncLoder.h"
+#include "QMALipSyncLoader.h"
 
 #include <QDir>
 #include <QRegExp>
@@ -44,7 +44,7 @@
 #include <QTextCodec>
 #include <QTextStream>
 
-QMALipSyncLoder::QMALipSyncLoder(const char *filename)
+QMALipSyncLoader::QMALipSyncLoader(const char *filename)
     : m_expressionNames(0),
     m_phoneNames(0),
     m_interpolation(0),
@@ -61,7 +61,7 @@ QMALipSyncLoder::QMALipSyncLoder(const char *filename)
         m_file = new QFile("mmdai:" + path);
 }
 
-QMALipSyncLoder::~QMALipSyncLoder()
+QMALipSyncLoader::~QMALipSyncLoader()
 {
     int count = 0;
     if (m_expressionNames != NULL) {
@@ -84,7 +84,7 @@ QMALipSyncLoder::~QMALipSyncLoder()
     delete m_file;
 }
 
-bool QMALipSyncLoder::load()
+bool QMALipSyncLoader::load()
 {
     enum QMALipSyncLoaderState {
         GetNExpressions,
@@ -153,12 +153,12 @@ bool QMALipSyncLoder::load()
     return ret;
 }
 
-int QMALipSyncLoder::getNExpressions()
+int QMALipSyncLoader::getNExpressions()
 {
     return m_nexpressions;
 }
 
-const char *QMALipSyncLoder::getExpressionName(int i)
+const char *QMALipSyncLoader::getExpressionName(int i)
 {
     if (i >= 0 && i < m_nexpressions) {
         return m_expressionNames->at(i);
@@ -166,12 +166,12 @@ const char *QMALipSyncLoder::getExpressionName(int i)
     return NULL;
 }
 
-int QMALipSyncLoder::getNPhonemes()
+int QMALipSyncLoader::getNPhonemes()
 {
     return m_nphonemes;
 }
 
-const char *QMALipSyncLoder::getPhoneName(int i)
+const char *QMALipSyncLoader::getPhoneName(int i)
 {
     if (i >= 0 && i < m_nphonemes) {
         return m_phoneNames->at(i);
@@ -179,7 +179,7 @@ const char *QMALipSyncLoder::getPhoneName(int i)
     return NULL;
 }
 
-float QMALipSyncLoder::getInterpolationWeight(int i, int j)
+float QMALipSyncLoader::getInterpolationWeight(int i, int j)
 {
     int ne = m_nexpressions;
     int np = m_nphonemes;
