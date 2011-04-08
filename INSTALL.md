@@ -20,7 +20,9 @@ MMDAI 及び MMDME のビルドに cmake が必要です。MacOSX の場合は�
 Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
 
 MacOSX の場合 OpenGL Easy Extension が正しくビルド出来無い問題があるため、
-libGLEE に入っている CMakeList.txt を入れて cmake を使ってビルドする必要があります。
+scripts/CMake に入っている GLEE.cmake をコピーし、CMakeLists.txt に名前を変えて
+cmake を使ってビルドする必要があります。
+
 インストール先は /usr または /usr/local にインストールする必要があります。
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
 
