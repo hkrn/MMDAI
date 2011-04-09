@@ -213,6 +213,47 @@ public:
         else
             return &m_localToonTexture[i];
     }
+    inline const uint8_t countFaceDisplayNames() {
+        return m_numFaceDisplayNames;
+    }
+    inline const int getFaceDisplayName(uint32_t index) {
+        if (index >= m_numFaceDisplayNames) {
+            return -1;
+        }
+        else {
+            return m_faceDisplayNames[index];
+        }
+    }
+    inline const uint8_t countBoneFrameNames() {
+        return m_numBoneFrameNames;
+    }
+    inline const char *getBoneFrameName(uint32_t index) {
+        if (index >= m_numBoneFrameNames) {
+            return NULL;
+        }
+        else {
+            return m_boneFrameNames[index];
+        }
+    }
+    inline const uint32_t countBoneDisplayNames() {
+        return m_numBoneDisplayNames;
+    }
+    inline const int getBoneDisplayIndex(uint32_t index) {
+        if (index >= m_numBoneDisplayNames) {
+            return -1;
+        }
+        else {
+            return m_boneDisplayIndices[index];
+        }
+    }
+    inline const int getBoneDisplayName(uint32_t index) {
+        if (index >= m_numBoneDisplayNames) {
+            return -1;
+        }
+        else {
+            return m_boneDisplayNames[index];
+        }
+    }
 
 private:
     bool parse(PMDModelLoader *loader, BulletPhysics *bullet);
@@ -267,6 +308,14 @@ private:
     bool m_selfShadowDrawing;
     float m_selfShadowDensityCoef;
     float m_edgeColor[4];
+
+    uint8_t m_numFaceDisplayNames;
+    uint16_t *m_faceDisplayNames;
+    uint8_t m_numBoneFrameNames;
+    char **m_boneFrameNames;
+    uint32_t m_numBoneDisplayNames;
+    uint16_t *m_boneDisplayIndices;
+    uint8_t *m_boneDisplayNames;
 
     BulletPhysics *m_bulletPhysics;
     PMDBone m_rootBone;

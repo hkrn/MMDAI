@@ -82,6 +82,14 @@ void PMDModel::initialize()
     m_rotateBoneIDList = NULL;
     m_IKSimulated = NULL;
 
+    m_numFaceDisplayNames = 0;
+    m_faceDisplayNames = NULL;
+    m_numBoneFrameNames = 0;
+    m_boneFrameNames = NULL;
+    m_numBoneDisplayNames = 0;
+    m_boneDisplayIndices = NULL;
+    m_boneDisplayNames = NULL;
+
     /* initial values for variables that should be kept at model change */
     m_enableSimulation = true;
     m_toon = false;
@@ -99,111 +107,68 @@ void PMDModel::initialize()
 /* PMDModel::clear: free PMDModel */
 void PMDModel::clear()
 {
-    int i;
+    delete [] m_vertexList;
+    m_vertexList = NULL;
+    delete [] m_normalList;
+    m_normalList = NULL;
+    MMDAIMemoryRelease(m_texCoordList);
+    m_texCoordList = NULL;
+    MMDAIMemoryRelease(m_bone1List);
+    m_bone1List = NULL;
+    MMDAIMemoryRelease(m_bone2List);
+    m_bone2List = NULL;
+    MMDAIMemoryRelease(m_boneWeight1);
+    m_boneWeight1 = NULL;
+    MMDAIMemoryRelease(m_noEdgeFlag);
+    m_noEdgeFlag = NULL;
+    MMDAIMemoryRelease(m_surfaceList);
+    delete [] m_boneList;
+    m_boneList = NULL;
+    delete [] m_IKList;
+    m_IKList = NULL;
+    delete [] m_faceList;
+    m_faceList = NULL;
+    delete [] m_constraintList;
+    m_constraintList = NULL;
+    delete [] m_rigidBodyList;
+    m_rigidBodyList = NULL;
+    delete [] m_boneSkinningTrans;
+    m_boneSkinningTrans = NULL;
+    delete [] m_skinnedVertexList;
+    m_skinnedVertexList = NULL;
+    delete [] m_skinnedNormalList;
+    m_skinnedNormalList = NULL;
+    MMDAIMemoryRelease(m_toonTexCoordList);
+    m_toonTexCoordList = NULL;
+    delete [] m_edgeVertexList;
+    m_edgeVertexList = NULL;
+    MMDAIMemoryRelease(m_surfaceListForEdge);
+    m_surfaceListForEdge = NULL;
+    MMDAIMemoryRelease(m_toonTexCoordListForShadowMap);
+    m_toonTexCoordListForShadowMap = NULL;
+    MMDAIMemoryRelease(m_rotateBoneIDList);
+    m_rotateBoneIDList = NULL;
+    MMDAIMemoryRelease(m_IKSimulated);
+    m_IKSimulated = NULL;
+    MMDAIMemoryRelease(m_faceDisplayNames);
+    m_faceDisplayNames = NULL;
+    MMDAIMemoryRelease(m_boneFrameNames);
+    m_boneFrameNames = NULL;
+    MMDAIMemoryRelease(m_boneDisplayIndices);
+    m_boneDisplayIndices = NULL;
+    MMDAIMemoryRelease(m_boneDisplayNames);
+    m_boneDisplayNames = NULL;
+    MMDAIMemoryRelease(m_comment);
+    m_comment = NULL;
+    MMDAIMemoryRelease(m_name);
+    m_name = NULL;
 
-    if (m_vertexList) {
-        delete [] m_vertexList;
-        m_vertexList = NULL;
-    }
-    if (m_normalList) {
-        delete [] m_normalList;
-        m_normalList = NULL;
-    }
-    if (m_texCoordList) {
-        MMDAIMemoryRelease(m_texCoordList);
-        m_texCoordList = NULL;
-    }
-    if (m_bone1List) {
-        MMDAIMemoryRelease(m_bone1List);
-        m_bone1List = NULL;
-    }
-    if (m_bone2List) {
-        MMDAIMemoryRelease(m_bone2List);
-        m_bone2List = NULL;
-    }
-    if (m_boneWeight1) {
-        MMDAIMemoryRelease(m_boneWeight1);
-        m_boneWeight1 = NULL;
-    }
-    if (m_noEdgeFlag) {
-        MMDAIMemoryRelease(m_noEdgeFlag);
-        m_noEdgeFlag = NULL;
-    }
-    if (m_surfaceList) {
-        MMDAIMemoryRelease(m_surfaceList);
-        m_surfaceList = NULL;
-    }
-    if (m_material) {
+    if (m_material && m_engine) {
         m_engine->releaseMaterials(m_material, m_numMaterial);
         m_material = NULL;
     }
-    if (m_boneList) {
-        delete [] m_boneList;
-        m_boneList = NULL;
-    }
-    if (m_IKList) {
-        delete [] m_IKList;
-        m_IKList = NULL;
-    }
-    if (m_faceList) {
-        delete [] m_faceList;
-        m_faceList = NULL;
-    }
-    if (m_constraintList) {
-        delete [] m_constraintList;
-        m_constraintList = NULL;
-    }
-    if (m_rigidBodyList) {
-        delete [] m_rigidBodyList;
-        m_rigidBodyList = NULL;
-    }
 
-    if (m_boneSkinningTrans) {
-        delete [] m_boneSkinningTrans;
-        m_boneSkinningTrans = NULL;
-    }
-    if (m_skinnedVertexList) {
-        delete [] m_skinnedVertexList;
-        m_skinnedVertexList = NULL;
-    }
-    if (m_skinnedNormalList) {
-        delete [] m_skinnedNormalList;
-        m_skinnedNormalList = NULL;
-    }
-    if (m_toonTexCoordList) {
-        MMDAIMemoryRelease(m_toonTexCoordList);
-        m_toonTexCoordList = NULL;
-    }
-    if (m_edgeVertexList) {
-        delete [] m_edgeVertexList;
-        m_edgeVertexList = NULL;
-    }
-    if (m_surfaceListForEdge) {
-        MMDAIMemoryRelease(m_surfaceListForEdge);
-        m_surfaceListForEdge = NULL;
-    }
-    if (m_toonTexCoordListForShadowMap) {
-        MMDAIMemoryRelease(m_toonTexCoordListForShadowMap);
-        m_toonTexCoordListForShadowMap = NULL;
-    }
-    if (m_rotateBoneIDList) {
-        MMDAIMemoryRelease(m_rotateBoneIDList);
-        m_rotateBoneIDList = NULL;
-    }
-    if (m_IKSimulated) {
-        MMDAIMemoryRelease(m_IKSimulated);
-        m_IKSimulated = NULL;
-    }
-    if(m_comment) {
-        MMDAIMemoryRelease(m_comment);
-        m_comment = NULL;
-    }
-    if(m_name) {
-        MMDAIMemoryRelease(m_name);
-        m_name = NULL;
-    }
-
-    for (i = 0; i < kNSystemTextureFiles; i++)
+    for (int i = 0; i < kNSystemTextureFiles; i++)
         m_localToonTexture[i].release();
     m_name2bone.release();
     m_name2face.release();

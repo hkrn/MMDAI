@@ -52,9 +52,6 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     PMDFile_Material *fileMaterial = NULL;
     PMDFile_Bone *fileBone = NULL;
     const char *centerBoneName = MotionController::getCenterBoneName();
-    uint8_t numFaceDisp = 0;
-    uint8_t numBoneFrameDisp = 0;
-    uint32_t numBoneDisp = 0;
 
     size_t size = 0, rest = 0;
     uint8_t *data = NULL;
@@ -315,31 +312,75 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
 
     /* display names (skip) */
     /* indices for faces which should be displayed in "face" region */
-    numFaceDisp = *reinterpret_cast<uint8_t *>(ptr);
-    if (numFaceDisp * sizeof(uint16_t) > rest) {
+    m_numFaceDisplayNames = *reinterpret_cast<uint8_t *>(ptr);
+    if (m_numFaceDisplayNames * sizeof(uint16_t) > rest) {
         MMDAILogWarnString("Size of display face names exceeds size of PMD");
         goto error;
     }
-    ptr += sizeof(uint8_t) + sizeof(uint16_t) * numFaceDisp;
-    rest -= sizeof(uint8_t) + sizeof(uint16_t) * numFaceDisp;
+
+    m_faceDisplayNames = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numFaceDisplayNames));
+    if (m_faceDisplayNames == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    ptr += sizeof(uint8_t);
+    rest -= sizeof(uint8_t);
+
+    memcpy(m_faceDisplayNames, ptr, sizeof(uint16_t) * m_numFaceDisplayNames);
+
+    ptr += sizeof(uint16_t) * m_numFaceDisplayNames;
+    rest -= sizeof(uint16_t) * m_numFaceDisplayNames;
 
     /* bone frame names */
-    numBoneFrameDisp = *reinterpret_cast<uint8_t *>(ptr);
-    if (static_cast<size_t>(numBoneFrameDisp * 50) > rest) {
+    m_numBoneFrameNames = *reinterpret_cast<uint8_t *>(ptr);
+    if (static_cast<size_t>(m_numBoneFrameNames * 50) > rest) {
         MMDAILogWarnString("Size of display bone frame names exceeds size of PMD");
         goto error;
     }
-    ptr += sizeof(uint8_t) + 50 * numBoneFrameDisp;
-    rest -= sizeof(uint8_t) + 50 * numBoneFrameDisp;
+
+    m_boneFrameNames = static_cast<char **>(MMDAIMemoryAllocate(sizeof(void *) * m_numBoneFrameNames));
+    if (m_boneFrameNames == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    ptr += sizeof(uint8_t);
+    rest -= sizeof(uint8_t);
+
+    for (uint32_t i = 0; i < m_numBoneFrameNames; i++) {
+        char buf[51];
+        MMDAIStringCopySafe(buf, reinterpret_cast<const char *>(ptr), sizeof(buf));
+        m_boneFrameNames[i] = MMDAIStringClone(buf);
+        ptr += 50;
+        rest -= 50;
+        MMDAILogDebugSJIS("frame=\"%s\"", buf);
+    }
 
     /* indices for bones which should be displayed in each bone region */
-    numBoneDisp = *reinterpret_cast<uint32_t *>(ptr);
-    if (numBoneDisp * (sizeof(int16_t) + sizeof(uint8_t)) > rest) {
+    m_numBoneDisplayNames = *reinterpret_cast<uint32_t *>(ptr);
+    if (m_numBoneDisplayNames * (sizeof(int16_t) + sizeof(uint8_t)) > rest) {
         MMDAILogWarnString("Size of display bone names exceeds size of PMD");
         goto error;
     }
-    ptr += sizeof(uint32_t) + (sizeof(int16_t) + sizeof(uint8_t)) * numBoneDisp;
-    rest -= sizeof(uint32_t) + (sizeof(int16_t) + sizeof(uint8_t)) * numBoneDisp;
+
+    m_boneDisplayIndices = static_cast<uint16_t *>(MMDAIMemoryAllocate(sizeof(uint16_t) * m_numBoneDisplayNames));
+    m_boneDisplayNames = static_cast<uint8_t *>(MMDAIMemoryAllocate(sizeof(uint8_t) * m_numBoneDisplayNames));
+    if (m_boneDisplayIndices == NULL || m_boneDisplayNames == NULL) {
+        MMDAILogWarnString("Cannot allocate memory");
+        goto error;
+    }
+
+    for (uint32_t i = 0; i < m_numBoneDisplayNames; i++) {
+        m_boneDisplayIndices[i] = *reinterpret_cast<uint16_t *>(ptr);
+        ptr += sizeof(uint16_t);
+        m_boneDisplayNames[i] = *reinterpret_cast<uint8_t *>(ptr);
+        ptr += sizeof(uint8_t);
+        rest -= sizeof(uint16_t) + sizeof(uint8_t);
+    }
+
+    ptr += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
 
     /* end of base format */
     /* check for remaining ptr */
@@ -372,8 +413,8 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
                 rest -= 20 * (m_numFace - 1);
             }
             /* bone frame names in English */
-            ptr += 50 * numBoneFrameDisp;
-            rest -= 50 * numBoneFrameDisp;
+            ptr += 50 * m_numBoneFrameNames;
+            rest -= 50 * m_numBoneFrameNames;
         }
 
         /* toon texture file list (replace toon01.bmp - toon10.bmp) */
