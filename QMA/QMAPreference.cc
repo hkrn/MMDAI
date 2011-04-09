@@ -151,7 +151,6 @@ void QMAPreference::setBool(const MMDAI::PreferenceKeys key, bool value)
 
 void QMAPreference::setFloat(const MMDAI::PreferenceKeys key, float value)
 {
-    Q_UNUSED(value);
     if (validateFloatKey(key)) {
         QVariant var(value);
         round(key, var);
@@ -164,7 +163,6 @@ void QMAPreference::setFloat(const MMDAI::PreferenceKeys key, float value)
 
 void QMAPreference::setFloat3(const MMDAI::PreferenceKeys key, float *values)
 {
-    Q_UNUSED(values);
     if (validateFloat3Key(key)) {
         QVector3D vec3;
         vec3.setX(values[0]);
@@ -181,7 +179,6 @@ void QMAPreference::setFloat3(const MMDAI::PreferenceKeys key, float *values)
 
 void QMAPreference::setFloat4(const MMDAI::PreferenceKeys key, float *values)
 {
-    Q_UNUSED(values);
     if (validateFloat4Key(key)) {
         QVector4D vec4;
         vec4.setX(values[0]);
@@ -199,7 +196,6 @@ void QMAPreference::setFloat4(const MMDAI::PreferenceKeys key, float *values)
 
 void QMAPreference::setInt(const MMDAI::PreferenceKeys key, int value)
 {
-    Q_UNUSED(value);
     if (validateIntKey(key)) {
         QVariant var(value);
         round(key, var);
@@ -404,6 +400,7 @@ bool QMAPreference::validateIntKey(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceBulletFPS:
     case MMDAI::kPreferenceShadowMappingTextureSize:
     case MMDAI::kPreferenceMaxMultiSampling:
+    case MMDAI::kPreferenceMaxMultiSamplingColor:
     case MMDAI::kPreferenceMotionAdjustFrame:
         return true;
     default:
