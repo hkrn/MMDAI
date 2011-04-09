@@ -371,6 +371,9 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         goto error;
     }
 
+    ptr += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
     for (uint32_t i = 0; i < m_numBoneDisplayNames; i++) {
         m_boneDisplayIndices[i] = *reinterpret_cast<uint16_t *>(ptr);
         ptr += sizeof(uint16_t);
@@ -378,9 +381,6 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         ptr += sizeof(uint8_t);
         rest -= sizeof(uint16_t) + sizeof(uint8_t);
     }
-
-    ptr += sizeof(uint32_t);
-    rest -= sizeof(uint32_t);
 
     /* end of base format */
     /* check for remaining ptr */
