@@ -632,14 +632,14 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     for (uint32_t i = 0; i < m_numBone; i++) {
         PMDBone *bone = &m_boneList[i];
         const char *name = bone->getName();
-        PMDBone *bMatch = (PMDBone *) m_name2bone.findNearest(name);
+        PMDBone *bMatch = static_cast<PMDBone *>(m_name2bone.findNearest(name));
         if (bMatch == NULL || !MMDAIStringEquals(bMatch->getName(), name))
             m_name2bone.add(name, bone, (bMatch) ? bMatch->getName() : NULL); /* add */
     }
     for (uint32_t i = 0; i < m_numFace; i++) {
         PMDFace *face = &m_faceList[i];
         const char *name = face->getName();
-        PMDFace *fMatch = (PMDFace *) m_name2face.findNearest(name);
+        PMDFace *fMatch = static_cast<PMDFace *>(m_name2face.findNearest(name));
         if (fMatch == NULL || !MMDAIStringEquals(fMatch->getName(), name))
             m_name2face.add(name, face, (fMatch) ? fMatch->getName() : NULL); /* add */
     }

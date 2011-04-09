@@ -216,7 +216,7 @@ public:
     inline const uint8_t countFaceDisplayNames() {
         return m_numFaceDisplayNames;
     }
-    inline const int getFaceDisplayName(uint32_t index) {
+    inline const int getFaceDisplayNameAt(uint32_t index) {
         if (index >= m_numFaceDisplayNames) {
             return -1;
         }
@@ -227,7 +227,7 @@ public:
     inline const uint8_t countBoneFrameNames() {
         return m_numBoneFrameNames;
     }
-    inline const char *getBoneFrameName(uint32_t index) {
+    inline const char *getBoneFrameNameAt(uint32_t index) {
         if (index >= m_numBoneFrameNames) {
             return NULL;
         }
@@ -238,7 +238,7 @@ public:
     inline const uint32_t countBoneDisplayNames() {
         return m_numBoneDisplayNames;
     }
-    inline const int getBoneDisplayIndex(uint32_t index) {
+    inline const int getBoneDisplayIndexAt(uint32_t index) {
         if (index >= m_numBoneDisplayNames) {
             return -1;
         }
@@ -246,12 +246,28 @@ public:
             return m_boneDisplayIndices[index];
         }
     }
-    inline const int getBoneDisplayName(uint32_t index) {
+    inline const int getBoneDisplayNameAt(uint32_t index) {
         if (index >= m_numBoneDisplayNames) {
             return -1;
         }
         else {
             return m_boneDisplayNames[index];
+        }
+    }
+    inline PMDBone *getBoneAt(uint32_t index) {
+        if (index >= m_numBone) {
+            return NULL;
+        }
+        else {
+            return &m_boneList[index];
+        }
+    }
+    inline PMDFace *getFaceAt(uint32_t index) {
+        if (index >= m_numFace) {
+            return NULL;
+        }
+        else {
+            return &m_faceList[index];
         }
     }
 
