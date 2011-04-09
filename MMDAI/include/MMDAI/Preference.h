@@ -76,7 +76,8 @@ enum PreferenceKeys {
     kPreferenceCartoonEdgeSelectedColor,
     kPreferenceRenderingRotation,
     kPreferenceRenderingTransition,
-    kPreferenceRenderingScale
+    kPreferenceRenderingScale,
+    kPreferenceMaxLengthOfKeys
 };
 
 class Preference
