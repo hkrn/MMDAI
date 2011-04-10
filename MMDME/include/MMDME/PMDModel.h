@@ -43,6 +43,7 @@
 
 #include "MMDME/Common.h"
 #include "MMDME/PMDBone.h"
+#include "MMDME/PMDFace.h"
 #include "MMDME/PMDTexture.h"
 #include "MMDME/PTree.h"
 
@@ -50,7 +51,6 @@ namespace MMDAI {
 
 class BulletPhysics;
 class PMDConstraint;
-class PMDFace;
 class PMDIK;
 class PMDMaterial;
 class PMDModelLoader;
