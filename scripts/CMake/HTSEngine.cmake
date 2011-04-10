@@ -29,6 +29,6 @@ endif()
 
 if(NOT MSVC)
   install(TARGETS HTSEngine DESTINATION lib)
-  install(DIRECTORY include DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
+  install(DIRECTORY include/ DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
 endif()
 
