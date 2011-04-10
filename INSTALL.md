@@ -12,7 +12,7 @@
   - AquesTalk2 (QMAAquesTalk2Plugin)
   - Julius (QMAJuliusPlugin)
   - OpenJTalk (QMAOpenJTalkPlugin)
-  - PortAudio (QMAAquesTalk2Plugin / QMAJuliusPlugin / QMAOpenJTalkPlugin)
+  - PortAudio V19 (QMAAquesTalk2Plugin / QMAJuliusPlugin / QMAOpenJTalkPlugin)
   - hts_engine (QMAOpenJTalkPlugin)
   - Lua (QMAVILuaPlugin)
 
@@ -27,7 +27,7 @@ cmake を使ってビルドする必要があります。
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
 
 Julius/OpenJTalk/hts_engine は独自の CMake ファイルを用いて作成する必要があるため、
-パッケージからではなく、ソースでビルドする必要があります。
+パッケージからではなく、後述の手順でソースでビルドする必要があります。
 
 ## 環境変数の設定
 
