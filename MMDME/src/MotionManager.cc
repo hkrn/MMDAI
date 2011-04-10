@@ -211,7 +211,7 @@ void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
             offset = pos - centerPos;
             offset.setY(0.0f); /* Y axis should be set to zero to place model on ground */
             /* save the current pos/rot for smooth motion changing, resetting center location */
-            m->mc.setOverrideFirst(offset);
+            m->mc.setOverrideFirst(&offset);
             /* add the offset to the root bone */
             btVector3 rootOffset = rootBone->getOffset();
             rootOffset += offset;
@@ -219,7 +219,7 @@ void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
             rootBone->update();
         } else {
             /* save the current pos/rot for smooth motion changing */
-            m->mc.setOverrideFirst(btVector3()) ;
+            m->mc.setOverrideFirst(NULL) ;
         }
     }
 }

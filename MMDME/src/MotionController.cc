@@ -488,11 +488,10 @@ void MotionController::rewind(float targetFrame, float frame)
     }
 }
 
-void MotionController::setOverrideFirst(const btVector3 &centerPos)
+void MotionController::setOverrideFirst(btVector3 *centerPos)
 {
     /* take snapshot of current pose, to be used as initial values at frame 0 */
-    btVector3 centerPosPtr = centerPos;
-    takeSnap(&centerPosPtr);
+    takeSnap(centerPos);
     /* tell controller that we have snapshot, and should take snap at loop */
     m_overrideFirst = true;
     m_noBoneSmearFrame = kBoneStartMarginFrame;

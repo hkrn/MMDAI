@@ -84,7 +84,7 @@ public:
     void reset();
     bool advance(double deltaFrame);
     void rewind(float targetFrame, float frame);
-    void setOverrideFirst(const btVector3 &centerPos);
+    void setOverrideFirst(btVector3 *centerPos);
 
     inline void setBoneBlendRate(float value) {
         m_boneBlendRate = value;
