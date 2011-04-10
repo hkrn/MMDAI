@@ -1095,14 +1095,14 @@ inline void SceneController::sendEvent2(const char *type, const char *arg1, cons
     }
 }
 
-static void MMDAIFrustum(float result[16], float left, float right, float bottom, float top, float near, float far)
+static void MMDAIFrustum(float result[16], float left, float right, float bottom, float top, float znear, float zfar)
 {
     const float a = (right + left) / (right - left);
     const float b = (top + bottom) / (top - bottom);
-    const float c = ((far + near) / (far - near)) * -1;
-    const float d = ((-2 * far * near) / (far - near));
-    const float e = (2 * near) / (right - left);
-    const float f = (2 * near) / (top - bottom);
+    const float c = (zfar + znear) / (zfar - znear) * -1;
+    const float d = (-2 * zfar * znear) / (zfar - znear);
+    const float e = (2 * znear) / (right - left);
+    const float f = (2 * znear) / (top - bottom);
     const float matrix[16] = {
         e, 0, 0, 0,
         0, f, 0, 0,
@@ -1122,8 +1122,8 @@ void SceneController::updateProjection()
             m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
         }
     }
-    float aspect = (m_width == 0) ? 1.0 : static_cast<float>(m_height) / m_width;
-    float ratio = (m_currentScale == 0.0f) ? 1.0 : 1.0 / m_currentScale;
+    float aspect = (m_width == 0) ? 1.0f : static_cast<float>(m_height) / m_width;
+    float ratio = (m_currentScale == 0.0f) ? 1.0f : 1.0f / m_currentScale;
     float projection[16];
     MMDAIFrustum(projection, -ratio, ratio, -aspect * ratio, aspect * ratio, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
     m_engine->setProjection(projection);

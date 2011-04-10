@@ -329,12 +329,12 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
         }
         else if (modifiers & Qt::ShiftModifier) {
             float cameraZ = MMDAI::SceneController::kRenderViewPointCameraZ;
-            float near = MMDAI::SceneController::kRenderViewPointFrustumNear;
+            float znear = MMDAI::SceneController::kRenderViewPointFrustumNear;
             float fx = 0.0f, fy = 0.0f, fz = 20.0f, scale = m_controller->getScale();
             fx = x / static_cast<float>(m_controller->getWidth());
             fy = -y / static_cast<float>(m_controller->getHeight());
-            fx = static_cast<float>(fx * (fz - cameraZ) / near);
-            fy = static_cast<float>(fy * (fz - cameraZ) / near);
+            fx = static_cast<float>(fx * (fz - cameraZ) / znear);
+            fy = static_cast<float>(fy * (fz - cameraZ) / znear);
             if (scale != 0) {
                 fx /= scale;
                 fy /= scale;
