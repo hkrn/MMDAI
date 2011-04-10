@@ -86,6 +86,8 @@ private slots:
     void changeSelectedObject();
     void deleteSelectedObject();
     void showLogWindow();
+    void saveScene();
+    void resizeScene();
     void about();
     void updateWindowTitle();
     void receiveEvent(const QString &type, const QStringList &arguments);
@@ -96,6 +98,7 @@ private:
     void createActions();
     void readSetting();
     void writeSetting();
+    void setDirectorySetting(const QString &key, const QString &fileName);
 
     QSettings m_settings;
     QMAPreference *m_preference;
@@ -106,6 +109,7 @@ private:
     QMenu *m_modelMenu;
     QMenu *m_motionMenu;
     QMenu *m_selectModelMenu;
+    QMenu *m_windowMenu;
     QMenu *m_helpMenu;
     QAction *m_insertMotionToAllAction;
     QAction *m_insertMotionToSelectedAction;
@@ -113,6 +117,7 @@ private:
     QAction *m_setStageAction;
     QAction *m_setFloorAction;
     QAction *m_setBackgroundAction;
+    QAction *m_saveSceneAction;
     QAction *m_showLogAction;
     QAction *m_increaseEdgeThinAction;
     QAction *m_decreaseEdgeThinAction;
@@ -135,6 +140,12 @@ private:
     QAction *m_translateRightAction;
     QAction *m_changeSelectedObjectAction;
     QAction *m_deleteSelectedObjectAction;
+    QAction *m_resize512x288Action;
+    QAction *m_resize512x384Action;
+    QAction *m_resize640x480Action;
+    QAction *m_resize800x480Action;
+    QAction *m_resize1024x768Action;
+    QAction *m_resize1280x800Action;
     QAction *m_exitAction;
     QAction *m_aboutAction;
     QAction *m_aboutQtAction;

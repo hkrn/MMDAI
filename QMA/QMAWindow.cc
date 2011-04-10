@@ -51,8 +51,8 @@ QMAWindow::QMAWindow(QWidget *parent) :
     m_preference = new QMAPreference(&m_settings);
     m_widget = new QMAWidget(m_preference, parent);
     m_logView = new QMALogViewWidget(parent);
-    setCentralWidget(m_widget);
 
+    setCentralWidget(m_widget);
     createActions();
     createMenu();
     setWindowTitle(qAppName());
@@ -97,11 +97,9 @@ void QMAWindow::insertMotionToAllModels()
     QString path = m_settings.value("lastVMDDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open VMD file"), path, tr("VMD (*.vmd)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
+        setDirectorySetting("lastVMDDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        m_settings.setValue("lastVMDDirectory", dir.absolutePath());
         MMDAI::SceneController *controller = m_widget->getSceneController();
         int count = controller->countPMDObjects();
         for (int i = 0; i < count; i++) {
@@ -121,9 +119,7 @@ void QMAWindow::insertMotionToSelectedModel()
     QString path = m_settings.value("lastVMDDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("VMD (*.vmd)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
-        m_settings.setValue("lastVMDDirectory", dir.absolutePath());
+        setDirectorySetting("lastVMDDirectory", fileName);
         MMDAI::SceneController *controller = m_widget->getSceneController();
         MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
         if (selectedObject != NULL) {
@@ -142,11 +138,9 @@ void QMAWindow::addModel()
     QString path = m_settings.value("lastPMDDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
+        setDirectorySetting("lastPMDDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        m_settings.setValue("lastPMDDirectory", dir.absolutePath());
         MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
         MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
         MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
@@ -163,11 +157,9 @@ void QMAWindow::setStage()
     QString path = m_settings.value("lastStageDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open stage PMD file"), path, tr("PMD (*.pmd *.xpmd)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
+        setDirectorySetting("lastStageDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        m_settings.setValue("lastStageDirectory", dir.absolutePath());
         MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
         m_widget->getSceneController()->loadStage(loader);
     }
@@ -180,11 +172,9 @@ void QMAWindow::setFloor()
     QString path = m_settings.value("lastFloorDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open floor image"), path, tr("Image (*.bmp *.png *.tga)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
+        setDirectorySetting("lastFloorDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        m_settings.setValue("lastFloorDirectory", dir.absolutePath());
         MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
         m_widget->getSceneController()->loadFloor(loader);
     }
@@ -197,11 +187,9 @@ void QMAWindow::setBackground()
     QString path = m_settings.value("lastBackgroundDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open floor image"), path, tr("Image (*.bmp *.png *.tga)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
+        setDirectorySetting("lastBackgroundDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        m_settings.setValue("window/lastBackgroundDirectory", dir.absolutePath());
         MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
         m_widget->getSceneController()->loadBackground(loader);
     }
@@ -349,12 +337,11 @@ void QMAWindow::selectObject()
 
 void QMAWindow::changeSelectedObject()
 {
-    QString path = m_settings.value("window/lastPMDDirectory").toString();
+    m_settings.beginGroup("window");
+    QString path = m_settings.value("lastPMDDirectory").toString();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
     if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
-        m_settings.value("window/lastPMDDirectory", dir.absolutePath());
+        setDirectorySetting("lastPMDDirectory", fileName);
         MMDAI::SceneController *controller = m_widget->getSceneController();
         MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
         if (selectedObject != NULL){
@@ -368,6 +355,7 @@ void QMAWindow::changeSelectedObject()
             factory->releaseLipSyncLoader(lipSyncLoader);
         }
     }
+    m_settings.endGroup();
 }
 
 void QMAWindow::deleteSelectedObject()
@@ -386,6 +374,29 @@ void QMAWindow::showLogWindow()
     if (pos.y() < 0)
         pos.setY(0);
     m_logView->show();
+}
+
+void QMAWindow::saveScene()
+{
+    m_settings.beginGroup("window");
+    QString path = m_settings.value("lastSaveSceneDirectory").toString();
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save image"), path, tr("Image (*.jpg, *.png, *.bmp)"));
+    if (!fileName.isEmpty()) {
+        setDirectorySetting("lastSaveSceneDirectory", fileName);
+        QImage image = m_widget->grabFrameBuffer();
+        image.save(fileName);
+    }
+    m_settings.endGroup();
+}
+
+void QMAWindow::resizeScene()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action) {
+        QSize size = action->data().toSize();
+        m_widget->resize(size);
+        resize(size);
+    }
 }
 
 void QMAWindow::updateWindowTitle()
@@ -485,6 +496,12 @@ void QMAWindow::createActions()
     action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
     connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
     m_setBackgroundAction = action;
+
+    action = new QAction(tr("Save screen as image"), this);
+    action->setStatusTip(tr("Save the current scene as a image (BMP/JPEG/PNG are supported)."));
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
+    connect(action, SIGNAL(triggered()), this, SLOT(saveScene()));
+    m_saveSceneAction = action;
 
     action = new QAction(tr("Show log"), this);
     action->setStatusTip(tr("Open log window"));
@@ -617,6 +634,45 @@ void QMAWindow::createActions()
     connect(action, SIGNAL(triggered()), this, SLOT(deleteSelectedObject()));
     m_deleteSelectedObjectAction = action;
 
+    const char *message = QT_TR_NOOP("Resize scene to %1x%2");
+    const char *description = QT_TR_NOOP("Set the width of the scene to %1px and the height of the scene to %2px.");
+
+    action = new QAction(tr(message).arg(512).arg(288), this);
+    action->setStatusTip(tr(description).arg(512).arg(288));
+    action->setData(QSize(512, 288));
+    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
+    m_resize512x288Action = action;
+
+    action = new QAction(tr(message).arg(512).arg(384), this);
+    action->setStatusTip(tr(description).arg(512).arg(384));
+    action->setData(QSize(512, 384));
+    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
+    m_resize512x384Action = action;
+
+    action = new QAction(tr(message).arg(640).arg(480), this);
+    action->setStatusTip(tr(description).arg(640).arg(480));
+    action->setData(QSize(640, 480));
+    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
+    m_resize640x480Action = action;
+
+    action = new QAction(tr(message).arg(800).arg(480), this);
+    action->setStatusTip(tr(description).arg(800).arg(480));
+    action->setData(QSize(800, 480));
+    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
+    m_resize800x480Action = action;
+
+    action = new QAction(tr(message).arg(1024).arg(768), this);
+    action->setStatusTip(tr(description).arg(1024).arg(768));
+    action->setData(QSize(1024, 768));
+    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
+    m_resize1024x768Action = action;
+
+    action = new QAction(tr(message).arg(1280).arg(800), this);
+    action->setStatusTip(tr(description).arg(1280).arg(800));
+    action->setData(QSize(1280, 800));
+    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
+    m_resize1280x800Action = action;
+
     action = new QAction(tr("E&xit"), this);
     action->setMenuRole(QAction::QuitRole);
     action->setShortcuts(QKeySequence::Quit);
@@ -665,6 +721,9 @@ void QMAWindow::createMenu()
     m_fileMenu->addAction(m_setStageAction);
     m_fileMenu->addAction(m_setFloorAction);
     m_fileMenu->addAction(m_setBackgroundAction);
+    m_fileMenu->addSeparator();
+    m_fileMenu->addAction(m_saveSceneAction);
+    m_fileMenu->addSeparator();
     m_fileMenu->addAction(m_showLogAction);
     m_fileMenu->addSeparator();
     m_fileMenu->addAction(m_exitAction);
@@ -703,6 +762,15 @@ void QMAWindow::createMenu()
     m_modelMenu->addAction(m_deleteSelectedObjectAction);
 
     menuBar()->addSeparator();
+    m_windowMenu = menuBar()->addMenu(tr("&Window"));
+    m_windowMenu->addAction(m_resize512x288Action);
+    m_windowMenu->addAction(m_resize512x384Action);
+    m_windowMenu->addAction(m_resize640x480Action);
+    m_windowMenu->addAction(m_resize800x480Action);
+    m_windowMenu->addAction(m_resize1024x768Action);
+    m_windowMenu->addAction(m_resize1280x800Action);
+
+    menuBar()->addSeparator();
     m_helpMenu = menuBar()->addMenu(tr("&Help"));
     m_helpMenu->addAction(m_aboutAction);
     m_helpMenu->addAction(m_aboutQtAction);
@@ -724,4 +792,11 @@ void QMAWindow::writeSetting()
     m_settings.setValue("pos", pos());
     m_settings.setValue("size", size());
     m_settings.endGroup();
+}
+
+void QMAWindow::setDirectorySetting(const QString &key, const QString &fileName)
+{
+    QDir dir(fileName);
+    dir.cdUp();
+    m_settings.setValue(key, dir.absolutePath());
 }
