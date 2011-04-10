@@ -39,7 +39,7 @@ QMAARToolKitPlugin::~QMAARToolKitPlugin()
 
 void QMAARToolKitPlugin::initialize(MMDAI::SceneController *controller)
 {
-  QDir dir = QDir::searchPaths("mmdai").at(0) + "/ARToolKit/Data";
+  QDir dir("mmdai2resources:/ARToolKit/Data");
   QString confingFile = "";
   QString cameraParamFile = dir.absoluteFilePath("camera_para.dat");
   QString patternFile = dir.absoluteFilePath("patt.hiro");
@@ -145,7 +145,7 @@ void QMAARToolKitPlugin::prerender()
     for (int i = 0; i < 16; i++) {
       projection[i] = arProjection[i];
     }
-    m_controller->setProjectionMatrix(projection);
+    m_controller->setProjection(projection);
     if (found == -1) {
       return;
     }
@@ -161,8 +161,7 @@ void QMAARToolKitPlugin::prerender()
       transform.setIdentity();
       transform.setFromOpenGLMatrix(modelView);
       transform.setRotation(btQuaternion(btVector3(0.0, 1.0, 0.0), 0.0));
-      transform.getOpenGLMatrix(modelView);
-      m_controller->setModelViewMatrix(modelView);
+      m_controller->setModelView(transform);
     }
   }
 }
