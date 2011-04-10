@@ -8,6 +8,7 @@
 #include <QTextStream>
 
 #include <math.h>
+#include <stdlib.h>
 
 #include "text2mecab.h"
 #include "mecab2njd.h"

@@ -37,7 +37,6 @@
 /* ----------------------------------------------------------------- */
 
 #include <QtCore>
-#include <phonon/Phonon>
 
 #include <MMDME/Common.h>
 #include "QMAOpenJTalkPlugin.h"
