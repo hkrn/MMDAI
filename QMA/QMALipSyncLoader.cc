@@ -58,7 +58,7 @@ QMALipSyncLoader::QMALipSyncLoader(const char *filename)
     if (QDir::isAbsolutePath(path))
         m_file = new QFile(path);
     else
-        m_file = new QFile("mmdai:" + path);
+        m_file = new QFile("MMDAIUserData:/" + path);
 }
 
 QMALipSyncLoader::~QMALipSyncLoader()

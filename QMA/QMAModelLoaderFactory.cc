@@ -73,6 +73,6 @@ void QMAModelLoaderFactory::releaseLipSyncLoader(MMDAI::LipSyncLoader *loader)
 
 inline QMAModelLoader *QMAModelLoaderFactory::createLoader(const char *filename)
 {
-    QString path = QDir::searchPaths("mmdai2resources").at(0) + "/AppData";
+    QString path = QDir::searchPaths("MMDAIResources").at(0) + "/AppData";
     return new QMAModelLoader(path, filename);
 }

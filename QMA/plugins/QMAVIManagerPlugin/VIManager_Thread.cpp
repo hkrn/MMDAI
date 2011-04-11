@@ -47,188 +47,188 @@
 /* VIManager_Event_initialize: initialize input message buffer */
 void VIManager_Event_initialize(VIManager_Event *e, const char *type, const char *args)
 {
-  if (type != NULL)
-    e->type = strdup(type);
-  else
-    e->type = NULL;
-  if (args != NULL)
-    e->args = strdup(args);
-  else
-    e->args = NULL;
-  e->next = NULL;
+    if (type != NULL)
+        e->type = strdup(type);
+    else
+        e->type = NULL;
+    if (args != NULL)
+        e->args = strdup(args);
+    else
+        e->args = NULL;
+    e->next = NULL;
 }
 
 /* VIManager_Event_clear: free input message buffer */
 void VIManager_Event_clear(VIManager_Event *e)
 {
-  if (e->type != NULL)
-    free(e->type);
-  if (e->args != NULL)
-    free(e->args);
-  VIManager_Event_initialize(e, NULL, NULL);
+    if (e->type != NULL)
+        free(e->type);
+    if (e->args != NULL)
+        free(e->args);
+    VIManager_Event_initialize(e, NULL, NULL);
 }
 
 /* VIManager_EventQueue_initialize: initialize queue */
 void VIManager_EventQueue_initialize(VIManager_EventQueue *q)
 {
-  q->head = NULL;
-  q->tail = NULL;
+    q->head = NULL;
+    q->tail = NULL;
 }
 
 /* VIManager_EventQueue_clear: free queue */
 void VIManager_EventQueue_clear(VIManager_EventQueue *q)
 {
-  VIManager_Event *tmp1, *tmp2;
+    VIManager_Event *tmp1, *tmp2;
 
-  for (tmp1 = q->head; tmp1 != NULL; tmp1 = tmp2) {
-    tmp2 = tmp1->next;
-    VIManager_Event_clear(tmp1);
-    free(tmp1);
-  }
-  VIManager_EventQueue_initialize(q);
+    for (tmp1 = q->head; tmp1 != NULL; tmp1 = tmp2) {
+        tmp2 = tmp1->next;
+        VIManager_Event_clear(tmp1);
+        free(tmp1);
+    }
+    VIManager_EventQueue_initialize(q);
 }
 
 /* VIManager_EventQueue_enqueue: enqueue */
 void VIManager_EventQueue_enqueue(VIManager_EventQueue *q, const char *type, const char *args)
 {
-  if (q->tail == NULL) {
-    q->tail = (VIManager_Event *) calloc(1, sizeof (VIManager_Event));
-    VIManager_Event_initialize(q->tail, type, args);
-    q->head = q->tail;
-  } else {
-    q->tail->next = (VIManager_Event *) calloc(1, sizeof (VIManager_Event));
-    VIManager_Event_initialize(q->tail->next, type, args);
-    q->tail = q->tail->next;
-  }
+    if (q->tail == NULL) {
+        q->tail = (VIManager_Event *) calloc(1, sizeof (VIManager_Event));
+        VIManager_Event_initialize(q->tail, type, args);
+        q->head = q->tail;
+    } else {
+        q->tail->next = (VIManager_Event *) calloc(1, sizeof (VIManager_Event));
+        VIManager_Event_initialize(q->tail->next, type, args);
+        q->tail = q->tail->next;
+    }
 }
 
 /* VIManager_EventQueue_dequeue: dequeue */
 int VIManager_EventQueue_dequeue(VIManager_EventQueue *q, char *type, char *args)
 {
-  VIManager_Event *tmp;
+    VIManager_Event *tmp;
 
-  if (q->head == NULL) {
+    if (q->head == NULL) {
+        if (type != NULL)
+            strcpy(type, "");
+        if (args != NULL)
+            strcpy(type, "");
+        return 0;
+    }
     if (type != NULL)
-      strcpy(type, "");
+        strcpy(type, q->head->type);
     if (args != NULL)
-      strcpy(type, "");
-    return 0;
-  }
-  if (type != NULL)
-    strcpy(type, q->head->type);
-  if (args != NULL)
-    strcpy(args, q->head->args);
-  tmp = q->head->next;
-  VIManager_Event_clear(q->head);
-  free(q->head);
-  q->head = tmp;
-  if (tmp == NULL)
-    q->tail = NULL;
-  return 1;
+        strcpy(args, q->head->args);
+    tmp = q->head->next;
+    VIManager_Event_clear(q->head);
+    free(q->head);
+    q->head = tmp;
+    if (tmp == NULL)
+        q->tail = NULL;
+    return 1;
 }
 
 /* VIManager_Thread::initialize: initialize thread */
 void VIManager_Thread::initialize()
 {
-  VIManager_EventQueue_initialize(&eventQueue);
+    VIManager_EventQueue_initialize(&eventQueue);
 }
 
 /* VIManager_Thread::clear: free thread */
 void VIManager_Thread::clear()
 {
-  VIManager_EventQueue_clear(&eventQueue);
-  initialize();
+    VIManager_EventQueue_clear(&eventQueue);
+    initialize();
 }
 
 /* VIManager_Thread::VIManager_Thread: thread constructor */
 VIManager_Thread::VIManager_Thread(QMAVIManagerPlugin *dispatcher)
-  : m_running(false),
-    m_dispathcer(dispatcher)
+    : m_running(false),
+      m_dispathcer(dispatcher)
 {
-  initialize();
+    initialize();
 }
 
 /* VIManager_Thread::~VIManager_Thread: thread destructor */
 VIManager_Thread::~VIManager_Thread()
 {
-  m_running = false;
-  clear();
+    m_running = false;
+    clear();
 }
 
 /* VIManager_Thread::loadAndStart: load FST and start thread */
 void VIManager_Thread::load(const char *filename)
 {
-  /* load FST for VIManager */
-  if (m_vim.load(filename) == 0)
-    return;
+    /* load FST for VIManager */
+    if (m_vim.load(filename) == 0)
+        return;
 }
 
 void VIManager_Thread::stop()
 {
-  m_running = false;
+    m_running = false;
 }
 
 /* VIManager_Thread::isStarted: check running */
 bool VIManager_Thread::isStarted()
 {
-  return m_running;
+    return m_running;
 }
 
 /* VIManager_Thread::enqueueBuffer: enqueue buffer to check */
 void VIManager_Thread::enqueueBuffer(const char *type, const char *args)
 {
-  m_mutex.lock();
-  /* save event */
-  VIManager_EventQueue_enqueue(&eventQueue, type, args);
-  m_cond.wakeAll();
-  m_mutex.unlock();
+    m_mutex.lock();
+    /* save event */
+    VIManager_EventQueue_enqueue(&eventQueue, type, args);
+    m_cond.wakeAll();
+    m_mutex.unlock();
 }
 
 /* VIManager_Thread::stateTransition: thread loop for VIManager */
 void VIManager_Thread::run()
 {
-  char itype[VIMANAGER_MAXBUFLEN];
-  char iargs[VIMANAGER_MAXBUFLEN];
-  char otype[VIMANAGER_MAXBUFLEN];
-  char oargs[VIMANAGER_MAXBUFLEN];
-  int remain = 1;
+    char itype[VIMANAGER_MAXBUFLEN];
+    char iargs[VIMANAGER_MAXBUFLEN];
+    char otype[VIMANAGER_MAXBUFLEN];
+    char oargs[VIMANAGER_MAXBUFLEN];
+    int remain = 1;
 
-  m_running = true;
+    m_running = true;
 
-  /* first epsilon step */
-  while (m_vim.transition(VIMANAGER_EPSILON, NULL, otype, oargs)) {
-    if (strcmp(otype, VIMANAGER_EPSILON) != 0)
-      sendMessage(otype, oargs);
-  }
-
-  while (m_running) {
-    /* wait transition event */
-    m_mutex.lock();
-    m_cond.wait(&m_mutex);
-    m_mutex.unlock();
-
-    do {
-      /* load input message */
-      remain = VIManager_EventQueue_dequeue(&eventQueue, itype, iargs);
-      if (remain == 0)
-        break;
-
-      /* state transition with input symbol */
-      m_vim.transition(itype, iargs, otype, oargs);
-      if (strcmp(otype, VIMANAGER_EPSILON) != 0)
-        sendMessage(otype, oargs);
-
-      /* state transition with epsilon */
-      while (m_vim.transition(VIMANAGER_EPSILON, NULL, otype, oargs)) {
+    /* first epsilon step */
+    while (m_vim.transition(VIMANAGER_EPSILON, NULL, otype, oargs)) {
         if (strcmp(otype, VIMANAGER_EPSILON) != 0)
-          sendMessage(otype, oargs);
-      }
-    } while (remain);
-  }
+            sendMessage(otype, oargs);
+    }
+
+    while (m_running) {
+        /* wait transition event */
+        m_mutex.lock();
+        m_cond.wait(&m_mutex);
+        m_mutex.unlock();
+
+        do {
+            /* load input message */
+            remain = VIManager_EventQueue_dequeue(&eventQueue, itype, iargs);
+            if (remain == 0)
+                break;
+
+            /* state transition with input symbol */
+            m_vim.transition(itype, iargs, otype, oargs);
+            if (strcmp(otype, VIMANAGER_EPSILON) != 0)
+                sendMessage(otype, oargs);
+
+            /* state transition with epsilon */
+            while (m_vim.transition(VIMANAGER_EPSILON, NULL, otype, oargs)) {
+                if (strcmp(otype, VIMANAGER_EPSILON) != 0)
+                    sendMessage(otype, oargs);
+            }
+        } while (remain);
+    }
 }
 
 /* VIManager_Thread::sendMessage: send message to MMDAgent */
 void VIManager_Thread::sendMessage(const char *str1, const char *str2)
 {
-  m_dispathcer->sendCommand(str1, strdup(str2));
+    m_dispathcer->sendCommand(str1, strdup(str2));
 }

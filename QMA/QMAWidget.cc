@@ -131,7 +131,7 @@ void QMAWidget::loadPlugins()
             qWarning() << plugin->metaObject()->className() << "was not loaded";
         }
     }
-    QDir pluginsDir = QDir::searchPaths("mmdai2plugins").at(0);
+    QDir pluginsDir("MMDAIPlugins:/");
     if (pluginsDir.exists()) {
         foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
             QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));

@@ -46,36 +46,36 @@
 
 class QMAAudioPlugin : public QMAPlugin
 {
-  Q_OBJECT
-  Q_INTERFACES(QMAPlugin)
+    Q_OBJECT
+    Q_INTERFACES(QMAPlugin)
 
 public:
-  QMAAudioPlugin(QObject *parent = 0);
-  ~QMAAudioPlugin();
+    QMAAudioPlugin(QObject *parent = 0);
+    ~QMAAudioPlugin();
 
 public slots:
-  void initialize(MMDAI::SceneController *controller);
-  void start();
-  void stop();
-  void receiveCommand(const QString &command, const QStringList &arguments);
-  void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, const QPoint &pos, const double delta);
-  void prerender();
-  void postrender();
+    void initialize(MMDAI::SceneController *controller);
+    void start();
+    void stop();
+    void receiveCommand(const QString &command, const QStringList &arguments);
+    void receiveEvent(const QString &type, const QStringList &arguments);
+    void update(const QRect &rect, const QPoint &pos, const double delta);
+    void prerender();
+    void postrender();
 
 private slots:
-  void aboutToFinish();
-  void changeCurrentSource(Phonon::MediaSource source);
-  void changeState(Phonon::State newState, Phonon::State oldState);
+    void aboutToFinish();
+    void changeCurrentSource(Phonon::MediaSource source);
+    void changeState(Phonon::State newState, Phonon::State oldState);
 
 signals:
-  void commandPost(const QString &command, const QStringList &arguments);
-  void eventPost(const QString &type, const QStringList &arguments);
+    void commandPost(const QString &command, const QStringList &arguments);
+    void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  Phonon::AudioOutput *m_audioOutput;
-  Phonon::MediaObject *m_audioObject;
-  QMap<QString, Phonon::MediaSource> m_audioSources;
+    Phonon::AudioOutput *m_audioOutput;
+    Phonon::MediaObject *m_audioObject;
+    QMap<QString, Phonon::MediaSource> m_audioSources;
 };
 
 #endif // QMAAUDIOPLUGIN_H

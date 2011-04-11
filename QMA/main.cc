@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
 #endif
     paths.clear();
     paths.append(configPath);
-    QDir::setSearchPaths("mmdai2configs", paths);
-    MMDAILogInfo("mmdai2configs: %s", configPath.toUtf8().constData());
+    QDir::setSearchPaths("MMDAIUserData", paths);
+    MMDAILogInfo("MMDAIUserData: %s", configPath.toUtf8().constData());
 
     /* set path to find plugins */
 #ifdef QMA_PLUGIN_PATH
@@ -106,8 +106,8 @@ int main(int argc, char *argv[])
 #endif
     paths.clear();
     paths.append(pluginPath);
-    QDir::setSearchPaths("mmdai2plugins", paths);
-    MMDAILogInfo("mmdai2plugins: %s", pluginPath.toUtf8().constData());
+    QDir::setSearchPaths("MMDAIPlugins", paths);
+    MMDAILogInfo("MMDAIPlugins: %s", pluginPath.toUtf8().constData());
 
     /* set path to find resources such as model, motion etc. */
 #ifdef QMA_RESOURCE_PATH
@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
 #endif
     paths.clear();
     paths.append(resourcePath);
-    QDir::setSearchPaths("mmdai2resources", paths);
-    MMDAILogInfo("mmdai2resources: %s", resourcePath.toUtf8().constData());
+    QDir::setSearchPaths("MMDAIResources", paths);
+    MMDAILogInfo("MMDAIResources: %s", resourcePath.toUtf8().constData());
 
     /* load translation files from Qt's system path and resource path */
 #if defined(Q_OS_MAC)

@@ -49,13 +49,13 @@
 
 /* VIManager_Arc: arc */
 typedef struct _VIManager_Arc {
-  char *input_event_type;
-  char **input_event_args;
-  int input_event_argc;
-  char *output_command_type;
-  char *output_command_args;
-  struct _VIManager_State *next_state;
-  struct _VIManager_Arc *next;
+    char *input_event_type;
+    char **input_event_args;
+    int input_event_argc;
+    char *output_command_type;
+    char *output_command_args;
+    struct _VIManager_State *next_state;
+    struct _VIManager_Arc *next;
 } VIManager_Arc;
 
 /* VIManager_Arc_initialize: initialize arc */
@@ -66,7 +66,7 @@ void VIManager_Arc_clear(VIManager_Arc * a);
 
 /* VIManager_ALis: arc list */
 typedef struct _VIManager_AList {
-  VIManager_Arc *head;
+    VIManager_Arc *head;
 } VIManager_AList;
 
 /* VIManager_AList_initialize: initialize arc list */
@@ -77,9 +77,9 @@ void VIManager_AList_clear(VIManager_AList * l);
 
 /* VIManager_State: state */
 typedef struct _VIManager_State {
-  unsigned int number;
-  struct _VIManager_AList arc_list;
-  struct _VIManager_State *next;
+    unsigned int number;
+    struct _VIManager_AList arc_list;
+    struct _VIManager_State *next;
 } VIManager_State;
 
 /* VIManager_State_initialize: initialize state */
@@ -90,7 +90,7 @@ void VIManager_State_clear(VIManager_State * s);
 
 /* VIManager_SList: state list */
 typedef struct _VIManager_SList {
-  VIManager_State *head;
+    VIManager_State *head;
 } VIManager_SList;
 
 /* VIManager_SList_initialize: initialize state list */
@@ -110,28 +110,28 @@ class VIManager
 {
 private:
 
-  VIManager_SList m_stateList;     /* state list */
-  VIManager_State *m_currentState; /* pointer of current state */
+    VIManager_SList m_stateList;     /* state list */
+    VIManager_State *m_currentState; /* pointer of current state */
 
-  /* initialize: initialize VIManager */
-  void initialize();
+    /* initialize: initialize VIManager */
+    void initialize();
 
-  /* clear: free VIManager */
-  void clear();
+    /* clear: free VIManager */
+    void clear();
 
 public:
 
-  /* VIManager: constructor */
-  VIManager();
+    /* VIManager: constructor */
+    VIManager();
 
-  /* ~VIManager: destructor */
-  ~VIManager();
+    /* ~VIManager: destructor */
+    ~VIManager();
 
-  /* load: load FST */
-  int load(const char *fn);
+    /* load: load FST */
+    int load(const char *fn);
 
-  /* transition: state transition (if jumped, return 1) */
-  int transition(const char *itype, const char* iargs, char *otype, char *oargs);
+    /* transition: state transition (if jumped, return 1) */
+    int transition(const char *itype, const char* iargs, char *otype, char *oargs);
 };
 
 #endif

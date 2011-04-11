@@ -127,7 +127,7 @@ QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
     if (QDir::isAbsolutePath(path))
         m_file = new QFile(path);
     else
-        m_file = new QFile("mmdai2resources:/" + path);
+        m_file = new QFile("MMDAIUserData:/" + path);
     m_filename = MMDAIStringClone(m_file->fileName().toUtf8().constData());
 }
 

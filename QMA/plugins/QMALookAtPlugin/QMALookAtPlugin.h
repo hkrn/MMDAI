@@ -46,32 +46,32 @@
 
 class QMALookAtPlugin : public QMAPlugin
 {
-  Q_OBJECT
-  Q_INTERFACES(QMAPlugin);
+    Q_OBJECT
+    Q_INTERFACES(QMAPlugin);
 
 public:
-  QMALookAtPlugin();
-  ~QMALookAtPlugin();
+    QMALookAtPlugin();
+    ~QMALookAtPlugin();
 
 public slots:
-  void initialize(MMDAI::SceneController *controller);
-  void start();
-  void stop();
-  void receiveCommand(const QString &command, const QStringList &arguments);
-  void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, const QPoint &pos, const double delta);
-  void prerender();
-  void postrender();
+    void initialize(MMDAI::SceneController *controller);
+    void start();
+    void stop();
+    void receiveCommand(const QString &command, const QStringList &arguments);
+    void receiveEvent(const QString &type, const QStringList &arguments);
+    void update(const QRect &rect, const QPoint &pos, const double delta);
+    void prerender();
+    void postrender();
 
 signals:
-  void commandPost(const QString &command, const QStringList &arguments);
-  void eventPost(const QString &type, const QStringList &arguments);
+    void commandPost(const QString &command, const QStringList &arguments);
+    void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  bool m_enable;
-  MMDAI::SceneController *m_controller;
-  MMDAI::BoneController m_neckController[MAX_MODEL];
-  MMDAI::BoneController m_eyeController[MAX_MODEL];
+    bool m_enable;
+    MMDAI::SceneController *m_controller;
+    MMDAI::BoneController m_neckController[MAX_MODEL];
+    MMDAI::BoneController m_eyeController[MAX_MODEL];
 };
 
 #endif // QMALOOKATPLUGIN_H

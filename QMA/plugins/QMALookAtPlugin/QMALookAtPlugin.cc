@@ -43,21 +43,21 @@
 
 static void setNeckController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
 {
-  const char head[] = { 0x93, 0xaa, 0x0 }; /* 頭 in Shift_JIS */
-  const char *bone[] = { head };
-  controller->setup(model, bone, 1, 0.150f, 0.008f, 0.0f, 0.0f, 1.0f, 20.0f, 60.0f, 0.0f, -45.0f, -60.0f, 0.0f, 0.0f, -1.0f, 0.0f);
+    const char head[] = { 0x93, 0xaa, 0x0 }; /* 頭 in Shift_JIS */
+    const char *bone[] = { head };
+    controller->setup(model, bone, 1, 0.150f, 0.008f, 0.0f, 0.0f, 1.0f, 20.0f, 60.0f, 0.0f, -45.0f, -60.0f, 0.0f, 0.0f, -1.0f, 0.0f);
 }
 
 static void setEyeController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
 {
-  const char rightEye[] = { 0x89, 0x45, 0x96, 0xda, 0x0 }; /* 右目 in Shift_JIS */
-  const char leftEye[] = { 0x8d, 0xb6, 0x96, 0xda, 0x0 };  /* 左目 in Shift_JIS */
-  const char *bone[] = { rightEye, leftEye };
-  controller->setup(model, bone, 2, 0.180f, 0.008f, 0.0f, 0.0f, 1.0f, 5.0f, 5.0f, 0.0f, -5.0f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    const char rightEye[] = { 0x89, 0x45, 0x96, 0xda, 0x0 }; /* 右目 in Shift_JIS */
+    const char leftEye[] = { 0x8d, 0xb6, 0x96, 0xda, 0x0 };  /* 左目 in Shift_JIS */
+    const char *bone[] = { rightEye, leftEye };
+    controller->setup(model, bone, 2, 0.180f, 0.008f, 0.0f, 0.0f, 1.0f, 5.0f, 5.0f, 0.0f, -5.0f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 QMALookAtPlugin::QMALookAtPlugin()
-  : m_enable(false)
+    : m_enable(false)
 {
 }
 
@@ -67,95 +67,95 @@ QMALookAtPlugin::~QMALookAtPlugin()
 
 void QMALookAtPlugin::initialize(MMDAI::SceneController *controller)
 {
-  m_controller = controller;
+    m_controller = controller;
 }
 
 void QMALookAtPlugin::start()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMALookAtPlugin::stop()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMALookAtPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
-  Q_UNUSED(command);
-  Q_UNUSED(arguments);
-  /* do nothing */
+    Q_UNUSED(command);
+    Q_UNUSED(arguments);
+    /* do nothing */
 }
 
 void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
-  if (type == MMDAI::SceneEventHandler::kKeyEvent && arguments.at(0) == "L") {
-    int count = m_controller->countPMDObjects();
-    for (int i = 0; i < count; i++) {
-      MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-      if(object->isEnable()) {
-        if(m_enable == true) {
-          m_neckController[i].setEnableFlag(false);
-          m_eyeController[i].setEnableFlag(false);
+    if (type == MMDAI::SceneEventHandler::kKeyEvent && arguments.at(0) == "L") {
+        int count = m_controller->countPMDObjects();
+        for (int i = 0; i < count; i++) {
+            MMDAI::PMDObject *object = m_controller->getPMDObject(i);
+            if(object->isEnable()) {
+                if(m_enable == true) {
+                    m_neckController[i].setEnableFlag(false);
+                    m_eyeController[i].setEnableFlag(false);
+                }
+                else {
+                    m_neckController[i].setEnableFlag(true);
+                    m_eyeController[i].setEnableFlag(true);
+                }
+            }
         }
-        else {
-          m_neckController[i].setEnableFlag(true);
-          m_eyeController[i].setEnableFlag(true);
-        }
-      }
+        m_enable = !m_enable;
     }
-    m_enable = !m_enable;
-  }
-  else if (type == MMDAI::SceneEventHandler::kModelChangeEvent || type == MMDAI::SceneEventHandler::kModelAddEvent) {
-    QTextCodec *codec = QTextCodec::codecForName("UTF8");
-    QString target = arguments.at(0);
-    int count = m_controller->countPMDObjects();
-    for (int i = 0; i < count; i++) {
-      MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-      const char *a = object->getAlias();
-      if (a) {
-        QString alias = codec->toUnicode(a, strlen(a));
-        if (alias == target) {
-          MMDAI::PMDModel *model = object->getPMDModel();
-          setNeckController(&m_neckController[i], model);
-          setEyeController(&m_eyeController[i], model);
+    else if (type == MMDAI::SceneEventHandler::kModelChangeEvent || type == MMDAI::SceneEventHandler::kModelAddEvent) {
+        QTextCodec *codec = QTextCodec::codecForName("UTF8");
+        QString target = arguments.at(0);
+        int count = m_controller->countPMDObjects();
+        for (int i = 0; i < count; i++) {
+            MMDAI::PMDObject *object = m_controller->getPMDObject(i);
+            const char *a = object->getAlias();
+            if (a) {
+                QString alias = codec->toUnicode(a, strlen(a));
+                if (alias == target) {
+                    MMDAI::PMDModel *model = object->getPMDModel();
+                    setNeckController(&m_neckController[i], model);
+                    setEyeController(&m_eyeController[i], model);
+                }
+            }
         }
-      }
     }
-  }
 }
 
 void QMALookAtPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
-  QPoint p = pos;
-  btVector3 pointPos;
+    QPoint p = pos;
+    btVector3 pointPos;
 
-  /* set target position */
-  p.setX(pos.x() - ((rect.left() + rect.right()) / 2));
-  p.setY(pos.y() - ((rect.top() + rect.bottom()) / 2));
-  float rate = 100.0f / static_cast<float>(rect.right() - rect.left());
-  pointPos.setValue(p.x() * rate, -p.y() * rate, 0.0f);
-  btVector3 targetPos = m_controller->getScreenPointPosition(pointPos);
+    /* set target position */
+    p.setX(pos.x() - ((rect.left() + rect.right()) / 2));
+    p.setY(pos.y() - ((rect.top() + rect.bottom()) / 2));
+    float rate = 100.0f / static_cast<float>(rect.right() - rect.left());
+    pointPos.setValue(p.x() * rate, -p.y() * rate, 0.0f);
+    btVector3 targetPos = m_controller->getScreenPointPosition(pointPos);
 
-  /* calculate direction of all controlled bones */
-  int count = m_controller->countPMDObjects();
-  for (int i = 0; i < count; i++) {
-    MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-    if (object->isEnable()) {
-      m_neckController[i].update(&targetPos, static_cast<float>(delta));
-      m_eyeController[i].update(&targetPos, static_cast<float>(delta));
+    /* calculate direction of all controlled bones */
+    int count = m_controller->countPMDObjects();
+    for (int i = 0; i < count; i++) {
+        MMDAI::PMDObject *object = m_controller->getPMDObject(i);
+        if (object->isEnable()) {
+            m_neckController[i].update(&targetPos, static_cast<float>(delta));
+            m_eyeController[i].update(&targetPos, static_cast<float>(delta));
+        }
     }
-  }
 }
 
 void QMALookAtPlugin::prerender()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMALookAtPlugin::postrender()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 Q_EXPORT_PLUGIN2(qma_lookat_plugin, QMALookAtPlugin);

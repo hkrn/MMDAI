@@ -51,51 +51,51 @@ class MMDAI::SceneController;
 
 class QMAVariablePlugin : public QMAPlugin
 {
-  Q_OBJECT
-  Q_INTERFACES(QMAPlugin);
+    Q_OBJECT
+    Q_INTERFACES(QMAPlugin);
 
 public:
-  static const char *kValueSet;
-  static const char *kValueUnset;
-  static const char *kValueEvaluate;
-  static const char *kTimerStart;
-  static const char *kTimerStop;
+    static const char *kValueSet;
+    static const char *kValueUnset;
+    static const char *kValueEvaluate;
+    static const char *kTimerStart;
+    static const char *kTimerStop;
 
-  static const char *kValueSetEvent;
-  static const char *kValueUnsetEvent;
-  static const char *kValueEvaluateEvent;
-  static const char *kTimerStartEvent;
-  static const char *kTimerStopEvent;
+    static const char *kValueSetEvent;
+    static const char *kValueUnsetEvent;
+    static const char *kValueEvaluateEvent;
+    static const char *kTimerStartEvent;
+    static const char *kTimerStopEvent;
 
-  QMAVariablePlugin();
-  ~QMAVariablePlugin();
+    QMAVariablePlugin();
+    ~QMAVariablePlugin();
 
 public slots:
-  void initialize(MMDAI::SceneController *controller);
-  void start();
-  void stop();
-  void receiveCommand(const QString &command, const QStringList &arguments);
-  void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, const QPoint &pos, const double delta);
-  void prerender();
-  void postrender();
+    void initialize(MMDAI::SceneController *controller);
+    void start();
+    void stop();
+    void receiveCommand(const QString &command, const QStringList &arguments);
+    void receiveEvent(const QString &type, const QStringList &arguments);
+    void update(const QRect &rect, const QPoint &pos, const double delta);
+    void prerender();
+    void postrender();
 
 signals:
-  void commandPost(const QString &command, const QStringList &arguments);
-  void eventPost(const QString &type, const QStringList &arguments);
+    void commandPost(const QString &command, const QStringList &arguments);
+    void eventPost(const QString &type, const QStringList &arguments);
 
 protected:
-  void timerEvent(QTimerEvent *event);
+    void timerEvent(QTimerEvent *event);
 
 private:
-  void setValue(const QString &key, const QString &value, const QString &value2);
-  void deleteValue(const QString &key);
-  void evaluate(const QString &key, const QString &op, const QString &value);
-  void startTimer0(const QString &key, const QString &value);
-  void stopTimer0(const QString &key);
+    void setValue(const QString &key, const QString &value, const QString &value2);
+    void deleteValue(const QString &key);
+    void evaluate(const QString &key, const QString &op, const QString &value);
+    void startTimer0(const QString &key, const QString &value);
+    void stopTimer0(const QString &key);
 
-  QHash<QString, float> m_values;
-  QMap<QString, QBasicTimer *> m_timers;
+    QHash<QString, float> m_values;
+    QMap<QString, QBasicTimer *> m_timers;
 };
 
 #endif // QMALOOKATPLUGIN_H

@@ -49,9 +49,9 @@ class QMAVIManagerPlugin;
 
 /* VIManager_Event: input message buffer */
 typedef struct _VIManager_Event {
-  char *type;
-  char *args;
-  struct _VIManager_Event *next;
+    char *type;
+    char *args;
+    struct _VIManager_Event *next;
 } VIManager_Event;
 
 /* VIManager_Event_initialize: initialize input message buffer */
@@ -62,8 +62,8 @@ void VIManager_Event_clear(VIManager_Event *e);
 
 /* VIManager_EventQueue: queue of VIManager_Event */
 typedef struct _VIManager_EventQueue {
-  VIManager_Event *head;
-  VIManager_Event *tail;
+    VIManager_Event *head;
+    VIManager_Event *tail;
 } VIManager_EventQueue;
 
 /* VIManager_EventQueue_initialize: initialize queue */
@@ -82,51 +82,51 @@ int VIManager_EventQueue_dequeue(VIManager_EventQueue *q, char *type, char *args
 class VIManager_Thread : public QThread
 {
 private:
-  QMutex m_mutex;
+    QMutex m_mutex;
 
-  QWaitCondition m_cond;
+    QWaitCondition m_cond;
 
-  volatile bool m_running;
+    volatile bool m_running;
 
-  VIManager m_vim; /* voicd interaction manager */
+    VIManager m_vim; /* voicd interaction manager */
 
-  VIManager_EventQueue eventQueue; /* queue of input message */
+    VIManager_EventQueue eventQueue; /* queue of input message */
 
-  /* initialize: initialize thread */
-  void initialize();
+    /* initialize: initialize thread */
+    void initialize();
 
-  /* clear: free thread */
-  void clear();
+    /* clear: free thread */
+    void clear();
 
 public:
-  /* VIManager_Thraed: thread constructor */
-  VIManager_Thread(QMAVIManagerPlugin *dispathcer);
+    /* VIManager_Thraed: thread constructor */
+    VIManager_Thread(QMAVIManagerPlugin *dispathcer);
 
-  /* ~VIManager_Thread: thread destructor */
-  ~VIManager_Thread();
+    /* ~VIManager_Thread: thread destructor */
+    ~VIManager_Thread();
 
-  /* loadAndStart: load FST and start thread */
-  void load(const char *filename);
+    /* loadAndStart: load FST and start thread */
+    void load(const char *filename);
 
-  void stop();
+    void stop();
 
-  /* isStarted: check running */
-  bool isStarted();
+    /* isStarted: check running */
+    bool isStarted();
 
-  /* enqueueBuffer: enqueue buffer to check */
-  void enqueueBuffer(const char *type, const char *args);
+    /* enqueueBuffer: enqueue buffer to check */
+    void enqueueBuffer(const char *type, const char *args);
 
-  /* stateTransition: thread loop for VIManager */
-  void stateTransition();
+    /* stateTransition: thread loop for VIManager */
+    void stateTransition();
 
-  /* sendMessage: send event message to MMDAgent */
-  void sendMessage(const char *str1, const char *str2);
+    /* sendMessage: send event message to MMDAgent */
+    void sendMessage(const char *str1, const char *str2);
 
 protected:
-  void run();
+    void run();
 
 private:
-  QMAVIManagerPlugin *m_dispathcer;
+    QMAVIManagerPlugin *m_dispathcer;
 };
 
 #endif

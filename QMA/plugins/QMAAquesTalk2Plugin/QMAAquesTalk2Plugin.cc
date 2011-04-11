@@ -95,7 +95,7 @@ void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringLi
         QString text = arguments.at(2);
         QString phontPath = arguments.at(1);
         QString modelName = arguments.at(0);
-        phontPath = QDir::isAbsolutePath(phontPath) ? phontPath : ("mmdai2resources:/" + phontPath);
+        phontPath = QDir::isAbsolutePath(phontPath) ? phontPath : ("MMDAIResources:/" + phontPath);
         QtConcurrent::run(this, &QMAAquesTalk2Plugin::run, modelName, phontPath, text);
     }
 }
@@ -135,7 +135,7 @@ void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath
         ptr = phont.data();
     }
 
-    const QString dicPath = QDir::searchPaths("mmdai2resources")[0] + "/aq_dic";
+    const QString dicPath = QDir("MMDAIResources").absoluteFilePath("aq_dic");
     char result[8192];
     int rc = 0;
     void *handle = AqKanji2Koe_Create(dicPath.toUtf8().constData(), &rc);

@@ -50,230 +50,230 @@
 class QMAJuliusPluginThread : public QThread
 {
 public:
-  QMAJuliusPluginThread(Recog *recog) {
-    m_recog = recog;
-  }
-  ~QMAJuliusPluginThread() {}
+    QMAJuliusPluginThread(Recog *recog) {
+        m_recog = recog;
+    }
+    ~QMAJuliusPluginThread() {}
 
 protected:
-  void run() {
-    int ret = j_recognize_stream(m_recog);
-    MMDAILogInfo("j_recognize_stream returned %d", ret);
-  }
+    void run() {
+        int ret = j_recognize_stream(m_recog);
+        MMDAILogInfo("j_recognize_stream returned %d", ret);
+    }
 
 private:
-  Recog *m_recog;
+    Recog *m_recog;
 };
 
 void QMAJuliusPluginBeginRecognition(Recog *recog, void *ptr)
 {
-  Q_UNUSED(recog);
-  QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
-  QStringList arguments;
-  emit plugin->eventPost("RECOG_EVENT_START", arguments);
+    Q_UNUSED(recog);
+    QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
+    QStringList arguments;
+    emit plugin->eventPost("RECOG_EVENT_START", arguments);
 }
 
 void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr)
 {
-  /* get status */
-  RecogProcess *process = recog->process_list;
-  if (!process->live || process->result.status < 0)
-    return;
+    /* get status */
+    RecogProcess *process = recog->process_list;
+    if (!process->live || process->result.status < 0)
+        return;
 
-  QString ret;
-  QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-  Sentence *sentence = &process->result.sent[0];
-  WORD_ID *words = sentence->word;
-  int nwords = sentence->word_num;
-  bool first = true;
-  for (int i = 0; i < nwords; i++) {
-    char *str = process->lm->winfo->woutput[words[i]];
-    if (MMDAIStringLength(str) > 0) {
-      if (!first)
-        ret += ",";
-      ret += codec->toUnicode(str);
-      if (first)
-        first = false;
+    QString ret;
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    Sentence *sentence = &process->result.sent[0];
+    WORD_ID *words = sentence->word;
+    int nwords = sentence->word_num;
+    bool first = true;
+    for (int i = 0; i < nwords; i++) {
+        char *str = process->lm->winfo->woutput[words[i]];
+        if (MMDAIStringLength(str) > 0) {
+            if (!first)
+                ret += ",";
+            ret += codec->toUnicode(str);
+            if (first)
+                first = false;
+        }
     }
-  }
 
-  if (!first) {
-    QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
-    QStringList arguments;
-    arguments << ret;
-    MMDAILogInfo("Recognized as %s", ret.toUtf8().constData());
-    emit plugin->eventPost("RECOG_EVENT_STOP", arguments);
-  }
-  else {
-    MMDAILogDebugString("Failed recognition");
-  }
+    if (!first) {
+        QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
+        QStringList arguments;
+        arguments << ret;
+        MMDAILogInfo("Recognized as %s", ret.toUtf8().constData());
+        emit plugin->eventPost("RECOG_EVENT_STOP", arguments);
+    }
+    else {
+        MMDAILogDebugString("Failed recognition");
+    }
 }
 
 QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
-  : QMAPlugin(parent),
-  m_thread(NULL),
-  m_jconf(NULL),
-  m_recog(NULL)
+    : QMAPlugin(parent),
+      m_thread(NULL),
+      m_jconf(NULL),
+      m_recog(NULL)
 {
-  connect(&m_watcher, SIGNAL(finished()), this, SLOT(initialized()));
-  m_tray.show();
+    connect(&m_watcher, SIGNAL(finished()), this, SLOT(initialized()));
+    m_tray.show();
 }
 
 QMAJuliusPlugin::~QMAJuliusPlugin()
 {
-  delete m_thread;
-  if (m_recog != NULL) {
-    j_close_stream(m_recog);
-    j_recog_free(m_recog);
-    m_recog = NULL;
-  }
-  if (m_jconf != NULL) {
-    j_jconf_free(m_jconf);
-    m_jconf = NULL;
-  }
-  m_tray.hide();
+    delete m_thread;
+    if (m_recog != NULL) {
+        j_close_stream(m_recog);
+        j_recog_free(m_recog);
+        m_recog = NULL;
+    }
+    if (m_jconf != NULL) {
+        j_jconf_free(m_jconf);
+        m_jconf = NULL;
+    }
+    m_tray.hide();
 }
 
 void QMAJuliusPlugin::initialize(MMDAI::SceneController *controller)
 {
-  Q_UNUSED(controller);
+    Q_UNUSED(controller);
     m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine));
     if (QSystemTrayIcon::supportsMessages())
-      m_tray.showMessage(tr("Started initialization of Julius"),
-                         tr("Please wait a moment until end of initialization of Julius engine."
-                            "This process takes about 10-20 seconds."));
+        m_tray.showMessage(tr("Started initialization of Julius"),
+                           tr("Please wait a moment until end of initialization of Julius engine."
+                              "This process takes about 10-20 seconds."));
 }
 
 void QMAJuliusPlugin::start()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::stop()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::receiveCommand(const QString &command, const QStringList &arguments)
 {
-  Q_UNUSED(command);
-  Q_UNUSED(arguments);
-  /* do nothing */
+    Q_UNUSED(command);
+    Q_UNUSED(arguments);
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::receiveEvent(const QString &type, const QStringList &arguments)
 {
-  Q_UNUSED(type);
-  Q_UNUSED(arguments);
-  /* do nothing */
+    Q_UNUSED(type);
+    Q_UNUSED(arguments);
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
 {
-  Q_UNUSED(rect);
-  Q_UNUSED(pos);
-  Q_UNUSED(delta);
-  /* do nothing */
+    Q_UNUSED(rect);
+    Q_UNUSED(pos);
+    Q_UNUSED(delta);
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::prerender()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::postrender()
 {
-  /* do nothing */
+    /* do nothing */
 }
 
 void QMAJuliusPlugin::initialized()
 {
-  bool result = m_watcher.future();
-  if (result) {
-    if (QSystemTrayIcon::supportsMessages())
-      m_tray.showMessage(tr("Completed initialization of Julius"),
-                         tr("You can now talk with the models."));
-    m_thread = new QMAJuliusPluginThread(m_recog);
-    m_thread->start();
-  }
-  else {
-    if (QSystemTrayIcon::supportsMessages())
-      m_tray.showMessage(tr("Failed initialization of Julius"),
-                         tr("Recognization feature is disabled."),
-                         QSystemTrayIcon::Warning);
-  }
+    bool result = m_watcher.future();
+    if (result) {
+        if (QSystemTrayIcon::supportsMessages())
+            m_tray.showMessage(tr("Completed initialization of Julius"),
+                               tr("You can now talk with the models."));
+        m_thread = new QMAJuliusPluginThread(m_recog);
+        m_thread->start();
+    }
+    else {
+        if (QSystemTrayIcon::supportsMessages())
+            m_tray.showMessage(tr("Failed initialization of Julius"),
+                               tr("Recognization feature is disabled."),
+                               QSystemTrayIcon::Warning);
+    }
 }
 
 void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
 {
-  if (arguments != NULL) {
-    QTextCodec *codec = QTextCodec::codecForName("EUC-JP");
-    QStringList argv;
-    argv << codec->toUnicode(arguments, strlen(arguments));
-    emit eventPost(QString(type), argv);
-    free(arguments);
-  }
+    if (arguments != NULL) {
+        QTextCodec *codec = QTextCodec::codecForName("EUC-JP");
+        QStringList argv;
+        argv << codec->toUnicode(arguments, strlen(arguments));
+        emit eventPost(QString(type), argv);
+        free(arguments);
+    }
 }
 
 bool QMAJuliusPlugin::initializeRecognitionEngine()
 {
-  char buf[BUFSIZ];
-  QByteArray path;
-  QDir dir = QDir::searchPaths("mmdai2resources").at(0) + "/AppData/Julius";
+    char buf[BUFSIZ];
+    QByteArray path;
+    QDir dir = QDir::searchPaths("MMDAIResources").at(0) + "/AppData/Julius";
 
-  path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8();
-  MMDAIStringFormat(buf, sizeof(buf), "-d %s", path.constData());
-  buf[sizeof(buf) - 1] = 0;
-  m_jconf = j_config_load_string_new(buf);
-  if (m_jconf == NULL) {
-    MMDAILogWarn("Failed loading language model for Julius: %s", path.constData());
-    return false;
-  }
-  path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8();
-  MMDAIStringFormat(buf, sizeof(buf), "-v %s", path.constData());
-  buf[sizeof(buf) - 1] = 0;
-  if (j_config_load_string(m_jconf, buf) < 0) {
-    MMDAILogWarn("Failed loading system dictionary for Julius: %s", path.constData());
-    return false;
-  }
-  path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8();
-  MMDAIStringFormat(buf, sizeof(buf), "-h %s", path.constData());
-  buf[sizeof(buf) - 1] = 0;
-  if (j_config_load_string(m_jconf, buf) < 0) {
-    MMDAILogWarn("Failed loading acoustic model for Julius: %s", path.constData());
-    return false;
-  }
-  path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8();
-  MMDAIStringFormat(buf, sizeof(buf), "-hlist %s", path.constData());
-  buf[sizeof(buf) - 1] = 0;
-  if (j_config_load_string(m_jconf, buf) < 0) {
-    MMDAILogWarn("Failed loading triphone list for Julius: %s", path.constData());
-    return false;
-  }
-  path = dir.absoluteFilePath("jconf.txt").toUtf8();
-  MMDAIStringCopy(buf, path.constData(), sizeof(buf));
-  buf[sizeof(buf) - 1] = 0;
-  if (j_config_load_file(m_jconf, buf)) {
-    MMDAILogWarn("Failed loading configuration for Julius: %s", path.constData());
-    return false;
-  }
-
-  /* create instance */
-  m_recog = j_create_instance_from_jconf(m_jconf);
-  if (m_recog != NULL) {
-    callback_add(m_recog, CALLBACK_EVENT_RECOGNITION_BEGIN, QMAJuliusPluginBeginRecognition, this);
-    callback_add(m_recog, CALLBACK_RESULT, QMAJuliusPluginGetRecognitionResult, this);
-    if (!j_adin_init(m_recog) || j_open_stream(m_recog, NULL) != 0) {
-      MMDAILogWarnString("Failed initialize adin or stream");
-      return false;
+    path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8();
+    MMDAIStringFormat(buf, sizeof(buf), "-d %s", path.constData());
+    buf[sizeof(buf) - 1] = 0;
+    m_jconf = j_config_load_string_new(buf);
+    if (m_jconf == NULL) {
+        MMDAILogWarn("Failed loading language model for Julius: %s", path.constData());
+        return false;
     }
-    MMDAILogInfoString("Get ready to recognize with Julius");
-    return true;
-  }
-  else {
-    MMDAILogWarnString("Failed creating an instance of Julius");
-    return false;
-  }
+    path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8();
+    MMDAIStringFormat(buf, sizeof(buf), "-v %s", path.constData());
+    buf[sizeof(buf) - 1] = 0;
+    if (j_config_load_string(m_jconf, buf) < 0) {
+        MMDAILogWarn("Failed loading system dictionary for Julius: %s", path.constData());
+        return false;
+    }
+    path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8();
+    MMDAIStringFormat(buf, sizeof(buf), "-h %s", path.constData());
+    buf[sizeof(buf) - 1] = 0;
+    if (j_config_load_string(m_jconf, buf) < 0) {
+        MMDAILogWarn("Failed loading acoustic model for Julius: %s", path.constData());
+        return false;
+    }
+    path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8();
+    MMDAIStringFormat(buf, sizeof(buf), "-hlist %s", path.constData());
+    buf[sizeof(buf) - 1] = 0;
+    if (j_config_load_string(m_jconf, buf) < 0) {
+        MMDAILogWarn("Failed loading triphone list for Julius: %s", path.constData());
+        return false;
+    }
+    path = dir.absoluteFilePath("jconf.txt").toUtf8();
+    MMDAIStringCopy(buf, path.constData(), sizeof(buf));
+    buf[sizeof(buf) - 1] = 0;
+    if (j_config_load_file(m_jconf, buf)) {
+        MMDAILogWarn("Failed loading configuration for Julius: %s", path.constData());
+        return false;
+    }
+
+    /* create instance */
+    m_recog = j_create_instance_from_jconf(m_jconf);
+    if (m_recog != NULL) {
+        callback_add(m_recog, CALLBACK_EVENT_RECOGNITION_BEGIN, QMAJuliusPluginBeginRecognition, this);
+        callback_add(m_recog, CALLBACK_RESULT, QMAJuliusPluginGetRecognitionResult, this);
+        if (!j_adin_init(m_recog) || j_open_stream(m_recog, NULL) != 0) {
+            MMDAILogWarnString("Failed initialize adin or stream");
+            return false;
+        }
+        MMDAILogInfoString("Get ready to recognize with Julius");
+        return true;
+    }
+    else {
+        MMDAILogWarnString("Failed creating an instance of Julius");
+        return false;
+    }
 }
 
 Q_EXPORT_PLUGIN2(qma_julius_plugin, QMAJuliusPlugin)

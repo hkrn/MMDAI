@@ -50,46 +50,46 @@ class QMAJuliusPluginThread;
 
 class QMAJuliusPlugin : public QMAPlugin
 {
-  Q_OBJECT
-  Q_INTERFACES(QMAPlugin);
+    Q_OBJECT
+    Q_INTERFACES(QMAPlugin);
 
-  friend void QMAJuliusPluginBeginRecognition(Recog *recog, void *ptr);
-  friend void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr);
+    friend void QMAJuliusPluginBeginRecognition(Recog *recog, void *ptr);
+    friend void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr);
 
 public:
 
-  QMAJuliusPlugin(QObject *parent = 0);
-  ~QMAJuliusPlugin();
+    QMAJuliusPlugin(QObject *parent = 0);
+    ~QMAJuliusPlugin();
 
-  void sendCommand(const char *command, char *arguments);
-  void sendEvent(const char *type, char *arguments);
+    void sendCommand(const char *command, char *arguments);
+    void sendEvent(const char *type, char *arguments);
 
 public slots:
-  void initialize(MMDAI::SceneController *controller);
-  void start();
-  void stop();
-  void receiveCommand(const QString &command, const QStringList &arguments);
-  void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, const QPoint &pos, const double delta);
-  void prerender();
-  void postrender();
+    void initialize(MMDAI::SceneController *controller);
+    void start();
+    void stop();
+    void receiveCommand(const QString &command, const QStringList &arguments);
+    void receiveEvent(const QString &type, const QStringList &arguments);
+    void update(const QRect &rect, const QPoint &pos, const double delta);
+    void prerender();
+    void postrender();
 
 private slots:
-  void initialized();
+    void initialized();
 
 signals:
-  void commandPost(const QString &command, const QStringList &arguments);
-  void eventPost(const QString &type, const QStringList &arguments);
+    void commandPost(const QString &command, const QStringList &arguments);
+    void eventPost(const QString &type, const QStringList &arguments);
 
 private:
-  bool initializeRecognitionEngine();
-  void startRecognition();
+    bool initializeRecognitionEngine();
+    void startRecognition();
 
-  QMAJuliusPluginThread *m_thread;
-  QFutureWatcher<bool> m_watcher;
-  QSystemTrayIcon m_tray;
-  Jconf *m_jconf;
-  Recog *m_recog;
+    QMAJuliusPluginThread *m_thread;
+    QFutureWatcher<bool> m_watcher;
+    QSystemTrayIcon m_tray;
+    Jconf *m_jconf;
+    Recog *m_recog;
 };
 
 #endif // QMAJULIUSPLUGIN_H
