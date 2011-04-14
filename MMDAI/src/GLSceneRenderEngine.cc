@@ -478,8 +478,8 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
 #endif
 
     /* activate texture unit 0 */
-    glActiveTextureARB(GL_TEXTURE0_ARB);
-    glClientActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0);
+    glClientActiveTexture(GL_TEXTURE0);
 
     /* set lists */
     const unsigned int nvertices = model->countVertices();
@@ -495,7 +495,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
     glNormalPointer(GL_FLOAT, sizeof(btVector3), NULL);
 
     /* set model texture coordinates to texture unit 0 */
-    glClientActiveTextureARB(GL_TEXTURE0_ARB);
+    glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, model->m_modelVBO[kModelTexCoords]);
     glTexCoordPointer(2, GL_FLOAT, 0, NULL);
@@ -506,9 +506,9 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
 
     if (enableToon) {
         /* set toon texture coordinates to texture unit 1 */
-        glActiveTextureARB(GL_TEXTURE1_ARB);
+        glActiveTexture(GL_TEXTURE1);
         glEnable(GL_TEXTURE_2D);
-        glClientActiveTextureARB(GL_TEXTURE1_ARB);
+        glClientActiveTexture(GL_TEXTURE1);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, model->m_modelVBO[kModelToonTexCoords]);
         if (model->isSelfShadowEnabled()) {
@@ -520,8 +520,8 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
             glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), model->getToonTexCoordsPtr(), GL_DYNAMIC_DRAW);
             glTexCoordPointer(2, GL_FLOAT, 0, NULL);
         }
-        glActiveTextureARB(GL_TEXTURE0_ARB);
-        glClientActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
+        glClientActiveTexture(GL_TEXTURE0);
     }
 
     if (hasSingleSphereMap) {
@@ -536,12 +536,12 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
     if (hasMultipleSphereMap) {
         /* this model contains additional sphere map texture */
         /* set texture coordinate generation for sphere map on texture unit 2 */
-        glActiveTextureARB(GL_TEXTURE2_ARB);
+        glActiveTexture(GL_TEXTURE2);
         glEnable(GL_TEXTURE_2D);
         glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
         glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
         glDisable(GL_TEXTURE_2D);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
     }
 
     /* calculate alpha value, applying model global alpha */
@@ -586,7 +586,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
 
         /* if using multiple texture units, set current unit to 0 */
         if (enableToon || hasMultipleSphereMap) {
-            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glActiveTexture(GL_TEXTURE0);
         }
 
         const PMDTexture *texture = m->getTexture();
@@ -625,7 +625,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
             /* set toon texture for texture unit 1 */
             const PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
             if (native != NULL) {
-                glActiveTextureARB(GL_TEXTURE1_ARB);
+                glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, native->id);
                 /* set GL_CLAMP_TO_EDGE for toon texture to avoid texture interpolation at edge */
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -637,7 +637,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
             const PMDTexture *addtex = m->getAdditionalTexture();
             if (addtex != NULL) {
                 /* this material has additional sphere map texture, bind it at texture unit 2 */
-                glActiveTextureARB(GL_TEXTURE2_ARB);
+                glActiveTexture(GL_TEXTURE2);
                 glEnable(GL_TEXTURE_2D);
                 if (addtex->isSPA()) {
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
@@ -657,7 +657,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
             }
             else {
                 /* disable generation */
-                glActiveTextureARB(GL_TEXTURE2_ARB);
+                glActiveTexture(GL_TEXTURE2);
                 glDisable(GL_TEXTURE_2D);
             }
         }
@@ -669,7 +669,7 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
         /* reset some parameters */
         if (texture && texture->isSPH() && texture->isSPA()) {
             if (enableToon)
-                glActiveTextureARB(GL_TEXTURE0_ARB);
+                glActiveTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
     }
@@ -677,21 +677,21 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     if (enableToon) {
-        glClientActiveTextureARB(GL_TEXTURE0_ARB);
+        glClientActiveTexture(GL_TEXTURE0);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         if (hasSingleSphereMap) {
-            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glActiveTexture(GL_TEXTURE0);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
         }
-        glClientActiveTextureARB(GL_TEXTURE1_ARB);
+        glClientActiveTexture(GL_TEXTURE1);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         if (hasMultipleSphereMap) {
-            glActiveTextureARB(GL_TEXTURE2_ARB);
+            glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
         }
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
     } else {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         if (hasSingleSphereMap) {
@@ -699,10 +699,10 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
             glDisable(GL_TEXTURE_GEN_T);
         }
         if (hasMultipleSphereMap) {
-            glActiveTextureARB(GL_TEXTURE2_ARB);
+            glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
-            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glActiveTexture(GL_TEXTURE0);
         }
     }
 
@@ -711,14 +711,14 @@ void GLSceneRenderEngine::renderModel(PMDModel *ptr)
         glDisable(GL_TEXTURE_GEN_T);
     }
     if (enableToon) {
-        glActiveTextureARB(GL_TEXTURE1_ARB);
+        glActiveTexture(GL_TEXTURE1);
         glDisable(GL_TEXTURE_2D);
     }
     if (hasMultipleSphereMap) {
-        glActiveTextureARB(GL_TEXTURE2_ARB);
+        glActiveTexture(GL_TEXTURE2);
         glDisable(GL_TEXTURE_2D);
     }
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDisable(GL_TEXTURE_2D);
@@ -961,7 +961,7 @@ void GLSceneRenderEngine::initializeShadowMap()
     glLoadIdentity();
 
     /* use 4th texture unit for depth texture, make it current */
-    glActiveTextureARB(GL_TEXTURE3_ARB);
+    glActiveTexture(GL_TEXTURE3);
 
     /* prepare a texture object for depth texture Renderering in frame buffer object */
     glGenTextures(1, &m_depthTextureID);
@@ -1005,23 +1005,23 @@ void GLSceneRenderEngine::initializeShadowMap()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     /* allocate a frame buffer object (FBO) for depth buffer Renderering */
-    glGenFramebuffersEXT(1, &m_fboID);
+    glGenFramebuffers(1, &m_fboID);
     /* switch to the newly allocated FBO */
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboID);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
     /* bind the texture to the FBO, telling that it should Renderer the depth information to the texture */
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, m_depthTextureID, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureID, 0);
     /* also tell OpenGL not to draw and read the color buffers */
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     /* check FBO status */
-    if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         /* cannot use FBO */
     }
     /* finished configuration of FBO, now switch to default frame buffer */
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     /* reset the current texture unit to default */
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0);
 
     /* restore the model view matrix */
     glPopMatrix();
@@ -1038,7 +1038,7 @@ void GLSceneRenderEngine::setShadowMapping()
             m_shadowMapInitialized = true;
         }
         /* set how to set the comparison result value of R coordinates and texture (depth) value */
-        glActiveTextureARB(GL_TEXTURE3_ARB);
+        glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
         if (m_preference->getBool(kPreferenceShadowMappingLightFirst)) {
             /* when Renderering order is light(full) - dark(shadow part), OpenGL should set the shadow part as true */
@@ -1048,15 +1048,15 @@ void GLSceneRenderEngine::setShadowMapping()
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
         }
         glDisable(GL_TEXTURE_2D);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
         MMDAILogInfoString("Shadow mapping enabled");
     } else {
         /* disabled */
         if (m_shadowMapInitialized) {
             /* disable depth texture unit */
-            glActiveTextureARB(GL_TEXTURE3_ARB);
+            glActiveTexture(GL_TEXTURE3);
             glDisable(GL_TEXTURE_2D);
-            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glActiveTexture(GL_TEXTURE0);
         }
         MMDAILogInfoString("Shadow mapping disabled");
     }
@@ -1140,7 +1140,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
 
     /* Renderer the part clipped by the depth texture */
     /* activate the texture unit for shadow mapping and make it current */
-    glActiveTextureARB(GL_TEXTURE3_ARB);
+    glActiveTexture(GL_TEXTURE3);
 
     /* set texture matrix (note: matrices should be set in reverse order) */
     glMatrixMode(GL_TEXTURE);
@@ -1167,7 +1167,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
     glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
 
     /* depth texture set up was done, now switch current texture unit to default */
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0);
 
     /* set depth func to allow overwrite for the same surface in the following Renderering */
     glDepthFunc(GL_LEQUAL);
@@ -1235,13 +1235,13 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
     glDepthFunc(GL_LESS);
     glAlphaFunc(GL_GEQUAL, 0.05f);
 
-    glActiveTextureARB(GL_TEXTURE3_ARB);
+    glActiveTexture(GL_TEXTURE3);
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
     glDisable(GL_TEXTURE_GEN_R);
     glDisable(GL_TEXTURE_GEN_Q);
     glDisable(GL_TEXTURE_2D);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 /* GLSceneRenderEngine::RendererScene: Renderer scene */
@@ -1330,7 +1330,7 @@ void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
         glGetDoublev(GL_PROJECTION_MATRIX, projection);
 
         /* switch to FBO for depth buffer Renderering */
-        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
 
         /* clear the buffer */
         /* clear only the depth buffer, since other buffers will not be used */
@@ -1382,9 +1382,9 @@ void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
         glDisable(GL_ALPHA_TEST);
 
         /* we are now writing to depth texture using FBO, so disable the depth texture mapping here */
-        glActiveTextureARB(GL_TEXTURE3_ARB);
+        glActiveTexture(GL_TEXTURE3);
         glDisable(GL_TEXTURE_2D);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
 
         /* set polygon offset to avoid "moire" */
         glEnable(GL_POLYGON_OFFSET_FILL);
@@ -1405,7 +1405,7 @@ void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
         glDisable(GL_POLYGON_OFFSET_FILL);
 
         /* switch to default FBO */
-        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         /* revert configurations to normal Renderering */
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
