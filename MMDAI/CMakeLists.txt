@@ -82,9 +82,11 @@ else()
 endif()
 
 # find OpenGL Easy Extension
-if (MSVC)
-  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from MMDME/Common.h
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
+if(NOT APPLE)
+  if (MSVC)
+    # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from MMDME/Common.h
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
+  endif()
   find_path(GLEE_INCLUDE GLee.h PATH $ENV{GLEE_DIR})
   find_library(GLEE_LIBRARY glee PATH $ENV{GLEE_DIR})
   if(GLEE_INCLUDE AND GLEE_LIBRARY)

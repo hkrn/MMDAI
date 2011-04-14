@@ -3,8 +3,8 @@
 まず必要なライブラリが入っているかどうかを確認して下さい。
 
   - Bullet Physics
-  - OpenGL Easy Extension
   - Qt 4.6 以降
+  - OpenGL Easy Extension (MacOSX の場合不要)
 
 プラグインをビルドする際以下が必要です。Phonon は Qt に含まれれます。
 
@@ -18,10 +18,6 @@
 
 MMDAI 及び MMDME のビルドに cmake が必要です。MacOSX の場合はさらに Xcode が必要です。
 Xcode をインストールしないと gcc 等が入らないので必ずインストールしてください。
-
-MacOSX の場合 OpenGL Easy Extension が正しくビルド出来無い問題があるため、
-scripts/CMake に入っている GLEE.cmake をコピーし、CMakeLists.txt に名前を変えて
-cmake を使ってビルドする必要があります。
 
 インストール先は /usr または /usr/local にインストールする必要があります。
 Ubuntu Linux の場合、apt-get でインストールした方が楽です。
