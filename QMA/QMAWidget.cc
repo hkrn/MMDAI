@@ -77,16 +77,6 @@ void QMAWidget::handleEventMessage(const char *eventType, int argc, ...)
     emit pluginEventPost(eventType, arguments);
 }
 
-void QMAWidget::toggleDisplayBone()
-{
-    m_displayBone = !m_displayBone;
-}
-
-void QMAWidget::toggleDisplayRigidBody()
-{
-    m_displayRigidBody = !m_displayRigidBody;
-}
-
 void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
 {
     float delta = m_preference->getFloat(MMDAI::kPreferenceScaleStep);
@@ -103,21 +93,6 @@ void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
     }
     m_controller->setScale(scale);
     update();
-}
-
-QMAModelLoaderFactory *QMAWidget::getModelLoaderFactory()
-{
-    return &m_factory;
-}
-
-QMATimer *QMAWidget::getSceneFrameTimer()
-{
-    return &m_sceneFrameTimer;
-}
-
-MMDAI::SceneController *QMAWidget::getSceneController() const
-{
-    return m_controller;
 }
 
 void QMAWidget::loadPlugins()
@@ -257,6 +232,7 @@ void QMAWidget::changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loa
 
 void QMAWidget::initializeGL()
 {
+    m_controller->setRect(width(), height());
 }
 
 void QMAWidget::showEvent(QShowEvent *event)
@@ -267,9 +243,9 @@ void QMAWidget::showEvent(QShowEvent *event)
         m_controller->initializeScreen(width(), height());
         m_controller->updateLight();
         loadPlugins();
-        emit pluginStarted();
         m_sceneFrameTimer.start();
         m_sceneUpdateTimer.start(10);
+        emit pluginStarted();
     }
 }
 

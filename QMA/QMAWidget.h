@@ -72,14 +72,24 @@ public:
     ~QMAWidget();
 
     void handleEventMessage(const char *eventType, int argc, ...);
-    QMAModelLoaderFactory *getModelLoaderFactory();
-    QMATimer *getSceneFrameTimer();
-    MMDAI::SceneController *getSceneController() const;
-
-    void toggleDisplayBone();
-    void toggleDisplayRigidBody();
     void changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader);
     void zoom(bool up, enum QMAWidgetZoomOption option);
+
+    inline void toggleDisplayBone() {
+        m_displayBone = !m_displayBone;
+    }
+    inline void toggleDisplayRigidBody() {
+        m_displayRigidBody = !m_displayRigidBody;
+    }
+    inline QMAModelLoaderFactory *getModelLoaderFactory() {
+        return &m_factory;
+    }
+    inline QMATimer *getSceneFrameTimer() {
+        return &m_sceneFrameTimer;
+    }
+    inline MMDAI::SceneController *getSceneController() const {
+        return m_controller;
+    }
 
 public slots:
     void delegateCommand(const QString &command, const QStringList &arguments);
