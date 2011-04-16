@@ -37,10 +37,12 @@
 /* ----------------------------------------------------------------- */
 
 #include <QtConcurrentRun>
+#include <QApplication>
 #include <QDir>
 #include <QFile>
 #include <QTextCodec>
 #include <QTextStream>
+#include <QTranslator>
 
 #include <MMDME/Common.h>
 
@@ -137,11 +139,16 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
 void QMAJuliusPlugin::initialize(MMDAI::SceneController *controller)
 {
     Q_UNUSED(controller);
+    QTranslator translator;
+    QFile path("MMDAITranslations:/QMAJuliusPlugin_" + QLocale::system().name());
+    translator.load(path.fileName());
+    qApp->installTranslator(&translator);
     m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine));
-    if (QSystemTrayIcon::supportsMessages())
+    if (QSystemTrayIcon::supportsMessages()) {
         m_tray.showMessage(tr("Started initialization of Julius"),
                            tr("Please wait a moment until end of initialization of Julius engine."
                               "This process takes about 10-20 seconds."));
+    }
 }
 
 void QMAJuliusPlugin::start()
@@ -190,17 +197,19 @@ void QMAJuliusPlugin::initialized()
 {
     bool result = m_watcher.future();
     if (result) {
-        if (QSystemTrayIcon::supportsMessages())
+        if (QSystemTrayIcon::supportsMessages()) {
             m_tray.showMessage(tr("Completed initialization of Julius"),
                                tr("You can now talk with the models."));
+        }
         m_thread = new QMAJuliusPluginThread(m_recog);
         m_thread->start();
     }
     else {
-        if (QSystemTrayIcon::supportsMessages())
+        if (QSystemTrayIcon::supportsMessages()) {
             m_tray.showMessage(tr("Failed initialization of Julius"),
                                tr("Recognization feature is disabled."),
                                QSystemTrayIcon::Warning);
+        }
     }
 }
 
@@ -219,10 +228,10 @@ bool QMAJuliusPlugin::initializeRecognitionEngine()
 {
     char buf[BUFSIZ];
     QByteArray path;
-    QDir dir = QDir::searchPaths("MMDAIResources").at(0) + "/AppData/Julius";
+    QDir dir("MMDAIResources:/AppData/Julius");
 
     path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8();
-    MMDAIStringFormat(buf, sizeof(buf), "-d %s", path.constData());
+    MMDAIStringFormatSafe(buf, sizeof(buf), "-d %s", path.constData());
     buf[sizeof(buf) - 1] = 0;
     m_jconf = j_config_load_string_new(buf);
     if (m_jconf == NULL) {
@@ -230,32 +239,37 @@ bool QMAJuliusPlugin::initializeRecognitionEngine()
         return false;
     }
     path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8();
-    MMDAIStringFormat(buf, sizeof(buf), "-v %s", path.constData());
+    MMDAIStringFormatSafe(buf, sizeof(buf), "-v %s", path.constData());
     buf[sizeof(buf) - 1] = 0;
     if (j_config_load_string(m_jconf, buf) < 0) {
         MMDAILogWarn("Failed loading system dictionary for Julius: %s", path.constData());
         return false;
     }
     path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8();
-    MMDAIStringFormat(buf, sizeof(buf), "-h %s", path.constData());
+    MMDAIStringFormatSafe(buf, sizeof(buf), "-h %s", path.constData());
     buf[sizeof(buf) - 1] = 0;
     if (j_config_load_string(m_jconf, buf) < 0) {
         MMDAILogWarn("Failed loading acoustic model for Julius: %s", path.constData());
         return false;
     }
     path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8();
-    MMDAIStringFormat(buf, sizeof(buf), "-hlist %s", path.constData());
+    MMDAIStringFormatSafe(buf, sizeof(buf), "-hlist %s", path.constData());
     buf[sizeof(buf) - 1] = 0;
     if (j_config_load_string(m_jconf, buf) < 0) {
         MMDAILogWarn("Failed loading triphone list for Julius: %s", path.constData());
         return false;
     }
     path = dir.absoluteFilePath("jconf.txt").toUtf8();
-    MMDAIStringCopy(buf, path.constData(), sizeof(buf));
-    buf[sizeof(buf) - 1] = 0;
+    MMDAIStringCopySafe(buf, path.constData(), sizeof(buf));
     if (j_config_load_file(m_jconf, buf)) {
         MMDAILogWarn("Failed loading configuration for Julius: %s", path.constData());
         return false;
+    }
+    QFile userDict("MMDAIUserData:/MMDAI.dic");
+    if (userDict.exists()) {
+        path = userDict.fileName().toUtf8();
+        MMDAIStringCopySafe(buf, path.constData(), sizeof(buf));
+        j_add_dict(m_jconf->lm_root, buf);
     }
 
     /* create instance */

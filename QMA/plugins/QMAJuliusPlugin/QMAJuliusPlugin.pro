@@ -59,3 +59,5 @@ HEADERS += \
 
 SOURCES += \
     QMAJuliusPlugin.cc
+
+TRANSLATIONS += ../../res/translations/QMAJuliusPlugin.ts

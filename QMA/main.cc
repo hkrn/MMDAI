@@ -122,12 +122,16 @@ int main(int argc, char *argv[])
 
     /* load translation files from Qt's system path and resource path */
 #if defined(Q_OS_MAC)
-    QString dir = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
+    QString translationPath = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
-    QString dir = resourcePath + "/Locales";
+    QString translationPath = resourcePath + "/Locales";
 #endif
+    paths.clear();
+    paths.append(translationPath);
+    QDir::setSearchPaths("MMDAITranslations", paths);
+
     qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-    appTranslator.load("QMA_" + locale, dir);
+    appTranslator.load("QMA_" + locale, translationPath);
     app.installTranslator(&qtTranslator);
     app.installTranslator(&appTranslator);
 
