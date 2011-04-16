@@ -244,7 +244,9 @@ void QMAWidget::showEvent(QShowEvent *event)
                 if (QFile::exists(path.absolutePath())) {
                     file.setFileName(path.absolutePath().replace(QRegExp("\\.(fst|mdf)$"), ".mdf"));
                     path.cdUp();
-                    QDir::addSearchPath("MMDAIUserData", path.absolutePath());
+                    QStringList searchPaths = QDir::searchPaths("MMDAIUserData");
+                    searchPaths.prepend(path.absolutePath());
+                    QDir::setSearchPaths("MMDAIUserData", searchPaths);
                     MMDAILogInfo("added %s to MMDAIUserData schema", path.absolutePath().toUtf8().constData());
                 }
             }
