@@ -412,74 +412,74 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
 {
     switch (key) {
     case MMDAI::kPreferenceBulletFPS:
-        return QVariant(120);
+        return 120;
     case MMDAI::kPreferenceCampusColor:
-        return QVariant(QVector3D(0.0f, 0.0f, 0.0f));
+        return QVector3D(0.0f, 0.0f, 0.0f);
     case MMDAI::kPreferenceCartoonEdgeStep:
-        return QVariant(1.2f);
+        return 1.2f;
     case MMDAI::kPreferenceCartoonEdgeWidth:
-        return QVariant(0.7f);
+        return 0.7f;
     case MMDAI::kPreferenceFPSPosition:
-        return QVariant(QVector3D(-2.5f, 22.0f, 3.0f));
+        return QVector3D(-2.5f, 22.0f, 3.0f);
     case MMDAI::kPreferenceFullScreen:
-        return QVariant(false);
+        return false;
     case MMDAI::kPreferenceLightColor:
-        return QVariant(QVector3D(1.0f, 1.0f, 1.0f));
+        return QVector3D(1.0f, 1.0f, 1.0f);
     case MMDAI::kPreferenceLightDirection:
-        return QVariant(QVector4D(0.5f, 1.0f, 0.5f, 0.0f));
+        return QVector4D(0.5f, 1.0f, 0.5f, 0.0f);
     case MMDAI::kPreferenceLightIntensity:
-        return QVariant(0.6f);
+        return 0.6f;
     case MMDAI::kPreferenceLogPosition:
-        return QVariant(QVector3D(-17.5f, 3.0f, -15.0f));
+        return QVector3D(-17.5f, 3.0f, -15.0f);
     case MMDAI::kPreferenceLogScale:
-        return QVariant(1.0f);
+        return 1.0f;
     case MMDAI::kPreferenceLogSize:
-        return QVariant(-1);
+        return -1;
     case MMDAI::kPreferenceMaxMultiSampling:
-        return QVariant(4);
+        return 4;
     case MMDAI::kPreferenceMaxMultiSamplingColor:
-        return QVariant(4);
+        return 4;
     case MMDAI::kPreferenceMotionAdjustFrame:
-        return QVariant(0);
+        return 0;
     case MMDAI::kPreferenceRotateStep:
-        return QVariant(0.08f);
+        return 0.08f;
     case MMDAI::kPreferenceScaleStep:
-        return QVariant(1.05f);
+        return 1.05f;
     case MMDAI::kPreferenceShadowMappingFloorDensity:
-        return QVariant(0.5f);
+        return 0.5f;
     case MMDAI::kPreferenceShadowMappingLightFirst:
-        return QVariant(true);
+        return true;
     case MMDAI::kPreferenceShadowMappingSelfDensity:
-        return QVariant(1.0f);
+        return 1.0f;
     case MMDAI::kPreferenceShadowMappingTextureSize:
-        return QVariant(1024);
+        return 1024;
     case MMDAI::kPreferenceShowFPS:
-        return QVariant(true);
+        return true;
     case MMDAI::kPreferenceStageSize:
-        return QVariant(QVector3D(25.0f, 25.0f, 40.0f));
+        return QVector3D(25.0f, 25.0f, 40.0f);
     case MMDAI::kPreferenceTopMost:
-        return QVariant(false);
+        return false;
     case MMDAI::kPreferenceTranslateStep:
-        return QVariant(0.5f);
+        return 0.5f;
     case MMDAI::kPreferenceUseCartoonRendering:
-        return QVariant(true);
+        return true;
     case MMDAI::kPreferenceUseMMDLikeCartoon:
-        return QVariant(true);
+        return true;
     case MMDAI::kPreferenceUseShadowMapping:
-        return QVariant(false);
+        return false;
     case MMDAI::kPreferenceWindowSize:
-        return QVariant(-1);
+        return -1;
     case MMDAI::kPreferenceCartoonEdgeSelectedColor:
-        return QVariant(QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
+        return QVector4D(1.0f, 0.0f, 0.0f, 1.0f);
     case MMDAI::kPreferenceRenderingRotation:
-        return QVariant(QVector3D(0.0f, 0.0f, 0.0f));
+        return QVector3D(0.0f, 0.0f, 0.0f);
     case MMDAI::kPreferenceRenderingTransition:
-        return QVariant(QVector3D(0.0f, 0.0f, 0.0f));
+        return QVector3D(0.0f, 0.0f, 0.0f);
     case MMDAI::kPreferenceRenderingScale:
-        return QVariant(1.0f);
+        return 1.0f;
     default:
         MMDAILogWarn("should not reach here: %d", key);
-        return QVariant(-1);
+        return -1;
     }
 }
 
