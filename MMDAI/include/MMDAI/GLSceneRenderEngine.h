@@ -39,14 +39,11 @@
 #ifndef MMDAI_GLSCENERENDERENGINE_H_
 #define MMDAI_GLSCENERENDERENGINE_H_
 
-#if defined(WIN32)
-#include <glee.h>
-#endif
-
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #else
+#include <glee.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #endif
