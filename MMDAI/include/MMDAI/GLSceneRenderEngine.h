@@ -43,7 +43,7 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #else
-#include <glee.h>
+#include <GLee.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #endif
