@@ -68,13 +68,9 @@ void BoneController::initialize()
 /* BoneController::clear: free bone controller */
 void BoneController::clear()
 {
-    if (m_boneList)
-        MMDAIMemoryRelease(m_boneList);
-    if (m_rotList)
-        MMDAIMemoryRelease(m_rotList);
-    if (m_childBoneList)
-        MMDAIMemoryRelease(m_childBoneList);
-
+    MMDAIMemoryRelease(m_boneList);
+    MMDAIMemoryRelease(m_rotList);
+    MMDAIMemoryRelease(m_childBoneList);
     initialize();
 }
 

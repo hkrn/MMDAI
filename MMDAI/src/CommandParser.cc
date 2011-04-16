@@ -104,6 +104,8 @@ CommandParser::CommandParser(SceneController *controller, PMDModelLoaderFactory 
 
 CommandParser::~CommandParser()
 {
+    m_controller = 0;
+    m_factory = 0;
 }
 
 bool CommandParser::parse(const char *command, const char **argv, int argc)

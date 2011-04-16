@@ -99,9 +99,11 @@ static void shadowMatrix(float shadowMat[4][4], float groundplane[4], float ligh
 Stage::Stage(SceneRenderEngine *engine)
     : m_engine(engine),
     m_cache(NULL),
-    m_floor(new TileTexture(engine)),
-    m_background(new TileTexture(engine))
+    m_floor(0),
+    m_background(0)
 {
+    m_floor = new TileTexture(engine);
+    m_background = new TileTexture(engine);
     m_model = m_engine->allocateModel();
     initialize();
 }
@@ -110,7 +112,9 @@ Stage::Stage(SceneRenderEngine *engine)
 Stage::~Stage()
 {
     delete m_background;
+    m_background = 0;
     delete m_floor;
+    m_floor = 0;
     m_engine->deleteCache(&m_cache);
     m_engine->releaseModel(m_model);
     clear();

@@ -55,7 +55,7 @@ void PMDObject::initialize()
 {
     m_model = m_engine->allocateModel();
     m_isEnable = false;
-    m_motionManager = NULL;
+    m_motionManager = 0;
 
     m_moveSpeed = -1.0f;
     m_spinSpeed = -1.0f;
@@ -78,10 +78,8 @@ void PMDObject::initialize()
 void PMDObject::clear()
 {
     m_engine->releaseModel(m_model);
-    if (m_motionManager)
-        delete m_motionManager;
-    if(m_alias)
-        MMDAIMemoryRelease(m_alias);
+    MMDAIMemoryRelease(m_alias);
+    delete m_motionManager;
     initialize();
 }
 

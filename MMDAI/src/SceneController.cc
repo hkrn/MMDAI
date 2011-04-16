@@ -123,29 +123,32 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler, Preference *preference)
-#if defined(OPENGLES1)
-    : m_engine(new GLES1SceneRenderEngine(preference)),
-#else
-    : m_engine(new GLSceneRenderEngine(preference)),
-#endif
-    m_objects(new PMDObject*[MAX_MODEL]),
+  : m_engine(0),
+    m_objects(0),
     m_highlightModel(0),
     m_preference(preference),
     m_handler(handler),
-    m_stage(new Stage(m_engine)),
+    m_stage(0),
     m_numModel(0),
     m_selectedModel(-1),
     m_width(0),
     m_height(0),
     m_enablePhysicsSimulation(true),
     m_scale(1.0),
-    m_trans(btVector3(0.0f, 0.0f, 0.0f)),
-    m_rot(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f)),
-    m_cameraTrans(btVector3(0.0f, kRenderViewPointYOffset, kRenderViewPointCameraZ)),
+    m_trans(0.0f, 0.0f, 0.0f),
+    m_rot(0.0f, 0.0f, 0.0f, 1.0f),
+    m_cameraTrans(0.0f, kRenderViewPointYOffset, kRenderViewPointCameraZ),
     m_currentScale(m_scale),
     m_currentTrans(m_trans),
     m_currentRot(m_rot)
 {
+#if defined(OPENGLES1)
+    m_engine = new GLES1SceneRenderEngine(preference);
+#else
+    m_engine = new GLSceneRenderEngine(preference);
+#endif
+    m_objects = new PMDObject*[MAX_MODEL];
+    m_stage = new Stage(m_engine);
     for (int i = 0; i < MAX_MODEL; i++) {
         m_objects[i] = new PMDObject(m_engine);
     }
@@ -156,12 +159,26 @@ SceneController::SceneController(SceneEventHandler *handler, Preference *prefere
 
 SceneController::~SceneController()
 {
+    m_currentScale = 0.0f;
+    m_scale = 0.0f;
+    m_enablePhysicsSimulation = false;
+    m_height = 0;
+    m_width = 0;
+    m_selectedModel = -1;
+    m_numModel = 0;
+    m_highlightModel = 0;
     for (int i = 0; i < MAX_MODEL; i++) {
         delete m_objects[i];
+        m_objects[i] = 0;
     }
     delete[] m_objects;
+    m_objects = 0;
     delete m_stage;
+    m_stage = 0;
     delete m_engine;
+    m_engine = 0;
+    m_handler = 0;
+    m_preference = 0;
 }
 
 void SceneController::updateLight()

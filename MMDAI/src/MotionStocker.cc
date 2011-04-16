@@ -55,12 +55,11 @@ void MotionStocker::initialize()
 /* MotionStocker::clear: free MotionStocker */
 void MotionStocker::clear()
 {
-    VMDList *vl, *tmp;
+    VMDList *tmp = NULL;
 
-    for(vl = m_head; vl; vl = tmp) {
+    for(VMDList *vl = m_head; vl; vl = tmp) {
         tmp = vl->next;
-        if(vl->name)
-            MMDAIMemoryRelease(vl->name);
+        MMDAIMemoryRelease(vl->name);
         delete vl;
     }
 

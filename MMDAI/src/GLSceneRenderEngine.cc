@@ -114,8 +114,8 @@ private:
 
 GLSceneRenderEngine::GLSceneRenderEngine(Preference *preference)
     : m_preference(preference),
-    m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
-    m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
+    m_lightVec(0.0f, 0.0f, 0.0f),
+    m_shadowMapAutoViewEyePoint(0.0f, 0.0f, 0.0f),
     m_shadowMapAutoViewRadius(0.0f),
     m_boxList(0),
     m_sphereList(0),
@@ -131,6 +131,19 @@ GLSceneRenderEngine::GLSceneRenderEngine(Preference *preference)
 
 GLSceneRenderEngine::~GLSceneRenderEngine()
 {
+    if (m_shadowMapInitialized) {
+        glDeleteFramebuffers(1, &m_fboID);
+        glDeleteTextures(1, &m_depthTextureID);
+        m_shadowMapInitialized = false;
+    }
+    if (m_sphereListEnabled) {
+        glDeleteLists(m_sphereList, 1);
+        m_sphereListEnabled = false;
+    }
+    if (m_boxListEnabled) {
+        glDeleteLists(m_boxList, 1);
+        m_boxListEnabled = false;
+    }
 }
 
 PMDMaterial **GLSceneRenderEngine::allocateMaterials(int size)
