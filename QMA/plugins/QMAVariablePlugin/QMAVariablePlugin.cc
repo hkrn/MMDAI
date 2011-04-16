@@ -62,75 +62,54 @@ QMAVariablePlugin::~QMAVariablePlugin()
 {
 }
 
-void QMAVariablePlugin::initialize(MMDAI::SceneController *controller)
+void QMAVariablePlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
+    Q_UNUSED(baseName);
     /* do nothing */
 }
 
-void QMAVariablePlugin::start()
+void QMAVariablePlugin::unload()
 {
     /* do nothing */
 }
 
-void QMAVariablePlugin::stop()
-{
-    /* do nothing */
-}
-
-void QMAVariablePlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAVariablePlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     int argc = arguments.count();
     if (command == kValueSet && argc >= 2) {
-        const QString key = arguments.at(0);
-        const QString value = arguments.at(1);
+        const QString key = arguments[0].toString();
+        const QString value = arguments[0].toString();
         QString value2 = "";
         if (argc >= 3)
-            value2 = arguments.at(2);
+            value2 = arguments[2].toString();
         setValue(key, value, value2);
     }
     else if (command == kValueUnset && argc >= 1) {
-        const QString key = arguments.at(0);
+        const QString key = arguments[0].toString();
         deleteValue(key);
     }
     else if (command == kValueEvaluate && argc >= 3) {
-        const QString key = arguments.at(0);
-        const QString op = arguments.at(1);
-        const QString value = arguments.at(2);
+        const QString key = arguments[0].toString();
+        const QString op = arguments[1].toString();
+        const QString value = arguments[2].toString();
         evaluate(key, op, value);
     }
     else if (command == kTimerStart && argc >= 2) {
-        const QString key = arguments.at(0);
-        const QString value = arguments.at(1);
+        const QString key = arguments[0].toString();
+        const QString value = arguments[1].toString();
         startTimer0(key, value);
     }
     else if (command == kTimerStop && argc >= 1) {
-        const QString key = arguments.at(0);
+        const QString key = arguments[0].toString();
         stopTimer0(key);
     }
 }
 
-void QMAVariablePlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAVariablePlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
     Q_UNUSED(type);
     Q_UNUSED(arguments);
-}
-
-void QMAVariablePlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-}
-
-void QMAVariablePlugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMAVariablePlugin::postrender()
-{
-    /* do nothing */
 }
 
 void QMAVariablePlugin::setValue(const QString &key, const QString &value, const QString &value2)
@@ -153,7 +132,7 @@ void QMAVariablePlugin::setValue(const QString &key, const QString &value, const
         const float random = min + (max - min) * qrand() * (1.0f / RAND_MAX);
         m_values[key] = random;
     }
-    QStringList arguments;
+    QList<QVariant> arguments;
     arguments << key;
     emit eventPost(kValueSetEvent, arguments);
 }
@@ -162,7 +141,7 @@ void QMAVariablePlugin::deleteValue(const QString &key)
 {
     if (m_values.contains(key)) {
         m_values.remove(key);
-        QStringList arguments;
+        QList<QVariant> arguments;
         arguments << key;
         emit eventPost(kValueUnsetEvent, arguments);
     }
@@ -198,7 +177,7 @@ void QMAVariablePlugin::evaluate(const QString &key, const QString &op, const QS
     else {
         MMDAILogInfo("Operation %s is invalid", op.toUtf8().constData());
     }
-    QStringList arguments;
+    QList<QVariant> arguments;
     arguments << key << op << value;
     arguments << (ret ? "TRUE" : "FALSE");
     emit eventPost(kValueEvaluateEvent, arguments);
@@ -221,7 +200,7 @@ void QMAVariablePlugin::startTimer0(const QString &key, const QString &value)
         QBasicTimer *timer = new QBasicTimer();
         m_timers.insert(key, timer);
         timer->start(msec, this);
-        QStringList arguments;
+        QList<QVariant> arguments;
         arguments << key;
         emit eventPost(kTimerStartEvent, arguments);
     }
@@ -237,7 +216,7 @@ void QMAVariablePlugin::stopTimer0(const QString &key)
         m_timers.remove(key);
         timer->stop();
         delete timer;
-        QStringList arguments;
+        QList<QVariant> arguments;
         arguments << key;
         emit eventPost(kTimerStopEvent, arguments);
     }
@@ -261,7 +240,7 @@ void QMAVariablePlugin::timerEvent(QTimerEvent *event)
         timer->stop();
         delete timer;
         m_timers.remove(key);
-        QStringList arguments;
+        QList<QVariant> arguments;
         arguments << key;
         emit eventPost(kTimerStopEvent, arguments);
     }

@@ -51,37 +51,38 @@
 
 class QMAOpenJTalkPlugin : public QMAPlugin
 {
-  Q_OBJECT
-  Q_INTERFACES(QMAPlugin)
+    Q_OBJECT
+    Q_INTERFACES(QMAPlugin)
 
 public:
-  QMAOpenJTalkPlugin(QObject *parent = 0);
-  ~QMAOpenJTalkPlugin();
+    static const QString kSynthEventStart;
+    static const QString kSynthEventStop;
+    static const QString kLipSyncStart;
+    static const QString kLipSyncStop;
+
+    QMAOpenJTalkPlugin(QObject *parent = 0);
+    ~QMAOpenJTalkPlugin();
 
 public slots:
-  void initialize(MMDAI::SceneController *controller);
-  void start();
-  void stop();
-  void receiveCommand(const QString &command, const QStringList &arguments);
-  void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, const QPoint &pos, const double delta);
-  void prerender();
-  void postrender();
+    void load(MMDAI::SceneController *controller, const QString &baseName);
+    void unload();
+    void receiveCommand(const QString &command, const QList<QVariant> &arguments);
+    void receiveEvent(const QString &type, const QList<QVariant> &arguments);
 
 signals:
-  void commandPost(const QString &command, const QStringList &arguments);
-  void eventPost(const QString &type, const QStringList &arguments);
+    void commandPost(const QString &command, const QList<QVariant> &arguments);
+    void eventPost(const QString &type, const QList<QVariant> &arguments);
 
 private:
-  void run(const QString &name,
-           const QString &style,
-           const QString &text);
+    void run(const QString &name,
+             const QString &style,
+             const QString &text);
 
-  QHash<QString, QMAOpenJTalkModel*> m_models;
-  QTimer m_timer;
-  QString m_base;
-  QString m_dir;
-  QString m_config;
+    QHash<QString, QMAOpenJTalkModel*> m_models;
+    QTimer m_timer;
+    QString m_base;
+    QString m_dir;
+    QString m_config;
 };
 
 #endif // QMAOPENJTALKPLUGIN_H

@@ -53,9 +53,8 @@ QMAPreference::~QMAPreference()
 {
 }
 
-void QMAPreference::load()
+void QMAPreference::load(QFile &file)
 {
-    QFile file("MMDAIUserData:/MMDAI.mdf");
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
         for (QString line = stream.readLine(); !line.isNull(); line = stream.readLine()) {

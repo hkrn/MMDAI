@@ -65,31 +65,47 @@ QMALookAtPlugin::~QMALookAtPlugin()
 {
 }
 
-void QMALookAtPlugin::initialize(MMDAI::SceneController *controller)
+void QMALookAtPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
+    Q_UNUSED(baseName);
     m_controller = controller;
 }
 
-void QMALookAtPlugin::start()
+void QMALookAtPlugin::unload()
 {
-    /* do nothing */
 }
 
-void QMALookAtPlugin::stop()
-{
-    /* do nothing */
-}
-
-void QMALookAtPlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMALookAtPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     Q_UNUSED(command);
     Q_UNUSED(arguments);
     /* do nothing */
 }
 
-void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMALookAtPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
-    if (type == MMDAI::SceneEventHandler::kKeyEvent && arguments.at(0) == "L") {
+    if (type == QMAPlugin::getUpdateEvent()) {
+        QRect rect = arguments[0].toRect();
+        QPoint pos = arguments[1].toPoint(), p = pos;
+        double delta = arguments[2].toDouble();
+        btVector3 pointPos;
+        /* set target position */
+        p.setX(pos.x() - ((rect.left() + rect.right()) / 2));
+        p.setY(pos.y() - ((rect.top() + rect.bottom()) / 2));
+        float rate = 100.0f / static_cast<float>(rect.right() - rect.left());
+        pointPos.setValue(p.x() * rate, -p.y() * rate, 0.0f);
+        btVector3 targetPos = m_controller->getScreenPointPosition(pointPos);
+        /* calculate direction of all controlled bones */
+        int count = m_controller->countPMDObjects();
+        for (int i = 0; i < count; i++) {
+            MMDAI::PMDObject *object = m_controller->getPMDObject(i);
+            if (object->isEnable()) {
+                m_neckController[i].update(&targetPos, static_cast<float>(delta));
+                m_eyeController[i].update(&targetPos, static_cast<float>(delta));
+            }
+        }
+    }
+    else if (type == MMDAI::SceneEventHandler::kKeyEvent && arguments.at(0).toString() == "L") {
         int count = m_controller->countPMDObjects();
         for (int i = 0; i < count; i++) {
             MMDAI::PMDObject *object = m_controller->getPMDObject(i);
@@ -108,7 +124,7 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &argum
     }
     else if (type == MMDAI::SceneEventHandler::kModelChangeEvent || type == MMDAI::SceneEventHandler::kModelAddEvent) {
         QTextCodec *codec = QTextCodec::codecForName("UTF8");
-        QString target = arguments.at(0);
+        QString target = arguments.at(0).toString();
         int count = m_controller->countPMDObjects();
         for (int i = 0; i < count; i++) {
             MMDAI::PMDObject *object = m_controller->getPMDObject(i);
@@ -123,39 +139,6 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QStringList &argum
             }
         }
     }
-}
-
-void QMALookAtPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    QPoint p = pos;
-    btVector3 pointPos;
-
-    /* set target position */
-    p.setX(pos.x() - ((rect.left() + rect.right()) / 2));
-    p.setY(pos.y() - ((rect.top() + rect.bottom()) / 2));
-    float rate = 100.0f / static_cast<float>(rect.right() - rect.left());
-    pointPos.setValue(p.x() * rate, -p.y() * rate, 0.0f);
-    btVector3 targetPos = m_controller->getScreenPointPosition(pointPos);
-
-    /* calculate direction of all controlled bones */
-    int count = m_controller->countPMDObjects();
-    for (int i = 0; i < count; i++) {
-        MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-        if (object->isEnable()) {
-            m_neckController[i].update(&targetPos, static_cast<float>(delta));
-            m_eyeController[i].update(&targetPos, static_cast<float>(delta));
-        }
-    }
-}
-
-void QMALookAtPlugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMALookAtPlugin::postrender()
-{
-    /* do nothing */
 }
 
 Q_EXPORT_PLUGIN2(qma_lookat_plugin, QMALookAtPlugin);

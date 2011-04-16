@@ -92,18 +92,14 @@ public:
     }
 
 public slots:
-    void delegateCommand(const QString &command, const QStringList &arguments);
-    void delegateEvent(const QString &type, const QStringList &arguments);
+    void delegateCommand(const QString &command, const QList<QVariant> &arguments);
+    void delegateEvent(const QString &type, const QList<QVariant> &arguments);
 
 signals:
-    void pluginInitialized(MMDAI::SceneController *);
-    void pluginStarted();
-    void pluginStopped();
-    void pluginCommandPost(const QString&, const QStringList&);
-    void pluginEventPost(const QString&, const QStringList&);
-    void pluginUpdated(const QRect&, const QPoint&, const double);
-    void pluginPreRendered();
-    void pluginPostRendered();
+    void pluginLoaded(MMDAI::SceneController *, const QString &);
+    void pluginUnloaded();
+    void pluginCommandPost(const QString&, const QList<QVariant>&);
+    void pluginEventPost(const QString&, const QList<QVariant>&);
 
 protected:
     void initializeGL();
@@ -126,7 +122,7 @@ private slots:
 
 private:
     void loadModel();
-    void loadPlugins();
+    void loadPlugins(QFile &file);
     void addPlugin(QMAPlugin *plugin);
 
     void updateModelPositionAndRotation(double fps);

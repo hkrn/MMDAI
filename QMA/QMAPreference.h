@@ -38,6 +38,7 @@
 #define QMAPREFERENCE_H
 
 #include <MMDAI/Preference.h>
+#include <QFile>
 #include <QSettings>
 #include <QVariant>
 
@@ -47,7 +48,7 @@ public:
     QMAPreference(QSettings *settings);
     ~QMAPreference();
 
-    void load();
+    void load(QFile &file);
     bool getBool(const MMDAI::PreferenceKeys key);
     int getInt(const MMDAI::PreferenceKeys key);
     float getFloat(const MMDAI::PreferenceKeys key);

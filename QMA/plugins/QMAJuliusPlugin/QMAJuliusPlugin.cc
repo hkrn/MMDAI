@@ -71,8 +71,7 @@ void QMAJuliusPluginBeginRecognition(Recog *recog, void *ptr)
 {
     Q_UNUSED(recog);
     QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
-    QStringList arguments;
-    emit plugin->eventPost("RECOG_EVENT_START", arguments);
+    emit plugin->eventPost("RECOG_EVENT_START", QMAPlugin::getEmptyArguments());
 }
 
 void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr)
@@ -101,7 +100,7 @@ void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr)
 
     if (!first) {
         QMAJuliusPlugin *plugin = static_cast<QMAJuliusPlugin*>(ptr);
-        QStringList arguments;
+        QList<QVariant> arguments;
         arguments << ret;
         MMDAILogInfo("Recognized as %s", ret.toUtf8().constData());
         emit plugin->eventPost("RECOG_EVENT_STOP", arguments);
@@ -136,14 +135,14 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
     m_tray.hide();
 }
 
-void QMAJuliusPlugin::initialize(MMDAI::SceneController *controller)
+void QMAJuliusPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
     QTranslator translator;
     QFile path("MMDAITranslations:/QMAJuliusPlugin_" + QLocale::system().name());
     translator.load(path.fileName());
     qApp->installTranslator(&translator);
-    m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine));
+    m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine, baseName));
     if (QSystemTrayIcon::supportsMessages()) {
         m_tray.showMessage(tr("Started initialization of Julius"),
                            tr("Please wait a moment until end of initialization of Julius engine."
@@ -151,45 +150,22 @@ void QMAJuliusPlugin::initialize(MMDAI::SceneController *controller)
     }
 }
 
-void QMAJuliusPlugin::start()
+void QMAJuliusPlugin::unload()
 {
     /* do nothing */
 }
 
-void QMAJuliusPlugin::stop()
-{
-    /* do nothing */
-}
-
-void QMAJuliusPlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAJuliusPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     Q_UNUSED(command);
     Q_UNUSED(arguments);
     /* do nothing */
 }
 
-void QMAJuliusPlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAJuliusPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
     Q_UNUSED(type);
     Q_UNUSED(arguments);
-    /* do nothing */
-}
-
-void QMAJuliusPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-    /* do nothing */
-}
-
-void QMAJuliusPlugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMAJuliusPlugin::postrender()
-{
     /* do nothing */
 }
 
@@ -217,14 +193,14 @@ void QMAJuliusPlugin::sendEvent(const char *type, char *arguments)
 {
     if (arguments != NULL) {
         QTextCodec *codec = QTextCodec::codecForName("EUC-JP");
-        QStringList argv;
+        QList<QVariant> argv;
         argv << codec->toUnicode(arguments, strlen(arguments));
         emit eventPost(QString(type), argv);
         free(arguments);
     }
 }
 
-bool QMAJuliusPlugin::initializeRecognitionEngine()
+bool QMAJuliusPlugin::initializeRecognitionEngine(const QString &baseName)
 {
     char buf[BUFSIZ];
     QByteArray path;
@@ -265,7 +241,7 @@ bool QMAJuliusPlugin::initializeRecognitionEngine()
         MMDAILogWarn("Failed loading configuration for Julius: %s", path.constData());
         return false;
     }
-    QFile userDict("MMDAIUserData:/MMDAI.dic");
+    QFile userDict(QString("MMDAIUserData:/%1.dic").arg(baseName));
     if (userDict.exists()) {
         path = userDict.fileName().toUtf8();
         MMDAIStringCopySafe(buf, path.constData(), sizeof(buf));

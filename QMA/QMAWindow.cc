@@ -86,7 +86,7 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_V: /* test command / Vsync */
         break;
     }
-    QStringList arguments;
+    QList<QVariant> arguments;
     arguments << event->text();
     m_widget->delegateEvent(QString(MMDAI::SceneEventHandler::kKeyEvent), arguments);
 }
@@ -304,7 +304,7 @@ void QMAWindow::speak()
     bool ok = false;
     QString text = QInputDialog::getText(this, "", tr("Text to speak"), QLineEdit::Normal, "", &ok);
     if (ok && !text.isEmpty()) {
-        QStringList arguments;
+        QList<QVariant> arguments;
         arguments << text;
         m_widget->delegateEvent(QString("RECOG_EVENT_STOP"), arguments);
     }
@@ -399,12 +399,6 @@ void QMAWindow::resizeScene()
     }
 }
 
-void QMAWindow::updateWindowTitle()
-{
-    double fps = m_widget->getSceneFrameTimer()->getFPS();
-    setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
-}
-
 void QMAWindow::about()
 {
     QMessageBox::about(this, tr("About QtMMDAI"),
@@ -432,18 +426,21 @@ void QMAWindow::about()
                           "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>").arg(qApp->applicationVersion()));
 }
 
-void QMAWindow::receiveEvent(const QString &type,
-                             const QStringList &arguments)
+void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
-    if (type == MMDAI::SceneEventHandler::kModelAddEvent) {
-        QString name = arguments.at(0);
+    if (type == QMAPlugin::getUpdateEvent()) {
+        double fps = m_widget->getSceneFrameTimer()->getFPS();
+        setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
+    }
+    else if (type == MMDAI::SceneEventHandler::kModelAddEvent) {
+        QString name = arguments.at(0).toString();
         QAction *action = new QAction(name, this);
         action->setStatusTip(tr("Select a model %1").arg(name));
         connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
         m_selectModelMenu->addAction(action);
     }
     else if (type == MMDAI::SceneEventHandler::kModelDeleteEvent) {
-        QString name = arguments.at(0);
+        QString name = arguments.at(0).toString();
         QAction *actionToRemove = NULL;
         foreach (QAction *action, m_selectModelMenu->actions()) {
             if (action->text() == name) {
@@ -695,10 +692,8 @@ void QMAWindow::createActions()
     connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     m_aboutQtAction = action;
 
-    connect(m_widget, SIGNAL(pluginPostRendered()),
-            this, SLOT(updateWindowTitle()));
-    connect(m_widget, SIGNAL(pluginEventPost(QString,QStringList)),
-            this, SLOT(receiveEvent(QString,QStringList)));
+    connect(m_widget, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
+            this, SLOT(receiveEvent(QString,QList<QVariant>)));
 }
 
 void QMAWindow::setEdgeThin(float value)

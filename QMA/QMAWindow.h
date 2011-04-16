@@ -89,8 +89,7 @@ private slots:
     void saveScene();
     void resizeScene();
     void about();
-    void updateWindowTitle();
-    void receiveEvent(const QString &type, const QStringList &arguments);
+    void receiveEvent(const QString &type, const QList<QVariant> &arguments);
 
 private:
     void setEdgeThin(float value);

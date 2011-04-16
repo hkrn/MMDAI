@@ -43,6 +43,12 @@
 
 const QString kOpenJTalkStartCommand = "SYNTH_START";
 const QString kOpenJTalkStopCommand =  "SYNTH_STOP";
+
+const QString QMAOpenJTalkPlugin::kSynthEventStart = "SYNTH_EVENT_START";
+const QString QMAOpenJTalkPlugin::kSynthEventStop = "SYNTH_EVENT_STOP";
+const QString QMAOpenJTalkPlugin::kLipSyncStart = "LIPSYNC_START";
+const QString QMAOpenJTalkPlugin::kLipSyncStop = "LIPSYNC_STOP";
+
 const QByteArray kOpenJTalkCodecName = "Shift-JIS";
 
 QMAOpenJTalkPlugin::QMAOpenJTalkPlugin(QObject *parent)
@@ -56,71 +62,47 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
         delete model;
 }
 
-void QMAOpenJTalkPlugin::initialize(MMDAI::SceneController *controller)
+void QMAOpenJTalkPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
     QDir dir("MMDAIResources:/");
     m_base = dir.absolutePath();
     m_dir = dir.absoluteFilePath("AppData/Open_JTalk");
-    m_config = QFile("MMDAIUserData:/MMDAI.ojt").fileName();
-}
-
-void QMAOpenJTalkPlugin::start()
-{
+    m_config = QFile(QString("MMDAIUserData:/%1.ojt").arg(baseName)).fileName();
     PaError err = Pa_Initialize();
     if (err != paNoError)
         MMDAILogWarn("Pa_Initialized failed: %s", Pa_GetErrorText(err));
 }
 
-void QMAOpenJTalkPlugin::stop()
+void QMAOpenJTalkPlugin::unload()
 {
     PaError err = Pa_Terminate();
     if (err != paNoError)
         MMDAILogWarn("Pa_Terminate failed: %s", Pa_GetErrorText(err));
 }
 
-void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     if (command == kOpenJTalkStartCommand && arguments.count() == 3) {
-        QString name = arguments[0];
-        QString style = arguments[1];
-        QString text = arguments[2];
+        QString name = arguments[0].toString();
+        QString style = arguments[1].toString();
+        QString text = arguments[2].toString();
         QtConcurrent::run(this, &QMAOpenJTalkPlugin::run, name, style, text);
     }
     else if (command == kOpenJTalkStopCommand && arguments.count() == 1) {
-        QString name = arguments[0];
+        QString name = arguments[0].toString();
         Q_UNUSED(name);
     }
 }
 
-void QMAOpenJTalkPlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAOpenJTalkPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
     Q_UNUSED(type);
     Q_UNUSED(arguments);
     /* do nothing */
 }
 
-void QMAOpenJTalkPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-    /* do nothing */
-}
-
-void QMAOpenJTalkPlugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMAOpenJTalkPlugin::postrender()
-{
-    /* do nothing */
-}
-
-void QMAOpenJTalkPlugin::run(const QString &name,
-                             const QString &style,
-                             const QString &text)
+void QMAOpenJTalkPlugin::run(const QString &name, const QString &style, const QString &text)
 {
     QMAOpenJTalkModel *model;
     if (m_models.contains(name)) {
@@ -137,12 +119,12 @@ void QMAOpenJTalkPlugin::run(const QString &name,
     QString sequence = model->getPhonemeSequence();
     QByteArray bytes = model->finalize(false);
 
-    QStringList arguments;
+    QList<QVariant> arguments;
     arguments << name;
-    eventPost("SYNTH_EVENT_START", arguments);
+    eventPost(kSynthEventStart, arguments);
     arguments.clear();
     arguments << name << sequence;
-    commandPost("LIPSYNC_START", arguments);
+    commandPost(kLipSyncStart, arguments);
 
     PaError err;
     PaStream *stream;
@@ -182,7 +164,7 @@ void QMAOpenJTalkPlugin::run(const QString &name,
     final:
         arguments.clear();
     arguments << name;
-    eventPost("SYNTH_EVENT_STOP", arguments);
+    eventPost(kSynthEventStop, arguments);
 }
 
 Q_EXPORT_PLUGIN2(qma_openjtalk_plugin, QMAOpenJTalkPlugin)

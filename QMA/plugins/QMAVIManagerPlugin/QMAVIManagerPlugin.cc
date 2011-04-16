@@ -39,6 +39,7 @@
 #include "QMAVIManagerPlugin.h"
 
 #include <QFile>
+#include <QStringList>
 #include <QTextCodec>
 #include <stdlib.h>
 
@@ -52,55 +53,37 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 {
 }
 
-void QMAVIManagerPlugin::initialize(MMDAI::SceneController *controller)
+void QMAVIManagerPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    QFile config("MMDAIUserData:/MMDAI.fst");
+    QFile config(QString("MMDAIUserData:/%1.fst").arg(baseName));
     if (config.exists())
         m_thread.load(config.fileName().toUtf8().constData());
-}
-
-void QMAVIManagerPlugin::start()
-{
     m_thread.start();
 }
 
-void QMAVIManagerPlugin::stop()
+void QMAVIManagerPlugin::unload()
 {
     m_thread.stop();
 }
 
-void QMAVIManagerPlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAVIManagerPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     Q_UNUSED(command);
     Q_UNUSED(arguments);
     /* do nothing */
 }
 
-void QMAVIManagerPlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAVIManagerPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
-    if (m_thread.isStarted()) {
+    if (m_thread.isStarted() && !QMAPlugin::isRenderEvent(type)) {
+        QStringList strings;
+        foreach (QVariant arg, arguments) {
+            strings << arg.toString();
+        }
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-        m_thread.enqueueBuffer(type.toUtf8().constData(), codec->fromUnicode(arguments.join("|")).constData());
+        m_thread.enqueueBuffer(type.toUtf8().constData(), codec->fromUnicode(strings.join("|")).constData());
     }
-}
-
-void QMAVIManagerPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-    /* do nothing */
-}
-
-void QMAVIManagerPlugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMAVIManagerPlugin::postrender()
-{
-    /* do nothing */
 }
 
 void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
@@ -108,7 +91,7 @@ void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     QString argv = codec->toUnicode(arguments, strlen(arguments)).replace(codec->toUnicode("\\"), "/");
     QRegExp regexp("\\/[^\\.]+\\.\\w+$");
-    QStringList args;
+    QList<QVariant> args;
     // encodes the filename if the value matches the filename suffix
     foreach (QString value, argv.split("|")) {
         if (regexp.indexIn(value) != -1)

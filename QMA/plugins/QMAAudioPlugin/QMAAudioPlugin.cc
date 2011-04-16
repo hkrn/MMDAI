@@ -38,6 +38,9 @@
 
 #include <QFile>
 
+const QString QMAAudioPlugin::kSoundStartEvent = "SOUND_EVENT_START";
+const QString QMAAudioPlugin::kSoundStopEvent = "SOUND_EVENT_STOP";
+
 QMAAudioPlugin::QMAAudioPlugin(QObject *parent)
     : QMAPlugin(parent),
       m_audioOutput(new Phonon::AudioOutput(Phonon::MusicCategory, this)),
@@ -58,28 +61,24 @@ QMAAudioPlugin::~QMAAudioPlugin()
     delete m_audioObject;
 }
 
-void QMAAudioPlugin::initialize(MMDAI::SceneController *controller)
+void QMAAudioPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
+    Q_UNUSED(baseName);
 }
 
-void QMAAudioPlugin::start()
-{
-    /* do nothing */
-}
-
-void QMAAudioPlugin::stop()
+void QMAAudioPlugin::unload()
 {
     m_audioObject->clear();
     m_audioSources.clear();
 }
 
-void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAAudioPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     int argc = arguments.count();
-    if (command == "SOUND_START" && argc == 2) {
-        QString alias = arguments.at(0);
-        QString filename = QFile::decodeName(arguments.at(1).toUtf8());
+    if (command == kSoundStartEvent && argc == 2) {
+        QString alias = arguments.at(0).toString();
+        QString filename = QFile::decodeName(arguments.at(1).toString().toUtf8());
         if (!QDir::isAbsolutePath(filename))
             filename = QDir("MMDAIUserData:/").absoluteFilePath(filename);
         Phonon::MediaSource source(filename);
@@ -88,8 +87,8 @@ void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &a
         m_audioObject->play();
         emit eventPost(QString("SOUND_EVENT_START"), arguments);
     }
-    else if (command == "SOUND_STOP" && argc == 1) {
-        QString alias = arguments.at(0);
+    else if (command == kSoundStopEvent && argc == 1) {
+        QString alias = arguments.at(0).toString();
         if (m_audioSources.contains(alias)) {
             m_audioObject->stop();
             m_audioSources.remove(alias);
@@ -98,47 +97,29 @@ void QMAAudioPlugin::receiveCommand(const QString &command, const QStringList &a
     }
 }
 
-void QMAAudioPlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAAudioPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
     Q_UNUSED(type);
     Q_UNUSED(arguments);
     /* do nothing */
 }
 
-void QMAAudioPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-    /* do nothing */
-}
-
-void QMAAudioPlugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMAAudioPlugin::postrender()
-{
-    /* do nothing */
-}
-
 void QMAAudioPlugin::aboutToFinish()
 {
-    QStringList arguments;
+    QList<QVariant> arguments;
     QString key = m_audioSources.key(m_audioObject->currentSource());
     m_audioSources.remove(key);
     arguments << key;
-    emit eventPost("SOUND_EVENT_STOP", arguments);
+    emit eventPost(kSoundStopEvent, arguments);
 }
 
 void QMAAudioPlugin::changeCurrentSource(Phonon::MediaSource source)
 {
-    QStringList arguments;
+    QList<QVariant> arguments;
     QString key = m_audioSources.key(source);
     m_audioSources.remove(key);
     arguments << key << source.fileName();
-    emit eventPost("SOUND_EVENT_START", arguments);
+    emit eventPost(kSoundStartEvent, arguments);
 }
 
 void QMAAudioPlugin::changeState(Phonon::State newState, Phonon::State oldState)
