@@ -168,7 +168,7 @@ void PMDModel::clear()
         m_material = NULL;
     }
 
-    for (int i = 0; i < kNSystemTextureFiles; i++)
+    for (uint32_t i = 0; i < kNSystemTextureFiles; i++)
         m_localToonTexture[i].release();
     m_name2bone.release();
     m_name2face.release();
