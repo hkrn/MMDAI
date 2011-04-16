@@ -65,10 +65,10 @@ QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 void QMAOpenJTalkPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    QDir dir("MMDAIResources:/");
+    QDir dir("MMDAIUserData:/");
     m_base = dir.absolutePath();
-    m_dir = dir.absoluteFilePath("AppData/Open_JTalk");
-    m_config = QFile(QString("MMDAIUserData:/%1.ojt").arg(baseName)).fileName();
+    m_config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
+    m_dir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
     PaError err = Pa_Initialize();
     if (err != paNoError)
         MMDAILogWarn("Pa_Initialized failed: %s", Pa_GetErrorText(err));
