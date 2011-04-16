@@ -334,12 +334,28 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsent/include/sent/config.h.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/libsent/include/sent/config.h)
 file(REMOVE libjulis/include/julius/config.h.cmake libsent/include/sent/config.h.cmake)
 
+file(GLOB libjulius_headers libjulius/include/julius/*.h)
+file(GLOB libsent_headers libsent/include/sent/*.h)
+set(libjulius_public_headers ${libjulius_headers} ${libsent_headers})
+
+
+# create as a framework if build on darwin environment
+if(APPLE)
+  if(BUILD_SHARED_LIBS AND FRAMEWORK)
+    install(TARGETS julius DESTINATION .)
+    set_target_properties(julius PROPERTIES FRAMEWORK true)
+    set_target_properties(julius PROPERTIES PUBLIC_HEADER "${libjulius_public_headers}")
+  endif()
+  set_target_properties(julius PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
 if(NOT MSVC)
   install(TARGETS julius DESTINATION lib)
   install(DIRECTORY libjulius/include/ libsent/include/
           DESTINATION include
           PATTERN "*.h"
           PATTERN "*.h.in" EXCLUDE
+          PATTERN "*.cmake" EXCLUDE
           PATTERN ".svn" EXCLUDE)
 endif()
 

@@ -27,6 +27,19 @@ if(FESTIVAL)
   add_definitions(-DFESTIVAL)
 endif()
 
+set(libHTSEngine_public_headers include/HTSEngine.h)
+
+# create as a framework if build on darwin environment
+if(APPLE)
+  if(BUILD_SHARED_LIBS AND FRAMEWORK)
+    install(TARGETS HTSEngine DESTINATION .)
+    set_target_properties(HTSEngine PROPERTIES FRAMEWORK true)
+    set_target_properties(HTSEngine PROPERTIES PUBLIC_HEADER "${libHTSEngine_public_headers}")
+  endif()
+  set_target_properties(HTSEngine PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+
 if(NOT MSVC)
   install(TARGETS HTSEngine DESTINATION lib)
   install(DIRECTORY include/ DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)

@@ -211,13 +211,34 @@ else()
   message(FATAL_ERROR "Encoding ${CHARSET} not recognized. You can set sjis/eucjp/utf8")
 endif()
 
+set(libOpenJTalk_public_headers 
+  jpcommon/jpcommon.h 
+  mecab/src/mecab.h 
+  mecab2njd/mecab2njd.h 
+  njd/njd.h 
+  njd2jpcommon/njd2jpcommon.h
+  njd_set_accent_phrase/njd_set_accent_phrase.h 
+  njd_set_accent_type/njd_set_accent_type.h 
+  njd_set_digit/njd_set_digit.h 
+  njd_set_long_vowel/njd_set_long_vowel.h 
+  njd_set_pronunciation/njd_set_pronunciation.h 
+  njd_set_unvoiced_vowel/njd_set_unvoiced_vowel.h 
+  text2mecab/text2mecab.h
+)
+
+# create as a framework if build on darwin environment
+if(APPLE)
+  if(BUILD_SHARED_LIBS AND FRAMEWORK)
+    install(TARGETS OpenJTalk DESTINATION .)
+    set_target_properties(OpenJTalk PROPERTIES FRAMEWORK true)
+    set_target_properties(OpenJTalk PROPERTIES PUBLIC_HEADER "${libOpenJTalk_public_headers}")
+  endif()
+  set_target_properties(OpenJTalk PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
 # installation
 if(NOT MSVC)
   install(TARGETS OpenJTalk DESTINATION lib)
-  install(FILES jpcommon/jpcommon.h mecab/src/mecab.h mecab2njd/mecab2njd.h njd/njd.h njd2jpcommon/njd2jpcommon.h
-          njd_set_accent_phrase/njd_set_accent_phrase.h njd_set_accent_type/njd_set_accent_type.h 
-          njd_set_digit/njd_set_digit.h njd_set_long_vowel/njd_set_long_vowel.h njd_set_pronunciation/njd_set_pronunciation.h 
-          njd_set_unvoiced_vowel/njd_set_unvoiced_vowel.h text2mecab/text2mecab.h
-          DESTINATION include/OpenJTalk)
+  install(FILES ${libOpenJTalk_public_headers} DESTINATION include/OpenJTalk)
 endif()
 
