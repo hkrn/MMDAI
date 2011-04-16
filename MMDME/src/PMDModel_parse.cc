@@ -76,7 +76,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
     m_bulletPhysics = bullet;
 
     /* reset toon texture IDs by system default textures */
-    for (int i = 0; i < kNSystemTextureFiles; i++) {
+    for (uint32_t i = 0; i < kNSystemTextureFiles; i++) {
         PMDTexture *texture = &m_localToonTexture[i];
         texture->setRenderEngine(m_engine);
         loader->loadSystemTexture(i, texture);
@@ -389,7 +389,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         m_numRigidBody = 0;
         m_numConstraint = 0;
         /* assign default toon textures for toon shading */
-        for (int i = 0; i <= kNSystemTextureFiles; i++) {
+        for (uint32_t i = 0; i < kNSystemTextureFiles; i++) {
             PMDTexture *texture = &m_localToonTexture[i];
             texture->setRenderEngine(m_engine);
             loader->loadSystemTexture(i, texture);
@@ -422,7 +422,7 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         PMDTexture *texture = &m_localToonTexture[0];
         texture->setRenderEngine(m_engine);
         loader->loadSystemTexture(0, texture);
-        for (int i = 1; i <= kNSystemTextureFiles; i++) {
+        for (uint32_t i = 1; i < kNSystemTextureFiles; i++) {
             char exToonBMPName[100];
             memcpy(exToonBMPName, ptr, sizeof(exToonBMPName));
             exToonBMPName[sizeof(exToonBMPName) - 1] = 0;

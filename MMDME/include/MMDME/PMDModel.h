@@ -65,7 +65,7 @@ typedef struct {
 class PMDModel
 {
 public:
-    static const int  kNSystemTextureFiles = 10;
+    static const uint32_t kNSystemTextureFiles = 11;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
     static const float kEdgeColorR;
@@ -208,7 +208,7 @@ public:
             return m_material[i];
     }
     inline PMDTexture *getToonTextureAt(uint32_t i) {
-        if (i >= kNSystemTextureFiles + 1)
+        if (i >= kNSystemTextureFiles)
             return NULL;
         else
             return &m_localToonTexture[i];
@@ -300,7 +300,7 @@ private:
     PMDRigidBody *m_rigidBodyList;
     uint32_t m_numConstraint;
     PMDConstraint *m_constraintList;
-    PMDTexture m_localToonTexture[kNSystemTextureFiles + 1];
+    PMDTexture m_localToonTexture[kNSystemTextureFiles];
     btTransform *m_boneSkinningTrans;
     btVector3 *m_skinnedVertexList;
     btVector3 *m_skinnedNormalList;
