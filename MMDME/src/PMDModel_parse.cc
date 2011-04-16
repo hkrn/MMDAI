@@ -436,6 +436,8 @@ bool PMDModel::parse(PMDModelLoader *loader, BulletPhysics *bullet)
         /* check for remaining ptr */
         if (rest == 0) {
             /* no rigid body / constraint ptr exist */
+            m_numRigidBody = 0;
+            m_numConstraint = 0;
         } else {
             btVector3 modelOffset = m_rootBone.getOffset();
             /* update bone matrix to apply root bone offset to bone position */
