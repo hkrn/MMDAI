@@ -121,10 +121,14 @@ int main(int argc, char *argv[])
     MMDAILogInfo("MMDAIResources: %s", resourcePath.toUtf8().constData());
 
     /* load translation files from Qt's system path and resource path */
-#if defined(Q_OS_MAC)
+#ifdef QMA_TRANSLATION_PATH
+    QString translationPath(QMA_TRANSLATION_PATH);
+#else
+#ifdef Q_OS_MAC
     QString translationPath = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
     QString translationPath = resourcePath + "/Locales";
+#endif
 #endif
     paths.clear();
     paths.append(translationPath);
