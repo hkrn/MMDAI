@@ -315,7 +315,7 @@ bool SceneController::addMotion(PMDObject *object,
             name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
             if (name == NULL)
                 return false;
-            MMDAIStringFormat(name, allocSize, "%d", i);
+            MMDAIStringFormatSafe(name, allocSize, "%d", i);
             motionPlayer = object->getMotionManager()->getMotionPlayerList();
             for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
                 if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
@@ -482,7 +482,7 @@ bool SceneController::addModel(const char *modelAlias,
             name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
             if (name == NULL)
                 return false;
-            MMDAIStringFormat(name, allocSize, "%d", i);
+            MMDAIStringFormatSafe(name, allocSize, "%d", i);
             if (findPMDObject(name) != NULL)
                 MMDAIMemoryRelease(name);
             else
@@ -609,7 +609,7 @@ void SceneController::changeLightDirection(float x, float y, float z)
     /* send event message */
     if (m_handler != NULL) {
         char buf[BUFSIZ];
-        MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", x, y, z);
+        MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", x, y, z);
         sendEvent1(SceneEventHandler::kLightDirectionEvent, buf);
     }
 }
@@ -624,7 +624,7 @@ void SceneController::changeLightColor(float r, float g, float b)
     /* send event message */
     if (m_handler != NULL) {
         char buf[BUFSIZ];
-        MMDAIStringFormat(buf, sizeof(BUFSIZ), "%.2f,%.2f,%.2f", r, g, b);
+        MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", r, g, b);
         sendEvent1(SceneEventHandler::kLightColorEvent, buf);
     }
 }

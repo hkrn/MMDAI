@@ -169,15 +169,16 @@ inline char *MMDAIStringClone(const char *str)
 
 inline char *MMDAIStringCopy(char *dst, const char *src, size_t max)
 {
-    assert(dst != NULL && src != NULL && max != 0);
+    assert(dst != NULL && src != NULL && max > 0);
     return strncpy(dst, src, max);
 }
 
 inline char *MMDAIStringCopySafe(char *dst, const char *src, size_t max)
 {
-    assert(dst != NULL && src != NULL && max != 0);
-    char *ptr = strncpy(dst, src, max - 1);
-    dst[max - 1] = 0;
+    assert(dst != NULL && src != NULL && max > 0);
+    size_t len = max - 1;
+    char *ptr = strncpy(dst, src, len);
+    dst[len] = '\0';
     return ptr;
 }
 
@@ -189,7 +190,7 @@ inline bool MMDAIStringEquals(const char *s1, const char *s2)
 
 inline bool MMDAIStringEqualsIn(const char *s1, const char *s2, size_t max)
 {
-    assert(s1 != NULL && s2 != NULL && max != 0);
+    assert(s1 != NULL && s2 != NULL && max > 0);
     return strncmp(s1, s2, max) == 0;
 }
 
@@ -204,13 +205,25 @@ inline char *MMDAIStringGetToken(char *str, const char *delim, char **ptr)
 #endif
 }
 
-inline int MMDAIStringFormat(char *str, size_t n, const char *format, ...)
+inline int MMDAIStringFormat(char *str, size_t max, const char *format, ...)
 {
-    assert(str != NULL && n != 0 && format != NULL);
+    assert(str != NULL && max > 0 && format != NULL);
     va_list ap;
     va_start(ap, format);
+    int len = vsnprintf(str, max, format, ap);
+    va_end(ap);
+    return len;
+}
+
+inline int MMDAIStringFormatSafe(char *str, size_t max, const char *format, ...)
+{
+    assert(str != NULL && max > 0 && format != NULL);
+    va_list ap;
+    va_start(ap, format);
+    size_t n = max - 1;
     int len = vsnprintf(str, n, format, ap);
     va_end(ap);
+    str[n] = '\0';
     return len;
 }
 
