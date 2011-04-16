@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -64,14 +64,10 @@ QMAAquesTalk2Plugin::~QMAAquesTalk2Plugin()
 {
 }
 
-void QMAAquesTalk2Plugin::initialize(MMDAI::SceneController *controller)
+void QMAAquesTalk2Plugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    /* do nothing */
-}
-
-void QMAAquesTalk2Plugin::start()
-{
+    Q_UNUSED(baseName);
 #if !defined(Q_OS_WIN32)
     PaError err = Pa_Initialize();
     if (err != paNoError)
@@ -79,7 +75,7 @@ void QMAAquesTalk2Plugin::start()
 #endif
 }
 
-void QMAAquesTalk2Plugin::stop()
+void QMAAquesTalk2Plugin::unload()
 {
 #if !defined(Q_OS_WIN32)
     PaError err = Pa_Terminate();
@@ -88,40 +84,22 @@ void QMAAquesTalk2Plugin::stop()
 #endif
 }
 
-void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     int argc = arguments.count();
     if (command == "MMDAI_AQTK2_START" && argc >= 3) {
-        QString text = arguments.at(2);
-        QString phontPath = arguments.at(1);
-        QString modelName = arguments.at(0);
+        QString text = arguments[2].toString();
+        QString phontPath = arguments[1].toString();
+        QString modelName = arguments[0].toString();
         phontPath = QDir::isAbsolutePath(phontPath) ? phontPath : ("MMDAIResources:/" + phontPath);
         QtConcurrent::run(this, &QMAAquesTalk2Plugin::run, modelName, phontPath, text);
     }
 }
 
-void QMAAquesTalk2Plugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAAquesTalk2Plugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
     Q_UNUSED(type);
     Q_UNUSED(arguments);
-    /* do nothing */
-}
-
-void QMAAquesTalk2Plugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-    /* do nothing */
-}
-
-void QMAAquesTalk2Plugin::prerender()
-{
-    /* do nothing */
-}
-
-void QMAAquesTalk2Plugin::postrender()
-{
     /* do nothing */
 }
 
@@ -135,7 +113,7 @@ void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath
         ptr = phont.data();
     }
 
-    const QString dicPath = QDir("MMDAIResources").absoluteFilePath("aq_dic");
+    const QString dicPath = QDir("MMDAIResources:/").absoluteFilePath("aq_dic");
     char result[8192];
     int rc = 0;
     void *handle = AqKanji2Koe_Create(dicPath.toUtf8().constData(), &rc);
@@ -200,7 +178,7 @@ final:
     }
 #endif
 
-    QStringList arguments;
+    QList<QVariant> arguments;
     arguments << modelName;
     emit eventPost(QString("MMDAI_AQTK2_STOP"), arguments);
 }
