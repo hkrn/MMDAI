@@ -84,14 +84,12 @@ int main(int argc, char *argv[])
 
     const QString applicationPath = appDir.absolutePath();
     QStringList paths;
-    paths.append(applicationPath);
-    QDir::setSearchPaths("mmdai", paths);
 
     /* set path to find configurations (e.g. MMDAI.fst) */
 #ifdef QMA_CONFIG_PATH
-    QString configPath(QMA_CONFIG_PATH);
+    const QString configPath(QMA_CONFIG_PATH);
 #else
-    QString configPath(applicationPath);
+    const QString configPath(applicationPath);
 #endif
     paths.clear();
     paths.append(configPath);
@@ -100,9 +98,9 @@ int main(int argc, char *argv[])
 
     /* set path to find plugins */
 #ifdef QMA_PLUGIN_PATH
-    QString pluginPath(QMA_PLUGIN_PATH);
+    const QString pluginPath(QMA_PLUGIN_PATH);
 #else
-    QString pluginPath(applicationPath + "/Plugins");
+    const QString pluginPath(applicationPath + "/Plugins");
 #endif
     paths.clear();
     paths.append(pluginPath);
@@ -111,9 +109,9 @@ int main(int argc, char *argv[])
 
     /* set path to find resources such as model, motion etc. */
 #ifdef QMA_RESOURCE_PATH
-    QString resourcePath(QMA_RESOURCE_PATH);
+    const QString resourcePath(QMA_RESOURCE_PATH);
 #else
-    QString resourcePath(applicationPath);
+    const QString resourcePath(applicationPath);
 #endif
     paths.clear();
     paths.append(resourcePath);
@@ -122,12 +120,12 @@ int main(int argc, char *argv[])
 
     /* load translation files from Qt's system path and resource path */
 #ifdef QMA_TRANSLATION_PATH
-    QString translationPath(QMA_TRANSLATION_PATH);
+    const QString translationPath(QMA_TRANSLATION_PATH);
 #else
 #ifdef Q_OS_MAC
-    QString translationPath = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
+    const QString translationPath = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
 #else
-    QString translationPath = resourcePath + "/Locales";
+    const QString translationPath = resourcePath + "/Locales";
 #endif
 #endif
     paths.clear();
