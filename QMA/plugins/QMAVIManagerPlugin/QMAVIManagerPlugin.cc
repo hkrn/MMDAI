@@ -57,8 +57,12 @@ void QMAVIManagerPlugin::load(MMDAI::SceneController *controller, const QString 
 {
     Q_UNUSED(controller);
     QFile config(QString("MMDAIUserData:/%1.fst").arg(baseName));
-    if (config.exists())
-        m_thread.load(config.fileName().toUtf8().constData());
+    if (config.exists() && config.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream stream(&config);
+        stream.setCodec("Shift-JIS");
+        m_thread.load(stream);
+        config.close();
+    }
     m_thread.start();
 }
 
@@ -81,24 +85,21 @@ void QMAVIManagerPlugin::receiveEvent(const QString &type, const QList<QVariant>
         foreach (QVariant arg, arguments) {
             strings << arg.toString();
         }
-        QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-        m_thread.enqueueBuffer(type.toUtf8().constData(), codec->fromUnicode(strings.join("|")).constData());
+        QByteArray typeBytes = type.toUtf8();
+        QByteArray stringsBytes = strings.join("|").toUtf8();
+        m_thread.enqueueBuffer(typeBytes.constData(), stringsBytes.constData());
     }
 }
 
 void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
 {
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    QString argv = codec->toUnicode(arguments, strlen(arguments)).replace(codec->toUnicode("\\"), "/");
-    QRegExp regexp("\\/[^\\.]+\\.\\w+$");
+    static QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QList<QVariant> args;
-    // encodes the filename if the value matches the filename suffix
+    QString argv = codec->toUnicode(arguments);
     foreach (QString value, argv.split("|")) {
-        if (regexp.indexIn(value) != -1)
-            value = QString(QFile::encodeName(value));
         args << value;
     }
-    emit commandPost(QString(command), args);
+    emit commandPost(command, args);
     free(arguments);
 }
 

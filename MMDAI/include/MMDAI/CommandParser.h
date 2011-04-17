@@ -54,7 +54,7 @@ public:
     explicit CommandParser(SceneController *controller, PMDModelLoaderFactory *factory);
     ~CommandParser();
 
-    bool parse(const char *command, const char **argv, int argc);
+    bool parse(const char *command, char **argv, int argc);
 
 private:
     SceneController *m_controller;

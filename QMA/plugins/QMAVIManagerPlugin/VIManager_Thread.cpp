@@ -156,10 +156,10 @@ VIManager_Thread::~VIManager_Thread()
 }
 
 /* VIManager_Thread::loadAndStart: load FST and start thread */
-void VIManager_Thread::load(const char *filename)
+void VIManager_Thread::load(QTextStream &stream)
 {
     /* load FST for VIManager */
-    if (m_vim.load(filename) == 0)
+    if (m_vim.load(stream) == 0)
         return;
 }
 

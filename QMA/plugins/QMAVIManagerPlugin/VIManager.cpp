@@ -37,12 +37,10 @@
 /* ----------------------------------------------------------------- */
 
 /* headers */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "VIManager.h"
+
+#include <QTextCodec>
+#include "MMDME/Common.h"
 
 /* get_token_from_string: get token from string */
 static int get_token_from_string(char *str, int *index, char *buff)
@@ -360,63 +358,40 @@ VIManager::~VIManager()
 }
 
 /* VIManager::load: load FST */
-int VIManager::load(const char *fn)
+int VIManager::load(QTextStream &stream)
 {
-    FILE *fp;
-    char buff[VIMANAGER_MAXBUFLEN];
-    int len;
-    int idx;
-
-    char buff_s1[VIMANAGER_MAXBUFLEN];
-    char buff_s2[VIMANAGER_MAXBUFLEN];
-    char buff_is[VIMANAGER_MAXBUFLEN];
-    char buff_os[VIMANAGER_MAXBUFLEN];
-    char buff_er[VIMANAGER_MAXBUFLEN];
-    int size_s1;
-    int size_s2;
-    int size_is;
-    int size_os;
-    int size_er;
-    char *err_s1;
-    char *err_s2;
-    unsigned int index_s1;
-    unsigned int index_s2;
-
-    /* open */
-    fp = fopen(fn, "r");
-    if (fp == NULL)
-        return 0;
-
     /* unload */
     VIManager_SList_clear(&m_stateList);
     VIManager_SList_initialize(&m_stateList);
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
 
-    while (fgets(buff, VIMANAGER_MAXBUFLEN - 3, fp) != NULL) { /* string + \r + \n + \0 */
-        /* remove final \n and \r */
-        len = strlen(buff);
-        while (len > 0 && (buff[len-1] == '\n' || buff[len-1] == '\r'))
-            buff[--len] = '\0';
-
+    while (!stream.atEnd()) { /* string + \r + \n + \0 */
+        QString line = stream.readLine().trimmed();
         /* check and load arc */
-        if (len > 0) {
-            idx = 0;
-            size_s1 = get_token_from_string(buff, &idx, buff_s1);
-            size_s2 = get_token_from_string(buff, &idx, buff_s2);
-            size_is = get_token_from_string(buff, &idx, buff_is);
-            size_os = get_token_from_string(buff, &idx, buff_os);
-            size_er = get_token_from_string(buff, &idx, buff_er);
+        if (!line.isEmpty() && line[0] != '#') {
+            char buff[VIMANAGER_MAXBUFLEN];
+            char buff_s1[VIMANAGER_MAXBUFLEN];
+            char buff_s2[VIMANAGER_MAXBUFLEN];
+            char buff_is[VIMANAGER_MAXBUFLEN];
+            char buff_os[VIMANAGER_MAXBUFLEN];
+            char buff_er[VIMANAGER_MAXBUFLEN];
+            QByteArray bytes = line.replace(codec->toUnicode("\\"), "/").toUtf8();
+            MMDAIStringCopySafe(buff, bytes.constData(), sizeof(buff));
+            int idx = 0;
+            int size_s1 = get_token_from_string(buff, &idx, buff_s1);
+            int size_s2 = get_token_from_string(buff, &idx, buff_s2);
+            int size_is = get_token_from_string(buff, &idx, buff_is);
+            int size_os = get_token_from_string(buff, &idx, buff_os);
+            int size_er = get_token_from_string(buff, &idx, buff_er);
             if (size_s1 > 0 && size_s2 > 0 && size_is > 0 && size_os > 0 && size_er == 0 && buff_s1[0] != VIMANAGER_COMMENT) {
-                index_s1 = (unsigned int) strtoul(buff_s1, &err_s1, 10);
-                index_s2 = (unsigned int) strtoul(buff_s2, &err_s2, 10);
+                char *err_s1 = NULL, *err_s2 = NULL;
+                unsigned int index_s1 = (unsigned int) strtoul(buff_s1, &err_s1, 10);
+                unsigned int index_s2 = (unsigned int) strtoul(buff_s2, &err_s2, 10);
                 if (buff_s1 + size_s1 == err_s1 && buff_s2 + size_s2 == err_s2)
                     VIManager_SList_add_arc(&m_stateList, index_s1, index_s2, buff_is, buff_os);
             }
         }
-        if (feof(fp) || ferror(fp))
-            break;
     }
-
-    fclose(fp);
 
     /* set current state to zero */
     m_currentState = VIManager_SList_search_state(&m_stateList, VIMANAGER_STARTSTATE);

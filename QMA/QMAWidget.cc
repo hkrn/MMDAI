@@ -39,17 +39,17 @@
 #include "QMAWidget.h"
 
 QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-      m_preference(preference),
-      m_sceneUpdateTimer(this),
-      m_controller(new MMDAI::SceneController(this, preference)),
-      m_parser(m_controller, &m_factory),
-      m_x(0),
-      m_y(0),
-      m_doubleClicked(false),
-      m_showLog(true),
-      m_displayBone(false),
-      m_displayRigidBody(false)
+: QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+m_preference(preference),
+m_sceneUpdateTimer(this),
+m_controller(new MMDAI::SceneController(this, preference)),
+m_parser(m_controller, &m_factory),
+m_x(0),
+m_y(0),
+m_doubleClicked(false),
+m_showLog(true),
+m_displayBone(false),
+m_displayRigidBody(false)
 {
     m_sceneUpdateTimer.setSingleShot(false);
     connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
@@ -117,8 +117,8 @@ void QMAWidget::loadPlugins(QFile &file)
                 }
                 else {
                     MMDAILogWarn("%s was not loaded by an error: %s",
-                                 fileName.toUtf8().constData(),
-                                 loader.errorString().toUtf8().constData());
+                        fileName.toUtf8().constData(),
+                        loader.errorString().toUtf8().constData());
                 }
             }
         }
@@ -129,17 +129,17 @@ void QMAWidget::loadPlugins(QFile &file)
 void QMAWidget::addPlugin(QMAPlugin *plugin)
 {
     connect(this, SIGNAL(pluginLoaded(MMDAI::SceneController*,QString)),
-            plugin, SLOT(load(MMDAI::SceneController*,QString)));
+        plugin, SLOT(load(MMDAI::SceneController*,QString)));
     connect(this, SIGNAL(pluginUnloaded()),
-            plugin, SLOT(unload()));
+        plugin, SLOT(unload()));
     connect(this, SIGNAL(pluginCommandPost(QString,QList<QVariant>)),
-            plugin, SLOT(receiveCommand(QString,QList<QVariant>)));
+        plugin, SLOT(receiveCommand(QString,QList<QVariant>)));
     connect(this, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
-            plugin, SLOT(receiveEvent(QString,QList<QVariant>)));
+        plugin, SLOT(receiveEvent(QString,QList<QVariant>)));
     connect(plugin, SIGNAL(commandPost(QString,QList<QVariant>)),
-            this, SLOT(delegateCommand(QString,QList<QVariant>)));
+        this, SLOT(delegateCommand(QString,QList<QVariant>)));
     connect(plugin, SIGNAL(eventPost(QString,QList<QVariant>)),
-            this, SLOT(delegateEvent(QString,QList<QVariant>)));
+        this, SLOT(delegateEvent(QString,QList<QVariant>)));
     MMDAILogInfo("%s was loaded successfully", plugin->metaObject()->className());
 }
 
@@ -147,29 +147,27 @@ void QMAWidget::delegateCommand(const QString &command, const QList<QVariant> &a
 {
     qDebug().nospace() << "delegateCommand command=" << command << ", arguments="  << arguments;
     int argc = arguments.count();
-    const char *cmd = MMDAIStringClone(command.toUtf8().constData());
-    const char **argv = static_cast<const char **>(calloc(sizeof(char *), argc));
-    if (cmd != NULL) {
-        if (argv != NULL) {
-            bool err = false;
-            for (int i = 0; i < argc; i++) {
-                QString arg = arguments.at(i).toString();
-                if ((argv[i] = MMDAIStringClone(arg.toUtf8().constData())) == NULL) {
-                    err = true;
-                    break;
-                }
+    QByteArray cmd = command.toUtf8();
+    char **argv = static_cast<char **>(calloc(sizeof(char *), argc));
+    if (argv != NULL) {
+        bool err = false;
+        QRegExp regexp(".*/.+\\.\\w+$");
+        for (int i = 0; i < argc; i++) {
+            QString arg = arguments.at(i).toString();
+            QByteArray bytes = regexp.indexIn(arg) != -1 ? QFile::encodeName(arg) : arg.toUtf8();
+            if ((argv[i] = MMDAIStringClone(bytes.constData())) == NULL) {
+                err = true;
+                break;
             }
-            if (!err)
-                m_parser.parse(cmd, argv, argc);
-            for (int i = 0; i < argc; i++) {
-                if (argv[i] != NULL)
-                    free(const_cast<char *>(argv[i]));
-            }
-            MMDAIMemoryRelease(argv);
-            if (!err)
-                emit pluginCommandPost(command, arguments);
         }
-        free(const_cast<char *>(cmd));
+        if (!err)
+            m_parser.parse(cmd.constData(), argv, argc);
+        for (int i = 0; i < argc; i++) {
+            MMDAIMemoryRelease(argv[i]);
+        }
+        MMDAIMemoryRelease(argv);
+        if (!err)
+            emit pluginCommandPost(command, arguments);
     }
 }
 
@@ -217,7 +215,7 @@ void QMAWidget::changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loa
 {
     MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
     for (; player != NULL; player = player->next) {
-        if (player->active && strncmp(player->name, "base", 4) == 0) {
+        if (player->active && MMDAIStringEqualsIn(player->name, "base", 4) == 0) {
             m_controller->changeMotion(object, "base", loader);
             break;
         }
@@ -245,9 +243,10 @@ void QMAWidget::showEvent(QShowEvent *event)
                     file.setFileName(path.absolutePath().replace(QRegExp("\\.(fst|mdf)$"), ".mdf"));
                     path.cdUp();
                     QStringList searchPaths = QDir::searchPaths("MMDAIUserData");
-                    searchPaths.prepend(path.absolutePath());
+                    QString searchPath = path.absolutePath();
+                    searchPaths.prepend(searchPath);
                     QDir::setSearchPaths("MMDAIUserData", searchPaths);
-                    MMDAILogInfo("added %s to MMDAIUserData schema", path.absolutePath().toUtf8().constData());
+                    MMDAILogInfo("added %s to MMDAIUserData schema", searchPath.toUtf8().constData());
                 }
             }
         }
@@ -272,8 +271,8 @@ void QMAWidget::paintGL()
     m_controller->updateModelPositionAndRotation(fps);
     m_controller->updateModelView();
     m_controller->updateProjection();
-    m_controller->prerenderScene();
     delegateEvent(QMAPlugin::getPreRenderEvent(), QMAPlugin::getEmptyArguments());
+    m_controller->prerenderScene();
     m_controller->renderScene();
     if (m_displayBone)
         m_controller->renderPMDObjectsForDebug();
@@ -480,14 +479,14 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     }
                 }
                 else if (path.endsWith(".bmp", Qt::CaseInsensitive)
-                         || path.endsWith(".tga", Qt::CaseInsensitive)
-                         || path.endsWith(".png", Qt::CaseInsensitive)) {
-                    /* floor or background */
-                    MMDAI::PMDModelLoader *loader = m_factory.createModelLoader(filename);
-                    if (modifiers & Qt::ControlModifier)
-                        m_controller->loadFloor(loader);
-                    else
-                        m_controller->loadBackground(loader);
+                    || path.endsWith(".tga", Qt::CaseInsensitive)
+                    || path.endsWith(".png", Qt::CaseInsensitive)) {
+                        /* floor or background */
+                        MMDAI::PMDModelLoader *loader = m_factory.createModelLoader(filename);
+                        if (modifiers & Qt::ControlModifier)
+                            m_controller->loadFloor(loader);
+                        else
+                            m_controller->loadBackground(loader);
                 }
                 else {
                     MMDAILogInfo("dropped file is not supported: %s", filename);

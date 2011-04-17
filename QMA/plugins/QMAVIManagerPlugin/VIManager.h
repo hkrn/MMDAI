@@ -39,6 +39,8 @@
 #ifndef VIMANAGER_H_
 #define VIMANAGER_H_
 
+#include <QTextStream>
+
 #define VIMANAGER_MAXBUFLEN        65536
 #define VIMANAGER_SEPARATOR1       '|'
 #define VIMANAGER_SEPARATOR2       ','
@@ -128,7 +130,7 @@ public:
     ~VIManager();
 
     /* load: load FST */
-    int load(const char *fn);
+    int load(QTextStream &stream);
 
     /* transition: state transition (if jumped, return 1) */
     int transition(const char *itype, const char* iargs, char *otype, char *oargs);

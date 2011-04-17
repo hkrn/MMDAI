@@ -40,6 +40,7 @@
 #define VIMANAGER_THREAD_H_
 
 #include <QMutex>
+#include <QTextStream>
 #include <QThread>
 #include <QWaitCondition>
 
@@ -106,7 +107,7 @@ public:
     ~VIManager_Thread();
 
     /* loadAndStart: load FST and start thread */
-    void load(const char *filename);
+    void load(QTextStream &stream);
 
     void stop();
 

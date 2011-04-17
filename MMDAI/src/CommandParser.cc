@@ -108,7 +108,7 @@ CommandParser::~CommandParser()
     m_factory = 0;
 }
 
-bool CommandParser::parse(const char *command, const char **argv, int argc)
+bool CommandParser::parse(const char *command, char **argv, int argc)
 {
     PMDObject *object = NULL;
     PMDModelLoader *pmd = NULL;
