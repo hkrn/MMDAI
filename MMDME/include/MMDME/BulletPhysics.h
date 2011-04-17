@@ -58,8 +58,7 @@ public:
     }
 
 private:
-    void initialize();
-    void clear();
+    void release();
 
     btDefaultCollisionConfiguration *m_collisionConfig;
     btCollisionDispatcher *m_dispatcher;

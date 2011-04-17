@@ -42,25 +42,30 @@
 
 namespace MMDAI {
 
-/* BulletPhysics::initialize: initialize BulletPhysics */
-void BulletPhysics::initialize()
+BulletPhysics::BulletPhysics()
+    : m_collisionConfig(0),
+      m_dispatcher(0),
+      m_overlappingPairCache(0),
+      m_solver(0),
+      m_world(0),
+      m_fps(0),
+      m_subStep(0)
 {
-    m_collisionConfig = NULL;
-    m_dispatcher = NULL;
-    m_overlappingPairCache = NULL;
-    m_solver = NULL;
-    m_world = NULL;
-    m_fps = 0;
 }
 
-/* BulletPhysics::clear: free BulletPhysics */
-void BulletPhysics::clear()
+BulletPhysics::~BulletPhysics()
+{
+    release();
+}
+
+void BulletPhysics::release()
 {
     if (m_world) {
         /* release remaining objects within the world */
         int numObject = m_world->getNumCollisionObjects();
+        btAlignedObjectArray<btCollisionObject*> objects = m_world->getCollisionObjectArray();
         for (int i = 0; i < numObject; i++) {
-            btCollisionObject *obj = m_world->getCollisionObjectArray()[i];
+            btCollisionObject *obj = objects[i];
             btRigidBody *body = btRigidBody::upcast(obj);
             if (body && body->getMotionState())
                 delete body->getMotionState();
@@ -69,33 +74,25 @@ void BulletPhysics::clear()
         }
     }
 
+    m_subStep = 0;
+    m_fps = 0;
     delete m_world;
+    m_world = 0;
     delete m_solver;
+    m_solver = 0;
     delete m_overlappingPairCache;
+    m_overlappingPairCache = 0;
     delete m_dispatcher;
+    m_dispatcher = 0;
     delete m_collisionConfig;
-
-    initialize();
+    m_collisionConfig = 0;
 }
 
-/* BulletPhysics::BulletPhysics: constructor */
-BulletPhysics::BulletPhysics()
-{
-    initialize();
-}
-
-/* BulletPhysics::~BulletPhysics: destructor */
-BulletPhysics::~BulletPhysics()
-{
-    clear();
-}
-
-/* BulletPhysics::setup: initialize and setup BulletPhysics */
 void BulletPhysics::setup(int simulationFps)
 {
     float dist = 400.0f;
 
-    clear();
+    release();
 
     /* store values */
     m_fps = simulationFps;
@@ -126,7 +123,6 @@ void BulletPhysics::setup(int simulationFps)
     m_world->getSolverInfo().m_numIterations = (int) (10 * 60 / m_fps);
 }
 
-/* BulletPhysics::update: step the simulation world forward */
 void BulletPhysics::update(float deltaFrame)
 {
     btScalar sec = deltaFrame / 30.0f; /* convert frame to second */
