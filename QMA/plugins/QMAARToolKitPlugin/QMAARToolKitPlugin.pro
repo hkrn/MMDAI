@@ -38,7 +38,7 @@ include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAARToolKitPlugin)
 QT += opengl
 
-unix:LIBS += -lAR -lARgsub_lite -lARvideo
+unix:LIBS += -lARgsub_lite -lARvideo -lAR
 macx:LIBS += -framework Carbon -framework Cocoa -framework QuickTime
 macx:CONFIG += x86
 

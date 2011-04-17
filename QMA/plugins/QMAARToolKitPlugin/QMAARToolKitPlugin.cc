@@ -21,7 +21,7 @@
 #include <QtCore>
 
 QMAARToolKitPlugin::QMAARToolKitPlugin()
-    : m_controller(NULL),
+    : m_controller(0),
       m_image(NULL),
       m_settings(NULL),
       m_patternID(0),
@@ -37,8 +37,9 @@ QMAARToolKitPlugin::~QMAARToolKitPlugin()
 {
 }
 
-void QMAARToolKitPlugin::initialize(MMDAI::SceneController *controller)
+void QMAARToolKitPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
+    Q_UNUSED(baseName);
     QDir dir("MMDAIResources:/ARToolKit/Data");
     QString confingFile = "";
     QString cameraParamFile = dir.absoluteFilePath("camera_para.dat");
@@ -72,15 +73,10 @@ void QMAARToolKitPlugin::initialize(MMDAI::SceneController *controller)
     }
     MMDAILogDebugString("Initialized ARToolKit settings successfully");
     m_enabled = true;
+    arVideoCapStart();
 }
 
-void QMAARToolKitPlugin::start()
-{
-    if (m_enabled)
-        arVideoCapStart();
-}
-
-void QMAARToolKitPlugin::stop()
+void QMAARToolKitPlugin::unload()
 {
     if (m_enabled) {
         arVideoCapStop();
@@ -89,31 +85,16 @@ void QMAARToolKitPlugin::stop()
     }
 }
 
-void QMAARToolKitPlugin::receiveCommand(const QString &command, const QStringList &arguments)
+void QMAARToolKitPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     Q_UNUSED(command);
     Q_UNUSED(arguments);
-    /* do nothing */
 }
 
-void QMAARToolKitPlugin::receiveEvent(const QString &type, const QStringList &arguments)
+void QMAARToolKitPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
-    Q_UNUSED(type);
     Q_UNUSED(arguments);
-    /* do nothing */
-}
-
-void QMAARToolKitPlugin::update(const QRect &rect, const QPoint &pos, const double delta)
-{
-    Q_UNUSED(rect);
-    Q_UNUSED(pos);
-    Q_UNUSED(delta);
-    /* do nothing */
-}
-
-void QMAARToolKitPlugin::prerender()
-{
-    if (m_enabled) {
+    if (m_enabled && type == QMAPlugin::getPreRenderEvent()) {
         ARUint8 *ptr = NULL;
         if ((ptr = static_cast<ARUint8 *>(arVideoGetImage())) == NULL) {
             ptr = m_image;
@@ -164,11 +145,6 @@ void QMAARToolKitPlugin::prerender()
             m_controller->setModelView(transform);
         }
     }
-}
-
-void QMAARToolKitPlugin::postrender()
-{
-    /* do nothing */
 }
 
 Q_EXPORT_PLUGIN2(qma_artoolkit_plugin, QMAARToolKitPlugin);
