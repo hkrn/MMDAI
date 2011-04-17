@@ -5,41 +5,36 @@
 #include <QMap>
 
 #include "QMAPlugin.h"
-#include "CommandDispatcher.h"
 
 class QMAVILuaPlugin : public QMAPlugin
 {
-  Q_OBJECT
-  Q_INTERFACES(QMAPlugin)
+    Q_OBJECT
+    Q_INTERFACES(QMAPlugin)
 
 public:
-  QMAVILuaPlugin();
-  ~QMAVILuaPlugin();
+    QMAVILuaPlugin();
+    ~QMAVILuaPlugin();
 
 public slots:
-  void initialize(MMDAI::SceneController *controller);
-  void start();
-  void stop();
-  void receiveCommand(const QString &command, const QStringList &arguments);
-  void receiveEvent(const QString &type, const QStringList &arguments);
-  void update(const QRect &rect, const QPoint &pos, const double delta);
-  void prerender();
-  void postrender();
+    void load(MMDAI::SceneController *controller, const QString &baseName);
+    void unload();
+    void receiveCommand(const QString &command, const QList<QVariant> &arguments);
+    void receiveEvent(const QString &type, const QList<QVariant> &arguments);
 
-  void pushCommand(const QString &command, const QStringList &arguments);
-  void pushEvent(const QString &command, const QStringList &arguments);
-  void broadcast();
+    void pushCommand(const QString &command, const QList<QVariant> &arguments);
+    void pushEvent(const QString &command, const QList<QVariant> &arguments);
+    void broadcast();
 
 signals:
-  void commandPost(const QString &command, const QStringList &arguments);
-  void eventPost(const QString &type, const QStringList &arguments);
+    void commandPost(const QString &command, const QList<QVariant> &arguments);
+    void eventPost(const QString &type, const QList<QVariant> &arguments);
 
 private:
-  void handleInvoke(const QString &command, const QStringList &arguments, const char *invoke);
+    void handleInvoke(const QString &command, const QList<QVariant> &arguments, const char *invoke);
 
-  QMap<QString, QStringList> m_commands;
-  QMap<QString, QStringList> m_events;
-  lua_State *m_state;
+    QMap<QString, QList<QVariant> > m_commands;
+    QMap<QString, QList<QVariant> > m_events;
+    lua_State *m_state;
 };
 
 #endif // QMAVILUAPLUGIN_H
