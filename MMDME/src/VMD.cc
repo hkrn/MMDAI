@@ -157,7 +157,7 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
         float x2 = ip[ 8+i] / 127.0f;
         float y2 = ip[12+i] / 127.0f;
         for (int16_t d = 0; d < kInterpolationTableSize; d++) {
-            float inval = ((float) d + 0.5f) / (float) kInterpolationTableSize;
+            float inval = (static_cast<float>(d) + 0.5f) / static_cast<float>(kInterpolationTableSize);
             /* get Y value for given inval */
             float t = inval;
             while (1) {
@@ -247,22 +247,28 @@ bool VMD::parse(unsigned char *data, size_t size)
     uint32_t i = 0;
 
     char name[16];
-    (void)size;
+    size_t rest = size;
 
     /* free VMD */
     release();
 
     /* header */
     VMDFile_Header *header = reinterpret_cast<VMDFile_Header *>(data);
-    if (!MMDAIStringEqualsIn(header->header, "Vocaloid Motion Data 0002", sizeof(header->header)))
+    if (sizeof(VMDFile_Header) > rest || !MMDAIStringEqualsIn(header->header, "Vocaloid Motion Data 0002", sizeof(header->header)))
         return false;
 
     data += sizeof(VMDFile_Header);
+    rest -= sizeof(VMDFile_Header);
 
     /* bone motions */
-    // FIXME: use unsigned int instead of unsigned long for 64bit environment
-    m_numTotalBoneKeyFrame = *((unsigned int *) data);
-    data += sizeof(unsigned int);
+    m_numTotalBoneKeyFrame = *reinterpret_cast<uint32_t *>(data);
+    data += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
+    if (m_numTotalBoneKeyFrame * sizeof(VMDFile_BoneFrame) > rest) {
+        MMDAILogWarnString("size of bones exceeds size of VMD");
+        return false;
+    }
 
     VMDFile_BoneFrame *boneFrame = reinterpret_cast<VMDFile_BoneFrame *>(data);
 
@@ -285,7 +291,7 @@ bool VMD::parse(unsigned char *data, size_t size)
         MMDAIStringCopySafe(name, boneFrame[i].name, sizeof(name));
         BoneMotion *bm = getBoneMotion(name);
         if (bm) {
-            bm->keyFrameList[bm->numKeyFrame].keyFrame = (float) boneFrame[i].keyFrame;
+            bm->keyFrameList[bm->numKeyFrame].keyFrame = static_cast<float>(boneFrame[i].keyFrame);
             if (m_maxFrame < bm->keyFrameList[bm->numKeyFrame].keyFrame)
                 m_maxFrame = bm->keyFrameList[bm->numKeyFrame].keyFrame;
             /* convert from left-hand coordinates to right-hand coordinates */
@@ -310,10 +316,17 @@ bool VMD::parse(unsigned char *data, size_t size)
         m_numBoneKind++;
 
     data += sizeof(VMDFile_BoneFrame) * m_numTotalBoneKeyFrame;
+    rest -= sizeof(VMDFile_BoneFrame) * m_numTotalBoneKeyFrame;
 
     /* face motions */
-    m_numTotalFaceKeyFrame = *((unsigned int *) data);
-    data += sizeof(unsigned int);
+    m_numTotalFaceKeyFrame = *reinterpret_cast<uint32_t *>(data);
+    data += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
+    if (m_numTotalFaceKeyFrame * sizeof(VMDFile_FaceFrame) > rest) {
+        MMDAILogWarnString("size of faces exceeds size of VMD");
+        return false;
+    }
 
     VMDFile_FaceFrame *faceFrame = reinterpret_cast<VMDFile_FaceFrame *>(data);
 
@@ -336,7 +349,7 @@ bool VMD::parse(unsigned char *data, size_t size)
         MMDAIStringCopySafe(name, faceFrame[i].name, sizeof(name));
         FaceMotion *fm = getFaceMotion(name);
         if (fm) {
-            fm->keyFrameList[fm->numKeyFrame].keyFrame = (float) faceFrame[i].keyFrame;
+            fm->keyFrameList[fm->numKeyFrame].keyFrame = static_cast<float>(faceFrame[i].keyFrame);
             if (m_maxFrame < fm->keyFrameList[fm->numKeyFrame].keyFrame)
                 m_maxFrame = fm->keyFrameList[fm->numKeyFrame].keyFrame;
             fm->keyFrameList[fm->numKeyFrame].weight = faceFrame[i].weight;
@@ -353,6 +366,22 @@ bool VMD::parse(unsigned char *data, size_t size)
         m_numFaceKind++;
 
     data += sizeof(VMDFile_FaceFrame) * m_numTotalFaceKeyFrame;
+    rest -= sizeof(VMDFile_FaceFrame) * m_numTotalFaceKeyFrame;
+
+    int numCameraFrame = *reinterpret_cast<uint32_t *>(data);
+    data += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
+    int numLightFrame = *reinterpret_cast<uint32_t *>(data);
+    data += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
+    int numSelfShadowFrame = *reinterpret_cast<uint32_t *>(data);
+    data += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
+
+    MMDAILogDebug("camera:%d light:%d selfShadow:%d", numCameraFrame, numLightFrame, numSelfShadowFrame);
+    MMDAILogDebug("rest of VMD: %d (data size is %d)", rest, size);
 
     return true;
 }
