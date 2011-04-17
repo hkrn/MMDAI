@@ -48,6 +48,11 @@ class QMAAquesTalk2Plugin : public QMAPlugin
     Q_INTERFACES(QMAPlugin)
 
 public:
+    static const QString kAquesTalk2Start;
+    static const QString kAquesTalk2RawStart;
+    static const QString kAquesTalk2EventStart;
+    static const QString kAquesTalk2EventStop;
+
     QMAAquesTalk2Plugin(QObject *parent = 0);
     ~QMAAquesTalk2Plugin();
 
@@ -62,7 +67,7 @@ signals:
     void eventPost(const QString &type, const QList<QVariant> &arguments);
 
 private:
-    void run(const QString &modelName, const QString &phontPath, const QString &text);
+    void run(const QString &modelName, const QString &phontPath, const QString &text, bool convert);
     QString m_modelName;
 };
 

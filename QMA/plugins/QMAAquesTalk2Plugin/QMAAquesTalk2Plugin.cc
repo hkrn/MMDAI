@@ -55,6 +55,11 @@
 #include "AqKanji2Koe.h"
 #endif
 
+const QString QMAAquesTalk2Plugin::kAquesTalk2Start = "MMDAI_AQTK2_START";
+const QString QMAAquesTalk2Plugin::kAquesTalk2RawStart = "MMDAI_AQTK2_START_RAW";
+const QString QMAAquesTalk2Plugin::kAquesTalk2EventStart = "MMDAI_AQTK2_EVENT_START";
+const QString QMAAquesTalk2Plugin::kAquesTalk2EventStop = "MMDAI_AQTK2_EVENT_STOP";
+
 QMAAquesTalk2Plugin::QMAAquesTalk2Plugin(QObject *parent)
 : QMAPlugin(parent)
 {
@@ -87,12 +92,13 @@ void QMAAquesTalk2Plugin::unload()
 void QMAAquesTalk2Plugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     int argc = arguments.count();
-    if (command == "MMDAI_AQTK2_START" && argc >= 3) {
+    if ((command == kAquesTalk2Start || command == kAquesTalk2RawStart) && argc >= 3) {
         QString text = arguments[2].toString();
         QString phontPath = arguments[1].toString();
         QString modelName = arguments[0].toString();
+        bool convert = command == kAquesTalk2Start;
         phontPath = QDir::isAbsolutePath(phontPath) ? phontPath : ("MMDAIResources:/" + phontPath);
-        QtConcurrent::run(this, &QMAAquesTalk2Plugin::run, modelName, phontPath, text);
+        QtConcurrent::run(this, &QMAAquesTalk2Plugin::run, modelName, phontPath, text, convert);
     }
 }
 
@@ -103,7 +109,7 @@ void QMAAquesTalk2Plugin::receiveEvent(const QString &type, const QList<QVariant
     /* do nothing */
 }
 
-void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath, const QString &text)
+void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath, const QString &text, bool convert)
 {
     QFile phontFile(phontPath);
     QByteArray phont;
@@ -113,21 +119,30 @@ void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath
         ptr = phont.data();
     }
 
-    const QString dicPath = QDir("MMDAIResources:/").absoluteFilePath("aq_dic");
-    char result[8192];
     int rc = 0;
-    void *handle = AqKanji2Koe_Create(dicPath.toUtf8().constData(), &rc);
-    if (handle == 0) {
-        MMDAILogWarn("AqKanji2Koe_Create failed: %d", rc);
-        return;
-    }
+    char result[8192];
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    rc = AqKanji2Koe_Convert(handle, codec->fromUnicode(text).constData(), result, sizeof(result));
-    AqKanji2Koe_Release(handle);
-    if (rc != 0) {
-        MMDAILogWarn("AqKanji2Koe_Convert failed: %d", rc);
-        return;
+    if (convert) {
+        const QString dicPath = QDir("MMDAIResources:/").absoluteFilePath("aq_dic");
+        void *handle = AqKanji2Koe_Create(dicPath.toUtf8().constData(), &rc);
+        if (handle == 0) {
+            MMDAILogWarn("AqKanji2Koe_Create failed: %d", rc);
+            return;
+        }
+        rc = AqKanji2Koe_Convert(handle, codec->fromUnicode(text).constData(), result, sizeof(result));
+        AqKanji2Koe_Release(handle);
+        if (rc != 0) {
+            MMDAILogWarn("AqKanji2Koe_Convert failed: %d", rc);
+            return;
+        }
     }
+    else {
+        MMDAIStringCopySafe(result,  codec->fromUnicode(text).constData(), sizeof(result));
+    }
+
+    QList<QVariant> arguments;
+    arguments << modelName;
+    emit eventPost(kAquesTalk2EventStart, arguments);
 
 #if defined(Q_OS_WIN32)
     rc = AquesTalk2Da_PlaySync(result, 100, ptr);
@@ -137,7 +152,7 @@ void QMAAquesTalk2Plugin::run(const QString &modelName, const QString &phontPath
     }
 #else
     int size = 0;
-    unsigned char *data = AquesTalk2_Synthe_Utf8(result, 100, &size, ptr);
+    unsigned char *data = AquesTalk2_Synthe(result, 100, &size, ptr);
     if (data != NULL) {
         PaError err;
         PaStream *stream;
@@ -178,9 +193,9 @@ final:
     }
 #endif
 
-    QList<QVariant> arguments;
+    arguments.clear();
     arguments << modelName;
-    emit eventPost(QString("MMDAI_AQTK2_STOP"), arguments);
+    emit eventPost(kAquesTalk2EventStop, arguments);
 }
 
 Q_EXPORT_PLUGIN2(qma_aquestalk2_plugin, QMAAquesTalk2Plugin)
