@@ -655,14 +655,12 @@ void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, f
         sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
 
     /* get */
-    btVector3 currentPos;
-    object->getCurrentPosition(currentPos);
+    const btVector3 currentPos = object->getCurrentPosition();
     btVector3 targetPos = (*pos);
 
     /* local or global */
-    btQuaternion currentRot;
     if (local) {
-        object->getCurrentRotation(currentRot);
+        const btQuaternion currentRot = object->getCurrentRotation();
         btTransform tr = btTransform(currentRot, currentPos);
         targetPos = tr * targetPos;
     }
@@ -691,8 +689,7 @@ void SceneController::stopMove(PMDObject *object)
         return;
     }
 
-    btVector3 currentPos;
-    object->getCurrentPosition(currentPos);
+    const btVector3 currentPos = object->getCurrentPosition();
     object->setPosition(currentPos);
 
     /* send event message */
@@ -711,8 +708,7 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
             sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
     }
 
-    btQuaternion currentRot;
-    object->getCurrentRotation(currentRot);
+    const btQuaternion currentRot = object->getCurrentRotation();
     btQuaternion targetRot = *rot;
     targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
 
@@ -740,8 +736,7 @@ void SceneController::stopRotation(PMDObject *object)
         return;
     }
 
-    btQuaternion currentRot;
-    object->getCurrentRotation(currentRot);
+    const btQuaternion currentRot = object->getCurrentRotation();
     object->setRotation(currentRot);
 
     sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
@@ -750,7 +745,7 @@ void SceneController::stopRotation(PMDObject *object)
 /* SceneController::startTurn: start turn */
 void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, float speed)
 {
-    btQuaternion targetRot, currentRot;
+    btQuaternion targetRot;
     const char *alias = object->getAlias();
 
     if (object->isRotating()) {
@@ -760,9 +755,8 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
             sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
     }
 
-    btVector3 currentPos;
-    object->getCurrentPosition(currentPos);
-    object->getCurrentRotation(currentRot);
+    const btVector3 currentPos = object->getCurrentPosition();
+    const btQuaternion currentRot = object->getCurrentRotation();
 
     btVector3 targetPos = local ? *pos : *pos - currentPos;
     targetPos.normalize();
@@ -795,7 +789,7 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
     object->setTurning(true);
 
     /* send event message */
-    sendEvent1(SceneEventHandler::kTurnStartEvent, object->getAlias());
+    sendEvent1(SceneEventHandler::kTurnStartEvent, alias);
 }
 
 /* SceneController::stopTurn: stop turn */
@@ -808,8 +802,7 @@ void SceneController::stopTurn(PMDObject *object)
         return;
     }
 
-    btQuaternion currentRot;
-    object->getCurrentRotation(currentRot);
+    const btQuaternion currentRot = object->getCurrentRotation();
     object->setRotation(currentRot);
 
     /* send event message */
@@ -1019,14 +1012,15 @@ void SceneController::eraseModel(PMDObject *object)
             eraseModel(assoc);
         }
     }
+    const char *alias = object->getAlias();
     const char *lipSyncMotion = LipSync::getMotionName();
     MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
     for (; player != NULL; player = player->next) {
         if (MMDAIStringEquals(player->name, lipSyncMotion)) {
-            sendEvent1(SceneEventHandler::kLipSyncStopEvent, object->getAlias());
+            sendEvent1(SceneEventHandler::kLipSyncStopEvent, alias);
         }
         else {
-            sendEvent2(SceneEventHandler::kMotionDeleteEvent, object->getAlias(), player->name);
+            sendEvent2(SceneEventHandler::kMotionDeleteEvent, alias, player->name);
         }
         m_motion.unload(player->vmd);
     }

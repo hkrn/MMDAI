@@ -94,7 +94,7 @@ public:
         return m_alias;
     }
     inline void setAlias(const char *alias) {
-        if(alias && MMDAIStringLength(alias) > 0) {
+        if (alias && MMDAIStringLength(alias) > 0) {
             MMDAIMemoryRelease(m_alias);
             m_alias = MMDAIStringClone(alias);
         }
@@ -109,20 +109,20 @@ public:
         delete m_motionManager;
         m_motionManager = new MotionManager(m_model);
     }
-    inline void getCurrentPosition(btVector3 &pos) {
-        pos = m_model->getRootBone()->getOffset();
+    inline const btVector3 &getCurrentPosition() {
+        return m_model->getRootBone()->getOffset();
     }
-    inline void getTargetPosition(btVector3 &pos) {
-        pos = m_offsetPos;
+    inline const btVector3 &getTargetPosition() {
+        return m_offsetPos;
     }
     inline void setPosition(const btVector3 &pos) {
         m_offsetPos = pos;
     }
-    inline void getCurrentRotation(btQuaternion &rot) {
-        rot = m_model->getRootBone()->getCurrentRotation();
+    inline const btQuaternion &getCurrentRotation() {
+        return m_model->getRootBone()->getCurrentRotation();
     }
-    inline void getTargetRotation(btQuaternion &rot) {
-        rot = m_offsetRot;
+    inline const btQuaternion &getTargetRotation() {
+        return m_offsetRot;
     }
     inline void setRotation(const btQuaternion &rot) {
         m_offsetRot = rot;

@@ -332,9 +332,8 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
         else if (modifiers & Qt::ControlModifier) {
             MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
             if (selectedObject != NULL) {
-                btVector3 pos;
                 m_controller->setHighlightPMDObject(selectedObject);
-                selectedObject->getTargetPosition(pos);
+                btVector3 pos = selectedObject->getTargetPosition();
                 pos.setX(pos.x() + x / 20.0f);
                 pos.setZ(pos.z() + y / 20.0f);
                 selectedObject->setPosition(pos);
