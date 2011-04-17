@@ -332,7 +332,7 @@ bool SceneController::addMotion(PMDObject *object,
             name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
             if (name == NULL)
                 return false;
-            MMDAIStringFormatSafe(name, allocSize, "%d", i);
+            MMDAIStringFormat(name, allocSize, "%d", i);
             motionPlayer = object->getMotionManager()->getMotionPlayerList();
             for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
                 if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
@@ -499,7 +499,7 @@ bool SceneController::addModel(const char *modelAlias,
             name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
             if (name == NULL)
                 return false;
-            MMDAIStringFormatSafe(name, allocSize, "%d", i);
+            MMDAIStringFormat(name, allocSize, "%d", i);
             if (findPMDObject(name) != NULL)
                 MMDAIMemoryRelease(name);
             else
