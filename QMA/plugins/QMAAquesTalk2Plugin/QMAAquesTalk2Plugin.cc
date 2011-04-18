@@ -42,7 +42,6 @@
 #include <QTextCodec>
 
 #include <MMDAI/MMDAI.h>
-#include "portaudio.h"
 
 #if defined(Q_OS_WIN32)
 #include "AquesTalk2Da.h"
@@ -50,9 +49,11 @@
 #elif defined(Q_OS_DARWIN)
 #include <AquesTalk2/AquesTalk2.h>
 #include <AqKanji2Koe/AqKanji2Koe.h>
+#include "portaudio.h"
 #else
 #include "AquesTalk2.h"
 #include "AqKanji2Koe.h"
+#include "portaudio.h"
 #endif
 
 const QString QMAAquesTalk2Plugin::kAquesTalk2Start = "MMDAI_AQTK2_START";

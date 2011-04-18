@@ -38,7 +38,7 @@ include(../QMAPlugin.pri)
 TARGET = $$qtLibraryTarget(QMAAquesTalk2Plugin)
 
 LIBS:unix += -lportaudio
-!macx:LIBS += -lAquesTalk2 -lAqKanji2Koe
+linux:LIBS += -lAquesTalk2 -lAqKanji2Koe
 
 macx {
     LIBS += -framework AquesTalk2 -framework AqKanji2Koe -framework CoreAudio
@@ -47,8 +47,14 @@ macx {
 }
 
 win32 {
-    INCLUDEPATH += $$(MMDAI_AQUESTALK2_INCLUDE_DIR) $$(MMDAI_AQKANJI2KOE_INCLUDE_DIR)
-    LIBS += -L$$(MMDAI_AQUESTALK2_LIBRARY_DIR) $$(MMDAI_AQKANJI2KOE_LIBRARY_DIR)
+    INCLUDEPATH += $$(MMDAI_AQUESTALK2_DIR) $$(MMDAI_AQKANJI2KOE_DIR)
+    LIBS +=  -lAquesTalk2Da -lAqKanji2Koe -L$$(MMDAI_AQUESTALK2_DIR) -L$$(MMDAI_AQKANJI2KOE_DIR)
+}
+
+BUNDLE_AQUESTALK2 = $$(MMDAI_BUNDLE_AQUESTALK2)
+!isEmpty(BUNDLE_AQUESTALK2) {
+    CONFIG += static
+	DESTDIR = ../../AquesTalk2PluginLib
 }
 
 HEADERS += \

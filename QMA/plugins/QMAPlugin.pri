@@ -12,7 +12,7 @@ CONFIG(debug, debug|release) {
 CONFIG(release, debug|release) {
     DESTDIR = ../../release/Plugins
     macx {
-        CONFIG += x86 static
+        CONFIG += static
         DESTDIR = ../StaticPlugins
     }
 }
