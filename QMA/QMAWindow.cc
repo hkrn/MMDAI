@@ -413,6 +413,10 @@ void QMAWindow::about()
                           "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
                           "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
                           "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
+#ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
+                          "<li><a href='http://www.a-quest.com'>AquesTalk2</a></li>"
+                          "<li><a href='http://www.a-quest.com'>AqKanji2Koe</a></li>"
+#endif
 #ifdef QMA_BUNDLE_PLUGINS
                           /* TODO: should split this */
                           "<li><a href='http://julius.sourceforge.jp'>Julius</a></li>"
