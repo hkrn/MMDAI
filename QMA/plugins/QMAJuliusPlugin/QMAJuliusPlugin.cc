@@ -42,7 +42,6 @@
 #include <QFile>
 #include <QTextCodec>
 #include <QTextStream>
-#include <QTranslator>
 
 #include <MMDME/Common.h>
 
@@ -138,10 +137,9 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
 void QMAJuliusPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    QTranslator translator;
     QFile path("MMDAITranslations:/QMAJuliusPlugin_" + QLocale::system().name());
-    translator.load(path.fileName());
-    qApp->installTranslator(&translator);
+    m_translator.load(path.fileName());
+    qApp->installTranslator(&m_translator);
     m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine, baseName));
     if (QSystemTrayIcon::supportsMessages()) {
         m_tray.showMessage(tr("Started initialization of Julius"),

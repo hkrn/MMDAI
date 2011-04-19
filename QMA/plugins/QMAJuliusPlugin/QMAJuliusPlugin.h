@@ -41,6 +41,7 @@
 
 #include <QFutureWatcher>
 #include <QSystemTrayIcon>
+#include <QTranslator>
 
 #include <julius/juliuslib.h>
 
@@ -84,6 +85,7 @@ private:
     QMAJuliusPluginThread *m_thread;
     QFutureWatcher<bool> m_watcher;
     QSystemTrayIcon m_tray;
+    QTranslator m_translator;
     Jconf *m_jconf;
     Recog *m_recog;
 };
