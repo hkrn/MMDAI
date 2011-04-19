@@ -185,7 +185,7 @@ void QMAWindow::setBackground()
 {
     m_settings.beginGroup("window");
     QString path = m_settings.value("lastBackgroundDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open floor image"), path, tr("Image (*.bmp *.png *.tga)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open background image"), path, tr("Image (*.bmp *.png *.tga)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastBackgroundDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
