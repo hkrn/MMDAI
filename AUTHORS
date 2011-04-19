@@ -8,5 +8,7 @@ MMDAI is distributed under new BSD license.
 Nagoya Institute of Technology Department of Computer Science: The original author(s) of MMDAgent
 
 * MMDAI
-hkrn <hikarin users.sourceforge.jp>: The founder of MMDAI
+- @hikarincl2 <hikarin users.sourceforge.jp>: The founder of MMDAI
+- @witch_kazumin: Created the first distribution of linux binaries
+- @iRi_E: Created the distribtion of Debian package, and found and reported some bugs
 
