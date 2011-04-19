@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("hkrn.github.com");
     app.setOrganizationName("MMDAI Project");
     app.setApplicationName("QtMMDAI");
-    app.setApplicationVersion("0.6");
+    app.setApplicationVersion("0.61");
 
     QDir appDir = QDir(app.applicationDirPath());
 #if defined(Q_OS_WIN)
