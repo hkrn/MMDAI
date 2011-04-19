@@ -50,6 +50,8 @@ class QMAAudioPlugin : public QMAPlugin
     Q_INTERFACES(QMAPlugin)
 
 public:
+    static const QString kSoundStart;
+    static const QString kSoundStop;
     static const QString kSoundStartEvent;
     static const QString kSoundStopEvent;
 

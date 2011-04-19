@@ -38,6 +38,8 @@
 
 #include <QFile>
 
+const QString QMAAudioPlugin::kSoundStart = "SOUND_START";
+const QString QMAAudioPlugin::kSoundStop = "SOUND_STOP";
 const QString QMAAudioPlugin::kSoundStartEvent = "SOUND_EVENT_START";
 const QString QMAAudioPlugin::kSoundStopEvent = "SOUND_EVENT_STOP";
 
@@ -76,18 +78,18 @@ void QMAAudioPlugin::unload()
 void QMAAudioPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
     int argc = arguments.count();
-    if (command == kSoundStartEvent && argc == 2) {
+    if (command == kSoundStart && argc >= 2) {
         QString alias = arguments.at(0).toString();
-        QString filename = QFile::decodeName(arguments.at(1).toString().toUtf8());
+        QString filename = arguments.at(1).toString();
         if (!QDir::isAbsolutePath(filename))
             filename = QDir("MMDAIUserData:/").absoluteFilePath(filename);
         Phonon::MediaSource source(filename);
         m_audioSources[alias] = source;
         m_audioObject->enqueue(source);
         m_audioObject->play();
-        emit eventPost(QString("SOUND_EVENT_START"), arguments);
+        emit eventPost(kSoundStartEvent, arguments);
     }
-    else if (command == kSoundStopEvent && argc == 1) {
+    else if (command == kSoundStop && argc >= 1) {
         QString alias = arguments.at(0).toString();
         if (m_audioSources.contains(alias)) {
             m_audioObject->stop();
