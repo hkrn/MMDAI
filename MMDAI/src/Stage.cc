@@ -169,7 +169,6 @@ void Stage::initialize()
 
     m_hasPMD = false;
     m_bullet = NULL;
-    m_model = NULL;
     m_floorBody = NULL;
     for (i = 0; i < 4 ; i++)
         for (j = 0; j < 4; j++)
@@ -245,7 +244,7 @@ bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
     if (m_bullet == NULL)
         m_bullet = bullet;
 
-    bool ret = m_model->load(loader, bullet);
+    bool ret = m_engine->loadModel(m_model, loader, bullet);
     if (ret) {
         m_model->setToonEnable(false);
         m_model->updateSkin();
