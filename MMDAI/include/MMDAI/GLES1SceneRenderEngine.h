@@ -50,7 +50,7 @@ class btConvexShape;
 namespace MMDAI {
 
 class BulletPhysics;
-class Preference;
+class IPreference;
 class PMDBone;
 class PMDModel;
 class PMDObject;
@@ -67,7 +67,7 @@ struct PMDRenderCacheNative {
 
 class GLES1SceneRenderEngine : public SceneRenderEngine {
 public:
-    GLES1SceneRenderEngine(Preference *preference);
+    GLES1SceneRenderEngine(IPreference *preference);
     ~GLES1SceneRenderEngine();
     
     PMDModel *allocateModel();
@@ -128,7 +128,7 @@ private:
     void drawSphere(int lats, int longs);
     void drawConvex(btConvexShape *shape);
     
-    Preference *m_preference;
+    IPreference *m_preference;
     btVector3 m_lightVec;                  /* light vector for shadow maapping */
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     btScalar m_modelView[16];

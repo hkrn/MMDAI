@@ -176,7 +176,7 @@ public:
 private:
 };
 
-GLES1SceneRenderEngine::GLES1SceneRenderEngine(Preference *preference)
+GLES1SceneRenderEngine::GLES1SceneRenderEngine(IPreference *preference)
 : m_preference(preference),
 m_lightVec(btVector3(0.0f, 0.0f, 0.0f)),
 m_shadowMapAutoViewEyePoint(btVector3(0.0f, 0.0f, 0.0f)),
