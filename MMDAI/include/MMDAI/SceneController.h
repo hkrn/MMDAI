@@ -52,7 +52,7 @@ namespace MMDAI {
 
 class ILipSyncLoader;
 class PMDObject;
-class Preference;
+class IPreference;
 class SceneEventHandler;
 class SceneRenderEngine;
 
@@ -64,7 +64,7 @@ public:
     static const float kRenderViewPointCameraZ;
     static const float kRenderViewPointYOffset;
 
-    SceneController(SceneEventHandler *handler, Preference *preference);
+    SceneController(SceneEventHandler *handler, IPreference *preference);
     ~SceneController();
 
     void initializeScreen(int width, int height);
@@ -203,7 +203,7 @@ private:
     MotionStocker m_motion;
     PMDObject **m_objects;
     PMDObject *m_highlightModel;
-    Preference *m_preference;
+    IPreference *m_preference;
     SceneEventHandler *m_handler;
     Stage *m_stage;
     int m_numModel;

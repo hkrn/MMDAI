@@ -112,7 +112,7 @@ public:
 private:
 };
 
-GLSceneRenderEngine::GLSceneRenderEngine(Preference *preference)
+GLSceneRenderEngine::GLSceneRenderEngine(IPreference *preference)
     : m_preference(preference),
     m_lightVec(0.0f, 0.0f, 0.0f),
     m_shadowMapAutoViewEyePoint(0.0f, 0.0f, 0.0f),

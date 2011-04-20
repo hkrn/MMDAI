@@ -42,6 +42,7 @@
 #include <MMDME/MMDME.h>
 
 #include "MMDAI/ILipSyncLoader.h"
+#include "MMDAI/IPreference.h"
 #include "MMDAI/IResourceFactory.h"
 
 #include "MMDAI/BoneController.h"
@@ -49,7 +50,6 @@
 #include "MMDAI/LipSync.h"
 #include "MMDAI/MotionStocker.h"
 #include "MMDAI/PMDObject.h"
-#include "MMDAI/Preference.h"
 #include "MMDAI/SceneController.h"
 #include "MMDAI/SceneEventHandler.h"
 #include "MMDAI/SceneRenderEngine.h"

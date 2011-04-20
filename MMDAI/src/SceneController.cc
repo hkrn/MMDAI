@@ -122,7 +122,7 @@ static int getNumDigit(int in)
     return out;
 }
 
-SceneController::SceneController(SceneEventHandler *handler, Preference *preference)
+SceneController::SceneController(SceneEventHandler *handler, IPreference *preference)
   : m_engine(0),
     m_objects(0),
     m_highlightModel(0),

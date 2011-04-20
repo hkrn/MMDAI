@@ -61,7 +61,7 @@ namespace MMDAI {
   class IModelLoader;
   class PMDObject;
   class PMDTexture;
-  class Preference;
+  class IPreference;
   class Stage;
 
   struct PMDTextureNative {
@@ -74,7 +74,7 @@ namespace MMDAI {
 
   class GLSceneRenderEngine : public SceneRenderEngine {
   public:
-    GLSceneRenderEngine(Preference *preference);
+    GLSceneRenderEngine(IPreference *preference);
     ~GLSceneRenderEngine();
 
     PMDModel *allocateModel();
@@ -136,7 +136,7 @@ namespace MMDAI {
     void renderSceneShadowMap(PMDObject **objects, int size, Stage * stage);
     void renderScene(PMDObject **objects, int size, Stage *stage);
 
-    Preference *m_preference;
+    IPreference *m_preference;
     btVector3 m_lightVec;                  /* light vector for shadow maapping */
     btVector3 m_shadowMapAutoViewEyePoint; /* view point of shadow mapping */
     GLdouble m_modelView2[16];

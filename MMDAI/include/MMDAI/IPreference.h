@@ -80,10 +80,10 @@ enum PreferenceKeys {
     kPreferenceMaxLengthOfKeys
 };
 
-class Preference
+class IPreference
 {
 public:
-    virtual ~Preference() {};
+    virtual ~IPreference() {};
 
     virtual bool getBool(const PreferenceKeys key) = 0;
     virtual int getInt(const PreferenceKeys key) = 0;

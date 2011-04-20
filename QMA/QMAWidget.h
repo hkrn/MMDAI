@@ -40,7 +40,6 @@
 #include <QtGui/QtGui>
 
 #include <MMDAI/CommandParser.h>
-#include <MMDAI/Preference.h>
 #include <MMDAI/SceneEventHandler.h>
 
 #include "QMAModelLoaderFactory.h"

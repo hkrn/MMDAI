@@ -37,12 +37,12 @@
 #ifndef QMAPREFERENCE_H
 #define QMAPREFERENCE_H
 
-#include <MMDAI/Preference.h>
+#include <MMDAI/IPreference.h>
 #include <QFile>
 #include <QSettings>
 #include <QVariant>
 
-class QMAPreference : public MMDAI::Preference
+class QMAPreference : public MMDAI::IPreference
 {
 public:
     QMAPreference(QSettings *settings);
