@@ -39,6 +39,12 @@
 #ifndef QMAVIMANAGERPLUGIN_H
 #define QMAVIMANAGERPLUGIN_H
 
+#include <QBasicTimer>
+#include <QHash>
+#include <QMap>
+#include <QString>
+#include <QTimerEvent>
+
 #include "VIManager_Thread.h"
 
 #include "QMAPlugin.h"
@@ -51,6 +57,18 @@ class QMAVIManagerPlugin : public QMAPlugin
     Q_INTERFACES(QMAPlugin)
 
 public:
+    static const QString kValueSet;
+    static const QString kValueUnset;
+    static const QString kValueEvaluate;
+    static const QString kTimerStart;
+    static const QString kTimerStop;
+
+    static const QString kValueSetEvent;
+    static const QString kValueUnsetEvent;
+    static const QString kValueEvaluateEvent;
+    static const QString kTimerStartEvent;
+    static const QString kTimerStopEvent;
+
     QMAVIManagerPlugin(QObject *parent = 0);
     ~QMAVIManagerPlugin();
 
@@ -67,8 +85,20 @@ signals:
     void commandPost(const QString &command, const QList<QVariant> &arguments);
     void eventPost(const QString &type, const QList<QVariant> &arguments);
 
+protected:
+    void timerEvent(QTimerEvent *event);
+
 private:
+    void setValue(const QString &key, const QString &value, const QString &value2);
+    void deleteValue(const QString &key);
+    void evaluate(const QString &key, const QString &op, const QString &value);
+    void startTimer0(const QString &key, const QString &value);
+    void stopTimer0(const QString &key);
+
+    QHash<QString, float> m_values;
+    QMap<QString, QBasicTimer *> m_timers;
     VIManager_Thread m_thread;
 };
 
 #endif // QMAVIMANAGERPLUGIN_H
+

@@ -41,7 +41,20 @@
 #include <QFile>
 #include <QStringList>
 #include <QTextCodec>
-#include <stdlib.h>
+
+#include <MMDME/MMDME.h>
+
+const QString QMAVIManagerPlugin::kValueSet = "VALUE_SET";
+const QString QMAVIManagerPlugin::kValueUnset = "VALUE_UNSET";
+const QString QMAVIManagerPlugin::kValueEvaluate = "VALUE_EVAL";
+const QString QMAVIManagerPlugin::kTimerStart = "TIMER_START";
+const QString QMAVIManagerPlugin::kTimerStop = "TIMER_STOP";
+
+const QString QMAVIManagerPlugin::kValueSetEvent = "VALUE_EVENT_SET";
+const QString QMAVIManagerPlugin::kValueUnsetEvent = "VALUE_EVENT_UNSET";
+const QString QMAVIManagerPlugin::kValueEvaluateEvent = "VALUE_EVENT_EVAL";
+const QString QMAVIManagerPlugin::kTimerStartEvent = "TIMER_EVENT_START";
+const QString QMAVIManagerPlugin::kTimerStopEvent = "TIMER_EVENT_STOP";
 
 QMAVIManagerPlugin::QMAVIManagerPlugin(QObject *parent)
     : QMAPlugin(parent),
@@ -73,9 +86,34 @@ void QMAVIManagerPlugin::unload()
 
 void QMAVIManagerPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
 {
-    Q_UNUSED(command);
-    Q_UNUSED(arguments);
-    /* do nothing */
+    int argc = arguments.count();
+    if (command == kValueSet && argc >= 2) {
+        const QString key = arguments[0].toString();
+        const QString value = arguments[0].toString();
+        QString value2 = "";
+        if (argc >= 3)
+            value2 = arguments[2].toString();
+        setValue(key, value, value2);
+    }
+    else if (command == kValueUnset && argc >= 1) {
+        const QString key = arguments[0].toString();
+        deleteValue(key);
+    }
+    else if (command == kValueEvaluate && argc >= 3) {
+        const QString key = arguments[0].toString();
+        const QString op = arguments[1].toString();
+        const QString value = arguments[2].toString();
+        evaluate(key, op, value);
+    }
+    else if (command == kTimerStart && argc >= 2) {
+        const QString key = arguments[0].toString();
+        const QString value = arguments[1].toString();
+        startTimer0(key, value);
+    }
+    else if (command == kTimerStop && argc >= 1) {
+        const QString key = arguments[0].toString();
+        stopTimer0(key);
+    }
 }
 
 void QMAVIManagerPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
@@ -108,6 +146,143 @@ void QMAVIManagerPlugin::sendEvent(const char *type, char *arguments)
     Q_UNUSED(type);
     Q_UNUSED(arguments);
     /* do nothing */
+}
+
+void QMAVIManagerPlugin::setValue(const QString &key, const QString &value, const QString &value2)
+{
+    if (key.isEmpty()) {
+        MMDAILogInfoString("specified key is empty");
+        return;
+    }
+    if (value2.isNull()) {
+        m_values[key] = value.toFloat();
+    }
+    else {
+        float min = value.toFloat();
+        float max = value2.toFloat();
+        if (max < min) {
+            float swap = max;
+            max = min;
+            min = swap;
+        }
+        const float random = min + (max - min) * qrand() * (1.0f / RAND_MAX);
+        m_values[key] = random;
+    }
+    QList<QVariant> arguments;
+    arguments << key;
+    emit eventPost(kValueSetEvent, arguments);
+}
+
+void QMAVIManagerPlugin::deleteValue(const QString &key)
+{
+    if (m_values.contains(key)) {
+        m_values.remove(key);
+        QList<QVariant> arguments;
+        arguments << key;
+        emit eventPost(kValueUnsetEvent, arguments);
+    }
+}
+
+void QMAVIManagerPlugin::evaluate(const QString &key, const QString &op, const QString &value)
+{
+    if (!m_values.contains(key)) {
+        MMDAILogInfo("Evaluating %s is not found", key.toUtf8().constData());
+        return;
+    }
+    const float v1 = value.toFloat();
+    const float v2 = m_values[key];
+    bool ret = false;
+    if (op == "EQ") {
+        ret = v1 == v2;
+    }
+    else if (op == "NE") {
+        ret = v1 != v2;
+    }
+    else if (op == "LT") {
+        ret = v1 > v2;
+    }
+    else if (op == "LE") {
+        ret = v1 >= v2;
+    }
+    else if (op == "GT") {
+        ret = v1 < v2;
+    }
+    else if (op == "GE") {
+        ret = v1 <= v2;
+    }
+    else {
+        MMDAILogInfo("Operation %s is invalid", op.toUtf8().constData());
+    }
+    QList<QVariant> arguments;
+    arguments << key << op << value;
+    arguments << (ret ? "TRUE" : "FALSE");
+    emit eventPost(kValueEvaluateEvent, arguments);
+}
+
+void QMAVIManagerPlugin::startTimer0(const QString &key, const QString &value)
+{
+    if (key.isEmpty()) {
+        MMDAILogInfoString("specified key is empty");
+        return;
+    }
+    const int seconds = value.toInt();
+    if (m_timers.contains(key)) {
+        QBasicTimer *timer = m_timers.value(key);
+        timer->stop();
+        delete timer;
+    }
+    if (seconds > 0) {
+        const int msec = seconds * 1000;
+        QBasicTimer *timer = new QBasicTimer();
+        m_timers.insert(key, timer);
+        timer->start(msec, this);
+        QList<QVariant> arguments;
+        arguments << key;
+        emit eventPost(kTimerStartEvent, arguments);
+    }
+    else {
+        MMDAILogInfo("Invalid second: %s", value.toUtf8().constData());
+    }
+}
+
+void QMAVIManagerPlugin::stopTimer0(const QString &key)
+{
+    if (m_timers.contains(key)) {
+        QBasicTimer *timer = m_timers.value(key);
+        m_timers.remove(key);
+        timer->stop();
+        delete timer;
+        QList<QVariant> arguments;
+        arguments << key;
+        emit eventPost(kTimerStopEvent, arguments);
+    }
+}
+
+void QMAVIManagerPlugin::timerEvent(QTimerEvent *event)
+{
+    QMapIterator<QString, QBasicTimer *> iterator(m_timers);
+    QString key;
+    QBasicTimer *timer = NULL;
+    const int id = event->timerId();
+    while (iterator.hasNext()) {
+        iterator.next();
+        timer = iterator.value();
+        if (timer->timerId() == id) {
+            key = iterator.key();
+            break;
+        }
+    }
+    if (!key.isNull()) {
+        timer->stop();
+        delete timer;
+        m_timers.remove(key);
+        QList<QVariant> arguments;
+        arguments << key;
+        emit eventPost(kTimerStopEvent, arguments);
+    }
+    else {
+        MMDAILogWarn("%s seems deleted", key.toUtf8().constData());
+    }
 }
 
 Q_EXPORT_PLUGIN2(qma_vimanager_plugin, QMAVIManagerPlugin)
