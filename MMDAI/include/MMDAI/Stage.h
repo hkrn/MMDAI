@@ -47,7 +47,7 @@
 
 namespace MMDAI {
 
-class PMDModelLoader;
+class IModelLoader;
 
 
 class Stage
@@ -57,9 +57,9 @@ public:
     ~Stage();
 
     void setSize(float *size, float numx, float numy);
-    bool loadFloor(PMDModelLoader *loader, BulletPhysics *bullet);
-    bool loadBackground(PMDModelLoader *loader, BulletPhysics *bullet);
-    bool loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet);
+    bool loadFloor(IModelLoader *loader, BulletPhysics *bullet);
+    bool loadBackground(IModelLoader *loader, BulletPhysics *bullet);
+    bool loadStagePMD(IModelLoader *loader, BulletPhysics *bullet);
     void renderFloor();
     void renderBackground();
     void renderPMD();

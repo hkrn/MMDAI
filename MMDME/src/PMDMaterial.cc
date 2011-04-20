@@ -75,7 +75,7 @@ void PMDMaterial::release()
     m_additionalTexture.release();
 }
 
-bool PMDMaterial::setup(const PMDFile_Material *m, PMDModelLoader *loader)
+bool PMDMaterial::setup(const PMDFile_Material *m, IModelLoader *loader)
 {
     release();
 

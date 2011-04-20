@@ -53,7 +53,7 @@ class BulletPhysics;
 class PMDConstraint;
 class PMDIK;
 class PMDMaterial;
-class PMDModelLoader;
+class IModelLoader;
 class PMDRenderEngine;
 class PMDRigidBody;
 
@@ -76,7 +76,7 @@ public:
     PMDModel(PMDRenderEngine *engine);
     virtual ~PMDModel();
 
-    bool load(PMDModelLoader *loader, BulletPhysics *bullet);
+    bool load(IModelLoader *loader, BulletPhysics *bullet);
     PMDBone *getBone(const char *name);
     PMDFace *getFace(const char *name);
     void updateBone();
@@ -272,7 +272,7 @@ public:
     }
 
 private:
-    bool parse(PMDModelLoader *loader, BulletPhysics *bullet);
+    bool parse(IModelLoader *loader, BulletPhysics *bullet);
     void initialize();
     void clear();
 

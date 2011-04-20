@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -38,30 +38,28 @@
 
 /* headers */
 
-#ifndef LIPSYNCLOADER_H
-#define LIPSYNCLOADER_H
+#ifndef MMDAI_IRESOURCEFACTORY_H_
+#define MMDAI_IRESOURCEFACTORY_H_
 
 namespace MMDAI {
 
-class LipSyncLoader
+class IModelLoader;
+class ILipSyncLoader;
+class IMotionLoader;
+
+class IResourceFactory
 {
 public:
-  virtual ~LipSyncLoader() {}
-
-  virtual bool load() = 0;
-
-  virtual int getNExpressions() = 0;
-
-  virtual const char *getExpressionName(int i) = 0;
-
-  virtual int getNPhonemes() = 0;
-
-  virtual const char *getPhoneName(int i) = 0;
-
-  virtual float getInterpolationWeight(int i, int j) = 0;
+    virtual ~IResourceFactory() {}
+    virtual IModelLoader *createModelLoader(const char *filename) = 0;
+    virtual IMotionLoader *createMotionLoader(const char *filename) = 0;
+    virtual ILipSyncLoader *createLipSyncLoader(const char *filename) = 0;
+    virtual void releaseModelLoader(IModelLoader *loader) = 0;
+    virtual void releaseMotionLoader(IMotionLoader *loader) = 0;
+    virtual void releaseLipSyncLoader(ILipSyncLoader *loader) = 0;
 };
 
 } /* namespace */
 
-#endif // LIPSYNCLOADER_H
+#endif // MMDAI_PMDMODELLOADERFACTORY_H_
 

@@ -71,7 +71,7 @@ public:
         glDeleteBuffers(m_nmaterials, m_materialVBO);
         free(m_materialVBO);
     }
-    bool load(PMDModelLoader *loader, BulletPhysics *bullet) {
+    bool load(IModelLoader *loader, BulletPhysics *bullet) {
         bool ret = PMDModel::load(loader, bullet);
         if (!ret)
           return ret;
@@ -168,7 +168,7 @@ PMDModel *GLSceneRenderEngine::allocateModel()
     return new GLPMDModel(this);
 }
 
-bool GLSceneRenderEngine::loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet)
+bool GLSceneRenderEngine::loadModel(PMDModel *model, IModelLoader *loader, BulletPhysics *bullet)
 {
     return reinterpret_cast<GLPMDModel *>(model)->load(loader, bullet);
 }

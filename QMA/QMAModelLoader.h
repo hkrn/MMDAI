@@ -41,10 +41,10 @@
 
 #include <QtGui>
 
-#include <MMDME/PMDModelLoader.h>
-#include <MMDME/VMDLoader.h>
+#include <MMDME/IModelLoader.h>
+#include <MMDME/IMotionLoader.h>
 
-class QMAModelLoader : public MMDAI::PMDModelLoader, public MMDAI::VMDLoader
+class QMAModelLoader : public MMDAI::IModelLoader, public MMDAI::IMotionLoader
 {
 public:
     QMAModelLoader(const QString &system, const char *filename);

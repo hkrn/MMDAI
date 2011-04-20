@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -16,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAgent project team nor the names of  */
+/* - Neither the name of the MMDAI project team nor the names of     */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -36,30 +34,28 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
+#ifndef MMDME_IMODELLOADER_H_
+#define MMDME_IMODELLOADER_H_
 
-#ifndef MMDAI_PMDMODELLOADERFACTORY_H_
-#define MMDAI_PMDMODELLOADERFACTORY_H_
+#include "MMDME/Common.h"
+#include "MMDME/PMDTexture.h"
 
 namespace MMDAI {
 
-class PMDModelLoader;
-class LipSyncLoader;
-class VMDLoader;
-
-class PMDModelLoaderFactory
+class IModelLoader
 {
 public:
-    virtual ~PMDModelLoaderFactory() {}
-    virtual PMDModelLoader *createModelLoader(const char *filename) = 0;
-    virtual VMDLoader *createMotionLoader(const char *filename) = 0;
-    virtual LipSyncLoader *createLipSyncLoader(const char *filename) = 0;
-    virtual void releaseModelLoader(PMDModelLoader *loader) = 0;
-    virtual void releaseMotionLoader(VMDLoader *loader) = 0;
-    virtual void releaseLipSyncLoader(LipSyncLoader *loader) = 0;
+    virtual ~IModelLoader() {}
+    virtual bool loadModelData(unsigned char **ptr, size_t *size) = 0;
+    virtual void unloadModelData(unsigned char *ptr) = 0;
+    //virtual bool loadMotionData(unsigned char **ptr, size_t *size) = 0;
+    //virtual void unloadMotionData(unsigned char *ptr) = 0;
+    virtual bool loadImageTexture(PMDTexture *texture) = 0;
+    virtual bool loadModelTexture(const char *name, PMDTexture *texture) = 0;
+    virtual bool loadSystemTexture(int index, PMDTexture *texture) = 0;
+    virtual const char *getLocation() const = 0;
 };
 
 } /* namespace */
 
-#endif // MMDAI_PMDMODELLOADERFACTORY_H_
-
+#endif

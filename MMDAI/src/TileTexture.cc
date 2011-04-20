@@ -86,7 +86,7 @@ TileTexture::~TileTexture()
 }
 
 /* TileTexture::load: load a texture from file name (wide char) */
-bool TileTexture::load(PMDModelLoader *loader, SceneRenderEngine *engine)
+bool TileTexture::load(IModelLoader *loader, SceneRenderEngine *engine)
 {
     m_texture.setRenderEngine(engine);
     bool ret = loader->loadImageTexture(&m_texture);

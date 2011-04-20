@@ -71,7 +71,7 @@ public:
     ~GLES1SceneRenderEngine();
     
     PMDModel *allocateModel();
-    bool loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet);
+    bool loadModel(PMDModel *model, IModelLoader *loader, BulletPhysics *bullet);
     void releaseModel(PMDModel *model);
     PMDMaterial **allocateMaterials(int size);
     void releaseMaterials(PMDMaterial **materials, int size);

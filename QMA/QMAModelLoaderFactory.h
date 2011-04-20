@@ -37,21 +37,21 @@
 #ifndef QMAMODELLOADERFACTORY_H
 #define QMAMODELLOADERFACTORY_H
 
-#include <MMDAI/PMDModelLoaderFactory.h>
+#include <MMDAI/IResourceFactory.h>
 #include "QMAModelLoader.h"
 
-class QMAModelLoaderFactory : public MMDAI::PMDModelLoaderFactory
+class QMAModelLoaderFactory : public MMDAI::IResourceFactory
 {
 public:
     QMAModelLoaderFactory() {}
     ~QMAModelLoaderFactory() {}
 
-    MMDAI::PMDModelLoader *createModelLoader(const char *filename);
-    MMDAI::VMDLoader *createMotionLoader(const char *filename);
-    MMDAI::LipSyncLoader *createLipSyncLoader(const char *filename);
-    void releaseModelLoader(MMDAI::PMDModelLoader *loader);
-    void releaseMotionLoader(MMDAI::VMDLoader *loader);
-    void releaseLipSyncLoader(MMDAI::LipSyncLoader *loader);
+    MMDAI::IModelLoader *createModelLoader(const char *filename);
+    MMDAI::IMotionLoader *createMotionLoader(const char *filename);
+    MMDAI::ILipSyncLoader *createLipSyncLoader(const char *filename);
+    void releaseModelLoader(MMDAI::IModelLoader *loader);
+    void releaseMotionLoader(MMDAI::IMotionLoader *loader);
+    void releaseLipSyncLoader(MMDAI::ILipSyncLoader *loader);
 
 private:
     QMAModelLoader *createLoader(const char *filename);

@@ -79,7 +79,7 @@ MotionStocker::~MotionStocker()
 }
 
 /* MotionStocker::loadFromLoader: load VMD from file or return cached one */
-VMD * MotionStocker::loadFromLoader(VMDLoader *loader)
+VMD * MotionStocker::loadFromLoader(IMotionLoader *loader)
 {
     VMDList *vl, *tmp;
     const char *fileName = loader->getLocation();

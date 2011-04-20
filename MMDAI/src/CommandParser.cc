@@ -96,7 +96,7 @@ static bool arg2rot(btQuaternion *dst, const char *arg)
     return true;
 }
 
-CommandParser::CommandParser(SceneController *controller, PMDModelLoaderFactory *factory)
+CommandParser::CommandParser(SceneController *controller, IResourceFactory *factory)
     : m_controller(controller),
     m_factory(factory)
 {
@@ -111,9 +111,9 @@ CommandParser::~CommandParser()
 bool CommandParser::parse(const char *command, char **argv, int argc)
 {
     PMDObject *object = NULL;
-    PMDModelLoader *pmd = NULL;
-    LipSyncLoader *lip = NULL;
-    VMDLoader *vmd = NULL;
+    IModelLoader *pmd = NULL;
+    ILipSyncLoader *lip = NULL;
+    IMotionLoader *vmd = NULL;
     float float3[3] = { 0.0f, 0.0f, 0.0f };
     bool ret = true;
     btVector3 pos;
@@ -459,8 +459,8 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         else {
             *background = '\0';
             *background++;
-            PMDModelLoader *floorPMD = m_factory->createModelLoader(filename);
-            PMDModelLoader *backgroundPMD = m_factory->createModelLoader(background);
+            IModelLoader *floorPMD = m_factory->createModelLoader(filename);
+            IModelLoader *backgroundPMD = m_factory->createModelLoader(background);
             ret = m_controller->loadFloor(floorPMD) && m_controller->loadBackground(backgroundPMD);
         }
         MMDAIMemoryRelease(filename);

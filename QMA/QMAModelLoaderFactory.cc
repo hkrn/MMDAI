@@ -41,32 +41,32 @@
 #include "QMAModelLoader.h"
 #include "QMAModelLoaderFactory.h"
 
-MMDAI::PMDModelLoader *QMAModelLoaderFactory::createModelLoader(const char *filename)
+MMDAI::IModelLoader *QMAModelLoaderFactory::createModelLoader(const char *filename)
 {
     return createLoader(filename);
 }
 
-MMDAI::VMDLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename)
+MMDAI::IMotionLoader *QMAModelLoaderFactory::createMotionLoader(const char *filename)
 {
     return createLoader(filename);
 }
 
-MMDAI::LipSyncLoader *QMAModelLoaderFactory::createLipSyncLoader(const char *filename)
+MMDAI::ILipSyncLoader *QMAModelLoaderFactory::createLipSyncLoader(const char *filename)
 {
     return new QMALipSyncLoader(filename);
 }
 
-void QMAModelLoaderFactory::releaseModelLoader(MMDAI::PMDModelLoader *loader)
+void QMAModelLoaderFactory::releaseModelLoader(MMDAI::IModelLoader *loader)
 {
     delete loader;
 }
 
-void QMAModelLoaderFactory::releaseMotionLoader(MMDAI::VMDLoader *loader)
+void QMAModelLoaderFactory::releaseMotionLoader(MMDAI::IMotionLoader *loader)
 {
     delete loader;
 }
 
-void QMAModelLoaderFactory::releaseLipSyncLoader(MMDAI::LipSyncLoader *loader)
+void QMAModelLoaderFactory::releaseLipSyncLoader(MMDAI::ILipSyncLoader *loader)
 {
     delete loader;
 }

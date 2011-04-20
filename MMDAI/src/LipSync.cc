@@ -92,7 +92,7 @@ LipSync::~LipSync()
 }
 
 /* LipSync::load: initialize and load lip setting */
-bool LipSync::load(LipSyncLoader *loader)
+bool LipSync::load(ILipSyncLoader *loader)
 {
     int len = 0;
 

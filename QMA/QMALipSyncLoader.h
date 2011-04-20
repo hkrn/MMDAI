@@ -43,9 +43,9 @@
 #include <QList>
 #include <QString>
 
-#include "MMDAI/LipSyncLoader.h"
+#include "MMDAI/ILipSyncLoader.h"
 
-class QMALipSyncLoader : public MMDAI::LipSyncLoader
+class QMALipSyncLoader : public MMDAI::ILipSyncLoader
 {
 public:
     QMALipSyncLoader(const char *filename);

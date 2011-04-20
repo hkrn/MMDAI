@@ -231,7 +231,7 @@ void VMD::release()
     m_maxFrame = 0.0f;
 }
 
-bool VMD::load(VMDLoader *loader)
+bool VMD::load(IMotionLoader *loader)
 {
     unsigned char *ptr = NULL;
     size_t size = 0;

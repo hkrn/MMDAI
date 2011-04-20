@@ -103,8 +103,8 @@ void PMDObject::release()
 }
 
 /* PMDObject::load: load model */
-bool PMDObject::load(PMDModelLoader *modelLoader,
-                     LipSyncLoader *lipSyncLoader,
+bool PMDObject::load(IModelLoader *modelLoader,
+                     ILipSyncLoader *lipSyncLoader,
                      btVector3 *offsetPos,
                      btQuaternion *offsetRot,
                      bool forcedPosition,

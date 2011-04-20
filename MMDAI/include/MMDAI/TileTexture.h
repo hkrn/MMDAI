@@ -40,7 +40,7 @@
 #define MMDAI_TILETEXTURE_H_
 
 #include <MMDME/Common.h>
-#include <MMDME/PMDModelLoader.h>
+#include <MMDME/IModelLoader.h>
 #include <MMDME/PMDTexture.h>
 
 #include "MMDAI/SceneRenderEngine.h"
@@ -53,7 +53,7 @@ public:
     TileTexture(SceneRenderEngine *engine);
     ~TileTexture();
 
-    bool load(PMDModelLoader *loader, SceneRenderEngine *engine);
+    bool load(IModelLoader *loader, SceneRenderEngine *engine);
     void render(bool cullFace, const float normal[3]);
     void setSize(float v00, float v01, float v02,
                  float v10, float v11, float v12,

@@ -48,7 +48,7 @@ namespace MMDAI {
 #define LIPSYNC_CONFIGFILE          "lip.txt"
 #define LIPSYNC_MAXBUFLEN           1024
 
-class LipSyncLoader;
+class ILipSyncLoader;
 
 typedef struct _LipKeyFrame {
     int phone;
@@ -67,7 +67,7 @@ public:
     LipSync();
     ~LipSync();
 
-    bool load(LipSyncLoader *loader);
+    bool load(ILipSyncLoader *loader);
     bool createMotion(const char *str, unsigned char **rawData, size_t *rawSize);
 
 

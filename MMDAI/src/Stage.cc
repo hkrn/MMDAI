@@ -202,7 +202,7 @@ void Stage::setSize(float *size, float numx, float numy)
 }
 
 /* Stage::loadFloor: load floor image */
-bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
+bool Stage::loadFloor(IModelLoader *loader, BulletPhysics *bullet)
 {
     if (m_bullet == NULL)
         m_bullet = bullet;
@@ -221,7 +221,7 @@ bool Stage::loadFloor(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* Stage::loadBackground: load background image */
-bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
+bool Stage::loadBackground(IModelLoader *loader, BulletPhysics *bullet)
 {
     if (m_bullet == NULL)
         m_bullet = bullet;
@@ -239,7 +239,7 @@ bool Stage::loadBackground(PMDModelLoader *loader, BulletPhysics *bullet)
 }
 
 /* Stage::loadStagePMD: load stage pmd */
-bool Stage::loadStagePMD(PMDModelLoader *loader, BulletPhysics *bullet)
+bool Stage::loadStagePMD(IModelLoader *loader, BulletPhysics *bullet)
 {
     if (m_bullet == NULL)
         m_bullet = bullet;

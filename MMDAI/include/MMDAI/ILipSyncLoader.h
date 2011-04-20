@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn (libMMDAI)                         */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -14,7 +16,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -34,23 +36,29 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDME_VMDLOADER_H_
-#define MMDME_VMDLOADER_H_
+/* headers */
 
-#include <stdio.h>
+#ifndef MMDAI_LIPSYNCLOADER_H_
+#define MMDAI_LIPSYNCLOADER_H_
 
 namespace MMDAI {
 
-class VMDLoader
+class ILipSyncLoader
 {
 public:
-   virtual ~VMDLoader() {}
+  virtual ~ILipSyncLoader() {}
 
-   virtual bool loadMotionData(unsigned char **ptr, size_t *size) = 0;
+  virtual bool load() = 0;
 
-   virtual void unloadMotionData(unsigned char *ptr) = 0;
+  virtual int getNExpressions() = 0;
 
-   virtual const char *getLocation() const = 0;
+  virtual const char *getExpressionName(int i) = 0;
+
+  virtual int getNPhonemes() = 0;
+
+  virtual const char *getPhoneName(int i) = 0;
+
+  virtual float getInterpolationWeight(int i, int j) = 0;
 };
 
 } /* namespace */

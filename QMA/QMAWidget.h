@@ -72,7 +72,7 @@ public:
     ~QMAWidget();
 
     void handleEventMessage(const char *eventType, int argc, ...);
-    void changeBaseMotion(MMDAI::PMDObject *object, MMDAI::VMDLoader *loader);
+    void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
     void zoom(bool up, enum QMAWidgetZoomOption option);
 
     inline void toggleDisplayBone() {

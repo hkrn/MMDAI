@@ -85,7 +85,7 @@ public:
             MMDAIMemoryRelease(m_spheres2);
         }
     }
-    bool load(PMDModelLoader *loader, BulletPhysics *bullet) {
+    bool load(IModelLoader *loader, BulletPhysics *bullet) {
         if (!PMDModel::load(loader, bullet))
             return false;
         const unsigned int nvertices = countVertices();
@@ -218,7 +218,7 @@ PMDModel *GLES1SceneRenderEngine::allocateModel()
     return new GLPMDModel(this);
 }
 
-bool GLES1SceneRenderEngine::loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet)
+bool GLES1SceneRenderEngine::loadModel(PMDModel *model, IModelLoader *loader, BulletPhysics *bullet)
 {
     return reinterpret_cast<GLPMDModel *>(model)->load(loader, bullet);
 }

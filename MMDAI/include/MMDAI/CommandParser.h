@@ -46,19 +46,19 @@
 namespace MMDAI {
 
 class SceneController;
-class PMDModelLoaderFactory;
+class IResourceFactory;
 
 class CommandParser
 {
 public:
-    explicit CommandParser(SceneController *controller, PMDModelLoaderFactory *factory);
+    CommandParser(SceneController *controller, IResourceFactory *factory);
     ~CommandParser();
 
     bool parse(const char *command, char **argv, int argc);
 
 private:
     SceneController *m_controller;
-    PMDModelLoaderFactory *m_factory;
+    IResourceFactory *m_factory;
 
     MMDME_DISABLE_COPY_AND_ASSIGN(CommandParser);
 };

@@ -34,28 +34,26 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MMDME_PMDMODELLOADER_H_
-#define MMDME_PMDMODELLOADER_H_
+#ifndef MMDME_IMOTIONLOADER_H_
+#define MMDME_IMOTIONLOADER_H_
 
-#include "MMDME/Common.h"
-#include "MMDME/PMDTexture.h"
+#include <stdio.h>
 
 namespace MMDAI {
 
-class PMDModelLoader
+class IMotionLoader
 {
 public:
-    virtual ~PMDModelLoader() {}
-    virtual bool loadModelData(unsigned char **ptr, size_t *size) = 0;
-    virtual void unloadModelData(unsigned char *ptr) = 0;
-    virtual bool loadMotionData(unsigned char **ptr, size_t *size) = 0;
-    virtual void unloadMotionData(unsigned char *ptr) = 0;
-    virtual bool loadImageTexture(PMDTexture *texture) = 0;
-    virtual bool loadModelTexture(const char *name, PMDTexture *texture) = 0;
-    virtual bool loadSystemTexture(int index, PMDTexture *texture) = 0;
-    virtual const char *getLocation() const = 0;
+   virtual ~IMotionLoader() {}
+
+   virtual bool loadMotionData(unsigned char **ptr, size_t *size) = 0;
+
+   virtual void unloadMotionData(unsigned char *ptr) = 0;
+
+   virtual const char *getLocation() const = 0;
 };
 
 } /* namespace */
 
 #endif
+

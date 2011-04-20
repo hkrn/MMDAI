@@ -45,7 +45,7 @@
 
 namespace MMDAI {
 
-class PMDModelLoader;
+class IModelLoader;
 class PMDRenderEngine;
 
 class PMDMaterial
@@ -54,7 +54,7 @@ public:
    PMDMaterial(PMDRenderEngine *engine);
    virtual ~PMDMaterial();
 
-   bool setup(const PMDFile_Material *m, PMDModelLoader *loader);
+   bool setup(const PMDFile_Material *m, IModelLoader *loader);
 
    inline void copyDiffuse(float c[4]) {
        for (int i = 0; i < 3; i++)

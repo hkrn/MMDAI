@@ -198,7 +198,7 @@ void SceneController::updateLight()
 }
 
 /* SceneController::setFloor: set floor image */
-bool SceneController::loadFloor(PMDModelLoader *loader)
+bool SceneController::loadFloor(IModelLoader *loader)
 {
     /* load floor */
     const char *fileName = loader->getLocation();
@@ -216,7 +216,7 @@ bool SceneController::loadFloor(PMDModelLoader *loader)
 }
 
 /* SceneController::setBackground: set background image */
-bool SceneController::loadBackground(PMDModelLoader *loader)
+bool SceneController::loadBackground(IModelLoader *loader)
 {
     /* load background */
     const char *fileName = loader->getLocation();
@@ -234,7 +234,7 @@ bool SceneController::loadBackground(PMDModelLoader *loader)
 }
 
 /* SceneController::setStage: set stage */
-bool SceneController::loadStage(PMDModelLoader *loader)
+bool SceneController::loadStage(IModelLoader *loader)
 {
     /* load stage */
     const char *fileName = loader->getLocation();
@@ -284,7 +284,7 @@ PMDObject *SceneController::findPMDObject(const char *alias)
 }
 
 /* SceneController::addMotion: add motion */
-bool SceneController::addMotion(PMDObject *object, VMDLoader *loader)
+bool SceneController::addMotion(PMDObject *object, IMotionLoader *loader)
 {
     return addMotion(object, NULL, loader, false, true, true, true);
 }
@@ -292,7 +292,7 @@ bool SceneController::addMotion(PMDObject *object, VMDLoader *loader)
 /* SceneController::addMotion: add motion */
 bool SceneController::addMotion(PMDObject *object,
                                 const char *motionAlias,
-                                VMDLoader *loader,
+                                IMotionLoader *loader,
                                 bool full,
                                 bool once,
                                 bool enableSmooth,
@@ -360,7 +360,7 @@ bool SceneController::addMotion(PMDObject *object,
 }
 
 /* SceneController::changeMotion: change motion */
-bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, VMDLoader *loader)
+bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, IMotionLoader *loader)
 {
     VMD *vmd, *old = NULL;
     MotionPlayer *motionPlayer;
@@ -422,15 +422,15 @@ bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
 }
 
 /* SceneController::addModel: add model */
-bool SceneController::addModel(PMDModelLoader *modelLoader, LipSyncLoader *lipSyncLoader)
+bool SceneController::addModel(IModelLoader *modelLoader, ILipSyncLoader *lipSyncLoader)
 {
     return addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
 }
 
 /* SceneController::addModel: add model */
 bool SceneController::addModel(const char *modelAlias,
-                               PMDModelLoader *modelLoader,
-                               LipSyncLoader *lipSyncLoader,
+                               IModelLoader *modelLoader,
+                               ILipSyncLoader *lipSyncLoader,
                                btVector3 *pos,
                                btQuaternion *rot,
                                const char *baseModelAlias,
@@ -539,8 +539,8 @@ bool SceneController::addModel(const char *modelAlias,
 
 /* SceneController::changeModel: change model */
 bool SceneController::changeModel(PMDObject *object,
-                                  PMDModelLoader *modelLoader,
-                                  LipSyncLoader *lipSyncLoader)
+                                  IModelLoader *modelLoader,
+                                  ILipSyncLoader *lipSyncLoader)
 {
     MotionPlayer *motionPlayer = NULL;
     int i = 0;

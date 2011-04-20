@@ -41,7 +41,7 @@
 
 #include "MMDME/Common.h"
 #include "MMDME/PTree.h"
-#include "MMDME/VMDLoader.h"
+#include "MMDME/IMotionLoader.h"
 
 namespace MMDAI {
 
@@ -94,7 +94,7 @@ public:
     VMD();
     ~VMD();
 
-    bool load(VMDLoader *loader);
+    bool load(IMotionLoader *loader);
     bool parse(unsigned char *data, size_t size);
 
     inline const unsigned int getTotalKeyFrame() const {

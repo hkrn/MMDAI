@@ -60,7 +60,7 @@ public:
     MotionStocker();
     ~MotionStocker();
 
-    VMD *loadFromLoader(VMDLoader *loader);
+    VMD *loadFromLoader(IMotionLoader *loader);
     VMD *loadFromData(unsigned char *rawData, size_t rawSize);
     void unload(VMD *vmd);
 

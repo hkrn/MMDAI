@@ -48,7 +48,7 @@ namespace MMDAI {
 class BulletPhysics;
 class PMDBone;
 class PMDModel;
-class PMDModelLoader;
+class IModelLoader;
 class PMDObject;
 class PMDTexture;
 class Stage;
@@ -61,7 +61,7 @@ public:
     virtual ~SceneRenderEngine() {}
 
     virtual PMDModel *allocateModel() = 0;
-    virtual bool loadModel(PMDModel *model, PMDModelLoader *loader, BulletPhysics *bullet) = 0;
+    virtual bool loadModel(PMDModel *model, IModelLoader *loader, BulletPhysics *bullet) = 0;
     virtual void releaseModel(PMDModel *model) = 0;
 
     virtual void renderModelCached(PMDModel *model,

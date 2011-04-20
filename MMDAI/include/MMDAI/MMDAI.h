@@ -41,12 +41,13 @@
 
 #include <MMDME/MMDME.h>
 
+#include "MMDAI/ILipSyncLoader.h"
+#include "MMDAI/IResourceFactory.h"
+
 #include "MMDAI/BoneController.h"
 #include "MMDAI/CommandParser.h"
 #include "MMDAI/LipSync.h"
-#include "MMDAI/LipSyncLoader.h"
 #include "MMDAI/MotionStocker.h"
-#include "MMDAI/PMDModelLoaderFactory.h"
 #include "MMDAI/PMDObject.h"
 #include "MMDAI/Preference.h"
 #include "MMDAI/SceneController.h"

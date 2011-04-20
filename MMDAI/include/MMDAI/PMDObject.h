@@ -51,11 +51,11 @@
 
 namespace MMDAI {
 
-class LipSyncLoader;
+class ILipSyncLoader;
 class MotionManager;
 class PMDBone;
 class PMDModel;
-class PMDModelLoader;
+class IModelLoader;
 class SceneRenderEngine;
 class VMD;
 
@@ -66,8 +66,8 @@ public:
     ~PMDObject();
 
     void release();
-    bool load(PMDModelLoader *modelLoader,
-              LipSyncLoader *lipSyncLoader,
+    bool load(IModelLoader *modelLoader,
+              ILipSyncLoader *lipSyncLoader,
               btVector3 *offsetPos,
               btQuaternion *offsetRot,
               bool forcedPosition,

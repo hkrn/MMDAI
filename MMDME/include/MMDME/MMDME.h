@@ -41,18 +41,18 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include "MMDME/BulletPhysics.h"
-#include "MMDME/Common.h"
+#include "MMDME/IModelLoader.h"
+#include "MMDME/IMotionLoader.h"
 
+#include "MMDME/Common.h"
 #include "MMDME/PMDFile.h"
 #include "MMDME/VMDFile.h"
-
 #include "MMDME/PTree.h"
 #include "MMDME/VMD.h"
+#include "MMDME/BulletPhysics.h"
 #include "MMDME/PMDBone.h"
 #include "MMDME/PMDFace.h"
 #include "MMDME/PMDTexture.h"
-#include "MMDME/PMDModelLoader.h"
 #include "MMDME/PMDMaterial.h"
 #include "MMDME/PMDIK.h"
 #include "MMDME/PMDRigidBody.h"

@@ -50,7 +50,7 @@ namespace MMDAI {
 
 #define MAX_MODEL 20
 
-class LipSyncLoader;
+class ILipSyncLoader;
 class PMDObject;
 class Preference;
 class SceneEventHandler;
@@ -73,35 +73,35 @@ public:
     PMDObject *findPMDObject(PMDObject *object);
     PMDObject *findPMDObject(const char *alias);
 
-    bool loadFloor(PMDModelLoader *loader);
-    bool loadBackground(PMDModelLoader *loader);
-    bool loadStage(PMDModelLoader *loader);
+    bool loadFloor(IModelLoader *loader);
+    bool loadBackground(IModelLoader *loader);
+    bool loadStage(IModelLoader *loader);
 
-    bool addMotion(PMDObject *object, VMDLoader *loader);
+    bool addMotion(PMDObject *object, IMotionLoader *loader);
     bool addMotion(PMDObject *object,
                    const char *motionAlias,
-                   VMDLoader *loader,
+                   IMotionLoader *loader,
                    bool full,
                    bool once,
                    bool enableSmooth,
                    bool enableRePos);
     bool changeMotion(PMDObject *object,
                       const char *motionAlias,
-                      VMDLoader *loader);
+                      IMotionLoader *loader);
     bool deleteMotion(PMDObject *object,
                       const char *motionAlias);
 
-    bool addModel(PMDModelLoader *loader, LipSyncLoader *lipSyncLoader);
+    bool addModel(IModelLoader *loader, ILipSyncLoader *lipSyncLoader);
     bool addModel(const char *modelAlias,
-                  PMDModelLoader *modelLoader,
-                  LipSyncLoader *lipSyncLoader,
+                  IModelLoader *modelLoader,
+                  ILipSyncLoader *lipSyncLoader,
                   btVector3 *pos,
                   btQuaternion *rot,
                   const char *baseModelAlias,
                   const char *baseBoneName);
     bool changeModel(PMDObject *object,
-                     PMDModelLoader *loader,
-                     LipSyncLoader *lipSyncLoader);
+                     IModelLoader *loader,
+                     ILipSyncLoader *lipSyncLoader);
     void deleteModel(PMDObject *object);
 
     void setLightDirection(float x, float y, float z);

@@ -105,7 +105,7 @@ void QMAWindow::insertMotionToAllModels()
         for (int i = 0; i < count; i++) {
             MMDAI::PMDObject *object = controller->getPMDObject(i);
             if (object->isEnable() && object->allowMotionFileDrop()) {
-                MMDAI::VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
+                MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
                 controller->addMotion(object, loader);
             }
         }
@@ -125,7 +125,7 @@ void QMAWindow::insertMotionToSelectedModel()
         if (selectedObject != NULL) {
             QByteArray encodedPath = QFile::encodeName(fileName);
             const char *filename = encodedPath.constData();
-            MMDAI::VMDLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
+            MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
             controller->addMotion(selectedObject, loader);
         }
     }
@@ -141,9 +141,9 @@ void QMAWindow::addModel()
         setDirectorySetting("lastPMDDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
-        MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
-        MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
+        MMDAI::IResourceFactory *factory = m_widget->getModelLoaderFactory();
+        MMDAI::IModelLoader *modelLoader = factory->createModelLoader(filename);
+        MMDAI::ILipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
         m_widget->getSceneController()->addModel(modelLoader, lipSyncLoader);
         factory->releaseModelLoader(modelLoader);
         factory->releaseLipSyncLoader(lipSyncLoader);
@@ -160,7 +160,7 @@ void QMAWindow::setStage()
         setDirectorySetting("lastStageDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
+        MMDAI::IModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
         m_widget->getSceneController()->loadStage(loader);
     }
     m_settings.endGroup();
@@ -175,7 +175,7 @@ void QMAWindow::setFloor()
         setDirectorySetting("lastFloorDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
+        MMDAI::IModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
         m_widget->getSceneController()->loadFloor(loader);
     }
     m_settings.endGroup();
@@ -190,7 +190,7 @@ void QMAWindow::setBackground()
         setDirectorySetting("lastBackgroundDirectory", fileName);
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
-        MMDAI::PMDModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
+        MMDAI::IModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
         m_widget->getSceneController()->loadBackground(loader);
     }
     m_settings.endGroup();
@@ -347,9 +347,9 @@ void QMAWindow::changeSelectedObject()
         if (selectedObject != NULL){
             QByteArray bytes = fileName.toUtf8();
             const char *filename = bytes.constData();
-            MMDAI::PMDModelLoaderFactory *factory = m_widget->getModelLoaderFactory();
-            MMDAI::PMDModelLoader *modelLoader = factory->createModelLoader(filename);
-            MMDAI::LipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
+            MMDAI::IResourceFactory *factory = m_widget->getModelLoaderFactory();
+            MMDAI::IModelLoader *modelLoader = factory->createModelLoader(filename);
+            MMDAI::ILipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
             controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
             factory->releaseModelLoader(modelLoader);
             factory->releaseLipSyncLoader(lipSyncLoader);
