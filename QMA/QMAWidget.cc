@@ -325,7 +325,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
             }
         }
         else {
-            m_controller->setModelViewRotation(x * 0.007f, y * 0.007f);
+            m_controller->setModelViewRotation(x, y);
         }
         m_x = event->x();
         m_y = event->y();
