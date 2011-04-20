@@ -475,7 +475,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: not \"R,G,B\" value: %s", command, argv[0]);
             return false;
         }
-        m_controller->changeLightColor(float3[0], float3[1], float3[2]);
+        m_controller->setLightColor(float3[0], float3[1], float3[2]);
     }
     else if (MMDAIStringEquals(command, SceneEventHandler::kLightDirectionCommand)) {
         /* change light direction */
@@ -487,7 +487,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: not \"x,y,z\" value: %s", command, argv[0]);
             return false;
         }
-        m_controller->changeLightDirection(float3[0], float3[1], float3[2]);
+        m_controller->setLightDirection(float3[0], float3[1], float3[2]);
     }
     else if (MMDAIStringEquals(command, SceneEventHandler::kLipSyncStartCommand)) {
         /* start lip sync */

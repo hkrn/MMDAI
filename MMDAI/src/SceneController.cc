@@ -616,8 +616,18 @@ void SceneController::deleteModel(PMDObject *object)
     sendEvent1(SceneEventHandler::kModelDeleteEvent, object->getAlias());
 }
 
-/* SceneController::changeLightDirection: change light direction */
-void SceneController::changeLightDirection(float x, float y, float z)
+void SceneController::updateLightDirection(float x, float y)
+{
+    float direction[4];
+    float step = m_preference->getFloat(kPreferenceRotateStep) * 0.1f;
+    m_preference->getFloat4(MMDAI::kPreferenceLightDirection, direction);
+    btVector3 v = btVector3(direction[0], direction[1], direction[2]);
+    btMatrix3x3 matrix = btMatrix3x3(btQuaternion(0, y * step, 0.0) * btQuaternion(x * step, 0, 0));
+    v = v * matrix;
+    setLightDirection(v.x(), v.y(), v.z());
+}
+
+void SceneController::setLightDirection(float x, float y, float z)
 {
     float f[4] = { x, y, z, 0.0f };
     m_preference->setFloat4(kPreferenceLightDirection, f);
@@ -631,8 +641,7 @@ void SceneController::changeLightDirection(float x, float y, float z)
     }
 }
 
-/* SceneController::changeLightColor: change light color */
-void SceneController::changeLightColor(float r, float g, float b)
+void SceneController::setLightColor(float r, float g, float b)
 {
     float f[3] = { r, g, b };
     m_preference->setFloat3(kPreferenceLightColor, f);
@@ -883,30 +892,47 @@ void SceneController::initializeScreen(int width, int height)
     scale = m_preference->getFloat(kPreferenceRenderingScale);
     m_preference->getFloat3(kPreferenceRenderingRotation, rot);
     m_preference->getFloat3(kPreferenceRenderingTransition, trans);
-    resetLocation(rot, trans, scale);
+    resetLocation(btVector3(trans[0], trans[1], trans[2]), rot, scale);
     MMDAILogInfo("reset location rot=(%.2f, %.2f, %.2f) trans=(%.2f, %.2f, %.2f) scale=%.2f",
        rot[0], rot[1], rot[2], trans[0], trans[1], trans[2], scale);
 }
 
-void SceneController::resetLocation(const float *trans, const float *rot, const float scale)
+void SceneController::resetLocation(const btVector3 &trans, const float *rot, const float scale)
 {
     btMatrix3x3 bm;
     bm.setEulerZYX(MMDME_RAD(rot[0]), MMDME_RAD(rot[1]), MMDME_RAD(rot[2]));
     bm.getRotation(m_rot);
-    m_trans = btVector3(trans[0], trans[1], trans[2]);
+    m_trans = trans;
     m_scale = scale;
 }
 
-void SceneController::rotate(float x, float y, float z)
+void SceneController::setModelViewPosition(int x, int y)
 {
-    z = 0; /* unused */
-    m_rot = m_rot * btQuaternion(x, 0, 0);
-    m_rot = btQuaternion(0, y, 0) * m_rot;
+    float cameraZ = kRenderViewPointCameraZ;
+    float znear = kRenderViewPointFrustumNear;
+    float fx = 0.0f, fy = 0.0f, fz = 20.0f;
+    fx = x / static_cast<float>(m_width);
+    fy = -y / static_cast<float>(m_height);
+    fx = static_cast<float>(fx * (fz - cameraZ) / znear);
+    fy = static_cast<float>(fy * (fz - cameraZ) / znear);
+    if (m_scale != 0) {
+        fx /= m_scale;
+        fy /= m_scale;
+    }
+    fz = 0.0f;
+    translate(btVector3(fx, fy, fz));
 }
 
-void SceneController::translate(float x, float y, float z)
+void SceneController::setModelViewRotation(int x, int y)
 {
-    m_trans += btVector3(x, y, z);
+    float step = m_preference->getFloat(kPreferenceRotateStep) * 0.1f;
+    m_rot = m_rot * btQuaternion(x * step, 0.0f, 0.0f);
+    m_rot = btQuaternion(0.0f, y * step, 0.0f) * m_rot;
+}
+
+void SceneController::translate(const btVector3 &value)
+{
+    m_trans += value;
 }
 
 void SceneController::setRect(int width, int height)
@@ -1077,15 +1103,16 @@ void SceneController::updateModelPositionAndRotation(double fps)
     for (int i = 0; i < m_numModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable()) {
+            const char *alias = object->getAlias();
             if (object->updateModelRootOffset(fps)) {
-                sendEvent1(SceneEventHandler::kMoveStopEvent, object->getAlias());
+                sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
             }
             if (object->updateModelRootRotation(fps)) {
                 if (object->isTurning()) {
-                    sendEvent1(SceneEventHandler::kTurnStopEvent, object->getAlias());
+                    sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
                     object->setTurning(false);
                 } else {
-                    sendEvent1(SceneEventHandler::kRotateStopEvent, object->getAlias());
+                    sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
                 }
             }
         }

@@ -77,8 +77,6 @@ public:
     bool loadBackground(PMDModelLoader *loader);
     bool loadStage(PMDModelLoader *loader);
 
-    void updateLight();
-
     bool addMotion(PMDObject *object, VMDLoader *loader);
     bool addMotion(PMDObject *object,
                    const char *motionAlias,
@@ -106,12 +104,8 @@ public:
                      LipSyncLoader *lipSyncLoader);
     void deleteModel(PMDObject *object);
 
-    void changeLightDirection(float x,
-                              float y,
-                              float z);
-    void changeLightColor(float r,
-                          float g,
-                          float b);
+    void setLightDirection(float x, float y, float z);
+    void setLightColor(float r, float g, float b);
 
     void startMove(PMDObject *object,
                    btVector3 *pos,
@@ -134,10 +128,11 @@ public:
     bool startLipSync(PMDObject *object,
                       const char *seq);
     bool stopLipSync(PMDObject *object);
-    void resetLocation(const float *trans, const float *rot, const float scale);
+    void resetLocation(const btVector3 &trans, const float *rot, const float scale);
 
-    void rotate(float x, float y, float z);
-    void translate(float x, float y, float z);
+    void setModelViewPosition(int x, int y);
+    void setModelViewRotation(int x, int y);
+    void translate(const btVector3 &value);
 
     void selectPMDObject(PMDObject *object);
     void selectPMDObject(int x, int y);
@@ -145,6 +140,8 @@ public:
     void setHighlightPMDObject(PMDObject *object);
     void setRect(int width, int height);
 
+    void updateLightDirection(float x, float y);
+    void updateLight();
     void updateMotion(double procFrame, double adjustFrame);
     void updateDepthTextureViewParam();
     void updateModelPositionAndRotation(double fps);

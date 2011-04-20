@@ -198,42 +198,42 @@ void QMAWindow::setBackground()
 
 void QMAWindow::rotateUp()
 {
-    m_widget->getSceneController()->rotate(0.0f, -m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
+    m_widget->getSceneController()->setModelViewRotation(0.0f, -m_preference->getFloat(MMDAI::kPreferenceRotateStep));
 }
 
 void QMAWindow::rotateDown()
 {
-    m_widget->getSceneController()->rotate(0.0f, m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
+    m_widget->getSceneController()->setModelViewRotation(0.0f, m_preference->getFloat(MMDAI::kPreferenceRotateStep));
 }
 
 void QMAWindow::rotateLeft()
 {
-    m_widget->getSceneController()->rotate(-m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f, 0.0f);
+    m_widget->getSceneController()->setModelViewRotation(-m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
 }
 
 void QMAWindow::rotateRight()
 {
-    m_widget->getSceneController()->rotate(m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f, 0.0f);
+    m_widget->getSceneController()->setModelViewRotation(m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
 }
 
 void QMAWindow::translateUp()
 {
-    m_widget->getSceneController()->translate(0.0f, -m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f);
+    m_widget->getSceneController()->translate(btVector3(0.0f, -m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f));
 }
 
 void QMAWindow::translateDown()
 {
-    m_widget->getSceneController()->translate(0.0f, m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f);
+    m_widget->getSceneController()->translate(btVector3(0.0f, m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f));
 }
 
 void QMAWindow::translateLeft()
 {
-    m_widget->getSceneController()->translate(m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f);
+    m_widget->getSceneController()->translate(btVector3(m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f));
 }
 
 void QMAWindow::translateRight()
 {
-    m_widget->getSceneController()->translate(-m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f);
+    m_widget->getSceneController()->translate(btVector3(-m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f));
 }
 
 void QMAWindow::toggleDisplayBone()
