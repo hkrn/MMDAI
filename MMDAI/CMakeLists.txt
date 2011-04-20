@@ -45,10 +45,11 @@ aux_source_directory(src libMMDAI_sources)
 set(libMMDAI_public_headers
   include/MMDAI/BoneController.h
   include/MMDAI/CommandParser.h
+  include/MMDAI/ILipSyncLoader.h
+  include/MMDAI/IResourceFactory.h
   include/MMDAI/LipSync.h
   include/MMDAI/MotionStocker.h
   include/MMDAI/MMDAI.h
-  include/MMDAI/PMDModelLoaderFactory.h
   include/MMDAI/PMDObject.h
   include/MMDAI/Preference.h
   include/MMDAI/SceneController.h
