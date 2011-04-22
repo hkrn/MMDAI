@@ -137,10 +137,12 @@ public:
     bool load(IModelLoader *loader, BulletPhysics *bullet) {
         if (!PMDModel::load(loader, bullet))
             return false;
-        const unsigned int nvertices = countVertices();
         const unsigned short *surfaceData = getSurfacesPtr();
+#ifdef MMDAI_OPENGL_ES1
+        const unsigned int nvertices = countVertices();
         const bool hasSingleSphereMap = this->hasSingleSphereMap();
         const bool hasMultipleSphereMap = this->hasMultipleSphereMap();
+#endif /* MMDAI_OPENGL_ES1 */
         m_nmaterials = countMaterials();
         m_materialVBO = static_cast<GLuint *>(MMDAIMemoryAllocate(m_nmaterials * sizeof(GLuint)));
         if (m_materialVBO == NULL)
@@ -152,7 +154,7 @@ public:
         m_spheres2 = static_cast<TexCoord **>(MMDAIMemoryAllocate(sizeof(void *) * m_nmaterials));
         if (m_spheres2 == NULL)
             return false;
-#endif
+#endif /* MMDAI_OPENGL_ES1 */
         glGenBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
         glGenBuffers(m_nmaterials, m_materialVBO);
         // edge buffer
@@ -167,8 +169,8 @@ public:
         // material indices
         for (unsigned int i = 0; i < m_nmaterials; i++) {
             PMDMaterial *m = getMaterialAt(i);
-            const PMDTexture *tex = m->getTexture();
 #ifdef MMDAI_OPENGL_ES1
+            const PMDTexture *tex = m->getTexture();
             m_spheres[i] = NULL;
             m_spheres2[i] = NULL;
             if (tex != NULL) {
@@ -195,7 +197,7 @@ public:
                 }
             }
 #endif /* MMDAI_OPENGL_ES1 */
-            const int nsurfaces = getMaterialAt(i)->countSurfaces();
+            const int nsurfaces = m->countSurfaces();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_materialVBO[i]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, nsurfaces * sizeof(GLushort), surfaceData, GL_STATIC_DRAW);
             surfaceData += nsurfaces;
@@ -208,12 +210,16 @@ public:
     inline GLuint getModelVBOAt(GLPMDModelBuffer index) const {
         return m_modelVBO[index];
     }
+
+#ifdef MMDAI_OPENGL_ES1
     inline TexCoord *getSphereCoordsAt(GLuint index) const {
         return m_spheres[index];
     }
     inline TexCoord *getSphereCoords2At(GLuint index) const {
         return m_spheres2[index];
     }
+#endif /* MMDAI_OPENGL_ES1 */
+
 private:
     GLuint *m_materialVBO;
     GLuint m_modelVBO[kModelBufferMax];
