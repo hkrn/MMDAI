@@ -56,6 +56,8 @@ class IPreference;
 class SceneEventHandler;
 class SceneRenderEngine;
 
+typedef struct RenderDepth RenderDepth;
+
 class SceneController
 {
 public:
@@ -84,7 +86,8 @@ public:
                    bool full,
                    bool once,
                    bool enableSmooth,
-                   bool enableRePos);
+                   bool enableRePos,
+                   float priority);
     bool changeMotion(PMDObject *object,
                       const char *motionAlias,
                       IMotionLoader *loader);
@@ -139,6 +142,7 @@ public:
     void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
     void setHighlightPMDObject(PMDObject *object);
     void setRect(int width, int height);
+    void setViewMoveTimer(int ms);
 
     void updateLightDirection(float x, float y);
     void updateLight();
@@ -146,8 +150,8 @@ public:
     void updateDepthTextureViewParam();
     void updateModelPositionAndRotation(double fps);
     void updateAfterSimulation();
-    void updateProjection();
-    void updateModelView();
+    void updateProjection(int ellapsedTimeForMove);
+    void updateModelView(int ellapsedTimeForMove);
     void prerenderScene();
     void renderScene();
     void renderBulletForDebug();
@@ -192,8 +196,12 @@ public:
     inline const int getHeight() const {
         return m_height;
     }
+    inline bool isViewMoving() const {
+        return m_viewMoveTime > 0 && (m_currentRot != m_rot || m_currentTrans != m_trans || m_currentScale != m_scale);
+    }
 
 private:
+    void sortRenderOrder();
     void eraseModel(PMDObject *object);
     void sendEvent1(const char *type, const char *arg1);
     void sendEvent2(const char *type, const char *arg1, const char *arg2);
@@ -216,6 +224,13 @@ private:
     btVector3 m_trans;       /* target trans vector */
     btQuaternion m_rot;      /* target rotation */
     btVector3 m_cameraTrans; /* position of camera */
+
+    int m_viewMoveTime;
+    btVector3 m_viewMoveStartTrans;
+    btQuaternion m_viewMoveStartRot;
+    float m_viewMoveStartScale;
+    RenderDepth *m_depth;
+    int16_t *m_order;
 
     float m_currentScale;         /* current scale */
     btVector3 m_currentTrans;     /* current trans vector */

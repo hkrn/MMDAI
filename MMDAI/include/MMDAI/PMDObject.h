@@ -77,7 +77,13 @@ public:
               bool useCartoonRendering,
               float cartoonEdgeWidth,
               btVector3 *light);
-    bool startMotion(VMD *vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRepos);
+    bool startMotion(VMD *vmd,
+                     const char *name,
+                     bool full,
+                     bool once,
+                     bool enableSmooth,
+                     bool enableRepos,
+                     float priority);
     bool swapMotion(VMD *vmd, const char *targetName);
     void updateRootBone();
     bool updateMotion(double deltaFrame);

@@ -244,6 +244,37 @@ bool PMDModel::parse(IModelLoader *loader, BulletPhysics *bullet)
     ptr += sizeof(PMDFile_Bone) * m_numBone;
     rest -= sizeof(PMDFile_Bone) * m_numBone;
 
+    /* make ordered bone list */
+    if (m_numBone > 0) {
+        m_orderedBoneList = static_cast<PMDBone **>(MMDAIMemoryAllocate(sizeof(PMDBone *) * m_numBone));
+        uint16_t k = 0;
+        for (uint16_t i = 0; i < m_numBone; i++) {
+            if (fileBone[i].parentBoneID == -1)
+                m_orderedBoneList[k++] = &(m_boneList[i]);
+        }
+        uint16_t l = k;
+        for (uint16_t i = 0; i < m_numBone; i++) {
+            if (fileBone[i].parentBoneID != -1)
+                m_orderedBoneList[l++] = &(m_boneList[i]);
+        }
+        uint16_t i = 0;
+        do {
+            for (uint16_t j = k; j < m_numBone; j++) {
+                for (l = 0; l < j; l++) {
+                    if (m_orderedBoneList[l] == m_orderedBoneList[j]->getParentBone())
+                        break;
+                }
+                if (l >= j) {
+                    PMDBone *bone = m_orderedBoneList[j];
+                    if (j < m_numBone - 1)
+                        memmove(m_orderedBoneList[j], m_orderedBoneList[j+1], sizeof(PMDBone *) * (m_numBone - 1 - j));
+                    m_orderedBoneList[m_numBone - 1] = bone;
+                    i = 1;
+                }
+            }
+        } while (i != 0);
+    }
+
     /* calculate bone offset after all bone positions are loaded */
     for (uint32_t i = 0; i < m_numBone; i++)
         m_boneList[i].computeOffset();
@@ -408,7 +439,7 @@ bool PMDModel::parse(IModelLoader *loader, BulletPhysics *bullet)
             rest -= 20 * m_numBone;
             /* face names in English */
             if (m_numFace > 0) {
-                 /* "base" not included in English list */
+                /* "base" not included in English list */
                 ptr += 20 * (m_numFace - 1);
                 rest -= 20 * (m_numFace - 1);
             }
@@ -442,7 +473,7 @@ bool PMDModel::parse(IModelLoader *loader, BulletPhysics *bullet)
             btVector3 modelOffset = m_rootBone.getOffset();
             /* update bone matrix to apply root bone offset to bone position */
             for (uint32_t i = 0; i < m_numBone; i++)
-                m_boneList[i].update();
+                m_orderedBoneList[i]->update();
 
             /* Bullet Physics rigidbody ptr */
             m_numRigidBody = *reinterpret_cast<uint32_t *>(ptr);
@@ -655,6 +686,12 @@ bool PMDModel::parse(IModelLoader *loader, BulletPhysics *bullet)
                 m_maxHeight = y;
         }
     }
+
+    m_boundingSphereStep = m_numVertex / kBoundingSpherePoints;
+    if (m_boundingSphereStep > kBoundingSpherePointsMax)
+        m_boundingSphereStep = kBoundingSpherePointsMax;
+    if (m_boundingSphereStep < kBoundingSpherePointsMin)
+        m_boundingSphereStep = kBoundingSpherePointsMin;
 
     /* simulation is currently off, so change bone status */
     if (!m_enableSimulation)

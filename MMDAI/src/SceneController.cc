@@ -107,6 +107,20 @@ const float SceneController::kRenderViewPointYOffset = -13.0f;
 #define RENDER_MINSPINDIFF    0.000001f
 #define RENDER_SPINSPEEDRATE  0.9f
 
+struct RenderDepth {
+    float distance;
+    short id;
+};
+
+static int compareDepth(const void *a, const void *b)
+{
+    const RenderDepth *x = static_cast<const RenderDepth *>(a);
+    const RenderDepth *y = static_cast<const RenderDepth *>(b);
+    if (x->distance == y->distance)
+        return 0;
+    return x->distance > y->distance ? 1 : -1;
+}
+
 // from util.h
 static int getNumDigit(int in)
 {
@@ -123,7 +137,7 @@ static int getNumDigit(int in)
 }
 
 SceneController::SceneController(SceneEventHandler *handler, IPreference *preference)
-  : m_engine(0),
+    : m_engine(0),
     m_objects(0),
     m_highlightModel(0),
     m_preference(preference),
@@ -138,6 +152,12 @@ SceneController::SceneController(SceneEventHandler *handler, IPreference *prefer
     m_trans(0.0f, 0.0f, 0.0f),
     m_rot(0.0f, 0.0f, 0.0f, 1.0f),
     m_cameraTrans(0.0f, kRenderViewPointYOffset, kRenderViewPointCameraZ),
+    m_viewMoveTime(-1),
+    m_viewMoveStartTrans(0.0f, 0.0f, 0.0f),
+    m_viewMoveStartRot(0.0f, 0.0f, 0.0f, 1.0f),
+    m_viewMoveStartScale(0.0f),
+    m_depth(0),
+    m_order(0),
     m_currentScale(m_scale),
     m_currentTrans(m_trans),
     m_currentRot(m_rot)
@@ -153,8 +173,10 @@ SceneController::SceneController(SceneEventHandler *handler, IPreference *prefer
         m_objects[i] = new PMDObject(m_engine);
     }
     m_transMatrix.setIdentity();
-    updateModelView();
-    updateProjection();
+    m_depth = new RenderDepth[MAX_MODEL];
+    m_order = new int16_t[MAX_MODEL];
+    updateModelView(0);
+    updateProjection(0);
 }
 
 SceneController::~SceneController()
@@ -171,6 +193,8 @@ SceneController::~SceneController()
         delete m_objects[i];
         m_objects[i] = 0;
     }
+    delete[] m_order;
+    delete[] m_depth;
     delete[] m_objects;
     m_objects = 0;
     delete m_stage;
@@ -286,7 +310,7 @@ PMDObject *SceneController::findPMDObject(const char *alias)
 /* SceneController::addMotion: add motion */
 bool SceneController::addMotion(PMDObject *object, IMotionLoader *loader)
 {
-    return addMotion(object, NULL, loader, false, true, true, true);
+    return addMotion(object, NULL, loader, false, true, true, true, 0.0f);
 }
 
 /* SceneController::addMotion: add motion */
@@ -296,7 +320,8 @@ bool SceneController::addMotion(PMDObject *object,
                                 bool full,
                                 bool once,
                                 bool enableSmooth,
-                                bool enableRePos)
+                                bool enableRePos,
+                                float priority)
 {
     int i;
     bool find;
@@ -347,7 +372,7 @@ bool SceneController::addMotion(PMDObject *object,
     }
 
     /* start motion */
-    if (!object->startMotion(vmd, name, full, once, enableSmooth, enableRePos)) {
+    if (!object->startMotion(vmd, name, full, once, enableSmooth, enableRePos, priority)) {
         MMDAIMemoryRelease(name);
         return false;
     }
@@ -853,7 +878,7 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
             return false;
         }
     } else {
-        if (!object->startMotion(vmd, name, false, true, true, true)) {
+        if (!object->startMotion(vmd, name, false, true, true, true, MotionManager::kDefaultPriority)) {
             MMDAILogWarnString("cannot start lip sync.");
             m_motion.unload(vmd);
             return false;
@@ -894,7 +919,7 @@ void SceneController::initializeScreen(int width, int height)
     m_preference->getFloat3(kPreferenceRenderingTransition, trans);
     resetLocation(btVector3(trans[0], trans[1], trans[2]), rot, scale);
     MMDAILogInfo("reset location rot=(%.2f, %.2f, %.2f) trans=(%.2f, %.2f, %.2f) scale=%.2f",
-       rot[0], rot[1], rot[2], trans[0], trans[1], trans[2], scale);
+                 rot[0], rot[1], rot[2], trans[0], trans[1], trans[2], scale);
 }
 
 void SceneController::resetLocation(const btVector3 &trans, const float *rot, const float scale)
@@ -942,7 +967,17 @@ void SceneController::setRect(int width, int height)
             m_width = width;
         if (height > 0)
             m_height = height;
-        updateProjection();
+        updateProjection(0);
+    }
+}
+
+void SceneController::setViewMoveTimer(int ms)
+{
+    m_viewMoveTime = ms;
+    if (m_viewMoveTime > 0) {
+        m_viewMoveStartRot = m_currentRot;
+        m_viewMoveStartTrans = m_currentTrans;
+        m_viewMoveStartScale = m_currentScale;
     }
 }
 
@@ -1150,14 +1185,26 @@ static void MMDAIFrustum(float result[16], float left, float right, float bottom
     memcpy(result, matrix, sizeof(matrix));
 }
 
-void SceneController::updateProjection()
+void SceneController::updateProjection(int ellapsedTimeForMove)
 {
     if (m_currentScale != m_scale) {
-        float diff = fabs(m_currentScale - m_scale);
-        if (diff < RENDER_MINSCALEDIFF) {
+        if (m_viewMoveTime == 0) {
+            /* immediately apply the target */
             m_currentScale = m_scale;
+        } else if (m_viewMoveTime > 0) {
+            /* constant move */
+            if (ellapsedTimeForMove >= m_viewMoveTime) {
+                m_currentScale = m_scale;
+            } else {
+                m_currentScale = m_viewMoveStartScale + (m_scale - m_viewMoveStartScale) * ellapsedTimeForMove / m_viewMoveTime;
+            }
         } else {
-            m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
+            float diff = fabs(m_currentScale - m_scale);
+            if (diff < RENDER_MINSCALEDIFF) {
+                m_currentScale = m_scale;
+            } else {
+                m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
+            }
         }
     }
     float aspect = (m_width == 0) ? 1.0f : static_cast<float>(m_height) / m_width;
@@ -1167,27 +1214,41 @@ void SceneController::updateProjection()
     m_engine->setProjection(projection);
 }
 
-void SceneController::updateModelView()
+void SceneController::updateModelView(int ellapsedTimeForMove)
 {
     if (m_currentRot != m_rot || m_currentTrans != m_trans) {
-        /* calculate difference */
-        btVector3 trans = m_trans;
-        trans -= m_currentTrans;
-        float diff1 = trans.length2();
-        btQuaternion rot = m_rot;
-        rot -= m_currentRot;
-        float diff2 = rot.length2();
-        if (diff1 > RENDER_MINMOVEDIFF) {
-            m_currentTrans = m_currentTrans.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
-        }
-        else {
+        if (m_viewMoveTime == 0) {
+            /* immediately apply the target */
+            m_currentRot = m_rot;
             m_currentTrans = m_trans;
         }
-        if (diff2 > RENDER_MINSPINDIFF) {
-            m_currentRot = m_currentRot.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
+        else if (m_viewMoveTime > 0) {
+            /* constant move */
+            if (ellapsedTimeForMove >= m_viewMoveTime) {
+                m_currentRot = m_rot;
+                m_currentTrans = m_trans;
+            }
+            else {
+                m_currentTrans = m_viewMoveStartTrans.lerp(m_trans, (btScalar) ellapsedTimeForMove / m_viewMoveTime);
+                m_currentRot = m_viewMoveStartRot.slerp(m_rot, (btScalar) ellapsedTimeForMove / m_viewMoveTime);
+            }
         }
         else {
-            m_currentRot = m_rot;
+            /* calculate difference */
+            btVector3 trans = m_trans;
+            trans -= m_currentTrans;
+            float diff1 = trans.length2();
+            btQuaternion rot = m_rot;
+            rot -= m_currentRot;
+            float diff2 = rot.length2();
+            if (diff1 > RENDER_MINMOVEDIFF)
+                m_currentTrans = m_currentTrans.lerp(m_trans, 1.0f - RENDER_MOVESPEEDRATE); /* current * 0.9 + target * 0.1 */
+            else
+                m_currentTrans = m_trans;
+            if (diff2 > RENDER_MINSPINDIFF)
+                m_currentRot = m_currentRot.slerp(m_rot, 1.0f - RENDER_SPINSPEEDRATE); /* current * 0.9 + target * 0.1 */
+            else
+                m_currentRot = m_rot;
         }
     }
     m_transMatrix.setRotation(m_currentRot);
@@ -1197,13 +1258,16 @@ void SceneController::updateModelView()
 
 void SceneController::prerenderScene()
 {
+    sortRenderOrder();
     m_engine->setViewport(m_width, m_height);
-    m_engine->prerender(m_objects, m_numModel);
+    m_engine->prerender(m_objects, m_order, m_numModel);
 }
 
 void SceneController::renderScene()
 {
-    m_engine->render(m_objects, m_numModel, m_stage);
+    if (!isViewMoving())
+        m_viewMoveTime = -1;
+    m_engine->render(m_objects, m_order, m_numModel, m_stage);
 }
 
 void SceneController::renderBulletForDebug()
@@ -1221,5 +1285,30 @@ void SceneController::renderPMDObjectsForDebug()
     }
 }
 
-} /* namespace */
+void SceneController::sortRenderOrder()
+{
+    if (m_numModel == 0)
+        return;
 
+    int size = 0;
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (!object->isEnable() || !object->allowMotionFileDrop())
+            continue;
+        btVector3 pos = object->getPMDModel()->getCenterBone()->getTransform().getOrigin();
+        pos = m_transMatrix * pos;
+        m_depth[size].distance = pos.z();
+        m_depth[size].id = i;
+        size++;
+    }
+    qsort(m_depth, size, sizeof(RenderDepth), compareDepth);
+    for (int i = 0; i < size; i++)
+        m_order[i] = m_depth[i].id;
+    for (int i = 0; i < m_numModel; i++) {
+        PMDObject *object = m_objects[i];
+        if (!object->isEnable() || !object->allowMotionFileDrop())
+            m_order[size++] = i;
+    }
+}
+
+} /* namespace */

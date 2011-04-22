@@ -764,6 +764,7 @@ void GLSceneRenderEngine::renderEdge(PMDModel *ptr)
     const float modelAlpha = model->getGlobalAlpha();
     const float *edgeColors = model->getEdgeColors();
 
+    /* FIXME: imlement force edge */
     glDisable(GL_LIGHTING);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, model->m_modelVBO[kEdgeVertices]);
@@ -1076,7 +1077,7 @@ void GLSceneRenderEngine::setShadowMapping()
 }
 
 /* GLSceneRenderEngine::RendererSceneShadowMap: shadow mapping */
-void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, Stage *stage)
+void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int16_t *order, int size, Stage *stage)
 {
     int i = 0;
     static GLfloat lightdim[] = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -1097,7 +1098,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
         stage->renderBackground();
         stage->renderFloor();
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
@@ -1116,7 +1117,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
         stage->renderBackground();
         stage->renderFloor();
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
@@ -1131,7 +1132,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
             updateLighting();
         /* Renderer the toon objects */
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
@@ -1199,7 +1200,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
         stage->renderBackground();
         stage->renderFloor();
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
@@ -1214,7 +1215,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
             updateLighting();
         /* Renderer the toon objects */
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             PMDModel *model = object->getPMDModel();
@@ -1237,7 +1238,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
         stage->renderBackground();
         stage->renderFloor();
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             renderModel(object->getPMDModel());
@@ -1258,7 +1259,7 @@ void GLSceneRenderEngine::renderSceneShadowMap(PMDObject **objects, int size, St
 }
 
 /* GLSceneRenderEngine::RendererScene: Renderer scene */
-void GLSceneRenderEngine::renderScene(PMDObject **objects, int size, Stage *stage)
+void GLSceneRenderEngine::renderScene(PMDObject **objects, int16_t *order, int size, Stage *stage)
 {
     int i = 0;
 
@@ -1290,7 +1291,7 @@ void GLSceneRenderEngine::renderScene(PMDObject **objects, int size, Stage *stag
     /* Render model */
     glDisable(GL_DEPTH_TEST);
     for (i = 0; i < size; i++) {
-        PMDObject *object = objects[i];
+        PMDObject *object = objects[order[i]];
         if (!object->isEnable())
             continue;
         glPushMatrix();
@@ -1314,7 +1315,7 @@ void GLSceneRenderEngine::renderScene(PMDObject **objects, int size, Stage *stag
 
     /* Render model */
     for (i = 0; i < size; i++) {
-        PMDObject *object = objects[i];
+        PMDObject *object = objects[order[i]];
         if (!object->isEnable())
             continue;
         PMDModel *model = object->getPMDModel();
@@ -1323,7 +1324,7 @@ void GLSceneRenderEngine::renderScene(PMDObject **objects, int size, Stage *stag
     }
 }
 
-void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
+void GLSceneRenderEngine::prerender(PMDObject **objects, int16_t *order, int size)
 {
     if (m_preference->getBool(kPreferenceUseShadowMapping)) {
         int i = 0;
@@ -1406,7 +1407,7 @@ void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
         /* Renderer objects for depth */
         /* only objects that wants to drop shadow should be Renderered here */
         for (i = 0; i < size; i++) {
-            PMDObject *object = objects[i];
+            PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
             glPushMatrix();
@@ -1439,12 +1440,12 @@ void GLSceneRenderEngine::prerender(PMDObject **objects, int size)
 }
 
 /* GLSceneRenderEngine::render: Render all */
-void GLSceneRenderEngine::render(PMDObject **objects, int size, Stage *stage)
+void GLSceneRenderEngine::render(PMDObject **objects, int16_t *order, int size, Stage *stage)
 {
     if (m_preference->getBool(kPreferenceUseShadowMapping))
-        renderSceneShadowMap(objects, size, stage);
+        renderSceneShadowMap(objects, order, size, stage);
     else
-        renderScene(objects, size, stage);
+        renderScene(objects, order, size, stage);
 }
 
 /* GLSceneRenderEngine::pickModel: pick up a model at the screen position */

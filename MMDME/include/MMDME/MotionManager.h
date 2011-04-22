@@ -59,7 +59,7 @@ struct MotionPlayer {
     MotionController mc;
     VMD *vmd;
     unsigned char onEnd;
-    short priority;
+    float priority;
     bool ignoreStatic;
     float loopAt;
     bool enableSmooth;
@@ -77,13 +77,19 @@ struct MotionPlayer {
 class MotionManager
 {
 public:
-    static const int kDefaultPriority = 0;
+    static const float kDefaultPriority;
     static const float kDefaultLoopAtFrame;
 
     MotionManager(PMDModel *pmd);
     ~MotionManager();
 
-    bool startMotion(VMD *vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRePos);
+    bool startMotion(VMD *vmd,
+                     const char *name,
+                     bool full,
+                     bool once,
+                     bool enableSmooth,
+                     bool enableRePos,
+                     float priority);
     void startMotionSub(VMD *vmd, MotionPlayer *m);
     bool swapMotion(VMD *vmd, const char *name);
     bool deleteMotion(const char *name);

@@ -155,11 +155,6 @@ bool PMDObject::load(IModelLoader *modelLoader,
     /* save position when position is fixed */
     if (m_baseBone)
         m_origBasePos = m_baseBone->getTransform().getOrigin();
-    /* set toon rendering flag */
-    m_model->setToonEnable(useCartoonRendering == true && m_allowToonShading == true);
-
-    /* set edge width */
-    m_model->setEdgeThin(cartoonEdgeWidth);
 
     /* set alpha frame */
     m_alphaAppearFrame = PMDOBJECT_ALPHAFRAME;
@@ -176,6 +171,12 @@ bool PMDObject::load(IModelLoader *modelLoader,
         clear();
         return false;
     }
+
+    /* set toon rendering flag */
+    m_model->setToonEnable(useCartoonRendering == true && m_allowToonShading == true);
+
+    /* set edge width */
+    m_model->setEdgeThin(cartoonEdgeWidth);
 
     /* set up lip sync */
     m_localLipSync.load(lipSyncLoader);
@@ -197,9 +198,15 @@ bool PMDObject::load(IModelLoader *modelLoader,
 }
 
 /* PMDObject::setMotion: start a motion */
-bool PMDObject::startMotion(VMD * vmd, const char * name, bool full, bool once, bool enableSmooth, bool enableRepos)
+bool PMDObject::startMotion(VMD * vmd,
+                            const char * name,
+                            bool full,
+                            bool once,
+                            bool enableSmooth,
+                            bool enableRepos,
+                            float priority)
 {
-    if (m_motionManager == NULL || m_motionManager->startMotion(vmd, name, full, once, enableSmooth, enableRepos) == false)
+    if (m_motionManager == NULL || !m_motionManager->startMotion(vmd, name, full, once, enableSmooth, enableRepos, priority))
         return false;
     return true;
 }
@@ -207,7 +214,7 @@ bool PMDObject::startMotion(VMD * vmd, const char * name, bool full, bool once, 
 /* PMDObject::swapMotion: swap a motion */
 bool PMDObject::swapMotion(VMD * vmd, const char *targetName)
 {
-    if (m_motionManager == NULL || m_motionManager->swapMotion(vmd, targetName) == false)
+    if (m_motionManager == NULL || !m_motionManager->swapMotion(vmd, targetName))
         return false;
     return true;
 }

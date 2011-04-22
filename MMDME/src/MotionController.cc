@@ -139,32 +139,37 @@ void MotionController::calcBoneAt(MotionControllerBoneElement *mc, float frameNo
             mc->pos = pos2;
             mc->rot = rot2;
         } else {
-            float x = 0, y = 0, z = 0, ww = 0;
+            float x = 0, y = 0, z = 0, ww = 0, *v = 0;
             /* lerp */
             float w = (frame - time1) / (time2 - time1);
+            int16_t index = static_cast<int16_t>(w * VMD::kInterpolationTableSize);
             if (keyFrameForInterpolation->linear[0]) {
                 x = pos1.x() * (1.0f - w) + pos2.x() * w;
             } else {
-                ww = keyFrameForInterpolation->interpolationTable[0][(int)(w * VMD::kInterpolationTableSize)];
+                v = keyFrameForInterpolation->interpolationTable[0];
+                ww = v[index] + (v[index + 1] - v[index]) * (w * VMD::kInterpolationTableSize - index);
                 x = pos1.x() * (1.0f - ww) + pos2.x() * ww;
             }
             if (keyFrameForInterpolation->linear[1]) {
                 y = pos1.y() * (1.0f - w) + pos2.y() * w;
             } else {
-                ww = keyFrameForInterpolation->interpolationTable[1][(int)(w * VMD::kInterpolationTableSize)];
+                v = keyFrameForInterpolation->interpolationTable[1];
+                ww = v[index] + (v[index + 1] - v[index]) * (w * VMD::kInterpolationTableSize - index);
                 y = pos1.y() * (1.0f - ww) + pos2.y() * ww;
             }
             if (keyFrameForInterpolation->linear[2]) {
                 z = pos1.z() * (1.0f - w) + pos2.z() * w;
             } else {
-                ww = keyFrameForInterpolation->interpolationTable[2][(int)(w * VMD::kInterpolationTableSize)];
+                v = keyFrameForInterpolation->interpolationTable[2];
+                ww = v[index] + (v[index + 1] - v[index]) * (w * VMD::kInterpolationTableSize - index);
                 z = pos1.z() * (1.0f - ww) + pos2.z() * ww;
             }
             mc->pos.setValue(x, y, z);
             if (keyFrameForInterpolation->linear[3]) {
                 mc->rot = rot1.slerp(rot2, w);
             } else {
-                ww = keyFrameForInterpolation->interpolationTable[3][(int)(w * VMD::kInterpolationTableSize)];
+                v = keyFrameForInterpolation->interpolationTable[3];
+                ww = v[index] + (v[index + 1] - v[index]) * (w * VMD::kInterpolationTableSize - index);
                 mc->rot = rot1.slerp(rot2, ww);
             }
         }

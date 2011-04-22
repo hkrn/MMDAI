@@ -115,8 +115,8 @@ namespace MMDAI {
     bool setup();
     void initializeShadowMap();
     void setShadowMapping();
-    void prerender(PMDObject **objects, int size);
-    void render(PMDObject **objects, int size, Stage *stage);
+    void prerender(PMDObject **objects, int16_t *order, int size);
+    void render(PMDObject **objects, int16_t *order, int size, Stage *stage);
     int pickModel(PMDObject **objects,
                   int size,
                   int x,
@@ -133,8 +133,8 @@ namespace MMDAI {
     void drawSphere(int lats, int longs);
     void drawConvex(btConvexShape *shape);
 
-    void renderSceneShadowMap(PMDObject **objects, int size, Stage * stage);
-    void renderScene(PMDObject **objects, int size, Stage *stage);
+    void renderSceneShadowMap(PMDObject **objects, int16_t *order, int size, Stage * stage);
+    void renderScene(PMDObject **objects, int16_t *order, int size, Stage *stage);
 
     IPreference *m_preference;
     btVector3 m_lightVec;                  /* light vector for shadow maapping */

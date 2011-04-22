@@ -111,8 +111,9 @@ bool QMALipSyncLoader::load()
                     if (i < m_nexpressions) {
                         QByteArray data = codec->fromUnicode(line);
                         int len = data.length();
-                        char *s = new char[len];
+                        char *s = new char[len + 1];
                         memcpy(s, data.constData(), len);
+                        s[len] = '\0';
                         m_expressionNames->append(s);
                         i++;
                     }
@@ -130,8 +131,9 @@ bool QMALipSyncLoader::load()
                         if (a.count() == 1 + m_nexpressions) {
                             QByteArray data = a.at(0).toUtf8();
                             int len = data.length();
-                            char *s = new char[len];
+                            char *s = new char[len + 1];
                             memcpy(s, data.constData(), len);
+                            s[len] = '\0';
                             m_phoneNames->append(s);
                             for (int j = 0; j < m_nexpressions; j++) {
                                 float f = a.at(j + 1).toFloat();

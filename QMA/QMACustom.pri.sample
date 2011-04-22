@@ -27,7 +27,7 @@ CONFIG(release, debug|release) {
                 -framework AudioToolbox -framework AudioUnit
         # link static plugins
         LIBS += -L../StaticPlugins -lQMAAudioPlugin -lQMAJuliusPlugin -lQMALookAtPlugin \
-                -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin -lQMAVariablePlugin
+                -lQMAOpenJTalkPlugin -lQMAVIManagerPlugin
     }
 }
 

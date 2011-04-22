@@ -90,6 +90,10 @@ void PMDModel::initialize()
     m_boneDisplayIndices = NULL;
     m_boneDisplayNames = NULL;
 
+    m_forceEdge = false;
+    m_orderedBoneList = NULL;
+    m_boundingSphereStep = kBoundingSpherePointsMin;
+
     /* initial values for variables that should be kept at model change */
     m_enableSimulation = true;
     m_toon = false;

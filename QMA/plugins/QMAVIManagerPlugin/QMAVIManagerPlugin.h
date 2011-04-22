@@ -69,6 +69,9 @@ public:
     static const QString kTimerStartEvent;
     static const QString kTimerStopEvent;
 
+    static const QString kKeyPost;
+    static const QString kExecute;
+
     QMAVIManagerPlugin(QObject *parent = 0);
     ~QMAVIManagerPlugin();
 

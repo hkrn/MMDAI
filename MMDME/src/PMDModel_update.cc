@@ -49,7 +49,7 @@ void PMDModel::updateBone()
 
     /* update bone matrix from current position and rotation */
     for (i = 0; i < m_numBone; i++)
-        m_boneList[i].update();
+        m_orderedBoneList[i]->update();
 
     /* solve IK chains */
     if (m_enableSimulation) {
@@ -170,7 +170,7 @@ float PMDModel::calculateBoundingSphereRange(btVector3 *cpos)
 
     if (m_centerBone) {
         centerPos = m_centerBone->getTransform().getOrigin();
-        for (uint32_t i = 0; i < m_numVertex; i += 10) {
+        for (uint32_t i = 0; i < m_numVertex; i += m_boundingSphereStep) {
             const float r2 = centerPos.distance2(m_skinnedVertexList[i]);
             if (maxR < r2)
                 maxR = r2;

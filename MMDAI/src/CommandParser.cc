@@ -195,7 +195,8 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         bool once = true; /* once */
         bool enableSmooth = true; /* enableSmooth */
         bool enableRepos = true; /* enableRePos */
-        if (argc < 3 || argc > 7) {
+        float priority = MotionManager::kDefaultPriority;
+        if (argc < 3 || argc > 8) {
             MMDAILogWarn("%s: too few arguments", command);
             return false;
         }
@@ -247,10 +248,13 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
                 return false;
             }
         }
+        if (argc >= 8) {
+            MMDAIStringToFloat(argv[7]);
+        }
         object = m_controller->findPMDObject(argv[0]);
         if (object != NULL) {
             vmd = m_factory->createMotionLoader(argv[2]);
-            ret = m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos);
+            ret = m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos, priority);
             m_factory->releaseMotionLoader(vmd);
         }
         else {

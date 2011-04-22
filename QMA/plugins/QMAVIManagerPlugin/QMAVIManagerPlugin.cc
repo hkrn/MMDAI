@@ -38,9 +38,13 @@
 
 #include "QMAVIManagerPlugin.h"
 
+#include <QDesktopServices>
 #include <QFile>
+#include <QKeyEvent>
+#include <QProcess>
 #include <QStringList>
 #include <QTextCodec>
+#include <QUrl>
 
 #include <MMDME/MMDME.h>
 
@@ -55,6 +59,9 @@ const QString QMAVIManagerPlugin::kValueUnsetEvent = "VALUE_EVENT_UNSET";
 const QString QMAVIManagerPlugin::kValueEvaluateEvent = "VALUE_EVENT_EVAL";
 const QString QMAVIManagerPlugin::kTimerStartEvent = "TIMER_EVENT_START";
 const QString QMAVIManagerPlugin::kTimerStopEvent = "TIMER_EVENT_STOP";
+
+const QString QMAVIManagerPlugin::kKeyPost = "KEY_POST";
+const QString QMAVIManagerPlugin::kExecute = "EXECUTE";
 
 QMAVIManagerPlugin::QMAVIManagerPlugin(QObject *parent)
     : QMAPlugin(parent),
@@ -113,6 +120,15 @@ void QMAVIManagerPlugin::receiveCommand(const QString &command, const QList<QVar
     else if (command == kTimerStop && argc >= 1) {
         const QString key = arguments[0].toString();
         stopTimer0(key);
+    }
+    else if (command == kKeyPost && argc >= 2) {
+    }
+    else if (command == kExecute && argc >= 1) {
+        QString argument = arguments[0].toString();
+        QUrl url(argument);
+        if (url.isValid()) {
+            QDesktopServices::openUrl(url);
+        }
     }
 }
 

@@ -66,6 +66,9 @@ class PMDModel
 {
 public:
     static const uint32_t kNSystemTextureFiles = 11;
+    static const uint32_t kBoundingSpherePoints = 1000;
+    static const uint32_t kBoundingSpherePointsMax = 20;
+    static const uint32_t kBoundingSpherePointsMin = 5;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
     static const float kEdgeColorR;
@@ -103,12 +106,18 @@ public:
     inline void setSelfShadowDrawing(const bool value) {
         m_selfShadowDrawing = value;
     }
-    inline void setEdgeColor(const float col[4]) {
+    inline void setEdgeColor(const float values[4]) {
         for (int i = 0; i < 4; i++)
-            m_edgeColor[i] = col[i];
+            m_edgeColor[i] = values[i];
     }
     inline void setGlobalAlpha(const float value) {
         m_globalAlpha = value;
+    }
+    inline void setForceEdge(const bool value) {
+        m_forceEdge = value;
+    }
+    inline const bool isForceEdge() {
+        return m_forceEdge;
     }
     inline PMDBone *getRootBone() {
         return &m_rootBone;
@@ -311,12 +320,15 @@ private:
     TexCoord *m_toonTexCoordListForShadowMap;
     PMDBone *m_centerBone;
     PMDFace *m_baseFace;
+    PMDBone **m_orderedBoneList;
     bool m_hasSingleSphereMap;
     bool m_hasMultipleSphereMap;
     uint16_t m_numRotateBone;
     uint16_t *m_rotateBoneIDList;
+    uint32_t m_boundingSphereStep;
     bool *m_IKSimulated;
     bool m_enableSimulation;
+    bool m_forceEdge;
     float m_maxHeight;
     bool m_toon;
     float m_globalAlpha;

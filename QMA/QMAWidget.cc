@@ -40,16 +40,16 @@
 
 QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-      m_preference(preference),
-      m_sceneUpdateTimer(this),
-      m_controller(new MMDAI::SceneController(this, preference)),
-      m_parser(m_controller, &m_factory),
-      m_x(0),
-      m_y(0),
-      m_doubleClicked(false),
-      m_showLog(true),
-      m_displayBone(false),
-      m_displayRigidBody(false)
+    m_preference(preference),
+    m_sceneUpdateTimer(this),
+    m_controller(new MMDAI::SceneController(this, preference)),
+    m_parser(m_controller, &m_factory),
+    m_x(0),
+    m_y(0),
+    m_doubleClicked(false),
+    m_showLog(true),
+    m_displayBone(false),
+    m_displayRigidBody(false)
 {
     m_sceneUpdateTimer.setSingleShot(false);
     connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
@@ -221,7 +221,7 @@ void QMAWidget::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *lo
         }
     }
     if (player == NULL) {
-        m_controller->addMotion(object, "base", loader, true, false, true, true);
+        m_controller->addMotion(object, "base", loader, true, false, true, true, MMDAI::MotionManager::kDefaultPriority);
     }
 }
 
@@ -271,8 +271,8 @@ void QMAWidget::paintGL()
     double fps = m_sceneFrameTimer.getFPS();
     glColor3f(1, 0, 0);
     m_controller->updateModelPositionAndRotation(fps);
-    m_controller->updateModelView();
-    m_controller->updateProjection();
+    m_controller->updateModelView(0);
+    m_controller->updateProjection(0);
     delegateEvent(QMAPlugin::getPreRenderEvent(), QMAPlugin::getEmptyArguments());
     m_controller->prerenderScene();
     m_controller->renderScene();
@@ -307,22 +307,29 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
         if (y < SHRT_MIN)
             y += (USHRT_MAX + 1);
         Qt::KeyboardModifiers modifiers = event->modifiers();
-        if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
+        MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+        if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier && selectedObject == NULL) {
             m_controller->updateLightDirection(x, y);
+        }
+        else if (modifiers & Qt::ControlModifier && selectedObject != NULL) {
+            m_controller->setHighlightPMDObject(selectedObject);
+            btVector3 pos = selectedObject->getTargetPosition();
+            float scale = m_controller->getScale();
+            float step = m_preference->getFloat(MMDAI::kPreferenceTranslateStep);
+            if (modifiers & Qt::ShiftModifier) {
+                /* with Shift-key, move on XY (coronal) plane */
+                pos.setX(pos.x() + x * 0.1f * step / scale);
+                pos.setY(pos.y() - y * 0.1f * step / scale);
+            } else {
+                /* else, move on XZ (axial) plane */
+                pos.setX(pos.x() + x * 0.1f * step / scale);
+                pos.setZ(pos.z() + y * 0.1f * step / scale);
+            }
+            selectedObject->setPosition(pos);
+            selectedObject->setMoveSpeed(-1.0f);
         }
         else if (modifiers & Qt::ShiftModifier) {
             m_controller->setModelViewPosition(x, y);
-        }
-        else if (modifiers & Qt::ControlModifier) {
-            MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
-            if (selectedObject != NULL) {
-                m_controller->setHighlightPMDObject(selectedObject);
-                btVector3 pos = selectedObject->getTargetPosition();
-                pos.setX(pos.x() + x / 20.0f);
-                pos.setZ(pos.z() + y / 20.0f);
-                selectedObject->setPosition(pos);
-                selectedObject->setMoveSpeed(-1.0f);
-            }
         }
         else {
             m_controller->setModelViewRotation(x, y);
@@ -464,8 +471,8 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     }
                 }
                 else if (path.endsWith(".bmp", Qt::CaseInsensitive)
-                         || path.endsWith(".tga", Qt::CaseInsensitive)
-                         || path.endsWith(".png", Qt::CaseInsensitive)) {
+                    || path.endsWith(".tga", Qt::CaseInsensitive)
+                    || path.endsWith(".png", Qt::CaseInsensitive)) {
                     /* floor or background */
                     MMDAI::IModelLoader *loader = m_factory.createModelLoader(filename);
                     if (modifiers & Qt::ControlModifier)

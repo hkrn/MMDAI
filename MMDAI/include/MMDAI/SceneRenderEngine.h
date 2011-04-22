@@ -83,8 +83,10 @@ public:
     virtual void initializeShadowMap() = 0;
     virtual void setShadowMapping() = 0;
     virtual void prerender(PMDObject **objects,
+                           int16_t *order,
                            int size) = 0;
     virtual void render(PMDObject **objects,
+                        int16_t *order,
                         int size,
                         Stage *stage) = 0;
     virtual int pickModel(PMDObject **objects,

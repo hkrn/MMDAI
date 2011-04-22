@@ -149,7 +149,7 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
             bf->interpolationTable[i] = NULL;
             continue;
         }
-        bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * kInterpolationTableSize));
+        bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * kInterpolationTableSize + 1));
         if (bf->interpolationTable[i] == NULL)
             return;
         float x1 = ip[   i] / 127.0f;
@@ -157,7 +157,7 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
         float x2 = ip[ 8+i] / 127.0f;
         float y2 = ip[12+i] / 127.0f;
         for (int16_t d = 0; d < kInterpolationTableSize; d++) {
-            float inval = (static_cast<float>(d) + 0.5f) / static_cast<float>(kInterpolationTableSize);
+            float inval = static_cast<float>(d) / kInterpolationTableSize;
             /* get Y value for given inval */
             float t = inval;
             while (1) {
@@ -171,6 +171,7 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
             }
             bf->interpolationTable[i][d] = ipfunc(t, y1, y2);
         }
+        bf->interpolationTable[i][kInterpolationTableSize] = 1.0f;
     }
 }
 

@@ -42,6 +42,7 @@
 
 namespace MMDAI {
 
+const float MotionManager::kDefaultPriority = 0.0f;
 const float MotionManager::kDefaultLoopAtFrame = 0.0f;
 
 /* MotionPlayer_initialize: initialize MotionPlayer */
@@ -120,7 +121,13 @@ void MotionManager::release()
 }
 
 /* MotionManager::startMotion start a motion */
-bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool once, bool enableSmooth, bool enableRePos)
+bool MotionManager::startMotion(VMD * vmd,
+                                const char *name,
+                                bool full,
+                                bool once,
+                                bool enableSmooth,
+                                bool enableRePos,
+                                float priority)
 {
     assert(vmd != NULL && name != NULL);
 
@@ -141,6 +148,7 @@ bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool onc
     m->ignoreStatic = full ? false : true;
     m->enableSmooth = enableSmooth;
     m->enableRePos = enableRePos;
+    m->priority = priority;
 
     startMotionSub(vmd, m);
 
@@ -149,8 +157,8 @@ bool MotionManager::startMotion(VMD * vmd, const char *name, bool full, bool onc
         m_beginningNonControlledBlend = 10.0f;
 
     /* add this new motion to the last of the motion player list, consulting priority */
-    if (m_playerList == NULL) {
-        m->next = NULL;
+    if (m_playerList == NULL || m_playerList->priority > m->priority) {
+        m->next = m_playerList;
         m_playerList = m;
     } else {
         MotionPlayer *tmp2 = m_playerList->next; /* skip the base motion */
@@ -256,9 +264,15 @@ bool MotionManager::deleteMotion(const char *name)
 
     for (MotionPlayer *m = m_playerList; m; m = m->next) {
         if (m->active && MMDAIStringEquals(m->name, name)) {
-            /* enter the ending status, gradually decreasing the blend rate */
-            m->endingBoneBlend = m->endingBoneBlendFrames;
-            m->endingFaceBlend = m->endingFaceBlendFrames;
+            if (m->enableSmooth) {
+                /* enter the ending status, gradually decreasing the blend rate */
+                m->endingBoneBlend = m->endingBoneBlendFrames;
+                m->endingFaceBlend = m->endingFaceBlendFrames;
+            }
+            else {
+                m->endingBoneBlend = 0.0001f;
+                m->endingFaceBlend = 0.0001f;
+            }
             return true;
         }
     }
@@ -323,8 +337,14 @@ bool MotionManager::update(double frame)
                     break;
             case 2:
                     /* enter the ending status, gradually decreasing the blend rate */
-                    m->endingBoneBlend = m->endingBoneBlendFrames;
-                    m->endingFaceBlend = m->endingFaceBlendFrames;
+                    if (m->enableSmooth) {
+                        m->endingBoneBlend = m->endingBoneBlendFrames;
+                        m->endingFaceBlend = m->endingFaceBlendFrames;
+                    }
+                    else {
+                        m->active = false;
+                        m->statusFlag = MOTION_STATUS_DELETED;
+                    }
                     break;
                 }
             }
