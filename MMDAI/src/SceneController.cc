@@ -43,7 +43,7 @@
 #if defined(OPENGLES1)
 #include "MMDAI/GLES1SceneRenderEngine.h"
 #else
-#include "MMDAI/GLSceneRenderEngine.h"
+#include "GLSceneRenderEngine.h"
 #endif
 
 namespace MMDAI {
