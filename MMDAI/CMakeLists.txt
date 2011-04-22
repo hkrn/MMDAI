@@ -59,6 +59,12 @@ set(libMMDAI_public_headers
   include/MMDAI/TileTexture.h
 )
 
+option(USE_OPENGL_ES1 "Use OpenGLES 1.x instead of desktop OpenGL" OFF)
+if (USE_OPENGL_ES1)
+  add_definitions(-DMMDAI_OPENGL_ES1)
+endif()
+list(APPEND libMMDAI_sources src/GLSceneRenderEngine.h)
+
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 if(BUILD_SHARED_LIBS)
   set(MMDAI_LIB_TYPE SHARED)
@@ -137,11 +143,6 @@ if(MMDME_INCLUDE AND MMDME_LIBRARY)
   include_directories(MMDAI ${MMDME_INCLUDE})
 else()
   message(FATAL_ERROR "Required MMDME is not found.")
-endif()
-
-option(USE_OPENGL_ES1 "Use OpenGLES 1.x instead of desktop OpenGL" OFF)
-if (USE_OPENGL_ES1)
-  add_definitions(-DOPENGLES1)
 endif()
 
 # create as a framework if build on darwin environment
