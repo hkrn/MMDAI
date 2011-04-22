@@ -100,26 +100,39 @@ enum GLPMDModelBuffer {
 
 class GLPMDModel : public PMDModel {
 public:
-    GLPMDModel(PMDRenderEngine *engine) : PMDModel(engine), m_materialVBO(NULL), m_nmaterials(0) {
+    GLPMDModel(PMDRenderEngine *engine)
+      : PMDModel(engine),
+        m_materialVBO(NULL),
+        m_nmaterials(0)
+    {
+#ifdef MMDAI_OPENGL_ES1
+        m_spheres = NULL;
+        m_spheres2 = NULL;
+#endif
     }
     ~GLPMDModel() {
         glDeleteBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
         if (m_materialVBO != 0) {
             glDeleteBuffers(m_nmaterials, m_materialVBO);
             MMDAIMemoryRelease(m_materialVBO);
+            m_materialVBO = NULL;
         }
+#ifdef MMDAI_OPENGL_ES1
         if (m_spheres) {
             for (unsigned int i = 0; i < m_nmaterials; i++) {
                 MMDAIMemoryRelease(m_spheres[i]);
             }
             MMDAIMemoryRelease(m_spheres);
+            m_spheres = NULL;
         }
         if (m_spheres2) {
             for (unsigned int i = 0; i < m_nmaterials; i++) {
                 MMDAIMemoryRelease(m_spheres2[i]);
             }
             MMDAIMemoryRelease(m_spheres2);
+            m_spheres2 = NULL;
         }
+#endif /* MMDAI_OPENGL_ES1 */
     }
     bool load(IModelLoader *loader, BulletPhysics *bullet) {
         if (!PMDModel::load(loader, bullet))
@@ -132,12 +145,14 @@ public:
         m_materialVBO = static_cast<GLuint *>(MMDAIMemoryAllocate(m_nmaterials * sizeof(GLuint)));
         if (m_materialVBO == NULL)
             return false;
+#ifdef MMDAI_OPENGL_ES1
         m_spheres = static_cast<TexCoord **>(MMDAIMemoryAllocate(sizeof(void *) * m_nmaterials));
         if (m_spheres == NULL)
             return false;
         m_spheres2 = static_cast<TexCoord **>(MMDAIMemoryAllocate(sizeof(void *) * m_nmaterials));
         if (m_spheres2 == NULL)
             return false;
+#endif
         glGenBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
         glGenBuffers(m_nmaterials, m_materialVBO);
         // edge buffer
@@ -153,6 +168,7 @@ public:
         for (unsigned int i = 0; i < m_nmaterials; i++) {
             PMDMaterial *m = getMaterialAt(i);
             const PMDTexture *tex = m->getTexture();
+#ifdef MMDAI_OPENGL_ES1
             m_spheres[i] = NULL;
             m_spheres2[i] = NULL;
             if (tex != NULL) {
@@ -178,6 +194,7 @@ public:
                     }
                 }
             }
+#endif /* MMDAI_OPENGL_ES1 */
             const int nsurfaces = getMaterialAt(i)->countSurfaces();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_materialVBO[i]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, nsurfaces * sizeof(GLushort), surfaceData, GL_STATIC_DRAW);
@@ -198,11 +215,15 @@ public:
         return m_spheres2[index];
     }
 private:
-    TexCoord **m_spheres;
-    TexCoord **m_spheres2;
     GLuint *m_materialVBO;
     GLuint m_modelVBO[kModelBufferMax];
     GLuint m_nmaterials;
+    
+#ifdef MMDAI_OPENGL_ES1
+    TexCoord **m_spheres;
+    TexCoord **m_spheres2;
+#endif /* MMDAI_OPENGL_ES1 */
+
 };
     
 class GLPMDMaterial : public PMDMaterial {
