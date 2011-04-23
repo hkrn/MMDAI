@@ -129,15 +129,15 @@ MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
 #define MMDAILogErrorStringSJIS(format) \
         MMDAILogWriteSJIS(__FILE__, __LINE__, (MMDAILogLevelError), (format))
 
-        /* convert from/to radian */
-        inline float MMDME_RAD(float a)
+/* convert from/to radian */
+inline float MMDAIMathRadian(float value)
 {
-    return a * (3.1415926f / 180.0f);
+    return value * (3.1415926f / 180.0f);
 }
 
-inline float MMDME_DEG(float a)
+inline float MMDAIMathDegree(float value)
 {
-    return a * (180.0f / 3.1415926f);
+    return value * (180.0f / 3.1415926f);
 }
 
 inline void *MMDAIMemoryAllocate(size_t size)

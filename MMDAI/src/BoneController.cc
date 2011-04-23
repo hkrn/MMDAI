@@ -132,8 +132,8 @@ void BoneController::setup(PMDModel *model, const char **boneName, int numBone, 
     m_rateOn = rateOn;
     m_rateOff = rateOff;
     m_baseVector = btVector3(baseVectorX, baseVectorY, baseVectorZ);
-    m_upperAngLimit = btVector3(MMDME_RAD(upperAngLimitX), MMDME_RAD(upperAngLimitY), MMDME_RAD(upperAngLimitZ));
-    m_lowerAngLimit = btVector3(MMDME_RAD(lowerAngLimitX), MMDME_RAD(lowerAngLimitY), MMDME_RAD(lowerAngLimitZ));
+    m_upperAngLimit = btVector3(MMDAIMathRadian(upperAngLimitX), MMDAIMathRadian(upperAngLimitY), MMDAIMathRadian(upperAngLimitZ));
+    m_lowerAngLimit = btVector3(MMDAIMathRadian(lowerAngLimitX), MMDAIMathRadian(lowerAngLimitY), MMDAIMathRadian(lowerAngLimitZ));
     m_adjustPos = btVector3(adjustPosX, adjustPosY, adjustPosZ);
 
     /* set child bones */

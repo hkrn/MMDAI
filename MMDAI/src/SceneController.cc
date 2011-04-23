@@ -925,7 +925,7 @@ void SceneController::initializeScreen(int width, int height)
 void SceneController::resetLocation(const btVector3 &trans, const float *rot, const float scale)
 {
     btMatrix3x3 bm;
-    bm.setEulerZYX(MMDME_RAD(rot[0]), MMDME_RAD(rot[1]), MMDME_RAD(rot[2]));
+    bm.setEulerZYX(MMDAIMathRadian(rot[0]), MMDAIMathRadian(rot[1]), MMDAIMathRadian(rot[2]));
     bm.getRotation(m_rot);
     m_trans = trans;
     m_scale = scale;

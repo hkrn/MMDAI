@@ -385,7 +385,7 @@ bool PMDObject::updateModelRootRotation(float fps)
         if (diff > PMDOBJECT_MINSPINDIFF) {
             if (m_spinSpeed >= 0.0f && fps != 0.0f) {
                 /* max turn speed */
-                maxStep = MMDME_RAD(m_spinSpeed) / fps;
+                maxStep = MMDAIMathRadian(m_spinSpeed) / fps;
                 if (diff > maxStep) {
                     tmpRot = b->getCurrentRotation();
                     tmpRot = tmpRot.slerp(m_offsetRot, maxStep / diff);

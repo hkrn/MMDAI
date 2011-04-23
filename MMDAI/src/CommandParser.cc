@@ -91,7 +91,7 @@ static bool arg2rot(btQuaternion *dst, const char *arg)
     if (arg2floatArray(angle, 3, arg) == false)
         return false;
 
-    dst->setEulerZYX(MMDME_RAD(angle[2]), MMDME_RAD(angle[1]), MMDME_RAD(angle[0]));
+    dst->setEulerZYX(MMDAIMathRadian(angle[2]), MMDAIMathRadian(angle[1]), MMDAIMathRadian(angle[0]));
 
     return true;
 }
