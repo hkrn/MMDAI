@@ -40,7 +40,6 @@
 
 #include <QDesktopServices>
 #include <QFile>
-#include <QKeyEvent>
 #include <QProcess>
 #include <QStringList>
 #include <QTextCodec>
@@ -121,13 +120,16 @@ void QMAVIManagerPlugin::receiveCommand(const QString &command, const QList<QVar
         const QString key = arguments[0].toString();
         stopTimer0(key);
     }
-    else if (command == kKeyPost && argc >= 2) {
-    }
     else if (command == kExecute && argc >= 1) {
-        QString argument = arguments[0].toString();
-        QUrl url(argument);
+        const QString argument = arguments[0].toString();
+        const QUrl url(argument);
         if (url.isValid()) {
             QDesktopServices::openUrl(url);
+        }
+        else {
+            const QProcess process;
+            const QString program = argument;
+            process.execute(program);
         }
     }
 }
