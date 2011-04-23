@@ -15,6 +15,7 @@ linux:DEFINES += QMA_CONFIG_PATH="\"\\\"/etc\\\"\"" \
 }
 
 # for creating MacOSX distribution
+macx:CONFIG += x86 x86_64
 CONFIG(release, debug|release) {
     DEFINES += QMA_BUNDLE_PLUGINS
     macx {
