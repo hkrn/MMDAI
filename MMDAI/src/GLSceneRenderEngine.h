@@ -1581,23 +1581,23 @@ private:
     {
 #ifndef MMDAI_OPENGL_ES1
         for (int i = 0; i <= lats; i++) {
-            const double lat0 = BULLETPHYSICS_PI * (-0.5 + (double) (i - 1) / lats);
+            const double lat0 = M_PI * (-0.5 + static_cast<double>(i - 1) / lats);
             const double z0 = sin(lat0);
             const double zr0 = cos(lat0);
-            const double lat1 = BULLETPHYSICS_PI * (-0.5 + (double) i / lats);
+            const double lat1 = M_PI * (-0.5 + static_cast<double>(i) / lats);
             const double z1 = sin(lat1);
             const double zr1 = cos(lat1);
 
             glBegin(GL_QUAD_STRIP);
             for (int j = 0; j <= longs; j++) {
-                const double lng = 2 * BULLETPHYSICS_PI * (double) (j - 1) / longs;
+                const double lng = 2 * M_PI * static_cast<double>(j - 1) / longs;
                 const double x = cos(lng);
                 const double y = sin(lng);
 
-                glNormal3f((GLfloat)(x * zr0), (GLfloat)(y * zr0), (GLfloat)z0);
-                glVertex3f((GLfloat)(x * zr0), (GLfloat)(y * zr0), (GLfloat)z0);
-                glNormal3f((GLfloat)(x * zr1), (GLfloat)(y * zr1), (GLfloat)z1);
-                glVertex3f((GLfloat)(x * zr1), (GLfloat)(y * zr1), (GLfloat)z1);
+                glNormal3d(x * zr0, y * zr0, z0);
+                glVertex3d(x * zr0, y * zr0, z0);
+                glNormal3d(x * zr1, y * zr1, z1);
+                glVertex3d(x * zr1, y * zr1, z1);
             }
             glEnd();
         }

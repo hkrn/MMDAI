@@ -40,6 +40,7 @@
 #define MMDME_COMMON_H_
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -132,12 +133,12 @@ MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
 /* convert from/to radian */
 inline float MMDAIMathRadian(float value)
 {
-    return value * (3.1415926f / 180.0f);
+    return value * (M_PI / 180.0f);
 }
 
 inline float MMDAIMathDegree(float value)
 {
-    return value * (180.0f / 3.1415926f);
+    return value * (180.0f / M_PI);
 }
 
 inline void *MMDAIMemoryAllocate(size_t size)
