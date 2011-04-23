@@ -191,7 +191,6 @@ private:
     bool m_underTurn;
     double m_alphaAppearFrame;
     double m_alphaDisappearFrame;
-    double m_displayCommentFrame;
     bool m_needResetKinematic;
 
     MMDME_DISABLE_COPY_AND_ASSIGN(PMDObject);

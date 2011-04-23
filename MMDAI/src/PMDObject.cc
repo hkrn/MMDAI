@@ -66,7 +66,6 @@ void PMDObject::initialize()
     m_offsetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
     m_alphaAppearFrame = 0.0;
     m_alphaDisappearFrame = 0.0;
-    m_displayCommentFrame = 0.0;
     m_assignTo = NULL;
     m_baseBone = NULL;
     m_needResetKinematic = false;
@@ -159,9 +158,6 @@ bool PMDObject::load(IModelLoader *modelLoader,
     /* set alpha frame */
     m_alphaAppearFrame = PMDOBJECT_ALPHAFRAME;
     m_alphaDisappearFrame = 0.0;
-
-    /* set comment frame */
-    m_displayCommentFrame = PMDOBJECT_COMMENTFRAME;
 
     /* enable */
     m_isEnable = true;
@@ -259,13 +255,6 @@ bool PMDObject::updateMotion(double deltaFrame)
     ret = m_motionManager->update(deltaFrame);
     m_model->updateBone(); /* update bone, IK, and rotation */
     m_model->updateFace(); /* update face */
-
-    /* update comment frame */
-    if (m_displayCommentFrame > 0.0f) {
-        m_displayCommentFrame -= deltaFrame;
-        if (m_displayCommentFrame < 0.0f)
-            m_displayCommentFrame = 0.0f;
-    }
 
     return ret;
 }
