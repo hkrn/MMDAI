@@ -55,13 +55,17 @@ public:
     BoneController();
     ~BoneController();
 
-    void setup(PMDModel *model, const char **boneName, int numBone, float rateOn, float rateOff,
-               float baseVectorX, float baseVectorY, float baseVectorZ,
-               float upperAngLimitX, float upperAngLimitY, float upperAngLimitZ,
-               float lowerAngLimitX, float lowerAngLimitY, float lowerAngLimitZ,
-               float adjustPosX, float adjustPosY, float adjustPosZ);
-    void setEnableFlag(bool b);
-    void update(btVector3 *pos, float deltaFrame);
+    void setup(PMDModel *model,
+               const char **boneName,
+               int numBone,
+               float rateOn,
+               float rateOff,
+               const btVector3 &base,
+               const btVector3 &upperAngularLimit,
+               const btVector3 &lowerAngularLimit,
+               const btVector3 &adjustPosition);
+    void setEnable(bool value);
+    void update(const btVector3 &pos, float deltaFrame);
 
 private:
     void initialize();

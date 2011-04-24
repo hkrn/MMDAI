@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -45,7 +45,11 @@ static void setNeckController(MMDAI::BoneController *controller, MMDAI::PMDModel
 {
     const char head[] = { 0x93, 0xaa, 0x0 }; /* 頭 in Shift_JIS */
     const char *bone[] = { head };
-    controller->setup(model, bone, 1, 0.150f, 0.008f, 0.0f, 0.0f, 1.0f, 20.0f, 60.0f, 0.0f, -45.0f, -60.0f, 0.0f, 0.0f, -1.0f, 0.0f);
+    controller->setup(model, bone, 1, 0.150f, 0.008f,
+                      btVector3(0.0f, 0.0f, 1.0f),
+                      btVector3(20.0f, 60.0f, 0.0f),
+                      btVector3(-45.0f, -60.0f, 0.0f),
+                      btVector3(0.0f, -1.0f, 0.0f));
 }
 
 static void setEyeController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
@@ -53,7 +57,11 @@ static void setEyeController(MMDAI::BoneController *controller, MMDAI::PMDModel 
     const char rightEye[] = { 0x89, 0x45, 0x96, 0xda, 0x0 }; /* 右目 in Shift_JIS */
     const char leftEye[] = { 0x8d, 0xb6, 0x96, 0xda, 0x0 };  /* 左目 in Shift_JIS */
     const char *bone[] = { rightEye, leftEye };
-    controller->setup(model, bone, 2, 0.180f, 0.008f, 0.0f, 0.0f, 1.0f, 5.0f, 5.0f, 0.0f, -5.0f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    controller->setup(model, bone, 2, 0.180f, 0.008f,
+                      btVector3(0.0f, 0.0f, 1.0f),
+                      btVector3(5.0f, 5.0f, 0.0f),
+                      btVector3(-5.0f, -5.0f, 0.0f),
+                      btVector3(0.0f, 0.0f, 0.0f));
 }
 
 QMALookAtPlugin::QMALookAtPlugin()
@@ -100,8 +108,8 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QList<QVariant> &a
         for (int i = 0; i < count; i++) {
             MMDAI::PMDObject *object = m_controller->getPMDObject(i);
             if (object->isEnable()) {
-                m_neckController[i].update(&targetPos, static_cast<float>(delta));
-                m_eyeController[i].update(&targetPos, static_cast<float>(delta));
+                m_neckController[i].update(targetPos, static_cast<float>(delta));
+                m_eyeController[i].update(targetPos, static_cast<float>(delta));
             }
         }
     }
@@ -111,12 +119,12 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QList<QVariant> &a
             MMDAI::PMDObject *object = m_controller->getPMDObject(i);
             if(object->isEnable()) {
                 if(m_enable == true) {
-                    m_neckController[i].setEnableFlag(false);
-                    m_eyeController[i].setEnableFlag(false);
+                    m_neckController[i].setEnable(false);
+                    m_eyeController[i].setEnable(false);
                 }
                 else {
-                    m_neckController[i].setEnableFlag(true);
-                    m_eyeController[i].setEnableFlag(true);
+                    m_neckController[i].setEnable(true);
+                    m_eyeController[i].setEnable(true);
                 }
             }
         }
