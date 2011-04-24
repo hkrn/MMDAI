@@ -68,15 +68,12 @@ public:
     void release();
     bool load(IModelLoader *modelLoader,
               ILipSyncLoader *lipSyncLoader,
-              btVector3 *offsetPos,
-              btQuaternion *offsetRot,
-              bool forcedPosition,
+              BulletPhysics *bullet,
               PMDBone *assignBone,
               PMDObject *assignObject,
-              BulletPhysics *bullet,
-              bool useCartoonRendering,
-              float cartoonEdgeWidth,
-              btVector3 *light);
+              const btVector3 &offsetPos,
+              const btQuaternion &offsetRot,
+              bool forcedPosition);
     bool startMotion(VMD *vmd,
                      const char *name,
                      bool full,
@@ -90,11 +87,10 @@ public:
     void updateAfterSimulation(bool physicsEnabled);
     bool updateAlpha(double deltaFrame);
     void startDisappear();
-    void setLightForToon(btVector3 *v);
+    void setLightForToon(const btVector3 &value);
     bool updateModelRootOffset(float fps);
     bool updateModelRootRotation(float fps);
     bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
-    void renderDebug();
 
     inline const char *getAlias() const {
         return m_alias;

@@ -153,9 +153,8 @@ public:
     void updateModelView(int ellapsedTimeForMove);
     void prerenderScene();
     void renderScene();
-    void renderBulletForDebug();
-    void renderPMDObjectsForDebug();
-    void renderLogger();
+    void renderModelRigidBodies();
+    void renderModelBones();
 
     inline PMDObject *getPMDObject(int index) const {
         if (index < 0 || index > m_numModel)

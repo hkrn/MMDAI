@@ -277,9 +277,9 @@ void QMAWidget::paintGL()
     m_controller->prerenderScene();
     m_controller->renderScene();
     if (m_displayBone)
-        m_controller->renderPMDObjectsForDebug();
+        m_controller->renderModelBones();
     if (m_displayRigidBody)
-        m_controller->renderBulletForDebug();
+        m_controller->renderModelRigidBodies();
     m_sceneFrameTimer.count();
     delegateEvent(QMAPlugin::getPostRenderEvent(), QMAPlugin::getEmptyArguments());
 }

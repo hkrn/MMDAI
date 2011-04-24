@@ -206,15 +206,14 @@ void SceneController::updateLight()
 {
     int i = 0;
     float direction[4];
-    btVector3 l;
     m_engine->updateLighting();
     m_preference->getFloat4(kPreferenceLightDirection, direction);
     m_stage->updateShadowMatrix(direction);
-    l = btVector3(direction[0], direction[1], direction[2]);
+    btVector3 dir = btVector3(direction[0], direction[1], direction[2]);
     for (i = 0; i < m_numModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable())
-            object->setLightForToon(&l);
+            object->setLightForToon(dir);
     }
 }
 
@@ -505,20 +504,22 @@ bool SceneController::addModel(const char *modelAlias,
     /* add model */
     if (!newObject->load(modelLoader,
                          lipSyncLoader,
-                         &offsetPos,
-                         &offsetRot,
-                         forcedPosition,
+                         &m_bullet,
                          assignBone,
                          assignObject,
-                         &m_bullet,
-                         m_preference->getBool(kPreferenceUseCartoonRendering),
-                         m_preference->getFloat(kPreferenceCartoonEdgeWidth),
-                         &light)) {
+                         offsetPos,
+                         offsetRot,
+                         forcedPosition)) {
         MMDAILogWarn("addModel: failed to load %s.", modelLoader->getLocation());
         newObject->release();
         MMDAIMemoryRelease(name);
         return false;
     }
+
+    PMDModel *model = newObject->getPMDModel();
+    model->setToonEnable(m_preference->getBool(kPreferenceUseCartoonRendering));
+    model->setEdgeThin(m_preference->getFloat(kPreferenceCartoonEdgeWidth));
+    newObject->setLightForToon(light);
 
     /* initialize motion manager */
     newObject->resetMotionManager();
@@ -536,6 +537,8 @@ bool SceneController::changeModel(PMDObject *object,
                                   IModelLoader *modelLoader,
                                   ILipSyncLoader *lipSyncLoader)
 {
+    static const btVector3 trans(0.0f, 0.0f, 0.0f);
+    static const btQuaternion rot(0.0f, 0.0f, 0.0f, 1.0f);
     const char *modelAlias = object->getAlias();
     float direction[4];
 
@@ -545,18 +548,20 @@ bool SceneController::changeModel(PMDObject *object,
     /* load model */
     if (!object->load(modelLoader,
                       lipSyncLoader,
-                      NULL,
-                      NULL,
-                      false,
-                      NULL,
-                      NULL,
                       &m_bullet,
-                      m_preference->getBool(kPreferenceUseCartoonRendering),
-                      m_preference->getFloat(kPreferenceCartoonEdgeWidth),
-                      &light)) {
+                      NULL,
+                      NULL,
+                      trans,
+                      rot,
+                      false)) {
         MMDAILogWarn("changeModel: failed to load model %s.", modelLoader->getLocation());
         return false;
     }
+
+    PMDModel *model = object->getPMDModel();
+    model->setToonEnable(m_preference->getBool(kPreferenceUseCartoonRendering));
+    model->setEdgeThin(m_preference->getFloat(kPreferenceCartoonEdgeWidth));
+    object->setLightForToon(light);
 
     /* update motion manager */
     MotionManager *manager = object->getMotionManager();
@@ -1235,17 +1240,17 @@ void SceneController::renderScene()
     m_engine->render(m_objects, m_order, m_numModel, m_stage);
 }
 
-void SceneController::renderBulletForDebug()
+void SceneController::renderModelRigidBodies()
 {
     m_engine->renderRigidBodies(&m_bullet);
 }
 
-void SceneController::renderPMDObjectsForDebug()
+void SceneController::renderModelBones()
 {
     for (int i = 0; i < m_numModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable()) {
-            object->renderDebug();
+            m_engine->renderBones(object->getPMDModel());
         }
     }
 }

@@ -104,19 +104,13 @@ void PMDObject::release()
 /* PMDObject::load: load model */
 bool PMDObject::load(IModelLoader *modelLoader,
                      ILipSyncLoader *lipSyncLoader,
-                     btVector3 *offsetPos,
-                     btQuaternion *offsetRot,
-                     bool forcedPosition,
+                     BulletPhysics *bullet,
                      PMDBone *assignBone,
                      PMDObject *assignObject,
-                     BulletPhysics *bullet,
-                     bool useCartoonRendering,
-                     float cartoonEdgeWidth,
-                     btVector3 *light)
+                     const btVector3 &offsetPos,
+                     const btQuaternion &offsetRot,
+                     bool forcedPosition)
 {
-
-    int i;
-
     if (modelLoader == NULL || lipSyncLoader == NULL)
         return false;
 
@@ -127,10 +121,8 @@ bool PMDObject::load(IModelLoader *modelLoader,
     PMDBone *bone = m_model->getRootBone();
     if (forcedPosition) {
         /* set offset by given parameters */
-        if (offsetPos)
-            m_offsetPos = (*offsetPos);
-        if (offsetRot)
-            m_offsetRot = (*offsetRot);
+        m_offsetPos = offsetPos;
+        m_offsetRot = offsetRot;
         bone->setOffset(m_offsetPos);
         bone->update();
     } else {
@@ -139,7 +131,7 @@ bool PMDObject::load(IModelLoader *modelLoader,
     }
 
     /* copy absolute position flag */
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
         m_absPosFlag[i] = false;
 
     /* copy toon rendering flag */
@@ -168,12 +160,6 @@ bool PMDObject::load(IModelLoader *modelLoader,
         return false;
     }
 
-    /* set toon rendering flag */
-    m_model->setToonEnable(useCartoonRendering == true && m_allowToonShading == true);
-
-    /* set edge width */
-    m_model->setEdgeThin(cartoonEdgeWidth);
-
     /* set up lip sync */
     m_localLipSync.load(lipSyncLoader);
 
@@ -181,7 +167,6 @@ bool PMDObject::load(IModelLoader *modelLoader,
     setAlias(m_model->getName());
 
     /* reset */
-    setLightForToon(light);
     m_moveSpeed = -1.0f;
     m_spinSpeed = -1.0f;
 
@@ -218,38 +203,37 @@ bool PMDObject::swapMotion(VMD * vmd, const char *targetName)
 /* PMDObject::updateRootBone: update root bone if assigned to a base bone */
 void PMDObject::updateRootBone()
 {
-    btVector3 pos;
-    btVector3 posAbs;
-    PMDBone *b;
-    btTransform tr;
-
     if (!m_baseBone)
         return;
 
     /* relative position */
-    pos = m_offsetPos;
+    btVector3 pos = m_offsetPos;
     /* if absolute flag is true, fix relative position from root bone */
-    posAbs = m_offsetPos + m_origBasePos - m_baseBone->getTransform().getOrigin();
-    if (m_absPosFlag[0]) pos.setX(posAbs.x());
-    if (m_absPosFlag[1]) pos.setY(posAbs.y());
-    if (m_absPosFlag[2]) pos.setZ(posAbs.z());
+    const btVector3 posAbs = m_offsetPos + m_origBasePos - m_baseBone->getTransform().getOrigin();
+    if (m_absPosFlag[0])
+        pos.setX(posAbs.x());
+    if (m_absPosFlag[1])
+        pos.setY(posAbs.y());
+    if (m_absPosFlag[2])
+        pos.setZ(posAbs.z());
 
     /* set root bone */
-    b = m_model->getRootBone();
+    PMDBone *b = m_model->getRootBone();
     b->setCurrentPosition(pos);
     b->setCurrentRotation(m_offsetRot);
     b->update();
     /* update transform for base position */
-    tr = m_baseBone->getTransform() * b->getTransform();
+    const btTransform tr = m_baseBone->getTransform() * b->getTransform();
     b->setTransform(tr);
 }
 
 /* PMDObject::updateMotion: update motions */
 bool PMDObject::updateMotion(double deltaFrame)
 {
-    bool ret;
+    bool ret = false;
 
-    if (m_isEnable == false || m_motionManager == NULL) return false;
+    if (m_isEnable == false || m_motionManager == NULL)
+        return ret;
 
     /* set rotation and position to bone and face from motion */
     ret = m_motionManager->update(deltaFrame);
@@ -262,7 +246,8 @@ bool PMDObject::updateMotion(double deltaFrame)
 /* PMDObject::updateAfterSimulation: update bone transforms from simulated rigid bodies */
 void PMDObject::updateAfterSimulation(bool physicsEnabled)
 {
-    if (m_isEnable == false) return;
+    if (!m_isEnable)
+        return;
 
     /* if necessary, change state of Bullet Physics */
     if (m_needResetKinematic) {
@@ -306,36 +291,35 @@ void PMDObject::startDisappear()
 }
 
 /* PMDModel::setLightForToon: set light direction for ton shading */
-void PMDObject::setLightForToon(btVector3 * v)
+void PMDObject::setLightForToon(const btVector3 &value)
 {
-    m_lightDir = (*v);
+    m_lightDir = value;
     m_lightDir.normalize();
 }
 
 /* PMDObject::updateModel: update model position of root bone */
 bool PMDObject::updateModelRootOffset(float fps)
 {
-    PMDBone *b;
-    btVector3 pos, pos2;
-    float diff = 0, maxStep = 0;
+    btVector3 pos2;
     bool ret = false;
 
-    if (m_isEnable == false) return false;
+    if (!m_isEnable)
+        return ret;
 
     /* get root bone */
-    b = m_model->getRootBone();
+    PMDBone *b = m_model->getRootBone();
 
     /* target position is m_offsetPos */
     /* move offset of root bone closer to m_offsetPos */
-    pos = b->getOffset();
+    const btVector3 pos = b->getOffset();
     m_isMoving = false;
     if (m_offsetPos != pos) {
         /* if there is difference then update */
-        diff = pos.distance(m_offsetPos);
+        const float diff = pos.distance(m_offsetPos);
         if (diff > PMDOBJECT_MINMOVEDIFF) {
             if (m_moveSpeed >= 0.0f && fps != 0.0f) {
                 /* max speed */
-                maxStep = m_moveSpeed / fps;
+                const float maxStep = m_moveSpeed / fps;
                 if (diff > maxStep) {
                     pos2 = pos.lerp(m_offsetPos, maxStep / diff);
                     m_isMoving = true;
@@ -363,31 +347,28 @@ bool PMDObject::updateModelRootOffset(float fps)
 /* PMDObject::updateModelRootRotation: update model rotation of root bone */
 bool PMDObject::updateModelRootRotation(float fps)
 {
-    btQuaternion tmpRot;
-    PMDBone *b;
     bool ret = false;
-    btQuaternion r;
-    float diff = 0, maxStep = 0;
 
-    if (m_isEnable == false) return false;
+    if (!m_isEnable)
+        return ret;
 
     m_isRotating = false;
 
     /* get root bone */
-    b = m_model->getRootBone();
+    PMDBone *b = m_model->getRootBone();
     /* target rotation is m_offsetRot */
     /* turn rotation of root bone closer to m_offsetRot */
     if (m_offsetRot != b->getCurrentRotation()) {
         /* difference calculation */
-        r = b->getCurrentRotation();
+        btQuaternion r = b->getCurrentRotation();
         r = r - m_offsetRot;
-        diff = r.length();
+        const float diff = r.length();
         if (diff > PMDOBJECT_MINSPINDIFF) {
             if (m_spinSpeed >= 0.0f && fps != 0.0f) {
                 /* max turn speed */
-                maxStep = MMDAIMathRadian(m_spinSpeed) / fps;
+                const float maxStep = MMDAIMathRadian(m_spinSpeed) / fps;
                 if (diff > maxStep) {
-                    tmpRot = b->getCurrentRotation();
+                    btQuaternion tmpRot = b->getCurrentRotation();
                     tmpRot = tmpRot.slerp(m_offsetRot, maxStep / diff);
                     b->setCurrentRotation(tmpRot);
                     m_isRotating = true;
@@ -397,7 +378,7 @@ bool PMDObject::updateModelRootRotation(float fps)
                 }
             } else {
                 /* current * 0.95 + target * 0.05 */
-                tmpRot = b->getCurrentRotation();
+                btQuaternion tmpRot = b->getCurrentRotation();
                 tmpRot = tmpRot.slerp(m_offsetRot, 1.0f - PMDOBJECT_SPINSPEEDRATE);
                 b->setCurrentRotation(tmpRot);
                 m_isRotating = true;
@@ -420,13 +401,6 @@ bool PMDObject::createLipSyncMotion(const char *str, unsigned char **data, size_
     if (!ret && m_globalLipSync != NULL)
         ret = m_globalLipSync->createMotion(str, data, size);
     return ret;
-}
-
-/* PMDObject::renderDebug: render model debug */
-void PMDObject::renderDebug()
-{
-    /* render debug */
-    m_engine->renderBones(m_model);
 }
 
 } /* namespace */
