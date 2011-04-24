@@ -59,6 +59,8 @@ QMALipSyncLoader::QMALipSyncLoader(const char *filename)
         m_file = new QFile(path);
     else
         m_file = new QFile("MMDAIUserData:/" + path);
+    if (!m_file->exists())
+        m_file->setFileName("MMDAIResources:AppData/lip.txt");
 }
 
 QMALipSyncLoader::~QMALipSyncLoader()

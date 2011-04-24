@@ -40,16 +40,16 @@
 
 QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    m_preference(preference),
-    m_sceneUpdateTimer(this),
-    m_controller(new MMDAI::SceneController(this, preference)),
-    m_parser(m_controller, &m_factory),
-    m_x(0),
-    m_y(0),
-    m_doubleClicked(false),
-    m_showLog(true),
-    m_displayBone(false),
-    m_displayRigidBody(false)
+      m_preference(preference),
+      m_sceneUpdateTimer(this),
+      m_controller(new MMDAI::SceneController(this, preference)),
+      m_parser(m_controller, &m_factory),
+      m_x(0),
+      m_y(0),
+      m_doubleClicked(false),
+      m_showLog(true),
+      m_displayBone(false),
+      m_displayRigidBody(false)
 {
     m_sceneUpdateTimer.setSingleShot(false);
     connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
@@ -215,7 +215,7 @@ void QMAWidget::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *lo
 {
     MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
     for (; player != NULL; player = player->next) {
-        if (player->active && MMDAIStringEqualsIn(player->name, "base", 4) == 0) {
+        if (player->active && MMDAIStringEqualsIn(player->name, "base", 4)) {
             m_controller->changeMotion(object, "base", loader);
             break;
         }
@@ -478,8 +478,8 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     }
                 }
                 else if (path.endsWith(".bmp", Qt::CaseInsensitive)
-                    || path.endsWith(".tga", Qt::CaseInsensitive)
-                    || path.endsWith(".png", Qt::CaseInsensitive)) {
+                         || path.endsWith(".tga", Qt::CaseInsensitive)
+                         || path.endsWith(".png", Qt::CaseInsensitive)) {
                     /* floor or background */
                     MMDAI::IModelLoader *loader = m_factory.createModelLoader(filename);
                     if (modifiers & Qt::ControlModifier)

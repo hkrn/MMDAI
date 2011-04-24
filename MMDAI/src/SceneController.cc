@@ -983,6 +983,7 @@ void SceneController::setViewMoveTimer(int ms)
 
 void SceneController::selectPMDObject(PMDObject *object)
 {
+    assert(object != NULL);
     const char *alias = object->getAlias();
     for (int i = 0; i < m_numModel; i++) {
         PMDObject *o = m_objects[i];
@@ -1012,6 +1013,11 @@ void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel
                                           &dropAllowedModelID);
     if (m_selectedModel == -1)
         *dropAllowedModel = getPMDObject(dropAllowedModelID);
+}
+
+void SceneController::deselectPMDObject()
+{
+    m_selectedModel = -1;
 }
 
 void SceneController::setHighlightPMDObject(PMDObject *object)

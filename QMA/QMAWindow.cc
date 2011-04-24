@@ -261,8 +261,12 @@ void QMAWindow::togglePhysicSimulation()
     MMDAI::SceneController *controller = m_widget->getSceneController();
     int count = controller->countPMDObjects();
     m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
-    for (int i = 0; i < count; i++)
-        controller->getPMDObject(i)->getPMDModel()->setPhysicsControl(m_enablePhysicsSimulation);
+    for (int i = 0; i < count; i++) {
+        MMDAI::PMDObject *object = controller->getPMDObject(i);
+        if (object->isEnable()) {
+            object->getPMDModel()->setPhysicsControl(m_enablePhysicsSimulation);
+        }
+    }
 }
 
 void QMAWindow::toggleShadowMapping()
@@ -362,8 +366,10 @@ void QMAWindow::deleteSelectedObject()
 {
     MMDAI::SceneController *controller = m_widget->getSceneController();
     MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
-    if (selectedObject != NULL)
+    if (selectedObject != NULL) {
         controller->deleteModel(selectedObject);
+        controller->deselectPMDObject();
+    }
 }
 
 void QMAWindow::showLogWindow()

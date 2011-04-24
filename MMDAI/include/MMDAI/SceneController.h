@@ -140,6 +140,7 @@ public:
     void selectPMDObject(PMDObject *object);
     void selectPMDObject(int x, int y);
     void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
+    void deselectPMDObject();
     void setHighlightPMDObject(PMDObject *object);
     void setRect(int width, int height);
     void setViewMoveTimer(int ms);
