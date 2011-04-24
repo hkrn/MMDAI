@@ -398,7 +398,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                                 MMDAI::PMDObject *object = m_controller->getPMDObject(i);
                                 if (object->isEnable() && object->allowMotionFileDrop()) {
                                     MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
-                                    ok = m_controller->addMotion(object, loader);
+                                    ok = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
                                     m_factory.releaseMotionLoader(loader);
                                 }
                             }
@@ -429,7 +429,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                             if (modifiers & Qt::ShiftModifier) {
                                 /* insert a motion to the model */
                                 MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
-                                ok = m_controller->addMotion(selectedObject, loader);
+                                ok = m_controller->addMotion(selectedObject, NULL, loader, false, true, true, true, 0.0f);
                                 m_factory.releaseMotionLoader(loader);
                             }
                             else {
@@ -453,7 +453,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     if (modifiers & Qt::ControlModifier) {
                         MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(filename);
                         MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
-                        ok = m_controller->addModel(modelLoader, lipSyncLoader);
+                        ok = m_controller->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
                         m_factory.releaseModelLoader(modelLoader);
                         m_factory.releaseLipSyncLoader(lipSyncLoader);
                     }

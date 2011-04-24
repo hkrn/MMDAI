@@ -70,6 +70,7 @@ const char *SceneEventHandler::kLightColorCommand = "LIGHTCOLOR";
 const char *SceneEventHandler::kLightDirectionCommand = "LIGHTDIRECTION";
 const char *SceneEventHandler::kLipSyncStartCommand = "LIPSYNC_START";
 const char *SceneEventHandler::kLipSyncStopCommand = "LIPSYNC_STOP";
+const char *SceneEventHandler::kCameraCommand = "CAMERA";
 
 const char *SceneEventHandler::kModelAddEvent = "MODEL_EVENT_ADD";
 const char *SceneEventHandler::kModelChangeEvent = "MODEL_EVENT_CHANGE";
@@ -162,11 +163,7 @@ SceneController::SceneController(SceneEventHandler *handler, IPreference *prefer
     m_currentTrans(m_trans),
     m_currentRot(m_rot)
 {
-#if defined(OPENGLES1)
-    m_engine = new GLES1SceneRenderEngine(preference);
-#else
     m_engine = new GLSceneRenderEngine(preference);
-#endif
     m_objects = new PMDObject*[MAX_MODEL];
     m_stage = new Stage(m_engine);
     for (int i = 0; i < MAX_MODEL; i++) {
@@ -221,7 +218,6 @@ void SceneController::updateLight()
     }
 }
 
-/* SceneController::setFloor: set floor image */
 bool SceneController::loadFloor(IModelLoader *loader)
 {
     /* load floor */
@@ -239,7 +235,6 @@ bool SceneController::loadFloor(IModelLoader *loader)
     return true;
 }
 
-/* SceneController::setBackground: set background image */
 bool SceneController::loadBackground(IModelLoader *loader)
 {
     /* load background */
@@ -257,7 +252,6 @@ bool SceneController::loadBackground(IModelLoader *loader)
     return true;
 }
 
-/* SceneController::setStage: set stage */
 bool SceneController::loadStage(IModelLoader *loader)
 {
     /* load stage */
@@ -275,7 +269,6 @@ bool SceneController::loadStage(IModelLoader *loader)
     return true;
 }
 
-/* SceneController::getNewModelId: return new model ID */
 PMDObject *SceneController::allocatePMDObject()
 {
     PMDObject *object = NULL;
@@ -307,13 +300,6 @@ PMDObject *SceneController::findPMDObject(const char *alias)
     return NULL;
 }
 
-/* SceneController::addMotion: add motion */
-bool SceneController::addMotion(PMDObject *object, IMotionLoader *loader)
-{
-    return addMotion(object, NULL, loader, false, true, true, true, 0.0f);
-}
-
-/* SceneController::addMotion: add motion */
 bool SceneController::addMotion(PMDObject *object,
                                 const char *motionAlias,
                                 IMotionLoader *loader,
@@ -323,15 +309,10 @@ bool SceneController::addMotion(PMDObject *object,
                                 bool enableRePos,
                                 float priority)
 {
-    int i;
-    bool find;
-    VMD *vmd;
-    MotionPlayer *motionPlayer;
     char *name;
-    size_t allocSize;
 
     /* motion file */
-    vmd = m_motion.loadFromLoader(loader);
+    VMD *vmd = m_motion.loadFromLoader(loader);
     if (vmd == NULL) {
         MMDAILogWarn("addMotion: failed to load %s.", loader->getLocation());
         return false;
@@ -341,7 +322,7 @@ bool SceneController::addMotion(PMDObject *object,
     if (motionAlias && MMDAIStringLength(motionAlias) > 0) {
         /* check the same alias */
         name = MMDAIStringClone(motionAlias);
-        motionPlayer = object->getMotionManager()->getMotionPlayerList();
+        MotionPlayer *motionPlayer = object->getMotionManager()->getMotionPlayerList();
         for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
             if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
                 MMDAILogWarn("addMotion: motion alias \"%s\" is already used.", name);
@@ -351,14 +332,14 @@ bool SceneController::addMotion(PMDObject *object,
         }
     } else {
         /* if motion alias is not specified, unused digit is used */
-        for (i = 0;; i++) {
-            find = false;
-            allocSize = sizeof(char) * (getNumDigit(i) + 1);
+        for (int i = 0;; i++) {
+            bool find = false;
+            size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
             name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
             if (name == NULL)
                 return false;
             MMDAIStringFormat(name, allocSize, "%d", i);
-            motionPlayer = object->getMotionManager()->getMotionPlayerList();
+            MotionPlayer *motionPlayer = object->getMotionManager()->getMotionPlayerList();
             for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
                 if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
                     find = true;
@@ -384,11 +365,9 @@ bool SceneController::addMotion(PMDObject *object,
     return true;
 }
 
-/* SceneController::changeMotion: change motion */
 bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, IMotionLoader *loader)
 {
-    VMD *vmd, *old = NULL;
-    MotionPlayer *motionPlayer;
+    VMD *old = NULL;
 
     /* check */
     if (!motionAlias) {
@@ -397,14 +376,14 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, I
     }
 
     /* motion file */
-    vmd = m_motion.loadFromLoader(loader);
+    VMD *vmd = m_motion.loadFromLoader(loader);
     if (vmd == NULL) {
         MMDAILogWarn("changeMotion: failed to load %s.", loader->getLocation());
         return false;
     }
 
     /* get motion before change */
-    motionPlayer = object->getMotionManager()->getMotionPlayerList();
+    MotionPlayer *motionPlayer = object->getMotionManager()->getMotionPlayerList();
     for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
         if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, motionAlias)) {
             old = motionPlayer->vmd;
@@ -433,7 +412,6 @@ bool SceneController::changeMotion(PMDObject *object, const char *motionAlias, I
     return true;
 }
 
-/* SceneController::deleteMotion: delete motion */
 bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
 {
     /* delete motion */
@@ -446,13 +424,6 @@ bool SceneController::deleteMotion(PMDObject *object, const char *motionAlias)
     return true;
 }
 
-/* SceneController::addModel: add model */
-bool SceneController::addModel(IModelLoader *modelLoader, ILipSyncLoader *lipSyncLoader)
-{
-    return addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
-}
-
-/* SceneController::addModel: add model */
 bool SceneController::addModel(const char *modelAlias,
                                IModelLoader *modelLoader,
                                ILipSyncLoader *lipSyncLoader,
@@ -461,10 +432,9 @@ bool SceneController::addModel(const char *modelAlias,
                                const char *baseModelAlias,
                                const char *baseBoneName)
 {
-    int i;
     char *name;
-    btVector3 offsetPos = btVector3(0.0f, 0.0f, 0.0f);
-    btQuaternion offsetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    btVector3 offsetPos(0.0f, 0.0f, 0.0f);
+    btQuaternion offsetRot(0.0f, 0.0f, 0.0f, 1.0f);
     bool forcedPosition = false;
     PMDBone *assignBone = NULL;
     PMDObject *assignObject = NULL, *newObject = NULL;
@@ -519,7 +489,7 @@ bool SceneController::addModel(const char *modelAlias,
         }
     } else {
         /* if model alias is not specified, unused digit is used */
-        for(i = 0;; i++) {
+        for(int i = 0;; i++) {
             size_t allocSize = sizeof(char) * (getNumDigit(i) + 1);
             name = static_cast<char *>(MMDAIMemoryAllocate(allocSize));
             if (name == NULL)
@@ -562,14 +532,10 @@ bool SceneController::addModel(const char *modelAlias,
     return true;
 }
 
-/* SceneController::changeModel: change model */
 bool SceneController::changeModel(PMDObject *object,
                                   IModelLoader *modelLoader,
                                   ILipSyncLoader *lipSyncLoader)
 {
-    MotionPlayer *motionPlayer = NULL;
-    int i = 0;
-    double currentFrame = 0;
     const char *modelAlias = object->getAlias();
     float direction[4];
 
@@ -595,10 +561,10 @@ bool SceneController::changeModel(PMDObject *object,
     /* update motion manager */
     MotionManager *manager = object->getMotionManager();
     if (manager != NULL) {
-        motionPlayer = manager->getMotionPlayerList();
+        MotionPlayer *motionPlayer = manager->getMotionPlayerList();
         for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
             if (motionPlayer->active) {
-                currentFrame = motionPlayer->mc.getCurrentFrame();
+                double currentFrame = motionPlayer->mc.getCurrentFrame();
                 manager->startMotionSub(motionPlayer->vmd, motionPlayer);
                 motionPlayer->mc.setCurrentFrame(currentFrame);
             }
@@ -609,7 +575,7 @@ bool SceneController::changeModel(PMDObject *object,
     object->setAlias(modelAlias);
 
     /* delete accessories  */
-    for (i = 0; i < MAX_MODEL; i++) {
+    for (int i = 0; i < MAX_MODEL; i++) {
         PMDObject *assoc = m_objects[i];
         if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             deleteModel(assoc);
@@ -622,7 +588,6 @@ bool SceneController::changeModel(PMDObject *object,
     return true;
 }
 
-/* SceneController::deleteModel: delete model */
 void SceneController::deleteModel(PMDObject *object)
 {
     /* delete accessories  */
@@ -680,8 +645,7 @@ void SceneController::setLightColor(float r, float g, float b)
     }
 }
 
-/* SceneController::startMove: start moving */
-void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, float speed)
+void SceneController::startMove(PMDObject *object, const btVector3 &pos, bool local, float speed)
 {
     const char *alias = object->getAlias();
 
@@ -690,13 +654,16 @@ void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, f
 
     /* get */
     const btVector3 currentPos = object->getCurrentPosition();
-    btVector3 targetPos = (*pos);
+    btVector3 targetPos;
 
     /* local or global */
     if (local) {
         const btQuaternion currentRot = object->getCurrentRotation();
         btTransform tr = btTransform(currentRot, currentPos);
-        targetPos = tr * targetPos;
+        targetPos = tr * pos;
+    }
+    else {
+        targetPos = pos;
     }
 
     /* not need to start */
@@ -713,7 +680,6 @@ void SceneController::startMove(PMDObject *object, btVector3 *pos, bool local, f
     sendEvent1(SceneEventHandler::kMoveStartEvent, alias);
 }
 
-/* SceneController::stopMove: stop moving */
 void SceneController::stopMove(PMDObject *object)
 {
     const char *alias = object->getAlias();
@@ -730,8 +696,7 @@ void SceneController::stopMove(PMDObject *object)
     sendEvent1(SceneEventHandler::kMoveStopEvent, alias);
 }
 
-/* SceneController::startRotation: start rotation */
-void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool local, float speed)
+void SceneController::startRotation(PMDObject *object, const btQuaternion &rot, bool local, float speed)
 {
     const char *alias = object->getAlias();
 
@@ -743,8 +708,7 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
     }
 
     const btQuaternion currentRot = object->getCurrentRotation();
-    btQuaternion targetRot = *rot;
-    targetRot = local ? currentRot * targetRot : currentRot.nearest(targetRot);
+    const btQuaternion targetRot = local ? currentRot * rot : currentRot.nearest(rot);
 
     /* not need to start */
     if (currentRot == targetRot) {
@@ -760,7 +724,6 @@ void SceneController::startRotation(PMDObject *object, btQuaternion *rot, bool l
     sendEvent1(SceneEventHandler::kRotateStartEvent, alias);
 }
 
-/* SceneController::stopRotation: stop rotation */
 void SceneController::stopRotation(PMDObject *object)
 {
     const char *alias = object->getAlias();
@@ -776,8 +739,7 @@ void SceneController::stopRotation(PMDObject *object)
     sendEvent1(SceneEventHandler::kRotateStopEvent, alias);
 }
 
-/* SceneController::startTurn: start turn */
-void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, float speed)
+void SceneController::startTurn(PMDObject *object, const btVector3 &pos, bool local, float speed)
 {
     btQuaternion targetRot;
     const char *alias = object->getAlias();
@@ -792,7 +754,7 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
     const btVector3 currentPos = object->getCurrentPosition();
     const btQuaternion currentRot = object->getCurrentRotation();
 
-    btVector3 targetPos = local ? *pos : *pos - currentPos;
+    btVector3 targetPos = local ? pos : pos - currentPos;
     targetPos.normalize();
 
     /* calculate target rotation from (0,0,1) */
@@ -826,7 +788,6 @@ void SceneController::startTurn(PMDObject *object, btVector3 *pos, bool local, f
     sendEvent1(SceneEventHandler::kTurnStartEvent, alias);
 }
 
-/* SceneController::stopTurn: stop turn */
 void SceneController::stopTurn(PMDObject *object)
 {
     const char *alias = object->getAlias();
@@ -843,26 +804,23 @@ void SceneController::stopTurn(PMDObject *object)
     sendEvent1(SceneEventHandler::kTurnStopEvent, alias);
 }
 
-/* SceneController::startLipSync: start lip sync */
 bool SceneController::startLipSync(PMDObject *object, const char *seq)
 {
-    unsigned char *vmdData;
-    size_t vmdSize;
-    VMD *vmd;
-    bool found = false;
-    MotionPlayer *motionPlayer;
-    const char *name = LipSync::getMotionName();
+    unsigned char *vmdData = NULL;
+    size_t vmdSize = 0;
 
     /* create motion */
     if(object->createLipSyncMotion(seq, &vmdData, &vmdSize) == false) {
         MMDAILogWarnString("cannot create lip motion.");
         return false;
     }
-    vmd = m_motion.loadFromData(vmdData, vmdSize);
+    VMD *vmd = m_motion.loadFromData(vmdData, vmdSize);
     MMDAIMemoryRelease(vmdData);
 
     /* search running lip motion */
-    motionPlayer = object->getMotionManager()->getMotionPlayerList();
+    bool found = false;
+    const char *name = LipSync::getMotionName();
+    MotionPlayer *motionPlayer = object->getMotionManager()->getMotionPlayerList();
     for (; motionPlayer != NULL; motionPlayer = motionPlayer->next) {
         if (motionPlayer->active && MMDAIStringEquals(motionPlayer->name, name)) {
             found = true;
@@ -891,7 +849,6 @@ bool SceneController::startLipSync(PMDObject *object, const char *seq)
     return true;
 }
 
-/* SceneController::stopLipSync: stop lip sync */
 bool SceneController::stopLipSync(PMDObject *object)
 {
     /* stop lip sync */
@@ -917,17 +874,19 @@ void SceneController::initializeScreen(int width, int height)
     scale = m_preference->getFloat(kPreferenceRenderingScale);
     m_preference->getFloat3(kPreferenceRenderingRotation, rot);
     m_preference->getFloat3(kPreferenceRenderingTransition, trans);
-    resetLocation(btVector3(trans[0], trans[1], trans[2]), rot, scale);
+    btQuaternion rot2;
+    btMatrix3x3 matrix;
+    matrix.setEulerZYX(MMDAIMathRadian(rot[0]), MMDAIMathRadian(rot[1]), MMDAIMathRadian(rot[2]));
+    matrix.getRotation(rot2);
+    resetLocation(btVector3(trans[0], trans[1], trans[2]), rot2, scale);
     MMDAILogInfo("reset location rot=(%.2f, %.2f, %.2f) trans=(%.2f, %.2f, %.2f) scale=%.2f",
                  rot[0], rot[1], rot[2], trans[0], trans[1], trans[2], scale);
 }
 
-void SceneController::resetLocation(const btVector3 &trans, const float *rot, const float scale)
+void SceneController::resetLocation(const btVector3 &trans, const btQuaternion &rot, const float scale)
 {
-    btMatrix3x3 bm;
-    bm.setEulerZYX(MMDAIMathRadian(rot[0]), MMDAIMathRadian(rot[1]), MMDAIMathRadian(rot[2]));
-    bm.getRotation(m_rot);
     m_trans = trans;
+    m_rot = rot;
     m_scale = scale;
 }
 

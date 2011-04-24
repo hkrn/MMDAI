@@ -106,7 +106,7 @@ void QMAWindow::insertMotionToAllModels()
             MMDAI::PMDObject *object = controller->getPMDObject(i);
             if (object->isEnable() && object->allowMotionFileDrop()) {
                 MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
-                controller->addMotion(object, loader);
+                controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
             }
         }
     }
@@ -126,7 +126,7 @@ void QMAWindow::insertMotionToSelectedModel()
             QByteArray encodedPath = QFile::encodeName(fileName);
             const char *filename = encodedPath.constData();
             MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
-            controller->addMotion(selectedObject, loader);
+            controller->addMotion(selectedObject, NULL, loader, false, true, true, true, 0.0f);
         }
     }
     m_settings.endGroup();
@@ -144,7 +144,7 @@ void QMAWindow::addModel()
         MMDAI::IResourceFactory *factory = m_widget->getModelLoaderFactory();
         MMDAI::IModelLoader *modelLoader = factory->createModelLoader(filename);
         MMDAI::ILipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
-        m_widget->getSceneController()->addModel(modelLoader, lipSyncLoader);
+        m_widget->getSceneController()->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
         factory->releaseModelLoader(modelLoader);
         factory->releaseLipSyncLoader(lipSyncLoader);
     }

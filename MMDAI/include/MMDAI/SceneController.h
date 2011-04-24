@@ -79,7 +79,6 @@ public:
     bool loadBackground(IModelLoader *loader);
     bool loadStage(IModelLoader *loader);
 
-    bool addMotion(PMDObject *object, IMotionLoader *loader);
     bool addMotion(PMDObject *object,
                    const char *motionAlias,
                    IMotionLoader *loader,
@@ -94,7 +93,6 @@ public:
     bool deleteMotion(PMDObject *object,
                       const char *motionAlias);
 
-    bool addModel(IModelLoader *loader, ILipSyncLoader *lipSyncLoader);
     bool addModel(const char *modelAlias,
                   IModelLoader *modelLoader,
                   ILipSyncLoader *lipSyncLoader,
@@ -111,19 +109,19 @@ public:
     void setLightColor(float r, float g, float b);
 
     void startMove(PMDObject *object,
-                   btVector3 *pos,
+                   const btVector3 &pos,
                    bool local,
                    float speed);
     void stopMove(PMDObject *object);
 
     void startRotation(PMDObject *object,
-                       btQuaternion *rot,
+                       const btQuaternion &rot,
                        bool local,
                        float speed);
     void stopRotation(PMDObject *object);
 
     void startTurn(PMDObject *object,
-                   btVector3 *pos,
+                   const btVector3 &pos,
                    bool local,
                    float speed);
     void stopTurn(PMDObject *object);
@@ -131,7 +129,7 @@ public:
     bool startLipSync(PMDObject *object,
                       const char *seq);
     bool stopLipSync(PMDObject *object);
-    void resetLocation(const btVector3 &trans, const float *rot, const float scale);
+    void resetLocation(const btVector3 &trans, const btQuaternion &rot, const float scale);
 
     void setModelViewPosition(int x, int y);
     void setModelViewRotation(int x, int y);

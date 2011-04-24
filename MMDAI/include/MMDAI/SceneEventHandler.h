@@ -67,6 +67,7 @@ public:
     static const char *kLightDirectionCommand;
     static const char *kLipSyncStartCommand;
     static const char *kLipSyncStopCommand;
+    static const char *kCameraCommand;
 
     static const char *kModelAddEvent;
     static const char *kModelChangeEvent;

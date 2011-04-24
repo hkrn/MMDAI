@@ -321,7 +321,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             speed = MMDAIStringToFloat(argv[3]);
         object = m_controller->findPMDObject(argv[0]);
         if (object != NULL) {
-            m_controller->startMove(object, &pos, local, speed);
+            m_controller->startMove(object, pos, local, speed);
         }
         else {
             MMDAILogWarn("specified PMD object not found: %s", argv[0]);
@@ -371,7 +371,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             speed = MMDAIStringToFloat(argv[3]);
         object = m_controller->findPMDObject(argv[0]);
         if (object != NULL) {
-            m_controller->startRotation(object, &rot, local, speed);
+            m_controller->startRotation(object, rot, local, speed);
         }
         else {
             MMDAILogWarn("specified PMD object not found: %s", argv[0]);
@@ -421,7 +421,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             speed = MMDAIStringToFloat(argv[3]);
         object = m_controller->findPMDObject(argv[0]);
         if (object != NULL) {
-            m_controller->startTurn(object, &pos, local, speed);
+            m_controller->startTurn(object, pos, local, speed);
         }
         else {
             MMDAILogWarn("specified PMD object not found: %s", argv[0]);
@@ -523,8 +523,26 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             return false;
         }
     }
+    else if (MMDAIStringEquals(command, SceneEventHandler::kCameraCommand)) {
+        if (argc < 3 || argc > 4) {
+            MMDAILogWarn("%s: wrong number of arguments", command);
+            return false;
+        }
+        btVector3 pos;
+        if (!arg2pos(&pos, argv[0])) {
+            MMDAILogWarn("%s: not a position string: %s", command, argv[0]);
+            return false;
+        }
+        btQuaternion rot;
+        if (!arg2rot(&rot, argv[1])) {
+            MMDAILogWarn("%s: not a rotate string: %s", command, argv[1]);
+            return false;
+        }
+        float scale = MMDAIStringToFloat(argv[2]);
+        m_controller->resetLocation(pos, rot, scale);
+        /* FIXME: support view timer */
+    }
     return ret;
 }
 
 } /* namespace */
-
