@@ -49,7 +49,7 @@ set(libMMDAI_public_headers
   include/MMDAI/IPreference.h
   include/MMDAI/IResourceFactory.h
   include/MMDAI/LipSync.h
-  include/MMDAI/MotionStocker.h
+  include/MMDAI/MotionCache.h
   include/MMDAI/MMDAI.h
   include/MMDAI/PMDObject.h
   include/MMDAI/SceneController.h

@@ -38,43 +38,35 @@
 
 /* headers */
 
-#ifndef MMDAI_MOTIONSTOCKER_H_
-#define MMDAI_MOTIONSTOCKER_H_
+#ifndef MMDAI_MOTIONCACHE_H_
+#define MMDAI_MOTIONCACHE_H_
 
 #include <MMDME/Common.h>
 #include <MMDME/VMD.h>
 
 namespace MMDAI {
 
-typedef struct _VMDList {
-    VMD vmd;
-    char *name;
-    int use;
-    struct _VMDList *prev;
-    struct _VMDList *next;
-} VMDList;
+typedef struct VMDList VMDList;
 
-class MotionStocker
+class MotionCache
 {
 public:
-    MotionStocker();
-    ~MotionStocker();
+    MotionCache();
+    ~MotionCache();
 
     VMD *loadFromLoader(IMotionLoader *loader);
     VMD *loadFromData(unsigned char *rawData, size_t rawSize);
     void unload(VMD *vmd);
 
 private:
-    void initialize();
-    void clear();
+    void release();
 
     VMDList *m_head;
     VMDList *m_tail;
 
-    MMDME_DISABLE_COPY_AND_ASSIGN(MotionStocker);
+    MMDME_DISABLE_COPY_AND_ASSIGN(MotionCache);
 };
 
 } /* namespace */
 
-#endif // MMDAI_MOTIONSTOCKER_H_
-
+#endif // MMDAI_MOTIONCACHE_H_

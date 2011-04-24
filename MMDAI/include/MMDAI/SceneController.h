@@ -43,7 +43,7 @@
 
 #include <MMDME/MMDME.h>
 
-#include "MMDAI/MotionStocker.h"
+#include "MMDAI/MotionCache.h"
 #include "MMDAI/Stage.h"
 
 namespace MMDAI {
@@ -206,7 +206,7 @@ private:
 
     BulletPhysics m_bullet;
     SceneRenderEngine *m_engine;
-    MotionStocker m_motion;
+    MotionCache m_motion;
     PMDObject **m_objects;
     PMDObject *m_highlightModel;
     IPreference *m_preference;

@@ -48,7 +48,7 @@
 #include "MMDAI/BoneController.h"
 #include "MMDAI/CommandParser.h"
 #include "MMDAI/LipSync.h"
-#include "MMDAI/MotionStocker.h"
+#include "MMDAI/MotionCache.h"
 #include "MMDAI/PMDObject.h"
 #include "MMDAI/SceneController.h"
 #include "MMDAI/SceneEventHandler.h"

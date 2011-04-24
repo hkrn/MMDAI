@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -42,57 +42,57 @@
 
 namespace MMDAI {
 
+struct VMDList {
+    VMD vmd;
+    char *name;
+    int use;
+    VMDList *prev;
+    VMDList *next;
+};
+
 #define VMDGRIDSIZE       10    /* number of cache VMD files */
 #define VMDGRID_MAXBUFLEN 2048
 
-/* MotionStocker::initialize: initialize MotionStocker */
-void MotionStocker::initialize()
+MotionCache::MotionCache()
+    : m_head(NULL),
+      m_tail(NULL)
 {
-    m_head = NULL;
-    m_tail = NULL;
 }
 
-/* MotionStocker::clear: free MotionStocker */
-void MotionStocker::clear()
+MotionCache::~MotionCache()
+{
+    release();
+}
+
+void MotionCache::release()
 {
     VMDList *tmp = NULL;
 
-    for(VMDList *vl = m_head; vl; vl = tmp) {
+    for (VMDList *vl = m_head; vl; vl = tmp) {
         tmp = vl->next;
         MMDAIMemoryRelease(vl->name);
         delete vl;
     }
 
-    initialize();
+    m_head = NULL;
+    m_tail = NULL;
 }
 
-/* MotionStocker::MotionStocker: constructor */
-MotionStocker::MotionStocker()
+VMD *MotionCache::loadFromLoader(IMotionLoader *loader)
 {
-    initialize();
-}
-
-/* MotionStocker::~MotionStocker: destructor */
-MotionStocker::~MotionStocker()
-{
-    clear();
-}
-
-/* MotionStocker::loadFromLoader: load VMD from file or return cached one */
-VMD * MotionStocker::loadFromLoader(IMotionLoader *loader)
-{
-    VMDList *vl, *tmp;
+    VMDList *tmp = NULL;
     const char *fileName = loader->getLocation();
 
     /* search cache from tail to head */
-    for(vl = m_tail; vl; vl = tmp) {
+    for (VMDList *vl = m_tail; vl; vl = tmp) {
         tmp = vl->prev;
-        if(vl->name && MMDAIStringEquals(vl->name, fileName)) {
-            if(vl != m_tail) {
-                if(vl == m_head) {
+        if (vl->name && MMDAIStringEquals(vl->name, fileName)) {
+            if (vl != m_tail) {
+                if (vl == m_head) {
                     m_head = vl->next;
                     vl->next->prev = NULL;
-                } else {
+                }
+                else {
                     vl->prev->next = vl->next;
                     vl->next->prev = vl->prev;
                 }
@@ -107,8 +107,8 @@ VMD * MotionStocker::loadFromLoader(IMotionLoader *loader)
     }
 
     /* load VMD */
-    vl = new VMDList;
-    if(vl->vmd.load(loader) == false) {
+    VMDList *vl = new VMDList;
+    if (!vl->vmd.load(loader)) {
         delete vl;
         MMDAILogWarn("failed to load vmd from file: %s", fileName);
         return NULL;
@@ -120,10 +120,11 @@ VMD * MotionStocker::loadFromLoader(IMotionLoader *loader)
     vl->next = NULL;
 
     /* store cache to tail */
-    if(m_head == NULL) {
+    if (m_head == NULL) {
         vl->prev = NULL;
         m_head = vl;
-    } else {
+    }
+    else {
         vl->prev = m_tail;
         m_tail->next = vl;
     }
@@ -132,14 +133,11 @@ VMD * MotionStocker::loadFromLoader(IMotionLoader *loader)
     return &vl->vmd;
 }
 
-/* MotionStocker::loadFromData: load VMD from data memories*/
-VMD * MotionStocker::loadFromData(unsigned char *rawData, size_t rawSize)
+VMD *MotionCache::loadFromData(unsigned char *rawData, size_t rawSize)
 {
-    VMDList *vl;
-
     /* load VMD  */
-    vl = new VMDList;
-    if(vl->vmd.parse(rawData, rawSize) == false) {
+    VMDList *vl = new VMDList;
+    if (!vl->vmd.parse(rawData, rawSize)) {
         delete vl;
         MMDAILogWarnString("failed to load vmd from memories");
         return NULL;
@@ -154,7 +152,8 @@ VMD * MotionStocker::loadFromData(unsigned char *rawData, size_t rawSize)
     if(m_head == NULL) {
         vl->next = NULL;
         m_tail = vl;
-    } else {
+    }
+    else {
         vl->next = m_head;
         m_head->prev = vl;
     }
@@ -163,48 +162,48 @@ VMD * MotionStocker::loadFromData(unsigned char *rawData, size_t rawSize)
     return &vl->vmd;
 }
 
-/* MotionStocker::unload: unload VMD */
-void MotionStocker::unload(VMD *vmd)
+void MotionCache::unload(VMD *vmd)
 {
-    int count;
-    VMDList *vl, *tmp;
+    VMDList *tmp = NULL;
 
     /* set disable flag */
-    for(vl = m_tail; vl; vl = tmp) {
+    for (VMDList *vl = m_tail; vl; vl = tmp) {
         tmp = vl->prev;
-        if(&vl->vmd == vmd) {
+        if (&vl->vmd == vmd) {
             vl->use--;
             break;
         }
     }
 
     /* count unused cache */
-    count = 0;
-    for(vl = m_head; vl; vl = tmp) {
+    int count = 0;
+    for (VMDList *vl = m_head; vl; vl = tmp) {
         tmp = vl->next;
-        if(vl->use <= 0)
+        if (vl->use <= 0)
             count++;
     }
 
     /* remove unused cache */
-    for(vl = m_head; vl && count > VMDGRIDSIZE; vl = tmp) {
+    for (VMDList *vl = m_head; vl && count > VMDGRIDSIZE; vl = tmp) {
         tmp = vl->next;
-        if(vl->use <= 0) {
-            if(vl == m_head && vl == m_tail) {
+        if (vl->use <= 0) {
+            if (vl == m_head && vl == m_tail) {
                 m_head = NULL;
                 m_tail = NULL;
-            } else if(vl == m_head) {
+            }
+            else if(vl == m_head) {
                 m_head = vl->next;
                 vl->next->prev = NULL;
-            } else if(vl == m_tail) {
+            }
+            else if(vl == m_tail) {
                 m_tail = vl->prev;
                 vl->prev->next = NULL;
-            } else {
+            }
+            else {
                 vl->prev->next = vl->next;
                 vl->next->prev = vl->prev;
             }
-            if(vl->name)
-                MMDAIMemoryRelease(vl->name);
+            MMDAIMemoryRelease(vl->name);
             delete vl;
             count--;
         }
@@ -212,4 +211,3 @@ void MotionStocker::unload(VMD *vmd)
 }
 
 } /* namespace */
-
