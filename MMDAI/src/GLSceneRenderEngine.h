@@ -224,14 +224,14 @@ private:
     GLuint *m_materialVBO;
     GLuint m_modelVBO[kModelBufferMax];
     GLuint m_nmaterials;
-    
+
 #ifdef MMDAI_OPENGL_ES1
     TexCoord **m_spheres;
     TexCoord **m_spheres2;
 #endif /* MMDAI_OPENGL_ES1 */
 
 };
-    
+
 class GLPMDMaterial : public PMDMaterial {
 public:
     GLPMDMaterial(PMDRenderEngine *engine) : PMDMaterial(engine) {
@@ -329,7 +329,7 @@ public:
         const btSphereShape* sphereShape;
         float radius;
         const int numObjects = world->getNumCollisionObjects();
-        
+
         /* draw in wire frame */
         glGetIntegerv(GL_POLYGON_MODE, polygonMode);
         if (polygonMode[1] != GL_LINE)
@@ -915,7 +915,7 @@ public:
         GLfloat priority = 1.0f;
         glPrioritizeTextures(1, &native->id, &priority);
 #endif /* MMDAI_OPENGL_ES1 */
-        
+
         return native;
     }
 
@@ -972,7 +972,7 @@ public:
         native->id = glGenLists(1);
         glNewList(native->id, GL_COMPILE);
 #endif /* MMDAI_OPENGL_ES1 */
-        
+
         /* register rendering command */
         if (!cullFace)
             glDisable(GL_CULL_FACE);
@@ -1031,10 +1031,10 @@ public:
         glDisableClientState(GL_NORMAL_ARRAY);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #endif /* MMDAI_OPENGL_ES1 */
-        
+
         if (!cullFace)
             glEnable(GL_CULL_FACE);
-        
+
 #ifndef MMDAI_OPENGL_ES1
         /* end of regist */
         glEndList();
@@ -1300,7 +1300,7 @@ public:
                 if (!object->isEnable())
                     continue;
                 glPushMatrix();
-                renderShadow(object->getPMDModel());
+                renderShadow(object->getModel());
                 glPopMatrix();
             }
 
@@ -1396,7 +1396,7 @@ public:
             if (!object->isEnable())
                 continue;
             glLoadName(i);
-            renderShadow(object->getPMDModel());
+            renderShadow(object->getModel());
         }
 
         /* restore projection matrix */
@@ -1679,7 +1679,7 @@ private:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                PMDModel *model = object->getPMDModel();
+                PMDModel *model = object->getModel();
                 renderModel(model);
                 renderEdge(model);
             }
@@ -1698,7 +1698,7 @@ private:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                PMDModel *model = object->getPMDModel();
+                PMDModel *model = object->getModel();
                 if (model->isToonEnabled())
                     continue;
                 renderModel(model);
@@ -1713,7 +1713,7 @@ private:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                PMDModel *model = object->getPMDModel();
+                PMDModel *model = object->getModel();
                 if (!model->isToonEnabled())
                     continue;
                 /* set texture coordinates for shadow mapping */
@@ -1781,7 +1781,7 @@ private:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                PMDModel *model = object->getPMDModel();
+                PMDModel *model = object->getModel();
                 if (!model->isToonEnabled())
                     continue;
                 renderModel(model);
@@ -1796,7 +1796,7 @@ private:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                PMDModel *model = object->getPMDModel();
+                PMDModel *model = object->getModel();
                 if (!model->isToonEnabled())
                     continue;
                 /* set texture coordinates for shadow mapping */
@@ -1819,7 +1819,7 @@ private:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                renderModel(object->getPMDModel());
+                renderModel(object->getModel());
             }
         }
 
@@ -1880,7 +1880,7 @@ private:
                 continue;
             glPushMatrix();
             glMultMatrixf(stage->getShadowMatrix());
-            renderShadow(object->getPMDModel());
+            renderShadow(object->getModel());
             glPopMatrix();
         }
         glEnable(GL_DEPTH_TEST);
@@ -1902,7 +1902,7 @@ private:
             PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
-            PMDModel *model = object->getPMDModel();
+            PMDModel *model = object->getModel();
             renderModel(model);
             renderEdge(model);
         }

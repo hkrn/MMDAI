@@ -48,8 +48,6 @@
 
 namespace MMDAI {
 
-#define MAX_MODEL 20
-
 class ILipSyncLoader;
 class PMDObject;
 class IPreference;
@@ -71,9 +69,9 @@ public:
 
     void initializeScreen(int width, int height);
 
-    PMDObject *allocatePMDObject();
-    PMDObject *findPMDObject(PMDObject *object);
-    PMDObject *findPMDObject(const char *alias);
+    PMDObject *allocateObject();
+    PMDObject *findObject(PMDObject *object);
+    PMDObject *findObject(const char *alias);
 
     bool loadFloor(IModelLoader *loader);
     bool loadBackground(IModelLoader *loader);
@@ -135,11 +133,11 @@ public:
     void setModelViewRotation(int x, int y);
     void translate(const btVector3 &value);
 
-    void selectPMDObject(PMDObject *object);
-    void selectPMDObject(int x, int y);
-    void selectPMDObject(int x, int y, PMDObject **dropAllowedModel);
-    void deselectPMDObject();
-    void setHighlightPMDObject(PMDObject *object);
+    void selectObject(PMDObject *object);
+    void selectObject(int x, int y);
+    void selectObject(int x, int y, PMDObject **dropAllowedModel);
+    void deselectObject();
+    void setHighlightObject(PMDObject *object);
     void setRect(int width, int height);
     void setViewMoveTimer(int ms);
 
@@ -156,16 +154,19 @@ public:
     void renderModelRigidBodies();
     void renderModelBones();
 
-    inline PMDObject *getPMDObject(int index) const {
+    inline PMDObject *getObjectAt(int index) const {
         if (index < 0 || index > m_numModel)
             return NULL;
         return m_objects[index];
     }
-    inline PMDObject *getSelectedPMDObject() const {
-        return getPMDObject(m_selectedModel);
+    inline PMDObject *getSelectedObject() const {
+        return getObjectAt(m_selectedModel);
     }
-    inline const int countPMDObjects() const {
+    inline const int countObjects() const {
         return m_numModel;
+    }
+    inline const int getMaxObjects() const {
+        return m_maxModel;
     }
     inline const btVector3 getScreenPointPosition(const btVector3 &src) {
         return m_transMatrix.inverse() * src;
@@ -212,6 +213,7 @@ private:
     IPreference *m_preference;
     SceneEventHandler *m_handler;
     Stage *m_stage;
+    int m_maxModel;
     int m_numModel;
     int m_selectedModel;
     int m_width;

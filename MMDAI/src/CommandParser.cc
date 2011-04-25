@@ -161,7 +161,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             pmd = m_factory->createModelLoader(argv[1]);
             lip = m_factory->createLipSyncLoader(argv[1]);
@@ -180,7 +180,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->deleteModel(object);
         }
@@ -251,7 +251,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         if (argc >= 8) {
             MMDAIStringToFloat(argv[7]);
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             vmd = m_factory->createMotionLoader(argv[2]);
             ret = m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos, priority);
@@ -268,7 +268,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             vmd = m_factory->createMotionLoader(argv[2]);
             ret = m_controller->changeMotion(object, argv[1], vmd);
@@ -284,7 +284,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             return m_controller->deleteMotion(object, argv[1]);
         }
@@ -319,7 +319,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
         if (argc >= 4)
             speed = MMDAIStringToFloat(argv[3]);
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->startMove(object, pos, local, speed);
         }
@@ -334,7 +334,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->stopMove(object);
         }
@@ -369,7 +369,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
         if (argc >= 4)
             speed = MMDAIStringToFloat(argv[3]);
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->startRotation(object, rot, local, speed);
         }
@@ -384,7 +384,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->stopRotation(object);
         }
@@ -419,7 +419,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
         if (argc >= 4)
             speed = MMDAIStringToFloat(argv[3]);
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->startTurn(object, pos, local, speed);
         }
@@ -434,7 +434,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             m_controller->stopTurn(object);
         }
@@ -499,7 +499,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             return m_controller->startLipSync(object, argv[1]);
         }
@@ -514,7 +514,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        object = m_controller->findPMDObject(argv[0]);
+        object = m_controller->findObject(argv[0]);
         if (object != NULL) {
             return m_controller->stopLipSync(object);
         }

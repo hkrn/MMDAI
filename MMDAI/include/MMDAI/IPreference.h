@@ -77,6 +77,7 @@ enum PreferenceKeys {
     kPreferenceRenderingRotation,
     kPreferenceRenderingTransition,
     kPreferenceRenderingScale,
+    kPreferenceMaxModelSize,
     kPreferenceMaxLengthOfKeys
 };
 

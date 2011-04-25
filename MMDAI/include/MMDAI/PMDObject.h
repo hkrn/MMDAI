@@ -101,7 +101,7 @@ public:
             m_alias = MMDAIStringClone(alias);
         }
     }
-    inline PMDModel *getPMDModel() const {
+    inline PMDModel *getModel() const {
         return m_model;
     }
     inline MotionManager *getMotionManager() const {

@@ -144,6 +144,7 @@ SceneController::SceneController(SceneEventHandler *handler, IPreference *prefer
     m_preference(preference),
     m_handler(handler),
     m_stage(0),
+    m_maxModel(0),
     m_numModel(0),
     m_selectedModel(-1),
     m_width(0),
@@ -163,15 +164,23 @@ SceneController::SceneController(SceneEventHandler *handler, IPreference *prefer
     m_currentTrans(m_trans),
     m_currentRot(m_rot)
 {
+    int maxModel = preference->getInt(kPreferenceMaxModelSize);
+    if (maxModel <= 0)
+        maxModel = 20; /* for compatibility */
     m_engine = new GLSceneRenderEngine(preference);
-    m_objects = new PMDObject*[MAX_MODEL];
+    m_objects = new PMDObject*[maxModel];
+    m_depth = new RenderDepth[maxModel];
+    m_order = new int16_t[maxModel];
     m_stage = new Stage(m_engine);
-    for (int i = 0; i < MAX_MODEL; i++) {
-        m_objects[i] = new PMDObject(m_engine);
-    }
+    m_maxModel = maxModel;
     m_transMatrix.setIdentity();
-    m_depth = new RenderDepth[MAX_MODEL];
-    m_order = new int16_t[MAX_MODEL];
+    for (int i = 0; i < maxModel; i++) {
+        RenderDepth *depth = &m_depth[i];
+        m_objects[i] = new PMDObject(m_engine);
+        m_order[i] = 0;
+        depth->id = 0;
+        depth->distance = 0;
+    }
     updateModelView(0);
     updateProjection(0);
 }
@@ -186,10 +195,11 @@ SceneController::~SceneController()
     m_selectedModel = -1;
     m_numModel = 0;
     m_highlightModel = 0;
-    for (int i = 0; i < MAX_MODEL; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         delete m_objects[i];
         m_objects[i] = 0;
     }
+    m_maxModel = 0;
     delete[] m_order;
     delete[] m_depth;
     delete[] m_objects;
@@ -210,7 +220,7 @@ void SceneController::updateLight()
     m_preference->getFloat4(kPreferenceLightDirection, direction);
     m_stage->updateShadowMatrix(direction);
     btVector3 dir = btVector3(direction[0], direction[1], direction[2]);
-    for (i = 0; i < m_numModel; i++) {
+    for (i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable())
             object->setLightForToon(dir);
@@ -268,30 +278,29 @@ bool SceneController::loadStage(IModelLoader *loader)
     return true;
 }
 
-PMDObject *SceneController::allocatePMDObject()
+PMDObject *SceneController::allocateObject()
 {
     PMDObject *object = NULL;
-    for (int i = 0; i < m_numModel; i++) {
-        PMDObject *object = m_objects[i];
+    for (int i = 0; i < m_maxModel; i++) {
+        object = m_objects[i];
         if (!object->isEnable())
             return object; /* re-use it */
     }
-    if (m_numModel >= MAX_MODEL)
-        return NULL; /* no more room */
+    if (m_numModel >= m_maxModel)
+        return object; /* no more model */
     object = m_objects[m_numModel];
-    m_numModel++;
     object->setEnable(false); /* model is not loaded yet */
     return object;
 }
 
-PMDObject *SceneController::findPMDObject(PMDObject *object)
+PMDObject *SceneController::findObject(PMDObject *object)
 {
-    return findPMDObject(object->getAlias());
+    return findObject(object->getAlias());
 }
 
-PMDObject *SceneController::findPMDObject(const char *alias)
+PMDObject *SceneController::findObject(const char *alias)
 {
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable() && MMDAIStringEquals(object->getAlias(), alias))
             return object;
@@ -450,12 +459,12 @@ bool SceneController::addModel(const char *modelAlias,
     if (pos || rot)
         forcedPosition = true;
     if (baseModelAlias) {
-        assignObject = findPMDObject(baseModelAlias);
+        assignObject = findObject(baseModelAlias);
         if (assignObject == NULL) {
             MMDAILogWarn("model alias \"%s\" is not found", baseModelAlias);
             return false;
         }
-        PMDModel *model = assignObject->getPMDModel();
+        PMDModel *model = assignObject->getModel();
         if (baseBoneName) {
             assignBone = model->getBone(baseBoneName);
         } else {
@@ -471,7 +480,7 @@ bool SceneController::addModel(const char *modelAlias,
     }
 
     /* ID */
-    newObject = allocatePMDObject();
+    newObject = allocateObject();
     if (newObject == NULL) {
         MMDAILogWarnString("addModel: too many models.");
         return false;
@@ -481,7 +490,7 @@ bool SceneController::addModel(const char *modelAlias,
     if (modelAlias && MMDAIStringLength(modelAlias) > 0) {
         /* check the same alias */
         name = MMDAIStringClone(modelAlias);
-        if (findPMDObject(name) != NULL) {
+        if (findObject(name) != NULL) {
             MMDAILogWarn("addModel: model alias \"%s\" is already used.", name);
             MMDAIMemoryRelease(name);
             return false;
@@ -494,7 +503,7 @@ bool SceneController::addModel(const char *modelAlias,
             if (name == NULL)
                 return false;
             MMDAIStringFormat(name, allocSize, "%d", i);
-            if (findPMDObject(name) != NULL)
+            if (findObject(name) != NULL)
                 MMDAIMemoryRelease(name);
             else
                 break;
@@ -516,7 +525,7 @@ bool SceneController::addModel(const char *modelAlias,
         return false;
     }
 
-    PMDModel *model = newObject->getPMDModel();
+    PMDModel *model = newObject->getModel();
     model->setToonEnable(m_preference->getBool(kPreferenceUseCartoonRendering));
     model->setEdgeThin(m_preference->getFloat(kPreferenceCartoonEdgeWidth));
     newObject->setLightForToon(light);
@@ -558,7 +567,7 @@ bool SceneController::changeModel(PMDObject *object,
         return false;
     }
 
-    PMDModel *model = object->getPMDModel();
+    PMDModel *model = object->getModel();
     model->setToonEnable(m_preference->getBool(kPreferenceUseCartoonRendering));
     model->setEdgeThin(m_preference->getFloat(kPreferenceCartoonEdgeWidth));
     object->setLightForToon(light);
@@ -580,7 +589,7 @@ bool SceneController::changeModel(PMDObject *object,
     object->setAlias(modelAlias);
 
     /* delete accessories  */
-    for (int i = 0; i < MAX_MODEL; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *assoc = m_objects[i];
         if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             deleteModel(assoc);
@@ -596,7 +605,7 @@ bool SceneController::changeModel(PMDObject *object,
 void SceneController::deleteModel(PMDObject *object)
 {
     /* delete accessories  */
-    for (int i = 0; i < MAX_MODEL; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *assoc = m_objects[i];
         if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             deleteModel(assoc);
@@ -605,7 +614,6 @@ void SceneController::deleteModel(PMDObject *object)
 
     /* set frame from now to disappear */
     object->startDisappear();
-    m_numModel--;
 
     /* send event message */
     sendEvent1(SceneEventHandler::kModelDeleteEvent, object->getAlias());
@@ -945,11 +953,11 @@ void SceneController::setViewMoveTimer(int ms)
     }
 }
 
-void SceneController::selectPMDObject(PMDObject *object)
+void SceneController::selectObject(PMDObject *object)
 {
     assert(object != NULL);
     const char *alias = object->getAlias();
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *o = m_objects[i];
         if (o->isEnable() && MMDAIStringEquals(o->getAlias(), alias)) {
             m_selectedModel = i;
@@ -958,7 +966,7 @@ void SceneController::selectPMDObject(PMDObject *object)
     }
 }
 
-void SceneController::selectPMDObject(int x, int y)
+void SceneController::selectObject(int x, int y)
 {
     m_selectedModel = m_engine->pickModel(m_objects,
                                           m_numModel,
@@ -967,7 +975,7 @@ void SceneController::selectPMDObject(int x, int y)
                                           NULL);
 }
 
-void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel)
+void SceneController::selectObject(int x, int y, PMDObject **dropAllowedModel)
 {
     int dropAllowedModelID = -1;
     m_selectedModel = m_engine->pickModel(m_objects,
@@ -976,15 +984,15 @@ void SceneController::selectPMDObject(int x, int y, PMDObject **dropAllowedModel
                                           y,
                                           &dropAllowedModelID);
     if (m_selectedModel == -1)
-        *dropAllowedModel = getPMDObject(dropAllowedModelID);
+        *dropAllowedModel = getObjectAt(dropAllowedModelID);
 }
 
-void SceneController::deselectPMDObject()
+void SceneController::deselectObject()
 {
     m_selectedModel = -1;
 }
 
-void SceneController::setHighlightPMDObject(PMDObject *object)
+void SceneController::setHighlightObject(PMDObject *object)
 {
     float col[4];
 
@@ -994,12 +1002,12 @@ void SceneController::setHighlightPMDObject(PMDObject *object)
         col[1] = PMDModel::kEdgeColorG;
         col[2] = PMDModel::kEdgeColorB;
         col[3] = PMDModel::kEdgeColorA;
-        m_highlightModel->getPMDModel()->setEdgeColor(col);
+        m_highlightModel->getModel()->setEdgeColor(col);
     }
     if (object != NULL) {
         /* set highlight to the specified model */
         m_preference->getFloat4(kPreferenceCartoonEdgeSelectedColor, col);
-        object->getPMDModel()->setEdgeColor(col);
+        object->getModel()->setEdgeColor(col);
     }
 
     m_highlightModel = object;
@@ -1008,7 +1016,7 @@ void SceneController::setHighlightPMDObject(PMDObject *object)
 void SceneController::updateMotion(double procFrame, double adjustFrame)
 {
     const char *lipSyncMotion = LipSync::getMotionName();
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable()) {
             object->updateRootBone();
@@ -1037,7 +1045,7 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
 void SceneController::eraseModel(PMDObject *object)
 {
     /* remove assigned accessories */
-    for (int i = 0; i < MAX_MODEL; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *assoc = m_objects[i];
         if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             eraseModel(assoc);
@@ -1055,6 +1063,7 @@ void SceneController::eraseModel(PMDObject *object)
         }
         m_motion.unload(player->vmd);
     }
+    m_numModel--;
     /* remove model */
     object->release();
 }
@@ -1062,7 +1071,7 @@ void SceneController::eraseModel(PMDObject *object)
 void SceneController::updateAfterSimulation()
 {
     /* update after simulation */
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         object->updateAfterSimulation(m_enablePhysicsSimulation);
     }
@@ -1072,7 +1081,7 @@ void SceneController::updateDepthTextureViewParam()
 {
     /* calculate rendering range for shadow mapping */
     if (m_preference->getBool(kPreferenceUseShadowMapping)) {
-        int num = m_numModel;
+        int num = m_maxModel;
         float d = 0, dmax = 0;
         float *r = new float[num];
         btVector3 *c = new btVector3[num];
@@ -1082,11 +1091,11 @@ void SceneController::updateDepthTextureViewParam()
             PMDObject *object = m_objects[i];
             if (!object->isEnable())
                 continue;
-            r[i] = object->getPMDModel()->calculateBoundingSphereRange(&(c[i]));
+            r[i] = object->getModel()->calculateBoundingSphereRange(&(c[i]));
             cc += c[i];
         }
         if (num != 0)
-            cc /= (float) num;
+            cc /= static_cast<float>(num);
 
         dmax = 0.0f;
         for (int i = 0; i < num; i++) {
@@ -1105,7 +1114,7 @@ void SceneController::updateDepthTextureViewParam()
 
 void SceneController::updateModelPositionAndRotation(double fps)
 {
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable()) {
             const char *alias = object->getAlias();
@@ -1230,14 +1239,14 @@ void SceneController::prerenderScene()
 {
     sortRenderOrder();
     m_engine->setViewport(m_width, m_height);
-    m_engine->prerender(m_objects, m_order, m_numModel);
+    m_engine->prerender(m_objects, m_order, m_maxModel);
 }
 
 void SceneController::renderScene()
 {
     if (!isViewMoving())
         m_viewMoveTime = -1;
-    m_engine->render(m_objects, m_order, m_numModel, m_stage);
+    m_engine->render(m_objects, m_order, m_maxModel, m_stage);
 }
 
 void SceneController::renderModelRigidBodies()
@@ -1247,11 +1256,10 @@ void SceneController::renderModelRigidBodies()
 
 void SceneController::renderModelBones()
 {
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
-        if (object->isEnable()) {
-            m_engine->renderBones(object->getPMDModel());
-        }
+        if (object->isEnable())
+            m_engine->renderBones(object->getModel());
     }
 }
 
@@ -1261,20 +1269,21 @@ void SceneController::sortRenderOrder()
         return;
 
     int size = 0;
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (!object->isEnable() || !object->allowMotionFileDrop())
             continue;
-        btVector3 pos = object->getPMDModel()->getCenterBone()->getTransform().getOrigin();
+        btVector3 pos = object->getModel()->getCenterBone()->getTransform().getOrigin();
+        RenderDepth *depth = &m_depth[size];
         pos = m_transMatrix * pos;
-        m_depth[size].distance = pos.z();
-        m_depth[size].id = i;
+        depth->distance = pos.z();
+        depth->id = i;
         size++;
     }
     qsort(m_depth, size, sizeof(RenderDepth), compareDepth);
     for (int i = 0; i < size; i++)
         m_order[i] = m_depth[i].id;
-    for (int i = 0; i < m_numModel; i++) {
+    for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (!object->isEnable() || !object->allowMotionFileDrop())
             m_order[size++] = i;
