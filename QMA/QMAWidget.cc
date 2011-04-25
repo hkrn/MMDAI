@@ -286,8 +286,8 @@ void QMAWidget::paintGL()
 
 void QMAWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    m_controller->selectPMDObject(event->x(), event->y());
-    m_controller->setHighlightPMDObject(m_controller->getSelectedPMDObject());
+    m_controller->selectObject(event->x(), event->y());
+    m_controller->setHighlightObject(m_controller->getSelectedObject());
     m_doubleClicked = true;
 }
 
@@ -307,12 +307,12 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
         if (y < SHRT_MIN)
             y += (USHRT_MAX + 1);
         Qt::KeyboardModifiers modifiers = event->modifiers();
-        MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+        MMDAI::PMDObject *selectedObject = m_controller->getSelectedObject();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier && selectedObject == NULL) {
             m_controller->updateLightDirection(x, y);
         }
         else if (modifiers & Qt::ControlModifier && selectedObject != NULL) {
-            m_controller->setHighlightPMDObject(selectedObject);
+            m_controller->setHighlightObject(selectedObject);
             btVector3 pos = selectedObject->getTargetPosition();
             float scale = m_controller->getScale();
             float step = m_preference->getFloat(MMDAI::kPreferenceTranslateStep);
@@ -345,13 +345,13 @@ void QMAWidget::mousePressEvent(QMouseEvent *event)
     m_x = event->x();
     m_y = event->y();
     m_doubleClicked = false;
-    m_controller->selectPMDObject(m_x, m_y);
+    m_controller->selectObject(m_x, m_y);
 }
 
 void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 {
     if (!m_doubleClicked)
-        m_controller->setHighlightPMDObject(NULL);
+        m_controller->setHighlightObject(NULL);
 }
 
 void QMAWidget::wheelEvent(QWheelEvent *event)
@@ -391,11 +391,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     /* motion */
                     if (modifiers & Qt::ControlModifier) {
                         /* select all objects */
-                        int count = m_controller->countPMDObjects();
+                        int count = m_controller->countObjects();
                         if (modifiers & Qt::ShiftModifier) {
                             /* insert a motion to the all objects */
                             for (int i = 0; i < count; i++) {
-                                MMDAI::PMDObject *object = m_controller->getPMDObject(i);
+                                MMDAI::PMDObject *object = m_controller->getObjectAt(i);
                                 if (object->isEnable() && object->allowMotionFileDrop()) {
                                     MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
                                     ok = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
@@ -406,7 +406,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                         else {
                             /* change base motion to the all objects */
                             for (int i = 0; i < count; i++) {
-                                MMDAI::PMDObject *object = m_controller->getPMDObject(i);
+                                MMDAI::PMDObject *object = m_controller->getObjectAt(i);
                                 if (object->isEnable() && object->allowMotionFileDrop()) {
                                     MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
                                     setBaseMotion(object, loader);
@@ -416,12 +416,12 @@ void QMAWidget::dropEvent(QDropEvent *event)
                         }
                     }
                     else {
-                        MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+                        MMDAI::PMDObject *selectedObject = m_controller->getSelectedObject();
                         if (!m_doubleClicked || selectedObject == NULL || !selectedObject->allowMotionFileDrop()) {
                             const QPoint pos = event->pos();
                             MMDAI::PMDObject *dropAllowed = NULL;
-                            m_controller->selectPMDObject(pos.x(), pos.y(), &dropAllowed);
-                            selectedObject = m_controller->getSelectedPMDObject();
+                            m_controller->selectObject(pos.x(), pos.y(), &dropAllowed);
+                            selectedObject = m_controller->getSelectedObject();
                             if (selectedObject == NULL)
                                 selectedObject = dropAllowed;
                         }
@@ -458,11 +458,11 @@ void QMAWidget::dropEvent(QDropEvent *event)
                         m_factory.releaseLipSyncLoader(lipSyncLoader);
                     }
                     else {
-                        MMDAI::PMDObject *selectedObject = m_controller->getSelectedPMDObject();
+                        MMDAI::PMDObject *selectedObject = m_controller->getSelectedObject();
                         if (!m_doubleClicked || selectedObject == NULL) {
                             const QPoint pos = event->pos();
-                            m_controller->selectPMDObject(pos.x(), pos.y());
-                            selectedObject = m_controller->getSelectedPMDObject();
+                            m_controller->selectObject(pos.x(), pos.y());
+                            selectedObject = m_controller->getSelectedObject();
                         }
                         if (selectedObject != NULL) {
                             MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(filename);

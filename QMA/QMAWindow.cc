@@ -101,9 +101,9 @@ void QMAWindow::insertMotionToAllModels()
         QByteArray encodedPath = QFile::encodeName(fileName);
         const char *filename = encodedPath.constData();
         MMDAI::SceneController *controller = m_widget->getSceneController();
-        int count = controller->countPMDObjects();
+        int count = controller->countObjects();
         for (int i = 0; i < count; i++) {
-            MMDAI::PMDObject *object = controller->getPMDObject(i);
+            MMDAI::PMDObject *object = controller->getObjectAt(i);
             if (object->isEnable() && object->allowMotionFileDrop()) {
                 MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
                 controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
@@ -121,7 +121,7 @@ void QMAWindow::insertMotionToSelectedModel()
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastVMDDirectory", fileName);
         MMDAI::SceneController *controller = m_widget->getSceneController();
-        MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
+        MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
         if (selectedObject != NULL) {
             QByteArray encodedPath = QFile::encodeName(fileName);
             const char *filename = encodedPath.constData();
@@ -259,12 +259,12 @@ void QMAWindow::decreaseEdgeThin()
 void QMAWindow::togglePhysicSimulation()
 {
     MMDAI::SceneController *controller = m_widget->getSceneController();
-    int count = controller->countPMDObjects();
+    int count = controller->countObjects();
     m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
     for (int i = 0; i < count; i++) {
-        MMDAI::PMDObject *object = controller->getPMDObject(i);
+        MMDAI::PMDObject *object = controller->getObjectAt(i);
         if (object->isEnable()) {
-            object->getPMDModel()->setPhysicsControl(m_enablePhysicsSimulation);
+            object->getModel()->setPhysicsControl(m_enablePhysicsSimulation);
         }
     }
 }
@@ -331,10 +331,10 @@ void QMAWindow::selectObject()
         QByteArray bytes = action->text().toUtf8();
         const char *name = bytes.constData();
         MMDAI::SceneController *controller = m_widget->getSceneController();
-        MMDAI::PMDObject *object = controller->findPMDObject(name);
+        MMDAI::PMDObject *object = controller->findObject(name);
         if (object != NULL) {
-            controller->selectPMDObject(object);
-            controller->setHighlightPMDObject(object);
+            controller->selectObject(object);
+            controller->setHighlightObject(object);
         }
     }
 }
@@ -347,7 +347,7 @@ void QMAWindow::changeSelectedObject()
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastPMDDirectory", fileName);
         MMDAI::SceneController *controller = m_widget->getSceneController();
-        MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
+        MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
         if (selectedObject != NULL){
             QByteArray bytes = fileName.toUtf8();
             const char *filename = bytes.constData();
@@ -365,10 +365,10 @@ void QMAWindow::changeSelectedObject()
 void QMAWindow::deleteSelectedObject()
 {
     MMDAI::SceneController *controller = m_widget->getSceneController();
-    MMDAI::PMDObject *selectedObject = controller->getSelectedPMDObject();
+    MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
     if (selectedObject != NULL) {
         controller->deleteModel(selectedObject);
-        controller->deselectPMDObject();
+        controller->deselectObject();
     }
 }
 
@@ -711,9 +711,9 @@ void QMAWindow::setEdgeThin(float value)
     MMDAI::SceneController *controller = m_widget->getSceneController();
     value = qMin(value, 2.0f);
     m_preference->setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value);
-    int count = controller->countPMDObjects();
+    int count = controller->countObjects();
     for (int i = 0; i < count; i++)
-        controller->getPMDObject(i)->getPMDModel()->setEdgeThin(value);
+        controller->getObjectAt(i)->getModel()->setEdgeThin(value);
 }
 
 void QMAWindow::createMenu()
