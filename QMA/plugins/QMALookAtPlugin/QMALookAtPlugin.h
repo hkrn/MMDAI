@@ -65,9 +65,10 @@ signals:
 
 private:
     bool m_enable;
+    int m_maxModel;
     MMDAI::SceneController *m_controller;
-    MMDAI::BoneController m_neckController[MAX_MODEL];
-    MMDAI::BoneController m_eyeController[MAX_MODEL];
+    MMDAI::BoneController *m_neckController;
+    MMDAI::BoneController *m_eyeController;
 };
 
 #endif // QMALOOKATPLUGIN_H

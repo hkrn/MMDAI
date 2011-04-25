@@ -65,7 +65,11 @@ static void setEyeController(MMDAI::BoneController *controller, MMDAI::PMDModel 
 }
 
 QMALookAtPlugin::QMALookAtPlugin()
-    : m_enable(false)
+    : m_enable(false),
+      m_maxModel(0),
+      m_controller(0),
+      m_neckController(0),
+      m_eyeController(0)
 {
 }
 
@@ -76,11 +80,18 @@ QMALookAtPlugin::~QMALookAtPlugin()
 void QMALookAtPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(baseName);
+    int maxModel = m_maxModel = controller->getMaxObjects();
     m_controller = controller;
+    m_eyeController = new MMDAI::BoneController[maxModel];
+    m_neckController = new MMDAI::BoneController[maxModel];
 }
 
 void QMALookAtPlugin::unload()
 {
+    delete[] m_eyeController;
+    m_eyeController = 0;
+    delete[] m_neckController;
+    m_neckController = 0;
 }
 
 void QMALookAtPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
@@ -104,43 +115,34 @@ void QMALookAtPlugin::receiveEvent(const QString &type, const QList<QVariant> &a
         pointPos.setValue(p.x() * rate, -p.y() * rate, 0.0f);
         btVector3 targetPos = m_controller->getScreenPointPosition(pointPos);
         /* calculate direction of all controlled bones */
-        int count = m_controller->countPMDObjects();
-        for (int i = 0; i < count; i++) {
-            MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-            if (object->isEnable()) {
+        for (int i = 0; i < m_maxModel; i++) {
+            MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+            if (object && object->isEnable()) {
                 m_neckController[i].update(targetPos, static_cast<float>(delta));
                 m_eyeController[i].update(targetPos, static_cast<float>(delta));
             }
         }
     }
-    else if (type == MMDAI::SceneEventHandler::kKeyEvent && arguments.at(0).toString() == "L") {
-        int count = m_controller->countPMDObjects();
-        for (int i = 0; i < count; i++) {
-            MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-            if(object->isEnable()) {
-                if(m_enable == true) {
-                    m_neckController[i].setEnable(false);
-                    m_eyeController[i].setEnable(false);
-                }
-                else {
-                    m_neckController[i].setEnable(true);
-                    m_eyeController[i].setEnable(true);
-                }
+    else if (type == MMDAI::ISceneEventHandler::kKeyEvent && arguments.at(0).toString() == "L") {
+        m_enable = !m_enable;
+        for (int i = 0; i < m_maxModel; i++) {
+            MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+            if (object && object->isEnable()) {
+                m_neckController[i].setEnable(m_enable);
+                m_eyeController[i].setEnable(m_enable);
             }
         }
-        m_enable = !m_enable;
     }
-    else if (type == MMDAI::SceneEventHandler::kModelChangeEvent || type == MMDAI::SceneEventHandler::kModelAddEvent) {
+    else if (type == MMDAI::ISceneEventHandler::kModelChangeEvent || type == MMDAI::ISceneEventHandler::kModelAddEvent) {
         QTextCodec *codec = QTextCodec::codecForName("UTF8");
         QString target = arguments.at(0).toString();
-        int count = m_controller->countPMDObjects();
-        for (int i = 0; i < count; i++) {
-            MMDAI::PMDObject *object = m_controller->getPMDObject(i);
-            const char *a = object->getAlias();
-            if (a) {
-                QString alias = codec->toUnicode(a, strlen(a));
+        for (int i = 0; i < m_maxModel; i++) {
+            const char *a;
+            MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+            if (object && ((a = object->getAlias()) != NULL)) {
+                QString alias = codec->toUnicode(a, MMDAIStringLength(a));
                 if (alias == target) {
-                    MMDAI::PMDModel *model = object->getPMDModel();
+                    MMDAI::PMDModel *model = object->getModel();
                     setNeckController(&m_neckController[i], model);
                     setEyeController(&m_eyeController[i], model);
                 }
