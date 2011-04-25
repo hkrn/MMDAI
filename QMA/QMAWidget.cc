@@ -134,8 +134,8 @@ bool QMAWidget::insertMotionToAllModels(const QString &filename)
     QByteArray encodedPath = QFile::encodeName(filename);
     const char *path = encodedPath.constData();
     bool ret = true;
-    int count = m_controller->getMaxObjects();
-    for (int i = 0; i < count; i++) {
+    int max = m_controller->getMaxObjects();
+    for (int i = 0; i < max; i++) {
         MMDAI::PMDObject *object = m_controller->getObjectAt(i);
         if (object && object->isEnable() && object->allowMotionFileDrop()) {
             MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(path);
@@ -476,15 +476,15 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     /* motion */
                     if (modifiers & Qt::ControlModifier) {
                         /* select all objects */
-                        int count = m_controller->countObjects();
+                        int max = m_controller->getMaxObjects();
                         if (modifiers & Qt::ShiftModifier) {
                             ok = insertMotionToAllModels(path);
                         }
                         else {
                             /* change base motion to the all objects */
-                            for (int i = 0; i < count; i++) {
+                            for (int i = 0; i < max; i++) {
                                 MMDAI::PMDObject *object = m_controller->getObjectAt(i);
-                                if (object->isEnable() && object->allowMotionFileDrop()) {
+                                if (object && object->isEnable() && object->allowMotionFileDrop()) {
                                     MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
                                     setBaseMotion(object, loader);
                                     m_factory.releaseMotionLoader(loader);

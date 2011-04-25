@@ -229,11 +229,11 @@ void QMAWindow::decreaseEdgeThin()
 void QMAWindow::togglePhysicSimulation()
 {
     MMDAI::SceneController *controller = m_widget->getSceneController();
-    int count = controller->countObjects();
+    int max = controller->getMaxObjects();
     m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < max; i++) {
         MMDAI::PMDObject *object = controller->getObjectAt(i);
-        if (object->isEnable()) {
+        if (object && object->isEnable()) {
             object->getModel()->setPhysicsControl(m_enablePhysicsSimulation);
         }
     }
@@ -673,9 +673,12 @@ void QMAWindow::setEdgeThin(float value)
     MMDAI::SceneController *controller = m_widget->getSceneController();
     value = qMin(value, 2.0f);
     m_preference->setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value);
-    int count = controller->countObjects();
-    for (int i = 0; i < count; i++)
-        controller->getObjectAt(i)->getModel()->setEdgeThin(value);
+    int max = controller->getMaxObjects();
+    for (int i = 0; i < max; i++) {
+        MMDAI::PMDObject *object = controller->getObjectAt(i);
+        if (object && object->isEnable())
+            object->getModel()->setEdgeThin(value);
+    }
 }
 
 void QMAWindow::createMenu()
