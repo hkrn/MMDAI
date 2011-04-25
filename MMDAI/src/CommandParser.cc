@@ -42,10 +42,6 @@
 
 namespace MMDAI {
 
-#define MMDAGENT_MAXNUMCOMMAND    10
-#define MMDAGENT_MAXCOMMANDBUFLEN 1024
-#define MMDAGENT_MAXLIPSYNCBUFLEN MMDAGENT_MAXCOMMANDBUFLEN
-
 /* arg2floatArray: parse float array from string */
 static bool arg2floatArray(float *dst, int len, const char *arg)
 {
@@ -70,28 +66,28 @@ static bool arg2floatArray(float *dst, int len, const char *arg)
 }
 
 /* arg2pos: get position from string */
-static bool arg2pos(btVector3 *dst, const char *arg)
+static bool arg2pos(btVector3 &dst, const char *arg)
 {
     float f[3] = { 0.0f, 0.0f, 0.0f };
 
     if (arg2floatArray(f, 3, arg) == false)
         return false;
 
-    dst->setZero();
-    dst->setValue(f[0], f[1], f[2]);
+    dst.setZero();
+    dst.setValue(f[0], f[1], f[2]);
 
     return true;
 }
 
 /* arg2rot: get rotation from string */
-static bool arg2rot(btQuaternion *dst, const char *arg)
+static bool arg2rot(btQuaternion &dst, const char *arg)
 {
     float angle[3] = { 0.0f, 0.0f, 0.0f };
 
     if (arg2floatArray(angle, 3, arg) == false)
         return false;
 
-    dst->setEulerZYX(MMDAIMathRadian(angle[2]), MMDAIMathRadian(angle[1]), MMDAIMathRadian(angle[0]));
+    dst.setEulerZYX(MMDAIMathRadian(angle[2]), MMDAIMathRadian(angle[1]), MMDAIMathRadian(angle[0]));
 
     return true;
 }
@@ -116,14 +112,9 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
     IMotionLoader *vmd = NULL;
     float float3[3] = { 0.0f, 0.0f, 0.0f };
     bool ret = true;
-    btVector3 pos;
+    btVector3 pos(0.0f, 0.0f, 0.0f);
     btQuaternion rot;
-
-    /* divide string into arguments */
-    if (argc >= MMDAGENT_MAXNUMCOMMAND) {
-        MMDAILogWarn("too many argument in command %s: %d", command, argc);
-        return false;
-    }
+    rot.setEulerZYX(0.0f, 0.0f, 0.0f);
 
     if (MMDAIStringEquals(command, SceneEventHandler::kModelAddCommand)) {
         if (argc < 2 || argc > 6) {
@@ -131,22 +122,16 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             return false;
         }
         if (argc >= 3) {
-            if (arg2pos(&pos, argv[2]) == false) {
+            if (arg2pos(pos, argv[2]) == false) {
                 MMDAILogWarn("%s: not a position string: %s", command, argv[2]);
                 return false;
             }
         }
-        else {
-            pos = btVector3(0.0, 0.0, 0.0);
-        }
         if (argc >= 4) {
-            if (arg2rot(&rot, argv[3]) == false) {
+            if (arg2rot(rot, argv[3]) == false) {
                 MMDAILogWarn("%s: not a rotation string: %s", command, argv[3]);
                 return false;
             }
-        }
-        else {
-            rot.setEulerZYX(0.0, 0.0, 0.0);
         }
         pmd = m_factory->createModelLoader(argv[1]);
         lip = m_factory->createLipSyncLoader(argv[1]);
@@ -301,7 +286,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        if (arg2pos(&pos, argv[1]) == false) {
+        if (arg2pos(pos, argv[1]) == false) {
             MMDAILogWarn("%s: not a position string: %s", command, argv[1]);
             return false;
         }
@@ -351,7 +336,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        if (arg2rot(&rot, argv[1]) == false) {
+        if (arg2rot(rot, argv[1]) == false) {
             MMDAILogWarn("%s: not a rotation string: %s", command, argv[1]);
             return false;
         }
@@ -401,7 +386,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        if (arg2pos(&pos, argv[1]) == false) {
+        if (arg2pos(pos, argv[1]) == false) {
             MMDAILogWarn("%s: not a position string: %s", command, argv[1]);
             return false;
         }
@@ -529,12 +514,12 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             return false;
         }
         btVector3 pos;
-        if (!arg2pos(&pos, argv[0])) {
+        if (!arg2pos(pos, argv[0])) {
             MMDAILogWarn("%s: not a position string: %s", command, argv[0]);
             return false;
         }
         btQuaternion rot;
-        if (!arg2rot(&rot, argv[1])) {
+        if (!arg2rot(rot, argv[1])) {
             MMDAILogWarn("%s: not a rotate string: %s", command, argv[1]);
             return false;
         }
