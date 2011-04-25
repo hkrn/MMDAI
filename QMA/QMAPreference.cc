@@ -326,6 +326,9 @@ void QMAPreference::parse(const QString &key, const QString &value)
     else if (key == "shadow_mapping_light_first") {
         setBool(MMDAI::kPreferenceShadowMappingLightFirst, value.toLower() == "true");
     }
+    else if (key == "max_num_model") {
+        setInt(MMDAI::kPreferenceMaxModelSize, value.toInt());
+    }
     else {
         MMDAILogWarn("unknown key %s: %s", key.toUtf8().constData(), value.toUtf8().constData());
     }
@@ -401,6 +404,7 @@ bool QMAPreference::validateIntKey(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceMaxMultiSampling:
     case MMDAI::kPreferenceMaxMultiSamplingColor:
     case MMDAI::kPreferenceMotionAdjustFrame:
+    case MMDAI::kPreferenceMaxModelSize:
         return true;
     default:
         return false;
@@ -476,6 +480,8 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
         return QVector3D(0.0f, 0.0f, 0.0f);
     case MMDAI::kPreferenceRenderingScale:
         return 1.0f;
+    case MMDAI::kPreferenceMaxModelSize:
+        return 10;
     default:
         MMDAILogWarn("should not reach here: %d", key);
         return -1;
@@ -589,6 +595,9 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         break;
     case MMDAI::kPreferenceRenderingScale:
         value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
+        break;
+    case MMDAI::kPreferenceMaxModelSize:
+        value.setValue(qMin(qMax(value.toInt(), 1), 1024));
         break;
     default:
         break;
