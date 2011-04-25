@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -49,7 +49,8 @@ QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
       m_doubleClicked(false),
       m_showLog(true),
       m_displayBone(false),
-      m_displayRigidBody(false)
+      m_displayRigidBody(false),
+      m_activeMotion(true)
 {
     m_sceneUpdateTimer.setSingleShot(false);
     connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
@@ -74,6 +75,86 @@ void QMAWidget::handleEventMessage(const char *eventType, int argc, ...)
     va_end(ap);
     qDebug().nospace() << "handleEventMessage event=" << eventType << ", arguments=" << arguments;
     emit pluginEventPost(eventType, arguments);
+}
+
+bool QMAWidget::addModel(const QString &filename)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    const char *path = encodedPath.constData();
+    MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
+    MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
+    bool ret = m_controller->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
+    m_factory.releaseModelLoader(modelLoader);
+    m_factory.releaseLipSyncLoader(lipSyncLoader);
+    return ret;
+}
+
+bool QMAWidget::changeModel(const QString &filename, MMDAI::PMDObject *object)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    const char *path = encodedPath.constData();
+    MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
+    MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
+    bool ret = m_controller->changeModel(object, modelLoader, lipSyncLoader);
+    m_factory.releaseModelLoader(modelLoader);
+    m_factory.releaseLipSyncLoader(lipSyncLoader);
+    return ret;
+}
+
+bool QMAWidget::setStage(const QString &filename)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
+    bool ret = m_controller->loadStage(loader);
+    m_factory.releaseModelLoader(loader);
+    return ret;
+}
+
+bool QMAWidget::setFloor(const QString &filename)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
+    bool ret = m_controller->loadFloor(loader);
+    m_factory.releaseModelLoader(loader);
+    return ret;
+}
+
+bool QMAWidget::setBackground(const QString &filename)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    const char *path = encodedPath.constData();
+    MMDAI::IModelLoader *loader = m_factory.createModelLoader(path);
+    bool ret = m_controller->loadBackground(loader);
+    m_factory.releaseModelLoader(loader);
+    return ret;
+}
+
+bool QMAWidget::insertMotionToAllModels(const QString &filename)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    const char *path = encodedPath.constData();
+    bool ret = true;
+    int count = m_controller->getMaxObjects();
+    for (int i = 0; i < count; i++) {
+        MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+        if (object && object->isEnable() && object->allowMotionFileDrop()) {
+            MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(path);
+            ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
+            m_factory.releaseMotionLoader(loader);
+            if (!ret)
+                break;
+        }
+    }
+    return ret;
+}
+
+bool QMAWidget::insertMotionToModel(const QString &filename, MMDAI::PMDObject *object)
+{
+    QByteArray encodedPath = QFile::encodeName(filename);
+    MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(encodedPath.constData());
+    bool ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
+    m_factory.releaseMotionLoader(loader);
+    return ret;
 }
 
 void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
@@ -189,20 +270,24 @@ void QMAWidget::updateScene()
     double restFrame = intervalFrame;
     double adjustFrame = 0.0, procFrame = 0.0;
 
-    for (int i = 0; i < stepMax; i++) {
-        if (restFrame <= stepFrame) {
-            procFrame = restFrame;
-            i = stepMax;
+    if (m_activeMotion) {
+        for (int i = 0; i < stepMax; i++) {
+            if (restFrame <= stepFrame) {
+                procFrame = restFrame;
+                i = stepMax;
+            }
+            else {
+                procFrame = stepFrame;
+                restFrame -= stepFrame;
+            }
+            adjustFrame = m_sceneFrameTimer.getAuxFrame(procFrame);
+            m_controller->updateMotion(procFrame, adjustFrame);
+            arguments.clear();
+            arguments << rectangle << point << procFrame + adjustFrame;
+            delegateEvent(QMAPlugin::getUpdateEvent(), arguments);
         }
-        else {
-            procFrame = stepFrame;
-            restFrame -= stepFrame;
-        }
-        adjustFrame = m_sceneFrameTimer.getAuxFrame(procFrame);
-        m_controller->updateMotion(procFrame, adjustFrame);
-        arguments.clear();
-        arguments << rectangle << point << procFrame + adjustFrame;
-        delegateEvent(QMAPlugin::getUpdateEvent(), arguments);
+    }
+    else {
     }
 
     m_controller->updateAfterSimulation();
@@ -393,15 +478,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                         /* select all objects */
                         int count = m_controller->countObjects();
                         if (modifiers & Qt::ShiftModifier) {
-                            /* insert a motion to the all objects */
-                            for (int i = 0; i < count; i++) {
-                                MMDAI::PMDObject *object = m_controller->getObjectAt(i);
-                                if (object->isEnable() && object->allowMotionFileDrop()) {
-                                    MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
-                                    ok = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
-                                    m_factory.releaseMotionLoader(loader);
-                                }
-                            }
+                            ok = insertMotionToAllModels(path);
                         }
                         else {
                             /* change base motion to the all objects */
@@ -428,9 +505,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                         if (selectedObject != NULL) {
                             if (modifiers & Qt::ShiftModifier) {
                                 /* insert a motion to the model */
-                                MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(filename);
-                                ok = m_controller->addMotion(selectedObject, NULL, loader, false, true, true, true, 0.0f);
-                                m_factory.releaseMotionLoader(loader);
+                                insertMotionToModel(path, selectedObject);
                             }
                             else {
                                 /* change base motion to the model */
@@ -443,19 +518,12 @@ void QMAWidget::dropEvent(QDropEvent *event)
                     /* timer resume */
                 }
                 else if (path.endsWith(".xpmd", Qt::CaseInsensitive)) {
-                    /* stage */
-                    MMDAI::IModelLoader *loader = m_factory.createModelLoader(filename);
-                    ok = m_controller->loadStage(loader);
-                    m_factory.releaseModelLoader(loader);
+                    ok = setStage(path);
                 }
                 else if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
                     /* model */
                     if (modifiers & Qt::ControlModifier) {
-                        MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(filename);
-                        MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
-                        ok = m_controller->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
-                        m_factory.releaseModelLoader(modelLoader);
-                        m_factory.releaseLipSyncLoader(lipSyncLoader);
+                        addModel(path);
                     }
                     else {
                         MMDAI::PMDObject *selectedObject = m_controller->getSelectedObject();
@@ -465,11 +533,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                             selectedObject = m_controller->getSelectedObject();
                         }
                         if (selectedObject != NULL) {
-                            MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(filename);
-                            MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(filename);
-                            ok = m_controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
-                            m_factory.releaseModelLoader(modelLoader);
-                            m_factory.releaseLipSyncLoader(lipSyncLoader);
+                            ok = changeModel(path, selectedObject);
                         }
                         else {
                             MMDAILogWarnString("pmd file dropped but no model at the point");
@@ -481,12 +545,10 @@ void QMAWidget::dropEvent(QDropEvent *event)
                          || path.endsWith(".tga", Qt::CaseInsensitive)
                          || path.endsWith(".png", Qt::CaseInsensitive)) {
                     /* floor or background */
-                    MMDAI::IModelLoader *loader = m_factory.createModelLoader(filename);
                     if (modifiers & Qt::ControlModifier)
-                        ok = m_controller->loadFloor(loader);
+                        ok = setFloor(path);
                     else
-                        ok = m_controller->loadBackground(loader);
-                    m_factory.releaseModelLoader(loader);
+                        ok = setBackground(path);
                 }
                 else {
                     MMDAILogInfo("dropped file is not supported: %s", filename);

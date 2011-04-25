@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -98,17 +98,7 @@ void QMAWindow::insertMotionToAllModels()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open VMD file"), path, tr("VMD (*.vmd)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastVMDDirectory", fileName);
-        QByteArray encodedPath = QFile::encodeName(fileName);
-        const char *filename = encodedPath.constData();
-        MMDAI::SceneController *controller = m_widget->getSceneController();
-        int count = controller->countObjects();
-        for (int i = 0; i < count; i++) {
-            MMDAI::PMDObject *object = controller->getObjectAt(i);
-            if (object->isEnable() && object->allowMotionFileDrop()) {
-                MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
-                controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
-            }
-        }
+        m_widget->insertMotionToAllModels(fileName);
     }
     m_settings.endGroup();
 }
@@ -122,12 +112,8 @@ void QMAWindow::insertMotionToSelectedModel()
         setDirectorySetting("lastVMDDirectory", fileName);
         MMDAI::SceneController *controller = m_widget->getSceneController();
         MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
-        if (selectedObject != NULL) {
-            QByteArray encodedPath = QFile::encodeName(fileName);
-            const char *filename = encodedPath.constData();
-            MMDAI::IMotionLoader *loader = m_widget->getModelLoaderFactory()->createMotionLoader(filename);
-            controller->addMotion(selectedObject, NULL, loader, false, true, true, true, 0.0f);
-        }
+        if (selectedObject != NULL)
+            m_widget->insertMotionToModel(fileName, selectedObject);
     }
     m_settings.endGroup();
 }
@@ -139,14 +125,7 @@ void QMAWindow::addModel()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastPMDDirectory", fileName);
-        QByteArray encodedPath = QFile::encodeName(fileName);
-        const char *filename = encodedPath.constData();
-        MMDAI::IResourceFactory *factory = m_widget->getModelLoaderFactory();
-        MMDAI::IModelLoader *modelLoader = factory->createModelLoader(filename);
-        MMDAI::ILipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
-        m_widget->getSceneController()->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
-        factory->releaseModelLoader(modelLoader);
-        factory->releaseLipSyncLoader(lipSyncLoader);
+        m_widget->addModel(fileName);
     }
     m_settings.endGroup();
 }
@@ -158,10 +137,7 @@ void QMAWindow::setStage()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open stage PMD file"), path, tr("PMD (*.pmd *.xpmd)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastStageDirectory", fileName);
-        QByteArray encodedPath = QFile::encodeName(fileName);
-        const char *filename = encodedPath.constData();
-        MMDAI::IModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
-        m_widget->getSceneController()->loadStage(loader);
+        m_widget->setStage(fileName);
     }
     m_settings.endGroup();
 }
@@ -173,10 +149,7 @@ void QMAWindow::setFloor()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open floor image"), path, tr("Image (*.bmp *.png *.tga)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastFloorDirectory", fileName);
-        QByteArray encodedPath = QFile::encodeName(fileName);
-        const char *filename = encodedPath.constData();
-        MMDAI::IModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
-        m_widget->getSceneController()->loadFloor(loader);
+        m_widget->setFloor(fileName);
     }
     m_settings.endGroup();
 }
@@ -188,10 +161,7 @@ void QMAWindow::setBackground()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open background image"), path, tr("Image (*.bmp *.png *.tga)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastBackgroundDirectory", fileName);
-        QByteArray encodedPath = QFile::encodeName(fileName);
-        const char *filename = encodedPath.constData();
-        MMDAI::IModelLoader *loader = m_widget->getModelLoaderFactory()->createModelLoader(filename);
-        m_widget->getSceneController()->loadBackground(loader);
+        m_widget->setBackground(fileName);
     }
     m_settings.endGroup();
 }
@@ -348,16 +318,8 @@ void QMAWindow::changeSelectedObject()
         setDirectorySetting("lastPMDDirectory", fileName);
         MMDAI::SceneController *controller = m_widget->getSceneController();
         MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
-        if (selectedObject != NULL){
-            QByteArray bytes = fileName.toUtf8();
-            const char *filename = bytes.constData();
-            MMDAI::IResourceFactory *factory = m_widget->getModelLoaderFactory();
-            MMDAI::IModelLoader *modelLoader = factory->createModelLoader(filename);
-            MMDAI::ILipSyncLoader *lipSyncLoader = factory->createLipSyncLoader(filename);
-            controller->changeModel(selectedObject, modelLoader, lipSyncLoader);
-            factory->releaseModelLoader(modelLoader);
-            factory->releaseLipSyncLoader(lipSyncLoader);
-        }
+        if (selectedObject != NULL)
+            m_widget->changeModel(fileName, selectedObject);
     }
     m_settings.endGroup();
 }

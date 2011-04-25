@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -70,6 +70,13 @@ public:
     explicit QMAWidget(QMAPreference *preference, QWidget *parent = 0);
     ~QMAWidget();
 
+    bool addModel(const QString &filename);
+    bool changeModel(const QString &filename, MMDAI::PMDObject *object);
+    bool setStage(const QString &filename);
+    bool setFloor(const QString &filename);
+    bool setBackground(const QString &filename);
+    bool insertMotionToAllModels(const QString &filename);
+    bool insertMotionToModel(const QString &filename, MMDAI::PMDObject *object);
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
     void zoom(bool up, enum QMAWidgetZoomOption option);
@@ -79,9 +86,6 @@ public:
     }
     inline void toggleDisplayRigidBody() {
         m_displayRigidBody = !m_displayRigidBody;
-    }
-    inline QMAModelLoaderFactory *getModelLoaderFactory() {
-        return &m_factory;
     }
     inline QMATimer *getSceneFrameTimer() {
         return &m_sceneFrameTimer;
@@ -142,6 +146,7 @@ private:
     bool m_showLog;
     bool m_displayBone;
     bool m_displayRigidBody;
+    bool m_activeMotion;
 
     Q_DISABLE_COPY(QMAWidget);
 };
