@@ -48,12 +48,12 @@ set(libMMDAI_public_headers
   include/MMDAI/ILipSyncLoader.h
   include/MMDAI/IPreference.h
   include/MMDAI/IResourceFactory.h
+  include/MMDAI/ISceneEventHandler.h
   include/MMDAI/LipSync.h
   include/MMDAI/MotionCache.h
   include/MMDAI/MMDAI.h
   include/MMDAI/PMDObject.h
   include/MMDAI/SceneController.h
-  include/MMDAI/SceneEventHandler.h
   include/MMDAI/SceneRenderEngine.h
   include/MMDAI/Stage.h
   include/MMDAI/TileTexture.h

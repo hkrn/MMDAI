@@ -88,7 +88,7 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
     }
     QList<QVariant> arguments;
     arguments << event->text();
-    m_widget->delegateEvent(QString(MMDAI::SceneEventHandler::kKeyEvent), arguments);
+    m_widget->delegateEvent(QString(MMDAI::ISceneEventHandler::kKeyEvent), arguments);
 }
 
 void QMAWindow::insertMotionToAllModels()
@@ -442,14 +442,14 @@ void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &argumen
         double fps = m_widget->getSceneFrameTimer()->getFPS();
         setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
     }
-    else if (type == MMDAI::SceneEventHandler::kModelAddEvent) {
+    else if (type == MMDAI::ISceneEventHandler::kModelAddEvent) {
         QString name = arguments.at(0).toString();
         QAction *action = new QAction(name, this);
         action->setStatusTip(tr("Select a model %1").arg(name));
         connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
         m_selectModelMenu->addAction(action);
     }
-    else if (type == MMDAI::SceneEventHandler::kModelDeleteEvent) {
+    else if (type == MMDAI::ISceneEventHandler::kModelDeleteEvent) {
         QString name = arguments.at(0).toString();
         QAction *actionToRemove = NULL;
         foreach (QAction *action, m_selectModelMenu->actions()) {

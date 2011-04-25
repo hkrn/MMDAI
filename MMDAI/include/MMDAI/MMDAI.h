@@ -44,6 +44,7 @@
 #include "MMDAI/ILipSyncLoader.h"
 #include "MMDAI/IPreference.h"
 #include "MMDAI/IResourceFactory.h"
+#include "MMDAI/ISceneEventHandler.h"
 
 #include "MMDAI/BoneController.h"
 #include "MMDAI/CommandParser.h"
@@ -51,7 +52,6 @@
 #include "MMDAI/MotionCache.h"
 #include "MMDAI/PMDObject.h"
 #include "MMDAI/SceneController.h"
-#include "MMDAI/SceneEventHandler.h"
 #include "MMDAI/SceneRenderEngine.h"
 #include "MMDAI/Stage.h"
 #include "MMDAI/TileTexture.h"

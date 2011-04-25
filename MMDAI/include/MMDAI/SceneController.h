@@ -49,9 +49,9 @@
 namespace MMDAI {
 
 class ILipSyncLoader;
-class PMDObject;
 class IPreference;
-class SceneEventHandler;
+class ISceneEventHandler;
+class PMDObject;
 class SceneRenderEngine;
 
 typedef struct RenderDepth RenderDepth;
@@ -64,7 +64,7 @@ public:
     static const float kRenderViewPointCameraZ;
     static const float kRenderViewPointYOffset;
 
-    SceneController(SceneEventHandler *handler, IPreference *preference);
+    SceneController(ISceneEventHandler *handler, IPreference *preference);
     ~SceneController();
 
     void initializeScreen(int width, int height);
@@ -211,7 +211,7 @@ private:
     PMDObject **m_objects;
     PMDObject *m_highlightModel;
     IPreference *m_preference;
-    SceneEventHandler *m_handler;
+    ISceneEventHandler *m_handler;
     Stage *m_stage;
     int m_maxModel;
     int m_numModel;

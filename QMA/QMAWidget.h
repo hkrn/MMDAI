@@ -40,7 +40,7 @@
 #include <QtGui/QtGui>
 
 #include <MMDAI/CommandParser.h>
-#include <MMDAI/SceneEventHandler.h>
+#include <MMDAI/ISceneEventHandler.h>
 
 #include "QMAModelLoaderFactory.h"
 #include "QMAPlugin.h"
@@ -62,7 +62,7 @@ enum QMAWidgetZoomOption {
 
 class QMAPreference;
 
-class QMAWidget : public QGLWidget, public MMDAI::SceneEventHandler
+class QMAWidget : public QGLWidget, public MMDAI::ISceneEventHandler
 {
     Q_OBJECT
 

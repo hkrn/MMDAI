@@ -38,14 +38,14 @@
 
 /* headers */
 
-#ifndef MMDAI_SCENEEVENTHANDLER_H_
-#define MMDAI_SCENEEVENTHANDLER_H_
+#ifndef MMDAI_ISCENEEVENTHANDLER_H_
+#define MMDAI_ISCENEEVENTHANDLER_H_
 
 namespace MMDAI {
 
 /* event names */
 
-class SceneEventHandler
+class ISceneEventHandler
 {
 public:
     static const char *kModelAddCommand;
@@ -91,11 +91,12 @@ public:
     static const char *kLipSyncStopEvent;
     static const char *kKeyEvent;
 
-    virtual ~SceneEventHandler() {}
+    virtual ~ISceneEventHandler() {}
 
     virtual void handleEventMessage(const char *eventType, int argc, ...) = 0;
 };
 
 } /* namespace */
 
-#endif // MMDAI_SCENEEVENTHANDLER_H_
+#endif // MMDAI_ISCENEEVENTHANDLER_H_
+
