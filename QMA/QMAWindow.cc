@@ -42,10 +42,10 @@
 #include "QMALogViewWidget.h"
 
 QMAWindow::QMAWindow(QWidget *parent) :
-        QMainWindow(parent),
-        m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QtMMDAI"),
-        m_isFullScreen(false),
-        m_enablePhysicsSimulation(true)
+    QMainWindow(parent),
+    m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QtMMDAI"),
+    m_isFullScreen(false),
+    m_enablePhysicsSimulation(true)
 {
     m_settings.setIniCodec("UTF-8");
     m_preference = new QMAPreference(&m_settings);
@@ -241,22 +241,15 @@ void QMAWindow::togglePhysicSimulation()
 
 void QMAWindow::toggleShadowMapping()
 {
-    if (m_preference->getBool(MMDAI::kPreferenceUseShadowMapping)) {
-        m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, false);
-        m_widget->getSceneController()->setShadowMapping();
-    }
-    else {
-        m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, true);
-        m_widget->getSceneController()->setShadowMapping();
-    }
+    bool value = !m_preference->getBool(MMDAI::kPreferenceUseShadowMapping);
+    m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, value);
+    m_widget->getSceneController()->setShadowMapping();
 }
 
 void QMAWindow::toggleShadowMappingLightFirst()
 {
-    if (m_preference->getBool(MMDAI::kPreferenceShadowMappingLightFirst))
-        m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, false);
-    else
-        m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, true);
+    bool value = !m_preference->getBool(MMDAI::kPreferenceShadowMappingLightFirst);
+    m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, value);
 }
 
 void QMAWindow::toggleFullScreen()
@@ -381,18 +374,18 @@ void QMAWindow::about()
                           "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
                           "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
                           "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
-#ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
+                      #ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
                           "<li><a href='http://www.a-quest.com'>AquesTalk2</a></li>"
                           "<li><a href='http://www.a-quest.com'>AqKanji2Koe</a></li>"
-#endif
-#ifdef QMA_BUNDLE_PLUGINS
+                      #endif
+                      #ifdef QMA_BUNDLE_PLUGINS
                           /* TODO: should split this */
                           "<li><a href='http://julius.sourceforge.jp'>Julius</a></li>"
                           "<li><a href='http://open-jtalk.sf.net'>Open JTalk</a></li>"
                           "<li><a href='http://hts-engine.sf.net/'>hts_engine API</a></li>"
                           "<li><a href='http://mecab.sf.net/'>MeCab</a></li>"
                           "<li><a href='http://www.portaudio.com'>PortAudio</a></li>"
-#endif
+                      #endif
                           "</ul></p>"
                           "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
                           "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>").arg(qApp->applicationVersion()));
