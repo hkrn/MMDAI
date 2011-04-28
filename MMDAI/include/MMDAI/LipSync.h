@@ -69,12 +69,9 @@ public:
 
     bool load(ILipSyncLoader *loader);
     bool createMotion(const char *str, unsigned char **rawData, size_t *rawSize);
-
+    void release();
 
 private:
-    void initialize();
-    void clear();
-
     int m_numMotion;
     char **m_motion;
     int m_numPhone;

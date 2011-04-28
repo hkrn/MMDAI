@@ -107,9 +107,9 @@ CommandParser::~CommandParser()
 bool CommandParser::parse(const char *command, char **argv, int argc)
 {
     PMDObject *object = NULL;
-    IModelLoader *pmd = NULL;
-    ILipSyncLoader *lip = NULL;
-    IMotionLoader *vmd = NULL;
+    IModelLoader *modelLoader = NULL;
+    ILipSyncLoader *lipSyncLoader = NULL;
+    IMotionLoader *motionLoader = NULL;
     float float3[3] = { 0.0f, 0.0f, 0.0f };
     bool ret = true;
     btVector3 pos(0.0f, 0.0f, 0.0f);
@@ -133,12 +133,12 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
                 return false;
             }
         }
-        pmd = m_factory->createModelLoader(argv[1]);
-        lip = m_factory->createLipSyncLoader(argv[1]);
-        ret = m_controller->addModel(argv[0], pmd, lip, &pos, &rot,
+        modelLoader = m_factory->createModelLoader(argv[1]);
+        lipSyncLoader = m_factory->createLipSyncLoader(argv[1]);
+        ret = m_controller->addModel(argv[0], modelLoader, lipSyncLoader, &pos, &rot,
                                      argc >= 5 ? argv[4] : NULL, argc >= 6 ? argv[5] : NULL);
-        m_factory->releaseModelLoader(pmd);
-        m_factory->releaseLipSyncLoader(lip);
+        m_factory->releaseModelLoader(modelLoader);
+        m_factory->releaseLipSyncLoader(lipSyncLoader);
     }
     else if (MMDAIStringEquals(command, ISceneEventHandler::kModelChangeCommand)) {
         /* change model */
@@ -148,11 +148,11 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
         object = m_controller->findObject(argv[0]);
         if (object != NULL) {
-            pmd = m_factory->createModelLoader(argv[1]);
-            lip = m_factory->createLipSyncLoader(argv[1]);
-            ret = m_controller->changeModel(object, pmd, lip);
-            m_factory->releaseModelLoader(pmd);
-            m_factory->releaseLipSyncLoader(lip);
+            modelLoader = m_factory->createModelLoader(argv[1]);
+            lipSyncLoader = m_factory->createLipSyncLoader(argv[1]);
+            ret = m_controller->changeModel(object, modelLoader, lipSyncLoader);
+            m_factory->releaseModelLoader(modelLoader);
+            m_factory->releaseLipSyncLoader(lipSyncLoader);
         }
         else {
             MMDAILogWarn("specified PMD object not found: %s", argv[0]);
@@ -238,9 +238,9 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
         object = m_controller->findObject(argv[0]);
         if (object != NULL) {
-            vmd = m_factory->createMotionLoader(argv[2]);
-            ret = m_controller->addMotion(object, argv[1], vmd, full, once, enableSmooth, enableRepos, priority);
-            m_factory->releaseMotionLoader(vmd);
+            motionLoader = m_factory->createMotionLoader(argv[2]);
+            ret = m_controller->addMotion(object, argv[1], motionLoader, full, once, enableSmooth, enableRepos, priority);
+            m_factory->releaseMotionLoader(motionLoader);
         }
         else {
             MMDAILogWarn("specified PMD object not found: %s", argv[0]);
@@ -255,9 +255,9 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
         object = m_controller->findObject(argv[0]);
         if (object != NULL) {
-            vmd = m_factory->createMotionLoader(argv[2]);
-            ret = m_controller->changeMotion(object, argv[1], vmd);
-            m_factory->releaseMotionLoader(vmd);
+            motionLoader = m_factory->createMotionLoader(argv[2]);
+            ret = m_controller->changeMotion(object, argv[1], motionLoader);
+            m_factory->releaseMotionLoader(motionLoader);
         }
         else {
             MMDAILogWarn("specified PMD object not found: %s", argv[0]);
@@ -434,7 +434,7 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        /* pmd or bitmap */
+        /* PMD stage or bitmap */
         char *filename = MMDAIStringClone(argv[0]);
         if (filename == NULL) {
             return false;
@@ -442,15 +442,18 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         bool ret = false;
         char *background = strstr(filename, ",");
         if (background == NULL) {
-            pmd = m_factory->createModelLoader(filename);
-            ret = m_controller->loadStage(pmd);
+            modelLoader = m_factory->createModelLoader(filename);
+            ret = m_controller->loadStage(modelLoader);
+            m_factory->releaseModelLoader(modelLoader);
         }
         else {
             *background = '\0';
             *background++;
-            IModelLoader *floorPMD = m_factory->createModelLoader(filename);
-            IModelLoader *backgroundPMD = m_factory->createModelLoader(background);
-            ret = m_controller->loadFloor(floorPMD) && m_controller->loadBackground(backgroundPMD);
+            IModelLoader *floorLoader = m_factory->createModelLoader(filename);
+            IModelLoader *backgroundLoader = m_factory->createModelLoader(background);
+            ret = m_controller->loadFloor(floorLoader) && m_controller->loadBackground(backgroundLoader);
+            m_factory->releaseModelLoader(floorLoader);
+            m_factory->releaseModelLoader(backgroundLoader);
         }
         MMDAIMemoryRelease(filename);
     }

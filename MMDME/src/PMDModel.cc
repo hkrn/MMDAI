@@ -156,8 +156,6 @@ void PMDModel::clear()
     m_IKSimulated = NULL;
     MMDAIMemoryRelease(m_faceDisplayNames);
     m_faceDisplayNames = NULL;
-    MMDAIMemoryRelease(m_boneFrameNames);
-    m_boneFrameNames = NULL;
     MMDAIMemoryRelease(m_boneDisplayIndices);
     m_boneDisplayIndices = NULL;
     MMDAIMemoryRelease(m_boneDisplayNames);
@@ -166,14 +164,25 @@ void PMDModel::clear()
     m_comment = NULL;
     MMDAIMemoryRelease(m_name);
     m_name = NULL;
+    MMDAIMemoryRelease(m_boneDisplayIndices);
+    m_boneDisplayIndices = NULL;
+    MMDAIMemoryRelease(m_orderedBoneList);
+    m_orderedBoneList = NULL;
 
     if (m_material && m_engine) {
         m_engine->releaseMaterials(m_material, m_numMaterial);
         m_material = NULL;
     }
 
+    for (uint32_t i = 0; i < m_numBoneFrameNames; i++) {
+        MMDAIMemoryRelease(m_boneFrameNames[i]);
+    }
     for (uint32_t i = 0; i < kNSystemTextureFiles; i++)
         m_localToonTexture[i].release();
+
+    MMDAIMemoryRelease(m_boneFrameNames);
+    m_boneFrameNames = NULL;
+
     m_name2bone.release();
     m_name2face.release();
 }

@@ -76,6 +76,7 @@ void PMDObject::initialize()
 /* PMDOjbect::clear: free PMDObject */
 void PMDObject::clear()
 {
+    m_localLipSync.release();
     m_engine->releaseModel(m_model);
     MMDAIMemoryRelease(m_alias);
     delete m_motionManager;
