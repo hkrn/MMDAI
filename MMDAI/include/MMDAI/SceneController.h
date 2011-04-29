@@ -196,6 +196,9 @@ public:
     inline bool isViewMoving() const {
         return m_viewMoveTime > 0 && (m_currentRot != m_rot || m_currentTrans != m_trans || m_currentScale != m_scale);
     }
+    inline BulletPhysics *getPhysicalEngine() {
+        return &m_bullet;
+    }
 
 private:
     void sortRenderOrder();
