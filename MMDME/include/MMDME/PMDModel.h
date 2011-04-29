@@ -159,9 +159,6 @@ public:
         return m_comment;
     }
 
-    inline PMDBone *getBonesPtr() const {
-        return m_boneList;
-    }
     inline const btVector3 *getVerticesPtr() const {
         return m_vertexList;
     }
