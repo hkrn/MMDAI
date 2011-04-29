@@ -1245,20 +1245,6 @@ void SceneController::renderScene()
     m_engine->render(m_objects, m_order, m_maxModel, m_stage);
 }
 
-void SceneController::renderModelRigidBodies()
-{
-    m_engine->renderRigidBodies(&m_bullet);
-}
-
-void SceneController::renderModelBones()
-{
-    for (int i = 0; i < m_maxModel; i++) {
-        PMDObject *object = m_objects[i];
-        if (object->isEnable())
-            m_engine->renderBones(object->getModel());
-    }
-}
-
 void SceneController::sortRenderOrder()
 {
     if (m_numModel == 0)

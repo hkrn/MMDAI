@@ -151,8 +151,6 @@ public:
     void updateModelView(int ellapsedTimeForMove);
     void prerenderScene();
     void renderScene();
-    void renderModelRigidBodies();
-    void renderModelBones();
 
     inline PMDObject *getObjectAt(int index) const {
         if (index < 0 || index > m_numModel)

@@ -51,9 +51,6 @@ typedef struct PMDTextureNative PMDTextureNative;
 class PMDRenderEngine {
 public:
     virtual ~PMDRenderEngine() {}
-    virtual void renderRigidBodies(BulletPhysics *bullet) = 0;
-    virtual void renderBone(PMDBone *bone) = 0;
-    virtual void renderBones(PMDModel *model) = 0;
     virtual void renderModel(PMDModel *model) = 0;
     virtual void renderEdge(PMDModel *model) = 0;
     virtual void renderShadow(PMDModel *model) = 0;

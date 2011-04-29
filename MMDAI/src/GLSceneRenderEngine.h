@@ -260,12 +260,8 @@ public:
           m_lightVec(0.0f, 0.0f, 0.0f),
           m_shadowMapAutoViewEyePoint(0.0f, 0.0f, 0.0f),
           m_shadowMapAutoViewRadius(0.0f),
-          m_boxList(0),
-          m_sphereList(0),
           m_depthTextureID(0),
           m_fboID(0),
-          m_boxListEnabled(false),
-          m_sphereListEnabled(false),
           m_shadowMapInitialized(false)
     {
         memset(m_modelView, 0, sizeof(m_modelView));
@@ -279,14 +275,6 @@ public:
             glDeleteFramebuffers(1, &m_fboID);
             glDeleteTextures(1, &m_depthTextureID);
             m_shadowMapInitialized = false;
-        }
-        if (m_sphereListEnabled) {
-            glDeleteLists(m_sphereList, 1);
-            m_sphereListEnabled = false;
-        }
-        if (m_boxListEnabled) {
-            glDeleteLists(m_boxList, 1);
-            m_boxListEnabled = false;
         }
 #endif /* MMDAI_OPENGL_ES1 */
     }
@@ -321,201 +309,6 @@ public:
     void releaseModel(PMDModel *model)
     {
         delete model;
-    }
-
-    void renderRigidBodies(BulletPhysics *bullet)
-    {
-#ifndef MMDAI_OPENGL_ES1
-        GLfloat color[] = {0.8f, 0.8f, 0.0f, 1.0f};
-        GLint polygonMode[2] = { 0, 0 };
-        btRigidBody* body = NULL;
-        btScalar m[16];
-        btCollisionShape* shape = NULL;
-        btVector3 halfExtent;
-        btDiscreteDynamicsWorld *world = bullet->getWorld();
-        const btSphereShape* sphereShape;
-        float radius;
-        const int numObjects = world->getNumCollisionObjects();
-
-        /* draw in wire frame */
-        glGetIntegerv(GL_POLYGON_MODE, polygonMode);
-        if (polygonMode[1] != GL_LINE)
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDisable(GL_TEXTURE_2D);
-
-        for (int i = 0; i < numObjects; i++) {
-            /* set color */
-            color[1] = 0.8f / (float) ((i % 5) + 1) + 0.2f;
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-            /* draw */
-            {
-                body = btRigidBody::upcast(world->getCollisionObjectArray()[i]);
-                body->getWorldTransform().getOpenGLMatrix(m);
-                shape = body->getCollisionShape();
-                glPushMatrix();
-                glMultMatrixf(m);
-                switch (shape->getShapeType()) {
-                case BOX_SHAPE_PROXYTYPE: {
-                    const btBoxShape* boxShape = static_cast<const btBoxShape*>(shape);
-                    halfExtent = boxShape->getHalfExtentsWithMargin();
-                    glScaled(2 * halfExtent[0], 2 * halfExtent[1], 2 * halfExtent[2]);
-                    if (m_boxListEnabled) {
-                        glCallList(m_boxList);
-                    }
-                    else {
-                        m_boxList = glGenLists(1);
-                        glNewList(m_boxList, GL_COMPILE);
-                        drawCube();
-                        glEndList();
-                        m_boxListEnabled = true;
-                    }
-                    break;
-                }
-                case SPHERE_SHAPE_PROXYTYPE: {
-                    sphereShape = static_cast<const btSphereShape*>(shape);
-                    radius = sphereShape->getMargin(); /* radius doesn't include the margin, so draw with margin */
-                    glScaled(radius, radius, radius);
-                    if (m_sphereListEnabled) {
-                        glCallList(m_sphereList);
-                    }
-                    else {
-                        m_sphereList = glGenLists(1);
-                        glNewList(m_sphereList, GL_COMPILE);
-                        drawSphere(10, 10);
-                        glEndList();
-                        m_sphereListEnabled = true;
-                    }
-                    break;
-                }
-                default:
-                    if (shape->isConvex()) {
-                        drawConvex(static_cast<btConvexShape*>(shape));
-                    }
-                }
-                glPopMatrix();
-            }
-        }
-        if (polygonMode[1] != GL_LINE) {
-            glPolygonMode(GL_FRONT_AND_BACK, polygonMode[1]);
-        }
-#else
-        (void) bullet;
-#endif /* MMDAI_OPENGL_ES1 */
-    }
-
-    void renderBone(PMDBone *bone)
-    {
-        btScalar m[16];
-        PMDBone *parentBone = bone->getParentBone();
-        const btTransform trans = bone->getTransform();
-        const unsigned char type = bone->getType();
-        const bool isSimulated = bone->isSimulated();
-
-        /* do not draw IK target bones if the IK chain is under simulation */
-        if (type == IK_TARGET && parentBone && parentBone->isSimulated())
-            return;
-
-        trans.getOpenGLMatrix(m);
-
-        /* draw node */
-        glPushMatrix();
-        glMultMatrixf(m);
-        if (type != NO_DISP) { /* do not draw invisible bone nodes */
-            if (isSimulated) {
-                /* under physics simulation */
-                glColor4f(0.8f, 0.8f, 0.0f, 1.0f);
-                glScalef(0.1, 0.1, 0.1);
-            }
-            else {
-                switch (type) {
-                case IK_DESTINATION:
-                    glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
-                    glScalef(0.25, 0.25, 0.25);
-                    break;
-                case UNDER_IK:
-                    glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
-                    break;
-                case IK_TARGET:
-                    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
-                    break;
-                case UNDER_ROTATE:
-                case TWIST:
-                case FOLLOW_ROTATE:
-                    glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
-                    break;
-                default:
-                    if (bone->hasMotionIndependency()) {
-                        glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-                        glScalef(0.25, 0.25, 0.25);
-                    } else {
-                        glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
-                        glScalef(0.15, 0.15, 0.15);
-                    }
-                    break;
-                }
-            }
-            drawCube();
-        }
-        glPopMatrix();
-
-        if (!parentBone || type == IK_DESTINATION)
-            return;
-
-        /* draw line from parent */
-        glPushMatrix();
-        if (type == NO_DISP) {
-            glColor4f(0.5f, 0.4f, 0.5f, 1.0f);
-        }
-        else if (isSimulated) {
-            glColor4f(0.7f, 0.7f, 0.0f, 1.0f);
-        }
-        else if (type == UNDER_IK || type == IK_TARGET) {
-            glColor4f(0.8f, 0.5f, 0.3f, 1.0f);
-        }
-        else {
-            glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
-        }
-
-#ifndef MMDAI_OPENGL_ES1
-        glBegin(GL_LINES);
-        const btVector3 a = parentBone->getTransform().getOrigin();
-        const btVector3 b = trans.getOrigin();
-        glVertex3f(a.x(), a.y(), a.z());
-        glVertex3f(b.x(), b.y(), b.z());
-        glEnd();
-#else
-        const btVector3 vertices[] = {
-            parentBone->getTransform().getOrigin(),
-            trans.getOrigin()
-        };
-        const int indices[] = {
-            1, 0
-        };
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(btVector3), vertices);
-        glDrawElements(GL_LINES, sizeof(indices) / sizeof(int), GL_UNSIGNED_SHORT, indices);
-        glDisableClientState(GL_VERTEX_ARRAY);
-#endif /* MMDAI_OPENGL_ES1 */
-        glPopMatrix();
-    }
-
-    void renderBones(PMDModel *model)
-    {
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-
-        /* draw bones */
-        const int nbones = model->countBones();
-        PMDBone *bones = model->getBonesPtr();
-        for (int i = 0; i < nbones; i++)
-            renderBone(&bones[i]);
-
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_LIGHTING);
     }
 
     /* needs multi-texture function on OpenGL: */
@@ -1531,135 +1324,6 @@ public:
     }
 
 private:
-    void drawCube()
-    {
-#ifndef MMDAI_OPENGL_ES1
-        static const GLfloat vertices [8][3] = {
-            { -0.5f, -0.5f, 0.5f},
-            { 0.5f, -0.5f, 0.5f},
-            { 0.5f, 0.5f, 0.5f},
-            { -0.5f, 0.5f, 0.5f},
-            { 0.5f, -0.5f, -0.5f},
-            { -0.5f, -0.5f, -0.5f},
-            { -0.5f, 0.5f, -0.5f},
-            { 0.5f, 0.5f, -0.5f}
-        };
-
-        glBegin(GL_POLYGON);
-        glVertex3fv(vertices[0]);
-        glVertex3fv(vertices[1]);
-        glVertex3fv(vertices[2]);
-        glVertex3fv(vertices[3]);
-        glEnd();
-        glBegin(GL_POLYGON);
-        glVertex3fv(vertices[4]);
-        glVertex3fv(vertices[5]);
-        glVertex3fv(vertices[6]);
-        glVertex3fv(vertices[7]);
-        glEnd();
-        glBegin(GL_POLYGON);
-        glVertex3fv(vertices[1]);
-        glVertex3fv(vertices[4]);
-        glVertex3fv(vertices[7]);
-        glVertex3fv(vertices[2]);
-        glEnd();
-        glBegin(GL_POLYGON);
-        glVertex3fv(vertices[5]);
-        glVertex3fv(vertices[0]);
-        glVertex3fv(vertices[3]);
-        glVertex3fv(vertices[6]);
-        glEnd();
-        glBegin(GL_POLYGON);
-        glVertex3fv(vertices[3]);
-        glVertex3fv(vertices[2]);
-        glVertex3fv(vertices[7]);
-        glVertex3fv(vertices[6]);
-        glEnd();
-        glBegin(GL_POLYGON);
-        glVertex3fv(vertices[1]);
-        glVertex3fv(vertices[0]);
-        glVertex3fv(vertices[5]);
-        glVertex3fv(vertices[4]);
-        glEnd();
-#endif
-    }
-
-    void drawSphere(int lats, int longs)
-    {
-#ifndef MMDAI_OPENGL_ES1
-        for (int i = 0; i <= lats; i++) {
-            const double lat0 = M_PI * (-0.5 + static_cast<double>(i - 1) / lats);
-            const double z0 = sin(lat0);
-            const double zr0 = cos(lat0);
-            const double lat1 = M_PI * (-0.5 + static_cast<double>(i) / lats);
-            const double z1 = sin(lat1);
-            const double zr1 = cos(lat1);
-
-            glBegin(GL_QUAD_STRIP);
-            for (int j = 0; j <= longs; j++) {
-                const double lng = 2 * M_PI * static_cast<double>(j - 1) / longs;
-                const double x = cos(lng);
-                const double y = sin(lng);
-
-                glNormal3d(x * zr0, y * zr0, z0);
-                glVertex3d(x * zr0, y * zr0, z0);
-                glNormal3d(x * zr1, y * zr1, z1);
-                glVertex3d(x * zr1, y * zr1, z1);
-            }
-            glEnd();
-        }
-#else
-        (void) lats;
-        (void) longs;
-#endif
-    }
-
-    void drawConvex(btConvexShape *shape)
-    {
-#ifndef MMDAI_OPENGL_ES1
-        btShapeHull *hull = new btShapeHull(shape);
-        hull->buildHull(shape->getMargin());
-
-        if (hull->numTriangles () > 0) {
-            int index = 0;
-            const unsigned int *idx = hull->getIndexPointer();
-            const btVector3 *vtx = hull->getVertexPointer();
-            glBegin (GL_TRIANGLES);
-            for (int i = 0; i < hull->numTriangles (); i++) {
-                const int i1 = index++;
-                const int i2 = index++;
-                const int i3 = index++;
-                btAssert(i1 < hull->numIndices () &&
-                         i2 < hull->numIndices () &&
-                         i3 < hull->numIndices ());
-
-                const int index1 = idx[i1];
-                const int index2 = idx[i2];
-                const int index3 = idx[i3];
-                btAssert(index1 < hull->numVertices () &&
-                         index2 < hull->numVertices () &&
-                         index3 < hull->numVertices ());
-                const btVector3 v1 = vtx[index1];
-                const btVector3 v2 = vtx[index2];
-                const btVector3 v3 = vtx[index3];
-                btVector3 normal = (v3 - v1).cross(v2 - v1);
-                normal.normalize ();
-
-                glNormal3f(normal.getX(), normal.getY(), normal.getZ());
-                glVertex3f (v1.x(), v1.y(), v1.z());
-                glVertex3f (v2.x(), v2.y(), v2.z());
-                glVertex3f (v3.x(), v3.y(), v3.z());
-            }
-            glEnd ();
-        }
-
-        delete hull;
-#else
-        (void) shape;
-#endif
-    }
-
-
     /* RendererSceneShadowMap: shadow mapping */
     void renderSceneShadowMap(PMDObject **objects, int16_t *order, int size, Stage *stage)
     {
@@ -1926,12 +1590,8 @@ private:
     btScalar m_projection[16];
     float m_shadowMapAutoViewRadius;       /* radius from view point */
 
-    GLuint m_boxList;
-    GLuint m_sphereList;
     GLuint m_depthTextureID;
     GLuint m_fboID;
-    bool m_boxListEnabled;
-    bool m_sphereListEnabled;
     bool m_shadowMapInitialized;           /* true if initialized */
 };
 
