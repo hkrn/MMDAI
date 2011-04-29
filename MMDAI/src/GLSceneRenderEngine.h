@@ -119,7 +119,7 @@ public:
     }
     ~GLPMDModel() {
         glDeleteBuffers(sizeof(m_modelVBO) / sizeof(GLuint), m_modelVBO);
-        if (m_materialVBO != 0) {
+        if (m_materialVBO) {
             glDeleteBuffers(m_nmaterials, m_materialVBO);
             MMDAIMemoryRelease(m_materialVBO);
             m_materialVBO = NULL;

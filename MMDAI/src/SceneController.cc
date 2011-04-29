@@ -615,7 +615,7 @@ void SceneController::deleteModel(PMDObject *object)
     sendEvent1(ISceneEventHandler::kModelDeleteEvent, object->getAlias());
 }
 
-void SceneController::updateLightDirection(float x, float y)
+void SceneController::setLightDirection(float x, float y)
 {
     float direction[4];
     float step = m_preference->getFloat(kPreferenceRotateStep) * 0.1f;
@@ -623,33 +623,33 @@ void SceneController::updateLightDirection(float x, float y)
     btVector3 v = btVector3(direction[0], direction[1], direction[2]);
     btMatrix3x3 matrix = btMatrix3x3(btQuaternion(0, y * step, 0.0) * btQuaternion(x * step, 0, 0));
     v = v * matrix;
-    setLightDirection(v.x(), v.y(), v.z());
+    setLightDirection(v);
 }
 
-void SceneController::setLightDirection(float x, float y, float z)
+void SceneController::setLightDirection(const btVector3 &direction)
 {
-    float f[4] = { x, y, z, 0.0f };
+    float f[4] = { direction.x(), direction.y(), direction.z(), 0.0f };
     m_preference->setFloat4(kPreferenceLightDirection, f);
     updateLight();
 
     /* send event message */
     if (m_handler != NULL) {
         char buf[BUFSIZ];
-        MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", x, y, z);
+        MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", f[0], f[1], f[2]);
         sendEvent1(ISceneEventHandler::kLightDirectionEvent, buf);
     }
 }
 
-void SceneController::setLightColor(float r, float g, float b)
+void SceneController::setLightColor(const btVector3 &color)
 {
-    float f[3] = { r, g, b };
+    float f[3] = { color.x(), color.y(), color.z() };
     m_preference->setFloat3(kPreferenceLightColor, f);
     updateLight();
 
     /* send event message */
     if (m_handler != NULL) {
         char buf[BUFSIZ];
-        MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", r, g, b);
+        MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", f[0], f[1], f[2]);
         sendEvent1(ISceneEventHandler::kLightColorEvent, buf);
     }
 }
@@ -870,7 +870,7 @@ bool SceneController::stopLipSync(PMDObject *object)
     return true;
 }
 
-void SceneController::initializeScreen(int width, int height)
+void SceneController::initialize(int width, int height)
 {
     float size[3];
     m_width = width;
@@ -1064,12 +1064,12 @@ void SceneController::eraseModel(PMDObject *object)
     object->release();
 }
 
-void SceneController::updateAfterSimulation()
+void SceneController::updateSkin()
 {
-    /* update after simulation */
     for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
-        object->updateAfterSimulation(m_enablePhysicsSimulation);
+        object->setPhysicsEnable(m_enablePhysicsSimulation);
+        object->updateSkin();
     }
 }
 
@@ -1108,16 +1108,16 @@ void SceneController::updateDepthTextureViewParam()
     }
 }
 
-void SceneController::updateModelPositionAndRotation(double fps)
+void SceneController::updateObject(double fps)
 {
     for (int i = 0; i < m_maxModel; i++) {
         PMDObject *object = m_objects[i];
         if (object->isEnable()) {
             const char *alias = object->getAlias();
-            if (object->updateModelRootOffset(fps)) {
+            if (object->move(fps)) {
                 sendEvent1(ISceneEventHandler::kMoveStopEvent, alias);
             }
-            if (object->updateModelRootRotation(fps)) {
+            if (object->rotate(fps)) {
                 if (object->isTurning()) {
                     sendEvent1(ISceneEventHandler::kTurnStopEvent, alias);
                     object->setTurning(false);

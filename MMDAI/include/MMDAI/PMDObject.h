@@ -82,14 +82,16 @@ public:
                      bool enableRepos,
                      float priority);
     bool swapMotion(VMD *vmd, const char *targetName);
+
     void updateRootBone();
     bool updateMotion(double deltaFrame);
-    void updateAfterSimulation(bool physicsEnabled);
+    void updateSkin();
     bool updateAlpha(double deltaFrame);
+    void setPhysicsEnable(bool value);
     void startDisappear();
     void setLightForToon(const btVector3 &value);
-    bool updateModelRootOffset(float fps);
-    bool updateModelRootRotation(float fps);
+    bool move(float fps);
+    bool rotate(float fps);
     bool createLipSyncMotion(const char *str, unsigned char **data, size_t *size);
 
     inline const char *getAlias() const {
@@ -161,15 +163,12 @@ public:
     }
 
 private:
-    void initialize();
-    void clear();
-
+    SceneRenderEngine *m_engine;
     char *m_alias;
     PMDModel *m_model;
     MotionManager *m_motionManager;
     LipSync *m_globalLipSync;
     LipSync m_localLipSync;
-    SceneRenderEngine *m_engine;
     bool m_isEnable;
     btVector3 m_lightDir;
     PMDObject *m_assignTo;

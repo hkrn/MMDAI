@@ -50,58 +50,67 @@ namespace MMDAI {
 #define PMDOBJECT_MINSPINDIFF   0.000001f
 #define PMDOBJECT_SPINSPEEDRATE 0.95f /* current * 0.95 + target * 0.05 */
 
-/* PMDObject::initialize: initialize PMDObject */
-void PMDObject::initialize()
+PMDObject::PMDObject(SceneRenderEngine *engine)
+    : m_engine(engine),
+      m_alias(NULL),
+      m_model(0),
+      m_motionManager(0),
+      m_globalLipSync(NULL),
+      m_isEnable(false),
+      m_lightDir(0.0f, 0.0f, 0.0f),
+      m_assignTo(NULL),
+      m_baseBone(NULL),
+      m_origBasePos(0.0f, 0.0f, 0.0f),
+      m_offsetPos(0.0f, 0.0f, 0.0f),
+      m_offsetRot(0.0f, 0.0f, 0.0f, 1.0f),
+      m_moveSpeed(-1.0f),
+      m_spinSpeed(-1.0f),
+      m_allowToonShading(false),
+      m_allowMotionFileDrop(false),
+      m_isMoving(false),
+      m_isRotating(false),
+      m_underTurn(false),
+      m_alphaAppearFrame(0.0f),
+      m_alphaDisappearFrame(0.0f),
+      m_needResetKinematic(false)
+
 {
     m_model = m_engine->allocateModel();
-    m_isEnable = false;
+}
+
+PMDObject::~PMDObject()
+{
+    release();
+}
+
+void PMDObject::release()
+{
+    m_engine->releaseModel(m_model);
+    m_model = 0;
+    MMDAIMemoryRelease(m_alias);
+    m_alias = 0;
+    delete m_motionManager;
     m_motionManager = 0;
 
+    m_globalLipSync = NULL;
+    m_isEnable = false;
+    m_lightDir.setZero();
+    m_assignTo = NULL;
+    m_baseBone = NULL;
+    m_origBasePos.setZero();
+    m_offsetPos.setZero();
     m_moveSpeed = -1.0f;
     m_spinSpeed = -1.0f;
+    m_allowToonShading = false;
+    m_allowMotionFileDrop = false;
     m_isMoving = false;
     m_isRotating = false;
     m_underTurn = false;
-    m_offsetPos = btVector3(0.0f, 0.0f, 0.0f);
-    m_offsetRot = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
-    m_alphaAppearFrame = 0.0;
-    m_alphaDisappearFrame = 0.0;
-    m_assignTo = NULL;
-    m_baseBone = NULL;
+    m_alphaAppearFrame = 0.0f;
+    m_alphaDisappearFrame = 0.0f;
     m_needResetKinematic = false;
-    m_alias = NULL;
-    m_globalLipSync = NULL;
 }
 
-/* PMDOjbect::clear: free PMDObject */
-void PMDObject::clear()
-{
-    m_engine->releaseModel(m_model);
-    MMDAIMemoryRelease(m_alias);
-    delete m_motionManager;
-    initialize();
-}
-
-/* PMDObject::PMDObject: constructor */
-PMDObject::PMDObject(SceneRenderEngine *engine)
-    : m_engine(engine)
-{
-    initialize();
-}
-
-/* PMDObject::PMDObject: destructor */
-PMDObject::~PMDObject()
-{
-    clear();
-}
-
-/* PMDOjbect::release: free PMDObject */
-void PMDObject::release()
-{
-    clear();
-}
-
-/* PMDObject::load: load model */
 bool PMDObject::load(IModelLoader *modelLoader,
                      ILipSyncLoader *lipSyncLoader,
                      BulletPhysics *bullet,
@@ -111,8 +120,11 @@ bool PMDObject::load(IModelLoader *modelLoader,
                      const btQuaternion &offsetRot,
                      bool forcedPosition)
 {
-    if (modelLoader == NULL || lipSyncLoader == NULL)
+    if (!modelLoader || !lipSyncLoader)
         return false;
+
+    if (!m_model)
+        m_model = m_engine->allocateModel();
 
     /* apply given parameters */
     m_assignTo = assignObject;
@@ -156,7 +168,7 @@ bool PMDObject::load(IModelLoader *modelLoader,
 
     /* load model */
     if (m_engine->loadModel(m_model, modelLoader, bullet) == false) {
-        clear();
+        release();
         return false;
     }
 
@@ -178,7 +190,6 @@ bool PMDObject::load(IModelLoader *modelLoader,
     return true;
 }
 
-/* PMDObject::setMotion: start a motion */
 bool PMDObject::startMotion(VMD * vmd,
                             const char * name,
                             bool full,
@@ -192,7 +203,6 @@ bool PMDObject::startMotion(VMD * vmd,
     return true;
 }
 
-/* PMDObject::swapMotion: swap a motion */
 bool PMDObject::swapMotion(VMD * vmd, const char *targetName)
 {
     if (m_motionManager == NULL || !m_motionManager->swapMotion(vmd, targetName))
@@ -200,10 +210,9 @@ bool PMDObject::swapMotion(VMD * vmd, const char *targetName)
     return true;
 }
 
-/* PMDObject::updateRootBone: update root bone if assigned to a base bone */
 void PMDObject::updateRootBone()
 {
-    if (!m_baseBone)
+    if (!m_baseBone || !m_model)
         return;
 
     /* relative position */
@@ -227,12 +236,11 @@ void PMDObject::updateRootBone()
     b->setTransform(tr);
 }
 
-/* PMDObject::updateMotion: update motions */
 bool PMDObject::updateMotion(double deltaFrame)
 {
     bool ret = false;
 
-    if (m_isEnable == false || m_motionManager == NULL)
+    if (!m_isEnable || !m_motionManager || !m_model)
         return ret;
 
     /* set rotation and position to bone and face from motion */
@@ -243,17 +251,22 @@ bool PMDObject::updateMotion(double deltaFrame)
     return ret;
 }
 
-/* PMDObject::updateAfterSimulation: update bone transforms from simulated rigid bodies */
-void PMDObject::updateAfterSimulation(bool physicsEnabled)
+void PMDObject::setPhysicsEnable(bool value)
 {
-    if (!m_isEnable)
+    if (!m_isEnable || !m_model)
         return;
-
     /* if necessary, change state of Bullet Physics */
     if (m_needResetKinematic) {
-        if (physicsEnabled) m_model->setPhysicsControl(true);
+        if (value)
+            m_model->setPhysicsControl(true);
         m_needResetKinematic = false;
     }
+}
+
+void PMDObject::updateSkin()
+{
+    if (!m_isEnable || !m_model)
+        return;
     /* apply calculation result to bone */
     m_model->updateBoneFromSimulation();
     /* update skin */
@@ -262,10 +275,11 @@ void PMDObject::updateAfterSimulation(bool physicsEnabled)
     m_model->updateToon(&m_lightDir);
 }
 
-/* PMDObject::updateAlpha: update global model alpha */
 bool PMDObject::updateAlpha(double deltaFrame)
 {
     bool ended = false;
+    if (!m_isEnable || !m_model)
+        return ended;
 
     if (m_alphaAppearFrame > 0.0f) {
         m_alphaAppearFrame -= deltaFrame;
@@ -281,29 +295,27 @@ bool PMDObject::updateAlpha(double deltaFrame)
         }
         m_model->setGlobalAlpha((float) (m_alphaDisappearFrame / PMDOBJECT_ALPHAFRAME));
     }
+
     return ended;
 }
 
-/* PMDObject::startDisppear: set disappear timer */
 void PMDObject::startDisappear()
 {
     m_alphaDisappearFrame = PMDOBJECT_ALPHAFRAME;
 }
 
-/* PMDModel::setLightForToon: set light direction for ton shading */
 void PMDObject::setLightForToon(const btVector3 &value)
 {
     m_lightDir = value;
     m_lightDir.normalize();
 }
 
-/* PMDObject::updateModel: update model position of root bone */
-bool PMDObject::updateModelRootOffset(float fps)
+bool PMDObject::move(float fps)
 {
     btVector3 pos2;
     bool ret = false;
 
-    if (!m_isEnable)
+    if (!m_isEnable || !m_model)
         return ret;
 
     /* get root bone */
@@ -344,12 +356,11 @@ bool PMDObject::updateModelRootOffset(float fps)
     return ret;
 }
 
-/* PMDObject::updateModelRootRotation: update model rotation of root bone */
-bool PMDObject::updateModelRootRotation(float fps)
+bool PMDObject::rotate(float fps)
 {
     bool ret = false;
 
-    if (!m_isEnable)
+    if (!m_isEnable || !m_model)
         return ret;
 
     m_isRotating = false;
@@ -394,7 +405,6 @@ bool PMDObject::updateModelRootRotation(float fps)
     return ret;
 }
 
-/* PMDObject::createLipSyncMotion: create LipSync motion */
 bool PMDObject::createLipSyncMotion(const char *str, unsigned char **data, size_t *size)
 {
     bool ret = m_localLipSync.createMotion(str, data, size);

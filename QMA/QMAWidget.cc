@@ -290,7 +290,7 @@ void QMAWidget::updateScene()
     else {
     }
 
-    m_controller->updateAfterSimulation();
+    m_controller->updateSkin();
     m_controller->updateDepthTextureViewParam();
 
     update();
@@ -338,7 +338,7 @@ void QMAWidget::showEvent(QShowEvent *event)
             }
         }
         m_preference->load(file);
-        m_controller->initializeScreen(width(), height());
+        m_controller->initialize(width(), height());
         m_controller->updateLight();
         loadPlugins(file);
         m_sceneFrameTimer.start();
@@ -355,7 +355,7 @@ void QMAWidget::paintGL()
 {
     double fps = m_sceneFrameTimer.getFPS();
     glColor3f(1, 0, 0);
-    m_controller->updateModelPositionAndRotation(fps);
+    m_controller->updateObject(fps);
     m_controller->updateModelView(0);
     m_controller->updateProjection(0);
     delegateEvent(QMAPlugin::getPreRenderEvent(), QMAPlugin::getEmptyArguments());
@@ -394,7 +394,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
         Qt::KeyboardModifiers modifiers = event->modifiers();
         MMDAI::PMDObject *selectedObject = m_controller->getSelectedObject();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier && selectedObject == NULL) {
-            m_controller->updateLightDirection(x, y);
+            m_controller->setLightDirection(x, y);
         }
         else if (modifiers & Qt::ControlModifier && selectedObject != NULL) {
             m_controller->setHighlightObject(selectedObject);

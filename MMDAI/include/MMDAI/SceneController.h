@@ -67,7 +67,7 @@ public:
     SceneController(ISceneEventHandler *handler, IPreference *preference);
     ~SceneController();
 
-    void initializeScreen(int width, int height);
+    void initialize(int width, int height);
 
     PMDObject *allocateObject();
     PMDObject *findObject(PMDObject *object);
@@ -103,9 +103,6 @@ public:
                      ILipSyncLoader *lipSyncLoader);
     void deleteModel(PMDObject *object);
 
-    void setLightDirection(float x, float y, float z);
-    void setLightColor(float r, float g, float b);
-
     void startMove(PMDObject *object,
                    const btVector3 &pos,
                    bool local,
@@ -129,24 +126,27 @@ public:
     bool stopLipSync(PMDObject *object);
     void resetLocation(const btVector3 &trans, const btQuaternion &rot, const float scale);
 
+    void setLightDirection(float x, float y);
+    void setLightDirection(const btVector3 &direction);
+    void setLightColor(const btVector3 &color);
     void setModelViewPosition(int x, int y);
     void setModelViewRotation(int x, int y);
+    void setHighlightObject(PMDObject *object);
+    void setRect(int width, int height);
+    void setViewMoveTimer(int ms);
+
+    void updateLight();
     void translate(const btVector3 &value);
 
     void selectObject(PMDObject *object);
     void selectObject(int x, int y);
     void selectObject(int x, int y, PMDObject **dropAllowedModel);
     void deselectObject();
-    void setHighlightObject(PMDObject *object);
-    void setRect(int width, int height);
-    void setViewMoveTimer(int ms);
 
-    void updateLightDirection(float x, float y);
-    void updateLight();
     void updateMotion(double procFrame, double adjustFrame);
+    void updateObject(double fps);
     void updateDepthTextureViewParam();
-    void updateModelPositionAndRotation(double fps);
-    void updateAfterSimulation();
+    void updateSkin();
     void updateProjection(int ellapsedTimeForMove);
     void updateModelView(int ellapsedTimeForMove);
     void prerenderScene();
