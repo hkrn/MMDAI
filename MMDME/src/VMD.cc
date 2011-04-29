@@ -372,14 +372,20 @@ bool VMD::parse(unsigned char *data, size_t size)
     int numCameraFrame = *reinterpret_cast<uint32_t *>(data);
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
+    data += numCameraFrame * sizeof(VMDFile_Camera);
+    rest -= numCameraFrame * sizeof(VMDFile_Camera);
 
     int numLightFrame = *reinterpret_cast<uint32_t *>(data);
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
+    data += numLightFrame * sizeof(VMDFile_Light);
+    rest -= numLightFrame * sizeof(VMDFile_Light);
 
     int numSelfShadowFrame = *reinterpret_cast<uint32_t *>(data);
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
+    data += numSelfShadowFrame * sizeof(VMDFile_SelfShadow);
+    rest -= numSelfShadowFrame * sizeof(VMDFile_SelfShadow);
 
     MMDAILogDebug("camera:%d light:%d selfShadow:%d", numCameraFrame, numLightFrame, numSelfShadowFrame);
     MMDAILogDebug("rest of VMD: %d (data size is %d)", rest, size);

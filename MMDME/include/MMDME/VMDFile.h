@@ -45,24 +45,46 @@ namespace MMDAI {
 
 #pragma pack(push, 1)
 
-typedef struct _VMDFile_Header {
+struct VMDFile_Header {
     char header[30];
     char name[20];
-} VMDFile_Header;
+};
 
-typedef struct _VMDFile_BoneFrame {
+struct VMDFile_BoneFrame {
     char name[15];
     uint32_t keyFrame;
     float pos[3];
     float rot[4];
     char interpolation[64];
-} VMDFile_BoneFrame;
+};
 
-typedef struct _VMDFile_FaceFrame {
+struct VMDFile_FaceFrame {
     char name[15];
     uint32_t keyFrame;
     float weight;
-} VMDFile_FaceFrame;
+};
+
+struct VMDFile_Camera {
+    uint32_t keyFrame;
+    float length;
+    float pos[3];
+    float rot[3];
+    char interpolation[24];
+    uint32_t angle;
+    char perspective;
+};
+
+struct VMDFile_Light {
+    uint32_t keyFrame;
+    float color[3];
+    float pos[3];
+};
+
+struct VMDFile_SelfShadow {
+    uint32_t keyFrame;
+    char mode;
+    float distance;
+};
 
 #pragma pack(pop)
 
