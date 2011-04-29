@@ -84,6 +84,7 @@ bool LipSync::load(ILipSyncLoader *loader)
 {
     int len = 0;
 
+    release();
     if (!loader->load())
         return false;
 
