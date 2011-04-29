@@ -40,16 +40,20 @@
 
 QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+      m_debug(0),
       m_preference(preference),
       m_sceneUpdateTimer(this),
-      m_controller(new MMDAI::SceneController(this, preference)),
-      m_parser(m_controller, &m_factory),
+      m_controller(0),
+      m_parser(0),
       m_x(0),
       m_y(0),
       m_doubleClicked(false),
       m_showLog(true),
       m_activeMotion(true)
 {
+    m_controller = new MMDAI::SceneController(this, preference);
+    m_parser = new MMDAI::CommandParser(m_controller, &m_factory);
+    m_debug = new QMADebugRenderEngine(m_controller);
     m_sceneUpdateTimer.setSingleShot(false);
     connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
     setAcceptDrops(true);
@@ -58,6 +62,12 @@ QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
 
 QMAWidget::~QMAWidget()
 {
+    delete m_debug;
+    m_debug = 0;
+    delete m_parser;
+    m_parser = 0;
+    delete m_controller;
+    m_controller = 0;
 }
 
 void QMAWidget::handleEventMessage(const char *eventType, int argc, ...)
@@ -240,7 +250,7 @@ void QMAWidget::delegateCommand(const QString &command, const QList<QVariant> &a
             }
         }
         if (!err)
-            m_parser.parse(cmd.constData(), argv, argc);
+            m_parser->parse(cmd.constData(), argv, argc);
         for (int i = 0; i < argc; i++) {
             MMDAIMemoryRelease(argv[i]);
         }
@@ -338,6 +348,7 @@ void QMAWidget::showEvent(QShowEvent *event)
         m_preference->load(file);
         m_controller->initialize(width(), height());
         m_controller->updateLight();
+        m_debug->initialize();
         loadPlugins(file);
         m_sceneFrameTimer.start();
         m_sceneUpdateTimer.start(10);
@@ -359,8 +370,7 @@ void QMAWidget::paintGL()
     delegateEvent(QMAPlugin::getPreRenderEvent(), QMAPlugin::getEmptyArguments());
     m_controller->prerenderScene();
     m_controller->renderScene();
-    m_debug.renderBones(m_controller);
-    m_debug.renderRigidBodies(m_controller);
+    m_debug->render();
     m_sceneFrameTimer.count();
     delegateEvent(QMAPlugin::getPostRenderEvent(), QMAPlugin::getEmptyArguments());
 }

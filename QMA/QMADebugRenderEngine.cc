@@ -39,11 +39,15 @@
 #include "QMADebugRenderEngine.h"
 
 #include <MMDAI/MMDAI.h>
+#include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btShapeHull.h>
 
-QMADebugRenderEngine::QMADebugRenderEngine()
-    : m_boxList(0),
+QMADebugRenderEngine::QMADebugRenderEngine(MMDAI::SceneController *controller)
+    : m_controller(controller),
+      m_world(0),
+      m_boxList(0),
       m_sphereList(0),
+      m_debugMode(btIDebugDraw::DBG_NoDebug),
       m_boxListEnabled(false),
       m_sphereListEnabled(false),
       m_renderBones(false),
@@ -53,28 +57,73 @@ QMADebugRenderEngine::QMADebugRenderEngine()
 
 QMADebugRenderEngine::~QMADebugRenderEngine()
 {
+    m_world = 0;
+    m_controller = 0;
     if (m_sphereListEnabled) {
         glDeleteLists(m_sphereList, 1);
+        m_sphereList = 0;
         m_sphereListEnabled = false;
     }
     if (m_boxListEnabled) {
         glDeleteLists(m_boxList, 1);
+        m_boxList = 0;
         m_boxListEnabled = false;
     }
 }
 
-void QMADebugRenderEngine::renderRigidBodies(MMDAI::SceneController *controller)
+void QMADebugRenderEngine::initialize()
 {
-    if (!m_renderRigidBodies)
-        return;
+    m_world = m_controller->getPhysicalEngine()->getWorld();
+    m_world->setDebugDrawer(this);
+}
 
+void QMADebugRenderEngine::render()
+{
+    if (m_renderRigidBodies)
+        renderRigidBodies();
+    if (m_renderBones)
+        renderModelBones();
+    m_world->debugDrawWorld();
+}
+
+void QMADebugRenderEngine::drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color)
+{
+    glColor3fv(color);
+    glBegin(GL_LINE);
+    glVertex3fv(from);
+    glVertex3fv(to);
+    glEnd();
+}
+
+void QMADebugRenderEngine::drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int lifeTime, const btVector3 &color)
+{
+    Q_UNUSED(PointOnB);
+    Q_UNUSED(normalOnB);
+    Q_UNUSED(distance);
+    Q_UNUSED(lifeTime);
+    Q_UNUSED(color);
+}
+
+void QMADebugRenderEngine::reportErrorWarning(const char *warningString)
+{
+    MMDAILogWarnString(warningString);
+}
+
+void QMADebugRenderEngine::draw3dText(const btVector3 &location, const char *textString)
+{
+    Q_UNUSED(location);
+    Q_UNUSED(textString);
+}
+
+void QMADebugRenderEngine::renderRigidBodies()
+{
     GLfloat color[] = {0.8f, 0.8f, 0.0f, 1.0f};
     GLint polygonMode[2] = { 0, 0 };
     btRigidBody* body = NULL;
     btScalar m[16];
     btCollisionShape* shape = NULL;
     btVector3 halfExtent;
-    btDiscreteDynamicsWorld *world = controller->getPhysicalEngine()->getWorld();
+    btDiscreteDynamicsWorld *world = m_controller->getPhysicalEngine()->getWorld();
     const btSphereShape* sphereShape;
     float radius;
     const int numObjects = world->getNumCollisionObjects();
@@ -142,24 +191,21 @@ void QMADebugRenderEngine::renderRigidBodies(MMDAI::SceneController *controller)
     }
 }
 
-void QMADebugRenderEngine::renderBones(MMDAI::SceneController *controller)
+void QMADebugRenderEngine::renderModelBones()
 {
-    if (!m_renderBones)
-        return;
-
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
 
     /* draw bones */
-    int nmodels = controller->getMaxObjects();
+    int nmodels = m_controller->getMaxObjects();
     for (int i = 0; i < nmodels; i++) {
-        MMDAI::PMDObject *object = controller->getObjectAt(i);
+        MMDAI::PMDObject *object = m_controller->getObjectAt(i);
         if (object && object->isEnable()) {
             MMDAI::PMDModel *model = object->getModel();
             const int nbones = model->countBones();
             for (int j = 0; j < nbones; j++) {
-                renderBone(model->getBoneAt(j));
+                renderModelBone(model->getBoneAt(j));
             }
         }
     }
@@ -222,23 +268,23 @@ void QMADebugRenderEngine::drawCube()
 void QMADebugRenderEngine::drawSphere(int lats, int longs)
 {
     for (int i = 0; i <= lats; i++) {
-        const double lat0 = M_PI * (-0.5 + static_cast<double>(i - 1) / lats);
-        const double z0 = sin(lat0);
-        const double zr0 = cos(lat0);
-        const double lat1 = M_PI * (-0.5 + static_cast<double>(i) / lats);
-        const double z1 = sin(lat1);
-        const double zr1 = cos(lat1);
+        const float lat0 = M_PI * (-0.5 + static_cast<float>(i - 1) / lats);
+        const float z0 = sin(lat0);
+        const float zr0 = cos(lat0);
+        const float lat1 = M_PI * (-0.5 + static_cast<float>(i) / lats);
+        const float z1 = sin(lat1);
+        const float zr1 = cos(lat1);
 
         glBegin(GL_QUAD_STRIP);
         for (int j = 0; j <= longs; j++) {
-            const double lng = 2 * M_PI * static_cast<double>(j - 1) / longs;
-            const double x = cos(lng);
-            const double y = sin(lng);
+            const float lng = 2 * M_PI * static_cast<float>(j - 1) / longs;
+            const float x = cos(lng);
+            const float y = sin(lng);
 
-            glNormal3d(x * zr0, y * zr0, z0);
-            glVertex3d(x * zr0, y * zr0, z0);
-            glNormal3d(x * zr1, y * zr1, z1);
-            glVertex3d(x * zr1, y * zr1, z1);
+            glNormal3f(x * zr0, y * zr0, z0);
+            glVertex3f(x * zr0, y * zr0, z0);
+            glNormal3f(x * zr1, y * zr1, z1);
+            glVertex3f(x * zr1, y * zr1, z1);
         }
         glEnd();
     }
@@ -274,10 +320,11 @@ void QMADebugRenderEngine::drawConvex(btConvexShape *shape)
             btVector3 normal = (v3 - v1).cross(v2 - v1);
             normal.normalize ();
 
-            glNormal3f(normal.getX(), normal.getY(), normal.getZ());
-            glVertex3f (v1.x(), v1.y(), v1.z());
-            glVertex3f (v2.x(), v2.y(), v2.z());
-            glVertex3f (v3.x(), v3.y(), v3.z());
+            //glNormal3f(normal.getX(), normal.getY(), normal.getZ());
+            glNormal3fv(normal);
+            glVertex3fv(v1);
+            glVertex3fv(v2);
+            glVertex3fv(v3);
         }
         glEnd ();
     }
@@ -285,7 +332,7 @@ void QMADebugRenderEngine::drawConvex(btConvexShape *shape)
     delete hull;
 }
 
-void QMADebugRenderEngine::renderBone(MMDAI::PMDBone *bone)
+void QMADebugRenderEngine::renderModelBone(MMDAI::PMDBone *bone)
 {
     btScalar m[16];
     MMDAI::PMDBone *parentBone = bone->getParentBone();
@@ -364,8 +411,8 @@ void QMADebugRenderEngine::renderBone(MMDAI::PMDBone *bone)
     const btVector3 a = parentBone->getTransform().getOrigin();
     const btVector3 b = trans.getOrigin();
     glBegin(GL_LINES);
-    glVertex3f(a.x(), a.y(), a.z());
-    glVertex3f(b.x(), b.y(), b.z());
+    glVertex3fv(a);
+    glVertex3fv(b);
     glEnd();
     glPopMatrix();
 }

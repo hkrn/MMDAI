@@ -83,10 +83,10 @@ public:
     void zoom(bool up, enum QMAWidgetZoomOption option);
 
     inline void toggleDisplayBone() {
-        m_debug.toggleRenderBones();
+        m_debug->toggleRenderBones();
     }
     inline void toggleDisplayRigidBody() {
-        m_debug.toggleRenderRigidBodies();
+        m_debug->toggleRenderRigidBodies();
     }
     inline QMATimer *getSceneFrameTimer() {
         return &m_sceneFrameTimer;
@@ -133,12 +133,13 @@ private:
     void renderDebugModel();
     void renderLogger();
 
+    QMADebugRenderEngine *m_debug;
     QMAModelLoaderFactory m_factory;
     QMAPreference *m_preference;
     QMATimer m_sceneFrameTimer;
     QTimer m_sceneUpdateTimer;
     MMDAI::SceneController *m_controller;
-    MMDAI::CommandParser m_parser;
+    MMDAI::CommandParser *m_parser;
 
     int m_x;
     int m_y;
@@ -146,8 +147,6 @@ private:
     bool m_doubleClicked;
     bool m_showLog;
     bool m_activeMotion;
-
-    QMADebugRenderEngine m_debug;
 
     Q_DISABLE_COPY(QMAWidget);
 };

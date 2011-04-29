@@ -41,23 +41,36 @@
 
 #include <QtOpenGL>
 
+#include <LinearMath/btIDebugDraw.h>
+
 namespace MMDAI {
-class BulletPhysics;
 class PMDBone;
 class SceneController;
 }
 
 class btConvexShape;
+class btDiscreteDynamicsWorld;
 
-class QMADebugRenderEngine
+class QMADebugRenderEngine : public btIDebugDraw
 {
 public:
-    QMADebugRenderEngine();
+    QMADebugRenderEngine(MMDAI::SceneController *controller);
     ~QMADebugRenderEngine();
 
-    void renderRigidBodies(MMDAI::SceneController *controller);
-    void renderBones(MMDAI::SceneController *model);
+    void initialize();
+    void render();
 
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color);
+    void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int lifeTime, const btVector3 &color);
+    void reportErrorWarning(const char *warningString);
+    void draw3dText(const btVector3 &location, const char *textString);
+
+    void setDebugMode(int debugMode) {
+        m_debugMode = debugMode;
+    }
+    int getDebugMode() const {
+        return m_debugMode;
+    }
     inline void toggleRenderBones() {
         m_renderBones = !m_renderBones;
     }
@@ -69,10 +82,15 @@ private:
     void drawCube();
     void drawSphere(int lats, int longs);
     void drawConvex(btConvexShape *shape);
-    void renderBone(MMDAI::PMDBone *bone);
+    void renderRigidBodies();
+    void renderModelBones();
+    void renderModelBone(MMDAI::PMDBone *bone);
 
+    MMDAI::SceneController *m_controller;
+    btDiscreteDynamicsWorld *m_world;
     GLuint m_boxList;
     GLuint m_sphereList;
+    int m_debugMode;
     bool m_boxListEnabled;
     bool m_sphereListEnabled;
     bool m_renderBones;
