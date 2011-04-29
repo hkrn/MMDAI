@@ -8,7 +8,7 @@ INCLUDEPATH += ../../
 CONFIG(debug, debug|release) {
     DESTDIR = ../../debug/Plugins
     macx:DESTDIR = ../Plugins
-    macx:CONFIG += x86 x86_64
+    macx:CONFIG += x86_64
 }
 CONFIG(release, debug|release) {
     DESTDIR = ../../release/Plugins
