@@ -97,16 +97,38 @@ bool QMAWidget::addModel(const QString &filename)
     return ret;
 }
 
+bool QMAWidget::changeModel(const QString &filename)
+{
+    return changeModel(filename, m_controller->getSelectedObject());
+}
+
 bool QMAWidget::changeModel(const QString &filename, MMDAI::PMDObject *object)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    const char *path = encodedPath.constData();
-    MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
-    MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
-    bool ret = m_controller->changeModel(object, modelLoader, lipSyncLoader);
-    m_factory.releaseModelLoader(modelLoader);
-    m_factory.releaseLipSyncLoader(lipSyncLoader);
-    return ret;
+    if (object) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        const char *path = encodedPath.constData();
+        MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
+        MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
+        bool ret = m_controller->changeModel(object, modelLoader, lipSyncLoader);
+        m_factory.releaseModelLoader(modelLoader);
+        m_factory.releaseLipSyncLoader(lipSyncLoader);
+        return ret;
+    }
+    return false;
+}
+
+bool QMAWidget::deleteModel()
+{
+    return deleteModel(m_controller->getSelectedObject());
+}
+
+bool QMAWidget::deleteModel(MMDAI::PMDObject *object)
+{
+    if (object) {
+        m_controller->deleteModel(object);
+        m_controller->deselectObject();
+    }
+    return false;
 }
 
 bool QMAWidget::setStage(const QString &filename)
@@ -156,13 +178,21 @@ bool QMAWidget::insertMotionToAllModels(const QString &filename)
     return ret;
 }
 
+bool QMAWidget::insertMotionToSelectedModel(const QString &filename)
+{
+    return insertMotionToModel(filename, m_controller->getSelectedObject());
+}
+
 bool QMAWidget::insertMotionToModel(const QString &filename, MMDAI::PMDObject *object)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(encodedPath.constData());
-    bool ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
-    m_factory.releaseMotionLoader(loader);
-    return ret;
+    if (object) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(encodedPath.constData());
+        bool ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
+        m_factory.releaseMotionLoader(loader);
+        return ret;
+    }
+    return false;
 }
 
 void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
@@ -183,11 +213,60 @@ void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
     update();
 }
 
+void QMAWidget::rotate(float x, float y)
+{
+    m_controller->setModelViewRotation(x, y);
+}
+
+void QMAWidget::translate(float x, float y)
+{
+    m_controller->translate(btVector3(x, y, 0.0f) * m_preference->getFloat(MMDAI::kPreferenceTranslateStep));
+}
+
+void QMAWidget::setEdgeThin(float value)
+{
+    value = qMax(qMin(value, 2.0f), 0.0f);
+    m_preference->setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value);
+    int max = m_controller->getMaxObjects();
+    for (int i = 0; i < max; i++) {
+        MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+        if (object && object->isEnable())
+            object->getModel()->setEdgeThin(value);
+    }
+}
+
+void QMAWidget::setEnablePhysicalEngine(bool value)
+{
+    int max = m_controller->getMaxObjects();
+    for (int i = 0; i < max; i++) {
+        MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+        if (object && object->isEnable()) {
+            object->getModel()->setPhysicsControl(value);
+        }
+    }
+}
+
+void QMAWidget::updateShadowMapping()
+{
+    m_controller->setShadowMapping();
+}
+
+void QMAWidget::selectModel(const QString &name)
+{
+    QByteArray bytes = name.toUtf8();
+    const char *alias = bytes.constData();
+    MMDAI::PMDObject *object = m_controller->findObject(alias);
+    if (object) {
+        m_controller->selectObject(object);
+        m_controller->setHighlightObject(object);
+    }
+}
+
 void QMAWidget::loadPlugins(QFile &file)
 {
     foreach (QObject *instance, QPluginLoader::staticInstances()) {
         QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
-        if (plugin != NULL) {
+        if (plugin) {
             addPlugin(plugin);
         }
         else {
@@ -201,7 +280,7 @@ void QMAWidget::loadPlugins(QFile &file)
                 QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
                 QObject *instance = loader.instance();
                 QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
-                if (plugin != NULL) {
+                if (plugin) {
                     addPlugin(plugin);
                 }
                 else {
@@ -238,7 +317,7 @@ void QMAWidget::delegateCommand(const QString &command, const QList<QVariant> &a
     int argc = arguments.count();
     QByteArray cmd = command.toUtf8();
     char **argv = static_cast<char **>(calloc(sizeof(char *), argc));
-    if (argv != NULL) {
+    if (argv) {
         bool err = false;
         QRegExp regexp(".*/.+\\.\\w+$");
         for (int i = 0; i < argc; i++) {
@@ -295,8 +374,6 @@ void QMAWidget::updateScene()
             delegateEvent(QMAPlugin::getUpdateEvent(), arguments);
         }
     }
-    else {
-    }
 
     m_controller->updateSkin();
     m_controller->updateDepthTextureViewParam();
@@ -307,7 +384,7 @@ void QMAWidget::updateScene()
 void QMAWidget::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader)
 {
     MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
-    for (; player != NULL; player = player->next) {
+    for (; player; player = player->next) {
         if (player->active && MMDAIStringEqualsIn(player->name, "base", 4)) {
             m_controller->changeMotion(object, "base", loader);
             break;
@@ -402,7 +479,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier && selectedObject == NULL) {
             m_controller->setLightDirection(x, y);
         }
-        else if (modifiers & Qt::ControlModifier && selectedObject != NULL) {
+        else if (modifiers & Qt::ControlModifier && selectedObject) {
             m_controller->setHighlightObject(selectedObject);
             btVector3 pos = selectedObject->getTargetPosition();
             float scale = m_controller->getScale();
@@ -423,7 +500,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
             m_controller->setModelViewPosition(x, y);
         }
         else {
-            m_controller->setModelViewRotation(x, y);
+            rotate(x, y);
         }
         m_x = event->x();
         m_y = event->y();
@@ -508,7 +585,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                             if (selectedObject == NULL)
                                 selectedObject = dropAllowed;
                         }
-                        if (selectedObject != NULL) {
+                        if (selectedObject) {
                             if (modifiers & Qt::ShiftModifier) {
                                 /* insert a motion to the model */
                                 insertMotionToModel(path, selectedObject);
@@ -538,7 +615,7 @@ void QMAWidget::dropEvent(QDropEvent *event)
                             m_controller->selectObject(pos.x(), pos.y());
                             selectedObject = m_controller->getSelectedObject();
                         }
-                        if (selectedObject != NULL) {
+                        if (selectedObject) {
                             ok = changeModel(path, selectedObject);
                         }
                         else {

@@ -110,10 +110,7 @@ void QMAWindow::insertMotionToSelectedModel()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("VMD (*.vmd)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastVMDDirectory", fileName);
-        MMDAI::SceneController *controller = m_widget->getSceneController();
-        MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
-        if (selectedObject != NULL)
-            m_widget->insertMotionToModel(fileName, selectedObject);
+        m_widget->insertMotionToSelectedModel(fileName);
     }
     m_settings.endGroup();
 }
@@ -168,42 +165,42 @@ void QMAWindow::setBackground()
 
 void QMAWindow::rotateUp()
 {
-    m_widget->getSceneController()->setModelViewRotation(0.0f, -m_preference->getFloat(MMDAI::kPreferenceRotateStep));
+    m_widget->rotate(0.0f, -1.0f);
 }
 
 void QMAWindow::rotateDown()
 {
-    m_widget->getSceneController()->setModelViewRotation(0.0f, m_preference->getFloat(MMDAI::kPreferenceRotateStep));
+    m_widget->rotate(0.0f, 1.0f);
 }
 
 void QMAWindow::rotateLeft()
 {
-    m_widget->getSceneController()->setModelViewRotation(-m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
+    m_widget->rotate(-1.0f, 0.0f);
 }
 
 void QMAWindow::rotateRight()
 {
-    m_widget->getSceneController()->setModelViewRotation(m_preference->getFloat(MMDAI::kPreferenceRotateStep), 0.0f);
+    m_widget->rotate(1.0f, 0.0f);
 }
 
 void QMAWindow::translateUp()
 {
-    m_widget->getSceneController()->translate(btVector3(0.0f, -m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f));
+    m_widget->translate(0.0f, -1.0f);
 }
 
 void QMAWindow::translateDown()
 {
-    m_widget->getSceneController()->translate(btVector3(0.0f, m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f));
+    m_widget->translate(0.0f, 1.0f);
 }
 
 void QMAWindow::translateLeft()
 {
-    m_widget->getSceneController()->translate(btVector3(m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f));
+    m_widget->translate(1.0f, 0.0f);
 }
 
 void QMAWindow::translateRight()
 {
-    m_widget->getSceneController()->translate(btVector3(-m_preference->getFloat(MMDAI::kPreferenceTranslateStep), 0.0f, 0.0f));
+    m_widget->translate(-1.0f, 0.0f);
 }
 
 void QMAWindow::toggleDisplayBone()
@@ -228,28 +225,26 @@ void QMAWindow::decreaseEdgeThin()
 
 void QMAWindow::togglePhysicSimulation()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    int max = controller->getMaxObjects();
     m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
-    for (int i = 0; i < max; i++) {
-        MMDAI::PMDObject *object = controller->getObjectAt(i);
-        if (object && object->isEnable()) {
-            object->getModel()->setPhysicsControl(m_enablePhysicsSimulation);
-        }
-    }
+    m_widget->setEnablePhysicalEngine(m_enablePhysicsSimulation);
 }
 
 void QMAWindow::toggleShadowMapping()
 {
     bool value = !m_preference->getBool(MMDAI::kPreferenceUseShadowMapping);
     m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, value);
-    m_widget->getSceneController()->setShadowMapping();
+    m_widget->updateShadowMapping();
 }
 
 void QMAWindow::toggleShadowMappingLightFirst()
 {
     bool value = !m_preference->getBool(MMDAI::kPreferenceShadowMappingLightFirst);
     m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, value);
+}
+
+void QMAWindow::setEdgeThin(float value)
+{
+    m_widget->setEdgeThin(value);
 }
 
 void QMAWindow::toggleFullScreen()
@@ -290,16 +285,8 @@ void QMAWindow::zoomOut()
 void QMAWindow::selectObject()
 {
     QAction *action = qobject_cast<QAction *>(sender());
-    if (action) {
-        QByteArray bytes = action->text().toUtf8();
-        const char *name = bytes.constData();
-        MMDAI::SceneController *controller = m_widget->getSceneController();
-        MMDAI::PMDObject *object = controller->findObject(name);
-        if (object != NULL) {
-            controller->selectObject(object);
-            controller->setHighlightObject(object);
-        }
-    }
+    if (action)
+        m_widget->selectModel(action->text());
 }
 
 void QMAWindow::changeSelectedObject()
@@ -309,22 +296,14 @@ void QMAWindow::changeSelectedObject()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
     if (!fileName.isEmpty()) {
         setDirectorySetting("lastPMDDirectory", fileName);
-        MMDAI::SceneController *controller = m_widget->getSceneController();
-        MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
-        if (selectedObject != NULL)
-            m_widget->changeModel(fileName, selectedObject);
+        m_widget->changeModel(fileName);
     }
     m_settings.endGroup();
 }
 
 void QMAWindow::deleteSelectedObject()
 {
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    MMDAI::PMDObject *selectedObject = controller->getSelectedObject();
-    if (selectedObject != NULL) {
-        controller->deleteModel(selectedObject);
-        controller->deselectObject();
-    }
+    m_widget->deleteModel();
 }
 
 void QMAWindow::showLogWindow()
@@ -413,7 +392,7 @@ void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &argumen
                 break;
             }
         }
-        if (actionToRemove != NULL)
+        if (actionToRemove)
             m_selectModelMenu->removeAction(actionToRemove);
     }
 }
@@ -659,19 +638,6 @@ void QMAWindow::createActions()
 
     connect(m_widget, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
             this, SLOT(receiveEvent(QString,QList<QVariant>)));
-}
-
-void QMAWindow::setEdgeThin(float value)
-{
-    MMDAI::SceneController *controller = m_widget->getSceneController();
-    value = qMin(value, 2.0f);
-    m_preference->setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value);
-    int max = controller->getMaxObjects();
-    for (int i = 0; i < max; i++) {
-        MMDAI::PMDObject *object = controller->getObjectAt(i);
-        if (object && object->isEnable())
-            object->getModel()->setEdgeThin(value);
-    }
 }
 
 void QMAWindow::createMenu()

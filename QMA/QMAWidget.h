@@ -72,12 +72,23 @@ public:
     ~QMAWidget();
 
     bool addModel(const QString &filename);
+    bool changeModel(const QString &filename);
     bool changeModel(const QString &filename, MMDAI::PMDObject *object);
+    bool deleteModel();
+    bool deleteModel(MMDAI::PMDObject *object);
     bool setStage(const QString &filename);
     bool setFloor(const QString &filename);
     bool setBackground(const QString &filename);
     bool insertMotionToAllModels(const QString &filename);
+    bool insertMotionToSelectedModel(const QString &filename);
     bool insertMotionToModel(const QString &filename, MMDAI::PMDObject *object);
+    void rotate(float x, float y);
+    void translate(float x, float y);
+    void selectModel(const QString &name);
+    void setEdgeThin(float value);
+    void setEnablePhysicalEngine(bool value);
+    void updateShadowMapping();
+
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
     void zoom(bool up, enum QMAWidgetZoomOption option);
@@ -90,9 +101,6 @@ public:
     }
     inline QMATimer *getSceneFrameTimer() {
         return &m_sceneFrameTimer;
-    }
-    inline MMDAI::SceneController *getSceneController() const {
-        return m_controller;
     }
 
 public slots:
