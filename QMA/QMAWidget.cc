@@ -48,8 +48,6 @@ QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
       m_y(0),
       m_doubleClicked(false),
       m_showLog(true),
-      m_displayBone(false),
-      m_displayRigidBody(false),
       m_activeMotion(true)
 {
     m_sceneUpdateTimer.setSingleShot(false);
@@ -361,10 +359,8 @@ void QMAWidget::paintGL()
     delegateEvent(QMAPlugin::getPreRenderEvent(), QMAPlugin::getEmptyArguments());
     m_controller->prerenderScene();
     m_controller->renderScene();
-    if (m_displayBone)
-        m_controller->renderModelBones();
-    if (m_displayRigidBody)
-        m_controller->renderModelRigidBodies();
+    m_debug.renderBones(m_controller);
+    m_debug.renderRigidBodies(m_controller);
     m_sceneFrameTimer.count();
     delegateEvent(QMAPlugin::getPostRenderEvent(), QMAPlugin::getEmptyArguments());
 }

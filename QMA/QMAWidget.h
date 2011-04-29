@@ -42,6 +42,7 @@
 #include <MMDAI/CommandParser.h>
 #include <MMDAI/ISceneEventHandler.h>
 
+#include "QMADebugRenderEngine.h"
 #include "QMAModelLoaderFactory.h"
 #include "QMAPlugin.h"
 #include "QMATimer.h"
@@ -82,10 +83,10 @@ public:
     void zoom(bool up, enum QMAWidgetZoomOption option);
 
     inline void toggleDisplayBone() {
-        m_displayBone = !m_displayBone;
+        m_debug.toggleRenderBones();
     }
     inline void toggleDisplayRigidBody() {
-        m_displayRigidBody = !m_displayRigidBody;
+        m_debug.toggleRenderRigidBodies();
     }
     inline QMATimer *getSceneFrameTimer() {
         return &m_sceneFrameTimer;
@@ -144,9 +145,9 @@ private:
 
     bool m_doubleClicked;
     bool m_showLog;
-    bool m_displayBone;
-    bool m_displayRigidBody;
     bool m_activeMotion;
+
+    QMADebugRenderEngine m_debug;
 
     Q_DISABLE_COPY(QMAWidget);
 };
