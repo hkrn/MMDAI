@@ -39,7 +39,7 @@
 
 #include "QMAPlugin.h"
 
-class QTextCodec;
+#include <QtGui>
 
 namespace MMDAI {
 class PMDBone;
@@ -76,13 +76,21 @@ signals:
     void commandPost(const QString &command, const QList<QVariant> &arguments);
     void eventPost(const QString &type, const QList<QVariant> &arguments);
 
+private slots:
+    void weightChanged(int value);
+
 private:
     MMDAI::PMDModel *findModel(const QString &modelName);
     MMDAI::PMDBone *findBone(const QString &modelName, const QString &boneName);
+    MMDAI::PMDBone *findBone(MMDAI::PMDModel *model, const QString &boneName);
     MMDAI::PMDFace *findFace(const QString &modelName, const QString &faceName);
+    MMDAI::PMDFace *findFace(MMDAI::PMDModel *model, const QString &faceName);
 
-    QTextCodec *m_codec;
     MMDAI::SceneController *m_controller;
+    MMDAI::PMDModel *m_model;
+
+    QWidget *m_widget;
+    QTableView *m_table;
 };
 
 #endif // QMAINTERNALPLUGIN_H
