@@ -82,7 +82,14 @@ static void GLGenSphereCoords(TexCoord **ptr,
 }
 #endif /* MMDAI_OPENGL_ES1 */
 
-enum GLPMDModelBuffer {
+enum GLSceneRenderEngineTextureID {
+    kModelTextureID = GL_TEXTURE0,
+    kToonTextureID  = GL_TEXTURE1,
+    kSPATextureID   = GL_TEXTURE2,
+    kDepthTextureID = GL_TEXTURE3,
+};
+
+enum GLSceneRenderEngineBufferID {
     kEdgeVertices,
     kEdgeIndices,
     kShadowVertices,
@@ -207,7 +214,7 @@ public:
     inline GLuint getMaterialVBOAt(GLuint index) const {
         return m_materialVBO[index];
     }
-    inline GLuint getModelVBOAt(GLPMDModelBuffer index) const {
+    inline GLuint getModelVBOAt(GLSceneRenderEngineBufferID index) const {
         return m_modelVBO[index];
     }
 
@@ -531,8 +538,8 @@ public:
 #endif /* MMDFILES_CONVERTCOORDINATESYSTEM */
 
         /* activate texture unit 0 */
-        glActiveTexture(GL_TEXTURE0);
-        glClientActiveTexture(GL_TEXTURE0);
+        glActiveTexture(kModelTextureID);
+        glClientActiveTexture(kModelTextureID);
 
         /* set lists */
         size_t vsize = nvertices  * sizeof(btVector3);
@@ -547,7 +554,7 @@ public:
         glNormalPointer(GL_FLOAT, sizeof(btVector3), NULL);
 
         /* set model texture coordinates to texture unit 0 */
-        glClientActiveTexture(GL_TEXTURE0);
+        glClientActiveTexture(kModelTextureID);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelTexCoords));
         glTexCoordPointer(2, GL_FLOAT, 0, NULL);
@@ -558,9 +565,9 @@ public:
 
         if (enableToon) {
             /* set toon texture coordinates to texture unit 1 */
-            glActiveTexture(GL_TEXTURE1);
+            glActiveTexture(kToonTextureID);
             glEnable(GL_TEXTURE_2D);
-            glClientActiveTexture(GL_TEXTURE1);
+            glClientActiveTexture(kToonTextureID);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelToonTexCoords));
             if (model->isSelfShadowEnabled()) {
@@ -572,8 +579,8 @@ public:
                 glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), model->getToonTexCoordsPtr(), GL_DYNAMIC_DRAW);
                 glTexCoordPointer(2, GL_FLOAT, 0, NULL);
             }
-            glActiveTexture(GL_TEXTURE0);
-            glClientActiveTexture(GL_TEXTURE0);
+            glActiveTexture(kModelTextureID);
+            glClientActiveTexture(kModelTextureID);
         }
 
 #ifndef MMDAI_OPENGL_ES1
@@ -588,12 +595,12 @@ public:
         if (hasMultipleSphereMap) {
             /* this model contains additional sphere map texture */
             /* set texture coordinate generation for sphere map on texture unit 2 */
-            glActiveTexture(GL_TEXTURE2);
+            glActiveTexture(kSPATextureID);
             glEnable(GL_TEXTURE_2D);
             glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
             glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
             glDisable(GL_TEXTURE_2D);
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(kModelTextureID);
         }
 #endif /* MMDAI_OPENGL_ES1 */
 
@@ -639,7 +646,7 @@ public:
 
             /* if using multiple texture units, set current unit to 0 */
             if (enableToon || hasMultipleSphereMap) {
-                glActiveTexture(GL_TEXTURE0);
+                glActiveTexture(kModelTextureID);
             }
 
             const PMDTexture *texture = m->getTexture();
@@ -693,7 +700,7 @@ public:
                 /* set toon texture for texture unit 1 */
                 const PMDTextureNative *native = model->getToonTextureAt(m->getToonID())->getNative();
                 if (native != NULL) {
-                    glActiveTexture(GL_TEXTURE1);
+                    glActiveTexture(kToonTextureID);
                     glBindTexture(GL_TEXTURE_2D, native->id);
                     /* set GL_CLAMP_TO_EDGE for toon texture to avoid texture interpolation at edge */
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -705,7 +712,7 @@ public:
                 const PMDTexture *addtex = m->getAdditionalTexture();
                 if (addtex != NULL) {
                     /* this material has additional sphere map texture, bind it at texture unit 2 */
-                    glActiveTexture(GL_TEXTURE2);
+                    glActiveTexture(kSPATextureID);
                     glEnable(GL_TEXTURE_2D);
                     if (addtex->isSPA()) {
                         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
@@ -720,7 +727,7 @@ public:
                         TexCoord *coords = model->getSphereCoords2At(i);
                         if (coords != NULL) {
                             GLGenSphereCoords(&coords, vertices, normals, nvertices);
-                            glClientActiveTexture(GL_TEXTURE2);
+                            glClientActiveTexture(kSPATextureID);
                             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                             glBindBuffer(GL_ARRAY_BUFFER, model->getModelVBOAt(kModelSphereMap2Coords));
                             glBufferData(GL_ARRAY_BUFFER, nvertices * sizeof(TexCoord), coords, GL_DYNAMIC_DRAW);
@@ -738,7 +745,7 @@ public:
                 }
                 else {
                     /* disable generation */
-                    glActiveTexture(GL_TEXTURE2);
+                    glActiveTexture(kSPATextureID);
                     glDisable(GL_TEXTURE_2D);
                 }
             }
@@ -750,7 +757,7 @@ public:
             /* reset some parameters */
             if (texture && texture->isSPH() && texture->isSPA()) {
                 if (enableToon)
-                    glActiveTexture(GL_TEXTURE0);
+                    glActiveTexture(kModelTextureID);
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             }
         }
@@ -758,25 +765,25 @@ public:
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
         if (enableToon) {
-            glClientActiveTexture(GL_TEXTURE0);
+            glClientActiveTexture(kModelTextureID);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #ifndef MMDAI_OPENGL_ES1
             if (hasSingleSphereMap) {
-                glActiveTexture(GL_TEXTURE0);
+                glActiveTexture(kModelTextureID);
                 glDisable(GL_TEXTURE_GEN_S);
                 glDisable(GL_TEXTURE_GEN_T);
             }
 #endif /* MMDAI_OPENGL_ES1 */
-            glClientActiveTexture(GL_TEXTURE1);
+            glClientActiveTexture(kToonTextureID);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #ifndef MMDAI_OPENGL_ES1
             if (hasMultipleSphereMap) {
-                glActiveTexture(GL_TEXTURE2);
+                glActiveTexture(kSPATextureID);
                 glDisable(GL_TEXTURE_GEN_S);
                 glDisable(GL_TEXTURE_GEN_T);
             }
 #endif /* MMDAI_OPENGL_ES1 */
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(kModelTextureID);
         } else {
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #ifndef MMDAI_OPENGL_ES1
@@ -786,12 +793,12 @@ public:
             }
 #endif /* MMDAI_OPENGL_ES1 */
             if (hasMultipleSphereMap) {
-                glActiveTexture(GL_TEXTURE2);
+                glActiveTexture(kSPATextureID);
 #ifndef MMDAI_OPENGL_ES1
                 glDisable(GL_TEXTURE_GEN_S);
                 glDisable(GL_TEXTURE_GEN_T);
 #endif /* MMDAI_OPENGL_ES1 */
-                glActiveTexture(GL_TEXTURE0);
+                glActiveTexture(kModelTextureID);
             }
         }
 
@@ -803,14 +810,14 @@ public:
 #endif /* MMDAI_OPENGL_ES1 */
 
         if (enableToon) {
-            glActiveTexture(GL_TEXTURE1);
+            glActiveTexture(kToonTextureID);
             glDisable(GL_TEXTURE_2D);
         }
         if (hasMultipleSphereMap) {
-            glActiveTexture(GL_TEXTURE2);
+            glActiveTexture(kSPATextureID);
             glDisable(GL_TEXTURE_2D);
         }
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(kModelTextureID);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glDisable(GL_TEXTURE_2D);
 
@@ -1108,7 +1115,7 @@ public:
         glLoadIdentity();
 
         /* use 4th texture unit for depth texture, make it current */
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(kDepthTextureID);
 
         /* prepare a texture object for depth texture Renderering in frame buffer object */
         glGenTextures(1, &m_depthTextureID);
@@ -1168,7 +1175,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         /* reset the current texture unit to default */
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(kModelTextureID);
 
         /* restore the model view matrix */
         glPopMatrix();
@@ -1187,7 +1194,7 @@ public:
                 m_shadowMapInitialized = true;
             }
             /* set how to set the comparison result value of R coordinates and texture (depth) value */
-            glActiveTexture(GL_TEXTURE3);
+            glActiveTexture(kDepthTextureID);
             glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
             if (m_preference->getBool(kPreferenceShadowMappingLightFirst)) {
                 /* when Renderering order is light(full) - dark(shadow part), OpenGL should set the shadow part as true */
@@ -1197,15 +1204,15 @@ public:
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
             }
             glDisable(GL_TEXTURE_2D);
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(kModelTextureID);
             MMDAILogInfoString("Shadow mapping enabled");
         } else {
             /* disabled */
             if (m_shadowMapInitialized) {
                 /* disable depth texture unit */
-                glActiveTexture(GL_TEXTURE3);
+                glActiveTexture(kDepthTextureID);
                 glDisable(GL_TEXTURE_2D);
-                glActiveTexture(GL_TEXTURE0);
+                glActiveTexture(kModelTextureID);
             }
             MMDAILogInfoString("Shadow mapping disabled");
         }
@@ -1285,9 +1292,9 @@ public:
             glDisable(GL_ALPHA_TEST);
 
             /* we are now writing to depth texture using FBO, so disable the depth texture mapping here */
-            glActiveTexture(GL_TEXTURE3);
+            glActiveTexture(kDepthTextureID);
             glDisable(GL_TEXTURE_2D);
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(kModelTextureID);
 
             /* set polygon offset to avoid "moire" */
             glEnable(GL_POLYGON_OFFSET_FILL);
@@ -1732,7 +1739,7 @@ private:
 
         /* Renderer the part clipped by the depth texture */
         /* activate the texture unit for shadow mapping and make it current */
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(kDepthTextureID);
 
         /* set texture matrix (note: matrices should be set in reverse order) */
         glMatrixMode(GL_TEXTURE);
@@ -1759,7 +1766,7 @@ private:
         glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
 
         /* depth texture set up was done, now switch current texture unit to default */
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(kModelTextureID);
 
         /* set depth func to allow overwrite for the same surface in the following Renderering */
         glDepthFunc(GL_LEQUAL);
@@ -1827,13 +1834,13 @@ private:
         glDepthFunc(GL_LESS);
         glAlphaFunc(GL_GEQUAL, 0.05f);
 
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(kDepthTextureID);
         glDisable(GL_TEXTURE_GEN_S);
         glDisable(GL_TEXTURE_GEN_T);
         glDisable(GL_TEXTURE_GEN_R);
         glDisable(GL_TEXTURE_GEN_Q);
         glDisable(GL_TEXTURE_2D);
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(kModelTextureID);
 #else
         (void) objects;
         (void) order;
