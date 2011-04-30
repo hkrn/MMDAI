@@ -143,7 +143,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
     char *buf = NULL, *p = NULL, *save = NULL;
     bool ret = false;
     float f = 0.0f, diff = 0.0f;
-    unsigned int currentFrame = 0, *numBoneKeyFrames = NULL, *numFaceKeyFrames = NULL;
+    uint32_t currentFrame = 0;
     unsigned char *data = NULL;
 
     /* check */
@@ -172,7 +172,7 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
                 goto finally;
             tmp1->phone = k;
             f = 0.03f * MMDAIStringToFloat(p) + diff; /* convert ms to frame */
-            tmp1->duration = (int) (f + 0.5);
+            tmp1->duration = static_cast<int>(f + 0.5);
             if(tmp1->duration < 1)
                 tmp1->duration = 1;
             diff = f - tmp1->duration;
@@ -224,7 +224,13 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
     totalNumKey = m_numMotion * len;
 
     /* create memories */
-    (*rawSize) = sizeof(VMDFile_Header) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(VMDFile_FaceFrame) * totalNumKey;
+    (*rawSize) = sizeof(VMDFile_Header)
+               + sizeof(uint32_t)
+               + sizeof(uint32_t)
+               + sizeof(VMDFile_FaceFrame) * totalNumKey
+               + sizeof(uint32_t)
+               + sizeof(uint32_t)
+               + sizeof(uint32_t);
     size = (*rawSize);
     size = sizeof(unsigned char) * (*rawSize);
     (*rawData) = static_cast<unsigned char *>(MMDAIMemoryAllocate(size));
@@ -237,13 +243,11 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
     MMDAIStringCopy(header->header, "Vocaloid Motion Data 0002", 30);
     data += sizeof(VMDFile_Header);
     /* number of key frame for bone */
-    numBoneKeyFrames = (unsigned int *) data;
-    (*numBoneKeyFrames) = 0;
-    data += sizeof(unsigned int);
+    *reinterpret_cast<uint32_t *>(data) = 0;
+    data += sizeof(uint32_t);
     /* number of key frame for expression */
-    numFaceKeyFrames = (unsigned int *) data;
-    (*numFaceKeyFrames) = totalNumKey;
-    data += sizeof(unsigned int);
+    *reinterpret_cast<uint32_t *>(data) = totalNumKey;
+    data += sizeof(uint32_t);
     /* set key frame */
     for (i = 0; i < m_numMotion; i++) {
         currentFrame = 0;
@@ -256,6 +260,17 @@ bool LipSync::createMotion(const char *str, unsigned char **rawData, size_t *raw
             currentFrame += tmp1->duration;
         }
     }
+
+    /* number of key frame for camera */
+    *reinterpret_cast<uint32_t *>(data)  = 0;
+    data += sizeof(uint32_t);
+    /* number of key frame for light */
+    *reinterpret_cast<uint32_t *>(data) = 0;
+    data += sizeof(uint32_t);
+    /* number of key frame for self shadow */
+    *reinterpret_cast<uint32_t *>(data) = 0;
+    data += sizeof(uint32_t);
+
     ret = true;
 
 finally:
