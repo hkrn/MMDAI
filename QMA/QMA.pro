@@ -70,4 +70,13 @@ HEADERS  += \
 
 TRANSLATIONS += res/translations/QMA.ts
 
+macx {
+    QMAKE_INFO_PLIST = Info.plist
+    FILETYPES.files = res/translations/QMA_ja.qm \
+                      res/translations/QMAJuliusPlugin_ja.qm
+    FILETYPES.path = Contents/Resources
+    QMAKE_BUNDLE_DATA += FILETYPES
+}
+
 CODECFORTR = UTF-8
+

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+     <key>NSHumanReadableCopyright</key>
+     <string>(C) 2010-2011 hkrn</string>
+     <key>CFBundleIconFile</key>
+     <string>@ICON@</string>
+     <key>CFBundlePackageType</key>
+     <string>APPL</string>
+     <key>CFBundleSignature</key>
+     <string>@TYPEINFO@</string>
+     <key>CFBundleExecutable</key>
+     <string>@EXECUTABLE@</string>
+     <key>CFBundleIdentifier</key>
+     <string>com.github.hkrn.mmdai</string>
+     <key>CFBundleVersion</key>
+     <string>1.414</string>
+     <key>CFBundleShortVersionString</key>
+     <string>1.414</string>
+     <key>CFBundleGetInfoString</key>
+     <string>MMDAI is an application to interact MMD models with voice forked from MMDAgent</string>
+  </dict>
+</plist>
+
