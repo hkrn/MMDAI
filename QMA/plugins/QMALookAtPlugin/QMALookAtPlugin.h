@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -47,7 +47,7 @@
 class QMALookAtPlugin : public QMAPlugin
 {
     Q_OBJECT
-    Q_INTERFACES(QMAPlugin);
+    Q_INTERFACES(QMAPlugin)
 
 public:
     QMALookAtPlugin();
@@ -69,6 +69,8 @@ private:
     MMDAI::SceneController *m_controller;
     MMDAI::BoneController *m_neckController;
     MMDAI::BoneController *m_eyeController;
+
+    Q_DISABLE_COPY(QMALookAtPlugin)
 };
 
 #endif // QMALOOKATPLUGIN_H

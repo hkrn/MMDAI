@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -36,16 +36,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QtConcurrentRun>
-#include <QApplication>
-#include <QDir>
-#include <QFile>
-#include <QTextCodec>
-#include <QTextStream>
+#include "QMAJuliusPlugin.h"
 
+#include <QtCore>
 #include <MMDME/Common.h>
 
-#include "QMAJuliusPlugin.h"
 #undef open // undef stddef.h in Julius
 
 class QMAJuliusPluginThread : public QThread

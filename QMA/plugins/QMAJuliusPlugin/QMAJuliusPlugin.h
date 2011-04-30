@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -39,9 +39,9 @@
 #ifndef QMAJULIUSPLUGIN_H
 #define QMAJULIUSPLUGIN_H
 
-#include <QFutureWatcher>
-#include <QSystemTrayIcon>
-#include <QTranslator>
+#include <QtCore/QFutureWatcher>
+#include <QtCore/QTranslator>
+#include <QtGui/QSystemTrayIcon>
 
 #include <julius/juliuslib.h>
 
@@ -52,7 +52,7 @@ class QMAJuliusPluginThread;
 class QMAJuliusPlugin : public QMAPlugin
 {
     Q_OBJECT
-    Q_INTERFACES(QMAPlugin);
+    Q_INTERFACES(QMAPlugin)
 
     friend void QMAJuliusPluginBeginRecognition(Recog *recog, void *ptr);
     friend void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr);
@@ -88,6 +88,8 @@ private:
     QTranslator m_translator;
     Jconf *m_jconf;
     Recog *m_recog;
+
+    Q_DISABLE_COPY(QMAJuliusPlugin)
 };
 
 #endif // QMAJULIUSPLUGIN_H

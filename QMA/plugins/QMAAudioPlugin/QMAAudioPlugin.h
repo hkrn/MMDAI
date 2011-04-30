@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn (libMMDAI)                         */
+/*  Copyright (c) 2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -14,7 +14,7 @@
 /*   copyright notice, this list of conditions and the following     */
 /*   disclaimer in the documentation and/or other materials provided */
 /*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
+/* - Neither the name of the MMDAgent project team nor the names of  */
 /*   its contributors may be used to endorse or promote products     */
 /*   derived from this software without specific prior written       */
 /*   permission.                                                     */
@@ -37,8 +37,8 @@
 #ifndef QMAAUDIOPLUGIN_H
 #define QMAAUDIOPLUGIN_H
 
-#include <QDir>
-#include <QMap>
+#include <QtCore/QDir>
+#include <QtCore/QMap>
 #include <phonon/AudioOutput>
 #include <phonon/MediaObject>
 
@@ -77,6 +77,8 @@ private:
     Phonon::AudioOutput *m_audioOutput;
     Phonon::MediaObject *m_audioObject;
     QMap<QString, Phonon::MediaSource> m_audioSources;
+
+    Q_DISABLE_COPY(QMAAudioPlugin)
 };
 
 #endif // QMAAUDIOPLUGIN_H

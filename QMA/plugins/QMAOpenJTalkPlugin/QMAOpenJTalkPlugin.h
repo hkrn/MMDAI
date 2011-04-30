@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -39,10 +39,10 @@
 #ifndef QMAOPENJTALKPLUGIN_H
 #define QMAOPENJTALKPLUGIN_H
 
-#include <QByteArray>
-#include <QFutureWatcher>
-#include <QIODevice>
-#include <QTimer>
+#include <QtCore/QByteArray>
+#include <QtCore/QFutureWatcher>
+#include <QtCore/QIODevice>
+#include <QtCore/QTimer>
 #include "portaudio.h"
 
 #include "QMAPlugin.h"
@@ -83,6 +83,8 @@ private:
     QString m_base;
     QString m_dir;
     QString m_config;
+
+    Q_DISABLE_COPY(QMAOpenJTalkPlugin)
 };
 
 #endif // QMAOPENJTALKPLUGIN_H

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
 /*                2010-2011  hkrn                                    */
 /*                                                                   */
@@ -36,10 +36,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QTextCodec>
-
-#include <MMDAI/MMDAI.h>
 #include "QMALookAtPlugin.h"
+
+#include <QtCore>
+#include <MMDAI/MMDAI.h>
 
 static void setNeckController(MMDAI::BoneController *controller, MMDAI::PMDModel *model)
 {

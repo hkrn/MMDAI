@@ -1,8 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -36,10 +36,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QtCore>
-
-#include <MMDME/Common.h>
 #include "QMAOpenJTalkPlugin.h"
+
+#include <QtCore>
+#include <MMDME/Common.h>
 
 const QString kOpenJTalkStartCommand = "SYNTH_START";
 const QString kOpenJTalkStopCommand =  "SYNTH_STOP";
