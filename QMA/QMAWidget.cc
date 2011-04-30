@@ -522,8 +522,10 @@ void QMAWidget::mousePressEvent(QMouseEvent *event)
 
 void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 {
-    if (!m_doubleClicked)
+    if (!m_doubleClicked) {
         m_controller->setHighlightObject(NULL);
+        m_controller->deselectObject();
+    }
 }
 
 void QMAWidget::wheelEvent(QWheelEvent *event)
