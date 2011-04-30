@@ -41,7 +41,7 @@
 #include <QSettings>
 
 class QMAPreference;
-class QMAWidget;
+class QMAScenePlayer;
 class QMALogViewWidget;
 
 class QMAWindow : public QMainWindow
@@ -101,7 +101,7 @@ private:
 
     QSettings m_settings;
     QMAPreference *m_preference;
-    QMAWidget *m_widget;
+    QMAScenePlayer *m_widget;
     QMALogViewWidget *m_logView;
     QMenu *m_fileMenu;
     QMenu *m_sceneMenu;

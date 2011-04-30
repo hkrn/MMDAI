@@ -42,7 +42,6 @@ TARGET = QtMMDAI
 TEMPLATE = app
 
 SOURCES += main.cc\
-    QMAWidget.cc \
     QMATimer.cc \
     QMAWindow.cc \
     QMAModelLoader.cc \
@@ -52,9 +51,10 @@ SOURCES += main.cc\
     QMALogViewWidget.cc \
     QMAPreference.cc \
     QMADebugRenderEngine.cc \
-    QMATextRenderEngine.cc
+    QMATextRenderEngine.cc \
+    QMAScenePlayer.cc
 
-HEADERS  += QMAWidget.h \
+HEADERS  += \
     QMAPlugin.h \
     QMATimer.h \
     QMAWindow.h \
@@ -65,7 +65,8 @@ HEADERS  += QMAWidget.h \
     QMALogViewWidget.h \
     QMAPreference.h \
     QMADebugRenderEngine.h \
-    QMATextRenderEngine.h
+    QMATextRenderEngine.h \
+    QMAScenePlayer.h
 
 TRANSLATIONS += res/translations/QMA.ts
 

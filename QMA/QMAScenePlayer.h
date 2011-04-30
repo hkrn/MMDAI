@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef WIDGET_H
-#define WIDGET_H
+#ifndef QMASCENEPLAYER_H
+#define QMASCENEPLAYER_H
 
 #include <QtGui/QtGui>
 
@@ -56,7 +56,7 @@ class PMDObject;
 class SceneController;
 }
 
-enum QMAWidgetZoomOption {
+enum QMAScenePlayerZoomOption {
     Normal = 0x0,
     Faster = 0x1,
     Slower = 0x2
@@ -64,13 +64,13 @@ enum QMAWidgetZoomOption {
 
 class QMAPreference;
 
-class QMAWidget : public QGLWidget, public MMDAI::ISceneEventHandler
+class QMAScenePlayer : public QGLWidget, public MMDAI::ISceneEventHandler
 {
     Q_OBJECT
 
 public:
-    explicit QMAWidget(QMAPreference *preference, QWidget *parent = 0);
-    ~QMAWidget();
+    explicit QMAScenePlayer(QMAPreference *preference, QWidget *parent = 0);
+    ~QMAScenePlayer();
 
     bool addModel(const QString &filename);
     bool changeModel(const QString &filename);
@@ -92,7 +92,7 @@ public:
 
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
-    void zoom(bool up, enum QMAWidgetZoomOption option);
+    void zoom(bool up, enum QMAScenePlayerZoomOption option);
 
     inline void toggleDisplayBone() {
         m_debug->toggleRenderBones();
@@ -160,7 +160,7 @@ private:
     bool m_showLog;
     bool m_activeMotion;
 
-    Q_DISABLE_COPY(QMAWidget);
+    Q_DISABLE_COPY(QMAScenePlayer);
 };
 
-#endif // WIDGET_H
+#endif // QMASCENEPLAYER_H

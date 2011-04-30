@@ -36,9 +36,9 @@
 
 #include <MMDAI/MMDAI.h>
 #include "QMAPreference.h"
-#include "QMAWidget.h"
+#include "QMAScenePlayer.h"
 
-QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
+QMAScenePlayer::QMAScenePlayer(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_debug(0),
       m_preference(preference),
@@ -61,7 +61,7 @@ QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
     setAutoFillBackground(false);
 }
 
-QMAWidget::~QMAWidget()
+QMAScenePlayer::~QMAScenePlayer()
 {
     delete m_debug;
     m_debug = 0;
@@ -71,7 +71,7 @@ QMAWidget::~QMAWidget()
     m_controller = 0;
 }
 
-void QMAWidget::handleEventMessage(const char *eventType, int argc, ...)
+void QMAScenePlayer::handleEventMessage(const char *eventType, int argc, ...)
 {
     QList<QVariant> arguments;
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
@@ -86,7 +86,7 @@ void QMAWidget::handleEventMessage(const char *eventType, int argc, ...)
     emit pluginEventPost(eventType, arguments);
 }
 
-bool QMAWidget::addModel(const QString &filename)
+bool QMAScenePlayer::addModel(const QString &filename)
 {
     QByteArray encodedPath = QFile::encodeName(filename);
     const char *path = encodedPath.constData();
@@ -98,12 +98,12 @@ bool QMAWidget::addModel(const QString &filename)
     return ret;
 }
 
-bool QMAWidget::changeModel(const QString &filename)
+bool QMAScenePlayer::changeModel(const QString &filename)
 {
     return changeModel(filename, m_controller->getSelectedObject());
 }
 
-bool QMAWidget::changeModel(const QString &filename, MMDAI::PMDObject *object)
+bool QMAScenePlayer::changeModel(const QString &filename, MMDAI::PMDObject *object)
 {
     if (object) {
         QByteArray encodedPath = QFile::encodeName(filename);
@@ -118,12 +118,12 @@ bool QMAWidget::changeModel(const QString &filename, MMDAI::PMDObject *object)
     return false;
 }
 
-bool QMAWidget::deleteModel()
+bool QMAScenePlayer::deleteModel()
 {
     return deleteModel(m_controller->getSelectedObject());
 }
 
-bool QMAWidget::deleteModel(MMDAI::PMDObject *object)
+bool QMAScenePlayer::deleteModel(MMDAI::PMDObject *object)
 {
     if (object) {
         m_controller->deleteModel(object);
@@ -132,7 +132,7 @@ bool QMAWidget::deleteModel(MMDAI::PMDObject *object)
     return false;
 }
 
-bool QMAWidget::setStage(const QString &filename)
+bool QMAScenePlayer::setStage(const QString &filename)
 {
     QByteArray encodedPath = QFile::encodeName(filename);
     MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
@@ -141,7 +141,7 @@ bool QMAWidget::setStage(const QString &filename)
     return ret;
 }
 
-bool QMAWidget::setFloor(const QString &filename)
+bool QMAScenePlayer::setFloor(const QString &filename)
 {
     QByteArray encodedPath = QFile::encodeName(filename);
     MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
@@ -150,7 +150,7 @@ bool QMAWidget::setFloor(const QString &filename)
     return ret;
 }
 
-bool QMAWidget::setBackground(const QString &filename)
+bool QMAScenePlayer::setBackground(const QString &filename)
 {
     QByteArray encodedPath = QFile::encodeName(filename);
     const char *path = encodedPath.constData();
@@ -160,7 +160,7 @@ bool QMAWidget::setBackground(const QString &filename)
     return ret;
 }
 
-bool QMAWidget::insertMotionToAllModels(const QString &filename)
+bool QMAScenePlayer::insertMotionToAllModels(const QString &filename)
 {
     QByteArray encodedPath = QFile::encodeName(filename);
     const char *path = encodedPath.constData();
@@ -179,12 +179,12 @@ bool QMAWidget::insertMotionToAllModels(const QString &filename)
     return ret;
 }
 
-bool QMAWidget::insertMotionToSelectedModel(const QString &filename)
+bool QMAScenePlayer::insertMotionToSelectedModel(const QString &filename)
 {
     return insertMotionToModel(filename, m_controller->getSelectedObject());
 }
 
-bool QMAWidget::insertMotionToModel(const QString &filename, MMDAI::PMDObject *object)
+bool QMAScenePlayer::insertMotionToModel(const QString &filename, MMDAI::PMDObject *object)
 {
     if (object) {
         QByteArray encodedPath = QFile::encodeName(filename);
@@ -196,7 +196,7 @@ bool QMAWidget::insertMotionToModel(const QString &filename, MMDAI::PMDObject *o
     return false;
 }
 
-void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
+void QMAScenePlayer::zoom(bool up, enum QMAScenePlayerZoomOption option)
 {
     float delta = m_preference->getFloat(MMDAI::kPreferenceScaleStep);
     float scale = m_controller->getScale();
@@ -214,17 +214,17 @@ void QMAWidget::zoom(bool up, enum QMAWidgetZoomOption option)
     update();
 }
 
-void QMAWidget::rotate(float x, float y)
+void QMAScenePlayer::rotate(float x, float y)
 {
     m_controller->setModelViewRotation(x, y);
 }
 
-void QMAWidget::translate(float x, float y)
+void QMAScenePlayer::translate(float x, float y)
 {
     m_controller->translate(btVector3(x, y, 0.0f) * m_preference->getFloat(MMDAI::kPreferenceTranslateStep));
 }
 
-void QMAWidget::setEdgeThin(float value)
+void QMAScenePlayer::setEdgeThin(float value)
 {
     value = qMax(qMin(value, 2.0f), 0.0f);
     m_preference->setFloat(MMDAI::kPreferenceCartoonEdgeWidth, value);
@@ -236,7 +236,7 @@ void QMAWidget::setEdgeThin(float value)
     }
 }
 
-void QMAWidget::setEnablePhysicalEngine(bool value)
+void QMAScenePlayer::setEnablePhysicalEngine(bool value)
 {
     int max = m_controller->getMaxObjects();
     for (int i = 0; i < max; i++) {
@@ -247,12 +247,12 @@ void QMAWidget::setEnablePhysicalEngine(bool value)
     }
 }
 
-void QMAWidget::updateShadowMapping()
+void QMAScenePlayer::updateShadowMapping()
 {
     m_controller->setShadowMapping();
 }
 
-void QMAWidget::selectModel(const QString &name)
+void QMAScenePlayer::selectModel(const QString &name)
 {
     QByteArray bytes = name.toUtf8();
     const char *alias = bytes.constData();
@@ -263,7 +263,7 @@ void QMAWidget::selectModel(const QString &name)
     }
 }
 
-void QMAWidget::loadPlugins(QFile &file)
+void QMAScenePlayer::loadPlugins(QFile &file)
 {
     foreach (QObject *instance, QPluginLoader::staticInstances()) {
         QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
@@ -295,7 +295,7 @@ void QMAWidget::loadPlugins(QFile &file)
     emit pluginLoaded(m_controller, QFileInfo(file).baseName());
 }
 
-void QMAWidget::addPlugin(QMAPlugin *plugin)
+void QMAScenePlayer::addPlugin(QMAPlugin *plugin)
 {
     connect(this, SIGNAL(pluginLoaded(MMDAI::SceneController*,QString)),
             plugin, SLOT(load(MMDAI::SceneController*,QString)));
@@ -312,7 +312,7 @@ void QMAWidget::addPlugin(QMAPlugin *plugin)
     MMDAILogInfo("%s was loaded successfully", plugin->metaObject()->className());
 }
 
-void QMAWidget::delegateCommand(const QString &command, const QList<QVariant> &arguments)
+void QMAScenePlayer::delegateCommand(const QString &command, const QList<QVariant> &arguments)
 {
     qDebug().nospace() << "delegateCommand command=" << command << ", arguments="  << arguments;
     if (!handleCommand(command, arguments)) {
@@ -342,14 +342,14 @@ void QMAWidget::delegateCommand(const QString &command, const QList<QVariant> &a
     }
 }
 
-void QMAWidget::delegateEvent(const QString &type, const QList<QVariant> &arguments)
+void QMAScenePlayer::delegateEvent(const QString &type, const QList<QVariant> &arguments)
 {
     if (!QMAPlugin::isRenderEvent(type))
         qDebug().nospace() << "delegateEvent type=" << type << ", arguments=" << arguments;
     emit pluginEventPost(type, arguments);
 }
 
-void QMAWidget::updateScene()
+void QMAScenePlayer::updateScene()
 {
     QList<QVariant> arguments;
     const QRect rectangle(geometry());
@@ -384,7 +384,7 @@ void QMAWidget::updateScene()
     update();
 }
 
-void QMAWidget::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader)
+void QMAScenePlayer::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader)
 {
     MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
     for (; player; player = player->next) {
@@ -398,11 +398,11 @@ void QMAWidget::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *lo
     }
 }
 
-void QMAWidget::initializeGL()
+void QMAScenePlayer::initializeGL()
 {
 }
 
-void QMAWidget::showEvent(QShowEvent *event)
+void QMAScenePlayer::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event);
     if (!m_sceneUpdateTimer.isActive()) {
@@ -435,12 +435,12 @@ void QMAWidget::showEvent(QShowEvent *event)
     }
 }
 
-void QMAWidget::resizeGL(int width, int height)
+void QMAScenePlayer::resizeGL(int width, int height)
 {
     m_controller->setRect(width, height);
 }
 
-void QMAWidget::paintGL()
+void QMAScenePlayer::paintGL()
 {
     double fps = m_sceneFrameTimer.getFPS();
     glColor3f(1, 0, 0);
@@ -456,14 +456,14 @@ void QMAWidget::paintGL()
     delegateEvent(QMAPlugin::getPostRenderEvent(), QMAPlugin::getEmptyArguments());
 }
 
-void QMAWidget::mouseDoubleClickEvent(QMouseEvent *event)
+void QMAScenePlayer::mouseDoubleClickEvent(QMouseEvent *event)
 {
     m_controller->selectObject(event->x(), event->y());
     m_controller->setHighlightObject(m_controller->getSelectedObject());
     m_doubleClicked = true;
 }
 
-void QMAWidget::mouseMoveEvent(QMouseEvent *event)
+void QMAScenePlayer::mouseMoveEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton) {
         int x = event->x();
@@ -512,7 +512,7 @@ void QMAWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void QMAWidget::mousePressEvent(QMouseEvent *event)
+void QMAScenePlayer::mousePressEvent(QMouseEvent *event)
 {
     m_x = event->x();
     m_y = event->y();
@@ -520,7 +520,7 @@ void QMAWidget::mousePressEvent(QMouseEvent *event)
     m_controller->selectObject(m_x, m_y);
 }
 
-void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
+void QMAScenePlayer::mouseReleaseEvent(QMouseEvent * /* event */)
 {
     if (!m_doubleClicked) {
         m_controller->setHighlightObject(NULL);
@@ -528,10 +528,10 @@ void QMAWidget::mouseReleaseEvent(QMouseEvent * /* event */)
     }
 }
 
-void QMAWidget::wheelEvent(QWheelEvent *event)
+void QMAScenePlayer::wheelEvent(QWheelEvent *event)
 {
     Qt::KeyboardModifiers modifiers = event->modifiers();
-    QMAWidgetZoomOption option = Normal;
+    QMAScenePlayerZoomOption option = Normal;
     if (modifiers & Qt::ControlModifier) /* faster */
         option = Faster;
     else if (modifiers & Qt::ShiftModifier) /* slower */
@@ -539,17 +539,17 @@ void QMAWidget::wheelEvent(QWheelEvent *event)
     zoom(event->delta() > 0, option);
 }
 
-void QMAWidget::dragEnterEvent(QDragEnterEvent *event)
+void QMAScenePlayer::dragEnterEvent(QDragEnterEvent *event)
 {
     event->acceptProposedAction();
 }
 
-void QMAWidget::dragMoveEvent(QDragMoveEvent *event)
+void QMAScenePlayer::dragMoveEvent(QDragMoveEvent *event)
 {
     event->acceptProposedAction();
 }
 
-void QMAWidget::dropEvent(QDropEvent *event)
+void QMAScenePlayer::dropEvent(QDropEvent *event)
 {
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
@@ -657,19 +657,19 @@ void QMAWidget::dropEvent(QDropEvent *event)
     event->acceptProposedAction();
 }
 
-void QMAWidget::dragLeaveEvent(QDragLeaveEvent *event)
+void QMAScenePlayer::dragLeaveEvent(QDragLeaveEvent *event)
 {
     event->accept();
 }
 
-void QMAWidget::closeEvent(QCloseEvent *event)
+void QMAScenePlayer::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event);
     m_sceneUpdateTimer.stop();
     emit pluginUnloaded();
 }
 
-bool QMAWidget::handleCommand(const QString &command, const QList<QVariant> &arguments)
+bool QMAScenePlayer::handleCommand(const QString &command, const QList<QVariant> &arguments)
 {
     bool ret = true;
     int argc = arguments.count();
@@ -689,7 +689,7 @@ bool QMAWidget::handleCommand(const QString &command, const QList<QVariant> &arg
     return ret;
 }
 
-void QMAWidget::hideText()
+void QMAScenePlayer::hideText()
 {
     m_text.setEnable(false);
 }

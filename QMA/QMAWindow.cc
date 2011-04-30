@@ -38,7 +38,7 @@
 #include "QMAWindow.h"
 
 #include "QMAPreference.h"
-#include "QMAWidget.h"
+#include "QMAScenePlayer.h"
 #include "QMALogViewWidget.h"
 
 QMAWindow::QMAWindow(QWidget *parent) :
@@ -49,7 +49,7 @@ QMAWindow::QMAWindow(QWidget *parent) :
 {
     m_settings.setIniCodec("UTF-8");
     m_preference = new QMAPreference(&m_settings);
-    m_widget = new QMAWidget(m_preference, parent);
+    m_widget = new QMAScenePlayer(m_preference, parent);
     m_logView = new QMALogViewWidget(parent);
 
     setCentralWidget(m_widget);
