@@ -45,6 +45,7 @@
 #include "QMADebugRenderEngine.h"
 #include "QMAModelLoaderFactory.h"
 #include "QMAPlugin.h"
+#include "QMATextRenderEngine.h"
 #include "QMATimer.h"
 
 /* to load glee correctly, should include QtOpenGL after MMDAI/MMDME */
@@ -130,9 +131,11 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
+    void hideText();
     void updateScene();
 
 private:
+    bool handleCommand(const QString &command, const QList<QVariant> &arguments);
     void loadModel();
     void loadPlugins(QFile &file);
     void addPlugin(QMAPlugin *plugin);
@@ -144,6 +147,7 @@ private:
     QMADebugRenderEngine *m_debug;
     QMAModelLoaderFactory m_factory;
     QMAPreference *m_preference;
+    QMATextRenderEngine m_text;
     QMATimer m_sceneFrameTimer;
     QTimer m_sceneUpdateTimer;
     MMDAI::SceneController *m_controller;

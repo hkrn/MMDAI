@@ -51,7 +51,8 @@ SOURCES += main.cc\
     QMALogger.cc \
     QMALogViewWidget.cc \
     QMAPreference.cc \
-    QMADebugRenderEngine.cc
+    QMADebugRenderEngine.cc \
+    QMATextRenderEngine.cc
 
 HEADERS  += QMAWidget.h \
     QMAPlugin.h \
@@ -63,7 +64,8 @@ HEADERS  += QMAWidget.h \
     QMALogger.h \
     QMALogViewWidget.h \
     QMAPreference.h \
-    QMADebugRenderEngine.h
+    QMADebugRenderEngine.h \
+    QMATextRenderEngine.h
 
 TRANSLATIONS += res/translations/QMA.ts
 

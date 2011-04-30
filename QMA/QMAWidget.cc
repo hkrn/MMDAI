@@ -42,6 +42,7 @@ QMAWidget::QMAWidget(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_debug(0),
       m_preference(preference),
+      m_text(font()),
       m_sceneUpdateTimer(this),
       m_controller(0),
       m_parser(0),
@@ -314,28 +315,30 @@ void QMAWidget::addPlugin(QMAPlugin *plugin)
 void QMAWidget::delegateCommand(const QString &command, const QList<QVariant> &arguments)
 {
     qDebug().nospace() << "delegateCommand command=" << command << ", arguments="  << arguments;
-    int argc = arguments.count();
-    QByteArray cmd = command.toUtf8();
-    char **argv = static_cast<char **>(calloc(sizeof(char *), argc));
-    if (argv) {
-        bool err = false;
-        QRegExp regexp(".*/.+\\.\\w+$");
-        for (int i = 0; i < argc; i++) {
-            QString arg = arguments.at(i).toString();
-            QByteArray bytes = regexp.indexIn(arg) != -1 ? QFile::encodeName(arg) : arg.toUtf8();
-            if ((argv[i] = MMDAIStringClone(bytes.constData())) == NULL) {
-                err = true;
-                break;
+    if (!handleCommand(command, arguments)) {
+        int argc = arguments.count();
+        QByteArray cmd = command.toUtf8();
+        char **argv = static_cast<char **>(calloc(sizeof(char *), argc));
+        if (argv) {
+            bool err = false;
+            QRegExp regexp(".*/.+\\.\\w+$");
+            for (int i = 0; i < argc; i++) {
+                QString arg = arguments.at(i).toString();
+                QByteArray bytes = regexp.indexIn(arg) != -1 ? QFile::encodeName(arg) : arg.toUtf8();
+                if ((argv[i] = MMDAIStringClone(bytes.constData())) == NULL) {
+                    err = true;
+                    break;
+                }
             }
+            if (!err)
+                m_parser->parse(cmd.constData(), argv, argc);
+            for (int i = 0; i < argc; i++) {
+                MMDAIMemoryRelease(argv[i]);
+            }
+            MMDAIMemoryRelease(argv);
+            if (!err)
+                emit pluginCommandPost(command, arguments);
         }
-        if (!err)
-            m_parser->parse(cmd.constData(), argv, argc);
-        for (int i = 0; i < argc; i++) {
-            MMDAIMemoryRelease(argv[i]);
-        }
-        MMDAIMemoryRelease(argv);
-        if (!err)
-            emit pluginCommandPost(command, arguments);
     }
 }
 
@@ -449,6 +452,7 @@ void QMAWidget::paintGL()
     m_controller->renderScene();
     m_debug->render();
     m_sceneFrameTimer.count();
+    m_text.render();
     delegateEvent(QMAPlugin::getPostRenderEvent(), QMAPlugin::getEmptyArguments());
 }
 
@@ -661,4 +665,29 @@ void QMAWidget::closeEvent(QCloseEvent *event)
     Q_UNUSED(event);
     m_sceneUpdateTimer.stop();
     emit pluginUnloaded();
+}
+
+bool QMAWidget::handleCommand(const QString &command, const QList<QVariant> &arguments)
+{
+    bool ret = true;
+    int argc = arguments.count();
+    if (command == "MMDAI_SHOW_TEXT" && argc >= 1) {
+        const QStringList text = arguments[0].toString().split("<br>");
+        m_text.setText(text);
+        if (argc >= 2) {
+            int ms = arguments[1].toInt();
+            if (ms > 0)
+                QTimer::singleShot(ms, this, SLOT(hideText()));
+        }
+        m_text.setEnable(true);
+    }
+    else {
+        ret = false;
+    }
+    return ret;
+}
+
+void QMAWidget::hideText()
+{
+    m_text.setEnable(false);
 }
