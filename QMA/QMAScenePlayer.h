@@ -69,7 +69,7 @@ class QMAScenePlayer : public QGLWidget, public MMDAI::ISceneEventHandler
     Q_OBJECT
 
 public:
-    explicit QMAScenePlayer(QMAPreference *preference, QWidget *parent = 0);
+    QMAScenePlayer(QMAPreference *preference, QWidget *parent = 0);
     ~QMAScenePlayer();
 
     bool addModel(const QString &filename);
@@ -93,13 +93,8 @@ public:
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
     void zoom(bool up, enum QMAScenePlayerZoomOption option);
+    void createMenu(const QHash<QString, QMenu*> &menuBar);
 
-    inline void toggleDisplayBone() {
-        m_debug->toggleRenderBones();
-    }
-    inline void toggleDisplayRigidBody() {
-        m_debug->toggleRenderRigidBodies();
-    }
     inline QMATimer *getSceneFrameTimer() {
         return &m_sceneFrameTimer;
     }
@@ -107,6 +102,12 @@ public:
 public slots:
     void delegateCommand(const QString &command, const QList<QVariant> &arguments);
     void delegateEvent(const QString &type, const QList<QVariant> &arguments);
+    inline void toggleDisplayBone() {
+        m_debug->toggleRenderBones();
+    }
+    inline void toggleDisplayRigidBody() {
+        m_debug->toggleRenderRigidBodies();
+    }
 
 signals:
     void pluginLoaded(MMDAI::SceneController *, const QString &);
@@ -133,12 +134,40 @@ protected:
 private slots:
     void hideText();
     void updateScene();
+    void insertMotionToAllModels();
+    void insertMotionToSelectedModel();
+    void addModel();
+    void setStage();
+    void setFloor();
+    void setBackground();
+    void rotateUp();
+    void rotateDown();
+    void rotateLeft();
+    void rotateRight();
+    void translateUp();
+    void translateDown();
+    void translateLeft();
+    void translateRight();
+    void increaseEdgeThin();
+    void decreaseEdgeThin();
+    void togglePhysicSimulation();
+    void toggleShadowMapping();
+    void toggleShadowMappingLightFirst();
+    void speak();
+    void zoomIn();
+    void zoomOut();
+    void selectObject();
+    void changeSelectedObject();
+    void deleteSelectedObject();
+    void saveScene();
 
 private:
     bool handleCommand(const QString &command, const QList<QVariant> &arguments);
     void loadModel();
     void loadPlugins(QFile &file);
     void addPlugin(QMAPlugin *plugin);
+    void createActions();
+    void setDirectorySetting(const QString &key, const QString &fileName);
 
     void updateModelPositionAndRotation(double fps);
     void renderDebugModel();
@@ -153,14 +182,44 @@ private:
     MMDAI::SceneController *m_controller;
     MMDAI::CommandParser *m_parser;
 
+    QMenu *m_selectModelMenu;
+    QAction *m_insertMotionToAllAction;
+    QAction *m_insertMotionToSelectedAction;
+    QAction *m_addModelAction;
+    QAction *m_setStageAction;
+    QAction *m_setFloorAction;
+    QAction *m_setBackgroundAction;
+    QAction *m_saveSceneAction;
+    QAction *m_showLogAction;
+    QAction *m_increaseEdgeThinAction;
+    QAction *m_decreaseEdgeThinAction;
+    QAction *m_toggleDisplayBoneAction;
+    QAction *m_toggleDisplayRigidBodyAction;
+    QAction *m_togglePhysicSimulationAction;
+    QAction *m_toggleShadowMappingAction;
+    QAction *m_toggleShadowMappingFirstAction;
+    QAction *m_toggleFullScreenAction;
+    QAction *m_speakAction;
+    QAction *m_zoomInAction;
+    QAction *m_zoomOutAction;
+    QAction *m_rotateUpAction;
+    QAction *m_rotateDownAction;
+    QAction *m_rotateLeftAction;
+    QAction *m_rotateRightAction;
+    QAction *m_translateUpAction;
+    QAction *m_translateDownAction;
+    QAction *m_translateLeftAction;
+    QAction *m_translateRightAction;
+    QAction *m_changeSelectedObjectAction;
+    QAction *m_deleteSelectedObjectAction;
+
     int m_x;
     int m_y;
-
     bool m_doubleClicked;
     bool m_showLog;
-    bool m_activeMotion;
+    bool m_enablePhysicsSimulation;
 
-    Q_DISABLE_COPY(QMAScenePlayer);
+    Q_DISABLE_COPY(QMAScenePlayer)
 };
 
 #endif // QMASCENEPLAYER_H

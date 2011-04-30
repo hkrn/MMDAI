@@ -44,17 +44,19 @@
 QMAWindow::QMAWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QtMMDAI"),
-    m_isFullScreen(false),
-    m_enablePhysicsSimulation(true)
+    m_isFullScreen(false)
 {
     m_settings.setIniCodec("UTF-8");
+    m_menuBar = new QMenuBar(0);
     m_preference = new QMAPreference(&m_settings);
     m_widget = new QMAScenePlayer(m_preference, parent);
     m_logView = new QMALogViewWidget(parent);
 
-    setCentralWidget(m_widget);
     createActions();
-    createMenu();
+    createMenu(m_menuBar);
+    mergeMenu();
+
+    setCentralWidget(m_widget);
     setWindowTitle(qAppName());
     statusBar()->showMessage("");
 
@@ -91,160 +93,24 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
     m_widget->delegateEvent(QString(MMDAI::ISceneEventHandler::kKeyEvent), arguments);
 }
 
-void QMAWindow::insertMotionToAllModels()
+void QMAWindow::showLogWindow()
 {
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastVMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open VMD file"), path, tr("VMD (*.vmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastVMDDirectory", fileName);
-        m_widget->insertMotionToAllModels(fileName);
+    QPoint pos = m_logView->pos();
+    if (pos.x() < 0)
+        pos.setX(0);
+    if (pos.y() < 0)
+        pos.setY(0);
+    m_logView->show();
+}
+
+void QMAWindow::resizeScene()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action) {
+        QSize size = action->data().toSize();
+        m_widget->resize(size);
+        resize(size);
     }
-    m_settings.endGroup();
-}
-
-void QMAWindow::insertMotionToSelectedModel()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastVMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("VMD (*.vmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastVMDDirectory", fileName);
-        m_widget->insertMotionToSelectedModel(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::addModel()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastPMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastPMDDirectory", fileName);
-        m_widget->addModel(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::setStage()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastStageDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open stage PMD file"), path, tr("PMD (*.pmd *.xpmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastStageDirectory", fileName);
-        m_widget->setStage(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::setFloor()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastFloorDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open floor image"), path, tr("Image (*.bmp *.png *.tga)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastFloorDirectory", fileName);
-        m_widget->setFloor(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::setBackground()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastBackgroundDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open background image"), path, tr("Image (*.bmp *.png *.tga)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastBackgroundDirectory", fileName);
-        m_widget->setBackground(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::rotateUp()
-{
-    m_widget->rotate(0.0f, -1.0f);
-}
-
-void QMAWindow::rotateDown()
-{
-    m_widget->rotate(0.0f, 1.0f);
-}
-
-void QMAWindow::rotateLeft()
-{
-    m_widget->rotate(-1.0f, 0.0f);
-}
-
-void QMAWindow::rotateRight()
-{
-    m_widget->rotate(1.0f, 0.0f);
-}
-
-void QMAWindow::translateUp()
-{
-    m_widget->translate(0.0f, -1.0f);
-}
-
-void QMAWindow::translateDown()
-{
-    m_widget->translate(0.0f, 1.0f);
-}
-
-void QMAWindow::translateLeft()
-{
-    m_widget->translate(1.0f, 0.0f);
-}
-
-void QMAWindow::translateRight()
-{
-    m_widget->translate(-1.0f, 0.0f);
-}
-
-void QMAWindow::toggleDisplayBone()
-{
-    m_widget->toggleDisplayBone();
-}
-
-void QMAWindow::toggleDisplayRigidBody()
-{
-    m_widget->toggleDisplayRigidBody();
-}
-
-void QMAWindow::increaseEdgeThin()
-{
-    setEdgeThin(m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeWidth) * m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeStep));
-}
-
-void QMAWindow::decreaseEdgeThin()
-{
-    setEdgeThin(m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeWidth) / m_preference->getFloat(MMDAI::kPreferenceCartoonEdgeStep));
-}
-
-void QMAWindow::togglePhysicSimulation()
-{
-    m_enablePhysicsSimulation = !m_enablePhysicsSimulation;
-    m_widget->setEnablePhysicalEngine(m_enablePhysicsSimulation);
-}
-
-void QMAWindow::toggleShadowMapping()
-{
-    bool value = !m_preference->getBool(MMDAI::kPreferenceUseShadowMapping);
-    m_preference->setBool(MMDAI::kPreferenceUseShadowMapping, value);
-    m_widget->updateShadowMapping();
-}
-
-void QMAWindow::toggleShadowMappingLightFirst()
-{
-    bool value = !m_preference->getBool(MMDAI::kPreferenceShadowMappingLightFirst);
-    m_preference->setBool(MMDAI::kPreferenceShadowMappingLightFirst, value);
-}
-
-void QMAWindow::setEdgeThin(float value)
-{
-    m_widget->setEdgeThin(value);
 }
 
 void QMAWindow::toggleFullScreen()
@@ -258,84 +124,6 @@ void QMAWindow::toggleFullScreen()
         statusBar()->hide();
         showFullScreen();
         m_isFullScreen = true;
-    }
-}
-
-void QMAWindow::speak()
-{
-    bool ok = false;
-    QString text = QInputDialog::getText(this, "", tr("Text to speak"), QLineEdit::Normal, "", &ok);
-    if (ok && !text.isEmpty()) {
-        QList<QVariant> arguments;
-        arguments << text;
-        m_widget->delegateEvent(QString("RECOG_EVENT_STOP"), arguments);
-    }
-}
-
-void QMAWindow::zoomIn()
-{
-    m_widget->zoom(true, Normal);
-}
-
-void QMAWindow::zoomOut()
-{
-    m_widget->zoom(false, Normal);
-}
-
-void QMAWindow::selectObject()
-{
-    QAction *action = qobject_cast<QAction *>(sender());
-    if (action)
-        m_widget->selectModel(action->text());
-}
-
-void QMAWindow::changeSelectedObject()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastPMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastPMDDirectory", fileName);
-        m_widget->changeModel(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::deleteSelectedObject()
-{
-    m_widget->deleteModel();
-}
-
-void QMAWindow::showLogWindow()
-{
-    QPoint pos = m_logView->pos();
-    if (pos.x() < 0)
-        pos.setX(0);
-    if (pos.y() < 0)
-        pos.setY(0);
-    m_logView->show();
-}
-
-void QMAWindow::saveScene()
-{
-    m_settings.beginGroup("window");
-    QString path = m_settings.value("lastSaveSceneDirectory").toString();
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save image"), path, tr("Image (*.jpg, *.png, *.bmp)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastSaveSceneDirectory", fileName);
-        QImage image = m_widget->grabFrameBuffer();
-        image.save(fileName);
-    }
-    m_settings.endGroup();
-}
-
-void QMAWindow::resizeScene()
-{
-    QAction *action = qobject_cast<QAction *>(sender());
-    if (action) {
-        QSize size = action->data().toSize();
-        m_widget->resize(size);
-        resize(size);
     }
 }
 
@@ -372,28 +160,10 @@ void QMAWindow::about()
 
 void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
+    Q_UNUSED(arguments);
     if (type == QMAPlugin::getUpdateEvent()) {
         double fps = m_widget->getSceneFrameTimer()->getFPS();
         setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
-    }
-    else if (type == MMDAI::ISceneEventHandler::kModelAddEvent) {
-        QString name = arguments.at(0).toString();
-        QAction *action = new QAction(name, this);
-        action->setStatusTip(tr("Select a model %1").arg(name));
-        connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
-        m_selectModelMenu->addAction(action);
-    }
-    else if (type == MMDAI::ISceneEventHandler::kModelDeleteEvent) {
-        QString name = arguments.at(0).toString();
-        QAction *actionToRemove = NULL;
-        foreach (QAction *action, m_selectModelMenu->actions()) {
-            if (action->text() == name) {
-                actionToRemove = action;
-                break;
-            }
-        }
-        if (actionToRemove)
-            m_selectModelMenu->removeAction(actionToRemove);
     }
 }
 
@@ -401,179 +171,6 @@ void QMAWindow::createActions()
 {
     QAction *action = NULL;
     QList<QKeySequence> shortcuts;
-
-    action = new QAction(tr("Insert to the all models"), this);
-    action->setStatusTip(tr("Insert a motion to the all models."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_V));
-    connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToAllModels()));
-    m_insertMotionToAllAction = action;
-
-    action = new QAction(tr("Insert to the selected model"), this);
-    action->setStatusTip(tr("Insert a motion to the selected model. If an object is not selected, do nothing."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_V));
-    connect(action, SIGNAL(triggered()), this, SLOT(insertMotionToSelectedModel()));
-    m_insertMotionToSelectedAction = action;
-
-    action = new QAction(tr("Add model"), this);
-    action->setStatusTip(tr("Add a PMD model to the scene (Maximum is 20)."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
-    connect(action, SIGNAL(triggered()), this, SLOT(addModel()));
-    m_addModelAction = action;
-
-    action = new QAction(tr("Set stage"), this);
-    action->setStatusTip(tr("Set or replace a stage to the scene."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_S));
-    connect(action, SIGNAL(triggered()), this, SLOT(setStage()));
-    m_setStageAction = action;
-
-    action = new QAction(tr("Set floor"), this);
-    action->setStatusTip(tr("Set or replace a floor to the scene."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F));
-    connect(action, SIGNAL(triggered()), this, SLOT(setFloor()));
-    m_setFloorAction = action;
-
-    action = new QAction(tr("Set background"), this);
-    action->setStatusTip(tr("Set or replace a background to the scene."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_B));
-    connect(action, SIGNAL(triggered()), this, SLOT(setBackground()));
-    m_setBackgroundAction = action;
-
-    action = new QAction(tr("Save screen as image"), this);
-    action->setStatusTip(tr("Save the current scene as a image (BMP/JPEG/PNG are supported)."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
-    connect(action, SIGNAL(triggered()), this, SLOT(saveScene()));
-    m_saveSceneAction = action;
-
-    action = new QAction(tr("Show log"), this);
-    action->setStatusTip(tr("Open log window"));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_L));
-    connect(action, SIGNAL(triggered()), this, SLOT(showLogWindow()));
-    m_showLogAction = action;
-
-    action = new QAction(tr("Increase edge thin"), this);
-    action->setStatusTip(tr("Increase light edge thin."));
-    action->setShortcut(Qt::Key_E);
-    connect(action, SIGNAL(triggered()), this, SLOT(increaseEdgeThin()));
-    m_increaseEdgeThinAction = action;
-
-    action = new QAction(tr("Decrease edge thin"), this);
-    action->setStatusTip(tr("Decrease light edge thin."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_E));
-    connect(action, SIGNAL(triggered()), this, SLOT(decreaseEdgeThin()));
-    m_decreaseEdgeThinAction = action;
-
-    action = new QAction(tr("Toggle display bone"), this);
-    action->setStatusTip(tr("Enable / Disable displaying bones of the models."));
-    action->setShortcut(Qt::Key_B);
-    connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayBone()));
-    m_toggleDisplayBoneAction = action;
-
-    action = new QAction(tr("Toggle rigid body"), this);
-    action->setStatusTip(tr("Enable / Disable displaying rigid body of the models."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_W));
-    connect(action, SIGNAL(triggered()), this, SLOT(toggleDisplayRigidBody()));
-    m_toggleDisplayRigidBodyAction = action;
-
-    action = new QAction(tr("Toggle physic simulation"), this);
-    action->setStatusTip(tr("Enable / Disable physic simulation using Bullet."));
-    action->setShortcut(Qt::Key_P);
-    connect(action, SIGNAL(triggered()), this, SLOT(togglePhysicSimulation()));
-    m_togglePhysicSimulationAction = action;
-
-    action = new QAction(tr("Toggle shadow mapping"), this);
-    action->setStatusTip(tr("Enable / Disable shadow mapping."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_X));
-    connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMapping()));
-    m_toggleShadowMappingAction = action;
-
-    action = new QAction(tr("Toggle shadow mapping light first"), this);
-    action->setStatusTip(tr("Enable / Disable shadow mapping light first."));
-    action->setShortcut(Qt::Key_X);
-    connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMappingLightFirst()));
-    m_toggleShadowMappingFirstAction = action;
-
-    action = new QAction(tr("Toggle fullscreen"), this);
-    action->setStatusTip(tr("Enable / Disable fullscreen."));
-    action->setShortcut(Qt::Key_F);
-    connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
-    m_toggleFullScreenAction = action;
-
-    action = new QAction(tr("Emulate speaking"), this);
-    action->setStatusTip(tr("Emulates speaking using input dialog."));
-    connect(action, SIGNAL(triggered()), this, SLOT(speak()));
-    m_speakAction = action;
-
-    action = new QAction(tr("Zoom in"), this);
-    action->setStatusTip(tr("Zoom in the scene."));
-    action->setShortcut(Qt::Key_Plus);
-    connect(action, SIGNAL(triggered()), this, SLOT(zoomIn()));
-    m_zoomInAction = action;
-
-    action = new QAction(tr("Zoom out"), this);
-    action->setStatusTip(tr("Zoom out the scene."));
-    action->setShortcut(Qt::Key_Minus);
-    connect(action, SIGNAL(triggered()), this, SLOT(zoomOut()));
-    m_zoomOutAction = action;
-
-    action = new QAction(tr("Rotate up"), this);
-    action->setStatusTip(tr("Rotate a model up."));
-    action->setShortcut(Qt::Key_Up);
-    connect(action, SIGNAL(triggered()), this, SLOT(rotateUp()));
-    m_rotateUpAction = action;
-
-    action = new QAction(tr("Rotate down"), this);
-    action->setStatusTip(tr("Rotate a model down."));
-    action->setShortcut(Qt::Key_Down);
-    connect(action, SIGNAL(triggered()), this, SLOT(rotateDown()));
-    m_rotateDownAction = action;
-
-    action = new QAction(tr("Rotate Left"), this);
-    action->setStatusTip(tr("Rotate a model left."));
-    action->setShortcut(Qt::Key_Left);
-    connect(action, SIGNAL(triggered()), this, SLOT(rotateLeft()));
-    m_rotateLeftAction = action;
-
-    action = new QAction(tr("Rotate right"), this);
-    action->setStatusTip(tr("Rotate a model right."));
-    action->setShortcut(Qt::Key_Right);
-    connect(action, SIGNAL(triggered()), this, SLOT(rotateRight()));
-    m_rotateRightAction = action;
-
-    action = new QAction(tr("Translate up"), this);
-    action->setStatusTip(tr("Translate a model up."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Up));
-    connect(action, SIGNAL(triggered()), this, SLOT(translateUp()));
-    m_translateUpAction = action;
-
-    action = new QAction(tr("Translate down"), this);
-    action->setStatusTip(tr("Translate a model down."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Down));
-    connect(action, SIGNAL(triggered()), this, SLOT(translateDown()));
-    m_translateDownAction = action;
-
-    action = new QAction(tr("Translate left"), this);
-    action->setStatusTip(tr("Translate a model left."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Left));
-    connect(action, SIGNAL(triggered()), this, SLOT(translateLeft()));
-    m_translateLeftAction = action;
-
-    action = new QAction(tr("Translate right"), this);
-    action->setStatusTip(tr("Translate a model right."));
-    action->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_Right));
-    connect(action, SIGNAL(triggered()), this, SLOT(translateRight()));
-    m_translateRightAction = action;
-
-    action = new QAction(tr("Change selected model"), this);
-    action->setStatusTip(tr("Change selected model to the specified model. If an object is not selected, do nothing."));
-    action->setShortcut(QKeySequence(Qt::ALT + Qt::Key_M));
-    connect(action, SIGNAL(triggered()), this, SLOT(changeSelectedObject()));
-    m_changeSelectedObjectAction = action;
-
-    action = new QAction(tr("Delete selected model"), this);
-    action->setStatusTip(tr("Delete selected model from the scene. If an object is not selected, do nothing."));
-    action->setShortcut(Qt::Key_Delete);
-    connect(action, SIGNAL(triggered()), this, SLOT(deleteSelectedObject()));
-    m_deleteSelectedObjectAction = action;
 
     const char *message = QT_TR_NOOP("Resize scene to %1x%2");
     const char *description = QT_TR_NOOP("Set the width of the scene to %1px and the height of the scene to %2px.");
@@ -640,69 +237,34 @@ void QMAWindow::createActions()
             this, SLOT(receiveEvent(QString,QList<QVariant>)));
 }
 
-void QMAWindow::createMenu()
+void QMAWindow::createMenu(QMenuBar *menubar)
 {
-    m_fileMenu = menuBar()->addMenu(tr("&File"));
-    m_motionMenu = m_fileMenu->addMenu(tr("Add motion"));
-    m_motionMenu->addAction(m_insertMotionToAllAction);
-    m_motionMenu->addAction(m_insertMotionToSelectedAction);
-    m_fileMenu->addAction(m_addModelAction);
-    m_fileMenu->addAction(m_setStageAction);
-    m_fileMenu->addAction(m_setFloorAction);
-    m_fileMenu->addAction(m_setBackgroundAction);
-    m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_saveSceneAction);
-    m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_showLogAction);
-    m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_exitAction);
+    m_menu.insert("File", menubar->addMenu(tr("&File")));
+    menubar->addSeparator();
+    m_menu.insert("Scene", menubar->addMenu(tr("&Scene")));
+    menubar->addSeparator();
+    m_menu.insert("Window", menubar->addMenu(tr("&Window")));
+    menubar->addSeparator();
+    m_menu.insert("Model", menubar->addMenu(tr("&Model")));
+    menubar->addSeparator();
+    m_menu.insert("Help", menubar->addMenu(tr("&Help")));
+}
 
-    menuBar()->addSeparator();
-    m_sceneMenu = menuBar()->addMenu(tr("&Scene"));
-    m_sceneMenu->addAction(m_zoomInAction);
-    m_sceneMenu->addAction(m_zoomOutAction);
-    m_sceneMenu->addSeparator();
-    m_sceneMenu->addAction(m_rotateUpAction);
-    m_sceneMenu->addAction(m_rotateDownAction);
-    m_sceneMenu->addAction(m_rotateLeftAction);
-    m_sceneMenu->addAction(m_rotateRightAction);
-    m_sceneMenu->addSeparator();
-    m_sceneMenu->addAction(m_translateUpAction);
-    m_sceneMenu->addAction(m_translateDownAction);
-    m_sceneMenu->addAction(m_translateLeftAction);
-    m_sceneMenu->addAction(m_translateRightAction);
-    m_sceneMenu->addSeparator();
-    m_sceneMenu->addAction(m_increaseEdgeThinAction);
-    m_sceneMenu->addAction(m_decreaseEdgeThinAction);
-    m_sceneMenu->addSeparator();
-    m_sceneMenu->addAction(m_toggleFullScreenAction);
-    m_sceneMenu->addAction(m_togglePhysicSimulationAction);
-    m_sceneMenu->addAction(m_toggleShadowMappingAction);
-    m_sceneMenu->addAction(m_toggleShadowMappingFirstAction);
-    m_sceneMenu->addAction(m_toggleDisplayBoneAction);
-    m_sceneMenu->addAction(m_toggleDisplayRigidBodyAction);
-    m_sceneMenu->addSeparator();
-    m_sceneMenu->addAction(m_speakAction);
-
-    menuBar()->addSeparator();
-    m_modelMenu = menuBar()->addMenu(tr("&Model"));
-    m_selectModelMenu = m_modelMenu->addMenu(tr("Select model"));
-    m_modelMenu->addAction(m_changeSelectedObjectAction);
-    m_modelMenu->addAction(m_deleteSelectedObjectAction);
-
-    menuBar()->addSeparator();
-    m_windowMenu = menuBar()->addMenu(tr("&Window"));
-    m_windowMenu->addAction(m_resize512x288Action);
-    m_windowMenu->addAction(m_resize512x384Action);
-    m_windowMenu->addAction(m_resize640x480Action);
-    m_windowMenu->addAction(m_resize800x480Action);
-    m_windowMenu->addAction(m_resize1024x768Action);
-    m_windowMenu->addAction(m_resize1280x800Action);
-
-    menuBar()->addSeparator();
-    m_helpMenu = menuBar()->addMenu(tr("&Help"));
-    m_helpMenu->addAction(m_aboutAction);
-    m_helpMenu->addAction(m_aboutQtAction);
+void QMAWindow::mergeMenu()
+{
+    m_widget->createMenu(m_menu);
+    QMenu *fileMenu = m_menu["File"];
+    fileMenu->addAction(m_exitAction);
+    QMenu *windowMenu = m_menu["Window"];
+    windowMenu->addAction(m_resize512x288Action);
+    windowMenu->addAction(m_resize512x384Action);
+    windowMenu->addAction(m_resize640x480Action);
+    windowMenu->addAction(m_resize800x480Action);
+    windowMenu->addAction(m_resize1024x768Action);
+    windowMenu->addAction(m_resize1280x800Action);
+    QMenu *helpMenu = m_menu["Help"];
+    helpMenu->addAction(m_aboutAction);
+    helpMenu->addAction(m_aboutQtAction);
 }
 
 void QMAWindow::readSetting()
@@ -721,11 +283,4 @@ void QMAWindow::writeSetting()
     m_settings.setValue("pos", pos());
     m_settings.setValue("size", size());
     m_settings.endGroup();
-}
-
-void QMAWindow::setDirectorySetting(const QString &key, const QString &fileName)
-{
-    QDir dir(fileName);
-    dir.cdUp();
-    m_settings.setValue(key, dir.absolutePath());
 }

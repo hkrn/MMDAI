@@ -60,6 +60,10 @@ public:
     void  setFloat3(const MMDAI::PreferenceKeys key, float *values);
     void  setFloat4(const MMDAI::PreferenceKeys key, float *values);
 
+    inline QSettings *getSettings() {
+        return m_settings;
+    }
+
 private:
     void parse(const QString &key, const QString &value);
     bool validateBoolKey(const MMDAI::PreferenceKeys key);

@@ -4,32 +4,32 @@
 <context>
     <name>QMAJuliusPlugin</name>
     <message>
-        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="148"/>
+        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="145"/>
         <source>Started initialization of Julius</source>
         <translation>Julius の初期化を開始しました</translation>
     </message>
     <message>
-        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="149"/>
+        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="146"/>
         <source>Please wait a moment until end of initialization of Julius engine.This process takes about 10-20 seconds.</source>
         <translation>Julius の初期化が終了するまで少々お待ち下さい。この処理は約10-20秒ほどかかります。</translation>
     </message>
     <message>
-        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="201"/>
+        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="175"/>
         <source>Completed initialization of Julius</source>
         <translation>Julius の初期化が完了しました</translation>
     </message>
     <message>
-        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="202"/>
+        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="176"/>
         <source>You can now talk with the models.</source>
         <translation>モデルと話しかけることが出来る状態です。</translation>
     </message>
     <message>
-        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="209"/>
+        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="183"/>
         <source>Failed initialization of Julius</source>
         <translation>Julius の初期化に失敗しました</translation>
     </message>
     <message>
-        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="210"/>
+        <location filename="../../plugins/QMAJuliusPlugin/QMAJuliusPlugin.cc" line="184"/>
         <source>Recognization feature is disabled.</source>
         <translation>音声認識機能は無効です。</translation>
     </message>
