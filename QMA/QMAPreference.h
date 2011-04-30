@@ -37,10 +37,11 @@
 #ifndef QMAPREFERENCE_H
 #define QMAPREFERENCE_H
 
+#include <QtCore/QFile>
+#include <QtCore/QSettings>
+#include <QtCore/QVariant>
+
 #include <MMDAI/IPreference.h>
-#include <QFile>
-#include <QSettings>
-#include <QVariant>
 
 class QMAPreference : public MMDAI::IPreference
 {
@@ -76,6 +77,8 @@ private:
 
     QSettings *m_settings;
     QHash<MMDAI::PreferenceKeys, QVariant> m_values;
+
+    Q_DISABLE_COPY(QMAPreference)
 };
 
 #endif // QMAPREFERENCE_H

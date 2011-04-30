@@ -37,7 +37,9 @@
 #ifndef QMALOGVIEWWIDGET_H
 #define QMALOGVIEWWIDGET_H
 
-#include <QWidget>
+#include <QtCore/QStringList>
+#include <QtGui/QTextEdit>
+#include <QtGui/QWidget>
 
 class QTextEdit;
 
@@ -57,6 +59,8 @@ private slots:
 private:
     QStringList m_contents;
     QTextEdit *m_text;
+
+    Q_DISABLE_COPY(QMALogViewWidget)
 };
 
 #endif // QMALOGVIEWWIDGET_H

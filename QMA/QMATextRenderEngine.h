@@ -2,10 +2,10 @@
 #define QMATEXTRENDERENGINE_H
 
 #include <QtOpenGL>
-#include <QColor>
-#include <QFont>
-#include <QSize>
-#include <QStringList>
+#include <QtCore/QSize>
+#include <QtCore/QStringList>
+#include <QtGui/QColor>
+#include <QtGui/QFont>
 
 class QMATextRenderEngine
 {
@@ -39,6 +39,8 @@ private:
     QSize m_size;
     GLuint m_textureID;
     bool m_enable;
+
+    Q_DISABLE_COPY(QMATextRenderEngine)
 };
 
 #endif // QMATEXTRENDERENGINE_H

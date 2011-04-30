@@ -37,12 +37,12 @@
 #include <MMDAI/MMDAI.h>
 #include "QMAPreference.h"
 
-#include <QFile>
-#include <QString>
-#include <QStringList>
-#include <QTextStream>
-#include <QVector3D>
-#include <QVector4D>
+#include <QtCore/QFile>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QTextStream>
+#include <QtGui/QVector3D>
+#include <QtGui/QVector4D>
 
 QMAPreference::QMAPreference(QSettings *settings)
     : m_settings(settings)

@@ -38,6 +38,9 @@
 
 #include "QMAModelLoader.h"
 
+#include <QtCore/QTextCodec>
+#include <QtGui/QImage>
+
 static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr)
 {
     /* parse TGA */

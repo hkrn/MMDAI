@@ -37,11 +37,11 @@
 #ifndef PLUGININTERFACE_H
 #define PLUGININTERFACE_H
 
-#include <QList>
-#include <QRect>
-#include <QString>
-#include <QVariant>
-#include <QtPlugin>
+#include <QtCore/QList>
+#include <QtCore/QRect>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
+#include <QtCore/QtPlugin>
 
 namespace MMDAI {
 
@@ -86,7 +86,7 @@ public:
     virtual void eventPost(const QString &type, const QList<QVariant> &arguments) = 0;
 
 private:
-    Q_DISABLE_COPY(QMAPlugin);
+    Q_DISABLE_COPY(QMAPlugin)
 };
 
 Q_DECLARE_INTERFACE(QMAPlugin, "com.github.hkrn.qma.PluginInterface/1.0")

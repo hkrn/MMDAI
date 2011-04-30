@@ -39,10 +39,13 @@
 #ifndef QMAMODELLOADER_H
 #define QMAMODELLOADER_H
 
-#include <QtGui>
+#include <QtCore/QDir>
+#include <QtCore/QString>
 
 #include <MMDME/IModelLoader.h>
 #include <MMDME/IMotionLoader.h>
+
+class QFile;
 
 class QMAModelLoader : public MMDAI::IModelLoader, public MMDAI::IMotionLoader
 {
@@ -65,7 +68,8 @@ private:
     QDir m_dir;
     QFile *m_file;
     const char *m_filename;
-    Q_DISABLE_COPY(QMAModelLoader);
+
+    Q_DISABLE_COPY(QMAModelLoader)
 };
 
 #endif // QMAMODELLOADER_H

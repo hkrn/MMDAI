@@ -37,8 +37,6 @@
 #ifndef QMASCENEPLAYER_H
 #define QMASCENEPLAYER_H
 
-#include <QtGui/QtGui>
-
 #include <MMDAI/CommandParser.h>
 #include <MMDAI/ISceneEventHandler.h>
 

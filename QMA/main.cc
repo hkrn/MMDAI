@@ -34,12 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QApplication>
-#include <QDir>
-#include <QLibraryInfo>
-#include <QLocale>
-#include <QTranslator>
-#include <QtPlugin>
+#include <QtCore/QDir>
+#include <QtCore/QLibraryInfo>
+#include <QtCore/QLocale>
+#include <QtCore/QTranslator>
+#include <QtCore/QtPlugin>
+#include <QtGui/QApplication>
 
 #include "MMDME/MMDME.h"
 #include "QMALogger.h"

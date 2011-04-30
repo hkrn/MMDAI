@@ -36,11 +36,11 @@
 
 #include "QMALogger.h"
 
-#include <QDateTime>
-#include <QString>
-#include <QStringList>
-#include <QTextCodec>
-#include <QTextStream>
+#include <QtCore/QDateTime>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QTextCodec>
+#include <QtCore/QTextStream>
 #include <MMDME/Common.h>
 
 #ifndef NDEBUG

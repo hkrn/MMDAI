@@ -39,11 +39,12 @@
 #ifndef QMALIPSYNCLODER_H
 #define QMALIPSYNCLODER_H
 
-#include <QFile>
-#include <QList>
-#include <QString>
+#include <QtCore/QList>
+#include <QtCore/QString>
 
 #include "MMDAI/ILipSyncLoader.h"
+
+class QFile;
 
 class QMALipSyncLoader : public MMDAI::ILipSyncLoader
 {
@@ -65,6 +66,8 @@ private:
     QFile *m_file;
     int m_nexpressions;
     int m_nphonemes;
+
+    Q_DISABLE_COPY(QMALipSyncLoader)
 };
 
 #endif // QMALIPSYNCLODER_H

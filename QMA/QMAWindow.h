@@ -37,8 +37,8 @@
 #ifndef QMAWINDOW_H
 #define QMAWINDOW_H
 
-#include <QMainWindow>
-#include <QSettings>
+#include <QtCore/QSettings>
+#include <QtGui/QMainWindow>
 
 class QMAPreference;
 class QMAScenePlayer;
@@ -91,7 +91,7 @@ private:
 
     bool m_isFullScreen;
 
-    Q_DISABLE_COPY(QMAWindow);
+    Q_DISABLE_COPY(QMAWindow)
 };
 
 #endif // QMAWINDOW_H

@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QDir>
-#include <QString>
+#include <QtCore/QDir>
+#include <QtCore/QString>
 
 #include "QMALipSyncLoader.h"
 #include "QMAModelLoader.h"

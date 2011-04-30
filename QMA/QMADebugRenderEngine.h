@@ -95,6 +95,8 @@ private:
     bool m_sphereListEnabled;
     bool m_renderBones;
     bool m_renderRigidBodies;
+
+    Q_DISABLE_COPY(QMADebugRenderEngine)
 };
 
 #endif // QMADEBUGRENDERENGINE_H

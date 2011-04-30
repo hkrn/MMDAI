@@ -39,7 +39,7 @@
 #ifndef QMATIMER_H
 #define QMATIMER_H
 
-#include <QTime>
+#include <QtCore/QTime>
 
 class QMATimer
 {
@@ -62,7 +62,7 @@ private:
     int m_paused;
     int m_count;
 
-    Q_DISABLE_COPY(QMATimer);
+    Q_DISABLE_COPY(QMATimer)
 };
 
 #endif // QMATIMER_H

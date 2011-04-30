@@ -38,11 +38,11 @@
 
 #include "QMALipSyncLoader.h"
 
-#include <QDir>
-#include <QRegExp>
-#include <QStringList>
-#include <QTextCodec>
-#include <QTextStream>
+#include <QtCore/QDir>
+#include <QtCore/QRegExp>
+#include <QtCore/QStringList>
+#include <QtCore/QTextCodec>
+#include <QtCore/QTextStream>
 
 QMALipSyncLoader::QMALipSyncLoader(const char *filename)
     : m_expressionNames(0),

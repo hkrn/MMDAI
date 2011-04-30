@@ -55,6 +55,8 @@ public:
 
 private:
     QMAModelLoader *createLoader(const char *filename);
+
+    Q_DISABLE_COPY(QMAModelLoaderFactory)
 };
 
 #endif // QMAMODELLOADERFACTORY_H

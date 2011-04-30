@@ -37,8 +37,8 @@
 #ifndef QMALOGGER_H
 #define QMALOGGER_H
 
-#include <QObject>
-#include <QString>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 
 class QMALogger : public QObject
 {
@@ -56,6 +56,8 @@ signals:
 
 private:
     QMALogger();
+
+    Q_DISABLE_COPY(QMALogger)
 };
 
 #endif // QMALOGGER_H
