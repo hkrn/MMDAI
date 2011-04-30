@@ -190,7 +190,6 @@ private:
     QAction *m_setFloorAction;
     QAction *m_setBackgroundAction;
     QAction *m_saveSceneAction;
-    QAction *m_showLogAction;
     QAction *m_increaseEdgeThinAction;
     QAction *m_decreaseEdgeThinAction;
     QAction *m_toggleDisplayBoneAction;
@@ -198,7 +197,6 @@ private:
     QAction *m_togglePhysicSimulationAction;
     QAction *m_toggleShadowMappingAction;
     QAction *m_toggleShadowMappingFirstAction;
-    QAction *m_toggleFullScreenAction;
     QAction *m_speakAction;
     QAction *m_zoomInAction;
     QAction *m_zoomOutAction;

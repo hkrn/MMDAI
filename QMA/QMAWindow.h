@@ -53,8 +53,8 @@ public:
     ~QMAWindow();
 
 protected:
-    void closeEvent(QCloseEvent *event);
     void keyPressEvent(QKeyEvent *event);
+    void closeEvent(QCloseEvent *event);
 
 private slots:
     void toggleFullScreen();
@@ -77,6 +77,8 @@ private:
     QMAScenePlayer *m_widget;
     QMALogViewWidget *m_logView;
     QHash<QString, QMenu*> m_menu;
+    QAction *m_showLogAction;
+    QAction *m_toggleFullScreenAction;
     QAction *m_resize512x288Action;
     QAction *m_resize512x384Action;
     QAction *m_resize640x480Action;

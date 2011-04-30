@@ -70,14 +70,6 @@ QMAWindow::~QMAWindow()
     delete m_logView;
 }
 
-void QMAWindow::closeEvent(QCloseEvent *event)
-{
-    m_widget->close();
-    m_logView->close();
-    writeSetting();
-    event->accept();
-}
-
 void QMAWindow::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {
@@ -91,6 +83,14 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
     QList<QVariant> arguments;
     arguments << event->text();
     m_widget->delegateEvent(QString(MMDAI::ISceneEventHandler::kKeyEvent), arguments);
+}
+
+void QMAWindow::closeEvent(QCloseEvent *event)
+{
+    m_widget->close();
+    m_logView->close();
+    writeSetting();
+    event->accept();
 }
 
 void QMAWindow::showLogWindow()
@@ -170,7 +170,18 @@ void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &argumen
 void QMAWindow::createActions()
 {
     QAction *action = NULL;
-    QList<QKeySequence> shortcuts;
+
+    action = new QAction(tr("Show log"), this);
+    action->setStatusTip(tr("Open log window"));
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_L));
+    connect(action, SIGNAL(triggered()), this, SLOT(showLogWindow()));
+    m_showLogAction = action;
+
+    action = new QAction(tr("Toggle fullscreen"), this);
+    action->setStatusTip(tr("Enable / Disable fullscreen."));
+    action->setShortcut(Qt::Key_F);
+    connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
+    m_toggleFullScreenAction = action;
 
     const char *message = QT_TR_NOOP("Resize scene to %1x%2");
     const char *description = QT_TR_NOOP("Set the width of the scene to %1px and the height of the scene to %2px.");
@@ -218,6 +229,7 @@ void QMAWindow::createActions()
     connect(action, SIGNAL(triggered()), this, SLOT(close()));
     m_exitAction = action;
 
+    QList<QKeySequence> shortcuts;
     shortcuts.append(QKeySequence(Qt::ALT + Qt::Key_Question));
     shortcuts.append(QKeySequence(Qt::ALT + Qt::Key_Slash));
     action = new QAction(tr("&About"), this);
@@ -254,8 +266,13 @@ void QMAWindow::mergeMenu()
 {
     m_widget->createMenu(m_menu);
     QMenu *fileMenu = m_menu["File"];
+    fileMenu->addSeparator();
+    fileMenu->addAction(m_showLogAction);
+    fileMenu->addSeparator();
     fileMenu->addAction(m_exitAction);
     QMenu *windowMenu = m_menu["Window"];
+    windowMenu->addAction(m_toggleFullScreenAction);
+    windowMenu->addSeparator();
     windowMenu->addAction(m_resize512x288Action);
     windowMenu->addAction(m_resize512x384Action);
     windowMenu->addAction(m_resize640x480Action);

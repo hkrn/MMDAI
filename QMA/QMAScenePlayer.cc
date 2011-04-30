@@ -968,12 +968,6 @@ void QMAScenePlayer::createActions()
     connect(action, SIGNAL(triggered()), this, SLOT(saveScene()));
     m_saveSceneAction = action;
 
-    action = new QAction(tr("Show log"), this);
-    action->setStatusTip(tr("Open log window"));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_L));
-    connect(action, SIGNAL(triggered()), this, SLOT(showLogWindow()));
-    m_showLogAction = action;
-
     action = new QAction(tr("Increase edge thin"), this);
     action->setStatusTip(tr("Increase light edge thin."));
     action->setShortcut(Qt::Key_E);
@@ -1015,12 +1009,6 @@ void QMAScenePlayer::createActions()
     action->setShortcut(Qt::Key_X);
     connect(action, SIGNAL(triggered()), this, SLOT(toggleShadowMappingLightFirst()));
     m_toggleShadowMappingFirstAction = action;
-
-    action = new QAction(tr("Toggle fullscreen"), this);
-    action->setStatusTip(tr("Enable / Disable fullscreen."));
-    action->setShortcut(Qt::Key_F);
-    connect(action, SIGNAL(triggered()), this, SLOT(toggleFullScreen()));
-    m_toggleFullScreenAction = action;
 
     action = new QAction(tr("Emulate speaking"), this);
     action->setStatusTip(tr("Emulates speaking using input dialog."));
@@ -1112,8 +1100,6 @@ void QMAScenePlayer::createMenu(const QHash<QString, QMenu*> &menuBar)
     fileMenu->addAction(m_setBackgroundAction);
     fileMenu->addSeparator();
     fileMenu->addAction(m_saveSceneAction);
-    fileMenu->addSeparator();
-    fileMenu->addAction(m_showLogAction);
 
     QMenu *sceneMenu = menuBar["Scene"];
     sceneMenu->addAction(m_zoomInAction);
@@ -1132,7 +1118,6 @@ void QMAScenePlayer::createMenu(const QHash<QString, QMenu*> &menuBar)
     sceneMenu->addAction(m_increaseEdgeThinAction);
     sceneMenu->addAction(m_decreaseEdgeThinAction);
     sceneMenu->addSeparator();
-    sceneMenu->addAction(m_toggleFullScreenAction);
     sceneMenu->addAction(m_togglePhysicSimulationAction);
     sceneMenu->addAction(m_toggleShadowMappingAction);
     sceneMenu->addAction(m_toggleShadowMappingFirstAction);
