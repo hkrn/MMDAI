@@ -452,7 +452,6 @@ bool VMD::parse(unsigned char *data, size_t size)
         }
         qsort(m_cameraMotion->keyFrameList, m_cameraMotion->numKeyFrame, sizeof(CameraKeyFrame), compareCameraKeyFrame);
     }
-
     data += m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
     rest -= m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
 
