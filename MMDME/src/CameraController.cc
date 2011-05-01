@@ -46,7 +46,7 @@ CameraController::CameraController()
       m_pos(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_fovy(0.0f),
-      m_lastKey(0.0f),
+      m_lastKey(0),
       m_currentFrame(0),
       m_previousFrame(0)
 {
@@ -62,7 +62,7 @@ void CameraController::release()
     m_motion = 0;
     m_distance = 0;
     m_fovy = 0.0f;
-    m_lastKey = 0.0f;
+    m_lastKey = 0;
     m_currentFrame = 0.0;
     m_previousFrame = 0.0;
     m_pos.setZero();

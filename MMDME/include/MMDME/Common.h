@@ -39,14 +39,8 @@
 #ifndef MMDME_COMMON_H_
 #define MMDME_COMMON_H_
 
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdlib.h>
-
 #if defined(WIN32)
+#define _USE_MATH_DEFINES
 typedef char int8_t;
 typedef unsigned char uint8_t;
 typedef short int16_t;
@@ -56,6 +50,13 @@ typedef unsigned int uint32_t;
 #else
 #include <stdint.h>
 #endif
+
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdlib.h>
 
 /* convert model coordinates from left-handed to right-handed */
 #define MMDFILES_CONVERTCOORDINATESYSTEM
@@ -133,12 +134,12 @@ MMDAILogWrite(__FILE__, __LINE__, (MMDAILogLevelDebug), (format), __VA_ARGS__)
 /* convert from/to radian */
 inline float MMDAIMathRadian(float value)
 {
-    return value * (M_PI / 180.0f);
+    return value * static_cast<float>(M_PI / 180.0f);
 }
 
 inline float MMDAIMathDegree(float value)
 {
-    return value * (180.0f / M_PI);
+    return value * static_cast<float>(180.0f / M_PI);
 }
 
 inline void *MMDAIMemoryAllocate(size_t size)

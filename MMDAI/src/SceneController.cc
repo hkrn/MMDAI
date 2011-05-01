@@ -923,7 +923,7 @@ void SceneController::loadCameraMotion(IMotionLoader *motionLoader)
 
 void SceneController::setModelViewPosition(int x, int y)
 {
-    float step = 0.0005 * m_distance;
+    float step = 0.0005f * m_distance;
     btVector3 v(x * step, -y * step, 0.0f);
     btTransform tr(m_transMatrix);
     tr.setOrigin(btVector3(0.0f, 0.0f, 0.0f));
@@ -1184,8 +1184,9 @@ void SceneController::updateModelView(int ellapsedTimeForMove)
                 m_currentTrans = m_trans;
             }
             else {
-                m_currentTrans = m_viewMoveStartTrans.lerp(m_trans, ellapsedTimeForMove / m_viewMoveTime);
-                m_currentRot = m_viewMoveStartRot.slerp(m_rot, ellapsedTimeForMove / m_viewMoveTime);
+                float moveTime = static_cast<float>(m_viewMoveTime);
+                m_currentTrans = m_viewMoveStartTrans.lerp(m_trans, ellapsedTimeForMove / moveTime);
+                m_currentRot = m_viewMoveStartRot.slerp(m_rot, ellapsedTimeForMove / moveTime);
             }
         }
         else {
