@@ -47,7 +47,11 @@ QMAWindow::QMAWindow(QWidget *parent) :
     m_isFullScreen(false)
 {
     m_settings.setIniCodec("UTF-8");
+#ifdef Q_OS_MAC
     m_menuBar = new QMenuBar(0);
+#else
+    m_menuBar = menuBar();
+#endif
     m_preference = new QMAPreference(&m_settings);
     m_widget = new QMAScenePlayer(m_preference, parent);
     m_logView = new QMALogViewWidget(parent);
