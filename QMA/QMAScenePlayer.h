@@ -54,12 +54,6 @@ class PMDObject;
 class SceneController;
 }
 
-enum QMAScenePlayerZoomOption {
-    Normal = 0x0,
-    Faster = 0x1,
-    Slower = 0x2
-         };
-
 class QMAPreference;
 
 class QMAScenePlayer : public QGLWidget, public MMDAI::ISceneEventHandler
@@ -90,7 +84,7 @@ public:
 
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
-    void zoom(bool up, enum QMAScenePlayerZoomOption option);
+    void zoom(bool up, Qt::KeyboardModifiers modifiers);
     void createMenu(const QHash<QString, QMenu*> &menuBar);
 
     inline QMATimer *getSceneFrameTimer() {

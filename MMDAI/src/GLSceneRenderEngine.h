@@ -1099,9 +1099,7 @@ public:
                 PMDObject *object = objects[order[i]];
                 if (!object->isEnable())
                     continue;
-                glPushMatrix();
                 renderShadow(object->getModel());
-                glPopMatrix();
             }
 
             /* reset the polygon offset */
@@ -1526,7 +1524,6 @@ private:
         glMultMatrixf(m_modelView);
 
         /* stage and shadhow */
-        glPushMatrix();
         /* background */
         stage->renderBackground();
         /* enable stencil */
@@ -1545,15 +1542,15 @@ private:
         glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
         /* Render model */
         glDisable(GL_DEPTH_TEST);
+        glPushMatrix();
+        glMultMatrixf(stage->getShadowMatrix());
         for (i = 0; i < size; i++) {
             PMDObject *object = objects[order[i]];
             if (!object->isEnable())
                 continue;
-            glPushMatrix();
-            glMultMatrixf(stage->getShadowMatrix());
             renderShadow(object->getModel());
-            glPopMatrix();
         }
+        glPopMatrix();
         glEnable(GL_DEPTH_TEST);
         glColorMask(1, 1, 1, 1);
         glDepthMask(1);
@@ -1566,7 +1563,6 @@ private:
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_STENCIL_TEST);
         glEnable(GL_LIGHTING);
-        glPopMatrix();
 
         /* Render model */
         for (i = 0; i < size; i++) {

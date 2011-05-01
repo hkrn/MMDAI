@@ -244,16 +244,19 @@ void QMAPreference::parse(const QString &key, const QString &value)
         QMAPreferenceValue2Float4(value, vec4);
         setFloat4(MMDAI::kPreferenceCartoonEdgeSelectedColor, vec4);
     }
-    else if (key == "rendering_rotation") {
+    else if (key == "camera_rotation") {
         QMAPreferenceValue2Float3(value, vec3);
-        setFloat3(MMDAI::kPreferenceRenderingRotation, vec3);
+        setFloat3(MMDAI::kPreferenceCameraRotation, vec3);
     }
-    else if (key == "rendering_transition") {
+    else if (key == "camera_transition") {
         QMAPreferenceValue2Float3(value, vec3);
-        setFloat3(MMDAI::kPreferenceRenderingTransition, vec3);
+        setFloat3(MMDAI::kPreferenceCameraTransition, vec3);
     }
-    else if (key == "rendering_scale") {
-        setFloat(MMDAI::kPreferenceRenderingScale, value.toFloat());
+    else if (key == "camera_distance") {
+        setFloat(MMDAI::kPreferenceCameraDistance, value.toFloat());
+    }
+    else if (key == "camera_fovy") {
+        setFloat(MMDAI::kPreferenceCameraFovy, value.toFloat());
     }
     else if (key == "show_fps") {
         setBool(MMDAI::kPreferenceShowFPS, value.toLower() == "true");
@@ -308,8 +311,11 @@ void QMAPreference::parse(const QString &key, const QString &value)
     else if (key == "translate_step") {
         setFloat(MMDAI::kPreferenceTranslateStep, value.toFloat());
     }
-    else if (key == "scale_step") {
-        setFloat(MMDAI::kPreferenceScaleStep, value.toFloat());
+    else if (key == "distance_step") {
+        setFloat(MMDAI::kPreferenceDistanceStep, value.toFloat());
+    }
+    else if (key == "fovy_step") {
+        setFloat(MMDAI::kPreferenceFovyStep, value.toFloat());
     }
     else if (key == "use_shadow_mapping") {
         setBool(MMDAI::kPreferenceUseShadowMapping, value.toLower() == "true");
@@ -358,11 +364,13 @@ bool QMAPreference::validateFloatKey(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceLogScale:
     case MMDAI::kPreferenceLightIntensity:
     case MMDAI::kPreferenceRotateStep:
-    case MMDAI::kPreferenceScaleStep:
+    case MMDAI::kPreferenceDistanceStep:
+    case MMDAI::kPreferenceFovyStep:
     case MMDAI::kPreferenceShadowMappingFloorDensity:
     case MMDAI::kPreferenceShadowMappingSelfDensity:
     case MMDAI::kPreferenceTranslateStep:
-    case MMDAI::kPreferenceRenderingScale:
+    case MMDAI::kPreferenceCameraDistance:
+    case MMDAI::kPreferenceCameraFovy:
         return true;
     default:
         return false;
@@ -377,8 +385,8 @@ bool QMAPreference::validateFloat3Key(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceLightColor:
     case MMDAI::kPreferenceLogPosition:
     case MMDAI::kPreferenceStageSize:
-    case MMDAI::kPreferenceRenderingRotation:
-    case MMDAI::kPreferenceRenderingTransition:
+    case MMDAI::kPreferenceCameraRotation:
+    case MMDAI::kPreferenceCameraTransition:
         return true;
     default:
         return false;
@@ -446,8 +454,10 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
         return 0;
     case MMDAI::kPreferenceRotateStep:
         return 0.08f;
-    case MMDAI::kPreferenceScaleStep:
-        return 1.05f;
+    case MMDAI::kPreferenceDistanceStep:
+        return 4.0f;
+    case MMDAI::kPreferenceFovyStep:
+        return 1.0f;
     case MMDAI::kPreferenceShadowMappingFloorDensity:
         return 0.5f;
     case MMDAI::kPreferenceShadowMappingLightFirst:
@@ -474,12 +484,14 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
         return -1;
     case MMDAI::kPreferenceCartoonEdgeSelectedColor:
         return QVector4D(1.0f, 0.0f, 0.0f, 1.0f);
-    case MMDAI::kPreferenceRenderingRotation:
+    case MMDAI::kPreferenceCameraRotation:
         return QVector3D(0.0f, 0.0f, 0.0f);
-    case MMDAI::kPreferenceRenderingTransition:
-        return QVector3D(0.0f, 0.0f, 0.0f);
-    case MMDAI::kPreferenceRenderingScale:
-        return 1.0f;
+    case MMDAI::kPreferenceCameraTransition:
+        return QVector3D(0.0f, 13.0f, 0.0f);
+    case MMDAI::kPreferenceCameraDistance:
+        return 100.0f;
+    case MMDAI::kPreferenceCameraFovy:
+        return 16.0f;
     case MMDAI::kPreferenceMaxModelSize:
         return 10;
     default:
@@ -539,7 +551,10 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
     case MMDAI::kPreferenceRotateStep:
         value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
         break;
-    case MMDAI::kPreferenceScaleStep:
+    case MMDAI::kPreferenceDistanceStep:
+        value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
+        break;
+    case MMDAI::kPreferenceFovyStep:
         value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
         break;
     case MMDAI::kPreferenceShadowMappingFloorDensity:
@@ -576,25 +591,28 @@ void QMAPreference::round(const MMDAI::PreferenceKeys key, QVariant &value)
         vec4.setW(qMin(qMax(vec4.w(), min), max));
         value.setValue(vec4);
         break;
-    case MMDAI::kPreferenceRenderingRotation:
-        vec3 = value.value<QVector3D>();
-        min = -1000.0;
-        max = 1000.0;
-        vec3.setX(qMin(qMax(vec3.x(), min), max));
-        vec3.setY(qMin(qMax(vec3.y(), min), max));
-        vec3.setZ(qMin(qMax(vec3.z(), min), max));
-        value.setValue(vec3);
-        break;
-    case MMDAI::kPreferenceRenderingTransition:
+    case MMDAI::kPreferenceCameraRotation:
         vec3 = value.value<QVector3D>();
         min = 0.001;
         max = 1000.0;
         vec3.setX(qMin(qMax(vec3.x(), min), max));
         vec3.setY(qMin(qMax(vec3.y(), min), max));
         vec3.setZ(qMin(qMax(vec3.z(), min), max));
+        value.setValue(vec3);
         break;
-    case MMDAI::kPreferenceRenderingScale:
-        value.setValue(qMin(qMax(value.toFloat(), 0.001f), 1000.0f));
+    case MMDAI::kPreferenceCameraTransition:
+        vec3 = value.value<QVector3D>();
+        min = -10000.0;
+        max = 10000.0;
+        vec3.setX(qMin(qMax(vec3.x(), min), max));
+        vec3.setY(qMin(qMax(vec3.y(), min), max));
+        vec3.setZ(qMin(qMax(vec3.z(), min), max));
+        break;
+    case MMDAI::kPreferenceCameraDistance:
+        value.setValue(qMin(qMax(value.toFloat(), 0.0f), 100000.0f));
+        break;
+    case MMDAI::kPreferenceCameraFovy:
+        value.setValue(qMin(qMax(value.toFloat(), 0.0f), 180.0f));
         break;
     case MMDAI::kPreferenceMaxModelSize:
         value.setValue(qMin(qMax(value.toInt(), 1), 1024));

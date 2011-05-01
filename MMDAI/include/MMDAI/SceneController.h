@@ -124,7 +124,11 @@ public:
     bool startLipSync(PMDObject *object,
                       const char *seq);
     bool stopLipSync(PMDObject *object);
-    void resetLocation(const btVector3 &trans, const btQuaternion &rot, const float scale);
+    void resetCamera(const btVector3 &trans,
+                     const btVector3 &angle,
+                     const float distance,
+                     const float fovy);
+    void loadCameraMotion(IMotionLoader *motionLoader);
 
     void setLightDirection(float x, float y);
     void setLightDirection(const btVector3 &direction);
@@ -169,11 +173,17 @@ public:
     inline const btVector3 getScreenPointPosition(const btVector3 &src) {
         return m_transMatrix.inverse() * src;
     }
-    inline const float getScale() const {
-        return m_scale;
+    inline const float getDistance() const {
+        return m_distance;
     }
-    inline void setScale(float value) {
-        m_scale = value;
+    inline void setDistance(const float value) {
+        m_distance = value;
+    }
+    inline const float getFovy() const {
+        return m_fovy;
+    }
+    inline void setFovy(const float value) {
+        m_fovy = value;
     }
     inline void setModelView(const btTransform &modelView) {
         m_engine->setModelView(modelView);
@@ -194,19 +204,31 @@ public:
         return m_height;
     }
     inline bool isViewMoving() const {
-        return m_viewMoveTime > 0 && (m_currentRot != m_rot || m_currentTrans != m_trans || m_currentScale != m_scale);
+        return m_viewMoveTime > 0 && (
+                    m_currentRot != m_rot ||
+                    m_currentTrans != m_trans ||
+                    m_currentDistance != m_distance ||
+                    m_currentFovy != m_fovy
+                    );
     }
     inline BulletPhysics *getPhysicalEngine() {
         return &m_bullet;
     }
 
 private:
+    void updateModelViewMatrix();
+    void updateProjectionMatrix();
+    void updateRotationFromAngle();
+    bool updateDistance(int ellapsedTimeForMove);
+    bool updateFovy(int ellapsedTimeForMove);
     void sortRenderOrder();
     void eraseModel(PMDObject *object);
     void sendEvent1(const char *type, const char *arg1);
     void sendEvent2(const char *type, const char *arg1, const char *arg2);
 
     BulletPhysics m_bullet;
+    CameraController m_cameraController;
+    VMD m_cameraMotion;
     SceneRenderEngine *m_engine;
     MotionCache m_motion;
     PMDObject **m_objects;
@@ -219,26 +241,31 @@ private:
     int m_selectedModel;
     int m_width;
     int m_height;
+    bool m_cameraControlled;
     bool m_enablePhysicsSimulation;
 
-    float m_scale;           /* target scale */
-    btVector3 m_trans;       /* target trans vector */
-    btQuaternion m_rot;      /* target rotation */
-    btVector3 m_cameraTrans; /* position of camera */
-
     int m_viewMoveTime;
+    bool m_viewControlledByMotion;
     btVector3 m_viewMoveStartTrans;
     btQuaternion m_viewMoveStartRot;
-    float m_viewMoveStartScale;
+    float m_viewMoveStartDistance;
+    float m_viewMoveStartFovy;
     RenderDepth *m_depth;
     int16_t *m_order;
 
-    float m_currentScale;         /* current scale */
-    btVector3 m_currentTrans;     /* current trans vector */
-    btQuaternion m_currentRot;    /* current rotation */
-    btTransform m_transMatrix;    /* current trans vector + rotation matrix */
+    btVector3 m_trans;
+    btVector3 m_angle;
+    btQuaternion m_rot;
+    float m_distance;
+    float m_fovy;
 
-    MMDME_DISABLE_COPY_AND_ASSIGN(SceneController);
+    btVector3 m_currentTrans;
+    btQuaternion m_currentRot;
+    float m_currentDistance;
+    float m_currentFovy;
+    btTransform m_transMatrix;
+
+    MMDME_DISABLE_COPY_AND_ASSIGN(SceneController)
 };
 
 } /* namespace */

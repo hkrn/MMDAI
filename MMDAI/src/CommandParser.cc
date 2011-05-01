@@ -94,7 +94,7 @@ static bool arg2rot(btQuaternion &dst, const char *arg)
 
 CommandParser::CommandParser(SceneController *controller, IResourceFactory *factory)
     : m_controller(controller),
-    m_factory(factory)
+      m_factory(factory)
 {
 }
 
@@ -514,22 +514,28 @@ bool CommandParser::parse(const char *command, char **argv, int argc)
         }
     }
     else if (MMDAIStringEquals(command, ISceneEventHandler::kCameraCommand)) {
-        if (argc < 3 || argc > 4) {
+        if (argc == 1) {
+            motionLoader = m_factory->createMotionLoader(argv[0]);
+            m_controller->loadCameraMotion(motionLoader);
+            m_factory->releaseMotionLoader(motionLoader);
+        }
+        else if (argc < 3 || argc > 4) {
             MMDAILogWarn("%s: wrong number of arguments", command);
             return false;
         }
-        btVector3 pos;
-        if (!arg2pos(pos, argv[0])) {
-            MMDAILogWarn("%s: not a position string: %s", command, argv[0]);
-            return false;
+        else {
+            btVector3 pos, rot;
+            if (arg2pos(pos, argv[0]) && arg2pos(rot, argv[1])) {
+                float distance = MMDAIStringToFloat(argv[2]);
+                float fovy = MMDAIStringToFloat(argv[3]);
+                m_controller->resetCamera(pos, rot, distance, fovy);
+            }
+            else {
+                MMDAILogWarn("%s: not a position string: %s:%s", command, argv[0], argv[1]);
+            }
         }
-        btQuaternion rot;
-        if (!arg2rot(rot, argv[1])) {
-            MMDAILogWarn("%s: not a rotate string: %s", command, argv[1]);
-            return false;
-        }
-        float scale = MMDAIStringToFloat(argv[2]);
-        m_controller->resetLocation(pos, rot, scale);
+        //float scale = MMDAIStringToFloat(argv[2]);
+        //m_controller->resetLocation(pos, rot, scale);
         /* FIXME: support view timer */
     }
     return ret;

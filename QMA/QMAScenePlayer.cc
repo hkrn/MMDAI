@@ -217,27 +217,34 @@ bool QMAScenePlayer::insertMotionToModel(const QString &filename, MMDAI::PMDObje
     return false;
 }
 
-void QMAScenePlayer::zoom(bool up, enum QMAScenePlayerZoomOption option)
+void QMAScenePlayer::zoom(bool up, Qt::KeyboardModifiers modifiers)
 {
-    float delta = m_preference->getFloat(MMDAI::kPreferenceScaleStep);
-    float scale = m_controller->getScale();
-    if (option & Faster) /* faster */
-        delta = (delta - 1.0f) * 5.0f + 1.0f;
-    else if (option & Slower) /* slower */
-        delta = (delta - 1.0f) * 0.2f + 1.0f;
-    if (delta != 0) {
-        if (up)
-            scale *= delta;
-        else
-            scale /= delta;
+    if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
+        float step = m_preference->getFloat(MMDAI::kPreferenceFovyStep);
+        float value = m_controller->getFovy();
+        if (step != 0.0f) {
+            value = up ? value - step : value + step;
+            m_controller->setFovy(value);
+        }
     }
-    m_controller->setScale(scale);
+    else {
+        float step = m_preference->getFloat(MMDAI::kPreferenceDistanceStep);
+        float value = m_controller->getDistance();
+        if (modifiers & Qt::ControlModifier)
+            step *= 5.0f;
+        else if (modifiers & Qt::ShiftModifier)
+            step *= 0.2f;
+        if (step != 0.0f) {
+            value = up ? value - step : value + step;
+            m_controller->setDistance(value);
+        }
+    }
     update();
 }
 
 void QMAScenePlayer::rotate(float x, float y)
 {
-    m_controller->setModelViewRotation(x, y);
+    m_controller->setModelViewRotation(y, x);
 }
 
 void QMAScenePlayer::translate(float x, float y)
@@ -463,7 +470,6 @@ void QMAScenePlayer::updateScene()
 void QMAScenePlayer::paintGL()
 {
     double fps = m_sceneFrameTimer.getFPS();
-    glColor3f(1, 0, 0);
     m_controller->updateObject(fps);
     m_controller->updateModelView(0);
     m_controller->updateProjection(0);
@@ -506,22 +512,22 @@ void QMAScenePlayer::mouseMoveEvent(QMouseEvent *event)
         else if (modifiers & Qt::ControlModifier && selectedObject) {
             m_controller->setHighlightObject(selectedObject);
             btVector3 pos = selectedObject->getTargetPosition();
-            float scale = m_controller->getScale();
+            float distance = m_controller->getDistance();
             float step = m_preference->getFloat(MMDAI::kPreferenceTranslateStep);
             if (modifiers & Qt::ShiftModifier) {
                 /* with Shift-key, move on XY (coronal) plane */
-                pos.setX(pos.x() + x * 0.1f * step / scale);
-                pos.setY(pos.y() - y * 0.1f * step / scale);
+                pos.setX(pos.x() + x * 0.001f * step / distance);
+                pos.setY(pos.y() - y * 0.001f * step / distance);
             } else {
                 /* else, move on XZ (axial) plane */
-                pos.setX(pos.x() + x * 0.1f * step / scale);
-                pos.setZ(pos.z() + y * 0.1f * step / scale);
+                pos.setX(pos.x() + x * 0.001f * step / distance);
+                pos.setZ(pos.z() + y * 0.001f * step / distance);
             }
             selectedObject->setPosition(pos);
             selectedObject->setMoveSpeed(-1.0f);
         }
         else if (modifiers & Qt::ShiftModifier) {
-            m_controller->setModelViewPosition(x, y);
+            m_controller->setModelViewPosition(y, x);
         }
         else {
             rotate(x, y);
@@ -550,13 +556,7 @@ void QMAScenePlayer::mouseReleaseEvent(QMouseEvent * /* event */)
 
 void QMAScenePlayer::wheelEvent(QWheelEvent *event)
 {
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-    QMAScenePlayerZoomOption option = Normal;
-    if (modifiers & Qt::ControlModifier) /* faster */
-        option = Faster;
-    else if (modifiers & Qt::ShiftModifier) /* slower */
-        option = Slower;
-    zoom(event->delta() > 0, option);
+    zoom(event->delta() > 0, event->modifiers());
 }
 
 void QMAScenePlayer::dragEnterEvent(QDragEnterEvent *event)
@@ -795,42 +795,42 @@ void QMAScenePlayer::setBackground()
 
 void QMAScenePlayer::rotateUp()
 {
-    rotate(0.0f, -1.0f);
+    rotate(0.0f, 1.0f);
 }
 
 void QMAScenePlayer::rotateDown()
 {
-    rotate(0.0f, 1.0f);
+    rotate(0.0f, -1.0f);
 }
 
 void QMAScenePlayer::rotateLeft()
 {
-    rotate(-1.0f, 0.0f);
+    rotate(1.0f, 0.0f);
 }
 
 void QMAScenePlayer::rotateRight()
 {
-    rotate(1.0f, 0.0f);
+    rotate(-1.0f, 0.0f);
 }
 
 void QMAScenePlayer::translateUp()
 {
-    translate(0.0f, -1.0f);
+    translate(0.0f, 1.0f);
 }
 
 void QMAScenePlayer::translateDown()
 {
-    translate(0.0f, 1.0f);
+    translate(0.0f, -1.0f);
 }
 
 void QMAScenePlayer::translateLeft()
 {
-    translate(1.0f, 0.0f);
+    translate(-1.0f, 0.0f);
 }
 
 void QMAScenePlayer::translateRight()
 {
-    translate(-1.0f, 0.0f);
+    translate(1.0f, 0.0f);
 }
 
 void QMAScenePlayer::increaseEdgeThin()
@@ -875,12 +875,12 @@ void QMAScenePlayer::speak()
 
 void QMAScenePlayer::zoomIn()
 {
-    zoom(true, Normal);
+    zoom(true, Qt::NoModifier);
 }
 
 void QMAScenePlayer::zoomOut()
 {
-    zoom(false, Normal);
+    zoom(false, Qt::NoModifier);
 }
 
 void QMAScenePlayer::selectObject()

@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -92,17 +92,19 @@ const char *ISceneEventHandler::kLipSyncStartEvent = "LIPSYNC_EVENT_START";
 const char *ISceneEventHandler::kLipSyncStopEvent = "LIPSYNC_EVENT_STOP";
 const char *ISceneEventHandler::kKeyEvent = "KEY";
 
-const float SceneController::kRenderViewPointFrustumNear = 5.0f;
-const float SceneController::kRenderViewPointFrustumFar = 2000.0f;
+const float SceneController::kRenderViewPointFrustumNear = 0.5f;
+const float SceneController::kRenderViewPointFrustumFar = 8000.0f;
 const float SceneController::kRenderViewPointCameraZ = -100.0f;
 const float SceneController::kRenderViewPointYOffset = -13.0f;
 
-#define RENDER_MINSCALEDIFF   0.001f
-#define RENDER_SCALESPEEDRATE 0.9f
-#define RENDER_MINMOVEDIFF    0.000001f
-#define RENDER_MOVESPEEDRATE  0.9f
-#define RENDER_MINSPINDIFF    0.000001f
-#define RENDER_SPINSPEEDRATE  0.9f
+#define RENDER_MINMOVEDIFF       0.000001f
+#define RENDER_MOVESPEEDRATE     0.9f
+#define RENDER_MINSPINDIFF       0.000001f
+#define RENDER_SPINSPEEDRATE     0.9f
+#define RENDER_MINDISTANCEDIFF   0.1f
+#define RENDER_DISTANCESPEEDRATE 0.9f
+#define RENDER_MINFOVYDIFF       0.01f
+#define RENDER_FOVYSPEEDRATE     0.9f
 
 struct RenderDepth {
     float distance;
@@ -135,30 +137,35 @@ static int getNumDigit(int in)
 
 SceneController::SceneController(ISceneEventHandler *handler, IPreference *preference)
     : m_engine(0),
-    m_objects(0),
-    m_highlightModel(0),
-    m_preference(preference),
-    m_handler(handler),
-    m_stage(0),
-    m_maxModel(0),
-    m_numModel(0),
-    m_selectedModel(-1),
-    m_width(0),
-    m_height(0),
-    m_enablePhysicsSimulation(true),
-    m_scale(1.0),
-    m_trans(0.0f, 0.0f, 0.0f),
-    m_rot(0.0f, 0.0f, 0.0f, 1.0f),
-    m_cameraTrans(0.0f, kRenderViewPointYOffset, kRenderViewPointCameraZ),
-    m_viewMoveTime(-1),
-    m_viewMoveStartTrans(0.0f, 0.0f, 0.0f),
-    m_viewMoveStartRot(0.0f, 0.0f, 0.0f, 1.0f),
-    m_viewMoveStartScale(0.0f),
-    m_depth(0),
-    m_order(0),
-    m_currentScale(m_scale),
-    m_currentTrans(m_trans),
-    m_currentRot(m_rot)
+      m_objects(0),
+      m_highlightModel(0),
+      m_preference(preference),
+      m_handler(handler),
+      m_stage(0),
+      m_maxModel(0),
+      m_numModel(0),
+      m_selectedModel(0),
+      m_width(0),
+      m_height(0),
+      m_cameraControlled(false),
+      m_enablePhysicsSimulation(true),
+      m_viewMoveTime(-1),
+      m_viewControlledByMotion(false),
+      m_viewMoveStartTrans(0.0f, 0.0f, 0.0f),
+      m_viewMoveStartRot(0.0f, 0.0f, 0.0f, 1.0f),
+      m_viewMoveStartDistance(0.0f),
+      m_viewMoveStartFovy(0.0f),
+      m_depth(0),
+      m_order(0),
+      m_trans(0.0f, 0.0f, 0.0f),
+      m_angle(0.0f, 0.0f, 0.0f),
+      m_rot(0.0f, 0.0f, 0.0f, 1.0f),
+      m_distance(preference->getFloat(kPreferenceCameraDistance)),
+      m_fovy(preference->getFloat(kPreferenceCameraFovy)),
+      m_currentTrans(m_trans),
+      m_currentRot(m_rot),
+      m_currentDistance(m_distance),
+      m_currentFovy(m_fovy)
 {
     int maxModel = preference->getInt(kPreferenceMaxModelSize);
     if (maxModel <= 0)
@@ -169,7 +176,6 @@ SceneController::SceneController(ISceneEventHandler *handler, IPreference *prefe
     m_order = new int16_t[maxModel];
     m_stage = new Stage(m_engine);
     m_maxModel = maxModel;
-    m_transMatrix.setIdentity();
     for (int i = 0; i < maxModel; i++) {
         RenderDepth *depth = &m_depth[i];
         m_objects[i] = new PMDObject(m_engine);
@@ -177,15 +183,14 @@ SceneController::SceneController(ISceneEventHandler *handler, IPreference *prefe
         depth->id = 0;
         depth->distance = 0;
     }
-    updateModelView(0);
-    updateProjection(0);
+    updateModelViewMatrix();
 }
 
 SceneController::~SceneController()
 {
-    m_currentScale = 0.0f;
-    m_scale = 0.0f;
+    m_cameraControlled = false;
     m_enablePhysicsSimulation = false;
+    m_viewControlledByMotion = false;
     m_height = 0;
     m_width = 0;
     m_selectedModel = -1;
@@ -206,6 +211,23 @@ SceneController::~SceneController()
     m_engine = 0;
     m_handler = 0;
     m_preference = 0;
+}
+
+void SceneController::initialize(int width, int height)
+{
+    float size[3];
+    setRect(width, height);
+    m_bullet.setup(m_preference->getInt(kPreferenceBulletFPS));
+    m_engine->setup();
+    m_preference->getFloat3(kPreferenceStageSize, size);
+    m_stage->setSize(size, 1.0f, 1.0f);
+    float rot[3], trans[3];
+    m_preference->getFloat3(kPreferenceCameraRotation, rot);
+    m_preference->getFloat3(kPreferenceCameraTransition, trans);
+    float distance = m_preference->getFloat(kPreferenceCameraDistance);
+    float fovy = m_preference->getFloat(kPreferenceCameraFovy);
+    resetCamera(btVector3(trans[0], trans[1], trans[2]), btVector3(rot[0], rot[1], rot[2]), distance, fovy);
+    setViewMoveTimer(0);
 }
 
 void SceneController::updateLight()
@@ -528,6 +550,11 @@ bool SceneController::addModel(const char *modelAlias,
 
     /* initialize motion manager */
     newObject->resetMotionManager();
+    newObject->updateRootBone();
+    newObject->updateMotion(0.0f);
+    newObject->updateAlpha(0.0f);
+    newObject->setPhysicsEnable(m_enablePhysicsSimulation);
+    newObject->updateSkin();
     newObject->setAlias(name);
     m_numModel++;
 
@@ -581,6 +608,11 @@ bool SceneController::changeModel(PMDObject *object,
         }
     }
 
+    object->updateRootBone();
+    object->updateMotion(0.0f);
+    object->updateAlpha(0.0f);
+    object->setPhysicsEnable(m_enablePhysicsSimulation);
+    object->updateSkin();
     /* set alias */
     object->setAlias(modelAlias);
 
@@ -621,7 +653,7 @@ void SceneController::setLightDirection(float x, float y)
     float step = m_preference->getFloat(kPreferenceRotateStep) * 0.1f;
     m_preference->getFloat4(MMDAI::kPreferenceLightDirection, direction);
     btVector3 v = btVector3(direction[0], direction[1], direction[2]);
-    btMatrix3x3 matrix = btMatrix3x3(btQuaternion(0, y * step, 0.0) * btQuaternion(x * step, 0, 0));
+    btMatrix3x3 matrix = btMatrix3x3(btQuaternion(0, y * MMDAIMathRadian(step), 0.0) * btQuaternion(x * MMDAIMathRadian(step), 0, 0));
     v = v * matrix;
     setLightDirection(v);
 }
@@ -870,57 +902,41 @@ bool SceneController::stopLipSync(PMDObject *object)
     return true;
 }
 
-void SceneController::initialize(int width, int height)
-{
-    float size[3];
-    m_width = width;
-    m_height = height;
-    m_bullet.setup(m_preference->getInt(kPreferenceBulletFPS));
-    m_engine->setup();
-    m_preference->getFloat3(kPreferenceStageSize, size);
-    m_stage->setSize(size, 1.0f, 1.0f);
-    float rot[3], trans[3], scale = 0.0f;
-    scale = m_preference->getFloat(kPreferenceRenderingScale);
-    m_preference->getFloat3(kPreferenceRenderingRotation, rot);
-    m_preference->getFloat3(kPreferenceRenderingTransition, trans);
-    btQuaternion rot2;
-    btMatrix3x3 matrix;
-    matrix.setEulerZYX(MMDAIMathRadian(rot[0]), MMDAIMathRadian(rot[1]), MMDAIMathRadian(rot[2]));
-    matrix.getRotation(rot2);
-    resetLocation(btVector3(trans[0], trans[1], trans[2]), rot2, scale);
-    MMDAILogInfo("reset location rot=(%.2f, %.2f, %.2f) trans=(%.2f, %.2f, %.2f) scale=%.2f",
-                 rot[0], rot[1], rot[2], trans[0], trans[1], trans[2], scale);
-}
-
-void SceneController::resetLocation(const btVector3 &trans, const btQuaternion &rot, const float scale)
+void SceneController::resetCamera(const btVector3 &trans, const btVector3 &angle, const float distance, const float fovy)
 {
     m_trans = trans;
-    m_rot = rot;
-    m_scale = scale;
+    m_angle = angle;
+    m_distance = distance;
+    m_fovy = fovy;
+    updateRotationFromAngle();
+}
+
+void SceneController::loadCameraMotion(IMotionLoader *motionLoader)
+{
+    if (!m_cameraControlled && m_cameraMotion.load(motionLoader)) {
+        m_cameraController.setup(&m_cameraMotion);
+        m_cameraController.reset();
+        m_cameraControlled = true;
+        m_viewControlledByMotion = true;
+    }
 }
 
 void SceneController::setModelViewPosition(int x, int y)
 {
-    float cameraZ = kRenderViewPointCameraZ;
-    float znear = kRenderViewPointFrustumNear;
-    float fx = 0.0f, fy = 0.0f, fz = 20.0f;
-    fx = x / static_cast<float>(m_width);
-    fy = -y / static_cast<float>(m_height);
-    fx = static_cast<float>(fx * (fz - cameraZ) / znear);
-    fy = static_cast<float>(fy * (fz - cameraZ) / znear);
-    if (m_scale != 0) {
-        fx /= m_scale;
-        fy /= m_scale;
-    }
-    fz = 0.0f;
-    translate(btVector3(fx, fy, fz));
+    float step = 0.0005 * m_distance;
+    btVector3 v(x * step, -y * step, 0.0f);
+    btTransform tr(m_transMatrix);
+    tr.setOrigin(btVector3(0.0f, 0.0f, 0.0f));
+    v = tr.inverse() * v;
+    translate(v * -1.0f);
 }
 
 void SceneController::setModelViewRotation(int x, int y)
 {
-    float step = m_preference->getFloat(kPreferenceRotateStep) * 0.1f;
-    m_rot = m_rot * btQuaternion(x * step, 0.0f, 0.0f);
-    m_rot = btQuaternion(0.0f, y * step, 0.0f) * m_rot;
+    float step = m_preference->getFloat(MMDAI::kPreferenceRotateStep) * 0.1f;
+    m_angle.setX(m_angle.x() + x * step);
+    m_angle.setY(m_angle.y() + y * step);
+    updateRotationFromAngle();
 }
 
 void SceneController::translate(const btVector3 &value)
@@ -935,7 +951,7 @@ void SceneController::setRect(int width, int height)
             m_width = width;
         if (height > 0)
             m_height = height;
-        updateProjection(0);
+        updateProjectionMatrix();
     }
 }
 
@@ -945,7 +961,8 @@ void SceneController::setViewMoveTimer(int ms)
     if (m_viewMoveTime > 0) {
         m_viewMoveStartRot = m_currentRot;
         m_viewMoveStartTrans = m_currentTrans;
-        m_viewMoveStartScale = m_currentScale;
+        m_viewMoveStartDistance = m_currentDistance;
+        m_viewMoveStartFovy = m_currentFovy;
     }
 }
 
@@ -1032,19 +1049,29 @@ void SceneController::updateMotion(double procFrame, double adjustFrame)
                     }
                 }
             }
+            // the model is transparent, model will be deleted
             if (object->updateAlpha(procFrame + adjustFrame)) {
                 eraseModel(object);
             }
         }
     }
     m_bullet.update((float)procFrame);
+    if (m_cameraControlled) {
+        // the camera motion reached to the end, camera controll will be disabled
+        if (m_cameraController.advance(procFrame + adjustFrame)) {
+            m_cameraControlled = false;
+            m_viewControlledByMotion = false;
+        }
+        m_cameraController.getCurrentViewParam(&m_distance, &m_trans, &m_angle, &m_fovy);
+        updateRotationFromAngle();
+    }
 }
 
 void SceneController::eraseModel(PMDObject *object)
 {
-    /* remove assigned accessories */
     for (int i = 0; i < m_maxModel; i++) {
         PMDObject *assoc = m_objects[i];
+        // associated accessories (models) is found, these are also deleted.
         if (assoc->isEnable() && assoc->getAssignedModel() == object) {
             eraseModel(assoc);
         }
@@ -1062,7 +1089,6 @@ void SceneController::eraseModel(PMDObject *object)
         m_motion.unload(player->vmd);
     }
     m_numModel--;
-    /* remove model */
     object->release();
 }
 
@@ -1133,68 +1159,20 @@ void SceneController::updateObject(double fps)
 
 inline void SceneController::sendEvent1(const char *type, const char *arg1)
 {
-    if (m_handler != NULL) {
+    if (m_handler != NULL)
         m_handler->handleEventMessage(type, 1, arg1);
-    }
 }
 
 inline void SceneController::sendEvent2(const char *type, const char *arg1, const char *arg2)
 {
-    if (m_handler != NULL) {
+    if (m_handler != NULL)
         m_handler->handleEventMessage(type, 2, arg1, arg2);
-    }
-}
-
-static void MMDAIFrustum(float result[16], float left, float right, float bottom, float top, float znear, float zfar)
-{
-    const float a = (right + left) / (right - left);
-    const float b = (top + bottom) / (top - bottom);
-    const float c = (zfar + znear) / (zfar - znear) * -1;
-    const float d = (-2 * zfar * znear) / (zfar - znear);
-    const float e = (2 * znear) / (right - left);
-    const float f = (2 * znear) / (top - bottom);
-    const float matrix[16] = {
-        e, 0, 0, 0,
-        0, f, 0, 0,
-        a, b, c, -1,
-        0, 0, d, 0
-    };
-    memcpy(result, matrix, sizeof(matrix));
-}
-
-void SceneController::updateProjection(int ellapsedTimeForMove)
-{
-    if (m_currentScale != m_scale) {
-        if (m_viewMoveTime == 0) {
-            /* immediately apply the target */
-            m_currentScale = m_scale;
-        } else if (m_viewMoveTime > 0) {
-            /* constant move */
-            if (ellapsedTimeForMove >= m_viewMoveTime) {
-                m_currentScale = m_scale;
-            } else {
-                m_currentScale = m_viewMoveStartScale + (m_scale - m_viewMoveStartScale) * ellapsedTimeForMove / m_viewMoveTime;
-            }
-        } else {
-            float diff = fabs(m_currentScale - m_scale);
-            if (diff < RENDER_MINSCALEDIFF) {
-                m_currentScale = m_scale;
-            } else {
-                m_currentScale = m_currentScale * (RENDER_SCALESPEEDRATE) + m_scale * (1.0f - RENDER_SCALESPEEDRATE);
-            }
-        }
-    }
-    float aspect = (m_width == 0) ? 1.0f : static_cast<float>(m_height) / m_width;
-    float ratio = (m_currentScale == 0.0f) ? 1.0f : 1.0f / m_currentScale;
-    float projection[16];
-    MMDAIFrustum(projection, -ratio, ratio, -aspect * ratio, aspect * ratio, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
-    m_engine->setProjection(projection);
 }
 
 void SceneController::updateModelView(int ellapsedTimeForMove)
 {
-    if (m_currentRot != m_rot || m_currentTrans != m_trans) {
-        if (m_viewMoveTime == 0) {
+    if  (updateDistance(ellapsedTimeForMove) || m_currentRot != m_rot || m_currentTrans != m_trans) {
+        if (m_viewMoveTime == 0 || m_viewControlledByMotion) {
             /* immediately apply the target */
             m_currentRot = m_rot;
             m_currentTrans = m_trans;
@@ -1206,8 +1184,8 @@ void SceneController::updateModelView(int ellapsedTimeForMove)
                 m_currentTrans = m_trans;
             }
             else {
-                m_currentTrans = m_viewMoveStartTrans.lerp(m_trans, (btScalar) ellapsedTimeForMove / m_viewMoveTime);
-                m_currentRot = m_viewMoveStartRot.slerp(m_rot, (btScalar) ellapsedTimeForMove / m_viewMoveTime);
+                m_currentTrans = m_viewMoveStartTrans.lerp(m_trans, ellapsedTimeForMove / m_viewMoveTime);
+                m_currentRot = m_viewMoveStartRot.slerp(m_rot, ellapsedTimeForMove / m_viewMoveTime);
             }
         }
         else {
@@ -1227,10 +1205,14 @@ void SceneController::updateModelView(int ellapsedTimeForMove)
             else
                 m_currentRot = m_rot;
         }
+        updateModelViewMatrix();
     }
-    m_transMatrix.setRotation(m_currentRot);
-    m_transMatrix.setOrigin(m_currentTrans + m_cameraTrans);
-    m_engine->setModelView(m_transMatrix);
+}
+
+void SceneController::updateProjection(int ellapsedTimeForMove)
+{
+    if (updateFovy(ellapsedTimeForMove))
+        updateProjectionMatrix();
 }
 
 void SceneController::prerenderScene()
@@ -1245,6 +1227,111 @@ void SceneController::renderScene()
     if (!isViewMoving())
         m_viewMoveTime = -1;
     m_engine->render(m_objects, m_order, m_maxModel, m_stage);
+}
+
+void SceneController::updateRotationFromAngle()
+{
+    m_rot = btQuaternion(btVector3(0.0f, 0.0f, 1.0f), MMDAIMathRadian(m_angle.z()))
+            * btQuaternion(btVector3(1.0f, 0.0f, 0.0f), MMDAIMathRadian(m_angle.x()))
+            * btQuaternion(btVector3(0.0f, 1.0f, 0.0f), MMDAIMathRadian(m_angle.y()));
+}
+
+bool SceneController::updateDistance(int ellapsedTimeForMove)
+{
+    /* if no difference, return */
+    if (m_currentDistance == m_distance)
+        return false;
+
+    if (m_viewMoveTime == 0 || m_viewControlledByMotion) {
+        /* immediately apply the target */
+        m_currentDistance = m_distance;
+    }
+    else if (m_viewMoveTime > 0) {
+        /* constant move */
+        if (ellapsedTimeForMove >= m_viewMoveTime) {
+            m_currentDistance = m_distance;
+        }
+        else {
+            m_currentDistance = m_viewMoveStartDistance + (m_distance - m_viewMoveStartDistance) * ellapsedTimeForMove / m_viewMoveTime;
+        }
+    }
+    else {
+        float diff = fabs(m_currentDistance - m_distance);
+        if (diff < RENDER_MINDISTANCEDIFF) {
+            m_currentDistance = m_distance;
+        }
+        else {
+            m_currentDistance = m_currentDistance * (RENDER_DISTANCESPEEDRATE) + m_distance * (1.0f - RENDER_DISTANCESPEEDRATE);
+        }
+    }
+    return true;
+}
+
+bool SceneController::updateFovy(int ellapsedTimeForMove)
+{
+    /* if no difference, return */
+    if (m_currentFovy == m_fovy)
+        return false;
+    if (m_viewMoveTime == 0 || m_viewControlledByMotion) {
+        /* immediately apply the target */
+        m_currentFovy = m_fovy;
+    }
+    else if (m_viewMoveTime > 0) {
+        /* constant move */
+        if (ellapsedTimeForMove >= m_viewMoveTime) {
+            m_currentFovy = m_fovy;
+        }
+        else {
+            m_currentFovy = m_viewMoveStartFovy + (m_fovy - m_viewMoveStartFovy) * ellapsedTimeForMove / m_viewMoveTime;
+        }
+    }
+    else {
+        float diff = fabs(m_currentFovy - m_fovy);
+        if (diff < RENDER_MINFOVYDIFF) {
+            m_currentFovy = m_fovy;
+        }
+        else {
+            m_currentFovy = m_currentFovy * (RENDER_FOVYSPEEDRATE) + m_fovy * (1.0f - RENDER_FOVYSPEEDRATE);
+        }
+    }
+    return true;
+}
+
+static void GLPerspective(float result[16], float fovy, float aspect, float znear, float zfar)
+{
+    const float f = 1.0f / tanf(fovy / 2.0f);
+    const float a = f / aspect;
+    const float b = f;
+    const float c = (zfar + znear) / (znear - zfar);
+    const float d = (2.0f * zfar * znear) / (znear - zfar);
+    const float matrix[16] = {
+        a, 0, 0, 0,
+        0, b, 0, 0,
+        0, 0, c, -1,
+        0, 0, d, 0
+    };
+    memcpy(result, matrix, sizeof(matrix));
+}
+
+void SceneController::updateModelViewMatrix()
+{
+    m_transMatrix.setIdentity();
+    m_transMatrix.setRotation(m_currentRot);
+    m_transMatrix.setOrigin(m_transMatrix * (-m_currentTrans) - btVector3(0.0f, 0.0f, m_currentDistance));
+    m_engine->setModelView(m_transMatrix);
+}
+
+void SceneController::updateProjectionMatrix()
+{
+    float aspect = (m_width == 0) ? 1.0f : static_cast<float>(m_width) / m_height;
+    float projection[16];
+    //GLPerspective(projection, m_currentFovy, aspect, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(m_currentFovy, aspect, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
+    glGetFloatv(GL_PROJECTION_MATRIX, projection);
+    glMatrixMode(GL_MODELVIEW);
+    m_engine->setProjection(projection);
 }
 
 void SceneController::sortRenderOrder()
