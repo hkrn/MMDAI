@@ -239,7 +239,7 @@ void QMAVIManagerPlugin::startTimer0(const QString &key, const QString &value)
         MMDAILogInfoString("specified key is empty");
         return;
     }
-    const int seconds = value.toInt();
+    const int seconds = value.toFloat();
     if (m_timers.contains(key)) {
         QBasicTimer *timer = m_timers.value(key);
         timer->stop();
