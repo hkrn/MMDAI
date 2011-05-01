@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -45,51 +45,62 @@
 
 namespace MMDAI {
 
-typedef struct _BoneKeyFrame {
+struct BoneKeyFrame {
     float keyFrame;
     btVector3 pos;
     btQuaternion rot;
     bool linear[4];
     float *interpolationTable[4];
-} BoneKeyFrame;
+};
 
-
-typedef struct _BoneMotion {
+struct BoneMotion {
     char *name;
-    unsigned long numKeyFrame;
+    uint32_t numKeyFrame;
     BoneKeyFrame *keyFrameList;
-} BoneMotion;
+};
 
-
-typedef struct _BoneMotionLink {
+struct BoneMotionLink {
     BoneMotion boneMotion;
-    struct _BoneMotionLink *next;
-} BoneMotionLink;
+    struct BoneMotionLink *next;
+};
 
-
-typedef struct _FaceKeyFrame {
+struct FaceKeyFrame {
     float keyFrame;
     float weight;
-} FaceKeyFrame;
+};
 
-
-typedef struct _FaceMotion {
+struct FaceMotion {
     char *name;
-    unsigned long numKeyFrame;
+    uint32_t numKeyFrame;
     FaceKeyFrame *keyFrameList;
-} FaceMotion;
+};
 
-
-typedef struct _FaceMotionLink {
+struct FaceMotionLink {
     FaceMotion faceMotion;
-    struct _FaceMotionLink *next;
-} FaceMotionLink;
+    struct FaceMotionLink *next;
+};
 
+struct CameraKeyFrame {
+    float keyFrame;
+    float distance;
+    btVector3 pos;
+    btVector3 angle;
+    bool linear[6];
+    float *interpolationTable[6];
+    float fovy;
+    uint8_t noPerspective;
+};
+
+struct CameraMotion {
+    uint32_t numKeyFrame;
+    CameraKeyFrame *keyFrameList;
+};
 
 class VMD
 {
 public:
-    static const int kInterpolationTableSize = 64;
+    static const int kBoneInterpolationTableSize = 64;
+    static const int kCameraInterpolationTableSize = 24;
 
     VMD();
     ~VMD();
@@ -106,6 +117,9 @@ public:
     inline FaceMotionLink * getFaceMotionLink() const {
         return m_faceLink;
     }
+    inline CameraMotion *getCameraMotion() const {
+        return m_cameraMotion;
+    }
     inline const uint32_t countBoneKind() const {
         return m_numBoneKind;
     }
@@ -119,19 +133,22 @@ public:
 private:
     void addBoneMotion(const char *name);
     void addFaceMotion(const char *name);
-    BoneMotion * getBoneMotion(const char *name);
-    FaceMotion * getFaceMotion(const char *name);
-    void setInterpolationTable(BoneKeyFrame *bf, char ip[]);
+    BoneMotion *getBoneMotion(const char *name);
+    FaceMotion *getFaceMotion(const char *name);
+    void setBoneInterpolationTable(BoneKeyFrame *bf, char ip[]);
+    void setCameraInterpolationTable(CameraKeyFrame *cf, char ip[]);
     void release();
 
     PTree m_name2bone;
     PTree m_name2face;
     BoneMotionLink *m_boneLink;
     FaceMotionLink *m_faceLink;
+    CameraMotion *m_cameraMotion;
     uint32_t m_numBoneKind;
     uint32_t m_numFaceKind;
     uint32_t m_numTotalBoneKeyFrame;
     uint32_t m_numTotalFaceKeyFrame;
+    uint32_t m_numTotalCameraKeyFrame;
     float m_maxFrame;
 
     MMDME_DISABLE_COPY_AND_ASSIGN(VMD);

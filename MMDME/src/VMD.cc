@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2010  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -36,24 +36,29 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* headers */
-
 #include "MMDME/MMDME.h"
 
 namespace MMDAI {
 
-static int compareKeyFrameBone(const void *x, const void *y)
+static int compareBoneKeyFrame(const void *x, const void *y)
 {
     const BoneKeyFrame *a = static_cast<const BoneKeyFrame *>(x);
     const BoneKeyFrame *b = static_cast<const BoneKeyFrame *>(y);
-    return (int) (a->keyFrame - b->keyFrame);
+    return static_cast<int>(a->keyFrame - b->keyFrame);
 }
 
-static int compareKeyFrameFace(const void *x, const void *y)
+static int compareFaceKeyFrame(const void *x, const void *y)
 {
     const FaceKeyFrame *a = static_cast<const FaceKeyFrame *>(x);
     const FaceKeyFrame *b = static_cast<const FaceKeyFrame *>(y);
-    return (int) (a->keyFrame - b->keyFrame);
+    return static_cast<int>(a->keyFrame - b->keyFrame);
+}
+
+static int compareCameraKeyFrame(const void *x, const void *y)
+{
+    const CameraKeyFrame *a = static_cast<const CameraKeyFrame *>(x);
+    const CameraKeyFrame *b = static_cast<const CameraKeyFrame *>(y);
+    return static_cast<int>(a->keyFrame - b->keyFrame);
 }
 
 static float ipfunc(const float t, const float p1,  const float p2)
@@ -64,6 +69,77 @@ static float ipfunc(const float t, const float p1,  const float p2)
 static float ipfuncd(const float t, const float p1, const float p2)
 {
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
+}
+
+VMD::VMD()
+    : m_boneLink(NULL),
+      m_faceLink(NULL),
+      m_cameraMotion(NULL),
+      m_numBoneKind(0),
+      m_numFaceKind(0),
+      m_numTotalBoneKeyFrame(0),
+      m_numTotalFaceKeyFrame(0),
+      m_numTotalCameraKeyFrame(0),
+      m_maxFrame(0.0f)
+{
+}
+
+VMD::~VMD()
+{
+    release();
+}
+
+void VMD::release()
+{
+    m_name2bone.release();
+    m_name2face.release();
+
+    BoneMotionLink *bl = m_boneLink;
+    while (bl) {
+        if (bl->boneMotion.keyFrameList) {
+            for (uint32_t i = 0; i < bl->boneMotion.numKeyFrame; i++)
+                for (int j = 0; j < 4; j++)
+                    if (bl->boneMotion.keyFrameList[i].linear[j] == false)
+                        MMDAIMemoryRelease(bl->boneMotion.keyFrameList[i].interpolationTable[j]);
+            MMDAIMemoryRelease(bl->boneMotion.keyFrameList);
+        }
+        if(bl->boneMotion.name)
+            MMDAIMemoryRelease(bl->boneMotion.name);
+        BoneMotionLink *bl_tmp = bl->next;
+        MMDAIMemoryRelease(bl);
+        bl = bl_tmp;
+    }
+
+    FaceMotionLink *fl = m_faceLink;
+    while (fl) {
+        if (fl->faceMotion.keyFrameList)
+            MMDAIMemoryRelease(fl->faceMotion.keyFrameList);
+        if(fl->faceMotion.name)
+            MMDAIMemoryRelease(fl->faceMotion.name);
+        FaceMotionLink *fl_tmp = fl->next;
+        MMDAIMemoryRelease(fl);
+        fl = fl_tmp;
+    }
+
+    if (m_cameraMotion != NULL) {
+        if (m_cameraMotion->keyFrameList != NULL) {
+            for (uint32_t i = 0; i < m_cameraMotion->numKeyFrame; i++) {
+                for (int j = 0; j < 6; j++)
+                    if (!m_cameraMotion->keyFrameList[i].linear[j])
+                        MMDAIMemoryRelease(m_cameraMotion->keyFrameList[i].interpolationTable[j]);
+            }
+            MMDAIMemoryRelease(m_cameraMotion->keyFrameList);
+        }
+        MMDAIMemoryRelease(m_cameraMotion);
+    }
+
+    m_boneLink = NULL;
+    m_faceLink = NULL;
+    m_numBoneKind = 0;
+    m_numFaceKind = 0;
+    m_numTotalBoneKeyFrame = 0;
+    m_numTotalFaceKeyFrame = 0;
+    m_maxFrame = 0.0f;
 }
 
 void VMD::addBoneMotion(const char *name)
@@ -136,28 +212,28 @@ FaceMotion* VMD::getFaceMotion(const char *name)
     return NULL;
 }
 
-void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
+void VMD::setBoneInterpolationTable(BoneKeyFrame *bf, char ip[])
 {
     /* check if they are just a linear function */
-    for (int16_t i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
         bf->linear[i] = (ip[0+i] == ip[4+i] && ip[8+i] == ip[12+i]) ? true : false;
 
     /* make X (0.0 - 1.0) -> Y (0.0 - 1.0) mapping table */
-    for (int16_t i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++) {
         if (bf->linear[i]) {
             /* table not needed */
             bf->interpolationTable[i] = NULL;
             continue;
         }
-        bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * kInterpolationTableSize + 1));
+        bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * kBoneInterpolationTableSize + 1));
         if (bf->interpolationTable[i] == NULL)
             return;
         float x1 = ip[   i] / 127.0f;
         float y1 = ip[ 4+i] / 127.0f;
         float x2 = ip[ 8+i] / 127.0f;
         float y2 = ip[12+i] / 127.0f;
-        for (int16_t d = 0; d < kInterpolationTableSize; d++) {
-            float inval = static_cast<float>(d) / kInterpolationTableSize;
+        for (int d = 0; d < kBoneInterpolationTableSize; d++) {
+            float inval = static_cast<float>(d) / kBoneInterpolationTableSize;
             /* get Y value for given inval */
             float t = inval;
             while (1) {
@@ -171,65 +247,45 @@ void VMD::setInterpolationTable(BoneKeyFrame *bf, char ip[])
             }
             bf->interpolationTable[i][d] = ipfunc(t, y1, y2);
         }
-        bf->interpolationTable[i][kInterpolationTableSize] = 1.0f;
+        bf->interpolationTable[i][kBoneInterpolationTableSize] = 1.0f;
     }
 }
 
-VMD::VMD()
-    : m_boneLink(NULL),
-    m_faceLink(NULL),
-    m_numBoneKind(0),
-    m_numFaceKind(0),
-    m_numTotalBoneKeyFrame(0),
-    m_numTotalFaceKeyFrame(0),
-    m_maxFrame(0.0f)
+void VMD::setCameraInterpolationTable(CameraKeyFrame *cf, char ip[])
 {
-}
+    /* check if they are just a linear function */
+    for (int i = 0; i < 6; i++)
+        cf->linear[i] = (ip[i*4] == ip[i*4+2] && ip[i*4+1] == ip[i*4+3]) ? true : false;
 
-VMD::~VMD()
-{
-    release();
-}
-
-void VMD::release()
-{
-    m_name2bone.release();
-    m_name2face.release();
-
-    BoneMotionLink *bl = m_boneLink;
-    while (bl) {
-        if (bl->boneMotion.keyFrameList) {
-            for (uint32_t i = 0; i < bl->boneMotion.numKeyFrame; i++)
-                for (int j = 0; j < 4; j++)
-                    if (bl->boneMotion.keyFrameList[i].linear[j] == false)
-                        MMDAIMemoryRelease(bl->boneMotion.keyFrameList[i].interpolationTable[j]);
-            MMDAIMemoryRelease(bl->boneMotion.keyFrameList);
+    /* make X (0.0 - 1.0) -> Y (0.0 - 1.0) mapping table */
+    for (int i = 0; i < 6; i++) {
+        if (cf->linear[i]) {
+            /* table not needed */
+            cf->interpolationTable[i] = NULL;
+            continue;
         }
-        if(bl->boneMotion.name)
-            MMDAIMemoryRelease(bl->boneMotion.name);
-        BoneMotionLink *bl_tmp = bl->next;
-        MMDAIMemoryRelease(bl);
-        bl = bl_tmp;
+        cf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * (kCameraInterpolationTableSize + 1)));
+        float x1 = ip[i*4  ] / 127.0f;
+        float y1 = ip[i*4+2] / 127.0f;
+        float x2 = ip[i*4+1] / 127.0f;
+        float y2 = ip[i*4+3] / 127.0f;
+        for (int d = 0; d < kCameraInterpolationTableSize; d++) {
+            float inval = static_cast<float>(d) / kCameraInterpolationTableSize;
+            /* get Y value for given inval */
+            float t = inval;
+            while (1) {
+                float v = ipfunc(t, x1, x2) - inval;
+                if (fabsf(v) < 0.0001f)
+                    break;
+                float tt = ipfuncd(t, x1, x2);
+                if (tt == 0.0f)
+                    break;
+                t -= v / tt;
+            }
+            cf->interpolationTable[i][d] = ipfunc(t, y1, y2);
+        }
+        cf->interpolationTable[i][kCameraInterpolationTableSize] = 1.0f;
     }
-
-    FaceMotionLink *fl = m_faceLink;
-    while (fl) {
-        if (fl->faceMotion.keyFrameList)
-            MMDAIMemoryRelease(fl->faceMotion.keyFrameList);
-        if(fl->faceMotion.name)
-            MMDAIMemoryRelease(fl->faceMotion.name);
-        FaceMotionLink *fl_tmp = fl->next;
-        MMDAIMemoryRelease(fl);
-        fl = fl_tmp;
-    }
-
-    m_boneLink = NULL;
-    m_faceLink = NULL;
-    m_numBoneKind = 0;
-    m_numFaceKind = 0;
-    m_numTotalBoneKeyFrame = 0;
-    m_numTotalFaceKeyFrame = 0;
-    m_maxFrame = 0.0f;
 }
 
 bool VMD::load(IMotionLoader *loader)
@@ -304,13 +360,13 @@ bool VMD::parse(unsigned char *data, size_t size)
             bm->keyFrameList[bm->numKeyFrame].rot = btQuaternion(boneFrame[i].rot[0], boneFrame[i].rot[1], boneFrame[i].rot[2], boneFrame[i].rot[3]);
 #endif
             /* set interpolation table */
-            setInterpolationTable(&(bm->keyFrameList[bm->numKeyFrame]), boneFrame[i].interpolation);
+            setBoneInterpolationTable(&(bm->keyFrameList[bm->numKeyFrame]), boneFrame[i].interpolation);
             bm->numKeyFrame++;
         }
     }
     /* sort the key frames in each boneMotion by frame */
     for (BoneMotionLink *bl = m_boneLink; bl; bl = bl->next)
-        qsort(bl->boneMotion.keyFrameList, bl->boneMotion.numKeyFrame, sizeof(BoneKeyFrame), compareKeyFrameBone);
+        qsort(bl->boneMotion.keyFrameList, bl->boneMotion.numKeyFrame, sizeof(BoneKeyFrame), compareBoneKeyFrame);
     /* count number of bones appear in this vmd */
     m_numBoneKind = 0;
     for (BoneMotionLink *bl = m_boneLink; bl; bl = bl->next)
@@ -359,7 +415,7 @@ bool VMD::parse(unsigned char *data, size_t size)
     }
     /* sort the key frames in each faceMotion by frame */
     for (FaceMotionLink *fl = m_faceLink; fl; fl = fl->next)
-        qsort(fl->faceMotion.keyFrameList, fl->faceMotion.numKeyFrame, sizeof(FaceKeyFrame), compareKeyFrameFace);
+        qsort(fl->faceMotion.keyFrameList, fl->faceMotion.numKeyFrame, sizeof(FaceKeyFrame), compareFaceKeyFrame);
 
     /* count number of faces appear in this vmd */
     m_numFaceKind = 0;
@@ -369,25 +425,50 @@ bool VMD::parse(unsigned char *data, size_t size)
     data += sizeof(VMDFile_FaceFrame) * m_numTotalFaceKeyFrame;
     rest -= sizeof(VMDFile_FaceFrame) * m_numTotalFaceKeyFrame;
 
-    int numCameraFrame = *reinterpret_cast<uint32_t *>(data);
+    m_numTotalCameraKeyFrame = *reinterpret_cast<uint32_t *>(data);
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
-    data += numCameraFrame * sizeof(VMDFile_Camera);
-    rest -= numCameraFrame * sizeof(VMDFile_Camera);
+
+    if (m_numTotalCameraKeyFrame > 0) {
+        VMDFile_CameraFrame *cameraFrame = reinterpret_cast<VMDFile_CameraFrame *>(data);
+        m_cameraMotion = static_cast<CameraMotion *>(MMDAIMemoryAllocate(sizeof(CameraMotion)));
+        m_cameraMotion->numKeyFrame = m_numTotalCameraKeyFrame;
+        m_cameraMotion->keyFrameList = static_cast<CameraKeyFrame *>(MMDAIMemoryAllocate(sizeof(CameraKeyFrame) * m_cameraMotion->numKeyFrame));
+        for (i = 0; i < m_cameraMotion->numKeyFrame; i++) {
+            m_cameraMotion->keyFrameList[i].keyFrame = (float) cameraFrame[i].keyFrame;
+            m_cameraMotion->keyFrameList[i].distance = - cameraFrame[i].distance;
+#ifdef MMDFILES_CONVERTCOORDINATESYSTEM
+            m_cameraMotion->keyFrameList[i].pos = btVector3(cameraFrame[i].pos[0], cameraFrame[i].pos[1], - cameraFrame[i].pos[2]);
+            m_cameraMotion->keyFrameList[i].angle = btVector3(- MMDAIMathDegree(cameraFrame[i].angle[0]), -MMDAIMathDegree(cameraFrame[i].angle[1]),
+                                                              MMDAIMathDegree(cameraFrame[i].angle[2]));
+#else
+            m_cameraMotion->keyFrameList[i].pos = btVector3(cameraFrame[i].pos[0], cameraFrame[i].pos[1], cameraFrame[i].pos[2]);
+            m_cameraMotion->keyFrameList[i].angle = btVector3(MMDAIMathDegree(cameraFrame[i].angle[0]), MMDAIMathDegree(cameraFrame[i].angle[1]),
+                                                              MMDAIMathDegree(cameraFrame[i].angle[2]));
+#endif
+            m_cameraMotion->keyFrameList[i].fovy = (float) cameraFrame[i].viewAngle;
+            m_cameraMotion->keyFrameList[i].noPerspective = cameraFrame[i].noPerspective;
+            setCameraInterpolationTable(&(m_cameraMotion->keyFrameList[i]), cameraFrame[i].interpolation);
+        }
+        qsort(m_cameraMotion->keyFrameList, m_cameraMotion->numKeyFrame, sizeof(CameraKeyFrame), compareCameraKeyFrame);
+    }
+
+    data += m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
+    rest -= m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
 
     int numLightFrame = *reinterpret_cast<uint32_t *>(data);
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
-    data += numLightFrame * sizeof(VMDFile_Light);
-    rest -= numLightFrame * sizeof(VMDFile_Light);
+    data += numLightFrame * sizeof(VMDFile_LightFrame);
+    rest -= numLightFrame * sizeof(VMDFile_LightFrame);
 
     int numSelfShadowFrame = *reinterpret_cast<uint32_t *>(data);
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
-    data += numSelfShadowFrame * sizeof(VMDFile_SelfShadow);
-    rest -= numSelfShadowFrame * sizeof(VMDFile_SelfShadow);
+    data += numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame);
+    rest -= numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame);
 
-    MMDAILogDebug("camera:%d light:%d selfShadow:%d", numCameraFrame, numLightFrame, numSelfShadowFrame);
+    MMDAILogDebug("camera:%d light:%d selfShadow:%d", m_numTotalCameraKeyFrame, numLightFrame, numSelfShadowFrame);
     MMDAILogDebug("rest of VMD: %d (data size is %d)", rest, size);
 
     return true;

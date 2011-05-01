@@ -45,7 +45,8 @@ aux_source_directory(src libMMDME_sources)
 set(libMMDME_public_headers
   include/MMDME/BulletPhysics.h
   include/MMDME/Common.h
-  include/MMDME/IModelLoader.h 
+  include/MMDME/CameraController.h
+  include/MMDME/IModelLoader.h
   include/MMDME/IMotionLoader.h
   include/MMDME/MotionController.h
   include/MMDME/MotionManager.h
@@ -55,13 +56,13 @@ set(libMMDME_public_headers
   include/MMDME/PMDFace.h
   include/MMDME/PMDFile.h
   include/MMDME/PMDIK.h
-  include/MMDME/PMDMaterial.h 
-  include/MMDME/PMDModel.h 
+  include/MMDME/PMDMaterial.h
+  include/MMDME/PMDModel.h
   include/MMDME/PMDRenderEngine.h
-  include/MMDME/PMDRigidBody.h 
-  include/MMDME/PMDTexture.h 
-  include/MMDME/PTree.h 
-  include/MMDME/VMD.h 
+  include/MMDME/PMDRigidBody.h
+  include/MMDME/PMDTexture.h
+  include/MMDME/PTree.h
+  include/MMDME/VMD.h
   include/MMDME/VMDFile.h
 )
 

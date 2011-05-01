@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2011  hkrn (libMMDAI)                         */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -64,23 +64,23 @@ struct VMDFile_FaceFrame {
     float weight;
 };
 
-struct VMDFile_Camera {
+struct VMDFile_CameraFrame {
     uint32_t keyFrame;
-    float length;
+    float distance;
     float pos[3];
-    float rot[3];
+    float angle[3];
     char interpolation[24];
-    uint32_t angle;
-    char perspective;
+    uint32_t viewAngle;
+    char noPerspective;
 };
 
-struct VMDFile_Light {
+struct VMDFile_LightFrame {
     uint32_t keyFrame;
     float color[3];
     float pos[3];
 };
 
-struct VMDFile_SelfShadow {
+struct VMDFile_SelfShadowFrame {
     uint32_t keyFrame;
     char mode;
     float distance;

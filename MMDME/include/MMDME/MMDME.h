@@ -45,6 +45,7 @@
 #include "MMDME/IMotionLoader.h"
 
 #include "MMDME/Common.h"
+#include "MMDME/CameraController.h"
 #include "MMDME/PMDFile.h"
 #include "MMDME/VMDFile.h"
 #include "MMDME/PTree.h"
