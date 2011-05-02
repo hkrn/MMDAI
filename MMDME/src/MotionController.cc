@@ -139,10 +139,10 @@ void MotionController::calcBoneAt(MotionControllerBoneElement *mc, float frameNo
             mc->pos = pos2;
             mc->rot = rot2;
         } else {
-            float x = 0, y = 0, z = 0, ww = 0, *v = 0;
+            const float *v, w = (frame - time1) / (time2 - time1);
+            const int16_t index = static_cast<int16_t>(w * VMD::kBoneInterpolationTableSize);
+            float x = 0, y = 0, z = 0, ww = 0;
             /* lerp */
-            float w = (frame - time1) / (time2 - time1);
-            int16_t index = static_cast<int16_t>(w * VMD::kBoneInterpolationTableSize);
             if (keyFrameForInterpolation->linear[0]) {
                 x = pos1.x() * (1.0f - w) + pos2.x() * w;
             } else {
