@@ -225,7 +225,7 @@ void VMD::setBoneInterpolationTable(BoneKeyFrame *bf, char ip[])
             bf->interpolationTable[i] = NULL;
             continue;
         }
-        bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * kBoneInterpolationTableSize + 1));
+        bf->interpolationTable[i] = static_cast<float *>(MMDAIMemoryAllocate(sizeof(float) * (kBoneInterpolationTableSize + 1)));
         if (bf->interpolationTable[i] == NULL)
             return;
         float x1 = ip[   i] / 127.0f;
