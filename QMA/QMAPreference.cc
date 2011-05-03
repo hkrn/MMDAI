@@ -163,7 +163,7 @@ void QMAPreference::setFloat(const MMDAI::PreferenceKeys key, float value)
     }
 }
 
-void QMAPreference::setFloat3(const MMDAI::PreferenceKeys key, float *values)
+void QMAPreference::setFloat3(const MMDAI::PreferenceKeys key, const float *values)
 {
     if (validateFloat3Key(key)) {
         QVector3D vec3;
@@ -179,7 +179,7 @@ void QMAPreference::setFloat3(const MMDAI::PreferenceKeys key, float *values)
     }
 }
 
-void QMAPreference::setFloat4(const MMDAI::PreferenceKeys key, float *values)
+void QMAPreference::setFloat4(const MMDAI::PreferenceKeys key, const float *values)
 {
     if (validateFloat4Key(key)) {
         QVector4D vec4;

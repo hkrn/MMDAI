@@ -58,8 +58,8 @@ public:
     void  setBool(const MMDAI::PreferenceKeys key, bool value);
     void  setInt(const MMDAI::PreferenceKeys key, int value);
     void  setFloat(const MMDAI::PreferenceKeys key, float value);
-    void  setFloat3(const MMDAI::PreferenceKeys key, float *values);
-    void  setFloat4(const MMDAI::PreferenceKeys key, float *values);
+    void  setFloat3(const MMDAI::PreferenceKeys key, const float *values);
+    void  setFloat4(const MMDAI::PreferenceKeys key, const float *values);
 
     inline QString getBaseName() const {
         return m_basename;
