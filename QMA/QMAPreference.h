@@ -61,6 +61,9 @@ public:
     void  setFloat3(const MMDAI::PreferenceKeys key, float *values);
     void  setFloat4(const MMDAI::PreferenceKeys key, float *values);
 
+    inline QString getBaseName() const {
+        return m_basename;
+    }
     inline QSettings *getSettings() {
         return m_settings;
     }
@@ -75,6 +78,7 @@ private:
     QVariant getDefaultValue(const MMDAI::PreferenceKeys key);
     void round(const MMDAI::PreferenceKeys key, QVariant &value);
 
+    QString m_basename;
     QSettings *m_settings;
     QHash<MMDAI::PreferenceKeys, QVariant> m_values;
 

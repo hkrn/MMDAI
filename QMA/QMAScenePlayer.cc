@@ -40,11 +40,12 @@
 
 QMAScenePlayer::QMAScenePlayer(QMAPreference *preference, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+      m_controller(0),
       m_debug(0),
       m_preference(preference),
+      m_interval(static_cast<int>(1000.0 / 120.0)),
       m_text(font()),
       m_sceneUpdateTimer(this),
-      m_controller(0),
       m_parser(0),
       m_x(0),
       m_y(0),
@@ -55,8 +56,6 @@ QMAScenePlayer::QMAScenePlayer(QMAPreference *preference, QWidget *parent)
     m_controller = new MMDAI::SceneController(this, preference);
     m_parser = new MMDAI::CommandParser(m_controller, &m_factory);
     m_debug = new QMADebugRenderEngine(m_controller);
-    m_sceneUpdateTimer.setSingleShot(false);
-    connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
     createActions();
     setAcceptDrops(true);
     setAutoFillBackground(false);
@@ -70,6 +69,17 @@ QMAScenePlayer::~QMAScenePlayer()
     m_parser = 0;
     delete m_controller;
     m_controller = 0;
+}
+
+void QMAScenePlayer::initialize()
+{
+    m_sceneUpdateTimer.setSingleShot(false);
+    connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
+    QStringList args = qApp->arguments();
+    if (args.count() > 1) {
+        QString filename = args.at(1);
+        loadUserPreference(filename);
+    }
 }
 
 void QMAScenePlayer::handleEventMessage(const char *eventType, int argc, ...)
@@ -217,6 +227,20 @@ bool QMAScenePlayer::insertMotionToModel(const QString &filename, MMDAI::PMDObje
     return false;
 }
 
+void QMAScenePlayer::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader)
+{
+    MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
+    for (; player; player = player->next) {
+        if (player->active && MMDAIStringEqualsIn(player->name, "base", 4)) {
+            m_controller->changeMotion(object, "base", loader);
+            break;
+        }
+    }
+    if (player == NULL) {
+        m_controller->addMotion(object, "base", loader, true, false, true, true, MMDAI::MotionManager::kDefaultPriority);
+    }
+}
+
 void QMAScenePlayer::zoom(bool up, Qt::KeyboardModifiers modifiers)
 {
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
@@ -291,7 +315,33 @@ void QMAScenePlayer::selectModel(const QString &name)
     }
 }
 
-void QMAScenePlayer::loadPlugins(QFile &file)
+void QMAScenePlayer::start()
+{
+    m_sceneFrameTimer.start();
+    m_sceneUpdateTimer.start(m_interval);
+}
+
+void QMAScenePlayer::loadUserPreference(const QString &filename)
+{
+    QFile file("MMDAIUserData:/MMDAI.mdf");
+    if (filename.endsWith(".fst") || filename.endsWith(".mdf")) {
+        QDir dir(filename);
+        QString path = dir.absolutePath();
+        if (QFile::exists(path)) {
+            if (!dir.cdUp())
+                dir = QDir::currentPath();
+            file.setFileName(path.replace(QRegExp("\\.(fst|mdf)$"), ".mdf"));
+            QStringList searchPaths = QDir::searchPaths("MMDAIUserData");
+            QString searchPath = dir.absolutePath();
+            searchPaths.prepend(searchPath);
+            QDir::setSearchPaths("MMDAIUserData", searchPaths);
+            MMDAILogInfo("added %s to MMDAIUserData schema", searchPath.toUtf8().constData());
+        }
+    }
+    m_preference->load(file);
+}
+
+void QMAScenePlayer::loadPlugins()
 {
     foreach (QObject *instance, QPluginLoader::staticInstances()) {
         QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
@@ -320,24 +370,7 @@ void QMAScenePlayer::loadPlugins(QFile &file)
             }
         }
     }
-    emit pluginLoaded(m_controller, QFileInfo(file).baseName());
-}
-
-void QMAScenePlayer::addPlugin(QMAPlugin *plugin)
-{
-    connect(this, SIGNAL(pluginLoaded(MMDAI::SceneController*,QString)),
-            plugin, SLOT(load(MMDAI::SceneController*,QString)));
-    connect(this, SIGNAL(pluginUnloaded()),
-            plugin, SLOT(unload()));
-    connect(this, SIGNAL(pluginCommandPost(QString,QList<QVariant>)),
-            plugin, SLOT(receiveCommand(QString,QList<QVariant>)));
-    connect(this, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
-            plugin, SLOT(receiveEvent(QString,QList<QVariant>)));
-    connect(plugin, SIGNAL(commandPost(QString,QList<QVariant>)),
-            this, SLOT(delegateCommand(QString,QList<QVariant>)));
-    connect(plugin, SIGNAL(eventPost(QString,QList<QVariant>)),
-            this, SLOT(delegateEvent(QString,QList<QVariant>)));
-    MMDAILogInfo("%s was loaded successfully", plugin->metaObject()->className());
+    emit pluginLoaded(m_controller, m_preference->getBaseName());
 }
 
 void QMAScenePlayer::delegateCommand(const QString &command, const QList<QVariant> &arguments)
@@ -377,56 +410,12 @@ void QMAScenePlayer::delegateEvent(const QString &type, const QList<QVariant> &a
     emit pluginEventPost(type, arguments);
 }
 
-void QMAScenePlayer::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader)
-{
-    MMDAI::MotionPlayer *player = object->getMotionManager()->getMotionPlayerList();
-    for (; player; player = player->next) {
-        if (player->active && MMDAIStringEqualsIn(player->name, "base", 4)) {
-            m_controller->changeMotion(object, "base", loader);
-            break;
-        }
-    }
-    if (player == NULL) {
-        m_controller->addMotion(object, "base", loader, true, false, true, true, MMDAI::MotionManager::kDefaultPriority);
-    }
-}
-
 /* events */
 void QMAScenePlayer::initializeGL()
 {
-}
-
-void QMAScenePlayer::showEvent(QShowEvent *event)
-{
-    Q_UNUSED(event);
-    if (!m_sceneUpdateTimer.isActive()) {
-        QStringList args = qApp->arguments();
-        QFile file("MMDAIUserData:/MMDAI.mdf");
-        if (args.count() > 1) {
-            QString filename = args.at(1);
-            if (filename.endsWith(".fst") || filename.endsWith(".mdf")) {
-                QDir dir(filename);
-                QString path = dir.absolutePath();
-                if (QFile::exists(path)) {
-                    if (!dir.cdUp())
-                        dir = QDir::currentPath();
-                    file.setFileName(path.replace(QRegExp("\\.(fst|mdf)$"), ".mdf"));
-                    QStringList searchPaths = QDir::searchPaths("MMDAIUserData");
-                    QString searchPath = dir.absolutePath();
-                    searchPaths.prepend(searchPath);
-                    QDir::setSearchPaths("MMDAIUserData", searchPaths);
-                    MMDAILogInfo("added %s to MMDAIUserData schema", searchPath.toUtf8().constData());
-                }
-            }
-        }
-        m_preference->load(file);
-        m_controller->initialize(width(), height());
-        m_controller->updateLight();
-        m_debug->initialize();
-        loadPlugins(file);
-        m_sceneFrameTimer.start();
-        m_sceneUpdateTimer.start(10);
-    }
+    m_controller->initialize(width(), height());
+    m_controller->updateLight();
+    m_debug->initialize();
 }
 
 void QMAScenePlayer::resizeGL(int width, int height)
@@ -1130,6 +1119,23 @@ void QMAScenePlayer::createMenu(const QHash<QString, QMenu*> &menuBar)
     m_selectModelMenu = modelMenu->addMenu(tr("Select model"));
     modelMenu->addAction(m_changeSelectedObjectAction);
     modelMenu->addAction(m_deleteSelectedObjectAction);
+}
+
+void QMAScenePlayer::addPlugin(QMAPlugin *plugin)
+{
+    connect(this, SIGNAL(pluginLoaded(MMDAI::SceneController*,QString)),
+            plugin, SLOT(load(MMDAI::SceneController*,QString)));
+    connect(this, SIGNAL(pluginUnloaded()),
+            plugin, SLOT(unload()));
+    connect(this, SIGNAL(pluginCommandPost(QString,QList<QVariant>)),
+            plugin, SLOT(receiveCommand(QString,QList<QVariant>)));
+    connect(this, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
+            plugin, SLOT(receiveEvent(QString,QList<QVariant>)));
+    connect(plugin, SIGNAL(commandPost(QString,QList<QVariant>)),
+            this, SLOT(delegateCommand(QString,QList<QVariant>)));
+    connect(plugin, SIGNAL(eventPost(QString,QList<QVariant>)),
+            this, SLOT(delegateEvent(QString,QList<QVariant>)));
+    MMDAILogInfo("%s was loaded successfully", plugin->metaObject()->className());
 }
 
 void QMAScenePlayer::setDirectorySetting(const QString &key, const QString &fileName)

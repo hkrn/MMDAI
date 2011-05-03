@@ -42,6 +42,7 @@
 
 class QMAPreference;
 class QMAScenePlayer;
+class QMAScenePreview;
 class QMALogViewWidget;
 
 class QMAWindow : public QMainWindow
@@ -51,6 +52,10 @@ class QMAWindow : public QMainWindow
 public:
     explicit QMAWindow(QWidget *parent = 0);
     ~QMAWindow();
+
+    void initialize();
+    void loadPlugins();
+    void start();
 
 protected:
     void keyPressEvent(QKeyEvent *event);
@@ -74,7 +79,7 @@ private:
     QMenuBar *m_menuBar;
     QSettings m_settings;
     QMAPreference *m_preference;
-    QMAScenePlayer *m_widget;
+    QMAScenePlayer *m_scene;
     QMALogViewWidget *m_logView;
     QHash<QString, QMenu*> m_menu;
     QAction *m_showLogAction;

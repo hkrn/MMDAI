@@ -38,6 +38,7 @@
 #include "QMAPreference.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QTextStream>
@@ -45,7 +46,8 @@
 #include <QtGui/QVector4D>
 
 QMAPreference::QMAPreference(QSettings *settings)
-    : m_settings(settings)
+    : m_basename("MMDAI"),
+      m_settings(settings)
 {
 }
 
@@ -71,6 +73,7 @@ void QMAPreference::load(QFile &file)
             parse(key, value);
         }
         file.close();
+        m_basename = QFileInfo(file).baseName();
     }
     else {
         MMDAILogWarn("Cannot open %s: %s", file.fileName().toUtf8().constData(),

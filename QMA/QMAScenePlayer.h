@@ -64,6 +64,7 @@ public:
     QMAScenePlayer(QMAPreference *preference, QWidget *parent = 0);
     ~QMAScenePlayer();
 
+    void initialize();
     bool addModel(const QString &filename);
     bool changeModel(const QString &filename);
     bool changeModel(const QString &filename, MMDAI::PMDObject *object);
@@ -81,6 +82,9 @@ public:
     void setEdgeThin(float value);
     void setEnablePhysicalEngine(bool value);
     void updateShadowMapping();
+    void loadPlugins();
+    void loadUserPreference(const QString &path);
+    void start();
 
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
@@ -110,7 +114,6 @@ signals:
 protected:
     void initializeGL();
     void resizeGL(int width, int height);
-    void showEvent(QShowEvent *event);
     void paintGL();
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
@@ -122,8 +125,15 @@ protected:
     void dropEvent(QDropEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void closeEvent(QCloseEvent *event);
+    void setUserPreference(const QString &filename, QFile &file);
+    void createActions();
 
-private slots:
+    MMDAI::SceneController *m_controller;
+    QMADebugRenderEngine *m_debug;
+    QMAPreference *m_preference;
+    int m_interval;
+
+protected slots:
     void hideText();
     void updateScene();
     void insertMotionToAllModels();
@@ -156,22 +166,17 @@ private slots:
 private:
     bool handleCommand(const QString &command, const QList<QVariant> &arguments);
     void loadModel();
-    void loadPlugins(QFile &file);
     void addPlugin(QMAPlugin *plugin);
-    void createActions();
     void setDirectorySetting(const QString &key, const QString &fileName);
 
     void updateModelPositionAndRotation(double fps);
     void renderDebugModel();
     void renderLogger();
 
-    QMADebugRenderEngine *m_debug;
     QMAModelLoaderFactory m_factory;
-    QMAPreference *m_preference;
     QMATextRenderEngine m_text;
     QMATimer m_sceneFrameTimer;
     QTimer m_sceneUpdateTimer;
-    MMDAI::SceneController *m_controller;
     MMDAI::CommandParser *m_parser;
 
     QMenu *m_selectModelMenu;

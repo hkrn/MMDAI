@@ -39,6 +39,7 @@
 
 #include "QMAPreference.h"
 #include "QMAScenePlayer.h"
+#include "QMAScenePreview.h"
 #include "QMALogViewWidget.h"
 
 QMAWindow::QMAWindow(QWidget *parent) :
@@ -53,14 +54,14 @@ QMAWindow::QMAWindow(QWidget *parent) :
     m_menuBar = menuBar();
 #endif
     m_preference = new QMAPreference(&m_settings);
-    m_widget = new QMAScenePlayer(m_preference, parent);
+    m_scene = new QMAScenePlayer(m_preference, parent);
     m_logView = new QMALogViewWidget(parent);
 
     createActions();
     createMenu(m_menuBar);
     mergeMenu();
 
-    setCentralWidget(m_widget);
+    setCentralWidget(m_scene);
     setWindowTitle(qAppName());
     statusBar()->showMessage("");
 
@@ -70,8 +71,23 @@ QMAWindow::QMAWindow(QWidget *parent) :
 QMAWindow::~QMAWindow()
 {
     delete m_preference;
-    delete m_widget;
+    delete m_scene;
     delete m_logView;
+}
+
+void QMAWindow::initialize()
+{
+    m_scene->initialize();
+}
+
+void QMAWindow::loadPlugins()
+{
+    m_scene->loadPlugins();
+}
+
+void QMAWindow::start()
+{
+    m_scene->start();
 }
 
 void QMAWindow::keyPressEvent(QKeyEvent *event)
@@ -86,12 +102,12 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
     }
     QList<QVariant> arguments;
     arguments << event->text();
-    m_widget->delegateEvent(QString(MMDAI::ISceneEventHandler::kKeyEvent), arguments);
+    m_scene->delegateEvent(QString(MMDAI::ISceneEventHandler::kKeyEvent), arguments);
 }
 
 void QMAWindow::closeEvent(QCloseEvent *event)
 {
-    m_widget->close();
+    m_scene->close();
     m_logView->close();
     writeSetting();
     event->accept();
@@ -112,7 +128,7 @@ void QMAWindow::resizeScene()
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
         QSize size = action->data().toSize();
-        m_widget->resize(size);
+        m_scene->resize(size);
         resize(size);
     }
 }
@@ -166,7 +182,7 @@ void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &argumen
 {
     Q_UNUSED(arguments);
     if (type == QMAPlugin::getUpdateEvent()) {
-        double fps = m_widget->getSceneFrameTimer()->getFPS();
+        double fps = m_scene->getSceneFrameTimer()->getFPS();
         setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
     }
 }
@@ -249,7 +265,7 @@ void QMAWindow::createActions()
     connect(action, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     m_aboutQtAction = action;
 
-    connect(m_widget, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
+    connect(m_scene, SIGNAL(pluginEventPost(QString,QList<QVariant>)),
             this, SLOT(receiveEvent(QString,QList<QVariant>)));
 }
 
@@ -268,7 +284,7 @@ void QMAWindow::createMenu(QMenuBar *menubar)
 
 void QMAWindow::mergeMenu()
 {
-    m_widget->createMenu(m_menu);
+    m_scene->createMenu(m_menu);
     QMenu *fileMenu = m_menu["File"];
     fileMenu->addSeparator();
     fileMenu->addAction(m_showLogAction);

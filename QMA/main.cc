@@ -34,16 +34,19 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-
+#include <QtCore/QDebug>
 #include <QtCore/QDir>
+#include <QtCore/QLibrary>
 #include <QtCore/QLibraryInfo>
 #include <QtCore/QLocale>
+#include <QtCore/QPluginLoader>
 #include <QtCore/QTranslator>
 #include <QtCore/QtPlugin>
 #include <QtGui/QApplication>
 
 #include "MMDME/MMDME.h"
 #include "QMALogger.h"
+#include "QMAPlugin.h"
 #include "QMAWindow.h"
 
 #ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
@@ -57,21 +60,10 @@ Q_IMPORT_PLUGIN(qma_openjtalk_plugin);
 Q_IMPORT_PLUGIN(qma_vimanager_plugin);
 #endif
 
-#include <QDebug>
-
-int main(int argc, char *argv[])
+static void QMASetSearchPath(const QCoreApplication &app)
 {
-    QApplication app(argc, argv);
-    QMALogger::initialize();
-    QTranslator appTranslator, qtTranslator;
-    const QString locale = QLocale::system().name();
-
-    app.setOrganizationDomain("hkrn.github.com");
-    app.setOrganizationName("MMDAI Project");
-    app.setApplicationName("QtMMDAI");
-    app.setApplicationVersion("0.61");
-
-    QDir appDir = QDir(app.applicationDirPath());
+    QStringList paths;
+    QDir appDir(app.applicationDirPath()), appBaseDir = appDir;
 #if defined(Q_OS_WIN)
     app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
 #elif defined(Q_OS_MAC)
@@ -81,9 +73,7 @@ int main(int argc, char *argv[])
         appDir.cdUp();
     }
 #endif
-
-    const QString applicationPath = appDir.absolutePath();
-    QStringList paths;
+    const QString applicationPath(appDir.absolutePath());
 
     /* set path to find configurations (e.g. MMDAI.fst) */
 #ifdef QMA_CONFIG_PATH
@@ -123,22 +113,45 @@ int main(int argc, char *argv[])
     const QString translationPath(QMA_TRANSLATION_PATH);
 #else
 #ifdef Q_OS_MAC
-    const QString translationPath = QDir(app.applicationDirPath()).absoluteFilePath("../Resources");
+    const QString translationPath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
-    const QString translationPath = resourcePath + "/Locales";
+    const QString translationPath(resourcePath + "/Locales");
 #endif
 #endif
     paths.clear();
     paths.append(translationPath);
     QDir::setSearchPaths("MMDAITranslations", paths);
+    MMDAILogInfo("MMDAITranslations: %s", translationPath.toUtf8().constData());
+}
 
-    qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-    appTranslator.load("QMA_" + locale, translationPath);
-    app.installTranslator(&qtTranslator);
-    app.installTranslator(&appTranslator);
+static void QMALoadTranslations(QCoreApplication &app, QTranslator &appTr, QTranslator &qtTr)
+{
+    const QString locale = QLocale::system().name();
+    qtTr.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+    appTr.load("QMA_" + locale, QDir("MMDAITranslations:/").absolutePath());
+    app.installTranslator(&qtTr);
+    app.installTranslator(&appTr);
+}
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    QTranslator appTranslator, qtTranslator;
+    QMALogger::initialize();
+
+    app.setOrganizationDomain("hkrn.github.com");
+    app.setOrganizationName("MMDAI Project");
+    app.setApplicationName("QtMMDAI");
+    app.setApplicationVersion("0.61");
+
+    QMASetSearchPath(app);
+    QMALoadTranslations(app, appTranslator, qtTranslator);
 
     /* invoke QMAWindow */
     QMAWindow window;
+    window.initialize();
     window.show();
+    window.loadPlugins();
+    window.start();
     return app.exec();
 }
