@@ -149,8 +149,8 @@ void QMAWindow::toggleFullScreen()
 
 void QMAWindow::about()
 {
-    QMessageBox::about(this, tr("About QtMMDAI"),
-                       tr("<h2>QtMMDAI %1 (Aloe)</h2>"
+    QMessageBox::about(this, tr("About %1").arg(qApp->applicationName()),
+                       tr("<h2>%1 %2 (Aloe)</h2>"
                           "<p>Copyright (C) 2010-2011<br>"
                           "Nagoya Institute of Technology Department of Computer Science, "
                           "hkrn (@hikarincl2)<br>"
@@ -175,7 +175,9 @@ void QMAWindow::about()
                       #endif
                           "</ul></p>"
                           "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
-                          "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>").arg(qApp->applicationVersion()));
+                          "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>")
+                       .arg(qApp->applicationName())
+                       .arg(qApp->applicationVersion()));
 }
 
 void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &arguments)

@@ -42,7 +42,6 @@
 
 class QMAPreference;
 class QMAScenePlayer;
-class QMAScenePreview;
 class QMALogViewWidget;
 
 class QMAWindow : public QMainWindow

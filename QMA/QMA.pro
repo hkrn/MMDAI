@@ -38,7 +38,7 @@ include(QMACommon.pri)
 exists(QMACustom.pri):include(QMACustom.pri)
 
 QT += core gui opengl
-TARGET = QtMMDAI
+TARGET = MMDAI
 TEMPLATE = app
 
 SOURCES += main.cc\
