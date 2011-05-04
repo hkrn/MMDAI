@@ -64,7 +64,10 @@ public:
     QMAScenePlayer(QMAPreference *preference, QWidget *parent = 0);
     ~QMAScenePlayer();
 
-    void initialize();
+    virtual void initialize();
+    virtual void loadPlugins();
+    virtual void start();
+
     bool addModel(const QString &filename);
     bool changeModel(const QString &filename);
     bool changeModel(const QString &filename, MMDAI::PMDObject *object);
@@ -82,9 +85,7 @@ public:
     void setEdgeThin(float value);
     void setEnablePhysicalEngine(bool value);
     void updateShadowMapping();
-    void loadPlugins();
     void loadUserPreference(const QString &path);
-    void start();
 
     void handleEventMessage(const char *eventType, int argc, ...);
     void setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader);
@@ -112,6 +113,9 @@ signals:
     void pluginEventPost(const QString&, const QList<QVariant>&);
 
 protected:
+    virtual bool handleCommand(const QString &command, const QList<QVariant> &arguments);
+    virtual bool handleEvent(const QString &command, const QList<QVariant> &arguments);
+
     void initializeGL();
     void resizeGL(int width, int height);
     void paintGL();
@@ -164,7 +168,6 @@ protected slots:
     void saveScene();
 
 private:
-    bool handleCommand(const QString &command, const QList<QVariant> &arguments);
     void loadModel();
     void addPlugin(QMAPlugin *plugin);
     void setDirectorySetting(const QString &key, const QString &fileName);

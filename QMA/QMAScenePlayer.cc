@@ -82,7 +82,7 @@ void QMAScenePlayer::initialize()
     }
 }
 
-void QMAScenePlayer::handleEventMessage(const char *eventType, int argc, ...)
+void QMAScenePlayer::handleEventMessage(const char *eventType, int argc...)
 {
     QList<QVariant> arguments;
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
@@ -94,27 +94,8 @@ void QMAScenePlayer::handleEventMessage(const char *eventType, int argc, ...)
     }
     va_end(ap);
     qDebug().nospace() << "handleEventMessage event=" << eventType << ", arguments=" << arguments;
-
-    if (eventType == MMDAI::ISceneEventHandler::kModelAddEvent) {
-        QString name = arguments.at(0).toString();
-        QAction *action = new QAction(name, this);
-        action->setStatusTip(tr("Select a model %1").arg(name));
-        connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
-        m_selectModelMenu->addAction(action);
-    }
-    else if (eventType == MMDAI::ISceneEventHandler::kModelDeleteEvent) {
-        QString name = arguments.at(0).toString();
-        QAction *actionToRemove = NULL;
-        foreach (QAction *action, m_selectModelMenu->actions()) {
-            if (action->text() == name) {
-                actionToRemove = action;
-                break;
-            }
-        }
-        if (actionToRemove)
-            m_selectModelMenu->removeAction(actionToRemove);
-    }
-    emit pluginEventPost(eventType, arguments);
+    if (!handleEvent(eventType, arguments))
+        emit pluginEventPost(eventType, arguments);
 }
 
 bool QMAScenePlayer::addModel(const QString &filename)
@@ -696,6 +677,30 @@ bool QMAScenePlayer::handleCommand(const QString &command, const QList<QVariant>
         ret = false;
     }
     return ret;
+}
+
+bool QMAScenePlayer::handleEvent(const QString &type, const QList<QVariant> &arguments)
+{
+    if (type == MMDAI::ISceneEventHandler::kModelAddEvent) {
+        QString name = arguments.at(0).toString();
+        QAction *action = new QAction(name, this);
+        action->setStatusTip(tr("Select a model %1").arg(name));
+        connect(action, SIGNAL(triggered()), this, SLOT(selectObject()));
+        m_selectModelMenu->addAction(action);
+    }
+    else if (type == MMDAI::ISceneEventHandler::kModelDeleteEvent) {
+        QString name = arguments.at(0).toString();
+        QAction *actionToRemove = NULL;
+        foreach (QAction *action, m_selectModelMenu->actions()) {
+            if (action->text() == name) {
+                actionToRemove = action;
+                break;
+            }
+        }
+        if (actionToRemove)
+            m_selectModelMenu->removeAction(actionToRemove);
+    }
+    return false;
 }
 
 void QMAScenePlayer::hideText()
