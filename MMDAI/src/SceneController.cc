@@ -1298,18 +1298,26 @@ bool SceneController::updateFovy(int ellapsedTimeForMove)
     return true;
 }
 
-static void GLPerspective(float result[16], float fovy, float aspect, float znear, float zfar)
+static void GetPerspectiveMatrix(float result[16], float fovy, float aspect, float znear, float zfar)
 {
-    const float f = 1.0f / tanf(fovy / 2.0f);
-    const float a = f / aspect;
-    const float b = f;
-    const float c = (zfar + znear) / (znear - zfar);
-    const float d = (2.0f * zfar * znear) / (znear - zfar);
+    // borrowed code from http://www.geeks3d.com/20090729/howto-perspective-projection-matrix-in-opengl/
+    static const float kPIOver360 = M_PI / 360.0f;
+    const float xymax = znear * tanf(fovy * kPIOver360);
+    const float xmin = -xymax;
+    const float ymin = -xymax;
+    const float width = xymax - xmin;
+    const float height = xymax - ymin;
+    const float depth = zfar - znear;
+    const float q = -(zfar + znear) / depth;
+    const float qn = -2 * (zfar * znear) / depth;
+    float w = 2 * znear / width;
+    w = w / aspect;
+    const float h = 2 * znear / height;
     const float matrix[16] = {
-        a, 0, 0, 0,
-        0, b, 0, 0,
-        0, 0, c, -1,
-        0, 0, d, 0
+        w, 0.0f, 0.0f, 0.0f,
+        0.0f, h, 0.0f, 0.0f,
+        0.0f, 0.0f, q, -1.0f,
+        0.0f, 0.0f, qn, 0.0f
     };
     memcpy(result, matrix, sizeof(matrix));
 }
@@ -1326,12 +1334,7 @@ void SceneController::updateProjectionMatrix()
 {
     float aspect = (m_width == 0) ? 1.0f : static_cast<float>(m_width) / m_height;
     float projection[16];
-    //GLPerspective(projection, m_currentFovy, aspect, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(m_currentFovy, aspect, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
-    glGetFloatv(GL_PROJECTION_MATRIX, projection);
-    glMatrixMode(GL_MODELVIEW);
+    GetPerspectiveMatrix(projection, m_currentFovy, aspect, kRenderViewPointFrustumNear, kRenderViewPointFrustumFar);
     m_engine->setProjection(projection);
 }
 
