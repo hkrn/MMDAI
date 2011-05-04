@@ -73,6 +73,8 @@ QMAScenePlayer::~QMAScenePlayer()
 
 void QMAScenePlayer::initialize()
 {
+    m_sceneFrameTimer.initialize();
+    m_sceneFrameTimer.startAdjustment();
     m_sceneUpdateTimer.setSingleShot(false);
     connect(&m_sceneUpdateTimer, SIGNAL(timeout()), this, SLOT(updateScene()));
     QStringList args = qApp->arguments();
@@ -409,7 +411,7 @@ void QMAScenePlayer::updateScene()
     QList<QVariant> arguments;
     const QRect rectangle(geometry());
     const QPoint point = mapFromGlobal(QCursor::pos());
-    double intervalFrame = m_sceneFrameTimer.getInterval();
+    double intervalFrame = m_sceneFrameTimer.getFrameInterval();
     double stepMax = m_preference->getInt(MMDAI::kPreferenceBulletFPS);
     double stepFrame = 30.0 / stepMax;
     double restFrame = intervalFrame;
@@ -424,7 +426,7 @@ void QMAScenePlayer::updateScene()
             procFrame = stepFrame;
             restFrame -= stepFrame;
         }
-        adjustFrame = m_sceneFrameTimer.getAuxFrame(procFrame);
+        adjustFrame = m_sceneFrameTimer.getAdjustmentFrame(procFrame);
         m_controller->updateMotion(procFrame, adjustFrame);
         arguments.clear();
         arguments << rectangle << point << procFrame + adjustFrame;
@@ -439,15 +441,16 @@ void QMAScenePlayer::updateScene()
 
 void QMAScenePlayer::paintGL()
 {
-    double fps = m_sceneFrameTimer.getFPS();
+    double fps = m_sceneFrameTimer.getFramePerSecond();
+    int ellapsed = m_controller->isViewMoving() ? m_sceneFrameTimer.ellapsed() : 0;
     m_controller->updateObject(fps);
-    m_controller->updateModelView(0);
-    m_controller->updateProjection(0);
+    m_controller->updateModelView(ellapsed);
+    m_controller->updateProjection(ellapsed);
     delegateEvent(QMAPlugin::getPreRenderEvent(), QMAPlugin::getEmptyArguments());
     m_controller->prerenderScene();
     m_controller->renderScene();
     m_debug->render();
-    m_sceneFrameTimer.count();
+    m_sceneFrameTimer.countFrame();
     m_text.render();
     delegateEvent(QMAPlugin::getPostRenderEvent(), QMAPlugin::getEmptyArguments());
 }

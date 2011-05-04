@@ -184,7 +184,7 @@ void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &argumen
 {
     Q_UNUSED(arguments);
     if (type == QMAPlugin::getUpdateEvent()) {
-        double fps = m_scene->getSceneFrameTimer()->getFPS();
+        double fps = m_scene->getSceneFrameTimer()->getFramePerSecond();
         setWindowTitle(QString("%1 - (FPS: %2)").arg(qAppName()).arg(fps, 0, 'f', 1));
     }
 }

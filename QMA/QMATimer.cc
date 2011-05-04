@@ -38,61 +38,131 @@
 
 #include "QMATimer.h"
 
+#include <QDebug>
+
 QMATimer::QMATimer()
-    : m_value(0.0),
-    m_lastFrame(0.0),
-    m_paused(0),
-    m_count(0)
+    : m_systemStartTime(0),
+      m_lastUpdateFrameSystem(0.0f),
+      m_pauseTime(0),
+      m_framePerSecond(0.0f),
+      m_framePerSecondStartTime(0),
+      m_framePerSecondCount(0),
+      m_targetAdjustmentFrame(0.0f),
+      m_currentAdjustmentFrame(0.0f),
+      m_enableAdjustment(false),
+      m_userStartTime(0)
 {
 }
 
 QMATimer::~QMATimer()
 {
+    m_systemStartTime = 0;
+    m_lastUpdateFrameSystem = 0.0f;
+    m_pauseTime = 0;
+    m_framePerSecond = 0.0f;
+    m_framePerSecondStartTime = 0;
+    m_framePerSecondCount = 0;
+    m_targetAdjustmentFrame = 0.0f;
+    m_currentAdjustmentFrame = 0.0f;
+    m_enableAdjustment = false;
+    m_userStartTime = 0;
+}
+
+void QMATimer::initialize()
+{
+    m_timer.start();
 }
 
 void QMATimer::start()
 {
-    m_timeFPS.start();
-    m_timeFrame.start();
+    m_userStartTime = m_timer.elapsed();
 }
 
 void QMATimer::pause()
 {
-    m_paused = m_timeFPS.elapsed();
+    m_pauseTime = m_timer.elapsed();
 }
 
 void QMATimer::resume()
 {
-    m_lastFrame += (m_timeFPS.elapsed() - m_paused) * 0.03;
+    m_lastUpdateFrameSystem += (m_timer.elapsed() - m_pauseTime) * 0.03f;
 }
 
-double QMATimer::getAuxFrame(double base)
+float QMATimer::getFrameInterval()
 {
-    base = 0.0;
-    return 0.0;
+    int currentFrame = m_timer.elapsed();
+    float currentFrameSystem = (currentFrame - m_systemStartTime) * 0.03;
+    float intervalFrame = currentFrameSystem - m_lastUpdateFrameSystem;
+    m_lastUpdateFrameSystem = currentFrameSystem;
+    return intervalFrame;
 }
 
-void QMATimer::count()
+float QMATimer::ellapsed()
 {
-    m_count++;
-    int t = m_timeFPS.elapsed();
-    if (t >= 1000) {
-        m_value = 1000.0f * (double) m_count / t;
-        m_count = 0;
-        m_timeFPS.restart();
+    return m_timer.elapsed() - m_userStartTime;
+}
+
+void QMATimer::countFrame()
+{
+    m_framePerSecondCount++;
+    int t = m_timer.elapsed();
+    if (t - m_framePerSecondStartTime >= 1000) {
+        m_framePerSecond = 1000.0f * m_framePerSecondCount / static_cast<float>(t - m_framePerSecondStartTime);
+        m_framePerSecondStartTime = t;
+        m_framePerSecondCount = 0;
     }
 }
 
-double QMATimer::getFPS()
+float QMATimer::getFramePerSecond()
 {
-    return m_value;
+    return m_framePerSecond;
 }
 
-double QMATimer::getInterval()
+void QMATimer::setAdjustment(float frame)
 {
-    int elapsed = m_timeFrame.elapsed();
-    double currentFrame = elapsed * 0.03;
-    double intervalFrame = currentFrame - m_lastFrame;
-    m_lastFrame = currentFrame;
-    return intervalFrame;
+    m_targetAdjustmentFrame = frame;
+}
+
+void QMATimer::startAdjustment()
+{
+    m_currentAdjustmentFrame = 0.0f;
+    m_enableAdjustment = true;
+}
+
+void QMATimer::stopAdjustment()
+{
+    m_enableAdjustment = false;
+}
+
+float QMATimer::getCurrentAdjustmentFrame()
+{
+    return m_currentAdjustmentFrame;
+}
+
+float QMATimer::getAdjustmentFrame(float baseFrame)
+{
+    if (!m_enableAdjustment)
+        return 0.0f;
+    float mstep = 0.0f;
+    if (m_targetAdjustmentFrame > m_currentAdjustmentFrame) {
+        mstep = baseFrame > 0.3f ? 0.3f : - baseFrame;
+        if (m_currentAdjustmentFrame + mstep > m_targetAdjustmentFrame) {
+            mstep = m_targetAdjustmentFrame - m_currentAdjustmentFrame;
+            m_currentAdjustmentFrame = m_targetAdjustmentFrame;
+        }
+        else {
+            m_currentAdjustmentFrame += mstep;
+        }
+    }
+    if (m_targetAdjustmentFrame < m_currentAdjustmentFrame) {
+        mstep = baseFrame > 0.3f ? -0.15f : - (baseFrame * 0.5f);
+        if (m_currentAdjustmentFrame + mstep < m_targetAdjustmentFrame) {
+            mstep = m_targetAdjustmentFrame - m_currentAdjustmentFrame;
+            m_currentAdjustmentFrame = m_targetAdjustmentFrame;
+        }
+        else {
+            m_currentAdjustmentFrame += mstep;
+        }
+    }
+    return mstep;
 }

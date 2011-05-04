@@ -46,21 +46,32 @@ class QMATimer
 public:
     QMATimer();
     ~QMATimer();
+    void initialize();
     void start();
     void pause();
     void resume();
-    void count();
-    double getAuxFrame(double base);
-    double getFPS();
-    double getInterval();
+    float getFrameInterval();
+    float ellapsed();
+    void countFrame();
+    float getFramePerSecond();
+    void setAdjustment(float frame);
+    void startAdjustment();
+    void stopAdjustment();
+    float getCurrentAdjustmentFrame();
+    float getAdjustmentFrame(float baseFrame);
 
 private:
-    QTime m_timeFPS;
-    QTime m_timeFrame;
-    double m_value;
-    double m_lastFrame;
-    int m_paused;
-    int m_count;
+    QTime m_timer;
+    int m_systemStartTime;
+    float m_lastUpdateFrameSystem;
+    int m_pauseTime;
+    float m_framePerSecond;
+    int m_framePerSecondStartTime;
+    int m_framePerSecondCount;
+    float m_targetAdjustmentFrame;
+    float m_currentAdjustmentFrame;
+    bool m_enableAdjustment;
+    int m_userStartTime;
 
     Q_DISABLE_COPY(QMATimer)
 };
