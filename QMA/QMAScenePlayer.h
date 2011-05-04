@@ -170,7 +170,7 @@ protected slots:
 private:
     void loadModel();
     void addPlugin(QMAPlugin *plugin);
-    void setDirectorySetting(const QString &key, const QString &fileName);
+    const QString openFileDialog(const QString &name, const QString &description, const QString &extensions);
 
     void updateModelPositionAndRotation(double fps);
     void renderDebugModel();

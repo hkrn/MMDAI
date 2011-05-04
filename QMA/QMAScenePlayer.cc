@@ -102,13 +102,16 @@ void QMAScenePlayer::handleEventMessage(const char *eventType, int argc...)
 
 bool QMAScenePlayer::addModel(const QString &filename)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    const char *path = encodedPath.constData();
-    MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
-    MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
-    bool ret = m_controller->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
-    m_factory.releaseModelLoader(modelLoader);
-    m_factory.releaseLipSyncLoader(lipSyncLoader);
+    bool ret = false;
+    if (!filename.isEmpty()) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        const char *path = encodedPath.constData();
+        MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
+        MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
+        ret = m_controller->addModel(NULL, modelLoader, lipSyncLoader, NULL, NULL, NULL, NULL);
+        m_factory.releaseModelLoader(modelLoader);
+        m_factory.releaseLipSyncLoader(lipSyncLoader);
+    }
     return ret;
 }
 
@@ -119,17 +122,18 @@ bool QMAScenePlayer::changeModel(const QString &filename)
 
 bool QMAScenePlayer::changeModel(const QString &filename, MMDAI::PMDObject *object)
 {
-    if (object) {
+    bool ret = false;
+    if (!filename.isEmpty() && object) {
         QByteArray encodedPath = QFile::encodeName(filename);
         const char *path = encodedPath.constData();
         MMDAI::IModelLoader *modelLoader = m_factory.createModelLoader(path);
         MMDAI::ILipSyncLoader *lipSyncLoader = m_factory.createLipSyncLoader(path);
-        bool ret = m_controller->changeModel(object, modelLoader, lipSyncLoader);
+        ret = m_controller->changeModel(object, modelLoader, lipSyncLoader);
         m_factory.releaseModelLoader(modelLoader);
         m_factory.releaseLipSyncLoader(lipSyncLoader);
         return ret;
     }
-    return false;
+    return ret;
 }
 
 bool QMAScenePlayer::deleteModel()
@@ -148,46 +152,58 @@ bool QMAScenePlayer::deleteModel(MMDAI::PMDObject *object)
 
 bool QMAScenePlayer::setStage(const QString &filename)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
-    bool ret = m_controller->loadStage(loader);
-    m_factory.releaseModelLoader(loader);
+    bool ret = false;
+    if (!filename.isEmpty()) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
+        ret = m_controller->loadStage(loader);
+        m_factory.releaseModelLoader(loader);
+    }
     return ret;
 }
 
 bool QMAScenePlayer::setFloor(const QString &filename)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
-    bool ret = m_controller->loadFloor(loader);
-    m_factory.releaseModelLoader(loader);
+    bool ret = false;
+    if (!filename.isEmpty()) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        MMDAI::IModelLoader *loader = m_factory.createModelLoader(encodedPath.constData());
+        ret = m_controller->loadFloor(loader);
+        m_factory.releaseModelLoader(loader);
+    }
     return ret;
 }
 
 bool QMAScenePlayer::setBackground(const QString &filename)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    const char *path = encodedPath.constData();
-    MMDAI::IModelLoader *loader = m_factory.createModelLoader(path);
-    bool ret = m_controller->loadBackground(loader);
-    m_factory.releaseModelLoader(loader);
+    bool ret = false;
+    if (!filename.isEmpty()) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        const char *path = encodedPath.constData();
+        MMDAI::IModelLoader *loader = m_factory.createModelLoader(path);
+        ret = m_controller->loadBackground(loader);
+        m_factory.releaseModelLoader(loader);
+    }
     return ret;
 }
 
 bool QMAScenePlayer::insertMotionToAllModels(const QString &filename)
 {
-    QByteArray encodedPath = QFile::encodeName(filename);
-    const char *path = encodedPath.constData();
-    bool ret = true;
-    int max = m_controller->getMaxObjects();
-    for (int i = 0; i < max; i++) {
-        MMDAI::PMDObject *object = m_controller->getObjectAt(i);
-        if (object && object->isEnable() && object->allowMotionFileDrop()) {
-            MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(path);
-            ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
-            m_factory.releaseMotionLoader(loader);
-            if (!ret)
-                break;
+    bool ret = false;
+    if (!filename.isEmpty()) {
+        QByteArray encodedPath = QFile::encodeName(filename);
+        const char *path = encodedPath.constData();
+        ret = true;
+        int max = m_controller->getMaxObjects();
+        for (int i = 0; i < max; i++) {
+            MMDAI::PMDObject *object = m_controller->getObjectAt(i);
+            if (object && object->isEnable() && object->allowMotionFileDrop()) {
+                MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(path);
+                ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
+                m_factory.releaseMotionLoader(loader);
+                if (!ret)
+                    break;
+            }
         }
     }
     return ret;
@@ -200,14 +216,15 @@ bool QMAScenePlayer::insertMotionToSelectedModel(const QString &filename)
 
 bool QMAScenePlayer::insertMotionToModel(const QString &filename, MMDAI::PMDObject *object)
 {
-    if (object) {
+    bool ret = false;
+    if (!filename.isEmpty() && object) {
         QByteArray encodedPath = QFile::encodeName(filename);
         MMDAI::IMotionLoader *loader = m_factory.createMotionLoader(encodedPath.constData());
-        bool ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
+        ret = m_controller->addMotion(object, NULL, loader, false, true, true, true, 0.0f);
         m_factory.releaseMotionLoader(loader);
         return ret;
     }
-    return false;
+    return ret;
 }
 
 void QMAScenePlayer::setBaseMotion(MMDAI::PMDObject *object, MMDAI::IMotionLoader *loader)
@@ -716,80 +733,44 @@ void QMAScenePlayer::hideText()
 /* menu actions */
 void QMAScenePlayer::insertMotionToAllModels()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastVMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open VMD file"), path, tr("VMD (*.vmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastVMDDirectory", fileName);
-        insertMotionToAllModels(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastVMDDirectory", tr("Open VMD file"), tr("VMD (*.vmd)"));
+    insertMotionToAllModels(fileName);
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::insertMotionToSelectedModel()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastVMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("VMD (*.vmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastVMDDirectory", fileName);
-        insertMotionToSelectedModel(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastVMDDirectory", tr("Open model PMD file"), tr("VMD (*.vmd)"));
+    insertMotionToSelectedModel(fileName);
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::addModel()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastPMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastPMDDirectory", fileName);
-        addModel(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastPMDDirectory", tr("Open model PMD file"), tr("PMD (*.pmd)"));
+    addModel(fileName);
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::setStage()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastStageDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open stage PMD file"), path, tr("PMD (*.pmd *.xpmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastStageDirectory", fileName);
-        setStage(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastStageDirectory", tr("Open stage PMD file"), tr("PMD (*.pmd *.xpmd)"));
+    setStage(fileName);
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::setFloor()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastFloorDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open floor image"), path, tr("Image (*.bmp *.png *.tga)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastFloorDirectory", fileName);
-        setFloor(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastFloorDirectory", tr("Open floor image"), tr("Image (*.bmp *.png *.tga)"));
+    setFloor(fileName);
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::setBackground()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastBackgroundDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open background image"), path, tr("Image (*.bmp *.png *.tga)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastBackgroundDirectory", fileName);
-        setBackground(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastBackgroundDirectory", tr("Open background image"), tr("Image (*.bmp *.png *.tga)"));
+    setBackground(fileName);
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::rotateUp()
@@ -891,15 +872,9 @@ void QMAScenePlayer::selectObject()
 
 void QMAScenePlayer::changeSelectedObject()
 {
-    QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastPMDDirectory").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open model PMD file"), path, tr("PMD (*.pmd)"));
-    if (!fileName.isEmpty()) {
-        setDirectorySetting("lastPMDDirectory", fileName);
-        changeModel(fileName);
-    }
-    settings->endGroup();
+    QString fileName = openFileDialog("lastPMDDirectory", tr("Open model PMD file"), tr("PMD (*.pmd)"));
+    changeModel(fileName);
+    m_sceneUpdateTimer.stop();
 }
 
 void QMAScenePlayer::deleteSelectedObject()
@@ -909,16 +884,19 @@ void QMAScenePlayer::deleteSelectedObject()
 
 void QMAScenePlayer::saveScene()
 {
+    const QString settingName("window/lastSaveSceneDirectory");
     QSettings *settings = m_preference->getSettings();
-    settings->beginGroup("window");
-    QString path = settings->value("lastSaveSceneDirectory").toString();
+    const QString path = settings->value(settingName).toString();
+    m_sceneUpdateTimer.stop();
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save image"), path, tr("Image (*.jpg, *.png, *.bmp)"));
     if (!fileName.isEmpty()) {
-        setDirectorySetting("lastSaveSceneDirectory", fileName);
+        QDir dir(fileName);
+        dir.cdUp();
+        settings->setValue(settingName, dir.absolutePath());
         QImage image = grabFrameBuffer();
         image.save(fileName);
     }
-    settings->endGroup();
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::createActions()
@@ -1148,9 +1126,17 @@ void QMAScenePlayer::addPlugin(QMAPlugin *plugin)
     MMDAILogInfo("%s was loaded successfully", plugin->metaObject()->className());
 }
 
-void QMAScenePlayer::setDirectorySetting(const QString &key, const QString &fileName)
+const QString QMAScenePlayer::openFileDialog(const QString &name, const QString &description, const QString &extensions)
 {
-    QDir dir(fileName);
-    dir.cdUp();
-    m_preference->getSettings()->setValue(key, dir.absolutePath());
+    const QString settingName(QString("window/%1").arg(name));
+    QSettings *settings = m_preference->getSettings();
+    const QString path = settings->value(settingName).toString();
+    m_sceneUpdateTimer.stop();
+    const QString fileName = QFileDialog::getOpenFileName(this, description, path, extensions);
+    if (!fileName.isEmpty()) {
+        QDir dir(fileName);
+        dir.cdUp();
+        settings->setValue(settingName, dir.absolutePath());
+    }
+    return fileName;
 }
