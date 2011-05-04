@@ -52,7 +52,8 @@ SOURCES += main.cc\
     QMAPreference.cc \
     QMADebugRenderEngine.cc \
     QMATextRenderEngine.cc \
-    QMAScenePlayer.cc
+    QMAScenePlayer.cc \
+    QMAScenePreview.cc
 
 HEADERS  += \
     QMAPlugin.h \
@@ -66,7 +67,8 @@ HEADERS  += \
     QMAPreference.h \
     QMADebugRenderEngine.h \
     QMATextRenderEngine.h \
-    QMAScenePlayer.h
+    QMAScenePlayer.h \
+    QMAScenePreview.h
 
 TRANSLATIONS += res/translations/QMA.ts
 
@@ -79,4 +81,3 @@ macx {
 }
 
 CODECFORTR = UTF-8
-
