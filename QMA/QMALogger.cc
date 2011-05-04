@@ -37,6 +37,7 @@
 #include "QMALogger.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QDir>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QTextCodec>
@@ -49,6 +50,8 @@
 
 namespace {
     QMALogger *g_instance = NULL;
+    QTextCodec *g_codecShiftJIS = QTextCodec::codecForName("Shift-JIS");
+    QTextCodec *g_codecUTF8 = QTextCodec::codecForName("UTF8");
 }
 
 static const QString LogGetLabel(const enum MMDAILogLevel level)
@@ -75,9 +78,8 @@ static void LogHandlerSJIS(const char *file,
 {
     char buf[BUFSIZ];
     vsnprintf(buf, sizeof(buf), format, ap);
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    QString message = codec->toUnicode(buf, strlen(buf));
-    QString name = QString(file).split("/").last();
+    QString message = g_codecShiftJIS->toUnicode(buf, strlen(buf));
+    QString name = QString(file).split(QDir::separator()).last();
     QString text = QString("%1 %2 %3:%4 %5\n")
                    .arg(LogGetLabel(level))
                    .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
@@ -98,8 +100,8 @@ static void LogHandler(const char *file,
 {
     char buf[BUFSIZ];
     vsnprintf(buf, sizeof(buf), format, ap);
-    QString message = QString(buf);
-    QString name = QString(file).split("/").last();
+    QString message = g_codecUTF8->toUnicode(buf);
+    QString name = QString(file).split(QDir::separator()).last();
     QString text = QString("%1 %2 %3:%4 %5\n")
                    .arg(LogGetLabel(level))
                    .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
