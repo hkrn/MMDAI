@@ -49,9 +49,10 @@
 #endif
 
 namespace {
-    QMALogger *g_instance = NULL;
-    QTextCodec *g_codecShiftJIS = QTextCodec::codecForName("Shift-JIS");
-    QTextCodec *g_codecUTF8 = QTextCodec::codecForName("UTF8");
+QMALogger *g_instance = NULL;
+QString g_format("%1 %2 %3:%4 %5\n");
+QTextCodec *g_codecShiftJIS = QTextCodec::codecForName("Shift-JIS");
+QTextCodec *g_codecUTF8 = QTextCodec::codecForName("UTF8");
 }
 
 static const QString LogGetLabel(const enum MMDAILogLevel level)
@@ -80,12 +81,9 @@ static void LogHandlerSJIS(const char *file,
     vsnprintf(buf, sizeof(buf), format, ap);
     QString message = g_codecShiftJIS->toUnicode(buf, strlen(buf));
     QString name = QString(file).split(QDir::separator()).last();
-    QString text = QString("%1 %2 %3:%4 %5\n")
-                   .arg(LogGetLabel(level))
-                   .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
-                   .arg(name)
-                   .arg(line)
-                   .arg(message);
+    QString text = g_format.arg(LogGetLabel(level))
+            .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
+            .arg(name).arg(line).arg(message);
     QMALogger::getInstance()->sendLineWritten(text);
 #ifndef NDEBUG
     qDebug() << text;
@@ -102,12 +100,9 @@ static void LogHandler(const char *file,
     vsnprintf(buf, sizeof(buf), format, ap);
     QString message = g_codecUTF8->toUnicode(buf);
     QString name = QString(file).split(QDir::separator()).last();
-    QString text = QString("%1 %2 %3:%4 %5\n")
-                   .arg(LogGetLabel(level))
-                   .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
-                   .arg(name)
-                   .arg(line)
-                   .arg(message);
+    QString text = g_format.arg(LogGetLabel(level))
+            .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"))
+            .arg(name).arg(line).arg(message);
     QMALogger::getInstance()->sendLineWritten(text);
 #ifndef NDEBUG
     qDebug() << text;
