@@ -514,6 +514,8 @@ void QMAScenePlayer::mousePressEvent(QMouseEvent *event)
     m_y = event->y();
     m_doubleClicked = false;
     m_controller->selectObject(m_x, m_y);
+    if (event->modifiers() & Qt::ControlModifier)
+        m_controller->setHighlightObject(m_controller->getSelectedObject());
 }
 
 void QMAScenePlayer::mouseReleaseEvent(QMouseEvent * /* event */)
