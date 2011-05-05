@@ -51,8 +51,8 @@
 namespace {
 QMALogger *g_instance = NULL;
 QString g_format("%1 %2 %3:%4 %5\n");
-QTextCodec *g_codecShiftJIS = QTextCodec::codecForName("Shift-JIS");
-QTextCodec *g_codecUTF8 = QTextCodec::codecForName("UTF8");
+QTextCodec *g_codecShiftJIS = NULL;
+QTextCodec *g_codecUTF8 = NULL;
 }
 
 static const QString LogGetLabel(const enum MMDAILogLevel level)
@@ -127,6 +127,8 @@ void QMALogger::initialize()
     if (!g_instance) {
         MMDAILogSetHandler(LogHandler);
         MMDAILogSetHandlerSJIS(LogHandlerSJIS);
+        g_codecShiftJIS = QTextCodec::codecForName("Shift-JIS");
+        g_codecUTF8 = QTextCodec::codecForName("UTF8");
         g_instance = new QMALogger();
     }
 }
