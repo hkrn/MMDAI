@@ -50,14 +50,14 @@
 #include "QMAWindow.h"
 
 #ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
-Q_IMPORT_PLUGIN(qma_aquestalk2_plugin);
+Q_IMPORT_PLUGIN(qma_aquestalk2_plugin)
 #endif
 #ifdef QMA_BUNDLE_PLUGINS
-Q_IMPORT_PLUGIN(qma_audio_plugin);
-Q_IMPORT_PLUGIN(qma_julius_plugin);
-Q_IMPORT_PLUGIN(qma_lookat_plugin);
-Q_IMPORT_PLUGIN(qma_openjtalk_plugin);
-Q_IMPORT_PLUGIN(qma_vimanager_plugin);
+Q_IMPORT_PLUGIN(qma_audio_plugin)
+Q_IMPORT_PLUGIN(qma_julius_plugin)
+Q_IMPORT_PLUGIN(qma_lookat_plugin)
+Q_IMPORT_PLUGIN(qma_openjtalk_plugin)
+Q_IMPORT_PLUGIN(qma_vimanager_plugin)
 #endif
 
 static void QMASetSearchPath(const QCoreApplication &app)
