@@ -84,7 +84,7 @@ private:
 
     QMAJuliusPluginThread *m_thread;
     QFutureWatcher<bool> m_watcher;
-    QSystemTrayIcon m_tray;
+    QSystemTrayIcon *m_tray;
     QTranslator m_translator;
     Jconf *m_jconf;
     Recog *m_recog;

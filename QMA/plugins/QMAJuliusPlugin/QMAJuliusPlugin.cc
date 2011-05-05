@@ -39,6 +39,7 @@
 #include "QMAJuliusPlugin.h"
 
 #include <QtCore>
+#include <QtGui/QApplication>
 #include <MMDME/Common.h>
 
 #undef open // undef stddef.h in Julius
@@ -106,17 +107,18 @@ void QMAJuliusPluginGetRecognitionResult(Recog *recog, void *ptr)
 
 QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
     : QMAPlugin(parent),
-      m_thread(NULL),
+      m_thread(0),
+      m_tray(0),
       m_jconf(NULL),
       m_recog(NULL)
 {
     connect(&m_watcher, SIGNAL(finished()), this, SLOT(initialized()));
-    m_tray.show();
 }
 
 QMAJuliusPlugin::~QMAJuliusPlugin()
 {
     delete m_thread;
+    delete m_tray;
     if (m_recog != NULL) {
         j_close_stream(m_recog);
         j_recog_free(m_recog);
@@ -126,7 +128,6 @@ QMAJuliusPlugin::~QMAJuliusPlugin()
         j_jconf_free(m_jconf);
         m_jconf = NULL;
     }
-    m_tray.hide();
 }
 
 void QMAJuliusPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
@@ -136,16 +137,18 @@ void QMAJuliusPlugin::load(MMDAI::SceneController *controller, const QString &ba
     m_translator.load(path.fileName());
     qApp->installTranslator(&m_translator);
     m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine, baseName));
+    m_tray = new QSystemTrayIcon(qApp->windowIcon(), this);
+    m_tray->show();
     if (QSystemTrayIcon::supportsMessages()) {
-        m_tray.showMessage(tr("Started initialization of Julius"),
-                           tr("Please wait a moment until end of initialization of Julius engine."
-                              "This process takes about 10-20 seconds."));
+        m_tray->showMessage(tr("Started initialization of Julius"),
+                            tr("Please wait a moment until end of initialization of Julius engine."
+                               "This process takes about 10-20 seconds."));
     }
 }
 
 void QMAJuliusPlugin::unload()
 {
-    /* do nothing */
+    m_tray->hide();
 }
 
 void QMAJuliusPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
@@ -167,17 +170,17 @@ void QMAJuliusPlugin::initialized()
     bool result = m_watcher.future();
     if (result) {
         if (QSystemTrayIcon::supportsMessages()) {
-            m_tray.showMessage(tr("Completed initialization of Julius"),
-                               tr("You can now talk with the models."));
+            m_tray->showMessage(tr("Completed initialization of Julius"),
+                                tr("You can now talk with the models."));
         }
         m_thread = new QMAJuliusPluginThread(m_recog);
         m_thread->start();
     }
     else {
         if (QSystemTrayIcon::supportsMessages()) {
-            m_tray.showMessage(tr("Failed initialization of Julius"),
-                               tr("Recognization feature is disabled."),
-                               QSystemTrayIcon::Warning);
+            m_tray->showMessage(tr("Failed initialization of Julius"),
+                                tr("Recognization feature is disabled."),
+                                QSystemTrayIcon::Warning);
         }
     }
 }
