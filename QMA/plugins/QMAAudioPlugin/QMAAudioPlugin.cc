@@ -121,7 +121,7 @@ void QMAAudioPlugin::changeCurrentSource(Phonon::MediaSource source)
     QList<QVariant> arguments;
     QString key = m_audioSources.key(source);
     m_audioSources.remove(key);
-    arguments << key << source.fileName();
+    arguments << key;
     emit eventPost(kSoundStartEvent, arguments);
 }
 
