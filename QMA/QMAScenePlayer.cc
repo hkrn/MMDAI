@@ -874,7 +874,7 @@ void QMAScenePlayer::changeSelectedObject()
 {
     QString fileName = openFileDialog("lastPMDDirectory", tr("Open model PMD file"), tr("PMD (*.pmd)"));
     changeModel(fileName);
-    m_sceneUpdateTimer.stop();
+    m_sceneUpdateTimer.start();
 }
 
 void QMAScenePlayer::deleteSelectedObject()
