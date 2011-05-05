@@ -174,6 +174,8 @@ void QMAWindow::about()
                           "<li><a href='http://www.portaudio.com'>PortAudio</a></li>"
                       #endif
                           "</ul></p>"
+                          "<p>This icon was generated with <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>"
+                          " and <a href='http://www.nicovideo.jp/watch/sm14177985'>Miku's love song motion</a></p>"
                           "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
                           "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>")
                        .arg(qApp->applicationName())
