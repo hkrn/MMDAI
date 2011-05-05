@@ -1,3 +1,8 @@
+## あらかじめ
+
+ビルドがこけてしまう場合は開発者(@hikarincl2)に報告してください。
+説明がどうしても甘くなりがちでどこかで間違いがあるかもしれません。
+
 ## ビルド手順
 
 まず必要なライブラリが入っているかどうかを確認して下さい。
@@ -70,9 +75,6 @@ MSVC 上でビルドする場合はさらに以下の環境変数を設定する
 
 ## Linux か MacOSX でビルドする場合
 
-ビルドがこけてしまう場合は開発者(@hikarincl2)に報告してください。
-説明がどうしても甘くなりがちでどこかで間違いがあるかもしれません。
-
 $MMDAI は MMDAI のレポジトリがあるパスを指します。
 cmake でビルドする際に共有ライブラリを作成する場合は
 
@@ -140,7 +142,7 @@ QMA/QMACustom.pri.sample を QMA/QMACustom.pri にコピーし、以下の定数
   - QMA_RESOURCE_PATH
     - モデルやモーション、JuliusやOpenJTalkに必要なデータが置かれるディレクトリ
 
-一度 QtMMDAI の Makefile を削除し、qmake を再実行すれば値が反映されます。
+一度 QMA の Makefile を削除し、qmake を再実行すれば値が反映されます。
 それから再コンパイルを実行してください。
 
 ## MSVC でビルドする場合 (暫定。記述が間違っている箇所があると思われる)
@@ -157,12 +159,12 @@ QMA/QMACustom.pri.sample を QMA/QMACustom.pri にコピーし、以下の定数
 プロジェクトファイルを生成します。生成したら MMDME のパスを環境変数に設定し、
 MMDAI のプロジェクトファイルを生成、ビルドを行います。
 
-QtMMDAI のファイル生成は qmake で行います。コマンドラインから "qmake -tp vc" を実行し、プロジェクトファイルを生成します。
-ソリューションファイル (sln) は作成されないので、ダイアログが出てきたら保存してください。ビルドする前に QtMMDAI のプロジェクトの
+QMA のファイル生成は qmake で行います。コマンドラインから "qmake -tp vc" を実行し、プロジェクトファイルを生成します。
+ソリューションファイル (sln) は作成されないので、ダイアログが出てきたら保存してください。ビルドする前に QMA のプロジェクトの
 プロパティを開き、「構成プロパティ」->「リンカー」->「入力」にある「特定の既定のライブラリの無視」の項目に"libc.lib" を追加してください。
 
-上記過程を終わったら QtMMDAI をビルドしてください。ビルドが正常に完了すると debug または release ディレクトリの下に
-QtMMDAI.exe が出来上がります。
+上記過程を終わったら QMA をビルドしてください。ビルドが正常に完了すると debug または release ディレクトリの下に
+MMDAI.exe が出来上がります。
 
 ## iPhone 向けのビルド (まだシミュレータ上のみのため、途中の段階)
 
@@ -209,11 +211,11 @@ make を実行します。ビルド出来たら make install を実行します�
 mingw32-cmake を使うこと以外方法は同じです。OpenGL Easy Extension と
 Bullet Physics の二つがインストールされていることが前提条件です。
 
-### QtMMDAI
+### QMA
 
 qmake-qt4 の代わりに mingw32-qmake-qt4 を使う必要があります。
 mingw32-qmake-qt4 を実行し、make すればバイナリが作成されます。
-生成されたバイナリは debug または release の QtMMDAI.exe になります。
+生成されたバイナリは debug または release の MMDAI.exe になります。
 
 実行する際 dll が必要なため、配置スクリプトを実行します。
 配置スクリプトの第一引数に "-release" つけることで Qt のリリースビルドをリンクします。
@@ -221,7 +223,7 @@ mingw32-qmake-qt4 を実行し、make すればバイナリが作成されます
 
     $ cd debug # or release
     $ perl ../scripts/mingw_deloy.pl
-    $ wine QtMMDAI.exe
+    $ wine MMDAI.exe
 
 ## ビルドの注意点
 
