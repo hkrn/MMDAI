@@ -150,7 +150,7 @@ void QMAWindow::toggleFullScreen()
 void QMAWindow::about()
 {
     QMessageBox::about(this, tr("About %1").arg(qApp->applicationName()),
-                       tr("<h2>%1 %2 (Aloe)</h2>"
+                       tr("<h2>%1 %2+beta (Aloe)</h2>"
                           "<p>Copyright (C) 2010-2011<br>"
                           "Nagoya Institute of Technology Department of Computer Science, "
                           "hkrn (@hikarincl2)<br>"
