@@ -97,7 +97,7 @@ float QMATimer::getFrameInterval()
     return intervalFrame;
 }
 
-float QMATimer::ellapsed()
+float QMATimer::ellapsed() const
 {
     return m_timer.elapsed() - m_userStartTime;
 }
@@ -113,7 +113,7 @@ void QMATimer::countFrame()
     }
 }
 
-float QMATimer::getFramePerSecond()
+float QMATimer::getFramePerSecond() const
 {
     return m_framePerSecond;
 }
@@ -134,7 +134,7 @@ void QMATimer::stopAdjustment()
     m_enableAdjustment = false;
 }
 
-float QMATimer::getCurrentAdjustmentFrame()
+float QMATimer::getCurrentAdjustmentFrame() const
 {
     return m_currentAdjustmentFrame;
 }

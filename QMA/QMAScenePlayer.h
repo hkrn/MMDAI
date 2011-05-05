@@ -92,8 +92,8 @@ public:
     void zoom(bool up, Qt::KeyboardModifiers modifiers);
     void createMenu(const QHash<QString, QMenu*> &menuBar);
 
-    inline QMATimer *getSceneFrameTimer() {
-        return &m_sceneFrameTimer;
+    inline const QMATimer &getSceneFrameTimer() const {
+        return m_sceneFrameTimer;
     }
 
 public slots:

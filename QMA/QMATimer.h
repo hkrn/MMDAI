@@ -51,13 +51,13 @@ public:
     void pause();
     void resume();
     float getFrameInterval();
-    float ellapsed();
+    float ellapsed() const;
     void countFrame();
-    float getFramePerSecond();
+    float getFramePerSecond() const;
     void setAdjustment(float frame);
     void startAdjustment();
     void stopAdjustment();
-    float getCurrentAdjustmentFrame();
+    float getCurrentAdjustmentFrame() const;
     float getAdjustmentFrame(float baseFrame);
 
 private:
