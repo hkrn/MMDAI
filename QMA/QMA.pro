@@ -73,7 +73,8 @@ HEADERS  += \
 TRANSLATIONS += res/translations/QMA.ts
 
 macx {
-    QMAKE_INFO_PLIST = Info.plist
+    ICON = res/MMDAI.icns
+    QMAKE_INFO_PLIST = res/Info.plist
     FILETYPES.files = res/translations/QMA_ja.qm \
                       res/translations/QMAJuliusPlugin_ja.qm
     FILETYPES.path = Contents/Resources
