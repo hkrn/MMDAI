@@ -38,11 +38,12 @@
 
 #include "QMAJuliusPlugin.h"
 
+#ifdef Q_OS_WIN32
+#undef open // undef stddef.h in Julius
+#endif
 #include <QtCore>
 #include <QtGui/QApplication>
 #include <MMDME/Common.h>
-
-#undef open // undef stddef.h in Julius
 
 class QMAJuliusPluginThread : public QThread
 {
