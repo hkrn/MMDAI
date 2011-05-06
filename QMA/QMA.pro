@@ -72,6 +72,9 @@ HEADERS  += \
 
 TRANSLATIONS += res/translations/QMA.ts
 
+win32 {
+    RC_FILE = res/MMDAI.rc
+}
 macx {
     ICON = res/MMDAI.icns
     QMAKE_INFO_PLIST = res/Info.plist
