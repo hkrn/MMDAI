@@ -205,7 +205,6 @@ bool QMAJuliusPlugin::initializeRecognitionEngine(const QString &baseName)
 
     path = dir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz").toUtf8();
     MMDAIStringFormatSafe(buf, sizeof(buf), "-d %s", path.constData());
-    buf[sizeof(buf) - 1] = 0;
     m_jconf = j_config_load_string_new(buf);
     if (m_jconf == NULL) {
         MMDAILogWarn("Failed loading language model for Julius: %s", path.constData());
@@ -213,21 +212,18 @@ bool QMAJuliusPlugin::initializeRecognitionEngine(const QString &baseName)
     }
     path = dir.absoluteFilePath("lang_m/web.60k.htkdic").toUtf8();
     MMDAIStringFormatSafe(buf, sizeof(buf), "-v %s", path.constData());
-    buf[sizeof(buf) - 1] = 0;
     if (j_config_load_string(m_jconf, buf) < 0) {
         MMDAILogWarn("Failed loading system dictionary for Julius: %s", path.constData());
         return false;
     }
     path = dir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm").toUtf8();
     MMDAIStringFormatSafe(buf, sizeof(buf), "-h %s", path.constData());
-    buf[sizeof(buf) - 1] = 0;
     if (j_config_load_string(m_jconf, buf) < 0) {
         MMDAILogWarn("Failed loading acoustic model for Julius: %s", path.constData());
         return false;
     }
     path = dir.absoluteFilePath("phone_m/tri_tied.list.bin").toUtf8();
     MMDAIStringFormatSafe(buf, sizeof(buf), "-hlist %s", path.constData());
-    buf[sizeof(buf) - 1] = 0;
     if (j_config_load_string(m_jconf, buf) < 0) {
         MMDAILogWarn("Failed loading triphone list for Julius: %s", path.constData());
         return false;
