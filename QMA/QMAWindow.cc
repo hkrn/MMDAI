@@ -90,6 +90,11 @@ void QMAWindow::start()
     m_scene->start();
 }
 
+void QMAWindow::reload(const QString &filename)
+{
+    m_scene->reload(filename);
+}
+
 void QMAWindow::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {

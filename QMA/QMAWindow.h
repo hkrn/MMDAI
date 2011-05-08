@@ -38,11 +38,37 @@
 #define QMAWINDOW_H
 
 #include <QtCore/QSettings>
+#include <QtGui/QApplication>
+#include <QtGui/QFileOpenEvent>
 #include <QtGui/QMainWindow>
 
 class QMAPreference;
 class QMAScenePlayer;
 class QMALogViewWidget;
+
+class QMAApplication : public QApplication
+{
+    Q_OBJECT
+
+public:
+    QMAApplication(int &argc, char **argv)
+        : QApplication(argc, argv)
+    {
+    }
+
+signals:
+    void fileFound(const QString &filename);
+
+protected:
+    bool event(QEvent *event)
+    {
+        if (event->type() == QEvent::FileOpen) {
+            QFileOpenEvent *foe = static_cast<QFileOpenEvent*>(event);
+            emit fileFound(foe->file());
+        }
+        return QApplication::event(event);
+    }
+};
 
 class QMAWindow : public QMainWindow
 {
@@ -55,6 +81,9 @@ public:
     void initialize();
     void loadPlugins();
     void start();
+
+public slots:
+    void reload(const QString &filename);
 
 protected:
     void keyPressEvent(QKeyEvent *event);

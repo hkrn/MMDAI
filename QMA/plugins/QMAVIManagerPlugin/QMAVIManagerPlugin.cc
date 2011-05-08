@@ -71,14 +71,16 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 void QMAVIManagerPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    QFile config(QString("MMDAIUserData:/%1.fst").arg(baseName));
-    if (config.exists() && config.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream stream(&config);
-        stream.setCodec("Shift-JIS");
-        m_thread.load(stream);
-        config.close();
+    if (!m_thread.isStarted()) {
+        QFile config(QString("MMDAIUserData:/%1.fst").arg(baseName));
+        if (config.exists() && config.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream stream(&config);
+            stream.setCodec("Shift-JIS");
+            m_thread.load(stream);
+            config.close();
+            m_thread.start();
+        }
     }
-    m_thread.start();
 }
 
 void QMAVIManagerPlugin::unload()

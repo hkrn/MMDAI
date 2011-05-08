@@ -113,43 +113,46 @@ QMAJuliusPlugin::QMAJuliusPlugin(QObject *parent)
       m_jconf(NULL),
       m_recog(NULL)
 {
+    QFile path("MMDAITranslations:/QMAJuliusPlugin_" + QLocale::system().name());
+    m_translator.load(path.fileName());
+    m_tray = new QSystemTrayIcon;
+    qApp->installTranslator(&m_translator);
     connect(&m_watcher, SIGNAL(finished()), this, SLOT(initialized()));
 }
 
 QMAJuliusPlugin::~QMAJuliusPlugin()
 {
     delete m_thread;
+    m_thread = 0;
     delete m_tray;
-    if (m_recog != NULL) {
-        j_close_stream(m_recog);
-        j_recog_free(m_recog);
-        m_recog = NULL;
-    }
-    if (m_jconf != NULL) {
-        j_jconf_free(m_jconf);
-        m_jconf = NULL;
-    }
+    m_tray = 0;
+    releaseRecognizeEngine();
 }
 
 void QMAJuliusPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    QFile path("MMDAITranslations:/QMAJuliusPlugin_" + QLocale::system().name());
-    m_translator.load(path.fileName());
-    qApp->installTranslator(&m_translator);
-    m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine, baseName));
-    m_tray = new QSystemTrayIcon(qApp->windowIcon(), this);
-    m_tray->show();
-    if (QSystemTrayIcon::supportsMessages()) {
-        m_tray->showMessage(tr("Started initialization of Julius"),
-                            tr("Please wait a moment until end of initialization of Julius engine."
-                               "This process takes about 10-20 seconds."));
+    if (m_watcher.isRunning())
+        m_watcher.waitForFinished();
+    if (!m_jconf && !m_recog) {
+        m_watcher.setFuture(QtConcurrent::run(this, &QMAJuliusPlugin::initializeRecognitionEngine, baseName));
+        /* FIXME: this causes erasing menu when invoked by a file on MacOSX */
+#ifndef Q_OS_MAC
+        m_tray->show();
+#endif
+        if (QSystemTrayIcon::supportsMessages()) {
+            m_tray->showMessage(tr("Started initialization of Julius"),
+                                tr("Please wait a moment until end of initialization of Julius engine."
+                                   "This process takes about 10-20 seconds."));
+        }
     }
 }
 
 void QMAJuliusPlugin::unload()
 {
+#ifndef Q_OS_MAC
     m_tray->hide();
+#endif
 }
 
 void QMAJuliusPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
@@ -247,6 +250,7 @@ bool QMAJuliusPlugin::initializeRecognitionEngine(const QString &baseName)
         callback_add(m_recog, CALLBACK_EVENT_RECOGNITION_BEGIN, QMAJuliusPluginBeginRecognition, this);
         callback_add(m_recog, CALLBACK_RESULT, QMAJuliusPluginGetRecognitionResult, this);
         if (!j_adin_init(m_recog) || j_open_stream(m_recog, NULL) != 0) {
+            releaseRecognizeEngine();
             MMDAILogWarnString("Failed initialize adin or stream");
             return false;
         }
@@ -254,8 +258,22 @@ bool QMAJuliusPlugin::initializeRecognitionEngine(const QString &baseName)
         return true;
     }
     else {
+        releaseRecognizeEngine();
         MMDAILogWarnString("Failed creating an instance of Julius");
         return false;
+    }
+}
+
+void QMAJuliusPlugin::releaseRecognizeEngine()
+{
+    if (m_recog != NULL) {
+        j_close_stream(m_recog);
+        j_recog_free(m_recog);
+        m_recog = NULL;
+    }
+    if (m_jconf != NULL) {
+        j_jconf_free(m_jconf);
+        m_jconf = NULL;
     }
 }
 

@@ -54,31 +54,32 @@ const QByteArray kOpenJTalkCodecName = "Shift-JIS";
 QMAOpenJTalkPlugin::QMAOpenJTalkPlugin(QObject *parent)
     : QMAPlugin(parent)
 {
-}
-
-QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
-{
-    foreach (QMAOpenJTalkModel *model, m_models)
-        delete model;
-}
-
-void QMAOpenJTalkPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
-{
-    Q_UNUSED(controller);
-    QDir dir("MMDAIUserData:/");
-    m_base = dir.absolutePath();
-    m_config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
-    m_dir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
     PaError err = Pa_Initialize();
     if (err != paNoError)
         MMDAILogWarn("Pa_Initialized failed: %s", Pa_GetErrorText(err));
 }
 
-void QMAOpenJTalkPlugin::unload()
+QMAOpenJTalkPlugin::~QMAOpenJTalkPlugin()
 {
+    qDeleteAll(m_models);
     PaError err = Pa_Terminate();
     if (err != paNoError)
         MMDAILogWarn("Pa_Terminate failed: %s", Pa_GetErrorText(err));
+}
+
+void QMAOpenJTalkPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
+{
+    Q_UNUSED(controller);
+    if (m_base.isEmpty()) {
+        QDir dir("MMDAIUserData:/");
+        m_base = dir.absolutePath();
+        m_config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
+        m_dir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
+    }
+}
+
+void QMAOpenJTalkPlugin::unload()
+{
 }
 
 void QMAOpenJTalkPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
@@ -161,8 +162,8 @@ void QMAOpenJTalkPlugin::run(const QString &name, const QString &style, const QS
         }
     }
 
-    final:
-        arguments.clear();
+final:
+    arguments.clear();
     arguments << name;
     eventPost(kSynthEventStop, arguments);
 }

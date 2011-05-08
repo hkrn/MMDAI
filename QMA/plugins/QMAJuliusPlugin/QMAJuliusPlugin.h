@@ -81,6 +81,7 @@ signals:
 private:
     bool initializeRecognitionEngine(const QString &baseName);
     void startRecognition();
+    void releaseRecognizeEngine();
 
     QMAJuliusPluginThread *m_thread;
     QFutureWatcher<bool> m_watcher;

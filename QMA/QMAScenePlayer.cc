@@ -84,6 +84,50 @@ void QMAScenePlayer::initialize()
     }
 }
 
+void QMAScenePlayer::loadPlugins()
+{
+    foreach (QObject *instance, QPluginLoader::staticInstances()) {
+        QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
+        if (plugin) {
+            addPlugin(plugin);
+        }
+        else {
+            qWarning() << plugin->metaObject()->className() << "was not loaded";
+        }
+    }
+    QDir pluginsDir("MMDAIPlugins:/");
+    if (pluginsDir.exists()) {
+        foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+            if (QLibrary::isLibrary(fileName)) {
+                QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+                QObject *instance = loader.instance();
+                QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
+                if (plugin) {
+                    addPlugin(plugin);
+                }
+                else {
+                    MMDAILogWarn("%s was not loaded by an error: %s",
+                                 fileName.toUtf8().constData(),
+                                 loader.errorString().toUtf8().constData());
+                }
+            }
+        }
+    }
+    emit pluginLoaded(m_controller, m_preference->getBaseName());
+}
+
+void QMAScenePlayer::start()
+{
+    m_sceneFrameTimer.start();
+    m_sceneUpdateTimer.start(m_interval);
+}
+
+void QMAScenePlayer::reload(const QString &filename)
+{
+    loadUserPreference(filename);
+    emit pluginLoaded(m_controller, m_preference->getBaseName());
+}
+
 void QMAScenePlayer::handleEventMessage(const char *eventType, int argc...)
 {
     QList<QVariant> arguments;
@@ -315,12 +359,6 @@ void QMAScenePlayer::selectModel(const QString &name)
     }
 }
 
-void QMAScenePlayer::start()
-{
-    m_sceneFrameTimer.start();
-    m_sceneUpdateTimer.start(m_interval);
-}
-
 void QMAScenePlayer::loadUserPreference(const QString &filename)
 {
     QFile file("MMDAIUserData:/MMDAI.mdf");
@@ -339,38 +377,6 @@ void QMAScenePlayer::loadUserPreference(const QString &filename)
         }
     }
     m_preference->load(file);
-}
-
-void QMAScenePlayer::loadPlugins()
-{
-    foreach (QObject *instance, QPluginLoader::staticInstances()) {
-        QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
-        if (plugin) {
-            addPlugin(plugin);
-        }
-        else {
-            qWarning() << plugin->metaObject()->className() << "was not loaded";
-        }
-    }
-    QDir pluginsDir("MMDAIPlugins:/");
-    if (pluginsDir.exists()) {
-        foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-            if (QLibrary::isLibrary(fileName)) {
-                QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-                QObject *instance = loader.instance();
-                QMAPlugin *plugin = qobject_cast<QMAPlugin *>(instance);
-                if (plugin) {
-                    addPlugin(plugin);
-                }
-                else {
-                    MMDAILogWarn("%s was not loaded by an error: %s",
-                                 fileName.toUtf8().constData(),
-                                 loader.errorString().toUtf8().constData());
-                }
-            }
-        }
-    }
-    emit pluginLoaded(m_controller, m_preference->getBaseName());
 }
 
 void QMAScenePlayer::delegateCommand(const QString &command, const QList<QVariant> &arguments)

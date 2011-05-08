@@ -67,6 +67,7 @@ public:
     virtual void initialize();
     virtual void loadPlugins();
     virtual void start();
+    virtual void reload(const QString &filename);
 
     bool addModel(const QString &filename);
     bool changeModel(const QString &filename);

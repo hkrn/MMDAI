@@ -75,23 +75,25 @@ QMALookAtPlugin::QMALookAtPlugin()
 
 QMALookAtPlugin::~QMALookAtPlugin()
 {
+    delete[] m_eyeController;
+    m_eyeController = 0;
+    delete[] m_neckController;
+    m_neckController = 0;
 }
 
 void QMALookAtPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(baseName);
-    int maxModel = m_maxModel = controller->getMaxObjects();
-    m_controller = controller;
-    m_eyeController = new MMDAI::BoneController[maxModel];
-    m_neckController = new MMDAI::BoneController[maxModel];
+    if (!m_controller) {
+        int maxModel = m_maxModel = controller->getMaxObjects();
+        m_controller = controller;
+        m_eyeController = new MMDAI::BoneController[maxModel];
+        m_neckController = new MMDAI::BoneController[maxModel];
+    }
 }
 
 void QMALookAtPlugin::unload()
 {
-    delete[] m_eyeController;
-    m_eyeController = 0;
-    delete[] m_neckController;
-    m_neckController = 0;
 }
 
 void QMALookAtPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)

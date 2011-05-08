@@ -135,7 +135,7 @@ static void QMALoadTranslations(QCoreApplication &app, QTranslator &appTr, QTran
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    QMAApplication app(argc, argv);
     QTranslator appTranslator, qtTranslator;
     QMALogger::initialize();
 
@@ -143,12 +143,16 @@ int main(int argc, char *argv[])
     app.setOrganizationName("MMDAI Project");
     app.setApplicationName("MMDAI");
     app.setApplicationVersion("1.414");
-
     QMASetSearchPath(app);
     QMALoadTranslations(app, appTranslator, qtTranslator);
 
     /* invoke QMAWindow */
+    MMDAILogInfo("argc: %d", app.arguments().count());
+    for (int i = 0; i < app.arguments().count(); i++) {
+        MMDAILogInfo("%d: %s", i, app.arguments().at(i).toUtf8().constData());
+    }
     QMAWindow window;
+    QObject::connect(&app, SIGNAL(fileFound(QString)), &window, SLOT(reload(QString)));
     window.initialize();
     window.show();
     window.loadPlugins();
