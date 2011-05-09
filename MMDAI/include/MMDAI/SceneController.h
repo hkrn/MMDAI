@@ -177,13 +177,15 @@ public:
         return m_distance;
     }
     inline void setDistance(const float value) {
-        m_distance = value;
+        if (!m_viewControlledByMotion)
+            m_distance = value;
     }
     inline const float getFovy() const {
         return m_fovy;
     }
     inline void setFovy(const float value) {
-        m_fovy = value;
+        if (!m_viewControlledByMotion)
+            m_fovy = value;
     }
     inline void setModelView(const btTransform &modelView) {
         m_engine->setModelView(modelView);
