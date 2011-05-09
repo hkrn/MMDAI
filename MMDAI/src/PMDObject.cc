@@ -163,9 +163,6 @@ bool PMDObject::load(IModelLoader *modelLoader,
     m_alphaAppearFrame = PMDOBJECT_ALPHAFRAME;
     m_alphaDisappearFrame = 0.0;
 
-    /* enable */
-    m_isEnable = true;
-
     /* load model */
     if (m_engine->loadModel(m_model, modelLoader, bullet) == false) {
         release();
@@ -186,6 +183,9 @@ bool PMDObject::load(IModelLoader *modelLoader,
     /* this is fixed at first simulation */
     m_needResetKinematic = true;
     m_model->setPhysicsControl(false);
+
+    /* enable */
+    m_isEnable = true;
 
     return true;
 }
