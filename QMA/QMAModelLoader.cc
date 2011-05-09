@@ -38,6 +38,7 @@
 
 #include "QMAModelLoader.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QTextCodec>
 #include <QtGui/QImage>
 
@@ -74,10 +75,101 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
     return ret;
 }
 
-static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
+QMAModelLoader::QMAModelLoader(const QString &system, const char *filename, bool nocompat)
+    : m_dir(system)
+{
+    QString path = QFile::decodeName(filename);
+    if (QDir::isAbsolutePath(path))
+        m_file = new QFile(path);
+    else
+        m_file = new QFile("MMDAIUserData:/" + path);
+    m_filename = MMDAIStringClone(m_file->fileName().toUtf8().constData());
+    m_nocompat = nocompat;
+}
+
+QMAModelLoader::~QMAModelLoader()
+{
+    if (m_file->isOpen()) {
+        MMDAILogWarn("File is still open, it just leaked: %s", m_filename);
+        m_file->close();
+    }
+    MMDAIMemoryRelease(const_cast<char *>(m_filename));
+    delete m_file;
+}
+
+bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
+{
+    *size = 0;
+    forceProcessEvents();
+    if (m_file->exists() && m_file->open(QFile::ReadOnly | QFile::Unbuffered)) {
+        size_t s = m_file->size();
+        unsigned char *p = m_file->map(0, s);
+        if (p != NULL) {
+            *ptr = p;
+            *size = s;
+            return true;
+        }
+        else {
+            QByteArray reason = m_file->errorString().toUtf8();
+            MMDAILogDebug("Failed mapping file: %s", reason.constData());
+        }
+    }
+    else {
+        MMDAILogDebug("Model is not found: %s", m_filename);
+    }
+    return false;
+}
+
+void QMAModelLoader::unloadModelData(unsigned char *ptr)
+{
+    forceProcessEvents();
+    m_file->unmap(ptr);
+    m_file->close();
+}
+
+bool QMAModelLoader::loadMotionData(unsigned char **ptr, size_t *size)
+{
+    return loadModelData(ptr, size);
+}
+
+void QMAModelLoader::unloadMotionData(unsigned char *ptr)
+{
+    unloadModelData(ptr);
+}
+
+bool QMAModelLoader::loadImageTexture(MMDAI::PMDTexture *texture)
+{
+    QString path = m_file->fileName();
+    return loadImage(path, texture);
+}
+
+bool QMAModelLoader::loadModelTexture(const char *name, MMDAI::PMDTexture *texture)
+{
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    QString textureName = codec->toUnicode(name, strlen(name));
+    QDir dir(m_file->fileName());
+    dir.cdUp();
+    QString path = dir.absoluteFilePath(textureName);
+    return loadImage(path, texture);
+}
+
+bool QMAModelLoader::loadSystemTexture(int index, MMDAI::PMDTexture *texture)
+{
+    int fill = index == 0 ? 1 : 2;
+    QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
+    return loadImage(path, texture);
+}
+
+const char *QMAModelLoader::getLocation() const
+{
+    return m_filename;
+}
+
+bool QMAModelLoader::loadImage(QString &path, MMDAI::PMDTexture *texture)
 {
     QImage image;
     QByteArray filename = path.toUtf8();
+    forceProcessEvents();
     if (QFile::exists(path)) {
         bool isSphereMap = false;
         bool isSphereMapAdd = false;
@@ -107,6 +199,7 @@ static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
 #else
             texture->loadBytes(image.rgbSwapped().bits(), size, w, h, c, isSphereMap, isSphereMapAdd);
 #endif
+            forceProcessEvents();
             return true;
         }
         else {
@@ -119,89 +212,8 @@ static bool QMAModelLoaderLoadImage(QString &path, MMDAI::PMDTexture *texture)
     return false;
 }
 
-QMAModelLoader::QMAModelLoader(const QString &system, const char *filename)
-    : m_dir(system)
+void QMAModelLoader::forceProcessEvents()
 {
-    QString path = QFile::decodeName(filename);
-    if (QDir::isAbsolutePath(path))
-        m_file = new QFile(path);
-    else
-        m_file = new QFile("MMDAIUserData:/" + path);
-    m_filename = MMDAIStringClone(m_file->fileName().toUtf8().constData());
-}
-
-QMAModelLoader::~QMAModelLoader()
-{
-    if (m_file->isOpen()) {
-        MMDAILogWarn("File is still open, it just leaked: %s", m_filename);
-        m_file->close();
-    }
-    MMDAIMemoryRelease(const_cast<char *>(m_filename));
-    delete m_file;
-}
-
-bool QMAModelLoader::loadModelData(unsigned char **ptr, size_t *size)
-{
-    *size = 0;
-    if (m_file->exists() && m_file->open(QFile::ReadOnly | QFile::Unbuffered)) {
-        size_t s = m_file->size();
-        unsigned char *p = m_file->map(0, s);
-        if (p != NULL) {
-            *ptr = p;
-            *size = s;
-            return true;
-        }
-        else {
-            QByteArray reason = m_file->errorString().toUtf8();
-            MMDAILogDebug("Failed mapping file: %s", reason.constData());
-        }
-    }
-    else {
-        MMDAILogDebug("Model is not found: %s", m_filename);
-    }
-    return false;
-}
-
-void QMAModelLoader::unloadModelData(unsigned char *ptr)
-{
-    m_file->unmap(ptr);
-    m_file->close();
-}
-
-bool QMAModelLoader::loadMotionData(unsigned char **ptr, size_t *size)
-{
-    return loadModelData(ptr, size);
-}
-
-void QMAModelLoader::unloadMotionData(unsigned char *ptr)
-{
-    unloadModelData(ptr);
-}
-
-bool QMAModelLoader::loadImageTexture(MMDAI::PMDTexture *texture)
-{
-    QString path = m_file->fileName();
-    return QMAModelLoaderLoadImage(path, texture);
-}
-
-bool QMAModelLoader::loadModelTexture(const char *name, MMDAI::PMDTexture *texture)
-{
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    QString textureName = codec->toUnicode(name, strlen(name));
-    QDir dir(m_file->fileName());
-    dir.cdUp();
-    QString path = dir.absoluteFilePath(textureName);
-    return QMAModelLoaderLoadImage(path, texture);
-}
-
-bool QMAModelLoader::loadSystemTexture(int index, MMDAI::PMDTexture *texture)
-{
-    int fill = index == 0 ? 1 : 2;
-    QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
-    return QMAModelLoaderLoadImage(path, texture);
-}
-
-const char *QMAModelLoader::getLocation() const
-{
-    return m_filename;
+    if (m_nocompat)
+        qApp->processEvents();
 }

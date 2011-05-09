@@ -40,11 +40,15 @@
 #include <MMDAI/IResourceFactory.h>
 #include "QMAModelLoader.h"
 
+namespace MMDAI {
+class IPreference;
+}
+
 class QMAModelLoaderFactory : public MMDAI::IResourceFactory
 {
 public:
-    QMAModelLoaderFactory() {}
-    ~QMAModelLoaderFactory() {}
+    QMAModelLoaderFactory(MMDAI::IPreference *preference);
+    ~QMAModelLoaderFactory();
 
     MMDAI::IModelLoader *createModelLoader(const char *filename);
     MMDAI::IMotionLoader *createMotionLoader(const char *filename);
@@ -55,6 +59,8 @@ public:
 
 private:
     QMAModelLoader *createLoader(const char *filename);
+
+    MMDAI::IPreference *m_preference;
 
     Q_DISABLE_COPY(QMAModelLoaderFactory)
 };

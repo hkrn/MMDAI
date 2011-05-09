@@ -44,6 +44,7 @@ QMAScenePlayer::QMAScenePlayer(QMAPreference *preference, QWidget *parent)
       m_debug(0),
       m_preference(preference),
       m_interval(static_cast<int>(1000.0 / 120.0)),
+      m_factory(preference),
       m_text(font()),
       m_sceneUpdateTimer(this),
       m_parser(0),

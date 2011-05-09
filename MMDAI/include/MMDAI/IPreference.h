@@ -80,13 +80,14 @@ enum PreferenceKeys {
     kPreferenceCameraDistance,
     kPreferenceCameraFovy,
     kPreferenceMaxModelSize,
+    kPreferenceNoCompatibleMode,
     kPreferenceMaxLengthOfKeys
 };
 
 class IPreference
 {
 public:
-    virtual ~IPreference() {};
+    virtual ~IPreference() {}
 
     virtual bool getBool(const PreferenceKeys key) = 0;
     virtual int getInt(const PreferenceKeys key) = 0;

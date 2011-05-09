@@ -223,6 +223,7 @@ private:
     bool updateFovy(int ellapsedTimeForMove);
     void sortRenderOrder();
     void eraseModel(PMDObject *object);
+    void sendEvent0(const char *type);
     void sendEvent1(const char *type, const char *arg1);
     void sendEvent2(const char *type, const char *arg1, const char *arg2);
 

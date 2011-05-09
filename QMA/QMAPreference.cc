@@ -338,6 +338,9 @@ void QMAPreference::parse(const QString &key, const QString &value)
     else if (key == "max_num_model") {
         setInt(MMDAI::kPreferenceMaxModelSize, value.toInt());
     }
+    else if (key == "no_compatible_mode") {
+        setBool(MMDAI::kPreferenceNoCompatibleMode, value.toLower() == "true");
+    }
     else {
         MMDAILogWarn("unknown key %s: %s", key.toUtf8().constData(), value.toUtf8().constData());
     }
@@ -353,6 +356,7 @@ bool QMAPreference::validateBoolKey(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceUseCartoonRendering:
     case MMDAI::kPreferenceUseMMDLikeCartoon:
     case MMDAI::kPreferenceUseShadowMapping:
+    case MMDAI::kPreferenceNoCompatibleMode:
         return true;
     default:
         return false;
@@ -497,6 +501,8 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
         return 16.0f;
     case MMDAI::kPreferenceMaxModelSize:
         return 10;
+    case MMDAI::kPreferenceNoCompatibleMode:
+        return false;
     default:
         MMDAILogWarn("should not reach here: %d", key);
         return -1;

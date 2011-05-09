@@ -50,7 +50,7 @@ class QFile;
 class QMAModelLoader : public MMDAI::IModelLoader, public MMDAI::IMotionLoader
 {
 public:
-    QMAModelLoader(const QString &system, const char *filename);
+    QMAModelLoader(const QString &system, const char *filename, bool nocompat);
     ~QMAModelLoader();
 
     bool loadModelData(unsigned char **ptr, size_t *size);
@@ -65,9 +65,13 @@ public:
     const char *getLocation() const;
 
 private:
+    bool loadImage(QString &path, MMDAI::PMDTexture *texture);
+    void forceProcessEvents();
+
     QDir m_dir;
     QFile *m_file;
     const char *m_filename;
+    bool m_nocompat;
 
     Q_DISABLE_COPY(QMAModelLoader)
 };

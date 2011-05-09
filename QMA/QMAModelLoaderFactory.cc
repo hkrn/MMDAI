@@ -38,9 +38,20 @@
 #include <QtCore/QDir>
 #include <QtCore/QString>
 
+#include <MMDAI/IPreference.h>
+
 #include "QMALipSyncLoader.h"
 #include "QMAModelLoader.h"
 #include "QMAModelLoaderFactory.h"
+
+QMAModelLoaderFactory::QMAModelLoaderFactory(MMDAI::IPreference *preference)
+{
+    m_preference = preference;
+}
+
+QMAModelLoaderFactory::~QMAModelLoaderFactory()
+{
+}
 
 MMDAI::IModelLoader *QMAModelLoaderFactory::createModelLoader(const char *filename)
 {
@@ -75,5 +86,5 @@ void QMAModelLoaderFactory::releaseLipSyncLoader(MMDAI::ILipSyncLoader *loader)
 inline QMAModelLoader *QMAModelLoaderFactory::createLoader(const char *filename)
 {
     QString path = QDir::searchPaths("MMDAIResources").at(0) + "/AppData";
-    return new QMAModelLoader(path, filename);
+    return new QMAModelLoader(path, filename, m_preference->getBool(MMDAI::kPreferenceNoCompatibleMode));
 }

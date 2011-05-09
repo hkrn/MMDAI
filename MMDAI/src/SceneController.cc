@@ -83,11 +83,11 @@ const char *ISceneEventHandler::kTurnStartEvent = "TURN_EVENT_START";
 const char *ISceneEventHandler::kTurnStopEvent = "TURN_EVENT_STOP";
 const char *ISceneEventHandler::kRotateStartEvent = "ROTATE_EVENT_START";
 const char *ISceneEventHandler::kRotateStopEvent = "ROTATE_EVENT_STOP";
-const char *ISceneEventHandler::kStageEvent = "STAGE";
-const char *ISceneEventHandler::kFloorEvent = "FLOOR";
-const char *ISceneEventHandler::kBackgroundEvent = "BACKGROUND";
-const char *ISceneEventHandler::kLightColorEvent = "LIGHTCOLOR";
-const char *ISceneEventHandler::kLightDirectionEvent = "LIGHTDIRECTION";
+const char *ISceneEventHandler::kStageEvent = "MMDAI_EVENT_STAGE";
+const char *ISceneEventHandler::kFloorEvent = "MMDAI_EVENT_FLOOR";
+const char *ISceneEventHandler::kBackgroundEvent = "MMDAI_EVENT_BACKGROUND";
+const char *ISceneEventHandler::kLightColorEvent = "MMDAI_EVENT_LIGHTCOLOR";
+const char *ISceneEventHandler::kLightDirectionEvent = "MMDAI_EVENT_LIGHTDIRECTION";
 const char *ISceneEventHandler::kLipSyncStartEvent = "LIPSYNC_EVENT_START";
 const char *ISceneEventHandler::kLipSyncStopEvent = "LIPSYNC_EVENT_STOP";
 const char *ISceneEventHandler::kKeyEvent = "KEY";
@@ -257,7 +257,8 @@ bool SceneController::loadFloor(IModelLoader *loader)
     }
 
     /* send event message */
-    sendEvent1(ISceneEventHandler::kFloorEvent, fileName);
+    if (m_preference->getBool(kPreferenceNoCompatibleMode))
+        sendEvent0(ISceneEventHandler::kFloorEvent);
 
     return true;
 }
@@ -274,7 +275,8 @@ bool SceneController::loadBackground(IModelLoader *loader)
     }
 
     /* send event message */
-    sendEvent1(ISceneEventHandler::kBackgroundEvent, fileName);
+    if (m_preference->getBool(kPreferenceNoCompatibleMode))
+        sendEvent0(ISceneEventHandler::kBackgroundEvent);
 
     return true;
 }
@@ -291,7 +293,8 @@ bool SceneController::loadStage(IModelLoader *loader)
     }
 
     /* send event message */
-    sendEvent1(ISceneEventHandler::kStageEvent, fileName);
+    if (m_preference->getBool(kPreferenceNoCompatibleMode))
+        sendEvent0(ISceneEventHandler::kStageEvent);
 
     return true;
 }
@@ -665,7 +668,7 @@ void SceneController::setLightDirection(const btVector3 &direction)
     updateLight();
 
     /* send event message */
-    if (m_handler != NULL) {
+    if (m_preference->getBool(kPreferenceNoCompatibleMode)) {
         char buf[BUFSIZ];
         MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", f[0], f[1], f[2]);
         sendEvent1(ISceneEventHandler::kLightDirectionEvent, buf);
@@ -679,7 +682,7 @@ void SceneController::setLightColor(const btVector3 &color)
     updateLight();
 
     /* send event message */
-    if (m_handler != NULL) {
+    if (m_preference->getBool(kPreferenceNoCompatibleMode)) {
         char buf[BUFSIZ];
         MMDAIStringFormatSafe(buf, sizeof(buf), "%.2f,%.2f,%.2f", f[0], f[1], f[2]);
         sendEvent1(ISceneEventHandler::kLightColorEvent, buf);
@@ -1155,6 +1158,12 @@ void SceneController::updateObject(double fps)
             }
         }
     }
+}
+
+inline void SceneController::sendEvent0(const char *type)
+{
+    if (m_handler != NULL)
+        m_handler->handleEventMessage(type, 0);
 }
 
 inline void SceneController::sendEvent1(const char *type, const char *arg1)
