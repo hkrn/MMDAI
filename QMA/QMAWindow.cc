@@ -112,8 +112,6 @@ void QMAWindow::keyPressEvent(QKeyEvent *event)
 
 void QMAWindow::closeEvent(QCloseEvent *event)
 {
-    m_scene->close();
-    m_logView->close();
     writeSetting();
     event->accept();
 }
@@ -255,7 +253,7 @@ void QMAWindow::createActions()
     action->setMenuRole(QAction::QuitRole);
     action->setShortcuts(QKeySequence::Quit);
     action->setStatusTip(tr("Exit the application."));
-    connect(action, SIGNAL(triggered()), this, SLOT(close()));
+    connect(action, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
     m_exitAction = action;
 
     QList<QKeySequence> shortcuts;
