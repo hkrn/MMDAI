@@ -52,8 +52,7 @@ SOURCES += main.cc\
     QMAPreference.cc \
     QMADebugRenderEngine.cc \
     QMATextRenderEngine.cc \
-    QMAScenePlayer.cc \
-    QMAScenePreview.cc
+    QMAScenePlayer.cc
 
 HEADERS  += \
     QMAPlugin.h \
@@ -67,8 +66,7 @@ HEADERS  += \
     QMAPreference.h \
     QMADebugRenderEngine.h \
     QMATextRenderEngine.h \
-    QMAScenePlayer.h \
-    QMAScenePreview.h
+    QMAScenePlayer.h
 
 TRANSLATIONS += res/translations/QMA.ts
 
