@@ -83,6 +83,11 @@ void QMAScenePlayer::initialize()
         QString filename = args.at(1);
         loadUserPreference(filename);
     }
+    if (m_preference->getBool(MMDAI::kPreferenceTopMost)) {
+        Qt::WindowFlags flags = windowFlags();
+        flags |= Qt::WindowStaysOnTopHint;
+        setWindowFlags(flags);
+    }
 }
 
 void QMAScenePlayer::loadPlugins()
