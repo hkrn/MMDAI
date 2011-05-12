@@ -41,10 +41,13 @@
 #include "QMAScenePlayer.h"
 #include "QMAScenePreview.h"
 #include "QMALogViewWidget.h"
+#include "QMALicenseWidget.h"
 
 QMAWindow::QMAWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QtMMDAI"),
+    m_logWidget(0),
+    m_licenseWidget(0),
     m_isFullScreen(false)
 {
     m_settings.setIniCodec("UTF-8");
@@ -55,7 +58,6 @@ QMAWindow::QMAWindow(QWidget *parent) :
 #endif
     m_preference = new QMAPreference(&m_settings);
     m_scene = new QMAScenePlayer(m_preference, parent);
-    m_logView = new QMALogViewWidget(parent);
 
     createActions();
     createMenu(m_menuBar);
@@ -63,6 +65,7 @@ QMAWindow::QMAWindow(QWidget *parent) :
 
     setCentralWidget(m_scene);
     setWindowTitle(qAppName());
+    setMinimumSize(640, 480);
     statusBar()->showMessage("");
 
     readSetting();
@@ -72,7 +75,8 @@ QMAWindow::~QMAWindow()
 {
     delete m_preference;
     delete m_scene;
-    delete m_logView;
+    delete m_logWidget;
+    delete m_licenseWidget;
 }
 
 void QMAWindow::initialize()
@@ -118,12 +122,9 @@ void QMAWindow::closeEvent(QCloseEvent *event)
 
 void QMAWindow::showLogWindow()
 {
-    QPoint pos = m_logView->pos();
-    if (pos.x() < 0)
-        pos.setX(0);
-    if (pos.y() < 0)
-        pos.setY(0);
-    m_logView->show();
+    if (!m_logWidget)
+        m_logWidget = new QMALogViewWidget;
+    m_logWidget->show();
 }
 
 void QMAWindow::resizeScene()
@@ -152,37 +153,9 @@ void QMAWindow::toggleFullScreen()
 
 void QMAWindow::about()
 {
-    QMessageBox::about(this, tr("About %1").arg(qApp->applicationName()),
-                       tr("<h2>%1 %2+beta (Aloe)</h2>"
-                          "<p>Copyright (C) 2010-2011<br>"
-                          "Nagoya Institute of Technology Department of Computer Science, "
-                          "hkrn (@hikarincl2)<br>"
-                          "All rights reserved.</p>"
-                          "<p>This application uses following libraries<ul>"
-                          "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDME</a></li>"
-                          "<li><a href='http://github.com/hkrn/MMDAI/'>libMMDAI</a></li>"
-                          "<li><a href='http://qt.nokia.com'>Qt (LGPL)</a></li>"
-                          "<li><a href='http://bulletphysics.org'>Bullet Physic Library</a></li>"
-                          "<li><a href='http://elf-stone.com/glee.php'>OpenGL Easy Extension Library</a></li>"
-                      #ifdef QMA_BUNDLE_AQUESTALK2_PLUGIN
-                          "<li><a href='http://www.a-quest.com'>AquesTalk2</a></li>"
-                          "<li><a href='http://www.a-quest.com'>AqKanji2Koe</a></li>"
-                      #endif
-                      #ifdef QMA_BUNDLE_PLUGINS
-                          /* TODO: should split this */
-                          "<li><a href='http://julius.sourceforge.jp'>Julius</a></li>"
-                          "<li><a href='http://open-jtalk.sf.net'>Open JTalk</a></li>"
-                          "<li><a href='http://hts-engine.sf.net/'>hts_engine API</a></li>"
-                          "<li><a href='http://mecab.sf.net/'>MeCab</a></li>"
-                          "<li><a href='http://www.portaudio.com'>PortAudio</a></li>"
-                      #endif
-                          "</ul></p>"
-                          "<p>This icon was generated with <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>"
-                          " and <a href='http://www.nicovideo.jp/watch/sm14177985'>Miku's love song motion</a></p>"
-                          "<p><a href='http://github.com/hkrn/MMDAI/'>MMDAI</a> is a fork project of "
-                          "<a href='http://www.mmdagent.jp'>MMDAgent</a></p>")
-                       .arg(qApp->applicationName())
-                       .arg(qApp->applicationVersion()));
+    if (!m_licenseWidget)
+        m_licenseWidget = new QMALicenseWidget;
+    m_licenseWidget->show();
 }
 
 void QMAWindow::receiveEvent(const QString &type, const QList<QVariant> &arguments)
@@ -212,18 +185,6 @@ void QMAWindow::createActions()
 
     const char *message = QT_TR_NOOP("Resize scene to %1x%2");
     const char *description = QT_TR_NOOP("Set the width of the scene to %1px and the height of the scene to %2px.");
-
-    action = new QAction(tr(message).arg(512).arg(288), this);
-    action->setStatusTip(tr(description).arg(512).arg(288));
-    action->setData(QSize(512, 288));
-    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
-    m_resize512x288Action = action;
-
-    action = new QAction(tr(message).arg(512).arg(384), this);
-    action->setStatusTip(tr(description).arg(512).arg(384));
-    action->setData(QSize(512, 384));
-    connect(action, SIGNAL(triggered()), this, SLOT(resizeScene()));
-    m_resize512x384Action = action;
 
     action = new QAction(tr(message).arg(640).arg(480), this);
     action->setStatusTip(tr(description).arg(640).arg(480));
@@ -300,8 +261,6 @@ void QMAWindow::mergeMenu()
     QMenu *windowMenu = m_menu["Window"];
     windowMenu->addAction(m_toggleFullScreenAction);
     windowMenu->addSeparator();
-    windowMenu->addAction(m_resize512x288Action);
-    windowMenu->addAction(m_resize512x384Action);
     windowMenu->addAction(m_resize640x480Action);
     windowMenu->addAction(m_resize800x480Action);
     windowMenu->addAction(m_resize1024x768Action);
@@ -314,17 +273,15 @@ void QMAWindow::mergeMenu()
 void QMAWindow::readSetting()
 {
     m_settings.beginGroup("window");
-    QPoint point = m_settings.value("pos", QPoint(200, 200)).toPoint();
-    QSize size = m_settings.value("size", QSize(800, 480)).toSize();
+    restoreGeometry(m_settings.value("geometry").toByteArray());
+    restoreState(m_settings.value("state").toByteArray());
     m_settings.endGroup();
-    resize(size);
-    move(point);
 }
 
 void QMAWindow::writeSetting()
 {
     m_settings.beginGroup("window");
-    m_settings.setValue("pos", pos());
-    m_settings.setValue("size", size());
+    m_settings.setValue("geometry", saveGeometry());
+    m_settings.setValue("state", saveState());
     m_settings.endGroup();
 }

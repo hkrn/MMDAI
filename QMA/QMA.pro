@@ -52,7 +52,8 @@ SOURCES += main.cc\
     QMAPreference.cc \
     QMADebugRenderEngine.cc \
     QMATextRenderEngine.cc \
-    QMAScenePlayer.cc
+    QMAScenePlayer.cc \
+    QMALicenseWidget.cc
 
 HEADERS  += \
     QMAPlugin.h \
@@ -66,9 +67,12 @@ HEADERS  += \
     QMAPreference.h \
     QMADebugRenderEngine.h \
     QMATextRenderEngine.h \
-    QMAScenePlayer.h
+    QMAScenePlayer.h \
+    QMALicenseWidget.h
 
 TRANSLATIONS += res/translations/QMA.ts
+
+RESOURCES += QMA.qrc
 
 win32 {
     RC_FILE = res/MMDAI.rc

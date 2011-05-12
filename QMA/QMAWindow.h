@@ -42,6 +42,7 @@
 #include <QtGui/QFileOpenEvent>
 #include <QtGui/QMainWindow>
 
+class QMALicenseWidget;
 class QMAPreference;
 class QMAScenePlayer;
 class QMALogViewWidget;
@@ -108,12 +109,11 @@ private:
     QSettings m_settings;
     QMAPreference *m_preference;
     QMAScenePlayer *m_scene;
-    QMALogViewWidget *m_logView;
+    QMALogViewWidget *m_logWidget;
+    QMALicenseWidget *m_licenseWidget;
     QHash<QString, QMenu*> m_menu;
     QAction *m_showLogAction;
     QAction *m_toggleFullScreenAction;
-    QAction *m_resize512x288Action;
-    QAction *m_resize512x384Action;
     QAction *m_resize640x480Action;
     QAction *m_resize800x480Action;
     QAction *m_resize1024x768Action;
