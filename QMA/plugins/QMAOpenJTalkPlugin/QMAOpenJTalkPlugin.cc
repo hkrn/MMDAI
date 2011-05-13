@@ -72,9 +72,14 @@ void QMAOpenJTalkPlugin::load(MMDAI::SceneController *controller, const QString 
     Q_UNUSED(controller);
     if (m_base.isEmpty()) {
         QDir dir("MMDAIUserData:/");
-        m_base = dir.absolutePath();
-        m_config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
-        m_dir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
+        const QString base = dir.absolutePath();
+        const QString config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
+        const QString resdir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
+        if (QFile::exists(base) && QFile::exists(config) && QFile::exists(resdir)) {
+            m_base = base;
+            m_config = config;
+            m_dir = resdir;
+        }
     }
 }
 
