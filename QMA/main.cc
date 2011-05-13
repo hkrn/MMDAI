@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("hkrn.github.com");
     app.setOrganizationName("MMDAI Project");
     app.setApplicationName("MMDAI");
-    app.setApplicationVersion("1.414");
+    app.setApplicationVersion("1.732");
     QMASetSearchPath(app);
     QMALoadTranslations(app, appTranslator, qtTranslator);
 
