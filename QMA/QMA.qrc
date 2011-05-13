@@ -9,5 +9,6 @@
         <file alias="MMDAgent">res/licenses/MMDAgent</file>
         <file alias="HTSEngine">res/licenses/HTSEngine</file>
         <file alias="GLEE">res/licenses/GLEE</file>
+        <file alias="mecab">res/licenses/mecab</file>
     </qresource>
 </RCC>
