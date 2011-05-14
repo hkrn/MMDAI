@@ -364,6 +364,7 @@ int VIManager::load(QTextStream &stream)
     VIManager_SList_clear(&m_stateList);
     VIManager_SList_initialize(&m_stateList);
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    QString sep = codec->toUnicode("\\");
 
     while (!stream.atEnd()) { /* string + \r + \n + \0 */
         QString line = stream.readLine().trimmed();
@@ -375,7 +376,7 @@ int VIManager::load(QTextStream &stream)
             char buff_is[VIMANAGER_MAXBUFLEN];
             char buff_os[VIMANAGER_MAXBUFLEN];
             char buff_er[VIMANAGER_MAXBUFLEN];
-            QByteArray bytes = line.replace(codec->toUnicode("\\"), "/").toUtf8();
+            QByteArray bytes = line.replace(sep, "/").toUtf8();
             MMDAIStringCopySafe(buff, bytes.constData(), sizeof(buff));
             int idx = 0;
             int size_s1 = get_token_from_string(buff, &idx, buff_s1);
