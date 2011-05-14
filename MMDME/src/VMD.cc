@@ -429,7 +429,7 @@ bool VMD::parse(unsigned char *data, size_t size)
     data += sizeof(uint32_t);
     rest -= sizeof(uint32_t);
 
-    if (m_numTotalCameraKeyFrame > 0) {
+    if (m_numTotalCameraKeyFrame > 0 && rest >= m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame)) {
         VMDFile_CameraFrame *cameraFrame = reinterpret_cast<VMDFile_CameraFrame *>(data);
         m_cameraMotion = static_cast<CameraMotion *>(MMDAIMemoryAllocate(sizeof(CameraMotion)));
         m_cameraMotion->numKeyFrame = m_numTotalCameraKeyFrame;
@@ -451,21 +451,29 @@ bool VMD::parse(unsigned char *data, size_t size)
             setCameraInterpolationTable(&(m_cameraMotion->keyFrameList[i]), cameraFrame[i].interpolation);
         }
         qsort(m_cameraMotion->keyFrameList, m_cameraMotion->numKeyFrame, sizeof(CameraKeyFrame), compareCameraKeyFrame);
+        data += m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
+        rest -= m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
     }
-    data += m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
-    rest -= m_numTotalCameraKeyFrame * sizeof(VMDFile_CameraFrame);
 
-    int numLightFrame = *reinterpret_cast<uint32_t *>(data);
-    data += sizeof(uint32_t);
-    rest -= sizeof(uint32_t);
-    data += numLightFrame * sizeof(VMDFile_LightFrame);
-    rest -= numLightFrame * sizeof(VMDFile_LightFrame);
-
-    int numSelfShadowFrame = *reinterpret_cast<uint32_t *>(data);
-    data += sizeof(uint32_t);
-    rest -= sizeof(uint32_t);
-    data += numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame);
-    rest -= numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame);
+    int numLightFrame = 0, numSelfShadowFrame = 0;
+    if (rest > 0) {
+        numLightFrame = *reinterpret_cast<uint32_t *>(data);
+        data += sizeof(uint32_t);
+        rest -= sizeof(uint32_t);
+        if (rest >= numLightFrame * sizeof(VMDFile_LightFrame)) {
+            data += numLightFrame * sizeof(VMDFile_LightFrame);
+            rest -= numLightFrame * sizeof(VMDFile_LightFrame);
+        }
+    }
+    if (rest > 0) {
+        numSelfShadowFrame = *reinterpret_cast<uint32_t *>(data);
+        data += sizeof(uint32_t);
+        rest -= sizeof(uint32_t);
+        if (rest >= numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame)) {
+            data += numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame);
+            rest -= numSelfShadowFrame * sizeof(VMDFile_SelfShadowFrame);
+        }
+    }
 
     MMDAILogDebug("camera:%d light:%d selfShadow:%d", m_numTotalCameraKeyFrame, numLightFrame, numSelfShadowFrame);
     MMDAILogDebug("rest of VMD: %d (data size is %d)", rest, size);
