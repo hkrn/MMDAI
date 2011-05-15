@@ -42,7 +42,6 @@
 #include <QtCore/QPluginLoader>
 #include <QtCore/QTranslator>
 #include <QtCore/QtPlugin>
-#include <QtGui/QApplication>
 
 #include "MMDME/MMDME.h"
 #include "QMALogger.h"
@@ -69,6 +68,9 @@ static void QMASetSearchPath(const QCoreApplication &app)
 #elif defined(Q_OS_MAC)
     if (appDir.dirName() == "MacOS") {
         appDir.cdUp();
+        // macdeployqt deploys on "@executable_path/../Plugins/"
+        // It should be loaded Qt's plugins.
+        app.addLibraryPath(appDir.absoluteFilePath("PlugIns"));
         appDir.cdUp();
         appDir.cdUp();
     }
@@ -147,15 +149,12 @@ int main(int argc, char *argv[])
     QMALoadTranslations(app, appTranslator, qtTranslator);
 
     /* invoke QMAWindow */
-    MMDAILogInfo("argc: %d", app.arguments().count());
-    for (int i = 0; i < app.arguments().count(); i++) {
-        MMDAILogInfo("%d: %s", i, app.arguments().at(i).toUtf8().constData());
-    }
     QMAWindow window;
     QObject::connect(&app, SIGNAL(fileFound(QString)), &window, SLOT(reload(QString)));
     window.initialize();
     window.show();
     window.loadPlugins();
     window.start();
+
     return app.exec();
 }

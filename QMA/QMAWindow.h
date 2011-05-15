@@ -38,6 +38,7 @@
 #define QMAWINDOW_H
 
 #include <QtCore/QSettings>
+#include <QtCore/QString>
 #include <QtGui/QApplication>
 #include <QtGui/QFileOpenEvent>
 #include <QtGui/QMainWindow>
@@ -52,10 +53,13 @@ class QMAApplication : public QApplication
     Q_OBJECT
 
 public:
-    QMAApplication(int &argc, char **argv)
-        : QApplication(argc, argv)
-    {
-    }
+    QMAApplication(int &argc, char **argv) : QApplication(argc, argv) {}
+    QMAApplication(int &argc, char **argv, bool GUIenabled) : QApplication(argc, argv, GUIenabled) {}
+    QMAApplication(int &argc, char **argv, Type type) : QApplication(argc, argv, type) {}
+#if defined(Q_WS_X11)
+    QApplication(Display* dpy, Qt::HANDLE visual = 0, Qt::HANDLE cmap = 0) : QApplication(dpy, visual, cmap) {}
+    QApplication(Display *dpy, int &argc, char **argv, Qt::HANDLE visual = 0, Qt::HANDLE cmap= 0) : QApplication(dpy, argc, argv, visual, cmap) {}
+#endif
 
 signals:
     void fileFound(const QString &filename);
