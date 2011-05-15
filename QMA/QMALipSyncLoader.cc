@@ -45,21 +45,18 @@
 
 QMALipSyncLoader::QMALipSyncLoader(const char *filename)
     : m_expressionNames(0),
-    m_phoneNames(0),
-    m_interpolation(0),
-    m_nexpressions(0),
-    m_nphonemes(0)
+      m_phoneNames(0),
+      m_interpolation(0),
+      m_nexpressions(0),
+      m_nphonemes(0)
 {
     QString path = QFile::decodeName(filename).replace(QRegExp(".pmd$"), ".lip");
-#if !defined(Q_OS_WIN)
-    path = path.replace(QChar(0xa5), QChar('/'));
-#endif
     if (QDir::isAbsolutePath(path))
         m_file = new QFile(path);
     else
         m_file = new QFile("MMDAIUserData:/" + path);
     if (!m_file->exists())
-        m_file->setFileName("MMDAIResources:AppData/lip.txt");
+        m_file->setFileName(":/resources/lip.txt");
 }
 
 QMALipSyncLoader::~QMALipSyncLoader()
@@ -126,7 +123,7 @@ bool QMALipSyncLoader::load()
                         i = 0;
                     }
                     break;
-        case GetPhoneNames:
+                case GetPhoneNames:
                     if (i < m_nphonemes) {
                         QStringList a = line.split(QRegExp("\\s+"), QString::SkipEmptyParts);
                         if (a.count() == 1 + m_nexpressions) {

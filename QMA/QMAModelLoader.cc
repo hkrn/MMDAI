@@ -155,8 +155,7 @@ bool QMAModelLoader::loadModelTexture(const char *name, MMDAI::PMDTexture *textu
 
 bool QMAModelLoader::loadSystemTexture(int index, MMDAI::PMDTexture *texture)
 {
-    int fill = index == 0 ? 1 : 2;
-    QString path = m_dir.absoluteFilePath(QString("toon%1.bmp").arg(index, fill, 10, QChar('0')));
+    QString path = QString(":/textures/toon%1.bmp").arg(index);
     return loadImage(path, texture);
 }
 

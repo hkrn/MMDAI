@@ -11,4 +11,20 @@
         <file alias="GLEE">res/licenses/GLEE</file>
         <file alias="mecab">res/licenses/mecab</file>
     </qresource>
+    <qresource prefix="/textures">
+        <file alias="toon0.bmp">res/images/toon0.bmp</file>
+        <file alias="toon1.bmp">res/images/toon01.bmp</file>
+        <file alias="toon2.bmp">res/images/toon02.bmp</file>
+        <file alias="toon3.bmp">res/images/toon03.bmp</file>
+        <file alias="toon4.bmp">res/images/toon04.bmp</file>
+        <file alias="toon5.bmp">res/images/toon05.bmp</file>
+        <file alias="toon6.bmp">res/images/toon06.bmp</file>
+        <file alias="toon7.bmp">res/images/toon07.bmp</file>
+        <file alias="toon8.bmp">res/images/toon08.bmp</file>
+        <file alias="toon9.bmp">res/images/toon09.bmp</file>
+        <file alias="toon10.bmp">res/images/toon10.bmp</file>
+    </qresource>
+    <qresource prefix="/resources">
+        <file alias="lip.txt">res/lip.txt</file>
+    </qresource>
 </RCC>
