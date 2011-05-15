@@ -529,7 +529,7 @@ void QMAScenePlayer::mouseMoveEvent(QMouseEvent *event)
             selectedObject->setMoveSpeed(-1.0f);
         }
         else if (modifiers & Qt::ShiftModifier) {
-            m_controller->setModelViewPosition(y, x);
+            m_controller->setModelViewPosition(x, y);
         }
         else {
             rotate(x, y);
