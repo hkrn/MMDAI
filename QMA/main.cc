@@ -139,7 +139,6 @@ int main(int argc, char *argv[])
 {
     QMAApplication app(argc, argv);
     QTranslator appTranslator, qtTranslator;
-    QMALogger::initialize();
 
     app.setOrganizationDomain("hkrn.github.com");
     app.setOrganizationName("MMDAI Project");
@@ -147,6 +146,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion("1.732");
     QMASetSearchPath(app);
     QMALoadTranslations(app, appTranslator, qtTranslator);
+    QMALogger::initialize();
 
     /* invoke QMAWindow */
     QMAWindow window;
