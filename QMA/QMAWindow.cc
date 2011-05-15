@@ -46,7 +46,6 @@
 QMAWindow::QMAWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QtMMDAI"),
-    m_logWidget(0),
     m_licenseWidget(0),
     m_isFullScreen(false)
 {
@@ -56,6 +55,7 @@ QMAWindow::QMAWindow(QWidget *parent) :
 #else
     m_menuBar = menuBar();
 #endif
+    m_logWidget = new QMALogViewWidget;
     m_preference = new QMAPreference(&m_settings);
     m_scene = new QMAScenePlayer(m_preference, parent);
 
@@ -122,8 +122,6 @@ void QMAWindow::closeEvent(QCloseEvent *event)
 
 void QMAWindow::showLogWindow()
 {
-    if (!m_logWidget)
-        m_logWidget = new QMALogViewWidget;
     m_logWidget->show();
 }
 
