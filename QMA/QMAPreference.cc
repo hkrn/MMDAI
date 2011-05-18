@@ -460,7 +460,7 @@ QVariant QMAPreference::getDefaultValue(const MMDAI::PreferenceKeys key)
     case MMDAI::kPreferenceMotionAdjustFrame:
         return 0;
     case MMDAI::kPreferenceRotateStep:
-        return 0.08f;
+        return 4.5f;
     case MMDAI::kPreferenceDistanceStep:
         return 4.0f;
     case MMDAI::kPreferenceFovyStep:
