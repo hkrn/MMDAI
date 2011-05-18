@@ -47,7 +47,7 @@ namespace MMDAI {
 class PMDTexture
 {
 public:
-    static bool loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight);
+    static bool loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight, int *pbit);
 
     PMDTexture();
     ~PMDTexture();

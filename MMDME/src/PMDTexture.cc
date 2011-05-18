@@ -77,7 +77,7 @@ void PMDTexture::release()
     m_textureData = NULL;
 }
 
-bool PMDTexture::loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight)
+bool PMDTexture::loadTGAImage(const unsigned char *data, unsigned char **ptr, int *pwidth, int *pheight, int *pbit)
 {
     /* support only Full-color images */
     unsigned char type = *((unsigned char *) (data + 2));
@@ -87,7 +87,7 @@ bool PMDTexture::loadTGAImage(const unsigned char *data, unsigned char **ptr, in
     }
     unsigned short width = *pwidth = *((short *) (data + 12));
     unsigned short height = *pheight = *((short *) (data + 14));
-    unsigned char bit = *((unsigned char *) (data + 16)); /* 24 or 32 */
+    unsigned char bit = *pbit = *((unsigned char *) (data + 16)); /* 24 or 32 */
     unsigned char attrib = *((unsigned char *) (data + 17));
     int stride = bit / 8;
     unsigned char *body = const_cast<unsigned char *>(data) + 18;
