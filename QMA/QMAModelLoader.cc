@@ -42,7 +42,7 @@
 #include <QtCore/QTextCodec>
 #include <QtGui/QImage>
 
-static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr)
+static bool QMAModelLoaderLoadTGA(QString path, unsigned char **ptr, QSize &size, int *bit)
 {
     /* parse TGA */
     QFile file(path);
@@ -66,7 +66,7 @@ static bool QMAModelLoaderLoadTGA(QString path, QSize &size, unsigned char **ptr
     file.close();
 
     int width = 0, height = 0;
-    bool ret = MMDAI::PMDTexture::loadTGAImage(reinterpret_cast<unsigned char *>(data), ptr, &width, &height);
+    bool ret = MMDAI::PMDTexture::loadTGAImage(reinterpret_cast<unsigned char *>(data), ptr, &width, &height, bit);
     MMDAIMemoryRelease(data);
 
     size.setWidth(width);
@@ -177,7 +177,8 @@ bool QMAModelLoader::loadImage(QString &path, MMDAI::PMDTexture *texture)
         if (path.endsWith(".tga")) {
             QSize size;
             unsigned char *ptr = NULL;
-            if (QMAModelLoaderLoadTGA(path, size, &ptr)) {
+            int component = 0;
+            if (QMAModelLoaderLoadTGA(path, &ptr, size, &component)) {
                 int w = size.width();
                 int h = size.height();
                 int c = 4;
