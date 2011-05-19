@@ -39,7 +39,7 @@
 #ifndef MMDME_COMMON_H_
 #define MMDME_COMMON_H_
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(__MINGW32__)
 #define _USE_MATH_DEFINES
 typedef char int8_t;
 typedef unsigned char uint8_t;
