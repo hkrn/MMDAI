@@ -14,7 +14,7 @@ public:
     Constraint();
     ~Constraint();
 
-    size_t stride();
+    size_t stride(const char *data);
     void read(const char *data, RigidBodyList &bodies, const btVector3 &offset);
 
     const char *name() {

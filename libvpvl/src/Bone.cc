@@ -42,7 +42,7 @@ Bone::~Bone()
     m_motionIndepent = false;
 }
 
-size_t Bone::stride()
+size_t Bone::stride(const char * /* data */)
 {
     return sizeof(m_name) + sizeof(int16_t)
             + sizeof(int16_t) + sizeof(int8_t)

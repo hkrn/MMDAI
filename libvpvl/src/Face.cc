@@ -11,13 +11,18 @@ Face::Face()
 
 Face::~Face()
 {
+    m_vertices.clear();
     m_type = kOther;
     m_weight = 0.0f;
 }
 
-size_t Face::stride()
+size_t Face::stride(const char *data)
 {
-    return sizeof(m_name) + sizeof(uint32_t) + sizeof(uint8_t);
+    char *ptr = const_cast<char *>(data);
+    size_t base = sizeof(m_name) + sizeof(uint32_t) + sizeof(uint8_t);
+    ptr += base;
+    int nvertices = *reinterpret_cast<int *>(ptr);
+    return base + nvertices * sizeof(FaceVertex);
 }
 
 void Face::read(const char *data)

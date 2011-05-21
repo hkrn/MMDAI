@@ -14,7 +14,7 @@ Constraint::~Constraint()
     m_constraint = 0;
 }
 
-size_t Constraint::stride()
+size_t Constraint::stride(const char * /* data */)
 {
     return sizeof(m_name) + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
 }

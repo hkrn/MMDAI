@@ -30,7 +30,7 @@ public:
 
     static const int kMaxVertexID = 65536;
 
-    size_t stride();
+    size_t stride(const char *data);
     void read(const char *data);
     void convertIndices(const Face &base);
     void applyToVertices(btAlignedObjectArray<btVector3> &vertices);

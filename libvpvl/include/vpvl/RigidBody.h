@@ -14,9 +14,8 @@ public:
     RigidBody();
     ~RigidBody();
 
-    static size_t size();
-
-    void read(const void *data, Bone *bone);
+    size_t stride(const char *data);
+    void read(const char *data, Bone *bone);
     void transformToBone();
     void setKinematic(bool value);
 
@@ -28,7 +27,7 @@ public:
     }
 
 private:
-    char *m_name;
+    char m_name[20];
     Bone *m_bone;
     btCollisionShape *m_shape;
     btRigidBody *m_body;
