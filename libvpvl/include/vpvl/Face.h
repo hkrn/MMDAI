@@ -30,7 +30,7 @@ public:
     ~Face();
 
     static const int kMaxVertexID = 65536;
-    static size_t stride(const char *data);
+    static size_t totalSize(const char *data, size_t n);
 
     void read(const char *data);
     void convertIndices(const Face &base);

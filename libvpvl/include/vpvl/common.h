@@ -204,6 +204,7 @@ inline bool vpvlDataGetSize8(char *&ptr, size_t &rest, size_t &size)
         return false;
     size = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
+    rest -= sizeof(uint8_t);
     return true;
 }
 
@@ -213,6 +214,7 @@ inline bool vpvlDataGetSize16(char *&ptr, size_t &rest, size_t &size)
         return false;
     size = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(uint16_t);
+    rest -= sizeof(uint16_t);
     return true;
 }
 
@@ -222,15 +224,17 @@ inline bool vpvlDataGetSize32(char *&ptr, size_t &rest, size_t &size)
         return false;
     size = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
+    rest -= sizeof(uint32_t);
     return true;
 }
 
-inline bool vpvlDataValidateSize(char *&ptr, size_t stride, size_t size, size_t rest)
+inline bool vpvlDataValidateSize(char *&ptr, size_t stride, size_t size, size_t &rest)
 {
     size_t required = stride * size;
     if (required > rest)
         return false;
     ptr += required;
+    rest -= required;
     return true;
 }
 

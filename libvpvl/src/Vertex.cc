@@ -29,7 +29,7 @@ Vertex::~Vertex()
 
 size_t Vertex::stride(const char * /* data */)
 {
-    return sizeof(float) * 7 + sizeof(int16_t) * 2 + sizeof(uint8_t);
+    return sizeof(float) * 8 + sizeof(int16_t) * 2 + sizeof(uint8_t) * 2;
 }
 
 void Vertex::read(const char *data)
@@ -46,7 +46,7 @@ void Vertex::read(const char *data)
     ptr += sizeof(int16_t);
     int16_t bone2 = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
-    float weight = *reinterpret_cast<float *>(ptr);
+    uint8_t weight = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(float);
     uint8_t edge = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);

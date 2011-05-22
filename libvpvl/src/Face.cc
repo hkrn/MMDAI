@@ -18,13 +18,19 @@ Face::~Face()
     m_weight = 0.0f;
 }
 
-size_t Face::stride(const char *data)
+// FIXME: boundary check
+size_t Face::totalSize(const char *data, size_t n)
 {
+    size_t size = 0;
     char *ptr = const_cast<char *>(data);
-    size_t base = 20 + sizeof(uint32_t) + sizeof(uint8_t);
-    ptr += base;
-    int nvertices = *reinterpret_cast<int *>(ptr);
-    return base + nvertices * sizeof(FaceVertex);
+    for (size_t i = 0; i < n; i++) {
+        ptr += 20;
+        uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
+        size_t rest = sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+        size += 20 + rest;
+        ptr += rest;
+    }
+    return size;
 }
 
 void Face::read(const char *data)

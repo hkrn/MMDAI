@@ -7,7 +7,7 @@
 namespace vpvl
 {
 
-struct ParserResult
+struct PMDParserResult
 {
     char *basePtr;
     char *namePtr;
@@ -61,8 +61,12 @@ public:
     void parseRigidBodies(PMDModel *model);
     void parseConstraints(PMDModel *model);
 
+    const PMDParserResult &result() {
+        return m_result;
+    }
+
 private:
-    ParserResult m_result;
+    PMDParserResult m_result;
     char *m_data;
     size_t m_size;
     size_t m_rest;

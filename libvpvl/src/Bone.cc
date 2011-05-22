@@ -56,9 +56,7 @@ Bone &Bone::centerBone(btAlignedObjectArray<Bone> *bones)
 
 size_t Bone::stride(const char * /* data */)
 {
-    return 20 + sizeof(int16_t)
-            + sizeof(int16_t) + sizeof(int8_t)
-            + sizeof(int16_t) + (sizeof(float) * 3);
+    return 20 + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
 }
 
 void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootBone)
@@ -70,7 +68,7 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootB
     ptr += sizeof(int16_t);
     int16_t childBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
-    BoneType type = *reinterpret_cast<BoneType *>(ptr);
+    BoneType type = static_cast<BoneType>(*reinterpret_cast<uint8_t *>(ptr));
     ptr += sizeof(int8_t);
     int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);

@@ -9,12 +9,12 @@ PMDParser::PMDParser(const char *data, size_t size)
       m_size(size),
       m_rest(size)
 {
-    memset(&m_result, 0, sizeof(ParserResult));
+    memset(&m_result, 0, sizeof(PMDParserResult));
 }
 
 PMDParser::~PMDParser()
 {
-    memset(&m_result, 0, sizeof(ParserResult));
+    memset(&m_result, 0, sizeof(PMDParserResult));
     m_data = 0;
     m_size = 0;
     m_rest = 0;
@@ -42,6 +42,7 @@ bool PMDParser::preparse()
     ptr += 20;
     m_result.commentPtr = ptr;
     ptr += 256;
+    m_rest -= 283;
 
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
             nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
@@ -81,7 +82,7 @@ bool PMDParser::preparse()
     if (!vpvlDataGetSize16(ptr, m_rest, nIKs))
         return false;
     m_result.IKsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, IK::stride(ptr), nIKs, m_rest))
+    if (!vpvlDataValidateSize(ptr, IK::totalSize(ptr, nIKs), 1, m_rest))
         return false;
     m_result.IKsCount = nIKs;
 
@@ -89,7 +90,7 @@ bool PMDParser::preparse()
     if (!vpvlDataGetSize16(ptr, m_rest, nFaces))
         return false;
     m_result.facesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Face::stride(ptr), nFaces, m_rest))
+    if (!vpvlDataValidateSize(ptr, Face::totalSize(ptr, nFaces), 1, m_rest))
         return false;
     m_result.facesCount = nFaces;
 
@@ -110,7 +111,7 @@ bool PMDParser::preparse()
     m_result.boneFrameNamesCount = nBoneFrames;
 
     /* bone display names */
-    if (!vpvlDataGetSize8(ptr, m_rest, nBoneFrames))
+    if (!vpvlDataGetSize32(ptr, m_rest, nBoneNames))
         return false;
     m_result.boneDisplayNamesPtr = ptr;
     if (!vpvlDataValidateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, m_rest))
@@ -125,20 +126,22 @@ bool PMDParser::preparse()
     /* english names */
     size_t english;
     vpvlDataGetSize8(ptr, m_rest, english);
-    if (english != 0) {
+    if (english == 1) {
         size_t tmp = nFaces > 0 ? (nFaces - 1) * 20 : 0;
         const size_t required = 20 + 256 + 20 * nBones + tmp + 50 * nBoneFrames;
         if (required > m_rest)
             return false;
         m_result.englishDisplayNamesPtr = ptr;
         ptr += required;
+        m_rest -= required;
     }
 
     /* extra texture path */
     if (1000 > m_rest)
         return false;
     m_result.toonTextureNamesPtr = ptr;
-    m_rest += 1000;
+    ptr += 1000;
+    m_rest -= 1000;
 
     if (m_rest == 0) {
         m_rest = m_size;
@@ -254,7 +257,8 @@ void PMDParser::parseIKs(PMDModel *model)
     IKs.reserve(nIKs);
     for (int i = 0; i < nIKs; i++) {
         IKs[i].read(ptr, model->mutableBones());
-        ptr += IK::stride(ptr);
+        // FIXME: stride IK
+        //ptr += IK::stride(ptr);
     }
     model->setIKs(IKs);
 }
@@ -269,7 +273,8 @@ void PMDParser::parseFaces(PMDModel *model)
     for (int i = 0; i < nfaces; i++) {
         Face &face = faces[i];
         face.read(ptr);
-        ptr += Face::stride(ptr);
+        // FIXME: stride IK
+        // ptr += Face::stride(ptr);
         if (face.type() == kBase)
             baseFace = &face;
     }

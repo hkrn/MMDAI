@@ -27,9 +27,20 @@ IK::~IK()
     m_angleConstraint = 0.0f;
 }
 
-size_t IK::stride(const char * /* data */)
+// FIXME: boundary check
+size_t IK::totalSize(const char *data, size_t n)
 {
-    return sizeof(int16_t) * 2 + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float);
+    size_t size = 0;
+    char *ptr = const_cast<char *>(data);
+    for (size_t i = 0; i < n; i++) {
+        size_t base = sizeof(int16_t) * 2;
+        ptr += base;
+        uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
+        size_t rest = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
+        size += base + rest;
+        ptr += rest;
+    }
+    return size;
 }
 
 void IK::read(const char *data, BoneList *bones)
@@ -45,6 +56,13 @@ void IK::read(const char *data, BoneList *bones)
     ptr += sizeof(uint16_t);
     float angleConstraint = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
+
+    btAlignedObjectArray<int16_t> IKBones;
+    for (int i = 0; i < nlinks; i++) {
+        int16_t IKBone = *reinterpret_cast<int16_t *>(ptr);
+        IKBones.push_back(IKBone);
+        ptr += sizeof(int16_t);
+    }
 
     int nbones = bones->size();
     if (destBoneID >= 0 && destBoneID < nbones && targetBoneID >= 0 && targetBoneID < nbones) {
