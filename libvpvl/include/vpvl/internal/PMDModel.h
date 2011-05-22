@@ -6,11 +6,34 @@
 namespace vpvl
 {
 
+struct SkinVertex
+{
+    btVector3 position;
+    btVector3 normal;
+    btVector3 texureCoord;
+};
+
 class PMDModel : public IModel
 {
 public:
     PMDModel();
     virtual ~PMDModel();
+
+    static const uint32_t kBoundingSpherePoints = 1000;
+    static const uint32_t kBoundingSpherePointsMax = 20;
+    static const uint32_t kBoundingSpherePointsMin = 5;
+    static const float kMinBoneWeight;
+    static const float kMinFaceWeight;
+
+    void prepare();
+    void updateBone();
+    void updateBoneFromSimulation();
+    void updateFace();
+    void updateShadow(float coef);
+    void updateSkin();
+    void updateToon(const btVector3 &light);
+    float boundingSphereRange(btVector3 &center);
+    void smearAllBonesToDefault(float rate);
 
     const char *name() const {
         return m_name;
@@ -62,6 +85,12 @@ public:
     Bone *mutableRootBone() {
         return &m_rootBone;
     }
+    float edgeOffset() const {
+        return m_edgeOffset;
+    }
+    bool isSimulationEnabled() const {
+        return m_enableSimulation;
+    }
 
     void setName(const char *value) {
         vpvlStringCopySafe(m_name, value, sizeof(m_name));
@@ -106,6 +135,12 @@ public:
             p += 100;
         }
     }
+    void setEdgeOffset(float value) {
+        m_edgeOffset = value * 0.03f;
+    }
+    void setEnableSimulation(bool value) {
+        m_enableSimulation = value;
+    }
 
 private:
     char m_name[20];
@@ -122,6 +157,18 @@ private:
     RigidBodyList m_rigidBodies;
     ConstraintList m_constraints;
     Bone m_rootBone;
+    btAlignedObjectArray<btTransform> m_skinningTransform;
+    btAlignedObjectArray<SkinVertex> m_skinnedVertices;
+    btAlignedObjectArray<btVector3> m_edgeVertices;
+    btAlignedObjectArray<uint16_t> m_edgeIndices;
+    btAlignedObjectArray<btVector3> m_toonTextureCoords;
+    btAlignedObjectArray<btVector3> m_shadowTextureCoords;
+    btAlignedObjectArray<uint16_t> m_rotatedBones;
+    btAlignedObjectArray<bool> m_isIKSimulated;
+    uint32_t m_boundingSphereStep;
+    float m_edgeOffset;
+    float m_selfShadowDensityCoef;
+    bool m_enableSimulation;
 };
 
 }

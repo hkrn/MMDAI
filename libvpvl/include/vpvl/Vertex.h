@@ -30,6 +30,12 @@ public:
     float v() const {
         return m_v;
     }
+    int16_t bone1() const {
+        return m_bone1;
+    }
+    int16_t bone2() const {
+        return m_bone2;
+    }
     float weight() const {
         return m_weight;
     }

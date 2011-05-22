@@ -3,6 +3,7 @@
 
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
+#include "vpvl/Vertex.h"
 #include "vpvl/common.h"
 
 namespace vpvl
@@ -33,8 +34,8 @@ public:
 
     void read(const char *data);
     void convertIndices(const Face &base);
-    void applyToVertices(btAlignedObjectArray<btVector3> &vertices);
-    void addToVertices(btAlignedObjectArray<btVector3> &vertices, float rate);
+    void applyToVertices(VertexList &vertices);
+    void addToVertices(VertexList &vertices, float rate);
 
     const char *name() const {
         return m_name;

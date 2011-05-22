@@ -38,6 +38,9 @@ public:
     float shiness() const {
         return m_shiness;
     }
+    uint32_t countIndices() const {
+        return m_nindices;
+    }
     bool isEdgeEnabled() const {
         return m_edge;
     }

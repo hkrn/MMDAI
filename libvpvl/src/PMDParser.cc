@@ -261,13 +261,23 @@ void PMDParser::parseIKs(PMDModel *model)
 
 void PMDParser::parseFaces(PMDModel *model)
 {
+    Face *baseFace = 0;
     FaceList faces;
     char *ptr = m_result.facesPtr;
     int nfaces = m_result.facesCount;
     faces.reserve(nfaces);
     for (int i = 0; i < nfaces; i++) {
-        faces[i].read(ptr);
+        Face &face = faces[i];
+        face.read(ptr);
         ptr += Face::stride(ptr);
+        if (face.type() == kBase)
+            baseFace = &face;
+    }
+    if (baseFace) {
+        for (int i = 0; i < nfaces; i++) {
+            Face &face = faces[i];
+            face.convertIndices(*baseFace);
+        }
     }
     model->setFaces(faces);
 }

@@ -72,18 +72,18 @@ void Face::convertIndices(const Face &base)
     }
 }
 
-void Face::applyToVertices(btAlignedObjectArray<btVector3> &vertices)
+void Face::applyToVertices(VertexList &vertices)
 {
     int nvertices = m_vertices.size();
     for (int i = 0; i < nvertices; i++)
-        vertices[m_vertices[i].id] = m_vertices[i].position;
+        vertices[m_vertices[i].id].setPosition(m_vertices[i].position);
 }
 
-void Face::addToVertices(btAlignedObjectArray<btVector3> &vertices, float rate)
+void Face::addToVertices(VertexList &vertices, float rate)
 {
     int nvertices = m_vertices.size();
     for (int i = 0; i < nvertices; i++)
-        vertices[m_vertices[i].id] = m_vertices[i].position * rate;
+        vertices[m_vertices[i].id].setPosition(m_vertices[i].position * rate);
 }
 
 } /* namespace vpvl */
