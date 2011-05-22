@@ -296,11 +296,12 @@ void PMDParser::parseMatrials(PMDModel *model)
 void PMDParser::parseBones(PMDModel *model)
 {
     BoneList bones;
+    Bone *mutableRootBone = model->mutableRootBone();
     char *ptr = m_result.bonesPtr;
     int nbones = m_result.bonesCount;
     bones.reserve(nbones);
     for (int i = 0; i < nbones; i++) {
-        bones[i].read(ptr, bones);
+        bones[i].read(ptr, bones, mutableRootBone);
         ptr += Bone::stride(ptr);
     }
     model->setBones(bones);
@@ -358,8 +359,7 @@ void PMDParser::parseRigidBodies(PMDModel *model)
     int nrigidBodies = m_result.rigidBodiesCount;
     rigidBodies.reserve(nrigidBodies);
     for (int i = 0; i < nrigidBodies; i++) {
-        // FIXME: bone
-        rigidBodies[i].read(ptr, 0);
+        rigidBodies[i].read(ptr, model->mutableBones());
         ptr += RigidBody::stride(ptr);
     }
     model->setRigidBodies(rigidBodies);
@@ -368,12 +368,12 @@ void PMDParser::parseRigidBodies(PMDModel *model)
 void PMDParser::parseConstraints(PMDModel *model)
 {
     ConstraintList constraints;
+    btVector3 offset = model->rootBone().offset();
     char *ptr = m_result.constraintsPtr;
     int nconstraints = m_result.constranitsCount;
     constraints.reserve(nconstraints);
     for (int i = 0; i < nconstraints; i++) {
-        // FIXME: offset
-        constraints[i].read(ptr, model->rigidBodies(), btVector3(0.0f, 0.0f, 0.0f));
+        constraints[i].read(ptr, model->rigidBodies(), offset);
         ptr += Constraint::stride(ptr);
     }
     model->setConstraints(constraints);

@@ -29,9 +29,10 @@ public:
     Bone();
     ~Bone();
 
+    static Bone &centerBone(btAlignedObjectArray<Bone> *bones);
     static size_t stride(const char *data);
 
-    void read(const char *data, btAlignedObjectArray<Bone> &bones);
+    void read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootBone);
     void computeOffset();
     void reset();
     void setMotionIndependency();

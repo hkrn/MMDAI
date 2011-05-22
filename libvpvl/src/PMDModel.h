@@ -53,6 +53,12 @@ public:
             return NULL;
         return m_textures[index];
     }
+    const Bone &rootBone() const {
+        return m_rootBone;
+    }
+    Bone *mutableRootBone() {
+        return &m_rootBone;
+    }
 
     void setName(const char *value) {
         vpvlStringCopySafe(m_name, value, sizeof(m_name));
@@ -111,6 +117,7 @@ public:
     FaceList m_faces;
     RigidBodyList m_rigidBodies;
     ConstraintList m_constraints;
+    Bone m_rootBone;
 };
 
 }

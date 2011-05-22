@@ -102,7 +102,7 @@ size_t RigidBody::stride(const char * /* data */)
             + (sizeof(float) * 14) + sizeof(uint8_t);
 }
 
-void RigidBody::read(const char *data, Bone *bone)
+void RigidBody::read(const char *data, BoneList *bones)
 {
     char *ptr = const_cast<char *>(data);
     vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
@@ -137,9 +137,14 @@ void RigidBody::read(const char *data, Bone *bone)
     uint8_t type = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
 
-    m_bone = bone;
-    if (boneID == 0xffff)
+    Bone *bone;
+    if (boneID == 0xffff) {
         m_noBone = true;
+        m_bone = bone = &Bone::centerBone(bones);
+    }
+    else if (boneID < bones->size()) {
+        m_bone = bone = &bones->at(boneID);
+    }
 
     switch (shapeType) {
     case 0:

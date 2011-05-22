@@ -10,6 +10,8 @@ PMDModel::PMDModel()
     memset(&m_comment, 0, sizeof(m_comment));
     memset(&m_englishName, 0, sizeof(m_englishName));
     memset(&m_englishComment, 0, sizeof(m_englishComment));
+    m_rootBone.setCurrentRotation(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
+    m_rootBone.updateTransform();
 }
 
 PMDModel::~PMDModel()

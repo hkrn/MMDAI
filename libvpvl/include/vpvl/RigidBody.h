@@ -16,7 +16,7 @@ public:
 
     static size_t stride(const char *data);
 
-    void read(const char *data, Bone *bone);
+    void read(const char *data, BoneList *bones);
     void transformToBone();
     void setKinematic(bool value);
 

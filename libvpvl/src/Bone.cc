@@ -43,6 +43,17 @@ Bone::~Bone()
     m_motionIndepent = false;
 }
 
+Bone &Bone::centerBone(btAlignedObjectArray<Bone> *bones)
+{
+    int nbones = bones->size();
+    for (int i = 0; i < nbones; i++) {
+        Bone &bone = bones->at(i);
+        if (vpvlStringEquals(bone.name(), ""))
+            return bone;
+    }
+    return bones->at(0);
+}
+
 size_t Bone::stride(const char * /* data */)
 {
     return 20 + sizeof(int16_t)
@@ -50,7 +61,7 @@ size_t Bone::stride(const char * /* data */)
             + sizeof(int16_t) + (sizeof(float) * 3);
 }
 
-void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones)
+void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootBone)
 {
     char *ptr = const_cast<char *>(data);
     vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
@@ -72,8 +83,11 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones)
         m_parentIsRoot = false;
     }
     else if (bones.size() > 0) {
-        m_parentBone = &bones[0];
+        m_parentBone = rootBone;
         m_parentIsRoot = true;
+    }
+    else {
+        m_parentIsRoot = false;
     }
 
     if (childBoneID != -1 && childBoneID < nbones)
