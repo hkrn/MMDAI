@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # set library version
-set(VPVL_VERSION 1.0)
+set(VPVL_VERSION 0.1.0)
 
 # project configuration
 project(libvpvl)
@@ -88,5 +88,29 @@ if(MSVC)
 else()
   install(TARGETS vpvl DESTINATION lib)
   install(DIRECTORY include/vpvl DESTINATION include PATTERN "*.h" PATTERN "internal" PATTERN ".svn" EXCLUDE)
+endif()
+
+option(BUILD_TESTS "Build test programs" OFF)
+if(BUILD_TESTS)
+  set(CMAKE_BUILD_TYPE Debug)
+  aux_source_directory(test vpvl_tests)
+  add_executable(vpvl_test ${vpvl_tests} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
+  find_library(GTEST_LIB gtest PATH ${GTEST_LIBRARY_DIR})
+  find_library(GTEST_MAIN_LIB gtest_main PATH ${GTEST_LIBRARY_DIR})
+  if(BULLET_FOUND)
+    include_directories(${BULLET_INCLUDE_DIRS})
+    target_link_libraries(vpvl_test ${GTEST_MAIN_LIB} ${GTEST_LIB} ${BULLET_LIBRARIES})
+    link_directories(${BULLET_LIBRARY_DIRS})
+  else()
+    include_directories(${BULLET_INCLUDE_DIRS})
+    target_link_libraries(vpvl_test
+      ${GTEST_MAIN_LIB}
+      ${BULLET_LIB_COLLISION}
+      ${BULLET_LIB_DYNAMICS}
+      ${BULLET_LIB_SOFTBODY}
+      ${BULLET_LIB_LINEAR_MATH}
+    )
+  endif()
+  include_directories(${GTEST_INCLUDE_DIR})
 endif()
 
