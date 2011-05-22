@@ -14,14 +14,19 @@ public:
     Constraint();
     ~Constraint();
 
-    size_t stride(const char *data);
-    void read(const char *data, RigidBodyList &bodies, const btVector3 &offset);
+    static size_t stride(const char *data);
 
-    const char *name() {
+    void read(const char *data, const RigidBodyList &bodies, const btVector3 &offset);
+
+    const char *name() const {
         return m_name;
     }
-    btGeneric6DofConstraint *constraint() {
+    btGeneric6DofConstraint *constraint() const {
         return m_constraint;
+    }
+
+    void setName(const char *value) {
+        vpvlStringCopySafe(m_name, value, sizeof(m_name));
     }
 
 private:

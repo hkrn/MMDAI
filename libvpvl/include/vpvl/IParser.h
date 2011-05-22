@@ -1,11 +1,16 @@
+#ifndef VPVL_IPARSER_H_
+#define VPVL_IPARSER_H_
+
 namespace vpvl
 {
 
 class IParser
 {
-    virtual ~IParser();
+public:
+    virtual ~IParser() {}
     virtual bool preparse() = 0;
-    virtual void parse() = 0;
 };
 
 } /* namespace vpvl */
+
+#endif

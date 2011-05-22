@@ -14,16 +14,21 @@ public:
     RigidBody();
     ~RigidBody();
 
-    size_t stride(const char *data);
+    static size_t stride(const char *data);
+
     void read(const char *data, Bone *bone);
     void transformToBone();
     void setKinematic(bool value);
 
-    const char *name() {
+    const char *name() const {
         return m_name;
     }
-    btRigidBody *body() {
+    btRigidBody *body() const {
         return m_body;
+    }
+
+    void setName(const char *value) {
+        vpvlStringCopySafe(m_name, value, sizeof(m_name));
     }
 
 private:

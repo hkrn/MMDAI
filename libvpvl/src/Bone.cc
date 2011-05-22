@@ -1,4 +1,4 @@
-#include "vpvl/Bone.h"
+#include "vpvl/vpvl.h"
 
 namespace vpvl
 {
@@ -18,6 +18,7 @@ Bone::Bone()
       m_simulated(false),
       m_motionIndepent(false)
 {
+    memset(m_name, 0, sizeof(m_name));
     m_transform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
 }
@@ -44,7 +45,7 @@ Bone::~Bone()
 
 size_t Bone::stride(const char * /* data */)
 {
-    return sizeof(m_name) + sizeof(int16_t)
+    return 20 + sizeof(int16_t)
             + sizeof(int16_t) + sizeof(int8_t)
             + sizeof(int16_t) + (sizeof(float) * 3);
 }

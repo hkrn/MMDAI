@@ -1,4 +1,4 @@
-#include "vpvl/IK.h"
+#include "vpvl/vpvl.h"
 
 namespace vpvl
 {

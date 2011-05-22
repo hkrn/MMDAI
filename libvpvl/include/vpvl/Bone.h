@@ -29,7 +29,8 @@ public:
     Bone();
     ~Bone();
 
-    size_t stride(const char *data);
+    static size_t stride(const char *data);
+
     void read(const char *data, btAlignedObjectArray<Bone> &bones);
     void computeOffset();
     void reset();
@@ -39,37 +40,40 @@ public:
     void updateTransform(btQuaternion &q);
     void getSkinTransform(btTransform &tr);
 
-    const char *name() {
+    const char *name() const {
         return m_name;
     }
-    int type() {
+    BoneType type() const {
         return m_type;
     }
-    const btTransform transform() {
+    const btTransform &transform() const {
         return m_transform;
     }
-    const btVector3 offset() {
+    const btVector3 &offset() const {
         return m_offset;
     }
-    const btVector3 originPosition() {
+    const btVector3 &originPosition() const {
         return m_originPosition;
     }
-    const btVector3 currentPosition() {
+    const btVector3 &currentPosition() const {
         return m_currentPosition;
     }
-    const btQuaternion currentRotation() {
+    const btQuaternion &currentRotation() const {
         return m_currentRotation;
     }
-    bool isAngleXLimited() {
+    bool isAngleXLimited() const {
         return m_angleXLimited;
     }
-    bool isSimulated() {
+    bool isSimulated() const {
         return m_simulated;
     }
-    bool hasMotionIndependency() {
+    bool hasMotionIndependency() const {
         return m_motionIndepent;
     }
 
+    void setName(const char *value) {
+        vpvlStringCopySafe(m_name, value, sizeof(m_name));
+    }
     void setTransform(const btTransform &value) {
         m_transform = value;
     }

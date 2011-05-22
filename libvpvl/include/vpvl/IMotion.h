@@ -1,10 +1,15 @@
+#ifndef VPVL_IMOTION_H_
+#define VPVL_IMOTION_H_
+
 namespace vpvl
 {
 
 class IMotion
 {
-    virtual ~IMotion();
-}
+public:
+    virtual ~IMotion() {}
+};
 
 } /* namespace vpvl */
 
+#endif

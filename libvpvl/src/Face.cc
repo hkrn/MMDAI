@@ -1,4 +1,4 @@
-#include "vpvl/Face.h"
+#include "vpvl/vpvl.h"
 
 namespace vpvl
 {
@@ -7,10 +7,12 @@ Face::Face()
     : m_type(kOther),
       m_weight(0.0f)
 {
+    memset(m_name, 0, sizeof(m_name));
 }
 
 Face::~Face()
 {
+    memset(m_name, 0, sizeof(m_name));
     m_vertices.clear();
     m_type = kOther;
     m_weight = 0.0f;
@@ -19,7 +21,7 @@ Face::~Face()
 size_t Face::stride(const char *data)
 {
     char *ptr = const_cast<char *>(data);
-    size_t base = sizeof(m_name) + sizeof(uint32_t) + sizeof(uint8_t);
+    size_t base = 20 + sizeof(uint32_t) + sizeof(uint8_t);
     ptr += base;
     int nvertices = *reinterpret_cast<int *>(ptr);
     return base + nvertices * sizeof(FaceVertex);

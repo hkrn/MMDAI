@@ -1,3 +1,6 @@
+#ifndef VPVL_IK_H_
+#define VPVL_IK_H_
+
 #include "vpvl/Bone.h"
 
 namespace vpvl
@@ -15,12 +18,12 @@ public:
     static const float kMinAxis;
     static const float kMinRotationSum;
     static const float kMinRotation;
+    static size_t stride(const char *data);
 
-    size_t stride(const char *data);
     void read(const char *data, BoneList *bones);
     void solve();
 
-    bool isSimulated() {
+    bool isSimulated() const {
         return m_bones[0]->isSimulated();
     }
 
@@ -32,5 +35,8 @@ private:
     float m_angleConstraint;
 };
 
+typedef btAlignedObjectArray<IK> IKList;
+
 } /* namespace vpvl */
 
+#endif

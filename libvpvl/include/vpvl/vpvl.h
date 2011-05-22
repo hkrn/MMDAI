@@ -6,9 +6,12 @@
 #include "vpvl/Face.h"
 #include "vpvl/IK.h"
 #include "vpvl/IModel.h"
+#include "vpvl/IModelParser.h"
 #include "vpvl/IMotion.h"
-#include "vpvl/IParser.h"
+#include "vpvl/IMotionParser.h"
+#include "vpvl/Material.h"
 #include "vpvl/RigidBody.h"
+#include "vpvl/Vertex.h"
 #include "vpvl/World.h"
 #endif /* vpvl_vpvl_H_ */
 

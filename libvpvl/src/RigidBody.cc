@@ -1,5 +1,5 @@
 #include <btBulletDynamicsCommon.h>
-#include "vpvl/RigidBody.h"
+#include "vpvl/vpvl.h"
 
 namespace vpvl
 {
@@ -72,12 +72,14 @@ RigidBody::RigidBody()
       m_type(0),
       m_noBone(false)
 {
+    memset(m_name, 0, sizeof(m_name));
     m_transform.setIdentity();
     m_invertedTransform.setIdentity();
 }
 
 RigidBody::~RigidBody()
 {
+    memset(m_name, 0, sizeof(m_name));
     delete m_body;
     m_body = 0;
     delete m_shape;
@@ -96,7 +98,7 @@ RigidBody::~RigidBody()
 
 size_t RigidBody::stride(const char * /* data */)
 {
-    return sizeof(m_name) + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
+    return 20 + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
             + (sizeof(float) * 14) + sizeof(uint8_t);
 }
 

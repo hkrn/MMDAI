@@ -1,4 +1,4 @@
-#include "vpvl/Constraint.h"
+#include "vpvl/vpvl.h"
 
 namespace vpvl
 {
@@ -6,20 +6,22 @@ namespace vpvl
 Constraint::Constraint()
     : m_constraint(0)
 {
+    memset(m_name, 0, sizeof(m_name));
 }
 
 Constraint::~Constraint()
 {
+    memset(m_name, 0, sizeof(m_name));
     delete m_constraint;
     m_constraint = 0;
 }
 
 size_t Constraint::stride(const char * /* data */)
 {
-    return sizeof(m_name) + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
+    return 20 + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
 }
 
-void Constraint::read(const char *data, RigidBodyList &bodies, const btVector3 &offset)
+void Constraint::read(const char *data, const RigidBodyList &bodies, const btVector3 &offset)
 {
     char *ptr = const_cast<char *>(data);
     vpvlStringCopySafe(m_name, ptr, sizeof(m_name));

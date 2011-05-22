@@ -5,7 +5,7 @@ class World
 {
     World();
     ~World();
-}
+};
 
 } /* namespace vpvl */
 
