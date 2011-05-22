@@ -1,3 +1,6 @@
+#ifndef VPVL_PMDMODEL_H_
+#define VPVL_PMDMODEL_H_
+
 #include "vpvl/vpvl.h"
 
 namespace vpvl
@@ -104,6 +107,7 @@ public:
         }
     }
 
+private:
     char m_name[20];
     char m_comment[256];
     char m_englishName[20];
@@ -121,3 +125,5 @@ public:
 };
 
 }
+
+#endif

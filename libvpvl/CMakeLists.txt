@@ -23,6 +23,10 @@ set(vpvl_public_headers
     include/vpvl/common.h
     include/vpvl/vpvl.h
 )
+set(vpvl_internal_headers
+    include/vpvl/internal/PMDModel.h
+    include/vpvl/internal/PMDParser.h
+)
 
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 if(BUILD_SHARED_LIBS)
@@ -31,7 +35,7 @@ else()
   set(VPVL_LIB_TYPE STATIC)
 endif()
 
-add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers})
+add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION})
 set_target_properties(vpvl PROPERTIES SO_VERSION ${VPVL_VERSION})
 
@@ -84,6 +88,6 @@ if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()
   install(TARGETS vpvl DESTINATION lib)
-  install(DIRECTORY include/vpvl DESTINATION include PATTERN "*.h" PATTERN ".svn" EXCLUDE)
+  install(DIRECTORY include/vpvl DESTINATION include PATTERN "*.h" PATTERN "internal" PATTERN ".svn" EXCLUDE)
 endif()
 

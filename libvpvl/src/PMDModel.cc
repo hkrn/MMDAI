@@ -1,5 +1,5 @@
 #include "vpvl/vpvl.h"
-#include "PMDModel.h"
+#include "vpvl/internal/PMDModel.h"
 
 namespace vpvl
 {

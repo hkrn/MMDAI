@@ -1,4 +1,8 @@
+#ifndef VPVL_IMOTIONPARSER_H_
+#define VPVL_IMOTIONPARSER_H_
+
 #include "vpvl/IParser.h"
+#include "vpvl/IMotion.h"
 
 namespace vpvl
 {
@@ -10,3 +14,5 @@ public:
 };
 
 } /* namespace vpvl */
+
+#endif
