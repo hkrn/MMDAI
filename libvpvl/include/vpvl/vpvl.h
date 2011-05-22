@@ -12,6 +12,5 @@
 #include "vpvl/Material.h"
 #include "vpvl/RigidBody.h"
 #include "vpvl/Vertex.h"
-#include "vpvl/World.h"
 #endif /* vpvl_vpvl_H_ */
 

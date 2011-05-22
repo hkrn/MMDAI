@@ -19,7 +19,6 @@ set(vpvl_public_headers
     include/vpvl/Material.h
     include/vpvl/RigidBody.h
     include/vpvl/Vertex.h
-    include/vpvl/World.h
     include/vpvl/common.h
     include/vpvl/vpvl.h
 )
