@@ -32,6 +32,7 @@ TEST(PMDParserTest, PreParseFullPMD) {
     EXPECT_TRUE(result.indicesPtr != 0);
     EXPECT_TRUE(result.indicesCount != 0);
     EXPECT_TRUE(result.materialsPtr != 0);
+    EXPECT_TRUE(result.materialsCount != 0);
     EXPECT_TRUE(result.bonesPtr != 0);
     EXPECT_TRUE(result.bonesCount != 0);
     EXPECT_TRUE(result.IKsPtr != 0);
@@ -60,5 +61,15 @@ TEST(PMDParserTest, ParseFullPMD) {
     FileSlurp("test/res/miku.pmd", data, size);
     vpvl::PMDParser parser(data, size);
     vpvl::PMDModel *model = parser.parse();
+    vpvl::PMDParserResult result = parser.result();
+    EXPECT_EQ(model->vertices().size(), result.verticesCount);
+    EXPECT_EQ(model->indices().size(), result.indicesCount);
+    EXPECT_EQ(model->materials().size(), result.materialsCount);
+    EXPECT_EQ(model->bones().size(), result.bonesCount);
+    EXPECT_EQ(model->IKs().size(), result.IKsCount);
+    EXPECT_EQ(model->faces().size(), result.facesCount);
+    EXPECT_EQ(model->rigidBodies().size(), result.rigidBodiesCount);
+    EXPECT_EQ(model->constraints().size(), result.constranitsCount);
+    EXPECT_STREQ("Miku Hatsune", model->englishName());
     delete model;
 }

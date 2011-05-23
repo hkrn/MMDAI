@@ -42,10 +42,10 @@ public:
         return m_comment;
     }
     const char *englishName() const {
-        return m_name;
+        return m_englishName;
     }
     const char *englishComment() const {
-        return m_comment;
+        return m_englishComment;
     }
     const VertexList &vertices() const {
         return m_vertices;
