@@ -19,7 +19,7 @@ enum FaceType {
 
 struct FaceVertex
 {
-    int id;
+    uint32_t id;
     btVector3 position;
 };
 
@@ -29,7 +29,7 @@ public:
     Face();
     ~Face();
 
-    static const int kMaxVertexID = 65536;
+    static const uint32_t kMaxVertexID = 65536;
     static size_t totalSize(const char *data, size_t n);
     static size_t stride(const char *data);
 

@@ -52,7 +52,6 @@ void Face::read(const char *data)
     ptr += sizeof(uint8_t);
     m_type = type;
     if (nvertices > 0) {
-        m_vertices.clear();
         for (uint32_t i = 0; i < nvertices; i++) {
             FaceVertex *vertex = new FaceVertex();
             vertex->id = *reinterpret_cast<uint32_t *>(ptr);

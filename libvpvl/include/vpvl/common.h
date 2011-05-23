@@ -190,7 +190,7 @@ inline float vpvlStringToFloat(const char *str)
     return (float) vpvlStringToDouble(str);
 }
 
-inline void vpvlStringGetVector3(char *ptr, float *values)
+inline void vpvlStringGetVector3(char *&ptr, float *values)
 {
     for (int i = 0; i < 3; i++) {
         values[i] = *reinterpret_cast<float *>(ptr);

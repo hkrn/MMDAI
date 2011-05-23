@@ -75,7 +75,7 @@ bool PMDParser::preparse()
     m_result.bonesPtr = ptr;
     if (!vpvlDataValidateSize(ptr, Bone::stride(ptr), nBones, rest))
         return false;
-    m_result.bonesCount = nMaterials;
+    m_result.bonesCount = nBones;
 
     /* IK */
     if (!vpvlDataGetSize16(ptr, rest, nIKs))
@@ -117,10 +117,8 @@ bool PMDParser::preparse()
         return false;
     m_result.boneDisplayNamesCount = nBoneNames;
 
-    if (rest == 0) {
-        rest = m_size;
+    if (rest == 0)
         return true;
-    }
 
     /* english names */
     size_t english;
@@ -145,10 +143,8 @@ bool PMDParser::preparse()
     ptr += 1000;
     rest -= 1000;
 
-    if (rest == 0) {
-        rest = m_size;
+    if (rest == 0)
         return true;
-    }
 
     /* rigid body */
     if (!vpvlDataGetSize32(ptr, rest, nRigidBodies))
@@ -272,14 +268,12 @@ void PMDParser::parseFaces(PMDModel *model)
             baseFace = face;
         model->addFace(face);
     }
-    /*
     if (baseFace) {
         FaceList faces = model->faces();
         for (int i = 0; i < nfaces; i++) {
             faces[i]->convertIndices(baseFace);
         }
     }
-    */
 }
 
 void PMDParser::parseFaceDisplayNames(PMDModel * /* model */)
