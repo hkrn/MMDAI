@@ -62,7 +62,7 @@ void Constraint::read(const char *data, const RigidBodyList &bodies, const btVec
 #else
         transform.setOrigin(btVector3(pos[0], pos[1], pos[2]) * offset);
 #endif
-        btRigidBody *bodyA = bodies[bodyID1].body(), *bodyB = bodies[bodyID2].body();
+        btRigidBody *bodyA = bodies[bodyID1]->body(), *bodyB = bodies[bodyID2]->body();
         btTransform transformA = bodyA->getWorldTransform().inverse() * transform,
                 transformB = bodyB->getWorldTransform().inverse() *transform;
         m_constraint = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);

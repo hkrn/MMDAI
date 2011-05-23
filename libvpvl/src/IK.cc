@@ -20,7 +20,6 @@ IK::IK()
 
 IK::~IK()
 {
-    m_bones.clear();
     m_destination = 0;
     m_target = 0;
     m_iteration = 0;
@@ -41,6 +40,15 @@ size_t IK::totalSize(const char *data, size_t n)
         ptr += rest;
     }
     return size;
+}
+
+size_t IK::stride(const char *data)
+{
+    char *ptr = const_cast<char *>(data);
+    size_t base = sizeof(int16_t) * 2;
+    ptr += base;
+    uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
+    return base + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
 }
 
 void IK::read(const char *data, BoneList *bones)
@@ -66,13 +74,13 @@ void IK::read(const char *data, BoneList *bones)
 
     int nbones = bones->size();
     if (destBoneID >= 0 && destBoneID < nbones && targetBoneID >= 0 && targetBoneID < nbones) {
-        m_destination = &bones->at(destBoneID);
-        m_target = &bones->at(targetBoneID);
+        m_destination = bones->at(destBoneID);
+        m_target = bones->at(targetBoneID);
         m_iteration = niterations;
         m_angleConstraint = angleConstraint;
         m_bones.reserve(nlinks);
         for (int i = 0; i < nlinks; i++) {
-            m_bones[i] = &bones->at(i);
+            m_bones.push_back(bones->at(i));
         }
     }
 }

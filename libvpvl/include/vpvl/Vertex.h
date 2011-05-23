@@ -73,7 +73,7 @@ private:
     bool m_edge;
 };
 
-typedef btAlignedObjectArray<Vertex> VertexList;
+typedef btAlignedObjectArray<Vertex*> VertexList;
 typedef btAlignedObjectArray<uint16_t> IndexList;
 
 } /* namespace vpvl */

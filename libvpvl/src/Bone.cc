@@ -43,12 +43,12 @@ Bone::~Bone()
     m_motionIndepent = false;
 }
 
-Bone &Bone::centerBone(btAlignedObjectArray<Bone> *bones)
+Bone *Bone::centerBone(btAlignedObjectArray<Bone*> *bones)
 {
     int nbones = bones->size();
     for (int i = 0; i < nbones; i++) {
-        Bone &bone = bones->at(i);
-        if (vpvlStringEquals(bone.name(), ""))
+        Bone *bone = bones->at(i);
+        if (vpvlStringEquals(bone->name(), ""))
             return bone;
     }
     return bones->at(0);
@@ -59,7 +59,7 @@ size_t Bone::stride(const char * /* data */)
     return 20 + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
 }
 
-void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootBone)
+void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
 {
     char *ptr = const_cast<char *>(data);
     vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
@@ -75,12 +75,12 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootB
     float pos[3];
     vpvlStringGetVector3(ptr, pos);
 
-    int nbones = bones.size();
+    int nbones = bones->size();
     if (parentBoneID != -1 && parentBoneID < nbones) {
-        m_parentBone = &bones[parentBoneID];
+        m_parentBone = bones->at(parentBoneID);
         m_parentIsRoot = false;
     }
-    else if (bones.size() > 0) {
+    else if (nbones > 0) {
         m_parentBone = rootBone;
         m_parentIsRoot = true;
     }
@@ -89,10 +89,10 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone> &bones, Bone *rootB
     }
 
     if (childBoneID != -1 && childBoneID < nbones)
-        m_childBone = &bones[childBoneID];
+        m_childBone = bones->at(childBoneID);
 
     if ((type == kUnderIK || m_type == kUnderRotate) && targetBoneID > 0 && targetBoneID < nbones)
-        m_targetBone = &bones[targetBoneID];
+        m_targetBone = bones->at(targetBoneID);
     else if (type == kFollowRotate)
         m_rotateCoef = targetBoneID * 0.01f;
 

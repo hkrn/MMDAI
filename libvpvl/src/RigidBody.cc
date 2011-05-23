@@ -140,10 +140,10 @@ void RigidBody::read(const char *data, BoneList *bones)
     Bone *bone;
     if (boneID == 0xffff) {
         m_noBone = true;
-        m_bone = bone = &Bone::centerBone(bones);
+        m_bone = bone = Bone::centerBone(bones);
     }
     else if (boneID < bones->size()) {
-        m_bone = bone = &bones->at(boneID);
+        m_bone = bone = bones->at(boneID);
     }
 
     switch (shapeType) {

@@ -83,7 +83,7 @@ private:
     bool m_edge;
 };
 
-typedef btAlignedObjectArray<Material> MaterialList;
+typedef btAlignedObjectArray<Material*> MaterialList;
 
 } /* namespace vpvl */
 

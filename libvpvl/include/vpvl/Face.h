@@ -31,9 +31,10 @@ public:
 
     static const int kMaxVertexID = 65536;
     static size_t totalSize(const char *data, size_t n);
+    static size_t stride(const char *data);
 
     void read(const char *data);
-    void convertIndices(const Face &base);
+    void convertIndices(const Face *base);
     void applyToVertices(VertexList &vertices);
     void addToVertices(VertexList &vertices, float rate);
 
@@ -57,11 +58,11 @@ public:
 private:
     char m_name[20];
     FaceType m_type;
-    btAlignedObjectArray<FaceVertex> m_vertices;
+    btAlignedObjectArray<FaceVertex *> m_vertices;
     float m_weight;
 };
 
-typedef btAlignedObjectArray<Face> FaceList;
+typedef btAlignedObjectArray<Face*> FaceList;
 
 } /* namespace vpvl */
 

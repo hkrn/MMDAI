@@ -13,7 +13,6 @@ Face::Face()
 Face::~Face()
 {
     memset(m_name, 0, sizeof(m_name));
-    m_vertices.clear();
     m_type = kOther;
     m_weight = 0.0f;
 }
@@ -33,63 +32,75 @@ size_t Face::totalSize(const char *data, size_t n)
     return size;
 }
 
+size_t Face::stride(const char *data)
+{
+    char *ptr = const_cast<char *>(data);
+    size_t base = 20;
+    ptr += base;
+    int nvertices = *reinterpret_cast<int *>(ptr);
+    return base + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+}
+
 void Face::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
     vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
-    FaceType type = *reinterpret_cast<FaceType *>(ptr);
+    uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
+    ptr += sizeof(uint32_t);
+    FaceType type = static_cast<FaceType>(*reinterpret_cast<uint8_t *>(ptr));
     ptr += sizeof(uint8_t);
-    int nvertices = *reinterpret_cast<int *>(ptr);
     m_type = type;
     if (nvertices > 0) {
-        m_vertices.reserve(nvertices);
-        for (int i = 0; i < nvertices; i++) {
-            m_vertices[i].id = *reinterpret_cast<uint32_t *>(ptr);
+        m_vertices.clear();
+        for (uint32_t i = 0; i < nvertices; i++) {
+            FaceVertex *vertex = new FaceVertex();
+            vertex->id = *reinterpret_cast<uint32_t *>(ptr);
             ptr += sizeof(uint32_t);
             float pos[3];
             vpvlStringGetVector3(ptr, pos);
 #ifdef VPVL_COORDINATE_OPENGL
-            m_vertices[i].position.setValue(pos[0], pos[1], -pos[2]);
+            vertex->position.setValue(pos[0], pos[1], -pos[2]);
 #else
-            m_vertices[i].position.setValue(pos[0], pos[1], pos[2]);
+            vertex->position.setValue(pos[0], pos[1], pos[2]);
 #endif
+            m_vertices.push_back(vertex);
         }
     }
 }
 
-void Face::convertIndices(const Face &base)
+void Face::convertIndices(const Face *base)
 {
-    int nvertices = m_vertices.size();
-    int baseNVertices = base.m_vertices.size();
+    uint32_t nvertices = m_vertices.size();
+    uint32_t baseNVertices = base->m_vertices.size();
     if (m_type != kBase) {
-        for (int i = 0; i < nvertices; i++) {
-            int relID = m_vertices[i].id;
+        for (uint32_t i = 0; i < nvertices; i++) {
+            uint32_t relID = m_vertices[i]->id;
             if (relID >= baseNVertices)
                 relID -= kMaxVertexID;
-            m_vertices[i].id = base.m_vertices[relID].id;
+            m_vertices[i]->id = base->m_vertices[relID]->id;
         }
     }
     else {
-        for (int i = 0; i < nvertices; i++) {
-            if (m_vertices[i].id >= kMaxVertexID)
-                m_vertices[i].id -= kMaxVertexID;
+        for (uint32_t i = 0; i < nvertices; i++) {
+            if (m_vertices[i]->id >= kMaxVertexID)
+                m_vertices[i]->id -= kMaxVertexID;
         }
     }
 }
 
 void Face::applyToVertices(VertexList &vertices)
 {
-    int nvertices = m_vertices.size();
-    for (int i = 0; i < nvertices; i++)
-        vertices[m_vertices[i].id].setPosition(m_vertices[i].position);
+    uint32_t nvertices = m_vertices.size();
+    for (uint32_t i = 0; i < nvertices; i++)
+        vertices[m_vertices[i]->id]->setPosition(m_vertices[i]->position);
 }
 
 void Face::addToVertices(VertexList &vertices, float rate)
 {
-    int nvertices = m_vertices.size();
-    for (int i = 0; i < nvertices; i++)
-        vertices[m_vertices[i].id].setPosition(m_vertices[i].position * rate);
+    uint32_t nvertices = m_vertices.size();
+    for (uint32_t i = 0; i < nvertices; i++)
+        vertices[m_vertices[i]->id]->setPosition(m_vertices[i]->position * rate);
 }
 
 } /* namespace vpvl */

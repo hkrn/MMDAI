@@ -13,11 +13,11 @@ struct SkinVertex
     btVector3 texureCoord;
 };
 
-class PMDModel : public IModel
+class PMDModel
 {
 public:
     PMDModel();
-    virtual ~PMDModel();
+    ~PMDModel();
 
     static const uint32_t kBoundingSpherePoints = 1000;
     static const uint32_t kBoundingSpherePointsMax = 20;
@@ -104,29 +104,29 @@ public:
     void setEnglishComment(const char *value) {
         vpvlStringCopySafe(m_englishComment, value, sizeof(m_englishComment));
     }
-    void setVertices(const VertexList &value) {
-        m_vertices = value;
+    void addVertex(Vertex *value) {
+        m_vertices.push_back(value);
     }
-    void setIndices(const IndexList &value) {
-        m_indices = value;
+    void addIndex(uint16_t value) {
+        m_indices.push_back(value);
     }
-    void setMaterials(const MaterialList &value) {
-        m_materials = value;
+    void addMaterial(Material *value) {
+        m_materials.push_back(value);
     }
-    void setBones(const BoneList &value) {
-        m_bones = value;
+    void addBone(Bone *value) {
+        m_bones.push_back(value);
     }
-    void setIKs(const IKList &value) {
-        m_IKs = value;
+    void addIK(IK *value) {
+        m_IKs.push_back(value);
     }
-    void setFaces(const FaceList &value) {
-        m_faces = value;
+    void addFace(Face *value) {
+        m_faces.push_back(value);
     }
-    void setRigidBodies(const RigidBodyList &value) {
-        m_rigidBodies = value;
+    void addRigidBody(RigidBody *value) {
+        m_rigidBodies.push_back(value);
     }
-    void setConstraints(const ConstraintList &value) {
-        m_constraints = value;
+    void addConstraint(Constraint *value) {
+        m_constraints.push_back(value);
     }
     void setToonTextures(const char *ptr) {
         char *p = const_cast<char *>(ptr);

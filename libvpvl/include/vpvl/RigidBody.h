@@ -46,7 +46,7 @@ private:
     bool m_noBone;
 };
 
-typedef btAlignedObjectArray<RigidBody> RigidBodyList;
+typedef btAlignedObjectArray<RigidBody*> RigidBodyList;
 
 } /* namespace vpvl */
 

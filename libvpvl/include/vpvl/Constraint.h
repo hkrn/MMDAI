@@ -34,7 +34,7 @@ private:
     btGeneric6DofSpringConstraint *m_constraint;
 };
 
-typedef btAlignedObjectArray<Constraint> ConstraintList;
+typedef btAlignedObjectArray<Constraint*> ConstraintList;
 
 } /* namespace vpvl */
 

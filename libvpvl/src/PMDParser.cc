@@ -6,8 +6,7 @@ namespace vpvl
 
 PMDParser::PMDParser(const char *data, size_t size)
     : m_data(const_cast<char *>(data)),
-      m_size(size),
-      m_rest(size)
+      m_size(size)
 {
     memset(&m_result, 0, sizeof(PMDParserResult));
 }
@@ -17,13 +16,13 @@ PMDParser::~PMDParser()
     memset(&m_result, 0, sizeof(PMDParserResult));
     m_data = 0;
     m_size = 0;
-    m_rest = 0;
 }
 
 bool PMDParser::preparse()
 {
+    size_t rest = m_size;
     /* header + version + name + comment */
-    if (283 > m_rest)
+    if (283 > rest)
         return false;
 
     char *ptr = m_data;
@@ -42,133 +41,135 @@ bool PMDParser::preparse()
     ptr += 20;
     m_result.commentPtr = ptr;
     ptr += 256;
-    m_rest -= 283;
+    rest -= 283;
 
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
             nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
     /* vertex */
-    if (!vpvlDataGetSize32(ptr, m_rest, nVertices))
+    if (!vpvlDataGetSize32(ptr, rest, nVertices))
         return false;
     m_result.verticesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Vertex::stride(ptr), nVertices, m_rest))
+    if (!vpvlDataValidateSize(ptr, Vertex::stride(ptr), nVertices, rest))
         return false;
     m_result.verticesCount = nVertices;
 
     /* index */
-    if (!vpvlDataGetSize32(ptr, m_rest, nIndices))
+    if (!vpvlDataGetSize32(ptr, rest, nIndices))
         return false;
     m_result.indicesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t), nIndices, m_rest))
+    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t), nIndices, rest))
         return false;
     m_result.indicesCount = nIndices;
 
     /* material */
-    if (!vpvlDataGetSize32(ptr, m_rest, nMaterials))
+    if (!vpvlDataGetSize32(ptr, rest, nMaterials))
         return false;
     m_result.materialsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Material::stride(ptr), nMaterials, m_rest))
+    if (!vpvlDataValidateSize(ptr, Material::stride(ptr), nMaterials, rest))
         return false;
     m_result.materialsCount = nMaterials;
 
     /* bone */
-    if (!vpvlDataGetSize16(ptr, m_rest, nBones))
+    if (!vpvlDataGetSize16(ptr, rest, nBones))
         return false;
     m_result.bonesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Bone::stride(ptr), nBones, m_rest))
+    if (!vpvlDataValidateSize(ptr, Bone::stride(ptr), nBones, rest))
         return false;
     m_result.bonesCount = nMaterials;
 
     /* IK */
-    if (!vpvlDataGetSize16(ptr, m_rest, nIKs))
+    if (!vpvlDataGetSize16(ptr, rest, nIKs))
         return false;
     m_result.IKsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, IK::totalSize(ptr, nIKs), 1, m_rest))
+    if (!vpvlDataValidateSize(ptr, IK::totalSize(ptr, nIKs), 1, rest))
         return false;
     m_result.IKsCount = nIKs;
 
     /* face */
-    if (!vpvlDataGetSize16(ptr, m_rest, nFaces))
+    if (!vpvlDataGetSize16(ptr, rest, nFaces))
         return false;
     m_result.facesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Face::totalSize(ptr, nFaces), 1, m_rest))
+    if (!vpvlDataValidateSize(ptr, Face::totalSize(ptr, nFaces), 1, rest))
         return false;
     m_result.facesCount = nFaces;
 
     /* face display names */
-    if (!vpvlDataGetSize8(ptr, m_rest, nFaceNames))
+    if (!vpvlDataGetSize8(ptr, rest, nFaceNames))
         return false;
     m_result.faceDisplayNamesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t), nFaceNames, m_rest))
+    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t), nFaceNames, rest))
         return false;
     m_result.faceDisplayNamesCount = nFaceNames;
 
     /* bone frame names */
-    if (!vpvlDataGetSize8(ptr, m_rest, nBoneFrames))
+    if (!vpvlDataGetSize8(ptr, rest, nBoneFrames))
         return false;
     m_result.boneFrameNamesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, 50, nBoneFrames, m_rest))
+    if (!vpvlDataValidateSize(ptr, 50, nBoneFrames, rest))
         return false;
     m_result.boneFrameNamesCount = nBoneFrames;
 
     /* bone display names */
-    if (!vpvlDataGetSize32(ptr, m_rest, nBoneNames))
+    if (!vpvlDataGetSize32(ptr, rest, nBoneNames))
         return false;
     m_result.boneDisplayNamesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, m_rest))
+    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest))
         return false;
     m_result.boneDisplayNamesCount = nBoneNames;
 
-    if (m_rest == 0) {
-        m_rest = m_size;
+    if (rest == 0) {
+        rest = m_size;
         return true;
     }
 
     /* english names */
     size_t english;
-    vpvlDataGetSize8(ptr, m_rest, english);
+    vpvlDataGetSize8(ptr, rest, english);
     if (english == 1) {
         size_t tmp = nFaces > 0 ? (nFaces - 1) * 20 : 0;
-        const size_t required = 20 + 256 + 20 * nBones + tmp + 50 * nBoneFrames;
-        if (required > m_rest)
+        const size_t required = 20 * nBones + tmp + 50 * nBoneFrames;
+        if ((required + 276) > rest)
             return false;
-        m_result.englishDisplayNamesPtr = ptr;
+        m_result.englishNamePtr = ptr;
+        ptr += 20;
+        m_result.englishCommentPtr = ptr;
+        ptr += 256;
         ptr += required;
-        m_rest -= required;
+        rest -= required;
     }
 
     /* extra texture path */
-    if (1000 > m_rest)
+    if (1000 > rest)
         return false;
     m_result.toonTextureNamesPtr = ptr;
     ptr += 1000;
-    m_rest -= 1000;
+    rest -= 1000;
 
-    if (m_rest == 0) {
-        m_rest = m_size;
+    if (rest == 0) {
+        rest = m_size;
         return true;
     }
 
     /* rigid body */
-    if (!vpvlDataGetSize32(ptr, m_rest, nRigidBodies))
+    if (!vpvlDataGetSize32(ptr, rest, nRigidBodies))
         return false;
     m_result.rigidBodiesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, RigidBody::stride(ptr), nRigidBodies, m_rest))
+    if (!vpvlDataValidateSize(ptr, RigidBody::stride(ptr), nRigidBodies, rest))
         return false;
     m_result.rigidBodiesCount = nRigidBodies;
 
     /* constranint */
-    if (!vpvlDataGetSize32(ptr, m_rest, nConstranits))
+    if (!vpvlDataGetSize32(ptr, rest, nConstranits))
         return false;
     m_result.constraintsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Constraint::stride(ptr), nConstranits, m_rest))
+    if (!vpvlDataValidateSize(ptr, Constraint::stride(ptr), nConstranits, rest))
         return false;
     m_result.constranitsCount = nConstranits;
 
-    m_rest = m_size;
     return true;
 }
 
-IModel *PMDParser::parse()
+PMDModel *PMDParser::parse()
 {
     if (preparse()) {
         PMDModel *model = new PMDModel();
@@ -185,6 +186,7 @@ IModel *PMDParser::parse()
         parseToonTextureNames(model);
         parseRigidBodies(model);
         parseConstraints(model);
+        model->prepare();
         return model;
     }
     return 0;
@@ -198,93 +200,86 @@ void PMDParser::parseHeader(PMDModel *model)
 
 void PMDParser::parseVertices(PMDModel *model)
 {
-    VertexList vertices;
-    char *ptr = m_result.verticesPtr;
+    char *ptr = const_cast<char *>(m_result.verticesPtr);
     int nvertices = m_result.verticesCount;
-    vertices.reserve(nvertices);
     for (int i = 0; i < nvertices; i++) {
-        vertices[i].read(ptr);
+        Vertex *vertex = new Vertex();
+        vertex->read(ptr);
         ptr += Vertex::stride(ptr);
+        model->addVertex(vertex);
     }
-    model->setVertices(vertices);
 }
 
 void PMDParser::parseIndices(PMDModel *model)
 {
-    IndexList indices;
-    char *ptr = m_result.indicesPtr;
+    char *ptr = const_cast<char *>(m_result.indicesPtr);
     int nindices = m_result.indicesCount;
-    indices.reserve(nindices);
     for (int i = 0; i < nindices; i++) {
-        indices[i] = *reinterpret_cast<uint16_t *>(ptr);
+        model->addIndex(*reinterpret_cast<uint16_t *>(ptr));
         ptr += sizeof(uint16_t);
     }
-    model->setIndices(indices);
 }
 
 void PMDParser::parseMatrials(PMDModel *model)
 {
-    MaterialList materials;
-    char *ptr = m_result.materialsPtr;
+    char *ptr = const_cast<char *>(m_result.materialsPtr);
     int nmaterials = m_result.materialsCount;
-    materials.reserve(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
-        materials[i].read(ptr);
+        Material *material = new Material();
+        material->read(ptr);
         ptr += Material::stride(ptr);
+        model->addMaterial(material);
     }
-    model->setMaterials(materials);
 }
 
 void PMDParser::parseBones(PMDModel *model)
 {
-    BoneList bones;
     Bone *mutableRootBone = model->mutableRootBone();
-    char *ptr = m_result.bonesPtr;
+    BoneList *mutableBones = model->mutableBones();
+    char *ptr = const_cast<char *>(m_result.bonesPtr);
     int nbones = m_result.bonesCount;
-    bones.reserve(nbones);
     for (int i = 0; i < nbones; i++) {
-        bones[i].read(ptr, bones, mutableRootBone);
+        Bone *bone = new Bone();
+        bone->read(ptr, mutableBones, mutableRootBone);
         ptr += Bone::stride(ptr);
+        model->addBone(bone);
     }
-    model->setBones(bones);
 }
 
 void PMDParser::parseIKs(PMDModel *model)
 {
-    IKList IKs;
-    char *ptr = m_result.IKsPtr;
+    char *ptr = const_cast<char *>(m_result.IKsPtr);
     int nIKs = m_result.IKsCount;
-    IKs.reserve(nIKs);
+    BoneList *mutableBones = model->mutableBones();
     for (int i = 0; i < nIKs; i++) {
-        IKs[i].read(ptr, model->mutableBones());
-        // FIXME: stride IK
-        //ptr += IK::stride(ptr);
+        IK *ik = new IK();
+        ik->read(ptr, mutableBones);
+        ptr += IK::stride(ptr);
+        model->addIK(ik);
     }
-    model->setIKs(IKs);
 }
 
 void PMDParser::parseFaces(PMDModel *model)
 {
     Face *baseFace = 0;
-    FaceList faces;
-    char *ptr = m_result.facesPtr;
+    char *ptr = const_cast<char *>(m_result.facesPtr);
     int nfaces = m_result.facesCount;
-    faces.reserve(nfaces);
     for (int i = 0; i < nfaces; i++) {
-        Face &face = faces[i];
-        face.read(ptr);
-        // FIXME: stride IK
-        // ptr += Face::stride(ptr);
-        if (face.type() == kBase)
-            baseFace = &face;
+        Face *face = new Face();
+        face->read(ptr);
+        ptr += Face::stride(ptr);
+        if (face->type() == kBase)
+            baseFace = face;
+        model->addFace(face);
     }
+    /*
     if (baseFace) {
+        FaceList faces = model->faces();
         for (int i = 0; i < nfaces; i++) {
-            Face &face = faces[i];
-            face.convertIndices(*baseFace);
+            faces[i]->convertIndices(baseFace);
         }
     }
-    model->setFaces(faces);
+    */
 }
 
 void PMDParser::parseFaceDisplayNames(PMDModel * /* model */)
@@ -297,8 +292,8 @@ void PMDParser::parseBoneDisplayNames(PMDModel * /* model */)
 
 void PMDParser::parseEnglishDisplayNames(PMDModel *model)
 {
-    model->setEnglishName("");
-    model->setEnglishComment("");
+    model->setEnglishName(m_result.englishNamePtr);
+    model->setEnglishComment(m_result.englishCommentPtr);
 }
 
 void PMDParser::parseToonTextureNames(PMDModel *model)
@@ -308,29 +303,29 @@ void PMDParser::parseToonTextureNames(PMDModel *model)
 
 void PMDParser::parseRigidBodies(PMDModel *model)
 {
-    RigidBodyList rigidBodies;
-    char *ptr = m_result.rigidBodiesPtr;
+    BoneList *mutableBones = model->mutableBones();
+    char *ptr = const_cast<char *>(m_result.rigidBodiesPtr);
     int nrigidBodies = m_result.rigidBodiesCount;
-    rigidBodies.reserve(nrigidBodies);
     for (int i = 0; i < nrigidBodies; i++) {
-        rigidBodies[i].read(ptr, model->mutableBones());
+        RigidBody *rigidBody = new RigidBody();
+        rigidBody->read(ptr, mutableBones);
         ptr += RigidBody::stride(ptr);
+        model->addRigidBody(rigidBody);
     }
-    model->setRigidBodies(rigidBodies);
 }
 
 void PMDParser::parseConstraints(PMDModel *model)
 {
-    ConstraintList constraints;
+    RigidBodyList rigidBodies = model->rigidBodies();
     btVector3 offset = model->rootBone().offset();
-    char *ptr = m_result.constraintsPtr;
+    char *ptr = const_cast<char *>(m_result.constraintsPtr);
     int nconstraints = m_result.constranitsCount;
-    constraints.reserve(nconstraints);
     for (int i = 0; i < nconstraints; i++) {
-        constraints[i].read(ptr, model->rigidBodies(), offset);
+        Constraint *constraint = new Constraint();
+        constraint->read(ptr, rigidBodies, offset);
         ptr += Constraint::stride(ptr);
+        model->addConstraint(constraint);
     }
-    model->setConstraints(constraints);
 }
 
 }

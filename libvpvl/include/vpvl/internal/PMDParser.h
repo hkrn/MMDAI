@@ -9,43 +9,44 @@ namespace vpvl
 
 struct PMDParserResult
 {
-    char *basePtr;
-    char *namePtr;
-    char *commentPtr;
-    char *verticesPtr;
+    const char *basePtr;
+    const char *namePtr;
+    const char *commentPtr;
+    const char *verticesPtr;
     size_t verticesCount;
-    char *indicesPtr;
+    const char *indicesPtr;
     size_t indicesCount;
-    char *materialsPtr;
+    const char *materialsPtr;
     size_t materialsCount;
-    char *bonesPtr;
+    const char *bonesPtr;
     size_t bonesCount;
-    char *IKsPtr;
+    const char *IKsPtr;
     size_t IKsCount;
-    char *facesPtr;
+    const char *facesPtr;
     size_t facesCount;
-    char *faceDisplayNamesPtr;
+    const char *faceDisplayNamesPtr;
     size_t faceDisplayNamesCount;
-    char *boneFrameNamesPtr;
+    const char *boneFrameNamesPtr;
     size_t boneFrameNamesCount;
-    char *boneDisplayNamesPtr;
+    const char *boneDisplayNamesPtr;
     size_t boneDisplayNamesCount;
-    char *englishDisplayNamesPtr;
-    char *toonTextureNamesPtr;
-    char *rigidBodiesPtr;
+    const char *englishNamePtr;
+    const char *englishCommentPtr;
+    const char *toonTextureNamesPtr;
+    const char *rigidBodiesPtr;
     size_t rigidBodiesCount;
-    char *constraintsPtr;
+    const char *constraintsPtr;
     size_t constranitsCount;
 };
 
-class PMDParser : public IModelParser
+class PMDParser
 {
 public:
     PMDParser(const char *data, size_t size);
-    virtual ~PMDParser();
+    ~PMDParser();
 
-    virtual bool preparse();
-    virtual IModel *parse();
+    bool preparse();
+    PMDModel *parse();
 
     void parseHeader(PMDModel *model);
     void parseVertices(PMDModel *model);
@@ -61,15 +62,20 @@ public:
     void parseRigidBodies(PMDModel *model);
     void parseConstraints(PMDModel *model);
 
-    const PMDParserResult &result() {
+    const PMDParserResult &result() const {
         return m_result;
+    }
+    const char *data() const {
+        return m_data;
+    }
+    size_t size() const {
+        return m_size;
     }
 
 private:
     PMDParserResult m_result;
     char *m_data;
     size_t m_size;
-    size_t m_rest;
 };
 
 }

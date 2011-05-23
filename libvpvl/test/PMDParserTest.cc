@@ -44,11 +44,21 @@ TEST(PMDParserTest, PreParseFullPMD) {
     EXPECT_TRUE(result.boneFrameNamesCount != 0);
     EXPECT_TRUE(result.boneDisplayNamesPtr != 0);
     EXPECT_TRUE(result.boneDisplayNamesCount != 0);
-    EXPECT_TRUE(result.englishDisplayNamesPtr != 0);
+    EXPECT_TRUE(result.englishNamePtr != 0);
+    EXPECT_TRUE(result.englishCommentPtr != 0);
     EXPECT_TRUE(result.toonTextureNamesPtr != 0);
     EXPECT_TRUE(result.rigidBodiesPtr != 0);
     EXPECT_TRUE(result.rigidBodiesCount != 0);
     EXPECT_TRUE(result.constraintsPtr != 0);
     EXPECT_TRUE(result.constranitsCount != 0);
     delete[] data;
+}
+
+TEST(PMDParserTest, ParseFullPMD) {
+    char *data = 0;
+    size_t size = 0;
+    FileSlurp("test/res/miku.pmd", data, size);
+    vpvl::PMDParser parser(data, size);
+    vpvl::PMDModel *model = parser.parse();
+    delete model;
 }
