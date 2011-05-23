@@ -6,6 +6,38 @@
 namespace vpvl
 {
 
+struct PMDModelDataInfo
+{
+    const char *basePtr;
+    const char *namePtr;
+    const char *commentPtr;
+    const char *verticesPtr;
+    size_t verticesCount;
+    const char *indicesPtr;
+    size_t indicesCount;
+    const char *materialsPtr;
+    size_t materialsCount;
+    const char *bonesPtr;
+    size_t bonesCount;
+    const char *IKsPtr;
+    size_t IKsCount;
+    const char *facesPtr;
+    size_t facesCount;
+    const char *faceDisplayNamesPtr;
+    size_t faceDisplayNamesCount;
+    const char *boneFrameNamesPtr;
+    size_t boneFrameNamesCount;
+    const char *boneDisplayNamesPtr;
+    size_t boneDisplayNamesCount;
+    const char *englishNamePtr;
+    const char *englishCommentPtr;
+    const char *toonTextureNamesPtr;
+    const char *rigidBodiesPtr;
+    size_t rigidBodiesCount;
+    const char *constraintsPtr;
+    size_t constranitsCount;
+};
+
 struct SkinVertex
 {
     btVector3 position;
@@ -16,7 +48,7 @@ struct SkinVertex
 class PMDModel
 {
 public:
-    PMDModel();
+    PMDModel(const char *data, size_t size);
     ~PMDModel();
 
     static const uint32_t kBoundingSpherePoints = 1000;
@@ -34,6 +66,9 @@ public:
     void updateToon(const btVector3 &light);
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
+
+    bool preparse();
+    bool parse();
 
     const char *name() const {
         return m_name;
@@ -91,6 +126,15 @@ public:
     bool isSimulationEnabled() const {
         return m_enableSimulation;
     }
+    const PMDModelDataInfo &result() const {
+        return m_result;
+    }
+    const char *data() const {
+        return m_data;
+    }
+    size_t size() const {
+        return m_size;
+    }
 
     void setName(const char *value) {
         vpvlStringCopySafe(m_name, value, sizeof(m_name));
@@ -103,30 +147,6 @@ public:
     }
     void setEnglishComment(const char *value) {
         vpvlStringCopySafe(m_englishComment, value, sizeof(m_englishComment));
-    }
-    void addVertex(Vertex *value) {
-        m_vertices.push_back(value);
-    }
-    void addIndex(uint16_t value) {
-        m_indices.push_back(value);
-    }
-    void addMaterial(Material *value) {
-        m_materials.push_back(value);
-    }
-    void addBone(Bone *value) {
-        m_bones.push_back(value);
-    }
-    void addIK(IK *value) {
-        m_IKs.push_back(value);
-    }
-    void addFace(Face *value) {
-        m_faces.push_back(value);
-    }
-    void addRigidBody(RigidBody *value) {
-        m_rigidBodies.push_back(value);
-    }
-    void addConstraint(Constraint *value) {
-        m_constraints.push_back(value);
     }
     void setToonTextures(const char *ptr) {
         char *p = const_cast<char *>(ptr);
@@ -143,6 +163,20 @@ public:
     }
 
 private:
+    void parseHeader();
+    void parseVertices();
+    void parseIndices();
+    void parseMatrials();
+    void parseBones();
+    void parseIKs();
+    void parseFaces();
+    void parseFaceDisplayNames();
+    void parseBoneDisplayNames();
+    void parseEnglishDisplayNames();
+    void parseToonTextureNames();
+    void parseRigidBodies();
+    void parseConstraints();
+
     char m_name[20];
     char m_comment[256];
     char m_englishName[20];
@@ -157,6 +191,7 @@ private:
     RigidBodyList m_rigidBodies;
     ConstraintList m_constraints;
     Bone m_rootBone;
+    PMDModelDataInfo m_result;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<SkinVertex> m_skinnedVertices;
     btAlignedObjectArray<btVector3> m_edgeVertices;
@@ -165,6 +200,8 @@ private:
     btAlignedObjectArray<btVector3> m_shadowTextureCoords;
     btAlignedObjectArray<uint16_t> m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
+    size_t m_size;
+    const char *m_data;
     uint32_t m_boundingSphereStep;
     float m_edgeOffset;
     float m_selfShadowDensityCoef;

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "vpvl/vpvl.h"
-#include "vpvl/internal/PMDParser.h"
+#include "vpvl/internal/PMDModel.h"
 
 static void FileSlurp(const char *path, char *&data, size_t &size) {
     FILE *fp = fopen(path, "rb");
@@ -12,18 +12,18 @@ static void FileSlurp(const char *path, char *&data, size_t &size) {
     fclose(fp);
 }
 
-TEST(PMDParserTest, PreParseEmptyPMD) {
-    vpvl::PMDParser parser("", 0);
-    EXPECT_FALSE(parser.preparse());
+TEST(PMDModelTest, PreParseEmptyPMD) {
+    vpvl::PMDModel model("", 0);
+    EXPECT_FALSE(model.preparse());
 }
 
-TEST(PMDParserTest, PreParseFullPMD) {
+TEST(PMDModelTest, PreParseFullPMD) {
     char *data = 0;
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
-    vpvl::PMDParser parser(data, size);
-    EXPECT_TRUE(parser.preparse());
-    vpvl::PMDParserResult result = parser.result();
+    vpvl::PMDModel model(data, size);
+    EXPECT_TRUE(model.preparse());
+    vpvl::PMDModelDataInfo result = model.result();
     EXPECT_TRUE(result.basePtr != 0);
     EXPECT_TRUE(result.namePtr != 0);
     EXPECT_TRUE(result.commentPtr != 0);
@@ -55,21 +55,20 @@ TEST(PMDParserTest, PreParseFullPMD) {
     delete[] data;
 }
 
-TEST(PMDParserTest, ParseFullPMD) {
+TEST(PMDModelTest, ParseFullPMD) {
     char *data = 0;
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
-    vpvl::PMDParser parser(data, size);
-    vpvl::PMDModel *model = parser.parse();
-    vpvl::PMDParserResult result = parser.result();
-    EXPECT_EQ(model->vertices().size(), result.verticesCount);
-    EXPECT_EQ(model->indices().size(), result.indicesCount);
-    EXPECT_EQ(model->materials().size(), result.materialsCount);
-    EXPECT_EQ(model->bones().size(), result.bonesCount);
-    EXPECT_EQ(model->IKs().size(), result.IKsCount);
-    EXPECT_EQ(model->faces().size(), result.facesCount);
-    EXPECT_EQ(model->rigidBodies().size(), result.rigidBodiesCount);
-    EXPECT_EQ(model->constraints().size(), result.constranitsCount);
-    EXPECT_STREQ("Miku Hatsune", model->englishName());
-    delete model;
+    vpvl::PMDModel model(data, size);
+    EXPECT_TRUE(model.parse());
+    vpvl::PMDModelDataInfo result = model.result();
+    EXPECT_EQ(model.vertices().size(), result.verticesCount);
+    EXPECT_EQ(model.indices().size(), result.indicesCount);
+    EXPECT_EQ(model.materials().size(), result.materialsCount);
+    EXPECT_EQ(model.bones().size(), result.bonesCount);
+    EXPECT_EQ(model.IKs().size(), result.IKsCount);
+    EXPECT_EQ(model.faces().size(), result.facesCount);
+    EXPECT_EQ(model.rigidBodies().size(), result.rigidBodiesCount);
+    EXPECT_EQ(model.constraints().size(), result.constranitsCount);
+    EXPECT_STREQ("Miku Hatsune", model.englishName());
 }

@@ -24,7 +24,6 @@ set(vpvl_public_headers
 )
 set(vpvl_internal_headers
     include/vpvl/internal/PMDModel.h
-    include/vpvl/internal/PMDParser.h
 )
 
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
