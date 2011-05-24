@@ -47,8 +47,8 @@ public:
     BoneType type() const {
         return m_type;
     }
-    const btTransform &transform() const {
-        return m_transform;
+    const btTransform &currentTransform() const {
+        return m_currentTransform;
     }
     const btVector3 &offset() const {
         return m_offset;
@@ -75,8 +75,8 @@ public:
     void setName(const char *value) {
         vpvlStringCopySafe(m_name, value, sizeof(m_name));
     }
-    void setTransform(const btTransform &value) {
-        m_transform = value;
+    void setCurrentTransform(const btTransform &value) {
+        m_currentTransform = value;
     }
     void setOffset(const btVector3 &value) {
         m_offset = value;
@@ -94,7 +94,7 @@ public:
 private:
     char m_name[20];
     BoneType m_type;
-    btTransform m_transform;
+    btTransform m_currentTransform;
     btTransform m_transformMoveToOrigin;
     btVector3 m_originPosition;
     btVector3 m_currentPosition;

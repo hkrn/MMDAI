@@ -187,7 +187,7 @@ float PMDModel::boundingSphereRange(btVector3 &center)
 {
     float max = 0.0f;
     Bone *bone = Bone::centerBone(&m_bones);
-    btVector3 pos = bone->transform().getOrigin();
+    btVector3 pos = bone->currentTransform().getOrigin();
     int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         const float r2 = pos.distance2(m_skinnedVertices[i].position);
