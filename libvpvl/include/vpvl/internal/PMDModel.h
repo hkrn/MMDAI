@@ -58,12 +58,15 @@ public:
     static const float kMinFaceWeight;
 
     void prepare();
-    void updateBone();
+    void updateRootBone();
+    void updateMotion();
+    void updateSkins();
+    void updateAllBones();
     void updateBoneFromSimulation();
-    void updateFace();
-    void updateShadow(float coef);
-    void updateSkin();
-    void updateToon(const btVector3 &light);
+    void updateAllFaces();
+    void updateShadowTextureCoords(float coef);
+    void updateSkinVertices();
+    void updateToon(const btVector3 &lightDirection);
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
 
@@ -126,6 +129,9 @@ public:
     bool isSimulationEnabled() const {
         return m_enableSimulation;
     }
+    const btVector3 &lightDirection() const {
+        return m_lightDirection;
+    }
     const PMDModelDataInfo &result() const {
         return m_result;
     }
@@ -154,6 +160,9 @@ public:
             vpvlStringCopySafe(m_textures[i], ptr, sizeof(m_textures[i]));
             p += 100;
         }
+    }
+    void setLightDirection(const btVector3 &value) {
+        m_lightDirection = value;
     }
     void setEdgeOffset(float value) {
         m_edgeOffset = value * 0.03f;
@@ -200,6 +209,7 @@ private:
     btAlignedObjectArray<btVector3> m_shadowTextureCoords;
     btAlignedObjectArray<uint16_t> m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
+    btVector3 m_lightDirection;
     size_t m_size;
     const char *m_data;
     uint32_t m_boundingSphereStep;

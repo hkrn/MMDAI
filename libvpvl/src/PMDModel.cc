@@ -71,7 +71,27 @@ void PMDModel::prepare()
     btClamp(m_boundingSphereStep, max, min);
 }
 
-void PMDModel::updateBone()
+void PMDModel::updateRootBone()
+{
+    // FIXME: implement associated accessory
+    m_rootBone.updateTransform();
+}
+
+void PMDModel::updateMotion()
+{
+    // FIXME: motion
+    updateAllBones();
+    updateAllFaces();
+}
+
+void PMDModel::updateSkins()
+{
+    updateBoneFromSimulation();
+    updateSkinVertices();
+    updateToon(m_lightDirection);
+}
+
+void PMDModel::updateAllBones()
 {
     int nBones = m_bones.size(), nIKs = m_IKs.size();
     /* FIXME: ordered bone list  */
@@ -99,7 +119,7 @@ void PMDModel::updateBoneFromSimulation()
         m_rigidBodies[i]->transformToBone();
 }
 
-void PMDModel::updateFace()
+void PMDModel::updateAllFaces()
 {
     int nFaces = m_faces.size();
     for (int i = 0; i < nFaces; i++) {
@@ -117,7 +137,7 @@ void PMDModel::updateFace()
     }
 }
 
-void PMDModel::updateShadow(float coef)
+void PMDModel::updateShadowTextureCoords(float coef)
 {
     bool update = false;
     int nVertices = m_vertices.size();
@@ -135,7 +155,7 @@ void PMDModel::updateShadow(float coef)
     }
 }
 
-void PMDModel::updateSkin()
+void PMDModel::updateSkinVertices()
 {
     int nBones = m_bones.size();
     for (int i = 0; i < nBones; i++)
@@ -170,11 +190,11 @@ void PMDModel::updateSkin()
     }
 }
 
-void PMDModel::updateToon(const btVector3 &light)
+void PMDModel::updateToon(const btVector3 &lightDirection)
 {
     int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
-        m_toonTextureCoords[i].setValue(0.0f, (1.0f - light.dot(m_skinnedVertices[i].normal)) * 0.5f, 0.0f);
+        m_toonTextureCoords[i].setValue(0.0f, (1.0f - lightDirection.dot(m_skinnedVertices[i].normal)) * 0.5f, 0.0f);
         SkinVertex skin = m_skinnedVertices[i];
         if (m_vertices[i]->isEdgeEnabled())
             m_edgeVertices[i] = skin.position;
