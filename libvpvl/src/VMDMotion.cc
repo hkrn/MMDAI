@@ -66,6 +66,15 @@ bool VMDMotion::preparse()
 
 bool VMDMotion::parse()
 {
+    if (preparse()) {
+        parseHeader();
+        parseBoneFrames();
+        parseFaceFrames();
+        parseCameraFrames();
+        parseLightFrames();
+        parseSelfShadowFrames();
+        return true;
+    }
     return false;
 }
 
@@ -76,14 +85,41 @@ void VMDMotion::parseHeader()
 
 void VMDMotion::parseBoneFrames()
 {
+    char *ptr = const_cast<char *>(m_result.boneKeyFramePtr);
+    int nBoneKeyFrames = m_result.boneKeyFrameCount;
+    m_boneKeyFrames.reserve(nBoneKeyFrames);
+    for (int i = 0; i < nBoneKeyFrames; i++) {
+        BoneKeyFrame *frame = new BoneKeyFrame();
+        frame->read(ptr);
+        ptr += BoneKeyFrame::stride(ptr);
+        m_boneKeyFrames.push_back(frame);
+    }
 }
 
 void VMDMotion::parseFaceFrames()
 {
+    char *ptr = const_cast<char *>(m_result.faceKeyFramePtr);
+    int nFaceKeyFrames = m_result.faceKeyFrameCount;
+    m_faceKeyFrames.reserve(nFaceKeyFrames);
+    for (int i = 0; i < nFaceKeyFrames; i++) {
+        FaceKeyFrame *frame = new FaceKeyFrame();
+        frame->read(ptr);
+        ptr += FaceKeyFrame::stride(ptr);
+        m_faceKeyFrames.push_back(frame);
+    }
 }
 
 void VMDMotion::parseCameraFrames()
 {
+    char *ptr = const_cast<char *>(m_result.cameraKeyFramePtr);
+    int nCameraKeyFrames = m_result.cameraKeyFrameCount;
+    m_cameraKeyFrames.reserve(nCameraKeyFrames);
+    for (int i = 0; i < nCameraKeyFrames; i++) {
+        CameraKeyFrame *frame = new CameraKeyFrame();
+        frame->read(ptr);
+        ptr += CameraKeyFrame::stride(ptr);
+        m_cameraKeyFrames.push_back(frame);
+    }
 }
 
 void VMDMotion::parseLightFrames()
