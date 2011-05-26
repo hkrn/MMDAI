@@ -427,6 +427,7 @@ void PMDModel::parseVertices()
 {
     char *ptr = const_cast<char *>(m_result.verticesPtr);
     int nvertices = m_result.verticesCount;
+    m_vertices.reserve(nvertices);
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex();
         vertex->read(ptr);
@@ -457,6 +458,7 @@ void PMDModel::parseMatrials()
 {
     char *ptr = const_cast<char *>(m_result.materialsPtr);
     int nmaterials = m_result.materialsCount;
+    m_materials.reserve(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = new Material();
         material->read(ptr);
@@ -471,6 +473,7 @@ void PMDModel::parseBones()
     BoneList *mutableBones = this->mutableBones();
     char *ptr = const_cast<char *>(m_result.bonesPtr);
     int nbones = m_result.bonesCount;
+    m_bones.reserve(nbones);
     for (int i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
         bone->read(ptr, mutableBones, mutableRootBone);
@@ -484,6 +487,7 @@ void PMDModel::parseIKs()
     char *ptr = const_cast<char *>(m_result.IKsPtr);
     int nIKs = m_result.IKsCount;
     BoneList *mutableBones = this->mutableBones();
+    m_IKs.reserve(nIKs);
     for (int i = 0; i < nIKs; i++) {
         IK *ik = new IK();
         ik->read(ptr, mutableBones);
@@ -497,6 +501,7 @@ void PMDModel::parseFaces()
     Face *baseFace = 0;
     char *ptr = const_cast<char *>(m_result.facesPtr);
     int nfaces = m_result.facesCount;
+    m_faces.reserve(nfaces);
     for (int i = 0; i < nfaces; i++) {
         Face *face = new Face();
         face->read(ptr);
@@ -536,6 +541,7 @@ void PMDModel::parseRigidBodies()
     BoneList *mutableBones = this->mutableBones();
     char *ptr = const_cast<char *>(m_result.rigidBodiesPtr);
     int nrigidBodies = m_result.rigidBodiesCount;
+    m_rigidBodies.reserve(nrigidBodies);
     for (int i = 0; i < nrigidBodies; i++) {
         RigidBody *rigidBody = new RigidBody();
         rigidBody->read(ptr, mutableBones);
@@ -550,6 +556,7 @@ void PMDModel::parseConstraints()
     btVector3 offset = this->rootBone().offset();
     char *ptr = const_cast<char *>(m_result.constraintsPtr);
     int nconstraints = m_result.constranitsCount;
+    m_constraints.reserve(nconstraints);
     for (int i = 0; i < nconstraints; i++) {
         Constraint *constraint = new Constraint();
         constraint->read(ptr, rigidBodies, offset);
