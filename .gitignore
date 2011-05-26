@@ -16,6 +16,7 @@ release
 Release
 UpgradeLog*.XML
 _UpgradeReport_Files
+vpvl_*
 Win32
 *.a
 *.build
