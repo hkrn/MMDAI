@@ -2,8 +2,11 @@
 #define vpvl_vpvl_H_
 #include "vpvl/common.h"
 #include "vpvl/Bone.h"
+#include "vpvl/BoneKeyFrame.h"
+#include "vpvl/CameraKeyFrame.h"
 #include "vpvl/Constraint.h"
 #include "vpvl/Face.h"
+#include "vpvl/FaceKeyFrame.h"
 #include "vpvl/IK.h"
 #include "vpvl/IModel.h"
 #include "vpvl/IModelParser.h"

@@ -190,12 +190,22 @@ inline float vpvlStringToFloat(const char *str)
     return (float) vpvlStringToDouble(str);
 }
 
-inline void vpvlStringGetVector3(char *&ptr, float *values)
+static inline void vpvlDataGetVectorN(char *&ptr, float *values, int n)
 {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < n; i++) {
         values[i] = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
     }
+}
+
+inline void vpvlStringGetVector3(char *&ptr, float *values)
+{
+    vpvlDataGetVectorN(ptr, values, 3);
+}
+
+inline void vpvlStringGetVector4(char *&ptr, float *values)
+{
+    vpvlDataGetVectorN(ptr, values, 4);
 }
 
 inline bool vpvlDataGetSize8(char *&ptr, size_t &rest, size_t &size)

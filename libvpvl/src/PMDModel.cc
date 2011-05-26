@@ -38,7 +38,6 @@ PMDModel::~PMDModel()
     m_indices = 0;
     m_skinnedVertices = 0;
     m_data = 0;
-    m_size = 0;
 }
 
 void PMDModel::prepare()

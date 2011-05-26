@@ -223,7 +223,7 @@ private:
     btAlignedObjectArray<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
     btVector3 m_lightDirection;
-    size_t m_size;
+    const size_t m_size;
     const char *m_data;
     uint32_t m_boundingSphereStep;
     float m_edgeOffset;

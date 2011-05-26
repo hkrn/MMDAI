@@ -8,8 +8,11 @@ project(libvpvl)
 aux_source_directory(src vpvl_sources)
 set(vpvl_public_headers
     include/vpvl/Bone.h
+    include/vpvl/BoneKeyFrame.h
+    include/vpvl/CameraKeyFrame.h
     include/vpvl/Constraint.h
     include/vpvl/Face.h
+    include/vpvl/FaceKeyFrame.h
     include/vpvl/IK.h
     include/vpvl/IModel.h
     include/vpvl/IModelParser.h
@@ -24,6 +27,7 @@ set(vpvl_public_headers
 )
 set(vpvl_internal_headers
     include/vpvl/internal/PMDModel.h
+    include/vpvl/internal/VMDMotion.h
 )
 
 function(link_bullet target)
