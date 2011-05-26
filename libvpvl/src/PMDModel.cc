@@ -8,7 +8,9 @@ const float PMDModel::kMinBoneWeight = 0.0001f;
 const float PMDModel::kMinFaceWeight = 0.001f;
 
 PMDModel::PMDModel(const char *data, size_t size)
-    : m_size(size),
+    : m_indices(0),
+      m_skinnedVertices(0),
+      m_size(size),
       m_data(data),
       m_boundingSphereStep(kBoundingSpherePointsMin),
       m_edgeOffset(0.03f),
@@ -31,6 +33,10 @@ PMDModel::~PMDModel()
     memset(&m_englishName, 0, sizeof(m_englishName));
     memset(&m_englishComment, 0, sizeof(m_englishComment));
     memset(&m_result, 0, sizeof(PMDModelDataInfo));
+    delete[] m_indices;
+    delete[] m_skinnedVertices;
+    m_indices = 0;
+    m_skinnedVertices = 0;
     m_data = 0;
     m_size = 0;
 }
@@ -39,10 +45,11 @@ void PMDModel::prepare()
 {
     m_skinningTransform.reserve(m_bones.size());
     int nVertices = m_vertices.size();
-    m_skinnedVertices.reserve(nVertices);
+    m_skinnedVertices = new SkinVertex[nVertices];
     m_edgeVertices.reserve(nVertices);
     m_toonTextureCoords.reserve(nVertices);
-    uint32_t from = 0;
+    /*
+    uint32_t from = 0, to = 0;
     int nMaterials = m_materials.size();
     for (int i = 0; i < nMaterials; i++) {
         Material *material = m_materials[i];
@@ -54,9 +61,16 @@ void PMDModel::prepare()
         }
         from += nindices;
     }
+    */
+    for (int i = 0; i < nVertices; i++) {
+        Vertex *vertex = m_vertices[i];
+        m_skinnedVertices[i].texureCoord.setValue(vertex->u(), vertex->v(), 0);
+    }
     int nBones = m_bones.size();
     for (int i = 0; i < nBones; i++) {
-        BoneType type = m_bones[i]->type();
+        Bone *bone = m_bones[i];
+        BoneType type = bone->type();
+        bone->computeOffset();
         if (type == kUnderRotate || type == kFollowRotate)
             m_rotatedBones.push_back(i);
     }
@@ -86,7 +100,7 @@ void PMDModel::updateMotion()
 
 void PMDModel::updateSkins()
 {
-    updateBoneFromSimulation();
+    //updateBoneFromSimulation();
     updateSkinVertices();
     updateToon(m_lightDirection);
 }
@@ -195,7 +209,7 @@ void PMDModel::updateToon(const btVector3 &lightDirection)
     int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         m_toonTextureCoords[i].setValue(0.0f, (1.0f - lightDirection.dot(m_skinnedVertices[i].normal)) * 0.5f, 0.0f);
-        SkinVertex skin = m_skinnedVertices[i];
+        SkinVertex &skin = m_skinnedVertices[i];
         if (m_vertices[i]->isEdgeEnabled())
             m_edgeVertices[i] = skin.position;
         else
@@ -426,10 +440,18 @@ void PMDModel::parseIndices()
 {
     char *ptr = const_cast<char *>(m_result.indicesPtr);
     int nindices = m_result.indicesCount;
+    m_indices = new uint16_t[nindices];
     for (int i = 0; i < nindices; i++) {
-        m_indices.push_back(*reinterpret_cast<uint16_t *>(ptr));
+        m_indices[i] = *reinterpret_cast<uint16_t *>(ptr);
         ptr += sizeof(uint16_t);
     }
+#ifdef VPVL_COORDINATE_OPENGL
+    for (int i = 0; i < nindices; i += 3) {
+        uint16_t index = m_indices[i];
+        m_indices[i] = m_indices[i + 1];
+        m_indices[i + 1] = index;
+    }
+#endif
 }
 
 void PMDModel::parseMatrials()

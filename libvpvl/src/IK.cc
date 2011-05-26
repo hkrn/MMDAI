@@ -65,22 +65,26 @@ void IK::read(const char *data, BoneList *bones)
     float angleConstraint = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
 
-    btAlignedObjectArray<int16_t> IKBones;
+    btAlignedObjectArray<int16_t> boneIKs;
+    int nbones = bones->size();
     for (int i = 0; i < nlinks; i++) {
-        int16_t IKBone = *reinterpret_cast<int16_t *>(ptr);
-        IKBones.push_back(IKBone);
-        ptr += sizeof(int16_t);
+        int16_t boneID = *reinterpret_cast<int16_t *>(ptr);
+        if (boneID >= 0 && boneID < nbones) {
+            boneIKs.push_back(boneID);
+            ptr += sizeof(int16_t);
+        }
     }
 
-    int nbones = bones->size();
     if (destBoneID >= 0 && destBoneID < nbones && targetBoneID >= 0 && targetBoneID < nbones) {
+        nlinks = boneIKs.size();
         m_destination = bones->at(destBoneID);
         m_target = bones->at(targetBoneID);
         m_iteration = niterations;
-        m_angleConstraint = angleConstraint;
+        m_angleConstraint = angleConstraint * IK::kPi;
         m_bones.reserve(nlinks);
         for (int i = 0; i < nlinks; i++) {
-            m_bones.push_back(bones->at(i));
+            Bone *bone = bones->at(boneIKs[i]);
+            m_bones.push_back(bone);
         }
     }
 }

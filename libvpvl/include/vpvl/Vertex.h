@@ -74,7 +74,6 @@ private:
 };
 
 typedef btAlignedObjectArray<Vertex*> VertexList;
-typedef btAlignedObjectArray<uint16_t> IndexList;
 
 } /* namespace vpvl */
 

@@ -69,7 +69,7 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *root
     int16_t childBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
     BoneType type = static_cast<BoneType>(*reinterpret_cast<uint8_t *>(ptr));
-    ptr += sizeof(int8_t);
+    ptr += sizeof(uint8_t);
     int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
     float pos[3];
@@ -145,7 +145,7 @@ void Bone::updateTransform()
     updateTransform(m_currentRotation);
 }
 
-void Bone::updateTransform(btQuaternion &q)
+void Bone::updateTransform(const btQuaternion &q)
 {
     m_currentTransform.setOrigin(m_currentPosition + m_offset);
     m_currentTransform.setRotation(q);

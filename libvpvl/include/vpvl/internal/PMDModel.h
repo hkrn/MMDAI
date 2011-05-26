@@ -57,16 +57,9 @@ public:
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
-    void prepare();
     void updateRootBone();
     void updateMotion();
     void updateSkins();
-    void updateAllBones();
-    void updateBoneFromSimulation();
-    void updateAllFaces();
-    void updateShadowTextureCoords(float coef);
-    void updateSkinVertices();
-    void updateToon(const btVector3 &lightDirection);
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
 
@@ -88,7 +81,7 @@ public:
     const VertexList &vertices() const {
         return m_vertices;
     }
-    const IndexList &indices() const {
+    const uint16_t *indices() const {
         return m_indices;
     }
     const MaterialList &materials() const {
@@ -142,6 +135,19 @@ public:
         return m_size;
     }
 
+    size_t stride() const {
+        return sizeof(SkinVertex);
+    }
+    const void *verticesPointer() const {
+        return &m_skinnedVertices[0].position;
+    }
+    const void *normalsPointer() const {
+        return &m_skinnedVertices[0].normal;
+    }
+    const void *textureCoordsPointer() const {
+        return &m_skinnedVertices[0].texureCoord;
+    }
+
     void setName(const char *value) {
         vpvlStringCopySafe(m_name, value, sizeof(m_name));
     }
@@ -185,6 +191,13 @@ private:
     void parseToonTextureNames();
     void parseRigidBodies();
     void parseConstraints();
+    void prepare();
+    void updateAllBones();
+    void updateBoneFromSimulation();
+    void updateAllFaces();
+    void updateShadowTextureCoords(float coef);
+    void updateSkinVertices();
+    void updateToon(const btVector3 &lightDirection);
 
     char m_name[20];
     char m_comment[256];
@@ -192,7 +205,7 @@ private:
     char m_englishComment[256];
     char m_textures[10][100];
     VertexList m_vertices;
-    IndexList m_indices;
+    uint16_t *m_indices;
     MaterialList m_materials;
     BoneList m_bones;
     IKList m_IKs;
@@ -202,13 +215,13 @@ private:
     Bone m_rootBone;
     PMDModelDataInfo m_result;
     btAlignedObjectArray<btTransform> m_skinningTransform;
-    btAlignedObjectArray<SkinVertex> m_skinnedVertices;
     btAlignedObjectArray<btVector3> m_edgeVertices;
     btAlignedObjectArray<uint16_t> m_edgeIndices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;
     btAlignedObjectArray<btVector3> m_shadowTextureCoords;
     btAlignedObjectArray<uint16_t> m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
+    SkinVertex *m_skinnedVertices;
     btVector3 m_lightDirection;
     size_t m_size;
     const char *m_data;

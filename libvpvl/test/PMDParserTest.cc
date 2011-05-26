@@ -63,7 +63,6 @@ TEST(PMDModelTest, ParseFullPMD) {
     EXPECT_TRUE(model.parse());
     vpvl::PMDModelDataInfo result = model.result();
     EXPECT_EQ(model.vertices().size(), result.verticesCount);
-    EXPECT_EQ(model.indices().size(), result.indicesCount);
     EXPECT_EQ(model.materials().size(), result.materialsCount);
     EXPECT_EQ(model.bones().size(), result.bonesCount);
     EXPECT_EQ(model.IKs().size(), result.IKsCount);

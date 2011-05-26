@@ -38,7 +38,7 @@ public:
     void setMotionIndependency();
     void updateRotation();
     void updateTransform();
-    void updateTransform(btQuaternion &q);
+    void updateTransform(const btQuaternion &q);
     void getSkinTransform(btTransform &tr);
 
     const char *name() const {

@@ -47,7 +47,7 @@ void Vertex::read(const char *data)
     int16_t bone2 = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
     uint8_t weight = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(float);
+    ptr += sizeof(uint8_t);
     uint8_t edge = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
 
@@ -56,7 +56,11 @@ void Vertex::read(const char *data)
 #else
     m_position.setValue(pos[0], pos[1], pos[2]);
 #endif
+#ifdef VPVL_COORDINATE_OPENGL
+    m_normal.setValue(normal[0], normal[1], -normal[2]);
+#else
     m_normal.setValue(normal[0], normal[1], normal[2]);
+#endif
     m_u = u;
     m_v = v;
     m_bone1 = bone1;
