@@ -15,6 +15,11 @@
 #include <vpvl/vpvl.h>
 #include <vpvl/internal/PMDModel.h>
 
+struct vpvl::MaterialPrivate {
+    GLuint primaryTextureID;
+    GLuint secondTextureID;
+};
+
 static const int g_width = 800;
 static const int g_height = 600;
 
@@ -50,10 +55,82 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     return true;
 }
 
-static void SetLighting()
+static void LoadTexture(const char *path, GLuint &texture)
 {
-    btVector3 color(1.0f, 1.0f, 1.0f);
-    btVector4 direction(0.5f, 1.0f, 0.5f, 0.0f);
+    SDL_Surface *surface = IMG_Load(path);
+    if (surface) {
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        GLenum format;
+        if (surface->format->BitsPerPixel == 32) {
+            format = GL_RGBA;
+        }
+        else if (surface->format->BitsPerPixel == 24) {
+            format = GL_RGB;
+        }
+        else {
+            printf("unknown image format: %s", path);
+            SDL_FreeSurface(surface);
+            return;
+        }
+        SDL_LockSurface(surface);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, surface->w, surface->h, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
+        SDL_UnlockSurface(surface);
+        SDL_FreeSurface(surface);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    else {
+        printf("failed loading %s: %s", path, IMG_GetError());
+    }
+}
+
+static void LoadModelTextures(const vpvl::PMDModel &model)
+{
+    const vpvl::MaterialList materials = model.materials();
+    uint32_t nMaterials = materials.size();
+    for (uint32_t i = 0; i <nMaterials; i++) {
+        vpvl::Material *material = materials[i];
+        const char *primary = material->primaryTextureName();
+        const char *second = material->secondTextureName();
+        GLuint textureID = 0;
+        vpvl::MaterialPrivate *data = new vpvl::MaterialPrivate;
+        data->primaryTextureID = 0;
+        data->secondTextureID = 0;
+        if (*primary) {
+            char path[256];
+            snprintf(path, sizeof(path), "render/res/%s", primary);
+            LoadTexture(path, textureID);
+            data->primaryTextureID = textureID;
+        }
+        if (*second) {
+            char path[256];
+            snprintf(path, sizeof(path), "render/res/%s", second);
+            LoadTexture(path, textureID);
+            data->secondTextureID = textureID;
+        }
+        material->setPrivateData(data);
+    }
+}
+
+static void UnloadModelTextures(const vpvl::PMDModel &model)
+{
+    const vpvl::MaterialList materials = model.materials();
+    uint32_t nMaterials = materials.size();
+    for (uint32_t i = 0; i < nMaterials; i++) {
+        vpvl::MaterialPrivate *data = materials[i]->privateData();
+        glDeleteTextures(1, &data->primaryTextureID);
+        glDeleteTextures(1, &data->secondTextureID);
+        delete data;
+    }
+}
+
+static void SetLighting(vpvl::PMDModel &model)
+{
+    btVector3 color(1.0f, 1.0f, 1.0f), direction(0.5f, 1.0f, 0.5f);
     btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6;
 
     // use MMD like cartoon
@@ -67,6 +144,7 @@ static void SetLighting()
     diffuse.setW(1.0f);
     ambient.setW(1.0f);
     specular.setW(1.0f);
+    model.setLightDirection(direction);
 
     glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(direction));
     glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
@@ -74,7 +152,7 @@ static void SetLighting()
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
 }
 
-static void DrawModel(vpvl::PMDModel &model)
+static void DrawModel(const vpvl::PMDModel &model)
 {
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
@@ -84,8 +162,9 @@ static void DrawModel(vpvl::PMDModel &model)
     glVertexPointer(3, GL_FLOAT, model.stride(), model.verticesPointer());
     glNormalPointer(GL_FLOAT, model.stride(), model.normalsPointer());
     glTexCoordPointer(2, GL_FLOAT, model.stride(), model.textureCoordsPointer());
+    bool enableToon = true;
     // toon
-    if (false) {
+    if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
         glClientActiveTexture(GL_TEXTURE1);
         glEnable(GL_TEXTURE_2D);
@@ -94,33 +173,37 @@ static void DrawModel(vpvl::PMDModel &model)
         if (false)
             glTexCoordPointer(2, GL_FLOAT, 0, 0);
         else
-            glTexCoordPointer(2, GL_FLOAT, 0, 0);
+            glTexCoordPointer(2, GL_FLOAT, 0, model.toonTextureCoordsPointer());
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
     }
-    // first sphere map
-    if (false) {
-        glEnable(GL_TEXTURE_2D);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
-    }
-    // second sphere map
-    if (false) {
-        glActiveTexture(GL_TEXTURE2);
-        glEnable(GL_TEXTURE_2D);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
-        glActiveTexture(GL_TEXTURE0);
-    }
+    bool hasSPH = false, hasSPA = false;
     const vpvl::MaterialList materials = model.materials();
-    uint16_t *indicesPtr = const_cast<uint16_t *>(model.indices());
     uint32_t nMaterials = materials.size();
+    uint16_t *indicesPtr = const_cast<uint16_t *>(model.indices());
     for (uint32_t i = 0; i <nMaterials; i++) {
         vpvl::Material *material = materials[i];
+        vpvl::MaterialPrivate *data = material->privateData();
+        // first sphere map
+        if (!hasSPH && (material->isSpherePrimary() || material->isSphereSecond())) {
+            glEnable(GL_TEXTURE_2D);
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            glDisable(GL_TEXTURE_2D);
+            hasSPH = true;
+        }
+        // second sphere map
+        if (!hasSPA && (material->isSphereAuxPrimary() || material->isSphereAuxSecond())) {
+            glActiveTexture(GL_TEXTURE2);
+            glEnable(GL_TEXTURE_2D);
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            glDisable(GL_TEXTURE_2D);
+            glActiveTexture(GL_TEXTURE0);
+            hasSPA = true;
+        }
         // toon
-        if (false) {
+        if (enableToon) {
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(material->averageColor()));
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
         }
@@ -132,64 +215,59 @@ static void DrawModel(vpvl::PMDModel &model)
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
         material->alpha() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
         // if toon or second sphere
-        if (false)
+        if (enableToon || hasSPA)
             glActiveTexture(GL_TEXTURE0);
         // has texture
-        if (false) {
+        if (data->primaryTextureID > 0) {
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            // has first sphere map
-            if (false) {
-                // is sphere map
-                if (false) {
-                    // is second sphere map
-                    if (false)
-                        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                    glEnable(GL_TEXTURE_GEN_S);
-                    glEnable(GL_TEXTURE_GEN_T);
-                }
-                else {
-                    glDisable(GL_TEXTURE_GEN_S);
-                    glDisable(GL_TEXTURE_GEN_T);
-                }
+            glBindTexture(GL_TEXTURE_2D, data->primaryTextureID);
+            // is sphere map
+            if (material->isSpherePrimary() || material->isSphereAuxPrimary()) {
+                // is second sphere map
+                if (material->isSphereAuxPrimary())
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+                glEnable(GL_TEXTURE_GEN_S);
+                glEnable(GL_TEXTURE_GEN_T);
+            }
+            else {
+                glDisable(GL_TEXTURE_GEN_S);
+                glDisable(GL_TEXTURE_GEN_T);
             }
         }
         else {
             glDisable(GL_TEXTURE_2D);
         }
         // toon
-        if (false) {
+        if (enableToon) {
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, 0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
         // second sphere
-        if (false) {
-            if (false) {
-                glActiveTexture(GL_TEXTURE2);
-                glEnable(GL_TEXTURE_2D);
-                // is second sphere
-                if (false)
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                else
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-                glBindTexture(GL_TEXTURE_2D, 0);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
-            }
-            else {
-                glActiveTexture(GL_TEXTURE2);
-                glDisable(GL_TEXTURE_2D);
-            }
+        if (data->secondTextureID > 0) {
+            glActiveTexture(GL_TEXTURE2);
+            glEnable(GL_TEXTURE_2D);
+            // is second sphere
+            if (material->isSphereAuxSecond())
+                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+            else
+                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glBindTexture(GL_TEXTURE_2D, data->secondTextureID);
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
+        }
+        else {
+            glActiveTexture(GL_TEXTURE2);
+            glDisable(GL_TEXTURE_2D);
         }
         // draw
         uint32_t nIndices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, indicesPtr);
         indicesPtr += nIndices;
-        // has texture and is second sphere map
-        if (false) {
-            if (false)
+        // is aux sphere map
+        if (material->isSphereAuxPrimary()) {
+            if (enableToon)
                 glActiveTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
@@ -197,11 +275,11 @@ static void DrawModel(vpvl::PMDModel &model)
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     // toon
-    if (false) {
+    if (enableToon) {
         glClientActiveTexture(GL_TEXTURE0);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         // first sphere map
-        if (false) {
+        if (hasSPH) {
             glActiveTexture(GL_TEXTURE0);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
@@ -209,7 +287,7 @@ static void DrawModel(vpvl::PMDModel &model)
         glClientActiveTexture(GL_TEXTURE1);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         // second sphere map
-        if (false) {
+        if (hasSPA) {
             glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
@@ -219,12 +297,12 @@ static void DrawModel(vpvl::PMDModel &model)
     else {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         // first sphere map
-        if (false) {
+        if (hasSPH) {
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
         }
         // second sphere map
-        if (false) {
+        if (hasSPA) {
             glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
@@ -232,18 +310,18 @@ static void DrawModel(vpvl::PMDModel &model)
         }
     }
     // first or second sphere map
-    if (false) {
+    if (hasSPH || hasSPA) {
         glDisable(GL_TEXTURE_GEN_S);
         glDisable(GL_TEXTURE_GEN_T);
+        // second sphere map
+        if (hasSPA) {
+            glActiveTexture(GL_TEXTURE2);
+            glDisable(GL_TEXTURE_2D);
+        }
     }
     // toon
-    if (false) {
+    if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
-        glDisable(GL_TEXTURE_2D);
-    }
-    // second sphere map
-    if (false) {
-        glActiveTexture(GL_TEXTURE2);
         glDisable(GL_TEXTURE_2D);
     }
     glActiveTexture(GL_TEXTURE0);
@@ -345,8 +423,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    model.parse();
-    SetLighting();
+    if (!model.parse()) {
+        delete data;
+        return -1;
+    }
+    SetLighting(model);
+    LoadModelTextures(model);
 
     while (true) {
         if (PollEvents())
@@ -354,8 +436,9 @@ int main(int argc, char *argv[])
         DrawSurface(model, g_width, g_height);
     }
 
-    delete data;
+    UnloadModelTextures(model);
     SDL_FreeSurface(surface);
+    delete data;
 
     return 0;
 }

@@ -13,12 +13,21 @@ Material::Material()
       m_shiness(0.0f),
       m_nindices(0),
       m_toonID(0),
-      m_edge(false)
+      m_edge(false),
+      m_firstSPH(false),
+      m_firstSPA(false),
+      m_secondSPH(false),
+      m_secondSPA(false),
+      m_private(0)
 {
+    memset(m_primaryTextureName, 0, sizeof(m_primaryTextureName));
+    memset(m_secondTextureName, 0, sizeof(m_secondTextureName));
 }
 
 Material::~Material()
 {
+    memset(m_primaryTextureName, 0, sizeof(m_primaryTextureName));
+    memset(m_secondTextureName, 0, sizeof(m_secondTextureName));
     m_ambient.setZero();
     m_averageColor.setZero();
     m_diffuse.setZero();
@@ -28,6 +37,11 @@ Material::~Material()
     m_nindices = 0;
     m_toonID = 0;
     m_edge = false;
+    m_firstSPH = false;
+    m_firstSPA = false;
+    m_secondSPH = false;
+    m_secondSPA = false;
+    m_private = 0;
 }
 
 size_t Material::stride(const char * /* data */)
@@ -52,10 +66,28 @@ void Material::read(const char *data)
     ptr += sizeof(uint8_t);
     uint32_t nindices = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
-    stringCopySafe(m_name, ptr, sizeof(m_name));
+    char name[20], *p;
+    stringCopySafe(name, ptr, sizeof(name));
+    if ((p = strchr(name, '*')) != NULL) {
+        *p = 0;
+        m_firstSPH = strstr(m_primaryTextureName, ".sph") != NULL;
+        m_firstSPA = strstr(m_primaryTextureName, ".spa") != NULL;
+        m_secondSPH = strstr(m_secondTextureName, ".sph") != NULL;
+        m_secondSPA = strstr(m_secondTextureName, ".spa") != NULL;
+        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
+        stringCopySafe(m_secondTextureName, p, sizeof(m_secondTextureName));
+    }
+    else {
+        m_firstSPH = strstr(m_primaryTextureName, ".sph") != NULL;
+        m_firstSPA = strstr(m_primaryTextureName, ".spa") != NULL;
+        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
+    }
+
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);
     m_diffuse.setValue(diffuse[0], diffuse[1], diffuse[2], 1.0f);
     m_specular.setValue(specular[0], specular[1], specular[2], 1.0f);
+    btVector3 ac((m_diffuse + m_ambient) * 0.5f);
+    m_averageColor.setValue(ac.x(), ac.y(), ac.z(), 1.0f);
     m_alpha = alpha;
     m_shiness = shiness;
     m_toonID = toonID;

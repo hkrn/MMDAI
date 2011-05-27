@@ -147,6 +147,9 @@ public:
     const void *textureCoordsPointer() const {
         return &m_skinnedVertices[0].texureCoord;
     }
+    const void *toonTextureCoordsPointer() const {
+        return &m_toonTextureCoords[0];
+    }
 
     void setName(const char *value) {
         stringCopySafe(m_name, value, sizeof(m_name));

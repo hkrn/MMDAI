@@ -7,6 +7,8 @@
 namespace vpvl
 {
 
+typedef struct MaterialPrivate MaterialPrivate;
+
 class Material
 {
 public:
@@ -17,8 +19,11 @@ public:
 
     void read(const char *data);
 
-    const char *name() const {
-        return m_name;
+    const char *primaryTextureName() const {
+        return m_primaryTextureName;
+    }
+    const char *secondTextureName() const {
+        return m_secondTextureName;
     }
     const btVector4 &ambient() const {
         return m_ambient;
@@ -44,9 +49,27 @@ public:
     bool isEdgeEnabled() const {
         return m_edge;
     }
+    bool isSpherePrimary() const {
+        return m_firstSPH;
+    }
+    bool isSphereAuxPrimary() const {
+        return m_firstSPA;
+    }
+    bool isSphereSecond() const {
+        return m_secondSPH;
+    }
+    bool isSphereAuxSecond() const {
+        return m_secondSPA;
+    }
+    MaterialPrivate *privateData() const {
+        return m_private;
+    }
 
-    void setName(const char *value) {
-        stringCopySafe(m_name, value, sizeof(m_name));
+    void setPrimaryTextureName(const char *value) {
+        stringCopySafe(m_primaryTextureName, value, sizeof(m_primaryTextureName));
+    }
+    void setSecondTextureName(const char *value) {
+        stringCopySafe(m_secondTextureName, value, sizeof(m_secondTextureName));
     }
     void setAmbient(const btVector4 &value) {
         m_ambient = value;
@@ -69,9 +92,13 @@ public:
     void setEdgeEnabled(bool value) {
         m_edge = value;
     }
+    void setPrivateData(MaterialPrivate *value) {
+        m_private = value;
+    }
 
 private:
-    char m_name[20];
+    char m_primaryTextureName[20];
+    char m_secondTextureName[20];
     btVector4 m_ambient;
     btVector4 m_averageColor;
     btVector4 m_diffuse;
@@ -81,6 +108,11 @@ private:
     uint32_t m_nindices;
     uint8_t m_toonID;
     bool m_edge;
+    bool m_firstSPH;
+    bool m_firstSPA;
+    bool m_secondSPH;
+    bool m_secondSPA;
+    MaterialPrivate *m_private;
 };
 
 typedef btAlignedObjectArray<Material*> MaterialList;
