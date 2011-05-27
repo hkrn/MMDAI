@@ -73,7 +73,7 @@ public:
     }
 
     void setName(const char *value) {
-        vpvlStringCopySafe(m_name, value, sizeof(m_name));
+        stringCopySafe(m_name, value, sizeof(m_name));
     }
     void setCurrentTransform(const btTransform &value) {
         m_currentTransform = value;

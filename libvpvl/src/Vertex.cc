@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -36,8 +37,8 @@ void Vertex::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
     float pos[3], normal[3];
-    vpvlStringGetVector3(ptr, pos);
-    vpvlStringGetVector3(ptr, normal);
+    vector3(ptr, pos);
+    vector3(ptr, normal);
     float u = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float v = *reinterpret_cast<float *>(ptr);

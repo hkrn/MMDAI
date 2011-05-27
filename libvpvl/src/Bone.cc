@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -48,7 +49,7 @@ Bone *Bone::centerBone(btAlignedObjectArray<Bone*> *bones)
     int nbones = bones->size();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones->at(i);
-        if (vpvlStringEquals(bone->name(), ""))
+        if (stringEquals(bone->name(), ""))
             return bone;
     }
     return bones->at(0);
@@ -62,7 +63,7 @@ size_t Bone::stride(const char * /* data */)
 void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
 {
     char *ptr = const_cast<char *>(data);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     int16_t parentBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
@@ -73,7 +74,7 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *root
     int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
     float pos[3];
-    vpvlStringGetVector3(ptr, pos);
+    vector3(ptr, pos);
 
     int nbones = bones->size();
     if (parentBoneID != -1 && parentBoneID < nbones) {

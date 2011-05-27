@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -19,13 +20,13 @@ size_t BoneKeyFrame::stride(const char * /* data */)
 void BoneKeyFrame::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
     float pos[3], rot[4];
-    vpvlStringGetVector3(ptr, pos);
-    vpvlStringGetVector4(ptr, rot);
+    vector3(ptr, pos);
+    vector4(ptr, rot);
     memcpy(m_interpolationTable, ptr, sizeof(m_interpolationTable));
     data += sizeof(m_interpolationTable);
 

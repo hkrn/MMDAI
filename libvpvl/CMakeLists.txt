@@ -28,6 +28,7 @@ set(vpvl_public_headers
 set(vpvl_internal_headers
     include/vpvl/internal/PMDModel.h
     include/vpvl/internal/VMDMotion.h
+    include/vpvl/internal/util.h
 )
 
 function(link_bullet target)

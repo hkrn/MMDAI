@@ -49,7 +49,7 @@ public:
     }
 
     void setName(const char *value) {
-        vpvlStringCopySafe(m_name, value, sizeof(m_name));
+        stringCopySafe(m_name, value, sizeof(m_name));
     }
     void setWeight(float value) {
         m_weight = value;

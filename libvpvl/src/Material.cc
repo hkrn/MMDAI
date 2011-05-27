@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -38,20 +39,20 @@ void Material::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
     float ambient[3], diffuse[3], specular[3];
-    vpvlStringGetVector3(ptr, diffuse);
+    vector3(ptr, diffuse);
     float alpha = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float shiness = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
-    vpvlStringGetVector3(ptr, specular);
-    vpvlStringGetVector3(ptr, ambient);
+    vector3(ptr, specular);
+    vector3(ptr, ambient);
     uint8_t toonID = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
     uint8_t edge = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
     uint32_t nindices = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);
     m_diffuse.setValue(diffuse[0], diffuse[1], diffuse[2], 1.0f);
     m_specular.setValue(specular[0], specular[1], specular[2], 1.0f);

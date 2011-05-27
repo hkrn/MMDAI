@@ -149,21 +149,21 @@ public:
     }
 
     void setName(const char *value) {
-        vpvlStringCopySafe(m_name, value, sizeof(m_name));
+        stringCopySafe(m_name, value, sizeof(m_name));
     }
     void setComment(const char *value) {
-        vpvlStringCopySafe(m_comment, value, sizeof(m_comment));
+        stringCopySafe(m_comment, value, sizeof(m_comment));
     }
     void setEnglishName(const char *value) {
-        vpvlStringCopySafe(m_englishName, value, sizeof(m_englishName));
+        stringCopySafe(m_englishName, value, sizeof(m_englishName));
     }
     void setEnglishComment(const char *value) {
-        vpvlStringCopySafe(m_englishComment, value, sizeof(m_englishComment));
+        stringCopySafe(m_englishComment, value, sizeof(m_englishComment));
     }
     void setToonTextures(const char *ptr) {
         char *p = const_cast<char *>(ptr);
         for (int i = 0; i < 10; i++) {
-            vpvlStringCopySafe(m_textures[i], ptr, sizeof(m_textures[i]));
+            stringCopySafe(m_textures[i], ptr, sizeof(m_textures[i]));
             p += 100;
         }
     }

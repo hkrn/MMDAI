@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -24,8 +25,8 @@ void CameraKeyFrame::read(const char *data)
     float distance = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float pos[3], angle[3];
-    vpvlStringGetVector3(ptr, pos);
-    vpvlStringGetVector3(ptr, angle);
+    vector3(ptr, pos);
+    vector3(ptr, angle);
     memcpy(m_interpolationTable, ptr, sizeof(m_interpolationTable));
     ptr += sizeof(m_interpolationTable);
     uint32_t fovy = *reinterpret_cast<uint32_t *>(ptr);
@@ -39,10 +40,10 @@ void CameraKeyFrame::read(const char *data)
     m_noPerspective = noPerspective == 1;
 #ifdef VPVL_COORDINATE_OPENGL
     m_position.setValue(pos[0], pos[1], -pos[2]);
-    m_angle.setValue(-vpvlMathDegree(angle[0]), -vpvlMathDegree(angle[1]), vpvlMathDegree(angle[2]));
+    m_angle.setValue(-degree(angle[0]), -degree(angle[1]), degree(angle[2]));
 #else
     m_position.setValue(pos[0], pos[1], pos[2]);
-    m_angle.setValue(vpvlMathDegree(angle[0]), vpvlMathDegree(angle[1]), vpvlMathDegree(angle[2]));
+    m_angle.setValue(degree(angle[0]), degree(angle[1]), degree(angle[2]));
 #endif
 }
 

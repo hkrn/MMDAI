@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -44,7 +45,7 @@ size_t Face::stride(const char *data)
 void Face::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
@@ -57,7 +58,7 @@ void Face::read(const char *data)
             vertex->id = *reinterpret_cast<uint32_t *>(ptr);
             ptr += sizeof(uint32_t);
             float pos[3];
-            vpvlStringGetVector3(ptr, pos);
+            vector3(ptr, pos);
 #ifdef VPVL_COORDINATE_OPENGL
             vertex->position.setValue(pos[0], pos[1], -pos[2]);
 #else

@@ -1,5 +1,6 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/VMDMotion.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -38,26 +39,26 @@ bool VMDMotion::preparse()
 
     /* bone key frame */
     size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames;
-    if (!vpvlDataGetSize32(ptr, rest, nBoneKeyFrames))
+    if (!size32(ptr, rest, nBoneKeyFrames))
         return false;
     m_result.boneKeyFramePtr = ptr;
-    if (!vpvlDataValidateSize(ptr, BoneKeyFrame::stride(ptr), nBoneKeyFrames, rest))
+    if (!validateSize(ptr, BoneKeyFrame::stride(ptr), nBoneKeyFrames, rest))
         return false;
     m_result.boneKeyFrameCount = nBoneKeyFrames;
 
     /* face key frame */
-    if (!vpvlDataGetSize32(ptr, rest, nFaceKeyFrames))
+    if (!size32(ptr, rest, nFaceKeyFrames))
         return false;
     m_result.faceKeyFramePtr = ptr;
-    if (!vpvlDataValidateSize(ptr, FaceKeyFrame::stride(ptr), nFaceKeyFrames, rest))
+    if (!validateSize(ptr, FaceKeyFrame::stride(ptr), nFaceKeyFrames, rest))
         return false;
     m_result.faceKeyFrameCount = nFaceKeyFrames;
 
     /* camera key frame */
-    if (!vpvlDataGetSize32(ptr, rest, nCameraKeyFrames))
+    if (!size32(ptr, rest, nCameraKeyFrames))
         return false;
     m_result.cameraKeyFramePtr = ptr;
-    if (!vpvlDataValidateSize(ptr, CameraKeyFrame::stride(ptr), nCameraKeyFrames, rest))
+    if (!validateSize(ptr, CameraKeyFrame::stride(ptr), nCameraKeyFrames, rest))
         return false;
     m_result.cameraKeyFrameCount = nCameraKeyFrames;
 
@@ -80,7 +81,7 @@ bool VMDMotion::parse()
 
 void VMDMotion::parseHeader()
 {
-    vpvlStringCopySafe(m_name, m_result.namePtr, sizeof(m_name));
+    stringCopySafe(m_name, m_result.namePtr, sizeof(m_name));
 }
 
 void VMDMotion::parseBoneFrames()

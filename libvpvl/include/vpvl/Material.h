@@ -46,7 +46,7 @@ public:
     }
 
     void setName(const char *value) {
-        vpvlStringCopySafe(m_name, value, sizeof(m_name));
+        stringCopySafe(m_name, value, sizeof(m_name));
     }
     void setAmbient(const btVector4 &value) {
         m_ambient = value;

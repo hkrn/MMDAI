@@ -1,4 +1,5 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -24,19 +25,19 @@ size_t Constraint::stride(const char * /* data */)
 void Constraint::read(const char *data, const RigidBodyList &bodies, const btVector3 &offset)
 {
     char *ptr = const_cast<char *>(data);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     int32_t bodyID1 = *reinterpret_cast<int32_t *>(ptr);
     ptr += sizeof(uint32_t);
     int32_t bodyID2 = *reinterpret_cast<int32_t *>(ptr);
     ptr += sizeof(uint32_t);
     float pos[3], rot[3], limitPosFrom[3], limitPosTo[3], limitRotFrom[3], limitRotTo[3], stiffness[6];
-    vpvlStringGetVector3(ptr, pos);
-    vpvlStringGetVector3(ptr, rot);
-    vpvlStringGetVector3(ptr, limitPosFrom);
-    vpvlStringGetVector3(ptr, limitPosTo);
-    vpvlStringGetVector3(ptr, limitRotFrom);
-    vpvlStringGetVector3(ptr, limitRotTo);
+    vector3(ptr, pos);
+    vector3(ptr, rot);
+    vector3(ptr, limitPosFrom);
+    vector3(ptr, limitPosTo);
+    vector3(ptr, limitRotFrom);
+    vector3(ptr, limitRotTo);
     for (int i = 0; i < 6; i++) {
         stiffness[i] = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);

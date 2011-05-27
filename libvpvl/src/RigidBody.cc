@@ -1,5 +1,6 @@
 #include <btBulletDynamicsCommon.h>
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -105,7 +106,7 @@ size_t RigidBody::stride(const char * /* data */)
 void RigidBody::read(const char *data, BoneList *bones)
 {
     char *ptr = const_cast<char *>(data);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     uint16_t boneID = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(int16_t);
@@ -122,8 +123,8 @@ void RigidBody::read(const char *data, BoneList *bones)
     float depth = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float pos[3], rot[3];
-    vpvlStringGetVector3(ptr, pos);
-    vpvlStringGetVector3(ptr, rot);
+    vector3(ptr, pos);
+    vector3(ptr, rot);
     float mass = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float linearDamping = *reinterpret_cast<float *>(ptr);

@@ -19,7 +19,7 @@ size_t FaceKeyFrame::stride(const char * /* data */)
 void FaceKeyFrame::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
-    vpvlStringCopySafe(m_name, ptr, sizeof(m_name));
+    stringCopySafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);

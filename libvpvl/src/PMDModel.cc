@@ -1,5 +1,6 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/PMDModel.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -276,74 +277,74 @@ bool PMDModel::preparse()
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
             nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
     /* vertex */
-    if (!vpvlDataGetSize32(ptr, rest, nVertices))
+    if (!size32(ptr, rest, nVertices))
         return false;
     m_result.verticesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Vertex::stride(ptr), nVertices, rest))
+    if (!validateSize(ptr, Vertex::stride(ptr), nVertices, rest))
         return false;
     m_result.verticesCount = nVertices;
 
     /* index */
-    if (!vpvlDataGetSize32(ptr, rest, nIndices))
+    if (!size32(ptr, rest, nIndices))
         return false;
     m_result.indicesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t), nIndices, rest))
+    if (!validateSize(ptr, sizeof(uint16_t), nIndices, rest))
         return false;
     m_result.indicesCount = nIndices;
 
     /* material */
-    if (!vpvlDataGetSize32(ptr, rest, nMaterials))
+    if (!size32(ptr, rest, nMaterials))
         return false;
     m_result.materialsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Material::stride(ptr), nMaterials, rest))
+    if (!validateSize(ptr, Material::stride(ptr), nMaterials, rest))
         return false;
     m_result.materialsCount = nMaterials;
 
     /* bone */
-    if (!vpvlDataGetSize16(ptr, rest, nBones))
+    if (!size16(ptr, rest, nBones))
         return false;
     m_result.bonesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Bone::stride(ptr), nBones, rest))
+    if (!validateSize(ptr, Bone::stride(ptr), nBones, rest))
         return false;
     m_result.bonesCount = nBones;
 
     /* IK */
-    if (!vpvlDataGetSize16(ptr, rest, nIKs))
+    if (!size16(ptr, rest, nIKs))
         return false;
     m_result.IKsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, IK::totalSize(ptr, nIKs), 1, rest))
+    if (!validateSize(ptr, IK::totalSize(ptr, nIKs), 1, rest))
         return false;
     m_result.IKsCount = nIKs;
 
     /* face */
-    if (!vpvlDataGetSize16(ptr, rest, nFaces))
+    if (!size16(ptr, rest, nFaces))
         return false;
     m_result.facesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Face::totalSize(ptr, nFaces), 1, rest))
+    if (!validateSize(ptr, Face::totalSize(ptr, nFaces), 1, rest))
         return false;
     m_result.facesCount = nFaces;
 
     /* face display names */
-    if (!vpvlDataGetSize8(ptr, rest, nFaceNames))
+    if (!size8(ptr, rest, nFaceNames))
         return false;
     m_result.faceDisplayNamesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t), nFaceNames, rest))
+    if (!validateSize(ptr, sizeof(uint16_t), nFaceNames, rest))
         return false;
     m_result.faceDisplayNamesCount = nFaceNames;
 
     /* bone frame names */
-    if (!vpvlDataGetSize8(ptr, rest, nBoneFrames))
+    if (!size8(ptr, rest, nBoneFrames))
         return false;
     m_result.boneFrameNamesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, 50, nBoneFrames, rest))
+    if (!validateSize(ptr, 50, nBoneFrames, rest))
         return false;
     m_result.boneFrameNamesCount = nBoneFrames;
 
     /* bone display names */
-    if (!vpvlDataGetSize32(ptr, rest, nBoneNames))
+    if (!size32(ptr, rest, nBoneNames))
         return false;
     m_result.boneDisplayNamesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest))
+    if (!validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest))
         return false;
     m_result.boneDisplayNamesCount = nBoneNames;
 
@@ -352,7 +353,7 @@ bool PMDModel::preparse()
 
     /* english names */
     size_t english;
-    vpvlDataGetSize8(ptr, rest, english);
+    size8(ptr, rest, english);
     if (english == 1) {
         size_t tmp = nFaces > 0 ? (nFaces - 1) * 20 : 0;
         const size_t required = 20 * nBones + tmp + 50 * nBoneFrames;
@@ -377,18 +378,18 @@ bool PMDModel::preparse()
         return true;
 
     /* rigid body */
-    if (!vpvlDataGetSize32(ptr, rest, nRigidBodies))
+    if (!size32(ptr, rest, nRigidBodies))
         return false;
     m_result.rigidBodiesPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, RigidBody::stride(ptr), nRigidBodies, rest))
+    if (!validateSize(ptr, RigidBody::stride(ptr), nRigidBodies, rest))
         return false;
     m_result.rigidBodiesCount = nRigidBodies;
 
     /* constranint */
-    if (!vpvlDataGetSize32(ptr, rest, nConstranits))
+    if (!size32(ptr, rest, nConstranits))
         return false;
     m_result.constraintsPtr = ptr;
-    if (!vpvlDataValidateSize(ptr, Constraint::stride(ptr), nConstranits, rest))
+    if (!validateSize(ptr, Constraint::stride(ptr), nConstranits, rest))
         return false;
     m_result.constranitsCount = nConstranits;
 
