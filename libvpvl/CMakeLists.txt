@@ -14,11 +14,6 @@ set(vpvl_public_headers
     include/vpvl/Face.h
     include/vpvl/FaceKeyFrame.h
     include/vpvl/IK.h
-    include/vpvl/IModel.h
-    include/vpvl/IModelParser.h
-    include/vpvl/IMotion.h
-    include/vpvl/IMotionParser.h
-    include/vpvl/IParser.h
     include/vpvl/Material.h
     include/vpvl/RigidBody.h
     include/vpvl/Vertex.h
