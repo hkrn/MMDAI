@@ -32,6 +32,8 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
         fprintf(stderr, "Unable to get video info: %s", SDL_GetError());
@@ -65,12 +67,14 @@ static void LoadTexture(const char *path, GLuint &texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        GLenum format;
+        GLenum format, internal;
         if (surface->format->BitsPerPixel == 32) {
-            format = GL_RGBA;
+            format = GL_BGRA;
+            internal = GL_RGBA8;
         }
         else if (surface->format->BitsPerPixel == 24) {
-            format = GL_RGB;
+            format = GL_BGR;
+            internal = GL_RGB8;
         }
         else {
             printf("unknown image format: %s", path);
@@ -78,7 +82,7 @@ static void LoadTexture(const char *path, GLuint &texture)
             return;
         }
         SDL_LockSurface(surface);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, surface->w, surface->h, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, internal, surface->w, surface->h, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -412,6 +416,11 @@ int main(int argc, char *argv[])
         return -1;
     }
     atexit(SDL_Quit);
+    if (IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF) < 0) {
+        fprintf(stderr, "Unable to init SDL_image: %s", IMG_GetError());
+        return -1;
+    }
+    atexit(IMG_Quit);
 
     SDL_Surface *surface;
     char *data;
