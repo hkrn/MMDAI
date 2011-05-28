@@ -169,9 +169,10 @@ static void DrawModel(const vpvl::PMDModel &model)
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(3, GL_FLOAT, model.stride(), model.verticesPointer());
-    glNormalPointer(GL_FLOAT, model.stride(), model.normalsPointer());
-    glTexCoordPointer(2, GL_FLOAT, model.stride(), model.textureCoordsPointer());
+    size_t stride = model.stride();
+    glVertexPointer(3, GL_FLOAT, stride, model.verticesPointer());
+    glNormalPointer(GL_FLOAT, stride, model.normalsPointer());
+    glTexCoordPointer(2, GL_FLOAT, stride, model.textureCoordsPointer());
     bool enableToon = true;
     // toon
     if (enableToon) {
@@ -373,6 +374,16 @@ static void DrawModelEdge(const vpvl::PMDModel &model)
 #endif
 }
 
+static void DrawModelShadow(const vpvl::PMDModel &model)
+{
+    glDisable(GL_CULL_FACE);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, model.stride(), model.verticesPointer());
+    glDrawElements(GL_TRIANGLES, model.indices().size(), GL_UNSIGNED_SHORT, model.indicesPointer());
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_CULL_FACE);
+}
+
 static void DrawSurface(vpvl::PMDModel &model, int width, int height)
 {
     float matrix[16] = {
@@ -404,6 +415,7 @@ static void DrawSurface(vpvl::PMDModel &model, int width, int height)
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     // render shadow
+    DrawModelShadow(model);
     glPopMatrix();
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
