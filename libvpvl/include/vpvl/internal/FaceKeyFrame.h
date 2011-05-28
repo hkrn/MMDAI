@@ -31,14 +31,14 @@ public:
         float weight = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
 
-        m_index = index;
+        m_index = static_cast<float>(index);
         m_weight = weight;
     }
 
     const char *name() const {
         return m_name;
     }
-    uint32_t index() const {
+    float index() const {
         return m_index;
     }
     float weight() const {
@@ -47,7 +47,7 @@ public:
 
 private:
     char m_name[15];
-    uint32_t m_index;
+    float m_index;
     float m_weight;
 };
 
