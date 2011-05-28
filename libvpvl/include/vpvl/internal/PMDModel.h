@@ -81,7 +81,7 @@ public:
     const VertexList &vertices() const {
         return m_vertices;
     }
-    const uint16_t *indices() const {
+    const IndexList &indices() const {
         return m_indices;
     }
     const MaterialList &materials() const {
@@ -150,6 +150,18 @@ public:
     const void *toonTextureCoordsPointer() const {
         return &m_toonTextureCoords[0];
     }
+    const void *edgeVerticesPointer() const {
+        return &m_edgeVertices[0];
+    }
+    const uint16_t *indicesPointer() const {
+        return m_indicesPointer;
+    }
+    const uint16_t *edgeIndicesPointer() const {
+        return m_edgeIndicesPointer;
+    }
+    uint32_t edgeIndicesCount() const {
+        return m_edgeIndicesCount;
+    }
 
     void setName(const char *value) {
         stringCopySafe(m_name, value, sizeof(m_name));
@@ -201,6 +213,7 @@ private:
     void updateShadowTextureCoords(float coef);
     void updateSkinVertices();
     void updateToon(const btVector3 &lightDirection);
+    void updateIndices();
 
     char m_name[20];
     char m_comment[256];
@@ -208,7 +221,7 @@ private:
     char m_englishComment[256];
     char m_textures[10][100];
     VertexList m_vertices;
-    uint16_t *m_indices;
+    IndexList m_indices;
     MaterialList m_materials;
     BoneList m_bones;
     IKList m_IKs;
@@ -219,12 +232,14 @@ private:
     PMDModelDataInfo m_result;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<btVector3> m_edgeVertices;
-    btAlignedObjectArray<uint16_t> m_edgeIndices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;
     btAlignedObjectArray<btVector3> m_shadowTextureCoords;
     btAlignedObjectArray<uint16_t> m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
+    uint16_t *m_indicesPointer;
+    uint16_t *m_edgeIndicesPointer;
+    uint32_t m_edgeIndicesCount;
     btVector3 m_lightDirection;
     const size_t m_size;
     const char *m_data;

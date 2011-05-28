@@ -95,7 +95,7 @@ static void LoadTexture(const char *path, GLuint &texture)
 static void LoadModelTextures(const vpvl::PMDModel &model)
 {
     const vpvl::MaterialList materials = model.materials();
-    uint32_t nMaterials = materials.size();
+    const uint32_t nMaterials = materials.size();
     for (uint32_t i = 0; i <nMaterials; i++) {
         vpvl::Material *material = materials[i];
         const char *primary = material->primaryTextureName();
@@ -123,7 +123,7 @@ static void LoadModelTextures(const vpvl::PMDModel &model)
 static void UnloadModelTextures(const vpvl::PMDModel &model)
 {
     const vpvl::MaterialList materials = model.materials();
-    uint32_t nMaterials = materials.size();
+    const uint32_t nMaterials = materials.size();
     for (uint32_t i = 0; i < nMaterials; i++) {
         vpvl::MaterialPrivate *data = materials[i]->privateData();
         glDeleteTextures(1, &data->primaryTextureID);
@@ -158,6 +158,12 @@ static void SetLighting(vpvl::PMDModel &model)
 
 static void DrawModel(const vpvl::PMDModel &model)
 {
+#ifndef VPVL_COORDINATE_OPENGL
+    glPushMatrix();
+    glScalef(1.0f, 1.0f, -1.0f);
+    glCullFace(GL_FRONT);
+#endif
+
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -177,17 +183,17 @@ static void DrawModel(const vpvl::PMDModel &model)
         if (false)
             glTexCoordPointer(2, GL_FLOAT, 0, 0);
         else
-            glTexCoordPointer(2, GL_FLOAT, 0, model.toonTextureCoordsPointer());
+            glTexCoordPointer(2, GL_FLOAT, sizeof(btVector3), model.toonTextureCoordsPointer());
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
     }
     bool hasSPH = false, hasSPA = false;
     const vpvl::MaterialList materials = model.materials();
-    uint32_t nMaterials = materials.size();
-    uint16_t *indicesPtr = const_cast<uint16_t *>(model.indices());
+    const uint32_t nMaterials = materials.size();
+    uint16_t *indicesPtr = const_cast<uint16_t *>(model.indicesPointer());
     for (uint32_t i = 0; i <nMaterials; i++) {
-        vpvl::Material *material = materials[i];
-        vpvl::MaterialPrivate *data = material->privateData();
+        const vpvl::Material *material = materials[i];
+        const vpvl::MaterialPrivate *data = material->privateData();
         // first sphere map
         if (!hasSPH && (material->isSpherePrimary() || material->isSphereSecond())) {
             glEnable(GL_TEXTURE_2D);
@@ -266,7 +272,7 @@ static void DrawModel(const vpvl::PMDModel &model)
             glDisable(GL_TEXTURE_2D);
         }
         // draw
-        uint32_t nIndices = material->countIndices();
+        const uint32_t nIndices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, indicesPtr);
         indicesPtr += nIndices;
         // is aux sphere map
@@ -331,6 +337,40 @@ static void DrawModel(const vpvl::PMDModel &model)
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
+
+#ifndef VPVL_COORDINATE_OPENGL
+    glPopMatrix();
+    glCullFace(GL_BACK);
+#endif
+}
+
+static void DrawModelEdge(const vpvl::PMDModel &model)
+{
+#ifdef VPVL_COORDINATE_OPENGL
+    glCullFace(GL_FRONT);
+#else
+    glPushMatrix();
+    glScalef(1.0f, 1.0f, -1.0f);
+    glCullFace(GL_BACK);
+#endif
+
+    const float alpha = 1.0f;
+    const btVector4 color(0.0f, 0.0f, 0.0f, alpha);
+
+    glDisable(GL_LIGHTING);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(btVector3), model.edgeVerticesPointer());
+    glColor4fv(static_cast<const btScalar *>(color));
+    glDrawElements(GL_TRIANGLES, model.edgeIndicesCount(), GL_UNSIGNED_SHORT, model.edgeIndicesPointer());
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_LIGHTING);
+
+#ifdef VPVL_COORDINATE_OPENGL
+    glCullFace(GL_BACK);
+#else
+    glPopMatrix();
+    glCullFace(GL_FRONT);
+#endif
 }
 
 static void DrawSurface(vpvl::PMDModel &model, int width, int height)
@@ -371,8 +411,9 @@ static void DrawSurface(vpvl::PMDModel &model, int width, int height)
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
-    // render model and shadow
+    // render model and edge
     DrawModel(model);
+    DrawModelEdge(model);
     SDL_GL_SwapBuffers();
 }
 
