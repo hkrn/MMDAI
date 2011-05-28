@@ -2,9 +2,9 @@
 #define VPVL_VMDMOTION_H_
 
 #include "LinearMath/btHashMap.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/FaceKeyFrame.h"
+#include "vpvl/BoneMotion.h"
+#include "vpvl/CameraMotion.h"
+#include "vpvl/FaceMotion.h"
 
 namespace vpvl
 {
@@ -43,14 +43,14 @@ public:
     size_t size() const {
         return m_size;
     }
-    const BoneKeyFrameList &boneKeyFrames() const {
-        return m_boneKeyFrames;
+    const BoneMotion &bone() const {
+        return m_boneMotion;
     }
-    const CameraKeyFrameList &cameraKeyFrames() const {
-        return m_cameraKeyFrames;
+    const CameraMotion &camera() const {
+        return m_cameraMotion;
     }
-    const FaceKeyFrameList &faceKeyFrames() const {
-        return m_faceKeyFrames;
+    const FaceMotion &face() const {
+        return m_faceMotion;
     }
     const VMDMotionDataInfo &result() const {
         return m_result;
@@ -66,11 +66,9 @@ private:
 
     char m_name[20];
     VMDMotionDataInfo m_result;
-    BoneKeyFrameList m_boneKeyFrames;
-    CameraKeyFrameList m_cameraKeyFrames;
-    FaceKeyFrameList m_faceKeyFrames;
-    btHashMap<const char *, BoneKeyFrame *> m_name2bone;
-    btHashMap<const char *, FaceKeyFrame *> m_name2face;
+    BoneMotion m_boneMotion;
+    CameraMotion m_cameraMotion;
+    FaceMotion m_faceMotion;
     const char *m_data;
     const size_t m_size;
 };

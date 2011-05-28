@@ -60,9 +60,9 @@ TEST(VMDMotionTest, ParseMotionVMD) {
     vpvl::VMDMotion motion(data, size);
     EXPECT_TRUE(motion.parse());
     vpvl::VMDMotionDataInfo result = motion.result();
-    EXPECT_EQ(motion.boneKeyFrames().size(), result.boneKeyFrameCount);
-    EXPECT_EQ(motion.faceKeyFrames().size(), result.faceKeyFrameCount);
-    EXPECT_EQ(motion.cameraKeyFrames().size(), result.cameraKeyFrameCount);
+    EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
+    EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
+    EXPECT_EQ(motion.camera().frames().size(), result.cameraKeyFrameCount);
     delete[] data;
 }
 
@@ -73,8 +73,8 @@ TEST(VMDMotionTest, ParseCameraVMD) {
     vpvl::VMDMotion motion(data, size);
     EXPECT_TRUE(motion.parse());
     vpvl::VMDMotionDataInfo result = motion.result();
-    EXPECT_EQ(motion.boneKeyFrames().size(), result.boneKeyFrameCount);
-    EXPECT_EQ(motion.faceKeyFrames().size(), result.faceKeyFrameCount);
-    EXPECT_EQ(motion.cameraKeyFrames().size(), result.cameraKeyFrameCount);
+    EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
+    EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
+    EXPECT_EQ(motion.camera().frames().size(), result.cameraKeyFrameCount);
     delete[] data;
 }

@@ -1,4 +1,7 @@
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/BoneKeyFrame.h"
+#include "vpvl/internal/CameraKeyFrame.h"
+#include "vpvl/internal/FaceKeyFrame.h"
 #include "vpvl/internal/VMDMotion.h"
 #include "vpvl/internal/util.h"
 
@@ -86,41 +89,17 @@ void VMDMotion::parseHeader()
 
 void VMDMotion::parseBoneFrames()
 {
-    char *ptr = const_cast<char *>(m_result.boneKeyFramePtr);
-    int nBoneKeyFrames = m_result.boneKeyFrameCount;
-    m_boneKeyFrames.reserve(nBoneKeyFrames);
-    for (int i = 0; i < nBoneKeyFrames; i++) {
-        BoneKeyFrame *frame = new BoneKeyFrame();
-        frame->read(ptr);
-        ptr += BoneKeyFrame::stride(ptr);
-        m_boneKeyFrames.push_back(frame);
-    }
+    m_boneMotion.read(m_result.boneKeyFramePtr, m_result.boneKeyFrameCount);
 }
 
 void VMDMotion::parseFaceFrames()
 {
-    char *ptr = const_cast<char *>(m_result.faceKeyFramePtr);
-    int nFaceKeyFrames = m_result.faceKeyFrameCount;
-    m_faceKeyFrames.reserve(nFaceKeyFrames);
-    for (int i = 0; i < nFaceKeyFrames; i++) {
-        FaceKeyFrame *frame = new FaceKeyFrame();
-        frame->read(ptr);
-        ptr += FaceKeyFrame::stride(ptr);
-        m_faceKeyFrames.push_back(frame);
-    }
+    m_faceMotion.read(m_result.faceKeyFramePtr, m_result.faceKeyFrameCount);
 }
 
 void VMDMotion::parseCameraFrames()
 {
-    char *ptr = const_cast<char *>(m_result.cameraKeyFramePtr);
-    int nCameraKeyFrames = m_result.cameraKeyFrameCount;
-    m_cameraKeyFrames.reserve(nCameraKeyFrames);
-    for (int i = 0; i < nCameraKeyFrames; i++) {
-        CameraKeyFrame *frame = new CameraKeyFrame();
-        frame->read(ptr);
-        ptr += CameraKeyFrame::stride(ptr);
-        m_cameraKeyFrames.push_back(frame);
-    }
+    m_cameraMotion.read(m_result.cameraKeyFramePtr, m_result.cameraKeyFrameCount);
 }
 
 void VMDMotion::parseLightFrames()
