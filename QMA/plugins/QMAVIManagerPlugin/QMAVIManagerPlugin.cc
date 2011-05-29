@@ -59,9 +59,9 @@ const QString QMAVIManagerPlugin::kKeyPost = "KEY_POST";
 const QString QMAVIManagerPlugin::kExecute = "EXECUTE";
 
 QMAVIManagerPlugin::QMAVIManagerPlugin(QObject *parent)
-    : QMAPlugin(parent),
-      m_thread(this)
+    : QMAPlugin(parent)
 {
+    connect(&m_scriptTimer, SIGNAL(timeout()), this, SLOT(executeScript()));
 }
 
 QMAVIManagerPlugin::~QMAVIManagerPlugin()
@@ -71,21 +71,22 @@ QMAVIManagerPlugin::~QMAVIManagerPlugin()
 void QMAVIManagerPlugin::load(MMDAI::SceneController *controller, const QString &baseName)
 {
     Q_UNUSED(controller);
-    if (!m_thread.isStarted()) {
-        QFile config(QString("MMDAIUserData:/%1.fst").arg(baseName));
-        if (config.exists() && config.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream stream(&config);
-            stream.setCodec("Shift-JIS");
-            m_thread.load(stream);
-            config.close();
-            m_thread.start();
-        }
+    QFile config(QString("MMDAIUserData:/%1.fst").arg(baseName));
+    if (!m_scriptTimer.isActive() && config.exists() && config.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream stream(&config);
+        stream.setCodec("Shift-JIS");
+        m_queue.clear();
+        m_script.load(stream);
+        config.close();
+        executeScriptEpsilons();
+        m_scriptTimer.start();
     }
 }
 
 void QMAVIManagerPlugin::unload()
 {
-    m_thread.stop();
+    m_scriptTimer.stop();
+    m_queue.clear();
 }
 
 void QMAVIManagerPlugin::receiveCommand(const QString &command, const QList<QVariant> &arguments)
@@ -134,34 +135,23 @@ void QMAVIManagerPlugin::receiveCommand(const QString &command, const QList<QVar
 
 void QMAVIManagerPlugin::receiveEvent(const QString &type, const QList<QVariant> &arguments)
 {
-    if (m_thread.isStarted() && !QMAPlugin::isRenderEvent(type)) {
+    if (!QMAPlugin::isRenderEvent(type)) {
         QStringList strings;
         foreach (QVariant arg, arguments) {
             strings << arg.toString();
         }
-        QByteArray typeBytes = type.toUtf8();
-        QByteArray stringsBytes = strings.join("|").toUtf8();
-        m_thread.enqueueBuffer(typeBytes.constData(), stringsBytes.constData());
+        QMAVIScriptArgument input(type, strings);
+        m_queue.enqueue(input);
     }
 }
 
-void QMAVIManagerPlugin::sendCommand(const char *command, char *arguments)
+void QMAVIManagerPlugin::sendCommand(const QMAVIScriptArgument &output)
 {
-    static QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QList<QVariant> args;
-    QString argv = codec->toUnicode(arguments);
-    foreach (QString value, argv.split("|")) {
+    foreach (QString value, output.arguments) {
         args << value;
     }
-    emit commandPost(command, args);
-    free(arguments);
-}
-
-void QMAVIManagerPlugin::sendEvent(const char *type, char *arguments)
-{
-    Q_UNUSED(type);
-    Q_UNUSED(arguments);
-    /* do nothing */
+    emit commandPost(output.type, args);
 }
 
 void QMAVIManagerPlugin::setValue(const QString &key, const QString &value, const QString &value2)
@@ -298,6 +288,26 @@ void QMAVIManagerPlugin::timerEvent(QTimerEvent *event)
     }
     else {
         MMDAILogWarn("%s seems deleted", key.toUtf8().constData());
+    }
+}
+
+void QMAVIManagerPlugin::executeScript()
+{
+    while (m_queue.size() > 0) {
+        QMAVIScriptArgument output, input = m_queue.dequeue();
+        m_script.setTransition(input, output);
+        if (output.type != QMAVIScript::kEPS)
+            sendCommand(output);
+        executeScriptEpsilons();
+    }
+}
+
+void QMAVIManagerPlugin::executeScriptEpsilons()
+{
+    QMAVIScriptArgument output, eps(QMAVIScript::kEPS, QStringList());
+    while (m_script.setTransition(eps, output)) {
+        if (output.type != QMAVIScript::kEPS)
+            sendCommand(output);
     }
 }
 

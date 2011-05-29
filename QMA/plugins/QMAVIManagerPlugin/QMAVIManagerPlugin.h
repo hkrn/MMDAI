@@ -41,12 +41,13 @@
 
 #include <QtCore/QBasicTimer>
 #include <QtCore/QHash>
+#include <QtCore/QQueue>
 #include <QtCore/QMap>
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 #include <QtCore/QTimerEvent>
 
-#include "VIManager_Thread.h"
-
+#include "QMAVIScript.h"
 #include "QMAPlugin.h"
 
 class VIManager_Thread;
@@ -75,9 +76,6 @@ public:
     QMAVIManagerPlugin(QObject *parent = 0);
     ~QMAVIManagerPlugin();
 
-    void sendCommand(const char *command, char *arguments);
-    void sendEvent(const char *type, char *arguments);
-
 public slots:
     void load(MMDAI::SceneController *controller, const QString &baseName);
     void unload();
@@ -91,17 +89,23 @@ signals:
 protected:
     void timerEvent(QTimerEvent *event);
 
+private slots:
+    void executeScript();
+
 private:
     void setValue(const QString &key, const QString &value, const QString &value2);
     void deleteValue(const QString &key);
     void evaluate(const QString &key, const QString &op, const QString &value);
     void startTimer0(const QString &key, const QString &value);
     void stopTimer0(const QString &key);
+    void sendCommand(const QMAVIScriptArgument &output);
+    void executeScriptEpsilons();
 
     QHash<QString, float> m_values;
     QMap<QString, QBasicTimer *> m_timers;
-    VIManager_Thread m_thread;
+    QQueue<QMAVIScriptArgument> m_queue;
+    QMAVIScript m_script;
+    QTimer m_scriptTimer;
 };
 
 #endif // QMAVIMANAGERPLUGIN_H
-

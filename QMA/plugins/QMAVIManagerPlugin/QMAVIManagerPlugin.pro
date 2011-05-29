@@ -39,11 +39,8 @@ TARGET = $$qtLibraryTarget(QMAVIManagerPlugin)
 
 HEADERS += \
     QMAVIManagerPlugin.h \
-    VIManager.h \
-    VIManager_Thread.h
+    QMAVIScript.h
 
 SOURCES += \
     QMAVIManagerPlugin.cc \
-    VIManager.cpp \
-    VIManager_Thread.cpp
-
+    QMAVIScript.cc
