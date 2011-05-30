@@ -70,17 +70,17 @@ void Material::read(const char *data)
     stringCopySafe(name, ptr, sizeof(name));
     if ((p = strchr(name, '*')) != NULL) {
         *p = 0;
+        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
+        stringCopySafe(m_secondTextureName, p + 1, sizeof(m_secondTextureName));
         m_firstSPH = strstr(m_primaryTextureName, ".sph") != NULL;
         m_firstSPA = strstr(m_primaryTextureName, ".spa") != NULL;
         m_secondSPH = strstr(m_secondTextureName, ".sph") != NULL;
         m_secondSPA = strstr(m_secondTextureName, ".spa") != NULL;
-        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
-        stringCopySafe(m_secondTextureName, p, sizeof(m_secondTextureName));
     }
     else {
+        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
         m_firstSPH = strstr(m_primaryTextureName, ".sph") != NULL;
         m_firstSPA = strstr(m_primaryTextureName, ".spa") != NULL;
-        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
     }
 
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);
@@ -90,7 +90,7 @@ void Material::read(const char *data)
     m_averageColor.setValue(ac.x(), ac.y(), ac.z(), 1.0f);
     m_alpha = alpha;
     m_shiness = shiness;
-    m_toonID = toonID;
+    m_toonID = toonID == 0xff ? 0 : toonID + 1;
     m_edge = edge;
     m_nindices = nindices;
 }

@@ -46,6 +46,9 @@ public:
     uint32_t countIndices() const {
         return m_nindices;
     }
+    uint8_t toonID() const {
+        return m_toonID;
+    }
     bool isEdgeEnabled() const {
         return m_edge;
     }

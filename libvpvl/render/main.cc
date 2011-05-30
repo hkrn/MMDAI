@@ -20,8 +20,16 @@ struct vpvl::MaterialPrivate {
     GLuint secondTextureID;
 };
 
+struct vpvl::PMDModelPrivate {
+    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
+};
+
 static const int g_width = 800;
 static const int g_height = 600;
+
+static const char *g_sysdir = "render/res/system";
+static const char *g_modeldir = "render/res/lat";
+static const char *g_modelname = "normal.pmd";
 
 static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
 {
@@ -77,7 +85,7 @@ static void LoadTexture(const char *path, GLuint &texture)
             internal = GL_RGB8;
         }
         else {
-            printf("unknown image format: %s", path);
+            fprintf(stderr, "unknown image format: %s\n", path);
             SDL_FreeSurface(surface);
             return;
         }
@@ -88,36 +96,43 @@ static void LoadTexture(const char *path, GLuint &texture)
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     else {
-        printf("failed loading %s: %s", path, IMG_GetError());
+        fprintf(stderr, "failed loading %s: %s\n", path, IMG_GetError());
     }
 }
 
-static void LoadModelTextures(const vpvl::PMDModel &model)
+static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const char *dir)
 {
+    char path[256];
     const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
+    GLuint textureID = 0;
     for (uint32_t i = 0; i <nMaterials; i++) {
         vpvl::Material *material = materials[i];
         const char *primary = material->primaryTextureName();
         const char *second = material->secondTextureName();
-        GLuint textureID = 0;
         vpvl::MaterialPrivate *data = new vpvl::MaterialPrivate;
         data->primaryTextureID = 0;
         data->secondTextureID = 0;
         if (*primary) {
-            char path[256];
-            snprintf(path, sizeof(path), "render/res/%s", primary);
+            snprintf(path, sizeof(path), "%s/%s", dir, primary);
             LoadTexture(path, textureID);
             data->primaryTextureID = textureID;
         }
         if (*second) {
-            char path[256];
-            snprintf(path, sizeof(path), "render/res/%s", second);
+            snprintf(path, sizeof(path), "%s/%s", dir, second);
             LoadTexture(path, textureID);
             data->secondTextureID = textureID;
         }
         material->setPrivateData(data);
     }
+    vpvl::PMDModelPrivate *data = new vpvl::PMDModelPrivate;
+    for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
+        const char *name = model.toonTexture(i);
+        snprintf(path, sizeof(path), "%s/%s", system, name);
+        LoadTexture(path, textureID);
+        data->toonTextureID[i] = textureID;
+    }
+    model.setPrivateData(data);
 }
 
 static void UnloadModelTextures(const vpvl::PMDModel &model)
@@ -130,6 +145,9 @@ static void UnloadModelTextures(const vpvl::PMDModel &model)
         glDeleteTextures(1, &data->secondTextureID);
         delete data;
     }
+    vpvl::PMDModelPrivate *data = model.privateData();
+    glDeleteTextures(sizeof(vpvl::PMDModel::kSystemTextureMax), data->toonTextureID);
+    delete data;
 }
 
 static void SetLighting(vpvl::PMDModel &model)
@@ -190,11 +208,12 @@ static void DrawModel(const vpvl::PMDModel &model)
     }
     bool hasSPH = false, hasSPA = false;
     const vpvl::MaterialList materials = model.materials();
+    const vpvl::PMDModelPrivate *modelPrivate = model.privateData();
     const uint32_t nMaterials = materials.size();
     uint16_t *indicesPtr = const_cast<uint16_t *>(model.indicesPointer());
     for (uint32_t i = 0; i <nMaterials; i++) {
         const vpvl::Material *material = materials[i];
-        const vpvl::MaterialPrivate *data = material->privateData();
+        const vpvl::MaterialPrivate *materialPrivate = material->privateData();
         // first sphere map
         if (!hasSPH && (material->isSpherePrimary() || material->isSphereSecond())) {
             glEnable(GL_TEXTURE_2D);
@@ -225,13 +244,11 @@ static void DrawModel(const vpvl::PMDModel &model)
         }
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
         material->alpha() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
-        // if toon or second sphere
-        if (enableToon || hasSPA)
-            glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         // has texture
-        if (data->primaryTextureID > 0) {
+        if (materialPrivate->primaryTextureID > 0) {
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, data->primaryTextureID);
+            glBindTexture(GL_TEXTURE_2D, materialPrivate->primaryTextureID);
             // is sphere map
             if (material->isSpherePrimary() || material->isSphereAuxPrimary()) {
                 // is second sphere map
@@ -250,26 +267,26 @@ static void DrawModel(const vpvl::PMDModel &model)
         }
         // toon
         if (enableToon) {
+            GLuint textureID = modelPrivate->toonTextureID[material->toonID()];
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, 0);
+            glBindTexture(GL_TEXTURE_2D, textureID);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
         // second sphere
-        if (data->secondTextureID > 0) {
-            glActiveTexture(GL_TEXTURE2);
+        glActiveTexture(GL_TEXTURE2);
+        if (materialPrivate->secondTextureID > 0) {
             glEnable(GL_TEXTURE_2D);
             // is second sphere
             if (material->isSphereAuxSecond())
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
             else
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            glBindTexture(GL_TEXTURE_2D, data->secondTextureID);
+            glBindTexture(GL_TEXTURE_2D, materialPrivate->secondTextureID);
             glEnable(GL_TEXTURE_GEN_S);
             glEnable(GL_TEXTURE_GEN_T);
         }
         else {
-            glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_2D);
         }
         // draw
@@ -278,8 +295,7 @@ static void DrawModel(const vpvl::PMDModel &model)
         indicesPtr += nIndices;
         // is aux sphere map
         if (material->isSphereAuxPrimary()) {
-            if (enableToon)
-                glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
     }
@@ -451,12 +467,17 @@ static bool PollEvents()
 
 static void FileSlurp(const char *path, char *&data, size_t &size) {
     FILE *fp = fopen(path, "rb");
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    data = new char[size];
-    fread(data, size, 1, fp);
-    fclose(fp);
+    if (fp) {
+        fseek(fp, 0, SEEK_END);
+        size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        data = new char[size];
+        fread(data, size, 1, fp);
+        fclose(fp);
+    }
+    else {
+        fprintf(stderr, "failed loading the model: %s\n", strerror(errno));
+    }
 }
 
 int main(int argc, char *argv[])
@@ -465,20 +486,21 @@ int main(int argc, char *argv[])
     (void) argv;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        fprintf(stderr, "Unable to init SDL: %s", SDL_GetError());
+        fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
         return -1;
     }
     atexit(SDL_Quit);
     if (IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF) < 0) {
-        fprintf(stderr, "Unable to init SDL_image: %s", IMG_GetError());
+        fprintf(stderr, "Unable to init SDL_image: %s\n", IMG_GetError());
         return -1;
     }
     atexit(IMG_Quit);
 
     SDL_Surface *surface;
-    char *data;
+    char *data = 0, path[256];
     size_t size;
-    FileSlurp("render/res/miku.pmd", data, size);
+    snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
+    FileSlurp(path, data, size);
     vpvl::PMDModel model(data, size);
     if (!InitializeSurface(surface, g_width, g_height)) {
         delete data;
@@ -486,11 +508,12 @@ int main(int argc, char *argv[])
     }
 
     if (!model.parse()) {
+        fprintf(stderr, "failed parsing the model\n");
         delete data;
         return -1;
     }
     SetLighting(model);
-    LoadModelTextures(model);
+    LoadModelTextures(model, g_sysdir, g_modeldir);
 
     while (true) {
         if (PollEvents())

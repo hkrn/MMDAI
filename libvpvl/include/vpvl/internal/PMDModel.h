@@ -45,6 +45,8 @@ struct SkinVertex
     btVector3 texureCoord;
 };
 
+typedef struct PMDModelPrivate PMDModelPrivate;
+
 class PMDModel
 {
 public:
@@ -54,6 +56,7 @@ public:
     static const uint32_t kBoundingSpherePoints = 1000;
     static const uint32_t kBoundingSpherePointsMax = 20;
     static const uint32_t kBoundingSpherePointsMin = 5;
+    static const uint32_t kSystemTextureMax = 10;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
@@ -105,8 +108,8 @@ public:
     BoneList *mutableBones() {
         return &m_bones;
     }
-    const char *toonTexture(unsigned int index) const {
-        if (index >= 10)
+    const char *toonTexture(uint32_t index) const {
+        if (index >= kSystemTextureMax)
             return NULL;
         return m_textures[index];
     }
@@ -127,6 +130,9 @@ public:
     }
     const PMDModelDataInfo &result() const {
         return m_result;
+    }
+    PMDModelPrivate *privateData() const {
+        return m_private;
     }
     const char *data() const {
         return m_data;
@@ -191,6 +197,9 @@ public:
     void setEnableSimulation(bool value) {
         m_enableSimulation = value;
     }
+    void setPrivateData(PMDModelPrivate *value) {
+        m_private = value;
+    }
 
 private:
     void parseHeader();
@@ -237,6 +246,7 @@ private:
     btAlignedObjectArray<uint16_t> m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
+    PMDModelPrivate *m_private;
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;

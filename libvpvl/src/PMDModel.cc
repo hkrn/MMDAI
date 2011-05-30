@@ -273,7 +273,7 @@ bool PMDModel::preparse()
 {
     size_t rest = m_size;
     /* header + version + name + comment */
-    if (283 > rest)
+    if (!m_data || 283 > rest)
         return false;
 
     char *ptr = const_cast<char *>(m_data);
@@ -542,8 +542,10 @@ void PMDModel::parseBoneDisplayNames()
 
 void PMDModel::parseEnglishDisplayNames()
 {
-    setEnglishName(m_result.englishNamePtr);
-    setEnglishComment(m_result.englishCommentPtr);
+    if (m_result.englishNamePtr)
+        setEnglishName(m_result.englishNamePtr);
+    if (m_result.englishCommentPtr)
+        setEnglishComment(m_result.englishCommentPtr);
 }
 
 void PMDModel::parseToonTextureNames()
