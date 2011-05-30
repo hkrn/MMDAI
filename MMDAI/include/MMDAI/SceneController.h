@@ -216,6 +216,9 @@ public:
     inline BulletPhysics *getPhysicalEngine() {
         return &m_bullet;
     }
+    inline void setEnablePhysicsSimulation(bool value) {
+        m_enablePhysicsSimulation = value;
+    }
 
 private:
     void updateModelViewMatrix();

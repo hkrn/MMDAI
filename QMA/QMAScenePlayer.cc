@@ -340,13 +340,7 @@ void QMAScenePlayer::setEdgeThin(float value)
 
 void QMAScenePlayer::setEnablePhysicalEngine(bool value)
 {
-    int max = m_controller->getMaxObjects();
-    for (int i = 0; i < max; i++) {
-        MMDAI::PMDObject *object = m_controller->getObjectAt(i);
-        if (object && object->isEnable()) {
-            object->getModel()->setPhysicsControl(value);
-        }
-    }
+    m_controller->setEnablePhysicsSimulation(value);
 }
 
 void QMAScenePlayer::updateShadowMapping()
