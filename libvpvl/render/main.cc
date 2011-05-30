@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -65,12 +66,13 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     return true;
 }
 
-static void LoadTexture(const char *path, GLuint &texture)
+static void LoadTexture(const char *path, GLuint &textureID)
 {
+    static const GLfloat priority = 1.0f;
     SDL_Surface *surface = IMG_Load(path);
     if (surface) {
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -79,10 +81,12 @@ static void LoadTexture(const char *path, GLuint &texture)
         if (surface->format->BitsPerPixel == 32) {
             format = GL_BGRA;
             internal = GL_RGBA8;
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         }
         else if (surface->format->BitsPerPixel == 24) {
             format = GL_BGR;
             internal = GL_RGB8;
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
         else {
             fprintf(stderr, "unknown image format: %s\n", path);
@@ -93,6 +97,7 @@ static void LoadTexture(const char *path, GLuint &texture)
         glTexImage2D(GL_TEXTURE_2D, 0, internal, surface->w, surface->h, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
+        glPrioritizeTextures(1, &textureID, &priority);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     else {
@@ -128,7 +133,15 @@ static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const c
     vpvl::PMDModelPrivate *data = new vpvl::PMDModelPrivate;
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
         const char *name = model.toonTexture(i);
-        snprintf(path, sizeof(path), "%s/%s", system, name);
+        struct stat sb;
+        snprintf(path, sizeof(path), "%s/%s", dir, name);
+        if (!(stat(path, &sb) != -1 && S_ISREG(sb.st_mode))) {
+            snprintf(path, sizeof(path), "%s/%s", system, name);
+            if (!(stat(path, &sb) != -1 && S_ISREG(sb.st_mode))) {
+                fprintf(stderr, "%s is not found, skipped...\n", path);
+                continue;
+            }
+        }
         LoadTexture(path, textureID);
         data->toonTextureID[i] = textureID;
     }
@@ -191,7 +204,7 @@ static void DrawModel(const vpvl::PMDModel &model)
     glVertexPointer(3, GL_FLOAT, stride, model.verticesPointer());
     glNormalPointer(GL_FLOAT, stride, model.normalsPointer());
     glTexCoordPointer(2, GL_FLOAT, stride, model.textureCoordsPointer());
-    bool enableToon = true;
+    const bool enableToon = true;
     // toon
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
@@ -267,7 +280,7 @@ static void DrawModel(const vpvl::PMDModel &model)
         }
         // toon
         if (enableToon) {
-            GLuint textureID = modelPrivate->toonTextureID[material->toonID()];
+            const GLuint textureID = modelPrivate->toonTextureID[material->toonID()];
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, textureID);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -402,16 +415,16 @@ static void DrawModelShadow(const vpvl::PMDModel &model)
 
 static void DrawSurface(vpvl::PMDModel &model, int width, int height)
 {
-    float matrix[16] = {
+    model.updateRootBone();
+    model.updateMotion();
+    model.updateSkins();
+    const double ratio = static_cast<double>(width) / height;
+    const float matrix[16] = {
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, -13, -100, 1
     };
-    model.updateRootBone();
-    model.updateMotion();
-    model.updateSkins();
-    double ratio = static_cast<double>(width) / height;
     // initialize
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
