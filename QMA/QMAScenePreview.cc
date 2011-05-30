@@ -3,6 +3,227 @@
 
 #include <MMDAI/MMDAI.h>
 
+class PMDTableModel : public QAbstractTableModel
+{
+public:
+    PMDTableModel(MMDAI::PMDModel *model, QObject *parent = 0)
+        : QAbstractTableModel(parent)
+    {
+        QList<QVariant> bones, faces;
+        int nbones = model->countBoneDisplayNames();
+        for (int i = 0; i < nbones; i++) {
+            int name = model->getBoneDisplayNameAt(i);
+            int index = model->getBoneDisplayIndexAt(i);
+            MMDAI::PMDBone *parent = model->getBoneAt(name);
+            MMDAI::PMDBone *child = model->getBoneAt(index);
+            if (parent && child) {
+                const QString parentBoneName = g_codec->toUnicode(parent->getName());
+                const QString childBoneName = g_codec->toUnicode(child->getName());
+                m_bones[parentBoneName] << childBoneName;
+            }
+        }
+        qDebug() << m_bones;
+        QHashIterator<QString, QList<QVariant> > iterator(m_bones);
+        bones << g_codec->toUnicode(model->getBoneAt(0)->getName());
+        while (iterator.hasNext()) {
+            iterator.next();
+            bones << iterator.key();
+            foreach (const QVariant bone, iterator.value()) {
+                bones << bone.toString();
+            }
+        }
+        int nfaces = model->countFaceDisplayNames();
+        for (int i = 0; i < nfaces; i++) {
+            int index = model->getFaceDisplayNameAt(i);
+            MMDAI::PMDFace *face = model->getFaceAt(index);
+            if (face)
+                faces << g_codec->toUnicode(face->getName());
+        }
+        m_model = model;
+        m_header << bones << faces;
+    }
+
+    ~PMDTableModel()
+    {
+    }
+
+    int rowCount(const QModelIndex &parent) const
+    {
+        Q_UNUSED(parent);
+        return m_header.size();
+    }
+
+    int columnCount(const QModelIndex &parent) const
+    {
+        Q_UNUSED(parent);
+        return 30;
+    }
+
+    QVariant data(const QModelIndex &index, int role) const
+    {
+        if (!index.isValid() || role == Qt::DisplayRole)
+            return QVariant();
+        else
+            return QVariant();
+    }
+
+    bool setData(const QModelIndex &index, const QVariant &value, int role)
+    {
+        Q_UNUSED(index);
+        Q_UNUSED(value);
+        Q_UNUSED(role);
+        return true;
+    }
+
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const
+    {
+        if (role == Qt::DisplayRole) {
+            if (orientation == Qt::Vertical)
+                return m_header.at(section);
+            else if (orientation == Qt::Horizontal && (section + 1) % 5 == 0)
+                return QString("%1").arg(section + 1);
+            else
+                return QVariant();
+        }
+        else {
+            return QVariant();
+        }
+    }
+private:
+    MMDAI::PMDModel *m_model;
+    QHash<QString, QList<QVariant> > m_bones;
+    QList<QVariant> m_header;
+};
+
+TransformBoneFrame::TransformBoneFrame(QTableView *table, MMDAI::PMDObject *object, int type)
+    : QLabel(0),
+      m_selectedBone(NULL),
+      m_type(type),
+      m_object(object),
+      m_table(table),
+      m_format("%1")
+{
+    setAlignment(Qt::AlignCenter);
+    connect(m_table, SIGNAL(clicked(QModelIndex)), this, SLOT(selectIndex(QModelIndex)));
+}
+
+void TransformBoneFrame::mousePressEvent(QMouseEvent *event)
+{
+    QModelIndexList indices = m_table->selectionModel()->selectedIndexes();
+    if (indices.size() > 0) {
+        QVariant row = m_table->model()->headerData(indices.at(0).row(), Qt::Vertical);
+        m_selectedBone = QMAFindPMDBone(m_object->getModel(), row.toString());
+        m_prev = event->pos();
+    }
+}
+
+void TransformBoneFrame::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_selectedBone) {
+        QPoint pos = event->pos();
+        QPoint diff = pos - m_prev;
+        transformBone(diff);
+        m_object->updateRootBone();
+        m_object->getModel()->updateBone();
+        m_prev = pos;
+    }
+}
+
+void TransformBoneFrame::mouseReleaseEvent(QMouseEvent *)
+{
+    m_selectedBone = NULL;
+}
+
+const QString TransformBoneFrame::format(float value)
+{
+    return m_format.arg(value, 0, 'g', 2);
+}
+
+void TransformBoneFrame::selectIndex(const QModelIndex &index)
+{
+    QVariant row = m_table->model()->headerData(index.row(), Qt::Vertical);
+    MMDAI::PMDBone *bone = QMAFindPMDBone(m_object->getModel(), row.toString());
+    if (bone)
+        selectBone(bone);
+}
+
+TranslateBoneFrame::TranslateBoneFrame(QTableView *view, MMDAI::PMDObject *object, int type)
+    : TransformBoneFrame(view, object, type)
+{
+    setText(tr("Translate %1").arg(QChar(type)));
+}
+
+void TranslateBoneFrame::selectBone(MMDAI::PMDBone *bone)
+{
+    const btVector3 pos(bone->getCurrentPosition());
+    emit translateX(format(pos.x()));
+    emit translateY(format(pos.y()));
+    emit translateZ(format(pos.z()));
+}
+
+void TranslateBoneFrame::transformBone(const QPoint &diff)
+{
+    unsigned char type = m_selectedBone->getType();
+    if (type != MMDAI::ROTATE_AND_MOVE && type != MMDAI::IK_DESTINATION)
+        return;
+    btVector3 pos;
+    float value = diff.y() * -0.01;
+    const btTransform tr(m_selectedBone->getCurrentRotation(), m_selectedBone->getCurrentPosition());
+    switch (m_type) {
+    case 'X':
+        pos = tr * btVector3(value, 0.0f, 0.0f);
+        break;
+    case 'Y':
+        pos = tr * btVector3(0.0f, value, 0.0f);
+        break;
+    case 'Z':
+        pos = tr * btVector3(0.0f, 0.0f, value);
+        break;
+    }
+    emit translateX(format(pos.x()));
+    emit translateY(format(pos.y()));
+    emit translateZ(format(pos.z()));
+    m_selectedBone->setCurrentPosition(pos);
+}
+
+RotateBoneFrame::RotateBoneFrame(QTableView *view, MMDAI::PMDObject *object, int type)
+    : TransformBoneFrame(view, object, type)
+{
+    setText(tr("Rotate %1").arg(QChar(type)));
+}
+
+void RotateBoneFrame::selectBone(MMDAI::PMDBone *bone)
+{
+    const btQuaternion rot(bone->getCurrentRotation());
+    emit rotateX(format(rot.x()));
+    emit rotateY(format(rot.y()));
+    emit rotateZ(format(rot.z()));
+}
+
+void RotateBoneFrame::transformBone(const QPoint &diff)
+{
+    btQuaternion rot, crot(m_selectedBone->getCurrentRotation());
+    float value = diff.y() * 0.1;
+    switch (m_type) {
+    case 'X':
+        rot.setEulerZYX(MMDAIMathRadian(0.0f), MMDAIMathRadian(0.0f), MMDAIMathRadian(value));
+        rot = crot * rot;
+        break;
+    case 'Y':
+        rot.setEulerZYX(MMDAIMathRadian(0.0f), MMDAIMathRadian(value), MMDAIMathRadian(0.0f));
+        rot = crot * rot;
+        break;
+    case 'Z':
+        rot.setEulerZYX(MMDAIMathRadian(value), MMDAIMathRadian(0.0f), MMDAIMathRadian(0.0f));
+        rot = crot * rot;
+        break;
+    }
+    emit rotateX(format(rot.x()));
+    emit rotateY(format(rot.y()));
+    emit rotateZ(format(rot.z()));
+    m_selectedBone->setCurrentRotation(rot);
+}
+
 QMAScenePreview::QMAScenePreview(QMAPreference *preference, QWidget *parent) :
     QMAScenePlayer(preference, parent),
     m_gridListID(0)
@@ -34,9 +255,9 @@ void QMAScenePreview::start()
 {
     addModel("/Users/hkrn/Library/MMD/MikuMikuDance_v730/UserFile/Model/miku.pmd");
     MMDAI::PMDObject *object = m_controller->getObjectAt(0);
-    MMDAI::PMDModel *model = object->getModel();
-    model->setGlobalAlpha(1.0);
-    buildUI(model);
+    object->getModel()->setGlobalAlpha(1.0);
+    buildUI(object);
+    m_controller->setEnablePhysicsSimulation(false);
     m_timer.start(m_interval);
 }
 
@@ -124,7 +345,7 @@ void QMAScenePreview::drawGrid()
     glEnable(GL_LIGHTING);
 }
 
-void QMAScenePreview::buildUI(MMDAI::PMDModel *model)
+void QMAScenePreview::buildUI(MMDAI::PMDObject *object)
 {
     QWidget *widget = new QWidget;
     widget->setWindowTitle("MMDAI Motion Editor");
@@ -138,33 +359,33 @@ void QMAScenePreview::buildUI(MMDAI::PMDModel *model)
     vertical->setResizeMode(QHeaderView::Fixed);
 
     QGridLayout *grid = new QGridLayout;
-    m_tframeX = new TranslateBoneFrame(table, model, 'X');
+    m_tframeX = new TranslateBoneFrame(table, object, 'X');
     m_tx = new CoordinateFrame();
     connect(m_tframeX, SIGNAL(translateX(QString)), m_tx, SLOT(setText(QString)));
     grid->addWidget(m_tframeX, 0, 0);
     grid->addWidget(m_tx, 0, 1);
-    m_tframeY = new TranslateBoneFrame(table, model, 'Y');
+    m_tframeY = new TranslateBoneFrame(table, object, 'Y');
     m_ty = new CoordinateFrame();
     connect(m_tframeY, SIGNAL(translateY(QString)), m_ty, SLOT(setText(QString)));
     grid->addWidget(m_tframeY, 0, 2);
     grid->addWidget(m_ty, 0, 3);
-    m_tframeZ = new TranslateBoneFrame(table, model, 'Z');
+    m_tframeZ = new TranslateBoneFrame(table, object, 'Z');
     m_tz = new CoordinateFrame();
     connect(m_tframeZ, SIGNAL(translateZ(QString)), m_tz, SLOT(setText(QString)));
     grid->addWidget(m_tframeZ, 0, 4);
     grid->addWidget(m_tz, 0, 5);
 
-    m_rframeX = new RotateBoneFrame(table, model, 'X');
+    m_rframeX = new RotateBoneFrame(table, object, 'X');
     m_rx = new CoordinateFrame();
     connect(m_rframeX, SIGNAL(rotateX(QString)), m_rx, SLOT(setText(QString)));
     grid->addWidget(m_rframeX, 1, 0);
     grid->addWidget(m_rx, 1, 1);
-    m_rframeY = new RotateBoneFrame(table, model, 'Y');
+    m_rframeY = new RotateBoneFrame(table, object, 'Y');
     m_ry = new CoordinateFrame();
     connect(m_rframeY, SIGNAL(rotateY(QString)), m_ry, SLOT(setText(QString)));
     grid->addWidget(m_rframeY, 1, 2);
     grid->addWidget(m_ry, 1, 3);
-    m_rframeZ = new RotateBoneFrame(table, model, 'Z');
+    m_rframeZ = new RotateBoneFrame(table, object, 'Z');
     m_rz = new CoordinateFrame();
     connect(m_rframeZ, SIGNAL(rotateZ(QString)), m_rz, SLOT(setText(QString)));
     grid->addWidget(m_rframeZ, 1, 4);
@@ -185,12 +406,12 @@ void QMAScenePreview::buildUI(MMDAI::PMDModel *model)
     vbox->addLayout(grid);
     vbox->addLayout(hbox);
 
-    PMDTableModel *tableModel = new PMDTableModel(model);
+    PMDTableModel *tableModel = new PMDTableModel(object->getModel());
     table->setModel(tableModel);
 
     m_widget = widget;
     m_table = table;
-    m_model = model;
+    m_object = object;
     m_widget->setLayout(vbox);
     m_widget->show();
     show();
@@ -201,7 +422,7 @@ void QMAScenePreview::resetBone()
     QModelIndexList indices = m_table->selectionModel()->selectedIndexes();
     if (indices.size() > 0) {
         QVariant row = m_table->model()->headerData(indices.at(0).row(), Qt::Vertical);
-        MMDAI::PMDBone *bone = QMAFindPMDBone(m_model, row.toString());
+        MMDAI::PMDBone *bone = QMAFindPMDBone(m_object->getModel(), row.toString());
         if (bone) {
             const QString text("0");
             m_tx->setText(text);
@@ -211,7 +432,9 @@ void QMAScenePreview::resetBone()
             m_ry->setText(text);
             m_rz->setText(text);
             bone->reset();
-            m_model->updateBone();
+            m_object->updateRootBone();
+            m_object->getModel()->updateBone();
+            m_object->updateSkin();
         }
     }
 }
@@ -219,7 +442,7 @@ void QMAScenePreview::resetBone()
 void QMAScenePreview::selectFace(const QModelIndex &index)
 {
     QVariant row = m_table->model()->headerData(index.row(), Qt::Vertical);
-    MMDAI::PMDFace *face = QMAFindPMDFace(m_model, row.toString());
+    MMDAI::PMDFace *face = QMAFindPMDFace(m_object->getModel(), row.toString());
     if (face)
         m_weightSlider->setValue(face->getWeight() * 100.0f);
 }
@@ -229,10 +452,10 @@ void QMAScenePreview::setFaceWeight(int value)
     QModelIndexList indices = m_table->selectionModel()->selectedIndexes();
     if (indices.size() > 0) {
         QVariant row = m_table->model()->headerData(indices.at(0).row(), Qt::Vertical);
-        MMDAI::PMDFace *face = QMAFindPMDFace(m_model, row.toString());
+        MMDAI::PMDFace *face = QMAFindPMDFace(m_object->getModel(), row.toString());
         if (face) {
             face->setWeight(value / 100.0f);
-            m_model->updateFace();
+            m_object->getModel()->updateFace();
         }
     }
 }
