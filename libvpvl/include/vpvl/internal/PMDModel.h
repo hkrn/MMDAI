@@ -184,7 +184,7 @@ public:
     void setToonTextures(const char *ptr) {
         char *p = const_cast<char *>(ptr);
         for (int i = 0; i < 10; i++) {
-            stringCopySafe(m_textures[i], ptr, sizeof(m_textures[i]));
+            stringCopySafe(m_textures[i], p, sizeof(m_textures[i]));
             p += 100;
         }
     }
