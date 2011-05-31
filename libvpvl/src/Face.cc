@@ -38,7 +38,7 @@ size_t Face::stride(const char *data)
     char *ptr = const_cast<char *>(data);
     size_t base = 20;
     ptr += base;
-    int nvertices = *reinterpret_cast<int *>(ptr);
+    const int nvertices = *reinterpret_cast<int *>(ptr);
     return base + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
 }
 
@@ -71,8 +71,8 @@ void Face::read(const char *data)
 
 void Face::convertIndices(const Face *base)
 {
-    uint32_t nvertices = m_vertices.size();
-    uint32_t baseNVertices = base->m_vertices.size();
+    const uint32_t nvertices = m_vertices.size();
+    const uint32_t baseNVertices = base->m_vertices.size();
     if (m_type != kBase) {
         for (uint32_t i = 0; i < nvertices; i++) {
             uint32_t relID = m_vertices[i]->id;
@@ -89,18 +89,30 @@ void Face::convertIndices(const Face *base)
     }
 }
 
-void Face::applyToVertices(VertexList &vertices)
+void Face::setVertices(VertexList &vertices)
 {
-    uint32_t nvertices = m_vertices.size();
-    for (uint32_t i = 0; i < nvertices; i++)
-        vertices[m_vertices[i]->id]->setPosition(m_vertices[i]->position);
+    const uint32_t nv = vertices.size();
+    const uint32_t nfv = m_vertices.size();
+    for (uint32_t i = 0; i < nfv; i++) {
+        const FaceVertex *fv = m_vertices[i];
+        const uint32_t id = fv->id;
+        if (id < nv)
+            vertices[id]->setPosition(fv->position);
+    }
 }
 
-void Face::addToVertices(VertexList &vertices, float rate)
+void Face::setVertices(VertexList &vertices, float rate)
 {
-    uint32_t nvertices = m_vertices.size();
-    for (uint32_t i = 0; i < nvertices; i++)
-        vertices[m_vertices[i]->id]->setPosition(m_vertices[i]->position * rate);
+    const uint32_t nv = vertices.size();
+    const uint32_t nfv = m_vertices.size();
+    for (uint32_t i = 0; i < nfv; i++) {
+        const FaceVertex *fv = m_vertices[i];
+        const uint32_t id = fv->id;
+        if (id < nv) {
+            Vertex *vertex = vertices[id];
+            vertex->setPosition(vertex->position() + fv->position * rate);
+        }
+    }
 }
 
 } /* namespace vpvl */

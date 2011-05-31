@@ -35,8 +35,8 @@ public:
 
     void read(const char *data);
     void convertIndices(const Face *base);
-    void applyToVertices(VertexList &vertices);
-    void addToVertices(VertexList &vertices, float rate);
+    void setVertices(VertexList &vertices);
+    void setVertices(VertexList &vertices, float rate);
 
     const char *name() const {
         return m_name;
