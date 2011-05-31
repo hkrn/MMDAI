@@ -56,7 +56,7 @@ public:
     static const uint32_t kBoundingSpherePoints = 1000;
     static const uint32_t kBoundingSpherePointsMax = 20;
     static const uint32_t kBoundingSpherePointsMin = 5;
-    static const uint32_t kSystemTextureMax = 10;
+    static const uint32_t kSystemTextureMax = 11;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
@@ -189,7 +189,7 @@ public:
         }
     }
     void setLightDirection(const btVector3 &value) {
-        m_lightDirection = value;
+        m_lightDirection = value.normalized();
     }
     void setEdgeOffset(float value) {
         m_edgeOffset = value * 0.03f;
@@ -238,6 +238,7 @@ private:
     RigidBodyList m_rigidBodies;
     ConstraintList m_constraints;
     Bone m_rootBone;
+    Face *m_baseFace;
     PMDModelDataInfo m_result;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<btVector3> m_edgeVertices;

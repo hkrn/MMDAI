@@ -9,7 +9,8 @@ const float PMDModel::kMinBoneWeight = 0.0001f;
 const float PMDModel::kMinFaceWeight = 0.001f;
 
 PMDModel::PMDModel(const char *data, size_t size)
-    : m_skinnedVertices(0),
+    : m_baseFace(0),
+      m_skinnedVertices(0),
       m_indicesPointer(0),
       m_edgeIndicesPointer(0),
       m_edgeIndicesCount(0),
@@ -18,7 +19,7 @@ PMDModel::PMDModel(const char *data, size_t size)
       m_boundingSphereStep(kBoundingSpherePointsMin),
       m_edgeOffset(0.03f),
       m_selfShadowDensityCoef(0.0f),
-      m_enableSimulation(true)
+      m_enableSimulation(false)
 {
     memset(&m_name, 0, sizeof(m_name));
     memset(&m_comment, 0, sizeof(m_comment));
@@ -39,6 +40,7 @@ PMDModel::~PMDModel()
     delete[] m_skinnedVertices;
     delete[] m_indicesPointer;
     delete[] m_edgeIndicesPointer;
+    m_baseFace = 0;
     m_skinnedVertices = 0;
     m_indicesPointer = 0;
     m_edgeIndicesPointer = 0;
@@ -58,7 +60,7 @@ void PMDModel::prepare()
     int nMaterials = m_materials.size();
     for (int i = 0; i < nMaterials; i++) {
         const Material *material = m_materials[i];
-        uint32_t nindices = material->countIndices();
+        const uint32_t nindices = material->countIndices();
         if (material->isEdgeEnabled()) {
             memcpy(to, from, sizeof(uint16_t) * nindices);
             to += nindices;
@@ -67,13 +69,13 @@ void PMDModel::prepare()
         from += nindices;
     }
     for (int i = 0; i < nVertices; i++) {
-        Vertex *vertex = m_vertices[i];
+        const Vertex *vertex = m_vertices[i];
         m_skinnedVertices[i].texureCoord.setValue(vertex->u(), vertex->v(), 0);
     }
     int nBones = m_bones.size();
     for (int i = 0; i < nBones; i++) {
         Bone *bone = m_bones[i];
-        BoneType type = bone->type();
+        const BoneType type = bone->type();
         bone->computeOffset();
         if (type == kUnderRotate || type == kFollowRotate)
             m_rotatedBones.push_back(i);
@@ -104,14 +106,14 @@ void PMDModel::updateMotion()
 
 void PMDModel::updateSkins()
 {
-    //updateBoneFromSimulation();
+    updateBoneFromSimulation();
     updateSkinVertices();
     updateToon(m_lightDirection);
 }
 
 void PMDModel::updateAllBones()
 {
-    int nBones = m_bones.size(), nIKs = m_IKs.size();
+    const int nBones = m_bones.size(), nIKs = m_IKs.size();
     /* FIXME: ordered bone list  */
     for (int i = 0; i < nBones; i++)
         m_bones[i]->updateTransform();
@@ -132,33 +134,29 @@ void PMDModel::updateAllBones()
 
 void PMDModel::updateBoneFromSimulation()
 {
-    int nRigidBodies = m_rigidBodies.size();
-    for (int i = 0; i < nRigidBodies; i++)
-        m_rigidBodies[i]->transformToBone();
+    if (m_enableSimulation) {
+        const int nRigidBodies = m_rigidBodies.size();
+        for (int i = 0; i < nRigidBodies; i++)
+            m_rigidBodies[i]->transformToBone();
+    }
 }
 
 void PMDModel::updateAllFaces()
 {
     int nFaces = m_faces.size();
+    m_baseFace->setVertices(m_vertices);
     for (int i = 0; i < nFaces; i++) {
         Face *face = m_faces[i];
-        if (face->type() == kBase) {
-            face->applyToVertices(m_vertices);
-            break;
-        }
-    }
-    for (int i = 0; i < nFaces; i++) {
-        Face *face = m_faces[i];
-        float weight = face->weight();
+        const float weight = face->weight();
         if (weight > kMinFaceWeight)
-            face->addToVertices(m_vertices, weight);
+            face->setVertices(m_vertices, weight);
     }
 }
 
 void PMDModel::updateShadowTextureCoords(float coef)
 {
     bool update = false;
-    int nVertices = m_vertices.size();
+    const int nVertices = m_vertices.size();
     if (m_shadowTextureCoords.size() == 0) {
         m_shadowTextureCoords.reserve(nVertices);
         update = true;
@@ -175,23 +173,23 @@ void PMDModel::updateShadowTextureCoords(float coef)
 
 void PMDModel::updateSkinVertices()
 {
-    int nBones = m_bones.size();
+    const int nBones = m_bones.size();
     for (int i = 0; i < nBones; i++)
         m_bones[i]->getSkinTransform(m_skinningTransform[i]);
-    int nVertices = m_vertices.size();
+    const int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         const Vertex *vertex = m_vertices[i];
-        SkinVertex *skin = &m_skinnedVertices[i];
+        SkinVertex &skin = m_skinnedVertices[i];
         const float weight = vertex->weight();
         if (weight >= 1.0f - kMinBoneWeight) {
             const int16_t bone1 = vertex->bone1();
-            skin->position = m_skinningTransform[bone1] * vertex->position();
-            skin->normal = m_skinningTransform[bone1].getBasis() * vertex->normal();
+            skin.position = m_skinningTransform[bone1] * vertex->position();
+            skin.normal = m_skinningTransform[bone1].getBasis() * vertex->normal();
         }
         else if (weight <= kMinBoneWeight) {
             const int16_t bone2 = vertex->bone2();
-            skin->position = m_skinningTransform[bone2] * vertex->position();
-            skin->normal = m_skinningTransform[bone2].getBasis() * vertex->normal();
+            skin.position = m_skinningTransform[bone2] * vertex->position();
+            skin.normal = m_skinningTransform[bone2].getBasis() * vertex->normal();
         }
         else {
             const int16_t bone1 = vertex->bone1();
@@ -202,15 +200,15 @@ void PMDModel::updateSkinVertices()
             const btVector3 n1 = m_skinningTransform[bone1].getBasis() * normal;
             const btVector3 v2 = m_skinningTransform[bone2] * position;
             const btVector3 n2 = m_skinningTransform[bone2].getBasis() * normal;
-            skin->position = v2.lerp(v1, weight);
-            skin->normal = n2.lerp(n1, weight);
+            skin.position = v2.lerp(v1, weight);
+            skin.normal = n2.lerp(n1, weight);
         }
     }
 }
 
 void PMDModel::updateToon(const btVector3 &lightDirection)
 {
-    int nVertices = m_vertices.size();
+    const int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         const SkinVertex &skin = m_skinnedVertices[i];
         m_toonTextureCoords[i].setValue(0.0f, (1.0f - lightDirection.dot(skin.normal)) * 0.5f, 0.0f);
@@ -223,7 +221,7 @@ void PMDModel::updateToon(const btVector3 &lightDirection)
 
 void PMDModel::updateIndices()
 {
-    int nIndices = m_indices.size();
+    const int nIndices = m_indices.size();
     m_indicesPointer = new uint16_t[nIndices];
     for (int i = 0; i < nIndices; i++) {
         m_indicesPointer[i] = m_indices[i];
@@ -242,7 +240,7 @@ float PMDModel::boundingSphereRange(btVector3 &center)
     float max = 0.0f;
     Bone *bone = Bone::centerBone(&m_bones);
     btVector3 pos = bone->currentTransform().getOrigin();
-    int nVertices = m_vertices.size();
+    const int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         const float r2 = pos.distance2(m_skinnedVertices[i].position);
         if (max < r2)
@@ -257,7 +255,7 @@ void PMDModel::smearAllBonesToDefault(float rate)
 {
     static const btVector3 v(0.0f, 0.0f, 0.0f);
     static const btQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
-    int nBones = m_bones.size(), nFaces = m_faces.size();
+    const int nBones = m_bones.size(), nFaces = m_faces.size();
     for (int i = 0; i < nBones; i++) {
         Bone *bone = m_bones[i];
         bone->setCurrentPosition(v.lerp(bone->currentPosition(), rate));
@@ -447,7 +445,7 @@ void PMDModel::parseHeader()
 void PMDModel::parseVertices()
 {
     char *ptr = const_cast<char *>(m_result.verticesPtr);
-    int nvertices = m_result.verticesCount;
+    const int nvertices = m_result.verticesCount;
     m_vertices.reserve(nvertices);
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex();
@@ -460,7 +458,7 @@ void PMDModel::parseVertices()
 void PMDModel::parseIndices()
 {
     char *ptr = const_cast<char *>(m_result.indicesPtr);
-    int nindices = m_result.indicesCount;
+    const int nindices = m_result.indicesCount;
     m_indices.reserve(nindices);
     for (int i = 0; i < nindices; i++) {
         m_indices.push_back(*reinterpret_cast<uint16_t *>(ptr));
@@ -472,7 +470,7 @@ void PMDModel::parseIndices()
 void PMDModel::parseMatrials()
 {
     char *ptr = const_cast<char *>(m_result.materialsPtr);
-    int nmaterials = m_result.materialsCount;
+    const int nmaterials = m_result.materialsCount;
     m_materials.reserve(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = new Material();
@@ -487,7 +485,7 @@ void PMDModel::parseBones()
     Bone *mutableRootBone = this->mutableRootBone();
     BoneList *mutableBones = this->mutableBones();
     char *ptr = const_cast<char *>(m_result.bonesPtr);
-    int nbones = m_result.bonesCount;
+    const int nbones = m_result.bonesCount;
     m_bones.reserve(nbones);
     for (int i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
@@ -500,7 +498,7 @@ void PMDModel::parseBones()
 void PMDModel::parseIKs()
 {
     char *ptr = const_cast<char *>(m_result.IKsPtr);
-    int nIKs = m_result.IKsCount;
+    const int nIKs = m_result.IKsCount;
     BoneList *mutableBones = this->mutableBones();
     m_IKs.reserve(nIKs);
     for (int i = 0; i < nIKs; i++) {
@@ -515,14 +513,14 @@ void PMDModel::parseFaces()
 {
     Face *baseFace = 0;
     char *ptr = const_cast<char *>(m_result.facesPtr);
-    int nfaces = m_result.facesCount;
+    const int nfaces = m_result.facesCount;
     m_faces.reserve(nfaces);
     for (int i = 0; i < nfaces; i++) {
         Face *face = new Face();
         face->read(ptr);
         ptr += Face::stride(ptr);
         if (face->type() == kBase)
-            baseFace = face;
+            m_baseFace = baseFace = face;
         m_faces.push_back(face);
     }
     if (baseFace) {
@@ -557,7 +555,7 @@ void PMDModel::parseRigidBodies()
 {
     BoneList *mutableBones = &m_bones;
     char *ptr = const_cast<char *>(m_result.rigidBodiesPtr);
-    int nrigidBodies = m_result.rigidBodiesCount;
+    const int nrigidBodies = m_result.rigidBodiesCount;
     m_rigidBodies.reserve(nrigidBodies);
     for (int i = 0; i < nrigidBodies; i++) {
         RigidBody *rigidBody = new RigidBody();
@@ -572,7 +570,7 @@ void PMDModel::parseConstraints()
     RigidBodyList rigidBodies = m_rigidBodies;
     btVector3 offset = m_rootBone.offset();
     char *ptr = const_cast<char *>(m_result.constraintsPtr);
-    int nconstraints = m_result.constranitsCount;
+    const int nconstraints = m_result.constranitsCount;
     m_constraints.reserve(nconstraints);
     for (int i = 0; i < nconstraints; i++) {
         Constraint *constraint = new Constraint();
