@@ -66,7 +66,7 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     return true;
 }
 
-static void LoadTexture(const char *path, GLuint &textureID)
+static bool LoadTexture(const char *path, GLuint &textureID)
 {
     static const GLfloat priority = 1.0f;
     SDL_Surface *surface = IMG_Load(path);
@@ -91,7 +91,7 @@ static void LoadTexture(const char *path, GLuint &textureID)
         else {
             fprintf(stderr, "unknown image format: %s\n", path);
             SDL_FreeSurface(surface);
-            return;
+            return false;
         }
         SDL_LockSurface(surface);
         glTexImage2D(GL_TEXTURE_2D, 0, internal, surface->w, surface->h, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
@@ -99,17 +99,35 @@ static void LoadTexture(const char *path, GLuint &textureID)
         SDL_FreeSurface(surface);
         glPrioritizeTextures(1, &textureID, &priority);
         glBindTexture(GL_TEXTURE_2D, 0);
+        return true;
     }
     else {
         fprintf(stderr, "failed loading %s: %s\n", path, IMG_GetError());
+        return false;
     }
+}
+
+static bool LoadToonTexture(const char *system, const char *dir, const char *name, GLuint &textureID)
+{
+    char path[256];
+    struct stat sb;
+    snprintf(path, sizeof(path), "%s/%s", dir, name);
+    if (!(stat(path, &sb) != -1 && S_ISREG(sb.st_mode))) {
+        snprintf(path, sizeof(path), "%s/%s", system, name);
+        if (!(stat(path, &sb) != -1 && S_ISREG(sb.st_mode))) {
+            fprintf(stderr, "%s is not found, skipped...\n", path);
+            return false;
+        }
+    }
+    //fprintf(stderr, "%s\n", path);
+    return LoadTexture(path, textureID);
 }
 
 static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const char *dir)
 {
-    char path[256];
     const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
+    char path[256];
     GLuint textureID = 0;
     for (uint32_t i = 0; i <nMaterials; i++) {
         vpvl::Material *material = materials[i];
@@ -120,30 +138,23 @@ static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const c
         data->secondTextureID = 0;
         if (*primary) {
             snprintf(path, sizeof(path), "%s/%s", dir, primary);
-            LoadTexture(path, textureID);
-            data->primaryTextureID = textureID;
+            if (LoadTexture(path, textureID))
+                data->primaryTextureID = textureID;
         }
         if (*second) {
             snprintf(path, sizeof(path), "%s/%s", dir, second);
-            LoadTexture(path, textureID);
-            data->secondTextureID = textureID;
+            if (LoadTexture(path, textureID))
+                data->secondTextureID = textureID;
         }
         material->setPrivateData(data);
     }
     vpvl::PMDModelPrivate *data = new vpvl::PMDModelPrivate;
-    for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
+    if (LoadToonTexture(system, dir, "toon0.bmp", textureID))
+        data->toonTextureID[0] = textureID;
+    for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const char *name = model.toonTexture(i);
-        struct stat sb;
-        snprintf(path, sizeof(path), "%s/%s", dir, name);
-        if (!(stat(path, &sb) != -1 && S_ISREG(sb.st_mode))) {
-            snprintf(path, sizeof(path), "%s/%s", system, name);
-            if (!(stat(path, &sb) != -1 && S_ISREG(sb.st_mode))) {
-                fprintf(stderr, "%s is not found, skipped...\n", path);
-                continue;
-            }
-        }
-        LoadTexture(path, textureID);
-        data->toonTextureID[i] = textureID;
+        if (LoadToonTexture(system, dir, name, textureID))
+            data->toonTextureID[i + 1] = textureID;
     }
     model.setPrivateData(data);
 }
@@ -159,7 +170,7 @@ static void UnloadModelTextures(const vpvl::PMDModel &model)
         delete data;
     }
     vpvl::PMDModelPrivate *data = model.privateData();
-    glDeleteTextures(sizeof(vpvl::PMDModel::kSystemTextureMax), data->toonTextureID);
+    glDeleteTextures(vpvl::PMDModel::kSystemTextureMax, data->toonTextureID);
     delete data;
 }
 
@@ -179,12 +190,12 @@ static void SetLighting(vpvl::PMDModel &model)
     diffuse.setW(1.0f);
     ambient.setW(1.0f);
     specular.setW(1.0f);
-    model.setLightDirection(direction);
 
     glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(direction));
     glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
+    model.setLightDirection(direction);
 }
 
 static void DrawModel(const vpvl::PMDModel &model)
@@ -208,8 +219,8 @@ static void DrawModel(const vpvl::PMDModel &model)
     // toon
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
-        glClientActiveTexture(GL_TEXTURE1);
         glEnable(GL_TEXTURE_2D);
+        glClientActiveTexture(GL_TEXTURE1);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         // shadow map
         if (false)
@@ -332,7 +343,6 @@ static void DrawModel(const vpvl::PMDModel &model)
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
         }
-        glActiveTexture(GL_TEXTURE0);
     }
     else {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -346,22 +356,22 @@ static void DrawModel(const vpvl::PMDModel &model)
             glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
-            glActiveTexture(GL_TEXTURE0);
         }
     }
+    glActiveTexture(GL_TEXTURE0);
     // first or second sphere map
     if (hasSPH || hasSPA) {
         glDisable(GL_TEXTURE_GEN_S);
         glDisable(GL_TEXTURE_GEN_T);
-        // second sphere map
-        if (hasSPA) {
-            glActiveTexture(GL_TEXTURE2);
-            glDisable(GL_TEXTURE_2D);
-        }
     }
     // toon
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
+        glDisable(GL_TEXTURE_2D);
+    }
+    // second sphere map
+    if (hasSPA) {
+        glActiveTexture(GL_TEXTURE2);
         glDisable(GL_TEXTURE_2D);
     }
     glActiveTexture(GL_TEXTURE0);
@@ -420,9 +430,9 @@ static void DrawSurface(vpvl::PMDModel &model, int width, int height)
     model.updateSkins();
     const double ratio = static_cast<double>(width) / height;
     const float matrix[16] = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
+        1.4, 0, 0, 0,
+        0, 1.4, 0, 0,
+        0, 0, 1.4, 0,
         0, -13, -100, 1
     };
     // initialize
