@@ -76,7 +76,6 @@ void PMDModel::prepare()
     for (int i = 0; i < nBones; i++) {
         Bone *bone = m_bones[i];
         const BoneType type = bone->type();
-        bone->computeOffset();
         if (type == kUnderRotate || type == kFollowRotate)
             m_rotatedBones.push_back(i);
     }
@@ -223,9 +222,7 @@ void PMDModel::updateIndices()
 {
     const int nIndices = m_indices.size();
     m_indicesPointer = new uint16_t[nIndices];
-    for (int i = 0; i < nIndices; i++) {
-        m_indicesPointer[i] = m_indices[i];
-    }
+    memcpy(m_indicesPointer, &m_indices[0], sizeof(uint16_t) * nIndices);
 #ifdef VPVL_COORDINATE_OPENGL
     for (int i = 0; i < nIndices; i += 3) {
         const uint16_t index = m_indicesPointer[i];
@@ -492,6 +489,10 @@ void PMDModel::parseBones()
         bone->read(ptr, mutableBones, mutableRootBone);
         ptr += Bone::stride(ptr);
         m_bones.push_back(bone);
+    }
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        bone->computeOffset();
     }
 }
 
