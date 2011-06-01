@@ -19,6 +19,9 @@ public:
 
     void read(const char *data);
 
+    const char *rawName() const {
+        return m_rawName;
+    }
     const char *primaryTextureName() const {
         return m_primaryTextureName;
     }
@@ -100,6 +103,7 @@ public:
     }
 
 private:
+    char m_rawName[20];
     char m_primaryTextureName[20];
     char m_secondTextureName[20];
     btVector4 m_ambient;

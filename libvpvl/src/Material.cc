@@ -68,6 +68,7 @@ void Material::read(const char *data)
     ptr += sizeof(uint32_t);
     char name[20], *p;
     stringCopySafe(name, ptr, sizeof(name));
+    stringCopySafe(m_rawName, ptr, sizeof(m_rawName));
     if ((p = strchr(name, '*')) != NULL) {
         *p = 0;
         stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
