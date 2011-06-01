@@ -23,6 +23,8 @@ struct vpvl::MaterialPrivate {
 
 struct vpvl::PMDModelPrivate {
     GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
+    bool hasSingleSphereMap;
+    bool hasMultipleSphereMap;
 };
 
 static const int g_width = 800;
@@ -53,10 +55,10 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
         return false;
     }
     glClearStencil(0);
-    glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_ALPHA_TEST);
@@ -129,34 +131,39 @@ static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const c
     const uint32_t nMaterials = materials.size();
     char path[256];
     GLuint textureID = 0;
+    vpvl::PMDModelPrivate *modelPrivate = new vpvl::PMDModelPrivate;
+    bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i <nMaterials; i++) {
         vpvl::Material *material = materials[i];
         const char *primary = material->primaryTextureName();
         const char *second = material->secondTextureName();
-        vpvl::MaterialPrivate *data = new vpvl::MaterialPrivate;
-        data->primaryTextureID = 0;
-        data->secondTextureID = 0;
+        vpvl::MaterialPrivate *materialPrivate = new vpvl::MaterialPrivate;
+        materialPrivate->primaryTextureID = 0;
+        materialPrivate->secondTextureID = 0;
         if (*primary) {
             snprintf(path, sizeof(path), "%s/%s", dir, primary);
             if (LoadTexture(path, textureID))
-                data->primaryTextureID = textureID;
+                materialPrivate->primaryTextureID = textureID;
         }
         if (*second) {
             snprintf(path, sizeof(path), "%s/%s", dir, second);
             if (LoadTexture(path, textureID))
-                data->secondTextureID = textureID;
+                materialPrivate->secondTextureID = textureID;
         }
-        material->setPrivateData(data);
+        hasSingleSphere |= material->isSpherePrimary() && !material->isSphereAuxSecond();
+        hasMultipleSphere |= material->isSphereAuxSecond();
+        material->setPrivateData(materialPrivate);
     }
-    vpvl::PMDModelPrivate *data = new vpvl::PMDModelPrivate;
+    modelPrivate->hasSingleSphereMap = hasSingleSphere;
+    modelPrivate->hasMultipleSphereMap = hasMultipleSphere;
     if (LoadToonTexture(system, dir, "toon0.bmp", textureID))
-        data->toonTextureID[0] = textureID;
+        modelPrivate->toonTextureID[0] = textureID;
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const char *name = model.toonTexture(i);
         if (LoadToonTexture(system, dir, name, textureID))
-            data->toonTextureID[i + 1] = textureID;
+            modelPrivate->toonTextureID[i + 1] = textureID;
     }
-    model.setPrivateData(data);
+    model.setPrivateData(modelPrivate);
 }
 
 static void UnloadModelTextures(const vpvl::PMDModel &model)
@@ -182,7 +189,7 @@ static void SetLighting(vpvl::PMDModel &model)
     // use MMD like cartoon
     diffuseValue = 0.2f;
     ambientValue = lightIntensity * 2.0f;
-    specularValue = lightIntensity;
+    specularValue = 0.4f;
 
     btVector3 diffuse = color * diffuseValue;
     btVector3 ambient = color * ambientValue;
@@ -210,12 +217,12 @@ static void DrawModel(const vpvl::PMDModel &model)
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     size_t stride = model.stride();
     glVertexPointer(3, GL_FLOAT, stride, model.verticesPointer());
     glNormalPointer(GL_FLOAT, stride, model.normalsPointer());
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glTexCoordPointer(2, GL_FLOAT, stride, model.textureCoordsPointer());
-    const bool enableToon = true;
+    const bool enableToon = false;
     // toon
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
@@ -230,32 +237,32 @@ static void DrawModel(const vpvl::PMDModel &model)
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
     }
-    bool hasSPH = false, hasSPA = false;
-    const vpvl::MaterialList materials = model.materials();
     const vpvl::PMDModelPrivate *modelPrivate = model.privateData();
+    bool hasSingleSphereMap = false, hasMultipleSphereMap = false;
+    // first sphere map
+    if (modelPrivate->hasSingleSphereMap) {
+        glEnable(GL_TEXTURE_2D);
+        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+        glDisable(GL_TEXTURE_2D);
+        hasSingleSphereMap = true;
+    }
+    // second sphere map
+    if (modelPrivate->hasMultipleSphereMap) {
+        glActiveTexture(GL_TEXTURE2);
+        glEnable(GL_TEXTURE_2D);
+        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+        glDisable(GL_TEXTURE_2D);
+        glActiveTexture(GL_TEXTURE0);
+        hasMultipleSphereMap = true;
+    }
+    const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
     uint16_t *indicesPtr = const_cast<uint16_t *>(model.indicesPointer());
     for (uint32_t i = 0; i <nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const vpvl::MaterialPrivate *materialPrivate = material->privateData();
-        // first sphere map
-        if (!hasSPH && (material->isSpherePrimary() || material->isSphereSecond())) {
-            glEnable(GL_TEXTURE_2D);
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glDisable(GL_TEXTURE_2D);
-            hasSPH = true;
-        }
-        // second sphere map
-        if (!hasSPA && (material->isSphereAuxPrimary() || material->isSphereAuxSecond())) {
-            glActiveTexture(GL_TEXTURE2);
-            glEnable(GL_TEXTURE_2D);
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glDisable(GL_TEXTURE_2D);
-            glActiveTexture(GL_TEXTURE0);
-            hasSPA = true;
-        }
         // toon
         if (enableToon) {
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(material->averageColor()));
@@ -273,17 +280,19 @@ static void DrawModel(const vpvl::PMDModel &model)
         if (materialPrivate->primaryTextureID > 0) {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, materialPrivate->primaryTextureID);
-            // is sphere map
-            if (material->isSpherePrimary() || material->isSphereAuxPrimary()) {
-                // is second sphere map
-                if (material->isSphereAuxPrimary())
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
-            }
-            else {
-                glDisable(GL_TEXTURE_GEN_S);
-                glDisable(GL_TEXTURE_GEN_T);
+            if (hasSingleSphereMap) {
+                // is sphere map
+                if (material->isSpherePrimary() || material->isSphereAuxPrimary()) {
+                    // is second sphere map
+                    if (material->isSphereAuxPrimary())
+                        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+                    glEnable(GL_TEXTURE_GEN_S);
+                    glEnable(GL_TEXTURE_GEN_T);
+                }
+                else {
+                    glDisable(GL_TEXTURE_GEN_S);
+                    glDisable(GL_TEXTURE_GEN_T);
+                }
             }
         }
         else {
@@ -297,24 +306,28 @@ static void DrawModel(const vpvl::PMDModel &model)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
-        // second sphere
-        glActiveTexture(GL_TEXTURE2);
-        if (materialPrivate->secondTextureID > 0) {
-            glEnable(GL_TEXTURE_2D);
-            // is second sphere
-            if (material->isSphereAuxSecond())
-                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-            else
-                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            glBindTexture(GL_TEXTURE_2D, materialPrivate->secondTextureID);
-            glEnable(GL_TEXTURE_GEN_S);
-            glEnable(GL_TEXTURE_GEN_T);
-        }
-        else {
-            glDisable(GL_TEXTURE_2D);
+        if (hasMultipleSphereMap) {
+            // second sphere
+            glActiveTexture(GL_TEXTURE2);
+            if (materialPrivate->secondTextureID > 0) {
+                glEnable(GL_TEXTURE_2D);
+                // is second sphere
+                if (material->isSphereAuxSecond())
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+                else
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+                glBindTexture(GL_TEXTURE_2D, materialPrivate->secondTextureID);
+                glEnable(GL_TEXTURE_GEN_S);
+                glEnable(GL_TEXTURE_GEN_T);
+            }
+            else {
+                glDisable(GL_TEXTURE_2D);
+            }
         }
         // draw
         const uint32_t nIndices = material->countIndices();
+        // memo: 16: 18:eye 21 23
+        //if (i != 23)
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, indicesPtr);
         indicesPtr += nIndices;
         // is aux sphere map
@@ -323,6 +336,7 @@ static void DrawModel(const vpvl::PMDModel &model)
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
     }
+
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     // toon
@@ -330,7 +344,7 @@ static void DrawModel(const vpvl::PMDModel &model)
         glClientActiveTexture(GL_TEXTURE0);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         // first sphere map
-        if (hasSPH) {
+        if (hasSingleSphereMap) {
             glActiveTexture(GL_TEXTURE0);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
@@ -338,7 +352,7 @@ static void DrawModel(const vpvl::PMDModel &model)
         glClientActiveTexture(GL_TEXTURE1);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         // second sphere map
-        if (hasSPA) {
+        if (hasMultipleSphereMap) {
             glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
@@ -347,12 +361,12 @@ static void DrawModel(const vpvl::PMDModel &model)
     else {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         // first sphere map
-        if (hasSPH) {
+        if (hasSingleSphereMap) {
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
         }
         // second sphere map
-        if (hasSPA) {
+        if (hasMultipleSphereMap) {
             glActiveTexture(GL_TEXTURE2);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
@@ -360,7 +374,7 @@ static void DrawModel(const vpvl::PMDModel &model)
     }
     glActiveTexture(GL_TEXTURE0);
     // first or second sphere map
-    if (hasSPH || hasSPA) {
+    if (hasSingleSphereMap || hasMultipleSphereMap) {
         glDisable(GL_TEXTURE_GEN_S);
         glDisable(GL_TEXTURE_GEN_T);
     }
@@ -370,7 +384,7 @@ static void DrawModel(const vpvl::PMDModel &model)
         glDisable(GL_TEXTURE_2D);
     }
     // second sphere map
-    if (hasSPA) {
+    if (hasMultipleSphereMap) {
         glActiveTexture(GL_TEXTURE2);
         glDisable(GL_TEXTURE_2D);
     }
@@ -447,10 +461,10 @@ static void DrawSurface(vpvl::PMDModel &model, int width, int height)
     glLoadMatrixf(matrix);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
-    glColorMask(0, 0, 0, 0);
-    glDepthMask(0);
     glStencilFunc(GL_EQUAL, 1, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    glColorMask(0, 0, 0, 0);
+    glDepthMask(0);
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     // render shadow
