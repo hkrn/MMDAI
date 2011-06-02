@@ -81,7 +81,7 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *root
         m_parentBone = bones->at(parentBoneID);
         m_parentIsRoot = false;
     }
-    else if (nbones > 0) {
+    else if (nbones >= 0) {
         m_parentBone = rootBone;
         m_parentIsRoot = true;
     }
@@ -114,7 +114,7 @@ void Bone::computeOffset()
 void Bone::reset()
 {
     m_currentPosition.setZero();
-    m_currentRotation = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    m_currentRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_currentTransform.setIdentity();
     m_currentTransform.setOrigin(m_originPosition);
 }
