@@ -281,8 +281,8 @@ static void DrawModel(const vpvl::PMDModel &model)
             diffuse.setW(diffuse.w() * alpha);
             specular = material->specular();
             specular.setW(specular.w() * alpha);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(ambient));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(diffuse));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(ambient));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(diffuse));
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
         }
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
