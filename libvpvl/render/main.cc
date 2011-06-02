@@ -222,7 +222,7 @@ static void DrawModel(const vpvl::PMDModel &model)
     glNormalPointer(GL_FLOAT, stride, model.normalsPointer());
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glTexCoordPointer(2, GL_FLOAT, stride, model.textureCoordsPointer());
-    const bool enableToon = false;
+    const bool enableToon = true;
     // toon
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
@@ -259,19 +259,31 @@ static void DrawModel(const vpvl::PMDModel &model)
     }
     const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
+    btVector4 average, ambient, diffuse, specular;
     uint16_t *indicesPtr = const_cast<uint16_t *>(model.indicesPointer());
     for (uint32_t i = 0; i <nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const vpvl::MaterialPrivate *materialPrivate = material->privateData();
         // toon
+        const float alpha = material->alpha();
         if (enableToon) {
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(material->averageColor()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
+            average = material->averageColor();
+            average.setW(average.w() * alpha);
+            specular = material->specular();
+            specular.setW(specular.w() * alpha);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(average));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
         }
         else {
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->diffuse()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(material->ambient()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
+            ambient = material->ambient();
+            ambient.setW(ambient.w() * alpha);
+            diffuse = material->diffuse();
+            diffuse.setW(diffuse.w() * alpha);
+            specular = material->specular();
+            specular.setW(specular.w() * alpha);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(ambient));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(diffuse));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
         }
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
         material->alpha() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
@@ -309,8 +321,8 @@ static void DrawModel(const vpvl::PMDModel &model)
         if (hasMultipleSphereMap) {
             // second sphere
             glActiveTexture(GL_TEXTURE2);
+            glEnable(GL_TEXTURE_2D);
             if (materialPrivate->secondTextureID > 0) {
-                glEnable(GL_TEXTURE_2D);
                 // is second sphere
                 if (material->isSphereAuxSecond())
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
@@ -321,7 +333,7 @@ static void DrawModel(const vpvl::PMDModel &model)
                 glEnable(GL_TEXTURE_GEN_T);
             }
             else {
-                glDisable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, 0);
             }
         }
         // draw
@@ -443,21 +455,23 @@ static void DrawSurface(vpvl::PMDModel &model, int width, int height)
     model.updateMotion();
     model.updateSkins();
     const double ratio = static_cast<double>(width) / height;
-    const float matrix[16] = {
-        1.4, 0, 0, 0,
-        0, 1.4, 0, 0,
-        0, 0, 1.4, 0,
-        0, -13, -100, 1
-    };
+    float matrix[16];
+    btTransform mv;
+    btQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
+    q.setEulerZYX(0.0f, 0.0f, 0.0f);
+    mv.setIdentity();
+    mv.setRotation(q);
+    mv.setOrigin(mv * -btVector3(0.0f, 15.0f, 0.0f) - btVector3(0.0f, 0.0f, 30.0f));
+    mv.getOpenGLMatrix(matrix);
     // initialize
     glViewport(0, 0, width, height);
-    glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    // initialize matrices
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(16.0, ratio, 0.5, 8000.0);
     glMatrixMode(GL_MODELVIEW);
+    glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    // initialize matrices
     glLoadMatrixf(matrix);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
