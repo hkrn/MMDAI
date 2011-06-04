@@ -46,8 +46,26 @@
 namespace vpvl
 {
 
+const float VMDMotion::kDefaultLoopAtFrame = 0.0f;
+const float VMDMotion::kDefaultPriority = 0.0f;
+
 VMDMotion::VMDMotion(const char *data, size_t size)
-    : m_data(data),
+    : m_model(0),
+      m_status(kRunning),
+      m_onEnd(2),
+      m_loopAt(kDefaultLoopAtFrame),
+      m_priority(kDefaultPriority),
+      m_endingBoneBlend(0.0f),
+      m_endingFaceBlend(0.0f),
+      m_endingBoneBlendFrames(20.0f),
+      m_endingFaceBlendFrames(5.0f),
+      m_motionBlendRate(1.0f),
+      m_beginningNonControlledBlend(0.0f),
+      m_active(false),
+      m_enableSmooth(true),
+      m_enableRelocation(true),
+      m_ignoreStatic(false),
+      m_data(data),
       m_size(size)
 {
     memset(&m_name, 0, sizeof(m_name));
@@ -58,6 +76,21 @@ VMDMotion::~VMDMotion()
 {
     memset(&m_name, 0, sizeof(m_name));
     memset(&m_result, 0, sizeof(m_result));
+    m_model = 0;
+    m_status = kRunning;
+    m_onEnd = 2;
+    m_loopAt = kDefaultLoopAtFrame;
+    m_priority = kDefaultPriority;
+    m_endingBoneBlend = 0.0f;
+    m_endingFaceBlend = 0.0f;
+    m_endingBoneBlendFrames = 20.0f;
+    m_endingFaceBlendFrames = 5.0f;
+    m_motionBlendRate = 1.0f;
+    m_beginningNonControlledBlend = 0.0f;
+    m_active = false;
+    m_enableSmooth = true;
+    m_enableRelocation = true;
+    m_ignoreStatic = false;
     m_data = 0;
 }
 
@@ -120,6 +153,81 @@ bool VMDMotion::load()
     return false;
 }
 
+void VMDMotion::start(PMDModel *model)
+{
+    m_model = model;
+    m_active = true;
+    m_endingBoneBlend = 0.0f;
+    m_endingFaceBlend = 0.0f;
+    if (m_enableSmooth) {
+        if (m_enableRelocation) { // FIXME: hasCenter
+            Bone *root = model->mutableRootBone();
+            Bone *center = Bone::centerBone(&model->bones());
+            btTransform transform = root->currentTransform().inverse();
+            btVector3 position = transform * center->currentTransform().getOrigin();
+            btVector3 centerPosition = center->originPosition();
+            btVector3 offset = position - centerPosition;
+            offset.setY(0.0f);
+            // setOverrideFirst(&offset)
+            root->setOffset(root->offset() + offset);
+            root->updateTransform();
+        }
+        else {
+            // setOverrideFirst(NULL)
+        }
+    }
+    if (!m_ignoreStatic)
+        m_beginningNonControlledBlend = 10.0f;
+}
+
+void VMDMotion::update(float frameAt)
+{
+    if (m_beginningNonControlledBlend > 0.0f) {
+        m_beginningNonControlledBlend -= frameAt;
+        btSetMax(m_beginningNonControlledBlend, 0.0f);
+    }
+    if (m_active) {
+        if (m_endingBoneBlend != 0.0f || m_endingFaceBlend != 0.0f) {
+            // setBoneBlend(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames)
+            // setFaceBlend(m_endingFaceBlend / m_endingFaceBlendFrames)
+            // advance(frame)
+            m_endingBoneBlend -= frameAt;
+            m_endingFaceBlend -= frameAt;
+            btSetMax(m_endingBoneBlend, 0.0f);
+            btSetMax(m_endingFaceBlend, 0.0f);
+            if (m_endingBoneBlend == 0.0f || m_endingFaceBlend == 0.0f) {
+                m_active = false;
+                m_status = kDeleted;
+            }
+        }
+        else {
+            // setBoneBlend(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames)
+            // setFaceBlend(m_endingFaceBlend / m_endingFaceBlendFrames)
+            // advance(frame)
+            switch (m_onEnd) {
+            case 0:
+                break;
+            case 1:
+                if (false) { // getMaxFrame != 0.0f
+                    // rewind(m_loopAt, frameAt)
+                    m_status = kLooped;
+                }
+                break;
+            case 2:
+                if (m_enableSmooth) {
+                    m_endingBoneBlend = m_endingBoneBlendFrames;
+                    m_endingFaceBlend = m_endingFaceBlendFrames;
+                }
+                else {
+                    m_active = false;
+                    m_status = kDeleted;
+                }
+                break;
+            }
+        }
+    }
+}
+
 void VMDMotion::parseHeader()
 {
     stringCopySafe(m_name, m_result.namePtr, sizeof(m_name));
@@ -128,19 +236,19 @@ void VMDMotion::parseHeader()
 void VMDMotion::parseBoneFrames()
 {
     m_boneMotion.read(m_result.boneKeyFramePtr, m_result.boneKeyFrameCount);
-    m_boneMotion.sort();
+    m_boneMotion.sortFrames();
 }
 
 void VMDMotion::parseFaceFrames()
 {
     m_faceMotion.read(m_result.faceKeyFramePtr, m_result.faceKeyFrameCount);
-    m_faceMotion.sort();
+    m_faceMotion.sortFrames();
 }
 
 void VMDMotion::parseCameraFrames()
 {
     m_cameraMotion.read(m_result.cameraKeyFramePtr, m_result.cameraKeyFrameCount);
-    m_cameraMotion.sort();
+    m_cameraMotion.sortFrames();
 }
 
 void VMDMotion::parseLightFrames()

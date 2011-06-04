@@ -44,6 +44,8 @@
 #include "vpvl/CameraMotion.h"
 #include "vpvl/FaceMotion.h"
 
+#include "vpvl/internal/PMDModel.h"
+
 namespace vpvl
 {
 
@@ -66,11 +68,23 @@ struct VMDMotionDataInfo
 class VMDMotion
 {
 public:
+    enum VMDMotionStatus
+    {
+        kRunning,
+        kLooped,
+        kDeleted
+    };
+
+    static const float kDefaultPriority;
+    static const float kDefaultLoopAtFrame;
+
     VMDMotion(const char *data, size_t size);
     ~VMDMotion();
 
     bool preparse();
     bool load();
+    void start(PMDModel *model);
+    void update(float frameAt);
 
     const char *name() const {
         return m_name;
@@ -93,6 +107,33 @@ public:
     const VMDMotionDataInfo &result() const {
         return m_result;
     }
+    float loopAt() const {
+        return m_loopAt;
+    }
+    float priority() const {
+        return m_priority;
+    }
+    bool enableSmooth() const {
+        return m_enableSmooth;
+    }
+    bool enableRelocation() const {
+        return m_enableRelocation;
+    }
+    bool isActive() const {
+        return m_active;
+    }
+    void setLoop(bool value) {
+        m_onEnd = value ? 1 : 2;
+    }
+    void setFull(bool value) {
+        m_ignoreStatic = !value;
+    }
+    void setEnableSmooth(bool value) {
+        m_enableSmooth = value;
+    }
+    void setEnableRelocation(bool value) {
+        m_enableRelocation = value;
+    }
 
 private:
     void parseHeader();
@@ -103,10 +144,25 @@ private:
     void parseSelfShadowFrames();
 
     char m_name[20];
+    PMDModel *m_model;
     VMDMotionDataInfo m_result;
     BoneMotion m_boneMotion;
     CameraMotion m_cameraMotion;
     FaceMotion m_faceMotion;
+    VMDMotionStatus m_status;
+    uint8_t m_onEnd;
+    float m_loopAt;
+    float m_priority;
+    float m_endingBoneBlend;
+    float m_endingFaceBlend;
+    float m_endingBoneBlendFrames;
+    float m_endingFaceBlendFrames;
+    float m_motionBlendRate;
+    float m_beginningNonControlledBlend;
+    bool m_active;
+    bool m_enableSmooth;
+    bool m_enableRelocation;
+    bool m_ignoreStatic;
     const char *m_data;
     const size_t m_size;
 };

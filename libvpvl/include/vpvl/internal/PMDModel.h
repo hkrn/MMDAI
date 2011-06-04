@@ -40,6 +40,7 @@
 #define VPVL_PMDMODEL_H_
 
 #include "vpvl/vpvl.h"
+#include "LinearMath/btHashMap.h"
 
 namespace vpvl
 {
@@ -172,6 +173,12 @@ public:
     PMDModelPrivate *privateData() const {
         return m_private;
     }
+    Bone *findBone(const char *name) const {
+        return *m_name2bone.find(btHashString(name));
+    }
+    Face *findFace(const char *name) const {
+        return *m_name2face.find(btHashString(name));
+    }
     const char *data() const {
         return m_data;
     }
@@ -278,6 +285,8 @@ private:
     Bone m_rootBone;
     Face *m_baseFace;
     PMDModelDataInfo m_result;
+    btHashMap<btHashString, Bone *> m_name2bone;
+    btHashMap<btHashString, Face *> m_name2face;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<btVector3> m_edgeVertices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;

@@ -46,6 +46,7 @@ namespace vpvl
 
 class Bone;
 class BoneKeyFrame;
+class PMDModel;
 typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
 
 class BoneMotion
@@ -57,8 +58,10 @@ public:
     static const float kStartingMarginFrame;
 
     void read(const char *data, uint32_t size);
-    void calculate(float frameAt);
-    void sort();
+    void translateFrames(PMDModel *model);
+    void calculateFrames(float frameAt);
+    void sortFrames();
+    void reset();
 
     const BoneKeyFrameList &frames() const {
         return m_frames;
@@ -89,7 +92,7 @@ private:
                              float w,
                              uint32_t at,
                              float &value);
-    void takeSnap(btVector3 &center);
+    void takeSnap(const btVector3 &center);
 
     Bone *m_bone;
     BoneKeyFrameList m_frames;

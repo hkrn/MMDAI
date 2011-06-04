@@ -48,11 +48,14 @@
 namespace vpvl
 {
 
+class Bone;
+
 class BoneKeyFrame
 {
 public:
     BoneKeyFrame()
-        : m_index(0),
+        : m_bone(0),
+          m_index(0),
           m_position(0.0f, 0.0f, 0.0f),
           m_rotation(0.0f, 0.0f, 0.0f, 1.0f) {
         memset(m_name, 0, sizeof(m_name));
@@ -60,6 +63,7 @@ public:
         memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
     }
     ~BoneKeyFrame() {
+        m_bone = 0;
         m_position.setZero();
         m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
         for (int i = 0; i < 4; i++)
@@ -102,6 +106,9 @@ public:
     const char *name() const {
         return m_name;
     }
+    Bone *bone() const {
+        return m_bone;
+    }
     float index() const {
         return m_index;
     }
@@ -116,6 +123,9 @@ public:
     }
     const float *const *interpolationTable() const {
         return m_interpolationTable;
+    }
+    void setBone(Bone *value) {
+        m_bone = value;
     }
 
 private:
@@ -137,6 +147,7 @@ private:
     }
 
     char m_name[15];
+    Bone *m_bone;
     float m_index;
     btVector3 m_position;
     btQuaternion m_rotation;

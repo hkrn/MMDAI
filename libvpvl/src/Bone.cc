@@ -82,7 +82,7 @@ Bone::~Bone()
     m_motionIndepent = false;
 }
 
-Bone *Bone::centerBone(btAlignedObjectArray<Bone*> *bones)
+Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
 {
     int nbones = bones->size();
     for (int i = 0; i < nbones; i++) {

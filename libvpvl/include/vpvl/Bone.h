@@ -61,16 +61,19 @@ enum BoneType {
     kFollowRotate
 };
 
+class Bone;
+typedef btAlignedObjectArray<Bone*> BoneList;
+
 class Bone
 {
 public:
     Bone();
     ~Bone();
 
-    static Bone *centerBone(btAlignedObjectArray<Bone*> *bones);
+    static Bone *centerBone(const BoneList *bones);
     static size_t stride(const char *data);
 
-    void read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone);
+    void read(const char *data, BoneList *bones, Bone *rootBone);
     void computeOffset();
     void reset();
     void setMotionIndependency();
@@ -147,8 +150,6 @@ private:
     bool m_simulated;
     bool m_motionIndepent;
 };
-
-typedef btAlignedObjectArray<Bone*> BoneList;
 
 } /* namespace vpvl */
 

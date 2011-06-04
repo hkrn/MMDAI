@@ -46,6 +46,7 @@ namespace vpvl
 
 class Face;
 class FaceKeyFrame;
+class PMDModel;
 typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
 
 class FaceMotion
@@ -57,8 +58,10 @@ public:
     static const float kStartingMarginFrame;
 
     void read(const char *data, uint32_t size);
-    void calculate(float frameAt);
-    void sort();
+    void translateFrames(PMDModel *model);
+    void calculateFrames(float frameAt);
+    void sortFrames();
+    void reset();
 
     const FaceKeyFrameList &frames() const {
         return m_frames;
@@ -74,6 +77,8 @@ public:
     }
 
 private:
+    void takeSnap();
+
     Face *m_face;
     FaceKeyFrameList m_frames;
     uint32_t m_lastIndex;

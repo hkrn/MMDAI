@@ -78,7 +78,7 @@ void CameraMotion::read(const char *data, uint32_t size)
     }
 }
 
-void CameraMotion::sort()
+void CameraMotion::sortFrames()
 {
     m_frames.quickSort(CameraMotionKeyFramePredication());
 }

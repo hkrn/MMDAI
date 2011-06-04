@@ -38,6 +38,7 @@
 
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/FaceKeyFrame.h"
+#include "vpvl/internal/PMDModel.h"
 
 namespace vpvl
 {
@@ -82,7 +83,18 @@ void FaceMotion::read(const char *data, uint32_t size)
     }
 }
 
-void FaceMotion::calculate(float frameAt)
+void FaceMotion::translateFrames(PMDModel *model)
+{
+    uint32_t nFrames = m_frames.size();
+    for (uint32_t i = 0; i < nFrames; i++) {
+        FaceKeyFrame *frame = m_frames.at(i);
+        Face *face = model->findFace(frame->name());
+        if (face)
+            frame->setFace(face);
+    }
+}
+
+void FaceMotion::calculateFrames(float frameAt)
 {
     uint32_t nFrames = m_frames.size();
     FaceKeyFrame *lastKeyFrame = m_frames.at(nFrames - 1);
@@ -153,7 +165,16 @@ void FaceMotion::calculate(float frameAt)
     }
 }
 
-void FaceMotion::sort()
+void FaceMotion::takeSnap()
+{
+    uint32_t nFrames = m_frames.size();
+    for (uint32_t i = 0; i < nFrames; i++) {
+        Face *face = m_frames.at(i)->face();
+        m_snapWeight = face->weight();
+    }
+}
+
+void FaceMotion::sortFrames()
 {
     m_frames.quickSort(FaceMotionKeyFramePredication());
 }

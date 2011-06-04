@@ -54,7 +54,7 @@ public:
     ~CameraMotion();
 
     void read(const char *data, uint32_t size);
-    void sort();
+    void sortFrames();
 
     const CameraKeyFrameList &frames() const {
         return m_frames;

@@ -46,13 +46,16 @@
 namespace vpvl
 {
 
+class Face;
+
 class FaceKeyFrame
 {
 public:
-    FaceKeyFrame() : m_index(0), m_weight(0.0f) {
+    FaceKeyFrame() : m_face(0), m_index(0), m_weight(0.0f) {
         memset(m_name, 0, sizeof(m_name));
     }
     ~FaceKeyFrame() {
+        m_face = 0;
         memset(m_name, 0, sizeof(m_name));
     }
 
@@ -76,15 +79,22 @@ public:
     const char *name() const {
         return m_name;
     }
+    Face *face() const {
+        return m_face;
+    }
     float index() const {
         return m_index;
     }
     float weight() const {
         return m_weight;
     }
+    void setFace(Face *value) {
+        m_face = value;
+    }
 
 private:
     char m_name[15];
+    Face *m_face;
     float m_index;
     float m_weight;
 };

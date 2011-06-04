@@ -526,6 +526,7 @@ void PMDModel::parseBones()
         Bone *bone = new Bone();
         bone->read(ptr, mutableBones, mutableRootBone);
         ptr += Bone::stride(ptr);
+        m_name2bone.insert(btHashString(bone->name()), bone);
         m_bones.push_back(bone);
     }
     for (int i = 0; i < nbones; i++) {
@@ -560,6 +561,7 @@ void PMDModel::parseFaces()
         ptr += Face::stride(ptr);
         if (face->type() == kBase)
             m_baseFace = baseFace = face;
+        m_name2face.insert(btHashString(face->name()), face);
         m_faces.push_back(face);
     }
     if (baseFace) {

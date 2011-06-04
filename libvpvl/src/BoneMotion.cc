@@ -38,6 +38,7 @@
 
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/BoneKeyFrame.h"
+#include "vpvl/internal/PMDModel.h"
 
 namespace vpvl
 {
@@ -89,7 +90,18 @@ void BoneMotion::read(const char *data, uint32_t size)
     }
 }
 
-void BoneMotion::calculate(float frameAt)
+void BoneMotion::translateFrames(PMDModel *model)
+{
+    uint32_t nFrames = m_frames.size();
+    for (uint32_t i = 0; i < nFrames; i++) {
+        BoneKeyFrame *frame = m_frames.at(i);
+        Bone *bone = model->findBone(frame->name());
+        if (bone)
+            frame->setBone(bone);
+    }
+}
+
+void BoneMotion::calculateFrames(float frameAt)
 {
     uint32_t nFrames = m_frames.size();
     BoneKeyFrame *lastKeyFrame = m_frames.at(nFrames - 1);
@@ -197,9 +209,15 @@ void BoneMotion::calculate(float frameAt)
     }
 }
 
-void BoneMotion::sort()
+void BoneMotion::sortFrames()
 {
     m_frames.quickSort(BoneMotionKeyFramePredication());
+}
+
+void BoneMotion::reset()
+{
+    m_lastIndex = 0;
+    m_lastLoopStartIndex = 0;
 }
 
 void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
@@ -219,6 +237,18 @@ void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
         const float *v = keyFrame->interpolationTable()[at];
         const float w2 = v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
         value = valueFrom * (1.0f - w2) + valueTo * w2;
+    }
+}
+
+void BoneMotion::takeSnap(const btVector3 &center)
+{
+    uint32_t nFrames = m_frames.size();
+    for (uint32_t i = 0; i < nFrames; i++) {
+        Bone *bone = m_frames.at(i)->bone();
+        m_snapPosition = bone->currentPosition();
+        if (bone->hasMotionIndependency())
+            m_snapPosition -= center;
+        m_snapRotation = bone->currentRotation();
     }
 }
 
