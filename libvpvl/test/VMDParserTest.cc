@@ -58,7 +58,7 @@ TEST(VMDMotionTest, ParseMotionVMD) {
     size_t size = 0;
     FileSlurp("test/res/motion.vmd", data, size);
     vpvl::VMDMotion motion(data, size);
-    EXPECT_TRUE(motion.parse());
+    EXPECT_TRUE(motion.load());
     vpvl::VMDMotionDataInfo result = motion.result();
     EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
     EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
@@ -71,7 +71,7 @@ TEST(VMDMotionTest, ParseCameraVMD) {
     size_t size = 0;
     FileSlurp("test/res/camera.vmd", data, size);
     vpvl::VMDMotion motion(data, size);
-    EXPECT_TRUE(motion.parse());
+    EXPECT_TRUE(motion.load());
     vpvl::VMDMotionDataInfo result = motion.result();
     EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
     EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);

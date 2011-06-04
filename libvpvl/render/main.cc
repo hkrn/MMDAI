@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if (!model.parse()) {
+    if (!model.load()) {
         fprintf(stderr, "failed parsing the model\n");
         delete data;
         return -1;

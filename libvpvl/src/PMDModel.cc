@@ -449,7 +449,7 @@ bool PMDModel::preparse()
     return true;
 }
 
-bool PMDModel::parse()
+bool PMDModel::load()
 {
     if (preparse()) {
         parseHeader();

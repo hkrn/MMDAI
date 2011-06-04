@@ -105,7 +105,7 @@ public:
     void smearAllBonesToDefault(float rate);
 
     bool preparse();
-    bool parse();
+    bool load();
 
     const char *name() const {
         return m_name;

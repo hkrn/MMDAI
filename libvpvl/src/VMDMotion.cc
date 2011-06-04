@@ -106,7 +106,7 @@ bool VMDMotion::preparse()
     return true;
 }
 
-bool VMDMotion::parse()
+bool VMDMotion::load()
 {
     if (preparse()) {
         parseHeader();

@@ -60,7 +60,7 @@ TEST(PMDModelTest, ParseFullPMD) {
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
     vpvl::PMDModel model(data, size);
-    EXPECT_TRUE(model.parse());
+    EXPECT_TRUE(model.load());
     vpvl::PMDModelDataInfo result = model.result();
     EXPECT_EQ(model.vertices().size(), result.verticesCount);
     EXPECT_EQ(model.materials().size(), result.materialsCount);
