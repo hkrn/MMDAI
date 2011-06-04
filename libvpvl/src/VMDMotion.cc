@@ -90,16 +90,19 @@ void VMDMotion::parseHeader()
 void VMDMotion::parseBoneFrames()
 {
     m_boneMotion.read(m_result.boneKeyFramePtr, m_result.boneKeyFrameCount);
+    m_boneMotion.sort();
 }
 
 void VMDMotion::parseFaceFrames()
 {
     m_faceMotion.read(m_result.faceKeyFramePtr, m_result.faceKeyFrameCount);
+    m_faceMotion.sort();
 }
 
 void VMDMotion::parseCameraFrames()
 {
     m_cameraMotion.read(m_result.cameraKeyFramePtr, m_result.cameraKeyFrameCount);
+    m_cameraMotion.sort();
 }
 
 void VMDMotion::parseLightFrames()

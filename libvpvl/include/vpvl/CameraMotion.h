@@ -16,14 +16,13 @@ public:
     ~CameraMotion();
 
     void read(const char *data, uint32_t size);
+    void sort();
 
     const CameraKeyFrameList &frames() const {
         return m_frames;
     }
 
 private:
-    void calculate();
-
     CameraKeyFrameList m_frames;
     btVector3 m_position;
     btVector3 m_angle;
