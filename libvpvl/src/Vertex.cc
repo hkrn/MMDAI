@@ -75,8 +75,8 @@ void Vertex::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
     float pos[3], normal[3];
-    vector3(ptr, pos);
-    vector3(ptr, normal);
+    internal::vector3(ptr, pos);
+    internal::vector3(ptr, normal);
     float u = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float v = *reinterpret_cast<float *>(ptr);

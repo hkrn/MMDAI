@@ -112,7 +112,7 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *root
     int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
     float pos[3];
-    vector3(ptr, pos);
+    internal::vector3(ptr, pos);
 
     int nbones = bones->size();
     if (parentBoneID != -1 && parentBoneID < nbones) {

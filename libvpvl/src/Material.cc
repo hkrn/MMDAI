@@ -91,13 +91,13 @@ void Material::read(const char *data)
 {
     char *ptr = const_cast<char *>(data);
     float ambient[3], diffuse[3], specular[3];
-    vector3(ptr, diffuse);
+    internal::vector3(ptr, diffuse);
     float alpha = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float shiness = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
-    vector3(ptr, specular);
-    vector3(ptr, ambient);
+    internal::vector3(ptr, specular);
+    internal::vector3(ptr, ambient);
     uint8_t toonID = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
     uint8_t edge = *reinterpret_cast<uint8_t *>(ptr);

@@ -70,12 +70,12 @@ void Constraint::read(const char *data, const RigidBodyList &bodies, const btVec
     int32_t bodyID2 = *reinterpret_cast<int32_t *>(ptr);
     ptr += sizeof(uint32_t);
     float pos[3], rot[3], limitPosFrom[3], limitPosTo[3], limitRotFrom[3], limitRotTo[3], stiffness[6];
-    vector3(ptr, pos);
-    vector3(ptr, rot);
-    vector3(ptr, limitPosFrom);
-    vector3(ptr, limitPosTo);
-    vector3(ptr, limitRotFrom);
-    vector3(ptr, limitRotTo);
+    internal::vector3(ptr, pos);
+    internal::vector3(ptr, rot);
+    internal::vector3(ptr, limitPosFrom);
+    internal::vector3(ptr, limitPosTo);
+    internal::vector3(ptr, limitRotFrom);
+    internal::vector3(ptr, limitRotTo);
     for (int i = 0; i < 6; i++) {
         stiffness[i] = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);

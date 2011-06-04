@@ -87,8 +87,8 @@ public:
         float distance = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
         float pos[3], angle[3];
-        vector3(ptr, pos);
-        vector3(ptr, angle);
+        internal::vector3(ptr, pos);
+        internal::vector3(ptr, angle);
         int8_t table[24];
         memcpy(table, ptr, sizeof(table));
         ptr += sizeof(table);
@@ -147,7 +147,7 @@ private:
             float y1 = table[i * 4 + 2] / 127.0f;
             float x2 = table[i * 4 + 1] / 127.0f;
             float y2 = table[i * 4 + 3] / 127.0f;
-            buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
+            internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
         }
     }
 

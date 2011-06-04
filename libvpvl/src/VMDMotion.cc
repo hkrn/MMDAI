@@ -80,26 +80,26 @@ bool VMDMotion::preparse()
 
     /* bone key frame */
     size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames;
-    if (!size32(ptr, rest, nBoneKeyFrames))
+    if (!internal::size32(ptr, rest, nBoneKeyFrames))
         return false;
     m_result.boneKeyFramePtr = ptr;
-    if (!validateSize(ptr, BoneKeyFrame::stride(ptr), nBoneKeyFrames, rest))
+    if (!internal::validateSize(ptr, BoneKeyFrame::stride(ptr), nBoneKeyFrames, rest))
         return false;
     m_result.boneKeyFrameCount = nBoneKeyFrames;
 
     /* face key frame */
-    if (!size32(ptr, rest, nFaceKeyFrames))
+    if (!internal::size32(ptr, rest, nFaceKeyFrames))
         return false;
     m_result.faceKeyFramePtr = ptr;
-    if (!validateSize(ptr, FaceKeyFrame::stride(ptr), nFaceKeyFrames, rest))
+    if (!internal::validateSize(ptr, FaceKeyFrame::stride(ptr), nFaceKeyFrames, rest))
         return false;
     m_result.faceKeyFrameCount = nFaceKeyFrames;
 
     /* camera key frame */
-    if (!size32(ptr, rest, nCameraKeyFrames))
+    if (!internal::size32(ptr, rest, nCameraKeyFrames))
         return false;
     m_result.cameraKeyFramePtr = ptr;
-    if (!validateSize(ptr, CameraKeyFrame::stride(ptr), nCameraKeyFrames, rest))
+    if (!internal::validateSize(ptr, CameraKeyFrame::stride(ptr), nCameraKeyFrames, rest))
         return false;
     m_result.cameraKeyFrameCount = nCameraKeyFrames;
 

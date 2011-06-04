@@ -41,6 +41,8 @@
 
 namespace vpvl
 {
+namespace internal
+{
 
 static inline void vectorN(char *&ptr, float *values, int n)
 {
@@ -130,9 +132,10 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
 }
 
 }
+}
 
 #define VPVL_DISABLE_COPY_AND_ASSIGN(TypeName) \
-TypeName(const TypeName &); \
-         void operator=(const TypeName &);
+    TypeName(const TypeName &); \
+    void operator=(const TypeName &);
 
 #endif

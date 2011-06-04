@@ -96,7 +96,7 @@ void Face::read(const char *data)
             vertex->id = *reinterpret_cast<uint32_t *>(ptr);
             ptr += sizeof(uint32_t);
             float pos[3];
-            vector3(ptr, pos);
+            internal::vector3(ptr, pos);
 #ifdef VPVL_COORDINATE_OPENGL
             vertex->position.setValue(pos[0], pos[1], -pos[2]);
 #else

@@ -82,8 +82,8 @@ public:
         uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
         ptr += sizeof(uint32_t);
         float pos[3], rot[4];
-        vector3(ptr, pos);
-        vector4(ptr, rot);
+        internal::vector3(ptr, pos);
+        internal::vector4(ptr, rot);
         int8_t table[64];
         memcpy(table, ptr, sizeof(table));
         data += sizeof(table);
@@ -132,7 +132,7 @@ private:
             float y1 = table[i +  4] / 127.0f;
             float x2 = table[i +  8] / 127.0f;
             float y2 = table[i + 12] / 127.0f;
-            buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
+            internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
         }
     }
 

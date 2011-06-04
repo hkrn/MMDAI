@@ -161,8 +161,8 @@ void RigidBody::read(const char *data, BoneList *bones)
     float depth = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float pos[3], rot[3];
-    vector3(ptr, pos);
-    vector3(ptr, rot);
+    internal::vector3(ptr, pos);
+    internal::vector3(ptr, rot);
     float mass = *reinterpret_cast<float *>(ptr);
     ptr += sizeof(float);
     float linearDamping = *reinterpret_cast<float *>(ptr);
