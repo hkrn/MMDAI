@@ -86,8 +86,24 @@ void BoneMotion::read(const char *data, uint32_t size)
     m_frames.quickSort(BoneMotionKeyFramePredication());
 }
 
-void BoneMotion::seek(float /* frameAt */)
+void BoneMotion::seek(float frameAt)
 {
+    uint32_t nNodes = m_name2node.size();
+    for (uint32_t i = 0; i < nNodes; i++) {
+        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
+        if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
+            continue;
+        calculateFrames(frameAt, node);
+        Bone *bone = node->bone;
+        if (m_blendRate == 1.0f) {
+            bone->setCurrentPosition(node->position);
+            bone->setCurrentRotation(node->rotation);
+        }
+        else {
+            bone->setCurrentPosition(bone->currentPosition().lerp(node->position, m_blendRate));
+            bone->setCurrentRotation(bone->currentRotation().slerp(node->rotation, m_blendRate));
+        }
+    }
 }
 
 void BoneMotion::takeSnap(const btVector3 &center)

@@ -21,6 +21,7 @@ public:
         m_lastLoopStartFrame(0.0f),
         m_blendRate(1.0f),
         m_smearIndex(smearDefault),
+        m_ignoreSingleMotion(false),
         m_overrideFirst(false)
     {
     }
@@ -71,6 +72,13 @@ public:
         m_smearIndex = m_smearDefault;
     }
 
+    float blendRate() const {
+        return m_blendRate;
+    }
+    void setBlendRate(float value) {
+        m_blendRate = value;
+    }
+
 protected:
     uint32_t m_lastIndex;
     const float m_smearDefault;
@@ -80,6 +88,7 @@ protected:
     float m_lastLoopStartFrame;
     float m_blendRate;
     float m_smearIndex;
+    bool m_ignoreSingleMotion;
     bool m_overrideFirst;
 };
 

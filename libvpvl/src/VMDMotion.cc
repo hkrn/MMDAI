@@ -188,9 +188,11 @@ void VMDMotion::update(float frameAt)
     }
     if (m_active) {
         if (m_endingBoneBlend != 0.0f || m_endingFaceBlend != 0.0f) {
-            // setBoneBlend(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames)
-            // setFaceBlend(m_endingFaceBlend / m_endingFaceBlendFrames)
-            // advance(frame)
+            bool reached = false;
+            m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
+            m_faceMotion.setBlendRate(m_endingFaceBlend / m_endingFaceBlendFrames);
+            m_boneMotion.advance(frameAt, reached);
+            m_faceMotion.advance(frameAt, reached);
             m_endingBoneBlend -= frameAt;
             m_endingFaceBlend -= frameAt;
             btSetMax(m_endingBoneBlend, 0.0f);
@@ -201,28 +203,33 @@ void VMDMotion::update(float frameAt)
             }
         }
         else {
-            // setBoneBlend(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames)
-            // setFaceBlend(m_endingFaceBlend / m_endingFaceBlendFrames)
-            // advance(frame)
-            switch (m_onEnd) {
-            case 0:
-                break;
-            case 1:
-                if (false) { // getMaxFrame != 0.0f
-                    // rewind(m_loopAt, frameAt)
-                    m_status = kLooped;
+            bool boneReached = false;
+            bool faceReached = false;
+            m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
+            m_faceMotion.setBlendRate(m_endingFaceBlend / m_endingFaceBlendFrames);
+            m_boneMotion.advance(frameAt, boneReached);
+            m_faceMotion.advance(frameAt, faceReached);
+            if (boneReached && faceReached) {
+                switch (m_onEnd) {
+                case 0:
+                    break;
+                case 1:
+                    if (false) { // getMaxFrame != 0.0f
+                        // rewind(m_loopAt, frameAt)
+                        m_status = kLooped;
+                    }
+                    break;
+                case 2:
+                    if (m_enableSmooth) {
+                        m_endingBoneBlend = m_endingBoneBlendFrames;
+                        m_endingFaceBlend = m_endingFaceBlendFrames;
+                    }
+                    else {
+                        m_active = false;
+                        m_status = kDeleted;
+                    }
+                    break;
                 }
-                break;
-            case 2:
-                if (m_enableSmooth) {
-                    m_endingBoneBlend = m_endingBoneBlendFrames;
-                    m_endingFaceBlend = m_endingFaceBlendFrames;
-                }
-                else {
-                    m_active = false;
-                    m_status = kDeleted;
-                }
-                break;
             }
         }
     }

@@ -51,7 +51,7 @@ class PMDModel;
 typedef struct BoneMotionInternal BoneMotionInternal;
 typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
 
-class BoneMotion : BaseMotion
+class BoneMotion : public BaseMotion
 {
 public:
     BoneMotion();

@@ -51,7 +51,7 @@ class PMDModel;
 typedef struct FaceMotionInternal FaceMotionInternal;
 typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
 
-class FaceMotion : BaseMotion
+class FaceMotion : public BaseMotion
 {
 public:
     FaceMotion();
@@ -72,7 +72,6 @@ public:
 private:
     void calculateFrames(float frameAt, FaceMotionInternal *node);
 
-    Face *m_face;
     FaceKeyFrameList m_frames;
     btHashMap<btHashString, FaceMotionInternal *> m_name2node;
     uint32_t m_lastLoopStartIndex;

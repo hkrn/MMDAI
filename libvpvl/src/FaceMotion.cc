@@ -62,14 +62,12 @@ public:
 };
 
 FaceMotion::FaceMotion()
-    : BaseMotion(kStartingMarginFrame),
-      m_face(0)
+    : BaseMotion(kStartingMarginFrame)
 {
 }
 
 FaceMotion::~FaceMotion()
 {
-    m_face = 0;
 }
 
 void FaceMotion::read(const char *data, uint32_t size)
@@ -85,8 +83,20 @@ void FaceMotion::read(const char *data, uint32_t size)
     m_frames.quickSort(FaceMotionKeyFramePredication());
 }
 
-void FaceMotion::seek(float /* frameAt */)
+void FaceMotion::seek(float frameAt)
 {
+    uint32_t nNodes = m_name2node.size();
+    for (uint32_t i = 0; i < nNodes; i++) {
+        FaceMotionInternal *node = *m_name2node.getAtIndex(i);
+        if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
+            continue;
+        calculateFrames(frameAt, node);
+        Face *face = node->face;
+        if (m_blendRate == 1.0f)
+            face->setWeight(node->weight);
+        else
+            face->setWeight(face->weight() * (1.0 - m_blendRate) + node->weight * m_blendRate);
+    }
 }
 
 void FaceMotion::takeSnap(const btVector3 & /* center */)
