@@ -45,6 +45,14 @@ namespace vpvl
 
 const float FaceMotion::kStartingMarginFrame = 6.0f;
 
+struct FaceMotionInternal {
+    Face *face;
+    FaceKeyFrameList keyFrames;
+    float weight;
+    float snapWeight;
+    uint32_t lastIndex;
+};
+
 class FaceMotionKeyFramePredication
 {
 public:
@@ -54,21 +62,14 @@ public:
 };
 
 FaceMotion::FaceMotion()
-    : m_face(0),
-      m_lastIndex(0),
-      m_lastLoopStartIndex(0),
-      m_noFaceSmearIndex(0),
-      m_weight(0.0f),
-      m_snapWeight(0.0f),
-      m_overrideFirst(false)
+    : BaseMotion(kStartingMarginFrame),
+      m_face(0)
 {
 }
 
 FaceMotion::~FaceMotion()
 {
     m_face = 0;
-    m_weight = 0.0f;
-    m_snapWeight = 0.0f;
 }
 
 void FaceMotion::read(const char *data, uint32_t size)
@@ -81,38 +82,74 @@ void FaceMotion::read(const char *data, uint32_t size)
         ptr += FaceKeyFrame::stride(ptr);
         m_frames.push_back(frame);
     }
+    m_frames.quickSort(FaceMotionKeyFramePredication());
 }
 
-void FaceMotion::translateFrames(PMDModel *model)
+void FaceMotion::seek(float /* frameAt */)
+{
+}
+
+void FaceMotion::takeSnap(const btVector3 & /* center */)
+{
+    uint32_t nNodes = m_name2node.size();
+    for (uint32_t i = 0; i < nNodes; i++) {
+        FaceMotionInternal *node = *m_name2node.getAtIndex(i);
+        node->snapWeight = node->face->weight();
+    }
+}
+
+void FaceMotion::build(PMDModel *model)
 {
     uint32_t nFrames = m_frames.size();
     for (uint32_t i = 0; i < nFrames; i++) {
         FaceKeyFrame *frame = m_frames.at(i);
-        Face *face = model->findFace(frame->name());
-        if (face)
-            frame->setFace(face);
+        btHashString name(frame->name());
+        FaceMotionInternal **ptr = m_name2node.find(name), *node;
+        if (ptr) {
+            node = *ptr;
+            node->keyFrames.push_back(frame);
+        }
+        else {
+            node = new FaceMotionInternal();
+            node->face = model->findFace(frame->name());
+            node->lastIndex = 0;
+            node->weight = 0.0f;
+            node->snapWeight = 0.0f;
+            m_name2node.insert(name, node);
+        }
     }
 }
 
-void FaceMotion::calculateFrames(float frameAt)
+void FaceMotion::reset()
 {
-    uint32_t nFrames = m_frames.size();
-    FaceKeyFrame *lastKeyFrame = m_frames.at(nFrames - 1);
+    BaseMotion::reset();
+    uint32_t nNodes = m_name2node.size();
+    for (uint32_t i = 0; i < nNodes; i++) {
+        FaceMotionInternal *node = *m_name2node.getAtIndex(i);
+        node->lastIndex = 0;
+    }
+}
+
+void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
+{
+    FaceKeyFrameList &kframes = node->keyFrames;
+    uint32_t nFrames = kframes.size();
+    FaceKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())
         currentFrame = lastKeyFrame->index();
 
     uint32_t k1 = 0, k2 = 0;
-    if (currentFrame >= m_frames.at(m_lastIndex)->index()) {
-        for (uint32_t i = m_lastIndex; i < nFrames; i++) {
-            if (currentFrame <= m_frames.at(i)->index()) {
+    if (currentFrame >= kframes.at(node->lastIndex)->index()) {
+        for (uint32_t i = node->lastIndex; i < nFrames; i++) {
+            if (currentFrame <= kframes.at(i)->index()) {
                 k2 = i;
                 break;
             }
         }
     }
     else {
-        for (uint32_t i = 0; i <= m_lastIndex && i < nFrames; i++) {
+        for (uint32_t i = 0; i <= node->lastIndex && i < nFrames; i++) {
             if (currentFrame <= m_frames.at(i)->index()) {
                 k2 = i;
                 break;
@@ -123,27 +160,27 @@ void FaceMotion::calculateFrames(float frameAt)
     if (k2 >= nFrames)
         k2 = nFrames - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
-    m_lastIndex = k1;
+    node->lastIndex = k1;
 
-    const FaceKeyFrame *keyFrameFrom = m_frames.at(k1), *keyFrameTo = m_frames.at(k2);
+    const FaceKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float timeFrom = keyFrameFrom->index();
     float timeTo = keyFrameTo->index();
     float weightFrom = 0.0f, weightTo = 0.0f;
-    if (m_overrideFirst &&(k1 == 0 || timeFrom <= m_lastIndex <= m_lastLoopStartIndex)) {
+    if (m_overrideFirst &&(k1 == 0 || timeFrom <= node->lastIndex <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
             timeFrom = m_lastLoopStartIndex;
-            weightFrom = m_snapWeight;
+            weightFrom = node->snapWeight;
             weightTo = keyFrameTo->weight();
         }
-        else if (frameAt - timeFrom < m_noFaceSmearIndex) {
+        else if (frameAt - timeFrom < m_smearIndex) {
             timeFrom = m_lastLoopStartIndex;
-            timeTo = m_lastLoopStartIndex + m_noFaceSmearIndex;
+            timeTo = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
-            weightFrom = m_snapWeight;
+            weightFrom = node->snapWeight;
             weightTo = keyFrameFrom->weight();
         }
         else if (nFrames > 1) {
-            timeFrom = m_lastLoopStartIndex + m_noFaceSmearIndex;
+            timeFrom = m_lastLoopStartIndex + m_smearIndex;
             weightFrom = keyFrameFrom->weight();
             weightTo = keyFrameTo->weight();
         }
@@ -158,25 +195,11 @@ void FaceMotion::calculateFrames(float frameAt)
 
     if (timeFrom != timeTo) {
         float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
-        m_weight = weightFrom * (1.0f - w) + weightTo * w;
+        node->weight = weightFrom * (1.0f - w) + weightTo * w;
     }
     else {
-        m_weight = weightFrom;
+        node->weight = weightFrom;
     }
-}
-
-void FaceMotion::takeSnap()
-{
-    uint32_t nFrames = m_frames.size();
-    for (uint32_t i = 0; i < nFrames; i++) {
-        Face *face = m_frames.at(i)->face();
-        m_snapWeight = face->weight();
-    }
-}
-
-void FaceMotion::sortFrames()
-{
-    m_frames.quickSort(FaceMotionKeyFramePredication());
 }
 
 }

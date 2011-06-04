@@ -40,6 +40,7 @@
 #define VPVL_BONEMOTION_H_
 
 #include "vpvl/BaseMotion.h"
+#include "LinearMath/btHashMap.h"
 
 namespace vpvl
 {
@@ -47,9 +48,10 @@ namespace vpvl
 class Bone;
 class BoneKeyFrame;
 class PMDModel;
+typedef struct BoneMotionInternal BoneMotionInternal;
 typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
 
-class BoneMotion
+class BoneMotion : BaseMotion
 {
 public:
     BoneMotion();
@@ -58,31 +60,13 @@ public:
     static const float kStartingMarginFrame;
 
     void read(const char *data, uint32_t size);
-    void translateFrames(PMDModel *model);
-    void calculateFrames(float frameAt);
-    void sortFrames();
+    void seek(float frameAt);
+    void takeSnap(const btVector3 &center);
+    void build(PMDModel *model);
     void reset();
 
     const BoneKeyFrameList &frames() const {
         return m_frames;
-    }
-    const btVector3 &position() const {
-        return m_position;
-    }
-    const btQuaternion &rotation() const {
-        return m_rotation;
-    }
-    const btVector3 &snapPosition() const {
-        return m_snapPosition;
-    }
-    const btQuaternion &snapRotation() const {
-        return m_snapRotation;
-    }
-    const void setSnapPosition(const btVector3 &value) {
-        m_snapPosition = value;
-    }
-    const void setSnapRotation(const btQuaternion &value) {
-        m_snapRotation = value;
     }
 
 private:
@@ -92,18 +76,12 @@ private:
                              float w,
                              uint32_t at,
                              float &value);
-    void takeSnap(const btVector3 &center);
+    void calculateFrames(float frameAt, BoneMotionInternal *node);
 
     Bone *m_bone;
     BoneKeyFrameList m_frames;
-    btVector3 m_position;
-    btVector3 m_snapPosition;
-    btQuaternion m_rotation;
-    btQuaternion m_snapRotation;
-    uint32_t m_lastIndex;
+    btHashMap<btHashString, BoneMotionInternal *> m_name2node;
     uint32_t m_lastLoopStartIndex;
-    uint32_t m_noBoneSmearIndex;
-    bool m_overrideFirst;
 };
 
 }

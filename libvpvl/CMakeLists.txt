@@ -7,6 +7,7 @@ set(VPVL_VERSION 0.1.0)
 project(libvpvl)
 aux_source_directory(src vpvl_sources)
 set(vpvl_public_headers
+    include/vpvl/BaseMotion.h
     include/vpvl/Bone.h
     include/vpvl/BoneMotion.h
     include/vpvl/CameraMotion.h

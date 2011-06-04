@@ -40,6 +40,7 @@
 #define VPVL_FACEMOTION_H_
 
 #include "vpvl/BaseMotion.h"
+#include "LinearMath/btHashMap.h"
 
 namespace vpvl
 {
@@ -47,9 +48,10 @@ namespace vpvl
 class Face;
 class FaceKeyFrame;
 class PMDModel;
+typedef struct FaceMotionInternal FaceMotionInternal;
 typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
 
-class FaceMotion
+class FaceMotion : BaseMotion
 {
 public:
     FaceMotion();
@@ -58,35 +60,22 @@ public:
     static const float kStartingMarginFrame;
 
     void read(const char *data, uint32_t size);
-    void translateFrames(PMDModel *model);
-    void calculateFrames(float frameAt);
-    void sortFrames();
+    void seek(float frameAt);
+    void takeSnap(const btVector3 &center);
+    void build(PMDModel *model);
     void reset();
 
     const FaceKeyFrameList &frames() const {
         return m_frames;
     }
-    float weight() const {
-        return m_weight;
-    }
-    float snapWeight() const {
-        return m_weight;
-    }
-    void setSnapWeight(float value) {
-        m_weight = value;
-    }
 
 private:
-    void takeSnap();
+    void calculateFrames(float frameAt, FaceMotionInternal *node);
 
     Face *m_face;
     FaceKeyFrameList m_frames;
-    uint32_t m_lastIndex;
+    btHashMap<btHashString, FaceMotionInternal *> m_name2node;
     uint32_t m_lastLoopStartIndex;
-    uint32_t m_noFaceSmearIndex;
-    float m_weight;
-    float m_snapWeight;
-    bool m_overrideFirst;
 };
 
 }

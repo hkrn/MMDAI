@@ -54,7 +54,9 @@ public:
     ~CameraMotion();
 
     void read(const char *data, uint32_t size);
-    void sortFrames();
+    void seek(float frameAt);
+    void takeSnap(const btVector3 &center);
+    void reset();
 
     const CameraKeyFrameList &frames() const {
         return m_frames;

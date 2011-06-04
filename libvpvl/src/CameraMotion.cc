@@ -51,7 +51,8 @@ public:
 };
 
 CameraMotion::CameraMotion()
-    : m_position(0.0f, 0.0f, 0.0f),
+    : BaseMotion(0.0f),
+      m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_distance(0.0f),
       m_fovy(0.0f)
@@ -76,11 +77,20 @@ void CameraMotion::read(const char *data, uint32_t size)
         ptr += CameraKeyFrame::stride(ptr);
         m_frames.push_back(frame);
     }
+    m_frames.quickSort(CameraMotionKeyFramePredication());
 }
 
-void CameraMotion::sortFrames()
+void CameraMotion::seek(float /* frameAt */)
 {
-    m_frames.quickSort(CameraMotionKeyFramePredication());
+}
+
+void CameraMotion::takeSnap(const btVector3 & /* center */)
+{
+}
+
+void CameraMotion::reset()
+{
+    BaseMotion::reset();
 }
 
 }
