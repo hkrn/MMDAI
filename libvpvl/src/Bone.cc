@@ -42,6 +42,30 @@
 namespace vpvl
 {
 
+const uint8_t *Bone::centerBoneName()
+{
+    static const uint8_t centerBoneName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b, 0x0 };
+    return centerBoneName;
+}
+
+Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
+{
+    const uint8_t *name = centerBoneName();
+    size_t len = strlen(reinterpret_cast<const char *>(name));
+    int nbones = bones->size();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones->at(i);
+        if (internal::stringEquals(bone->name(), name, len))
+            return bone;
+    }
+    return bones->at(0);
+}
+
+size_t Bone::stride(const uint8_t * /* data */)
+{
+    return 20 + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
+}
+
 Bone::Bone()
     : m_type(kUnknown),
       m_originPosition(0.0f, 0.0f, 0.0f),
@@ -80,23 +104,6 @@ Bone::~Bone()
     m_angleXLimited = false;
     m_simulated = false;
     m_motionIndepent = false;
-}
-
-Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
-{
-    static const uint8_t centerName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b, 0x0 };
-    int nbones = bones->size();
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = bones->at(i);
-        if (internal::stringEquals(bone->name(), centerName, sizeof(centerName)))
-            return bone;
-    }
-    return bones->at(0);
-}
-
-size_t Bone::stride(const uint8_t * /* data */)
-{
-    return 20 + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
 }
 
 void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
@@ -164,6 +171,22 @@ void Bone::reset()
 
 void Bone::setMotionIndependency()
 {
+    if (!m_parentBone || m_parentIsRoot) {
+        m_motionIndepent = true;
+        return;
+    }
+    static const uint8_t allParent[] = { 0x91, 0x53, 0x82, 0xc4, 0x82, 0xcc, 0x90, 0x65, 0x0 };
+    static const uint8_t legsOffset[] = { 0x97, 0xbc, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
+    static const uint8_t rightLegOffset[] = { 0x89, 0x45, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
+    static const uint8_t leftLegOffset[] = { 0x8d, 0xb6, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
+    if (internal::stringEquals(m_name, allParent, sizeof(allParent)) ||
+            internal::stringEquals(m_name, legsOffset, sizeof(legsOffset)) ||
+            internal::stringEquals(m_name, rightLegOffset, sizeof(rightLegOffset)) ||
+            internal::stringEquals(m_name, leftLegOffset, sizeof(leftLegOffset))) {
+        m_motionIndepent = true;
+        return;
+    }
+    m_motionIndepent = false;
 }
 
 void Bone::updateRotation()

@@ -70,6 +70,7 @@ public:
     Bone();
     ~Bone();
 
+    static const uint8_t *centerBoneName();
     static Bone *centerBone(const BoneList *bones);
     static size_t stride(const uint8_t *data);
 

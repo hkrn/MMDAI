@@ -544,6 +544,7 @@ void PMDModel::parseBones()
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
         bone->computeOffset();
+        bone->setMotionIndependency();
     }
 }
 
