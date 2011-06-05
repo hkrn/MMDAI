@@ -47,6 +47,14 @@ namespace vpvl
 const float PMDModel::kMinBoneWeight = 0.0001f;
 const float PMDModel::kMinFaceWeight = 0.001f;
 
+class VMDMotionPriorityPredication
+{
+public:
+    bool operator()(const VMDMotion *left, const VMDMotion *right) {
+        return left->priority() > right->priority();
+    }
+};
+
 PMDModel::PMDModel(const uint8_t *data, size_t size)
     : m_baseFace(0),
       m_skinnedVertices(0),
@@ -133,6 +141,7 @@ void PMDModel::addMotion(VMDMotion *motion)
 {
     motion->attachModel(this);
     m_motions.push_back(motion);
+    m_motions.quickSort(VMDMotionPriorityPredication());
 }
 
 void PMDModel::removeMotion(VMDMotion *motion)
