@@ -40,6 +40,7 @@
 #include "vpvl/internal/BoneKeyFrame.h"
 #include "vpvl/internal/CameraKeyFrame.h"
 #include "vpvl/internal/FaceKeyFrame.h"
+#include "vpvl/internal/PMDModel.h"
 #include "vpvl/internal/VMDMotion.h"
 #include "vpvl/internal/util.h"
 

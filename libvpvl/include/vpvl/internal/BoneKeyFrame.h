@@ -123,7 +123,7 @@ public:
 private:
     void setInterpolationTable(const int8_t *table) {
         for (int i = 0; i < 4; i++)
-            m_linear[i] = (table[0 + i] == table[4 + i] == table[8 + i] == table[12 + i]) ? true : false;
+            m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;
         for (int i = 0; i < 4; i++) {
             if (m_linear[i]) {
                 m_interpolationTable[i] = 0;

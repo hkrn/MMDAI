@@ -57,7 +57,7 @@ class FaceMotionKeyFramePredication
 {
 public:
     bool operator()(const FaceKeyFrame *left, const FaceKeyFrame *right) {
-        return left->index() - right->index();
+        return left->index() < right->index();
     }
 };
 
@@ -80,9 +80,6 @@ void FaceMotion::read(const char *data, uint32_t size)
         ptr += FaceKeyFrame::stride(ptr);
         m_frames.push_back(frame);
     }
-    m_frames.quickSort(FaceMotionKeyFramePredication());
-    if (size > 0)
-        m_maxFrame = m_frames[size - 1]->index();
 }
 
 void FaceMotion::seek(float frameAt)
@@ -94,12 +91,10 @@ void FaceMotion::seek(float frameAt)
             continue;
         calculateFrames(frameAt, node);
         Face *face = node->face;
-        if (face) {
-            if (m_blendRate == 1.0f)
-                face->setWeight(node->weight);
-            else
-                face->setWeight(face->weight() * (1.0 - m_blendRate) + node->weight * m_blendRate);
-        }
+        if (m_blendRate == 1.0f)
+            face->setWeight(node->weight);
+        else
+            face->setWeight(face->weight() * (1.0 - m_blendRate) + node->weight * m_blendRate);
     }
 }
 
@@ -109,8 +104,7 @@ void FaceMotion::takeSnap(const btVector3 & /* center */)
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
         Face *face = node->face;
-        if (face)
-            node->snapWeight = face->weight();
+        node->snapWeight = face->weight();
     }
 }
 
@@ -126,13 +120,25 @@ void FaceMotion::build(PMDModel *model)
             node->keyFrames.push_back(frame);
         }
         else {
-            node = new FaceMotionInternal();
-            node->face = model->findFace(frame->name());
-            node->lastIndex = 0;
-            node->weight = 0.0f;
-            node->snapWeight = 0.0f;
-            m_name2node.insert(name, node);
+            Face *face = model->findFace(frame->name());
+            if (face) {
+                node = new FaceMotionInternal();
+                node->keyFrames.push_back(frame);
+                node->face = face;
+                node->lastIndex = 0;
+                node->weight = 0.0f;
+                node->snapWeight = 0.0f;
+                m_name2node.insert(name, node);
+            }
         }
+    }
+
+    uint32_t nNodes = m_name2node.size();
+    for (uint32_t i = 0; i < nNodes; i++) {
+        FaceMotionInternal *node = *m_name2node.getAtIndex(i);
+        FaceKeyFrameList &frames = node->keyFrames;
+        frames.quickSort(FaceMotionKeyFramePredication());
+        btSetMax(m_maxFrame, frames[frames.size() - 1]->index());
     }
 }
 

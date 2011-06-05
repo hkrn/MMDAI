@@ -59,7 +59,7 @@ class BoneMotionKeyFramePredication
 {
 public:
     bool operator()(const BoneKeyFrame *left, const BoneKeyFrame *right) {
-        return left->index() - right->index();
+        return left->index() < right->index();
     }
 };
 
@@ -83,29 +83,24 @@ void BoneMotion::read(const char *data, uint32_t size)
         ptr += BoneKeyFrame::stride(ptr);
         m_frames.push_back(frame);
     }
-    m_frames.quickSort(BoneMotionKeyFramePredication());
-    if (size > 0)
-        m_maxFrame = m_frames[size - 1]->index();
 }
 
 void BoneMotion::seek(float frameAt)
 {
     uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
+        BoneMotionInternal *node = *m_name2node.getAtIndex(nNodes - i - 1);
         if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
             continue;
         calculateFrames(frameAt, node);
         Bone *bone = node->bone;
-        if (bone) {
-            if (m_blendRate == 1.0f) {
-                bone->setCurrentPosition(node->position);
-                bone->setCurrentRotation(node->rotation);
-            }
-            else {
-                bone->setCurrentPosition(bone->currentPosition().lerp(node->position, m_blendRate));
-                bone->setCurrentRotation(bone->currentRotation().slerp(node->rotation, m_blendRate));
-            }
+        if (m_blendRate == 1.0f) {
+            bone->setCurrentPosition(node->position);
+            bone->setCurrentRotation(node->rotation);
+        }
+        else {
+            bone->setCurrentPosition(bone->currentPosition().lerp(node->position, m_blendRate));
+            bone->setCurrentRotation(bone->currentRotation().slerp(node->rotation, m_blendRate));
         }
     }
 }
@@ -116,12 +111,10 @@ void BoneMotion::takeSnap(const btVector3 &center)
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         Bone *bone = node->bone;
-        if (bone) {
-            node->snapPosition = bone->currentPosition();
-            if (bone->hasMotionIndependency())
-                node->snapPosition -= center;
-            node->snapRotation = bone->currentRotation();
-        }
+        node->snapPosition = bone->currentPosition();
+        if (bone->hasMotionIndependency())
+            node->snapPosition -= center;
+        node->snapRotation = bone->currentRotation();
     }
 }
 
@@ -137,15 +130,27 @@ void BoneMotion::build(PMDModel *model)
             node->keyFrames.push_back(frame);
         }
         else {
-            node = new BoneMotionInternal();
-            node->bone = model->findBone(frame->name());
-            node->lastIndex = 0;
-            node->position.setZero();
-            node->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-            node->snapPosition.setZero();
-            node->snapRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-            m_name2node.insert(name, node);
+            Bone *bone = model->findBone(frame->name());
+            if (bone) {
+                node = new BoneMotionInternal();
+                node->keyFrames.push_back(frame);
+                node->bone = bone;
+                node->lastIndex = 0;
+                node->position.setZero();
+                node->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+                node->snapPosition.setZero();
+                node->snapRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+                m_name2node.insert(name, node);
+            }
         }
+    }
+
+    uint32_t nNodes = m_name2node.size();
+    for (uint32_t i = 0; i < nNodes; i++) {
+        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
+        BoneKeyFrameList &frames = node->keyFrames;
+        frames.quickSort(BoneMotionKeyFramePredication());
+        btSetMax(m_maxFrame, frames[frames.size() - 1]->index());
     }
 }
 
@@ -153,26 +158,23 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
 {
     BoneKeyFrameList &kframes = node->keyFrames;
     uint32_t nFrames = kframes.size();
-    if (nFrames == 0)
-        return;
-
-    BoneKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
+    BoneKeyFrame *lastKeyFrame = kframes[nFrames - 1];
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())
         currentFrame = lastKeyFrame->index();
 
-    uint32_t k1 = 0, k2 = 0;
-    if (currentFrame >= kframes.at(node->lastIndex)->index()) {
-        for (uint32_t i = node->lastIndex; i < nFrames; i++) {
-            if (currentFrame <= kframes.at(i)->index()) {
+    uint32_t k1 = 0, k2 = 0, lastIndex = node->lastIndex;
+    if (currentFrame >= kframes[lastIndex]->index()) {
+        for (uint32_t i = lastIndex; i < nFrames; i++) {
+            if (currentFrame <= kframes[i]->index()) {
                 k2 = i;
                 break;
             }
         }
     }
     else {
-        for (uint32_t i = 0; i <= node->lastIndex && i < nFrames; i++) {
-            if (currentFrame <= kframes.at(i)->index()) {
+        for (uint32_t i = 0; i <= lastIndex && i < nFrames; i++) {
+            if (currentFrame <= kframes[i]->index()) {
                 k2 = i;
                 break;
             }
@@ -184,7 +186,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     k1 = k2 <= 1 ? 0 : k2 - 1;
     node->lastIndex = k1;
 
-    const BoneKeyFrame *keyFrameFrom = m_frames.at(k1), *keyFrameTo = m_frames.at(k2);
+    const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float timeFrom = keyFrameFrom->index();
     float timeTo = keyFrameTo->index();
     BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);

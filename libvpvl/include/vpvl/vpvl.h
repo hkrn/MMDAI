@@ -2,6 +2,7 @@
 #define vpvl_vpvl_H_
 
 #include "vpvl/common.h"
+#include "vpvl/BaseMotion.h"
 #include "vpvl/Bone.h"
 #include "vpvl/BoneMotion.h"
 #include "vpvl/CameraMotion.h"

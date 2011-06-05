@@ -44,7 +44,7 @@
 #include "vpvl/CameraMotion.h"
 #include "vpvl/FaceMotion.h"
 
-#include "vpvl/internal/PMDModel.h"
+class PMDModel;
 
 namespace vpvl
 {

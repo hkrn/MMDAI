@@ -452,9 +452,6 @@ static void DrawModelShadow(const vpvl::PMDModel &model)
 
 static void DrawSurface(vpvl::PMDModel &model, int width, int height)
 {
-    model.updateRootBone();
-    model.updateMotion();
-    model.updateSkins();
     const double ratio = static_cast<double>(width) / height;
     float matrix[16];
     btTransform mv;
@@ -532,12 +529,21 @@ static void FileSlurp(const char *path, char *&data, size_t &size) {
     }
 }
 
+static Uint32 UpdateTimer(Uint32 internal, void *data)
+{
+    vpvl::PMDModel *model = static_cast<vpvl::PMDModel *>(data);
+    model->updateRootBone();
+    model->updateMotion(0.5);
+    model->updateSkins();
+    return internal;
+}
+
 int main(int argc, char *argv[])
 {
     (void) argc;
     (void) argv;
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) < 0) {
         fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
         return -1;
     }
@@ -575,15 +581,16 @@ int main(int argc, char *argv[])
         delete motionData;
         return -1;
     }
-    motion.attachModel(&model);
-    motion.update(1);
-    motion.update(1);
+    model.addMotion(&motion);
 
+    uint32_t interval = static_cast<uint32_t>(1000.0f / 60.0f);
+    SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &model);
     while (true) {
         if (PollEvents())
             break;
         DrawSurface(model, g_width, g_height);
     }
+    SDL_RemoveTimer(timerID);
 
     UnloadModelTextures(model);
     SDL_FreeSurface(surface);

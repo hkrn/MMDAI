@@ -39,7 +39,13 @@
 #ifndef VPVL_PMDMODEL_H_
 #define VPVL_PMDMODEL_H_
 
-#include "vpvl/vpvl.h"
+#include "vpvl/Bone.h"
+#include "vpvl/Constraint.h"
+#include "vpvl/Face.h"
+#include "vpvl/IK.h"
+#include "vpvl/Material.h"
+#include "vpvl/RigidBody.h"
+#include "vpvl/Vertex.h"
 #include "LinearMath/btHashMap.h"
 
 namespace vpvl
@@ -84,6 +90,8 @@ struct SkinVertex
     btVector3 texureCoord;
 };
 
+class VMDMotion;
+
 typedef struct PMDModelPrivate PMDModelPrivate;
 
 class PMDModel
@@ -99,8 +107,10 @@ public:
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
+    void addMotion(VMDMotion *motion);
+    void removeMotion(VMDMotion *motion);
     void updateRootBone();
-    void updateMotion();
+    void updateMotion(float frameAt);
     void updateSkins();
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
@@ -289,6 +299,7 @@ private:
     PMDModelDataInfo m_result;
     btHashMap<btHashString, Bone *> m_name2bone;
     btHashMap<btHashString, Face *> m_name2face;
+    btAlignedObjectArray<VMDMotion *> m_motions;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<btVector3> m_edgeVertices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;

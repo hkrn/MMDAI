@@ -38,6 +38,7 @@
 
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/PMDModel.h"
+#include "vpvl/internal/VMDMotion.h"
 #include "vpvl/internal/util.h"
 
 namespace vpvl
@@ -128,15 +129,28 @@ void PMDModel::prepare()
     btClamp(m_boundingSphereStep, max, min);
 }
 
+void PMDModel::addMotion(VMDMotion *motion)
+{
+    motion->attachModel(this);
+    m_motions.push_back(motion);
+}
+
+void PMDModel::removeMotion(VMDMotion *motion)
+{
+    m_motions.remove(motion);
+}
+
 void PMDModel::updateRootBone()
 {
     // FIXME: implement associated accessory
     m_rootBone.updateTransform();
 }
 
-void PMDModel::updateMotion()
+void PMDModel::updateMotion(float frameAt)
 {
-    // FIXME: motion
+    uint32_t nMotions = m_motions.size();
+    for (uint32_t i = 0; i < nMotions; i++)
+        m_motions[i]->update(frameAt);
     updateAllBones();
     updateAllFaces();
 }
