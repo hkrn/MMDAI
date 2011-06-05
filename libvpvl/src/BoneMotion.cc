@@ -63,6 +63,26 @@ public:
     }
 };
 
+void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
+                              const btVector3 &from,
+                              const btVector3 &to,
+                              float w,
+                              uint32_t at,
+                              float &value)
+{
+    const float valueFrom = static_cast<const btScalar *>(from)[at];
+    const float valueTo = static_cast<const btScalar *>(to)[at];
+    if (keyFrame->linear()[at]) {
+        value = valueFrom * (1.0f - w) + valueTo * w;
+    }
+    else {
+        const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
+        const float *v = keyFrame->interpolationTable()[at];
+        const float w2 = v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
+        value = valueFrom * (1.0f - w2) + valueTo * w2;
+    }
+}
+
 BoneMotion::BoneMotion()
     : BaseMotion(kStartingMarginFrame),
       m_bone(0)
@@ -270,26 +290,6 @@ void BoneMotion::reset()
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         node->lastIndex = 0;
-    }
-}
-
-void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
-                              const btVector3 &from,
-                              const btVector3 &to,
-                              float w,
-                              uint32_t at,
-                              float &value)
-{
-    const float valueFrom = static_cast<const btScalar *>(from)[at];
-    const float valueTo = static_cast<const btScalar *>(to)[at];
-    if (keyFrame->linear()[at]) {
-        value = valueFrom * (1.0f - w) + valueTo * w;
-    }
-    else {
-        const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
-        const float *v = keyFrame->interpolationTable()[at];
-        const float w2 = v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
-        value = valueFrom * (1.0f - w2) + valueTo * w2;
     }
 }
 

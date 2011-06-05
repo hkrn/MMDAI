@@ -100,6 +100,12 @@ private:
     btTransform m_boneTransform;
 };
 
+size_t RigidBody::stride(const uint8_t * /* data */)
+{
+    return 20 + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
+            + (sizeof(float) * 14) + sizeof(uint8_t);
+}
+
 RigidBody::RigidBody()
     : m_bone(0),
       m_shape(0),
@@ -133,12 +139,6 @@ RigidBody::~RigidBody()
     m_noBone = false;
     m_transform.setIdentity();
     m_invertedTransform.setIdentity();
-}
-
-size_t RigidBody::stride(const uint8_t * /* data */)
-{
-    return 20 + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
-            + (sizeof(float) * 14) + sizeof(uint8_t);
 }
 
 void RigidBody::read(const uint8_t *data, BoneList *bones)

@@ -42,6 +42,11 @@
 namespace vpvl
 {
 
+size_t Vertex::stride(const uint8_t * /* data */)
+{
+    return sizeof(float) * 8 + sizeof(int16_t) * 2 + sizeof(uint8_t) * 2;
+}
+
 Vertex::Vertex()
     : m_position(0.0f, 0.0f, 0.0f),
       m_normal(0.0f, 0.0f, 0.0f),
@@ -64,11 +69,6 @@ Vertex::~Vertex()
     m_bone2 = 0;
     m_weight = 0.0f;
     m_edge = false;
-}
-
-size_t Vertex::stride(const uint8_t * /* data */)
-{
-    return sizeof(float) * 8 + sizeof(int16_t) * 2 + sizeof(uint8_t) * 2;
 }
 
 void Vertex::read(const uint8_t *data)

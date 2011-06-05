@@ -48,22 +48,6 @@ const float IK::kMinAxis        = 0.0000001f;
 const float IK::kMinRotationSum = 0.002f;
 const float IK::kMinRotation    = 0.00001f;
 
-IK::IK()
-    : m_destination(0),
-      m_target(0),
-      m_iteration(0),
-      m_angleConstraint(0.0f)
-{
-}
-
-IK::~IK()
-{
-    m_destination = 0;
-    m_target = 0;
-    m_iteration = 0;
-    m_angleConstraint = 0.0f;
-}
-
 // FIXME: boundary check
 size_t IK::totalSize(const uint8_t *data, size_t n)
 {
@@ -87,6 +71,22 @@ size_t IK::stride(const uint8_t *data)
     ptr += base;
     uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
     return base + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
+}
+
+IK::IK()
+    : m_destination(0),
+      m_target(0),
+      m_iteration(0),
+      m_angleConstraint(0.0f)
+{
+}
+
+IK::~IK()
+{
+    m_destination = 0;
+    m_target = 0;
+    m_iteration = 0;
+    m_angleConstraint = 0.0f;
 }
 
 void IK::read(const uint8_t *data, BoneList *bones)

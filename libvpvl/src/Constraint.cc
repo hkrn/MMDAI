@@ -42,6 +42,11 @@
 namespace vpvl
 {
 
+size_t Constraint::stride(const uint8_t * /* data */)
+{
+    return 20 + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
+}
+
 Constraint::Constraint()
     : m_constraint(0)
 {
@@ -53,11 +58,6 @@ Constraint::~Constraint()
     memset(m_name, 0, sizeof(m_name));
     delete m_constraint;
     m_constraint = 0;
-}
-
-size_t Constraint::stride(const uint8_t * /* data */)
-{
-    return 20 + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
 }
 
 void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset)

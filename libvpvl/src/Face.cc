@@ -42,20 +42,6 @@
 namespace vpvl
 {
 
-Face::Face()
-    : m_type(kOther),
-      m_weight(0.0f)
-{
-    memset(m_name, 0, sizeof(m_name));
-}
-
-Face::~Face()
-{
-    memset(m_name, 0, sizeof(m_name));
-    m_type = kOther;
-    m_weight = 0.0f;
-}
-
 // FIXME: boundary check
 size_t Face::totalSize(const uint8_t *data, size_t n)
 {
@@ -78,6 +64,20 @@ size_t Face::stride(const uint8_t *data)
     ptr += base;
     const int nvertices = *reinterpret_cast<int *>(ptr);
     return base + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+}
+
+Face::Face()
+    : m_type(kOther),
+      m_weight(0.0f)
+{
+    memset(m_name, 0, sizeof(m_name));
+}
+
+Face::~Face()
+{
+    memset(m_name, 0, sizeof(m_name));
+    m_type = kOther;
+    m_weight = 0.0f;
 }
 
 void Face::read(const uint8_t *data)

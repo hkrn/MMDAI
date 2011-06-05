@@ -42,6 +42,11 @@
 namespace vpvl
 {
 
+size_t Material::stride(const uint8_t * /* data */)
+{
+    return sizeof(float) * 11 + (sizeof(uint8_t) * 2) + sizeof(uint32_t) + 20;
+}
+
 Material::Material()
     : m_ambient(0.0f, 0.0f, 0.0f, 1.0f),
       m_averageColor(0.0f, 0.0f, 0.0f, 1.0f),
@@ -80,11 +85,6 @@ Material::~Material()
     m_secondSPH = false;
     m_secondSPA = false;
     m_private = 0;
-}
-
-size_t Material::stride(const uint8_t * /* data */)
-{
-    return sizeof(float) * 11 + (sizeof(uint8_t) * 2) + sizeof(uint32_t) + 20;
 }
 
 void Material::read(const uint8_t *data)
