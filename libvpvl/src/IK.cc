@@ -65,10 +65,10 @@ IK::~IK()
 }
 
 // FIXME: boundary check
-size_t IK::totalSize(const char *data, size_t n)
+size_t IK::totalSize(const uint8_t *data, size_t n)
 {
     size_t size = 0;
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     for (size_t i = 0; i < n; i++) {
         size_t base = sizeof(int16_t) * 2;
         ptr += base;
@@ -80,18 +80,18 @@ size_t IK::totalSize(const char *data, size_t n)
     return size;
 }
 
-size_t IK::stride(const char *data)
+size_t IK::stride(const uint8_t *data)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     size_t base = sizeof(int16_t) * 2;
     ptr += base;
     uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
     return base + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
 }
 
-void IK::read(const char *data, BoneList *bones)
+void IK::read(const uint8_t *data, BoneList *bones)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     int16_t destBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
     int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);

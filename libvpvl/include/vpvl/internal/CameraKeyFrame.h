@@ -76,12 +76,12 @@ public:
 
     static const int kTableSize = 24;
 
-    static size_t stride(const char * /* data */) {
+    static size_t stride(const uint8_t * /* data */) {
         return sizeof(uint32_t) + sizeof(float) * 7 + 24 + sizeof(uint32_t) + sizeof(uint8_t);
     }
 
-    void read(const char *data) {
-        char *ptr = const_cast<char *>(data);
+    void read(const uint8_t *data) {
+        uint8_t *ptr = const_cast<uint8_t *>(data);
         uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
         ptr += sizeof(uint32_t);
         float distance = *reinterpret_cast<float *>(ptr);

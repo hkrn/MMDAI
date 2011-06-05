@@ -84,24 +84,25 @@ Bone::~Bone()
 
 Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
 {
+    static const uint8_t centerName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b, 0x0 };
     int nbones = bones->size();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones->at(i);
-        if (stringEquals(bone->name(), ""))
+        if (internal::stringEquals(bone->name(), centerName, sizeof(centerName)))
             return bone;
     }
     return bones->at(0);
 }
 
-size_t Bone::stride(const char * /* data */)
+size_t Bone::stride(const uint8_t * /* data */)
 {
     return 20 + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
 }
 
-void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
+void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
 {
-    char *ptr = const_cast<char *>(data);
-    stringCopySafe(m_name, ptr, sizeof(m_name));
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    copyBytesSafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     int16_t parentBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
@@ -114,8 +115,8 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *root
     float pos[3];
     internal::vector3(ptr, pos);
 
-    static const unsigned char kneeName[] = { 0x82, 0xd0, 0x82, 0xb4 };
-    if (strstr(m_name, reinterpret_cast<const char *>(kneeName)))
+    static const uint8_t kneeName[] = { 0x82, 0xd0, 0x82, 0xb4, 0x0 };
+    if (strstr(reinterpret_cast<const char *>(m_name), reinterpret_cast<const char *>(kneeName)))
         m_angleXLimited = true;
 
     int nbones = bones->size();

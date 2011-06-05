@@ -52,25 +52,25 @@ public:
     RigidBody();
     ~RigidBody();
 
-    static size_t stride(const char *data);
+    static size_t stride(const uint8_t *data);
 
-    void read(const char *data, BoneList *bones);
+    void read(const uint8_t *data, BoneList *bones);
     void transformToBone();
     void setKinematic(bool value);
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
     btRigidBody *body() const {
         return m_body;
     }
 
-    void setName(const char *value) {
-        stringCopySafe(m_name, value, sizeof(m_name));
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
     }
 
 private:
-    char m_name[20];
+    uint8_t m_name[20];
     Bone *m_bone;
     btCollisionShape *m_shape;
     btRigidBody *m_body;

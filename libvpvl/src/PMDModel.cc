@@ -47,7 +47,7 @@ namespace vpvl
 const float PMDModel::kMinBoneWeight = 0.0001f;
 const float PMDModel::kMinFaceWeight = 0.001f;
 
-PMDModel::PMDModel(const char *data, size_t size)
+PMDModel::PMDModel(const uint8_t *data, size_t size)
     : m_baseFace(0),
       m_skinnedVertices(0),
       m_indicesPointer(0),
@@ -321,7 +321,7 @@ bool PMDModel::preparse()
     if (!m_data || 283 > rest)
         return false;
 
-    char *ptr = const_cast<char *>(m_data);
+    uint8_t *ptr = const_cast<uint8_t *>(m_data);
     m_result.basePtr = ptr;
 
     /* header and version check */
@@ -491,7 +491,7 @@ void PMDModel::parseHeader()
 
 void PMDModel::parseVertices()
 {
-    char *ptr = const_cast<char *>(m_result.verticesPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.verticesPtr);
     const int nvertices = m_result.verticesCount;
     m_vertices.reserve(nvertices);
     for (int i = 0; i < nvertices; i++) {
@@ -504,7 +504,7 @@ void PMDModel::parseVertices()
 
 void PMDModel::parseIndices()
 {
-    char *ptr = const_cast<char *>(m_result.indicesPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.indicesPtr);
     const int nindices = m_result.indicesCount;
     m_indices.reserve(nindices);
     for (int i = 0; i < nindices; i++) {
@@ -516,7 +516,7 @@ void PMDModel::parseIndices()
 
 void PMDModel::parseMatrials()
 {
-    char *ptr = const_cast<char *>(m_result.materialsPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.materialsPtr);
     const int nmaterials = m_result.materialsCount;
     m_materials.reserve(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
@@ -531,14 +531,14 @@ void PMDModel::parseBones()
 {
     Bone *mutableRootBone = this->mutableRootBone();
     BoneList *mutableBones = this->mutableBones();
-    char *ptr = const_cast<char *>(m_result.bonesPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.bonesPtr);
     const int nbones = m_result.bonesCount;
     m_bones.reserve(nbones);
     for (int i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
         bone->read(ptr, mutableBones, mutableRootBone);
         ptr += Bone::stride(ptr);
-        m_name2bone.insert(btHashString(bone->name()), bone);
+        m_name2bone.insert(btHashString(reinterpret_cast<const char *>(bone->name())), bone);
         m_bones.push_back(bone);
     }
     for (int i = 0; i < nbones; i++) {
@@ -549,7 +549,7 @@ void PMDModel::parseBones()
 
 void PMDModel::parseIKs()
 {
-    char *ptr = const_cast<char *>(m_result.IKsPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.IKsPtr);
     const int nIKs = m_result.IKsCount;
     BoneList *mutableBones = this->mutableBones();
     m_IKs.reserve(nIKs);
@@ -564,7 +564,7 @@ void PMDModel::parseIKs()
 void PMDModel::parseFaces()
 {
     Face *baseFace = 0;
-    char *ptr = const_cast<char *>(m_result.facesPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.facesPtr);
     const int nfaces = m_result.facesCount;
     m_faces.reserve(nfaces);
     for (int i = 0; i < nfaces; i++) {
@@ -573,7 +573,7 @@ void PMDModel::parseFaces()
         ptr += Face::stride(ptr);
         if (face->type() == kBase)
             m_baseFace = baseFace = face;
-        m_name2face.insert(btHashString(face->name()), face);
+        m_name2face.insert(btHashString(reinterpret_cast<const char *>(face->name())), face);
         m_faces.push_back(face);
     }
     if (baseFace) {
@@ -607,7 +607,7 @@ void PMDModel::parseToonTextureNames()
 void PMDModel::parseRigidBodies()
 {
     BoneList *mutableBones = &m_bones;
-    char *ptr = const_cast<char *>(m_result.rigidBodiesPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.rigidBodiesPtr);
     const int nrigidBodies = m_result.rigidBodiesCount;
     m_rigidBodies.reserve(nrigidBodies);
     for (int i = 0; i < nrigidBodies; i++) {
@@ -622,7 +622,7 @@ void PMDModel::parseConstraints()
 {
     RigidBodyList rigidBodies = m_rigidBodies;
     btVector3 offset = m_rootBone.offset();
-    char *ptr = const_cast<char *>(m_result.constraintsPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(m_result.constraintsPtr);
     const int nconstraints = m_result.constranitsCount;
     m_constraints.reserve(nconstraints);
     for (int i = 0; i < nconstraints; i++) {

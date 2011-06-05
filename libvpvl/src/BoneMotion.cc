@@ -73,9 +73,9 @@ BoneMotion::~BoneMotion()
 {
 }
 
-void BoneMotion::read(const char *data, uint32_t size)
+void BoneMotion::read(const uint8_t *data, uint32_t size)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
     for (uint32_t i = 0; i < size; i++) {
         BoneKeyFrame *frame = new BoneKeyFrame();
@@ -123,7 +123,7 @@ void BoneMotion::build(PMDModel *model)
     uint32_t nFrames = m_frames.size();
     for (uint32_t i = 0; i < nFrames; i++) {
         BoneKeyFrame *frame = m_frames.at(i);
-        btHashString name(frame->name());
+        btHashString name(reinterpret_cast<const char *>(frame->name()));
         BoneMotionInternal **ptr = m_name2node.find(name), *node;
         if (ptr) {
             node = *ptr;

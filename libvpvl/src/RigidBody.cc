@@ -135,16 +135,16 @@ RigidBody::~RigidBody()
     m_invertedTransform.setIdentity();
 }
 
-size_t RigidBody::stride(const char * /* data */)
+size_t RigidBody::stride(const uint8_t * /* data */)
 {
     return 20 + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
             + (sizeof(float) * 14) + sizeof(uint8_t);
 }
 
-void RigidBody::read(const char *data, BoneList *bones)
+void RigidBody::read(const uint8_t *data, BoneList *bones)
 {
-    char *ptr = const_cast<char *>(data);
-    stringCopySafe(m_name, ptr, sizeof(m_name));
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    copyBytesSafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     uint16_t boneID = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(int16_t);

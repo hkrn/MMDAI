@@ -53,17 +53,17 @@ public:
     Material();
     ~Material();
 
-    static size_t stride(const char *data);
+    static size_t stride(const uint8_t *data);
 
-    void read(const char *data);
+    void read(const uint8_t *data);
 
-    const char *rawName() const {
+    const uint8_t *rawName() const {
         return m_rawName;
     }
-    const char *primaryTextureName() const {
+    const uint8_t *primaryTextureName() const {
         return m_primaryTextureName;
     }
-    const char *secondTextureName() const {
+    const uint8_t *secondTextureName() const {
         return m_secondTextureName;
     }
     const btVector4 &ambient() const {
@@ -109,11 +109,11 @@ public:
         return m_private;
     }
 
-    void setPrimaryTextureName(const char *value) {
-        stringCopySafe(m_primaryTextureName, value, sizeof(m_primaryTextureName));
+    void setPrimaryTextureName(const uint8_t *value) {
+        copyBytesSafe(m_primaryTextureName, value, sizeof(m_primaryTextureName));
     }
-    void setSecondTextureName(const char *value) {
-        stringCopySafe(m_secondTextureName, value, sizeof(m_secondTextureName));
+    void setSecondTextureName(const uint8_t *value) {
+        copyBytesSafe(m_secondTextureName, value, sizeof(m_secondTextureName));
     }
     void setAmbient(const btVector4 &value) {
         m_ambient = value;
@@ -141,9 +141,9 @@ public:
     }
 
 private:
-    char m_rawName[20];
-    char m_primaryTextureName[20];
-    char m_secondTextureName[20];
+    uint8_t m_rawName[20];
+    uint8_t m_primaryTextureName[20];
+    uint8_t m_secondTextureName[20];
     btVector4 m_ambient;
     btVector4 m_averageColor;
     btVector4 m_diffuse;

@@ -144,58 +144,13 @@ inline float degree(float value)
     return value * static_cast<float>(180.0f / M_PI);
 }
 
-inline size_t stringLength(const char *str)
-{
-    assert(str != NULL);
-    return strlen(str);
-}
-
-inline char *stringClone(const char *str)
-{
-    assert(str != NULL);
-#if defined(WIN32)
-    return _strdup(str);
-#else
-    return strdup(str);
-#endif
-}
-
-inline char *stringCopy(char *dst, const char *src, size_t max)
-{
-    assert(dst != NULL && src != NULL && max > 0);
-    return strncpy(dst, src, max);
-}
-
-inline char *stringCopySafe(char *dst, const char *src, size_t max)
+inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
 {
     assert(dst != NULL && src != NULL && max > 0);
     size_t len = max - 1;
-    char *ptr = strncpy(dst, src, len);
+    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, len));
     dst[len] = '\0';
     return ptr;
-}
-
-inline bool stringEquals(const char *s1, const char *s2)
-{
-    assert(s1 != NULL && s2 != NULL);
-    return strcmp(s1, s2) == 0;
-}
-
-inline bool stringEqualsIn(const char *s1, const char *s2, size_t max)
-{
-    assert(s1 != NULL && s2 != NULL && max > 0);
-    return strncmp(s1, s2, max) == 0;
-}
-
-inline double stringToDouble(const char *str)
-{
-    assert(str != NULL);
-    return atof(str);
-}
-
-inline float stringToFloat(const char *str)
-{
-    return (float) stringToDouble(str);
 }
 
 }

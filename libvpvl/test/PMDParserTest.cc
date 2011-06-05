@@ -2,23 +2,23 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/PMDModel.h"
 
-static void FileSlurp(const char *path, char *&data, size_t &size) {
+static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
     FILE *fp = fopen(path, "rb");
     fseek(fp, 0, SEEK_END);
     size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    data = new char[size];
+    data = new uint8_t[size];
     fread(data, size, 1, fp);
     fclose(fp);
 }
 
 TEST(PMDModelTest, PreParseEmptyPMD) {
-    vpvl::PMDModel model("", 0);
+    vpvl::PMDModel model(reinterpret_cast<const uint8_t *>(""), 0);
     EXPECT_FALSE(model.preparse());
 }
 
 TEST(PMDModelTest, PreParseFullPMD) {
-    char *data = 0;
+    uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
     vpvl::PMDModel model(data, size);
@@ -56,7 +56,7 @@ TEST(PMDModelTest, PreParseFullPMD) {
 }
 
 TEST(PMDModelTest, ParseFullPMD) {
-    char *data = 0;
+    uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
     vpvl::PMDModel model(data, size);
@@ -69,5 +69,5 @@ TEST(PMDModelTest, ParseFullPMD) {
     EXPECT_EQ(model.faces().size(), result.facesCount);
     EXPECT_EQ(model.rigidBodies().size(), result.rigidBodiesCount);
     EXPECT_EQ(model.constraints().size(), result.constranitsCount);
-    EXPECT_STREQ("Miku Hatsune", model.englishName());
+    EXPECT_STREQ("Miku Hatsune", reinterpret_cast<const char *>(model.englishName()));
 }

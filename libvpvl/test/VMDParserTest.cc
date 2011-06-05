@@ -2,23 +2,23 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/VMDMotion.h"
 
-static void FileSlurp(const char *path, char *&data, size_t &size) {
+static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
     FILE *fp = fopen(path, "rb");
     fseek(fp, 0, SEEK_END);
     size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    data = new char[size];
+    data = new uint8_t[size];
     fread(data, size, 1, fp);
     fclose(fp);
 }
 
 TEST(VMDMotionTest, PreParseEmptyVMD) {
-    vpvl::VMDMotion motion("", 0);
+    vpvl::VMDMotion motion(reinterpret_cast<const uint8_t *>(""), 0);
     EXPECT_FALSE(motion.preparse());
 }
 
 TEST(VMDMotionTest, PreParseMotionVMD) {
-    char *data = 0;
+    uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/motion.vmd", data, size);
     vpvl::VMDMotion motion(data, size);
@@ -36,7 +36,7 @@ TEST(VMDMotionTest, PreParseMotionVMD) {
 }
 
 TEST(VMDMotionTest, PreParseCameraVMD) {
-    char *data = 0;
+    uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/camera.vmd", data, size);
     vpvl::VMDMotion motion(data, size);
@@ -54,7 +54,7 @@ TEST(VMDMotionTest, PreParseCameraVMD) {
 }
 
 TEST(VMDMotionTest, ParseMotionVMD) {
-    char *data = 0;
+    uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/motion.vmd", data, size);
     vpvl::VMDMotion motion(data, size);
@@ -67,7 +67,7 @@ TEST(VMDMotionTest, ParseMotionVMD) {
 }
 
 TEST(VMDMotionTest, ParseCameraVMD) {
-    char *data = 0;
+    uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/camera.vmd", data, size);
     vpvl::VMDMotion motion(data, size);

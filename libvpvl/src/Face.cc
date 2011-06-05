@@ -57,10 +57,10 @@ Face::~Face()
 }
 
 // FIXME: boundary check
-size_t Face::totalSize(const char *data, size_t n)
+size_t Face::totalSize(const uint8_t *data, size_t n)
 {
     size_t size = 0;
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     for (size_t i = 0; i < n; i++) {
         ptr += 20;
         uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
@@ -71,19 +71,19 @@ size_t Face::totalSize(const char *data, size_t n)
     return size;
 }
 
-size_t Face::stride(const char *data)
+size_t Face::stride(const uint8_t *data)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     size_t base = 20;
     ptr += base;
     const int nvertices = *reinterpret_cast<int *>(ptr);
     return base + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
 }
 
-void Face::read(const char *data)
+void Face::read(const uint8_t *data)
 {
-    char *ptr = const_cast<char *>(data);
-    stringCopySafe(m_name, ptr, sizeof(m_name));
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    copyBytesSafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);

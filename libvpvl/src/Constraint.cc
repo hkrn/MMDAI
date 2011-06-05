@@ -55,15 +55,15 @@ Constraint::~Constraint()
     m_constraint = 0;
 }
 
-size_t Constraint::stride(const char * /* data */)
+size_t Constraint::stride(const uint8_t * /* data */)
 {
     return 20 + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
 }
 
-void Constraint::read(const char *data, const RigidBodyList &bodies, const btVector3 &offset)
+void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset)
 {
-    char *ptr = const_cast<char *>(data);
-    stringCopySafe(m_name, ptr, sizeof(m_name));
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    copyBytesSafe(m_name, ptr, sizeof(m_name));
     ptr += sizeof(m_name);
     int32_t bodyID1 = *reinterpret_cast<int32_t *>(ptr);
     ptr += sizeof(uint32_t);

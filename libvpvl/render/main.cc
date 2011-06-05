@@ -31,9 +31,9 @@ struct vpvl::PMDModelPrivate {
 static const int g_width = 800;
 static const int g_height = 600;
 
-static const char *g_sysdir = "render/res/system";
-static const char *g_modeldir = "render/res/lat";
-static const char *g_modelname = "normal.pmd";
+static const uint8_t g_sysdir[] = "render/res/system";
+static const uint8_t g_modeldir[] = "render/res/lat";
+static const uint8_t g_modelname[] = "normal.pmd";
 
 static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
 {
@@ -69,10 +69,10 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     return true;
 }
 
-static bool LoadTexture(const char *path, GLuint &textureID)
+static bool LoadTexture(const uint8_t *path, GLuint &textureID)
 {
     static const GLfloat priority = 1.0f;
-    SDL_Surface *surface = IMG_Load(path);
+    SDL_Surface *surface = IMG_Load(reinterpret_cast<const char *>(path));
     if (surface) {
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
@@ -110,7 +110,7 @@ static bool LoadTexture(const char *path, GLuint &textureID)
     }
 }
 
-static bool LoadToonTexture(const char *system, const char *dir, const char *name, GLuint &textureID)
+static bool LoadToonTexture(const uint8_t *system, const uint8_t *dir, const uint8_t *name, GLuint &textureID)
 {
     char path[256];
     struct stat sb;
@@ -123,10 +123,10 @@ static bool LoadToonTexture(const char *system, const char *dir, const char *nam
         }
     }
     //fprintf(stderr, "%s\n", path);
-    return LoadTexture(path, textureID);
+    return LoadTexture(reinterpret_cast<const uint8_t *>(path), textureID);
 }
 
-static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const char *dir)
+static void LoadModelTextures(vpvl::PMDModel &model, const uint8_t *system, const uint8_t *dir)
 {
     const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
@@ -136,19 +136,19 @@ static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const c
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i <nMaterials; i++) {
         vpvl::Material *material = materials[i];
-        const char *primary = material->primaryTextureName();
-        const char *second = material->secondTextureName();
+        const uint8_t *primary = material->primaryTextureName();
+        const uint8_t *second = material->secondTextureName();
         vpvl::MaterialPrivate *materialPrivate = new vpvl::MaterialPrivate;
         materialPrivate->primaryTextureID = 0;
         materialPrivate->secondTextureID = 0;
         if (*primary) {
             snprintf(path, sizeof(path), "%s/%s", dir, primary);
-            if (LoadTexture(path, textureID))
+            if (LoadTexture(reinterpret_cast<const uint8_t *>(path), textureID))
                 materialPrivate->primaryTextureID = textureID;
         }
         if (*second) {
             snprintf(path, sizeof(path), "%s/%s", dir, second);
-            if (LoadTexture(path, textureID))
+            if (LoadTexture(reinterpret_cast<const uint8_t *>(path), textureID))
                 materialPrivate->secondTextureID = textureID;
         }
         hasSingleSphere |= material->isSpherePrimary() && !material->isSphereAuxSecond();
@@ -157,10 +157,10 @@ static void LoadModelTextures(vpvl::PMDModel &model, const char *system, const c
     }
     modelPrivate->hasSingleSphereMap = hasSingleSphere;
     modelPrivate->hasMultipleSphereMap = hasMultipleSphere;
-    if (LoadToonTexture(system, dir, "toon0.bmp", textureID))
+    if (LoadToonTexture(system, dir, reinterpret_cast<const uint8_t *>("toon0.bmp"), textureID))
         modelPrivate->toonTextureID[0] = textureID;
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
-        const char *name = model.toonTexture(i);
+        const uint8_t *name = model.toonTexture(i);
         if (LoadToonTexture(system, dir, name, textureID))
             modelPrivate->toonTextureID[i + 1] = textureID;
     }
@@ -514,13 +514,13 @@ static bool PollEvents()
     return false;
 }
 
-static void FileSlurp(const char *path, char *&data, size_t &size) {
+static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
     FILE *fp = fopen(path, "rb");
     if (fp) {
         fseek(fp, 0, SEEK_END);
         size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
-        data = new char[size];
+        data = new uint8_t[size];
         fread(data, size, 1, fp);
         fclose(fp);
     }
@@ -555,7 +555,8 @@ int main(int argc, char *argv[])
     atexit(IMG_Quit);
 
     SDL_Surface *surface;
-    char *modelData = 0, *motionData = 0, path[256];
+    uint8_t *modelData = 0, *motionData = 0;
+    char path[256];
     size_t size;
     snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
     FileSlurp(path, modelData, size);

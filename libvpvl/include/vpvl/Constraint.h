@@ -52,23 +52,23 @@ public:
     Constraint();
     ~Constraint();
 
-    static size_t stride(const char *data);
+    static size_t stride(const uint8_t *data);
 
-    void read(const char *data, const RigidBodyList &bodies, const btVector3 &offset);
+    void read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset);
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
     btGeneric6DofConstraint *constraint() const {
         return m_constraint;
     }
 
-    void setName(const char *value) {
-        stringCopySafe(m_name, value, sizeof(m_name));
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
     }
 
 private:
-    char m_name[20];
+    uint8_t m_name[20];
     btGeneric6DofSpringConstraint *m_constraint;
 };
 

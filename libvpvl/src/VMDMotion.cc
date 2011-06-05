@@ -50,7 +50,7 @@ namespace vpvl
 const float VMDMotion::kDefaultLoopAtFrame = 0.0f;
 const float VMDMotion::kDefaultPriority = 0.0f;
 
-VMDMotion::VMDMotion(const char *data, size_t size)
+VMDMotion::VMDMotion(const uint8_t *data, size_t size)
     : m_model(0),
       m_status(kRunning),
       m_onEnd(2),
@@ -102,10 +102,11 @@ bool VMDMotion::preparse()
     if (50 > rest)
         return false;
 
-    char *ptr = const_cast<char *>(m_data);
+    uint8_t *ptr = const_cast<uint8_t *>(m_data);
     m_result.basePtr = ptr;
 
-    if (strcmp(ptr, "Vocaloid Motion Data 0002") != 0)
+    static const uint8_t header[] = "Vocaloid Motion Data 0002";
+    if (memcmp(ptr, header, sizeof(header)) != 0)
         return false;
     ptr += 30;
     m_result.namePtr = ptr;
@@ -243,7 +244,7 @@ void VMDMotion::update(float frameAt)
 
 void VMDMotion::parseHeader()
 {
-    stringCopySafe(m_name, m_result.namePtr, sizeof(m_name));
+    copyBytesSafe(m_name, m_result.namePtr, sizeof(m_name));
 }
 
 void VMDMotion::parseBoneFrames()

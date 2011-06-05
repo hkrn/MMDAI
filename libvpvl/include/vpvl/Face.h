@@ -68,15 +68,15 @@ public:
     ~Face();
 
     static const uint32_t kMaxVertexID = 65536;
-    static size_t totalSize(const char *data, size_t n);
-    static size_t stride(const char *data);
+    static size_t totalSize(const uint8_t *data, size_t n);
+    static size_t stride(const uint8_t *data);
 
-    void read(const char *data);
+    void read(const uint8_t *data);
     void convertIndices(const Face *base);
     void setVertices(VertexList &vertices);
     void setVertices(VertexList &vertices, float rate);
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
     FaceType type() const {
@@ -86,15 +86,15 @@ public:
         return m_weight;
     }
 
-    void setName(const char *value) {
-        stringCopySafe(m_name, value, sizeof(m_name));
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
     }
     void setWeight(float value) {
         m_weight = value;
     }
 
 private:
-    char m_name[20];
+    uint8_t m_name[20];
     FaceType m_type;
     btAlignedObjectArray<FaceVertex *> m_vertices;
     float m_weight;

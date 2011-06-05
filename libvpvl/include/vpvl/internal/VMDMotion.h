@@ -51,17 +51,17 @@ namespace vpvl
 
 struct VMDMotionDataInfo
 {
-    const char *basePtr;
-    const char *namePtr;
-    const char *boneKeyFramePtr;
+    const uint8_t *basePtr;
+    const uint8_t *namePtr;
+    const uint8_t *boneKeyFramePtr;
     size_t boneKeyFrameCount;
-    const char *faceKeyFramePtr;
+    const uint8_t *faceKeyFramePtr;
     size_t faceKeyFrameCount;
-    const char *cameraKeyFramePtr;
+    const uint8_t *cameraKeyFramePtr;
     size_t cameraKeyFrameCount;
-    const char *lightKeyFramePtr;
+    const uint8_t *lightKeyFramePtr;
     size_t lightKeyFrameCount;
-    const char *selfShadowKeyFramePtr;
+    const uint8_t *selfShadowKeyFramePtr;
     size_t selfShadowKeyFrameCount;
 };
 
@@ -78,7 +78,7 @@ public:
     static const float kDefaultPriority;
     static const float kDefaultLoopAtFrame;
 
-    VMDMotion(const char *data, size_t size);
+    VMDMotion(const uint8_t *data, size_t size);
     ~VMDMotion();
 
     bool preparse();
@@ -86,10 +86,10 @@ public:
     void attachModel(PMDModel *model);
     void update(float frameAt);
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
-    const char *data() const {
+    const uint8_t *data() const {
         return m_data;
     }
     size_t size() const {
@@ -143,7 +143,7 @@ private:
     void parseLightFrames();
     void parseSelfShadowFrames();
 
-    char m_name[20];
+    uint8_t m_name[20];
     PMDModel *m_model;
     VMDMotionDataInfo m_result;
     BoneMotion m_boneMotion;
@@ -163,7 +163,7 @@ private:
     bool m_enableSmooth;
     bool m_enableRelocation;
     bool m_ignoreStatic;
-    const char *m_data;
+    const uint8_t *m_data;
     const size_t m_size;
 };
 

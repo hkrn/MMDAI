@@ -52,9 +52,9 @@ public:
     Vertex();
     ~Vertex();
 
-    static size_t stride(const char *data);
+    static size_t stride(const uint8_t *data);
 
-    void read(const char *data);
+    void read(const uint8_t *data);
 
     const btVector3 &position() const {
         return m_position;

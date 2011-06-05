@@ -71,9 +71,9 @@ public:
     ~Bone();
 
     static Bone *centerBone(const BoneList *bones);
-    static size_t stride(const char *data);
+    static size_t stride(const uint8_t *data);
 
-    void read(const char *data, BoneList *bones, Bone *rootBone);
+    void read(const uint8_t *data, BoneList *bones, Bone *rootBone);
     void computeOffset();
     void reset();
     void setMotionIndependency();
@@ -82,7 +82,7 @@ public:
     void updateTransform(const btQuaternion &q);
     void getSkinTransform(btTransform &tr);
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
     BoneType type() const {
@@ -113,8 +113,8 @@ public:
         return m_motionIndepent;
     }
 
-    void setName(const char *value) {
-        stringCopySafe(m_name, value, sizeof(m_name));
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
     }
     void setCurrentTransform(const btTransform &value) {
         m_currentTransform = value;
@@ -133,7 +133,7 @@ public:
     }
 
 private:
-    char m_name[20];
+    uint8_t m_name[20];
     BoneType m_type;
     btTransform m_currentTransform;
     btTransform m_transformMoveToOrigin;

@@ -53,33 +53,33 @@ namespace vpvl
 
 struct PMDModelDataInfo
 {
-    const char *basePtr;
-    const char *namePtr;
-    const char *commentPtr;
-    const char *verticesPtr;
+    const uint8_t *basePtr;
+    const uint8_t *namePtr;
+    const uint8_t *commentPtr;
+    const uint8_t *verticesPtr;
     size_t verticesCount;
-    const char *indicesPtr;
+    const uint8_t *indicesPtr;
     size_t indicesCount;
-    const char *materialsPtr;
+    const uint8_t *materialsPtr;
     size_t materialsCount;
-    const char *bonesPtr;
+    const uint8_t *bonesPtr;
     size_t bonesCount;
-    const char *IKsPtr;
+    const uint8_t *IKsPtr;
     size_t IKsCount;
-    const char *facesPtr;
+    const uint8_t *facesPtr;
     size_t facesCount;
-    const char *faceDisplayNamesPtr;
+    const uint8_t *faceDisplayNamesPtr;
     size_t faceDisplayNamesCount;
-    const char *boneFrameNamesPtr;
+    const uint8_t *boneFrameNamesPtr;
     size_t boneFrameNamesCount;
-    const char *boneDisplayNamesPtr;
+    const uint8_t *boneDisplayNamesPtr;
     size_t boneDisplayNamesCount;
-    const char *englishNamePtr;
-    const char *englishCommentPtr;
-    const char *toonTextureNamesPtr;
-    const char *rigidBodiesPtr;
+    const uint8_t *englishNamePtr;
+    const uint8_t *englishCommentPtr;
+    const uint8_t *toonTextureNamesPtr;
+    const uint8_t *rigidBodiesPtr;
     size_t rigidBodiesCount;
-    const char *constraintsPtr;
+    const uint8_t *constraintsPtr;
     size_t constranitsCount;
 };
 
@@ -97,7 +97,7 @@ typedef struct PMDModelPrivate PMDModelPrivate;
 class PMDModel
 {
 public:
-    PMDModel(const char *data, size_t size);
+    PMDModel(const uint8_t *data, size_t size);
     ~PMDModel();
 
     static const uint32_t kBoundingSpherePoints = 1000;
@@ -118,16 +118,16 @@ public:
     bool preparse();
     bool load();
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
-    const char *comment() const {
+    const uint8_t *comment() const {
         return m_comment;
     }
-    const char *englishName() const {
+    const uint8_t *englishName() const {
         return m_englishName;
     }
-    const char *englishComment() const {
+    const uint8_t *englishComment() const {
         return m_englishComment;
     }
     const VertexList &vertices() const {
@@ -157,7 +157,7 @@ public:
     BoneList *mutableBones() {
         return &m_bones;
     }
-    const char *toonTexture(uint32_t index) const {
+    const uint8_t *toonTexture(uint32_t index) const {
         if (index >= kSystemTextureMax)
             return NULL;
         return m_textures[index];
@@ -183,15 +183,15 @@ public:
     PMDModelPrivate *privateData() const {
         return m_private;
     }
-    Bone *findBone(const char *name) const {
-        Bone **ptr = const_cast<Bone **>(m_name2bone.find(btHashString(name)));
+    Bone *findBone(const uint8_t *name) const {
+        Bone **ptr = const_cast<Bone **>(m_name2bone.find(btHashString(reinterpret_cast<const char *>(name))));
         return ptr ? *ptr : 0;
     }
-    Face *findFace(const char *name) const {
-        Face **ptr = const_cast<Face **>(m_name2face.find(btHashString(name)));
+    Face *findFace(const uint8_t *name) const {
+        Face **ptr = const_cast<Face **>(m_name2face.find(btHashString(reinterpret_cast<const char *>(name))));
         return ptr ? *ptr : 0;
     }
-    const char *data() const {
+    const uint8_t *data() const {
         return m_data;
     }
     size_t size() const {
@@ -226,22 +226,22 @@ public:
         return m_edgeIndicesCount;
     }
 
-    void setName(const char *value) {
-        stringCopySafe(m_name, value, sizeof(m_name));
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
     }
-    void setComment(const char *value) {
-        stringCopySafe(m_comment, value, sizeof(m_comment));
+    void setComment(const uint8_t *value) {
+        copyBytesSafe(m_comment, value, sizeof(m_comment));
     }
-    void setEnglishName(const char *value) {
-        stringCopySafe(m_englishName, value, sizeof(m_englishName));
+    void setEnglishName(const uint8_t *value) {
+        copyBytesSafe(m_englishName, value, sizeof(m_englishName));
     }
-    void setEnglishComment(const char *value) {
-        stringCopySafe(m_englishComment, value, sizeof(m_englishComment));
+    void setEnglishComment(const uint8_t *value) {
+        copyBytesSafe(m_englishComment, value, sizeof(m_englishComment));
     }
-    void setToonTextures(const char *ptr) {
-        char *p = const_cast<char *>(ptr);
+    void setToonTextures(const uint8_t *ptr) {
+        uint8_t *p = const_cast<uint8_t *>(ptr);
         for (int i = 0; i < 10; i++) {
-            stringCopySafe(m_textures[i], p, sizeof(m_textures[i]));
+            copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
             p += 100;
         }
     }
@@ -281,11 +281,11 @@ private:
     void updateToon(const btVector3 &lightDirection);
     void updateIndices();
 
-    char m_name[20];
-    char m_comment[256];
-    char m_englishName[20];
-    char m_englishComment[256];
-    char m_textures[10][100];
+    uint8_t m_name[20];
+    uint8_t m_comment[256];
+    uint8_t m_englishName[20];
+    uint8_t m_englishComment[256];
+    uint8_t m_textures[10][100];
     VertexList m_vertices;
     IndexList m_indices;
     MaterialList m_materials;
@@ -313,7 +313,7 @@ private:
     uint32_t m_edgeIndicesCount;
     btVector3 m_lightDirection;
     const size_t m_size;
-    const char *m_data;
+    const uint8_t *m_data;
     uint32_t m_boundingSphereStep;
     float m_edgeOffset;
     float m_selfShadowDensityCoef;

@@ -53,7 +53,7 @@ public:
     BaseMotion(float smearDefault);
     virtual ~BaseMotion() {}
 
-    virtual void read(const char *data, uint32_t size) = 0;
+    virtual void read(const uint8_t *data, uint32_t size) = 0;
     virtual void seek(float frameAt) = 0;
     virtual void takeSnap(const btVector3 &center) = 0;
 

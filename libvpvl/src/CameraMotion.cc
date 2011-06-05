@@ -67,9 +67,9 @@ CameraMotion::~CameraMotion()
     m_fovy = 0.0f;
 }
 
-void CameraMotion::read(const char *data, uint32_t size)
+void CameraMotion::read(const uint8_t *data, uint32_t size)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
     for (uint32_t i = 0; i < size; i++) {
         CameraKeyFrame *frame = new CameraKeyFrame();

@@ -82,14 +82,14 @@ Material::~Material()
     m_private = 0;
 }
 
-size_t Material::stride(const char * /* data */)
+size_t Material::stride(const uint8_t * /* data */)
 {
     return sizeof(float) * 11 + (sizeof(uint8_t) * 2) + sizeof(uint32_t) + 20;
 }
 
-void Material::read(const char *data)
+void Material::read(const uint8_t *data)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     float ambient[3], diffuse[3], specular[3];
     internal::vector3(ptr, diffuse);
     float alpha = *reinterpret_cast<float *>(ptr);
@@ -104,22 +104,22 @@ void Material::read(const char *data)
     ptr += sizeof(uint8_t);
     uint32_t nindices = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
-    char name[20], *p;
-    stringCopySafe(name, ptr, sizeof(name));
-    stringCopySafe(m_rawName, ptr, sizeof(m_rawName));
-    if ((p = strchr(name, '*')) != NULL) {
+    uint8_t name[20], *p;
+    copyBytesSafe(name, ptr, sizeof(name));
+    copyBytesSafe(m_rawName, ptr, sizeof(m_rawName));
+    if ((p = static_cast<uint8_t *>(memchr(name, '*', sizeof(name)))) != NULL) {
         *p = 0;
-        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
-        stringCopySafe(m_secondTextureName, p + 1, sizeof(m_secondTextureName));
-        m_firstSPH = strstr(m_primaryTextureName, ".sph") != NULL;
-        m_firstSPA = strstr(m_primaryTextureName, ".spa") != NULL;
-        m_secondSPH = strstr(m_secondTextureName, ".sph") != NULL;
-        m_secondSPA = strstr(m_secondTextureName, ".spa") != NULL;
+        copyBytesSafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
+        copyBytesSafe(m_secondTextureName, p + 1, sizeof(m_secondTextureName));
+        m_firstSPH = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".sph") != NULL;
+        m_firstSPA = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".spa") != NULL;
+        m_secondSPH = strstr(reinterpret_cast<const char *>(m_secondTextureName), ".sph") != NULL;
+        m_secondSPA = strstr(reinterpret_cast<const char *>(m_secondTextureName), ".spa") != NULL;
     }
     else {
-        stringCopySafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
-        m_firstSPH = strstr(m_primaryTextureName, ".sph") != NULL;
-        m_firstSPA = strstr(m_primaryTextureName, ".spa") != NULL;
+        copyBytesSafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
+        m_firstSPH = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".sph") != NULL;
+        m_firstSPA = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".spa") != NULL;
     }
 
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);

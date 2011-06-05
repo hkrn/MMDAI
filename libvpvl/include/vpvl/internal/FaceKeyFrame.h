@@ -58,13 +58,13 @@ public:
         memset(m_name, 0, sizeof(m_name));
     }
 
-    static size_t stride(const char * /* data */) {
+    static size_t stride(const uint8_t * /* data */) {
         return 15 + sizeof(uint32_t) + sizeof(float);
     }
 
-    void read(const char *data) {
-        char *ptr = const_cast<char *>(data);
-        stringCopySafe(m_name, ptr, sizeof(m_name));
+    void read(const uint8_t *data) {
+        uint8_t *ptr = const_cast<uint8_t *>(data);
+        copyBytesSafe(m_name, ptr, sizeof(m_name));
         ptr += sizeof(m_name);
         uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
         ptr += sizeof(uint32_t);
@@ -75,7 +75,7 @@ public:
         m_weight = weight;
     }
 
-    const char *name() const {
+    const uint8_t *name() const {
         return m_name;
     }
     float index() const {
@@ -86,7 +86,7 @@ public:
     }
 
 private:
-    char m_name[15];
+    uint8_t m_name[15];
     float m_index;
     float m_weight;
 };

@@ -53,7 +53,7 @@ public:
     CameraMotion();
     ~CameraMotion();
 
-    void read(const char *data, uint32_t size);
+    void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
     void reset();

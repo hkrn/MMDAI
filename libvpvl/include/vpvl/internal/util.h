@@ -41,6 +41,7 @@
 
 #include "LinearMath/btVector3.h"
 #include "LinearMath/btQuaternion.h"
+#include <string.h>
 
 namespace vpvl
 {
@@ -50,7 +51,7 @@ namespace internal
 static const btVector3 kZeroV = btVector3(0.0f, 0.0f, 0.0f);
 static const btQuaternion kZeroQ = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
-static inline void vectorN(char *&ptr, float *values, int n)
+static inline void vectorN(uint8_t *&ptr, float *values, int n)
 {
     for (int i = 0; i < n; i++) {
         values[i] = *reinterpret_cast<float *>(ptr);
@@ -68,17 +69,17 @@ static inline float spline2(const float t, const float p1, const float p2)
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
 }
 
-inline void vector3(char *&ptr, float *values)
+inline void vector3(uint8_t *&ptr, float *values)
 {
     vectorN(ptr, values, 3);
 }
 
-inline void vector4(char *&ptr, float *values)
+inline void vector4(uint8_t *&ptr, float *values)
 {
     vectorN(ptr, values, 4);
 }
 
-inline bool size8(char *&ptr, size_t &rest, size_t &size)
+inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     if (sizeof(uint8_t) > rest)
         return false;
@@ -88,7 +89,7 @@ inline bool size8(char *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool size16(char *&ptr, size_t &rest, size_t &size)
+inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     if (sizeof(uint16_t) > rest)
         return false;
@@ -98,7 +99,7 @@ inline bool size16(char *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool size32(char *&ptr, size_t &rest, size_t &size)
+inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     if (sizeof(uint32_t) > rest)
         return false;
@@ -108,7 +109,7 @@ inline bool size32(char *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool validateSize(char *&ptr, size_t stride, size_t size, size_t &rest)
+inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
     size_t required = stride * size;
     if (required > rest)
@@ -135,6 +136,12 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
         table[i] = spline1(t, y1, y2);
     }
     table[size] = 1.0f;
+}
+
+inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
+{
+    assert(s1 != NULL && s2 != NULL && max > 0);
+    return memcmp(s1, s2, max) == 0;
 }
 
 }

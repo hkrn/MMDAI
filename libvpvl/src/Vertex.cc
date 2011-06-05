@@ -66,14 +66,14 @@ Vertex::~Vertex()
     m_edge = false;
 }
 
-size_t Vertex::stride(const char * /* data */)
+size_t Vertex::stride(const uint8_t * /* data */)
 {
     return sizeof(float) * 8 + sizeof(int16_t) * 2 + sizeof(uint8_t) * 2;
 }
 
-void Vertex::read(const char *data)
+void Vertex::read(const uint8_t *data)
 {
-    char *ptr = const_cast<char *>(data);
+    uint8_t *ptr = const_cast<uint8_t *>(data);
     float pos[3], normal[3];
     internal::vector3(ptr, pos);
     internal::vector3(ptr, normal);
