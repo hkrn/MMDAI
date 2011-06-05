@@ -89,7 +89,7 @@ void BoneMotion::seek(float frameAt)
 {
     uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneMotionInternal *node = *m_name2node.getAtIndex(nNodes - i - 1);
+        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
             continue;
         calculateFrames(frameAt, node);
@@ -192,7 +192,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);
     btVector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
     btQuaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
-    if (m_overrideFirst &&(k1 == 0 || timeFrom <= node->lastIndex <= m_lastLoopStartIndex)) {
+    if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
             timeFrom = m_lastLoopStartIndex;
             positionFrom = node->snapPosition;

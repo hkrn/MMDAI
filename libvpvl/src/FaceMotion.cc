@@ -156,9 +156,6 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
 {
     FaceKeyFrameList &kframes = node->keyFrames;
     uint32_t nFrames = kframes.size();
-    if (nFrames == 0)
-        return;
-
     FaceKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())
@@ -191,7 +188,7 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     float timeFrom = keyFrameFrom->index();
     float timeTo = keyFrameTo->index();
     float weightFrom = 0.0f, weightTo = 0.0f;
-    if (m_overrideFirst &&(k1 == 0 || timeFrom <= node->lastIndex <= m_lastLoopStartIndex)) {
+    if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
             timeFrom = m_lastLoopStartIndex;
             weightFrom = node->snapWeight;
