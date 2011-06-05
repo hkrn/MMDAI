@@ -81,10 +81,8 @@ private:
                              float &value);
     void calculateFrames(float frameAt, BoneMotionInternal *node);
 
-    Bone *m_bone;
     BoneKeyFrameList m_frames;
     btHashMap<btHashString, BoneMotionInternal *> m_name2node;
-    uint32_t m_lastLoopStartIndex;
     bool m_hasCenterBoneMotion;
 };
 

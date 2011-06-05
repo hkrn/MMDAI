@@ -44,6 +44,7 @@ namespace vpvl
 
 BaseMotion::BaseMotion(float smearDefault) :
     m_lastIndex(0),
+    m_lastLoopStartIndex(0),
     m_smearDefault(smearDefault),
     m_maxFrame(0.0f),
     m_currentFrame(0.0f),

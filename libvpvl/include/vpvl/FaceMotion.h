@@ -74,7 +74,6 @@ private:
 
     FaceKeyFrameList m_frames;
     btHashMap<btHashString, FaceMotionInternal *> m_name2node;
-    uint32_t m_lastLoopStartIndex;
 };
 
 }

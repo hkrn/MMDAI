@@ -85,7 +85,6 @@ void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
 
 BoneMotion::BoneMotion()
     : BaseMotion(kStartingMarginFrame),
-      m_bone(0),
       m_hasCenterBoneMotion(false)
 {
 }

@@ -74,6 +74,7 @@ public:
 
 protected:
     uint32_t m_lastIndex;
+    uint32_t m_lastLoopStartIndex;
     const float m_smearDefault;
     float m_maxFrame;
     float m_currentFrame;
