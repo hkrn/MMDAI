@@ -164,14 +164,13 @@ void Bone::setMotionIndependency()
 void Bone::updateRotation()
 {
     btQuaternion q;
-    const btQuaternion zero(0.0f, 0.0f, 0.0f, 1.0f);
     switch (m_type) {
     case kUnderRotate:
         q = m_currentRotation * m_targetBone->m_currentRotation;
         updateTransform(q);
         break;
     case kFollowRotate:
-        q = m_currentRotation * zero.slerp(m_childBone->m_currentRotation, m_rotateCoef);
+        q = m_currentRotation * internal::kZeroQ.slerp(m_childBone->m_currentRotation, m_rotateCoef);
         updateTransform(q);
         break;
     default:

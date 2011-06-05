@@ -83,7 +83,7 @@ public:
 
     bool preparse();
     bool load();
-    void start(PMDModel *model);
+    void attachModel(PMDModel *model);
     void update(float frameAt);
 
     const char *name() const {

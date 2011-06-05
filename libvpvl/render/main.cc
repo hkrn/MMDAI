@@ -15,6 +15,7 @@
 
 #include <vpvl/vpvl.h>
 #include <vpvl/internal/PMDModel.h>
+#include <vpvl/internal/VMDMotion.h>
 
 struct vpvl::MaterialPrivate {
     GLuint primaryTextureID;
@@ -216,7 +217,7 @@ static void DrawModel(const vpvl::PMDModel &model)
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
+    //glEnableClientState(GL_NORMAL_ARRAY);
     size_t stride = model.stride();
     glVertexPointer(3, GL_FLOAT, stride, model.verticesPointer());
     glNormalPointer(GL_FLOAT, stride, model.normalsPointer());
@@ -461,7 +462,7 @@ static void DrawSurface(vpvl::PMDModel &model, int width, int height)
     q.setEulerZYX(0.0f, 0.0f, 0.0f);
     mv.setIdentity();
     mv.setRotation(q);
-    mv.setOrigin(mv * -btVector3(0.0f, 15.0f, 0.0f) - btVector3(0.0f, 0.0f, 30.0f));
+    mv.setOrigin(mv * -btVector3(0.0f, 10.0f, 0.0f) - btVector3(0.0f, 0.0f, 100.0f));
     mv.getOpenGLMatrix(matrix);
     // initialize
     glViewport(0, 0, width, height);
@@ -548,23 +549,35 @@ int main(int argc, char *argv[])
     atexit(IMG_Quit);
 
     SDL_Surface *surface;
-    char *data = 0, path[256];
+    char *modelData = 0, *motionData = 0, path[256];
     size_t size;
     snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
-    FileSlurp(path, data, size);
-    vpvl::PMDModel model(data, size);
+    FileSlurp(path, modelData, size);
+    vpvl::PMDModel model(modelData, size);
     if (!InitializeSurface(surface, g_width, g_height)) {
-        delete data;
+        delete modelData;
         return -1;
     }
 
     if (!model.load()) {
         fprintf(stderr, "failed parsing the model\n");
-        delete data;
+        delete modelData;
         return -1;
     }
     SetLighting(model);
     LoadModelTextures(model, g_sysdir, g_modeldir);
+
+    FileSlurp("test/res/motion.vmd", motionData, size);
+    vpvl::VMDMotion motion(motionData, size);
+    if (!motion.load()) {
+        fprintf(stderr, "failed parsing the motion\n");
+        delete modelData;
+        delete motionData;
+        return -1;
+    }
+    motion.attachModel(&model);
+    motion.update(1);
+    motion.update(1);
 
     while (true) {
         if (PollEvents())
@@ -574,7 +587,8 @@ int main(int argc, char *argv[])
 
     UnloadModelTextures(model);
     SDL_FreeSurface(surface);
-    delete data;
+    delete motionData;
+    delete modelData;
 
     return 0;
 }

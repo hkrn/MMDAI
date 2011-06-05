@@ -288,13 +288,11 @@ float PMDModel::boundingSphereRange(btVector3 &center)
 
 void PMDModel::smearAllBonesToDefault(float rate)
 {
-    static const btVector3 v(0.0f, 0.0f, 0.0f);
-    static const btQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
     const int nBones = m_bones.size(), nFaces = m_faces.size();
     for (int i = 0; i < nBones; i++) {
         Bone *bone = m_bones[i];
-        bone->setCurrentPosition(v.lerp(bone->currentPosition(), rate));
-        bone->setCurrentRotation(q.slerp(bone->currentRotation(), rate));
+        bone->setCurrentPosition(internal::kZeroV.lerp(bone->currentPosition(), rate));
+        bone->setCurrentRotation(internal::kZeroQ.slerp(bone->currentRotation(), rate));
     }
     for (int i = 0; i < nFaces; i++) {
         Face *face = m_faces[i];

@@ -174,10 +174,12 @@ public:
         return m_private;
     }
     Bone *findBone(const char *name) const {
-        return *m_name2bone.find(btHashString(name));
+        Bone **ptr = const_cast<Bone **>(m_name2bone.find(btHashString(name)));
+        return ptr ? *ptr : 0;
     }
     Face *findFace(const char *name) const {
-        return *m_name2face.find(btHashString(name));
+        Face **ptr = const_cast<Face **>(m_name2face.find(btHashString(name)));
+        return ptr ? *ptr : 0;
     }
     const char *data() const {
         return m_data;

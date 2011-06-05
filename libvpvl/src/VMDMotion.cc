@@ -153,12 +153,14 @@ bool VMDMotion::load()
     return false;
 }
 
-void VMDMotion::start(PMDModel *model)
+void VMDMotion::attachModel(PMDModel *model)
 {
     m_model = model;
     m_active = true;
     m_endingBoneBlend = 0.0f;
     m_endingFaceBlend = 0.0f;
+    m_boneMotion.build(model);
+    m_faceMotion.build(model);
     if (m_enableSmooth) {
         if (m_enableRelocation) { // FIXME: hasCenter
             Bone *root = model->mutableRootBone();
@@ -168,12 +170,14 @@ void VMDMotion::start(PMDModel *model)
             btVector3 centerPosition = center->originPosition();
             btVector3 offset = position - centerPosition;
             offset.setY(0.0f);
-            // setOverrideFirst(&offset)
+            m_boneMotion.setOverrideFirst(offset);
+            m_faceMotion.setOverrideFirst(offset);
             root->setOffset(root->offset() + offset);
             root->updateTransform();
         }
         else {
-            // setOverrideFirst(NULL)
+            m_boneMotion.setOverrideFirst(internal::kZeroV);
+            m_faceMotion.setOverrideFirst(internal::kZeroV);
         }
     }
     if (!m_ignoreStatic)
@@ -205,8 +209,8 @@ void VMDMotion::update(float frameAt)
         else {
             bool boneReached = false;
             bool faceReached = false;
-            m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
-            m_faceMotion.setBlendRate(m_endingFaceBlend / m_endingFaceBlendFrames);
+            m_boneMotion.setBlendRate(m_boneMotion.blendRate());
+            m_faceMotion.setBlendRate(1.0f);
             m_boneMotion.advance(frameAt, boneReached);
             m_faceMotion.advance(frameAt, faceReached);
             if (boneReached && faceReached) {
@@ -215,7 +219,8 @@ void VMDMotion::update(float frameAt)
                     break;
                 case 1:
                     if (false) { // getMaxFrame != 0.0f
-                        // rewind(m_loopAt, frameAt)
+                        m_boneMotion.rewind(m_loopAt, frameAt);
+                        m_faceMotion.rewind(m_loopAt, frameAt);
                         m_status = kLooped;
                     }
                     break;

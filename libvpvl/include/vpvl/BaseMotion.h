@@ -75,6 +75,9 @@ public:
     float blendRate() const {
         return m_blendRate;
     }
+    float maxIndex() const {
+        return m_maxFrame;
+    }
     void setBlendRate(float value) {
         m_blendRate = value;
     }

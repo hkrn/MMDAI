@@ -84,6 +84,8 @@ void BoneMotion::read(const char *data, uint32_t size)
         m_frames.push_back(frame);
     }
     m_frames.quickSort(BoneMotionKeyFramePredication());
+    if (size > 0)
+        m_maxFrame = m_frames[size - 1]->index();
 }
 
 void BoneMotion::seek(float frameAt)
@@ -95,13 +97,15 @@ void BoneMotion::seek(float frameAt)
             continue;
         calculateFrames(frameAt, node);
         Bone *bone = node->bone;
-        if (m_blendRate == 1.0f) {
-            bone->setCurrentPosition(node->position);
-            bone->setCurrentRotation(node->rotation);
-        }
-        else {
-            bone->setCurrentPosition(bone->currentPosition().lerp(node->position, m_blendRate));
-            bone->setCurrentRotation(bone->currentRotation().slerp(node->rotation, m_blendRate));
+        if (bone) {
+            if (m_blendRate == 1.0f) {
+                bone->setCurrentPosition(node->position);
+                bone->setCurrentRotation(node->rotation);
+            }
+            else {
+                bone->setCurrentPosition(bone->currentPosition().lerp(node->position, m_blendRate));
+                bone->setCurrentRotation(bone->currentRotation().slerp(node->rotation, m_blendRate));
+            }
         }
     }
 }
@@ -112,10 +116,12 @@ void BoneMotion::takeSnap(const btVector3 &center)
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         Bone *bone = node->bone;
-        node->snapPosition = bone->currentPosition();
-        if (bone->hasMotionIndependency())
-            node->snapPosition -= center;
-        node->snapRotation = bone->currentRotation();
+        if (bone) {
+            node->snapPosition = bone->currentPosition();
+            if (bone->hasMotionIndependency())
+                node->snapPosition -= center;
+            node->snapRotation = bone->currentRotation();
+        }
     }
 }
 
@@ -147,6 +153,9 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
 {
     BoneKeyFrameList &kframes = node->keyFrames;
     uint32_t nFrames = kframes.size();
+    if (nFrames == 0)
+        return;
+
     BoneKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())

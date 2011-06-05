@@ -81,6 +81,8 @@ void FaceMotion::read(const char *data, uint32_t size)
         m_frames.push_back(frame);
     }
     m_frames.quickSort(FaceMotionKeyFramePredication());
+    if (size > 0)
+        m_maxFrame = m_frames[size - 1]->index();
 }
 
 void FaceMotion::seek(float frameAt)
@@ -92,10 +94,12 @@ void FaceMotion::seek(float frameAt)
             continue;
         calculateFrames(frameAt, node);
         Face *face = node->face;
-        if (m_blendRate == 1.0f)
-            face->setWeight(node->weight);
-        else
-            face->setWeight(face->weight() * (1.0 - m_blendRate) + node->weight * m_blendRate);
+        if (face) {
+            if (m_blendRate == 1.0f)
+                face->setWeight(node->weight);
+            else
+                face->setWeight(face->weight() * (1.0 - m_blendRate) + node->weight * m_blendRate);
+        }
     }
 }
 
@@ -104,7 +108,9 @@ void FaceMotion::takeSnap(const btVector3 & /* center */)
     uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
-        node->snapWeight = node->face->weight();
+        Face *face = node->face;
+        if (face)
+            node->snapWeight = face->weight();
     }
 }
 
@@ -144,6 +150,9 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
 {
     FaceKeyFrameList &kframes = node->keyFrames;
     uint32_t nFrames = kframes.size();
+    if (nFrames == 0)
+        return;
+
     FaceKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())

@@ -39,10 +39,16 @@
 #ifndef VPVL_INTERNAL_UTIL_H_
 #define VPVL_INTERNAL_UTIL_H_
 
+#include "LinearMath/btVector3.h"
+#include "LinearMath/btQuaternion.h"
+
 namespace vpvl
 {
 namespace internal
 {
+
+static const btVector3 kZeroV = btVector3(0.0f, 0.0f, 0.0f);
+static const btQuaternion kZeroQ = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 static inline void vectorN(char *&ptr, float *values, int n)
 {
