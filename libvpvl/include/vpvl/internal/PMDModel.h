@@ -304,7 +304,7 @@ private:
     btAlignedObjectArray<btVector3> m_edgeVertices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;
     btAlignedObjectArray<btVector3> m_shadowTextureCoords;
-    btAlignedObjectArray<uint16_t> m_rotatedBones;
+    BoneList m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
     PMDModelPrivate *m_private;

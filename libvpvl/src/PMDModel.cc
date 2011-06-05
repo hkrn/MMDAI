@@ -116,7 +116,7 @@ void PMDModel::prepare()
         Bone *bone = m_bones[i];
         const BoneType type = bone->type();
         if (type == kUnderRotate || type == kFollowRotate)
-            m_rotatedBones.push_back(i);
+            m_rotatedBones.push_back(bone);
     }
     int nIKs = m_IKs.size();
     m_isIKSimulated.reserve(nIKs);
@@ -180,7 +180,7 @@ void PMDModel::updateAllBones()
     }
     int nRotatedBones = m_rotatedBones.size();
     for (int i = 0; i < nRotatedBones; i++)
-        m_bones[m_rotatedBones[i]]->updateRotation();
+       m_rotatedBones[i]->updateRotation();
 }
 
 void PMDModel::updateBoneFromSimulation()
