@@ -68,6 +68,9 @@ public:
     const BoneKeyFrameList &frames() const {
         return m_frames;
     }
+    bool hasCenterBoneMotion() const {
+        return m_hasCenterBoneMotion;
+    }
 
 private:
     static void lerpPosition(const BoneKeyFrame *keyFrame,
@@ -82,6 +85,7 @@ private:
     BoneKeyFrameList m_frames;
     btHashMap<btHashString, BoneMotionInternal *> m_name2node;
     uint32_t m_lastLoopStartIndex;
+    bool m_hasCenterBoneMotion;
 };
 
 }

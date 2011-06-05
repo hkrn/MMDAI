@@ -85,7 +85,8 @@ void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
 
 BoneMotion::BoneMotion()
     : BaseMotion(kStartingMarginFrame),
-      m_bone(0)
+      m_bone(0),
+      m_hasCenterBoneMotion(false)
 {
 }
 
@@ -141,6 +142,8 @@ void BoneMotion::takeSnap(const btVector3 &center)
 void BoneMotion::build(PMDModel *model)
 {
     uint32_t nFrames = m_frames.size();
+    const uint8_t *centerBoneName = Bone::centerBoneName();
+    size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
     for (uint32_t i = 0; i < nFrames; i++) {
         BoneKeyFrame *frame = m_frames.at(i);
         btHashString name(reinterpret_cast<const char *>(frame->name()));
@@ -148,6 +151,8 @@ void BoneMotion::build(PMDModel *model)
         if (ptr) {
             node = *ptr;
             node->keyFrames.push_back(frame);
+            if (internal::stringEquals(frame->name(), centerBoneName, len))
+                m_hasCenterBoneMotion = true;
         }
         else {
             Bone *bone = model->findBone(frame->name());

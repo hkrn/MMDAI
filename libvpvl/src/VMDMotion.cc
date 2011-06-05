@@ -164,7 +164,7 @@ void VMDMotion::attachModel(PMDModel *model)
     m_boneMotion.build(model);
     m_faceMotion.build(model);
     if (m_enableSmooth) {
-        if (m_enableRelocation) { // FIXME: hasCenter
+        if (m_enableRelocation && m_boneMotion.hasCenterBoneMotion()) {
             Bone *root = model->mutableRootBone();
             Bone *center = Bone::centerBone(&model->bones());
             btTransform transform = root->currentTransform().inverse();
@@ -220,7 +220,7 @@ void VMDMotion::update(float frameAt)
                 case 0:
                     break;
                 case 1:
-                    if (false) { // getMaxFrame != 0.0f
+                    if (m_boneMotion.maxIndex() != 0.0f && m_faceMotion.maxIndex() != 0.0f) {
                         m_boneMotion.rewind(m_loopAt, frameAt);
                         m_faceMotion.rewind(m_loopAt, frameAt);
                         m_status = kLooped;
