@@ -114,6 +114,10 @@ void Bone::read(const char *data, btAlignedObjectArray<Bone*> *bones, Bone *root
     float pos[3];
     internal::vector3(ptr, pos);
 
+    static const unsigned char kneeName[] = { 0x82, 0xd0, 0x82, 0xb4 };
+    if (strstr(m_name, reinterpret_cast<const char *>(kneeName)))
+        m_angleXLimited = true;
+
     int nbones = bones->size();
     if (parentBoneID != -1 && parentBoneID < nbones) {
         m_parentBone = bones->at(parentBoneID);

@@ -130,11 +130,13 @@ void IK::read(const char *data, BoneList *bones)
 void IK::solve()
 {
     const btVector3 destPosition = m_destination->currentTransform().getOrigin();
+    const btVector3 xAxis(1.0f, 0.0f, 0.0f);
     int nbones = m_bones.size();
-    for (int i = 0; i < nbones; i++)
+    for (int i = nbones - 1; i >= 0; i--)
         m_bones[i]->updateTransform();
     m_target->updateTransform();
     const btQuaternion originTargetRotation = m_target->currentRotation();
+    btQuaternion q;
     for (int i = 0; i < m_iteration; i++) {
         for (int j = 0; j < nbones; j++) {
             Bone *bone = m_bones[j];
@@ -152,19 +154,17 @@ void IK::solve()
             if (dot > 1.0f)
                 continue;
             float angle = acosf(dot);
-            if (fabs(angle) < kMinAngle)
+            if (fabsf(angle) < kMinAngle)
                 continue;
             btClamp(angle, -m_angleConstraint, m_angleConstraint);
             btVector3 axis = localTarget.cross(localDestination);
             if (axis.length2() < kMinAxis && i > 0)
                 continue;
             axis.normalize();
-            btQuaternion q(axis, angle);
+            q.setRotation(axis, angle);
             if (bone->isAngleXLimited()) {
                 if (i == 0) {
-                    if (angle < 0.0f)
-                        angle = -angle;
-                    q = btQuaternion(btVector3(1.0f, 0.0f, 0.0f), angle);
+                    q.setRotation(xAxis, fabsf(angle));
                 }
                 else {
                     btScalar x, y, z, cx, cy, cz;
@@ -178,7 +178,7 @@ void IK::solve()
                     if (kMinRotationSum > x + cx)
                         x = kMinRotationSum - cx;
                     btClamp(x, -m_angleConstraint, m_angleConstraint);
-                    if (fabs(x) < kMinRotation)
+                    if (fabsf(x) < kMinRotation)
                         continue;
                     q.setEulerZYX(0.0f, 0.0f, x);
                 }
