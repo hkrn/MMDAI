@@ -39,14 +39,31 @@
 #ifndef VPVL_SCENE_H_
 #define VPVL_SCENE_H_
 
+#include <LinearMath/btHashMap.h>
+
 namespace vpvl
 {
+
+class PMDModel;
+class VMDMotion;
 
 class Scene
 {
 public:
     Scene();
     ~Scene();
+
+    void addModel(PMDModel *model);
+    void addModel(const char *name, PMDModel *model);
+    PMDModel *findModel(const char *name) const;
+    void removeModel(PMDModel *model);
+    void removeModel(const char *name);
+    void setCameraMotion(VMDMotion *motion);
+    void update(float deltaFrame);
+
+private:
+    btHashMap<btHashString, PMDModel *> m_models;
+    VMDMotion *m_cameraMotion;
 };
 
 }

@@ -37,16 +37,62 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/PMDModel.h"
+#include "vpvl/internal/VMDMotion.h"
 
 namespace vpvl
 {
 
 Scene::Scene()
+    : m_cameraMotion(0)
 {
 }
 
 Scene::~Scene()
 {
+    m_cameraMotion = 0;
+}
+
+void Scene::addModel(PMDModel *model)
+{
+    addModel(reinterpret_cast<const char *>(model->name()), model);
+}
+
+void Scene::addModel(const char *name, PMDModel *model)
+{
+    m_models.insert(btHashString(name), model);
+}
+
+PMDModel *Scene::findModel(const char *name) const
+{
+    PMDModel **ptr = const_cast<PMDModel **>(m_models.find(btHashString(name)));
+    return ptr ? 0 : *ptr;
+}
+
+void Scene::removeModel(PMDModel *model)
+{
+    removeModel(reinterpret_cast<const char *>(model->name()));
+}
+
+void Scene::removeModel(const char *name)
+{
+    m_models.remove(btHashString(name));
+}
+
+void Scene::setCameraMotion(VMDMotion *motion)
+{
+    m_cameraMotion = motion;
+}
+
+void Scene::update(float deltaFrame)
+{
+    uint32_t nModels = m_models.size();
+    for (uint32_t i = 0; i < nModels; i++) {
+        PMDModel *model = *m_models.getAtIndex(i);
+        model->updateRootBone();
+        model->updateMotion(deltaFrame);
+        model->updateSkins();
+    }
 }
 
 }
