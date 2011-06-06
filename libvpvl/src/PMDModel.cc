@@ -157,11 +157,11 @@ void PMDModel::updateRootBone()
     m_rootBone.updateTransform();
 }
 
-void PMDModel::updateMotion(float frameAt)
+void PMDModel::updateMotion(float deltaFrame)
 {
     uint32_t nMotions = m_motions.size();
     for (uint32_t i = 0; i < nMotions; i++)
-        m_motions[i]->update(frameAt);
+        m_motions[i]->update(deltaFrame);
     updateAllBones();
     updateAllFaces();
 }

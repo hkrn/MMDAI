@@ -84,7 +84,7 @@ public:
     bool preparse();
     bool load();
     void attachModel(PMDModel *model);
-    void update(float frameAt);
+    void update(float deltaFrame);
 
     const uint8_t *name() const {
         return m_name;

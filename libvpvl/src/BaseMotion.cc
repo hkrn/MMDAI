@@ -71,9 +71,9 @@ void BaseMotion::advance(float deltaFrame, bool &reached)
     }
 }
 
-void BaseMotion::rewind(float target, float frameAt)
+void BaseMotion::rewind(float target, float deltaFrame)
 {
-    m_currentFrame = m_previousFrame + frameAt - m_maxFrame + target;
+    m_currentFrame = m_previousFrame + deltaFrame - m_maxFrame + target;
     m_previousFrame = target;
     if (m_overrideFirst) {
         takeSnap(internal::kZeroV);

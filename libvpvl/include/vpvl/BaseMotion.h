@@ -58,7 +58,7 @@ public:
     virtual void takeSnap(const btVector3 &center) = 0;
 
     void advance(float deltaFrame, bool &reached);
-    void rewind(float target, float frameAt);
+    void rewind(float target, float deltaFrame);
     void reset();
     void setOverrideFirst(const btVector3 &center);
 

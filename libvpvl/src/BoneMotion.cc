@@ -80,11 +80,11 @@ void BoneMotion::lerpVector3(const BoneKeyFrame *keyFrame,
     const float valueFrom = static_cast<const btScalar *>(from)[at];
     const float valueTo = static_cast<const btScalar *>(to)[at];
     if (keyFrame->linear()[at]) {
-        value = valueFrom * (1.0f - w) + valueTo * w;
+        value = internal::lerp(valueFrom, valueTo, w);
     }
     else {
         const float w2 = weightValue(keyFrame, w, at);
-        value = valueFrom * (1.0f - w2) + valueTo * w2;
+        value = internal::lerp(valueFrom, valueTo, w2);
     }
 }
 

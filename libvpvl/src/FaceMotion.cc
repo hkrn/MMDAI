@@ -223,7 +223,7 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
 
     if (timeFrom != timeTo) {
         float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
-        node->weight = weightFrom * (1.0f - w) + weightTo * w;
+        node->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {
         node->weight = weightFrom;

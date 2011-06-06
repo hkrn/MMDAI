@@ -188,10 +188,10 @@ void VMDMotion::attachModel(PMDModel *model)
         m_beginningNonControlledBlend = 10.0f;
 }
 
-void VMDMotion::update(float frameAt)
+void VMDMotion::update(float deltaFrame)
 {
     if (m_beginningNonControlledBlend > 0.0f) {
-        m_beginningNonControlledBlend -= frameAt;
+        m_beginningNonControlledBlend -= deltaFrame;
         btSetMax(m_beginningNonControlledBlend, 0.0f);
     }
     if (m_active) {
@@ -199,10 +199,10 @@ void VMDMotion::update(float frameAt)
             bool reached = false;
             m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
             m_faceMotion.setBlendRate(m_endingFaceBlend / m_endingFaceBlendFrames);
-            m_boneMotion.advance(frameAt, reached);
-            m_faceMotion.advance(frameAt, reached);
-            m_endingBoneBlend -= frameAt;
-            m_endingFaceBlend -= frameAt;
+            m_boneMotion.advance(deltaFrame, reached);
+            m_faceMotion.advance(deltaFrame, reached);
+            m_endingBoneBlend -= deltaFrame;
+            m_endingFaceBlend -= deltaFrame;
             btSetMax(m_endingBoneBlend, 0.0f);
             btSetMax(m_endingFaceBlend, 0.0f);
             if (m_endingBoneBlend == 0.0f || m_endingFaceBlend == 0.0f) {
@@ -215,16 +215,16 @@ void VMDMotion::update(float frameAt)
             bool faceReached = false;
             m_boneMotion.setBlendRate(m_boneMotion.blendRate());
             m_faceMotion.setBlendRate(1.0f);
-            m_boneMotion.advance(frameAt, boneReached);
-            m_faceMotion.advance(frameAt, faceReached);
+            m_boneMotion.advance(deltaFrame, boneReached);
+            m_faceMotion.advance(deltaFrame, faceReached);
             if (boneReached && faceReached) {
                 switch (m_onEnd) {
                 case 0:
                     break;
                 case 1:
                     if (m_boneMotion.maxIndex() != 0.0f && m_faceMotion.maxIndex() != 0.0f) {
-                        m_boneMotion.rewind(m_loopAt, frameAt);
-                        m_faceMotion.rewind(m_loopAt, frameAt);
+                        m_boneMotion.rewind(m_loopAt, deltaFrame);
+                        m_faceMotion.rewind(m_loopAt, deltaFrame);
                         m_status = kLooped;
                     }
                     break;

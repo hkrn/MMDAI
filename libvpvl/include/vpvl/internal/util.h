@@ -69,6 +69,11 @@ static inline float spline2(const float t, const float p1, const float p2)
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
 }
 
+inline float lerp(float x, float y, float t)
+{
+    return x * (1.0f - t) + y * t;
+}
+
 inline void vector3(uint8_t *&ptr, float *values)
 {
     vectorN(ptr, values, 3);

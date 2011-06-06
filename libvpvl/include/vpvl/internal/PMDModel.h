@@ -113,7 +113,7 @@ public:
     void addMotion(VMDMotion *motion);
     void removeMotion(VMDMotion *motion);
     void updateRootBone();
-    void updateMotion(float frameAt);
+    void updateMotion(float deltaFrame);
     void updateSkins();
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);

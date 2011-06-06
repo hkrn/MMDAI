@@ -179,18 +179,18 @@ void CameraMotion::seek(float frameAt)
                 m_angle = angleFrom.lerp(angleTo, w2);
             }
             if (keyFrameForInterpolation->linear()[4]) {
-                m_distance = distanceFrom * (1.0f - w) + distanceTo * w;
+                m_distance = internal::lerp(distanceFrom, distanceTo, w);
             }
             else {
                 const float w2 = weightValue(keyFrameForInterpolation, w, 4);
-                m_distance = distanceFrom * (1.0f - w2) + distanceTo * w2;
+                m_distance = internal::lerp(distanceFrom, distanceTo, w2);
             }
             if (keyFrameForInterpolation->linear()[5]) {
-                m_fovy = fovyFrom * (1.0f - w) + fovyTo * w;
+                m_fovy = internal::lerp(fovyFrom, fovyTo, w);
             }
             else {
                 const float w2 = weightValue(keyFrameForInterpolation, w, 5);
-                m_fovy = fovyFrom * (1.0f - w2) + fovyTo * w2;
+                m_fovy = internal::lerp(fovyFrom, fovyTo, w2);
             }
         }
     }
