@@ -62,7 +62,7 @@ public:
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
-    void build(PMDModel *model);
+    void attachModel(PMDModel *model);
     void reset();
 
     const BoneKeyFrameList &frames() const {
@@ -70,6 +70,9 @@ public:
     }
     bool hasCenterBoneMotion() const {
         return m_hasCenterBoneMotion;
+    }
+    PMDModel *attachedModel() const {
+        return m_model;
     }
 
 private:
@@ -83,6 +86,7 @@ private:
 
     BoneKeyFrameList m_frames;
     btHashMap<btHashString, BoneMotionInternal *> m_name2node;
+    PMDModel *m_model;
     bool m_hasCenterBoneMotion;
 };
 

@@ -157,12 +157,14 @@ bool VMDMotion::load()
 
 void VMDMotion::attachModel(PMDModel *model)
 {
+    if (m_model)
+        return;
     m_model = model;
     m_active = true;
     m_endingBoneBlend = 0.0f;
     m_endingFaceBlend = 0.0f;
-    m_boneMotion.build(model);
-    m_faceMotion.build(model);
+    m_boneMotion.attachModel(model);
+    m_faceMotion.attachModel(model);
     if (m_enableSmooth) {
         if (m_enableRelocation && m_boneMotion.hasCenterBoneMotion()) {
             Bone *root = model->mutableRootBone();

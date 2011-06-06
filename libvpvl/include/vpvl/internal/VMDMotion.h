@@ -89,6 +89,9 @@ public:
     const uint8_t *name() const {
         return m_name;
     }
+    PMDModel *attachedModel() const {
+        return m_model;
+    }
     const uint8_t *data() const {
         return m_data;
     }

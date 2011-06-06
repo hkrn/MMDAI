@@ -62,11 +62,14 @@ public:
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
-    void build(PMDModel *model);
+    void attachModel(PMDModel *model);
     void reset();
 
     const FaceKeyFrameList &frames() const {
         return m_frames;
+    }
+    PMDModel *attachedModel() const {
+        return m_model;
     }
 
 private:
@@ -74,6 +77,7 @@ private:
 
     FaceKeyFrameList m_frames;
     btHashMap<btHashString, FaceMotionInternal *> m_name2node;
+    PMDModel *m_model;
 };
 
 }

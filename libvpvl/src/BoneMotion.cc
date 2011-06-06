@@ -85,12 +85,15 @@ void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
 
 BoneMotion::BoneMotion()
     : BaseMotion(kStartingMarginFrame),
+      m_model(0),
       m_hasCenterBoneMotion(false)
 {
 }
 
 BoneMotion::~BoneMotion()
 {
+    m_model = 0;
+    m_hasCenterBoneMotion = false;
 }
 
 void BoneMotion::read(const uint8_t *data, uint32_t size)
@@ -138,8 +141,11 @@ void BoneMotion::takeSnap(const btVector3 &center)
     }
 }
 
-void BoneMotion::build(PMDModel *model)
+void BoneMotion::attachModel(PMDModel *model)
 {
+    if (m_model)
+        return;
+
     uint32_t nFrames = m_frames.size();
     const uint8_t *centerBoneName = Bone::centerBoneName();
     size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
@@ -176,6 +182,8 @@ void BoneMotion::build(PMDModel *model)
         frames.quickSort(BoneMotionKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.size() - 1]->index());
     }
+
+    m_model = model;
 }
 
 void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)

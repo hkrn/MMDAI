@@ -62,12 +62,14 @@ public:
 };
 
 FaceMotion::FaceMotion()
-    : BaseMotion(kStartingMarginFrame)
+    : BaseMotion(kStartingMarginFrame),
+      m_model(0)
 {
 }
 
 FaceMotion::~FaceMotion()
 {
+    m_model = 0;
 }
 
 void FaceMotion::read(const uint8_t *data, uint32_t size)
@@ -108,8 +110,11 @@ void FaceMotion::takeSnap(const btVector3 & /* center */)
     }
 }
 
-void FaceMotion::build(PMDModel *model)
+void FaceMotion::attachModel(PMDModel *model)
 {
+    if (m_model)
+        return;
+
     uint32_t nFrames = m_frames.size();
     for (uint32_t i = 0; i < nFrames; i++) {
         FaceKeyFrame *frame = m_frames.at(i);
@@ -140,6 +145,8 @@ void FaceMotion::build(PMDModel *model)
         frames.quickSort(FaceMotionKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.size() - 1]->index());
     }
+
+    m_model = model;
 }
 
 void FaceMotion::reset()
