@@ -42,9 +42,9 @@
 namespace vpvl
 {
 
-size_t Material::stride(const uint8_t * /* data */)
+size_t Material::stride()
 {
-    return sizeof(float) * 11 + (sizeof(uint8_t) * 2) + sizeof(uint32_t) + 20;
+    return sizeof(float) * 11 + (sizeof(uint8_t) * 2) + sizeof(uint32_t) + kNameSize;
 }
 
 Material::Material()

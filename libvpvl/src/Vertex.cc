@@ -42,7 +42,7 @@
 namespace vpvl
 {
 
-size_t Vertex::stride(const uint8_t * /* data */)
+size_t Vertex::stride()
 {
     return sizeof(float) * 8 + sizeof(int16_t) * 2 + sizeof(uint8_t) * 2;
 }

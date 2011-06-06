@@ -52,7 +52,9 @@ public:
     RigidBody();
     ~RigidBody();
 
-    static size_t stride(const uint8_t *data);
+    static const int kNameSize = 20;
+
+    static size_t stride();
 
     void read(const uint8_t *data, BoneList *bones);
     void transformToBone();
@@ -70,7 +72,7 @@ public:
     }
 
 private:
-    uint8_t m_name[20];
+    uint8_t m_name[kNameSize];
     Bone *m_bone;
     btCollisionShape *m_shape;
     btRigidBody *m_body;

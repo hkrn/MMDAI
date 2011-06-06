@@ -52,7 +52,7 @@ public:
     Vertex();
     ~Vertex();
 
-    static size_t stride(const uint8_t *data);
+    static size_t stride();
 
     void read(const uint8_t *data);
 

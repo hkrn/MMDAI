@@ -52,7 +52,9 @@ public:
     Constraint();
     ~Constraint();
 
-    static size_t stride(const uint8_t *data);
+    static const int kNameSize = 20;
+
+    static size_t stride();
 
     void read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset);
 
@@ -68,7 +70,7 @@ public:
     }
 
 private:
-    uint8_t m_name[20];
+    uint8_t m_name[kNameSize];
     btGeneric6DofSpringConstraint *m_constraint;
 };
 

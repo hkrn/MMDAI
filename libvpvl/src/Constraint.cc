@@ -42,9 +42,9 @@
 namespace vpvl
 {
 
-size_t Constraint::stride(const uint8_t * /* data */)
+size_t Constraint::stride()
 {
-    return 20 + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
+    return kNameSize + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
 }
 
 Constraint::Constraint()

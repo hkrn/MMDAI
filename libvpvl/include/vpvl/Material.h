@@ -53,7 +53,9 @@ public:
     Material();
     ~Material();
 
-    static size_t stride(const uint8_t *data);
+    static const int kNameSize = 20;
+
+    static size_t stride();
 
     void read(const uint8_t *data);
 
@@ -141,9 +143,9 @@ public:
     }
 
 private:
-    uint8_t m_rawName[20];
-    uint8_t m_primaryTextureName[20];
-    uint8_t m_secondTextureName[20];
+    uint8_t m_rawName[kNameSize];
+    uint8_t m_primaryTextureName[kNameSize];
+    uint8_t m_secondTextureName[kNameSize];
     btVector4 m_ambient;
     btVector4 m_averageColor;
     btVector4 m_diffuse;

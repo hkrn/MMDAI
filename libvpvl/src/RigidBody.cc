@@ -100,9 +100,9 @@ private:
     btTransform m_boneTransform;
 };
 
-size_t RigidBody::stride(const uint8_t * /* data */)
+size_t RigidBody::stride()
 {
-    return 20 + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
+    return kNameSize + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
             + (sizeof(float) * 14) + sizeof(uint8_t);
 }
 

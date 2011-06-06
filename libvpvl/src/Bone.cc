@@ -61,9 +61,9 @@ Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
     return bones->at(0);
 }
 
-size_t Bone::stride(const uint8_t * /* data */)
+size_t Bone::stride()
 {
-    return 20 + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
+    return kNameSize + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
 }
 
 Bone::Bone()

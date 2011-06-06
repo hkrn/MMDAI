@@ -48,10 +48,10 @@ size_t Face::totalSize(const uint8_t *data, size_t n)
     size_t size = 0;
     uint8_t *ptr = const_cast<uint8_t *>(data);
     for (size_t i = 0; i < n; i++) {
-        ptr += 20;
+        ptr += kNameSize;
         uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
         size_t rest = sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
-        size += 20 + rest;
+        size += kNameSize + rest;
         ptr += rest;
     }
     return size;
@@ -60,10 +60,9 @@ size_t Face::totalSize(const uint8_t *data, size_t n)
 size_t Face::stride(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    size_t base = 20;
-    ptr += base;
+    ptr += kNameSize;
     const int nvertices = *reinterpret_cast<int *>(ptr);
-    return base + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+    return kNameSize + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
 }
 
 Face::Face()

@@ -70,9 +70,11 @@ public:
     Bone();
     ~Bone();
 
+    static const int kNameSize = 20;
+
     static const uint8_t *centerBoneName();
     static Bone *centerBone(const BoneList *bones);
-    static size_t stride(const uint8_t *data);
+    static size_t stride();
 
     void read(const uint8_t *data, BoneList *bones, Bone *rootBone);
     void computeOffset();
@@ -85,6 +87,9 @@ public:
 
     const uint8_t *name() const {
         return m_name;
+    }
+    const uint8_t *englishName() const {
+        return m_englishName;
     }
     BoneType type() const {
         return m_type;
@@ -117,6 +122,9 @@ public:
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
+    void setEnglishName(const uint8_t *value) {
+        copyBytesSafe(m_englishName, value, sizeof(m_englishName));
+    }
     void setCurrentTransform(const btTransform &value) {
         m_currentTransform = value;
     }
@@ -134,7 +142,8 @@ public:
     }
 
 private:
-    uint8_t m_name[20];
+    uint8_t m_name[kNameSize];
+    uint8_t m_englishName[kNameSize];
     BoneType m_type;
     btTransform m_currentTransform;
     btTransform m_transformMoveToOrigin;

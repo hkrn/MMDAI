@@ -76,6 +76,9 @@ struct PMDModelDataInfo
     size_t boneDisplayNamesCount;
     const uint8_t *englishNamePtr;
     const uint8_t *englishCommentPtr;
+    const uint8_t *englishBoneNamesPtr;
+    const uint8_t *englishFaceNamesPtr;
+    const uint8_t *englishBoneFramesPtr;
     const uint8_t *toonTextureNamesPtr;
     const uint8_t *rigidBodiesPtr;
     size_t rigidBodiesCount;
@@ -242,7 +245,7 @@ public:
         uint8_t *p = const_cast<uint8_t *>(ptr);
         for (int i = 0; i < 10; i++) {
             copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
-            p += 100;
+            p += sizeof(m_textures[i]);
         }
     }
     void setLightDirection(const btVector3 &value) {

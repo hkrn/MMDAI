@@ -47,6 +47,9 @@ TEST(PMDModelTest, PreParseFullPMD) {
     EXPECT_TRUE(result.boneDisplayNamesCount != 0);
     EXPECT_TRUE(result.englishNamePtr != 0);
     EXPECT_TRUE(result.englishCommentPtr != 0);
+    EXPECT_TRUE(result.englishBoneNamesPtr != 0);
+    EXPECT_TRUE(result.englishFaceNamesPtr != 0);
+    EXPECT_TRUE(result.englishBoneFramesPtr != 0);
     EXPECT_TRUE(result.toonTextureNamesPtr != 0);
     EXPECT_TRUE(result.rigidBodiesPtr != 0);
     EXPECT_TRUE(result.rigidBodiesCount != 0);
