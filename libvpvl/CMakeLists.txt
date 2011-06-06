@@ -17,6 +17,7 @@ set(vpvl_public_headers
     include/vpvl/IK.h
     include/vpvl/Material.h
     include/vpvl/RigidBody.h
+    include/vpvl/Scene.h
     include/vpvl/Vertex.h
     include/vpvl/common.h
     include/vpvl/vpvl.h

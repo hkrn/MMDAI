@@ -12,6 +12,7 @@
 #include "vpvl/IK.h"
 #include "vpvl/Material.h"
 #include "vpvl/RigidBody.h"
+#include "vpvl/Scene.h"
 #include "vpvl/Vertex.h"
 
 #endif /* vpvl_vpvl_H_ */
