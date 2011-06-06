@@ -107,6 +107,9 @@ public:
     const FaceMotion &face() const {
         return m_faceMotion;
     }
+    const VMDMotionStatus &status() const {
+        return m_status;
+    }
     const VMDMotionDataInfo &result() const {
         return m_result;
     }
