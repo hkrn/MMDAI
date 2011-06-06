@@ -76,7 +76,7 @@ public:
 
     static const int kTableSize = 24;
 
-    static size_t stride(const uint8_t * /* data */) {
+    static size_t stride() {
         return sizeof(uint32_t) + sizeof(float) * 7 + 24 + sizeof(uint32_t) + sizeof(uint8_t);
     }
 

@@ -63,12 +63,19 @@ public:
     }
 };
 
-void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
-                              const btVector3 &from,
-                              const btVector3 &to,
-                              float w,
-                              uint32_t at,
-                              float &value)
+float BoneMotion::weightValue(const BoneKeyFrame *keyFrame, float w, uint32_t at)
+{
+    const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
+    const float *v = keyFrame->interpolationTable()[at];
+    return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
+}
+
+void BoneMotion::lerpVector3(const BoneKeyFrame *keyFrame,
+                             const btVector3 &from,
+                             const btVector3 &to,
+                             float w,
+                             uint32_t at,
+                             float &value)
 {
     const float valueFrom = static_cast<const btScalar *>(from)[at];
     const float valueTo = static_cast<const btScalar *>(to)[at];
@@ -76,9 +83,7 @@ void BoneMotion::lerpPosition(const BoneKeyFrame *keyFrame,
         value = valueFrom * (1.0f - w) + valueTo * w;
     }
     else {
-        const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
-        const float *v = keyFrame->interpolationTable()[at];
-        const float w2 = v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
+        const float w2 = weightValue(keyFrame, w, at);
         value = valueFrom * (1.0f - w2) + valueTo * w2;
     }
 }
@@ -103,7 +108,7 @@ void BoneMotion::read(const uint8_t *data, uint32_t size)
     for (uint32_t i = 0; i < size; i++) {
         BoneKeyFrame *frame = new BoneKeyFrame();
         frame->read(ptr);
-        ptr += BoneKeyFrame::stride(ptr);
+        ptr += BoneKeyFrame::stride();
         m_frames.push_back(frame);
     }
 }
@@ -219,8 +224,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     node->lastIndex = k1;
 
     const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    float timeFrom = keyFrameFrom->index();
-    float timeTo = keyFrameTo->index();
+    float timeFrom = keyFrameFrom->index(), timeTo = keyFrameTo->index();
     BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);
     btVector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
     btQuaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
@@ -274,17 +278,15 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
         else {
             float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
             float x = 0, y = 0, z = 0;
-            lerpPosition(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
-            lerpPosition(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
-            lerpPosition(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);
+            lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
+            lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
+            lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);
             node->position.setValue(x, y, z);
             if (keyFrameForInterpolation->linear()[3]) {
                 node->rotation = rotationFrom.slerp(rotationTo, w);
             }
             else {
-                const float *v = keyFrameForInterpolation->interpolationTable()[3];
-                const int16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
-                const float w2 = v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
+                const float w2 = weightValue(keyFrameForInterpolation, w, 3);
                 node->rotation = rotationFrom.slerp(rotationTo, w2);
             }
         }

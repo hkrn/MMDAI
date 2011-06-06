@@ -76,12 +76,15 @@ public:
     }
 
 private:
-    static void lerpPosition(const BoneKeyFrame *keyFrame,
-                             const btVector3 &from,
-                             const btVector3 &to,
+    static float weightValue(const BoneKeyFrame *keyFrame,
                              float w,
-                             uint32_t at,
-                             float &value);
+                             uint32_t at);
+    static void lerpVector3(const BoneKeyFrame *keyFrame,
+                            const btVector3 &from,
+                            const btVector3 &to,
+                            float w,
+                            uint32_t at,
+                            float &value);
     void calculateFrames(float frameAt, BoneMotionInternal *node);
 
     BoneKeyFrameList m_frames;

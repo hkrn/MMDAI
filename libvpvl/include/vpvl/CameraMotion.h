@@ -63,11 +63,22 @@ public:
     }
 
 private:
+    static float weightValue(const CameraKeyFrame *keyFrame,
+                             float w,
+                             uint32_t at);
+    static void lerpVector3(const CameraKeyFrame *keyFrame,
+                            const btVector3 &from,
+                            const btVector3 &to,
+                            float w,
+                            uint32_t at,
+                            float &value);
+
     CameraKeyFrameList m_frames;
     btVector3 m_position;
     btVector3 m_angle;
     float m_distance;
     float m_fovy;
+    uint32_t m_lastIndex;
 };
 
 }

@@ -50,12 +50,38 @@ public:
     }
 };
 
+float CameraMotion::weightValue(const CameraKeyFrame *keyFrame, float w, uint32_t at)
+{
+    const uint16_t index = static_cast<int16_t>(w * CameraKeyFrame::kTableSize);
+    const float *v = keyFrame->interpolationTable()[at];
+    return v[index] + (v[index + 1] - v[index]) * (w * CameraKeyFrame::kTableSize - index);
+}
+
+void CameraMotion::lerpVector3(const CameraKeyFrame *keyFrame,
+                               const btVector3 &from,
+                               const btVector3 &to,
+                               float w,
+                               uint32_t at,
+                               float &value)
+{
+    const float valueFrom = static_cast<const btScalar *>(from)[at];
+    const float valueTo = static_cast<const btScalar *>(to)[at];
+    if (keyFrame->linear()[at]) {
+        value = valueFrom * (1.0f - w) + valueTo * w;
+    }
+    else {
+        const float w2 = weightValue(keyFrame, w, at);
+        value = valueFrom * (1.0f - w2) + valueTo * w2;
+    }
+}
+
 CameraMotion::CameraMotion()
     : BaseMotion(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_distance(0.0f),
-      m_fovy(0.0f)
+      m_fovy(0.0f),
+      m_lastIndex(0)
 {
 }
 
@@ -65,6 +91,7 @@ CameraMotion::~CameraMotion()
     m_angle.setZero();
     m_distance = 0.0f;
     m_fovy = 0.0f;
+    m_lastIndex = 0;
 }
 
 void CameraMotion::read(const uint8_t *data, uint32_t size)
@@ -74,14 +101,105 @@ void CameraMotion::read(const uint8_t *data, uint32_t size)
     for (uint32_t i = 0; i < size; i++) {
         CameraKeyFrame *frame = new CameraKeyFrame();
         frame->read(ptr);
-        ptr += CameraKeyFrame::stride(ptr);
+        ptr += CameraKeyFrame::stride();
         m_frames.push_back(frame);
     }
     m_frames.quickSort(CameraMotionKeyFramePredication());
 }
 
-void CameraMotion::seek(float /* frameAt */)
+void CameraMotion::seek(float frameAt)
 {
+    uint32_t nFrames = m_frames.size();
+    CameraKeyFrame *lastKeyFrame = m_frames[nFrames - 1];
+    float currentFrame = frameAt;
+    if (currentFrame > lastKeyFrame->index())
+        currentFrame = lastKeyFrame->index();
+
+    uint32_t k1 = 0, k2 = 0;
+    if (currentFrame >= m_frames[m_lastIndex]->index()) {
+        for (uint32_t i = m_lastIndex; i < nFrames; i++) {
+            if (currentFrame <= m_frames[i]->index()) {
+                k2 = i;
+                break;
+            }
+        }
+    }
+    else {
+        for (uint32_t i = 0; i <= m_lastIndex && i < nFrames; i++) {
+            if (currentFrame <= m_frames[i]->index()) {
+                k2 = i;
+                break;
+            }
+        }
+    }
+
+    if (k2 >= nFrames)
+        k2 = nFrames - 1;
+    k1 = k2 <= 1 ? 0 : k2 - 1;
+    m_lastIndex = k1;
+
+    const CameraKeyFrame *keyFrameFrom = m_frames.at(k1), *keyFrameTo = m_frames.at(k2);
+    CameraKeyFrame *keyFrameForInterpolation = const_cast<CameraKeyFrame *>(keyFrameTo);
+    float timeFrom = keyFrameFrom->index(), timeTo = keyFrameTo->index();
+    float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
+    btVector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();
+    float distanceTo = keyFrameTo->distance(), fovyTo = keyFrameTo->fovy();
+    btVector3 positionTo = keyFrameTo->position(), angleTo = keyFrameTo->angle();
+    if (timeFrom != timeTo) {
+        if (currentFrame <= timeFrom) {
+            m_distance = distanceFrom;
+            m_position = positionFrom;
+            m_angle = angleFrom;
+            m_fovy = fovyFrom;
+        }
+        else if (currentFrame >= timeTo) {
+            m_distance = distanceTo;
+            m_position = positionTo;
+            m_angle = angleTo;
+            m_fovy = fovyTo;
+        }
+        else if (timeTo - timeFrom <= 1.0f) {
+            m_distance = distanceFrom;
+            m_position = positionFrom;
+            m_angle = angleFrom;
+            m_fovy = fovyFrom;
+        }
+        else {
+            float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+            float x = 0, y = 0, z = 0;
+            lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
+            lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
+            lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);
+            m_position.setValue(x, y, z);
+            if (keyFrameForInterpolation->linear()[3]) {
+                m_angle = angleFrom.lerp(angleTo, w);
+            }
+            else {
+                const float w2 = weightValue(keyFrameForInterpolation, w, 3);
+                m_angle = angleFrom.lerp(angleTo, w2);
+            }
+            if (keyFrameForInterpolation->linear()[4]) {
+                m_distance = distanceFrom * (1.0f - w) + distanceTo * w;
+            }
+            else {
+                const float w2 = weightValue(keyFrameForInterpolation, w, 4);
+                m_distance = distanceFrom * (1.0f - w2) + distanceTo * w2;
+            }
+            if (keyFrameForInterpolation->linear()[5]) {
+                m_fovy = fovyFrom * (1.0f - w) + fovyTo * w;
+            }
+            else {
+                const float w2 = weightValue(keyFrameForInterpolation, w, 5);
+                m_fovy = fovyFrom * (1.0f - w2) + fovyTo * w2;
+            }
+        }
+    }
+    else {
+        m_distance = distanceFrom;
+        m_position = positionFrom;
+        m_angle = angleFrom;
+        m_fovy = fovyFrom;
+    }
 }
 
 void CameraMotion::takeSnap(const btVector3 & /* center */)

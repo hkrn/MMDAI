@@ -79,7 +79,7 @@ void FaceMotion::read(const uint8_t *data, uint32_t size)
     for (uint32_t i = 0; i < size; i++) {
         FaceKeyFrame *frame = new FaceKeyFrame();
         frame->read(ptr);
-        ptr += FaceKeyFrame::stride(ptr);
+        ptr += FaceKeyFrame::stride();
         m_frames.push_back(frame);
     }
 }
@@ -192,8 +192,7 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     node->lastIndex = k1;
 
     const FaceKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    float timeFrom = keyFrameFrom->index();
-    float timeTo = keyFrameTo->index();
+    float timeFrom = keyFrameFrom->index(), timeTo = keyFrameTo->index();
     float weightFrom = 0.0f, weightTo = 0.0f;
     if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {

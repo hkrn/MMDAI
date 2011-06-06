@@ -58,8 +58,10 @@ public:
         memset(m_name, 0, sizeof(m_name));
     }
 
-    static size_t stride(const uint8_t * /* data */) {
-        return 15 + sizeof(uint32_t) + sizeof(float);
+    static const int kNameSize = 15;
+
+    static size_t stride() {
+        return kNameSize + sizeof(uint32_t) + sizeof(float);
     }
 
     void read(const uint8_t *data) {
@@ -86,7 +88,7 @@ public:
     }
 
 private:
-    uint8_t m_name[15];
+    uint8_t m_name[kNameSize];
     float m_index;
     float m_weight;
 };

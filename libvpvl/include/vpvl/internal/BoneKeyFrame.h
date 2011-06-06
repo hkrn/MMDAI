@@ -71,10 +71,11 @@ public:
         memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
     }
 
+    static const int kNameSize = 15;
     static const int kTableSize = 64;
 
-    static size_t stride(const uint8_t * /* data */) {
-        return 15 + sizeof(uint32_t) + sizeof(float) * 7 + 64;
+    static size_t stride() {
+        return kNameSize + sizeof(uint32_t) + sizeof(float) * 7 + 64;
     }
 
     void read(const uint8_t *data) {
@@ -138,7 +139,7 @@ private:
         }
     }
 
-    uint8_t m_name[15];
+    uint8_t m_name[kNameSize];
     float m_index;
     btVector3 m_position;
     btQuaternion m_rotation;
