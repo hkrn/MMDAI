@@ -31,8 +31,11 @@ struct vpvl::PMDModelPrivate {
 static const int g_width = 800;
 static const int g_height = 600;
 
-static const uint8_t g_sysdir[] = "render/res/system";
-static const uint8_t g_modeldir[] = "render/res/lat";
+#define CONCAT_PATH(path) "" #path
+
+static const uint8_t g_sysdir[] = CONCAT_PATH("render/res/system");
+static const uint8_t g_modeldir[] = CONCAT_PATH("render/res/lat");
+static const uint8_t g_motion[] = CONCAT_PATH("test/res/motion.vmd");
 static const uint8_t g_modelname[] = "normal.pmd";
 
 static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
@@ -574,7 +577,8 @@ int main(int argc, char *argv[])
     SetLighting(model);
     LoadModelTextures(model, g_sysdir, g_modeldir);
 
-    FileSlurp("test/res/motion.vmd", motionData, size);
+    snprintf(path, sizeof(path), "%s", g_motion);
+    FileSlurp(path, motionData, size);
     vpvl::VMDMotion motion(motionData, size);
     if (!motion.load()) {
         fprintf(stderr, "failed parsing the motion\n");
