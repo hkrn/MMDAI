@@ -55,12 +55,27 @@ const float Scene::kDistanceSpeedRate = 0.9f;
 const float Scene::kMinFovyDiff = 0.01f;
 const float Scene::kFovySpeedRate = 0.9f;
 
+class SceneModelDistancePredication
+{
+public:
+    SceneModelDistancePredication(const btTransform &transform)
+        : m_transform(transform) {
+    }
+    bool operator()(const PMDModel *left, const PMDModel *right) {
+        const btVector3 positionLeft = m_transform * Bone::centerBone(&left->bones())->currentTransform().getOrigin();
+        const btVector3 positionRight = m_transform * Bone::centerBone(&right->bones())->currentTransform().getOrigin();
+        return positionLeft.z() < positionRight.z();
+    }
+private:
+    const btTransform m_transform;
+};
+
 Scene::Scene(int width, int height)
     : m_cameraMotion(0),
-      m_currentRotation(0.0f, 0.0f, 0.0f, 0.0f),
-      m_rotation(0.0f, 0.0f, 0.0f, 0.0f),
-      m_viewMoveRotation(0.0f, 0.0f, 0.0f, 0.0f),
-      m_lightColor(0.0f, 0.0f, 0.0f, 0.0f),
+      m_currentRotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_viewMoveRotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_lightColor(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightDirection(0.0f, 0.0f, 0.0f, 0.0f),
       m_currentPosition(0.0f, 0.0f, 0.0f),
       m_position(0.0f, 0.0f, 0.0f),
@@ -82,7 +97,27 @@ Scene::Scene(int width, int height)
 Scene::~Scene()
 {
     m_models.clear();
+    m_order.clear();
     m_cameraMotion = 0;
+    m_currentRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_viewMoveRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_lightColor.setZero();
+    m_lightDirection.setZero();
+    m_currentPosition.setZero();
+    m_position.setZero();
+    m_viewMovePosition.setZero();
+    m_angle.setZero();
+    m_currentDistance.setZero();
+    m_viewMoveDistance.setZero();
+    m_modelview.setIdentity();
+    m_distance = 0.0f;
+    m_currentFovy = 0.0f;
+    m_fovy = 0.0f;
+    m_viewMoveFovy = 0.0f;
+    m_viewMoveTime = -1;
+    m_width = 0;
+    m_height = 0;
 }
 
 void Scene::addModel(PMDModel *model)
@@ -139,6 +174,11 @@ void Scene::setLight(const btVector4 &color, const btVector4 &direction)
 {
     m_lightColor = color;
     m_lightDirection = direction;
+    uint32_t nModels = m_models.size();
+    for (uint32_t i = 0; i < nModels; i++) {
+        PMDModel *model = *m_models.getAtIndex(i);
+        model->setLightDirection(direction);
+    }
 }
 
 void Scene::setViewMove(int viewMoveTime)
@@ -154,9 +194,10 @@ void Scene::setViewMove(int viewMoveTime)
 
 void Scene::update(float deltaFrame)
 {
-    uint32_t nModels = m_models.size();
+    sortModelRenderOrder();
+    uint32_t nModels = m_order.size();
     for (uint32_t i = 0; i < nModels; i++) {
-        PMDModel *model = *m_models.getAtIndex(i);
+        PMDModel *model = m_order[i];
         model->updateRootBone();
         model->updateMotion(deltaFrame);
         model->updateSkins();
@@ -197,14 +238,14 @@ void Scene::updateModelView(int ellapsedTimeForMove)
             btVector3 position = m_position - m_currentPosition;
             btQuaternion rotation = m_rotation - m_currentRotation;
             if (position.length2() > kMinMoveDiff) {
-                 /* current * 0.9 + target * 0.1 */
+                /* current * 0.9 + target * 0.1 */
                 m_currentPosition = m_currentPosition.lerp(m_position, 1.0f - kMoveSpeedRate);
             }
             else {
                 m_currentPosition = m_position;
             }
             if (rotation.length2() > kMinSpinDiff) {
-                 /* current * 0.9 + target * 0.1 */
+                /* current * 0.9 + target * 0.1 */
                 m_currentRotation = m_currentRotation.slerp(m_rotation, 1.0f - kSpinSpeedRate);
             }
             else {
@@ -219,6 +260,20 @@ void Scene::updateProjection(int ellapsedTimeForMove)
 {
     if (updateFovy(ellapsedTimeForMove))
         updateProjectionMatrix();
+}
+
+void Scene::sortModelRenderOrder()
+{
+    uint32_t nModels = m_models.size();
+    if (static_cast<uint32_t>(m_order.size()) != nModels) {
+        m_order.clear();
+        m_order.reserve(nModels);
+        for (uint32_t i = 0; i < nModels; i++) {
+            PMDModel *model = *m_models.getAtIndex(i);
+            m_order.push_back(model);
+        }
+    }
+    m_order.quickSort(SceneModelDistancePredication(m_modelview));
 }
 
 void Scene::updateModelViewMatrix()

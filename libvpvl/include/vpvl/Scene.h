@@ -89,6 +89,7 @@ public:
     }
 
 private:
+    void sortModelRenderOrder();
     void updateModelViewMatrix();
     void updateProjectionMatrix();
     void updateRotationFromAngle();
