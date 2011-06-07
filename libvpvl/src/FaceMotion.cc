@@ -69,6 +69,8 @@ FaceMotion::FaceMotion()
 
 FaceMotion::~FaceMotion()
 {
+    internal::clearAll(m_frames);
+    internal::clearAll(m_name2node);
     m_model = 0;
 }
 

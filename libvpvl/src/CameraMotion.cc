@@ -87,6 +87,7 @@ CameraMotion::CameraMotion()
 
 CameraMotion::~CameraMotion()
 {
+    internal::clearAll(m_frames);
     m_position.setZero();
     m_angle.setZero();
     m_distance = 0.0f;

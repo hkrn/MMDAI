@@ -75,6 +75,7 @@ Face::Face()
 Face::~Face()
 {
     memset(m_name, 0, sizeof(m_name));
+    internal::clearAll(m_vertices);
     m_type = kOther;
     m_weight = 0.0f;
 }

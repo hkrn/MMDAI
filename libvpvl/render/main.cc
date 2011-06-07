@@ -565,13 +565,13 @@ int main(int argc, char *argv[])
     FileSlurp(path, modelData, size);
     vpvl::PMDModel model(modelData, size);
     if (!InitializeSurface(surface, g_width, g_height)) {
-        delete modelData;
+        delete[] modelData;
         return -1;
     }
 
     if (!model.load()) {
         fprintf(stderr, "failed parsing the model\n");
-        delete modelData;
+        delete[] modelData;
         return -1;
     }
     SetLighting(model);
@@ -582,8 +582,8 @@ int main(int argc, char *argv[])
     vpvl::VMDMotion motion(motionData, size);
     if (!motion.load()) {
         fprintf(stderr, "failed parsing the motion\n");
-        delete modelData;
-        delete motionData;
+        delete[] modelData;
+        delete[] motionData;
         return -1;
     }
     model.addMotion(&motion);
@@ -599,8 +599,8 @@ int main(int argc, char *argv[])
 
     UnloadModelTextures(model);
     SDL_FreeSurface(surface);
-    delete motionData;
-    delete modelData;
+    delete[] motionData;
+    delete[] modelData;
 
     return 0;
 }

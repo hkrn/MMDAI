@@ -97,6 +97,8 @@ BoneMotion::BoneMotion()
 
 BoneMotion::~BoneMotion()
 {
+    internal::clearAll(m_frames);
+    internal::clearAll(m_name2node);
     m_model = 0;
     m_hasCenterBoneMotion = false;
 }

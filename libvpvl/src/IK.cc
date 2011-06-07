@@ -83,6 +83,7 @@ IK::IK()
 
 IK::~IK()
 {
+    m_bones.clear();
     m_destination = 0;
     m_target = 0;
     m_iteration = 0;

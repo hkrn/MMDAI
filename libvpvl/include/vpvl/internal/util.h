@@ -39,6 +39,8 @@
 #ifndef VPVL_INTERNAL_UTIL_H_
 #define VPVL_INTERNAL_UTIL_H_
 
+#include "LinearMath/btAlignedObjectArray.h"
+#include "LinearMath/btHashMap.h"
 #include "LinearMath/btVector3.h"
 #include "LinearMath/btQuaternion.h"
 #include <string.h>
@@ -147,6 +149,24 @@ inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
 {
     assert(s1 != NULL && s2 != NULL && max > 0);
     return memcmp(s1, s2, max) == 0;
+}
+
+template<typename T>
+inline void clearAll(btAlignedObjectArray<T*> &a)
+{
+    uint32_t size = a.size();
+    for (uint32_t i = 0; i < size; i++)
+        delete a[i];
+    a.clear();
+}
+
+template<typename T>
+inline void clearAll(btHashMap<btHashString, T*> &a)
+{
+    uint32_t nNodes = a.size();
+    for (uint32_t i = 0; i < nNodes; i++)
+        delete *a.getAtIndex(i);
+    a.clear();
 }
 
 }
