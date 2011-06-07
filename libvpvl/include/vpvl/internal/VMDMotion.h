@@ -113,6 +113,9 @@ public:
     const VMDMotionDataInfo &result() const {
         return m_result;
     }
+    CameraMotion *mutableCamera() {
+        return &m_cameraMotion;
+    }
     float loopAt() const {
         return m_loopAt;
     }

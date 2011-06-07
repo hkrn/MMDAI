@@ -47,7 +47,7 @@ namespace vpvl
 class CameraKeyFrame;
 typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
 
-class CameraMotion : BaseMotion
+class CameraMotion : public BaseMotion
 {
 public:
     CameraMotion();
@@ -60,6 +60,18 @@ public:
 
     const CameraKeyFrameList &frames() const {
         return m_frames;
+    }
+    const btVector3 &position() const {
+        return m_position;
+    }
+    const btVector3 &angle() const {
+        return m_angle;
+    }
+    float distance() const {
+        return m_distance;
+    }
+    float fovy() const {
+        return m_fovy;
     }
 
 private:

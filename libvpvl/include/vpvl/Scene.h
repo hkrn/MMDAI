@@ -40,6 +40,8 @@
 #define VPVL_SCENE_H_
 
 #include <LinearMath/btHashMap.h>
+#include <LinearMath/btTransform.h>
+#include <LinearMath/btVector3.h>
 
 namespace vpvl
 {
@@ -50,20 +52,72 @@ class VMDMotion;
 class Scene
 {
 public:
-    Scene();
+    static const float kFrustumNear;
+    static const float kFrustumFar;
+    static const float kMinMoveDiff;
+    static const float kMoveSpeedRate;
+    static const float kMinSpinDiff;
+    static const float kSpinSpeedRate;
+    static const float kMinDistanceDiff;
+    static const float kDistanceSpeedRate;
+    static const float kMinFovyDiff;
+    static const float kFovySpeedRate;
+
+    Scene(int width, int height);
     ~Scene();
 
     void addModel(PMDModel *model);
     void addModel(const char *name, PMDModel *model);
     PMDModel *findModel(const char *name) const;
+    void getModelViewMatrix(float matrix[16]) const;
+    void getProjectionMatrix(float matrix[16]) const;
     void removeModel(PMDModel *model);
     void removeModel(const char *name);
+    void setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
+    void setLight(const btVector4 &color, const btVector4 &direction);
+    void setViewMove(int viewMoveTime);
     void update(float deltaFrame);
+    void updateModelView(int ellapsedTimeForMove);
+    void updateProjection(int ellapsedTimeForMove);
+
+    const btVector4 &lightColor() const {
+        return m_lightColor;
+    }
+    const btVector4 &lightDirection() const {
+        return m_lightDirection;
+    }
 
 private:
+    void updateModelViewMatrix();
+    void updateProjectionMatrix();
+    void updateRotationFromAngle();
+    bool updateDistance(int ellapsedTimeForMove);
+    bool updateFovy(int ellapsedTimeForMove);
+
     btHashMap<btHashString, PMDModel *> m_models;
+    btAlignedObjectArray<PMDModel *> m_order;
     VMDMotion *m_cameraMotion;
+    btTransform m_modelview;
+    btQuaternion m_currentRotation;
+    btQuaternion m_rotation;
+    btQuaternion m_viewMoveRotation;
+    btVector4 m_lightColor;
+    btVector4 m_lightDirection;
+    btVector3 m_currentPosition;
+    btVector3 m_position;
+    btVector3 m_viewMovePosition;
+    btVector3 m_angle;
+    btVector3 m_currentDistance;
+    btVector3 m_viewMoveDistance;
+    float m_projection[16];
+    float m_distance;
+    float m_currentFovy;
+    float m_fovy;
+    float m_viewMoveFovy;
+    int m_viewMoveTime;
+    int m_width;
+    int m_height;
 };
 
 }
