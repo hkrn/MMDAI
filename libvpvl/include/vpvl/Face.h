@@ -47,7 +47,8 @@
 namespace vpvl
 {
 
-enum FaceType {
+enum FaceType
+{
     kBase,
     kEyebrow,
     kEye,

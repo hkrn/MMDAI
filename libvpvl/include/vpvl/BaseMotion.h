@@ -39,9 +39,9 @@
 #ifndef VPVL_BASEMOTION_H_
 #define VPVL_BASEMOTION_H_
 
-#include "LinearMath/btAlignedObjectArray.h"
-#include "LinearMath/btQuaternion.h"
-#include "LinearMath/btVector3.h"
+#include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btVector3.h>
 #include "vpvl/common.h"
 
 namespace vpvl

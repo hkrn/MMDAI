@@ -41,7 +41,7 @@
 
 #define VPVL_COORDINATE_OPENGL
 
-#if defined(WIN32)
+#if defined(WIN32) && (defined(__MINGW__) || defined(__MINGW32__))
 #define _USE_MATH_DEFINES
 typedef char int8_t;
 typedef unsigned char uint8_t;
@@ -65,7 +65,7 @@ enum vpvlLogLevel
     vpvlLogLevelDebug,
     vpvlLogLevelInfo,
     vpvlLogLevelWarning,
-    vpvlLogLevelError,
+    vpvlLogLevelError
 };
 
 typedef void (vpvlLoggingHandler)(const char *file,

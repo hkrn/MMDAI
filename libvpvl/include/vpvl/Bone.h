@@ -48,7 +48,8 @@
 namespace vpvl
 {
 
-enum BoneType {
+enum BoneType
+{
     kRotate,
     kRotateAndMove,
     kIKDestination,

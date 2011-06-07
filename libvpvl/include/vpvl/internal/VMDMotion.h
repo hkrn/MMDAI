@@ -39,7 +39,7 @@
 #ifndef VPVL_VMDMOTION_H_
 #define VPVL_VMDMOTION_H_
 
-#include "LinearMath/btHashMap.h"
+#include <LinearMath/btHashMap.h>
 #include "vpvl/BoneMotion.h"
 #include "vpvl/CameraMotion.h"
 #include "vpvl/FaceMotion.h"

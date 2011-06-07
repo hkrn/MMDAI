@@ -39,6 +39,8 @@
 #ifndef VPVL_PMDMODEL_H_
 #define VPVL_PMDMODEL_H_
 
+#include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btHashMap.h>
 #include "vpvl/Bone.h"
 #include "vpvl/Constraint.h"
 #include "vpvl/Face.h"
@@ -46,7 +48,6 @@
 #include "vpvl/Material.h"
 #include "vpvl/RigidBody.h"
 #include "vpvl/Vertex.h"
-#include "LinearMath/btHashMap.h"
 
 namespace vpvl
 {

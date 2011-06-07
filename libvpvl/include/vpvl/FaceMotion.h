@@ -39,8 +39,8 @@
 #ifndef VPVL_FACEMOTION_H_
 #define VPVL_FACEMOTION_H_
 
+#include <LinearMath/btHashMap.h>
 #include "vpvl/BaseMotion.h"
-#include "LinearMath/btHashMap.h"
 
 namespace vpvl
 {

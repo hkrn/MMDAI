@@ -41,6 +41,7 @@
 
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
 #include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btVector3.h>
 #include "vpvl/RigidBody.h"
 
 namespace vpvl

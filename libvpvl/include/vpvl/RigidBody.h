@@ -41,6 +41,7 @@
 
 #include <BulletDynamics/Dynamics/btRigidBody.h>
 #include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btTransform.h>
 #include "vpvl/Bone.h"
 
 namespace vpvl
