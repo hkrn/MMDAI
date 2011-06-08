@@ -601,7 +601,7 @@ int main(int argc, char *argv[])
         delete[] cameraData;
         return -1;
     }
-    //scene.setCameraMotion(&camera);
+    scene.setCameraMotion(&camera);
 
     uint32_t interval = static_cast<uint32_t>(1000.0f / 60.0f);
     SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &scene);
