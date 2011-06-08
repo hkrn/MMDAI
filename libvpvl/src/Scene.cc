@@ -73,29 +73,31 @@ private:
 Scene::Scene(int width, int height)
     : m_cameraMotion(0),
       m_currentRotation(0.0f, 0.0f, 0.0f, 1.0f),
-      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_rotation(m_currentRotation),
       m_viewMoveRotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightColor(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightDirection(0.0f, 0.0f, 0.0f, 0.0f),
-      m_currentPosition(0.0f, 0.0f, 0.0f),
-      m_position(0.0f, 0.0f, 0.0f),
-      m_viewMovePosition(0.0f, 0.0f, 0.0f),
+      m_currentPosition(0.0f, 10.0f, 0.0f),
+      m_position(m_currentPosition),
+      m_viewMovePosition(m_currentPosition),
       m_angle(0.0f, 0.0f, 0.0f),
-      m_currentDistance(0.0f, 0.0f, 0.0f),
-      m_viewMoveDistance(0.0f, 0.0f, 0.0f),
-      m_distance(0.0f),
-      m_currentFovy(0.0f),
-      m_fovy(0.0f),
-      m_viewMoveFovy(0.0f),
+      m_currentDistance(0.0f, 0.0f, 100.0f),
+      m_viewMoveDistance(m_currentDistance),
+      m_distance(m_currentDistance.z()),
+      m_currentFovy(16.0f),
+      m_fovy(m_currentFovy),
+      m_viewMoveFovy(m_currentFovy),
       m_viewMoveTime(-1),
       m_width(width),
       m_height(height)
 {
-    m_modelview.setIdentity();
+    updateProjectionMatrix();
+    updateModelViewMatrix();
 }
 
 Scene::~Scene()
 {
+    memset(m_projection, 0, sizeof(m_projection));
     m_models.clear();
     m_order.clear();
     m_cameraMotion = 0;
@@ -133,7 +135,7 @@ void Scene::addModel(const char *name, PMDModel *model)
 PMDModel *Scene::findModel(const char *name) const
 {
     PMDModel **ptr = const_cast<PMDModel **>(m_models.find(btHashString(name)));
-    return ptr ? 0 : *ptr;
+    return ptr ? *ptr : 0;
 }
 
 void Scene::getModelViewMatrix(float matrix[]) const
