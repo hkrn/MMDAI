@@ -6,8 +6,8 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #else
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #include <SDL.h>
@@ -36,6 +36,7 @@ static const int g_height = 600;
 static const uint8_t g_sysdir[] = CONCAT_PATH(render/res/system);
 static const uint8_t g_modeldir[] = CONCAT_PATH(render/res/lat);
 static const uint8_t g_motion[] = CONCAT_PATH(test/res/motion.vmd);
+static const uint8_t g_camera[] = CONCAT_PATH(test/res/camera.vmd);
 static const uint8_t g_modelname[] = "normal.pmd";
 
 static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
@@ -47,8 +48,10 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+    if (GL_ARB_multisample) {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+    }
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
         fprintf(stderr, "Unable to get video info: %s", SDL_GetError());
@@ -185,9 +188,9 @@ static void UnloadModelTextures(const vpvl::PMDModel &model)
     delete data;
 }
 
-static void SetLighting(vpvl::PMDModel &model)
+static void SetLighting(vpvl::Scene &scene)
 {
-    btVector3 color(1.0f, 1.0f, 1.0f), direction(0.5f, 1.0f, 0.5f);
+    btVector4 color(1.0f, 1.0f, 1.0f, 1.0f), direction(0.5f, 1.0f, 0.5f, 0.0f);
     btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6;
 
     // use MMD like cartoon
@@ -206,10 +209,10 @@ static void SetLighting(vpvl::PMDModel &model)
     glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
-    model.setLightDirection(direction);
+    scene.setLight(color, direction);
 }
 
-static void DrawModel(const vpvl::PMDModel &model)
+static void DrawModel(const vpvl::PMDModel *model)
 {
 #ifndef VPVL_COORDINATE_OPENGL
     glPushMatrix();
@@ -221,11 +224,11 @@ static void DrawModel(const vpvl::PMDModel &model)
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_NORMAL_ARRAY);
-    size_t stride = model.stride();
-    glVertexPointer(3, GL_FLOAT, stride, model.verticesPointer());
-    glNormalPointer(GL_FLOAT, stride, model.normalsPointer());
+    size_t stride = model->stride();
+    glVertexPointer(3, GL_FLOAT, stride, model->verticesPointer());
+    glNormalPointer(GL_FLOAT, stride, model->normalsPointer());
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, stride, model.textureCoordsPointer());
+    glTexCoordPointer(2, GL_FLOAT, stride, model->textureCoordsPointer());
     const bool enableToon = true;
     // toon
     if (enableToon) {
@@ -237,11 +240,11 @@ static void DrawModel(const vpvl::PMDModel &model)
         if (false)
             glTexCoordPointer(2, GL_FLOAT, 0, 0);
         else
-            glTexCoordPointer(2, GL_FLOAT, sizeof(btVector3), model.toonTextureCoordsPointer());
+            glTexCoordPointer(2, GL_FLOAT, sizeof(btVector3), model->toonTextureCoordsPointer());
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
     }
-    const vpvl::PMDModelPrivate *modelPrivate = model.privateData();
+    const vpvl::PMDModelPrivate *modelPrivate = model->privateData();
     bool hasSingleSphereMap = false, hasMultipleSphereMap = false;
     // first sphere map
     if (modelPrivate->hasSingleSphereMap) {
@@ -261,10 +264,10 @@ static void DrawModel(const vpvl::PMDModel &model)
         glActiveTexture(GL_TEXTURE0);
         hasMultipleSphereMap = true;
     }
-    const vpvl::MaterialList materials = model.materials();
+    const vpvl::MaterialList materials = model->materials();
     const uint32_t nMaterials = materials.size();
     btVector4 average, ambient, diffuse, specular;
-    uint16_t *indicesPtr = const_cast<uint16_t *>(model.indicesPointer());
+    uint16_t *indicesPtr = const_cast<uint16_t *>(model->indicesPointer());
     for (uint32_t i = 0; i <nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const vpvl::MaterialPrivate *materialPrivate = material->privateData();
@@ -414,7 +417,7 @@ static void DrawModel(const vpvl::PMDModel &model)
 #endif
 }
 
-static void DrawModelEdge(const vpvl::PMDModel &model)
+static void DrawModelEdge(const vpvl::PMDModel *model)
 {
 #ifdef VPVL_COORDINATE_OPENGL
     glCullFace(GL_FRONT);
@@ -429,9 +432,9 @@ static void DrawModelEdge(const vpvl::PMDModel &model)
 
     glDisable(GL_LIGHTING);
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(btVector3), model.edgeVerticesPointer());
+    glVertexPointer(3, GL_FLOAT, sizeof(btVector3), model->edgeVerticesPointer());
     glColor4fv(static_cast<const btScalar *>(color));
-    glDrawElements(GL_TRIANGLES, model.edgeIndicesCount(), GL_UNSIGNED_SHORT, model.edgeIndicesPointer());
+    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, model->edgeIndicesPointer());
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_LIGHTING);
 
@@ -443,37 +446,30 @@ static void DrawModelEdge(const vpvl::PMDModel &model)
 #endif
 }
 
-static void DrawModelShadow(const vpvl::PMDModel &model)
+static void DrawModelShadow(const vpvl::PMDModel *model)
 {
     glDisable(GL_CULL_FACE);
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, model.stride(), model.verticesPointer());
-    glDrawElements(GL_TRIANGLES, model.indices().size(), GL_UNSIGNED_SHORT, model.indicesPointer());
+    glVertexPointer(3, GL_FLOAT, model->stride(), model->verticesPointer());
+    glDrawElements(GL_TRIANGLES, model->indices().size(), GL_UNSIGNED_SHORT, model->indicesPointer());
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
 }
 
-static void DrawSurface(vpvl::PMDModel &model, int width, int height)
+static void DrawSurface(vpvl::Scene &scene, int width, int height)
 {
-    const double ratio = static_cast<double>(width) / height;
+    vpvl::PMDModel *model = scene.findModel("miku");
     float matrix[16];
-    btTransform mv;
-    btQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
-    q.setEulerZYX(0.0f, 0.0f, 0.0f);
-    mv.setIdentity();
-    mv.setRotation(q);
-    mv.setOrigin(mv * -btVector3(0.0f, 10.0f, 0.0f) - btVector3(0.0f, 0.0f, 100.0f));
-    mv.getOpenGLMatrix(matrix);
-    // initialize
+    memset(matrix, 0, sizeof(matrix));
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(16.0, ratio, 0.5, 8000.0);
+    scene.getProjectionMatrix(matrix);
+    glLoadMatrixf(matrix);
     glMatrixMode(GL_MODELVIEW);
+    scene.getModelViewMatrix(matrix);
+    glLoadMatrixf(matrix);
     glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    // initialize matrices
-    glLoadMatrixf(matrix);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
@@ -528,16 +524,18 @@ static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
         fclose(fp);
     }
     else {
+        data = 0;
+        size = 0;
         fprintf(stderr, "failed loading the model: %s\n", strerror(errno));
     }
 }
 
 static Uint32 UpdateTimer(Uint32 internal, void *data)
 {
-    vpvl::PMDModel *model = static_cast<vpvl::PMDModel *>(data);
-    model->updateRootBone();
-    model->updateMotion(0.5);
-    model->updateSkins();
+    vpvl::Scene *scene = static_cast<vpvl::Scene *>(data);
+    scene->updateModelView(0);
+    scene->updateProjection(0);
+    scene->update(0.5);
     return internal;
 }
 
@@ -558,7 +556,7 @@ int main(int argc, char *argv[])
     atexit(IMG_Quit);
 
     SDL_Surface *surface;
-    uint8_t *modelData = 0, *motionData = 0;
+    uint8_t *modelData = 0;
     char path[256];
     size_t size;
     snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
@@ -574,26 +572,43 @@ int main(int argc, char *argv[])
         delete[] modelData;
         return -1;
     }
-    SetLighting(model);
+
+    vpvl::Scene scene(g_width, g_height);
+    scene.addModel("miku", &model);
+    SetLighting(scene);
     LoadModelTextures(model, g_sysdir, g_modeldir);
 
     snprintf(path, sizeof(path), "%s", g_motion);
+    uint8_t *motionData = 0;
     FileSlurp(path, motionData, size);
     vpvl::VMDMotion motion(motionData, size);
     if (!motion.load()) {
-        fprintf(stderr, "failed parsing the motion\n");
+        fprintf(stderr, "failed parsing the model motion\n");
         delete[] modelData;
         delete[] motionData;
         return -1;
     }
     model.addMotion(&motion);
 
+    snprintf(path, sizeof(path), "%s", g_camera);
+    uint8_t *cameraData = 0;
+    FileSlurp(path, cameraData, size);
+    vpvl::VMDMotion camera(cameraData, size);
+    if (!camera.load()) {
+        fprintf(stderr, "failed parsing the camera motion\n");
+        delete[] modelData;
+        delete[] motionData;
+        delete[] cameraData;
+        return -1;
+    }
+    //scene.setCameraMotion(&camera);
+
     uint32_t interval = static_cast<uint32_t>(1000.0f / 60.0f);
-    SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &model);
+    SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &scene);
     while (true) {
         if (PollEvents())
             break;
-        DrawSurface(model, g_width, g_height);
+        DrawSurface(scene, g_width, g_height);
     }
     SDL_RemoveTimer(timerID);
 
@@ -601,6 +616,7 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(surface);
     delete[] motionData;
     delete[] modelData;
+    delete[] cameraData;
 
     return 0;
 }
