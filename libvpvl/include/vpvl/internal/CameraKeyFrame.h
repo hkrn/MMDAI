@@ -98,13 +98,14 @@ public:
         ptr += sizeof(uint8_t);
 
         m_index = static_cast<float>(index);
-        m_distance = distance;
         m_fovy = static_cast<float>(fovy);
         m_noPerspective = noPerspective == 1;
     #ifdef VPVL_COORDINATE_OPENGL
+        m_distance = -distance;
         m_position.setValue(pos[0], pos[1], -pos[2]);
         m_angle.setValue(-degree(angle[0]), -degree(angle[1]), degree(angle[2]));
     #else
+        m_distance = distance;
         m_position.setValue(pos[0], pos[1], pos[2]);
         m_angle.setValue(degree(angle[0]), degree(angle[1]), degree(angle[2]));
     #endif

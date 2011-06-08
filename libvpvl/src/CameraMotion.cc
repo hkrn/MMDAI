@@ -97,15 +97,18 @@ CameraMotion::~CameraMotion()
 
 void CameraMotion::read(const uint8_t *data, uint32_t size)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    m_frames.reserve(size);
-    for (uint32_t i = 0; i < size; i++) {
-        CameraKeyFrame *frame = new CameraKeyFrame();
-        frame->read(ptr);
-        ptr += CameraKeyFrame::stride();
-        m_frames.push_back(frame);
+    if (size > 0) {
+        uint8_t *ptr = const_cast<uint8_t *>(data);
+        m_frames.reserve(size);
+        for (uint32_t i = 0; i < size; i++) {
+            CameraKeyFrame *frame = new CameraKeyFrame();
+            frame->read(ptr);
+            ptr += CameraKeyFrame::stride();
+            m_frames.push_back(frame);
+        }
+        m_frames.quickSort(CameraMotionKeyFramePredication());
+        m_maxFrame = m_frames[size - 1]->index();
     }
-    m_frames.quickSort(CameraMotionKeyFramePredication());
 }
 
 void CameraMotion::seek(float frameAt)
