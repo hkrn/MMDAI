@@ -64,7 +64,7 @@ public:
     {
         m_worldTransform = worldTrans;
         btMatrix3x3 matrix = worldTrans.getBasis();
-        m_worldTransform.setOrigin(btVector3(0.0f, 0.0f, 0.0f));
+        m_worldTransform.setOrigin(internal::kZeroV);
         m_worldTransform = m_boneTransform * m_worldTransform;
         m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->currentTransform().getOrigin());
         m_worldTransform.setBasis(matrix);
@@ -176,7 +176,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
     uint8_t type = *reinterpret_cast<uint8_t *>(ptr);
     ptr += sizeof(uint8_t);
 
-    Bone *bone;
+    Bone *bone = 0;
     if (boneID == 0xffff) {
         m_noBone = true;
         m_bone = bone = Bone::centerBone(bones);
@@ -197,9 +197,9 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         break;
     }
 
-    btScalar massValue = 0.0f;
     if (m_shape) {
         btVector3 localInertia(0.0f, 0.0f, 0.0f);
+        btScalar massValue = 0.0f;
         if (type != 0) {
             massValue = mass;
             if (massValue != 0.0f)
@@ -212,7 +212,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         mx.setEulerZYX(-rot[0], 0.0f, 0.0f);
         my.setEulerZYX(0.0f, -rot[1], 0.0f);
         mz.setEulerZYX(0.0f, 0.0f, -rot[2]);
-        basis = mx * my * mz;
+        basis = my * mz * mx;
 #else
         basis.setEulerZYX(rot[0], rot[1], rot[2]);
 #endif
@@ -254,11 +254,12 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         m_body->setActivationState(DISABLE_DEACTIVATION);
         m_groupID = 0x0001 << collisionGroupID;
         m_groupMask = collisionMask;
+        m_type = type;
         m_invertedTransform = m_transform.inverse();
     }
 }
 
-void RigidBody::transformToBone()
+void RigidBody::transformBone()
 {
     if (m_type == 0 || m_noBone)
         return;

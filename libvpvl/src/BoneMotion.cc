@@ -117,7 +117,7 @@ void BoneMotion::read(const uint8_t *data, uint32_t size)
 
 void BoneMotion::seek(float frameAt)
 {
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
@@ -137,7 +137,7 @@ void BoneMotion::seek(float frameAt)
 
 void BoneMotion::takeSnap(const btVector3 &center)
 {
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         Bone *bone = node->bone;
@@ -153,9 +153,9 @@ void BoneMotion::attachModel(PMDModel *model)
     if (m_model)
         return;
 
-    uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.size();
     const uint8_t *centerBoneName = Bone::centerBoneName();
-    size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
+    const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
     for (uint32_t i = 0; i < nFrames; i++) {
         BoneKeyFrame *frame = m_frames.at(i);
         btHashString name(reinterpret_cast<const char *>(frame->name()));
@@ -182,7 +182,7 @@ void BoneMotion::attachModel(PMDModel *model)
         }
     }
 
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         BoneKeyFrameList &frames = node->keyFrames;
@@ -196,7 +196,7 @@ void BoneMotion::attachModel(PMDModel *model)
 void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
 {
     BoneKeyFrameList &kframes = node->keyFrames;
-    uint32_t nFrames = kframes.size();
+    const uint32_t nFrames = kframes.size();
     BoneKeyFrame *lastKeyFrame = kframes[nFrames - 1];
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())
@@ -278,7 +278,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
             node->rotation = rotationTo;
         }
         else {
-            float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+            const float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
             float x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
@@ -302,7 +302,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
 void BoneMotion::reset()
 {
     BaseMotion::reset();
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         node->lastIndex = 0;

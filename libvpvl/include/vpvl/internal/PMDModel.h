@@ -49,6 +49,8 @@
 #include "vpvl/RigidBody.h"
 #include "vpvl/Vertex.h"
 
+class btDiscreteDynamicsWorld;
+
 namespace vpvl
 {
 
@@ -112,6 +114,8 @@ public:
     static const float kMinFaceWeight;
 
     void addMotion(VMDMotion *motion);
+    void joinWorld(::btDiscreteDynamicsWorld *world);
+    void leaveWorld(::btDiscreteDynamicsWorld *world);
     void removeMotion(VMDMotion *motion);
     void updateRootBone();
     void updateMotion(float deltaFrame);
@@ -311,6 +315,7 @@ private:
     BoneList m_rotatedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
+    ::btDiscreteDynamicsWorld *m_world;
     PMDModelPrivate *m_private;
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;

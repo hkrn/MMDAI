@@ -43,6 +43,8 @@
 #include <LinearMath/btTransform.h>
 #include <LinearMath/btVector3.h>
 
+class btDiscreteDynamicsWorld;
+
 namespace vpvl
 {
 
@@ -52,6 +54,7 @@ class VMDMotion;
 class Scene
 {
 public:
+    static const int kFPS = 30;
     static const float kFrustumNear;
     static const float kFrustumFar;
     static const float kMinMoveDiff;
@@ -77,7 +80,8 @@ public:
     void setCameraMotion(VMDMotion *motion);
     void setLight(const btVector4 &color, const btVector4 &direction);
     void setViewMove(int viewMoveTime);
-    void update(float deltaFrame);
+    void setWorld(::btDiscreteDynamicsWorld *world);
+    void update(float deltaFrame, int fps);
     void updateModelView(int ellapsedTimeForMove);
     void updateProjection(int ellapsedTimeForMove);
 
@@ -96,6 +100,7 @@ private:
     bool updateDistance(int ellapsedTimeForMove);
     bool updateFovy(int ellapsedTimeForMove);
 
+    ::btDiscreteDynamicsWorld *m_world;
     btHashMap<btHashString, PMDModel *> m_models;
     btAlignedObjectArray<PMDModel *> m_order;
     VMDMotion *m_cameraMotion;

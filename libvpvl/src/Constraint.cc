@@ -91,7 +91,7 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
         mx.setEulerZYX(-rot[0], 0.0f, 0.0f);
         my.setEulerZYX(0.0f, -rot[1], 0.0f);
         mz.setEulerZYX(0.0f, 0.0f, -rot[2]);
-        basis = mx * my * mz;
+        basis = my * mz * mx;
 #else
         basis.setEulerZYX(rot[0], rot[1], rot[2]);
 #endif
@@ -108,8 +108,8 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
 #ifdef VPVL_COORDINATE_OPENGL
         m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], -limitPosTo[2]));
         m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], -limitPosFrom[2]));
-        m_constraint->setAngularUpperLimit(btVector3(limitRotTo[0], limitRotTo[1], -limitRotTo[2]));
-        m_constraint->setAngularLowerLimit(btVector3(limitRotFrom[0], limitRotFrom[1], -limitRotFrom[2]));
+        m_constraint->setAngularUpperLimit(btVector3(-limitRotTo[0], -limitRotTo[1], limitRotTo[2]));
+        m_constraint->setAngularLowerLimit(btVector3(-limitRotFrom[0], -limitRotFrom[1], limitRotFrom[2]));
 #else
         m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], limitPosTo[2]));
         m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], limitPosFrom[2]));

@@ -113,7 +113,7 @@ void CameraMotion::read(const uint8_t *data, uint32_t size)
 
 void CameraMotion::seek(float frameAt)
 {
-    uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.size();
     CameraKeyFrame *lastKeyFrame = m_frames[nFrames - 1];
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())
@@ -169,7 +169,7 @@ void CameraMotion::seek(float frameAt)
             m_fovy = fovyFrom;
         }
         else {
-            float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+            const float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
             float x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);

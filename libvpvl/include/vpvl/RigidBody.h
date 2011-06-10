@@ -58,7 +58,7 @@ public:
     static size_t stride();
 
     void read(const uint8_t *data, BoneList *bones);
-    void transformToBone();
+    void transformBone();
     void setKinematic(bool value);
 
     const uint8_t *name() const {
@@ -66,6 +66,12 @@ public:
     }
     btRigidBody *body() const {
         return m_body;
+    }
+    uint16_t groupID() const {
+        return m_groupID;
+    }
+    uint16_t groupMask() const {
+        return m_groupMask;
     }
 
     void setName(const uint8_t *value) {
@@ -81,9 +87,9 @@ private:
     btTransform m_transform;
     btTransform m_invertedTransform;
     btMotionState *m_kinematicMotionState;
-    unsigned short m_groupID;
-    unsigned short m_groupMask;
-    unsigned char m_type;
+    uint16_t m_groupID;
+    uint16_t m_groupMask;
+    uint8_t m_type;
     bool m_noBone;
 };
 

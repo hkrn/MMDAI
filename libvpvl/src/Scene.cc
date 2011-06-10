@@ -36,6 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <BulletDynamics/btBulletDynamicsCommon.h>
+
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/PMDModel.h"
 #include "vpvl/internal/VMDMotion.h"
@@ -71,7 +73,8 @@ private:
 };
 
 Scene::Scene(int width, int height)
-    : m_cameraMotion(0),
+    : m_world(0),
+      m_cameraMotion(0),
       m_currentRotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_rotation(m_currentRotation),
       m_viewMoveRotation(0.0f, 0.0f, 0.0f, 1.0f),
@@ -98,6 +101,7 @@ Scene::Scene(int width, int height)
 Scene::~Scene()
 {
     memset(m_projection, 0, sizeof(m_projection));
+    setWorld(0);
     m_models.clear();
     m_order.clear();
     m_cameraMotion = 0;
@@ -194,15 +198,40 @@ void Scene::setViewMove(int viewMoveTime)
     m_viewMoveTime = viewMoveTime;
 }
 
-void Scene::update(float deltaFrame)
+void Scene::setWorld(::btDiscreteDynamicsWorld *world)
+{
+    const uint32_t nModels = m_models.size();
+    if (m_world) {
+        for (uint32_t i = 0; i < nModels; i++) {
+            PMDModel *model = *m_models.getAtIndex(i);
+            model->leaveWorld(m_world);
+        }
+    }
+    if (world) {
+        for (uint32_t i = 0; i < nModels; i++) {
+            PMDModel *model = *m_models.getAtIndex(i);
+            model->joinWorld(world);
+        }
+    }
+    m_world = world;
+}
+
+void Scene::update(float deltaFrame, int fps)
 {
     sortModelRenderOrder();
-    uint32_t nModels = m_order.size();
+    const uint32_t nModels = m_order.size();
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_order[i];
         model->updateRootBone();
         model->updateMotion(deltaFrame);
         model->updateSkins();
+    }
+    if (m_world) {
+        btScalar sec = deltaFrame / kFPS;
+        if (sec > 1.0f)
+            m_world->stepSimulation(sec, 1, sec);
+        else
+            m_world->stepSimulation(sec, fps, 1.0f / fps);
     }
     if (m_cameraMotion) {
         bool reached = false;
@@ -231,14 +260,14 @@ void Scene::updateModelView(int ellapsedTimeForMove)
                 m_currentRotation = m_rotation;
             }
             else {
-                float moveTime = static_cast<float>(m_viewMoveTime);
+                const float moveTime = static_cast<float>(m_viewMoveTime);
                 m_currentPosition = m_viewMovePosition.lerp(m_position, ellapsedTimeForMove / moveTime);
                 m_currentRotation = m_viewMoveRotation.slerp(m_rotation, ellapsedTimeForMove / moveTime);
             }
         }
         else {
-            btVector3 position = m_position - m_currentPosition;
-            btQuaternion rotation = m_rotation - m_currentRotation;
+            const btVector3 position = m_position - m_currentPosition;
+            const btQuaternion rotation = m_rotation - m_currentRotation;
             if (position.length2() > kMinMoveDiff) {
                 /* current * 0.9 + target * 0.1 */
                 m_currentPosition = m_currentPosition.lerp(m_position, 1.0f - kMoveSpeedRate);
@@ -266,7 +295,7 @@ void Scene::updateProjection(int ellapsedTimeForMove)
 
 void Scene::sortModelRenderOrder()
 {
-    uint32_t nModels = m_models.size();
+    const uint32_t nModels = m_models.size();
     if (static_cast<uint32_t>(m_order.size()) != nModels) {
         m_order.clear();
         m_order.reserve(nModels);
@@ -287,7 +316,7 @@ void Scene::updateModelViewMatrix()
 
 void Scene::updateProjectionMatrix()
 {
-    float aspect = static_cast<float>(m_width) / m_height;
+    const float aspect = static_cast<float>(m_width) / m_height;
     // borrowed code from http://www.geeks3d.com/20090729/howto-perspective-projection-matrix-in-opengl/
     static const float kPIOver360 = M_PI / 360.0f;
     const float xymax = kFrustumNear * tanf(m_currentFovy * kPIOver360);
@@ -332,7 +361,7 @@ bool Scene::updateDistance(int ellapsedTimeForMove)
             }
         }
         else {
-            float diff = fabsf(distance - m_distance);
+            const float diff = fabsf(distance - m_distance);
             if (diff < kMinDistanceDiff)
                 m_currentDistance.setZ(m_distance);
             else
@@ -356,7 +385,7 @@ bool Scene::updateFovy(int ellapsedTimeForMove)
                 m_currentFovy = m_viewMoveFovy + (m_fovy - m_viewMoveFovy) * ellapsedTimeForMove / m_viewMoveTime;
         }
         else {
-            float diff = fabsf(m_currentFovy - m_fovy);
+            const float diff = fabsf(m_currentFovy - m_fovy);
             if (diff < kMinFovyDiff)
                 m_currentFovy = m_fovy;
             else

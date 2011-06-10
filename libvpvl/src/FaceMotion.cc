@@ -88,7 +88,7 @@ void FaceMotion::read(const uint8_t *data, uint32_t size)
 
 void FaceMotion::seek(float frameAt)
 {
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
         if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
@@ -104,10 +104,10 @@ void FaceMotion::seek(float frameAt)
 
 void FaceMotion::takeSnap(const btVector3 & /* center */)
 {
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
-        Face *face = node->face;
+        const Face *face = node->face;
         node->snapWeight = face->weight();
     }
 }
@@ -117,7 +117,7 @@ void FaceMotion::attachModel(PMDModel *model)
     if (m_model)
         return;
 
-    uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.size();
     for (uint32_t i = 0; i < nFrames; i++) {
         FaceKeyFrame *frame = m_frames.at(i);
         btHashString name(reinterpret_cast<const char *>(frame->name()));
@@ -140,7 +140,7 @@ void FaceMotion::attachModel(PMDModel *model)
         }
     }
 
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
         FaceKeyFrameList &frames = node->keyFrames;
@@ -154,7 +154,7 @@ void FaceMotion::attachModel(PMDModel *model)
 void FaceMotion::reset()
 {
     BaseMotion::reset();
-    uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
         node->lastIndex = 0;
@@ -164,7 +164,7 @@ void FaceMotion::reset()
 void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
 {
     FaceKeyFrameList &kframes = node->keyFrames;
-    uint32_t nFrames = kframes.size();
+    const uint32_t nFrames = kframes.size();
     FaceKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->index())
@@ -224,7 +224,7 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     }
 
     if (timeFrom != timeTo) {
-        float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+        const float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
         node->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {
