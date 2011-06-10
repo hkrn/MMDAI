@@ -237,9 +237,14 @@ static void SetLighting(vpvl::Scene &scene)
     btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6;
 
     // use MMD like cartoon
+    /*
     diffuseValue = 0.2f;
     ambientValue = lightIntensity * 2.0f;
     specularValue = 0.4f;
+    */
+    diffuseValue = 0.0f;
+    ambientValue = lightIntensity * 2.0f;
+    specularValue = lightIntensity;
 
     btVector3 diffuse = color * diffuseValue;
     btVector3 ambient = color * ambientValue;
@@ -266,7 +271,7 @@ static void DrawModel(const vpvl::PMDModel *model)
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
     size_t stride = model->stride();
     glVertexPointer(3, GL_FLOAT, stride, model->verticesPointer());
     glNormalPointer(GL_FLOAT, stride, model->normalsPointer());
