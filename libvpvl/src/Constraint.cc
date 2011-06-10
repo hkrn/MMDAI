@@ -90,26 +90,26 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
         btMatrix3x3 mx, my, mz;
         mx.setEulerZYX(-rot[0], 0.0f, 0.0f);
         my.setEulerZYX(0.0f, -rot[1], 0.0f);
-        mz.setEulerZYX(0.0f, 0.0f, -rot[2]);
+        mz.setEulerZYX(0.0f, 0.0f, rot[2]);
         basis = my * mz * mx;
 #else
         basis.setEulerZYX(rot[0], rot[1], rot[2]);
 #endif
         transform.setBasis(basis);
 #ifdef VPVL_COORDINATE_OPENGL
-        transform.setOrigin(btVector3(pos[0], pos[1], -pos[2]) * offset);
+        transform.setOrigin(btVector3(pos[0], pos[1], -pos[2]) + offset);
 #else
-        transform.setOrigin(btVector3(pos[0], pos[1], pos[2]) * offset);
+        transform.setOrigin(btVector3(pos[0], pos[1], pos[2]) + offset);
 #endif
         btRigidBody *bodyA = bodies[bodyID1]->body(), *bodyB = bodies[bodyID2]->body();
         btTransform transformA = bodyA->getWorldTransform().inverse() * transform,
-                transformB = bodyB->getWorldTransform().inverse() *transform;
+                transformB = bodyB->getWorldTransform().inverse() * transform;
         m_constraint = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
 #ifdef VPVL_COORDINATE_OPENGL
-        m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], -limitPosTo[2]));
-        m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], -limitPosFrom[2]));
-        m_constraint->setAngularUpperLimit(btVector3(-limitRotTo[0], -limitRotTo[1], limitRotTo[2]));
-        m_constraint->setAngularLowerLimit(btVector3(-limitRotFrom[0], -limitRotFrom[1], limitRotFrom[2]));
+        m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], -limitPosFrom[2]));
+        m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], -limitPosTo[2]));
+        m_constraint->setAngularUpperLimit(btVector3(-limitRotFrom[0], -limitRotFrom[1], limitRotTo[2]));
+        m_constraint->setAngularLowerLimit(btVector3(-limitRotTo[0], -limitRotTo[1], limitRotFrom[2]));
 #else
         m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], limitPosTo[2]));
         m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], limitPosFrom[2]));

@@ -102,7 +102,8 @@ private:
 
 size_t RigidBody::stride()
 {
-    return kNameSize + (sizeof(int16_t) * 2) + (sizeof(int8_t) * 2)
+    return kNameSize + sizeof(int16_t) + sizeof(int8_t)
+            + sizeof(uint16_t) + sizeof(uint8_t)
             + (sizeof(float) * 14) + sizeof(uint8_t);
 }
 
@@ -148,10 +149,10 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
     ptr += sizeof(m_name);
     uint16_t boneID = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(int16_t);
-    int8_t collisionGroupID = *reinterpret_cast<int8_t *>(ptr);
-    ptr += sizeof(int8_t);
-    int16_t collisionMask = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
+    uint8_t collisionGroupID = *reinterpret_cast<uint8_t *>(ptr);
+    ptr += sizeof(uint8_t);
+    uint16_t collisionMask = *reinterpret_cast<uint16_t *>(ptr);
+    ptr += sizeof(uint16_t);
     int8_t shapeType = *reinterpret_cast<int8_t *>(ptr);
     ptr += sizeof(int8_t);
     float width = *reinterpret_cast<float *>(ptr);
@@ -211,7 +212,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         btMatrix3x3 mx, my, mz;
         mx.setEulerZYX(-rot[0], 0.0f, 0.0f);
         my.setEulerZYX(0.0f, -rot[1], 0.0f);
-        mz.setEulerZYX(0.0f, 0.0f, -rot[2]);
+        mz.setEulerZYX(0.0f, 0.0f, rot[2]);
         basis = my * mz * mx;
 #else
         basis.setEulerZYX(rot[0], rot[1], rot[2]);
