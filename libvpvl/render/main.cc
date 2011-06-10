@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <sys/stat.h>
 
 #ifdef __APPLE__
@@ -50,6 +51,9 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 
 #include <vpvl/vpvl.h>
 #include <vpvl/internal/PMDModel.h>
@@ -68,6 +72,7 @@ struct vpvl::PMDModelPrivate {
 
 static const int g_width = 800;
 static const int g_height = 600;
+static const int g_FPS = 60;
 
 #define CONCAT_PATH(path) "" #path
 
@@ -383,8 +388,6 @@ static void DrawModel(const vpvl::PMDModel *model)
         }
         // draw
         const uint32_t nIndices = material->countIndices();
-        // memo: 16: 18:eye 21 23
-        //if (i != 23)
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, indicesPtr);
         indicesPtr += nIndices;
         // is aux sphere map
@@ -611,8 +614,18 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    vpvl::Scene scene(g_width, g_height);
+    const float dist = 400.0f;
+    btDefaultCollisionConfiguration config;
+    btCollisionDispatcher dispatcher(&config);
+    btAxisSweep3 broadphase(btVector3(-dist, -dist, -dist), btVector3(dist, dist, dist), 1024);
+    btSequentialImpulseConstraintSolver solver;
+    btDiscreteDynamicsWorld world(&dispatcher, &broadphase, &solver, &config);
+    world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
+    world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / g_FPS);
+
+    vpvl::Scene scene(g_width, g_height, g_FPS);
     scene.addModel("miku", &model);
+    scene.setWorld(&world);
     SetLighting(scene);
     LoadModelTextures(model, g_sysdir, g_modeldir);
 
@@ -641,7 +654,7 @@ int main(int argc, char *argv[])
     }
     scene.setCameraMotion(&camera);
 
-    uint32_t interval = static_cast<uint32_t>(1000.0f / 60.0f);
+    uint32_t interval = static_cast<uint32_t>(1000.0f / g_FPS);
     SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &scene);
     while (true) {
         if (PollEvents())
