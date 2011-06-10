@@ -72,7 +72,7 @@ private:
     const btTransform m_transform;
 };
 
-Scene::Scene(int width, int height)
+Scene::Scene(int width, int height, int fps)
     : m_world(0),
       m_cameraMotion(0),
       m_currentRotation(0.0f, 0.0f, 0.0f, 1.0f),
@@ -91,6 +91,7 @@ Scene::Scene(int width, int height)
       m_fovy(m_currentFovy),
       m_viewMoveFovy(m_currentFovy),
       m_viewMoveTime(-1),
+      m_fps(fps),
       m_width(width),
       m_height(height)
 {
@@ -122,6 +123,7 @@ Scene::~Scene()
     m_fovy = 0.0f;
     m_viewMoveFovy = 0.0f;
     m_viewMoveTime = -1;
+    m_fps = 0;
     m_width = 0;
     m_height = 0;
 }
@@ -216,7 +218,7 @@ void Scene::setWorld(::btDiscreteDynamicsWorld *world)
     m_world = world;
 }
 
-void Scene::update(float deltaFrame, int fps)
+void Scene::update(float deltaFrame)
 {
     sortModelRenderOrder();
     const uint32_t nModels = m_order.size();
@@ -231,7 +233,7 @@ void Scene::update(float deltaFrame, int fps)
         if (sec > 1.0f)
             m_world->stepSimulation(sec, 1, sec);
         else
-            m_world->stepSimulation(sec, fps, 1.0f / fps);
+            m_world->stepSimulation(sec, m_fps, 1.0f / m_fps);
     }
     if (m_cameraMotion) {
         bool reached = false;

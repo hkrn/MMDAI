@@ -66,7 +66,7 @@ public:
     static const float kMinFovyDiff;
     static const float kFovySpeedRate;
 
-    Scene(int width, int height);
+    Scene(int width, int height, int fps);
     ~Scene();
 
     void addModel(PMDModel *model);
@@ -81,7 +81,7 @@ public:
     void setLight(const btVector4 &color, const btVector4 &direction);
     void setViewMove(int viewMoveTime);
     void setWorld(::btDiscreteDynamicsWorld *world);
-    void update(float deltaFrame, int fps);
+    void update(float deltaFrame);
     void updateModelView(int ellapsedTimeForMove);
     void updateProjection(int ellapsedTimeForMove);
 
@@ -122,6 +122,7 @@ private:
     float m_fovy;
     float m_viewMoveFovy;
     int m_viewMoveTime;
+    int m_fps;
     int m_width;
     int m_height;
 };
