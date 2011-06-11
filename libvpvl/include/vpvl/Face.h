@@ -71,7 +71,7 @@ public:
     static const int kNameSize = 20;
     static const uint32_t kMaxVertexID = 65536;
 
-    static size_t totalSize(const uint8_t *data, size_t n);
+    static size_t totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok);
     static size_t stride(const uint8_t *data);
 
     void read(const uint8_t *data);

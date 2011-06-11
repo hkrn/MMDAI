@@ -48,19 +48,24 @@ const float IK::kMinAxis        = 0.0000001f;
 const float IK::kMinRotationSum = 0.002f;
 const float IK::kMinRotation    = 0.00001f;
 
-// FIXME: boundary check
-size_t IK::totalSize(const uint8_t *data, size_t n)
+size_t IK::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 {
     size_t size = 0;
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < count; i++) {
         size_t base = sizeof(int16_t) * 2;
         ptr += base;
         uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
-        size_t rest = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
-        size += base + rest;
-        ptr += rest;
+        size_t required = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
+        if (required > rest) {
+            ok = false;
+            return 0;
+        }
+        rest -= base + required;
+        size += base + required;
+        ptr += required;
     }
+    ok = true;
     return size;
 }
 

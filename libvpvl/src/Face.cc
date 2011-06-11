@@ -42,18 +42,23 @@
 namespace vpvl
 {
 
-// FIXME: boundary check
-size_t Face::totalSize(const uint8_t *data, size_t n)
+size_t Face::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 {
     size_t size = 0;
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < count; i++) {
         ptr += kNameSize;
         uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
-        size_t rest = sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
-        size += kNameSize + rest;
-        ptr += rest;
+        size_t required = sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+        if (required > rest) {
+            ok = false;
+            return 0;
+        }
+        rest -= kNameSize + required;
+        size += kNameSize + required;
+        ptr += required;
     }
+    ok = true;
     return size;
 }
 

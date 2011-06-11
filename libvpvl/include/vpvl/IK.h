@@ -56,7 +56,7 @@ public:
     static const float kMinAxis;
     static const float kMinRotationSum;
     static const float kMinRotation;
-    static size_t totalSize(const uint8_t *data, size_t n);
+    static size_t totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok);
     static size_t stride(const uint8_t *data);
 
     void read(const uint8_t *data, BoneList *bones);

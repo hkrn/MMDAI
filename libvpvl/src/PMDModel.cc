@@ -454,7 +454,10 @@ bool PMDModel::preparse()
     if (!internal::size16(ptr, rest, nIKs))
         return false;
     m_result.IKsPtr = ptr;
-    if (!internal::validateSize(ptr, IK::totalSize(ptr, nIKs), 1, rest))
+
+    bool ok = false;
+    size_t size = IK::totalSize(ptr, rest, nIKs, ok);
+    if (!ok || !internal::validateSize(ptr, size, 1, rest))
         return false;
     m_result.IKsCount = nIKs;
 
@@ -462,7 +465,10 @@ bool PMDModel::preparse()
     if (!internal::size16(ptr, rest, nFaces))
         return false;
     m_result.facesPtr = ptr;
-    if (!internal::validateSize(ptr, Face::totalSize(ptr, nFaces), 1, rest))
+
+    ok = false;
+    size = Face::totalSize(ptr, rest, nFaces, ok);
+    if (!ok || !internal::validateSize(ptr, size, 1, rest))
         return false;
     m_result.facesCount = nFaces;
 
