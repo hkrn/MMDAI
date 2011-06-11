@@ -38,7 +38,6 @@
 
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/FaceKeyFrame.h"
-#include "vpvl/internal/PMDModel.h"
 
 namespace vpvl
 {

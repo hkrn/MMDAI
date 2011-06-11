@@ -16,9 +16,11 @@ set(vpvl_public_headers
     include/vpvl/FaceMotion.h
     include/vpvl/IK.h
     include/vpvl/Material.h
+    include/vpvl/PMDModel.h
     include/vpvl/RigidBody.h
     include/vpvl/Scene.h
     include/vpvl/Vertex.h
+    include/vpvl/VMDMotion.h
     include/vpvl/common.h
     include/vpvl/vpvl.h
 )
@@ -26,8 +28,6 @@ set(vpvl_internal_headers
     include/vpvl/internal/BoneKeyFrame.h
     include/vpvl/internal/CameraKeyFrame.h
     include/vpvl/internal/FaceKeyFrame.h
-    include/vpvl/internal/PMDModel.h
-    include/vpvl/internal/VMDMotion.h
     include/vpvl/internal/util.h
 )
 

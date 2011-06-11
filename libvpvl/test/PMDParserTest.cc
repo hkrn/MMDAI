@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "vpvl/vpvl.h"
-#include "vpvl/internal/PMDModel.h"
 
 static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
     FILE *fp = fopen(path, "rb");

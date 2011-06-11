@@ -38,7 +38,6 @@
 
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/BoneKeyFrame.h"
-#include "vpvl/internal/PMDModel.h"
 
 namespace vpvl
 {

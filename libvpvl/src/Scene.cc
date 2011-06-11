@@ -39,8 +39,6 @@
 #include <BulletDynamics/btBulletDynamicsCommon.h>
 
 #include "vpvl/vpvl.h"
-#include "vpvl/internal/PMDModel.h"
-#include "vpvl/internal/VMDMotion.h"
 #include "vpvl/internal/util.h"
 
 namespace vpvl

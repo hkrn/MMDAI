@@ -56,8 +56,6 @@
 #include <btBulletDynamicsCommon.h>
 
 #include <vpvl/vpvl.h>
-#include <vpvl/internal/PMDModel.h>
-#include <vpvl/internal/VMDMotion.h>
 
 enum VertexBufferObject {
     kModelVertices,
