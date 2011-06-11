@@ -57,6 +57,13 @@ public:
     }
 };
 
+struct SkinVertex
+{
+    btVector3 position;
+    btVector3 normal;
+    btVector3 texureCoord;
+};
+
 PMDModel::PMDModel(const uint8_t *data, size_t size)
     : m_baseFace(0),
       m_skinnedVertices(0),
@@ -714,6 +721,46 @@ void PMDModel::parseConstraints()
         ptr += Constraint::stride();
         m_constraints.push_back(constraint);
     }
+}
+
+size_t PMDModel::stride() const
+{
+    return sizeof(SkinVertex);
+}
+
+size_t PMDModel::edgeStride() const
+{
+    return sizeof(btVector3);
+}
+
+size_t PMDModel::toonStride() const
+{
+    return sizeof(btVector3);
+}
+
+const void *PMDModel::verticesPointer() const
+{
+    return &m_skinnedVertices[0].position;
+}
+
+const void *PMDModel::normalsPointer() const
+{
+    return &m_skinnedVertices[0].normal;
+}
+
+const void *PMDModel::textureCoordsPointer() const
+{
+    return &m_skinnedVertices[0].texureCoord;
+}
+
+const void *PMDModel::toonTextureCoordsPointer() const
+{
+    return &m_toonTextureCoords[0];
+}
+
+const void *PMDModel::edgeVerticesPointer() const
+{
+    return &m_edgeVertices[0];
 }
 
 }

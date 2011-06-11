@@ -89,15 +89,9 @@ struct PMDModelDataInfo
     size_t constranitsCount;
 };
 
-struct SkinVertex
-{
-    btVector3 position;
-    btVector3 normal;
-    btVector3 texureCoord;
-};
-
 class VMDMotion;
 
+typedef struct SkinVertex SkinVertex;
 typedef struct PMDModelPrivate PMDModelPrivate;
 
 class PMDModel
@@ -122,6 +116,15 @@ public:
     void updateSkins();
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
+
+    size_t stride() const;
+    size_t edgeStride() const;
+    size_t toonStride() const;
+    const void *verticesPointer() const;
+    const void *normalsPointer() const;
+    const void *textureCoordsPointer() const;
+    const void *toonTextureCoordsPointer() const;
+    const void *edgeVerticesPointer() const;
 
     bool preparse();
     bool load();
@@ -206,24 +209,6 @@ public:
         return m_size;
     }
 
-    size_t stride() const {
-        return sizeof(SkinVertex);
-    }
-    const void *verticesPointer() const {
-        return &m_skinnedVertices[0].position;
-    }
-    const void *normalsPointer() const {
-        return &m_skinnedVertices[0].normal;
-    }
-    const void *textureCoordsPointer() const {
-        return &m_skinnedVertices[0].texureCoord;
-    }
-    const void *toonTextureCoordsPointer() const {
-        return &m_toonTextureCoords[0];
-    }
-    const void *edgeVerticesPointer() const {
-        return &m_edgeVertices[0];
-    }
     const uint16_t *indicesPointer() const {
         return m_indicesPointer;
     }
