@@ -51,6 +51,17 @@ class PMDModel;
 typedef struct FaceMotionInternal FaceMotionInternal;
 typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * FaceMotion class represents a face motion that includes many face frames
+ * of a Vocaloid Motion Data object inherits BaseMotion.
+ */
+
 class FaceMotion : public BaseMotion
 {
 public:

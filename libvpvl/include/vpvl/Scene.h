@@ -51,6 +51,16 @@ namespace vpvl
 class PMDModel;
 class VMDMotion;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Scene class represents scene with camera and set of models.
+ */
+
 class Scene
 {
 public:

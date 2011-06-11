@@ -47,27 +47,102 @@
 namespace vpvl
 {
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * The basic class inherited by BoneMotion, CameraMotion and FaceMotion class.
+ */
+
 class BaseMotion
 {
 public:
+
+    /**
+     * Constructor that set the smear default value to a given value.
+     *
+     * @param The smear default value
+     */
     BaseMotion(float smearDefault);
+
     virtual ~BaseMotion() {}
 
+    /**
+     * Read and parse the buffer with size and sets it's result to the class.
+     *
+     * @param The buffer to read and parse
+     * @param Size of the buffer
+     */
     virtual void read(const uint8_t *data, uint32_t size) = 0;
+
+    /**
+     * Seek the motion to the given value index.
+     *
+     * @param A frame index to seek
+     */
     virtual void seek(float frameAt) = 0;
+
+    /**
+     * Save the current motion state.
+     *
+     * @param A position of center
+     */
     virtual void takeSnap(const btVector3 &center) = 0;
 
+    /**
+     * Seek from the previous to the next frame with delta.
+     *
+     * @param A delta frame index to seek the next frame
+     * @param A value whether the motion is reached to the end.
+     */
     void advance(float deltaFrame, bool &reached);
+
+    /**
+     * Rewind the motion.
+     *
+     * @param A frame index to rewind
+     * @param A delta frame indx to rewind
+     */
     void rewind(float target, float deltaFrame);
+
+    /**
+     * Reset all states and last frame index.
+     */
     void reset();
+
+    /**
+     * Save the current motion state.
+     *
+     * @param A position of center
+     */
     void setOverrideFirst(const btVector3 &center);
 
+    /**
+     * Get the blend rate.
+     *
+     * @return The blend rate value
+     */
     float blendRate() const {
         return m_blendRate;
     }
+
+    /**
+     * Get the max frame index.
+     *
+     * @return The max frame index
+     */
     float maxIndex() const {
         return m_maxFrame;
     }
+
+    /**
+     * Set the blend rate.
+     *
+     * @param The blend rate value
+     */
     void setBlendRate(float value) {
         m_blendRate = value;
     }

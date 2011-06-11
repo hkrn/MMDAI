@@ -47,6 +47,16 @@ namespace vpvl
 
 typedef struct MaterialPrivate MaterialPrivate;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Material class represents a material of a Polygon Model Data object.
+ */
+
 class Material
 {
 public:

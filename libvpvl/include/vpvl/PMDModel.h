@@ -94,6 +94,16 @@ class VMDMotion;
 typedef struct SkinVertex SkinVertex;
 typedef struct PMDModelPrivate PMDModelPrivate;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * PMDModel class represents a Polygon Model Data object, 3D model object.
+ */
+
 class PMDModel
 {
 public:

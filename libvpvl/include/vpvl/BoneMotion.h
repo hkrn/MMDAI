@@ -51,6 +51,17 @@ class PMDModel;
 typedef struct BoneMotionInternal BoneMotionInternal;
 typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * BoneMotion class represents a bone motion that includes many bone key frames
+ * of a Vocaloid Motion Data object inherits BaseMotion.
+ */
+
 class BoneMotion : public BaseMotion
 {
 public:

@@ -62,6 +62,16 @@ struct FaceVertex
     btVector3 position;
 };
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Face class represents a face of a Polygon Model Data object.
+ */
+
 class Face
 {
 public:

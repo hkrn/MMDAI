@@ -65,6 +65,16 @@ struct VMDMotionDataInfo
     size_t selfShadowKeyFrameCount;
 };
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Bone class represents a Vocaloid Motion Data object, set of bone, face and camera motion.
+ */
+
 class VMDMotion
 {
 public:

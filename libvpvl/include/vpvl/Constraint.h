@@ -47,6 +47,16 @@
 namespace vpvl
 {
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Constraint class represents a consraint of a Polygon Model Data object.
+ */
+
 class Constraint
 {
 public:

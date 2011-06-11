@@ -48,6 +48,9 @@
 namespace vpvl
 {
 
+/**
+ * Type of bone kinds.
+ */
 enum BoneType
 {
     kRotate,
@@ -65,79 +68,257 @@ enum BoneType
 class Bone;
 typedef btAlignedObjectArray<Bone*> BoneList;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Bone class represents a bone of a Polygon Model Data object.
+ */
+
 class Bone
 {
 public:
+
+    /**
+     * Constructor
+     */
     Bone();
     ~Bone();
 
+    /**
+     * The max length of a bone name
+     */
     static const int kNameSize = 20;
 
+    /**
+     * Get the center bone name in Shift_JIS, not in english.
+     *
+     * @return The center bone name in Shift_JIS
+     */
     static const uint8_t *centerBoneName();
+
+    /**
+     * Get the center bone from a bone list that is not empty.
+     *
+     * @return The center bone
+     */
     static Bone *centerBone(const BoneList *bones);
+
+    /**
+     * Stride length of a bone structure.
+     *
+     * @return Stride length
+     */
     static size_t stride();
 
+    /**
+     * Read and parse the buffer with size and sets it's result to the class.
+     *
+     * @param The buffer to read and parse
+     * @param Size of the buffer
+     */
     void read(const uint8_t *data, BoneList *bones, Bone *rootBone);
+
+    /**
+     * Calcurate offset of the bone.
+     */
     void computeOffset();
+
+    /**
+     * Reset all bone states.
+     */
     void reset();
+
+    /**
+     * Mark the bone motion independent.
+     */
     void setMotionIndependency();
+
+    /**
+     * Update rotation from the bone.
+     */
     void updateRotation();
+
+    /**
+     * Update transform from the bone.
+     */
     void updateTransform();
+
+    /**
+     * Update rotation from the bone.
+     *
+     * @param The quaternion value to rotate
+     */
     void updateTransform(const btQuaternion &q);
+
+    /**
+     * Get transform for skinning
+     *
+     * @param The result value of transform
+     */
     void getSkinTransform(btTransform &tr);
 
+    /**
+     * Get the name of bone.
+     *
+     * @return the name of bone
+     */
     const uint8_t *name() const {
         return m_name;
     }
+
+    /**
+     * Get the name of bone in English.
+     *
+     * @return the name of bone in English.
+     */
     const uint8_t *englishName() const {
         return m_englishName;
     }
+
+    /**
+     * Get the kind of bone.
+     *
+     * @return the kind of bone
+     */
     BoneType type() const {
         return m_type;
     }
+
+    /**
+     * Get transform object.
+     *
+     * @return transform object
+     */
     const btTransform &currentTransform() const {
         return m_currentTransform;
     }
+
+    /**
+     * Get offset of the bone.
+     *
+     * @return offset of the bone
+     */
     const btVector3 &offset() const {
         return m_offset;
     }
+
+    /**
+     * Get original position of the bone.
+     *
+     * @return original position of the bone
+     */
     const btVector3 &originPosition() const {
         return m_originPosition;
     }
+
+    /**
+     * Get position of the bone.
+     *
+     * @return position of the bone
+     */
     const btVector3 &currentPosition() const {
         return m_currentPosition;
     }
+
+    /**
+     * Get rotation of the bone.
+     *
+     * @return rotation of the bone
+     */
     const btQuaternion &currentRotation() const {
         return m_currentRotation;
     }
+
+    /**
+     * Get the bone is constrainted only X coordinate.
+     *
+     * @return true if the bone is constrainted
+     */
     bool isAngleXLimited() const {
         return m_angleXLimited;
     }
+
+    /**
+     * Get the bone is simulated.
+     *
+     * @return true if the bone is simulated
+     */
     bool isSimulated() const {
         return m_simulated;
     }
+
+    /**
+     * Get the bone is independent.
+     *
+     * @return true if the bone is independent
+     */
     bool hasMotionIndependency() const {
         return m_motionIndepent;
     }
 
+    /**
+     * Set the name of the bone.
+     *
+     * @param the name of the bone
+     */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
+
+    /**
+     * Set the name of the bone in English.
+     *
+     * @param the name of the bone in English
+     */
     void setEnglishName(const uint8_t *value) {
         copyBytesSafe(m_englishName, value, sizeof(m_englishName));
     }
+
+    /**
+     * Set transform object
+     *
+     * @param transform object
+     */
     void setCurrentTransform(const btTransform &value) {
         m_currentTransform = value;
     }
+
+    /**
+     * Set offset of the bone.
+     *
+     * @param offset of the bone
+     */
     void setOffset(const btVector3 &value) {
         m_offset = value;
     }
+
+    /**
+     * Set position of the bone.
+     *
+     * @param position of the bone
+     */
     void setCurrentPosition(const btVector3 &value) {
         m_currentPosition = value;
     }
+
+    /**
+     * Set rotation of the bone.
+     *
+     * @param rotation of the bone
+     */
     void setCurrentRotation(const btQuaternion &value) {
         m_currentRotation = value;
     }
+
+    /**
+     * Set the bone is simulated.
+     *
+     * @param wheter the bone is simulated
+     */
     void setSimulated(bool value) {
         m_simulated = value;
     }

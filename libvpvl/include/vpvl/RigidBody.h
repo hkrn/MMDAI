@@ -47,6 +47,16 @@
 namespace vpvl
 {
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * RigidBody class represents a rigid body of a Polygon Model Data object.
+ */
+
 class RigidBody
 {
 public:

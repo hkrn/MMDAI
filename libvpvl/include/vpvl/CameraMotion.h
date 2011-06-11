@@ -47,6 +47,17 @@ namespace vpvl
 class CameraKeyFrame;
 typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
 
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * CameraMotion class represents a camera motion that includes many camera key frames
+ * of a Vocaloid Motion Data object inherits BaseMotion.
+ */
+
 class CameraMotion : public BaseMotion
 {
 public:
