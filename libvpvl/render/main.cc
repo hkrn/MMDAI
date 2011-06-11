@@ -102,18 +102,32 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    if (GL_ARB_multisample) {
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-    }
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
-        fprintf(stderr, "Unable to get video info: %s", SDL_GetError());
+        fprintf(stderr, "Unable to get video info: %s\n", SDL_GetError());
         return false;
     }
-    if ((surface = SDL_SetVideoMode(width, height, info->vfmt->BitsPerPixel, SDL_OPENGL)) == NULL) {
-        fprintf(stderr, "Unable to init surface: %s", SDL_GetError());
-        return false;
+    Uint8 bpp = info->vfmt->BitsPerPixel;
+    if (SDL_VideoModeOK(width, height, bpp, SDL_OPENGL)) {
+        if ((surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL)) == NULL) {
+            fprintf(stderr, "Unable to init surface: %s\n", SDL_GetError());
+            return false;
+        }
+    }
+    else {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+        if (SDL_VideoModeOK(width, height, bpp, SDL_OPENGL)) {
+            if ((surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL)) == NULL) {
+                fprintf(stderr, "Unable to init surface: %s\n", SDL_GetError());
+                return false;
+            }
+        }
+        else {
+            fprintf(stderr, "It seems OpenGL is not supported\n");
+            return false;
+        }
     }
     glClearStencil(0);
     glEnable(GL_DEPTH_TEST);
@@ -142,17 +156,17 @@ static bool LoadTexture(const uint8_t *path, GLuint &textureID)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         GLenum format, internal;
         if (surface->format->BitsPerPixel == 32) {
-            format = GL_BGRA;
+            format = surface->format->Rmask & 0xff ? GL_RGBA : GL_BGRA;
             internal = GL_RGBA8;
             glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         }
         else if (surface->format->BitsPerPixel == 24) {
-            format = GL_BGR;
+            format = surface->format->Rmask & 0xff ? GL_RGB : GL_BGR;
             internal = GL_RGB8;
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
         else {
-            fprintf(stderr, "unknown image format: %s\n", path);
+            fprintf(stderr, "Unknown image format: %s\n", path);
             SDL_FreeSurface(surface);
             return false;
         }
@@ -165,7 +179,7 @@ static bool LoadTexture(const uint8_t *path, GLuint &textureID)
         return true;
     }
     else {
-        fprintf(stderr, "failed loading %s: %s\n", path, IMG_GetError());
+        fprintf(stderr, "Failed loading %s: %s\n", path, IMG_GetError());
         return false;
     }
 }
@@ -349,7 +363,7 @@ static void DrawModel(const vpvl::PMDModel *model)
     const uint32_t nMaterials = materials.size();
     btVector4 average, ambient, diffuse, specular;
     uint16_t *indicesPtr = const_cast<uint16_t *>(model->indicesPointer());
-    for (uint32_t i = 0; i <nMaterials; i++) {
+    for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const vpvl::MaterialPrivate *materialPrivate = material->privateData();
         // toon
@@ -622,7 +636,7 @@ static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
     else {
         data = 0;
         size = 0;
-        fprintf(stderr, "failed loading the model: %s\n", strerror(errno));
+        fprintf(stderr, "Failed loading the model: %s\n", strerror(errno));
     }
 }
 
@@ -664,7 +678,7 @@ int main(int argc, char *argv[])
     }
 
     if (!model.load()) {
-        fprintf(stderr, "failed parsing the model\n");
+        fprintf(stderr, "Failed parsing the model\n");
         delete[] modelData;
         return -1;
     }
@@ -689,7 +703,7 @@ int main(int argc, char *argv[])
     FileSlurp(path, motionData, size);
     vpvl::VMDMotion motion(motionData, size);
     if (!motion.load()) {
-        fprintf(stderr, "failed parsing the model motion\n");
+        fprintf(stderr, "Failed parsing the model motion\n");
         delete[] modelData;
         delete[] motionData;
         return -1;
@@ -701,7 +715,7 @@ int main(int argc, char *argv[])
     FileSlurp(path, cameraData, size);
     vpvl::VMDMotion camera(cameraData, size);
     if (!camera.load()) {
-        fprintf(stderr, "failed parsing the camera motion\n");
+        fprintf(stderr, "Failed parsing the camera motion\n");
         delete[] modelData;
         delete[] motionData;
         delete[] cameraData;
