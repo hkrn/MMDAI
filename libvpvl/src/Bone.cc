@@ -122,26 +122,33 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
     float pos[3];
     internal::vector3(ptr, pos);
 
+    // Knee bone treats as a special bone to constraint X for IK
     static const uint8_t kneeName[] = { 0x82, 0xd0, 0x82, 0xb4, 0x0 };
     if (strstr(reinterpret_cast<const char *>(m_name), reinterpret_cast<const char *>(kneeName)))
         m_angleXLimited = true;
 
     int nbones = bones->size();
+    // The bone has a parent bone and in the the current bones
     if (parentBoneID != -1 && parentBoneID < nbones) {
         m_parentBone = bones->at(parentBoneID);
         m_parentIsRoot = false;
     }
+    // The bone has no parent bone but bones found.
     else if (nbones >= 0) {
         m_parentBone = rootBone;
         m_parentIsRoot = true;
     }
+    // The bone has no parent bone and no bones found.
+    // e.g. The "Center" bone
     else {
         m_parentIsRoot = false;
     }
 
+    // The bone has a child bone and in the current bones
     if (childBoneID != -1 && childBoneID < nbones)
         m_childBone = bones->at(childBoneID);
 
+    // The bone has a target bone and in the current bones for IK
     if ((type == kUnderIK || m_type == kUnderRotate) && targetBoneID > 0 && targetBoneID < nbones)
         m_targetBone = bones->at(targetBoneID);
     else if (type == kFollowRotate)
@@ -171,10 +178,12 @@ void Bone::reset()
 
 void Bone::setMotionIndependency()
 {
+    // The parent is root bone
     if (!m_parentBone || m_parentIsRoot) {
         m_motionIndepent = true;
         return;
     }
+    // check if the bone is a special root bone
     static const uint8_t allParent[] = { 0x91, 0x53, 0x82, 0xc4, 0x82, 0xcc, 0x90, 0x65, 0x0 };
     static const uint8_t legsOffset[] = { 0x97, 0xbc, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
     static const uint8_t rightLegOffset[] = { 0x89, 0x45, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };

@@ -98,13 +98,14 @@ VMDMotion::~VMDMotion()
 bool VMDMotion::preparse()
 {
     size_t rest = m_size;
-    /* header + name */
+    // Header(30) + Name(20)
     if (50 > rest)
         return false;
 
     uint8_t *ptr = const_cast<uint8_t *>(m_data);
     m_result.basePtr = ptr;
 
+    // Check the signature is valid
     static const uint8_t header[] = "Vocaloid Motion Data 0002";
     if (memcmp(ptr, header, sizeof(header)) != 0)
         return false;
@@ -113,7 +114,7 @@ bool VMDMotion::preparse()
     ptr += 20;
     rest -= 50;
 
-    /* bone key frame */
+    // Bone key frame
     size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames;
     if (!internal::size32(ptr, rest, nBoneKeyFrames))
         return false;
@@ -122,7 +123,7 @@ bool VMDMotion::preparse()
         return false;
     m_result.boneKeyFrameCount = nBoneKeyFrames;
 
-    /* face key frame */
+    // Face key frame
     if (!internal::size32(ptr, rest, nFaceKeyFrames))
         return false;
     m_result.faceKeyFramePtr = ptr;
@@ -130,7 +131,7 @@ bool VMDMotion::preparse()
         return false;
     m_result.faceKeyFrameCount = nFaceKeyFrames;
 
-    /* camera key frame */
+    // Camera key frame
     if (!internal::size32(ptr, rest, nCameraKeyFrames))
         return false;
     m_result.cameraKeyFramePtr = ptr;
@@ -166,6 +167,7 @@ void VMDMotion::attachModel(PMDModel *model)
     m_boneMotion.attachModel(model);
     m_faceMotion.attachModel(model);
     if (m_enableSmooth) {
+        // The model is relocated to the specified offset and save the current motion state.
         if (m_enableRelocation && m_boneMotion.hasCenterBoneMotion()) {
             Bone *root = model->mutableRootBone();
             Bone *center = Bone::centerBone(&model->bones());
@@ -179,6 +181,7 @@ void VMDMotion::attachModel(PMDModel *model)
             root->setOffset(root->offset() + offset);
             root->updateTransform();
         }
+        // Save the current motion state for loop
         else {
             m_boneMotion.setOverrideFirst(internal::kZeroV);
             m_faceMotion.setOverrideFirst(internal::kZeroV);
@@ -195,6 +198,7 @@ void VMDMotion::update(float deltaFrame)
         btSetMax(m_beginningNonControlledBlend, 0.0f);
     }
     if (m_active) {
+        // Started gracefully finish
         if (m_endingBoneBlend != 0.0f || m_endingFaceBlend != 0.0f) {
             bool reached = false;
             m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
@@ -205,12 +209,14 @@ void VMDMotion::update(float deltaFrame)
             m_endingFaceBlend -= deltaFrame;
             btSetMax(m_endingBoneBlend, 0.0f);
             btSetMax(m_endingFaceBlend, 0.0f);
+            // The motion's blend rate is zero (finish), it should be marked as end
             if (m_endingBoneBlend == 0.0f || m_endingFaceBlend == 0.0f) {
                 m_active = false;
                 m_status = kDeleted;
             }
         }
         else {
+            // The motion is active and continue to advance
             bool boneReached = false;
             bool faceReached = false;
             m_boneMotion.setBlendRate(m_boneMotion.blendRate());
@@ -219,16 +225,16 @@ void VMDMotion::update(float deltaFrame)
             m_faceMotion.advance(deltaFrame, faceReached);
             if (boneReached && faceReached) {
                 switch (m_onEnd) {
-                case 0:
+                case 0: // none
                     break;
-                case 1:
+                case 1: // loop
                     if (m_boneMotion.maxIndex() != 0.0f && m_faceMotion.maxIndex() != 0.0f) {
                         m_boneMotion.rewind(m_loopAt, deltaFrame);
                         m_faceMotion.rewind(m_loopAt, deltaFrame);
                         m_status = kLooped;
                     }
                     break;
-                case 2:
+                case 2: // gracefully finish
                     if (m_enableSmooth) {
                         m_endingBoneBlend = m_endingBoneBlendFrames;
                         m_endingFaceBlend = m_endingFaceBlendFrames;

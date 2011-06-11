@@ -76,6 +76,7 @@ void BaseMotion::rewind(float target, float deltaFrame)
     m_currentFrame = m_previousFrame + deltaFrame - m_maxFrame + target;
     m_previousFrame = target;
     if (m_overrideFirst) {
+        // save current motion state for loop
         takeSnap(internal::kZeroV);
         m_lastLoopStartFrame = target;
         if (m_maxFrame >= m_smearDefault) {

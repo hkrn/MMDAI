@@ -107,6 +107,8 @@ void Material::read(const uint8_t *data)
     uint8_t name[20], *p;
     copyBytesSafe(name, ptr, sizeof(name));
     copyBytesSafe(m_rawName, ptr, sizeof(m_rawName));
+
+    // If asterisk is included in the path, we should load two textures
     if ((p = static_cast<uint8_t *>(memchr(name, '*', sizeof(name)))) != NULL) {
         *p = 0;
         copyBytesSafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));

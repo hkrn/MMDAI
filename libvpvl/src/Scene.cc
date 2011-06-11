@@ -203,6 +203,8 @@ void Scene::setViewMove(int viewMoveTime)
 void Scene::setWorld(::btDiscreteDynamicsWorld *world)
 {
     const uint32_t nModels = m_models.size();
+    // Remove rigid bodies and constraints from the current world
+    // before setting the new world
     if (m_world) {
         for (uint32_t i = 0; i < nModels; i++) {
             PMDModel *model = *m_models.getAtIndex(i);
@@ -222,12 +224,14 @@ void Scene::update(float deltaFrame)
 {
     sortModelRenderOrder();
     const uint32_t nModels = m_order.size();
+    // Updating model
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_order[i];
         model->updateRootBone();
         model->updateMotion(deltaFrame);
         model->updateSkins();
     }
+    // Updating world simulation
     if (m_world) {
         btScalar sec = deltaFrame / kFPS;
         if (sec > 1.0f)
@@ -235,6 +239,7 @@ void Scene::update(float deltaFrame)
         else
             m_world->stepSimulation(sec, m_fps, 1.0f / m_fps);
     }
+    // Updating camera motion
     if (m_cameraMotion) {
         bool reached = false;
         CameraMotion *camera = m_cameraMotion->mutableCamera();

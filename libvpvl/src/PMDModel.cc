@@ -131,7 +131,7 @@ void PMDModel::prepare()
     m_edgeIndicesPointer = new uint16_t[m_indices.size()];
     uint16_t *from = m_indicesPointer, *to = m_edgeIndicesPointer;
     int nMaterials = m_materials.size();
-    /* create edge vertices (copy model vertices if the material is enabled) */
+    // create edge vertices (copy model vertices if the material is enabled)
     for (int i = 0; i < nMaterials; i++) {
         const Material *material = m_materials[i];
         const uint32_t nindices = material->countIndices();
@@ -142,6 +142,7 @@ void PMDModel::prepare()
         }
         from += nindices;
     }
+    // Therefore no updating texture coordinates, set texture coordinates here
     for (int i = 0; i < nVertices; i++) {
         const Vertex *vertex = m_vertices[i];
         m_skinnedVertices[i].texureCoord.setValue(vertex->u(), vertex->v(), 0);
@@ -155,7 +156,7 @@ void PMDModel::prepare()
     }
     const uint32_t nIKs = m_IKs.size();
     m_isIKSimulated.reserve(nIKs);
-    /* IK simulation: enabled => physic engine / disabled => IK#solve */
+    // IK simulation: enabled => physic engine / disabled => IK#solve
     for (uint32_t i = 0; i < nIKs; i++) {
         m_isIKSimulated.push_back(m_IKs[i]->isSimulated());
     }
@@ -240,12 +241,12 @@ void PMDModel::updateSkins()
 void PMDModel::updateAllBones()
 {
     const int nBones = m_bones.size(), nIKs = m_IKs.size();
-    /* FIXME: ordered bone list  */
+    // FIXME: Ordered bone list
     for (int i = 0; i < nBones; i++)
         m_bones[i]->updateTransform();
     if (m_enableSimulation) {
         for (int i = 0; i < nIKs; i++) {
-            /* solve IK with physic engine instead of IK class if it's disabled */
+            // Solve IK with physic engine instead of IK class if it's disabled
             if (!m_isIKSimulated[i])
                 m_IKs[i]->solve();
         }
@@ -393,21 +394,21 @@ void PMDModel::smearAllBonesToDefault(float rate)
 bool PMDModel::preparse()
 {
     size_t rest = m_size;
-    /* header + version + name + comment */
+    // Header[3] + Version[4] + Name[20] + Comment[256]
     if (!m_data || 283 > rest)
         return false;
 
     uint8_t *ptr = const_cast<uint8_t *>(m_data);
     m_result.basePtr = ptr;
 
-    /* header and version check */
+    // Check the signature and version is correct
     if (memcmp(ptr, "Pmd", 3) != 0)
         return false;
     ptr += 3;
     if (1.0f != *reinterpret_cast<float *>(ptr))
         return false;
 
-    /* name and comment (in Shift-JIS) */
+    // Name and Comment (in Shift-JIS)
     ptr += sizeof(float);
     m_result.namePtr = ptr;
     ptr += 20;
@@ -417,7 +418,7 @@ bool PMDModel::preparse()
 
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
             nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
-    /* vertex */
+    // Vertices
     if (!internal::size32(ptr, rest, nVertices))
         return false;
     m_result.verticesPtr = ptr;
@@ -425,7 +426,7 @@ bool PMDModel::preparse()
         return false;
     m_result.verticesCount = nVertices;
 
-    /* index */
+    // Indices
     if (!internal::size32(ptr, rest, nIndices))
         return false;
     m_result.indicesPtr = ptr;
@@ -433,7 +434,7 @@ bool PMDModel::preparse()
         return false;
     m_result.indicesCount = nIndices;
 
-    /* material */
+    // Materials
     if (!internal::size32(ptr, rest, nMaterials))
         return false;
     m_result.materialsPtr = ptr;
@@ -441,7 +442,7 @@ bool PMDModel::preparse()
         return false;
     m_result.materialsCount = nMaterials;
 
-    /* bone */
+    // Bones
     if (!internal::size16(ptr, rest, nBones))
         return false;
     m_result.bonesPtr = ptr;
@@ -449,7 +450,7 @@ bool PMDModel::preparse()
         return false;
     m_result.bonesCount = nBones;
 
-    /* IK */
+    // IKs
     if (!internal::size16(ptr, rest, nIKs))
         return false;
     m_result.IKsPtr = ptr;
@@ -457,7 +458,7 @@ bool PMDModel::preparse()
         return false;
     m_result.IKsCount = nIKs;
 
-    /* face */
+    // Faces
     if (!internal::size16(ptr, rest, nFaces))
         return false;
     m_result.facesPtr = ptr;
@@ -465,7 +466,7 @@ bool PMDModel::preparse()
         return false;
     m_result.facesCount = nFaces;
 
-    /* face display names */
+    // Face display names
     if (!internal::size8(ptr, rest, nFaceNames))
         return false;
     m_result.faceDisplayNamesPtr = ptr;
@@ -473,7 +474,7 @@ bool PMDModel::preparse()
         return false;
     m_result.faceDisplayNamesCount = nFaceNames;
 
-    /* bone frame names */
+    // Bone frame names
     if (!internal::size8(ptr, rest, nBoneFrames))
         return false;
     m_result.boneFrameNamesPtr = ptr;
@@ -481,7 +482,7 @@ bool PMDModel::preparse()
         return false;
     m_result.boneFrameNamesCount = nBoneFrames;
 
-    /* bone display names */
+    // Bone display names
     if (!internal::size32(ptr, rest, nBoneNames))
         return false;
     m_result.boneDisplayNamesPtr = ptr;
@@ -492,11 +493,12 @@ bool PMDModel::preparse()
     if (rest == 0)
         return true;
 
-    /* english names */
+    // English names
     size_t english;
     internal::size8(ptr, rest, english);
     if (english == 1) {
         const size_t englishBoneNamesSize = 20 * nBones;
+        // In english names, the base face is not includes.
         const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * 20 : 0;
         const size_t englishBoneFramesSize = 50 * nBoneFrames;
         const size_t required = englishBoneNamesSize + englishFaceNamesSize + englishBoneFramesSize;
@@ -515,7 +517,7 @@ bool PMDModel::preparse()
         rest -= required;
     }
 
-    /* extra texture path */
+    // Extra texture path (100 * 10)
     if (1000 > rest)
         return false;
     m_result.toonTextureNamesPtr = ptr;
@@ -525,7 +527,7 @@ bool PMDModel::preparse()
     if (rest == 0)
         return true;
 
-    /* rigid body */
+    // Rigid body
     if (!internal::size32(ptr, rest, nRigidBodies))
         return false;
     m_result.rigidBodiesPtr = ptr;
@@ -533,7 +535,7 @@ bool PMDModel::preparse()
         return false;
     m_result.rigidBodiesCount = nRigidBodies;
 
-    /* constranint */
+    // Constranint
     if (!internal::size32(ptr, rest, nConstranits))
         return false;
     m_result.constraintsPtr = ptr;
