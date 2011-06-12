@@ -82,6 +82,7 @@ public:
     void addModel(PMDModel *model);
     void addModel(const char *name, PMDModel *model);
     PMDModel *findModel(const char *name) const;
+    PMDModel **getRenderingOrder(size_t &size);
     void getModelViewMatrix(float matrix[16]) const;
     void getProjectionMatrix(float matrix[16]) const;
     void removeModel(PMDModel *model);
@@ -103,7 +104,7 @@ public:
     }
 
 private:
-    void sortModelRenderOrder();
+    void sortRenderingOrder();
     void updateModelViewMatrix();
     void updateProjectionMatrix();
     void updateRotationFromAngle();

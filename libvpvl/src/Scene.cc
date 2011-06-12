@@ -142,6 +142,12 @@ PMDModel *Scene::findModel(const char *name) const
     return ptr ? *ptr : 0;
 }
 
+PMDModel **Scene::getRenderingOrder(size_t &size)
+{
+    size = m_order.size();
+    return &m_order[0];
+}
+
 void Scene::getModelViewMatrix(float matrix[]) const
 {
     m_modelview.getOpenGLMatrix(matrix);
@@ -220,7 +226,7 @@ void Scene::setWorld(::btDiscreteDynamicsWorld *world)
 
 void Scene::update(float deltaFrame)
 {
-    sortModelRenderOrder();
+    sortRenderingOrder();
     const uint32_t nModels = m_order.size();
     // Updating model
     for (uint32_t i = 0; i < nModels; i++) {
@@ -298,7 +304,7 @@ void Scene::updateProjection(int ellapsedTimeForMove)
         updateProjectionMatrix();
 }
 
-void Scene::sortModelRenderOrder()
+void Scene::sortRenderingOrder()
 {
     const uint32_t nModels = m_models.size();
     if (static_cast<uint32_t>(m_order.size()) != nModels) {
