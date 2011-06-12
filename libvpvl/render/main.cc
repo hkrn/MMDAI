@@ -568,7 +568,6 @@ static void DrawModelShadow(const vpvl::PMDModel *model)
 
 static void DrawSurface(vpvl::Scene &scene, int width, int height)
 {
-    vpvl::PMDModel *model = scene.findModel("miku");
     float matrix[16];
     memset(matrix, 0, sizeof(matrix));
     glViewport(0, 0, width, height);
@@ -589,7 +588,12 @@ static void DrawSurface(vpvl::Scene &scene, int width, int height)
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     // render shadow
-    DrawModelShadow(model);
+    size_t size = 0;
+    vpvl::PMDModel **models = scene.getRenderingOrder(size);
+    for (size_t i = 0; i < size; i++) {
+        vpvl::PMDModel *model = models[i];
+        DrawModelShadow(model);
+    }
     glPopMatrix();
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
@@ -598,8 +602,11 @@ static void DrawSurface(vpvl::Scene &scene, int width, int height)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     // render model and edge
-    DrawModel(model);
-    DrawModelEdge(model);
+    for (size_t i = 0; i < size; i++) {
+        vpvl::PMDModel *model = models[i];
+        DrawModel(model);
+        DrawModelEdge(model);
+    }
     SDL_GL_SwapBuffers();
 }
 
