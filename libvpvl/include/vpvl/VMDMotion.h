@@ -78,7 +78,11 @@ struct VMDMotionDataInfo
 class VMDMotion
 {
 public:
-    enum VMDMotionStatus
+
+    /**
+     * Status of current motion.
+     */
+    enum Status
     {
         kRunning,
         kLooped,
@@ -117,7 +121,7 @@ public:
     const FaceMotion &face() const {
         return m_faceMotion;
     }
-    const VMDMotionStatus &status() const {
+    const Status &status() const {
         return m_status;
     }
     const VMDMotionDataInfo &result() const {
@@ -168,7 +172,7 @@ private:
     BoneMotion m_boneMotion;
     CameraMotion m_cameraMotion;
     FaceMotion m_faceMotion;
-    VMDMotionStatus m_status;
+    Status m_status;
     uint8_t m_onEnd;
     float m_loopAt;
     float m_priority;

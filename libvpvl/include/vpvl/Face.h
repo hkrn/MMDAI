@@ -47,15 +47,6 @@
 namespace vpvl
 {
 
-enum FaceType
-{
-    kBase,
-    kEyebrow,
-    kEye,
-    kLip,
-    kOther
-};
-
 struct FaceVertex
 {
     uint32_t id;
@@ -75,6 +66,19 @@ struct FaceVertex
 class Face
 {
 public:
+
+    /**
+     * Type of face kinds.
+     */
+    enum Type
+    {
+        kBase,
+        kEyebrow,
+        kEye,
+        kLip,
+        kOther
+    };
+
     Face();
     ~Face();
 
@@ -95,7 +99,7 @@ public:
     const uint8_t *englishName() const {
         return m_englishName;
     }
-    FaceType type() const {
+    Type type() const {
         return m_type;
     }
     float weight() const {
@@ -115,7 +119,7 @@ public:
 private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
-    FaceType m_type;
+    Type m_type;
     btAlignedObjectArray<FaceVertex *> m_vertices;
     float m_weight;
 };

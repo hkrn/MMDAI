@@ -148,8 +148,8 @@ void PMDModel::prepare()
     const uint32_t nBones = m_bones.size();
     for (uint32_t i = 0; i < nBones; i++) {
         Bone *bone = m_bones[i];
-        const BoneType type = bone->type();
-        if (type == kUnderRotate || type == kFollowRotate)
+        const Bone::Type type = bone->type();
+        if (type == Bone::kUnderRotate || type == Bone::kFollowRotate)
             m_rotatedBones.push_back(bone);
     }
     const uint32_t nIKs = m_IKs.size();
@@ -664,7 +664,7 @@ void PMDModel::parseFaces()
     for (uint32_t i = 0; i < nfaces; i++) {
         Face *face = new Face();
         face->read(ptr);
-        if (face->type() == kBase)
+        if (face->type() == Face::kBase)
             m_baseFace = baseFace = face;
         else if (englishPtr)
             face->setEnglishName(englishPtr + Face::kNameSize * (i - 1));
@@ -729,7 +729,7 @@ void PMDModel::parseConstraints()
     }
 }
 
-size_t PMDModel::stride(PMDModelStrideType type) const
+size_t PMDModel::stride(StrideType type) const
 {
     switch (type) {
     case kVerticesStride:

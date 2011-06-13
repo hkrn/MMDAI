@@ -92,7 +92,7 @@ void Face::read(const uint8_t *data)
     ptr += sizeof(m_name);
     uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
-    FaceType type = static_cast<FaceType>(*reinterpret_cast<uint8_t *>(ptr));
+    Type type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
     ptr += sizeof(uint8_t);
     m_type = type;
     if (nvertices > 0) {

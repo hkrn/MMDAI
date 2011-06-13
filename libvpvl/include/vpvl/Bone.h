@@ -48,23 +48,6 @@
 namespace vpvl
 {
 
-/**
- * Type of bone kinds.
- */
-enum BoneType
-{
-    kRotate,
-    kRotateAndMove,
-    kIKDestination,
-    kUnknown,
-    kUnderIK,
-    kUnderRotate,
-    kIKTarget,
-    kInvisible,
-    kTwist,
-    kFollowRotate
-};
-
 class Bone;
 typedef btAlignedObjectArray<Bone*> BoneList;
 
@@ -81,6 +64,23 @@ typedef btAlignedObjectArray<Bone*> BoneList;
 class Bone
 {
 public:
+
+    /**
+     * Type of bone kinds.
+     */
+    enum Type
+    {
+        kRotate,
+        kRotateAndMove,
+        kIKDestination,
+        kUnknown,
+        kUnderIK,
+        kUnderRotate,
+        kIKTarget,
+        kInvisible,
+        kTwist,
+        kFollowRotate
+    };
 
     /**
      * Constructor
@@ -184,7 +184,7 @@ public:
      *
      * @return the kind of bone
      */
-    BoneType type() const {
+    Type type() const {
         return m_type;
     }
 
@@ -326,7 +326,7 @@ public:
 private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
-    BoneType m_type;
+    Type m_type;
     btTransform m_currentTransform;
     btTransform m_transformMoveToOrigin;
     btVector3 m_originPosition;

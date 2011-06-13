@@ -115,7 +115,7 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
     ptr += sizeof(int16_t);
     int16_t childBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
-    BoneType type = static_cast<BoneType>(*reinterpret_cast<uint8_t *>(ptr));
+    Type type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
     ptr += sizeof(uint8_t);
     int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
     ptr += sizeof(int16_t);
