@@ -55,17 +55,48 @@ namespace vpvl
 class XModel
 {
 public:
+    enum StrideType
+    {
+        kVerticesStride,
+        kNormalsStride,
+        kTextureCoordsStride,
+        kColorsStride,
+        kIndicesStride
+    };
+
     XModel(const uint8_t *data, size_t size);
     ~XModel();
 
     bool preparse();
     bool load();
 
+    size_t stride(StrideType type) const;
+    const void *verticesPointer() const;
+    const void *normalsPointer() const;
+    const void *textureCoordsPointer() const;
+    const void *colorsPointer() const;
+    const void *indicesPointer() const;
+
+    const btAlignedObjectArray<btVector3> &vertices() const {
+        return m_vertices;
+    }
+    const btAlignedObjectArray<btVector3> &normals() const {
+        return m_normals;
+    }
+    const btAlignedObjectArray<btVector3> &textureCoords() const {
+        return m_coords;
+    }
+    const char *findTexture(int index) const {
+        const char **ptr = const_cast<const char **>(m_textures.find(btHashInt(index)));
+        return ptr ? *ptr : 0;
+    }
+
 private:
     btAlignedObjectArray<btVector3> m_vertices;
+    btAlignedObjectArray<btVector3> m_normals;
     btAlignedObjectArray<btVector3> m_coords;
-    btAlignedObjectArray<btVector4> m_faces;
     btAlignedObjectArray<uint16_t> m_indices;
+    btHashMap<btHashInt, btVector4> m_colors;
     btHashMap<btHashInt, char *> m_textures;
     const uint8_t *m_data;
     const size_t m_size;

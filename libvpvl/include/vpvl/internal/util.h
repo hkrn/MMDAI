@@ -148,7 +148,30 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
 inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
 {
     assert(s1 != NULL && s2 != NULL && max > 0);
-    return memcmp(s1, s2, max) == 0;
+    return strncmp(reinterpret_cast<const char *>(s1), reinterpret_cast<const char *>(s2), max) == 0;
+}
+
+inline bool stringEquals(const char *s1, const char *s2, size_t max)
+{
+    assert(s1 != NULL && s2 != NULL && max > 0);
+    return strncmp(s1, s2, max) == 0;
+}
+
+inline char *stringToken(char *str, const char *delim, char **ptr)
+{
+    assert(delim != NULL);
+    return strtok_r(str, delim, ptr);
+}
+
+inline float stringToInt(const char *str)
+{
+    return atoi(str);
+}
+
+inline float stringToFloat(const char *str)
+{
+    char *p = 0;
+    return strtof(str, &p);
 }
 
 template<typename T>
