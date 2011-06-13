@@ -729,19 +729,22 @@ void PMDModel::parseConstraints()
     }
 }
 
-size_t PMDModel::stride() const
+size_t PMDModel::stride(PMDModelStrideType type) const
 {
-    return sizeof(SkinVertex);
-}
-
-size_t PMDModel::edgeStride() const
-{
-    return sizeof(btVector3);
-}
-
-size_t PMDModel::toonStride() const
-{
-    return sizeof(btVector3);
+    switch (type) {
+    case kVerticesStride:
+    case kNormalsStride:
+    case kTextureCoordsStride:
+       return sizeof(SkinVertex);
+    case kEdgeVerticesStride:
+    case kToonTextureStride:
+        return sizeof(btVector3);
+    case kIndicesStride:
+    case kEdgeIndicesStride:
+        return sizeof(uint16_t);
+    default:
+        return 0;
+    }
 }
 
 const void *PMDModel::verticesPointer() const

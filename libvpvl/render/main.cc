@@ -239,11 +239,14 @@ static void LoadModelTextures(vpvl::PMDModel &model, const uint8_t *system, cons
     modelPrivate->hasMultipleSphereMap = hasMultipleSphere;
     glGenBuffers(kVertexBufferObjectMax, modelPrivate->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.edgeIndicesCount() * sizeof(uint16_t), model.edgeIndicesPointer(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.edgeIndicesCount() * model.stride(vpvl::kEdgeIndicesStride),
+                 model.edgeIndicesPointer(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kShadowIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices().size() * sizeof(uint16_t), model.indicesPointer(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices().size() * model.stride(vpvl::kIndicesStride),
+                 model.indicesPointer(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelTexCoords]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.vertices().size() * model.stride(), model.textureCoordsPointer(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.vertices().size() * model.stride(vpvl::kTextureCoordsStride),
+                 model.textureCoordsPointer(), GL_STATIC_DRAW);
     if (LoadToonTexture(system, dir, reinterpret_cast<const uint8_t *>("toon0.bmp"), textureID))
         modelPrivate->toonTextureID[0] = textureID;
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
@@ -309,19 +312,19 @@ static void DrawModel(const vpvl::PMDModel *model)
 #endif
 
     const vpvl::PMDModelPrivate *modelPrivate = model->privateData();
+    size_t stride = model->stride(vpvl::kNormalsStride), vsize = model->vertices().size();
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    size_t stride = model->stride(),  vsize = model->vertices().size() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelVertices]);
-    glVertexPointer(3, GL_FLOAT, stride, 0);
+    glVertexPointer(3, GL_FLOAT, model->stride(vpvl::kVerticesStride), 0);
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelNormals]);
-    glBufferData(GL_ARRAY_BUFFER, vsize, model->normalsPointer(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->normalsPointer(), GL_DYNAMIC_DRAW);
     glNormalPointer(GL_FLOAT, stride, 0);
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelTexCoords]);
-    glTexCoordPointer(2, GL_FLOAT, stride, 0);
+    glTexCoordPointer(2, GL_FLOAT, model->stride(vpvl::kTextureCoordsStride), 0);
 
     const bool enableToon = true;
     // toon
@@ -332,11 +335,12 @@ static void DrawModel(const vpvl::PMDModel *model)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelToonTexCoords]);
         // shadow map
+        stride = model->stride(vpvl::kToonTextureStride);
         if (false)
             glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_DYNAMIC_DRAW);
         else
-            glBufferData(GL_ARRAY_BUFFER, vsize, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
-        glTexCoordPointer(2, GL_FLOAT, model->toonStride(), 0);
+            glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
+        glTexCoordPointer(2, GL_FLOAT, stride, 0);
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
     }
@@ -524,7 +528,7 @@ static void DrawModelEdge(const vpvl::PMDModel *model)
 #endif
 
     const float alpha = 1.0f;
-    const size_t stride = model->edgeStride();
+    const size_t stride = model->stride(vpvl::kEdgeVerticesStride);
     const btVector4 color(0.0f, 0.0f, 0.0f, alpha);
     const vpvl::PMDModelPrivate *modelPrivate = model->privateData();
 
@@ -551,7 +555,7 @@ static void DrawModelEdge(const vpvl::PMDModel *model)
 
 static void DrawModelShadow(const vpvl::PMDModel *model)
 {
-    const size_t stride = model->stride();
+    const size_t stride = model->stride(vpvl::kVerticesStride);
     const vpvl::PMDModelPrivate *modelPrivate = model->privateData();
     glDisable(GL_CULL_FACE);
     glEnableClientState(GL_VERTEX_ARRAY);

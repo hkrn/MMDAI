@@ -89,6 +89,17 @@ struct PMDModelDataInfo
     size_t constranitsCount;
 };
 
+enum PMDModelStrideType
+{
+    kVerticesStride,
+    kEdgeVerticesStride,
+    kNormalsStride,
+    kTextureCoordsStride,
+    kToonTextureStride,
+    kIndicesStride,
+    kEdgeIndicesStride
+};
+
 class VMDMotion;
 
 typedef struct SkinVertex SkinVertex;
@@ -127,9 +138,7 @@ public:
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
 
-    size_t stride() const;
-    size_t edgeStride() const;
-    size_t toonStride() const;
+    size_t stride(PMDModelStrideType type) const;
     const void *verticesPointer() const;
     const void *normalsPointer() const;
     const void *textureCoordsPointer() const;
