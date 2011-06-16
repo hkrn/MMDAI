@@ -799,6 +799,7 @@ int main(int argc, char *argv[])
         delete[] modelData;
         return -1;
     }
+    LoadModel(model, g_sysdir, g_modeldir);
 
     snprintf(path, sizeof(path), "%s/%s", g_stagedir, g_stagename);
     FileSlurp(path, stageData, size);
@@ -811,9 +812,6 @@ int main(int argc, char *argv[])
     }
     LoadStage(stage, g_stagedir);
 
-    vpvl::Scene scene(g_width, g_height, g_FPS);
-    SetLighting(scene);
-
     const float dist = 400.0f;
     btDefaultCollisionConfiguration config;
     btCollisionDispatcher dispatcher(&config);
@@ -823,9 +821,10 @@ int main(int argc, char *argv[])
     world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
     world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / g_FPS);
 
+    vpvl::Scene scene(g_width, g_height, g_FPS);
+    SetLighting(scene);
     scene.addModel("miku", &model);
     scene.setWorld(&world);
-    LoadModel(model, g_sysdir, g_modeldir);
 
     snprintf(path, sizeof(path), "%s", g_motion);
     FileSlurp(path, motionData, size);
