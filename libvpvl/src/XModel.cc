@@ -40,13 +40,33 @@
 namespace vpvl
 {
 
-struct XModelToken
+struct XModelInternalToken
 {
     const uint8_t *ptr;
     size_t size;
 };
 
-enum XModelParseState
+struct XModelInternalIndexedColor {
+    uint32_t index;
+    btVector4 color;
+};
+
+struct XModelInternalFaceIndex {
+    uint32_t index;
+    uint32_t count;
+    btVector4 value;
+};
+
+struct XModelInternalMaterial {
+    uint32_t index;
+    btVector4 color;
+    btVector4 specular;
+    btVector4 emmisive;
+    char *textureName;
+    float power;
+};
+
+enum XModelInternalParseState
 {
     kNone,
     kHeaderDeclation,
@@ -82,6 +102,14 @@ XModel::XModel(const uint8_t *data, size_t size)
 
 XModel::~XModel()
 {
+    internal::clearAll(m_indices);
+    internal::clearAll(m_materials);
+    m_vertices.clear();
+    m_normals.clear();
+    m_coords.clear();
+    m_colors.clear();
+    m_materials.clear();
+    m_userData = 0;
     m_data = 0;
     delete m_buffer;
 }
@@ -107,6 +135,9 @@ bool XModel::preparse()
 
 bool XModel::load()
 {
+    if (!preparse())
+        return false;
+
     btAlignedObjectArray<char *> tokens;
     char *p = 0, *token = 0;
     bool skip = false;
@@ -118,7 +149,7 @@ bool XModel::load()
             skip = false;
             continue;
         }
-        else if (!internal::stringEquals(token, "template", 8)) {
+        else if (internal::stringEquals(token, "template", 8)) {
             skip = true;
         }
         if (skip)
@@ -126,329 +157,368 @@ bool XModel::load()
         tokens.push_back(token);
     }
 
-    btVector4 color, specular, emmisive;
-    float power = 0;
-
+    bool ret = false;
     int evsize = 0, ensize = 0, evfsize = 0, enfsize = 0, emsize = 0, efisize = 0, etsize = 0, ecsize = 0;
-    int ntokens = tokens.size(), depth = 0, mindex = -1, nindices = 0;
-    btAlignedObjectArray<uint32_t> indices;
-    XModelParseState state = kNone;
-    for (int i = 0; i < ntokens; i++) {
-        char *token = tokens[i];
-        if (*token == '{') {
-            switch (state) {
-            case kHeaderDeclation:
-            case kMeshVerticesDeclation:
-            case kMeshNormalsDeclation:
-            case kMeshMaterialListDeclation:
-            case kMeshMaterialDeclation:
-            case kMeshTextureFilenameDeclation:
-            case kMeshTextureCoordsDeclation:
-            case kMeshVertexColorsDeclation:
-                break;
-            default:
-                return false;
-            }
-        }
-        else if (*token == '}') {
-            state = kNone;
-            depth--;
-        }
-        else {
-            switch (state) {
-            case kNone:
-            {
-                if (depth == 0 && !internal::stringEquals(token, "Header", 6))
-                    state = kHeaderDeclation;
-                else if (depth == 0 && !internal::stringEquals(token, "Mesh", 4))
-                    state = kMeshVerticesDeclation;
-                else if (depth == 0 && !internal::stringEquals(token, "MeshNormals", 11))
-                    state = kMeshNormalsDeclation;
-                else if (depth == 1 && !internal::stringEquals(token, "MeshMaterialList", 16))
-                    state = kMeshMaterialListDeclation;
-                else if (depth == 2 && !internal::stringEquals(token, "Material", 8))
-                    state = kMeshMaterialDeclation;
-                else if (depth == 3 && !internal::stringEquals(token, "TextureFilename", 15))
-                    state = kMeshTextureFilenameDeclation;
-                else if (depth == 1 && !internal::stringEquals(token, "MeshTextureCoords", 17))
-                    state = kMeshTextureCoordsDeclation;
-                else if (depth == 1 && !internal::stringEquals(token, "MeshVertexColors", 16))
-                    state = kMeshVertexColorsDeclation;
-                else
-                    return false;
-                depth++;
-                break;
-            }
-            case kHeaderDeclation:
-            {
-                continue;
-            }
-            case kMeshVerticesDeclation:
-            {
-                evsize = internal::stringToInt(token);
-                state = kMeshVertices;
-                break;
-            }
-            case kMeshVertices:
-            {
-                char *x = internal::stringToken(token, ";", &p);
-                char *y = internal::stringToken(NULL, ";", &p);
-                char *z = internal::stringToken(NULL, ";", &p);
-                if (x && y && z) {
-                    btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y),
-                                internal::stringToFloat(z));
-                    m_vertices.push_back(v);
+    int ntokens = tokens.size(), depth = 0, mindex = 0, nindices = 0;
+    btAlignedObjectArray<XModelInternalFaceIndex> indices;
+    btAlignedObjectArray<XModelInternalIndexedColor> colors;
+    btAlignedObjectArray<XModelInternalMaterial *> materials;
+    XModelInternalMaterial *currentMaterial = 0;
+    XModelInternalParseState state = kNone;
+
+    try {
+        for (int i = 0; i < ntokens; i++) {
+            char *token = tokens[i];
+            if (*token == '{') {
+                switch (state) {
+                case kHeaderDeclation:
+                case kMeshVerticesDeclation:
+                case kMeshNormalsDeclation:
+                case kMeshMaterialListDeclation:
+                case kMeshMaterialDeclation:
+                case kMeshTextureFilenameDeclation:
+                case kMeshTextureCoordsDeclation:
+                case kMeshVertexColorsDeclation:
+                    break;
+                default:
+                    throw 0;
                 }
-                else {
-                    return false;
+            }
+            else if (*token == '}') {
+                state = kNone;
+                depth--;
+            }
+            else {
+                switch (state) {
+                case kNone:
+                {
+                    if (depth == 0 && internal::stringEquals(token, "Header", 6))
+                        state = kHeaderDeclation;
+                    else if (depth == 0 && internal::stringEquals(token, "Mesh", 4))
+                        state = kMeshVerticesDeclation;
+                    else if (depth == 0 && internal::stringEquals(token, "MeshNormals", 11))
+                        state = kMeshNormalsDeclation;
+                    else if (depth == 1 && internal::stringEquals(token, "MeshMaterialList", 16))
+                        state = kMeshMaterialListDeclation;
+                    else if (depth == 2 && internal::stringEquals(token, "Material", 8))
+                        state = kMeshMaterialDeclation;
+                    else if (depth == 3 && internal::stringEquals(token, "TextureFilename", 15))
+                        state = kMeshTextureFilenameDeclation;
+                    else if (depth == 1 && internal::stringEquals(token, "MeshTextureCoords", 17))
+                        state = kMeshTextureCoordsDeclation;
+                    else if (depth == 1 && internal::stringEquals(token, "MeshVertexColors", 16))
+                        state = kMeshVertexColorsDeclation;
+                    else
+                        throw 1;
+                    depth++;
+                    break;
                 }
-                if (evsize <= m_vertices.size())
-                    state = kMeshVertexFacesSize;
-                break;
-            }
-            case kMeshVertexFacesSize:
-            {
-                evfsize = internal::stringToInt(token);
-                state = kMeshVertexFaces;
-                nindices = 0;
-                indices.clear();
-                break;
-            }
-            case kMeshVertexFaces:
-            {
-                char *s = internal::stringToken(token, ";", &p);
-                char *x = internal::stringToken(NULL, ",", &p);
-                char *y = internal::stringToken(NULL, ",", &p);
-                char *z = internal::stringToken(NULL, ",", &p);
-                char *w = internal::stringToken(NULL, ",", &p);
-                if (s) {
-                    int size = internal::stringToInt(s);
-                    if (size == 3 && x && y && z) {
-                        indices.push_back(internal::stringToInt(x));
-                        indices.push_back(internal::stringToInt(y));
-                        indices.push_back(internal::stringToInt(z));
-                        nindices++;
+                case kHeaderDeclation:
+                {
+                    continue;
+                }
+                case kMeshVerticesDeclation:
+                {
+                    evsize = internal::stringToInt(token);
+                    state = kMeshVertices;
+                    break;
+                }
+                case kMeshVertices:
+                {
+                    char *x = internal::stringToken(token, ";", &p);
+                    char *y = internal::stringToken(NULL, ";", &p);
+                    char *z = internal::stringToken(NULL, ";", &p);
+                    if (x && y && z) {
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y),
+                                    internal::stringToFloat(z));
+                        m_vertices.push_back(v);
                     }
-                    else if (size == 4 && x && y && z && w) {
-                        indices.push_back(internal::stringToInt(x));
-                        indices.push_back(internal::stringToInt(y));
-                        indices.push_back(internal::stringToInt(z));
-                        indices.push_back(internal::stringToInt(z));
-                        indices.push_back(internal::stringToInt(w));
-                        indices.push_back(internal::stringToInt(x));
+                    else {
+                        throw 2;
+                    }
+                    if (evsize <= m_vertices.size())
+                        state = kMeshVertexFacesSize;
+                    break;
+                }
+                case kMeshVertexFacesSize:
+                {
+                    evfsize = internal::stringToInt(token);
+                    state = kMeshVertexFaces;
+                    nindices = 0;
+                    break;
+                }
+                case kMeshVertexFaces:
+                {
+                    char *s = internal::stringToken(token, ";", &p);
+                    char *x = internal::stringToken(NULL, ",", &p);
+                    char *y = internal::stringToken(NULL, ",", &p);
+                    char *z = internal::stringToken(NULL, ",", &p);
+                    char *w = internal::stringToken(NULL, ",", &p);
+                    if (s) {
+                        int size = internal::stringToInt(s);
+                        XModelInternalFaceIndex v;
+                        v.index = 0;
+                        v.count = size;
+                        if (size == 3 && x && y && z) {
+                            v.value.setValue(internal::stringToInt(x), internal::stringToInt(y),
+                                             internal::stringToInt(z), 0.0f);
+                        }
+                        else if (size == 4 && x && y && z && w) {
+                            v.value.setValue(internal::stringToInt(x), internal::stringToInt(y),
+                                             internal::stringToInt(z), internal::stringToInt(w));
+                        }
+                        else {
+                            throw 3;
+                        }
+                        indices.push_back(v);
                         nindices++;
                     }
                     else {
-                        return false;
+                        throw 4;
                     }
+                    if (evfsize <= nindices)
+                        state = kNone;
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshNormalsDeclation:
+                {
+                    ensize = internal::stringToInt(token);
+                    state = kMeshNormals;
+                    break;
                 }
-                if (evfsize <= nindices)
-                    state = kNone;
-                break;
-            }
-            case kMeshNormalsDeclation:
-            {
-                ensize = internal::stringToInt(token);
-                state = kMeshNormals;
-                break;
-            }
-            case kMeshNormals:
-            {
-                char *x = internal::stringToken(token, ";", &p);
-                char *y = internal::stringToken(NULL, ";", &p);
-                char *z = internal::stringToken(NULL, ";", &p);
-                if (x && y && z) {
-                    btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y),
-                                internal::stringToFloat(z));
-                    m_normals.push_back(v);
-                }
-                else {
-                    return false;
-                }
-                if (ensize <= m_normals.size())
-                    state = kMeshNormalFacesSize;
-                break;
-            }
-            case kMeshNormalFacesSize:
-            {
-                enfsize = internal::stringToInt(token);
-                state = kMeshNormalFaces;
-                nindices = 0;
-                indices.clear();
-                break;
-            }
-            case kMeshNormalFaces:
-            {
-                char *s = internal::stringToken(token, ";", &p);
-                char *x = internal::stringToken(NULL, ",", &p);
-                char *y = internal::stringToken(NULL, ",", &p);
-                char *z = internal::stringToken(NULL, ",", &p);
-                char *w = internal::stringToken(NULL, ",", &p);
-                if (s) {
-                    int size = internal::stringToInt(s);
-                    if (size == 3 && x && y && z) {
-                        indices.push_back(internal::stringToInt(x));
-                        indices.push_back(internal::stringToInt(y));
-                        indices.push_back(internal::stringToInt(z));
-                        nindices++;
-                    }
-                    else if (size == 4 && x && y && z && w) {
-                        indices.push_back(internal::stringToInt(x));
-                        indices.push_back(internal::stringToInt(y));
-                        indices.push_back(internal::stringToInt(z));
-                        indices.push_back(internal::stringToInt(z));
-                        indices.push_back(internal::stringToInt(w));
-                        indices.push_back(internal::stringToInt(x));
-                        nindices++;
+                case kMeshNormals:
+                {
+                    char *x = internal::stringToken(token, ";", &p);
+                    char *y = internal::stringToken(NULL, ";", &p);
+                    char *z = internal::stringToken(NULL, ";", &p);
+                    if (x && y && z) {
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y),
+                                    internal::stringToFloat(z));
+                        m_normals.push_back(v);
                     }
                     else {
-                        return false;
+                        throw 5;
                     }
+                    if (ensize <= m_normals.size())
+                        state = kMeshNormalFacesSize;
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshNormalFacesSize:
+                {
+                    enfsize = internal::stringToInt(token);
+                    state = kMeshNormalFaces;
+                    nindices = 0;
+                    break;
                 }
-                if (enfsize <= nindices)
-                    state = kNone;
-                break;
-            }
-            case kMeshMaterialListDeclation:
-            {
-                emsize = internal::stringToInt(token);
-                state = kMeshMaterialFaceIndicesSize;
-                break;
-            }
-            case kMeshMaterialFaceIndicesSize:
-            {
-                efisize = internal::stringToInt(token);
-                state = kMeshMaterialFaceIndices;
-                break;
-            }
-            case kMeshMaterialFaceIndices:
-            {
-                int index = internal::stringToInt(token);
-                if (index < evfsize)
-                    m_indices.push_back(index);
-                if (efisize <= m_indices.size())
-                    state = kNone;
-                break;
-            }
-            case kMeshMaterialDeclation:
-            {
-                char *x = internal::stringToken(token, ";", &p);
-                char *y = internal::stringToken(NULL, ";", &p);
-                char *z = internal::stringToken(NULL, ";", &p);
-                char *w = internal::stringToken(NULL, ";", &p);
-                if (x && y && z && w) {
-                    color.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
-                                   internal::stringToFloat(z), internal::stringToFloat(w));
-                    state = kMeshMaterialPower;
-                    mindex++;
+                case kMeshNormalFaces:
+                {
+                    nindices++;
+                    if (enfsize <= nindices)
+                        state = kNone;
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshMaterialListDeclation:
+                {
+                    emsize = internal::stringToInt(token);
+                    state = kMeshMaterialFaceIndicesSize;
+                    break;
                 }
-                break;
-            }
-            case kMeshMaterialPower:
-            {
-                power = internal::stringToFloat(token);
-                state = kMeshMaterialSpecularColor;
-                break;
-            }
-            case kMeshMaterialSpecularColor:
-            {
-                char *x = internal::stringToken(token, ";", &p);
-                char *y = internal::stringToken(NULL, ";", &p);
-                char *z = internal::stringToken(NULL, ";", &p);
-                if (x && y && z) {
-                    specular.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
-                                      internal::stringToFloat(z), 1.0f);
-                    state = kMeshMaterialEmmisiveColor;
+                case kMeshMaterialFaceIndicesSize:
+                {
+                    efisize = internal::stringToInt(token);
+                    state = kMeshMaterialFaceIndices;
+                    nindices = 0;
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshMaterialFaceIndices:
+                {
+                    int index = internal::stringToInt(token);
+                    if (index <= emsize)
+                        indices[nindices++].index = index;
+                    else
+                        throw 6;
+                    if (efisize <= nindices)
+                        state = kNone;
+                    break;
                 }
-                break;
-            }
-            case kMeshMaterialEmmisiveColor:
-            {
-                char *x = internal::stringToken(token, ";", &p);
-                char *y = internal::stringToken(NULL, ";", &p);
-                char *z = internal::stringToken(NULL, ";", &p);
-                if (x && y && z) {
-                    emmisive.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
-                                      internal::stringToFloat(z), 1.0f);
-                    state = kNone;
+                case kMeshMaterialDeclation:
+                {
+                    currentMaterial = new XModelInternalMaterial;
+                    currentMaterial->emmisive.setZero();
+                    currentMaterial->index = 0;
+                    currentMaterial->power = 0.0f;
+                    currentMaterial->specular.setZero();
+                    currentMaterial->textureName = 0;
+                    materials.push_back(currentMaterial);
+                    char *x = internal::stringToken(token, ";", &p);
+                    char *y = internal::stringToken(NULL, ";", &p);
+                    char *z = internal::stringToken(NULL, ";", &p);
+                    char *w = internal::stringToken(NULL, ";", &p);
+                    if (x && y && z && w) {
+                        currentMaterial->color.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
+                                                        internal::stringToFloat(z), internal::stringToFloat(w));
+                        currentMaterial->index = mindex;
+                        state = kMeshMaterialPower;
+                        mindex++;
+                    }
+                    else {
+                        throw 7;
+                    }
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshMaterialPower:
+                {
+                    currentMaterial->power = internal::stringToFloat(token);
+                    state = kMeshMaterialSpecularColor;
+                    break;
                 }
-                break;
-            }
-            case kMeshTextureFilenameDeclation:
-            {
-                m_textures.insert(btHashInt(mindex), token);
-                break;
-            }
-            case kMeshTextureCoordsDeclation:
-            {
-                etsize = internal::stringToInt(token);
-                state = kMeshTextureCoords;
-                break;
-            }
-            case kMeshTextureCoords:
-            {
-                char *x = internal::stringToken(token, ";", &p);
-                char *y = internal::stringToken(NULL, ";", &p);
-                if (x && y) {
-                    btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), 0.0f);
-                    m_coords.push_back(v);
+                case kMeshMaterialSpecularColor:
+                {
+                    char *x = internal::stringToken(token, ";", &p);
+                    char *y = internal::stringToken(NULL, ";", &p);
+                    char *z = internal::stringToken(NULL, ";", &p);
+                    if (x && y && z) {
+                        currentMaterial->specular.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
+                                                           internal::stringToFloat(z), 1.0f);
+                        state = kMeshMaterialEmmisiveColor;
+                    }
+                    else {
+                        throw 8;
+                    }
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshMaterialEmmisiveColor:
+                {
+                    char *x = internal::stringToken(token, ";", &p);
+                    char *y = internal::stringToken(NULL, ";", &p);
+                    char *z = internal::stringToken(NULL, ";", &p);
+                    if (x && y && z) {
+                        currentMaterial->emmisive.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
+                                                           internal::stringToFloat(z), 1.0f);
+                        state = kNone;
+                    }
+                    else {
+                        throw 9;
+                    }
+                    break;
                 }
-                if (etsize <= m_coords.size())
-                    state = kNone;
-                break;
-            }
-            case kMeshVertexColorsDeclation:
-            {
-                ecsize = internal::stringToInt(token);
-                state = kMeshVertexColors;
-                break;
-            }
-            case kMeshVertexColors:
-            {
-                char *index = internal::stringToken(token, ";", &p);
-                char *r = internal::stringToken(NULL, ";", &p);
-                char *g = internal::stringToken(NULL, ";", &p);
-                char *b = internal::stringToken(NULL, ";", &p);
-                char *a = internal::stringToken(NULL, ";", &p);
-                if (index && r && g && b && a) {
-                    btVector4 v(internal::stringToFloat(r), internal::stringToFloat(g),
-                                internal::stringToFloat(b), internal::stringToFloat(a));
-                    m_colors.insert(btHashInt(internal::stringToInt(index)), v);
+                case kMeshTextureFilenameDeclation:
+                {
+                    currentMaterial->textureName = token;
+                    break;
                 }
-                else {
-                    return false;
+                case kMeshTextureCoordsDeclation:
+                {
+                    etsize = internal::stringToInt(token);
+                    state = kMeshTextureCoords;
+                    break;
                 }
-                if (ecsize <= m_colors.size())
-                    state = kNone;
-                break;
-            }
-            default:
-            {
-                return false;
-            }
+                case kMeshTextureCoords:
+                {
+                    char *x = internal::stringToken(token, ";", &p);
+                    char *y = internal::stringToken(NULL, ";", &p);
+                    if (x && y) {
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), 0.0f);
+                        m_coords.push_back(v);
+                    }
+                    else {
+                        throw 10;
+                    }
+                    if (etsize <= m_coords.size())
+                        state = kNone;
+                    break;
+                }
+                case kMeshVertexColorsDeclation:
+                {
+                    ecsize = internal::stringToInt(token);
+                    state = kMeshVertexColors;
+                    break;
+                }
+                case kMeshVertexColors:
+                {
+                    char *index = internal::stringToken(token, ";", &p);
+                    char *r = internal::stringToken(NULL, ";", &p);
+                    char *g = internal::stringToken(NULL, ";", &p);
+                    char *b = internal::stringToken(NULL, ";", &p);
+                    char *a = internal::stringToken(NULL, ";", &p);
+                    if (index && r && g && b && a) {
+                        XModelInternalIndexedColor ic;
+                        ic.index = internal::stringToInt(index);
+                        ic.color.setValue(internal::stringToFloat(r), internal::stringToFloat(g),
+                                          internal::stringToFloat(b), internal::stringToFloat(a));
+                        colors.push_back(ic);
+                    }
+                    else {
+                        throw 11;
+                    }
+                    if (ecsize <= colors.size()) {
+                        const uint32_t nColors = colors.size();
+                        m_colors.reserve(nColors);
+                        for (uint32_t i = 0; i < nColors; i++) {
+                            XModelInternalIndexedColor &ic = colors[i];
+                            if (ic.index < nColors)
+                                m_colors[ic.index] = ic.color;
+                        }
+                        state = kNone;
+                    }
+                    break;
+                }
+                default:
+                {
+                    throw 12;
+                }
+                }
             }
         }
+
+        if (mindex == emsize) {
+            uint32_t size = indices.size();
+            m_indices.reserve(emsize + 1);
+            m_materials.reserve(emsize + 1);
+            for (int i = 0; i <= emsize; i++)
+                m_indices.push_back(new XModelIndexList);
+            for (int i = 0; i <= emsize; i++)
+                m_materials.push_back(new XModelMaterial);
+            for (uint32_t i = 0; i < size; i++) {
+                XModelInternalFaceIndex &index = indices[i];
+                XModelIndexList *indice = m_indices[index.index];
+                btVector4 &v = index.value;
+                if (index.count == 3) {
+                    indice->push_back(v.x());
+                    indice->push_back(v.y());
+                    indice->push_back(v.z());
+                }
+                else if (index.count == 4) {
+                    indice->push_back(v.x());
+                    indice->push_back(v.y());
+                    indice->push_back(v.z());
+                    indice->push_back(v.z());
+                    indice->push_back(v.w());
+                    indice->push_back(v.x());
+                }
+            }
+            size = materials.size();
+            for (uint32_t i = 0; i < size; i++) {
+                XModelInternalMaterial *internal = materials[i];
+                XModelMaterial *material = new XModelMaterial(internal->color,
+                                                              internal->specular,
+                                                              internal->emmisive,
+                                                              internal->textureName,
+                                                              internal->power);
+                delete m_materials[internal->index];
+                m_materials[internal->index] = material;
+            }
+            ret = true;
+        }
+
+    } catch (int e) {
     }
 
-    return true;
+    internal::clearAll(materials);
+    indices.clear();
+    colors.clear();
+
+    return ret;
 }
 
 size_t XModel::stride(StrideType type) const
@@ -483,12 +553,7 @@ const void *XModel::textureCoordsPointer() const
 
 const void *XModel::colorsPointer() const
 {
-    return 0;
-}
-
-const void *XModel::indicesPointer() const
-{
-    return &m_indices[0];
+    return &m_colors[0];
 }
 
 }

@@ -60,6 +60,7 @@
 enum VertexBufferObject {
     kModelVertices,
     kModelNormals,
+    kModelColors,
     kModelTexCoords,
     kModelToonTexCoords,
     kEdgeVertices,
@@ -81,6 +82,15 @@ struct vpvl::PMDModelPrivate {
     bool hasMultipleSphereMap;
 };
 
+struct XModelMaterialPrivate {
+    GLuint vertexBufferObject;
+};
+
+struct vpvl::XModelUserData {
+    GLuint vertexBufferObjects[kVertexBufferObjectMax];
+    XModelMaterialPrivate *materials;
+};
+
 static const int g_width = 800;
 static const int g_height = 600;
 static const int g_FPS = 60;
@@ -89,9 +99,11 @@ static const int g_FPS = 60;
 
 static const uint8_t g_sysdir[] = CONCAT_PATH(render/res/system);
 static const uint8_t g_modeldir[] = CONCAT_PATH(render/res/lat);
+static const uint8_t g_stagedir[] = CONCAT_PATH(render/res/stage);
 static const uint8_t g_motion[] = CONCAT_PATH(test/res/motion.vmd);
 static const uint8_t g_camera[] = CONCAT_PATH(test/res/camera.vmd);
 static const uint8_t g_modelname[] = "normal.pmd";
+static const uint8_t g_stagename[] = "stage.x";
 
 static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
 {
@@ -200,7 +212,7 @@ static bool LoadToonTexture(const uint8_t *system, const uint8_t *dir, const uin
     return LoadTexture(reinterpret_cast<const uint8_t *>(path), textureID);
 }
 
-static void LoadModelTextures(vpvl::PMDModel &model, const uint8_t *system, const uint8_t *dir)
+static void LoadModel(vpvl::PMDModel &model, const uint8_t *system, const uint8_t *dir)
 {
     const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
@@ -257,7 +269,7 @@ static void LoadModelTextures(vpvl::PMDModel &model, const uint8_t *system, cons
     model.setPrivateData(modelPrivate);
 }
 
-static void UnloadModelTextures(const vpvl::PMDModel &model)
+static void UnloadModel(const vpvl::PMDModel &model)
 {
     const vpvl::MaterialList materials = model.materials();
     const uint32_t nMaterials = materials.size();
@@ -272,6 +284,46 @@ static void UnloadModelTextures(const vpvl::PMDModel &model)
     glDeleteTextures(vpvl::PMDModel::kSystemTextureMax, data->toonTextureID);
     glDeleteBuffers(kVertexBufferObjectMax, data->vertexBufferObjects);
     delete data;
+}
+
+static void LoadStage(vpvl::XModel &model, const uint8_t * /* dir */)
+{
+    vpvl::XModelUserData *userData = new vpvl::XModelUserData;
+    glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glBufferData(GL_ARRAY_BUFFER, model.vertices().size() * model.stride(vpvl::XModel::kVerticesStride),
+                 model.verticesPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
+    glBufferData(GL_ARRAY_BUFFER, model.normals().size() * model.stride(vpvl::XModel::kNormalsStride),
+                 model.normalsPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelColors]);
+    glBufferData(GL_ARRAY_BUFFER, model.colors().size() * model.stride(vpvl::XModel::kColorsStride),
+                 model.colorsPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.textureCoords().size() * model.stride(vpvl::XModel::kTextureCoordsStride),
+                 model.textureCoordsPointer(), GL_STATIC_DRAW);
+    uint32_t nMaterials = model.countMatreials();
+    userData->materials = new XModelMaterialPrivate[nMaterials];
+    for (uint32_t i = 1; i <= nMaterials; i++) {
+        const vpvl::XModelIndexList *indices = model.indicesAt(i);
+        GLuint &vbo = userData->materials[i - 1].vertexBufferObject;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(uint16_t), &indices[0], GL_STATIC_DRAW);
+    }
+    model.setUserData(userData);
+}
+
+static void UnloadStage(const vpvl::XModel &model)
+{
+    vpvl::XModelUserData *userData = model.userData();
+    uint32_t nMaterials = model.countMatreials();
+    for (uint32_t i = 0; i < nMaterials; i++) {
+        glDeleteBuffers(1, &userData->materials[i].vertexBufferObject);
+    }
+    delete[] userData->materials;
+    glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
+    delete userData;
 }
 
 static void SetLighting(vpvl::Scene &scene)
@@ -301,6 +353,52 @@ static void SetLighting(vpvl::Scene &scene)
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
     scene.setLight(color, direction);
+}
+
+static void DrawStage(const vpvl::XModel *model)
+{
+    const vpvl::XModelUserData *userData = model->userData();
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glVertexPointer(3, GL_FLOAT, model->stride(vpvl::XModel::kVerticesStride), 0);
+    size_t nNormals = model->normals().size();
+    if (nNormals > 0) {
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
+        glNormalPointer(GL_FLOAT, model->stride(vpvl::XModel::kNormalsStride), 0);
+    }
+    size_t nTextureCoords = model->normals().size();
+    if (nTextureCoords > 0) {
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
+        glTexCoordPointer(2, GL_FLOAT, model->stride(vpvl::XModel::kTextureCoordsStride), 0);
+    }
+    size_t nColors = model->colors().size();
+    if (nColors > 0) {
+        glEnableClientState(GL_COLOR_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelColors]);
+        glColorPointer(4, GL_FLOAT, model->stride(vpvl::XModel::kColorsStride), 0);
+    }
+
+    uint32_t size = model->countMatreials();
+    for (uint32_t i = 1; i <= size; i++) {
+        const vpvl::XModelMaterial *material = model->materialAt(i - 1);
+        GLuint &vbo = userData->materials[i - 1].vertexBufferObject;
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
+        glDrawElements(GL_TRIANGLES, model->indicesAt(i)->size(), GL_UNSIGNED_SHORT, 0);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    if (nNormals > 0)
+        glDisableClientState(GL_NORMAL_ARRAY);
+    if (nTextureCoords > 0)
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 static void DrawModel(const vpvl::PMDModel *model)
@@ -570,7 +668,7 @@ static void DrawModelShadow(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
-static void DrawSurface(vpvl::Scene &scene, int width, int height)
+static void DrawSurface(vpvl::Scene &scene, vpvl::XModel &stage, int width, int height)
 {
     float matrix[16];
     memset(matrix, 0, sizeof(matrix));
@@ -583,6 +681,7 @@ static void DrawSurface(vpvl::Scene &scene, int width, int height)
     glLoadMatrixf(matrix);
     glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    DrawStage(&stage);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
@@ -670,29 +769,46 @@ int main(int argc, char *argv[])
         return -1;
     }
     atexit(SDL_Quit);
-    if (IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF) < 0) {
+    if (IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG) < 0) {
         fprintf(stderr, "Unable to init SDL_image: %s\n", IMG_GetError());
         return -1;
     }
     atexit(IMG_Quit);
 
     SDL_Surface *surface;
-    uint8_t *modelData = 0;
-    char path[256];
-    size_t size;
-    snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
-    FileSlurp(path, modelData, size);
-    vpvl::PMDModel model(modelData, size);
     if (!InitializeSurface(surface, g_width, g_height)) {
-        delete[] modelData;
         return -1;
     }
 
+    char path[256];
+    uint8_t *modelData = 0;
+    uint8_t *motionData = 0;
+    uint8_t *cameraData = 0;
+    uint8_t *stageData = 0;
+    size_t size = 0;
+
+    snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
+    FileSlurp(path, modelData, size);
+    vpvl::PMDModel model(modelData, size);
     if (!model.load()) {
         fprintf(stderr, "Failed parsing the model\n");
         delete[] modelData;
         return -1;
     }
+
+    snprintf(path, sizeof(path), "%s/%s", g_stagedir, g_stagename);
+    FileSlurp(path, stageData, size);
+    vpvl::XModel stage(stageData, size);
+    if (!stage.load()) {
+        fprintf(stderr, "Failed parsing the stage\n");
+        delete[] modelData;
+        delete[] stageData;
+        return -1;
+    }
+    LoadStage(stage, g_stagedir);
+
+    vpvl::Scene scene(g_width, g_height, g_FPS);
+    SetLighting(scene);
 
     const float dist = 400.0f;
     btDefaultCollisionConfiguration config;
@@ -703,48 +819,50 @@ int main(int argc, char *argv[])
     world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
     world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / g_FPS);
 
-    vpvl::Scene scene(g_width, g_height, g_FPS);
-    scene.addModel("miku", &model);
+    //scene.addModel("miku", &model);
+    scene.setCamera(btVector3(0.0f, 0.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60, 500.0f);
     scene.setWorld(&world);
-    SetLighting(scene);
-    LoadModelTextures(model, g_sysdir, g_modeldir);
+    LoadModel(model, g_sysdir, g_modeldir);
 
     snprintf(path, sizeof(path), "%s", g_motion);
-    uint8_t *motionData = 0;
     FileSlurp(path, motionData, size);
     vpvl::VMDMotion motion(motionData, size);
     if (!motion.load()) {
         fprintf(stderr, "Failed parsing the model motion\n");
         delete[] modelData;
+        delete[] stageData;
         delete[] motionData;
         return -1;
     }
     model.addMotion(&motion);
 
     snprintf(path, sizeof(path), "%s", g_camera);
-    uint8_t *cameraData = 0;
     FileSlurp(path, cameraData, size);
     vpvl::VMDMotion camera(cameraData, size);
     if (!camera.load()) {
         fprintf(stderr, "Failed parsing the camera motion\n");
         delete[] modelData;
+        delete[] stageData;
         delete[] motionData;
         delete[] cameraData;
         return -1;
     }
-    scene.setCameraMotion(&camera);
+    //scene.setCameraMotion(&camera);
 
     uint32_t interval = static_cast<uint32_t>(1000.0f / g_FPS);
     SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &scene);
     while (true) {
         if (PollEvents())
             break;
-        DrawSurface(scene, g_width, g_height);
+        DrawSurface(scene, stage, g_width, g_height);
     }
     SDL_RemoveTimer(timerID);
 
-    UnloadModelTextures(model);
+    UnloadModel(model);
+    UnloadStage(stage);
     SDL_FreeSurface(surface);
+
+    delete[] stageData;
     delete[] motionData;
     delete[] modelData;
     delete[] cameraData;
