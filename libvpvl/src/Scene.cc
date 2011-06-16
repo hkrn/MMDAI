@@ -134,6 +134,8 @@ void Scene::addModel(PMDModel *model)
 void Scene::addModel(const char *name, PMDModel *model)
 {
     m_models.insert(btHashString(name), model);
+    model->setLightDirection(m_lightDirection);
+    model->joinWorld(m_world);
 }
 
 PMDModel *Scene::findModel(const char *name) const
@@ -165,7 +167,11 @@ void Scene::removeModel(PMDModel *model)
 
 void Scene::removeModel(const char *name)
 {
-    m_models.remove(btHashString(name));
+    vpvl::PMDModel *model = findModel(name);
+    if (model) {
+        model->leaveWorld(m_world);
+        m_models.remove(btHashString(name));
+    }
 }
 
 void Scene::setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
