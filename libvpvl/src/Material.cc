@@ -60,8 +60,7 @@ Material::Material()
       m_firstSPH(false),
       m_firstSPA(false),
       m_secondSPH(false),
-      m_secondSPA(false),
-      m_private(0)
+      m_secondSPA(false)
 {
     memset(m_primaryTextureName, 0, sizeof(m_primaryTextureName));
     memset(m_secondTextureName, 0, sizeof(m_secondTextureName));
@@ -84,7 +83,6 @@ Material::~Material()
     m_firstSPA = false;
     m_secondSPH = false;
     m_secondSPA = false;
-    m_private = 0;
 }
 
 void Material::read(const uint8_t *data)

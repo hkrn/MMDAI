@@ -45,8 +45,6 @@
 namespace vpvl
 {
 
-typedef struct MaterialPrivate MaterialPrivate;
-
 /**
  * @file
  * @author Nagoya Institute of Technology Department of Computer Science
@@ -117,9 +115,6 @@ public:
     bool isSphereAuxSecond() const {
         return m_secondSPA;
     }
-    MaterialPrivate *privateData() const {
-        return m_private;
-    }
 
     void setPrimaryTextureName(const uint8_t *value) {
         copyBytesSafe(m_primaryTextureName, value, sizeof(m_primaryTextureName));
@@ -148,9 +143,6 @@ public:
     void setEdgeEnabled(bool value) {
         m_edge = value;
     }
-    void setPrivateData(MaterialPrivate *value) {
-        m_private = value;
-    }
 
 private:
     uint8_t m_rawName[kNameSize];
@@ -169,7 +161,6 @@ private:
     bool m_firstSPA;
     bool m_secondSPH;
     bool m_secondSPA;
-    MaterialPrivate *m_private;
 };
 
 typedef btAlignedObjectArray<Material*> MaterialList;

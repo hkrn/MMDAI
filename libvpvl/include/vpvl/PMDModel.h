@@ -92,7 +92,7 @@ struct PMDModelDataInfo
 class VMDMotion;
 
 typedef struct SkinVertex SkinVertex;
-typedef struct PMDModelPrivate PMDModelPrivate;
+typedef struct PMDModelUserData PMDModelUserData;
 
 /**
  * @file
@@ -214,8 +214,8 @@ public:
     const PMDModelDataInfo &result() const {
         return m_result;
     }
-    PMDModelPrivate *privateData() const {
-        return m_private;
+    PMDModelUserData *userData() const {
+        return m_userData;
     }
     Bone *findBone(const uint8_t *name) const {
         Bone **ptr = const_cast<Bone **>(m_name2bone.find(btHashString(reinterpret_cast<const char *>(name))));
@@ -270,8 +270,8 @@ public:
     void setEnableSimulation(bool value) {
         m_enableSimulation = value;
     }
-    void setPrivateData(PMDModelPrivate *value) {
-        m_private = value;
+    void setUserData(PMDModelUserData *value) {
+        m_userData = value;
     }
 
 private:
@@ -324,7 +324,7 @@ private:
     btAlignedObjectArray<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
     ::btDiscreteDynamicsWorld *m_world;
-    PMDModelPrivate *m_private;
+    PMDModelUserData *m_userData;
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;
