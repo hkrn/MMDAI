@@ -69,7 +69,7 @@ public:
         m_angle.setZero();
         m_noPerspective = false;
         for (int i = 0; i < 6; i++)
-            delete m_interpolationTable[i];
+            delete[] m_interpolationTable[i];
         memset(m_linear, 0, sizeof(m_linear));
         memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
     }

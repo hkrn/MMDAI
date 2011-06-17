@@ -111,7 +111,7 @@ XModel::~XModel()
     m_materials.clear();
     m_userData = 0;
     m_data = 0;
-    delete m_buffer;
+    delete[] m_buffer;
 }
 
 bool XModel::preparse()

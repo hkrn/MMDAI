@@ -65,7 +65,7 @@ public:
         m_position.setZero();
         m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
         for (int i = 0; i < 4; i++)
-            delete m_interpolationTable[i];
+            delete[] m_interpolationTable[i];
         memset(m_name, 0, sizeof(m_name));
         memset(m_linear, 0, sizeof(m_linear));
         memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
