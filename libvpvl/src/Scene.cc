@@ -99,7 +99,7 @@ Scene::Scene(int width, int height, int fps)
 
 Scene::~Scene()
 {
-    memset(m_projection, 0, sizeof(m_projection));
+    internal::zerofill(m_projection, sizeof(m_projection));
     setWorld(0);
     m_models.clear();
     m_order.clear();

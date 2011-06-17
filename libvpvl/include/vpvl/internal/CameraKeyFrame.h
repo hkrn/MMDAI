@@ -58,8 +58,8 @@ public:
           m_angle(0.0f, 0.0f, 0.0f),
           m_noPerspective(false)
     {
-        memset(m_linear, 0, sizeof(m_linear));
-        memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
+        internal::zerofill(m_linear, sizeof(m_linear));
+        internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     }
     ~CameraKeyFrame() {
         m_index = 0;
@@ -70,8 +70,8 @@ public:
         m_noPerspective = false;
         for (int i = 0; i < 6; i++)
             delete[] m_interpolationTable[i];
-        memset(m_linear, 0, sizeof(m_linear));
-        memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
+        internal::zerofill(m_linear, sizeof(m_linear));
+        internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     }
 
     static const int kTableSize = 24;

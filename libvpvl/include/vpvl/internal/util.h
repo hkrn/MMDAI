@@ -174,6 +174,11 @@ inline float stringToFloat(const char *str)
     return strtof(str, &p);
 }
 
+inline void zerofill(void *ptr, size_t size)
+{
+    memset(ptr, 0, size);
+}
+
 template<typename T>
 inline void clearAll(btAlignedObjectArray<T*> &a)
 {

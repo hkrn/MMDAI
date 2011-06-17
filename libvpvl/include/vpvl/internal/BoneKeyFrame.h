@@ -57,18 +57,18 @@ public:
         : m_index(0),
           m_position(0.0f, 0.0f, 0.0f),
           m_rotation(0.0f, 0.0f, 0.0f, 1.0f) {
-        memset(m_name, 0, sizeof(m_name));
-        memset(m_linear, 0, sizeof(m_linear));
-        memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
+        internal::zerofill(m_name, sizeof(m_name));
+        internal::zerofill(m_linear, sizeof(m_linear));
+        internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     }
     ~BoneKeyFrame() {
         m_position.setZero();
         m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
         for (int i = 0; i < 4; i++)
             delete[] m_interpolationTable[i];
-        memset(m_name, 0, sizeof(m_name));
-        memset(m_linear, 0, sizeof(m_linear));
-        memset(m_interpolationTable, 0, sizeof(m_interpolationTable));
+        internal::zerofill(m_name, sizeof(m_name));
+        internal::zerofill(m_linear, sizeof(m_linear));
+        internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     }
 
     static const int kNameSize = 15;

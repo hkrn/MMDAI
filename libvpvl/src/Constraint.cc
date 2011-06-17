@@ -50,12 +50,12 @@ size_t Constraint::stride()
 Constraint::Constraint()
     : m_constraint(0)
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
 }
 
 Constraint::~Constraint()
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
     delete m_constraint;
     m_constraint = 0;
 }

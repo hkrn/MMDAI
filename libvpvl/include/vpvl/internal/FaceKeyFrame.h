@@ -52,10 +52,10 @@ class FaceKeyFrame
 {
 public:
     FaceKeyFrame() : m_index(0), m_weight(0.0f) {
-        memset(m_name, 0, sizeof(m_name));
+        internal::zerofill(m_name, sizeof(m_name));
     }
     ~FaceKeyFrame() {
-        memset(m_name, 0, sizeof(m_name));
+        internal::zerofill(m_name, sizeof(m_name));
     }
 
     static const int kNameSize = 15;

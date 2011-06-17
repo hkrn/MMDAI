@@ -76,22 +76,22 @@ PMDModel::PMDModel(const uint8_t *data, size_t size)
       m_selfShadowDensityCoef(0.0f),
       m_enableSimulation(false)
 {
-    memset(&m_name, 0, sizeof(m_name));
-    memset(&m_comment, 0, sizeof(m_comment));
-    memset(&m_englishName, 0, sizeof(m_englishName));
-    memset(&m_englishComment, 0, sizeof(m_englishComment));
-    memset(&m_result, 0, sizeof(PMDModelDataInfo));
+    internal::zerofill(&m_name, sizeof(m_name));
+    internal::zerofill(&m_comment, sizeof(m_comment));
+    internal::zerofill(&m_englishName, sizeof(m_englishName));
+    internal::zerofill(&m_englishComment, sizeof(m_englishComment));
+    internal::zerofill(&m_result, sizeof(PMDModelDataInfo));
     m_rootBone.setCurrentRotation(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
     m_rootBone.updateTransform();
 }
 
 PMDModel::~PMDModel()
 {
-    memset(&m_name, 0, sizeof(m_name));
-    memset(&m_comment, 0, sizeof(m_comment));
-    memset(&m_englishName, 0, sizeof(m_englishName));
-    memset(&m_englishComment, 0, sizeof(m_englishComment));
-    memset(&m_result, 0, sizeof(PMDModelDataInfo));
+    internal::zerofill(&m_name, sizeof(m_name));
+    internal::zerofill(&m_comment, sizeof(m_comment));
+    internal::zerofill(&m_englishName, sizeof(m_englishName));
+    internal::zerofill(&m_englishComment, sizeof(m_englishComment));
+    internal::zerofill(&m_result, sizeof(PMDModelDataInfo));
     leaveWorld(m_world);
     internal::clearAll(m_vertices);
     internal::clearAll(m_materials);

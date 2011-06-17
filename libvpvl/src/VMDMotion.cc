@@ -67,14 +67,14 @@ VMDMotion::VMDMotion(const uint8_t *data, size_t size)
       m_data(data),
       m_size(size)
 {
-    memset(&m_name, 0, sizeof(m_name));
-    memset(&m_result, 0, sizeof(m_result));
+    internal::zerofill(&m_name, sizeof(m_name));
+    internal::zerofill(&m_result, sizeof(m_result));
 }
 
 VMDMotion::~VMDMotion()
 {
-    memset(&m_name, 0, sizeof(m_name));
-    memset(&m_result, 0, sizeof(m_result));
+    internal::zerofill(&m_name, sizeof(m_name));
+    internal::zerofill(&m_result, sizeof(m_result));
     m_model = 0;
     m_status = kRunning;
     m_onEnd = 2;

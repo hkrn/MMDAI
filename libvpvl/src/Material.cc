@@ -62,14 +62,14 @@ Material::Material()
       m_secondSPH(false),
       m_secondSPA(false)
 {
-    memset(m_primaryTextureName, 0, sizeof(m_primaryTextureName));
-    memset(m_secondTextureName, 0, sizeof(m_secondTextureName));
+    internal::zerofill(m_primaryTextureName, sizeof(m_primaryTextureName));
+    internal::zerofill(m_secondTextureName, sizeof(m_secondTextureName));
 }
 
 Material::~Material()
 {
-    memset(m_primaryTextureName, 0, sizeof(m_primaryTextureName));
-    memset(m_secondTextureName, 0, sizeof(m_secondTextureName));
+    internal::zerofill(m_primaryTextureName, sizeof(m_primaryTextureName));
+    internal::zerofill(m_secondTextureName, sizeof(m_secondTextureName));
     m_ambient.setZero();
     m_averageColor.setZero();
     m_diffuse.setZero();

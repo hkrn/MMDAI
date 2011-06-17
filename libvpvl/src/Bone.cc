@@ -81,14 +81,14 @@ Bone::Bone()
       m_simulated(false),
       m_motionIndepent(false)
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
     m_currentTransform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
 }
 
 Bone::~Bone()
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
     m_type = kUnknown;
     m_currentTransform.setIdentity();
     m_transformMoveToOrigin.setIdentity();

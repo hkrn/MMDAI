@@ -74,12 +74,12 @@ Face::Face()
     : m_type(kOther),
       m_weight(0.0f)
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
 }
 
 Face::~Face()
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
     internal::clearAll(m_vertices);
     m_type = kOther;
     m_weight = 0.0f;

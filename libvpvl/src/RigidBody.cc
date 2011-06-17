@@ -118,14 +118,14 @@ RigidBody::RigidBody()
       m_type(0),
       m_noBone(false)
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
     m_transform.setIdentity();
     m_invertedTransform.setIdentity();
 }
 
 RigidBody::~RigidBody()
 {
-    memset(m_name, 0, sizeof(m_name));
+    internal::zerofill(m_name, sizeof(m_name));
     delete m_body;
     m_body = 0;
     delete m_shape;
