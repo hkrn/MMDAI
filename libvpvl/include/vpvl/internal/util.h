@@ -88,6 +88,7 @@ inline void vector4(uint8_t *&ptr, float *values)
 
 inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 {
+    assert(ptr != NULL && rest > 0);
     if (sizeof(uint8_t) > rest)
         return false;
     size = *reinterpret_cast<uint8_t *>(ptr);
@@ -98,6 +99,7 @@ inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 
 inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 {
+    assert(ptr != NULL && rest > 0);
     if (sizeof(uint16_t) > rest)
         return false;
     size = *reinterpret_cast<uint16_t *>(ptr);
@@ -108,6 +110,7 @@ inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 
 inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
+    assert(ptr != NULL && rest > 0);
     if (sizeof(uint32_t) > rest)
         return false;
     size = *reinterpret_cast<uint32_t *>(ptr);
@@ -118,6 +121,7 @@ inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 
 inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
+    assert(ptr != NULL && stride > 0 && rest > 0);
     size_t required = stride * size;
     if (required > rest)
         return false;
@@ -128,6 +132,7 @@ inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest
 
 inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
+    assert(table != NULL && size > 0);
     for (int i = 0; i < size; i++) {
         const float in = static_cast<double>(i) / size;
         float t = in;
@@ -165,17 +170,20 @@ inline char *stringToken(char *str, const char *delim, char **ptr)
 
 inline float stringToInt(const char *str)
 {
+    assert(str != NULL);
     return atoi(str);
 }
 
 inline float stringToFloat(const char *str)
 {
+    assert(str != NULL);
     char *p = 0;
     return strtof(str, &p);
 }
 
 inline void zerofill(void *ptr, size_t size)
 {
+    assert(ptr != NULL && size > 0);
     memset(ptr, 0, size);
 }
 
