@@ -51,12 +51,6 @@ struct XModelInternalIndexedColor {
     btVector4 color;
 };
 
-struct XModelInternalFaceIndex {
-    uint32_t index;
-    uint32_t count;
-    btVector4 value;
-};
-
 struct XModelInternalMaterial {
     uint32_t index;
     btVector4 color;
@@ -95,8 +89,7 @@ enum XModelInternalParseState
 
 XModel::XModel(const uint8_t *data, size_t size)
     : m_data(data),
-      m_size(size),
-      m_buffer(0)
+      m_size(size)
 {
 }
 
@@ -111,7 +104,6 @@ XModel::~XModel()
     m_materials.clear();
     m_userData = 0;
     m_data = 0;
-    delete[] m_buffer;
 }
 
 bool XModel::preparse()
@@ -126,10 +118,6 @@ bool XModel::preparse()
     if (!internal::stringEquals(ptr + 8, reinterpret_cast<const uint8_t *>("txt"), 3))
         return false;
 
-    m_buffer = new char[m_size + 1];
-    memcpy(m_buffer, m_data, m_size);
-    m_buffer[m_size] = 0;
-
     return true;
 }
 
@@ -138,10 +126,14 @@ bool XModel::load()
     if (!preparse())
         return false;
 
+    char *buffer = new char[m_size + 1];
+    memcpy(buffer, m_data, m_size);
+    buffer[m_size] = 0;
+
     btAlignedObjectArray<char *> tokens;
     char *p = 0, *token = 0;
     bool skip = false;
-    internal::stringToken(m_buffer, " \r\n\t", &p); // signature
+    internal::stringToken(buffer, " \r\n\t", &p); // signature
     internal::stringToken(NULL, " \r\n\t", &p); // version
     internal::stringToken(NULL, " \r\n\t", &p); // size
     while ((token = internal::stringToken(NULL, " \r\n\t", &p))) {
@@ -160,7 +152,6 @@ bool XModel::load()
     bool ret = false;
     int evsize = 0, ensize = 0, evfsize = 0, enfsize = 0, emsize = 0, efisize = 0, etsize = 0, ecsize = 0;
     int ntokens = tokens.size(), depth = 0, mindex = 0, nindices = 0;
-    btAlignedObjectArray<XModelInternalFaceIndex> indices;
     btAlignedObjectArray<XModelInternalIndexedColor> colors;
     btAlignedObjectArray<XModelInternalMaterial *> materials;
     XModelInternalMaterial *currentMaterial = 0;
@@ -256,7 +247,7 @@ bool XModel::load()
                     char *w = internal::stringToken(NULL, ",", &p);
                     if (s) {
                         int size = internal::stringToInt(s);
-                        XModelInternalFaceIndex v;
+                        XModelFaceIndex v;
                         v.index = 0;
                         v.count = size;
                         if (size == 3 && x && y && z) {
@@ -270,7 +261,7 @@ bool XModel::load()
                         else {
                             throw 3;
                         }
-                        indices.push_back(v);
+                        m_faces.push_back(v);
                         nindices++;
                     }
                     else {
@@ -333,8 +324,8 @@ bool XModel::load()
                 case kMeshMaterialFaceIndices:
                 {
                     int index = internal::stringToInt(token);
-                    if (index <= emsize)
-                        indices[nindices++].index = index;
+                    if (index > 0 && index <= emsize)
+                        m_faces[nindices++].index = index;
                     else
                         throw 6;
                     if (efisize <= nindices)
@@ -404,7 +395,26 @@ bool XModel::load()
                 }
                 case kMeshTextureFilenameDeclation:
                 {
-                    currentMaterial->textureName = token;
+                    size_t len = strlen(token);
+                    char *filename = new char[len + 1];
+                    strcpy(filename, token);
+                    //internal::zerofill(filename, len + 1);
+                    size_t j = 0;
+                    for (size_t i = 0; i < len; i++) {
+                        char c = token[i];
+                        switch (c) {
+                        case '"':
+                        case ';':
+                            break;
+                        case '\\':
+                            filename[j++] = '/';
+                            break;
+                        default:
+                            filename[j++] = c;
+                        }
+                    }
+                    filename[j] = 0;
+                    currentMaterial->textureName = filename;
                     break;
                 }
                 case kMeshTextureCoordsDeclation:
@@ -454,9 +464,10 @@ bool XModel::load()
                     if (ecsize <= colors.size()) {
                         const uint32_t nColors = colors.size();
                         m_colors.reserve(nColors);
+                        nindices = m_faces.size();
                         for (uint32_t i = 0; i < nColors; i++) {
                             XModelInternalIndexedColor &ic = colors[i];
-                            if (ic.index < nColors)
+                            if (ic.index < nindices)
                                 m_colors[ic.index] = ic.color;
                         }
                         state = kNone;
@@ -472,7 +483,7 @@ bool XModel::load()
         }
 
         if (mindex == emsize) {
-            uint32_t size = indices.size();
+            uint32_t size = m_faces.size();
             m_indices.reserve(emsize + 1);
             m_materials.reserve(emsize + 1);
             for (int i = 0; i <= emsize; i++)
@@ -480,7 +491,7 @@ bool XModel::load()
             for (int i = 0; i <= emsize; i++)
                 m_materials.push_back(new XModelMaterial);
             for (uint32_t i = 0; i < size; i++) {
-                XModelInternalFaceIndex &index = indices[i];
+                XModelFaceIndex &index = m_faces[i];
                 XModelIndexList *indice = m_indices[index.index];
                 btVector4 &v = index.value;
                 if (index.count == 3) {
@@ -493,8 +504,8 @@ bool XModel::load()
                     indice->push_back(v.y());
                     indice->push_back(v.z());
                     indice->push_back(v.z());
+                    indice->push_back(v.y());
                     indice->push_back(v.w());
-                    indice->push_back(v.x());
                 }
             }
             size = materials.size();
@@ -515,8 +526,8 @@ bool XModel::load()
     }
 
     internal::clearAll(materials);
-    indices.clear();
     colors.clear();
+    delete[] buffer;
 
     return ret;
 }

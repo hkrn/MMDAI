@@ -64,14 +64,20 @@ public:
         : m_color(color),
           m_specular(specular),
           m_emmisive(emmisive),
-          m_textureName(textureName),
+          m_textureName(0),
           m_power(power)
     {
+        if (textureName) {
+            size_t len = strlen(textureName);
+            m_textureName = new char[len + 1];
+            strncpy(m_textureName, textureName, len);
+        }
     }
     ~XModelMaterial() {
         m_color.setZero();
         m_specular.setZero();
         m_emmisive.setZero();
+        delete[] m_textureName;
         m_textureName = 0;
         m_power = 0;
     }
@@ -88,6 +94,12 @@ private:
     btVector4 m_emmisive;
     char *m_textureName;
     float m_power;
+};
+
+struct XModelFaceIndex {
+    uint32_t index;
+    uint32_t count;
+    btVector4 value;
 };
 
 /**
@@ -135,6 +147,9 @@ public:
     const btAlignedObjectArray<btVector4> &colors() const {
         return m_colors;
     }
+    const btAlignedObjectArray<XModelFaceIndex> &faces() const {
+        return m_faces;
+    }
     const XModelIndexList *indicesAt(uint32_t value) const {
         return m_indices[value];
     }
@@ -163,12 +178,12 @@ private:
     btAlignedObjectArray<btVector3> m_normals;
     btAlignedObjectArray<btVector3> m_coords;
     btAlignedObjectArray<btVector4> m_colors;
+    btAlignedObjectArray<XModelFaceIndex> m_faces;
     btAlignedObjectArray<XModelIndexList *> m_indices;
     btAlignedObjectArray<XModelMaterial *> m_materials;
     XModelUserData *m_userData;
     const uint8_t *m_data;
     const size_t m_size;
-    char *m_buffer;
 };
 
 }

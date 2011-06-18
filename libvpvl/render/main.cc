@@ -57,6 +57,12 @@
 
 #include <vpvl/vpvl.h>
 
+#ifdef __GNUC__
+#define WILL_BE_UNUSED __attribute__ ((unused))
+#else
+#define WILL_BE_UNUSED
+#endif
+
 enum VertexBufferObject {
     kModelVertices,
     kModelNormals,
@@ -257,8 +263,8 @@ static void LoadModel(vpvl::PMDModel &model, const uint8_t *system, const uint8_
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices().size() * model.stride(vpvl::PMDModel::kIndicesStride),
                  model.indicesPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.vertices().size() * model.stride(vpvl::PMDModel::kTextureCoordsStride),
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
+    glBufferData(GL_ARRAY_BUFFER, model.vertices().size() * model.stride(vpvl::PMDModel::kTextureCoordsStride),
                  model.textureCoordsPointer(), GL_STATIC_DRAW);
     if (LoadToonTexture(system, dir, reinterpret_cast<const uint8_t *>("toon0.bmp"), textureID))
         userData->toonTextureID[0] = textureID;
@@ -288,34 +294,45 @@ static void UnloadModel(const vpvl::PMDModel &model)
     delete userData;
 }
 
+WILL_BE_UNUSED
 static void LoadStage(vpvl::XModel &model, const uint8_t * /* dir */)
 {
     vpvl::XModelUserData *userData = new vpvl::XModelUserData;
-    glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model.vertices().size() * model.stride(vpvl::XModel::kVerticesStride),
-                 model.verticesPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
-    glBufferData(GL_ARRAY_BUFFER, model.normals().size() * model.stride(vpvl::XModel::kNormalsStride),
-                 model.normalsPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelColors]);
-    glBufferData(GL_ARRAY_BUFFER, model.colors().size() * model.stride(vpvl::XModel::kColorsStride),
-                 model.colorsPointer(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.textureCoords().size() * model.stride(vpvl::XModel::kTextureCoordsStride),
-                 model.textureCoordsPointer(), GL_STATIC_DRAW);
-    uint32_t nMaterials = model.countMatreials();
-    userData->materials = new XModelMaterialPrivate[nMaterials];
-    for (uint32_t i = 1; i <= nMaterials; i++) {
+    uint32_t size = model.countMatreials();
+    userData->materials = new XModelMaterialPrivate[size];
+    for (uint32_t i = 1; i <= size; i++) {
         const vpvl::XModelIndexList *indices = model.indicesAt(i);
         GLuint &vbo = userData->materials[i - 1].vertexBufferObject;
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices->size() * sizeof(uint16_t), &indices[0], GL_STATIC_DRAW);
     }
+    glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glBufferData(GL_ARRAY_BUFFER, model.vertices().size() * model.stride(vpvl::XModel::kVerticesStride),
+                 model.verticesPointer(), GL_STATIC_DRAW);
+    size = model.normals().size();
+    if (size > 0) {
+        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
+        glBufferData(GL_ARRAY_BUFFER, size * model.stride(vpvl::XModel::kNormalsStride),
+                     model.normalsPointer(), GL_STATIC_DRAW);
+    }
+    size = model.colors().size();
+    if (size > 0) {
+        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelColors]);
+        glBufferData(GL_ARRAY_BUFFER, size * model.stride(vpvl::XModel::kColorsStride),
+                     model.colorsPointer(), GL_STATIC_DRAW);
+    }
+    size = model.textureCoords().size();
+    if (size > 0) {
+        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
+        glBufferData(GL_ARRAY_BUFFER, size * model.stride(vpvl::XModel::kTextureCoordsStride),
+                     model.textureCoordsPointer(), GL_STATIC_DRAW);
+    }
     model.setUserData(userData);
 }
 
+WILL_BE_UNUSED
 static void UnloadStage(const vpvl::XModel &model)
 {
     vpvl::XModelUserData *userData = model.userData();
@@ -334,14 +351,15 @@ static void SetLighting(vpvl::Scene &scene)
     btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6;
 
     // use MMD like cartoon
-    /*
+#if 0
     diffuseValue = 0.2f;
     ambientValue = lightIntensity * 2.0f;
     specularValue = 0.4f;
-    */
+#else
     diffuseValue = 0.0f;
     ambientValue = lightIntensity * 2.0f;
     specularValue = lightIntensity;
+#endif
 
     btVector3 diffuse = color * diffuseValue;
     btVector3 ambient = color * ambientValue;
@@ -357,6 +375,7 @@ static void SetLighting(vpvl::Scene &scene)
     scene.setLight(color, direction);
 }
 
+WILL_BE_UNUSED
 static void DrawStage(const vpvl::XModel *model)
 {
     const vpvl::XModelUserData *userData = model->userData();
@@ -369,7 +388,7 @@ static void DrawStage(const vpvl::XModel *model)
         glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
         glNormalPointer(GL_FLOAT, model->stride(vpvl::XModel::kNormalsStride), 0);
     }
-    size_t nTextureCoords = model->normals().size();
+    size_t nTextureCoords = model->textureCoords().size();
     if (nTextureCoords > 0) {
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
@@ -382,14 +401,14 @@ static void DrawStage(const vpvl::XModel *model)
         glColorPointer(4, GL_FLOAT, model->stride(vpvl::XModel::kColorsStride), 0);
     }
 
-    uint32_t size = model->countMatreials();
-    for (uint32_t i = 1; i <= size; i++) {
+    uint32_t nMaterials = model->countMatreials();
+    for (uint32_t i = 1; i <= nMaterials; i++) {
         const vpvl::XModelMaterial *material = model->materialAt(i - 1);
-        GLuint &vbo = userData->materials[i - 1].vertexBufferObject;
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
+        const GLuint &vbo = userData->materials[i - 1].vertexBufferObject;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
         glDrawElements(GL_TRIANGLES, model->indicesAt(i)->size(), GL_UNSIGNED_SHORT, 0);
     }
@@ -401,6 +420,67 @@ static void DrawStage(const vpvl::XModel *model)
         glDisableClientState(GL_NORMAL_ARRAY);
     if (nTextureCoords > 0)
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    if (nColors > 0)
+        glDisableClientState(GL_COLOR_ARRAY);
+}
+
+static void DrawStage2(const vpvl::XModel *model, const uint8_t *dir)
+{
+    const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
+    const btAlignedObjectArray<btVector3> &vertices = model->vertices();
+    const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
+    uint32_t nFaces = faces.size();
+    uint32_t prevIndex = 0;
+    static btHashMap<btHashInt, GLuint> textures;
+    glEnable(GL_TEXTURE_2D);
+    for (uint32_t i = 0; i < nFaces; i++) {
+        const vpvl::XModelFaceIndex &face = faces[i];
+        const btVector4 &value = face.value;
+        const uint32_t count = face.count;
+        const uint32_t currentIndex = face.index;
+        if (prevIndex != currentIndex) {
+            const vpvl::XModelMaterial *material = model->materialAt(currentIndex - 1);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(material->color()));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
+            const char *textureName = material->textureName();
+            if (textureName) {
+                GLuint *textureID = textures[currentIndex];
+                if (!textureID) {
+                    char path[256];
+                    snprintf(path, sizeof(path), "%s/%s", dir, textureName);
+                    GLuint newTextureID = 0;
+                    if (LoadTexture(reinterpret_cast<const uint8_t *>(path), newTextureID)) {
+                        textures.insert(currentIndex, newTextureID);
+                        glBindTexture(GL_TEXTURE_2D, newTextureID);
+                    }
+                }
+                else {
+                    glBindTexture(GL_TEXTURE_2D, *textureID);
+                }
+            }
+            prevIndex = currentIndex;
+        }
+        switch (count) {
+        case 3:
+            glBegin(GL_TRIANGLES);
+            break;
+        case 4:
+            glBegin(GL_QUADS);
+            break;
+        }
+        for (uint32_t j = 0; j < count; j++) {
+            const uint32_t x = static_cast<const uint32_t>(value[j]);
+            const btVector3 &v = vertices[x];
+            glVertex3f(v.x(), v.y(), v.z());
+            const btVector3 &t = textureCoords[x];
+            glTexCoord2f(t.x(), t.y());
+        }
+        glEnd();
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 }
 
 static void DrawModel(const vpvl::PMDModel *model)
@@ -468,7 +548,6 @@ static void DrawModel(const vpvl::PMDModel *model)
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const uint32_t nMaterials = materials.size();
     btVector4 average, ambient, diffuse, specular;
-    uint16_t *indicesPtr = const_cast<uint16_t *>(model->indicesPointer());
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
@@ -548,7 +627,6 @@ static void DrawModel(const vpvl::PMDModel *model)
         const uint32_t nIndices = material->countIndices();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, materialPrivate.vertexBufferObject);
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, 0);
-        indicesPtr += nIndices;
         // is aux sphere map
         if (material->isSphereAuxPrimary()) {
             glActiveTexture(GL_TEXTURE0);
@@ -675,7 +753,6 @@ static void DrawModelShadow(const vpvl::PMDModel *model)
 static void DrawSurface(vpvl::Scene &scene, vpvl::XModel &stage, int width, int height)
 {
     float matrix[16];
-    memset(matrix, 0, sizeof(matrix));
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     scene.getProjectionMatrix(matrix);
@@ -685,7 +762,7 @@ static void DrawSurface(vpvl::Scene &scene, vpvl::XModel &stage, int width, int 
     glLoadMatrixf(matrix);
     glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    //DrawStage(&stage);
+    DrawStage2(&stage, g_stagedir);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
@@ -810,7 +887,7 @@ int main(int argc, char *argv[])
         delete[] stageData;
         return -1;
     }
-    LoadStage(stage, g_stagedir);
+    //LoadStage(stage, g_stagedir);
 
     const float dist = 400.0f;
     btDefaultCollisionConfiguration config;
@@ -823,7 +900,7 @@ int main(int argc, char *argv[])
 
     vpvl::Scene scene(g_width, g_height, g_FPS);
     SetLighting(scene);
-    scene.addModel("miku", &model);
+    //scene.addModel("miku", &model);
     scene.setWorld(&world);
 
     snprintf(path, sizeof(path), "%s", g_motion);
@@ -849,7 +926,8 @@ int main(int argc, char *argv[])
         delete[] cameraData;
         return -1;
     }
-    scene.setCameraMotion(&camera);
+    //scene.setCamera(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 45.0f, 550.0f);
+    //scene.setCameraMotion(&camera);
 
     uint32_t interval = static_cast<uint32_t>(1000.0f / g_FPS);
     SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &scene);
@@ -861,7 +939,7 @@ int main(int argc, char *argv[])
     SDL_RemoveTimer(timerID);
 
     UnloadModel(model);
-    UnloadStage(stage);
+    //UnloadStage(stage);
     SDL_FreeSurface(surface);
 
     delete[] stageData;
