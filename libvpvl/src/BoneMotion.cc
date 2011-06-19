@@ -231,14 +231,14 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     btQuaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
     if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
-            timeFrom = m_lastLoopStartIndex;
+            timeFrom = static_cast<float>(m_lastLoopStartIndex);
             positionFrom = node->snapPosition;
             rotationFrom = node->snapRotation;
             positionTo = keyFrameTo->position();
             rotationTo = keyFrameTo->rotation();
         }
         else if (frameAt - timeFrom < m_smearIndex) {
-            timeFrom = m_lastLoopStartIndex;
+            timeFrom = static_cast<float>(m_lastLoopStartIndex);
             timeTo = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
             positionFrom = node->snapPosition;

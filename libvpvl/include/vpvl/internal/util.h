@@ -45,6 +45,10 @@
 #include "LinearMath/btQuaternion.h"
 #include <string.h>
 
+#if defined(WIN32)
+#include <windows.h>
+#endif
+
 namespace vpvl
 {
 namespace internal
@@ -134,7 +138,7 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
 {
     assert(table != NULL && size > 0);
     for (int i = 0; i < size; i++) {
-        const float in = static_cast<double>(i) / size;
+        const float in = static_cast<const float>(i) / size;
         float t = in;
         while (1) {
             const float v = spline1(t, x1, x2) - in;
@@ -165,10 +169,14 @@ inline bool stringEquals(const char *s1, const char *s2, size_t max)
 inline char *stringToken(char *str, const char *delim, char **ptr)
 {
     assert(delim != NULL);
+#if defined(WIN32)
+    return strtok_s(str, delim, ptr);
+#else
     return strtok_r(str, delim, ptr);
+#endif
 }
 
-inline float stringToInt(const char *str)
+inline int stringToInt(const char *str)
 {
     assert(str != NULL);
     return atoi(str);
@@ -178,13 +186,21 @@ inline float stringToFloat(const char *str)
 {
     assert(str != NULL);
     char *p = 0;
+#if defined(WIN32)
+    return static_cast<float>(strtod(str, &p));
+#else
     return strtof(str, &p);
+#endif
 }
 
 inline void zerofill(void *ptr, size_t size)
 {
     assert(ptr != NULL && size > 0);
+#if defined(WIN32)
+    SecureZeroMemory(ptr, size);
+#else
     memset(ptr, 0, size);
+#endif
 }
 
 template<typename T>

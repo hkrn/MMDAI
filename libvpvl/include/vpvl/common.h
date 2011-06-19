@@ -41,7 +41,7 @@
 
 #define VPVL_COORDINATE_OPENGL
 
-#if defined(WIN32) && (defined(__MINGW__) || defined(__MINGW32__))
+#if defined(WIN32) && !(defined(__MINGW__) || defined(__MINGW32__))
 #define _USE_MATH_DEFINES
 typedef char int8_t;
 typedef unsigned char uint8_t;
@@ -63,15 +63,17 @@ typedef unsigned int uint32_t;
 namespace vpvl
 {
 
+static const float kPI = 3.14159265358979323846f;
+
 /* convert from/to radian */
 inline float radian(float value)
 {
-    return value * static_cast<float>(M_PI / 180.0f);
+    return value * static_cast<float>(kPI / 180.0f);
 }
 
 inline float degree(float value)
 {
-    return value * static_cast<float>(180.0f / M_PI);
+    return value * static_cast<float>(180.0f / kPI);
 }
 
 inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)

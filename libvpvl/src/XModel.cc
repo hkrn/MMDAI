@@ -252,12 +252,16 @@ bool XModel::load()
                         v.index = 0;
                         v.count = size;
                         if (size == 3 && x && y && z) {
-                            v.value.setValue(internal::stringToInt(x), internal::stringToInt(y),
-                                             internal::stringToInt(z), 0.0f);
+                            v.value.setValue(static_cast<const btScalar>(internal::stringToInt(x)),
+                                             static_cast<const btScalar>(internal::stringToInt(y)),
+                                             static_cast<const btScalar>(internal::stringToInt(z)),
+                                             0.0f);
                         }
                         else if (size == 4 && x && y && z && w) {
-                            v.value.setValue(internal::stringToInt(x), internal::stringToInt(y),
-                                             internal::stringToInt(z), internal::stringToInt(w));
+                            v.value.setValue(static_cast<const btScalar>(internal::stringToInt(x)),
+                                             static_cast<const btScalar>(internal::stringToInt(y)),
+                                             static_cast<const btScalar>(internal::stringToInt(z)),
+                                             static_cast<const btScalar>(internal::stringToInt(w)));
                         }
                         else {
                             throw 3;
@@ -497,17 +501,17 @@ bool XModel::load()
                 XModelIndexList *indice = m_indices[index.index];
                 btVector4 &v = index.value;
                 if (index.count == 3) {
-                    indice->push_back(v.x());
-                    indice->push_back(v.y());
-                    indice->push_back(v.z());
+                    indice->push_back(static_cast<const uint16_t>(v.x()));
+                    indice->push_back(static_cast<const uint16_t>(v.y()));
+                    indice->push_back(static_cast<const uint16_t>(v.z()));
                 }
                 else if (index.count == 4) {
-                    indice->push_back(v.x());
-                    indice->push_back(v.y());
-                    indice->push_back(v.z());
-                    indice->push_back(v.z());
-                    indice->push_back(v.y());
-                    indice->push_back(v.w());
+                    indice->push_back(static_cast<const uint16_t>(v.x()));
+                    indice->push_back(static_cast<const uint16_t>(v.y()));
+                    indice->push_back(static_cast<const uint16_t>(v.z()));
+                    indice->push_back(static_cast<const uint16_t>(v.z()));
+                    indice->push_back(static_cast<const uint16_t>(v.y()));
+                    indice->push_back(static_cast<const uint16_t>(v.w()));
                 }
             }
             size = materials.size();

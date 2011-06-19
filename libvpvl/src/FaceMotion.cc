@@ -97,7 +97,7 @@ void FaceMotion::seek(float frameAt)
         if (m_blendRate == 1.0f)
             face->setWeight(node->weight);
         else
-            face->setWeight(face->weight() * (1.0 - m_blendRate) + node->weight * m_blendRate);
+            face->setWeight(face->weight() * (1.0f - m_blendRate) + node->weight * m_blendRate);
     }
 }
 
@@ -197,12 +197,12 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     float weightFrom = 0.0f, weightTo = 0.0f;
     if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
-            timeFrom = m_lastLoopStartIndex;
+            timeFrom = static_cast<float>(m_lastLoopStartIndex);
             weightFrom = node->snapWeight;
             weightTo = keyFrameTo->weight();
         }
         else if (frameAt - timeFrom < m_smearIndex) {
-            timeFrom = m_lastLoopStartIndex;
+            timeFrom = static_cast<float>(m_lastLoopStartIndex);
             timeTo = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
             weightFrom = node->snapWeight;

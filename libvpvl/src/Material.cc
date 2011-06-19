@@ -130,7 +130,7 @@ void Material::read(const uint8_t *data)
     m_alpha = alpha;
     m_shiness = shiness;
     m_toonID = toonID == 0xff ? 0 : toonID + 1;
-    m_edge = edge;
+    m_edge = edge ? true : false;
     m_nindices = nindices;
 }
 
