@@ -150,15 +150,16 @@ bool XModel::load()
     }
 
     bool ret = false;
-    int evsize = 0, ensize = 0, evfsize = 0, enfsize = 0, emsize = 0, efisize = 0, etsize = 0, ecsize = 0;
-    int ntokens = tokens.size(), depth = 0, mindex = 0, nindices = 0;
+    uint32_t evsize = 0, ensize = 0, evfsize = 0, enfsize = 0, emsize = 0, efisize = 0, etsize = 0, ecsize = 0;
+    uint32_t nTokens = tokens.size(), nIndices = 0, materialIndex = 0;
+    int depth = 0;
     btAlignedObjectArray<XModelInternalIndexedColor> colors;
     btAlignedObjectArray<XModelInternalMaterial *> materials;
     XModelInternalMaterial *currentMaterial = 0;
     XModelInternalParseState state = kNone;
 
     try {
-        for (int i = 0; i < ntokens; i++) {
+        for (uint32_t i = 0; i < nTokens; i++) {
             char *token = tokens[i];
             if (*token == '{') {
                 switch (state) {
@@ -227,7 +228,7 @@ bool XModel::load()
                     else {
                         throw 2;
                     }
-                    if (evsize <= m_vertices.size())
+                    if (evsize <= static_cast<uint32_t>(m_vertices.size()))
                         state = kMeshVertexFacesSize;
                     break;
                 }
@@ -235,7 +236,7 @@ bool XModel::load()
                 {
                     evfsize = internal::stringToInt(token);
                     state = kMeshVertexFaces;
-                    nindices = 0;
+                    nIndices = 0;
                     break;
                 }
                 case kMeshVertexFaces:
@@ -246,7 +247,7 @@ bool XModel::load()
                     char *z = internal::stringToken(NULL, ",", &p);
                     char *w = internal::stringToken(NULL, ",", &p);
                     if (s) {
-                        int size = internal::stringToInt(s);
+                        uint32_t size = internal::stringToInt(s);
                         XModelFaceIndex v;
                         v.index = 0;
                         v.count = size;
@@ -262,12 +263,12 @@ bool XModel::load()
                             throw 3;
                         }
                         m_faces.push_back(v);
-                        nindices++;
+                        nIndices++;
                     }
                     else {
                         throw 4;
                     }
-                    if (evfsize <= nindices)
+                    if (evfsize <= nIndices)
                         state = kNone;
                     break;
                 }
@@ -290,7 +291,7 @@ bool XModel::load()
                     else {
                         throw 5;
                     }
-                    if (ensize <= m_normals.size())
+                    if (ensize <= static_cast<uint32_t>(m_normals.size()))
                         state = kMeshNormalFacesSize;
                     break;
                 }
@@ -298,13 +299,13 @@ bool XModel::load()
                 {
                     enfsize = internal::stringToInt(token);
                     state = kMeshNormalFaces;
-                    nindices = 0;
+                    nIndices = 0;
                     break;
                 }
                 case kMeshNormalFaces:
                 {
-                    nindices++;
-                    if (enfsize <= nindices)
+                    nIndices++;
+                    if (enfsize <= nIndices)
                         state = kNone;
                     break;
                 }
@@ -318,17 +319,17 @@ bool XModel::load()
                 {
                     efisize = internal::stringToInt(token);
                     state = kMeshMaterialFaceIndices;
-                    nindices = 0;
+                    nIndices = 0;
                     break;
                 }
                 case kMeshMaterialFaceIndices:
                 {
-                    int index = internal::stringToInt(token);
-                    if (index > 0 && index <= emsize)
-                        m_faces[nindices++].index = index;
+                    uint32_t index = internal::stringToInt(token);
+                    if (index <= emsize)
+                        m_faces[nIndices++].index = index;
                     else
                         throw 6;
-                    if (efisize <= nindices)
+                    if (efisize <= nIndices)
                         state = kNone;
                     break;
                 }
@@ -348,7 +349,7 @@ bool XModel::load()
                     if (x && y && z && w) {
                         currentMaterial->color.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
                                                         internal::stringToFloat(z), internal::stringToFloat(w));
-                        currentMaterial->index = mindex++;
+                        currentMaterial->index = materialIndex++;
                         state = kMeshMaterialPower;
                     }
                     else {
@@ -432,7 +433,7 @@ bool XModel::load()
                     else {
                         throw 10;
                     }
-                    if (etsize <= m_coords.size())
+                    if (etsize <= static_cast<uint32_t>(m_coords.size()))
                         state = kNone;
                     break;
                 }
@@ -459,13 +460,13 @@ bool XModel::load()
                     else {
                         throw 11;
                     }
-                    if (ecsize <= colors.size()) {
+                    if (ecsize <= static_cast<uint32_t>(colors.size())) {
                         const uint32_t nColors = colors.size();
                         m_colors.reserve(nColors);
-                        nindices = m_faces.size();
+                        nIndices = m_faces.size();
                         for (uint32_t i = 0; i < nColors; i++) {
                             XModelInternalIndexedColor &ic = colors[i];
-                            if (ic.index < nindices)
+                            if (ic.index < nIndices)
                                 m_colors[ic.index] = ic.color;
                         }
                         state = kNone;
@@ -483,13 +484,13 @@ bool XModel::load()
         delete[] buffer;
         buffer = 0;
 
-        if (mindex == emsize) {
+        if (materialIndex == emsize) {
             uint32_t size = m_faces.size();
             m_indices.reserve(emsize + 1);
             m_materials.reserve(emsize + 1);
-            for (int i = 0; i <= emsize; i++)
+            for (uint32_t i = 0; i <= emsize; i++)
                 m_indices.push_back(new XModelIndexList);
-            for (int i = 0; i <= emsize; i++)
+            for (uint32_t i = 0; i <= emsize; i++)
                 m_materials.push_back(new XMaterial);
             for (uint32_t i = 0; i < size; i++) {
                 XModelFaceIndex &index = m_faces[i];
