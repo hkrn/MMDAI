@@ -348,9 +348,8 @@ bool XModel::load()
                     if (x && y && z && w) {
                         currentMaterial->color.setValue(internal::stringToFloat(x), internal::stringToFloat(y),
                                                         internal::stringToFloat(z), internal::stringToFloat(w));
-                        currentMaterial->index = mindex;
+                        currentMaterial->index = mindex++;
                         state = kMeshMaterialPower;
-                        mindex++;
                     }
                     else {
                         throw 7;
@@ -398,9 +397,8 @@ bool XModel::load()
                     size_t len = strlen(token);
                     char *filename = new char[len + 1];
                     strcpy(filename, token);
-                    //internal::zerofill(filename, len + 1);
-                    size_t j = 0;
-                    for (size_t i = 0; i < len; i++) {
+                    size_t i = 0, j = 0;
+                    for (; i < len; i++) {
                         char c = token[i];
                         switch (c) {
                         case '"':
@@ -482,6 +480,9 @@ bool XModel::load()
             }
         }
 
+        delete[] buffer;
+        buffer = 0;
+
         if (mindex == emsize) {
             uint32_t size = m_faces.size();
             m_indices.reserve(emsize + 1);
@@ -489,7 +490,7 @@ bool XModel::load()
             for (int i = 0; i <= emsize; i++)
                 m_indices.push_back(new XModelIndexList);
             for (int i = 0; i <= emsize; i++)
-                m_materials.push_back(new XModelMaterial);
+                m_materials.push_back(new XMaterial);
             for (uint32_t i = 0; i < size; i++) {
                 XModelFaceIndex &index = m_faces[i];
                 XModelIndexList *indice = m_indices[index.index];
@@ -511,18 +512,20 @@ bool XModel::load()
             size = materials.size();
             for (uint32_t i = 0; i < size; i++) {
                 XModelInternalMaterial *internal = materials[i];
-                XModelMaterial *material = new XModelMaterial(internal->color,
-                                                              internal->specular,
-                                                              internal->emmisive,
-                                                              internal->textureName,
-                                                              internal->power);
-                delete m_materials[internal->index];
-                m_materials[internal->index] = material;
+                uint32_t index = internal->index;
+                XMaterial *material = new XMaterial(internal->color,
+                                                    internal->specular,
+                                                    internal->emmisive,
+                                                    internal->textureName,
+                                                    internal->power);
+                delete m_materials[index];
+                m_materials[index] = material;
             }
             ret = true;
         }
 
     } catch (int e) {
+        fprintf(stderr, "%d", e);
     }
 
     internal::clearAll(materials);

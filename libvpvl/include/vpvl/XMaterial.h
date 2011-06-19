@@ -34,110 +34,65 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_XMODEL_H_
-#define VPVL_XMODEL_H_
+#ifndef VPVL_XMATERIAL_H_
+#define VPVL_XMATERIAL_H_
 
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
 
-#include "vpvl/PMDModel.h"
-#include "vpvl/XMaterial.h"
 #include "vpvl/common.h"
 
 namespace vpvl
 {
 
-struct XModelFaceIndex {
-    uint32_t index;
-    uint32_t count;
-    btVector4 value;
-};
-
-typedef struct XModelUserData XModelUserData;
-typedef btAlignedObjectArray<uint16_t> XModelIndexList;
-
-/**
- * @file
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * XModel class represents a DirectX model.
- */
-
-class XModel
-{
+class XMaterial {
 public:
-    enum StrideType
+    XMaterial()
+        : m_color(0.0f, 0.0f, 0.0f, 0.0f),
+          m_specular(0.0f, 0.0f, 0.0f, 0.0f),
+          m_emmisive(0.0f, 0.0f, 0.0f, 0.0f),
+          m_textureName(0),
+          m_power(0.0f)
     {
-        kVerticesStride,
-        kNormalsStride,
-        kTextureCoordsStride,
-        kColorsStride,
-        kIndicesStride
-    };
-
-    XModel(const uint8_t *data, size_t size);
-    ~XModel();
-
-    bool preparse();
-    bool load();
-
-    size_t stride(StrideType type) const;
-    const void *verticesPointer() const;
-    const void *normalsPointer() const;
-    const void *textureCoordsPointer() const;
-    const void *colorsPointer() const;
-
-    const btAlignedObjectArray<btVector3> &vertices() const {
-        return m_vertices;
     }
-    const btAlignedObjectArray<btVector3> &normals() const {
-        return m_normals;
+    XMaterial(const btVector4 &color,
+              const btVector4 &specular,
+              btVector4 &emmisive,
+              char *textureName,
+              float power)
+        : m_color(color),
+          m_specular(specular),
+          m_emmisive(emmisive),
+          m_textureName(0),
+          m_power(power)
+    {
+        if (textureName) {
+            size_t len = strlen(textureName);
+            m_textureName = new char[len + 1];
+            strcpy(m_textureName, textureName);
+        }
     }
-    const btAlignedObjectArray<btVector3> &textureCoords() const {
-        return m_coords;
-    }
-    const btAlignedObjectArray<btVector4> &colors() const {
-        return m_colors;
-    }
-    const btAlignedObjectArray<XModelFaceIndex> &faces() const {
-        return m_faces;
-    }
-    const XModelIndexList *indicesAt(uint32_t value) const {
-        return m_indices[value];
-    }
-    const XMaterial *materialAt(uint32_t value) const {
-        return m_materials[value];
-    }
-    uint32_t countMatreials() const {
-        return m_materials.size() - 1;
-    }
-    XModelUserData *userData() const {
-        return m_userData;
-    }
-    const uint8_t *data() const {
-        return m_data;
-    }
-    size_t size() const {
-        return m_size;
+    ~XMaterial() {
+        m_color.setZero();
+        m_specular.setZero();
+        m_emmisive.setZero();
+        delete[] m_textureName;
+        m_textureName = 0;
+        m_power = 0;
     }
 
-    void setUserData(XModelUserData *value) {
-        m_userData = value;
-    }
+    const btVector4 &color() const { return m_color; }
+    const btVector4 &specular() const { return m_specular; }
+    const btVector4 &emmisive() const { return m_emmisive; }
+    const char *textureName() const { return m_textureName; }
+    float power() const { return m_power; }
 
 private:
-    btAlignedObjectArray<btVector3> m_vertices;
-    btAlignedObjectArray<btVector3> m_normals;
-    btAlignedObjectArray<btVector3> m_coords;
-    btAlignedObjectArray<btVector4> m_colors;
-    btAlignedObjectArray<XModelFaceIndex> m_faces;
-    btAlignedObjectArray<XModelIndexList *> m_indices;
-    btAlignedObjectArray<XMaterial *> m_materials;
-    XModelUserData *m_userData;
-    const uint8_t *m_data;
-    const size_t m_size;
+    btVector4 m_color;
+    btVector4 m_specular;
+    btVector4 m_emmisive;
+    char *m_textureName;
+    float m_power;
 };
 
 }

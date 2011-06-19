@@ -21,6 +21,7 @@ set(vpvl_public_headers
     include/vpvl/Scene.h
     include/vpvl/Vertex.h
     include/vpvl/VMDMotion.h
+    include/vpvl/XMaterial.h
     include/vpvl/XModel.h
     include/vpvl/common.h
     include/vpvl/vpvl.h
