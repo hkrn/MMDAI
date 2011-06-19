@@ -403,7 +403,7 @@ static void DrawStage(const vpvl::XModel *model)
 
     uint32_t nMaterials = model->countMatreials();
     for (uint32_t i = 1; i <= nMaterials; i++) {
-        const vpvl::XModelMaterial *material = model->materialAt(i - 1);
+        const vpvl::XMaterial *material = model->materialAt(i - 1);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
@@ -426,60 +426,90 @@ static void DrawStage(const vpvl::XModel *model)
 
 static void DrawStage2(const vpvl::XModel *model, const uint8_t *dir)
 {
-    const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
-    const btAlignedObjectArray<btVector3> &vertices = model->vertices();
-    const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
-    uint32_t nFaces = faces.size();
-    uint32_t prevIndex = 0;
-    static btHashMap<btHashInt, GLuint> textures;
-    glEnable(GL_TEXTURE_2D);
-    for (uint32_t i = 0; i < nFaces; i++) {
-        const vpvl::XModelFaceIndex &face = faces[i];
-        const btVector4 &value = face.value;
-        const uint32_t count = face.count;
-        const uint32_t currentIndex = face.index;
-        if (prevIndex != currentIndex) {
-            const vpvl::XModelMaterial *material = model->materialAt(currentIndex - 1);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(material->color()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
-            const char *textureName = material->textureName();
-            if (textureName) {
-                GLuint *textureID = textures[currentIndex];
-                if (!textureID) {
-                    char path[256];
-                    snprintf(path, sizeof(path), "%s/%s", dir, textureName);
-                    GLuint newTextureID = 0;
-                    if (LoadTexture(reinterpret_cast<const uint8_t *>(path), newTextureID)) {
-                        textures.insert(currentIndex, newTextureID);
-                        glBindTexture(GL_TEXTURE_2D, newTextureID);
+    static GLuint cache = 0;
+    if (cache > 0) {
+        glCallList(cache);
+    }
+    else {
+        cache = glGenLists(1);
+        glNewList(cache, GL_COMPILE_AND_EXECUTE);
+        glPushMatrix();
+        glScalef(1.0f, 1.0f, -1.0f);
+        glCullFace(GL_FRONT);
+        const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
+        const btAlignedObjectArray<btVector3> &vertices = model->vertices();
+        const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
+        const btAlignedObjectArray<btVector3> &normals = model->normals();
+        const btAlignedObjectArray<btVector4> &colors = model->colors();
+        const bool hasMaterials = model->countMatreials() > 0;
+        const bool hasTextureCoords = textureCoords.size() > 0;
+        const bool hasNormals = normals.size();
+        const bool hasColors = colors.size();
+        uint32_t nFaces = faces.size();
+        uint32_t prevIndex = 0;
+        static btHashMap<btHashInt, GLuint> textures;
+        glEnable(GL_TEXTURE_2D);
+        for (uint32_t i = 0; i < nFaces; i++) {
+            const vpvl::XModelFaceIndex &face = faces[i];
+            const btVector4 &value = face.value;
+            const uint32_t count = face.count;
+            const uint32_t currentIndex = face.index;
+            if (hasMaterials && prevIndex != currentIndex) {
+                const vpvl::XMaterial *material = model->materialAt(currentIndex);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(material->color()));
+                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
+                glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
+                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
+                const char *textureName = material->textureName();
+                if (textureName) {
+                    GLuint *textureID = textures[currentIndex];
+                    if (!textureID) {
+                        GLuint newTextureID;
+                        char path[256];
+                        snprintf(path, sizeof(path), "%s/%s", dir, textureName);
+                        if (LoadTexture(reinterpret_cast<const uint8_t *>(path), newTextureID)) {
+                            textures.insert(currentIndex, newTextureID);
+                            glEnable(GL_TEXTURE_2D);
+                            glBindTexture(GL_TEXTURE_2D, newTextureID);
+                        }
+                    }
+                    else {
+                        glEnable(GL_TEXTURE_2D);
+                        glBindTexture(GL_TEXTURE_2D, *textureID);
                     }
                 }
                 else {
-                    glBindTexture(GL_TEXTURE_2D, *textureID);
+                    glDisable(GL_TEXTURE_2D);
+                    glBindTexture(GL_TEXTURE_2D, 0);
                 }
+                prevIndex = currentIndex;
             }
-            prevIndex = currentIndex;
+            switch (count) {
+            case 3:
+                glBegin(GL_TRIANGLES);
+                break;
+            case 4:
+                glBegin(GL_QUADS);
+                break;
+            }
+            for (uint32_t j = 0; j < count; j++) {
+                const uint32_t x = static_cast<const uint32_t>(value[j]);
+                glVertex3fv(vertices[x]);
+                if (hasTextureCoords)
+                    glTexCoord2fv(textureCoords[x]);
+                if (hasNormals)
+                    glNormal3fv(normals[x]);
+                if (hasColors)
+                    glColor4fv(colors[x]);
+            }
+            glEnd();
         }
-        switch (count) {
-        case 3:
-            glBegin(GL_TRIANGLES);
-            break;
-        case 4:
-            glBegin(GL_QUADS);
-            break;
-        }
-        for (uint32_t j = 0; j < count; j++) {
-            const uint32_t x = static_cast<const uint32_t>(value[j]);
-            const btVector3 &v = vertices[x];
-            glVertex3f(v.x(), v.y(), v.z());
-            const btVector3 &t = textureCoords[x];
-            glTexCoord2f(t.x(), t.y());
-        }
-        glEnd();
         glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+        glPopMatrix();
+        glCullFace(GL_BACK);
+        glEndList();
     }
 }
 
@@ -926,7 +956,7 @@ int main(int argc, char *argv[])
         delete[] cameraData;
         return -1;
     }
-    //scene.setCamera(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 45.0f, 550.0f);
+    scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
     //scene.setCameraMotion(&camera);
 
     uint32_t interval = static_cast<uint32_t>(1000.0f / g_FPS);
