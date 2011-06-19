@@ -620,7 +620,7 @@ static void LoadStage(vpvl::XModel *model, const uint8_t *dir)
     const bool hasNormals = normals.size();
     const bool hasColors = colors.size();
     uint32_t nFaces = faces.size();
-    uint32_t prevIndex = 0;
+    uint32_t prevIndex = UINT32_MAX;
     glEnable(GL_TEXTURE_2D);
     for (uint32_t i = 0; i < nFaces; i++) {
         const vpvl::XModelFaceIndex &face = faces[i];
