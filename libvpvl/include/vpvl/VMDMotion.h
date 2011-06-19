@@ -82,7 +82,7 @@ public:
     /**
      * Status of current motion.
      */
-    enum Status
+    enum MotionStatus
     {
         kRunning,
         kLooped,
@@ -121,7 +121,7 @@ public:
     const FaceMotion &face() const {
         return m_faceMotion;
     }
-    const Status &status() const {
+    const MotionStatus &status() const {
         return m_status;
     }
     const VMDMotionDataInfo &result() const {
@@ -172,7 +172,7 @@ private:
     BoneMotion m_boneMotion;
     CameraMotion m_cameraMotion;
     FaceMotion m_faceMotion;
-    Status m_status;
+    MotionStatus m_status;
     uint8_t m_onEnd;
     float m_loopAt;
     float m_priority;
