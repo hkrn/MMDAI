@@ -433,9 +433,11 @@ static void DrawStage2(const vpvl::XModel *model, const uint8_t *dir)
     else {
         cache = glGenLists(1);
         glNewList(cache, GL_COMPILE_AND_EXECUTE);
+#ifndef VPVL_COORDINATE_OPENGL
         glPushMatrix();
         glScalef(1.0f, 1.0f, -1.0f);
         glCullFace(GL_FRONT);
+#endif
         const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
         const btAlignedObjectArray<btVector3> &vertices = model->vertices();
         const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
@@ -447,7 +449,7 @@ static void DrawStage2(const vpvl::XModel *model, const uint8_t *dir)
         const bool hasColors = colors.size();
         uint32_t nFaces = faces.size();
         uint32_t prevIndex = 0;
-        static btHashMap<btHashInt, GLuint> textures;
+        static btHashMap<btHashString, GLuint> textures;
         glEnable(GL_TEXTURE_2D);
         for (uint32_t i = 0; i < nFaces; i++) {
             const vpvl::XModelFaceIndex &face = faces[i];
@@ -456,31 +458,28 @@ static void DrawStage2(const vpvl::XModel *model, const uint8_t *dir)
             const uint32_t currentIndex = face.index;
             if (hasMaterials && prevIndex != currentIndex) {
                 const vpvl::XMaterial *material = model->materialAt(currentIndex);
-                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(material->color()));
-                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(material->color()));
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(material->color()));
                 glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
                 glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
                 const char *textureName = material->textureName();
                 if (textureName) {
-                    GLuint *textureID = textures[currentIndex];
+                    btHashString key(textureName);
+                    GLuint *textureID = textures[key];
                     if (!textureID) {
-                        GLuint newTextureID;
+                        GLuint value;
                         char path[256];
                         snprintf(path, sizeof(path), "%s/%s", dir, textureName);
-                        if (LoadTexture(reinterpret_cast<const uint8_t *>(path), newTextureID)) {
-                            textures.insert(currentIndex, newTextureID);
-                            glEnable(GL_TEXTURE_2D);
-                            glBindTexture(GL_TEXTURE_2D, newTextureID);
+                        if (LoadTexture(reinterpret_cast<const uint8_t *>(path), value)) {
+                            textures.insert(key, value);
+                            glBindTexture(GL_TEXTURE_2D, value);
                         }
                     }
                     else {
-                        glEnable(GL_TEXTURE_2D);
                         glBindTexture(GL_TEXTURE_2D, *textureID);
                     }
                 }
                 else {
-                    glDisable(GL_TEXTURE_2D);
                     glBindTexture(GL_TEXTURE_2D, 0);
                 }
                 prevIndex = currentIndex;
@@ -495,20 +494,22 @@ static void DrawStage2(const vpvl::XModel *model, const uint8_t *dir)
             }
             for (uint32_t j = 0; j < count; j++) {
                 const uint32_t x = static_cast<const uint32_t>(value[j]);
-                glVertex3fv(vertices[x]);
                 if (hasTextureCoords)
                     glTexCoord2fv(textureCoords[x]);
-                if (hasNormals)
-                    glNormal3fv(normals[x]);
                 if (hasColors)
                     glColor4fv(colors[x]);
+                if (hasNormals)
+                    glNormal3fv(normals[x]);
+                glVertex3fv(vertices[x]);
             }
             glEnd();
         }
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
+#ifndef VPVL_COORDINATE_OPENGL
         glPopMatrix();
         glCullFace(GL_BACK);
+#endif
         glEndList();
     }
 }
@@ -917,7 +918,7 @@ int main(int argc, char *argv[])
         delete[] stageData;
         return -1;
     }
-    //LoadStage(stage, g_stagedir);
+    LoadStage(stage, g_stagedir);
 
     const float dist = 400.0f;
     btDefaultCollisionConfiguration config;
