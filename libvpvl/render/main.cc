@@ -45,8 +45,7 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #else
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <GLee.h>
 #endif
 
 #include <SDL.h>
@@ -129,14 +128,16 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#if 0
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+#endif
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
         fprintf(stderr, "Unable to get video info: %s\n", SDL_GetError());
         return false;
     }
-    Uint8 bpp = info->vfmt->BitsPerPixel;
+    int bpp = info->vfmt->BitsPerPixel;
     if (SDL_VideoModeOK(width, height, bpp, SDL_OPENGL)) {
         if ((surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL)) == NULL) {
             fprintf(stderr, "Unable to init surface: %s\n", SDL_GetError());
@@ -144,17 +145,8 @@ static bool InitializeSurface(SDL_Surface *&surface, int width, int height)
         }
     }
     else {
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-        if (SDL_VideoModeOK(width, height, bpp, SDL_OPENGL)) {
-            if ((surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL)) == NULL) {
-                fprintf(stderr, "Unable to init surface: %s\n", SDL_GetError());
-                return false;
-            }
-        }
-        else {
-            fprintf(stderr, "It seems OpenGL is not supported\n");
-            return false;
-        }
+        fprintf(stderr, "It seems OpenGL is not supported\n");
+        return false;
     }
     glClearStencil(0);
     glEnable(GL_DEPTH_TEST);
@@ -620,7 +612,8 @@ static void LoadStage(vpvl::XModel *model, const uint8_t *dir)
     const bool hasNormals = normals.size();
     const bool hasColors = colors.size();
     uint32_t nFaces = faces.size();
-    uint32_t prevIndex = UINT32_MAX;
+    // FIXME: UINT32_MAX doesn't declare(?) on Linux
+    uint32_t prevIndex = -1;
     glEnable(GL_TEXTURE_2D);
     for (uint32_t i = 0; i < nFaces; i++) {
         const vpvl::XModelFaceIndex &face = faces[i];
@@ -812,7 +805,7 @@ static void DrawSurface(vpvl::Scene &scene, vpvl::XModel &stage, int width, int 
     glLoadMatrixf(matrix);
     glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    DrawStage(&stage);
+    // DrawStage(&stage);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
@@ -950,7 +943,7 @@ int main(int argc, char *argv[])
 
     vpvl::Scene scene(g_width, g_height, g_FPS);
     SetLighting(scene);
-    //scene.addModel("miku", &model);
+    scene.addModel("miku", &model);
     scene.setWorld(&world);
 
     snprintf(path, sizeof(path), "%s", g_motion);
@@ -976,8 +969,8 @@ int main(int argc, char *argv[])
         delete[] cameraData;
         return -1;
     }
-    scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
-    //scene.setCameraMotion(&camera);
+    //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
+    scene.setCameraMotion(&camera);
 
     uint32_t interval = static_cast<uint32_t>(1000.0f / g_FPS);
     SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &scene);
