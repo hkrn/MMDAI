@@ -188,7 +188,7 @@ bool XModel::load()
                         state = kHeaderDeclation;
                     else if (depth == 0 && internal::stringEquals(token, "Mesh", 4))
                         state = kMeshVerticesDeclation;
-                    else if (depth == 0 && internal::stringEquals(token, "MeshNormals", 11))
+                    else if (depth == 1 && internal::stringEquals(token, "MeshNormals", 11))
                         state = kMeshNormalsDeclation;
                     else if (depth == 1 && internal::stringEquals(token, "MeshMaterialList", 16))
                         state = kMeshMaterialListDeclation;
