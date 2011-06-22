@@ -134,6 +134,7 @@ void Scene::addModel(PMDModel *model)
 void Scene::addModel(const char *name, PMDModel *model)
 {
     m_models.insert(btHashString(name), model);
+    sortRenderingOrder();
     model->setLightDirection(m_lightDirection);
     model->joinWorld(m_world);
 }
@@ -171,6 +172,7 @@ void Scene::removeModel(const char *name)
     if (model) {
         model->leaveWorld(m_world);
         m_models.remove(btHashString(name));
+        sortRenderingOrder();
     }
 }
 
