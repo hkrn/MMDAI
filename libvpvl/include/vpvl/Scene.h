@@ -102,6 +102,39 @@ public:
     const btVector4 &lightDirection() const {
         return m_lightDirection;
     }
+    const btVector3 &angle() const {
+        return m_angle;
+    }
+    const btVector3 &position() const {
+        return m_position;
+    }
+    float distance() const {
+        return m_distance;
+    }
+    float fovy() const {
+        return m_fovy;
+    }
+    int width() const {
+        return m_width;
+    }
+    int height() const {
+        return m_height;
+    }
+    int FPS() const {
+        return m_fps;
+    }
+
+    void setWidth(int value) {
+        m_width = value;
+        updateProjectionMatrix();
+    }
+    void setHeight(int value) {
+        m_height = value;
+        updateProjectionMatrix();
+    }
+    void setFPS(int value) {
+        m_fps = value;
+    }
 
 private:
     void sortRenderingOrder();
