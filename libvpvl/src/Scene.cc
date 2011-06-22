@@ -176,6 +176,11 @@ void Scene::removeModel(const char *name)
     }
 }
 
+void Scene::resetCamera()
+{
+    setCamera(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
+}
+
 void Scene::setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
 {
     m_position = position;
