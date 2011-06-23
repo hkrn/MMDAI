@@ -77,7 +77,7 @@ Bone::Bone()
       m_childBone(0),
       m_targetBone(0),
       m_parentIsRoot(false),
-      m_angleXLimited(false),
+      m_constraintedXCoordinateForIK(false),
       m_simulated(false),
       m_motionIndepent(false)
 {
@@ -101,7 +101,7 @@ Bone::~Bone()
     m_childBone = 0;
     m_targetBone = 0;
     m_parentIsRoot = false;
-    m_angleXLimited = false;
+    m_constraintedXCoordinateForIK = false;
     m_simulated = false;
     m_motionIndepent = false;
 }
@@ -125,7 +125,7 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
     // Knee bone treats as a special bone to constraint X for IK
     static const uint8_t kneeName[] = { 0x82, 0xd0, 0x82, 0xb4, 0x0 };
     if (strstr(reinterpret_cast<const char *>(m_name), reinterpret_cast<const char *>(kneeName)))
-        m_angleXLimited = true;
+        m_constraintedXCoordinateForIK = true;
 
     int nbones = bones->size();
     // The bone has a parent bone and in the the current bones

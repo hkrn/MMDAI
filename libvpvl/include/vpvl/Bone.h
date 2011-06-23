@@ -238,8 +238,8 @@ public:
      *
      * @return true if the bone is constrainted
      */
-    bool isAngleXLimited() const {
-        return m_angleXLimited;
+    bool isConstraintedXCoordinateForIK() const {
+        return m_constraintedXCoordinateForIK;
     }
 
     /**
@@ -338,7 +338,7 @@ private:
     Bone *m_childBone;
     Bone *m_targetBone;
     bool m_parentIsRoot;
-    bool m_angleXLimited;
+    bool m_constraintedXCoordinateForIK;
     bool m_simulated;
     bool m_motionIndepent;
 };

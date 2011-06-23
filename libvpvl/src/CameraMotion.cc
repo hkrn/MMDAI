@@ -46,7 +46,7 @@ class CameraMotionKeyFramePredication
 {
 public:
     bool operator()(const CameraKeyFrame *left, const CameraKeyFrame *right) {
-        return left->index() - right->index();
+        return left->frameIndex() - right->frameIndex();
     }
 };
 
@@ -107,7 +107,7 @@ void CameraMotion::read(const uint8_t *data, uint32_t size)
             m_frames.push_back(frame);
         }
         m_frames.quickSort(CameraMotionKeyFramePredication());
-        m_maxFrame = m_frames[size - 1]->index();
+        m_maxFrame = m_frames[size - 1]->frameIndex();
     }
 }
 
@@ -116,13 +116,13 @@ void CameraMotion::seek(float frameAt)
     const uint32_t nFrames = m_frames.size();
     CameraKeyFrame *lastKeyFrame = m_frames[nFrames - 1];
     float currentFrame = frameAt;
-    if (currentFrame > lastKeyFrame->index())
-        currentFrame = lastKeyFrame->index();
+    if (currentFrame > lastKeyFrame->frameIndex())
+        currentFrame = lastKeyFrame->frameIndex();
 
     uint32_t k1 = 0, k2 = 0;
-    if (currentFrame >= m_frames[m_lastIndex]->index()) {
+    if (currentFrame >= m_frames[m_lastIndex]->frameIndex()) {
         for (uint32_t i = m_lastIndex; i < nFrames; i++) {
-            if (currentFrame <= m_frames[i]->index()) {
+            if (currentFrame <= m_frames[i]->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -130,7 +130,7 @@ void CameraMotion::seek(float frameAt)
     }
     else {
         for (uint32_t i = 0; i <= m_lastIndex && i < nFrames; i++) {
-            if (currentFrame <= m_frames[i]->index()) {
+            if (currentFrame <= m_frames[i]->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -144,32 +144,32 @@ void CameraMotion::seek(float frameAt)
 
     const CameraKeyFrame *keyFrameFrom = m_frames.at(k1), *keyFrameTo = m_frames.at(k2);
     CameraKeyFrame *keyFrameForInterpolation = const_cast<CameraKeyFrame *>(keyFrameTo);
-    float timeFrom = keyFrameFrom->index(), timeTo = keyFrameTo->index();
+    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
     btVector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();
     float distanceTo = keyFrameTo->distance(), fovyTo = keyFrameTo->fovy();
     btVector3 positionTo = keyFrameTo->position(), angleTo = keyFrameTo->angle();
-    if (timeFrom != timeTo) {
-        if (currentFrame <= timeFrom) {
+    if (frameIndexFrom != frameIndexTo) {
+        if (currentFrame <= frameIndexFrom) {
             m_distance = distanceFrom;
             m_position = positionFrom;
             m_angle = angleFrom;
             m_fovy = fovyFrom;
         }
-        else if (currentFrame >= timeTo) {
+        else if (currentFrame >= frameIndexTo) {
             m_distance = distanceTo;
             m_position = positionTo;
             m_angle = angleTo;
             m_fovy = fovyTo;
         }
-        else if (timeTo - timeFrom <= 1.0f) {
+        else if (frameIndexTo - frameIndexFrom <= 1.0f) {
             m_distance = distanceFrom;
             m_position = positionFrom;
             m_angle = angleFrom;
             m_fovy = fovyFrom;
         }
         else {
-            const float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+            const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
             float x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);

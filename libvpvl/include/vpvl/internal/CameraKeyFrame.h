@@ -51,7 +51,7 @@ class CameraKeyFrame
 {
 public:
     CameraKeyFrame()
-        : m_index(0),
+        : m_frameIndex(0),
           m_distance(0.0f),
           m_fovy(0.0f),
           m_position(0.0f, 0.0f, 0.0f),
@@ -62,7 +62,7 @@ public:
         internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     }
     ~CameraKeyFrame() {
-        m_index = 0;
+        m_frameIndex = 0;
         m_distance = 0.0f;
         m_fovy = 0.0f;
         m_position.setZero();
@@ -97,7 +97,7 @@ public:
         uint8_t noPerspective = *reinterpret_cast<uint8_t *>(ptr);
         ptr += sizeof(uint8_t);
 
-        m_index = static_cast<float>(index);
+        m_frameIndex = static_cast<float>(index);
         m_fovy = static_cast<float>(fovy);
         m_noPerspective = noPerspective == 1;
     #ifdef VPVL_COORDINATE_OPENGL
@@ -112,8 +112,8 @@ public:
         setInterpolationTable(table);
     }
 
-    float index() const {
-        return m_index;
+    float frameIndex() const {
+        return m_frameIndex;
     }
     float distance() const {
         return m_distance;
@@ -152,7 +152,7 @@ private:
         }
     }
 
-    float m_index;
+    float m_frameIndex;
     float m_distance;
     float m_fovy;
     btVector3 m_position;

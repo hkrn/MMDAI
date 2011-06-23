@@ -51,7 +51,7 @@ class Face;
 class FaceKeyFrame
 {
 public:
-    FaceKeyFrame() : m_index(0), m_weight(0.0f) {
+    FaceKeyFrame() : m_frameIndex(0), m_weight(0.0f) {
         internal::zerofill(m_name, sizeof(m_name));
     }
     ~FaceKeyFrame() {
@@ -73,15 +73,15 @@ public:
         float weight = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
 
-        m_index = static_cast<float>(index);
+        m_frameIndex = static_cast<float>(index);
         m_weight = weight;
     }
 
     const uint8_t *name() const {
         return m_name;
     }
-    float index() const {
-        return m_index;
+    float frameIndex() const {
+        return m_frameIndex;
     }
     float weight() const {
         return m_weight;
@@ -89,7 +89,7 @@ public:
 
 private:
     uint8_t m_name[kNameSize];
-    float m_index;
+    float m_frameIndex;
     float m_weight;
 };
 

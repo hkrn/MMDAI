@@ -56,7 +56,7 @@ class FaceMotionKeyFramePredication
 {
 public:
     bool operator()(const FaceKeyFrame *left, const FaceKeyFrame *right) {
-        return left->index() < right->index();
+        return left->frameIndex() < right->frameIndex();
     }
 };
 
@@ -144,7 +144,7 @@ void FaceMotion::attachModel(PMDModel *model)
         FaceMotionInternal *node = *m_name2node.getAtIndex(i);
         FaceKeyFrameList &frames = node->keyFrames;
         frames.quickSort(FaceMotionKeyFramePredication());
-        btSetMax(m_maxFrame, frames[frames.size() - 1]->index());
+        btSetMax(m_maxFrame, frames[frames.size() - 1]->frameIndex());
     }
 
     m_model = model;
@@ -166,13 +166,13 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     const uint32_t nFrames = kframes.size();
     FaceKeyFrame *lastKeyFrame = kframes.at(nFrames - 1);
     float currentFrame = frameAt;
-    if (currentFrame > lastKeyFrame->index())
-        currentFrame = lastKeyFrame->index();
+    if (currentFrame > lastKeyFrame->frameIndex())
+        currentFrame = lastKeyFrame->frameIndex();
 
     uint32_t k1 = 0, k2 = 0;
-    if (currentFrame >= kframes.at(node->lastIndex)->index()) {
+    if (currentFrame >= kframes.at(node->lastIndex)->frameIndex()) {
         for (uint32_t i = node->lastIndex; i < nFrames; i++) {
-            if (currentFrame <= kframes.at(i)->index()) {
+            if (currentFrame <= kframes.at(i)->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -180,7 +180,7 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     }
     else {
         for (uint32_t i = 0; i <= node->lastIndex && i < nFrames; i++) {
-            if (currentFrame <= m_frames.at(i)->index()) {
+            if (currentFrame <= m_frames.at(i)->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -193,23 +193,23 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
     node->lastIndex = k1;
 
     const FaceKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    float timeFrom = keyFrameFrom->index(), timeTo = keyFrameTo->index();
+    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float weightFrom = 0.0f, weightTo = 0.0f;
-    if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
-        if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
-            timeFrom = static_cast<float>(m_lastLoopStartIndex);
+    if (m_overrideFirst && (k1 == 0 || frameIndexFrom <= m_lastLoopStartIndex)) {
+        if (nFrames > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
+            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
             weightFrom = node->snapWeight;
             weightTo = keyFrameTo->weight();
         }
-        else if (frameAt - timeFrom < m_smearIndex) {
-            timeFrom = static_cast<float>(m_lastLoopStartIndex);
-            timeTo = m_lastLoopStartIndex + m_smearIndex;
+        else if (frameAt - frameIndexFrom < m_smearIndex) {
+            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
+            frameIndexTo = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
             weightFrom = node->snapWeight;
             weightTo = keyFrameFrom->weight();
         }
         else if (nFrames > 1) {
-            timeFrom = m_lastLoopStartIndex + m_smearIndex;
+            frameIndexFrom = m_lastLoopStartIndex + m_smearIndex;
             weightFrom = keyFrameFrom->weight();
             weightTo = keyFrameTo->weight();
         }
@@ -222,8 +222,8 @@ void FaceMotion::calculateFrames(float frameAt, FaceMotionInternal *node)
         weightTo = keyFrameTo->weight();
     }
 
-    if (timeFrom != timeTo) {
-        const float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+    if (frameIndexFrom != frameIndexTo) {
+        const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
         node->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {

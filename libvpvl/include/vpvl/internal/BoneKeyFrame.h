@@ -54,7 +54,7 @@ class BoneKeyFrame
 {
 public:
     BoneKeyFrame()
-        : m_index(0),
+        : m_frameIndex(0),
           m_position(0.0f, 0.0f, 0.0f),
           m_rotation(0.0f, 0.0f, 0.0f, 1.0f) {
         internal::zerofill(m_name, sizeof(m_name));
@@ -91,7 +91,7 @@ public:
         memcpy(table, ptr, sizeof(table));
         data += sizeof(table);
 
-        m_index = static_cast<float>(index);
+        m_frameIndex = static_cast<float>(index);
 #ifdef VPVL_COORDINATE_OPENGL
         m_position.setValue(pos[0], pos[1], -pos[2]);
         m_rotation.setValue(-rot[0], -rot[1], rot[2], rot[3]);
@@ -105,8 +105,8 @@ public:
     const uint8_t *name() const {
         return m_name;
     }
-    float index() const {
-        return m_index;
+    float frameIndex() const {
+        return m_frameIndex;
     }
     const btVector3 &position() const {
         return m_position;
@@ -140,7 +140,7 @@ private:
     }
 
     uint8_t m_name[kNameSize];
-    float m_index;
+    float m_frameIndex;
     btVector3 m_position;
     btQuaternion m_rotation;
     bool m_linear[4];

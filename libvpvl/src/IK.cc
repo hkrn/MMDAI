@@ -168,7 +168,7 @@ void IK::solve()
                 continue;
             axis.normalize();
             q.setRotation(axis, angle);
-            if (bone->isAngleXLimited()) {
+            if (bone->isConstraintedXCoordinateForIK()) {
                 if (i == 0) {
                     q.setRotation(xAxis, fabsf(angle));
                 }

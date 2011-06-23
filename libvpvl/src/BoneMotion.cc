@@ -58,7 +58,7 @@ class BoneMotionKeyFramePredication
 {
 public:
     bool operator()(const BoneKeyFrame *left, const BoneKeyFrame *right) {
-        return left->index() < right->index();
+        return left->frameIndex() < right->frameIndex();
     }
 };
 
@@ -186,7 +186,7 @@ void BoneMotion::attachModel(PMDModel *model)
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         BoneKeyFrameList &frames = node->keyFrames;
         frames.quickSort(BoneMotionKeyFramePredication());
-        btSetMax(m_maxFrame, frames[frames.size() - 1]->index());
+        btSetMax(m_maxFrame, frames[frames.size() - 1]->frameIndex());
     }
 
     m_model = model;
@@ -198,13 +198,13 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     const uint32_t nFrames = kframes.size();
     BoneKeyFrame *lastKeyFrame = kframes[nFrames - 1];
     float currentFrame = frameAt;
-    if (currentFrame > lastKeyFrame->index())
-        currentFrame = lastKeyFrame->index();
+    if (currentFrame > lastKeyFrame->frameIndex())
+        currentFrame = lastKeyFrame->frameIndex();
 
     uint32_t k1 = 0, k2 = 0, lastIndex = node->lastIndex;
-    if (currentFrame >= kframes[lastIndex]->index()) {
+    if (currentFrame >= kframes[lastIndex]->frameIndex()) {
         for (uint32_t i = lastIndex; i < nFrames; i++) {
-            if (currentFrame <= kframes[i]->index()) {
+            if (currentFrame <= kframes[i]->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -212,7 +212,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     }
     else {
         for (uint32_t i = 0; i <= lastIndex && i < nFrames; i++) {
-            if (currentFrame <= kframes[i]->index()) {
+            if (currentFrame <= kframes[i]->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -225,21 +225,21 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     node->lastIndex = k1;
 
     const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    float timeFrom = keyFrameFrom->index(), timeTo = keyFrameTo->index();
+    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);
     btVector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
     btQuaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
-    if (m_overrideFirst && (k1 == 0 || timeFrom <= m_lastLoopStartIndex)) {
-        if (nFrames > 1 && timeTo < m_lastLoopStartIndex + 60.0f) {
-            timeFrom = static_cast<float>(m_lastLoopStartIndex);
+    if (m_overrideFirst && (k1 == 0 || frameIndexFrom <= m_lastLoopStartIndex)) {
+        if (nFrames > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
+            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
             positionFrom = node->snapPosition;
             rotationFrom = node->snapRotation;
             positionTo = keyFrameTo->position();
             rotationTo = keyFrameTo->rotation();
         }
-        else if (frameAt - timeFrom < m_smearIndex) {
-            timeFrom = static_cast<float>(m_lastLoopStartIndex);
-            timeTo = m_lastLoopStartIndex + m_smearIndex;
+        else if (frameAt - frameIndexFrom < m_smearIndex) {
+            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
+            frameIndexTo = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
             positionFrom = node->snapPosition;
             rotationFrom = node->snapRotation;
@@ -248,7 +248,7 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
             keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameFrom);
         }
         else if (nFrames > 1) {
-            timeFrom = m_lastLoopStartIndex + m_smearIndex;
+            frameIndexFrom = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
             positionFrom = keyFrameFrom->position();
             rotationFrom = keyFrameFrom->rotation();
@@ -267,17 +267,17 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
         rotationTo = keyFrameTo->rotation();
     }
 
-    if (timeFrom != timeTo) {
-        if (currentFrame <= timeFrom) {
+    if (frameIndexFrom != frameIndexTo) {
+        if (currentFrame <= frameIndexFrom) {
             node->position = positionFrom;
             node->rotation = rotationFrom;
         }
-        else if (currentFrame >= timeTo) {
+        else if (currentFrame >= frameIndexTo) {
             node->position = positionTo;
             node->rotation = rotationTo;
         }
         else {
-            const float w = (currentFrame - timeFrom) / (timeTo - timeFrom);
+            const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
             float x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
