@@ -80,13 +80,10 @@ public:
     ~Scene();
 
     void addModel(PMDModel *model);
-    void addModel(const char *name, PMDModel *model);
-    PMDModel *findModel(const char *name) const;
     PMDModel **getRenderingOrder(size_t &size);
     void getModelViewMatrix(float matrix[16]) const;
     void getProjectionMatrix(float matrix[16]) const;
     void removeModel(PMDModel *model);
-    void removeModel(const char *name);
     void resetCamera();
     void setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
@@ -146,8 +143,7 @@ private:
     bool updateFovy(int ellapsedTimeForMove);
 
     ::btDiscreteDynamicsWorld *m_world;
-    btHashMap<btHashString, PMDModel *> m_models;
-    btAlignedObjectArray<PMDModel *> m_order;
+    btAlignedObjectArray<PMDModel *> m_models;
     VMDMotion *m_cameraMotion;
     btTransform m_modelview;
     btQuaternion m_currentRotation;

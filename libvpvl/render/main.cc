@@ -943,7 +943,7 @@ int main(int argc, char *argv[])
 
     vpvl::Scene scene(g_width, g_height, g_FPS);
     SetLighting(scene);
-    scene.addModel("miku", &model);
+    scene.addModel(&model);
     scene.setWorld(&world);
 
     snprintf(path, sizeof(path), "%s", g_motion);

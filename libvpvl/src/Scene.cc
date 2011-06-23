@@ -102,7 +102,6 @@ Scene::~Scene()
     internal::zerofill(m_projection, sizeof(m_projection));
     setWorld(0);
     m_models.clear();
-    m_order.clear();
     m_cameraMotion = 0;
     m_currentRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
@@ -128,27 +127,16 @@ Scene::~Scene()
 
 void Scene::addModel(PMDModel *model)
 {
-    addModel(reinterpret_cast<const char *>(model->name()), model);
-}
-
-void Scene::addModel(const char *name, PMDModel *model)
-{
-    m_models.insert(btHashString(name), model);
+    m_models.push_back(model);
     sortRenderingOrder();
     model->setLightDirection(m_lightDirection);
     model->joinWorld(m_world);
 }
 
-PMDModel *Scene::findModel(const char *name) const
-{
-    PMDModel **ptr = const_cast<PMDModel **>(m_models.find(btHashString(name)));
-    return ptr ? *ptr : 0;
-}
-
 PMDModel **Scene::getRenderingOrder(size_t &size)
 {
-    size = m_order.size();
-    return &m_order[0];
+    size = m_models.size();
+    return &m_models[0];
 }
 
 void Scene::getModelViewMatrix(float matrix[]) const
@@ -163,17 +151,9 @@ void Scene::getProjectionMatrix(float matrix[]) const
 
 void Scene::removeModel(PMDModel *model)
 {
-    removeModel(reinterpret_cast<const char *>(model->name()));
-}
-
-void Scene::removeModel(const char *name)
-{
-    vpvl::PMDModel *model = findModel(name);
-    if (model) {
-        model->leaveWorld(m_world);
-        m_models.remove(btHashString(name));
-        sortRenderingOrder();
-    }
+    m_models.remove(model);
+    model->leaveWorld(m_world);
+    sortRenderingOrder();
 }
 
 void Scene::resetCamera()
@@ -183,11 +163,13 @@ void Scene::resetCamera()
 
 void Scene::setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
 {
-    m_position = position;
-    m_angle = angle;
-    m_fovy = fovy;
-    m_distance = distance;
-    updateRotationFromAngle();
+    if (!m_cameraMotion) {
+        m_position = position;
+        m_angle = angle;
+        m_fovy = fovy;
+        m_distance = distance;
+        updateRotationFromAngle();
+    }
 }
 
 void Scene::setCameraMotion(VMDMotion *motion)
@@ -201,7 +183,7 @@ void Scene::setLight(const btVector4 &color, const btVector4 &direction)
     m_lightDirection = direction;
     uint32_t nModels = m_models.size();
     for (uint32_t i = 0; i < nModels; i++) {
-        PMDModel *model = *m_models.getAtIndex(i);
+        PMDModel *model = m_models[i];
         model->setLightDirection(direction);
     }
 }
@@ -224,13 +206,13 @@ void Scene::setWorld(::btDiscreteDynamicsWorld *world)
     // before setting the new world
     if (m_world) {
         for (uint32_t i = 0; i < nModels; i++) {
-            PMDModel *model = *m_models.getAtIndex(i);
+            PMDModel *model = m_models[i];
             model->leaveWorld(m_world);
         }
     }
     if (world) {
         for (uint32_t i = 0; i < nModels; i++) {
-            PMDModel *model = *m_models.getAtIndex(i);
+            PMDModel *model = m_models[i];
             model->joinWorld(world);
         }
     }
@@ -240,10 +222,10 @@ void Scene::setWorld(::btDiscreteDynamicsWorld *world)
 void Scene::update(float deltaFrame)
 {
     sortRenderingOrder();
-    const uint32_t nModels = m_order.size();
+    const uint32_t nModels = m_models.size();
     // Updating model
     for (uint32_t i = 0; i < nModels; i++) {
-        PMDModel *model = m_order[i];
+        PMDModel *model = m_models[i];
         model->updateRootBone();
         model->updateMotion(deltaFrame);
         model->updateSkins();
@@ -319,16 +301,7 @@ void Scene::updateProjection(int ellapsedTimeForMove)
 
 void Scene::sortRenderingOrder()
 {
-    const uint32_t nModels = m_models.size();
-    if (static_cast<uint32_t>(m_order.size()) != nModels) {
-        m_order.clear();
-        m_order.reserve(nModels);
-        for (uint32_t i = 0; i < nModels; i++) {
-            PMDModel *model = *m_models.getAtIndex(i);
-            m_order.push_back(model);
-        }
-    }
-    m_order.quickSort(SceneModelDistancePredication(m_modelview));
+    m_models.quickSort(SceneModelDistancePredication(m_modelview));
 }
 
 void Scene::updateModelViewMatrix()
