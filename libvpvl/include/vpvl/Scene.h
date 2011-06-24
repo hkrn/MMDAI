@@ -118,8 +118,8 @@ public:
     int height() const {
         return m_height;
     }
-    int FPS() const {
-        return m_fps;
+    int currentFPS() const {
+        return m_currentFPS;
     }
 
     void setWidth(int value) {
@@ -130,8 +130,8 @@ public:
         m_height = value;
         updateProjectionMatrix();
     }
-    void setFPS(int value) {
-        m_fps = value;
+    void setCurrentFPS(int value) {
+        m_currentFPS = value;
     }
 
 private:
@@ -163,7 +163,7 @@ private:
     float m_fovy;
     float m_viewMoveFovy;
     int m_viewMoveTime;
-    int m_fps;
+    int m_currentFPS;
     int m_width;
     int m_height;
 };
