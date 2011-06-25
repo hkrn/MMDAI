@@ -56,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent)
 #ifdef Q_OS_MAC
     menuBar = new QMenuBar(0);
 #else
-    menuBar = menuBar();
+    menuBar = this->menuBar();
 #endif
     createActions();
     createMenus(menuBar);
