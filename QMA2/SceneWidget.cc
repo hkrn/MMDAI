@@ -508,7 +508,6 @@ void SceneWidget::setLighting()
 
 bool SceneWidget::loadTexture(const QString &path, GLuint &textureID)
 {
-    qDebug() << path;
     QImage image(path);
     textureID = bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     return textureID != 0;
@@ -517,11 +516,8 @@ bool SceneWidget::loadTexture(const QString &path, GLuint &textureID)
 bool SceneWidget::loadToonTexture(const QString &name, const QDir &model, GLuint &textureID)
 {
     QString path = model.absoluteFilePath(name);
-    if (!QFile::exists(path)) {
-        path = m_system.absoluteFilePath(name);
-        if (!QFile::exists(path))
-            return false;
-    }
+    if (!QFile::exists(path))
+        path = QString(":/textures/%1").arg(name);
     return loadTexture(path, textureID);
 }
 

@@ -150,7 +150,6 @@ private:
     QSettings *m_settings;
     QHash<QString, vpvl::PMDModel *> m_models;
     QList<vpvl::VMDMotion *> m_motions;
-    QDir m_system;
     QTime m_timer;
     QPoint m_prevPos;
     int m_frameCount;

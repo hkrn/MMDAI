@@ -13,15 +13,15 @@
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>
-        <file alias="toon1.bmp">images/toon01.bmp</file>
-        <file alias="toon2.bmp">images/toon02.bmp</file>
-        <file alias="toon3.bmp">images/toon03.bmp</file>
-        <file alias="toon4.bmp">images/toon04.bmp</file>
-        <file alias="toon5.bmp">images/toon05.bmp</file>
-        <file alias="toon6.bmp">images/toon06.bmp</file>
-        <file alias="toon7.bmp">images/toon07.bmp</file>
-        <file alias="toon8.bmp">images/toon08.bmp</file>
-        <file alias="toon9.bmp">images/toon09.bmp</file>
+        <file alias="toon01.bmp">images/toon01.bmp</file>
+        <file alias="toon02.bmp">images/toon02.bmp</file>
+        <file alias="toon03.bmp">images/toon03.bmp</file>
+        <file alias="toon04.bmp">images/toon04.bmp</file>
+        <file alias="toon05.bmp">images/toon05.bmp</file>
+        <file alias="toon06.bmp">images/toon06.bmp</file>
+        <file alias="toon07.bmp">images/toon07.bmp</file>
+        <file alias="toon08.bmp">images/toon08.bmp</file>
+        <file alias="toon09.bmp">images/toon09.bmp</file>
         <file alias="toon10.bmp">images/toon10.bmp</file>
     </qresource>
 </RCC>
