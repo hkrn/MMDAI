@@ -12,3 +12,9 @@ SOURCES += main.cc\
 
 HEADERS  += MainWindow.h \
     SceneWidget.h
+
+RESOURCES += resources/QMA2.qrc
+
+macx {
+  QMAKE_INFO_PLIST = resources/Info.plist
+}

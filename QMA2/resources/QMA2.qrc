@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/licenses">
+        <file alias="Bullet">licenses/Bullet</file>
+        <file alias="Julius">licenses/Julius</file>
+        <file alias="MMDAI">licenses/MMDAI</file>
+        <file alias="OpenJTalk">licenses/OpenJTalk</file>
+        <file alias="PortAudio">licenses/PortAudio</file>
+        <file alias="Qt">licenses/Qt</file>
+        <file alias="MMDAgent">licenses/MMDAgent</file>
+        <file alias="HTSEngine">licenses/HTSEngine</file>
+        <file alias="GLEE">licenses/GLEE</file>
+        <file alias="mecab">licenses/mecab</file>
+    </qresource>
+    <qresource prefix="/textures">
+        <file alias="toon0.bmp">images/toon0.bmp</file>
+        <file alias="toon1.bmp">images/toon01.bmp</file>
+        <file alias="toon2.bmp">images/toon02.bmp</file>
+        <file alias="toon3.bmp">images/toon03.bmp</file>
+        <file alias="toon4.bmp">images/toon04.bmp</file>
+        <file alias="toon5.bmp">images/toon05.bmp</file>
+        <file alias="toon6.bmp">images/toon06.bmp</file>
+        <file alias="toon7.bmp">images/toon07.bmp</file>
+        <file alias="toon8.bmp">images/toon08.bmp</file>
+        <file alias="toon9.bmp">images/toon09.bmp</file>
+        <file alias="toon10.bmp">images/toon10.bmp</file>
+    </qresource>
+</RCC>
+
