@@ -8,8 +8,8 @@
         <file alias="Qt">licenses/Qt</file>
         <file alias="MMDAgent">licenses/MMDAgent</file>
         <file alias="HTSEngine">licenses/HTSEngine</file>
-        <file alias="GLEE">licenses/GLEE</file>
         <file alias="mecab">licenses/mecab</file>
+        <file alias="GLEW">licenses/GLEW</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>
@@ -25,4 +25,3 @@
         <file alias="toon10.bmp">images/toon10.bmp</file>
     </qresource>
 </RCC>
-
