@@ -40,6 +40,7 @@
 #define SCENEWIDGET_H
 
 #include <QtCore/QtCore>
+#include <GL/glew.h>
 #include <QtOpenGL/QGLWidget>
 #include <LinearMath/btVector3.h>
 

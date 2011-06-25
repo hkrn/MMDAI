@@ -274,6 +274,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
                 QFileInfo stagePath(path);
                 setStageInternal(stagePath.baseName(), stagePath.dir());
             }
+            qDebug() << "Proceeded a dropped file:" << path;
         }
         startSceneUpdateTimer();
     }
@@ -281,6 +282,11 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
+    GLenum err = glewInit();
+    if (GLEW_OK != err)
+        qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
+    else
+        qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     m_scene = new vpvl::Scene(width(), height(), m_defaultFPS);
     m_scene->setWorld(m_world->mutableWorld());
     startSceneUpdateTimer();
@@ -510,6 +516,7 @@ bool SceneWidget::loadTexture(const QString &path, GLuint &textureID)
 {
     QImage image(path);
     textureID = bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, path.toUtf8().constData());
     return textureID != 0;
 }
 
@@ -541,39 +548,54 @@ void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
         glGenBuffers(1, &materialPrivate.vertexBufferObject);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, materialPrivate.vertexBufferObject);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices * sizeof(uint16_t), indicesPtr, GL_STATIC_DRAW);
+        qDebug("Binding material indices to vertex buffer object (ID=%d)", materialPrivate.vertexBufferObject);
         indicesPtr += nIndices;
         if (*primary) {
-            if (loadTexture(dir.absoluteFilePath(reinterpret_cast<const char *>(primary)), textureID))
+            if (loadTexture(dir.absoluteFilePath(reinterpret_cast<const char *>(primary)), textureID)) {
                 materialPrivate.primaryTextureID = textureID;
+                qDebug("Binding the texture as a primary texture (ID=%d)", textureID);
+            }
         }
         if (*second) {
-            if (loadTexture(dir.absoluteFilePath(reinterpret_cast<const char *>(second)), textureID))
+            if (loadTexture(dir.absoluteFilePath(reinterpret_cast<const char *>(second)), textureID)) {
                 materialPrivate.secondTextureID = textureID;
+                qDebug("Binding the texture as a secondary texture (ID=%d)", textureID);
+            }
         }
         hasSingleSphere |= material->isSpherePrimary() && !material->isSphereAuxSecond();
         hasMultipleSphere |= material->isSphereAuxSecond();
     }
     userData->hasSingleSphereMap = hasSingleSphere;
     userData->hasMultipleSphereMap = hasMultipleSphere;
+    qDebug().nospace() << "Sphere map information: hasSingleSphere=" << hasSingleSphere
+                       << ", hasMultipleSphere=" << hasMultipleSphere;
     glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->stride(vpvl::PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
+    qDebug("Binding edge indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().size() * model->stride(vpvl::PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
+    qDebug("Binding indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kShadowIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * model->stride(vpvl::PMDModel::kTextureCoordsStride),
                  model->textureCoordsPointer(), GL_STATIC_DRAW);
-    if (loadToonTexture("toon0.bmp", dir, textureID))
+    qDebug("Binding texture coordinates to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kModelTexCoords]);
+    if (loadToonTexture("toon0.bmp", dir, textureID)) {
         userData->toonTextureID[0] = textureID;
+        qDebug("Binding the texture as a toon texture (ID=%d)", textureID);
+    }
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
-        if (loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID))
+        if (loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
+            qDebug("Binding the texture as a toon texture (ID=%d)", textureID);
+        }
     }
     userData->materials = materialPrivates;
     model->setUserData(userData);
+    qDebug() << "Created the model:" << toUnicodeModelName(model);
 }
 
 void SceneWidget::unloadModel(const vpvl::PMDModel *model)
@@ -594,6 +616,7 @@ void SceneWidget::unloadModel(const vpvl::PMDModel *model)
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
         delete[] userData->materials;
         delete userData;
+        qDebug() << "Destroyed the model:" << toUnicodeModelName(model);
     }
 }
 
@@ -874,6 +897,7 @@ void SceneWidget::loadStage(vpvl::XModel *model, const QDir &dir)
     vpvl::XModelUserData *userData = new vpvl::XModelUserData;
     userData->listID = glGenLists(1);
     glNewList(userData->listID, GL_COMPILE);
+    qDebug("Generated a OpenGL list (ID=%d)", userData->listID);
 #ifndef VPVL_COORDINATE_OPENGL
     glPushMatrix();
     glScalef(1.0f, 1.0f, -1.0f);
@@ -890,7 +914,7 @@ void SceneWidget::loadStage(vpvl::XModel *model, const QDir &dir)
     const bool hasNormals = normals.size();
     const bool hasColors = colors.size();
     uint32_t nFaces = faces.size();
-    uint32_t prevIndex = UINT32_MAX;
+    uint32_t prevIndex = -1;
     glEnable(GL_TEXTURE_2D);
     for (uint32_t i = 0; i < nFaces; i++) {
         const vpvl::XModelFaceIndex &face = faces[i];
@@ -912,6 +936,7 @@ void SceneWidget::loadStage(vpvl::XModel *model, const QDir &dir)
                     if (loadTexture(dir.absoluteFilePath(textureName), value)) {
                         userData->textures.insert(key, value);
                         glBindTexture(GL_TEXTURE_2D, value);
+                        qDebug("Binding the texture as a texture (ID=%d)", value);
                     }
                 }
                 else {
@@ -951,6 +976,7 @@ void SceneWidget::loadStage(vpvl::XModel *model, const QDir &dir)
 #endif
     glEndList();
     model->setUserData(userData);
+    qDebug("Created the stage");
 }
 
 void SceneWidget::unloadStage(const vpvl::XModel *model)
@@ -964,6 +990,7 @@ void SceneWidget::unloadStage(const vpvl::XModel *model)
             deleteTexture(*textures.getAtIndex(i));
         textures.clear();
         delete userData;
+        qDebug("Destroyed the stage");
     }
 }
 
