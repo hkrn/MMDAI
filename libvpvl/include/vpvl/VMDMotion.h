@@ -80,6 +80,23 @@ class VMDMotion
 public:
 
     /**
+      * Type of parsing errors.
+      */
+    enum Error
+    {
+        kNoError,
+        kInvalidHeaderError,
+        kInvalidSignatureError,
+        kBoneKeyFramesSizeError,
+        kBoneKeyFramesError,
+        kFaceKeyFramesSizeError,
+        kFaceKeyFramesError,
+        kCameraKeyFramesSizeError,
+        kCameraKeyFramesError,
+        kMaxErrors
+    };
+
+    /**
      * Status of current motion.
      */
     enum MotionStatus
@@ -105,6 +122,9 @@ public:
     }
     PMDModel *attachedModel() const {
         return m_model;
+    }
+    Error error() const {
+        return m_error;
     }
     const uint8_t *data() const {
         return m_data;
@@ -173,6 +193,7 @@ private:
     CameraMotion m_cameraMotion;
     FaceMotion m_faceMotion;
     MotionStatus m_status;
+    Error m_error;
     uint8_t m_onEnd;
     float m_loopAt;
     float m_priority;

@@ -50,6 +50,7 @@ const float VMDMotion::kDefaultPriority = 0.0f;
 
 VMDMotion::VMDMotion(const uint8_t *data, size_t size)
     : m_model(0),
+      m_error(kNoError),
       m_status(kRunning),
       m_onEnd(2),
       m_loopAt(kDefaultLoopAtFrame),
@@ -97,16 +98,20 @@ bool VMDMotion::preparse()
 {
     size_t rest = m_size;
     // Header(30) + Name(20)
-    if (50 > rest)
+    if (50 > rest) {
+        m_error = kInvalidHeaderError;
         return false;
+    }
 
     uint8_t *ptr = const_cast<uint8_t *>(m_data);
     m_result.basePtr = ptr;
 
     // Check the signature is valid
     static const uint8_t header[] = "Vocaloid Motion Data 0002";
-    if (memcmp(ptr, header, sizeof(header)) != 0)
+    if (memcmp(ptr, header, sizeof(header)) != 0) {
+        m_error = kInvalidSignatureError;
         return false;
+    }
     ptr += 30;
     m_result.namePtr = ptr;
     ptr += 20;
@@ -114,27 +119,39 @@ bool VMDMotion::preparse()
 
     // Bone key frame
     size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames;
-    if (!internal::size32(ptr, rest, nBoneKeyFrames))
+    if (!internal::size32(ptr, rest, nBoneKeyFrames)) {
+        m_error = kBoneKeyFramesSizeError;
         return false;
+    }
     m_result.boneKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, BoneKeyFrame::stride(), nBoneKeyFrames, rest))
+    if (!internal::validateSize(ptr, BoneKeyFrame::stride(), nBoneKeyFrames, rest)) {
+        m_error = kBoneKeyFramesError;
         return false;
+    }
     m_result.boneKeyFrameCount = nBoneKeyFrames;
 
     // Face key frame
-    if (!internal::size32(ptr, rest, nFaceKeyFrames))
+    if (!internal::size32(ptr, rest, nFaceKeyFrames)) {
+        m_error = kFaceKeyFramesSizeError;
         return false;
+    }
     m_result.faceKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, FaceKeyFrame::stride(), nFaceKeyFrames, rest))
+    if (!internal::validateSize(ptr, FaceKeyFrame::stride(), nFaceKeyFrames, rest)) {
+        m_error = kFaceKeyFramesError;
         return false;
+    }
     m_result.faceKeyFrameCount = nFaceKeyFrames;
 
     // Camera key frame
-    if (!internal::size32(ptr, rest, nCameraKeyFrames))
+    if (!internal::size32(ptr, rest, nCameraKeyFrames)) {
+        m_error = kCameraKeyFramesSizeError;
         return false;
+    }
     m_result.cameraKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, CameraKeyFrame::stride(), nCameraKeyFrames, rest))
+    if (!internal::validateSize(ptr, CameraKeyFrame::stride(), nCameraKeyFrames, rest)) {
+        m_error = kCameraKeyFramesError;
         return false;
+    }
     m_result.cameraKeyFrameCount = nCameraKeyFrames;
 
     return true;

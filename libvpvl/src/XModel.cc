@@ -63,32 +63,33 @@ struct XModelInternalMaterial {
 enum XModelInternalParseState
 {
     kNone,
-    kHeaderDeclation,
-    kMeshVerticesDeclation,
+    kHeaderDeclaration,
+    kMeshVerticesDeclaration,
     kMeshVertices,
     kMeshVertexFacesSize,
     kMeshVertexFaces,
-    kMeshNormalsDeclation,
+    kMeshNormalsDeclaration,
     kMeshNormals,
     kMeshNormalFacesSize,
     kMeshNormalFaces,
-    kMeshMaterialListDeclation,
+    kMeshMaterialListDeclaration,
     kMeshMaterialFaceIndicesSize,
     kMeshMaterialFaceIndices,
-    kMeshMaterialDeclation,
+    kMeshMaterialDeclaration,
     kMeshMaterialPower,
     kMeshMaterialSpecularColor,
     kMeshMaterialEmmisiveColor,
-    kMeshTextureFilenameDeclation,
+    kMeshTextureFilenameDeclaration,
     kMeshMaterialTextureFilename,
-    kMeshTextureCoordsDeclation,
+    kMeshTextureCoordsDeclaration,
     kMeshTextureCoords,
-    kMeshVertexColorsDeclation,
+    kMeshVertexColorsDeclaration,
     kMeshVertexColors
 };
 
 XModel::XModel(const uint8_t *data, size_t size)
-    : m_data(data),
+    : m_error(kNoError),
+      m_data(data),
       m_size(size)
 {
 }
@@ -102,6 +103,7 @@ XModel::~XModel()
     m_coords.clear();
     m_colors.clear();
     m_materials.clear();
+    m_error = kNoError;
     m_userData = 0;
     m_data = 0;
 }
@@ -109,14 +111,20 @@ XModel::~XModel()
 bool XModel::preparse()
 {
     uint8_t *ptr = const_cast<uint8_t *>(m_data);
-    if (16 > m_size)
+    if (16 > m_size) {
+        m_error = kInvalidHeader;
         return false;
+    }
 
-    if (!internal::stringEquals(ptr, reinterpret_cast<const uint8_t *>("xof"), 3))
+    if (!internal::stringEquals(ptr, reinterpret_cast<const uint8_t *>("xof"), 3)) {
+        m_error = kInvalidSignatureError;
         return false;
+    }
 
-    if (!internal::stringEquals(ptr + 8, reinterpret_cast<const uint8_t *>("txt"), 3))
+    if (!internal::stringEquals(ptr + 8, reinterpret_cast<const uint8_t *>("txt"), 3)) {
+        m_error = kNotTextFormatError;
         return false;
+    }
 
     return true;
 }
@@ -163,17 +171,17 @@ bool XModel::load()
             char *token = tokens[i];
             if (*token == '{') {
                 switch (state) {
-                case kHeaderDeclation:
-                case kMeshVerticesDeclation:
-                case kMeshNormalsDeclation:
-                case kMeshMaterialListDeclation:
-                case kMeshMaterialDeclation:
-                case kMeshTextureFilenameDeclation:
-                case kMeshTextureCoordsDeclation:
-                case kMeshVertexColorsDeclation:
+                case kHeaderDeclaration:
+                case kMeshVerticesDeclaration:
+                case kMeshNormalsDeclaration:
+                case kMeshMaterialListDeclaration:
+                case kMeshMaterialDeclaration:
+                case kMeshTextureFilenameDeclaration:
+                case kMeshTextureCoordsDeclaration:
+                case kMeshVertexColorsDeclaration:
                     break;
                 default:
-                    throw 0;
+                    throw kDeclarationError;
                 }
             }
             else if (*token == '}') {
@@ -185,31 +193,31 @@ bool XModel::load()
                 case kNone:
                 {
                     if (depth == 0 && internal::stringEquals(token, "Header", 6))
-                        state = kHeaderDeclation;
+                        state = kHeaderDeclaration;
                     else if (depth == 0 && internal::stringEquals(token, "Mesh", 4))
-                        state = kMeshVerticesDeclation;
+                        state = kMeshVerticesDeclaration;
                     else if (depth == 1 && internal::stringEquals(token, "MeshNormals", 11))
-                        state = kMeshNormalsDeclation;
+                        state = kMeshNormalsDeclaration;
                     else if (depth == 1 && internal::stringEquals(token, "MeshMaterialList", 16))
-                        state = kMeshMaterialListDeclation;
+                        state = kMeshMaterialListDeclaration;
                     else if (depth == 2 && internal::stringEquals(token, "Material", 8))
-                        state = kMeshMaterialDeclation;
+                        state = kMeshMaterialDeclaration;
                     else if (depth == 3 && internal::stringEquals(token, "TextureFilename", 15))
-                        state = kMeshTextureFilenameDeclation;
+                        state = kMeshTextureFilenameDeclaration;
                     else if (depth == 1 && internal::stringEquals(token, "MeshTextureCoords", 17))
-                        state = kMeshTextureCoordsDeclation;
+                        state = kMeshTextureCoordsDeclaration;
                     else if (depth == 1 && internal::stringEquals(token, "MeshVertexColors", 16))
-                        state = kMeshVertexColorsDeclation;
+                        state = kMeshVertexColorsDeclaration;
                     else
-                        throw 1;
+                        throw kInvalidParseStateError;
                     depth++;
                     break;
                 }
-                case kHeaderDeclation:
+                case kHeaderDeclaration:
                 {
                     continue;
                 }
-                case kMeshVerticesDeclation:
+                case kMeshVerticesDeclaration:
                 {
                     evsize = internal::stringToInt(token);
                     state = kMeshVertices;
@@ -226,7 +234,7 @@ bool XModel::load()
                         m_vertices.push_back(v);
                     }
                     else {
-                        throw 2;
+                        throw kMeshVerticeError;
                     }
                     if (evsize <= static_cast<uint32_t>(m_vertices.size()))
                         state = kMeshVertexFacesSize;
@@ -264,19 +272,19 @@ bool XModel::load()
                                              static_cast<const btScalar>(internal::stringToInt(w)));
                         }
                         else {
-                            throw 3;
+                            throw kMeshFaceSizeError;
                         }
                         m_faces.push_back(v);
                         nIndices++;
                     }
                     else {
-                        throw 4;
+                        throw kMeshFaceError;
                     }
                     if (evfsize <= nIndices)
                         state = kNone;
                     break;
                 }
-                case kMeshNormalsDeclation:
+                case kMeshNormalsDeclaration:
                 {
                     ensize = internal::stringToInt(token);
                     state = kMeshNormals;
@@ -293,7 +301,7 @@ bool XModel::load()
                         m_normals.push_back(v);
                     }
                     else {
-                        throw 5;
+                        throw kMeshNormalError;
                     }
                     if (ensize <= static_cast<uint32_t>(m_normals.size()))
                         state = kMeshNormalFacesSize;
@@ -313,7 +321,7 @@ bool XModel::load()
                         state = kNone;
                     break;
                 }
-                case kMeshMaterialListDeclation:
+                case kMeshMaterialListDeclaration:
                 {
                     emsize = internal::stringToInt(token);
                     state = kMeshMaterialFaceIndicesSize;
@@ -332,12 +340,12 @@ bool XModel::load()
                     if (index <= emsize)
                         m_faces[nIndices++].index = index;
                     else
-                        throw 6;
+                        throw kMeshMaterialFaceError;
                     if (efisize <= nIndices)
                         state = kNone;
                     break;
                 }
-                case kMeshMaterialDeclation:
+                case kMeshMaterialDeclaration:
                 {
                     currentMaterial = new XModelInternalMaterial;
                     currentMaterial->emmisive.setZero();
@@ -357,7 +365,7 @@ bool XModel::load()
                         state = kMeshMaterialPower;
                     }
                     else {
-                        throw 7;
+                        throw kMeshMaterialDeclarationError;
                     }
                     break;
                 }
@@ -378,7 +386,7 @@ bool XModel::load()
                         state = kMeshMaterialEmmisiveColor;
                     }
                     else {
-                        throw 8;
+                        throw kMeshMaterialSpecularError;
                     }
                     break;
                 }
@@ -393,11 +401,11 @@ bool XModel::load()
                         state = kNone;
                     }
                     else {
-                        throw 9;
+                        throw kMeshMaterialEmmisiveError;
                     }
                     break;
                 }
-                case kMeshTextureFilenameDeclation:
+                case kMeshTextureFilenameDeclaration:
                 {
                     size_t len = strlen(token);
                     char *filename = new char[len + 1];
@@ -420,7 +428,7 @@ bool XModel::load()
                     currentMaterial->textureName = filename;
                     break;
                 }
-                case kMeshTextureCoordsDeclation:
+                case kMeshTextureCoordsDeclaration:
                 {
                     etsize = internal::stringToInt(token);
                     state = kMeshTextureCoords;
@@ -435,13 +443,13 @@ bool XModel::load()
                         m_coords.push_back(v);
                     }
                     else {
-                        throw 10;
+                        throw kMeshTextureCoordsError;
                     }
                     if (etsize <= static_cast<uint32_t>(m_coords.size()))
                         state = kNone;
                     break;
                 }
-                case kMeshVertexColorsDeclation:
+                case kMeshVertexColorsDeclaration:
                 {
                     ecsize = internal::stringToInt(token);
                     state = kMeshVertexColors;
@@ -462,7 +470,7 @@ bool XModel::load()
                         colors.push_back(ic);
                     }
                     else {
-                        throw 11;
+                        throw kMeshVertexColorError;
                     }
                     if (ecsize <= static_cast<uint32_t>(colors.size())) {
                         const uint32_t nColors = colors.size();
@@ -479,7 +487,7 @@ bool XModel::load()
                 }
                 default:
                 {
-                    throw 12;
+                    throw kInvalidParseStateError;
                 }
                 }
             }
@@ -529,8 +537,8 @@ bool XModel::load()
             ret = true;
         }
 
-    } catch (int e) {
-        fprintf(stderr, "%d", e);
+    } catch (Error e) {
+        m_error = e;
     }
 
     internal::clearAll(materials);

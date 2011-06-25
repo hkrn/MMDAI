@@ -14,6 +14,7 @@ static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
 TEST(PMDModelTest, PreParseEmptyPMD) {
     vpvl::PMDModel model(reinterpret_cast<const uint8_t *>(""), 0);
     EXPECT_FALSE(model.preparse());
+    EXPECT_EQ(vpvl::PMDModel::kInvalidHeaderError, model.error());
 }
 
 TEST(PMDModelTest, PreParseFullPMD) {
@@ -54,6 +55,7 @@ TEST(PMDModelTest, PreParseFullPMD) {
     EXPECT_TRUE(result.rigidBodiesCount != 0);
     EXPECT_TRUE(result.constraintsPtr != 0);
     EXPECT_TRUE(result.constranitsCount != 0);
+    EXPECT_EQ(vpvl::PMDModel::kNoError, model.error());
     delete[] data;
 }
 
@@ -72,4 +74,5 @@ TEST(PMDModelTest, ParseFullPMD) {
     EXPECT_EQ(model.rigidBodies().size(), result.rigidBodiesCount);
     EXPECT_EQ(model.constraints().size(), result.constranitsCount);
     EXPECT_STREQ("Miku Hatsune", reinterpret_cast<const char *>(model.englishName()));
+    EXPECT_EQ(vpvl::PMDModel::kNoError, model.error());
 }

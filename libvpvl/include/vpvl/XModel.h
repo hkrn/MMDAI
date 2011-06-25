@@ -68,6 +68,28 @@ typedef btAlignedObjectArray<uint16_t> XModelIndexList;
 class XModel
 {
 public:
+
+    enum Error
+    {
+        kNoError,
+        kInvalidHeader,
+        kInvalidSignatureError,
+        kNotTextFormatError,
+        kDeclarationError,
+        kInvalidParseStateError,
+        kMeshVerticeError,
+        kMeshFaceSizeError,
+        kMeshFaceError,
+        kMeshNormalError,
+        kMeshMaterialFaceError,
+        kMeshMaterialDeclarationError,
+        kMeshMaterialSpecularError,
+        kMeshMaterialEmmisiveError,
+        kMeshTextureCoordsError,
+        kMeshVertexColorError,
+        kMaxErrors
+    };
+
     enum StrideType
     {
         kVerticesStride,
@@ -136,6 +158,7 @@ private:
     btAlignedObjectArray<XModelIndexList *> m_indices;
     btAlignedObjectArray<XMaterial *> m_materials;
     XModelUserData *m_userData;
+    Error m_error;
     const uint8_t *m_data;
     const size_t m_size;
 };

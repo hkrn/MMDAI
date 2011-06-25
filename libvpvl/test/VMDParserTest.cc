@@ -14,6 +14,7 @@ static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
 TEST(VMDMotionTest, PreParseEmptyVMD) {
     vpvl::VMDMotion motion(reinterpret_cast<const uint8_t *>(""), 0);
     EXPECT_FALSE(motion.preparse());
+    EXPECT_EQ(vpvl::VMDMotion::kInvalidHeaderError, motion.error());
 }
 
 TEST(VMDMotionTest, PreParseMotionVMD) {
@@ -31,6 +32,7 @@ TEST(VMDMotionTest, PreParseMotionVMD) {
     EXPECT_TRUE(result.faceKeyFrameCount != 0);
     EXPECT_TRUE(result.cameraKeyFramePtr != 0);
     EXPECT_TRUE(result.cameraKeyFrameCount == 0);
+    EXPECT_EQ(vpvl::VMDMotion::kNoError, motion.error());
     delete[] data;
 }
 
@@ -49,6 +51,7 @@ TEST(VMDMotionTest, PreParseCameraVMD) {
     EXPECT_TRUE(result.faceKeyFrameCount == 0);
     EXPECT_TRUE(result.cameraKeyFramePtr != 0);
     EXPECT_TRUE(result.cameraKeyFrameCount != 0);
+    EXPECT_EQ(vpvl::VMDMotion::kNoError, motion.error());
     delete[] data;
 }
 
@@ -62,6 +65,7 @@ TEST(VMDMotionTest, ParseMotionVMD) {
     EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
     EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
     EXPECT_EQ(motion.camera().frames().size(), result.cameraKeyFrameCount);
+    EXPECT_EQ(vpvl::VMDMotion::kNoError, motion.error());
     delete[] data;
 }
 
@@ -75,5 +79,6 @@ TEST(VMDMotionTest, ParseCameraVMD) {
     EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
     EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
     EXPECT_EQ(motion.camera().frames().size(), result.cameraKeyFrameCount);
+    EXPECT_EQ(vpvl::VMDMotion::kNoError, motion.error());
     delete[] data;
 }

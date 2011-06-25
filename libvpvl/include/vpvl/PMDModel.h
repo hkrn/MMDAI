@@ -109,6 +109,42 @@ class PMDModel
 public:
 
     /**
+      * Type of parsing errors.
+      */
+    enum Error
+    {
+        kNoError,
+        kInvalidHeaderError,
+        kInvalidSignatureError,
+        kInvalidVersionError,
+        kVerticesSizeError,
+        kVerticesError,
+        kIndicesSizeError,
+        kIndicesError,
+        kMaterialsSizeError,
+        kMaterialsError,
+        kBonesSizeError,
+        kBonesError,
+        kIKsSizeError,
+        kIKsError,
+        kFacesSizeError,
+        kFacesError,
+        kFaceDisplayNamesSizeError,
+        kFaceDisplayNamesError,
+        kBoneFrameNamesSizeError,
+        kBoneFrameNamesError,
+        kBoneDisplayNamesSizeError,
+        kBoneDisplayNamesError,
+        kEnglishNamesError,
+        kExtraTextureNamesError,
+        kRigidBodiesSizeError,
+        kRigidBodiesError,
+        kConstraintsSizeError,
+        kConstraintsError,
+        kMaxErrors
+    };
+
+    /**
       * Type of stride to get stride length.
       */
     enum StrideType
@@ -225,6 +261,9 @@ public:
         Face **ptr = const_cast<Face **>(m_name2face.find(btHashString(reinterpret_cast<const char *>(name))));
         return ptr ? *ptr : 0;
     }
+    Error error() const {
+        return m_error;
+    }
     const uint8_t *data() const {
         return m_data;
     }
@@ -329,6 +368,7 @@ private:
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;
     btVector3 m_lightDirection;
+    Error m_error;
     const size_t m_size;
     const uint8_t *m_data;
     uint32_t m_boundingSphereStep;

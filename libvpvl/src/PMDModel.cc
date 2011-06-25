@@ -69,6 +69,7 @@ PMDModel::PMDModel(const uint8_t *data, size_t size)
       m_indicesPointer(0),
       m_edgeIndicesPointer(0),
       m_edgeIndicesCount(0),
+      m_error(kNoError),
       m_size(size),
       m_data(data),
       m_boundingSphereStep(kBoundingSpherePointsMin),
@@ -117,6 +118,7 @@ PMDModel::~PMDModel()
     m_edgeIndicesPointer = 0;
     m_edgeIndicesCount = 0;
     m_data = 0;
+    m_error = kNoError;
 }
 
 void PMDModel::prepare()
@@ -393,18 +395,24 @@ bool PMDModel::preparse()
 {
     size_t rest = m_size;
     // Header[3] + Version[4] + Name[20] + Comment[256]
-    if (!m_data || 283 > rest)
+    if (!m_data || 283 > rest) {
+        m_error = kInvalidHeaderError;
         return false;
+    }
 
     uint8_t *ptr = const_cast<uint8_t *>(m_data);
     m_result.basePtr = ptr;
 
     // Check the signature and version is correct
-    if (memcmp(ptr, "Pmd", 3) != 0)
+    if (memcmp(ptr, "Pmd", 3) != 0) {
+        m_error = kInvalidSignatureError;
         return false;
+    }
     ptr += 3;
-    if (1.0f != *reinterpret_cast<float *>(ptr))
+    if (1.0f != *reinterpret_cast<float *>(ptr)) {
+        m_error = kInvalidVersionError;
         return false;
+    }
 
     // Name and Comment (in Shift-JIS)
     ptr += sizeof(float);
@@ -417,81 +425,117 @@ bool PMDModel::preparse()
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
             nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
     // Vertices
-    if (!internal::size32(ptr, rest, nVertices))
+    if (!internal::size32(ptr, rest, nVertices)) {
+        m_error = kVerticesSizeError;
         return false;
+    }
     m_result.verticesPtr = ptr;
-    if (!internal::validateSize(ptr, Vertex::stride(), nVertices, rest))
+    if (!internal::validateSize(ptr, Vertex::stride(), nVertices, rest)) {
+        m_error = kVerticesError;
         return false;
+    }
     m_result.verticesCount = nVertices;
 
     // Indices
-    if (!internal::size32(ptr, rest, nIndices))
+    if (!internal::size32(ptr, rest, nIndices)) {
+        m_error = kIndicesSizeError;
         return false;
+    }
     m_result.indicesPtr = ptr;
-    if (!internal::validateSize(ptr, sizeof(uint16_t), nIndices, rest))
+    if (!internal::validateSize(ptr, sizeof(uint16_t), nIndices, rest)) {
+        m_error = kIndicesError;
         return false;
+    }
     m_result.indicesCount = nIndices;
 
     // Materials
-    if (!internal::size32(ptr, rest, nMaterials))
+    if (!internal::size32(ptr, rest, nMaterials)) {
+        m_error = kMaterialsSizeError;
         return false;
+    }
     m_result.materialsPtr = ptr;
-    if (!internal::validateSize(ptr, Material::stride(), nMaterials, rest))
+    if (!internal::validateSize(ptr, Material::stride(), nMaterials, rest)) {
+        m_error = kMaterialsError;
         return false;
+    }
     m_result.materialsCount = nMaterials;
 
     // Bones
-    if (!internal::size16(ptr, rest, nBones))
+    if (!internal::size16(ptr, rest, nBones)) {
+        m_error = kBonesSizeError;
         return false;
+    }
     m_result.bonesPtr = ptr;
-    if (!internal::validateSize(ptr, Bone::stride(), nBones, rest))
+    if (!internal::validateSize(ptr, Bone::stride(), nBones, rest)) {
+        m_error = kBonesError;
         return false;
+    }
     m_result.bonesCount = nBones;
 
     // IKs
-    if (!internal::size16(ptr, rest, nIKs))
+    if (!internal::size16(ptr, rest, nIKs)) {
+        m_error = kIKsSizeError;
         return false;
+    }
     m_result.IKsPtr = ptr;
 
     bool ok = false;
     size_t size = IK::totalSize(ptr, rest, nIKs, ok);
-    if (!ok || !internal::validateSize(ptr, size, 1, rest))
+    if (!ok || !internal::validateSize(ptr, size, 1, rest)) {
+        m_error = kIKsError;
         return false;
+    }
     m_result.IKsCount = nIKs;
 
     // Faces
-    if (!internal::size16(ptr, rest, nFaces))
+    if (!internal::size16(ptr, rest, nFaces)) {
+        m_error = kFacesSizeError;
         return false;
+    }
     m_result.facesPtr = ptr;
 
     ok = false;
     size = Face::totalSize(ptr, rest, nFaces, ok);
-    if (!ok || !internal::validateSize(ptr, size, 1, rest))
+    if (!ok || !internal::validateSize(ptr, size, 1, rest)) {
+        m_error = kFacesError;
         return false;
+    }
     m_result.facesCount = nFaces;
 
     // Face display names
-    if (!internal::size8(ptr, rest, nFaceNames))
+    if (!internal::size8(ptr, rest, nFaceNames)) {
+        m_error = kFaceDisplayNamesSizeError;
         return false;
+    }
     m_result.faceDisplayNamesPtr = ptr;
-    if (!internal::validateSize(ptr, sizeof(uint16_t), nFaceNames, rest))
+    if (!internal::validateSize(ptr, sizeof(uint16_t), nFaceNames, rest)) {
+        m_error = kFaceDisplayNamesError;
         return false;
+    }
     m_result.faceDisplayNamesCount = nFaceNames;
 
     // Bone frame names
-    if (!internal::size8(ptr, rest, nBoneFrames))
+    if (!internal::size8(ptr, rest, nBoneFrames)) {
+        m_error = kBoneFrameNamesSizeError;
         return false;
+    }
     m_result.boneFrameNamesPtr = ptr;
-    if (!internal::validateSize(ptr, 50, nBoneFrames, rest))
+    if (!internal::validateSize(ptr, 50, nBoneFrames, rest)) {
+        m_error = kBoneFrameNamesError;
         return false;
+    }
     m_result.boneFrameNamesCount = nBoneFrames;
 
     // Bone display names
-    if (!internal::size32(ptr, rest, nBoneNames))
+    if (!internal::size32(ptr, rest, nBoneNames)) {
+        m_error = kBoneDisplayNamesSizeError;
         return false;
+    }
     m_result.boneDisplayNamesPtr = ptr;
-    if (!internal::validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest))
+    if (!internal::validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest)) {
+        m_error = kBoneDisplayNamesError;
         return false;
+    }
     m_result.boneDisplayNamesCount = nBoneNames;
 
     if (rest == 0)
@@ -506,8 +550,10 @@ bool PMDModel::preparse()
         const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * 20 : 0;
         const size_t englishBoneFramesSize = 50 * nBoneFrames;
         const size_t required = englishBoneNamesSize + englishFaceNamesSize + englishBoneFramesSize;
-        if ((required + 276) > rest)
+        if ((required + 276) > rest) {
+            m_error = kEnglishNamesError;
             return false;
+        }
         m_result.englishNamePtr = ptr;
         ptr += 20;
         m_result.englishCommentPtr = ptr;
@@ -522,8 +568,10 @@ bool PMDModel::preparse()
     }
 
     // Extra texture path (100 * 10)
-    if (1000 > rest)
+    if (1000 > rest) {
+        m_error = kExtraTextureNamesError;
         return false;
+    }
     m_result.toonTextureNamesPtr = ptr;
     ptr += 1000;
     rest -= 1000;
@@ -532,19 +580,27 @@ bool PMDModel::preparse()
         return true;
 
     // Rigid body
-    if (!internal::size32(ptr, rest, nRigidBodies))
+    if (!internal::size32(ptr, rest, nRigidBodies)) {
+        m_error = kRigidBodiesSizeError;
         return false;
+    }
     m_result.rigidBodiesPtr = ptr;
-    if (!internal::validateSize(ptr, RigidBody::stride(), nRigidBodies, rest))
+    if (!internal::validateSize(ptr, RigidBody::stride(), nRigidBodies, rest)) {
+        m_error = kRigidBodiesError;
         return false;
+    }
     m_result.rigidBodiesCount = nRigidBodies;
 
     // Constranint
-    if (!internal::size32(ptr, rest, nConstranits))
+    if (!internal::size32(ptr, rest, nConstranits)) {
+        m_error = kConstraintsSizeError;
         return false;
+    }
     m_result.constraintsPtr = ptr;
-    if (!internal::validateSize(ptr, Constraint::stride(), nConstranits, rest))
+    if (!internal::validateSize(ptr, Constraint::stride(), nConstranits, rest)) {
+        m_error = kConstraintsError;
         return false;
+    }
     m_result.constranitsCount = nConstranits;
 
     return true;
