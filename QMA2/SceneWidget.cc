@@ -189,7 +189,6 @@ private:
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_scene(0),
-    m_stage(0),
     m_camera(0),
     m_selected(0),
     m_world(0),
@@ -209,9 +208,6 @@ SceneWidget::~SceneWidget()
 {
     delete m_scene;
     m_scene = 0;
-    unloadStage(m_stage);
-    delete m_stage;
-    m_stage = 0;
     delete m_camera;
     m_camera = 0;
     delete m_world;
@@ -222,7 +218,12 @@ SceneWidget::~SceneWidget()
         unloadModel(model);
         delete model;
     }
+    foreach (vpvl::XModel *model, m_assets) {
+        unloadAsset(model, m_assets.key(model));
+        delete model;
+    }
     m_models.clear();
+    m_assets.clear();
 }
 
 void SceneWidget::setCurrentFPS(int value)
@@ -287,13 +288,13 @@ void SceneWidget::insertMotionToSelectedModel()
     }
 }
 
-void SceneWidget::setStage()
+void SceneWidget::addAsset()
 {
     stopSceneUpdateTimer();
-    QFileInfo fi(openFileDialog("lastStageDirectory", tr("Open stage X file"), tr("DirectX mesh file (*.x)")));
+    QFileInfo fi(openFileDialog("lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
-        if (!setStageInternal(fi.fileName(), fi.dir())) {
+        if (!addAssetInternal(fi.fileName(), fi.dir())) {
             QMessageBox::warning(this, tr("Loading stage error"),
                                  tr("%s cannot be loaded").arg(fi.fileName()));
         }
@@ -318,7 +319,7 @@ void SceneWidget::deleteSelectedModel()
 {
     const QString &key = m_models.key(m_selected);
     if (!key.isNull()) {
-        emit modelDeleted(m_selected);
+        emit modelDidDelete(m_selected);
         m_scene->removeModel(m_selected);
         m_models.remove(key);
         delete m_selected;
@@ -372,7 +373,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
             }
             else if (path.endsWith(".x", Qt::CaseInsensitive)) {
                 QFileInfo stagePath(path);
-                setStageInternal(stagePath.baseName(), stagePath.dir());
+                addAssetInternal(stagePath.baseName(), stagePath.dir());
             }
             qDebug() << "Proceeded a dropped file:" << path;
         }
@@ -472,6 +473,35 @@ void SceneWidget::initializeSurface()
     setLighting();
 }
 
+vpvl::XModel *SceneWidget::addAssetInternal(const QString &baseName, const QDir &dir)
+{
+    QFile file(dir.absoluteFilePath(baseName));
+    vpvl::XModel *model = 0;
+    if (file.open(QFile::ReadOnly)) {
+        QByteArray data = file.readAll();
+        model = new vpvl::XModel(reinterpret_cast<const uint8_t *>(data.constData()), data.size());
+        if (model->load()) {
+            QString key = baseName;
+            if (m_assets.contains(key)) {
+                int i = 0;
+                while (true) {
+                    QString tmpKey = QString("%1%2").arg(key).arg(i);
+                    if (!m_assets.contains(tmpKey))
+                        key = tmpKey;
+                }
+            }
+            loadAsset(model, key, dir);
+            m_assets[key] = model;
+            emit assetDidAdd(model);
+        }
+        else {
+            delete model;
+            model = 0;
+        }
+    }
+    return model;
+}
+
 vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDir &dir)
 {
     QFile file(dir.absoluteFilePath(baseName));
@@ -493,7 +523,7 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
                 }
             }
             m_models[key] = model;
-            emit modelAdded(model);
+            emit modelDidAdd(model);
         }
         else {
             delete model;
@@ -513,7 +543,7 @@ vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QSt
         if (motion->load()) {
             model->addMotion(motion);
             m_motions.append(motion);
-            emit motionAdded(motion);
+            emit motionDidAdd(motion);
         }
         else {
             delete motion;
@@ -534,7 +564,7 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
             delete m_camera;
             m_camera = motion;
             m_scene->setCameraMotion(motion);
-            emit cameraMotionSet(motion);
+            emit cameraMotionDidSet(motion);
         }
         else {
             delete motion;
@@ -542,30 +572,6 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
         }
     }
     return motion;
-}
-
-vpvl::XModel *SceneWidget::setStageInternal(const QString &baseName, const QDir &dir)
-{
-    QFile file(dir.absoluteFilePath(baseName));
-    vpvl::XModel *model = 0;
-    if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
-        model = new vpvl::XModel(reinterpret_cast<const uint8_t *>(data.constData()), data.size());
-        if (model->load()) {
-            if (m_stage) {
-                unloadStage(m_stage);
-                delete m_stage;
-            }
-            loadStage(model, dir);
-            m_stage = model;
-            emit stageSet(model);
-        }
-        else {
-            delete model;
-            model = 0;
-        }
-    }
-    return model;
 }
 
 void SceneWidget::rotateInternal(float x, float y)
@@ -1001,7 +1007,7 @@ void SceneWidget::drawModelShadow(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
-void SceneWidget::loadStage(vpvl::XModel *model, const QDir &dir)
+void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir)
 {
     vpvl::XModelUserData *userData = new vpvl::XModelUserData;
     userData->listID = glGenLists(1);
@@ -1085,10 +1091,10 @@ void SceneWidget::loadStage(vpvl::XModel *model, const QDir &dir)
 #endif
     glEndList();
     model->setUserData(userData);
-    qDebug("Created the stage");
+    qDebug("Created the stage: %s", name.toUtf8().constData());
 }
 
-void SceneWidget::unloadStage(const vpvl::XModel *model)
+void SceneWidget::unloadAsset(const vpvl::XModel *model, const QString &name)
 {
     if (model) {
         vpvl::XModelUserData *userData = model->userData();
@@ -1099,11 +1105,11 @@ void SceneWidget::unloadStage(const vpvl::XModel *model)
             deleteTexture(*textures.getAtIndex(i));
         textures.clear();
         delete userData;
-        qDebug("Destroyed the stage");
+        qDebug("Destroyed the stage: %s", name.toUtf8().constData());
     }
 }
 
-void SceneWidget::drawStage(const vpvl::XModel *model)
+void SceneWidget::drawAsset(const vpvl::XModel *model)
 {
     if (model)
         glCallList(model->userData()->listID);
@@ -1121,7 +1127,6 @@ void SceneWidget::drawSurface()
     glLoadMatrixf(matrix);
     glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    drawStage(m_stage);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
@@ -1130,7 +1135,7 @@ void SceneWidget::drawSurface()
     glDepthMask(0);
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
-    // render shadow
+    // render shadow before drawing models
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
@@ -1144,6 +1149,11 @@ void SceneWidget::drawSurface()
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
+    // render all assets
+    // TODO: merge drawing models
+    foreach (vpvl::XModel *asset, m_assets) {
+        drawAsset(asset);
+    }
     // render model and edge
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];

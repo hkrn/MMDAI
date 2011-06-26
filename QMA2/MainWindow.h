@@ -69,9 +69,9 @@ private:
     void createMenus(QMenuBar *menuBar);
 
     QAction *m_addModelAction;
+    QAction *m_addAssetAction;
     QAction *m_insertMotionToAllAction;
     QAction *m_insertMotionToSelectedAction;
-    QAction *m_setStageAction;
     QAction *m_setCameraAction;
     QAction *m_zoomInAction;
     QAction *m_zoomOutAction;

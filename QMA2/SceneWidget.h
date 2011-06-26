@@ -79,7 +79,7 @@ public slots:
     void addModel();
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
-    void setStage();
+    void addAsset();
     void setCamera();
     void deleteSelectedModel();
     void resetCamera();
@@ -95,11 +95,11 @@ public slots:
     void translateRight() { translateInternal(1.0f, 0.0f); }
 
 signals:
-    void modelAdded(const vpvl::PMDModel *model);
-    void modelDeleted(const vpvl::PMDModel *model);
-    void motionAdded(const vpvl::VMDMotion *motion);
-    void stageSet(const vpvl::XModel *model);
-    void cameraMotionSet(const vpvl::VMDMotion *motion);
+    void modelDidAdd(const vpvl::PMDModel *model);
+    void modelDidDelete(const vpvl::PMDModel *model);
+    void motionDidAdd(const vpvl::VMDMotion *motion);
+    void assetDidAdd(const vpvl::XModel *model);
+    void cameraMotionDidSet(const vpvl::VMDMotion *motion);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -117,10 +117,10 @@ protected:
 
 private:
     void initializeSurface();
+    vpvl::XModel *addAssetInternal(const QString &baseName, const QDir &dir);
     vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
-    vpvl::XModel *setStageInternal(const QString &baseName, const QDir &dir);
     void rotateInternal(float x, float y);
     void translateInternal(float x, float y);
     void setLighting();
@@ -131,9 +131,9 @@ private:
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
     void drawModelShadow(const vpvl::PMDModel *model);
-    void loadStage(vpvl::XModel *model, const QDir &dir);
-    void unloadStage(const vpvl::XModel *model);
-    void drawStage(const vpvl::XModel *model);
+    void loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir);
+    void unloadAsset(const vpvl::XModel *model, const QString &name);
+    void drawAsset(const vpvl::XModel *model);
     void drawSurface();
     void updateFPS();
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
@@ -144,12 +144,12 @@ private:
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
     vpvl::Scene *m_scene;
-    vpvl::XModel *m_stage;
     vpvl::VMDMotion *m_camera;
     vpvl::PMDModel *m_selected;
     World *m_world;
     QSettings *m_settings;
     QHash<QString, vpvl::PMDModel *> m_models;
+    QHash<QString, vpvl::XModel *> m_assets;
     QList<vpvl::VMDMotion *> m_motions;
     QTime m_timer;
     QPoint m_prevPos;

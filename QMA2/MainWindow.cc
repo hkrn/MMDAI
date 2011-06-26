@@ -47,9 +47,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     m_settings.setIniCodec("UTF-8");
     m_scene = new SceneWidget(&m_settings, this);
-    connect(m_scene, SIGNAL(modelAdded(const vpvl::PMDModel*)),
+    connect(m_scene, SIGNAL(modelDidAdd(const vpvl::PMDModel*)),
             this, SLOT(addModel(const vpvl::PMDModel*)));
-    connect(m_scene, SIGNAL(modelDeleted(const vpvl::PMDModel*)),
+    connect(m_scene, SIGNAL(modelDidDelete(const vpvl::PMDModel*)),
             this, SLOT(deleteModel(const vpvl::PMDModel*)));
 
     QMenuBar *menuBar;
@@ -127,6 +127,12 @@ void MainWindow::createActions()
     connect(action, SIGNAL(triggered()), m_scene, SLOT(addModel()));
     m_addModelAction = action;
 
+    action = new QAction(tr("Add asset"), this);
+    action->setStatusTip(tr("Add an asset to the scene."));
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S));
+    connect(action, SIGNAL(triggered()), m_scene, SLOT(addAsset()));
+    m_addAssetAction = action;
+
     action = new QAction(tr("Insert to the all models"), this);
     action->setStatusTip(tr("Insert a motion to the all models."));
     action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_V));
@@ -138,12 +144,6 @@ void MainWindow::createActions()
     action->setShortcut(QKeySequence(Qt::ALT + Qt::CTRL + Qt::SHIFT + Qt::Key_V));
     connect(action, SIGNAL(triggered()), m_scene, SLOT(insertMotionToSelectedModel()));
     m_insertMotionToSelectedAction = action;
-
-    action = new QAction(tr("Set stage"), this);
-    action->setStatusTip(tr("Set or replace a stage to the scene."));
-    action->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S));
-    connect(action, SIGNAL(triggered()), m_scene, SLOT(setStage()));
-    m_setStageAction = action;
 
     action = new QAction(tr("Set camera"), this);
     action->setStatusTip(tr("Set or replace a camera motion to the scene."));
@@ -255,10 +255,11 @@ void MainWindow::createMenus(QMenuBar *menuBar)
 {
     m_fileMenu = menuBar->addMenu(tr("&File"));
     m_fileMenu->addAction(m_addModelAction);
+    m_fileMenu->addAction(m_addAssetAction);
+    m_fileMenu->addSeparator();
     m_fileMenu->addAction(m_insertMotionToAllAction);
     m_fileMenu->addAction(m_insertMotionToSelectedAction);
     m_fileMenu->addSeparator();
-    m_fileMenu->addAction(m_setStageAction);
     m_fileMenu->addAction(m_setCameraAction);
     m_fileMenu->addSeparator();
     m_fileMenu->addAction(m_exitAction);
