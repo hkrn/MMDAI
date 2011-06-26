@@ -73,6 +73,85 @@ struct vpvl::XModelUserData {
     btHashMap<btHashString, GLuint> textures;
 };
 
+typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
+
+static QImage LoadTGAImage(const QString &path, uint8_t *&rawData)
+{
+    QFile file(path);
+    if (file.open(QFile::ReadOnly) && file.size() > 18) {
+        QByteArray data = file.readAll();
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
+        uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
+        uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
+        if (type != 2 /* full color */ && type != 10 /* full color + RLE */)
+            return QImage();
+        uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
+        uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
+        uint8_t bit = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
+        uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
+        if (width == 0 || height == 0 || (bit != 24 && bit != 32))
+            return QImage();
+        int stride = bit >> 3;
+        uint8_t *body = ptr + 18 + field;
+        /* if RLE compressed, uncompress it */
+        size_t datalen = width * height * stride;
+        ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
+        if (type == 10) {
+            uint8_t *uncompressed = uncompressedPtr.data();
+            uint8_t *src = body;
+            uint8_t *dst = uncompressed;
+            while (static_cast<size_t>(dst - uncompressed) < datalen) {
+                int16_t len = (*src & 0x7f) + 1;
+                if (*src & 0x80) {
+                    src++;
+                    for (int i = 0; i < len; i++) {
+                        memcpy(dst, src, stride);
+                        dst += stride;
+                    }
+                    src += stride;
+                }
+                else {
+                    src++;
+                    memcpy(dst, src, stride * len);
+                    dst += stride * len;
+                    src += stride * len;
+                }
+            }
+            /* will load from uncompressed data */
+            body = uncompressed;
+        }
+        /* prepare texture data area */
+        datalen = (width * height) << 2;
+        rawData = new uint8_t[datalen];
+        ptr = rawData;
+        for (uint16_t h = 0; h < height; h++) {
+            uint8_t *line = NULL;
+            if (flags & 0x20) /* from up to bottom */
+                line = body + h * width * stride;
+            else /* from bottom to up */
+                line = body + (height - 1 - h) * width * stride;
+            for (uint16_t w = 0; w < width; w++) {
+                uint32_t index = 0;
+                if (flags & 0x10)/* from right to left */
+                    index = (width - 1 - w) * stride;
+                else /* from left to right */
+                    index = w * stride;
+                /* BGR or BGRA -> ARGB */
+                *ptr++ = line[index + 2];
+                *ptr++ = line[index + 1];
+                *ptr++ = line[index + 0];
+                *ptr++ = (bit == 32) ? line[index + 3] : 255;
+            }
+        }
+        return QImage(rawData, width, height, QImage::Format_ARGB32);
+    }
+    else {
+        qWarning("Cannot open file %s: %s", path.toUtf8().constData(),
+                 file.errorString().toUtf8().constData());
+    }
+    return QImage();
+}
+
 class World {
 public:
     World(int defaultFPS)
@@ -162,7 +241,9 @@ void SceneWidget::addModel()
     QFileInfo fi(openFileDialog("lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
-        addModelInternal(fi.fileName(), fi.dir());
+        if (!addModelInternal(fi.fileName(), fi.dir()))
+            QMessageBox::warning(this, tr("Loading model error"),
+                                 tr("%s cannot be loaded").arg(fi.fileName()));
         delete progress;
     }
     startSceneUpdateTimer();
@@ -173,8 +254,13 @@ void SceneWidget::insertMotionToAllModels()
     stopSceneUpdateTimer();
     QString fileName = openFileDialog("lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
-        foreach (vpvl::PMDModel *model, m_models)
-            addMotionInternal(model, fileName);
+        foreach (vpvl::PMDModel *model, m_models) {
+            if (!addMotionInternal(model, fileName)) {
+                QMessageBox::warning(this, tr("Loading model motion error"),
+                                     tr("%s cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                break;
+            }
+        }
     }
     startSceneUpdateTimer();
 }
@@ -184,8 +270,11 @@ void SceneWidget::insertMotionToSelectedModel()
     if (m_selected) {
         stopSceneUpdateTimer();
         QString fileName = openFileDialog("lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
-        if (QFile::exists(fileName))
-            addMotionInternal(m_selected, fileName);
+        if (QFile::exists(fileName)) {
+            if (!addMotionInternal(m_selected, fileName))
+                QMessageBox::warning(this, tr("Loading model motion error"),
+                                     tr("%s cannot be loaded").arg(QFileInfo(fileName).fileName()));
+        }
         startSceneUpdateTimer();
     }
     else {
@@ -199,7 +288,10 @@ void SceneWidget::setStage()
     QFileInfo fi(openFileDialog("lastStageDirectory", tr("Open stage X file"), tr("DirectX mesh file (*.x)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
-        setStageInternal(fi.fileName(), fi.dir());
+        if (!setStageInternal(fi.fileName(), fi.dir())) {
+            QMessageBox::warning(this, tr("Loading stage error"),
+                                 tr("%s cannot be loaded").arg(fi.fileName()));
+        }
         delete progress;
     }
     startSceneUpdateTimer();
@@ -209,8 +301,11 @@ void SceneWidget::setCamera()
 {
     stopSceneUpdateTimer();
     QString fileName = openFileDialog("lastCameraDirectory", tr("Open VMD (for camera) file"), tr("VMD file (*.vmd)"));
-    if (QFile::exists(fileName))
-        setCameraInternal(fileName);
+    if (QFile::exists(fileName)) {
+        if (!setCameraInternal(fileName))
+            QMessageBox::warning(this, tr("Loading camera motion error"),
+                                 tr("%s cannot be loaded").arg(QFileInfo(fileName).fileName()));
+    }
     startSceneUpdateTimer();
 }
 
@@ -514,8 +609,16 @@ void SceneWidget::setLighting()
 
 bool SceneWidget::loadTexture(const QString &path, GLuint &textureID)
 {
-    QImage image(path);
-    textureID = bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    if (path.endsWith(".tga", Qt::CaseInsensitive)) {
+        uint8_t *rawData = 0;
+        QImage image = LoadTGAImage(path, rawData);
+        textureID = bindTexture(QGLWidget::convertToGLFormat(image));
+        delete[] rawData;
+    }
+    else {
+        QImage image(path);
+        textureID = bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    }
     qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, path.toUtf8().constData());
     return textureID != 0;
 }
