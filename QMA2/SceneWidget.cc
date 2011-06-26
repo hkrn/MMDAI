@@ -1195,6 +1195,10 @@ void SceneWidget::drawInformativeText(QPainter &painter)
         QString name = toUnicodeModelName(m_selected);
         painter.drawText(10, 35, QString("Model: %1").arg(name));
     }
+    btVector3 p = m_scene->position();
+    btVector3 a = m_scene->angle();
+    painter.drawText(10, height() - 15, tr("Center X:%1 Y:%2 Z:%3 Angle X:%4 Y:%5 Z:%6")
+                     .arg(p.x()).arg(p.y()).arg(p.z()).arg(a.x()).arg(a.y()).arg(a.z()));
 }
 
 QProgressDialog *SceneWidget::getProgressDialog(const QString &label, int max)
