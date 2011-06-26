@@ -635,6 +635,7 @@ void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
 {
     const vpvl::MaterialList materials = model->materials();
     const uint32_t nMaterials = materials.size();
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     GLuint textureID = 0;
     vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
     __vpvlPMDModelMaterialPrivate *materialPrivates = new __vpvlPMDModelMaterialPrivate[nMaterials];
@@ -642,8 +643,8 @@ void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
-        const uint8_t *primary = material->primaryTextureName();
-        const uint8_t *second = material->secondTextureName();
+        const QString primary = codec->toUnicode(reinterpret_cast<const char *>(material->primaryTextureName()));
+        const QString second = codec->toUnicode(reinterpret_cast<const char *>(material->secondTextureName()));
         __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.primaryTextureID = 0;
         materialPrivate.secondTextureID = 0;
@@ -653,14 +654,14 @@ void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices * sizeof(uint16_t), indicesPtr, GL_STATIC_DRAW);
         qDebug("Binding material indices to vertex buffer object (ID=%d)", materialPrivate.vertexBufferObject);
         indicesPtr += nIndices;
-        if (*primary) {
-            if (loadTexture(dir.absoluteFilePath(reinterpret_cast<const char *>(primary)), textureID)) {
+        if (!primary.isEmpty()) {
+            if (loadTexture(dir.absoluteFilePath(primary), textureID)) {
                 materialPrivate.primaryTextureID = textureID;
                 qDebug("Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
-        if (*second) {
-            if (loadTexture(dir.absoluteFilePath(reinterpret_cast<const char *>(second)), textureID)) {
+        if (!second.isEmpty()) {
+            if (loadTexture(dir.absoluteFilePath(second), textureID)) {
                 materialPrivate.secondTextureID = textureID;
                 qDebug("Binding the texture as a secondary texture (ID=%d)", textureID);
             }
