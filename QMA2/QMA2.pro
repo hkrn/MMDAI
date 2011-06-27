@@ -2,7 +2,16 @@ QT += core gui opengl
 TARGET = MMDAI
 TEMPLATE = app
 
-LIBS += -L../libvpvl -lvpvl -L/usr/local/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
+
+LIBS += -L../libvpvl
+CONFIG(debug, debug|release) {
+  LIBS += -lvpvl_debug
+}
+CONFIG(release, debug|release) {
+  LIBS += -lvpvl
+}
+
+LIBS += -L/usr/local/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
 INCLUDEPATH += ../libvpvl/include /usr/local/include/bullet
 
 SOURCES += main.cc\

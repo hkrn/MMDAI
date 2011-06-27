@@ -5,7 +5,7 @@ set(VPVL_VERSION 0.1.0)
 
 # project configuration
 project(libvpvl)
-aux_source_directory(src vpvl_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src vpvl_sources)
 set(vpvl_public_headers
     include/vpvl/BaseMotion.h
     include/vpvl/Bone.h
@@ -33,6 +33,7 @@ set(vpvl_internal_headers
     include/vpvl/internal/util.h
 )
 
+# declarations of function
 function(link_bullet target)
   OPTION(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
   if(FIND_BULLET_BY_PKGCONFIG)
@@ -66,6 +67,24 @@ function(link_bullet target)
   endif()
 endfunction()
 
+# imported functions from Allegro5's cmake
+function(append_lib_type_suffix var)
+  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_TOLOWER)
+  if(CMAKE_BUILD_TYPE_TOLOWER STREQUAL "debug")
+    set(${var} "${${var}}_debug" PARENT_SCOPE)
+  endif()
+  if(CMAKE_BUILD_TYPE_TOLOWER MATCHES "profile")
+    set(${var} "${${var}}_profile" PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(append_lib_linkage_suffix var)
+  if(NOT BUILD_SHARED_LIBS)
+    set(${var} "${${var}}_static" PARENT_SCOPE)
+  endif()
+endfunction()
+# end of imported
+
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 if(BUILD_SHARED_LIBS)
   set(VPVL_LIB_TYPE SHARED)
@@ -74,14 +93,24 @@ else()
 endif()
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
-set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION})
-set_target_properties(vpvl PROPERTIES SO_VERSION ${VPVL_VERSION})
+set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION})
 
 # project include directories
-include_directories(include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # find Bullet Physics
 link_bullet(vpvl)
+
+set(VPVL_OUTPUT_NAME "vpvl")
+append_lib_type_suffix(VPVL_OUTPUT_NAME)
+append_lib_linkage_suffix(VPVL_OUTPUT_NAME)
+set_target_properties(vpvl PROPERTIES OUTPUT_NAME ${VPVL_OUTPUT_NAME})
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  set_target_properties(vpvl 
+      PROPERTIES PREFIX "" SUFFIX .${VPVL_VERSION}.dll
+      IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+endif()
 
 # create as a framework if build on darwin environment
 if(APPLE)
@@ -136,3 +165,4 @@ if(VPVL_BUILD_TESTS)
   target_link_libraries(vpvl_test vpvl ${GTEST_MAIN_LIB} ${GTEST_LIB})
   include_directories(${GTEST_INCLUDE_DIR})
 endif()
+
