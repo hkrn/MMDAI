@@ -1117,6 +1117,9 @@ void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir
     const bool hasTextureCoords = textureCoords.size() > 0;
     const bool hasNormals = normals.size();
     const bool hasColors = colors.size();
+    const uint32_t nTextureCoords = textureCoords.size();
+    const uint32_t nColors = colors.size();
+    const uint32_t nNormals = normals.size();
     uint32_t nFaces = faces.size();
     uint32_t prevIndex = -1;
     glEnable(GL_TEXTURE_2D);
@@ -1162,11 +1165,11 @@ void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir
         }
         for (uint32_t j = 0; j < count; j++) {
             const uint32_t x = static_cast<const uint32_t>(value[j]);
-            if (hasTextureCoords)
+            if (hasTextureCoords && nTextureCoords > x)
                 glTexCoord2fv(textureCoords[x]);
-            if (hasColors)
+            if (hasColors && nColors > x)
                 glColor4fv(colors[x]);
-            if (hasNormals)
+            if (hasNormals && nNormals > x)
                 glNormal3fv(normals[x]);
             glVertex3fv(vertices[x]);
         }
