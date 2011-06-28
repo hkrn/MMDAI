@@ -51,6 +51,7 @@ class VMDMotion;
 class XModel;
 }
 
+class Grid;
 class World;
 class QProgressDialog;
 
@@ -135,6 +136,7 @@ private:
     void unloadAsset(const vpvl::XModel *model, const QString &name);
     void drawAsset(const vpvl::XModel *model);
     void drawSurface();
+    void drawGrid();
     void updateFPS();
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void startSceneUpdateTimer();
@@ -146,6 +148,7 @@ private:
     vpvl::Scene *m_scene;
     vpvl::VMDMotion *m_camera;
     vpvl::PMDModel *m_selected;
+    Grid *m_grid;
     World *m_world;
     QSettings *m_settings;
     QHash<QString, vpvl::PMDModel *> m_models;
@@ -153,6 +156,7 @@ private:
     QList<vpvl::VMDMotion *> m_motions;
     QTime m_timer;
     QPoint m_prevPos;
+    GLuint m_gridListID;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;
