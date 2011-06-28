@@ -57,7 +57,6 @@ enum __vpvlVertexBufferObjectType {
 struct __vpvlPMDModelMaterialPrivate {
     GLuint primaryTextureID;
     GLuint secondTextureID;
-    GLuint vertexBufferObject;
 };
 
 struct vpvl::PMDModelUserData {
@@ -746,7 +745,6 @@ void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
     GLuint textureID = 0;
     vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
     __vpvlPMDModelMaterialPrivate *materialPrivates = new __vpvlPMDModelMaterialPrivate[nMaterials];
-    uint16_t *indicesPtr = const_cast<uint16_t *>(model->indicesPointer());
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
@@ -755,12 +753,6 @@ void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
         __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.primaryTextureID = 0;
         materialPrivate.secondTextureID = 0;
-        const uint32_t nIndices = material->countIndices();
-        glGenBuffers(1, &materialPrivate.vertexBufferObject);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, materialPrivate.vertexBufferObject);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices * sizeof(uint16_t), indicesPtr, GL_STATIC_DRAW);
-        qDebug("Binding material indices to vertex buffer object (ID=%d)", materialPrivate.vertexBufferObject);
-        indicesPtr += nIndices;
         if (!primary.isEmpty()) {
             if (loadTexture(dir.absoluteFilePath(primary), textureID)) {
                 materialPrivate.primaryTextureID = textureID;
@@ -819,7 +811,6 @@ void SceneWidget::unloadModel(const vpvl::PMDModel *model)
             __vpvlPMDModelMaterialPrivate &materialPrivate = userData->materials[i];
             deleteTexture(materialPrivate.primaryTextureID);
             deleteTexture(materialPrivate.secondTextureID);
-            glDeleteBuffers(1, &materialPrivate.vertexBufferObject);
         }
         for (uint32_t i = 1; i < vpvl::PMDModel::kSystemTextureMax; i++) {
             deleteTexture(userData->toonTextureID[i]);
@@ -853,6 +844,7 @@ void SceneWidget::drawModel(const vpvl::PMDModel *model)
     glNormalPointer(GL_FLOAT, stride, 0);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
     glTexCoordPointer(2, GL_FLOAT, model->stride(vpvl::PMDModel::kTextureCoordsStride), 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
 
     const bool enableToon = true;
     // toon
@@ -896,6 +888,7 @@ void SceneWidget::drawModel(const vpvl::PMDModel *model)
     const __vpvlPMDModelMaterialPrivate *materialPrivates = userData->materials;
     const uint32_t nMaterials = materials.size();
     btVector4 average, ambient, diffuse, specular;
+    uint32_t offset = 0;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
@@ -973,8 +966,8 @@ void SceneWidget::drawModel(const vpvl::PMDModel *model)
         }
         // draw
         const uint32_t nIndices = material->countIndices();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, materialPrivate.vertexBufferObject);
-        glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, 0);
+        glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(offset));
+        offset += (nIndices << 1);
         // is aux sphere map
         if (material->isSphereAuxPrimary()) {
             glActiveTexture(GL_TEXTURE0);
