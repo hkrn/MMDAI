@@ -16,6 +16,7 @@
 #include "vpvl/Scene.h"
 #include "vpvl/Vertex.h"
 #include "vpvl/VMDMotion.h"
+#include "vpvl/VPDPose.h"
 #include "vpvl/XModel.h"
 
 #endif /* vpvl_vpvl_H_ */

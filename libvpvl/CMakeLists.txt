@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 # set library version
 set(VPVL_VERSION 0.1.0)
+set(VPVL_VERSION_COMPATIBLE 0.1.0)
 
 # project configuration
 project(libvpvl)
@@ -21,6 +22,7 @@ set(vpvl_public_headers
     include/vpvl/Scene.h
     include/vpvl/Vertex.h
     include/vpvl/VMDMotion.h
+    include/vpvl/VPDPose.h
     include/vpvl/XMaterial.h
     include/vpvl/XModel.h
     include/vpvl/common.h
@@ -93,7 +95,7 @@ else()
 endif()
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
-set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION})
+set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
 
 # project include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -102,6 +104,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 link_bullet(vpvl)
 
 set(VPVL_OUTPUT_NAME "vpvl")
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 append_lib_type_suffix(VPVL_OUTPUT_NAME)
 append_lib_linkage_suffix(VPVL_OUTPUT_NAME)
 set_target_properties(vpvl PROPERTIES OUTPUT_NAME ${VPVL_OUTPUT_NAME})
