@@ -44,6 +44,8 @@ namespace vpvl {
 class PMDModel;
 }
 
+class FaceWidget;
+class HandleWidget;
 class SceneWidget;
 class TimelineWidget;
 
@@ -97,6 +99,8 @@ private:
     QMenu *m_selectModelMenu;
 
     QSettings m_settings;
+    FaceWidget *m_face;
+    HandleWidget *m_handle;
     SceneWidget *m_scene;
     TimelineWidget *m_timeline;
 };

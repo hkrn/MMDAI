@@ -36,6 +36,8 @@
 
 #include "MainWindow.h"
 
+#include "FaceWidget.h"
+#include "HandleWidget.h"
 #include "SceneWidget.h"
 #include "TimelineWidget.h"
 
@@ -46,28 +48,41 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QMA2")
 {
-    m_settings.setIniCodec("UTF-8");
-    m_scene = new SceneWidget(&m_settings);
-    m_timeline = new TimelineWidget();
-    connect(m_scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
-            this, SLOT(addModel(vpvl::PMDModel*)));
-    connect(m_scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
-            this, SLOT(deleteModel(vpvl::PMDModel*)));
-    connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-            m_timeline, SLOT(setModel(vpvl::PMDModel*)));
-
     QMenuBar *menuBar;
 #ifdef Q_OS_MAC
     menuBar = new QMenuBar(0);
 #else
     menuBar = this->menuBar();
 #endif
+
+    QSplitter *left = new QSplitter(Qt::Vertical, this);
+    QSplitter *main = new QSplitter(Qt::Horizontal, this);
+    m_settings.setIniCodec("UTF-8");
+    m_face = new FaceWidget();
+    m_handle = new HandleWidget();
+    m_scene = new SceneWidget(&m_settings);
+    m_timeline = new TimelineWidget();
+    left->addWidget(m_timeline);
+    left->addWidget(m_face);
+    //left->addWidget(m_handle);
+    left->setStretchFactor(1, 1);
+    main->addWidget(left);
+    main->addWidget(m_scene);
+    main->setStretchFactor(1, 1);
+
+    setCentralWidget(main);
+    setWindowTitle(qAppName());
     createActions();
     createMenus(menuBar);
 
-    setCentralWidget(m_scene);
-    setWindowTitle(qAppName());
-    setMinimumSize(640, 480);
+    connect(m_scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
+            this, SLOT(addModel(vpvl::PMDModel*)));
+    connect(m_scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+            this, SLOT(deleteModel(vpvl::PMDModel*)));
+    connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_timeline, SLOT(setModel(vpvl::PMDModel*)));
+    connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_face, SLOT(setModel(vpvl::PMDModel*)));
 
     restoreGeometry(m_settings.value("geometry").toByteArray());
     restoreState(m_settings.value("state").toByteArray());
@@ -75,8 +90,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete m_scene;
-    delete m_timeline;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -171,25 +184,25 @@ void MainWindow::createActions()
 
     action = new QAction(tr("Rotate up"), this);
     action->setStatusTip(tr("Rotate a model up."));
-    action->setShortcut(Qt::Key_Up);
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Up));
     connect(action, SIGNAL(triggered()), m_scene, SLOT(rotateUp()));
     m_rotateUpAction = action;
 
     action = new QAction(tr("Rotate down"), this);
     action->setStatusTip(tr("Rotate a model down."));
-    action->setShortcut(Qt::Key_Down);
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Down));
     connect(action, SIGNAL(triggered()), m_scene, SLOT(rotateDown()));
     m_rotateDownAction = action;
 
     action = new QAction(tr("Rotate Left"), this);
     action->setStatusTip(tr("Rotate a model left."));
-    action->setShortcut(Qt::Key_Left);
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Left));
     connect(action, SIGNAL(triggered()), m_scene, SLOT(rotateLeft()));
     m_rotateLeftAction = action;
 
     action = new QAction(tr("Rotate right"), this);
     action->setStatusTip(tr("Rotate a model right."));
-    action->setShortcut(Qt::Key_Right);
+    action->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Right));
     connect(action, SIGNAL(triggered()), m_scene, SLOT(rotateRight()));
     m_rotateRightAction = action;
 
