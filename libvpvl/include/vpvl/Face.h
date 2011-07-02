@@ -73,7 +73,7 @@ public:
     enum Type
     {
         kBase,
-        kEyebrow,
+        kEyeblow,
         kEye,
         kLip,
         kOther

@@ -16,8 +16,14 @@ public:
 
 public slots:
     void setModel(vpvl::PMDModel *model);
+    void setEyeWeight(int value);
+    void setLipWeight(int value);
+    void setEyeblowWeight(int value);
+    void setOtherWeight(int value);
 
 private:
+    void setFaceWeight(const QString &name, int value);
+
     QComboBox *m_eyes;
     QComboBox *m_lips;
     QComboBox *m_eyeblows;

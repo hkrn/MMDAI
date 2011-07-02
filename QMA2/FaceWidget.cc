@@ -17,6 +17,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_eyes = new QComboBox();
     slider = new QSlider(Qt::Horizontal);
+    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
     eyeHBoxLayout->addWidget(label);
     eyeHBoxLayout->addWidget(button);
     eyeVBoxLayout->addLayout(eyeHBoxLayout);
@@ -29,6 +30,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_lips = new QComboBox();
     slider = new QSlider(Qt::Horizontal);
+    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
     lipHBoxLayout->addWidget(label);
     lipHBoxLayout->addWidget(button);
     lipVBoxLayout->addLayout(lipHBoxLayout);
@@ -41,6 +43,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_eyeblows = new QComboBox();
     slider = new QSlider(Qt::Horizontal);
+    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
     eyeblowHBoxLayout->addWidget(label);
     eyeblowHBoxLayout->addWidget(button);
     eyeblowVBoxLayout->addLayout(eyeblowHBoxLayout);
@@ -53,6 +56,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_others = new QComboBox();
     slider = new QSlider(Qt::Horizontal);
+    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
     otherHBoxLayout->addWidget(label);
     otherHBoxLayout->addWidget(button);
     otherVBoxLayout->addLayout(otherHBoxLayout);
@@ -69,13 +73,72 @@ FaceWidget::FaceWidget(QWidget *parent) :
 
 void FaceWidget::setModel(vpvl::PMDModel *model)
 {
+    m_eyes->clear();
+    m_lips->clear();
+    m_eyeblows->clear();
+    m_others->clear();
     if (model) {
         m_model = model;
+        QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+        const vpvl::FaceList &faces = model->faces();
+        const uint32_t nFaces = faces.size();
+        for (uint32_t i = 0; i < nFaces; i++) {
+            vpvl::Face *face = faces[i];
+            const uint8_t *name = face->name();
+            const QString utf8Name = codec->toUnicode(reinterpret_cast<const char *>(name));
+            switch (face->type()) {
+            case vpvl::Face::kEye:
+                m_eyes->addItem(utf8Name, name);
+                break;
+            case vpvl::Face::kLip:
+                m_lips->addItem(utf8Name, name);
+                break;
+            case vpvl::Face::kEyeblow:
+                m_eyeblows->addItem(utf8Name, name);
+                break;
+            case vpvl::Face::kOther:
+                m_others->addItem(utf8Name, name);
+                break;
+            default:
+                break;
+            }
+        }
     }
-    else {
-        m_eyes->clear();
-        m_lips->clear();
-        m_eyeblows->clear();
-        m_others->clear();
-    }
+}
+
+void FaceWidget::setEyeWeight(int value)
+{
+    int index = m_eyes->currentIndex();
+    if (index >= 0)
+        setFaceWeight(m_eyes->itemText(index), value);
+}
+
+void FaceWidget::setLipWeight(int value)
+{
+    int index = m_lips->currentIndex();
+    if (index >= 0)
+        setFaceWeight(m_lips->itemText(index), value);
+}
+
+void FaceWidget::setEyeblowWeight(int value)
+{
+    int index = m_eyeblows->currentIndex();
+    if (index >= 0)
+        setFaceWeight(m_eyeblows->itemText(index), value);
+}
+
+void FaceWidget::setOtherWeight(int value)
+{
+    int index = m_others->currentIndex();
+    if (index >= 0)
+        setFaceWeight(m_others->itemText(index), value);
+}
+
+void FaceWidget::setFaceWeight(const QString &name, int value)
+{
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    QByteArray bytes = codec->fromUnicode(name);
+    vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    if (face)
+        face->setWeight(value / 100.0f);
 }

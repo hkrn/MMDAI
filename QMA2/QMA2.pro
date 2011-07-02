@@ -17,11 +17,15 @@ INCLUDEPATH += ../libvpvl/include /usr/local/include/bullet
 SOURCES += main.cc\
            MainWindow.cc \
            SceneWidget.cc \
-    TimelineWidget.cc
+           TimelineWidget.cc \
+    HandleWidget.cc \
+    FaceWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
-    TimelineWidget.h
+            TimelineWidget.h \
+    HandleWidget.h \
+    FaceWidget.h
 
 RESOURCES += resources/QMA2.qrc
 
