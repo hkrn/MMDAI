@@ -105,6 +105,8 @@ signals:
     void motionDidAdd(vpvl::VMDMotion *motion);
     void assetDidAdd(vpvl::XModel *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
+    void surfaceDidUpdate();
+    void fpsDidUpdate(int fps);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -147,7 +149,6 @@ private:
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void startSceneUpdateTimer();
     void stopSceneUpdateTimer();
-    void drawInformativeText(QPainter &painter);
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 

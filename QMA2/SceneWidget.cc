@@ -291,6 +291,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_world = new World(m_defaultFPS);
     setAcceptDrops(true);
     setAutoFillBackground(false);
+    setMinimumSize(540, 480);
 }
 
 SceneWidget::~SceneWidget()
@@ -532,6 +533,7 @@ void SceneWidget::paintGL()
     initializeSurface();
     drawSurface();
     drawGrid();
+    emit surfaceDidUpdate();
 }
 
 void SceneWidget::resizeGL(int w, int h)
@@ -1301,6 +1303,7 @@ void SceneWidget::updateFPS()
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
         m_timer.restart();
+        emit fpsDidUpdate(m_frameCount);
     }
     m_frameCount++;
 }
@@ -1332,21 +1335,6 @@ void SceneWidget::stopSceneUpdateTimer()
 {
     killTimer(m_internalTimerID);
     m_currentFPS = 0;
-}
-
-void SceneWidget::drawInformativeText(QPainter &painter)
-{
-    painter.setPen(Qt::black);
-    if (m_currentFPS > 0)
-        painter.drawText(10, 15, QString("FPS: %1").arg(m_currentFPS));
-    if (m_selected) {
-        QString name = toUnicodeModelName(m_selected);
-        painter.drawText(10, 35, QString("Model: %1").arg(name));
-    }
-    btVector3 p = m_scene->position();
-    btVector3 a = m_scene->angle();
-    painter.drawText(10, height() - 15, tr("Center X:%1 Y:%2 Z:%3 Angle X:%4 Y:%5 Z:%6")
-                     .arg(p.x()).arg(p.y()).arg(p.z()).arg(a.x()).arg(a.y()).arg(a.z()));
 }
 
 QProgressDialog *SceneWidget::getProgressDialog(const QString &label, int max)
