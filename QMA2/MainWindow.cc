@@ -37,6 +37,7 @@
 #include "MainWindow.h"
 
 #include "SceneWidget.h"
+#include "TimelineWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -46,11 +47,14 @@ MainWindow::MainWindow(QWidget *parent)
       m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QMA2")
 {
     m_settings.setIniCodec("UTF-8");
-    m_scene = new SceneWidget(&m_settings, this);
-    connect(m_scene, SIGNAL(modelDidAdd(const vpvl::PMDModel*)),
-            this, SLOT(addModel(const vpvl::PMDModel*)));
-    connect(m_scene, SIGNAL(modelDidDelete(const vpvl::PMDModel*)),
-            this, SLOT(deleteModel(const vpvl::PMDModel*)));
+    m_scene = new SceneWidget(&m_settings);
+    m_timeline = new TimelineWidget();
+    connect(m_scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
+            this, SLOT(addModel(vpvl::PMDModel*)));
+    connect(m_scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+            this, SLOT(deleteModel(vpvl::PMDModel*)));
+    connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_timeline, SLOT(setModel(vpvl::PMDModel*)));
 
     QMenuBar *menuBar;
 #ifdef Q_OS_MAC
@@ -71,6 +75,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete m_scene;
+    delete m_timeline;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -94,7 +100,7 @@ void MainWindow::revertSelectedModel()
     m_scene->setSelectedModel(0);
 }
 
-void MainWindow::addModel(const vpvl::PMDModel *model)
+void MainWindow::addModel(vpvl::PMDModel *model)
 {
     QString name = SceneWidget::toUnicodeModelName(model);
     QAction *action = new QAction(name, this);
@@ -103,7 +109,7 @@ void MainWindow::addModel(const vpvl::PMDModel *model)
     m_selectModelMenu->addAction(action);
 }
 
-void MainWindow::deleteModel(const vpvl::PMDModel *model)
+void MainWindow::deleteModel(vpvl::PMDModel *model)
 {
     QAction *actionToRemove = 0;
     QString name = SceneWidget::toUnicodeModelName(model);

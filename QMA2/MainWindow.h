@@ -45,6 +45,7 @@ class PMDModel;
 }
 
 class SceneWidget;
+class TimelineWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -61,8 +62,8 @@ private slots:
     void about();
     void selectModel();
     void revertSelectedModel();
-    void addModel(const vpvl::PMDModel *model);
-    void deleteModel(const vpvl::PMDModel *model);
+    void addModel(vpvl::PMDModel *model);
+    void deleteModel(vpvl::PMDModel *model);
 
 private:
     void createActions();
@@ -97,6 +98,7 @@ private:
 
     QSettings m_settings;
     SceneWidget *m_scene;
+    TimelineWidget *m_timeline;
 };
 
 #endif // MAINWINDOW_H

@@ -1,9 +1,9 @@
 QT += core gui opengl
-TARGET = MMDAI
+TARGET = MMDAI2
 TEMPLATE = app
 
 
-LIBS += -L../libvpvl
+LIBS += -L../libvpvl/lib
 CONFIG(debug, debug|release) {
   LIBS += -lvpvl_debug
 }
@@ -16,10 +16,12 @@ INCLUDEPATH += ../libvpvl/include /usr/local/include/bullet
 
 SOURCES += main.cc\
            MainWindow.cc \
-           SceneWidget.cc
+           SceneWidget.cc \
+    TimelineWidget.cc
 
 HEADERS  += MainWindow.h \
-            SceneWidget.h
+            SceneWidget.h \
+    TimelineWidget.h
 
 RESOURCES += resources/QMA2.qrc
 
