@@ -342,7 +342,7 @@ void SceneWidget::addModel()
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
         if (!addModelInternal(fi.fileName(), fi.dir()))
             QMessageBox::warning(this, tr("Loading model error"),
-                                 tr("%s cannot be loaded").arg(fi.fileName()));
+                                 tr("%1 cannot be loaded").arg(fi.fileName()));
         delete progress;
     }
     startSceneUpdateTimer();
@@ -356,7 +356,7 @@ void SceneWidget::insertMotionToAllModels()
         foreach (vpvl::PMDModel *model, m_models) {
             if (!addMotionInternal(model, fileName)) {
                 QMessageBox::warning(this, tr("Loading model motion error"),
-                                     tr("%s cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                                     tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
                 break;
             }
         }
@@ -372,7 +372,7 @@ void SceneWidget::insertMotionToSelectedModel()
         if (QFile::exists(fileName)) {
             if (!addMotionInternal(m_selected, fileName))
                 QMessageBox::warning(this, tr("Loading model motion error"),
-                                     tr("%s cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                                     tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
         }
         startSceneUpdateTimer();
     }
@@ -389,7 +389,7 @@ void SceneWidget::addAsset()
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
         if (!addAssetInternal(fi.fileName(), fi.dir())) {
             QMessageBox::warning(this, tr("Loading stage error"),
-                                 tr("%s cannot be loaded").arg(fi.fileName()));
+                                 tr("%1 cannot be loaded").arg(fi.fileName()));
         }
         delete progress;
     }
@@ -403,7 +403,7 @@ void SceneWidget::setCamera()
     if (QFile::exists(fileName)) {
         if (!setCameraInternal(fileName))
             QMessageBox::warning(this, tr("Loading camera motion error"),
-                                 tr("%s cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                                 tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
     }
     startSceneUpdateTimer();
 }
@@ -482,7 +482,7 @@ void SceneWidget::initializeGL()
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     m_scene = new vpvl::Scene(width(), height(), m_defaultFPS);
-    m_scene->setWorld(m_world->mutableWorld());
+    //m_scene->setWorld(m_world->mutableWorld());
     m_grid->initialize();
     m_timer.start();
     startSceneUpdateTimer();
@@ -491,6 +491,15 @@ void SceneWidget::initializeGL()
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     m_prevPos = event->pos();
+    if (m_selected) {
+        vpvl::BoneList bones;
+        pickBones(event->pos(), 0.5f, bones);
+        QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+        for (int i = 0; i < bones.size(); i++) {
+            vpvl::Bone *bone = bones[i];
+            qDebug() << codec->toUnicode(reinterpret_cast<const char *>(bone->name()));
+        }
+    }
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
@@ -517,17 +526,12 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void SceneWidget::paintEvent(QPaintEvent * /* event */)
+void SceneWidget::paintGL()
 {
-    makeCurrent();
+    qglClearColor(Qt::white);
     initializeSurface();
     drawSurface();
     drawGrid();
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    drawInformativeText(painter);
-    painter.end();
-    updateFPS();
 }
 
 void SceneWidget::resizeGL(int w, int h)
@@ -542,7 +546,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         m_scene->updateModelView(0);
         m_scene->updateProjection(0);
         m_scene->update(0.5f);
-        update();
+        updateGL();
     }
 }
 
@@ -667,6 +671,39 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
         }
     }
     return motion;
+}
+
+void SceneWidget::pickBones(const QPoint &point, float approx, vpvl::BoneList &pickBones)
+{
+    btVector3 coordinate;
+    const vpvl::BoneList &bones = m_selected->bones();
+    int n = bones.size();
+    getObjectCoordinate(point, coordinate);
+    for (int i = 0; i < n; i++) {
+        vpvl::Bone *bone = bones[i];
+        const btVector3 &p = bone->originPosition();
+        if (coordinate.distance(p) < approx)
+            pickBones.push_back(bone);
+    }
+}
+
+void SceneWidget::getObjectCoordinate(const QPoint &point, btVector3 &coordinate)
+{
+    double modelViewMatrixd[16], projectionMatrixd[16], winX = 0, winY = 0, x = 0, y = 0, z = 0;
+    float modelViewMatrixf[16], projectionMatrixf[16], winZ = 0;
+    int view[4];
+    m_scene->getModelViewMatrix(modelViewMatrixf);
+    m_scene->getProjectionMatrix(projectionMatrixf);
+    for (int i = 0; i < 16; i++) {
+        modelViewMatrixd[i] = modelViewMatrixf[i];
+        projectionMatrixd[i] = projectionMatrixf[i];
+    }
+    glGetIntegerv(GL_VIEWPORT, view);
+    winX = point.x();
+    winY = view[3] - point.y();
+    glReadPixels(winX, winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
+    gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
+    coordinate.setValue(x, y, z);
 }
 
 void SceneWidget::rotateInternal(float x, float y)
@@ -1217,7 +1254,6 @@ void SceneWidget::drawSurface()
     glMatrixMode(GL_MODELVIEW);
     m_scene->getModelViewMatrix(matrix);
     glLoadMatrixf(matrix);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);

@@ -42,7 +42,9 @@
 #include <QtCore/QtCore>
 #include <GL/glew.h>
 #include <QtOpenGL/QGLWidget>
+
 #include <LinearMath/btVector3.h>
+#include <vpvl/Bone.h>
 
 namespace vpvl {
 class PMDModel;
@@ -72,6 +74,7 @@ public:
     }
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
+        emit modelDidSelect(value);
     }
 
     static const QString toUnicodeModelName(const vpvl::PMDModel *model);
@@ -96,11 +99,12 @@ public slots:
     void translateRight() { translateInternal(1.0f, 0.0f); }
 
 signals:
-    void modelDidAdd(const vpvl::PMDModel *model);
-    void modelDidDelete(const vpvl::PMDModel *model);
-    void motionDidAdd(const vpvl::VMDMotion *motion);
-    void assetDidAdd(const vpvl::XModel *model);
-    void cameraMotionDidSet(const vpvl::VMDMotion *motion);
+    void modelDidAdd(vpvl::PMDModel *model);
+    void modelDidDelete(vpvl::PMDModel *model);
+    void modelDidSelect(vpvl::PMDModel *model);
+    void motionDidAdd(vpvl::VMDMotion *motion);
+    void assetDidAdd(vpvl::XModel *model);
+    void cameraMotionDidSet(vpvl::VMDMotion *motion);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -111,7 +115,7 @@ protected:
     void initializeGL();
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
-    void paintEvent(QPaintEvent *event);
+    void paintGL();
     void resizeGL(int w, int h);
     void timerEvent(QTimerEvent *event);
     void wheelEvent(QWheelEvent *event);
@@ -122,6 +126,8 @@ private:
     vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
+    void pickBones(const QPoint &point, float approx, vpvl::BoneList &pickBones);
+    void getObjectCoordinate(const QPoint &point, btVector3 &coordinate);
     void rotateInternal(float x, float y);
     void translateInternal(float x, float y);
     void setLighting();
