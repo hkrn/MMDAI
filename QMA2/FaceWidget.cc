@@ -16,7 +16,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     label = new QLabel(tr("Eye"));
     button = new QPushButton(buttonLabel);
     m_eyes = new QComboBox();
-    slider = new QSlider(Qt::Horizontal);
+    slider = createSlider();
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
     eyeHBoxLayout->addWidget(label);
     eyeHBoxLayout->addWidget(button);
@@ -29,7 +29,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     label = new QLabel(tr("Lip"));
     button = new QPushButton(buttonLabel);
     m_lips = new QComboBox();
-    slider = new QSlider(Qt::Horizontal);
+    slider = createSlider();
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
     lipHBoxLayout->addWidget(label);
     lipHBoxLayout->addWidget(button);
@@ -42,7 +42,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     label = new QLabel(tr("Eyeblow"));
     button = new QPushButton(buttonLabel);
     m_eyeblows = new QComboBox();
-    slider = new QSlider(Qt::Horizontal);
+    slider = createSlider();
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
     eyeblowHBoxLayout->addWidget(label);
     eyeblowHBoxLayout->addWidget(button);
@@ -55,7 +55,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     label = new QLabel(tr("Other"));
     button = new QPushButton(buttonLabel);
     m_others = new QComboBox();
-    slider = new QSlider(Qt::Horizontal);
+    slider = createSlider();
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
     otherHBoxLayout->addWidget(label);
     otherHBoxLayout->addWidget(button);
@@ -140,5 +140,14 @@ void FaceWidget::setFaceWeight(const QString &name, int value)
     QByteArray bytes = codec->fromUnicode(name);
     vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
     if (face)
-        face->setWeight(value / 100.0f);
+        face->setWeight(value / static_cast<float>(kSliderMaximumValue));
+}
+
+QSlider *FaceWidget::createSlider()
+{
+    QSlider *slider = new QSlider(Qt::Horizontal);
+    slider->setTickInterval(20);
+    slider->setMinimum(0);
+    slider->setMaximum(kSliderMaximumValue);
+    return slider;
 }

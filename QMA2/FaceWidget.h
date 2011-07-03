@@ -6,12 +6,15 @@
 namespace vpvl { class PMDModel; }
 
 class QComboBox;
+class QSlider;
 
 class FaceWidget : public QWidget
 {
     Q_OBJECT
 
 public:
+    static const int kSliderMaximumValue = 100;
+
     explicit FaceWidget(QWidget *parent = 0);
 
 public slots:
@@ -23,6 +26,7 @@ public slots:
 
 private:
     void setFaceWeight(const QString &name, int value);
+    QSlider *createSlider();
 
     QComboBox *m_eyes;
     QComboBox *m_lips;
