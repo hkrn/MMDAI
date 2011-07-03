@@ -345,7 +345,7 @@ bool Scene::updateDistance(int ellapsedTimeForMove)
 {
     const float distance = m_currentDistance.z();
     if (distance != m_distance) {
-        if (m_viewMoveTime != 0 || m_cameraMotion) {
+        if (m_viewMoveTime == 0 || m_cameraMotion) {
             m_currentDistance.setZ(m_distance);
         }
         else if (m_viewMoveTime > 0) {
@@ -372,7 +372,7 @@ bool Scene::updateDistance(int ellapsedTimeForMove)
 bool Scene::updateFovy(int ellapsedTimeForMove)
 {
     if (m_currentFovy != m_fovy) {
-        if (m_viewMoveTime != 0 || m_cameraMotion) {
+        if (m_viewMoveTime == 0 || m_cameraMotion) {
             m_currentFovy = m_fovy;
         }
         else if (m_viewMoveTime > 0) {
