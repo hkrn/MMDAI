@@ -109,6 +109,7 @@ signals:
     void motionDidAdd(vpvl::VMDMotion *motion);
     void assetDidAdd(vpvl::XModel *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
+    void cameraPerspectionDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
     void surfaceDidUpdate();
     void fpsDidUpdate(int fps);
 

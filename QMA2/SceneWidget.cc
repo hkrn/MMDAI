@@ -418,6 +418,7 @@ void SceneWidget::deleteSelectedModel()
         m_models.remove(key);
         delete m_selected;
         m_selected = 0;
+        emit modelDidSelect(0);
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected or exist."), tr("Select a model to delete"));
@@ -427,6 +428,7 @@ void SceneWidget::deleteSelectedModel()
 void SceneWidget::resetCamera()
 {
     m_scene->resetCamera();
+    emit cameraPerspectionDidSet(m_scene->position(), m_scene->angle(), m_scene->fovy(), m_scene->distance());
 }
 
 void SceneWidget::setCameraPerspection(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
@@ -438,24 +440,30 @@ void SceneWidget::setCameraPerspection(btVector3 *pos, btVector3 *angle, float *
     fovyValue = !fovy ? m_scene->fovy() : *fovy;
     distanceValue = !distance ? m_scene->distance() : *distance;
     m_scene->setCamera(posValue, angleValue, fovyValue, distanceValue);
+    emit cameraPerspectionDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
 void SceneWidget::rotate(float x, float y)
 {
-    btVector3 angle = m_scene->angle();
+    btVector3 pos = m_scene->position(), angle = m_scene->angle();
+    float fovy = m_scene->fovy(), distance = m_scene->distance();
     angle.setValue(angle.x() + x, angle.y() + y, angle.z());
-    m_scene->setCamera(m_scene->position(), angle, m_scene->fovy(), m_scene->distance());
+    m_scene->setCamera(pos, angle, fovy, distance);
+    emit cameraPerspectionDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::translate(float x, float y)
 {
-    btVector3 position = m_scene->position();
-    position.setValue(position.x() + x, position.y() + y, position.z());
-    m_scene->setCamera(position, m_scene->angle(), m_scene->fovy(), m_scene->distance());
+    btVector3 pos = m_scene->position(), angle = m_scene->angle();
+    float fovy = m_scene->fovy(), distance = m_scene->distance();
+    pos.setValue(pos.x() + x, pos.y() + y, pos.z());
+    m_scene->setCamera(pos, angle, fovy, distance);
+    emit cameraPerspectionDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
+    btVector3 pos = m_scene->position(), angle = m_scene->angle();
     float fovy = m_scene->fovy(), distance = m_scene->distance();
     float fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
@@ -469,7 +477,8 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
         if (distanceStep != 0.0f)
             distance = up ? distance - distanceStep : distance + distanceStep;
     }
-    m_scene->setCamera(m_scene->position(), m_scene->angle(), fovy, distance);
+    m_scene->setCamera(pos, angle, fovy, distance);
+    emit cameraPerspectionDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::closeEvent(QCloseEvent *event)
@@ -577,6 +586,7 @@ void SceneWidget::paintGL()
     initializeSurface();
     drawSurface();
     drawGrid();
+    updateFPS();
     emit surfaceDidUpdate();
 }
 
@@ -1333,7 +1343,7 @@ void SceneWidget::updateFPS()
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
         m_timer.restart();
-        emit fpsDidUpdate(m_frameCount);
+        emit fpsDidUpdate(m_currentFPS);
     }
     m_frameCount++;
 }
