@@ -429,6 +429,49 @@ void SceneWidget::resetCamera()
     m_scene->resetCamera();
 }
 
+void SceneWidget::setCameraPerspection(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
+{
+    btVector3 posValue, angleValue;
+    float fovyValue, distanceValue;
+    posValue = !pos ? m_scene->position() : *pos;
+    angleValue = !angle ? m_scene->angle() : *angle;
+    fovyValue = !fovy ? m_scene->fovy() : *fovy;
+    distanceValue = !distance ? m_scene->distance() : *distance;
+    m_scene->setCamera(posValue, angleValue, fovyValue, distanceValue);
+}
+
+void SceneWidget::rotate(float x, float y)
+{
+    btVector3 angle = m_scene->angle();
+    angle.setValue(angle.x() + x, angle.y() + y, angle.z());
+    m_scene->setCamera(m_scene->position(), angle, m_scene->fovy(), m_scene->distance());
+}
+
+void SceneWidget::translate(float x, float y)
+{
+    btVector3 position = m_scene->position();
+    position.setValue(position.x() + x, position.y() + y, position.z());
+    m_scene->setCamera(position, m_scene->angle(), m_scene->fovy(), m_scene->distance());
+}
+
+void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
+{
+    float fovy = m_scene->fovy(), distance = m_scene->distance();
+    float fovyStep = 1.0f, distanceStep = 4.0f;
+    if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
+        fovy = up ? fovy - fovyStep : fovy + fovyStep;
+    }
+    else {
+        if (modifiers & Qt::ControlModifier)
+            distanceStep *= 5.0f;
+        else if (modifiers & Qt::ShiftModifier)
+            distanceStep *= 0.2f;
+        if (distanceStep != 0.0f)
+            distance = up ? distance - distanceStep : distance + distanceStep;
+    }
+    m_scene->setCamera(m_scene->position(), m_scene->angle(), fovy, distance);
+}
+
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
     stopSceneUpdateTimer();
@@ -483,6 +526,7 @@ void SceneWidget::initializeGL()
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     m_scene = new vpvl::Scene(width(), height(), m_defaultFPS);
+    m_scene->setViewMove(0);
     //m_scene->setWorld(m_world->mutableWorld());
     m_grid->initialize();
     m_timer.start();
@@ -518,10 +562,10 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             m_scene->setLight(m_scene->lightColor(), direction);
         }
         else if (modifiers & Qt::ShiftModifier) {
-            translateInternal(diff.x() * -0.1f, diff.y() * 0.1f);
+            translate(diff.x() * -0.1f, diff.y() * 0.1f);
         }
         else {
-            rotateInternal(diff.y() * 0.5f, diff.x() * 0.5f);
+            rotate(diff.y() * 0.5f, diff.x() * 0.5f);
         }
         m_prevPos = event->pos();
     }
@@ -706,20 +750,6 @@ void SceneWidget::getObjectCoordinate(const QPoint &point, btVector3 &coordinate
     glReadPixels(winX, winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
     gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
     coordinate.setValue(x, y, z);
-}
-
-void SceneWidget::rotateInternal(float x, float y)
-{
-    btVector3 angle = m_scene->angle();
-    angle.setValue(angle.x() + x, angle.y() + y, angle.z());
-    m_scene->setCamera(m_scene->position(), angle, m_scene->fovy(), m_scene->distance());
-}
-
-void SceneWidget::translateInternal(float x, float y)
-{
-    btVector3 position = m_scene->position();
-    position.setValue(position.x() + x, position.y() + y, position.z());
-    m_scene->setCamera(position, m_scene->angle(), m_scene->fovy(), m_scene->distance());
 }
 
 void SceneWidget::setLighting()
@@ -1306,24 +1336,6 @@ void SceneWidget::updateFPS()
         emit fpsDidUpdate(m_frameCount);
     }
     m_frameCount++;
-}
-
-void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
-{
-    float fovy = m_scene->fovy(), distance = m_scene->distance();
-    float fovyStep = 1.0f, distanceStep = 4.0f;
-    if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-        fovy = up ? fovy - fovyStep : fovy + fovyStep;
-    }
-    else {
-        if (modifiers & Qt::ControlModifier)
-            distanceStep *= 5.0f;
-        else if (modifiers & Qt::ShiftModifier)
-            distanceStep *= 0.2f;
-        if (distanceStep != 0.0f)
-            distance = up ? distance - distanceStep : distance + distanceStep;
-    }
-    m_scene->setCamera(m_scene->position(), m_scene->angle(), fovy, distance);
 }
 
 void SceneWidget::startSceneUpdateTimer()

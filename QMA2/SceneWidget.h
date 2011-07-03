@@ -87,16 +87,20 @@ public slots:
     void setCamera();
     void deleteSelectedModel();
     void resetCamera();
+    void rotate(float x, float y);
+    void translate(float x, float y);
+    void setCameraPerspection(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
+    void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
-    void rotateUp() { rotateInternal(10.0f, 0.0f); }
-    void rotateDown() { rotateInternal(-10.0f, 0.0f); }
-    void rotateLeft() { rotateInternal(0.0f, 10.0f); }
-    void rotateRight() { rotateInternal(0.0f, -10.0f); }
-    void translateUp() { translateInternal(0.0f, 1.0f); }
-    void translateDown() { translateInternal(0.0f, -1.0f); }
-    void translateLeft() { translateInternal(-1.0f, 0.0f); }
-    void translateRight() { translateInternal(1.0f, 0.0f); }
+    void rotateUp() { rotate(10.0f, 0.0f); }
+    void rotateDown() { rotate(-10.0f, 0.0f); }
+    void rotateLeft() { rotate(0.0f, 10.0f); }
+    void rotateRight() { rotate(0.0f, -10.0f); }
+    void translateUp() { translate(0.0f, 1.0f); }
+    void translateDown() { translate(0.0f, -1.0f); }
+    void translateLeft() { translate(-1.0f, 0.0f); }
+    void translateRight() { translate(1.0f, 0.0f); }
 
 signals:
     void modelDidAdd(vpvl::PMDModel *model);
@@ -130,8 +134,6 @@ private:
     vpvl::VMDMotion *setCameraInternal(const QString &path);
     void pickBones(const QPoint &point, float approx, vpvl::BoneList &pickBones);
     void getObjectCoordinate(const QPoint &point, btVector3 &coordinate);
-    void rotateInternal(float x, float y);
-    void translateInternal(float x, float y);
     void setLighting();
     bool loadTexture(const QString &path, GLuint &textureID);
     bool loadToonTexture(const QString &name, const QDir &model, GLuint &textureID);
@@ -146,7 +148,6 @@ private:
     void drawSurface();
     void drawGrid();
     void updateFPS();
-    void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void startSceneUpdateTimer();
     void stopSceneUpdateTimer();
     QProgressDialog *getProgressDialog(const QString &label, int max);
