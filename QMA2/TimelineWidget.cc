@@ -26,22 +26,24 @@ public:
         setModel(0);
     }
 
-    void setModel(vpvl::PMDModel *model) {
+    void setModel(vpvl::PMDModel *value) {
         m_bones.clear();
-        if (model) {
-            vpvl::BoneList bones = model->bones();
+        if (value) {
+            vpvl::BoneList bones = value->bones();
             uint32_t nBones = bones.size();
             QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
             for (uint32_t i = 0; i < nBones; i++) {
                 vpvl::Bone *bone = bones.at(i);
                 m_bones.append(codec->toUnicode(reinterpret_cast<const char *>(bone->name())));
             }
+            m_model = value;
         }
         else {
             m_bones.append(tr("Camera"));
         }
         reset();
     }
+    bool hasModel() { return m_model != 0; }
 
     int rowCount(const QModelIndex & /* parent */) const {
         return m_bones.size();
@@ -83,9 +85,10 @@ TimelineWidget::TimelineWidget(QWidget *parent) :
     //ItemDelegate *delegate = new ItemDelegate(this);
     //m_tableView->setItemDelegate(delegate);
     m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    connect(m_tableView, SIGNAL(clicked(QModelIndex)), this, SLOT(selectCell(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tableView);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(QMargins());
     setMinimumSize(260, 480);
     setLayout(layout);
 }
@@ -96,8 +99,20 @@ TimelineWidget::~TimelineWidget()
     delete m_tableView;
 }
 
-void TimelineWidget::setModel(vpvl::PMDModel *model)
+void TimelineWidget::setModel(vpvl::PMDModel *value)
 {
-    m_selectedModel = model;
-    m_tableModel->setModel(model);
+    m_selectedModel = value;
+    m_tableModel->setModel(value);
+}
+
+void TimelineWidget::selectCell(QModelIndex modelIndex)
+{
+    QVariant name = m_tableModel->headerData(modelIndex.row(), Qt::Vertical, Qt::DisplayRole);
+    if (m_tableModel->hasModel()) {
+        QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+        QByteArray bytes = codec->fromUnicode(name.toString());
+        vpvl::Bone *bone = m_selectedModel->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        if (bone)
+            boneDidSelect(bone);
+    }
 }

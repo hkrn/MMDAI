@@ -1,9 +1,13 @@
 #ifndef TIMELINEWIDGET_H
 #define TIMELINEWIDGET_H
 
+#include <QtCore/QModelIndex>
 #include <QtGui/QWidget>
 
-namespace vpvl { class PMDModel; }
+namespace vpvl {
+class Bone;
+class PMDModel;
+}
 
 class QTableView;
 class TableModel;
@@ -16,7 +20,11 @@ public:
     ~TimelineWidget();
 
 public slots:
-    void setModel(vpvl::PMDModel *model);
+    void setModel(vpvl::PMDModel *value);
+    void selectCell(QModelIndex modelIndex);
+
+signals:
+    void boneDidSelect(vpvl::Bone *bone);
 
 private:
     QTableView *m_tableView;
