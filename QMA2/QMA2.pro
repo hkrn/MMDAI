@@ -19,13 +19,15 @@ SOURCES += main.cc\
            SceneWidget.cc \
            TimelineWidget.cc \
     HandleWidget.cc \
-    FaceWidget.cc
+    FaceWidget.cc \
+    PerspectionWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
             TimelineWidget.h \
     HandleWidget.h \
-    FaceWidget.h
+    FaceWidget.h \
+    PerspectionWidget.h
 
 RESOURCES += resources/QMA2.qrc
 

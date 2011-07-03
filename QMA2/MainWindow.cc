@@ -38,6 +38,7 @@
 
 #include "FaceWidget.h"
 #include "HandleWidget.h"
+#include "PerspectionWidget.h"
 #include "SceneWidget.h"
 #include "TimelineWidget.h"
 
@@ -46,7 +47,14 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-      m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QMA2")
+      m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QMA2"),
+      m_model(0),
+      m_bone(0),
+      m_position(0.0f, 0.0f, 0.0f),
+      m_angle(0.0f, 0.0f, 0.0f),
+      m_fovy(0.0f),
+      m_distance(0.0f),
+      m_currentFPS(0)
 {
     QMenuBar *menuBar;
 #ifdef Q_OS_MAC
@@ -60,20 +68,30 @@ MainWindow::MainWindow(QWidget *parent)
     m_settings.setIniCodec("UTF-8");
     m_face = new FaceWidget();
     m_handle = new HandleWidget();
+    m_perspection = new PerspectionWidget();
     m_scene = new SceneWidget(&m_settings);
     m_timeline = new TimelineWidget();
+    m_info = new QLabel();
     left->addWidget(m_timeline);
-    left->addWidget(m_face);
-    //left->addWidget(m_handle);
-    left->setStretchFactor(1, 1);
+    //left->addWidget(m_face);
+    left->addWidget(m_handle);
+    //left->addWidget(m_perspection);
     main->addWidget(left);
-    main->addWidget(m_scene);
-    main->setStretchFactor(1, 1);
+    QWidget *widget = new QWidget;
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(m_scene);
+    layout->addWidget(m_info);
+    // new QLabel(tr("Model:%1 Bone:%2 FPS:%3\nPosition: %1 Angle:%2 Fovy:%3 Distance:%4").arg("N/A").arg("N/A").arg(0)));
+    layout->setContentsMargins(QMargins());
+    layout->setStretch(0, 1);
+    widget->setLayout(layout);
+    main->addWidget(widget);
 
     setCentralWidget(main);
     setWindowTitle(qAppName());
     createActions();
     createMenus(menuBar);
+    updateInformation();
 
     connect(m_scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
             this, SLOT(addModel(vpvl::PMDModel*)));
@@ -83,13 +101,31 @@ MainWindow::MainWindow(QWidget *parent)
             m_timeline, SLOT(setModel(vpvl::PMDModel*)));
     connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_face, SLOT(setModel(vpvl::PMDModel*)));
+    connect(m_perspection, SIGNAL(perspectionDidChange(btVector3*,btVector3*,float*,float*)),
+            m_scene, SLOT(setCameraPerspection(btVector3*,btVector3*,float*,float*)));
+    connect(m_timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
+            m_handle, SLOT(setBone(vpvl::Bone*)));
+    connect(m_scene, SIGNAL(fpsDidUpdate(int)),
+            this, SLOT(setCurrentFPS(int)));
+    connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            this, SLOT(setModel(vpvl::PMDModel*)));
+    connect(m_timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
+            this, SLOT(setBone(vpvl::Bone*)));
+    connect(m_scene, SIGNAL(cameraPerspectionDidSet(btVector3,btVector3,float,float)),
+            this, SLOT(setCameraPerspection(btVector3,btVector3,float,float)));
 
+    statusBar()->show();
     restoreGeometry(m_settings.value("geometry").toByteArray());
     restoreState(m_settings.value("state").toByteArray());
 }
 
 MainWindow::~MainWindow()
 {
+    delete m_face;
+    delete m_handle;
+    delete m_perspection;
+    delete m_scene;
+    delete m_timeline;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -134,6 +170,33 @@ void MainWindow::deleteModel(vpvl::PMDModel *model)
     }
     if (actionToRemove)
         m_selectModelMenu->removeAction(actionToRemove);
+}
+
+void MainWindow::setCurrentFPS(int value)
+{
+    m_currentFPS = value;
+    updateInformation();
+}
+
+void MainWindow::setModel(vpvl::PMDModel *value)
+{
+    m_model = value;
+    updateInformation();
+}
+
+void MainWindow::setBone(vpvl::Bone *value)
+{
+    m_bone = value;
+    updateInformation();
+}
+
+void MainWindow::setCameraPerspection(const btVector3 &pos, const btVector3 &angle, float fovy, float distance)
+{
+    m_position = pos;
+    m_angle = angle;
+    m_fovy = fovy;
+    m_distance = distance;
+    updateInformation();
 }
 
 void MainWindow::createActions()
@@ -304,6 +367,24 @@ void MainWindow::createMenus(QMenuBar *menuBar)
     m_helpMenu = menuBar->addMenu(tr("&Help"));
     m_helpMenu->addAction(m_aboutAction);
     m_helpMenu->addAction(m_aboutQtAction);
+}
+
+void MainWindow::updateInformation()
+{
+    QString modelName = tr("N/A"), boneName = tr("N/A");
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    if (m_model)
+        modelName = codec->toUnicode(reinterpret_cast<const char *>(m_model->name()));
+    if (m_bone)
+        boneName = codec->toUnicode(reinterpret_cast<const char *>(m_bone->name()));
+    m_info->setText(tr("<font color=blue><b>Model</b></font>: <font color=red><b>%1</b></font> "
+                       "<font color=blue><b>Bone</b></font>: <font color=red><b>%2</b></font> "
+                       "<font color=blue>%3fps</font><br>"
+                       "Fovy: %4 Distance: %5 Position: (%6,%7,%8) Angle: (%9,%10,%11)")
+                    .arg(modelName).arg(boneName).arg(m_currentFPS)
+                    .arg(m_fovy).arg(m_distance)
+                    .arg(m_position.x()).arg(m_position.y()).arg(m_position.z())
+                    .arg(m_angle.x()).arg(m_angle.y()).arg(m_angle.z()));
 }
 
 void MainWindow::about()

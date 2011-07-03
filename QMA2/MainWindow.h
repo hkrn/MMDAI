@@ -39,13 +39,17 @@
 
 #include <QtCore/QSettings>
 #include <QtGui/QMainWindow>
+#include <LinearMath/btVector3.h>
 
 namespace vpvl {
+class Bone;
 class PMDModel;
 }
 
+class QLabel;
 class FaceWidget;
 class HandleWidget;
+class PerspectionWidget;
 class SceneWidget;
 class TimelineWidget;
 
@@ -66,10 +70,15 @@ private slots:
     void revertSelectedModel();
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
+    void setCurrentFPS(int value);
+    void setModel(vpvl::PMDModel *value);
+    void setBone(vpvl::Bone *value);
+    void setCameraPerspection(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
 private:
     void createActions();
     void createMenus(QMenuBar *menuBar);
+    void updateInformation();
 
     QAction *m_addModelAction;
     QAction *m_addAssetAction;
@@ -98,11 +107,21 @@ private:
     QMenu *m_helpMenu;
     QMenu *m_selectModelMenu;
 
+    QLabel *m_info;
     QSettings m_settings;
     FaceWidget *m_face;
     HandleWidget *m_handle;
+    PerspectionWidget *m_perspection;
     SceneWidget *m_scene;
     TimelineWidget *m_timeline;
+
+    vpvl::PMDModel *m_model;
+    vpvl::Bone *m_bone;
+    btVector3 m_position;
+    btVector3 m_angle;
+    float m_fovy;
+    float m_distance;
+    int m_currentFPS;
 };
 
 #endif // MAINWINDOW_H
