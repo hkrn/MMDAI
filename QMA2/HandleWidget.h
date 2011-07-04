@@ -2,8 +2,7 @@
 #define HANDLEWIDGET_H
 
 #include <QtGui/QWidget>
-
-namespace vpvl { class Bone; }
+#include <vpvl/Bone.h>
 
 class QGraphicsScene;
 class XHandle;
@@ -24,7 +23,7 @@ public slots:
 private:
     void createHandles(QGraphicsScene *scene);
 
-    vpvl::Bone *m_bone;
+    vpvl::BoneList m_bones;
     XHandle *m_xHandle;
     YHandle *m_yHandle;
     ZHandle *m_zHandle;

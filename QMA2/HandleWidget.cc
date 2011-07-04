@@ -14,7 +14,6 @@ public:
 
     BaseHandle(qreal x, qreal y, qreal w, qreal h)
         : QGraphicsItem(),
-          m_bone(0),
           m_mode(kLocal),
           m_prev(0, 0),
           m_rect(x, y, w, h)
@@ -23,7 +22,6 @@ public:
         m_pen.setWidth(15);
     }
     ~BaseHandle() {
-        m_bone = 0;
     }
 
     HandleMode handleMode() const {
@@ -32,8 +30,8 @@ public:
     QRectF boundingRect() const {
         return m_rect;
     }
-    void setBone(vpvl::Bone *value) {
-        m_bone = value;
+    void setBone(const vpvl::BoneList &bones) {
+        m_bones.copyFromArray(bones);
     }
     void setHandleMode(HandleMode value) {
         m_mode = value;
@@ -45,22 +43,46 @@ protected:
     }
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
         QPointF current = event->pos(), pos = current - m_prev;
-        if (m_bone)
-            moveBone(m_bone, pos);
+        if (m_bones.size() > 0)
+            moveBones(pos);
         m_prev = current;
     }
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
         QPointF current = event->pos(), pos = current - m_prev;
-        if (m_bone)
-            moveBone(m_bone, pos);
+        if (m_bones.size())
+            moveBones(pos);
         m_prev = current;
     }
-    virtual void moveBone(vpvl::Bone *bone, QPointF &diff) = 0;
+    void translateBones(const btVector3 &v) {
+        uint32_t nBones = m_bones.size();
+        switch (handleMode()) {
+        case kView: {
+            break;
+        }
+        case kLocal: {
+            for (uint32_t i = 0; i < nBones; i++) {
+                vpvl::Bone *bone = m_bones[i];
+                btTransform tr(bone->currentRotation(), bone->currentPosition());
+                bone->setCurrentPosition(tr * v);
+            }
+            break;
+        }
+        case kGlobal: {
+            for (uint32_t i = 0; i < nBones; i++) {
+                vpvl::Bone *bone = m_bones[i];
+                bone->setCurrentPosition(bone->currentPosition() + v);
+            }
+            break;
+        }
+        }
+    }
+
+    virtual void moveBones(QPointF &diff) = 0;
 
     QPen m_pen;
 
 private:
-    vpvl::Bone *m_bone;
+    vpvl::BoneList m_bones;
     HandleMode m_mode;
     QPointF m_prev;
     QRectF m_rect;
@@ -84,22 +106,9 @@ public:
     }
 
 protected:
-    void moveBone(vpvl::Bone *bone, QPointF &diff) {
+    void moveBones(QPointF &diff) {
         btVector3 v(diff.x(), 0.0f, 0.0f);
-        switch (handleMode()) {
-        case kView: {
-            break;
-        }
-        case kLocal: {
-            btTransform tr(bone->currentRotation(), bone->currentPosition());
-            bone->setCurrentPosition(tr * v);
-            break;
-        }
-        case kGlobal: {
-            bone->setCurrentPosition(bone->currentPosition() + v);
-            break;
-        }
-        }
+        translateBones(v);
     }
 };
 
@@ -121,22 +130,9 @@ public:
     }
 
 protected:
-    void moveBone(vpvl::Bone *bone, QPointF &diff) {
+    void moveBones(QPointF &diff) {
         btVector3 v(0.0f, diff.y(), 0.0f);
-        switch (handleMode()) {
-        case kView: {
-            break;
-        }
-        case kLocal: {
-            btTransform tr(bone->currentRotation(), bone->currentPosition());
-            bone->setCurrentPosition(tr * v);
-            break;
-        }
-        case kGlobal: {
-            bone->setCurrentPosition(bone->currentPosition() + v);
-            break;
-        }
-        }
+        translateBones(v);
     }
 };
 
@@ -157,8 +153,7 @@ public:
     }
 
 protected:
-    void moveBone(vpvl::Bone *bone, QPointF &diff) {
-        Q_UNUSED(bone);
+    void moveBones(QPointF &diff) {
         Q_UNUSED(diff);
     }
 };
@@ -179,15 +174,15 @@ HandleWidget::HandleWidget(QWidget *parent) :
 
 HandleWidget::~HandleWidget()
 {
-    m_bone = 0;
 }
 
 void HandleWidget::setBone(vpvl::Bone *value)
 {
-    m_bone = value;
-    m_xHandle->setBone(value);
-    m_yHandle->setBone(value);
-    m_zHandle->setBone(value);
+    m_bones.clear();
+    m_bones.push_back(value);
+    m_xHandle->setBone(m_bones);
+    m_yHandle->setBone(m_bones);
+    m_zHandle->setBone(m_bones);
 }
 
 void HandleWidget::createHandles(QGraphicsScene *scene)
