@@ -109,11 +109,11 @@ public:
     static const float kDefaultPriority;
     static const float kDefaultLoopAtFrame;
 
-    VMDMotion(const uint8_t *data, size_t size);
+    VMDMotion();
     ~VMDMotion();
 
-    bool preparse();
-    bool load();
+    bool preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &info);
+    bool load(const uint8_t *data, size_t size);
     void attachModel(PMDModel *model);
     void update(float deltaFrame);
 
@@ -125,12 +125,6 @@ public:
     }
     Error error() const {
         return m_error;
-    }
-    const uint8_t *data() const {
-        return m_data;
-    }
-    size_t size() const {
-        return m_size;
     }
     const BoneMotion &bone() const {
         return m_boneMotion;
@@ -179,12 +173,12 @@ public:
     }
 
 private:
-    void parseHeader();
-    void parseBoneFrames();
-    void parseFaceFrames();
-    void parseCameraFrames();
-    void parseLightFrames();
-    void parseSelfShadowFrames();
+    void parseHeader(const VMDMotionDataInfo &info);
+    void parseBoneFrames(const VMDMotionDataInfo &info);
+    void parseFaceFrames(const VMDMotionDataInfo &info);
+    void parseCameraFrames(const VMDMotionDataInfo &info);
+    void parseLightFrames(const VMDMotionDataInfo &info);
+    void parseSelfShadowFrames(const VMDMotionDataInfo &info);
 
     uint8_t m_name[20];
     PMDModel *m_model;
@@ -207,8 +201,6 @@ private:
     bool m_enableSmooth;
     bool m_enableRelocation;
     bool m_ignoreStatic;
-    const uint8_t *m_data;
-    const size_t m_size;
 };
 
 }

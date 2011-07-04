@@ -12,18 +12,19 @@ static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
 }
 
 TEST(VMDMotionTest, PreParseEmptyVMD) {
-    vpvl::VMDMotion motion(reinterpret_cast<const uint8_t *>(""), 0);
-    EXPECT_FALSE(motion.preparse());
+    vpvl::VMDMotionDataInfo result;
+    vpvl::VMDMotion motion;
+    EXPECT_FALSE(motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, result));
     EXPECT_EQ(vpvl::VMDMotion::kInvalidHeaderError, motion.error());
 }
 
 TEST(VMDMotionTest, PreParseMotionVMD) {
     uint8_t *data = 0;
     size_t size = 0;
+    vpvl::VMDMotion motion;
+    vpvl::VMDMotionDataInfo result;
     FileSlurp("test/res/motion.vmd", data, size);
-    vpvl::VMDMotion motion(data, size);
-    EXPECT_TRUE(motion.preparse());
-    vpvl::VMDMotionDataInfo result = motion.result();
+    EXPECT_TRUE(motion.preparse(data, size, result));
     EXPECT_TRUE(result.basePtr != 0);
     EXPECT_TRUE(result.namePtr != 0);
     EXPECT_TRUE(result.boneKeyFramePtr != 0);
@@ -39,10 +40,10 @@ TEST(VMDMotionTest, PreParseMotionVMD) {
 TEST(VMDMotionTest, PreParseCameraVMD) {
     uint8_t *data = 0;
     size_t size = 0;
+    vpvl::VMDMotion motion;
+    vpvl::VMDMotionDataInfo result;
     FileSlurp("test/res/camera.vmd", data, size);
-    vpvl::VMDMotion motion(data, size);
-    EXPECT_TRUE(motion.preparse());
-    vpvl::VMDMotionDataInfo result = motion.result();
+    EXPECT_TRUE(motion.preparse(data, size, result));
     EXPECT_TRUE(result.basePtr != 0);
     EXPECT_TRUE(result.namePtr != 0);
     EXPECT_TRUE(result.boneKeyFramePtr != 0);
@@ -58,10 +59,11 @@ TEST(VMDMotionTest, PreParseCameraVMD) {
 TEST(VMDMotionTest, ParseMotionVMD) {
     uint8_t *data = 0;
     size_t size = 0;
+    vpvl::VMDMotion motion;
+    vpvl::VMDMotionDataInfo result;
     FileSlurp("test/res/motion.vmd", data, size);
-    vpvl::VMDMotion motion(data, size);
-    EXPECT_TRUE(motion.load());
-    vpvl::VMDMotionDataInfo result = motion.result();
+    EXPECT_TRUE(motion.preparse(data, size, result));
+    EXPECT_TRUE(motion.load(data, size));
     EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
     EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
     EXPECT_EQ(motion.camera().frames().size(), result.cameraKeyFrameCount);
@@ -72,10 +74,11 @@ TEST(VMDMotionTest, ParseMotionVMD) {
 TEST(VMDMotionTest, ParseCameraVMD) {
     uint8_t *data = 0;
     size_t size = 0;
+    vpvl::VMDMotion motion;
+    vpvl::VMDMotionDataInfo result;
     FileSlurp("test/res/camera.vmd", data, size);
-    vpvl::VMDMotion motion(data, size);
-    EXPECT_TRUE(motion.load());
-    vpvl::VMDMotionDataInfo result = motion.result();
+    EXPECT_TRUE(motion.preparse(data, size, result));
+    EXPECT_TRUE(motion.load(data, size));
     EXPECT_EQ(motion.bone().frames().size(), result.boneKeyFrameCount);
     EXPECT_EQ(motion.face().frames().size(), result.faceKeyFrameCount);
     EXPECT_EQ(motion.camera().frames().size(), result.cameraKeyFrameCount);

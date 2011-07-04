@@ -48,7 +48,7 @@ namespace vpvl
 const float VMDMotion::kDefaultLoopAtFrame = 0.0f;
 const float VMDMotion::kDefaultPriority = 0.0f;
 
-VMDMotion::VMDMotion(const uint8_t *data, size_t size)
+VMDMotion::VMDMotion()
     : m_model(0),
       m_error(kNoError),
       m_status(kRunning),
@@ -64,18 +64,14 @@ VMDMotion::VMDMotion(const uint8_t *data, size_t size)
       m_active(false),
       m_enableSmooth(true),
       m_enableRelocation(true),
-      m_ignoreStatic(false),
-      m_data(data),
-      m_size(size)
+      m_ignoreStatic(false)
 {
     internal::zerofill(&m_name, sizeof(m_name));
-    internal::zerofill(&m_result, sizeof(m_result));
 }
 
 VMDMotion::~VMDMotion()
 {
     internal::zerofill(&m_name, sizeof(m_name));
-    internal::zerofill(&m_result, sizeof(m_result));
     m_model = 0;
     m_status = kRunning;
     m_onEnd = 2;
@@ -91,20 +87,19 @@ VMDMotion::~VMDMotion()
     m_enableSmooth = true;
     m_enableRelocation = true;
     m_ignoreStatic = false;
-    m_data = 0;
 }
 
-bool VMDMotion::preparse()
+bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &info)
 {
-    size_t rest = m_size;
+    size_t rest = size;
     // Header(30) + Name(20)
     if (50 > rest) {
         m_error = kInvalidHeaderError;
         return false;
     }
 
-    uint8_t *ptr = const_cast<uint8_t *>(m_data);
-    m_result.basePtr = ptr;
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    info.basePtr = ptr;
 
     // Check the signature is valid
     static const uint8_t header[] = "Vocaloid Motion Data 0002";
@@ -113,7 +108,7 @@ bool VMDMotion::preparse()
         return false;
     }
     ptr += 30;
-    m_result.namePtr = ptr;
+    info.namePtr = ptr;
     ptr += 20;
     rest -= 50;
 
@@ -123,49 +118,51 @@ bool VMDMotion::preparse()
         m_error = kBoneKeyFramesSizeError;
         return false;
     }
-    m_result.boneKeyFramePtr = ptr;
+    info.boneKeyFramePtr = ptr;
     if (!internal::validateSize(ptr, BoneKeyFrame::stride(), nBoneKeyFrames, rest)) {
         m_error = kBoneKeyFramesError;
         return false;
     }
-    m_result.boneKeyFrameCount = nBoneKeyFrames;
+    info.boneKeyFrameCount = nBoneKeyFrames;
 
     // Face key frame
     if (!internal::size32(ptr, rest, nFaceKeyFrames)) {
         m_error = kFaceKeyFramesSizeError;
         return false;
     }
-    m_result.faceKeyFramePtr = ptr;
+    info.faceKeyFramePtr = ptr;
     if (!internal::validateSize(ptr, FaceKeyFrame::stride(), nFaceKeyFrames, rest)) {
         m_error = kFaceKeyFramesError;
         return false;
     }
-    m_result.faceKeyFrameCount = nFaceKeyFrames;
+    info.faceKeyFrameCount = nFaceKeyFrames;
 
     // Camera key frame
     if (!internal::size32(ptr, rest, nCameraKeyFrames)) {
         m_error = kCameraKeyFramesSizeError;
         return false;
     }
-    m_result.cameraKeyFramePtr = ptr;
+    info.cameraKeyFramePtr = ptr;
     if (!internal::validateSize(ptr, CameraKeyFrame::stride(), nCameraKeyFrames, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
-    m_result.cameraKeyFrameCount = nCameraKeyFrames;
+    info.cameraKeyFrameCount = nCameraKeyFrames;
 
     return true;
 }
 
-bool VMDMotion::load()
+bool VMDMotion::load(const uint8_t *data, size_t size)
 {
-    if (preparse()) {
-        parseHeader();
-        parseBoneFrames();
-        parseFaceFrames();
-        parseCameraFrames();
-        parseLightFrames();
-        parseSelfShadowFrames();
+    VMDMotionDataInfo info;
+    internal::zerofill(&info, sizeof(info));
+    if (preparse(data, size, info)) {
+        parseHeader(info);
+        parseBoneFrames(info);
+        parseFaceFrames(info);
+        parseCameraFrames(info);
+        parseLightFrames(info);
+        parseSelfShadowFrames(info);
         return true;
     }
     return false;
@@ -265,31 +262,31 @@ void VMDMotion::update(float deltaFrame)
     }
 }
 
-void VMDMotion::parseHeader()
+void VMDMotion::parseHeader(const VMDMotionDataInfo &info)
 {
-    copyBytesSafe(m_name, m_result.namePtr, sizeof(m_name));
+    copyBytesSafe(m_name, info.namePtr, sizeof(m_name));
 }
 
-void VMDMotion::parseBoneFrames()
+void VMDMotion::parseBoneFrames(const VMDMotionDataInfo &info)
 {
-    m_boneMotion.read(m_result.boneKeyFramePtr, m_result.boneKeyFrameCount);
+    m_boneMotion.read(info.boneKeyFramePtr, info.boneKeyFrameCount);
 }
 
-void VMDMotion::parseFaceFrames()
+void VMDMotion::parseFaceFrames(const VMDMotionDataInfo &info)
 {
-    m_faceMotion.read(m_result.faceKeyFramePtr, m_result.faceKeyFrameCount);
+    m_faceMotion.read(info.faceKeyFramePtr, info.faceKeyFrameCount);
 }
 
-void VMDMotion::parseCameraFrames()
+void VMDMotion::parseCameraFrames(const VMDMotionDataInfo &info)
 {
-    m_cameraMotion.read(m_result.cameraKeyFramePtr, m_result.cameraKeyFrameCount);
+    m_cameraMotion.read(info.cameraKeyFramePtr, info.cameraKeyFrameCount);
 }
 
-void VMDMotion::parseLightFrames()
+void VMDMotion::parseLightFrames(const VMDMotionDataInfo & /* info */)
 {
 }
 
-void VMDMotion::parseSelfShadowFrames()
+void VMDMotion::parseSelfShadowFrames(const VMDMotionDataInfo & /* info */)
 {
 }
 
