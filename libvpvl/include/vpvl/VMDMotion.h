@@ -179,6 +179,7 @@ private:
     void parseCameraFrames(const VMDMotionDataInfo &info);
     void parseLightFrames(const VMDMotionDataInfo &info);
     void parseSelfShadowFrames(const VMDMotionDataInfo &info);
+    void release();
 
     uint8_t m_name[20];
     PMDModel *m_model;

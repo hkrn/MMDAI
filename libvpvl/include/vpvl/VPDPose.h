@@ -87,6 +87,8 @@ public:
     void makePose(vpvl::PMDModel *model);
 
 private:
+    void release();
+
     btAlignedObjectArray<VPDBone *> m_bones;
     Error m_error;
 };

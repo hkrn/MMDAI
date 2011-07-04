@@ -85,35 +85,7 @@ PMDModel::PMDModel()
 
 PMDModel::~PMDModel()
 {
-    internal::zerofill(&m_name, sizeof(m_name));
-    internal::zerofill(&m_comment, sizeof(m_comment));
-    internal::zerofill(&m_englishName, sizeof(m_englishName));
-    internal::zerofill(&m_englishComment, sizeof(m_englishComment));
-    leaveWorld(m_world);
-    internal::clearAll(m_vertices);
-    internal::clearAll(m_materials);
-    internal::clearAll(m_bones);
-    internal::clearAll(m_IKs);
-    internal::clearAll(m_faces);
-    internal::clearAll(m_rigidBodies);
-    internal::clearAll(m_constraints);
-    m_indices.clear();
-    m_motions.clear();
-    m_skinningTransform.clear();
-    m_edgeVertices.clear();
-    m_toonTextureCoords.clear();
-    m_shadowTextureCoords.clear();
-    m_rotatedBones.clear();
-    m_isIKSimulated.clear();
-    delete[] m_skinnedVertices;
-    delete[] m_indicesPointer;
-    delete[] m_edgeIndicesPointer;
-    m_baseFace = 0;
-    m_skinnedVertices = 0;
-    m_indicesPointer = 0;
-    m_edgeIndicesPointer = 0;
-    m_edgeIndicesCount = 0;
-    m_error = kNoError;
+    release();
 }
 
 void PMDModel::prepare()
@@ -606,6 +578,7 @@ bool PMDModel::load(const uint8_t *data, size_t size)
     PMDModelDataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
+        release();
         parseHeader(info);
         parseVertices(info);
         parseIndices(info);
@@ -780,6 +753,39 @@ void PMDModel::parseConstraints(const PMDModelDataInfo &info)
         ptr += Constraint::stride();
         m_constraints.push_back(constraint);
     }
+}
+
+void PMDModel::release()
+{
+    internal::zerofill(&m_name, sizeof(m_name));
+    internal::zerofill(&m_comment, sizeof(m_comment));
+    internal::zerofill(&m_englishName, sizeof(m_englishName));
+    internal::zerofill(&m_englishComment, sizeof(m_englishComment));
+    leaveWorld(m_world);
+    internal::clearAll(m_vertices);
+    internal::clearAll(m_materials);
+    internal::clearAll(m_bones);
+    internal::clearAll(m_IKs);
+    internal::clearAll(m_faces);
+    internal::clearAll(m_rigidBodies);
+    internal::clearAll(m_constraints);
+    m_indices.clear();
+    m_motions.clear();
+    m_skinningTransform.clear();
+    m_edgeVertices.clear();
+    m_toonTextureCoords.clear();
+    m_shadowTextureCoords.clear();
+    m_rotatedBones.clear();
+    m_isIKSimulated.clear();
+    delete[] m_skinnedVertices;
+    delete[] m_indicesPointer;
+    delete[] m_edgeIndicesPointer;
+    m_baseFace = 0;
+    m_skinnedVertices = 0;
+    m_indicesPointer = 0;
+    m_edgeIndicesPointer = 0;
+    m_edgeIndicesCount = 0;
+    m_error = kNoError;
 }
 
 size_t PMDModel::stride(StrideType type) const

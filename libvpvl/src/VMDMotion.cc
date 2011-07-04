@@ -71,22 +71,7 @@ VMDMotion::VMDMotion()
 
 VMDMotion::~VMDMotion()
 {
-    internal::zerofill(&m_name, sizeof(m_name));
-    m_model = 0;
-    m_status = kRunning;
-    m_onEnd = 2;
-    m_loopAt = kDefaultLoopAtFrame;
-    m_priority = kDefaultPriority;
-    m_endingBoneBlend = 0.0f;
-    m_endingFaceBlend = 0.0f;
-    m_endingBoneBlendFrames = 20.0f;
-    m_endingFaceBlendFrames = 5.0f;
-    m_motionBlendRate = 1.0f;
-    m_beginningNonControlledBlend = 0.0f;
-    m_active = false;
-    m_enableSmooth = true;
-    m_enableRelocation = true;
-    m_ignoreStatic = false;
+    release();
 }
 
 bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &info)
@@ -157,6 +142,7 @@ bool VMDMotion::load(const uint8_t *data, size_t size)
     VMDMotionDataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
+        release();
         parseHeader(info);
         parseBoneFrames(info);
         parseFaceFrames(info);
@@ -288,6 +274,26 @@ void VMDMotion::parseLightFrames(const VMDMotionDataInfo & /* info */)
 
 void VMDMotion::parseSelfShadowFrames(const VMDMotionDataInfo & /* info */)
 {
+}
+
+void VMDMotion::release()
+{
+    internal::zerofill(&m_name, sizeof(m_name));
+    m_model = 0;
+    m_status = kRunning;
+    m_onEnd = 2;
+    m_loopAt = kDefaultLoopAtFrame;
+    m_priority = kDefaultPriority;
+    m_endingBoneBlend = 0.0f;
+    m_endingFaceBlend = 0.0f;
+    m_endingBoneBlendFrames = 20.0f;
+    m_endingFaceBlendFrames = 5.0f;
+    m_motionBlendRate = 1.0f;
+    m_beginningNonControlledBlend = 0.0f;
+    m_active = false;
+    m_enableSmooth = true;
+    m_enableRelocation = true;
+    m_ignoreStatic = false;
 }
 
 }

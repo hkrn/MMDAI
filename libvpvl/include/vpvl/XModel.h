@@ -144,6 +144,8 @@ public:
     }
 
 private:
+    void release();
+
     btAlignedObjectArray<btVector3> m_vertices;
     btAlignedObjectArray<btVector3> m_normals;
     btAlignedObjectArray<btVector3> m_coords;

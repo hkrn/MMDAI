@@ -55,14 +55,7 @@ VPDPose::VPDPose()
 
 VPDPose::~VPDPose()
 {
-    uint32_t size = m_bones.size();
-    for (uint32_t i = 0; i < size; i++) {
-        VPDBone *bone = m_bones[i];
-        delete[] bone->name;
-        delete bone;
-    }
-    m_bones.clear();
-    m_error = kNoError;
+    release();
 }
 
 bool VPDPose::preparse(const uint8_t *data, size_t size)
@@ -86,6 +79,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
 {
     if (!preparse(data, size))
         return false;
+    release();
 
     char *buffer = new char[size + 1];
     memcpy(buffer, data, size);
@@ -194,6 +188,18 @@ void VPDPose::makePose(vpvl::PMDModel *model)
             bone->setCurrentRotation(rotation);
         }
     }
+}
+
+void VPDPose::release()
+{
+    uint32_t size = m_bones.size();
+    for (uint32_t i = 0; i < size; i++) {
+        VPDBone *bone = m_bones[i];
+        delete[] bone->name;
+        delete bone;
+    }
+    m_bones.clear();
+    m_error = kNoError;
 }
 
 }

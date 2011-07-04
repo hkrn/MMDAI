@@ -319,6 +319,7 @@ private:
     void parseRigidBodies(const PMDModelDataInfo &info);
     void parseConstraints(const PMDModelDataInfo &info);
     void prepare();
+    void release();
     void updateAllBones();
     void updateBoneFromSimulation();
     void updateAllFaces();

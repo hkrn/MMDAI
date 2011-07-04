@@ -94,15 +94,7 @@ XModel::XModel()
 
 XModel::~XModel()
 {
-    internal::clearAll(m_indices);
-    internal::clearAll(m_materials);
-    m_vertices.clear();
-    m_normals.clear();
-    m_coords.clear();
-    m_colors.clear();
-    m_materials.clear();
-    m_error = kNoError;
-    m_userData = 0;
+    release();
 }
 
 bool XModel::preparse(const uint8_t *data, size_t size)
@@ -130,6 +122,7 @@ bool XModel::load(const uint8_t *data, size_t size)
 {
     if (!preparse(data, size))
         return false;
+    release();
 
     char *buffer = new char[size + 1];
     memcpy(buffer, data, size);
@@ -543,6 +536,19 @@ bool XModel::load(const uint8_t *data, size_t size)
     delete[] buffer;
 
     return ret;
+}
+
+void XModel::release()
+{
+    internal::clearAll(m_indices);
+    internal::clearAll(m_materials);
+    m_vertices.clear();
+    m_normals.clear();
+    m_coords.clear();
+    m_colors.clear();
+    m_materials.clear();
+    m_error = kNoError;
+    m_userData = 0;
 }
 
 size_t XModel::stride(StrideType type) const
