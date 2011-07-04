@@ -62,7 +62,7 @@ struct SkinVertex
     btVector3 texureCoord;
 };
 
-PMDModel::PMDModel(const uint8_t *data, size_t size)
+PMDModel::PMDModel()
     : m_baseFace(0),
       m_skinnedVertices(0),
       m_world(0),
@@ -70,8 +70,6 @@ PMDModel::PMDModel(const uint8_t *data, size_t size)
       m_edgeIndicesPointer(0),
       m_edgeIndicesCount(0),
       m_error(kNoError),
-      m_size(size),
-      m_data(data),
       m_boundingSphereStep(kBoundingSpherePointsMin),
       m_edgeOffset(0.03f),
       m_selfShadowDensityCoef(0.0f),
@@ -81,7 +79,6 @@ PMDModel::PMDModel(const uint8_t *data, size_t size)
     internal::zerofill(&m_comment, sizeof(m_comment));
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
-    internal::zerofill(&m_result, sizeof(PMDModelDataInfo));
     m_rootBone.setCurrentRotation(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
     m_rootBone.updateTransform();
 }
@@ -92,7 +89,6 @@ PMDModel::~PMDModel()
     internal::zerofill(&m_comment, sizeof(m_comment));
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
-    internal::zerofill(&m_result, sizeof(PMDModelDataInfo));
     leaveWorld(m_world);
     internal::clearAll(m_vertices);
     internal::clearAll(m_materials);
@@ -117,7 +113,6 @@ PMDModel::~PMDModel()
     m_indicesPointer = 0;
     m_edgeIndicesPointer = 0;
     m_edgeIndicesCount = 0;
-    m_data = 0;
     m_error = kNoError;
 }
 
@@ -391,17 +386,17 @@ void PMDModel::smearAllBonesToDefault(float rate)
     }
 }
 
-bool PMDModel::preparse()
+bool PMDModel::preparse(const uint8_t *data, size_t size, PMDModelDataInfo &info)
 {
-    size_t rest = m_size;
+    size_t rest = size;
     // Header[3] + Version[4] + Name[20] + Comment[256]
-    if (!m_data || 283 > rest) {
+    if (!data || 283 > rest) {
         m_error = kInvalidHeaderError;
         return false;
     }
 
-    uint8_t *ptr = const_cast<uint8_t *>(m_data);
-    m_result.basePtr = ptr;
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    info.basePtr = ptr;
 
     // Check the signature and version is correct
     if (memcmp(ptr, "Pmd", 3) != 0) {
@@ -416,9 +411,9 @@ bool PMDModel::preparse()
 
     // Name and Comment (in Shift-JIS)
     ptr += sizeof(float);
-    m_result.namePtr = ptr;
+    info.namePtr = ptr;
     ptr += 20;
-    m_result.commentPtr = ptr;
+    info.commentPtr = ptr;
     ptr += 256;
     rest -= 283;
 
@@ -429,114 +424,114 @@ bool PMDModel::preparse()
         m_error = kVerticesSizeError;
         return false;
     }
-    m_result.verticesPtr = ptr;
+    info.verticesPtr = ptr;
     if (!internal::validateSize(ptr, Vertex::stride(), nVertices, rest)) {
         m_error = kVerticesError;
         return false;
     }
-    m_result.verticesCount = nVertices;
+    info.verticesCount = nVertices;
 
     // Indices
     if (!internal::size32(ptr, rest, nIndices)) {
         m_error = kIndicesSizeError;
         return false;
     }
-    m_result.indicesPtr = ptr;
+    info.indicesPtr = ptr;
     if (!internal::validateSize(ptr, sizeof(uint16_t), nIndices, rest)) {
         m_error = kIndicesError;
         return false;
     }
-    m_result.indicesCount = nIndices;
+    info.indicesCount = nIndices;
 
     // Materials
     if (!internal::size32(ptr, rest, nMaterials)) {
         m_error = kMaterialsSizeError;
         return false;
     }
-    m_result.materialsPtr = ptr;
+    info.materialsPtr = ptr;
     if (!internal::validateSize(ptr, Material::stride(), nMaterials, rest)) {
         m_error = kMaterialsError;
         return false;
     }
-    m_result.materialsCount = nMaterials;
+    info.materialsCount = nMaterials;
 
     // Bones
     if (!internal::size16(ptr, rest, nBones)) {
         m_error = kBonesSizeError;
         return false;
     }
-    m_result.bonesPtr = ptr;
+    info.bonesPtr = ptr;
     if (!internal::validateSize(ptr, Bone::stride(), nBones, rest)) {
         m_error = kBonesError;
         return false;
     }
-    m_result.bonesCount = nBones;
+    info.bonesCount = nBones;
 
     // IKs
     if (!internal::size16(ptr, rest, nIKs)) {
         m_error = kIKsSizeError;
         return false;
     }
-    m_result.IKsPtr = ptr;
+    info.IKsPtr = ptr;
 
     bool ok = false;
-    size_t size = IK::totalSize(ptr, rest, nIKs, ok);
-    if (!ok || !internal::validateSize(ptr, size, 1, rest)) {
+    size_t s = IK::totalSize(ptr, rest, nIKs, ok);
+    if (!ok || !internal::validateSize(ptr, s, 1, rest)) {
         m_error = kIKsError;
         return false;
     }
-    m_result.IKsCount = nIKs;
+    info.IKsCount = nIKs;
 
     // Faces
     if (!internal::size16(ptr, rest, nFaces)) {
         m_error = kFacesSizeError;
         return false;
     }
-    m_result.facesPtr = ptr;
+    info.facesPtr = ptr;
 
     ok = false;
-    size = Face::totalSize(ptr, rest, nFaces, ok);
-    if (!ok || !internal::validateSize(ptr, size, 1, rest)) {
+    s = Face::totalSize(ptr, rest, nFaces, ok);
+    if (!ok || !internal::validateSize(ptr, s, 1, rest)) {
         m_error = kFacesError;
         return false;
     }
-    m_result.facesCount = nFaces;
+    info.facesCount = nFaces;
 
     // Face display names
     if (!internal::size8(ptr, rest, nFaceNames)) {
         m_error = kFaceDisplayNamesSizeError;
         return false;
     }
-    m_result.faceDisplayNamesPtr = ptr;
+    info.faceDisplayNamesPtr = ptr;
     if (!internal::validateSize(ptr, sizeof(uint16_t), nFaceNames, rest)) {
         m_error = kFaceDisplayNamesError;
         return false;
     }
-    m_result.faceDisplayNamesCount = nFaceNames;
+    info.faceDisplayNamesCount = nFaceNames;
 
     // Bone frame names
     if (!internal::size8(ptr, rest, nBoneFrames)) {
         m_error = kBoneFrameNamesSizeError;
         return false;
     }
-    m_result.boneFrameNamesPtr = ptr;
+    info.boneFrameNamesPtr = ptr;
     if (!internal::validateSize(ptr, 50, nBoneFrames, rest)) {
         m_error = kBoneFrameNamesError;
         return false;
     }
-    m_result.boneFrameNamesCount = nBoneFrames;
+    info.boneFrameNamesCount = nBoneFrames;
 
     // Bone display names
     if (!internal::size32(ptr, rest, nBoneNames)) {
         m_error = kBoneDisplayNamesSizeError;
         return false;
     }
-    m_result.boneDisplayNamesPtr = ptr;
+    info.boneDisplayNamesPtr = ptr;
     if (!internal::validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest)) {
         m_error = kBoneDisplayNamesError;
         return false;
     }
-    m_result.boneDisplayNamesCount = nBoneNames;
+    info.boneDisplayNamesCount = nBoneNames;
 
     if (rest == 0)
         return true;
@@ -554,15 +549,15 @@ bool PMDModel::preparse()
             m_error = kEnglishNamesError;
             return false;
         }
-        m_result.englishNamePtr = ptr;
+        info.englishNamePtr = ptr;
         ptr += 20;
-        m_result.englishCommentPtr = ptr;
+        info.englishCommentPtr = ptr;
         ptr += 256;
-        m_result.englishBoneNamesPtr = ptr;
+        info.englishBoneNamesPtr = ptr;
         ptr += englishBoneNamesSize;
-        m_result.englishFaceNamesPtr = ptr;
+        info.englishFaceNamesPtr = ptr;
         ptr += englishFaceNamesSize;
-        m_result.englishBoneFramesPtr = ptr;
+        info.englishBoneFramesPtr = ptr;
         ptr += englishBoneFramesSize;
         rest -= required;
     }
@@ -572,7 +567,7 @@ bool PMDModel::preparse()
         m_error = kExtraTextureNamesError;
         return false;
     }
-    m_result.toonTextureNamesPtr = ptr;
+    info.toonTextureNamesPtr = ptr;
     ptr += 1000;
     rest -= 1000;
 
@@ -584,60 +579,62 @@ bool PMDModel::preparse()
         m_error = kRigidBodiesSizeError;
         return false;
     }
-    m_result.rigidBodiesPtr = ptr;
+    info.rigidBodiesPtr = ptr;
     if (!internal::validateSize(ptr, RigidBody::stride(), nRigidBodies, rest)) {
         m_error = kRigidBodiesError;
         return false;
     }
-    m_result.rigidBodiesCount = nRigidBodies;
+    info.rigidBodiesCount = nRigidBodies;
 
     // Constranint
     if (!internal::size32(ptr, rest, nConstranits)) {
         m_error = kConstraintsSizeError;
         return false;
     }
-    m_result.constraintsPtr = ptr;
+    info.constraintsPtr = ptr;
     if (!internal::validateSize(ptr, Constraint::stride(), nConstranits, rest)) {
         m_error = kConstraintsError;
         return false;
     }
-    m_result.constranitsCount = nConstranits;
+    info.constranitsCount = nConstranits;
 
     return true;
 }
 
-bool PMDModel::load()
+bool PMDModel::load(const uint8_t *data, size_t size)
 {
-    if (preparse()) {
-        parseHeader();
-        parseVertices();
-        parseIndices();
-        parseMatrials();
-        parseBones();
-        parseIKs();
-        parseFaces();
-        parseFaceDisplayNames();
-        parseBoneDisplayNames();
-        parseEnglishDisplayNames();
-        parseToonTextureNames();
-        parseRigidBodies();
-        parseConstraints();
+    PMDModelDataInfo info;
+    internal::zerofill(&info, sizeof(info));
+    if (preparse(data, size, info)) {
+        parseHeader(info);
+        parseVertices(info);
+        parseIndices(info);
+        parseMatrials(info);
+        parseBones(info);
+        parseIKs(info);
+        parseFaces(info);
+        parseFaceDisplayNames(info);
+        parseBoneDisplayNames(info);
+        parseEnglishDisplayNames(info);
+        parseToonTextureNames(info);
+        parseRigidBodies(info);
+        parseConstraints(info);
         prepare();
         return true;
     }
     return false;
 }
 
-void PMDModel::parseHeader()
+void PMDModel::parseHeader(const PMDModelDataInfo &info)
 {
-    setName(m_result.namePtr);
-    setComment(m_result.commentPtr);
+    setName(info.namePtr);
+    setComment(info.commentPtr);
 }
 
-void PMDModel::parseVertices()
+void PMDModel::parseVertices(const PMDModelDataInfo &info)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.verticesPtr);
-    const uint32_t nvertices = m_result.verticesCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.verticesPtr);
+    const uint32_t nvertices = info.verticesCount;
     m_vertices.reserve(nvertices);
     for (uint32_t i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex();
@@ -647,10 +644,10 @@ void PMDModel::parseVertices()
     }
 }
 
-void PMDModel::parseIndices()
+void PMDModel::parseIndices(const PMDModelDataInfo &info)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.indicesPtr);
-    const uint32_t nindices = m_result.indicesCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.indicesPtr);
+    const uint32_t nindices = info.indicesCount;
     m_indices.reserve(nindices);
     for (uint32_t i = 0; i < nindices; i++) {
         m_indices.push_back(*reinterpret_cast<uint16_t *>(ptr));
@@ -659,10 +656,10 @@ void PMDModel::parseIndices()
     updateIndices();
 }
 
-void PMDModel::parseMatrials()
+void PMDModel::parseMatrials(const PMDModelDataInfo &info)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.materialsPtr);
-    const uint32_t nmaterials = m_result.materialsCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.materialsPtr);
+    const uint32_t nmaterials = info.materialsCount;
     m_materials.reserve(nmaterials);
     for (uint32_t i = 0; i < nmaterials; i++) {
         Material *material = new Material();
@@ -672,13 +669,13 @@ void PMDModel::parseMatrials()
     }
 }
 
-void PMDModel::parseBones()
+void PMDModel::parseBones(const PMDModelDataInfo &info)
 {
     Bone *mutableRootBone = this->mutableRootBone();
     BoneList *mutableBones = this->mutableBones();
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.bonesPtr);
-    uint8_t *englishPtr = const_cast<uint8_t *>(m_result.englishBoneNamesPtr);
-    const uint32_t nbones = m_result.bonesCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.bonesPtr);
+    uint8_t *englishPtr = const_cast<uint8_t *>(info.englishBoneNamesPtr);
+    const uint32_t nbones = info.bonesCount;
     m_bones.reserve(nbones);
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
@@ -696,10 +693,10 @@ void PMDModel::parseBones()
     }
 }
 
-void PMDModel::parseIKs()
+void PMDModel::parseIKs(const PMDModelDataInfo &info)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.IKsPtr);
-    const uint32_t nIKs = m_result.IKsCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.IKsPtr);
+    const uint32_t nIKs = info.IKsCount;
     BoneList *mutableBones = this->mutableBones();
     m_IKs.reserve(nIKs);
     for (uint32_t i = 0; i < nIKs; i++) {
@@ -710,12 +707,12 @@ void PMDModel::parseIKs()
     }
 }
 
-void PMDModel::parseFaces()
+void PMDModel::parseFaces(const PMDModelDataInfo &info)
 {
     Face *baseFace = 0;
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.facesPtr);
-    uint8_t *englishPtr = const_cast<uint8_t *>(m_result.englishFaceNamesPtr);
-    const uint32_t nfaces = m_result.facesCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.facesPtr);
+    uint8_t *englishPtr = const_cast<uint8_t *>(info.englishFaceNamesPtr);
+    const uint32_t nfaces = info.facesCount;
     m_faces.reserve(nfaces);
     for (uint32_t i = 0; i < nfaces; i++) {
         Face *face = new Face();
@@ -735,32 +732,32 @@ void PMDModel::parseFaces()
     }
 }
 
-void PMDModel::parseFaceDisplayNames()
+void PMDModel::parseFaceDisplayNames(const PMDModelDataInfo & /* info */)
 {
 }
 
-void PMDModel::parseBoneDisplayNames()
+void PMDModel::parseBoneDisplayNames(const PMDModelDataInfo & /* info */)
 {
 }
 
-void PMDModel::parseEnglishDisplayNames()
+void PMDModel::parseEnglishDisplayNames(const PMDModelDataInfo &info)
 {
-    if (m_result.englishNamePtr)
-        setEnglishName(m_result.englishNamePtr);
-    if (m_result.englishCommentPtr)
-        setEnglishComment(m_result.englishCommentPtr);
+    if (info.englishNamePtr)
+        setEnglishName(info.englishNamePtr);
+    if (info.englishCommentPtr)
+        setEnglishComment(info.englishCommentPtr);
 }
 
-void PMDModel::parseToonTextureNames()
+void PMDModel::parseToonTextureNames(const PMDModelDataInfo &info)
 {
-    setToonTextures(m_result.toonTextureNamesPtr);
+    setToonTextures(info.toonTextureNamesPtr);
 }
 
-void PMDModel::parseRigidBodies()
+void PMDModel::parseRigidBodies(const PMDModelDataInfo &info)
 {
     BoneList *mutableBones = &m_bones;
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.rigidBodiesPtr);
-    const uint32_t nrigidBodies = m_result.rigidBodiesCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.rigidBodiesPtr);
+    const uint32_t nrigidBodies = info.rigidBodiesCount;
     m_rigidBodies.reserve(nrigidBodies);
     for (uint32_t i = 0; i < nrigidBodies; i++) {
         RigidBody *rigidBody = new RigidBody();
@@ -770,12 +767,12 @@ void PMDModel::parseRigidBodies()
     }
 }
 
-void PMDModel::parseConstraints()
+void PMDModel::parseConstraints(const PMDModelDataInfo &info)
 {
     RigidBodyList rigidBodies = m_rigidBodies;
     btVector3 offset = m_rootBone.offset();
-    uint8_t *ptr = const_cast<uint8_t *>(m_result.constraintsPtr);
-    const uint32_t nconstraints = m_result.constranitsCount;
+    uint8_t *ptr = const_cast<uint8_t *>(info.constraintsPtr);
+    const uint32_t nconstraints = info.constranitsCount;
     m_constraints.reserve(nconstraints);
     for (uint32_t i = 0; i < nconstraints; i++) {
         Constraint *constraint = new Constraint();

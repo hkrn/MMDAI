@@ -12,8 +12,9 @@ static void FileSlurp(const char *path, uint8_t *&data, size_t &size) {
 }
 
 TEST(PMDModelTest, PreParseEmptyPMD) {
-    vpvl::PMDModel model(reinterpret_cast<const uint8_t *>(""), 0);
-    EXPECT_FALSE(model.preparse());
+    vpvl::PMDModel model;
+    vpvl::PMDModelDataInfo info;
+    EXPECT_FALSE(model.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
     EXPECT_EQ(vpvl::PMDModel::kInvalidHeaderError, model.error());
 }
 
@@ -21,9 +22,9 @@ TEST(PMDModelTest, PreParseFullPMD) {
     uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
-    vpvl::PMDModel model(data, size);
-    EXPECT_TRUE(model.preparse());
-    vpvl::PMDModelDataInfo result = model.result();
+    vpvl::PMDModel model;
+    vpvl::PMDModelDataInfo result;
+    EXPECT_TRUE(model.preparse(data, size, result));
     EXPECT_TRUE(result.basePtr != 0);
     EXPECT_TRUE(result.namePtr != 0);
     EXPECT_TRUE(result.commentPtr != 0);
@@ -63,9 +64,10 @@ TEST(PMDModelTest, ParseFullPMD) {
     uint8_t *data = 0;
     size_t size = 0;
     FileSlurp("test/res/miku.pmd", data, size);
-    vpvl::PMDModel model(data, size);
-    EXPECT_TRUE(model.load());
-    vpvl::PMDModelDataInfo result = model.result();
+    vpvl::PMDModel model;
+    vpvl::PMDModelDataInfo result;
+    EXPECT_TRUE(model.preparse(data, size, result));
+    EXPECT_TRUE(model.load(data, size));
     EXPECT_EQ(model.vertices().size(), result.verticesCount);
     EXPECT_EQ(model.materials().size(), result.materialsCount);
     EXPECT_EQ(model.bones().size(), result.bonesCount);

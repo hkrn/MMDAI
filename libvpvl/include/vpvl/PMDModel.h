@@ -158,7 +158,7 @@ public:
         kEdgeIndicesStride
     };
 
-    PMDModel(const uint8_t *data, size_t size);
+    PMDModel();
     ~PMDModel();
 
     static const uint32_t kBoundingSpherePoints = 1000;
@@ -185,8 +185,8 @@ public:
     const void *toonTextureCoordsPointer() const;
     const void *edgeVerticesPointer() const;
 
-    bool preparse();
-    bool load();
+    bool preparse(const uint8_t *data, size_t size, PMDModelDataInfo &info);
+    bool load(const uint8_t *data, size_t size);
 
     const uint8_t *name() const {
         return m_name;
@@ -247,9 +247,6 @@ public:
     const btVector3 &lightDirection() const {
         return m_lightDirection;
     }
-    const PMDModelDataInfo &result() const {
-        return m_result;
-    }
     PMDModelUserData *userData() const {
         return m_userData;
     }
@@ -263,12 +260,6 @@ public:
     }
     Error error() const {
         return m_error;
-    }
-    const uint8_t *data() const {
-        return m_data;
-    }
-    size_t size() const {
-        return m_size;
     }
 
     const uint16_t *indicesPointer() const {
@@ -314,19 +305,19 @@ public:
     }
 
 private:
-    void parseHeader();
-    void parseVertices();
-    void parseIndices();
-    void parseMatrials();
-    void parseBones();
-    void parseIKs();
-    void parseFaces();
-    void parseFaceDisplayNames();
-    void parseBoneDisplayNames();
-    void parseEnglishDisplayNames();
-    void parseToonTextureNames();
-    void parseRigidBodies();
-    void parseConstraints();
+    void parseHeader(const PMDModelDataInfo &info);
+    void parseVertices(const PMDModelDataInfo &info);
+    void parseIndices(const PMDModelDataInfo &info);
+    void parseMatrials(const PMDModelDataInfo &info);
+    void parseBones(const PMDModelDataInfo &info);
+    void parseIKs(const PMDModelDataInfo &info);
+    void parseFaces(const PMDModelDataInfo &info);
+    void parseFaceDisplayNames(const PMDModelDataInfo &info);
+    void parseBoneDisplayNames(const PMDModelDataInfo &info);
+    void parseEnglishDisplayNames(const PMDModelDataInfo &info);
+    void parseToonTextureNames(const PMDModelDataInfo &info);
+    void parseRigidBodies(const PMDModelDataInfo &info);
+    void parseConstraints(const PMDModelDataInfo &info);
     void prepare();
     void updateAllBones();
     void updateBoneFromSimulation();
@@ -351,7 +342,6 @@ private:
     ConstraintList m_constraints;
     Bone m_rootBone;
     Face *m_baseFace;
-    PMDModelDataInfo m_result;
     btHashMap<btHashString, Bone *> m_name2bone;
     btHashMap<btHashString, Face *> m_name2face;
     btAlignedObjectArray<VMDMotion *> m_motions;
@@ -369,8 +359,6 @@ private:
     uint32_t m_edgeIndicesCount;
     btVector3 m_lightDirection;
     Error m_error;
-    const size_t m_size;
-    const uint8_t *m_data;
     uint32_t m_boundingSphereStep;
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
