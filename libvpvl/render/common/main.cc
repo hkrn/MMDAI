@@ -913,8 +913,8 @@ int main(int argc, char *argv[])
 
     snprintf(path, sizeof(path), "%s/%s", g_modeldir, g_modelname);
     FileSlurp(path, modelData, size);
-    vpvl::PMDModel model(modelData, size);
-    if (!model.load()) {
+    vpvl::PMDModel model;
+    if (!model.load(modelData, size)) {
         fprintf(stderr, "Failed parsing the model\n");
         delete[] modelData;
         return -1;
@@ -948,8 +948,8 @@ int main(int argc, char *argv[])
 
     snprintf(path, sizeof(path), "%s", g_motion);
     FileSlurp(path, motionData, size);
-    vpvl::VMDMotion motion(motionData, size);
-    if (!motion.load()) {
+    vpvl::VMDMotion motion;
+    if (!motion.load(motionData, size)) {
         fprintf(stderr, "Failed parsing the model motion\n");
         delete[] modelData;
         delete[] stageData;
@@ -960,8 +960,8 @@ int main(int argc, char *argv[])
 
     snprintf(path, sizeof(path), "%s", g_camera);
     FileSlurp(path, cameraData, size);
-    vpvl::VMDMotion camera(cameraData, size);
-    if (!camera.load()) {
+    vpvl::VMDMotion camera;
+    if (!camera.load(cameraData, size)) {
         fprintf(stderr, "Failed parsing the camera motion\n");
         delete[] modelData;
         delete[] stageData;
