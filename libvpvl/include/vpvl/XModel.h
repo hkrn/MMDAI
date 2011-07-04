@@ -99,11 +99,11 @@ public:
         kIndicesStride
     };
 
-    XModel(const uint8_t *data, size_t size);
+    XModel();
     ~XModel();
 
-    bool preparse();
-    bool load();
+    bool preparse(const uint8_t *data, size_t size);
+    bool load(const uint8_t *data, size_t size);
 
     size_t stride(StrideType type) const;
     const void *verticesPointer() const;
@@ -138,12 +138,6 @@ public:
     XModelUserData *userData() const {
         return m_userData;
     }
-    const uint8_t *data() const {
-        return m_data;
-    }
-    size_t size() const {
-        return m_size;
-    }
 
     void setUserData(XModelUserData *value) {
         m_userData = value;
@@ -159,8 +153,6 @@ private:
     btAlignedObjectArray<XMaterial *> m_materials;
     XModelUserData *m_userData;
     Error m_error;
-    const uint8_t *m_data;
-    const size_t m_size;
 };
 
 }

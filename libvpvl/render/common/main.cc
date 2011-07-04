@@ -923,8 +923,8 @@ int main(int argc, char *argv[])
 
     snprintf(path, sizeof(path), "%s/%s", g_stagedir, g_stagename);
     FileSlurp(path, stageData, size);
-    vpvl::XModel stage(stageData, size);
-    if (!stage.load()) {
+    vpvl::XModel stage;
+    if (!stage.load(stageData, size)) {
         fprintf(stderr, "Failed parsing the stage\n");
         delete[] modelData;
         delete[] stageData;

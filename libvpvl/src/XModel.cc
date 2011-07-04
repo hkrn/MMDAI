@@ -87,10 +87,8 @@ enum XModelInternalParseState
     kMeshVertexColors
 };
 
-XModel::XModel(const uint8_t *data, size_t size)
-    : m_error(kNoError),
-      m_data(data),
-      m_size(size)
+XModel::XModel()
+    : m_error(kNoError)
 {
 }
 
@@ -105,13 +103,12 @@ XModel::~XModel()
     m_materials.clear();
     m_error = kNoError;
     m_userData = 0;
-    m_data = 0;
 }
 
-bool XModel::preparse()
+bool XModel::preparse(const uint8_t *data, size_t size)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(m_data);
-    if (16 > m_size) {
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    if (16 > size) {
         m_error = kInvalidHeader;
         return false;
     }
@@ -129,14 +126,14 @@ bool XModel::preparse()
     return true;
 }
 
-bool XModel::load()
+bool XModel::load(const uint8_t *data, size_t size)
 {
-    if (!preparse())
+    if (!preparse(data, size))
         return false;
 
-    char *buffer = new char[m_size + 1];
-    memcpy(buffer, m_data, m_size);
-    buffer[m_size] = 0;
+    char *buffer = new char[size + 1];
+    memcpy(buffer, data, size);
+    buffer[size] = 0;
 
     btAlignedObjectArray<char *> tokens;
     char *p = 0, *token = 0;

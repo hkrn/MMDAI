@@ -79,18 +79,16 @@ public:
         kMaxErrors
     };
 
-    VPDPose(const uint8_t *data, size_t size);
+    VPDPose();
     ~VPDPose();
 
-    bool preparse();
-    bool load();
+    bool preparse(const uint8_t *data, size_t size);
+    bool load(const uint8_t *data, size_t size);
     void makePose(vpvl::PMDModel *model);
 
 private:
     btAlignedObjectArray<VPDBone *> m_bones;
     Error m_error;
-    const uint8_t *m_data;
-    const size_t m_size;
 };
 
 } /* namespace vpvl */

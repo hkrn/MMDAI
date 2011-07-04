@@ -48,10 +48,8 @@ enum VPDPoseInternalParseState
     kEnd
 };
 
-VPDPose::VPDPose(const uint8_t *data, size_t size)
-    : m_error(kNoError),
-      m_data(data),
-      m_size(size)
+VPDPose::VPDPose()
+    : m_error(kNoError)
 {
 }
 
@@ -65,14 +63,13 @@ VPDPose::~VPDPose()
     }
     m_bones.clear();
     m_error = kNoError;
-    m_data = 0;
 }
 
-bool VPDPose::preparse()
+bool VPDPose::preparse(const uint8_t *data, size_t size)
 {
     static const uint8_t signature[] = "Vocaloid Pose Data file";
-    uint8_t *ptr = const_cast<uint8_t *>(m_data);
-    if (sizeof(signature) > m_size) {
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    if (sizeof(signature) > size) {
         m_error = kInvalidHeaderError;
         return false;
     }
@@ -85,14 +82,14 @@ bool VPDPose::preparse()
     return true;
 }
 
-bool VPDPose::load()
+bool VPDPose::load(const uint8_t *data, size_t size)
 {
-    if (!preparse())
+    if (!preparse(data, size))
         return false;
 
-    char *buffer = new char[m_size + 1];
-    memcpy(buffer, m_data, m_size);
-    buffer[m_size] = 0;
+    char *buffer = new char[size + 1];
+    memcpy(buffer, data, size);
+    buffer[size] = 0;
 
     btAlignedObjectArray<char *> tokens;
     char *p = 0, *token = 0, *ptr = buffer + 23;
