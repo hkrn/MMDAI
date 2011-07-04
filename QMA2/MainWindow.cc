@@ -81,7 +81,6 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_scene);
     layout->addWidget(m_info);
-    // new QLabel(tr("Model:%1 Bone:%2 FPS:%3\nPosition: %1 Angle:%2 Fovy:%3 Distance:%4").arg("N/A").arg("N/A").arg(0)));
     layout->setContentsMargins(QMargins());
     layout->setStretch(0, 1);
     widget->setLayout(layout);
