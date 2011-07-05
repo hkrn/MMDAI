@@ -634,8 +634,8 @@ vpvl::XModel *SceneWidget::addAssetInternal(const QString &baseName, const QDir 
     vpvl::XModel *model = 0;
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
-        model = new vpvl::XModel(reinterpret_cast<const uint8_t *>(data.constData()), data.size());
-        if (model->load()) {
+        model = new vpvl::XModel();
+        if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             QString key = baseName;
             if (m_assets.contains(key)) {
                 int i = 0;
@@ -663,12 +663,13 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
     vpvl::PMDModel *model = 0;
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
-        model = new vpvl::PMDModel(reinterpret_cast<const uint8_t *>(data.constData()), data.size());
-        if (model->load()) {
+        model = new vpvl::PMDModel();
+        if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             loadModel(model, dir);
             m_scene->addModel(model);
             QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
             QString key = codec->toUnicode(reinterpret_cast<const char *>(model->name()));
+            qDebug() << key << baseName;
             if (m_models.contains(key)) {
                 int i = 0;
                 while (true) {
@@ -694,8 +695,8 @@ vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QSt
     vpvl::VMDMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
-        motion = new vpvl::VMDMotion(reinterpret_cast<const uint8_t *>(data.constData()), data.size());
-        if (motion->load()) {
+        motion = new vpvl::VMDMotion();
+        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             model->addMotion(motion);
             m_motions.append(motion);
             emit motionDidAdd(motion);
@@ -714,8 +715,8 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
     vpvl::VMDMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
-        motion = new vpvl::VMDMotion(reinterpret_cast<const uint8_t *>(data.constData()), data.size());
-        if (motion->load()) {
+        motion = new vpvl::VMDMotion();
+        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             delete m_camera;
             m_camera = motion;
             m_scene->setCameraMotion(motion);
