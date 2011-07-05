@@ -47,6 +47,7 @@ class PMDModel;
 }
 
 class QLabel;
+class QSplitter;
 class FaceWidget;
 class HandleWidget;
 class PerspectionWidget;
@@ -107,8 +108,11 @@ private:
     QMenu *m_helpMenu;
     QMenu *m_selectModelMenu;
 
+    QSplitter *m_main;
+    QSplitter *m_left;
     QLabel *m_info;
     QSettings m_settings;
+    QWidget *m_widget;
     FaceWidget *m_face;
     HandleWidget *m_handle;
     PerspectionWidget *m_perspection;

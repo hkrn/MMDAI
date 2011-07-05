@@ -338,7 +338,7 @@ const QString SceneWidget::toUnicodeModelName(const vpvl::PMDModel *model)
 void SceneWidget::addModel()
 {
     stopSceneUpdateTimer();
-    QFileInfo fi(openFileDialog("lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
+    QFileInfo fi(openFileDialog("sceneWidget/lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
         if (!addModelInternal(fi.fileName(), fi.dir()))
@@ -352,7 +352,7 @@ void SceneWidget::addModel()
 void SceneWidget::insertMotionToAllModels()
 {
     stopSceneUpdateTimer();
-    QString fileName = openFileDialog("lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
+    QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
         foreach (vpvl::PMDModel *model, m_models) {
             if (!addMotionInternal(model, fileName)) {
@@ -369,7 +369,7 @@ void SceneWidget::insertMotionToSelectedModel()
 {
     if (m_selected) {
         stopSceneUpdateTimer();
-        QString fileName = openFileDialog("lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
+        QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
         if (QFile::exists(fileName)) {
             if (!addMotionInternal(m_selected, fileName))
                 QMessageBox::warning(this, tr("Loading model motion error"),
@@ -385,7 +385,7 @@ void SceneWidget::insertMotionToSelectedModel()
 void SceneWidget::addAsset()
 {
     stopSceneUpdateTimer();
-    QFileInfo fi(openFileDialog("lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
+    QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
         if (!addAssetInternal(fi.fileName(), fi.dir())) {
@@ -400,7 +400,7 @@ void SceneWidget::addAsset()
 void SceneWidget::setCamera()
 {
     stopSceneUpdateTimer();
-    QString fileName = openFileDialog("lastCameraDirectory", tr("Open VMD (for camera) file"), tr("VMD file (*.vmd)"));
+    QString fileName = openFileDialog("sceneWidget/lastCameraDirectory", tr("Open VMD (for camera) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
         if (!setCameraInternal(fileName))
             QMessageBox::warning(this, tr("Loading camera motion error"),

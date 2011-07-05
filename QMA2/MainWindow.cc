@@ -63,30 +63,32 @@ MainWindow::MainWindow(QWidget *parent)
     menuBar = this->menuBar();
 #endif
 
-    QSplitter *left = new QSplitter(Qt::Vertical, this);
-    QSplitter *main = new QSplitter(Qt::Horizontal, this);
+    m_left = new QSplitter(Qt::Vertical, this);
+    m_main = new QSplitter(Qt::Horizontal, this);
     m_settings.setIniCodec("UTF-8");
-    m_face = new FaceWidget();
-    m_handle = new HandleWidget();
-    m_perspection = new PerspectionWidget();
-    m_scene = new SceneWidget(&m_settings);
     m_timeline = new TimelineWidget();
-    m_info = new QLabel();
-    left->addWidget(m_timeline);
-    //left->addWidget(m_face);
-    left->addWidget(m_handle);
-    //left->addWidget(m_perspection);
-    main->addWidget(left);
-    QWidget *widget = new QWidget;
+    m_left->addWidget(m_timeline);
+    QTabWidget *tab = new QTabWidget();
+    m_face = new FaceWidget();
+    tab->addTab(m_face, tr("Face"));
+    m_handle = new HandleWidget();
+    tab->addTab(m_handle, tr("Handle"));
+    m_perspection = new PerspectionWidget();
+    tab->addTab(m_perspection, tr("Perspection"));
+    m_left->addWidget(tab);
+    m_main->addWidget(m_left);
     QVBoxLayout *layout = new QVBoxLayout();
+    m_scene = new SceneWidget(&m_settings);
     layout->addWidget(m_scene);
+    m_info = new QLabel();
     layout->addWidget(m_info);
     layout->setContentsMargins(QMargins());
     layout->setStretch(0, 1);
-    widget->setLayout(layout);
-    main->addWidget(widget);
+    m_widget = new QWidget;
+    m_widget->setLayout(layout);
+    m_main->addWidget(m_widget);
 
-    setCentralWidget(main);
+    setCentralWidget(m_main);
     setWindowTitle(qAppName());
     createActions();
     createMenus(menuBar);
@@ -114,8 +116,12 @@ MainWindow::MainWindow(QWidget *parent)
             this, SLOT(setCameraPerspection(btVector3,btVector3,float,float)));
 
     statusBar()->show();
-    restoreGeometry(m_settings.value("geometry").toByteArray());
-    restoreState(m_settings.value("state").toByteArray());
+    restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
+    restoreState(m_settings.value("mainWindow/state").toByteArray());
+    m_main->restoreGeometry(m_settings.value("mainSplitter/geometry").toByteArray());
+    m_main->restoreState(m_settings.value("mainSplitter/state").toByteArray());
+    m_left->restoreGeometry(m_settings.value("leftSplitter/geometry").toByteArray());
+    m_left->restoreState(m_settings.value("leftSplitter/state").toByteArray());
 }
 
 MainWindow::~MainWindow()
@@ -129,8 +135,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    m_settings.setValue("geometry", saveGeometry());
-    m_settings.setValue("state", saveState());
+    m_settings.setValue("mainWindow/geometry", saveGeometry());
+    m_settings.setValue("mainWindow/state", saveState());
+    m_settings.setValue("mainSplitter/geometry", m_main->saveGeometry());
+    m_settings.setValue("mainSplitter/state", m_main->saveState());
+    m_settings.setValue("leftSplitter/geometry", m_left->saveGeometry());
+    m_settings.setValue("leftSplitter/state", m_left->saveState());
     event->accept();
 }
 
