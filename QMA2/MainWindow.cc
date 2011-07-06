@@ -112,8 +112,10 @@ MainWindow::MainWindow(QWidget *parent)
             this, SLOT(setModel(vpvl::PMDModel*)));
     connect(m_timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
             this, SLOT(setBone(vpvl::Bone*)));
-    connect(m_scene, SIGNAL(cameraPerspectionDidSet(btVector3,btVector3,float,float)),
+    connect(m_scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
+    connect(m_scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
+            m_handle, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
 
     statusBar()->show();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());

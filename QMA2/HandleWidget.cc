@@ -14,7 +14,8 @@ public:
 
     BaseHandle(qreal x, qreal y, qreal w, qreal h)
         : QGraphicsItem(),
-          m_mode(kLocal),
+          m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
+          m_mode(kView),
           m_prev(0, 0),
           m_rect(x, y, w, h)
     {
@@ -29,6 +30,9 @@ public:
     }
     QRectF boundingRect() const {
         return m_rect;
+    }
+    void setAngle(const btVector3 &angle) {
+        m_rotation.setEulerZYX(vpvl::radian(angle.z()), vpvl::radian(angle.y()), vpvl::radian(angle.x()));
     }
     void setBone(const vpvl::BoneList &bones) {
         m_bones.copyFromArray(bones);
@@ -57,6 +61,11 @@ protected:
         uint32_t nBones = m_bones.size();
         switch (handleMode()) {
         case kView: {
+            for (uint32_t i = 0; i < nBones; i++) {
+                vpvl::Bone *bone = m_bones[i];
+                btTransform tr(m_rotation, bone->currentPosition());
+                bone->setCurrentPosition(tr * v);
+            }
             break;
         }
         case kLocal: {
@@ -82,6 +91,7 @@ protected:
     QPen m_pen;
 
 private:
+    btQuaternion m_rotation;
     vpvl::BoneList m_bones;
     HandleMode m_mode;
     QPointF m_prev;
@@ -178,11 +188,20 @@ HandleWidget::~HandleWidget()
 
 void HandleWidget::setBone(vpvl::Bone *value)
 {
-    m_bones.clear();
-    m_bones.push_back(value);
-    m_xHandle->setBone(m_bones);
-    m_yHandle->setBone(m_bones);
-    m_zHandle->setBone(m_bones);
+    if (value) {
+        m_bones.clear();
+        m_bones.push_back(value);
+        m_xHandle->setBone(m_bones);
+        m_yHandle->setBone(m_bones);
+        m_zHandle->setBone(m_bones);
+    }
+}
+
+void HandleWidget::setCameraPerspective(const btVector3 & /* pos */, const btVector3 &angle, float /* fovy */, float /* distance */)
+{
+    m_xHandle->setAngle(angle);
+    m_yHandle->setAngle(angle);
+    m_zHandle->setAngle(angle);
 }
 
 void HandleWidget::createHandles(QGraphicsScene *scene)
