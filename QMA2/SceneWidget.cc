@@ -414,6 +414,7 @@ void SceneWidget::deleteSelectedModel()
     const QString &key = m_models.key(m_selected);
     if (!key.isNull()) {
         emit modelDidDelete(m_selected);
+        unloadModel(m_selected);
         m_scene->removeModel(m_selected);
         m_models.remove(key);
         delete m_selected;
