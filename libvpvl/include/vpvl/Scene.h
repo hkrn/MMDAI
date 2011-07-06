@@ -85,7 +85,7 @@ public:
     void getProjectionMatrix(float matrix[16]) const;
     void removeModel(PMDModel *model);
     void resetCamera();
-    void setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
     void setLight(const btVector4 &color, const btVector4 &direction);
     void setViewMove(int viewMoveTime);

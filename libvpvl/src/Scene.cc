@@ -158,10 +158,10 @@ void Scene::removeModel(PMDModel *model)
 
 void Scene::resetCamera()
 {
-    setCamera(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
+    setCameraPerspective(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
 }
 
-void Scene::setCamera(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
+void Scene::setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
 {
     if (!m_cameraMotion) {
         m_position = position;
@@ -338,7 +338,8 @@ void Scene::updateProjectionMatrix()
 void Scene::updateRotationFromAngle()
 {
     static const btVector3 x(1.0f, 0.0f, 0.0f), y(0.0f, 1.0f, 0.0f), z(0.0f, 0.0f, 1.0f);
-    m_rotation = btQuaternion(z, radian(m_angle.z())) * btQuaternion(x, radian(m_angle.x())) * btQuaternion(y, radian(m_angle.y()));
+    btQuaternion rz(z, radian(m_angle.z())), rx(x, radian(m_angle.x())), ry(y, radian(m_angle.y()));
+    m_rotation = rz * rx * ry;
 }
 
 bool Scene::updateDistance(int ellapsedTimeForMove)
