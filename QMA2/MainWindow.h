@@ -50,7 +50,7 @@ class QLabel;
 class QSplitter;
 class FaceWidget;
 class HandleWidget;
-class PerspectionWidget;
+class CameraPerspectiveWidget;
 class SceneWidget;
 class TimelineWidget;
 
@@ -115,7 +115,7 @@ private:
     QWidget *m_widget;
     FaceWidget *m_face;
     HandleWidget *m_handle;
-    PerspectionWidget *m_perspection;
+    CameraPerspectiveWidget *m_perspection;
     SceneWidget *m_scene;
     TimelineWidget *m_timeline;
 

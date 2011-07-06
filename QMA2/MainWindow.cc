@@ -36,9 +36,9 @@
 
 #include "MainWindow.h"
 
+#include "CameraPerspectiveWidget.h"
 #include "FaceWidget.h"
 #include "HandleWidget.h"
-#include "PerspectionWidget.h"
 #include "SceneWidget.h"
 #include "TimelineWidget.h"
 
@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
     tab->addTab(m_face, tr("Face"));
     m_handle = new HandleWidget();
     tab->addTab(m_handle, tr("Handle"));
-    m_perspection = new PerspectionWidget();
+    m_perspection = new CameraPerspectiveWidget();
     tab->addTab(m_perspection, tr("Perspection"));
     m_left->addWidget(tab);
     m_main->addWidget(m_left);
