@@ -125,7 +125,7 @@ inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 
 inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
-    assert(ptr != NULL && stride > 0 && rest > 0);
+    assert(ptr != NULL);
     size_t required = stride * size;
     if (required > rest)
         return false;
