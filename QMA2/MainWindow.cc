@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_face, SLOT(setModel(vpvl::PMDModel*)));
     connect(m_perspection, SIGNAL(perspectionDidChange(btVector3*,btVector3*,float*,float*)),
-            m_scene, SLOT(setCameraPerspection(btVector3*,btVector3*,float*,float*)));
+            m_scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
     connect(m_timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
             m_handle, SLOT(setBone(vpvl::Bone*)));
     connect(m_scene, SIGNAL(fpsDidUpdate(int)),
@@ -113,7 +113,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
             this, SLOT(setBone(vpvl::Bone*)));
     connect(m_scene, SIGNAL(cameraPerspectionDidSet(btVector3,btVector3,float,float)),
-            this, SLOT(setCameraPerspection(btVector3,btVector3,float,float)));
+            this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
 
     statusBar()->show();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
@@ -199,7 +199,7 @@ void MainWindow::setBone(vpvl::Bone *value)
     updateInformation();
 }
 
-void MainWindow::setCameraPerspection(const btVector3 &pos, const btVector3 &angle, float fovy, float distance)
+void MainWindow::setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance)
 {
     m_position = pos;
     m_angle = angle;

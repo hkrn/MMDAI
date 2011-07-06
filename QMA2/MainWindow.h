@@ -74,7 +74,7 @@ private slots:
     void setCurrentFPS(int value);
     void setModel(vpvl::PMDModel *value);
     void setBone(vpvl::Bone *value);
-    void setCameraPerspection(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
 private:
     void createActions();

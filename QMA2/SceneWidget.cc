@@ -428,10 +428,10 @@ void SceneWidget::deleteSelectedModel()
 void SceneWidget::resetCamera()
 {
     m_scene->resetCamera();
-    emit cameraPerspectionDidSet(m_scene->position(), m_scene->angle(), m_scene->fovy(), m_scene->distance());
+    emit cameraPerspectiveDidSet(m_scene->position(), m_scene->angle(), m_scene->fovy(), m_scene->distance());
 }
 
-void SceneWidget::setCameraPerspection(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
+void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
 {
     btVector3 posValue, angleValue;
     float fovyValue, distanceValue;
@@ -439,8 +439,8 @@ void SceneWidget::setCameraPerspection(btVector3 *pos, btVector3 *angle, float *
     angleValue = !angle ? m_scene->angle() : *angle;
     fovyValue = !fovy ? m_scene->fovy() : *fovy;
     distanceValue = !distance ? m_scene->distance() : *distance;
-    m_scene->setCamera(posValue, angleValue, fovyValue, distanceValue);
-    emit cameraPerspectionDidSet(posValue, angleValue, fovyValue, distanceValue);
+    m_scene->setCameraPerspective(posValue, angleValue, fovyValue, distanceValue);
+    emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
 void SceneWidget::rotate(float x, float y)
@@ -448,8 +448,8 @@ void SceneWidget::rotate(float x, float y)
     btVector3 pos = m_scene->position(), angle = m_scene->angle();
     float fovy = m_scene->fovy(), distance = m_scene->distance();
     angle.setValue(angle.x() + x, angle.y() + y, angle.z());
-    m_scene->setCamera(pos, angle, fovy, distance);
-    emit cameraPerspectionDidSet(pos, angle, fovy, distance);
+    m_scene->setCameraPerspective(pos, angle, fovy, distance);
+    emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::translate(float x, float y)
@@ -457,8 +457,8 @@ void SceneWidget::translate(float x, float y)
     btVector3 pos = m_scene->position(), angle = m_scene->angle();
     float fovy = m_scene->fovy(), distance = m_scene->distance();
     pos.setValue(pos.x() + x, pos.y() + y, pos.z());
-    m_scene->setCamera(pos, angle, fovy, distance);
-    emit cameraPerspectionDidSet(pos, angle, fovy, distance);
+    m_scene->setCameraPerspective(pos, angle, fovy, distance);
+    emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
@@ -477,8 +477,8 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
         if (distanceStep != 0.0f)
             distance = up ? distance - distanceStep : distance + distanceStep;
     }
-    m_scene->setCamera(pos, angle, fovy, distance);
-    emit cameraPerspectionDidSet(pos, angle, fovy, distance);
+    m_scene->setCameraPerspective(pos, angle, fovy, distance);
+    emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::closeEvent(QCloseEvent *event)

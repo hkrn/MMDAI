@@ -89,7 +89,7 @@ public slots:
     void resetCamera();
     void rotate(float x, float y);
     void translate(float x, float y);
-    void setCameraPerspection(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
+    void setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
@@ -109,7 +109,7 @@ signals:
     void motionDidAdd(vpvl::VMDMotion *motion);
     void assetDidAdd(vpvl::XModel *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
-    void cameraPerspectionDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
     void surfaceDidUpdate();
     void fpsDidUpdate(int fps);
 
