@@ -1177,6 +1177,157 @@ void SceneWidget::drawModelShadow(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
+void SceneWidget::drawModelBones(const vpvl::PMDModel *model)
+{
+    float matrix[16];
+    const vpvl::BoneList bones = model->bones();
+    uint32_t nBones = bones.size();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+
+    for (uint32_t i = 0; i < nBones; i++) {
+        const vpvl::Bone *bone = bones[i], *parent = bone->parent();
+        vpvl::Bone::Type type = bone->type();
+        if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
+            continue;
+        const btTransform transform = bone->currentTransform();
+        transform.getOpenGLMatrix(matrix);
+        glPushMatrix();
+        glMultMatrixf(matrix);
+        if (type != vpvl::Bone::kInvisible) {
+            if (bone->isSimulated()) {
+                glColor4f(0.8f, 0.8f, 0.0f, 1.0f);
+                glScalef(0.1, 0.1, 0.1);
+            }
+            else {
+                switch (type) {
+                case vpvl::Bone::kIKDestination:
+                    glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
+                    glScalef(0.25, 0.25, 0.25);
+                    break;
+                case vpvl::Bone::kUnderIK:
+                    glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
+                    glScalef(0.15, 0.15, 0.15);
+                    break;
+                case vpvl::Bone::kIKTarget:
+                    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+                    glScalef(0.15, 0.15, 0.15);
+                    break;
+                case vpvl::Bone::kUnderRotate:
+                case vpvl::Bone::kTwist:
+                case vpvl::Bone::kFollowRotate:
+                    glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
+                    glScalef(0.15, 0.15, 0.15);
+                    break;
+                default:
+                    if (bone->hasMotionIndependency()) {
+                        glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
+                        glScalef(0.25, 0.25, 0.25);
+                    } else {
+                        glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
+                        glScalef(0.15, 0.15, 0.15);
+                    }
+                    break;
+                }
+            }
+            static const GLfloat vertices [8][3] = {
+                { -0.5f, -0.5f, 0.5f},
+                { 0.5f, -0.5f, 0.5f},
+                { 0.5f, 0.5f, 0.5f},
+                { -0.5f, 0.5f, 0.5f},
+                { 0.5f, -0.5f, -0.5f},
+                { -0.5f, -0.5f, -0.5f},
+                { -0.5f, 0.5f, -0.5f},
+                { 0.5f, 0.5f, -0.5f}
+            };
+            glBegin(GL_POLYGON);
+            glVertex3fv(vertices[0]);
+            glVertex3fv(vertices[1]);
+            glVertex3fv(vertices[2]);
+            glVertex3fv(vertices[3]);
+            glEnd();
+            glBegin(GL_POLYGON);
+            glVertex3fv(vertices[4]);
+            glVertex3fv(vertices[5]);
+            glVertex3fv(vertices[6]);
+            glVertex3fv(vertices[7]);
+            glEnd();
+            glBegin(GL_POLYGON);
+            glVertex3fv(vertices[1]);
+            glVertex3fv(vertices[4]);
+            glVertex3fv(vertices[7]);
+            glVertex3fv(vertices[2]);
+            glEnd();
+            glBegin(GL_POLYGON);
+            glVertex3fv(vertices[5]);
+            glVertex3fv(vertices[0]);
+            glVertex3fv(vertices[3]);
+            glVertex3fv(vertices[6]);
+            glEnd();
+            glBegin(GL_POLYGON);
+            glVertex3fv(vertices[3]);
+            glVertex3fv(vertices[2]);
+            glVertex3fv(vertices[7]);
+            glVertex3fv(vertices[6]);
+            glEnd();
+            glBegin(GL_POLYGON);
+            glVertex3fv(vertices[1]);
+            glVertex3fv(vertices[0]);
+            glVertex3fv(vertices[5]);
+            glVertex3fv(vertices[4]);
+            glEnd();
+        }
+        glPopMatrix();
+        if (!parent || type == vpvl::Bone::kIKDestination)
+            continue;
+        glPushMatrix();
+        if (type == vpvl::Bone::kInvisible) {
+            glColor4f(0.5f, 0.4f, 0.5f, 1.0f);
+        }
+        else if (bone->isSimulated()) {
+            glColor4f(0.7f, 0.7f, 0.0f, 1.0f);
+        }
+        else if (type == vpvl::Bone::kUnderIK || type == vpvl::Bone::kIKTarget) {
+            glColor4f(0.8f, 0.5f, 0.3f, 1.0f);
+        }
+        else {
+            glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
+        }
+        glBegin(GL_LINES);
+        glVertex3fv(parent->currentTransform().getOrigin());
+        glVertex3fv(transform.getOrigin());
+        glEnd();
+        glPopMatrix();
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+}
+
+static void SetVertices(const btVector4 indices,
+                        int index,
+                        const btAlignedObjectArray<btVector3> &vertices,
+                        const btAlignedObjectArray<btVector3> &textureCoords,
+                        const btAlignedObjectArray<btVector3> &normals,
+                        const btAlignedObjectArray<btVector4> &colors)
+{
+    const int x = static_cast<const int>(indices[index]);
+    if (textureCoords.size() > x)
+        glTexCoord2fv(textureCoords[x]);
+    else if (textureCoords.size() > 0)
+        glTexCoord2f(0, 0);
+    if (colors.size() > x)
+        glColor4fv(colors[x]);
+    else if (colors.size() > 0)
+        glColor3f(0, 0, 0);
+    if (normals.size() > x)
+        glNormal3fv(normals[x]);
+    else if (normals.size() > 0)
+        glNormal3f(0, 0, 0);
+    glVertex3fv(vertices[x]);
+}
+
 void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir)
 {
     vpvl::XModelUserData *userData = new vpvl::XModelUserData;
@@ -1195,12 +1346,6 @@ void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir
     const btAlignedObjectArray<btVector3> &normals = model->normals();
     const btAlignedObjectArray<btVector4> &colors = model->colors();
     const bool hasMaterials = model->countMatreials() > 0;
-    const bool hasTextureCoords = textureCoords.size() > 0;
-    const bool hasNormals = normals.size();
-    const bool hasColors = colors.size();
-    const uint32_t nTextureCoords = textureCoords.size();
-    const uint32_t nColors = colors.size();
-    const uint32_t nNormals = normals.size();
     uint32_t nFaces = faces.size();
     uint32_t prevIndex = -1;
     glEnable(GL_TEXTURE_2D);
@@ -1236,23 +1381,23 @@ void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir
             }
             prevIndex = currentIndex;
         }
+        glBegin(GL_TRIANGLES);
         switch (count) {
         case 3:
-            glBegin(GL_TRIANGLES);
+            SetVertices(value, 1, vertices, textureCoords, normals, colors);
+            SetVertices(value, 0, vertices, textureCoords, normals, colors);
+            SetVertices(value, 2, vertices, textureCoords, normals, colors);
             break;
         case 4:
-            glBegin(GL_QUADS);
+            SetVertices(value, 1, vertices, textureCoords, normals, colors);
+            SetVertices(value, 0, vertices, textureCoords, normals, colors);
+            SetVertices(value, 2, vertices, textureCoords, normals, colors);
+            SetVertices(value, 3, vertices, textureCoords, normals, colors);
+            SetVertices(value, 2, vertices, textureCoords, normals, colors);
+            SetVertices(value, 0, vertices, textureCoords, normals, colors);
             break;
-        }
-        for (uint32_t j = 0; j < count; j++) {
-            const uint32_t x = static_cast<const uint32_t>(value[j]);
-            if (hasTextureCoords && nTextureCoords > x)
-                glTexCoord2fv(textureCoords[x]);
-            if (hasColors && nColors > x)
-                glColor4fv(colors[x]);
-            if (hasNormals && nNormals > x)
-                glNormal3fv(normals[x]);
-            glVertex3fv(vertices[x]);
+        default:
+            throw new std::bad_exception();
         }
         glEnd();
     }
@@ -1331,6 +1476,13 @@ void SceneWidget::drawSurface()
         vpvl::PMDModel *model = models[i];
         drawModel(model);
         drawModelEdge(model);
+    }
+    // render bones if selecting bone is enabled
+    if (true) {
+        for (size_t i = 0; i < size; i++) {
+            vpvl::PMDModel *model = models[i];
+            drawModelBones(model);
+        }
     }
 }
 

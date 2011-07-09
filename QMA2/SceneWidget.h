@@ -143,6 +143,7 @@ private:
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
     void drawModelShadow(const vpvl::PMDModel *model);
+    void drawModelBones(const vpvl::PMDModel *model);
     void loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir);
     void unloadAsset(const vpvl::XModel *model, const QString &name);
     void drawAsset(const vpvl::XModel *model);
