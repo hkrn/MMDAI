@@ -52,7 +52,7 @@ Material::Material()
       m_averageColor(0.0f, 0.0f, 0.0f, 1.0f),
       m_diffuse(0.0f, 0.0f, 0.0f, 1.0f),
       m_specular(0.0f, 0.0f, 0.0f, 1.0f),
-      m_alpha(0.0f),
+      m_opacity(0.0f),
       m_shiness(0.0f),
       m_nindices(0),
       m_toonID(0),
@@ -74,7 +74,7 @@ Material::~Material()
     m_averageColor.setZero();
     m_diffuse.setZero();
     m_specular.setZero();
-    m_alpha = 0.0f;
+    m_opacity = 0.0f;
     m_shiness = 0.0f;
     m_nindices = 0;
     m_toonID = 0;
@@ -127,7 +127,7 @@ void Material::read(const uint8_t *data)
     m_specular.setValue(specular[0], specular[1], specular[2], 1.0f);
     btVector3 ac((m_diffuse + m_ambient) * 0.5f);
     m_averageColor.setValue(ac.x(), ac.y(), ac.z(), 1.0f);
-    m_alpha = alpha;
+    m_opacity = alpha;
     m_shiness = shiness;
     m_toonID = toonID == 0xff ? 0 : toonID + 1;
     m_edge = edge ? true : false;

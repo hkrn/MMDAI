@@ -88,8 +88,8 @@ public:
     const btVector4 &specular() const {
         return m_specular;
     }
-    float alpha() const {
-        return m_alpha;
+    float opacity() const {
+        return m_opacity;
     }
     float shiness() const {
         return m_shiness;
@@ -135,7 +135,7 @@ public:
         m_specular = value;
     }
     void setAlpha(float value) {
-        m_alpha = value;
+        m_opacity = value;
     }
     void setShiness(float value) {
         m_shiness = value;
@@ -152,7 +152,7 @@ private:
     btVector4 m_averageColor;
     btVector4 m_diffuse;
     btVector4 m_specular;
-    float m_alpha;
+    float m_opacity;
     float m_shiness;
     uint32_t m_nindices;
     uint8_t m_toonID;

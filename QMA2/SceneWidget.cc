@@ -974,7 +974,7 @@ void SceneWidget::drawModel(const vpvl::PMDModel *model)
         const vpvl::Material *material = materials[i];
         const __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         // toon
-        const float alpha = material->alpha();
+        const float alpha = material->opacity();
         if (enableToon) {
             average = material->averageColor();
             average.setW(average.w() * alpha);
@@ -995,7 +995,7 @@ void SceneWidget::drawModel(const vpvl::PMDModel *model)
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
         }
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
-        material->alpha() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
+        material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
         glActiveTexture(GL_TEXTURE0);
         // has texture
         if (materialPrivate.primaryTextureID > 0) {
