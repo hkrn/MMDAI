@@ -102,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
             m_timeline, SLOT(setModel(vpvl::PMDModel*)));
     connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_face, SLOT(setModel(vpvl::PMDModel*)));
-    connect(m_perspection, SIGNAL(perspectionDidChange(btVector3*,btVector3*,float*,float*)),
+    connect(m_perspection, SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
             m_scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
     connect(m_timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
             m_handle, SLOT(setBone(vpvl::Bone*)));
