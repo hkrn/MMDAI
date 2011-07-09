@@ -189,6 +189,33 @@ public:
     }
 
     /**
+     * Get the parent bone of this.
+     *
+     * @return parent bone
+     */
+    const Bone *parent() const {
+        return m_parentBone;
+    }
+
+    /**
+     * Get the child bone of this.
+     *
+     * @return child bone
+     */
+    const Bone *child() const {
+        return m_childBone;
+    }
+
+    /**
+     * Get the target bone of this.
+     *
+     * @return target bone
+     */
+    const Bone *target() const {
+        return m_targetBone;
+    }
+
+    /**
      * Get transform object.
      *
      * @return transform object
