@@ -1305,13 +1305,13 @@ void SceneWidget::drawModelBones(const vpvl::PMDModel *model)
     glEnable(GL_LIGHTING);
 }
 
-static void SetVertices(const btVector4 indices,
-                        int index,
-                        const btAlignedObjectArray<btVector3> &vertices,
-                        const btAlignedObjectArray<btVector3> &textureCoords,
-                        const btAlignedObjectArray<btVector3> &normals,
-                        const btAlignedObjectArray<btVector4> &colors)
+static void DrawAsset(const vpvl::XModel *model, const btVector4 indices, int index)
 {
+    const btAlignedObjectArray<btVector3> &vertices = model->vertices();
+    const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
+    const btAlignedObjectArray<btVector3> &normals = model->normals();
+    const btAlignedObjectArray<btVector4> &colors = model->colors();
+    const btTransform transform = model->transform();
     const int x = static_cast<const int>(indices[index]);
     if (textureCoords.size() > x)
         glTexCoord2fv(textureCoords[x]);
@@ -1322,10 +1322,10 @@ static void SetVertices(const btVector4 indices,
     else if (colors.size() > 0)
         glColor3f(0, 0, 0);
     if (normals.size() > x)
-        glNormal3fv(normals[x]);
+        glNormal3fv(transform.getBasis() * normals[x]);
     else if (normals.size() > 0)
         glNormal3f(0, 0, 0);
-    glVertex3fv(vertices[x]);
+    glVertex3fv(transform * vertices[x] * model->scale());
 }
 
 void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir)
@@ -1341,10 +1341,6 @@ void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir
 #endif
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
-    const btAlignedObjectArray<btVector3> &vertices = model->vertices();
-    const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
-    const btAlignedObjectArray<btVector3> &normals = model->normals();
-    const btAlignedObjectArray<btVector4> &colors = model->colors();
     const bool hasMaterials = model->countMatreials() > 0;
     uint32_t nFaces = faces.size();
     uint32_t prevIndex = -1;
@@ -1384,17 +1380,17 @@ void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir
         glBegin(GL_TRIANGLES);
         switch (count) {
         case 3:
-            SetVertices(value, 1, vertices, textureCoords, normals, colors);
-            SetVertices(value, 0, vertices, textureCoords, normals, colors);
-            SetVertices(value, 2, vertices, textureCoords, normals, colors);
+            DrawAsset(model, value, 1);
+            DrawAsset(model, value, 0);
+            DrawAsset(model, value, 2);
             break;
         case 4:
-            SetVertices(value, 1, vertices, textureCoords, normals, colors);
-            SetVertices(value, 0, vertices, textureCoords, normals, colors);
-            SetVertices(value, 2, vertices, textureCoords, normals, colors);
-            SetVertices(value, 3, vertices, textureCoords, normals, colors);
-            SetVertices(value, 2, vertices, textureCoords, normals, colors);
-            SetVertices(value, 0, vertices, textureCoords, normals, colors);
+            DrawAsset(model, value, 1);
+            DrawAsset(model, value, 0);
+            DrawAsset(model, value, 2);
+            DrawAsset(model, value, 3);
+            DrawAsset(model, value, 2);
+            DrawAsset(model, value, 0);
             break;
         default:
             throw new std::bad_exception();

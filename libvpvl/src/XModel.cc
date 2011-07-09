@@ -88,8 +88,13 @@ enum XModelInternalParseState
 };
 
 XModel::XModel()
-    : m_error(kNoError)
+    : m_position(0.0f, 0.0f, 0.0f),
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_scale(1.0f),
+      m_opacity(1.0f),
+      m_error(kNoError)
 {
+    m_transform.setIdentity();
 }
 
 XModel::~XModel()
@@ -548,6 +553,11 @@ void XModel::release()
 {
     internal::clearAll(m_indices);
     internal::clearAll(m_materials);
+    m_position.setZero();
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_transform.setIdentity();
+    m_scale = 1.0f;
+    m_opacity = 1.0f;
     m_vertices.clear();
     m_normals.clear();
     m_coords.clear();

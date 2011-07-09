@@ -139,6 +139,35 @@ public:
         return m_userData;
     }
 
+    const btVector3 &position() const {
+        return m_position;
+    }
+    const btQuaternion &rotation() const {
+        return m_rotation;
+    }
+    const btTransform &transform() const {
+        return m_transform;
+    }
+    float scale() const {
+        return m_scale;
+    }
+    float opacity() const {
+        return m_opacity;
+    }
+    void setPosition(const btVector3 &value) {
+        m_position = value;
+        m_transform.setOrigin(value);
+    }
+    void setRotation(const btQuaternion &value) {
+        m_rotation = value;
+        m_transform.setRotation(value);
+    }
+    void setScale(float value) {
+        m_scale = value;
+    }
+    void setOpacity(float value) {
+        m_opacity = value;
+    }
     void setUserData(XModelUserData *value) {
         m_userData = value;
     }
@@ -146,6 +175,11 @@ public:
 private:
     void release();
 
+    btVector3 m_position;
+    btQuaternion m_rotation;
+    btTransform m_transform;
+    float m_scale;
+    float m_opacity;
     btAlignedObjectArray<btVector3> m_vertices;
     btAlignedObjectArray<btVector3> m_normals;
     btAlignedObjectArray<btVector3> m_coords;
