@@ -62,8 +62,8 @@ public:
         : m_transform(transform) {
     }
     bool operator()(const PMDModel *left, const PMDModel *right) {
-        const btVector3 positionLeft = m_transform * Bone::centerBone(&left->bones())->currentTransform().getOrigin();
-        const btVector3 positionRight = m_transform * Bone::centerBone(&right->bones())->currentTransform().getOrigin();
+        const btVector3 positionLeft = m_transform * Bone::centerBone(&left->bones())->transform().getOrigin();
+        const btVector3 positionRight = m_transform * Bone::centerBone(&right->bones())->transform().getOrigin();
         return positionLeft.z() < positionRight.z();
     }
 private:

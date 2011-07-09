@@ -184,8 +184,8 @@ void VPDPose::makePose(vpvl::PMDModel *model)
         if (bone) {
             btVector4 &v = b->rotation;
             btQuaternion rotation(v.x(), v.y(), v.z(), v.w());
-            bone->setCurrentPosition(b->position);
-            bone->setCurrentRotation(rotation);
+            bone->setPosition(b->position);
+            bone->setRotation(rotation);
         }
     }
 }

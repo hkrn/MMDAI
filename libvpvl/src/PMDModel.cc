@@ -79,7 +79,7 @@ PMDModel::PMDModel()
     internal::zerofill(&m_comment, sizeof(m_comment));
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
-    m_rootBone.setCurrentRotation(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
+    m_rootBone.setRotation(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
     m_rootBone.updateTransform();
 }
 
@@ -332,7 +332,7 @@ float PMDModel::boundingSphereRange(btVector3 &center)
 {
     float max = 0.0f;
     Bone *bone = Bone::centerBone(&m_bones);
-    btVector3 pos = bone->currentTransform().getOrigin();
+    btVector3 pos = bone->transform().getOrigin();
     const int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         const float r2 = pos.distance2(m_skinnedVertices[i].position);
@@ -349,8 +349,8 @@ void PMDModel::smearAllBonesToDefault(float rate)
     const int nBones = m_bones.size(), nFaces = m_faces.size();
     for (int i = 0; i < nBones; i++) {
         Bone *bone = m_bones[i];
-        bone->setCurrentPosition(internal::kZeroV.lerp(bone->currentPosition(), rate));
-        bone->setCurrentRotation(internal::kZeroQ.slerp(bone->currentRotation(), rate));
+        bone->setPosition(internal::kZeroV.lerp(bone->position(), rate));
+        bone->setRotation(internal::kZeroQ.slerp(bone->rotation(), rate));
     }
     for (int i = 0; i < nFaces; i++) {
         Face *face = m_faces[i];

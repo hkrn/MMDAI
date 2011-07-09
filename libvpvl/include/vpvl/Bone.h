@@ -220,8 +220,8 @@ public:
      *
      * @return transform object
      */
-    const btTransform &currentTransform() const {
-        return m_currentTransform;
+    const btTransform &transform() const {
+        return m_transform;
     }
 
     /**
@@ -247,8 +247,8 @@ public:
      *
      * @return position of the bone
      */
-    const btVector3 &currentPosition() const {
-        return m_currentPosition;
+    const btVector3 &position() const {
+        return m_position;
     }
 
     /**
@@ -256,8 +256,8 @@ public:
      *
      * @return rotation of the bone
      */
-    const btQuaternion &currentRotation() const {
-        return m_currentRotation;
+    const btQuaternion &rotation() const {
+        return m_rotation;
     }
 
     /**
@@ -310,8 +310,8 @@ public:
      *
      * @param transform object
      */
-    void setCurrentTransform(const btTransform &value) {
-        m_currentTransform = value;
+    void setTransform(const btTransform &value) {
+        m_transform = value;
     }
 
     /**
@@ -328,8 +328,8 @@ public:
      *
      * @param position of the bone
      */
-    void setCurrentPosition(const btVector3 &value) {
-        m_currentPosition = value;
+    void setPosition(const btVector3 &value) {
+        m_position = value;
     }
 
     /**
@@ -337,8 +337,8 @@ public:
      *
      * @param rotation of the bone
      */
-    void setCurrentRotation(const btQuaternion &value) {
-        m_currentRotation = value;
+    void setRotation(const btQuaternion &value) {
+        m_rotation = value;
     }
 
     /**
@@ -354,12 +354,12 @@ private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
     Type m_type;
-    btTransform m_currentTransform;
+    btTransform m_transform;
     btTransform m_transformMoveToOrigin;
     btVector3 m_originPosition;
-    btVector3 m_currentPosition;
+    btVector3 m_position;
     btVector3 m_offset;
-    btQuaternion m_currentRotation;
+    btQuaternion m_rotation;
     float m_rotateCoef;
     Bone *m_parentBone;
     Bone *m_childBone;

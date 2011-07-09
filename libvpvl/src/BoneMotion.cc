@@ -124,12 +124,12 @@ void BoneMotion::seek(float frameAt)
         calculateFrames(frameAt, node);
         Bone *bone = node->bone;
         if (m_blendRate == 1.0f) {
-            bone->setCurrentPosition(node->position);
-            bone->setCurrentRotation(node->rotation);
+            bone->setPosition(node->position);
+            bone->setRotation(node->rotation);
         }
         else {
-            bone->setCurrentPosition(bone->currentPosition().lerp(node->position, m_blendRate));
-            bone->setCurrentRotation(bone->currentRotation().slerp(node->rotation, m_blendRate));
+            bone->setPosition(bone->position().lerp(node->position, m_blendRate));
+            bone->setRotation(bone->rotation().slerp(node->rotation, m_blendRate));
         }
     }
 }
@@ -140,10 +140,10 @@ void BoneMotion::takeSnap(const btVector3 &center)
     for (uint32_t i = 0; i < nNodes; i++) {
         BoneMotionInternal *node = *m_name2node.getAtIndex(i);
         Bone *bone = node->bone;
-        node->snapPosition = bone->currentPosition();
+        node->snapPosition = bone->position();
         if (bone->hasMotionIndependency())
             node->snapPosition -= center;
-        node->snapRotation = bone->currentRotation();
+        node->snapRotation = bone->rotation();
     }
 }
 

@@ -69,9 +69,9 @@ size_t Bone::stride()
 Bone::Bone()
     : m_type(kUnknown),
       m_originPosition(0.0f, 0.0f, 0.0f),
-      m_currentPosition(0.0f, 0.0f, 0.0f),
+      m_position(0.0f, 0.0f, 0.0f),
       m_offset(0.0f, 0.0f, 0.0f),
-      m_currentRotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_rotateCoef(0.0f),
       m_parentBone(0),
       m_childBone(0),
@@ -82,7 +82,7 @@ Bone::Bone()
       m_motionIndepent(false)
 {
     internal::zerofill(m_name, sizeof(m_name));
-    m_currentTransform.setIdentity();
+    m_transform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
 }
 
@@ -90,12 +90,12 @@ Bone::~Bone()
 {
     internal::zerofill(m_name, sizeof(m_name));
     m_type = kUnknown;
-    m_currentTransform.setIdentity();
+    m_transform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
     m_originPosition.setZero();
-    m_currentPosition.setZero();
+    m_position.setZero();
     m_offset.setZero();
-    m_currentRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_rotateCoef = 0.0f;
     m_parentBone = 0;
     m_childBone = 0;
@@ -159,7 +159,7 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
 #else
     m_originPosition.setValue(pos[0], pos[1], pos[2]);
 #endif
-    m_currentTransform.setOrigin(m_originPosition);
+    m_transform.setOrigin(m_originPosition);
     m_transformMoveToOrigin.setOrigin(-m_originPosition);
 }
 
@@ -170,10 +170,10 @@ void Bone::computeOffset()
 
 void Bone::reset()
 {
-    m_currentPosition.setZero();
-    m_currentRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-    m_currentTransform.setIdentity();
-    m_currentTransform.setOrigin(m_originPosition);
+    m_position.setZero();
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_transform.setIdentity();
+    m_transform.setOrigin(m_originPosition);
 }
 
 void Bone::setMotionIndependency()
@@ -203,11 +203,11 @@ void Bone::updateRotation()
     btQuaternion q;
     switch (m_type) {
     case kUnderRotate:
-        q = m_currentRotation * m_targetBone->m_currentRotation;
+        q = m_rotation * m_targetBone->m_rotation;
         updateTransform(q);
         break;
     case kFollowRotate:
-        q = m_currentRotation * internal::kZeroQ.slerp(m_childBone->m_currentRotation, m_rotateCoef);
+        q = m_rotation * internal::kZeroQ.slerp(m_childBone->m_rotation, m_rotateCoef);
         updateTransform(q);
         break;
     default:
@@ -217,20 +217,20 @@ void Bone::updateRotation()
 
 void Bone::updateTransform()
 {
-    updateTransform(m_currentRotation);
+    updateTransform(m_rotation);
 }
 
 void Bone::updateTransform(const btQuaternion &q)
 {
-    m_currentTransform.setOrigin(m_currentPosition + m_offset);
-    m_currentTransform.setRotation(q);
+    m_transform.setOrigin(m_position + m_offset);
+    m_transform.setRotation(q);
     if (m_parentBone)
-        m_currentTransform = m_parentBone->m_currentTransform * m_currentTransform;
+        m_transform = m_parentBone->m_transform * m_transform;
 }
 
 void Bone::getSkinTransform(btTransform &tr)
 {
-    tr = m_currentTransform * m_transformMoveToOrigin;
+    tr = m_transform * m_transformMoveToOrigin;
 }
 
 } /* namespace vpvl */

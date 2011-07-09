@@ -135,19 +135,19 @@ void IK::read(const uint8_t *data, BoneList *bones)
 
 void IK::solve()
 {
-    const btVector3 destPosition = m_destination->currentTransform().getOrigin();
+    const btVector3 destPosition = m_destination->transform().getOrigin();
     const btVector3 xAxis(1.0f, 0.0f, 0.0f);
     int nbones = m_bones.size();
     for (int i = nbones - 1; i >= 0; i--)
         m_bones[i]->updateTransform();
     m_target->updateTransform();
-    const btQuaternion originTargetRotation = m_target->currentRotation();
+    const btQuaternion originTargetRotation = m_target->rotation();
     btQuaternion q;
     for (int i = 0; i < m_iteration; i++) {
         for (int j = 0; j < nbones; j++) {
             Bone *bone = m_bones[j];
-            const btVector3 targetPosition = m_target->currentTransform().getOrigin();
-            const btTransform transform = bone->currentTransform().inverse();
+            const btVector3 targetPosition = m_target->transform().getOrigin();
+            const btTransform transform = bone->transform().inverse();
             btVector3 localDestination = transform * destPosition;
             btVector3 localTarget = transform * targetPosition;
             if (localDestination.distance2(localTarget) < kMinDistance) {
@@ -177,7 +177,7 @@ void IK::solve()
                     btMatrix3x3 matrix;
                     matrix.setRotation(q);
                     matrix.getEulerZYX(z, y, x);
-                    matrix.setRotation(bone->currentRotation());
+                    matrix.setRotation(bone->rotation());
                     matrix.getEulerZYX(cz, cy, cx);
                     if (x + cx > kPi)
                         x = kPi - cx;
@@ -188,19 +188,19 @@ void IK::solve()
                         continue;
                     q.setEulerZYX(0.0f, 0.0f, x);
                 }
-                bone->setCurrentRotation(q * bone->currentRotation());
+                bone->setRotation(q * bone->rotation());
             }
             else {
-                btQuaternion tmp = bone->currentRotation();
+                btQuaternion tmp = bone->rotation();
                 tmp *= q;
-                bone->setCurrentRotation(tmp);
+                bone->setRotation(tmp);
             }
             for (int k = j; k >= 0; k--)
                 m_bones[k]->updateTransform();
             m_target->updateTransform();
         }
     }
-    m_target->setCurrentRotation(originTargetRotation);
+    m_target->setRotation(originTargetRotation);
     m_target->updateTransform();
 }
 

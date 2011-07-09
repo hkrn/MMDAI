@@ -63,23 +63,23 @@ protected:
         case kView: {
             for (uint32_t i = 0; i < nBones; i++) {
                 vpvl::Bone *bone = m_bones[i];
-                btTransform tr(m_rotation, bone->currentPosition());
-                bone->setCurrentPosition(tr * v);
+                btTransform tr(m_rotation, bone->position());
+                bone->setPosition(tr * v);
             }
             break;
         }
         case kLocal: {
             for (uint32_t i = 0; i < nBones; i++) {
                 vpvl::Bone *bone = m_bones[i];
-                btTransform tr(bone->currentRotation(), bone->currentPosition());
-                bone->setCurrentPosition(tr * v);
+                btTransform tr(bone->rotation(), bone->position());
+                bone->setPosition(tr * v);
             }
             break;
         }
         case kGlobal: {
             for (uint32_t i = 0; i < nBones; i++) {
                 vpvl::Bone *bone = m_bones[i];
-                bone->setCurrentPosition(bone->currentPosition() + v);
+                bone->setPosition(bone->position() + v);
             }
             break;
         }
