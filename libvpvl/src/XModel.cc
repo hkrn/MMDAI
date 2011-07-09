@@ -219,8 +219,11 @@ bool XModel::load(const uint8_t *data, size_t size)
                     char *y = internal::stringToken(NULL, ";", &p);
                     char *z = internal::stringToken(NULL, ";", &p);
                     if (x && y && z) {
-                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y),
-                                    internal::stringToFloat(z));
+#ifdef VPVL_COORDINATE_OPENGL
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), -internal::stringToFloat(z));
+#else
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), internal::stringToFloat(z));
+#endif
                         m_vertices.push_back(v);
                     }
                     else {
@@ -286,8 +289,11 @@ bool XModel::load(const uint8_t *data, size_t size)
                     char *y = internal::stringToken(NULL, ";", &p);
                     char *z = internal::stringToken(NULL, ";", &p);
                     if (x && y && z) {
-                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y),
-                                    internal::stringToFloat(z));
+#ifdef VPVL_COORDINATE_OPENGL
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), -internal::stringToFloat(z));
+#else
+                        btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), internal::stringToFloat(z));
+#endif
                         m_normals.push_back(v);
                     }
                     else {
