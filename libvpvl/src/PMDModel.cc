@@ -278,23 +278,27 @@ void PMDModel::updateSkinVertices()
         const float weight = vertex->weight();
         if (weight >= 1.0f - kMinBoneWeight) {
             const int16_t bone1 = vertex->bone1();
-            skin.position = m_skinningTransform[bone1] * vertex->position();
-            skin.normal = m_skinningTransform[bone1].getBasis() * vertex->normal();
+            const btTransform &transform = m_skinningTransform[bone1];
+            skin.position = transform * vertex->position();
+            skin.normal = transform.getBasis() * vertex->normal();
         }
         else if (weight <= kMinBoneWeight) {
             const int16_t bone2 = vertex->bone2();
-            skin.position = m_skinningTransform[bone2] * vertex->position();
-            skin.normal = m_skinningTransform[bone2].getBasis() * vertex->normal();
+            const btTransform &transform = m_skinningTransform[bone2];
+            skin.position = transform * vertex->position();
+            skin.normal = transform.getBasis() * vertex->normal();
         }
         else {
             const int16_t bone1 = vertex->bone1();
             const int16_t bone2 = vertex->bone2();
-            const btVector3 position = vertex->position();
-            const btVector3 normal = vertex->normal();
-            const btVector3 v1 = m_skinningTransform[bone1] * position;
-            const btVector3 n1 = m_skinningTransform[bone1].getBasis() * normal;
-            const btVector3 v2 = m_skinningTransform[bone2] * position;
-            const btVector3 n2 = m_skinningTransform[bone2].getBasis() * normal;
+            const btVector3 &position = vertex->position();
+            const btVector3 &normal = vertex->normal();
+            const btTransform &transform1 = m_skinningTransform[bone1];
+            const btTransform &transform2 = m_skinningTransform[bone2];
+            const btVector3 &v1 = transform1 * position;
+            const btVector3 &n1 = transform1.getBasis() * normal;
+            const btVector3 &v2 = transform2 * position;
+            const btVector3 &n2 = transform2.getBasis() * normal;
             skin.position = v2.lerp(v1, weight);
             skin.normal = n2.lerp(n1, weight);
         }
