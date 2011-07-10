@@ -69,6 +69,17 @@ function(link_bullet target)
   endif()
 endfunction()
 
+function(link_glew target)
+  find_path(GLEW_INCLUDE GL/glew.h PATH $ENV{GLEW_DIR})
+  find_library(GLEW_LIBRARY GLEW PATH $ENV{GLEW_DIR})
+  if(GLEW_INCLUDE AND GLEW_LIBRARY)
+    target_link_libraries(${target} ${GLEW_LIBRARY})
+    include_directories(${GLEW_INCLUDE})
+  else()
+    message(FATAL_ERROR "Required OpenGL GLEW is not found.")
+  endif()
+endfunction()
+
 # imported functions from Allegro5's cmake
 function(append_lib_type_suffix var)
   string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_TOLOWER)
@@ -94,6 +105,14 @@ else()
   set(VPVL_LIB_TYPE STATIC)
 endif()
 
+# intercept to add source
+option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class" OFF)
+if(VPVL_OPENGL_RENDERER)
+  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl vpvl_gl_sources)
+  list(APPEND vpvl_sources ${vpvl_gl_sources})
+  list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
+endif()
+
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
 
@@ -110,7 +129,7 @@ append_lib_linkage_suffix(VPVL_OUTPUT_NAME)
 set_target_properties(vpvl PROPERTIES OUTPUT_NAME ${VPVL_OUTPUT_NAME})
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-  set_target_properties(vpvl 
+  set_target_properties(vpvl
       PROPERTIES PREFIX "" SUFFIX .${VPVL_VERSION}.dll
       IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
 endif()
@@ -133,6 +152,15 @@ else()
   install(DIRECTORY include/vpvl DESTINATION include PATTERN "*.h" PATTERN "internal" PATTERN ".svn" EXCLUDE)
 endif()
 
+# link with OpenGL and GLEW
+if(VPVL_OPENGL_RENDERER)
+  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl vpvl_opengl_sources)
+  find_package(OpenGL)
+  target_link_libraries(vpvl ${OPENGL_LIBRARIES})
+  include_directories(${OPENGL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl)
+  link_glew(vpvl)
+endif()
+
 # extra renderer program
 option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result" OFF)
 if(VPVL_BUILD_SDL)
@@ -146,16 +174,7 @@ if(VPVL_BUILD_SDL)
   add_executable(vpvl_sdl ${vpvl_sdl_common_sources} ${vpvl_sdl_osx_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
   target_link_libraries(vpvl_sdl vpvl ${OPENGL_LIBRARIES} ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
   include_directories(${OPENGL_INCLUDE_DIR} ${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
-  if(NOT APPLE)
-    find_path(GLEE_INCLUDE GLee.h PATH $ENV{GLEE_DIR})
-    find_library(GLEE_LIBRARY glee PATH $ENV{GLEE_DIR})
-    if(GLEE_INCLUDE AND GLEE_LIBRARY)
-      target_link_libraries(vpvl_sdl ${GLEE_LIBRARY})
-      include_directories(${GLEE_INCLUDE})
-    else()
-      message(FATAL_ERROR "Required OpenGL Easy Extension is not found.")
-    endif()
-  endif()
+  link_glew(vpvl_sdl)
 endif()
 
 # extra test program

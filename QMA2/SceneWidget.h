@@ -45,6 +45,7 @@
 
 #include <LinearMath/btVector3.h>
 #include <vpvl/Bone.h>
+#include <vpvl/gl/Renderer.h>
 
 namespace vpvl {
 class PMDModel;
@@ -53,8 +54,12 @@ class VMDMotion;
 class XModel;
 }
 
+namespace internal {
+class Delegate;
 class Grid;
 class World;
+}
+
 class QProgressDialog;
 
 class SceneWidget : public QGLWidget
@@ -70,10 +75,10 @@ public:
         return m_models;
     }
     vpvl::PMDModel *selectedModel() const {
-        return m_selected;
+        return m_renderer->selectedModel();
     }
     void setSelectedModel(vpvl::PMDModel *value) {
-        m_selected = value;
+        m_renderer->setSelectedModel(value);
         emit modelDidSelect(value);
     }
 
@@ -128,26 +133,12 @@ protected:
     void wheelEvent(QWheelEvent *event);
 
 private:
-    void initializeSurface();
     vpvl::XModel *addAssetInternal(const QString &baseName, const QDir &dir);
     vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
-    void pickBones(const QPoint &point, float approx, vpvl::BoneList &pickBones);
-    void getObjectCoordinate(const QPoint &point, btVector3 &coordinate);
-    void setLighting();
-    bool loadTexture(const QString &path, GLuint &textureID);
-    bool loadToonTexture(const QString &name, const QDir &model, GLuint &textureID);
-    void loadModel(vpvl::PMDModel *model, const QDir &dir);
-    void unloadModel(const vpvl::PMDModel *model);
-    void drawModel(const vpvl::PMDModel *model);
-    void drawModelEdge(const vpvl::PMDModel *model);
-    void drawModelShadow(const vpvl::PMDModel *model);
-    void drawModelBones(const vpvl::PMDModel *model);
-    void loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir);
-    void unloadAsset(const vpvl::XModel *model, const QString &name);
-    void drawAsset(const vpvl::XModel *model);
-    void drawSurface();
+    //bool loadTexture(const QString &path, GLuint &textureID);
+    //bool loadToonTexture(const QString &name, const QDir &model, GLuint &textureID);
     void drawGrid();
     void updateFPS();
     void startSceneUpdateTimer();
@@ -155,11 +146,11 @@ private:
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
-    vpvl::Scene *m_scene;
+    vpvl::gl::Renderer *m_renderer;
     vpvl::VMDMotion *m_camera;
-    vpvl::PMDModel *m_selected;
-    Grid *m_grid;
-    World *m_world;
+    internal::Delegate *m_delegate;
+    internal::Grid *m_grid;
+    internal::World *m_world;
     QSettings *m_settings;
     QHash<QString, vpvl::PMDModel *> m_models;
     QHash<QString, vpvl::XModel *> m_assets;

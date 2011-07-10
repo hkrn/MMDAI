@@ -42,119 +42,130 @@
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
 
-enum __vpvlVertexBufferObjectType {
-    kModelVertices,
-    kModelNormals,
-    kModelColors,
-    kModelTexCoords,
-    kModelToonTexCoords,
-    kEdgeVertices,
-    kEdgeIndices,
-    kShadowIndices,
-    kVertexBufferObjectMax
-};
-
-struct __vpvlPMDModelMaterialPrivate {
-    GLuint primaryTextureID;
-    GLuint secondTextureID;
-};
-
-struct vpvl::PMDModelUserData {
-    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
-    GLuint vertexBufferObjects[kVertexBufferObjectMax];
-    bool hasSingleSphereMap;
-    bool hasMultipleSphereMap;
-    __vpvlPMDModelMaterialPrivate *materials;
-};
-
-struct vpvl::XModelUserData {
-    GLuint listID;
-    btHashMap<btHashString, GLuint> textures;
-};
+namespace internal
+{
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
-static QImage LoadTGAImage(const QString &path, uint8_t *&rawData)
+class Delegate : public vpvl::gl::Delegate
 {
-    QFile file(path);
-    if (file.open(QFile::ReadOnly) && file.size() > 18) {
-        QByteArray data = file.readAll();
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
-        uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
-        uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
-        if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-            qWarning("Loaded TGA image type is not full color: %s", path.toUtf8().constData());
-            return QImage();
+public:
+    Delegate(QGLWidget *widget)
+        : m_widget(widget),
+          m_codec(QTextCodec::codecForName("Shift-JIS"))
+    {}
+    ~Delegate() {}
+
+    bool loadTexture(const std::string &path, GLuint &textureID) {
+        QString pathString = QString::fromUtf8(path.c_str());
+        if (pathString.endsWith(".tga", Qt::CaseInsensitive)) {
+            uint8_t *rawData = 0;
+            QImage image = loadTGA(pathString, rawData);
+            textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image));
+            delete[] rawData;
         }
-        uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
-        uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
-        uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
-        uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
-        if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
-            qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
-                     width, height, depth, path.toUtf8().constData());
-            return QImage();
+        else {
+            QImage image(pathString);
+            textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
         }
-        int component = depth >> 3;
-        uint8_t *body = ptr + 18 + field;
-        /* if RLE compressed, uncompress it */
-        size_t datalen = width * height * component;
-        ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
-        if (type == 10) {
-            uint8_t *uncompressed = uncompressedPtr.data();
-            uint8_t *src = body;
-            uint8_t *dst = uncompressed;
-            while (static_cast<size_t>(dst - uncompressed) < datalen) {
-                int16_t len = (*src & 0x7f) + 1;
-                if (*src & 0x80) {
-                    src++;
-                    for (int i = 0; i < len; i++) {
-                        memcpy(dst, src, component);
-                        dst += component;
+        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, pathString.toUtf8().constData());
+        return textureID != 0;
+    }
+    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
+        QString path = QString::fromUtf8(dir.c_str()) + "/" + QString::fromUtf8(name.c_str());
+        if (!QFile::exists(path))
+            path = QString(":/textures/%1").arg(name.c_str());
+        return loadTexture(std::string(path.toUtf8()), textureID);
+    }
+    const std::string toUnicode(const uint8_t *value) {
+        return std::string(m_codec->toUnicode(reinterpret_cast<const char *>(value)).toUtf8());
+    }
+
+private:
+    static QImage loadTGA(const QString &path, uint8_t *&rawData) {
+        QFile file(path);
+        if (file.open(QFile::ReadOnly) && file.size() > 18) {
+            QByteArray data = file.readAll();
+            uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
+            uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
+            uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
+            if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
+                qWarning("Loaded TGA image type is not full color: %s", path.toUtf8().constData());
+                return QImage();
+            }
+            uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
+            uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
+            uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
+            uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
+            if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
+                qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
+                         width, height, depth, path.toUtf8().constData());
+                return QImage();
+            }
+            int component = depth >> 3;
+            uint8_t *body = ptr + 18 + field;
+            /* if RLE compressed, uncompress it */
+            size_t datalen = width * height * component;
+            ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
+            if (type == 10) {
+                uint8_t *uncompressed = uncompressedPtr.data();
+                uint8_t *src = body;
+                uint8_t *dst = uncompressed;
+                while (static_cast<size_t>(dst - uncompressed) < datalen) {
+                    int16_t len = (*src & 0x7f) + 1;
+                    if (*src & 0x80) {
+                        src++;
+                        for (int i = 0; i < len; i++) {
+                            memcpy(dst, src, component);
+                            dst += component;
+                        }
+                        src += component;
                     }
-                    src += component;
+                    else {
+                        src++;
+                        memcpy(dst, src, component * len);
+                        dst += component * len;
+                        src += component * len;
+                    }
                 }
-                else {
-                    src++;
-                    memcpy(dst, src, component * len);
-                    dst += component * len;
-                    src += component * len;
+                /* will load from uncompressed data */
+                body = uncompressed;
+            }
+            /* prepare texture data area */
+            datalen = (width * height) << 2;
+            rawData = new uint8_t[datalen];
+            ptr = rawData;
+            for (uint16_t h = 0; h < height; h++) {
+                uint8_t *line = NULL;
+                if (flags & 0x20) /* from up to bottom */
+                    line = body + h * width * component;
+                else /* from bottom to up */
+                    line = body + (height - 1 - h) * width * component;
+                for (uint16_t w = 0; w < width; w++) {
+                    uint32_t index = 0;
+                    if (flags & 0x10)/* from right to left */
+                        index = (width - 1 - w) * component;
+                    else /* from left to right */
+                        index = w * component;
+                    /* BGR or BGRA -> ARGB */
+                    *ptr++ = line[index + 2];
+                    *ptr++ = line[index + 1];
+                    *ptr++ = line[index + 0];
+                    *ptr++ = (depth == 32) ? line[index + 3] : 255;
                 }
             }
-            /* will load from uncompressed data */
-            body = uncompressed;
+            return QImage(rawData, width, height, QImage::Format_ARGB32);
         }
-        /* prepare texture data area */
-        datalen = (width * height) << 2;
-        rawData = new uint8_t[datalen];
-        ptr = rawData;
-        for (uint16_t h = 0; h < height; h++) {
-            uint8_t *line = NULL;
-            if (flags & 0x20) /* from up to bottom */
-                line = body + h * width * component;
-            else /* from bottom to up */
-                line = body + (height - 1 - h) * width * component;
-            for (uint16_t w = 0; w < width; w++) {
-                uint32_t index = 0;
-                if (flags & 0x10)/* from right to left */
-                    index = (width - 1 - w) * component;
-                else /* from left to right */
-                    index = w * component;
-                /* BGR or BGRA -> ARGB */
-                *ptr++ = line[index + 2];
-                *ptr++ = line[index + 1];
-                *ptr++ = line[index + 0];
-                *ptr++ = (depth == 32) ? line[index + 3] : 255;
-            }
+        else {
+            qWarning("Cannot open file %s: %s", path.toUtf8().constData(),
+                     file.errorString().toUtf8().constData());
+            return QImage();
         }
-        return QImage(rawData, width, height, QImage::Format_ARGB32);
     }
-    else {
-        qWarning("Cannot open file %s: %s", path.toUtf8().constData(),
-                 file.errorString().toUtf8().constData());
-        return QImage();
-    }
-}
+
+    QGLWidget *m_widget;
+    QTextCodec *m_codec;
+};
 
 class World {
 public:
@@ -272,11 +283,12 @@ private:
     GLuint m_list;
 };
 
+}
+
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    m_scene(0),
     m_camera(0),
-    m_selected(0),
+    m_delegate(0),
     m_grid(0),
     m_world(0),
     m_settings(settings),
@@ -287,8 +299,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0)
 {
-    m_grid = new Grid();
-    m_world = new World(m_defaultFPS);
+    m_delegate = new internal::Delegate(this);
+    m_grid = new internal::Grid();
+    m_world = new internal::World(m_defaultFPS);
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -296,28 +309,25 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
 
 SceneWidget::~SceneWidget()
 {
-    delete m_scene;
-    m_scene = 0;
     delete m_camera;
     m_camera = 0;
     delete m_grid;
     m_grid = 0;
     delete m_world;
     m_world = 0;
-    m_selected = 0;
     glDeleteLists(m_gridListID, 1);
     m_gridListID = 0;
     qDeleteAll(m_motions);
     foreach (vpvl::PMDModel *model, m_models) {
-        unloadModel(model);
-        delete model;
-    }
-    foreach (vpvl::XModel *model, m_assets) {
-        unloadAsset(model, m_assets.key(model));
+        m_renderer->unloadModel(model);
         delete model;
     }
     m_models.clear();
     m_assets.clear();
+    delete m_renderer;
+    m_renderer = 0;
+    delete m_delegate;
+    m_delegate = 0;
 }
 
 void SceneWidget::setCurrentFPS(int value)
@@ -325,7 +335,7 @@ void SceneWidget::setCurrentFPS(int value)
     if (value > 0) {
         m_defaultFPS = value;
         m_world->setCurrentFPS(value);
-        m_scene->setCurrentFPS(value);
+        m_renderer->scene()->setCurrentFPS(value);
     }
 }
 
@@ -367,11 +377,12 @@ void SceneWidget::insertMotionToAllModels()
 
 void SceneWidget::insertMotionToSelectedModel()
 {
-    if (m_selected) {
+    vpvl::PMDModel *selected = m_renderer->selectedModel();
+    if (selected) {
         stopSceneUpdateTimer();
         QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
         if (QFile::exists(fileName)) {
-            if (!addMotionInternal(m_selected, fileName))
+            if (!addMotionInternal(selected, fileName))
                 QMessageBox::warning(this, tr("Loading model motion error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
         }
@@ -411,14 +422,15 @@ void SceneWidget::setCamera()
 
 void SceneWidget::deleteSelectedModel()
 {
-    const QString &key = m_models.key(m_selected);
+    vpvl::PMDModel *selected = m_renderer->selectedModel();
+    const QString &key = m_models.key(selected);
     if (!key.isNull()) {
-        emit modelDidDelete(m_selected);
-        unloadModel(m_selected);
-        m_scene->removeModel(m_selected);
+        emit modelDidDelete(selected);
+        m_renderer->unloadModel(selected);
+        m_renderer->scene()->removeModel(selected);
         m_models.remove(key);
-        delete m_selected;
-        m_selected = 0;
+        delete selected;
+        m_renderer->setSelectedModel(0);
         emit modelDidSelect(0);
     }
     else {
@@ -428,44 +440,49 @@ void SceneWidget::deleteSelectedModel()
 
 void SceneWidget::resetCamera()
 {
-    m_scene->resetCamera();
-    emit cameraPerspectiveDidSet(m_scene->position(), m_scene->angle(), m_scene->fovy(), m_scene->distance());
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->resetCamera();
+    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
 void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
 {
+    vpvl::Scene *scene = m_renderer->scene();
     btVector3 posValue, angleValue;
     float fovyValue, distanceValue;
-    posValue = !pos ? m_scene->position() : *pos;
-    angleValue = !angle ? m_scene->angle() : *angle;
-    fovyValue = !fovy ? m_scene->fovy() : *fovy;
-    distanceValue = !distance ? m_scene->distance() : *distance;
-    m_scene->setCameraPerspective(posValue, angleValue, fovyValue, distanceValue);
+    posValue = !pos ? scene->position() : *pos;
+    angleValue = !angle ? scene->angle() : *angle;
+    fovyValue = !fovy ? scene->fovy() : *fovy;
+    distanceValue = !distance ? scene->distance() : *distance;
+    scene->setCameraPerspective(posValue, angleValue, fovyValue, distanceValue);
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
 void SceneWidget::rotate(float x, float y)
 {
-    btVector3 pos = m_scene->position(), angle = m_scene->angle();
-    float fovy = m_scene->fovy(), distance = m_scene->distance();
+    vpvl::Scene *scene = m_renderer->scene();
+    btVector3 pos = scene->position(), angle = scene->angle();
+    float fovy = scene->fovy(), distance = scene->distance();
     angle.setValue(angle.x() + x, angle.y() + y, angle.z());
-    m_scene->setCameraPerspective(pos, angle, fovy, distance);
+    scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::translate(float x, float y)
 {
-    btVector3 pos = m_scene->position(), angle = m_scene->angle();
-    float fovy = m_scene->fovy(), distance = m_scene->distance();
+    vpvl::Scene *scene = m_renderer->scene();
+    btVector3 pos = scene->position(), angle = scene->angle();
+    float fovy = scene->fovy(), distance = scene->distance();
     pos.setValue(pos.x() + x, pos.y() + y, pos.z());
-    m_scene->setCameraPerspective(pos, angle, fovy, distance);
+    scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
-    btVector3 pos = m_scene->position(), angle = m_scene->angle();
-    float fovy = m_scene->fovy(), distance = m_scene->distance();
+    vpvl::Scene *scene = m_renderer->scene();
+    btVector3 pos = scene->position(), angle = scene->angle();
+    float fovy = scene->fovy(), distance = scene->distance();
     float fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
         fovy = up ? fovy - fovyStep : fovy + fovyStep;
@@ -478,7 +495,7 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
         if (distanceStep != 0.0f)
             distance = up ? distance - distanceStep : distance + distanceStep;
     }
-    m_scene->setCameraPerspective(pos, angle, fovy, distance);
+    scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
@@ -530,14 +547,15 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
-    GLenum err = glewInit();
-    if (GLEW_OK != err)
+    GLenum err;
+    if (!vpvl::gl::Renderer::initializeGLEW(err))
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
-    m_scene = new vpvl::Scene(width(), height(), m_defaultFPS);
-    m_scene->setViewMove(0);
-    //m_scene->setWorld(m_world->mutableWorld());
+    m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->setViewMove(0);
+    // scene->setWorld(m_world->mutableWorld());
     m_grid->initialize();
     m_timer.start();
     startSceneUpdateTimer();
@@ -545,10 +563,11 @@ void SceneWidget::initializeGL()
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
+    vpvl::PMDModel *selected = m_renderer->selectedModel();
     m_prevPos = event->pos();
-    if (m_selected) {
+    if (selected) {
         vpvl::BoneList bones;
-        pickBones(event->pos(), 0.5f, bones);
+        //m_renderer->pickBones(event->pos().x(), event->pos().y(), 0.5f, bones);
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         for (int i = 0; i < bones.size(); i++) {
             vpvl::Bone *bone = bones[i];
@@ -563,13 +582,14 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         Qt::KeyboardModifiers modifiers = event->modifiers();
         QPoint diff = event->pos() - m_prevPos;
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            btVector4 direction = m_scene->lightDirection();
+            vpvl::Scene *scene = m_renderer->scene();
+            btVector4 direction = scene->lightDirection();
             btVector3 d(direction.x(), direction.y(), direction.z());
             btQuaternion rx(0.0f, diff.y() * vpvl::radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * vpvl::radian(0.1f), 0.0f);
             d = d * btMatrix3x3(rx * ry);
             direction.setValue(d.x(), d.y(), d.z(), direction.w());
-            m_scene->setLight(m_scene->lightColor(), direction);
+            scene->setLight(scene->lightColor(), direction);
         }
         else if (modifiers & Qt::ShiftModifier) {
             translate(diff.x() * -0.1f, diff.y() * 0.1f);
@@ -584,8 +604,8 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     qglClearColor(Qt::white);
-    initializeSurface();
-    drawSurface();
+    m_renderer->initializeSurface();
+    m_renderer->drawSurface();
     drawGrid();
     updateFPS();
     emit surfaceDidUpdate();
@@ -593,16 +613,16 @@ void SceneWidget::paintGL()
 
 void SceneWidget::resizeGL(int w, int h)
 {
-    m_scene->setWidth(w);
-    m_scene->setHeight(h);
+    m_renderer->resize(w, h);
 }
 
 void SceneWidget::timerEvent(QTimerEvent *event)
 {
     if (event->timerId() == m_internalTimerID) {
-        m_scene->updateModelView(0);
-        m_scene->updateProjection(0);
-        m_scene->update(0.5f);
+        vpvl::Scene *scene = m_renderer->scene();
+        scene->updateModelView(0);
+        scene->updateProjection(0);
+        scene->update(0.5f);
         updateGL();
     }
 }
@@ -610,23 +630,6 @@ void SceneWidget::timerEvent(QTimerEvent *event)
 void SceneWidget::wheelEvent(QWheelEvent *event)
 {
     zoom(event->delta() > 0, event->modifiers());
-}
-
-void SceneWidget::initializeSurface()
-{
-    glClearStencil(0);
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GEQUAL, 0.05f);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHTING);
-    setLighting();
 }
 
 vpvl::XModel *SceneWidget::addAssetInternal(const QString &baseName, const QDir &dir)
@@ -646,7 +649,7 @@ vpvl::XModel *SceneWidget::addAssetInternal(const QString &baseName, const QDir 
                         key = tmpKey;
                 }
             }
-            loadAsset(model, key, dir);
+            m_renderer->loadAsset(model, std::string(dir.absolutePath().toUtf8()));
             m_assets[key] = model;
             emit assetDidAdd(model);
         }
@@ -666,8 +669,8 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
         QByteArray data = file.readAll();
         model = new vpvl::PMDModel();
         if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            loadModel(model, dir);
-            m_scene->addModel(model);
+            m_renderer->loadModel(model, std::string(dir.absolutePath().toUtf8()));
+            m_renderer->scene()->addModel(model);
             QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
             QString key = codec->toUnicode(reinterpret_cast<const char *>(model->name()));
             qDebug() << key << baseName;
@@ -720,7 +723,7 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             delete m_camera;
             m_camera = motion;
-            m_scene->setCameraMotion(motion);
+            m_renderer->scene()->setCameraMotion(motion);
             emit cameraMotionDidSet(motion);
         }
         else {
@@ -729,757 +732,6 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
         }
     }
     return motion;
-}
-
-void SceneWidget::pickBones(const QPoint &point, float approx, vpvl::BoneList &pickBones)
-{
-    btVector3 coordinate;
-    const vpvl::BoneList &bones = m_selected->bones();
-    int n = bones.size();
-    getObjectCoordinate(point, coordinate);
-    for (int i = 0; i < n; i++) {
-        vpvl::Bone *bone = bones[i];
-        const btVector3 &p = bone->originPosition();
-        if (coordinate.distance(p) < approx)
-            pickBones.push_back(bone);
-    }
-}
-
-void SceneWidget::getObjectCoordinate(const QPoint &point, btVector3 &coordinate)
-{
-    double modelViewMatrixd[16], projectionMatrixd[16], winX = 0, winY = 0, x = 0, y = 0, z = 0;
-    float modelViewMatrixf[16], projectionMatrixf[16], winZ = 0;
-    int view[4];
-    m_scene->getModelViewMatrix(modelViewMatrixf);
-    m_scene->getProjectionMatrix(projectionMatrixf);
-    for (int i = 0; i < 16; i++) {
-        modelViewMatrixd[i] = modelViewMatrixf[i];
-        projectionMatrixd[i] = projectionMatrixf[i];
-    }
-    glGetIntegerv(GL_VIEWPORT, view);
-    winX = point.x();
-    winY = view[3] - point.y();
-    glReadPixels(winX, winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
-    gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
-    coordinate.setValue(x, y, z);
-}
-
-void SceneWidget::setLighting()
-{
-    btVector4 color(1.0f, 1.0f, 1.0f, 1.0f), direction(0.5f, 1.0f, 0.5f, 0.0f);
-    btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6;
-
-    // use MMD like cartoon
-#if 0
-    diffuseValue = 0.2f;
-    ambientValue = lightIntensity * 2.0f;
-    specularValue = 0.4f;
-#else
-    diffuseValue = 0.0f;
-    ambientValue = lightIntensity * 2.0f;
-    specularValue = lightIntensity;
-#endif
-
-    btVector3 diffuse = color * diffuseValue;
-    btVector3 ambient = color * ambientValue;
-    btVector3 specular = color * specularValue;
-    diffuse.setW(1.0f);
-    ambient.setW(1.0f);
-    specular.setW(1.0f);
-
-    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(direction));
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
-    glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
-    glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
-    m_scene->setLight(color, direction);
-}
-
-bool SceneWidget::loadTexture(const QString &path, GLuint &textureID)
-{
-    if (path.endsWith(".tga", Qt::CaseInsensitive)) {
-        uint8_t *rawData = 0;
-        QImage image = LoadTGAImage(path, rawData);
-        textureID = bindTexture(QGLWidget::convertToGLFormat(image));
-        delete[] rawData;
-    }
-    else {
-        QImage image(path);
-        textureID = bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
-    }
-    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, path.toUtf8().constData());
-    return textureID != 0;
-}
-
-bool SceneWidget::loadToonTexture(const QString &name, const QDir &model, GLuint &textureID)
-{
-    QString path = model.absoluteFilePath(name);
-    if (!QFile::exists(path))
-        path = QString(":/textures/%1").arg(name);
-    return loadTexture(path, textureID);
-}
-
-void SceneWidget::loadModel(vpvl::PMDModel *model, const QDir &dir)
-{
-    const vpvl::MaterialList materials = model->materials();
-    const uint32_t nMaterials = materials.size();
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    GLuint textureID = 0;
-    vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
-    __vpvlPMDModelMaterialPrivate *materialPrivates = new __vpvlPMDModelMaterialPrivate[nMaterials];
-    bool hasSingleSphere = false, hasMultipleSphere = false;
-    for (uint32_t i = 0; i < nMaterials; i++) {
-        const vpvl::Material *material = materials[i];
-        const QString primary = codec->toUnicode(reinterpret_cast<const char *>(material->primaryTextureName()));
-        const QString second = codec->toUnicode(reinterpret_cast<const char *>(material->secondTextureName()));
-        __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
-        materialPrivate.primaryTextureID = 0;
-        materialPrivate.secondTextureID = 0;
-        if (!primary.isEmpty()) {
-            if (loadTexture(dir.absoluteFilePath(primary), textureID)) {
-                materialPrivate.primaryTextureID = textureID;
-                qDebug("Binding the texture as a primary texture (ID=%d)", textureID);
-            }
-        }
-        if (!second.isEmpty()) {
-            if (loadTexture(dir.absoluteFilePath(second), textureID)) {
-                materialPrivate.secondTextureID = textureID;
-                qDebug("Binding the texture as a secondary texture (ID=%d)", textureID);
-            }
-        }
-        hasSingleSphere |= material->isSpherePrimary() && !material->isSphereAuxSecond();
-        hasMultipleSphere |= material->isSphereAuxSecond();
-    }
-    userData->hasSingleSphereMap = hasSingleSphere;
-    userData->hasMultipleSphereMap = hasMultipleSphere;
-    qDebug().nospace() << "Sphere map information: hasSingleSphere=" << hasSingleSphere
-                       << ", hasMultipleSphere=" << hasMultipleSphere;
-    glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->stride(vpvl::PMDModel::kEdgeIndicesStride),
-                 model->edgeIndicesPointer(), GL_STATIC_DRAW);
-    qDebug("Binding edge indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kEdgeIndices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().size() * model->stride(vpvl::PMDModel::kIndicesStride),
-                 model->indicesPointer(), GL_STATIC_DRAW);
-    qDebug("Binding indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kShadowIndices]);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * model->stride(vpvl::PMDModel::kTextureCoordsStride),
-                 model->textureCoordsPointer(), GL_STATIC_DRAW);
-    qDebug("Binding texture coordinates to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kModelTexCoords]);
-    if (loadToonTexture("toon0.bmp", dir, textureID)) {
-        userData->toonTextureID[0] = textureID;
-        qDebug("Binding the texture as a toon texture (ID=%d)", textureID);
-    }
-    for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
-        const uint8_t *name = model->toonTexture(i);
-        if (loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
-            userData->toonTextureID[i + 1] = textureID;
-            qDebug("Binding the texture as a toon texture (ID=%d)", textureID);
-        }
-    }
-    userData->materials = materialPrivates;
-    model->setUserData(userData);
-    qDebug() << "Created the model:" << toUnicodeModelName(model);
-}
-
-void SceneWidget::unloadModel(const vpvl::PMDModel *model)
-{
-    if (model) {
-        const vpvl::MaterialList materials = model->materials();
-        const uint32_t nMaterials = materials.size();
-        vpvl::PMDModelUserData *userData = model->userData();
-        for (uint32_t i = 0; i < nMaterials; i++) {
-            __vpvlPMDModelMaterialPrivate &materialPrivate = userData->materials[i];
-            deleteTexture(materialPrivate.primaryTextureID);
-            deleteTexture(materialPrivate.secondTextureID);
-        }
-        for (uint32_t i = 1; i < vpvl::PMDModel::kSystemTextureMax; i++) {
-            deleteTexture(userData->toonTextureID[i]);
-        }
-        glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
-        delete[] userData->materials;
-        delete userData;
-        qDebug() << "Destroyed the model:" << toUnicodeModelName(model);
-    }
-}
-
-void SceneWidget::drawModel(const vpvl::PMDModel *model)
-{
-#ifndef VPVL_COORDINATE_OPENGL
-    glPushMatrix();
-    glScalef(1.0f, 1.0f, -1.0f);
-    glCullFace(GL_FRONT);
-#endif
-
-    const vpvl::PMDModelUserData *userData = model->userData();
-    size_t stride = model->stride(vpvl::PMDModel::kNormalsStride), vsize = model->vertices().size();
-    glActiveTexture(GL_TEXTURE0);
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glVertexPointer(3, GL_FLOAT, model->stride(vpvl::PMDModel::kVerticesStride), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
-    glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->normalsPointer(), GL_DYNAMIC_DRAW);
-    glNormalPointer(GL_FLOAT, stride, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    glTexCoordPointer(2, GL_FLOAT, model->stride(vpvl::PMDModel::kTextureCoordsStride), 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
-
-    const bool enableToon = true;
-    // toon
-    if (enableToon) {
-        glActiveTexture(GL_TEXTURE1);
-        glEnable(GL_TEXTURE_2D);
-        glClientActiveTexture(GL_TEXTURE1);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelToonTexCoords]);
-        // shadow map
-        stride = model->stride(vpvl::PMDModel::kToonTextureStride);
-        if (false)
-            glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_DYNAMIC_DRAW);
-        else
-            glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
-        glTexCoordPointer(2, GL_FLOAT, stride, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glClientActiveTexture(GL_TEXTURE0);
-    }
-    bool hasSingleSphereMap = false, hasMultipleSphereMap = false;
-    // first sphere map
-    if (userData->hasSingleSphereMap) {
-        glEnable(GL_TEXTURE_2D);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
-        hasSingleSphereMap = true;
-    }
-    // second sphere map
-    if (userData->hasMultipleSphereMap) {
-        glActiveTexture(GL_TEXTURE2);
-        glEnable(GL_TEXTURE_2D);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
-        glActiveTexture(GL_TEXTURE0);
-        hasMultipleSphereMap = true;
-    }
-
-    const vpvl::MaterialList materials = model->materials();
-    const __vpvlPMDModelMaterialPrivate *materialPrivates = userData->materials;
-    const uint32_t nMaterials = materials.size();
-    btVector4 average, ambient, diffuse, specular;
-    uint32_t offset = 0;
-    for (uint32_t i = 0; i < nMaterials; i++) {
-        const vpvl::Material *material = materials[i];
-        const __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
-        // toon
-        const float alpha = material->opacity();
-        if (enableToon) {
-            average = material->averageColor();
-            average.setW(average.w() * alpha);
-            specular = material->specular();
-            specular.setW(specular.w() * alpha);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(average));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
-        }
-        else {
-            ambient = material->ambient();
-            ambient.setW(ambient.w() * alpha);
-            diffuse = material->diffuse();
-            diffuse.setW(diffuse.w() * alpha);
-            specular = material->specular();
-            specular.setW(specular.w() * alpha);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(ambient));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(diffuse));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
-        }
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
-        material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
-        glActiveTexture(GL_TEXTURE0);
-        // has texture
-        if (materialPrivate.primaryTextureID > 0) {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, materialPrivate.primaryTextureID);
-            if (hasSingleSphereMap) {
-                // is sphere map
-                if (material->isSpherePrimary() || material->isSphereAuxPrimary()) {
-                    // is second sphere map
-                    if (material->isSphereAuxPrimary())
-                        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                    glEnable(GL_TEXTURE_GEN_S);
-                    glEnable(GL_TEXTURE_GEN_T);
-                }
-                else {
-                    glDisable(GL_TEXTURE_GEN_S);
-                    glDisable(GL_TEXTURE_GEN_T);
-                }
-            }
-        }
-        else {
-            glDisable(GL_TEXTURE_2D);
-        }
-        // toon
-        if (enableToon) {
-            const GLuint textureID = userData->toonTextureID[material->toonID()];
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        if (hasMultipleSphereMap) {
-            // second sphere
-            glActiveTexture(GL_TEXTURE2);
-            glEnable(GL_TEXTURE_2D);
-            if (materialPrivate.secondTextureID > 0) {
-                // is second sphere
-                if (material->isSphereAuxSecond())
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                else
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-                glBindTexture(GL_TEXTURE_2D, materialPrivate.secondTextureID);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
-            }
-            else {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-        }
-        // draw
-        const uint32_t nIndices = material->countIndices();
-        glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(offset));
-        offset += (nIndices << 1);
-        // is aux sphere map
-        if (material->isSphereAuxPrimary()) {
-            glActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        }
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    // toon
-    if (enableToon) {
-        glClientActiveTexture(GL_TEXTURE0);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        // first sphere map
-        if (hasSingleSphereMap) {
-            glActiveTexture(GL_TEXTURE0);
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-        glClientActiveTexture(GL_TEXTURE1);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        // second sphere map
-        if (hasMultipleSphereMap) {
-            glActiveTexture(GL_TEXTURE2);
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-    }
-    else {
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        // first sphere map
-        if (hasSingleSphereMap) {
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-        // second sphere map
-        if (hasMultipleSphereMap) {
-            glActiveTexture(GL_TEXTURE2);
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-    }
-    glActiveTexture(GL_TEXTURE0);
-    // first or second sphere map
-    if (hasSingleSphereMap || hasMultipleSphereMap) {
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-    }
-    // toon
-    if (enableToon) {
-        glActiveTexture(GL_TEXTURE1);
-        glDisable(GL_TEXTURE_2D);
-    }
-    // second sphere map
-    if (hasMultipleSphereMap) {
-        glActiveTexture(GL_TEXTURE2);
-        glDisable(GL_TEXTURE_2D);
-    }
-    glActiveTexture(GL_TEXTURE0);
-    glDisable(GL_TEXTURE_2D);
-    glEnable(GL_CULL_FACE);
-
-#ifndef VPVL_COORDINATE_OPENGL
-    glPopMatrix();
-    glCullFace(GL_BACK);
-#endif
-}
-
-void SceneWidget::drawModelEdge(const vpvl::PMDModel *model)
-{
-#ifdef VPVL_COORDINATE_OPENGL
-    glCullFace(GL_FRONT);
-#else
-    glPushMatrix();
-    glScalef(1.0f, 1.0f, -1.0f);
-    glCullFace(GL_BACK);
-#endif
-
-    const float alpha = 1.0f;
-    const size_t stride = model->stride(vpvl::PMDModel::kEdgeVerticesStride);
-    const vpvl::PMDModelUserData *modelPrivate = model->userData();
-    btVector4 color;
-
-    if (model == m_selected)
-        color.setValue(1.0f, 0.0f, 0.0f, alpha);
-    else
-        color.setValue(0.0f, 0.0f, 0.0f, alpha);
-
-    glDisable(GL_LIGHTING);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * stride, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
-    glVertexPointer(3, GL_FLOAT, stride, 0);
-    glColor4fv(static_cast<const btScalar *>(color));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
-    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_LIGHTING);
-
-#ifdef VPVL_COORDINATE_OPENGL
-    glCullFace(GL_BACK);
-#else
-    glPopMatrix();
-    glCullFace(GL_FRONT);
-#endif
-}
-
-void SceneWidget::drawModelShadow(const vpvl::PMDModel *model)
-{
-    const size_t stride = model->stride(vpvl::PMDModel::kVerticesStride);
-    const vpvl::PMDModelUserData *modelPrivate = model->userData();
-    glDisable(GL_CULL_FACE);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * stride, model->verticesPointer(), GL_DYNAMIC_DRAW);
-    glVertexPointer(3, GL_FLOAT, stride, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kShadowIndices]);
-    glDrawElements(GL_TRIANGLES, model->indices().size(), GL_UNSIGNED_SHORT, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-}
-
-void SceneWidget::drawModelBones(const vpvl::PMDModel *model)
-{
-    float matrix[16];
-    const vpvl::BoneList bones = model->bones();
-    uint32_t nBones = bones.size();
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-
-    for (uint32_t i = 0; i < nBones; i++) {
-        const vpvl::Bone *bone = bones[i], *parent = bone->parent();
-        vpvl::Bone::Type type = bone->type();
-        if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
-            continue;
-        const btTransform transform = bone->transform();
-        transform.getOpenGLMatrix(matrix);
-        glPushMatrix();
-        glMultMatrixf(matrix);
-        if (type != vpvl::Bone::kInvisible) {
-            if (bone->isSimulated()) {
-                glColor4f(0.8f, 0.8f, 0.0f, 1.0f);
-                glScalef(0.1, 0.1, 0.1);
-            }
-            else {
-                switch (type) {
-                case vpvl::Bone::kIKDestination:
-                    glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
-                    glScalef(0.25, 0.25, 0.25);
-                    break;
-                case vpvl::Bone::kUnderIK:
-                    glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
-                    break;
-                case vpvl::Bone::kIKTarget:
-                    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
-                    break;
-                case vpvl::Bone::kUnderRotate:
-                case vpvl::Bone::kTwist:
-                case vpvl::Bone::kFollowRotate:
-                    glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
-                    break;
-                default:
-                    if (bone->hasMotionIndependency()) {
-                        glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-                        glScalef(0.25, 0.25, 0.25);
-                    } else {
-                        glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
-                        glScalef(0.15, 0.15, 0.15);
-                    }
-                    break;
-                }
-            }
-            static const GLfloat vertices [8][3] = {
-                { -0.5f, -0.5f, 0.5f},
-                { 0.5f, -0.5f, 0.5f},
-                { 0.5f, 0.5f, 0.5f},
-                { -0.5f, 0.5f, 0.5f},
-                { 0.5f, -0.5f, -0.5f},
-                { -0.5f, -0.5f, -0.5f},
-                { -0.5f, 0.5f, -0.5f},
-                { 0.5f, 0.5f, -0.5f}
-            };
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[0]);
-            glVertex3fv(vertices[1]);
-            glVertex3fv(vertices[2]);
-            glVertex3fv(vertices[3]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[4]);
-            glVertex3fv(vertices[5]);
-            glVertex3fv(vertices[6]);
-            glVertex3fv(vertices[7]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[1]);
-            glVertex3fv(vertices[4]);
-            glVertex3fv(vertices[7]);
-            glVertex3fv(vertices[2]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[5]);
-            glVertex3fv(vertices[0]);
-            glVertex3fv(vertices[3]);
-            glVertex3fv(vertices[6]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[3]);
-            glVertex3fv(vertices[2]);
-            glVertex3fv(vertices[7]);
-            glVertex3fv(vertices[6]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[1]);
-            glVertex3fv(vertices[0]);
-            glVertex3fv(vertices[5]);
-            glVertex3fv(vertices[4]);
-            glEnd();
-        }
-        glPopMatrix();
-        if (!parent || type == vpvl::Bone::kIKDestination)
-            continue;
-        glPushMatrix();
-        if (type == vpvl::Bone::kInvisible) {
-            glColor4f(0.5f, 0.4f, 0.5f, 1.0f);
-        }
-        else if (bone->isSimulated()) {
-            glColor4f(0.7f, 0.7f, 0.0f, 1.0f);
-        }
-        else if (type == vpvl::Bone::kUnderIK || type == vpvl::Bone::kIKTarget) {
-            glColor4f(0.8f, 0.5f, 0.3f, 1.0f);
-        }
-        else {
-            glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
-        }
-        glBegin(GL_LINES);
-        glVertex3fv(parent->transform().getOrigin());
-        glVertex3fv(transform.getOrigin());
-        glEnd();
-        glPopMatrix();
-    }
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-}
-
-static void DrawAsset(const vpvl::XModel *model, const btVector4 indices, int index)
-{
-    const btAlignedObjectArray<btVector3> &vertices = model->vertices();
-    const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
-    const btAlignedObjectArray<btVector3> &normals = model->normals();
-    const btAlignedObjectArray<btVector4> &colors = model->colors();
-    const btTransform transform = model->transform();
-    const int x = static_cast<const int>(indices[index]);
-    if (textureCoords.size() > x)
-        glTexCoord2fv(textureCoords[x]);
-    else if (textureCoords.size() > 0)
-        glTexCoord2f(0, 0);
-    if (colors.size() > x)
-        glColor4fv(colors[x]);
-    else if (colors.size() > 0)
-        glColor3f(0, 0, 0);
-    if (normals.size() > x)
-        glNormal3fv(transform.getBasis() * normals[x]);
-    else if (normals.size() > 0)
-        glNormal3f(0, 0, 0);
-    glVertex3fv(transform * vertices[x] * model->scale());
-}
-
-void SceneWidget::loadAsset(vpvl::XModel *model, const QString &name, const QDir &dir)
-{
-    vpvl::XModelUserData *userData = new vpvl::XModelUserData;
-    userData->listID = glGenLists(1);
-    glNewList(userData->listID, GL_COMPILE);
-    qDebug("Generated a OpenGL list (ID=%d)", userData->listID);
-#ifndef VPVL_COORDINATE_OPENGL
-    glPushMatrix();
-    glScalef(1.0f, 1.0f, -1.0f);
-    glCullFace(GL_FRONT);
-#endif
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
-    const bool hasMaterials = model->countMatreials() > 0;
-    uint32_t nFaces = faces.size();
-    uint32_t prevIndex = -1;
-    glEnable(GL_TEXTURE_2D);
-    for (uint32_t i = 0; i < nFaces; i++) {
-        const vpvl::XModelFaceIndex &face = faces[i];
-        const btVector4 &value = face.value;
-        const uint32_t count = face.count;
-        const uint32_t currentIndex = face.index;
-        if (hasMaterials && prevIndex != currentIndex) {
-            const vpvl::XMaterial *material = model->materialAt(currentIndex);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(material->color()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
-            QString textureName = codec->toUnicode(material->textureName());
-            if (!textureName.isEmpty()) {
-                btHashString key(material->textureName());
-                GLuint *textureID = userData->textures[key];
-                if (!textureID) {
-                    GLuint value;
-                    if (loadTexture(dir.absoluteFilePath(textureName), value)) {
-                        userData->textures.insert(key, value);
-                        glBindTexture(GL_TEXTURE_2D, value);
-                        qDebug("Binding the texture as a texture (ID=%d)", value);
-                    }
-                }
-                else {
-                    glBindTexture(GL_TEXTURE_2D, *textureID);
-                }
-            }
-            else {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-            prevIndex = currentIndex;
-        }
-        glBegin(GL_TRIANGLES);
-        switch (count) {
-        case 3:
-            DrawAsset(model, value, 1);
-            DrawAsset(model, value, 0);
-            DrawAsset(model, value, 2);
-            break;
-        case 4:
-            DrawAsset(model, value, 1);
-            DrawAsset(model, value, 0);
-            DrawAsset(model, value, 2);
-            DrawAsset(model, value, 3);
-            DrawAsset(model, value, 2);
-            DrawAsset(model, value, 0);
-            break;
-        default:
-            throw new std::bad_exception();
-        }
-        glEnd();
-    }
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-#ifndef VPVL_COORDINATE_OPENGL
-    glPopMatrix();
-    glCullFace(GL_BACK);
-#endif
-    glEndList();
-    model->setUserData(userData);
-    qDebug("Created the stage: %s", name.toUtf8().constData());
-}
-
-void SceneWidget::unloadAsset(const vpvl::XModel *model, const QString &name)
-{
-    if (model) {
-        vpvl::XModelUserData *userData = model->userData();
-        glDeleteLists(userData->listID, 1);
-        btHashMap<btHashString, GLuint> &textures = userData->textures;
-        uint32_t nTextures = textures.size();
-        for (uint32_t i = 0; i < nTextures; i++)
-            deleteTexture(*textures.getAtIndex(i));
-        textures.clear();
-        delete userData;
-        qDebug("Destroyed the stage: %s", name.toUtf8().constData());
-    }
-}
-
-void SceneWidget::drawAsset(const vpvl::XModel *model)
-{
-    if (model)
-        glCallList(model->userData()->listID);
-}
-
-void SceneWidget::drawSurface()
-{
-    float matrix[16];
-    glViewport(0, 0, width(), height());
-    glMatrixMode(GL_PROJECTION);
-    m_scene->getProjectionMatrix(matrix);
-    glLoadMatrixf(matrix);
-    glMatrixMode(GL_MODELVIEW);
-    m_scene->getModelViewMatrix(matrix);
-    glLoadMatrixf(matrix);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    // initialize rendering states
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, 1, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-    glColorMask(0, 0, 0, 0);
-    glDepthMask(0);
-    glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
-    // render shadow before drawing models
-    size_t size = 0;
-    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
-    for (size_t i = 0; i < size; i++) {
-        vpvl::PMDModel *model = models[i];
-        drawModelShadow(model);
-    }
-    glPopMatrix();
-    glColorMask(1, 1, 1, 1);
-    glDepthMask(1);
-    glStencilFunc(GL_EQUAL, 2, ~0);
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-    // render all assets
-    // TODO: merge drawing models
-    foreach (vpvl::XModel *asset, m_assets) {
-        drawAsset(asset);
-    }
-    // render model and edge
-    for (size_t i = 0; i < size; i++) {
-        vpvl::PMDModel *model = models[i];
-        drawModel(model);
-        drawModelEdge(model);
-    }
-    // render bones if selecting bone is enabled
-    if (true) {
-        for (size_t i = 0; i < size; i++) {
-            vpvl::PMDModel *model = models[i];
-            drawModelBones(model);
-        }
-    }
 }
 
 void SceneWidget::drawGrid()
