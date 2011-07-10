@@ -93,6 +93,8 @@ private:
     btVector4 m_emmisive;
     char *m_textureName;
     float m_power;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(XMaterial)
 };
 
 }

@@ -145,6 +145,8 @@ private:
     btQuaternion m_rotation;
     bool m_linear[4];
     float *m_interpolationTable[4];
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(BoneKeyFrame)
 };
 
 }

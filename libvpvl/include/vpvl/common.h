@@ -87,4 +87,8 @@ inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
 
 }
 
+#define VPVL_DISABLE_COPY_AND_ASSIGN(TypeName) \
+    TypeName(const TypeName &); \
+    void operator=(const TypeName &);
+
 #endif

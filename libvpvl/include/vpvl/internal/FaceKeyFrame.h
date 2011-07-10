@@ -91,6 +91,8 @@ private:
     uint8_t m_name[kNameSize];
     float m_frameIndex;
     float m_weight;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(FaceKeyFrame)
 };
 
 }

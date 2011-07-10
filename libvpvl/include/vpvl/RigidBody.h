@@ -101,6 +101,8 @@ private:
     uint16_t m_groupMask;
     uint8_t m_type;
     bool m_noBone;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(RigidBody)
 };
 
 typedef btAlignedObjectArray<RigidBody*> RigidBodyList;

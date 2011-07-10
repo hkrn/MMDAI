@@ -364,6 +364,8 @@ private:
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
     bool m_enableSimulation;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(PMDModel)
 };
 
 }

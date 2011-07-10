@@ -160,6 +160,8 @@ private:
     bool m_noPerspective;
     bool m_linear[6];
     float *m_interpolationTable[6];
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(CameraKeyFrame)
 };
 
 }

@@ -202,6 +202,8 @@ private:
     bool m_enableSmooth;
     bool m_enableRelocation;
     bool m_ignoreStatic;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(VMDMotion)
 };
 
 }

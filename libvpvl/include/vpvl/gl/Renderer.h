@@ -39,9 +39,10 @@
 #ifndef VPVL_GL_RENDERER_H_
 #define VPVL_GL_RENDERER_H_
 
+#include <string>
 #include <GL/glew.h>
 #include <LinearMath/btHashMap.h>
-#include <string>
+#include "vpvl/common.h"
 
 namespace vpvl
 {
@@ -119,6 +120,8 @@ private:
     bool m_displayBones;
     int m_width;
     int m_height;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };
 
 }

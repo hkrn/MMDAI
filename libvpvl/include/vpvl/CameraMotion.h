@@ -102,6 +102,8 @@ private:
     float m_distance;
     float m_fovy;
     uint32_t m_lastIndex;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(CameraMotion)
 };
 
 }

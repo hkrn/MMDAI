@@ -83,6 +83,8 @@ public:
 private:
     uint8_t m_name[kNameSize];
     btGeneric6DofSpringConstraint *m_constraint;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Constraint)
 };
 
 typedef btAlignedObjectArray<Constraint*> ConstraintList;

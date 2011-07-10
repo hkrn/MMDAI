@@ -159,6 +159,8 @@ protected:
     float m_smearIndex;
     bool m_ignoreSingleMotion;
     bool m_overrideFirst;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(BaseMotion)
 };
 
 }

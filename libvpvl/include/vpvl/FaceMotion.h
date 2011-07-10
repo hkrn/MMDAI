@@ -89,6 +89,8 @@ private:
     FaceKeyFrameList m_frames;
     btHashMap<btHashString, FaceMotionInternal *> m_name2node;
     PMDModel *m_model;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(FaceMotion)
 };
 
 }

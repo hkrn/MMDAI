@@ -161,6 +161,8 @@ private:
     bool m_firstSPA;
     bool m_secondSPH;
     bool m_secondSPA;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Material)
 };
 
 typedef btAlignedObjectArray<Material*> MaterialList;

@@ -122,6 +122,8 @@ private:
     Type m_type;
     btAlignedObjectArray<FaceVertex *> m_vertices;
     float m_weight;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Face)
 };
 
 typedef btAlignedObjectArray<Face*> FaceList;

@@ -119,6 +119,8 @@ private:
     int16_t m_bone2;
     float m_weight;
     bool m_edge;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Vertex)
 };
 
 typedef btAlignedObjectArray<Vertex*> VertexList;

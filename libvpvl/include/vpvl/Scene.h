@@ -42,6 +42,7 @@
 #include <LinearMath/btHashMap.h>
 #include <LinearMath/btTransform.h>
 #include <LinearMath/btVector3.h>
+#include "vpvl/common.h"
 
 class btDiscreteDynamicsWorld;
 
@@ -166,6 +167,8 @@ private:
     int m_currentFPS;
     int m_width;
     int m_height;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Scene)
 };
 
 }

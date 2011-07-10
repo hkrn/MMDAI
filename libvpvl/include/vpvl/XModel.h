@@ -189,6 +189,8 @@ private:
     btAlignedObjectArray<XMaterial *> m_materials;
     XModelUserData *m_userData;
     Error m_error;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(XModel)
 };
 
 }

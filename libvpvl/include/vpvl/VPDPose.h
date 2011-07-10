@@ -39,6 +39,7 @@
 
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
+#include "vpvl/common.h"
 
 namespace vpvl
 {
@@ -91,6 +92,8 @@ private:
 
     btAlignedObjectArray<VPDBone *> m_bones;
     Error m_error;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(VPDPose)
 };
 
 } /* namespace vpvl */

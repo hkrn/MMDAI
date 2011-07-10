@@ -102,6 +102,8 @@ private:
     btHashMap<btHashString, BoneMotionInternal *> m_name2node;
     PMDModel *m_model;
     bool m_hasCenterBoneMotion;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(BoneMotion)
 };
 
 }

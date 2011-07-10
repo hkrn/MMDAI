@@ -368,6 +368,8 @@ private:
     bool m_constraintedXCoordinateForIK;
     bool m_simulated;
     bool m_motionIndepent;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(Bone)
 };
 
 } /* namespace vpvl */

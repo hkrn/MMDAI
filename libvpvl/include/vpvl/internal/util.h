@@ -224,8 +224,4 @@ inline void clearAll(btHashMap<btHashString, T*> &a)
 }
 }
 
-#define VPVL_DISABLE_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName &); \
-    void operator=(const TypeName &);
-
 #endif

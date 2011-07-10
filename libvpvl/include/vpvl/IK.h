@@ -82,6 +82,8 @@ private:
     BoneList m_bones;
     uint16_t m_iteration;
     float m_angleConstraint;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(IK)
 };
 
 typedef btAlignedObjectArray<IK*> IKList;
