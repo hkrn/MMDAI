@@ -162,9 +162,8 @@ if(VPVL_OPENGL_RENDERER)
 endif()
 
 # extra renderer program
-option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result" OFF)
-if(VPVL_BUILD_SDL)
-  find_package(OpenGL)
+option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL_OPENGL_RENDERER required)" OFF)
+if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL)
   find_package(SDL)
   find_package(SDL_image)
   aux_source_directory(render/common vpvl_sdl_common_sources)
@@ -172,9 +171,8 @@ if(VPVL_BUILD_SDL)
     aux_source_directory(render/osx vpvl_sdl_osx_sources)
   endif()
   add_executable(vpvl_sdl ${vpvl_sdl_common_sources} ${vpvl_sdl_osx_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
-  target_link_libraries(vpvl_sdl vpvl ${OPENGL_LIBRARIES} ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
-  include_directories(${OPENGL_INCLUDE_DIR} ${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
-  link_glew(vpvl_sdl)
+  target_link_libraries(vpvl_sdl vpvl ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
+  include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
 endif()
 
 # extra test program
