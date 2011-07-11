@@ -77,8 +77,13 @@ namespace gl
 
 bool Renderer::initializeGLEW(GLenum &err)
 {
+#ifndef VPVL_USE_ALLEGRO5
     err = glewInit();
     return err == GLEW_OK;
+#else
+    (void) err;
+    return true;
+#endif
 }
 
 Renderer::Renderer(Delegate *delegate, int width, int height, int fps)

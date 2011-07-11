@@ -40,9 +40,16 @@
 #define VPVL_GL_RENDERER_H_
 
 #include <string>
-#include <GL/glew.h>
 #include <LinearMath/btHashMap.h>
 #include "vpvl/common.h"
+
+#ifdef VPVL_USE_ALLEGRO5
+#include <allegro5/allegro5.h>
+#include <allegro5/allegro_opengl.h>
+#include <GL/glu.h>
+#else
+#include <GL/glew.h>
+#endif
 
 namespace vpvl
 {

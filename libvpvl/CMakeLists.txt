@@ -26,6 +26,7 @@ set(vpvl_public_headers
     include/vpvl/XMaterial.h
     include/vpvl/XModel.h
     include/vpvl/common.h
+    include/vpvl/config.h
     include/vpvl/vpvl.h
 )
 set(vpvl_internal_headers
@@ -39,7 +40,7 @@ set(vpvl_internal_headers
 function(link_bullet target)
   OPTION(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
   if(FIND_BULLET_BY_PKGCONFIG)
-    find_package(PkgConfig)
+    find_package(PkgConfig REQUIRED)
     pkg_search_module(BULLET REQUIRED bullet)
   endif()
   if(BULLET_FOUND)
@@ -48,21 +49,13 @@ function(link_bullet target)
     link_directories(${BULLET_LIBRARY_DIRS})
   else()
     find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATH $ENV{BULLET_INCLUDE_DIR})
-    find_library(BULLET_LIB_COLLISION BulletCollision PATH $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_LIB_DYNAMICS BulletDynamics PATH $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_LIB_SOFTBODY BulletSoftBody PATH $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_LIB_LINEAR_MATH LinearMath PATH $ENV{BULLET_LIBRARY_DIR})
-    if(BULLET_INCLUDE_DIRS AND BULLET_LIB_COLLISION AND
-        BULLET_LIB_DYNAMICS AND  BULLET_LIB_SOFTBODY AND
-        BULLET_LIB_LINEAR_MATH)
+    find_library(BULLET_COLLISION_LIB BulletCollision PATH $ENV{BULLET_LIBRARY_DIR})
+    find_library(BULLET_DYNAMICS_LIB BulletDynamics PATH $ENV{BULLET_LIBRARY_DIR})
+    find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATH $ENV{BULLET_LIBRARY_DIR})
+    find_library(BULLET_LINEARMATH_LIB LinearMath PATH $ENV{BULLET_LIBRARY_DIR})
+    if(BULLET_INCLUDE_DIRS AND BULLET_LIBRARIES)
       include_directories(${BULLET_INCLUDE_DIRS})
-      target_link_libraries(
-        ${target}
-        ${BULLET_LIB_COLLISION}
-        ${BULLET_LIB_DYNAMICS}
-        ${BULLET_LIB_SOFTBODY}
-        ${BULLET_LIB_LINEAR_MATH}
-      )
+      target_link_libraries(${target} ${BULLET_COLLISION_LIB} ${BULLET_DYNAMICS_LIB} ${BULLET_SOFTBODY_LIB} ${BULLET_LINEARMATH_LIB})
     else()
       message(FATAL_ERROR "Required Bullet Physics is not found.")
     endif()
@@ -98,20 +91,27 @@ function(append_lib_linkage_suffix var)
 endfunction()
 # end of imported
 
-option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
 if(BUILD_SHARED_LIBS)
   set(VPVL_LIB_TYPE SHARED)
 else()
   set(VPVL_LIB_TYPE STATIC)
 endif()
 
+option(VPVL_COORDINATE_OPENGL "Use OpenGL coordinate system (default is OFF)" OFF)
+option(VPVL_USE_ALLEGRO5 "Use Allegro5 OpenGL extensions instead of GLEW (default is OFF)" OFF)
+
 # intercept to add source
-option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class" OFF)
+option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl vpvl_gl_sources)
+  set(VPVL_COORDINATE_OPENGL ON BOOL)
   list(APPEND vpvl_sources ${vpvl_gl_sources})
   list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.cmake
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h)
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
@@ -121,6 +121,14 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # find Bullet Physics
 link_bullet(vpvl)
+
+# find Allegro5 game library if enabled
+if(VPVL_USE_ALLEGRO5)
+  find_path(ALLEG5_INCLUDE_DIRS allegro5/allegro5.h PATH $ENV{ALLEG5_INCLUDE_DIR})
+  find_library(ALLEG5_LIBRARY allegro PATH $ENV{ALLEG5_LIBRARY_DIR})
+  target_link_libraries(vpvl ${ALLEG5_LIBRARY})
+  include_directories(${ALLEG5_INCLUDE_DIRS})
+endif()
 
 set(VPVL_OUTPUT_NAME "vpvl")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
@@ -155,17 +163,17 @@ endif()
 # link with OpenGL and GLEW
 if(VPVL_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl vpvl_opengl_sources)
-  find_package(OpenGL)
+  find_package(OpenGL REQUIRED)
   target_link_libraries(vpvl ${OPENGL_LIBRARIES})
   include_directories(${OPENGL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl)
   link_glew(vpvl)
 endif()
 
-# extra renderer program
-option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL_OPENGL_RENDERER required)" OFF)
-if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL)
-  find_package(SDL)
-  find_package(SDL_image)
+# extra renderer program with SDL
+option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL_OPENGL_RENDERER required, exclusive VPVL_USE_ALLEGRO5, default is OFF)" OFF)
+if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL AND NOT VPVL_USE_ALLEGRO5)
+  find_package(SDL REQUIRED)
+  find_package(SDL_image REQUIRED)
   aux_source_directory(render/common vpvl_sdl_common_sources)
   if(APPLE)
     aux_source_directory(render/osx vpvl_sdl_osx_sources)
@@ -175,8 +183,19 @@ if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL)
   include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
 endif()
 
+# extra renderer program with allegro5
+option(VPVL_BUILD_A5 "Build a renderer program using Allegro, OpenCV and NyARToolKit to test rendering result (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
+if(VPVL_OPENGL_RENDERER AND VPVL_USE_ALLEGRO5 AND VPVL_BUILD_A5)
+  find_package(OpenCV REQUIRED)
+  find_library(ALLEG5_LIBRARY_MAIN allegro_main PATH $ENV{ALLEG5_LIBRARY_DIR})
+  find_library(ALLEG5_LIBRARY_IMAGE allegro_image PATH $ENV{ALLEG5_LIBRARY_DIR})
+  aux_source_directory(render/a5 vpvl_a5_sources)
+  add_executable(vpvl_a5 ${vpvl_a5_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
+  target_link_libraries(vpvl_a5 vpvl ${ALLEG5_LIBRARY_MAIN} ${ALLEG5_LIBRARY_IMAGE} opencv_core opencv_highgui)
+endif()
+
 # extra test program
-option(VPVL_BUILD_TESTS "Build test programs" OFF)
+option(VPVL_BUILD_TESTS "Build test programs (default is OFF)" OFF)
 if(VPVL_BUILD_TESTS)
   aux_source_directory(test vpvl_test_sources)
   add_executable(vpvl_test ${vpvl_test_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
@@ -185,4 +204,3 @@ if(VPVL_BUILD_TESTS)
   target_link_libraries(vpvl_test vpvl ${GTEST_MAIN_LIB} ${GTEST_LIB})
   include_directories(${GTEST_INCLUDE_DIR})
 endif()
-

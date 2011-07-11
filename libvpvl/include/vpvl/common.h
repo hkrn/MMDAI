@@ -39,7 +39,7 @@
 #ifndef VPVL_COMMON_H_
 #define VPVL_COMMON_H_
 
-#define VPVL_COORDINATE_OPENGL
+#include "vpvl/config.h"
 
 #if defined(WIN32) && !(defined(__MINGW__) || defined(__MINGW32__))
 #define _USE_MATH_DEFINES

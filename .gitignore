@@ -3,6 +3,7 @@ CMakeFiles
 CMakeLists.txt.user*
 CMakeScripts
 cmake_install.cmake*
+config.h
 Debug
 debug
 *.dir
