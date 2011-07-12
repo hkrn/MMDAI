@@ -49,11 +49,11 @@ static const int kHeight = 600;
 static const int kFPS = 60;
 
 static const std::string kSystemDir = "render/res/system";
-static const std::string kModelDir = "render/res/lat";
+static const std::string kModelDir = "render/res/default";
 static const std::string kStageDir = "render/res/stage";
 static const std::string kMotion = "test/res/motion.vmd";
 static const std::string kCamera = "test/res/camera.vmd";
-static const std::string kModelName = "normal.pmd";
+static const std::string kModelName = "miku.pmd";
 static const std::string kStageName = "stage.x";
 
 static const std::string concatPath(const std::string &dir, const std::string &name) {
@@ -163,7 +163,15 @@ public:
         al_install_keyboard();
         al_init_image_addon();
         al_set_new_display_flags(ALLEGRO_OPENGL);
-        m_display = al_create_display(640, 480);
+        al_set_new_display_option(ALLEGRO_RED_SIZE, 8, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_GREEN_SIZE, 8, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_BLUE_SIZE, 8, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_ALPHA_SIZE, 8, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 24, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_STENCIL_SIZE, 8, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+        al_set_new_display_option(ALLEGRO_SAMPLES, 4, ALLEGRO_SUGGEST);
+        m_display = al_create_display(internal::kWidth, internal::kHeight);
         if (!m_display) {
             fprintf(stderr, "failed initializing display\n");
             return false;
@@ -186,6 +194,7 @@ public:
         return true;
     }
     int execute() {
+        al_start_timer(m_timer);
         while (true) {
             if (!al_is_event_queue_empty(m_queue)) {
                 ALLEGRO_EVENT event;

@@ -166,7 +166,9 @@ if(VPVL_OPENGL_RENDERER)
   find_package(OpenGL REQUIRED)
   target_link_libraries(vpvl ${OPENGL_LIBRARIES})
   include_directories(${OPENGL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl)
-  link_glew(vpvl)
+  if(NOT VPVL_USE_ALLEGRO5)
+    link_glew(vpvl)
+  endif()
 endif()
 
 # extra renderer program with SDL
