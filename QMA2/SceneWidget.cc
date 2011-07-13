@@ -647,6 +647,7 @@ vpvl::XModel *SceneWidget::addAssetInternal(const QString &baseName, const QDir 
                     QString tmpKey = QString("%1%2").arg(key).arg(i);
                     if (!m_assets.contains(tmpKey))
                         key = tmpKey;
+                    i++;
                 }
             }
             m_renderer->loadAsset(model, std::string(dir.absolutePath().toUtf8()));
@@ -680,6 +681,7 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
                     QString tmpKey = QString("%1%2").arg(key).arg(i);
                     if (!m_models.contains(tmpKey))
                         key = tmpKey;
+                    i++;
                 }
             }
             m_models[key] = model;
