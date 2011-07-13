@@ -53,6 +53,7 @@ class HandleWidget;
 class CameraPerspectiveWidget;
 class SceneWidget;
 class TimelineWidget;
+class TransformWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -118,6 +119,7 @@ private:
     CameraPerspectiveWidget *m_perspection;
     SceneWidget *m_scene;
     TimelineWidget *m_timeline;
+    TransformWidget *m_transform;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;

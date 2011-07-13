@@ -20,14 +20,16 @@ SOURCES += main.cc\
            TimelineWidget.cc \
     HandleWidget.cc \
     FaceWidget.cc \
-    CameraPerspectiveWidget.cc
+    CameraPerspectiveWidget.cc \
+    TransformWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
             TimelineWidget.h \
     HandleWidget.h \
     FaceWidget.h \
-    CameraPerspectiveWidget.h
+    CameraPerspectiveWidget.h \
+    TransformWidget.h
 
 RESOURCES += resources/QMA2.qrc
 
@@ -37,3 +39,6 @@ macx {
     CONFIG += x86_64
   }
 }
+
+FORMS += \
+    TransformWidget.ui

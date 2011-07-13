@@ -41,6 +41,7 @@
 #include "HandleWidget.h"
 #include "SceneWidget.h"
 #include "TimelineWidget.h"
+#include "TransformWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -94,6 +95,11 @@ MainWindow::MainWindow(QWidget *parent)
     createMenus(menuBar);
     updateInformation();
 
+    m_transform = new TransformWidget();
+    m_transform->show();
+    connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_transform, SLOT(setModel(vpvl::PMDModel*)));
+
     connect(m_scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
             this, SLOT(addModel(vpvl::PMDModel*)));
     connect(m_scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
@@ -133,6 +139,7 @@ MainWindow::~MainWindow()
     delete m_perspection;
     delete m_scene;
     delete m_timeline;
+    delete m_transform;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
