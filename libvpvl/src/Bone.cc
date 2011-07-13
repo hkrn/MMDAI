@@ -76,6 +76,7 @@ Bone::Bone()
       m_parentBone(0),
       m_childBone(0),
       m_targetBone(0),
+      m_targetBoneID(0),
       m_parentIsRoot(false),
       m_constraintedXCoordinateForIK(false),
       m_simulated(false),
@@ -100,6 +101,7 @@ Bone::~Bone()
     m_parentBone = 0;
     m_childBone = 0;
     m_targetBone = 0;
+    m_targetBoneID = 0;
     m_parentIsRoot = false;
     m_constraintedXCoordinateForIK = false;
     m_simulated = false;
@@ -148,10 +150,7 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
     if (childBoneID != -1 && childBoneID < nbones)
         m_childBone = bones->at(childBoneID);
 
-    // The bone has a target bone and in the current bones for IK
-    if ((type == kUnderIK || m_type == kUnderRotate) && targetBoneID > 0 && targetBoneID < nbones)
-        m_targetBone = bones->at(targetBoneID);
-    else if (type == kFollowRotate)
+    if (type == kFollowRotate)
         m_rotateCoef = targetBoneID * 0.01f;
 
 #ifdef VPVL_COORDINATE_OPENGL
@@ -161,6 +160,8 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
 #endif
     m_transform.setOrigin(m_originPosition);
     m_transformMoveToOrigin.setOrigin(-m_originPosition);
+    m_targetBoneID = targetBoneID;
+    m_type = type;
 }
 
 void Bone::computeOffset()
@@ -196,6 +197,15 @@ void Bone::setMotionIndependency()
         return;
     }
     m_motionIndepent = false;
+}
+
+void Bone::setTargetBone(BoneList *bones)
+{
+    // The bone has a target bone and in the current bones for IK
+    if (m_type == kUnderIK || m_type == kUnderRotate) {
+        if (m_targetBoneID >= 0 && m_targetBoneID < bones->size())
+            m_targetBone = bones->at(m_targetBoneID);
+    }
 }
 
 void Bone::updateRotation()

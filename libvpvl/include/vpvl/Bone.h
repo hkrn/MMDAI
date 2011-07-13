@@ -138,6 +138,13 @@ public:
     void setMotionIndependency();
 
     /**
+     * Search a target bone to rotate from all bones.
+     *
+     * @param All bones with the model
+     */
+    void setTargetBone(BoneList *bones);
+
+    /**
      * Update rotation from the bone.
      */
     void updateRotation();
@@ -364,6 +371,7 @@ private:
     Bone *m_parentBone;
     Bone *m_childBone;
     Bone *m_targetBone;
+    int16_t m_targetBoneID;
     bool m_parentIsRoot;
     bool m_constraintedXCoordinateForIK;
     bool m_simulated;
