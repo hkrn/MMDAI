@@ -28,11 +28,11 @@ public:
         reset();
     }
     bool hasModel() { return m_model != 0; }
-
     vpvl::Bone *selectBone(int rowIndex) {
         vpvl::Bone *bone = m_selectedBone = m_bones[rowIndex].second;
         return bone;
     }
+
     int rowCount(const QModelIndex & /* parent */) const {
         return m_bones.size();
     }
@@ -100,12 +100,29 @@ private:
 
 TransformLabel::TransformLabel(QWidget *parent) :
     QLabel(parent),
-    m_bone(0)
+    m_bone(0),
+    m_angle(0.0f, 0.0f, 0.0f),
+    m_mode(kLocal)
 {
 }
 
 TransformLabel::~TransformLabel()
 {
+}
+
+void TransformLabel::setMode(int value)
+{
+    switch (value) {
+    case 0:
+        m_mode = kLocal;
+        break;
+    case 1:
+        m_mode = kGlobal;
+        break;
+    case 2:
+        m_mode = kView;
+        break;
+    }
 }
 
 void TransformLabel::mousePressEvent(QMouseEvent *event)
@@ -117,14 +134,14 @@ void TransformLabel::mousePressEvent(QMouseEvent *event)
 void TransformLabel::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_bone && !m_pos.isNull()) {
-        QString name = objectName();
-        QPoint p = m_pos - event->pos();
+        const QString name = objectName();
+        const QPoint p = m_pos - event->pos();
         char type = name[0].toAscii();
-        char axis = name[1].toAscii();
+        char coordinate = name[1].toAscii();
         if (type == 'r') {
             btQuaternion current = m_bone->rotation(), rot, dest;
             float value = vpvl::radian(p.y() * 0.1f);
-            switch (axis) {
+            switch (coordinate) {
             case 'x':
                 rot.setEulerZYX(0, 0, value);
                 break;
@@ -134,15 +151,25 @@ void TransformLabel::mouseMoveEvent(QMouseEvent *event)
             case 'z':
                 rot.setEulerZYX(value, 0, 0);
                 break;
+            default:
+                qFatal("Unexpected coordinate value: %c", coordinate);
             }
+            btQuaternion view;
+            view.setEulerZYX(vpvl::radian(m_angle.z()), vpvl::radian(m_angle.y()), vpvl::radian(m_angle.x()));
             // local coordinate
-            dest = current * rot;
+            switch (m_mode) {
+            case kLocal:
+                dest = current * rot;
+                break;
+            default:
+                break;
+            }
             m_bone->setRotation(dest);
         }
         else if (type == 't') {
             btVector3 current = m_bone->position(), pos, dest;
             float value = p.y() * 0.1;
-            switch (axis) {
+            switch (coordinate) {
             case 'x':
                 pos.setValue(value, 0, 0);
                 break;
@@ -152,10 +179,20 @@ void TransformLabel::mouseMoveEvent(QMouseEvent *event)
             case 'z':
                 pos.setValue(0, 0, value);
                 break;
+            default:
+                qFatal("Unexpected coordinate value: %c", coordinate);
             }
             // local coordinate
-            dest = btTransform(m_bone->rotation(), current) * pos;
-            qDebug() << dest.x() << dest.y() << dest.z();
+            switch (m_mode) {
+            case kLocal:
+                dest = btTransform(m_bone->rotation(), current) * pos;
+                break;
+            case kGlobal:
+                dest = current + pos;
+                break;
+            default:
+                break;
+            }
             m_bone->setPosition(dest);
         }
         m_pos = event->pos();
@@ -204,6 +241,16 @@ void TransformWidget::setModel(vpvl::PMDModel *value)
     castFaceModel(ui)->setModel(value);
 }
 
+void TransformWidget::setCameraPerspective(const btVector3 & /* pos */,
+                                           const btVector3 &angle,
+                                           float /* fovy */,
+                                           float /* distance */)
+{
+    reinterpret_cast<TransformLabel *>(ui->rx)->setAngle(angle);
+    reinterpret_cast<TransformLabel *>(ui->ry)->setAngle(angle);
+    reinterpret_cast<TransformLabel *>(ui->rz)->setAngle(angle);
+}
+
 void TransformWidget::on_faceWeightSlider_sliderMoved(int position)
 {
     setFaceValue(ui, position / 100.0f);
@@ -239,4 +286,15 @@ void TransformWidget::on_bones_clicked(const QModelIndex &index)
     ui->tx->setBone(bone);
     ui->ty->setBone(bone);
     ui->tz->setBone(bone);
+}
+
+void TransformWidget::on_comboBox_currentIndexChanged(int index)
+{
+
+    ui->rx->setMode(index);
+    ui->ry->setMode(index);
+    ui->rz->setMode(index);
+    ui->tx->setMode(index);
+    ui->ty->setMode(index);
+    ui->tz->setMode(index);
 }

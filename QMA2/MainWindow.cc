@@ -99,6 +99,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_transform->show();
     connect(m_scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_transform, SLOT(setModel(vpvl::PMDModel*)));
+    connect(m_scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
+            m_transform, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
 
     connect(m_scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
             this, SLOT(addModel(vpvl::PMDModel*)));

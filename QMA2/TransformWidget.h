@@ -4,6 +4,7 @@
 #include <QtCore/QModelIndex>
 #include <QtGui/QLabel>
 #include <QtGui/QWidget>
+#include <LinearMath/btVector3.h>
 
 namespace vpvl {
 class Bone;
@@ -19,10 +20,20 @@ class TransformLabel : public QLabel
     Q_OBJECT
 
 public:
+    enum Coordinate {
+        kLocal,
+        kGlobal,
+        kView
+    };
+
     explicit TransformLabel(QWidget *parent = 0);
     ~TransformLabel();
 
     void setBone(vpvl::Bone *value) { m_bone = value; }
+    void setAngle(const btVector3 &angle) { m_angle = angle; }
+
+public slots:
+    void setMode(int value);
 
 protected:
     virtual void mousePressEvent(QMouseEvent *event);
@@ -31,7 +42,9 @@ protected:
 
 private:
     vpvl::Bone *m_bone;
+    btVector3 m_angle;
     QPoint m_pos;
+    Coordinate m_mode;
 };
 
 class TransformWidget : public QWidget
@@ -44,12 +57,14 @@ public:
 
 public slots:
     void setModel(vpvl::PMDModel *value);
+    void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
 private slots:
     void on_faceWeightSlider_sliderMoved(int position);
     void on_faces_clicked(const QModelIndex &index);
     void on_faceWeightValue_returnPressed();
     void on_bones_clicked(const QModelIndex &index);
+    void on_comboBox_currentIndexChanged(int index);
 
 private:
     Ui::TransformWidget *ui;

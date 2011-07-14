@@ -161,17 +161,17 @@ p, li { white-space: pre-wrap; }
        <widget class="QComboBox" name="comboBox">
         <item>
          <property name="text">
-          <string>View</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
           <string>Local</string>
          </property>
         </item>
         <item>
          <property name="text">
           <string>Global</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>View</string>
          </property>
         </item>
        </widget>
