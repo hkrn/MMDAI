@@ -232,15 +232,27 @@ static FaceModel *castFaceModel(Ui::TransformWidget *ui)
     return reinterpret_cast<FaceModel *>(ui->faces->model());
 }
 
-static const QList<TransformButton *> buttons(Ui::TransformWidget *ui)
+static void rotateButtons(QList<TransformButton *> &buttons,
+                          const Ui::TransformWidget *ui)
 {
-    QList<TransformButton *> buttons;
     buttons.append(ui->rx);
     buttons.append(ui->ry);
     buttons.append(ui->rz);
+}
+
+static void transformButtons(QList<TransformButton *> &buttons,
+                             const Ui::TransformWidget *ui)
+{
     buttons.append(ui->tx);
     buttons.append(ui->ty);
     buttons.append(ui->tz);
+}
+
+static const QList<TransformButton *> allButtons(const Ui::TransformWidget *ui)
+{
+    QList<TransformButton *> buttons;
+    rotateButtons(buttons, ui);
+    transformButtons(buttons, ui);
     return buttons;
 }
 
@@ -294,12 +306,23 @@ void TransformWidget::on_faceWeightValue_returnPressed()
 void TransformWidget::on_bones_clicked(const QModelIndex &index)
 {
     vpvl::Bone *bone = castBoneModel(ui)->selectBone(index.row());
-    foreach (TransformButton *button, buttons(ui))
+    bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+    QList<TransformButton *> buttons;
+    transformButtons(buttons, ui);
+    foreach (TransformButton *button, buttons) {
+        button->setEnabled(movable);
         button->setBone(bone);
+    }
+    buttons.clear();
+    rotateButtons(buttons, ui);
+    foreach (TransformButton *button, buttons) {
+        button->setEnabled(rotateable);
+        button->setBone(bone);
+    }
 }
 
 void TransformWidget::on_comboBox_currentIndexChanged(int index)
 {
-    foreach (TransformButton *button, buttons(ui))
+    foreach (TransformButton *button, allButtons(ui))
         button->setMode(index);
 }
