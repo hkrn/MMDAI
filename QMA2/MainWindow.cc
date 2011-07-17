@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menuView->addAction(ui->dockTimelineWidget->toggleViewAction());
     ui->menuView->addAction(ui->dockFaceWidget->toggleViewAction());
     ui->menuView->addAction(ui->dockTransformWidget->toggleViewAction());
+    connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
 }
@@ -110,6 +111,27 @@ void MainWindow::setCameraPerspective(const btVector3 &pos,
 void MainWindow::updateInformation()
 {
 }
+
+void MainWindow::connectWidgets()
+{
+    connect(ui->scene, SIGNAL(modelDidAdd(vpvl::PMDModel*)),
+            this, SLOT(addModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+            this, SLOT(deleteModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            ui->timeline, SLOT(setModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            ui->face, SLOT(setModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
+            this, SLOT(setCurrentFPS(int)));
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            this, SLOT(setModel(vpvl::PMDModel*)));
+    connect(ui->timeline, SIGNAL(boneDidSelect(vpvl::Bone*)),
+            this, SLOT(setBone(vpvl::Bone*)));
+    connect(ui->scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
+            this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
+}
+
 void MainWindow::on_actionAddModel_triggered()
 {
     ui->scene->addModel();

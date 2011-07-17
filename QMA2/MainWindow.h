@@ -11,7 +11,7 @@ class PMDModel;
 }
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -58,6 +58,7 @@ private slots:
     void on_actionAboutQt_triggered();
 
 private:
+    void connectWidgets();
     void updateInformation();
     Ui::MainWindow *ui;
     QSettings m_settings;
