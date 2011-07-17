@@ -122,6 +122,8 @@ void MainWindow::connectWidgets()
             ui->timeline, SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             ui->face, SLOT(setModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            ui->transform, SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
             this, SLOT(setCurrentFPS(int)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
