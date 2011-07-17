@@ -9,7 +9,7 @@ public:
     }
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
         const QRect &rect = option.rect;
-        painter->restore();
+        painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
         if (index.column() % 5 == 0)
             painter->fillRect(rect, Qt::lightGray);
@@ -19,7 +19,7 @@ public:
         painter->setBrush(option.palette.foreground());
         painter->drawEllipse(rect.x() + 5, offset, 10, 10);
 #endif
-        painter->save();
+        painter->restore();
     }
 };
 
@@ -43,8 +43,6 @@ public:
         }
         else {
             m_bones.append(tr("Camera"));
-            for (int i = 0; i < 16; i++)
-                m_bones.append("");
         }
         m_model = value;
         reset();
@@ -96,7 +94,6 @@ TimelineWidget::TimelineWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tableView);
     layout->setContentsMargins(QMargins());
-    setMinimumSize(260, 480);
     setLayout(layout);
 }
 
