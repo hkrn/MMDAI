@@ -86,8 +86,9 @@ bool Renderer::initializeGLEW(GLenum &err)
 #endif
 }
 
-Renderer::Renderer(Delegate *delegate, int width, int height, int fps)
+Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_scene(0),
+      m_selected(0),
       m_delegate(delegate),
       m_displayBones(false),
       m_width(width),

@@ -86,7 +86,7 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
     }
 }
 
-class Delegate : public vpvl::gl::Delegate
+class Delegate : public vpvl::gl::IDelegate
 {
 public:
     Delegate(const std::string &system) : m_system(system) {

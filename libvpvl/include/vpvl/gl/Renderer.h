@@ -61,7 +61,7 @@ class XModel;
 namespace gl
 {
 
-class Delegate
+class IDelegate
 {
 public:
     virtual bool loadTexture(const std::string &path, GLuint &textureID) = 0;
@@ -84,7 +84,7 @@ class Renderer
 public:
     static bool initializeGLEW(GLenum &err);
 
-    Renderer(Delegate *delegate, int width, int height, int fps);
+    Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
     vpvl::Scene *scene() const {
@@ -122,7 +122,7 @@ public:
 private:
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
-    vpvl::gl::Delegate *m_delegate;
+    vpvl::gl::IDelegate *m_delegate;
     btAlignedObjectArray<vpvl::XModel *> m_assets;
     bool m_displayBones;
     int m_width;

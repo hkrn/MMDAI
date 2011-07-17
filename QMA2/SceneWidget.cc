@@ -47,7 +47,7 @@ namespace internal
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
-class Delegate : public vpvl::gl::Delegate
+class Delegate : public vpvl::gl::IDelegate
 {
 public:
     Delegate(QGLWidget *widget)
@@ -410,7 +410,7 @@ void SceneWidget::setModelPose()
         startSceneUpdateTimer();
     }
     else {
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
+        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to set the pose"));
     }
 }
 
