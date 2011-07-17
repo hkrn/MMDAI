@@ -182,9 +182,15 @@ void VPDPose::makePose(vpvl::PMDModel *model)
         VPDBone *b = m_bones[i];
         Bone *bone = model->findBone(b->name);
         if (bone) {
-            btVector4 &v = b->rotation;
-            btQuaternion rotation(v.x(), v.y(), v.z(), v.w());
-            bone->setPosition(b->position);
+            btVector3 pos = b->position;
+            btVector4 rot = b->rotation;
+#ifdef VPVL_COORDINATE_OPENGL
+            pos.setZ(-pos.z());
+            rot.setX(-rot.x());
+            rot.setY(-rot.y());
+#endif
+            const btQuaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
+            bone->setPosition(pos);
             bone->setRotation(rotation);
         }
     }
