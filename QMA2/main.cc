@@ -102,8 +102,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QTranslator appTranslator, qtTranslator;
-    a.setApplicationName("MMDAI");
-    a.setApplicationVersion("2.0");
+    a.setApplicationName("MMDAI2");
+    a.setApplicationVersion("0.1.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
     SetSearchPaths(a);
