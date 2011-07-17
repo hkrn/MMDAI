@@ -200,7 +200,7 @@ QPushButton:disabled { color:gray }</string>
               </layout>
              </item>
              <item>
-              <widget class="QComboBox" name="comboBox_2">
+              <widget class="QComboBox" name="comboBox">
                <item>
                 <property name="text">
                  <string>Local</string>
