@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>640</width>
+    <height>480</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">MMDAI2</string>
+  </property>
+  <property name="dockNestingEnabled">
+   <bool>true</bool>
+  </property>
+  <widget class="SceneWidget" name="scene"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>900</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionAddModel"/>
+    <addaction name="actionAddAsset"/>
+    <addaction name="separator"/>
+    <addaction name="actionInsertToAllModels"/>
+    <addaction name="actionInsertToSelectedModel"/>
+    <addaction name="separator"/>
+    <addaction name="actionSetCamera"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuScene">
+    <property name="title">
+     <string>&amp;Scene</string>
+    </property>
+    <addaction name="actionZoomIn"/>
+    <addaction name="actionZoomOut"/>
+    <addaction name="separator"/>
+    <addaction name="actionRotateUp"/>
+    <addaction name="actionRotateDown"/>
+    <addaction name="actionRotateLeft"/>
+    <addaction name="actionRotateRight"/>
+    <addaction name="separator"/>
+    <addaction name="actionTranslateUp"/>
+    <addaction name="actionTranslateDown"/>
+    <addaction name="actionTranslateLeft"/>
+    <addaction name="actionTranslateRight"/>
+    <addaction name="separator"/>
+    <addaction name="actionResetCamera"/>
+   </widget>
+   <widget class="QMenu" name="menuModel">
+    <property name="title">
+     <string>&amp;Model</string>
+    </property>
+    <widget class="QMenu" name="menuSelectModel">
+     <property name="title">
+      <string>Select model</string>
+     </property>
+    </widget>
+    <addaction name="menuSelectModel"/>
+    <addaction name="actionRevertSelectedModel"/>
+    <addaction name="actionDeleteSelectedModel"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionAboutQt"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuScene"/>
+   <addaction name="menuModel"/>
+   <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockTimelineWidget">
+   <property name="floating">
+    <bool>true</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Timeline</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="TimelineWidget" name="timeline"/>
+  </widget>
+  <widget class="QDockWidget" name="dockFaceWidget">
+   <property name="floating">
+    <bool>true</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Face</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="FaceWidget" name="face"/>
+  </widget>
+  <widget class="QDockWidget" name="dockTransformWidget">
+   <property name="floating">
+    <bool>true</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Transform</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="TransformWidget" name="transform"/>
+  </widget>
+  <action name="actionAddModel">
+   <property name="text">
+    <string>Add model</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+M</string>
+   </property>
+  </action>
+  <action name="actionAddAsset">
+   <property name="text">
+    <string>Add asset</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+A</string>
+   </property>
+  </action>
+  <action name="actionInsertToAllModels">
+   <property name="text">
+    <string>Insert to all models</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+V</string>
+   </property>
+  </action>
+  <action name="actionInsertToSelectedModel">
+   <property name="text">
+    <string>Insert to selected model</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+Shift+V</string>
+   </property>
+  </action>
+  <action name="actionSetCamera">
+   <property name="text">
+    <string>Set camera</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+C</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::QuitRole</enum>
+   </property>
+  </action>
+  <action name="actionZoomIn">
+   <property name="text">
+    <string>Zoom in</string>
+   </property>
+   <property name="shortcut">
+    <string>+</string>
+   </property>
+  </action>
+  <action name="actionZoomOut">
+   <property name="text">
+    <string>Zoom out</string>
+   </property>
+   <property name="shortcut">
+    <string>-</string>
+   </property>
+  </action>
+  <action name="actionRotateUp">
+   <property name="text">
+    <string>Rotate up</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Up</string>
+   </property>
+  </action>
+  <action name="actionRotateDown">
+   <property name="text">
+    <string>Rotate down</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Down</string>
+   </property>
+  </action>
+  <action name="actionRotateLeft">
+   <property name="text">
+    <string>Rotate left</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Left</string>
+   </property>
+  </action>
+  <action name="actionRotateRight">
+   <property name="text">
+    <string>Rotate right</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Right</string>
+   </property>
+  </action>
+  <action name="actionTranslateUp">
+   <property name="text">
+    <string>Translate up</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Up</string>
+   </property>
+  </action>
+  <action name="actionTranslateDown">
+   <property name="text">
+    <string>Translate down</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Down</string>
+   </property>
+  </action>
+  <action name="actionTranslateLeft">
+   <property name="text">
+    <string>Translate left</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Left</string>
+   </property>
+  </action>
+  <action name="actionTranslateRight">
+   <property name="text">
+    <string>Translate right</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Right</string>
+   </property>
+  </action>
+  <action name="actionResetCamera">
+   <property name="text">
+    <string>Reset camera</string>
+   </property>
+  </action>
+  <action name="actionRevertSelectedModel">
+   <property name="text">
+    <string>Revert selected model</string>
+   </property>
+  </action>
+  <action name="actionDeleteSelectedModel">
+   <property name="text">
+    <string>Delete selected model</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Backspace</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Q, Alt+/</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::AboutRole</enum>
+   </property>
+  </action>
+  <action name="actionAboutQt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::AboutQtRole</enum>
+   </property>
+  </action>
+  <action name="actionTimeline">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Timeline</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>SceneWidget</class>
+   <extends>QWidget</extends>
+   <header>SceneWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TimelineWidget</class>
+   <extends>QWidget</extends>
+   <header>TimelineWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FaceWidget</class>
+   <extends>QWidget</extends>
+   <header>FaceWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TransformWidget</class>
+   <extends>QWidget</extends>
+   <header>TransformWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
