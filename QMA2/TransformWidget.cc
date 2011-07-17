@@ -65,8 +65,10 @@ public:
             QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
             for (uint32_t i = 0; i < nFaces; i++) {
                 vpvl::Face *face = faces.at(i);
-                QString name = codec->toUnicode(reinterpret_cast<const char *>(face->name()));
-                m_faces.append(QPair<QString, vpvl::Face *>(format.arg(i).arg(name), face));
+                if (face->type() != vpvl::Face::kBase) {
+                    QString name = codec->toUnicode(reinterpret_cast<const char *>(face->name()));
+                    m_faces.append(QPair<QString, vpvl::Face *>(format.arg(i).arg(name), face));
+                }
             }
         }
         m_model = value;
@@ -98,19 +100,19 @@ private:
     QList< QPair<QString, vpvl::Face *> > m_faces;
 };
 
-TransformLabel::TransformLabel(QWidget *parent) :
-    QLabel(parent),
+TransformButton::TransformButton(QWidget *parent) :
+    QPushButton(parent),
     m_bone(0),
     m_angle(0.0f, 0.0f, 0.0f),
     m_mode(kLocal)
 {
 }
 
-TransformLabel::~TransformLabel()
+TransformButton::~TransformButton()
 {
 }
 
-void TransformLabel::setMode(int value)
+void TransformButton::setMode(int value)
 {
     switch (value) {
     case 0:
@@ -125,13 +127,13 @@ void TransformLabel::setMode(int value)
     }
 }
 
-void TransformLabel::mousePressEvent(QMouseEvent *event)
+void TransformButton::mousePressEvent(QMouseEvent *event)
 {
     m_pos = event->pos();
     qDebug() << event->pos();
 }
 
-void TransformLabel::mouseMoveEvent(QMouseEvent *event)
+void TransformButton::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_bone && !m_pos.isNull()) {
         const QString name = objectName();
@@ -199,7 +201,7 @@ void TransformLabel::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void TransformLabel::mouseReleaseEvent(QMouseEvent *event)
+void TransformButton::mouseReleaseEvent(QMouseEvent *event)
 {
     qDebug() << event->pos();
     m_pos.setX(0);
@@ -230,6 +232,18 @@ static FaceModel *castFaceModel(Ui::TransformWidget *ui)
     return reinterpret_cast<FaceModel *>(ui->faces->model());
 }
 
+static const QList<TransformButton *> buttons(Ui::TransformWidget *ui)
+{
+    QList<TransformButton *> buttons;
+    buttons.append(ui->rx);
+    buttons.append(ui->ry);
+    buttons.append(ui->rz);
+    buttons.append(ui->tx);
+    buttons.append(ui->ty);
+    buttons.append(ui->tz);
+    return buttons;
+}
+
 static void setFaceValue(Ui::TransformWidget *ui, float value)
 {
     ui->faceWeightValue->setText(QString("%1").arg(value, 0, 'g', 2));
@@ -246,9 +260,9 @@ void TransformWidget::setCameraPerspective(const btVector3 & /* pos */,
                                            float /* fovy */,
                                            float /* distance */)
 {
-    reinterpret_cast<TransformLabel *>(ui->rx)->setAngle(angle);
-    reinterpret_cast<TransformLabel *>(ui->ry)->setAngle(angle);
-    reinterpret_cast<TransformLabel *>(ui->rz)->setAngle(angle);
+    reinterpret_cast<TransformButton *>(ui->rx)->setAngle(angle);
+    reinterpret_cast<TransformButton *>(ui->ry)->setAngle(angle);
+    reinterpret_cast<TransformButton *>(ui->rz)->setAngle(angle);
 }
 
 void TransformWidget::on_faceWeightSlider_sliderMoved(int position)
@@ -280,21 +294,12 @@ void TransformWidget::on_faceWeightValue_returnPressed()
 void TransformWidget::on_bones_clicked(const QModelIndex &index)
 {
     vpvl::Bone *bone = castBoneModel(ui)->selectBone(index.row());
-    ui->rx->setBone(bone);
-    ui->ry->setBone(bone);
-    ui->rz->setBone(bone);
-    ui->tx->setBone(bone);
-    ui->ty->setBone(bone);
-    ui->tz->setBone(bone);
+    foreach (TransformButton *button, buttons(ui))
+        button->setBone(bone);
 }
 
 void TransformWidget::on_comboBox_currentIndexChanged(int index)
 {
-
-    ui->rx->setMode(index);
-    ui->ry->setMode(index);
-    ui->rz->setMode(index);
-    ui->tx->setMode(index);
-    ui->ty->setMode(index);
-    ui->tz->setMode(index);
+    foreach (TransformButton *button, buttons(ui))
+        button->setMode(index);
 }

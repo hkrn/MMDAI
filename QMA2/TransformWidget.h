@@ -2,7 +2,7 @@
 #define TRANSFORMWIDGET_H
 
 #include <QtCore/QModelIndex>
-#include <QtGui/QLabel>
+#include <QtGui/QPushButton>
 #include <QtGui/QWidget>
 #include <LinearMath/btVector3.h>
 
@@ -15,7 +15,7 @@ namespace Ui {
     class TransformWidget;
 }
 
-class TransformLabel : public QLabel
+class TransformButton : public QPushButton
 {
     Q_OBJECT
 
@@ -26,8 +26,8 @@ public:
         kView
     };
 
-    explicit TransformLabel(QWidget *parent = 0);
-    ~TransformLabel();
+    explicit TransformButton(QWidget *parent = 0);
+    ~TransformButton();
 
     void setBone(vpvl::Bone *value) { m_bone = value; }
     void setAngle(const btVector3 &angle) { m_angle = angle; }
