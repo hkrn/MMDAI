@@ -41,4 +41,5 @@ macx {
 }
 
 FORMS += \
-    TransformWidget.ui
+    TransformWidget.ui \
+    MainWindow.ui

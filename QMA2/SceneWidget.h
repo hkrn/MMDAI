@@ -61,15 +61,17 @@ class World;
 }
 
 class QProgressDialog;
+class QSettings;
 
 class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
+    explicit SceneWidget(QWidget *parent = 0);
     ~SceneWidget();
 
     void setCurrentFPS(int value);
+    void setSettings(QSettings *value) { m_settings = value; }
 
     const QHash<QString, vpvl::PMDModel *> &models() const {
         return m_models;

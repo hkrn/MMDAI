@@ -285,13 +285,13 @@ private:
 
 }
 
-SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
+SceneWidget::SceneWidget(QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_camera(0),
     m_delegate(0),
     m_grid(0),
     m_world(0),
-    m_settings(settings),
+    m_settings(0),
     m_gridListID(0),
     m_frameCount(0),
     m_currentFPS(0),

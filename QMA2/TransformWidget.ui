@@ -13,6 +13,12 @@
     <height>560</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>480</width>
+    <height>560</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>TransformView</string>
   </property>
