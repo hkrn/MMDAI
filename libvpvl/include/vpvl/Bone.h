@@ -357,6 +357,38 @@ public:
         m_simulated = value;
     }
 
+    /**
+     * Get whether bone is movable
+     *
+     * @return true if bone is movable
+     */
+    bool isMovable() const {
+        switch (m_type) {
+        case kRotateAndMove:
+        case kIKTarget:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Get whether bone is rotateable
+     *
+     * @return true if bone is rotateable
+     */
+    bool isRotateable() const {
+        switch (m_type) {
+        case kRotate:
+        case kRotateAndMove:
+        case kUnderRotate:
+        case kIKTarget:
+            return true;
+        default:
+            return false;
+        }
+    }
+
 private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
