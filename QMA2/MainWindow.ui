@@ -99,13 +99,13 @@
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockTimelineWidget">
    <property name="floating">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="windowTitle">
     <string>Timeline</string>
    </property>
    <attribute name="dockWidgetArea">
-    <number>1</number>
+    <number>8</number>
    </attribute>
    <widget class="TimelineWidget" name="timeline"/>
   </widget>
