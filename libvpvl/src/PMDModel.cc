@@ -224,7 +224,7 @@ void PMDModel::updateAllBones()
     }
     int nRotatedBones = m_rotatedBones.size();
     for (int i = 0; i < nRotatedBones; i++)
-       m_rotatedBones[i]->updateRotation();
+        m_rotatedBones[i]->updateRotation();
 }
 
 void PMDModel::updateBoneFromSimulation()
@@ -239,7 +239,8 @@ void PMDModel::updateBoneFromSimulation()
 void PMDModel::updateAllFaces()
 {
     int nFaces = m_faces.size();
-    m_baseFace->setVertices(m_vertices);
+    if (nFaces > 0)
+        m_baseFace->setVertices(m_vertices);
     for (int i = 0; i < nFaces; i++) {
         Face *face = m_faces[i];
         const float weight = face->weight();
@@ -799,7 +800,7 @@ size_t PMDModel::stride(StrideType type) const
     case kVerticesStride:
     case kNormalsStride:
     case kTextureCoordsStride:
-       return sizeof(SkinVertex);
+        return sizeof(SkinVertex);
     case kEdgeVerticesStride:
     case kToonTextureStride:
         return sizeof(btVector3);
