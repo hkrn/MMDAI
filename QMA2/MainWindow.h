@@ -57,6 +57,8 @@ private slots:
     void on_actionAbout_triggered();
     void on_actionAboutQt_triggered();
 
+    void on_actionSetModelPose_triggered();
+
 private:
     void connectWidgets();
     void updateInformation();

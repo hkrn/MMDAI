@@ -238,3 +238,8 @@ void MainWindow::on_actionAboutQt_triggered()
     qApp->aboutQt();
 }
 
+
+void MainWindow::on_actionSetModelPose_triggered()
+{
+    ui->scene->setModelPose();
+}

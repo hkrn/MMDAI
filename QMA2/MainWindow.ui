@@ -41,6 +41,7 @@
     <addaction name="separator"/>
     <addaction name="actionInsertToAllModels"/>
     <addaction name="actionInsertToSelectedModel"/>
+    <addaction name="actionSetModelPose"/>
     <addaction name="separator"/>
     <addaction name="actionSetCamera"/>
     <addaction name="separator"/>
@@ -301,15 +302,12 @@
     <enum>QAction::AboutQtRole</enum>
    </property>
   </action>
-  <action name="actionTimeline">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
+  <action name="actionSetModelPose">
    <property name="text">
-    <string>Timeline</string>
+    <string>Set model pose</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
    </property>
   </action>
  </widget>

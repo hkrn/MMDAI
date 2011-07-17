@@ -51,6 +51,7 @@ namespace vpvl {
 class PMDModel;
 class Scene;
 class VMDMotion;
+class VPDPose;
 class XModel;
 }
 
@@ -90,6 +91,7 @@ public slots:
     void addModel();
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
+    void setModelPose();
     void addAsset();
     void setCamera();
     void deleteSelectedModel();
@@ -113,7 +115,8 @@ signals:
     void modelDidAdd(vpvl::PMDModel *model);
     void modelDidDelete(vpvl::PMDModel *model);
     void modelDidSelect(vpvl::PMDModel *model);
-    void motionDidAdd(vpvl::VMDMotion *motion);
+    void modelDidMakePose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
+    void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void assetDidAdd(vpvl::XModel *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
@@ -138,9 +141,8 @@ private:
     vpvl::XModel *addAssetInternal(const QString &baseName, const QDir &dir);
     vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
+    vpvl::VPDPose *setModelPoseInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
-    //bool loadTexture(const QString &path, GLuint &textureID);
-    //bool loadToonTexture(const QString &name, const QDir &model, GLuint &textureID);
     void drawGrid();
     void updateFPS();
     void startSceneUpdateTimer();
