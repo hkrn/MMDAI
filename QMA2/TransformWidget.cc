@@ -7,7 +7,7 @@
 class BoneModel : public QAbstractListModel {
 public:
     BoneModel(QObject *parent = 0)
-        : QAbstractListModel(parent) {
+        : QAbstractListModel(parent), m_selectedBone(0) {
         setModel(0);
     }
 
@@ -52,7 +52,7 @@ private:
 class FaceModel : public QAbstractListModel {
 public:
     FaceModel(QObject *parent = 0)
-        : QAbstractListModel(parent) {
+        : QAbstractListModel(parent), m_selectedFace(0) {
         setModel(0);
     }
 
