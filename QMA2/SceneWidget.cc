@@ -573,6 +573,7 @@ void SceneWidget::initializeGL()
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
+    qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
