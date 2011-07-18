@@ -92,7 +92,7 @@ inline void vector4(uint8_t *&ptr, float *values)
 
 inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr != NULL && rest > 0);
+    assert(ptr != NULL);
     if (sizeof(uint8_t) > rest)
         return false;
     size = *reinterpret_cast<uint8_t *>(ptr);
@@ -103,7 +103,7 @@ inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 
 inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr != NULL && rest > 0);
+    assert(ptr != NULL);
     if (sizeof(uint16_t) > rest)
         return false;
     size = *reinterpret_cast<uint16_t *>(ptr);
@@ -114,7 +114,7 @@ inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 
 inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr != NULL && rest > 0);
+    assert(ptr != NULL);
     if (sizeof(uint32_t) > rest)
         return false;
     size = *reinterpret_cast<uint32_t *>(ptr);
