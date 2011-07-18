@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,28 +36,40 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl_vpvl_H_
-#define vpvl_vpvl_H_
+#include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
-#include "vpvl/common.h"
-#include "vpvl/BaseMotion.h"
-#include "vpvl/Bone.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/BoneMotion.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/CameraMotion.h"
-#include "vpvl/Constraint.h"
-#include "vpvl/Face.h"
-#include "vpvl/FaceKeyFrame.h"
-#include "vpvl/FaceMotion.h"
-#include "vpvl/IK.h"
-#include "vpvl/Material.h"
-#include "vpvl/PMDModel.h"
-#include "vpvl/RigidBody.h"
-#include "vpvl/Scene.h"
-#include "vpvl/Vertex.h"
-#include "vpvl/VMDMotion.h"
-#include "vpvl/VPDPose.h"
-#include "vpvl/XModel.h"
+namespace vpvl
+{
 
-#endif /* vpvl_vpvl_H_ */
+#pragma pack(push, 1)
+
+struct FaceKeyFrameChunk
+{
+    uint8_t name[15];
+    uint32_t frameIndex;
+    float weight;
+};
+
+#pragma pack(pop)
+
+FaceKeyFrame::FaceKeyFrame() : m_frameIndex(0), m_weight(0.0f) {
+    internal::zerofill(m_name, sizeof(m_name));
+}
+FaceKeyFrame::~FaceKeyFrame() {
+    internal::zerofill(m_name, sizeof(m_name));
+}
+
+size_t FaceKeyFrame::stride() {
+    return sizeof(FaceKeyFrameChunk);
+}
+
+void FaceKeyFrame::read(const uint8_t *data) {
+    FaceKeyFrameChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    m_frameIndex = static_cast<float>(chunk.frameIndex);
+    m_weight = chunk.weight;
+}
+
+}

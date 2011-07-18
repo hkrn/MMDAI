@@ -36,10 +36,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_CAMERAKEYFRAME_H_
-#define VPVL_CAMERAKEYFRAME_H_
+#ifndef VPVL_BONEKEYFRAME_H_
+#define VPVL_BONEKEYFRAME_H_
 
 #include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btQuaternion.h>
 #include <LinearMath/btVector3.h>
 #include "vpvl/common.h"
 #include "vpvl/internal/util.h"
@@ -47,89 +48,32 @@
 namespace vpvl
 {
 
-#pragma pack(push, 1)
+class Bone;
 
-struct CameraKeyFrameChunk
-{
-    uint32_t frameIndex;
-    float distance;
-    float position[3];
-    float angle[3];
-    int8_t interpolationTable[24];
-    uint32_t viewAngle;
-    uint8_t noPerspective;
-};
-
-#pragma pack(pop)
-
-class CameraKeyFrame
+class BoneKeyFrame
 {
 public:
-    CameraKeyFrame()
-        : m_frameIndex(0),
-          m_distance(0.0f),
-          m_fovy(0.0f),
-          m_position(0.0f, 0.0f, 0.0f),
-          m_angle(0.0f, 0.0f, 0.0f),
-          m_noPerspective(false)
-    {
-        internal::zerofill(m_linear, sizeof(m_linear));
-        internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
+    BoneKeyFrame();
+    ~BoneKeyFrame();
+
+    static const int kNameSize = 15;
+    static const int kTableSize = 64;
+
+    static size_t stride();
+
+    void read(const uint8_t *data);
+
+    const uint8_t *name() const {
+        return m_name;
     }
-    ~CameraKeyFrame() {
-        m_frameIndex = 0;
-        m_distance = 0.0f;
-        m_fovy = 0.0f;
-        m_position.setZero();
-        m_angle.setZero();
-        m_noPerspective = false;
-        for (int i = 0; i < 6; i++)
-            delete[] m_interpolationTable[i];
-        internal::zerofill(m_linear, sizeof(m_linear));
-        internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
-    }
-
-    static const int kTableSize = 24;
-
-    static size_t stride() {
-        return sizeof(CameraKeyFrameChunk);
-    }
-
-    void read(const uint8_t *data) {
-        CameraKeyFrameChunk chunk;
-        internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-        float *pos = chunk.position;
-        float *angle = chunk.angle;
-
-        m_frameIndex = static_cast<float>(chunk.frameIndex);
-        m_fovy = static_cast<float>(chunk.viewAngle);
-        m_noPerspective = chunk.noPerspective == 1;
-    #ifdef VPVL_COORDINATE_OPENGL
-        m_distance = -chunk.distance;
-        m_position.setValue(pos[0], pos[1], -pos[2]);
-        m_angle.setValue(-degree(angle[0]), -degree(angle[1]), degree(angle[2]));
-    #else
-        m_distance = chunk.distance;
-        m_position.setValue(pos[0], pos[1], pos[2]);
-        m_angle.setValue(degree(angle[0]), degree(angle[1]), degree(angle[2]));
-    #endif
-        setInterpolationTable(chunk.interpolationTable);
-    }
-
     float frameIndex() const {
         return m_frameIndex;
-    }
-    float distance() const {
-        return m_distance;
-    }
-    float fovy() const {
-        return m_fovy;
     }
     const btVector3 &position() const {
         return m_position;
     }
-    const btVector3 &angle() const {
-        return m_angle;
+    const btQuaternion &rotation() const {
+        return m_rotation;
     }
     const bool *linear() const {
         return m_linear;
@@ -139,33 +83,16 @@ public:
     }
 
 private:
-    void setInterpolationTable(const int8_t *table) {
-        for (int i = 0; i < 6; i++)
-            m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;
-        for (int i = 0; i < 6; i++) {
-            if (m_linear[i]) {
-                m_interpolationTable[i] = 0;
-                continue;
-            }
-            m_interpolationTable[i] = new float[kTableSize + 1];
-            float x1 = table[i * 4]     / 127.0f;
-            float y1 = table[i * 4 + 2] / 127.0f;
-            float x2 = table[i * 4 + 1] / 127.0f;
-            float y2 = table[i * 4 + 3] / 127.0f;
-            internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
-        }
-    }
+    void setInterpolationTable(const int8_t *table);
 
+    uint8_t m_name[kNameSize];
     float m_frameIndex;
-    float m_distance;
-    float m_fovy;
     btVector3 m_position;
-    btVector3 m_angle;
-    bool m_noPerspective;
-    bool m_linear[6];
-    float *m_interpolationTable[6];
+    btQuaternion m_rotation;
+    bool m_linear[4];
+    float *m_interpolationTable[4];
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(CameraKeyFrame)
+    VPVL_DISABLE_COPY_AND_ASSIGN(BoneKeyFrame)
 };
 
 }

@@ -9,11 +9,14 @@ project(libvpvl)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src vpvl_sources)
 set(vpvl_public_headers
     include/vpvl/BaseMotion.h
+    include/vpvl/BoneKeyFrame.h
     include/vpvl/Bone.h
     include/vpvl/BoneMotion.h
+    include/vpvl/CameraKeyFrame.h
     include/vpvl/CameraMotion.h
     include/vpvl/Constraint.h
     include/vpvl/Face.h
+    include/vpvl/FaceKeyFrame.h
     include/vpvl/FaceMotion.h
     include/vpvl/IK.h
     include/vpvl/Material.h
@@ -30,9 +33,6 @@ set(vpvl_public_headers
     include/vpvl/vpvl.h
 )
 set(vpvl_internal_headers
-    include/vpvl/internal/BoneKeyFrame.h
-    include/vpvl/internal/CameraKeyFrame.h
-    include/vpvl/internal/FaceKeyFrame.h
     include/vpvl/internal/util.h
 )
 

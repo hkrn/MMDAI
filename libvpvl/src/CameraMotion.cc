@@ -37,7 +37,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl/vpvl.h"
-#include "vpvl/internal/CameraKeyFrame.h"
 
 namespace vpvl
 {
