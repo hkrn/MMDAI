@@ -60,8 +60,8 @@ static const int kFPS = 60;
 static const std::string kSystemDir = "render/res/system";
 static const std::string kModelDir = "render/res/lat";
 static const std::string kStageDir = "render/res/stage";
-static const std::string kMotion = "test/res/motion.vmd";
-static const std::string kCamera = "test/res/camera.vmd";
+static const std::string kMotion = "gtest/res/motion.vmd";
+static const std::string kCamera = "gtest/res/camera.vmd";
 static const std::string kModelName = "normal.pmd";
 static const std::string kStageName = "stage.x";
 
