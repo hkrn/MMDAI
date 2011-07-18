@@ -199,7 +199,7 @@ endif()
 # extra test program
 option(VPVL_BUILD_TESTS "Build test programs (default is OFF)" OFF)
 if(VPVL_BUILD_TESTS)
-  aux_source_directory(test vpvl_test_sources)
+  aux_source_directory(gtest vpvl_test_sources)
   add_executable(vpvl_test ${vpvl_test_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
   find_library(GTEST_LIB gtest PATH ${GTEST_LIBRARY_DIR})
   find_library(GTEST_MAIN_LIB gtest_main PATH ${GTEST_LIBRARY_DIR})
