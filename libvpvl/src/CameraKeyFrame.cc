@@ -107,6 +107,32 @@ void CameraKeyFrame::read(const uint8_t *data) {
     setInterpolationTable(chunk.interpolationTable);
 }
 
+void CameraKeyFrame::write(uint8_t *data)
+{
+    CameraKeyFrameChunk chunk;
+    chunk.frameIndex = m_frameIndex;
+    chunk.viewAngle = static_cast<uint32_t>(m_fovy);
+    chunk.noPerspective = m_noPerspective ? 1 : 0;
+    chunk.position[0] = m_position.x();
+    chunk.position[1] = m_position.y();
+    chunk.angle[2] = radian(m_angle.z());
+#ifdef VPVL_COORDINATE_OPENGL
+    chunk.distance = -m_distance;
+    chunk.angle[0] = -radian(m_angle.x());
+    chunk.angle[1] = -radian(m_angle.y());
+    chunk.position[2] = -m_position.z();
+#else
+    chunk.distance = m_distance;
+    chunk.angle[0] = radian(m_angle.x());
+    chunk.angle[1] = radian(m_angle.y());
+    chunk.position[2] = m_position.z();
+#endif
+    internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
+                        reinterpret_cast<uint8_t *>(m_interpolationTable),
+                        sizeof(chunk.interpolationTable));
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
 void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 6; i++)
         m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;

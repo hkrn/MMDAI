@@ -96,6 +96,30 @@ void BoneKeyFrame::read(const uint8_t *data) {
     setInterpolationTable(chunk.interpolationTable);
 }
 
+void BoneKeyFrame::write(uint8_t *data)
+{
+    BoneKeyFrameChunk chunk;
+    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    chunk.frameIndex = m_frameIndex;
+    chunk.position[0] = m_position.x();
+    chunk.position[1] = m_position.y();
+    chunk.rotation[2] = m_rotation.z();
+    chunk.rotation[3] = m_rotation.w();
+#ifdef VPVL_COORDINATE_OPENGL
+    chunk.rotation[0] = -m_rotation.x();
+    chunk.rotation[1] = -m_rotation.y();
+    chunk.position[2] = -m_position.z();
+#else
+    chunk.rotation[0] = m_rotation.x();
+    chunk.rotation[1] = m_rotation.y();
+    chunk.position[2] = m_position.z();
+#endif
+    internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
+                        reinterpret_cast<uint8_t *>(m_interpolationTable),
+                        sizeof(chunk.interpolationTable));
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
 void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 4; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;

@@ -72,4 +72,13 @@ void FaceKeyFrame::read(const uint8_t *data) {
     m_weight = chunk.weight;
 }
 
+void FaceKeyFrame::write(uint8_t *data)
+{
+    FaceKeyFrameChunk chunk;
+    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    chunk.frameIndex = m_frameIndex;
+    chunk.weight = m_weight;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
 }

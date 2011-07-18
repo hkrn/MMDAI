@@ -151,6 +151,62 @@ bool VMDMotion::load(const uint8_t *data, size_t size)
     return false;
 }
 
+size_t VMDMotion::estimateSize()
+{
+    /*
+     * header[30]
+     * name[20]
+     * bone size
+     * face size
+     * camera size
+     * light size (empty)
+     * selfshadow size (empty)
+     */
+    return 70 + m_boneMotion.frames().size() * BoneKeyFrame::stride()
+            + m_faceMotion.frames().size() * FaceKeyFrame::stride()
+            + m_cameraMotion.frames().size() * CameraKeyFrame::stride();
+}
+
+void VMDMotion::save(uint8_t *data)
+{
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002"), 30);
+    data += 30;
+    internal::copyBytes(data, m_name, sizeof(m_name));
+    data += sizeof(m_name);
+    BoneKeyFrameList boneFrames = m_boneMotion.frames();
+    uint32_t nBoneFrames = boneFrames.size();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
+    data += sizeof(nBoneFrames);
+    for (uint32_t i = 0; i < nBoneFrames; i++) {
+        BoneKeyFrame *frame = boneFrames[i];
+        frame->write(data);
+        data += BoneKeyFrame::stride();
+    }
+    FaceKeyFrameList faceFrames = m_faceMotion.frames();
+    uint32_t nFaceFrames = faceFrames.size();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nFaceFrames), sizeof(nFaceFrames));
+    data += sizeof(nFaceFrames);
+    for (uint32_t i = 0; i < nFaceFrames; i++) {
+        FaceKeyFrame *frame = faceFrames[i];
+        frame->write(data);
+        data += FaceKeyFrame::stride();
+    }
+    CameraKeyFrameList cameraFrames = m_cameraMotion.frames();
+    uint32_t nCameraFrames = cameraFrames.size();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
+    data += sizeof(nCameraFrames);
+    for (uint32_t i = 0; i < nCameraFrames; i++) {
+        CameraKeyFrame *frame = cameraFrames[i];
+        frame->write(data);
+        data += CameraKeyFrame::stride();
+    }
+    uint32_t empty = 0;
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
+    data += sizeof(empty);
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
+    data += sizeof(empty);
+}
+
 void VMDMotion::attachModel(PMDModel *model)
 {
     if (m_model)

@@ -114,6 +114,8 @@ public:
 
     bool preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &info);
     bool load(const uint8_t *data, size_t size);
+    size_t estimateSize();
+    void save(uint8_t *data);
     void attachModel(PMDModel *model);
     void update(float deltaFrame);
 

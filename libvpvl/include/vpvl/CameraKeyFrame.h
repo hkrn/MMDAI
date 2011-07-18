@@ -58,6 +58,7 @@ public:
     static size_t stride();
 
     void read(const uint8_t *data);
+    void write(uint8_t *data);
 
     float frameIndex() const {
         return m_frameIndex;
