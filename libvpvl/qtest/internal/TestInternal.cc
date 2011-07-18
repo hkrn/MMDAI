@@ -14,6 +14,9 @@ private Q_SLOTS:
     void lerp();
     void vector3();
     void vector4();
+    void size8();
+    void size16();
+    void size32();
     void stringEquals();
     void stringToFloat();
     void stringToInt();
@@ -72,6 +75,70 @@ void TestInternal::vector4()
     QCOMPARE(actual[3], 7.0f);
 }
 
+void TestInternal::size8()
+{
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    QDataStream stream(&buffer);
+    quint8 expected = 255;
+    buffer.open(QBuffer::WriteOnly);
+    stream << expected;
+    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    size_t rest = 0, actual = 0;
+    // rest is not enough to read (0 < 1)
+    QVERIFY(!vpvl::internal::size8(ptr, rest, actual));
+    QCOMPARE(actual, size_t(0));
+    QCOMPARE(rest, size_t(0));
+    rest = sizeof(quint8);
+    // rest is now enough to read (1 = 1)
+    QVERIFY(vpvl::internal::size8(ptr, rest, actual));
+    QCOMPARE(actual, size_t(expected));
+    QCOMPARE(rest, size_t(0));
+}
+
+void TestInternal::size16()
+{
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    QDataStream stream(&buffer);
+    quint16 expected = 65535;
+    buffer.open(QBuffer::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << expected;
+    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    size_t rest = 1, actual = 0;
+    // rest is not enough to read (1 < 2)
+    QVERIFY(!vpvl::internal::size16(ptr, rest, actual));
+    QCOMPARE(actual, size_t(0));
+    QCOMPARE(rest, size_t(1));
+    rest = sizeof(quint16);
+    // rest is now enough to read (2 = 2)
+    QVERIFY(vpvl::internal::size16(ptr, rest, actual));
+    QCOMPARE(actual, size_t(expected));
+    QCOMPARE(rest, size_t(0));
+}
+
+void TestInternal::size32()
+{
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    QDataStream stream(&buffer);
+    quint32 expected = 4294967295;
+    buffer.open(QBuffer::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << expected;
+    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    size_t rest = 2, actual = 0;
+    // rest is not enough to read (2 < 4)
+    QVERIFY(!vpvl::internal::size32(ptr, rest, actual));
+    QCOMPARE(actual, size_t(0));
+    QCOMPARE(rest, size_t(2));
+    rest = sizeof(quint32);
+    // rest is now enough to read (4 = 4)
+    QVERIFY(vpvl::internal::size32(ptr, rest, actual));
+    QCOMPARE(actual, size_t(expected));
+    QCOMPARE(rest, size_t(0));
+}
 
 void TestInternal::stringEquals()
 {
