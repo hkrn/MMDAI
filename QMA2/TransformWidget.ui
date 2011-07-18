@@ -23,13 +23,7 @@
    <string>TransformView</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QPushButton {
-  border: 1px solid black;
-  border-radius: 6px;
-  background-color: transparent;
-  font-size:32px;
-}
-</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
@@ -83,6 +77,15 @@
            <number>0</number>
           </property>
           <widget class="QWidget" name="transform_2">
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+  border: 1px solid black;
+  border-radius: 6px;
+  background-color: transparent;
+  font-size:32px;
+}
+</string>
+           </property>
            <attribute name="title">
             <string>Transform</string>
            </attribute>
@@ -91,7 +94,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>211</width>
+              <width>201</width>
               <height>241</height>
              </rect>
             </property>
@@ -242,6 +245,13 @@ QPushButton:disabled { color:gray }</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="register_2">
+          <property name="text">
+           <string>Register</string>
           </property>
          </widget>
         </item>
