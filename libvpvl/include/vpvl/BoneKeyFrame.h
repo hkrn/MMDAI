@@ -82,6 +82,19 @@ public:
         return m_interpolationTable;
     }
 
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
+    }
+    void setFrameIndex(float value) {
+        m_frameIndex = value;
+    }
+    void setPosition(const btVector3 &value) {
+        m_position = value;
+    }
+    void setRotation(const btQuaternion &value) {
+        m_rotation = value;
+    }
+
 private:
     void setInterpolationTable(const int8_t *table);
 

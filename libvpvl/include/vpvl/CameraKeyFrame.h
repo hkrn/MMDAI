@@ -81,6 +81,22 @@ public:
         return m_interpolationTable;
     }
 
+    void setFrameIndex(float value) {
+        m_frameIndex = value;
+    }
+    void setDistance(float value) {
+        m_distance = value;
+    }
+    void setFovy(float value) {
+        m_fovy = value;
+    }
+    void setPosition(const btVector3 &value) {
+        m_position = value;
+    }
+    void setAngle(const btVector3 &value) {
+        m_angle = value;
+    }
+
 private:
     void setInterpolationTable(const int8_t *table);
 

@@ -70,6 +70,16 @@ public:
         return m_weight;
     }
 
+    void setName(const uint8_t *value) {
+        copyBytesSafe(m_name, value, sizeof(m_name));
+    }
+    void setFrameIndex(float value) {
+        m_frameIndex = value;
+    }
+    void setWeight(float value) {
+        m_weight = value;
+    }
+
 private:
     uint8_t m_name[kNameSize];
     float m_frameIndex;
