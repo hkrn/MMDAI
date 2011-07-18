@@ -57,14 +57,6 @@ namespace internal
 static const btVector3 kZeroV = btVector3(0.0f, 0.0f, 0.0f);
 static const btQuaternion kZeroQ = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
-static inline void vectorN(uint8_t *&ptr, float *values, int n)
-{
-    for (int i = 0; i < n; i++) {
-        values[i] = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(float);
-    }
-}
-
 static inline float spline1(const float t, const float p1, const float p2)
 {
     return ((1 + 3 * p1 - 3 * p2) * t * t * t + (3 * p2 - 6 * p1) * t * t + 3 * p1 * t);
@@ -80,14 +72,11 @@ inline float lerp(float x, float y, float t)
     return x * (1.0f - t) + y * t;
 }
 
-inline void vector3(uint8_t *&ptr, float *values)
+inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
 {
-    vectorN(ptr, values, 3);
-}
-
-inline void vector4(uint8_t *&ptr, float *values)
-{
-    vectorN(ptr, values, 4);
+    assert(dst != NULL && src != NULL && max > 0);
+    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
+    return ptr;
 }
 
 inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)

@@ -46,6 +46,17 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct FaceKeyFrameChunk
+{
+    uint8_t name[15];
+    uint32_t frameIndex;
+    float weight;
+};
+
+#pragma pack(pop)
+
 class Face;
 
 class FaceKeyFrame
@@ -61,20 +72,15 @@ public:
     static const int kNameSize = 15;
 
     static size_t stride() {
-        return kNameSize + sizeof(uint32_t) + sizeof(float);
+        return sizeof(FaceKeyFrameChunk);
     }
 
     void read(const uint8_t *data) {
-        uint8_t *ptr = const_cast<uint8_t *>(data);
-        copyBytesSafe(m_name, ptr, sizeof(m_name));
-        ptr += sizeof(m_name);
-        uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
-        ptr += sizeof(uint32_t);
-        float weight = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(float);
-
-        m_frameIndex = static_cast<float>(index);
-        m_weight = weight;
+        FaceKeyFrameChunk chunk;
+        internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+        copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+        m_frameIndex = static_cast<float>(chunk.frameIndex);
+        m_weight = chunk.weight;
     }
 
     const uint8_t *name() const {

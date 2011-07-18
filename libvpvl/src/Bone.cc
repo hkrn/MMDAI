@@ -42,6 +42,20 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct BoneChunk
+{
+    uint8_t name[Bone::kNameSize];
+    int16_t parentBoneID;
+    int16_t childBoneID;
+    uint8_t type;
+    int16_t targetBoneID;
+    float position[3];
+};
+
+#pragma pack(pop)
+
 const uint8_t *Bone::centerBoneName()
 {
     static const uint8_t centerBoneName[] = { 0x83, 0x5a, 0x83, 0x93, 0x83, 0x5e, 0x81, 0x5b, 0x0 };
@@ -63,7 +77,7 @@ Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
 
 size_t Bone::stride()
 {
-    return kNameSize + (sizeof(int16_t) * 3)+ sizeof(uint8_t) + (sizeof(float) * 3);
+    return sizeof(BoneChunk);
 }
 
 Bone::Bone()
@@ -110,19 +124,14 @@ Bone::~Bone()
 
 void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    copyBytesSafe(m_name, ptr, sizeof(m_name));
-    ptr += sizeof(m_name);
-    int16_t parentBoneID = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    int16_t childBoneID = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    Type type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
-    ptr += sizeof(uint8_t);
-    int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    float pos[3];
-    internal::vector3(ptr, pos);
+    BoneChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    int16_t parentBoneID = chunk.parentBoneID;
+    int16_t childBoneID = chunk.childBoneID;
+    Type type = static_cast<Type>(chunk.type);
+    int16_t targetBoneID = chunk.targetBoneID;
+    float *pos = chunk.position;
 
     // Knee bone treats as a special bone to constraint X for IK
     static const uint8_t kneeName[] = { 0x82, 0xd0, 0x82, 0xb4, 0x0 };

@@ -42,9 +42,27 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct ConstraintChunk
+{
+    uint8_t name[Constraint::kNameSize];
+    uint32_t bodyIDA;
+    uint32_t bodyIDB;
+    float position[3];
+    float rotation[3];
+    float limitPositionFrom[3];
+    float limitPositionTo[3];
+    float limitRotationFrom[3];
+    float limitRotationTo[3];
+    float stiffness[6];
+};
+
+#pragma pack(pop)
+
 size_t Constraint::stride()
 {
-    return kNameSize + (sizeof(uint32_t) * 2) + (sizeof(float) * 24);
+    return sizeof(ConstraintChunk);
 }
 
 Constraint::Constraint()
@@ -62,24 +80,18 @@ Constraint::~Constraint()
 
 void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    copyBytesSafe(m_name, ptr, sizeof(m_name));
-    ptr += sizeof(m_name);
-    int32_t bodyID1 = *reinterpret_cast<int32_t *>(ptr);
-    ptr += sizeof(uint32_t);
-    int32_t bodyID2 = *reinterpret_cast<int32_t *>(ptr);
-    ptr += sizeof(uint32_t);
-    float pos[3], rot[3], limitPosFrom[3], limitPosTo[3], limitRotFrom[3], limitRotTo[3], stiffness[6];
-    internal::vector3(ptr, pos);
-    internal::vector3(ptr, rot);
-    internal::vector3(ptr, limitPosFrom);
-    internal::vector3(ptr, limitPosTo);
-    internal::vector3(ptr, limitRotFrom);
-    internal::vector3(ptr, limitRotTo);
-    for (int i = 0; i < 6; i++) {
-        stiffness[i] = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(float);
-    }
+    ConstraintChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    int32_t bodyID1 = chunk.bodyIDA;
+    int32_t bodyID2 = chunk.bodyIDB;
+    float *pos = chunk.position;
+    float *rot = chunk.rotation;
+    float *limitPosFrom = chunk.limitPositionFrom;
+    float *limitPosTo = chunk.limitPositionTo;
+    float *limitRotFrom = chunk.limitRotationFrom;
+    float *limitRotTo = chunk.limitRotationTo;
+    float *stiffness = chunk.stiffness;
 
     int nbodies = bodies.size();
     if (bodyID1 >= 0 && bodyID1 < nbodies &&bodyID2 >= 0 && bodyID2 < nbodies) {

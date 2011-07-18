@@ -42,20 +42,35 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct FaceVertexChunk
+{
+    uint32_t vertexID;
+    float position[3];
+};
+
+struct FaceChunk
+{
+    uint8_t name[20];
+    uint32_t nvertices;
+    uint8_t type;
+};
+
+#pragma pack(pop)
+
 size_t Face::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 {
     size_t size = 0;
     uint8_t *ptr = const_cast<uint8_t *>(data);
     for (size_t i = 0; i < count; i++) {
-        ptr += kNameSize;
-        uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
-        size_t required = sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+        size_t required = stride(ptr);
         if (required > rest) {
             ok = false;
             return 0;
         }
-        rest -= kNameSize + required;
-        size += kNameSize + required;
+        rest -= required;
+        size += required;
         ptr += required;
     }
     ok = true;
@@ -64,10 +79,8 @@ size_t Face::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 
 size_t Face::stride(const uint8_t *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    ptr += kNameSize;
-    const int nvertices = *reinterpret_cast<int *>(ptr);
-    return kNameSize + sizeof(uint32_t) + sizeof(uint8_t) + nvertices * (sizeof(uint32_t) + sizeof(float) * 3);
+    const FaceChunk *ptr = reinterpret_cast<const FaceChunk *>(data);
+    return sizeof(*ptr) + ptr->nvertices * sizeof(FaceVertexChunk);
 }
 
 Face::Face()
@@ -87,26 +100,27 @@ Face::~Face()
 
 void Face::read(const uint8_t *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    copyBytesSafe(m_name, ptr, sizeof(m_name));
-    ptr += sizeof(m_name);
-    uint32_t nvertices = *reinterpret_cast<uint32_t *>(ptr);
-    ptr += sizeof(uint32_t);
-    Type type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
-    ptr += sizeof(uint8_t);
+    FaceChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    uint32_t nvertices = chunk.nvertices;
+    Type type = static_cast<Type>(chunk.type);
     m_type = type;
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    ptr += sizeof(chunk);
     if (nvertices > 0) {
+        FaceVertexChunk vc;
         for (uint32_t i = 0; i < nvertices; i++) {
             FaceVertex *vertex = new FaceVertex();
-            vertex->id = *reinterpret_cast<uint32_t *>(ptr);
-            ptr += sizeof(uint32_t);
-            float pos[3];
-            internal::vector3(ptr, pos);
+            internal::copyBytes(reinterpret_cast<uint8_t *>(&vc), ptr, sizeof(vc));
+            vertex->id = vc.vertexID;
+            float *pos = vc.position;
 #ifdef VPVL_COORDINATE_OPENGL
             vertex->position.setValue(pos[0], pos[1], -pos[2]);
 #else
             vertex->position.setValue(pos[0], pos[1], pos[2]);
 #endif
+            ptr += sizeof(vc);
             m_vertices.push_back(vertex);
         }
     }

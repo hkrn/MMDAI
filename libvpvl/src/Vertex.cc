@@ -42,9 +42,26 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+/* based on BDEF */
+struct VertexChunk
+{
+    float position[3];
+    float normal[3];
+    float u;
+    float v;
+    int16_t parentBoneID;
+    int16_t childBoneID;
+    uint8_t weight;
+    uint8_t edge;
+};
+
+#pragma pack(pop)
+
 size_t Vertex::stride()
 {
-    return sizeof(float) * 8 + sizeof(int16_t) * 2 + sizeof(uint8_t) * 2;
+    return sizeof(VertexChunk);
 }
 
 Vertex::Vertex()
@@ -73,22 +90,16 @@ Vertex::~Vertex()
 
 void Vertex::read(const uint8_t *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    float pos[3], normal[3];
-    internal::vector3(ptr, pos);
-    internal::vector3(ptr, normal);
-    float u = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float v = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    int16_t bone1 = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    int16_t bone2 = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    uint8_t weight = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
-    uint8_t edge = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
+    VertexChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    float *pos = chunk.position;
+    float *normal = chunk.normal;
+    float u = chunk.u;
+    float v = chunk.v;
+    int16_t bone1 = chunk.parentBoneID;
+    int16_t bone2 = chunk.childBoneID;
+    uint8_t weight = chunk.weight;
+    uint8_t edge = chunk.edge;
 
 #ifdef VPVL_COORDINATE_OPENGL
     m_position.setValue(pos[0], pos[1], -pos[2]);

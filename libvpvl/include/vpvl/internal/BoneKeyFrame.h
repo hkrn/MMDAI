@@ -48,6 +48,19 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct BoneKeyFrameChunk
+{
+    uint8_t name[15];
+    uint32_t frameIndex;
+    float position[3];
+    float rotation[4];
+    int8_t interpolationTable[64];
+};
+
+#pragma pack(pop)
+
 class Bone;
 
 class BoneKeyFrame
@@ -75,23 +88,17 @@ public:
     static const int kTableSize = 64;
 
     static size_t stride() {
-        return kNameSize + sizeof(uint32_t) + sizeof(float) * 7 + 64;
+        return sizeof(BoneKeyFrameChunk);
     }
 
     void read(const uint8_t *data) {
-        uint8_t *ptr = const_cast<uint8_t *>(data);
-        copyBytesSafe(m_name, ptr, sizeof(m_name));
-        ptr += sizeof(m_name);
-        uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
-        ptr += sizeof(uint32_t);
-        float pos[3], rot[4];
-        internal::vector3(ptr, pos);
-        internal::vector4(ptr, rot);
-        int8_t table[64];
-        memcpy(table, ptr, sizeof(table));
-        data += sizeof(table);
+        BoneKeyFrameChunk chunk;
+        internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+        copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+        float *pos = chunk.position;
+        float *rot = chunk.rotation;
 
-        m_frameIndex = static_cast<float>(index);
+        m_frameIndex = static_cast<float>(chunk.frameIndex);
 #ifdef VPVL_COORDINATE_OPENGL
         m_position.setValue(pos[0], pos[1], -pos[2]);
         m_rotation.setValue(-rot[0], -rot[1], rot[2], rot[3]);
@@ -99,7 +106,7 @@ public:
         m_position.setValue(pos[0], pos[1], pos[2]);
         m_rotation.setValue(rot[0], rot[1], rot[2], rot[3]);
 #endif
-        setInterpolationTable(table);
+        setInterpolationTable(chunk.interpolationTable);
     }
 
     const uint8_t *name() const {

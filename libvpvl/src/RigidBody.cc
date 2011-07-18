@@ -43,6 +43,30 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct RigidBodyChunk
+{
+    uint8_t name[Constraint::kNameSize];
+    uint16_t boneID;
+    uint8_t collisionGroupID;
+    uint16_t collsionMask;
+    uint8_t shapeType;
+    float width;
+    float height;
+    float depth;
+    float position[3];
+    float rotation[3];
+    float mass;
+    float linearDamping;
+    float angularDamping;
+    float restitution;
+    float friction;
+    uint8_t type;
+};
+
+#pragma pack(pop)
+
 class AlignedMotionState : public btMotionState
 {
 public:
@@ -144,38 +168,24 @@ RigidBody::~RigidBody()
 
 void RigidBody::read(const uint8_t *data, BoneList *bones)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    copyBytesSafe(m_name, ptr, sizeof(m_name));
-    ptr += sizeof(m_name);
-    uint16_t boneID = *reinterpret_cast<uint16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    uint8_t collisionGroupID = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
-    uint16_t collisionMask = *reinterpret_cast<uint16_t *>(ptr);
-    ptr += sizeof(uint16_t);
-    int8_t shapeType = *reinterpret_cast<int8_t *>(ptr);
-    ptr += sizeof(int8_t);
-    float width = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float height = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float depth = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float pos[3], rot[3];
-    internal::vector3(ptr, pos);
-    internal::vector3(ptr, rot);
-    float mass = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float linearDamping = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float angularDamping = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float restitution = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float friction = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    uint8_t type = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
+    RigidBodyChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    uint16_t boneID = chunk.boneID;
+    uint8_t collisionGroupID = chunk.collisionGroupID;
+    uint16_t collisionMask = chunk.collsionMask;
+    int8_t shapeType = chunk.shapeType;
+    float width = chunk.width;
+    float height = chunk.height;
+    float depth = chunk.depth;
+    float *pos = chunk.position;
+    float *rot = chunk.rotation;
+    float mass = chunk.mass;
+    float linearDamping = chunk.linearDamping;
+    float angularDamping = chunk.angularDamping;
+    float restitution = chunk.restitution;
+    float friction = chunk.friction;
+    uint8_t type = chunk.type;
 
     Bone *bone = 0;
     if (boneID == 0xffff) {

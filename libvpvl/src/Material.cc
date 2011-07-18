@@ -42,9 +42,26 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct MaterialChunk
+{
+    float diffuse[3];
+    float alpha;
+    float shiness;
+    float specular[3];
+    float ambient[3];
+    uint8_t toonID;
+    uint8_t edge;
+    uint32_t nindices;
+    uint8_t textureName[Material::kNameSize];
+};
+
+#pragma pack(pop)
+
 size_t Material::stride()
 {
-    return sizeof(float) * 11 + (sizeof(uint8_t) * 2) + sizeof(uint32_t) + kNameSize;
+    return sizeof(MaterialChunk);
 }
 
 Material::Material()
@@ -87,24 +104,19 @@ Material::~Material()
 
 void Material::read(const uint8_t *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    float ambient[3], diffuse[3], specular[3];
-    internal::vector3(ptr, diffuse);
-    float alpha = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    float shiness = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
-    internal::vector3(ptr, specular);
-    internal::vector3(ptr, ambient);
-    uint8_t toonID = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
-    uint8_t edge = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
-    uint32_t nindices = *reinterpret_cast<uint32_t *>(ptr);
-    ptr += sizeof(uint32_t);
+    MaterialChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    float *diffuse = chunk.diffuse;
+    float alpha = chunk.alpha;
+    float shiness = chunk.shiness;
+    float *specular = chunk.specular;
+    float *ambient = chunk.ambient;
+    uint8_t toonID = chunk.toonID;
+    uint8_t edge = chunk.edge;
+    uint32_t nindices = chunk.nindices;
     uint8_t name[20], *p;
-    copyBytesSafe(name, ptr, sizeof(name));
-    copyBytesSafe(m_rawName, ptr, sizeof(m_rawName));
+    copyBytesSafe(name, chunk.textureName, sizeof(name));
+    copyBytesSafe(m_rawName, chunk.textureName, sizeof(m_rawName));
 
     // If asterisk is included in the path, we should load two textures
     if ((p = static_cast<uint8_t *>(memchr(name, '*', sizeof(name)))) != NULL) {

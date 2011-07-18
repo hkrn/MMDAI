@@ -47,6 +47,21 @@
 namespace vpvl
 {
 
+#pragma pack(push, 1)
+
+struct CameraKeyFrameChunk
+{
+    uint32_t frameIndex;
+    float distance;
+    float position[3];
+    float angle[3];
+    int8_t interpolationTable[24];
+    uint32_t viewAngle;
+    uint8_t noPerspective;
+};
+
+#pragma pack(pop)
+
 class CameraKeyFrame
 {
 public:
@@ -77,39 +92,28 @@ public:
     static const int kTableSize = 24;
 
     static size_t stride() {
-        return sizeof(uint32_t) + sizeof(float) * 7 + 24 + sizeof(uint32_t) + sizeof(uint8_t);
+        return sizeof(CameraKeyFrameChunk);
     }
 
     void read(const uint8_t *data) {
-        uint8_t *ptr = const_cast<uint8_t *>(data);
-        uint32_t index = *reinterpret_cast<uint32_t *>(ptr);
-        ptr += sizeof(uint32_t);
-        float distance = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(float);
-        float pos[3], angle[3];
-        internal::vector3(ptr, pos);
-        internal::vector3(ptr, angle);
-        int8_t table[24];
-        memcpy(table, ptr, sizeof(table));
-        ptr += sizeof(table);
-        uint32_t fovy = *reinterpret_cast<uint32_t *>(ptr);
-        ptr += sizeof(uint32_t);
-        uint8_t noPerspective = *reinterpret_cast<uint8_t *>(ptr);
-        ptr += sizeof(uint8_t);
+        CameraKeyFrameChunk chunk;
+        internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+        float *pos = chunk.position;
+        float *angle = chunk.angle;
 
-        m_frameIndex = static_cast<float>(index);
-        m_fovy = static_cast<float>(fovy);
-        m_noPerspective = noPerspective == 1;
+        m_frameIndex = static_cast<float>(chunk.frameIndex);
+        m_fovy = static_cast<float>(chunk.viewAngle);
+        m_noPerspective = chunk.noPerspective == 1;
     #ifdef VPVL_COORDINATE_OPENGL
-        m_distance = -distance;
+        m_distance = -chunk.distance;
         m_position.setValue(pos[0], pos[1], -pos[2]);
         m_angle.setValue(-degree(angle[0]), -degree(angle[1]), degree(angle[2]));
     #else
-        m_distance = distance;
+        m_distance = chunk.distance;
         m_position.setValue(pos[0], pos[1], pos[2]);
         m_angle.setValue(degree(angle[0]), degree(angle[1]), degree(angle[2]));
     #endif
-        setInterpolationTable(table);
+        setInterpolationTable(chunk.interpolationTable);
     }
 
     float frameIndex() const {

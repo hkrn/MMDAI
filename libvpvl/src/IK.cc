@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -48,21 +49,31 @@ const float IK::kMinAxis        = 0.0000001f;
 const float IK::kMinRotationSum = 0.002f;
 const float IK::kMinRotation    = 0.00001f;
 
+#pragma pack(push, 1)
+
+struct IKChunk
+{
+    int16_t destBoneID;
+    int16_t targetBoneID;
+    uint8_t nlinks;
+    uint16_t niterations;
+    float angleConstraint;
+};
+
+#pragma pack(pop)
+
 size_t IK::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 {
     size_t size = 0;
     uint8_t *ptr = const_cast<uint8_t *>(data);
     for (size_t i = 0; i < count; i++) {
-        size_t base = sizeof(int16_t) * 2;
-        ptr += base;
-        uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
-        size_t required = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
+        size_t required = stride(ptr);
         if (required > rest) {
             ok = false;
             return 0;
         }
-        rest -= base + required;
-        size += base + required;
+        rest -= required;
+        size += required;
         ptr += required;
     }
     ok = true;
@@ -71,11 +82,8 @@ size_t IK::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 
 size_t IK::stride(const uint8_t *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    size_t base = sizeof(int16_t) * 2;
-    ptr += base;
-    uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
-    return base + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(float) + nlinks * sizeof(int16_t);
+    const IKChunk *chunk = reinterpret_cast<const IKChunk *>(data);
+    return sizeof(*chunk) + chunk->nlinks * sizeof(int16_t);
 }
 
 IK::IK()
@@ -97,26 +105,22 @@ IK::~IK()
 
 void IK::read(const uint8_t *data, BoneList *bones)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
-    int16_t destBoneID = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    int16_t targetBoneID = *reinterpret_cast<int16_t *>(ptr);
-    ptr += sizeof(int16_t);
-    uint8_t nlinks = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
-    uint16_t niterations = *reinterpret_cast<uint16_t *>(ptr);
-    ptr += sizeof(uint16_t);
-    float angleConstraint = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(float);
+    IKChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    int16_t destBoneID = chunk.destBoneID;
+    int16_t targetBoneID = chunk.targetBoneID;
+    uint8_t nlinks = chunk.nlinks;
+    uint16_t niterations = chunk.niterations;
+    float angleConstraint = chunk.angleConstraint;
 
     btAlignedObjectArray<int16_t> boneIKs;
     int nbones = bones->size();
+    uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(chunk));
     for (int i = 0; i < nlinks; i++) {
         int16_t boneID = *reinterpret_cast<int16_t *>(ptr);
-        if (boneID >= 0 && boneID < nbones) {
+        if (boneID >= 0 && boneID < nbones)
             boneIKs.push_back(boneID);
-            ptr += sizeof(int16_t);
-        }
+        ptr += sizeof(int16_t);
     }
 
     if (destBoneID >= 0 && destBoneID < nbones && targetBoneID >= 0 && targetBoneID < nbones) {
