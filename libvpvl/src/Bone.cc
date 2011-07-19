@@ -81,7 +81,8 @@ size_t Bone::stride()
 }
 
 Bone::Bone()
-    : m_type(kUnknown),
+    : m_id(-1),
+      m_type(kUnknown),
       m_originPosition(0.0f, 0.0f, 0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_offset(0.0f, 0.0f, 0.0f),
@@ -91,6 +92,7 @@ Bone::Bone()
       m_childBone(0),
       m_targetBone(0),
       m_targetBoneID(0),
+      m_hasParent(false),
       m_parentIsRoot(false),
       m_constraintedXCoordinateForIK(false),
       m_simulated(false),
@@ -104,6 +106,7 @@ Bone::Bone()
 Bone::~Bone()
 {
     internal::zerofill(m_name, sizeof(m_name));
+    m_id = -1;
     m_type = kUnknown;
     m_transform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
@@ -122,7 +125,7 @@ Bone::~Bone()
     m_motionIndepent = false;
 }
 
-void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *rootBone)
+void Bone::read(const uint8_t *data, BoneList *bones, Bone *rootBone)
 {
     BoneChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
@@ -139,20 +142,24 @@ void Bone::read(const uint8_t *data, btAlignedObjectArray<Bone*> *bones, Bone *r
         m_constraintedXCoordinateForIK = true;
 
     int nbones = bones->size();
+    m_id = nbones;
     // The bone has a parent bone and in the the current bones
     if (parentBoneID != -1 && parentBoneID < nbones) {
         m_parentBone = bones->at(parentBoneID);
         m_parentIsRoot = false;
+        m_hasParent = true;
     }
     // The bone has no parent bone but bones found.
     else if (nbones >= 0) {
         m_parentBone = rootBone;
         m_parentIsRoot = true;
+        m_hasParent = false;
     }
     // The bone has no parent bone and no bones found.
     // e.g. The "Center" bone
     else {
         m_parentIsRoot = false;
+        m_hasParent = false;
     }
 
     // The bone has a child bone and in the current bones

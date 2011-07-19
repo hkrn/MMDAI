@@ -196,6 +196,15 @@ public:
     }
 
     /**
+     * Get the bone ID of this.
+     *
+     * @return bone ID
+     */
+    int16_t id() const {
+        return m_id;
+    }
+
+    /**
      * Get the parent bone of this.
      *
      * @return parent bone
@@ -292,6 +301,15 @@ public:
      */
     bool hasMotionIndependency() const {
         return m_motionIndepent;
+    }
+
+    /**
+     * Get the bone has parent.
+     *
+     * @return true if the bone has parent
+     */
+    bool hasParent() const {
+        return m_hasParent;
     }
 
     /**
@@ -392,6 +410,7 @@ public:
 private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
+    int16_t m_id;
     Type m_type;
     btTransform m_transform;
     btTransform m_transformMoveToOrigin;
@@ -404,6 +423,7 @@ private:
     Bone *m_childBone;
     Bone *m_targetBone;
     int16_t m_targetBoneID;
+    bool m_hasParent;
     bool m_parentIsRoot;
     bool m_constraintedXCoordinateForIK;
     bool m_simulated;
