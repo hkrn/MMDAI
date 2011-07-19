@@ -64,6 +64,7 @@ struct SkinVertex
 
 PMDModel::PMDModel()
     : m_baseFace(0),
+      m_orderedBones(0),
       m_skinnedVertices(0),
       m_world(0),
       m_indicesPointer(0),
@@ -208,9 +209,8 @@ void PMDModel::updateSkins()
 void PMDModel::updateAllBones()
 {
     const int nBones = m_bones.size(), nIKs = m_IKs.size();
-    // FIXME: Ordered bone list
     for (int i = 0; i < nBones; i++)
-        m_bones[i]->updateTransform();
+        m_orderedBones[i]->updateTransform();
     if (m_enableSimulation) {
         for (int i = 0; i < nIKs; i++) {
             // Solve IK with physic engine instead of IK class if it's disabled
@@ -323,7 +323,9 @@ void PMDModel::updateIndices()
 {
     const int nIndices = m_indices.size();
     m_indicesPointer = new uint16_t[nIndices];
-    memcpy(m_indicesPointer, &m_indices[0], sizeof(uint16_t) * nIndices);
+    internal::copyBytes(reinterpret_cast<uint8_t *>(m_indicesPointer),
+                        reinterpret_cast<const uint8_t *>(&m_indices[0]),
+                        sizeof(uint16_t) * nIndices);
 #ifdef VPVL_COORDINATE_OPENGL
     for (int i = 0; i < nIndices; i += 3) {
         const uint16_t index = m_indicesPointer[i];
@@ -649,26 +651,29 @@ void PMDModel::parseMatrials(const PMDModelDataInfo &info)
 
 void PMDModel::parseBones(const PMDModelDataInfo &info)
 {
-    Bone *mutableRootBone = this->mutableRootBone();
-    BoneList *mutableBones = this->mutableBones();
     uint8_t *ptr = const_cast<uint8_t *>(info.bonesPtr);
     uint8_t *englishPtr = const_cast<uint8_t *>(info.englishBoneNamesPtr);
     const uint32_t nbones = info.bonesCount;
     m_bones.reserve(nbones);
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
-        bone->read(ptr, mutableBones, mutableRootBone);
+        bone->read(ptr, &m_bones, &m_rootBone);
         if (englishPtr)
             bone->setEnglishName(englishPtr + Bone::kNameSize * i);
         ptr += Bone::stride();
         m_name2bone.insert(btHashString(reinterpret_cast<const char *>(bone->name())), bone);
         m_bones.push_back(bone);
     }
+    sortBones();
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
-        bone->setTargetBone(mutableBones);
+        bone->setTargetBone(&m_bones);
         bone->computeOffset();
         bone->setMotionIndependency();
+    }
+    for (uint32_t i = 0; i < nbones; i++) {
+        Bone *bone = m_orderedBones[i];
+        bone->updateTransform();
     }
 }
 
@@ -783,15 +788,54 @@ void PMDModel::release()
     m_shadowTextureCoords.clear();
     m_rotatedBones.clear();
     m_isIKSimulated.clear();
+    delete[] m_orderedBones;
     delete[] m_skinnedVertices;
     delete[] m_indicesPointer;
     delete[] m_edgeIndicesPointer;
     m_baseFace = 0;
+    m_orderedBones = 0;
     m_skinnedVertices = 0;
     m_indicesPointer = 0;
     m_edgeIndicesPointer = 0;
     m_edgeIndicesCount = 0;
     m_error = kNoError;
+}
+
+void PMDModel::sortBones()
+{
+    uint32_t nbones = m_bones.size();
+    if (nbones > 0) {
+        delete[] m_orderedBones;
+        m_orderedBones = new Bone*[nbones];
+        uint32_t k = 0;
+        for (uint32_t i = 0; i < nbones; i++) {
+            Bone *bone = m_bones[i];
+            if (!bone->hasParent())
+                m_orderedBones[k++] = bone;
+        }
+        uint32_t l = k;
+        for (uint32_t i = 0; i < nbones; i++) {
+            Bone *bone = m_bones[i];
+            if (bone->hasParent())
+                m_orderedBones[l++] = bone;
+        }
+        uint32_t i = 0;
+        do {
+            for (uint32_t j = k; j < nbones; j++) {
+                for (l = 0; l < j; l++) {
+                    if (m_orderedBones[l] == m_orderedBones[j]->parent())
+                        break;
+                }
+                if (l >= j) {
+                    Bone *bone = m_orderedBones[j];
+                    if (j < nbones - 1)
+                        memmove(m_orderedBones[j], m_orderedBones[j+1], sizeof(Bone *) * (nbones - 1 - j));
+                    m_orderedBones[nbones - 1] = bone;
+                    i = 1;
+                }
+            }
+        } while (i != 0);
+    }
 }
 
 size_t PMDModel::stride(StrideType type) const
