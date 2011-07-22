@@ -383,7 +383,8 @@ public:
     bool isMovable() const {
         switch (m_type) {
         case kRotateAndMove:
-        case kIKTarget:
+        case kIKDestination:
+        case kUnderIK:
             return true;
         default:
             return false;
@@ -396,14 +397,23 @@ public:
      * @return true if bone is rotateable
      */
     bool isRotateable() const {
+        return isVisible();
+    }
+
+    /**
+     * Get whether bone is visible
+     *
+     * @return true if bone is visible
+     */
+    bool isVisible() const {
         switch (m_type) {
-        case kRotate:
-        case kRotateAndMove:
-        case kUnderRotate:
+        case kUnknown:
         case kIKTarget:
-            return true;
-        default:
+        case kInvisible:
+        case kFollowRotate:
             return false;
+        default:
+            return true;
         }
     }
 
