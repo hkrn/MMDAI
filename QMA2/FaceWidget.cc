@@ -2,6 +2,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include "util.h"
 
 FaceWidget::FaceWidget(QWidget *parent) :
     QWidget(parent)
@@ -79,13 +80,12 @@ void FaceWidget::setModel(vpvl::PMDModel *model)
     m_others->clear();
     if (model) {
         m_model = model;
-        QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         const vpvl::FaceList &faces = model->faces();
         const uint32_t nFaces = faces.size();
         for (uint32_t i = 0; i < nFaces; i++) {
             vpvl::Face *face = faces[i];
             const uint8_t *name = face->name();
-            const QString utf8Name = codec->toUnicode(reinterpret_cast<const char *>(name));
+            const QString utf8Name = internal::toQString(face);
             switch (face->type()) {
             case vpvl::Face::kEye:
                 m_eyes->addItem(utf8Name, name);
@@ -136,8 +136,7 @@ void FaceWidget::setOtherWeight(int value)
 
 void FaceWidget::setFaceWeight(const QString &name, int value)
 {
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    QByteArray bytes = codec->fromUnicode(name);
+    QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
     vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
     if (face)
         face->setWeight(value / static_cast<float>(kSliderMaximumValue));

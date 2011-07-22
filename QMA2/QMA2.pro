@@ -29,7 +29,8 @@ HEADERS  += MainWindow.h \
     HandleWidget.h \
     FaceWidget.h \
     CameraPerspectiveWidget.h \
-    TransformWidget.h
+    TransformWidget.h \
+    util.h
 
 RESOURCES += resources/QMA2.qrc
 
