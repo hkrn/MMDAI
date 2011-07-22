@@ -81,19 +81,32 @@
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
-     <string>Help</string>
+     <string>&amp;Help</string>
     </property>
     <addaction name="actionAbout"/>
     <addaction name="actionAboutQt"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>View</string>
+     <string>&amp;View</string>
     </property>
+   </widget>
+   <widget class="QMenu" name="menuBone">
+    <property name="title">
+     <string>&amp;Bone</string>
+    </property>
+    <addaction name="actionBoneXCoordinateZero"/>
+    <addaction name="actionBoneYCoordinateZero"/>
+    <addaction name="actionBoneZCoordinateZero"/>
+    <addaction name="actionBoneRotationZero"/>
+    <addaction name="actionBoneResetAll"/>
+    <addaction name="separator"/>
+    <addaction name="actionDirect_coordinate_input"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuScene"/>
    <addaction name="menuModel"/>
+   <addaction name="menuBone"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -143,6 +156,9 @@
    </property>
   </action>
   <action name="actionAddAsset">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Add asset</string>
    </property>
@@ -310,6 +326,36 @@
     <string>Ctrl+Shift+P</string>
    </property>
   </action>
+  <action name="actionBoneXCoordinateZero">
+   <property name="text">
+    <string>Make X coordinate of bone zero</string>
+   </property>
+  </action>
+  <action name="actionBoneYCoordinateZero">
+   <property name="text">
+    <string>Make Y coordinate of bone zero</string>
+   </property>
+  </action>
+  <action name="actionBoneZCoordinateZero">
+   <property name="text">
+    <string>Make Z coordinate of bone zero</string>
+   </property>
+  </action>
+  <action name="actionBoneRotationZero">
+   <property name="text">
+    <string>Make rotation of bone zero</string>
+   </property>
+  </action>
+  <action name="actionDirect_coordinate_input">
+   <property name="text">
+    <string>Open direct coordinate dialog</string>
+   </property>
+  </action>
+  <action name="actionBoneResetAll">
+   <property name="text">
+    <string>Reset all bone's position and rotation</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -318,6 +364,10 @@
    <extends>QWidget</extends>
    <header>SceneWidget.h</header>
    <container>1</container>
+   <slots>
+    <slot>addModel()</slot>
+    <slot>removeModel()</slot>
+   </slots>
   </customwidget>
   <customwidget>
    <class>TimelineWidget</class>

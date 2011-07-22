@@ -41,6 +41,7 @@
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
+#include "util.h"
 
 namespace internal
 {
@@ -51,8 +52,7 @@ class Delegate : public vpvl::gl::IDelegate
 {
 public:
     Delegate(QGLWidget *widget)
-        : m_widget(widget),
-          m_codec(QTextCodec::codecForName("Shift-JIS"))
+        : m_widget(widget)
     {}
     ~Delegate() {}
 
@@ -78,7 +78,7 @@ public:
         return loadTexture(std::string(path.toUtf8()), textureID);
     }
     const std::string toUnicode(const uint8_t *value) {
-        return std::string(m_codec->toUnicode(reinterpret_cast<const char *>(value)).toUtf8());
+        return std::string(toQString(value).toUtf8());
     }
 
 private:
@@ -164,7 +164,6 @@ private:
     }
 
     QGLWidget *m_widget;
-    QTextCodec *m_codec;
 };
 
 class World {
@@ -339,10 +338,14 @@ void SceneWidget::setCurrentFPS(int value)
     }
 }
 
-const QString SceneWidget::toUnicodeModelName(const vpvl::PMDModel *model)
+void SceneWidget::resetAllBones()
 {
-    static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    return codec->toUnicode(reinterpret_cast<const char *>(model->name()));
+    resetAllBones(selectedModel());
+}
+
+void SceneWidget::resetAllBones(vpvl::PMDModel *model)
+{
+    model->smearAllBonesToDefault(0.0f);
 }
 
 void SceneWidget::addModel()
@@ -351,7 +354,10 @@ void SceneWidget::addModel()
     QFileInfo fi(openFileDialog("sceneWidget/lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
-        if (!addModelInternal(fi.fileName(), fi.dir()))
+        vpvl::PMDModel *model = addModelInternal(fi.fileName(), fi.dir());
+        if (model)
+            setSelectedModel(model);
+        else
             QMessageBox::warning(this, tr("Loading model error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
         delete progress;
@@ -590,10 +596,9 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     if (selected) {
         vpvl::BoneList bones;
         //m_renderer->pickBones(event->pos().x(), event->pos().y(), 0.5f, bones);
-        QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         for (int i = 0; i < bones.size(); i++) {
             vpvl::Bone *bone = bones[i];
-            qDebug() << codec->toUnicode(reinterpret_cast<const char *>(bone->name()));
+            qDebug() << internal::toQString(bone);
         }
     }
 }
@@ -694,8 +699,7 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
         if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             m_renderer->loadModel(model, std::string(dir.absolutePath().toUtf8()));
             m_renderer->scene()->addModel(model);
-            QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-            QString key = codec->toUnicode(reinterpret_cast<const char *>(model->name()));
+            QString key = internal::toQString(model);
             qDebug() << key << baseName;
             if (m_models.contains(key)) {
                 int i = 0;

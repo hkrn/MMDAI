@@ -8,6 +8,8 @@
 
 namespace vpvl {
 class Bone;
+class BoneKeyFrame;
+class FaceKeyFrame;
 class PMDModel;
 }
 
@@ -52,18 +54,30 @@ class TransformWidget : public QWidget
     Q_OBJECT
 
 public:
+    enum ResetBoneType {
+        kX,
+        kY,
+        kZ,
+        kRotation
+    };
     explicit TransformWidget(QWidget *parent = 0);
     ~TransformWidget();
+
+    void resetBone(ResetBoneType type);
 
 public slots:
     void setModel(vpvl::PMDModel *value);
     void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
+signals:
+    void boneKeyFrameDidRegister(vpvl::BoneKeyFrame *frame);
+    void faceKeyFrameDidRegister(vpvl::FaceKeyFrame *frame);
+
 private slots:
     void on_faceWeightSlider_sliderMoved(int position);
     void on_faces_clicked(const QModelIndex &index);
     void on_faceWeightValue_returnPressed();
-    void on_bones_clicked(const QModelIndex &index);
+    void on_bones_pressed(const QModelIndex &index);
     void on_comboBox_currentIndexChanged(int index);
 
 private:

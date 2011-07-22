@@ -6,6 +6,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include "util.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -57,7 +58,7 @@ void MainWindow::revertSelectedModel()
 
 void MainWindow::addModel(vpvl::PMDModel *model)
 {
-    QString name = SceneWidget::toUnicodeModelName(model);
+    QString name = internal::toQString(model);
     QAction *action = new QAction(name, this);
     action->setStatusTip(tr("Select a model %1").arg(name));
     connect(action, SIGNAL(triggered()), this, SLOT(selectModel()));
@@ -67,7 +68,7 @@ void MainWindow::addModel(vpvl::PMDModel *model)
 void MainWindow::deleteModel(vpvl::PMDModel *model)
 {
     QAction *actionToRemove = 0;
-    QString name = SceneWidget::toUnicodeModelName(model);
+    QString name = internal::toQString(model);
     foreach (QAction *action, ui->menuSelectModel->actions()) {
         if (action->text() == name) {
             actionToRemove = action;
@@ -132,6 +133,19 @@ void MainWindow::connectWidgets()
             this, SLOT(setBone(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
+    connect(ui->transform, SIGNAL(boneKeyFrameDidRegister(vpvl::BoneKeyFrame*)),
+            ui->timeline, SLOT(registerBoneKeyFrame(vpvl::BoneKeyFrame*)));
+    connect(ui->transform, SIGNAL(faceKeyFrameDidRegister(vpvl::FaceKeyFrame*)),
+            ui->timeline, SLOT(registerFaceKeyFrame(vpvl::FaceKeyFrame*)));
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+}
+
+void MainWindow::on_actionAboutQt_triggered()
+{
+    qApp->aboutQt();
 }
 
 void MainWindow::on_actionAddModel_triggered()
@@ -229,17 +243,32 @@ void MainWindow::on_actionDeleteSelectedModel_triggered()
     ui->scene->deleteSelectedModel();
 }
 
-void MainWindow::on_actionAbout_triggered()
-{
-}
-
-void MainWindow::on_actionAboutQt_triggered()
-{
-    qApp->aboutQt();
-}
-
-
 void MainWindow::on_actionSetModelPose_triggered()
 {
     ui->scene->setModelPose();
+}
+
+void MainWindow::on_actionBoneXCoordinateZero_triggered()
+{
+    ui->transform->resetBone(TransformWidget::kX);
+}
+
+void MainWindow::on_actionBoneYCoordinateZero_triggered()
+{
+    ui->transform->resetBone(TransformWidget::kY);
+}
+
+void MainWindow::on_actionBoneZCoordinateZero_triggered()
+{
+    ui->transform->resetBone(TransformWidget::kZ);
+}
+
+void MainWindow::on_actionBoneRotationZero_triggered()
+{
+    ui->transform->resetBone(TransformWidget::kRotation);
+}
+
+void MainWindow::on_actionBoneResetAll_triggered()
+{
+    ui->scene->resetAllBones();
 }

@@ -35,6 +35,8 @@ private slots:
     void setBone(vpvl::Bone *value);
     void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
+    void on_actionAbout_triggered();
+    void on_actionAboutQt_triggered();
     void on_actionAddModel_triggered();
     void on_actionAddAsset_triggered();
     void on_actionInsertToAllModels_triggered();
@@ -54,10 +56,12 @@ private slots:
     void on_actionResetCamera_triggered();
     void on_actionRevertSelectedModel_triggered();
     void on_actionDeleteSelectedModel_triggered();
-    void on_actionAbout_triggered();
-    void on_actionAboutQt_triggered();
-
     void on_actionSetModelPose_triggered();
+    void on_actionBoneXCoordinateZero_triggered();
+    void on_actionBoneYCoordinateZero_triggered();
+    void on_actionBoneZCoordinateZero_triggered();
+    void on_actionBoneRotationZero_triggered();
+    void on_actionBoneResetAll_triggered();
 
 private:
     void connectWidgets();
