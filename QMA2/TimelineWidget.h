@@ -6,11 +6,16 @@
 
 namespace vpvl {
 class Bone;
+class BoneKeyFrame;
+class FaceKeyFrame;
 class PMDModel;
 }
 
+namespace internal {
+class TimelineTableModel;
+}
+
 class QTableView;
-class TableModel;
 
 class TimelineWidget : public QWidget
 {
@@ -20,6 +25,8 @@ public:
     ~TimelineWidget();
 
 public slots:
+    void registerBoneKeyFrame(vpvl::BoneKeyFrame *frame);
+    void registerFaceKeyFrame(vpvl::FaceKeyFrame *frame);
     void setModel(vpvl::PMDModel *value);
     void selectCell(QModelIndex modelIndex);
 
@@ -28,7 +35,7 @@ signals:
 
 private:
     QTableView *m_tableView;
-    TableModel *m_tableModel;
+    internal::TimelineTableModel *m_tableModel;
     vpvl::PMDModel *m_selectedModel;
 };
 
