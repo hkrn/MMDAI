@@ -90,6 +90,7 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <addaction name="actionTabs"/>
     <addaction name="actionTimeline"/>
     <addaction name="actionTransform"/>
    </widget>
@@ -444,6 +445,17 @@
    </property>
    <property name="statusTip">
     <string>Make the transform view visible.</string>
+   </property>
+  </action>
+  <action name="actionTabs">
+   <property name="text">
+    <string>Tabs</string>
+   </property>
+   <property name="toolTip">
+    <string>Show tab view</string>
+   </property>
+   <property name="statusTip">
+    <string>Make tab view visible.</string>
    </property>
   </action>
  </widget>

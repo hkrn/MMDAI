@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TabWidget</class>
+ <widget class="QTabWidget" name="TabWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>336</width>
+    <height>265</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>336</width>
+    <height>265</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>TabWidget</string>
+  </property>
+  <property name="currentIndex">
+   <number>0</number>
+  </property>
+  <widget class="FaceWidget" name="face">
+   <attribute name="title">
+    <string>Tab 1</string>
+   </attribute>
+  </widget>
+  <widget class="CameraPerspectiveWidget" name="cameraPerspective">
+   <attribute name="title">
+    <string>Tab 2</string>
+   </attribute>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FaceWidget</class>
+   <extends>QWidget</extends>
+   <header>FaceWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CameraPerspectiveWidget</class>
+   <extends>QWidget</extends>
+   <header>CameraPerspectiveWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

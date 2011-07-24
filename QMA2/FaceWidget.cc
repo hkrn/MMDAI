@@ -18,6 +18,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_eyes = new QComboBox();
     slider = createSlider();
+    connect(button, SIGNAL(clicked()), this, SLOT(registerEye()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
     eyeHBoxLayout->addWidget(label);
     eyeHBoxLayout->addWidget(button);
@@ -31,6 +32,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_lips = new QComboBox();
     slider = createSlider();
+    connect(button, SIGNAL(clicked()), this, SLOT(registerLip()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
     lipHBoxLayout->addWidget(label);
     lipHBoxLayout->addWidget(button);
@@ -44,6 +46,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_eyeblows = new QComboBox();
     slider = createSlider();
+    connect(button, SIGNAL(clicked()), this, SLOT(registerEyeblow()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
     eyeblowHBoxLayout->addWidget(label);
     eyeblowHBoxLayout->addWidget(button);
@@ -57,6 +60,7 @@ FaceWidget::FaceWidget(QWidget *parent) :
     button = new QPushButton(buttonLabel);
     m_others = new QComboBox();
     slider = createSlider();
+    connect(button, SIGNAL(clicked()), this, SLOT(registerOther()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
     otherHBoxLayout->addWidget(label);
     otherHBoxLayout->addWidget(button);
@@ -108,38 +112,68 @@ void FaceWidget::setModel(vpvl::PMDModel *model)
 
 void FaceWidget::setEyeWeight(int value)
 {
-    int index = m_eyes->currentIndex();
-    if (index >= 0)
-        setFaceWeight(m_eyes->itemText(index), value);
+    setFaceWeight(m_eyes, value);
 }
 
 void FaceWidget::setLipWeight(int value)
 {
-    int index = m_lips->currentIndex();
-    if (index >= 0)
-        setFaceWeight(m_lips->itemText(index), value);
+    setFaceWeight(m_lips, value);
 }
 
 void FaceWidget::setEyeblowWeight(int value)
 {
-    int index = m_eyeblows->currentIndex();
-    if (index >= 0)
-        setFaceWeight(m_eyeblows->itemText(index), value);
+    setFaceWeight(m_eyeblows, value);
 }
 
 void FaceWidget::setOtherWeight(int value)
 {
-    int index = m_others->currentIndex();
-    if (index >= 0)
-        setFaceWeight(m_others->itemText(index), value);
+    setFaceWeight(m_others, value);
 }
 
-void FaceWidget::setFaceWeight(const QString &name, int value)
+void FaceWidget::registerEye()
+{
+    registerBase(m_eyes);
+}
+
+void FaceWidget::registerLip()
+{
+    registerBase(m_lips);
+}
+
+void FaceWidget::registerEyeblow()
+{
+    registerBase(m_eyeblows);
+}
+
+void FaceWidget::registerOther()
+{
+    registerBase(m_others);
+}
+
+void FaceWidget::registerBase(const QComboBox *comboBox)
+{
+    int index = comboBox->currentIndex();
+    if (index >= 0) {
+        vpvl::Face *face = findFace(comboBox->itemText(index));
+        if (face)
+            emit faceDidRegister(face);
+    }
+}
+
+void FaceWidget::setFaceWeight(const QComboBox *comboBox, int value)
+{
+    int index = comboBox->currentIndex();
+    if (index >= 0) {
+        vpvl::Face *face = findFace(comboBox->itemText(index));
+        if (face)
+            face->setWeight(value / static_cast<float>(kSliderMaximumValue));
+    }
+}
+
+vpvl::Face *FaceWidget::findFace(const QString &name)
 {
     QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
-    vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    if (face)
-        face->setWeight(value / static_cast<float>(kSliderMaximumValue));
+    return m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
 }
 
 QSlider *FaceWidget::createSlider()

@@ -3,7 +3,10 @@
 
 #include <QtGui/QWidget>
 
-namespace vpvl { class PMDModel; }
+namespace vpvl {
+class PMDModel;
+class Face;
+}
 
 class QComboBox;
 class QSlider;
@@ -24,8 +27,19 @@ public slots:
     void setEyeblowWeight(int value);
     void setOtherWeight(int value);
 
+signals:
+    void faceDidRegister(vpvl::Face *face);
+
+private slots:
+    void registerEye();
+    void registerLip();
+    void registerEyeblow();
+    void registerOther();
+
 private:
-    void setFaceWeight(const QString &name, int value);
+    void setFaceWeight(const QComboBox *comboBox, int value);
+    void registerBase(const QComboBox *comboBox);
+    vpvl::Face *findFace(const QString &name);
     QSlider *createSlider();
 
     QComboBox *m_eyes;

@@ -1,6 +1,9 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "CameraPerspectiveWidget.h"
+#include "FaceWidget.h"
+#include "TabWidget.h"
 #include "TimelineWidget.h"
 #include "TransformWidget.h"
 
@@ -20,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_distance(0.0f),
     m_currentFPS(0)
 {
+    m_tabWidget = new TabWidget(&m_settings);
     m_timelineWidget = new TimelineWidget(&m_settings);
     m_transformWidget = new TransformWidget(&m_settings);
     ui->setupUi(this);
@@ -32,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_tabWidget;
     delete m_timelineWidget;
     delete m_transformWidget;
     delete ui->menuBar;
@@ -124,8 +129,8 @@ void MainWindow::connectWidgets()
             this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_timelineWidget, SLOT(setModel(vpvl::PMDModel*)));
-    //connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-    //        ui->face, SLOT(setModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_tabWidget->faceWidget(), SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_transformWidget, SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
@@ -136,9 +141,13 @@ void MainWindow::connectWidgets()
             this, SLOT(setBone(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
+    connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
+            ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
             m_timelineWidget, SLOT(registerBone(vpvl::Bone*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
+            m_timelineWidget, SLOT(registerFace(vpvl::Face*)));
+    connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
             m_timelineWidget, SLOT(registerFace(vpvl::Face*)));
 }
 
@@ -284,4 +293,9 @@ void MainWindow::on_actionTimeline_triggered()
 void MainWindow::on_actionTransform_triggered()
 {
     m_transformWidget->setVisible(true);
+}
+
+void MainWindow::on_actionTabs_triggered()
+{
+    m_tabWidget->setVisible(true);
 }

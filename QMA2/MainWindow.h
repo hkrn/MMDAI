@@ -15,6 +15,7 @@ namespace Ui {
 class MainWindow;
 }
 
+class TabWidget;
 class TimelineWidget;
 class TransformWidget;
 
@@ -69,11 +70,14 @@ private slots:
     void on_actionTimeline_triggered();
     void on_actionTransform_triggered();
 
+    void on_actionTabs_triggered();
+
 private:
     void connectWidgets();
     void updateInformation();
     Ui::MainWindow *ui;
     QSettings m_settings;
+    TabWidget *m_tabWidget;
     TimelineWidget *m_timelineWidget;
     TransformWidget *m_transformWidget;
 

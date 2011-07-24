@@ -21,7 +21,8 @@ SOURCES += main.cc\
     HandleWidget.cc \
     FaceWidget.cc \
     CameraPerspectiveWidget.cc \
-    TransformWidget.cc
+    TransformWidget.cc \
+    TabWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -30,7 +31,8 @@ HEADERS  += MainWindow.h \
     FaceWidget.h \
     CameraPerspectiveWidget.h \
     TransformWidget.h \
-    util.h
+    util.h \
+    TabWidget.h
 
 RESOURCES += resources/QMA2.qrc
 
@@ -43,4 +45,5 @@ macx {
 
 FORMS += \
     TransformWidget.ui \
-    MainWindow.ui
+    MainWindow.ui \
+    TabWidget.ui
