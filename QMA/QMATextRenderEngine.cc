@@ -98,7 +98,11 @@ void QMATextRenderEngine::setText(const QStringList &text)
     glEnable(GL_TEXTURE_2D);
     glGenTextures(1, &m_textureID);
     glBindTexture(GL_TEXTURE_2D, m_textureID);
+#if QT_VERSION >= QT_VERSION_CHECK(4, 7, 0)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, kWidth, kWidth, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.constBits());
+#else
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, kWidth, kWidth, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+#endif
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
