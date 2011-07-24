@@ -98,7 +98,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
 
     try {
         VPDPoseInternalParseState state = kNone;
-        VPDBone *bone = 0;
+        Bone *bone = 0;
         size_t nTokens = tokens.size();
         for (uint32_t i = 0; i < nTokens; i++) {
             token = tokens[i];
@@ -109,7 +109,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
                     token += 4;
                     char *s = internal::stringToken(token, "0123456789{", &p);
                     size_t len = strlen(s) + 1;
-                    bone = new VPDBone();
+                    bone = new Bone();
                     bone->name = new uint8_t[len];
                     bone->position.setZero();
                     bone->rotation.setZero();
@@ -127,9 +127,15 @@ bool VPDPose::load(const uint8_t *data, size_t size)
                 char *y = internal::stringToken(NULL, ",", &p);
                 char *z = internal::stringToken(NULL, ",;", &p);
                 if (x && y && z) {
+#ifdef VPVL_COORDINATE_OPENGL
+                    bone->position.setValue(internal::stringToFloat(x),
+                                            internal::stringToFloat(y),
+                                            -internal::stringToFloat(z));
+#else
                     bone->position.setValue(internal::stringToFloat(x),
                                             internal::stringToFloat(y),
                                             internal::stringToFloat(z));
+#endif
                     state = kQuaternion;
                 }
                 else {
@@ -144,10 +150,17 @@ bool VPDPose::load(const uint8_t *data, size_t size)
                 char *z = internal::stringToken(NULL, ",", &p);
                 char *w = internal::stringToken(NULL, ",;", &p);
                 if (x && y && z) {
+#ifdef VPVL_COORDINATE_OPENGL
+                    bone->rotation.setValue(-internal::stringToFloat(x),
+                                            -internal::stringToFloat(y),
+                                            internal::stringToFloat(z),
+                                            internal::stringToFloat(w));
+#else
                     bone->rotation.setValue(internal::stringToFloat(x),
                                             internal::stringToFloat(y),
                                             internal::stringToFloat(z),
                                             internal::stringToFloat(w));
+#endif
                     state = kEnd;
                 }
                 else {
@@ -179,16 +192,11 @@ void VPDPose::makePose(vpvl::PMDModel *model)
 {
     uint32_t nBones = m_bones.size();
     for (uint32_t i = 0; i < nBones; i++) {
-        VPDBone *b = m_bones[i];
-        Bone *bone = model->findBone(b->name);
+        Bone *b = m_bones[i];
+        vpvl::Bone *bone = model->findBone(b->name);
         if (bone) {
             btVector3 pos = b->position;
             btVector4 rot = b->rotation;
-#ifdef VPVL_COORDINATE_OPENGL
-            pos.setZ(-pos.z());
-            rot.setX(-rot.x());
-            rot.setY(-rot.y());
-#endif
             const btQuaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
             bone->setPosition(pos);
             bone->setRotation(rotation);
@@ -200,7 +208,7 @@ void VPDPose::release()
 {
     uint32_t size = m_bones.size();
     for (uint32_t i = 0; i < size; i++) {
-        VPDBone *bone = m_bones[i];
+        Bone *bone = m_bones[i];
         delete[] bone->name;
         delete bone;
     }

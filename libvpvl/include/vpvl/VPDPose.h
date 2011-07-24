@@ -58,12 +58,13 @@ class PMDModel;
 class VPDPose
 {
 public:
-    struct VPDBone
+    struct Bone
     {
         uint8_t *name;
         btVector3 position;
         btVector4 rotation;
     };
+    typedef btAlignedObjectArray<Bone *> BoneList;
 
     /**
       * Type of parsing errors.
@@ -87,10 +88,14 @@ public:
     bool load(const uint8_t *data, size_t size);
     void makePose(vpvl::PMDModel *model);
 
+    const BoneList &bones() {
+        return m_bones;
+    }
+
 private:
     void release();
 
-    btAlignedObjectArray<VPDBone *> m_bones;
+    BoneList m_bones;
     Error m_error;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(VPDPose)
