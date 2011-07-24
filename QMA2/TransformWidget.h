@@ -8,8 +8,7 @@
 
 namespace vpvl {
 class Bone;
-class BoneKeyFrame;
-class FaceKeyFrame;
+class Face;
 class PMDModel;
 }
 
@@ -70,8 +69,8 @@ public slots:
     void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
 signals:
-    void boneKeyFrameDidRegister(vpvl::BoneKeyFrame *frame);
-    void faceKeyFrameDidRegister(vpvl::FaceKeyFrame *frame);
+    void boneDidRegister(vpvl::Bone *bone);
+    void faceDidRegister(vpvl::Face *face);
 
 private slots:
     void on_faceWeightSlider_sliderMoved(int position);
@@ -79,6 +78,7 @@ private slots:
     void on_faceWeightValue_returnPressed();
     void on_bones_pressed(const QModelIndex &index);
     void on_comboBox_currentIndexChanged(int index);
+    void on_registerButton_clicked();
 
 private:
     Ui::TransformWidget *ui;

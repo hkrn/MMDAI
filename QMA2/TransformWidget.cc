@@ -7,6 +7,8 @@
 
 namespace internal {
 
+static const QString kNotSelected = QT_TR_NOOP("0: Not Selected");
+
 class BoneModel : public QAbstractListModel {
 public:
     BoneModel(QObject *parent = 0)
@@ -15,8 +17,9 @@ public:
     }
 
     void setModel(vpvl::PMDModel *value) {
-        m_bones.clear();
         QString format("%1: %2");
+        m_bones.clear();
+        m_bones.append(QPair<QString, vpvl::Bone *>(kNotSelected, 0));
         if (value) {
             vpvl::BoneList bones = value->bones();
             uint32_t nBones = bones.size();
@@ -31,6 +34,7 @@ public:
         m_model = value;
         reset();
     }
+
     void resetBone(TransformWidget::ResetBoneType type) {
         if (m_selectedBone) {
             btVector3 pos = m_selectedBone->position();
@@ -57,15 +61,26 @@ public:
             }
         }
     }
+
     bool hasModel() { return m_model != 0; }
+
     vpvl::Bone *selectBone(int rowIndex) {
         vpvl::Bone *bone = m_selectedBone = m_bones[rowIndex].second;
         return bone;
     }
 
+    QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) {
+        QList<vpvl::Bone *> bones;
+        foreach (QModelIndex index, indices) {
+            bones.append(index.isValid() ? m_bones[index.row()].second : 0);
+        }
+        return bones;
+    }
+
     int rowCount(const QModelIndex & /* parent */) const {
         return m_bones.size();
     }
+
     QVariant data(const QModelIndex &index, int role) const {
         if (!index.isValid() || role != Qt::DisplayRole)
             return QVariant();
@@ -87,8 +102,9 @@ public:
     }
 
     void setModel(vpvl::PMDModel *value) {
-        m_faces.clear();
         QString format("%1: %2");
+        m_faces.clear();
+        m_faces.append(QPair<QString, vpvl::Face *>(kNotSelected, 0));
         if (value) {
             vpvl::FaceList faces = value->faces();
             uint32_t nFaces = faces.size();
@@ -103,12 +119,22 @@ public:
         m_model = value;
         reset();
     }
+
     bool hasModel() { return m_model != 0; }
 
     vpvl::Face *selectFace(int rowIndex) {
         vpvl::Face *face = m_selectedFace = m_faces[rowIndex].second;
         return face;
     }
+
+    QList<vpvl::Face *> facesFromIndices(const QModelIndexList &indices) {
+        QList<vpvl::Face *> faces;
+        foreach (QModelIndex index, indices) {
+            faces.append(index.isValid() ? m_faces[index.row()].second : 0);
+        }
+        return faces;
+    }
+
     void setWeight(float value) {
         if (m_selectedFace)
             m_selectedFace->setWeight(value);
@@ -320,9 +346,11 @@ void TransformWidget::on_faceWeightSlider_sliderMoved(int position)
 void TransformWidget::on_faces_clicked(const QModelIndex &index)
 {
     vpvl::Face *face = castFaceModel(ui)->selectFace(index.row());
-    float weight = face->weight();
-    setFaceValue(ui, weight);
-    ui->faceWeightSlider->setValue(weight * 100.0f);
+    if (face) {
+        float weight = face->weight();
+        setFaceValue(ui, weight);
+        ui->faceWeightSlider->setValue(weight * 100.0f);
+    }
 }
 
 void TransformWidget::on_faceWeightValue_returnPressed()
@@ -339,19 +367,32 @@ void TransformWidget::on_faceWeightValue_returnPressed()
 
 void TransformWidget::on_bones_pressed(const QModelIndex &index)
 {
-    vpvl::Bone *bone = castBoneModel(ui)->selectBone(index.row());
-    bool movable = bone->isMovable(), rotateable = bone->isRotateable();
     QList<TransformButton *> buttons;
-    transformButtons(buttons, ui);
-    foreach (TransformButton *button, buttons) {
-        button->setEnabled(movable);
-        button->setBone(bone);
+    vpvl::Bone *bone = castBoneModel(ui)->selectBone(index.row());
+    if (bone) {
+        bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+        transformButtons(buttons, ui);
+        foreach (TransformButton *button, buttons) {
+            button->setEnabled(movable);
+            button->setBone(bone);
+        }
+        buttons.clear();
+        rotateButtons(buttons, ui);
+        foreach (TransformButton *button, buttons) {
+            button->setEnabled(rotateable);
+            button->setBone(bone);
+        }
     }
-    buttons.clear();
-    rotateButtons(buttons, ui);
-    foreach (TransformButton *button, buttons) {
-        button->setEnabled(rotateable);
-        button->setBone(bone);
+    else {
+        transformButtons(buttons, ui);
+        foreach (TransformButton *button, buttons) {
+            button->setEnabled(false);
+        }
+        buttons.clear();
+        rotateButtons(buttons, ui);
+        foreach (TransformButton *button, buttons) {
+            button->setEnabled(false);
+        }
     }
 }
 
@@ -359,4 +400,16 @@ void TransformWidget::on_comboBox_currentIndexChanged(int index)
 {
     foreach (TransformButton *button, allButtons(ui))
         button->setMode(index);
+}
+
+void TransformWidget::on_registerButton_clicked()
+{
+    foreach (vpvl::Bone *bone, castBoneModel(ui)->bonesFromIndices(ui->bones->selectionModel()->selectedIndexes())) {
+        if (bone)
+            emit boneDidRegister(bone);
+    }
+    foreach (vpvl::Face *face, castFaceModel(ui)->facesFromIndices(ui->faces->selectionModel()->selectedIndexes())) {
+        if (face)
+            emit faceDidRegister(face);
+    }
 }

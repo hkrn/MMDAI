@@ -133,10 +133,10 @@ void MainWindow::connectWidgets()
             this, SLOT(setBone(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
-    connect(ui->transform, SIGNAL(boneKeyFrameDidRegister(vpvl::BoneKeyFrame*)),
-            ui->timeline, SLOT(registerBoneKeyFrame(vpvl::BoneKeyFrame*)));
-    connect(ui->transform, SIGNAL(faceKeyFrameDidRegister(vpvl::FaceKeyFrame*)),
-            ui->timeline, SLOT(registerFaceKeyFrame(vpvl::FaceKeyFrame*)));
+    connect(ui->transform, SIGNAL(boneDidRegister(vpvl::Bone*)),
+            ui->timeline, SLOT(registerBone(vpvl::Bone*)));
+    connect(ui->transform, SIGNAL(faceDidRegister(vpvl::Face*)),
+            ui->timeline, SLOT(registerFace(vpvl::Face*)));
 }
 
 void MainWindow::on_actionAbout_triggered()

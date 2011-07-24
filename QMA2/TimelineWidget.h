@@ -6,8 +6,7 @@
 
 namespace vpvl {
 class Bone;
-class BoneKeyFrame;
-class FaceKeyFrame;
+class Face;
 class PMDModel;
 }
 
@@ -25,8 +24,8 @@ public:
     ~TimelineWidget();
 
 public slots:
-    void registerBoneKeyFrame(vpvl::BoneKeyFrame *frame);
-    void registerFaceKeyFrame(vpvl::FaceKeyFrame *frame);
+    void registerBone(vpvl::Bone *bone);
+    void registerFace(vpvl::Face *face);
     void setModel(vpvl::PMDModel *value);
     void selectCell(QModelIndex modelIndex);
 

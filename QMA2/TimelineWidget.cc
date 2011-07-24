@@ -54,6 +54,7 @@ class TimelineTableModel : public QAbstractTableModel {
 private:
     struct VariantInternal {
         enum Type {
+            kInvalid,
             kBone,
             kFace,
             kCamera
@@ -108,27 +109,34 @@ public:
         m_model = value;
         reset();
     }
-    void registerBoneKeyFrame(const QModelIndex &index, vpvl::BoneKeyFrame *value) {
-        VariantInternal v = m_keys[index.row()];
+    void registerBoneKeyFrame(vpvl::Bone *value, int column) {
+        QModelIndex modelIndex;
+        const VariantInternal v = findVariant(value, column, modelIndex);
         if (v.type == VariantInternal::kBone) {
-            TimelineBoneKeyFrame frame;
-            frame.pack(value);
-            QVariant variant;
-            variant.setValue(frame);
-            setData(index, variant, Qt::EditRole);
+            QByteArray bytes(vpvl::BoneKeyFrame::stride(), '0');
+            vpvl::BoneKeyFrame frame;
+            frame.setName(value->name());
+            frame.setPosition(value->position());
+            frame.setRotation(value->rotation());
+            frame.setFrameIndex(column);
+            frame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+            setData(modelIndex, bytes, Qt::EditRole);
         }
         else {
             qWarning("tried registering not bone key frame: %s", v.name.toUtf8().constData());
         }
     }
-    void registerFaceKeyFrame(const QModelIndex &index, vpvl::FaceKeyFrame *value) {
-        VariantInternal v = m_keys[index.row()];
+    void registerFaceKeyFrame(vpvl::Face *value, int column) {
+        QModelIndex modelIndex;
+        const VariantInternal v = findVariant(value, column, modelIndex);
         if (v.type == VariantInternal::kFace) {
-            TimelineFaceKeyFrame frame;
-            frame.pack(value);
-            QVariant variant;
-            variant.setValue(frame);
-            setData(index, variant, Qt::EditRole);
+            QByteArray bytes(vpvl::FaceKeyFrame::stride(), '0');
+            vpvl::FaceKeyFrame frame;
+            frame.setName(value->name());
+            frame.setWeight(value->weight());
+            frame.setFrameIndex(column);
+            frame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+            setData(modelIndex, bytes, Qt::EditRole);
         }
         else {
             qWarning("tried registering not face key frame: %s", v.name.toUtf8().constData());
@@ -167,6 +175,36 @@ public:
     }
 
 private:
+    const VariantInternal invalidVariant() {
+        VariantInternal v;
+        v.type = VariantInternal::kInvalid;
+        return v;
+    }
+    const VariantInternal findVariant(const vpvl::Bone *bone, int column, QModelIndex &modelIndex) {
+        QString s = toQString(bone);
+        int i = 0;
+        foreach (VariantInternal v, m_keys) {
+            if (v.type == VariantInternal::kBone && s == v.name) {
+                modelIndex = index(i, column);
+                return v;
+            }
+            i++;
+        }
+        return invalidVariant();
+    }
+    const VariantInternal findVariant(const vpvl::Face *bone, int column, QModelIndex &modelIndex) {
+        QString s = toQString(bone);
+        int i = 0;
+        foreach (VariantInternal v, m_keys) {
+            if (v.type == VariantInternal::kFace && s == v.name) {
+                modelIndex = index(i, column);
+                return v;
+            }
+            i++;
+        }
+        return invalidVariant();
+    }
+
     vpvl::PMDModel *m_model;
     QList<VariantInternal> m_keys;
     QHash< QPair<int, int>, QVariant > m_values;
@@ -234,14 +272,18 @@ TimelineWidget::~TimelineWidget()
     delete m_tableView;
 }
 
-void TimelineWidget::registerBoneKeyFrame(vpvl::BoneKeyFrame *frame)
+void TimelineWidget::registerBone(vpvl::Bone *bone)
 {
-    m_tableModel->registerBoneKeyFrame(m_tableView->currentIndex(), frame);
+    QModelIndex index = m_tableView->selectionModel()->selectedIndexes().first();
+    if (index.isValid())
+        m_tableModel->registerBoneKeyFrame(bone, index.column());
 }
 
-void TimelineWidget::registerFaceKeyFrame(vpvl::FaceKeyFrame *frame)
+void TimelineWidget::registerFace(vpvl::Face *face)
 {
-    m_tableModel->registerFaceKeyFrame(m_tableView->currentIndex(), frame);
+    QModelIndex index = m_tableView->selectionModel()->selectedIndexes().first();
+    if (index.isValid())
+        m_tableModel->registerFaceKeyFrame(face, index.column());
 }
 
 void TimelineWidget::setModel(vpvl::PMDModel *value)

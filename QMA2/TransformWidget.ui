@@ -249,7 +249,7 @@ QPushButton:disabled { color:gray }</string>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="register_2">
+         <widget class="QPushButton" name="registerButton">
           <property name="text">
            <string>Register</string>
           </property>
