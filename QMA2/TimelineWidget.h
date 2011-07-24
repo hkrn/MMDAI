@@ -15,12 +15,13 @@ class TimelineTableModel;
 }
 
 class QTableView;
+class QSettings;
 
 class TimelineWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit TimelineWidget(QWidget *parent = 0);
+    explicit TimelineWidget(QSettings *settings, QWidget *parent = 0);
     ~TimelineWidget();
 
 public slots:
@@ -32,7 +33,11 @@ public slots:
 signals:
     void boneDidSelect(vpvl::Bone *bone);
 
+protected:
+    void closeEvent(QCloseEvent *event);
+
 private:
+    QSettings *m_settings;
     QTableView *m_tableView;
     internal::TimelineTableModel *m_tableModel;
     vpvl::PMDModel *m_selectedModel;

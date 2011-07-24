@@ -27,7 +27,7 @@ public:
                 vpvl::Bone *bone = bones.at(i);
                 if (bone->isVisible()) {
                     QString name = toQString(bone);
-                    m_bones.append(QPair<QString, vpvl::Bone *>(format.arg(i).arg(name), bone));
+                    m_bones.append(QPair<QString, vpvl::Bone *>(format.arg(i + 1).arg(name), bone));
                 }
             }
         }
@@ -273,13 +273,15 @@ static internal::FaceModel *castFaceModel(Ui::TransformWidget *ui)
     return reinterpret_cast<internal::FaceModel *>(ui->faces->model());
 }
 
-TransformWidget::TransformWidget(QWidget *parent) :
+TransformWidget::TransformWidget(QSettings *settings, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::TransformWidget)
+    ui(new Ui::TransformWidget),
+    m_settings(settings)
 {
     ui->setupUi(this);
     ui->bones->setModel(new internal::BoneModel(this));
     ui->faces->setModel(new internal::FaceModel(this));
+    restoreGeometry(m_settings->value("transformWidget/geometry").toByteArray());
 }
 
 TransformWidget::~TransformWidget()
@@ -335,6 +337,12 @@ void TransformWidget::setCameraPerspective(const btVector3 & /* pos */,
     reinterpret_cast<TransformButton *>(ui->rx)->setAngle(angle);
     reinterpret_cast<TransformButton *>(ui->ry)->setAngle(angle);
     reinterpret_cast<TransformButton *>(ui->rz)->setAngle(angle);
+}
+
+void TransformWidget::closeEvent(QCloseEvent *event)
+{
+    m_settings->setValue("transformWidget/geometry", saveGeometry());
+    event->accept();
 }
 
 void TransformWidget::on_faceWeightSlider_sliderMoved(int position)

@@ -3,6 +3,7 @@
 
 #include <QtCore/QSettings>
 #include <QtGui/QMainWindow>
+#include <QtGui/QMenuBar>
 #include <LinearMath/btVector3.h>
 
 namespace vpvl {
@@ -13,6 +14,9 @@ class PMDModel;
 namespace Ui {
 class MainWindow;
 }
+
+class TimelineWidget;
+class TransformWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -62,12 +66,16 @@ private slots:
     void on_actionBoneZCoordinateZero_triggered();
     void on_actionBoneRotationZero_triggered();
     void on_actionBoneResetAll_triggered();
+    void on_actionTimeline_triggered();
+    void on_actionTransform_triggered();
 
 private:
     void connectWidgets();
     void updateInformation();
     Ui::MainWindow *ui;
     QSettings m_settings;
+    TimelineWidget *m_timelineWidget;
+    TransformWidget *m_transformWidget;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;

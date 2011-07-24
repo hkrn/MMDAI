@@ -81,11 +81,13 @@ public:
             uint32_t nFaces = faces.size();
             for (uint32_t i = 0; i < nFaces; i++) {
                 vpvl::Face *face = faces.at(i);
-                VariantInternal v;
-                v.type = VariantInternal::kFace;
-                v.u.face = face;
-                v.name = toQString(face);
-                m_keys.append(v);
+                if (face->type() != vpvl::Face::kBase) {
+                    VariantInternal v;
+                    v.type = VariantInternal::kFace;
+                    v.u.face = face;
+                    v.name = toQString(face);
+                    m_keys.append(v);
+                }
             }
             vpvl::BoneList bones = value->bones();
             uint32_t nBones = bones.size();
@@ -243,8 +245,9 @@ public:
 
 }
 
-TimelineWidget::TimelineWidget(QWidget *parent) :
+TimelineWidget::TimelineWidget(QSettings *settings, QWidget *parent) :
     QWidget(parent),
+    m_settings(settings),
     m_tableView(0),
     m_tableModel(0),
     m_selectedModel(0)
@@ -263,7 +266,9 @@ TimelineWidget::TimelineWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tableView);
     layout->setContentsMargins(QMargins());
+    setWindowTitle(tr("TimelineView"));
     setLayout(layout);
+    restoreGeometry(m_settings->value("timelineWidget/geometry").toByteArray());
 }
 
 TimelineWidget::~TimelineWidget()
@@ -274,9 +279,12 @@ TimelineWidget::~TimelineWidget()
 
 void TimelineWidget::registerBone(vpvl::Bone *bone)
 {
-    QModelIndex index = m_tableView->selectionModel()->selectedIndexes().first();
-    if (index.isValid())
-        m_tableModel->registerBoneKeyFrame(bone, index.column());
+    QModelIndexList indices = m_tableView->selectionModel()->selectedIndexes();
+    if (!indices.isEmpty()) {
+        QModelIndex index = indices.first();
+        if (index.isValid())
+            m_tableModel->registerBoneKeyFrame(bone, index.column());
+    }
 }
 
 void TimelineWidget::registerFace(vpvl::Face *face)
@@ -302,4 +310,10 @@ void TimelineWidget::selectCell(QModelIndex modelIndex)
         if (bone)
             boneDidSelect(bone);
     }
+}
+
+void TimelineWidget::closeEvent(QCloseEvent *event)
+{
+    m_settings->setValue("timelineWidget/geometry", saveGeometry());
+    event->accept();
 }

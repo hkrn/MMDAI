@@ -16,6 +16,8 @@ namespace Ui {
     class TransformWidget;
 }
 
+class QSettings;
+
 class TransformButton : public QPushButton
 {
     Q_OBJECT
@@ -59,7 +61,7 @@ public:
         kZ,
         kRotation
     };
-    explicit TransformWidget(QWidget *parent = 0);
+    explicit TransformWidget(QSettings *settings, QWidget *parent = 0);
     ~TransformWidget();
 
     void resetBone(ResetBoneType type);
@@ -72,6 +74,9 @@ signals:
     void boneDidRegister(vpvl::Bone *bone);
     void faceDidRegister(vpvl::Face *face);
 
+protected:
+    void closeEvent(QCloseEvent *event);
+
 private slots:
     void on_faceWeightSlider_sliderMoved(int position);
     void on_faces_clicked(const QModelIndex &index);
@@ -82,6 +87,7 @@ private slots:
 
 private:
     Ui::TransformWidget *ui;
+    QSettings *m_settings;
 };
 
 #endif // TRANSFORMWIDGET_H
