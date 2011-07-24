@@ -145,6 +145,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   set_target_properties(vpvl
       PROPERTIES PREFIX "" SUFFIX .${VPVL_VERSION}.dll
       IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
 endif()
 
 # create as a framework if build on darwin environment
