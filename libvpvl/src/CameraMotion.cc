@@ -45,7 +45,7 @@ class CameraMotionKeyFramePredication
 {
 public:
     bool operator()(const CameraKeyFrame *left, const CameraKeyFrame *right) {
-        return left->frameIndex() - right->frameIndex();
+        return left->frameIndex() < right->frameIndex();
     }
 };
 

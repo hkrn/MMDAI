@@ -155,15 +155,15 @@ void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate)
     glGetIntegerv(GL_VIEWPORT, view);
     winX = px;
     winY = view[3] - py;
-    glReadPixels(winX, winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
+    glReadPixels(static_cast<GLint>(winX), static_cast<GLint>(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
     gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
-    coordinate.setValue(x, y, z);
+    coordinate.setValue(static_cast<btScalar>(x), static_cast<btScalar>(y), static_cast<btScalar>(z));
 }
 
 void Renderer::setLighting()
 {
     btVector4 color(1.0f, 1.0f, 1.0f, 1.0f), direction(0.5f, 1.0f, 0.5f, 0.0f);
-    btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6;
+    btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6f;
 
     // use MMD like cartoon
 #if 0
@@ -569,35 +569,35 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
         if (type != vpvl::Bone::kInvisible) {
             if (bone->isSimulated()) {
                 glColor4f(0.8f, 0.8f, 0.0f, 1.0f);
-                glScalef(0.1, 0.1, 0.1);
+                glScalef(0.1f, 0.1f, 0.1f);
             }
             else {
                 switch (type) {
                 case vpvl::Bone::kIKDestination:
                     glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
-                    glScalef(0.25, 0.25, 0.25);
+                    glScalef(0.25f, 0.25f, 0.25f);
                     break;
                 case vpvl::Bone::kUnderIK:
                     glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
+                    glScalef(0.15f, 0.15f, 0.15f);
                     break;
                 case vpvl::Bone::kIKTarget:
                     glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
+                    glScalef(0.15f, 0.15f, 0.15f);
                     break;
                 case vpvl::Bone::kUnderRotate:
                 case vpvl::Bone::kTwist:
                 case vpvl::Bone::kFollowRotate:
                     glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
-                    glScalef(0.15, 0.15, 0.15);
+                    glScalef(0.15f, 0.15f, 0.15f);
                     break;
                 default:
                     if (bone->hasMotionIndependency()) {
                         glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-                        glScalef(0.25, 0.25, 0.25);
+                        glScalef(0.25f, 0.25f, 0.25f);
                     } else {
                         glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
-                        glScalef(0.15, 0.15, 0.15);
+                        glScalef(0.15f, 0.15f, 0.15f);
                     }
                     break;
                 }
@@ -676,7 +676,7 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
     glEnable(GL_LIGHTING);
 }
 
-static void DrawAsset(const vpvl::XModel *model, const btVector4 indices, int index)
+static void DrawAsset(const vpvl::XModel *model, const btVector4 &indices, int index)
 {
     const btAlignedObjectArray<btVector3> &vertices = model->vertices();
     const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();

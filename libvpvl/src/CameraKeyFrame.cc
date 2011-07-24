@@ -110,7 +110,7 @@ void CameraKeyFrame::read(const uint8_t *data) {
 void CameraKeyFrame::write(uint8_t *data)
 {
     CameraKeyFrameChunk chunk;
-    chunk.frameIndex = m_frameIndex;
+    chunk.frameIndex = static_cast<uint32_t>(m_frameIndex);
     chunk.viewAngle = static_cast<uint32_t>(m_fovy);
     chunk.noPerspective = m_noPerspective ? 1 : 0;
     chunk.position[0] = m_position.x();

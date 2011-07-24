@@ -100,7 +100,7 @@ void BoneKeyFrame::write(uint8_t *data)
 {
     BoneKeyFrameChunk chunk;
     copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
-    chunk.frameIndex = m_frameIndex;
+    chunk.frameIndex = static_cast<uint32_t>(m_frameIndex);
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
     chunk.rotation[2] = m_rotation.z();
