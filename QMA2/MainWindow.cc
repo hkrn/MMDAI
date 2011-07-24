@@ -27,8 +27,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_timelineWidget = new TimelineWidget(&m_settings);
     m_transformWidget = new TransformWidget(&m_settings);
     ui->setupUi(this);
-    ui->menuBar->setParent(0);
     ui->scene->setSettings(&m_settings);
+    /* for QMenu limitation see http://doc.qt.nokia.com/latest/mac-differences.html#menu-actions */
+#ifdef Q_OS_MACX
+    ui->menuBar->setParent(0);
+#endif
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
@@ -39,7 +42,10 @@ MainWindow::~MainWindow()
     delete m_tabWidget;
     delete m_timelineWidget;
     delete m_transformWidget;
+    /* for QMenu limitation see http://doc.qt.nokia.com/latest/mac-differences.html#menu-actions */
+#ifdef Q_OS_MACX
     delete ui->menuBar;
+#endif
     delete ui;
 }
 
