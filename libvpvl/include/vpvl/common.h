@@ -60,6 +60,16 @@ typedef unsigned int uint32_t;
 #include <stdarg.h>
 #include <stdlib.h>
 
+#if defined (_WIN32) 
+  #if defined(vpvl_EXPORTS)
+    #define  VPVL_EXPORT __declspec(dllexport)
+  #else
+    #define  VPVL_EXPORT __declspec(dllimport)
+  #endif /* MyLibrary_EXPORTS */
+#else /* defined (_WIN32) */
+ #define VPVL_EXPORT
+#endif
+
 namespace vpvl
 {
 

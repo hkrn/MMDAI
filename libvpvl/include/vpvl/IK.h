@@ -54,7 +54,7 @@ namespace vpvl
  * IK class represents a Inverse Kinematics of a Polygon Model Data object.
  */
 
-class IK
+class VPVL_EXPORT IK
 {
 public:
     IK();

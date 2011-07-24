@@ -56,7 +56,7 @@ namespace vpvl
  * Vertex class represents a vertex of a Polygon Model Data object.
  */
 
-class Vertex
+class VPVL_EXPORT Vertex
 {
 public:
     Vertex();

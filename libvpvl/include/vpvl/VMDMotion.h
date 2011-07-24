@@ -75,7 +75,7 @@ struct VMDMotionDataInfo
  * Bone class represents a Vocaloid Motion Data object, set of bone, face and camera motion.
  */
 
-class VMDMotion
+class VPVL_EXPORT VMDMotion
 {
 public:
 

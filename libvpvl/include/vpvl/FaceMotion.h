@@ -62,7 +62,7 @@ typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
  * of a Vocaloid Motion Data object inherits BaseMotion.
  */
 
-class FaceMotion : public BaseMotion
+class VPVL_EXPORT FaceMotion : public BaseMotion
 {
 public:
     FaceMotion();

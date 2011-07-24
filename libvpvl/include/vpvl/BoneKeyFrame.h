@@ -50,7 +50,7 @@ namespace vpvl
 
 class Bone;
 
-class BoneKeyFrame
+class VPVL_EXPORT BoneKeyFrame
 {
 public:
     BoneKeyFrame();

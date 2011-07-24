@@ -47,7 +47,7 @@
 namespace vpvl
 {
 
-class CameraKeyFrame
+class VPVL_EXPORT CameraKeyFrame
 {
 public:
     CameraKeyFrame();

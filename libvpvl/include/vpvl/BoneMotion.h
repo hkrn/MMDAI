@@ -62,7 +62,7 @@ typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
  * of a Vocaloid Motion Data object inherits BaseMotion.
  */
 
-class BoneMotion : public BaseMotion
+class VPVL_EXPORT BoneMotion : public BaseMotion
 {
 public:
     BoneMotion();

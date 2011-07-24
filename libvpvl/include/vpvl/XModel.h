@@ -65,7 +65,7 @@ typedef btAlignedObjectArray<uint16_t> XModelIndexList;
  * XModel class represents a DirectX model.
  */
 
-class XModel
+class VPVL_EXPORT XModel
 {
 public:
 

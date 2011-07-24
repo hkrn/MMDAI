@@ -63,7 +63,7 @@ struct FaceVertex
  * Face class represents a face of a Polygon Model Data object.
  */
 
-class Face
+class VPVL_EXPORT Face
 {
 public:
 

@@ -62,7 +62,7 @@ class VMDMotion;
  * Scene class represents scene with camera and set of models.
  */
 
-class Scene
+class VPVL_EXPORT Scene
 {
 public:
     static const int kFPS = 30;

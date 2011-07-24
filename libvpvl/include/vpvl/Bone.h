@@ -61,7 +61,7 @@ typedef btAlignedObjectArray<Bone*> BoneList;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class Bone
+class VPVL_EXPORT Bone
 {
 public:
 

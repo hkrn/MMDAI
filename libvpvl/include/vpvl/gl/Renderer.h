@@ -61,7 +61,7 @@ class XModel;
 namespace gl
 {
 
-class IDelegate
+class VPVL_EXPORT IDelegate
 {
 public:
     virtual bool loadTexture(const std::string &path, GLuint &textureID) = 0;
@@ -79,7 +79,7 @@ public:
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class Renderer
+class VPVL_EXPORT Renderer
 {
 public:
     static bool initializeGLEW(GLenum &err);

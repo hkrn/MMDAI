@@ -58,7 +58,7 @@ typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
  * of a Vocaloid Motion Data object inherits BaseMotion.
  */
 
-class CameraMotion : public BaseMotion
+class VPVL_EXPORT CameraMotion : public BaseMotion
 {
 public:
     CameraMotion();

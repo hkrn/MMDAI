@@ -48,7 +48,7 @@ namespace vpvl
 
 class Face;
 
-class FaceKeyFrame
+class VPVL_EXPORT FaceKeyFrame
 {
 public:
     FaceKeyFrame();

@@ -57,7 +57,7 @@ namespace vpvl
  * Constraint class represents a consraint of a Polygon Model Data object.
  */
 
-class Constraint
+class VPVL_EXPORT Constraint
 {
 public:
     Constraint();

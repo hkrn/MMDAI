@@ -57,7 +57,7 @@ namespace vpvl
  * The basic class inherited by BoneMotion, CameraMotion and FaceMotion class.
  */
 
-class BaseMotion
+class VPVL_EXPORT BaseMotion
 {
 public:
 
