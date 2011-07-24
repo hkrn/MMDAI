@@ -119,6 +119,9 @@
               <layout class="QHBoxLayout" name="rotation_2">
                <item>
                 <widget class="TransformButton" name="rx">
+                 <property name="cursor">
+                  <cursorShape>OpenHandCursor</cursorShape>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">QPushButton { color:red }
 QPushButton:disabled { color:gray }</string>
@@ -130,6 +133,9 @@ QPushButton:disabled { color:gray }</string>
                </item>
                <item>
                 <widget class="TransformButton" name="ry">
+                 <property name="cursor">
+                  <cursorShape>OpenHandCursor</cursorShape>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">QPushButton { color:green }
 QPushButton:disabled { color:gray }</string>
@@ -141,6 +147,9 @@ QPushButton:disabled { color:gray }</string>
                </item>
                <item>
                 <widget class="TransformButton" name="rz">
+                 <property name="cursor">
+                  <cursorShape>OpenHandCursor</cursorShape>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">QPushButton { color:blue }
 QPushButton:disabled { color:gray }</string>
@@ -169,6 +178,9 @@ QPushButton:disabled { color:gray }</string>
               <layout class="QHBoxLayout" name="transformation_2">
                <item>
                 <widget class="TransformButton" name="tx">
+                 <property name="cursor">
+                  <cursorShape>OpenHandCursor</cursorShape>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">QPushButton { color:red }
 QPushButton:disabled { color:gray }</string>
@@ -180,6 +192,9 @@ QPushButton:disabled { color:gray }</string>
                </item>
                <item>
                 <widget class="TransformButton" name="ty">
+                 <property name="cursor">
+                  <cursorShape>OpenHandCursor</cursorShape>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">QPushButton { color:green }
 QPushButton:disabled { color:gray }</string>
@@ -191,6 +206,9 @@ QPushButton:disabled { color:gray }</string>
                </item>
                <item>
                 <widget class="TransformButton" name="tz">
+                 <property name="cursor">
+                  <cursorShape>OpenHandCursor</cursorShape>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">QPushButton { color:blue }
 QPushButton:disabled { color:gray }</string>

@@ -46,6 +46,8 @@ protected:
 private:
     vpvl::Bone *m_bone;
     btVector3 m_angle;
+    QCursor m_cursor;
+    QPoint m_drag;
     QPoint m_pos;
     Coordinate m_mode;
 };

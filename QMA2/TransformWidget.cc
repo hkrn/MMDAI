@@ -187,6 +187,11 @@ void TransformButton::setMode(int value)
 void TransformButton::mousePressEvent(QMouseEvent *event)
 {
     m_pos = event->pos();
+    m_drag = mapToGlobal(m_pos);
+    m_cursor = cursor();
+    QBitmap transparent(32, 32);
+    transparent.fill(Qt::color0);
+    qApp->setOverrideCursor(QCursor(transparent, transparent));
 }
 
 void TransformButton::mouseMoveEvent(QMouseEvent *event)
@@ -259,6 +264,8 @@ void TransformButton::mouseMoveEvent(QMouseEvent *event)
 
 void TransformButton::mouseReleaseEvent(QMouseEvent * /* event */)
 {
+    qApp->setOverrideCursor(m_cursor);
+    cursor().setPos(m_drag);
     m_pos.setX(0);
     m_pos.setY(0);
 }
