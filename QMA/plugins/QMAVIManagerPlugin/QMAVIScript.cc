@@ -192,7 +192,7 @@ void QMAVIScript::addScriptArc(int from,
     state1->arcs.append(arc);
 }
 
-QMAVIScriptState *QMAVIScript::newScriptState(uint32_t index)
+QMAVIScriptState *QMAVIScript::newScriptState(quint32 index)
 {
     QMAVIScriptState *head, *res;
     if (m_states.count() == 0) {

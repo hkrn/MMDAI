@@ -81,7 +81,7 @@ private:
                       int to,
                       const QMAVIScriptArgument &input,
                       const QMAVIScriptArgument &output);
-    QMAVIScriptState *newScriptState(uint32_t index);
+    QMAVIScriptState *newScriptState(quint32 index);
 
     QLinkedList<QMAVIScriptState *> m_states;
     QMAVIScriptState *m_currentState;
