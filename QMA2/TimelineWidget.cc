@@ -111,6 +111,73 @@ public:
         m_model = value;
         reset();
     }
+
+    void loadMotion(vpvl::VMDMotion *motion) {
+        QModelIndex modelIndex;
+        const vpvl::BoneKeyFrameList boneFrames = motion->bone().frames();
+        uint32_t nBoneFrames = boneFrames.size();
+        for (uint32_t i = 0; i < nBoneFrames; i++) {
+            vpvl::BoneKeyFrame *frame = boneFrames[i];
+            const uint8_t *name = frame->name();
+            vpvl::Bone *bone = m_model->findBone(name);
+            uint32_t frameIndex = frame->frameIndex();
+            const VariantInternal v = findVariant(bone, frameIndex, modelIndex);
+            if (v.type == VariantInternal::kBone) {
+                QByteArray bytes(vpvl::BoneKeyFrame::stride(), '0');
+                vpvl::BoneKeyFrame newFrame;
+                newFrame.setName(name);
+                newFrame.setPosition(frame->position());
+                newFrame.setRotation(frame->rotation());
+                newFrame.setFrameIndex(frameIndex);
+                newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+                setData(modelIndex, bytes, Qt::EditRole);
+            }
+        }
+        const vpvl::FaceKeyFrameList faceFrames = motion->face().frames();
+        uint32_t nFaceFrames = faceFrames.size();
+        for (uint32_t i = 0; i < nFaceFrames; i++) {
+            vpvl::FaceKeyFrame *frame = faceFrames[i];
+            const uint8_t *name = frame->name();
+            vpvl::Face *bone = m_model->findFace(name);
+            uint32_t frameIndex = frame->frameIndex();
+            const VariantInternal v = findVariant(bone, frameIndex, modelIndex);
+            if (v.type == VariantInternal::kFace) {
+                QByteArray bytes(vpvl::FaceKeyFrame::stride(), '0');
+                vpvl::FaceKeyFrame newFrame;
+                newFrame.setName(name);
+                newFrame.setWeight(frame->weight());
+                newFrame.setFrameIndex(frameIndex);
+                newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+                setData(modelIndex, bytes, Qt::EditRole);
+            }
+        }
+    }
+
+    void loadPose(vpvl::VPDPose *pose, int frameIndex) {
+        QModelIndex modelIndex;
+        const vpvl::VPDPose::BoneList boneFrames = pose->bones();
+        uint32_t nBoneFrames = boneFrames.size();
+        for (uint32_t i = 0; i < nBoneFrames; i++) {
+            vpvl::VPDPose::Bone *frame = boneFrames[i];
+            const uint8_t *name = frame->name;
+            vpvl::Bone *bone = m_model->findBone(name);
+            const VariantInternal v = findVariant(bone, frameIndex, modelIndex);
+            if (v.type == VariantInternal::kBone) {
+                QByteArray bytes(vpvl::BoneKeyFrame::stride(), '0');
+                btQuaternion rotation;
+                const btVector4 &v = frame->rotation;
+                rotation.setValue(v.x(), v.y(), v.z(), v.w());
+                vpvl::BoneKeyFrame newFrame;
+                newFrame.setName(name);
+                newFrame.setPosition(frame->position);
+                newFrame.setRotation(rotation);
+                newFrame.setFrameIndex(frameIndex);
+                newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+                setData(modelIndex, bytes, Qt::EditRole);
+            }
+        }
+    }
+
     void registerBoneKeyFrame(vpvl::Bone *value, int column) {
         QModelIndex modelIndex;
         const VariantInternal v = findVariant(value, column, modelIndex);
@@ -128,6 +195,7 @@ public:
             qWarning("tried registering not bone key frame: %s", v.name.toUtf8().constData());
         }
     }
+
     void registerFaceKeyFrame(vpvl::Face *value, int column) {
         QModelIndex modelIndex;
         const VariantInternal v = findVariant(value, column, modelIndex);
@@ -144,6 +212,7 @@ public:
             qWarning("tried registering not face key frame: %s", v.name.toUtf8().constData());
         }
     }
+
     bool hasModel() { return m_model != 0; }
 
     int rowCount(const QModelIndex & /* parent */) const {
@@ -183,6 +252,8 @@ private:
         return v;
     }
     const VariantInternal findVariant(const vpvl::Bone *bone, int column, QModelIndex &modelIndex) {
+        if (!bone)
+            return invalidVariant();
         QString s = toQString(bone);
         int i = 0;
         foreach (VariantInternal v, m_keys) {
@@ -194,8 +265,10 @@ private:
         }
         return invalidVariant();
     }
-    const VariantInternal findVariant(const vpvl::Face *bone, int column, QModelIndex &modelIndex) {
-        QString s = toQString(bone);
+    const VariantInternal findVariant(const vpvl::Face *face, int column, QModelIndex &modelIndex) {
+        if (!face)
+            return invalidVariant();
+        QString s = toQString(face);
         int i = 0;
         foreach (VariantInternal v, m_keys) {
             if (v.type == VariantInternal::kFace && s == v.name) {
@@ -289,9 +362,12 @@ void TimelineWidget::registerBone(vpvl::Bone *bone)
 
 void TimelineWidget::registerFace(vpvl::Face *face)
 {
-    QModelIndex index = m_tableView->selectionModel()->selectedIndexes().first();
-    if (index.isValid())
-        m_tableModel->registerFaceKeyFrame(face, index.column());
+    QModelIndexList indices = m_tableView->selectionModel()->selectedIndexes();
+    if (!indices.isEmpty()) {
+        QModelIndex index = indices.first();
+        if (index.isValid())
+            m_tableModel->registerFaceKeyFrame(face, index.column());
+    }
 }
 
 void TimelineWidget::setModel(vpvl::PMDModel *value)
@@ -301,14 +377,43 @@ void TimelineWidget::setModel(vpvl::PMDModel *value)
     boneDidSelect(0);
 }
 
+void TimelineWidget::setMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+{
+    setModel(model);
+    m_tableModel->loadMotion(motion);
+}
+
+void TimelineWidget::setPose(vpvl::VPDPose *pose, vpvl::PMDModel *model)
+{
+    QModelIndexList indices = m_tableView->selectionModel()->selectedIndexes();
+    if (!indices.isEmpty()) {
+        QModelIndex index = indices.first();
+        if (index.isValid()) {
+            setModel(model);
+            m_tableModel->loadPose(pose, index.column());
+        }
+    }
+}
+
 void TimelineWidget::selectCell(QModelIndex modelIndex)
 {
     QVariant name = m_tableModel->headerData(modelIndex.row(), Qt::Vertical, Qt::DisplayRole);
     if (m_tableModel->hasModel()) {
-        QByteArray bytes = internal::getTextCodec()->fromUnicode(name.toString());
-        vpvl::Bone *bone = m_selectedModel->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        if (bone)
+        QTextCodec *codec = internal::getTextCodec();
+        QByteArray bytes = codec->fromUnicode(name.toString());
+        const uint8_t *n = reinterpret_cast<const uint8_t *>(bytes.constData());
+        vpvl::Bone *bone = m_selectedModel->findBone(n);
+        if (bone) {
             boneDidSelect(bone);
+            frameIndexSeeked(modelIndex.column());
+            return;
+        }
+        vpvl::Face *face = m_selectedModel->findFace(n);
+        if (face) {
+            faceDidSelect(face);
+            frameIndexSeeked(modelIndex.column());
+            return;
+        }
     }
 }
 

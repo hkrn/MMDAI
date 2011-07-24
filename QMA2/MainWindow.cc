@@ -139,6 +139,10 @@ void MainWindow::connectWidgets()
             m_tabWidget->faceWidget(), SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_transformWidget, SLOT(setModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
+            m_timelineWidget, SLOT(setMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidMakePose(vpvl::VPDPose*,vpvl::PMDModel*)),
+            m_timelineWidget, SLOT(setPose(vpvl::VPDPose*,vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
             this, SLOT(setCurrentFPS(int)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
