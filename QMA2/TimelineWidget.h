@@ -37,7 +37,7 @@ public slots:
 signals:
     void boneDidSelect(vpvl::Bone *bone);
     void faceDidSelect(vpvl::Face *face);
-    void frameIndexSeeked(int frameIndex);
+    void frameIndexSeeked(float frameIndex);
 
 protected:
     void closeEvent(QCloseEvent *event);

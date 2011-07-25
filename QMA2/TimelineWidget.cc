@@ -293,7 +293,7 @@ public:
     }
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
         const QRect &rect = option.rect;
-        painter->save();
+        //painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
         if (index.column() % 5 == 0)
             painter->fillRect(rect, Qt::lightGray);
@@ -311,8 +311,8 @@ public:
             polygon.append(QPoint(xoffset + width, yoffset + height / 2));
             polygon.append(QPoint(xoffset + width / 2, yoffset ));
             painter->drawPolygon(polygon);
-            painter->restore();
         }
+        //painter->restore();
     }
 };
 
@@ -405,13 +405,13 @@ void TimelineWidget::selectCell(QModelIndex modelIndex)
         vpvl::Bone *bone = m_selectedModel->findBone(n);
         if (bone) {
             boneDidSelect(bone);
-            frameIndexSeeked(modelIndex.column());
+            frameIndexSeeked(static_cast<float>(modelIndex.column()));
             return;
         }
         vpvl::Face *face = m_selectedModel->findFace(n);
         if (face) {
             faceDidSelect(face);
-            frameIndexSeeked(modelIndex.column());
+            frameIndexSeeked(static_cast<float>(modelIndex.column()));
             return;
         }
     }

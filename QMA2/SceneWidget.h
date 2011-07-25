@@ -100,6 +100,7 @@ public slots:
     void resetCamera();
     void rotate(float x, float y);
     void translate(float x, float y);
+    void seekMotion(float frameIndex);
     void setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }

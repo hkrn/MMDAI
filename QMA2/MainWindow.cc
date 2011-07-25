@@ -159,6 +159,8 @@ void MainWindow::connectWidgets()
             m_timelineWidget, SLOT(registerFace(vpvl::Face*)));
     connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
             m_timelineWidget, SLOT(registerFace(vpvl::Face*)));
+    connect(m_timelineWidget, SIGNAL(frameIndexSeeked(float)),
+            ui->scene, SLOT(seekMotion(float)));
 }
 
 void MainWindow::on_actionAbout_triggered()
