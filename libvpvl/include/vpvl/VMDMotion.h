@@ -117,6 +117,7 @@ public:
     size_t estimateSize();
     void save(uint8_t *data);
     void attachModel(PMDModel *model);
+    void seek(float frameIndex);
     void update(float deltaFrame);
 
     const uint8_t *name() const {

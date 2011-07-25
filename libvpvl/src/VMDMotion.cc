@@ -242,6 +242,14 @@ void VMDMotion::attachModel(PMDModel *model)
         m_beginningNonControlledBlend = 10.0f;
 }
 
+void VMDMotion::seek(float frameIndex)
+{
+    m_boneMotion.setBlendRate(m_boneMotion.blendRate());
+    m_faceMotion.setBlendRate(1.0f);
+    m_boneMotion.seek(frameIndex);
+    m_faceMotion.seek(frameIndex);
+}
+
 void VMDMotion::update(float deltaFrame)
 {
     if (m_beginningNonControlledBlend > 0.0f) {

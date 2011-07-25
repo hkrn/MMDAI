@@ -172,6 +172,7 @@ public:
     void joinWorld(::btDiscreteDynamicsWorld *world);
     void leaveWorld(::btDiscreteDynamicsWorld *world);
     void removeMotion(VMDMotion *motion);
+    void seekMotion(float frameIndex);
     void updateRootBone();
     void updateMotion(float deltaFrame);
     void updateSkins();

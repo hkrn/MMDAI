@@ -184,6 +184,16 @@ void PMDModel::removeMotion(VMDMotion *motion)
     m_motions.remove(motion);
 }
 
+void PMDModel::seekMotion(float deltaFrame)
+{
+    uint32_t nMotions = m_motions.size();
+    for (uint32_t i = 0; i < nMotions; i++)
+        m_motions[i]->seek(deltaFrame);
+    updateAllBones();
+    updateAllFaces();
+    updateBoneFromSimulation();
+}
+
 void PMDModel::updateRootBone()
 {
     // FIXME: implement associated accessory
