@@ -47,14 +47,12 @@
 #define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
 #define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@
 #define VPVL_VERSION_MINOR @VPVL_VERSION_MINOR@
-#define VPVL_VERSION_PATCH @VPVL_VERSION_PATCH@
 
-#define VPVL_MAKE_VERSION(major, compat, minor, patch) \
-    ((major)  << 6 | (compat) << 4 | (minor)  << 2 | (patch)  << 0)
+#define VPVL_MAKE_VERSION(major, compat, minor) \
+    (((major) << 16) | ((compat) << 8) | (minor))
 #define VPVL_VERSION VPVL_MAKE_VERSION(VPVL_VERSION_MAJOR, \
                                        VPVL_VERSION_COMPAT, \
-                                       VPVL_VERSION_MINOR, \
-                                       VPVL_VERSION_PATCH)
+                                       VPVL_VERSION_MINOR)
 
 #define VPVL_VERSION_STRING "@VPVL_VERSION@"
 
