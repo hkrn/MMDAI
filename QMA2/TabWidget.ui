@@ -24,12 +24,12 @@
   </property>
   <widget class="FaceWidget" name="face">
    <attribute name="title">
-    <string>Tab 1</string>
+    <string>Face</string>
    </attribute>
   </widget>
   <widget class="CameraPerspectiveWidget" name="cameraPerspective">
    <attribute name="title">
-    <string>Tab 2</string>
+    <string>Camera</string>
    </attribute>
   </widget>
  </widget>
