@@ -64,9 +64,9 @@ private slots:
     void on_actionRevertSelectedModel_triggered();
     void on_actionDeleteSelectedModel_triggered();
     void on_actionSetModelPose_triggered();
-    void on_actionBoneXCoordinateZero_triggered();
-    void on_actionBoneYCoordinateZero_triggered();
-    void on_actionBoneZCoordinateZero_triggered();
+    void on_actionBoneXPositionZero_triggered();
+    void on_actionBoneYPositionZero_triggered();
+    void on_actionBoneZPositionZero_triggered();
     void on_actionBoneRotationZero_triggered();
     void on_actionBoneResetAll_triggered();
     void on_actionTimeline_triggered();

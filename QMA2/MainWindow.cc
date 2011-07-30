@@ -270,24 +270,32 @@ void MainWindow::on_actionSetModelPose_triggered()
     ui->scene->setModelPose();
 }
 
-void MainWindow::on_actionBoneXCoordinateZero_triggered()
+void MainWindow::on_actionBoneXPositionZero_triggered()
 {
-    m_boneMotionModel->resetBone(BoneMotionModel::kX);
+    if (!m_boneMotionModel->resetBone(BoneMotionModel::kX))
+        QMessageBox::warning(this, tr("The model or the bone is not selected."),
+                             tr("Select a model or a bone to reset X position of the bone"));
 }
 
-void MainWindow::on_actionBoneYCoordinateZero_triggered()
+void MainWindow::on_actionBoneYPositionZero_triggered()
 {
-    m_boneMotionModel->resetBone(BoneMotionModel::kY);
+    if (!m_boneMotionModel->resetBone(BoneMotionModel::kY))
+        QMessageBox::warning(this, tr("The model or the bone is not selected."),
+                             tr("Select a model or a bone to reset Y position of the bone"));
 }
 
-void MainWindow::on_actionBoneZCoordinateZero_triggered()
+void MainWindow::on_actionBoneZPositionZero_triggered()
 {
-    m_boneMotionModel->resetBone(BoneMotionModel::kZ);
+    if (!m_boneMotionModel->resetBone(BoneMotionModel::kZ))
+        QMessageBox::warning(this, tr("The model or the bone is not selected."),
+                             tr("Select a model or a bone to reset Z position of the bone"));
 }
 
 void MainWindow::on_actionBoneRotationZero_triggered()
 {
-    m_boneMotionModel->resetBone(BoneMotionModel::kRotation);
+    if (!m_boneMotionModel->resetBone(BoneMotionModel::kRotation))
+        QMessageBox::warning(this, tr("The model or the bone is not selected."),
+                             tr("Select a model or a bone to reset rotation of the bone"));
 }
 
 void MainWindow::on_actionBoneResetAll_triggered()
