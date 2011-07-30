@@ -1,7 +1,9 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "BoneMotionModel.h"
 #include "CameraPerspectiveWidget.h"
+#include "FaceMotionModel.h"
 #include "FaceWidget.h"
 #include "TabWidget.h"
 #include "TimelineWidget.h"
@@ -23,9 +25,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_distance(0.0f),
     m_currentFPS(0)
 {
+    m_boneMotionModel = new BoneMotionModel(this);
+    m_faceMotionModel = new FaceMotionModel(this);
     m_tabWidget = new TabWidget(&m_settings);
-    m_timelineWidget = new TimelineWidget(&m_settings);
-    m_transformWidget = new TransformWidget(&m_settings);
+    m_timelineWidget = new TimelineWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
+    m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     ui->setupUi(this);
     ui->scene->setSettings(&m_settings);
     /* for QMenu limitation see http://doc.qt.nokia.com/latest/mac-differences.html#menu-actions */
@@ -134,33 +138,27 @@ void MainWindow::connectWidgets()
     connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
             this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-            m_timelineWidget, SLOT(setModel(vpvl::PMDModel*)));
+            m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
+            m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
+            m_timelineWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
+            m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
+            m_timelineWidget, SLOT(registerKeyFrame(vpvl::Face*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_tabWidget->faceWidget(), SLOT(setModel(vpvl::PMDModel*)));
-    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-            m_transformWidget, SLOT(setModel(vpvl::PMDModel*)));
-    connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
-            m_timelineWidget, SLOT(setMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(ui->scene, SIGNAL(modelDidMakePose(vpvl::VPDPose*,vpvl::PMDModel*)),
-            m_timelineWidget, SLOT(setPose(vpvl::VPDPose*,vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
             this, SLOT(setCurrentFPS(int)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             this, SLOT(setModel(vpvl::PMDModel*)));
-    connect(m_timelineWidget, SIGNAL(boneDidSelect(vpvl::Bone*)),
-            this, SLOT(setBone(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
             ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
-    connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
-            m_timelineWidget, SLOT(registerBone(vpvl::Bone*)));
-    connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
-            m_timelineWidget, SLOT(registerFace(vpvl::Face*)));
-    connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
-            m_timelineWidget, SLOT(registerFace(vpvl::Face*)));
-    connect(m_timelineWidget, SIGNAL(frameIndexSeeked(float)),
-            ui->scene, SLOT(seekMotion(float)));
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -274,22 +272,22 @@ void MainWindow::on_actionSetModelPose_triggered()
 
 void MainWindow::on_actionBoneXCoordinateZero_triggered()
 {
-    m_transformWidget->resetBone(TransformWidget::kX);
+    m_boneMotionModel->resetBone(BoneMotionModel::kX);
 }
 
 void MainWindow::on_actionBoneYCoordinateZero_triggered()
 {
-    m_transformWidget->resetBone(TransformWidget::kY);
+    m_boneMotionModel->resetBone(BoneMotionModel::kY);
 }
 
 void MainWindow::on_actionBoneZCoordinateZero_triggered()
 {
-    m_transformWidget->resetBone(TransformWidget::kZ);
+    m_boneMotionModel->resetBone(BoneMotionModel::kZ);
 }
 
 void MainWindow::on_actionBoneRotationZero_triggered()
 {
-    m_transformWidget->resetBone(TransformWidget::kRotation);
+    m_boneMotionModel->resetBone(BoneMotionModel::kRotation);
 }
 
 void MainWindow::on_actionBoneResetAll_triggered()

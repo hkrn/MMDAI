@@ -16,6 +16,9 @@ namespace internal {
 class TimelineTableModel;
 }
 
+class BoneMotionModel;
+class FaceMotionModel;
+
 class QTableView;
 class QSettings;
 
@@ -23,30 +26,30 @@ class TimelineWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit TimelineWidget(QSettings *settings, QWidget *parent = 0);
+    explicit TimelineWidget(QSettings *settings,
+                            BoneMotionModel *bmm,
+                            FaceMotionModel *fmm,
+                            QWidget *parent = 0);
     ~TimelineWidget();
 
-public slots:
-    void registerBone(vpvl::Bone *bone);
-    void registerFace(vpvl::Face *face);
-    void setModel(vpvl::PMDModel *value);
-    void selectCell(QModelIndex modelIndex);
-    void setMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void setPose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
+    BoneMotionModel *boneMotionModel() const { return m_boneMotionModel; }
+    FaceMotionModel *faceMotionModel() const { return m_faceMotionModel; }
 
-signals:
-    void boneDidSelect(vpvl::Bone *bone);
-    void faceDidSelect(vpvl::Face *face);
-    void frameIndexSeeked(float frameIndex);
+public slots:
+    void loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
+    void registerKeyFrame(vpvl::Bone *bone);
+    void registerKeyFrame(vpvl::Face *face);
 
 protected:
     void closeEvent(QCloseEvent *event);
 
 private:
+    const QModelIndex selectedIndex() const;
+
     QSettings *m_settings;
     QTableView *m_tableView;
-    internal::TimelineTableModel *m_tableModel;
-    vpvl::PMDModel *m_selectedModel;
+    BoneMotionModel *m_boneMotionModel;
+    FaceMotionModel *m_faceMotionModel;
 };
 
 #endif // TIMLINEWIDGET_H

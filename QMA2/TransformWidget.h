@@ -13,9 +13,11 @@ class PMDModel;
 }
 
 namespace Ui {
-    class TransformWidget;
+class TransformWidget;
 }
 
+class BoneMotionModel;
+class FaceMotionModel;
 class QSettings;
 
 class TransformButton : public QPushButton
@@ -63,13 +65,13 @@ public:
         kZ,
         kRotation
     };
-    explicit TransformWidget(QSettings *settings, QWidget *parent = 0);
+    explicit TransformWidget(QSettings *settings,
+                             BoneMotionModel *bmm,
+                             FaceMotionModel *fmm,
+                             QWidget *parent = 0);
     ~TransformWidget();
 
-    void resetBone(ResetBoneType type);
-
 public slots:
-    void setModel(vpvl::PMDModel *value);
     void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
 
 signals:
@@ -83,7 +85,7 @@ private slots:
     void on_faceWeightSlider_sliderMoved(int position);
     void on_faces_clicked(const QModelIndex &index);
     void on_faceWeightValue_returnPressed();
-    void on_bones_pressed(const QModelIndex &index);
+    void on_bones_clicked(const QModelIndex &index);
     void on_comboBox_currentIndexChanged(int index);
     void on_registerButton_clicked();
 

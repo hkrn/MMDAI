@@ -15,6 +15,8 @@ namespace Ui {
 class MainWindow;
 }
 
+class BoneMotionModel;
+class FaceMotionModel;
 class TabWidget;
 class TimelineWidget;
 class TransformWidget;
@@ -80,6 +82,8 @@ private:
     TabWidget *m_tabWidget;
     TimelineWidget *m_timelineWidget;
     TransformWidget *m_transformWidget;
+    BoneMotionModel *m_boneMotionModel;
+    FaceMotionModel *m_faceMotionModel;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;

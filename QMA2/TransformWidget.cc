@@ -1,159 +1,47 @@
 #include "TransformWidget.h"
 #include "ui_TransformWidget.h"
+#include "BoneMotionModel.h"
+#include "FaceMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 #include "util.h"
 
-namespace internal {
+namespace {
 
-static const QString kNotSelected = QT_TR_NOOP("0: Not Selected");
+static BoneMotionModel *castBoneModel(Ui::TransformWidget *ui)
+{
+    return reinterpret_cast<BoneMotionModel *>(ui->bones->model());
+}
 
-class BoneModel : public QAbstractListModel {
-public:
-    BoneModel(QObject *parent = 0)
-        : QAbstractListModel(parent), m_selectedBone(0) {
-        setModel(0);
-    }
+static FaceMotionModel *castFaceModel(Ui::TransformWidget *ui)
+{
+    return reinterpret_cast<FaceMotionModel *>(ui->faces->model());
+}
 
-    void setModel(vpvl::PMDModel *value) {
-        QString format("%1: %2");
-        m_bones.clear();
-        m_bones.append(QPair<QString, vpvl::Bone *>(kNotSelected, 0));
-        if (value) {
-            vpvl::BoneList bones = value->bones();
-            uint32_t nBones = bones.size();
-            for (uint32_t i = 0; i < nBones; i++) {
-                vpvl::Bone *bone = bones.at(i);
-                if (bone->isVisible()) {
-                    QString name = toQString(bone);
-                    m_bones.append(QPair<QString, vpvl::Bone *>(format.arg(i + 1).arg(name), bone));
-                }
-            }
-        }
-        m_model = value;
-        reset();
-    }
+static void rotateButtons(QList<TransformButton *> &buttons,
+                          const Ui::TransformWidget *ui)
+{
+    buttons.append(ui->rx);
+    buttons.append(ui->ry);
+    buttons.append(ui->rz);
+}
 
-    void resetBone(TransformWidget::ResetBoneType type) {
-        if (m_selectedBone) {
-            btVector3 pos = m_selectedBone->position();
-            btQuaternion rot = m_selectedBone->rotation();
-            switch (type) {
-            case TransformWidget::kX:
-                pos.setX(0.0f);
-                m_selectedBone->setPosition(pos);
-                break;
-            case TransformWidget::kY:
-                pos.setY(0.0f);
-                m_selectedBone->setPosition(pos);
-                break;
-            case TransformWidget::kZ:
-                pos.setZ(0.0f);
-                m_selectedBone->setPosition(pos);
-                break;
-            case TransformWidget::kRotation:
-                rot.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-                m_selectedBone->setRotation(rot);
-                break;
-            default:
-                qFatal("Unexpected reset bone type: %d", type);
-            }
-        }
-    }
+static void transformButtons(QList<TransformButton *> &buttons,
+                             const Ui::TransformWidget *ui)
+{
+    buttons.append(ui->tx);
+    buttons.append(ui->ty);
+    buttons.append(ui->tz);
+}
 
-    bool hasModel() { return m_model != 0; }
-
-    vpvl::Bone *selectBone(int rowIndex) {
-        vpvl::Bone *bone = m_selectedBone = m_bones[rowIndex].second;
-        return bone;
-    }
-
-    QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) {
-        QList<vpvl::Bone *> bones;
-        foreach (QModelIndex index, indices) {
-            bones.append(index.isValid() ? m_bones[index.row()].second : 0);
-        }
-        return bones;
-    }
-
-    int rowCount(const QModelIndex & /* parent */) const {
-        return m_bones.size();
-    }
-
-    QVariant data(const QModelIndex &index, int role) const {
-        if (!index.isValid() || role != Qt::DisplayRole)
-            return QVariant();
-        return m_bones[index.row()].first;
-    }
-
-private:
-    vpvl::PMDModel *m_model;
-    vpvl::Bone *m_selectedBone;
-    QList< QPair<QString, vpvl::Bone *> > m_bones;
-};
-
-
-class FaceModel : public QAbstractListModel {
-public:
-    FaceModel(QObject *parent = 0)
-        : QAbstractListModel(parent), m_selectedFace(0) {
-        setModel(0);
-    }
-
-    void setModel(vpvl::PMDModel *value) {
-        QString format("%1: %2");
-        m_faces.clear();
-        m_faces.append(QPair<QString, vpvl::Face *>(kNotSelected, 0));
-        if (value) {
-            vpvl::FaceList faces = value->faces();
-            uint32_t nFaces = faces.size();
-            for (uint32_t i = 0; i < nFaces; i++) {
-                vpvl::Face *face = faces.at(i);
-                if (face->type() != vpvl::Face::kBase) {
-                    QString name = toQString(face);
-                    m_faces.append(QPair<QString, vpvl::Face *>(format.arg(i).arg(name), face));
-                }
-            }
-        }
-        m_model = value;
-        reset();
-    }
-
-    bool hasModel() { return m_model != 0; }
-
-    vpvl::Face *selectFace(int rowIndex) {
-        vpvl::Face *face = m_selectedFace = m_faces[rowIndex].second;
-        return face;
-    }
-
-    QList<vpvl::Face *> facesFromIndices(const QModelIndexList &indices) {
-        QList<vpvl::Face *> faces;
-        foreach (QModelIndex index, indices) {
-            faces.append(index.isValid() ? m_faces[index.row()].second : 0);
-        }
-        return faces;
-    }
-
-    void setWeight(float value) {
-        if (m_selectedFace)
-            m_selectedFace->setWeight(value);
-    }
-
-    int rowCount(const QModelIndex & /* parent */) const {
-        return m_faces.size();
-    }
-    QVariant data(const QModelIndex &index, int role) const {
-        if (!index.isValid() || role != Qt::DisplayRole)
-            return QVariant();
-        return m_faces[index.row()].first;
-    }
-
-private:
-    vpvl::PMDModel *m_model;
-    vpvl::Face *m_selectedFace;
-    QList< QPair<QString, vpvl::Face *> > m_faces;
-};
+static const QList<TransformButton *> allButtons(const Ui::TransformWidget *ui)
+{
+    QList<TransformButton *> buttons;
+    rotateButtons(buttons, ui);
+    transformButtons(buttons, ui);
+    return buttons;
+}
 
 }
 
@@ -270,24 +158,21 @@ void TransformButton::mouseReleaseEvent(QMouseEvent * /* event */)
     m_pos.setY(0);
 }
 
-static internal::BoneModel *castBoneModel(Ui::TransformWidget *ui)
-{
-    return reinterpret_cast<internal::BoneModel *>(ui->bones->model());
-}
-
-static internal::FaceModel *castFaceModel(Ui::TransformWidget *ui)
-{
-    return reinterpret_cast<internal::FaceModel *>(ui->faces->model());
-}
-
-TransformWidget::TransformWidget(QSettings *settings, QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::TransformWidget),
-    m_settings(settings)
+TransformWidget::TransformWidget(QSettings *settings,
+                                 BoneMotionModel *bmm,
+                                 FaceMotionModel *fmm,
+                                 QWidget *parent)
+    : QWidget(parent),
+      ui(new Ui::TransformWidget),
+      m_settings(settings)
 {
     ui->setupUi(this);
-    ui->bones->setModel(new internal::BoneModel(this));
-    ui->faces->setModel(new internal::FaceModel(this));
+    ui->bones->setModel(bmm);
+    ui->faces->setModel(fmm);
+    connect(ui->bones->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(on_bones_clicked(QModelIndex)));
+    connect(ui->faces->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(on_faces_clicked(QModelIndex)));
     restoreGeometry(m_settings->value("transformWidget/geometry").toByteArray());
 }
 
@@ -296,44 +181,9 @@ TransformWidget::~TransformWidget()
     delete ui;
 }
 
-void TransformWidget::resetBone(ResetBoneType type)
-{
-    castBoneModel(ui)->resetBone(type);
-}
-
-static void rotateButtons(QList<TransformButton *> &buttons,
-                          const Ui::TransformWidget *ui)
-{
-    buttons.append(ui->rx);
-    buttons.append(ui->ry);
-    buttons.append(ui->rz);
-}
-
-static void transformButtons(QList<TransformButton *> &buttons,
-                             const Ui::TransformWidget *ui)
-{
-    buttons.append(ui->tx);
-    buttons.append(ui->ty);
-    buttons.append(ui->tz);
-}
-
-static const QList<TransformButton *> allButtons(const Ui::TransformWidget *ui)
-{
-    QList<TransformButton *> buttons;
-    rotateButtons(buttons, ui);
-    transformButtons(buttons, ui);
-    return buttons;
-}
-
 static void setFaceValue(Ui::TransformWidget *ui, float value)
 {
     ui->faceWeightValue->setText(QString("%1").arg(value, 0, 'g', 2));
-}
-
-void TransformWidget::setModel(vpvl::PMDModel *value)
-{
-    castBoneModel(ui)->setModel(value);
-    castFaceModel(ui)->setModel(value);
 }
 
 void TransformWidget::setCameraPerspective(const btVector3 & /* pos */,
@@ -380,7 +230,7 @@ void TransformWidget::on_faceWeightValue_returnPressed()
     setFaceValue(ui, value);
 }
 
-void TransformWidget::on_bones_pressed(const QModelIndex &index)
+void TransformWidget::on_bones_clicked(const QModelIndex &index)
 {
     QList<TransformButton *> buttons;
     vpvl::Bone *bone = castBoneModel(ui)->selectBone(index.row());
