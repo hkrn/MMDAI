@@ -73,8 +73,6 @@ public:
 
     void setCurrentFPS(int value);
     void setSettings(QSettings *value) { m_settings = value; }
-    void resetAllBones();
-    void resetAllBones(vpvl::PMDModel *model);
 
     const QHash<QString, vpvl::PMDModel *> &models() const {
         return m_models;

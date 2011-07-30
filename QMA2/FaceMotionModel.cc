@@ -46,7 +46,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     m_model = model;
 }
 
-void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::FaceKeyFrameList faceFrames = motion->face().frames();
@@ -68,6 +68,10 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 setData(modelIndex, bytes, Qt::EditRole);
             }
         }
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -80,14 +84,15 @@ vpvl::Face *FaceMotionModel::selectFace(int rowIndex)
 QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &indices)
 {
     QList<vpvl::Face *> faces;
-    foreach (QModelIndex index, indices) {
+    foreach (QModelIndex index, indices)
         faces.append(index.isValid() ? m_faces[index.row()] : 0);
-    }
     return faces;
 }
 
 void FaceMotionModel::setWeight(float value)
 {
-    if (m_selected)
+    if (m_selected) {
         m_selected->setWeight(value);
+        updateModel();
+    }
 }

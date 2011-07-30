@@ -18,6 +18,8 @@ class MotionBaseModel : public QAbstractTableModel
 public:
     explicit MotionBaseModel(QObject *parent = 0);
 
+    virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
+
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role) const;
@@ -25,6 +27,8 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 protected:
+    bool updateModel();
+
     vpvl::PMDModel *m_model;
     QList<QString> m_keys;
     QHash< QPair<int, int>, QVariant > m_values;

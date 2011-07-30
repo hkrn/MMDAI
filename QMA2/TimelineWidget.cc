@@ -17,8 +17,8 @@ public:
         //painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
         if (index.column() % 5 == 0)
-            painter->fillRect(rect, Qt::lightGray);
-        if (index.data() != QVariant()) {
+            painter->setBackground(option.palette.background());
+        if (index.data(Qt::UserRole) != QVariant()) {
             painter->setPen(Qt::NoPen);
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(option.palette.foreground());

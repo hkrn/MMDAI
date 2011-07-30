@@ -47,9 +47,8 @@ static const QList<TransformButton *> allButtons(const Ui::TransformWidget *ui)
 
 TransformButton::TransformButton(QWidget *parent) :
     QPushButton(parent),
-    m_bone(0),
-    m_angle(0.0f, 0.0f, 0.0f),
-    m_mode(kLocal)
+    m_boneMotionModel(0),
+    m_angle(0.0f, 0.0f, 0.0f)
 {
 }
 
@@ -59,17 +58,7 @@ TransformButton::~TransformButton()
 
 void TransformButton::setMode(int value)
 {
-    switch (value) {
-    case 0:
-        m_mode = kLocal;
-        break;
-    case 1:
-        m_mode = kGlobal;
-        break;
-    case 2:
-        m_mode = kView;
-        break;
-    }
+    m_boneMotionModel->setMode(value);
 }
 
 void TransformButton::mousePressEvent(QMouseEvent *event)
@@ -84,67 +73,19 @@ void TransformButton::mousePressEvent(QMouseEvent *event)
 
 void TransformButton::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_bone && !m_pos.isNull()) {
+    if (m_boneMotionModel->isBoneSelected() && !m_pos.isNull()) {
         const QString name = objectName();
         const QPoint p = m_pos - event->pos();
         char type = name[0].toAscii();
         char coordinate = name[1].toAscii();
-        if (type == 'r') {
-            btQuaternion current = m_bone->rotation(), rot, dest;
-            float value = vpvl::radian(p.y() * 0.1f);
-            switch (coordinate) {
-            case 'x':
-                rot.setEulerZYX(0, 0, value);
-                break;
-            case 'y':
-                rot.setEulerZYX(0, value, 0);
-                break;
-            case 'z':
-                rot.setEulerZYX(value, 0, 0);
-                break;
-            default:
-                qFatal("Unexpected coordinate value: %c", coordinate);
-            }
-            btQuaternion view;
-            view.setEulerZYX(vpvl::radian(m_angle.z()), vpvl::radian(m_angle.y()), vpvl::radian(m_angle.x()));
-            // local coordinate
-            switch (m_mode) {
-            case kLocal:
-                dest = current * rot;
-                break;
-            default:
-                break;
-            }
-            m_bone->setRotation(dest);
-        }
-        else if (type == 't') {
-            btVector3 current = m_bone->position(), pos, dest;
-            float value = p.y() * 0.1;
-            switch (coordinate) {
-            case 'x':
-                pos.setValue(value, 0, 0);
-                break;
-            case 'y':
-                pos.setValue(0, value, 0);
-                break;
-            case 'z':
-                pos.setValue(0, 0, value);
-                break;
-            default:
-                qFatal("Unexpected coordinate value: %c", coordinate);
-            }
-            // local coordinate
-            switch (m_mode) {
-            case kLocal:
-                dest = btTransform(m_bone->rotation(), current) * pos;
-                break;
-            case kGlobal:
-                dest = current + pos;
-                break;
-            default:
-                break;
-            }
-            m_bone->setPosition(dest);
+        float value = p.y() * 0.1;
+        switch (type) {
+        case 'r':
+            m_boneMotionModel->setRotation(coordinate, vpvl::radian(value));
+            break;
+        case 't':
+            m_boneMotionModel->setPosition(coordinate, value);
+            break;
         }
         m_pos = event->pos();
     }
@@ -166,9 +107,14 @@ TransformWidget::TransformWidget(QSettings *settings,
       ui(new Ui::TransformWidget),
       m_settings(settings)
 {
+    QList<TransformButton *> buttons;
     ui->setupUi(this);
     ui->bones->setModel(bmm);
     ui->faces->setModel(fmm);
+    transformButtons(buttons, ui);
+    rotateButtons(buttons, ui);
+    foreach (TransformButton *button, buttons)
+        button->setBoneMotionModel(bmm);
     connect(ui->bones->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(on_bones_clicked(QModelIndex)));
     connect(ui->faces->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
@@ -237,27 +183,21 @@ void TransformWidget::on_bones_clicked(const QModelIndex &index)
     if (bone) {
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
         transformButtons(buttons, ui);
-        foreach (TransformButton *button, buttons) {
+        foreach (TransformButton *button, buttons)
             button->setEnabled(movable);
-            button->setBone(bone);
-        }
         buttons.clear();
         rotateButtons(buttons, ui);
-        foreach (TransformButton *button, buttons) {
+        foreach (TransformButton *button, buttons)
             button->setEnabled(rotateable);
-            button->setBone(bone);
-        }
     }
     else {
         transformButtons(buttons, ui);
-        foreach (TransformButton *button, buttons) {
+        foreach (TransformButton *button, buttons)
             button->setEnabled(false);
-        }
         buttons.clear();
         rotateButtons(buttons, ui);
-        foreach (TransformButton *button, buttons) {
+        foreach (TransformButton *button, buttons)
             button->setEnabled(false);
-        }
     }
 }
 

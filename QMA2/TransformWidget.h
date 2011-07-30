@@ -25,17 +25,11 @@ class TransformButton : public QPushButton
     Q_OBJECT
 
 public:
-    enum Coordinate {
-        kLocal,
-        kGlobal,
-        kView
-    };
-
     explicit TransformButton(QWidget *parent = 0);
     ~TransformButton();
 
-    void setBone(vpvl::Bone *value) { m_bone = value; }
-    void setAngle(const btVector3 &angle) { m_angle = angle; }
+    void setAngle(const btVector3 &value) { m_angle = value; }
+    void setBoneMotionModel(BoneMotionModel *value) { m_boneMotionModel = value; }
 
 public slots:
     void setMode(int value);
@@ -46,12 +40,11 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *event);
 
 private:
-    vpvl::Bone *m_bone;
+    BoneMotionModel *m_boneMotionModel;
     btVector3 m_angle;
     QCursor m_cursor;
     QPoint m_drag;
     QPoint m_pos;
-    Coordinate m_mode;
 };
 
 class TransformWidget : public QWidget

@@ -17,7 +17,7 @@ public:
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
-    void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
 
 private:
     QList<vpvl::Face *> m_faces;

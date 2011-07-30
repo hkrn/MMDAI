@@ -338,20 +338,6 @@ void SceneWidget::setCurrentFPS(int value)
     }
 }
 
-void SceneWidget::resetAllBones()
-{
-    vpvl::PMDModel *model = selectedModel();
-    if (model)
-        resetAllBones(model);
-    else
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to reset bones"));
-}
-
-void SceneWidget::resetAllBones(vpvl::PMDModel *model)
-{
-    model->smearAllBonesToDefault(0.0f);
-}
-
 void SceneWidget::addModel()
 {
     stopSceneUpdateTimer();

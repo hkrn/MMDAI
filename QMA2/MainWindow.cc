@@ -292,7 +292,8 @@ void MainWindow::on_actionBoneRotationZero_triggered()
 
 void MainWindow::on_actionBoneResetAll_triggered()
 {
-    ui->scene->resetAllBones();
+    if (!m_boneMotionModel->resetAllBones())
+        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to reset bones"));
 }
 
 void MainWindow::on_actionTimeline_triggered()
