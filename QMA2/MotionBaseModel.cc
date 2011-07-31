@@ -4,8 +4,38 @@
 
 MotionBaseModel::MotionBaseModel(QObject *parent) :
     QAbstractTableModel(parent),
-    m_model(0)
+    m_model(0),
+    m_state(0)
 {
+}
+
+MotionBaseModel::~MotionBaseModel()
+{
+    if (m_model)
+        m_model->discardState(m_state);
+    if (m_state)
+        qWarning("It seems memory leak occured: m_state");
+}
+
+void MotionBaseModel::saveState()
+{
+    if (m_model)
+        m_state = m_model->saveState();
+}
+
+void MotionBaseModel::restoreState()
+{
+    if (m_model) {
+        m_model->restoreState(m_state);
+        m_model->updateImmediate();
+        m_model->discardState(m_state);
+    }
+}
+
+void MotionBaseModel::discardState()
+{
+    if (m_model)
+        m_model->discardState(m_state);
 }
 
 int MotionBaseModel::rowCount(const QModelIndex &parent) const

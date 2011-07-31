@@ -75,9 +75,9 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
-    void on_faceWeightSlider_sliderMoved(int position);
+    void on_faceWeightSlider_valueChanged(int value);
+    void on_faceWeightSpinBox_valueChanged(double value);
     void on_faces_clicked(const QModelIndex &index);
-    void on_faceWeightValue_returnPressed();
     void on_bones_clicked(const QModelIndex &index);
     void on_comboBox_currentIndexChanged(int index);
     void on_registerButton_clicked();

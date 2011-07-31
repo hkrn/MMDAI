@@ -14,6 +14,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm,
     vpvl::Bone *bone = m_boneMotionModel->selectedBone();
     setPosition(bone->position());
     setRotation(bone->rotation());
+    m_boneMotionModel->saveState();
 }
 
 BoneDialog::~BoneDialog()
@@ -63,4 +64,14 @@ void BoneDialog::on_YAxisSpinBox_valueChanged(double value)
 void BoneDialog::on_ZAxisSpinBox_valueChanged(double value)
 {
     m_boneMotionModel->setRotation('Z', vpvl::radian(value));
+}
+
+void BoneDialog::on_buttonBox_accepted()
+{
+    m_boneMotionModel->discardState();
+}
+
+void BoneDialog::on_buttonBox_rejected()
+{
+    m_boneMotionModel->restoreState();
 }

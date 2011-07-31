@@ -127,11 +127,6 @@ TransformWidget::~TransformWidget()
     delete ui;
 }
 
-static void setFaceValue(Ui::TransformWidget *ui, float value)
-{
-    ui->faceWeightValue->setText(QString("%1").arg(value, 0, 'g', 2));
-}
-
 void TransformWidget::setCameraPerspective(const btVector3 & /* pos */,
                                            const btVector3 &angle,
                                            float /* fovy */,
@@ -148,10 +143,18 @@ void TransformWidget::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-void TransformWidget::on_faceWeightSlider_sliderMoved(int position)
+void TransformWidget::on_faceWeightSlider_valueChanged(int value)
 {
-    setFaceValue(ui, position / 100.0f);
-    castFaceModel(ui)->setWeight(position / 100.0f);
+    float weight = value / 100.0f;
+    ui->faceWeightSpinBox->setValue(weight);
+    castFaceModel(ui)->setWeight(weight);
+}
+
+void TransformWidget::on_faceWeightSpinBox_valueChanged(double value)
+{
+    float weight = value;
+    ui->faceWeightSlider->setValue(weight * 100.0f);
+    castFaceModel(ui)->setWeight(weight);
 }
 
 void TransformWidget::on_faces_clicked(const QModelIndex &index)
@@ -159,21 +162,9 @@ void TransformWidget::on_faces_clicked(const QModelIndex &index)
     vpvl::Face *face = castFaceModel(ui)->selectFace(index.row());
     if (face) {
         float weight = face->weight();
-        setFaceValue(ui, weight);
+        ui->faceWeightSpinBox->setValue(weight);
         ui->faceWeightSlider->setValue(weight * 100.0f);
     }
-}
-
-void TransformWidget::on_faceWeightValue_returnPressed()
-{
-    bool ok = false;
-    float value = ui->faceWeightValue->text().toFloat(&ok);
-    if (ok) {
-        value = qMin(1.0f, qMax(0.0f, value));
-        castFaceModel(ui)->setWeight(value);
-        ui->faceWeightSlider->setValue(value * 100.0f);
-    }
-    setFaceValue(ui, value);
 }
 
 void TransformWidget::on_bones_clicked(const QModelIndex &index)

@@ -2,11 +2,9 @@
 #define MOTIONBASEMODEL_H
 
 #include <QtGui/QAbstractItemView>
+#include <vpvl/PMDModel.h>
 
 namespace vpvl {
-class Bone;
-class Face;
-class PMDModel;
 class VMDMotion;
 class VPDPose;
 }
@@ -17,8 +15,14 @@ class MotionBaseModel : public QAbstractTableModel
 
 public:
     explicit MotionBaseModel(QObject *parent = 0);
+    ~MotionBaseModel();
 
     virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
+    void saveState();
+    void restoreState();
+    void discardState();
+
+    vpvl::PMDModel *selectedModel() const { return m_model; }
 
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;
@@ -30,6 +34,7 @@ protected:
     bool updateModel();
 
     vpvl::PMDModel *m_model;
+    vpvl::PMDModel::State *m_state;
     QList<QString> m_keys;
     QHash< QPair<int, int>, QVariant > m_values;
 };

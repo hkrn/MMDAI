@@ -4,6 +4,7 @@
 #include <QtGui/QDialog>
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btVector3.h>
+#include <vpvl/PMDModel.h>
 
 namespace Ui {
     class BoneDialog;
@@ -28,6 +29,8 @@ private slots:
     void on_XAxisSpinBox_valueChanged(double value);
     void on_YAxisSpinBox_valueChanged(double value);
     void on_ZAxisSpinBox_valueChanged(double value);
+    void on_buttonBox_accepted();
+    void on_buttonBox_rejected();
 
 private:
     Ui::BoneDialog *ui;
