@@ -62,6 +62,14 @@ struct SkinVertex
     btVector3 texureCoord;
 };
 
+struct State
+{
+    const PMDModel *model;
+    btAlignedObjectArray<btVector3> positions;
+    btAlignedObjectArray<btQuaternion> rotations;
+    btAlignedObjectArray<float> weights;
+};
+
 PMDModel::PMDModel()
     : m_baseFace(0),
       m_orderedBones(0),
@@ -182,6 +190,53 @@ void PMDModel::leaveWorld(::btDiscreteDynamicsWorld *world)
 void PMDModel::removeMotion(VMDMotion *motion)
 {
     m_motions.remove(motion);
+}
+
+void PMDModel::discardState(State *&state) const
+{
+    if (state) {
+        state->positions.clear();
+        state->rotations.clear();
+        state->weights.clear();
+        delete state;
+        state = 0;
+    }
+}
+
+bool PMDModel::restoreState(State *state)
+{
+    const int nBones = m_bones.size(), nFaces = m_faces.size();
+    bool ret = false;
+    if (state->model == this) {
+        for (int i = 0; i < nBones; i++) {
+            Bone *bone = m_bones[i];
+            bone->setPosition(state->positions[i]);
+            bone->setRotation(state->rotations[i]);
+        }
+        for (int i = 0; i < nFaces; i++) {
+            Face *face = m_faces[i];
+            face->setWeight(state->weights[i]);
+        }
+        ret = true;
+    }
+    return ret;
+}
+
+PMDModel::State *PMDModel::saveState() const
+{
+    State *state = new State;
+    const int nBones = m_bones.size(), nFaces = m_faces.size();
+    for (int i = 0; i < nBones; i++) {
+        Bone *bone = m_bones[i];
+        state->positions.push_back(bone->position());
+        state->rotations.push_back(bone->rotation());
+    }
+    for (int i = 0; i < nFaces; i++) {
+        Face *face = m_faces[i];
+        state->weights.push_back(face->weight());
+    }
+    state->model = this;
+    return state;
 }
 
 void PMDModel::seekMotion(float deltaFrame)
@@ -382,7 +437,7 @@ void PMDModel::smearAllBonesToDefault(float rate)
     }
 }
 
-bool PMDModel::preparse(const uint8_t *data, size_t size, PMDModelDataInfo &info)
+bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     // Header[3] + Version[4] + Name[20] + Comment[256]
@@ -599,7 +654,7 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, PMDModelDataInfo &info
 
 bool PMDModel::load(const uint8_t *data, size_t size)
 {
-    PMDModelDataInfo info;
+    DataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
         release();
@@ -622,13 +677,13 @@ bool PMDModel::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void PMDModel::parseHeader(const PMDModelDataInfo &info)
+void PMDModel::parseHeader(const DataInfo &info)
 {
     setName(info.namePtr);
     setComment(info.commentPtr);
 }
 
-void PMDModel::parseVertices(const PMDModelDataInfo &info)
+void PMDModel::parseVertices(const DataInfo &info)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.verticesPtr);
     const uint32_t nvertices = info.verticesCount;
@@ -641,7 +696,7 @@ void PMDModel::parseVertices(const PMDModelDataInfo &info)
     }
 }
 
-void PMDModel::parseIndices(const PMDModelDataInfo &info)
+void PMDModel::parseIndices(const DataInfo &info)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.indicesPtr);
     const uint32_t nindices = info.indicesCount;
@@ -653,7 +708,7 @@ void PMDModel::parseIndices(const PMDModelDataInfo &info)
     updateIndices();
 }
 
-void PMDModel::parseMatrials(const PMDModelDataInfo &info)
+void PMDModel::parseMatrials(const DataInfo &info)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.materialsPtr);
     const uint32_t nmaterials = info.materialsCount;
@@ -666,7 +721,7 @@ void PMDModel::parseMatrials(const PMDModelDataInfo &info)
     }
 }
 
-void PMDModel::parseBones(const PMDModelDataInfo &info)
+void PMDModel::parseBones(const DataInfo &info)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.bonesPtr);
     uint8_t *englishPtr = const_cast<uint8_t *>(info.englishBoneNamesPtr);
@@ -694,7 +749,7 @@ void PMDModel::parseBones(const PMDModelDataInfo &info)
     }
 }
 
-void PMDModel::parseIKs(const PMDModelDataInfo &info)
+void PMDModel::parseIKs(const DataInfo &info)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.IKsPtr);
     const uint32_t nIKs = info.IKsCount;
@@ -708,7 +763,7 @@ void PMDModel::parseIKs(const PMDModelDataInfo &info)
     }
 }
 
-void PMDModel::parseFaces(const PMDModelDataInfo &info)
+void PMDModel::parseFaces(const DataInfo &info)
 {
     Face *baseFace = 0;
     uint8_t *ptr = const_cast<uint8_t *>(info.facesPtr);
@@ -733,15 +788,15 @@ void PMDModel::parseFaces(const PMDModelDataInfo &info)
     }
 }
 
-void PMDModel::parseFaceDisplayNames(const PMDModelDataInfo & /* info */)
+void PMDModel::parseFaceDisplayNames(const DataInfo & /* info */)
 {
 }
 
-void PMDModel::parseBoneDisplayNames(const PMDModelDataInfo & /* info */)
+void PMDModel::parseBoneDisplayNames(const DataInfo & /* info */)
 {
 }
 
-void PMDModel::parseEnglishDisplayNames(const PMDModelDataInfo &info)
+void PMDModel::parseEnglishDisplayNames(const DataInfo &info)
 {
     if (info.englishNamePtr)
         setEnglishName(info.englishNamePtr);
@@ -749,12 +804,12 @@ void PMDModel::parseEnglishDisplayNames(const PMDModelDataInfo &info)
         setEnglishComment(info.englishCommentPtr);
 }
 
-void PMDModel::parseToonTextureNames(const PMDModelDataInfo &info)
+void PMDModel::parseToonTextureNames(const DataInfo &info)
 {
     setToonTextures(info.toonTextureNamesPtr);
 }
 
-void PMDModel::parseRigidBodies(const PMDModelDataInfo &info)
+void PMDModel::parseRigidBodies(const DataInfo &info)
 {
     BoneList *mutableBones = &m_bones;
     uint8_t *ptr = const_cast<uint8_t *>(info.rigidBodiesPtr);
@@ -768,7 +823,7 @@ void PMDModel::parseRigidBodies(const PMDModelDataInfo &info)
     }
 }
 
-void PMDModel::parseConstraints(const PMDModelDataInfo &info)
+void PMDModel::parseConstraints(const DataInfo &info)
 {
     RigidBodyList rigidBodies = m_rigidBodies;
     btVector3 offset = m_rootBone.offset();

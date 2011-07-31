@@ -54,44 +54,7 @@ class btDiscreteDynamicsWorld;
 namespace vpvl
 {
 
-struct PMDModelDataInfo
-{
-    const uint8_t *basePtr;
-    const uint8_t *namePtr;
-    const uint8_t *commentPtr;
-    const uint8_t *verticesPtr;
-    size_t verticesCount;
-    const uint8_t *indicesPtr;
-    size_t indicesCount;
-    const uint8_t *materialsPtr;
-    size_t materialsCount;
-    const uint8_t *bonesPtr;
-    size_t bonesCount;
-    const uint8_t *IKsPtr;
-    size_t IKsCount;
-    const uint8_t *facesPtr;
-    size_t facesCount;
-    const uint8_t *faceDisplayNamesPtr;
-    size_t faceDisplayNamesCount;
-    const uint8_t *boneFrameNamesPtr;
-    size_t boneFrameNamesCount;
-    const uint8_t *boneDisplayNamesPtr;
-    size_t boneDisplayNamesCount;
-    const uint8_t *englishNamePtr;
-    const uint8_t *englishCommentPtr;
-    const uint8_t *englishBoneNamesPtr;
-    const uint8_t *englishFaceNamesPtr;
-    const uint8_t *englishBoneFramesPtr;
-    const uint8_t *toonTextureNamesPtr;
-    const uint8_t *rigidBodiesPtr;
-    size_t rigidBodiesCount;
-    const uint8_t *constraintsPtr;
-    size_t constranitsCount;
-};
-
 class VMDMotion;
-
-typedef struct SkinVertex SkinVertex;
 typedef struct PMDModelUserData PMDModelUserData;
 
 /**
@@ -107,6 +70,8 @@ typedef struct PMDModelUserData PMDModelUserData;
 class VPVL_EXPORT PMDModel
 {
 public:
+    typedef struct SkinVertex SkinVertex;
+    typedef struct State State;
 
     /**
       * Type of parsing errors.
@@ -158,6 +123,41 @@ public:
         kEdgeIndicesStride
     };
 
+    struct DataInfo
+    {
+        const uint8_t *basePtr;
+        const uint8_t *namePtr;
+        const uint8_t *commentPtr;
+        const uint8_t *verticesPtr;
+        size_t verticesCount;
+        const uint8_t *indicesPtr;
+        size_t indicesCount;
+        const uint8_t *materialsPtr;
+        size_t materialsCount;
+        const uint8_t *bonesPtr;
+        size_t bonesCount;
+        const uint8_t *IKsPtr;
+        size_t IKsCount;
+        const uint8_t *facesPtr;
+        size_t facesCount;
+        const uint8_t *faceDisplayNamesPtr;
+        size_t faceDisplayNamesCount;
+        const uint8_t *boneFrameNamesPtr;
+        size_t boneFrameNamesCount;
+        const uint8_t *boneDisplayNamesPtr;
+        size_t boneDisplayNamesCount;
+        const uint8_t *englishNamePtr;
+        const uint8_t *englishCommentPtr;
+        const uint8_t *englishBoneNamesPtr;
+        const uint8_t *englishFaceNamesPtr;
+        const uint8_t *englishBoneFramesPtr;
+        const uint8_t *toonTextureNamesPtr;
+        const uint8_t *rigidBodiesPtr;
+        size_t rigidBodiesCount;
+        const uint8_t *constraintsPtr;
+        size_t constranitsCount;
+    };
+
     PMDModel();
     ~PMDModel();
 
@@ -179,6 +179,9 @@ public:
     void updateImmediate();
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
+    void discardState(State *&state) const;
+    State *saveState() const;
+    bool restoreState(State *state);
 
     size_t stride(StrideType type) const;
     const void *verticesPointer() const;
@@ -187,7 +190,7 @@ public:
     const void *toonTextureCoordsPointer() const;
     const void *edgeVerticesPointer() const;
 
-    bool preparse(const uint8_t *data, size_t size, PMDModelDataInfo &info);
+    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     bool load(const uint8_t *data, size_t size);
 
     const uint8_t *name() const {
@@ -307,19 +310,19 @@ public:
     }
 
 private:
-    void parseHeader(const PMDModelDataInfo &info);
-    void parseVertices(const PMDModelDataInfo &info);
-    void parseIndices(const PMDModelDataInfo &info);
-    void parseMatrials(const PMDModelDataInfo &info);
-    void parseBones(const PMDModelDataInfo &info);
-    void parseIKs(const PMDModelDataInfo &info);
-    void parseFaces(const PMDModelDataInfo &info);
-    void parseFaceDisplayNames(const PMDModelDataInfo &info);
-    void parseBoneDisplayNames(const PMDModelDataInfo &info);
-    void parseEnglishDisplayNames(const PMDModelDataInfo &info);
-    void parseToonTextureNames(const PMDModelDataInfo &info);
-    void parseRigidBodies(const PMDModelDataInfo &info);
-    void parseConstraints(const PMDModelDataInfo &info);
+    void parseHeader(const DataInfo &info);
+    void parseVertices(const DataInfo &info);
+    void parseIndices(const DataInfo &info);
+    void parseMatrials(const DataInfo &info);
+    void parseBones(const DataInfo &info);
+    void parseIKs(const DataInfo &info);
+    void parseFaces(const DataInfo &info);
+    void parseFaceDisplayNames(const DataInfo &info);
+    void parseBoneDisplayNames(const DataInfo &info);
+    void parseEnglishDisplayNames(const DataInfo &info);
+    void parseToonTextureNames(const DataInfo &info);
+    void parseRigidBodies(const DataInfo &info);
+    void parseConstraints(const DataInfo &info);
     void prepare();
     void release();
     void sortBones();
