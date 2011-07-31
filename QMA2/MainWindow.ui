@@ -163,10 +163,13 @@
   </action>
   <action name="actionSetCamera">
    <property name="text">
-    <string>Set camera</string>
+    <string>Set camera motion</string>
+   </property>
+   <property name="toolTip">
+    <string>Set a camera motion</string>
    </property>
    <property name="statusTip">
-    <string>Set camera motion to the scene.</string>
+    <string>Set a camera motion to the scene.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+C</string>
