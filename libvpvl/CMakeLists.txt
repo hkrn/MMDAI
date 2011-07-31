@@ -114,8 +114,10 @@ if(VPVL_OPENGL_RENDERER)
   list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.cmake
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc @ONLY)
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
@@ -161,8 +163,10 @@ if(MSVC)
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()
-  install(TARGETS vpvl DESTINATION lib)
-  install(DIRECTORY include/vpvl DESTINATION include PATTERN "*.h" PATTERN "internal" PATTERN ".svn" EXCLUDE)
+  install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+  install(FILES vpvl.pc DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+  install(DIRECTORY include/vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
+      PATTERN "*.h" PATTERN "internal" PATTERN ".svn" EXCLUDE)
 endif()
 
 # link with OpenGL and GLEW

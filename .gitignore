@@ -31,6 +31,7 @@ Win32
 *.qm
 *.o
 *.opensdf
+*.pc
 *.pro.user*
 *.sdf
 *.sln
