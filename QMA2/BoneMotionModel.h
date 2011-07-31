@@ -36,7 +36,8 @@ public:
     vpvl::Bone *selectBone(int rowIndex);
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
-    bool isBoneSelected() const { return m_selected != 0 && m_selected != 0; }
+    vpvl::Bone *selectedBone() const { return m_selected; }
+    bool isBoneSelected() const { return m_model != 0 && m_selected != 0; }
 
 signals:
     void bonePositionDidChange(const btVector3 &pos);

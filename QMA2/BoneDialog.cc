@@ -11,6 +11,9 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm,
     m_boneMotionModel(bmm)
 {
     ui->setupUi(this);
+    vpvl::Bone *bone = m_boneMotionModel->selectedBone();
+    setPosition(bone->position());
+    setRotation(bone->rotation());
 }
 
 BoneDialog::~BoneDialog()
