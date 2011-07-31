@@ -2,6 +2,8 @@
 #define BONEMOTIONMODEL_H
 
 #include "MotionBaseModel.h"
+#include <LinearMath/btVector3.h>
+#include <LinearMath/btQuaternion.h>
 
 class BoneMotionModel : public MotionBaseModel
 {
@@ -29,10 +31,16 @@ public:
     void setMode(int value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
+    void transform(int coordinate, float value);
+    void rotate(int coordinate, float value);
     vpvl::Bone *selectBone(int rowIndex);
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
-    bool isBoneSelected() const { return m_selected != 0; }
+    bool isBoneSelected() const { return m_selected != 0 && m_selected != 0; }
+
+signals:
+    void bonePositionDidChange(const btVector3 &pos);
+    void boneRotationDidChange(const btQuaternion &rot);
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);

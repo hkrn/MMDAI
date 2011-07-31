@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "BoneDialog.h"
 #include "BoneMotionModel.h"
 #include "CameraPerspectiveWidget.h"
 #include "FaceMotionModel.h"
@@ -317,4 +318,16 @@ void MainWindow::on_actionTransform_triggered()
 void MainWindow::on_actionTabs_triggered()
 {
     m_tabWidget->setVisible(true);
+}
+
+void MainWindow::on_actionBoneDialog_triggered()
+{
+    if (m_boneMotionModel->isBoneSelected()) {
+        BoneDialog *dialog = new BoneDialog(m_boneMotionModel, this);
+        dialog->exec();
+    }
+    else {
+        QMessageBox::warning(this, tr("The model or the bone is not selected."),
+                             tr("Select a model or a bone to open this dialog"));
+    }
 }

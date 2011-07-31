@@ -1,0 +1,37 @@
+#ifndef BONEDIALOG_H
+#define BONEDIALOG_H
+
+#include <QtGui/QDialog>
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btVector3.h>
+
+namespace Ui {
+    class BoneDialog;
+}
+
+class BoneMotionModel;
+
+class BoneDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit BoneDialog(BoneMotionModel *bmm, QWidget *parent = 0);
+    ~BoneDialog();
+
+private slots:
+    void setPosition(const btVector3 &pos);
+    void setRotation(const btQuaternion &rot);
+    void on_XPositionSpinBox_valueChanged(double value);
+    void on_YPositionSpinBox_valueChanged(double value);
+    void on_ZPositionSpinBox_valueChanged(double value);
+    void on_XAxisSpinBox_valueChanged(double value);
+    void on_YAxisSpinBox_valueChanged(double value);
+    void on_ZAxisSpinBox_valueChanged(double value);
+
+private:
+    Ui::BoneDialog *ui;
+    BoneMotionModel *m_boneMotionModel;
+};
+
+#endif // BONEDIALOG_H

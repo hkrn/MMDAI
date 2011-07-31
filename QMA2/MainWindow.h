@@ -71,8 +71,8 @@ private slots:
     void on_actionBoneResetAll_triggered();
     void on_actionTimeline_triggered();
     void on_actionTransform_triggered();
-
     void on_actionTabs_triggered();
+    void on_actionBoneDialog_triggered();
 
 private:
     void connectWidgets();

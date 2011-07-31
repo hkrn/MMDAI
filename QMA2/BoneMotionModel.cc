@@ -182,15 +182,72 @@ void BoneMotionModel::setMode(int value)
 
 void BoneMotionModel::setPosition(int coordinate, float value)
 {
+    if (!isBoneSelected())
+        return;
+    btVector3 pos = m_selected->position();
+    switch (coordinate) {
+    case 'x':
+    case 'X':
+        pos.setX(value);
+        break;
+    case 'y':
+    case 'Y':
+        pos.setY(value);
+        break;
+    case 'z':
+    case 'Z':
+        pos.setZ(value);
+        break;
+    default:
+        qFatal("Unexpected coordinate value: %c", coordinate);
+    }
+    m_selected->setPosition(pos);
+    updateModel();
+    emit bonePositionDidChange(pos);
+}
+
+void BoneMotionModel::setRotation(int coordinate, float value)
+{
+    if (!isBoneSelected())
+        return;
+    btQuaternion rot = m_selected->rotation();
+    switch (coordinate) {
+    case 'x':
+    case 'X':
+        rot.setX(value);
+        break;
+    case 'y':
+    case 'Y':
+        rot.setY(value);
+        break;
+    case 'z':
+    case 'Z':
+        rot.setZ(value);
+        break;
+    default:
+        qFatal("Unexpected coordinate value: %c", coordinate);
+    }
+    m_selected->setRotation(rot);
+    updateModel();
+    emit boneRotationDidChange(rot);
+}
+
+void BoneMotionModel::transform(int coordinate, float value)
+{
+    if (!isBoneSelected())
+        return;
     btVector3 current = m_selected->position(), pos, dest;
     switch (coordinate) {
     case 'x':
+    case 'X':
         pos.setValue(value, 0, 0);
         break;
     case 'y':
+    case 'Y':
         pos.setValue(0, value, 0);
         break;
     case 'z':
+    case 'Z':
         pos.setValue(0, 0, value);
         break;
     default:
@@ -208,19 +265,25 @@ void BoneMotionModel::setPosition(int coordinate, float value)
     }
     m_selected->setPosition(dest);
     updateModel();
+    emit bonePositionDidChange(dest);
 }
 
-void BoneMotionModel::setRotation(int coordinate, float value)
+void BoneMotionModel::rotate(int coordinate, float value)
 {
+    if (!isBoneSelected())
+        return;
     btQuaternion current = m_selected->rotation(), rot, dest;
     switch (coordinate) {
     case 'x':
+    case 'X':
         rot.setEulerZYX(0, 0, value);
         break;
     case 'y':
+    case 'Y':
         rot.setEulerZYX(0, value, 0);
         break;
     case 'z':
+    case 'Z':
         rot.setEulerZYX(value, 0, 0);
         break;
     default:
@@ -235,6 +298,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     }
     m_selected->setRotation(dest);
     updateModel();
+    emit boneRotationDidChange(dest);
 }
 
 vpvl::Bone *BoneMotionModel::selectBone(int rowIndex)
