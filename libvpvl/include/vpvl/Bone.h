@@ -120,12 +120,7 @@ public:
      * @param The buffer to read and parse
      * @param Size of the buffer
      */
-    void read(const uint8_t *data, BoneList *bones, Bone *rootBone);
-
-    /**
-     * Calcurate offset of the bone.
-     */
-    void computeOffset();
+    void read(const uint8_t *data, int16_t id);
 
     /**
      * Reset all bone states.
@@ -133,16 +128,12 @@ public:
     void reset();
 
     /**
-     * Mark the bone motion independent.
-     */
-    void setMotionIndependency();
-
-    /**
-     * Search a target bone to rotate from all bones.
+     * Resolve parent, child and target bone from all bones.
      *
      * @param All bones with the model
+     * @param Root bone
      */
-    void setTargetBone(BoneList *bones);
+    void build(BoneList *bones, Bone *rootBone);
 
     /**
      * Update rotation from the bone.
@@ -432,6 +423,8 @@ private:
     Bone *m_parentBone;
     Bone *m_childBone;
     Bone *m_targetBone;
+    int16_t m_parentBoneID;
+    int16_t m_childBoneID;
     int16_t m_targetBoneID;
     bool m_hasParent;
     bool m_parentIsRoot;

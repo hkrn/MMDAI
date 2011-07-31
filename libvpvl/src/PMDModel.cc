@@ -729,20 +729,18 @@ void PMDModel::parseBones(const DataInfo &info)
     m_bones.reserve(nbones);
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
-        bone->read(ptr, &m_bones, &m_rootBone);
+        bone->read(ptr, i);
         if (englishPtr)
             bone->setEnglishName(englishPtr + Bone::kNameSize * i);
         ptr += Bone::stride();
         m_name2bone.insert(btHashString(reinterpret_cast<const char *>(bone->name())), bone);
         m_bones.push_back(bone);
     }
-    sortBones();
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
-        bone->setTargetBone(&m_bones);
-        bone->computeOffset();
-        bone->setMotionIndependency();
+        bone->build(&m_bones, &m_rootBone);
     }
+    sortBones();
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = m_orderedBones[i];
         bone->updateTransform();

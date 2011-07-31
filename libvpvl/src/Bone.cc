@@ -91,7 +91,9 @@ Bone::Bone()
       m_parentBone(0),
       m_childBone(0),
       m_targetBone(0),
-      m_targetBoneID(0),
+      m_parentBoneID(-1),
+      m_childBoneID(-1),
+      m_targetBoneID(-1),
       m_hasParent(false),
       m_parentIsRoot(false),
       m_constraintedXCoordinateForIK(false),
@@ -118,20 +120,20 @@ Bone::~Bone()
     m_parentBone = 0;
     m_childBone = 0;
     m_targetBone = 0;
-    m_targetBoneID = 0;
+    m_parentBoneID = -1;
+    m_childBoneID = -1;
+    m_targetBoneID = -1;
     m_parentIsRoot = false;
     m_constraintedXCoordinateForIK = false;
     m_simulated = false;
     m_motionIndepent = false;
 }
 
-void Bone::read(const uint8_t *data, BoneList *bones, Bone *rootBone)
+void Bone::read(const uint8_t *data, int16_t id)
 {
     BoneChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
-    int16_t parentBoneID = chunk.parentBoneID;
-    int16_t childBoneID = chunk.childBoneID;
     Type type = static_cast<Type>(chunk.type);
     int16_t targetBoneID = chunk.targetBoneID;
     float *pos = chunk.position;
@@ -140,12 +142,37 @@ void Bone::read(const uint8_t *data, BoneList *bones, Bone *rootBone)
     static const uint8_t kneeName[] = { 0x82, 0xd0, 0x82, 0xb4, 0x0 };
     if (strstr(reinterpret_cast<const char *>(m_name), reinterpret_cast<const char *>(kneeName)))
         m_constraintedXCoordinateForIK = true;
+    if (type == kFollowRotate)
+        m_rotateCoef = targetBoneID * 0.01f;
 
-    int nbones = bones->size();
-    m_id = nbones;
+#ifdef VPVL_COORDINATE_OPENGL
+    m_originPosition.setValue(pos[0], pos[1], -pos[2]);
+#else
+    m_originPosition.setValue(pos[0], pos[1], pos[2]);
+#endif
+    m_localTransform.setOrigin(m_originPosition);
+    m_transformMoveToOrigin.setOrigin(-m_originPosition);
+    m_id = id;
+    m_parentBoneID = chunk.parentBoneID;
+    m_childBoneID = chunk.childBoneID;
+    m_targetBoneID = targetBoneID;
+    m_type = type;
+}
+
+void Bone::reset()
+{
+    m_position.setZero();
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_localTransform.setIdentity();
+    m_localTransform.setOrigin(m_originPosition);
+}
+
+void Bone::build(BoneList *bones, Bone *rootBone)
+{
+    uint32_t nbones = bones->size();
     // The bone has a parent bone and in the the current bones
-    if (parentBoneID != -1 && parentBoneID < nbones) {
-        m_parentBone = bones->at(parentBoneID);
+    if (m_parentBoneID != -1 && m_parentBoneID < nbones) {
+        m_parentBone = bones->at(m_parentBoneID);
         m_parentIsRoot = false;
         m_hasParent = true;
     }
@@ -161,40 +188,15 @@ void Bone::read(const uint8_t *data, BoneList *bones, Bone *rootBone)
         m_parentIsRoot = false;
         m_hasParent = false;
     }
-
     // The bone has a child bone and in the current bones
-    if (childBoneID != -1 && childBoneID < nbones)
-        m_childBone = bones->at(childBoneID);
-
-    if (type == kFollowRotate)
-        m_rotateCoef = targetBoneID * 0.01f;
-
-#ifdef VPVL_COORDINATE_OPENGL
-    m_originPosition.setValue(pos[0], pos[1], -pos[2]);
-#else
-    m_originPosition.setValue(pos[0], pos[1], pos[2]);
-#endif
-    m_localTransform.setOrigin(m_originPosition);
-    m_transformMoveToOrigin.setOrigin(-m_originPosition);
-    m_targetBoneID = targetBoneID;
-    m_type = type;
-}
-
-void Bone::computeOffset()
-{
+    if (m_childBoneID != -1 && m_childBoneID < nbones)
+        m_childBone = bones->at(m_childBoneID);
+    // The bone has a target bone and in the current bones for IK
+    if (m_type == kUnderIK || m_type == kUnderRotate) {
+        if (m_targetBoneID >= 0 && m_targetBoneID < bones->size())
+            m_targetBone = bones->at(m_targetBoneID);
+    }
     m_offset = m_parentBone ? m_originPosition - m_parentBone->m_originPosition : m_originPosition;
-}
-
-void Bone::reset()
-{
-    m_position.setZero();
-    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-    m_localTransform.setIdentity();
-    m_localTransform.setOrigin(m_originPosition);
-}
-
-void Bone::setMotionIndependency()
-{
     // The parent is root bone
     if (!m_parentBone || m_parentIsRoot) {
         m_motionIndepent = true;
@@ -213,15 +215,6 @@ void Bone::setMotionIndependency()
         return;
     }
     m_motionIndepent = false;
-}
-
-void Bone::setTargetBone(BoneList *bones)
-{
-    // The bone has a target bone and in the current bones for IK
-    if (m_type == kUnderIK || m_type == kUnderRotate) {
-        if (m_targetBoneID >= 0 && m_targetBoneID < bones->size())
-            m_targetBone = bones->at(m_targetBoneID);
-    }
 }
 
 void Bone::updateRotation()
