@@ -329,6 +329,13 @@ void PMDModel::updateToon(const btVector3 &lightDirection)
     }
 }
 
+void PMDModel::updateImmediate()
+{
+    updateRootBone();
+    updateMotion(0);
+    updateSkins();
+}
+
 void PMDModel::updateIndices()
 {
     const int nIndices = m_indices.size();
@@ -349,7 +356,7 @@ float PMDModel::boundingSphereRange(btVector3 &center)
 {
     float max = 0.0f;
     Bone *bone = Bone::centerBone(&m_bones);
-    btVector3 pos = bone->transform().getOrigin();
+    btVector3 pos = bone->localTransform().getOrigin();
     const int nVertices = m_vertices.size();
     for (int i = 0; i < nVertices; i++) {
         const float r2 = pos.distance2(m_skinnedVertices[i].position);

@@ -139,7 +139,7 @@ void IK::read(const uint8_t *data, BoneList *bones)
 
 void IK::solve()
 {
-    const btVector3 destPosition = m_destination->transform().getOrigin();
+    const btVector3 destPosition = m_destination->localTransform().getOrigin();
     const btVector3 xAxis(1.0f, 0.0f, 0.0f);
     int nbones = m_bones.size();
     for (int i = nbones - 1; i >= 0; i--)
@@ -150,8 +150,8 @@ void IK::solve()
     for (int i = 0; i < m_iteration; i++) {
         for (int j = 0; j < nbones; j++) {
             Bone *bone = m_bones[j];
-            const btVector3 targetPosition = m_target->transform().getOrigin();
-            const btTransform transform = bone->transform().inverse();
+            const btVector3 targetPosition = m_target->localTransform().getOrigin();
+            const btTransform transform = bone->localTransform().inverse();
             btVector3 localDestination = transform * destPosition;
             btVector3 localTarget = transform * targetPosition;
             if (localDestination.distance2(localTarget) < kMinDistance) {

@@ -99,7 +99,7 @@ Bone::Bone()
       m_motionIndepent(false)
 {
     internal::zerofill(m_name, sizeof(m_name));
-    m_transform.setIdentity();
+    m_localTransform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
 }
 
@@ -108,7 +108,7 @@ Bone::~Bone()
     internal::zerofill(m_name, sizeof(m_name));
     m_id = -1;
     m_type = kUnknown;
-    m_transform.setIdentity();
+    m_localTransform.setIdentity();
     m_transformMoveToOrigin.setIdentity();
     m_originPosition.setZero();
     m_position.setZero();
@@ -174,7 +174,7 @@ void Bone::read(const uint8_t *data, BoneList *bones, Bone *rootBone)
 #else
     m_originPosition.setValue(pos[0], pos[1], pos[2]);
 #endif
-    m_transform.setOrigin(m_originPosition);
+    m_localTransform.setOrigin(m_originPosition);
     m_transformMoveToOrigin.setOrigin(-m_originPosition);
     m_targetBoneID = targetBoneID;
     m_type = type;
@@ -189,8 +189,8 @@ void Bone::reset()
 {
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-    m_transform.setIdentity();
-    m_transform.setOrigin(m_originPosition);
+    m_localTransform.setIdentity();
+    m_localTransform.setOrigin(m_originPosition);
 }
 
 void Bone::setMotionIndependency()
@@ -248,15 +248,15 @@ void Bone::updateTransform()
 
 void Bone::updateTransform(const btQuaternion &q)
 {
-    m_transform.setOrigin(m_position + m_offset);
-    m_transform.setRotation(q);
+    m_localTransform.setOrigin(m_position + m_offset);
+    m_localTransform.setRotation(q);
     if (m_parentBone)
-        m_transform = m_parentBone->m_transform * m_transform;
+        m_localTransform = m_parentBone->m_localTransform * m_localTransform;
 }
 
 void Bone::getSkinTransform(btTransform &tr)
 {
-    tr = m_transform * m_transformMoveToOrigin;
+    tr = m_localTransform * m_transformMoveToOrigin;
 }
 
 } /* namespace vpvl */

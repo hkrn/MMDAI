@@ -236,8 +236,8 @@ public:
      *
      * @return transform object
      */
-    const btTransform &transform() const {
-        return m_transform;
+    const btTransform &localTransform() const {
+        return m_localTransform;
     }
 
     /**
@@ -335,8 +335,8 @@ public:
      *
      * @param transform object
      */
-    void setTransform(const btTransform &value) {
-        m_transform = value;
+    void setLocalTransform(const btTransform &value) {
+        m_localTransform = value;
     }
 
     /**
@@ -422,7 +422,7 @@ private:
     uint8_t m_englishName[kNameSize];
     int16_t m_id;
     Type m_type;
-    btTransform m_transform;
+    btTransform m_localTransform;
     btTransform m_transformMoveToOrigin;
     btVector3 m_originPosition;
     btVector3 m_position;

@@ -90,7 +90,7 @@ public:
         btMatrix3x3 matrix = worldTrans.getBasis();
         m_worldTransform.setOrigin(internal::kZeroV);
         m_worldTransform = m_boneTransform * m_worldTransform;
-        m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->transform().getOrigin());
+        m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
         m_worldTransform.setBasis(matrix);
     }
 private:
@@ -113,7 +113,7 @@ public:
     }
     virtual void getWorldTransform(btTransform &worldTrans) const
     {
-        worldTrans = m_bone->transform() * m_boneTransform;
+        worldTrans = m_bone->localTransform() * m_boneTransform;
     }
     virtual void setWorldTransform(const btTransform &worldTrans)
     {
@@ -235,7 +235,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
 #endif
         btTransform startTransform;
         startTransform.setIdentity();
-        startTransform.setOrigin(bone->transform().getOrigin());
+        startTransform.setOrigin(bone->localTransform().getOrigin());
         startTransform *= m_transform;
 
         switch (type) {
@@ -274,7 +274,7 @@ void RigidBody::transformBone()
 {
     if (m_type == 0 || m_noBone)
         return;
-    m_bone->setTransform(m_body->getCenterOfMassTransform() * m_invertedTransform);
+    m_bone->setLocalTransform(m_body->getCenterOfMassTransform() * m_invertedTransform);
 }
 
 void RigidBody::setKinematic(bool value)

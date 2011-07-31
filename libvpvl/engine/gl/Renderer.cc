@@ -562,7 +562,7 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
         vpvl::Bone::Type type = bone->type();
         if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
             continue;
-        const btTransform transform = bone->transform();
+        const btTransform transform = bone->localTransform();
         transform.getOpenGLMatrix(matrix);
         glPushMatrix();
         glMultMatrixf(matrix);
@@ -666,7 +666,7 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
             glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
         }
         glBegin(GL_LINES);
-        glVertex3fv(parent->transform().getOrigin());
+        glVertex3fv(parent->localTransform().getOrigin());
         glVertex3fv(transform.getOrigin());
         glEnd();
         glPopMatrix();

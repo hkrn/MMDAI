@@ -176,6 +176,7 @@ public:
     void updateRootBone();
     void updateMotion(float deltaFrame);
     void updateSkins();
+    void updateImmediate();
     float boundingSphereRange(btVector3 &center);
     void smearAllBonesToDefault(float rate);
 

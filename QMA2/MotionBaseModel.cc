@@ -57,9 +57,7 @@ QVariant MotionBaseModel::headerData(int section, Qt::Orientation orientation, i
 bool MotionBaseModel::updateModel()
 {
     if (m_model) {
-        m_model->updateRootBone();
-        m_model->updateMotion(0);
-        m_model->updateSkins();
+        m_model->updateImmediate();
         return true;
     }
     else {
