@@ -49,7 +49,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
-        const vpvl::FaceKeyFrameList faceFrames = motion->faceMotion().frames();
+        const vpvl::FaceKeyFrameList faceFrames = motion->faceAnimation().frames();
         uint32_t nFaceFrames = faceFrames.size();
         for (uint32_t i = 0; i < nFaceFrames; i++) {
             vpvl::FaceKeyFrame *frame = faceFrames[i];

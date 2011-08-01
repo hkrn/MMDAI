@@ -95,7 +95,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
-        const vpvl::BoneKeyFrameList boneFrames = motion->boneMotion().frames();
+        const vpvl::BoneKeyFrameList boneFrames = motion->boneAnimation().frames();
         uint32_t nBoneFrames = boneFrames.size();
         for (uint32_t i = 0; i < nBoneFrames; i++) {
             vpvl::BoneKeyFrame *frame = boneFrames[i];

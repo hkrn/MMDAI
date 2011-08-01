@@ -36,66 +36,73 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_FACEMOTION_H_
-#define VPVL_FACEMOTION_H_
-
-#include <LinearMath/btHashMap.h>
-#include "vpvl/BaseMotion.h"
+#include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
 
-class Face;
-class FaceKeyFrame;
-class PMDModel;
-typedef struct FaceMotionInternal FaceMotionInternal;
-typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
-
-/**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * FaceMotion class represents a face motion that includes many face frames
- * of a Vocaloid Motion Data object inherits BaseMotion.
- */
-
-class VPVL_EXPORT FaceMotion : public BaseMotion
+BaseAnimation::BaseAnimation(float smearDefault) :
+    m_lastIndex(0),
+    m_lastLoopStartIndex(0),
+    m_smearDefault(smearDefault),
+    m_maxFrame(0.0f),
+    m_currentFrame(0.0f),
+    m_previousFrame(0.0f),
+    m_lastLoopStartFrame(0.0f),
+    m_blendRate(1.0f),
+    m_smearIndex(smearDefault),
+    m_ignoreSingleAnimation(false),
+    m_overrideFirst(false)
 {
-public:
-    FaceMotion();
-    ~FaceMotion();
-
-    static const float kStartingMarginFrame;
-
-    void read(const uint8_t *data, uint32_t size);
-    void seek(float frameAt);
-    void takeSnap(const btVector3 &center);
-    void attachModel(PMDModel *model);
-    void reset();
-
-    const FaceKeyFrameList &frames() const {
-        return m_frames;
-    }
-    PMDModel *attachedModel() const {
-        return m_model;
-    }
-    void setFrames(const FaceKeyFrameList &value) {
-        m_frames = value;
-    }
-
-private:
-    void calculateFrames(float frameAt, FaceMotionInternal *node);
-
-    FaceKeyFrameList m_frames;
-    btHashMap<btHashString, FaceMotionInternal *> m_name2node;
-    PMDModel *m_model;
-
-    VPVL_DISABLE_COPY_AND_ASSIGN(FaceMotion)
-};
-
 }
 
-#endif
+void BaseAnimation::advance(float deltaFrame, bool &reached)
+{
+    seek(m_currentFrame);
+    m_previousFrame = m_currentFrame;
+    m_currentFrame += deltaFrame;
+    if (m_currentFrame >= m_maxFrame) {
+        m_currentFrame = m_maxFrame;
+        reached = true;
+    }
+    else {
+        reached = false;
+    }
+}
+
+void BaseAnimation::rewind(float target, float deltaFrame)
+{
+    m_currentFrame = m_previousFrame + deltaFrame - m_maxFrame + target;
+    m_previousFrame = target;
+    if (m_overrideFirst) {
+        // save current Animation state for loop
+        takeSnap(internal::kZeroV);
+        m_lastLoopStartFrame = target;
+        if (m_maxFrame >= m_smearDefault) {
+            m_smearIndex = m_smearDefault;
+        }
+        else {
+            m_smearIndex -= m_maxFrame + 1.0f;
+            btSetMax(m_smearIndex, 0.0f);
+        }
+    }
+}
+
+void BaseAnimation::reset()
+{
+    m_currentFrame = 0.0f;
+    m_previousFrame = 0.0f;
+    m_lastLoopStartFrame = 0.0f;
+    m_blendRate = 1.0f;
+    m_smearIndex = m_smearDefault;
+}
+
+void BaseAnimation::setOverrideFirst(const btVector3 &center)
+{
+    takeSnap(center);
+    m_overrideFirst = true;
+    m_smearIndex = m_smearDefault;
+}
+
+}

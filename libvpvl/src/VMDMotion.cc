@@ -219,7 +219,7 @@ void VMDMotion::attachModel(PMDModel *model)
     m_faceMotion.attachModel(model);
     if (m_enableSmooth) {
         // The model is relocated to the specified offset and save the current motion state.
-        if (m_enableRelocation && m_boneMotion.hasCenterBoneMotion()) {
+        if (m_enableRelocation && m_boneMotion.hasCenterBoneAnimation()) {
             Bone *root = model->mutableRootBone();
             Bone *center = Bone::centerBone(&model->bones());
             btTransform transform = root->localTransform().inverse();

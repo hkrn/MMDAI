@@ -36,16 +36,20 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_BASEMOTION_H_
-#define VPVL_BASEMOTION_H_
+#ifndef VPVL_FACEANIMATION_H_
+#define VPVL_FACEANIMATION_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btQuaternion.h>
-#include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
+#include <LinearMath/btHashMap.h>
+#include "vpvl/BaseAnimation.h"
 
 namespace vpvl
 {
+
+class Face;
+class FaceKeyFrame;
+class PMDModel;
+typedef struct FaceAnimationInternal FaceAnimationInternal;
+typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
 
 /**
  * @file
@@ -54,116 +58,44 @@ namespace vpvl
  *
  * @section DESCRIPTION
  *
- * The basic class inherited by BoneMotion, CameraMotion and FaceMotion class.
+ * FaceAnimation class represents a face Animation that includes many face frames
+ * of a Vocaloid Animation Data object inherits BaseAnimation.
  */
 
-class VPVL_EXPORT BaseMotion
+class VPVL_EXPORT FaceAnimation : public BaseAnimation
 {
 public:
+    FaceAnimation();
+    ~FaceAnimation();
 
-    /**
-     * Constructor that set the smear default value to a given value.
-     *
-     * @param The smear default value
-     */
-    BaseMotion(float smearDefault);
+    static const float kStartingMarginFrame;
 
-    virtual ~BaseMotion() {}
-
-    /**
-     * Read and parse the buffer with size and sets it's result to the class.
-     *
-     * @param The buffer to read and parse
-     * @param Size of the buffer
-     */
-    virtual void read(const uint8_t *data, uint32_t size) = 0;
-
-    /**
-     * Seek the motion to the given value index.
-     *
-     * @param A frame index to seek
-     */
-    virtual void seek(float frameAt) = 0;
-
-    /**
-     * Save the current motion state.
-     *
-     * @param A position of center
-     */
-    virtual void takeSnap(const btVector3 &center) = 0;
-
-    /**
-     * Seek from the previous to the next frame with delta.
-     *
-     * @param A delta frame index to seek the next frame
-     * @param A value whether the motion is reached to the end.
-     */
-    void advance(float deltaFrame, bool &reached);
-
-    /**
-     * Rewind the motion.
-     *
-     * @param A frame index to rewind
-     * @param A delta frame indx to rewind
-     */
-    void rewind(float target, float deltaFrame);
-
-    /**
-     * Reset all states and last frame index.
-     */
+    void read(const uint8_t *data, uint32_t size);
+    void seek(float frameAt);
+    void takeSnap(const btVector3 &center);
+    void attachModel(PMDModel *model);
     void reset();
 
-    /**
-     * Save the current motion state.
-     *
-     * @param A position of center
-     */
-    void setOverrideFirst(const btVector3 &center);
-
-    /**
-     * Get the blend rate.
-     *
-     * @return The blend rate value
-     */
-    float blendRate() const {
-        return m_blendRate;
+    const FaceKeyFrameList &frames() const {
+        return m_frames;
+    }
+    PMDModel *attachedModel() const {
+        return m_model;
+    }
+    void setFrames(const FaceKeyFrameList &value) {
+        m_frames = value;
     }
 
-    /**
-     * Get the max frame index.
-     *
-     * @return The max frame index
-     */
-    float maxIndex() const {
-        return m_maxFrame;
-    }
+private:
+    void calculateFrames(float frameAt, FaceAnimationInternal *node);
 
-    /**
-     * Set the blend rate.
-     *
-     * @param The blend rate value
-     */
-    void setBlendRate(float value) {
-        m_blendRate = value;
-    }
+    FaceKeyFrameList m_frames;
+    btHashMap<btHashString, FaceAnimationInternal *> m_name2node;
+    PMDModel *m_model;
 
-protected:
-    uint32_t m_lastIndex;
-    uint32_t m_lastLoopStartIndex;
-    const float m_smearDefault;
-    float m_maxFrame;
-    float m_currentFrame;
-    float m_previousFrame;
-    float m_lastLoopStartFrame;
-    float m_blendRate;
-    float m_smearIndex;
-    bool m_ignoreSingleMotion;
-    bool m_overrideFirst;
-
-    VPVL_DISABLE_COPY_AND_ASSIGN(BaseMotion)
+    VPVL_DISABLE_COPY_AND_ASSIGN(FaceAnimation)
 };
 
 }
 
 #endif
-

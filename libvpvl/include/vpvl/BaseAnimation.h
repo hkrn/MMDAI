@@ -36,16 +36,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_CAMERAMOTION_H_
-#define VPVL_CAMERAMOTION_H_
+#ifndef VPVL_BASEANIMATION_H_
+#define VPVL_BASEANIMATION_H_
 
-#include "vpvl/BaseMotion.h"
+#include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btVector3.h>
+#include "vpvl/common.h"
 
 namespace vpvl
 {
-
-class CameraKeyFrame;
-typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
 
 /**
  * @file
@@ -54,59 +54,113 @@ typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
  *
  * @section DESCRIPTION
  *
- * CameraMotion class represents a camera motion that includes many camera key frames
- * of a Vocaloid Motion Data object inherits BaseMotion.
+ * The basic class inherited by BoneAnimation, CameraAnimation and FaceAnimation class.
  */
 
-class VPVL_EXPORT CameraMotion : public BaseMotion
+class VPVL_EXPORT BaseAnimation
 {
 public:
-    CameraMotion();
-    ~CameraMotion();
 
-    void read(const uint8_t *data, uint32_t size);
-    void seek(float frameAt);
-    void takeSnap(const btVector3 &center);
+    /**
+     * Constructor that set the smear default value to a given value.
+     *
+     * @param The smear default value
+     */
+    BaseAnimation(float smearDefault);
+
+    virtual ~BaseAnimation() {}
+
+    /**
+     * Read and parse the buffer with size and sets it's result to the class.
+     *
+     * @param The buffer to read and parse
+     * @param Size of the buffer
+     */
+    virtual void read(const uint8_t *data, uint32_t size) = 0;
+
+    /**
+     * Seek the Animation to the given value index.
+     *
+     * @param A frame index to seek
+     */
+    virtual void seek(float frameAt) = 0;
+
+    /**
+     * Save the current Animation state.
+     *
+     * @param A position of center
+     */
+    virtual void takeSnap(const btVector3 &center) = 0;
+
+    /**
+     * Seek from the previous to the next frame with delta.
+     *
+     * @param A delta frame index to seek the next frame
+     * @param A value whether the Animation is reached to the end.
+     */
+    void advance(float deltaFrame, bool &reached);
+
+    /**
+     * Rewind the Animation.
+     *
+     * @param A frame index to rewind
+     * @param A delta frame indx to rewind
+     */
+    void rewind(float target, float deltaFrame);
+
+    /**
+     * Reset all states and last frame index.
+     */
     void reset();
 
-    const CameraKeyFrameList &frames() const {
-        return m_frames;
-    }
-    const btVector3 &position() const {
-        return m_position;
-    }
-    const btVector3 &angle() const {
-        return m_angle;
-    }
-    float distance() const {
-        return m_distance;
-    }
-    float fovy() const {
-        return m_fovy;
-    }
-    void setFrames(const CameraKeyFrameList &value) {
-        m_frames = value;
+    /**
+     * Save the current Animation state.
+     *
+     * @param A position of center
+     */
+    void setOverrideFirst(const btVector3 &center);
+
+    /**
+     * Get the blend rate.
+     *
+     * @return The blend rate value
+     */
+    float blendRate() const {
+        return m_blendRate;
     }
 
-private:
-    static float weightValue(const CameraKeyFrame *keyFrame,
-                             float w,
-                             uint32_t at);
-    static void lerpVector3(const CameraKeyFrame *keyFrame,
-                            const btVector3 &from,
-                            const btVector3 &to,
-                            float w,
-                            uint32_t at,
-                            float &value);
+    /**
+     * Get the max frame index.
+     *
+     * @return The max frame index
+     */
+    float maxIndex() const {
+        return m_maxFrame;
+    }
 
-    CameraKeyFrameList m_frames;
-    btVector3 m_position;
-    btVector3 m_angle;
-    float m_distance;
-    float m_fovy;
+    /**
+     * Set the blend rate.
+     *
+     * @param The blend rate value
+     */
+    void setBlendRate(float value) {
+        m_blendRate = value;
+    }
+
+protected:
     uint32_t m_lastIndex;
+    uint32_t m_lastLoopStartIndex;
+    const float m_smearDefault;
+    float m_maxFrame;
+    float m_currentFrame;
+    float m_previousFrame;
+    float m_lastLoopStartFrame;
+    float m_blendRate;
+    float m_smearIndex;
+    bool m_ignoreSingleAnimation;
+    bool m_overrideFirst;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(CameraMotion)
+    VPVL_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };
 
 }

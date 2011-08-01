@@ -12,16 +12,16 @@ set(VPVL_VERSION_COMPATIBLE "${VPVL_VERSION_MAJOR}.${VPVL_VERSION_COMPAT}.0")
 project(libvpvl)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src vpvl_sources)
 set(vpvl_public_headers
-    include/vpvl/BaseMotion.h
+    include/vpvl/BaseAnimation.h
     include/vpvl/BoneKeyFrame.h
     include/vpvl/Bone.h
-    include/vpvl/BoneMotion.h
+    include/vpvl/BoneAnimation.h
     include/vpvl/CameraKeyFrame.h
-    include/vpvl/CameraMotion.h
+    include/vpvl/CameraAnimation.h
     include/vpvl/Constraint.h
     include/vpvl/Face.h
     include/vpvl/FaceKeyFrame.h
-    include/vpvl/FaceMotion.h
+    include/vpvl/FaceAnimation.h
     include/vpvl/IK.h
     include/vpvl/Material.h
     include/vpvl/PMDModel.h

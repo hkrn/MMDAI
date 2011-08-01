@@ -36,11 +36,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_BONEMOTION_H_
-#define VPVL_BONEMOTION_H_
+#ifndef VPVL_BONEANIMATION_H_
+#define VPVL_BONEANIMATION_H_
 
 #include <LinearMath/btHashMap.h>
-#include "vpvl/BaseMotion.h"
+#include "vpvl/BaseAnimation.h"
 
 namespace vpvl
 {
@@ -48,7 +48,7 @@ namespace vpvl
 class Bone;
 class BoneKeyFrame;
 class PMDModel;
-typedef struct BoneMotionInternal BoneMotionInternal;
+typedef struct BoneAnimationInternal BoneAnimationInternal;
 typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
 
 /**
@@ -58,15 +58,15 @@ typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
  *
  * @section DESCRIPTION
  *
- * BoneMotion class represents a bone motion that includes many bone key frames
- * of a Vocaloid Motion Data object inherits BaseMotion.
+ * BoneAnimation class represents a bone Animation that includes many bone key frames
+ * of a Vocaloid Animation Data object inherits BaseAnimation.
  */
 
-class VPVL_EXPORT BoneMotion : public BaseMotion
+class VPVL_EXPORT BoneAnimation : public BaseAnimation
 {
 public:
-    BoneMotion();
-    ~BoneMotion();
+    BoneAnimation();
+    ~BoneAnimation();
 
     static const float kStartingMarginFrame;
 
@@ -79,8 +79,8 @@ public:
     const BoneKeyFrameList &frames() const {
         return m_frames;
     }
-    bool hasCenterBoneMotion() const {
-        return m_hasCenterBoneMotion;
+    bool hasCenterBoneAnimation() const {
+        return m_hasCenterBoneAnimation;
     }
     PMDModel *attachedModel() const {
         return m_model;
@@ -99,14 +99,14 @@ private:
                             float w,
                             uint32_t at,
                             float &value);
-    void calculateFrames(float frameAt, BoneMotionInternal *node);
+    void calculateFrames(float frameAt, BoneAnimationInternal *node);
 
     BoneKeyFrameList m_frames;
-    btHashMap<btHashString, BoneMotionInternal *> m_name2node;
+    btHashMap<btHashString, BoneAnimationInternal *> m_name2node;
     PMDModel *m_model;
-    bool m_hasCenterBoneMotion;
+    bool m_hasCenterBoneAnimation;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(BoneMotion)
+    VPVL_DISABLE_COPY_AND_ASSIGN(BoneAnimation)
 };
 
 }

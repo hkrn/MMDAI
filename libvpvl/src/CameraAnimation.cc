@@ -41,7 +41,7 @@
 namespace vpvl
 {
 
-class CameraMotionKeyFramePredication
+class CameraAnimationKeyFramePredication
 {
 public:
     bool operator()(const CameraKeyFrame *left, const CameraKeyFrame *right) {
@@ -49,14 +49,14 @@ public:
     }
 };
 
-float CameraMotion::weightValue(const CameraKeyFrame *keyFrame, float w, uint32_t at)
+float CameraAnimation::weightValue(const CameraKeyFrame *keyFrame, float w, uint32_t at)
 {
     const uint16_t index = static_cast<int16_t>(w * CameraKeyFrame::kTableSize);
     const float *v = keyFrame->interpolationTable()[at];
     return v[index] + (v[index + 1] - v[index]) * (w * CameraKeyFrame::kTableSize - index);
 }
 
-void CameraMotion::lerpVector3(const CameraKeyFrame *keyFrame,
+void CameraAnimation::lerpVector3(const CameraKeyFrame *keyFrame,
                                const btVector3 &from,
                                const btVector3 &to,
                                float w,
@@ -74,8 +74,8 @@ void CameraMotion::lerpVector3(const CameraKeyFrame *keyFrame,
     }
 }
 
-CameraMotion::CameraMotion()
-    : BaseMotion(0.0f),
+CameraAnimation::CameraAnimation()
+    : BaseAnimation(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_distance(0.0f),
@@ -84,7 +84,7 @@ CameraMotion::CameraMotion()
 {
 }
 
-CameraMotion::~CameraMotion()
+CameraAnimation::~CameraAnimation()
 {
     internal::clearAll(m_frames);
     m_position.setZero();
@@ -94,7 +94,7 @@ CameraMotion::~CameraMotion()
     m_lastIndex = 0;
 }
 
-void CameraMotion::read(const uint8_t *data, uint32_t size)
+void CameraAnimation::read(const uint8_t *data, uint32_t size)
 {
     if (size > 0) {
         uint8_t *ptr = const_cast<uint8_t *>(data);
@@ -105,12 +105,12 @@ void CameraMotion::read(const uint8_t *data, uint32_t size)
             ptr += CameraKeyFrame::stride();
             m_frames.push_back(frame);
         }
-        m_frames.quickSort(CameraMotionKeyFramePredication());
+        m_frames.quickSort(CameraAnimationKeyFramePredication());
         m_maxFrame = m_frames[size - 1]->frameIndex();
     }
 }
 
-void CameraMotion::seek(float frameAt)
+void CameraAnimation::seek(float frameAt)
 {
     const uint32_t nFrames = m_frames.size();
     CameraKeyFrame *lastKeyFrame = m_frames[nFrames - 1];
@@ -205,13 +205,13 @@ void CameraMotion::seek(float frameAt)
     }
 }
 
-void CameraMotion::takeSnap(const btVector3 & /* center */)
+void CameraAnimation::takeSnap(const btVector3 & /* center */)
 {
 }
 
-void CameraMotion::reset()
+void CameraAnimation::reset()
 {
-    BaseMotion::reset();
+    BaseAnimation::reset();
 }
 
 }

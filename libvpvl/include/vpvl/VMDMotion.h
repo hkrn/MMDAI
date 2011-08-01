@@ -40,9 +40,9 @@
 #define VPVL_VMDMOTION_H_
 
 #include <LinearMath/btHashMap.h>
-#include "vpvl/BoneMotion.h"
-#include "vpvl/CameraMotion.h"
-#include "vpvl/FaceMotion.h"
+#include "vpvl/BoneAnimation.h"
+#include "vpvl/CameraAnimation.h"
+#include "vpvl/FaceAnimation.h"
 
 class PMDModel;
 
@@ -129,13 +129,13 @@ public:
     Error error() const {
         return m_error;
     }
-    const BoneMotion &boneMotion() const {
+    const BoneAnimation &boneAnimation() const {
         return m_boneMotion;
     }
-    const CameraMotion &cameraMotion() const {
+    const CameraAnimation &cameraAnimation() const {
         return m_cameraMotion;
     }
-    const FaceMotion &faceMotion() const {
+    const FaceAnimation &faceAnimation() const {
         return m_faceMotion;
     }
     const MotionStatus &status() const {
@@ -144,13 +144,13 @@ public:
     const VMDMotionDataInfo &result() const {
         return m_result;
     }
-    BoneMotion *mutableBoneMotion() {
+    BoneAnimation *mutableBoneAnimation() {
         return &m_boneMotion;
     }
-    CameraMotion *mutableCameraMotion() {
+    CameraAnimation *mutableCameraAnimation() {
         return &m_cameraMotion;
     }
-    FaceMotion *mutableFaceMotion() {
+    FaceAnimation *mutableFaceAnimation() {
         return &m_faceMotion;
     }
     float loopAt() const {
@@ -193,9 +193,9 @@ private:
     uint8_t m_name[20];
     PMDModel *m_model;
     VMDMotionDataInfo m_result;
-    BoneMotion m_boneMotion;
-    CameraMotion m_cameraMotion;
-    FaceMotion m_faceMotion;
+    BoneAnimation m_boneMotion;
+    CameraAnimation m_cameraMotion;
+    FaceAnimation m_faceMotion;
     MotionStatus m_status;
     Error m_error;
     uint8_t m_onEnd;

@@ -36,73 +36,80 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "vpvl/vpvl.h"
-#include "vpvl/internal/util.h"
+#ifndef VPVL_CAMERAANIMATION_H_
+#define VPVL_CAMERAANIMATION_H_
+
+#include "vpvl/BaseAnimation.h"
 
 namespace vpvl
 {
 
-BaseMotion::BaseMotion(float smearDefault) :
-    m_lastIndex(0),
-    m_lastLoopStartIndex(0),
-    m_smearDefault(smearDefault),
-    m_maxFrame(0.0f),
-    m_currentFrame(0.0f),
-    m_previousFrame(0.0f),
-    m_lastLoopStartFrame(0.0f),
-    m_blendRate(1.0f),
-    m_smearIndex(smearDefault),
-    m_ignoreSingleMotion(false),
-    m_overrideFirst(false)
-{
-}
+class CameraKeyFrame;
+typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
 
-void BaseMotion::advance(float deltaFrame, bool &reached)
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * CameraAnimation class represents a camera Animation that includes many camera key frames
+ * of a Vocaloid Animation Data object inherits BaseAnimation.
+ */
+
+class VPVL_EXPORT CameraAnimation : public BaseAnimation
 {
-    seek(m_currentFrame);
-    m_previousFrame = m_currentFrame;
-    m_currentFrame += deltaFrame;
-    if (m_currentFrame >= m_maxFrame) {
-        m_currentFrame = m_maxFrame;
-        reached = true;
+public:
+    CameraAnimation();
+    ~CameraAnimation();
+
+    void read(const uint8_t *data, uint32_t size);
+    void seek(float frameAt);
+    void takeSnap(const btVector3 &center);
+    void reset();
+
+    const CameraKeyFrameList &frames() const {
+        return m_frames;
     }
-    else {
-        reached = false;
+    const btVector3 &position() const {
+        return m_position;
     }
-}
-
-void BaseMotion::rewind(float target, float deltaFrame)
-{
-    m_currentFrame = m_previousFrame + deltaFrame - m_maxFrame + target;
-    m_previousFrame = target;
-    if (m_overrideFirst) {
-        // save current motion state for loop
-        takeSnap(internal::kZeroV);
-        m_lastLoopStartFrame = target;
-        if (m_maxFrame >= m_smearDefault) {
-            m_smearIndex = m_smearDefault;
-        }
-        else {
-            m_smearIndex -= m_maxFrame + 1.0f;
-            btSetMax(m_smearIndex, 0.0f);
-        }
+    const btVector3 &angle() const {
+        return m_angle;
     }
+    float distance() const {
+        return m_distance;
+    }
+    float fovy() const {
+        return m_fovy;
+    }
+    void setFrames(const CameraKeyFrameList &value) {
+        m_frames = value;
+    }
+
+private:
+    static float weightValue(const CameraKeyFrame *keyFrame,
+                             float w,
+                             uint32_t at);
+    static void lerpVector3(const CameraKeyFrame *keyFrame,
+                            const btVector3 &from,
+                            const btVector3 &to,
+                            float w,
+                            uint32_t at,
+                            float &value);
+
+    CameraKeyFrameList m_frames;
+    btVector3 m_position;
+    btVector3 m_angle;
+    float m_distance;
+    float m_fovy;
+    uint32_t m_lastIndex;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(CameraAnimation)
+};
+
 }
 
-void BaseMotion::reset()
-{
-    m_currentFrame = 0.0f;
-    m_previousFrame = 0.0f;
-    m_lastLoopStartFrame = 0.0f;
-    m_blendRate = 1.0f;
-    m_smearIndex = m_smearDefault;
-}
+#endif
 
-void BaseMotion::setOverrideFirst(const btVector3 &center)
-{
-    takeSnap(center);
-    m_overrideFirst = true;
-    m_smearIndex = m_smearDefault;
-}
-
-}

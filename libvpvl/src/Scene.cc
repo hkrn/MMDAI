@@ -174,7 +174,7 @@ void Scene::seek(float frameIndex)
     }
     // Updating camera motion
     if (m_cameraMotion) {
-        CameraMotion *camera = m_cameraMotion->mutableCameraMotion();
+        CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         camera->seek(frameIndex);
         m_position = camera->position();
         m_angle = camera->angle();
@@ -264,7 +264,7 @@ void Scene::update(float deltaFrame)
     // Updating camera motion
     if (m_cameraMotion) {
         bool reached = false;
-        CameraMotion *camera = m_cameraMotion->mutableCameraMotion();
+        CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         camera->advance(deltaFrame, reached);
         m_position = camera->position();
         m_angle = camera->angle();

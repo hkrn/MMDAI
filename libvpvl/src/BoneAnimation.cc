@@ -41,9 +41,9 @@
 namespace vpvl
 {
 
-const float BoneMotion::kStartingMarginFrame = 20.0f;
+const float BoneAnimation::kStartingMarginFrame = 20.0f;
 
-struct BoneMotionInternal {
+struct BoneAnimationInternal {
     Bone *bone;
     BoneKeyFrameList keyFrames;
     btVector3 position;
@@ -53,7 +53,7 @@ struct BoneMotionInternal {
     uint32_t lastIndex;
 };
 
-class BoneMotionKeyFramePredication
+class BoneAnimationKeyFramePredication
 {
 public:
     bool operator()(const BoneKeyFrame *left, const BoneKeyFrame *right) {
@@ -61,14 +61,14 @@ public:
     }
 };
 
-float BoneMotion::weightValue(const BoneKeyFrame *keyFrame, float w, uint32_t at)
+float BoneAnimation::weightValue(const BoneKeyFrame *keyFrame, float w, uint32_t at)
 {
     const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
     const float *v = keyFrame->interpolationTable()[at];
     return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
 }
 
-void BoneMotion::lerpVector3(const BoneKeyFrame *keyFrame,
+void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
                              const btVector3 &from,
                              const btVector3 &to,
                              float w,
@@ -86,22 +86,22 @@ void BoneMotion::lerpVector3(const BoneKeyFrame *keyFrame,
     }
 }
 
-BoneMotion::BoneMotion()
-    : BaseMotion(kStartingMarginFrame),
+BoneAnimation::BoneAnimation()
+    : BaseAnimation(kStartingMarginFrame),
       m_model(0),
-      m_hasCenterBoneMotion(false)
+      m_hasCenterBoneAnimation(false)
 {
 }
 
-BoneMotion::~BoneMotion()
+BoneAnimation::~BoneAnimation()
 {
     internal::clearAll(m_frames);
     internal::clearAll(m_name2node);
     m_model = 0;
-    m_hasCenterBoneMotion = false;
+    m_hasCenterBoneAnimation = false;
 }
 
-void BoneMotion::read(const uint8_t *data, uint32_t size)
+void BoneAnimation::read(const uint8_t *data, uint32_t size)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
@@ -113,12 +113,12 @@ void BoneMotion::read(const uint8_t *data, uint32_t size)
     }
 }
 
-void BoneMotion::seek(float frameAt)
+void BoneAnimation::seek(float frameAt)
 {
     const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
-        if (m_ignoreSingleMotion && node->keyFrames.size() <= 1)
+        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
+        if (m_ignoreSingleAnimation && node->keyFrames.size() <= 1)
             continue;
         calculateFrames(frameAt, node);
         Bone *bone = node->bone;
@@ -133,11 +133,11 @@ void BoneMotion::seek(float frameAt)
     }
 }
 
-void BoneMotion::takeSnap(const btVector3 &center)
+void BoneAnimation::takeSnap(const btVector3 &center)
 {
     const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
+        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
         Bone *bone = node->bone;
         node->snapPosition = bone->position();
         if (bone->hasMotionIndependency())
@@ -146,7 +146,7 @@ void BoneMotion::takeSnap(const btVector3 &center)
     }
 }
 
-void BoneMotion::attachModel(PMDModel *model)
+void BoneAnimation::attachModel(PMDModel *model)
 {
     if (m_model)
         return;
@@ -157,17 +157,17 @@ void BoneMotion::attachModel(PMDModel *model)
     for (uint32_t i = 0; i < nFrames; i++) {
         BoneKeyFrame *frame = m_frames.at(i);
         btHashString name(reinterpret_cast<const char *>(frame->name()));
-        BoneMotionInternal **ptr = m_name2node.find(name), *node;
+        BoneAnimationInternal **ptr = m_name2node.find(name), *node;
         if (ptr) {
             node = *ptr;
             node->keyFrames.push_back(frame);
             if (internal::stringEquals(frame->name(), centerBoneName, len))
-                m_hasCenterBoneMotion = true;
+                m_hasCenterBoneAnimation = true;
         }
         else {
             Bone *bone = model->findBone(frame->name());
             if (bone) {
-                node = new BoneMotionInternal();
+                node = new BoneAnimationInternal();
                 node->keyFrames.push_back(frame);
                 node->bone = bone;
                 node->lastIndex = 0;
@@ -182,16 +182,16 @@ void BoneMotion::attachModel(PMDModel *model)
 
     const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
+        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
         BoneKeyFrameList &frames = node->keyFrames;
-        frames.quickSort(BoneMotionKeyFramePredication());
+        frames.quickSort(BoneAnimationKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.size() - 1]->frameIndex());
     }
 
     m_model = model;
 }
 
-void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
+void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
 {
     BoneKeyFrameList &kframes = node->keyFrames;
     const uint32_t nFrames = kframes.size();
@@ -297,12 +297,12 @@ void BoneMotion::calculateFrames(float frameAt, BoneMotionInternal *node)
     }
 }
 
-void BoneMotion::reset()
+void BoneAnimation::reset()
 {
-    BaseMotion::reset();
+    BaseAnimation::reset();
     const uint32_t nNodes = m_name2node.size();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneMotionInternal *node = *m_name2node.getAtIndex(i);
+        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
         node->lastIndex = 0;
     }
 }
