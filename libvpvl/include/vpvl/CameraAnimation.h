@@ -55,7 +55,7 @@ typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
  * @section DESCRIPTION
  *
  * CameraAnimation class represents a camera Animation that includes many camera key frames
- * of a Vocaloid Animation Data object inherits BaseAnimation.
+ * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
 class VPVL_EXPORT CameraAnimation : public BaseAnimation

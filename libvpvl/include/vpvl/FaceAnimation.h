@@ -59,7 +59,7 @@ typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
  * @section DESCRIPTION
  *
  * FaceAnimation class represents a face Animation that includes many face frames
- * of a Vocaloid Animation Data object inherits BaseAnimation.
+ * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
 class VPVL_EXPORT FaceAnimation : public BaseAnimation

@@ -59,7 +59,7 @@ typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
  * @section DESCRIPTION
  *
  * BoneAnimation class represents a bone Animation that includes many bone key frames
- * of a Vocaloid Animation Data object inherits BaseAnimation.
+ * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
 class VPVL_EXPORT BoneAnimation : public BaseAnimation
