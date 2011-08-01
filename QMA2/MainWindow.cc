@@ -331,3 +331,33 @@ void MainWindow::on_actionBoneDialog_triggered()
                              tr("Select a model or a bone to open this dialog"));
     }
 }
+
+void MainWindow::on_actionExportVMD_triggered()
+{
+    const QString name = "mainWindow/lastVMDDirectory";
+    const QString path = m_settings.value(name).toString();
+    const QString fileName = QFileDialog::getSaveFileName(this,
+                                                          tr("Open VMD file"),
+                                                          path,
+                                                          tr("VMD file (*.vmd)"));
+    if (!fileName.isEmpty()) {
+        vpvl::VMDMotion motion;
+        m_boneMotionModel->saveMotion(&motion);
+        m_faceMotionModel->saveMotion(&motion);
+        size_t size = motion.estimateSize();
+        uint8_t *buffer = new uint8_t[size];
+        motion.save(buffer);
+        QFile file(fileName);
+        if (file.open(QFile::WriteOnly)) {
+            file.write(reinterpret_cast<const char *>(buffer), size);
+            file.close();
+        }
+        else {
+            qWarning("Failed exporting VMD: %s", file.errorString().toUtf8().constData());
+        }
+        delete[] buffer;
+        QDir dir(fileName);
+        dir.cdUp();
+        m_settings.setValue(name, dir.absolutePath());
+    }
+}

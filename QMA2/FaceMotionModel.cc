@@ -8,6 +8,18 @@ FaceMotionModel::FaceMotionModel(QObject *parent) :
 {
 }
 
+void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
+{
+    vpvl::FaceKeyFrameList frames;
+    foreach (QVariant value, m_values) {
+        vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+        QByteArray bytes = value.toByteArray();
+        frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        frames.push_back(frame);
+    }
+    motion->mutableFaceAnimation()->setFrames(frames);
+}
+
 void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
 {
     QString key = internal::toQString(face->name());

@@ -9,6 +9,18 @@ BoneMotionModel::BoneMotionModel(QObject *parent) :
 {
 }
 
+void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
+{
+    vpvl::BoneKeyFrameList frames;
+    foreach (QVariant value, m_values) {
+        vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+        QByteArray bytes = value.toByteArray();
+        frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        frames.push_back(frame);
+    }
+    motion->mutableBoneAnimation()->setFrames(frames);
+}
+
 bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model) {
@@ -26,6 +38,7 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
                 const btVector4 &v = frame->rotation;
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 vpvl::BoneKeyFrame newFrame;
+                /* FIXME: interpolation */
                 newFrame.setName(name);
                 newFrame.setPosition(frame->position);
                 newFrame.setRotation(rotation);

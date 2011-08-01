@@ -73,6 +73,7 @@ private slots:
     void on_actionTransform_triggered();
     void on_actionTabs_triggered();
     void on_actionBoneDialog_triggered();
+    void on_actionExportVMD_triggered();
 
 private:
     void connectWidgets();

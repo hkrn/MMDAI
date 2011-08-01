@@ -18,6 +18,7 @@ public:
     ~MotionBaseModel();
 
     virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
+    virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     void saveState();
     void restoreState();
     void discardState();

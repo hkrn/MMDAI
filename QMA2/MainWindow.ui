@@ -45,6 +45,8 @@
     <addaction name="separator"/>
     <addaction name="actionSetCamera"/>
     <addaction name="separator"/>
+    <addaction name="actionExportVMD"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuScene">
@@ -477,6 +479,14 @@
    </property>
    <property name="statusTip">
     <string>Make tab view visible.</string>
+   </property>
+  </action>
+  <action name="actionExportVMD">
+   <property name="text">
+    <string>Export VMD</string>
+   </property>
+   <property name="statusTip">
+    <string>Export bone key frames and face key frames as a VMD</string>
    </property>
   </action>
  </widget>

@@ -10,6 +10,7 @@ class FaceMotionModel : public MotionBaseModel
 public:
     explicit FaceMotionModel(QObject *parent = 0);
 
+    void saveMotion(vpvl::VMDMotion *motion);
     void registerKeyFrame(vpvl::Face *bone, int frameIndex);
     vpvl::Face *selectFace(int rowIndex);
     QList<vpvl::Face *> facesFromIndices(const QModelIndexList &indices);

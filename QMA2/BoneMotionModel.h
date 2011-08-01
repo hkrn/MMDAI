@@ -24,6 +24,7 @@ public:
 
     explicit BoneMotionModel(QObject *parent = 0);
 
+    void saveMotion(vpvl::VMDMotion *motion);
     bool loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int frameIndex);
     bool registerKeyFrame(vpvl::Bone *bone, int frameIndex);
     bool resetBone(ResetType type);
