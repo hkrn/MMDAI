@@ -84,6 +84,9 @@ public:
     float fovy() const {
         return m_fovy;
     }
+    void setFrames(const CameraKeyFrameList &value) {
+        m_frames = value;
+    }
 
 private:
     static float weightValue(const CameraKeyFrame *keyFrame,

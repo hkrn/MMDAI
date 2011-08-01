@@ -82,6 +82,9 @@ public:
     PMDModel *attachedModel() const {
         return m_model;
     }
+    void setFrames(const FaceKeyFrameList &value) {
+        m_frames = value;
+    }
 
 private:
     void calculateFrames(float frameAt, FaceMotionInternal *node);

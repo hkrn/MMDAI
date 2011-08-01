@@ -85,6 +85,9 @@ public:
     PMDModel *attachedModel() const {
         return m_model;
     }
+    void setFrames(const BoneKeyFrameList &value) {
+        m_frames = value;
+    }
 
 private:
     static float weightValue(const BoneKeyFrame *keyFrame,
