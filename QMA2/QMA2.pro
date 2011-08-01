@@ -3,7 +3,7 @@ TARGET = MMDAI2
 TEMPLATE = app
 
 
-LIBS += -L../libvpvl/lib
+LIBS += -L../libvpvl/dist/lib
 CONFIG(debug, debug|release) {
   LIBS += -lvpvl_debug
 }

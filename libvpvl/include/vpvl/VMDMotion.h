@@ -129,13 +129,13 @@ public:
     Error error() const {
         return m_error;
     }
-    const BoneMotion &bone() const {
+    const BoneMotion &boneMotion() const {
         return m_boneMotion;
     }
-    const CameraMotion &camera() const {
+    const CameraMotion &cameraMotion() const {
         return m_cameraMotion;
     }
-    const FaceMotion &face() const {
+    const FaceMotion &faceMotion() const {
         return m_faceMotion;
     }
     const MotionStatus &status() const {
@@ -144,8 +144,14 @@ public:
     const VMDMotionDataInfo &result() const {
         return m_result;
     }
-    CameraMotion *mutableCamera() {
+    BoneMotion *mutableBoneMotion() {
+        return &m_boneMotion;
+    }
+    CameraMotion *mutableCameraMotion() {
         return &m_cameraMotion;
+    }
+    FaceMotion *mutableFaceMotion() {
+        return &m_faceMotion;
     }
     float loopAt() const {
         return m_loopAt;
