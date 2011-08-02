@@ -57,19 +57,33 @@ struct CameraKeyFrameChunk
 
 #pragma pack(pop)
 
+struct InterpolationParameter
+{
+    btQuadWord x;
+    btQuadWord y;
+    btQuadWord z;
+    btQuadWord rotation;
+    btQuadWord distance;
+    btQuadWord fovy;
+};
+
 CameraKeyFrame::CameraKeyFrame()
     : m_frameIndex(0),
       m_distance(0.0f),
       m_fovy(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
-      m_noPerspective(false)
+      m_noPerspective(false),
+      m_parameter(0)
 {
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
+    internal::zerofill(&m_parameter, sizeof(m_parameter));
+    m_parameter = new InterpolationParameter();
 }
 
-CameraKeyFrame::~CameraKeyFrame() {
+CameraKeyFrame::~CameraKeyFrame()
+{
     m_frameIndex = 0;
     m_distance = 0.0f;
     m_fovy = 0.0f;
@@ -78,15 +92,20 @@ CameraKeyFrame::~CameraKeyFrame() {
     m_noPerspective = false;
     for (int i = 0; i < 6; i++)
         delete[] m_interpolationTable[i];
+    delete m_parameter;
+    m_parameter = 0;
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
+    internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
-size_t CameraKeyFrame::stride() {
+size_t CameraKeyFrame::stride()
+{
     return sizeof(CameraKeyFrameChunk);
 }
 
-void CameraKeyFrame::read(const uint8_t *data) {
+void CameraKeyFrame::read(const uint8_t *data)
+{
     CameraKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     float *pos = chunk.position;
@@ -133,6 +152,83 @@ void CameraKeyFrame::write(uint8_t *data)
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
+void CameraKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2)
+{
+    btQuadWord *w = 0;
+    switch (type) {
+    case kX:
+        w = &m_parameter->x;
+        break;
+    case kY:
+        w = &m_parameter->y;
+        break;
+    case kZ:
+        w = &m_parameter->z;
+        break;
+    case kRotation:
+        w = &m_parameter->rotation;
+        break;
+    case kDistance:
+        w = &m_parameter->distance;
+        break;
+    case kFovy:
+        w = &m_parameter->fovy;
+        break;
+    default:
+        return;
+    }
+    x1 = static_cast<int8_t>(w->x());
+    x2 = static_cast<int8_t>(w->y());
+    y1 = static_cast<int8_t>(w->z());
+    y2 = static_cast<int8_t>(w->w());
+}
+
+void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
+{
+    btQuadWord *w = 0;
+    switch (type) {
+    case kX:
+        w = &m_parameter->x;
+        break;
+    case kY:
+        w = &m_parameter->y;
+        break;
+    case kZ:
+        w = &m_parameter->z;
+        break;
+    case kRotation:
+        w = &m_parameter->rotation;
+        break;
+    case kDistance:
+        w = &m_parameter->distance;
+        break;
+    case kFovy:
+        w = &m_parameter->fovy;
+        break;
+    default:
+        return;
+    }
+    w->setX(x1);
+    w->setY(x2);
+    w->setZ(y1);
+    w->setW(y2);
+    int8_t table[kTableSize];
+    internal::zerofill(table, sizeof(table));
+    for (int i = 0; i < 4; i++) {
+        // x1 => btQuadWord#x():0
+        // x2 => btQuadWord#y():1
+        // y1 => btQuadWord#z():2
+        // y2 => btQuadWord#w():3
+        table[i * 6 + 0] = m_parameter->x[i];
+        table[i * 6 + 1] = m_parameter->y[i];
+        table[i * 6 + 2] = m_parameter->z[i];
+        table[i * 6 + 3] = m_parameter->rotation[i];
+        table[i * 6 + 4] = m_parameter->distance[i];
+        table[i * 6 + 5] = m_parameter->fovy[i];
+    }
+    setInterpolationTable(table);
+}
+
 void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 6; i++)
         m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;
@@ -141,6 +237,7 @@ void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
             m_interpolationTable[i] = 0;
             continue;
         }
+        delete[] m_interpolationTable[i];
         m_interpolationTable[i] = new float[kTableSize + 1];
         float x1 = table[i * 4]     / 127.0f;
         float y1 = table[i * 4 + 2] / 127.0f;

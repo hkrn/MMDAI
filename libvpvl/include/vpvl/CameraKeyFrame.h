@@ -50,6 +50,17 @@ namespace vpvl
 class VPVL_EXPORT CameraKeyFrame
 {
 public:
+    enum InterpolationType
+    {
+        kX,
+        kY,
+        kZ,
+        kRotation,
+        kDistance,
+        kFovy
+    };
+    typedef struct InterpolationParameter InterpolationParameter;
+
     CameraKeyFrame();
     ~CameraKeyFrame();
 
@@ -59,6 +70,8 @@ public:
 
     void read(const uint8_t *data);
     void write(uint8_t *data);
+    void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2);
+    void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
     float frameIndex() const {
         return m_frameIndex;
@@ -109,6 +122,7 @@ private:
     bool m_noPerspective;
     bool m_linear[6];
     float *m_interpolationTable[6];
+    InterpolationParameter *m_parameter;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(CameraKeyFrame)
 };

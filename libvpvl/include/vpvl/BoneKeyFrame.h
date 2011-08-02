@@ -53,6 +53,15 @@ class Bone;
 class VPVL_EXPORT BoneKeyFrame
 {
 public:
+    enum InterpolationType
+    {
+        kX,
+        kY,
+        kZ,
+        kRotation
+    };
+    typedef struct InterpolationParameter InterpolationParameter;
+
     BoneKeyFrame();
     ~BoneKeyFrame();
 
@@ -63,6 +72,8 @@ public:
 
     void read(const uint8_t *data);
     void write(uint8_t *data);
+    void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2);
+    void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
     const uint8_t *name() const {
         return m_name;
@@ -105,6 +116,7 @@ private:
     btQuaternion m_rotation;
     bool m_linear[4];
     float *m_interpolationTable[4];
+    InterpolationParameter *m_parameter;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BoneKeyFrame)
 };
