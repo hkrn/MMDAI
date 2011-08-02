@@ -113,6 +113,8 @@ public:
 
 private:
     void setInterpolationTable(const int8_t *table);
+    void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
+    btQuadWord *getInterpolationParameterInternal(InterpolationType type);
 
     float m_frameIndex;
     float m_distance;

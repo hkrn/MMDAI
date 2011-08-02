@@ -138,23 +138,7 @@ void BoneKeyFrame::write(uint8_t *data)
 
 void BoneKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2)
 {
-    btQuadWord *w = 0;
-    switch (type) {
-    case kX:
-        w = &m_parameter->x;
-        break;
-    case kY:
-        w = &m_parameter->y;
-        break;
-    case kZ:
-        w = &m_parameter->z;
-        break;
-    case kRotation:
-        w = &m_parameter->rotation;
-        break;
-    default:
-        return;
-    }
+    btQuadWord *w = getInterpolationParameterInternal(type);
     x1 = static_cast<int8_t>(w->x());
     y1 = static_cast<int8_t>(w->y());
     x2 = static_cast<int8_t>(w->z());
@@ -163,27 +147,7 @@ void BoneKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1,
 
 void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
 {
-    btQuadWord *w = 0;
-    switch (type) {
-    case kX:
-        w = &m_parameter->x;
-        break;
-    case kY:
-        w = &m_parameter->y;
-        break;
-    case kZ:
-        w = &m_parameter->z;
-        break;
-    case kRotation:
-        w = &m_parameter->rotation;
-        break;
-    default:
-        return;
-    }
-    w->setX(x1);
-    w->setY(y1);
-    w->setZ(x2);
-    w->setW(y2);
+    setInterpolationParameterInternal(type, x1, x2, y1, y2);
     int8_t table[kTableSize];
     internal::zerofill(table, sizeof(table));
     for (int i = 0; i < 4; i++) {
@@ -214,6 +178,32 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
         float x2 = table[i +  8] / 127.0f;
         float y2 = table[i + 12] / 127.0f;
         internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
+        setInterpolationParameterInternal(static_cast<InterpolationType>(i), x1, x2, y1, y2);
+    }
+}
+
+void BoneKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
+{
+    btQuadWord *w = getInterpolationParameterInternal(type);
+    w->setX(x1);
+    w->setY(y1);
+    w->setZ(x2);
+    w->setW(y2);
+}
+
+btQuadWord *BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type)
+{
+    switch (type) {
+    case kX:
+        return &m_parameter->x;
+    case kY:
+        return &m_parameter->y;
+    case kZ:
+        return &m_parameter->z;
+    case kRotation:
+        return &m_parameter->rotation;
+    default:
+        assert(0);
     }
 }
 

@@ -154,29 +154,7 @@ void CameraKeyFrame::write(uint8_t *data)
 
 void CameraKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2)
 {
-    btQuadWord *w = 0;
-    switch (type) {
-    case kX:
-        w = &m_parameter->x;
-        break;
-    case kY:
-        w = &m_parameter->y;
-        break;
-    case kZ:
-        w = &m_parameter->z;
-        break;
-    case kRotation:
-        w = &m_parameter->rotation;
-        break;
-    case kDistance:
-        w = &m_parameter->distance;
-        break;
-    case kFovy:
-        w = &m_parameter->fovy;
-        break;
-    default:
-        return;
-    }
+    btQuadWord *w = getInterpolationParameterInternal(type);
     x1 = static_cast<int8_t>(w->x());
     x2 = static_cast<int8_t>(w->y());
     y1 = static_cast<int8_t>(w->z());
@@ -185,33 +163,7 @@ void CameraKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x
 
 void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
 {
-    btQuadWord *w = 0;
-    switch (type) {
-    case kX:
-        w = &m_parameter->x;
-        break;
-    case kY:
-        w = &m_parameter->y;
-        break;
-    case kZ:
-        w = &m_parameter->z;
-        break;
-    case kRotation:
-        w = &m_parameter->rotation;
-        break;
-    case kDistance:
-        w = &m_parameter->distance;
-        break;
-    case kFovy:
-        w = &m_parameter->fovy;
-        break;
-    default:
-        return;
-    }
-    w->setX(x1);
-    w->setY(x2);
-    w->setZ(y1);
-    w->setW(y2);
+    setInterpolationParameterInternal(type, x1, x2, y1, y2);
     int8_t table[kTableSize];
     internal::zerofill(table, sizeof(table));
     for (int i = 0; i < 4; i++) {
@@ -244,6 +196,36 @@ void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
         float x2 = table[i * 4 + 1] / 127.0f;
         float y2 = table[i * 4 + 3] / 127.0f;
         internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
+        setInterpolationParameterInternal(static_cast<InterpolationType>(i), x1, x2, y1, y2);
+    }
+}
+
+void CameraKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
+{
+    btQuadWord *w = getInterpolationParameterInternal(type);
+    w->setX(x1);
+    w->setY(x2);
+    w->setZ(y1);
+    w->setW(y2);
+}
+
+btQuadWord *CameraKeyFrame::getInterpolationParameterInternal(InterpolationType type)
+{
+    switch (type) {
+    case kX:
+        return &m_parameter->x;
+    case kY:
+        return &m_parameter->y;
+    case kZ:
+        return &m_parameter->z;
+    case kRotation:
+        return &m_parameter->rotation;
+    case kDistance:
+        return &m_parameter->distance;
+    case kFovy:
+        return &m_parameter->fovy;
+    default:
+        assert(0);
     }
 }
 
