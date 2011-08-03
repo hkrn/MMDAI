@@ -178,6 +178,15 @@ public:
     }
 
     /**
+     * Get an index of the category of the bone.
+     *
+     * @return an index of the category of the bone
+     */
+    uint8_t categoryIndex() const {
+        return m_categoryIndex;
+    }
+
+    /**
      * Get the kind of bone.
      *
      * @return the kind of bone
@@ -322,6 +331,15 @@ public:
     }
 
     /**
+     * Set an index of the category of the bone.
+     *
+     * @param an index of the category of the bone
+     */
+    void setCategoryIndex(uint8_t value) {
+        m_categoryIndex = value;
+    }
+
+    /**
      * Set transform object
      *
      * @param transform object
@@ -411,6 +429,7 @@ public:
 private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
+    uint8_t m_categoryIndex;
     int16_t m_id;
     Type m_type;
     btTransform m_localTransform;

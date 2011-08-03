@@ -542,7 +542,7 @@ bool XModel::load(const uint8_t *data, size_t size)
         m_error = e;
     }
 
-    internal::clearAll(materials);
+    internal::clearArray(materials);
     colors.clear();
     delete[] buffer;
 
@@ -551,8 +551,8 @@ bool XModel::load(const uint8_t *data, size_t size)
 
 void XModel::release()
 {
-    internal::clearAll(m_indices);
-    internal::clearAll(m_materials);
+    internal::clearArray(m_indices);
+    internal::clearArray(m_materials);
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_transform.setIdentity();

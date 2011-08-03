@@ -67,8 +67,8 @@ FaceAnimation::FaceAnimation()
 
 FaceAnimation::~FaceAnimation()
 {
-    internal::clearAll(m_frames);
-    internal::clearAll(m_name2node);
+    internal::clearArray(m_frames);
+    internal::clearHash(m_name2node);
     m_model = 0;
 }
 

@@ -463,9 +463,9 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
     // Name and Comment (in Shift-JIS)
     ptr += sizeof(float);
     info.namePtr = ptr;
-    ptr += 20;
+    ptr += kNameSize;
     info.commentPtr = ptr;
-    ptr += 256;
+    ptr += kDescriptionSize;
     rest -= 283;
 
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
@@ -550,39 +550,39 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     // Face display names
     if (!internal::size8(ptr, rest, nFaceNames)) {
-        m_error = kFaceDisplayNamesSizeError;
+        m_error = kFacesForDisplaySizeError;
         return false;
     }
-    info.faceDisplayNamesPtr = ptr;
+    info.facesForUIPtr = ptr;
     if (!internal::validateSize(ptr, sizeof(uint16_t), nFaceNames, rest)) {
-        m_error = kFaceDisplayNamesError;
+        m_error = kFacesForDisplayError;
         return false;
     }
-    info.faceDisplayNamesCount = nFaceNames;
+    info.facesForUICount = nFaceNames;
 
     // Bone frame names
     if (!internal::size8(ptr, rest, nBoneFrames)) {
         m_error = kBoneFrameNamesSizeError;
         return false;
     }
-    info.boneFrameNamesPtr = ptr;
-    if (!internal::validateSize(ptr, 50, nBoneFrames, rest)) {
+    info.boneCategoryNamesPtr = ptr;
+    if (!internal::validateSize(ptr, kBoneCategoryNameSize, nBoneFrames, rest)) {
         m_error = kBoneFrameNamesError;
         return false;
     }
-    info.boneFrameNamesCount = nBoneFrames;
+    info.boneCategoryNamesCount = nBoneFrames;
 
     // Bone display names
     if (!internal::size32(ptr, rest, nBoneNames)) {
         m_error = kBoneDisplayNamesSizeError;
         return false;
     }
-    info.boneDisplayNamesPtr = ptr;
+    info.bonesForUIPtr = ptr;
     if (!internal::validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest)) {
         m_error = kBoneDisplayNamesError;
         return false;
     }
-    info.boneDisplayNamesCount = nBoneNames;
+    info.bonesForUICount = nBoneNames;
 
     if (rest == 0)
         return true;
@@ -591,25 +591,25 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
     size_t english;
     internal::size8(ptr, rest, english);
     if (english == 1) {
-        const size_t englishBoneNamesSize = 20 * nBones;
+        const size_t englishBoneNamesSize = Bone::kNameSize * nBones;
         // In english names, the base face is not includes.
-        const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * 20 : 0;
-        const size_t englishBoneFramesSize = 50 * nBoneFrames;
-        const size_t required = englishBoneNamesSize + englishFaceNamesSize + englishBoneFramesSize;
-        if ((required + 276) > rest) {
+        const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * Face::kNameSize : 0;
+        const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneFrames;
+        const size_t required = englishBoneNamesSize + englishFaceNamesSize + englishBoneCategoryNameSize;
+        if ((required + kNameSize + kDescriptionSize) > rest) {
             m_error = kEnglishNamesError;
             return false;
         }
         info.englishNamePtr = ptr;
-        ptr += 20;
+        ptr += kNameSize;
         info.englishCommentPtr = ptr;
-        ptr += 256;
+        ptr += kDescriptionSize;
         info.englishBoneNamesPtr = ptr;
         ptr += englishBoneNamesSize;
         info.englishFaceNamesPtr = ptr;
         ptr += englishFaceNamesSize;
         info.englishBoneFramesPtr = ptr;
-        ptr += englishBoneFramesSize;
+        ptr += englishBoneCategoryNameSize;
         rest -= required;
     }
 
@@ -665,8 +665,9 @@ bool PMDModel::load(const uint8_t *data, size_t size)
         parseBones(info);
         parseIKs(info);
         parseFaces(info);
-        parseFaceDisplayNames(info);
-        parseBoneDisplayNames(info);
+        parseFacesForUI(info);
+        parseBoneCategoryNames(info);
+        parseBonesForUI(info);
         parseEnglishDisplayNames(info);
         parseToonTextureNames(info);
         parseRigidBodies(info);
@@ -786,12 +787,62 @@ void PMDModel::parseFaces(const DataInfo &info)
     }
 }
 
-void PMDModel::parseFaceDisplayNames(const DataInfo & /* info */)
+void PMDModel::parseFacesForUI(const DataInfo &info)
 {
+    const uint32_t nFacesForUI = info.facesForUICount;
+    const uint32_t nFaces = m_faces.size();
+    uint16_t *ptr = reinterpret_cast<uint16_t *>(const_cast<uint8_t *>(info.facesForUIPtr));
+    for (uint32_t i = 0; i < nFacesForUI; i++) {
+        uint16_t faceIndex = *ptr;
+        if (faceIndex < nFaces) {
+            Face *face = m_faces[faceIndex];
+            m_facesForUI.push_back(face);
+        }
+        ptr++;
+    }
 }
 
-void PMDModel::parseBoneDisplayNames(const DataInfo & /* info */)
+void PMDModel::parseBoneCategoryNames(const DataInfo &info)
 {
+    const uint8_t nBoneCategoryNames = info.boneCategoryNamesCount;
+    const uint8_t *ptr = const_cast<uint8_t *>(info.boneCategoryNamesPtr);
+    for (uint32_t i = 0; i < nBoneCategoryNames; i++) {
+        uint8_t *name = new uint8_t[kBoneCategoryNameSize];
+        copyBytesSafe(name, ptr, kBoneCategoryNameSize);
+        m_boneCategoryNames.push_back(name);
+        ptr += kBoneCategoryNameSize;
+    }
+}
+
+void PMDModel::parseBonesForUI(const DataInfo &info)
+{
+    const uint32_t nBonesCategoryNames = m_boneCategoryNames.size();
+    const uint32_t nBonesForUI = info.bonesForUICount;
+    const uint32_t nBones = m_bones.size();
+    uint8_t *ptr = const_cast<uint8_t *>(info.facesForUIPtr);
+    for (uint32_t i = 0; i < nBonesForUI; i++) {
+        uint16_t boneIndex = *reinterpret_cast<uint16_t *>(ptr);
+        ptr += sizeof(uint16_t);
+        if (boneIndex < nBones) {
+            Bone *bone = m_bones[boneIndex];
+            uint8_t boneCategoryIndex = *ptr;
+            if (boneCategoryIndex < nBonesCategoryNames) {
+                btHashInt key(boneCategoryIndex);
+                BoneList **bonesPtr = m_bonesForUI.find(key), *bones;
+                bone->setCategoryIndex(boneCategoryIndex);
+                if (bonesPtr) {
+                    bones = *bonesPtr;
+                    bones->push_back(bone);
+                }
+                else {
+                    bones = new BoneList();
+                    bones->push_back(bone);
+                    m_bonesForUI.insert(key, bones);
+                }
+            }
+        }
+        ptr += sizeof(uint8_t);
+    }
 }
 
 void PMDModel::parseEnglishDisplayNames(const DataInfo &info)
@@ -843,13 +894,15 @@ void PMDModel::release()
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
     leaveWorld(m_world);
-    internal::clearAll(m_vertices);
-    internal::clearAll(m_materials);
-    internal::clearAll(m_bones);
-    internal::clearAll(m_IKs);
-    internal::clearAll(m_faces);
-    internal::clearAll(m_rigidBodies);
-    internal::clearAll(m_constraints);
+    internal::clearHash(m_bonesForUI);
+    internal::clearArray(m_vertices);
+    internal::clearArray(m_materials);
+    internal::clearArray(m_bones);
+    internal::clearArray(m_IKs);
+    internal::clearArray(m_faces);
+    internal::clearArray(m_rigidBodies);
+    internal::clearArray(m_constraints);
+    internal::clearArrayOfArray(m_boneCategoryNames);
     m_indices.clear();
     m_motions.clear();
     m_skinningTransform.clear();
@@ -858,6 +911,7 @@ void PMDModel::release()
     m_shadowTextureCoords.clear();
     m_rotatedBones.clear();
     m_isIKSimulated.clear();
+    m_facesForUI.clear();
     delete[] m_orderedBones;
     delete[] m_skinnedVertices;
     delete[] m_indicesPointer;

@@ -193,7 +193,7 @@ inline void zerofill(void *ptr, size_t size)
 }
 
 template<typename T>
-inline void clearAll(btAlignedObjectArray<T*> &a)
+inline void clearArray(btAlignedObjectArray<T*> &a)
 {
     uint32_t size = a.size();
     for (uint32_t i = 0; i < size; i++)
@@ -201,12 +201,21 @@ inline void clearAll(btAlignedObjectArray<T*> &a)
     a.clear();
 }
 
-template<typename T>
-inline void clearAll(btHashMap<btHashString, T*> &a)
+template<typename K, typename V>
+inline void clearHash(btHashMap<K, V*> &a)
 {
     uint32_t nNodes = a.size();
     for (uint32_t i = 0; i < nNodes; i++)
         delete *a.getAtIndex(i);
+    a.clear();
+}
+
+template<typename T>
+inline void clearArrayOfArray(btAlignedObjectArray<T*> &a)
+{
+    uint32_t size = a.size();
+    for (uint32_t i = 0; i < size; i++)
+        delete[] a[i];
     a.clear();
 }
 

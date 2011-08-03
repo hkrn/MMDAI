@@ -94,8 +94,8 @@ public:
         kIKsError,
         kFacesSizeError,
         kFacesError,
-        kFaceDisplayNamesSizeError,
-        kFaceDisplayNamesError,
+        kFacesForDisplaySizeError,
+        kFacesForDisplayError,
         kBoneFrameNamesSizeError,
         kBoneFrameNamesError,
         kBoneDisplayNamesSizeError,
@@ -140,12 +140,12 @@ public:
         size_t IKsCount;
         const uint8_t *facesPtr;
         size_t facesCount;
-        const uint8_t *faceDisplayNamesPtr;
-        size_t faceDisplayNamesCount;
-        const uint8_t *boneFrameNamesPtr;
-        size_t boneFrameNamesCount;
-        const uint8_t *boneDisplayNamesPtr;
-        size_t boneDisplayNamesCount;
+        const uint8_t *facesForUIPtr;
+        size_t facesForUICount;
+        const uint8_t *boneCategoryNamesPtr;
+        size_t boneCategoryNamesCount;
+        const uint8_t *bonesForUIPtr;
+        size_t bonesForUICount;
         const uint8_t *englishNamePtr;
         const uint8_t *englishCommentPtr;
         const uint8_t *englishBoneNamesPtr;
@@ -165,6 +165,9 @@ public:
     static const uint32_t kBoundingSpherePointsMax = 20;
     static const uint32_t kBoundingSpherePointsMin = 5;
     static const uint32_t kSystemTextureMax = 11;
+    static const uint32_t kNameSize = 20;
+    static const uint32_t kDescriptionSize = 256;
+    static const uint32_t kBoneCategoryNameSize = 50;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
@@ -222,6 +225,15 @@ public:
     }
     const FaceList &faces() const {
         return m_faces;
+    }
+    const FaceList &facesForUI() const {
+        return m_facesForUI;
+    }
+    const btAlignedObjectArray<uint8_t *> &boneCategoryNames() const {
+        return m_boneCategoryNames;
+    }
+    const btHashMap<btHashInt, BoneList *> &bonesForUI() const {
+        return m_bonesForUI;
     }
     const RigidBodyList &rigidBodies() const {
         return m_rigidBodies;
@@ -317,8 +329,9 @@ private:
     void parseBones(const DataInfo &info);
     void parseIKs(const DataInfo &info);
     void parseFaces(const DataInfo &info);
-    void parseFaceDisplayNames(const DataInfo &info);
-    void parseBoneDisplayNames(const DataInfo &info);
+    void parseFacesForUI(const DataInfo &info);
+    void parseBoneCategoryNames(const DataInfo &info);
+    void parseBonesForUI(const DataInfo &info);
     void parseEnglishDisplayNames(const DataInfo &info);
     void parseToonTextureNames(const DataInfo &info);
     void parseRigidBodies(const DataInfo &info);
@@ -334,10 +347,10 @@ private:
     void updateToon(const btVector3 &lightDirection);
     void updateIndices();
 
-    uint8_t m_name[20];
-    uint8_t m_comment[256];
-    uint8_t m_englishName[20];
-    uint8_t m_englishComment[256];
+    uint8_t m_name[kNameSize];
+    uint8_t m_comment[kDescriptionSize];
+    uint8_t m_englishName[kNameSize];
+    uint8_t m_englishComment[kDescriptionSize];
     uint8_t m_textures[10][100];
     VertexList m_vertices;
     IndexList m_indices;
@@ -345,13 +358,16 @@ private:
     BoneList m_bones;
     IKList m_IKs;
     FaceList m_faces;
+    FaceList m_facesForUI;
     RigidBodyList m_rigidBodies;
     ConstraintList m_constraints;
     Bone m_rootBone;
     Face *m_baseFace;
     btHashMap<btHashString, Bone *> m_name2bone;
     btHashMap<btHashString, Face *> m_name2face;
+    btHashMap<btHashInt, BoneList *> m_bonesForUI;
     btAlignedObjectArray<VMDMotion *> m_motions;
+    btAlignedObjectArray<uint8_t *> m_boneCategoryNames;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<btVector3> m_edgeVertices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;
