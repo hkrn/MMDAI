@@ -232,7 +232,7 @@ public:
     const btAlignedObjectArray<uint8_t *> &boneCategoryNames() const {
         return m_boneCategoryNames;
     }
-    const btHashMap<btHashInt, BoneList *> &bonesForUI() const {
+    const btAlignedObjectArray<BoneList> &bonesForUI() const {
         return m_bonesForUI;
     }
     const RigidBodyList &rigidBodies() const {
@@ -365,13 +365,13 @@ private:
     Face *m_baseFace;
     btHashMap<btHashString, Bone *> m_name2bone;
     btHashMap<btHashString, Face *> m_name2face;
-    btHashMap<btHashInt, BoneList *> m_bonesForUI;
     btAlignedObjectArray<VMDMotion *> m_motions;
     btAlignedObjectArray<uint8_t *> m_boneCategoryNames;
     btAlignedObjectArray<btTransform> m_skinningTransform;
     btAlignedObjectArray<btVector3> m_edgeVertices;
     btAlignedObjectArray<btVector3> m_toonTextureCoords;
     btAlignedObjectArray<btVector3> m_shadowTextureCoords;
+    btAlignedObjectArray<BoneList> m_bonesForUI;
     BoneList m_rotatedBones;
     Bone **m_orderedBones;
     btAlignedObjectArray<bool> m_isIKSimulated;

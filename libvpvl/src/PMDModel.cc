@@ -819,27 +819,18 @@ void PMDModel::parseBonesForUI(const DataInfo &info)
     const uint32_t nBonesCategoryNames = m_boneCategoryNames.size();
     const uint32_t nBonesForUI = info.bonesForUICount;
     const uint32_t nBones = m_bones.size();
-    uint8_t *ptr = const_cast<uint8_t *>(info.facesForUIPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(info.bonesForUIPtr);
+    m_bonesForUI.reserve(nBonesCategoryNames);
+    for (uint32_t i = 0; i < nBonesCategoryNames; i++)
+        m_bonesForUI.push_back(BoneList());
     for (uint32_t i = 0; i < nBonesForUI; i++) {
         uint16_t boneIndex = *reinterpret_cast<uint16_t *>(ptr);
         ptr += sizeof(uint16_t);
         if (boneIndex < nBones) {
             Bone *bone = m_bones[boneIndex];
             uint8_t boneCategoryIndex = *ptr;
-            if (boneCategoryIndex < nBonesCategoryNames) {
-                btHashInt key(boneCategoryIndex);
-                BoneList **bonesPtr = m_bonesForUI.find(key), *bones;
-                bone->setCategoryIndex(boneCategoryIndex);
-                if (bonesPtr) {
-                    bones = *bonesPtr;
-                    bones->push_back(bone);
-                }
-                else {
-                    bones = new BoneList();
-                    bones->push_back(bone);
-                    m_bonesForUI.insert(key, bones);
-                }
-            }
+            if (boneCategoryIndex < nBonesCategoryNames)
+                m_bonesForUI[boneCategoryIndex].push_back(bone);
         }
         ptr += sizeof(uint8_t);
     }
@@ -894,7 +885,6 @@ void PMDModel::release()
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
     leaveWorld(m_world);
-    internal::clearHash(m_bonesForUI);
     internal::clearArray(m_vertices);
     internal::clearArray(m_materials);
     internal::clearArray(m_bones);
@@ -911,6 +901,7 @@ void PMDModel::release()
     m_shadowTextureCoords.clear();
     m_rotatedBones.clear();
     m_isIKSimulated.clear();
+    m_bonesForUI.clear();
     m_facesForUI.clear();
     delete[] m_orderedBones;
     delete[] m_skinnedVertices;
