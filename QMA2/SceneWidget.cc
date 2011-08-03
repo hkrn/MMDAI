@@ -316,7 +316,11 @@ SceneWidget::~SceneWidget()
     m_world = 0;
     glDeleteLists(m_gridListID, 1);
     m_gridListID = 0;
-    qDeleteAll(m_motions);
+    foreach (vpvl::VMDMotion *motion, m_motions) {
+        vpvl::PMDModel *model = m_motions.key(motion);
+        model->removeMotion(motion);
+        delete motion;
+    }
     foreach (vpvl::PMDModel *model, m_models) {
         m_renderer->unloadModel(model);
         delete model;
@@ -710,6 +714,7 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
                 }
             }
             m_models[key] = model;
+            m_motions.insert(model, new vpvl::VMDMotion());
             // force to render an added model
             m_renderer->scene()->seek(0.0f);
             emit modelDidAdd(model);
@@ -731,7 +736,12 @@ vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QSt
         motion = new vpvl::VMDMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             model->addMotion(motion);
-            m_motions.append(motion);
+            if (m_motions.contains(model)) {
+                vpvl::VMDMotion *oldMotion = m_motions.value(model);
+                model->removeMotion(oldMotion);
+                delete oldMotion;
+            }
+            m_motions.insert(model, motion);
             emit motionDidAdd(motion, model);
         }
         else {

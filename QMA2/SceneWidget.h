@@ -159,7 +159,7 @@ private:
     QSettings *m_settings;
     QHash<QString, vpvl::PMDModel *> m_models;
     QHash<QString, vpvl::XModel *> m_assets;
-    QList<vpvl::VMDMotion *> m_motions;
+    QHash<vpvl::PMDModel *, vpvl::VMDMotion *> m_motions;
     QTime m_timer;
     QPoint m_prevPos;
     GLuint m_gridListID;

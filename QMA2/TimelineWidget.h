@@ -39,6 +39,10 @@ public slots:
     void loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
     void registerKeyFrame(vpvl::Bone *bone);
     void registerKeyFrame(vpvl::Face *face);
+    void selectColumn(QModelIndex current, QModelIndex previous);
+
+signals:
+    void motionDidSeek(float column);
 
 protected:
     void closeEvent(QCloseEvent *event);

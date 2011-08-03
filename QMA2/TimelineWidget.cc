@@ -58,6 +58,9 @@ TimelineWidget::TimelineWidget(QSettings *settings,
     m_tableView->setItemDelegate(delegate);
     m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableView->resizeColumnsToContents();
+    connect(m_tableView->selectionModel(),
+            SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)),
+            this, SLOT(selectColumn(QModelIndex,QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tableView);
     layout->setContentsMargins(QMargins());
@@ -90,6 +93,11 @@ void TimelineWidget::registerKeyFrame(vpvl::Face *face)
     QModelIndex index = selectedIndex();
     if (index.isValid())
         m_faceMotionModel->registerKeyFrame(face, index.column());
+}
+
+void TimelineWidget::selectColumn(QModelIndex current, QModelIndex /* previous */)
+{
+    emit motionDidSeek(static_cast<float>(current.column()));
 }
 
 void TimelineWidget::closeEvent(QCloseEvent *event)
