@@ -44,14 +44,12 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     m_keys.clear();
     m_faces.clear();
     if (model) {
-        vpvl::FaceList faces = model->faces();
+        vpvl::FaceList faces = model->facesForUI();
         uint32_t nFaces = faces.size();
         for (uint32_t i = 0; i < nFaces; i++) {
-            vpvl::Face *face = faces.at(i);
-            if (face->type() != vpvl::Face::kBase) {
-                m_keys.append(internal::toQString(face));
-                m_faces.append(face);
-            }
+            vpvl::Face *face = faces[i];
+            m_keys.append(internal::toQString(face));
+            m_faces.append(face);
         }
         reset();
     }
