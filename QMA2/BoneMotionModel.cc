@@ -47,6 +47,7 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
                 setData(modelIndex, bytes, Qt::EditRole);
             }
         }
+        reset();
         return true;
     }
     else {
@@ -128,6 +129,7 @@ bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 setData(modelIndex, bytes, Qt::EditRole);
             }
         }
+        reset();
         return true;
     }
     else {
