@@ -204,14 +204,22 @@ public:
         m_vertices.clear();
         m_colors.clear();
         m_indices.clear();
-        glDeleteBuffers(1, &m_vbo);
-        m_vbo = 0;
-        glDeleteBuffers(1, &m_cbo);
-        m_cbo = 0;
-        glDeleteBuffers(1, &m_ibo);
-        m_ibo = 0;
-        glDeleteLists(m_list, 1);
-        m_list = 0;
+        if (m_vbo) {
+            glDeleteBuffers(1, &m_vbo);
+            m_vbo = 0;
+        }
+        if (m_cbo) {
+            glDeleteBuffers(1, &m_cbo);
+            m_cbo = 0;
+        }
+        if (m_ibo) {
+            glDeleteBuffers(1, &m_ibo);
+            m_ibo = 0;
+        }
+        if (m_list) {
+            glDeleteLists(m_list, 1);
+            m_list = 0;
+        }
     }
 
     void initialize() {
