@@ -29,6 +29,8 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    bool validateLibraryVersion();
+
 protected:
     void closeEvent(QCloseEvent *event);
 

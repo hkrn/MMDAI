@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <QtGui/QtGui>
+#include <vpvl/vpvl.h>
 #include "MainWindow.h"
 
 static void SetSearchPaths(const QCoreApplication &app)
@@ -110,7 +111,11 @@ int main(int argc, char *argv[])
     LoadTranslations(a, appTranslator, qtTranslator);
 
     MainWindow w;
-    w.show();
-
-    return a.exec();
+    if (w.validateLibraryVersion()) {
+        w.show();
+        return a.exec();
+    }
+    else {
+        return -1;
+    }
 }

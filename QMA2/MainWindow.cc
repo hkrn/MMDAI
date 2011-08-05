@@ -54,6 +54,19 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+bool MainWindow::validateLibraryVersion()
+{
+    if (!vpvl::isLibraryVersionCorrect(VPVL_VERSION)) {
+        QMessageBox::warning(this,
+                             tr("libvpvl version mismatch"),
+                             tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
+                                "Please replace libvpvl to correct version or reinstall MMDAI.")
+                             .arg(VPVL_VERSION_STRING).arg(vpvl::libraryVersionString()));
+        return false;
+    }
+    return true;
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     m_settings.setValue("mainWindow/geometry", saveGeometry());

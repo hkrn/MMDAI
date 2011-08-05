@@ -34,28 +34,20 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl_vpvl_H_
-#define vpvl_vpvl_H_
+#include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
-#include "vpvl/Common.h"
-#include "vpvl/BaseAnimation.h"
-#include "vpvl/Bone.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/BoneAnimation.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/CameraAnimation.h"
-#include "vpvl/Constraint.h"
-#include "vpvl/Face.h"
-#include "vpvl/FaceKeyFrame.h"
-#include "vpvl/FaceAnimation.h"
-#include "vpvl/IK.h"
-#include "vpvl/Material.h"
-#include "vpvl/PMDModel.h"
-#include "vpvl/RigidBody.h"
-#include "vpvl/Scene.h"
-#include "vpvl/Vertex.h"
-#include "vpvl/VMDMotion.h"
-#include "vpvl/VPDPose.h"
-#include "vpvl/XModel.h"
+namespace vpvl
+{
 
-#endif /* vpvl_vpvl_H_ */
+bool isLibraryVersionCorrect(int version)
+{
+    return internal::kCurrentVersion == version;
+}
+
+const char *libraryVersionString()
+{
+    return internal::kCurrentVersionString;
+}
+
+}

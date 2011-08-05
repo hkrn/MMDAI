@@ -42,7 +42,6 @@
 #include "vpvl/config.h"
 
 #if defined(WIN32) && !(defined(__MINGW__) || defined(__MINGW32__))
-#define _USE_MATH_DEFINES
 typedef char int8_t;
 typedef unsigned char uint8_t;
 typedef short int16_t;
@@ -60,11 +59,11 @@ typedef unsigned int uint32_t;
 #include <stdarg.h>
 #include <stdlib.h>
 
-#if defined (_WIN32) 
+#if defined (WIN32)
   #if defined(vpvl_EXPORTS)
-    #define  VPVL_EXPORT __declspec(dllexport)
+    #define VPVL_EXPORT __declspec(dllexport)
   #else
-    #define  VPVL_EXPORT __declspec(dllimport)
+    #define VPVL_EXPORT __declspec(dllimport)
   #endif /* MyLibrary_EXPORTS */
 #else /* defined (_WIN32) */
  #define VPVL_EXPORT
@@ -73,20 +72,22 @@ typedef unsigned int uint32_t;
 namespace vpvl
 {
 
-static const float kPI = 3.14159265358979323846f;
+VPVL_EXPORT static const float kPI = 3.14159265358979323846f;
+VPVL_EXPORT bool isLibraryVersionCorrect(int version);
+VPVL_EXPORT const char *libraryVersionString();
 
 /* convert from/to radian */
-inline float radian(float value)
+VPVL_EXPORT inline float radian(float value)
 {
     return value * static_cast<float>(kPI / 180.0f);
 }
 
-inline float degree(float value)
+VPVL_EXPORT inline float degree(float value)
 {
     return value * static_cast<float>(180.0f / kPI);
 }
 
-inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
+VPVL_EXPORT inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
 {
     assert(dst != NULL && src != NULL && max > 0);
     size_t len = max - 1;
