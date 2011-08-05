@@ -828,7 +828,7 @@ void PMDModel::parseBonesForUI(const DataInfo &info)
         ptr += sizeof(uint16_t);
         if (boneIndex < nBones) {
             Bone *bone = m_bones[boneIndex];
-            uint8_t boneCategoryIndex = *ptr;
+            uint8_t boneCategoryIndex = *ptr - 1;
             if (boneCategoryIndex < nBonesCategoryNames)
                 m_bonesForUI[boneCategoryIndex].push_back(bone);
         }
