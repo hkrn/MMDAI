@@ -177,12 +177,8 @@ void MainWindow::connectWidgets()
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
             ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
-    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-            m_timelineTabWidget, SLOT(updateTabs()));
-    /*
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),
             ui->scene, SLOT(seekMotion(float)));
-            */
 }
 
 void MainWindow::on_actionAbout_triggered()

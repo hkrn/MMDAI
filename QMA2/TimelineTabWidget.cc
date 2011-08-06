@@ -27,6 +27,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     layout->addWidget(tabWidget);
     setLayout(layout);
     restoreGeometry(m_settings->value("timelineTabWidget/geometry").toByteArray());
+    setWindowTitle(tr("Motion Timeline"));
 }
 
 TimelineTabWidget::~TimelineTabWidget()

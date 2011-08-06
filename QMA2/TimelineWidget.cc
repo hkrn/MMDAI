@@ -52,13 +52,13 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_tableView->horizontalHeader()->setResizeMode(QHeaderView::Fixed);
     m_tableView->setItemDelegate(delegate);
     m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tableView->resizeColumnsToContents();
     connect(m_tableView->selectionModel(),
             SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(setCurrentIndex(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tableView);
     layout->setContentsMargins(QMargins());
-    setWindowTitle(tr("TimelineView"));
     setLayout(layout);
 }
 

@@ -46,7 +46,7 @@ int MotionBaseModel::rowCount(const QModelIndex &parent) const
 int MotionBaseModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    return -1;
+    return 600;
 }
 
 QVariant MotionBaseModel::data(const QModelIndex &index, int role) const

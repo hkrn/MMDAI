@@ -21,6 +21,7 @@ TabWidget::TabWidget(QSettings *settings, QWidget *parent) :
     setMinimumSize(332, 265);
     setLayout(layout);
     restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
+    setWindowTitle(tr("Motion Tabs"));
 }
 
 TabWidget::~TabWidget()
