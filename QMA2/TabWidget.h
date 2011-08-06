@@ -11,7 +11,7 @@ class CameraPerspectiveWidget;
 class FaceWidget;
 class QSettings;
 
-class TabWidget : public QTabWidget
+class TabWidget : public QWidget
 {
     Q_OBJECT
 
@@ -26,8 +26,9 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private:
-    Ui::TabWidget *ui;
     QSettings *m_settings;
+    CameraPerspectiveWidget *m_camera;
+    FaceWidget *m_face;
 };
 
 #endif // TABWIDGET_H

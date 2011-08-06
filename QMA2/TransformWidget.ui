@@ -22,9 +22,6 @@
   <property name="windowTitle">
    <string>TransformView</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true"/>
-  </property>
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>

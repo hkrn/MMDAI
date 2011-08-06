@@ -56,6 +56,4 @@ macx {
 FORMS += \
     TransformWidget.ui \
     MainWindow.ui \
-    TabWidget.ui \
-    BoneDialog.ui \
-    TimelineTabWidget.ui
+    BoneDialog.ui

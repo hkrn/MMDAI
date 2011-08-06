@@ -3,10 +3,6 @@
 
 #include <QWidget>
 
-namespace Ui {
-class TimelineTabWidget;
-}
-
 namespace vpvl {
 class PMDModel;
 }
@@ -41,7 +37,6 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private:
-    Ui::TimelineTabWidget *ui;
     QSettings *m_settings;
     BoneMotionModel *m_boneMotionModel;
     FaceMotionModel *m_faceMotionModel;

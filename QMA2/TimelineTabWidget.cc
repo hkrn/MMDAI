@@ -2,7 +2,6 @@
 #include "BoneMotionModel.h"
 #include "FaceMotionModel.h"
 #include "TimelineWidget.h"
-#include "ui_TimelineTabWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -12,24 +11,26 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      FaceMotionModel *fmm,
                                      QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::TimelineTabWidget),
     m_settings(settings),
     m_boneMotionModel(bmm),
     m_faceMotionModel(fmm)
 {
-    ui->setupUi(this);
+    QTabWidget *tabWidget = new QTabWidget();
     TimelineWidget *boneTimeline = new TimelineWidget(m_boneMotionModel, this);
-    ui->tabWidget->addTab(boneTimeline, tr("Bone"));
+    tabWidget->addTab(boneTimeline, tr("Bone"));
     TimelineWidget *faceTimeline = new TimelineWidget(m_faceMotionModel, this);
-    ui->tabWidget->addTab(faceTimeline, tr("Face"));
+    tabWidget->addTab(faceTimeline, tr("Face"));
     connect(boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->setContentsMargins(10, 10, 10, 10);
+    layout->addWidget(tabWidget);
+    setLayout(layout);
     restoreGeometry(m_settings->value("timelineTabWidget/geometry").toByteArray());
 }
 
 TimelineTabWidget::~TimelineTabWidget()
 {
-    delete ui;
 }
 
 #if 0
