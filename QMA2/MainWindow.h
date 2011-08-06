@@ -18,7 +18,7 @@ class MainWindow;
 class BoneMotionModel;
 class FaceMotionModel;
 class TabWidget;
-class TimelineWidget;
+class TimelineTabWidget;
 class TransformWidget;
 
 class MainWindow : public QMainWindow
@@ -83,7 +83,7 @@ private:
     Ui::MainWindow *ui;
     QSettings m_settings;
     TabWidget *m_tabWidget;
-    TimelineWidget *m_timelineWidget;
+    TimelineTabWidget *m_timelineTabWidget;
     TransformWidget *m_transformWidget;
     BoneMotionModel *m_boneMotionModel;
     FaceMotionModel *m_faceMotionModel;

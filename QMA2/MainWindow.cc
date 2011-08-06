@@ -7,7 +7,7 @@
 #include "FaceMotionModel.h"
 #include "FaceWidget.h"
 #include "TabWidget.h"
-#include "TimelineWidget.h"
+#include "TimelineTabWidget.h"
 #include "TransformWidget.h"
 
 #include <QtGui/QtGui>
@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_boneMotionModel = new BoneMotionModel(this);
     m_faceMotionModel = new FaceMotionModel(this);
     m_tabWidget = new TabWidget(&m_settings);
-    m_timelineWidget = new TimelineWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
+    m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     ui->setupUi(this);
     ui->scene->setSettings(&m_settings);
@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete m_tabWidget;
-    delete m_timelineWidget;
+    delete m_timelineTabWidget;
     delete m_transformWidget;
     /* for QMenu limitation see http://doc.qt.nokia.com/latest/mac-differences.html#menu-actions */
 #ifdef Q_OS_MACX
@@ -155,14 +155,18 @@ void MainWindow::connectWidgets()
             m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    /*
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
-            m_timelineWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
+            m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
+            */
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    /*
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
-            m_timelineWidget, SLOT(registerKeyFrame(vpvl::Face*)));
+            m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Face*)));
+            */
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_tabWidget->faceWidget(), SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
@@ -173,8 +177,12 @@ void MainWindow::connectWidgets()
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
             ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
-    connect(m_timelineWidget, SIGNAL(motionDidSeek(float)),
+    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_timelineTabWidget, SLOT(updateTabs()));
+    /*
+    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),
             ui->scene, SLOT(seekMotion(float)));
+            */
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -322,7 +330,7 @@ void MainWindow::on_actionBoneResetAll_triggered()
 
 void MainWindow::on_actionTimeline_triggered()
 {
-    m_timelineWidget->setVisible(true);
+    m_timelineTabWidget->setVisible(true);
 }
 
 void MainWindow::on_actionTransform_triggered()

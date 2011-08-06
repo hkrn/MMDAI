@@ -39,34 +39,27 @@ public:
 
 }
 
-TimelineWidget::TimelineWidget(QSettings *settings,
-                               BoneMotionModel *bmm,
-                               FaceMotionModel *fmm,
+TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                QWidget *parent) :
     QWidget(parent),
-    m_settings(settings),
-    m_tableView(0),
-    m_boneMotionModel(bmm),
-    m_faceMotionModel(fmm)
+    m_tableView(0)
 {
     m_tableView = new QTableView();
     m_tableView->setShowGrid(true);
-    m_tableView->setModel(bmm);
+    m_tableView->setModel(base);
     m_tableView->setSelectionBehavior(QAbstractItemView::SelectItems);
     internal::TimelineItemDelegate *delegate = new internal::TimelineItemDelegate(this);
     m_tableView->horizontalHeader()->setResizeMode(QHeaderView::Fixed);
     m_tableView->setItemDelegate(delegate);
     m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_tableView->resizeColumnsToContents();
     connect(m_tableView->selectionModel(),
-            SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)),
-            this, SLOT(selectColumn(QModelIndex,QModelIndex)));
+            SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this, SLOT(setCurrentIndex(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tableView);
     layout->setContentsMargins(QMargins());
     setWindowTitle(tr("TimelineView"));
     setLayout(layout);
-    restoreGeometry(m_settings->value("timelineWidget/geometry").toByteArray());
 }
 
 TimelineWidget::~TimelineWidget()
@@ -74,36 +67,9 @@ TimelineWidget::~TimelineWidget()
     delete m_tableView;
 }
 
-void TimelineWidget::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model)
+void TimelineWidget::setCurrentIndex(const QModelIndex index)
 {
-    QModelIndex index = selectedIndex();
-    if (index.isValid())
-        m_boneMotionModel->loadPose(pose, model, index.column());
-}
-
-void TimelineWidget::registerKeyFrame(vpvl::Bone *bone)
-{
-    QModelIndex index = selectedIndex();
-    if (index.isValid())
-        m_boneMotionModel->registerKeyFrame(bone, index.column());
-}
-
-void TimelineWidget::registerKeyFrame(vpvl::Face *face)
-{
-    QModelIndex index = selectedIndex();
-    if (index.isValid())
-        m_faceMotionModel->registerKeyFrame(face, index.column());
-}
-
-void TimelineWidget::selectColumn(QModelIndex current, QModelIndex /* previous */)
-{
-    emit motionDidSeek(static_cast<float>(current.column()));
-}
-
-void TimelineWidget::closeEvent(QCloseEvent *event)
-{
-    m_settings->setValue("timelineWidget/geometry", saveGeometry());
-    event->accept();
+    emit motionDidSeek(static_cast<float>(index.column()));
 }
 
 const QModelIndex TimelineWidget::selectedIndex() const

@@ -16,8 +16,7 @@ namespace internal {
 class TimelineTableModel;
 }
 
-class BoneMotionModel;
-class FaceMotionModel;
+class MotionBaseModel;
 
 class QTableView;
 class QSettings;
@@ -26,34 +25,21 @@ class TimelineWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit TimelineWidget(QSettings *settings,
-                            BoneMotionModel *bmm,
-                            FaceMotionModel *fmm,
+    explicit TimelineWidget(MotionBaseModel *base,
                             QWidget *parent = 0);
     ~TimelineWidget();
 
-    BoneMotionModel *boneMotionModel() const { return m_boneMotionModel; }
-    FaceMotionModel *faceMotionModel() const { return m_faceMotionModel; }
-
 public slots:
-    void loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
-    void registerKeyFrame(vpvl::Bone *bone);
-    void registerKeyFrame(vpvl::Face *face);
-    void selectColumn(QModelIndex current, QModelIndex previous);
+    void setCurrentIndex(const QModelIndex index);
 
 signals:
     void motionDidSeek(float column);
-
-protected:
-    void closeEvent(QCloseEvent *event);
 
 private:
     const QModelIndex selectedIndex() const;
 
     QSettings *m_settings;
     QTableView *m_tableView;
-    BoneMotionModel *m_boneMotionModel;
-    FaceMotionModel *m_faceMotionModel;
 };
 
 #endif // TIMLINEWIDGET_H

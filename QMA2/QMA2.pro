@@ -26,7 +26,8 @@ SOURCES += main.cc\
     MotionBaseModel.cc \
     BoneMotionModel.cc \
     FaceMotionModel.cc \
-    BoneDialog.cc
+    BoneDialog.cc \
+    TimelineTabWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -40,7 +41,8 @@ HEADERS  += MainWindow.h \
     MotionBaseModel.h \
     BoneMotionModel.h \
     FaceMotionModel.h \
-    BoneDialog.h
+    BoneDialog.h \
+    TimelineTabWidget.h
 
 RESOURCES += resources/QMA2.qrc
 
@@ -55,4 +57,5 @@ FORMS += \
     TransformWidget.ui \
     MainWindow.ui \
     TabWidget.ui \
-    BoneDialog.ui
+    BoneDialog.ui \
+    TimelineTabWidget.ui
