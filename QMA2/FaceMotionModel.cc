@@ -54,6 +54,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
         reset();
     }
     m_model = model;
+    emit modelDidChange(model);
 }
 
 bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
@@ -92,6 +93,16 @@ vpvl::Face *FaceMotionModel::selectFace(int rowIndex)
     return face;
 }
 
+vpvl::Face *FaceMotionModel::findFace(const QString &name)
+{
+    QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
+    foreach (vpvl::Face *face, m_faces) {
+        if (!qstrcmp(reinterpret_cast<const char *>(face->name()), bytes))
+            return face;
+    }
+    return 0;
+}
+
 QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &indices)
 {
     QList<vpvl::Face *> faces;
@@ -102,8 +113,13 @@ QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &ind
 
 void FaceMotionModel::setWeight(float value)
 {
-    if (m_selected) {
-        m_selected->setWeight(value);
+    setWeight(value, m_selected);
+}
+
+void FaceMotionModel::setWeight(float value, vpvl::Face *face)
+{
+    if (face) {
+        face->setWeight(value);
         updateModel();
     }
 }

@@ -13,8 +13,10 @@ public:
     void saveMotion(vpvl::VMDMotion *motion);
     void registerKeyFrame(vpvl::Face *bone, int frameIndex);
     vpvl::Face *selectFace(int rowIndex);
+    vpvl::Face *findFace(const QString &name);
     QList<vpvl::Face *> facesFromIndices(const QModelIndexList &indices);
     void setWeight(float value);
+    void setWeight(float value, vpvl::Face *face);
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);

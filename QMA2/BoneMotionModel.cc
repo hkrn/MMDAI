@@ -104,6 +104,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
         reset();
     }
     m_model = model;
+    emit modelDidChange(model);
 }
 
 bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
@@ -320,6 +321,16 @@ vpvl::Bone *BoneMotionModel::selectBone(int rowIndex)
 {
     vpvl::Bone *bone = m_selected = m_bones[rowIndex];
     return bone;
+}
+
+vpvl::Bone *BoneMotionModel::findBone(const QString &name)
+{
+    QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
+    foreach (vpvl::Bone *bone, m_bones) {
+        if (!qstrcmp(reinterpret_cast<const char *>(bone->name()), bytes))
+            return bone;
+    }
+    return 0;
 }
 
 QList<vpvl::Bone *> BoneMotionModel::bonesFromIndices(const QModelIndexList &indices) const
