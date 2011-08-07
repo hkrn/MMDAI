@@ -1,6 +1,7 @@
 #include <QtCore/QtCore>
 #include <QtTest/QtTest>
 
+#include <vpvl/Common.h>
 #include <vpvl/internal/util.h>
 
 class TestInternal : public QObject
@@ -12,8 +13,6 @@ public:
 
 private Q_SLOTS:
     void lerp();
-    void vector3();
-    void vector4();
     void size8();
     void size16();
     void size32();
@@ -22,6 +21,9 @@ private Q_SLOTS:
     void stringToInt();
     void zerofill();
     void clearAll();
+    void version();
+    void rad2deg();
+    void deg2rad();
 };
 
 TestInternal::TestInternal()
@@ -33,46 +35,6 @@ void TestInternal::lerp()
     QCOMPARE(vpvl::internal::lerp(4, 2, 0), 4.0f);
     QCOMPARE(vpvl::internal::lerp(4, 2, 1), 2.0f);
     QCOMPARE(vpvl::internal::lerp(4, 2, 0.5), 3.0f);
-}
-
-void TestInternal::vector3()
-{
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    QDataStream stream(&buffer);
-    buffer.open(QBuffer::WriteOnly);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
-    stream << 1.0f;
-    stream << 2.0f;
-    stream << 3.0f;
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    float actual[3];
-    vpvl::internal::vector3(ptr, actual);
-    QCOMPARE(actual[0], 1.0f);
-    QCOMPARE(actual[1], 2.0f);
-    QCOMPARE(actual[2], 3.0f);
-}
-
-void TestInternal::vector4()
-{
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    QDataStream stream(&buffer);
-    buffer.open(QBuffer::WriteOnly);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
-    stream << 4.0f;
-    stream << 5.0f;
-    stream << 6.0f;
-    stream << 7.0f;
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    float actual[3];
-    vpvl::internal::vector4(ptr, actual);
-    QCOMPARE(actual[0], 4.0f);
-    QCOMPARE(actual[1], 5.0f);
-    QCOMPARE(actual[2], 6.0f);
-    QCOMPARE(actual[3], 7.0f);
 }
 
 void TestInternal::size8()
@@ -180,14 +142,34 @@ void TestInternal::clearAll()
     array.push_back(new int(1));
     array.push_back(new int(2));
     array.push_back(new int(3));
-    vpvl::internal::clearAll(array);
+    vpvl::internal::clearArray(array);
     QCOMPARE(array.size(), 0);
     btHashMap<btHashString, int*> hash;
     hash.insert(btHashString("foo"), new int(1));
     hash.insert(btHashString("bar"), new int(2));
     hash.insert(btHashString("baz"), new int(3));
-    vpvl::internal::clearAll(hash);
+    vpvl::internal::clearHash(hash);
     QCOMPARE(hash.size(), 0);
+}
+
+void TestInternal::version()
+{
+    QVERIFY(vpvl::isLibraryVersionCorrect(VPVL_VERSION));
+    QVERIFY(!vpvl::isLibraryVersionCorrect(
+                VPVL_MAKE_VERSION(VPVL_VERSION_MAJOR - 1,
+                                  VPVL_VERSION_COMPAT,
+                                  VPVL_VERSION_MINOR)));
+    QCOMPARE(vpvl::libraryVersionString(), VPVL_VERSION_STRING);
+}
+
+void TestInternal::rad2deg()
+{
+    QCOMPARE(180.0f, vpvl::degree(vpvl::radian(180.0f)));
+}
+
+void TestInternal::deg2rad()
+{
+    QCOMPARE(vpvl::kPI, vpvl::radian(vpvl::degree(vpvl::kPI)));
 }
 
 QTEST_APPLESS_MAIN(TestInternal)

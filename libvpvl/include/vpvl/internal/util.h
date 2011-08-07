@@ -39,6 +39,7 @@
 #ifndef VPVL_INTERNAL_UTIL_H_
 #define VPVL_INTERNAL_UTIL_H_
 
+#include "vpvl/config.h"
 #include "LinearMath/btAlignedObjectArray.h"
 #include "LinearMath/btHashMap.h"
 #include "LinearMath/btVector3.h"
