@@ -1,11 +1,17 @@
 #include "FaceWidget.h"
+#include "FaceMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 #include "util.h"
 
-FaceWidget::FaceWidget(QWidget *parent) :
-    QWidget(parent)
+FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
+    QWidget(parent),
+    m_eyes(0),
+    m_lips(0),
+    m_eyeblows(0),
+    m_others(0),
+    m_faceMotionModel(fmm)
 {
     QLabel *label = 0;
     QPushButton *button = 0;
@@ -74,17 +80,19 @@ FaceWidget::FaceWidget(QWidget *parent) :
     layout->addLayout(eyeblowVBoxLayout, 1, 0);
     layout->addLayout(otherVBoxLayout, 1, 1);
     setLayout(layout);
+
+    connect(m_faceMotionModel, SIGNAL(modelDidChange(vpvl::PMDModel*)),
+            this, SLOT(setPMDModel(vpvl::PMDModel*)));
 }
 
-void FaceWidget::setModel(vpvl::PMDModel *model)
+void FaceWidget::setPMDModel(vpvl::PMDModel *model)
 {
     m_eyes->clear();
     m_lips->clear();
     m_eyeblows->clear();
     m_others->clear();
     if (model) {
-        m_model = model;
-        const vpvl::FaceList &faces = model->faces();
+        const vpvl::FaceList &faces = m_faceMotionModel->selectedModel()->facesForUI();
         const uint32_t nFaces = faces.size();
         for (uint32_t i = 0; i < nFaces; i++) {
             vpvl::Face *face = faces[i];
@@ -154,7 +162,7 @@ void FaceWidget::registerBase(const QComboBox *comboBox)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        vpvl::Face *face = findFace(comboBox->itemText(index));
+        vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
         if (face)
             emit faceDidRegister(face);
     }
@@ -164,16 +172,12 @@ void FaceWidget::setFaceWeight(const QComboBox *comboBox, int value)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        vpvl::Face *face = findFace(comboBox->itemText(index));
-        if (face)
-            face->setWeight(value / static_cast<float>(kSliderMaximumValue));
+        vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
+        if (face) {
+            float weight = value / static_cast<float>(kSliderMaximumValue);
+            m_faceMotionModel->setWeight(weight, face);
+        }
     }
-}
-
-vpvl::Face *FaceWidget::findFace(const QString &name)
-{
-    QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
-    return m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
 }
 
 QSlider *FaceWidget::createSlider()

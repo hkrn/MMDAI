@@ -1,17 +1,18 @@
 #include "TabWidget.h"
 #include "CameraPerspectiveWidget.h"
+#include "FaceMotionModel.h"
 #include "FaceWidget.h"
 
 #include <QtGui/QtGui>
 
-TabWidget::TabWidget(QSettings *settings, QWidget *parent) :
+TabWidget::TabWidget(QSettings *settings, FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
     m_camera(0),
     m_face(0)
 {
     m_camera = new CameraPerspectiveWidget(), tr("Camera");
-    m_face = new FaceWidget();
+    m_face = new FaceWidget(fmm);
     QTabWidget *tabWidget = new QTabWidget();
     tabWidget->addTab(m_camera, tr("Camera"));
     tabWidget->addTab(m_face, tr("Face"));

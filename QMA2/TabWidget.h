@@ -8,6 +8,7 @@ namespace Ui {
 }
 
 class CameraPerspectiveWidget;
+class FaceMotionModel;
 class FaceWidget;
 class QSettings;
 
@@ -16,7 +17,9 @@ class TabWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TabWidget(QSettings *settings, QWidget *parent = 0);
+    explicit TabWidget(QSettings *settings,
+                       FaceMotionModel *fmm,
+                       QWidget *parent = 0);
     ~TabWidget();
 
     CameraPerspectiveWidget *cameraPerspectiveWidget();

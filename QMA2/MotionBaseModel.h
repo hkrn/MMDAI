@@ -31,6 +31,12 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role);
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
+public slots:
+    virtual void setPMDModel(vpvl::PMDModel *model) = 0;
+
+signals:
+    void modelDidChange(vpvl::PMDModel *model);
+
 protected:
     bool updateModel();
 

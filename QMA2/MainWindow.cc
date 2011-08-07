@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_boneMotionModel = new BoneMotionModel(this);
     m_faceMotionModel = new FaceMotionModel(this);
-    m_tabWidget = new TabWidget(&m_settings);
+    m_tabWidget = new TabWidget(&m_settings, m_faceMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     ui->setupUi(this);
@@ -167,8 +167,6 @@ void MainWindow::connectWidgets()
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
             m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Face*)));
             */
-    connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-            m_tabWidget->faceWidget(), SLOT(setModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
             this, SLOT(setCurrentFPS(int)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),

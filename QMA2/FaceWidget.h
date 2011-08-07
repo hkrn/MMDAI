@@ -8,6 +8,7 @@ class PMDModel;
 class Face;
 }
 
+class FaceMotionModel;
 class QComboBox;
 class QSlider;
 
@@ -18,10 +19,10 @@ class FaceWidget : public QWidget
 public:
     static const int kSliderMaximumValue = 100;
 
-    explicit FaceWidget(QWidget *parent = 0);
+    explicit FaceWidget(FaceMotionModel *fmm, QWidget *parent = 0);
 
 public slots:
-    void setModel(vpvl::PMDModel *model);
+    void setPMDModel(vpvl::PMDModel *model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
     void setEyeblowWeight(int value);
@@ -46,7 +47,7 @@ private:
     QComboBox *m_lips;
     QComboBox *m_eyeblows;
     QComboBox *m_others;
-    vpvl::PMDModel *m_model;
+    FaceMotionModel *m_faceMotionModel;
 };
 
 #endif // FACEWIDGET_H
