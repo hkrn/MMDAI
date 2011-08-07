@@ -188,10 +188,80 @@ void TestPMDModel::parseIK()
 void TestPMDModel::parseMaterial()
 {
     // TODO: should rename primary to main, second to sub
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << 0.0f << 0.1f << 0.2f // diffuse
+           << 0.3f                 // alpha
+           << 0.4f                 // shiness
+           << 0.5f << 0.6f << 0.7f // specular
+           << 0.8f << 0.9f << 1.0f // ambient
+           << quint8(255)            // toonID
+           << quint8(1)            // edge
+           << quint32(2)           // nindices
+              ;
+    const char path[] = "main.sph*sub.spa";
+    stream.writeRawData(path, vpvl::Material::kNameSize);
+    QCOMPARE(size_t(bytes.size()), vpvl::Material::stride());
+    vpvl::Material material;
+    material.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.rawName())), QString(path));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.primaryTextureName())), QString("main.sph"));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.secondTextureName())), QString("sub.spa"));
+    QVERIFY(material.ambient() == btVector4(0.8f, 0.9f, 1.0f, 1.0f));
+    QVERIFY(material.averageColor() == btVector4(0.4f, 0.5f, 0.6f, 1.0f));
+    QVERIFY(material.diffuse() == btVector4(0.0f, 0.1f, 0.2f, 1.0f));
+    QVERIFY(material.specular() == btVector4(0.5f, 0.6f, 0.7f, 1.0f));
+    QCOMPARE(material.opacity(), 0.3f);
+    QCOMPARE(material.shiness(), 0.4f);
+    QCOMPARE(material.countIndices(), quint32(2));
+    QCOMPARE(material.toonID(), quint8(0));
+    QVERIFY(material.isEdgeEnabled());
+    QVERIFY(material.isSpherePrimary());
+    QVERIFY(!material.isSphereSecond());
+    QVERIFY(!material.isSphereAuxPrimary());
+    QVERIFY(material.isSphereAuxSecond());
 }
 
 void TestPMDModel::parseRigidBody()
 {
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream.writeRawData(kTestString, vpvl::RigidBody::kNameSize);
+    stream << quint16(0xffff)         // bone
+           << quint8(3)               // collision group ID
+           << quint16(2)              // collision mask
+           << quint8(0)               // shape type
+           << 4.0f                    // width
+           << 5.0f                    // height
+           << 6.0f                    // depth
+           << 7.0f << 8.0f << 9.0f    // position
+           << 10.0f << 11.0f << 12.0f // rotation
+           << 0.1f                    // mass
+           << 0.2f                    // linearDamping
+           << 0.3f                    // angularDamping
+           << 0.4f                    // restitution
+           << 0.5f                    // friction
+           << quint8(1)               // type
+              ;
+    QCOMPARE(size_t(bytes.size()), vpvl::RigidBody::stride());
+    vpvl::RigidBody body;
+    vpvl::BoneList bones;
+    bones.push_back(new vpvl::Bone());
+    body.read(reinterpret_cast<const uint8_t *>(bytes.constData()), &bones);
+    QCOMPARE(QString(reinterpret_cast<const char *>(body.name())), QString(kTestString));
+    btRigidBody *b = body.body();
+    QVERIFY(b != 0);
+    QCOMPARE(b->getLinearDamping(), 0.2f);
+    QCOMPARE(b->getAngularDamping(), 0.3f);
+    QCOMPARE(b->getRestitution(), 0.4f);
+    QCOMPARE(b->getFriction(), 0.5f);
+    QCOMPARE(body.groupID(), quint16(8));
+    QCOMPARE(body.groupMask(), quint16(2));
+    vpvl::internal::clearArray(bones);
 }
 
 void TestPMDModel::parseVertex()
@@ -223,7 +293,7 @@ void TestPMDModel::parseVertex()
     QCOMPARE(vertex.bone1(), qint16(8));
     QCOMPARE(vertex.bone2(), qint16(9));
     QCOMPARE(vertex.weight(), 1.0f);
-    QCOMPARE(vertex.isEdgeEnabled(), false);
+    QVERIFY(!vertex.isEdgeEnabled());
 }
 
 QTEST_APPLESS_MAIN(TestPMDModel)
