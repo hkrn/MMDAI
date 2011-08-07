@@ -20,6 +20,7 @@ class MotionBaseModel;
 
 class QTableView;
 class QSettings;
+class QSpinBox;
 
 class TimelineWidget : public QWidget
 {
@@ -39,6 +40,7 @@ private:
     const QModelIndex selectedIndex() const;
 
     QSettings *m_settings;
+    QSpinBox *m_spinBox;
     QTableView *m_tableView;
 };
 

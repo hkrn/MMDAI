@@ -38,14 +38,13 @@ void MotionBaseModel::discardState()
         m_model->discardState(m_state);
 }
 
-int MotionBaseModel::rowCount(const QModelIndex &parent) const
+int MotionBaseModel::rowCount(const QModelIndex & /* parent */) const
 {
     return m_keys.count();
 }
 
-int MotionBaseModel::columnCount(const QModelIndex &parent) const
+int MotionBaseModel::columnCount(const QModelIndex & /* parent */) const
 {
-    Q_UNUSED(parent);
     return 600;
 }
 
@@ -76,11 +75,12 @@ QVariant MotionBaseModel::headerData(int section, Qt::Orientation orientation, i
 {
     if (role != Qt::DisplayRole)
         return QVariant();
-    if (orientation == Qt::Vertical) {
+    switch (orientation) {
+    case Qt::Vertical:
         return m_keys[section];
-    }
-    else if (orientation == Qt::Horizontal)
+    case Qt::Horizontal:
         return " "; //QString("%1").setNum(section + 1);
+    }
     return QVariant();
 }
 

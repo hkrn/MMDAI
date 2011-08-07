@@ -13,27 +13,24 @@ public:
     TimelineItemDelegate(QObject *parent = 0) : QStyledItemDelegate(parent) {
     }
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-        const QRect &rect = option.rect;
-        //painter->save();
-        painter->setRenderHint(QPainter::Antialiasing);
-        if (index.column() % 5 == 0)
-            painter->setBackground(option.palette.background());
+        if (index.column() % 5 == 0 && !(option.state & QStyle::State_Selected))
+            painter->fillRect(option.rect, qApp->palette().alternateBase());
         if (index.data(Qt::UserRole) != QVariant()) {
             painter->setPen(Qt::NoPen);
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(option.palette.foreground());
-            QPolygon polygon;
+            const QRect &rect = option.rect;
             int width = rect.width();
             int height = width;
             int xoffset = rect.x();
             int yoffset = rect.y() + ((rect.height() - height) / 2);
+            QPolygon polygon;
             polygon.append(QPoint(xoffset, yoffset + height / 2));
             polygon.append(QPoint(xoffset + width / 2, yoffset + height));
             polygon.append(QPoint(xoffset + width, yoffset + height / 2));
             polygon.append(QPoint(xoffset + width / 2, yoffset ));
             painter->drawPolygon(polygon);
         }
-        //painter->restore();
     }
 };
 
@@ -51,12 +48,21 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     internal::TimelineItemDelegate *delegate = new internal::TimelineItemDelegate(this);
     m_tableView->horizontalHeader()->setResizeMode(QHeaderView::Fixed);
     m_tableView->setItemDelegate(delegate);
-    m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     m_tableView->resizeColumnsToContents();
+    m_tableView->setSelectionBehavior(QTableView::SelectColumns);
     connect(m_tableView->selectionModel(),
             SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(setCurrentIndex(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
+    QHBoxLayout *spinboxLayout = new QHBoxLayout();
+    m_spinBox = new QSpinBox();
+    m_spinBox->setMaximum(base->columnCount());
+    connect(m_spinBox, SIGNAL(valueChanged(int)), m_tableView, SLOT(selectColumn(int)));
+    spinboxLayout->addSpacing(250);
+    spinboxLayout->addWidget(new QLabel(tr("Frame index")));
+    spinboxLayout->addWidget(m_spinBox);
+    spinboxLayout->addSpacing(250);
+    layout->addLayout(spinboxLayout);
     layout->addWidget(m_tableView);
     layout->setContentsMargins(QMargins());
     setLayout(layout);
@@ -69,7 +75,9 @@ TimelineWidget::~TimelineWidget()
 
 void TimelineWidget::setCurrentIndex(const QModelIndex index)
 {
-    emit motionDidSeek(static_cast<float>(index.column()));
+    int frameIndex = index.column();
+    m_spinBox->setValue(frameIndex);
+    emit motionDidSeek(static_cast<float>(frameIndex));
 }
 
 const QModelIndex TimelineWidget::selectedIndex() const
