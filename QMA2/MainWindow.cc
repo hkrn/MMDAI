@@ -6,6 +6,7 @@
 #include "CameraPerspectiveWidget.h"
 #include "FaceMotionModel.h"
 #include "FaceWidget.h"
+#include "InterpolationWidget.h"
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
@@ -28,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_boneMotionModel = new BoneMotionModel(this);
     m_faceMotionModel = new FaceMotionModel(this);
-    m_tabWidget = new TabWidget(&m_settings, m_faceMotionModel);
+    m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     ui->setupUi(this);
@@ -155,28 +156,26 @@ void MainWindow::connectWidgets()
             m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    /*
+    connect(ui->scene, SIGNAL(modelDidMakePose(vpvl::VPDPose*,vpvl::PMDModel*)),
+            m_timelineTabWidget, SLOT(loadPose(vpvl::VPDPose*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
             m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
-            */
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    /*
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
             m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Face*)));
-            */
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
             this, SLOT(setCurrentFPS(int)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             this, SLOT(setModel(vpvl::PMDModel*)));
-    /*
     connect(ui->scene, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)),
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
             ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
-            */
+    connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)),
+            m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),
             ui->scene, SLOT(seekMotion(float)));
 }

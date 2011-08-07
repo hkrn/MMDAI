@@ -73,13 +73,6 @@ TimelineWidget::~TimelineWidget()
     delete m_tableView;
 }
 
-void TimelineWidget::setCurrentIndex(const QModelIndex index)
-{
-    int frameIndex = index.column();
-    m_spinBox->setValue(frameIndex);
-    emit motionDidSeek(static_cast<float>(frameIndex));
-}
-
 const QModelIndex TimelineWidget::selectedIndex() const
 {
     QModelIndexList indices = m_tableView->selectionModel()->selectedIndexes();
@@ -89,4 +82,11 @@ const QModelIndex TimelineWidget::selectedIndex() const
             return index;
     }
     return QModelIndex();
+}
+
+void TimelineWidget::setCurrentIndex(const QModelIndex index)
+{
+    int frameIndex = index.column();
+    m_spinBox->setValue(frameIndex);
+    emit motionDidSeek(static_cast<float>(frameIndex));
 }

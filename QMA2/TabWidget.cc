@@ -6,7 +6,7 @@
 
 #include <QtGui/QtGui>
 
-TabWidget::TabWidget(QSettings *settings, FaceMotionModel *fmm, QWidget *parent) :
+TabWidget::TabWidget(QSettings *settings, BoneMotionModel *bmm, FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
     m_camera(0),
@@ -14,7 +14,7 @@ TabWidget::TabWidget(QSettings *settings, FaceMotionModel *fmm, QWidget *parent)
 {
     m_camera = new CameraPerspectiveWidget();
     m_face = new FaceWidget(fmm);
-    m_interpolation = new InterpolationWidget();
+    m_interpolation = new InterpolationWidget(bmm);
     QTabWidget *tabWidget = new QTabWidget();
     tabWidget->addTab(m_camera, tr("Camera"));
     tabWidget->addTab(m_face, tr("Face"));

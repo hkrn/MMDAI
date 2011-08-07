@@ -30,6 +30,9 @@ public:
                             QWidget *parent = 0);
     ~TimelineWidget();
 
+    const QModelIndex selectedIndex() const;
+    QTableView *tableView() const { return m_tableView; }
+
 public slots:
     void setCurrentIndex(const QModelIndex index);
 
@@ -37,8 +40,6 @@ signals:
     void motionDidSeek(float column);
 
 private:
-    const QModelIndex selectedIndex() const;
-
     QSettings *m_settings;
     QSpinBox *m_spinBox;
     QTableView *m_tableView;

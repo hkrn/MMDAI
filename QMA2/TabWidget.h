@@ -7,6 +7,7 @@ namespace Ui {
     class TabWidget;
 }
 
+class BoneMotionModel;
 class CameraPerspectiveWidget;
 class FaceMotionModel;
 class FaceWidget;
@@ -19,12 +20,14 @@ class TabWidget : public QWidget
 
 public:
     explicit TabWidget(QSettings *settings,
+                       BoneMotionModel *bmm,
                        FaceMotionModel *fmm,
                        QWidget *parent = 0);
     ~TabWidget();
 
-    CameraPerspectiveWidget *cameraPerspectiveWidget();
-    FaceWidget *faceWidget();
+    CameraPerspectiveWidget *cameraPerspectiveWidget() const { return m_camera; }
+    FaceWidget *faceWidget() const { return m_face; }
+    InterpolationWidget *interpolationWidget() const { return m_interpolation; }
 
 protected:
     void closeEvent(QCloseEvent *event);

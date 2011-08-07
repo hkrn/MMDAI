@@ -6,22 +6,27 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+const QString TimelineTabWidget::kBone = QT_TR_NOOP_UTF8("Bone");
+const QString TimelineTabWidget::kCamera = QT_TR_NOOP_UTF8("Camera");
+const QString TimelineTabWidget::kFace = QT_TR_NOOP_UTF8("Face");
+
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
                                      FaceMotionModel *fmm,
                                      QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
-    m_boneMotionModel(bmm),
-    m_faceMotionModel(fmm)
+    m_boneTimeline(0),
+    m_faceTimeline(0)
 {
     QTabWidget *tabWidget = new QTabWidget();
-    TimelineWidget *boneTimeline = new TimelineWidget(m_boneMotionModel, this);
-    tabWidget->addTab(boneTimeline, tr("Bone"));
-    TimelineWidget *faceTimeline = new TimelineWidget(m_faceMotionModel, this);
-    tabWidget->addTab(faceTimeline, tr("Face"));
-    connect(boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    m_boneTimeline = new TimelineWidget(bmm, this);
+    tabWidget->addTab(m_boneTimeline, kBone);
+    m_faceTimeline = new TimelineWidget(fmm, this);
+    tabWidget->addTab(m_faceTimeline, kFace);
+    connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(tabWidget);
@@ -34,36 +39,41 @@ TimelineTabWidget::~TimelineTabWidget()
 {
 }
 
-#if 0
-void TimelineWidget::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model)
+void TimelineTabWidget::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model)
 {
-    QModelIndex index = selectedIndex();
+    QModelIndex index = m_boneTimeline->selectedIndex();
     if (index.isValid())
-        m_boneMotionModel->loadPose(pose, model, index.column());
+        reinterpret_cast<BoneMotionModel *>(m_boneTimeline->tableView()->model())->loadPose(pose, model, index.column());
 }
 
-void TimelineWidget::registerKeyFrame(vpvl::Bone *bone)
+void TimelineTabWidget::registerKeyFrame(vpvl::Bone *bone)
 {
-    QModelIndex index = selectedIndex();
+    QModelIndex index = m_boneTimeline->selectedIndex();
     if (index.isValid())
-        m_boneMotionModel->registerKeyFrame(bone, index.column());
+        reinterpret_cast<BoneMotionModel *>(m_boneTimeline->tableView()->model())->registerKeyFrame(bone, index.column());
 }
 
-void TimelineWidget::registerKeyFrame(vpvl::Face *face)
+void TimelineTabWidget::registerKeyFrame(vpvl::Face *face)
 {
-    QModelIndex index = selectedIndex();
+    QModelIndex index = m_faceTimeline->selectedIndex();
     if (index.isValid())
-        m_faceMotionModel->registerKeyFrame(face, index.column());
+        reinterpret_cast<FaceMotionModel *>(m_faceTimeline->tableView()->model())->registerKeyFrame(face, index.column());
 }
-
-void TimelineWidget::selectColumn(QModelIndex current, QModelIndex /* previous */)
-{
-    emit motionDidSeek(static_cast<float>(current.column()));
-}
-#endif
 
 void TimelineTabWidget::closeEvent(QCloseEvent *event)
 {
     m_settings->setValue("timelineTabWidget/geometry", saveGeometry());
     event->accept();
+}
+
+void TimelineTabWidget::setCurrentTabIndex(int index)
+{
+    switch (index) {
+    case 0:
+        emit currentTabDidChange(kBone);
+        break;
+    case 1:
+        emit currentTabDidChange(kFace);
+        break;
+    }
 }
