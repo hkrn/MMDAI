@@ -3,6 +3,7 @@
 
 #include <QtGui/QWidget>
 
+class BoneMotionModel;
 class QComboBox;
 class QHBoxLayout;
 
@@ -13,7 +14,7 @@ class InterpolationGraphWidget : public QWidget
 public:
     static const int kCircleWidth = 5;
 
-    explicit InterpolationGraphWidget(QWidget *parent = 0);
+    explicit InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent = 0);
     ~InterpolationGraphWidget();
 
 public slots:
@@ -35,6 +36,7 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private:
+    BoneMotionModel *m_boneMotionModel;
     QPoint m_p1;
     QPoint m_p2;
 };
@@ -44,8 +46,11 @@ class InterpolationWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit InterpolationWidget(QWidget *parent = 0);
+    explicit InterpolationWidget(BoneMotionModel *bmm, QWidget *parent = 0);
     ~InterpolationWidget();
+
+public slots:
+    void setMode(const QString &mode);
 
 private:
     void createSpinBox(QHBoxLayout *layout,
@@ -55,7 +60,7 @@ private:
                        const char *slot);
 
     QComboBox *m_comboBox;
-    InterpolationGraphWidget *m_graph;
+    InterpolationGraphWidget *m_graphWidget;
 };
 
 #endif // INTERPOLATIONWIDGET_H

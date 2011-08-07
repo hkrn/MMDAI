@@ -1,9 +1,12 @@
 #include "InterpolationWidget.h"
+#include "TimelineTabWidget.h"
+#include "BoneMotionModel.h"
 
 #include <QtGui/QtGui>
 
-InterpolationGraphWidget::InterpolationGraphWidget(QWidget *parent)
-    : QWidget(parent)
+InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent)
+    : QWidget(parent),
+      m_boneMotionModel(bmm)
 {
 }
 
@@ -71,14 +74,16 @@ void InterpolationGraphWidget::paintEvent(QPaintEvent * /* event */)
     painter.drawEllipse(m_p2.x(), m_p2.y(), kCircleWidth, kCircleWidth);
 }
 
-InterpolationWidget::InterpolationWidget(QWidget *parent)
-    : QWidget(parent)
+InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
+    : QWidget(parent),
+      m_comboBox(0),
+      m_graphWidget(0)
 {
     m_comboBox = new QComboBox();
-    m_graph = new InterpolationGraphWidget();
-    m_graph->setMinimumSize(128, 128);
-    m_graph->setMaximumSize(128, 128);
-    qDebug() << m_graph->size();
+    m_graphWidget = new InterpolationGraphWidget(bmm);
+    m_graphWidget->setMinimumSize(128, 128);
+    m_graphWidget->setMaximumSize(128, 128);
+    qDebug() << m_graphWidget->size();
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_comboBox);
     QHBoxLayout *x = new QHBoxLayout();
@@ -89,12 +94,37 @@ InterpolationWidget::InterpolationWidget(QWidget *parent)
     createSpinBox(y, "y1", 0, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int)));
     createSpinBox(y, "y2", 127, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int)));
     layout->addLayout(y);
-    layout->addWidget(m_graph, Qt::AlignVCenter);
+    layout->addWidget(m_graphWidget, Qt::AlignVCenter);
     setLayout(layout);
+    setEnabled(false);
 }
 
 InterpolationWidget::~InterpolationWidget()
 {
+}
+
+void InterpolationWidget::setMode(const QString &mode)
+{
+    bool enabled = true;
+    m_comboBox->clear();
+    if (mode == TimelineTabWidget::kBone) {
+        m_comboBox->addItem(tr("X axis"));
+        m_comboBox->addItem(tr("Y axis"));
+        m_comboBox->addItem(tr("Z axis"));
+        m_comboBox->addItem(tr("Rotation"));
+    }
+    else if (mode == TimelineTabWidget::kCamera) {
+        m_comboBox->addItem(tr("X axis"));
+        m_comboBox->addItem(tr("Y axis"));
+        m_comboBox->addItem(tr("Z axis"));
+        m_comboBox->addItem(tr("Rotation"));
+        m_comboBox->addItem(tr("Distance"));
+        m_comboBox->addItem(tr("Fovy"));
+    }
+    else {
+        enabled = false;
+    }
+    setEnabled(enabled);
 }
 
 void InterpolationWidget::createSpinBox(QHBoxLayout *layout,
@@ -107,7 +137,7 @@ void InterpolationWidget::createSpinBox(QHBoxLayout *layout,
     spinBox->setRange(0, 127);
     layout->addWidget(new QLabel(label), Qt::AlignCenter);
     layout->addWidget(spinBox);
-    connect(spinBox, SIGNAL(valueChanged(int)), m_graph, slot);
-    connect(m_graph, signal, spinBox, SLOT(setValue(int)));
+    connect(spinBox, SIGNAL(valueChanged(int)), m_graphWidget, slot);
+    connect(m_graphWidget, signal, spinBox, SLOT(setValue(int)));
     spinBox->setValue(defaultValue);
 }
