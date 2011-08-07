@@ -10,6 +10,7 @@ namespace Ui {
 class CameraPerspectiveWidget;
 class FaceMotionModel;
 class FaceWidget;
+class InterpolationWidget;
 class QSettings;
 
 class TabWidget : public QWidget
@@ -32,6 +33,7 @@ private:
     QSettings *m_settings;
     CameraPerspectiveWidget *m_camera;
     FaceWidget *m_face;
+    InterpolationWidget *m_interpolation;
 };
 
 #endif // TABWIDGET_H

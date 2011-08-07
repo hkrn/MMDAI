@@ -27,7 +27,8 @@ SOURCES += main.cc\
     BoneMotionModel.cc \
     FaceMotionModel.cc \
     BoneDialog.cc \
-    TimelineTabWidget.cc
+    TimelineTabWidget.cc \
+    InterpolationWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -42,7 +43,8 @@ HEADERS  += MainWindow.h \
     BoneMotionModel.h \
     FaceMotionModel.h \
     BoneDialog.h \
-    TimelineTabWidget.h
+    TimelineTabWidget.h \
+    InterpolationWidget.h
 
 RESOURCES += resources/QMA2.qrc
 

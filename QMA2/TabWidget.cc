@@ -2,6 +2,7 @@
 #include "CameraPerspectiveWidget.h"
 #include "FaceMotionModel.h"
 #include "FaceWidget.h"
+#include "InterpolationWidget.h"
 
 #include <QtGui/QtGui>
 
@@ -11,11 +12,13 @@ TabWidget::TabWidget(QSettings *settings, FaceMotionModel *fmm, QWidget *parent)
     m_camera(0),
     m_face(0)
 {
-    m_camera = new CameraPerspectiveWidget(), tr("Camera");
+    m_camera = new CameraPerspectiveWidget();
     m_face = new FaceWidget(fmm);
+    m_interpolation = new InterpolationWidget();
     QTabWidget *tabWidget = new QTabWidget();
     tabWidget->addTab(m_camera, tr("Camera"));
     tabWidget->addTab(m_face, tr("Face"));
+    tabWidget->addTab(m_interpolation, tr("Interpolation"));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(tabWidget);
     layout->setContentsMargins(10, 10, 10, 10);
@@ -27,16 +30,6 @@ TabWidget::TabWidget(QSettings *settings, FaceMotionModel *fmm, QWidget *parent)
 
 TabWidget::~TabWidget()
 {
-}
-
-CameraPerspectiveWidget *TabWidget::cameraPerspectiveWidget()
-{
-    return m_camera;
-}
-
-FaceWidget *TabWidget::faceWidget()
-{
-    return m_face;
 }
 
 void TabWidget::closeEvent(QCloseEvent *event)
