@@ -74,19 +74,19 @@ Material::Material()
       m_nindices(0),
       m_toonID(0),
       m_edge(false),
-      m_firstSPH(false),
-      m_firstSPA(false),
-      m_secondSPH(false),
-      m_secondSPA(false)
+      m_isMultiplicationSphereMain(false),
+      m_isAdditionalSphereMain(false),
+      m_isMultiplicationSphereSub(false),
+      m_isAdditionalSphereSub(false)
 {
-    internal::zerofill(m_primaryTextureName, sizeof(m_primaryTextureName));
-    internal::zerofill(m_secondTextureName, sizeof(m_secondTextureName));
+    internal::zerofill(m_mainTextureName, sizeof(m_mainTextureName));
+    internal::zerofill(m_subTextureName, sizeof(m_subTextureName));
 }
 
 Material::~Material()
 {
-    internal::zerofill(m_primaryTextureName, sizeof(m_primaryTextureName));
-    internal::zerofill(m_secondTextureName, sizeof(m_secondTextureName));
+    internal::zerofill(m_mainTextureName, sizeof(m_mainTextureName));
+    internal::zerofill(m_subTextureName, sizeof(m_subTextureName));
     m_ambient.setZero();
     m_averageColor.setZero();
     m_diffuse.setZero();
@@ -96,10 +96,10 @@ Material::~Material()
     m_nindices = 0;
     m_toonID = 0;
     m_edge = false;
-    m_firstSPH = false;
-    m_firstSPA = false;
-    m_secondSPH = false;
-    m_secondSPA = false;
+    m_isMultiplicationSphereMain = false;
+    m_isAdditionalSphereMain = false;
+    m_isMultiplicationSphereSub = false;
+    m_isAdditionalSphereSub = false;
 }
 
 void Material::read(const uint8_t *data)
@@ -121,17 +121,17 @@ void Material::read(const uint8_t *data)
     // If asterisk is included in the path, we should load two textures
     if ((p = static_cast<uint8_t *>(memchr(name, '*', sizeof(name)))) != NULL) {
         *p = 0;
-        copyBytesSafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
-        copyBytesSafe(m_secondTextureName, p + 1, sizeof(m_secondTextureName));
-        m_firstSPH = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".sph") != NULL;
-        m_firstSPA = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".spa") != NULL;
-        m_secondSPH = strstr(reinterpret_cast<const char *>(m_secondTextureName), ".sph") != NULL;
-        m_secondSPA = strstr(reinterpret_cast<const char *>(m_secondTextureName), ".spa") != NULL;
+        copyBytesSafe(m_mainTextureName, name, sizeof(m_mainTextureName));
+        copyBytesSafe(m_subTextureName, p + 1, sizeof(m_subTextureName));
+        m_isMultiplicationSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".sph") != NULL;
+        m_isAdditionalSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
+        m_isMultiplicationSphereSub = strstr(reinterpret_cast<const char *>(m_subTextureName), ".sph") != NULL;
+        m_isAdditionalSphereSub = strstr(reinterpret_cast<const char *>(m_subTextureName), ".spa") != NULL;
     }
     else {
-        copyBytesSafe(m_primaryTextureName, name, sizeof(m_primaryTextureName));
-        m_firstSPH = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".sph") != NULL;
-        m_firstSPA = strstr(reinterpret_cast<const char *>(m_primaryTextureName), ".spa") != NULL;
+        copyBytesSafe(m_mainTextureName, name, sizeof(m_mainTextureName));
+        m_isMultiplicationSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".sph") != NULL;
+        m_isAdditionalSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
     }
 
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);

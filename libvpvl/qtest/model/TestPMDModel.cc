@@ -207,8 +207,8 @@ void TestPMDModel::parseMaterial()
     vpvl::Material material;
     material.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(QString(reinterpret_cast<const char *>(material.rawName())), QString(path));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.primaryTextureName())), QString("main.sph"));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.secondTextureName())), QString("sub.spa"));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.mainTextureName())), QString("main.sph"));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.subTextureName())), QString("sub.spa"));
     QVERIFY(material.ambient() == btVector4(0.8f, 0.9f, 1.0f, 1.0f));
     QVERIFY(material.averageColor() == btVector4(0.4f, 0.5f, 0.6f, 1.0f));
     QVERIFY(material.diffuse() == btVector4(0.0f, 0.1f, 0.2f, 1.0f));
@@ -218,10 +218,10 @@ void TestPMDModel::parseMaterial()
     QCOMPARE(material.countIndices(), quint32(2));
     QCOMPARE(material.toonID(), quint8(0));
     QVERIFY(material.isEdgeEnabled());
-    QVERIFY(material.isSpherePrimary());
-    QVERIFY(!material.isSphereSecond());
-    QVERIFY(!material.isSphereAuxPrimary());
-    QVERIFY(material.isSphereAuxSecond());
+    QVERIFY(material.isMultiplicationSphereMain());
+    QVERIFY(!material.isMultiplicationSphereSecond());
+    QVERIFY(!material.isAdditionalSphereMain());
+    QVERIFY(material.isAdditionalSphereSub());
 }
 
 void TestPMDModel::parseRigidBody()

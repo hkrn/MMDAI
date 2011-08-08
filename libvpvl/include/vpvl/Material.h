@@ -70,11 +70,11 @@ public:
     const uint8_t *rawName() const {
         return m_rawName;
     }
-    const uint8_t *primaryTextureName() const {
-        return m_primaryTextureName;
+    const uint8_t *mainTextureName() const {
+        return m_mainTextureName;
     }
-    const uint8_t *secondTextureName() const {
-        return m_secondTextureName;
+    const uint8_t *subTextureName() const {
+        return m_subTextureName;
     }
     const btVector4 &ambient() const {
         return m_ambient;
@@ -103,24 +103,24 @@ public:
     bool isEdgeEnabled() const {
         return m_edge;
     }
-    bool isSpherePrimary() const {
-        return m_firstSPH;
+    bool isMultiplicationSphereMain() const {
+        return m_isMultiplicationSphereMain;
     }
-    bool isSphereAuxPrimary() const {
-        return m_firstSPA;
+    bool isAdditionalSphereMain() const {
+        return m_isAdditionalSphereMain;
     }
-    bool isSphereSecond() const {
-        return m_secondSPH;
+    bool isMultiplicationSphereSecond() const {
+        return m_isMultiplicationSphereSub;
     }
-    bool isSphereAuxSecond() const {
-        return m_secondSPA;
+    bool isAdditionalSphereSub() const {
+        return m_isAdditionalSphereSub;
     }
 
-    void setPrimaryTextureName(const uint8_t *value) {
-        copyBytesSafe(m_primaryTextureName, value, sizeof(m_primaryTextureName));
+    void setMainTextureName(const uint8_t *value) {
+        copyBytesSafe(m_mainTextureName, value, sizeof(m_mainTextureName));
     }
-    void setSecondTextureName(const uint8_t *value) {
-        copyBytesSafe(m_secondTextureName, value, sizeof(m_secondTextureName));
+    void setSubTextureName(const uint8_t *value) {
+        copyBytesSafe(m_subTextureName, value, sizeof(m_subTextureName));
     }
     void setAmbient(const btVector4 &value) {
         m_ambient = value;
@@ -134,7 +134,7 @@ public:
     void setSpecular(const btVector4 &value) {
         m_specular = value;
     }
-    void setAlpha(float value) {
+    void setOpacity(float value) {
         m_opacity = value;
     }
     void setShiness(float value) {
@@ -146,8 +146,8 @@ public:
 
 private:
     uint8_t m_rawName[kNameSize];
-    uint8_t m_primaryTextureName[kNameSize];
-    uint8_t m_secondTextureName[kNameSize];
+    uint8_t m_mainTextureName[kNameSize];
+    uint8_t m_subTextureName[kNameSize];
     btVector4 m_ambient;
     btVector4 m_averageColor;
     btVector4 m_diffuse;
@@ -157,10 +157,10 @@ private:
     uint32_t m_nindices;
     uint8_t m_toonID;
     bool m_edge;
-    bool m_firstSPH;
-    bool m_firstSPA;
-    bool m_secondSPH;
-    bool m_secondSPA;
+    bool m_isMultiplicationSphereMain;
+    bool m_isAdditionalSphereMain;
+    bool m_isMultiplicationSphereSub;
+    bool m_isAdditionalSphereSub;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Material)
 };

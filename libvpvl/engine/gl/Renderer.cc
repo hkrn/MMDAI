@@ -200,8 +200,8 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
-        const std::string primary = m_delegate->toUnicode(material->primaryTextureName());
-        const std::string second = m_delegate->toUnicode(material->secondTextureName());
+        const std::string primary = m_delegate->toUnicode(material->mainTextureName());
+        const std::string second = m_delegate->toUnicode(material->subTextureName());
         __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.primaryTextureID = 0;
         materialPrivate.secondTextureID = 0;
@@ -217,8 +217,8 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
                 //qDebug("Binding the texture as a secondary texture (ID=%d)", textureID);
             }
         }
-        hasSingleSphere |= material->isSpherePrimary() && !material->isSphereAuxSecond();
-        hasMultipleSphere |= material->isSphereAuxSecond();
+        hasSingleSphere |= material->isMultiplicationSphereMain() && !material->isAdditionalSphereSub();
+        hasMultipleSphere |= material->isAdditionalSphereSub();
     }
     userData->hasSingleSphereMap = hasSingleSphere;
     userData->hasMultipleSphereMap = hasMultipleSphere;
@@ -374,9 +374,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             glBindTexture(GL_TEXTURE_2D, materialPrivate.primaryTextureID);
             if (hasSingleSphereMap) {
                 // is sphere map
-                if (material->isSpherePrimary() || material->isSphereAuxPrimary()) {
+                if (material->isMultiplicationSphereMain() || material->isAdditionalSphereMain()) {
                     // is second sphere map
-                    if (material->isSphereAuxPrimary())
+                    if (material->isAdditionalSphereMain())
                         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                     glEnable(GL_TEXTURE_GEN_S);
                     glEnable(GL_TEXTURE_GEN_T);
@@ -404,7 +404,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             glEnable(GL_TEXTURE_2D);
             if (materialPrivate.secondTextureID > 0) {
                 // is second sphere
-                if (material->isSphereAuxSecond())
+                if (material->isAdditionalSphereSub())
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                 else
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -421,7 +421,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(offset));
         offset += (nIndices << 1);
         // is aux sphere map
-        if (material->isSphereAuxPrimary()) {
+        if (material->isAdditionalSphereMain()) {
             glActiveTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
