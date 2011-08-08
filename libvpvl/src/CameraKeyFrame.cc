@@ -190,17 +190,17 @@ void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 6; i++)
         m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;
     for (int i = 0; i < 6; i++) {
-        if (m_linear[i]) {
-            m_interpolationTable[i] = 0;
-            setInterpolationParameterInternal(static_cast<InterpolationType>(i), 0.0f, 0.0f, 0.0f, 0.0f);
-            continue;
-        }
-        delete[] m_interpolationTable[i];
-        m_interpolationTable[i] = new float[kTableSize + 1];
         float x1 = table[i * 4]     / 127.0f;
         float y1 = table[i * 4 + 2] / 127.0f;
         float x2 = table[i * 4 + 1] / 127.0f;
         float y2 = table[i * 4 + 3] / 127.0f;
+        if (m_linear[i]) {
+            m_interpolationTable[i] = 0;
+            setInterpolationParameterInternal(static_cast<InterpolationType>(i), x1, x2, y1, y2);
+            continue;
+        }
+        delete[] m_interpolationTable[i];
+        m_interpolationTable[i] = new float[kTableSize + 1];
         internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
         setInterpolationParameterInternal(static_cast<InterpolationType>(i), x1, x2, y1, y2);
     }

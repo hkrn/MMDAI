@@ -172,17 +172,17 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 4; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;
     for (int i = 0; i < 4; i++) {
-        if (m_linear[i]) {
-            m_interpolationTable[i] = 0;
-            setInterpolationParameterInternal(static_cast<InterpolationType>(i), 0.0f, 0.0f, 0.0f, 0.0f);
-            continue;
-        }
-        delete[] m_interpolationTable[i];
-        m_interpolationTable[i] = new float[kTableSize + 1];
         float x1 = table[i]      / 127.0f;
         float y1 = table[i +  4] / 127.0f;
         float x2 = table[i +  8] / 127.0f;
         float y2 = table[i + 12] / 127.0f;
+        if (m_linear[i]) {
+            m_interpolationTable[i] = 0;
+            setInterpolationParameterInternal(static_cast<InterpolationType>(i), x1, x2, y1, y2);
+            continue;
+        }
+        delete[] m_interpolationTable[i];
+        m_interpolationTable[i] = new float[kTableSize + 1];
         internal::buildInterpolationTable(x1, x2, y1, y2, kTableSize, m_interpolationTable[i]);
         setInterpolationParameterInternal(static_cast<InterpolationType>(i), x1, x2, y1, y2);
     }
