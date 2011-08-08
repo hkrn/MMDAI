@@ -123,6 +123,9 @@ void CameraKeyFrame::read(const uint8_t *data)
     m_position.setValue(pos[0], pos[1], pos[2]);
     m_angle.setValue(degree(angle[0]), degree(angle[1]), degree(angle[2]));
 #endif
+    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
+                        sizeof(chunk.interpolationTable));
     setInterpolationTable(chunk.interpolationTable);
 }
 
@@ -147,7 +150,7 @@ void CameraKeyFrame::write(uint8_t *data)
     chunk.position[2] = m_position.z();
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
-                        reinterpret_cast<uint8_t *>(m_interpolationTable),
+                        reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
@@ -155,10 +158,10 @@ void CameraKeyFrame::write(uint8_t *data)
 void CameraKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2)
 {
     btQuadWord *w = getInterpolationParameterInternal(type);
-    x1 = static_cast<int8_t>(w->x());
-    x2 = static_cast<int8_t>(w->y());
-    y1 = static_cast<int8_t>(w->z());
-    y2 = static_cast<int8_t>(w->w());
+    x1 = static_cast<int8_t>(w->x() * 127);
+    x2 = static_cast<int8_t>(w->y() * 127);
+    y1 = static_cast<int8_t>(w->z() * 127);
+    y2 = static_cast<int8_t>(w->w() * 127);
 }
 
 void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
@@ -178,6 +181,8 @@ void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1
         table[i * 6 + 4] = m_parameter->distance[i];
         table[i * 6 + 5] = m_parameter->fovy[i];
     }
+    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(table), sizeof(table));
     setInterpolationTable(table);
 }
 
@@ -187,6 +192,7 @@ void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 6; i++) {
         if (m_linear[i]) {
             m_interpolationTable[i] = 0;
+            setInterpolationParameterInternal(static_cast<InterpolationType>(i), 0.0f, 0.0f, 0.0f, 0.0f);
             continue;
         }
         delete[] m_interpolationTable[i];
@@ -200,7 +206,7 @@ void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
     }
 }
 
-void CameraKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
+void CameraKeyFrame::setInterpolationParameterInternal(InterpolationType type, float x1, float x2, float y1, float y2)
 {
     btQuadWord *w = getInterpolationParameterInternal(type);
     w->setX(x1);

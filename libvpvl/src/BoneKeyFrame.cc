@@ -109,6 +109,9 @@ void BoneKeyFrame::read(const uint8_t *data)
     m_position.setValue(pos[0], pos[1], pos[2]);
     m_rotation.setValue(rot[0], rot[1], rot[2], rot[3]);
 #endif
+    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
+                        sizeof(chunk.interpolationTable));
     setInterpolationTable(chunk.interpolationTable);
 }
 
@@ -131,7 +134,7 @@ void BoneKeyFrame::write(uint8_t *data)
     chunk.position[2] = m_position.z();
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
-                        reinterpret_cast<uint8_t *>(m_interpolationTable),
+                        reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
@@ -139,10 +142,10 @@ void BoneKeyFrame::write(uint8_t *data)
 void BoneKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2)
 {
     btQuadWord *w = getInterpolationParameterInternal(type);
-    x1 = static_cast<int8_t>(w->x());
-    y1 = static_cast<int8_t>(w->y());
-    x2 = static_cast<int8_t>(w->z());
-    y2 = static_cast<int8_t>(w->w());
+    x1 = static_cast<int8_t>(w->x() * 127);
+    y1 = static_cast<int8_t>(w->y() * 127);
+    x2 = static_cast<int8_t>(w->z() * 127);
+    y2 = static_cast<int8_t>(w->w() * 127);
 }
 
 void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
@@ -160,6 +163,8 @@ void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, 
         table[i * 4 + i] = m_parameter->z[i];
         table[i * 4 + i] = m_parameter->rotation[i];
     }
+    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(table), sizeof(table));
     setInterpolationTable(table);
 }
 
@@ -169,6 +174,7 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
     for (int i = 0; i < 4; i++) {
         if (m_linear[i]) {
             m_interpolationTable[i] = 0;
+            setInterpolationParameterInternal(static_cast<InterpolationType>(i), 0.0f, 0.0f, 0.0f, 0.0f);
             continue;
         }
         delete[] m_interpolationTable[i];
@@ -182,7 +188,7 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
     }
 }
 
-void BoneKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
+void BoneKeyFrame::setInterpolationParameterInternal(InterpolationType type, float x1, float x2, float y1, float y2)
 {
     btQuadWord *w = getInterpolationParameterInternal(type);
     w->setX(x1);

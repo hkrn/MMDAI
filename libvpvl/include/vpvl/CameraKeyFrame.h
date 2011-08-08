@@ -113,7 +113,7 @@ public:
 
 private:
     void setInterpolationTable(const int8_t *table);
-    void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
+    void setInterpolationParameterInternal(InterpolationType type, float x1, float x2, float y1, float y2);
     btQuadWord *getInterpolationParameterInternal(InterpolationType type);
 
     float m_frameIndex;
@@ -124,6 +124,7 @@ private:
     bool m_noPerspective;
     bool m_linear[6];
     float *m_interpolationTable[6];
+    int8_t m_rawInterpolationTable[kTableSize];
     InterpolationParameter *m_parameter;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(CameraKeyFrame)
