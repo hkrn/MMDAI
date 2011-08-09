@@ -41,6 +41,7 @@
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
+#include <vpvl/gl/Renderer.h>
 #include "util.h"
 
 namespace internal
@@ -350,6 +351,23 @@ void SceneWidget::setCurrentFPS(int value)
     }
 }
 
+vpvl::PMDModel *SceneWidget::selectedModel() const
+{
+    return m_renderer->selectedModel();
+}
+
+vpvl::VMDMotion *SceneWidget::selectedMotion() const
+{
+    vpvl::PMDModel *model = selectedModel();
+    return model ? m_motions.value(model) : 0;
+}
+
+void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
+{
+    m_renderer->setSelectedModel(value);
+    emit modelDidSelect(value);
+}
+
 void SceneWidget::addModel()
 {
     stopSceneUpdateTimer();
@@ -357,9 +375,7 @@ void SceneWidget::addModel()
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
         vpvl::PMDModel *model = addModelInternal(fi.fileName(), fi.dir());
-        if (model)
-            setSelectedModel(model);
-        else
+        if (!model)
             QMessageBox::warning(this, tr("Loading model error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
         delete progress;
@@ -563,24 +579,21 @@ void SceneWidget::dropEvent(QDropEvent *event)
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
         const QList<QUrl> urls = mimeData->urls();
-        const Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
         stopSceneUpdateTimer();
+        vpvl::PMDModel *model = m_renderer->selectedModel();
         foreach (const QUrl url, urls) {
             QString path = url.toLocalFile();
             if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
-                if (modifiers & Qt::ControlModifier) {
-                    QFileInfo modelPath(path);
-                    addModelInternal(modelPath.baseName(), modelPath.dir());
-                }
+                QFileInfo modelPath(path);
+                addModelInternal(modelPath.baseName(), modelPath.dir());
             }
-            else if (path.endsWith(".x", Qt::CaseInsensitive)) {
-                QFileInfo stagePath(path);
-                addAssetInternal(stagePath.baseName(), stagePath.dir());
+            else if (path.endsWith(".vmd") && model) {
+                addMotionInternal(model, path);
             }
             qDebug() << "Proceeded a dropped file:" << path;
         }
-        startSceneUpdateTimer();
     }
+    startSceneUpdateTimer();
 }
 
 void SceneWidget::initializeGL()
@@ -721,11 +734,16 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
                     i++;
                 }
             }
+            vpvl::VMDMotion *motion = new vpvl::VMDMotion();
+            model->addMotion(motion);
             m_models[key] = model;
-            m_motions.insert(model, new vpvl::VMDMotion());
+            m_motions.insert(model, motion);
             // force to render an added model
             m_renderer->scene()->seek(0.0f);
+            setSelectedModel(model);
             emit modelDidAdd(model);
+            emit modelDidSelect(model);
+            emit motionDidAdd(motion, model);
         }
         else {
             delete model;
@@ -768,7 +786,7 @@ vpvl::VPDPose *SceneWidget::setModelPoseInternal(vpvl::PMDModel *model, const QS
         QByteArray data = file.readAll();
         pose = new vpvl::VPDPose();
         if (pose->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            pose->makePose(model);
+            // pose->makePose(model);
             emit modelDidMakePose(pose, model);
         }
         else {

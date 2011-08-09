@@ -45,9 +45,11 @@
 
 #include <LinearMath/btVector3.h>
 #include <vpvl/Bone.h>
-#include <vpvl/gl/Renderer.h>
 
 namespace vpvl {
+namespace gl {
+class Renderer;
+}
 class PMDModel;
 class Scene;
 class VMDMotion;
@@ -73,16 +75,12 @@ public:
 
     void setCurrentFPS(int value);
     void setSettings(QSettings *value) { m_settings = value; }
+    vpvl::PMDModel *selectedModel() const;
+    vpvl::VMDMotion *selectedMotion() const;
+    void setSelectedModel(vpvl::PMDModel *value);
 
     const QHash<QString, vpvl::PMDModel *> &models() const {
         return m_models;
-    }
-    vpvl::PMDModel *selectedModel() const {
-        return m_renderer->selectedModel();
-    }
-    void setSelectedModel(vpvl::PMDModel *value) {
-        m_renderer->setSelectedModel(value);
-        emit modelDidSelect(value);
     }
 
     static const QString toUnicodeModelName(const vpvl::PMDModel *model);
