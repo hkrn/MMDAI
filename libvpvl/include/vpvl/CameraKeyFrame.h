@@ -52,12 +52,13 @@ class VPVL_EXPORT CameraKeyFrame
 public:
     enum InterpolationType
     {
-        kX,
+        kX = 0,
         kY,
         kZ,
         kRotation,
         kDistance,
-        kFovy
+        kFovy,
+        kMax
     };
     typedef struct InterpolationParameter InterpolationParameter;
 
@@ -70,7 +71,7 @@ public:
 
     void read(const uint8_t *data);
     void write(uint8_t *data);
-    void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2);
+    void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
     void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
     float frameIndex() const {
@@ -113,8 +114,8 @@ public:
 
 private:
     void setInterpolationTable(const int8_t *table);
-    void setInterpolationParameterInternal(InterpolationType type, float x1, float x2, float y1, float y2);
-    btQuadWord *getInterpolationParameterInternal(InterpolationType type);
+    void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
+    btQuadWord *getInterpolationParameterInternal(InterpolationType type) const;
 
     float m_frameIndex;
     float m_distance;

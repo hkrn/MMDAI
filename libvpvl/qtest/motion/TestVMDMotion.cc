@@ -20,6 +20,8 @@ private Q_SLOTS:
     void parseCameraKeyFrame();
     void parseFaceKeyFrame();
     void saveMotion();
+    void boneInterpolation();
+    void cameraInterpolation();
 };
 
 const char *TestVMDMotion::kTestString = "01234567890123";
@@ -175,6 +177,88 @@ void TestVMDMotion::parseFaceKeyFrame()
     QCOMPARE(QString(reinterpret_cast<const char *>(frame.name())), QString(kTestString));
     QCOMPARE(frame.frameIndex(), 1.0f);
     QCOMPARE(frame.weight(), 0.5f);
+}
+
+void TestVMDMotion::boneInterpolation()
+{
+    vpvl::BoneKeyFrame frame;
+    int8_t x1, x2, y1, y2;
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kX, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(0));
+    QCOMPARE(x2, int8_t(0));
+    QCOMPARE(y1, int8_t(0));
+    QCOMPARE(y2, int8_t(0));
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kX, 1, 2, 3, 4);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kY, 5, 6, 7, 8);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kZ, 9, 10, 11, 12);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kRotation, 13, 14, 15, 16);
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kX, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(1));
+    QCOMPARE(x2, int8_t(2));
+    QCOMPARE(y1, int8_t(3));
+    QCOMPARE(y2, int8_t(4));
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kY, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(5));
+    QCOMPARE(x2, int8_t(6));
+    QCOMPARE(y1, int8_t(7));
+    QCOMPARE(y2, int8_t(8));
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kZ, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(9));
+    QCOMPARE(x2, int8_t(10));
+    QCOMPARE(y1, int8_t(11));
+    QCOMPARE(y2, int8_t(12));
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(13));
+    QCOMPARE(x2, int8_t(14));
+    QCOMPARE(y1, int8_t(15));
+    QCOMPARE(y2, int8_t(16));
+}
+
+void TestVMDMotion::cameraInterpolation()
+{
+    vpvl::CameraKeyFrame frame;
+    int8_t x1, x2, y1, y2;
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(0));
+    QCOMPARE(x2, int8_t(0));
+    QCOMPARE(y1, int8_t(0));
+    QCOMPARE(y2, int8_t(0));
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kX, 1, 2, 3, 4);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kY, 5, 6, 7, 8);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kZ, 9, 10, 11, 12);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kRotation, 13, 14, 15, 16);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kDistance, 17, 18, 19, 20);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kFovy, 21, 22, 23, 24);
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(1));
+    QCOMPARE(x2, int8_t(2));
+    QCOMPARE(y1, int8_t(3));
+    QCOMPARE(y2, int8_t(4));
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kY, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(5));
+    QCOMPARE(x2, int8_t(6));
+    QCOMPARE(y1, int8_t(7));
+    QCOMPARE(y2, int8_t(8));
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kZ, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(9));
+    QCOMPARE(x2, int8_t(10));
+    QCOMPARE(y1, int8_t(11));
+    QCOMPARE(y2, int8_t(12));
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kRotation, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(13));
+    QCOMPARE(x2, int8_t(14));
+    QCOMPARE(y1, int8_t(15));
+    QCOMPARE(y2, int8_t(16));
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kDistance, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(17));
+    QCOMPARE(x2, int8_t(18));
+    QCOMPARE(y1, int8_t(19));
+    QCOMPARE(y2, int8_t(20));
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kFovy, x1, x2, y1, y2);
+    QCOMPARE(x1, int8_t(21));
+    QCOMPARE(x2, int8_t(22));
+    QCOMPARE(y1, int8_t(23));
+    QCOMPARE(y2, int8_t(24));
 }
 
 QTEST_APPLESS_MAIN(TestVMDMotion)
