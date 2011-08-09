@@ -731,8 +731,11 @@ void PMDModel::parseBones(const DataInfo &info)
     for (uint32_t i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
         bone->read(ptr, i);
-        if (englishPtr)
-            bone->setEnglishName(englishPtr + Bone::kNameSize * i);
+        if (englishPtr) {
+            const uint8_t *englishNamePtr = englishPtr + Bone::kNameSize * i;
+            bone->setEnglishName(englishNamePtr);
+            m_name2bone.insert(btHashString(reinterpret_cast<const char *>(bone->englishName())), bone);
+        }
         ptr += Bone::stride();
         m_name2bone.insert(btHashString(reinterpret_cast<const char *>(bone->name())), bone);
         m_bones.push_back(bone);
@@ -774,8 +777,11 @@ void PMDModel::parseFaces(const DataInfo &info)
         face->read(ptr);
         if (face->type() == Face::kBase)
             m_baseFace = baseFace = face;
-        else if (englishPtr)
-            face->setEnglishName(englishPtr + Face::kNameSize * (i - 1));
+        else if (englishPtr) {
+            const uint8_t *englishNamePtr = englishPtr + Face::kNameSize * i;
+            face->setEnglishName(englishNamePtr);
+            m_name2face.insert(btHashString(reinterpret_cast<const char *>(face->englishName())), face);
+        }
         ptr += Face::stride(ptr);
         m_name2face.insert(btHashString(reinterpret_cast<const char *>(face->name())), face);
         m_faces.push_back(face);
