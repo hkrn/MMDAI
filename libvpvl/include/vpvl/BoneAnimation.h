@@ -79,14 +79,14 @@ public:
     const BoneKeyFrameList &frames() const {
         return m_frames;
     }
+    BoneKeyFrameList *mutableFrames() {
+        return &m_frames;
+    }
     bool hasCenterBoneAnimation() const {
         return m_hasCenterBoneAnimation;
     }
     PMDModel *attachedModel() const {
         return m_model;
-    }
-    void setFrames(const BoneKeyFrameList &value) {
-        m_frames = value;
     }
 
 private:

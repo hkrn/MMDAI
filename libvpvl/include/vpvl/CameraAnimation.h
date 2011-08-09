@@ -72,6 +72,9 @@ public:
     const CameraKeyFrameList &frames() const {
         return m_frames;
     }
+    CameraKeyFrameList *mutableFrames() {
+        return &m_frames;
+    }
     const btVector3 &position() const {
         return m_position;
     }
@@ -83,9 +86,6 @@ public:
     }
     float fovy() const {
         return m_fovy;
-    }
-    void setFrames(const CameraKeyFrameList &value) {
-        m_frames = value;
     }
 
 private:

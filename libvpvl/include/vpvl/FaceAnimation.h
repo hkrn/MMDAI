@@ -79,11 +79,11 @@ public:
     const FaceKeyFrameList &frames() const {
         return m_frames;
     }
+    FaceKeyFrameList *mutableFrames() {
+        return &m_frames;
+    }
     PMDModel *attachedModel() const {
         return m_model;
-    }
-    void setFrames(const FaceKeyFrameList &value) {
-        m_frames = value;
     }
 
 private:
