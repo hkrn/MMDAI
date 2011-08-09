@@ -87,12 +87,12 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_comboBox);
     QHBoxLayout *x = new QHBoxLayout();
-    createSpinBox(x, "x1", 0, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int)));
-    createSpinBox(x, "x2", 127, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int)));
+    createSpinBox(x, "x1", 20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int)));
+    createSpinBox(x, "x2", 107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int)));
     layout->addLayout(x);
     QHBoxLayout *y = new QHBoxLayout();
-    createSpinBox(y, "y1", 0, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int)));
-    createSpinBox(y, "y2", 127, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int)));
+    createSpinBox(y, "y1", 20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int)));
+    createSpinBox(y, "y2", 107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int)));
     layout->addLayout(y);
     layout->addWidget(m_graphWidget, Qt::AlignVCenter);
     setLayout(layout);
