@@ -73,16 +73,59 @@ public:
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
+
+    /**
+     * Attach this to the model.
+     *
+     * After calling this method, internal states to animate are built.
+     * If you modified frames of this animation, you should call
+     * refresh method to rebuild internal states.
+     *
+     * This method has no effect if you have already called it.
+     *
+     * @param A model to attach the motion
+     * @see refresh
+     */
     void attachModel(PMDModel *model);
+
+    /**
+     * Rebuild internal states to animate.
+     *
+     * This method has no effect if you haven't call attachModel.
+     *
+     * @see attachModel
+     */
     void refresh();
+
+    /**
+     * Reset the last frame index of all frames.
+     *
+     */
     void reset();
 
+    /**
+     * Get immutable face frames of this animation.
+     *
+     * @return immutable face frames
+     */
     const FaceKeyFrameList &frames() const {
         return m_frames;
     }
+
+    /**
+     * Get mutable face frames of this animation.
+     *
+     * @return mutable face frames
+     */
     FaceKeyFrameList *mutableFrames() {
         return &m_frames;
     }
+
+    /**
+     * Get an attached model of this animation.
+     *
+     * @return An attached model
+     */
     PMDModel *attachedModel() const {
         return m_model;
     }

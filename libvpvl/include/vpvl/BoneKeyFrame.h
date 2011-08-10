@@ -69,42 +69,145 @@ public:
     static const int kNameSize = 15;
     static const int kTableSize = 64;
 
+    /**
+     * Stride length of a bone keyframe structure.
+     *
+     * @return Stride length
+     */
     static size_t stride();
 
+    /**
+     * Set the default value of interpolation parameter.
+     */
     void setDefaultInterpolationParameter();
+
+    /**
+     * Read and parse the buffer and sets it's result to the class.
+     *
+     * This method is called by BoneAnimation class.
+     *
+     * @param The buffer to read and parse
+     */
     void read(const uint8_t *data);
+
+    /**
+     * Write the current value to the buffer.
+     *
+     * You should allocate the buffer size with stride.
+     *
+     * @param The buffer to write
+     * @see stride
+     */
     void write(uint8_t *data);
+
+    /**
+     * Get interpolation values with the type.
+     *
+     * @param An interpolation type
+     * @param A value of X1
+     * @param A value of X2
+     * @param A value of Y1
+     * @param A value of Y2
+     */
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
+
+    /**
+     * Set interpolation values with the type.
+     *
+     * @param An interpolation type
+     * @param A value of X1
+     * @param A value of X2
+     * @param A value of Y1
+     * @param A value of Y2
+     */
     void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
+    /**
+     * Get the target bone name of this keyframe.
+     *
+     * @return the bone name
+     */
     const uint8_t *name() const {
         return m_name;
     }
+
+    /**
+     * Get the frame index of this keyframe.
+     *
+     * @return A value of frame index
+     */
     float frameIndex() const {
         return m_frameIndex;
     }
+
+    /**
+     * Get the position to the target bone of this keyframe.
+     *
+     * @return A value of position value
+     */
     const btVector3 &position() const {
         return m_position;
     }
+
+    /**
+     * Get the rotation to the target bone of this keyframe.
+     *
+     * @return A value of rotation value
+     */
     const btQuaternion &rotation() const {
         return m_rotation;
     }
+
+    /**
+     * Get this keyframe is linear.
+     *
+     * @return True if this keyframe is linear
+     */
     const bool *linear() const {
         return m_linear;
     }
+
+    /**
+     * Get the interpolation values of this keyframes.
+     *
+     * @return An array of interpolation values
+     */
     const float *const *interpolationTable() const {
         return m_interpolationTable;
     }
 
+    /**
+     * Set the target bone name of this keyframe.
+     *
+     * @param the bone name
+     */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
+
+    /**
+     * Set the frame index of this keyframe.
+     *
+     * @param A value of frame index
+     */
     void setFrameIndex(float value) {
         m_frameIndex = value;
     }
+
+    /**
+     * Set the position to the target bone of this keyframe.
+     *
+     * @param A value of position value
+     */
     void setPosition(const btVector3 &value) {
         m_position = value;
     }
+
+    /**
+     * Set the rotation to the target bone of this keyframe.
+     *
+     * @param A value of rotation value
+     */
     void setRotation(const btQuaternion &value) {
         m_rotation = value;
     }

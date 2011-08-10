@@ -148,16 +148,18 @@ void BoneAnimation::takeSnap(const btVector3 &center)
 
 void BoneAnimation::attachModel(PMDModel *model)
 {
-    if (m_model)
-        return;
-    buildInternalNodes(model);
-    m_model = model;
+    if (!m_model) {
+        buildInternalNodes(model);
+        m_model = model;
+    }
 }
 
 void BoneAnimation::refresh()
 {
-    internal::clearHash(m_name2node);
-    buildInternalNodes(m_model);
+    if (m_model) {
+        internal::clearHash(m_name2node);
+        buildInternalNodes(m_model);
+    }
 }
 
 void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)

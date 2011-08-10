@@ -86,7 +86,7 @@ public:
     virtual void seek(float frameAt) = 0;
 
     /**
-     * Save the current Animation state.
+     * Save the current animation state.
      *
      * @param A position of center
      */
@@ -94,6 +94,9 @@ public:
 
     /**
      * Seek from the previous to the next frame with delta.
+     *
+     * If the seeked frame is reached to the max frame of this animation,
+     * reached argument set to true.
      *
      * @param A delta frame index to seek the next frame
      * @param A value whether the Animation is reached to the end.

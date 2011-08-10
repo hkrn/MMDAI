@@ -103,7 +103,11 @@ public:
     /**
      * Get the center bone from a bone list that is not empty.
      *
+     * This method search a bone named of centerBoneName() first.
+     * If there is no bone found, returns the first bone.
+     *
      * @return The center bone
+     * @see centerBoneName
      */
     static Bone *centerBone(const BoneList *bones);
 
@@ -117,13 +121,22 @@ public:
     /**
      * Read and parse the buffer with size and sets it's result to the class.
      *
+     * This method just set ID and value from buffer. You should call build method
+     * to get a bone object from ID.
+     *
      * @param The buffer to read and parse
      * @param Size of the buffer
+     * @see build
      */
     void read(const uint8_t *data, int16_t id);
 
     /**
      * Reset all bone states.
+     *
+     * This method resets below properties.
+     * - position
+     * - rotation
+     * - localTransform
      */
     void reset();
 
@@ -137,66 +150,70 @@ public:
 
     /**
      * Update rotation from the bone.
+     *
+     * This method affects only the bone of kUnderRotate or kFollowRotate.
      */
     void updateRotation();
 
     /**
-     * Update transform from the bone.
+     * Update local transform from the bone.
+     *
+     * This method same as calling updateTransform with current rotation property.
      */
     void updateTransform();
 
     /**
-     * Update rotation from the bone.
+     * Update local transform from the bone with the quaternion.
      *
      * @param The quaternion value to rotate
      */
     void updateTransform(const btQuaternion &q);
 
     /**
-     * Get transform for skinning
+     * Get transform value for skinning
      *
      * @param The result value of transform
      */
     void getSkinTransform(btTransform &tr);
 
     /**
-     * Get the name of bone.
+     * Get the name of this bone.
      *
-     * @return the name of bone
+     * @return the name of this bone
      */
     const uint8_t *name() const {
         return m_name;
     }
 
     /**
-     * Get the name of bone in English.
+     * Get the name of this bone in English.
      *
-     * @return the name of bone in English.
+     * @return the name of this bone in English.
      */
     const uint8_t *englishName() const {
         return m_englishName;
     }
 
     /**
-     * Get an index of the category of the bone.
+     * Get an index of the category of this bone.
      *
-     * @return an index of the category of the bone
+     * @return an index of the category of this bone
      */
     uint8_t categoryIndex() const {
         return m_categoryIndex;
     }
 
     /**
-     * Get the kind of bone.
+     * Get the kind of this bone.
      *
-     * @return the kind of bone
+     * @return the kind of this bone
      */
     Type type() const {
         return m_type;
     }
 
     /**
-     * Get the bone ID of this.
+     * Get the ID of this bone.
      *
      * @return bone ID
      */
@@ -205,7 +222,7 @@ public:
     }
 
     /**
-     * Get the parent bone of this.
+     * Get the parent bone of this bone.
      *
      * @return parent bone
      */
@@ -214,7 +231,7 @@ public:
     }
 
     /**
-     * Get the child bone of this.
+     * Get the child bone of this bone.
      *
      * @return child bone
      */
@@ -223,7 +240,7 @@ public:
     }
 
     /**
-     * Get the target bone of this.
+     * Get the target bone of this bone.
      *
      * @return target bone
      */
@@ -241,36 +258,36 @@ public:
     }
 
     /**
-     * Get offset of the bone.
+     * Get offset of this bone.
      *
-     * @return offset of the bone
+     * @return offset of this bone
      */
     const btVector3 &offset() const {
         return m_offset;
     }
 
     /**
-     * Get original position of the bone.
+     * Get original position of this bone.
      *
-     * @return original position of the bone
+     * @return original position of this bone
      */
     const btVector3 &originPosition() const {
         return m_originPosition;
     }
 
     /**
-     * Get position of the bone.
+     * Get position of this bone.
      *
-     * @return position of the bone
+     * @return position of this bone
      */
     const btVector3 &position() const {
         return m_position;
     }
 
     /**
-     * Get rotation of the bone.
+     * Get rotation of this bone.
      *
-     * @return rotation of the bone
+     * @return rotation of this bone
      */
     const btQuaternion &rotation() const {
         return m_rotation;
@@ -279,61 +296,61 @@ public:
     /**
      * Get the bone is constrainted only X coordinate.
      *
-     * @return true if the bone is constrainted
+     * @return true if this bone is constrainted
      */
     bool isConstraintedXCoordinateForIK() const {
         return m_constraintedXCoordinateForIK;
     }
 
     /**
-     * Get the bone is simulated.
+     * Get this bone is simulated.
      *
-     * @return true if the bone is simulated
+     * @return true if this bone is simulated
      */
     bool isSimulated() const {
         return m_simulated;
     }
 
     /**
-     * Get the bone is independent.
+     * Get this bone is independent.
      *
-     * @return true if the bone is independent
+     * @return true if this bone is independent
      */
     bool hasMotionIndependency() const {
         return m_motionIndepent;
     }
 
     /**
-     * Get the bone has parent.
+     * Get this bone has parent.
      *
-     * @return true if the bone has parent
+     * @return true if this bone has parent
      */
     bool hasParent() const {
         return m_hasParent;
     }
 
     /**
-     * Set the name of the bone.
+     * Set this name of the bone.
      *
-     * @param the name of the bone
+     * @param this name of the bone
      */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
 
     /**
-     * Set the name of the bone in English.
+     * Set this name of this bone in English.
      *
-     * @param the name of the bone in English
+     * @param this name of this bone in English
      */
     void setEnglishName(const uint8_t *value) {
         copyBytesSafe(m_englishName, value, sizeof(m_englishName));
     }
 
     /**
-     * Set an index of the category of the bone.
+     * Set an index of the category of this bone.
      *
-     * @param an index of the category of the bone
+     * @param an index of the category of this bone
      */
     void setCategoryIndex(uint8_t value) {
         m_categoryIndex = value;
@@ -349,45 +366,45 @@ public:
     }
 
     /**
-     * Set offset of the bone.
+     * Set offset of this bone.
      *
-     * @param offset of the bone
+     * @param offset of this bone
      */
     void setOffset(const btVector3 &value) {
         m_offset = value;
     }
 
     /**
-     * Set position of the bone.
+     * Set position of this bone.
      *
-     * @param position of the bone
+     * @param position of this bone
      */
     void setPosition(const btVector3 &value) {
         m_position = value;
     }
 
     /**
-     * Set rotation of the bone.
+     * Set rotation of this bone.
      *
-     * @param rotation of the bone
+     * @param rotation of this bone
      */
     void setRotation(const btQuaternion &value) {
         m_rotation = value;
     }
 
     /**
-     * Set the bone is simulated.
+     * Set this bone is simulated.
      *
-     * @param wheter the bone is simulated
+     * @param whether this bone is simulated
      */
     void setSimulated(bool value) {
         m_simulated = value;
     }
 
     /**
-     * Get whether bone is movable
+     * Get whether this bone is movable
      *
-     * @return true if bone is movable
+     * @return true if this bone is movable
      */
     bool isMovable() const {
         switch (m_type) {
@@ -401,18 +418,18 @@ public:
     }
 
     /**
-     * Get whether bone is rotateable
+     * Get whether this bone is rotateable
      *
-     * @return true if bone is rotateable
+     * @return true if this bone is rotateable
      */
     bool isRotateable() const {
         return isVisible();
     }
 
     /**
-     * Get whether bone is visible
+     * Get whether this bone is visible
      *
-     * @return true if bone is visible
+     * @return true if this bone is visible
      */
     bool isVisible() const {
         switch (m_type) {
