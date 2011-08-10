@@ -61,7 +61,13 @@ public:
         kRotation,
         kMax
     };
-    typedef struct InterpolationParameter InterpolationParameter;
+    struct InterpolationParameter
+    {
+        btQuadWord x;
+        btQuadWord y;
+        btQuadWord z;
+        btQuadWord rotation;
+    };
 
     BoneKeyFrame();
     ~BoneKeyFrame();
@@ -215,7 +221,7 @@ public:
 private:
     void setInterpolationTable(const int8_t *table);
     void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
-    btQuadWord *getInterpolationParameterInternal(InterpolationType type) const;
+    btQuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     uint8_t m_name[kNameSize];
     float m_frameIndex;
@@ -224,7 +230,7 @@ private:
     bool m_linear[4];
     float *m_interpolationTable[4];
     int8_t m_rawInterpolationTable[kTableSize];
-    InterpolationParameter *m_parameter;
+    InterpolationParameter m_parameter;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BoneKeyFrame)
 };

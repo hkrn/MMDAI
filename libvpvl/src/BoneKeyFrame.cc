@@ -55,14 +55,6 @@ struct BoneKeyFrameChunk
 
 #pragma pack(pop)
 
-struct InterpolationParameter
-{
-    btQuadWord x;
-    btQuadWord y;
-    btQuadWord z;
-    btQuadWord rotation;
-};
-
 static void getValueFromTable(const int8_t *table, int i, int8_t &x1, int8_t &y1, int8_t &x2, int8_t &y2)
 {
     static const int8_t zero = 0;
@@ -75,15 +67,13 @@ static void getValueFromTable(const int8_t *table, int i, int8_t &x1, int8_t &y1
 BoneKeyFrame::BoneKeyFrame()
     : m_frameIndex(0),
       m_position(0.0f, 0.0f, 0.0f),
-      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
-      m_parameter(0)
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f)
 {
     internal::zerofill(m_name, sizeof(m_name));
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
-    m_parameter = new InterpolationParameter();
-    internal::zerofill(m_parameter, sizeof(*m_parameter));
+    internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
 BoneKeyFrame::~BoneKeyFrame()
@@ -92,12 +82,11 @@ BoneKeyFrame::~BoneKeyFrame()
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     for (int i = 0; i < kMax; i++)
         delete[] m_interpolationTable[i];
-    delete m_parameter;
-    m_parameter = 0;
     internal::zerofill(m_name, sizeof(m_name));
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
+    internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
 size_t BoneKeyFrame::stride()
@@ -164,11 +153,11 @@ void BoneKeyFrame::write(uint8_t *data)
 
 void BoneKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const
 {
-    btQuadWord *w = getInterpolationParameterInternal(type);
-    x1 = static_cast<int8_t>(w->x());
-    y1 = static_cast<int8_t>(w->y());
-    x2 = static_cast<int8_t>(w->z());
-    y2 = static_cast<int8_t>(w->w());
+    btQuadWord &w = getInterpolationParameterInternal(type);
+    x1 = static_cast<int8_t>(w.x());
+    y1 = static_cast<int8_t>(w.y());
+    x2 = static_cast<int8_t>(w.z());
+    y2 = static_cast<int8_t>(w.w());
 }
 
 void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
@@ -181,10 +170,10 @@ void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, 
         // y1 => btQuadWord#y():1
         // x2 => btQuadWord#z():2
         // y2 => btQuadWord#w():3
-        table[i * kMax + kX] = m_parameter->x[i];
-        table[i * kMax + kY] = m_parameter->y[i];
-        table[i * kMax + kZ] = m_parameter->z[i];
-        table[i * kMax + kRotation] = m_parameter->rotation[i];
+        table[i * kMax + kX] = m_parameter.x[i];
+        table[i * kMax + kY] = m_parameter.y[i];
+        table[i * kMax + kZ] = m_parameter.z[i];
+        table[i * kMax + kRotation] = m_parameter.rotation[i];
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
@@ -210,24 +199,24 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
 
 void BoneKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
 {
-    btQuadWord *w = getInterpolationParameterInternal(type);
-    w->setX(x1);
-    w->setY(y1);
-    w->setZ(x2);
-    w->setW(y2);
+    btQuadWord &w = getInterpolationParameterInternal(type);
+    w.setX(x1);
+    w.setY(y1);
+    w.setZ(x2);
+    w.setW(y2);
 }
 
-btQuadWord *BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
+btQuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
 {
     switch (type) {
     case kX:
-        return &m_parameter->x;
+        return const_cast<btQuadWord &>(m_parameter.x);
     case kY:
-        return &m_parameter->y;
+        return const_cast<btQuadWord &>(m_parameter.y);
     case kZ:
-        return &m_parameter->z;
+        return const_cast<btQuadWord &>(m_parameter.z);
     case kRotation:
-        return &m_parameter->rotation;
+        return const_cast<btQuadWord &>(m_parameter.rotation);
     default:
         assert(0);
     }

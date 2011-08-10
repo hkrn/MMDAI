@@ -57,16 +57,6 @@ struct CameraKeyFrameChunk
 
 #pragma pack(pop)
 
-struct InterpolationParameter
-{
-    btQuadWord x;
-    btQuadWord y;
-    btQuadWord z;
-    btQuadWord rotation;
-    btQuadWord distance;
-    btQuadWord fovy;
-};
-
 static void getValueFromTable(const int8_t *table, int i, int8_t &x1, int8_t &y1, int8_t &x2, int8_t &y2)
 {
     static const int8_t zero = 0;
@@ -82,14 +72,12 @@ CameraKeyFrame::CameraKeyFrame()
       m_fovy(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
-      m_noPerspective(false),
-      m_parameter(0)
+      m_noPerspective(false)
 {
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
-    m_parameter = new InterpolationParameter();
-    internal::zerofill(m_parameter, sizeof(*m_parameter));
+    internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
 CameraKeyFrame::~CameraKeyFrame()
@@ -102,11 +90,10 @@ CameraKeyFrame::~CameraKeyFrame()
     m_noPerspective = false;
     for (int i = 0; i < kMax; i++)
         delete[] m_interpolationTable[i];
-    delete m_parameter;
-    m_parameter = 0;
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
+    internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
 size_t CameraKeyFrame::stride()
@@ -178,11 +165,11 @@ void CameraKeyFrame::write(uint8_t *data)
 
 void CameraKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const
 {
-    btQuadWord *w = getInterpolationParameterInternal(type);
-    x1 = static_cast<int8_t>(w->x());
-    x2 = static_cast<int8_t>(w->y());
-    y1 = static_cast<int8_t>(w->z());
-    y2 = static_cast<int8_t>(w->w());
+    btQuadWord &w = getInterpolationParameterInternal(type);
+    x1 = static_cast<int8_t>(w.x());
+    x2 = static_cast<int8_t>(w.y());
+    y1 = static_cast<int8_t>(w.z());
+    y2 = static_cast<int8_t>(w.w());
 }
 
 void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
@@ -195,12 +182,12 @@ void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1
         // x2 => btQuadWord#y():1
         // y1 => btQuadWord#z():2
         // y2 => btQuadWord#w():3
-        table[i * kMax + kX] = m_parameter->x[i];
-        table[i * kMax + kY] = m_parameter->y[i];
-        table[i * kMax + kZ] = m_parameter->z[i];
-        table[i * kMax + kRotation] = m_parameter->rotation[i];
-        table[i * kMax + kDistance] = m_parameter->distance[i];
-        table[i * kMax + kFovy] = m_parameter->fovy[i];
+        table[i * kMax + kX] = m_parameter.x[i];
+        table[i * kMax + kY] = m_parameter.y[i];
+        table[i * kMax + kZ] = m_parameter.z[i];
+        table[i * kMax + kRotation] = m_parameter.rotation[i];
+        table[i * kMax + kDistance] = m_parameter.distance[i];
+        table[i * kMax + kFovy] = m_parameter.fovy[i];
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
@@ -226,28 +213,28 @@ void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
 
 void CameraKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
 {
-    btQuadWord *w = getInterpolationParameterInternal(type);
-    w->setX(x1);
-    w->setY(x2);
-    w->setZ(y1);
-    w->setW(y2);
+    btQuadWord &w = getInterpolationParameterInternal(type);
+    w.setX(x1);
+    w.setY(x2);
+    w.setZ(y1);
+    w.setW(y2);
 }
 
-btQuadWord *CameraKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
+btQuadWord &CameraKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
 {
     switch (type) {
     case kX:
-        return &m_parameter->x;
+        return const_cast<btQuadWord &>(m_parameter.x);
     case kY:
-        return &m_parameter->y;
+        return const_cast<btQuadWord &>(m_parameter.y);
     case kZ:
-        return &m_parameter->z;
+        return const_cast<btQuadWord &>(m_parameter.z);
     case kRotation:
-        return &m_parameter->rotation;
+        return const_cast<btQuadWord &>(m_parameter.rotation);
     case kDistance:
-        return &m_parameter->distance;
+        return const_cast<btQuadWord &>(m_parameter.distance);
     case kFovy:
-        return &m_parameter->fovy;
+        return const_cast<btQuadWord &>(m_parameter.fovy);
     default:
         assert(0);
     }
