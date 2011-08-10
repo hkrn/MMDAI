@@ -735,6 +735,7 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
                 }
             }
             vpvl::VMDMotion *motion = new vpvl::VMDMotion();
+            motion->setEnableSmooth(false);
             model->addMotion(motion);
             m_models[key] = model;
             m_motions.insert(model, motion);
@@ -761,6 +762,7 @@ vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QSt
         QByteArray data = file.readAll();
         motion = new vpvl::VMDMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+            motion->setEnableSmooth(false);
             model->addMotion(motion);
             if (m_motions.contains(model)) {
                 vpvl::VMDMotion *oldMotion = m_motions.value(model);
