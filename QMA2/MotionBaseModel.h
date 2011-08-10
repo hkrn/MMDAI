@@ -17,7 +17,6 @@ public:
     explicit MotionBaseModel(QObject *parent = 0);
     ~MotionBaseModel();
 
-    virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     void saveState();
     void restoreState();
@@ -33,6 +32,7 @@ public:
 
 public slots:
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
+    virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);
@@ -42,6 +42,7 @@ protected:
 
     vpvl::PMDModel *m_model;
     vpvl::PMDModel::State *m_state;
+    vpvl::VMDMotion *m_motion;
     QList<QString> m_keys;
     QHash< QPair<int, int>, QVariant > m_values;
 };

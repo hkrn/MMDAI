@@ -5,6 +5,7 @@
 MotionBaseModel::MotionBaseModel(QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),
+    m_motion(0),
     m_state(0)
 {
 }

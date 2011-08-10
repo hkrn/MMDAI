@@ -10,14 +10,13 @@ FaceMotionModel::FaceMotionModel(QObject *parent) :
 
 void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
-    vpvl::FaceKeyFrameList frames;
+    vpvl::FaceKeyFrameList *frames = motion->mutableFaceAnimation()->mutableFrames();
     foreach (QVariant value, m_values) {
-        vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+        vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
         QByteArray bytes = value.toByteArray();
-        frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        frames.push_back(frame);
+        newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        frames->push_back(newFrame);
     }
-    motion->mutableFaceAnimation()->setFrames(frames);
 }
 
 void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
@@ -26,12 +25,16 @@ void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
     int i = m_keys.indexOf(key);
     if (i != -1) {
         QModelIndex modelIndex = index(i, frameIndex);
+        vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
+        vpvl::FaceKeyFrameList *frames = animation->mutableFrames();
+        vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
+        newFrame->setName(face->name());
+        newFrame->setWeight(face->weight());
+        newFrame->setFrameIndex(frameIndex);
         QByteArray bytes(vpvl::FaceKeyFrame::stride(), '0');
-        vpvl::FaceKeyFrame frame;
-        frame.setName(face->name());
-        frame.setWeight(face->weight());
-        frame.setFrameIndex(frameIndex);
-        frame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+        newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+        frames->push_back(newFrame);
+        animation->refresh();
         setData(modelIndex, bytes, Qt::EditRole);
     }
     else {
@@ -69,16 +72,17 @@ bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             int i = m_keys.indexOf(key);
             if (i != -1) {
                 uint32_t frameIndex = frame->frameIndex();
-                QByteArray bytes(vpvl::FaceKeyFrame::stride(), '0');
                 QModelIndex modelIndex = index(i, frameIndex);
                 vpvl::FaceKeyFrame newFrame;
                 newFrame.setName(name);
                 newFrame.setWeight(frame->weight());
                 newFrame.setFrameIndex(frameIndex);
+                QByteArray bytes(vpvl::FaceKeyFrame::stride(), '0');
                 newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
                 setData(modelIndex, bytes, Qt::EditRole);
             }
         }
+        m_motion = motion;
         reset();
         return true;
     }
