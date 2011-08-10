@@ -112,15 +112,18 @@ void FaceAnimation::takeSnap(const btVector3 & /* center */)
 
 void FaceAnimation::attachModel(PMDModel *model)
 {
-    if (m_model)
-        return;
-    m_model = model;
+    if (!m_model) {
+        buildInternalNodes(model);
+        m_model = model;
+    }
 }
 
 void FaceAnimation::refresh()
 {
-    internal::clearHash(m_name2node);
-    buildInternalNodes(m_model);
+    if (m_model) {
+        internal::clearHash(m_name2node);
+        buildInternalNodes(m_model);
+    }
 }
 
 void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
