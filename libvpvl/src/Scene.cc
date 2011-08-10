@@ -89,7 +89,7 @@ Scene::Scene(int width, int height, int fps)
       m_fovy(m_currentFovy),
       m_viewMoveFovy(m_currentFovy),
       m_viewMoveTime(-1),
-      m_currentFPS(fps),
+      m_preferredFPS(fps),
       m_width(width),
       m_height(height)
 {
@@ -120,7 +120,7 @@ Scene::~Scene()
     m_fovy = 0.0f;
     m_viewMoveFovy = 0.0f;
     m_viewMoveTime = -1;
-    m_currentFPS = 0;
+    m_preferredFPS = 0;
     m_width = 0;
     m_height = 0;
 }
@@ -259,7 +259,7 @@ void Scene::update(float deltaFrame)
         if (sec > 1.0f)
             m_world->stepSimulation(sec, 1, sec);
         else
-            m_world->stepSimulation(sec, m_currentFPS, 1.0f / m_currentFPS);
+            m_world->stepSimulation(sec, m_preferredFPS, 1.0f / m_preferredFPS);
     }
     // Updating camera motion
     if (m_cameraMotion) {

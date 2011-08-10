@@ -347,7 +347,7 @@ void SceneWidget::setCurrentFPS(int value)
     if (value > 0) {
         m_defaultFPS = value;
         m_world->setCurrentFPS(value);
-        m_renderer->scene()->setCurrentFPS(value);
+        m_renderer->scene()->setPreferredFPS(value);
     }
 }
 
