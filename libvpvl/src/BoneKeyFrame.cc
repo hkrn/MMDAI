@@ -105,6 +105,12 @@ size_t BoneKeyFrame::stride()
     return sizeof(BoneKeyFrameChunk);
 }
 
+void BoneKeyFrame::setDefaultInterpolationParameter()
+{
+    for (int i = 0; i < kMax; i++)
+        setInterpolationParameter(static_cast<InterpolationType>(i), 20, 107, 20, 107);
+}
+
 void BoneKeyFrame::read(const uint8_t *data)
 {
     BoneKeyFrameChunk chunk;

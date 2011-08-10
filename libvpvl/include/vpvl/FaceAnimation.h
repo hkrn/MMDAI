@@ -74,6 +74,7 @@ public:
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
     void attachModel(PMDModel *model);
+    void refresh();
     void reset();
 
     const FaceKeyFrameList &frames() const {
@@ -87,6 +88,7 @@ public:
     }
 
 private:
+    void buildInternalNodes(vpvl::PMDModel *model);
     void calculateFrames(float frameAt, FaceAnimationInternal *node);
 
     FaceKeyFrameList m_frames;

@@ -114,7 +114,17 @@ void FaceAnimation::attachModel(PMDModel *model)
 {
     if (m_model)
         return;
+    m_model = model;
+}
 
+void FaceAnimation::refresh()
+{
+    internal::clearHash(m_name2node);
+    buildInternalNodes(m_model);
+}
+
+void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
+{
     const uint32_t nFrames = m_frames.size();
     for (uint32_t i = 0; i < nFrames; i++) {
         FaceKeyFrame *frame = m_frames.at(i);
@@ -145,8 +155,6 @@ void FaceAnimation::attachModel(PMDModel *model)
         frames.quickSort(FaceAnimationKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.size() - 1]->frameIndex());
     }
-
-    m_model = model;
 }
 
 void FaceAnimation::reset()

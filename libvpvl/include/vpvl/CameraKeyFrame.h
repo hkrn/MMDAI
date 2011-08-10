@@ -69,6 +69,7 @@ public:
 
     static size_t stride();
 
+    void setDefaultInterpolationParameter();
     void read(const uint8_t *data);
     void write(uint8_t *data);
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;

@@ -114,6 +114,12 @@ size_t CameraKeyFrame::stride()
     return sizeof(CameraKeyFrameChunk);
 }
 
+void CameraKeyFrame::setDefaultInterpolationParameter()
+{
+    for (int i = 0; i < kMax; i++)
+        setInterpolationParameter(static_cast<InterpolationType>(i), 20, 107, 20, 107);
+}
+
 void CameraKeyFrame::read(const uint8_t *data)
 {
     CameraKeyFrameChunk chunk;

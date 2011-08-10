@@ -74,6 +74,7 @@ public:
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
     void attachModel(PMDModel *model);
+    void refresh();
     void reset();
 
     const BoneKeyFrameList &frames() const {
@@ -99,6 +100,7 @@ private:
                             float w,
                             uint32_t at,
                             float &value);
+    void buildInternalNodes(vpvl::PMDModel *model);
     void calculateFrames(float frameAt, BoneAnimationInternal *node);
 
     BoneKeyFrameList m_frames;

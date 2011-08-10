@@ -69,11 +69,11 @@ float BoneAnimation::weightValue(const BoneKeyFrame *keyFrame, float w, uint32_t
 }
 
 void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
-                             const btVector3 &from,
-                             const btVector3 &to,
-                             float w,
-                             uint32_t at,
-                             float &value)
+                                const btVector3 &from,
+                                const btVector3 &to,
+                                float w,
+                                uint32_t at,
+                                float &value)
 {
     const float valueFrom = static_cast<const btScalar *>(from)[at];
     const float valueTo = static_cast<const btScalar *>(to)[at];
@@ -150,7 +150,18 @@ void BoneAnimation::attachModel(PMDModel *model)
 {
     if (m_model)
         return;
+    buildInternalNodes(model);
+    m_model = model;
+}
 
+void BoneAnimation::refresh()
+{
+    internal::clearHash(m_name2node);
+    buildInternalNodes(m_model);
+}
+
+void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
+{
     const uint32_t nFrames = m_frames.size();
     const uint8_t *centerBoneName = Bone::centerBoneName();
     const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
@@ -187,8 +198,6 @@ void BoneAnimation::attachModel(PMDModel *model)
         frames.quickSort(BoneAnimationKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.size() - 1]->frameIndex());
     }
-
-    m_model = model;
 }
 
 void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
