@@ -43,6 +43,16 @@ static const QList<TransformButton *> allButtons(const Ui::TransformWidget *ui)
     return buttons;
 }
 
+static QModelIndexList selectRowIndices(const QItemSelectionRange &range)
+{
+    QModelIndexList newIndices;
+    foreach (QModelIndex index, range.indexes()) {
+        if (index.column() == 0)
+            newIndices.append(index);
+    }
+    return newIndices;
+}
+
 }
 
 TransformButton::TransformButton(QWidget *parent) :
@@ -200,12 +210,18 @@ void TransformWidget::on_comboBox_currentIndexChanged(int index)
 
 void TransformWidget::on_registerButton_clicked()
 {
-    foreach (vpvl::Bone *bone, castBoneModel(ui)->bonesFromIndices(ui->bones->selectionModel()->selectedIndexes())) {
-        if (bone)
-            emit boneDidRegister(bone);
+    BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(ui->bones->model());
+    foreach (QItemSelectionRange range, ui->bones->selectionModel()->selection()) {
+        foreach (vpvl::Bone *bone, bmm->bonesFromIndices(selectRowIndices(range))) {
+            if (bone)
+                emit boneDidRegister(bone);
+        }
     }
-    foreach (vpvl::Face *face, castFaceModel(ui)->facesFromIndices(ui->faces->selectionModel()->selectedIndexes())) {
-        if (face)
-            emit faceDidRegister(face);
+    FaceMotionModel *fmm = qobject_cast<FaceMotionModel *>(ui->faces->model());
+    foreach (QItemSelectionRange range, ui->faces->selectionModel()->selection()) {
+        foreach (vpvl::Face *face, fmm->facesFromIndices(selectRowIndices(range))) {
+            if (face)
+                emit faceDidRegister(face);
+        }
     }
 }

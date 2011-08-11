@@ -44,7 +44,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="bones"/>
+         <widget class="QListView" name="bones">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::ExtendedSelection</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -58,7 +62,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="faces"/>
+         <widget class="QListView" name="faces">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::ExtendedSelection</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
