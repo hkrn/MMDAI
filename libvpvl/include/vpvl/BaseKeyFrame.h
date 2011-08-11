@@ -36,111 +36,86 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_BONEANIMATION_H_
-#define VPVL_BONEANIMATION_H_
+#ifndef VPVL_BASEKEYFRAME_H_
+#define VPVL_BASEKEYFRAME_H_
 
-#include <LinearMath/btHashMap.h>
-#include "vpvl/BaseAnimation.h"
+#include "vpvl/common.h"
 
 namespace vpvl
 {
 
-class Bone;
-class BoneKeyFrame;
-class PMDModel;
-typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
-typedef struct BoneAnimationInternal BoneAnimationInternal;
-
-/**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * BoneAnimation class represents a bone Animation that includes many bone key frames
- * of a Vocaloid Motion Data object inherits BaseAnimation.
- */
-
-class VPVL_EXPORT BoneAnimation : public BaseAnimation
+class VPVL_EXPORT BaseKeyFrame
 {
 public:
-    BoneAnimation();
-    ~BoneAnimation();
-
-    static const float kStartingMarginFrame;
-
-    void read(const uint8_t *data, uint32_t size);
-    void seek(float frameAt);
-    void takeSnap(const btVector3 &center);
-
-    /**
-     * Attach this to the model.
-     *
-     * After calling this method, internal states to animate are built.
-     * If you modified frames of this animation, you should call
-     * refresh method to rebuild internal states.
-     *
-     * This method has no effect if you have already called it.
-     *
-     * @param A model to attach the motion
-     * @see refresh
-     */
-    void attachModel(PMDModel *model);
-
-    /**
-     * Rebuild internal states to animate.
-     *
-     * This method has no effect if you haven't call attachModel.
-     *
-     * @see attachModel
-     */
-    void refresh();
-
-    /**
-     * Reset the last frame index of all frames.
-     *
-     */
-    void reset();
-
-    /**
-     * Get whether this animation has a frame to control center bone.
-     *
-     * @return boolean
-     */
-    bool hasCenterBoneAnimation() const {
-        return m_hasCenterBoneAnimation;
+    BaseKeyFrame() : m_frameIndex(0) {
+    }
+    ~BaseKeyFrame() {
+        m_frameIndex = 0;
     }
 
     /**
-     * Get an attached model of this animation.
+     * Stride length of a keyframe structure.
      *
-     * @return An attached model
+     * @return Stride length
      */
-    PMDModel *attachedModel() const {
-        return m_model;
+    virtual size_t stride() const = 0;
+
+    /**
+     * Read and parse the buffer and sets it's result to the class.
+     *
+     * @param The buffer to read and parse
+     */
+    virtual void read(const uint8_t *data) = 0;
+
+    /**
+     * Write the current value to the buffer.
+     *
+     * You should allocate the buffer size with stride.
+     *
+     * @param The buffer to write
+     * @see stride
+     */
+    virtual void write(uint8_t *data) const = 0;
+
+    /**
+     * Get the target bone name of this keyframe.
+     *
+     * @return the bone name
+     */
+    virtual const uint8_t *name() const = 0;
+
+    /**
+     * Get the frame index of this keyframe.
+     *
+     * @return A value of frame index
+     */
+    float frameIndex() const {
+        return m_frameIndex;
     }
 
-private:
-    static float weightValue(const BoneKeyFrame *keyFrame,
-                             float w,
-                             uint32_t at);
-    static void lerpVector3(const BoneKeyFrame *keyFrame,
-                            const btVector3 &from,
-                            const btVector3 &to,
-                            float w,
-                            uint32_t at,
-                            float &value);
-    void buildInternalNodes(vpvl::PMDModel *model);
-    void calculateFrames(float frameAt, BoneAnimationInternal *node);
+    /**
+     * Set the target bone name of this keyframe.
+     *
+     * @param the bone name
+     */
+    virtual void setName(const uint8_t *value) = 0;
 
-    btHashMap<btHashString, BoneAnimationInternal *> m_name2node;
-    PMDModel *m_model;
-    bool m_hasCenterBoneAnimation;
+    /**
+     * Set the frame index of this keyframe.
+     *
+     * @param A value of frame index
+     */
+    void setFrameIndex(float value) {
+        m_frameIndex = value;
+    }
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(BoneAnimation)
+protected:
+    float m_frameIndex;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(BaseKeyFrame)
 };
 
 }
 
 #endif
+

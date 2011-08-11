@@ -13,6 +13,7 @@ project(libvpvl)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src vpvl_sources)
 set(vpvl_public_headers
     include/vpvl/BaseAnimation.h
+    include/vpvl/BaseKeyFrame.h
     include/vpvl/BoneKeyFrame.h
     include/vpvl/Bone.h
     include/vpvl/BoneAnimation.h

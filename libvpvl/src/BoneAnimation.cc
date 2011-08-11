@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -108,7 +109,7 @@ void BoneAnimation::read(const uint8_t *data, uint32_t size)
     for (uint32_t i = 0; i < size; i++) {
         BoneKeyFrame *frame = new BoneKeyFrame();
         frame->read(ptr);
-        ptr += BoneKeyFrame::stride();
+        ptr += frame->stride();
         m_frames.push_back(frame);
     }
 }
@@ -162,49 +163,13 @@ void BoneAnimation::refresh()
     }
 }
 
-void BoneAnimation::deleteFrame(int frameIndex, const vpvl::Bone *bone)
-{
-    const uint8_t *name = bone->name();
-    const uint32_t nFrames = m_frames.size();
-    const size_t len = strlen(reinterpret_cast<const char *>(name));
-    BoneKeyFrame *frameToRemove = 0;
-    for (uint32_t i = 0; i < nFrames; i++) {
-        BoneKeyFrame *frame = m_frames.at(i);
-        if (frame->frameIndex() == frameIndex && internal::stringEquals(name, frame->name(), len)) {
-            frameToRemove = frame;
-            break;
-        }
-    }
-    if (frameToRemove) {
-        m_frames.remove(frameToRemove);
-        refresh();
-    }
-}
-
-void BoneAnimation::deleteFrames(int frameIndex)
-{
-    const uint32_t nFrames = m_frames.size();
-    BoneKeyFrameList framesToRemove;
-    for (uint32_t i = 0; i < nFrames; i++) {
-        BoneKeyFrame *frame = m_frames.at(i);
-        if (frame->frameIndex() == frameIndex)
-            framesToRemove.push_back(frame);
-    }
-    const uint32_t nFramesToRemove = framesToRemove.size();
-    if (nFramesToRemove) {
-        for (uint32_t i = 0; i < nFramesToRemove; i++)
-            m_frames.remove(framesToRemove[i]);
-        refresh();
-    }
-}
-
 void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
 {
     const uint32_t nFrames = m_frames.size();
     const uint8_t *centerBoneName = Bone::centerBoneName();
     const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
     for (uint32_t i = 0; i < nFrames; i++) {
-        BoneKeyFrame *frame = m_frames.at(i);
+        BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(m_frames.at(i));
         btHashString name(reinterpret_cast<const char *>(frame->name()));
         BoneAnimationInternal **ptr = m_name2node.find(name), *node;
         if (ptr) {

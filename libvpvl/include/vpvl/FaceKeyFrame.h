@@ -40,15 +40,14 @@
 #define VPVL_FACEKEYFRAME_H_
 
 #include <LinearMath/btAlignedObjectArray.h>
-#include "vpvl/common.h"
-#include "vpvl/internal/util.h"
+#include "vpvl/BaseKeyFrame.h"
 
 namespace vpvl
 {
 
 class Face;
 
-class VPVL_EXPORT FaceKeyFrame
+class VPVL_EXPORT FaceKeyFrame : public BaseKeyFrame
 {
 public:
     FaceKeyFrame();
@@ -56,12 +55,14 @@ public:
 
     static const int kNameSize = 15;
 
+    static size_t strideSize();
+
     /**
      * Stride length of a face keyframe structure.
      *
      * @return Stride length
      */
-    static size_t stride();
+    size_t stride() const;
 
     /**
      * Read and parse the buffer and sets it's result to the class.
@@ -80,25 +81,14 @@ public:
      * @param The buffer to write
      * @see stride
      */
-    void write(uint8_t *data);
+    void write(uint8_t *data) const;
 
     /**
      * Get the target bone name of this keyframe.
      *
      * @return the bone name
      */
-    const uint8_t *name() const {
-        return m_name;
-    }
-
-    /**
-     * Get the frame index of this keyframe.
-     *
-     * @return A value of frame index
-     */
-    float frameIndex() const {
-        return m_frameIndex;
-    }
+    const uint8_t *name() const;
 
     /**
      * Get the face weight of this keyframe.
@@ -114,18 +104,7 @@ public:
      *
      * @param the bone name
      */
-    void setName(const uint8_t *value) {
-        copyBytesSafe(m_name, value, sizeof(m_name));
-    }
-
-    /**
-     * Set the frame index of this keyframe.
-     *
-     * @param A value of frame index
-     */
-    void setFrameIndex(float value) {
-        m_frameIndex = value;
-    }
+    void setName(const uint8_t *value);
 
     /**
      * Set the face weight of this keyframe.
@@ -138,7 +117,6 @@ public:
 
 private:
     uint8_t m_name[kNameSize];
-    float m_frameIndex;
     float m_weight;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(FaceKeyFrame)

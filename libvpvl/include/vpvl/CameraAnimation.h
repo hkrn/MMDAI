@@ -68,13 +68,8 @@ public:
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
     void reset();
+    void refresh();
 
-    const CameraKeyFrameList &frames() const {
-        return m_frames;
-    }
-    CameraKeyFrameList *mutableFrames() {
-        return &m_frames;
-    }
     const btVector3 &position() const {
         return m_position;
     }
@@ -99,7 +94,6 @@ private:
                             uint32_t at,
                             float &value);
 
-    CameraKeyFrameList m_frames;
     btVector3 m_position;
     btVector3 m_angle;
     float m_distance;

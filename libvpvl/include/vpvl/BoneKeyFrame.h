@@ -42,15 +42,14 @@
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
-#include "vpvl/internal/util.h"
+#include "vpvl/BaseKeyFrame.h"
 
 namespace vpvl
 {
 
 class Bone;
 
-class VPVL_EXPORT BoneKeyFrame
+class VPVL_EXPORT BoneKeyFrame : public BaseKeyFrame
 {
 public:
     enum InterpolationType
@@ -75,12 +74,14 @@ public:
     static const int kNameSize = 15;
     static const int kTableSize = 64;
 
+    static size_t strideSize();
+
     /**
      * Stride length of a bone keyframe structure.
      *
      * @return Stride length
      */
-    static size_t stride();
+    size_t stride() const;
 
     /**
      * Set the default value of interpolation parameter.
@@ -104,7 +105,7 @@ public:
      * @param The buffer to write
      * @see stride
      */
-    void write(uint8_t *data);
+    void write(uint8_t *data) const;
 
     /**
      * Get interpolation values with the type.
@@ -133,18 +134,7 @@ public:
      *
      * @return the bone name
      */
-    const uint8_t *name() const {
-        return m_name;
-    }
-
-    /**
-     * Get the frame index of this keyframe.
-     *
-     * @return A value of frame index
-     */
-    float frameIndex() const {
-        return m_frameIndex;
-    }
+    const uint8_t *name() const;
 
     /**
      * Get the position to the target bone of this keyframe.
@@ -187,18 +177,7 @@ public:
      *
      * @param the bone name
      */
-    void setName(const uint8_t *value) {
-        copyBytesSafe(m_name, value, sizeof(m_name));
-    }
-
-    /**
-     * Set the frame index of this keyframe.
-     *
-     * @param A value of frame index
-     */
-    void setFrameIndex(float value) {
-        m_frameIndex = value;
-    }
+    void setName(const uint8_t *value);
 
     /**
      * Set the position to the target bone of this keyframe.
@@ -224,7 +203,6 @@ private:
     btQuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     uint8_t m_name[kNameSize];
-    float m_frameIndex;
     btVector3 m_position;
     btQuaternion m_rotation;
     bool m_linear[4];

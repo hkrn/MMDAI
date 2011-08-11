@@ -65,7 +65,7 @@ static void getValueFromTable(const int8_t *table, int i, int8_t &x1, int8_t &y1
 }
 
 BoneKeyFrame::BoneKeyFrame()
-    : m_frameIndex(0),
+    : BaseKeyFrame(),
       m_position(0.0f, 0.0f, 0.0f),
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f)
 {
@@ -89,9 +89,14 @@ BoneKeyFrame::~BoneKeyFrame()
     internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
-size_t BoneKeyFrame::stride()
+size_t BoneKeyFrame::strideSize()
 {
     return sizeof(BoneKeyFrameChunk);
+}
+
+size_t BoneKeyFrame::stride() const
+{
+    return strideSize();
 }
 
 void BoneKeyFrame::setDefaultInterpolationParameter()
@@ -127,7 +132,7 @@ void BoneKeyFrame::read(const uint8_t *data)
     setInterpolationTable(m_rawInterpolationTable);
 }
 
-void BoneKeyFrame::write(uint8_t *data)
+void BoneKeyFrame::write(uint8_t *data) const
 {
     BoneKeyFrameChunk chunk;
     copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
@@ -146,7 +151,7 @@ void BoneKeyFrame::write(uint8_t *data)
     chunk.position[2] = m_position.z();
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
-                        reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
@@ -178,6 +183,16 @@ void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, 
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
     setInterpolationTable(table);
+}
+
+const uint8_t *BoneKeyFrame::name() const
+{
+    return m_name;
+}
+
+void BoneKeyFrame::setName(const uint8_t *value)
+{
+    copyBytesSafe(m_name, value, sizeof(m_name));
 }
 
 void BoneKeyFrame::setInterpolationTable(const int8_t *table) {

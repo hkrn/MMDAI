@@ -41,13 +41,12 @@
 
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
-#include "vpvl/internal/util.h"
+#include "vpvl/BaseKeyFrame.h"
 
 namespace vpvl
 {
 
-class VPVL_EXPORT CameraKeyFrame
+class VPVL_EXPORT CameraKeyFrame : public BaseKeyFrame
 {
 public:
     enum InterpolationType
@@ -75,17 +74,16 @@ public:
 
     static const int kTableSize = 24;
 
-    static size_t stride();
+    static size_t strideSize();
+    size_t stride() const;
 
     void setDefaultInterpolationParameter();
     void read(const uint8_t *data);
-    void write(uint8_t *data);
+    void write(uint8_t *data) const;
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
     void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
-    float frameIndex() const {
-        return m_frameIndex;
-    }
+    const uint8_t *name() const;
     float distance() const {
         return m_distance;
     }
@@ -105,9 +103,7 @@ public:
         return m_interpolationTable;
     }
 
-    void setFrameIndex(float value) {
-        m_frameIndex = value;
-    }
+    void setName(const uint8_t *name);
     void setDistance(float value) {
         m_distance = value;
     }
@@ -126,7 +122,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
     btQuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
-    float m_frameIndex;
+    uint8_t m_name[1];
     float m_distance;
     float m_fovy;
     btVector3 m_position;

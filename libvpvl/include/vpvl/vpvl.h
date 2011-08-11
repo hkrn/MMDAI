@@ -39,6 +39,7 @@
 
 #include "vpvl/Common.h"
 #include "vpvl/BaseAnimation.h"
+#include "vpvl/BaseKeyFrame.h"
 #include "vpvl/Bone.h"
 #include "vpvl/BoneKeyFrame.h"
 #include "vpvl/BoneAnimation.h"

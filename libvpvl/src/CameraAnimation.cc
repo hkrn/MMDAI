@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
 namespace vpvl
 {
@@ -44,7 +45,7 @@ namespace vpvl
 class CameraAnimationKeyFramePredication
 {
 public:
-    bool operator()(const CameraKeyFrame *left, const CameraKeyFrame *right) {
+    bool operator()(const BaseKeyFrame *left, const BaseKeyFrame *right) {
         return left->frameIndex() < right->frameIndex();
     }
 };
@@ -102,7 +103,7 @@ void CameraAnimation::read(const uint8_t *data, uint32_t size)
         for (uint32_t i = 0; i < size; i++) {
             CameraKeyFrame *frame = new CameraKeyFrame();
             frame->read(ptr);
-            ptr += CameraKeyFrame::stride();
+            ptr += frame->stride();
             m_frames.push_back(frame);
         }
         m_frames.quickSort(CameraAnimationKeyFramePredication());
@@ -113,7 +114,7 @@ void CameraAnimation::read(const uint8_t *data, uint32_t size)
 void CameraAnimation::seek(float frameAt)
 {
     const uint32_t nFrames = m_frames.size();
-    CameraKeyFrame *lastKeyFrame = m_frames[nFrames - 1];
+    CameraKeyFrame *lastKeyFrame = static_cast<CameraKeyFrame *>(m_frames[nFrames - 1]);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->frameIndex())
         currentFrame = lastKeyFrame->frameIndex();
@@ -141,7 +142,8 @@ void CameraAnimation::seek(float frameAt)
     k1 = k2 <= 1 ? 0 : k2 - 1;
     m_lastIndex = k1;
 
-    const CameraKeyFrame *keyFrameFrom = m_frames.at(k1), *keyFrameTo = m_frames.at(k2);
+    const CameraKeyFrame *keyFrameFrom = static_cast<CameraKeyFrame *>(m_frames.at(k1)),
+            *keyFrameTo = static_cast<CameraKeyFrame *>(m_frames.at(k2));
     CameraKeyFrame *keyFrameForInterpolation = const_cast<CameraKeyFrame *>(keyFrameTo);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
@@ -212,6 +214,10 @@ void CameraAnimation::takeSnap(const btVector3 & /* center */)
 void CameraAnimation::reset()
 {
     BaseAnimation::reset();
+}
+
+void CameraAnimation::refresh()
+{
 }
 
 }

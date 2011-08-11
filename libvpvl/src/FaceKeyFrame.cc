@@ -53,18 +53,28 @@ struct FaceKeyFrameChunk
 
 #pragma pack(pop)
 
-FaceKeyFrame::FaceKeyFrame() : m_frameIndex(0), m_weight(0.0f) {
+FaceKeyFrame::FaceKeyFrame()
+    : BaseKeyFrame(), m_weight(0.0f)
+{
     internal::zerofill(m_name, sizeof(m_name));
 }
-FaceKeyFrame::~FaceKeyFrame() {
+FaceKeyFrame::~FaceKeyFrame()
+{
     internal::zerofill(m_name, sizeof(m_name));
 }
 
-size_t FaceKeyFrame::stride() {
+size_t FaceKeyFrame::strideSize()
+{
     return sizeof(FaceKeyFrameChunk);
 }
 
-void FaceKeyFrame::read(const uint8_t *data) {
+size_t FaceKeyFrame::stride() const
+{
+    return strideSize();
+}
+
+void FaceKeyFrame::read(const uint8_t *data)
+{
     FaceKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
@@ -72,13 +82,23 @@ void FaceKeyFrame::read(const uint8_t *data) {
     m_weight = chunk.weight;
 }
 
-void FaceKeyFrame::write(uint8_t *data)
+void FaceKeyFrame::write(uint8_t *data) const
 {
     FaceKeyFrameChunk chunk;
     copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
     chunk.frameIndex = static_cast<uint32_t>(m_frameIndex);
     chunk.weight = m_weight;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+const uint8_t *FaceKeyFrame::name() const
+{
+    return m_name;
+}
+
+void FaceKeyFrame::setName(const uint8_t *value)
+{
+    copyBytesSafe(m_name, value, sizeof(m_name));
 }
 
 }

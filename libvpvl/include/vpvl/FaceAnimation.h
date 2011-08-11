@@ -104,45 +104,6 @@ public:
     void reset();
 
     /**
-     * Delete a key frame associated with an index and a name of the bone.
-     *
-     * This method automatically calls refresh after deleting the frame.
-     * No refresh is called if no frame to remove is found.
-     *
-     * @param A frame index to delete
-     * @param A name of the bone to delete
-     */
-    void deleteFrame(int frameIndex, const vpvl::Bone *bone);
-
-    /**
-     * Delete key frames associated with an index.
-     *
-     * This method automatically calls refresh after deleting the frame.
-     * No refresh is called if no frame to remove is found.
-     *
-     * @param A frame index to delete
-     */
-    void deleteFrames(int frameIndex);
-
-    /**
-     * Get immutable face frames of this animation.
-     *
-     * @return immutable face frames
-     */
-    const FaceKeyFrameList &frames() const {
-        return m_frames;
-    }
-
-    /**
-     * Get mutable face frames of this animation.
-     *
-     * @return mutable face frames
-     */
-    FaceKeyFrameList *mutableFrames() {
-        return &m_frames;
-    }
-
-    /**
      * Get an attached model of this animation.
      *
      * @return An attached model
@@ -155,7 +116,6 @@ private:
     void buildInternalNodes(vpvl::PMDModel *model);
     void calculateFrames(float frameAt, FaceAnimationInternal *node);
 
-    FaceKeyFrameList m_frames;
     btHashMap<btHashString, FaceAnimationInternal *> m_name2node;
     PMDModel *m_model;
 

@@ -42,10 +42,12 @@
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
 
 namespace vpvl
 {
+
+class BaseKeyFrame;
+typedef btAlignedObjectArray<BaseKeyFrame *> BaseKeyFrameList;
 
 /**
  * @file
@@ -117,6 +119,32 @@ public:
     void reset();
 
     /**
+     * Rebuild internal states to animate.
+     */
+    virtual void refresh() = 0;
+
+    /**
+     * Delete a key frame associated with an index and a name.
+     *
+     * This method automatically calls refresh after deleting the frame.
+     * No refresh is called if no frame to remove is found.
+     *
+     * @param A frame index to delete
+     * @param A name to delete
+     */
+    void deleteFrame(int frameIndex, const uint8_t *name);
+
+    /**
+     * Delete key frames associated with an index.
+     *
+     * This method automatically calls refresh after deleting the frame.
+     * No refresh is called if no frame to remove is found.
+     *
+     * @param A frame index to delete
+     */
+    void deleteFrames(int frameIndex);
+
+    /**
      * Save the current Animation state.
      *
      * @param A position of center
@@ -150,7 +178,26 @@ public:
         m_blendRate = value;
     }
 
+    /**
+     * Get immutable bone frames of this animation.
+     *
+     * @return immutable bone frames
+     */
+    const BaseKeyFrameList &frames() const {
+        return m_frames;
+    }
+
+    /**
+     * Get mutable bone frames of this animation.
+     *
+     * @return mutable bone frames
+     */
+    BaseKeyFrameList *mutableFrames() {
+        return &m_frames;
+    }
+
 protected:
+    BaseKeyFrameList m_frames;
     uint32_t m_lastIndex;
     uint32_t m_lastLoopStartIndex;
     const float m_smearDefault;

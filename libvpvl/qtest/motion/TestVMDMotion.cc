@@ -115,7 +115,7 @@ void TestVMDMotion::parseBoneKeyFrame()
            << 5.0f << 6.0f << 7.0f << 8.0f // rotation
               ;
     stream.writeRawData(kTestString, vpvl::BoneKeyFrame::kTableSize);
-    QCOMPARE(size_t(bytes.size()), vpvl::BoneKeyFrame::stride());
+    QCOMPARE(size_t(bytes.size()), vpvl::BoneKeyFrame::strideSize());
     vpvl::BoneKeyFrame frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(QString(reinterpret_cast<const char *>(frame.name())), QString(kTestString));
@@ -144,7 +144,7 @@ void TestVMDMotion::parseCameraKeyFrame()
     stream << quint32(8)           // view angle (fovy)
            << quint8(1)            // no perspective
               ;
-    QCOMPARE(size_t(bytes.size()), vpvl::CameraKeyFrame::stride());
+    QCOMPARE(size_t(bytes.size()), vpvl::CameraKeyFrame::strideSize());
     vpvl::CameraKeyFrame frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(frame.frameIndex(), 1.0f);
@@ -171,7 +171,7 @@ void TestVMDMotion::parseFaceKeyFrame()
     stream << quint32(1) // frame index
            << 0.5f       // weight
               ;
-    QCOMPARE(size_t(bytes.size()), vpvl::FaceKeyFrame::stride());
+    QCOMPARE(size_t(bytes.size()), vpvl::FaceKeyFrame::strideSize());
     vpvl::FaceKeyFrame frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(QString(reinterpret_cast<const char *>(frame.name())), QString(kTestString));

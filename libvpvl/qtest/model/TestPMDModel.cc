@@ -2,6 +2,7 @@
 #include <QtTest/QtTest>
 
 #include <vpvl/vpvl.h>
+#include <vpvl/internal/util.h>
 
 class TestPMDModel : public QObject
 {

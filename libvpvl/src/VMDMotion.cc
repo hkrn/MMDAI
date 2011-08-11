@@ -101,7 +101,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &in
         return false;
     }
     info.boneKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, BoneKeyFrame::stride(), nBoneKeyFrames, rest)) {
+    if (!internal::validateSize(ptr, BoneKeyFrame::strideSize(), nBoneKeyFrames, rest)) {
         m_error = kBoneKeyFramesError;
         return false;
     }
@@ -113,7 +113,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &in
         return false;
     }
     info.faceKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, FaceKeyFrame::stride(), nFaceKeyFrames, rest)) {
+    if (!internal::validateSize(ptr, FaceKeyFrame::strideSize(), nFaceKeyFrames, rest)) {
         m_error = kFaceKeyFramesError;
         return false;
     }
@@ -125,7 +125,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &in
         return false;
     }
     info.cameraKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, CameraKeyFrame::stride(), nCameraKeyFrames, rest)) {
+    if (!internal::validateSize(ptr, CameraKeyFrame::strideSize(), nCameraKeyFrames, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
@@ -162,9 +162,9 @@ size_t VMDMotion::estimateSize()
      * light size (empty)
      * selfshadow size (empty)
      */
-    return 70 + m_boneMotion.frames().size() * BoneKeyFrame::stride()
-            + m_faceMotion.frames().size() * FaceKeyFrame::stride()
-            + m_cameraMotion.frames().size() * CameraKeyFrame::stride();
+    return 70 + m_boneMotion.frames().size() * BoneKeyFrame::strideSize()
+            + m_faceMotion.frames().size() * FaceKeyFrame::strideSize()
+            + m_cameraMotion.frames().size() * CameraKeyFrame::strideSize();
 }
 
 void VMDMotion::save(uint8_t *data)
@@ -173,32 +173,32 @@ void VMDMotion::save(uint8_t *data)
     data += 30;
     internal::copyBytes(data, m_name, sizeof(m_name));
     data += sizeof(m_name);
-    BoneKeyFrameList boneFrames = m_boneMotion.frames();
+    BaseKeyFrameList boneFrames = m_boneMotion.frames();
     uint32_t nBoneFrames = boneFrames.size();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
     data += sizeof(nBoneFrames);
     for (uint32_t i = 0; i < nBoneFrames; i++) {
-        BoneKeyFrame *frame = boneFrames[i];
+        BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(boneFrames[i]);
         frame->write(data);
-        data += BoneKeyFrame::stride();
+        data += BoneKeyFrame::strideSize();
     }
-    FaceKeyFrameList faceFrames = m_faceMotion.frames();
+    BaseKeyFrameList faceFrames = m_faceMotion.frames();
     uint32_t nFaceFrames = faceFrames.size();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nFaceFrames), sizeof(nFaceFrames));
     data += sizeof(nFaceFrames);
     for (uint32_t i = 0; i < nFaceFrames; i++) {
-        FaceKeyFrame *frame = faceFrames[i];
+        FaceKeyFrame *frame = static_cast<FaceKeyFrame *>(faceFrames[i]);
         frame->write(data);
-        data += FaceKeyFrame::stride();
+        data += FaceKeyFrame::strideSize();
     }
-    CameraKeyFrameList cameraFrames = m_cameraMotion.frames();
+    BaseKeyFrameList cameraFrames = m_cameraMotion.frames();
     uint32_t nCameraFrames = cameraFrames.size();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
     data += sizeof(nCameraFrames);
     for (uint32_t i = 0; i < nCameraFrames; i++) {
-        CameraKeyFrame *frame = cameraFrames[i];
+        CameraKeyFrame *frame = static_cast<CameraKeyFrame *>(cameraFrames[i]);
         frame->write(data);
-        data += CameraKeyFrame::stride();
+        data += CameraKeyFrame::strideSize();
     }
     uint32_t empty = 0;
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));

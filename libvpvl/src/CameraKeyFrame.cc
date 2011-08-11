@@ -67,13 +67,14 @@ static void getValueFromTable(const int8_t *table, int i, int8_t &x1, int8_t &y1
 }
 
 CameraKeyFrame::CameraKeyFrame()
-    : m_frameIndex(0),
+    : BaseKeyFrame(),
       m_distance(0.0f),
       m_fovy(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_noPerspective(false)
 {
+    m_name[0] = 0;
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
@@ -82,7 +83,6 @@ CameraKeyFrame::CameraKeyFrame()
 
 CameraKeyFrame::~CameraKeyFrame()
 {
-    m_frameIndex = 0;
     m_distance = 0.0f;
     m_fovy = 0.0f;
     m_position.setZero();
@@ -96,9 +96,14 @@ CameraKeyFrame::~CameraKeyFrame()
     internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
-size_t CameraKeyFrame::stride()
+size_t CameraKeyFrame::strideSize()
 {
     return sizeof(CameraKeyFrameChunk);
+}
+
+size_t CameraKeyFrame::stride() const
+{
+    return strideSize();
 }
 
 void CameraKeyFrame::setDefaultInterpolationParameter()
@@ -137,7 +142,7 @@ void CameraKeyFrame::read(const uint8_t *data)
     setInterpolationTable(m_rawInterpolationTable);
 }
 
-void CameraKeyFrame::write(uint8_t *data)
+void CameraKeyFrame::write(uint8_t *data) const
 {
     CameraKeyFrameChunk chunk;
     chunk.frameIndex = static_cast<uint32_t>(m_frameIndex);
@@ -158,7 +163,7 @@ void CameraKeyFrame::write(uint8_t *data)
     chunk.position[2] = m_position.z();
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
-                        reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
@@ -192,6 +197,15 @@ void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
     setInterpolationTable(table);
+}
+
+const uint8_t *CameraKeyFrame::name() const
+{
+    return m_name;
+}
+
+void CameraKeyFrame::setName(const uint8_t * /* name */)
+{
 }
 
 void CameraKeyFrame::setInterpolationTable(const int8_t *table) {

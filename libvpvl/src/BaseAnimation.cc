@@ -98,6 +98,41 @@ void BaseAnimation::reset()
     m_smearIndex = m_smearDefault;
 }
 
+void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
+{
+    const uint32_t nFrames = m_frames.size();
+    const size_t len = strlen(reinterpret_cast<const char *>(value));
+    BaseKeyFrame *frameToRemove = 0;
+    for (uint32_t i = 0; i < nFrames; i++) {
+        BaseKeyFrame *frame = m_frames.at(i);
+        if (frame->frameIndex() == frameIndex && internal::stringEquals(value, frame->name(), len)) {
+            frameToRemove = frame;
+            break;
+        }
+    }
+    if (frameToRemove) {
+        m_frames.remove(frameToRemove);
+        refresh();
+    }
+}
+
+void BaseAnimation::deleteFrames(int frameIndex)
+{
+    const uint32_t nFrames = m_frames.size();
+    BaseKeyFrameList framesToRemove;
+    for (uint32_t i = 0; i < nFrames; i++) {
+        BaseKeyFrame *frame = m_frames.at(i);
+        if (frame->frameIndex() == frameIndex)
+            framesToRemove.push_back(frame);
+    }
+    const uint32_t nFramesToRemove = framesToRemove.size();
+    if (nFramesToRemove) {
+        for (uint32_t i = 0; i < nFramesToRemove; i++)
+            m_frames.remove(framesToRemove[i]);
+        refresh();
+    }
+}
+
 void BaseAnimation::setOverrideFirst(const btVector3 &center)
 {
     takeSnap(center);
