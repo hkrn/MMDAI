@@ -162,6 +162,42 @@ void BoneAnimation::refresh()
     }
 }
 
+void BoneAnimation::deleteFrame(int frameIndex, const vpvl::Bone *bone)
+{
+    const uint8_t *name = bone->name();
+    const uint32_t nFrames = m_frames.size();
+    const size_t len = strlen(reinterpret_cast<const char *>(name));
+    BoneKeyFrame *frameToRemove = 0;
+    for (uint32_t i = 0; i < nFrames; i++) {
+        BoneKeyFrame *frame = m_frames.at(i);
+        if (frame->frameIndex() == frameIndex && internal::stringEquals(name, frame->name(), len)) {
+            frameToRemove = frame;
+            break;
+        }
+    }
+    if (frameToRemove) {
+        m_frames.remove(frameToRemove);
+        refresh();
+    }
+}
+
+void BoneAnimation::deleteFrames(int frameIndex)
+{
+    const uint32_t nFrames = m_frames.size();
+    BoneKeyFrameList framesToRemove;
+    for (uint32_t i = 0; i < nFrames; i++) {
+        BoneKeyFrame *frame = m_frames.at(i);
+        if (frame->frameIndex() == frameIndex)
+            framesToRemove.push_back(frame);
+    }
+    const uint32_t nFramesToRemove = framesToRemove.size();
+    if (nFramesToRemove) {
+        for (uint32_t i = 0; i < nFramesToRemove; i++)
+            m_frames.remove(framesToRemove[i]);
+        refresh();
+    }
+}
+
 void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
 {
     const uint32_t nFrames = m_frames.size();

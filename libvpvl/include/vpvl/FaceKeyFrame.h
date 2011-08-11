@@ -56,27 +56,82 @@ public:
 
     static const int kNameSize = 15;
 
+    /**
+     * Stride length of a face keyframe structure.
+     *
+     * @return Stride length
+     */
     static size_t stride();
 
+    /**
+     * Read and parse the buffer and sets it's result to the class.
+     *
+     * This method is called by FaceAnimation class.
+     *
+     * @param The buffer to read and parse
+     */
     void read(const uint8_t *data);
+
+    /**
+     * Write the current value to the buffer.
+     *
+     * You should allocate the buffer size with stride.
+     *
+     * @param The buffer to write
+     * @see stride
+     */
     void write(uint8_t *data);
 
+    /**
+     * Get the target bone name of this keyframe.
+     *
+     * @return the bone name
+     */
     const uint8_t *name() const {
         return m_name;
     }
+
+    /**
+     * Get the frame index of this keyframe.
+     *
+     * @return A value of frame index
+     */
     float frameIndex() const {
         return m_frameIndex;
     }
+
+    /**
+     * Get the face weight of this keyframe.
+     *
+     * @return A value of face weight
+     */
     float weight() const {
         return m_weight;
     }
 
+    /**
+     * Set the target bone name of this keyframe.
+     *
+     * @param the bone name
+     */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
+
+    /**
+     * Set the frame index of this keyframe.
+     *
+     * @param A value of frame index
+     */
     void setFrameIndex(float value) {
         m_frameIndex = value;
     }
+
+    /**
+     * Set the face weight of this keyframe.
+     *
+     * @param A value of face weight
+     */
     void setWeight(float value) {
         m_weight = value;
     }

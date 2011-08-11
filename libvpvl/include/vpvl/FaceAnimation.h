@@ -104,6 +104,27 @@ public:
     void reset();
 
     /**
+     * Delete a key frame associated with an index and a name of the bone.
+     *
+     * This method automatically calls refresh after deleting the frame.
+     * No refresh is called if no frame to remove is found.
+     *
+     * @param A frame index to delete
+     * @param A name of the bone to delete
+     */
+    void deleteFrame(int frameIndex, const vpvl::Bone *bone);
+
+    /**
+     * Delete key frames associated with an index.
+     *
+     * This method automatically calls refresh after deleting the frame.
+     * No refresh is called if no frame to remove is found.
+     *
+     * @param A frame index to delete
+     */
+    void deleteFrames(int frameIndex);
+
+    /**
      * Get immutable face frames of this animation.
      *
      * @return immutable face frames
