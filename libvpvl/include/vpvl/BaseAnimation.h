@@ -186,12 +186,30 @@ public:
     }
 
     /**
+     * Get whether calls refresh method automatically after modifying key frames.
+     *
+     * @return True if calling refresh automatically
+     */
+    bool isEnabledAutomaticRefresh() const {
+        return m_automaticRefresh;
+    }
+
+    /**
      * Set the blend rate.
      *
      * @param The blend rate value
      */
     void setBlendRate(float value) {
         m_blendRate = value;
+    }
+
+    /**
+     * Set calling refresh method automatically after modifying key frames.
+     *
+     * @param True if calling refresh automatically
+     */
+    void setEnableAutomaticRefresh(bool value) {
+        m_automaticRefresh = value;
     }
 
 protected:
@@ -207,6 +225,7 @@ protected:
     float m_smearIndex;
     bool m_ignoreSingleAnimation;
     bool m_overrideFirst;
+    bool m_automaticRefresh;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

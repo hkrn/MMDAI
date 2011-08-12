@@ -53,7 +53,8 @@ BaseAnimation::BaseAnimation(float smearDefault) :
     m_blendRate(1.0f),
     m_smearIndex(smearDefault),
     m_ignoreSingleAnimation(false),
-    m_overrideFirst(false)
+    m_overrideFirst(false),
+    m_automaticRefresh(true)
 {
 }
 
@@ -101,7 +102,8 @@ void BaseAnimation::reset()
 void BaseAnimation::addFrame(BaseKeyFrame *frame)
 {
     m_frames.push_back(frame);
-    refresh();
+    if (m_automaticRefresh)
+        refresh();
 }
 
 void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
@@ -118,7 +120,8 @@ void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
     }
     if (frameToRemove) {
         m_frames.remove(frameToRemove);
-        refresh();
+        if (m_automaticRefresh)
+            refresh();
     }
 }
 
@@ -135,7 +138,8 @@ void BaseAnimation::deleteFrames(int frameIndex)
     if (nFramesToRemove) {
         for (uint32_t i = 0; i < nFramesToRemove; i++)
             m_frames.remove(framesToRemove[i]);
-        refresh();
+        if (m_automaticRefresh)
+            refresh();
     }
 }
 
