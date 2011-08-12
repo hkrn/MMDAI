@@ -11,12 +11,12 @@ BoneMotionModel::BoneMotionModel(QObject *parent) :
 
 void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
-    vpvl::BaseKeyFrameList *frames = motion->mutableBoneAnimation()->mutableFrames();
+    vpvl::BoneAnimation *animation = motion->mutableBoneAnimation();
     foreach (QVariant value, m_values) {
         vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
         QByteArray bytes = value.toByteArray();
         newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        frames->push_back(newFrame);
+        animation->addFrame(newFrame);
     }
 }
 
@@ -25,7 +25,6 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
     if (model == m_model && m_motion) {
         const vpvl::VPDPose::BoneList boneFrames = pose->bones();
         vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
-        vpvl::BaseKeyFrameList *frames = animation->mutableFrames();
         uint32_t nBoneFrames = boneFrames.size();
         for (uint32_t i = 0; i < nBoneFrames; i++) {
             vpvl::VPDPose::Bone *frame = boneFrames[i];
@@ -46,7 +45,7 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 setData(modelIndex, bytes, Qt::EditRole);
-                frames->push_back(newFrame);
+                animation->addFrame(newFrame);
             }
         }
         animation->refresh();
@@ -76,7 +75,6 @@ bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
         QModelIndex modelIndex = index(i, frameIndex);
         QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
         vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
-        vpvl::BaseKeyFrameList *frames = animation->mutableFrames();
         vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
         /* FIXME: interpolation */
         newFrame->setDefaultInterpolationParameter();
@@ -85,7 +83,7 @@ bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
         newFrame->setRotation(bone->rotation());
         newFrame->setFrameIndex(frameIndex);
         newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-        frames->push_back(newFrame);
+        animation->addFrame(newFrame);
         animation->refresh();
         setData(modelIndex, bytes, Qt::EditRole);
         return true;
@@ -119,10 +117,10 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
-        const vpvl::BaseKeyFrameList boneFrames = motion->boneAnimation().frames();
-        uint32_t nBoneFrames = boneFrames.size();
+        const vpvl::BoneAnimation &animation = motion->boneAnimation();
+        uint32_t nBoneFrames = animation.countFrames();
         for (uint32_t i = 0; i < nBoneFrames; i++) {
-            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(boneFrames[i]);
+            vpvl::BoneKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             QString key = internal::toQString(name);
             int i = m_keys.indexOf(key);

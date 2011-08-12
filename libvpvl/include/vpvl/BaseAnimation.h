@@ -124,6 +124,22 @@ public:
     virtual void refresh() = 0;
 
     /**
+     * Add a key frame.
+     *
+     * @param A key frame to be added
+     */
+    void addFrame(BaseKeyFrame *frame);
+
+    /**
+     * Count all of key frames.
+     *
+     * @return size of all key frames
+     */
+    size_t countFrames() const {
+        return m_frames.size();
+    }
+
+    /**
      * Delete a key frame associated with an index and a name.
      *
      * This method automatically calls refresh after deleting the frame.
@@ -176,24 +192,6 @@ public:
      */
     void setBlendRate(float value) {
         m_blendRate = value;
-    }
-
-    /**
-     * Get immutable bone frames of this animation.
-     *
-     * @return immutable bone frames
-     */
-    const BaseKeyFrameList &frames() const {
-        return m_frames;
-    }
-
-    /**
-     * Get mutable bone frames of this animation.
-     *
-     * @return mutable bone frames
-     */
-    BaseKeyFrameList *mutableFrames() {
-        return &m_frames;
     }
 
 protected:

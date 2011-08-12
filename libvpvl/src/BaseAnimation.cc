@@ -98,6 +98,12 @@ void BaseAnimation::reset()
     m_smearIndex = m_smearDefault;
 }
 
+void BaseAnimation::addFrame(BaseKeyFrame *frame)
+{
+    m_frames.push_back(frame);
+    refresh();
+}
+
 void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
 {
     const uint32_t nFrames = m_frames.size();

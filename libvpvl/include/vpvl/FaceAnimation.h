@@ -104,6 +104,16 @@ public:
     void reset();
 
     /**
+     * Get a camera key frame associated with index.
+     *
+     * @param A frame index to get key frame
+     * @return A camera key frame associated with index
+     */
+    FaceKeyFrame *frameAt(uint32_t i) const {
+        return static_cast<FaceKeyFrame *>(m_frames[i]);
+    }
+
+    /**
      * Get an attached model of this animation.
      *
      * @return An attached model

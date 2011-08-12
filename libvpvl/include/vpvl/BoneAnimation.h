@@ -104,6 +104,16 @@ public:
     void reset();
 
     /**
+     * Get a bone key frame associated with index.
+     *
+     * @param A frame index to get key frame
+     * @return A bone key frame associated with index
+     */
+    BoneKeyFrame *frameAt(uint32_t i) const {
+        return static_cast<BoneKeyFrame *>(m_frames[i]);
+    }
+
+    /**
      * Get whether this animation has a frame to control center bone.
      *
      * @return boolean

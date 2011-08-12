@@ -49,9 +49,9 @@ void TestVMDMotion::parseMotion()
         vpvl::VMDMotionDataInfo result;
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
-        QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().frames().size()));
-        QCOMPARE(result.cameraKeyFrameCount, size_t(motion.cameraAnimation().frames().size()));
-        QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().frames().size()));
+        QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countFrames()));
+        QCOMPARE(result.cameraKeyFrameCount, motion.cameraAnimation().countFrames());
+        QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().countFrames()));
         QCOMPARE(motion.error(), vpvl::VMDMotion::kNoError);
     }
     else {
@@ -70,9 +70,9 @@ void TestVMDMotion::parseCamera()
         vpvl::VMDMotionDataInfo result;
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
-        QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().frames().size()));
-        QCOMPARE(result.cameraKeyFrameCount, size_t(motion.cameraAnimation().frames().size()));
-        QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().frames().size()));
+        QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countFrames()));
+        QCOMPARE(result.cameraKeyFrameCount, size_t(motion.cameraAnimation().countFrames()));
+        QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().countFrames()));
         QCOMPARE(motion.error(), vpvl::VMDMotion::kNoError);
     }
     else {

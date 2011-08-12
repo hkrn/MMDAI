@@ -162,9 +162,9 @@ size_t VMDMotion::estimateSize()
      * light size (empty)
      * selfshadow size (empty)
      */
-    return 70 + m_boneMotion.frames().size() * BoneKeyFrame::strideSize()
-            + m_faceMotion.frames().size() * FaceKeyFrame::strideSize()
-            + m_cameraMotion.frames().size() * CameraKeyFrame::strideSize();
+    return 70 + m_boneMotion.countFrames() * BoneKeyFrame::strideSize()
+            + m_faceMotion.countFrames() * FaceKeyFrame::strideSize()
+            + m_cameraMotion.countFrames() * CameraKeyFrame::strideSize();
 }
 
 void VMDMotion::save(uint8_t *data)
@@ -173,30 +173,27 @@ void VMDMotion::save(uint8_t *data)
     data += 30;
     internal::copyBytes(data, m_name, sizeof(m_name));
     data += sizeof(m_name);
-    BaseKeyFrameList boneFrames = m_boneMotion.frames();
-    uint32_t nBoneFrames = boneFrames.size();
+    uint32_t nBoneFrames = m_boneMotion.countFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
     data += sizeof(nBoneFrames);
     for (uint32_t i = 0; i < nBoneFrames; i++) {
-        BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(boneFrames[i]);
+        BoneKeyFrame *frame = m_boneMotion.frameAt(i);
         frame->write(data);
         data += BoneKeyFrame::strideSize();
     }
-    BaseKeyFrameList faceFrames = m_faceMotion.frames();
-    uint32_t nFaceFrames = faceFrames.size();
+    uint32_t nFaceFrames = m_faceMotion.countFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nFaceFrames), sizeof(nFaceFrames));
     data += sizeof(nFaceFrames);
     for (uint32_t i = 0; i < nFaceFrames; i++) {
-        FaceKeyFrame *frame = static_cast<FaceKeyFrame *>(faceFrames[i]);
+        FaceKeyFrame *frame = m_faceMotion.frameAt(i);
         frame->write(data);
         data += FaceKeyFrame::strideSize();
     }
-    BaseKeyFrameList cameraFrames = m_cameraMotion.frames();
-    uint32_t nCameraFrames = cameraFrames.size();
+    uint32_t nCameraFrames = m_cameraMotion.countFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
     data += sizeof(nCameraFrames);
     for (uint32_t i = 0; i < nCameraFrames; i++) {
-        CameraKeyFrame *frame = static_cast<CameraKeyFrame *>(cameraFrames[i]);
+        CameraKeyFrame *frame = m_cameraMotion.frameAt(i);
         frame->write(data);
         data += CameraKeyFrame::strideSize();
     }

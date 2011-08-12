@@ -10,12 +10,12 @@ FaceMotionModel::FaceMotionModel(QObject *parent) :
 
 void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
-    vpvl::BaseKeyFrameList *frames = motion->mutableFaceAnimation()->mutableFrames();
+    vpvl::FaceAnimation *animation = motion->mutableFaceAnimation();
     foreach (QVariant value, m_values) {
         vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
         QByteArray bytes = value.toByteArray();
         newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        frames->push_back(newFrame);
+        animation->addFrame(newFrame);
     }
 }
 
@@ -26,14 +26,13 @@ void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
     if (i != -1) {
         QModelIndex modelIndex = index(i, frameIndex);
         vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
-        vpvl::BaseKeyFrameList *frames = animation->mutableFrames();
         vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
         newFrame->setName(face->name());
         newFrame->setWeight(face->weight());
         newFrame->setFrameIndex(frameIndex);
         QByteArray bytes(vpvl::FaceKeyFrame::strideSize(), '0');
         newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-        frames->push_back(newFrame);
+        animation->addFrame(newFrame);
         animation->refresh();
         setData(modelIndex, bytes, Qt::EditRole);
     }
@@ -63,10 +62,10 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
-        const vpvl::BaseKeyFrameList faceFrames = motion->faceAnimation().frames();
-        uint32_t nFaceFrames = faceFrames.size();
+        const vpvl::FaceAnimation &animation = motion->faceAnimation();
+        uint32_t nFaceFrames = animation.countFrames();
         for (uint32_t i = 0; i < nFaceFrames; i++) {
-            vpvl::FaceKeyFrame *frame = static_cast<vpvl::FaceKeyFrame *>(faceFrames[i]);
+            vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             QString key = internal::toQString(name);
             int i = m_keys.indexOf(key);
