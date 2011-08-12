@@ -154,6 +154,8 @@ void MainWindow::connectWidgets()
             this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+            m_boneMotionModel, SLOT(clear()));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidMakePose(vpvl::VPDPose*,vpvl::PMDModel*)),
@@ -162,6 +164,8 @@ void MainWindow::connectWidgets()
             m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+            m_faceMotionModel, SLOT(clear()));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
@@ -176,6 +180,8 @@ void MainWindow::connectWidgets()
             ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)),
             m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
+    connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+            m_tabWidget->interpolationWidget(), SLOT(disable()));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),
             ui->scene, SLOT(seekMotion(float)));
 }

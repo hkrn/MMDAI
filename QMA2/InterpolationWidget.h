@@ -36,6 +36,8 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private:
+    void updateValues();
+
     BoneMotionModel *m_boneMotionModel;
     QPoint m_p1;
     QPoint m_p2;
@@ -51,6 +53,8 @@ public:
 
 public slots:
     void setMode(const QString &mode);
+    void disable();
+    void resetInterpolation();
 
 private:
     void createSpinBox(QHBoxLayout *layout,

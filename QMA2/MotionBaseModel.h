@@ -33,6 +33,7 @@ public:
 public slots:
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
     virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
+    virtual void clear() = 0;
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);

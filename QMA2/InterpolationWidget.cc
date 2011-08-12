@@ -17,28 +17,28 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 void InterpolationGraphWidget::setX1(int value)
 {
     m_p1.setX(value);
-    repaint();
+    updateValues();
     emit x1ValueDidChange(value);
 }
 
 void InterpolationGraphWidget::setX2(int value)
 {
     m_p2.setX(value);
-    repaint();
+    updateValues();
     emit x2ValueDidChange(value);
 }
 
 void InterpolationGraphWidget::setY1(int value)
 {
     m_p1.setY(value);
-    repaint();
+    updateValues();
     emit y1ValueDidChange(value);
 }
 
 void InterpolationGraphWidget::setY2(int value)
 {
     m_p2.setY(value);
-    repaint();
+    updateValues();
     emit y2ValueDidChange(value);
 }
 
@@ -74,6 +74,11 @@ void InterpolationGraphWidget::paintEvent(QPaintEvent * /* event */)
     painter.drawEllipse(m_p2.x(), m_p2.y(), kCircleWidth, kCircleWidth);
 }
 
+void InterpolationGraphWidget::updateValues()
+{
+    repaint();
+}
+
 InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
     : QWidget(parent),
       m_comboBox(0),
@@ -85,7 +90,12 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
     m_graphWidget->setMaximumSize(128, 128);
     qDebug() << m_graphWidget->size();
     QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(m_comboBox);
+    QHBoxLayout *c = new QHBoxLayout();
+    QPushButton *button = new QPushButton(tr("Reset"));
+    connect(button, SIGNAL(clicked()), this, SLOT(resetInterpolation()));
+    c->addWidget(m_comboBox);
+    c->addWidget(button);
+    layout->addLayout(c);
     QHBoxLayout *x = new QHBoxLayout();
     createSpinBox(x, "x1", 20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int)));
     createSpinBox(x, "x2", 107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int)));
@@ -125,6 +135,20 @@ void InterpolationWidget::setMode(const QString &mode)
         enabled = false;
     }
     setEnabled(enabled);
+}
+
+void InterpolationWidget::disable()
+{
+    resetInterpolation();
+    setEnabled(false);
+}
+
+void InterpolationWidget::resetInterpolation()
+{
+    m_graphWidget->setX1(20);
+    m_graphWidget->setY1(20);
+    m_graphWidget->setX2(107);
+    m_graphWidget->setY2(107);
 }
 
 void InterpolationWidget::createSpinBox(QHBoxLayout *layout,
