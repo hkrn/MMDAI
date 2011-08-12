@@ -34,24 +34,26 @@ public:
     void setRotation(int coordinate, float value);
     void transform(int coordinate, float value);
     void rotate(int coordinate, float value);
+    void selectBones(QList<vpvl::Bone *> bones);
     vpvl::Bone *selectBone(int rowIndex);
     vpvl::Bone *findBone(const QString &name);
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
-    vpvl::Bone *selectedBone() const { return m_selected; }
-    bool isBoneSelected() const { return m_model != 0 && m_selected != 0; }
+    vpvl::Bone *selectedBone() const { return m_selected.first(); }
+    bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
     bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void clear();
 
 signals:
-    void bonePositionDidChange(const btVector3 &pos);
-    void boneRotationDidChange(const btQuaternion &rot);
+    void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);
+    void boneRotationDidChange(vpvl::Bone *bone, const btQuaternion &rot);
 
 private:
     QList<vpvl::Bone *> m_bones;
-    vpvl::Bone *m_selected;
+    QList<vpvl::Bone *> m_selected;
     TransformType m_mode;
 };
 

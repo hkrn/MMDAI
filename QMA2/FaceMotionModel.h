@@ -12,6 +12,7 @@ public:
 
     void saveMotion(vpvl::VMDMotion *motion);
     void registerKeyFrame(vpvl::Face *bone, int frameIndex);
+    void selectFaces(QList<vpvl::Face *> faces);
     vpvl::Face *selectFace(int rowIndex);
     vpvl::Face *findFace(const QString &name);
     QList<vpvl::Face *> facesFromIndices(const QModelIndexList &indices);
@@ -21,10 +22,11 @@ public:
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
     bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void clear();
 
 private:
     QList<vpvl::Face *> m_faces;
-    vpvl::Face *m_selected;
+    QList<vpvl::Face *> m_selected;
 };
 
 #endif // FACEMOTIONMODEL_H

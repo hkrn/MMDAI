@@ -9,41 +9,41 @@
 
 namespace {
 
-static BoneMotionModel *castBoneModel(Ui::TransformWidget *ui)
+static BoneMotionModel *UICastBoneModel(Ui::TransformWidget *ui)
 {
     return reinterpret_cast<BoneMotionModel *>(ui->bones->model());
 }
 
-static FaceMotionModel *castFaceModel(Ui::TransformWidget *ui)
+static FaceMotionModel *UICastFaceModel(Ui::TransformWidget *ui)
 {
     return reinterpret_cast<FaceMotionModel *>(ui->faces->model());
 }
 
-static void rotateButtons(QList<TransformButton *> &buttons,
-                          const Ui::TransformWidget *ui)
+static void UIGetRotateButtons(QList<TransformButton *> &buttons,
+                               const Ui::TransformWidget *ui)
 {
     buttons.append(ui->rx);
     buttons.append(ui->ry);
     buttons.append(ui->rz);
 }
 
-static void transformButtons(QList<TransformButton *> &buttons,
-                             const Ui::TransformWidget *ui)
+static void UIGetTransformButtons(QList<TransformButton *> &buttons,
+                                  const Ui::TransformWidget *ui)
 {
     buttons.append(ui->tx);
     buttons.append(ui->ty);
     buttons.append(ui->tz);
 }
 
-static const QList<TransformButton *> allButtons(const Ui::TransformWidget *ui)
+static const QList<TransformButton *> UIGetAllButtons(const Ui::TransformWidget *ui)
 {
     QList<TransformButton *> buttons;
-    rotateButtons(buttons, ui);
-    transformButtons(buttons, ui);
+    UIGetRotateButtons(buttons, ui);
+    UIGetTransformButtons(buttons, ui);
     return buttons;
 }
 
-static QModelIndexList selectRowIndices(const QItemSelectionRange &range)
+static QModelIndexList UISelectRowIndices(const QItemSelectionRange &range)
 {
     QModelIndexList newIndices;
     foreach (QModelIndex index, range.indexes()) {
@@ -51,6 +51,54 @@ static QModelIndexList selectRowIndices(const QItemSelectionRange &range)
             newIndices.append(index);
     }
     return newIndices;
+}
+
+static QList<vpvl::Bone *> UISelectBonesBySelection(const Ui::TransformWidget *ui, const QItemSelection &selection)
+{
+    QList<vpvl::Bone *> bones;
+    BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(ui->bones->model());
+    foreach (QItemSelectionRange range, selection) {
+        foreach (vpvl::Bone *bone, bmm->bonesFromIndices(UISelectRowIndices(range))) {
+            if (bone)
+                bones.append(bone);
+        }
+    }
+    return bones;
+}
+
+static QList<vpvl::Bone *> UISelectBones(const Ui::TransformWidget *ui)
+{
+    UISelectBonesBySelection(ui, ui->bones->selectionModel()->selection());
+}
+
+static QList<vpvl::Face *> UISelectFacesBySelection(const Ui::TransformWidget *ui, const QItemSelection &selection)
+{
+    QList<vpvl::Face *> faces;
+    FaceMotionModel *fmm = qobject_cast<FaceMotionModel *>(ui->faces->model());
+    foreach (QItemSelectionRange range, selection) {
+        foreach (vpvl::Face *face, fmm->facesFromIndices(UISelectRowIndices(range))) {
+            if (face)
+                faces.append(face);
+        }
+    }
+    return faces;
+}
+
+static QList<vpvl::Face *> UISelectFaces(const Ui::TransformWidget *ui)
+{
+    UISelectBonesBySelection(ui, ui->faces->selectionModel()->selection());
+}
+
+static void UIToggleBoneButtons(const Ui::TransformWidget *ui, bool movable, bool rotateable)
+{
+    QList<TransformButton *> buttons;
+    UIGetTransformButtons(buttons, ui);
+    foreach (TransformButton *button, buttons)
+        button->setEnabled(movable);
+    buttons.clear();
+    UIGetRotateButtons(buttons, ui);
+    foreach (TransformButton *button, buttons)
+        button->setEnabled(rotateable);
 }
 
 }
@@ -121,14 +169,18 @@ TransformWidget::TransformWidget(QSettings *settings,
     ui->setupUi(this);
     ui->bones->setModel(bmm);
     ui->faces->setModel(fmm);
-    transformButtons(buttons, ui);
-    rotateButtons(buttons, ui);
+    UIGetTransformButtons(buttons, ui);
+    UIGetRotateButtons(buttons, ui);
     foreach (TransformButton *button, buttons)
         button->setBoneMotionModel(bmm);
     connect(ui->bones->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(on_bones_clicked(QModelIndex)));
+    connect(ui->bones->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            this, SLOT(on_bones_selectionChanged(QItemSelection)));
     connect(ui->faces->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(on_faces_clicked(QModelIndex)));
+    connect(ui->faces->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            this, SLOT(on_faces_selectionChanged(QItemSelection)));
     restoreGeometry(m_settings->value("transformWidget/geometry").toByteArray());
 }
 
@@ -153,23 +205,41 @@ void TransformWidget::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
+void TransformWidget::on_faces_selectionChanged(const QItemSelection &selection)
+{
+}
+
+void TransformWidget::on_bones_selectionChanged(const QItemSelection &selection)
+{
+#if 0
+    bool movable = true, rotateable = true;
+    QList<vpvl::Bone *> bones = UISelectBonesBySelection(ui, selection);
+    UICastBoneModel(ui)->selectBones(bones);
+    foreach (vpvl::Bone *bone, bones) {
+        movable = movable && bone->isMovable();
+        rotateable = rotateable && bone->isRotateable();
+    }
+    UIToggleBoneButtons(ui, movable, rotateable);
+#endif
+}
+
 void TransformWidget::on_faceWeightSlider_valueChanged(int value)
 {
     float weight = value / 100.0f;
     ui->faceWeightSpinBox->setValue(weight);
-    castFaceModel(ui)->setWeight(weight);
+    UICastFaceModel(ui)->setWeight(weight);
 }
 
 void TransformWidget::on_faceWeightSpinBox_valueChanged(double value)
 {
     float weight = value;
     ui->faceWeightSlider->setValue(weight * 100.0f);
-    castFaceModel(ui)->setWeight(weight);
+    UICastFaceModel(ui)->setWeight(weight);
 }
 
 void TransformWidget::on_faces_clicked(const QModelIndex &index)
 {
-    vpvl::Face *face = castFaceModel(ui)->selectFace(index.row());
+    vpvl::Face *face = UICastFaceModel(ui)->selectFace(index.row());
     if (face) {
         float weight = face->weight();
         ui->faceWeightSpinBox->setValue(weight);
@@ -179,49 +249,23 @@ void TransformWidget::on_faces_clicked(const QModelIndex &index)
 
 void TransformWidget::on_bones_clicked(const QModelIndex &index)
 {
-    QList<TransformButton *> buttons;
-    vpvl::Bone *bone = castBoneModel(ui)->selectBone(index.row());
-    if (bone) {
-        bool movable = bone->isMovable(), rotateable = bone->isRotateable();
-        transformButtons(buttons, ui);
-        foreach (TransformButton *button, buttons)
-            button->setEnabled(movable);
-        buttons.clear();
-        rotateButtons(buttons, ui);
-        foreach (TransformButton *button, buttons)
-            button->setEnabled(rotateable);
-    }
-    else {
-        transformButtons(buttons, ui);
-        foreach (TransformButton *button, buttons)
-            button->setEnabled(false);
-        buttons.clear();
-        rotateButtons(buttons, ui);
-        foreach (TransformButton *button, buttons)
-            button->setEnabled(false);
-    }
+    vpvl::Bone *bone = UICastBoneModel(ui)->selectBone(index.row());
+    if (bone)
+        UIToggleBoneButtons(ui, bone->isMovable(), bone->isRotateable());
+    else
+        UIToggleBoneButtons(ui, false, false);
 }
 
 void TransformWidget::on_comboBox_currentIndexChanged(int index)
 {
-    foreach (TransformButton *button, allButtons(ui))
+    foreach (TransformButton *button, UIGetAllButtons(ui))
         button->setMode(index);
 }
 
 void TransformWidget::on_registerButton_clicked()
 {
-    BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(ui->bones->model());
-    foreach (QItemSelectionRange range, ui->bones->selectionModel()->selection()) {
-        foreach (vpvl::Bone *bone, bmm->bonesFromIndices(selectRowIndices(range))) {
-            if (bone)
-                emit boneDidRegister(bone);
-        }
-    }
-    FaceMotionModel *fmm = qobject_cast<FaceMotionModel *>(ui->faces->model());
-    foreach (QItemSelectionRange range, ui->faces->selectionModel()->selection()) {
-        foreach (vpvl::Face *face, fmm->facesFromIndices(selectRowIndices(range))) {
-            if (face)
-                emit faceDidRegister(face);
-        }
-    }
+    foreach (vpvl::Bone *bone, UISelectBones(ui))
+        emit boneDidRegister(bone);
+    foreach (vpvl::Face *face, UISelectFaces(ui))
+        emit faceDidRegister(face);
 }

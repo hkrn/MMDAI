@@ -3,8 +3,7 @@
 #include <vpvl/vpvl.h>
 
 FaceMotionModel::FaceMotionModel(QObject *parent) :
-    MotionBaseModel(parent),
-    m_selected(0)
+    MotionBaseModel(parent)
 {
 }
 
@@ -90,9 +89,26 @@ bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     }
 }
 
+void FaceMotionModel::clear()
+{
+    m_faces.clear();
+    m_selected.clear();
+    m_keys.clear();
+    m_values.clear();
+    m_model = 0;
+    reset();
+}
+
+void FaceMotionModel::selectFaces(QList<vpvl::Face *> faces)
+{
+    m_selected = faces;
+}
+
 vpvl::Face *FaceMotionModel::selectFace(int rowIndex)
 {
-    vpvl::Face *face = m_selected = m_faces[rowIndex];
+    m_selected.clear();
+    vpvl::Face *face = m_faces[rowIndex];
+    m_selected.append(face);
     return face;
 }
 
@@ -116,7 +132,7 @@ QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &ind
 
 void FaceMotionModel::setWeight(float value)
 {
-    setWeight(value, m_selected);
+    setWeight(value, m_selected.last());
 }
 
 void FaceMotionModel::setWeight(float value, vpvl::Face *face)
