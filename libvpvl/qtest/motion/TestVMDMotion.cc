@@ -33,7 +33,7 @@ TestVMDMotion::TestVMDMotion()
 void TestVMDMotion::parseEmpty()
 {
     vpvl::VMDMotion motion;
-    vpvl::VMDMotionDataInfo info;
+    vpvl::VMDMotion::DataInfo info;
     QVERIFY(!motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
     QCOMPARE(motion.error(), vpvl::VMDMotion::kInvalidHeaderError);
 }
@@ -46,7 +46,7 @@ void TestVMDMotion::parseMotion()
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
         vpvl::VMDMotion motion;
-        vpvl::VMDMotionDataInfo result;
+        vpvl::VMDMotion::DataInfo result;
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
         QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countFrames()));
@@ -67,7 +67,7 @@ void TestVMDMotion::parseCamera()
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
         vpvl::VMDMotion motion;
-        vpvl::VMDMotionDataInfo result;
+        vpvl::VMDMotion::DataInfo result;
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
         QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countFrames()));

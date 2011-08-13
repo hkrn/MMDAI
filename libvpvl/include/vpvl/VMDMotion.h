@@ -49,22 +49,6 @@ class PMDModel;
 namespace vpvl
 {
 
-struct VMDMotionDataInfo
-{
-    const uint8_t *basePtr;
-    const uint8_t *namePtr;
-    const uint8_t *boneKeyFramePtr;
-    size_t boneKeyFrameCount;
-    const uint8_t *faceKeyFramePtr;
-    size_t faceKeyFrameCount;
-    const uint8_t *cameraKeyFramePtr;
-    size_t cameraKeyFrameCount;
-    const uint8_t *lightKeyFramePtr;
-    size_t lightKeyFrameCount;
-    const uint8_t *selfShadowKeyFramePtr;
-    size_t selfShadowKeyFrameCount;
-};
-
 /**
  * @file
  * @author Nagoya Institute of Technology Department of Computer Science
@@ -106,13 +90,29 @@ public:
         kDeleted
     };
 
+    struct DataInfo
+    {
+        const uint8_t *basePtr;
+        const uint8_t *namePtr;
+        const uint8_t *boneKeyFramePtr;
+        size_t boneKeyFrameCount;
+        const uint8_t *faceKeyFramePtr;
+        size_t faceKeyFrameCount;
+        const uint8_t *cameraKeyFramePtr;
+        size_t cameraKeyFrameCount;
+        const uint8_t *lightKeyFramePtr;
+        size_t lightKeyFrameCount;
+        const uint8_t *selfShadowKeyFramePtr;
+        size_t selfShadowKeyFrameCount;
+    };
+
     static const float kDefaultPriority;
     static const float kDefaultLoopAtFrame;
 
     VMDMotion();
     ~VMDMotion();
 
-    bool preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &info);
+    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     bool load(const uint8_t *data, size_t size);
     size_t estimateSize();
     void save(uint8_t *data);
@@ -141,7 +141,7 @@ public:
     const MotionStatus &status() const {
         return m_status;
     }
-    const VMDMotionDataInfo &result() const {
+    const DataInfo &result() const {
         return m_result;
     }
     BoneAnimation *mutableBoneAnimation() {
@@ -182,17 +182,17 @@ public:
     }
 
 private:
-    void parseHeader(const VMDMotionDataInfo &info);
-    void parseBoneFrames(const VMDMotionDataInfo &info);
-    void parseFaceFrames(const VMDMotionDataInfo &info);
-    void parseCameraFrames(const VMDMotionDataInfo &info);
-    void parseLightFrames(const VMDMotionDataInfo &info);
-    void parseSelfShadowFrames(const VMDMotionDataInfo &info);
+    void parseHeader(const DataInfo &info);
+    void parseBoneFrames(const DataInfo &info);
+    void parseFaceFrames(const DataInfo &info);
+    void parseCameraFrames(const DataInfo &info);
+    void parseLightFrames(const DataInfo &info);
+    void parseSelfShadowFrames(const DataInfo &info);
     void release();
 
     uint8_t m_name[20];
     PMDModel *m_model;
-    VMDMotionDataInfo m_result;
+    DataInfo m_result;
     BoneAnimation m_boneMotion;
     CameraAnimation m_cameraMotion;
     FaceAnimation m_faceMotion;

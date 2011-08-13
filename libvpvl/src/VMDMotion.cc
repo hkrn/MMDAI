@@ -71,7 +71,7 @@ VMDMotion::~VMDMotion()
     release();
 }
 
-bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &info)
+bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     // Header(30) + Name(20)
@@ -136,7 +136,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, VMDMotionDataInfo &in
 
 bool VMDMotion::load(const uint8_t *data, size_t size)
 {
-    VMDMotionDataInfo info;
+    DataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
         release();
@@ -306,31 +306,31 @@ void VMDMotion::update(float deltaFrame)
     }
 }
 
-void VMDMotion::parseHeader(const VMDMotionDataInfo &info)
+void VMDMotion::parseHeader(const DataInfo &info)
 {
     copyBytesSafe(m_name, info.namePtr, sizeof(m_name));
 }
 
-void VMDMotion::parseBoneFrames(const VMDMotionDataInfo &info)
+void VMDMotion::parseBoneFrames(const DataInfo &info)
 {
     m_boneMotion.read(info.boneKeyFramePtr, info.boneKeyFrameCount);
 }
 
-void VMDMotion::parseFaceFrames(const VMDMotionDataInfo &info)
+void VMDMotion::parseFaceFrames(const DataInfo &info)
 {
     m_faceMotion.read(info.faceKeyFramePtr, info.faceKeyFrameCount);
 }
 
-void VMDMotion::parseCameraFrames(const VMDMotionDataInfo &info)
+void VMDMotion::parseCameraFrames(const DataInfo &info)
 {
     m_cameraMotion.read(info.cameraKeyFramePtr, info.cameraKeyFrameCount);
 }
 
-void VMDMotion::parseLightFrames(const VMDMotionDataInfo & /* info */)
+void VMDMotion::parseLightFrames(const DataInfo & /* info */)
 {
 }
 
-void VMDMotion::parseSelfShadowFrames(const VMDMotionDataInfo & /* info */)
+void VMDMotion::parseSelfShadowFrames(const DataInfo & /* info */)
 {
 }
 
