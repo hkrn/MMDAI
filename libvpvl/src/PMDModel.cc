@@ -423,10 +423,20 @@ float PMDModel::boundingSphereRange(btVector3 &center)
     return max;
 }
 
-void PMDModel::smearAllToDefault(float rate)
+void PMDModel::resetAllBones()
 {
-    smearAllBonesToDefault(rate);
-    smearAllFacesToDefault(rate);
+    m_rootBone.reset();
+    m_rootBone.updateTransform();
+    const int nBones = m_bones.size();
+    for (int i = 0; i < nBones; i++) {
+        Bone *bone = m_bones[i];
+        bone->reset();
+    }
+}
+
+void PMDModel::resetAllFaces()
+{
+    smearAllFacesToDefault(0.0f);
 }
 
 void PMDModel::smearAllBonesToDefault(float rate)
