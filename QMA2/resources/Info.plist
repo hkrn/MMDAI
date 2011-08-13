@@ -4,45 +4,6 @@
   <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
-    <key>CFBundleDocumentTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleTypeExtensions</key>
-        <array>
-          <string>fst</string>
-        </array>
-        <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
-        <key>CFBundleTypeName</key>
-        <string>MMDAgent Finite State Transition File</string>
-        <key>CFBundleTypeOSTypes</key>
-        <array>
-          <string>TEXT</string>
-        </array>
-        <key>CFBundleTypeRole</key>
-        <string>Viewer</string>
-        <key>LSHandlerRank</key>
-        <string>Default</string>
-      </dict>
-      <dict>
-        <key>CFBundleTypeExtensions</key>
-        <array>
-          <string>mdf</string>
-        </array>
-        <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
-        <key>CFBundleTypeName</key>
-        <string>MMDAgent Definition File</string>
-        <key>CFBundleTypeOSTypes</key>
-        <array>
-          <string>TEXT</string>
-        </array>
-        <key>CFBundleTypeRole</key>
-        <string>Viewer</string>
-        <key>LSHandlerRank</key>
-        <string>Default</string>
-      </dict>
-    </array>
      <key>NSHumanReadableCopyright</key>
      <string>(C) 2010-2011 hkrn</string>
      <key>CFBundleIconFile</key>
@@ -54,13 +15,13 @@
      <key>CFBundleExecutable</key>
      <string>@EXECUTABLE@</string>
      <key>CFBundleIdentifier</key>
-     <string>com.github.hkrn.mmdai</string>
+     <string>com.github.mmdai</string>
      <key>CFBundleVersion</key>
-     <string>2.0</string>
+     <string>0.1.0</string>
      <key>CFBundleShortVersionString</key>
-     <string>2.0</string>
+     <string>0.1.0</string>
      <key>CFBundleGetInfoString</key>
-     <string>MMDAI is an application to interact MMD models with voice forked from MMDAgent</string>
+     <string>MMDAI2 is an application to edit VMD motion</string>
      <key>LSArchitecturePriority</key>
      <array>
        <string>x86_64</string>
