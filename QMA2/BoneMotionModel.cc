@@ -128,11 +128,16 @@ bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 QModelIndex modelIndex = index(i, frameIndex);
                 vpvl::BoneKeyFrame newFrame;
-                /* FIXME: interpolation */
                 newFrame.setName(name);
                 newFrame.setPosition(frame->position());
                 newFrame.setRotation(frame->rotation());
                 newFrame.setFrameIndex(frameIndex);
+                int8_t x1, x2, y1, y2;
+                for (int i = 0; i < vpvl::BoneKeyFrame::kMax; i++) {
+                    vpvl::BoneKeyFrame::InterpolationType type = static_cast<vpvl::BoneKeyFrame::InterpolationType>(i);
+                    frame->getInterpolationParameter(type, x1, x2, y1, y2);
+                    newFrame.setInterpolationParameter(type, x1, x2, y1, y2);
+                }
                 newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
                 setData(modelIndex, bytes, Qt::EditRole);
             }
