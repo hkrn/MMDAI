@@ -181,7 +181,9 @@ public:
     void updateSkins();
     void updateImmediate();
     float boundingSphereRange(btVector3 &center);
+    void smearAllToDefault(float rate);
     void smearAllBonesToDefault(float rate);
+    void smearAllFacesToDefault(float rate);
     void discardState(State *&state) const;
     State *saveState() const;
     bool restoreState(State *state);
