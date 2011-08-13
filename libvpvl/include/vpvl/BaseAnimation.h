@@ -120,6 +120,11 @@ public:
 
     /**
      * Rebuild internal states to animate.
+     *
+     * This method has no effect if you haven't call attachModel.
+     * In CameraAnimation class, this method does nothing.
+     *
+     * @see attachModel
      */
     virtual void refresh() = 0;
 

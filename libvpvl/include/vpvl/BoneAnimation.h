@@ -73,6 +73,8 @@ public:
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
     void takeSnap(const btVector3 &center);
+    void reset();
+    void refresh();
 
     /**
      * Attach this to the model.
@@ -87,21 +89,6 @@ public:
      * @see refresh
      */
     void attachModel(PMDModel *model);
-
-    /**
-     * Rebuild internal states to animate.
-     *
-     * This method has no effect if you haven't call attachModel.
-     *
-     * @see attachModel
-     */
-    void refresh();
-
-    /**
-     * Reset the last frame index of all frames.
-     *
-     */
-    void reset();
 
     /**
      * Get a bone key frame associated with index.

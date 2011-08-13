@@ -76,43 +76,140 @@ public:
 
     static size_t strideSize();
     size_t stride() const;
-
-    void setDefaultInterpolationParameter();
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
+
+    /**
+     * Set the default values of the interpolation parameter.
+     */
+    void setDefaultInterpolationParameter();
+
+    /**
+     * Get the interpolation values with the type.
+     *
+     * @param An interpolation type
+     * @param A value of X1
+     * @param A value of X2
+     * @param A value of Y1
+     * @param A value of Y2
+     */
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
+
+    /**
+     * Set the interpolation values with the type.
+     *
+     * @param An interpolation type
+     * @param A value of X1
+     * @param A value of X2
+     * @param A value of Y1
+     * @param A value of Y2
+     */
     void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
+    /**
+     * Get empty name
+     *
+     * The camera key frame doesn't have name.
+     *
+     * @return null name
+     */
     const uint8_t *name() const;
+
+    /**
+     * Get the distance of this keyframe.
+     *
+     * @return A value of distance value
+     */
     float distance() const {
         return m_distance;
     }
+
+    /**
+     * Get the fovy of this keyframe.
+     *
+     * @return A value of fovy value
+     */
     float fovy() const {
         return m_fovy;
     }
+
+    /**
+     * Get the position of this keyframe.
+     *
+     * @return A value of position value
+     */
     const btVector3 &position() const {
         return m_position;
     }
+
+    /**
+     * Get the angle of this keyframe.
+     *
+     * @return A value of angle value
+     */
     const btVector3 &angle() const {
         return m_angle;
     }
+
+    /**
+     * Get whether this keyframe is linear.
+     *
+     * @return True if this keyframe is linear
+     */
     const bool *linear() const {
         return m_linear;
     }
+
+    /**
+     * Get the interpolation values of this keyframe.
+     *
+     * @return An array of interpolation values
+     */
     const float *const *interpolationTable() const {
         return m_interpolationTable;
     }
 
+    /**
+     * Set the name of this keyframe.
+     *
+     * This method do nothing.
+     *
+     * @param A value of name
+     */
     void setName(const uint8_t *name);
+
+    /**
+     * Set the distance of this keyframe.
+     *
+     * @param A value of distance
+     */
     void setDistance(float value) {
         m_distance = value;
     }
+
+    /**
+     * Set the fovy of this keyframe.
+     *
+     * @param A value of fovy
+     */
     void setFovy(float value) {
         m_fovy = value;
     }
+
+    /**
+     * Set the position of this keyframe.
+     *
+     * @param A value of position
+     */
     void setPosition(const btVector3 &value) {
         m_position = value;
     }
+
+    /**
+     * Set the angle of this keyframe.
+     *
+     * @param A value of angle
+     */
     void setAngle(const btVector3 &value) {
         m_angle = value;
     }
@@ -122,7 +219,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
     btQuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
-    uint8_t m_name[1];
+    uint8_t m_name[2];
     float m_distance;
     float m_fovy;
     btVector3 m_position;

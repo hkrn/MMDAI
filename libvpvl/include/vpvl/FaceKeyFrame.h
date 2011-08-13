@@ -57,30 +57,8 @@ public:
 
     static size_t strideSize();
 
-    /**
-     * Stride length of a face keyframe structure.
-     *
-     * @return Stride length
-     */
     size_t stride() const;
-
-    /**
-     * Read and parse the buffer and sets it's result to the class.
-     *
-     * This method is called by FaceAnimation class.
-     *
-     * @param The buffer to read and parse
-     */
     void read(const uint8_t *data);
-
-    /**
-     * Write the current value to the buffer.
-     *
-     * You should allocate the buffer size with stride.
-     *
-     * @param The buffer to write
-     * @see stride
-     */
     void write(uint8_t *data) const;
 
     /**

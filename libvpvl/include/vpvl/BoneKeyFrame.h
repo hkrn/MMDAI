@@ -76,39 +76,17 @@ public:
 
     static size_t strideSize();
 
-    /**
-     * Stride length of a bone keyframe structure.
-     *
-     * @return Stride length
-     */
     size_t stride() const;
+    void read(const uint8_t *data);
+    void write(uint8_t *data) const;
 
     /**
-     * Set the default value of interpolation parameter.
+     * Set the default values of the interpolation parameter.
      */
     void setDefaultInterpolationParameter();
 
     /**
-     * Read and parse the buffer and sets it's result to the class.
-     *
-     * This method is called by BoneAnimation class.
-     *
-     * @param The buffer to read and parse
-     */
-    void read(const uint8_t *data);
-
-    /**
-     * Write the current value to the buffer.
-     *
-     * You should allocate the buffer size with stride.
-     *
-     * @param The buffer to write
-     * @see stride
-     */
-    void write(uint8_t *data) const;
-
-    /**
-     * Get interpolation values with the type.
+     * Get the interpolation values with the type.
      *
      * @param An interpolation type
      * @param A value of X1
@@ -119,7 +97,7 @@ public:
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
 
     /**
-     * Set interpolation values with the type.
+     * Set the interpolation values with the type.
      *
      * @param An interpolation type
      * @param A value of X1
@@ -155,7 +133,7 @@ public:
     }
 
     /**
-     * Get this keyframe is linear.
+     * Get whether this keyframe is linear.
      *
      * @return True if this keyframe is linear
      */
@@ -164,7 +142,7 @@ public:
     }
 
     /**
-     * Get the interpolation values of this keyframes.
+     * Get the interpolation values of this keyframe.
      *
      * @return An array of interpolation values
      */

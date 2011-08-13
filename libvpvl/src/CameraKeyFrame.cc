@@ -74,7 +74,7 @@ CameraKeyFrame::CameraKeyFrame()
       m_angle(0.0f, 0.0f, 0.0f),
       m_noPerspective(false)
 {
-    m_name[0] = 0;
+    internal::zerofill(m_name, sizeof(m_name));
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));

@@ -80,15 +80,38 @@ public:
         return static_cast<CameraKeyFrame *>(m_frames[i]);
     }
 
+    /**
+     * Get a position of camera work.
+     *
+     * @return A position (X, Y, Z)
+     */
     const btVector3 &position() const {
         return m_position;
     }
+
+    /**
+     * Get an angle of camera work.
+     *
+     * @return An angle (X, Y, Z) in degree
+     */
     const btVector3 &angle() const {
         return m_angle;
     }
+
+    /**
+     * Get distance of camera work.
+     *
+     * @return A value of distance
+     */
     float distance() const {
         return m_distance;
     }
+
+    /**
+     * Get fovy of camera work.
+     *
+     * @return A value of fovy
+     */
     float fovy() const {
         return m_fovy;
     }
