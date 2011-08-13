@@ -17,6 +17,7 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
         newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
         animation->addFrame(newFrame);
     }
+    setModified(false);
 }
 
 bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int frameIndex)
@@ -49,9 +50,11 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
         }
         animation->refresh();
         reset();
+        qDebug("Loaded a pose to the model: %s", qPrintable(internal::toQString(model)));
         return true;
     }
     else {
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(internal::toQString(model)));
         return false;
     }
 }
@@ -66,7 +69,7 @@ bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
         key = internal::toQString(selected->name());
     }
     else {
-        qWarning("bone is not selected or null");
+        qWarning("A bone is not selected or null");
         return false;
     }
     int i = m_keys.indexOf(key);
@@ -88,7 +91,7 @@ bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
         return true;
     }
     else {
-        qWarning("tried registering not bone key frame: %s", key.toUtf8().constData());
+        qWarning("Tried registering not bone key frame: %s", qPrintable(key));
         return false;
     }
 }
@@ -111,6 +114,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
     }
     m_model = model;
     emit modelDidChange(model);
+    qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
 }
 
 bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
@@ -144,19 +148,29 @@ bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         }
         m_motion = motion;
         reset();
+        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
         return true;
     }
     else {
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQString(model)));
         return false;
     }
 }
 
-void BoneMotionModel::clear()
+void BoneMotionModel::clearMotion()
 {
     m_bones.clear();
     m_selected.clear();
-    m_keys.clear();
     m_values.clear();
+    setModified(false);
+    reset();
+    resetAllBones();
+}
+
+void BoneMotionModel::clearModel()
+{
+    clearMotion();
+    m_keys.clear();
     m_model = 0;
     reset();
 }
@@ -187,13 +201,13 @@ bool BoneMotionModel::resetBone(ResetType type)
             qFatal("Unexpected reset bone type: %d", type);
         }
     }
-    updateModel();
+    return updateModel();
 }
 
 bool BoneMotionModel::resetAllBones()
 {
     if (m_model) {
-        m_model->smearAllBonesToDefault(0.0f);
+        m_model->resetAllBones();
         return updateModel();
     }
     else {

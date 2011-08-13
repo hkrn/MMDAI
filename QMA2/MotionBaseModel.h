@@ -23,6 +23,8 @@ public:
     void discardState();
 
     vpvl::PMDModel *selectedModel() const { return m_model; }
+    void setModified(bool value) { m_modified = value; motionDidModify(value); }
+    bool isModified() const { return m_modified; }
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
@@ -33,19 +35,24 @@ public:
 public slots:
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
     virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
-    virtual void clear() = 0;
+    virtual void clearMotion() = 0;
+    virtual void clearModel() = 0;
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);
+    void motionDidModify(bool value);
 
 protected:
     bool updateModel();
 
     vpvl::PMDModel *m_model;
-    vpvl::PMDModel::State *m_state;
     vpvl::VMDMotion *m_motion;
     QList<QString> m_keys;
     QHash< QPair<int, int>, QVariant > m_values;
+
+private:
+    vpvl::PMDModel::State *m_state;
+    bool m_modified;
 };
 
 #endif // MOTIONBASEMODEL_H

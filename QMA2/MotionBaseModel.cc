@@ -6,7 +6,8 @@ MotionBaseModel::MotionBaseModel(QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),
     m_motion(0),
-    m_state(0)
+    m_state(0),
+    m_modified(false)
 {
 }
 
@@ -66,6 +67,7 @@ bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, i
 {
     if (index.isValid() && role == Qt::EditRole) {
         m_values.insert(QPair<int, int>(index.column(), index.row()), value);
+        setModified(true);
         emit dataChanged(index, index);
         return true;
     }

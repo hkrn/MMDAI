@@ -16,6 +16,7 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
         newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
         animation->addFrame(newFrame);
     }
+    setModified(false);
 }
 
 void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
@@ -36,7 +37,18 @@ void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
         setData(modelIndex, bytes, Qt::EditRole);
     }
     else {
-        qWarning("tried registering not face key frame: %s", key.toUtf8().constData());
+        qWarning("Tried registering not face key frame: %s", qPrintable(key));
+    }
+}
+
+bool FaceMotionModel::resetAllFaces()
+{
+    if (m_model) {
+        m_model->resetAllFaces();
+        return updateModel();
+    }
+    else {
+        return false;
     }
 }
 
@@ -56,6 +68,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     }
     m_model = model;
     emit modelDidChange(model);
+    qDebug("Set a model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
 }
 
 bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
@@ -82,19 +95,29 @@ bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         }
         m_motion = motion;
         reset();
+        qDebug("Loaded a motion to the model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
         return true;
     }
     else {
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQString(model)));
         return false;
     }
 }
 
-void FaceMotionModel::clear()
+void FaceMotionModel::clearMotion()
 {
     m_faces.clear();
     m_selected.clear();
-    m_keys.clear();
     m_values.clear();
+    setModified(false);
+    reset();
+    resetAllFaces();
+}
+
+void FaceMotionModel::clearModel()
+{
+    clearMotion();
+    m_keys.clear();
     m_model = 0;
     reset();
 }

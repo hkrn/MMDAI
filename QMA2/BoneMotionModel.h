@@ -45,7 +45,8 @@ public:
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
     bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void clear();
+    void clearMotion();
+    void clearModel();
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);

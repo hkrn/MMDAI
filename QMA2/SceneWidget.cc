@@ -417,6 +417,20 @@ void SceneWidget::insertMotionToSelectedModel()
     }
 }
 
+void SceneWidget::setEmptyMotion()
+{
+    vpvl::PMDModel *selected = m_renderer->selectedModel();
+    if (selected) {
+        vpvl::VMDMotion *motion = new vpvl::VMDMotion();
+        stopSceneUpdateTimer();
+        addMotionInternal2(selected, motion);
+        startSceneUpdateTimer();
+    }
+    else {
+        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
+    }
+}
+
 void SceneWidget::setModelPose()
 {
     vpvl::PMDModel *selected = m_renderer->selectedModel();
@@ -622,7 +636,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         //m_renderer->pickBones(event->pos().x(), event->pos().y(), 0.5f, bones);
         for (int i = 0; i < bones.size(); i++) {
             vpvl::Bone *bone = bones[i];
-            qDebug() << internal::toQString(bone);
+            qDebug("Selected a bone: %s", qPrintable(internal::toQString(bone)));
         }
     }
 }
@@ -741,9 +755,8 @@ vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDi
             m_motions.insert(model, motion);
             // force to render an added model
             m_renderer->scene()->seek(0.0f);
-            setSelectedModel(model);
             emit modelDidAdd(model);
-            emit modelDidSelect(model);
+            setSelectedModel(model);
             emit motionDidAdd(motion, model);
         }
         else {
@@ -762,15 +775,7 @@ vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QSt
         QByteArray data = file.readAll();
         motion = new vpvl::VMDMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            motion->setEnableSmooth(false);
-            model->addMotion(motion);
-            if (m_motions.contains(model)) {
-                vpvl::VMDMotion *oldMotion = m_motions.value(model);
-                model->removeMotion(oldMotion);
-                delete oldMotion;
-            }
-            m_motions.insert(model, motion);
-            emit motionDidAdd(motion, model);
+            addMotionInternal2(model, motion);
         }
         else {
             delete motion;
@@ -778,6 +783,19 @@ vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QSt
         }
     }
     return motion;
+}
+
+void SceneWidget::addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *motion)
+{
+    motion->setEnableSmooth(false);
+    model->addMotion(motion);
+    if (m_motions.contains(model)) {
+        vpvl::VMDMotion *oldMotion = m_motions.value(model);
+        model->removeMotion(oldMotion);
+        delete oldMotion;
+    }
+    m_motions.insert(model, motion);
+    emit motionDidAdd(motion, model);
 }
 
 vpvl::VPDPose *SceneWidget::setModelPoseInternal(vpvl::PMDModel *model, const QString &path)

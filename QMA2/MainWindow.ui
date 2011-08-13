@@ -39,6 +39,7 @@
     <addaction name="actionAddModel"/>
     <addaction name="actionAddAsset"/>
     <addaction name="separator"/>
+    <addaction name="actionNewMotion"/>
     <addaction name="actionInsertToAllModels"/>
     <addaction name="actionInsertToSelectedModel"/>
     <addaction name="actionSetModelPose"/>
@@ -487,6 +488,14 @@
    </property>
    <property name="statusTip">
     <string>Export bone key frames and face key frames as a VMD</string>
+   </property>
+  </action>
+  <action name="actionNewMotion">
+   <property name="text">
+    <string>New motion</string>
+   </property>
+   <property name="statusTip">
+    <string>Create an empty motion to the selected model.</string>
    </property>
   </action>
  </widget>

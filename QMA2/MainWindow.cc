@@ -70,9 +70,14 @@ bool MainWindow::validateLibraryVersion()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    m_settings.setValue("mainWindow/geometry", saveGeometry());
-    m_settings.setValue("mainWindow/state", saveState());
-    event->accept();
+    if (maybeSave()) {
+        m_settings.setValue("mainWindow/geometry", saveGeometry());
+        m_settings.setValue("mainWindow/state", saveState());
+        event->accept();
+    }
+    else {
+        event->ignore();
+    }
 }
 
 void MainWindow::selectModel()
@@ -82,6 +87,81 @@ void MainWindow::selectModel()
         vpvl::PMDModel *model = ui->scene->models().value(action->text());
         ui->scene->setSelectedModel(model);
     }
+}
+
+void MainWindow::newFile()
+{
+    if (maybeSave()) {
+        ui->scene->setEmptyMotion();
+        m_boneMotionModel->clearMotion();
+        m_faceMotionModel->clearMotion();
+    }
+}
+
+bool MainWindow::save()
+{
+    return saveAs();
+}
+
+bool MainWindow::saveAs()
+{
+    const QString name = "mainWindow/lastVMDDirectory";
+    const QString path = m_settings.value(name).toString();
+    const QString filename = QFileDialog::getSaveFileName(this,
+                                                          tr("Open VMD file"),
+                                                          path,
+                                                          tr("VMD file (*.vmd)"));
+    bool ret = false;
+    if (!filename.isEmpty()) {
+        ret = saveFile(filename);
+        QDir dir(filename);
+        dir.cdUp();
+        m_settings.setValue(name, dir.absolutePath());
+    }
+    return ret;
+}
+
+bool MainWindow::saveFile(const QString &filename)
+{
+    vpvl::VMDMotion motion;
+    m_boneMotionModel->saveMotion(&motion);
+    m_faceMotionModel->saveMotion(&motion);
+    size_t size = motion.estimateSize();
+    uint8_t *buffer = new uint8_t[size];
+    motion.save(buffer);
+    QFile file(filename);
+    bool ret = true;
+    if (file.open(QFile::WriteOnly)) {
+        file.write(reinterpret_cast<const char *>(buffer), size);
+        file.close();
+        qDebug("Saved a motion: %s", qPrintable(filename));
+    }
+    else {
+        qWarning("Failed exporting VMD: %s", qPrintable(file.errorString()));
+        ret = false;
+    }
+    delete[] buffer;
+    return ret;
+}
+
+bool MainWindow::maybeSave()
+{
+    if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified()) {
+        QMessageBox::StandardButton ret;
+        ret = QMessageBox::warning(this,
+                                   qAppName(),
+                                   tr("Do you want to save your changes?"),
+                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        switch (ret) {
+        case QMessageBox::Save:
+            return save();
+        case QMessageBox::Cancel:
+            return false;
+        default:
+            return true;
+        }
+    }
+    return true;
 }
 
 void MainWindow::revertSelectedModel()
@@ -184,6 +264,10 @@ void MainWindow::connectWidgets()
             m_tabWidget->interpolationWidget(), SLOT(disable()));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),
             ui->scene, SLOT(seekMotion(float)));
+    connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)),
+            this, SLOT(setWindowModified(bool)));
+    connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)),
+            this, SLOT(setWindowModified(bool)));
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -207,12 +291,14 @@ void MainWindow::on_actionAddAsset_triggered()
 
 void MainWindow::on_actionInsertToAllModels_triggered()
 {
-    ui->scene->insertMotionToAllModels();
+    if (maybeSave())
+        ui->scene->insertMotionToAllModels();
 }
 
 void MainWindow::on_actionInsertToSelectedModel_triggered()
 {
-    ui->scene->insertMotionToSelectedModel();
+    if (maybeSave())
+        ui->scene->insertMotionToSelectedModel();
 }
 
 void MainWindow::on_actionSetCamera_triggered()
@@ -287,12 +373,14 @@ void MainWindow::on_actionRevertSelectedModel_triggered()
 
 void MainWindow::on_actionDeleteSelectedModel_triggered()
 {
-    ui->scene->deleteSelectedModel();
+    if (maybeSave())
+        ui->scene->deleteSelectedModel();
 }
 
 void MainWindow::on_actionSetModelPose_triggered()
 {
-    ui->scene->setModelPose();
+    if (maybeSave())
+        ui->scene->setModelPose();
 }
 
 void MainWindow::on_actionBoneXPositionZero_triggered()
@@ -358,30 +446,10 @@ void MainWindow::on_actionBoneDialog_triggered()
 
 void MainWindow::on_actionExportVMD_triggered()
 {
-    const QString name = "mainWindow/lastVMDDirectory";
-    const QString path = m_settings.value(name).toString();
-    const QString fileName = QFileDialog::getSaveFileName(this,
-                                                          tr("Open VMD file"),
-                                                          path,
-                                                          tr("VMD file (*.vmd)"));
-    if (!fileName.isEmpty()) {
-        vpvl::VMDMotion motion;
-        m_boneMotionModel->saveMotion(&motion);
-        m_faceMotionModel->saveMotion(&motion);
-        size_t size = motion.estimateSize();
-        uint8_t *buffer = new uint8_t[size];
-        motion.save(buffer);
-        QFile file(fileName);
-        if (file.open(QFile::WriteOnly)) {
-            file.write(reinterpret_cast<const char *>(buffer), size);
-            file.close();
-        }
-        else {
-            qWarning("Failed exporting VMD: %s", file.errorString().toUtf8().constData());
-        }
-        delete[] buffer;
-        QDir dir(fileName);
-        dir.cdUp();
-        m_settings.setValue(name, dir.absolutePath());
-    }
+    saveAs();
+}
+
+void MainWindow::on_actionNewMotion_triggered()
+{
+    newFile();
 }

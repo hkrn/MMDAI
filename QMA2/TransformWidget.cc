@@ -68,7 +68,7 @@ static QList<vpvl::Bone *> UISelectBonesBySelection(const Ui::TransformWidget *u
 
 static QList<vpvl::Bone *> UISelectBones(const Ui::TransformWidget *ui)
 {
-    UISelectBonesBySelection(ui, ui->bones->selectionModel()->selection());
+    return UISelectBonesBySelection(ui, ui->bones->selectionModel()->selection());
 }
 
 static QList<vpvl::Face *> UISelectFacesBySelection(const Ui::TransformWidget *ui, const QItemSelection &selection)
@@ -86,7 +86,7 @@ static QList<vpvl::Face *> UISelectFacesBySelection(const Ui::TransformWidget *u
 
 static QList<vpvl::Face *> UISelectFaces(const Ui::TransformWidget *ui)
 {
-    UISelectBonesBySelection(ui, ui->faces->selectionModel()->selection());
+    return UISelectFacesBySelection(ui, ui->faces->selectionModel()->selection());
 }
 
 static void UIToggleBoneButtons(const Ui::TransformWidget *ui, bool movable, bool rotateable)
@@ -205,11 +205,11 @@ void TransformWidget::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-void TransformWidget::on_faces_selectionChanged(const QItemSelection &selection)
+void TransformWidget::on_faces_selectionChanged(QItemSelection /* selection */)
 {
 }
 
-void TransformWidget::on_bones_selectionChanged(const QItemSelection &selection)
+void TransformWidget::on_bones_selectionChanged(QItemSelection /* selection */)
 {
 #if 0
     bool movable = true, rotateable = true;

@@ -89,6 +89,7 @@ public slots:
     void addModel();
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
+    void setEmptyMotion();
     void setModelPose();
     void addAsset();
     void setCamera();
@@ -140,6 +141,7 @@ private:
     vpvl::XModel *addAssetInternal(const QString &baseName, const QDir &dir);
     vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
+    void addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *motion);
     vpvl::VPDPose *setModelPoseInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
     void drawGrid();

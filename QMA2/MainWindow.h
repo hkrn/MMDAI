@@ -35,6 +35,11 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
+    void newFile();
+    bool save();
+    bool saveAs();
+    bool saveFile(const QString &filename);
+    bool maybeSave();
     void selectModel();
     void revertSelectedModel();
     void addModel(vpvl::PMDModel *model);
@@ -76,6 +81,7 @@ private slots:
     void on_actionTabs_triggered();
     void on_actionBoneDialog_triggered();
     void on_actionExportVMD_triggered();
+    void on_actionNewMotion_triggered();
 
 private:
     void connectWidgets();
