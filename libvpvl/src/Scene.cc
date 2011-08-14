@@ -36,10 +36,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <btBulletDynamicsCommon.h>
-
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
+
+#ifndef VPVL_NO_BULLET
+#include <btBulletDynamicsCommon.h>
+#else
+struct btDiscreteDynamicsWorld { int unused; };
+#endif
 
 namespace vpvl
 {
@@ -253,6 +257,7 @@ void Scene::update(float deltaFrame)
         model->updateSkins();
     }
     // Updating world simulation
+#ifndef VPVL_NO_BULLET
     if (m_world) {
         btScalar sec = deltaFrame / kFPS;
         if (sec > 1.0f)
@@ -260,6 +265,7 @@ void Scene::update(float deltaFrame)
         else
             m_world->stepSimulation(sec, m_preferredFPS, 1.0f / m_preferredFPS);
     }
+#endif /* VPVL_NO_BULLET */
     // Updating camera motion
     if (m_cameraMotion) {
         bool reached = false;

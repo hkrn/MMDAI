@@ -43,6 +43,9 @@
 /* use Allegro5 OpenGL extensions instead of GLEW */
 #cmakedefine VPVL_USE_ALLEGRO5
 
+/* Build libvpvl without BulletPhysics except LinearMath */
+#cmakedefine VPVL_NO_BULLET
+
 /* version */
 #define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
 #define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@

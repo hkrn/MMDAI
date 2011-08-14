@@ -36,10 +36,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <btBulletDynamicsCommon.h>
-
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
+
+#ifndef VPVL_NO_BULLET
+#include <btBulletDynamicsCommon.h>
+#else
+struct btDiscreteDynamicsWorld { int unused; };
+#endif
 
 namespace vpvl
 {
@@ -151,6 +155,7 @@ void PMDModel::addMotion(VMDMotion *motion)
 
 void PMDModel::joinWorld(btDiscreteDynamicsWorld *world)
 {
+#ifndef VPVL_NO_BULLET
     if (!world)
         return;
     const uint32_t nRigidBodies = m_rigidBodies.count();
@@ -166,10 +171,12 @@ void PMDModel::joinWorld(btDiscreteDynamicsWorld *world)
     }
     m_enableSimulation = true;
     m_world = world;
+#endif /* VPVL_NO_BULLET */
 }
 
 void PMDModel::leaveWorld(btDiscreteDynamicsWorld *world)
 {
+#ifndef VPVL_NO_BULLET
     if (!world)
         return;
     const uint32_t nRigidBodies = m_rigidBodies.count();
@@ -185,6 +192,7 @@ void PMDModel::leaveWorld(btDiscreteDynamicsWorld *world)
     }
     m_enableSimulation = false;
     m_world = 0;
+#endif /* VPVL_NO_BULLET */
 }
 
 void PMDModel::removeMotion(VMDMotion *motion)

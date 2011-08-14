@@ -36,9 +36,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-
 #include <vpvl/vpvl.h>
 #include <vpvl/gl/Renderer.h>
 
@@ -49,6 +46,13 @@
 #include <errno.h>
 
 #define VPVL_SDL_LOAD_ASSET 0
+
+#ifndef VPVL_NO_BULLET
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#else
+struct btDiscreteDynamicsWorld { int unused; };
+#endif
 
 namespace internal
 {
@@ -171,8 +175,10 @@ public:
     UI(int argc, char **argv)
         : m_surface(0),
           m_world(0),
+      #ifndef VPVL_NO_BULLET
           m_dispatcher(&m_config),
           m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0f, 400.0f), 1024),
+      #endif /* VPVL_NO_BULLET */
           m_delegate(internal::kSystemDir),
           m_renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS),
           m_model(0),
@@ -183,9 +189,11 @@ public:
           m_argc(argc),
           m_argv(argv)
     {
+#ifndef VPVL_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
         m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
         m_world->getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / internal::kFPS);
+#endif /* VPVL_NO_BULLET */
     }
     ~UI() {
         m_renderer.unloadModel(m_model);
@@ -339,10 +347,12 @@ private:
 
     SDL_Surface *m_surface;
     btDiscreteDynamicsWorld *m_world;
+#ifndef VPVL_NO_BULLET
     btDefaultCollisionConfiguration m_config;
     btCollisionDispatcher m_dispatcher;
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
+#endif /* VPVL_NO_BULLET */
     internal::Delegate m_delegate;
     vpvl::gl::Renderer m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */

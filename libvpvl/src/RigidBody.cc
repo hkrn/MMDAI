@@ -36,9 +36,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <btBulletDynamicsCommon.h>
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
+
+#ifndef VPVL_NO_BULLET
+#include <btBulletDynamicsCommon.h>
+#else
+struct btCollisionShape { int unused; };
+struct btRigidBody { int unused; };
+struct btMotionState { int unused; };
+#endif
 
 namespace vpvl
 {
@@ -67,6 +74,7 @@ struct RigidBodyChunk
 
 #pragma pack(pop)
 
+#ifndef VPVL_NO_BULLET
 class AlignedMotionState : public btMotionState
 {
 public:
@@ -123,6 +131,7 @@ private:
     Bone *m_bone;
     btTransform m_boneTransform;
 };
+#endif /* VPVL_NO_BULLET */
 
 size_t RigidBody::stride()
 {
@@ -168,6 +177,7 @@ RigidBody::~RigidBody()
 
 void RigidBody::read(const uint8_t *data, BoneList *bones)
 {
+#ifndef VPVL_NO_BULLET
     RigidBodyChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
@@ -224,15 +234,15 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         my.setEulerZYX(0.0f, -rot[1], 0.0f);
         mz.setEulerZYX(0.0f, 0.0f, rot[2]);
         basis = my * mz * mx;
-#else
+#else  /* VPVL_COORDINATE_OPENGL */
         basis.setEulerZYX(rot[0], rot[1], rot[2]);
-#endif
+#endif /* VPVL_COORDINATE_OPENGL */
         m_transform.setBasis(basis);
 #ifdef VPVL_COORDINATE_OPENGL
         m_transform.setOrigin(btVector3(pos[0], pos[1], -pos[2]));
-#else
+#else  /* VPVL_COORDINATE_OPENGL */
         m_transform.setOrigin(btVector3(pos[0], pos[1], pos[2]));
-#endif
+#endif /* VPVL_COORDINATE_OPENGL */
         btTransform startTransform;
         startTransform.setIdentity();
         startTransform.setOrigin(bone->localTransform().getOrigin());
@@ -268,17 +278,24 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         m_type = type;
         m_invertedTransform = m_transform.inverse();
     }
+#else  /* VPVL_NO_BULLET */
+    (void) data;
+    (void) bones;
+#endif /* VPVL_NO_BULLET */
 }
 
 void RigidBody::transformBone()
 {
+#ifndef VPVL_NO_BULLET
     if (m_type == 0 || m_noBone)
         return;
     m_bone->setLocalTransform(m_body->getCenterOfMassTransform() * m_invertedTransform);
+#endif /* VPVL_NO_BULLET */
 }
 
 void RigidBody::setKinematic(bool value)
 {
+#ifndef VPVL_NO_BULLET
     if (m_type == 0)
         return;
     if (value) {
@@ -292,6 +309,9 @@ void RigidBody::setKinematic(bool value)
         m_body->setMotionState(m_motionState);
         m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
     }
+#else  /* VPVL_NO_BULLET */
+    (void) value;
+#endif /* VPVL_NO_BULLET */
 }
 
 }

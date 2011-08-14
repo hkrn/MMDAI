@@ -39,7 +39,12 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
 
+#ifndef VPVL_NO_BULLET
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
+#else
+struct btGeneric6DofConstraint { int unused; };
+struct btGeneric6DofSpringConstraint { int unused; };
+#endif
 
 namespace vpvl
 {
@@ -82,6 +87,7 @@ Constraint::~Constraint()
 
 void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset)
 {
+#ifndef VPVL_NO_BULLET
     ConstraintChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
@@ -106,15 +112,15 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
         my.setEulerZYX(0.0f, -rot[1], 0.0f);
         mz.setEulerZYX(0.0f, 0.0f, rot[2]);
         basis = my * mz * mx;
-#else
+#else  /* VPVL_COORDINATE_OPENGL */
         basis.setEulerZYX(rot[0], rot[1], rot[2]);
-#endif
+#endif /* VPVL_COORDINATE_OPENGL */
         transform.setBasis(basis);
 #ifdef VPVL_COORDINATE_OPENGL
         transform.setOrigin(btVector3(pos[0], pos[1], -pos[2]) + offset);
-#else
+#else  /* VPVL_COORDINATE_OPENGL */
         transform.setOrigin(btVector3(pos[0], pos[1], pos[2]) + offset);
-#endif
+#endif /* VPVL_COORDINATE_OPENGL */
         btRigidBody *bodyA = bodies[bodyID1]->body(), *bodyB = bodies[bodyID2]->body();
         btTransform transformA = bodyA->getWorldTransform().inverse() * transform,
                 transformB = bodyB->getWorldTransform().inverse() * transform;
@@ -124,12 +130,12 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
         m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], -limitPosTo[2]));
         m_constraint->setAngularUpperLimit(btVector3(-limitRotFrom[0], -limitRotFrom[1], limitRotTo[2]));
         m_constraint->setAngularLowerLimit(btVector3(-limitRotTo[0], -limitRotTo[1], limitRotFrom[2]));
-#else
+#else  /* VPVL_COORDINATE_OPENGL */
         m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], limitPosTo[2]));
         m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], limitPosFrom[2]));
         m_constraint->setAngularUpperLimit(btVector3(limitRotTo[0], limitRotTo[1], limitRotTo[2]));
         m_constraint->setAngularLowerLimit(btVector3(limitRotFrom[0], limitRotFrom[1], limitRotFrom[2]));
-#endif
+#endif /* VPVL_COORDINATE_OPENGL */
 
         for (int i = 0; i < 6; i++) {
             if (i >= 3 || stiffness[i] != 0.0f) {
@@ -138,6 +144,11 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
             }
         }
     }
+#else  /* VPVL_NO_BULLET */
+    (void) data;
+    (void) bodies;
+    (void) offset;
+#endif /* VPVL_NO_BULLET */
 }
 
 } /* namespace vpvl */
