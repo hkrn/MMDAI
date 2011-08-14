@@ -39,6 +39,8 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
 
+#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
+
 namespace vpvl
 {
 

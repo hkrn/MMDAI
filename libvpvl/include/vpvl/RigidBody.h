@@ -41,6 +41,10 @@
 
 #include "vpvl/Bone.h"
 
+class btCollisionShape;
+class btRigidBody;
+class btMotionState;
+
 namespace vpvl
 {
 

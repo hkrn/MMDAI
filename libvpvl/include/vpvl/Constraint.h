@@ -39,8 +39,10 @@
 #ifndef VPVL_CONSTRAINT_H_
 #define VPVL_CONSTRAINT_H_
 
-#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
 #include "vpvl/RigidBody.h"
+
+class btGeneric6DofConstraint;
+class btGeneric6DofSpringConstraint;
 
 namespace vpvl
 {
@@ -71,7 +73,7 @@ public:
         return m_name;
     }
     btGeneric6DofConstraint *constraint() const {
-        return m_constraint;
+        return reinterpret_cast<btGeneric6DofConstraint *>(m_constraint);
     }
 
     void setName(const uint8_t *value) {
