@@ -85,7 +85,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
     memcpy(buffer, data, size);
     buffer[size] = 0;
 
-    btAlignedObjectArray<char *> tokens;
+    Array<char *> tokens;
     char *p = 0, *token = 0, *ptr = buffer + 23;
     internal::stringToken(ptr, ";\r\n\t", &p); // rest
     internal::stringToken(NULL, ";\r\n\t", &p); // file
@@ -93,13 +93,13 @@ bool VPDPose::load(const uint8_t *data, size_t size)
     while ((token = internal::stringToken(NULL, "\r\n\t", &p))) {
         if (internal::stringEquals(token, "//", 2))
             continue;
-        tokens.push_back(token);
+        tokens.add(token);
     }
 
     try {
         VPDPoseInternalParseState state = kNone;
         Bone *bone = 0;
-        size_t nTokens = tokens.size();
+        size_t nTokens = tokens.count();
         for (uint32_t i = 0; i < nTokens; i++) {
             token = tokens[i];
             switch (state) {
@@ -113,7 +113,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
                     bone->name = new uint8_t[len];
                     bone->position.setZero();
                     bone->rotation.setZero();
-                    m_bones.push_back(bone);
+                    m_bones.add(bone);
                     copyBytesSafe(bone->name, reinterpret_cast<const uint8_t *>(s), len);
                     state = kPosition;
                 }
@@ -182,7 +182,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
     }
     delete[] buffer;
 
-    if (expected != m_bones.size())
+    if (expected != m_bones.count())
         return false;
 
     return true;
@@ -190,7 +190,7 @@ bool VPDPose::load(const uint8_t *data, size_t size)
 
 void VPDPose::makePose(vpvl::PMDModel *model)
 {
-    uint32_t nBones = m_bones.size();
+    const uint32_t nBones = m_bones.count();
     for (uint32_t i = 0; i < nBones; i++) {
         Bone *b = m_bones[i];
         vpvl::Bone *bone = model->findBone(b->name);
@@ -206,13 +206,12 @@ void VPDPose::makePose(vpvl::PMDModel *model)
 
 void VPDPose::release()
 {
-    uint32_t size = m_bones.size();
+    uint32_t size = m_bones.count();
     for (uint32_t i = 0; i < size; i++) {
         Bone *bone = m_bones[i];
         delete[] bone->name;
         delete bone;
     }
-    m_bones.clear();
     m_error = kNoError;
 }
 

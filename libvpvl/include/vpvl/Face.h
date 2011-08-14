@@ -39,10 +39,8 @@
 #ifndef VPVL_FACE_H_
 #define VPVL_FACE_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
+#include "vpvl/Common.h"
 #include "vpvl/Vertex.h"
-#include "vpvl/common.h"
 
 namespace vpvl
 {
@@ -120,13 +118,13 @@ private:
     uint8_t m_name[kNameSize];
     uint8_t m_englishName[kNameSize];
     Type m_type;
-    btAlignedObjectArray<FaceVertex *> m_vertices;
+    Array<FaceVertex *> m_vertices;
     float m_weight;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Face)
 };
 
-typedef btAlignedObjectArray<Face*> FaceList;
+typedef Array<Face*> FaceList;
 
 } /* namespace vpvl */
 

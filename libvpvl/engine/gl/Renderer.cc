@@ -69,7 +69,7 @@ struct PMDModelUserData {
 
 struct XModelUserData {
     GLuint listID;
-    btHashMap<btHashString, GLuint> textures;
+    vpvl::Hash<vpvl::HashString, GLuint> textures;
 };
 
 namespace gl
@@ -131,13 +131,13 @@ void Renderer::pickBones(int px, int py, float approx, vpvl::BoneList &pickBones
 {
     btVector3 coordinate;
     const vpvl::BoneList &bones = m_selected->bones();
-    int n = bones.size();
+    const uint32_t n = bones.count();
     getObjectCoordinate(px, py, coordinate);
-    for (int i = 0; i < n; i++) {
+    for (uint32_t i = 0; i < n; i++) {
         vpvl::Bone *bone = bones[i];
         const btVector3 &p = bone->originPosition();
         if (coordinate.distance(p) < approx)
-            pickBones.push_back(bone);
+            pickBones.add(bone);
     }
 }
 
@@ -192,8 +192,8 @@ void Renderer::setLighting()
 
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
 {
-    const vpvl::MaterialList materials = model->materials();
-    const uint32_t nMaterials = materials.size();
+    const vpvl::MaterialList &materials = model->materials();
+    const uint32_t nMaterials = materials.count();
     GLuint textureID = 0;
     vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
     __vpvlPMDModelMaterialPrivate *materialPrivates = new __vpvlPMDModelMaterialPrivate[nMaterials];
@@ -230,11 +230,11 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
     //qDebug("Binding edge indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().size() * model->stride(vpvl::PMDModel::kIndicesStride),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->stride(vpvl::PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
     //qDebug("Binding indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kShadowIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * model->stride(vpvl::PMDModel::kTextureCoordsStride),
+    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->stride(vpvl::PMDModel::kTextureCoordsStride),
                  model->textureCoordsPointer(), GL_STATIC_DRAW);
     //qDebug("Binding texture coordinates to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kModelTexCoords]);
     if (m_delegate->loadToonTexture("toon0.bmp", dir, textureID)) {
@@ -256,8 +256,8 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
 void Renderer::unloadModel(const vpvl::PMDModel *model)
 {
     if (model) {
-        const vpvl::MaterialList materials = model->materials();
-        const uint32_t nMaterials = materials.size();
+        const vpvl::MaterialList &materials = model->materials();
+        const uint32_t nMaterials = materials.count();
         vpvl::PMDModelUserData *userData = model->userData();
         for (uint32_t i = 0; i < nMaterials; i++) {
             __vpvlPMDModelMaterialPrivate &materialPrivate = userData->materials[i];
@@ -283,7 +283,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 #endif
 
     const vpvl::PMDModelUserData *userData = model->userData();
-    size_t stride = model->stride(vpvl::PMDModel::kNormalsStride), vsize = model->vertices().size();
+    size_t stride = model->stride(vpvl::PMDModel::kNormalsStride), vsize = model->vertices().count();
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -336,9 +336,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         hasMultipleSphereMap = true;
     }
 
-    const vpvl::MaterialList materials = model->materials();
+    const vpvl::MaterialList &materials = model->materials();
     const __vpvlPMDModelMaterialPrivate *materialPrivates = userData->materials;
-    const uint32_t nMaterials = materials.size();
+    const uint32_t nMaterials = materials.count();
     btVector4 average, ambient, diffuse, specular;
     uint32_t offset = 0;
     for (uint32_t i = 0; i < nMaterials; i++) {
@@ -513,7 +513,7 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     glDisable(GL_LIGHTING);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * stride, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * stride, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, stride, 0);
     glColor4fv(static_cast<const btScalar *>(color));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
@@ -538,10 +538,10 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     glDisable(GL_CULL_FACE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().size() * stride, model->verticesPointer(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * stride, model->verticesPointer(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, stride, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kShadowIndices]);
-    glDrawElements(GL_TRIANGLES, model->indices().size(), GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -551,8 +551,8 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
 void Renderer::drawModelBones(const vpvl::PMDModel *model)
 {
     float matrix[16];
-    const vpvl::BoneList bones = model->bones();
-    uint32_t nBones = bones.size();
+    const vpvl::BoneList &bones = model->bones();
+    uint32_t nBones = bones.count();
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
@@ -678,23 +678,23 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
 
 static void DrawAsset(const vpvl::XModel *model, const btVector4 &indices, int index)
 {
-    const btAlignedObjectArray<btVector3> &vertices = model->vertices();
-    const btAlignedObjectArray<btVector3> &textureCoords = model->textureCoords();
-    const btAlignedObjectArray<btVector3> &normals = model->normals();
-    const btAlignedObjectArray<btVector4> &colors = model->colors();
+    const Array<btVector3> &vertices = model->vertices();
+    const Array<btVector3> &textureCoords = model->textureCoords();
+    const Array<btVector3> &normals = model->normals();
+    const Array<btVector4> &colors = model->colors();
     const btTransform transform = model->transform();
     const int x = static_cast<const int>(indices[index]);
-    if (textureCoords.size() > x)
+    if (textureCoords.count() > x)
         glTexCoord2fv(textureCoords[x]);
-    else if (textureCoords.size() > 0)
+    else if (textureCoords.count() > 0)
         glTexCoord2f(0, 0);
-    if (colors.size() > x)
+    if (colors.count() > x)
         glColor4fv(colors[x]);
-    else if (colors.size() > 0)
+    else if (colors.count() > 0)
         glColor3f(0, 0, 0);
-    if (normals.size() > x)
+    if (normals.count() > x)
         glNormal3fv(transform.getBasis() * normals[x]);
-    else if (normals.size() > 0)
+    else if (normals.count() > 0)
         glNormal3f(0, 0, 0);
     glVertex3fv(transform * vertices[x] * model->scale());
 }
@@ -710,9 +710,9 @@ void Renderer::loadAsset(vpvl::XModel *model, const std::string &dir)
     glScalef(1.0f, 1.0f, -1.0f);
     glCullFace(GL_FRONT);
 #endif
-    const btAlignedObjectArray<vpvl::XModelFaceIndex> &faces = model->faces();
+    const Array<vpvl::XModelFaceIndex> &faces = model->faces();
     const bool hasMaterials = model->countMatreials() > 0;
-    uint32_t nFaces = faces.size();
+    uint32_t nFaces = faces.count();
     uint32_t prevIndex = -1;
     glEnable(GL_TEXTURE_2D);
     for (uint32_t i = 0; i < nFaces; i++) {
@@ -728,7 +728,7 @@ void Renderer::loadAsset(vpvl::XModel *model, const std::string &dir)
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
             const std::string textureName = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(material->textureName()));
             if (!textureName.empty()) {
-                btHashString key(material->textureName());
+                HashString key(material->textureName());
                 GLuint *textureID = userData->textures[key];
                 if (!textureID) {
                     GLuint value;
@@ -775,7 +775,7 @@ void Renderer::loadAsset(vpvl::XModel *model, const std::string &dir)
 #endif
     glEndList();
     model->setUserData(userData);
-    m_assets.push_back(model);
+    m_assets.add(model);
 }
 
 void Renderer::unloadAsset(const vpvl::XModel *model)
@@ -784,11 +784,10 @@ void Renderer::unloadAsset(const vpvl::XModel *model)
         m_assets.remove(const_cast<vpvl::XModel *>(model));
         vpvl::XModelUserData *userData = model->userData();
         glDeleteLists(userData->listID, 1);
-        btHashMap<btHashString, GLuint> &textures = userData->textures;
-        uint32_t nTextures = textures.size();
+        vpvl::Hash<vpvl::HashString, GLuint> &textures = userData->textures;
+        uint32_t nTextures = textures.count();
         for (uint32_t i = 0; i < nTextures; i++)
-            glDeleteTextures(1, textures.getAtIndex(i));
-        textures.clear();
+            glDeleteTextures(1, textures.value(i));
         delete userData;
     }
 }
@@ -834,7 +833,7 @@ void Renderer::drawSurface()
     glEnable(GL_LIGHTING);
     // render all assets
     // TODO: merge drawing models
-    uint32_t nAssets = m_assets.size();
+    uint32_t nAssets = m_assets.count();
     for (uint32_t i = 0; i < nAssets; i++) {
         drawAsset(m_assets[i]);
     }

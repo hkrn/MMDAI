@@ -39,15 +39,13 @@
 #ifndef VPVL_BASEANIMATION_H_
 #define VPVL_BASEANIMATION_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btQuaternion.h>
-#include <LinearMath/btVector3.h>
+#include "vpvl/Common.h"
 
 namespace vpvl
 {
 
 class BaseKeyFrame;
-typedef btAlignedObjectArray<BaseKeyFrame *> BaseKeyFrameList;
+typedef Array<BaseKeyFrame *> BaseKeyFrameList;
 
 /**
  * @file
@@ -141,7 +139,7 @@ public:
      * @return size of all key frames
      */
     size_t countFrames() const {
-        return m_frames.size();
+        return m_frames.count();
     }
 
     /**

@@ -39,8 +39,6 @@
 #ifndef VPVL_CAMERAKEYFRAME_H_
 #define VPVL_CAMERAKEYFRAME_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
 #include "vpvl/BaseKeyFrame.h"
 
 namespace vpvl

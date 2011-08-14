@@ -35,7 +35,7 @@ public:
         m_rotation.setEulerZYX(vpvl::radian(angle.z()), vpvl::radian(angle.y()), vpvl::radian(angle.x()));
     }
     void setBone(const vpvl::BoneList &bones) {
-        m_bones.copyFromArray(bones);
+        m_bones.copy(bones);
     }
     void setHandleMode(HandleMode value) {
         m_mode = value;
@@ -47,18 +47,18 @@ protected:
     }
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
         QPointF current = event->pos(), pos = current - m_prev;
-        if (m_bones.size() > 0)
+        if (m_bones.count() > 0)
             moveBones(pos);
         m_prev = current;
     }
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
         QPointF current = event->pos(), pos = current - m_prev;
-        if (m_bones.size())
+        if (m_bones.count())
             moveBones(pos);
         m_prev = current;
     }
     void translateBones(const btVector3 &v) {
-        uint32_t nBones = m_bones.size();
+        uint32_t nBones = m_bones.count();
         switch (handleMode()) {
         case kView: {
             for (uint32_t i = 0; i < nBones; i++) {
@@ -190,7 +190,7 @@ void HandleWidget::setBone(vpvl::Bone *value)
 {
     if (value) {
         m_bones.clear();
-        m_bones.push_back(value);
+        m_bones.add(value);
         m_xHandle->setBone(m_bones);
         m_yHandle->setBone(m_bones);
         m_zHandle->setBone(m_bones);

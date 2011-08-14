@@ -39,8 +39,7 @@
 #ifndef VPVL_MATERIAL_H_
 #define VPVL_MATERIAL_H_
 
-#include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {
@@ -165,7 +164,7 @@ private:
     VPVL_DISABLE_COPY_AND_ASSIGN(Material)
 };
 
-typedef btAlignedObjectArray<Material*> MaterialList;
+typedef Array<Material*> MaterialList;
 
 } /* namespace vpvl */
 

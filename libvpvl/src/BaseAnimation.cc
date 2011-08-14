@@ -101,18 +101,18 @@ void BaseAnimation::reset()
 
 void BaseAnimation::addFrame(BaseKeyFrame *frame)
 {
-    m_frames.push_back(frame);
+    m_frames.add(frame);
     if (m_automaticRefresh)
         refresh();
 }
 
 void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
 {
-    const uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.count();
     const size_t len = strlen(reinterpret_cast<const char *>(value));
     BaseKeyFrame *frameToRemove = 0;
     for (uint32_t i = 0; i < nFrames; i++) {
-        BaseKeyFrame *frame = m_frames.at(i);
+        BaseKeyFrame *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex && internal::stringEquals(value, frame->name(), len)) {
             frameToRemove = frame;
             break;
@@ -127,14 +127,14 @@ void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
 
 void BaseAnimation::deleteFrames(int frameIndex)
 {
-    const uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.count();
     BaseKeyFrameList framesToRemove;
     for (uint32_t i = 0; i < nFrames; i++) {
-        BaseKeyFrame *frame = m_frames.at(i);
+        BaseKeyFrame *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex)
-            framesToRemove.push_back(frame);
+            framesToRemove.add(frame);
     }
-    const uint32_t nFramesToRemove = framesToRemove.size();
+    const uint32_t nFramesToRemove = framesToRemove.count();
     if (nFramesToRemove) {
         for (uint32_t i = 0; i < nFramesToRemove; i++)
             m_frames.remove(framesToRemove[i]);

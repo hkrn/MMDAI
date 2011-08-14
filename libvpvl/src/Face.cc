@@ -93,7 +93,7 @@ Face::Face()
 Face::~Face()
 {
     internal::zerofill(m_name, sizeof(m_name));
-    internal::clearArray(m_vertices);
+    m_vertices.clear();
     m_type = kOther;
     m_weight = 0.0f;
 }
@@ -121,15 +121,15 @@ void Face::read(const uint8_t *data)
             vertex->position.setValue(pos[0], pos[1], pos[2]);
 #endif
             ptr += sizeof(vc);
-            m_vertices.push_back(vertex);
+            m_vertices.add(vertex);
         }
     }
 }
 
 void Face::convertIndices(const Face *base)
 {
-    const uint32_t nvertices = m_vertices.size();
-    const uint32_t baseNVertices = base->m_vertices.size();
+    const uint32_t nvertices = m_vertices.count();
+    const uint32_t baseNVertices = base->m_vertices.count();
     if (m_type != kBase) {
         for (uint32_t i = 0; i < nvertices; i++) {
             uint32_t relID = m_vertices[i]->id;
@@ -148,8 +148,8 @@ void Face::convertIndices(const Face *base)
 
 void Face::setVertices(VertexList &vertices)
 {
-    const uint32_t nv = vertices.size();
-    const uint32_t nfv = m_vertices.size();
+    const uint32_t nv = vertices.count();
+    const uint32_t nfv = m_vertices.count();
     for (uint32_t i = 0; i < nfv; i++) {
         const FaceVertex *fv = m_vertices[i];
         const uint32_t id = fv->id;
@@ -160,8 +160,8 @@ void Face::setVertices(VertexList &vertices)
 
 void Face::setVertices(VertexList &vertices, float rate)
 {
-    const uint32_t nv = vertices.size();
-    const uint32_t nfv = m_vertices.size();
+    const uint32_t nv = vertices.count();
+    const uint32_t nfv = m_vertices.count();
     for (uint32_t i = 0; i < nfv; i++) {
         const FaceVertex *fv = m_vertices[i];
         const uint32_t id = fv->id;

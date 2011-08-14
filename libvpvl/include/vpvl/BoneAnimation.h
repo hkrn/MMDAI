@@ -39,7 +39,6 @@
 #ifndef VPVL_BONEANIMATION_H_
 #define VPVL_BONEANIMATION_H_
 
-#include <LinearMath/btHashMap.h>
 #include "vpvl/BaseAnimation.h"
 
 namespace vpvl
@@ -48,7 +47,7 @@ namespace vpvl
 class Bone;
 class BoneKeyFrame;
 class PMDModel;
-typedef btAlignedObjectArray<BoneKeyFrame *> BoneKeyFrameList;
+typedef Array<BoneKeyFrame *> BoneKeyFrameList;
 typedef struct BoneAnimationInternal BoneAnimationInternal;
 
 /**
@@ -131,7 +130,7 @@ private:
     void buildInternalNodes(vpvl::PMDModel *model);
     void calculateFrames(float frameAt, BoneAnimationInternal *node);
 
-    btHashMap<btHashString, BoneAnimationInternal *> m_name2node;
+    Hash<HashString, BoneAnimationInternal *> m_name2node;
     PMDModel *m_model;
     bool m_hasCenterBoneAnimation;
 

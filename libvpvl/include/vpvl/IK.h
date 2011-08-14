@@ -73,7 +73,7 @@ public:
     void solve();
 
     bool isSimulated() const {
-        return m_bones.size() > 0 ? m_bones[0]->isSimulated() : false;
+        return m_bones.count() > 0 ? m_bones[0]->isSimulated() : false;
     }
 
 private:
@@ -86,7 +86,7 @@ private:
     VPVL_DISABLE_COPY_AND_ASSIGN(IK)
 };
 
-typedef btAlignedObjectArray<IK*> IKList;
+typedef Array<IK*> IKList;
 
 } /* namespace vpvl */
 

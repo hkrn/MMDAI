@@ -93,7 +93,7 @@ void FaceWidget::setPMDModel(vpvl::PMDModel *model)
     m_others->clear();
     if (model) {
         const vpvl::FaceList &faces = m_faceMotionModel->selectedModel()->facesForUI();
-        const uint32_t nFaces = faces.size();
+        const uint32_t nFaces = faces.count();
         for (uint32_t i = 0; i < nFaces; i++) {
             vpvl::Face *face = faces[i];
             const uint8_t *name = face->name();

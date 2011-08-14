@@ -37,10 +37,7 @@
 #ifndef VPVL_XMATERIAL_H_
 #define VPVL_XMATERIAL_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
-
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {

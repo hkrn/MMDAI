@@ -39,7 +39,7 @@
 #ifndef VPVL_BASEKEYFRAME_H_
 #define VPVL_BASEKEYFRAME_H_
 
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {

@@ -39,7 +39,6 @@
 #ifndef VPVL_FACEANIMATION_H_
 #define VPVL_FACEANIMATION_H_
 
-#include <LinearMath/btHashMap.h>
 #include "vpvl/BaseAnimation.h"
 
 namespace vpvl
@@ -49,7 +48,7 @@ class Face;
 class FaceKeyFrame;
 class PMDModel;
 typedef struct FaceAnimationInternal FaceAnimationInternal;
-typedef btAlignedObjectArray<FaceKeyFrame *> FaceKeyFrameList;
+typedef Array<FaceKeyFrame *> FaceKeyFrameList;
 
 /**
  * @file
@@ -126,7 +125,7 @@ private:
     void buildInternalNodes(vpvl::PMDModel *model);
     void calculateFrames(float frameAt, FaceAnimationInternal *node);
 
-    btHashMap<btHashString, FaceAnimationInternal *> m_name2node;
+    Hash<HashString, FaceAnimationInternal *> m_name2node;
     PMDModel *m_model;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(FaceAnimation)

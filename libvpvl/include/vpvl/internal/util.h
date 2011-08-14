@@ -40,8 +40,6 @@
 #define VPVL_INTERNAL_UTIL_H_
 
 #include "vpvl/config.h"
-#include "LinearMath/btAlignedObjectArray.h"
-#include "LinearMath/btHashMap.h"
 #include "LinearMath/btVector3.h"
 #include "LinearMath/btQuaternion.h"
 #include <string.h>
@@ -193,33 +191,6 @@ inline void zerofill(void *ptr, size_t size)
 #else
     memset(ptr, 0, size);
 #endif
-}
-
-template<typename T>
-inline void clearArray(btAlignedObjectArray<T*> &a)
-{
-    uint32_t size = a.size();
-    for (uint32_t i = 0; i < size; i++)
-        delete a[i];
-    a.clear();
-}
-
-template<typename K, typename V>
-inline void clearHash(btHashMap<K, V*> &a)
-{
-    uint32_t nNodes = a.size();
-    for (uint32_t i = 0; i < nNodes; i++)
-        delete *a.getAtIndex(i);
-    a.clear();
-}
-
-template<typename T>
-inline void clearArrayOfArray(btAlignedObjectArray<T*> &a)
-{
-    uint32_t size = a.size();
-    for (uint32_t i = 0; i < size; i++)
-        delete[] a[i];
-    a.clear();
 }
 
 }

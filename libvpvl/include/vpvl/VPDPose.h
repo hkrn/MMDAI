@@ -37,9 +37,7 @@
 #ifndef VPVL_VPDPOSE_H_
 #define VPVL_VPDPOSE_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {
@@ -64,7 +62,7 @@ public:
         btVector3 position;
         btVector4 rotation;
     };
-    typedef btAlignedObjectArray<Bone *> BoneList;
+    typedef Array<Bone *> BoneList;
 
     /**
       * Type of parsing errors.

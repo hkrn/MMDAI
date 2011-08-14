@@ -96,7 +96,6 @@ IK::IK()
 
 IK::~IK()
 {
-    m_bones.clear();
     m_destination = 0;
     m_target = 0;
     m_iteration = 0;
@@ -113,18 +112,18 @@ void IK::read(const uint8_t *data, BoneList *bones)
     uint16_t niterations = chunk.niterations;
     float angleConstraint = chunk.angleConstraint;
 
-    btAlignedObjectArray<int16_t> boneIKs;
-    int nbones = bones->size();
+    Array<int16_t> boneIKs;
+    int nbones = bones->count();
     uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(chunk));
     for (int i = 0; i < nlinks; i++) {
         int16_t boneID = *reinterpret_cast<int16_t *>(ptr);
         if (boneID >= 0 && boneID < nbones)
-            boneIKs.push_back(boneID);
+            boneIKs.add(boneID);
         ptr += sizeof(int16_t);
     }
 
     if (destBoneID >= 0 && destBoneID < nbones && targetBoneID >= 0 && targetBoneID < nbones) {
-        nlinks = boneIKs.size();
+        nlinks = boneIKs.count();
         m_destination = bones->at(destBoneID);
         m_target = bones->at(targetBoneID);
         m_iteration = niterations;
@@ -132,7 +131,7 @@ void IK::read(const uint8_t *data, BoneList *bones)
         m_bones.reserve(nlinks);
         for (int i = 0; i < nlinks; i++) {
             Bone *bone = bones->at(boneIKs[i]);
-            m_bones.push_back(bone);
+            m_bones.add(bone);
         }
     }
 }
@@ -141,7 +140,7 @@ void IK::solve()
 {
     const btVector3 destPosition = m_destination->localTransform().getOrigin();
     const btVector3 xAxis(1.0f, 0.0f, 0.0f);
-    int nbones = m_bones.size();
+    int nbones = m_bones.count();
     for (int i = nbones - 1; i >= 0; i--)
         m_bones[i]->updateTransform();
     m_target->updateTransform();

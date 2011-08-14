@@ -40,8 +40,6 @@
 #define VPVL_CONSTRAINT_H_
 
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
 #include "vpvl/RigidBody.h"
 
 namespace vpvl
@@ -87,7 +85,7 @@ private:
     VPVL_DISABLE_COPY_AND_ASSIGN(Constraint)
 };
 
-typedef btAlignedObjectArray<Constraint*> ConstraintList;
+typedef Array<Constraint*> ConstraintList;
 
 } /* namespace vpvl */
 

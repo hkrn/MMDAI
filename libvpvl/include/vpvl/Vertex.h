@@ -39,9 +39,7 @@
 #ifndef VPVL_VERTEX_H_
 #define VPVL_VERTEX_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {
@@ -123,8 +121,8 @@ private:
     VPVL_DISABLE_COPY_AND_ASSIGN(Vertex)
 };
 
-typedef btAlignedObjectArray<Vertex*> VertexList;
-typedef btAlignedObjectArray<uint16_t> IndexList;
+typedef Array<Vertex*> VertexList;
+typedef Array<uint16_t> IndexList;
 
 } /* namespace vpvl */
 

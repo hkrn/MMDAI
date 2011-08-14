@@ -101,7 +101,6 @@ Scene::~Scene()
 {
     internal::zerofill(m_projection, sizeof(m_projection));
     setWorld(0);
-    m_models.clear();
     m_cameraMotion = 0;
     m_currentRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
@@ -127,7 +126,7 @@ Scene::~Scene()
 
 void Scene::addModel(PMDModel *model)
 {
-    m_models.push_back(model);
+    m_models.add(model);
     sortRenderingOrder();
     model->setLightDirection(m_lightDirection);
     model->joinWorld(m_world);
@@ -135,7 +134,7 @@ void Scene::addModel(PMDModel *model)
 
 PMDModel **Scene::getRenderingOrder(size_t &size)
 {
-    size = m_models.size();
+    size = m_models.count();
     return &m_models[0];
 }
 
@@ -164,7 +163,7 @@ void Scene::resetCamera()
 void Scene::seek(float frameIndex)
 {
     sortRenderingOrder();
-    const uint32_t nModels = m_models.size();
+    const uint32_t nModels = m_models.count();
     // Updating model
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_models[i];
@@ -204,7 +203,7 @@ void Scene::setLight(const btVector4 &color, const btVector4 &direction)
 {
     m_lightColor = color;
     m_lightDirection = direction;
-    uint32_t nModels = m_models.size();
+    const uint32_t nModels = m_models.count();
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_models[i];
         model->setLightDirection(direction);
@@ -224,7 +223,7 @@ void Scene::setViewMove(int viewMoveTime)
 
 void Scene::setWorld(::btDiscreteDynamicsWorld *world)
 {
-    const uint32_t nModels = m_models.size();
+    const uint32_t nModels = m_models.count();
     // Remove rigid bodies and constraints from the current world
     // before setting the new world
     if (m_world) {
@@ -245,7 +244,7 @@ void Scene::setWorld(::btDiscreteDynamicsWorld *world)
 void Scene::update(float deltaFrame)
 {
     sortRenderingOrder();
-    const uint32_t nModels = m_models.size();
+    const uint32_t nModels = m_models.count();
     // Updating model
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_models[i];
@@ -324,7 +323,7 @@ void Scene::updateProjection(int ellapsedTimeForMove)
 
 void Scene::sortRenderingOrder()
 {
-    m_models.quickSort(SceneModelDistancePredication(m_modelview));
+    m_models.sort(SceneModelDistancePredication(m_modelview));
 }
 
 void Scene::updateModelViewMatrix()

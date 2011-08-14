@@ -87,7 +87,7 @@ CameraAnimation::CameraAnimation()
 
 CameraAnimation::~CameraAnimation()
 {
-    internal::clearArray(m_frames);
+    m_frames.clear();
     m_position.setZero();
     m_angle.setZero();
     m_distance = 0.0f;
@@ -104,16 +104,16 @@ void CameraAnimation::read(const uint8_t *data, uint32_t size)
             CameraKeyFrame *frame = new CameraKeyFrame();
             frame->read(ptr);
             ptr += frame->stride();
-            m_frames.push_back(frame);
+            m_frames.add(frame);
         }
-        m_frames.quickSort(CameraAnimationKeyFramePredication());
+        m_frames.sort(CameraAnimationKeyFramePredication());
         m_maxFrame = m_frames[size - 1]->frameIndex();
     }
 }
 
 void CameraAnimation::seek(float frameAt)
 {
-    const uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.count();
     CameraKeyFrame *lastKeyFrame = static_cast<CameraKeyFrame *>(m_frames[nFrames - 1]);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->frameIndex())

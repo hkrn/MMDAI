@@ -96,8 +96,8 @@ BoneAnimation::BoneAnimation()
 
 BoneAnimation::~BoneAnimation()
 {
-    internal::clearArray(m_frames);
-    internal::clearHash(m_name2node);
+    m_frames.clear();
+    m_name2node.clear();
     m_model = 0;
     m_hasCenterBoneAnimation = false;
 }
@@ -110,16 +110,16 @@ void BoneAnimation::read(const uint8_t *data, uint32_t size)
         BoneKeyFrame *frame = new BoneKeyFrame();
         frame->read(ptr);
         ptr += frame->stride();
-        m_frames.push_back(frame);
+        m_frames.add(frame);
     }
 }
 
 void BoneAnimation::seek(float frameAt)
 {
-    const uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
-        if (m_ignoreSingleAnimation && node->keyFrames.size() <= 1)
+        BoneAnimationInternal *node = *m_name2node.value(i);
+        if (m_ignoreSingleAnimation && node->keyFrames.count() <= 1)
             continue;
         calculateFrames(frameAt, node);
         Bone *bone = node->bone;
@@ -136,9 +136,9 @@ void BoneAnimation::seek(float frameAt)
 
 void BoneAnimation::takeSnap(const btVector3 &center)
 {
-    const uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
+        BoneAnimationInternal *node = *m_name2node.value(i);
         Bone *bone = node->bone;
         node->snapPosition = bone->position();
         if (bone->hasMotionIndependency())
@@ -158,23 +158,23 @@ void BoneAnimation::attachModel(PMDModel *model)
 void BoneAnimation::refresh()
 {
     if (m_model) {
-        internal::clearHash(m_name2node);
+        m_name2node.clear();
         buildInternalNodes(m_model);
     }
 }
 
 void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
 {
-    const uint32_t nFrames = m_frames.size();
+    const uint32_t nFrames = m_frames.count();
     const uint8_t *centerBoneName = Bone::centerBoneName();
     const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
     for (uint32_t i = 0; i < nFrames; i++) {
         BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(m_frames.at(i));
-        btHashString name(reinterpret_cast<const char *>(frame->name()));
-        BoneAnimationInternal **ptr = m_name2node.find(name), *node;
+        HashString name(reinterpret_cast<const char *>(frame->name()));
+        BoneAnimationInternal **ptr = m_name2node[name], *node;
         if (ptr) {
             node = *ptr;
-            node->keyFrames.push_back(frame);
+            node->keyFrames.add(frame);
             if (internal::stringEquals(frame->name(), centerBoneName, len))
                 m_hasCenterBoneAnimation = true;
         }
@@ -182,7 +182,7 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
             Bone *bone = model->findBone(frame->name());
             if (bone) {
                 node = new BoneAnimationInternal();
-                node->keyFrames.push_back(frame);
+                node->keyFrames.add(frame);
                 node->bone = bone;
                 node->lastIndex = 0;
                 node->position.setZero();
@@ -194,19 +194,19 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
         }
     }
 
-    const uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
+        BoneAnimationInternal *node = *m_name2node.value(i);
         BoneKeyFrameList &frames = node->keyFrames;
-        frames.quickSort(BoneAnimationKeyFramePredication());
-        btSetMax(m_maxFrame, frames[frames.size() - 1]->frameIndex());
+        frames.sort(BoneAnimationKeyFramePredication());
+        btSetMax(m_maxFrame, frames[frames.count() - 1]->frameIndex());
     }
 }
 
 void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
 {
     BoneKeyFrameList &kframes = node->keyFrames;
-    const uint32_t nFrames = kframes.size();
+    const uint32_t nFrames = kframes.count();
     BoneKeyFrame *lastKeyFrame = kframes[nFrames - 1];
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->frameIndex())
@@ -312,9 +312,9 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
 void BoneAnimation::reset()
 {
     BaseAnimation::reset();
-    const uint32_t nNodes = m_name2node.size();
+    const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.getAtIndex(i);
+        BoneAnimationInternal *node = *m_name2node.value(i);
         node->lastIndex = 0;
     }
 }

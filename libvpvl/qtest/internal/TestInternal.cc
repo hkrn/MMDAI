@@ -138,18 +138,18 @@ void TestInternal::zerofill()
 
 void TestInternal::clearAll()
 {
-    btAlignedObjectArray<int *> array;
-    array.push_back(new int(1));
-    array.push_back(new int(2));
-    array.push_back(new int(3));
-    vpvl::internal::clearArray(array);
-    QCOMPARE(array.size(), 0);
-    btHashMap<btHashString, int*> hash;
-    hash.insert(btHashString("foo"), new int(1));
-    hash.insert(btHashString("bar"), new int(2));
-    hash.insert(btHashString("baz"), new int(3));
-    vpvl::internal::clearHash(hash);
-    QCOMPARE(hash.size(), 0);
+    vpvl::Array<int *> array;
+    array.add(new int(1));
+    array.add(new int(2));
+    array.add(new int(3));
+    array.clear();
+    QCOMPARE(array.count(), uint32_t(0));
+    vpvl::Hash<vpvl::HashString, int*> hash;
+    hash.insert(vpvl::HashString("foo"), new int(1));
+    hash.insert(vpvl::HashString("bar"), new int(2));
+    hash.insert(vpvl::HashString("baz"), new int(3));
+    hash.clear();
+    QCOMPARE(hash.count(), uint32_t(0));
 }
 
 void TestInternal::version()

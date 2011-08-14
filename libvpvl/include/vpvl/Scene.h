@@ -39,10 +39,7 @@
 #ifndef VPVL_SCENE_H_
 #define VPVL_SCENE_H_
 
-#include <LinearMath/btHashMap.h>
-#include <LinearMath/btTransform.h>
-#include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 class btDiscreteDynamicsWorld;
 
@@ -145,7 +142,7 @@ private:
     bool updateFovy(int ellapsedTimeForMove);
 
     ::btDiscreteDynamicsWorld *m_world;
-    btAlignedObjectArray<PMDModel *> m_models;
+    Array<PMDModel *> m_models;
     VMDMotion *m_cameraMotion;
     btTransform m_modelview;
     btQuaternion m_currentRotation;

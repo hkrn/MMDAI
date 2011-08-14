@@ -59,6 +59,12 @@ typedef unsigned int uint32_t;
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include <LinearMath/btAlignedObjectArray.h>
+#include <LinearMath/btHashMap.h>
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btTransform.h>
+#include <LinearMath/btVector3.h>
+
 #if defined (WIN32)
   #if defined(vpvl_EXPORTS)
     #define VPVL_EXPORT __declspec(dllexport)
@@ -69,8 +75,106 @@ typedef unsigned int uint32_t;
  #define VPVL_EXPORT
 #endif
 
+#define VPVL_DISABLE_COPY_AND_ASSIGN(TypeName) \
+    TypeName(const TypeName &); \
+    void operator=(const TypeName &);
+
 namespace vpvl
 {
+
+template<typename T>
+class Array
+{
+public:
+    Array() {
+    }
+    ~Array() {
+    }
+
+    void add(const T &item) {
+        m_values.push_back(item);
+    }
+    const T &at(uint32_t i) const {
+        return m_values.at(i);
+    }
+    T &at(uint32_t i) {
+        return m_values.at(i);
+    }
+    void clear() {
+        uint32_t size = m_values.size();
+        for (uint32_t i = 0; i < size; i++)
+            delete m_values[i];
+        m_values.clear();
+    }
+    void clearArray() {
+        uint32_t size = m_values.size();
+        for (uint32_t i = 0; i < size; i++)
+            delete[] m_values[i];
+        m_values.clear();
+    }
+    void copy(const Array &items) {
+        m_values.copyFromArray(items.m_values);
+    }
+    uint32_t count() const {
+        return m_values.size();
+    }
+    void remove(const T &item) {
+        m_values.remove(item);
+    }
+    void reserve(uint32_t size) {
+        m_values.reserve(size);
+    }
+    template <typename Comparable>
+    void sort(Comparable comparable) {
+        m_values.quickSort(comparable);
+    }
+    const T &operator[](uint32_t i) const {
+        return m_values[i];
+    }
+    T &operator[](uint32_t i) {
+        return m_values[i];
+    }
+
+private:
+    btAlignedObjectArray<T> m_values;
+    VPVL_DISABLE_COPY_AND_ASSIGN(Array)
+};
+
+template<typename K, typename V>
+class Hash
+{
+public:
+    Hash() {
+    }
+    ~Hash() {
+    }
+
+    void clear() {
+        uint32_t nNodes = m_values.size();
+        for (uint32_t i = 0; i < nNodes; i++)
+            delete *m_values.getAtIndex(i);
+        m_values.clear();
+    }
+    uint32_t count() const {
+        return m_values.size();
+    }
+    const V *find(const K &key) const {
+        return m_values.find(key);
+    }
+    void insert(const K &key, const V &value) {
+        m_values.insert(key, value);
+    }
+    const V *value(uint32_t index) const {
+        return m_values.getAtIndex(index);
+    }
+    V *operator[](const K &key) {
+        return m_values[key];
+    }
+
+private:
+    btHashMap<K, V> m_values;
+};
+typedef btHashString HashString;
 
 VPVL_EXPORT static const float kPI = 3.14159265358979323846f;
 
@@ -133,9 +237,5 @@ VPVL_EXPORT inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size
 }
 
 }
-
-#define VPVL_DISABLE_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName &); \
-    void operator=(const TypeName &);
 
 #endif

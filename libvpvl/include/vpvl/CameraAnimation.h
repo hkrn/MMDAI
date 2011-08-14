@@ -45,7 +45,7 @@ namespace vpvl
 {
 
 class CameraKeyFrame;
-typedef btAlignedObjectArray<CameraKeyFrame *> CameraKeyFrameList;
+typedef Array<CameraKeyFrame *> CameraKeyFrameList;
 
 /**
  * @file

@@ -23,9 +23,9 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
-        const vpvl::VPDPose::BoneList boneFrames = pose->bones();
+        const vpvl::VPDPose::BoneList &boneFrames = pose->bones();
         vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
-        uint32_t nBoneFrames = boneFrames.size();
+        uint32_t nBoneFrames = boneFrames.count();
         for (uint32_t i = 0; i < nBoneFrames; i++) {
             vpvl::VPDPose::Bone *frame = boneFrames[i];
             const uint8_t *name = frame->name;
@@ -101,8 +101,8 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
     m_keys.clear();
     m_bones.clear();
     if (model) {
-        vpvl::BoneList bones = model->bones();
-        uint32_t nBones = bones.size();
+        const vpvl::BoneList &bones = model->bones();
+        uint32_t nBones = bones.count();
         for (uint32_t i = 0; i < nBones; i++) {
             vpvl::Bone *bone = bones.at(i);
             if (bone->isVisible()) {

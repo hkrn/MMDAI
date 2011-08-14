@@ -39,8 +39,6 @@
 #ifndef VPVL_PMDMODEL_H_
 #define VPVL_PMDMODEL_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btHashMap.h>
 #include "vpvl/Bone.h"
 #include "vpvl/Constraint.h"
 #include "vpvl/Face.h"
@@ -232,10 +230,10 @@ public:
     const FaceList &facesForUI() const {
         return m_facesForUI;
     }
-    const btAlignedObjectArray<uint8_t *> &boneCategoryNames() const {
+    const Array<uint8_t *> &boneCategoryNames() const {
         return m_boneCategoryNames;
     }
-    const btAlignedObjectArray<BoneList> &bonesForUI() const {
+    const Array<BoneList *> &bonesForUI() const {
         return m_bonesForUI;
     }
     const RigidBodyList &rigidBodies() const {
@@ -271,11 +269,13 @@ public:
         return m_userData;
     }
     Bone *findBone(const uint8_t *name) const {
-        Bone **ptr = const_cast<Bone **>(m_name2bone.find(btHashString(reinterpret_cast<const char *>(name))));
+        const HashString key(reinterpret_cast<const char *>(name));
+        Bone **ptr = const_cast<Bone **>(m_name2bone.find(key));
         return ptr ? *ptr : 0;
     }
     Face *findFace(const uint8_t *name) const {
-        Face **ptr = const_cast<Face **>(m_name2face.find(btHashString(reinterpret_cast<const char *>(name))));
+        const HashString key(reinterpret_cast<const char *>(name));
+        Face **ptr = const_cast<Face **>(m_name2face.find(key));
         return ptr ? *ptr : 0;
     }
     Error error() const {
@@ -366,18 +366,18 @@ private:
     ConstraintList m_constraints;
     Bone m_rootBone;
     Face *m_baseFace;
-    btHashMap<btHashString, Bone *> m_name2bone;
-    btHashMap<btHashString, Face *> m_name2face;
-    btAlignedObjectArray<VMDMotion *> m_motions;
-    btAlignedObjectArray<uint8_t *> m_boneCategoryNames;
-    btAlignedObjectArray<btTransform> m_skinningTransform;
-    btAlignedObjectArray<btVector3> m_edgeVertices;
-    btAlignedObjectArray<btVector3> m_toonTextureCoords;
-    btAlignedObjectArray<btVector3> m_shadowTextureCoords;
-    btAlignedObjectArray<BoneList> m_bonesForUI;
+    Hash<HashString, Bone *> m_name2bone;
+    Hash<HashString, Face *> m_name2face;
+    Array<VMDMotion *> m_motions;
+    Array<uint8_t *> m_boneCategoryNames;
+    Array<btTransform> m_skinningTransform;
+    Array<btVector3> m_edgeVertices;
+    Array<btVector3> m_toonTextureCoords;
+    Array<btVector3> m_shadowTextureCoords;
+    Array<BoneList *> m_bonesForUI;
     BoneList m_rotatedBones;
     Bone **m_orderedBones;
-    btAlignedObjectArray<bool> m_isIKSimulated;
+    Array<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
     ::btDiscreteDynamicsWorld *m_world;
     PMDModelUserData *m_userData;

@@ -39,9 +39,6 @@
 #ifndef VPVL_RIGIDBODY_H_
 #define VPVL_RIGIDBODY_H_
 
-#include <BulletDynamics/Dynamics/btRigidBody.h>
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btTransform.h>
 #include "vpvl/Bone.h"
 
 namespace vpvl
@@ -105,7 +102,7 @@ private:
     VPVL_DISABLE_COPY_AND_ASSIGN(RigidBody)
 };
 
-typedef btAlignedObjectArray<RigidBody*> RigidBodyList;
+typedef Array<RigidBody*> RigidBodyList;
 
 } /* namespace vpvl */
 

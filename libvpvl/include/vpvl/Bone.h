@@ -39,17 +39,13 @@
 #ifndef VPVL_BONE_H_
 #define VPVL_BONE_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btQuaternion.h>
-#include <LinearMath/btTransform.h>
-#include <LinearMath/btVector3.h>
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {
 
 class Bone;
-typedef btAlignedObjectArray<Bone*> BoneList;
+typedef Array<Bone*> BoneList;
 
 /**
  * @file

@@ -50,13 +50,13 @@ void TestPMDModel::parseFile()
         vpvl::PMDModel::DataInfo result;
         QVERIFY(model.preparse(data, size, result));
         QVERIFY(model.load(data, size));
-        QCOMPARE(result.verticesCount, size_t(model.vertices().size()));
-        QCOMPARE(result.materialsCount, size_t(model.materials().size()));
-        QCOMPARE(result.bonesCount, size_t(model.bones().size()));
-        QCOMPARE(result.IKsCount, size_t(model.IKs().size()));
-        QCOMPARE(result.facesCount, size_t(model.faces().size()));
-        QCOMPARE(result.rigidBodiesCount, size_t(model.rigidBodies().size()));
-        QCOMPARE(result.constranitsCount, size_t(model.constraints().size()));
+        QCOMPARE(result.verticesCount, size_t(model.vertices().count()));
+        QCOMPARE(result.materialsCount, size_t(model.materials().count()));
+        QCOMPARE(result.bonesCount, size_t(model.bones().count()));
+        QCOMPARE(result.IKsCount, size_t(model.IKs().count()));
+        QCOMPARE(result.facesCount, size_t(model.faces().count()));
+        QCOMPARE(result.rigidBodiesCount, size_t(model.rigidBodies().count()));
+        QCOMPARE(result.constranitsCount, size_t(model.constraints().count()));
         QCOMPARE(reinterpret_cast<const char *>(model.englishName()), "Miku Hatsune");
         QCOMPARE(model.error(), vpvl::PMDModel::kNoError);
     }
@@ -111,12 +111,12 @@ void TestPMDModel::parseConstraint()
     QCOMPARE(size_t(bytes.size()), vpvl::Constraint::stride());
     vpvl::Constraint constaint;
     vpvl::RigidBodyList bodies;
-    bodies.push_back(new vpvl::RigidBody());
-    bodies.push_back(new vpvl::RigidBody());
+    bodies.add(new vpvl::RigidBody());
+    bodies.add(new vpvl::RigidBody());
     btVector3 offset(1.0f, 2.0f, 3.0f);
     constaint.read(reinterpret_cast<const uint8_t *>(bytes.constData()), bodies, offset);
     QCOMPARE(QString(reinterpret_cast<const char *>(constaint.name())), QString(kTestString));
-    vpvl::internal::clearArray(bodies);
+    bodies.clear();
 }
 
 void TestPMDModel::parseFace()
@@ -146,14 +146,14 @@ void TestPMDModel::parseFace()
     QCOMPARE(face.type(), vpvl::Face::kBase);
     vpvl::VertexList vertices;
     vpvl::Vertex *vertex = new vpvl::Vertex();
-    vertices.push_back(vertex);
+    vertices.add(vertex);
     face.setVertices(vertices);
 #ifdef VPVL_COORDINATE_OPENGL
     QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, -3.0f));
 #else
     QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, 3.0f));
 #endif
-    vpvl::internal::clearArray(vertices);
+    vertices.clear();
 }
 
 void TestPMDModel::parseIK()
@@ -180,10 +180,10 @@ void TestPMDModel::parseIK()
     QVERIFY(!ok);
     QCOMPARE(size, size_t(0));
     vpvl::BoneList bones;
-    bones.push_back(new vpvl::Bone());
-    bones.push_back(new vpvl::Bone());
+    bones.add(new vpvl::Bone());
+    bones.add(new vpvl::Bone());
     ik.read(ptr, &bones);
-    vpvl::internal::clearArray(bones);
+    bones.clear();
 }
 
 void TestPMDModel::parseMaterial()
@@ -251,7 +251,7 @@ void TestPMDModel::parseRigidBody()
     QCOMPARE(size_t(bytes.size()), vpvl::RigidBody::stride());
     vpvl::RigidBody body;
     vpvl::BoneList bones;
-    bones.push_back(new vpvl::Bone());
+    bones.add(new vpvl::Bone());
     body.read(reinterpret_cast<const uint8_t *>(bytes.constData()), &bones);
     QCOMPARE(QString(reinterpret_cast<const char *>(body.name())), QString(kTestString));
     btRigidBody *b = body.body();
@@ -262,7 +262,7 @@ void TestPMDModel::parseRigidBody()
     QCOMPARE(b->getFriction(), 0.5f);
     QCOMPARE(body.groupID(), quint16(8));
     QCOMPARE(body.groupMask(), quint16(2));
-    vpvl::internal::clearArray(bones);
+    bones.clear();
 }
 
 void TestPMDModel::parseVertex()

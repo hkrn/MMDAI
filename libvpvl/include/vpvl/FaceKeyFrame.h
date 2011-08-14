@@ -39,7 +39,6 @@
 #ifndef VPVL_FACEKEYFRAME_H_
 #define VPVL_FACEKEYFRAME_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
 #include "vpvl/BaseKeyFrame.h"
 
 namespace vpvl

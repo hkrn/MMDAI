@@ -37,12 +37,8 @@
 #ifndef VPVL_XMODEL_H_
 #define VPVL_XMODEL_H_
 
-#include <LinearMath/btAlignedObjectArray.h>
-#include <LinearMath/btVector3.h>
-
-#include "vpvl/PMDModel.h"
 #include "vpvl/XMaterial.h"
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 namespace vpvl
 {
@@ -54,7 +50,7 @@ struct XModelFaceIndex {
 };
 
 typedef struct XModelUserData XModelUserData;
-typedef btAlignedObjectArray<uint16_t> XModelIndexList;
+typedef Array<uint16_t> XModelIndexList;
 
 /**
  * @file
@@ -111,19 +107,19 @@ public:
     const void *textureCoordsPointer() const;
     const void *colorsPointer() const;
 
-    const btAlignedObjectArray<btVector3> &vertices() const {
+    const Array<btVector3> &vertices() const {
         return m_vertices;
     }
-    const btAlignedObjectArray<btVector3> &normals() const {
+    const Array<btVector3> &normals() const {
         return m_normals;
     }
-    const btAlignedObjectArray<btVector3> &textureCoords() const {
+    const Array<btVector3> &textureCoords() const {
         return m_coords;
     }
-    const btAlignedObjectArray<btVector4> &colors() const {
+    const Array<btVector4> &colors() const {
         return m_colors;
     }
-    const btAlignedObjectArray<XModelFaceIndex> &faces() const {
+    const Array<XModelFaceIndex> &faces() const {
         return m_faces;
     }
     const XModelIndexList *indicesAt(uint32_t value) const {
@@ -133,7 +129,7 @@ public:
         return m_materials[value];
     }
     uint32_t countMatreials() const {
-        return m_materials.size() - 1;
+        return m_materials.count() - 1;
     }
     XModelUserData *userData() const {
         return m_userData;
@@ -180,13 +176,13 @@ private:
     btTransform m_transform;
     float m_scale;
     float m_opacity;
-    btAlignedObjectArray<btVector3> m_vertices;
-    btAlignedObjectArray<btVector3> m_normals;
-    btAlignedObjectArray<btVector3> m_coords;
-    btAlignedObjectArray<btVector4> m_colors;
-    btAlignedObjectArray<XModelFaceIndex> m_faces;
-    btAlignedObjectArray<XModelIndexList *> m_indices;
-    btAlignedObjectArray<XMaterial *> m_materials;
+    Array<btVector3> m_vertices;
+    Array<btVector3> m_normals;
+    Array<btVector3> m_coords;
+    Array<btVector4> m_colors;
+    Array<XModelFaceIndex> m_faces;
+    Array<XModelIndexList *> m_indices;
+    Array<XMaterial *> m_materials;
     XModelUserData *m_userData;
     Error m_error;
 

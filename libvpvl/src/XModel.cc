@@ -133,7 +133,7 @@ bool XModel::load(const uint8_t *data, size_t size)
     memcpy(buffer, data, size);
     buffer[size] = 0;
 
-    btAlignedObjectArray<char *> tokens;
+    Array<char *> tokens;
     char *p = 0, *token = 0;
     bool skip = false;
     internal::stringToken(buffer, " \r\n\t", &p); // signature
@@ -149,15 +149,15 @@ bool XModel::load(const uint8_t *data, size_t size)
         }
         if (skip)
             continue;
-        tokens.push_back(token);
+        tokens.add(token);
     }
 
     bool ret = false;
     uint32_t evsize = 0, ensize = 0, evfsize = 0, enfsize = 0, emsize = 0, efisize = 0, etsize = 0, ecsize = 0;
-    uint32_t nTokens = tokens.size(), nIndices = 0, materialIndex = 0;
+    uint32_t nTokens = tokens.count(), nIndices = 0, materialIndex = 0;
     int depth = 0;
-    btAlignedObjectArray<XModelInternalIndexedColor> colors;
-    btAlignedObjectArray<XModelInternalMaterial *> materials;
+    Array<XModelInternalIndexedColor> colors;
+    Array<XModelInternalMaterial *> materials;
     XModelInternalMaterial *currentMaterial = 0;
     XModelInternalParseState state = kNone;
 
@@ -229,12 +229,12 @@ bool XModel::load(const uint8_t *data, size_t size)
 #else
                         btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), internal::stringToFloat(z));
 #endif
-                        m_vertices.push_back(v);
+                        m_vertices.add(v);
                     }
                     else {
                         throw kMeshVerticeError;
                     }
-                    if (evsize <= static_cast<uint32_t>(m_vertices.size()))
+                    if (evsize <= static_cast<uint32_t>(m_vertices.count()))
                         state = kMeshVertexFacesSize;
                     break;
                 }
@@ -272,7 +272,7 @@ bool XModel::load(const uint8_t *data, size_t size)
                         else {
                             throw kMeshFaceSizeError;
                         }
-                        m_faces.push_back(v);
+                        m_faces.add(v);
                         nIndices++;
                     }
                     else {
@@ -299,12 +299,12 @@ bool XModel::load(const uint8_t *data, size_t size)
 #else
                         btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), internal::stringToFloat(z));
 #endif
-                        m_normals.push_back(v);
+                        m_normals.add(v);
                     }
                     else {
                         throw kMeshNormalError;
                     }
-                    if (ensize <= static_cast<uint32_t>(m_normals.size()))
+                    if (ensize <= static_cast<uint32_t>(m_normals.count()))
                         state = kMeshNormalFacesSize;
                     break;
                 }
@@ -354,7 +354,7 @@ bool XModel::load(const uint8_t *data, size_t size)
                     currentMaterial->power = 0.0f;
                     currentMaterial->specular.setZero();
                     currentMaterial->textureName = 0;
-                    materials.push_back(currentMaterial);
+                    materials.add(currentMaterial);
                     char *x = internal::stringToken(token, ";", &p);
                     char *y = internal::stringToken(NULL, ";", &p);
                     char *z = internal::stringToken(NULL, ";", &p);
@@ -441,12 +441,12 @@ bool XModel::load(const uint8_t *data, size_t size)
                     char *y = internal::stringToken(NULL, ";", &p);
                     if (x && y) {
                         btVector3 v(internal::stringToFloat(x), internal::stringToFloat(y), 0.0f);
-                        m_coords.push_back(v);
+                        m_coords.add(v);
                     }
                     else {
                         throw kMeshTextureCoordsError;
                     }
-                    if (etsize <= static_cast<uint32_t>(m_coords.size()))
+                    if (etsize <= static_cast<uint32_t>(m_coords.count()))
                         state = kNone;
                     break;
                 }
@@ -468,15 +468,15 @@ bool XModel::load(const uint8_t *data, size_t size)
                         ic.index = internal::stringToInt(index);
                         ic.color.setValue(internal::stringToFloat(r), internal::stringToFloat(g),
                                           internal::stringToFloat(b), internal::stringToFloat(a));
-                        colors.push_back(ic);
+                        colors.add(ic);
                     }
                     else {
                         throw kMeshVertexColorError;
                     }
-                    if (ecsize <= static_cast<uint32_t>(colors.size())) {
-                        const uint32_t nColors = colors.size();
+                    if (ecsize <= static_cast<uint32_t>(colors.count())) {
+                        const uint32_t nColors = colors.count();
                         m_colors.reserve(nColors);
-                        nIndices = m_faces.size();
+                        nIndices = m_faces.count();
                         for (uint32_t i = 0; i < nColors; i++) {
                             XModelInternalIndexedColor &ic = colors[i];
                             if (ic.index < nIndices)
@@ -498,32 +498,32 @@ bool XModel::load(const uint8_t *data, size_t size)
         buffer = 0;
 
         if (materialIndex == emsize) {
-            uint32_t size = m_faces.size();
+            uint32_t size = m_faces.count();
             m_indices.reserve(emsize + 1);
             m_materials.reserve(emsize + 1);
             for (uint32_t i = 0; i <= emsize; i++)
-                m_indices.push_back(new XModelIndexList);
+                m_indices.add(new XModelIndexList);
             for (uint32_t i = 0; i <= emsize; i++)
-                m_materials.push_back(new XMaterial);
+                m_materials.add(new XMaterial);
             for (uint32_t i = 0; i < size; i++) {
                 XModelFaceIndex &index = m_faces[i];
                 XModelIndexList *indice = m_indices[index.index];
                 btVector4 &v = index.value;
                 if (index.count == 3) {
-                    indice->push_back(static_cast<const uint16_t>(v.x()));
-                    indice->push_back(static_cast<const uint16_t>(v.y()));
-                    indice->push_back(static_cast<const uint16_t>(v.z()));
+                    indice->add(static_cast<const uint16_t>(v.x()));
+                    indice->add(static_cast<const uint16_t>(v.y()));
+                    indice->add(static_cast<const uint16_t>(v.z()));
                 }
                 else if (index.count == 4) {
-                    indice->push_back(static_cast<const uint16_t>(v.x()));
-                    indice->push_back(static_cast<const uint16_t>(v.y()));
-                    indice->push_back(static_cast<const uint16_t>(v.z()));
-                    indice->push_back(static_cast<const uint16_t>(v.z()));
-                    indice->push_back(static_cast<const uint16_t>(v.y()));
-                    indice->push_back(static_cast<const uint16_t>(v.w()));
+                    indice->add(static_cast<const uint16_t>(v.x()));
+                    indice->add(static_cast<const uint16_t>(v.y()));
+                    indice->add(static_cast<const uint16_t>(v.z()));
+                    indice->add(static_cast<const uint16_t>(v.z()));
+                    indice->add(static_cast<const uint16_t>(v.y()));
+                    indice->add(static_cast<const uint16_t>(v.w()));
                 }
             }
-            size = materials.size();
+            size = materials.count();
             for (uint32_t i = 0; i < size; i++) {
                 XModelInternalMaterial *internal = materials[i];
                 uint32_t index = internal->index;
@@ -542,8 +542,7 @@ bool XModel::load(const uint8_t *data, size_t size)
         m_error = e;
     }
 
-    internal::clearArray(materials);
-    colors.clear();
+    materials.clear();
     delete[] buffer;
 
     return ret;
@@ -551,18 +550,13 @@ bool XModel::load(const uint8_t *data, size_t size)
 
 void XModel::release()
 {
-    internal::clearArray(m_indices);
-    internal::clearArray(m_materials);
+    m_indices.clear();
+    m_materials.clear();
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_transform.setIdentity();
     m_scale = 1.0f;
     m_opacity = 1.0f;
-    m_vertices.clear();
-    m_normals.clear();
-    m_coords.clear();
-    m_colors.clear();
-    m_materials.clear();
     m_error = kNoError;
     m_userData = 0;
 }

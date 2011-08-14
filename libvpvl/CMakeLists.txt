@@ -19,6 +19,7 @@ set(vpvl_public_headers
     include/vpvl/BoneAnimation.h
     include/vpvl/CameraKeyFrame.h
     include/vpvl/CameraAnimation.h
+    include/vpvl/Common.h
     include/vpvl/Constraint.h
     include/vpvl/Face.h
     include/vpvl/FaceKeyFrame.h
@@ -33,7 +34,6 @@ set(vpvl_public_headers
     include/vpvl/VPDPose.h
     include/vpvl/XMaterial.h
     include/vpvl/XModel.h
-    include/vpvl/common.h
     include/vpvl/config.h
     include/vpvl/vpvl.h
 )
@@ -161,7 +161,7 @@ if(APPLE)
 endif()
 
 if(MSVC)
-  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/common.h
+  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()
   install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")

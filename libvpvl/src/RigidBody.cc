@@ -192,7 +192,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         m_noBone = true;
         m_bone = bone = Bone::centerBone(bones);
     }
-    else if (boneID < bones->size()) {
+    else if (boneID < bones->count()) {
         m_bone = bone = bones->at(boneID);
     }
 

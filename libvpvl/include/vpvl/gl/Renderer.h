@@ -40,8 +40,7 @@
 #define VPVL_GL_RENDERER_H_
 
 #include <string>
-#include <LinearMath/btHashMap.h>
-#include "vpvl/common.h"
+#include "vpvl/Common.h"
 
 #ifdef VPVL_USE_ALLEGRO5
 #include <allegro5/allegro5.h>
@@ -123,7 +122,7 @@ private:
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
-    btAlignedObjectArray<vpvl::XModel *> m_assets;
+    Array<vpvl::XModel *> m_assets;
     bool m_displayBones;
     int m_width;
     int m_height;

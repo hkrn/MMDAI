@@ -93,7 +93,7 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
     float *limitRotTo = chunk.limitRotationTo;
     float *stiffness = chunk.stiffness;
 
-    int nbodies = bodies.size();
+    int nbodies = bodies.count();
     if (bodyID1 >= 0 && bodyID1 < nbodies &&bodyID2 >= 0 && bodyID2 < nbodies) {
         btTransform transform;
         btMatrix3x3 basis;

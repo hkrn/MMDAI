@@ -62,11 +62,11 @@ const uint8_t *Bone::centerBoneName()
     return centerBoneName;
 }
 
-Bone *Bone::centerBone(const btAlignedObjectArray<Bone*> *bones)
+Bone *Bone::centerBone(const BoneList *bones)
 {
     const uint8_t *name = centerBoneName();
     size_t len = strlen(reinterpret_cast<const char *>(name));
-    int nbones = bones->size();
+    int nbones = bones->count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones->at(i);
         if (internal::stringEquals(bone->name(), name, len))
@@ -169,7 +169,7 @@ void Bone::reset()
 
 void Bone::build(BoneList *bones, Bone *rootBone)
 {
-    uint32_t nbones = bones->size();
+    uint32_t nbones = bones->count();
     // The bone has a parent bone and in the the current bones
     if (m_parentBoneID != -1 && m_parentBoneID < nbones) {
         m_parentBone = bones->at(m_parentBoneID);
@@ -193,7 +193,7 @@ void Bone::build(BoneList *bones, Bone *rootBone)
         m_childBone = bones->at(m_childBoneID);
     // The bone has a target bone and in the current bones for IK
     if (m_type == kUnderIK || m_type == kUnderRotate) {
-        if (m_targetBoneID >= 0 && m_targetBoneID < bones->size())
+        if (m_targetBoneID >= 0 && m_targetBoneID < bones->count())
             m_targetBone = bones->at(m_targetBoneID);
     }
     m_offset = m_parentBone ? m_originPosition - m_parentBone->m_originPosition : m_originPosition;
