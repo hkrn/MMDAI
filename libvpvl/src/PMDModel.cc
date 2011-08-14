@@ -149,7 +149,7 @@ void PMDModel::addMotion(VMDMotion *motion)
     m_motions.sort(VMDMotionPriorityPredication());
 }
 
-void PMDModel::joinWorld(::btDiscreteDynamicsWorld *world)
+void PMDModel::joinWorld(btDiscreteDynamicsWorld *world)
 {
     if (!world)
         return;
@@ -168,7 +168,7 @@ void PMDModel::joinWorld(::btDiscreteDynamicsWorld *world)
     m_world = world;
 }
 
-void PMDModel::leaveWorld(::btDiscreteDynamicsWorld *world)
+void PMDModel::leaveWorld(btDiscreteDynamicsWorld *world)
 {
     if (!world)
         return;

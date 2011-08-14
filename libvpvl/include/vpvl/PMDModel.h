@@ -170,8 +170,8 @@ public:
     static const float kMinFaceWeight;
 
     void addMotion(VMDMotion *motion);
-    void joinWorld(::btDiscreteDynamicsWorld *world);
-    void leaveWorld(::btDiscreteDynamicsWorld *world);
+    void joinWorld(btDiscreteDynamicsWorld *world);
+    void leaveWorld(btDiscreteDynamicsWorld *world);
     void removeMotion(VMDMotion *motion);
     void seekMotion(float frameIndex);
     void updateRootBone();
@@ -379,7 +379,7 @@ private:
     Bone **m_orderedBones;
     Array<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
-    ::btDiscreteDynamicsWorld *m_world;
+    btDiscreteDynamicsWorld *m_world;
     PMDModelUserData *m_userData;
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;

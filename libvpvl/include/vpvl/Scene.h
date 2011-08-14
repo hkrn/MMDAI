@@ -88,7 +88,7 @@ public:
     void setCameraMotion(VMDMotion *motion);
     void setLight(const btVector4 &color, const btVector4 &direction);
     void setViewMove(int viewMoveTime);
-    void setWorld(::btDiscreteDynamicsWorld *world);
+    void setWorld(btDiscreteDynamicsWorld *world);
     void update(float deltaFrame);
     void updateModelView(int ellapsedTimeForMove);
     void updateProjection(int ellapsedTimeForMove);
@@ -141,7 +141,7 @@ private:
     bool updateDistance(int ellapsedTimeForMove);
     bool updateFovy(int ellapsedTimeForMove);
 
-    ::btDiscreteDynamicsWorld *m_world;
+    btDiscreteDynamicsWorld *m_world;
     Array<PMDModel *> m_models;
     VMDMotion *m_cameraMotion;
     btTransform m_modelview;

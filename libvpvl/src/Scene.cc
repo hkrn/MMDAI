@@ -221,7 +221,7 @@ void Scene::setViewMove(int viewMoveTime)
     m_viewMoveTime = viewMoveTime;
 }
 
-void Scene::setWorld(::btDiscreteDynamicsWorld *world)
+void Scene::setWorld(btDiscreteDynamicsWorld *world)
 {
     const uint32_t nModels = m_models.count();
     // Remove rigid bodies and constraints from the current world
