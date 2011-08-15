@@ -39,6 +39,11 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
 
+namespace
+{
+const uint8_t *kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
+}
+
 namespace vpvl
 {
 
@@ -75,7 +80,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     // Header(30) + Name(20)
-    if (50 > rest) {
+    if (kSignatureSize + kNameSize > rest) {
         m_error = kInvalidHeaderError;
         return false;
     }
@@ -84,15 +89,14 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.basePtr = ptr;
 
     // Check the signature is valid
-    static const uint8_t header[] = "Vocaloid Motion Data 0002";
-    if (memcmp(ptr, header, sizeof(header)) != 0) {
+    if (memcmp(ptr, kSignature, sizeof(kSignature)) != 0) {
         m_error = kInvalidSignatureError;
         return false;
     }
-    ptr += 30;
+    ptr += kSignatureSize;
     info.namePtr = ptr;
-    ptr += 20;
-    rest -= 50;
+    ptr += kNameSize;
+    rest -= kSignatureSize + kNameSize;
 
     // Bone key frame
     size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames;
@@ -162,15 +166,16 @@ size_t VMDMotion::estimateSize()
      * light size (empty)
      * selfshadow size (empty)
      */
-    return 70 + m_boneMotion.countFrames() * BoneKeyFrame::strideSize()
+    return kSignatureSize + kNameSize + sizeof(uint32_t) * 5
+            + m_boneMotion.countFrames() * BoneKeyFrame::strideSize()
             + m_faceMotion.countFrames() * FaceKeyFrame::strideSize()
             + m_cameraMotion.countFrames() * CameraKeyFrame::strideSize();
 }
 
 void VMDMotion::save(uint8_t *data)
 {
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002"), 30);
-    data += 30;
+    internal::copyBytes(data, kSignature, kSignatureSize);
+    data += kSignatureSize;
     internal::copyBytes(data, m_name, sizeof(m_name));
     data += sizeof(m_name);
     uint32_t nBoneFrames = m_boneMotion.countFrames();

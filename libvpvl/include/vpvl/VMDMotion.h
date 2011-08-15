@@ -105,6 +105,8 @@ public:
         size_t selfShadowKeyFrameCount;
     };
 
+    static const uint32_t kSignatureSize = 30;
+    static const uint32_t kNameSize = 20;
     static const float kDefaultPriority;
     static const float kDefaultLoopAtFrame;
 
