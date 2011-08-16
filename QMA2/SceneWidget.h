@@ -53,7 +53,6 @@ class Renderer;
 class PMDModel;
 class Scene;
 class VMDMotion;
-class VPDPose;
 class XModel;
 }
 
@@ -65,6 +64,7 @@ class World;
 
 class QProgressDialog;
 class QSettings;
+class VPDFile;
 
 class SceneWidget : public QGLWidget
 {
@@ -115,7 +115,7 @@ signals:
     void modelDidAdd(vpvl::PMDModel *model);
     void modelDidDelete(vpvl::PMDModel *model);
     void modelDidSelect(vpvl::PMDModel *model);
-    void modelDidMakePose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
+    void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void assetDidAdd(vpvl::XModel *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
@@ -142,7 +142,7 @@ private:
     vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
     void addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *motion);
-    vpvl::VPDPose *setModelPoseInternal(vpvl::PMDModel *model, const QString &path);
+    VPDFile *setModelPoseInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
     void drawGrid();
     void updateFPS();

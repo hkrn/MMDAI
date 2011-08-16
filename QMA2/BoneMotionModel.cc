@@ -1,4 +1,5 @@
 #include "BoneMotionModel.h"
+#include "VPDFile.h"
 #include "util.h"
 #include <vpvl/vpvl.h>
 
@@ -10,27 +11,33 @@ BoneMotionModel::BoneMotionModel(QObject *parent) :
 
 void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
-    vpvl::BoneAnimation *animation = motion->mutableBoneAnimation();
-    foreach (QVariant value, m_values) {
-        vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
-        QByteArray bytes = value.toByteArray();
-        newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        animation->addFrame(newFrame);
+    if (m_model) {
+        vpvl::BoneAnimation *animation = motion->mutableBoneAnimation();
+        foreach (QVariant value, values()) {
+            vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
+            QByteArray bytes = value.toByteArray();
+            newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            animation->addFrame(newFrame);
+        }
+        setModified(false);
     }
-    setModified(false);
+    else {
+        qWarning("No model is selected to save motion.");
+    }
 }
 
-bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int frameIndex)
+bool BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
-        const vpvl::VPDPose::BoneList &boneFrames = pose->bones();
+        const VPDFile::BoneList &boneFrames = pose->bones();
+        QTextCodec *codec = internal::getTextCodec();
+        Keys k = keys();
         vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
         uint32_t nBoneFrames = boneFrames.count();
         for (uint32_t i = 0; i < nBoneFrames; i++) {
-            vpvl::VPDPose::Bone *frame = boneFrames[i];
-            const uint8_t *name = frame->name;
-            QString key = internal::toQString(name);
-            int i = m_keys.indexOf(key);
+            VPDFile::Bone *frame = boneFrames[i];
+            QString key = frame->name;
+            int i = k.indexOf(key);
             if (i != -1) {
                 QModelIndex modelIndex = index(i, frameIndex);
                 btQuaternion rotation;
@@ -38,7 +45,7 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
                 newFrame->setDefaultInterpolationParameter();
-                newFrame->setName(name);
+                newFrame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(key).constData()));
                 newFrame->setPosition(frame->position);
                 newFrame->setRotation(rotation);
                 newFrame->setFrameIndex(frameIndex);
@@ -61,6 +68,10 @@ bool BoneMotionModel::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int f
 
 bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
 {
+    if (!m_model) {
+        qWarning("No model is selected to register a bone frame.");
+        return false;
+    }
     QString key;
     if (bone) {
         key = internal::toQString(bone->name());
@@ -69,10 +80,10 @@ bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
         key = internal::toQString(selected->name());
     }
     else {
-        qWarning("A bone is not selected or null");
+        qWarning("No bone is selected or null");
         return false;
     }
-    int i = m_keys.indexOf(key);
+    int i = keys().indexOf(key);
     if (i != -1 && m_motion) {
         QModelIndex modelIndex = index(i, frameIndex);
         QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
@@ -98,23 +109,22 @@ bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
 
 void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
-    m_keys.clear();
     m_bones.clear();
+    clearKeys();
     if (model) {
         const vpvl::BoneList &bones = model->bones();
         uint32_t nBones = bones.count();
         for (uint32_t i = 0; i < nBones; i++) {
             vpvl::Bone *bone = bones.at(i);
             if (bone->isVisible()) {
-                m_keys.append(internal::toQString(bone));
+                appendKey(internal::toQString(bone), model);
                 m_bones.append(bone);
             }
         }
-        reset();
     }
-    m_model = model;
-    emit modelDidChange(model);
+    MotionBaseModel::setPMDModel(model);
     qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
+    reset();
 }
 
 bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
@@ -126,7 +136,7 @@ bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             vpvl::BoneKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             QString key = internal::toQString(name);
-            int i = m_keys.indexOf(key);
+            int i = keys().indexOf(key);
             if (i != -1) {
                 uint32_t frameIndex = frame->frameIndex();
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
@@ -157,21 +167,21 @@ bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     }
 }
 
-void BoneMotionModel::clearMotion()
+void BoneMotionModel::deleteMotion()
 {
     m_bones.clear();
     m_selected.clear();
-    m_values.clear();
+    clearValues();
     setModified(false);
     reset();
     resetAllBones();
 }
 
-void BoneMotionModel::clearModel()
+void BoneMotionModel::deleteModel()
 {
-    clearMotion();
-    m_keys.clear();
-    m_model = 0;
+    deleteMotion();
+    clearKeys();
+    setPMDModel(0);
     reset();
 }
 

@@ -5,6 +5,8 @@
 #include <LinearMath/btVector3.h>
 #include <LinearMath/btQuaternion.h>
 
+class VPDFile;
+
 class BoneMotionModel : public MotionBaseModel
 {
     Q_OBJECT
@@ -25,7 +27,7 @@ public:
     explicit BoneMotionModel(QObject *parent = 0);
 
     void saveMotion(vpvl::VMDMotion *motion);
-    bool loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model, int frameIndex);
+    bool loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     bool registerKeyFrame(vpvl::Bone *bone, int frameIndex);
     bool resetBone(ResetType type);
     bool resetAllBones();
@@ -45,8 +47,8 @@ public:
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
     bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void clearMotion();
-    void clearModel();
+    void deleteMotion();
+    void deleteModel();
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);

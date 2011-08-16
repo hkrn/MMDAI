@@ -42,7 +42,7 @@ void MotionBaseModel::discardState()
 
 int MotionBaseModel::rowCount(const QModelIndex & /* parent */) const
 {
-    return m_keys.count();
+    return keys().count();
 }
 
 int MotionBaseModel::columnCount(const QModelIndex & /* parent */) const
@@ -55,9 +55,9 @@ QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
     if (index.isValid()) {
         switch(role) {
         case Qt::UserRole:
-            return m_values.value(QPair<int, int>(index.column(), index.row()));
+            return values().value(QPair<int, int>(index.column(), index.row()));
         case Qt::DisplayRole:
-            return m_keys[index.row()];
+            return keys()[index.row()];
         }
     }
     return QVariant();
@@ -65,8 +65,8 @@ QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
 
 bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (index.isValid() && role == Qt::EditRole) {
-        m_values.insert(QPair<int, int>(index.column(), index.row()), value);
+    if (m_model && index.isValid() && role == Qt::EditRole) {
+        m_values[m_model].insert(QPair<int, int>(index.column(), index.row()), value);
         setModified(true);
         emit dataChanged(index, index);
         return true;
@@ -76,11 +76,11 @@ bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, i
 
 QVariant MotionBaseModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (role != Qt::DisplayRole)
+    if (!m_model || role != Qt::DisplayRole)
         return QVariant();
     switch (orientation) {
     case Qt::Vertical:
-        return m_keys[section];
+        return keys()[section];
     case Qt::Horizontal:
         return " "; //QString("%1").setNum(section + 1);
     }
@@ -96,4 +96,10 @@ bool MotionBaseModel::updateModel()
     else {
         return false;
     }
+}
+
+void MotionBaseModel::setPMDModel(vpvl::PMDModel *model)
+{
+    m_model = model;
+    emit modelDidChange(model);
 }

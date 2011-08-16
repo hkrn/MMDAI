@@ -14,6 +14,7 @@ class QSettings;
 class TimelineWidget;
 class BoneMotionModel;
 class FaceMotionModel;
+class VPDFile;
 
 class TimelineTabWidget : public QWidget
 {
@@ -31,7 +32,7 @@ public:
     ~TimelineTabWidget();
 
 public slots:
-    void loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model);
+    void loadPose(VPDFile *pose, vpvl::PMDModel *model);
     void registerKeyFrame(vpvl::Bone *bone);
     void registerKeyFrame(vpvl::Face *face);
 

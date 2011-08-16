@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "SceneWidget.h"
+#include "VPDFile.h"
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
@@ -438,7 +439,7 @@ void SceneWidget::setModelPose()
         stopSceneUpdateTimer();
         QString fileName = openFileDialog("sceneWidget/lastVPDDirectory", tr("Open VPD file"), tr("VPD file (*.vpd)"));
         if (QFile::exists(fileName)) {
-            vpvl::VPDPose *pose = setModelPoseInternal(selected, fileName);
+            VPDFile *pose = setModelPoseInternal(selected, fileName);
             if (!pose)
                 QMessageBox::warning(this, tr("Loading model pose error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
@@ -798,14 +799,14 @@ void SceneWidget::addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *mot
     emit motionDidAdd(motion, model);
 }
 
-vpvl::VPDPose *SceneWidget::setModelPoseInternal(vpvl::PMDModel *model, const QString &path)
+VPDFile *SceneWidget::setModelPoseInternal(vpvl::PMDModel *model, const QString &path)
 {
     QFile file(path);
-    vpvl::VPDPose *pose = 0;
+    VPDFile *pose = 0;
     if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
-        pose = new vpvl::VPDPose();
-        if (pose->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+        QTextStream stream(&file);
+        pose = new VPDFile();
+        if (pose->load(stream)) {
             // pose->makePose(model);
             emit modelDidMakePose(pose, model);
         }

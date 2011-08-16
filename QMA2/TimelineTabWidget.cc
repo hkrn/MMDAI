@@ -2,6 +2,7 @@
 #include "BoneMotionModel.h"
 #include "FaceMotionModel.h"
 #include "TimelineWidget.h"
+#include "VPDFile.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -39,7 +40,7 @@ TimelineTabWidget::~TimelineTabWidget()
 {
 }
 
-void TimelineTabWidget::loadPose(vpvl::VPDPose *pose, vpvl::PMDModel *model)
+void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
 {
     QModelIndex index = m_boneTimeline->selectedIndex();
     if (index.isValid())

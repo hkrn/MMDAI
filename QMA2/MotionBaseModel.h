@@ -9,11 +9,15 @@ class VMDMotion;
 class VPDPose;
 }
 
+
 class MotionBaseModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
+    typedef QStringList Keys;
+    typedef QHash< QPair<int, int>, QVariant > Values;
+
     explicit MotionBaseModel(QObject *parent = 0);
     ~MotionBaseModel();
 
@@ -35,8 +39,8 @@ public:
 public slots:
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
     virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
-    virtual void clearMotion() = 0;
-    virtual void clearModel() = 0;
+    virtual void deleteMotion() = 0;
+    virtual void deleteModel() = 0;
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);
@@ -44,14 +48,22 @@ signals:
 
 protected:
     bool updateModel();
+    void setModel(vpvl::PMDModel *model);
+
+    const Keys keys() const { return keys(m_model); }
+    const Keys keys(vpvl::PMDModel *model) const { return m_keys[model]; }
+    const Values values() const { return m_values[m_model]; }
+    void appendKey(const QString &key, vpvl::PMDModel *model) { m_keys[model].append(key); }
+    void clearKeys() { m_keys[m_model].clear(); m_keys.remove(m_model); }
+    void clearValues() { m_values[m_model].clear(); m_values.remove(m_model); }
 
     vpvl::PMDModel *m_model;
     vpvl::VMDMotion *m_motion;
-    QList<QString> m_keys;
-    QHash< QPair<int, int>, QVariant > m_values;
 
 private:
     vpvl::PMDModel::State *m_state;
+    QHash<vpvl::PMDModel *, Keys> m_keys;
+    QHash<vpvl::PMDModel *, Values> m_values;
     bool m_modified;
 };
 

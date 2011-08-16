@@ -93,8 +93,8 @@ void MainWindow::newFile()
 {
     if (maybeSave()) {
         ui->scene->setEmptyMotion();
-        m_boneMotionModel->clearMotion();
-        m_faceMotionModel->clearMotion();
+        m_boneMotionModel->deleteMotion();
+        m_faceMotionModel->deleteMotion();
     }
 }
 
@@ -235,17 +235,17 @@ void MainWindow::connectWidgets()
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
-            m_boneMotionModel, SLOT(clear()));
+            m_boneMotionModel, SLOT(deleteModel()));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(ui->scene, SIGNAL(modelDidMakePose(vpvl::VPDPose*,vpvl::PMDModel*)),
-            m_timelineTabWidget, SLOT(loadPose(vpvl::VPDPose*,vpvl::PMDModel*)));
+    connect(ui->scene, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)),
+            m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
             m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
-            m_faceMotionModel, SLOT(clear()));
+            m_faceMotionModel, SLOT(deleteModel()));
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
@@ -379,8 +379,7 @@ void MainWindow::on_actionDeleteSelectedModel_triggered()
 
 void MainWindow::on_actionSetModelPose_triggered()
 {
-    if (maybeSave())
-        ui->scene->setModelPose();
+    ui->scene->setModelPose();
 }
 
 void MainWindow::on_actionBoneXPositionZero_triggered()
