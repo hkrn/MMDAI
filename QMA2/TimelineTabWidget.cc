@@ -47,6 +47,14 @@ void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
         reinterpret_cast<BoneMotionModel *>(m_boneTimeline->tableView()->model())->loadPose(pose, model, index.column());
 }
 
+void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
+{
+    QModelIndex index = m_boneTimeline->selectedIndex();
+    if (index.isValid())
+        reinterpret_cast<BoneMotionModel *>(m_boneTimeline->tableView()->model())->savePose(pose, model, index.column());
+}
+
+
 void TimelineTabWidget::registerKeyFrame(vpvl::Bone *bone)
 {
     QModelIndex index = m_boneTimeline->selectedIndex();

@@ -70,7 +70,8 @@ private slots:
     void on_actionResetCamera_triggered();
     void on_actionRevertSelectedModel_triggered();
     void on_actionDeleteSelectedModel_triggered();
-    void on_actionSetModelPose_triggered();
+    void on_actionLoadModelPose_triggered();
+    void on_actionSaveModelPose_triggered();
     void on_actionBoneXPositionZero_triggered();
     void on_actionBoneYPositionZero_triggered();
     void on_actionBoneZPositionZero_triggered();

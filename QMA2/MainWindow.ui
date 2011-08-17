@@ -42,7 +42,8 @@
     <addaction name="actionNewMotion"/>
     <addaction name="actionInsertToAllModels"/>
     <addaction name="actionInsertToSelectedModel"/>
-    <addaction name="actionSetModelPose"/>
+    <addaction name="actionLoadModelPose"/>
+    <addaction name="actionSaveModelPose"/>
     <addaction name="separator"/>
     <addaction name="actionSetCamera"/>
     <addaction name="separator"/>
@@ -354,12 +355,12 @@
     <enum>QAction::AboutQtRole</enum>
    </property>
   </action>
-  <action name="actionSetModelPose">
+  <action name="actionLoadModelPose">
    <property name="text">
-    <string>Set model pose</string>
+    <string>Load model pose</string>
    </property>
    <property name="statusTip">
-    <string>Set a model pose to the selected model.</string>
+    <string>Load a model pose to the selected model.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+P</string>
@@ -431,6 +432,9 @@
    <property name="statusTip">
     <string>Open direct coordinate dialog.</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
   </action>
   <action name="actionBoneResetAll">
    <property name="text">
@@ -459,6 +463,9 @@
    <property name="whatsThis">
     <string/>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+V, I</string>
+   </property>
   </action>
   <action name="actionTransform">
    <property name="text">
@@ -469,6 +476,9 @@
    </property>
    <property name="statusTip">
     <string>Make the transform view visible.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V, R</string>
    </property>
   </action>
   <action name="actionTabs">
@@ -481,6 +491,9 @@
    <property name="statusTip">
     <string>Make tab view visible.</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+V, A</string>
+   </property>
   </action>
   <action name="actionExportVMD">
    <property name="text">
@@ -489,6 +502,9 @@
    <property name="statusTip">
     <string>Export bone key frames and face key frames as a VMD</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="actionNewMotion">
    <property name="text">
@@ -496,6 +512,20 @@
    </property>
    <property name="statusTip">
     <string>Create an empty motion to the selected model.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionSaveModelPose">
+   <property name="text">
+    <string>Save model pose</string>
+   </property>
+   <property name="statusTip">
+    <string>Save selected frame bones as a model pose file.</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+Shift+P</string>
    </property>
   </action>
  </widget>

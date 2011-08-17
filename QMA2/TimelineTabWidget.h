@@ -33,6 +33,7 @@ public:
 
 public slots:
     void loadPose(VPDFile *pose, vpvl::PMDModel *model);
+    void savePose(VPDFile *pose, vpvl::PMDModel *model);
     void registerKeyFrame(vpvl::Bone *bone);
     void registerKeyFrame(vpvl::Face *face);
 

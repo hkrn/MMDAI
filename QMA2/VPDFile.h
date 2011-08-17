@@ -7,6 +7,7 @@
 #include <LinearMath/btVector3.h>
 
 namespace vpvl {
+class Bone;
 class PMDModel;
 }
 
@@ -44,6 +45,7 @@ public:
     void makePose(vpvl::PMDModel *model);
 
     const BoneList &bones() const { return m_bones; }
+    void setBones(const BoneList &value) { m_bones = value; }
 
 private:
     BoneList m_bones;

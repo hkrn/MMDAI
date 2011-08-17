@@ -1,4 +1,5 @@
 #include "VPDFile.h"
+#include "util.h"
 #include <vpvl/vpvl.h>
 #include <QtCore/QtCore>
 
@@ -23,7 +24,7 @@ VPDFile::~VPDFile()
 bool VPDFile::load(QTextStream &stream)
 {
     QString line;
-    stream.setCodec("Shift-JIS");
+    stream.setCodec(internal::getTextCodec());
     if (stream.readLine() != "Vocaloid Pose Data file") {
         m_error = kInvalidSignatureError;
         return false;
@@ -127,14 +128,42 @@ bool VPDFile::load(QTextStream &stream)
     return true;
 }
 
-void VPDFile::save(QTextStream & /* stream */)
+void VPDFile::save(QTextStream &stream)
 {
+    const QString headerTemplate("Vocaloid Pose Data file\r\n"
+                                 "\r\n"
+                                 "miku.osm;\t\t// 親ファイル名\r\n"
+                                 "%1;\t\t\t\t// 総ポーズボーン数\r\n"
+                                 "\r\n");
+    const char boneTemplate[] = "Bone%d{%s\r\n"
+            "  %.06f,%.06f,%.06f;\t\t\t\t// trans x,y,z\r\n"
+            "  %.06f,%.06f,%.06f,%.06f;\t\t// Quatanion x,y,z,w\r\n"
+            "}\r\n"
+            "\r\n";
+    QTextCodec *codec = internal::getTextCodec();
+    stream.setCodec(codec);
+    stream << headerTemplate.arg(m_bones.size());
+    uint32_t i = 0;
+    foreach (Bone *bone, m_bones) {
+        const btVector3 &pos = bone->position;
+        const btVector4 &rot = bone->rotation;
+#ifdef VPVL_COORDINATE_OPENGL
+        stream << QString().sprintf(boneTemplate, i, qPrintable(bone->name),
+                                    pos.x(), pos.y(), -pos.z(),
+                                    -rot.x(), -rot.y(), rot.z(), rot.w());
+#else
+        stream << QString().sprintf(boneTemplate, i, qPrintable(bone->name),
+                                    pos.x(), pos.y(), pos.z(),
+                                    rot.x(), rot.y(), rot.z(), rot.w());
+#endif
+        i++;
+    }
 }
 
 void VPDFile::makePose(vpvl::PMDModel *model)
 {
     QByteArray bytes;
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
+    QTextCodec *codec = internal::getTextCodec();
     foreach (Bone *b, m_bones) {
         bytes = codec->fromUnicode(b->name);
         vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));

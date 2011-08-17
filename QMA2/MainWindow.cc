@@ -10,6 +10,7 @@
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
+#include "VPDFile.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -108,7 +109,7 @@ bool MainWindow::saveAs()
     const QString name = "mainWindow/lastVMDDirectory";
     const QString path = m_settings.value(name).toString();
     const QString filename = QFileDialog::getSaveFileName(this,
-                                                          tr("Open VMD file"),
+                                                          tr("Save Motion as a VMD file"),
                                                           path,
                                                           tr("VMD file (*.vmd)"));
     bool ret = false;
@@ -377,9 +378,36 @@ void MainWindow::on_actionDeleteSelectedModel_triggered()
         ui->scene->deleteSelectedModel();
 }
 
-void MainWindow::on_actionSetModelPose_triggered()
+void MainWindow::on_actionLoadModelPose_triggered()
 {
     ui->scene->setModelPose();
+}
+
+void MainWindow::on_actionSaveModelPose_triggered()
+{
+    const QString name = "mainWindow/lastVPDDirectory";
+    const QString path = m_settings.value(name).toString();
+    const QString filename = QFileDialog::getSaveFileName(this,
+                                                          tr("Save model pose as a VPD file"),
+                                                          path,
+                                                          tr("VPD file (*.vpd)"));
+    if (!filename.isEmpty()) {
+        QFile file(filename);
+        if (file.open(QFile::WriteOnly)) {
+            VPDFile pose;
+            QTextStream stream(&file);
+            m_timelineTabWidget->savePose(&pose, ui->scene->selectedModel());
+            pose.save(stream);
+            file.close();
+            qDebug("Saved a pose: %s", qPrintable(filename));
+        }
+        else {
+            qWarning("Failed saving VPD: %s", qPrintable(file.errorString()));
+        }
+        QDir dir(filename);
+        dir.cdUp();
+        m_settings.setValue(name, dir.absolutePath());
+    }
 }
 
 void MainWindow::on_actionBoneXPositionZero_triggered()

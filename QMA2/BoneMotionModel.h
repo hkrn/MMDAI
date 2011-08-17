@@ -28,6 +28,7 @@ public:
 
     void saveMotion(vpvl::VMDMotion *motion);
     bool loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
+    bool savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     bool registerKeyFrame(vpvl::Bone *bone, int frameIndex);
     bool resetBone(ResetType type);
     bool resetAllBones();

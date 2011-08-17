@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
     a.setApplicationVersion("0.1.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     SetSearchPaths(a);
     LoadTranslations(a, appTranslator, qtTranslator);
 
