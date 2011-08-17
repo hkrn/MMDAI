@@ -11,8 +11,8 @@ CONFIG(release, debug|release) {
   LIBS += -lvpvl
 }
 
-LIBS += -L/opt/local/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
-INCLUDEPATH += ../libvpvl/include /opt/local/include /opt/local/include/bullet
+LIBS += -L/opt/local/lib -L/usr/local/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
+INCLUDEPATH += ../libvpvl/include /opt/local/include /opt/local/include/bullet /usr/local/include /usr/local/include/bullet
 
 SOURCES += main.cc\
            MainWindow.cc \
