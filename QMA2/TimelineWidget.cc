@@ -8,14 +8,14 @@
 
 namespace internal {
 
-class TimelineItemDelegate : public QStyledItemDelegate {
+class TimelineItemDelegate : public QItemDelegate {
 public:
-    TimelineItemDelegate(QObject *parent = 0) : QStyledItemDelegate(parent) {
+    TimelineItemDelegate(QObject *parent = 0) : QItemDelegate(parent) {
     }
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
         if (index.column() % 5 == 0 && !(option.state & QStyle::State_Selected))
             painter->fillRect(option.rect, qApp->palette().alternateBase());
-        if (index.data(Qt::UserRole) != QVariant()) {
+        if (index.data(Qt::UserRole).canConvert(QVariant::ByteArray)) {
             painter->setPen(Qt::NoPen);
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(option.palette.foreground());
@@ -34,6 +34,16 @@ public:
     }
 };
 
+class TableView : public QTableView {
+public:
+    TableView(QWidget *parent = 0) : QTableView(parent) {
+    }
+protected:
+    int sizeHintForColumn(int /* column */) const {
+        return 16;
+    }
+};
+
 }
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
@@ -41,7 +51,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QWidget(parent),
     m_tableView(0)
 {
-    m_tableView = new QTableView();
+    m_tableView = new internal::TableView();
     m_tableView->setShowGrid(true);
     m_tableView->setModel(base);
     m_tableView->setSelectionBehavior(QAbstractItemView::SelectItems);
