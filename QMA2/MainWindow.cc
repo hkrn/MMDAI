@@ -259,10 +259,10 @@ void MainWindow::connectWidgets()
             this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)),
             ui->scene, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
-    connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)),
-            m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
-    connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
-            m_tabWidget->interpolationWidget(), SLOT(disable()));
+    //connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)),
+    //        m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
+    //connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
+    //        m_tabWidget->interpolationWidget(), SLOT(disable()));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),
             ui->scene, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)),
