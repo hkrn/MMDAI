@@ -635,7 +635,8 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     if (selected) {
         vpvl::BoneList bones;
         //m_renderer->pickBones(event->pos().x(), event->pos().y(), 0.5f, bones);
-        for (int i = 0; i < bones.count(); i++) {
+        const uint32_t nBones = bones.count();
+        for (uint32_t i = 0; i < nBones; i++) {
             vpvl::Bone *bone = bones[i];
             qDebug("Selected a bone: %s", qPrintable(internal::toQString(bone)));
         }
