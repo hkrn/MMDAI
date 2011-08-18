@@ -40,6 +40,7 @@ public:
     void selectBones(QList<vpvl::Bone *> bones);
     vpvl::Bone *selectBone(int rowIndex);
     vpvl::Bone *findBone(const QString &name);
+    QList<vpvl::Bone *> bonesByIndices(const QModelIndexList &indices) const;
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
     vpvl::Bone *selectedBone() const { return m_selected.first(); }

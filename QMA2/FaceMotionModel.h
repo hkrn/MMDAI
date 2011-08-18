@@ -16,6 +16,7 @@ public:
     void selectFaces(QList<vpvl::Face *> faces);
     vpvl::Face *selectFace(int rowIndex);
     vpvl::Face *findFace(const QString &name);
+    QList<vpvl::Face *> facesByIndices(const QModelIndexList &indices);
     QList<vpvl::Face *> facesFromIndices(const QModelIndexList &indices);
     void setWeight(float value);
     void setWeight(float value, vpvl::Face *face);

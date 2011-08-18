@@ -416,6 +416,16 @@ vpvl::Bone *BoneMotionModel::findBone(const QString &name)
     return 0;
 }
 
+QList<vpvl::Bone *> BoneMotionModel::bonesByIndices(const QModelIndexList &indices) const
+{
+    QList<vpvl::Bone *> bones;
+    foreach (QModelIndex index, indices) {
+        if (index.isValid())
+            bones.append(m_bones[index.row()]);
+    }
+    return bones;
+}
+
 QList<vpvl::Bone *> BoneMotionModel::bonesFromIndices(const QModelIndexList &indices) const
 {
     QList<vpvl::Bone *> bones;

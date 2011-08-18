@@ -155,6 +155,16 @@ vpvl::Face *FaceMotionModel::findFace(const QString &name)
     return 0;
 }
 
+QList<vpvl::Face *> FaceMotionModel::facesByIndices(const QModelIndexList &indices)
+{
+    QList<vpvl::Face *> faces;
+    foreach (QModelIndex index, indices) {
+        if (index.isValid())
+            faces.append(m_faces[index.row()]);
+    }
+    return faces;
+}
+
 QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &indices)
 {
     QList<vpvl::Face *> faces;

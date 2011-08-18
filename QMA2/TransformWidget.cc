@@ -58,10 +58,8 @@ static QList<vpvl::Bone *> UISelectBonesBySelection(const Ui::TransformWidget *u
     QList<vpvl::Bone *> bones;
     BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(ui->bones->model());
     foreach (QItemSelectionRange range, selection) {
-        foreach (vpvl::Bone *bone, bmm->bonesFromIndices(UISelectRowIndices(range))) {
-            if (bone)
-                bones.append(bone);
-        }
+        foreach (vpvl::Bone *bone, bmm->bonesByIndices(UISelectRowIndices(range)))
+            bones.append(bone);
     }
     return bones;
 }
@@ -76,10 +74,8 @@ static QList<vpvl::Face *> UISelectFacesBySelection(const Ui::TransformWidget *u
     QList<vpvl::Face *> faces;
     FaceMotionModel *fmm = qobject_cast<FaceMotionModel *>(ui->faces->model());
     foreach (QItemSelectionRange range, selection) {
-        foreach (vpvl::Face *face, fmm->facesFromIndices(UISelectRowIndices(range))) {
-            if (face)
-                faces.append(face);
-        }
+        foreach (vpvl::Face *face, fmm->facesByIndices(UISelectRowIndices(range)))
+            faces.append(face);
     }
     return faces;
 }
