@@ -84,6 +84,8 @@ private slots:
     void on_actionBoneDialog_triggered();
     void on_actionExportVMD_triggered();
     void on_actionNewMotion_triggered();
+    void on_actionInsertEmptyFrame_triggered();
+    void on_actionDeleteSelectedFrame_triggered();
 
 private:
     void connectWidgets();

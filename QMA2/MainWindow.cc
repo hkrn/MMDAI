@@ -20,7 +20,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_settings(QSettings::IniFormat, QSettings::UserScope, "MMDAI", "QMA2"),
+    m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
     m_model(0),
     m_bone(0),
     m_position(0.0f, 0.0f, 0.0f),
@@ -483,4 +483,14 @@ void MainWindow::on_actionExportVMD_triggered()
 void MainWindow::on_actionNewMotion_triggered()
 {
     newFile();
+}
+
+void MainWindow::on_actionInsertEmptyFrame_triggered()
+{
+    m_timelineTabWidget->insertFrame();
+}
+
+void MainWindow::on_actionDeleteSelectedFrame_triggered()
+{
+    m_timelineTabWidget->deleteFrame();
 }

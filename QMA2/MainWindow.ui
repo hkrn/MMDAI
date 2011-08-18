@@ -110,10 +110,18 @@
     <addaction name="separator"/>
     <addaction name="actionBoneDialog"/>
    </widget>
+   <widget class="QMenu" name="menuFrame">
+    <property name="title">
+     <string>Frame</string>
+    </property>
+    <addaction name="actionInsertEmptyFrame"/>
+    <addaction name="actionDeleteSelectedFrame"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuScene"/>
    <addaction name="menuModel"/>
    <addaction name="menuBone"/>
+   <addaction name="menuFrame"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -526,6 +534,28 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+Shift+P</string>
+   </property>
+  </action>
+  <action name="actionInsertEmptyFrame">
+   <property name="text">
+    <string>Insert empty frame</string>
+   </property>
+   <property name="statusTip">
+    <string>Insert an empty frame to the selected frame.</string>
+   </property>
+   <property name="shortcut">
+    <string>I</string>
+   </property>
+  </action>
+  <action name="actionDeleteSelectedFrame">
+   <property name="text">
+    <string>Delete selected frame</string>
+   </property>
+   <property name="statusTip">
+    <string>Deleted a selected frame.</string>
+   </property>
+   <property name="shortcut">
+    <string>K</string>
    </property>
   </action>
  </widget>

@@ -11,6 +11,7 @@ class VPDPose;
 }
 
 class QSettings;
+class QTabWidget;
 class TimelineWidget;
 class BoneMotionModel;
 class FaceMotionModel;
@@ -36,19 +37,19 @@ public slots:
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
     void registerKeyFrame(vpvl::Bone *bone);
     void registerKeyFrame(vpvl::Face *face);
+    void insertFrame();
+    void deleteFrame();
 
 signals:
     void motionDidSeek(float frameIndex);
     void currentTabDidChange(const QString &name);
-
-protected:
-    void closeEvent(QCloseEvent *event);
 
 private slots:
     void setCurrentTabIndex(int index);
 
 private:
     QSettings *m_settings;
+    QTabWidget *m_tabWidget;
     TimelineWidget *m_boneTimeline;
     TimelineWidget *m_faceTimeline;
 };
