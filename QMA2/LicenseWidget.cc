@@ -9,6 +9,9 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     QLabel *copyrightLabel = new QLabel();
     copyrightLabel->setText(tr("<h3>%1 %2+alpha</h3>"
+                               "<h4>MMDAI2 is an application to edit motion compatible with MMD ("
+                               "<a href='http://www.geocities.jp/higuchuu4/index.htm'>MikuMikuDance</a> "
+                               "created by Yuu Higuchi). This doesn't intend to be the successor of MMD.</h4>"
                                "Copyright (C) 2010-2011 "
                                "Nagoya Institute of Technology Department of Computer Science (MMDAgent), "
                                "hkrn (MMDAI) All rights reserved."
