@@ -309,19 +309,18 @@ private:
         scene->addModel(m_model);
 
         internal::slurpFile(internal::kMotion, m_motionData, size);
-        if (!m_motion.load(m_motionData, size)) {
-            fprintf(stderr, "Failed parsing the model motion\n");
-            return false;
-        }
-        m_model->addMotion(&m_motion);
+        if (!m_motion.load(m_motionData, size))
+            fprintf(stderr, "Failed parsing the model motion, skipped...\n");
+        else
+            m_model->addMotion(&m_motion);
 
         internal::slurpFile(internal::kCamera, m_cameraData, size);
-        if (!m_camera.load(m_cameraData, size)) {
-            fprintf(stderr, "Failed parsing the camera motion\n");
-            return false;
-        }
+        if (!m_camera.load(m_cameraData, size))
+            fprintf(stderr, "Failed parsing the camera motion, skipped...\n");
+        else
+            scene->setCameraMotion(&m_camera);
+
         //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
-        scene->setCameraMotion(&m_camera);
         scene->setWorld(m_world);
 
         return true;
