@@ -2,7 +2,7 @@
     <qresource prefix="/licenses">
         <file alias="Bullet">licenses/Bullet</file>
         <file alias="Julius">licenses/Julius</file>
-        <file alias="MMDAI">licenses/MMDAI</file>
+        <file alias="libvpvl">licenses/MMDAI</file>
         <file alias="OpenJTalk">licenses/OpenJTalk</file>
         <file alias="PortAudio">licenses/PortAudio</file>
         <file alias="Qt">licenses/Qt</file>

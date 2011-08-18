@@ -7,6 +7,7 @@
 #include "FaceMotionModel.h"
 #include "FaceWidget.h"
 #include "InterpolationWidget.h"
+#include "LicenseWidget.h"
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
@@ -30,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_boneMotionModel = new BoneMotionModel(this);
     m_faceMotionModel = new FaceMotionModel(this);
+    m_licenseWidget = new LicenseWidget();
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
@@ -46,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_licenseWidget;
     delete m_tabWidget;
     delete m_timelineTabWidget;
     delete m_transformWidget;
@@ -273,6 +276,7 @@ void MainWindow::connectWidgets()
 
 void MainWindow::on_actionAbout_triggered()
 {
+    m_licenseWidget->show();
 }
 
 void MainWindow::on_actionAboutQt_triggered()

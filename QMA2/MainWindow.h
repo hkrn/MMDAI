@@ -17,6 +17,7 @@ class MainWindow;
 
 class BoneMotionModel;
 class FaceMotionModel;
+class LicenseWidget;
 class TabWidget;
 class TimelineTabWidget;
 class TransformWidget;
@@ -89,6 +90,7 @@ private:
     void updateInformation();
     Ui::MainWindow *ui;
     QSettings m_settings;
+    LicenseWidget *m_licenseWidget;
     TabWidget *m_tabWidget;
     TimelineTabWidget *m_timelineTabWidget;
     TransformWidget *m_transformWidget;

@@ -29,7 +29,8 @@ SOURCES += main.cc\
     BoneDialog.cc \
     TimelineTabWidget.cc \
     InterpolationWidget.cc \
-    VPDFile.cc
+    VPDFile.cc \
+    LicenseWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -46,7 +47,8 @@ HEADERS  += MainWindow.h \
     BoneDialog.h \
     TimelineTabWidget.h \
     InterpolationWidget.h \
-    VPDFile.h
+    VPDFile.h \
+    LicenseWidget.h
 
 RESOURCES += resources/QMA2.qrc
 
