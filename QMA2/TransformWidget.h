@@ -76,18 +76,17 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
-    void on_faces_selectionChanged(QItemSelection selection);
-    void on_bones_selectionChanged(QItemSelection selection);
+    void on_faces_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void on_bones_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void on_faceWeightSlider_valueChanged(int value);
     void on_faceWeightSpinBox_valueChanged(double value);
-    void on_faces_clicked(const QModelIndex &index);
-    void on_bones_clicked(const QModelIndex &index);
     void on_comboBox_currentIndexChanged(int index);
     void on_registerButton_clicked();
 
 private:
     Ui::TransformWidget *ui;
     QSettings *m_settings;
+    QItemSelection m_selectedBones;
 };
 
 #endif // TRANSFORMWIDGET_H

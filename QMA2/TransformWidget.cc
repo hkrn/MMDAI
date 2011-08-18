@@ -173,14 +173,10 @@ TransformWidget::TransformWidget(QSettings *settings,
     UIGetRotateButtons(buttons, ui);
     foreach (TransformButton *button, buttons)
         button->setBoneMotionModel(bmm);
-    connect(ui->bones->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(on_bones_clicked(QModelIndex)));
     connect(ui->bones->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-            this, SLOT(on_bones_selectionChanged(QItemSelection)));
-    connect(ui->faces->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(on_faces_clicked(QModelIndex)));
+            this, SLOT(on_bones_selectionChanged(QItemSelection,QItemSelection)));
     connect(ui->faces->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-            this, SLOT(on_faces_selectionChanged(QItemSelection)));
+            this, SLOT(on_faces_selectionChanged(QItemSelection,QItemSelection)));
     restoreGeometry(m_settings->value("transformWidget/geometry").toByteArray());
 }
 
@@ -205,22 +201,34 @@ void TransformWidget::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-void TransformWidget::on_faces_selectionChanged(QItemSelection /* selection */)
+void TransformWidget::on_faces_selectionChanged(const QItemSelection &selected,
+                                                const QItemSelection & /* deselected */)
 {
+    QList<vpvl::Face *> faces = UISelectFacesBySelection(ui, selected);
+    UICastFaceModel(ui)->selectFaces(faces);
+    float weight = 0.0f;
+    if (!faces.isEmpty()) {
+        vpvl::Face *face = faces.last();
+        if (face)
+            weight = face->weight();
+    }
+    ui->faceWeightSpinBox->setValue(weight);
+    ui->faceWeightSlider->setValue(weight * 100.0f);
 }
 
-void TransformWidget::on_bones_selectionChanged(QItemSelection /* selection */)
+void TransformWidget::on_bones_selectionChanged(const QItemSelection &selected,
+                                                const QItemSelection &deselected)
 {
-#if 0
     bool movable = true, rotateable = true;
-    QList<vpvl::Bone *> bones = UISelectBonesBySelection(ui, selection);
-    UICastBoneModel(ui)->selectBones(bones);
-    foreach (vpvl::Bone *bone, bones) {
+    m_selectedBones.merge(selected, QItemSelectionModel::Select);
+    m_selectedBones.merge(deselected, QItemSelectionModel::Deselect);
+    QList<vpvl::Bone *> selectedBones = UISelectBonesBySelection(ui, m_selectedBones);
+    UICastBoneModel(ui)->selectBones(selectedBones);
+    foreach (vpvl::Bone *bone, selectedBones) {
         movable = movable && bone->isMovable();
         rotateable = rotateable && bone->isRotateable();
     }
     UIToggleBoneButtons(ui, movable, rotateable);
-#endif
 }
 
 void TransformWidget::on_faceWeightSlider_valueChanged(int value)
@@ -235,25 +243,6 @@ void TransformWidget::on_faceWeightSpinBox_valueChanged(double value)
     float weight = value;
     ui->faceWeightSlider->setValue(weight * 100.0f);
     UICastFaceModel(ui)->setWeight(weight);
-}
-
-void TransformWidget::on_faces_clicked(const QModelIndex &index)
-{
-    vpvl::Face *face = UICastFaceModel(ui)->selectFace(index.row());
-    if (face) {
-        float weight = face->weight();
-        ui->faceWeightSpinBox->setValue(weight);
-        ui->faceWeightSlider->setValue(weight * 100.0f);
-    }
-}
-
-void TransformWidget::on_bones_clicked(const QModelIndex &index)
-{
-    vpvl::Bone *bone = UICastBoneModel(ui)->selectBone(index.row());
-    if (bone)
-        UIToggleBoneButtons(ui, bone->isMovable(), bone->isRotateable());
-    else
-        UIToggleBoneButtons(ui, false, false);
 }
 
 void TransformWidget::on_comboBox_currentIndexChanged(int index)
