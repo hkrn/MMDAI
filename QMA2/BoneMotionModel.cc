@@ -213,6 +213,12 @@ void BoneMotionModel::deleteModel()
     reset();
 }
 
+void BoneMotionModel::deleteFrame(const QModelIndex &index)
+{
+    m_motion->mutableBoneAnimation()->deleteFrame(index.column(), m_bones[index.row()]->name());
+    setData(index, QVariant(), Qt::EditRole);
+}
+
 bool BoneMotionModel::resetBone(ResetType type)
 {
     foreach (vpvl::Bone *selected, m_selected) {

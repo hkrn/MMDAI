@@ -132,6 +132,12 @@ void FaceMotionModel::deleteModel()
     reset();
 }
 
+void FaceMotionModel::deleteFrame(const QModelIndex &index)
+{
+    m_motion->mutableFaceAnimation()->deleteFrame(index.column(), m_faces[index.row()]->name());
+    setData(index, QVariant(), Qt::EditRole);
+}
+
 void FaceMotionModel::selectFaces(QList<vpvl::Face *> faces)
 {
     m_selected = faces;

@@ -25,10 +25,10 @@ static FaceMotionModel *UIGetFaceModel(TimelineWidget *timeline)
 
 static void UIModelDeleteFrame(TimelineWidget *timeline)
 {
-    QAbstractItemModel *model = timeline->tableView()->model();
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(timeline->tableView()->model());
     QModelIndexList indices = timeline->tableView()->selectionModel()->selectedIndexes();
     foreach (QModelIndex index, indices)
-        model->setData(index, QVariant());
+        model->deleteFrame(index);
 }
 
 static void UIModelInsertBoneFrame(TimelineWidget *timeline)

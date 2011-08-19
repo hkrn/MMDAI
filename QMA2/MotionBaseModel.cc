@@ -1,4 +1,5 @@
 #include "MotionBaseModel.h"
+#include "util.h"
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 

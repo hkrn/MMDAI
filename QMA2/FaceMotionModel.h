@@ -26,6 +26,7 @@ public slots:
     bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void deleteMotion();
     void deleteModel();
+    void deleteFrame(const QModelIndex &index);
 
 private:
     QList<vpvl::Face *> m_faces;

@@ -51,6 +51,7 @@ public slots:
     bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void deleteMotion();
     void deleteModel();
+    void deleteFrame(const QModelIndex &index);
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);

@@ -41,6 +41,7 @@ public slots:
     virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void deleteMotion() = 0;
     virtual void deleteModel() = 0;
+    virtual void deleteFrame(const QModelIndex &index) = 0;
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);
