@@ -54,12 +54,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_tableView = new internal::TableView();
     m_tableView->setShowGrid(true);
     m_tableView->setModel(base);
-    m_tableView->setSelectionBehavior(QAbstractItemView::SelectItems);
     internal::TimelineItemDelegate *delegate = new internal::TimelineItemDelegate(this);
     m_tableView->horizontalHeader()->setResizeMode(QHeaderView::Fixed);
     m_tableView->setItemDelegate(delegate);
     m_tableView->resizeColumnsToContents();
-    m_tableView->setSelectionBehavior(QTableView::SelectColumns);
     connect(m_tableView->selectionModel(),
             SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(setCurrentIndex(QModelIndex)));
