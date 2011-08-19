@@ -367,9 +367,9 @@ void BoneMotionModel::transform(int coordinate, float value)
 
 void BoneMotionModel::rotate(int coordinate, float value)
 {
-    vpvl::Bone *selected = m_selected.last();
     if (!isBoneSelected())
         return;
+    vpvl::Bone *selected = m_selected.last();
     btQuaternion current = selected->rotation(), rot, dest;
     switch (coordinate) {
     case 'x':

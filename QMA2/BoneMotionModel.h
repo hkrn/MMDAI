@@ -43,7 +43,7 @@ public:
     QList<vpvl::Bone *> bonesByIndices(const QModelIndexList &indices) const;
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
-    vpvl::Bone *selectedBone() const { return m_selected.first(); }
+    vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
 
 public slots:

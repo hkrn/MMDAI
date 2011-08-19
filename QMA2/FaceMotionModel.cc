@@ -181,7 +181,8 @@ QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &ind
 
 void FaceMotionModel::setWeight(float value)
 {
-    setWeight(value, m_selected.last());
+    if (!m_selected.isEmpty())
+        setWeight(value, m_selected.last());
 }
 
 void FaceMotionModel::setWeight(float value, vpvl::Face *face)
