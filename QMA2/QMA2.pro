@@ -2,17 +2,30 @@ QT += core gui opengl
 TARGET = MMDAI2
 TEMPLATE = app
 
-
-LIBS += -L../libvpvl/dist/lib
 CONFIG(debug, debug|release) {
-  LIBS += -lvpvl_debug
+  LIBS += -L../libvpvl/debug/lib \
+          -L../bullet/debug/src/BulletCollision \
+          -L../bullet/debug/src/BulletDynamics \
+          -L../bullet/debug/src/BulletSoftBody \
+          -L../bullet/debug/src/LinearMath \
+          -lvpvl_debug
 }
 CONFIG(release, debug|release) {
-  LIBS += -lvpvl
+  LIBS += -L../libvpvl/release/lib \
+          -L../bullet/release/src/BulletCollision \
+          -L../bullet/release/src/BulletDynamics \
+          -L../bullet/release/src/BulletSoftBody \
+          -L../bullet/release/src/LinearMath \
+          -lvpvl
 }
 
-LIBS += -L/opt/local/lib -L/usr/local/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
-INCLUDEPATH += ../libvpvl/include /opt/local/include /opt/local/include/bullet /usr/local/include /usr/local/include/bullet
+exists(/opt/local/lib):LIBS += -L/opt/local/lib
+exists(/opt/local/include):INCLUDEPATH += /opt/local/include
+exists(/usr/local/lib):LIBS += -L/usr/local/lib
+exists(/usr/local/include):INCLUDEPATH += /usr/local/include
+
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
+INCLUDEPATH += ../libvpvl/include ../bullet/src
 
 SOURCES += main.cc\
            MainWindow.cc \
