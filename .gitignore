@@ -22,7 +22,7 @@ vpvl_*
 Win32
 *.a
 *.build
-*-build-desktop
+*-*-desktop
 *.cbp
 *.dll*
 *.dylib
