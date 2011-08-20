@@ -41,6 +41,10 @@ set(vpvl_internal_headers
     include/vpvl/internal/util.h
 )
 
+IF(NOT CMAKE_BUILD_TYPE)
+ SET(CMAKE_BUILD_TYPE "Release")
+ENDIF()
+
 # declarations of function
 function(link_bullet target)
   OPTION(FIND_BULLET_BY_PKGCONFIG "Find Bullet Physics by pkg-config" OFF)
@@ -48,16 +52,26 @@ function(link_bullet target)
     find_package(PkgConfig REQUIRED)
     pkg_search_module(BULLET REQUIRED bullet)
   endif()
+  # exists bullet in pkgconfig?
   if(BULLET_FOUND)
     include_directories(${BULLET_INCLUDE_DIRS})
     target_link_libraries(${target} ${BULLET_LIBRARIES})
     link_directories(${BULLET_LIBRARY_DIRS})
   else()
-    find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATHS $ENV{BULLET_INCLUDE_DIR})
-    find_library(BULLET_COLLISION_LIB BulletCollision PATHS $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_DYNAMICS_LIB BulletDynamics PATHS $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATHS $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_LINEARMATH_LIB LinearMath PATHS $ENV{BULLET_LIBRARY_DIR})
+    string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_TOLOWER)
+    set(BULLET_LIBRARY_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/${CMAKE_BUILD_TYPE_TOLOWER}/src")
+    set(BULLET_LIBRARY_LOCAL_DIR_WIN "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/${CMAKE_BUILD_TYPE_TOLOWER}/lib")
+    # find from MMDAI/bullet or environment variables
+    find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/src"
+              $ENV{BULLET_INCLUDE_DIR})
+    find_library(BULLET_COLLISION_LIB BulletCollision PATHS "${BULLET_LIBRARY_LOCAL_DIR}/BulletCollision"
+                 ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
+    find_library(BULLET_DYNAMICS_LIB BulletDynamics PATHS "${BULLET_LIBRARY_LOCAL_DIR}/BulletDynamics"
+                 ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
+    find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATHS "${BULLET_LIBRARY_LOCAL_DIR}/BulletSoftBody"
+                 ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
+    find_library(BULLET_LINEARMATH_LIB LinearMath PATHS "${BULLET_LIBRARY_LOCAL_DIR}/LinearMath"
+                 ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
     if(VPVL_NO_BULLET)
       if(BULLET_INCLUDE_DIRS AND BULLET_LINEARMATH_LIB)
         include_directories(${BULLET_INCLUDE_DIRS})
@@ -125,10 +139,12 @@ if(VPVL_OPENGL_RENDERER)
   list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
 endif()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h")
+if(NOT WIN32)
+  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc DESTINATION ${PKGCONFIG_INSTALL_PREFIX})
+endif()
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
