@@ -3,20 +3,10 @@ TARGET = MMDAI2
 TEMPLATE = app
 
 CONFIG(debug, debug|release) {
-  LIBS += -L../libvpvl/debug/lib \
-          -L../bullet/debug/src/BulletCollision \
-          -L../bullet/debug/src/BulletDynamics \
-          -L../bullet/debug/src/BulletSoftBody \
-          -L../bullet/debug/src/LinearMath \
-          -lvpvl_debug
+  LIBS += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
 }
 CONFIG(release, debug|release) {
-  LIBS += -L../libvpvl/release/lib \
-          -L../bullet/release/src/BulletCollision \
-          -L../bullet/release/src/BulletDynamics \
-          -L../bullet/release/src/BulletSoftBody \
-          -L../bullet/release/src/LinearMath \
-          -lvpvl
+  LIBS += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
 }
 
 exists(/opt/local/lib):LIBS += -L/opt/local/lib

@@ -64,13 +64,13 @@ function(link_bullet target)
     # find from MMDAI/bullet or environment variables
     find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/src"
               $ENV{BULLET_INCLUDE_DIR})
-    find_library(BULLET_COLLISION_LIB BulletCollision PATHS "${BULLET_LIBRARY_LOCAL_DIR}/BulletCollision"
+    find_library(BULLET_COLLISION_LIB BulletCollision PATHS ${BULLET_LIBRARY_LOCAL_DIR}
                  ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_DYNAMICS_LIB BulletDynamics PATHS "${BULLET_LIBRARY_LOCAL_DIR}/BulletDynamics"
+    find_library(BULLET_DYNAMICS_LIB BulletDynamics PATHS ${BULLET_LIBRARY_LOCAL_DIR}
                  ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATHS "${BULLET_LIBRARY_LOCAL_DIR}/BulletSoftBody"
+    find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATHS ${BULLET_LIBRARY_LOCAL_DIR}
                  ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
-    find_library(BULLET_LINEARMATH_LIB LinearMath PATHS "${BULLET_LIBRARY_LOCAL_DIR}/LinearMath"
+    find_library(BULLET_LINEARMATH_LIB LinearMath PATHS ${BULLET_LIBRARY_LOCAL_DIR}
                  ${BULLET_LIBRARY_LOCAL_DIR_WIN} $ENV{BULLET_LIBRARY_DIR})
     if(VPVL_NO_BULLET)
       if(BULLET_INCLUDE_DIRS AND BULLET_LINEARMATH_LIB)
