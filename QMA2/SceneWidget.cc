@@ -650,7 +650,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         QPoint diff = event->pos() - m_prevPos;
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             vpvl::Scene *scene = m_renderer->scene();
-            btVector4 direction = scene->lightDirection();
+            btVector4 direction = scene->lightPosition();
             btVector3 d(direction.x(), direction.y(), direction.z());
             btQuaternion rx(0.0f, diff.y() * vpvl::radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * vpvl::radian(0.1f), 0.0f);
@@ -673,6 +673,7 @@ void SceneWidget::paintGL()
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
     m_renderer->drawSurface();
+    m_renderer->drawModelBones();
     drawGrid();
     updateFPS();
     emit surfaceDidUpdate();
