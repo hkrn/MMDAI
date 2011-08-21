@@ -102,6 +102,43 @@ public:
         m_displayBones = !m_displayBones;
     }
 
+    const btVector4 &lightColor() const {
+        return m_lightColor;
+    }
+    void setLightColor(const btVector4 &value) {
+        m_lightColor = value;
+    }
+    const btVector4 &lightDirection() const {
+        return m_lightDirection;
+    }
+    void setLightDirection(const btVector4 &value) {
+        m_lightDirection = value;
+    }
+    btScalar lightIntensity() const {
+        return m_lightIntensity;
+    }
+    void setLightIntensity(btScalar value) {
+        m_lightIntensity = value;
+    }
+    btScalar ambient() const {
+        return m_ambient;
+    }
+    void setAmbient(btScalar value) {
+        m_ambient = value;
+    }
+    btScalar diffuse() const {
+        return m_diffuse;
+    }
+    void setDiffuse(btScalar value) {
+        m_diffuse = value;
+    }
+    btScalar specular() const {
+        return m_specular;
+    }
+    void setSpecular(btScalar value) {
+        m_specular = value;
+    }
+
     void initializeSurface();
     void resize(int width, int height);
     void pickBones(int px, int py, float approx, vpvl::BoneList &pickBones);
@@ -112,6 +149,7 @@ public:
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
     void drawModelShadow(const vpvl::PMDModel *model);
+    void drawModelBones();
     void drawModelBones(const vpvl::PMDModel *model);
     void loadAsset(vpvl::XModel *model, const std::string &dir);
     void unloadAsset(const vpvl::XModel *model);
@@ -123,6 +161,12 @@ private:
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
     Array<vpvl::XModel *> m_assets;
+    btVector4 m_lightColor;
+    btVector4 m_lightDirection;
+    btScalar m_lightIntensity;
+    btScalar m_ambient;
+    btScalar m_diffuse;
+    btScalar m_specular;
     bool m_displayBones;
     int m_width;
     int m_height;

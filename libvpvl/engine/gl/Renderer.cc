@@ -90,6 +90,12 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_scene(0),
       m_selected(0),
       m_delegate(delegate),
+      m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
+      m_lightDirection(0.5f, 1.0f, 0.5f, 0.0f),
+      m_lightIntensity(0.6f),
+      m_ambient(m_lightIntensity * 2.0f),
+      m_diffuse(0.0f),
+      m_specular(m_lightIntensity),
       m_displayBones(false),
       m_width(width),
       m_height(height)
@@ -136,7 +142,7 @@ void Renderer::pickBones(int px, int py, float approx, vpvl::BoneList &pickBones
     for (uint32_t i = 0; i < n; i++) {
         vpvl::Bone *bone = bones[i];
         const btVector3 &p = bone->originPosition();
-        if (coordinate.distance(p) < approx)
+        if (p.dot(coordinate) > 0)
             pickBones.add(bone);
     }
 }
@@ -162,32 +168,17 @@ void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate)
 
 void Renderer::setLighting()
 {
-    btVector4 color(1.0f, 1.0f, 1.0f, 1.0f), direction(0.5f, 1.0f, 0.5f, 0.0f);
-    btScalar diffuseValue, ambientValue, specularValue, lightIntensity = 0.6f;
-
-    // use MMD like cartoon
-#if 0
-    diffuseValue = 0.2f;
-    ambientValue = lightIntensity * 2.0f;
-    specularValue = 0.4f;
-#else
-    diffuseValue = 0.0f;
-    ambientValue = lightIntensity * 2.0f;
-    specularValue = lightIntensity;
-#endif
-
-    btVector3 diffuse = color * diffuseValue;
-    btVector3 ambient = color * ambientValue;
-    btVector3 specular = color * specularValue;
+    btVector3 diffuse = m_lightColor * m_diffuse;
+    btVector3 ambient = m_lightColor * m_ambient;
+    btVector3 specular = m_lightColor * m_specular;
     diffuse.setW(1.0f);
     ambient.setW(1.0f);
     specular.setW(1.0f);
-
-    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(direction));
+    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_lightDirection));
     glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
-    m_scene->setLight(color, direction);
+    m_scene->setLight(m_lightColor, m_lightDirection);
 }
 
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
@@ -546,6 +537,12 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
+}
+
+void Renderer::drawModelBones()
+{
+    if (m_selected)
+        drawModelBones(m_selected);
 }
 
 void Renderer::drawModelBones(const vpvl::PMDModel *model)
