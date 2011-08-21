@@ -81,7 +81,7 @@ Scene::Scene(int width, int height, int fps)
       m_rotation(m_currentRotation),
       m_viewMoveRotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightColor(0.0f, 0.0f, 0.0f, 1.0f),
-      m_lightDirection(0.0f, 0.0f, 0.0f, 0.0f),
+      m_lightPosition(0.0f, 0.0f, 0.0f, 0.0f),
       m_currentPosition(0.0f, 10.0f, 0.0f),
       m_position(m_currentPosition),
       m_viewMovePosition(m_currentPosition),
@@ -110,7 +110,7 @@ Scene::~Scene()
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_viewMoveRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_lightColor.setZero();
-    m_lightDirection.setZero();
+    m_lightPosition.setZero();
     m_currentPosition.setZero();
     m_position.setZero();
     m_viewMovePosition.setZero();
@@ -132,7 +132,7 @@ void Scene::addModel(PMDModel *model)
 {
     m_models.add(model);
     sortRenderingOrder();
-    model->setLightDirection(m_lightDirection);
+    model->setLightPosition(m_lightPosition);
     model->joinWorld(m_world);
 }
 
@@ -203,14 +203,14 @@ void Scene::setCameraMotion(VMDMotion *motion)
     m_cameraMotion = motion;
 }
 
-void Scene::setLight(const btVector4 &color, const btVector4 &direction)
+void Scene::setLight(const btVector4 &color, const btVector4 &position)
 {
     m_lightColor = color;
-    m_lightDirection = direction;
+    m_lightPosition = position;
     const uint32_t nModels = m_models.count();
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_models[i];
-        model->setLightDirection(direction);
+        model->setLightPosition(position);
     }
 }
 

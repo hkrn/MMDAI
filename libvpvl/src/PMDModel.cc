@@ -273,7 +273,7 @@ void PMDModel::updateMotion(float deltaFrame)
 void PMDModel::updateSkins()
 {
     updateSkinVertices();
-    updateToon(m_lightDirection);
+    updateToon(m_lightPosition);
 }
 
 void PMDModel::updateAllBones()

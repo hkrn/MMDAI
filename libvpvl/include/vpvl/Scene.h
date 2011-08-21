@@ -86,7 +86,7 @@ public:
     void seek(float frameIndex);
     void setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
-    void setLight(const btVector4 &color, const btVector4 &direction);
+    void setLight(const btVector4 &color, const btVector4 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
     void update(float deltaFrame);
@@ -96,8 +96,8 @@ public:
     const btVector4 &lightColor() const {
         return m_lightColor;
     }
-    const btVector4 &lightDirection() const {
-        return m_lightDirection;
+    const btVector4 &lightPosition() const {
+        return m_lightPosition;
     }
     const btVector3 &angle() const {
         return m_angle;
@@ -149,7 +149,7 @@ private:
     btQuaternion m_rotation;
     btQuaternion m_viewMoveRotation;
     btVector4 m_lightColor;
-    btVector4 m_lightDirection;
+    btVector4 m_lightPosition;
     btVector3 m_currentPosition;
     btVector3 m_position;
     btVector3 m_viewMovePosition;

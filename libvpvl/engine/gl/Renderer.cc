@@ -91,7 +91,7 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_selected(0),
       m_delegate(delegate),
       m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
-      m_lightDirection(0.5f, 1.0f, 0.5f, 0.0f),
+      m_lightPosition(0.5f, 1.0f, 0.5f, 0.0f),
       m_lightIntensity(0.6f),
       m_ambient(m_lightIntensity * 2.0f),
       m_diffuse(0.0f),
@@ -174,11 +174,11 @@ void Renderer::setLighting()
     diffuse.setW(1.0f);
     ambient.setW(1.0f);
     specular.setW(1.0f);
-    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_lightDirection));
+    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_lightPosition));
     glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
-    m_scene->setLight(m_lightColor, m_lightDirection);
+    m_scene->setLight(m_lightColor, m_lightPosition);
 }
 
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)

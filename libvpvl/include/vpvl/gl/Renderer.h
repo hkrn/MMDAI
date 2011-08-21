@@ -108,11 +108,11 @@ public:
     void setLightColor(const btVector4 &value) {
         m_lightColor = value;
     }
-    const btVector4 &lightDirection() const {
-        return m_lightDirection;
+    const btVector4 &lightPosition() const {
+        return m_lightPosition;
     }
-    void setLightDirection(const btVector4 &value) {
-        m_lightDirection = value;
+    void setLightPosition(const btVector4 &value) {
+        m_lightPosition = value;
     }
     btScalar lightIntensity() const {
         return m_lightIntensity;
@@ -162,7 +162,7 @@ private:
     vpvl::gl::IDelegate *m_delegate;
     Array<vpvl::XModel *> m_assets;
     btVector4 m_lightColor;
-    btVector4 m_lightDirection;
+    btVector4 m_lightPosition;
     btScalar m_lightIntensity;
     btScalar m_ambient;
     btScalar m_diffuse;

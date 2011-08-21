@@ -262,8 +262,8 @@ public:
     bool isSimulationEnabled() const {
         return m_enableSimulation;
     }
-    const btVector3 &lightDirection() const {
-        return m_lightDirection;
+    const btVector3 &lightPosition() const {
+        return m_lightPosition;
     }
     PMDModelUserData *userData() const {
         return m_userData;
@@ -311,8 +311,8 @@ public:
             p += sizeof(m_textures[i]);
         }
     }
-    void setLightDirection(const btVector3 &value) {
-        m_lightDirection = value.normalized();
+    void setLightPosition(const btVector3 &value) {
+        m_lightPosition = value.normalized();
     }
     void setEdgeOffset(float value) {
         m_edgeOffset = value * 0.03f;
@@ -347,7 +347,7 @@ private:
     void updateAllFaces();
     void updateShadowTextureCoords(float coef);
     void updateSkinVertices();
-    void updateToon(const btVector3 &lightDirection);
+    void updateToon(const btVector3 &lightPosition);
     void updateIndices();
 
     uint8_t m_name[kNameSize];
@@ -384,7 +384,7 @@ private:
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;
-    btVector3 m_lightDirection;
+    btVector3 m_lightPosition;
     Error m_error;
     uint32_t m_boundingSphereStep;
     float m_edgeOffset;
