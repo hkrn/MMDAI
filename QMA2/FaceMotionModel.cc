@@ -2,8 +2,12 @@
 #include "util.h"
 #include <vpvl/vpvl.h>
 
-FaceMotionModel::FaceMotionModel(QObject *parent) :
-    MotionBaseModel(parent)
+FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
+    : MotionBaseModel(undo, parent)
+{
+}
+
+FaceMotionModel::~FaceMotionModel()
 {
 }
 

@@ -21,6 +21,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
+    m_undo(0),
+    m_licenseWidget(0),
+    m_tabWidget(0),
+    m_timelineTabWidget(0),
+    m_transformWidget(0),
+    m_boneMotionModel(0),
+    m_faceMotionModel(0),
     m_model(0),
     m_bone(0),
     m_position(0.0f, 0.0f, 0.0f),
@@ -29,18 +36,14 @@ MainWindow::MainWindow(QWidget *parent) :
     m_distance(0.0f),
     m_currentFPS(0)
 {
-    m_boneMotionModel = new BoneMotionModel(this);
-    m_faceMotionModel = new FaceMotionModel(this);
+    m_undo = new QUndoGroup(this);
+    m_boneMotionModel = new BoneMotionModel(m_undo, this);
+    m_faceMotionModel = new FaceMotionModel(m_undo, this);
     m_licenseWidget = new LicenseWidget();
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
-    ui->setupUi(this);
-    ui->scene->setSettings(&m_settings);
-    /* for QMenu limitation see http://doc.qt.nokia.com/latest/mac-differences.html#menu-actions */
-#ifdef Q_OS_MACX
-    ui->menuBar->setParent(0);
-#endif
+    buildUI();
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
@@ -228,6 +231,24 @@ void MainWindow::setCameraPerspective(const btVector3 &pos,
 
 void MainWindow::updateInformation()
 {
+}
+
+void MainWindow::buildUI()
+{
+    ui->setupUi(this);
+    ui->scene->setSettings(&m_settings);
+    /* for QMenu limitation see http://doc.qt.nokia.com/latest/mac-differences.html#menu-actions */
+#ifdef Q_OS_MACX
+    ui->menuBar->setParent(0);
+#endif
+    QMenu *menuFrame = ui->menuFrame;
+    menuFrame->addSeparator();
+    QAction *undoAction = m_undo->createUndoAction(this);
+    undoAction->setShortcut(tr("Ctrl+Z"));
+    menuFrame->addAction(undoAction);
+    QAction *redoAction = m_undo->createRedoAction(this);
+    redoAction->setShortcut(tr("Ctrl+Shift+Z"));
+    menuFrame->addAction(redoAction);
 }
 
 void MainWindow::connectWidgets()

@@ -8,7 +8,8 @@ class FaceMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    explicit FaceMotionModel(QObject *parent = 0);
+    FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    ~FaceMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
     void registerKeyFrame(vpvl::Face *bone, int frameIndex);

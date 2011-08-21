@@ -3,7 +3,6 @@
 
 #include <QtCore/QSettings>
 #include <QtGui/QMainWindow>
-#include <QtGui/QMenuBar>
 #include <LinearMath/btVector3.h>
 
 namespace vpvl {
@@ -21,6 +20,7 @@ class LicenseWidget;
 class TabWidget;
 class TimelineTabWidget;
 class TransformWidget;
+class QUndoGroup;
 
 class MainWindow : public QMainWindow
 {
@@ -88,10 +88,12 @@ private slots:
     void on_actionDeleteSelectedFrame_triggered();
 
 private:
+    void buildUI();
     void connectWidgets();
     void updateInformation();
     Ui::MainWindow *ui;
     QSettings m_settings;
+    QUndoGroup *m_undo;
     LicenseWidget *m_licenseWidget;
     TabWidget *m_tabWidget;
     TimelineTabWidget *m_timelineTabWidget;

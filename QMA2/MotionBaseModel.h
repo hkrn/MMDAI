@@ -9,6 +9,9 @@ class VMDMotion;
 class VPDPose;
 }
 
+class QUndoCommand;
+class QUndoGroup;
+class QUndoStack;
 
 class MotionBaseModel : public QAbstractTableModel
 {
@@ -18,8 +21,8 @@ public:
     typedef QStringList Keys;
     typedef QHash< QPair<int, int>, QVariant > Values;
 
-    explicit MotionBaseModel(QObject *parent = 0);
-    ~MotionBaseModel();
+    MotionBaseModel(QUndoGroup *undo, QObject *parent = 0);
+    virtual ~MotionBaseModel();
 
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     void saveState();
@@ -57,6 +60,7 @@ protected:
     void appendKey(const QString &key, vpvl::PMDModel *model) { m_keys[model].append(key); }
     void clearKeys() { m_keys[m_model].clear(); m_keys.remove(m_model); }
     void clearValues() { m_values[m_model].clear(); m_values.remove(m_model); }
+    void addUndoCommand(QUndoCommand *command);
 
     vpvl::PMDModel *m_model;
     vpvl::VMDMotion *m_motion;
@@ -65,6 +69,8 @@ private:
     vpvl::PMDModel::State *m_state;
     QHash<vpvl::PMDModel *, Keys> m_keys;
     QHash<vpvl::PMDModel *, Values> m_values;
+    QHash<vpvl::PMDModel *, QUndoStack *> m_stacks;
+    QUndoGroup *m_undo;
     bool m_modified;
 };
 

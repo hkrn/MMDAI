@@ -3,11 +3,12 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-MotionBaseModel::MotionBaseModel(QObject *parent) :
+MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),
     m_motion(0),
     m_state(0),
+    m_undo(undo),
     m_modified(false)
 {
 }
@@ -18,6 +19,7 @@ MotionBaseModel::~MotionBaseModel()
         m_model->discardState(m_state);
     if (m_state)
         qWarning("It seems memory leak occured: m_state");
+    qDeleteAll(m_stacks);
 }
 
 void MotionBaseModel::saveState()
@@ -99,8 +101,22 @@ bool MotionBaseModel::updateModel()
     }
 }
 
+void MotionBaseModel::addUndoCommand(QUndoCommand *command)
+{
+    m_undo->activeStack()->push(command);
+}
+
 void MotionBaseModel::setPMDModel(vpvl::PMDModel *model)
 {
+    if (!m_stacks.contains(model)) {
+        QUndoStack *stack = new QUndoStack();
+        m_stacks.insert(model, stack);
+        m_undo->addStack(stack);
+        m_undo->setActiveStack(stack);
+    }
+    else {
+        m_undo->setActiveStack(m_stacks[model]);
+    }
     m_model = model;
     emit modelDidChange(model);
 }

@@ -3,9 +3,13 @@
 #include "util.h"
 #include <vpvl/vpvl.h>
 
-BoneMotionModel::BoneMotionModel(QObject *parent) :
-    MotionBaseModel(parent),
+BoneMotionModel::BoneMotionModel(QUndoGroup *undo, QObject *parent) :
+    MotionBaseModel(undo, parent),
     m_mode(kLocal)
+{
+}
+
+BoneMotionModel::~BoneMotionModel()
 {
 }
 

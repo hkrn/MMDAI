@@ -24,7 +24,8 @@ public:
         kRotation
     };
 
-    explicit BoneMotionModel(QObject *parent = 0);
+    BoneMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
     bool loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
