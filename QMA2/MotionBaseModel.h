@@ -52,7 +52,6 @@ signals:
 
 protected:
     bool updateModel();
-    void setModel(vpvl::PMDModel *model);
 
     const Keys keys() const { return keys(m_model); }
     const Keys keys(vpvl::PMDModel *model) const { return m_keys[model]; }
