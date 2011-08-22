@@ -39,6 +39,8 @@
 #include <vpvl/vpvl.h>
 #include <vpvl/gl/Renderer.h>
 
+#include <btBulletDynamicsCommon.h>
+
 namespace vpvl
 {
 
@@ -75,6 +77,52 @@ struct XModelUserData {
 namespace gl
 {
 
+class DebugDrawer : public btIDebugDraw
+{
+public:
+    DebugDrawer() {}
+    virtual ~DebugDrawer() {}
+
+    void draw3dText(const btVector3 & /* location */, const char *textString) {
+        fprintf(stderr, "[INFO]: %s\n", textString);
+    }
+    void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int /* lifeTime */, const btVector3 &color) {
+        const btVector3 to = PointOnB + normalOnB * distance;
+        glBegin(GL_LINES);
+        glColor3fv(color);
+        glVertex3fv(PointOnB);
+        glVertex3fv(to);
+        glEnd();
+    }
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
+        glBegin(GL_LINES);
+        glColor3fv(color);
+        glVertex3fv(from);
+        glVertex3fv(to);
+        glEnd();
+    }
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &fromColor, const btVector3 &toColor) {
+        glBegin(GL_LINES);
+        glColor3fv(fromColor);
+        glVertex3fv(from);
+        glColor3fv(toColor);
+        glVertex3fv(to);
+        glEnd();
+    }
+    void reportErrorWarning(const char *warningString) {
+        fprintf(stderr, "[ERROR]: %s\n", warningString);
+    }
+    int getDebugMode() const {
+        return m_flags;
+    }
+    void setDebugMode(int debugMode) {
+        m_flags = debugMode;
+    }
+
+private:
+    int m_flags;
+};
+
 bool Renderer::initializeGLEW(GLenum &err)
 {
 #ifndef VPVL_USE_ALLEGRO5
@@ -89,6 +137,8 @@ bool Renderer::initializeGLEW(GLenum &err)
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_scene(0),
       m_selected(0),
+      m_world(0),
+      m_debugDrawer(0),
       m_delegate(delegate),
       m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lightPosition(0.5f, 1.0f, 0.5f, 0.0f),
@@ -100,11 +150,13 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_width(width),
       m_height(height)
 {
+    m_debugDrawer = new DebugDrawer();
     m_scene = new vpvl::Scene(width, height, fps);
 }
 
 Renderer::~Renderer()
 {
+    delete m_debugDrawer;
     delete m_scene;
 }
 
@@ -179,6 +231,12 @@ void Renderer::setLighting()
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
     m_scene->setLight(m_lightColor, m_lightPosition);
+}
+
+void Renderer::setDebugDrawer(btDynamicsWorld *world)
+{
+    m_world = world;
+    world->setDebugDrawer(m_debugDrawer);
 }
 
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
@@ -840,13 +898,8 @@ void Renderer::drawSurface()
         drawModel(model);
         drawModelEdge(model);
     }
-    // render bones if selecting bone is enabled
-    if (m_displayBones) {
-        for (size_t i = 0; i < size; i++) {
-            vpvl::PMDModel *model = models[i];
-            drawModelBones(model);
-        }
-    }
+    if (m_world)
+        m_world->debugDrawWorld();
 }
 
 }

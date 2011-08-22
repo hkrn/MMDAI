@@ -50,6 +50,9 @@
 #include <GL/glew.h>
 #endif
 
+class btDynamicsWorld;
+class btIDebugDraw;
+
 namespace vpvl
 {
 
@@ -139,11 +142,16 @@ public:
         m_specular = value;
     }
 
+    btIDebugDraw *debugDrawer() const {
+        return m_debugDrawer;
+    }
+
     void initializeSurface();
     void resize(int width, int height);
     void pickBones(int px, int py, float approx, vpvl::BoneList &pickBones);
     void getObjectCoordinate(int px, int py, btVector3 &coordinate);
     void setLighting();
+    void setDebugDrawer(btDynamicsWorld *world);
     void loadModel(vpvl::PMDModel *model, const std::string &dir);
     void unloadModel(const vpvl::PMDModel *model);
     void drawModel(const vpvl::PMDModel *model);
@@ -161,6 +169,8 @@ private:
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
     Array<vpvl::XModel *> m_assets;
+    btDynamicsWorld *m_world;
+    btIDebugDraw *m_debugDrawer;
     btVector4 m_lightColor;
     btVector4 m_lightPosition;
     btScalar m_lightIntensity;
