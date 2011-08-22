@@ -156,6 +156,21 @@ void BoneKeyFrame::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
+BaseKeyFrame *BoneKeyFrame::clone() const
+{
+    BoneKeyFrame *frame = new BoneKeyFrame();
+    internal::copyBytes(frame->m_name, m_name, kNameSize);
+    internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
+                        sizeof(m_rawInterpolationTable));
+    frame->m_frameIndex = m_frameIndex;
+    frame->m_position = m_position;
+    frame->m_rotation = m_rotation;
+    frame->m_parameter = m_parameter;
+    frame->setInterpolationTable(m_rawInterpolationTable);
+    return frame;
+}
+
 void BoneKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const
 {
     btQuadWord &w = getInterpolationParameterInternal(type);

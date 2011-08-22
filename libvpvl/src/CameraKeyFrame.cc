@@ -168,6 +168,23 @@ void CameraKeyFrame::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
+BaseKeyFrame *CameraKeyFrame::clone() const
+{
+    CameraKeyFrame *frame = new CameraKeyFrame();
+    internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
+                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
+                        sizeof(m_rawInterpolationTable));
+    frame->m_frameIndex = m_frameIndex;
+    frame->m_distance = m_distance;
+    frame->m_fovy = m_fovy;
+    frame->m_position = m_position;
+    frame->m_angle = m_angle;
+    frame->m_noPerspective = m_noPerspective;
+    frame->m_parameter = m_parameter;
+    frame->setInterpolationTable(m_rawInterpolationTable);
+    return frame;
+}
+
 void CameraKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const
 {
     btQuadWord &w = getInterpolationParameterInternal(type);

@@ -87,12 +87,10 @@ CameraAnimation::CameraAnimation()
 
 CameraAnimation::~CameraAnimation()
 {
-    m_frames.clear();
     m_position.setZero();
     m_angle.setZero();
     m_distance = 0.0f;
     m_fovy = 0.0f;
-    m_lastIndex = 0;
 }
 
 void CameraAnimation::read(const uint8_t *data, uint32_t size)

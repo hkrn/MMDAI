@@ -76,6 +76,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
+    BaseKeyFrame *clone() const;
 
     /**
      * Set the default values of the interpolation parameter.

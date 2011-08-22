@@ -58,6 +58,22 @@ BaseAnimation::BaseAnimation(float smearDefault) :
 {
 }
 
+BaseAnimation::~BaseAnimation()
+{
+    m_frames.clear();
+    m_lastIndex = 0;
+    m_lastLoopStartIndex = 0;
+    m_maxFrame = 0.0f;
+    m_currentFrame = 0.0f;
+    m_previousFrame = 0.0f;
+    m_lastLoopStartFrame = 0.0f;
+    m_blendRate = 1.0f;
+    m_smearIndex = 0;
+    m_ignoreSingleAnimation = false;
+    m_overrideFirst = false;
+    m_automaticRefresh = true;
+}
+
 void BaseAnimation::advance(float deltaFrame, bool &reached)
 {
     seek(m_currentFrame);
@@ -104,6 +120,16 @@ void BaseAnimation::addFrame(BaseKeyFrame *frame)
     m_frames.add(frame);
     if (m_automaticRefresh)
         refresh();
+}
+
+void BaseAnimation::copyFrames(int frameIndex, BaseKeyFrameList &frames) const
+{
+    const uint32_t nFrames = m_frames.count();
+    for (uint32_t i = 0; i < nFrames; i++) {
+        BaseKeyFrame *frame = m_frames[i];
+        if (frame->frameIndex() == frameIndex)
+            frames.add(frame->clone());
+    }
 }
 
 void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)

@@ -91,6 +91,15 @@ void FaceKeyFrame::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
+BaseKeyFrame *FaceKeyFrame::clone() const
+{
+    FaceKeyFrame *frame = new FaceKeyFrame();
+    internal::copyBytes(frame->m_name, m_name, kNameSize);
+    frame->m_frameIndex = m_frameIndex;
+    frame->m_weight = m_weight;
+    return frame;
+}
+
 const uint8_t *FaceKeyFrame::name() const
 {
     return m_name;

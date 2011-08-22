@@ -59,6 +59,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
+    BaseKeyFrame *clone() const;
 
     /**
      * Get the target bone name of this keyframe.

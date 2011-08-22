@@ -68,7 +68,7 @@ public:
      */
     BaseAnimation(float smearDefault);
 
-    virtual ~BaseAnimation() {}
+    virtual ~BaseAnimation();
 
     /**
      * Read and parse the buffer with size and sets it's result to the class.
@@ -141,6 +141,16 @@ public:
     size_t countFrames() const {
         return m_frames.count();
     }
+
+    /**
+     * Copy key frames associated with an index.
+     *
+     * This method clone all key frames and add them to the frames argument.
+     * You should call clear method of the frames argument at destruction.
+     *
+     * @return copied key frames
+     */
+    void copyFrames(int frameIndex, BaseKeyFrameList &frames) const;
 
     /**
      * Delete a key frame associated with an index and a name.

@@ -68,7 +68,6 @@ FaceAnimation::FaceAnimation()
 
 FaceAnimation::~FaceAnimation()
 {
-    m_frames.clear();
     m_name2node.clear();
     m_model = 0;
 }

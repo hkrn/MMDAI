@@ -49,7 +49,7 @@ class VPVL_EXPORT BaseKeyFrame
 public:
     BaseKeyFrame() : m_frameIndex(0) {
     }
-    ~BaseKeyFrame() {
+    virtual ~BaseKeyFrame() {
         m_frameIndex = 0;
     }
 
@@ -76,6 +76,15 @@ public:
      * @see stride
      */
     virtual void write(uint8_t *data) const = 0;
+
+    /**
+     * Clone a key frame
+     *
+     * You must manage a copied keyframe and free it at destruction.
+     *
+     * @return copied key frame
+     */
+    virtual BaseKeyFrame *clone() const = 0;
 
     /**
      * Get the target bone name of this keyframe.

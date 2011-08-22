@@ -96,7 +96,6 @@ BoneAnimation::BoneAnimation()
 
 BoneAnimation::~BoneAnimation()
 {
-    m_frames.clear();
     m_name2node.clear();
     m_model = 0;
     m_hasCenterBoneAnimation = false;
