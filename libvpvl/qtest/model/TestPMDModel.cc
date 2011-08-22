@@ -1,5 +1,6 @@
 #include <QtCore/QtCore>
 #include <QtTest/QtTest>
+#include <btBulletDynamicsCommon.h>
 
 #include <vpvl/vpvl.h>
 #include <vpvl/internal/util.h>
