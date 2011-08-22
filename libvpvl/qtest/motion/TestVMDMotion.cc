@@ -89,7 +89,7 @@ void TestVMDMotion::parseCamera()
 
 void TestVMDMotion::saveBoneKeyFrame()
 {
-    vpvl::BoneKeyFrame frame, newFrame;
+    vpvl::BoneKeyFrame frame, newFrame, *cloned;
     btVector3 pos(1, 2, 3);
     btQuaternion rot(4, 5, 6, 7);
     frame.setFrameIndex(42);
@@ -115,11 +115,18 @@ void TestVMDMotion::saveBoneKeyFrame()
         20, 21, 22, 23
     };
     testBoneInterpolationMatrix(matrix, frame);
+    cloned = static_cast<vpvl::BoneKeyFrame *>(frame.clone());
+    QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
+             QString(reinterpret_cast<const char *>(frame.name())));
+    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QVERIFY(cloned->position() == pos);
+    QVERIFY(cloned->rotation() == rot);
+    testBoneInterpolationMatrix(matrix, *cloned);
 }
 
 void TestVMDMotion::saveCameraKeyFrame()
 {
-    vpvl::CameraKeyFrame frame, newFrame;
+    vpvl::CameraKeyFrame frame, newFrame, *cloned;
     btVector3 pos(1, 2, 3), angle(4, 5, 6);
     frame.setFrameIndex(42);
     frame.setPosition(pos);
@@ -152,11 +159,21 @@ void TestVMDMotion::saveCameraKeyFrame()
         29, 30, 31, 32
     };
     testCameraInterpolationMatrix(matrix, frame);
+    cloned = static_cast<vpvl::CameraKeyFrame *>(frame.clone());
+    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QVERIFY(cloned->position() == frame.position());
+    // for radian and degree calculation
+    QVERIFY(qFuzzyCompare(cloned->angle().x(), frame.angle().x()));
+    QVERIFY(qFuzzyCompare(cloned->angle().y(), frame.angle().y()));
+    QVERIFY(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
+    QVERIFY(cloned->distance() == frame.distance());
+    QVERIFY(cloned->fovy() == frame.fovy());
+    testCameraInterpolationMatrix(matrix, *cloned);
 }
 
 void TestVMDMotion::saveFaceKeyFrame()
 {
-    vpvl::FaceKeyFrame frame, newFrame;
+    vpvl::FaceKeyFrame frame, newFrame, *cloned;
     frame.setFrameIndex(42);
     frame.setName(reinterpret_cast<const uint8_t *>(kTestString));
     frame.setWeight(0.5);
@@ -167,6 +184,11 @@ void TestVMDMotion::saveFaceKeyFrame()
              QString(reinterpret_cast<const char *>(frame.name())));
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QCOMPARE(newFrame.weight(), frame.weight());
+    cloned = static_cast<vpvl::FaceKeyFrame *>(frame.clone());
+    QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
+             QString(reinterpret_cast<const char *>(frame.name())));
+    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QCOMPARE(cloned->weight(), frame.weight());
 }
 
 void TestVMDMotion::saveMotion()
