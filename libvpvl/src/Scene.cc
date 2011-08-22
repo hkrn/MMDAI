@@ -203,7 +203,7 @@ void Scene::setCameraMotion(VMDMotion *motion)
     m_cameraMotion = motion;
 }
 
-void Scene::setLight(const btVector4 &color, const btVector4 &position)
+void Scene::setLightSource(const btVector4 &color, const btVector4 &position)
 {
     m_lightColor = color;
     m_lightPosition = position;

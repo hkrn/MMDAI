@@ -230,7 +230,7 @@ void Renderer::setLighting()
     glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
     glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
     glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
-    m_scene->setLight(m_lightColor, m_lightPosition);
+    m_scene->setLightSource(m_lightColor, m_lightPosition);
 }
 
 void Renderer::setDebugDrawer(btDynamicsWorld *world)

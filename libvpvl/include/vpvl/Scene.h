@@ -86,7 +86,7 @@ public:
     void seek(float frameIndex);
     void setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
-    void setLight(const btVector4 &color, const btVector4 &position);
+    void setLightSource(const btVector4 &color, const btVector4 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
     void update(float deltaFrame);
