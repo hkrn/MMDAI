@@ -80,7 +80,7 @@ namespace gl
 class DebugDrawer : public btIDebugDraw
 {
 public:
-    DebugDrawer() {}
+    DebugDrawer() : m_world(0) {}
     virtual ~DebugDrawer() {}
 
     void draw3dText(const btVector3 & /* location */, const char *textString) {
@@ -119,7 +119,16 @@ public:
         m_flags = debugMode;
     }
 
+    void render() {
+        if (m_world)
+            m_world->debugDrawWorld();
+    }
+    void setWorld(btDynamicsWorld *value) {
+        m_world = value;
+    }
+
 private:
+    btDynamicsWorld *m_world;
     int m_flags;
 };
 
@@ -137,7 +146,6 @@ bool Renderer::initializeGLEW(GLenum &err)
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_scene(0),
       m_selected(0),
-      m_world(0),
       m_debugDrawer(0),
       m_delegate(delegate),
       m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
@@ -185,21 +193,7 @@ void Renderer::resize(int width, int height)
     m_scene->setHeight(height);
 }
 
-void Renderer::pickBones(int px, int py, float approx, vpvl::BoneList &pickBones)
-{
-    btVector3 coordinate;
-    const vpvl::BoneList &bones = m_selected->bones();
-    const uint32_t n = bones.count();
-    getObjectCoordinate(px, py, coordinate);
-    for (uint32_t i = 0; i < n; i++) {
-        vpvl::Bone *bone = bones[i];
-        const btVector3 &p = bone->originPosition();
-        if (p.dot(coordinate) > 0)
-            pickBones.add(bone);
-    }
-}
-
-void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate)
+void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate) const
 {
     double modelViewMatrixd[16], projectionMatrixd[16], winX = 0, winY = 0, x = 0, y = 0, z = 0;
     float modelViewMatrixf[16], projectionMatrixf[16], winZ = 0;
@@ -235,7 +229,7 @@ void Renderer::setLighting()
 
 void Renderer::setDebugDrawer(btDynamicsWorld *world)
 {
-    m_world = world;
+    static_cast<DebugDrawer *>(m_debugDrawer)->setWorld(world);
     world->setDebugDrawer(m_debugDrawer);
 }
 
@@ -605,128 +599,77 @@ void Renderer::drawModelBones()
 
 void Renderer::drawModelBones(const vpvl::PMDModel *model)
 {
-    float matrix[16];
     const vpvl::BoneList &bones = model->bones();
+    btVector3 color;
     uint32_t nBones = bones.count();
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
+    glPushMatrix();
 
     for (uint32_t i = 0; i < nBones; i++) {
         const vpvl::Bone *bone = bones[i], *parent = bone->parent();
         vpvl::Bone::Type type = bone->type();
         if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
             continue;
-        const btTransform transform = bone->localTransform();
-        transform.getOpenGLMatrix(matrix);
-        glPushMatrix();
-        glMultMatrixf(matrix);
+        const btTransform &transform = bone->localTransform();
         if (type != vpvl::Bone::kInvisible) {
+            float scale;
             if (bone->isSimulated()) {
-                glColor4f(0.8f, 0.8f, 0.0f, 1.0f);
-                glScalef(0.1f, 0.1f, 0.1f);
+                color.setValue(0.8f, 0.8f, 0.0f);
+                scale = 0.1f;
             }
             else {
                 switch (type) {
                 case vpvl::Bone::kIKDestination:
-                    glColor4f(0.7f, 0.2f, 0.2f, 1.0f);
-                    glScalef(0.25f, 0.25f, 0.25f);
+                    color.setValue(0.7f, 0.2f, 0.2f);
+                    scale = 0.25f;
                     break;
                 case vpvl::Bone::kUnderIK:
-                    glColor4f(0.8f, 0.5f, 0.0f, 1.0f);
-                    glScalef(0.15f, 0.15f, 0.15f);
+                    color.setValue(0.8f, 0.5f, 0.0f);
+                    scale = 0.15f;
                     break;
                 case vpvl::Bone::kIKTarget:
-                    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-                    glScalef(0.15f, 0.15f, 0.15f);
+                    color.setValue(1.0f, 0.0f, 0.0f);
+                    scale = 0.15f;
                     break;
                 case vpvl::Bone::kUnderRotate:
                 case vpvl::Bone::kTwist:
                 case vpvl::Bone::kFollowRotate:
-                    glColor4f(0.0f, 0.8f, 0.2f, 1.0f);
-                    glScalef(0.15f, 0.15f, 0.15f);
+                    color.setValue(0.0f, 0.8f, 0.2f);
+                    scale = 0.15f;
                     break;
                 default:
                     if (bone->hasMotionIndependency()) {
-                        glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-                        glScalef(0.25f, 0.25f, 0.25f);
+                        color.setValue(0.0f, 1.0f, 1.0f);
+                        scale = 0.25f;
                     } else {
-                        glColor4f(0.0f, 0.5f, 1.0f, 1.0f);
-                        glScalef(0.15f, 0.15f, 0.15f);
+                        color.setValue(0.0f, 0.5f, 1.0f);
+                        scale = 0.15f;
                     }
                     break;
                 }
             }
-            static const GLfloat vertices [8][3] = {
-                { -0.5f, -0.5f, 0.5f},
-                { 0.5f, -0.5f, 0.5f},
-                { 0.5f, 0.5f, 0.5f},
-                { -0.5f, 0.5f, 0.5f},
-                { 0.5f, -0.5f, -0.5f},
-                { -0.5f, -0.5f, -0.5f},
-                { -0.5f, 0.5f, -0.5f},
-                { 0.5f, 0.5f, -0.5f}
-            };
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[0]);
-            glVertex3fv(vertices[1]);
-            glVertex3fv(vertices[2]);
-            glVertex3fv(vertices[3]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[4]);
-            glVertex3fv(vertices[5]);
-            glVertex3fv(vertices[6]);
-            glVertex3fv(vertices[7]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[1]);
-            glVertex3fv(vertices[4]);
-            glVertex3fv(vertices[7]);
-            glVertex3fv(vertices[2]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[5]);
-            glVertex3fv(vertices[0]);
-            glVertex3fv(vertices[3]);
-            glVertex3fv(vertices[6]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[3]);
-            glVertex3fv(vertices[2]);
-            glVertex3fv(vertices[7]);
-            glVertex3fv(vertices[6]);
-            glEnd();
-            glBegin(GL_POLYGON);
-            glVertex3fv(vertices[1]);
-            glVertex3fv(vertices[0]);
-            glVertex3fv(vertices[5]);
-            glVertex3fv(vertices[4]);
-            glEnd();
+            m_debugDrawer->drawSphere(transform.getOrigin(), scale, color);
         }
-        glPopMatrix();
         if (!parent || type == vpvl::Bone::kIKDestination)
             continue;
-        glPushMatrix();
         if (type == vpvl::Bone::kInvisible) {
-            glColor4f(0.5f, 0.4f, 0.5f, 1.0f);
+            color.setValue(0.5f, 0.4f, 0.5f);
         }
         else if (bone->isSimulated()) {
-            glColor4f(0.7f, 0.7f, 0.0f, 1.0f);
+            color.setValue(0.7f, 0.7f, 0.0f);
         }
         else if (type == vpvl::Bone::kUnderIK || type == vpvl::Bone::kIKTarget) {
-            glColor4f(0.8f, 0.5f, 0.3f, 1.0f);
+            color.setValue(0.8f, 0.5f, 0.3f);
         }
         else {
-            glColor4f(0.5f, 0.6f, 1.0f, 1.0f);
+            color.setValue(0.5f, 0.6f, 1.0f);
         }
-        glBegin(GL_LINES);
-        glVertex3fv(parent->localTransform().getOrigin());
-        glVertex3fv(transform.getOrigin());
-        glEnd();
-        glPopMatrix();
+        m_debugDrawer->drawLine(parent->localTransform().getOrigin(), transform.getOrigin(), color);
     }
 
+    glPopMatrix();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
 }
@@ -898,8 +841,7 @@ void Renderer::drawSurface()
         drawModel(model);
         drawModelEdge(model);
     }
-    if (m_world)
-        m_world->debugDrawWorld();
+    static_cast<DebugDrawer *>(m_debugDrawer)->render();
 }
 
 }

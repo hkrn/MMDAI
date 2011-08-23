@@ -148,8 +148,7 @@ public:
 
     void initializeSurface();
     void resize(int width, int height);
-    void pickBones(int px, int py, float approx, vpvl::BoneList &pickBones);
-    void getObjectCoordinate(int px, int py, btVector3 &coordinate);
+    void getObjectCoordinate(int px, int py, btVector3 &coordinate) const;
     void setLighting();
     void setDebugDrawer(btDynamicsWorld *world);
     void loadModel(vpvl::PMDModel *model, const std::string &dir);
@@ -169,7 +168,6 @@ private:
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
     Array<vpvl::XModel *> m_assets;
-    btDynamicsWorld *m_world;
     btIDebugDraw *m_debugDrawer;
     btVector4 m_lightColor;
     btVector4 m_lightPosition;
