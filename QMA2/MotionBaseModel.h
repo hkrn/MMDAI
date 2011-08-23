@@ -25,6 +25,7 @@ public:
     virtual ~MotionBaseModel();
 
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
+    virtual void copyFrames(int frameIndex) = 0;
     void saveState();
     void restoreState();
     void discardState();

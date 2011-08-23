@@ -30,6 +30,12 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
+void BoneMotionModel::copyFrames(int /* frameIndex */)
+{
+    if (m_model && m_motion) {
+    }
+}
+
 bool BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
@@ -98,44 +104,47 @@ bool BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
     }
 }
 
-bool BoneMotionModel::registerKeyFrame(vpvl::Bone *bone, int frameIndex)
+void BoneMotionModel::setFrames(const QList<Frame> &frames)
 {
-    if (!m_model) {
-        qWarning("No model is selected to register a bone frame.");
-        return false;
+    if (!m_model || !m_motion) {
+        qWarning("No model or motion to register a bone frame.");
+        return;
     }
     QString key;
-    if (bone) {
-        key = internal::toQString(bone->name());
-    }
-    else if (vpvl::Bone *selected = selectedBone()) {
-        key = internal::toQString(selected->name());
-    }
-    else {
-        qWarning("No bone is selected or null");
-        return false;
-    }
-    int i = keys().indexOf(key);
-    if (i != -1 && m_motion) {
-        QModelIndex modelIndex = index(i, frameIndex);
-        QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
-        vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
-        vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
-        /* FIXME: interpolation */
-        newFrame->setDefaultInterpolationParameter();
-        newFrame->setName(bone->name());
-        newFrame->setPosition(bone->position());
-        newFrame->setRotation(bone->rotation());
-        newFrame->setFrameIndex(frameIndex);
-        newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-        animation->addFrame(newFrame);
-        animation->refresh();
-        setData(modelIndex, bytes, Qt::EditRole);
-        return true;
-    }
-    else {
-        qWarning("Tried registering not bone key frame: %s", qPrintable(key));
-        return false;
+    foreach (Frame pair, frames) {
+        int frameIndex = pair.first;
+        vpvl::Bone *bone = pair.second;
+        if (bone) {
+            key = internal::toQString(bone->name());
+        }
+        else if (vpvl::Bone *selected = selectedBone()) {
+            key = internal::toQString(selected->name());
+        }
+        else {
+            qWarning("No bone is selected or null");
+            continue;
+        }
+        int i = keys().indexOf(key);
+        if (i != -1) {
+            QModelIndex modelIndex = index(i, frameIndex);
+            QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
+            vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
+            vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
+            /* FIXME: interpolation */
+            newFrame->setDefaultInterpolationParameter();
+            newFrame->setName(bone->name());
+            newFrame->setPosition(bone->position());
+            newFrame->setRotation(bone->rotation());
+            newFrame->setFrameIndex(frameIndex);
+            newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+            animation->addFrame(newFrame);
+            animation->refresh();
+            setData(modelIndex, bytes, Qt::EditRole);
+        }
+        else {
+            qWarning("Tried registering not bone key frame: %s", qPrintable(key));
+            continue;
+        }
     }
 }
 

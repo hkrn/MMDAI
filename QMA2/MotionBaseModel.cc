@@ -3,6 +3,20 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+/**
+ * Should create undo command
+ *
+ * - copyFrames (Bone and Face)
+ * - loadPose (Bone)
+ * - registerKeyFrame (Bone and Face)
+ * - resetBone (Bone)
+ * - resetAllBone (Bone)
+ * - resetAllFace (Face)
+ * - setPosition (Bone)
+ * - setRotation (Bone)
+ * - setWeight (Face)
+ */
+
 MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),

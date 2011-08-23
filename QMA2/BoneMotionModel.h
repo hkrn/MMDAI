@@ -23,14 +23,16 @@ public:
         kZ,
         kRotation
     };
+    typedef QPair<int, vpvl::Bone *> Frame;
 
     BoneMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
+    void copyFrames(int frameIndex);
     bool loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     bool savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
-    bool registerKeyFrame(vpvl::Bone *bone, int frameIndex);
+    void setFrames(const QList<Frame> &frames);
     bool resetBone(ResetType type);
     bool resetAllBones();
     void setMode(int value);

@@ -266,7 +266,7 @@ void MainWindow::connectWidgets()
     connect(ui->scene, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)),
             m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)),
-            m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Bone*)));
+            m_timelineTabWidget, SLOT(setFrameAtCurrentIndex(vpvl::Bone*)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(ui->scene, SIGNAL(modelDidDelete(vpvl::PMDModel*)),
@@ -274,7 +274,7 @@ void MainWindow::connectWidgets()
     connect(ui->scene, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)),
             m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)),
-            m_timelineTabWidget, SLOT(registerKeyFrame(vpvl::Face*)));
+            m_timelineTabWidget, SLOT(setFrameAtCurrentIndex(vpvl::Face*)));
     connect(ui->scene, SIGNAL(fpsDidUpdate(int)),
             this, SLOT(setCurrentFPS(int)));
     connect(ui->scene, SIGNAL(modelDidSelect(vpvl::PMDModel*)),

@@ -36,6 +36,7 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
     BoneMotionModel *model = UIGetBoneModel(timeline);
     QModelIndexList indices = timeline->tableView()->selectionModel()->selectedIndexes();
     QTextCodec *codec = internal::getTextCodec();
+    QList<BoneMotionModel::Frame> boneFrames;
     foreach (QModelIndex index, indices) {
         vpvl::Bone bone;
         QString name = model->data(index, Qt::DisplayRole).toString();
@@ -43,8 +44,9 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
         // FIXME: should use constant value
         bone.setPosition(btVector3(0, 0, 0));
         bone.setRotation(btQuaternion(0, 0, 0, 1));
-        model->registerKeyFrame(&bone, index.column());
+        boneFrames.append(BoneMotionModel::Frame(index.column(), &bone));
     }
+    model->setFrames(boneFrames);
 }
 
 static void UIModelInsertFaceFrame(TimelineWidget *timeline)
@@ -52,13 +54,15 @@ static void UIModelInsertFaceFrame(TimelineWidget *timeline)
     FaceMotionModel *model = UIGetFaceModel(timeline);
     QModelIndexList indices = timeline->tableView()->selectionModel()->selectedIndexes();
     QTextCodec *codec = internal::getTextCodec();
+    QList<FaceMotionModel::Frame> faceFrames;
     foreach (QModelIndex index, indices) {
         vpvl::Face face;
         QString name = model->data(index, Qt::DisplayRole).toString();
         face.setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
         face.setWeight(0);
-        model->registerKeyFrame(&face, index.column());
+        faceFrames.append(FaceMotionModel::Frame(index.column(), &face));
     }
+    model->setFrames(faceFrames);
 }
 
 }
@@ -111,18 +115,24 @@ void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 }
 
 
-void TimelineTabWidget::registerKeyFrame(vpvl::Bone *bone)
+void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Bone *bone)
 {
     QModelIndex index = m_boneTimeline->selectedIndex();
-    if (index.isValid())
-        UIGetBoneModel(m_boneTimeline)->registerKeyFrame(bone, index.column());
+    if (index.isValid()) {
+        QList<BoneMotionModel::Frame> boneFrames;
+        boneFrames.append(BoneMotionModel::Frame(index.column(), bone));
+        UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
+    }
 }
 
-void TimelineTabWidget::registerKeyFrame(vpvl::Face *face)
+void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Face *face)
 {
     QModelIndex index = m_faceTimeline->selectedIndex();
-    if (index.isValid())
-        UIGetFaceModel(m_faceTimeline)->registerKeyFrame(face, index.column());
+    if (index.isValid()) {
+        QList<FaceMotionModel::Frame> faceFrames;
+        faceFrames.append(FaceMotionModel::Frame(index.column(), face));
+        UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
+    }
 }
 
 void TimelineTabWidget::insertFrame()

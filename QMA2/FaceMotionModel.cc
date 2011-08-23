@@ -28,10 +28,21 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
-void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
+void FaceMotionModel::copyFrames(int /* frameIndex */)
 {
-    if (m_model) {
-        QString key = internal::toQString(face->name());
+}
+
+void FaceMotionModel::setFrames(const QList<Frame> &frames)
+{
+    if (!m_model || !m_motion) {
+        qWarning("No model or motion to register a bone frame.");
+        return;
+    }
+    QString key;
+    foreach (Frame pair, frames) {
+        int frameIndex = pair.first;
+        vpvl::Face *face = pair.second;
+        key = internal::toQString(face->name());
         int i = keys().indexOf(key);
         if (i != -1) {
             QModelIndex modelIndex = index(i, frameIndex);
@@ -49,9 +60,6 @@ void FaceMotionModel::registerKeyFrame(vpvl::Face *face, int frameIndex)
         else {
             qWarning("Tried registering not face key frame: %s", qPrintable(key));
         }
-    }
-    else {
-        qWarning("No model is selected to register a bone frame.");
     }
 }
 

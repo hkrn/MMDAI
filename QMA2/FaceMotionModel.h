@@ -8,11 +8,14 @@ class FaceMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
+    typedef QPair<int, vpvl::Face *> Frame;
+
     FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~FaceMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void registerKeyFrame(vpvl::Face *bone, int frameIndex);
+    void copyFrames(int frameIndex);
+    void setFrames(const QList<Frame> &frames);
     bool resetAllFaces();
     void selectFaces(QList<vpvl::Face *> faces);
     vpvl::Face *selectFace(int rowIndex);
