@@ -620,6 +620,7 @@ void SceneWidget::initializeGL()
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
+    m_renderer->setDebugDrawer(m_world->mutableWorld());
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
     // scene->setWorld(m_world->mutableWorld());
@@ -630,17 +631,49 @@ void SceneWidget::initializeGL()
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
     m_prevPos = event->pos();
+#if 0
+    vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
-        vpvl::BoneList bones;
-        //m_renderer->pickBones(event->pos().x(), event->pos().y(), 0.5f, bones);
+        vpvl::BoneList result;
+        const vpvl::BoneList &bones = selectedModel()->bones();
         const uint32_t nBones = bones.count();
+        btVector3 coordinate;
+        m_renderer->getObjectCoordinate(event->pos().x(), event->pos().y(), coordinate);
         for (uint32_t i = 0; i < nBones; i++) {
+            vpvl::Bone *bone = bones[i];
+            btVector3 p = coordinate - bone->localTransform.getOrigin();
+            if (p.length() < 0.5f)
+                qDebug() << internal::toQString(bone) << p.x() << p.y() << p.z() << p.length();
+        }
+//#else
+        GLdouble x, y, z;
+        double modelViewMatrixd[16], projectionMatrixd[16];
+        float modelViewMatrixf[16], projectionMatrixf[16];
+        int view[4];
+        vpvl::Scene *scene = m_renderer->scene();
+        glGetIntegerv(GL_VIEWPORT, view);
+        scene->getModelViewMatrix(modelViewMatrixf);
+        scene->getProjectionMatrix(projectionMatrixf);
+        for (int i = 0; i < 16; i++) {
+            modelViewMatrixd[i] = modelViewMatrixf[i];
+            projectionMatrixd[i] = projectionMatrixf[i];
+        }
+        QPointF currentPosition(mapToGlobal(event->pos()));
+        qDebug() << currentPosition;
+        for (uint32_t i = 0; i < nBones; i++) {
+            vpvl::Bone *bone = bones[i];
+            const btVector3 &p = bone->localTransform().getOrigin();
+            gluProject(p.x(), p.y(), p.z(), modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
+            qDebug() << internal::toQString(bone) << x << y;
+        }
+        const uint32_t nResult = result.count();
+        for (uint32_t i = 0; i < nResult; i++) {
             vpvl::Bone *bone = bones[i];
             qDebug("Selected a bone: %s", qPrintable(internal::toQString(bone)));
         }
     }
+#endif
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
@@ -656,7 +689,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                     ry(0.0f, diff.x() * vpvl::radian(0.1f), 0.0f);
             d = d * btMatrix3x3(rx * ry);
             direction.setValue(d.x(), d.y(), d.z(), direction.w());
-            scene->setLight(scene->lightColor(), direction);
+            scene->setLightSource(scene->lightColor(), direction);
         }
         else if (modifiers & Qt::ShiftModifier) {
             translate(diff.x() * -0.1f, diff.y() * 0.1f);
