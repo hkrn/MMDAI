@@ -80,6 +80,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (maybeSave()) {
         m_settings.setValue("mainWindow/geometry", saveGeometry());
         m_settings.setValue("mainWindow/state", saveState());
+        m_settings.setValue("mainWindow/visibleTabs", m_tabWidget->isVisible());
+        m_settings.setValue("mainWindow/visibleTimeline", m_timelineTabWidget->isVisible());
+        m_settings.setValue("mainWindow/visibleTransform", m_transformWidget->isVisible());
         event->accept();
     }
     else {
@@ -249,6 +252,15 @@ void MainWindow::buildUI()
     QAction *redoAction = m_undo->createRedoAction(this);
     redoAction->setShortcut(tr("Ctrl+Shift+Z"));
     menuFrame->addAction(redoAction);
+    bool visibleTabs = m_settings.value("mainWindow/visibleTabs", QVariant(false)).toBool();
+    bool visibleTimeline = m_settings.value("mainWindow/visibleTimeline", QVariant(false)).toBool();
+    bool visibleTransform = m_settings.value("mainWindow/visibleTransform", QVariant(false)).toBool();
+    ui->actionTabs->setChecked(visibleTabs);
+    ui->actionTimeline->setChecked(visibleTimeline);
+    ui->actionTransform->setChecked(visibleTransform);
+    m_tabWidget->setVisible(visibleTabs);
+    m_timelineTabWidget->setVisible(visibleTimeline);
+    m_transformWidget->setVisible(visibleTransform);
 }
 
 void MainWindow::connectWidgets()
@@ -469,19 +481,19 @@ void MainWindow::on_actionBoneResetAll_triggered()
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to reset bones"));
 }
 
-void MainWindow::on_actionTimeline_triggered()
+void MainWindow::on_actionTimeline_triggered(bool value)
 {
-    m_timelineTabWidget->setVisible(true);
+    m_timelineTabWidget->setVisible(value);
 }
 
-void MainWindow::on_actionTransform_triggered()
+void MainWindow::on_actionTransform_triggered(bool value)
 {
-    m_transformWidget->setVisible(true);
+    m_transformWidget->setVisible(value);
 }
 
-void MainWindow::on_actionTabs_triggered()
+void MainWindow::on_actionTabs_triggered(bool value)
 {
-    m_tabWidget->setVisible(true);
+    m_tabWidget->setVisible(value);
 }
 
 void MainWindow::on_actionBoneDialog_triggered()

@@ -78,9 +78,9 @@ private slots:
     void on_actionBoneZPositionZero_triggered();
     void on_actionBoneRotationZero_triggered();
     void on_actionBoneResetAll_triggered();
-    void on_actionTimeline_triggered();
-    void on_actionTransform_triggered();
-    void on_actionTabs_triggered();
+    void on_actionTimeline_triggered(bool value);
+    void on_actionTransform_triggered(bool value);
+    void on_actionTabs_triggered(bool value);
     void on_actionBoneDialog_triggered();
     void on_actionExportVMD_triggered();
     void on_actionNewMotion_triggered();

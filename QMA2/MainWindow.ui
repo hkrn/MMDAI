@@ -459,6 +459,9 @@
    </property>
   </action>
   <action name="actionTimeline">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Timeline</string>
    </property>
@@ -476,6 +479,9 @@
    </property>
   </action>
   <action name="actionTransform">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Transform</string>
    </property>
@@ -490,6 +496,9 @@
    </property>
   </action>
   <action name="actionTabs">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Tabs</string>
    </property>
