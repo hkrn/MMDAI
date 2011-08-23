@@ -2,6 +2,79 @@
 #include "util.h"
 #include <vpvl/vpvl.h>
 
+namespace
+{
+
+class CopyFramesCommand : public QUndoCommand
+{
+public:
+    CopyFramesCommand(FaceMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~CopyFramesCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    FaceMotionModel *m_model;
+};
+
+class SetFramesCommand : public QUndoCommand
+{
+public:
+    SetFramesCommand(FaceMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~SetFramesCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    FaceMotionModel *m_model;
+};
+
+class ResetAllCommand : public QUndoCommand
+{
+public:
+    ResetAllCommand(FaceMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~ResetAllCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    FaceMotionModel *m_model;
+};
+
+class SetWeightCommand : public QUndoCommand
+{
+public:
+    SetWeightCommand(FaceMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~SetWeightCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    FaceMotionModel *m_model;
+};
+
+}
+
 FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
     : MotionBaseModel(undo, parent)
 {

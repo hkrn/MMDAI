@@ -3,6 +3,113 @@
 #include "util.h"
 #include <vpvl/vpvl.h>
 
+namespace
+{
+
+class CopyFramesCommand : public QUndoCommand
+{
+public:
+    CopyFramesCommand(BoneMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~CopyFramesCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    BoneMotionModel *m_model;
+};
+
+class LoadPoseCommand : public QUndoCommand
+{
+public:
+    LoadPoseCommand(BoneMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~LoadPoseCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    BoneMotionModel *m_model;
+};
+
+class SetFramesCommand : public QUndoCommand
+{
+public:
+    SetFramesCommand(BoneMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~SetFramesCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    BoneMotionModel *m_model;
+};
+
+class ResetAllCommand : public QUndoCommand
+{
+public:
+    ResetAllCommand(BoneMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~ResetAllCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    BoneMotionModel *m_model;
+};
+
+class SetPositionCommand : public QUndoCommand
+{
+public:
+    SetPositionCommand(BoneMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~SetPositionCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    BoneMotionModel *m_model;
+};
+
+class SetRotationCommand : public QUndoCommand
+{
+public:
+    SetRotationCommand(BoneMotionModel *model)
+        : QUndoCommand(),
+          m_model(model)
+    {
+    }
+    virtual ~SetRotationCommand() {}
+
+    void undo() {}
+    void redo() {}
+
+private:
+    BoneMotionModel *m_model;
+};
+
+}
+
 BoneMotionModel::BoneMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
     m_mode(kLocal)
