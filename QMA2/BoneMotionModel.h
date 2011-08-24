@@ -30,11 +30,11 @@ public:
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
-    bool loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
-    bool savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
+    void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
+    void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void setFrames(const QList<Frame> &frames);
-    bool resetBone(ResetType type);
-    bool resetAllBones();
+    void resetBone(ResetType type);
+    void resetAllBones();
     void setMode(int value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
@@ -51,7 +51,7 @@ public:
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
-    bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void deleteMotion();
     void deleteModel();
     void deleteFrame(const QModelIndex &index);

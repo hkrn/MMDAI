@@ -26,18 +26,80 @@ private:
 class LoadPoseCommand : public QUndoCommand
 {
 public:
-    LoadPoseCommand(BoneMotionModel *model)
+    LoadPoseCommand(BoneMotionModel *bmm, VPDFile *pose, int frameIndex)
         : QUndoCommand(),
-          m_model(model)
+          m_bmm(bmm),
+          m_pose(0),
+          m_frameIndex(frameIndex)
     {
+        int nBones = m_bmm->rowCount();
+        for (int i = 0; i < nBones; i++) {
+            QModelIndex index = bmm->index(i, frameIndex);
+            if (index.data(Qt::UserRole).canConvert(QVariant::ByteArray))
+                m_indices.append(index);
+        }
+        m_pose = pose->clone();
+        execute();
     }
-    virtual ~LoadPoseCommand() {}
+    virtual ~LoadPoseCommand() {
+        delete m_pose;
+    }
 
-    void undo() {}
-    void redo() {}
+    virtual void undo() {
+        vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
+        animation->deleteFrames(m_frameIndex);
+        int nBones = m_bmm->rowCount();
+        for (int i = 0; i < nBones; i++) {
+            QModelIndex index = m_bmm->index(i, m_frameIndex);
+            m_bmm->setData(index, QVariant(), Qt::EditRole);
+        }
+        foreach (QModelIndex index, m_indices) {
+            QByteArray bytes = index.data(Qt::UserRole).toByteArray();
+            m_bmm->setData(index, bytes, Qt::EditRole);
+            vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+            frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            animation->addFrame(frame);
+        }
+        animation->refresh();
+        m_bmm->refreshModel();
+    }
+    virtual void redo() {
+        execute();
+    }
 
 private:
-    BoneMotionModel *m_model;
+    void execute() {
+        QTextCodec *codec = internal::getTextCodec();
+        vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
+        const BoneMotionModel::Keys &keys = m_bmm->keys();
+        btQuaternion rotation;
+        foreach (VPDFile::Bone *bone, m_pose->bones()) {
+            const QString &key = bone->name;
+            int i = keys.indexOf(key);
+            if (i != -1) {
+                const btVector4 &v = bone->rotation;
+                QModelIndex modelIndex = m_bmm->index(i, m_frameIndex);
+                rotation.setValue(v.x(), v.y(), v.z(), v.w());
+                vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
+                newFrame->setDefaultInterpolationParameter();
+                newFrame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(key).constData()));
+                newFrame->setPosition(bone->position);
+                newFrame->setRotation(rotation);
+                newFrame->setFrameIndex(m_frameIndex);
+                QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
+                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                m_bmm->setData(modelIndex, bytes, Qt::EditRole);
+                animation->addFrame(newFrame);
+            }
+        }
+        animation->refresh();
+        m_bmm->refreshModel();
+    }
+
+    QModelIndexList m_indices;
+    BoneMotionModel *m_bmm;
+    VPDFile *m_pose;
+    int m_frameIndex;
 };
 
 class SetFramesCommand : public QUndoCommand
@@ -84,8 +146,10 @@ public:
     }
     virtual ~SetPositionCommand() {}
 
-    void undo() {}
-    void redo() {}
+    void undo() {
+    }
+    void redo() {
+    }
 
 private:
     BoneMotionModel *m_model;
@@ -143,47 +207,18 @@ void BoneMotionModel::copyFrames(int /* frameIndex */)
     }
 }
 
-bool BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
+void BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
-        const VPDFile::BoneList &boneFrames = pose->bones();
-        QTextCodec *codec = internal::getTextCodec();
-        vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
-        const Keys k = keys();
-        const uint32_t nBoneFrames = boneFrames.count();
-        for (uint32_t i = 0; i < nBoneFrames; i++) {
-            VPDFile::Bone *frame = boneFrames[i];
-            QString key = frame->name;
-            int i = k.indexOf(key);
-            if (i != -1) {
-                QModelIndex modelIndex = index(i, frameIndex);
-                btQuaternion rotation;
-                const btVector4 &v = frame->rotation;
-                rotation.setValue(v.x(), v.y(), v.z(), v.w());
-                vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
-                newFrame->setDefaultInterpolationParameter();
-                newFrame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(key).constData()));
-                newFrame->setPosition(frame->position);
-                newFrame->setRotation(rotation);
-                newFrame->setFrameIndex(frameIndex);
-                QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
-                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                setData(modelIndex, bytes, Qt::EditRole);
-                animation->addFrame(newFrame);
-            }
-        }
-        animation->refresh();
-        reset();
+        addUndoCommand(new LoadPoseCommand(this, pose, frameIndex));
         qDebug("Loaded a pose to the model: %s", qPrintable(internal::toQString(model)));
-        return true;
     }
     else {
         qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(internal::toQString(model)));
-        return false;
     }
 }
 
-bool BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
+void BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model) {
         VPDFile::BoneList bones;
@@ -203,11 +238,9 @@ bool BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
             }
         }
         pose->setBones(bones);
-        return true;
     }
     else {
         qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(internal::toQString(model)));
-        return false;
     }
 }
 
@@ -275,7 +308,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
     reset();
 }
 
-bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::BoneAnimation &animation = motion->boneAnimation();
@@ -305,13 +338,11 @@ bool BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             }
         }
         m_motion = motion;
-        reset();
+        refreshModel();
         qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
-        return true;
     }
     else {
         qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQString(model)));
-        return false;
     }
 }
 
@@ -339,7 +370,7 @@ void BoneMotionModel::deleteFrame(const QModelIndex &index)
     setData(index, QVariant(), Qt::EditRole);
 }
 
-bool BoneMotionModel::resetBone(ResetType type)
+void BoneMotionModel::resetBone(ResetType type)
 {
     foreach (vpvl::Bone *selected, m_selected) {
         btVector3 pos = selected->position();
@@ -365,17 +396,14 @@ bool BoneMotionModel::resetBone(ResetType type)
             qFatal("Unexpected reset bone type: %d", type);
         }
     }
-    return updateModel();
+    updateModel();
 }
 
-bool BoneMotionModel::resetAllBones()
+void BoneMotionModel::resetAllBones()
 {
     if (m_model) {
         m_model->resetAllBones();
-        return updateModel();
-    }
-    else {
-        return false;
+        updateModel();
     }
 }
 

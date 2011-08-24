@@ -104,15 +104,16 @@ QVariant MotionBaseModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
-bool MotionBaseModel::updateModel()
+void MotionBaseModel::refreshModel()
 {
-    if (m_model) {
+    updateModel();
+    reset();
+}
+
+void MotionBaseModel::updateModel()
+{
+    if (m_model)
         m_model->updateImmediate();
-        return true;
-    }
-    else {
-        return false;
-    }
 }
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)

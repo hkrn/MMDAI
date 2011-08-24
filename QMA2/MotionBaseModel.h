@@ -29,10 +29,17 @@ public:
     void saveState();
     void restoreState();
     void discardState();
+    void updateModel();
+    void refreshModel();
 
     vpvl::PMDModel *selectedModel() const { return m_model; }
+    vpvl::VMDMotion *currentMotion() const { return m_motion; }
     void setModified(bool value) { m_modified = value; motionDidModify(value); }
     bool isModified() const { return m_modified; }
+    const Keys keys() const { return keys(m_model); }
+    const Keys keys(vpvl::PMDModel *model) const { return m_keys[model]; }
+    const Values values() const { return values(m_model); }
+    const Values values(vpvl::PMDModel *model) const { return m_values[model]; }
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
@@ -42,7 +49,7 @@ public:
 
 public slots:
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
-    virtual bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
+    virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void deleteMotion() = 0;
     virtual void deleteModel() = 0;
     virtual void deleteFrame(const QModelIndex &index) = 0;
@@ -52,11 +59,6 @@ signals:
     void motionDidModify(bool value);
 
 protected:
-    bool updateModel();
-
-    const Keys keys() const { return keys(m_model); }
-    const Keys keys(vpvl::PMDModel *model) const { return m_keys[model]; }
-    const Values values() const { return m_values[m_model]; }
     void appendKey(const QString &key, vpvl::PMDModel *model) { m_keys[model].append(key); }
     void clearKeys() { m_keys[m_model].clear(); m_keys.remove(m_model); }
     void clearValues() { m_values[m_model].clear(); m_values.remove(m_model); }

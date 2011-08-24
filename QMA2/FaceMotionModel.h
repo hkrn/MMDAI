@@ -16,7 +16,7 @@ public:
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
     void setFrames(const QList<Frame> &frames);
-    bool resetAllFaces();
+    void resetAllFaces();
     void selectFaces(QList<vpvl::Face *> faces);
     vpvl::Face *selectFace(int rowIndex);
     vpvl::Face *findFace(const QString &name);
@@ -27,7 +27,7 @@ public:
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
-    bool loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void deleteMotion();
     void deleteModel();
     void deleteFrame(const QModelIndex &index);

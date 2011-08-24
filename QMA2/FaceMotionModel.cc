@@ -136,14 +136,11 @@ void FaceMotionModel::setFrames(const QList<Frame> &frames)
     }
 }
 
-bool FaceMotionModel::resetAllFaces()
+void FaceMotionModel::resetAllFaces()
 {
     if (m_model) {
         m_model->resetAllFaces();
-        return updateModel();
-    }
-    else {
-        return false;
+        updateModel();
     }
 }
 
@@ -166,7 +163,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     reset();
 }
 
-bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::FaceAnimation &animation = motion->faceAnimation();
@@ -189,13 +186,11 @@ bool FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             }
         }
         m_motion = motion;
-        reset();
+        refreshModel();
         qDebug("Loaded a motion to the model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
-        return true;
     }
     else {
         qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQString(model)));
-        return false;
     }
 }
 
