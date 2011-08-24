@@ -265,6 +265,10 @@ public:
     /**
      * Get original position of this bone.
      *
+     * This method returns constant origin position so it doesn't reflect
+     * transform of the bone. If you want to get transformed origin position,
+     * you should call "localTransform().getOrigin()".
+     *
      * @return original position of this bone
      */
     const btVector3 &originPosition() const {
