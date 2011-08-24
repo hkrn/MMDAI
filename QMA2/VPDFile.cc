@@ -177,3 +177,18 @@ void VPDFile::makePose(vpvl::PMDModel *model)
     }
 }
 
+VPDFile *VPDFile::clone()
+{
+    VPDFile *newPose = new VPDFile();
+    VPDFile::BoneList newBones;
+    foreach (Bone *bone, m_bones) {
+        VPDFile::Bone *newBone = new VPDFile::Bone();
+        newBone->name = bone->name;
+        newBone->position = bone->position;
+        newBone->rotation = bone->rotation;
+        newBones.append(newBone);
+    }
+    newPose->m_bones = newBones;
+    newPose->m_error = m_error;
+    return newPose;
+}

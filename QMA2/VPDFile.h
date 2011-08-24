@@ -43,6 +43,7 @@ public:
     bool load(QTextStream &stream);
     void save(QTextStream &stream);
     void makePose(vpvl::PMDModel *model);
+    VPDFile *clone();
 
     const BoneList &bones() const { return m_bones; }
     void setBones(const BoneList &value) { m_bones = value; }
