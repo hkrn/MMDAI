@@ -56,6 +56,7 @@ class btIDebugDraw;
 namespace vpvl
 {
 
+class Bone;
 class PMDModel;
 class Scene;
 class XModel;
@@ -97,12 +98,6 @@ public:
     }
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
-    }
-    bool isDisplayBones() {
-        return m_displayBones;
-    }
-    void toggleDisplayBones() {
-        m_displayBones = !m_displayBones;
     }
 
     const btVector4 &lightColor() const {
@@ -156,8 +151,9 @@ public:
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
     void drawModelShadow(const vpvl::PMDModel *model);
-    void drawModelBones();
-    void drawModelBones(const vpvl::PMDModel *model);
+    void drawModelBones(bool drawSpheres, bool drawLines);
+    void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
+    void drawBoneTransform(vpvl::Bone *bone);
     void loadAsset(vpvl::XModel *model, const std::string &dir);
     void unloadAsset(const vpvl::XModel *model);
     void drawAsset(const vpvl::XModel *model);
@@ -175,7 +171,6 @@ private:
     btScalar m_ambient;
     btScalar m_diffuse;
     btScalar m_specular;
-    bool m_displayBones;
     int m_width;
     int m_height;
 

@@ -154,7 +154,6 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_ambient(m_lightIntensity * 2.0f),
       m_diffuse(0.0f),
       m_specular(m_lightIntensity),
-      m_displayBones(false),
       m_width(width),
       m_height(height)
 {
@@ -591,13 +590,13 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
-void Renderer::drawModelBones()
+void Renderer::drawModelBones(bool drawSpheres, bool drawLines)
 {
     if (m_selected)
-        drawModelBones(m_selected);
+        drawModelBones(m_selected, drawSpheres, drawLines);
 }
 
-void Renderer::drawModelBones(const vpvl::PMDModel *model)
+void Renderer::drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines)
 {
     const vpvl::BoneList &bones = model->bones();
     btVector3 color;
@@ -613,7 +612,7 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
         if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
             continue;
         const btTransform &transform = bone->localTransform();
-        if (type != vpvl::Bone::kInvisible) {
+        if (drawSpheres && type != vpvl::Bone::kInvisible) {
             float scale;
             if (bone->isSimulated()) {
                 color.setValue(0.8f, 0.8f, 0.0f);
@@ -652,7 +651,7 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
             }
             m_debugDrawer->drawSphere(transform.getOrigin(), scale, color);
         }
-        if (!parent || type == vpvl::Bone::kIKDestination)
+        if (!drawLines || !parent || type == vpvl::Bone::kIKDestination)
             continue;
         if (type == vpvl::Bone::kInvisible) {
             color.setValue(0.5f, 0.4f, 0.5f);
@@ -672,6 +671,26 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model)
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
+}
+
+void Renderer::drawBoneTransform(vpvl::Bone *bone)
+{
+    if (bone) {
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glPushMatrix();
+        btTransform t = bone->localTransform();
+        btScalar orthoLen = 1.0f;
+        if (bone->hasParent()) {
+            btTransform pt = bone->parent()->localTransform();
+            orthoLen = btMin(orthoLen, pt.getOrigin().distance(t.getOrigin()));
+        }
+        m_debugDrawer->drawTransform(t, orthoLen);
+        glPopMatrix();
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LIGHTING);
+    }
 }
 
 static void DrawAsset(const vpvl::XModel *model, const btVector4 &indices, int index)
@@ -841,7 +860,6 @@ void Renderer::drawSurface()
         drawModel(model);
         drawModelEdge(model);
     }
-    static_cast<DebugDrawer *>(m_debugDrawer)->render();
 }
 
 }
