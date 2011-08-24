@@ -305,6 +305,8 @@ void MainWindow::connectWidgets()
             this, SLOT(setWindowModified(bool)));
     connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)),
             this, SLOT(setWindowModified(bool)));
+    connect(m_transformWidget, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)),
+            ui->scene, SLOT(setBones(QList<vpvl::Bone*>)));
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -526,4 +528,9 @@ void MainWindow::on_actionInsertEmptyFrame_triggered()
 void MainWindow::on_actionDeleteSelectedFrame_triggered()
 {
     m_timelineTabWidget->deleteFrame();
+}
+
+void MainWindow::on_actionShowBones_triggered(bool value)
+{
+    ui->scene->setDisplayBones(value);
 }

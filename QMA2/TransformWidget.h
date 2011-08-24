@@ -71,6 +71,8 @@ public slots:
 signals:
     void boneDidRegister(vpvl::Bone *bone);
     void faceDidRegister(vpvl::Face *face);
+    void bonesDidSelect(const QList<vpvl::Bone *> &bones);
+    void facesDidSelect(const QList<vpvl::Face *> &faces);
 
 protected:
     void closeEvent(QCloseEvent *event);

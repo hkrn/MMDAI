@@ -86,6 +86,7 @@ private slots:
     void on_actionNewMotion_triggered();
     void on_actionInsertEmptyFrame_triggered();
     void on_actionDeleteSelectedFrame_triggered();
+    void on_actionShowBones_triggered(bool value);
 
 private:
     void buildUI();

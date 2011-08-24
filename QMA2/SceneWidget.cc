@@ -297,6 +297,7 @@ private:
 SceneWidget::SceneWidget(QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_camera(0),
+    m_bone(0),
     m_delegate(0),
     m_grid(0),
     m_world(0),
@@ -527,6 +528,11 @@ void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
+void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
+{
+    m_bone = bones.isEmpty() ? 0 : bones.last();
+}
+
 void SceneWidget::rotate(float x, float y)
 {
     vpvl::Scene *scene = m_renderer->scene();
@@ -632,48 +638,22 @@ void SceneWidget::initializeGL()
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     m_prevPos = event->pos();
-#if 0
     vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
-        vpvl::BoneList result;
         const vpvl::BoneList &bones = selectedModel()->bones();
         const uint32_t nBones = bones.count();
         btVector3 coordinate;
         m_renderer->getObjectCoordinate(event->pos().x(), event->pos().y(), coordinate);
+        QList< QPair<float, vpvl::Bone *> > result;
         for (uint32_t i = 0; i < nBones; i++) {
             vpvl::Bone *bone = bones[i];
-            btVector3 p = coordinate - bone->localTransform.getOrigin();
-            if (p.length() < 0.5f)
-                qDebug() << internal::toQString(bone) << p.x() << p.y() << p.z() << p.length();
+            const btVector3 &p = coordinate - bone->localTransform().getOrigin();
+            result.append(QPair<float, vpvl::Bone *>(p.length2(), bone));
         }
-//#else
-        GLdouble x, y, z;
-        double modelViewMatrixd[16], projectionMatrixd[16];
-        float modelViewMatrixf[16], projectionMatrixf[16];
-        int view[4];
-        vpvl::Scene *scene = m_renderer->scene();
-        glGetIntegerv(GL_VIEWPORT, view);
-        scene->getModelViewMatrix(modelViewMatrixf);
-        scene->getProjectionMatrix(projectionMatrixf);
-        for (int i = 0; i < 16; i++) {
-            modelViewMatrixd[i] = modelViewMatrixf[i];
-            projectionMatrixd[i] = projectionMatrixf[i];
-        }
-        QPointF currentPosition(mapToGlobal(event->pos()));
-        qDebug() << currentPosition;
-        for (uint32_t i = 0; i < nBones; i++) {
-            vpvl::Bone *bone = bones[i];
-            const btVector3 &p = bone->localTransform().getOrigin();
-            gluProject(p.x(), p.y(), p.z(), modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
-            qDebug() << internal::toQString(bone) << x << y;
-        }
-        const uint32_t nResult = result.count();
-        for (uint32_t i = 0; i < nResult; i++) {
-            vpvl::Bone *bone = bones[i];
-            qDebug("Selected a bone: %s", qPrintable(internal::toQString(bone)));
-        }
+        qSort(result);
+        QPair<float, vpvl::Bone *> pair = result.first();
+        qDebug() << qPrintable(internal::toQString(pair.second)) << pair.first;
     }
-#endif
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
@@ -706,7 +686,7 @@ void SceneWidget::paintGL()
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
     m_renderer->drawSurface();
-    m_renderer->drawModelBones();
+    drawBones();
     drawGrid();
     updateFPS();
     emit surfaceDidUpdate();
@@ -872,6 +852,13 @@ vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
         }
     }
     return motion;
+}
+
+void SceneWidget::drawBones()
+{
+    if (m_visibleBones)
+        m_renderer->drawModelBones(true, true);
+    m_renderer->drawBoneTransform(m_bone);
 }
 
 void SceneWidget::drawGrid()

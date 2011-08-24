@@ -69,6 +69,7 @@
     <addaction name="actionTranslateRight"/>
     <addaction name="separator"/>
     <addaction name="actionResetCamera"/>
+    <addaction name="actionShowBones"/>
    </widget>
    <widget class="QMenu" name="menuModel">
     <property name="title">
@@ -565,6 +566,14 @@
    </property>
    <property name="shortcut">
     <string>K</string>
+   </property>
+  </action>
+  <action name="actionShowBones">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show bones</string>
    </property>
   </action>
  </widget>

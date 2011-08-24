@@ -73,17 +73,15 @@ public:
     explicit SceneWidget(QWidget *parent = 0);
     ~SceneWidget();
 
-    void setCurrentFPS(int value);
+    const QHash<QString, vpvl::PMDModel *> &models() const { return m_models; }
     void setSettings(QSettings *value) { m_settings = value; }
+
     vpvl::PMDModel *selectedModel() const;
     vpvl::VMDMotion *selectedMotion() const;
+    bool isDisplayBones() const { return m_visibleBones; }
+    void setDisplayBones(bool value) { m_visibleBones = value; }
     void setSelectedModel(vpvl::PMDModel *value);
-
-    const QHash<QString, vpvl::PMDModel *> &models() const {
-        return m_models;
-    }
-
-    static const QString toUnicodeModelName(const vpvl::PMDModel *model);
+    void setCurrentFPS(int value);
 
 public slots:
     void addModel();
@@ -110,6 +108,7 @@ public slots:
     void translateDown() { translate(0.0f, -1.0f); }
     void translateLeft() { translate(-1.0f, 0.0f); }
     void translateRight() { translate(1.0f, 0.0f); }
+    void setBones(const QList<vpvl::Bone *> &bones);
 
 signals:
     void modelDidAdd(vpvl::PMDModel *model);
@@ -144,6 +143,7 @@ private:
     void addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *motion);
     VPDFile *setModelPoseInternal(vpvl::PMDModel *model, const QString &path);
     vpvl::VMDMotion *setCameraInternal(const QString &path);
+    void drawBones();
     void drawGrid();
     void updateFPS();
     void startSceneUpdateTimer();
@@ -153,6 +153,7 @@ private:
 
     vpvl::gl::Renderer *m_renderer;
     vpvl::VMDMotion *m_camera;
+    vpvl::Bone *m_bone;
     internal::Delegate *m_delegate;
     internal::Grid *m_grid;
     internal::World *m_world;
@@ -168,6 +169,7 @@ private:
     int m_defaultFPS;
     int m_interval;
     int m_internalTimerID;
+    bool m_visibleBones;
 };
 
 #endif // SCENEWIDGET_H
