@@ -146,6 +146,7 @@ void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
     }
     if (frameToRemove) {
         m_frames.remove(frameToRemove);
+        delete frameToRemove;
         if (m_automaticRefresh)
             refresh();
     }
@@ -162,8 +163,11 @@ void BaseAnimation::deleteFrames(int frameIndex)
     }
     const uint32_t nFramesToRemove = framesToRemove.count();
     if (nFramesToRemove) {
-        for (uint32_t i = 0; i < nFramesToRemove; i++)
-            m_frames.remove(framesToRemove[i]);
+        for (uint32_t i = 0; i < nFramesToRemove; i++) {
+            BaseKeyFrame *frame = framesToRemove[i];
+            m_frames.remove(frame);
+            delete frame;
+        }
         if (m_automaticRefresh)
             refresh();
     }
