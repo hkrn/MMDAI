@@ -39,7 +39,7 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
     QList<BoneMotionModel::Frame> boneFrames;
     foreach (QModelIndex index, indices) {
         vpvl::Bone bone;
-        QString name = model->data(index, Qt::DisplayRole).toString();
+        QString name = model->data(index, BoneMotionModel::kNameRole).toString();
         bone.setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
         // FIXME: should use constant value
         bone.setPosition(btVector3(0, 0, 0));
@@ -57,7 +57,7 @@ static void UIModelInsertFaceFrame(TimelineWidget *timeline)
     QList<FaceMotionModel::Frame> faceFrames;
     foreach (QModelIndex index, indices) {
         vpvl::Face face;
-        QString name = model->data(index, Qt::DisplayRole).toString();
+        QString name = model->data(index, BoneMotionModel::kNameRole).toString();
         face.setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
         face.setWeight(0);
         faceFrames.append(FaceMotionModel::Frame(index.column(), &face));

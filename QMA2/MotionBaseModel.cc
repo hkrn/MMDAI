@@ -17,6 +17,8 @@
  * - setWeight (Face)
  */
 
+const QVariant MotionBaseModel::kInvalidData = QVariant();
+
 MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),
@@ -71,9 +73,9 @@ QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
 {
     if (index.isValid()) {
         switch(role) {
-        case Qt::UserRole:
+        case kBinaryDataRole:
             return values().value(QPair<int, int>(index.column(), index.row()));
-        case Qt::DisplayRole:
+        case kNameRole:
             return keys()[index.row()];
         }
     }

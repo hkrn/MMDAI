@@ -105,6 +105,10 @@ void FaceMotionModel::copyFrames(int /* frameIndex */)
 {
 }
 
+void FaceMotionModel::commit()
+{
+}
+
 void FaceMotionModel::setFrames(const QList<Frame> &frames)
 {
     if (!m_model || !m_motion) {
@@ -215,7 +219,7 @@ void FaceMotionModel::deleteModel()
 void FaceMotionModel::deleteFrame(const QModelIndex &index)
 {
     m_motion->mutableFaceAnimation()->deleteFrame(index.column(), m_faces[index.row()]->name());
-    setData(index, QVariant(), Qt::EditRole);
+    setData(index, kInvalidData, Qt::EditRole);
 }
 
 void FaceMotionModel::selectFaces(QList<vpvl::Face *> faces)

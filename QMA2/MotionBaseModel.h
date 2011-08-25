@@ -20,12 +20,20 @@ class MotionBaseModel : public QAbstractTableModel
 public:
     typedef QStringList Keys;
     typedef QHash< QPair<int, int>, QVariant > Values;
+    enum DataRole
+    {
+        kNameRole = 0x1000,
+        kBinaryDataRole
+    };
+
+    static const QVariant kInvalidData;
 
     MotionBaseModel(QUndoGroup *undo, QObject *parent = 0);
     virtual ~MotionBaseModel();
 
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     virtual void copyFrames(int frameIndex) = 0;
+    virtual void commit() = 0;
     void saveState();
     void restoreState();
     void discardState();

@@ -30,6 +30,7 @@ public:
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
+    void commit();
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void setFrames(const QList<Frame> &frames);

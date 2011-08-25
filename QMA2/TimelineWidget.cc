@@ -15,7 +15,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
         if (index.column() % 5 == 0 && !(option.state & QStyle::State_Selected))
             painter->fillRect(option.rect, qApp->palette().alternateBase());
-        if (index.data(Qt::UserRole).canConvert(QVariant::ByteArray)) {
+        if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
             painter->setPen(Qt::NoPen);
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(option.palette.foreground());
