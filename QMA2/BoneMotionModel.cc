@@ -203,18 +203,32 @@ private:
 class ResetAllCommand : public QUndoCommand
 {
 public:
-    ResetAllCommand(BoneMotionModel *model)
+    ResetAllCommand(vpvl::PMDModel *model)
         : QUndoCommand(),
           m_model(model)
     {
+        m_state = model->saveState();
     }
-    virtual ~ResetAllCommand() {}
+    virtual ~ResetAllCommand() {
+        m_model->discardState(m_state);
+    }
 
-    void undo() {}
-    void redo() {}
+    void undo() {
+        m_model->restoreState(m_state);
+        m_model->updateImmediate();
+    }
+    void redo() {
+        execute();
+    }
 
 private:
-    BoneMotionModel *m_model;
+    void execute() {
+        m_model->resetAllBones();
+        m_model->updateImmediate();
+    }
+
+    vpvl::PMDModel *m_model;
+    vpvl::PMDModel::State *m_state;
 };
 
 class SetPositionCommand : public QUndoCommand
@@ -453,10 +467,8 @@ void BoneMotionModel::resetBone(ResetType type)
 
 void BoneMotionModel::resetAllBones()
 {
-    if (m_model) {
-        m_model->resetAllBones();
-        updateModel();
-    }
+    if (m_model)
+        addUndoCommand(new ResetAllCommand(m_model));
 }
 
 void BoneMotionModel::setMode(int value)
