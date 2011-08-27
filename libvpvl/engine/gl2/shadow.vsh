@@ -2,7 +2,6 @@
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform vec4 inColor;
 attribute vec3 inPosition;
 attribute vec3 inNormal;
 varying vec3 outPosition;

@@ -65,9 +65,19 @@ class ShadowProgram;
 class VPVL_EXPORT IDelegate
 {
 public:
-    virtual bool loadTexture(const std::string &path, GLuint &textureID) = 0;
-    virtual bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
-    virtual const std::string toUnicode(const uint8_t *value) = 0;
+    enum ShaderType {
+        kEdgeVertexShader,
+        kEdgeFragmentShader,
+        kModelVertexShader,
+        kModelFragmentShader,
+        kShadowVertexShader,
+        kShadowFragmentShader
+    };
+
+    virtual bool loadTexture(const std::string &path, GLuint &textureID) const = 0;
+    virtual bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) const = 0;
+    virtual const std::string loadShader(ShaderType type) const = 0;
+    virtual const std::string toUnicode(const uint8_t *value) const = 0;
 };
 
 /**
@@ -103,6 +113,7 @@ public:
     }
 
     void initializeSurface();
+    bool loadAllShaders();
     void resize(int width, int height);
     void getObjectCoordinate(int px, int py, btVector3 &coordinate) const;
     void setDebugDrawer(btDynamicsWorld *world);

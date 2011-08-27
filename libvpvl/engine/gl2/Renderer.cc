@@ -41,10 +41,9 @@
 
 #include <btBulletDynamicsCommon.h>
 
-namespace vpvl
-{
+namespace {
 
-enum __vpvlVertexBufferObjectType {
+enum VertexBufferObjectType {
     kModelVertices,
     kModelNormals,
     kModelColors,
@@ -56,17 +55,22 @@ enum __vpvlVertexBufferObjectType {
     kVertexBufferObjectMax
 };
 
-struct __vpvlPMDModelMaterialPrivate {
+struct PMDModelMaterialPrivate {
     GLuint primaryTextureID;
     GLuint secondTextureID;
 };
+
+}
+
+namespace vpvl
+{
 
 struct PMDModelUserData {
     GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
-    __vpvlPMDModelMaterialPrivate *materials;
+    PMDModelMaterialPrivate *materials;
 };
 
 struct XModelUserData {
@@ -88,7 +92,7 @@ public:
           m_normalAttributeLocation(0)
     {
     }
-    virtual ~ShaderProgram() {
+    ~ShaderProgram() {
         if (m_program) {
             glDeleteProgram(m_program);
             m_program = 0;
@@ -139,11 +143,11 @@ public:
     void unbind() {
         glUseProgram(0);
     }
-    void setModelViewMatrix(float matrix[16]) {
-        glUniformMatrix4fv(m_modelViewUniformLocation, 1, GL_FALSE, matrix);
+    void setModelViewMatrix(float value[16]) {
+        glUniformMatrix4fv(m_modelViewUniformLocation, 1, GL_FALSE, value);
     }
-    void setProjectionMatrix(float matrix[16]) {
-        glUniformMatrix4fv(m_projectionUniformLocation, 1, GL_FALSE, matrix);
+    void setProjectionMatrix(float value[16]) {
+        glUniformMatrix4fv(m_projectionUniformLocation, 1, GL_FALSE, value);
     }
     void setPosition(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_positionAttributeLocation);
@@ -201,8 +205,8 @@ public:
             m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
         return ret;
     }
-    void setColor(const btVector4 &color) {
-        glVertexAttrib4fv(m_colorAttributeLocation, color);
+    void setColor(const btVector3 &value) {
+        glVertexAttrib4fv(m_colorAttributeLocation, value);
     }
 
 private:
@@ -211,9 +215,21 @@ private:
 
 class ShadowProgram : public ShaderProgram {
 public:
-    ShadowProgram() : ShaderProgram() {
+    ShadowProgram()
+        : ShaderProgram(),
+          m_lightColorUniformLocation(0),
+          m_lightPositionUniformLocation(0),
+          m_lightAmbientUniformLocation(0),
+          m_lightDiffuseUniformLocation(0),
+          m_lightSpecularUniformLocation(0)
+    {
     }
     ~ShadowProgram() {
+        m_lightColorUniformLocation = 0;
+        m_lightPositionUniformLocation = 0;
+        m_lightAmbientUniformLocation = 0;
+        m_lightDiffuseUniformLocation = 0;
+        m_lightSpecularUniformLocation = 0;
     }
 
     bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
@@ -227,20 +243,20 @@ public:
         }
         return ret;
     }
-    void setLightColor(const btVector4 &color) {
-        glUniform4fv(m_lightColorUniformLocation, 1, color);
+    void setLightColor(const btVector3 &value) {
+        glUniform4fv(m_lightColorUniformLocation, 1, value);
     }
-    void setLightPosition(const btVector3 &position) {
-        glUniform3fv(m_lightPositionUniformLocation, 1, position);
+    void setLightPosition(const btVector3 &value) {
+        glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
-    void setLightAmbient(const btVector4 &color) {
-        glUniform4fv(m_lightAmbientUniformLocation, 1, color);
+    void setLightAmbient(const btVector3 &value) {
+        glUniform4fv(m_lightAmbientUniformLocation, 1, value);
     }
-    void setLightDiffuse(const btVector4 &color) {
-        glUniform4fv(m_lightDiffuseUniformLocation, 1, color);
+    void setLightDiffuse(const btVector3 &value) {
+        glUniform4fv(m_lightDiffuseUniformLocation, 1, value);
     }
-    void setLightSpecular(const btVector4 &color) {
-        glUniform4fv(m_lightSpecularUniformLocation, 1, color);
+    void setLightSpecular(const btVector3 &value) {
+        glUniform4fv(m_lightSpecularUniformLocation, 1, value);
     }
 
 private:
@@ -253,10 +269,135 @@ private:
 
 class ModelProgram : public ShadowProgram {
 public:
-    ModelProgram() : ShadowProgram() {
+    ModelProgram()
+        : ShadowProgram(),
+          m_texCoordAttributeLocation(0),
+          m_toonTexCoordAttributeLocation(0),
+          m_materialAmbientUniformLocation(0),
+          m_materialDiffuseUniformLocation(0),
+          m_materialSpecularUniformLocation(0),
+          m_materialShininessUniformLocation(0),
+          m_hasSingleSphereMapUniformLocation(0),
+          m_hasMultipleSphereMapUniformLocation(0),
+          m_hasMainTextureUniformLocation(0),
+          m_hasSubTextureUniformLocation(0),
+          m_mainTextureUniformLocation(0),
+          m_subTextureUniformLocation(0),
+          m_toonTextureUniformLocation(0)
+    {
     }
     ~ModelProgram() {
+        m_texCoordAttributeLocation = 0;
+        m_toonTexCoordAttributeLocation = 0;
+        m_materialAmbientUniformLocation = 0;
+        m_materialDiffuseUniformLocation = 0;
+        m_materialSpecularUniformLocation = 0;
+        m_materialShininessUniformLocation = 0;
+        m_hasSingleSphereMapUniformLocation = 0;
+        m_hasMultipleSphereMapUniformLocation = 0;
+        m_hasMainTextureUniformLocation = 0;
+        m_hasSubTextureUniformLocation = 0;
+        m_mainTextureUniformLocation = 0;
+        m_subTextureUniformLocation = 0;
+        m_toonTextureUniformLocation = 0;
     }
+
+    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+        bool ret = ShadowProgram::load(vertexShaderSource, fragmentShaderSource);
+        if (ret) {
+            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
+            m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
+            m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
+            m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+            m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
+            m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
+            m_hasSingleSphereMapUniformLocation = glGetUniformLocation(m_program, "hasSingleSphereMap");
+            m_hasMultipleSphereMapUniformLocation = glGetUniformLocation(m_program, "hasMultipleSphereMap");
+            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
+            m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
+            m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
+            m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
+            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+            m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
+            m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
+            resetTextureState();
+        }
+        return ret;
+    }
+    void resetTextureState() {
+        glUniform1i(m_mainTextureUniformLocation, 0);
+        glUniform1i(m_subTextureUniformLocation, 0);
+        glUniform1i(m_hasMainTextureUniformLocation, 0);
+        glUniform1i(m_hasSubTextureUniformLocation, 0);
+        glUniform1i(m_isMainAdditiveUniformLocation, 0);
+        glUniform1i(m_isSubAdditiveUniformLocation, 0);
+    }
+    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_texCoordAttributeLocation);
+        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
+        glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setMaterialAmbient(const btVector3 &color) {
+        glUniform4fv(m_materialAmbientUniformLocation, 1, color);
+    }
+    void setMaterialDiffuse(const btVector3 &color) {
+        glUniform4fv(m_materialDiffuseUniformLocation, 1, color);
+    }
+    void setMaterialSpecular(const btVector3 &color) {
+        glUniform4fv(m_materialSpecularUniformLocation, 1, color);
+    }
+    void setMaterialShininess(float value) {
+        glUniform1f(m_materialShininessUniformLocation, value);
+    }
+    void setHasSingleSphereMap(bool value) {
+        glUniform1i(m_hasSingleSphereMapUniformLocation, value ? 1 : 0);
+    }
+    void setHasMultipleSphereMap(bool value) {
+        glUniform1i(m_hasMultipleSphereMapUniformLocation, value ? 1 : 0);
+    }
+    void setIsMainAdditive(bool value) {
+        glUniform1i(m_isMainAdditiveUniformLocation, value ? 1 : 0);
+    }
+    void setIsSubAdditive(bool value) {
+        glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
+    }
+    void setMainTexture(GLint value) {
+        if (value) {
+            glUniform1i(m_mainTextureUniformLocation, value);
+            glUniform1i(m_hasMainTextureUniformLocation, 1);
+        }
+    }
+    void setSubTexture(GLint value) {
+        if (value) {
+            glUniform1i(m_subTextureUniformLocation, value);
+            glUniform1i(m_subTextureUniformLocation, 1);
+        }
+    }
+    void setToonTexture(GLint value) {
+        glUniform1i(m_toonTextureUniformLocation, value);
+        glSamplerParameteri(m_toonTextureUniformLocation, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(m_toonTextureUniformLocation, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+
+private:
+    GLuint m_texCoordAttributeLocation;
+    GLuint m_toonTexCoordAttributeLocation;
+    GLuint m_materialAmbientUniformLocation;
+    GLuint m_materialDiffuseUniformLocation;
+    GLuint m_materialSpecularUniformLocation;
+    GLuint m_materialShininessUniformLocation;
+    GLuint m_hasSingleSphereMapUniformLocation;
+    GLuint m_hasMultipleSphereMapUniformLocation;
+    GLuint m_hasMainTextureUniformLocation;
+    GLuint m_hasSubTextureUniformLocation;
+    GLuint m_isMainAdditiveUniformLocation;
+    GLuint m_isSubAdditiveUniformLocation;
+    GLuint m_mainTextureUniformLocation;
+    GLuint m_subTextureUniformLocation;
+    GLuint m_toonTextureUniformLocation;
 };
 
 class DebugDrawer : public btIDebugDraw
@@ -355,15 +496,29 @@ void Renderer::initializeSurface()
     glClearStencil(0);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GEQUAL, 0.05f);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHTING);
+}
+
+bool Renderer::loadAllShaders()
+{
+    std::string vertexShader;
+    std::string fragmentShader;
+    vertexShader = m_delegate->loadShader(IDelegate::kEdgeVertexShader);
+    fragmentShader = m_delegate->loadShader(IDelegate::kEdgeFragmentShader);
+    if (!m_edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
+        return false;
+    vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
+    fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
+    if (!m_modelProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
+        return false;
+    vertexShader = m_delegate->loadShader(IDelegate::kShadowVertexShader);
+    fragmentShader = m_delegate->loadShader(IDelegate::kShadowFragmentShader);
+    return m_shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str());
 }
 
 void Renderer::resize(int width, int height)
@@ -403,13 +558,13 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
     const uint32_t nMaterials = materials.count();
     GLuint textureID = 0;
     vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
-    __vpvlPMDModelMaterialPrivate *materialPrivates = new __vpvlPMDModelMaterialPrivate[nMaterials];
+    PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nMaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const std::string primary = m_delegate->toUnicode(material->mainTextureName());
         const std::string second = m_delegate->toUnicode(material->subTextureName());
-        __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
+        PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.primaryTextureID = 0;
         materialPrivate.secondTextureID = 0;
         if (!primary.empty()) {
@@ -467,7 +622,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
         const uint32_t nMaterials = materials.count();
         vpvl::PMDModelUserData *userData = model->userData();
         for (uint32_t i = 0; i < nMaterials; i++) {
-            __vpvlPMDModelMaterialPrivate &materialPrivate = userData->materials[i];
+            PMDModelMaterialPrivate &materialPrivate = userData->materials[i];
             glDeleteTextures(1, &materialPrivate.primaryTextureID);
             glDeleteTextures(1, &materialPrivate.secondTextureID);
         }
@@ -483,6 +638,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
 
 void Renderer::drawModel(const vpvl::PMDModel *model)
 {
+    return;
 #ifndef VPVL_COORDINATE_OPENGL
     glPushMatrix();
     glScalef(1.0f, 1.0f, -1.0f);
@@ -491,27 +647,22 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 
     const vpvl::PMDModelUserData *userData = model->userData();
     size_t stride = model->stride(vpvl::PMDModel::kNormalsStride), vsize = model->vertices().count();
-    glActiveTexture(GL_TEXTURE0);
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    m_modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glVertexPointer(3, GL_FLOAT, model->stride(vpvl::PMDModel::kVerticesStride), 0);
+    m_modelProgram->setPosition(0, model->stride(vpvl::PMDModel::kVerticesStride));
+    // glVertexPointer(3, GL_FLOAT, model->stride(vpvl::PMDModel::kVerticesStride), 0);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
     glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->normalsPointer(), GL_DYNAMIC_DRAW);
-    glNormalPointer(GL_FLOAT, stride, 0);
+    m_modelProgram->setNormal(0, model->stride(vpvl::PMDModel::kNormalsStride));
+    // glNormalPointer(GL_FLOAT, stride, 0);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
+    m_modelProgram->setTexCoord(0, model->stride(vpvl::PMDModel::kTextureCoordsStride));
     glTexCoordPointer(2, GL_FLOAT, model->stride(vpvl::PMDModel::kTextureCoordsStride), 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
 
     const bool enableToon = true;
     // toon
     if (enableToon) {
-        glActiveTexture(GL_TEXTURE1);
-        glEnable(GL_TEXTURE_2D);
-        glClientActiveTexture(GL_TEXTURE1);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelToonTexCoords]);
         // shadow map
         stride = model->stride(vpvl::PMDModel::kToonTextureStride);
@@ -519,38 +670,24 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_DYNAMIC_DRAW);
         else
             glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
-        glTexCoordPointer(2, GL_FLOAT, stride, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glClientActiveTexture(GL_TEXTURE0);
+        m_modelProgram->setToonTexCoord(0, stride);
+        // glTexCoordPointer(2, GL_FLOAT, stride, 0);
     }
-    bool hasSingleSphereMap = false, hasMultipleSphereMap = false;
     // first sphere map
-    if (userData->hasSingleSphereMap) {
-        glEnable(GL_TEXTURE_2D);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
-        hasSingleSphereMap = true;
-    }
+    if (userData->hasSingleSphereMap)
+        m_modelProgram->setHasSingleSphereMap(true);
     // second sphere map
-    if (userData->hasMultipleSphereMap) {
-        glActiveTexture(GL_TEXTURE2);
-        glEnable(GL_TEXTURE_2D);
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
-        glActiveTexture(GL_TEXTURE0);
-        hasMultipleSphereMap = true;
-    }
+    if (userData->hasMultipleSphereMap)
+        m_modelProgram->setHasMultipleSphereMap(true);
 
     const vpvl::MaterialList &materials = model->materials();
-    const __vpvlPMDModelMaterialPrivate *materialPrivates = userData->materials;
+    const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const uint32_t nMaterials = materials.count();
-    btVector4 average, ambient, diffuse, specular;
+    btVector3 average, ambient, diffuse, specular;
     uint32_t offset = 0;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
-        const __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
+        const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         // toon
         const float alpha = material->opacity();
         if (enableToon) {
@@ -558,8 +695,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             average.setW(average.w() * alpha);
             specular = material->specular();
             specular.setW(specular.w() * alpha);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(average));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
+            m_modelProgram->setMaterialAmbient(average);
+            m_modelProgram->setMaterialDiffuse(diffuse);
+            m_modelProgram->setMaterialSpecular(specular);
         }
         else {
             ambient = material->ambient();
@@ -568,127 +706,26 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             diffuse.setW(diffuse.w() * alpha);
             specular = material->specular();
             specular.setW(specular.w() * alpha);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(ambient));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(diffuse));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
+            m_modelProgram->setMaterialAmbient(ambient);
+            m_modelProgram->setMaterialDiffuse(diffuse);
+            m_modelProgram->setMaterialSpecular(specular);
         }
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
+        m_modelProgram->setMaterialShininess(material->shiness());
+        m_modelProgram->setMainTexture(materialPrivate.primaryTextureID);
+        m_modelProgram->setSubTexture(materialPrivate.secondTextureID);
+        m_modelProgram->setIsMainAdditive(material->isAdditionalSphereMain());
+        m_modelProgram->setIsSubAdditive(material->isAdditionalSphereSub());
         material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
-        glActiveTexture(GL_TEXTURE0);
-        // has texture
-        if (materialPrivate.primaryTextureID > 0) {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, materialPrivate.primaryTextureID);
-            if (hasSingleSphereMap) {
-                // is sphere map
-                if (material->isMultiplicationSphereMain() || material->isAdditionalSphereMain()) {
-                    // is second sphere map
-                    if (material->isAdditionalSphereMain())
-                        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                    glEnable(GL_TEXTURE_GEN_S);
-                    glEnable(GL_TEXTURE_GEN_T);
-                }
-                else {
-                    glDisable(GL_TEXTURE_GEN_S);
-                    glDisable(GL_TEXTURE_GEN_T);
-                }
-            }
-        }
-        else {
-            glDisable(GL_TEXTURE_2D);
-        }
-        // toon
-        if (enableToon) {
-            const GLuint textureID = userData->toonTextureID[material->toonID()];
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        if (hasMultipleSphereMap) {
-            // second sphere
-            glActiveTexture(GL_TEXTURE2);
-            glEnable(GL_TEXTURE_2D);
-            if (materialPrivate.secondTextureID > 0) {
-                // is second sphere
-                if (material->isAdditionalSphereSub())
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-                else
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-                glBindTexture(GL_TEXTURE_2D, materialPrivate.secondTextureID);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
-            }
-            else {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-        }
         // draw
         const uint32_t nIndices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(offset));
         offset += (nIndices << 1);
-        // is aux sphere map
-        if (material->isAdditionalSphereMain()) {
-            glActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        }
+        m_modelProgram->resetTextureState();
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    // toon
-    if (enableToon) {
-        glClientActiveTexture(GL_TEXTURE0);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        // first sphere map
-        if (hasSingleSphereMap) {
-            glActiveTexture(GL_TEXTURE0);
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-        glClientActiveTexture(GL_TEXTURE1);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        // second sphere map
-        if (hasMultipleSphereMap) {
-            glActiveTexture(GL_TEXTURE2);
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-    }
-    else {
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        // first sphere map
-        if (hasSingleSphereMap) {
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-        // second sphere map
-        if (hasMultipleSphereMap) {
-            glActiveTexture(GL_TEXTURE2);
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
-    }
-    glActiveTexture(GL_TEXTURE0);
-    // first or second sphere map
-    if (hasSingleSphereMap || hasMultipleSphereMap) {
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-    }
-    // toon
-    if (enableToon) {
-        glActiveTexture(GL_TEXTURE1);
-        glDisable(GL_TEXTURE_2D);
-    }
-    // second sphere map
-    if (hasMultipleSphereMap) {
-        glActiveTexture(GL_TEXTURE2);
-        glDisable(GL_TEXTURE_2D);
-    }
-    glActiveTexture(GL_TEXTURE0);
-    glDisable(GL_TEXTURE_2D);
+    m_modelProgram->unbind();
     glEnable(GL_CULL_FACE);
 
 #ifndef VPVL_COORDINATE_OPENGL
@@ -710,25 +747,28 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     const float alpha = 1.0f;
     const size_t stride = model->stride(vpvl::PMDModel::kEdgeVerticesStride);
     const vpvl::PMDModelUserData *modelPrivate = model->userData();
-    btVector4 color;
+    btVector3 color;
+
+    float modelViewMatrix[16], projectionMatrix[16];
+    m_scene->getModelViewMatrix(modelViewMatrix);
+    m_scene->getProjectionMatrix(projectionMatrix);
 
     if (model == m_selected)
-        color.setValue(1.0f, 0.0f, 0.0f, alpha);
-    else
-        color.setValue(0.0f, 0.0f, 0.0f, alpha);
+        color *= alpha;
 
-    glDisable(GL_LIGHTING);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    m_edgeProgram->bind();
+    size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * stride, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
-    glVertexPointer(3, GL_FLOAT, stride, 0);
-    glColor4fv(static_cast<const btScalar *>(color));
+    glBufferData(GL_ARRAY_BUFFER, len, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
+    m_edgeProgram->setColor(color);
+    m_edgeProgram->setModelViewMatrix(modelViewMatrix);
+    m_edgeProgram->setProjectionMatrix(projectionMatrix);
+    m_edgeProgram->setPosition(0, len);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_LIGHTING);
+    m_edgeProgram->unbind();
 
 #ifdef VPVL_COORDINATE_OPENGL
     glCullFace(GL_BACK);
@@ -740,18 +780,32 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 
 void Renderer::drawModelShadow(const vpvl::PMDModel *model)
 {
+    return;
     const size_t stride = model->stride(vpvl::PMDModel::kVerticesStride);
     const vpvl::PMDModelUserData *modelPrivate = model->userData();
+
+    float modelViewMatrix[16], projectionMatrix[16];
+    m_scene->getModelViewMatrix(modelViewMatrix);
+    m_scene->getProjectionMatrix(projectionMatrix);
+
     glDisable(GL_CULL_FACE);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    m_shadowProgram->bind();
+    size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * stride, model->verticesPointer(), GL_DYNAMIC_DRAW);
-    glVertexPointer(3, GL_FLOAT, stride, 0);
+    glBufferData(GL_ARRAY_BUFFER, len, model->verticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kShadowIndices]);
+    m_shadowProgram->setLightAmbient(m_scene->lightAmbient());
+    m_shadowProgram->setLightColor(m_scene->lightColor());
+    m_shadowProgram->setLightDiffuse(m_scene->lightDiffuse());
+    m_shadowProgram->setLightPosition(m_scene->lightPosition());
+    m_shadowProgram->setLightSpecular(m_scene->lightSpecular());
+    m_shadowProgram->setModelViewMatrix(modelViewMatrix);
+    m_shadowProgram->setProjectionMatrix(projectionMatrix);
+    m_shadowProgram->setPosition(0, len);
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    m_shadowProgram->unbind();
     glEnable(GL_CULL_FACE);
 }
 
@@ -982,14 +1036,7 @@ void Renderer::drawAsset(const vpvl::XModel *model)
 
 void Renderer::drawSurface()
 {
-    float matrix[16];
     glViewport(0, 0, m_scene->width(), m_scene->height());
-    glMatrixMode(GL_PROJECTION);
-    m_scene->getProjectionMatrix(matrix);
-    glLoadMatrixf(matrix);
-    glMatrixMode(GL_MODELVIEW);
-    m_scene->getModelViewMatrix(matrix);
-    glLoadMatrixf(matrix);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
@@ -998,7 +1045,6 @@ void Renderer::drawSurface()
     glColorMask(0, 0, 0, 0);
     glDepthMask(0);
     glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
     // render shadow before drawing models
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
@@ -1006,13 +1052,11 @@ void Renderer::drawSurface()
         vpvl::PMDModel *model = models[i];
         drawModelShadow(model);
     }
-    glPopMatrix();
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
     glStencilFunc(GL_EQUAL, 2, ~0);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
     // render all assets
     // TODO: merge drawing models
     uint32_t nAssets = m_assets.count();
