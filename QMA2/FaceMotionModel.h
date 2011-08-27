@@ -15,7 +15,8 @@ public:
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
-    void commit();
+    void startTransform();
+    void commitTransform();
     void setFrames(const QList<Frame> &frames);
     void resetAllFaces();
     void selectFaces(QList<vpvl::Face *> faces);

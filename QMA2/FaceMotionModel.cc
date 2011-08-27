@@ -90,7 +90,7 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
         vpvl::FaceAnimation *animation = motion->mutableFaceAnimation();
         foreach (QVariant value, values()) {
             vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
-            QByteArray bytes = value.toByteArray();
+            const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->addFrame(newFrame);
         }
@@ -105,7 +105,11 @@ void FaceMotionModel::copyFrames(int /* frameIndex */)
 {
 }
 
-void FaceMotionModel::commit()
+void FaceMotionModel::startTransform()
+{
+}
+
+void FaceMotionModel::commitTransform()
 {
 }
 
@@ -122,7 +126,7 @@ void FaceMotionModel::setFrames(const QList<Frame> &frames)
         key = internal::toQString(face->name());
         int i = keys().indexOf(key);
         if (i != -1) {
-            QModelIndex modelIndex = index(i, frameIndex);
+            const QModelIndex &modelIndex = index(i, frameIndex);
             vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
             vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
             newFrame->setName(face->name());

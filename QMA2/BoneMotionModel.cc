@@ -34,7 +34,7 @@ public:
     {
         int nBones = m_bmm->rowCount();
         for (int i = 0; i < nBones; i++) {
-            QModelIndex index = bmm->index(i, frameIndex);
+            const QModelIndex &index = bmm->index(i, frameIndex);
             if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                 m_indices.append(index);
         }
@@ -50,11 +50,11 @@ public:
         animation->deleteFrames(m_frameIndex);
         int nBones = m_bmm->rowCount();
         for (int i = 0; i < nBones; i++) {
-            QModelIndex index = m_bmm->index(i, m_frameIndex);
+            const QModelIndex &index = m_bmm->index(i, m_frameIndex);
             m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
         }
-        foreach (QModelIndex index, m_indices) {
-            QByteArray bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
+        foreach (const QModelIndex &index, m_indices) {
+            const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -78,7 +78,7 @@ private:
             int i = keys.indexOf(key);
             if (i != -1) {
                 const btVector4 &v = bone->rotation;
-                QModelIndex modelIndex = m_bmm->index(i, m_frameIndex);
+                const QModelIndex &modelIndex = m_bmm->index(i, m_frameIndex);
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
                 newFrame->setDefaultInterpolationParameter();
@@ -111,11 +111,11 @@ public:
     {
         int nBones = m_bmm->rowCount();
         QHash<int, bool> indexProceeded;
-        foreach (BoneMotionModel::Frame frame, frames) {
+        foreach (const BoneMotionModel::Frame &frame, frames) {
             int frameIndex = frame.first;
             if (!indexProceeded[frameIndex]) {
                 for (int i = 0; i < nBones; i++) {
-                    QModelIndex index = bmm->index(i, frameIndex);
+                    const QModelIndex &index = bmm->index(i, frameIndex);
                     if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                         m_indices.append(index);
                 }
@@ -135,12 +135,12 @@ public:
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteFrames(frameIndex);
             for (int i = 0; i < nBones; i++) {
-                QModelIndex index = m_bmm->index(i, frameIndex);
+                const QModelIndex &index = m_bmm->index(i, frameIndex);
                 m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
             }
         }
-        foreach (QModelIndex index, m_indices) {
-            QByteArray bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
+        foreach (const QModelIndex &index, m_indices) {
+            const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -157,7 +157,7 @@ private:
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &keys = m_bmm->keys();
         vpvl::Bone *selected = m_bmm->selectedBone();
-        foreach (BoneMotionModel::Frame pair, m_frames) {
+        foreach (const BoneMotionModel::Frame &pair, m_frames) {
             int frameIndex = pair.first;
             vpvl::Bone *bone = pair.second;
             if (bone) {
@@ -172,7 +172,7 @@ private:
             }
             int i = keys.indexOf(key);
             if (i != -1) {
-                QModelIndex modelIndex = m_bmm->index(i, frameIndex);
+                const QModelIndex &modelIndex = m_bmm->index(i, frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
                 /* FIXME: interpolation */
@@ -283,9 +283,9 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
     if (m_model) {
         vpvl::BoneAnimation *animation = motion->mutableBoneAnimation();
-        foreach (const QVariant value, values()) {
+        foreach (const QVariant &value, values()) {
             vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
-            QByteArray bytes = value.toByteArray();
+            const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->addFrame(newFrame);
         }
@@ -302,7 +302,11 @@ void BoneMotionModel::copyFrames(int /* frameIndex */)
     }
 }
 
-void BoneMotionModel::commit()
+void BoneMotionModel::startTransform()
+{
+}
+
+void BoneMotionModel::commitTransform()
 {
 }
 
@@ -329,7 +333,7 @@ void BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
                 VPDFile::Bone *bone = new VPDFile::Bone();
                 vpvl::BoneKeyFrame frame;
                 frame.read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-                btQuaternion q = frame.rotation();
+                const btQuaternion &q = frame.rotation();
                 bone->name = internal::toQString(&frame);
                 bone->position = frame.position();
                 bone->rotation = btVector4(q.x(), q.y(), q.z(), q.w());
@@ -387,7 +391,7 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             if (i != -1) {
                 uint32_t frameIndex = frame->frameIndex();
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
-                QModelIndex modelIndex = index(i, frameIndex);
+                const QModelIndex &modelIndex = index(i, frameIndex);
                 vpvl::BoneKeyFrame newFrame;
                 newFrame.setName(name);
                 newFrame.setPosition(frame->position());
@@ -543,8 +547,9 @@ void BoneMotionModel::setRotation(int coordinate, float value)
 
 void BoneMotionModel::transform(int coordinate, float value)
 {
+    btVector3 pos, dest;
     foreach (vpvl::Bone *selected, m_selected) {
-        btVector3 current = selected->position(), pos, dest;
+        const btVector3 &current = selected->position();
         switch (coordinate) {
         case 'x':
         case 'X':
@@ -582,7 +587,8 @@ void BoneMotionModel::rotate(int coordinate, float value)
     if (!isBoneSelected())
         return;
     vpvl::Bone *selected = m_selected.last();
-    btQuaternion current = selected->rotation(), rot, dest;
+    const btQuaternion &current = selected->rotation();
+    btQuaternion rot, dest;
     switch (coordinate) {
     case 'x':
     case 'X':

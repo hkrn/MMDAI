@@ -33,7 +33,8 @@ public:
 
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     virtual void copyFrames(int frameIndex) = 0;
-    virtual void commit() = 0;
+    virtual void startTransform() = 0;
+    virtual void commitTransform() = 0;
     void saveState();
     void restoreState();
     void discardState();
