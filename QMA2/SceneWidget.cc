@@ -79,6 +79,22 @@ public:
             path = QString(":/textures/%1").arg(name.c_str());
         return loadTexture(std::string(path.toUtf8()), textureID);
     }
+    void log(LogLevel level, const char *format...) {
+        QString message;
+        va_list ap;
+        va_start(ap, format);
+        message.vsprintf(format, ap);
+        switch (level) {
+        case kLogInfo:
+        default:
+            qDebug("%s", qPrintable(message));
+            break;
+        case kLogWarning:
+            qWarning("%s", qPrintable(message));
+            break;
+        }
+        va_end(ap);
+    }
     const std::string toUnicode(const uint8_t *value) {
         return std::string(toQString(value).toUtf8());
     }
