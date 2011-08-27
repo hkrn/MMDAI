@@ -418,7 +418,6 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 void BoneMotionModel::deleteMotion()
 {
-    m_bones.clear();
     m_selected.clear();
     clearValues();
     setModified(false);
@@ -656,4 +655,10 @@ QList<vpvl::Bone *> BoneMotionModel::bonesFromIndices(const QModelIndexList &ind
     foreach (QModelIndex index, indices)
         bones.append(index.isValid() ? m_bones[index.row()] : 0);
     return bones;
+}
+
+void BoneMotionModel::clearKeys()
+{
+    m_bones.clear();
+    MotionBaseModel::clearKeys();
 }

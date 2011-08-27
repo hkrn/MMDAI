@@ -76,6 +76,7 @@ QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
         case kBinaryDataRole:
             return values().value(QPair<int, int>(index.column(), index.row()));
         case kNameRole:
+        case Qt::DisplayRole:
             return keys()[index.row()];
         }
     }

@@ -62,6 +62,9 @@ signals:
     void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);
     void boneRotationDidChange(vpvl::Bone *bone, const btQuaternion &rot);
 
+protected:
+    void clearKeys();
+
 private:
     QList<vpvl::Bone *> m_bones;
     QList<vpvl::Bone *> m_selected;

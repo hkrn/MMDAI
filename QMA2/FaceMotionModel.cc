@@ -204,7 +204,6 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 void FaceMotionModel::deleteMotion()
 {
-    m_faces.clear();
     m_selected.clear();
     clearValues();
     setModified(false);
@@ -214,6 +213,7 @@ void FaceMotionModel::deleteMotion()
 
 void FaceMotionModel::deleteModel()
 {
+    m_faces.clear();
     deleteMotion();
     clearKeys();
     setPMDModel(0);
@@ -279,4 +279,10 @@ void FaceMotionModel::setWeight(float value, vpvl::Face *face)
         face->setWeight(value);
         updateModel();
     }
+}
+
+void FaceMotionModel::clearKeys()
+{
+    m_faces.clear();
+    MotionBaseModel::clearKeys();
 }

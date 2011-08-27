@@ -34,6 +34,9 @@ public slots:
     void deleteModel();
     void deleteFrame(const QModelIndex &index);
 
+protected:
+    void clearKeys();
+
 private:
     QList<vpvl::Face *> m_faces;
     QList<vpvl::Face *> m_selected;
