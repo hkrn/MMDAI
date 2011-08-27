@@ -86,18 +86,28 @@ public:
     void seek(float frameIndex);
     void setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
-    void setLightSource(const btVector4 &color, const btVector4 &position);
+    void setLightComponent(const btVector3 &ambient, const btVector3 &diffuse, const btVector3 &specular);
+    void setLightSource(const btVector3 &color, const btVector3 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
     void update(float deltaFrame);
     void updateModelView(int ellapsedTimeForMove);
     void updateProjection(int ellapsedTimeForMove);
 
-    const btVector4 &lightColor() const {
+    const btVector3 &lightColor() const {
         return m_lightColor;
     }
-    const btVector4 &lightPosition() const {
+    const btVector3 &lightPosition() const {
         return m_lightPosition;
+    }
+    const btVector3 &lightAmbient() const {
+        return m_lightAmbient;
+    }
+    const btVector3 &lightDiffuse() const {
+        return m_lightDiffuse;
+    }
+    const btVector3 &lightSpecular() const {
+        return m_lightSpecular;
     }
     const btVector3 &angle() const {
         return m_angle;
@@ -148,8 +158,11 @@ private:
     btQuaternion m_currentRotation;
     btQuaternion m_rotation;
     btQuaternion m_viewMoveRotation;
-    btVector4 m_lightColor;
-    btVector4 m_lightPosition;
+    btVector3 m_lightColor;
+    btVector3 m_lightPosition;
+    btVector3 m_lightAmbient;
+    btVector3 m_lightDiffuse;
+    btVector3 m_lightSpecular;
     btVector3 m_currentPosition;
     btVector3 m_position;
     btVector3 m_viewMovePosition;

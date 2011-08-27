@@ -198,10 +198,9 @@ endif()
 
 # link with OpenGL and GLEW
 if(VPVL_OPENGL_RENDERER)
-  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl vpvl_opengl_sources)
   find_package(OpenGL REQUIRED)
   target_link_libraries(vpvl ${OPENGL_LIBRARIES})
-  include_directories(${OPENGL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/engine/opengl)
+  include_directories(${OPENGL_INCLUDE_DIR})
   if(NOT VPVL_USE_ALLEGRO5)
     link_glew(vpvl)
   endif()
