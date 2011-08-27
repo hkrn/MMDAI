@@ -99,44 +99,6 @@ public:
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
     }
-
-    const btVector4 &lightColor() const {
-        return m_lightColor;
-    }
-    void setLightColor(const btVector4 &value) {
-        m_lightColor = value;
-    }
-    const btVector4 &lightPosition() const {
-        return m_lightPosition;
-    }
-    void setLightPosition(const btVector4 &value) {
-        m_lightPosition = value;
-    }
-    btScalar lightIntensity() const {
-        return m_lightIntensity;
-    }
-    void setLightIntensity(btScalar value) {
-        m_lightIntensity = value;
-    }
-    btScalar ambient() const {
-        return m_ambient;
-    }
-    void setAmbient(btScalar value) {
-        m_ambient = value;
-    }
-    btScalar diffuse() const {
-        return m_diffuse;
-    }
-    void setDiffuse(btScalar value) {
-        m_diffuse = value;
-    }
-    btScalar specular() const {
-        return m_specular;
-    }
-    void setSpecular(btScalar value) {
-        m_specular = value;
-    }
-
     btIDebugDraw *debugDrawer() const {
         return m_debugDrawer;
     }
@@ -144,7 +106,6 @@ public:
     void initializeSurface();
     void resize(int width, int height);
     void getObjectCoordinate(int px, int py, btVector3 &coordinate) const;
-    void setLighting();
     void setDebugDrawer(btDynamicsWorld *world);
     void loadModel(vpvl::PMDModel *model, const std::string &dir);
     void unloadModel(const vpvl::PMDModel *model);
@@ -165,14 +126,6 @@ private:
     vpvl::gl::IDelegate *m_delegate;
     Array<vpvl::XModel *> m_assets;
     btIDebugDraw *m_debugDrawer;
-    btVector4 m_lightColor;
-    btVector4 m_lightPosition;
-    btScalar m_lightIntensity;
-    btScalar m_ambient;
-    btScalar m_diffuse;
-    btScalar m_specular;
-    int m_width;
-    int m_height;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

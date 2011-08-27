@@ -147,15 +147,7 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_scene(0),
       m_selected(0),
       m_debugDrawer(0),
-      m_delegate(delegate),
-      m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
-      m_lightPosition(0.5f, 1.0f, 0.5f, 0.0f),
-      m_lightIntensity(0.6f),
-      m_ambient(m_lightIntensity * 2.0f),
-      m_diffuse(0.0f),
-      m_specular(m_lightIntensity),
-      m_width(width),
-      m_height(height)
+      m_delegate(delegate)
 {
     m_debugDrawer = new DebugDrawer();
     m_scene = new vpvl::Scene(width, height, fps);
@@ -181,13 +173,14 @@ void Renderer::initializeSurface()
     glAlphaFunc(GL_GEQUAL, 0.05f);
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
-    setLighting();
+    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_scene->lightPosition()));
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(m_scene->lightDiffuse()));
+    glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(m_scene->lightAmbient()));
+    glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(m_scene->lightSpecular()));
 }
 
 void Renderer::resize(int width, int height)
 {
-    m_width = width;
-    m_height = height;
     m_scene->setWidth(width);
     m_scene->setHeight(height);
 }
@@ -209,21 +202,6 @@ void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate) const
     glReadPixels(static_cast<GLint>(winX), static_cast<GLint>(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
     gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
     coordinate.setValue(static_cast<btScalar>(x), static_cast<btScalar>(y), static_cast<btScalar>(z));
-}
-
-void Renderer::setLighting()
-{
-    btVector3 diffuse = m_lightColor * m_diffuse;
-    btVector3 ambient = m_lightColor * m_ambient;
-    btVector3 specular = m_lightColor * m_specular;
-    diffuse.setW(1.0f);
-    ambient.setW(1.0f);
-    specular.setW(1.0f);
-    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_lightPosition));
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
-    glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
-    glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
-    m_scene->setLightSource(m_lightColor, m_lightPosition);
 }
 
 void Renderer::setDebugDrawer(btDynamicsWorld *world)
@@ -818,7 +796,7 @@ void Renderer::drawAsset(const vpvl::XModel *model)
 void Renderer::drawSurface()
 {
     float matrix[16];
-    glViewport(0, 0, m_width, m_height);
+    glViewport(0, 0, m_scene->width(), m_scene->height());
     glMatrixMode(GL_PROJECTION);
     m_scene->getProjectionMatrix(matrix);
     glLoadMatrixf(matrix);

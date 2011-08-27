@@ -305,7 +305,7 @@ private:
 #endif
 
         vpvl::Scene *scene = m_renderer.scene();
-        m_renderer.setLighting();
+        // m_renderer.setLighting();
         scene->addModel(m_model);
 
         internal::slurpFile(internal::kMotion, m_motionData, size);
