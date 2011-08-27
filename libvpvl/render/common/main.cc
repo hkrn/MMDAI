@@ -37,7 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl/vpvl.h>
-#include <vpvl/gl/Renderer.h>
+#include <vpvl/gl2/Renderer.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -54,7 +54,11 @@
 struct btDiscreteDynamicsWorld { int unused; };
 #endif
 
+#if defined(VPVL_GL2_RENDERER_H_)
+using namespace vpvl::gl2;
+#elif defined(VPVL_GL_RENDERER_H_)
 using namespace vpvl::gl;
+#endif
 
 namespace internal
 {
@@ -272,6 +276,10 @@ public:
             return false;
         }
 
+#ifdef VPVL_GL2_RENDERER_H_
+        m_renderer.loadAllShaders();
+#endif
+
         if (!loadScene())
             return false;
 
@@ -293,6 +301,7 @@ public:
 
 protected:
     virtual void draw() {
+        glClearColor(0, 0, 1, 1);
         m_renderer.initializeSurface();
         m_renderer.drawSurface();
     }
@@ -346,7 +355,6 @@ private:
 #endif
 
         vpvl::Scene *scene = m_renderer.scene();
-        // m_renderer.setLighting();
         scene->addModel(m_model);
 
         internal::slurpFile(internal::kMotion, m_motionData, size);
