@@ -67,8 +67,14 @@ namespace gl
 class VPVL_EXPORT IDelegate
 {
 public:
+    enum LogLevel {
+        kLogInfo,
+        kLogWarning
+    };
+
     virtual bool loadTexture(const std::string &path, GLuint &textureID) = 0;
     virtual bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
+    virtual void log(LogLevel level, const char *format, ...) = 0;
     virtual const std::string toUnicode(const uint8_t *value) = 0;
 };
 

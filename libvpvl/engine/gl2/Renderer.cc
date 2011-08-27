@@ -84,8 +84,9 @@ namespace gl2
 class ShaderProgram
 {
 public:
-    ShaderProgram()
+    ShaderProgram(IDelegate *delegate)
         : m_program(0),
+          m_delegate(delegate),
           m_modelViewUniformLocation(0),
           m_projectionUniformLocation(0),
           m_positionAttributeLocation(0),
@@ -121,6 +122,7 @@ public:
                 if (len > 0) {
                     char *message = new char[len];
                     glGetProgramInfoLog(program, len, NULL, message);
+                    m_delegate->log(IDelegate::kLogWarning, "%s", message);
                     delete[] message;
                 }
                 glDeleteProgram(program);
@@ -174,6 +176,7 @@ private:
             if (len > 0) {
                 char *message = new char[len];
                 glGetShaderInfoLog(shader, len, NULL, message);
+                m_delegate->log(IDelegate::kLogWarning, "%s", message);
                 delete[] message;
             }
             glDeleteShader(shader);
@@ -182,6 +185,7 @@ private:
         return shader;
     }
 
+    IDelegate *m_delegate;
     GLuint m_modelViewUniformLocation;
     GLuint m_projectionUniformLocation;
     GLuint m_positionAttributeLocation;
@@ -190,8 +194,8 @@ private:
 
 class EdgeProgram : public ShaderProgram {
 public:
-    EdgeProgram()
-        : ShaderProgram(),
+    EdgeProgram(IDelegate *delegate)
+        : ShaderProgram(delegate),
           m_colorAttributeLocation(0)
     {
     }
@@ -215,8 +219,8 @@ private:
 
 class ShadowProgram : public ShaderProgram {
 public:
-    ShadowProgram()
-        : ShaderProgram(),
+    ShadowProgram(IDelegate *delegate)
+        : ShaderProgram(delegate),
           m_lightColorUniformLocation(0),
           m_lightPositionUniformLocation(0),
           m_lightAmbientUniformLocation(0),
@@ -269,8 +273,8 @@ private:
 
 class ModelProgram : public ShadowProgram {
 public:
-    ModelProgram()
-        : ShadowProgram(),
+    ModelProgram(IDelegate *delegate)
+        : ShadowProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
           m_materialAmbientUniformLocation(0),
@@ -470,9 +474,9 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_selected(0),
       m_debugDrawer(0)
 {
-    m_edgeProgram = new EdgeProgram();
-    m_modelProgram = new ModelProgram();
-    m_shadowProgram = new ShadowProgram();
+    m_edgeProgram = new EdgeProgram(delegate);
+    m_modelProgram = new ModelProgram(delegate);
+    m_shadowProgram = new ShadowProgram(delegate);
     m_debugDrawer = new DebugDrawer();
     m_scene = new vpvl::Scene(width, height, fps);
 }
@@ -570,13 +574,13 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
         if (!primary.empty()) {
             if (m_delegate->loadTexture(dir + "/" + primary, textureID)) {
                 materialPrivate.primaryTextureID = textureID;
-                //qDebug("Binding the texture as a primary texture (ID=%d)", textureID);
+                m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
         if (!second.empty()) {
             if (m_delegate->loadTexture(dir + "/" + second, textureID)) {
                 materialPrivate.secondTextureID = textureID;
-                //qDebug("Binding the texture as a secondary texture (ID=%d)", textureID);
+                m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
         }
         hasSingleSphere |= material->isMultiplicationSphereMain() && !material->isAdditionalSphereSub();
@@ -584,35 +588,43 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
     }
     userData->hasSingleSphereMap = hasSingleSphere;
     userData->hasMultipleSphereMap = hasMultipleSphere;
-    //qDebug().nospace() << "Sphere map information: hasSingleSphere=" << hasSingleSphere
-    //                   << ", hasMultipleSphere=" << hasMultipleSphere;
+    m_delegate->log(IDelegate::kLogInfo,
+                    "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
+                    hasSingleSphere ? "true" : "false",
+                    hasMultipleSphere ? "true" : "false");
     glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->stride(vpvl::PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
-    //qDebug("Binding edge indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kEdgeIndices]);
+    m_delegate->log(IDelegate::kLogInfo,
+                    "Binding edge indices to the vertex buffer object (ID=%d)",
+                    userData->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->stride(vpvl::PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
-    //qDebug("Binding indices to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kShadowIndices]);
+    m_delegate->log(IDelegate::kLogInfo,
+                    "Binding indices to the vertex buffer object (ID=%d)",
+                    userData->vertexBufferObjects[kShadowIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->stride(vpvl::PMDModel::kTextureCoordsStride),
                  model->textureCoordsPointer(), GL_STATIC_DRAW);
-    //qDebug("Binding texture coordinates to the vertex buffer object (ID=%d)", userData->vertexBufferObjects[kModelTexCoords]);
+    m_delegate->log(IDelegate::kLogInfo,
+                    "Binding texture coordinates to the vertex buffer object (ID=%d)",
+                    userData->vertexBufferObjects[kModelTexCoords]);
     if (m_delegate->loadToonTexture("toon0.bmp", dir, textureID)) {
         userData->toonTextureID[0] = textureID;
-        //qDebug("Binding the texture as a toon texture (ID=%d)", textureID);
+        m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
-            //qDebug("Binding the texture as a toon texture (ID=%d)", textureID);
+            m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
     userData->materials = materialPrivates;
     model->setUserData(userData);
-    //qDebug() << "Created the model:" << toUnicodeModelName(model);
+    m_delegate->log(IDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
 }
 
 void Renderer::unloadModel(const vpvl::PMDModel *model)
@@ -632,7 +644,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
         delete[] userData->materials;
         delete userData;
-        //qDebug() << "Destroyed the model:" << toUnicodeModelName(model);
+        m_delegate->log(IDelegate::kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
     }
 }
 
@@ -940,7 +952,7 @@ void Renderer::loadAsset(vpvl::XModel *model, const std::string &dir)
     vpvl::XModelUserData *userData = new vpvl::XModelUserData;
     userData->listID = glGenLists(1);
     glNewList(userData->listID, GL_COMPILE);
-    // qDebug("Generated a OpenGL list (ID=%d)", userData->listID);
+    m_delegate->log(IDelegate::kLogInfo, "Generated a OpenGL list (ID=%d)", userData->listID);
 #ifndef VPVL_COORDINATE_OPENGL
     glPushMatrix();
     glScalef(1.0f, 1.0f, -1.0f);
@@ -971,7 +983,7 @@ void Renderer::loadAsset(vpvl::XModel *model, const std::string &dir)
                     if (m_delegate->loadTexture(dir + "/" + textureName, value)) {
                         userData->textures.insert(key, value);
                         glBindTexture(GL_TEXTURE_2D, value);
-                        //qDebug("Binding the texture as a texture (ID=%d)", value);
+                        m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a texture (ID=%d)", value);
                     }
                 }
                 else {

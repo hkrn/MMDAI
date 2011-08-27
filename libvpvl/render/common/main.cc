@@ -54,6 +54,8 @@
 struct btDiscreteDynamicsWorld { int unused; };
 #endif
 
+using namespace vpvl::gl;
+
 namespace internal
 {
 
@@ -90,7 +92,7 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
     }
 }
 
-class Delegate : public vpvl::gl::IDelegate
+class Delegate : public IDelegate
 {
 public:
     Delegate(const std::string &system) : m_system(system) {
@@ -120,7 +122,7 @@ public:
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             }
             else {
-                fprintf(stderr, "Unknown image format: %s\n", path.c_str());
+                log(kLogWarning, "Unknown image format: %s", path.c_str());
                 SDL_FreeSurface(surface);
                 return false;
             }
@@ -130,10 +132,11 @@ public:
             SDL_FreeSurface(surface);
             glPrioritizeTextures(1, &textureID, &priority);
             glBindTexture(GL_TEXTURE_2D, 0);
+            log(kLogInfo, "Loaded a texture: %s", path.c_str());
             return true;
         }
         else {
-            fprintf(stderr, "Failed loading %s: %s\n", path.c_str(), IMG_GetError());
+            log(kLogWarning, "Failed loading %s: %s", path.c_str(), IMG_GetError());
             return false;
         }
     }
@@ -143,12 +146,50 @@ public:
         if (!(stat(path.c_str(), &sb) != -1 && S_ISREG(sb.st_mode))) {
             path = m_system + "/" + name;
             if (!(stat(path.c_str(), &sb) != -1 && S_ISREG(sb.st_mode))) {
-                fprintf(stderr, "%s is not found, skipped...\n", path.c_str());
+                log(kLogWarning, "%s is not found, skipped...", path.c_str());
                 return false;
             }
         }
         return loadTexture(path, textureID);
     }
+    void log(LogLevel /* level */, const char *format, ...) {
+        va_list ap;
+        va_start(ap, format);
+        vfprintf(stderr, format, ap);
+        fprintf(stderr, "%s", "\n");
+        va_end(ap);
+    }
+#ifdef VPVL_GL2_RENDERER_H_
+    const std::string loadShader(ShaderType type) {
+        std::string file;
+        switch (type) {
+        case kEdgeVertexShader:
+            file = "edge.vsh";
+            break;
+        case kEdgeFragmentShader:
+            file = "edge.fsh";
+            break;
+        case kModelVertexShader:
+            file = "model.vsh";
+            break;
+        case kModelFragmentShader:
+            file = "model.fsh";
+            break;
+        case kShadowVertexShader:
+            file = "shadow.vsh";
+            break;
+        case kShadowFragmentShader:
+            file = "shadow.fsh";
+            break;
+        }
+        uint8_t *data;
+        size_t size;
+        std::string path = m_system + "/" + file;
+        slurpFile(path, data, size);
+        log(kLogInfo, "Loaded a shader: %s", path.c_str());
+        return std::string(reinterpret_cast<const char *>(data), size);
+    }
+#endif
     const std::string toUnicode(const uint8_t *value) {
         return reinterpret_cast<const char *>(value);
     }
@@ -161,7 +202,7 @@ private:
 
 static Uint32 UpdateTimer(Uint32 internal, void *data)
 {
-    vpvl::gl::Renderer *renderer = static_cast<vpvl::gl::Renderer *>(data);
+    Renderer *renderer = static_cast<Renderer *>(data);
     vpvl::Scene *scene = renderer->scene();
     scene->updateModelView(0);
     scene->updateProjection(0);
@@ -212,12 +253,12 @@ public:
 
     bool initialize() {
         if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) < 0) {
-            fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+            m_delegate.log(IDelegate::kLogWarning, "Unable to init SDL: %s", SDL_GetError());
             return false;
         }
         atexit(SDL_Quit);
         if (IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG) < 0) {
-            fprintf(stderr, "Unable to init SDL_image: %s\n", IMG_GetError());
+            m_delegate.log(IDelegate::kLogWarning, "Unable to init SDL_image: %s", IMG_GetError());
             return false;
         }
         atexit(IMG_Quit);
@@ -226,8 +267,8 @@ public:
             return false;
 
         GLenum err;
-        if (!vpvl::gl::Renderer::initializeGLEW(err)) {
-            fprintf(stderr, "Unable to init GLEW: %s\n", glewGetErrorString(err));
+        if (!Renderer::initializeGLEW(err)) {
+            m_delegate.log(IDelegate::kLogWarning, "Unable to init GLEW: %s", glewGetErrorString(err));
             return false;
         }
 
@@ -269,18 +310,18 @@ private:
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
         const SDL_VideoInfo *info = SDL_GetVideoInfo();
         if (!info) {
-            fprintf(stderr, "Unable to get video info: %s\n", SDL_GetError());
+            m_delegate.log(IDelegate::kLogWarning, "Unable to get video info: %s", SDL_GetError());
             return false;
         }
         int bpp = info->vfmt->BitsPerPixel;
         if (SDL_VideoModeOK(width, height, bpp, SDL_OPENGL)) {
             if ((m_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL)) == NULL) {
-                fprintf(stderr, "Unable to init surface: %s\n", SDL_GetError());
+                m_delegate.log(IDelegate::kLogWarning, "Unable to init surface: %s", SDL_GetError());
                 return false;
             }
         }
         else {
-            fprintf(stderr, "It seems OpenGL is not supported\n");
+            m_delegate.log(IDelegate::kLogWarning, "It seems OpenGL is not supported");
             return false;
         }
         return true;
@@ -290,7 +331,7 @@ private:
         internal::slurpFile(internal::concatPath(internal::kModelDir, internal::kModelName), m_modelData, size);
         m_model = new vpvl::PMDModel();
         if (!m_model->load(m_modelData, size)) {
-            fprintf(stderr, "Failed parsing the model\n");
+            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the model");
             return false;
         }
         m_renderer.loadModel(m_model, internal::kModelDir);
@@ -298,7 +339,7 @@ private:
 #if VPVL_SDL_LOAD_ASSET
         internal::slurpFile(internal::concatPath(internal::kStageDir, internal::kStageName), m_stageData, size);
         if (!m_stage.load(m_stageData, size)) {
-            fprintf(stderr, "Failed parsing the stage\n");
+            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the stage");
             return -1;
         }
         m_renderer.loadAsset(&m_stage, internal::kStageDir);
@@ -310,13 +351,13 @@ private:
 
         internal::slurpFile(internal::kMotion, m_motionData, size);
         if (!m_motion.load(m_motionData, size))
-            fprintf(stderr, "Failed parsing the model motion, skipped...\n");
+            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the model motion, skipped...");
         else
             m_model->addMotion(&m_motion);
 
         internal::slurpFile(internal::kCamera, m_cameraData, size);
         if (!m_camera.load(m_cameraData, size))
-            fprintf(stderr, "Failed parsing the camera motion, skipped...\n");
+            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the camera motion, skipped...");
         else
             scene->setCameraMotion(&m_camera);
 
@@ -353,7 +394,7 @@ private:
     btSequentialImpulseConstraintSolver m_solver;
 #endif /* VPVL_NO_BULLET */
     internal::Delegate m_delegate;
-    vpvl::gl::Renderer m_renderer;
+    Renderer m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */
     vpvl::VMDMotion m_motion;
     vpvl::VMDMotion m_camera;
