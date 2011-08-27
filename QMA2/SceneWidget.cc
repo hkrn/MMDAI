@@ -663,13 +663,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         QPoint diff = event->pos() - m_prevPos;
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             vpvl::Scene *scene = m_renderer->scene();
-            btVector4 direction = scene->lightPosition();
-            btVector3 d(direction.x(), direction.y(), direction.z());
+            btVector3 position = scene->lightPosition();
             btQuaternion rx(0.0f, diff.y() * vpvl::radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * vpvl::radian(0.1f), 0.0f);
-            d = d * btMatrix3x3(rx * ry);
-            direction.setValue(d.x(), d.y(), d.z(), direction.w());
-            scene->setLightSource(scene->lightColor(), direction);
+            position = position * btMatrix3x3(rx * ry);
+            scene->setLightSource(scene->lightColor(), position);
         }
         else if (modifiers & Qt::ShiftModifier) {
             translate(diff.x() * -0.1f, diff.y() * 0.1f);
