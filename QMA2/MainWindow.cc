@@ -8,6 +8,7 @@
 #include "FaceWidget.h"
 #include "InterpolationWidget.h"
 #include "LicenseWidget.h"
+#include "PlayerWidget.h"
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
@@ -553,4 +554,10 @@ void MainWindow::on_actionDeleteSelectedFrame_triggered()
 void MainWindow::on_actionShowBones_triggered(bool value)
 {
     ui->scene->setDisplayBones(value);
+}
+
+void MainWindow::on_actionPlay_triggered()
+{
+    PlayerWidget *widget = ui->scene->createPlayer(0);
+    widget->show();
 }

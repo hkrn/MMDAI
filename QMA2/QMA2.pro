@@ -33,7 +33,9 @@ SOURCES += main.cc\
     TimelineTabWidget.cc \
     InterpolationWidget.cc \
     VPDFile.cc \
-    LicenseWidget.cc
+    LicenseWidget.cc \
+    PlayerWidget.cc \
+    Delegate.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -51,7 +53,10 @@ HEADERS  += MainWindow.h \
     TimelineTabWidget.h \
     InterpolationWidget.h \
     VPDFile.h \
-    LicenseWidget.h
+    LicenseWidget.h \
+    PlayerWidget.h \
+    Delegate.h \
+    World.h
 
 RESOURCES += resources/QMA2.qrc
 

@@ -70,6 +70,7 @@
     <addaction name="separator"/>
     <addaction name="actionResetCamera"/>
     <addaction name="actionShowBones"/>
+    <addaction name="actionPlay"/>
    </widget>
    <widget class="QMenu" name="menuModel">
     <property name="title">
@@ -574,6 +575,14 @@
    </property>
    <property name="text">
     <string>Show bones</string>
+   </property>
+  </action>
+  <action name="actionPlay">
+   <property name="text">
+    <string>Play</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
  </widget>

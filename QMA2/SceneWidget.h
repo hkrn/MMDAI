@@ -57,14 +57,15 @@ class XModel;
 }
 
 namespace internal {
-class Delegate;
 class Grid;
-class World;
 }
 
+class Delegate;
+class PlayerWidget;
 class QProgressDialog;
 class QSettings;
 class VPDFile;
+class World;
 
 class SceneWidget : public QGLWidget
 {
@@ -73,6 +74,7 @@ public:
     explicit SceneWidget(QWidget *parent = 0);
     ~SceneWidget();
 
+    PlayerWidget *createPlayer(QWidget *parent);
     const QHash<QString, vpvl::PMDModel *> &models() const { return m_models; }
     void setSettings(QSettings *value) { m_settings = value; }
 
@@ -145,25 +147,22 @@ private:
     vpvl::VMDMotion *setCameraInternal(const QString &path);
     void drawBones();
     void drawGrid();
-    void updateFPS();
-    void startSceneUpdateTimer();
-    void stopSceneUpdateTimer();
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
     vpvl::gl::Renderer *m_renderer;
     vpvl::VMDMotion *m_camera;
     vpvl::Bone *m_bone;
-    internal::Delegate *m_delegate;
+    Delegate *m_delegate;
+    PlayerWidget *m_player;
+    World *m_world;
     internal::Grid *m_grid;
-    internal::World *m_world;
     QSettings *m_settings;
     QHash<QString, vpvl::PMDModel *> m_models;
     QHash<QString, vpvl::XModel *> m_assets;
     QHash<vpvl::PMDModel *, vpvl::VMDMotion *> m_motions;
     QTime m_timer;
     QPoint m_prevPos;
-    GLuint m_gridListID;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;

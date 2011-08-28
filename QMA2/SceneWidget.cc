@@ -36,8 +36,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "Delegate.h"
+#include "PlayerWidget.h"
 #include "SceneWidget.h"
 #include "VPDFile.h"
+#include "World.h"
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
@@ -47,171 +50,6 @@
 
 namespace internal
 {
-
-typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
-
-class Delegate : public vpvl::gl::IDelegate
-{
-public:
-    Delegate(QGLWidget *widget)
-        : m_widget(widget)
-    {}
-    ~Delegate() {}
-
-    bool loadTexture(const std::string &path, GLuint &textureID) {
-        QString pathString = QString::fromUtf8(path.c_str());
-        if (pathString.endsWith(".tga", Qt::CaseInsensitive)) {
-            uint8_t *rawData = 0;
-            QImage image = loadTGA(pathString, rawData);
-            textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image));
-            delete[] rawData;
-        }
-        else {
-            QImage image(pathString);
-            textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
-        }
-        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, pathString.toUtf8().constData());
-        return textureID != 0;
-    }
-    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
-        QString path = QString::fromUtf8(dir.c_str()) + "/" + QString::fromUtf8(name.c_str());
-        if (!QFile::exists(path))
-            path = QString(":/textures/%1").arg(name.c_str());
-        return loadTexture(std::string(path.toUtf8()), textureID);
-    }
-    void log(LogLevel level, const char *format...) {
-        QString message;
-        va_list ap;
-        va_start(ap, format);
-        message.vsprintf(format, ap);
-        switch (level) {
-        case kLogInfo:
-        default:
-            qDebug("%s", qPrintable(message));
-            break;
-        case kLogWarning:
-            qWarning("%s", qPrintable(message));
-            break;
-        }
-        va_end(ap);
-    }
-    const std::string toUnicode(const uint8_t *value) {
-        return std::string(toQString(value).toUtf8());
-    }
-
-private:
-    static QImage loadTGA(const QString &path, uint8_t *&rawData) {
-        QFile file(path);
-        if (file.open(QFile::ReadOnly) && file.size() > 18) {
-            QByteArray data = file.readAll();
-            uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
-            uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
-            uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
-            if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-                qWarning("Loaded TGA image type is not full color: %s", path.toUtf8().constData());
-                return QImage();
-            }
-            uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
-            uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
-            uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
-            uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
-            if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
-                qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
-                         width, height, depth, path.toUtf8().constData());
-                return QImage();
-            }
-            int component = depth >> 3;
-            uint8_t *body = ptr + 18 + field;
-            /* if RLE compressed, uncompress it */
-            size_t datalen = width * height * component;
-            ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
-            if (type == 10) {
-                uint8_t *uncompressed = uncompressedPtr.data();
-                uint8_t *src = body;
-                uint8_t *dst = uncompressed;
-                while (static_cast<size_t>(dst - uncompressed) < datalen) {
-                    int16_t len = (*src & 0x7f) + 1;
-                    if (*src & 0x80) {
-                        src++;
-                        for (int i = 0; i < len; i++) {
-                            memcpy(dst, src, component);
-                            dst += component;
-                        }
-                        src += component;
-                    }
-                    else {
-                        src++;
-                        memcpy(dst, src, component * len);
-                        dst += component * len;
-                        src += component * len;
-                    }
-                }
-                /* will load from uncompressed data */
-                body = uncompressed;
-            }
-            /* prepare texture data area */
-            datalen = (width * height) << 2;
-            rawData = new uint8_t[datalen];
-            ptr = rawData;
-            for (uint16_t h = 0; h < height; h++) {
-                uint8_t *line = NULL;
-                if (flags & 0x20) /* from up to bottom */
-                    line = body + h * width * component;
-                else /* from bottom to up */
-                    line = body + (height - 1 - h) * width * component;
-                for (uint16_t w = 0; w < width; w++) {
-                    uint32_t index = 0;
-                    if (flags & 0x10)/* from right to left */
-                        index = (width - 1 - w) * component;
-                    else /* from left to right */
-                        index = w * component;
-                    /* BGR or BGRA -> ARGB */
-                    *ptr++ = line[index + 2];
-                    *ptr++ = line[index + 1];
-                    *ptr++ = line[index + 0];
-                    *ptr++ = (depth == 32) ? line[index + 3] : 255;
-                }
-            }
-            return QImage(rawData, width, height, QImage::Format_ARGB32);
-        }
-        else {
-            qWarning("Cannot open file %s: %s", path.toUtf8().constData(),
-                     file.errorString().toUtf8().constData());
-            return QImage();
-        }
-    }
-
-    QGLWidget *m_widget;
-};
-
-class World {
-public:
-    World(int defaultFPS)
-        : m_dispatcher(&m_config),
-          m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0, 400.0f), 1024),
-          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
-    {
-        m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
-        setCurrentFPS(defaultFPS);
-    }
-    ~World()
-    {
-    }
-
-    btDiscreteDynamicsWorld *mutableWorld() {
-        return &m_world;
-    }
-    void setCurrentFPS(int value) {
-        m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / value);
-    }
-
-private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher m_dispatcher;
-    btAxisSweep3 m_broadphase;
-    btSequentialImpulseConstraintSolver m_solver;
-    btDiscreteDynamicsWorld m_world;
-};
 
 class Grid {
 public:
@@ -315,19 +153,19 @@ SceneWidget::SceneWidget(QWidget *parent) :
     m_camera(0),
     m_bone(0),
     m_delegate(0),
-    m_grid(0),
+    m_player(0),
     m_world(0),
+    m_grid(0),
     m_settings(0),
-    m_gridListID(0),
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0)
 {
-    m_delegate = new internal::Delegate(this);
+    m_delegate = new Delegate(this);
     m_grid = new internal::Grid();
-    m_world = new internal::World(m_defaultFPS);
+    m_world = new World(m_defaultFPS);
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -341,8 +179,6 @@ SceneWidget::~SceneWidget()
     m_grid = 0;
     delete m_world;
     m_world = 0;
-    glDeleteLists(m_gridListID, 1);
-    m_gridListID = 0;
     foreach (vpvl::VMDMotion *motion, m_motions) {
         vpvl::PMDModel *model = m_motions.key(motion);
         model->removeMotion(motion);
@@ -358,6 +194,13 @@ SceneWidget::~SceneWidget()
     m_renderer = 0;
     delete m_delegate;
     m_delegate = 0;
+}
+
+PlayerWidget *SceneWidget::createPlayer(QWidget *parent)
+{
+    delete m_player;
+    m_player = new PlayerWidget(m_camera, m_models, m_assets, m_motions, parent);
+    return m_player;
 }
 
 void SceneWidget::setCurrentFPS(int value)
@@ -388,7 +231,6 @@ void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 
 void SceneWidget::addModel()
 {
-    stopSceneUpdateTimer();
     QFileInfo fi(openFileDialog("sceneWidget/lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
@@ -398,12 +240,10 @@ void SceneWidget::addModel()
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
         delete progress;
     }
-    startSceneUpdateTimer();
 }
 
 void SceneWidget::insertMotionToAllModels()
 {
-    stopSceneUpdateTimer();
     QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
         foreach (vpvl::PMDModel *model, m_models) {
@@ -414,21 +254,18 @@ void SceneWidget::insertMotionToAllModels()
             }
         }
     }
-    startSceneUpdateTimer();
 }
 
 void SceneWidget::insertMotionToSelectedModel()
 {
     vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
-        stopSceneUpdateTimer();
         QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
         if (QFile::exists(fileName)) {
             if (!addMotionInternal(selected, fileName))
                 QMessageBox::warning(this, tr("Loading model motion error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
         }
-        startSceneUpdateTimer();
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
@@ -440,9 +277,7 @@ void SceneWidget::setEmptyMotion()
     vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
         vpvl::VMDMotion *motion = new vpvl::VMDMotion();
-        stopSceneUpdateTimer();
         addMotionInternal2(selected, motion);
-        startSceneUpdateTimer();
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
@@ -453,7 +288,6 @@ void SceneWidget::setModelPose()
 {
     vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
-        stopSceneUpdateTimer();
         QString fileName = openFileDialog("sceneWidget/lastVPDDirectory", tr("Open VPD file"), tr("VPD file (*.vpd)"));
         if (QFile::exists(fileName)) {
             VPDFile *pose = setModelPoseInternal(selected, fileName);
@@ -463,7 +297,6 @@ void SceneWidget::setModelPose()
             else
                 delete pose;
         }
-        startSceneUpdateTimer();
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to set the pose"));
@@ -472,7 +305,6 @@ void SceneWidget::setModelPose()
 
 void SceneWidget::addAsset()
 {
-    stopSceneUpdateTimer();
     QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
@@ -482,7 +314,6 @@ void SceneWidget::addAsset()
         }
         delete progress;
     }
-    startSceneUpdateTimer();
 }
 
 void SceneWidget::seekMotion(float frameIndex)
@@ -496,14 +327,12 @@ void SceneWidget::seekMotion(float frameIndex)
 
 void SceneWidget::setCamera()
 {
-    stopSceneUpdateTimer();
     QString fileName = openFileDialog("sceneWidget/lastCameraDirectory", tr("Open VMD (for camera) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
         if (!setCameraInternal(fileName))
             QMessageBox::warning(this, tr("Loading camera motion error"),
                                  tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
     }
-    startSceneUpdateTimer();
 }
 
 void SceneWidget::deleteSelectedModel()
@@ -592,7 +421,7 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
-    stopSceneUpdateTimer();
+    killTimer(m_internalTimerID);
     event->accept();
 }
 
@@ -616,7 +445,6 @@ void SceneWidget::dropEvent(QDropEvent *event)
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
         const QList<QUrl> urls = mimeData->urls();
-        stopSceneUpdateTimer();
         vpvl::PMDModel *model = m_renderer->selectedModel();
         foreach (const QUrl url, urls) {
             QString path = url.toLocalFile();
@@ -630,7 +458,6 @@ void SceneWidget::dropEvent(QDropEvent *event)
             qDebug() << "Proceeded a dropped file:" << path;
         }
     }
-    startSceneUpdateTimer();
 }
 
 void SceneWidget::initializeGL()
@@ -648,7 +475,7 @@ void SceneWidget::initializeGL()
     // scene->setWorld(m_world->mutableWorld());
     m_grid->initialize();
     m_timer.start();
-    startSceneUpdateTimer();
+    m_internalTimerID = startTimer(m_interval);
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
@@ -702,7 +529,6 @@ void SceneWidget::paintGL()
     m_renderer->drawSurface();
     drawBones();
     drawGrid();
-    updateFPS();
     emit surfaceDidUpdate();
 }
 
@@ -717,7 +543,6 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         vpvl::Scene *scene = m_renderer->scene();
         scene->updateModelView(0);
         scene->updateProjection(0);
-        //scene->update(0.5f);
         updateGL();
     }
 }
@@ -878,28 +703,6 @@ void SceneWidget::drawBones()
 void SceneWidget::drawGrid()
 {
     m_grid->draw();
-}
-
-void SceneWidget::updateFPS()
-{
-    if (m_timer.elapsed() > 1000) {
-        m_currentFPS = m_frameCount;
-        m_frameCount = 0;
-        m_timer.restart();
-        emit fpsDidUpdate(m_currentFPS);
-    }
-    m_frameCount++;
-}
-
-void SceneWidget::startSceneUpdateTimer()
-{
-    m_internalTimerID = startTimer(m_interval);
-}
-
-void SceneWidget::stopSceneUpdateTimer()
-{
-    killTimer(m_internalTimerID);
-    m_currentFPS = 0;
 }
 
 QProgressDialog *SceneWidget::getProgressDialog(const QString &label, int max)
