@@ -82,6 +82,8 @@ private slots:
     void on_bones_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void on_faceWeightSlider_valueChanged(int value);
     void on_faceWeightSpinBox_valueChanged(double value);
+    void on_faceWeightSlider_sliderPressed();
+    void on_faceWeightSlider_sliderReleased();
     void on_comboBox_currentIndexChanged(int index);
     void on_registerButton_clicked();
 

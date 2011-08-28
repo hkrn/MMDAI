@@ -68,6 +68,7 @@ protected:
 private:
     QList<vpvl::Bone *> m_bones;
     QList<vpvl::Bone *> m_selected;
+    vpvl::PMDModel::State *m_state;
     TransformType m_mode;
 };
 

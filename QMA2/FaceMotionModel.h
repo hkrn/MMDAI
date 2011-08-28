@@ -40,6 +40,7 @@ protected:
 private:
     QList<vpvl::Face *> m_faces;
     QList<vpvl::Face *> m_selected;
+    vpvl::PMDModel::State *m_state;
 };
 
 #endif // FACEMOTIONMODEL_H

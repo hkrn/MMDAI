@@ -120,6 +120,7 @@ void TransformButton::mousePressEvent(QMouseEvent *event)
     m_pos = event->pos();
     m_drag = mapToGlobal(m_pos);
     m_cursor = cursor();
+    m_boneMotionModel->startTransform();
     QBitmap transparent(32, 32);
     transparent.fill(Qt::color0);
     qApp->setOverrideCursor(QCursor(transparent, transparent));
@@ -151,6 +152,7 @@ void TransformButton::mouseReleaseEvent(QMouseEvent * /* event */)
     cursor().setPos(m_drag);
     m_pos.setX(0);
     m_pos.setY(0);
+    m_boneMotionModel->commitTransform();
 }
 
 TransformWidget::TransformWidget(QSettings *settings,
@@ -241,6 +243,16 @@ void TransformWidget::on_faceWeightSpinBox_valueChanged(double value)
     float weight = value;
     ui->faceWeightSlider->setValue(weight * 100.0f);
     UICastFaceModel(ui)->setWeight(weight);
+}
+
+void TransformWidget::on_faceWeightSlider_sliderPressed()
+{
+    UICastFaceModel(ui)->startTransform();
+}
+
+void TransformWidget::on_faceWeightSlider_sliderReleased()
+{
+    UICastFaceModel(ui)->commitTransform();
 }
 
 void TransformWidget::on_comboBox_currentIndexChanged(int index)

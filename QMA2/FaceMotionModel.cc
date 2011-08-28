@@ -56,27 +56,46 @@ private:
     FaceMotionModel *m_model;
 };
 
-class SetWeightCommand : public QUndoCommand
+class SetFaceCommand : public QUndoCommand
 {
 public:
-    SetWeightCommand(FaceMotionModel *model)
+    SetFaceCommand(vpvl::PMDModel *model, vpvl::PMDModel::State *state)
         : QUndoCommand(),
-          m_model(model)
+          m_model(model),
+          m_newState(0),
+          m_oldState(state)
     {
+        m_newState = m_model->saveState();
     }
-    virtual ~SetWeightCommand() {}
+    virtual ~SetFaceCommand() {
+        m_model->discardState(m_newState);
+        m_model->discardState(m_oldState);
+    }
 
-    void undo() {}
-    void redo() {}
+    void undo() {
+        m_model->restoreState(m_oldState);
+        m_model->updateImmediate();
+    }
+    void redo() {
+        execute();
+    }
 
 private:
-    FaceMotionModel *m_model;
+    void execute() {
+        m_model->restoreState(m_newState);
+        m_model->updateImmediate();
+    }
+
+    vpvl::PMDModel *m_model;
+    vpvl::PMDModel::State *m_newState;
+    vpvl::PMDModel::State *m_oldState;
 };
 
 }
 
 FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
-    : MotionBaseModel(undo, parent)
+    : MotionBaseModel(undo, parent),
+      m_state(0)
 {
 }
 
@@ -107,10 +126,18 @@ void FaceMotionModel::copyFrames(int /* frameIndex */)
 
 void FaceMotionModel::startTransform()
 {
+    if (m_model) {
+        m_model->discardState(m_state);
+        m_state = m_model->saveState();
+    }
 }
 
 void FaceMotionModel::commitTransform()
 {
+    if (m_model && m_state) {
+        addUndoCommand(new SetFaceCommand(m_model, m_state));
+        m_state = 0;
+    }
 }
 
 void FaceMotionModel::setFrames(const QList<Frame> &frames)

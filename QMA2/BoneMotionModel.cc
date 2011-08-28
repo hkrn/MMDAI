@@ -231,46 +231,46 @@ private:
     vpvl::PMDModel::State *m_state;
 };
 
-class SetPositionCommand : public QUndoCommand
+class SetBoneCommand : public QUndoCommand
 {
 public:
-    SetPositionCommand(BoneMotionModel *model)
+    SetBoneCommand(vpvl::PMDModel *model, vpvl::PMDModel::State *state)
         : QUndoCommand(),
-          m_model(model)
+          m_model(model),
+          m_newState(0),
+          m_oldState(state)
     {
+        m_newState = m_model->saveState();
     }
-    virtual ~SetPositionCommand() {}
+    virtual ~SetBoneCommand() {
+        m_model->discardState(m_newState);
+        m_model->discardState(m_oldState);
+    }
 
     void undo() {
+        m_model->restoreState(m_oldState);
+        m_model->updateImmediate();
     }
     void redo() {
+        execute();
     }
 
 private:
-    BoneMotionModel *m_model;
-};
-
-class SetRotationCommand : public QUndoCommand
-{
-public:
-    SetRotationCommand(BoneMotionModel *model)
-        : QUndoCommand(),
-          m_model(model)
-    {
+    void execute() {
+        m_model->restoreState(m_newState);
+        m_model->updateImmediate();
     }
-    virtual ~SetRotationCommand() {}
 
-    void undo() {}
-    void redo() {}
-
-private:
-    BoneMotionModel *m_model;
+    vpvl::PMDModel *m_model;
+    vpvl::PMDModel::State *m_newState;
+    vpvl::PMDModel::State *m_oldState;
 };
 
 }
 
 BoneMotionModel::BoneMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
+    m_state(0),
     m_mode(kLocal)
 {
 }
@@ -304,10 +304,18 @@ void BoneMotionModel::copyFrames(int /* frameIndex */)
 
 void BoneMotionModel::startTransform()
 {
+    if (m_model) {
+        m_model->discardState(m_state);
+        m_state = m_model->saveState();
+    }
 }
 
 void BoneMotionModel::commitTransform()
 {
+    if (m_model && m_state) {
+        addUndoCommand(new SetBoneCommand(m_model, m_state));
+        m_state = 0;
+    }
 }
 
 void BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
