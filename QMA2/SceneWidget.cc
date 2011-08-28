@@ -36,9 +36,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "SceneWidget.h"
 #include "Delegate.h"
 #include "PlayerWidget.h"
-#include "SceneWidget.h"
+#include "SceneLoader.h"
 #include "VPDFile.h"
 #include "World.h"
 
@@ -150,10 +151,10 @@ private:
 
 SceneWidget::SceneWidget(QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    m_camera(0),
     m_bone(0),
     m_delegate(0),
     m_player(0),
+    m_loader(0),
     m_world(0),
     m_grid(0),
     m_settings(0),
@@ -173,23 +174,10 @@ SceneWidget::SceneWidget(QWidget *parent) :
 
 SceneWidget::~SceneWidget()
 {
-    delete m_camera;
-    m_camera = 0;
     delete m_grid;
     m_grid = 0;
     delete m_world;
     m_world = 0;
-    foreach (vpvl::VMDMotion *motion, m_motions) {
-        vpvl::PMDModel *model = m_motions.key(motion);
-        model->removeMotion(motion);
-        delete motion;
-    }
-    foreach (vpvl::PMDModel *model, m_models) {
-        m_renderer->unloadModel(model);
-        delete model;
-    }
-    m_models.clear();
-    m_assets.clear();
     delete m_renderer;
     m_renderer = 0;
     delete m_delegate;
@@ -199,8 +187,13 @@ SceneWidget::~SceneWidget()
 PlayerWidget *SceneWidget::createPlayer(QWidget *parent)
 {
     delete m_player;
-    m_player = new PlayerWidget(m_camera, m_models, m_assets, m_motions, parent);
+    //m_player = new PlayerWidget(m_camera, m_models, m_assets, m_motions, parent);
     return m_player;
+}
+
+vpvl::PMDModel *SceneWidget::findModel(const QString &name)
+{
+    return m_loader->findModel(name);
 }
 
 void SceneWidget::setCurrentFPS(int value)
@@ -220,7 +213,7 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
 vpvl::VMDMotion *SceneWidget::selectedMotion() const
 {
     vpvl::PMDModel *model = selectedModel();
-    return model ? m_motions.value(model) : 0;
+    return m_loader->findModelMotion(model);
 }
 
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
@@ -234,10 +227,17 @@ void SceneWidget::addModel()
     QFileInfo fi(openFileDialog("sceneWidget/lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
-        vpvl::PMDModel *model = addModelInternal(fi.fileName(), fi.dir());
-        if (!model)
+        vpvl::VMDMotion *motion = 0;
+        vpvl::PMDModel *model = m_loader->loadModel(fi.fileName(), fi.dir(), motion);
+        if (model && motion) {
+            emit modelDidAdd(model);
+            setSelectedModel(model);
+            emit motionDidAdd(motion, model);
+        }
+        else {
             QMessageBox::warning(this, tr("Loading model error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
+        }
         delete progress;
     }
 }
@@ -246,12 +246,15 @@ void SceneWidget::insertMotionToAllModels()
 {
     QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
-        foreach (vpvl::PMDModel *model, m_models) {
-            if (!addMotionInternal(model, fileName)) {
-                QMessageBox::warning(this, tr("Loading model motion error"),
-                                     tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
-                break;
-            }
+        QList<vpvl::PMDModel *> models;
+        vpvl::VMDMotion *motion = m_loader->loadModelMotion(fileName, models);
+        if (motion) {
+            foreach (vpvl::PMDModel *model, models)
+                emit motionDidAdd(motion, model);
+        }
+        else {
+            QMessageBox::warning(this, tr("Loading model motion error"),
+                                 tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
         }
     }
 }
@@ -262,7 +265,10 @@ void SceneWidget::insertMotionToSelectedModel()
     if (selected) {
         QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
         if (QFile::exists(fileName)) {
-            if (!addMotionInternal(selected, fileName))
+            vpvl::VMDMotion *motion = m_loader->loadModelMotion(fileName, selected);
+            if (motion)
+                emit motionDidAdd(motion, selected);
+            else
                 QMessageBox::warning(this, tr("Loading model motion error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
         }
@@ -277,7 +283,8 @@ void SceneWidget::setEmptyMotion()
     vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
         vpvl::VMDMotion *motion = new vpvl::VMDMotion();
-        addMotionInternal2(selected, motion);
+        m_loader->setModelMotion(motion, selected);
+        emit motionDidAdd(motion, selected);
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
@@ -290,12 +297,12 @@ void SceneWidget::setModelPose()
     if (selected) {
         QString fileName = openFileDialog("sceneWidget/lastVPDDirectory", tr("Open VPD file"), tr("VPD file (*.vpd)"));
         if (QFile::exists(fileName)) {
-            VPDFile *pose = setModelPoseInternal(selected, fileName);
-            if (!pose)
+            VPDFile *pose = m_loader->loadPose(fileName, selected);
+            if (pose)
+                emit modelDidMakePose(pose, selected);
+            else
                 QMessageBox::warning(this, tr("Loading model pose error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
-            else
-                delete pose;
         }
     }
     else {
@@ -308,10 +315,12 @@ void SceneWidget::addAsset()
     QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
-        if (!addAssetInternal(fi.fileName(), fi.dir())) {
+        vpvl::XModel *asset = m_loader->loadAsset(fi.fileName(), fi.dir());
+        if (asset)
+            emit assetDidAdd(asset);
+        else
             QMessageBox::warning(this, tr("Loading stage error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
-        }
         delete progress;
     }
 }
@@ -329,7 +338,10 @@ void SceneWidget::setCamera()
 {
     QString fileName = openFileDialog("sceneWidget/lastCameraDirectory", tr("Open VMD (for camera) file"), tr("VMD file (*.vmd)"));
     if (QFile::exists(fileName)) {
-        if (!setCameraInternal(fileName))
+        vpvl::VMDMotion *motion = m_loader->loadCameraMotion(fileName);
+        if (motion)
+            emit cameraMotionDidSet(motion);
+        else
             QMessageBox::warning(this, tr("Loading camera motion error"),
                                  tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
     }
@@ -338,18 +350,13 @@ void SceneWidget::setCamera()
 void SceneWidget::deleteSelectedModel()
 {
     vpvl::PMDModel *selected = m_renderer->selectedModel();
-    const QString &key = m_models.key(selected);
-    if (!key.isNull()) {
+    if (m_loader->deleteModel(selected)) {
         emit modelDidDelete(selected);
-        m_renderer->unloadModel(selected);
-        m_renderer->scene()->removeModel(selected);
-        m_models.remove(key);
-        delete selected;
-        m_renderer->setSelectedModel(0);
         emit modelDidSelect(0);
     }
     else {
-        QMessageBox::warning(this, tr("The model is not selected or exist."), tr("Select a model to delete"));
+        QMessageBox::warning(this, tr("The model is not selected or exist."),
+                             tr("Select a model to delete"));
     }
 }
 
@@ -450,10 +457,18 @@ void SceneWidget::dropEvent(QDropEvent *event)
             QString path = url.toLocalFile();
             if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
                 QFileInfo modelPath(path);
-                addModelInternal(modelPath.baseName(), modelPath.dir());
+                vpvl::VMDMotion *motion = 0;
+                vpvl::PMDModel *model = m_loader->loadModel(modelPath.baseName(), modelPath.dir(), motion);
+                if (model && motion) {
+                    emit modelDidAdd(model);
+                    setSelectedModel(model);
+                    emit motionDidAdd(motion, model);
+                }
             }
             else if (path.endsWith(".vmd") && model) {
-                addMotionInternal(model, path);
+                vpvl::VMDMotion *motion = m_loader->loadModelMotion(path, model);
+                if (motion)
+                    emit motionDidAdd(motion, model);
             }
             qDebug() << "Proceeded a dropped file:" << path;
         }
@@ -469,6 +484,7 @@ void SceneWidget::initializeGL()
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
+    m_loader = new SceneLoader(m_renderer);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
@@ -550,147 +566,6 @@ void SceneWidget::timerEvent(QTimerEvent *event)
 void SceneWidget::wheelEvent(QWheelEvent *event)
 {
     zoom(event->delta() > 0, event->modifiers());
-}
-
-vpvl::XModel *SceneWidget::addAssetInternal(const QString &baseName, const QDir &dir)
-{
-    QFile file(dir.absoluteFilePath(baseName));
-    vpvl::XModel *model = 0;
-    if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
-        model = new vpvl::XModel();
-        if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            QString key = baseName;
-            if (m_assets.contains(key)) {
-                int i = 0;
-                while (true) {
-                    QString tmpKey = QString("%1%2").arg(key).arg(i);
-                    if (!m_assets.contains(tmpKey))
-                        key = tmpKey;
-                    i++;
-                }
-            }
-            m_renderer->loadAsset(model, std::string(dir.absolutePath().toUtf8()));
-            m_assets[key] = model;
-            emit assetDidAdd(model);
-        }
-        else {
-            delete model;
-            model = 0;
-        }
-    }
-    return model;
-}
-
-vpvl::PMDModel *SceneWidget::addModelInternal(const QString &baseName, const QDir &dir)
-{
-    QFile file(dir.absoluteFilePath(baseName));
-    vpvl::PMDModel *model = 0;
-    if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
-        model = new vpvl::PMDModel();
-        if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            m_renderer->loadModel(model, std::string(dir.absolutePath().toUtf8()));
-            m_renderer->scene()->addModel(model);
-            QString key = internal::toQString(model);
-            qDebug() << key << baseName;
-            if (m_models.contains(key)) {
-                int i = 0;
-                while (true) {
-                    QString tmpKey = QString("%1%2").arg(key).arg(i);
-                    if (!m_models.contains(tmpKey))
-                        key = tmpKey;
-                    i++;
-                }
-            }
-            vpvl::VMDMotion *motion = new vpvl::VMDMotion();
-            motion->setEnableSmooth(false);
-            model->addMotion(motion);
-            m_models[key] = model;
-            m_motions.insert(model, motion);
-            // force to render an added model
-            m_renderer->scene()->seek(0.0f);
-            emit modelDidAdd(model);
-            setSelectedModel(model);
-            emit motionDidAdd(motion, model);
-        }
-        else {
-            delete model;
-            model = 0;
-        }
-    }
-    return model;
-}
-
-vpvl::VMDMotion *SceneWidget::addMotionInternal(vpvl::PMDModel *model, const QString &path)
-{
-    QFile file(path);
-    vpvl::VMDMotion *motion = 0;
-    if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
-        motion = new vpvl::VMDMotion();
-        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            addMotionInternal2(model, motion);
-        }
-        else {
-            delete motion;
-            motion = 0;
-        }
-    }
-    return motion;
-}
-
-void SceneWidget::addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *motion)
-{
-    motion->setEnableSmooth(false);
-    model->addMotion(motion);
-    if (m_motions.contains(model)) {
-        vpvl::VMDMotion *oldMotion = m_motions.value(model);
-        model->removeMotion(oldMotion);
-        delete oldMotion;
-    }
-    m_motions.insert(model, motion);
-    emit motionDidAdd(motion, model);
-}
-
-VPDFile *SceneWidget::setModelPoseInternal(vpvl::PMDModel *model, const QString &path)
-{
-    QFile file(path);
-    VPDFile *pose = 0;
-    if (file.open(QFile::ReadOnly)) {
-        QTextStream stream(&file);
-        pose = new VPDFile();
-        if (pose->load(stream)) {
-            // pose->makePose(model);
-            emit modelDidMakePose(pose, model);
-        }
-        else {
-            delete pose;
-            pose = 0;
-        }
-    }
-    return pose;
-}
-
-vpvl::VMDMotion *SceneWidget::setCameraInternal(const QString &path)
-{
-    QFile file(path);
-    vpvl::VMDMotion *motion = 0;
-    if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
-        motion = new vpvl::VMDMotion();
-        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            delete m_camera;
-            m_camera = motion;
-            m_renderer->scene()->setCameraMotion(motion);
-            emit cameraMotionDidSet(motion);
-        }
-        else {
-            delete motion;
-            motion = 0;
-        }
-    }
-    return motion;
 }
 
 void SceneWidget::drawBones()

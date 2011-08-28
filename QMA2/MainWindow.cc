@@ -95,7 +95,7 @@ void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
-        vpvl::PMDModel *model = ui->scene->models().value(action->text());
+        vpvl::PMDModel *model = ui->scene->findModel(action->text());
         ui->scene->setSelectedModel(model);
     }
 }

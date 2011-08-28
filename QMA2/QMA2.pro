@@ -35,7 +35,8 @@ SOURCES += main.cc\
     VPDFile.cc \
     LicenseWidget.cc \
     PlayerWidget.cc \
-    Delegate.cc
+    Delegate.cc \
+    SceneLoader.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -56,7 +57,8 @@ HEADERS  += MainWindow.h \
     LicenseWidget.h \
     PlayerWidget.h \
     Delegate.h \
-    World.h
+    World.h \
+    SceneLoader.h
 
 RESOURCES += resources/QMA2.qrc
 

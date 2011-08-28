@@ -64,6 +64,7 @@ class Delegate;
 class PlayerWidget;
 class QProgressDialog;
 class QSettings;
+class SceneLoader;
 class VPDFile;
 class World;
 
@@ -75,7 +76,7 @@ public:
     ~SceneWidget();
 
     PlayerWidget *createPlayer(QWidget *parent);
-    const QHash<QString, vpvl::PMDModel *> &models() const { return m_models; }
+    vpvl::PMDModel *findModel(const QString &name);
     void setSettings(QSettings *value) { m_settings = value; }
 
     vpvl::PMDModel *selectedModel() const;
@@ -115,11 +116,11 @@ public slots:
 signals:
     void modelDidAdd(vpvl::PMDModel *model);
     void modelDidDelete(vpvl::PMDModel *model);
-    void modelDidSelect(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void assetDidAdd(vpvl::XModel *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
+    void modelDidSelect(vpvl::PMDModel *model);
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
     void surfaceDidUpdate();
     void fpsDidUpdate(int fps);
@@ -139,28 +140,19 @@ protected:
     void wheelEvent(QWheelEvent *event);
 
 private:
-    vpvl::XModel *addAssetInternal(const QString &baseName, const QDir &dir);
-    vpvl::PMDModel *addModelInternal(const QString &baseName, const QDir &dir);
-    vpvl::VMDMotion *addMotionInternal(vpvl::PMDModel *model, const QString &path);
-    void addMotionInternal2(vpvl::PMDModel *model, vpvl::VMDMotion *motion);
-    VPDFile *setModelPoseInternal(vpvl::PMDModel *model, const QString &path);
-    vpvl::VMDMotion *setCameraInternal(const QString &path);
     void drawBones();
     void drawGrid();
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
     vpvl::gl::Renderer *m_renderer;
-    vpvl::VMDMotion *m_camera;
     vpvl::Bone *m_bone;
     Delegate *m_delegate;
     PlayerWidget *m_player;
+    SceneLoader *m_loader;
     World *m_world;
     internal::Grid *m_grid;
     QSettings *m_settings;
-    QHash<QString, vpvl::PMDModel *> m_models;
-    QHash<QString, vpvl::XModel *> m_assets;
-    QHash<vpvl::PMDModel *, vpvl::VMDMotion *> m_motions;
     QTime m_timer;
     QPoint m_prevPos;
     int m_frameCount;
