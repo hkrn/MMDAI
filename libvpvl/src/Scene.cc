@@ -289,9 +289,8 @@ void Scene::advanceMotion(float deltaFrame)
 #endif /* VPVL_NO_BULLET */
     // Updating camera motion
     if (m_cameraMotion) {
-        bool reached = false;
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
-        camera->advance(deltaFrame, reached);
+        camera->advance(deltaFrame);
         setCameraPerspective(camera);
     }
 }

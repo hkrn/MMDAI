@@ -261,11 +261,10 @@ void VMDMotion::advance(float deltaFrame)
     if (m_active) {
         // Started gracefully finish
         if (m_endingBoneBlend != 0.0f || m_endingFaceBlend != 0.0f) {
-            bool reached = false;
             m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
             m_faceMotion.setBlendRate(m_endingFaceBlend / m_endingFaceBlendFrames);
-            m_boneMotion.advance(deltaFrame, reached);
-            m_faceMotion.advance(deltaFrame, reached);
+            m_boneMotion.advance(deltaFrame);
+            m_faceMotion.advance(deltaFrame);
             m_endingBoneBlend -= deltaFrame;
             m_endingFaceBlend -= deltaFrame;
             btSetMax(m_endingBoneBlend, 0.0f);
@@ -273,18 +272,17 @@ void VMDMotion::advance(float deltaFrame)
             // The motion's blend rate is zero (finish), it should be marked as end
             if (m_endingBoneBlend == 0.0f || m_endingFaceBlend == 0.0f) {
                 m_active = false;
-                m_status = kDeleted;
+                m_status = kStopped;
             }
         }
         else {
             // The motion is active and continue to advance
-            bool boneReached = false;
-            bool faceReached = false;
             m_boneMotion.setBlendRate(m_boneMotion.blendRate());
             m_faceMotion.setBlendRate(1.0f);
-            m_boneMotion.advance(deltaFrame, boneReached);
-            m_faceMotion.advance(deltaFrame, faceReached);
-            if (boneReached && faceReached) {
+            m_boneMotion.advance(deltaFrame);
+            m_faceMotion.advance(deltaFrame);
+            if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
+                    m_faceMotion.currentIndex() >= m_faceMotion.maxIndex()) {
                 switch (m_onEnd) {
                 case 0: // none
                     break;
@@ -302,7 +300,7 @@ void VMDMotion::advance(float deltaFrame)
                     }
                     else {
                         m_active = false;
-                        m_status = kDeleted;
+                        m_status = kStopped;
                     }
                     break;
                 }

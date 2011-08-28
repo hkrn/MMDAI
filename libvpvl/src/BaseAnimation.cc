@@ -74,18 +74,11 @@ BaseAnimation::~BaseAnimation()
     m_automaticRefresh = true;
 }
 
-void BaseAnimation::advance(float deltaFrame, bool &reached)
+void BaseAnimation::advance(float deltaFrame)
 {
     seek(m_currentFrame);
     m_previousFrame = m_currentFrame;
     m_currentFrame += deltaFrame;
-    if (m_currentFrame >= m_maxFrame) {
-        m_currentFrame = m_maxFrame;
-        reached = true;
-    }
-    else {
-        reached = false;
-    }
 }
 
 void BaseAnimation::rewind(float target, float deltaFrame)

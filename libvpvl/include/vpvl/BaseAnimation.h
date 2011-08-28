@@ -95,13 +95,9 @@ public:
     /**
      * Seek from the previous to the next frame with delta.
      *
-     * If the seeked frame is reached to the max frame of this animation,
-     * reached argument set to true.
-     *
      * @param A delta frame index to seek the next frame
-     * @param A value whether the Animation is reached to the end.
      */
-    void advance(float deltaFrame, bool &reached);
+    void advance(float deltaFrame);
 
     /**
      * Rewind the Animation.

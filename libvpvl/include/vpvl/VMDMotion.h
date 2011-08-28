@@ -86,7 +86,7 @@ public:
     {
         kRunning,
         kLooped,
-        kDeleted
+        kStopped
     };
 
     struct DataInfo
