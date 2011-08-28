@@ -179,7 +179,7 @@ void Scene::resetCamera()
     setCameraPerspective(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
 }
 
-void Scene::seek(float frameIndex)
+void Scene::seekMotion(float frameIndex)
 {
     sortRenderingOrder();
     const uint32_t nModels = m_models.count();
@@ -194,12 +194,13 @@ void Scene::seek(float frameIndex)
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         camera->seek(frameIndex);
-        m_position = camera->position();
-        m_angle = camera->angle();
-        m_distance = camera->distance();
-        m_fovy = camera->fovy();
-        updateRotationFromAngle();
+        setCameraPerspective(camera);
     }
+}
+
+void Scene::setCameraPerspective(CameraAnimation *camera)
+{
+    setCameraPerspective(camera->position(), camera->angle(), camera->distance(), camera->fovy());
 }
 
 void Scene::setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
@@ -267,7 +268,7 @@ void Scene::setWorld(btDiscreteDynamicsWorld *world)
     m_world = world;
 }
 
-void Scene::update(float deltaFrame)
+void Scene::advanceMotion(float deltaFrame)
 {
     sortRenderingOrder();
     const uint32_t nModels = m_models.count();
@@ -275,7 +276,7 @@ void Scene::update(float deltaFrame)
     for (uint32_t i = 0; i < nModels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
-        model->updateMotion(deltaFrame);
+        model->advanceMotion(deltaFrame);
         model->updateSkins();
     }
     // Updating world simulation
@@ -301,6 +302,35 @@ void Scene::update(float deltaFrame)
         if (reached)
             m_cameraMotion = 0;
     }
+}
+
+void Scene::resetMotion()
+{
+    sortRenderingOrder();
+    const uint32_t nModels = m_models.count();
+    // Updating model
+    for (uint32_t i = 0; i < nModels; i++) {
+        PMDModel *model = m_models[i];
+        model->updateRootBone();
+        model->resetMotion();
+        model->updateSkins();
+    }
+    // Updating camera motion
+    if (m_cameraMotion) {
+        CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
+        camera->seek(0.0f);
+        camera->reset();
+        setCameraPerspective(camera);
+    }
+}
+
+bool Scene::isMotionReached(float atEnd)
+{
+    const uint32_t nModels = m_models.count();
+    bool ret = true;
+    for (uint32_t i = 0; i < nModels; i++)
+        ret = ret && m_models[i]->isMotionReached(atEnd);
+    return ret;
 }
 
 void Scene::updateModelView(int ellapsedTimeForMove)

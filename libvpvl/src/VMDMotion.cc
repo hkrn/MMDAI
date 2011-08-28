@@ -167,9 +167,9 @@ size_t VMDMotion::estimateSize()
      * selfshadow size (empty)
      */
     return kSignatureSize + kNameSize + sizeof(uint32_t) * 5
-            + m_boneMotion.countFrames() * BoneKeyFrame::strideSize()
-            + m_faceMotion.countFrames() * FaceKeyFrame::strideSize()
-            + m_cameraMotion.countFrames() * CameraKeyFrame::strideSize();
+            + m_boneMotion.countKeyFrames() * BoneKeyFrame::strideSize()
+            + m_faceMotion.countKeyFrames() * FaceKeyFrame::strideSize()
+            + m_cameraMotion.countKeyFrames() * CameraKeyFrame::strideSize();
 }
 
 void VMDMotion::save(uint8_t *data)
@@ -178,7 +178,7 @@ void VMDMotion::save(uint8_t *data)
     data += kSignatureSize;
     internal::copyBytes(data, m_name, sizeof(m_name));
     data += sizeof(m_name);
-    uint32_t nBoneFrames = m_boneMotion.countFrames();
+    uint32_t nBoneFrames = m_boneMotion.countKeyFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
     data += sizeof(nBoneFrames);
     for (uint32_t i = 0; i < nBoneFrames; i++) {
@@ -186,7 +186,7 @@ void VMDMotion::save(uint8_t *data)
         frame->write(data);
         data += BoneKeyFrame::strideSize();
     }
-    uint32_t nFaceFrames = m_faceMotion.countFrames();
+    uint32_t nFaceFrames = m_faceMotion.countKeyFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nFaceFrames), sizeof(nFaceFrames));
     data += sizeof(nFaceFrames);
     for (uint32_t i = 0; i < nFaceFrames; i++) {
@@ -194,7 +194,7 @@ void VMDMotion::save(uint8_t *data)
         frame->write(data);
         data += FaceKeyFrame::strideSize();
     }
-    uint32_t nCameraFrames = m_cameraMotion.countFrames();
+    uint32_t nCameraFrames = m_cameraMotion.countKeyFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
     data += sizeof(nCameraFrames);
     for (uint32_t i = 0; i < nCameraFrames; i++) {
@@ -252,7 +252,7 @@ void VMDMotion::seek(float frameIndex)
     m_faceMotion.seek(frameIndex);
 }
 
-void VMDMotion::update(float deltaFrame)
+void VMDMotion::advance(float deltaFrame)
 {
     if (m_beginningNonControlledBlend > 0.0f) {
         m_beginningNonControlledBlend -= deltaFrame;
@@ -309,6 +309,19 @@ void VMDMotion::update(float deltaFrame)
             }
         }
     }
+}
+
+void VMDMotion::reset()
+{
+    m_boneMotion.seek(0.0f);
+    m_faceMotion.seek(0.0f);
+    m_boneMotion.reset();
+    m_faceMotion.reset();
+}
+
+bool VMDMotion::isReached(float atEnd)
+{
+    return m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd;
 }
 
 void VMDMotion::parseHeader(const DataInfo &info)

@@ -37,7 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl/gl/Renderer.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -210,7 +210,7 @@ static Uint32 UpdateTimer(Uint32 internal, void *data)
     vpvl::Scene *scene = renderer->scene();
     scene->updateModelView(0);
     scene->updateProjection(0);
-    scene->update(0.5);
+    scene->advanceMotion(0.5);
     return internal;
 }
 

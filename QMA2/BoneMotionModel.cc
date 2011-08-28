@@ -47,7 +47,7 @@ public:
 
     virtual void undo() {
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
-        animation->deleteFrames(m_frameIndex);
+        animation->deleteKeyFrames(m_frameIndex);
         int nBones = m_bmm->rowCount();
         for (int i = 0; i < nBones; i++) {
             const QModelIndex &index = m_bmm->index(i, m_frameIndex);
@@ -58,7 +58,7 @@ public:
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addFrame(frame);
+            animation->addKeyFrame(frame);
         }
         animation->refresh();
         m_bmm->refreshModel();
@@ -89,7 +89,7 @@ private:
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 m_bmm->setData(modelIndex, bytes, Qt::EditRole);
-                animation->addFrame(newFrame);
+                animation->addKeyFrame(newFrame);
             }
         }
         animation->refresh();
@@ -133,7 +133,7 @@ public:
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         int nBones = m_bmm->rowCount();
         foreach (int frameIndex, m_frameIndices) {
-            animation->deleteFrames(frameIndex);
+            animation->deleteKeyFrames(frameIndex);
             for (int i = 0; i < nBones; i++) {
                 const QModelIndex &index = m_bmm->index(i, frameIndex);
                 m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
@@ -144,7 +144,7 @@ public:
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addFrame(frame);
+            animation->addKeyFrame(frame);
         }
     }
     virtual void redo() {
@@ -182,7 +182,7 @@ private:
                 newFrame->setRotation(bone->rotation());
                 newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                animation->addFrame(newFrame);
+                animation->addKeyFrame(newFrame);
                 animation->refresh();
                 m_bmm->setData(modelIndex, bytes, Qt::EditRole);
             }
@@ -287,7 +287,7 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
             vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
             const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addFrame(newFrame);
+            animation->addKeyFrame(newFrame);
         }
         setModified(false);
     }
@@ -390,7 +390,7 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::BoneAnimation &animation = motion->boneAnimation();
-        const uint32_t nBoneFrames = animation.countFrames();
+        const uint32_t nBoneFrames = animation.countKeyFrames();
         for (uint32_t i = 0; i < nBoneFrames; i++) {
             const vpvl::BoneKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
@@ -443,7 +443,7 @@ void BoneMotionModel::deleteModel()
 
 void BoneMotionModel::deleteFrame(const QModelIndex &index)
 {
-    m_motion->mutableBoneAnimation()->deleteFrame(index.column(), m_bones[index.row()]->name());
+    m_motion->mutableBoneAnimation()->deleteKeyFrame(index.column(), m_bones[index.row()]->name());
     setData(index, kInvalidData, Qt::EditRole);
 }
 

@@ -111,7 +111,7 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
             vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
             const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addFrame(newFrame);
+            animation->addKeyFrame(newFrame);
         }
         setModified(false);
     }
@@ -161,7 +161,7 @@ void FaceMotionModel::setFrames(const QList<Frame> &frames)
             newFrame->setFrameIndex(frameIndex);
             QByteArray bytes(vpvl::FaceKeyFrame::strideSize(), '0');
             newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-            animation->addFrame(newFrame);
+            animation->addKeyFrame(newFrame);
             animation->refresh();
             setData(modelIndex, bytes, Qt::EditRole);
         }
@@ -202,7 +202,7 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::FaceAnimation &animation = motion->faceAnimation();
-        uint32_t nFaceFrames = animation.countFrames();
+        uint32_t nFaceFrames = animation.countKeyFrames();
         for (uint32_t i = 0; i < nFaceFrames; i++) {
             vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
@@ -249,7 +249,7 @@ void FaceMotionModel::deleteModel()
 
 void FaceMotionModel::deleteFrame(const QModelIndex &index)
 {
-    m_motion->mutableFaceAnimation()->deleteFrame(index.column(), m_faces[index.row()]->name());
+    m_motion->mutableFaceAnimation()->deleteKeyFrame(index.column(), m_faces[index.row()]->name());
     setData(index, kInvalidData, Qt::EditRole);
 }
 

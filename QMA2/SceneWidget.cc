@@ -191,7 +191,7 @@ SceneWidget::~SceneWidget()
 void SceneWidget::play()
 {
     m_title = windowTitle();
-    m_renderer->scene()->seek(0.0f);
+    m_renderer->scene()->seekMotion(0.0f);
     m_playing = true;
     setWindowTitle(kWindowTileFormat.arg(qAppName()).arg(0));
 }
@@ -199,7 +199,7 @@ void SceneWidget::play()
 void SceneWidget::stop()
 {
     m_playing = false;
-    m_renderer->scene()->seek(0.0f);
+    m_renderer->scene()->seekMotion(0.0f);
     setWindowTitle(m_title);
 }
 
@@ -342,7 +342,7 @@ void SceneWidget::seekMotion(float frameIndex)
     vpvl::Scene *scene = m_renderer->scene();
     scene->updateModelView(0);
     scene->updateProjection(0);
-    scene->seek(frameIndex);
+    scene->seekMotion(frameIndex);
     updateGL();
 }
 
@@ -572,7 +572,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         scene->updateModelView(0);
         scene->updateProjection(0);
         if (m_playing)
-            scene->update(0.5f);
+            scene->advanceMotion(0.5f);
         updateGL();
     }
 }

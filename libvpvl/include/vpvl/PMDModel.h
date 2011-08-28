@@ -173,9 +173,11 @@ public:
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     void removeMotion(VMDMotion *motion);
+    void resetMotion();
+    bool isMotionReached(float atEnd);
     void seekMotion(float frameIndex);
     void updateRootBone();
-    void updateMotion(float deltaFrame);
+    void advanceMotion(float deltaFrame);
     void updateSkins();
     void updateImmediate();
     float boundingSphereRange(btVector3 &center);

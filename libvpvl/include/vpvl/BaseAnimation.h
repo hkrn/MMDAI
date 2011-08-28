@@ -131,14 +131,14 @@ public:
      *
      * @param A key frame to be added
      */
-    void addFrame(BaseKeyFrame *frame);
+    void addKeyFrame(BaseKeyFrame *frame);
 
     /**
      * Count all of key frames.
      *
      * @return size of all key frames
      */
-    size_t countFrames() const {
+    size_t countKeyFrames() const {
         return m_frames.count();
     }
 
@@ -150,7 +150,7 @@ public:
      *
      * @return copied key frames
      */
-    void copyFrames(int frameIndex, BaseKeyFrameList &frames) const;
+    void copyKeyFrames(int frameIndex, BaseKeyFrameList &frames) const;
 
     /**
      * Delete a key frame associated with an index and a name.
@@ -161,7 +161,7 @@ public:
      * @param A frame index to delete
      * @param A name to delete
      */
-    void deleteFrame(int frameIndex, const uint8_t *name);
+    void deleteKeyFrame(int frameIndex, const uint8_t *name);
 
     /**
      * Delete key frames associated with an index.
@@ -171,7 +171,7 @@ public:
      *
      * @param A frame index to delete
      */
-    void deleteFrames(int frameIndex);
+    void deleteKeyFrames(int frameIndex);
 
     /**
      * Save the current Animation state.
@@ -187,6 +187,24 @@ public:
      */
     float blendRate() const {
         return m_blendRate;
+    }
+
+    /**
+     * Get the previous frame index.
+     *
+     * @return The previous frame index
+     */
+    float previousIndex() const {
+        return m_previousFrame;
+    }
+
+    /**
+     * Get the current frame index.
+     *
+     * @return The current frame index
+     */
+    float currentIndex() const {
+        return m_currentFrame;
     }
 
     /**

@@ -46,6 +46,7 @@ class btDiscreteDynamicsWorld;
 namespace vpvl
 {
 
+class CameraAnimation;
 class PMDModel;
 class VMDMotion;
 
@@ -84,14 +85,17 @@ public:
     void getProjectionMatrix(float matrix[16]) const;
     void removeModel(PMDModel *model);
     void resetCamera();
-    void seek(float frameIndex);
+    void seekMotion(float frameIndex);
+    void setCameraPerspective(CameraAnimation *camera);
     void setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
     void setLightComponent(const btVector3 &ambient, const btVector3 &diffuse, const btVector3 &specular);
     void setLightSource(const btVector3 &color, const btVector3 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
-    void update(float deltaFrame);
+    void advanceMotion(float deltaFrame);
+    void resetMotion();
+    bool isMotionReached(float atEnd);
     void updateModelView(int ellapsedTimeForMove);
     void updateProjection(int ellapsedTimeForMove);
 

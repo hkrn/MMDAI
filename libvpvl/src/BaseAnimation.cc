@@ -115,14 +115,14 @@ void BaseAnimation::reset()
     m_smearIndex = m_smearDefault;
 }
 
-void BaseAnimation::addFrame(BaseKeyFrame *frame)
+void BaseAnimation::addKeyFrame(BaseKeyFrame *frame)
 {
     m_frames.add(frame);
     if (m_automaticRefresh)
         refresh();
 }
 
-void BaseAnimation::copyFrames(int frameIndex, BaseKeyFrameList &frames) const
+void BaseAnimation::copyKeyFrames(int frameIndex, BaseKeyFrameList &frames) const
 {
     const uint32_t nFrames = m_frames.count();
     for (uint32_t i = 0; i < nFrames; i++) {
@@ -132,7 +132,7 @@ void BaseAnimation::copyFrames(int frameIndex, BaseKeyFrameList &frames) const
     }
 }
 
-void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
+void BaseAnimation::deleteKeyFrame(int frameIndex, const uint8_t *value)
 {
     const uint32_t nFrames = m_frames.count();
     const size_t len = strlen(reinterpret_cast<const char *>(value));
@@ -152,7 +152,7 @@ void BaseAnimation::deleteFrame(int frameIndex, const uint8_t *value)
     }
 }
 
-void BaseAnimation::deleteFrames(int frameIndex)
+void BaseAnimation::deleteKeyFrames(int frameIndex)
 {
     const uint32_t nFrames = m_frames.count();
     BaseKeyFrameList framesToRemove;

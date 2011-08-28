@@ -132,7 +132,7 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir,
             insertModel(model, key, path);
             insertMotion(nullMotion, model, QString());
             // force to render an added model
-            m_renderer->scene()->seek(0.0f);
+            m_renderer->scene()->seekMotion(0.0f);
         }
         else {
             delete model;

@@ -119,7 +119,9 @@ public:
     void save(uint8_t *data);
     void attachModel(PMDModel *model);
     void seek(float frameIndex);
-    void update(float deltaFrame);
+    void advance(float deltaFrame);
+    void reset();
+    bool isReached(float atEnd);
 
     const uint8_t *name() const {
         return m_name;

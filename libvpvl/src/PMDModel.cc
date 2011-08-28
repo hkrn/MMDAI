@@ -242,11 +242,30 @@ PMDModel::State *PMDModel::saveState() const
     return state;
 }
 
-void PMDModel::seekMotion(float deltaFrame)
+void PMDModel::resetMotion()
 {
     const uint32_t nMotions = m_motions.count();
     for (uint32_t i = 0; i < nMotions; i++)
-        m_motions[i]->seek(deltaFrame);
+        m_motions[i]->reset();
+    updateAllBones();
+    updateAllFaces();
+    updateBoneFromSimulation();
+}
+
+bool PMDModel::isMotionReached(float atEnd)
+{
+    const uint32_t nMotions = m_motions.count();
+    bool ret = true;
+    for (uint32_t i = 0; i < nMotions; i++)
+        ret = ret && m_motions[i]->isReached(atEnd);
+    return ret;
+}
+
+void PMDModel::seekMotion(float frameIndex)
+{
+    const uint32_t nMotions = m_motions.count();
+    for (uint32_t i = 0; i < nMotions; i++)
+        m_motions[i]->seek(frameIndex);
     updateAllBones();
     updateAllFaces();
     updateBoneFromSimulation();
@@ -258,11 +277,11 @@ void PMDModel::updateRootBone()
     m_rootBone.updateTransform();
 }
 
-void PMDModel::updateMotion(float deltaFrame)
+void PMDModel::advanceMotion(float deltaFrame)
 {
     const uint32_t nMotions = m_motions.count();
     for (uint32_t i = 0; i < nMotions; i++)
-        m_motions[i]->update(deltaFrame);
+        m_motions[i]->advance(deltaFrame);
     updateAllBones();
     updateAllFaces();
     updateBoneFromSimulation();
@@ -390,7 +409,7 @@ void PMDModel::updateToon(const btVector3 &lightDirection)
 void PMDModel::updateImmediate()
 {
     updateRootBone();
-    updateMotion(0);
+    advanceMotion(0);
     updateSkins();
 }
 
