@@ -200,18 +200,16 @@ void Scene::seekMotion(float frameIndex)
 
 void Scene::setCameraPerspective(CameraAnimation *camera)
 {
-    setCameraPerspective(camera->position(), camera->angle(), camera->distance(), camera->fovy());
+    setCameraPerspective(camera->position(), camera->angle(), camera->fovy(), camera->distance());
 }
 
 void Scene::setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
 {
-    if (!m_cameraMotion) {
-        m_position = position;
-        m_angle = angle;
-        m_fovy = fovy;
-        m_distance = distance;
-        updateRotationFromAngle();
-    }
+    m_position = position;
+    m_angle = angle;
+    m_fovy = fovy;
+    m_distance = distance;
+    updateRotationFromAngle();
 }
 
 void Scene::setCameraMotion(VMDMotion *motion)
@@ -294,13 +292,7 @@ void Scene::advanceMotion(float deltaFrame)
         bool reached = false;
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         camera->advance(deltaFrame, reached);
-        m_position = camera->position();
-        m_angle = camera->angle();
-        m_distance = camera->distance();
-        m_fovy = camera->fovy();
-        updateRotationFromAngle();
-        if (reached)
-            m_cameraMotion = 0;
+        setCameraPerspective(camera);
     }
 }
 
