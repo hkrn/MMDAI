@@ -1,4 +1,4 @@
-/* Phong shading implementation for fragment shader */
+/* Phong shading implementation for model fragment shader */
 
 uniform vec4 lightColor;
 uniform vec3 lightPosition;
@@ -22,12 +22,13 @@ varying vec2 outMainTexCoord;
 varying vec2 outSubTexCoord;
 varying vec2 outToonTexCoord;
 const float kZero = 0.0;
+const float kAlphaThreshold = 0.05;
 
 void main() {
     vec3 normal = normalize(outNormal);
     vec3 light = normalize(lightPosition - outPosition);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightAmbient + materialAmbient;
+    vec4 color = lightAmbient * materialAmbient;
     if (diffuse != kZero) {
         vec3 view = normalize(outPosition);
         vec3 halfway = normalize(light - view);
@@ -35,17 +36,25 @@ void main() {
         color += lightDiffuse * materialDiffuse * diffuse + lightSpecular * materialSpecular * specular;
     }
     if (hasMainTexture) {
-        if (isMainAdditive)
-            color += texture2D(mainTexture, outMainTexCoord) + texture2D(toonTexture, outToonTexCoord);
-        else
-            color *= texture2D(mainTexture, outMainTexCoord) * texture2D(toonTexture, outToonTexCoord);
+        if (isMainAdditive) {
+            color += texture2D(mainTexture, outMainTexCoord);// + texture2D(toonTexture, outToonTexCoord);
+        }
+        else {
+            color *= texture2D(mainTexture, outMainTexCoord);// * texture2D(toonTexture, outToonTexCoord);
+        }
     }
+    // color += texture2D(toonTexture, outToonTexCoord);
     if (hasSubTexture) {
-        if (isMainAdditive || isSubAdditive)
-            color += texture2D(subTexture, outSubTexCoord) + texture2D(toonTexture, outToonTexCoord);
-        else
-            color *= texture2D(subTexture, outSubTexCoord) * texture2D(toonTexture, outToonTexCoord);
+        if (isMainAdditive || isSubAdditive) {
+            color += texture2D(subTexture, outSubTexCoord);// + texture2D(toonTexture, outToonTexCoord);
+        }
+        else {
+            color *= texture2D(subTexture, outSubTexCoord);// * texture2D(toonTexture, outToonTexCoord);
+        }
     }
-    gl_FragColor = color;
+    if (color.a >= kAlphaThreshold)
+        gl_FragColor = color;
+    else
+        discard;
 }
 
