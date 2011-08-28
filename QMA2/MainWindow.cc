@@ -558,6 +558,10 @@ void MainWindow::on_actionShowBones_triggered(bool value)
 
 void MainWindow::on_actionPlay_triggered()
 {
-    PlayerWidget *widget = ui->scene->createPlayer(0);
-    widget->show();
+    ui->scene->play();
+}
+
+void MainWindow::on_actionStop_triggered()
+{
+    ui->scene->stop();
 }

@@ -34,7 +34,6 @@ SOURCES += main.cc\
     InterpolationWidget.cc \
     VPDFile.cc \
     LicenseWidget.cc \
-    PlayerWidget.cc \
     Delegate.cc \
     SceneLoader.cc
 
@@ -55,7 +54,6 @@ HEADERS  += MainWindow.h \
     InterpolationWidget.h \
     VPDFile.h \
     LicenseWidget.h \
-    PlayerWidget.h \
     Delegate.h \
     World.h \
     SceneLoader.h

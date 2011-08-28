@@ -149,6 +149,8 @@ private:
 
 }
 
+const QString SceneWidget::kWindowTileFormat = tr("%1 - Rendering scene (FPS: %2)");
+
 SceneWidget::SceneWidget(QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_bone(0),
@@ -162,7 +164,9 @@ SceneWidget::SceneWidget(QWidget *parent) :
     m_currentFPS(0),
     m_defaultFPS(60),
     m_interval(1000.0f / m_defaultFPS),
-    m_internalTimerID(0)
+    m_internalTimerID(0),
+    m_visibleBones(false),
+    m_playing(false)
 {
     m_delegate = new Delegate(this);
     m_grid = new internal::Grid();
@@ -184,11 +188,19 @@ SceneWidget::~SceneWidget()
     m_delegate = 0;
 }
 
-PlayerWidget *SceneWidget::createPlayer(QWidget *parent)
+void SceneWidget::play()
 {
-    delete m_player;
-    m_player = new PlayerWidget(m_loader, parent);
-    return m_player;
+    m_title = windowTitle();
+    m_renderer->scene()->seek(0.0f);
+    m_playing = true;
+    setWindowTitle(kWindowTileFormat.arg(qAppName()).arg(0));
+}
+
+void SceneWidget::stop()
+{
+    m_playing = false;
+    m_renderer->scene()->seek(0.0f);
+    setWindowTitle(m_title);
 }
 
 vpvl::PMDModel *SceneWidget::findModel(const QString &name)
@@ -559,6 +571,8 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         vpvl::Scene *scene = m_renderer->scene();
         scene->updateModelView(0);
         scene->updateProjection(0);
+        if (m_playing)
+            scene->update(0.5f);
         updateGL();
     }
 }
@@ -578,6 +592,17 @@ void SceneWidget::drawBones()
 void SceneWidget::drawGrid()
 {
     m_grid->draw();
+}
+
+void SceneWidget::updateFPS()
+{
+    if (m_timer.elapsed() > 1000) {
+        m_currentFPS = m_frameCount;
+        m_frameCount = 0;
+        m_timer.restart();
+        setWindowTitle(kWindowTileFormat.arg(qAppName()).arg(m_currentFPS));
+    }
+    m_frameCount++;
 }
 
 QProgressDialog *SceneWidget::getProgressDialog(const QString &label, int max)

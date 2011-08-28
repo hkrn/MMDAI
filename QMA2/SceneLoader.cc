@@ -31,32 +31,6 @@ SceneLoader::~SceneLoader()
     m_motionLocation.clear();
 }
 
-SceneLoader *SceneLoader::clone(vpvl::gl::Renderer *renderer)
-{
-    SceneLoader *loader = new SceneLoader(renderer);
-    loader->m_modelLocation = m_modelLocation;
-    loader->m_motionLocation = m_motionLocation;
-    QFileInfo info;
-    foreach (const QString &location, m_modelLocation) {
-        info.setFile(location);
-        vpvl::VMDMotion *nullMotion = 0;
-        vpvl::PMDModel *model = loader->loadModel(info.fileName(), info.dir(), nullMotion);
-        if (model) {
-            vpvl::PMDModel *oldModel = m_modelLocation.key(location);
-            vpvl::VMDMotion *modelMotion = m_motions.value(oldModel);
-            const QString &path = m_motionLocation.value(modelMotion);
-            if (!path.isEmpty()) {
-                loader->loadModelMotion(path, model);
-            }
-            else {
-                // loader->setModelMotion(modelMotion->clone(), model, QString());
-                loader->setModelMotion(nullMotion, model, QString());
-            }
-        }
-    }
-    return loader;
-}
-
 bool SceneLoader::deleteModel(vpvl::PMDModel *model)
 {
     const QString &key = m_models.key(model);

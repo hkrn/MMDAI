@@ -39,7 +39,7 @@
 #ifndef SCENEWIDGET_H
 #define SCENEWIDGET_H
 
-#include <QtCore/QtCore>
+#include <QtCore/QElapsedTimer>
 #include <GL/glew.h>
 #include <QtOpenGL/QGLWidget>
 
@@ -72,19 +72,22 @@ class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
+    static const QString kWindowTileFormat;
+
     explicit SceneWidget(QWidget *parent = 0);
     ~SceneWidget();
 
-    PlayerWidget *createPlayer(QWidget *parent);
+    void play();
+    void stop();
     vpvl::PMDModel *findModel(const QString &name);
-    void setSettings(QSettings *value) { m_settings = value; }
-
     vpvl::PMDModel *selectedModel() const;
     vpvl::VMDMotion *selectedMotion() const;
-    bool isDisplayBones() const { return m_visibleBones; }
-    void setDisplayBones(bool value) { m_visibleBones = value; }
     void setSelectedModel(vpvl::PMDModel *value);
     void setCurrentFPS(int value);
+
+    void setSettings(QSettings *value) { m_settings = value; }
+    bool isDisplayBones() const { return m_visibleBones; }
+    void setDisplayBones(bool value) { m_visibleBones = value; }
 
 public slots:
     void addModel();
@@ -142,6 +145,7 @@ protected:
 private:
     void drawBones();
     void drawGrid();
+    void updateFPS();
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
@@ -153,14 +157,16 @@ private:
     World *m_world;
     internal::Grid *m_grid;
     QSettings *m_settings;
-    QTime m_timer;
+    QElapsedTimer m_timer;
     QPoint m_prevPos;
+    QString m_title;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;
     int m_interval;
     int m_internalTimerID;
     bool m_visibleBones;
+    bool m_playing;
 };
 
 #endif // SCENEWIDGET_H

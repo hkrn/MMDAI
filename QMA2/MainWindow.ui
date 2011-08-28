@@ -55,6 +55,9 @@
     <property name="title">
      <string>&amp;Scene</string>
     </property>
+    <addaction name="actionPlay"/>
+    <addaction name="actionStop"/>
+    <addaction name="separator"/>
     <addaction name="actionZoomIn"/>
     <addaction name="actionZoomOut"/>
     <addaction name="separator"/>
@@ -70,7 +73,6 @@
     <addaction name="separator"/>
     <addaction name="actionResetCamera"/>
     <addaction name="actionShowBones"/>
-    <addaction name="actionPlay"/>
    </widget>
    <widget class="QMenu" name="menuModel">
     <property name="title">
@@ -581,8 +583,10 @@
    <property name="text">
     <string>Play</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+P</string>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
    </property>
   </action>
  </widget>

@@ -24,7 +24,6 @@ public:
     SceneLoader(vpvl::gl::Renderer *renderer);
     ~SceneLoader();
 
-    SceneLoader *clone(vpvl::gl::Renderer *renderer);
     bool deleteModel(vpvl::PMDModel *model);
     vpvl::PMDModel *findModel(const QString &name) const;
     vpvl::VMDMotion *findModelMotion(vpvl::PMDModel *model) const;
