@@ -202,10 +202,8 @@ void PMDModel::removeMotion(VMDMotion *motion)
 
 void PMDModel::discardState(State *&state) const
 {
-    if (state) {
-        delete state;
-        state = 0;
-    }
+    delete state;
+    state = 0;
 }
 
 bool PMDModel::restoreState(State *state)
