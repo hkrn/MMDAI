@@ -796,11 +796,11 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
     glBufferData(GL_ARRAY_BUFFER, len, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
-    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     m_edgeProgram->setColor(color);
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
     m_edgeProgram->setPosition(0, stride);
+    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     m_edgeProgram->unbind();
 
 #ifdef VPVL_COORDINATE_OPENGL
