@@ -149,8 +149,6 @@ private:
 
 }
 
-const QString SceneWidget::kWindowTileFormat = tr("%1 - Rendering scene (FPS: %2)");
-
 SceneWidget::SceneWidget(QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_bone(0),
@@ -190,17 +188,21 @@ SceneWidget::~SceneWidget()
 
 void SceneWidget::play()
 {
-    m_title = windowTitle();
-    m_renderer->scene()->seekMotion(0.0f);
     m_playing = true;
-    setWindowTitle(kWindowTileFormat.arg(qAppName()).arg(0));
+    emit sceneDidPlay();
+}
+
+void SceneWidget::pause()
+{
+    m_playing = false;
+    emit sceneDidPause();
 }
 
 void SceneWidget::stop()
 {
     m_playing = false;
-    m_renderer->scene()->seekMotion(0.0f);
-    setWindowTitle(m_title);
+    m_renderer->scene()->resetMotion();
+    emit sceneDidStop();
 }
 
 vpvl::PMDModel *SceneWidget::findModel(const QString &name)
@@ -571,8 +573,10 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         vpvl::Scene *scene = m_renderer->scene();
         scene->updateModelView(0);
         scene->updateProjection(0);
-        if (m_playing)
+        if (m_playing) {
             scene->advanceMotion(0.5f);
+            updateFPS();
+        }
         updateGL();
     }
 }
@@ -600,7 +604,7 @@ void SceneWidget::updateFPS()
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
         m_timer.restart();
-        setWindowTitle(kWindowTileFormat.arg(qAppName()).arg(m_currentFPS));
+        emit fpsDidUpdate(m_currentFPS);
     }
     m_frameCount++;
 }

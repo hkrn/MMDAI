@@ -72,13 +72,9 @@ class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
-    static const QString kWindowTileFormat;
-
     explicit SceneWidget(QWidget *parent = 0);
     ~SceneWidget();
 
-    void play();
-    void stop();
     vpvl::PMDModel *findModel(const QString &name);
     vpvl::PMDModel *selectedModel() const;
     vpvl::VMDMotion *selectedMotion() const;
@@ -90,6 +86,9 @@ public:
     void setDisplayBones(bool value) { m_visibleBones = value; }
 
 public slots:
+    void play();
+    void pause();
+    void stop();
     void addModel();
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
@@ -127,6 +126,9 @@ signals:
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
     void surfaceDidUpdate();
     void fpsDidUpdate(int fps);
+    void sceneDidPlay();
+    void sceneDidPause();
+    void sceneDidStop();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -159,7 +161,6 @@ private:
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
-    QString m_title;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;

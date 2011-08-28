@@ -47,8 +47,12 @@ private slots:
     void deleteModel(vpvl::PMDModel *model);
     void setCurrentFPS(int value);
     void setModel(vpvl::PMDModel *value);
-    void setBone(vpvl::Bone *value);
+    void setBones(const QList<vpvl::Bone*> &bones);
     void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+
+    void startSceneUpdate();
+    void stopSceneUpdate();
+    void updateFPS(int fps);
 
     void on_actionAbout_triggered();
     void on_actionAboutQt_triggered();
@@ -89,6 +93,7 @@ private slots:
     void on_actionShowBones_triggered(bool value);
     void on_actionPlay_triggered();
     void on_actionStop_triggered();
+    void on_actionPause_triggered();
 
 private:
     void buildUI();

@@ -56,6 +56,7 @@
      <string>&amp;Scene</string>
     </property>
     <addaction name="actionPlay"/>
+    <addaction name="actionPause"/>
     <addaction name="actionStop"/>
     <addaction name="separator"/>
     <addaction name="actionZoomIn"/>
@@ -587,6 +588,11 @@
   <action name="actionStop">
    <property name="text">
     <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionPause">
+   <property name="text">
+    <string>Pause</string>
    </property>
   </action>
  </widget>

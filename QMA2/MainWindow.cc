@@ -18,6 +18,12 @@
 #include <vpvl/vpvl.h>
 #include "util.h"
 
+namespace
+{
+const char *kWindowTitleFormat = QT_TR_NOOP("%1 - %2 - %3: Rendering Scene (FPS: %4)");
+const char *kWindowTitleFormat2 = QT_TR_NOOP("%1 - %2 - %3");
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -48,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
+    setWindowTitle(tr(kWindowTitleFormat2).arg(qAppName()).arg(internal::noneString()).arg(internal::noneString()));
 }
 
 MainWindow::~MainWindow()
@@ -215,9 +222,9 @@ void MainWindow::setModel(vpvl::PMDModel *value)
     updateInformation();
 }
 
-void MainWindow::setBone(vpvl::Bone *value)
+void MainWindow::setBones(const QList<vpvl::Bone *> &bones)
 {
-    m_bone = value;
+    m_bone = bones.isEmpty() ? 0 : bones.last();
     updateInformation();
 }
 
@@ -235,6 +242,10 @@ void MainWindow::setCameraPerspective(const btVector3 &pos,
 
 void MainWindow::updateInformation()
 {
+    setWindowTitle(tr(kWindowTitleFormat2)
+                   .arg(qAppName())
+                   .arg(internal::toQString(m_model))
+                   .arg(internal::toQString(m_bone)));
 }
 
 void MainWindow::buildUI()
@@ -308,6 +319,38 @@ void MainWindow::connectWidgets()
             this, SLOT(setWindowModified(bool)));
     connect(m_transformWidget, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)),
             ui->scene, SLOT(setBones(QList<vpvl::Bone*>)));
+    connect(m_transformWidget, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)),
+            this, SLOT(setBones(QList<vpvl::Bone*>)));
+    connect(ui->scene, SIGNAL(sceneDidPlay()), this, SLOT(startSceneUpdate()));
+    connect(ui->scene, SIGNAL(sceneDidPause()), this, SLOT(stopSceneUpdate()));
+    connect(ui->scene, SIGNAL(sceneDidStop()), this, SLOT(stopSceneUpdate()));
+    connect(ui->scene, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
+}
+
+void MainWindow::startSceneUpdate()
+{
+    setWindowTitle(tr(kWindowTitleFormat)
+                   .arg(qAppName())
+                   .arg(internal::toQString(m_model))
+                   .arg(internal::toQString(m_bone))
+                   .arg(0));
+}
+
+void MainWindow::stopSceneUpdate()
+{
+    setWindowTitle(tr(kWindowTitleFormat2)
+                   .arg(qAppName())
+                   .arg(internal::toQString(m_model))
+                   .arg(internal::toQString(m_bone)));
+}
+
+void MainWindow::updateFPS(int fps)
+{
+    setWindowTitle(tr(kWindowTitleFormat)
+                   .arg(qAppName())
+                   .arg(internal::toQString(m_model))
+                   .arg(internal::toQString(m_bone))
+                   .arg(fps));
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -564,4 +607,9 @@ void MainWindow::on_actionPlay_triggered()
 void MainWindow::on_actionStop_triggered()
 {
     ui->scene->stop();
+}
+
+void MainWindow::on_actionPause_triggered()
+{
+    ui->scene->pause();
 }
