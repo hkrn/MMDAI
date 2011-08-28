@@ -523,7 +523,7 @@ void Renderer::initializeSurface()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-bool Renderer::loadAllShaders()
+bool Renderer::createPrograms()
 {
     bool ret = false;
     std::string vertexShader;

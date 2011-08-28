@@ -277,7 +277,7 @@ public:
         }
 
 #ifdef VPVL_GL2_RENDERER_H_
-        m_renderer.loadAllShaders();
+        m_renderer.createPrograms();
 #endif
 
         if (!loadScene())

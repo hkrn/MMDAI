@@ -118,7 +118,7 @@ public:
     }
 
     void initializeSurface();
-    bool loadAllShaders();
+    bool createPrograms();
     void resize(int width, int height);
     void getObjectCoordinate(int px, int py, btVector3 &coordinate) const;
     void setDebugDrawer(btDynamicsWorld *world);
