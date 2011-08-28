@@ -27,6 +27,34 @@ SceneLoader::~SceneLoader()
     m_models.clear();
     m_motions.clear();
     m_assets.clear();
+    m_modelLocation.clear();
+    m_motionLocation.clear();
+}
+
+SceneLoader *SceneLoader::clone(vpvl::gl::Renderer *renderer)
+{
+    SceneLoader *loader = new SceneLoader(renderer);
+    loader->m_modelLocation = m_modelLocation;
+    loader->m_motionLocation = m_motionLocation;
+    QFileInfo info;
+    foreach (const QString &location, m_modelLocation) {
+        info.setFile(location);
+        vpvl::VMDMotion *nullMotion = 0;
+        vpvl::PMDModel *model = loader->loadModel(info.fileName(), info.dir(), nullMotion);
+        if (model) {
+            vpvl::PMDModel *oldModel = m_modelLocation.key(location);
+            vpvl::VMDMotion *modelMotion = m_motions.value(oldModel);
+            const QString &path = m_motionLocation.value(modelMotion);
+            if (!path.isEmpty()) {
+                loader->loadModelMotion(path, model);
+            }
+            else {
+                // loader->setModelMotion(modelMotion->clone(), model, QString());
+                loader->setModelMotion(nullMotion, model, QString());
+            }
+        }
+    }
+    return loader;
 }
 
 bool SceneLoader::deleteModel(vpvl::PMDModel *model)
@@ -102,9 +130,10 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
     return motion;
 }
 
-vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir, vpvl::VMDMotion *&motion)
+vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir, vpvl::VMDMotion *&nullMotion)
 {
-    QFile file(dir.absoluteFilePath(baseName));
+    const QString &path = dir.absoluteFilePath(baseName);
+    QFile file(path);
     vpvl::PMDModel *model = 0;
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
@@ -123,11 +152,11 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir,
                     i++;
                 }
             }
-            motion = new vpvl::VMDMotion();
-            motion->setEnableSmooth(false);
-            model->addMotion(motion);
-            m_models[key] = model;
-            m_motions.insert(model, motion);
+            nullMotion = new vpvl::VMDMotion();
+            nullMotion->setEnableSmooth(false);
+            model->addMotion(nullMotion);
+            insertModel(model, key, path);
+            insertMotion(nullMotion, model, QString());
             // force to render an added model
             m_renderer->scene()->seek(0.0f);
         }
@@ -159,7 +188,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<vpvl::P
     vpvl::VMDMotion *motion = loadModelMotion(path);
     if (motion) {
         foreach (vpvl::PMDModel *model, m_models) {
-            setModelMotion(motion, model);
+            setModelMotion(motion, model, path);
             models.append(model);
         }
     }
@@ -170,7 +199,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDMode
 {
     vpvl::VMDMotion *motion = loadModelMotion(path);
     if (motion)
-        setModelMotion(motion, model);
+        setModelMotion(motion, model, path);
     return motion;
 }
 
@@ -192,7 +221,7 @@ VPDFile *SceneLoader::loadPose(const QString &path, vpvl::PMDModel * /* model */
     return pose;
 }
 
-void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QString &location)
 {
     motion->setEnableSmooth(false);
     model->addMotion(motion);
@@ -201,5 +230,17 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         model->removeMotion(oldMotion);
         delete oldMotion;
     }
+    insertMotion(motion, model, location);
+}
+
+void SceneLoader::insertModel(vpvl::PMDModel *model, const QString &name, const QString &location)
+{
+    m_models.insert(name, model);
+    m_modelLocation.insert(model, location);
+}
+
+void SceneLoader::insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QString &location)
+{
     m_motions.insert(model, motion);
+    m_motionLocation.insert(motion, location);
 }

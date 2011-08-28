@@ -187,7 +187,7 @@ SceneWidget::~SceneWidget()
 PlayerWidget *SceneWidget::createPlayer(QWidget *parent)
 {
     delete m_player;
-    //m_player = new PlayerWidget(m_camera, m_models, m_assets, m_motions, parent);
+    m_player = new PlayerWidget(m_loader, parent);
     return m_player;
 }
 
@@ -283,7 +283,7 @@ void SceneWidget::setEmptyMotion()
     vpvl::PMDModel *selected = m_renderer->selectedModel();
     if (selected) {
         vpvl::VMDMotion *motion = new vpvl::VMDMotion();
-        m_loader->setModelMotion(motion, selected);
+        m_loader->setModelMotion(motion, selected, QString());
         emit motionDidAdd(motion, selected);
     }
     else {

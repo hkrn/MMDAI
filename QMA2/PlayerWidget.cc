@@ -1,5 +1,6 @@
 #include "Delegate.h"
 #include "PlayerWidget.h"
+#include "SceneLoader.h"
 #include "World.h"
 
 #include <QtGui/QtGui>
@@ -8,19 +9,13 @@
 
 const QString PlayerWidget::kWindowTileFormat = tr("%1 - Rendering scene (FPS: %2)");
 
-PlayerWidget::PlayerWidget(vpvl::VMDMotion *camera,
-                           const QHash<QString, vpvl::PMDModel *> &models,
-                           const QHash<QString, vpvl::XModel *> &assets,
-                           const QHash<vpvl::PMDModel *, vpvl::VMDMotion *> &motions,
-                           QWidget *parent) :
-    QGLWidget(parent),
+PlayerWidget::PlayerWidget(SceneLoader *loader, QWidget *parent) :
+    QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
     m_delegate(0),
+    m_parentLoader(loader),
+    m_thisLoader(0),
     m_world(0),
-    m_camera(camera),
-    m_models(models),
-    m_assets(assets),
-    m_motions(motions),
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
@@ -37,8 +32,10 @@ PlayerWidget::PlayerWidget(vpvl::VMDMotion *camera,
 
 PlayerWidget::~PlayerWidget()
 {
+    delete m_thisLoader;
     m_renderer = 0;
-    m_camera = 0;
+    m_parentLoader = 0;
+    m_thisLoader = 0;
     m_frameCount = 0;
     m_currentFPS = 0;
     m_defaultFPS = 0;
@@ -61,6 +58,7 @@ void PlayerWidget::initializeGL()
 {
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
+    m_thisLoader = m_parentLoader->clone(m_renderer);
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
     scene->setWorld(m_world->mutableWorld());

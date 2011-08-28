@@ -17,6 +17,7 @@ class XModel;
 }
 
 class Delegate;
+class SceneLoader;
 class World;
 
 class PlayerWidget : public QGLWidget
@@ -25,11 +26,7 @@ class PlayerWidget : public QGLWidget
 public:
     static const QString kWindowTileFormat;
 
-    explicit PlayerWidget(vpvl::VMDMotion *camera,
-                          const QHash<QString, vpvl::PMDModel *> &models,
-                          const QHash<QString, vpvl::XModel *> &assets,
-                          const QHash<vpvl::PMDModel *, vpvl::VMDMotion *> &motions,
-                          QWidget *parent = 0);
+    explicit PlayerWidget(SceneLoader *loader, QWidget *parent = 0);
     ~PlayerWidget();
 
     void play();
@@ -47,11 +44,9 @@ private:
 
     vpvl::gl::Renderer *m_renderer;
     Delegate *m_delegate;
+    SceneLoader *m_parentLoader;
+    SceneLoader *m_thisLoader;
     World *m_world;
-    vpvl::VMDMotion *m_camera;
-    QHash<QString, vpvl::PMDModel *> m_models;
-    QHash<QString, vpvl::XModel *> m_assets;
-    QHash<vpvl::PMDModel *, vpvl::VMDMotion *> m_motions;
     QElapsedTimer m_timer;
     int m_frameCount;
     int m_currentFPS;
