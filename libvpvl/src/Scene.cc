@@ -66,8 +66,8 @@ public:
         : m_transform(transform) {
     }
     bool operator()(const PMDModel *left, const PMDModel *right) {
-        const btVector3 positionLeft = m_transform * Bone::centerBone(&left->bones())->localTransform().getOrigin();
-        const btVector3 positionRight = m_transform * Bone::centerBone(&right->bones())->localTransform().getOrigin();
+        const btVector3 &positionLeft = m_transform * Bone::centerBone(&left->bones())->localTransform().getOrigin();
+        const btVector3 &positionRight = m_transform * Bone::centerBone(&right->bones())->localTransform().getOrigin();
         return positionLeft.z() < positionRight.z();
     }
 private:
@@ -100,6 +100,10 @@ Scene::Scene(int width, int height, int fps)
       m_width(width),
       m_height(height)
 {
+    m_lightColor.setW(1.0f);
+    m_lightAmbient.setW(m_lightAmbient.x());
+    m_lightDiffuse.setW(0.0f);
+    m_lightSpecular.setW(m_lightSpecular.x());
     updateProjectionMatrix();
     updateModelViewMatrix();
 }
@@ -151,6 +155,11 @@ PMDModel **Scene::getRenderingOrder(size_t &size)
 void Scene::getModelViewMatrix(float matrix[]) const
 {
     m_modelview.getOpenGLMatrix(matrix);
+}
+
+void Scene::getInvertedModelViewMatrix(float matrix[]) const
+{
+    m_modelview.inverse().getOpenGLMatrix(matrix);
 }
 
 void Scene::getProjectionMatrix(float matrix[]) const
