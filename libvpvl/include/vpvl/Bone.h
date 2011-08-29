@@ -102,6 +102,7 @@ public:
      * This method search a bone named of centerBoneName() first.
      * If there is no bone found, returns the first bone.
      *
+     * @param bones All bones of the model
      * @return The center bone
      * @see centerBoneName
      */
@@ -115,12 +116,13 @@ public:
     static size_t stride();
 
     /**
-     * Read and parse the buffer with size and sets it's result to the class.
+     * Read and parse the buffer with id and sets it's result to the class.
      *
      * This method just set ID and value from buffer. You should call build method
      * to get a bone object from ID.
      *
-     * @param The buffer to read and parse
+     * @param data The buffer to read and parse
+     * @param id An ID of this bone
      * @param Size of the buffer
      * @see build
      */
@@ -139,8 +141,8 @@ public:
     /**
      * Resolve parent, child and target bone from all bones.
      *
-     * @param All bones with the model
-     * @param Root bone
+     * @param bones All bones of the model
+     * @param rootBone Root bone of the model
      */
     void build(BoneList *bones, Bone *rootBone);
 
@@ -161,14 +163,14 @@ public:
     /**
      * Update local transform from the bone with the quaternion.
      *
-     * @param The quaternion value to rotate
+     * @param q The quaternion value to rotate
      */
     void updateTransform(const btQuaternion &q);
 
     /**
      * Get transform value for skinning
      *
-     * @param The result value of transform
+     * @param tr The result value of transform
      */
     void getSkinTransform(btTransform &tr);
 
@@ -245,9 +247,9 @@ public:
     }
 
     /**
-     * Get transform object.
+     * Get local transform object of this bone.
      *
-     * @return transform object
+     * @return local transform object
      */
     const btTransform &localTransform() const {
         return m_localTransform;
@@ -330,18 +332,18 @@ public:
     }
 
     /**
-     * Set this name of the bone.
+     * Set the name of this bone.
      *
-     * @param this name of the bone
+     * @param value the name of this bone
      */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
 
     /**
-     * Set this name of this bone in English.
+     * Set the name of this bone in English.
      *
-     * @param this name of this bone in English
+     * @param value the name of this bone in English
      */
     void setEnglishName(const uint8_t *value) {
         copyBytesSafe(m_englishName, value, sizeof(m_englishName));
@@ -350,7 +352,7 @@ public:
     /**
      * Set an index of the category of this bone.
      *
-     * @param an index of the category of this bone
+     * @param value an index of the category of this bone
      */
     void setCategoryIndex(uint8_t value) {
         m_categoryIndex = value;
@@ -359,7 +361,7 @@ public:
     /**
      * Set transform object
      *
-     * @param transform object
+     * @param value transform object
      */
     void setLocalTransform(const btTransform &value) {
         m_localTransform = value;
@@ -368,7 +370,7 @@ public:
     /**
      * Set offset of this bone.
      *
-     * @param offset of this bone
+     * @param value offset of this bone
      */
     void setOffset(const btVector3 &value) {
         m_offset = value;
@@ -377,7 +379,7 @@ public:
     /**
      * Set position of this bone.
      *
-     * @param position of this bone
+     * @param value position of this bone
      */
     void setPosition(const btVector3 &value) {
         m_position = value;
@@ -386,7 +388,7 @@ public:
     /**
      * Set rotation of this bone.
      *
-     * @param rotation of this bone
+     * @param value rotation of this bone
      */
     void setRotation(const btQuaternion &value) {
         m_rotation = value;
@@ -395,7 +397,7 @@ public:
     /**
      * Set this bone is simulated.
      *
-     * @param whether this bone is simulated
+     * @param value whether this bone is simulated
      */
     void setSimulated(bool value) {
         m_simulated = value;

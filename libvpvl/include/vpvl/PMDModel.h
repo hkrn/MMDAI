@@ -169,48 +169,225 @@ public:
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
+    /**
+     * Add and attach a motion to the model.
+     *
+     * This method sort motions by priority automatically after adding the motion.
+     *
+     * @param motion A motion to attach
+     */
     void addMotion(VMDMotion *motion);
+
+    /**
+     * Set the physics world to join the model.
+     *
+     * After calling this method, isSimulationEnabled returns true.
+     * If the model is already join to the world, this method nothing.
+     * If VPVL_NO_BULLET is defined, this method does nothing.
+     *
+     * @param world The world to join the model
+     */
     void joinWorld(btDiscreteDynamicsWorld *world);
+
+    /**
+     * Leave the model from world.
+     *
+     * After calling this method, isSimulationEnabled returns false.
+     * If the model is already leaved from the world, this method nothing.
+     * If VPVL_NO_BULLET is defined, this method does nothing.
+     *
+     * @param world The world to leave the model
+     */
     void leaveWorld(btDiscreteDynamicsWorld *world);
+
+    /**
+     * Detach a motion from the model.
+     *
+     * @param motion A motion to detach
+     */
     void removeMotion(VMDMotion *motion);
+
+    /**
+     * Reset all motions of the model and seek to zero.
+     */
     void resetMotion();
+
+    /**
+     * Check whether all motions of the model are reached to the end.
+     *
+     * @param atEnd A frame index to check
+     * @return True if all motions are reached to the end
+     */
     bool isMotionReached(float atEnd);
+
+    /**
+     * Seek all motions of the model to the specified frame index.
+     *
+     * @param A frame index to seek
+     */
     void seekMotion(float frameIndex);
+
     void updateRootBone();
+
+    /**
+     * Advance all motions of the model relative with current frame index.
+     *
+     * @param A delta frame index to advance
+     */
     void advanceMotion(float deltaFrame);
+
     void updateSkins();
     void updateImmediate();
     float boundingSphereRange(btVector3 &center);
+
+    /**
+     * Reset all bones of the model to initial state.
+     */
     void resetAllBones();
+
+    /**
+     * Reset all faces of the model to initial state.
+     */
     void resetAllFaces();
+
     void smearAllBonesToDefault(float rate);
     void smearAllFacesToDefault(float rate);
+
+    /**
+     * Discard and release state of the model.
+     *
+     * This methods set 0 to first argument after discarding state.
+     *
+     * @param state State to discard
+     * @see saveState
+     * @see restoreState
+     */
     void discardState(State *&state) const;
+
+    /**
+     * Allocate and save state of the model.
+     *
+     * You must release state with discardState.
+     *
+     * @return Current state of the model
+     * @see discardState
+     * @see restoreState
+     */
     State *saveState() const;
+
+    /**
+     * Restore the model to current state.
+     *
+     * This methods return false if state is different from the model.
+     * State will retain memory even if the model is restored,
+     * You must release state with discardState.
+     *
+     * @param Current state of the model
+     * @return True if the model is restored
+     * @see discardState
+     * @see saveState
+     */
     bool restoreState(State *state);
 
+    /**
+     * Get the stride byte size of specified type.
+     *
+     * @return stride size of specified type
+     */
     size_t stride(StrideType type) const;
+
+    /**
+     * Get the base adderess of vertices pointer.
+     *
+     * @return Address of vertices
+     */
     const void *verticesPointer() const;
+
+    /**
+     * Get the base adderess of normal pointer.
+     *
+     * @return Address of normal pointer
+     */
     const void *normalsPointer() const;
+
+    /**
+     * Get the base adderess of texture coordinates pointer.
+     *
+     * @return Address of texture coordinates
+     */
     const void *textureCoordsPointer() const;
+
+    /**
+     * Get the base adderess of toon texture coordinates pointer.
+     *
+     * @return Address of texture coordinates
+     */
     const void *toonTextureCoordsPointer() const;
+
+    /**
+     * Get the base adderess of edge vertices pointer.
+     *
+     * @return Address of edge vertices
+     */
     const void *edgeVerticesPointer() const;
 
+    /**
+     * parse and validate if the buffer can load as a model from memory.
+     *
+     * @param data The buffer to load
+     * @param size Size of the buffer
+     * @param info Data of parsed information
+     * @return True if the model is loaded successfully
+     */
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
+
+    /**
+     * Load and build the model from memory.
+     *
+     * This method calls preparse internally so you don't need call preparse.
+     *
+     * @param data The buffer to load
+     * @param size Size of the buffer
+     * @return True if the model is loaded successfully
+     */
     bool load(const uint8_t *data, size_t size);
 
+    /**
+     * Get the name of this model.
+     *
+     * @return the name of this model
+     */
     const uint8_t *name() const {
         return m_name;
     }
+
+    /**
+     * Get the comment of this model.
+     *
+     * @return the comment of this model
+     */
     const uint8_t *comment() const {
         return m_comment;
     }
+
+    /**
+     * Get the name of this model in English.
+     *
+     * @return the name of this model in English
+     */
     const uint8_t *englishName() const {
         return m_englishName;
     }
+
+    /**
+     * Get the comment of this model in English.
+     *
+     * @return the comment of this model in English
+     */
     const uint8_t *englishComment() const {
         return m_englishComment;
     }
+
     const VertexList &vertices() const {
         return m_vertices;
     }
@@ -294,18 +471,42 @@ public:
         return m_edgeIndicesCount;
     }
 
+    /**
+     * Set the name of this model.
+     *
+     * @param value the name of this model
+     */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
+
+    /**
+     * Set the name of this model in English.
+     *
+     * @param value the name of this model in English
+     */
     void setComment(const uint8_t *value) {
         copyBytesSafe(m_comment, value, sizeof(m_comment));
     }
+
+    /**
+     * Set the comment of this model.
+     *
+     * @param value the name of this model
+     */
     void setEnglishName(const uint8_t *value) {
         copyBytesSafe(m_englishName, value, sizeof(m_englishName));
     }
+
+    /**
+     * Set the comment of this model in English.
+     *
+     * @param value the comment of this model in English
+     */
     void setEnglishComment(const uint8_t *value) {
         copyBytesSafe(m_englishComment, value, sizeof(m_englishComment));
     }
+
     void setToonTextures(const uint8_t *ptr) {
         uint8_t *p = const_cast<uint8_t *>(ptr);
         for (int i = 0; i < 10; i++) {

@@ -84,7 +84,7 @@ public:
      *
      * This method has no effect if you have already called it.
      *
-     * @param A model to attach the motion
+     * @param model A model to attach the motion
      * @see refresh
      */
     void attachModel(PMDModel *model);
@@ -92,7 +92,7 @@ public:
     /**
      * Get a bone key frame associated with index.
      *
-     * @param A frame index to get key frame
+     * @param i A frame index to get key frame
      * @return A bone key frame associated with index
      */
     BoneKeyFrame *frameAt(uint32_t i) const {
@@ -102,7 +102,7 @@ public:
     /**
      * Get whether this animation has a frame to control center bone.
      *
-     * @return boolean
+     * @return True if the model has center bone
      */
     bool hasCenterBoneAnimation() const {
         return m_hasCenterBoneAnimation;

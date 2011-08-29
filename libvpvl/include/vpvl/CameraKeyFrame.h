@@ -86,22 +86,22 @@ public:
     /**
      * Get the interpolation values with the type.
      *
-     * @param An interpolation type
-     * @param A value of X1
-     * @param A value of X2
-     * @param A value of Y1
-     * @param A value of Y2
+     * @param type An interpolation type
+     * @param x1 A value of X1
+     * @param x2 A value of X2
+     * @param y1 A value of Y1
+     * @param y2 A value of Y2
      */
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
 
     /**
      * Set the interpolation values with the type.
      *
-     * @param An interpolation type
-     * @param A value of X1
-     * @param A value of X2
-     * @param A value of Y1
-     * @param A value of Y2
+     * @param type An interpolation type
+     * @param x1 A value of X1
+     * @param x2 A value of X2
+     * @param y1 A value of Y1
+     * @param y2 A value of Y2
      */
     void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
@@ -173,14 +173,14 @@ public:
      *
      * This method do nothing.
      *
-     * @param A value of name
+     * @param value A value of name
      */
     void setName(const uint8_t *name);
 
     /**
      * Set the distance of this keyframe.
      *
-     * @param A value of distance
+     * @param value A value of distance
      */
     void setDistance(float value) {
         m_distance = value;
@@ -189,7 +189,7 @@ public:
     /**
      * Set the fovy of this keyframe.
      *
-     * @param A value of fovy
+     * @param value A value of fovy
      */
     void setFovy(float value) {
         m_fovy = value;
@@ -198,7 +198,7 @@ public:
     /**
      * Set the position of this keyframe.
      *
-     * @param A value of position
+     * @param value A value of position
      */
     void setPosition(const btVector3 &value) {
         m_position = value;
@@ -207,7 +207,7 @@ public:
     /**
      * Set the angle of this keyframe.
      *
-     * @param A value of angle
+     * @param value A value of angle
      */
     void setAngle(const btVector3 &value) {
         m_angle = value;

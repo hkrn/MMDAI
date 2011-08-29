@@ -183,7 +183,7 @@ VPVL_EXPORT static const float kPI = 3.14159265358979323846f;
  *
  * A first argument should be passed VPVL_VERSION macro.
  *
- * @param A version of compiled version (VPVL_VERSION)
+ * @param version A version of compiled version (VPVL_VERSION)
  * @return True if the version is compatible to work
  */
 VPVL_EXPORT bool isLibraryVersionCorrect(int version);
@@ -198,7 +198,7 @@ VPVL_EXPORT const char *libraryVersionString();
 /**
  * Convert degree to radian.
  *
- * @param A value of degree
+ * @param value A value of degree
  * @return A value of converted radian from degree
  */
 VPVL_EXPORT inline float radian(float value)
@@ -209,7 +209,7 @@ VPVL_EXPORT inline float radian(float value)
 /**
  * Convert radian to degree.
  *
- * @param A value of radian
+ * @param value A value of radian
  * @return A value of converted degree from radian
  */
 VPVL_EXPORT inline float degree(float value)
@@ -222,9 +222,9 @@ VPVL_EXPORT inline float degree(float value)
  *
  * This function aims to copy stack based string from pointer based string.
  *
- * @param A value of string to be copied
- * @param A value of string to copy
- * @param A length of string to copy
+ * @param dst A value of string to be copied
+ * @param src A value of string to copy
+ * @param max A length of string to copy
  * @return A pointer of string to be copied
  */
 VPVL_EXPORT inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)

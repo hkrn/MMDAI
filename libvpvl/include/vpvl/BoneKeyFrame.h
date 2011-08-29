@@ -86,11 +86,11 @@ public:
     /**
      * Get the interpolation values with the type.
      *
-     * @param An interpolation type
-     * @param A value of X1
-     * @param A value of X2
-     * @param A value of Y1
-     * @param A value of Y2
+     * @param type An interpolation type
+     * @param x1 A value of X1
+     * @param x2 A value of X2
+     * @param y1 A value of Y1
+     * @param y2 A value of Y2
      */
     void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
 
@@ -98,10 +98,10 @@ public:
      * Set the interpolation values with the type.
      *
      * @param An interpolation type
-     * @param A value of X1
-     * @param A value of X2
-     * @param A value of Y1
-     * @param A value of Y2
+     * @param x1 A value of X1
+     * @param x2 A value of X2
+     * @param y1 A value of Y1
+     * @param y2 A value of Y2
      */
     void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
 
@@ -151,14 +151,14 @@ public:
     /**
      * Set the target bone name of this keyframe.
      *
-     * @param the bone name
+     * @param value the bone name
      */
     void setName(const uint8_t *value);
 
     /**
      * Set the position to the target bone of this keyframe.
      *
-     * @param A value of position value
+     * @param value A value of position value
      */
     void setPosition(const btVector3 &value) {
         m_position = value;
@@ -167,7 +167,7 @@ public:
     /**
      * Set the rotation to the target bone of this keyframe.
      *
-     * @param A value of rotation value
+     * @param value A value of rotation value
      */
     void setRotation(const btQuaternion &value) {
         m_rotation = value;

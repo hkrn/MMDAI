@@ -73,7 +73,7 @@ public:
     /**
      * Get a camera key frame associated with index.
      *
-     * @param A frame index to get key frame
+     * @param i A frame index to get key frame
      * @return A camera key frame associated with index
      */
     CameraKeyFrame *frameAt(uint32_t i) const {

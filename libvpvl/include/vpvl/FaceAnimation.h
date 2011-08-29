@@ -82,7 +82,7 @@ public:
      *
      * This method has no effect if you have already called it.
      *
-     * @param A model to attach the motion
+     * @param model A model to attach the motion
      * @see refresh
      */
     void attachModel(PMDModel *model);
@@ -105,7 +105,7 @@ public:
     /**
      * Get a camera key frame associated with index.
      *
-     * @param A frame index to get key frame
+     * @param i A frame index to get key frame
      * @return A camera key frame associated with index
      */
     FaceKeyFrame *frameAt(uint32_t i) const {

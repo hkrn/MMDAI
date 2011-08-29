@@ -58,7 +58,7 @@ struct FaceVertex
  *
  * @section DESCRIPTION
  *
- * Face class represents a face of a Polygon Model Data object.
+ * Face class represents a face (Vertex Morphing) of a Polygon Model Data object.
  */
 
 class VPVL_EXPORT Face
@@ -83,33 +83,112 @@ public:
     static const int kNameSize = 20;
     static const uint32_t kMaxVertexID = 65536;
 
+    /**
+     * Get byte size of all faces.
+     *
+     * @param data The buffer to read
+     * @param rest Rest size of the buffer
+     * @param count Count of all faces
+     * @param ok True if the buffer is valid
+     * @return Byte size of faces passed by count
+     */
     static size_t totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok);
+
+    /**
+     * Get stride of this face.
+     *
+     * @param data The buffer to read
+     * @return Stride of the face
+     */
     static size_t stride(const uint8_t *data);
 
+    /**
+     * Read and parse the buffer with id and sets it's result to the class.
+     *
+     * @param data The buffer to read and parse
+     */
     void read(const uint8_t *data);
+
+    /**
+     * Convert indices of this face by the face.
+     *
+     * @param face A face to convert indices
+     */
     void convertIndices(const Face *base);
+
+    /**
+     * Transform vertices with this face.
+     *
+     * @param vertices The vertices to transform
+     */
     void setVertices(VertexList &vertices);
+
+    /**
+     * Transform vertices with this face by rate.
+     *
+     * @param vertices The vertices to transform
+     */
     void setVertices(VertexList &vertices, float rate);
 
+    /**
+     * Get the name of this face.
+     *
+     * @return the name of this face
+     */
     const uint8_t *name() const {
         return m_name;
     }
+
+    /**
+     * Get the name of this face in English.
+     *
+     * @return the name of this face in English.
+     */
     const uint8_t *englishName() const {
         return m_englishName;
     }
+
+    /**
+     * Get the type of this face.
+     *
+     * @return the type of this face
+     */
     Type type() const {
         return m_type;
     }
+
+    /**
+     * Get weight of this face.
+     *
+     * @return weight of this face
+     */
     float weight() const {
         return m_weight;
     }
 
+    /**
+     * Set the name of this face.
+     *
+     * @param value the name of this face
+     */
     void setName(const uint8_t *value) {
         copyBytesSafe(m_name, value, sizeof(m_name));
     }
+
+    /**
+     * Set the name of this face in English.
+     *
+     * @param value the name of this face in English
+     */
     void setEnglishName(const uint8_t *value) {
         copyBytesSafe(m_englishName, value, sizeof(m_englishName));
     }
+
+    /**
+     * Set weight of this face.
+     *
+     * @param weight A weight value of this face
+     */
     void setWeight(float value) {
         m_weight = value;
     }

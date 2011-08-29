@@ -62,9 +62,9 @@ public:
     BaseKeyFrame *clone() const;
 
     /**
-     * Get the target bone name of this keyframe.
+     * Get the target face name of this keyframe.
      *
-     * @return the bone name
+     * @return the face name
      */
     const uint8_t *name() const;
 
@@ -78,16 +78,16 @@ public:
     }
 
     /**
-     * Set the target bone name of this keyframe.
+     * Set the target face name of this keyframe.
      *
-     * @param the bone name
+     * @param the face name
      */
     void setName(const uint8_t *value);
 
     /**
-     * Set the face weight of this keyframe.
+     * Set weight of the face of this keyframe.
      *
-     * @param A value of face weight
+     * @param A value of weight of the face
      */
     void setWeight(float value) {
         m_weight = value;

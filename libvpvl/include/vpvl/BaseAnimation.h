@@ -64,7 +64,7 @@ public:
     /**
      * Constructor that set the smear default value to a given value.
      *
-     * @param The smear default value
+     * @param smearDefault The smear default value
      */
     BaseAnimation(float smearDefault);
 
@@ -73,37 +73,37 @@ public:
     /**
      * Read and parse the buffer with size and sets it's result to the class.
      *
-     * @param The buffer to read and parse
-     * @param Size of the buffer
+     * @param data The buffer to read and parse
+     * @param size Size of the buffer
      */
     virtual void read(const uint8_t *data, uint32_t size) = 0;
 
     /**
      * Seek the Animation to the given value index.
      *
-     * @param A frame index to seek
+     * @param frameAt A frame index to seek
      */
     virtual void seek(float frameAt) = 0;
 
     /**
      * Save the current animation state.
      *
-     * @param A position of center
+     * @param center A position of center
      */
     virtual void takeSnap(const btVector3 &center) = 0;
 
     /**
      * Seek from the previous to the next frame with delta.
      *
-     * @param A delta frame index to seek the next frame
+     * @param deltaFrame A delta frame index to seek the next frame
      */
     void advance(float deltaFrame);
 
     /**
      * Rewind the Animation.
      *
-     * @param A frame index to rewind
-     * @param A delta frame indx to rewind
+     * @param target A frame index to rewind
+     * @param deltaFrame A delta frame indx to rewind
      */
     void rewind(float target, float deltaFrame);
 
@@ -125,7 +125,7 @@ public:
     /**
      * Add a key frame.
      *
-     * @param A key frame to be added
+     * @param frame A key frame to be added
      */
     void addKeyFrame(BaseKeyFrame *frame);
 
@@ -154,8 +154,8 @@ public:
      * This method automatically calls refresh after deleting the frame.
      * No refresh is called if no frame to remove is found.
      *
-     * @param A frame index to delete
-     * @param A name to delete
+     * @param frameIndex A frame index to delete
+     * @param name A name to delete
      */
     void deleteKeyFrame(int frameIndex, const uint8_t *name);
 
@@ -165,14 +165,14 @@ public:
      * This method automatically calls refresh after deleting the frame.
      * No refresh is called if no frame to remove is found.
      *
-     * @param A frame index to delete
+     * @param frameIndex A frame index to delete
      */
     void deleteKeyFrames(int frameIndex);
 
     /**
      * Save the current Animation state.
      *
-     * @param A position of center
+     * @param center A position of center
      */
     void setOverrideFirst(const btVector3 &center);
 
@@ -224,7 +224,7 @@ public:
     /**
      * Set the blend rate.
      *
-     * @param The blend rate value
+     * @param value The blend rate value
      */
     void setBlendRate(float value) {
         m_blendRate = value;
@@ -233,7 +233,7 @@ public:
     /**
      * Set calling refresh method automatically after modifying key frames.
      *
-     * @param True if calling refresh automatically
+     * @param value True if calling refresh automatically
      */
     void setEnableAutomaticRefresh(bool value) {
         m_automaticRefresh = value;

@@ -63,7 +63,7 @@ public:
     /**
      * Read and parse the buffer and sets it's result to the class.
      *
-     * @param The buffer to read and parse
+     * @param data The buffer to read and parse
      */
     virtual void read(const uint8_t *data) = 0;
 
@@ -72,7 +72,7 @@ public:
      *
      * You should allocate the buffer size with stride.
      *
-     * @param The buffer to write
+     * @param data The buffer to write
      * @see stride
      */
     virtual void write(uint8_t *data) const = 0;
@@ -89,7 +89,7 @@ public:
     /**
      * Get the target bone name of this keyframe.
      *
-     * @return the bone name
+     * @return name the bone name
      */
     virtual const uint8_t *name() const = 0;
 
@@ -105,14 +105,14 @@ public:
     /**
      * Set the target bone name of this keyframe.
      *
-     * @param the bone name
+     * @param value the bone name
      */
     virtual void setName(const uint8_t *value) = 0;
 
     /**
      * Set the frame index of this keyframe.
      *
-     * @param A value of frame index
+     * @param value A value of frame index
      */
     void setFrameIndex(float value) {
         m_frameIndex = value;
