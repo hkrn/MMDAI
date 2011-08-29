@@ -18,12 +18,6 @@
 #include <vpvl/vpvl.h>
 #include "util.h"
 
-namespace
-{
-const char *kWindowTitleFormat = QT_TR_NOOP("%1 - %2 - %3: Rendering Scene (FPS: %4)");
-const char *kWindowTitleFormat2 = QT_TR_NOOP("%1 - %2 - %3");
-}
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -54,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
-    setWindowTitle(tr(kWindowTitleFormat2).arg(qAppName()).arg(internal::noneString()).arg(internal::noneString()));
+    setWindowTitle(buildWindowTitle());
 }
 
 MainWindow::~MainWindow()
@@ -242,10 +236,7 @@ void MainWindow::setCameraPerspective(const btVector3 &pos,
 
 void MainWindow::updateInformation()
 {
-    setWindowTitle(tr(kWindowTitleFormat2)
-                   .arg(qAppName())
-                   .arg(internal::toQString(m_model))
-                   .arg(internal::toQString(m_bone)));
+    setWindowTitle(buildWindowTitle());
 }
 
 void MainWindow::buildUI()
@@ -329,28 +320,32 @@ void MainWindow::connectWidgets()
 
 void MainWindow::startSceneUpdate()
 {
-    setWindowTitle(tr(kWindowTitleFormat)
-                   .arg(qAppName())
-                   .arg(internal::toQString(m_model))
-                   .arg(internal::toQString(m_bone))
-                   .arg(0));
+    setWindowTitle(buildWindowTitle(0));
 }
 
 void MainWindow::stopSceneUpdate()
 {
-    setWindowTitle(tr(kWindowTitleFormat2)
-                   .arg(qAppName())
-                   .arg(internal::toQString(m_model))
-                   .arg(internal::toQString(m_bone)));
+    setWindowTitle(buildWindowTitle());
 }
 
 void MainWindow::updateFPS(int fps)
 {
-    setWindowTitle(tr(kWindowTitleFormat)
-                   .arg(qAppName())
-                   .arg(internal::toQString(m_model))
-                   .arg(internal::toQString(m_bone))
-                   .arg(fps));
+    setWindowTitle(buildWindowTitle(fps));
+}
+
+const QString MainWindow::buildWindowTitle()
+{
+    QString title = qAppName();
+    if (m_model)
+        title += " - " + internal::toQString(m_model);
+    if (m_bone)
+        title += " - " + internal::toQString(m_bone);
+    return title;
+}
+
+const QString MainWindow::buildWindowTitle(int fps)
+{
+    return buildWindowTitle() + tr(": Rendering Scene (FPS: %1)").arg(fps);
 }
 
 void MainWindow::on_actionAbout_triggered()

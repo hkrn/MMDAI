@@ -53,6 +53,8 @@ private slots:
     void startSceneUpdate();
     void stopSceneUpdate();
     void updateFPS(int fps);
+    const QString buildWindowTitle();
+    const QString buildWindowTitle(int fps);
 
     void on_actionAbout_triggered();
     void on_actionAboutQt_triggered();
