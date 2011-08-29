@@ -122,6 +122,7 @@ void TestVMDMotion::saveBoneKeyFrame()
     QVERIFY(cloned->position() == pos);
     QVERIFY(cloned->rotation() == rot);
     testBoneInterpolationMatrix(matrix, *cloned);
+    delete cloned;
 }
 
 void TestVMDMotion::saveCameraKeyFrame()
@@ -169,6 +170,7 @@ void TestVMDMotion::saveCameraKeyFrame()
     QVERIFY(cloned->distance() == frame.distance());
     QVERIFY(cloned->fovy() == frame.fovy());
     testCameraInterpolationMatrix(matrix, *cloned);
+    delete cloned;
 }
 
 void TestVMDMotion::saveFaceKeyFrame()
@@ -189,6 +191,7 @@ void TestVMDMotion::saveFaceKeyFrame()
              QString(reinterpret_cast<const char *>(frame.name())));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QCOMPARE(cloned->weight(), frame.weight());
+    delete cloned;
 }
 
 void TestVMDMotion::saveMotion()

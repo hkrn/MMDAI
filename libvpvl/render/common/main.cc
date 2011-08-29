@@ -341,6 +341,8 @@ private:
         m_model = new vpvl::PMDModel();
         if (!m_model->load(m_modelData, size)) {
             m_delegate.log(IDelegate::kLogWarning, "Failed parsing the model");
+            delete m_model;
+            m_model = 0;
             return false;
         }
         m_renderer.loadModel(m_model, internal::kModelDir);
