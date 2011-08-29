@@ -29,6 +29,8 @@ unix {
   UI_DIR = $${OUT_PWD}/.uic
 }
 macx {
+  QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
+  QMAKE_LFLAGS *= -mmacosx-version-min=10.5
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
