@@ -398,8 +398,6 @@ public:
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, value);
         glUniform1i(m_toonTextureUniformLocation, 1);
-        glSamplerParameteri(m_toonTextureUniformLocation, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glSamplerParameteri(m_toonTextureUniformLocation, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
 private:
@@ -632,12 +630,16 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
                     userData->vertexBufferObjects[kModelTexCoords]);
     if (m_delegate->loadToonTexture("toon0.bmp", dir, textureID)) {
         userData->toonTextureID[0] = textureID;
+        glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
@@ -747,6 +749,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         }
         m_modelProgram->setMaterialShininess(material->shiness());
         m_modelProgram->setMainTexture(materialPrivate.primaryTextureID);
+        m_modelProgram->setToonTexture(userData->toonTextureID[material->toonID()]);
         m_modelProgram->setSubTexture(materialPrivate.secondTextureID);
         m_modelProgram->setIsMainAdditive(material->isAdditionalSphereMain());
         m_modelProgram->setIsSubAdditive(material->isAdditionalSphereSub());

@@ -28,28 +28,28 @@ void main() {
     vec3 normal = normalize(outNormal);
     vec3 light = normalize(lightPosition - outPosition);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightAmbient * materialAmbient;
+    vec4 color = lightAmbient + materialAmbient;
     if (diffuse != kZero) {
         vec3 view = normalize(outPosition);
         vec3 halfway = normalize(light - view);
         float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
-        color += lightDiffuse * materialDiffuse * diffuse + lightSpecular * materialSpecular * specular;
+        color += (lightDiffuse * materialDiffuse) * diffuse
+               + (lightSpecular * materialSpecular) * specular;
     }
     if (hasMainTexture) {
         if (isMainAdditive) {
-            color += texture2D(mainTexture, outMainTexCoord);// + texture2D(toonTexture, outToonTexCoord);
+            color += texture2D(mainTexture, outMainTexCoord) + texture2D(toonTexture, outToonTexCoord);
         }
         else {
-            color *= texture2D(mainTexture, outMainTexCoord);// * texture2D(toonTexture, outToonTexCoord);
+            color *= texture2D(mainTexture, outMainTexCoord) * texture2D(toonTexture, outToonTexCoord);
         }
     }
-    // color += texture2D(toonTexture, outToonTexCoord);
     if (hasSubTexture) {
         if (isMainAdditive || isSubAdditive) {
-            color += texture2D(subTexture, outSubTexCoord);// + texture2D(toonTexture, outToonTexCoord);
+            color += texture2D(subTexture, outSubTexCoord);
         }
         else {
-            color *= texture2D(subTexture, outSubTexCoord);// * texture2D(toonTexture, outToonTexCoord);
+            color *= texture2D(subTexture, outSubTexCoord);
         }
     }
     if (color.a >= kAlphaThreshold)
