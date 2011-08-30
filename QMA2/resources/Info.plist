@@ -17,9 +17,9 @@
      <key>CFBundleIdentifier</key>
      <string>com.github.mmdai</string>
      <key>CFBundleVersion</key>
-     <string>0.1.1</string>
+     <string>0.2.0</string>
      <key>CFBundleShortVersionString</key>
-     <string>0.1.1</string>
+     <string>0.2.0</string>
      <key>CFBundleGetInfoString</key>
      <string>MMDAI2 is an application to edit VMD motion</string>
      <key>LSArchitecturePriority</key>

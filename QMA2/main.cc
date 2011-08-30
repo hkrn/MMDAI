@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QTranslator appTranslator, qtTranslator;
     a.setApplicationName("MMDAI2");
-    a.setApplicationVersion("0.1.1");
+    a.setApplicationVersion("0.2.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
