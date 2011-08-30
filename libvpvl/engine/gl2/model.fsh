@@ -28,7 +28,7 @@ void main() {
     vec3 normal = normalize(outNormal);
     vec3 light = normalize(lightPosition - outPosition);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightAmbient + materialAmbient;
+    vec4 color = lightAmbient * materialAmbient;
     if (diffuse != kZero) {
         vec3 view = normalize(outPosition);
         vec3 halfway = normalize(light - view);
@@ -43,6 +43,9 @@ void main() {
         else {
             color *= texture2D(mainTexture, outMainTexCoord) * texture2D(toonTexture, outToonTexCoord);
         }
+    }
+    else {
+        color *= texture2D(toonTexture, outToonTexCoord);
     }
     if (hasSubTexture) {
         if (isMainAdditive || isSubAdditive) {
