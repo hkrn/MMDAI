@@ -46,6 +46,9 @@
 /* Build libvpvl without BulletPhysics except LinearMath */
 #cmakedefine VPVL_NO_BULLET
 
+/* Build libvpvl with Open Asset Import Library */
+#cmakedefine VPVL_LINK_ASSIMP
+
 /* version */
 #define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
 #define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@

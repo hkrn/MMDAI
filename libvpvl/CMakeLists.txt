@@ -101,6 +101,20 @@ function(link_glew target)
   endif()
 endfunction()
 
+function(link_assimp target)
+  string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_TOLOWER)
+  set(ASSIMP_LOCAL_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../assimp/${CMAKE_BUILD_TYPE_TOLOWER}/code")
+  set(ASSIMP_LOCAL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../assimp/include")
+  find_path(ASSIMP_INCLUDE_DIRS assimp.hpp PATHS ${ASSIMP_LOCAL_INCLUDE_DIR} $ENV{ASSIMP_INCLUDE_DIR})
+  find_library(ASSIMP_LIBRARY assimp PATHS ${ASSIMP_LOCAL_LIBRARY_DIR} $ENV{ASSIMP_LIBRARY_DIR})
+  if (ASSIMP_LIBRARY AND ASSIMP_LIBRARY)
+    target_link_libraries(${target} ${ASSIMP_LIBRARY})
+    include_directories(${ASSIMP_INCLUDE_DIRS})
+  else()
+    message(FATAL_ERROR "Required Open Asset Import Library is not found.")
+  endif()
+endfunction()
+
 # imported functions from Allegro5's cmake
 function(append_lib_type_suffix var)
   string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_TOLOWER)
@@ -154,6 +168,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # find Bullet Physics
 link_bullet(vpvl)
+
+# find assimp library
+option(VPVL_LINK_ASSIMP "Link with Open Asset Import Library (default is OFF)" OFF)
+if(VPVL_LINK_ASSIMP)
+  link_assimp(vpvl)
+endif()
 
 # find Allegro5 game library if enabled
 if(VPVL_USE_ALLEGRO5)

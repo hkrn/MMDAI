@@ -45,13 +45,16 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#define VPVL_SDL_LOAD_ASSET 0
-
 #ifndef VPVL_NO_BULLET
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #else
 struct btDiscreteDynamicsWorld { int unused; };
+#endif
+
+#ifdef VPVL_LINK_ASSIMP
+#include <assimp.hpp>
+#include <aiPostProcess.h>
 #endif
 
 #if defined(VPVL_GL2_RENDERER_H_)
@@ -347,13 +350,16 @@ private:
         }
         m_renderer.loadModel(m_model, internal::kModelDir);
 
-#if VPVL_SDL_LOAD_ASSET
-        internal::slurpFile(internal::concatPath(internal::kStageDir, internal::kStageName), m_stageData, size);
-        if (!m_stage.load(m_stageData, size)) {
-            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the stage");
-            return -1;
-        }
-        m_renderer.loadAsset(&m_stage, internal::kStageDir);
+#ifdef VPVL_LINK_ASSIMP
+        const aiScene *asset = m_importer.ReadFile(
+                    internal::concatPath(internal::kStageDir, internal::kStageName),
+                    aiProcessPreset_TargetRealtime_Quality);
+        if (asset)
+            m_renderer.loadAsset(asset, internal::kStageDir);
+        else
+            m_delegate.log(IDelegate::kLogWarning,
+                           "Failed parsing the asset: %s, skipped...",
+                           m_importer.GetErrorString());
 #endif
 
         vpvl::Scene *scene = m_renderer.scene();
@@ -403,6 +409,9 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
 #endif /* VPVL_NO_BULLET */
+#ifdef VPVL_LINK_ASSIMP
+    Assimp::Importer m_importer;
+#endif
     internal::Delegate m_delegate;
     Renderer m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */

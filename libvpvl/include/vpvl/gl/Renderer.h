@@ -50,6 +50,9 @@
 #include <GL/glew.h>
 #endif
 
+struct aiScene;
+struct aiMaterial;
+struct aiNode;
 class btDynamicsWorld;
 class btIDebugDraw;
 
@@ -59,10 +62,11 @@ namespace vpvl
 class Bone;
 class PMDModel;
 class Scene;
-class XModel;
 
 namespace gl
 {
+
+struct AssetInternal;
 
 class VPVL_EXPORT IDelegate
 {
@@ -121,16 +125,20 @@ public:
     void drawModelBones(bool drawSpheres, bool drawLines);
     void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
     void drawBoneTransform(vpvl::Bone *bone);
-    void loadAsset(vpvl::XModel *model, const std::string &dir);
-    void unloadAsset(const vpvl::XModel *model);
-    void drawAsset(const vpvl::XModel *model);
+    void loadAsset(const aiScene *asset, const std::string &dir);
+    void unloadAsset(const aiScene *asset);
+    void drawAsset(const aiScene *scene);
     void drawSurface();
 
 private:
+    void drawAssetRecurse(const aiScene *scene, const aiNode *node);
+    void setAssetMaterial(const aiMaterial *material);
+
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
-    Array<vpvl::XModel *> m_assets;
+    Array<aiScene *> m_assets;
+    AssetInternal *m_internal;
     btIDebugDraw *m_debugDrawer;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
