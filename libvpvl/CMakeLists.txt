@@ -238,6 +238,11 @@ if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL AND NOT VPVL_USE_ALLEGRO5)
   add_executable(vpvl_sdl ${vpvl_sdl_common_sources} ${vpvl_sdl_osx_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
   target_link_libraries(vpvl_sdl vpvl ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
   include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
+  find_library(ICONV_LIBRARY iconv)
+  if(ICONV_LIBRARY)
+    add_definitions(-DVPVL_HAS_ICONV)
+    target_link_libraries(vpvl_sdl ${ICONV_LIBRARY})
+  endif()
 endif()
 
 # extra renderer program with allegro5

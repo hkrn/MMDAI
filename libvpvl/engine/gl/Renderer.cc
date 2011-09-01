@@ -711,11 +711,24 @@ void Renderer::drawBoneTransform(vpvl::Bone *bone)
     }
 }
 
+static const std::string CanonicalizePath(const std::string &path)
+{
+    const std::string from("\\"), to("/");
+    std::string ret(path);
+    std::string::size_type pos(path.find(from));
+    while (pos != std::string::npos) {
+        ret.replace(pos, from.length(), to);
+        pos = ret.find(from, pos + to.length());
+    }
+    return ret;
+}
+
 void Renderer::loadAsset(const aiScene *asset, const std::string &dir)
 {
 #ifdef VPVL_LINK_ASSIMP
     const uint32_t nMaterials = asset->mNumMaterials;
     aiString texturePath;
+    std::string path, canonicalized, filename;
     for (uint32_t i = 0; i < nMaterials; i++) {
         aiMaterial *material = asset->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -723,11 +736,13 @@ void Renderer::loadAsset(const aiScene *asset, const std::string &dir)
         int textureIndex = 0;
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-            const char *path = texturePath.data;
+            path = texturePath.data;
             if (m_internal->textures[path] == 0) {
-                if (m_delegate->loadTexture(dir + "/" + path, textureID)) {
+                canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
+                filename = dir + "/" + canonicalized;
+                if (m_delegate->loadTexture(filename, textureID)) {
                     m_internal->textures[path] = textureID;
-                    m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", path, textureID);
+                    m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;
@@ -914,18 +929,19 @@ void Renderer::setAssetMaterial(const aiMaterial *material)
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission))
         aiColor2Float4(emission, color);
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular))
+        aiColor2Float4(specular, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
     if (ret1 == AI_SUCCESS && ret2 == AI_SUCCESS) {
-        if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular))
-            aiColor2Float4(diffuse, color);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess * strength);
     }
+    else if (ret1 == AI_SUCCESS) {
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+    }
     else {
-        color[0] = 0.0f; color[1] = 0.0f; color[2] = 0.0f; color[3] = 0.0f;
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
     }
     int wireframe, twoside;

@@ -57,6 +57,10 @@ struct btDiscreteDynamicsWorld { int unused; };
 #include <aiPostProcess.h>
 #endif
 
+#ifdef VPVL_HAS_ICONV
+#include <iconv.h>
+#endif
+
 #if defined(VPVL_GL2_RENDERER_H_)
 using namespace vpvl::gl2;
 #elif defined(VPVL_GL_RENDERER_H_)
@@ -102,9 +106,17 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
 class Delegate : public IDelegate
 {
 public:
-    Delegate(const std::string &system) : m_system(system) {
+    Delegate(const std::string &system) : m_system(system), m_iconv(0) {
+#ifdef VPVL_HAS_ICONV
+        m_iconv = iconv_open("UTF-8", "SHIFT-JIS");
+        assert(m_iconv != reinterpret_cast<iconv_t *>(-1));
+#endif
     }
     ~Delegate() {
+#ifdef VPVL_HAS_ICONV
+        iconv_close(m_iconv);
+        m_iconv = 0;
+#endif
     }
 
     bool loadTexture(const std::string &path, GLuint &textureID) {
@@ -198,11 +210,32 @@ public:
     }
 #endif
     const std::string toUnicode(const uint8_t *value) {
+#ifdef VPVL_HAS_ICONV
+        char *inbuf = strdup(reinterpret_cast<const char *>(value)), *pinbuf = inbuf;
+        size_t inbuflen = strlen(inbuf), outbuflen = inbuflen * 3;
+        char *outbuf = new char[outbuflen], *poutbuf = outbuf;
+        if (iconv(m_iconv, &inbuf, &inbuflen, &outbuf, &outbuflen) >= 0) {
+            *outbuf = '\0';
+        }
+        else {
+            free(pinbuf);
+            delete[] poutbuf;
+            log(kLogWarning, "Cannot convert string: %s", inbuf);
+            return std::string("");
+        }
+        size_t len = strlen(poutbuf);
+        std::string result(poutbuf);
+        free(pinbuf);
+        delete[] poutbuf;
+        return result;
+#else
         return reinterpret_cast<const char *>(value);
+#endif
     }
 
 private:
     std::string m_system;
+    iconv_t m_iconv;
 };
 
 }
