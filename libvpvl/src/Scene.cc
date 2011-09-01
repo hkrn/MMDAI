@@ -80,11 +80,11 @@ Scene::Scene(int width, int height, int fps)
       m_currentRotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_rotation(m_currentRotation),
       m_viewMoveRotation(0.0f, 0.0f, 0.0f, 1.0f),
-      m_lightColor(1.0f, 1.0f, 1.0f),
+      m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lightPosition(0.5f, 1.0f, 0.5f),
-      m_lightAmbient(m_lightColor * 1.2f),
-      m_lightDiffuse(0.0f, 0.0f, 0.0f),
-      m_lightSpecular(m_lightColor * 0.6f),
+      m_lightAmbient(1.2f, 1.2f, 1.2f, 1.0f),
+      m_lightDiffuse(0.0f, 0.0f, 0.0f, 0.0f),
+      m_lightSpecular(0.6f, 0.6f, 0.6f, 1.0f),
       m_currentPosition(0.0f, 10.0f, 0.0f),
       m_position(m_currentPosition),
       m_viewMovePosition(m_currentPosition),
@@ -217,14 +217,14 @@ void Scene::setCameraMotion(VMDMotion *motion)
     m_cameraMotion = motion;
 }
 
-void Scene::setLightComponent(const btVector3 &ambient, const btVector3 &diffuse, const btVector3 &specular)
+void Scene::setLightComponent(const btVector4 &ambient, const btVector4 &diffuse, const btVector4 &specular)
 {
     m_lightAmbient = ambient;
     m_lightDiffuse = diffuse;
     m_lightSpecular = specular;
 }
 
-void Scene::setLightSource(const btVector3 &color, const btVector3 &position)
+void Scene::setLightSource(const btVector4 &color, const btVector3 &position)
 {
     m_lightColor = color;
     m_lightPosition = position;
