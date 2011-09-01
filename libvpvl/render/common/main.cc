@@ -245,8 +245,8 @@ public:
     }
     ~UI() {
         m_renderer.unloadModel(m_model);
-#if VPVL_SDL_LOAD_ASSET
-        // m_renderer.unloadAsset(&m_stage);
+#ifdef VPVL_LINK_ASSIMP
+        m_renderer.unloadAsset(m_asset);
 #endif
         delete m_model;
         delete m_world;
@@ -291,8 +291,10 @@ public:
     int execute() {
         uint32_t interval = static_cast<uint32_t>(1000.0f / internal::kFPS);
         SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &m_renderer);
+        bool quit = false;
         while (true) {
-            if (pollEvent())
+            pollEvent(quit);
+            if (quit)
                 return 0;
             draw();
             SDL_GL_SwapBuffers();
@@ -351,11 +353,11 @@ private:
         m_renderer.loadModel(m_model, internal::kModelDir);
 
 #ifdef VPVL_LINK_ASSIMP
-        const aiScene *asset = m_importer.ReadFile(
+        m_asset = m_importer.ReadFile(
                     internal::concatPath(internal::kStageDir, internal::kStageName),
                     aiProcessPreset_TargetRealtime_Quality);
-        if (asset)
-            m_renderer.loadAsset(asset, internal::kStageDir);
+        if (m_asset)
+            m_renderer.loadAsset(m_asset, internal::kStageDir);
         else
             m_delegate.log(IDelegate::kLogWarning,
                            "Failed parsing the asset: %s, skipped...",
@@ -382,23 +384,43 @@ private:
 
         return true;
     }
-    bool pollEvent() {
+    void pollEvent(bool &quit) {
         SDL_Event event;
-        SDLKey key;
+        quit = false;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
-            case SDL_QUIT:
-                return true;
-            case SDL_KEYDOWN:
-                key = event.key.keysym.sym;
+            case SDL_QUIT: {
+                quit = true;
+            }
+            case SDL_KEYDOWN: {
+                SDLKey key = event.key.keysym.sym;
                 if (key == SDLK_ESCAPE || key == SDLK_q)
-                    return true;
-                break;
-            default:
+                    quit = true;
                 break;
             }
+            case SDL_MOUSEBUTTONDOWN: {
+                break;
+            }
+            case SDL_VIDEORESIZE: {
+                const SDL_ResizeEvent &e = event.resize;
+                m_renderer.resize(e.w, e.h);
+            }
+            case SDL_MOUSEMOTION: {
+                const SDL_MouseMotionEvent &e = event.motion;
+                if (e.state == SDL_PRESSED) {
+                    vpvl::Scene *scene = m_renderer.scene();
+                    btVector3 pos = scene->position(), angle = scene->angle();
+                    float fovy = scene->fovy(), distance = scene->distance();
+                    angle.setValue(angle.x() + e.yrel, angle.y() + e.xrel, angle.z());
+                    scene->setCameraPerspective(pos, angle, fovy, distance);
+                }
+                break;
+            }
+            default: {
+                break;
+            }
+            }
         }
-        return false;
     }
 
     SDL_Surface *m_surface;
@@ -411,6 +433,7 @@ private:
 #endif /* VPVL_NO_BULLET */
 #ifdef VPVL_LINK_ASSIMP
     Assimp::Importer m_importer;
+    const aiScene *m_asset;
 #endif
     internal::Delegate m_delegate;
     Renderer m_renderer;
