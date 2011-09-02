@@ -42,9 +42,9 @@
 #ifndef VPVL_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else
-struct btCollisionShape { int unused; };
-struct btRigidBody { int unused; };
-struct btMotionState { int unused; };
+VPVL_DECLARE_HANDLE(btCollisionShape)
+VPVL_DECLARE_HANDLE(btMotionState)
+VPVL_DECLARE_HANDLE(btRigidBody)
 #endif
 
 namespace vpvl

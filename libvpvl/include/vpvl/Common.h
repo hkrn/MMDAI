@@ -70,10 +70,17 @@ typedef unsigned int uint32_t;
     #define VPVL_EXPORT __declspec(dllexport)
   #else
     #define VPVL_EXPORT __declspec(dllimport)
-  #endif /* MyLibrary_EXPORTS */
+  #endif /* defined(vpvl_EXPORTS) */
 #else /* defined (_WIN32) */
- #define VPVL_EXPORT
+ #if defined(__GNUC__) && __GNUC__ >= 4
+  #define VPVL_EXPORT __attribute__ ((visibility("default")))
+ #else
+  #define VPVL_EXPORT
+ #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
 #endif
+
+#define VPVL_DECLARE_HANDLE(TypeName) \
+    struct TypeName { int unused; };
 
 #define VPVL_DISABLE_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName &); \

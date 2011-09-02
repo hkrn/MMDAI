@@ -49,14 +49,14 @@
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #else
-struct btDiscreteDynamicsWorld { int unused; };
+VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
 #ifdef VPVL_LINK_ASSIMP
 #include <assimp.hpp>
 #include <aiPostProcess.h>
 #else
-struct aiScene { int unused; };
+VPVL_DECLARE_HANDLE(aiScene)
 #endif
 
 #if defined(VPVL_HAS_ICU)

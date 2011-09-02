@@ -42,7 +42,7 @@
 #ifndef VPVL_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else
-struct btDiscreteDynamicsWorld { int unused; };
+VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
 namespace vpvl

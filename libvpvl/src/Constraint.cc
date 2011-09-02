@@ -42,8 +42,8 @@
 #ifndef VPVL_NO_BULLET
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
 #else
-struct btGeneric6DofConstraint { int unused; };
-struct btGeneric6DofSpringConstraint { int unused; };
+VPVL_DECLARE_HANDLE(btGeneric6DofConstraint)
+VPVL_DECLARE_HANDLE(btGeneric6DofSpringConstraint)
 #endif
 
 namespace vpvl

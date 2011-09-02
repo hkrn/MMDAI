@@ -56,13 +56,13 @@ struct AssetInternal
 }
 }
 #else
-struct aiNode { int unused; };
-struct aiScene { int unused; };
+VPVL_DECLARE_HANDLE(aiNode)
+VPVL_DECLARE_HANDLE(aiScene)
 namespace vpvl
 {
 namespace gl
 {
-struct AssetInternal { int unused; };
+VPVL_DECLARE_HANDLE(AssetInternal)
 }
 }
 #endif
