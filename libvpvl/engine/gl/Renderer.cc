@@ -771,6 +771,7 @@ void Renderer::unloadAsset(const aiScene *asset)
                 textureID = m_internal->textures[texturePath.data];
                 glDeleteTextures(1, &textureID);
                 m_internal->textures.erase(texturePath.data);
+                textureIndex++;
             }
         }
         m_assets.remove(const_cast<aiScene *>(asset));
