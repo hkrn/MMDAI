@@ -62,7 +62,7 @@ class EdgeProgram;
 class ModelProgram;
 class ShadowProgram;
 
-class VPVL_EXPORT IDelegate
+class VPVL_API IDelegate
 {
 public:
     enum LogLevel {
@@ -95,7 +95,7 @@ public:
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL_EXPORT Renderer
+class VPVL_API Renderer
 {
 public:
     static bool initializeGLEW(GLenum &err);

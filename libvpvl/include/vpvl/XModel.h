@@ -61,7 +61,7 @@ typedef Array<uint16_t> XModelIndexList;
  * XModel class represents a DirectX model.
  */
 
-class VPVL_EXPORT XModel
+class VPVL_API XModel
 {
 public:
 

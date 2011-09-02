@@ -54,7 +54,7 @@ namespace vpvl
  * Material class represents a material of a Polygon Model Data object.
  */
 
-class VPVL_EXPORT Material
+class VPVL_API Material
 {
 public:
     Material();

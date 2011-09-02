@@ -61,7 +61,7 @@ struct FaceVertex
  * Face class represents a face (Vertex Morphing) of a Polygon Model Data object.
  */
 
-class VPVL_EXPORT Face
+class VPVL_API Face
 {
 public:
 

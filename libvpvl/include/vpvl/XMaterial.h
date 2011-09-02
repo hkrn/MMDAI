@@ -42,7 +42,7 @@
 namespace vpvl
 {
 
-class VPVL_EXPORT XMaterial {
+class VPVL_API XMaterial {
 public:
     XMaterial()
         : m_color(0.0f, 0.0f, 0.0f, 0.0f),

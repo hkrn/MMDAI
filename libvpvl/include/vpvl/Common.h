@@ -67,15 +67,15 @@ typedef unsigned int uint32_t;
 
 #if defined (WIN32)
   #if defined(vpvl_EXPORTS)
-    #define VPVL_EXPORT __declspec(dllexport)
+    #define VPVL_API __declspec(dllexport)
   #else
-    #define VPVL_EXPORT __declspec(dllimport)
+    #define VPVL_API __declspec(dllimport)
   #endif /* defined(vpvl_EXPORTS) */
 #else /* defined (_WIN32) */
  #if defined(__GNUC__) && __GNUC__ >= 4
-  #define VPVL_EXPORT __attribute__ ((visibility("default")))
+  #define VPVL_API __attribute__ ((visibility("default")))
  #else
-  #define VPVL_EXPORT
+  #define VPVL_API
  #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
 #endif
 
@@ -193,14 +193,14 @@ static const float kPI = 3.14159265358979323846f;
  * @param version A version of compiled version (VPVL_VERSION)
  * @return True if the version is compatible to work
  */
-VPVL_EXPORT bool isLibraryVersionCorrect(int version);
+VPVL_API bool isLibraryVersionCorrect(int version);
 
 /**
  * Get current version string of this library.
  *
  * @return A string of current version
  */
-VPVL_EXPORT const char *libraryVersionString();
+VPVL_API const char *libraryVersionString();
 
 /**
  * Convert degree to radian.
@@ -208,7 +208,7 @@ VPVL_EXPORT const char *libraryVersionString();
  * @param value A value of degree
  * @return A value of converted radian from degree
  */
-VPVL_EXPORT inline float radian(float value)
+VPVL_API inline float radian(float value)
 {
     return value * static_cast<float>(kPI / 180.0f);
 }
@@ -219,7 +219,7 @@ VPVL_EXPORT inline float radian(float value)
  * @param value A value of radian
  * @return A value of converted degree from radian
  */
-VPVL_EXPORT inline float degree(float value)
+VPVL_API inline float degree(float value)
 {
     return value * static_cast<float>(180.0f / kPI);
 }
@@ -234,7 +234,7 @@ VPVL_EXPORT inline float degree(float value)
  * @param max A length of string to copy
  * @return A pointer of string to be copied
  */
-VPVL_EXPORT inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
+VPVL_API inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
 {
     assert(dst != NULL && src != NULL && max > 0);
     size_t len = max - 1;

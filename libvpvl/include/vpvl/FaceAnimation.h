@@ -61,7 +61,7 @@ typedef Array<FaceKeyFrame *> FaceKeyFrameList;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL_EXPORT FaceAnimation : public BaseAnimation
+class VPVL_API FaceAnimation : public BaseAnimation
 {
 public:
     FaceAnimation();

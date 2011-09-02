@@ -46,7 +46,7 @@ namespace vpvl
 
 class Bone;
 
-class VPVL_EXPORT BoneKeyFrame : public BaseKeyFrame
+class VPVL_API BoneKeyFrame : public BaseKeyFrame
 {
 public:
     enum InterpolationType

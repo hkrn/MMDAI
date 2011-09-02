@@ -58,7 +58,7 @@ typedef Array<CameraKeyFrame *> CameraKeyFrameList;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL_EXPORT CameraAnimation : public BaseAnimation
+class VPVL_API CameraAnimation : public BaseAnimation
 {
 public:
     CameraAnimation();

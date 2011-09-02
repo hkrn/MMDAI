@@ -65,7 +65,7 @@ typedef struct PMDModelUserData PMDModelUserData;
  * PMDModel class represents a Polygon Model Data object, 3D model object.
  */
 
-class VPVL_EXPORT PMDModel
+class VPVL_API PMDModel
 {
 public:
     typedef struct SkinVertex SkinVertex;

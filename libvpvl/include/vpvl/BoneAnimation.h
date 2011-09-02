@@ -61,7 +61,7 @@ typedef struct BoneAnimationInternal BoneAnimationInternal;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL_EXPORT BoneAnimation : public BaseAnimation
+class VPVL_API BoneAnimation : public BaseAnimation
 {
 public:
     BoneAnimation();

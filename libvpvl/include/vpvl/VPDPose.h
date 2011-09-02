@@ -53,7 +53,7 @@ class PMDModel;
  * VPDPose represents model's pose
  */
 
-class VPVL_EXPORT VPDPose
+class VPVL_API VPDPose
 {
 public:
     struct Bone

@@ -44,7 +44,7 @@
 namespace vpvl
 {
 
-class VPVL_EXPORT CameraKeyFrame : public BaseKeyFrame
+class VPVL_API CameraKeyFrame : public BaseKeyFrame
 {
 public:
     enum InterpolationType

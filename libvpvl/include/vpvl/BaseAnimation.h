@@ -57,7 +57,7 @@ typedef Array<BaseKeyFrame *> BaseKeyFrameList;
  * The basic class inherited by BoneAnimation, CameraAnimation and FaceAnimation class.
  */
 
-class VPVL_EXPORT BaseAnimation
+class VPVL_API BaseAnimation
 {
 public:
 

@@ -58,7 +58,7 @@ namespace vpvl
  * RigidBody class represents a rigid body of a Polygon Model Data object.
  */
 
-class VPVL_EXPORT RigidBody
+class VPVL_API RigidBody
 {
 public:
     RigidBody();

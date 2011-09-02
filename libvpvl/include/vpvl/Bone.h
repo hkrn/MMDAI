@@ -57,7 +57,7 @@ typedef Array<Bone*> BoneList;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL_EXPORT Bone
+class VPVL_API Bone
 {
 public:
 

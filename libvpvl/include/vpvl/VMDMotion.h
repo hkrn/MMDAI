@@ -58,7 +58,7 @@ namespace vpvl
  * Bone class represents a Vocaloid Motion Data object, set of bone, face and camera motion.
  */
 
-class VPVL_EXPORT VMDMotion
+class VPVL_API VMDMotion
 {
 public:
 

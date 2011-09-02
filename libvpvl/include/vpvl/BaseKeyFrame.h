@@ -44,7 +44,7 @@
 namespace vpvl
 {
 
-class VPVL_EXPORT BaseKeyFrame
+class VPVL_API BaseKeyFrame
 {
 public:
     BaseKeyFrame() : m_frameIndex(0) {
