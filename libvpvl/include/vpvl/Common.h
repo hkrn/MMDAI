@@ -176,7 +176,7 @@ private:
 };
 typedef btHashString HashString;
 
-VPVL_EXPORT static const float kPI = 3.14159265358979323846f;
+static const float kPI = 3.14159265358979323846f;
 
 /**
  * Get whether current library version is compatible with specified version.

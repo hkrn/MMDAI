@@ -159,7 +159,9 @@ inline bool stringEquals(const char *s1, const char *s2, size_t max)
 inline char *stringToken(char *str, const char *delim, char **ptr)
 {
     assert(delim != NULL);
-#if defined(WIN32)
+#if defined(__MINGW32__)
+    return strtok(str, delim);
+#elif defined(WIN32)
     return strtok_s(str, delim, ptr);
 #else
     return strtok_r(str, delim, ptr);
@@ -186,7 +188,7 @@ inline float stringToFloat(const char *str)
 inline void zerofill(void *ptr, size_t size)
 {
     assert(ptr != NULL && size > 0);
-#if defined(WIN32)
+#if defined(WIN32) && !defined(__MINGW32__)
     SecureZeroMemory(ptr, size);
 #else
     memset(ptr, 0, size);

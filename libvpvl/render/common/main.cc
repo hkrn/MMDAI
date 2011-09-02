@@ -55,10 +55,18 @@ struct btDiscreteDynamicsWorld { int unused; };
 #ifdef VPVL_LINK_ASSIMP
 #include <assimp.hpp>
 #include <aiPostProcess.h>
+#else
+struct aiScene { int unused; };
 #endif
 
-#ifdef VPVL_HAS_ICONV
+#if defined(VPVL_HAS_ICU)
+#include <unicode/ucnv.h>
+#elif defined(VPVL_HAS_ICONV)
 #include <iconv.h>
+#endif
+
+#ifndef VPVL_HAS_ICONV
+typedef void* iconv_t;
 #endif
 
 #if defined(VPVL_GL2_RENDERER_H_)
@@ -106,17 +114,21 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
 class Delegate : public IDelegate
 {
 public:
-    Delegate(const std::string &system) : m_system(system), m_iconv(0) {
-#ifdef VPVL_HAS_ICONV
+    Delegate(const std::string &system)
+        : m_system(system),
+          m_iconv(0)
+    {
+#if defined(VPVL_HAS_ICONV)
         m_iconv = iconv_open("UTF-8", "SHIFT-JIS");
         assert(m_iconv != reinterpret_cast<iconv_t *>(-1));
 #endif
     }
-    ~Delegate() {
-#ifdef VPVL_HAS_ICONV
+    ~Delegate()
+    {
+#if defined(VPVL_HAS_ICONV)
         iconv_close(m_iconv);
-        m_iconv = 0;
 #endif
+        m_iconv = 0;
     }
 
     bool loadTexture(const std::string &path, GLuint &textureID) {
@@ -210,7 +222,16 @@ public:
     }
 #endif
     const std::string toUnicode(const uint8_t *value) {
-#ifdef VPVL_HAS_ICONV
+#if defined(VPVL_HAS_ICU)
+        UnicodeString str(reinterpret_cast<const char *>(value), "shift_jis");
+        size_t inlen = str.length(), outlen = inlen * 3;
+        char *dest = new char[outlen];
+        size_t size = str.extract(0, inlen, dest, outlen, "utf-8");
+        dest[size] = '\0';
+        std::string result(dest);
+        delete[] dest;
+        return result;
+#elif defined(VPVL_HAS_ICONV)
         char *inbuf = strdup(reinterpret_cast<const char *>(value)), *pinbuf = inbuf;
         size_t inbuflen = strlen(inbuf), outbuflen = inbuflen * 3;
         char *outbuf = new char[outbuflen], *poutbuf = outbuf;
@@ -260,6 +281,7 @@ public:
           m_dispatcher(&m_config),
           m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0f, 400.0f), 1024),
       #endif /* VPVL_NO_BULLET */
+          m_asset(0),
           m_delegate(internal::kSystemDir),
           m_renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS),
           m_model(0),
@@ -386,9 +408,9 @@ private:
         m_renderer.loadModel(m_model, internal::kModelDir);
 
 #ifdef VPVL_LINK_ASSIMP
-        m_asset = m_importer.ReadFile(
+        m_asset = const_cast<aiScene *>(m_importer.ReadFile(
                     internal::concatPath(internal::kStageDir, internal::kStageName),
-                    aiProcessPreset_TargetRealtime_Quality);
+                    aiProcessPreset_TargetRealtime_Quality));
         if (m_asset)
             m_renderer.loadAsset(m_asset, internal::kStageDir);
         else
@@ -466,14 +488,13 @@ private:
 #endif /* VPVL_NO_BULLET */
 #ifdef VPVL_LINK_ASSIMP
     Assimp::Importer m_importer;
-    const aiScene *m_asset;
-#endif
+#endif /* VPVL_LINK_ASSIMP */
+    aiScene *m_asset;
     internal::Delegate m_delegate;
     Renderer m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */
     vpvl::VMDMotion m_motion;
     vpvl::VMDMotion m_camera;
-    vpvl::XModel m_stage;
     uint8_t *m_modelData;
     uint8_t *m_motionData;
     uint8_t *m_cameraData;
