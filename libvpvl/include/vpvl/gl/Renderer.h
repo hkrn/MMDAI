@@ -131,9 +131,6 @@ public:
     void drawSurface();
 
 private:
-    void drawAssetRecurse(const aiScene *scene, const aiNode *node);
-    void setAssetMaterial(const aiMaterial *material);
-
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
