@@ -54,6 +54,8 @@ VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 
 #ifdef VPVL_LINK_ASSIMP
 #include <assimp.hpp>
+#include <DefaultLogger.h>
+#include <Logger.h>
 #include <aiPostProcess.h>
 #else
 VPVL_DECLARE_HANDLE(aiScene)
@@ -66,6 +68,8 @@ VPVL_DECLARE_HANDLE(aiScene)
 #endif
 
 #ifndef VPVL_HAS_ICONV
+#define iconv_open(to, from) 0
+#define iconv_close(iconv)
 typedef void* iconv_t;
 #endif
 
@@ -89,6 +93,7 @@ static const std::string kMotion = "gtest/res/motion.vmd";
 static const std::string kCamera = "gtest/res/camera.vmd";
 static const std::string kModelName = "normal.pmd";
 static const std::string kStageName = "stage.x";
+static const std::string kStage2Name = "stage2.x";
 
 static const std::string concatPath(const std::string &dir, const std::string &name) {
     return dir + "/" + name;
@@ -118,16 +123,12 @@ public:
         : m_system(system),
           m_iconv(0)
     {
-#if defined(VPVL_HAS_ICONV)
         m_iconv = iconv_open("UTF-8", "SHIFT-JIS");
         assert(m_iconv != reinterpret_cast<iconv_t *>(-1));
-#endif
     }
     ~Delegate()
     {
-#if defined(VPVL_HAS_ICONV)
         iconv_close(m_iconv);
-#endif
         m_iconv = 0;
     }
 
@@ -281,7 +282,6 @@ public:
           m_dispatcher(&m_config),
           m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0f, 400.0f), 1024),
       #endif /* VPVL_NO_BULLET */
-          m_asset(0),
           m_delegate(internal::kSystemDir),
           m_renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS),
           m_model(0),
@@ -301,7 +301,13 @@ public:
     ~UI() {
         m_renderer.unloadModel(m_model);
 #ifdef VPVL_LINK_ASSIMP
-        m_renderer.unloadAsset(m_asset);
+        const uint32_t nAssets = m_importers.count();
+        for (uint32_t i = 0; i < nAssets; i++) {
+            Assimp::Importer *importer = m_importers[i];
+            m_renderer.unloadAsset(importer->GetScene());
+        }
+        m_importers.clear();
+        Assimp::DefaultLogger::kill();
 #endif
         delete m_model;
         delete m_world;
@@ -407,15 +413,10 @@ private:
         m_renderer.loadModel(m_model, internal::kModelDir);
 
 #ifdef VPVL_LINK_ASSIMP
-        m_asset = const_cast<aiScene *>(m_importer.ReadFile(
-                    internal::concatPath(internal::kStageDir, internal::kStageName),
-                    aiProcessPreset_TargetRealtime_Quality));
-        if (m_asset)
-            m_renderer.loadAsset(m_asset, internal::kStageDir);
-        else
-            m_delegate.log(IDelegate::kLogWarning,
-                           "Failed parsing the asset: %s, skipped...",
-                           m_importer.GetErrorString());
+        Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
+        Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
+        loadAsset(internal::kStageDir, internal::kStageName);
+        loadAsset(internal::kStageDir, internal::kStage2Name);
 #endif
 
         vpvl::Scene *scene = m_renderer.scene();
@@ -438,6 +439,19 @@ private:
 
         return true;
     }
+#ifdef VPVL_LINK_ASSIMP
+    void loadAsset(std::string dir, std::string name) {
+        Assimp::Importer *importer = new Assimp::Importer();
+        const std::string path = internal::concatPath(dir, name);
+        aiScene *asset = const_cast<aiScene *>(importer->ReadFile(path, aiProcessPreset_TargetRealtime_Quality));
+        if (asset)
+            m_renderer.loadAsset(asset, dir);
+        else
+            m_delegate.log(IDelegate::kLogWarning,
+                           "Failed parsing the asset (%s): %s, skipped...",
+                           path.c_str(), importer->GetErrorString());
+    }
+#endif
     void pollEvent(bool &quit) {
         SDL_Event event;
         quit = false;
@@ -486,9 +500,8 @@ private:
     btSequentialImpulseConstraintSolver m_solver;
 #endif /* VPVL_NO_BULLET */
 #ifdef VPVL_LINK_ASSIMP
-    Assimp::Importer m_importer;
+    vpvl::Array<Assimp::Importer *> m_importers;
 #endif /* VPVL_LINK_ASSIMP */
-    aiScene *m_asset;
     internal::Delegate m_delegate;
     Renderer m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */
