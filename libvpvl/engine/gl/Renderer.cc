@@ -60,10 +60,10 @@ VPVL_DECLARE_HANDLE(aiNode)
 VPVL_DECLARE_HANDLE(aiScene)
 namespace vpvl
 {
-namespace gl
-{
-VPVL_DECLARE_HANDLE(AssetInternal)
-}
+    namespace gl
+    {
+    VPVL_DECLARE_HANDLE(AssetInternal)
+    }
 }
 #endif
 
@@ -860,7 +860,8 @@ void Renderer::drawAssetRecurse(const aiScene *scene, const aiNode *node)
 {
     GLenum faceMode;
     struct aiMatrix4x4 m = node->mTransformation;
-    m.Scaling(aiVector3D(10.0f, 10.0f, 10.0f), m);
+    const aiVector3D scale(10.0f, 10.0f, 10.0f);
+    m.Scaling(scale, m);
     m.Transpose();
     glPushMatrix();
     glMultMatrixf(reinterpret_cast<const float *>(&m));
@@ -869,12 +870,12 @@ void Renderer::drawAssetRecurse(const aiScene *scene, const aiNode *node)
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex]);
         mesh->mNormals ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING);
-        mesh->mColors ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
+        mesh->mColors[0] ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
         const uint32_t nFaces = mesh->mNumFaces;
         for (uint32_t j = 0; j < nFaces; j++) {
             const struct aiFace &face = mesh->mFaces[j];
-            const uint32_t nFaces = face.mNumIndices;
-            switch (nFaces) {
+            const uint32_t nIndices = face.mNumIndices;
+            switch (nIndices) {
             case 1:
                 faceMode = GL_POINTS;
                 break;
@@ -889,18 +890,17 @@ void Renderer::drawAssetRecurse(const aiScene *scene, const aiNode *node)
                 break;
             }
             glBegin(faceMode);
-            for (uint32_t k = 0; k < nFaces; k++) {
+            for (uint32_t k = 0; k < nIndices; k++) {
                 int vertexIndex = face.mIndices[k];
                 if (mesh->mColors[0])
                     aiColor4f(mesh->mColors[0][vertexIndex]);
-                if (mesh->mNormals) {
-                    if (mesh->HasTextureCoords(0)) {
-                        const aiVector3D &p = mesh->mTextureCoords[0][vertexIndex];
-                        glTexCoord2f(p.x, 1 - p.y);
-                    }
-                    glNormal3fv(&mesh->mNormals[vertexIndex].x);
-                    glVertex3fv(&mesh->mVertices[vertexIndex].x);
+                if (mesh->HasTextureCoords(0)) {
+                    const aiVector3D &p = mesh->mTextureCoords[0][vertexIndex];
+                    glTexCoord2f(p.x, 1.0f - p.y);
                 }
+                if (mesh->mNormals)
+                    glNormal3fv(&mesh->mNormals[vertexIndex].x);
+                glVertex3fv(&mesh->mVertices[vertexIndex].x);
             }
             glEnd();
         }
@@ -921,18 +921,22 @@ void Renderer::setAssetMaterial(const aiMaterial *material)
     }
     aiColor4D ambient, diffuse, emission, specular;
     float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient))
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
         aiColor2Float4(ambient, color);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
         aiColor2Float4(diffuse, color);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission))
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
         aiColor2Float4(emission, color);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular))
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
         aiColor2Float4(specular, color);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+    }
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
@@ -946,8 +950,8 @@ void Renderer::setAssetMaterial(const aiMaterial *material)
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
     }
     int wireframe, twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS)
-        glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS && wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == AI_SUCCESS && twoside)
