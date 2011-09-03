@@ -350,12 +350,11 @@ public:
         while (true) {
             pollEvent(quit);
             if (quit)
-                return 0;
+                break;
             draw();
             SDL_GL_SwapBuffers();
         }
         SDL_RemoveTimer(timerID);
-        sleep(2); /* wait for ensuring SDL's timer thread is killed */
         return 0;
     }
 
