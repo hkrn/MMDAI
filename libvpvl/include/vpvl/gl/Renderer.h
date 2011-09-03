@@ -127,15 +127,13 @@ public:
     void drawBoneTransform(vpvl::Bone *bone);
     void loadAsset(const aiScene *asset, const std::string &dir);
     void unloadAsset(const aiScene *asset);
-    void drawAsset(const aiScene *scene);
     void drawSurface();
 
 private:
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
-    Array<aiScene *> m_assets;
-    AssetInternal *m_internal;
+    Array<AssetInternal *> m_assets;
     btIDebugDraw *m_debugDrawer;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)

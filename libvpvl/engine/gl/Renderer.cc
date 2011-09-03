@@ -41,6 +41,27 @@
 
 #include <btBulletDynamicsCommon.h>
 
+namespace
+{
+
+enum VertexBufferObjectType {
+    kModelVertices,
+    kModelNormals,
+    kModelColors,
+    kModelTexCoords,
+    kModelToonTexCoords,
+    kEdgeVertices,
+    kEdgeIndices,
+    kShadowIndices,
+    kVertexBufferObjectMax
+};
+
+struct PMDModelMaterialPrivate {
+    GLuint primaryTextureID;
+    GLuint secondTextureID;
+};
+
+}
 
 #ifdef VPVL_LINK_ASSIMP
 #include <aiScene.h>
@@ -51,6 +72,7 @@ namespace gl
 {
 struct AssetInternal
 {
+    const aiScene *scene;
     std::map<std::string, GLuint> textures;
 };
 }
@@ -70,29 +92,12 @@ namespace vpvl
 namespace vpvl
 {
 
-enum __vpvlVertexBufferObjectType {
-    kModelVertices,
-    kModelNormals,
-    kModelColors,
-    kModelTexCoords,
-    kModelToonTexCoords,
-    kEdgeVertices,
-    kEdgeIndices,
-    kShadowIndices,
-    kVertexBufferObjectMax
-};
-
-struct __vpvlPMDModelMaterialPrivate {
-    GLuint primaryTextureID;
-    GLuint secondTextureID;
-};
-
 struct PMDModelUserData {
     GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
-    __vpvlPMDModelMaterialPrivate *materials;
+    PMDModelMaterialPrivate *materials;
 };
 
 struct XModelUserData {
@@ -172,19 +177,16 @@ bool Renderer::initializeGLEW(GLenum &err)
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_scene(0),
       m_selected(0),
-      m_internal(0),
       m_debugDrawer(0),
       m_delegate(delegate)
 {
     m_debugDrawer = new DebugDrawer();
     m_scene = new vpvl::Scene(width, height, fps);
-    m_internal = new AssetInternal();
 }
 
 Renderer::~Renderer()
 {
-    delete m_internal;
-    m_internal = 0;
+    m_assets.clear();
     delete m_debugDrawer;
     m_debugDrawer = 0;
     delete m_scene;
@@ -248,13 +250,13 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
     const uint32_t nMaterials = materials.count();
     GLuint textureID = 0;
     vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
-    __vpvlPMDModelMaterialPrivate *materialPrivates = new __vpvlPMDModelMaterialPrivate[nMaterials];
+    PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nMaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const std::string primary = m_delegate->toUnicode(material->mainTextureName());
         const std::string second = m_delegate->toUnicode(material->subTextureName());
-        __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
+        PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.primaryTextureID = 0;
         materialPrivate.secondTextureID = 0;
         if (!primary.empty()) {
@@ -320,7 +322,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
         const uint32_t nMaterials = materials.count();
         vpvl::PMDModelUserData *userData = model->userData();
         for (uint32_t i = 0; i < nMaterials; i++) {
-            __vpvlPMDModelMaterialPrivate &materialPrivate = userData->materials[i];
+            PMDModelMaterialPrivate &materialPrivate = userData->materials[i];
             glDeleteTextures(1, &materialPrivate.primaryTextureID);
             glDeleteTextures(1, &materialPrivate.secondTextureID);
         }
@@ -397,13 +399,13 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     }
 
     const vpvl::MaterialList &materials = model->materials();
-    const __vpvlPMDModelMaterialPrivate *materialPrivates = userData->materials;
+    const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const uint32_t nMaterials = materials.count();
     btVector4 average, ambient, diffuse, specular;
     uint32_t offset = 0;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
-        const __vpvlPMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
+        const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         // toon
         const float alpha = material->opacity();
         if (enableToon) {
@@ -723,10 +725,22 @@ static const std::string CanonicalizePath(const std::string &path)
     return ret;
 }
 
+static AssetInternal *FindAssetInternal(const aiScene *asset, const Array<AssetInternal *> &assets)
+{
+    const uint32_t nAssets = assets.count();
+    for (uint32_t i = 0; i < nAssets; i++) {
+        AssetInternal *internal = assets[i];
+        if (internal->scene = asset)
+            return internal;
+    }
+    return 0;
+}
+
 void Renderer::loadAsset(const aiScene *asset, const std::string &dir)
 {
 #ifdef VPVL_LINK_ASSIMP
     const uint32_t nMaterials = asset->mNumMaterials;
+    AssetInternal *internal = new AssetInternal();
     aiString texturePath;
     std::string path, canonicalized, filename;
     for (uint32_t i = 0; i < nMaterials; i++) {
@@ -737,18 +751,19 @@ void Renderer::loadAsset(const aiScene *asset, const std::string &dir)
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
-            if (m_internal->textures[path] == 0) {
+            if (internal->textures[path] == 0) {
                 canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
                 filename = dir + "/" + canonicalized;
                 if (m_delegate->loadTexture(filename, textureID)) {
-                    m_internal->textures[path] = textureID;
+                    internal->textures[path] = textureID;
                     m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;
         }
     }
-    m_assets.add(const_cast<aiScene *>(asset));
+    internal->scene = const_cast<aiScene *>(asset);
+    m_assets.add(internal);
 #else
     (void) asset;
     (void) dir;
@@ -758,7 +773,8 @@ void Renderer::loadAsset(const aiScene *asset, const std::string &dir)
 void Renderer::unloadAsset(const aiScene *asset)
 {
 #ifdef VPVL_LINK_ASSIMP
-    if (asset) {
+    AssetInternal *internal = FindAssetInternal(asset, m_assets);
+    if (internal) {
         const uint32_t nMaterials = asset->mNumMaterials;
         aiString texturePath;
         for (uint32_t i = 0; i < nMaterials; i++) {
@@ -768,13 +784,14 @@ void Renderer::unloadAsset(const aiScene *asset)
             int textureIndex = 0;
             while (found == AI_SUCCESS) {
                 found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                textureID = m_internal->textures[texturePath.data];
+                textureID = internal->textures[texturePath.data];
                 glDeleteTextures(1, &textureID);
-                m_internal->textures.erase(texturePath.data);
+                internal->textures.erase(texturePath.data);
                 textureIndex++;
             }
         }
-        m_assets.remove(const_cast<aiScene *>(asset));
+        delete internal;
+        m_assets.remove(internal);
     }
 #else
     (void) asset;
@@ -905,20 +922,17 @@ static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetIn
     glPopMatrix();
 }
 
-#endif /* VPVL_LINK_ASSIMP */
-
-void Renderer::drawAsset(const aiScene *scene)
+void aiDrawAsset(AssetInternal *internal)
 {
-#ifdef VPVL_LINK_ASSIMP
-    if (scene) {
+    if (internal) {
+        const aiScene *asset = internal->scene;
         glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-        aiDrawAssetRecurse(scene, scene->mRootNode, m_internal);
+        aiDrawAssetRecurse(asset, asset->mRootNode, internal);
         glPopAttrib();
     }
-#else
-    (void) scene;
-#endif
 }
+
+#endif /* VPVL_LINK_ASSIMP */
 
 void Renderer::drawSurface()
 {
@@ -957,7 +971,7 @@ void Renderer::drawSurface()
     // TODO: merge drawing models
     uint32_t nAssets = m_assets.count();
     for (uint32_t i = 0; i < nAssets; i++) {
-        drawAsset(m_assets[i]);
+        aiDrawAsset(m_assets[i]);
     }
     // render model and edge
     for (size_t i = 0; i < size; i++) {
