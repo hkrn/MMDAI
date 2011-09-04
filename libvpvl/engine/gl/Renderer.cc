@@ -74,6 +74,7 @@ struct AssetInternal
 {
     const aiScene *scene;
     std::map<std::string, GLuint> textures;
+    aiVector3D position;
 };
 }
 }
@@ -98,11 +99,6 @@ struct PMDModelUserData {
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
     PMDModelMaterialPrivate *materials;
-};
-
-struct XModelUserData {
-    GLuint listID;
-    vpvl::Hash<vpvl::HashString, GLuint> textures;
 };
 
 namespace gl
@@ -798,6 +794,17 @@ void Renderer::unloadAsset(const aiScene *asset)
 #endif
 }
 
+void Renderer::setAssetPosition(const aiScene *asset, const btVector3 &position)
+{
+#ifdef VPVL_LINK_ASSIMP
+    AssetInternal *internal = FindAssetInternal(asset, m_assets);
+    internal->position.Set(position.x(), position.y(), position.z());
+#else
+    (void) asset;
+    (void) position;
+#endif
+}
+
 #ifdef VPVL_LINK_ASSIMP
 
 static inline void aiColor4f(const struct aiColor4D &color)
@@ -869,9 +876,16 @@ static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetIn
 {
     GLenum faceMode;
     struct aiMatrix4x4 m = node->mTransformation;
-    const float scaleValue = 0.5f;
-    const aiVector3D scale(scaleValue, scaleValue, scaleValue);
-    m.Scaling(scale, m);
+    const float scaleFactor = 10.0f;
+    const aiVector3D &pos = internal->position;
+    // translate
+    m.a4 = pos.x;
+    m.b4 = pos.y;
+    m.c4 = pos.z;
+    // scale
+    m.a1 = scaleFactor;
+    m.b2 = scaleFactor;
+    m.c3 = scaleFactor;
     m.Transpose();
     glPushMatrix();
     glMultMatrixf(reinterpret_cast<const float *>(&m));

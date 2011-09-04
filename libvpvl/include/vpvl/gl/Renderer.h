@@ -127,6 +127,7 @@ public:
     void drawBoneTransform(vpvl::Bone *bone);
     void loadAsset(const aiScene *asset, const std::string &dir);
     void unloadAsset(const aiScene *asset);
+    void setAssetPosition(const aiScene *asset, const btVector3 &position);
     void drawSurface();
 
 private:
