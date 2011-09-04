@@ -889,13 +889,19 @@ static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetIn
     m.Transpose();
     glPushMatrix();
     glMultMatrixf(reinterpret_cast<const float *>(&m));
-
     const uint32_t nMeshes = node->mNumMeshes;
     for (uint32_t i = 0; i < nMeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const aiVector3D *vertices = mesh->mVertices;
+        const aiVector3D *normals = mesh->mNormals;
+        const aiColor4D *colors = mesh->mColors[0];
+        const bool hasNormals = normals ? true : false;
+        const bool hasColors = colors ? true : false;
+        const bool hasTexCoords = mesh->HasTextureCoords(0);
+        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
         aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], internal);
-        mesh->mNormals ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING);
-        mesh->mColors[0] ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
+        hasNormals ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING);
+        hasColors ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
         const uint32_t nFaces = mesh->mNumFaces;
         for (uint32_t j = 0; j < nFaces; j++) {
             const struct aiFace &face = mesh->mFaces[j];
@@ -917,15 +923,15 @@ static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetIn
             glBegin(faceMode);
             for (uint32_t k = 0; k < nIndices; k++) {
                 int vertexIndex = face.mIndices[k];
-                if (mesh->mColors[0])
-                    aiColor4f(mesh->mColors[0][vertexIndex]);
-                if (mesh->HasTextureCoords(0)) {
-                    const aiVector3D &p = mesh->mTextureCoords[0][vertexIndex];
+                if (hasColors)
+                    aiColor4f(colors[vertexIndex]);
+                if (hasTexCoords) {
+                    const aiVector3D &p = texcoords[vertexIndex];
                     glTexCoord2f(p.x, 1.0f - p.y);
                 }
-                if (mesh->mNormals)
-                    glNormal3fv(&mesh->mNormals[vertexIndex].x);
-                glVertex3fv(&mesh->mVertices[vertexIndex].x);
+                if (hasNormals)
+                    glNormal3fv(&normals[vertexIndex].x);
+                glVertex3fv(&vertices[vertexIndex].x);
             }
             glEnd();
         }
