@@ -50,10 +50,10 @@ namespace vpvl {
 namespace gl {
 class Renderer;
 }
+class Asset;
 class PMDModel;
 class Scene;
 class VMDMotion;
-class XModel;
 }
 
 namespace internal {
@@ -120,7 +120,7 @@ signals:
     void modelDidDelete(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void assetDidAdd(vpvl::XModel *model);
+    void assetDidAdd(vpvl::Asset *model);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
     void modelDidSelect(vpvl::PMDModel *model);
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);

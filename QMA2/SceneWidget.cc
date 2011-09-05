@@ -329,7 +329,7 @@ void SceneWidget::addAsset()
     QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
-        vpvl::XModel *asset = m_loader->loadAsset(fi.fileName(), fi.dir());
+        vpvl::Asset *asset = m_loader->loadAsset(fi.fileName(), fi.dir());
         if (asset)
             emit assetDidAdd(asset);
         else

@@ -11,7 +11,7 @@ namespace gl
 {
 class Renderer;
 }
-class XModel;
+class Asset;
 class PMDModel;
 class VMDMotion;
 }
@@ -27,7 +27,7 @@ public:
     bool deleteModel(vpvl::PMDModel *model);
     vpvl::PMDModel *findModel(const QString &name) const;
     vpvl::VMDMotion *findModelMotion(vpvl::PMDModel *model) const;
-    vpvl::XModel *loadAsset(const QString &baseName, const QDir &dir);
+    vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
     vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir, vpvl::VMDMotion *&nullMotion);
     vpvl::VMDMotion *loadModelMotion(const QString &path);
@@ -43,7 +43,7 @@ private:
     vpvl::gl::Renderer *m_renderer;
     vpvl::VMDMotion *m_camera;
     QHash<QString, vpvl::PMDModel *> m_models;
-    QHash<QString, vpvl::XModel *> m_assets;
+    QHash<QString, vpvl::Asset *> m_assets;
     QHash<vpvl::PMDModel *, vpvl::VMDMotion *> m_motions;
     QHash<vpvl::PMDModel *, QString> m_modelLocation;
     QHash<vpvl::VMDMotion *, QString> m_motionLocation;

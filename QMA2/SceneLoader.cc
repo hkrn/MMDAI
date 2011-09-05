@@ -55,14 +55,14 @@ vpvl::VMDMotion *SceneLoader::findModelMotion(vpvl::PMDModel *model) const
     return m_motions.value(model);
 }
 
-vpvl::XModel *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
+vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
 {
     QFile file(dir.absoluteFilePath(baseName));
-    vpvl::XModel *model = 0;
+    vpvl::Asset *asset = 0;
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
-        model = new vpvl::XModel();
-        if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+        asset = new vpvl::Asset();
+        if (asset->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             QString key = baseName;
             if (m_assets.contains(key)) {
                 int i = 0;
@@ -73,15 +73,15 @@ vpvl::XModel *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
                     i++;
                 }
             }
-            m_renderer->loadAsset(model, std::string(dir.absolutePath().toUtf8()));
-            m_assets[key] = model;
+            m_renderer->loadAsset(asset, std::string(dir.absolutePath().toUtf8()));
+            m_assets[key] = asset;
         }
         else {
-            delete model;
-            model = 0;
+            delete asset;
+            asset = 0;
         }
     }
-    return model;
+    return asset;
 }
 
 vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
