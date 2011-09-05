@@ -34,66 +34,84 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_XMATERIAL_H_
-#define VPVL_XMATERIAL_H_
+#ifndef VPVL_ASSET_H_
+#define VPVL_ASSET_H_
 
 #include "vpvl/Common.h"
+
+struct aiScene;
+
+namespace Assimp
+{
+class Importer;
+}
 
 namespace vpvl
 {
 
-class VPVL_API XMaterial {
-public:
-    XMaterial()
-        : m_color(0.0f, 0.0f, 0.0f, 0.0f),
-          m_specular(0.0f, 0.0f, 0.0f, 0.0f),
-          m_emmisive(0.0f, 0.0f, 0.0f, 0.0f),
-          m_textureName(0),
-          m_power(0.0f)
-    {
-    }
-    XMaterial(const btVector4 &color,
-              const btVector4 &specular,
-              btVector4 &emmisive,
-              char *textureName,
-              float power)
-        : m_color(color),
-          m_specular(specular),
-          m_emmisive(emmisive),
-          m_textureName(0),
-          m_power(power)
-    {
-        if (textureName) {
-            size_t len = strlen(textureName);
-            m_textureName = new char[len + 1];
-            strcpy(m_textureName, textureName);
-        }
-    }
-    ~XMaterial() {
-        m_color.setZero();
-        m_specular.setZero();
-        m_emmisive.setZero();
-        delete[] m_textureName;
-        m_textureName = 0;
-        m_power = 0;
-    }
+/**
+ * @file
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Asset class represents an accessory
+ */
 
-    const btVector4 &color() const { return m_color; }
-    const btVector4 &specular() const { return m_specular; }
-    const btVector4 &emmisive() const { return m_emmisive; }
-    const char *textureName() const { return m_textureName; }
-    float power() const { return m_power; }
+typedef struct AssetUserData AssetUserData;
+
+class VPVL_API Asset
+{
+public:
+    static bool isSupported();
+
+    Asset();
+    ~Asset();
+
+    bool load(const char *path);
+    bool load(const uint8_t *data, size_t size);
+
+    const btVector3 &position() const {
+        return m_position;
+    }
+    void setPosition(const btVector3 &value) {
+        m_position = value;
+    }
+    const btScalar &scale() const {
+        return m_scale;
+    }
+    void setScale(const btScalar &value) {
+        m_scale = value;
+    }
+    uint32_t loadFlags() const {
+        return m_flags;
+    }
+    void setLoadFlags(uint32_t value) {
+        m_flags = value;
+    }
+    AssetUserData *userData() const {
+        return m_userData;
+    }
+    void setUserData(AssetUserData *value) {
+        m_userData = value;
+    }
+    const aiScene *getScene() const {
+        return m_scene;
+    }
 
 private:
-    btVector4 m_color;
-    btVector4 m_specular;
-    btVector4 m_emmisive;
-    char *m_textureName;
-    float m_power;
+    Assimp::Importer *m_importer;
+    const aiScene *m_scene;
+    AssetUserData *m_userData;
+    btVector3 m_position;
+    btScalar m_scale;
+    uint32_t m_flags;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(XMaterial)
+    VPVL_DISABLE_COPY_AND_ASSIGN(Asset)
 };
 
-}
+typedef Array<Asset*> AssetList;
+
+} /* namespace vpvl */
 
 #endif

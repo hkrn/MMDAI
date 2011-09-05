@@ -38,6 +38,7 @@
 #define vpvl_vpvl_H_
 
 #include "vpvl/Common.h"
+#include "vpvl/Asset.h"
 #include "vpvl/BaseAnimation.h"
 #include "vpvl/BaseKeyFrame.h"
 #include "vpvl/Bone.h"
@@ -56,7 +57,5 @@
 #include "vpvl/Scene.h"
 #include "vpvl/Vertex.h"
 #include "vpvl/VMDMotion.h"
-#include "vpvl/VPDPose.h"
-#include "vpvl/XModel.h"
 
 #endif /* vpvl_vpvl_H_ */

@@ -40,7 +40,7 @@
 #define VPVL_GL_RENDERER_H_
 
 #include <string>
-#include "vpvl/Common.h"
+#include "vpvl/Asset.h"
 
 #ifdef VPVL_USE_ALLEGRO5
 #include <allegro5/allegro5.h>
@@ -50,9 +50,6 @@
 #include <GL/glew.h>
 #endif
 
-struct aiScene;
-struct aiMaterial;
-struct aiNode;
 class btDynamicsWorld;
 class btIDebugDraw;
 
@@ -125,16 +122,15 @@ public:
     void drawModelBones(bool drawSpheres, bool drawLines);
     void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
     void drawBoneTransform(vpvl::Bone *bone);
-    void loadAsset(const aiScene *asset, const std::string &dir);
-    void unloadAsset(const aiScene *asset);
-    void setAssetPosition(const aiScene *asset, const btVector3 &position);
+    void loadAsset(Asset *asset, const std::string &dir);
+    void unloadAsset(Asset *asset);
     void drawSurface();
 
 private:
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
-    Array<AssetInternal *> m_assets;
+    AssetList m_assets;
     btIDebugDraw *m_debugDrawer;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)

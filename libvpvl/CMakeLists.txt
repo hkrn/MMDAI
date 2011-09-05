@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(VPVL_VERSION_MAJOR 0)
-set(VPVL_VERSION_COMPAT 2)
+set(VPVL_VERSION_COMPAT 3)
 set(VPVL_VERSION_MINOR 0)
 
 # set library version
@@ -12,6 +12,7 @@ set(VPVL_VERSION_COMPATIBLE "${VPVL_VERSION_MAJOR}.${VPVL_VERSION_COMPAT}.0")
 project(libvpvl)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src vpvl_sources)
 set(vpvl_public_headers
+    include/vpvl/Asset.h
     include/vpvl/BaseAnimation.h
     include/vpvl/BaseKeyFrame.h
     include/vpvl/BoneKeyFrame.h
@@ -31,9 +32,6 @@ set(vpvl_public_headers
     include/vpvl/Scene.h
     include/vpvl/Vertex.h
     include/vpvl/VMDMotion.h
-    include/vpvl/VPDPose.h
-    include/vpvl/XMaterial.h
-    include/vpvl/XModel.h
     include/vpvl/config.h
     include/vpvl/vpvl.h
 )

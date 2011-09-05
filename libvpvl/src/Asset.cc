@@ -34,72 +34,93 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_VPDPOSE_H_
-#define VPVL_VPDPOSE_H_
+#include "vpvl/vpvl.h"
 
-#include "vpvl/Common.h"
+#ifdef VPVL_LINK_ASSIMP
+
+#include <assimp.hpp>
+#include <aiPostProcess.h>
+#include <aiScene.h>
 
 namespace vpvl
 {
 
-class PMDModel;
-
-/**
- * @file
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * VPDPose represents model's pose
- */
-
-class VPVL_API VPDPose
+bool Asset::isSupported()
 {
-public:
-    struct Bone
-    {
-        uint8_t *name;
-        btVector3 position;
-        btVector4 rotation;
-    };
-    typedef Array<Bone *> BoneList;
+    return true;
+}
 
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kBoneNameError,
-        kPositionError,
-        kQuaternionError,
-        kEndError,
-        kMaxErrors
-    };
+Asset::Asset()
+    : m_importer(0),
+      m_scene(0),
+      m_position(0.0f, 0.0f, 0.0f),
+      m_scale(10.0f),
+      m_flags(aiProcessPreset_TargetRealtime_Quality)
+{
+    m_importer = new Assimp::Importer();
+}
 
-    VPDPose();
-    ~VPDPose();
+Asset::~Asset()
+{
+    m_flags = 0;
+    m_scale = 0.0f;
+    m_position.setZero();
+    m_scene = 0;
+    delete m_importer;
+    m_importer = 0;
+}
 
-    bool preparse(const uint8_t *data, size_t size);
-    bool load(const uint8_t *data, size_t size);
-    void makePose(vpvl::PMDModel *model);
+bool Asset::load(const char *path)
+{
+    m_scene = m_importer->ReadFile(path, m_flags);
+    return m_scene != NULL;
+}
 
-    const BoneList &bones() {
-        return m_bones;
-    }
+bool Asset::load(const uint8_t *data, size_t size)
+{
+    m_scene = m_importer->ReadFileFromMemory(data, size, m_flags);
+    return m_scene != NULL;
+}
 
-private:
-    void release();
+#else /* VPVL_LINK_ASSIMP */
 
-    BoneList m_bones;
-    Error m_error;
+namespace vpvl
+{
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(VPDPose)
-};
+bool Asset::isSupported()
+{
+    return false;
+}
+
+Asset::Asset()
+    : m_importer(0),
+      m_scene(0),
+      m_position(0.0f, 0.0f, 0.0f),
+      m_scale(10.0f),
+      m_flags(0)
+{
+}
+
+Asset::~Asset()
+{
+    m_flags = 0;
+    m_scale = 0.0f;
+    m_position.setZero();
+    m_scene = 0;
+    m_importer = 0;
+}
+
+bool Asset::load(const char * /* path */)
+{
+    return false;
+}
+
+bool Asset::load(const uint8_t * /* data */, size_t /* size */)
+{
+    return false;
+}
+
+#endif /* VPVL_LINK_ASSIMP */
 
 } /* namespace vpvl */
-
-#endif
 

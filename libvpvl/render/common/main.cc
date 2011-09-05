@@ -301,12 +301,6 @@ public:
     ~UI() {
         m_renderer.unloadModel(m_model);
 #ifdef VPVL_LINK_ASSIMP
-        const uint32_t nAssets = m_importers.count();
-        for (uint32_t i = 0; i < nAssets; i++) {
-            Assimp::Importer *importer = m_importers[i];
-            m_renderer.unloadAsset(importer->GetScene());
-        }
-        m_importers.clear();
         Assimp::DefaultLogger::kill();
 #endif
         delete m_model;
@@ -439,19 +433,20 @@ private:
 
         return true;
     }
-#ifdef VPVL_LINK_ASSIMP
-    void loadAsset(std::string dir, std::string name) {
-        Assimp::Importer *importer = new Assimp::Importer();
+    vpvl::Asset *loadAsset(const std::string &dir, const std::string &name) {
+        vpvl::Asset *asset = new vpvl::Asset();
         const std::string path = internal::concatPath(dir, name);
-        aiScene *asset = const_cast<aiScene *>(importer->ReadFile(path, aiProcessPreset_TargetRealtime_Quality));
-        if (asset)
+        if (asset->load(path.c_str())) {
             m_renderer.loadAsset(asset, dir);
-        else
+            return asset;
+        }
+        else {
             m_delegate.log(IDelegate::kLogWarning,
-                           "Failed parsing the asset (%s): %s, skipped...",
-                           path.c_str(), importer->GetErrorString());
+                           "Failed parsing the asset %s, skipped...",
+                           path.c_str());
+            return 0;
+        }
     }
-#endif
     void pollEvent(bool &quit) {
         SDL_Event event;
         quit = false;

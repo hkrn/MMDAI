@@ -68,15 +68,10 @@ struct PMDModelMaterialPrivate {
 #include <map>
 namespace vpvl
 {
-namespace gl
+struct AssetUserData
 {
-struct AssetInternal
-{
-    const aiScene *scene;
     std::map<std::string, GLuint> textures;
-    aiVector3D position;
 };
-}
 }
 #else
 VPVL_DECLARE_HANDLE(aiNode)
@@ -182,6 +177,13 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 
 Renderer::~Renderer()
 {
+#ifdef VPVL_LINK_ASSIMP
+    const uint32_t nAssets = m_assets.count();
+    for (uint32_t i = 0; i < nAssets; i++) {
+        Asset *asset = m_assets[i];
+        delete asset->userData();
+    }
+#endif
     m_assets.clear();
     delete m_debugDrawer;
     m_debugDrawer = 0;
@@ -721,87 +723,68 @@ static const std::string CanonicalizePath(const std::string &path)
     return ret;
 }
 
-static AssetInternal *FindAssetInternal(const aiScene *asset, const Array<AssetInternal *> &assets)
-{
-    const uint32_t nAssets = assets.count();
-    for (uint32_t i = 0; i < nAssets; i++) {
-        AssetInternal *internal = assets[i];
-        if (internal->scene = asset)
-            return internal;
-    }
-    return 0;
-}
-
-void Renderer::loadAsset(const aiScene *asset, const std::string &dir)
+void Renderer::loadAsset(Asset *asset, const std::string &dir)
 {
 #ifdef VPVL_LINK_ASSIMP
-    const uint32_t nMaterials = asset->mNumMaterials;
-    AssetInternal *internal = new AssetInternal();
+    const aiScene *scene = asset->getScene();
+    const uint32_t nMaterials = scene->mNumMaterials;
+    AssetUserData *userData = new AssetUserData();
     aiString texturePath;
     std::string path, canonicalized, filename;
+    asset->setUserData(userData);
     for (uint32_t i = 0; i < nMaterials; i++) {
-        aiMaterial *material = asset->mMaterials[i];
+        aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
         GLuint textureID;
         int textureIndex = 0;
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
-            if (internal->textures[path] == 0) {
+            if (userData->textures[path] == 0) {
                 canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
                 filename = dir + "/" + canonicalized;
                 if (m_delegate->loadTexture(filename, textureID)) {
-                    internal->textures[path] = textureID;
+                    userData->textures[path] = textureID;
                     m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;
         }
     }
-    internal->scene = const_cast<aiScene *>(asset);
-    m_assets.add(internal);
+    m_assets.add(asset);
 #else
     (void) asset;
     (void) dir;
 #endif
 }
 
-void Renderer::unloadAsset(const aiScene *asset)
+void Renderer::unloadAsset(Asset *asset)
 {
 #ifdef VPVL_LINK_ASSIMP
-    AssetInternal *internal = FindAssetInternal(asset, m_assets);
-    if (internal) {
-        const uint32_t nMaterials = asset->mNumMaterials;
+    if (asset) {
+        const aiScene *scene = asset->getScene();
+        const uint32_t nMaterials = scene->mNumMaterials;
+        AssetUserData *userData = asset->userData();
         aiString texturePath;
         for (uint32_t i = 0; i < nMaterials; i++) {
-            aiMaterial *material = asset->mMaterials[i];
+            aiMaterial *material = scene->mMaterials[i];
             aiReturn found = AI_SUCCESS;
             GLuint textureID;
             int textureIndex = 0;
             while (found == AI_SUCCESS) {
                 found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                textureID = internal->textures[texturePath.data];
+                textureID = userData->textures[texturePath.data];
                 glDeleteTextures(1, &textureID);
-                internal->textures.erase(texturePath.data);
+                userData->textures.erase(texturePath.data);
                 textureIndex++;
             }
         }
-        delete internal;
-        m_assets.remove(internal);
+        delete asset;
+        delete userData;
+        m_assets.remove(asset);
     }
 #else
     (void) asset;
-#endif
-}
-
-void Renderer::setAssetPosition(const aiScene *asset, const btVector3 &position)
-{
-#ifdef VPVL_LINK_ASSIMP
-    AssetInternal *internal = FindAssetInternal(asset, m_assets);
-    internal->position.Set(position.x(), position.y(), position.z());
-#else
-    (void) asset;
-    (void) position;
 #endif
 }
 
@@ -820,12 +803,12 @@ static inline void aiColor2Float4(const struct aiColor4D &color, float *dest)
     dest[3] = color.a;
 }
 
-static void aiSetAssetMaterial(const aiMaterial *material, AssetInternal *internal)
+static void aiSetAssetMaterial(const aiMaterial *material, Asset *asset)
 {
     int textureIndex = 0;
     aiString texturePath;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == AI_SUCCESS) {
-        GLuint textureID = internal->textures[texturePath.data];
+        GLuint textureID = asset->userData()->textures[texturePath.data];
         glBindTexture(GL_TEXTURE_2D, textureID);
     }
     else {
@@ -872,16 +855,16 @@ static void aiSetAssetMaterial(const aiMaterial *material, AssetInternal *intern
         glDisable(GL_CULL_FACE);
 }
 
-static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetInternal *internal)
+static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, Asset *asset)
 {
     GLenum faceMode;
     struct aiMatrix4x4 m = node->mTransformation;
-    const float scaleFactor = 10.0f;
-    const aiVector3D &pos = internal->position;
+    const btScalar &scaleFactor = asset->scale();
+    const btVector3 &pos = asset->position();
     // translate
-    m.a4 = pos.x;
-    m.b4 = pos.y;
-    m.c4 = pos.z;
+    m.a4 = pos.x();
+    m.b4 = pos.y();
+    m.c4 = pos.z();
     // scale
     m.a1 = scaleFactor;
     m.b2 = scaleFactor;
@@ -899,7 +882,7 @@ static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetIn
         const bool hasColors = colors ? true : false;
         const bool hasTexCoords = mesh->HasTextureCoords(0);
         const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
-        aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], internal);
+        aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], asset);
         hasNormals ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING);
         hasColors ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
         const uint32_t nFaces = mesh->mNumFaces;
@@ -938,19 +921,21 @@ static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, AssetIn
     }
     const uint32_t nChildNodes = node->mNumChildren;
     for (uint32_t i = 0; i < nChildNodes; i++)
-        aiDrawAssetRecurse(scene, node->mChildren[i], internal);
+        aiDrawAssetRecurse(scene, node->mChildren[i], asset);
     glPopMatrix();
 }
 
-void aiDrawAsset(AssetInternal *internal)
+void aiDrawAsset(Asset *asset)
 {
-    if (internal) {
-        const aiScene *asset = internal->scene;
-        glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-        aiDrawAssetRecurse(asset, asset->mRootNode, internal);
-        glPopAttrib();
-    }
+    const aiScene *a = asset->getScene();
+    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+    aiDrawAssetRecurse(a, a->mRootNode, asset);
+    glPopAttrib();
 }
+
+#else
+
+#define aiDrawAsset(asset)
 
 #endif /* VPVL_LINK_ASSIMP */
 
