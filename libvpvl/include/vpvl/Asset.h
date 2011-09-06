@@ -71,6 +71,15 @@ public:
     bool load(const char *path);
     bool load(const uint8_t *data, size_t size);
 
+    const char *name() const {
+        return m_name;
+    }
+    void setName(const char *name) {
+        if (name != m_name) {
+            delete[] m_name;
+            m_name = name;
+        }
+    }
     const btVector3 &position() const {
         return m_position;
     }
@@ -106,6 +115,7 @@ private:
     btVector3 m_position;
     btScalar m_scale;
     uint32_t m_flags;
+    const char *m_name;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Asset)
 };

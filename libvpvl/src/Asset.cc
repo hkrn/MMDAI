@@ -55,13 +55,16 @@ Asset::Asset()
       m_scene(0),
       m_position(0.0f, 0.0f, 0.0f),
       m_scale(10.0f),
-      m_flags(aiProcessPreset_TargetRealtime_Quality)
+      m_flags(aiProcessPreset_TargetRealtime_Quality),
+      m_name(0)
 {
     m_importer = new Assimp::Importer();
 }
 
 Asset::~Asset()
 {
+    delete m_name;
+    m_name = 0;
     m_flags = 0;
     m_scale = 0.0f;
     m_position.setZero();
@@ -97,12 +100,14 @@ Asset::Asset()
       m_scene(0),
       m_position(0.0f, 0.0f, 0.0f),
       m_scale(10.0f),
-      m_flags(0)
+      m_flags(0),
+      m_name(0)
 {
 }
 
 Asset::~Asset()
 {
+    m_name = 0;
     m_flags = 0;
     m_scale = 0.0f;
     m_position.setZero();
