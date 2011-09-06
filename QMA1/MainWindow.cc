@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
     setWindowTitle(buildWindowTitle());
+    statusBar()->show();
 }
 
 MainWindow::~MainWindow()
@@ -97,18 +98,19 @@ void MainWindow::deleteModel(vpvl::PMDModel *model)
 }
 
 
-void MainWindow::addAsset(void * /* asset */)
+void MainWindow::addAsset(vpvl::Asset *asset)
 {
-    QString name = "";
+    QString name(asset->name());
     QAction *action = new QAction(name, this);
-    action->setStatusTip(tr("%1").arg(name));
-    // connect(action, SIGNAL(triggered()), this, SLOT(selectCurrentModel()));
+    action->setStatusTip(tr("Select an asset %1").arg(name));
+    //connect(action, SIGNAL(triggered()), this, SLOT(selectCurrentModel()));
+    m_menuRetainAssets->addAction(action);
 }
 
-void MainWindow::deleteAsset(void * /* asset */)
+void MainWindow::deleteAsset(vpvl::Asset *asset)
 {
     QAction *actionToRemove = 0;
-    QString name = "";
+    QString name(asset->name());
     foreach (QAction *action, m_menuRetainAssets->actions()) {
         if (action->text() == name) {
             actionToRemove = action;
@@ -225,6 +227,8 @@ void MainWindow::buildMenuBar()
     m_menuBar->addMenu(m_menuFile);
     m_menuScene = new QMenu(this);
     m_menuRetainAssets = new QMenu(this);
+    m_menuScene->addMenu(m_menuRetainAssets);
+    m_menuScene->addSeparator();
     m_menuScene->addAction(m_actionZoomIn);
     m_menuScene->addAction(m_actionZoomOut);
     m_menuScene->addSeparator();
@@ -254,8 +258,8 @@ void MainWindow::buildMenuBar()
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), this, SLOT(addModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::XModel*)), this, SLOT(addAsset(void*)));
-    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::XModel*)), this, SLOT(deleteAsset(void*)));
+    connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
+    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(setCurrentFPS(int)));
 
     retranslate();

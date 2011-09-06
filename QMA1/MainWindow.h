@@ -5,6 +5,7 @@
 #include <QtGui/QMainWindow>
 
 namespace vpvl {
+class Asset;
 class PMDModel;
 }
 
@@ -30,8 +31,8 @@ private slots:
     void setCurrentFPS(int value);
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
-    void addAsset(void *asset);
-    void deleteAsset(void *asset);
+    void addAsset(vpvl::Asset *asset);
+    void deleteAsset(vpvl::Asset *asset);
 
 private:
     void startSceneUpdate();

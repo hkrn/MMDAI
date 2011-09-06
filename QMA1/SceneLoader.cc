@@ -72,7 +72,12 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
                     i++;
                 }
             }
-            //m_renderer->loadAsset(model, std::string(dir.absolutePath().toUtf8()));
+            const QByteArray &assetName = baseName.toUtf8();
+            char *name = new char[assetName.size() + 1];
+            memcpy(name, assetName.constData(), assetName.size());
+            name[assetName.size()] = 0;
+            asset->setName(name);
+            m_renderer->loadAsset(asset, std::string(dir.absolutePath().toUtf8()));
             m_assets[key] = asset;
         }
         else {
