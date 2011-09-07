@@ -77,8 +77,9 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             memcpy(name, assetName.constData(), assetName.size());
             name[assetName.size()] = 0;
             asset->setName(name);
-            m_renderer->loadAsset(asset, std::string(dir.absolutePath().toUtf8()));
+            m_renderer->loadAsset(asset, std::string(dir.absolutePath().toLocal8Bit()));
             m_assets[key] = asset;
+            m_renderer->scene()->seekMotion(0.0f);
         }
         else {
             delete asset;
@@ -117,7 +118,7 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir,
         QByteArray data = file.readAll();
         model = new vpvl::PMDModel();
         if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            m_renderer->loadModel(model, std::string(dir.absolutePath().toUtf8()));
+            m_renderer->loadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
             m_renderer->scene()->addModel(model);
             QString key = internal::toQString(model);
             qDebug() << key << baseName;

@@ -17,8 +17,11 @@ Delegate::~Delegate()
 
 bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
 {
-    QString pathString = QString::fromUtf8(path.c_str());
-    if (pathString.endsWith(".tga", Qt::CaseInsensitive)) {
+    QString pathString = QString::fromLocal8Bit(path.c_str());
+    if (!QFileInfo(pathString).exists()) {
+        return false;
+    }
+    else if (pathString.endsWith(".tga", Qt::CaseInsensitive)) {
         uint8_t *rawData = 0;
         QImage image = loadTGA(pathString, rawData);
         textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image));
@@ -34,7 +37,7 @@ bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
 
 bool Delegate::loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID)
 {
-    QString path = QString::fromUtf8(dir.c_str()) + "/" + QString::fromUtf8(name.c_str());
+    QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + QString::fromLocal8Bit(name.c_str());
     if (!QFile::exists(path))
         path = QString(":/textures/%1").arg(name.c_str());
     return loadTexture(std::string(path.toUtf8()), textureID);
