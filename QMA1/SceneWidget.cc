@@ -372,22 +372,6 @@ void SceneWidget::initializeGL()
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     m_prevPos = event->pos();
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
-    if (selected) {
-        const vpvl::BoneList &bones = selectedModel()->bones();
-        const uint32_t nBones = bones.count();
-        btVector3 coordinate;
-        m_renderer->getObjectCoordinate(event->pos().x(), event->pos().y(), coordinate);
-        QList< QPair<float, vpvl::Bone *> > result;
-        for (uint32_t i = 0; i < nBones; i++) {
-            vpvl::Bone *bone = bones[i];
-            const btVector3 &p = coordinate - bone->localTransform().getOrigin();
-            result.append(QPair<float, vpvl::Bone *>(p.length2(), bone));
-        }
-        qSort(result);
-        QPair<float, vpvl::Bone *> pair = result.first();
-        qDebug() << qPrintable(internal::toQString(pair.second)) << pair.first;
-    }
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
