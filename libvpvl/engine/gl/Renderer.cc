@@ -820,17 +820,33 @@ static void aiSetAssetMaterial(const aiMaterial *material, Asset *asset)
         aiColor2Float4(ambient, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
     }
+    else {
+        float defaultAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+    }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
         aiColor2Float4(diffuse, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    }
+    else {
+        float defaultDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
         aiColor2Float4(emission, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
     }
+    else {
+        float defaultEmission[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, defaultEmission);
+    }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
         aiColor2Float4(specular, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+    }
+    else {
+        float defaultSpecular[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
     }
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
@@ -950,6 +966,14 @@ void Renderer::drawSurface()
     m_scene->getModelViewMatrix(matrix);
     glLoadMatrixf(matrix);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    // render all assets
+    // TODO: merge drawing models
+    uint32_t nAssets = m_assets.count();
+    for (uint32_t i = 0; i < nAssets; i++) {
+        glPushMatrix();
+        aiDrawAsset(m_assets[i]);
+        glPopMatrix();
+    }
     // initialize rendering states
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
@@ -957,32 +981,28 @@ void Renderer::drawSurface()
     glColorMask(0, 0, 0, 0);
     glDepthMask(0);
     glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
     // render shadow before drawing models
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
+        glPushMatrix();
         drawModelShadow(model);
+        glPopMatrix();
     }
-    glPopMatrix();
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
     glStencilFunc(GL_EQUAL, 2, ~0);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
-    // render all assets
-    // TODO: merge drawing models
-    uint32_t nAssets = m_assets.count();
-    for (uint32_t i = 0; i < nAssets; i++) {
-        aiDrawAsset(m_assets[i]);
-    }
     // render model and edge
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
+        glPushMatrix();
         drawModel(model);
         drawModelEdge(model);
+        glPopMatrix();
     }
 }
 
