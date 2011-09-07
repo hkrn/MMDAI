@@ -28,16 +28,15 @@ protected:
 private slots:
     void selectCurrentModel();
     void setCurrentModel(vpvl::PMDModel *value);
-    void setCurrentFPS(int value);
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
     void addAsset(vpvl::Asset *asset);
     void deleteAsset(vpvl::Asset *asset);
+    void updateFPS(int fps);
 
 private:
     void startSceneUpdate();
     void stopSceneUpdate();
-    void updateFPS(int fps);
     const QString buildWindowTitle();
     const QString buildWindowTitle(int fps);
     void connectWidgets();
@@ -59,6 +58,9 @@ private:
     QAction *m_actionExit;
     QAction *m_actionAbout;
     QAction *m_actionAboutQt;
+    QAction *m_actionPlay;
+    QAction *m_actionPause;
+    QAction *m_actionStop;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;
@@ -73,9 +75,6 @@ private:
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
     QAction *m_actionShowBones;
-    QAction *m_actionPlay;
-    QAction *m_actionStop;
-    QAction *m_actionPause;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
     QMenu *m_menuScene;

@@ -68,12 +68,6 @@ void MainWindow::setCurrentModel(vpvl::PMDModel *value)
     updateInformation();
 }
 
-void MainWindow::setCurrentFPS(int value)
-{
-    m_currentFPS = value;
-    updateInformation();
-}
-
 void MainWindow::addModel(vpvl::PMDModel *model)
 {
     QString name = internal::toQString(model);
@@ -155,7 +149,7 @@ const QString MainWindow::buildWindowTitle()
 
 const QString MainWindow::buildWindowTitle(int fps)
 {
-    return buildWindowTitle() + tr(": Rendering Scene (FPS: %1)").arg(fps);
+    return buildWindowTitle() + tr(" (FPS: %1)").arg(fps);
 }
 
 void MainWindow::buildMenuBar()
@@ -174,6 +168,12 @@ void MainWindow::buildMenuBar()
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
+    m_actionPlay = new QAction(this);
+    connect(m_actionPlay, SIGNAL(triggered()), m_sceneWidget, SLOT(play()));
+    m_actionPause = new QAction(this);
+    connect(m_actionPause, SIGNAL(triggered()), m_sceneWidget, SLOT(pause()));
+    m_actionStop = new QAction(this);
+    connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
     m_actionZoomOut = new QAction(this);
@@ -226,8 +226,9 @@ void MainWindow::buildMenuBar()
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
     m_menuScene = new QMenu(this);
-    m_menuRetainAssets = new QMenu(this);
-    m_menuScene->addMenu(m_menuRetainAssets);
+    m_menuScene->addAction(m_actionPlay);
+    m_menuScene->addAction(m_actionPause);
+    m_menuScene->addAction(m_actionStop);
     m_menuScene->addSeparator();
     m_menuScene->addAction(m_actionZoomIn);
     m_menuScene->addAction(m_actionZoomOut);
@@ -247,6 +248,9 @@ void MainWindow::buildMenuBar()
     m_menuModel = new QMenu(this);
     m_menuRetainModels = new QMenu(this);
     m_menuModel->addMenu(m_menuRetainModels);
+    m_menuRetainAssets = new QMenu(this);
+    if (vpvl::Asset::isSupported())
+        m_menuScene->addMenu(m_menuRetainAssets);
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
     m_menuBar->addMenu(m_menuModel);
@@ -260,7 +264,7 @@ void MainWindow::buildMenuBar()
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
-    connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(setCurrentFPS(int)));
+    connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
 
     retranslate();
 }
@@ -273,6 +277,7 @@ void MainWindow::retranslate()
     m_actionAddAsset->setText(tr("Add asset"));
     m_actionAddAsset->setToolTip(tr("Add an asset to the scene."));
     m_actionAddAsset->setShortcut(tr("Ctrl+Shift+A"));
+    m_actionAddAsset->setEnabled(vpvl::Asset::isSupported());
     m_actionInsertToAllModels->setText(tr("Insert to all models"));
     m_actionInsertToAllModels->setToolTip(tr("Insert a motion to the all models."));
     m_actionInsertToAllModels->setShortcut(tr("Ctrl+Shift+V"));
@@ -285,6 +290,12 @@ void MainWindow::retranslate()
     m_actionExit->setText(tr("Exit"));
     m_actionExit->setToolTip(tr("Exit this application."));
     m_actionExit->setShortcut(tr("Ctrl+Q"));
+    m_actionPlay->setText(tr("Play"));
+    m_actionPlay->setStatusTip(tr("Play current scene."));
+    m_actionPause->setText(tr("Pause"));
+    m_actionPause->setStatusTip(tr("Pause current scene."));
+    m_actionStop->setText(tr("Stop"));
+    m_actionStop->setStatusTip(tr("Stop current scene."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomIn->setShortcut(tr("+"));
