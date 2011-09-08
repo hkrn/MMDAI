@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,57 +36,92 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SCENELOADER_H
-#define SCENELOADER_H
+#ifndef SCRIPT_H
+#define SCRIPT_H
 
-#include <QtCore/QDir>
 #include <QtCore/QHash>
+#include <QtCore/QLinkedList>
+#include <QtCore/QMap>
+#include <QtCore/QObject>
+#include <QtCore/QQueue>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QTextStream>
+#include <QtCore/QTimer>
 
 namespace vpvl
 {
-namespace gl
-{
-class Renderer;
-}
-class Asset;
 class PMDModel;
 class VMDMotion;
 }
 
-class VPDFile;
-
-class SceneLoader
-{
-public:
-    SceneLoader(vpvl::gl::Renderer *renderer);
-    ~SceneLoader();
-
-    bool deleteModel(vpvl::PMDModel *model);
-    bool deleteModelMotion(vpvl::PMDModel *model);
-    bool deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    vpvl::PMDModel *findModel(const QString &name) const;
-    QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
-    vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
-    vpvl::VMDMotion *loadCameraMotion(const QString &path);
-    vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir, vpvl::VMDMotion *&nullMotion);
-    vpvl::VMDMotion *loadModelMotion(const QString &path);
-    vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
-    vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
-    VPDFile *loadPose(const QString &path, vpvl::PMDModel *model);
-    void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-
-private:
-    void insertModel(vpvl::PMDModel *model, const QString &name);
-    void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-
-    vpvl::gl::Renderer *m_renderer;
-    vpvl::VMDMotion *m_camera;
-    QHash<QString, vpvl::PMDModel *> m_models;
-    QHash<QString, vpvl::Asset *> m_assets;
-    QHash<vpvl::PMDModel *, QList<vpvl::VMDMotion *> > m_motions;
-
-    Q_DISABLE_COPY(SceneLoader)
+struct ScriptArgument {
+    QString type;
+    QStringList arguments;
+    ScriptArgument()
+        : type(QString()), arguments(QStringList()) {
+    }
+    ScriptArgument(const ScriptArgument &value)
+        : type(value.type), arguments(value.arguments) {
+    }
+    ScriptArgument(const QString &t, const QStringList &args)
+        : type(t), arguments(args) {
+    }
+    void operator =(const ScriptArgument &value) {
+        this->type = value.type;
+        this->arguments = value.arguments;
+    }
 };
 
-#endif // SCENELOADER_H
+class QBasicTimer;
+class SceneWidget;
+
+class Script : public QObject
+{
+    Q_OBJECT
+
+public:
+    typedef struct State State;
+    typedef QList<QVariant> Arguments;
+
+    static const QString kEPS;
+
+    Script(SceneWidget *parent);
+    ~Script();
+
+    bool load(QTextStream &stream);
+    void start();
+    void stop();
+
+signals:
+    void eventDidPost(const QString &type, const Arguments &arguments);
+
+private slots:
+    void execute();
+    void queueEvent(const QString &type, const Arguments &arguments);
+
+private:
+    void addScriptArc(int from,
+                      int to,
+                      const ScriptArgument &input,
+                      const ScriptArgument &output);
+    void executeEplisons();
+    void handleCommand(const ScriptArgument &output);
+    State *newScriptState(quint32 index);
+    bool setTransition(const ScriptArgument &input, ScriptArgument &output);
+
+    SceneWidget *m_parent;
+    QLinkedList<State *> m_states;
+    State *m_currentState;
+    QHash<QString, float> m_values;
+    QHash<QString, vpvl::PMDModel *> m_models;
+    QHash<QString, vpvl::VMDMotion *> m_motions;
+    QMap<QString, QBasicTimer *> m_timers;
+    QQueue<ScriptArgument> m_queue;
+    QTimer m_timer;
+    vpvl::PMDModel *m_stage;
+
+    Q_DISABLE_COPY(Script)
+};
+
+#endif // SCRIPT_H

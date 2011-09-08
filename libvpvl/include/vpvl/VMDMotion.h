@@ -162,6 +162,12 @@ public:
     float priority() const {
         return m_priority;
     }
+    bool isLoop() const {
+        return m_onEnd == 1;
+    }
+    bool isFull() const {
+        return m_ignoreStatic;
+    }
     bool enableSmooth() const {
         return m_enableSmooth;
     }
@@ -170,6 +176,9 @@ public:
     }
     bool isActive() const {
         return m_active;
+    }
+    void setPriority(float value) {
+        m_priority = value;
     }
     void setLoop(bool value) {
         m_onEnd = value ? 1 : 2;

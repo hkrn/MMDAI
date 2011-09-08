@@ -73,7 +73,6 @@ public:
 
     vpvl::PMDModel *findModel(const QString &name);
     vpvl::PMDModel *selectedModel() const;
-    vpvl::VMDMotion *selectedMotion() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setCurrentFPS(int value);
 
@@ -85,13 +84,25 @@ public slots:
     void play();
     void pause();
     void stop();
+
     void addModel();
+    vpvl::PMDModel *addModel(const QString &path);
     void insertMotionToAllModels();
+    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     void insertMotionToSelectedModel();
+    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
+    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
     void addAsset();
+    vpvl::Asset *addAsset(const QString &path);
     void setCamera();
+    vpvl::VMDMotion *setCamera(const QString &path);
     void deleteSelectedModel();
+    void deleteModel(vpvl::PMDModel *model);
+    void deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void resetCamera();
+    void setLightColor(const btVector4 &color);
+    void setLightPosition(const btVector3 &position);
+
     void rotate(float x, float y);
     void translate(float x, float y);
     void seekMotion(float frameIndex);
@@ -118,6 +129,8 @@ signals:
     void assetDidAdd(vpvl::Asset *asset);
     void assetWillDelete(vpvl::Asset *asset);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
+    void lightColorDidSet(const btVector4 &color);
+    void lightPositionDidSet(const btVector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
     void surfaceDidUpdate();
