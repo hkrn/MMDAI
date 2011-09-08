@@ -138,7 +138,7 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path)
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
         vpvl::VMDMotion *motion = 0;
-        vpvl::PMDModel *model = m_loader->loadModel(fi.fileName(), fi.dir(), motion);
+        model = m_loader->loadModel(fi.fileName(), fi.dir(), motion);
         if (model && motion) {
             emit modelDidAdd(model);
             setSelectedModel(model);

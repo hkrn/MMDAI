@@ -47,6 +47,7 @@ class PMDModel;
 
 class LicenseWidget;
 class SceneWidget;
+class Script;
 
 class MainWindow : public QMainWindow
 {
@@ -69,6 +70,7 @@ private slots:
     void addAsset(vpvl::Asset *asset);
     void deleteAsset(vpvl::Asset *asset);
     void updateFPS(int fps);
+    void loadScript();
 
 private:
     void startSceneUpdate();
@@ -83,9 +85,11 @@ private:
     QSettings m_settings;
     LicenseWidget *m_licenseWidget;
     SceneWidget *m_sceneWidget;
+    Script *m_script;
     vpvl::PMDModel *m_model;
     int m_currentFPS;
 
+    QAction *m_actionLoadScript;
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
     QAction *m_actionInsertToAllModels;

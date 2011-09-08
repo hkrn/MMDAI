@@ -38,6 +38,7 @@
 
 #include "LicenseWidget.h"
 #include "SceneWidget.h"
+#include "Script.h"
 #include "util.h"
 
 #include <QtGui/QtGui>
@@ -48,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
     m_licenseWidget(0),
     m_sceneWidget(0),
+    m_script(0),
     m_model(0),
     m_currentFPS(0)
 {
@@ -66,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_script;
     delete m_menuBar;
     delete m_licenseWidget;
 }
@@ -176,6 +179,28 @@ void MainWindow::updateFPS(int fps)
     setWindowTitle(buildWindowTitle(fps));
 }
 
+void MainWindow::loadScript()
+{
+    if (m_script)
+        return;
+    const QString name("mainWindow/lastScriptDirectory");
+    const QString path = m_settings.value(name).toString();
+    const QString fileName = QFileDialog::getOpenFileName(this, tr("Open script file"), path, tr("Script file (*.fst)"));
+    if (!fileName.isEmpty()) {
+        QDir dir(fileName);
+        dir.cdUp();
+        m_settings.setValue(name, dir.absolutePath());
+    }
+    QFile file(fileName);
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        m_script = new Script(m_sceneWidget);
+        m_script->setDir(QFileInfo(file).absoluteDir());
+        m_script->load(stream);
+        m_script->start();
+    }
+}
+
 const QString MainWindow::buildWindowTitle()
 {
     QString title = qAppName();
@@ -191,6 +216,8 @@ const QString MainWindow::buildWindowTitle(int fps)
 
 void MainWindow::buildMenuBar()
 {
+    m_actionLoadScript = new QAction(this);
+    connect(m_actionLoadScript, SIGNAL(triggered()), this, SLOT(loadScript()));
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
@@ -253,6 +280,8 @@ void MainWindow::buildMenuBar()
     m_menuBar = new QMenuBar(this);
 #endif
     m_menuFile = new QMenu(this);
+    m_menuFile->addAction(m_actionLoadScript);
+    m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionAddModel);
     m_menuFile->addAction(m_actionAddAsset);
     m_menuFile->addSeparator();
@@ -308,6 +337,8 @@ void MainWindow::buildMenuBar()
 
 void MainWindow::retranslate()
 {
+    m_actionLoadScript->setText(tr("Load script"));
+    m_actionLoadScript->setToolTip(tr("Load a script"));
     m_actionAddModel->setText(tr("Add model"));
     m_actionAddModel->setToolTip(tr("Add a model to the scene."));
     m_actionAddModel->setShortcut(tr("Ctrl+Shift+M"));

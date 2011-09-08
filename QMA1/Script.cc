@@ -172,24 +172,27 @@ struct State {
 };
 
 #if 0
-static void DumpScriptState(State *state)
+static void DumpScriptState(State *state, int &depth)
 {
     if (!state)
         return;
-    qDebug("state dump start");
+    depth++;
+    qDebug("state dump start (depth=%d)", depth);
     uint32_t index = state->index;
     foreach (ScriptArc *arc, state->arcs) {
         qDebug() << index << arc->input.type << arc->input.arguments
                  << arc->output.type << arc->output.arguments;
-        DumpScriptState(state->next);
+        DumpScriptState(state->next, depth);
     }
-    qDebug("state dump end");
+    depth--;
+    qDebug("state dump end (depth=%d)", depth);
 }
 
 static void DumpScriptStates(QLinkedList<State *> states)
 {
+    int depth = 0;
     foreach (State *state, states)
-        DumpScriptState(state);
+        DumpScriptState(state, depth);
 }
 #else
 #define DumpScriptStates (void)
@@ -207,6 +210,7 @@ Script::Script(SceneWidget *parent)
 
 Script::~Script()
 {
+    stop();
     qDeleteAll(m_states);
     qDeleteAll(m_timers);
 }
@@ -248,6 +252,7 @@ void Script::start()
 {
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(execute()));
     connect(this, SIGNAL(eventDidPost(QString,Arguments)), this, SLOT(queueEvent(QString,Arguments)));
+    executeEplisons();
     m_timer.start();
 }
 
@@ -289,6 +294,15 @@ void Script::addScriptArc(int from,
     state1->arcs.append(arc);
 }
 
+const QString Script::canonicalizePath(const QString &path)
+{
+    const QString filename = QString(path).replace("\\", "/");
+    QString result = m_dir.absoluteFilePath(filename);
+    if (!QFile::exists(result))
+        result = QDir(":MMDAIUserData/").absoluteFilePath(filename);
+    return result;
+}
+
 void Script::executeEplisons()
 {
     ScriptArgument output, eps(Script::kEPS, QStringList());
@@ -302,10 +316,10 @@ void Script::handleCommand(const ScriptArgument &output)
 {
     const QString &type = output.type;
     const QStringList &argv = output.arguments;
-    const QString kInvalidArgumentFixed = tr("%1: Invalid argument count (expected %2, actual is %3)");
-    const QString kInvalidArgumentRanged = tr("%1: Invalid argument count (expected between %2 and %3, actual is %4)");
-    const QString kInvalidArgumentVariant = tr("%1: Invalid argument count (expected %2 or between %3 and %4, actual is %5)");
-    const QString kModelNotFound = tr("%1: Model %2 is not found");
+    const QString kInvalidArgumentFixed = tr("[%1] Invalid argument count (expected %2, actual is %3)");
+    const QString kInvalidArgumentRanged = tr("[%1] Invalid argument count (expected between %2 and %3, actual is %4)");
+    const QString kInvalidArgumentVariant = tr("[%1] Invalid argument count (expected %2 or between %3 and %4, actual is %5)");
+    const QString kModelNotFound = tr("[%1] Model %2 is not found");
     int argc = output.arguments.count();
     if (type == kModelAddCommand) {
         if (argc < 2 || argc > 6) {
@@ -313,17 +327,18 @@ void Script::handleCommand(const ScriptArgument &output)
             return;
         }
         const QString &modelName = argv[0];
-        vpvl::PMDModel *model = m_parent->addModel(argv[1]);
+        const QString &path = canonicalizePath(argv[1]);
+        vpvl::PMDModel *model = m_parent->addModel(path);
         if (model) {
             if (argc >= 3) {
                 btVector3 position;
                 ParsePosition(argv[2], position);
-                model->mutableRootBone()->setPosition(position);
+                model->mutableRootBone()->setOffset(position);
             }
             if (argc >= 4) {
-                btQuaternion rotation;
-                ParseRotation(argv[2], rotation);
-                model->mutableRootBone()->setRotation(rotation);
+                // btQuaternion rotation;
+                // ParseRotation(argv[3], rotation);
+                // model->mutableRootBone()->setOffset(rotation);
             }
             if (argc >= 5) {
                 // base model
@@ -335,6 +350,10 @@ void Script::handleCommand(const ScriptArgument &output)
             Arguments a; a << modelName;
             emit eventDidPost(kModelAddEvent, a);
         }
+        else {
+            qWarning("%s", tr("[%1] Failed loading the model %2: %3")
+                     .arg(type).arg(modelName).arg(path).toUtf8().constData());
+        }
     }
     else if (type == kModelChangeCommand) {
         if (argc != 2) {
@@ -344,17 +363,22 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
             vpvl::PMDModel *model = m_models.value(modelName);
+            const QString &path = canonicalizePath(argv[1]);
             m_parent->deleteModel(model);
-            model = m_parent->addModel(argv[1]);
+            model = m_parent->addModel(path);
             if (model) {
                 m_models.remove(modelName);
                 m_models.insert(modelName, model);
                 Arguments a; a << modelName;
                 emit eventDidPost(kModelChangeEvent, a);
             }
+            else
+                qWarning("%s", tr("[%1] Failed loading the model %2: %3")
+                         .arg(type).arg(modelName).arg(path).toUtf8().constData());
         }
-        else
+        else {
             qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+        }
     }
     else if (type == kModelDeleteCommand) {
         if (argc != 1) {
@@ -367,8 +391,9 @@ void Script::handleCommand(const ScriptArgument &output)
             Arguments a; a << modelName;
             emit eventDidPost(kModelDeleteEvent, a);
         }
-        else
+        else {
             qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+        }
     }
     else if (type == kMotionAddCommand) {
         if (argc < 3 || argc > 8) {
@@ -378,8 +403,9 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         const QString &motionName = argv[1];
         if (m_models.contains(modelName)) {
+            const QString &path = canonicalizePath(argv[2]);
             vpvl::PMDModel *model = m_models.value(modelName);
-            vpvl::VMDMotion *motion = m_parent->insertMotionToModel(argv[2], model);
+            vpvl::VMDMotion *motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 bool value = false;
                 if (argc >= 4) {
@@ -405,9 +431,14 @@ void Script::handleCommand(const ScriptArgument &output)
                 Arguments a; a << modelName << motionName;
                 emit eventDidPost(kMotionAddEvent, a);
             }
+            else {
+                qWarning("%s", tr("[%1] Failed loading the motion %2 to %3: %4")
+                         .arg(type).arg(motionName).arg(modelName).arg(path).toUtf8().constData());
+            }
         }
-        else
+        else {
             qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+        }
     }
     else if (type == kMotionChangeCommand) {
         if (argc != 3) {
@@ -416,6 +447,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         const QString &motionName = argv[1];
+        const QString &path = canonicalizePath(argv[2]);
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
             vpvl::PMDModel *model = m_models.value(modelName);
             vpvl::VMDMotion *motion = m_motions.value(motionName);
@@ -424,7 +456,7 @@ void Script::handleCommand(const ScriptArgument &output)
             bool enableSmooth = motion->enableSmooth();
             bool enableRelocation = motion->enableRelocation();
             m_parent->deleteMotion(motion, model);
-            motion = m_parent->insertMotionToModel(argv[2], model);
+            motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 motion->setFull(full);
                 motion->setLoop(loop);
@@ -434,6 +466,10 @@ void Script::handleCommand(const ScriptArgument &output)
                 m_motions.insert(motionName, motion);
                 Arguments a;  a << modelName << motionName;
                 emit eventDidPost(kMotionChangeEvent, a);
+            }
+            else {
+                qWarning("%s", tr("[%1] Failed loading the motion %2 to %3: %4")
+                         .arg(type).arg(motionName).arg(modelName).arg(path).toUtf8().constData());
             }
         }
         else
@@ -451,8 +487,9 @@ void Script::handleCommand(const ScriptArgument &output)
             vpvl::VMDMotion *motion = m_motions.value(motionName);
             m_parent->deleteMotion(motion, model);
         }
-        else
+        else {
             qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+        }
     }
     else if (type == kStageCommand) {
         if (argc != 1) {
@@ -460,10 +497,14 @@ void Script::handleCommand(const ScriptArgument &output)
             return;
         }
         m_parent->deleteModel(m_stage);
-        vpvl::PMDModel *model = m_parent->addModel(argv[0]);
+        const QString &path = canonicalizePath(argv[0]);
+        vpvl::PMDModel *model = m_parent->addModel(path);
         if (model) {
             m_stage = model;
             emit eventDidPost(kStageEvent, Arguments());
+        }
+        else {
+            qWarning("%s", tr("[%1] Failed loading the stage: %2").arg(type).arg(path).toUtf8().constData());
         }
     }
     else if (type == kLightColorCommand) {
@@ -494,7 +535,9 @@ void Script::handleCommand(const ScriptArgument &output)
     }
     else if (type == kCameraCommand) {
         if (argc == 1) {
-            m_parent->setCamera(argv[0]);
+            const QString &path = canonicalizePath(argv[0]);
+            if (!m_parent->setCamera(path))
+                qWarning("%s", tr("[%1] Failed loading camera motion: %2").arg(type).arg(path).toUtf8().constData());
         }
         else if (argc == 3 || argc == 4) {
             btVector3 position, angle;
@@ -516,7 +559,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &key = argv[0];
         const QString &value = argv[1];
         if (key.isEmpty()) {
-            qWarning("Specified key is empty");
+            qWarning("%s", tr("[%1] Specified key is empty").arg(type).toUtf8().constData());
             return;
         }
         if (argc == 2) {
@@ -554,7 +597,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &value = argv[1];
         const QString &op = argv[2];
         if (!m_values.contains(key)) {
-            qWarning("Evaluating %s is not found", key.toUtf8().constData());
+            qWarning("%s", tr("[%1] Evaluating %1 is not found").arg(type).arg(key).toUtf8().constData());
             return;
         }
         const float v1 = value.toFloat();
@@ -579,7 +622,7 @@ void Script::handleCommand(const ScriptArgument &output)
             ret = v1 <= v2;
         }
         else {
-            qWarning("Operation %s is invalid", op.toUtf8().constData());
+            qWarning("%s", tr("[%1] Operation %s is invalid").arg(type).arg(op).toUtf8().constData());
         }
         Arguments a; a << key << op << value << (ret ? "TRUE" : "FALSE");
         emit eventDidPost(kValueEvaluateEvent, a);
@@ -592,7 +635,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &key = argv[0];
         const QString &value = argv[1];
         if (key.isEmpty()) {
-            qWarning("Specified key is empty");
+            qWarning("%s", tr("[%1] Specified key is empty").arg(type).toUtf8().constData());
             return;
         }
         const float seconds = value.toFloat();
@@ -610,7 +653,7 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kTimerStartEvent, a);
         }
         else {
-            qWarning("Invalid second: %s", value.toUtf8().constData());
+            qWarning("%s", tr("[%1] Invalid second: %2").arg(type).arg(value).toUtf8().constData());
         }
     }
     else if (type == kTimerStop) {
@@ -628,6 +671,7 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kTimerStopEvent, a);
         }
     }
+    qDebug() << type << argv;
 }
 
 State *Script::newScriptState(quint32 index)

@@ -39,6 +39,7 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
+#include <QtCore/QDir>
 #include <QtCore/QHash>
 #include <QtCore/QLinkedList>
 #include <QtCore/QMap>
@@ -93,6 +94,8 @@ public:
     void start();
     void stop();
 
+    void setDir(const QDir &value) { m_dir = value; }
+
 signals:
     void eventDidPost(const QString &type, const Arguments &arguments);
 
@@ -105,6 +108,7 @@ private:
                       int to,
                       const ScriptArgument &input,
                       const ScriptArgument &output);
+    const QString canonicalizePath(const QString &path);
     void executeEplisons();
     void handleCommand(const ScriptArgument &output);
     State *newScriptState(quint32 index);
@@ -119,6 +123,7 @@ private:
     QMap<QString, QBasicTimer *> m_timers;
     QQueue<ScriptArgument> m_queue;
     QTimer m_timer;
+    QDir m_dir;
     vpvl::PMDModel *m_stage;
 
     Q_DISABLE_COPY(Script)
