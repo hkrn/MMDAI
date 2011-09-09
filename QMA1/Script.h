@@ -99,9 +99,13 @@ public:
 signals:
     void eventDidPost(const QString &type, const Arguments &arguments);
 
+protected:
+    void timerEvent(QTimerEvent *event);
+
 private slots:
     void execute();
     void queueEvent(const QString &type, const Arguments &arguments);
+    void handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
 
 private:
     void addScriptArc(int from,

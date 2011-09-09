@@ -109,6 +109,12 @@ bool ParseEnable(const QString &value, const QString &enable, const QString &dis
         output = false;
         return true;
     }
+    else {
+        qWarning("Unexpected value %s to boolean (%s or %s)",
+                 value.toUtf8().constData(),
+                 enable.toUtf8().constData(),
+                 disable.toUtf8().constData());
+    }
     return false;
 }
 
@@ -120,6 +126,9 @@ bool ParsePosition(const QString &value, btVector3 &v) {
         v.setY(xyz.at(1).toFloat());
         v.setZ(xyz.at(2).toFloat());
         return true;
+    }
+    else {
+        qWarning("Unexpected value %s to position", value.toUtf8().constData());
     }
     return false;
 }
@@ -133,6 +142,9 @@ bool ParseColor(const QString &value, btVector4 &v) {
         v.setW(xyz.at(3).toFloat());
         return true;
     }
+    else {
+        qWarning("Unexpected value %s to color", value.toUtf8().constData());
+    }
     return false;
 }
 
@@ -144,6 +156,9 @@ bool ParseRotation(const QString &value, btQuaternion &v) {
         float x = vpvl::radian(xyz.at(0).toFloat());
         v.setEulerZYX(z, y, x);
         return true;
+    }
+    else {
+        qWarning("Unexpected value %s to rotation", value.toUtf8().constData());
     }
     return false;
 }
@@ -208,6 +223,9 @@ Script::Script(SceneWidget *parent)
       m_currentState(0),
       m_stage(0)
 {
+    connect(this, SIGNAL(eventDidPost(QString,Arguments)), this, SLOT(queueEvent(QString,Arguments)));
+    connect(m_parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
+            this, SLOT(handleFinishedMotion(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)));
 }
 
 Script::~Script()
@@ -253,16 +271,40 @@ bool Script::load(QTextStream &stream)
 void Script::start()
 {
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(execute()));
-    connect(this, SIGNAL(eventDidPost(QString,Arguments)), this, SLOT(queueEvent(QString,Arguments)));
     executeEplisons();
     m_timer.start();
 }
 
 void Script::stop()
 {
-    m_timer.stop();
-    disconnect(this, SLOT(queueEvent(QString,Arguments)));
     disconnect(this, SLOT(execute()));
+    m_timer.stop();
+}
+
+void Script::timerEvent(QTimerEvent *event)
+{
+    QMapIterator<QString, QBasicTimer *> iterator(m_timers);
+    QString key;
+    QBasicTimer *timer = 0;
+    const int id = event->timerId();
+    while (iterator.hasNext()) {
+        iterator.next();
+        timer = iterator.value();
+        if (timer->timerId() == id) {
+            key = iterator.key();
+            break;
+        }
+    }
+    if (!key.isNull()) {
+        timer->stop();
+        delete timer;
+        m_timers.remove(key);
+        Arguments a; a << key;
+        emit eventDidPost(kTimerStopEvent, a);
+    }
+    else {
+        qWarning("%s", tr("[%1] %2 seems deleted").arg(key).toUtf8().constData());
+    }
 }
 
 void Script::execute()
@@ -282,7 +324,26 @@ void Script::queueEvent(const QString &type, const Arguments &arguments)
     foreach (QVariant arg, arguments) {
         strings << arg.toString();
     }
+    qDebug() << type << arguments;
     m_queue.enqueue(ScriptArgument(type, strings));
+}
+
+void Script::handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions)
+{
+    Arguments a;
+    QMapIterator<vpvl::PMDModel *, vpvl::VMDMotion *> iterator(motions);
+    while (iterator.hasNext()) {
+        iterator.next();
+        vpvl::VMDMotion *motion = iterator.value();
+        const QString &name = m_motions.key(motion);
+        if (!name.isEmpty()) {
+            vpvl::PMDModel *model = iterator.key();
+            m_parent->deleteMotion(motion, model);
+            m_motions.remove(name);
+            a.clear(); a << name;
+            emit eventDidPost(kMotionDeleteEvent, a);
+        }
+    }
 }
 
 void Script::addScriptArc(int from,
@@ -423,12 +484,14 @@ void Script::handleCommand(const ScriptArgument &output)
             vpvl::VMDMotion *motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 bool value = false;
+                motion->setEnableRelocation(true);
+                motion->setEnableSmooth(true);
                 if (argc >= 4) {
                     ParseEnable(argv[3], "FULL", "PART", value);
                     motion->setFull(value);
                 }
                 if (argc >= 5) {
-                    ParseEnable(argv[4], "ONCE", "LOOP", value);
+                    ParseEnable(argv[4], "LOOP", "ONCE", value);
                     motion->setLoop(value);
                 }
                 if (argc >= 6) {
