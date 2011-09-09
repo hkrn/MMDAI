@@ -185,7 +185,7 @@ public:
         m_onEnd = value ? 1 : 2;
     }
     void setFull(bool value) {
-        m_ignoreStatic = !value;
+        m_ignoreStatic = value ? false : true;
     }
     void setEnableSmooth(bool value) {
         m_enableSmooth = value;

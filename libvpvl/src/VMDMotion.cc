@@ -64,8 +64,8 @@ VMDMotion::VMDMotion()
       m_motionBlendRate(1.0f),
       m_beginningNonControlledBlend(0.0f),
       m_active(false),
-      m_enableSmooth(true),
-      m_enableRelocation(true),
+      m_enableSmooth(false),
+      m_enableRelocation(false),
       m_ignoreStatic(false)
 {
     internal::zerofill(&m_name, sizeof(m_name));
@@ -257,6 +257,8 @@ void VMDMotion::advance(float deltaFrame)
     if (m_beginningNonControlledBlend > 0.0f) {
         m_beginningNonControlledBlend -= deltaFrame;
         btSetMax(m_beginningNonControlledBlend, 0.0f);
+        m_model->smearAllBonesToDefault(m_beginningNonControlledBlend / 10.0f);
+        m_model->smearAllFacesToDefault(m_beginningNonControlledBlend / 10.0f);
     }
     if (m_active) {
         // Started gracefully finish
@@ -374,8 +376,8 @@ void VMDMotion::release()
     m_motionBlendRate = 1.0f;
     m_beginningNonControlledBlend = 0.0f;
     m_active = false;
-    m_enableSmooth = true;
-    m_enableRelocation = true;
+    m_enableSmooth = false;
+    m_enableRelocation = false;
     m_ignoreStatic = false;
 }
 
