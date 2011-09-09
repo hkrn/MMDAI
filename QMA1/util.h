@@ -22,6 +22,10 @@ static inline const QString noneString()
     return QApplication::tr(kEmptyString);
 }
 
+static inline const QByteArray fromQString(const QString &value) {
+    return getTextCodec()->fromUnicode(value);
+}
+
 static inline const QString toQString(const uint8_t *value) {
     return getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
 }

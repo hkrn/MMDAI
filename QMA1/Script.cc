@@ -39,6 +39,7 @@
 #include "Script.h"
 
 #include "SceneWidget.h"
+#include "util.h"
 
 #include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
@@ -114,6 +115,7 @@ bool ParseEnable(const QString &value, const QString &enable, const QString &dis
 bool ParsePosition(const QString &value, btVector3 &v) {
     QStringList xyz = value.split(',');
     if (xyz.count() == 3) {
+        v.setZero();
         v.setX(xyz.at(0).toFloat());
         v.setY(xyz.at(1).toFloat());
         v.setZ(xyz.at(2).toFloat());
@@ -136,11 +138,11 @@ bool ParseColor(const QString &value, btVector4 &v) {
 
 bool ParseRotation(const QString &value, btQuaternion &v) {
     QStringList xyz = value.split(',');
-    if (xyz.count() == 4) {
-        v.setX(xyz.at(0).toFloat());
-        v.setY(xyz.at(1).toFloat());
-        v.setZ(xyz.at(2).toFloat());
-        v.setW(xyz.at(3).toFloat());
+    if (xyz.count() == 3) {
+        float z = vpvl::radian(xyz.at(2).toFloat());
+        float y = vpvl::radian(xyz.at(1).toFloat());
+        float x = vpvl::radian(xyz.at(0).toFloat());
+        v.setEulerZYX(z, y, x);
         return true;
     }
     return false;
@@ -333,19 +335,32 @@ void Script::handleCommand(const ScriptArgument &output)
             if (argc >= 3) {
                 btVector3 position;
                 ParsePosition(argv[2], position);
-                model->mutableRootBone()->setOffset(position);
+                model->setPositionOffset(position);
+                vpvl::Bone *rootBone = model->mutableRootBone();
+                rootBone->setOffset(position);
+                rootBone->updateTransform();
+                if (argc >= 4) {
+                    btQuaternion rotation;
+                    ParseRotation(argv[3], rotation);
+                    model->setRotationOffset(rotation);
+                }
             }
-            if (argc >= 4) {
-                // btQuaternion rotation;
-                // ParseRotation(argv[3], rotation);
-                // model->mutableRootBone()->setOffset(rotation);
+            else {
+                model->setPositionOffset(model->rootBone().offset());
             }
             if (argc >= 5) {
-                // base model
+                vpvl::PMDModel *parentModel = m_models.value(argv[4]);
+                if (argc >= 6) {
+                    const QByteArray &name = internal::fromQString(argv[5]);
+                    vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
+                    model->setBaseBone(bone);
+                }
+                else {
+                    vpvl::Bone *bone = vpvl::Bone::centerBone(parentModel->mutableBones());
+                    model->setBaseBone(bone);
+                }
             }
-            if (argc >= 6) {
-                // base bone
-            }
+            model->updateImmediate();
             m_models.insert(modelName, model);
             Arguments a; a << modelName;
             emit eventDidPost(kModelAddEvent, a);
