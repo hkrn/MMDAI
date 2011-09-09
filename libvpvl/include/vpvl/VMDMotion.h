@@ -121,6 +121,7 @@ public:
     void seek(float frameIndex);
     void advance(float deltaFrame);
     void reset();
+    bool isReached();
     bool isReached(float atEnd);
 
     const uint8_t *name() const {

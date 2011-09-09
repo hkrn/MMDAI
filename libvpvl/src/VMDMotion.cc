@@ -287,8 +287,11 @@ void VMDMotion::advance(float deltaFrame)
                 case 0: // none
                     break;
                 case 1: // loop
-                    if (m_boneMotion.maxIndex() != 0.0f && m_faceMotion.maxIndex() != 0.0f) {
+                    if (m_boneMotion.maxIndex() != 0.0f) {
                         m_boneMotion.rewind(m_loopAt, deltaFrame);
+                        m_status = kLooped;
+                    }
+                    if (m_faceMotion.maxIndex() != 0.0f) {
                         m_faceMotion.rewind(m_loopAt, deltaFrame);
                         m_status = kLooped;
                     }
@@ -315,6 +318,12 @@ void VMDMotion::reset()
     m_faceMotion.seek(0.0f);
     m_boneMotion.reset();
     m_faceMotion.reset();
+}
+
+bool VMDMotion::isReached()
+{
+    return m_boneMotion.currentIndex() >= m_boneMotion.maxIndex()
+            && m_faceMotion.currentIndex()>= m_faceMotion.maxIndex();
 }
 
 bool VMDMotion::isReached(float atEnd)
@@ -355,7 +364,7 @@ void VMDMotion::release()
     internal::zerofill(&m_name, sizeof(m_name));
     m_model = 0;
     m_status = kRunning;
-    m_onEnd = 2;
+    m_onEnd = 0;
     m_loopAt = kDefaultLoopAtFrame;
     m_priority = kDefaultPriority;
     m_endingBoneBlend = 0.0f;
