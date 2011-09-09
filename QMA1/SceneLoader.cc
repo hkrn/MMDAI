@@ -37,6 +37,7 @@
 #include "SceneLoader.h"
 #include "util.h"
 
+#include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
 #include <vpvl/gl/Renderer.h>
 
@@ -50,15 +51,13 @@ SceneLoader::~SceneLoader()
 {
     delete m_camera;
     m_camera = 0;
-    QHashIterator<vpvl::PMDModel *, QList<vpvl::VMDMotion *> > iterator(m_motions);
-    while (iterator.hasNext()) {
-        iterator.next();
-        vpvl::PMDModel *model = iterator.key();
-        QList<vpvl::VMDMotion *> motions = iterator.value();
-        foreach (vpvl::VMDMotion *motion, motions) {
-            model->removeMotion(motion);
-            delete motion;
-        }
+    QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
+    while (i.hasNext()) {
+        i.next();
+        vpvl::PMDModel *model = i.key();
+        vpvl::VMDMotion *motion = i.value();
+        model->removeMotion(motion);
+        delete motion;
     }
     foreach (vpvl::PMDModel *model, m_models) {
         m_renderer->unloadModel(model);
@@ -91,12 +90,15 @@ bool SceneLoader::deleteModelMotion(vpvl::PMDModel *model)
     if (!model)
         return false;
     if (m_motions.contains(model)) {
-        QList<vpvl::VMDMotion *> motions = m_motions.value(model);
-        foreach (vpvl::VMDMotion *motion, motions) {
-            model->removeMotion(motion);
-            delete motion;
+        QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
+        while (i.hasNext()) {
+            i.next();
+            if (i.key() == model) {
+                vpvl::VMDMotion *motion = i.value();
+                model->removeMotion(motion);
+                delete motion;
+            }
         }
-        motions.clear();
         m_motions.remove(model);
         return true;
     }
@@ -106,11 +108,15 @@ bool SceneLoader::deleteModelMotion(vpvl::PMDModel *model)
 bool SceneLoader::deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (m_motions.contains(model)) {
-        QList<vpvl::VMDMotion *> motions = m_motions.value(model);
-        if (motions.contains(motion)) {
-            model->removeMotion(motion);
-            motions.removeOne(motion);
-            delete motion;
+        QMutableHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
+        while (i.hasNext()) {
+            i.next();
+            if (i.key() == model && i.value() == motion) {
+                model->removeMotion(motion);
+                m_motions.remove(model, motion);
+                delete motion;
+                break;
+            }
         }
         return true;
     }
@@ -124,7 +130,7 @@ vpvl::PMDModel *SceneLoader::findModel(const QString &name) const
 
 QList<vpvl::VMDMotion *> SceneLoader::findModelMotions(vpvl::PMDModel *model) const
 {
-    return m_motions.value(model);
+    return m_motions.values(model);
 }
 
 vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
@@ -181,7 +187,7 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
     return motion;
 }
 
-vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir, vpvl::VMDMotion *&nullMotion)
+vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
 {
     const QString &path = dir.absoluteFilePath(baseName);
     QFile file(path);
@@ -203,11 +209,7 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir,
                     i++;
                 }
             }
-            nullMotion = new vpvl::VMDMotion();
-            nullMotion->setEnableSmooth(false);
-            model->addMotion(nullMotion);
-            insertModel(model, key);
-            insertMotion(nullMotion, model);
+            m_models.insert(key, model);
         }
         else {
             delete model;
@@ -254,19 +256,22 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDMode
 
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
-    motion->setEnableSmooth(false);
     model->addMotion(motion);
-    insertMotion(motion, model);
+    m_motions.insert(model, motion);
 }
 
-void SceneLoader::insertModel(vpvl::PMDModel *model, const QString &name)
+const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions()
 {
-    m_models.insert(name, model);
+    QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
+    QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
+    while (i.hasNext()) {
+        i.next();
+        vpvl::VMDMotion *motion = i.value();
+        if (motion->status() == vpvl::VMDMotion::kStopped && motion->isReached()) {
+            vpvl::PMDModel *model = i.key();
+            ret.insert(model, motion);
+        }
+    }
+    return ret;
 }
 
-void SceneLoader::insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
-{
-    QList<vpvl::VMDMotion *> motions = m_motions.value(model);
-    motions.append(motion);
-    m_motions.insert(model, motions);
-}

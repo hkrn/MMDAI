@@ -39,6 +39,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QHash>
+#include <QtCore/QMap>
 #include <QtCore/QString>
 
 namespace vpvl
@@ -57,6 +58,10 @@ class VPDFile;
 class SceneLoader
 {
 public:
+    typedef QHash<QString, vpvl::PMDModel *> ModelList;
+    typedef QHash<QString, vpvl::Asset *> AssetList;
+    typedef QMultiHash<vpvl::PMDModel *, vpvl::VMDMotion *> MotionList;
+
     SceneLoader(vpvl::gl::Renderer *renderer);
     ~SceneLoader();
 
@@ -67,12 +72,13 @@ public:
     QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
     vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
-    vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir, vpvl::VMDMotion *&nullMotion);
+    vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadModelMotion(const QString &path);
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
     VPDFile *loadPose(const QString &path, vpvl::PMDModel *model);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
 
 private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
@@ -80,9 +86,9 @@ private:
 
     vpvl::gl::Renderer *m_renderer;
     vpvl::VMDMotion *m_camera;
-    QHash<QString, vpvl::PMDModel *> m_models;
-    QHash<QString, vpvl::Asset *> m_assets;
-    QHash<vpvl::PMDModel *, QList<vpvl::VMDMotion *> > m_motions;
+    ModelList m_models;
+    AssetList m_assets;
+    MotionList m_motions;
 
     Q_DISABLE_COPY(SceneLoader)
 };
