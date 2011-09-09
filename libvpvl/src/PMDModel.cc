@@ -154,7 +154,8 @@ void PMDModel::addMotion(VMDMotion *motion)
 {
     motion->attachModel(this);
     m_motions.add(motion);
-    m_motions.sort(VMDMotionPriorityPredication());
+    // FIXME: priority issue of compatibility with MMDAgent
+    // m_motions.sort(VMDMotionPriorityPredication());
 }
 
 void PMDModel::joinWorld(btDiscreteDynamicsWorld *world)
@@ -268,8 +269,10 @@ bool PMDModel::isMotionReached(float atEnd)
 void PMDModel::seekMotion(float frameIndex)
 {
     const uint32_t nMotions = m_motions.count();
-    for (uint32_t i = 0; i < nMotions; i++)
-        m_motions[i]->seek(frameIndex);
+    for (uint32_t i = 0; i < nMotions; i++) {
+        vpvl::VMDMotion *motion = m_motions[i];
+        motion->seek(frameIndex);
+    }
     updateAllBones();
     updateAllFaces();
     updateBoneFromSimulation();
@@ -288,8 +291,10 @@ void PMDModel::updateRootBone()
 void PMDModel::advanceMotion(float deltaFrame)
 {
     const uint32_t nMotions = m_motions.count();
-    for (uint32_t i = 0; i < nMotions; i++)
-        m_motions[i]->advance(deltaFrame);
+    for (uint32_t i = 0; i < nMotions; i++) {
+        vpvl::VMDMotion *motion = m_motions[i];
+        motion->advance(deltaFrame);
+    }
     updateAllBones();
     updateAllFaces();
     updateBoneFromSimulation();
