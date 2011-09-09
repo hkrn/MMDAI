@@ -152,7 +152,6 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             asset->setName(name);
             m_renderer->loadAsset(asset, std::string(dir.absolutePath().toLocal8Bit()));
             m_assets[key] = asset;
-            m_renderer->scene()->seekMotion(0.0f);
         }
         else {
             delete asset;
@@ -209,8 +208,6 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir,
             model->addMotion(nullMotion);
             insertModel(model, key);
             insertMotion(nullMotion, model);
-            // force to render an added model
-            m_renderer->scene()->seekMotion(0.0f);
         }
         else {
             delete model;
