@@ -198,6 +198,7 @@ void MainWindow::loadScript()
         m_script->setDir(QFileInfo(file).absoluteDir());
         m_script->load(stream);
         m_script->start();
+        m_sceneWidget->play();
     }
 }
 
