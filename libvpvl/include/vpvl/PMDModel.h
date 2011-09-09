@@ -435,11 +435,20 @@ public:
     Bone *mutableRootBone() {
         return &m_rootBone;
     }
+    Bone *baseBone() const {
+        return m_baseBone;
+    }
     float edgeOffset() const {
         return m_edgeOffset;
     }
     bool isSimulationEnabled() const {
         return m_enableSimulation;
+    }
+    const btQuaternion &rotationOffset() const {
+        return m_rotationOffset;
+    }
+    const btVector3 &positionOffset() const {
+        return m_positionOffset;
     }
     const btVector3 &lightPosition() const {
         return m_lightPosition;
@@ -514,6 +523,15 @@ public:
             p += sizeof(m_textures[i]);
         }
     }
+    void setBaseBone(Bone *value) {
+        m_baseBone = value;
+    }
+    void setRotationOffset(const btQuaternion &value) {
+        m_rotationOffset = value;
+    }
+    void setPositionOffset(const btVector3 &value) {
+        m_positionOffset = value;
+    }
     void setLightPosition(const btVector3 &value) {
         m_lightPosition = value.normalized();
     }
@@ -568,6 +586,7 @@ private:
     RigidBodyList m_rigidBodies;
     ConstraintList m_constraints;
     Bone m_rootBone;
+    Bone *m_baseBone;
     Face *m_baseFace;
     Hash<HashString, Bone *> m_name2bone;
     Hash<HashString, Face *> m_name2face;
@@ -587,6 +606,8 @@ private:
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;
+    btQuaternion m_rotationOffset;
+    btVector3 m_positionOffset;
     btVector3 m_lightPosition;
     Error m_error;
     uint32_t m_boundingSphereStep;

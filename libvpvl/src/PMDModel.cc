@@ -75,13 +75,17 @@ struct State
 };
 
 PMDModel::PMDModel()
-    : m_baseFace(0),
+    : m_baseBone(0),
+      m_baseFace(0),
       m_orderedBones(0),
       m_skinnedVertices(0),
       m_world(0),
       m_indicesPointer(0),
       m_edgeIndicesPointer(0),
       m_edgeIndicesCount(0),
+      m_rotationOffset(0.0f, 0.0f, 0.0f, 1.0f),
+      m_positionOffset(0.0f, 0.0f, 0.0f),
+      m_lightPosition(0.0f, 0.0f, 0.0f),
       m_error(kNoError),
       m_boundingSphereStep(kBoundingSpherePointsMin),
       m_edgeOffset(0.03f),
@@ -273,8 +277,12 @@ void PMDModel::seekMotion(float frameIndex)
 
 void PMDModel::updateRootBone()
 {
-    // FIXME: implement associated accessory
-    m_rootBone.updateTransform();
+    if (m_baseBone) {
+        m_rootBone.setPosition(m_positionOffset);
+        m_rootBone.setRotation(m_rotationOffset);
+        m_rootBone.updateTransform();
+        m_rootBone.setLocalTransform(m_baseBone->localTransform() * m_rootBone.localTransform());
+    }
 }
 
 void PMDModel::advanceMotion(float deltaFrame)
@@ -933,6 +941,9 @@ void PMDModel::release()
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
     leaveWorld(m_world);
+    m_rotationOffset.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_positionOffset.setZero();
+    m_lightPosition.setZero();
     m_vertices.clear();
     m_materials.clear();
     m_bones.clear();
@@ -946,6 +957,7 @@ void PMDModel::release()
     delete[] m_skinnedVertices;
     delete[] m_indicesPointer;
     delete[] m_edgeIndicesPointer;
+    m_baseBone = 0;
     m_baseFace = 0;
     m_orderedBones = 0;
     m_skinnedVertices = 0;
