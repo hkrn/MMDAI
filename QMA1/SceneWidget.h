@@ -126,6 +126,7 @@ signals:
     void modelWillDelete(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
     void assetDidAdd(vpvl::Asset *asset);
     void assetWillDelete(vpvl::Asset *asset);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
@@ -133,7 +134,6 @@ signals:
     void lightPositionDidSet(const btVector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
-    void surfaceDidUpdate();
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();

@@ -137,12 +137,10 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path)
     vpvl::PMDModel *model = 0;
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
-        vpvl::VMDMotion *motion = 0;
-        model = m_loader->loadModel(fi.fileName(), fi.dir(), motion);
-        if (model && motion) {
+        model = m_loader->loadModel(fi.fileName(), fi.dir());
+        if (model) {
             emit modelDidAdd(model);
             setSelectedModel(model);
-            emit motionDidAdd(motion, model);
         }
         else {
             QMessageBox::warning(this, tr("Loading model error"),
@@ -398,12 +396,10 @@ void SceneWidget::dropEvent(QDropEvent *event)
             QString path = url.toLocalFile();
             if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
                 QFileInfo modelPath(path);
-                vpvl::VMDMotion *motion = 0;
-                vpvl::PMDModel *model = m_loader->loadModel(modelPath.baseName(), modelPath.dir(), motion);
-                if (model && motion) {
+                vpvl::PMDModel *model = m_loader->loadModel(modelPath.baseName(), modelPath.dir());
+                if (model) {
                     emit modelDidAdd(model);
                     setSelectedModel(model);
-                    emit motionDidAdd(motion, model);
                 }
             }
             else if (path.endsWith(".vmd") && model) {
@@ -468,7 +464,7 @@ void SceneWidget::paintGL()
     m_renderer->initializeSurface();
     m_renderer->drawSurface();
     drawBones();
-    emit surfaceDidUpdate();
+    emit motionDidFinished(m_loader->stoppedMotions());
 }
 
 void SceneWidget::resizeGL(int w, int h)
