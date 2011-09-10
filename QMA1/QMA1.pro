@@ -16,6 +16,7 @@ CONFIG(debug, debug|release) {
 CONFIG(release, debug|release) {
   LIBS += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
 }
+LIBS += -lOpenJTalk -lHTSEngine -ljulius -lportaudio
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII
@@ -34,6 +35,7 @@ macx {
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
+  LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
