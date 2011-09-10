@@ -126,9 +126,11 @@ void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 
 void SceneWidget::addModel()
 {
-    addModel(openFileDialog("sceneWidget/lastPMDDirectory",
-                            tr("Open PMD file"),
-                            tr("PMD file (*.pmd)")));
+    vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",
+                                                    tr("Open PMD file"),
+                                                    tr("PMD file (*.pmd)")));
+    if (model && !m_playing)
+        model->updateImmediate();
 }
 
 vpvl::PMDModel *SceneWidget::addModel(const QString &path)
@@ -153,9 +155,11 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path)
 
 void SceneWidget::insertMotionToAllModels()
 {
-    insertMotionToAllModels(openFileDialog("sceneWidget/lastVMDDirectory",
-                                           tr("Open VMD (for model) file"),
-                                           tr("VMD file (*.vmd)")));
+    vpvl::VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastVMDDirectory",
+                                                                     tr("Open VMD (for model) file"),
+                                                                     tr("VMD file (*.vmd)")));
+    if (motion)
+        selectedModel()->updateImmediate();
 }
 
 vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
@@ -178,9 +182,11 @@ vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
 
 void SceneWidget::insertMotionToSelectedModel()
 {
-    insertMotionToSelectedModel(openFileDialog("sceneWidget/lastVMDDirectory",
-                                               tr("Open VMD (for model) file"),
-                                               tr("VMD file (*.vmd)")));
+    vpvl::VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastVMDDirectory",
+                                                                         tr("Open VMD (for model) file"),
+                                                                         tr("VMD file (*.vmd)")));
+    if (motion)
+        advanceMotion(0.0f);
 }
 
 vpvl::VMDMotion *SceneWidget::insertMotionToSelectedModel(const QString &path)
@@ -232,6 +238,15 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
     return asset;
 }
 
+void SceneWidget::advanceMotion(float frameIndex)
+{
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->updateModelView(0);
+    scene->updateProjection(0);
+    scene->advanceMotion(frameIndex);
+    updateGL();
+}
+
 void SceneWidget::seekMotion(float frameIndex)
 {
     vpvl::Scene *scene = m_renderer->scene();
@@ -243,9 +258,11 @@ void SceneWidget::seekMotion(float frameIndex)
 
 void SceneWidget::setCamera()
 {
-    setCamera(openFileDialog("sceneWidget/lastCameraDirectory",
-                             tr("Open VMD (for camera) file"),
-                             tr("VMD file (*.vmd)")));
+    vpvl::VMDMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraDirectory",
+                                                       tr("Open VMD (for camera) file"),
+                                                       tr("VMD file (*.vmd)")));
+    if (motion)
+        advanceMotion(0.0f);
 }
 
 vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
