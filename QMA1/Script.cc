@@ -100,69 +100,6 @@ const QString kTimerStartEvent = "TIMER_EVENT_START";
 const QString kTimerStopEvent = "TIMER_EVENT_STOP";
 const QString &kKeyEvent = "KEY";
 
-bool ParseEnable(const QString &value, const QString &enable, const QString &disable, bool &output) {
-    if (enable == value) {
-        output = true;
-        return true;
-    }
-    else if (disable == value) {
-        output = false;
-        return true;
-    }
-    else {
-        qWarning("Unexpected value %s to boolean (%s or %s)",
-                 value.toUtf8().constData(),
-                 enable.toUtf8().constData(),
-                 disable.toUtf8().constData());
-    }
-    return false;
-}
-
-bool ParsePosition(const QString &value, btVector3 &v) {
-    QStringList xyz = value.split(',');
-    if (xyz.count() == 3) {
-        v.setZero();
-        v.setX(xyz.at(0).toFloat());
-        v.setY(xyz.at(1).toFloat());
-        v.setZ(xyz.at(2).toFloat());
-        return true;
-    }
-    else {
-        qWarning("Unexpected value %s to position", value.toUtf8().constData());
-    }
-    return false;
-}
-
-bool ParseColor(const QString &value, btVector4 &v) {
-    QStringList xyz = value.split(',');
-    if (xyz.count() == 4) {
-        v.setX(xyz.at(0).toFloat());
-        v.setY(xyz.at(1).toFloat());
-        v.setZ(xyz.at(2).toFloat());
-        v.setW(xyz.at(3).toFloat());
-        return true;
-    }
-    else {
-        qWarning("Unexpected value %s to color", value.toUtf8().constData());
-    }
-    return false;
-}
-
-bool ParseRotation(const QString &value, btQuaternion &v) {
-    QStringList xyz = value.split(',');
-    if (xyz.count() == 3) {
-        float z = vpvl::radian(xyz.at(2).toFloat());
-        float y = vpvl::radian(xyz.at(1).toFloat());
-        float x = vpvl::radian(xyz.at(0).toFloat());
-        v.setEulerZYX(z, y, x);
-        return true;
-    }
-    else {
-        qWarning("Unexpected value %s to rotation", value.toUtf8().constData());
-    }
-    return false;
-}
-
 }
 
 struct ScriptArc {
@@ -254,11 +191,11 @@ bool Script::load(QTextStream &stream)
                     addScriptArc(from, to, input, output);
                 }
                 else {
-                    qDebug("empty input arguments or empty output arguments found: %s", line.toUtf8().constData());
+                    qDebug("Empty input arguments or empty output arguments found: %s", qPrintable(line));
                 }
             }
             else {
-                qWarning("invalid script line: %s", line.toUtf8().constData());
+                qWarning("%s", qPrintable(tr("Invalid script line: %s").arg(line)));
             }
         }
     }
@@ -303,7 +240,7 @@ void Script::timerEvent(QTimerEvent *event)
         emit eventDidPost(kTimerStopEvent, a);
     }
     else {
-        qWarning("%s", tr("[%1] %2 seems deleted").arg(key).toUtf8().constData());
+        qWarning("%s", qPrintable(tr("[%1] %2 seems deleted").arg(key)));
     }
 }
 
@@ -386,7 +323,7 @@ void Script::handleCommand(const ScriptArgument &output)
     int argc = output.arguments.count();
     if (type == kModelAddCommand) {
         if (argc < 2 || argc > 6) {
-            qWarning("%s", kInvalidArgumentRanged.arg(type).arg(2).arg(6).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(2).arg(6).arg(argc)));
             return;
         }
         const QString &modelName = argv[0];
@@ -395,14 +332,14 @@ void Script::handleCommand(const ScriptArgument &output)
         if (model) {
             if (argc >= 3) {
                 btVector3 position;
-                ParsePosition(argv[2], position);
+                parsePosition(argv[2], position);
                 model->setPositionOffset(position);
                 vpvl::Bone *rootBone = model->mutableRootBone();
                 rootBone->setOffset(position);
                 rootBone->updateTransform();
                 if (argc >= 4) {
                     btQuaternion rotation;
-                    ParseRotation(argv[3], rotation);
+                    parseRotation(argv[3], rotation);
                     model->setRotationOffset(rotation);
                 }
             }
@@ -427,13 +364,12 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kModelAddEvent, a);
         }
         else {
-            qWarning("%s", tr("[%1] Failed loading the model %2: %3")
-                     .arg(type).arg(modelName).arg(path).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Failed loading the model %2: %3").arg(type).arg(modelName).arg(path)));
         }
     }
     else if (type == kModelChangeCommand) {
         if (argc != 2) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(2).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
             return;
         }
         const QString &modelName = argv[0];
@@ -449,8 +385,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 emit eventDidPost(kModelChangeEvent, a);
             }
             else
-                qWarning("%s", tr("[%1] Failed loading the model %2: %3")
-                         .arg(type).arg(modelName).arg(path).toUtf8().constData());
+                qWarning("%s", qPrintable(tr("[%1] Failed loading the model %2: %3").arg(type).arg(modelName).arg(path)));
         }
         else {
             qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
@@ -458,7 +393,7 @@ void Script::handleCommand(const ScriptArgument &output)
     }
     else if (type == kModelDeleteCommand) {
         if (argc != 1) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(1).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
         const QString &modelName = argv[0];
@@ -468,12 +403,12 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kModelDeleteEvent, a);
         }
         else {
-            qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+            qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
         }
     }
     else if (type == kMotionAddCommand) {
         if (argc < 3 || argc > 8) {
-            qWarning("%s", kInvalidArgumentRanged.arg(type).arg(3).arg(8).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(3).arg(8).arg(argc)));
             return;
         }
         const QString &modelName = argv[0];
@@ -487,19 +422,19 @@ void Script::handleCommand(const ScriptArgument &output)
                 motion->setEnableRelocation(true);
                 motion->setEnableSmooth(true);
                 if (argc >= 4) {
-                    ParseEnable(argv[3], "FULL", "PART", value);
+                    parseEnable(argv[3], "FULL", "PART", value);
                     motion->setFull(value);
                 }
                 if (argc >= 5) {
-                    ParseEnable(argv[4], "LOOP", "ONCE", value);
+                    parseEnable(argv[4], "LOOP", "ONCE", value);
                     motion->setLoop(value);
                 }
                 if (argc >= 6) {
-                    ParseEnable(argv[5], "ON", "OFF", value);
+                    parseEnable(argv[5], "ON", "OFF", value);
                     motion->setEnableSmooth(value);
                 }
                 if (argc >= 7) {
-                    ParseEnable(argv[6], "ON", "OFF", value);
+                    parseEnable(argv[6], "ON", "OFF", value);
                     motion->setEnableRelocation(value);
                 }
                 if (argc >= 8) {
@@ -510,17 +445,17 @@ void Script::handleCommand(const ScriptArgument &output)
                 emit eventDidPost(kMotionAddEvent, a);
             }
             else {
-                qWarning("%s", tr("[%1] Failed loading the motion %2 to %3: %4")
-                         .arg(type).arg(motionName).arg(modelName).arg(path).toUtf8().constData());
+                qWarning("%s", qPrintable(tr("[%1] Failed loading the motion %2 to %3: %4")
+                         .arg(type).arg(motionName).arg(modelName).arg(path)));
             }
         }
         else {
-            qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+            qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
         }
     }
     else if (type == kMotionChangeCommand) {
         if (argc != 3) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(3).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
             return;
         }
         const QString &modelName = argv[0];
@@ -546,16 +481,16 @@ void Script::handleCommand(const ScriptArgument &output)
                 emit eventDidPost(kMotionChangeEvent, a);
             }
             else {
-                qWarning("%s", tr("[%1] Failed loading the motion %2 to %3: %4")
-                         .arg(type).arg(motionName).arg(modelName).arg(path).toUtf8().constData());
+                qWarning("%s", qPrintable(tr("[%1] Failed loading the motion %2 to %3: %4")
+                         .arg(type).arg(motionName).arg(modelName).arg(path)));
             }
         }
         else
-            qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+            qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
     }
     else if (type == kMotionDeleteCommand) {
         if (argc != 2) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(2).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
             return;
         }
         const QString &modelName = argv[0];
@@ -566,12 +501,12 @@ void Script::handleCommand(const ScriptArgument &output)
             m_parent->deleteMotion(motion, model);
         }
         else {
-            qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
+            qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
         }
     }
     else if (type == kStageCommand) {
         if (argc != 1) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(1).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
         m_parent->deleteModel(m_stage);
@@ -582,27 +517,27 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kStageEvent, Arguments());
         }
         else {
-            qWarning("%s", tr("[%1] Failed loading the stage: %2").arg(type).arg(path).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Failed loading the stage: %2").arg(type).arg(path)));
         }
     }
     else if (type == kLightColorCommand) {
         if (argc != 1) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(1).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
         btVector4 color;
-        ParseColor(argv[0], color);
+        parseColor(argv[0], color);
         m_parent->setLightColor(color);
         Arguments a; a << color.x() << color.y() << color.z() << color.w();
         emit eventDidPost(kLightColorEvent, a);
     }
     else if (type == kLightDirectionCommand) {
         if (argc != 1) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(1).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
         btVector3 position;
-        ParsePosition(argv[0], position);
+        parsePosition(argv[0], position);
         m_parent->setLightPosition(position);
         Arguments a; a << position.x() << position.y() << position.z();
         emit eventDidPost(kLightDirectionEvent, a);
@@ -615,29 +550,29 @@ void Script::handleCommand(const ScriptArgument &output)
         if (argc == 1) {
             const QString &path = canonicalizePath(argv[0]);
             if (!m_parent->setCamera(path))
-                qWarning("%s", tr("[%1] Failed loading camera motion: %2").arg(type).arg(path).toUtf8().constData());
+                qWarning("%s", qPrintable(tr("[%1] Failed loading camera motion: %2").arg(type).arg(path)));
         }
         else if (argc == 3 || argc == 4) {
             btVector3 position, angle;
-            ParsePosition(argv[0], position);
-            ParsePosition(argv[1], angle);
+            parsePosition(argv[0], position);
+            parsePosition(argv[1], angle);
             float distance = argv.at(2).toFloat();
             float fovy = argv.at(3).toFloat();
             m_parent->setCameraPerspective(&position, &angle, &fovy, &distance);
         }
         else {
-            qWarning("%s", kInvalidArgumentVariant.arg(type).arg(1).arg(3).arg(4).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentVariant.arg(type).arg(1).arg(3).arg(4).arg(argc)));
         }
     }
     else if (type == kValueSet) {
         if (argc != 2 && argc != 3) {
-            qWarning("%s", kInvalidArgumentRanged.arg(type).arg(2).arg(3).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(2).arg(3).arg(argc)));
             return;
         }
         const QString &key = argv[0];
         const QString &value = argv[1];
         if (key.isEmpty()) {
-            qWarning("%s", tr("[%1] Specified key is empty").arg(type).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Specified key is empty").arg(type)));
             return;
         }
         if (argc == 2) {
@@ -656,7 +591,7 @@ void Script::handleCommand(const ScriptArgument &output)
     }
     else if (type == kValueUnset) {
         if (argc != 1) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(1).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
         const QString &key = argv[0];
@@ -668,14 +603,14 @@ void Script::handleCommand(const ScriptArgument &output)
     }
     else if (type == kValueEvaluate) {
         if (argc != 3) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(3).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
             return;
         }
         const QString &key = argv[0];
         const QString &value = argv[1];
         const QString &op = argv[2];
         if (!m_values.contains(key)) {
-            qWarning("%s", tr("[%1] Evaluating %1 is not found").arg(type).arg(key).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Evaluating %1 is not found").arg(type).arg(key)));
             return;
         }
         const float v1 = value.toFloat();
@@ -700,20 +635,20 @@ void Script::handleCommand(const ScriptArgument &output)
             ret = v1 <= v2;
         }
         else {
-            qWarning("%s", tr("[%1] Operation %s is invalid").arg(type).arg(op).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Operation %s is invalid").arg(type).arg(op)));
         }
         Arguments a; a << key << op << value << (ret ? "TRUE" : "FALSE");
         emit eventDidPost(kValueEvaluateEvent, a);
     }
     else if (type == kTimerStart) {
         if (argc != 2) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(2).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
             return;
         }
         const QString &key = argv[0];
         const QString &value = argv[1];
         if (key.isEmpty()) {
-            qWarning("%s", tr("[%1] Specified key is empty").arg(type).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Specified key is empty").arg(type)));
             return;
         }
         const float seconds = value.toFloat();
@@ -731,12 +666,12 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kTimerStartEvent, a);
         }
         else {
-            qWarning("%s", tr("[%1] Invalid second: %2").arg(type).arg(value).toUtf8().constData());
+            qWarning("%s", qPrintable(tr("[%1] Invalid second: %2").arg(type).arg(value)));
         }
     }
     else if (type == kTimerStop) {
         if (argc != 1) {
-            qWarning("%s", kInvalidArgumentFixed.arg(type).arg(1).arg(argc).toUtf8().constData());
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
         const QString &key = argv[0];
@@ -835,4 +770,74 @@ bool Script::setTransition(const ScriptArgument &input,
     }
 
     return jumped;
+}
+
+bool Script::parseEnable(const QString &value, const QString &enable, const QString &disable, bool &output) const
+{
+    if (enable == value) {
+        output = true;
+        return true;
+    }
+    else if (disable == value) {
+        output = false;
+        return true;
+    }
+    else {
+        output = false;
+        qWarning("%s", qPrintable(tr("Unexpected value %s to boolean (%s or %s)")
+                                  .arg(value).arg(enable).arg(disable)));
+    }
+    return false;
+}
+
+bool Script::parsePosition(const QString &value, btVector3 &v) const
+{
+    QStringList xyz = value.split(',');
+    if (xyz.count() == 3) {
+        v.setZero();
+        v.setX(xyz.at(0).toFloat());
+        v.setY(xyz.at(1).toFloat());
+        v.setZ(xyz.at(2).toFloat());
+        return true;
+    }
+    else {
+        v.setZero();
+        qWarning("%s", qPrintable(tr("Unexpected value %s to position").arg(value)));
+    }
+    return false;
+}
+
+bool Script::parseColor(const QString &value, btVector4 &v) const
+{
+    QStringList xyz = value.split(',');
+    if (xyz.count() == 4) {
+        v.setX(xyz.at(0).toFloat());
+        v.setY(xyz.at(1).toFloat());
+        v.setZ(xyz.at(2).toFloat());
+        v.setW(xyz.at(3).toFloat());
+        return true;
+    }
+    else {
+        v.setZero();
+        v.setW(1.0f);
+        qWarning("%s", qPrintable(tr("Unexpected value %s to color").arg(value)));
+    }
+    return false;
+}
+
+bool Script::parseRotation(const QString &value, btQuaternion &v) const
+{
+    QStringList xyz = value.split(',');
+    if (xyz.count() == 3) {
+        float z = vpvl::radian(xyz.at(2).toFloat());
+        float y = vpvl::radian(xyz.at(1).toFloat());
+        float x = vpvl::radian(xyz.at(0).toFloat());
+        v.setEulerZYX(z, y, x);
+        return true;
+    }
+    else {
+        v.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+        qWarning("%s", qPrintable(tr("Unexpected value %s to rotation").arg(value)));
+    }
+    return false;
 }

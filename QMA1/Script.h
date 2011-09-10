@@ -50,6 +50,9 @@
 #include <QtCore/QTextStream>
 #include <QtCore/QTimer>
 
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btVector3.h>
+
 namespace vpvl
 {
 class PMDModel;
@@ -117,6 +120,10 @@ private:
     void handleCommand(const ScriptArgument &output);
     State *newScriptState(quint32 index);
     bool setTransition(const ScriptArgument &input, ScriptArgument &output);
+    bool parseEnable(const QString &value, const QString &enable, const QString &disable, bool &output) const;
+    bool parsePosition(const QString &value, btVector3 &v) const;
+    bool parseColor(const QString &value, btVector4 &v) const;
+    bool parseRotation(const QString &value, btQuaternion &v) const;
 
     SceneWidget *m_parent;
     QLinkedList<State *> m_states;

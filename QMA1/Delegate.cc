@@ -28,7 +28,7 @@ bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
     textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
                                       image.depth() == 32 ? GL_RGBA : GL_RGB, options);
     delete[] rawData;
-    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, pathString.toUtf8().constData());
+    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
     return textureID != 0;
 }
 
@@ -71,7 +71,7 @@ QImage Delegate::loadTGA(const QString &path, uint8_t *&rawData) {
         uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
         uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
         if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-            qWarning("Loaded TGA image type is not full color: %s", path.toUtf8().constData());
+            qWarning("Loaded TGA image type is not full color: %s", qPrintable(path));
             return QImage();
         }
         uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
@@ -80,7 +80,7 @@ QImage Delegate::loadTGA(const QString &path, uint8_t *&rawData) {
         uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
         if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
             qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
-                     width, height, depth, path.toUtf8().constData());
+                     width, height, depth, qPrintable(path));
             return QImage();
         }
         int component = depth >> 3;
@@ -138,8 +138,7 @@ QImage Delegate::loadTGA(const QString &path, uint8_t *&rawData) {
         return QImage(rawData, width, height, QImage::Format_ARGB32);
     }
     else {
-        qWarning("Cannot open file %s: %s", path.toUtf8().constData(),
-                 file.errorString().toUtf8().constData());
+        qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
         return QImage();
     }
 }
