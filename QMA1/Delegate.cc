@@ -21,16 +21,13 @@ bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
     if (!QFileInfo(pathString).exists()) {
         return false;
     }
-    else if (pathString.endsWith(".tga", Qt::CaseInsensitive)) {
-        uint8_t *rawData = 0;
-        QImage image = loadTGA(pathString, rawData);
-        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image));
-        delete[] rawData;
-    }
-    else {
-        QImage image(pathString);
-        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
-    }
+    uint8_t *rawData = 0;
+    QImage image = pathString.endsWith(".tga", Qt::CaseInsensitive)
+            ? loadTGA(pathString, rawData) : QImage(pathString).rgbSwapped();
+    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+    textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
+                                      image.depth() == 32 ? GL_RGBA : GL_RGB, options);
+    delete[] rawData;
     qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, pathString.toUtf8().constData());
     return textureID != 0;
 }
