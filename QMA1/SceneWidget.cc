@@ -39,6 +39,7 @@
 #include "SceneWidget.h"
 #include "Delegate.h"
 #include "SceneLoader.h"
+#include "TiledStage.h"
 #include "World.h"
 
 #include <QtGui/QtGui>
@@ -65,6 +66,7 @@ SceneWidget::SceneWidget(QWidget *parent) :
 {
     m_delegate = new Delegate(this);
     m_world = new World(m_defaultFPS);
+    m_tiledStage = new TiledStage(m_delegate, m_world);
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -72,6 +74,8 @@ SceneWidget::SceneWidget(QWidget *parent) :
 
 SceneWidget::~SceneWidget()
 {
+    delete m_tiledStage;
+    m_tiledStage = 0;
     delete m_renderer;
     m_renderer = 0;
     delete m_delegate;
@@ -320,6 +324,7 @@ void SceneWidget::setLightPosition(const btVector3 &position)
 {
     vpvl::Scene *scene = m_renderer->scene();
     scene->setLightSource(scene->lightColor(), position);
+    m_tiledStage->updateShadowMatrix(position);
     emit lightPositionDidSet(position);
 }
 
@@ -480,6 +485,8 @@ void SceneWidget::paintGL()
     qglClearColor(Qt::blue);
     m_renderer->initializeSurface();
     m_renderer->drawSurface();
+    m_tiledStage->updateShadowMatrix(m_renderer->scene()->lightPosition());
+    m_tiledStage->render();
     drawBones();
     emit motionDidFinished(m_loader->stoppedMotions());
 }

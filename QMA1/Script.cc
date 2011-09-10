@@ -39,6 +39,7 @@
 #include "Script.h"
 
 #include "SceneWidget.h"
+#include "TiledStage.h"
 #include "util.h"
 
 #include <QtCore/QtCore>
@@ -170,6 +171,9 @@ Script::~Script()
     stop();
     qDeleteAll(m_states);
     qDeleteAll(m_timers);
+    m_parent = 0;
+    m_currentState = 0;
+    m_parent = 0;
 }
 
 bool Script::load(QTextStream &stream)
@@ -209,7 +213,7 @@ void Script::start()
 {
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(execute()));
     executeEplisons();
-    m_timer.start();
+    m_timer.start(20);
 }
 
 void Script::stop()
@@ -446,7 +450,7 @@ void Script::handleCommand(const ScriptArgument &output)
             }
             else {
                 qWarning("%s", qPrintable(tr("[%1] Failed loading the motion %2 to %3: %4")
-                         .arg(type).arg(motionName).arg(modelName).arg(path)));
+                                          .arg(type).arg(motionName).arg(modelName).arg(path)));
             }
         }
         else {
@@ -482,7 +486,7 @@ void Script::handleCommand(const ScriptArgument &output)
             }
             else {
                 qWarning("%s", qPrintable(tr("[%1] Failed loading the motion %2 to %3: %4")
-                         .arg(type).arg(motionName).arg(modelName).arg(path)));
+                                          .arg(type).arg(motionName).arg(modelName).arg(path)));
             }
         }
         else
@@ -509,15 +513,24 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
-        m_parent->deleteModel(m_stage);
-        const QString &path = canonicalizePath(argv[0]);
-        vpvl::PMDModel *model = m_parent->addModel(path);
-        if (model) {
-            m_stage = model;
-            emit eventDidPost(kStageEvent, Arguments());
+        QString filename = argv[0];
+        QStringList pair = filename.split(',');
+        if (pair.count() == 2) {
+            TiledStage *stage = m_parent->tiledStage();
+            stage->loadFloor(canonicalizePath(pair[0]));
+            stage->loadBackground(canonicalizePath(pair[1]));
         }
         else {
-            qWarning("%s", qPrintable(tr("[%1] Failed loading the stage: %2").arg(type).arg(path)));
+            m_parent->deleteModel(m_stage);
+            const QString &path = canonicalizePath(argv[0]);
+            vpvl::PMDModel *model = m_parent->addModel(path);
+            if (model) {
+                m_stage = model;
+                emit eventDidPost(kStageEvent, Arguments());
+            }
+            else {
+                qWarning("%s", qPrintable(tr("[%1] Failed loading the stage: %2").arg(type).arg(path)));
+            }
         }
     }
     else if (type == kLightColorCommand) {

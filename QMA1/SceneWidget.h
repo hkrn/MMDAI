@@ -61,6 +61,7 @@ class PlayerWidget;
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
+class TiledStage;
 class VPDFile;
 class World;
 
@@ -76,6 +77,7 @@ public:
     void setSelectedModel(vpvl::PMDModel *value);
     void setCurrentFPS(int value);
 
+    TiledStage *tiledStage() const { return m_tiledStage; }
     void setSettings(QSettings *value) { m_settings = value; }
     bool isDisplayBones() const { return m_visibleBones; }
     void setDisplayBones(bool value) { m_visibleBones = value; }
@@ -165,6 +167,7 @@ private:
     Delegate *m_delegate;
     PlayerWidget *m_player;
     SceneLoader *m_loader;
+    TiledStage *m_tiledStage;
     World *m_world;
     QSettings *m_settings;
     QElapsedTimer m_timer;

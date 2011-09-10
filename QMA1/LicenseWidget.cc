@@ -46,6 +46,13 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+    addLibrary("PortAudio", "MIT/X11", "http://portaudio.com", "PortAudio");
+    addLibrary("MeCab", "GPL/LGPL/New BSD", "http://mecab.sf.net", "mecab");
+    addLibrary("hts_engine API", "New BSD", "http://hts-engine.sf.net", "HTSEngine");
+    addLibrary("Open JTalk", "New BSD", "http://open-jtalk.sf.net", "OpenJTalk");
+    addLibrary("Julius", "New BSD", "http://julius.sourceforge.jp", "Julius");
+    addLibrary("Open Asset Import Library", "New BSD", "http://assimp.sf.net", "Assimp");
+    addLibrary("OpenGL Extension Wranger", "New BSD", "http://glew.sf.net", "GLEW");
     addLibrary("BulletPhysics", "zlib", "http://bulletphysics.org/wordpress/", "Bullet");
     addLibrary("MMDAgent", "New BSD", "http://mmdagent.jp", "MMDAgent");
     addLibrary("libvpvl", "New BSD", "https://github.com/hkrn/MMDAI/", "libvpvl");

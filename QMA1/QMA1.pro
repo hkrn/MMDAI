@@ -52,14 +52,17 @@ SOURCES += Delegate.cc \
            SceneWidget.cc \
            main.cc \
            MainWindow.cc \
-           Script.cc
+           Script.cc \
+           TiledStage.cc
 
 HEADERS  += Delegate.h \
+            World.h \
             LicenseWidget.h \
             SceneLoader.h \
             SceneWidget.h \
             util.h \
             MainWindow.h \
-            Script.h
+            Script.h \
+            TiledStage.h
 
 RESOURCES += ../QMA2/resources/QMA2.qrc
