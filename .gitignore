@@ -1,3 +1,4 @@
+assimp*
 bullet*
 CMakeCache.txt
 CMakeFiles
@@ -8,12 +9,14 @@ config.h
 Debug
 debug
 *.dir
+hts_engine_API-*
 install_manifest.txt
 ipch
+julius-*
 Makefile*
 moc_*
+open_jtalk-*
 QMACustom.pri
-QtMMDAI*
 release
 Release
 UpgradeLog*.XML
@@ -25,7 +28,7 @@ Win32
 *-*-desktop
 *.cbp
 *.dll*
-*.dylib
+*.dylib*
 *.idb
 *.ncb
 *.pdb
