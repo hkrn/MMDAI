@@ -324,6 +324,8 @@ set_target_properties(julius PROPERTIES VERSION ${VERSION})
 set_target_properties(julius PROPERTIES SO_VERSION ${VERSION})
 
 # rewrite configuration
+set(CC ${CMAKE_C_COMPILER})
+set(CFLAGS ${CMAKE_C_FLAGS})
 string(REPLACE "#undef" "#cmakedefine" JULIUS_CONFIG_H_CMAKE ${JULIUS_CONFIG_H_IN})
 string(REPLACE "#undef" "#cmakedefine" SENT_CONFIG_H_CMAKE ${SENT_CONFIG_H_IN})
 file(WRITE libjulius/include/julius/config.h.cmake ${JULIUS_CONFIG_H_CMAKE})
@@ -332,6 +334,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libjulius/include/julius/config.h.cma
                ${CMAKE_CURRENT_SOURCE_DIR}/libjulius/include/julius/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsent/include/sent/config.h.cmake 
                ${CMAKE_CURRENT_SOURCE_DIR}/libsent/include/sent/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libjulius/src/version.c.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/libjulius/src/version.c)
 file(REMOVE libjulis/include/julius/config.h.cmake libsent/include/sent/config.h.cmake)
 
 file(GLOB libjulius_headers libjulius/include/julius/*.h)
