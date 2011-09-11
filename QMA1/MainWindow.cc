@@ -197,6 +197,10 @@ void MainWindow::loadScript()
         m_script = new Script(m_sceneWidget);
         m_script->setDir(QFileInfo(file).absoluteDir());
         m_script->load(stream);
+        const QFileInfo info(file);
+        const QDir &dir = info.dir();;
+        m_script->loadSpeechEngine(dir, info.baseName());
+        m_script->loadSpeechRecognitionEngine(dir, info.baseName());
         m_script->start();
         m_sceneWidget->play();
     }

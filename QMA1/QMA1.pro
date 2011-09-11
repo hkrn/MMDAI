@@ -35,6 +35,7 @@ macx {
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
+  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
@@ -57,7 +58,8 @@ SOURCES += Delegate.cc \
            Script.cc \
            TiledStage.cc \
            LipSync.cc \
-    OpenJTalkSpeechEngine.cc
+           OpenJTalkSpeechEngine.cc \
+           JuliusSpeechRecognitionEngine.cc
 
 HEADERS  += Delegate.h \
             World.h \
@@ -69,6 +71,7 @@ HEADERS  += Delegate.h \
             Script.h \
             TiledStage.h \
             LipSync.h \
-    OpenJTalkSpeechEngine.h
+            OpenJTalkSpeechEngine.h \
+            JuliusSpeechRecognitionEngine.h
 
 RESOURCES += ../QMA2/resources/QMA2.qrc

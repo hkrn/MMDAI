@@ -162,10 +162,13 @@ Script::Script(SceneWidget *parent)
       m_currentState(0),
       m_stage(0)
 {
-    connect(this, SIGNAL(eventDidPost(QString,Arguments)), this, SLOT(queueEvent(QString,Arguments)));
+    connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(queueEvent(QString,QList<QVariant>)));
     connect(m_parent, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(handleModelDelete(vpvl::PMDModel*)));
     connect(m_parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
             this, SLOT(handleFinishedMotion(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)));
+    connect(&m_recog, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(queueEvent(QString,QList<QVariant>)));
+    connect(&m_speech, SIGNAL(commandDidPost(QString,QList<QVariant>)), this, SLOT(handleCommand(QString,QList<QVariant>)));
+    connect(&m_speech, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(queueEvent(QString,QList<QVariant>)));
 }
 
 Script::~Script()
@@ -231,6 +234,16 @@ bool Script::loadScript(QTextStream &stream)
     return false;
 }
 
+void Script::loadSpeechEngine(const QDir &dir, const QString &baseName)
+{
+    m_speech.load(dir ,baseName);
+}
+
+void Script::loadSpeechRecognitionEngine(const QDir &dir, const QString &baseName)
+{
+    m_recog.load(dir, baseName);
+}
+
 void Script::start()
 {
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(execute()));
@@ -281,7 +294,7 @@ void Script::execute()
     }
 }
 
-void Script::queueEvent(const QString &type, const Arguments &arguments)
+void Script::queueEvent(const QString &type, const QList<QVariant> &arguments)
 {
     QStringList strings;
     foreach (QVariant arg, arguments) {
@@ -289,6 +302,15 @@ void Script::queueEvent(const QString &type, const Arguments &arguments)
     }
     qDebug() << type << arguments;
     m_queue.enqueue(ScriptArgument(type, strings));
+}
+
+void Script::handleCommand(const QString &type, const QList<QVariant> &arguments)
+{
+    QStringList strings;
+    foreach (QVariant arg, arguments) {
+        strings << arg.toString();
+    }
+    handleCommand(ScriptArgument(type, strings));
 }
 
 void Script::handleModelDelete(vpvl::PMDModel *model)
@@ -584,7 +606,24 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << position.x() << position.y() << position.z();
         emit eventDidPost(kLightDirectionEvent, a);
     }
-    else if (type == kLipSyncStartCommand) {
+    else if (type == OpenJTalkSpeechEngine::kSynthStartCommand) {
+        if (argc != 3) {
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
+            return;
+        }
+        const QString &name = argv[0];
+        const QString &style = argv[1];
+        const QString &text = argv[2];
+        m_speech.speech(name, style, text);
+    }
+    else if (type == OpenJTalkSpeechEngine::kSynthStopCommand) {
+        if (argc != 2) {
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
+            return;
+        }
+        // NOT SUPPORTED
+    }
+    else if (type == OpenJTalkSpeechEngine::kLipSyncStartCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
             return;
@@ -601,7 +640,7 @@ void Script::handleCommand(const ScriptArgument &output)
             }
         }
     }
-    else if (type == kLipSyncStopCommand) {
+    else if (type == OpenJTalkSpeechEngine::kLipSyncStopCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;

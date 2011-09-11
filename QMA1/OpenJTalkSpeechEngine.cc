@@ -520,13 +520,12 @@ void OpenJTalkSpeechEngineInternal::setStyle(const QString &style)
         HTS_Engine_set_volume(&m_engine, volume);
 }
 
-const QString kOpenJTalkStartCommand = "SYNTH_START";
-const QString kOpenJTalkStopCommand =  "SYNTH_STOP";
-
-const QString OpenJTalkSpeechEngine::kSynthEventStart = "SYNTH_EVENT_START";
-const QString OpenJTalkSpeechEngine::kSynthEventStop = "SYNTH_EVENT_STOP";
-const QString OpenJTalkSpeechEngine::kLipSyncStart = "LIPSYNC_START";
-const QString OpenJTalkSpeechEngine::kLipSyncStop = "LIPSYNC_STOP";
+const QString OpenJTalkSpeechEngine::kSynthStartCommand = "SYNTH_START";
+const QString OpenJTalkSpeechEngine::kSynthStopCommand =  "SYNTH_STOP";
+const QString OpenJTalkSpeechEngine::kSynthStartEvent = "SYNTH_EVENT_START";
+const QString OpenJTalkSpeechEngine::kSynthStopEvent = "SYNTH_EVENT_STOP";
+const QString OpenJTalkSpeechEngine::kLipSyncStartCommand = "LIPSYNC_START";
+const QString OpenJTalkSpeechEngine::kLipSyncStopCommand = "LIPSYNC_STOP";
 
 const QByteArray kOpenJTalkCodecName = "Shift-JIS";
 
@@ -546,10 +545,9 @@ OpenJTalkSpeechEngine::~OpenJTalkSpeechEngine()
         qWarning("Pa_Terminate failed: %s", Pa_GetErrorText(err));
 }
 
-void OpenJTalkSpeechEngine::load(const QString &baseName)
+void OpenJTalkSpeechEngine::load(const QDir &dir, const QString &baseName)
 {
     if (m_base.isEmpty()) {
-        QDir dir("MMDAIUserData:/");
         const QString base = dir.absolutePath();
         const QString config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
         const QString resdir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
@@ -559,6 +557,11 @@ void OpenJTalkSpeechEngine::load(const QString &baseName)
             m_dir = resdir;
         }
     }
+}
+
+void OpenJTalkSpeechEngine::speech(const QString &name, const QString &style, const QString &text)
+{
+    QtConcurrent::run(this, &OpenJTalkSpeechEngine::run, name, style, text);
 }
 
 void OpenJTalkSpeechEngine::run(const QString &name, const QString &style, const QString &text)
@@ -580,10 +583,10 @@ void OpenJTalkSpeechEngine::run(const QString &name, const QString &style, const
 
     QList<QVariant> arguments;
     arguments << name;
-    //eventPost(kSynthEventStart, arguments);
+    eventDidPost(kSynthStartEvent, arguments);
     arguments.clear();
     arguments << name << sequence;
-    // commandPost(kLipSyncStart, arguments);
+    commandDidPost(kLipSyncStartCommand, arguments);
 
     PaError err;
     PaStream *stream;
@@ -623,5 +626,5 @@ void OpenJTalkSpeechEngine::run(const QString &name, const QString &style, const
 final:
     arguments.clear();
     arguments << name;
-    // eventPost(kSynthEventStop, arguments);
+    eventDidPost(kSynthStopEvent, arguments);
 }

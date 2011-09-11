@@ -39,7 +39,9 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
+#include "JuliusSpeechRecognitionEngine.h"
 #include "LipSync.h"
+#include "OpenJTalkSpeechEngine.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QHash>
@@ -99,20 +101,23 @@ public:
     bool load(QTextStream &stream);
     void loadGlobalLipSync(QTextStream &stream);
     bool loadScript(QTextStream &stream);
+    void loadSpeechEngine(const QDir &dir, const QString &baseName);
+    void loadSpeechRecognitionEngine(const QDir &dir, const QString &baseName);
     void start();
     void stop();
 
     void setDir(const QDir &value) { m_dir = value; }
 
 signals:
-    void eventDidPost(const QString &type, const Arguments &arguments);
+    void eventDidPost(const QString &type, const QList<QVariant> &arguments);
 
 protected:
     void timerEvent(QTimerEvent *event);
 
 private slots:
     void execute();
-    void queueEvent(const QString &type, const Arguments &arguments);
+    void queueEvent(const QString &type, const QList<QVariant> &arguments);
+    void handleCommand(const QString &type, const QList<QVariant> &arguments);
     void handleModelDelete(vpvl::PMDModel *model);
     void handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
 
@@ -134,6 +139,8 @@ private:
     SceneWidget *m_parent;
     QLinkedList<State *> m_states;
     State *m_currentState;
+    JuliusSpeechRecognitionEngine m_recog;
+    OpenJTalkSpeechEngine m_speech;
     LipSync m_globalLipSync;
     QHash<QString, float> m_values;
     QMap<QString, vpvl::PMDModel *> m_models;

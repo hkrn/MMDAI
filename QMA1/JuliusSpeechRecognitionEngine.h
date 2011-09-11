@@ -36,48 +36,53 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef OPENJTALKSPEECHENGINE_H
-#define OPENJTALKSPEECHENGINE_H
+#ifndef JULIUSSPEECHRECOGNITIONENGINE_H
+#define JULIUSSPEECHRECOGNITIONENGINE_H
 
 #include <QtCore/QDir>
-#include <QtCore/QHash>
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
+#include <QtCore/QFutureWatcher>
+#include <QtCore/QTranslator>
 
-class OpenJTalkSpeechEngineInternal;
+#include <julius/julius.h>
 
-class OpenJTalkSpeechEngine : public QObject
+class JuliusSpeechRegonitionThread;
+class QSystemTrayIcon;
+
+class JuliusSpeechRecognitionEngine : public QObject
 {
     Q_OBJECT
 
-public:
-    static const QString kSynthStartCommand;
-    static const QString kSynthStopCommand;
-    static const QString kSynthStartEvent;
-    static const QString kSynthStopEvent;
-    static const QString kLipSyncStartCommand;
-    static const QString kLipSyncStopCommand;
+    friend void JuliusSpeechRecognitionEngineBeginRecognition(Recog *recog, void *ptr);
+    friend void JuliusSpeechRecognitionEngineGetRecognitionResult(Recog *recog, void *ptr);
 
-    explicit OpenJTalkSpeechEngine(QObject *parent = 0);
-    ~OpenJTalkSpeechEngine();
+public:
+    static const QString kRecogStartEvent;
+    static const QString kRecogStopEvent;
+
+    explicit JuliusSpeechRecognitionEngine(QObject *parent = 0);
+    ~JuliusSpeechRecognitionEngine();
 
     void load(const QDir &dir, const QString &baseName);
-    void speech(const QString &name, const QString &style, const QString &text);
 
 signals:
-    void commandDidPost(const QString &type, const QList<QVariant> &arguments);
     void eventDidPost(const QString &type, const QList<QVariant> &arguments);
 
+private slots:
+    void engineDidInitalize();
+
 private:
-    void run(const QString &name, const QString &style, const QString &text);
+    bool initialize(const QDir &dir, const QString &baseName);
+    void release();
 
-    QHash<QString, OpenJTalkSpeechEngineInternal *> m_models;
-    QTimer m_timer;
-    QString m_base;
-    QString m_dir;
-    QString m_config;
+    JuliusSpeechRegonitionThread *m_thread;
+    QFutureWatcher<bool> m_watcher;
+    QSystemTrayIcon *m_tray;
+    QTranslator m_translator;
+    Jconf *m_jconf;
+    Recog *m_recog;
 
-    Q_DISABLE_COPY(OpenJTalkSpeechEngine)
+    Q_DISABLE_COPY(JuliusSpeechRecognitionEngine)
+
 };
 
-#endif // OPENJTALKSPEECHENGINE_H
+#endif // JULIUSSPEECHRECOGNITIONENGINE_H
