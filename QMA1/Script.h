@@ -108,6 +108,10 @@ public:
 
     void setDir(const QDir &value) { m_dir = value; }
 
+public slots:
+    void handleCommand(const QString &type, const QList<QVariant> &arguments);
+    void handleEvent(const QString &type, const QList<QVariant> &arguments);
+
 signals:
     void eventDidPost(const QString &type, const QList<QVariant> &arguments);
 
@@ -116,8 +120,6 @@ protected:
 
 private slots:
     void execute();
-    void queueEvent(const QString &type, const QList<QVariant> &arguments);
-    void handleCommand(const QString &type, const QList<QVariant> &arguments);
     void handleModelDelete(vpvl::PMDModel *model);
     void handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
 

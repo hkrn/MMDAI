@@ -162,13 +162,13 @@ Script::Script(SceneWidget *parent)
       m_currentState(0),
       m_stage(0)
 {
-    connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(queueEvent(QString,QList<QVariant>)));
+    connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
     connect(m_parent, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(handleModelDelete(vpvl::PMDModel*)));
     connect(m_parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
             this, SLOT(handleFinishedMotion(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)));
-    connect(&m_recog, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(queueEvent(QString,QList<QVariant>)));
+    connect(&m_recog, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
     connect(&m_speech, SIGNAL(commandDidPost(QString,QList<QVariant>)), this, SLOT(handleCommand(QString,QList<QVariant>)));
-    connect(&m_speech, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(queueEvent(QString,QList<QVariant>)));
+    connect(&m_speech, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
 }
 
 Script::~Script()
@@ -205,7 +205,7 @@ bool Script::loadScript(QTextStream &stream)
 {
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     QString sep = codec->toUnicode("\\");
-
+    stream.setCodec("Shift-JIS");
     while (!stream.atEnd()) {
         QString line = stream.readLine().trimmed();
         if (!line.isEmpty() && line[0] != '#') {
@@ -294,13 +294,13 @@ void Script::execute()
     }
 }
 
-void Script::queueEvent(const QString &type, const QList<QVariant> &arguments)
+void Script::handleEvent(const QString &type, const QList<QVariant> &arguments)
 {
     QStringList strings;
     foreach (QVariant arg, arguments) {
         strings << arg.toString();
     }
-    qDebug() << type << arguments;
+    qDebug() << "[EVENT]  " << type << arguments;
     m_queue.enqueue(ScriptArgument(type, strings));
 }
 
@@ -791,7 +791,7 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kTimerStopEvent, a);
         }
     }
-    qDebug() << type << argv;
+    qDebug() << "[COMMAND]" << type << argv;
 }
 
 State *Script::newScriptState(quint32 index)
