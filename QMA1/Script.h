@@ -108,6 +108,7 @@ protected:
 private slots:
     void execute();
     void queueEvent(const QString &type, const Arguments &arguments);
+    void handleModelDelete(vpvl::PMDModel *model);
     void handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
 
 private:
@@ -129,8 +130,8 @@ private:
     QLinkedList<State *> m_states;
     State *m_currentState;
     QHash<QString, float> m_values;
-    QHash<QString, vpvl::PMDModel *> m_models;
-    QHash<QString, vpvl::VMDMotion *> m_motions;
+    QMap<QString, vpvl::PMDModel *> m_models;
+    QMap<QString, vpvl::VMDMotion *> m_motions;
     QMap<QString, QBasicTimer *> m_timers;
     QQueue<ScriptArgument> m_queue;
     QTimer m_timer;

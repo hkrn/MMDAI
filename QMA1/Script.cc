@@ -162,6 +162,7 @@ Script::Script(SceneWidget *parent)
       m_stage(0)
 {
     connect(this, SIGNAL(eventDidPost(QString,Arguments)), this, SLOT(queueEvent(QString,Arguments)));
+    connect(m_parent, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(handleModelDelete(vpvl::PMDModel*)));
     connect(m_parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
             this, SLOT(handleFinishedMotion(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)));
 }
@@ -267,6 +268,13 @@ void Script::queueEvent(const QString &type, const Arguments &arguments)
     }
     qDebug() << type << arguments;
     m_queue.enqueue(ScriptArgument(type, strings));
+}
+
+void Script::handleModelDelete(vpvl::PMDModel *model)
+{
+    QString name = m_models.key(model);
+    if (!name.isNull())
+        m_models.remove(name);
 }
 
 void Script::handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions)
