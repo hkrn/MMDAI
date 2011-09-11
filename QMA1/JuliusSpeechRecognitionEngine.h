@@ -82,7 +82,6 @@ private:
     Recog *m_recog;
 
     Q_DISABLE_COPY(JuliusSpeechRecognitionEngine)
-
 };
 
 #endif // JULIUSSPEECHRECOGNITIONENGINE_H

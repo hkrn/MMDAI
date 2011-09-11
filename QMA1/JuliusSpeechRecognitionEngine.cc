@@ -52,6 +52,11 @@ public:
         m_recog = recog;
     }
     ~JuliusSpeechRegonitionThread() {
+        m_recog = 0;
+    }
+
+    void stop() {
+        j_close_stream(m_recog);
     }
 
 protected:
@@ -118,15 +123,13 @@ JuliusSpeechRecognitionEngine::JuliusSpeechRecognitionEngine(QObject *parent)
 {
     QFile path("MMDAITranslations:/JuliusSpeechRecognitionEngine_" + QLocale::system().name());
     m_translator.load(path.fileName());
-    m_tray = new QSystemTrayIcon;
+    m_tray = new QSystemTrayIcon();
     qApp->installTranslator(&m_translator);
     connect(&m_watcher, SIGNAL(finished()), this, SLOT(engineDidInitalize()));
 }
 
 JuliusSpeechRecognitionEngine::~JuliusSpeechRecognitionEngine()
 {
-    delete m_thread;
-    m_thread = 0;
     delete m_tray;
     m_tray = 0;
     release();
@@ -136,17 +139,15 @@ void JuliusSpeechRecognitionEngine::load(const QDir &dir, const QString &baseNam
 {
     if (m_watcher.isRunning())
         m_watcher.waitForFinished();
-    if (!m_jconf && !m_recog) {
-        m_watcher.setFuture(QtConcurrent::run(this, &JuliusSpeechRecognitionEngine::initialize, dir, baseName));
-        /* FIXME: this causes erasing menu when invoked by a file on MacOSX */
-#ifndef Q_OS_MAC
-        m_tray->show();
+    release();
+    m_watcher.setFuture(QtConcurrent::run(this, &JuliusSpeechRecognitionEngine::initialize, dir, baseName));
+#ifndef Q_OS_MAC // freeze all menu on MacOSX
+    m_tray->show();
 #endif
-        if (QSystemTrayIcon::supportsMessages()) {
-            m_tray->showMessage(tr("Started initialization of Julius"),
-                                tr("Please wait a moment until end of initialization of Julius engine."
-                                   "This process takes about 10-20 seconds."));
-        }
+    if (QSystemTrayIcon::supportsMessages()) {
+        m_tray->showMessage(tr("Started initialization of Julius"),
+                            tr("Please wait a moment until end of initialization of Julius engine."
+                               "This process takes about 5-10 seconds."));
     }
 }
 
@@ -154,12 +155,13 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
 {
     char buf[BUFSIZ];
     QString path;
-    QDir resdir("MMDAIResources:/");
+    QDir resdir("MMDAIResources:AppData/Julius");
 
+    jlog_set_output(NULL);
     path = resdir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz");
     qstrncpy(buf, QString("-d %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     m_jconf = j_config_load_string_new(buf);
-    if (m_jconf == NULL) {
+    if (!m_jconf) {
         qWarning("%s", qPrintable(tr("Failed loading language model for Julius: %1").arg(path)));
         return false;
     }
@@ -196,7 +198,7 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
 
     /* create instance */
     m_recog = j_create_instance_from_jconf(m_jconf);
-    if (m_recog != NULL) {
+    if (m_recog) {
         callback_add(m_recog, CALLBACK_EVENT_RECOGNITION_BEGIN, JuliusSpeechRecognitionEngineBeginRecognition, this);
         callback_add(m_recog, CALLBACK_RESULT, JuliusSpeechRecognitionEngineGetRecognitionResult, this);
         if (!j_adin_init(m_recog) || j_open_stream(m_recog, NULL) != 0) {
@@ -204,11 +206,12 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
             qWarning("%s", qPrintable(tr("Failed initialize adin or stream")));
             return false;
         }
+        m_thread = new JuliusSpeechRegonitionThread(m_recog);
+        m_thread->start();
         qDebug("%s", qPrintable(tr("Get ready to recognize with Julius")));
         return true;
     }
     else {
-        release();
         qWarning("%s", qPrintable(tr("Failed creating an instance of Julius")));
         return false;
     }
@@ -222,10 +225,9 @@ void JuliusSpeechRecognitionEngine::engineDidInitalize()
             m_tray->showMessage(tr("Completed initialization of Julius"),
                                 tr("You can now talk with the models."));
         }
-        m_thread = new JuliusSpeechRegonitionThread(m_recog);
-        m_thread->start();
     }
     else {
+        release();
         if (QSystemTrayIcon::supportsMessages()) {
             m_tray->showMessage(tr("Failed initialization of Julius"),
                                 tr("Recognization feature is disabled."),
@@ -236,13 +238,20 @@ void JuliusSpeechRecognitionEngine::engineDidInitalize()
 
 void JuliusSpeechRecognitionEngine::release()
 {
+    if (m_thread) {
+        m_thread->stop();
+        m_thread->wait();
+    }
+    delete m_thread;
+    m_thread = 0;
     if (m_recog) {
-        j_close_stream(m_recog);
         j_recog_free(m_recog);
         m_recog = 0;
     }
+#if 0
     if (m_jconf) {
         j_jconf_free(m_jconf);
         m_jconf = 0;
     }
+#endif
 }
