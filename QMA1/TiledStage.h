@@ -56,9 +56,11 @@ public:
 
     void loadFloor(const QString &path);
     void loadBackground(const QString &path);
-    void render();
+    void renderFloor();
+    void renderBackground();
     void setSize(float width, float height, float depth);
     void updateShadowMatrix(const btVector3 &position);
+    const qreal *shadowMatrix() const;
 
 private:
     void buildFloor(float width, float height);

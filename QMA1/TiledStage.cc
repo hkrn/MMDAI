@@ -47,6 +47,7 @@ class TiledStageInternal {
 public:
     TiledStageInternal(Delegate *delegate, const QVector3D &normal)
         : m_delegate(delegate),
+          m_listID(0),
           m_textureID(0)
     {
         const float normals[] = {
@@ -54,6 +55,12 @@ public:
             normal.x(), normal.y(), normal.z(),
             normal.x(), normal.y(), normal.z(),
             normal.x(), normal.y(), normal.z()
+        };
+        const float colors[] = {
+            0.1f, 0.1f, 0.1f, 0.6f,
+            0.1f, 0.1f, 0.1f, 0.6f,
+            0.1f, 0.1f, 0.1f, 0.6f,
+            0.1f, 0.1f, 0.1f, 0.6f
         };
         const float coords[] = {
             0.0f, 1.0f,
@@ -63,68 +70,88 @@ public:
         };
         const uint16_t indices[] = { 3, 2, 0, 0, 2, 1 };
         memcpy(m_normals, normals, sizeof(normals));
+        memcpy(m_colors, colors, sizeof(colors));
         memcpy(m_texcoords, coords, sizeof(coords));
         memcpy(m_indices, indices, sizeof(indices));
         glGenBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[1]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(m_normals), m_normals, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[3]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(m_texcoords), m_texcoords, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[3]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[4]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(m_indices), m_indices, GL_STATIC_DRAW);
         m_matrix.setToIdentity();
     }
     ~TiledStageInternal() {
         glDeleteBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
+        deleteList();
         if (m_textureID)
             glDeleteTextures(1, &m_textureID);
         m_delegate = 0;
+        m_listID = 0;
         m_textureID = 0;
     }
     void load(const QString &path) {
         m_delegate->loadTexture(path.toStdString(), m_textureID);
     }
-    void render() {
+    void render(bool cullface, bool hasColor) {
         const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
-        glDisable(GL_CULL_FACE);
-        glPushMatrix();
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, m_textureID);
+        if (m_listID) {
+            glCallList(m_listID);
+        }
+        else {
+            m_listID = glGenLists(1);
+            glNewList(m_listID, GL_COMPILE_AND_EXECUTE);
+            if (!cullface)
+                glDisable(GL_CULL_FACE);
+            glPushMatrix();
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, m_textureID);
 #if 1
-        glActiveTexture(GL_TEXTURE0);
-        glClientActiveTexture(GL_TEXTURE0);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
-        glVertexPointer(3, GL_DOUBLE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[1]);
-        glNormalPointer(GL_FLOAT, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[2]);
-        glTexCoordPointer(2, GL_FLOAT, 0, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[3]);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_NORMAL_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glActiveTexture(GL_TEXTURE0);
+            glClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_NORMAL_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
+            glVertexPointer(3, GL_DOUBLE, 0, 0);
+            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[1]);
+            glNormalPointer(GL_FLOAT, 0, 0);
+            if (hasColor) {
+                glBindBuffer(GL_ARRAY_BUFFER, m_buffers[2]);
+                glColorPointer(4, GL_FLOAT, 0, 0);
+            }
+            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[3]);
+            glTexCoordPointer(2, GL_FLOAT, 0, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[4]);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #else
-        glNormal3f(normal.x(), normal.y(), normal.z());
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, m_y);
-        glVertex3d(m_matrix(0, 0), m_matrix(0, 1), m_matrix(0, 2));
-        glTexCoord2f(m_x, m_y);
-        glVertex3d(m_matrix(1, 0), m_matrix(1, 1), m_matrix(1, 2));
-        glTexCoord2f(m_x, 0.0f);
-        glVertex3d(m_matrix(2, 0), m_matrix(2, 1), m_matrix(2, 2));
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex3d(m_matrix(3, 0), m_matrix(3, 1), m_matrix(3, 2));
-        glEnd();
+            glNormal3f(normal.x(), normal.y(), normal.z());
+            glColor4(0.1f, 0.1f, 0.1f, 0.6f);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, m_y);
+            glVertex3d(m_matrix(0, 0), m_matrix(0, 1), m_matrix(0, 2));
+            glTexCoord2f(m_x, m_y);
+            glVertex3d(m_matrix(1, 0), m_matrix(1, 1), m_matrix(1, 2));
+            glTexCoord2f(m_x, 0.0f);
+            glVertex3d(m_matrix(2, 0), m_matrix(2, 1), m_matrix(2, 2));
+            glTexCoord2f(0.0f, 0.0f);
+            glVertex3d(m_matrix(3, 0), m_matrix(3, 1), m_matrix(3, 2));
+            glEnd();
 #endif
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_2D);
-        glPopMatrix();
-        glEnable(GL_CULL_FACE);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glDisable(GL_TEXTURE_2D);
+            glPopMatrix();
+            if (!cullface)
+                glEnable(GL_CULL_FACE);
+            glEndList();
+        }
     }
     const QMatrix3x4 &vertices() const {
         return m_matrix;
@@ -137,13 +164,22 @@ public:
     }
 
 private:
+    void deleteList() {
+        if (m_listID) {
+            glDeleteLists(m_listID, 1);
+            m_listID = 0;
+        }
+    }
+
     Delegate *m_delegate;
     QMatrix3x4 m_matrix;
     qreal m_vertices[12];
     float m_normals[12];
+    float m_colors[12];
     float m_texcoords[8];
     uint16_t m_indices[6];
-    GLuint m_buffers[4];
+    GLuint m_listID;
+    GLuint m_buffers[5];
     GLuint m_textureID;
 };
 
@@ -223,12 +259,16 @@ void TiledStage::loadBackground(const QString &path)
     setSize(25.0f, 40.0f, 25.0f);
 }
 
-void TiledStage::render()
+void TiledStage::renderFloor()
+{
+    if (m_floor)
+        m_floor->render(false, true);
+}
+
+void TiledStage::renderBackground()
 {
     if (m_background)
-        m_background->render();
-    if (m_floor)
-        m_floor->render();
+        m_background->render(false, false);
 }
 
 void TiledStage::setSize(float width, float height, float depth)
@@ -278,6 +318,11 @@ void TiledStage::updateShadowMatrix(const btVector3 &position)
         FindPlane(m_floor, plane);
         ShadowMatrix(plane, direction, m_matrix);
     }
+}
+
+const qreal *TiledStage::shadowMatrix() const
+{
+    return m_matrix.constData();
 }
 
 void TiledStage::buildFloor(float width, float height)
