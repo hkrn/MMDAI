@@ -55,7 +55,8 @@ SOURCES += Delegate.cc \
            main.cc \
            MainWindow.cc \
            Script.cc \
-           TiledStage.cc
+           TiledStage.cc \
+           LipSync.cc
 
 HEADERS  += Delegate.h \
             World.h \
@@ -65,6 +66,7 @@ HEADERS  += Delegate.h \
             util.h \
             MainWindow.h \
             Script.h \
-            TiledStage.h
+            TiledStage.h \
+            LipSync.h
 
 RESOURCES += ../QMA2/resources/QMA2.qrc
