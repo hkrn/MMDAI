@@ -44,6 +44,20 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+namespace
+{
+
+void ConstructScriptArguments(const QString &input, QString &command, QList<QVariant> &arguments)
+{
+    QStringList strings = QString(input).split("|");
+    command = strings.first();
+    strings.pop_front();
+    foreach (QString string, strings)
+        arguments << string;
+}
+
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
@@ -206,6 +220,24 @@ void MainWindow::loadScript()
     }
 }
 
+void MainWindow::executeCommand()
+{
+    QString input = QInputDialog::getText(this, tr("Execute command"), tr("Execute command")), command;
+    QList<QVariant> arguments;
+    ConstructScriptArguments(input, command, arguments);
+    if (m_script)
+        m_script->handleCommand(command, arguments);
+}
+
+void MainWindow::executeEvent()
+{
+    QString input = QInputDialog::getText(this, tr("Execute event"), tr("Execute event")), event;
+    QList<QVariant> arguments;
+    ConstructScriptArguments(input, event, arguments);
+    if (m_script)
+        m_script->handleEvent(event, arguments);
+}
+
 const QString MainWindow::buildWindowTitle()
 {
     QString title = qAppName();
@@ -221,8 +253,6 @@ const QString MainWindow::buildWindowTitle(int fps)
 
 void MainWindow::buildMenuBar()
 {
-    m_actionLoadScript = new QAction(this);
-    connect(m_actionLoadScript, SIGNAL(triggered()), this, SLOT(loadScript()));
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
@@ -237,6 +267,8 @@ void MainWindow::buildMenuBar()
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
+    m_actionLoadScript = new QAction(this);
+    connect(m_actionLoadScript, SIGNAL(triggered()), this, SLOT(loadScript()));
     m_actionPlay = new QAction(this);
     connect(m_actionPlay, SIGNAL(triggered()), m_sceneWidget, SLOT(play()));
     m_actionPause = new QAction(this);
@@ -244,6 +276,11 @@ void MainWindow::buildMenuBar()
     m_actionStop = new QAction(this);
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
     m_actionZoomIn = new QAction(this);
+    m_actionExecuteCommand = new QAction(this);
+    connect(m_actionExecuteCommand, SIGNAL(triggered()), this, SLOT(executeCommand()));
+    m_actionExecuteEvent = new QAction(this);
+    connect(m_actionExecuteEvent, SIGNAL(triggered()), this, SLOT(executeEvent()));
+
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
     m_actionZoomOut = new QAction(this);
     connect(m_actionZoomOut, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomOut()));
@@ -296,11 +333,15 @@ void MainWindow::buildMenuBar()
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
+    m_menuScript = new QMenu(this);
+    m_menuScript->addAction(m_actionPlay);
+    m_menuScript->addAction(m_actionPause);
+    m_menuScript->addAction(m_actionStop);
+    m_menuScript->addSeparator();
+    m_menuScript->addAction(m_actionExecuteCommand);
+    m_menuScript->addAction(m_actionExecuteEvent);
+    m_menuBar->addMenu(m_menuScript);
     m_menuScene = new QMenu(this);
-    m_menuScene->addAction(m_actionPlay);
-    m_menuScene->addAction(m_actionPause);
-    m_menuScene->addAction(m_actionStop);
-    m_menuScene->addSeparator();
     m_menuScene->addAction(m_actionZoomIn);
     m_menuScene->addAction(m_actionZoomOut);
     m_menuScene->addSeparator();
@@ -369,6 +410,10 @@ void MainWindow::retranslate()
     m_actionPause->setStatusTip(tr("Pause current scene."));
     m_actionStop->setText(tr("Stop"));
     m_actionStop->setStatusTip(tr("Stop current scene."));
+    m_actionExecuteCommand->setText(tr("Execute command"));
+    m_actionExecuteCommand->setStatusTip(tr("Execute command to the script."));
+    m_actionExecuteEvent->setText(tr("Execute event"));
+    m_actionExecuteEvent->setStatusTip(tr("Execute event to the script."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomIn->setShortcut(tr("+"));
@@ -412,6 +457,7 @@ void MainWindow::retranslate()
     m_actionAboutQt->setText(tr("About Qt"));
     m_actionAboutQt->setStatusTip(tr("About Qt."));
     m_menuFile->setTitle(tr("&File"));
+    m_menuScript->setTitle(tr("Script"));
     m_menuScene->setTitle(tr("&Scene"));
     m_menuModel->setTitle(tr("&Model"));
     m_menuRetainAssets->setTitle(tr("Select asset"));

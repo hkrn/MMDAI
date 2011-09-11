@@ -71,6 +71,8 @@ private slots:
     void deleteAsset(vpvl::Asset *asset);
     void updateFPS(int fps);
     void loadScript();
+    void executeCommand();
+    void executeEvent();
 
 private:
     void startSceneUpdate();
@@ -89,7 +91,6 @@ private:
     vpvl::PMDModel *m_model;
     int m_currentFPS;
 
-    QAction *m_actionLoadScript;
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
     QAction *m_actionInsertToAllModels;
@@ -98,9 +99,12 @@ private:
     QAction *m_actionExit;
     QAction *m_actionAbout;
     QAction *m_actionAboutQt;
+    QAction *m_actionLoadScript;
     QAction *m_actionPlay;
     QAction *m_actionPause;
     QAction *m_actionStop;
+    QAction *m_actionExecuteCommand;
+    QAction *m_actionExecuteEvent;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;
@@ -117,6 +121,7 @@ private:
     QAction *m_actionShowBones;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
+    QMenu *m_menuScript;
     QMenu *m_menuScene;
     QMenu *m_menuModel;
     QMenu *m_menuRetainModels;
