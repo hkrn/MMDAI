@@ -39,6 +39,8 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
+#include "LipSync.h"
+
 #include <QtCore/QDir>
 #include <QtCore/QHash>
 #include <QtCore/QLinkedList>
@@ -89,11 +91,14 @@ public:
     typedef QList<QVariant> Arguments;
 
     static const QString kEPS;
+    static const QString kLipSyncName;
 
     Script(SceneWidget *parent);
     ~Script();
 
     bool load(QTextStream &stream);
+    void loadGlobalLipSync(QTextStream &stream);
+    bool loadScript(QTextStream &stream);
     void start();
     void stop();
 
@@ -129,6 +134,7 @@ private:
     SceneWidget *m_parent;
     QLinkedList<State *> m_states;
     State *m_currentState;
+    LipSync m_globalLipSync;
     QHash<QString, float> m_values;
     QMap<QString, vpvl::PMDModel *> m_models;
     QMap<QString, vpvl::VMDMotion *> m_motions;

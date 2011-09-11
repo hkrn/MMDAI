@@ -154,6 +154,7 @@ static void DumpScriptStates(QLinkedList<State *> states)
 #endif
 
 const QString Script::kEPS = "<eps>";
+const QString Script::kLipSyncName = "LipSync";
 
 Script::Script(SceneWidget *parent)
     : QObject(parent),
@@ -178,6 +179,26 @@ Script::~Script()
 }
 
 bool Script::load(QTextStream &stream)
+{
+    bool ret = loadScript(stream);
+    QFile file(":/lipsync.txt");
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        loadGlobalLipSync(stream);
+        file.close();
+    }
+    else {
+        qWarning("Cannot load :/lipsync.txt (and should not show this message)");
+    }
+    return ret;
+}
+
+void Script::loadGlobalLipSync(QTextStream &stream)
+{
+    m_globalLipSync.load(stream);
+}
+
+bool Script::loadScript(QTextStream &stream)
 {
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     QString sep = codec->toUnicode("\\");
@@ -564,8 +585,34 @@ void Script::handleCommand(const ScriptArgument &output)
         emit eventDidPost(kLightDirectionEvent, a);
     }
     else if (type == kLipSyncStartCommand) {
+        if (argc != 2) {
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
+            return;
+        }
+        const QString &modelName = argv[0];
+        if (m_models.contains(modelName)) {
+            const QString &sequence = argv[1];
+            vpvl::PMDModel *model = m_models.value(modelName);
+            vpvl::VMDMotion *motion = m_globalLipSync.createMotion(sequence);
+            if (motion) {
+                vpvl::VMDMotion *motion = m_motions.value(kLipSyncName);
+                m_parent->deleteMotion(motion, model);
+                m_parent->insertMotionToModel(motion, model);
+            }
+        }
     }
     else if (type == kLipSyncStopCommand) {
+        if (argc != 1) {
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
+            return;
+        }
+        const QString &modelName = argv[0];
+        if (m_models.contains(modelName)) {
+            vpvl::PMDModel *model = m_models.value(modelName);
+            vpvl::VMDMotion *motion = m_motions.value(kLipSyncName);
+            m_parent->deleteMotion(motion, model);
+            m_motions.remove(kLipSyncName);
+        }
     }
     else if (type == kCameraCommand) {
         if (argc == 1) {
