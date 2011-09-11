@@ -375,7 +375,7 @@ void OpenJTalkSpeechEngineInternal::setText(const QString &text)
     HTS_Engine_set_stop_flag(&m_engine, false);
 
     char *buff = static_cast<char *>(calloc(2 * text.length() + 1, sizeof(char)));
-    QTextCodec *codec= QTextCodec::codecForName("Shift-JIS");
+    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     QByteArray bytes = codec->fromUnicode(text);
     char *str = strdup(bytes.constData());
     if (buff == NULL || str == NULL) {
@@ -550,7 +550,7 @@ void OpenJTalkSpeechEngine::load(const QDir &dir, const QString &baseName)
     if (m_base.isEmpty()) {
         const QString base = dir.absolutePath();
         const QString config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
-        const QString resdir = QDir("MMDAIResources:/").absoluteFilePath("AppData/Open_JTalk");
+        const QString resdir = QDir("MMDAIResources:AppData/Open_JTalk").absolutePath();
         if (QFile::exists(base) && QFile::exists(config) && QFile::exists(resdir)) {
             m_base = base;
             m_config = config;
