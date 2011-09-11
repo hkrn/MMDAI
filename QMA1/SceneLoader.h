@@ -65,6 +65,7 @@ public:
     SceneLoader(vpvl::gl::Renderer *renderer);
     ~SceneLoader();
 
+    bool deleteAsset(vpvl::Asset *asset);
     bool deleteModel(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
