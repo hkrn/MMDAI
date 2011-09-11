@@ -40,6 +40,27 @@
 #include <vpvl/gl2/Renderer.h>
 
 #include <btBulletDynamicsCommon.h>
+#ifdef VPVL_LINK_ASSIMP
+#include <aiScene.h>
+#include <map>
+namespace vpvl
+{
+struct AssetUserData
+{
+    std::map<std::string, GLuint> textures;
+};
+}
+#else
+VPVL_DECLARE_HANDLE(aiNode)
+VPVL_DECLARE_HANDLE(aiScene)
+namespace vpvl
+{
+    namespace gl
+    {
+    VPVL_DECLARE_HANDLE(AssetInternal)
+    }
+}
+#endif
 
 namespace {
 
@@ -59,6 +80,18 @@ struct PMDModelMaterialPrivate {
     GLuint primaryTextureID;
     GLuint secondTextureID;
 };
+
+const std::string CanonicalizePath(const std::string &path)
+{
+    const std::string from("\\"), to("/");
+    std::string ret(path);
+    std::string::size_type pos(path.find(from));
+    while (pos != std::string::npos) {
+        ret.replace(pos, from.length(), to);
+        pos = ret.find(from, pos + to.length());
+    }
+    return ret;
+}
 
 }
 
@@ -666,6 +699,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
         delete[] userData->materials;
         delete userData;
         m_delegate->log(IDelegate::kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
+        m_scene->removeModel(const_cast<vpvl::PMDModel *>(model));
     }
 }
 
@@ -949,163 +983,300 @@ void Renderer::drawBoneTransform(vpvl::Bone *bone)
     }
 }
 
-static void DrawAsset(const vpvl::XModel *model, const btVector4 &indices, int index)
+void Renderer::loadAsset(Asset *asset, const std::string &dir)
 {
-    const Array<btVector3> &vertices = model->vertices();
-    const Array<btVector3> &textureCoords = model->textureCoords();
-    const Array<btVector3> &normals = model->normals();
-    const Array<btVector4> &colors = model->colors();
-    const btTransform transform = model->transform();
-    const int x = static_cast<const int>(indices[index]);
-    if (textureCoords.count() > x)
-        glTexCoord2fv(textureCoords[x]);
-    else if (textureCoords.count() > 0)
-        glTexCoord2f(0, 0);
-    if (colors.count() > x)
-        glColor4fv(colors[x]);
-    else if (colors.count() > 0)
-        glColor3f(0, 0, 0);
-    if (normals.count() > x)
-        glNormal3fv(transform.getBasis() * normals[x]);
-    else if (normals.count() > 0)
-        glNormal3f(0, 0, 0);
-    glVertex3fv(transform * vertices[x] * model->scale());
-}
-
-void Renderer::loadAsset(vpvl::XModel *model, const std::string &dir)
-{
-    vpvl::XModelUserData *userData = new vpvl::XModelUserData;
-    userData->listID = glGenLists(1);
-    glNewList(userData->listID, GL_COMPILE);
-    m_delegate->log(IDelegate::kLogInfo, "Generated a OpenGL list (ID=%d)", userData->listID);
-#ifndef VPVL_COORDINATE_OPENGL
-    glPushMatrix();
-    glScalef(1.0f, 1.0f, -1.0f);
-    glCullFace(GL_FRONT);
-#endif
-    const Array<vpvl::XModelFaceIndex> &faces = model->faces();
-    const bool hasMaterials = model->countMatreials() > 0;
-    uint32_t nFaces = faces.count();
-    uint32_t prevIndex = -1;
-    glEnable(GL_TEXTURE_2D);
-    for (uint32_t i = 0; i < nFaces; i++) {
-        const vpvl::XModelFaceIndex &face = faces[i];
-        const btVector4 &value = face.value;
-        const uint32_t count = face.count;
-        const uint32_t currentIndex = face.index;
-        if (hasMaterials && prevIndex != currentIndex) {
-            const vpvl::XMaterial *material = model->materialAt(currentIndex);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(material->color()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, static_cast<const GLfloat *>(material->emmisive()));
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(material->specular()));
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->power());
-            const std::string textureName = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(material->textureName()));
-            if (!textureName.empty()) {
-                HashString key(material->textureName());
-                GLuint *textureID = userData->textures[key];
-                if (!textureID) {
-                    GLuint value;
-                    if (m_delegate->loadTexture(dir + "/" + textureName, value)) {
-                        userData->textures.insert(key, value);
-                        glBindTexture(GL_TEXTURE_2D, value);
-                        m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a texture (ID=%d)", value);
-                    }
-                }
-                else {
-                    glBindTexture(GL_TEXTURE_2D, *textureID);
+#ifdef VPVL_LINK_ASSIMP
+    const aiScene *scene = asset->getScene();
+    const uint32_t nMaterials = scene->mNumMaterials;
+    AssetUserData *userData = new AssetUserData();
+    aiString texturePath;
+    std::string path, canonicalized, filename;
+    asset->setUserData(userData);
+    for (uint32_t i = 0; i < nMaterials; i++) {
+        aiMaterial *material = scene->mMaterials[i];
+        aiReturn found = AI_SUCCESS;
+        GLuint textureID;
+        int textureIndex = 0;
+        while (found == AI_SUCCESS) {
+            found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+            path = texturePath.data;
+            if (userData->textures[path] == 0) {
+                canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
+                filename = dir + "/" + canonicalized;
+                if (m_delegate->loadTexture(filename, textureID)) {
+                    userData->textures[path] = textureID;
+                    m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
-            else {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-            prevIndex = currentIndex;
+            textureIndex++;
         }
-        glBegin(GL_TRIANGLES);
-        switch (count) {
-        case 3:
-            DrawAsset(model, value, 1);
-            DrawAsset(model, value, 0);
-            DrawAsset(model, value, 2);
-            break;
-        case 4:
-            DrawAsset(model, value, 1);
-            DrawAsset(model, value, 0);
-            DrawAsset(model, value, 2);
-            DrawAsset(model, value, 3);
-            DrawAsset(model, value, 2);
-            DrawAsset(model, value, 0);
-            break;
-        default:
-            throw new std::bad_exception();
-        }
-        glEnd();
     }
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-#ifndef VPVL_COORDINATE_OPENGL
-    glPopMatrix();
-    glCullFace(GL_BACK);
+    m_assets.add(asset);
+#else
+    (void) asset;
+    (void) dir;
 #endif
-    glEndList();
-    model->setUserData(userData);
-    m_assets.add(model);
 }
 
-void Renderer::unloadAsset(const vpvl::XModel *model)
+void Renderer::unloadAsset(Asset *asset)
 {
-    if (model) {
-        m_assets.remove(const_cast<vpvl::XModel *>(model));
-        vpvl::XModelUserData *userData = model->userData();
-        glDeleteLists(userData->listID, 1);
-        vpvl::Hash<vpvl::HashString, GLuint> &textures = userData->textures;
-        uint32_t nTextures = textures.count();
-        for (uint32_t i = 0; i < nTextures; i++)
-            glDeleteTextures(1, textures.value(i));
+#ifdef VPVL_LINK_ASSIMP
+    if (asset) {
+        const aiScene *scene = asset->getScene();
+        const uint32_t nMaterials = scene->mNumMaterials;
+        AssetUserData *userData = asset->userData();
+        aiString texturePath;
+        for (uint32_t i = 0; i < nMaterials; i++) {
+            aiMaterial *material = scene->mMaterials[i];
+            aiReturn found = AI_SUCCESS;
+            GLuint textureID;
+            int textureIndex = 0;
+            while (found == AI_SUCCESS) {
+                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+                textureID = userData->textures[texturePath.data];
+                glDeleteTextures(1, &textureID);
+                userData->textures.erase(texturePath.data);
+                textureIndex++;
+            }
+        }
+        delete asset;
         delete userData;
+        m_assets.remove(asset);
     }
+#else
+    (void) asset;
+#endif
 }
 
-void Renderer::drawAsset(const vpvl::XModel *model)
+#ifdef VPVL_LINK_ASSIMP
+
+static inline void aiColor4f(const struct aiColor4D &color)
 {
-    if (model)
-        glCallList(model->userData()->listID);
+    glColor4f(color.r, color.g, color.b, color.a);
 }
 
-void Renderer::drawSurface()
+static inline void aiColor2Float4(const struct aiColor4D &color, float *dest)
+{
+    dest[0] = color.r;
+    dest[1] = color.g;
+    dest[2] = color.b;
+    dest[3] = color.a;
+}
+
+static void aiSetAssetMaterial(const aiMaterial *material, Asset *asset)
+{
+    int textureIndex = 0;
+    aiString texturePath;
+    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == AI_SUCCESS) {
+        GLuint textureID = asset->userData()->textures[texturePath.data];
+        glBindTexture(GL_TEXTURE_2D, textureID);
+    }
+    else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    aiColor4D ambient, diffuse, emission, specular;
+    float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
+        aiColor2Float4(ambient, color);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    }
+    else {
+        float defaultAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
+        aiColor2Float4(diffuse, color);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    }
+    else {
+        float defaultDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
+        aiColor2Float4(emission, color);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
+    }
+    else {
+        float defaultEmission[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, defaultEmission);
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
+        aiColor2Float4(specular, color);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+    }
+    else {
+        float defaultSpecular[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+    }
+    float shininess, strength;
+    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
+    if (ret1 == AI_SUCCESS && ret2 == AI_SUCCESS) {
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess * strength);
+    }
+    else if (ret1 == AI_SUCCESS) {
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+    }
+    else {
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+    }
+    int wireframe, twoside;
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS && wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == AI_SUCCESS && twoside)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
+}
+
+static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, Asset *asset)
+{
+    GLenum faceMode;
+    struct aiMatrix4x4 m = node->mTransformation;
+    const btScalar &scaleFactor = asset->scale();
+    const btVector3 &pos = asset->position();
+    // translate
+    m.a4 = pos.x();
+    m.b4 = pos.y();
+    m.c4 = pos.z();
+    // scale
+    m.a1 = scaleFactor;
+    m.b2 = scaleFactor;
+    m.c3 = scaleFactor;
+    m.Transpose();
+    glPushMatrix();
+    glMultMatrixf(reinterpret_cast<const float *>(&m));
+    const uint32_t nMeshes = node->mNumMeshes;
+    for (uint32_t i = 0; i < nMeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const aiVector3D *vertices = mesh->mVertices;
+        const aiVector3D *normals = mesh->mNormals;
+        const aiColor4D *colors = mesh->mColors[0];
+        const bool hasNormals = normals ? true : false;
+        const bool hasColors = colors ? true : false;
+        const bool hasTexCoords = mesh->HasTextureCoords(0);
+        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
+        aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], asset);
+        hasNormals ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING);
+        hasColors ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
+        const uint32_t nFaces = mesh->mNumFaces;
+        for (uint32_t j = 0; j < nFaces; j++) {
+            const struct aiFace &face = mesh->mFaces[j];
+            const uint32_t nIndices = face.mNumIndices;
+            switch (nIndices) {
+            case 1:
+                faceMode = GL_POINTS;
+                break;
+            case 2:
+                faceMode = GL_LINES;
+                break;
+            case 3:
+                faceMode = GL_TRIANGLES;
+                break;
+            default:
+                faceMode = GL_POLYGON;
+                break;
+            }
+            glBegin(faceMode);
+            for (uint32_t k = 0; k < nIndices; k++) {
+                int vertexIndex = face.mIndices[k];
+                if (hasColors)
+                    aiColor4f(colors[vertexIndex]);
+                if (hasTexCoords) {
+                    const aiVector3D &p = texcoords[vertexIndex];
+                    glTexCoord2f(p.x, 1.0f - p.y);
+                }
+                if (hasNormals)
+                    glNormal3fv(&normals[vertexIndex].x);
+                glVertex3fv(&vertices[vertexIndex].x);
+            }
+            glEnd();
+        }
+    }
+    const uint32_t nChildNodes = node->mNumChildren;
+    for (uint32_t i = 0; i < nChildNodes; i++)
+        aiDrawAssetRecurse(scene, node->mChildren[i], asset);
+    glPopMatrix();
+}
+
+void aiDrawAsset(Asset *asset)
+{
+    const aiScene *a = asset->getScene();
+    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+    aiDrawAssetRecurse(a, a->mRootNode, asset);
+    glPopAttrib();
+}
+
+#else
+
+#define aiDrawAsset(asset)
+
+#endif /* VPVL_LINK_ASSIMP */
+
+void Renderer::clearSurface()
 {
     glViewport(0, 0, m_scene->width(), m_scene->height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    // initialize rendering states
+}
+
+void Renderer::preShadow()
+{
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 1, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
     glColorMask(0, 0, 0, 0);
     glDepthMask(0);
     glDisable(GL_DEPTH_TEST);
-    // render shadow before drawing models
+}
+
+void Renderer::drawShadow()
+{
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
         drawModelShadow(model);
     }
+}
+
+void Renderer::postShadow()
+{
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
     glStencilFunc(GL_EQUAL, 2, ~0);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
-    // render all assets
-    // TODO: merge drawing models
+}
+
+void Renderer::drawAssets()
+{
     uint32_t nAssets = m_assets.count();
     for (uint32_t i = 0; i < nAssets; i++) {
-        drawAsset(m_assets[i]);
+        aiDrawAsset(m_assets[i]);
     }
-    // render model and edge
+}
+
+void Renderer::drawModels()
+{
+    size_t size = 0;
+    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
         drawModel(model);
         drawModelEdge(model);
     }
+}
+
+void Renderer::drawSurface()
+{
+    clearSurface();
+    preShadow();
+    drawShadow();
+    postShadow();
+    drawAssets();
+    drawModels();
 }
 
 }

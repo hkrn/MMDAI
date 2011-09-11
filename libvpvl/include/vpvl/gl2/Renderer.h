@@ -50,10 +50,10 @@ class btIDebugDraw;
 namespace vpvl
 {
 
+class Asset;
 class Bone;
 class PMDModel;
 class Scene;
-class XModel;
 
 namespace gl2
 {
@@ -130,9 +130,15 @@ public:
     void drawModelBones(bool drawSpheres, bool drawLines);
     void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
     void drawBoneTransform(vpvl::Bone *bone);
-    void loadAsset(vpvl::XModel *model, const std::string &dir);
-    void unloadAsset(const vpvl::XModel *model);
-    void drawAsset(const vpvl::XModel *model);
+    void loadAsset(Asset *asset, const std::string &dir);
+    void unloadAsset(Asset *asset);
+
+    void clearSurface();
+    void preShadow();
+    void drawShadow();
+    void postShadow();
+    void drawAssets();
+    void drawModels();
     void drawSurface();
 
 private:
@@ -142,7 +148,7 @@ private:
     ShadowProgram *m_shadowProgram;
     vpvl::Scene *m_scene;
     vpvl::PMDModel *m_selected;
-    Array<vpvl::XModel *> m_assets;
+    Array<vpvl::Asset *> m_assets;
     btIDebugDraw *m_debugDrawer;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
