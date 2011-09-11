@@ -218,6 +218,15 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(const QString &path, vpvl::PMD
     return motion;
 }
 
+vpvl::VMDMotion *SceneWidget::insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+{
+    if (motion && model) {
+        m_loader->setModelMotion(motion, model);
+        return motion;
+    }
+    return 0;
+}
+
 void SceneWidget::addAsset()
 {
     addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
