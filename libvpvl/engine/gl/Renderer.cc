@@ -955,7 +955,7 @@ void aiDrawAsset(Asset *asset)
 
 #endif /* VPVL_LINK_ASSIMP */
 
-void Renderer::drawSurface()
+void Renderer::clearSurface()
 {
     float matrix[16];
     glViewport(0, 0, m_scene->width(), m_scene->height());
@@ -966,22 +966,21 @@ void Renderer::drawSurface()
     m_scene->getModelViewMatrix(matrix);
     glLoadMatrixf(matrix);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    // render all assets
-    // TODO: merge drawing models
-    uint32_t nAssets = m_assets.count();
-    for (uint32_t i = 0; i < nAssets; i++) {
-        glPushMatrix();
-        aiDrawAsset(m_assets[i]);
-        glPopMatrix();
-    }
-    // initialize rendering states
+}
+
+void Renderer::preShadow()
+{
     glEnable(GL_STENCIL_TEST);
+    glDisable(GL_LIGHTING);
     glStencilFunc(GL_EQUAL, 1, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
     glColorMask(0, 0, 0, 0);
     glDepthMask(0);
     glDisable(GL_DEPTH_TEST);
-    // render shadow before drawing models
+}
+
+void Renderer::drawShadow()
+{
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
@@ -990,13 +989,32 @@ void Renderer::drawSurface()
         drawModelShadow(model);
         glPopMatrix();
     }
+}
+
+void Renderer::postShadow()
+{
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
     glStencilFunc(GL_EQUAL, 2, ~0);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
-    // render model and edge
+}
+
+void Renderer::drawAssets()
+{
+    uint32_t nAssets = m_assets.count();
+    for (uint32_t i = 0; i < nAssets; i++) {
+        glPushMatrix();
+        aiDrawAsset(m_assets[i]);
+        glPopMatrix();
+    }
+}
+
+void Renderer::drawModels()
+{
+    size_t size = 0;
+    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
         glPushMatrix();
@@ -1004,6 +1022,16 @@ void Renderer::drawSurface()
         drawModelEdge(model);
         glPopMatrix();
     }
+}
+
+void Renderer::drawSurface()
+{
+    clearSurface();
+    preShadow();
+    drawShadow();
+    postShadow();
+    drawAssets();
+    drawModels();
 }
 
 }

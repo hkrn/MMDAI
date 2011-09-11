@@ -124,6 +124,13 @@ public:
     void drawBoneTransform(vpvl::Bone *bone);
     void loadAsset(Asset *asset, const std::string &dir);
     void unloadAsset(Asset *asset);
+
+    void clearSurface();
+    void preShadow();
+    void drawShadow();
+    void postShadow();
+    void drawAssets();
+    void drawModels();
     void drawSurface();
 
 private:
