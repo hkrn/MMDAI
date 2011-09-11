@@ -103,6 +103,12 @@ void SceneWidget::stop()
     emit sceneDidStop();
 }
 
+void SceneWidget::clear()
+{
+    stop();
+    m_loader->release();
+}
+
 vpvl::PMDModel *SceneWidget::findModel(const QString &name)
 {
     return m_loader->findModel(name);

@@ -195,8 +195,6 @@ void MainWindow::updateFPS(int fps)
 
 void MainWindow::loadScript()
 {
-    if (m_script)
-        return;
     const QString name("mainWindow/lastScriptDirectory");
     const QString path = m_settings.value(name).toString();
     const QString fileName = QFileDialog::getOpenFileName(this, tr("Open script file"), path, tr("Script file (*.fst)"));
@@ -208,6 +206,8 @@ void MainWindow::loadScript()
     QFile file(fileName);
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
+        m_sceneWidget->clear();
+        delete m_script;
         m_script = new Script(m_sceneWidget);
         m_script->setDir(QFileInfo(file).absoluteDir());
         m_script->load(stream);

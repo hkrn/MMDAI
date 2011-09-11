@@ -49,23 +49,7 @@ SceneLoader::SceneLoader(vpvl::gl::Renderer *renderer)
 
 SceneLoader::~SceneLoader()
 {
-    delete m_camera;
-    m_camera = 0;
-    QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
-    while (i.hasNext()) {
-        i.next();
-        vpvl::PMDModel *model = i.key();
-        vpvl::VMDMotion *motion = i.value();
-        model->removeMotion(motion);
-        delete motion;
-    }
-    foreach (vpvl::PMDModel *model, m_models) {
-        m_renderer->unloadModel(model);
-        delete model;
-    }
-    m_models.clear();
-    m_motions.clear();
-    m_assets.clear();
+    release();
 }
 
 bool SceneLoader::deleteAsset(vpvl::Asset *asset)
@@ -268,6 +252,31 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDMode
     return motion;
 }
 
+void SceneLoader::release()
+{
+    delete m_camera;
+    m_camera = 0;
+    QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
+    while (i.hasNext()) {
+        i.next();
+        vpvl::PMDModel *model = i.key();
+        vpvl::VMDMotion *motion = i.value();
+        model->removeMotion(motion);
+        delete motion;
+    }
+    foreach (vpvl::PMDModel *model, m_models) {
+        m_renderer->unloadModel(model);
+        delete model;
+    }
+    foreach (vpvl::Asset *asset, m_assets) {
+        m_renderer->unloadAsset(asset);
+        delete asset;
+    }
+    m_models.clear();
+    m_motions.clear();
+    m_assets.clear();
+}
+
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     model->addMotion(motion);
@@ -288,4 +297,3 @@ const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions
     }
     return ret;
 }
-

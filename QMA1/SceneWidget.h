@@ -86,6 +86,7 @@ public slots:
     void play();
     void pause();
     void stop();
+    void clear();
 
     void addModel();
     vpvl::PMDModel *addModel(const QString &path);

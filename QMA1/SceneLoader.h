@@ -78,6 +78,7 @@ public:
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
     VPDFile *loadPose(const QString &path, vpvl::PMDModel *model);
+    void release();
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
 
