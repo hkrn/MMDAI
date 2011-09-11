@@ -67,6 +67,8 @@ private:
     QStringList m_expressionNames;
     QStringList m_phoneNames;
     QList<float> m_interpolation;
+
+    Q_DISABLE_COPY(LipSync)
 };
 
 #endif // LIPSYNC_H

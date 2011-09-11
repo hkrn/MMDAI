@@ -56,7 +56,8 @@ SOURCES += Delegate.cc \
            MainWindow.cc \
            Script.cc \
            TiledStage.cc \
-           LipSync.cc
+           LipSync.cc \
+    OpenJTalkSpeechEngine.cc
 
 HEADERS  += Delegate.h \
             World.h \
@@ -67,6 +68,7 @@ HEADERS  += Delegate.h \
             MainWindow.h \
             Script.h \
             TiledStage.h \
-            LipSync.h
+            LipSync.h \
+    OpenJTalkSpeechEngine.h
 
 RESOURCES += ../QMA2/resources/QMA2.qrc

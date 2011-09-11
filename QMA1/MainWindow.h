@@ -122,6 +122,8 @@ private:
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
     QMenu *m_menuHelp;
+
+    Q_DISABLE_COPY(MainWindow)
 };
 
 #endif // MAINWINDOW_H

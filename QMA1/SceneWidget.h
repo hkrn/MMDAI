@@ -180,6 +180,8 @@ private:
     int m_internalTimerID;
     bool m_visibleBones;
     bool m_playing;
+
+    Q_DISABLE_COPY(SceneWidget)
 };
 
 #endif // SCENEWIDGET_H
