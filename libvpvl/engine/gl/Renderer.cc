@@ -331,6 +331,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
         delete[] userData->materials;
         delete userData;
         m_delegate->log(IDelegate::kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
+        m_scene->removeModel(const_cast<vpvl::PMDModel *>(model));
     }
 }
 
