@@ -492,11 +492,46 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     qglClearColor(Qt::blue);
-    m_renderer->initializeSurface();
-    m_renderer->drawSurface();
     m_tiledStage->updateShadowMatrix(m_renderer->scene()->lightPosition());
-    m_tiledStage->render();
+    m_renderer->initializeSurface();
+    m_renderer->clearSurface();
+#if 1
+    m_tiledStage->renderBackground();
+    // pre shadow
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    m_tiledStage->renderFloor();
+    glColorMask(0, 0, 0, 0);
+    glDepthMask(0);
+    glStencilFunc(GL_EQUAL, 1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    glDisable(GL_DEPTH_TEST);
+    glPushMatrix();
+    glMultMatrixd(m_tiledStage->shadowMatrix());
+    // draw shadows
+    m_renderer->drawShadow();
+    // post shadow
+    glPopMatrix();
+    glColorMask(1, 1, 1, 1);
+    glDepthMask(1);
+    glStencilFunc(GL_EQUAL, 2, ~0);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    m_tiledStage->renderFloor();
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    // draw all assets and models
+    m_renderer->drawAssets();
+    m_renderer->drawModels();
     drawBones();
+#else
+    glPushMatrix();
+    glMultMatrixd(m_tiledStage->shadowMatrix());
+    m_renderer->drawShadow();
+    glPopMatrix();
+#endif
     emit motionDidFinished(m_loader->stoppedMotions());
 }
 
