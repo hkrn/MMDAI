@@ -42,7 +42,7 @@
 
 class World {
 public:
-    World(int defaultFPS)
+    explicit World(int defaultFPS)
         : m_dispatcher(&m_config),
           m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0, 400.0f), 1024),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)

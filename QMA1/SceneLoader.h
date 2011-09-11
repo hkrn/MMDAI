@@ -62,7 +62,7 @@ public:
     typedef QHash<QString, vpvl::Asset *> AssetList;
     typedef QMultiHash<vpvl::PMDModel *, vpvl::VMDMotion *> MotionList;
 
-    SceneLoader(vpvl::gl::Renderer *renderer);
+    explicit SceneLoader(vpvl::gl::Renderer *renderer);
     ~SceneLoader();
 
     bool deleteAsset(vpvl::Asset *asset);

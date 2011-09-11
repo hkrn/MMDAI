@@ -55,7 +55,7 @@ public:
     static const QString kLipSyncStart;
     static const QString kLipSyncStop;
 
-    OpenJTalkSpeechEngine(QObject *parent);
+    explicit OpenJTalkSpeechEngine(QObject *parent);
     ~OpenJTalkSpeechEngine();
 
     void load(const QString &baseName);

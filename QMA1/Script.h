@@ -93,7 +93,7 @@ public:
     static const QString kEPS;
     static const QString kLipSyncName;
 
-    Script(SceneWidget *parent);
+    explicit Script(SceneWidget *parent);
     ~Script();
 
     bool load(QTextStream &stream);

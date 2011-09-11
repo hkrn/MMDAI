@@ -47,7 +47,7 @@ class QGLWidget;
 class Delegate : public vpvl::gl::IDelegate
 {
 public:
-    Delegate(QGLWidget *wiget);
+    explicit Delegate(QGLWidget *wiget);
     ~Delegate();
 
     bool loadTexture(const std::string &path, GLuint &textureID);
