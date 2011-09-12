@@ -320,11 +320,6 @@ void TiledStage::updateShadowMatrix(const btVector3 &position)
     }
 }
 
-const qreal *TiledStage::shadowMatrix() const
-{
-    return m_matrix.constData();
-}
-
 void TiledStage::buildFloor(float width, float height)
 {
     btVector3 localIneteria(0.0f, 0.0f, 0.0f);

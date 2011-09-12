@@ -497,11 +497,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
+    qreal matrix[16];
     qglClearColor(Qt::blue);
     m_tiledStage->updateShadowMatrix(m_renderer->scene()->lightPosition());
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
-#if 1
     m_tiledStage->renderBackground();
     // pre shadow
     glEnable(GL_STENCIL_TEST);
@@ -514,7 +514,8 @@ void SceneWidget::paintGL()
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
-    glMultMatrixd(m_tiledStage->shadowMatrix());
+    m_tiledStage->shadowMatrix().copyDataTo(matrix);
+    glMultMatrixd(matrix);
     // draw shadows
     m_renderer->drawShadow();
     // post shadow
@@ -532,12 +533,6 @@ void SceneWidget::paintGL()
     m_renderer->drawAssets();
     m_renderer->drawModels();
     drawBones();
-#else
-    glPushMatrix();
-    glMultMatrixd(m_tiledStage->shadowMatrix());
-    m_renderer->drawShadow();
-    glPopMatrix();
-#endif
     emit motionDidFinished(m_loader->stoppedMotions());
 }
 

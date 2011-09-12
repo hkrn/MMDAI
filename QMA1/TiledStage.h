@@ -60,7 +60,9 @@ public:
     void renderBackground();
     void setSize(float width, float height, float depth);
     void updateShadowMatrix(const btVector3 &position);
-    const qreal *shadowMatrix() const;
+    const QMatrix4x4 &shadowMatrix() const {
+        return m_matrix;
+    }
 
 private:
     void buildFloor(float width, float height);
