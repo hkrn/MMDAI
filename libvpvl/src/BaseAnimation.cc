@@ -52,9 +52,9 @@ BaseAnimation::BaseAnimation(float smearDefault) :
     m_lastLoopStartFrame(0.0f),
     m_blendRate(1.0f),
     m_smearIndex(smearDefault),
-    m_ignoreSingleAnimation(false),
     m_overrideFirst(false),
-    m_automaticRefresh(true)
+    m_automaticRefresh(true),
+    m_ignoreOneKeyFrame(false)
 {
 }
 
@@ -69,9 +69,9 @@ BaseAnimation::~BaseAnimation()
     m_lastLoopStartFrame = 0.0f;
     m_blendRate = 1.0f;
     m_smearIndex = 0;
-    m_ignoreSingleAnimation = false;
     m_overrideFirst = false;
     m_automaticRefresh = true;
+    m_ignoreOneKeyFrame = false;
 }
 
 void BaseAnimation::advance(float deltaFrame)

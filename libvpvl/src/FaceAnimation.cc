@@ -89,7 +89,7 @@ void FaceAnimation::seek(float frameAt)
     const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {
         FaceAnimationInternal *node = *m_name2node.value(i);
-        if (m_ignoreSingleAnimation && node->keyFrames.count() <= 1)
+        if (m_ignoreOneKeyFrame && node->keyFrames.count() <= 1)
             continue;
         calculateFrames(frameAt, node);
         Face *face = node->face;

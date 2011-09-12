@@ -222,6 +222,15 @@ public:
     }
 
     /**
+     * Returnes ignore just one key frame.
+     *
+     * @param True if ignore
+     */
+    bool isIgnoreOneKeyFrame() const {
+        return m_ignoreOneKeyFrame;
+    }
+
+    /**
      * Set the blend rate.
      *
      * @param value The blend rate value
@@ -239,6 +248,15 @@ public:
         m_automaticRefresh = value;
     }
 
+    /**
+     * Set ignore just one key frame.
+     *
+     * @param True if ignore
+     */
+    void setIgnoreOneKeyFrame(bool value) {
+        m_ignoreOneKeyFrame = value;
+    }
+
 protected:
     BaseKeyFrameList m_frames;
     uint32_t m_lastIndex;
@@ -250,9 +268,9 @@ protected:
     float m_lastLoopStartFrame;
     float m_blendRate;
     float m_smearIndex;
-    bool m_ignoreSingleAnimation;
     bool m_overrideFirst;
     bool m_automaticRefresh;
+    bool m_ignoreOneKeyFrame;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

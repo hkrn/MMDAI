@@ -62,7 +62,7 @@ VMDMotion::VMDMotion()
       m_endingBoneBlendFrames(20.0f),
       m_endingFaceBlendFrames(5.0f),
       m_motionBlendRate(1.0f),
-      m_beginningNonControlledBlend(0.0f),
+      m_beginningNonControlledBlend(10.0f),
       m_active(false),
       m_enableSmooth(false),
       m_enableRelocation(false),
@@ -240,8 +240,6 @@ void VMDMotion::attachModel(PMDModel *model)
             m_faceMotion.setOverrideFirst(internal::kZeroV);
         }
     }
-    if (!m_ignoreStatic)
-        m_beginningNonControlledBlend = 10.0f;
 }
 
 void VMDMotion::seek(float frameIndex)
@@ -322,15 +320,28 @@ void VMDMotion::reset()
     m_faceMotion.reset();
 }
 
-bool VMDMotion::isReached()
+bool VMDMotion::isReached() const
 {
     return m_boneMotion.currentIndex() >= m_boneMotion.maxIndex()
             && m_faceMotion.currentIndex()>= m_faceMotion.maxIndex();
 }
 
-bool VMDMotion::isReached(float atEnd)
+bool VMDMotion::isReached(float atEnd) const
 {
     return m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd;
+}
+
+bool VMDMotion::isFull() const
+{
+    return m_boneMotion.isIgnoreOneKeyFrame() && m_faceMotion.isIgnoreOneKeyFrame();
+}
+
+void VMDMotion::setFull(bool value)
+{
+    bool ignoreOneKeyFrame = value ? false : true;
+    m_boneMotion.setIgnoreOneKeyFrame(ignoreOneKeyFrame);
+    m_faceMotion.setIgnoreOneKeyFrame(ignoreOneKeyFrame);
+    m_beginningNonControlledBlend = ignoreOneKeyFrame ? 0.0f : 10.0f;
 }
 
 void VMDMotion::parseHeader(const DataInfo &info)

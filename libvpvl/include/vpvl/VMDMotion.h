@@ -121,8 +121,10 @@ public:
     void seek(float frameIndex);
     void advance(float deltaFrame);
     void reset();
-    bool isReached();
-    bool isReached(float atEnd);
+    bool isReached() const;
+    bool isReached(float atEnd) const;
+    bool isFull() const;
+    void setFull(bool value);
 
     const uint8_t *name() const {
         return m_name;
@@ -166,9 +168,6 @@ public:
     bool isLoop() const {
         return m_onEnd == 1;
     }
-    bool isFull() const {
-        return m_ignoreStatic;
-    }
     bool enableSmooth() const {
         return m_enableSmooth;
     }
@@ -183,9 +182,6 @@ public:
     }
     void setLoop(bool value) {
         m_onEnd = value ? 1 : 2;
-    }
-    void setFull(bool value) {
-        m_ignoreStatic = value ? false : true;
     }
     void setEnableSmooth(bool value) {
         m_enableSmooth = value;
