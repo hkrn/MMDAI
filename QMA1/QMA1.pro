@@ -37,6 +37,11 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
+  QMAKE_INFO_PLIST = res/Info.plist
+  resources.files = res/translations/MMDAI1_ja.qm \
+                    $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
+  resources.path = Contents/Resources
+  QMAKE_BUNDLE_DATA += resources
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -74,4 +79,7 @@ HEADERS  += Delegate.h \
             OpenJTalkSpeechEngine.h \
             JuliusSpeechRecognitionEngine.h
 
+CODECFORTR = UTF-8
 RESOURCES += ../QMA2/resources/QMA2.qrc
+TRANSLATIONS += res/translations/MMDAI1.ts
+

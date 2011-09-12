@@ -94,7 +94,7 @@ static void LoadTranslations(QCoreApplication &app, QTranslator &appTr, QTransla
 {
     const QString locale = QLocale::system().name();
     qtTr.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-    appTr.load("QMA_" + locale, QDir("MMDAITranslations:/").absolutePath());
+    appTr.load("MMDAI1_" + locale, QDir("MMDAITranslations:/").absolutePath());
     app.installTranslator(&qtTr);
     app.installTranslator(&appTr);
 }
