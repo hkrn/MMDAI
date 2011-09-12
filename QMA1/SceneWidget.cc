@@ -250,7 +250,7 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
         if (asset)
             emit assetDidAdd(asset);
         else
-            QMessageBox::warning(this, tr("Loading stage error"),
+            QMessageBox::warning(this, tr("Loading asset error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
         delete progress;
     }

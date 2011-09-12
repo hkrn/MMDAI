@@ -224,7 +224,7 @@ bool Script::loadScript(QTextStream &stream)
                 }
             }
             else {
-                qWarning("%s", qPrintable(tr("Invalid script line: %s").arg(line)));
+                qWarning("%s", qPrintable(tr("Invalid script line: %1").arg(line)));
             }
         }
     }
@@ -717,7 +717,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &value = argv[1];
         const QString &op = argv[2];
         if (!m_values.contains(key)) {
-            qWarning("%s", qPrintable(tr("[%1] Evaluating %1 is not found").arg(type).arg(key)));
+            qWarning("%s", qPrintable(tr("[%1] Evaluating %2 is not found").arg(type).arg(key)));
             return;
         }
         const float v1 = value.toFloat();
@@ -742,7 +742,7 @@ void Script::handleCommand(const ScriptArgument &output)
             ret = v1 <= v2;
         }
         else {
-            qWarning("%s", qPrintable(tr("[%1] Operation %s is invalid").arg(type).arg(op)));
+            qWarning("%s", qPrintable(tr("[%1] Operation %2 is invalid").arg(type).arg(op)));
         }
         Arguments a; a << key << op << value << (ret ? "TRUE" : "FALSE");
         emit eventDidPost(kValueEvaluateEvent, a);
@@ -891,7 +891,7 @@ bool Script::parseEnable(const QString &value, const QString &enable, const QStr
     }
     else {
         output = false;
-        qWarning("%s", qPrintable(tr("Unexpected value %s to boolean (%s or %s)")
+        qWarning("%s", qPrintable(tr("Unexpected value %1 to boolean (%2 or %3)")
                                   .arg(value).arg(enable).arg(disable)));
     }
     return false;
@@ -909,7 +909,7 @@ bool Script::parsePosition(const QString &value, btVector3 &v) const
     }
     else {
         v.setZero();
-        qWarning("%s", qPrintable(tr("Unexpected value %s to position").arg(value)));
+        qWarning("%s", qPrintable(tr("Unexpected value %1 to position").arg(value)));
     }
     return false;
 }
@@ -927,7 +927,7 @@ bool Script::parseColor(const QString &value, btVector4 &v) const
     else {
         v.setZero();
         v.setW(1.0f);
-        qWarning("%s", qPrintable(tr("Unexpected value %s to color").arg(value)));
+        qWarning("%s", qPrintable(tr("Unexpected value %1 to color").arg(value)));
     }
     return false;
 }
@@ -944,7 +944,7 @@ bool Script::parseRotation(const QString &value, btQuaternion &v) const
     }
     else {
         v.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-        qWarning("%s", qPrintable(tr("Unexpected value %s to rotation").arg(value)));
+        qWarning("%s", qPrintable(tr("Unexpected value %1 to rotation").arg(value)));
     }
     return false;
 }
