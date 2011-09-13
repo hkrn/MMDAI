@@ -37,6 +37,7 @@
 #include "MainWindow.h"
 
 #include "LicenseWidget.h"
+#include "LoggerWidget.h"
 #include "SceneWidget.h"
 #include "Script.h"
 #include "util.h"
@@ -62,12 +63,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
     m_licenseWidget(0),
+    m_loggerWidget(0),
     m_sceneWidget(0),
     m_script(0),
     m_model(0),
     m_currentFPS(0)
 {
     m_licenseWidget = new LicenseWidget();
+    m_loggerWidget = new LoggerWidget();
     m_sceneWidget = new SceneWidget();
     m_sceneWidget->setSettings(&m_settings);
     resize(900, 720);
@@ -84,6 +87,7 @@ MainWindow::~MainWindow()
 {
     delete m_script;
     delete m_menuBar;
+    delete m_loggerWidget;
     delete m_licenseWidget;
 }
 
@@ -276,12 +280,14 @@ void MainWindow::buildMenuBar()
     connect(m_actionPause, SIGNAL(triggered()), m_sceneWidget, SLOT(pause()));
     m_actionStop = new QAction(this);
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
-    m_actionZoomIn = new QAction(this);
+    m_actionShowLogMessage = new QAction(this);
+    connect(m_actionShowLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
     m_actionExecuteCommand = new QAction(this);
     connect(m_actionExecuteCommand, SIGNAL(triggered()), this, SLOT(executeCommand()));
     m_actionExecuteEvent = new QAction(this);
     connect(m_actionExecuteEvent, SIGNAL(triggered()), this, SLOT(executeEvent()));
 
+    m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
     m_actionZoomOut = new QAction(this);
     connect(m_actionZoomOut, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomOut()));
@@ -338,6 +344,8 @@ void MainWindow::buildMenuBar()
     m_menuScript->addAction(m_actionPlay);
     m_menuScript->addAction(m_actionPause);
     m_menuScript->addAction(m_actionStop);
+    m_menuScript->addSeparator();
+    m_menuScript->addAction(m_actionShowLogMessage);
     m_menuScript->addSeparator();
     m_menuScript->addAction(m_actionExecuteCommand);
     m_menuScript->addAction(m_actionExecuteEvent);
@@ -411,6 +419,8 @@ void MainWindow::retranslate()
     m_actionPause->setStatusTip(tr("Pause current scene."));
     m_actionStop->setText(tr("Stop"));
     m_actionStop->setStatusTip(tr("Stop current scene."));
+    m_actionShowLogMessage->setText(tr("Open log message window"));
+    m_actionShowLogMessage->setToolTip(tr("Open a window of log messages such as script."));
     m_actionExecuteCommand->setText(tr("Execute command"));
     m_actionExecuteCommand->setStatusTip(tr("Execute command to the script."));
     m_actionExecuteEvent->setText(tr("Execute event"));

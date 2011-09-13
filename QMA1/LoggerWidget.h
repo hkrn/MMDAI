@@ -34,104 +34,33 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
 
-#include <QtCore/QSettings>
-#include <QtGui/QMainWindow>
+#ifndef LOGGERWIDGET_H_
+#define LOGGERWIDGET_H_
 
-namespace vpvl {
-class Asset;
-class PMDModel;
-}
+#include <QtCore/QStringList>
+#include <QtGui/QTextEdit>
+#include <QtGui/QWidget>
 
-class LicenseWidget;
-class LoggerWidget;
-class SceneWidget;
-class Script;
+class QTextEdit;
 
-class MainWindow : public QMainWindow
+class LoggerWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+    explicit LoggerWidget(QWidget *parent = 0);
+    ~LoggerWidget();
 
-    bool validateLibraryVersion();
+    void addMessage(const QString &message);
 
-protected:
-    void closeEvent(QCloseEvent *event);
-
-private slots:
-    void selectCurrentModel();
-    void setCurrentModel(vpvl::PMDModel *value);
-    void addModel(vpvl::PMDModel *model);
-    void deleteModel(vpvl::PMDModel *model);
-    void addAsset(vpvl::Asset *asset);
-    void deleteAsset(vpvl::Asset *asset);
-    void updateFPS(int fps);
-    void loadScript();
-    void executeCommand();
-    void executeEvent();
+signals:
+    void messageDidAdd(const QString &message);
 
 private:
-    void startSceneUpdate();
-    void stopSceneUpdate();
-    const QString buildWindowTitle();
-    const QString buildWindowTitle(int fps);
-    void connectWidgets();
-    void updateInformation();
-    void buildMenuBar();
-    void retranslate();
+    QTextEdit *m_textEdit;
 
-    QSettings m_settings;
-    LicenseWidget *m_licenseWidget;
-    LoggerWidget *m_loggerWidget;
-    SceneWidget *m_sceneWidget;
-    Script *m_script;
-    vpvl::PMDModel *m_model;
-    int m_currentFPS;
-
-    QAction *m_actionAddModel;
-    QAction *m_actionAddAsset;
-    QAction *m_actionInsertToAllModels;
-    QAction *m_actionInsertToSelectedModel;
-    QAction *m_actionSetCamera;
-    QAction *m_actionExit;
-    QAction *m_actionAbout;
-    QAction *m_actionAboutQt;
-    QAction *m_actionLoadScript;
-    QAction *m_actionPlay;
-    QAction *m_actionPause;
-    QAction *m_actionStop;
-    QAction *m_actionShowLogMessage;
-    QAction *m_actionExecuteCommand;
-    QAction *m_actionExecuteEvent;
-    QAction *m_actionZoomIn;
-    QAction *m_actionZoomOut;
-    QAction *m_actionRotateUp;
-    QAction *m_actionRotateDown;
-    QAction *m_actionRotateLeft;
-    QAction *m_actionRotateRight;
-    QAction *m_actionTranslateUp;
-    QAction *m_actionTranslateDown;
-    QAction *m_actionTranslateLeft;
-    QAction *m_actionTranslateRight;
-    QAction *m_actionResetCamera;
-    QAction *m_actionRevertSelectedModel;
-    QAction *m_actionDeleteSelectedModel;
-    QAction *m_actionShowBones;
-    QMenuBar *m_menuBar;
-    QMenu *m_menuFile;
-    QMenu *m_menuScript;
-    QMenu *m_menuScene;
-    QMenu *m_menuModel;
-    QMenu *m_menuRetainModels;
-    QMenu *m_menuRetainAssets;
-    QMenu *m_menuHelp;
-
-    Q_DISABLE_COPY(MainWindow)
+    Q_DISABLE_COPY(LoggerWidget)
 };
 
-#endif // MAINWINDOW_H
+#endif // QMALOGVIEWWIDGET_H

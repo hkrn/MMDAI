@@ -64,7 +64,8 @@ SOURCES += Delegate.cc \
            TiledStage.cc \
            LipSync.cc \
            OpenJTalkSpeechEngine.cc \
-           JuliusSpeechRecognitionEngine.cc
+           JuliusSpeechRecognitionEngine.cc \
+           LoggerWidget.cc
 
 HEADERS  += Delegate.h \
             World.h \
@@ -77,7 +78,8 @@ HEADERS  += Delegate.h \
             TiledStage.h \
             LipSync.h \
             OpenJTalkSpeechEngine.h \
-            JuliusSpeechRecognitionEngine.h
+            JuliusSpeechRecognitionEngine.h \
+            LoggerWidget.h
 
 CODECFORTR = UTF-8
 RESOURCES += ../QMA2/resources/QMA2.qrc \

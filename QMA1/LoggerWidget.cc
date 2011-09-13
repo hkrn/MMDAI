@@ -34,104 +34,46 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#include "LoggerWidget.h"
 
-#include <QtCore/QSettings>
-#include <QtGui/QMainWindow>
+#include <QtGui/QtGui>
 
-namespace vpvl {
-class Asset;
-class PMDModel;
+namespace {
+LoggerWidget *g_instance = 0;
 }
 
-class LicenseWidget;
-class LoggerWidget;
-class SceneWidget;
-class Script;
-
-class MainWindow : public QMainWindow
+static void LoggerWidgetHandleMessage(QtMsgType /* type */, const char *message)
 {
-    Q_OBJECT
+    QString datetime = QDateTime::currentDateTime().toString(Qt::ISODate);
+    g_instance->addMessage(datetime + " " + message);
+    fprintf(stderr, "%s %s\n", qPrintable(datetime), message);
+}
 
-public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+LoggerWidget::LoggerWidget(QWidget *parent)
+    : QWidget(parent),
+      m_textEdit(0)
+{
+    Q_ASSERT(g_instance == 0);
+    m_textEdit = new QTextEdit();
+    m_textEdit->setReadOnly(true);
+    m_textEdit->setLineWrapMode(QTextEdit::NoWrap);
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(m_textEdit);
+    layout->setMargin(10);
+    setLayout(layout);
+    setWindowTitle(tr("Log Window"));
+    resize(QSize(640, 320));
+    g_instance = this;
+    qInstallMsgHandler(LoggerWidgetHandleMessage);
+    connect(this, SIGNAL(messageDidAdd(QString)), m_textEdit, SLOT(append(QString)));
+}
 
-    bool validateLibraryVersion();
+LoggerWidget::~LoggerWidget()
+{
+    qInstallMsgHandler(0);
+}
 
-protected:
-    void closeEvent(QCloseEvent *event);
-
-private slots:
-    void selectCurrentModel();
-    void setCurrentModel(vpvl::PMDModel *value);
-    void addModel(vpvl::PMDModel *model);
-    void deleteModel(vpvl::PMDModel *model);
-    void addAsset(vpvl::Asset *asset);
-    void deleteAsset(vpvl::Asset *asset);
-    void updateFPS(int fps);
-    void loadScript();
-    void executeCommand();
-    void executeEvent();
-
-private:
-    void startSceneUpdate();
-    void stopSceneUpdate();
-    const QString buildWindowTitle();
-    const QString buildWindowTitle(int fps);
-    void connectWidgets();
-    void updateInformation();
-    void buildMenuBar();
-    void retranslate();
-
-    QSettings m_settings;
-    LicenseWidget *m_licenseWidget;
-    LoggerWidget *m_loggerWidget;
-    SceneWidget *m_sceneWidget;
-    Script *m_script;
-    vpvl::PMDModel *m_model;
-    int m_currentFPS;
-
-    QAction *m_actionAddModel;
-    QAction *m_actionAddAsset;
-    QAction *m_actionInsertToAllModels;
-    QAction *m_actionInsertToSelectedModel;
-    QAction *m_actionSetCamera;
-    QAction *m_actionExit;
-    QAction *m_actionAbout;
-    QAction *m_actionAboutQt;
-    QAction *m_actionLoadScript;
-    QAction *m_actionPlay;
-    QAction *m_actionPause;
-    QAction *m_actionStop;
-    QAction *m_actionShowLogMessage;
-    QAction *m_actionExecuteCommand;
-    QAction *m_actionExecuteEvent;
-    QAction *m_actionZoomIn;
-    QAction *m_actionZoomOut;
-    QAction *m_actionRotateUp;
-    QAction *m_actionRotateDown;
-    QAction *m_actionRotateLeft;
-    QAction *m_actionRotateRight;
-    QAction *m_actionTranslateUp;
-    QAction *m_actionTranslateDown;
-    QAction *m_actionTranslateLeft;
-    QAction *m_actionTranslateRight;
-    QAction *m_actionResetCamera;
-    QAction *m_actionRevertSelectedModel;
-    QAction *m_actionDeleteSelectedModel;
-    QAction *m_actionShowBones;
-    QMenuBar *m_menuBar;
-    QMenu *m_menuFile;
-    QMenu *m_menuScript;
-    QMenu *m_menuScene;
-    QMenu *m_menuModel;
-    QMenu *m_menuRetainModels;
-    QMenu *m_menuRetainAssets;
-    QMenu *m_menuHelp;
-
-    Q_DISABLE_COPY(MainWindow)
-};
-
-#endif // MAINWINDOW_H
+void LoggerWidget::addMessage(const QString &message)
+{
+    emit messageDidAdd(message);
+}
