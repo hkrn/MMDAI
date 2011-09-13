@@ -68,11 +68,13 @@ const QString &kLightDirectionCommand = "LIGHTDIRECTION";
 const QString &kLipSyncStartCommand = "LIPSYNC_START";
 const QString &kLipSyncStopCommand = "LIPSYNC_STOP";
 const QString &kCameraCommand = "CAMERA";
-const QString kValueSet = "VALUE_SET";
-const QString kValueUnset = "VALUE_UNSET";
-const QString kValueEvaluate = "VALUE_EVAL";
-const QString kTimerStart = "TIMER_START";
-const QString kTimerStop = "TIMER_STOP";
+const QString kValueSetCommand = "VALUE_SET";
+const QString kValueUnsetCommand = "VALUE_UNSET";
+const QString kValueEvaluateCommand = "VALUE_EVAL";
+const QString kTimerStartCommand = "TIMER_START";
+const QString kTimerStopCommand = "TIMER_STOP";
+const QString kExecuteCommand = "EXECUTE";
+const QString kKeyPostCommand = "KEY_POST";
 /* event */
 const QString &kModelAddEvent = "MODEL_EVENT_ADD";
 const QString &kModelChangeEvent = "MODEL_EVENT_CHANGE";
@@ -672,7 +674,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kInvalidArgumentVariant.arg(type).arg(1).arg(3).arg(4).arg(argc)));
         }
     }
-    else if (type == kValueSet) {
+    else if (type == kValueSetCommand) {
         if (argc != 2 && argc != 3) {
             qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(2).arg(3).arg(argc)));
             return;
@@ -697,7 +699,7 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << key;
         emit eventDidPost(kValueSetEvent, a);
     }
-    else if (type == kValueUnset) {
+    else if (type == kValueUnsetCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
@@ -709,14 +711,14 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kValueUnsetEvent, a);
         }
     }
-    else if (type == kValueEvaluate) {
+    else if (type == kValueEvaluateCommand) {
         if (argc != 3) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
             return;
         }
         const QString &key = argv[0];
-        const QString &value = argv[1];
-        const QString &op = argv[2];
+        const QString &op = argv[1];
+        const QString &value = argv[2];
         if (!m_values.contains(key)) {
             qWarning("%s", qPrintable(tr("[%1] Evaluating %2 is not found").arg(type).arg(key)));
             return;
@@ -748,7 +750,7 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << key << op << value << (ret ? "TRUE" : "FALSE");
         emit eventDidPost(kValueEvaluateEvent, a);
     }
-    else if (type == kTimerStart) {
+    else if (type == kTimerStartCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
             return;
@@ -777,7 +779,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(tr("[%1] Invalid second: %2").arg(type).arg(value)));
         }
     }
-    else if (type == kTimerStop) {
+    else if (type == kTimerStopCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
