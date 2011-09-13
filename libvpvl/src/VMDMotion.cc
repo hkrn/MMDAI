@@ -62,7 +62,7 @@ VMDMotion::VMDMotion()
       m_endingBoneBlendFrames(20.0f),
       m_endingFaceBlendFrames(5.0f),
       m_motionBlendRate(1.0f),
-      m_beginningNonControlledBlend(10.0f),
+      m_beginningNonControlledBlend(0.0f),
       m_active(false),
       m_enableSmooth(false),
       m_enableRelocation(false),
