@@ -149,404 +149,404 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="225"/>
-        <location filename="../../MainWindow.cc" line="413"/>
+        <location filename="../../MainWindow.cc" line="226"/>
+        <location filename="../../MainWindow.cc" line="414"/>
         <source>Execute command</source>
         <translation>コマンドの実行</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="234"/>
-        <location filename="../../MainWindow.cc" line="415"/>
+        <location filename="../../MainWindow.cc" line="235"/>
+        <location filename="../../MainWindow.cc" line="416"/>
         <source>Execute event</source>
         <translation>イベントの実行</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="251"/>
+        <location filename="../../MainWindow.cc" line="252"/>
         <source> (FPS: %1)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="386"/>
+        <location filename="../../MainWindow.cc" line="387"/>
         <source>Load script</source>
         <translation>スクリプトの読み込み</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="387"/>
+        <location filename="../../MainWindow.cc" line="388"/>
         <source>Load a script</source>
         <translation>スクリプトを読み込みます</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="388"/>
+        <location filename="../../MainWindow.cc" line="389"/>
         <source>Add model</source>
         <translation>モデルの追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="389"/>
+        <location filename="../../MainWindow.cc" line="390"/>
         <source>Add a model to the scene.</source>
         <translation>モデルを現在の場面に追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="390"/>
+        <location filename="../../MainWindow.cc" line="391"/>
         <source>Ctrl+Shift+M</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="391"/>
+        <location filename="../../MainWindow.cc" line="392"/>
         <source>Add asset</source>
         <translation>アクセサリの追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="392"/>
+        <location filename="../../MainWindow.cc" line="393"/>
         <source>Add an asset to the scene.</source>
         <translation>アクセサリを現在の場面に追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="393"/>
+        <location filename="../../MainWindow.cc" line="394"/>
         <source>Ctrl+Shift+A</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="395"/>
+        <location filename="../../MainWindow.cc" line="396"/>
         <source>Insert to all models</source>
         <translation>全てのモデルにモーションを挿入</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="396"/>
+        <location filename="../../MainWindow.cc" line="397"/>
         <source>Insert a motion to the all models.</source>
         <translation>全てのモデルにモーションを挿入します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="397"/>
+        <location filename="../../MainWindow.cc" line="398"/>
         <source>Ctrl+Shift+V</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="398"/>
+        <location filename="../../MainWindow.cc" line="399"/>
         <source>Insert to selected model</source>
         <translation>選択されたモデルにモーションを挿入</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="399"/>
+        <location filename="../../MainWindow.cc" line="400"/>
         <source>Insert a motion to the selected model.</source>
         <translation>選択されたモデルにモーションを挿入します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="400"/>
+        <location filename="../../MainWindow.cc" line="401"/>
         <source>Ctrl+Alt+Shift+V</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="401"/>
+        <location filename="../../MainWindow.cc" line="402"/>
         <source>Set camera motion</source>
         <translation>カメラモーションの適用</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="402"/>
+        <location filename="../../MainWindow.cc" line="403"/>
         <source>Set a camera motion to the scene.</source>
         <translation>カメラモーションを現在の場面に適用します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="403"/>
+        <location filename="../../MainWindow.cc" line="404"/>
         <source>Ctrl+Shift+C</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="404"/>
+        <location filename="../../MainWindow.cc" line="405"/>
         <source>Exit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="405"/>
+        <location filename="../../MainWindow.cc" line="406"/>
         <source>Exit this application.</source>
         <translation>このアプリケーションを終了します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="406"/>
+        <location filename="../../MainWindow.cc" line="407"/>
         <source>Ctrl+Q</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="407"/>
+        <location filename="../../MainWindow.cc" line="408"/>
         <source>Play</source>
         <translation>再生</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="408"/>
+        <location filename="../../MainWindow.cc" line="409"/>
         <source>Play current scene.</source>
         <translation>現在の場面を再生します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="409"/>
+        <location filename="../../MainWindow.cc" line="410"/>
         <source>Pause</source>
         <translation>一時停止</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="410"/>
+        <location filename="../../MainWindow.cc" line="411"/>
         <source>Pause current scene.</source>
         <translation>現在の場面を一時停止します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="411"/>
+        <location filename="../../MainWindow.cc" line="412"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="412"/>
+        <location filename="../../MainWindow.cc" line="413"/>
         <source>Stop current scene.</source>
         <translation>現在の場面を停止します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="414"/>
+        <location filename="../../MainWindow.cc" line="415"/>
         <source>Execute command to the script.</source>
         <translation>コマンドを現在のスクリプトに対して実行します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="416"/>
+        <location filename="../../MainWindow.cc" line="417"/>
         <source>Execute event to the script.</source>
         <translation>イベントを現在のスクリプトに実行します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="417"/>
+        <location filename="../../MainWindow.cc" line="418"/>
         <source>Zoom in</source>
         <translation>拡大</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="418"/>
+        <location filename="../../MainWindow.cc" line="419"/>
         <source>Zoom in the scene.</source>
         <translation>現在の場面を拡大します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="419"/>
+        <location filename="../../MainWindow.cc" line="420"/>
         <source>+</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="420"/>
+        <location filename="../../MainWindow.cc" line="421"/>
         <source>Zoom out</source>
         <translation>縮小</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="421"/>
+        <location filename="../../MainWindow.cc" line="422"/>
         <source>Zoom out the scene.</source>
         <translation>現在の場面を縮小します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="422"/>
+        <location filename="../../MainWindow.cc" line="423"/>
         <source>-</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="423"/>
+        <location filename="../../MainWindow.cc" line="424"/>
         <source>Rotate up</source>
         <translation>上に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="424"/>
+        <location filename="../../MainWindow.cc" line="425"/>
         <source>Rotate up the scene.</source>
         <translation>現在の場面を上に回転させます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="425"/>
+        <location filename="../../MainWindow.cc" line="426"/>
         <source>Ctrl+Up</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="426"/>
+        <location filename="../../MainWindow.cc" line="427"/>
         <source>Rotate down</source>
         <translation>下に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="427"/>
+        <location filename="../../MainWindow.cc" line="428"/>
         <source>Rotate down the scene.</source>
         <translation>現在の場面を下に回転させます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="428"/>
+        <location filename="../../MainWindow.cc" line="429"/>
         <source>Ctrl+Down</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="429"/>
+        <location filename="../../MainWindow.cc" line="430"/>
         <source>Rotate left</source>
         <translation>左に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="430"/>
+        <location filename="../../MainWindow.cc" line="431"/>
         <source>Rotate left the scene.</source>
         <translation>現在の場面を左に回転させます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="431"/>
+        <location filename="../../MainWindow.cc" line="432"/>
         <source>Ctrl+Left</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="432"/>
+        <location filename="../../MainWindow.cc" line="433"/>
         <source>Rotate right</source>
         <translation>右に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="433"/>
+        <location filename="../../MainWindow.cc" line="434"/>
         <source>Rotate right the scene.</source>
         <translation>現在の場面を右に回転させます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="434"/>
+        <location filename="../../MainWindow.cc" line="435"/>
         <source>Ctrl+Right</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="435"/>
+        <location filename="../../MainWindow.cc" line="436"/>
         <source>Translate up</source>
         <translation>上に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="436"/>
+        <location filename="../../MainWindow.cc" line="437"/>
         <source>Translate up the scene.</source>
         <translation>現在の場面を上に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="437"/>
+        <location filename="../../MainWindow.cc" line="438"/>
         <source>Shift+Up</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="438"/>
+        <location filename="../../MainWindow.cc" line="439"/>
         <source>Translate down</source>
         <translation>下に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="439"/>
+        <location filename="../../MainWindow.cc" line="440"/>
         <source>Translate down the scene.</source>
         <translation>現在の場面を下に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="440"/>
+        <location filename="../../MainWindow.cc" line="441"/>
         <source>Shift+Down</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="441"/>
+        <location filename="../../MainWindow.cc" line="442"/>
         <source>Translate left</source>
         <translation>左に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="442"/>
+        <location filename="../../MainWindow.cc" line="443"/>
         <source>Translate left the scene.</source>
         <translation>現在の場面を左に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="443"/>
+        <location filename="../../MainWindow.cc" line="444"/>
         <source>Shift+Left</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="444"/>
+        <location filename="../../MainWindow.cc" line="445"/>
         <source>Translate right</source>
         <translation>右に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="445"/>
+        <location filename="../../MainWindow.cc" line="446"/>
         <source>Translate right the scene.</source>
         <translation>現在の場面を右に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="446"/>
+        <location filename="../../MainWindow.cc" line="447"/>
         <source>Shift+Right</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="447"/>
+        <location filename="../../MainWindow.cc" line="448"/>
         <source>Reset camera</source>
         <translation>カメラのリセット</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="448"/>
+        <location filename="../../MainWindow.cc" line="449"/>
         <source>Reset camera perspective.</source>
         <translation>カメラのパースペクティブをリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="449"/>
+        <location filename="../../MainWindow.cc" line="450"/>
         <source>Revert selected model</source>
         <translation>選択されたモデルを未選択状態にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="450"/>
+        <location filename="../../MainWindow.cc" line="451"/>
         <source>Revert the selected model.</source>
         <translation>選択されたモデルを未選択状態にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="451"/>
+        <location filename="../../MainWindow.cc" line="452"/>
         <source>Delete selected model</source>
         <translation>選択されたモデルの削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="452"/>
+        <location filename="../../MainWindow.cc" line="453"/>
         <source>Delete the selected model from the scene.</source>
         <translation>選択されたモデルを現在の場面から削除します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="453"/>
+        <location filename="../../MainWindow.cc" line="454"/>
         <source>Ctrl+Shift+Backspace</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="454"/>
+        <location filename="../../MainWindow.cc" line="455"/>
         <source>About</source>
         <translation>MMDAI について</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="455"/>
+        <location filename="../../MainWindow.cc" line="456"/>
         <source>About this application.</source>
         <translation>このアプリケーションについて。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="456"/>
+        <location filename="../../MainWindow.cc" line="457"/>
         <source>Alt+Q, Alt+/</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="457"/>
+        <location filename="../../MainWindow.cc" line="458"/>
         <source>About Qt</source>
         <translation>Qt について</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="458"/>
+        <location filename="../../MainWindow.cc" line="459"/>
         <source>About Qt.</source>
         <translation>Qt について。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="459"/>
+        <location filename="../../MainWindow.cc" line="460"/>
         <source>&amp;File</source>
         <translation>ファイル (&amp;F)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="460"/>
+        <location filename="../../MainWindow.cc" line="461"/>
         <source>Script</source>
         <translation>スクリプト</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="461"/>
+        <location filename="../../MainWindow.cc" line="462"/>
         <source>&amp;Scene</source>
         <translation>場面 (&amp;S)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="462"/>
+        <location filename="../../MainWindow.cc" line="463"/>
         <source>&amp;Model</source>
         <translation>モデル (&amp;M)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="463"/>
+        <location filename="../../MainWindow.cc" line="464"/>
         <source>Select asset</source>
         <translation>アクセサリの選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="464"/>
+        <location filename="../../MainWindow.cc" line="465"/>
         <source>Select model</source>
         <translation>モデルの選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="465"/>
+        <location filename="../../MainWindow.cc" line="466"/>
         <source>&amp;Help</source>
         <translation>ヘルプ (&amp;H)</translation>
     </message>
@@ -650,95 +650,100 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>Script</name>
     <message>
-        <location filename="../../Script.cc" line="227"/>
+        <location filename="../../Script.cc" line="229"/>
         <source>Invalid script line: %1</source>
         <translation>すせいなスクリプトの行: %1</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="282"/>
+        <location filename="../../Script.cc" line="284"/>
         <source>[%1] %2 seems deleted</source>
         <translation>[%1] %2 は削除されているようです</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="374"/>
+        <location filename="../../Script.cc" line="376"/>
         <source>[%1] Invalid argument count (expected %2, actual is %3)</source>
         <translation>[%1] 不正な引数です (%2 のはずが %3 を渡された)</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="375"/>
+        <location filename="../../Script.cc" line="377"/>
         <source>[%1] Invalid argument count (expected between %2 and %3, actual is %4)</source>
         <translation>[%1] 不正な引数です (%2 から %3 の間のはずが %4 を渡された)</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="376"/>
+        <location filename="../../Script.cc" line="378"/>
         <source>[%1] Invalid argument count (expected %2 or between %3 and %4, actual is %5)</source>
         <translation>[%1] 不正な引数です (%2 または %3 から %4 の間のはずが %5 を渡された)</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="377"/>
+        <location filename="../../Script.cc" line="379"/>
         <source>[%1] Model %2 is not found</source>
         <translation>[%1] モデル %2 は存在しません</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="422"/>
-        <location filename="../../Script.cc" line="443"/>
+        <location filename="../../Script.cc" line="424"/>
+        <location filename="../../Script.cc" line="445"/>
         <source>[%1] Failed loading the model %2: %3</source>
         <translation>[%1] モデルの読み込みに失敗しました (%2): %3</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="503"/>
-        <location filename="../../Script.cc" line="539"/>
+        <location filename="../../Script.cc" line="505"/>
+        <location filename="../../Script.cc" line="541"/>
         <source>[%1] Failed loading the motion %2 to %3: %4</source>
         <translation>[%1] モーション %2 を%3 に対する読み込みに失敗しました: %4</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="583"/>
+        <location filename="../../Script.cc" line="585"/>
         <source>[%1] Failed loading the stage: %2</source>
         <translation>[%1] ステージの読み込みに失敗しました: %2</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="660"/>
+        <location filename="../../Script.cc" line="663"/>
         <source>[%1] Failed loading camera motion: %2</source>
         <translation>[%1] カメラモーションの読み込みに失敗しました: %2</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="682"/>
-        <location filename="../../Script.cc" line="758"/>
+        <location filename="../../Script.cc" line="685"/>
+        <location filename="../../Script.cc" line="761"/>
         <source>[%1] Specified key is empty</source>
         <translation>[%1] 指定されたキーは空です</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="720"/>
+        <location filename="../../Script.cc" line="723"/>
         <source>[%1] Evaluating %2 is not found</source>
         <translation>[%1] 評価した %2 は存在しません</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="745"/>
+        <location filename="../../Script.cc" line="748"/>
         <source>[%1] Operation %2 is invalid</source>
         <translation>[%1] 演算子 %2 は不正です</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="894"/>
+        <location filename="../../Script.cc" line="813"/>
+        <source>[%1] Command %1 is not supported</source>
+        <translation>[%1] コマンド %1 はサポートされていません</translation>
+    </message>
+    <message>
+        <location filename="../../Script.cc" line="915"/>
         <source>Unexpected value %1 to boolean (%2 or %3)</source>
         <translation>%1 を真偽値として評価しようとしましたが失敗しました (%2 か %3)</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="912"/>
+        <location filename="../../Script.cc" line="933"/>
         <source>Unexpected value %1 to position</source>
         <translation>%1 を位置として変換しようとしましたが失敗しました</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="930"/>
+        <location filename="../../Script.cc" line="951"/>
         <source>Unexpected value %1 to color</source>
         <translation>%1 を色情報として変換しようとしましたが失敗しました</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="947"/>
+        <location filename="../../Script.cc" line="968"/>
         <source>Unexpected value %1 to rotation</source>
         <translation>%1 を回転値として変換しようとしましたが失敗しました</translation>
     </message>
     <message>
-        <location filename="../../Script.cc" line="776"/>
+        <location filename="../../Script.cc" line="779"/>
         <source>[%1] Invalid second: %2</source>
         <translation>[%1] 不正な秒数です: %2</translation>
     </message>

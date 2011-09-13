@@ -794,6 +794,24 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kTimerStopEvent, a);
         }
     }
+    else if (type == kExecuteCommand) {
+        if (argc != 1) {
+            qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
+            return;
+        }
+        const QString &argument = argv[0];
+        const QUrl url(argument);
+        if (url.isValid()) {
+            QDesktopServices::openUrl(url);
+        }
+        else {
+            QProcess process;
+            process.startDetached(argument);
+        }
+    }
+    else {
+        qWarning("%s", qPrintable(tr("[%1] Command %1 is not supported").arg(type)));
+    }
     qDebug() << "[COMMAND]" << type << argv;
 }
 
