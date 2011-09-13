@@ -70,11 +70,11 @@ bool LipSync::load(QTextStream &stream)
         GetPhoneNames
     };
     State state = GetNExpressions;
+    int i = 0, nexpressions = 0, nphonemes = 0;
     bool ret = false;
     release();
     stream.setCodec("Shift-JIS");
     do {
-        int i = 0, nexpressions, nphonemes;
         QString line = stream.readLine().trimmed();
         if (!line.isEmpty() && line.at(0) != '#') {
             switch (state) {
