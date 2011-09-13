@@ -184,14 +184,14 @@ Script::~Script()
 bool Script::load(QTextStream &stream)
 {
     bool ret = loadScript(stream);
-    QFile file(":/lipsync.txt");
+    QFile file(":/lipsync/global");
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
         loadGlobalLipSync(stream);
         file.close();
     }
     else {
-        qWarning("Cannot load :/lipsync.txt (and should not show this message)");
+        qWarning("Cannot load :/lipsync/global (and should not show this message)");
     }
     return ret;
 }
@@ -632,11 +632,12 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName)) {
             const QString &sequence = argv[1];
             vpvl::PMDModel *model = m_models.value(modelName);
-            vpvl::VMDMotion *motion = m_globalLipSync.createMotion(sequence);
-            if (motion) {
-                vpvl::VMDMotion *motion = m_motions.value(kLipSyncName);
-                m_parent->deleteMotion(motion, model);
-                m_parent->insertMotionToModel(motion, model);
+            vpvl::VMDMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
+            if (newLipSyncMotion) {
+                vpvl::VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
+                newLipSyncMotion->setFull(false);
+                m_parent->deleteMotion(oldLipSyncMotion, model);
+                m_parent->insertMotionToModel(newLipSyncMotion, model);
             }
         }
     }

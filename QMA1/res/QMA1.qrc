@@ -6,4 +6,7 @@
         <file alias="OpenJTalk">licenses/OpenJTalk</file>
         <file alias="PortAudio">licenses/PortAudio</file>
     </qresource>
+    <qresource prefix="/lipsync">
+        <file alias="global">global.lip</file>
+    </qresource>
 </RCC>
