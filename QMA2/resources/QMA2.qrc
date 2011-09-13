@@ -1,14 +1,9 @@
 <RCC>
     <qresource prefix="/licenses">
         <file alias="Bullet">licenses/Bullet</file>
-        <file alias="Julius">licenses/Julius</file>
         <file alias="libvpvl">licenses/MMDAI</file>
-        <file alias="OpenJTalk">licenses/OpenJTalk</file>
-        <file alias="PortAudio">licenses/PortAudio</file>
         <file alias="Qt">licenses/Qt</file>
         <file alias="MMDAgent">licenses/MMDAgent</file>
-        <file alias="HTSEngine">licenses/HTSEngine</file>
-        <file alias="mecab">licenses/mecab</file>
         <file alias="GLEW">licenses/GLEW</file>
     </qresource>
     <qresource prefix="/textures">

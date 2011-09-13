@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/licenses">
+        <file alias="HTSEngine">licenses/HTSEngine</file>
+        <file alias="Julius">licenses/Julius</file>
+        <file alias="mecab">licenses/mecab</file>
+        <file alias="OpenJTalk">licenses/OpenJTalk</file>
+        <file alias="PortAudio">licenses/PortAudio</file>
+    </qresource>
+</RCC>

@@ -80,6 +80,6 @@ HEADERS  += Delegate.h \
             JuliusSpeechRecognitionEngine.h
 
 CODECFORTR = UTF-8
-RESOURCES += ../QMA2/resources/QMA2.qrc
+RESOURCES += ../QMA2/resources/QMA2.qrc \
+             res/QMA1.qrc
 TRANSLATIONS += res/translations/MMDAI1.ts
-
