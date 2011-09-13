@@ -206,6 +206,7 @@ void MainWindow::loadScript()
     QFile file(fileName);
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
+        m_sceneWidget->stop();
         m_sceneWidget->clear();
         delete m_script;
         m_script = new Script(m_sceneWidget);
