@@ -62,7 +62,7 @@ SceneWidget::SceneWidget(QWidget *parent) :
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0),
     m_visibleBones(false),
-    m_playing(false)
+    m_playing(true)
 {
     m_delegate = new Delegate(this);
     m_world = new World(m_defaultFPS);
@@ -498,7 +498,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     qreal matrix[16];
-    qglClearColor(Qt::blue);
+    qglClearColor(Qt::darkBlue);
     m_tiledStage->updateShadowMatrix(m_renderer->scene()->lightPosition());
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
