@@ -457,6 +457,9 @@ void SceneWidget::initializeGL()
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
+    qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
+    qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
+    qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
