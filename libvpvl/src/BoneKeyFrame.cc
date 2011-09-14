@@ -247,8 +247,6 @@ btQuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType ty
         return const_cast<btQuadWord &>(m_parameter.z);
     case kRotation:
         return const_cast<btQuadWord &>(m_parameter.rotation);
-    default:
-        assert(0);
     }
 }
 
