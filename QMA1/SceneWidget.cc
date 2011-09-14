@@ -37,8 +37,11 @@
 /* ----------------------------------------------------------------- */
 
 #include "SceneWidget.h"
+
+#include "Application.h"
 #include "Delegate.h"
 #include "SceneLoader.h"
+#include "Script.h"
 #include "TiledStage.h"
 #include "World.h"
 
@@ -54,6 +57,7 @@ SceneWidget::SceneWidget(QWidget *parent) :
     m_delegate(0),
     m_player(0),
     m_loader(0),
+    m_script(0),
     m_world(0),
     m_settings(0),
     m_frameCount(0),
@@ -70,10 +74,13 @@ SceneWidget::SceneWidget(QWidget *parent) :
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
+    connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadScript(QString)));
 }
 
 SceneWidget::~SceneWidget()
 {
+    delete m_script;
+    m_script = 0;
     delete m_tiledStage;
     m_tiledStage = 0;
     delete m_renderer;
@@ -356,6 +363,36 @@ void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
+void SceneWidget::loadScript()
+{
+    loadScript(openFileDialog("sceneWidget/lastScriptDirectory",
+                              tr("Open script file"),
+                              tr("Script file (*.fst)")));
+}
+
+void SceneWidget::loadScript(const QString &filename)
+{
+    QFile file(filename);
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        stop();
+        clear();
+        delete m_script;
+        m_script = new Script(this);
+        m_script->setDir(QFileInfo(file).absoluteDir());
+        m_script->load(stream);
+        const QFileInfo info(file);
+        const QDir &dir = info.dir();
+        m_script->loadSpeechEngine(dir, info.baseName());
+        m_script->loadSpeechRecognitionEngine(dir, info.baseName());
+        m_script->start();
+        play();
+    }
+    else {
+        qWarning("%s", qPrintable(tr("Cannot load script %1: %2").arg(filename).arg(file.errorString())));
+    }
+}
+
 void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
 {
     m_bone = bones.isEmpty() ? 0 : bones.last();
@@ -444,6 +481,9 @@ void SceneWidget::dropEvent(QDropEvent *event)
                 if (motion)
                     emit motionDidAdd(motion, model);
             }
+            else if (path.endsWith(".fst")) {
+                loadScript(path);
+            }
             qDebug() << "Proceeded a dropped file:" << path;
         }
     }
@@ -468,6 +508,9 @@ void SceneWidget::initializeGL()
     scene->setWorld(m_world->mutableWorld());
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
+    QStringList arguments = qApp->arguments();
+    if (arguments.count() == 2)
+        loadScript(arguments[1]);
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)

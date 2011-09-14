@@ -85,7 +85,8 @@ HEADERS  += Delegate.h \
             LipSync.h \
             OpenJTalkSpeechEngine.h \
             JuliusSpeechRecognitionEngine.h \
-            LoggerWidget.h
+            LoggerWidget.h \
+    Application.h
 
 CODECFORTR = UTF-8
 RESOURCES += ../QMA2/resources/QMA2.qrc \

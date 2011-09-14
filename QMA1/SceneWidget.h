@@ -61,6 +61,7 @@ class PlayerWidget;
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
+class Script;
 class TiledStage;
 class VPDFile;
 class World;
@@ -78,6 +79,8 @@ public:
     void setCurrentFPS(int value);
 
     TiledStage *tiledStage() const { return m_tiledStage; }
+    Script *script() const { return m_script; }
+
     void setSettings(QSettings *value) { m_settings = value; }
     bool isDisplayBones() const { return m_visibleBones; }
     void setDisplayBones(bool value) { m_visibleBones = value; }
@@ -106,6 +109,8 @@ public slots:
     void resetCamera();
     void setLightColor(const btVector4 &color);
     void setLightPosition(const btVector3 &position);
+    void loadScript();
+    void loadScript(const QString &filename);
 
     void rotate(float x, float y);
     void translate(float x, float y);
@@ -169,6 +174,7 @@ private:
     Delegate *m_delegate;
     PlayerWidget *m_player;
     SceneLoader *m_loader;
+    Script *m_script;
     TiledStage *m_tiledStage;
     World *m_world;
     QSettings *m_settings;

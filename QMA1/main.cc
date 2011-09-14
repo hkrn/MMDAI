@@ -36,6 +36,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include "Application.h"
 #include "MainWindow.h"
 
 static void SetSearchPaths(const QCoreApplication &app)
@@ -101,7 +102,7 @@ static void LoadTranslations(QCoreApplication &app, QTranslator &appTr, QTransla
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    Application a(argc, argv);
     QTranslator appTranslator, qtTranslator;
     a.setApplicationName("MMDAI");
     a.setApplicationVersion("2.0.0");

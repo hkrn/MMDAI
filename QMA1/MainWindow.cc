@@ -65,7 +65,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_licenseWidget(0),
     m_loggerWidget(0),
     m_sceneWidget(0),
-    m_script(0),
     m_model(0),
     m_currentFPS(0)
 {
@@ -85,7 +84,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete m_script;
     delete m_menuBar;
     delete m_loggerWidget;
     delete m_licenseWidget;
@@ -197,41 +195,14 @@ void MainWindow::updateFPS(int fps)
     setWindowTitle(buildWindowTitle(fps));
 }
 
-void MainWindow::loadScript()
-{
-    const QString name("mainWindow/lastScriptDirectory");
-    const QString path = m_settings.value(name).toString();
-    const QString fileName = QFileDialog::getOpenFileName(this, tr("Open script file"), path, tr("Script file (*.fst)"));
-    if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
-        m_settings.setValue(name, dir.absolutePath());
-    }
-    QFile file(fileName);
-    if (file.open(QFile::ReadOnly)) {
-        QTextStream stream(&file);
-        m_sceneWidget->stop();
-        m_sceneWidget->clear();
-        delete m_script;
-        m_script = new Script(m_sceneWidget);
-        m_script->setDir(QFileInfo(file).absoluteDir());
-        m_script->load(stream);
-        const QFileInfo info(file);
-        const QDir &dir = info.dir();;
-        m_script->loadSpeechEngine(dir, info.baseName());
-        m_script->loadSpeechRecognitionEngine(dir, info.baseName());
-        m_script->start();
-        m_sceneWidget->play();
-    }
-}
-
 void MainWindow::executeCommand()
 {
     QString input = QInputDialog::getText(this, tr("Execute command"), tr("Execute command")), command;
     QList<QVariant> arguments;
     ConstructScriptArguments(input, command, arguments);
-    if (m_script)
-        m_script->handleCommand(command, arguments);
+    Script *script = m_sceneWidget->script();
+    if (script)
+        script->handleCommand(command, arguments);
 }
 
 void MainWindow::executeEvent()
@@ -239,8 +210,9 @@ void MainWindow::executeEvent()
     QString input = QInputDialog::getText(this, tr("Execute event"), tr("Execute event")), event;
     QList<QVariant> arguments;
     ConstructScriptArguments(input, event, arguments);
-    if (m_script)
-        m_script->handleEvent(event, arguments);
+    Script *script = m_sceneWidget->script();
+    if (script)
+        script->handleEvent(event, arguments);
 }
 
 const QString MainWindow::buildWindowTitle()
@@ -273,7 +245,7 @@ void MainWindow::buildMenuBar()
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
     m_actionLoadScript = new QAction(this);
-    connect(m_actionLoadScript, SIGNAL(triggered()), this, SLOT(loadScript()));
+    connect(m_actionLoadScript, SIGNAL(triggered()), m_sceneWidget, SLOT(loadScript()));
     m_actionPlay = new QAction(this);
     connect(m_actionPlay, SIGNAL(triggered()), m_sceneWidget, SLOT(play()));
     m_actionPause = new QAction(this);
