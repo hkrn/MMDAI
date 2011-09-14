@@ -242,3 +242,7 @@ if(NOT MSVC)
   install(FILES ${libOpenJTalk_public_headers} DESTINATION include/OpenJTalk)
 endif()
 
+if(MINGW)
+  # workaround for mmap.h
+  add_definitions(-D__CYGWIN__)
+endif()

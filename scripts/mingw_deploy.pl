@@ -3,19 +3,37 @@
 use strict;
 use File::Copy qw(copy);
 
-my $mingw_root = '/usr/i686-pc-mingw32/sys-root/mingw';
-my $mingw_bin = $mingw_root . '/bin';
-my $mingw_lib = $mingw_root . '/lib';
+my $MINGW_ROOT = '/usr/i686-pc-mingw32/sys-root/mingw';
+my $MINGW_BIN = $MINGW_ROOT . '/bin';
+my $MINGW_LIB = $MINGW_ROOT . '/lib';
 
 my $release = $ARGV[0] eq '-release' ? 1 : 0;
 my $deploy = $ARGV[1] eq '-deploy' ? 1 : 0;
 
-system('rm -f *.dll');
+sub copy_dll {
+  my ($path, $dir, $targets) = @_;
+  foreach my $target (@$targets) {
+    $target .= '.dll';
+    my $src = $path . '/'. $target;
+    my $dest = $dir . '/' . $target;
+    unless (-e $src) {
+      warn 'source: ', $src, ' doesn\'t exists.', "\n";
+      next;
+    }
+    my $ret = $deploy ? copy($src, $dest)
+                      : symlink($src, $dest);
+    print 'deploying ', $target, '...', "\n";
+    warn 'failed deploying ', $target, "\n" unless $ret;
+  }
+}
+
+system('rm -f */*.dll');
 
 my @targets_in_bin = (
   'libgcc_s_sjlj-1',
-  'libstdc++-6',
   'libpng14-14',
+  'libportaudio-2',
+  'libstdc++-6',
   'zlib1'
 );
 if ($release) {
@@ -36,29 +54,36 @@ else {
 }
 
 my @targets_in_lib = (
-  'libglee',
-  'libBulletCollision',
-  'libBulletDynamics',
-  'libLinearMath',
-  'libMMDAI',
-  'libMMDME',
+  'glew32',
+  'libHTSEngine',
+  'libOpenJTalk',
+  'libjulius',
 );
 
-foreach my $target (@targets_in_bin) {
-  $target .= '.dll';
-  $deploy ? copy($mingw_bin . '/' . $target, $target)
-          : symlink($mingw_bin . '/' . $target, $target);
-  print 'deploying ', $target, '...', "\n";
-}
+my @targets_bullet = (
+  'libBulletCollision',
+  'libBulletDynamics',
+  'libBulletSoftBody',
+  'libLinearMath',
+);
 
-foreach my $target (@targets_in_lib) {
-  $target .= '.dll';
-  $deploy ? copy($mingw_lib . '/' . $target, $target)
-          : symlink($mingw_lib . '/' . $target, $target);
-  print 'deploying ', $target, '...', "\n";
-}
+my $vpvl_version = '0.3.0';
+my @targets_vpvl = (
+  sprintf('%s.%s', ($release ? 'vpvl' : 'vpvl_debug'), $vpvl_version),
+);
+
+my $dir = $release ? 'release' : 'debug';
+my $bullet_lib = '../bullet/' . $dir . '-mingw/lib';
+my $vpvl_lib = '../libvpvl/' . $dir . '-mingw/lib';
+
+copy_dll($MINGW_BIN, $dir, \@targets_in_bin);
+copy_dll($MINGW_LIB, $dir, \@targets_in_lib);
+copy_dll($bullet_lib, $dir, \@targets_bullet);
+copy_dll($vpvl_lib, $dir, \@targets_vpvl);
 
 if ($deploy) {
-  system('mkdir QtMMDAI; cp *.exe *.dll QtMMDAI; zip -r QtMMDAI.zip QtMMDAI; rm -rf QtMMDAI');
+  my $cmd = 'mkdir MMDAI; cp ' . $dir . '/*.exe ' . $dir . 
+            '/*.dll MMDAI; zip -1 -r MMDAI.zip MMDAI; rm -rf MMDAI';
+  system($cmd);
 }
 

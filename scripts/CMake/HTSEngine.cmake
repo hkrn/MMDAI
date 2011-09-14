@@ -39,6 +39,10 @@ if(APPLE)
   set_target_properties(HTSEngine PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
+if(MINGW)
+  find_library(WINMM_LIBRARY winmm)
+  target_link_libraries(HTSEngine ${WINMM_LIBRARY})
+endif()
 
 if(NOT MSVC)
   install(TARGETS HTSEngine DESTINATION lib)
