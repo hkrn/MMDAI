@@ -7,14 +7,20 @@ exists(/opt/local/include):INCLUDEPATH += /opt/local/include
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
 INCLUDEPATH += ../libvpvl/include ../bullet/src
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+win32:LIBS += -lglew32
+unix:LIBS += -lGLEW
 
 CONFIG(debug, debug|release) {
-  LIBS += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
+  win32:LIBS += -L../libvpvl/debug-mingw/lib -L../bullet/debug-mingw/lib
+  unix:LIBS  += -L../libvpvl/debug/lib -L../bullet/debug/lib
+  LIBS       += -lvpvl_debug
 }
 CONFIG(release, debug|release) {
-  LIBS += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
+  win32:LIBS += -L../libvpvl/release-mingw/lib -L../bullet/debug-mingw/lib
+  unix:LIBS  += -L../libvpvl/release/lib -L../bullet/release/lib
+  LIBS       += -lvpvl
 }
 LIBS += -lOpenJTalk -lHTSEngine -ljulius -lportaudio
 
