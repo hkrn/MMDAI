@@ -32,7 +32,6 @@ set(vpvl_public_headers
     include/vpvl/Scene.h
     include/vpvl/Vertex.h
     include/vpvl/VMDMotion.h
-    include/vpvl/config.h
     include/vpvl/vpvl.h
 )
 set(vpvl_internal_headers
@@ -154,7 +153,9 @@ if(VPVL_OPENGL_RENDERER)
   list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
 endif()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h")
+set(vpvl_public_headers ${vpvl_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h)
 if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
@@ -214,9 +215,8 @@ if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()
   install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc" DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
-      PATTERN "*.h" PATTERN "internal" PATTERN ".svn" EXCLUDE)
+      PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
 endif()
 
 # link with OpenGL and GLEW
