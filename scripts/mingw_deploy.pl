@@ -82,8 +82,17 @@ copy_dll($bullet_lib, $dir, \@targets_bullet);
 copy_dll($vpvl_lib, $dir, \@targets_vpvl);
 
 if ($deploy) {
-  my $cmd = 'mkdir MMDAI; cp ' . $dir . '/*.exe ' . $dir . 
-            '/*.dll MMDAI; zip -1 -r MMDAI.zip MMDAI; rm -rf MMDAI';
+  my $cmd = <<"EOS";
+mkdir MMDAI;
+cp $dir/*.exe $dir/*.dll MMDAI;
+cp -r $MINGW_ROOT/lib/qt4/plugins MMDAI;
+cd MMDAI/plugins;
+rm -rf bearer graphicssystems iconengines script sqldrivers;
+find -name '*d4.dll*' -exec rm -f {} \\;
+cd ../..;
+zip -1 -r MMDAI.zip MMDAI;
+rm -rf MMDAI;
+EOS
   system($cmd);
 }
 
