@@ -69,9 +69,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_currentFPS(0)
 {
     m_licenseWidget = new LicenseWidget();
-    m_loggerWidget = new LoggerWidget();
-    m_sceneWidget = new SceneWidget();
-    m_sceneWidget->setSettings(&m_settings);
+    m_loggerWidget = new LoggerWidget(&m_settings);
+    m_sceneWidget = new SceneWidget(&m_settings);
     resize(900, 720);
     setMinimumSize(QSize(640, 480));
     setCentralWidget(m_sceneWidget);

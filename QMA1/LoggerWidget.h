@@ -42,6 +42,7 @@
 #include <QtGui/QTextEdit>
 #include <QtGui/QWidget>
 
+class QSettings;
 class QTextEdit;
 
 class LoggerWidget : public QWidget
@@ -49,7 +50,7 @@ class LoggerWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit LoggerWidget(QWidget *parent = 0);
+    explicit LoggerWidget(QSettings *settings, QWidget *parent = 0);
     ~LoggerWidget();
 
     void addMessage(const QString &message);
@@ -57,7 +58,12 @@ public:
 signals:
     void messageDidAdd(const QString &message);
 
+private slots:
+    void save();
+    void clear();
+
 private:
+    QSettings *m_settings;
     QTextEdit *m_textEdit;
 
     Q_DISABLE_COPY(LoggerWidget)

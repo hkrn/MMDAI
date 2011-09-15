@@ -70,7 +70,7 @@ class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit SceneWidget(QWidget *parent = 0);
+    explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
     vpvl::PMDModel *findModel(const QString &name);
@@ -81,7 +81,6 @@ public:
     TiledStage *tiledStage() const { return m_tiledStage; }
     Script *script() const { return m_script; }
 
-    void setSettings(QSettings *value) { m_settings = value; }
     bool isDisplayBones() const { return m_visibleBones; }
     void setDisplayBones(bool value) { m_visibleBones = value; }
 

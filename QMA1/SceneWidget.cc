@@ -51,7 +51,7 @@
 #include <vpvl/gl/Renderer.h>
 #include "util.h"
 
-SceneWidget::SceneWidget(QWidget *parent) :
+SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_bone(0),
     m_delegate(0),
@@ -59,7 +59,7 @@ SceneWidget::SceneWidget(QWidget *parent) :
     m_loader(0),
     m_script(0),
     m_world(0),
-    m_settings(0),
+    m_settings(settings),
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
