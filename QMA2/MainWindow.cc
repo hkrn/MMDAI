@@ -92,10 +92,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
-    if (action) {
-        vpvl::PMDModel *model = m_sceneWidget->findModel(action->text());
-        m_sceneWidget->setSelectedModel(model);
-    }
+    if (action)
+        m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(action->text()));
+}
+
+void MainWindow::setCurrentModel(vpvl::PMDModel *model)
+{
+    m_model = model;
 }
 
 void MainWindow::newFile()
@@ -273,6 +276,7 @@ void MainWindow::buildUI()
     m_actionSetCamera = new QAction(this);
     connect(m_actionSetCamera, SIGNAL(triggered()), m_sceneWidget, SLOT(setCamera()));
     m_actionLoadModelPose = new QAction(this);
+    connect(m_actionLoadModelPose, SIGNAL(triggered()), m_sceneWidget, SLOT(insertPoseToSelectedModel()));
     m_actionSaveModelPose = new QAction(this);
     connect(m_actionSaveModelPose, SIGNAL(triggered()), this, SLOT(saveModelPose()));
     m_actionSaveMotion = new QAction(this);
@@ -336,6 +340,13 @@ void MainWindow::buildUI()
     connect(m_actionDeleteSelectedFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(deleteFrame()));
     m_actionUndoFrame = m_undo->createUndoAction(this);
     m_actionRedoFrame = m_undo->createRedoAction(this);
+
+    m_actionViewTab = new QAction(this);
+    connect(m_actionViewTab, SIGNAL(triggered()), m_tabWidget, SLOT(show()));
+    m_actionViewTimeline = new QAction(this);
+    connect(m_actionViewTimeline, SIGNAL(triggered()), m_timelineTabWidget, SLOT(show()));
+    m_actionViewTransform = new QAction(this);
+    connect(m_actionViewTransform, SIGNAL(triggered()), m_transformWidget, SLOT(show()));
 
     m_actionAbout = new QAction(this);
     connect(m_actionAbout, SIGNAL(triggered()), m_licenseWidget, SLOT(show()));
@@ -409,6 +420,11 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionUndoFrame);
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
+    m_menuView = new QMenu(this);
+    m_menuView->addAction(m_actionViewTab);
+    m_menuView->addAction(m_actionViewTimeline);
+    m_menuView->addAction(m_actionViewTransform);
+    m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
     m_menuHelp->addAction(m_actionAboutQt);
@@ -421,18 +437,14 @@ void MainWindow::buildUI()
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
 
-    retranslate();
-    /*
     bool visibleTabs = m_settings.value("mainWindow/visibleTabs", QVariant(false)).toBool();
     bool visibleTimeline = m_settings.value("mainWindow/visibleTimeline", QVariant(false)).toBool();
     bool visibleTransform = m_settings.value("mainWindow/visibleTransform", QVariant(false)).toBool();
-    ui->actionTabs->setChecked(visibleTabs);
-    ui->actionTimeline->setChecked(visibleTimeline);
-    ui->actionTransform->setChecked(visibleTransform);
     m_tabWidget->setVisible(visibleTabs);
     m_timelineTabWidget->setVisible(visibleTimeline);
     m_transformWidget->setVisible(visibleTransform);
-    */
+
+    retranslate();
 }
 
 void MainWindow::retranslate()
@@ -523,6 +535,12 @@ void MainWindow::retranslate()
     m_actionDeleteSelectedFrame->setStatusTip(tr("Delete a selected keyframe."));
     m_actionUndoFrame->setShortcut(tr("Ctrl+Z"));
     m_actionRedoFrame->setShortcut(tr("Ctrl+Shift+Z"));
+    m_actionViewTab->setText(tr("Tab"));
+    m_actionViewTab->setStatusTip(tr("Open tab window."));
+    m_actionViewTimeline->setText(tr("Timeline"));
+    m_actionViewTimeline->setStatusTip(tr("Open timeline window."));
+    m_actionViewTransform->setText(tr("Transform"));
+    m_actionViewTransform->setStatusTip(tr("Open transform window."));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAbout->setShortcut(tr("Alt+Q, Alt+/"));
@@ -534,6 +552,7 @@ void MainWindow::retranslate()
     m_menuModel->setTitle(tr("&Model"));
     m_menuBone->setTitle(tr("&Bone"));
     m_menuFrame->setTitle(tr("Frame"));
+    m_menuView->setTitle(tr("&View"));
     m_menuRetainAssets->setTitle(tr("Select asset"));
     m_menuRetainModels->setTitle(tr("Select model"));
     m_menuHelp->setTitle(tr("&Help"));
@@ -541,19 +560,16 @@ void MainWindow::retranslate()
 
 void MainWindow::connectWidgets()
 {
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), this, SLOT(addModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelDidDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelDidDelete(vpvl::PMDModel*)), m_boneMotionModel, SLOT(deleteModel()));
+    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_boneMotionModel, SLOT(deleteModel()));
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)), m_timelineTabWidget, SLOT(setFrameAtCurrentIndex(vpvl::Bone*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelDidDelete(vpvl::PMDModel*)), m_faceMotionModel, SLOT(deleteModel()));
+    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_faceMotionModel, SLOT(deleteModel()));
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(setFrameAtCurrentIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(setCurrentFPS(int)));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)), this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
     //connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)), m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
@@ -566,7 +582,6 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(sceneDidPlay()), this, SLOT(startSceneUpdate()));
     connect(m_sceneWidget, SIGNAL(sceneDidPause()), this, SLOT(stopSceneUpdate()));
     connect(m_sceneWidget, SIGNAL(sceneDidStop()), this, SLOT(stopSceneUpdate()));
-    connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
 }
 
 void MainWindow::startSceneUpdate()
@@ -661,8 +676,8 @@ void MainWindow::resetBoneY()
         m_boneMotionModel->resetBone(BoneMotionModel::kY);
     }
     else {
-            QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                                 tr("Select a model or a bone to reset Y position of the bone"));
+        QMessageBox::warning(this, tr("The model or the bone is not selected."),
+                             tr("Select a model or a bone to reset Y position of the bone"));
     }
 }
 
@@ -684,7 +699,7 @@ void MainWindow::resetBoneRotation()
     }
     else {
         QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                                       tr("Select a model or a bone to reset rotation of the bone"));
+                             tr("Select a model or a bone to reset rotation of the bone"));
     }
 }
 

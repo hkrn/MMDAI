@@ -44,6 +44,7 @@ private slots:
     bool saveFile(const QString &filename);
     bool maybeSave();
     void selectModel();
+    void setCurrentModel(vpvl::PMDModel *model);
     void revertSelectedModel();
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
@@ -142,6 +143,7 @@ private:
     QMenu *m_menuModel;
     QMenu *m_menuBone;
     QMenu *m_menuFrame;
+    QMenu *m_menuView;
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
     QMenu *m_menuHelp;
