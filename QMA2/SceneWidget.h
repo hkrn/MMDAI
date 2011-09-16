@@ -56,15 +56,12 @@ class Scene;
 class VMDMotion;
 }
 
-namespace internal {
-class Grid;
-}
-
 class Delegate;
-class PlayerWidget;
+class Grid;
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
+class Script;
 class VPDFile;
 class World;
 
@@ -72,16 +69,14 @@ class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit SceneWidget(QWidget *parent = 0);
+    explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
     vpvl::PMDModel *findModel(const QString &name);
     vpvl::PMDModel *selectedModel() const;
-    vpvl::VMDMotion *selectedMotion() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setCurrentFPS(int value);
 
-    void setSettings(QSettings *value) { m_settings = value; }
     bool isDisplayBones() const { return m_visibleBones; }
     void setDisplayBones(bool value) { m_visibleBones = value; }
 
@@ -89,17 +84,30 @@ public slots:
     void play();
     void pause();
     void stop();
+    void clear();
+
     void addModel();
+    vpvl::PMDModel *addModel(const QString &path);
     void insertMotionToAllModels();
+    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     void insertMotionToSelectedModel();
-    void setEmptyMotion();
-    void setModelPose();
+    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
+    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
+    vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void addAsset();
+    vpvl::Asset *addAsset(const QString &path);
     void setCamera();
+    vpvl::VMDMotion *setCamera(const QString &path);
     void deleteSelectedModel();
+    void deleteModel(vpvl::PMDModel *model);
+    void deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void resetCamera();
+    void setLightColor(const btVector4 &color);
+    void setLightPosition(const btVector3 &position);
+
     void rotate(float x, float y);
     void translate(float x, float y);
+    void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
     void setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
@@ -113,18 +121,22 @@ public slots:
     void translateDown() { translate(0.0f, -1.0f); }
     void translateLeft() { translate(-1.0f, 0.0f); }
     void translateRight() { translate(1.0f, 0.0f); }
+    void revertSelectedModel() { setSelectedModel(0); }
     void setBones(const QList<vpvl::Bone *> &bones);
 
 signals:
     void modelDidAdd(vpvl::PMDModel *model);
-    void modelDidDelete(vpvl::PMDModel *model);
+    void modelWillDelete(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void assetDidAdd(vpvl::Asset *model);
+    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
+    void assetDidAdd(vpvl::Asset *asset);
+    void assetWillDelete(vpvl::Asset *asset);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
+    void lightColorDidSet(const btVector4 &color);
+    void lightPositionDidSet(const btVector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
     void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
-    void surfaceDidUpdate();
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();
@@ -146,7 +158,6 @@ protected:
 
 private:
     void drawBones();
-    void drawGrid();
     void updateFPS();
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
@@ -154,10 +165,9 @@ private:
     vpvl::gl::Renderer *m_renderer;
     vpvl::Bone *m_bone;
     Delegate *m_delegate;
-    PlayerWidget *m_player;
     SceneLoader *m_loader;
+    Grid *m_grid;
     World *m_world;
-    internal::Grid *m_grid;
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
@@ -168,6 +178,8 @@ private:
     int m_internalTimerID;
     bool m_visibleBones;
     bool m_playing;
+
+    Q_DISABLE_COPY(SceneWidget)
 };
 
 #endif // SCENEWIDGET_H

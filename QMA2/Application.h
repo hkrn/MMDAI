@@ -34,58 +34,31 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef APPLICATION_H
+#define APPLICATION_H
 
-#include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <QtGui/QApplication>
+#include <QtGui/QFileOpenEvent>
 
-namespace
+class Application : public QApplication
 {
-const char *kEmptyString = QT_TR_NOOP("(none)");
-}
+    Q_OBJECT
 
-namespace internal
-{
+public:
+    Application(int &argc, char **argv) : QApplication(argc, argv) {}
 
-static inline QTextCodec *getTextCodec() {
-    static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    return codec;
-}
+signals:
+    void fileDidRequest(const QString &filename);
 
-static inline const QString noneString()
-{
-    return QApplication::tr(kEmptyString);
-}
+protected:
+    bool event(QEvent *event)
+    {
+        if (event->type() == QEvent::FileOpen) {
+            QFileOpenEvent *foe = static_cast<QFileOpenEvent *>(event);
+            emit fileDidRequest(foe->file());
+        }
+        return QApplication::event(event);
+    }
+};
 
-static inline const QByteArray fromQString(const QString &value) {
-    return getTextCodec()->fromUnicode(value);
-}
-
-static inline const QString toQString(const uint8_t *value) {
-    return getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
-}
-
-static inline const QString toQString(const vpvl::PMDModel *value) {
-    return value ? toQString(value->name()) : noneString();
-}
-
-static inline const QString toQString(const vpvl::Bone *value) {
-    return value ? toQString(value->name()) : noneString();
-}
-
-static inline const QString toQString(const vpvl::Face *value) {
-    return value ? toQString(value->name()) : noneString();
-}
-
-static inline const QString toQString(const vpvl::BoneKeyFrame *value) {
-    return value ? toQString(value->name()) : noneString();
-}
-
-static inline const QString toQString(const vpvl::FaceKeyFrame *value) {
-    return value ? toQString(value->name()) : noneString();
-}
-
-}
-
-#endif // UTIL_H
+#endif // APPLICATION_H

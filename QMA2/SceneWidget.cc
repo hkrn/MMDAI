@@ -37,10 +37,11 @@
 /* ----------------------------------------------------------------- */
 
 #include "SceneWidget.h"
+
+#include "Application.h"
 #include "Delegate.h"
-#include "PlayerWidget.h"
+#include "Grid.h"
 #include "SceneLoader.h"
-#include "VPDFile.h"
 #include "World.h"
 
 #include <QtGui/QtGui>
@@ -49,141 +50,38 @@
 #include <vpvl/gl/Renderer.h>
 #include "util.h"
 
-namespace internal
-{
-
-class Grid {
-public:
-    static const int kLimit = 50;
-
-    Grid() : m_vbo(0), m_cbo(0), m_ibo(0), m_list(0) {}
-    ~Grid() {
-        m_vertices.clear();
-        m_colors.clear();
-        m_indices.clear();
-        if (m_vbo) {
-            glDeleteBuffers(1, &m_vbo);
-            m_vbo = 0;
-        }
-        if (m_cbo) {
-            glDeleteBuffers(1, &m_cbo);
-            m_cbo = 0;
-        }
-        if (m_ibo) {
-            glDeleteBuffers(1, &m_ibo);
-            m_ibo = 0;
-        }
-        if (m_list) {
-            glDeleteLists(m_list, 1);
-            m_list = 0;
-        }
-    }
-
-    void initialize() {
-        // draw black grid
-        btVector3 lineColor(0.5f, 0.5f, 0.5f);
-        uint16_t index = 0;
-        for (int x = -kLimit; x <= kLimit; x += 5)
-            addLine(btVector3(x, 0.0, -kLimit), btVector3(x, 0.0, x == 0 ? 0.0 : kLimit), lineColor, index);
-        for (int z = -kLimit; z <= kLimit; z += 5)
-            addLine(btVector3(-kLimit, 0.0f, z), btVector3(z == 0 ? 0.0f : kLimit, 0.0f, z), lineColor, index);
-        // X coordinate (red)
-        addLine(btVector3(0.0f, 0.0f, 0.0f), btVector3(kLimit, 0.0f, 0.0f), btVector3(1.0f, 0.0f, 0.0f), index);
-        // Y coordinate (green)
-        addLine(btVector3(0.0f, 0.0f, 0.0f), btVector3(0.0f, kLimit, 0.0f), btVector3(0.0f, 1.0f, 0.0f), index);
-        // Z coordinate (blue)
-        addLine(btVector3(0.0f, 0.0f, 0.0f), btVector3(0.0f, 0.0f, kLimit), btVector3(0.0f, 0.0f, 1.0f), index);
-        m_list = glGenLists(1);
-        glGenBuffers(1, &m_vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(btVector3), &m_vertices[0], GL_STATIC_DRAW);
-        glGenBuffers(1, &m_cbo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
-        glBufferData(GL_ARRAY_BUFFER, m_colors.size() * sizeof(btVector3), &m_colors[0], GL_STATIC_DRAW);
-        glGenBuffers(1, &m_ibo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(uint16_t), &m_indices[0], GL_STATIC_DRAW);
-        // start compiling to render with list cache
-        glNewList(m_list, GL_COMPILE);
-        glDisable(GL_LIGHTING);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glVertexPointer(3, GL_FLOAT, sizeof(btVector3), 0);
-        glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
-        glColorPointer(3, GL_FLOAT, sizeof(btVector3), 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-        glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_SHORT, 0);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_COLOR_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glEnable(GL_LIGHTING);
-        glEndList();
-    }
-
-    void draw() const {
-        glCallList(m_list);
-    }
-
-private:
-    void addLine(const btVector3 &from, const btVector3 &to, const btVector3 &color, uint16_t &index) {
-        m_vertices.push_back(from);
-        m_vertices.push_back(to);
-        m_colors.push_back(color);
-        m_colors.push_back(color);
-        m_indices.push_back(index);
-        index++;
-        m_indices.push_back(index);
-        index++;
-    }
-
-    btAlignedObjectArray<btVector3> m_vertices;
-    btAlignedObjectArray<btVector3> m_colors;
-    btAlignedObjectArray<uint16_t> m_indices;
-    GLuint m_vbo;
-    GLuint m_cbo;
-    GLuint m_ibo;
-    GLuint m_list;
-};
-
-}
-
-SceneWidget::SceneWidget(QWidget *parent) :
+SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_bone(0),
     m_delegate(0),
-    m_player(0),
     m_loader(0),
-    m_world(0),
     m_grid(0),
-    m_settings(0),
+    m_world(0),
+    m_settings(settings),
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0),
     m_visibleBones(false),
-    m_playing(false)
+    m_playing(true)
 {
     m_delegate = new Delegate(this);
-    m_grid = new internal::Grid();
     m_world = new World(m_defaultFPS);
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
+    connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadScript(QString)));
 }
 
 SceneWidget::~SceneWidget()
 {
-    delete m_grid;
-    m_grid = 0;
-    delete m_world;
-    m_world = 0;
     delete m_renderer;
     m_renderer = 0;
     delete m_delegate;
     m_delegate = 0;
+    delete m_world;
+    m_world = 0;
 }
 
 void SceneWidget::play()
@@ -205,6 +103,12 @@ void SceneWidget::stop()
     emit sceneDidStop();
 }
 
+void SceneWidget::clear()
+{
+    stop();
+    m_loader->release();
+}
+
 vpvl::PMDModel *SceneWidget::findModel(const QString &name)
 {
     return m_loader->findModel(name);
@@ -224,12 +128,6 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
     return m_renderer->selectedModel();
 }
 
-vpvl::VMDMotion *SceneWidget::selectedMotion() const
-{
-    vpvl::PMDModel *model = selectedModel();
-    return m_loader->findModelMotion(model);
-}
-
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 {
     m_renderer->setSelectedModel(value);
@@ -238,15 +136,23 @@ void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 
 void SceneWidget::addModel()
 {
-    QFileInfo fi(openFileDialog("sceneWidget/lastPMDDirectory", tr("Open PMD file"), tr("PMD file (*.pmd)")));
+    vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",
+                                                    tr("Open PMD file"),
+                                                    tr("PMD file (*.pmd)")));
+    if (model && !m_playing)
+        model->updateImmediate();
+}
+
+vpvl::PMDModel *SceneWidget::addModel(const QString &path)
+{
+    QFileInfo fi(path);
+    vpvl::PMDModel *model = 0;
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
-        vpvl::VMDMotion *motion = 0;
-        vpvl::PMDModel *model = m_loader->loadModel(fi.fileName(), fi.dir(), motion);
-        if (model && motion) {
+        model = m_loader->loadModel(fi.fileName(), fi.dir());
+        if (model) {
             emit modelDidAdd(model);
             setSelectedModel(model);
-            emit motionDidAdd(motion, model);
         }
         else {
             QMessageBox::warning(this, tr("Loading model error"),
@@ -254,89 +160,110 @@ void SceneWidget::addModel()
         }
         delete progress;
     }
+    return model;
 }
 
 void SceneWidget::insertMotionToAllModels()
 {
-    QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
-    if (QFile::exists(fileName)) {
+    vpvl::VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastVMDDirectory",
+                                                                     tr("Open VMD (for model) file"),
+                                                                     tr("VMD file (*.vmd)")));
+    if (motion)
+        selectedModel()->updateImmediate();
+}
+
+vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
+{
+    vpvl::VMDMotion *motion = 0;
+    if (QFile::exists(path)) {
         QList<vpvl::PMDModel *> models;
-        vpvl::VMDMotion *motion = m_loader->loadModelMotion(fileName, models);
+        motion = m_loader->loadModelMotion(path, models);
         if (motion) {
             foreach (vpvl::PMDModel *model, models)
                 emit motionDidAdd(motion, model);
         }
         else {
             QMessageBox::warning(this, tr("Loading model motion error"),
-                                 tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                                 tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
+    return motion;
 }
 
 void SceneWidget::insertMotionToSelectedModel()
 {
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
-    if (selected) {
-        QString fileName = openFileDialog("sceneWidget/lastVMDDirectory", tr("Open VMD (for model) file"), tr("VMD file (*.vmd)"));
-        if (QFile::exists(fileName)) {
-            vpvl::VMDMotion *motion = m_loader->loadModelMotion(fileName, selected);
+    vpvl::VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastVMDDirectory",
+                                                                         tr("Open VMD (for model) file"),
+                                                                         tr("VMD file (*.vmd)")));
+    if (motion)
+        advanceMotion(0.0f);
+}
+
+vpvl::VMDMotion *SceneWidget::insertMotionToSelectedModel(const QString &path)
+{
+    return insertMotionToModel(path, m_renderer->selectedModel());
+}
+
+vpvl::VMDMotion *SceneWidget::insertMotionToModel(const QString &path, vpvl::PMDModel *model)
+{
+    vpvl::VMDMotion *motion = 0;
+    if (model) {
+        if (QFile::exists(path)) {
+            motion = m_loader->loadModelMotion(path, model);
             if (motion)
-                emit motionDidAdd(motion, selected);
+                emit motionDidAdd(motion, model);
             else
                 QMessageBox::warning(this, tr("Loading model motion error"),
-                                     tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                                     tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     else {
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
+        QMessageBox::warning(this, tr("The model is not selected."),
+                             tr("Select a model to insert the motion"));
     }
+    return motion;
 }
 
-void SceneWidget::setEmptyMotion()
+vpvl::VMDMotion *SceneWidget::insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
-    if (selected) {
-        vpvl::VMDMotion *motion = new vpvl::VMDMotion();
-        m_loader->setModelMotion(motion, selected, QString());
-        emit motionDidAdd(motion, selected);
+    if (motion && model) {
+        m_loader->setModelMotion(motion, model);
+        return motion;
     }
-    else {
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
-    }
-}
-
-void SceneWidget::setModelPose()
-{
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
-    if (selected) {
-        QString fileName = openFileDialog("sceneWidget/lastVPDDirectory", tr("Open VPD file"), tr("VPD file (*.vpd)"));
-        if (QFile::exists(fileName)) {
-            VPDFile *pose = m_loader->loadPose(fileName, selected);
-            if (pose)
-                emit modelDidMakePose(pose, selected);
-            else
-                QMessageBox::warning(this, tr("Loading model pose error"),
-                                     tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
-        }
-    }
-    else {
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to set the pose"));
-    }
+    return 0;
 }
 
 void SceneWidget::addAsset()
 {
-    QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory", tr("Open X file"), tr("DirectX mesh file (*.x)")));
+    addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
+                            tr("Open X file"),
+                            tr("DirectX mesh file (*.x)")));
+}
+
+vpvl::Asset *SceneWidget::addAsset(const QString &path)
+{
+    QFileInfo fi(path);
+    vpvl::Asset *asset = 0;
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
-        vpvl::Asset *asset = m_loader->loadAsset(fi.fileName(), fi.dir());
+        asset = m_loader->loadAsset(fi.fileName(), fi.dir());
         if (asset)
             emit assetDidAdd(asset);
         else
-            QMessageBox::warning(this, tr("Loading stage error"),
+            QMessageBox::warning(this, tr("Loading asset error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
         delete progress;
     }
+    return asset;
+}
+
+void SceneWidget::advanceMotion(float frameIndex)
+{
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->updateModelView(0);
+    scene->updateProjection(0);
+    scene->advanceMotion(frameIndex);
+    updateGL();
 }
 
 void SceneWidget::seekMotion(float frameIndex)
@@ -350,22 +277,32 @@ void SceneWidget::seekMotion(float frameIndex)
 
 void SceneWidget::setCamera()
 {
-    QString fileName = openFileDialog("sceneWidget/lastCameraDirectory", tr("Open VMD (for camera) file"), tr("VMD file (*.vmd)"));
-    if (QFile::exists(fileName)) {
-        vpvl::VMDMotion *motion = m_loader->loadCameraMotion(fileName);
+    vpvl::VMDMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraDirectory",
+                                                       tr("Open VMD (for camera) file"),
+                                                       tr("VMD file (*.vmd)")));
+    if (motion)
+        advanceMotion(0.0f);
+}
+
+vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
+{
+    vpvl::VMDMotion *motion = 0;
+    if (QFile::exists(path)) {
+        motion = m_loader->loadCameraMotion(path);
         if (motion)
             emit cameraMotionDidSet(motion);
         else
             QMessageBox::warning(this, tr("Loading camera motion error"),
-                                 tr("%1 cannot be loaded").arg(QFileInfo(fileName).fileName()));
+                                 tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
     }
+    return motion;
 }
 
 void SceneWidget::deleteSelectedModel()
 {
     vpvl::PMDModel *selected = m_renderer->selectedModel();
+    emit modelWillDelete(selected);
     if (m_loader->deleteModel(selected)) {
-        emit modelDidDelete(selected);
         emit modelDidSelect(0);
     }
     else {
@@ -374,11 +311,35 @@ void SceneWidget::deleteSelectedModel()
     }
 }
 
+void SceneWidget::deleteModel(vpvl::PMDModel *model)
+{
+    m_loader->deleteModel(model);
+}
+
+void SceneWidget::deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+{
+    m_loader->deleteModelMotion(motion, model);
+}
+
 void SceneWidget::resetCamera()
 {
     vpvl::Scene *scene = m_renderer->scene();
     scene->resetCamera();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+}
+
+void SceneWidget::setLightColor(const btVector4 &color)
+{
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->setLightSource(color, scene->lightPosition());
+    emit lightColorDidSet(color);
+}
+
+void SceneWidget::setLightPosition(const btVector3 &position)
+{
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->setLightSource(scene->lightColor(), position);
+    emit lightPositionDidSet(position);
 }
 
 void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
@@ -471,12 +432,10 @@ void SceneWidget::dropEvent(QDropEvent *event)
             QString path = url.toLocalFile();
             if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
                 QFileInfo modelPath(path);
-                vpvl::VMDMotion *motion = 0;
-                vpvl::PMDModel *model = m_loader->loadModel(modelPath.baseName(), modelPath.dir(), motion);
-                if (model && motion) {
+                vpvl::PMDModel *model = m_loader->loadModel(modelPath.baseName(), modelPath.dir());
+                if (model) {
                     emit modelDidAdd(model);
                     setSelectedModel(model);
-                    emit motionDidAdd(motion, model);
                 }
             }
             else if (path.endsWith(".vmd") && model) {
@@ -497,36 +456,23 @@ void SceneWidget::initializeGL()
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
+    qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
+    qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
+    qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
-    // scene->setWorld(m_world->mutableWorld());
-    m_grid->initialize();
+    scene->setWorld(m_world->mutableWorld());
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
+    QStringList arguments = qApp->arguments();
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     m_prevPos = event->pos();
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
-    if (selected) {
-        const vpvl::BoneList &bones = selectedModel()->bones();
-        const uint32_t nBones = bones.count();
-        btVector3 coordinate;
-        m_renderer->getObjectCoordinate(event->pos().x(), event->pos().y(), coordinate);
-        QList< QPair<float, vpvl::Bone *> > result;
-        for (uint32_t i = 0; i < nBones; i++) {
-            vpvl::Bone *bone = bones[i];
-            const btVector3 &p = coordinate - bone->localTransform().getOrigin();
-            result.append(QPair<float, vpvl::Bone *>(p.length2(), bone));
-        }
-        qSort(result);
-        QPair<float, vpvl::Bone *> pair = result.first();
-        qDebug() << qPrintable(internal::toQString(pair.second)) << pair.first;
-    }
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
@@ -554,12 +500,37 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
+    qreal matrix[16];
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
-    m_renderer->drawSurface();
+    m_renderer->clearSurface();
+    // pre shadow
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glColorMask(0, 0, 0, 0);
+    glDepthMask(0);
+    glStencilFunc(GL_EQUAL, 1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    glDisable(GL_DEPTH_TEST);
+    glPushMatrix();
+    // draw shadows
+    m_renderer->drawShadow();
+    // post shadow
+    glPopMatrix();
+    glColorMask(1, 1, 1, 1);
+    glDepthMask(1);
+    glStencilFunc(GL_EQUAL, 2, ~0);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    // draw all assets and models
+    m_renderer->drawAssets();
+    m_renderer->drawModels();
     drawBones();
-    drawGrid();
-    emit surfaceDidUpdate();
+    emit motionDidFinished(m_loader->stoppedMotions());
 }
 
 void SceneWidget::resizeGL(int w, int h)
@@ -591,11 +562,6 @@ void SceneWidget::drawBones()
     if (m_visibleBones)
         m_renderer->drawModelBones(true, true);
     m_renderer->drawBoneTransform(m_bone);
-}
-
-void SceneWidget::drawGrid()
-{
-    m_grid->draw();
 }
 
 void SceneWidget::updateFPS()

@@ -6,6 +6,7 @@
 #include <LinearMath/btVector3.h>
 
 namespace vpvl {
+class Asset;
 class Bone;
 class PMDModel;
 }
@@ -17,6 +18,7 @@ class MainWindow;
 class BoneMotionModel;
 class FaceMotionModel;
 class LicenseWidget;
+class SceneWidget;
 class TabWidget;
 class TimelineTabWidget;
 class TransformWidget;
@@ -45,10 +47,22 @@ private slots:
     void revertSelectedModel();
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
+    void addAsset(vpvl::Asset *asset);
+    void deleteAsset(vpvl::Asset *asset);
     void setCurrentFPS(int value);
     void setModel(vpvl::PMDModel *value);
     void setBones(const QList<vpvl::Bone*> &bones);
     void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void insertMotionToAllModels();
+    void insertMotionToSelectedModel();
+    void deleteSelectedModel();
+    void saveModelPose();
+    void resetBoneX();
+    void resetBoneY();
+    void resetBoneZ();
+    void resetBoneRotation();
+    void resetAllBones();
+    void openBoneDialog();
 
     void startSceneUpdate();
     void stopSceneUpdate();
@@ -56,55 +70,16 @@ private slots:
     const QString buildWindowTitle();
     const QString buildWindowTitle(int fps);
 
-    void on_actionAbout_triggered();
-    void on_actionAboutQt_triggered();
-    void on_actionAddModel_triggered();
-    void on_actionAddAsset_triggered();
-    void on_actionInsertToAllModels_triggered();
-    void on_actionInsertToSelectedModel_triggered();
-    void on_actionSetCamera_triggered();
-    void on_actionExit_triggered();
-    void on_actionZoomIn_triggered();
-    void on_actionZoomOut_triggered();
-    void on_actionRotateUp_triggered();
-    void on_actionRotateDown_triggered();
-    void on_actionRotateLeft_triggered();
-    void on_actionRotateRight_triggered();
-    void on_actionTranslateUp_triggered();
-    void on_actionTranslateDown_triggered();
-    void on_actionTranslateLeft_triggered();
-    void on_actionTranslateRight_triggered();
-    void on_actionResetCamera_triggered();
-    void on_actionRevertSelectedModel_triggered();
-    void on_actionDeleteSelectedModel_triggered();
-    void on_actionLoadModelPose_triggered();
-    void on_actionSaveModelPose_triggered();
-    void on_actionBoneXPositionZero_triggered();
-    void on_actionBoneYPositionZero_triggered();
-    void on_actionBoneZPositionZero_triggered();
-    void on_actionBoneRotationZero_triggered();
-    void on_actionBoneResetAll_triggered();
-    void on_actionTimeline_triggered(bool value);
-    void on_actionTransform_triggered(bool value);
-    void on_actionTabs_triggered(bool value);
-    void on_actionBoneDialog_triggered();
-    void on_actionExportVMD_triggered();
-    void on_actionNewMotion_triggered();
-    void on_actionInsertEmptyFrame_triggered();
-    void on_actionDeleteSelectedFrame_triggered();
-    void on_actionShowBones_triggered(bool value);
-    void on_actionPlay_triggered();
-    void on_actionStop_triggered();
-    void on_actionPause_triggered();
-
 private:
     void buildUI();
+    void retranslate();
     void connectWidgets();
     void updateInformation();
-    Ui::MainWindow *ui;
+
     QSettings m_settings;
     QUndoGroup *m_undo;
     LicenseWidget *m_licenseWidget;
+    SceneWidget *m_sceneWidget;
     TabWidget *m_tabWidget;
     TimelineTabWidget *m_timelineTabWidget;
     TransformWidget *m_transformWidget;
@@ -118,6 +93,58 @@ private:
     float m_fovy;
     float m_distance;
     int m_currentFPS;
+
+    QAction *m_actionAddModel;
+    QAction *m_actionAddAsset;
+    QAction *m_actionInsertToAllModels;
+    QAction *m_actionInsertToSelectedModel;
+    QAction *m_actionSaveMotion;
+    QAction *m_actionLoadModelPose;
+    QAction *m_actionSaveModelPose;
+    QAction *m_actionSetCamera;
+    QAction *m_actionExit;
+    QAction *m_actionAbout;
+    QAction *m_actionAboutQt;
+    QAction *m_actionPlay;
+    QAction *m_actionPause;
+    QAction *m_actionStop;
+    QAction *m_actionZoomIn;
+    QAction *m_actionZoomOut;
+    QAction *m_actionRotateUp;
+    QAction *m_actionRotateDown;
+    QAction *m_actionRotateLeft;
+    QAction *m_actionRotateRight;
+    QAction *m_actionTranslateUp;
+    QAction *m_actionTranslateDown;
+    QAction *m_actionTranslateLeft;
+    QAction *m_actionTranslateRight;
+    QAction *m_actionResetCamera;
+    QAction *m_actionRevertSelectedModel;
+    QAction *m_actionDeleteSelectedModel;
+    QAction *m_actionShowBones;
+    QAction *m_actionBoneXPosZero;
+    QAction *m_actionBoneYPosZero;
+    QAction *m_actionBoneZPosZero;
+    QAction *m_actionBoneRotationZero;
+    QAction *m_actionBoneResetAll;
+    QAction *m_actionBoneDialog;
+    QAction *m_actionInsertEmptyFrame;
+    QAction *m_actionDeleteSelectedFrame;
+    QAction *m_actionUndoFrame;
+    QAction *m_actionRedoFrame;
+    QAction *m_actionViewTab;
+    QAction *m_actionViewTimeline;
+    QAction *m_actionViewTransform;
+    QMenuBar *m_menuBar;
+    QMenu *m_menuFile;
+    QMenu *m_menuProject;
+    QMenu *m_menuScene;
+    QMenu *m_menuModel;
+    QMenu *m_menuBone;
+    QMenu *m_menuFrame;
+    QMenu *m_menuRetainModels;
+    QMenu *m_menuRetainAssets;
+    QMenu *m_menuHelp;
 };
 
 #endif // MAINWINDOW_H

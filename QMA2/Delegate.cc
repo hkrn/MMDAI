@@ -1,3 +1,39 @@
+/* ----------------------------------------------------------------- */
+/*                                                                   */
+/*  Copyright (c) 2010-2011  hkrn                                    */
+/*                                                                   */
+/* All rights reserved.                                              */
+/*                                                                   */
+/* Redistribution and use in source and binary forms, with or        */
+/* without modification, are permitted provided that the following   */
+/* conditions are met:                                               */
+/*                                                                   */
+/* - Redistributions of source code must retain the above copyright  */
+/*   notice, this list of conditions and the following disclaimer.   */
+/* - Redistributions in binary form must reproduce the above         */
+/*   copyright notice, this list of conditions and the following     */
+/*   disclaimer in the documentation and/or other materials provided */
+/*   with the distribution.                                          */
+/* - Neither the name of the MMDAI project team nor the names of     */
+/*   its contributors may be used to endorse or promote products     */
+/*   derived from this software without specific prior written       */
+/*   permission.                                                     */
+/*                                                                   */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
+/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
+/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
+/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
+/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
+/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
+/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
+/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
+/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
+/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
+/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
+/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
+/* POSSIBILITY OF SUCH DAMAGE.                                       */
+/* ----------------------------------------------------------------- */
+
 #include "Delegate.h"
 
 #include <QtOpenGL/QtOpenGL>
@@ -17,24 +53,24 @@ Delegate::~Delegate()
 
 bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
 {
-    QString pathString = QString::fromUtf8(path.c_str());
-    if (pathString.endsWith(".tga", Qt::CaseInsensitive)) {
-        uint8_t *rawData = 0;
-        QImage image = loadTGA(pathString, rawData);
-        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image));
-        delete[] rawData;
+    QString pathString = QString::fromLocal8Bit(path.c_str());
+    if (!QFileInfo(pathString).exists()) {
+        return false;
     }
-    else {
-        QImage image(pathString);
-        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
-    }
-    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, pathString.toUtf8().constData());
+    uint8_t *rawData = 0;
+    QImage image = pathString.endsWith(".tga", Qt::CaseInsensitive)
+            ? loadTGA(pathString, rawData) : QImage(pathString).rgbSwapped();
+    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+    textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
+                                      image.depth() == 32 ? GL_RGBA : GL_RGB, options);
+    delete[] rawData;
+    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
     return textureID != 0;
 }
 
 bool Delegate::loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID)
 {
-    QString path = QString::fromUtf8(dir.c_str()) + "/" + QString::fromUtf8(name.c_str());
+    QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + QString::fromLocal8Bit(name.c_str());
     if (!QFile::exists(path))
         path = QString(":/textures/%1").arg(name.c_str());
     return loadTexture(std::string(path.toUtf8()), textureID);
@@ -71,7 +107,7 @@ QImage Delegate::loadTGA(const QString &path, uint8_t *&rawData) {
         uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
         uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
         if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-            qWarning("Loaded TGA image type is not full color: %s", path.toUtf8().constData());
+            qWarning("Loaded TGA image type is not full color: %s", qPrintable(path));
             return QImage();
         }
         uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
@@ -80,7 +116,7 @@ QImage Delegate::loadTGA(const QString &path, uint8_t *&rawData) {
         uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
         if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
             qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
-                     width, height, depth, path.toUtf8().constData());
+                     width, height, depth, qPrintable(path));
             return QImage();
         }
         int component = depth >> 3;
@@ -138,8 +174,7 @@ QImage Delegate::loadTGA(const QString &path, uint8_t *&rawData) {
         return QImage(rawData, width, height, QImage::Format_ARGB32);
     }
     else {
-        qWarning("Cannot open file %s: %s", path.toUtf8().constData(),
-                 file.errorString().toUtf8().constData());
+        qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
         return QImage();
     }
 }

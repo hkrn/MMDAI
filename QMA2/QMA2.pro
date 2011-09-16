@@ -40,6 +40,7 @@ macx {
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
+  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -91,11 +92,13 @@ HEADERS  += MainWindow.h \
     LicenseWidget.h \
     Delegate.h \
     World.h \
-    SceneLoader.h
+    SceneLoader.h \
+    Grid.h \
+    Application.h
 
 RESOURCES += resources/QMA2.qrc
 
 FORMS += \
     TransformWidget.ui \
-    MainWindow.ui \
+    #MainWindow.ui \
     BoneDialog.ui
