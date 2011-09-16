@@ -89,6 +89,7 @@ SceneWidget::~SceneWidget()
 void SceneWidget::play()
 {
     m_playing = true;
+    m_renderer->scene()->setWorld(m_world->mutableWorld());
     emit sceneDidPlay();
 }
 
@@ -102,6 +103,7 @@ void SceneWidget::stop()
 {
     m_playing = false;
     m_renderer->scene()->resetMotion();
+    m_renderer->scene()->setWorld(0);
     emit sceneDidStop();
 }
 
@@ -141,8 +143,10 @@ void SceneWidget::addModel()
     vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",
                                                     tr("Open PMD file"),
                                                     tr("PMD file (*.pmd)")));
-    if (model && !m_playing)
+    if (model && !m_playing) {
+        setEmptyMotion(model);
         model->updateImmediate();
+    }
 }
 
 vpvl::PMDModel *SceneWidget::addModel(const QString &path)
@@ -235,6 +239,17 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(vpvl::VMDMotion *motion, vpvl:
     return 0;
 }
 
+void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
+{
+    if (model) {
+        vpvl::VMDMotion *motion = new vpvl::VMDMotion();
+        m_loader->setModelMotion(motion, model);
+        emit motionDidAdd(motion, model);
+    }
+    else
+        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
+}
+
 void SceneWidget::addAsset()
 {
     addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
@@ -257,6 +272,35 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
         delete progress;
     }
     return asset;
+}
+
+void SceneWidget::insertPoseToSelectedModel()
+{
+    vpvl::PMDModel *model = m_renderer->selectedModel();
+    VPDFile *pose = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastVPDDirectory",
+                                                             tr("Open VPD file"),
+                                                             tr("VPD file (*.vpd)")),
+                                              model);
+    if (pose)
+        model->updateImmediate();
+}
+
+VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model)
+{
+    VPDFile *pose = 0;
+    if (model) {
+        if (QFile::exists(filename)) {
+            pose = m_loader->loadModelPose(filename, model);
+            if (pose)
+                emit modelDidMakePose(pose, model);
+            else
+                QMessageBox::warning(this, tr("Loading model pose error"),
+                                     tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
+        }
+    }
+    else
+        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to set the pose"));
+    return pose;
 }
 
 void SceneWidget::advanceMotion(float frameIndex)
@@ -467,7 +511,8 @@ void SceneWidget::initializeGL()
     m_grid->initialize();
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
-    scene->setWorld(m_world->mutableWorld());
+    if (m_playing)
+        scene->setWorld(m_world->mutableWorld());
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
 }

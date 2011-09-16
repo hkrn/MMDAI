@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "SceneLoader.h"
+#include "VPDFile.h"
 #include "util.h"
 
 #include <QtCore/QtCore>
@@ -250,6 +251,25 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDMode
     if (motion)
         setModelMotion(motion, model);
     return motion;
+}
+
+
+VPDFile *SceneLoader::loadModelPose(const QString &path, vpvl::PMDModel * /* model */)
+{
+    QFile file(path);
+    VPDFile *pose = 0;
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        pose = new VPDFile();
+        if (pose->load(stream)) {
+            // pose->makePose(model);
+        }
+        else {
+            delete pose;
+            pose = 0;
+        }
+    }
+    return pose;
 }
 
 void SceneLoader::release()

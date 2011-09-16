@@ -94,8 +94,11 @@ public slots:
     vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
     vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
     vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void setEmptyMotion(vpvl::PMDModel *model);
     void addAsset();
     vpvl::Asset *addAsset(const QString &path);
+    void insertPoseToSelectedModel();
+    VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     void setCamera();
     vpvl::VMDMotion *setCamera(const QString &path);
     void deleteSelectedModel();
