@@ -9,7 +9,7 @@ class Grid {
 public:
     static const int kLimit = 50;
 
-    Grid() : m_vbo(0), m_cbo(0), m_ibo(0), m_list(0) {}
+    Grid() : m_vbo(0), m_cbo(0), m_ibo(0), m_list(0), m_enabled(true) {}
     ~Grid() {
         m_vertices.clear();
         m_colors.clear();
@@ -76,7 +76,16 @@ public:
     }
 
     void draw() const {
-        glCallList(m_list);
+        if (m_enabled)
+            glCallList(m_list);
+    }
+
+    bool isEnabled() const {
+        return m_enabled;
+    }
+
+    void setEnable(bool value) {
+        m_enabled = value;
     }
 
 private:
@@ -98,6 +107,7 @@ private:
     GLuint m_cbo;
     GLuint m_ibo;
     GLuint m_list;
+    bool m_enabled;
 };
 
 #endif // GRID_H

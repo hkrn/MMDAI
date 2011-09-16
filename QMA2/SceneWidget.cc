@@ -64,20 +64,22 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0),
     m_visibleBones(false),
-    m_playing(true)
+    m_playing(false)
 {
     m_delegate = new Delegate(this);
+    m_grid = new Grid();
     m_world = new World(m_defaultFPS);
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
-    connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadScript(QString)));
 }
 
 SceneWidget::~SceneWidget()
 {
     delete m_renderer;
     m_renderer = 0;
+    delete m_grid;
+    m_grid = 0;
     delete m_delegate;
     m_delegate = 0;
     delete m_world;
@@ -462,12 +464,12 @@ void SceneWidget::initializeGL()
     m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
+    m_grid->initialize();
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
     scene->setWorld(m_world->mutableWorld());
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
-    QStringList arguments = qApp->arguments();
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
@@ -500,10 +502,10 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
-    qreal matrix[16];
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
+    m_grid->draw();
     // pre shadow
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, ~0);
