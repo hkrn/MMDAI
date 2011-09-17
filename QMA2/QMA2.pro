@@ -8,31 +8,32 @@ exists(/opt/local/include):INCLUDEPATH += /opt/local/include
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 
-# GLEW
+# GLEW and assimp
 exists(../glew/lib):LIBS += -L../glew/lib
 exists(../glew/include):INCLUDEPATH += ../glew/include
+exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
 # Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lassimp
 win32:LIBS += -lglew32
 unix:LIBS += -lGLEW
-INCLUDEPATH += ../libvpvl/include ../bullet/src
 
-# VPVL Configuration
+# VPVL and others configuration
+INCLUDEPATH += ../libvpvl/include ../bullet/src
+win32:INCLUDEPATH += ../libvpvl/msvc-build/include
+
+# configuration by build type
 CONFIG(debug, debug|release) {
-  win32:LIBS        += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug
-  unix:LIBS         += -L../libvpvl/debug/lib -L../bullet/debug/lib
-  win32:INCLUDEPATH += ../libvpvl/msvc-build/include
-  unix:INCLUDEPATH  += ../libvpvl/debug/include
-  win32:LIBS        += -lvpvl
-  unix:LIBS         += -lvpvl_debug
+  win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
+  unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
+  unix:INCLUDEPATH += ../libvpvl/debug/include
+  exists(../assimp/debug/code):LIBS += -L../assimp/debug/code -lassimp
 }
 CONFIG(release, debug|release) {
-  win32:LIBS        += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release
-  unix:LIBS         += -L../libvpvl/release/lib -L../bullet/release/lib
-  win32:INCLUDEPATH += ../libvpvl/msvc-build/include
-  unix:INCLUDEPATH  += ../libvpvl/release/include
-  LIBS              += -lvpvl
+  win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
+  unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
+  unix:INCLUDEPATH += ../libvpvl/release/include
+  exists(../assimp/release/code):LIBS += -L../assimp/release/code -lassimp
 }
 
 # based on QtCreator's qmake spec
