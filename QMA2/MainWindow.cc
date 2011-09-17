@@ -358,7 +358,7 @@ void MainWindow::buildUI()
 #ifdef Q_OS_MACX
     m_menuBar = new QMenuBar(0);
 #else
-    m_menuBar = new QMenuBar(this);
+    m_menuBar = menuBar();
 #endif
     m_menuFile = new QMenu(this);
     m_menuFile->addAction(m_actionAddModel);
