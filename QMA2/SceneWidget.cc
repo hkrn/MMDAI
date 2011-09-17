@@ -58,6 +58,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_grid(0),
     m_world(0),
     m_settings(settings),
+    m_prevElapsed(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
@@ -90,6 +91,7 @@ void SceneWidget::play()
 {
     m_playing = true;
     m_renderer->scene()->setWorld(m_world->mutableWorld());
+    m_timer.restart();
     emit sceneDidPlay();
 }
 
@@ -118,12 +120,17 @@ vpvl::PMDModel *SceneWidget::findModel(const QString &name)
     return m_loader->findModel(name);
 }
 
-void SceneWidget::setCurrentFPS(int value)
+void SceneWidget::setPreferredFPS(int value)
 {
     if (value > 0) {
         m_defaultFPS = value;
-        m_world->setCurrentFPS(value);
+        m_interval = 1000.0f / value;
+        m_world->setPreferredFPS(value);
         m_renderer->scene()->setPreferredFPS(value);
+        if (m_internalTimerID) {
+            killTimer(m_internalTimerID);
+            m_internalTimerID = startTimer(m_interval);
+        }
     }
 }
 
@@ -592,7 +599,12 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         scene->updateModelView(0);
         scene->updateProjection(0);
         if (m_playing) {
-            scene->advanceMotion(0.5f);
+            float elapsed = m_timer.elapsed() / static_cast<float>(vpvl::Scene::kFPS);
+            float diff = elapsed - m_prevElapsed;
+            m_prevElapsed = elapsed;
+            if (diff < 0)
+                diff = elapsed;
+            scene->advanceMotion(diff);
             updateFPS();
         }
         updateGL();

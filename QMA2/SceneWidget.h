@@ -75,7 +75,7 @@ public:
     vpvl::PMDModel *findModel(const QString &name);
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
-    void setCurrentFPS(int value);
+    void setPreferredFPS(int value);
 
     bool isDisplayBones() const { return m_visibleBones; }
     void setDisplayBones(bool value) { m_visibleBones = value; }
@@ -174,6 +174,7 @@ private:
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
+    float m_prevElapsed;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;
