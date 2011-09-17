@@ -56,7 +56,11 @@ function(link_bullet target)
     link_directories(${BULLET_LIBRARY_DIRS})
   else()
     get_build_type(BULLET_BUILD_TYPE)
-    set(BULLET_LIBRARY_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/${BULLET_BUILD_TYPE}/lib")
+    if(MSVC)
+      set(BULLET_LIBRARY_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/msvc-build/lib/${BULLET_BUILD_TYPE}")
+    else()
+      set(BULLET_LIBRARY_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/${BULLET_BUILD_TYPE}/lib")
+    endif()
     # find from MMDAI/bullet or environment variables
     find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/src" $ENV{BULLET_INCLUDE_DIR})
     find_library(BULLET_COLLISION_LIB BulletCollision PATHS ${BULLET_LIBRARY_LOCAL_DIR} $ENV{BULLET_LIBRARY_DIR})
@@ -82,8 +86,8 @@ function(link_bullet target)
 endfunction()
 
 function(link_glew target)
-  find_path(GLEW_INCLUDE GL/glew.h PATHS $ENV{GLEW_DIR}/include)
-  find_library(GLEW_LIBRARY NAMES GLEW glew32 PATHS $ENV{GLEW_DIR}/lib)
+  find_path(GLEW_INCLUDE GL/glew.h PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../glew/include" $ENV{GLEW_DIR}/include)
+  find_library(GLEW_LIBRARY NAMES GLEW glew32 PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../glew/lib" $ENV{GLEW_DIR}/lib)
   if(GLEW_INCLUDE AND GLEW_LIBRARY)
     target_link_libraries(${target} ${GLEW_LIBRARY})
     include_directories(${GLEW_INCLUDE})
@@ -128,7 +132,7 @@ endfunction()
 
 function(append_lib_linkage_suffix var)
   if(NOT BUILD_SHARED_LIBS)
-    set(${var} "${${var}}_static" PARENT_SCOPE)
+    #set(${var} "${${var}}_static" PARENT_SCOPE)
   endif()
 endfunction()
 # end of imported
@@ -156,6 +160,7 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h")
 set(vpvl_public_headers ${vpvl_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
@@ -195,9 +200,6 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   set_target_properties(vpvl
       PROPERTIES PREFIX "" SUFFIX .${VPVL_VERSION}.dll
       IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  if(NOT MINGW)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
-  endif()
 endif()
 
 # create as a framework if build on darwin environment
@@ -211,6 +213,7 @@ if(APPLE)
 endif()
 
 if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()

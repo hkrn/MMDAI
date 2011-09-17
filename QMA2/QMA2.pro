@@ -2,25 +2,37 @@ QT += core gui opengl
 TARGET = MMDAI2
 TEMPLATE = app
 
+# Linux, Darwin(OSX), etc...
 exists(/opt/local/lib):LIBS += -L/opt/local/lib
 exists(/opt/local/include):INCLUDEPATH += /opt/local/include
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 
+# GLEW
+exists(../glew/lib):LIBS += -L../glew/lib
+exists(../glew/include):INCLUDEPATH += ../glew/include
+
+# Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 win32:LIBS += -lglew32
 unix:LIBS += -lGLEW
 INCLUDEPATH += ../libvpvl/include ../bullet/src
 
+# VPVL Configuration
 CONFIG(debug, debug|release) {
-  win32:LIBS += -L../libvpvl/debug-mingw/lib -L../bullet/debug-mingw/lib
-  unix:LIBS  += -L../libvpvl/debug/lib -L../bullet/debug/lib
-  LIBS       += -lvpvl_debug
+  win32:LIBS        += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug
+  unix:LIBS         += -L../libvpvl/debug/lib -L../bullet/debug/lib
+  win32:INCLUDEPATH += ../libvpvl/msvc-build/include
+  unix:INCLUDEPATH  += ../libvpvl/debug/include
+  win32:LIBS        += -lvpvl
+  unix:LIBS         += -lvpvl_debug
 }
 CONFIG(release, debug|release) {
-  win32:LIBS += -L../libvpvl/release-mingw/lib -L../bullet/debug-mingw/lib
-  unix:LIBS  += -L../libvpvl/release/lib -L../bullet/release/lib
-  LIBS       += -lvpvl
+  win32:LIBS        += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release
+  unix:LIBS         += -L../libvpvl/release/lib -L../bullet/release/lib
+  win32:INCLUDEPATH += ../libvpvl/msvc-build/include
+  unix:INCLUDEPATH  += ../libvpvl/release/include
+  LIBS              += -lvpvl
 }
 
 # based on QtCreator's qmake spec
