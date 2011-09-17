@@ -12,6 +12,7 @@ exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 exists(../glew/lib):LIBS += -L../glew/lib
 exists(../glew/include):INCLUDEPATH += ../glew/include
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
+exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lassimp
@@ -27,13 +28,11 @@ CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
-  exists(../assimp/debug/code):LIBS += -L../assimp/debug/code -lassimp
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
-  exists(../assimp/release/code):LIBS += -L../assimp/release/code -lassimp
 }
 
 # based on QtCreator's qmake spec
