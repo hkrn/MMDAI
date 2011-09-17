@@ -69,7 +69,7 @@ typedef unsigned int uint32_t;
   #if defined(vpvl_EXPORTS)
     #define VPVL_API __declspec(dllexport)
   #else
-    #define VPVL_API __declspec(dllimport)
+    #define VPVL_API //__declspec(dllimport)
   #endif /* defined(vpvl_EXPORTS) */
 #else /* defined (_WIN32) */
  #if defined(__GNUC__) && __GNUC__ >= 4
