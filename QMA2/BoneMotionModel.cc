@@ -395,8 +395,8 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             const vpvl::BoneKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             const QString key = internal::toQString(name);
-            int i = keys().indexOf(key);
-            if (i != -1) {
+            int foundIndex = keys().indexOf(key);
+            if (foundIndex != -1) {
                 uint32_t frameIndex = frame->frameIndex();
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 const QModelIndex &modelIndex = index(i, frameIndex);

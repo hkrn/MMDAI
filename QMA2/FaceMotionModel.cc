@@ -207,8 +207,8 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             QString key = internal::toQString(name);
-            int i = keys().indexOf(key);
-            if (i != -1) {
+            int foundIndex = keys().indexOf(key);
+            if (foundIndex != -1) {
                 uint32_t frameIndex = frame->frameIndex();
                 QModelIndex modelIndex = index(i, frameIndex);
                 vpvl::FaceKeyFrame newFrame;
