@@ -76,7 +76,7 @@ public:
     vpvl::PMDModel *findModel(const QString &name);
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
-    void setCurrentFPS(int value);
+    void setPreferredFPS(int value);
 
     TiledStage *tiledStage() const { return m_tiledStage; }
     Script *script() const { return m_script; }
@@ -179,6 +179,7 @@ private:
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
+    float m_prevElapsed;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;

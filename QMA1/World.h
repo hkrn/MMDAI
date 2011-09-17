@@ -48,7 +48,7 @@ public:
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
         m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
-        setCurrentFPS(defaultFPS);
+        setPreferredFPS(defaultFPS);
     }
     ~World()
     {
@@ -57,7 +57,7 @@ public:
     btDiscreteDynamicsWorld *mutableWorld() {
         return &m_world;
     }
-    void setCurrentFPS(int value) {
+    void setPreferredFPS(int value) {
         m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / value);
     }
 
