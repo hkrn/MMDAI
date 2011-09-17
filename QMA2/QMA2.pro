@@ -28,11 +28,13 @@ CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
+  exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
+  exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
 }
 
 # based on QtCreator's qmake spec
