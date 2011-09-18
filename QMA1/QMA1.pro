@@ -36,7 +36,7 @@ CONFIG(debug, debug|release) {
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
-                      -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk
+                      -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk -lws2_32
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
