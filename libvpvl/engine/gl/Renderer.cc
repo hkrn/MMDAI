@@ -60,6 +60,7 @@ struct PMDModelMaterialPrivate {
 
 }
 
+#define VPVL_LINK_ASSIMP
 #ifdef VPVL_LINK_ASSIMP
 #include <aiScene.h>
 #include <map>
@@ -67,7 +68,7 @@ namespace
 {
 struct AssetVertex
 {
-    btVector3 vertex;
+    btVector3 position;
     btVector3 normal;
     btVector3 texcoord;
     btVector4 color;
@@ -75,9 +76,6 @@ struct AssetVertex
 struct AssetVBO
 {
     GLuint vertices;
-    GLuint normals;
-    GLuint texcoords;
-    GLuint colors;
     GLuint indices;
 };
 typedef btAlignedObjectArray<AssetVertex> AssetVertices;
@@ -149,26 +147,17 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
                     assetVertex.normal.setZero();
                 }
                 const aiVector3D &v = vertices[vertexIndex];
-                assetVertex.vertex.setValue(v.x, v.y, v.z);
+                assetVertex.position.setValue(v.x, v.y, v.z);
                 assetVertices.push_back(assetVertex);
                 indices.push_back(index);
                 index++;
             }
         }
         AssetVBO &vbo = userData->vbo[mesh];
-        glGenBuffers(1, &vbo.colors);
         size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.colors);
-        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].color, GL_STATIC_DRAW);
-        glGenBuffers(1, &vbo.normals);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.normals);
-        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].normal, GL_STATIC_DRAW);
-        glGenBuffers(1, &vbo.texcoords);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.texcoords);
-        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].texcoord, GL_STATIC_DRAW);
         glGenBuffers(1, &vbo.vertices);
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].vertex, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].position, GL_STATIC_DRAW);
         glGenBuffers(1, &vbo.indices);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
@@ -184,9 +173,6 @@ void aiUnloadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::Asse
     for (uint32_t i = 0; i < nMeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = userData->vbo[mesh];
-        glDeleteBuffers(1, &vbo.colors);
-        glDeleteBuffers(1, &vbo.normals);
-        glDeleteBuffers(1, &vbo.texcoords);
         glDeleteBuffers(1, &vbo.vertices);
         glDeleteBuffers(1, &vbo.indices);
     }
@@ -280,6 +266,11 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     glPushMatrix();
     glMultMatrixf(reinterpret_cast<const float *>(&m));
     vpvl::AssetUserData *userData = asset->userData();
+    AssetVertex v;
+    const GLvoid *vertexPtr = 0;
+    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
     const uint32_t nMeshes = node->mNumMeshes;
     const size_t stride = sizeof(AssetVertex);
     for (uint32_t i = 0; i < nMeshes; i++) {
@@ -302,13 +293,10 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
         const AssetVBO &vbo = userData->vbo[mesh];
         const AssetIndices &indices = userData->indices[mesh];
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        glVertexPointer(3, GL_FLOAT, stride, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.normals);
-        glNormalPointer(GL_FLOAT, stride, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.colors);
-        glColorPointer(4, GL_FLOAT, stride, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.texcoords);
-        glTexCoordPointer(2, GL_FLOAT, stride, 0);
+        glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
+        glNormalPointer(GL_FLOAT, stride, normalPtr);
+        glTexCoordPointer(2, GL_FLOAT, stride, texcoordPtr);
+        glColorPointer(4, GL_FLOAT, stride, colorPtr);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
