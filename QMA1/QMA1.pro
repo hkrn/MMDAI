@@ -10,19 +10,20 @@ exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 # GLEW and assimp
 exists(../glew/lib):LIBS += -L../glew/lib
 exists(../glew/include):INCLUDEPATH += ../glew/include
+exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 win32:MMDA_PATH = ../../MMDAgent/MMDAgent
 win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib -L$${MMDA_PATH}/Library_Julius/lib \
-              -L$${MMDA_PATH}/Library_Open_JTalk/lib -L$${MMDA_PATH}/Library_PortAudio/lib -lglew32
-unix:LIBS += -lGLEW -lOpenJTalk -lHTSEngine -ljulius -ldsound -lportaudio
+      -L$${MMDA_PATH}/Library_Open_JTalk/lib -L$${MMDA_PATH}/Library_PortAudio/lib -lglew32 -ldsound
+unix:LIBS += -lGLEW -lOpenJTalk -lHTSEngine -ljulius -lportaudio
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
-               $${MMDA_PATH}/Library_Open_JTalk/include $${MMDA_PATH}/Library_hts_engine_API/include \
-			   $${MMDA_PATH}/Library_PortAudio/include
+       $${MMDA_PATH}/Library_Open_JTalk/include $${MMDA_PATH}/Library_hts_engine_API/include \
+       $${MMDA_PATH}/Library_PortAudio/include
 win32:INCLUDEPATH += ../libvpvl/msvc-build/include $${MMDA_PATH}
 
 # configuration by build type

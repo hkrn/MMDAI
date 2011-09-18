@@ -11,8 +11,8 @@ exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 # GLEW and assimp
 exists(../glew/lib):LIBS += -L../glew/lib
 exists(../glew/include):INCLUDEPATH += ../glew/include
-exists(../assimp/include):INCLUDEPATH += ../assimp/include
 exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
+exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lassimp
