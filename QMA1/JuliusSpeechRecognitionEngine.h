@@ -43,17 +43,18 @@
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QTranslator>
 
-#include <julius/julius.h>
-
 class JuliusSpeechRegonitionThread;
 class QSystemTrayIcon;
+
+struct JuliusSpeechRecognitionEngineInternal;
 
 class JuliusSpeechRecognitionEngine : public QObject
 {
     Q_OBJECT
 
-    friend void JuliusSpeechRecognitionEngineBeginRecognition(Recog *recog, void *ptr);
-    friend void JuliusSpeechRecognitionEngineGetRecognitionResult(Recog *recog, void *ptr);
+    friend void JuliusSpeechRecognitionEngineSendEvent(JuliusSpeechRecognitionEngine *engine,
+	                                                   const QString &type,
+													   const QString &value);
 
 public:
     static const QString kRecogStartEvent;
@@ -78,8 +79,7 @@ private:
     QFutureWatcher<bool> m_watcher;
     QSystemTrayIcon *m_tray;
     QTranslator m_translator;
-    Jconf *m_jconf;
-    Recog *m_recog;
+	JuliusSpeechRecognitionEngineInternal *m_internal;
 
     Q_DISABLE_COPY(JuliusSpeechRecognitionEngine)
 };

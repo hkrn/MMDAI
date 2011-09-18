@@ -11,31 +11,35 @@ exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 exists(../glew/lib):LIBS += -L../glew/lib
 exists(../glew/include):INCLUDEPATH += ../glew/include
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
-exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 
 # Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lassimp
-win32:LIBS += -lglew32
-unix:LIBS += -lGLEW
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+win32:MMDA_PATH = ../../MMDAgent/MMDAgent
+win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib -L$${MMDA_PATH}/Library_Julius/lib \
+              -L$${MMDA_PATH}/Library_Open_JTalk/lib -L$${MMDA_PATH}/Library_PortAudio/lib -lglew32
+unix:LIBS += -lGLEW -lOpenJTalk -lHTSEngine -ljulius -ldsound -lportaudio
 
 # VPVL and others configuration
-INCLUDEPATH += ../libvpvl/include ../bullet/src
-win32:INCLUDEPATH += ../libvpvl/msvc-build/include
+INCLUDEPATH += ../libvpvl/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
+               $${MMDA_PATH}/Library_Open_JTalk/include $${MMDA_PATH}/Library_hts_engine_API/include \
+			   $${MMDA_PATH}/Library_PortAudio/include
+win32:INCLUDEPATH += ../libvpvl/msvc-build/include $${MMDA_PATH}
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
+  win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug \
+                      -lvpvl -lPortAudio_D -lhts_engine_API_D -lJulius_D -lOpen_JTalk_D -lws2_32
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
-  exists(../assimp/debug/code):LIBS += -L../assimp/debug/code -lassimp
+  exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
 CONFIG(release, debug|release) {
-  win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
+  win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
+                      -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
-  exists(../assimp/release/code):LIBS += -L../assimp/release/code -lassimp
+  exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
 }
-LIBS += -lOpenJTalk -lHTSEngine -ljulius -lportaudio
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII

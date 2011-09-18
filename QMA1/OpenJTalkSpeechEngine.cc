@@ -43,10 +43,24 @@
 #include <portaudio.h>
 
 #include <HTS_engine.h>
+
+#ifdef Q_OS_WIN32
+#include <mecab.h>
+#include <njd.h>
+#include <jpcommon.h>
+#include <text2mecab.h>
+#include <mecab2njd.h>
+#include <njd2jpcommon.h>
+#include <njd_set_pronunciation.h>
+#include <njd_set_digit.h>
+#include <njd_set_accent_phrase.h>
+#include <njd_set_accent_type.h>
+#include <njd_set_unvoiced_vowel.h>
+#include <njd_set_long_vowel.h>
+#else
 #include <OpenJTalk/mecab.h>
 #include <OpenJTalk/njd.h>
 #include <OpenJTalk/jpcommon.h>
-
 #include <OpenJTalk/text2mecab.h>
 #include <OpenJTalk/mecab2njd.h>
 #include <OpenJTalk/njd2jpcommon.h>
@@ -56,6 +70,7 @@
 #include <OpenJTalk/njd_set_accent_type.h>
 #include <OpenJTalk/njd_set_unvoiced_vowel.h>
 #include <OpenJTalk/njd_set_long_vowel.h>
+#endif
 
 class OpenJTalkSpeechEngineInternal : public QObject
 {

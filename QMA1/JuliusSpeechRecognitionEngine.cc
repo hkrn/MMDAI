@@ -42,8 +42,17 @@
 #include <QtGui/QtGui>
 
 #ifdef Q_OS_WIN32
-#undef open
-#endif
+#include <winsock2.h>
+#pragma warning(push)
+#pragma warning(disable : 4819)
+#endif /* Q_OS_WIN32 */
+#undef TRUE
+#undef FALSE
+#include <julius/julius.h>
+#ifdef Q_OS_WIN32
+#pragma warning(pop)
+#undef open /* prevent an error on QFile class */
+#endif /* Q_OS_WIN32 */
 
 class JuliusSpeechRegonitionThread : public QThread
 {
@@ -69,14 +78,20 @@ private:
     Recog *m_recog;
 };
 
-void JuliusSpeechRecognitionEngineBeginRecognition(Recog *recog, void *ptr)
+struct JuliusSpeechRecognitionEngineInternal
+{
+    Jconf *jconf;
+    Recog *recog;
+};
+
+static void BeginRecognition(Recog *recog, void *ptr)
 {
     Q_UNUSED(recog);
     JuliusSpeechRecognitionEngine *engine = static_cast<JuliusSpeechRecognitionEngine*>(ptr);
-    emit engine->eventDidPost(JuliusSpeechRecognitionEngine::kRecogStartEvent, QList<QVariant>());
+    JuliusSpeechRecognitionEngineSendEvent(engine, JuliusSpeechRecognitionEngine::kRecogStartEvent, QString());
 }
 
-void JuliusSpeechRecognitionEngineGetRecognitionResult(Recog *recog, void *ptr)
+static void GetRecognitionResult(Recog *recog, void *ptr)
 {
     /* get status */
     RecogProcess *process = recog->process_list;
@@ -102,13 +117,22 @@ void JuliusSpeechRecognitionEngineGetRecognitionResult(Recog *recog, void *ptr)
 
     if (!first) {
         JuliusSpeechRecognitionEngine *engine = static_cast<JuliusSpeechRecognitionEngine *>(ptr);
-        QList<QVariant> a; a << ret;
-        qDebug("Recognized as %s", ret.toUtf8().constData());
-        emit engine->eventDidPost(JuliusSpeechRecognitionEngine::kRecogStopEvent, a);
+        qDebug("Recognized as %s", qPrintable(ret));
+        JuliusSpeechRecognitionEngineSendEvent(engine, JuliusSpeechRecognitionEngine::kRecogStopEvent, ret);
     }
     else {
         qWarning("Failed recognition");
     }
+}
+
+void JuliusSpeechRecognitionEngineSendEvent(JuliusSpeechRecognitionEngine *engine,
+                                            const QString &type,
+                                            const QString &value)
+{
+    QList<QVariant> a;
+    if (!value.isEmpty())
+        a << value;
+    emit engine->eventDidPost(type, a);
 }
 
 const QString JuliusSpeechRecognitionEngine::kRecogStartEvent = "RECOG_EVENT_START";
@@ -118,8 +142,7 @@ JuliusSpeechRecognitionEngine::JuliusSpeechRecognitionEngine(QObject *parent)
     : QObject(parent),
       m_thread(0),
       m_tray(0),
-      m_jconf(0),
-      m_recog(0)
+      m_internal(0)
 {
     QFile path("MMDAITranslations:/JuliusSpeechRecognitionEngine_" + QLocale::system().name());
     m_translator.load(path.fileName());
@@ -160,32 +183,32 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
     jlog_set_output(NULL);
     path = resdir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz");
     qstrncpy(buf, QString("-d %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
-    m_jconf = j_config_load_string_new(buf);
-    if (!m_jconf) {
+    Jconf *jconf = j_config_load_string_new(buf);
+    if (!jconf) {
         qWarning("%s", qPrintable(tr("Failed loading language model for Julius: %1").arg(path)));
         return false;
     }
     path = resdir.absoluteFilePath("lang_m/web.60k.htkdic");
     qstrncpy(buf, QString("-v %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
-    if (j_config_load_string(m_jconf, buf) < 0) {
+    if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading system dictionary for Julius: %1").arg(path)));
         return false;
     }
     path = resdir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm");
     qstrncpy(buf, QString("-h %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
-    if (j_config_load_string(m_jconf, buf) < 0) {
+    if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading acoustic model for Julius: %1").arg(path)));
         return false;
     }
     path = resdir.absoluteFilePath("phone_m/tri_tied.list.bin");
     qstrncpy(buf, QString("-hlist %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
-    if (j_config_load_string(m_jconf, buf) < 0) {
+    if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading triphone list for Julius: %1").arg(path)));
         return false;
     }
     path = resdir.absoluteFilePath("jconf.txt").toUtf8();
     qstrncpy(buf, path.toLocal8Bit().constData(), sizeof(buf));
-    if (j_config_load_file(m_jconf, buf)) {
+    if (j_config_load_file(jconf, buf)) {
         qWarning("%s", qPrintable(tr("Failed loading configuration for Julius: %1").arg(path)));
         return false;
     }
@@ -193,20 +216,23 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
     if (userDict.exists()) {
         path = userDict.fileName().toUtf8();
         qstrncpy(buf, path.toLocal8Bit().constData(), sizeof(buf));
-        j_add_dict(m_jconf->lm_root, buf);
+        j_add_dict(jconf->lm_root, buf);
     }
 
     /* create instance */
-    m_recog = j_create_instance_from_jconf(m_jconf);
-    if (m_recog) {
-        callback_add(m_recog, CALLBACK_EVENT_RECOGNITION_BEGIN, JuliusSpeechRecognitionEngineBeginRecognition, this);
-        callback_add(m_recog, CALLBACK_RESULT, JuliusSpeechRecognitionEngineGetRecognitionResult, this);
-        if (!j_adin_init(m_recog) || j_open_stream(m_recog, NULL) != 0) {
+    Recog *recog = j_create_instance_from_jconf(jconf);
+    if (recog) {
+        callback_add(recog, CALLBACK_EVENT_RECOGNITION_BEGIN, BeginRecognition, this);
+        callback_add(recog, CALLBACK_RESULT, GetRecognitionResult, this);
+        if (!j_adin_init(recog) || j_open_stream(recog, NULL) != 0) {
             release();
             qWarning("%s", qPrintable(tr("Failed initialize adin or stream")));
             return false;
         }
-        m_thread = new JuliusSpeechRegonitionThread(m_recog);
+        m_internal = new JuliusSpeechRecognitionEngineInternal();
+        m_internal->jconf = jconf;
+        m_internal->recog = recog;
+        m_thread = new JuliusSpeechRegonitionThread(recog);
         m_thread->start();
         qDebug("%s", qPrintable(tr("Get ready to recognize with Julius")));
         return true;
@@ -244,14 +270,16 @@ void JuliusSpeechRecognitionEngine::release()
     }
     delete m_thread;
     m_thread = 0;
-    if (m_recog) {
-        j_recog_free(m_recog);
-        m_recog = 0;
-    }
+    if (m_internal) {
+        Recog *recog = m_internal->recog;
+        if (recog)
+            j_recog_free(recog);
 #if 0
-    if (m_jconf) {
-        j_jconf_free(m_jconf);
-        m_jconf = 0;
-    }
+        JConf *jconf = m_internal->jconf;
+        if (jconf)
+            j_jconf_free(jconf);
 #endif
+    }
+    delete m_internal;
+    m_internal = 0;
 }
