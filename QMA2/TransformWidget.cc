@@ -139,7 +139,7 @@ void TransformButton::mouseMoveEvent(QMouseEvent *event)
             m_boneMotionModel->rotate(coordinate, vpvl::radian(value));
             break;
         case 't':
-            m_boneMotionModel->transform(coordinate, value);
+            m_boneMotionModel->translate(coordinate, value);
             break;
         }
         m_pos = event->pos();

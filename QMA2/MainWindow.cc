@@ -37,10 +37,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_currentFPS(0)
 {
     m_undo = new QUndoGroup(this);
-    m_boneMotionModel = new BoneMotionModel(m_undo, this);
-    m_faceMotionModel = new FaceMotionModel(m_undo, this);
     m_licenseWidget = new LicenseWidget();
     m_sceneWidget = new SceneWidget(&m_settings);
+    m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
+    m_faceMotionModel = new FaceMotionModel(m_undo, this);
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);

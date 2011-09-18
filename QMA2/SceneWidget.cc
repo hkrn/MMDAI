@@ -115,7 +115,12 @@ void SceneWidget::clear()
     m_loader->release();
 }
 
-vpvl::PMDModel *SceneWidget::findModel(const QString &name)
+const vpvl::Scene *SceneWidget::scene() const
+{
+    return m_renderer->scene();
+}
+
+vpvl::PMDModel *SceneWidget::findModel(const QString &name) const
 {
     return m_loader->findModel(name);
 }

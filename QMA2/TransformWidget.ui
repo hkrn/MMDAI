@@ -237,6 +237,11 @@ QPushButton:disabled { color:gray }</string>
                  <string>Global</string>
                 </property>
                </item>
+               <item>
+                <property name="text">
+                 <string>View</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>

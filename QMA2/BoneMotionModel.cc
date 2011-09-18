@@ -1,4 +1,5 @@
 #include "BoneMotionModel.h"
+#include "SceneWidget.h"
 #include "VPDFile.h"
 #include "util.h"
 #include <vpvl/vpvl.h>
@@ -268,8 +269,9 @@ private:
 
 }
 
-BoneMotionModel::BoneMotionModel(QUndoGroup *undo, QObject *parent) :
+BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent) :
     MotionBaseModel(undo, parent),
+    m_sceneWidget(scene),
     m_state(0),
     m_mode(kLocal)
 {
@@ -552,7 +554,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     emit boneRotationDidChange(selected, rot);
 }
 
-void BoneMotionModel::transform(int coordinate, float value)
+void BoneMotionModel::translate(int coordinate, float value)
 {
     btVector3 pos, dest;
     foreach (vpvl::Bone *selected, m_selected) {
@@ -574,12 +576,19 @@ void BoneMotionModel::transform(int coordinate, float value)
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
         switch (m_mode) {
-        case kLocal:
+        case kView: {
+            QVector4D r = modelviewMatrix() * QVector4D(pos.x(), pos.y(), pos.z(), 0.0f);
+            dest = btTransform(selected->rotation(), current) * btVector3(r.x(), r.y(), r.z());
+            break;
+        }
+        case kLocal: {
             dest = btTransform(selected->rotation(), current) * pos;
             break;
-        case kGlobal:
+        }
+        case kGlobal: {
             dest = current + pos;
             break;
+        }
         default:
             break;
         }
@@ -613,9 +622,16 @@ void BoneMotionModel::rotate(int coordinate, float value)
         qFatal("Unexpected coordinate value: %c", coordinate);
     }
     switch (m_mode) {
-    case kLocal:
+    case kView: {
+        QVector4D r = modelviewMatrix() * QVector4D(rot.x(), rot.y(), rot.z(), rot.w());
+        r.normalize();
+        dest = current * btQuaternion(r.x(), r.y(), r.z(), r.w());
+        break;
+    }
+    case kLocal: {
         dest = current * rot;
         break;
+    }
     default:
         break;
     }
@@ -669,4 +685,14 @@ void BoneMotionModel::clearKeys()
 {
     m_bones.clear();
     MotionBaseModel::clearKeys();
+}
+
+const QMatrix4x4 BoneMotionModel::modelviewMatrix() const
+{
+    float modelviewf[16];
+    qreal modelviewd[16];
+    m_sceneWidget->scene()->getModelViewMatrix(modelviewf);
+    for (int i = 0; i < 16; i++)
+        modelviewd[i] = modelviewf[i];
+    return QMatrix4x4(modelviewd);
 }

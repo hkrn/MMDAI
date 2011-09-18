@@ -5,6 +5,7 @@
 #include <LinearMath/btVector3.h>
 #include <LinearMath/btQuaternion.h>
 
+class SceneWidget;
 class VPDFile;
 
 class BoneMotionModel : public MotionBaseModel
@@ -25,7 +26,7 @@ public:
     };
     typedef QPair<int, vpvl::Bone *> Frame;
 
-    BoneMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent = 0);
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
@@ -40,7 +41,7 @@ public:
     void setMode(int value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
-    void transform(int coordinate, float value);
+    void translate(int coordinate, float value);
     void rotate(int coordinate, float value);
     void selectBones(QList<vpvl::Bone *> bones);
     vpvl::Bone *selectBone(int rowIndex);
@@ -66,8 +67,11 @@ protected:
     void clearKeys();
 
 private:
+    const QMatrix4x4 modelviewMatrix() const;
+
     QList<vpvl::Bone *> m_bones;
     QList<vpvl::Bone *> m_selected;
+    const SceneWidget *m_sceneWidget;
     vpvl::PMDModel::State *m_state;
     TransformType m_mode;
 };

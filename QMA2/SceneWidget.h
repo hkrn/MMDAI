@@ -72,7 +72,8 @@ public:
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
-    vpvl::PMDModel *findModel(const QString &name);
+    const vpvl::Scene *scene() const;
+    vpvl::PMDModel *findModel(const QString &name) const;
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setPreferredFPS(int value);
