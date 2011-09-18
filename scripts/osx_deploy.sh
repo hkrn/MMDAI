@@ -13,10 +13,10 @@ fi
 
 rm -r ${app_name}.app;
 rm ${app_name}.dmg;
-make;
+make || exit;
 macdeployqt $app_name.app;
 echo "deployed $app_name.app";
-cd ${app_name}.app/Contents/Frameworks;
+cd ${app_name}.app/Contents/Frameworks || exit;
 rm -rf QtSql.framework;
 rm -rf QtXmlPatterns.framework;
 rm -rf QtDeclarative.framework;
@@ -24,11 +24,11 @@ rm -rf QtNetwork.framework;
 rm -rf QtScript.framework;
 rm -rf QtSvg.framework;
 echo 'removed unused Qt frameworks';
-cd ../PlugIns;
+cd ../PlugIns || exit;
 rm -rf bearer
 rm -rf graphicssystems
 rm -rf qmltooling
-cd ../../..
+cd ../../.. || exit
 echo 'removed unused Qt plugins';
 hdiutil create ${app_name}.dmg -srcfolder ${app_name}.app -format UDZO -volname $app_name
 
