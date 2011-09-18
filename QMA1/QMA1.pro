@@ -53,6 +53,9 @@ unix {
   RCC_DIR = $${OUT_PWD}/.rcc
   UI_DIR = $${OUT_PWD}/.uic
 }
+win32 {
+  RC_FILE = ../QMA/res/MMDAI.rc
+}
 macx {
   QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
   QMAKE_LFLAGS *= -mmacosx-version-min=10.5
@@ -61,6 +64,7 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
+  ICON = ../QMA/res/MMDAI.icns
   QMAKE_INFO_PLIST = res/Info.plist
   resources.files = res/translations/MMDAI1_ja.qm \
                     $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm

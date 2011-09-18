@@ -67,7 +67,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     tree->setModel(model);
     tree->setEditTriggers(QTreeView::NoEditTriggers);
     layout->addWidget(tree);
-#if 0
+#if 1
     QLabel *aboutIconLabel = new QLabel;
     aboutIconLabel->setText(
                 tr("%1's icon was generated with <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>"
