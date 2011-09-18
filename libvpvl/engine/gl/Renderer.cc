@@ -60,7 +60,6 @@ struct PMDModelMaterialPrivate {
 
 }
 
-#define VPVL_LINK_ASSIMP
 #ifdef VPVL_LINK_ASSIMP
 #include <aiScene.h>
 #include <map>
