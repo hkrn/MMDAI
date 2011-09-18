@@ -644,20 +644,20 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
                     hasMultipleSphere ? "true" : "false");
     glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->stride(vpvl::PMDModel::kEdgeIndicesStride),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(vpvl::PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
     m_delegate->log(IDelegate::kLogInfo,
                     "Binding edge indices to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->stride(vpvl::PMDModel::kIndicesStride),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(vpvl::PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
     m_delegate->log(IDelegate::kLogInfo,
                     "Binding indices to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kShadowIndices]);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->stride(vpvl::PMDModel::kTextureCoordsStride),
-                 model->textureCoordsPointer(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
+                 model->verticesPointer(), GL_DYNAMIC_DRAW);
     m_delegate->log(IDelegate::kLogInfo,
                     "Binding texture coordinates to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kModelTexCoords]);
@@ -703,6 +703,14 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
     }
 }
 
+void Renderer::updateModelBuffer(const vpvl::PMDModel *model) const
+{
+    size_t size = model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride);
+    glBindBuffer(GL_ARRAY_BUFFER, model->userData()->vertexBufferObjects[kModelVertices]);
+    glBufferData(GL_ARRAY_BUFFER, size, model->verticesPointer(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void Renderer::drawModel(const vpvl::PMDModel *model)
 {
 #ifndef VPVL_COORDINATE_OPENGL
@@ -712,17 +720,12 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 #endif
 
     const vpvl::PMDModelUserData *userData = model->userData();
-    size_t stride = model->stride(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
+    size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
     m_modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    m_modelProgram->setPosition(0, stride);
-    stride = model->stride(vpvl::PMDModel::kNormalsStride);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelNormals]);
-    glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->normalsPointer(), GL_DYNAMIC_DRAW);
-    m_modelProgram->setNormal(0, stride);
-    stride = model->stride(vpvl::PMDModel::kTextureCoordsStride);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelTexCoords]);
-    m_modelProgram->setTexCoord(0, stride);
+    m_modelProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)), stride);
+    m_modelProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kNormalsStride)), stride);
+    m_modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kTextureCoordsStride)), stride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
 
     float matrix[16];
@@ -742,7 +745,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     // toon
     if (enableToon) {
         // shadow map
-        stride = model->stride(vpvl::PMDModel::kToonTextureStride);
+        stride = model->strideSize(vpvl::PMDModel::kToonTextureStride);
         glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelToonTexCoords]);
         glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
         m_modelProgram->setToonTexCoord(0, stride);
@@ -816,7 +819,7 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 #endif
 
     const float alpha = 1.0f;
-    const size_t stride = model->stride(vpvl::PMDModel::kEdgeVerticesStride);
+    const size_t stride = model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
     const vpvl::PMDModelUserData *modelPrivate = model->userData();
     btVector3 color(0, 0, 0);
     color.setW(1);
@@ -850,11 +853,9 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 
 void Renderer::drawModelShadow(const vpvl::PMDModel *model)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, model->userData()->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->stride(vpvl::PMDModel::kVerticesStride), model->verticesPointer(), GL_DYNAMIC_DRAW);
     return;
 
-    const size_t stride = model->stride(vpvl::PMDModel::kVerticesStride);
+    const size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride);
     const vpvl::PMDModelUserData *modelPrivate = model->userData();
 
     float modelViewMatrix[16], projectionMatrix[16];
@@ -1237,6 +1238,7 @@ void Renderer::drawShadow()
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
+        updateModelBuffer(model);
         drawModelShadow(model);
     }
 }
