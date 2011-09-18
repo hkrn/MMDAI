@@ -1,66 +1,77 @@
-MMDAI 
+MMDAI
 =====
+
 MMDAI is a fork project of MMDAgent (http://www.mmdagent.jp) to support cross platform
 
-## What's this?
+## これは何?
 
 MMDAI とは MMDAgent からフォークしたプロジェクトです。
 主な目的はクロスプラットフォームで動かせるようにすることです。
-(MMDAgent は Win32 API に強く依存する設計になっているため)
 
-## Supported OS
+名前にあるとおり MMD (MikuMikuDance) で使われているモデルやモーションの読み込みが可能で、
+かつ音声認識を行ってモデルと対話することが出来る点が特徴です。あくまで MMD 互換であり、
+完全に同じ結果になることは全く保証されていません。
 
-以下は動作の確認が出来ている環境です。
+姉妹プロジェクトとして音声認識機能を持っていない代わりにモーション編集に対応した MMDAI2 と
+MMDAI/MMDAI2 両方で用いられる OS に依存しない小型ライブラリである libvpvl があります。
 
-  - Windows7 (MSVC 9.0) 32bit
-  - MacOSX 10.6 32/64bit
-  - Fedora 14 32bit
-  - Ubuntu 10.10 64bit
+## サポートされている OS
 
-## How to use?
+以下は開発で動作の確認が出来ている環境です。
 
-基本的にオリジナルの MMDAgent とあわせていますが、MMDAgent と異なる操作系を持つ場合があります。
+  - Windows XP (MSVC 9.0) 32bit
+    - Windows 8 Developer Preview 32bit
+  - MacOSX 10.7 64bit
+  - Fedora 15 64bit
+
+## 使い方
+
+※以下の説明は MMDAI (MMDAI2 ではない) のものになります。
+
+MMDAgent 公式ページからスクリプトのパッケージをダウンロードし、拡張子 fst とつくファイルを
+アプリケーションにドラッグ・アンド・ドロップするか、もしくはメニューから「ファイル」
+「スクリプトの読み込み」で拡張子 fst のつくファイルを読みこむことでメイと対話可能になります。
+
+MMDAI では実行バイナリを提供しているだけであり、スクリプトは提供していませんが、
+単体でもメニューからモデルの読み込みやモーションの読み込みが可能です。
+(MMDAgent でもドラッグ・アンド・ドロップからなら可能)
 
 ### メニューからの操作
 
 キーボード、マウス、及びドラッグアンドドロップの操作は基本的にここでも可能です。
+メニューから操作する場合、以下の機能を提供しています。
+
+  - スクリプトの読み込み
+  - モデルの読み込み及び削除
+  - モーションの読み込み
+  - カメラモーションの読み込み
+  - 場面の再生、一時停止、停止
+  - 場面の操作
   
 ### キーボードでの操作
 
-  - ↑
-    - カメラビューを上に回転
-  - ↓
-    - カメラビューを下に回転
-  - ←
-    - カメラビューを左に回転
-  - →
-    - カメラビューを右に回転
   - CTRL + ↑
-    - カメラビューを上に移動
+    - カメラビューを上に回転
   - CTRL + ↓
-    - カメラビューを下に移動
+    - カメラビューを下に回転
   - CTRL + ←
-    - カメラビューを左に移動
+    - カメラビューを左に回転
   - CTRL + →
+    - カメラビューを右に回転
+  - SHIFT + ↑
+    - カメラビューを上に移動
+  - SHIFT + ↓
+    - カメラビューを下に移動
+  - SHIFT + ←
+    - カメラビューを左に移動
+  - SHIFT + →
     - カメラビュー右に移動
-  - B
-    - 全てのモデルのボーンの表示
-  - P
-    - 物理エンジンの有効/無効
-  - SHIFT + X
-    - シャドウマップの有効/無効
-  - X
-    - シャドウマップの影優先または光優先の切り替え
   - ALT + ? or ALT + /
     - アプリケーションについてのダイアログの表示
   - +
     - カメラビューの拡大
   - -
     - カメラビューの縮小
-  - DELETE
-    - 選択されたモデルの削除。選択されていなければなにもしない
-  - ESCAPE
-    - アプリケーションの終了
 
 ### マウスを使った操作
 
@@ -78,150 +89,35 @@ MMDAI とは MMDAgent からフォークしたプロジェクトです。
     - 視野角の調整
   - SHIFT + CTRL を押しながらのドラッグ
     - 光源の移動
-  - CTRL を押しながらモデルをドラッグ
-    - モデルの平行移動
-  - モデルのダブルクリック
-    - モデルの選択
 
 ### ドラッグ and ドロップ
 
   - PMD ファイル
-    - モーションを維持しながら選択されたモデルを変更
-  - CTRL を押しながら PMD ファイル
-    - モデルを追加(最大20まで)
+    - モデルを追加
   - VMD ファイル
     - 選択されたモデルに対してモーションを追加
-  - CTRL を押しながら VMD ファイル
-    - 全てのモデルに対してモーションを追加
-  - XPMD ファイル
-    - ステージを変更
-  - BMP/TGA/PNG ファイル
-    - フロアのテクスチャを変更
-  - CTRL を押しながら BMP/TGA/PNG ファイル
-    - 背景のテクスチャを変更
+  - FST ファイル
+    - スクリプトの読み込み
 
-## プラグインについて
+## 名前の由来
 
-現在以下のプラグインが入っています。
+MMDAgent をぼかした名前の結果 MMDAI になっています。"AI" には特にこれといった略称はありません。
+内部的に使用している名前である QMA は元々 "Qt MMD Agent" から名前をとっています。
 
-### QMAAquesTalk2Plugin
+MMDAI2 にはまだ使っていないものの別名があり、VPVM (VOCALOID Promotion Video Maker) といいます。
+VPVL も元は VOCALOID Promotion Video Library の略名ですが完全名で使うことはないでしょう。
+これらは MMD を配布しているサイト名である VPVP (VOCALOID Promotion Video Project) からとっています。
 
-音声合成ライブラリである AquesTalk2 を使って喋らせるプラグインです。
-以下が利用可能です。喋らせる文字列は AquesTalk2 に渡す文字列と同様です。
-引数は MMDAgent の OpenJTalk プラグインにあわせています。
+## ライセンス
 
-※ リップシンクには対応していません
+MMDAgent と同じく修正 BSD ライセンスの下で配布されています。LICENSE を参照してください。
+これは MMDAI だけでなく、MMDAI2 及び libvpvl も同様です。
 
-####  Command
+ただし MMDAI/MMDAI2 は Qt を必要とするため、MMDAI/MMDAI2 を元に改造して派生品として作成しかつ利用規約に
+リバースエンジニアリングをも禁止して配布したい場合は Qt の商用ライセンスを購入する必要があります。
+開発ではなく単純に利用するだけならもちろん無料で利用可能です。
 
-  - MMDAI_AQTK2_START(エイリアス名,phontファイルのパス,会話内容)
-  - MMDAI_AQTK2_STOP(エイリアス名)
+## 開発者
 
-### QMAAudioPlugin
-
-BGM または SE を流すためのプラグインです。以下が利用可能です。
-MMDAgent のコマンド及びイベントと互換性があります。
-
-####  Command
-
-  - SOUND_START(エイリアス名, ファイル名)
-  - SOUND_STOP(エイリアス名)
-
-#### Event
-
-  - SOUND_EVENT_START(エイリアス名, ファイル名)
-  - SOUND_EVENT_STOP(エイリアス名)
-
-### QMAJuliusPlugin
-
-音声認識エンジンである Julius を用いて音声認識を行うプラグインです。
-以下が利用可能です。MMDAgent のコマンド及びイベントと互換性があります。
-
-####  EVENT
-  - RECOG_EVENT_START()
-  - RECOG_EVENT_STOP(認識結果の内容)
-
-### QMALookAtPlugin
-
-マウスのカーソルに合わせてモデルの顔が動くプラグインです。
-キーボードの "L" を押すことによって有効無効を切り替えることが出来ます。
-
-### QMAOpenJTalkPlugin
-
-音声合成ライブラリである OpenJTalk を用いて喋らせるプラグインです。
-以下が利用可能です。MMDAgent のコマンド及びイベントと互換性があります。
-
-#### COMMAND 
-
-  - SYNTH_START(エイリアス名,表情名,会話内容)
-  - SYNTH_STOP(エイリアス名)
-
-#### EVENT
-
-  - SYNTH_EVENT_START(エイリアス名)
-  - SYNTH_EVENT_STOP(エイリアス名)
-
-※ SYNTH_STOP コマンドは動作しません
-
-### QMAVILuaPlugin
-
-※ このプラグインは非推奨であり、現在サポートされていません。
-
-Lua を用いてコマンド及びイベントを制御するプラグインです。
-アプリケーションディレクトリの MMDAI.lua を読み込んで実行します。
-スクリプトの文字コードは必ず UTF-8 にしてください。
-
-Lua に以下の拡張が行われます。
-
-  - mmdai.command(command, arg1, ...)
-    コマンドを実行します。第一引数にコマンド名を渡します。必須です。
-    第二引数以降の引数は任意であり、可変です。
-
-  - mmdai.event(type, arg1, ...)
-    イベントを実行します。第一引数にイベント名を渡します。必須です。
-    第二引数以降の引数は任意であり、可変です。
-
-  - mmdai_handle_command(command, ...)
-    プラグインが呼び出すコマンドを取り扱うコールバック関数です。
-    第一引数にコマンド名が渡されます。第二引数に可変引数が入ります。
-
- - mmdai_handle_event(event, ...)
-    プラグインが呼び出すイベントを取り扱うコールバック関数です。
-    第一引数にイベント名が渡されます。第二引数に可変引数が入ります。
-
-mmdai.command 及び mmdai.event はすぐに実行されません。
-関数の実行が終了してからはじめて実行されます。
-
-### QMAVIManagerPlugin
-
-MMDAgent の fst を取り扱ってイベント及びコマンドを制御するプラグインです。
-アプリケーションディレクトリにある MMDAI.fst を読み込んで実行します。
-fst の文字コードは Shift-JIS にしてください。
-
-QMAVariablePluginと統合された関係で、以下のコマンドとイベントが利用可能です。
-
-#### Command
-
-  - VALUE_SET(変数名,値)
-  - VALUE_SET(変数名,ランダムの最小値,ランダムの最大値)
-  - VALUE_UNSET(変数名)
-  - VALUE_EVAL(変数名,演算子[EQ/NE/LT/LE/GT/GE],値)
-  - TIMER_START(タイマー名,秒数)
-  - TIMER_STOP(タイマー名)
-
-#### Event
-
-  - VALUE_EVENT_SET(変数名)
-  - VALUE_EVENT_UNSET(変数名)
-  - VALUE_EVENT_EVAL(変数名,演算子[EQ/NE/LT/LE/GT/GE],値,結果[TRUE/FALSE])
-  - TIMER_EVENT_START(タイマー名)
-  - TIMER_EVENT_STOP(タイマー名)
-
-## License
-
-Distributed under new BSD License. See also LICENSE
-
-## Authors
-
-See AUTHORS
+AUTHORS を参照してください
 
