@@ -60,11 +60,16 @@ bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
     uint8_t *rawData = 0;
     QImage image = pathString.endsWith(".tga", Qt::CaseInsensitive)
             ? loadTGA(pathString, rawData) : QImage(pathString).rgbSwapped();
-    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-    textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
-                                      image.depth() == 32 ? GL_RGBA : GL_RGB, options);
-    delete[] rawData;
-    qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
+    if (!image.isNull()) {
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
+                                          image.depth() == 32 ? GL_RGBA : GL_RGB, options);
+        delete[] rawData;
+        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
+    }
+    else {
+        textureID = 0;
+    }
     return textureID != 0;
 }
 
