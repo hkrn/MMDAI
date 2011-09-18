@@ -290,42 +290,49 @@ public:
     bool restoreState(State *state);
 
     /**
-     * Get the stride byte size of specified type.
+     * Returns the stride byte size of specified type.
      *
      * @return stride size of specified type
      */
-    size_t stride(StrideType type) const;
+    size_t strideSize(StrideType type) const;
 
     /**
-     * Get the base adderess of vertices pointer.
+     * Returns the stride offset size of specified type.
+     *
+     * @return stride size of specified type
+     */
+    size_t strideOffset(StrideType type) const;
+
+    /**
+     * Returns the base adderess of vertices pointer.
      *
      * @return Address of vertices
      */
     const void *verticesPointer() const;
 
     /**
-     * Get the base adderess of normal pointer.
+     * Returns the base adderess of normal pointer.
      *
      * @return Address of normal pointer
      */
     const void *normalsPointer() const;
 
     /**
-     * Get the base adderess of texture coordinates pointer.
+     * Returns the base adderess of texture coordinates pointer.
      *
      * @return Address of texture coordinates
      */
     const void *textureCoordsPointer() const;
 
     /**
-     * Get the base adderess of toon texture coordinates pointer.
+     * Returns the base adderess of toon texture coordinates pointer.
      *
      * @return Address of texture coordinates
      */
     const void *toonTextureCoordsPointer() const;
 
     /**
-     * Get the base adderess of edge vertices pointer.
+     * Returns the base adderess of edge vertices pointer.
      *
      * @return Address of edge vertices
      */
@@ -353,7 +360,7 @@ public:
     bool load(const uint8_t *data, size_t size);
 
     /**
-     * Get the name of this model.
+     * Returns the name of this model.
      *
      * @return the name of this model
      */
@@ -362,7 +369,7 @@ public:
     }
 
     /**
-     * Get the comment of this model.
+     * Returns the comment of this model.
      *
      * @return the comment of this model
      */
@@ -371,7 +378,7 @@ public:
     }
 
     /**
-     * Get the name of this model in English.
+     * Returns the name of this model in English.
      *
      * @return the name of this model in English
      */
@@ -380,7 +387,7 @@ public:
     }
 
     /**
-     * Get the comment of this model in English.
+     * Returns the comment of this model in English.
      *
      * @return the comment of this model in English
      */

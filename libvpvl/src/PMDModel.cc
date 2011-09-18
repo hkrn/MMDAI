@@ -1009,7 +1009,7 @@ void PMDModel::sortBones()
     }
 }
 
-size_t PMDModel::stride(StrideType type) const
+size_t PMDModel::strideSize(StrideType type) const
 {
     switch (type) {
     case kVerticesStride:
@@ -1022,6 +1022,25 @@ size_t PMDModel::stride(StrideType type) const
     case kIndicesStride:
     case kEdgeIndicesStride:
         return sizeof(uint16_t);
+    default:
+        return 0;
+    }
+}
+
+size_t PMDModel::strideOffset(StrideType type) const
+{
+    SkinVertex v;
+    switch (type) {
+    case kVerticesStride:
+    case kEdgeVerticesStride:
+    case kToonTextureStride:
+    case kIndicesStride:
+    case kEdgeIndicesStride:
+        return 0;
+    case kNormalsStride:
+        return reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kTextureCoordsStride:
+        return reinterpret_cast<const uint8_t *>(&v.texureCoord) - reinterpret_cast<const uint8_t *>(&v.position);
     default:
         return 0;
     }
