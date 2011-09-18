@@ -16,7 +16,7 @@ rm ${app_name}.dmg;
 make;
 macdeployqt $app_name.app;
 echo "deployed $app_name.app";
-cd MMDAI.app/Contents/Frameworks;
+cd ${app_name}.app/Contents/Frameworks;
 rm -rf QtSql.framework;
 rm -rf QtXmlPatterns.framework;
 rm -rf QtDeclarative.framework;
