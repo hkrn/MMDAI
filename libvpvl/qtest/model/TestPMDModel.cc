@@ -42,7 +42,7 @@ void TestPMDModel::parseEmpty()
 
 void TestPMDModel::parseFile()
 {
-    QFile file("../../gtest/res/miku.pmd");
+    QFile file("../../render/res/miku.pmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());

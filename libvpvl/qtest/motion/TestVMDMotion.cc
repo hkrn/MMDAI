@@ -47,7 +47,7 @@ void TestVMDMotion::parseEmpty()
 
 void TestVMDMotion::parseMotion()
 {
-    QFile file("../../gtest/res/motion.vmd");
+    QFile file("../../render/res/motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
@@ -68,7 +68,7 @@ void TestVMDMotion::parseMotion()
 
 void TestVMDMotion::parseCamera()
 {
-    QFile file("../../gtest/res/camera.vmd");
+    QFile file("../../render/res/camera.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
@@ -196,7 +196,7 @@ void TestVMDMotion::saveFaceKeyFrame()
 
 void TestVMDMotion::saveMotion()
 {
-    QFile file("../../gtest/res/motion.vmd");
+    QFile file("../../render/res/motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());

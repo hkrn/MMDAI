@@ -269,15 +269,3 @@ if(VPVL_OPENGL_RENDERER AND VPVL_USE_ALLEGRO5 AND VPVL_BUILD_A5)
   add_executable(vpvl_a5 ${vpvl_a5_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
   target_link_libraries(vpvl_a5 vpvl ${ALLEG5_LIBRARY_MAIN} ${ALLEG5_LIBRARY_IMAGE} opencv_core opencv_highgui)
 endif()
-
-# extra test program
-option(VPVL_BUILD_TESTS "Build test programs (default is OFF)" OFF)
-if(VPVL_BUILD_TESTS)
-  aux_source_directory(gtest vpvl_test_sources)
-  add_executable(vpvl_test ${vpvl_test_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
-  find_library(GTEST_LIB gtest PATHS ${GTEST_LIBRARY_DIR})
-  find_library(GTEST_MAIN_LIB gtest_main PATHS ${GTEST_LIBRARY_DIR})
-  target_link_libraries(vpvl_test vpvl ${GTEST_MAIN_LIB} ${GTEST_LIB})
-  include_directories(${GTEST_INCLUDE_DIR})
-endif()
-
