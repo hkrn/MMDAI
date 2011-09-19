@@ -60,6 +60,8 @@ namespace vpvl
 
 typedef struct AssetUserData AssetUserData;
 
+class Bone;
+
 class VPVL_API Asset
 {
 public:
@@ -86,10 +88,10 @@ public:
     void setPosition(const btVector3 &value) {
         m_position = value;
     }
-    const btScalar &scale() const {
+    const btScalar &scaleFactor() const {
         return m_scale;
     }
-    void setScale(const btScalar &value) {
+    void setScaleFactor(const btScalar &value) {
         m_scale = value;
     }
     uint32_t loadFlags() const {
@@ -97,6 +99,12 @@ public:
     }
     void setLoadFlags(uint32_t value) {
         m_flags = value;
+    }
+    Bone *parentBone() const {
+        return m_parentBone;
+    }
+    void setParentBone(Bone *value) {
+        m_parentBone = value;
     }
     AssetUserData *userData() const {
         return m_userData;
@@ -112,6 +120,7 @@ private:
     Assimp::Importer *m_importer;
     const aiScene *m_scene;
     AssetUserData *m_userData;
+    Bone *m_parentBone;
     btVector3 m_position;
     btScalar m_scale;
     uint32_t m_flags;

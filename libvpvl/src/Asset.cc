@@ -53,6 +53,7 @@ bool Asset::isSupported()
 Asset::Asset()
     : m_importer(0),
       m_scene(0),
+      m_parentBone(0),
       m_position(0.0f, 0.0f, 0.0f),
       m_scale(10.0f),
       m_flags(aiProcessPreset_TargetRealtime_Quality),

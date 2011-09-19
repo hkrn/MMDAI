@@ -251,7 +251,7 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset)
 void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *asset)
 {
     struct aiMatrix4x4 m = node->mTransformation;
-    const btScalar &scaleFactor = asset->scale();
+    const btScalar &scaleFactor = asset->scaleFactor();
     const btVector3 &pos = asset->position();
     // translate
     m.a4 = pos.x();
