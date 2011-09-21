@@ -40,80 +40,17 @@
 #include <vpvl/gl2/Renderer.h>
 
 #include <btBulletDynamicsCommon.h>
+
+#define VPVL_LINK_ASSIMP
 #ifdef VPVL_LINK_ASSIMP
 #include <aiScene.h>
 #include <map>
-namespace vpvl
-{
-struct AssetUserData
-{
-    std::map<std::string, GLuint> textures;
-};
-}
-#else
-VPVL_DECLARE_HANDLE(aiNode)
-VPVL_DECLARE_HANDLE(aiScene)
-namespace vpvl
-{
-    namespace gl
-    {
-    VPVL_DECLARE_HANDLE(AssetInternal)
-    }
-}
 #endif
 
-namespace {
-
-enum VertexBufferObjectType {
-    kModelVertices,
-    kModelNormals,
-    kModelColors,
-    kModelTexCoords,
-    kModelToonTexCoords,
-    kEdgeVertices,
-    kEdgeIndices,
-    kShadowIndices,
-    kVertexBufferObjectMax
-};
-
-struct PMDModelMaterialPrivate {
-    GLuint primaryTextureID;
-    GLuint secondTextureID;
-};
-
-const std::string CanonicalizePath(const std::string &path)
-{
-    const std::string from("\\"), to("/");
-    std::string ret(path);
-    std::string::size_type pos(path.find(from));
-    while (pos != std::string::npos) {
-        ret.replace(pos, from.length(), to);
-        pos = ret.find(from, pos + to.length());
-    }
-    return ret;
-}
-
-}
-
 namespace vpvl
 {
-
-struct PMDModelUserData {
-    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
-    GLuint vertexBufferObjects[kVertexBufferObjectMax];
-    bool hasSingleSphereMap;
-    bool hasMultipleSphereMap;
-    PMDModelMaterialPrivate *materials;
-};
-
-struct XModelUserData {
-    GLuint listID;
-    vpvl::Hash<vpvl::HashString, GLuint> textures;
-};
-
 namespace gl2
 {
-
 class ShaderProgram
 {
 public:
@@ -283,19 +220,19 @@ public:
         }
         return ret;
     }
-    void setLightColor(const btVector3 &value) {
+    void setLightColor(const btVector4 &value) {
         glUniform4fv(m_lightColorUniformLocation, 1, value);
     }
     void setLightPosition(const btVector3 &value) {
         glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
-    void setLightAmbient(const btVector3 &value) {
+    void setLightAmbient(const btVector4 &value) {
         glUniform4fv(m_lightAmbientUniformLocation, 1, value);
     }
-    void setLightDiffuse(const btVector3 &value) {
+    void setLightDiffuse(const btVector4 &value) {
         glUniform4fv(m_lightDiffuseUniformLocation, 1, value);
     }
-    void setLightSpecular(const btVector3 &value) {
+    void setLightSpecular(const btVector4 &value) {
         glUniform4fv(m_lightSpecularUniformLocation, 1, value);
     }
 
@@ -387,13 +324,13 @@ public:
     void setNormalMatrix(const float value[16]) {
         glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_TRUE, value);
     }
-    void setMaterialAmbient(const btVector3 &value) {
+    void setMaterialAmbient(const btVector4 &value) {
         glUniform4fv(m_materialAmbientUniformLocation, 1, value);
     }
-    void setMaterialDiffuse(const btVector3 &value) {
+    void setMaterialDiffuse(const btVector4 &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
-    void setMaterialSpecular(const btVector3 &value) {
+    void setMaterialSpecular(const btVector4 &value) {
         glUniform4fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(float value) {
@@ -451,6 +388,430 @@ private:
     GLuint m_subTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
 };
+
+class AssetProgram : public ShadowProgram {
+public:
+    AssetProgram(IDelegate *delegate)
+        : ShadowProgram(delegate),
+          m_texCoordAttributeLocation(0),
+          m_normalMatrixUniformLocation(0),
+          m_transformMatrixUniformLocation(0),
+          m_materialAmbientUniformLocation(0),
+          m_materialDiffuseUniformLocation(0),
+          m_materialSpecularUniformLocation(0),
+          m_materialShininessUniformLocation(0),
+          m_hasTextureUniformLocation(0),
+          m_mainTextureUniformLocation(0)
+    {
+    }
+    ~AssetProgram() {
+        m_texCoordAttributeLocation = 0;
+        m_normalMatrixUniformLocation = 0;
+        m_transformMatrixUniformLocation = 0;
+        m_materialAmbientUniformLocation = 0;
+        m_materialDiffuseUniformLocation = 0;
+        m_materialEmissionUniformLocation = 0;
+        m_materialSpecularUniformLocation = 0;
+        m_materialShininessUniformLocation = 0;
+        m_hasTextureUniformLocation = 0;
+        m_mainTextureUniformLocation = 0;
+    }
+
+    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+        bool ret = ShadowProgram::load(vertexShaderSource, fragmentShaderSource);
+        if (ret) {
+            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
+            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
+            m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
+            m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
+            m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+            m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
+            m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
+            m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
+            m_hasTextureUniformLocation = glGetUniformLocation(m_program, "hasTexture");
+            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+        }
+        return ret;
+    }
+    void bind() {
+        ShadowProgram::bind();
+        resetTextureState();
+    }
+    void resetTextureState() {
+        glUniform1i(m_hasTextureUniformLocation, 0);
+    }
+    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_texCoordAttributeLocation);
+        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setNormalMatrix(const float value[16]) {
+        glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_TRUE, value);
+    }
+    void setTransformMatrix(const float value[16]) {
+        glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_TRUE, value);
+    }
+    void setMaterialAmbient(const btVector4 &value) {
+        glUniform4fv(m_materialAmbientUniformLocation, 1, value);
+    }
+    void setMaterialDiffuse(const btVector4 &value) {
+        glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+    }
+    void setMaterialEmission(const btVector4 &value) {
+        glUniform4fv(m_materialEmissionUniformLocation, 1, value);
+    }
+    void setMaterialSpecular(const btVector4 &value) {
+        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+    }
+    void setMaterialShininess(float value) {
+        glUniform1f(m_materialShininessUniformLocation, value);
+    }
+    void setMainTexture(GLuint value) {
+        if (value) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, value);
+            glUniform1i(m_mainTextureUniformLocation, 0);
+            glUniform1i(m_hasTextureUniformLocation, 1);
+        }
+    }
+
+private:
+    GLuint m_texCoordAttributeLocation;
+    GLuint m_normalMatrixUniformLocation;
+    GLuint m_transformMatrixUniformLocation;
+    GLuint m_materialAmbientUniformLocation;
+    GLuint m_materialDiffuseUniformLocation;
+    GLuint m_materialEmissionUniformLocation;
+    GLuint m_materialSpecularUniformLocation;
+    GLuint m_materialShininessUniformLocation;
+    GLuint m_hasTextureUniformLocation;
+    GLuint m_mainTextureUniformLocation;
+};
+
+}
+}
+
+#ifdef VPVL_LINK_ASSIMP
+namespace
+{
+struct AssetVertex
+{
+    btVector3 position;
+    btVector3 normal;
+    btVector3 texcoord;
+    btVector4 color;
+};
+struct AssetVBO
+{
+    GLuint vertices;
+    GLuint indices;
+};
+typedef btAlignedObjectArray<AssetVertex> AssetVertices;
+typedef btAlignedObjectArray<uint32_t> AssetIndices;
+}
+namespace vpvl
+{
+struct AssetUserData
+{
+    std::map<std::string, GLuint> textures;
+    std::map<const struct aiMesh *, AssetVertices> vertices;
+    std::map<const struct aiMesh *, AssetIndices> indices;
+    std::map<const struct aiMesh *, AssetVBO> vbo;
+    std::map<const struct aiNode *, vpvl::gl2::AssetProgram *> programs;
+};
+}
+namespace
+{
+
+inline void aiColor2Float4(const struct aiColor4D &color, btVector4 &dest)
+{
+    dest.setX(color.r);
+    dest.setY(color.g);
+    dest.setZ(color.b);
+    dest.setW(color.a);
+}
+
+void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData, vpvl::gl2::IDelegate *delegate)
+{
+    const uint32_t nMeshes = node->mNumMeshes;
+    AssetVertex assetVertex;
+    vpvl::gl2::AssetProgram *program = new vpvl::gl2::AssetProgram(delegate);
+    program->load(delegate->loadShader(vpvl::gl2::IDelegate::kAssetVertexShader).c_str(),
+                  delegate->loadShader(vpvl::gl2::IDelegate::kAssetFragmentShader).c_str());
+    userData->programs[node] = program;
+    for (uint32_t i = 0; i < nMeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const aiVector3D *vertices = mesh->mVertices;
+        const aiVector3D *normals = mesh->mNormals;
+        const aiColor4D *colors = mesh->mColors[0];
+        const bool hasNormals = normals ? true : false;
+        const bool hasColors = colors ? true : false;
+        const bool hasTexCoords = mesh->HasTextureCoords(0);
+        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
+        AssetVertices &assetVertices = userData->vertices[mesh];
+        AssetIndices &indices = userData->indices[mesh];
+        const uint32_t nFaces = mesh->mNumFaces;
+        uint32_t index = 0;
+        for (uint32_t j = 0; j < nFaces; j++) {
+            const struct aiFace &face = mesh->mFaces[j];
+            const uint32_t nIndices = face.mNumIndices;
+            for (uint32_t k = 0; k < nIndices; k++) {
+                int vertexIndex = face.mIndices[k];
+                if (hasColors) {
+                    const aiColor4D &c = colors[vertexIndex];
+                    assetVertex.color.setValue(c.r, c.g, c.b, c.a);
+                }
+                else {
+                    assetVertex.color.setZero();
+                    assetVertex.color.setW(0.0f);
+                }
+                if (hasTexCoords) {
+                    const aiVector3D &p = texcoords[vertexIndex];
+                    assetVertex.texcoord.setValue(p.x, 1.0f - p.y, 0.0f);
+                }
+                else {
+                    assetVertex.texcoord.setZero();
+                }
+                if (hasNormals) {
+                    const aiVector3D &n = normals[vertexIndex];
+                    assetVertex.normal.setValue(n.x, n.y, n.z);
+                }
+                else {
+                    assetVertex.normal.setZero();
+                }
+                const aiVector3D &v = vertices[vertexIndex];
+                assetVertex.position.setValue(v.x, v.y, v.z);
+                assetVertices.push_back(assetVertex);
+                indices.push_back(index);
+                index++;
+            }
+        }
+        AssetVBO &vbo = userData->vbo[mesh];
+        size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
+        glGenBuffers(1, &vbo.vertices);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].position, GL_STATIC_DRAW);
+        glGenBuffers(1, &vbo.indices);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
+    }
+    const uint32_t nChildNodes = node->mNumChildren;
+    for (uint32_t i = 0; i < nChildNodes; i++)
+        aiLoadAssetRecursive(scene, node->mChildren[i], userData, delegate);
+}
+
+void aiUnloadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData)
+{
+    const uint32_t nMeshes = node->mNumMeshes;
+    for (uint32_t i = 0; i < nMeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const AssetVBO &vbo = userData->vbo[mesh];
+        glDeleteBuffers(1, &vbo.vertices);
+        glDeleteBuffers(1, &vbo.indices);
+    }
+    delete userData->programs[node];
+    const uint32_t nChildNodes = node->mNumChildren;
+    for (uint32_t i = 0; i < nChildNodes; i++)
+        aiUnloadAssetRecursive(scene, node->mChildren[i], userData);
+}
+
+void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl2::AssetProgram *program)
+{
+    int textureIndex = 0;
+    aiString texturePath;
+    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == AI_SUCCESS) {
+        GLuint textureID = asset->userData()->textures[texturePath.data];
+        program->setMainTexture(textureID);
+    }
+    else {
+        program->setMainTexture(0);
+    }
+    aiColor4D ambient, diffuse, emission, specular;
+    btVector4 color(0.0f, 0.0f, 0.0f, 0.0f);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
+        aiColor2Float4(ambient, color);
+        program->setMaterialAmbient(color);
+    }
+    else {
+        program->setMaterialAmbient(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
+        aiColor2Float4(diffuse, color);
+        program->setMaterialDiffuse(color);
+    }
+    else {
+        program->setMaterialDiffuse(btVector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
+        aiColor2Float4(emission, color);
+        program->setMaterialEmission(color);
+    }
+    else {
+        program->setMaterialEmission(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
+    }
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
+        aiColor2Float4(specular, color);
+        program->setMaterialSpecular(color);
+    }
+    else {
+        program->setMaterialSpecular(btVector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+    float shininess, strength;
+    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
+    if (ret1 == AI_SUCCESS && ret2 == AI_SUCCESS) {
+        program->setMaterialShininess(shininess * strength);
+    }
+    else if (ret1 == AI_SUCCESS) {
+        program->setMaterialShininess(shininess);
+    }
+    else {
+        program->setMaterialShininess(0.0f);
+    }
+    int wireframe, twoside;
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS && wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == AI_SUCCESS && twoside)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
+}
+
+void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *asset, vpvl::Scene *s)
+{
+    struct aiMatrix4x4 m = node->mTransformation;
+    const btScalar &scaleFactor = asset->scaleFactor();
+    const btVector3 &pos = asset->position();
+    float matrix[16];
+    // translate
+    m.a4 = pos.x();
+    m.b4 = pos.y();
+    m.c4 = pos.z();
+    // scale
+    m.a1 = scaleFactor;
+    m.b2 = scaleFactor;
+    m.c3 = scaleFactor;
+    vpvl::AssetUserData *userData = asset->userData();
+    AssetVertex v;
+    const GLvoid *vertexPtr = 0;
+    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    // const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
+    const uint32_t nMeshes = node->mNumMeshes;
+    const size_t stride = sizeof(AssetVertex);
+    vpvl::gl2::AssetProgram *program = userData->programs[node];
+    program->bind();
+    s->getModelViewMatrix(matrix);
+    program->setModelViewMatrix(matrix);
+    s->getProjectionMatrix(matrix);
+    program->setProjectionMatrix(matrix);
+    s->getInvertedModelViewMatrix(matrix);
+    program->setNormalMatrix(matrix);
+    program->setTransformMatrix(reinterpret_cast<const float *>(&m));
+    program->setLightAmbient(s->lightAmbient());
+    program->setLightColor(s->lightColor());
+    program->setLightDiffuse(s->lightDiffuse());
+    program->setLightPosition(s->lightPosition());
+    program->setLightSpecular(s->lightSpecular());
+    for (uint32_t i = 0; i < nMeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const AssetVBO &vbo = userData->vbo[mesh];
+        const AssetIndices &indices = userData->indices[mesh];
+        aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], asset, program);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        program->setPosition(vertexPtr, stride);
+        program->setNormal(normalPtr, stride);
+        program->setTexCoord(texcoordPtr, stride);
+        //glColorPointer(4, GL_FLOAT, stride, colorPtr);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+        program->resetTextureState();
+    }
+    program->unbind();
+    const uint32_t nChildNodes = node->mNumChildren;
+    for (uint32_t i = 0; i < nChildNodes; i++)
+        aiDrawAssetRecurse(scene, node->mChildren[i], asset, s);
+}
+
+void aiDrawAsset(vpvl::Asset *asset, vpvl::Scene *s)
+{
+    const aiScene *a = asset->getScene();
+    aiDrawAssetRecurse(a, a->mRootNode, asset, s);
+}
+
+}
+#else
+VPVL_DECLARE_HANDLE(aiNode)
+VPVL_DECLARE_HANDLE(aiScene)
+namespace vpvl
+{
+    namespace gl
+    {
+    VPVL_DECLARE_HANDLE(AssetInternal)
+    }
+}
+namespace
+{
+void aiDrawAsset(vpvl::Asset *asset, vpvl::Scene *s)
+{
+    (void) asset;
+    (void) s;
+}
+}
+#endif
+
+namespace {
+
+enum VertexBufferObjectType {
+    kModelVertices,
+    kModelNormals,
+    kModelColors,
+    kModelTexCoords,
+    kModelToonTexCoords,
+    kEdgeVertices,
+    kEdgeIndices,
+    kShadowIndices,
+    kVertexBufferObjectMax
+};
+
+struct PMDModelMaterialPrivate {
+    GLuint primaryTextureID;
+    GLuint secondTextureID;
+};
+
+const std::string CanonicalizePath(const std::string &path)
+{
+    const std::string from("\\"), to("/");
+    std::string ret(path);
+    std::string::size_type pos(path.find(from));
+    while (pos != std::string::npos) {
+        ret.replace(pos, from.length(), to);
+        pos = ret.find(from, pos + to.length());
+    }
+    return ret;
+}
+
+}
+
+namespace vpvl
+{
+
+struct PMDModelUserData {
+    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
+    GLuint vertexBufferObjects[kVertexBufferObjectMax];
+    bool hasSingleSphereMap;
+    bool hasMultipleSphereMap;
+    PMDModelMaterialPrivate *materials;
+};
+
+struct XModelUserData {
+    GLuint listID;
+    vpvl::Hash<vpvl::HashString, GLuint> textures;
+};
+
+namespace gl2
+{
 
 class DebugDrawer : public btIDebugDraw
 {
@@ -754,7 +1115,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     const vpvl::MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const uint32_t nMaterials = materials.count();
-    btVector3 average, ambient, diffuse, specular;
+    btVector4 average, ambient, diffuse, specular;
     uint32_t offset = 0;
     m_modelProgram->setHasSingleSphereMap(userData->hasSingleSphereMap);
     m_modelProgram->setHasMultipleSphereMap(userData->hasMultipleSphereMap);
@@ -1012,6 +1373,7 @@ void Renderer::loadAsset(Asset *asset, const std::string &dir)
             textureIndex++;
         }
     }
+    aiLoadAssetRecursive(scene, scene->mRootNode, userData, m_delegate);
     m_assets.add(asset);
 #else
     (void) asset;
@@ -1040,6 +1402,7 @@ void Renderer::unloadAsset(Asset *asset)
                 textureIndex++;
             }
         }
+        aiUnloadAssetRecursive(scene, scene->mRootNode, userData);
         delete asset;
         delete userData;
         m_assets.remove(asset);
@@ -1048,173 +1411,6 @@ void Renderer::unloadAsset(Asset *asset)
     (void) asset;
 #endif
 }
-
-#ifdef VPVL_LINK_ASSIMP
-
-static inline void aiColor4f(const struct aiColor4D &color)
-{
-    glColor4f(color.r, color.g, color.b, color.a);
-}
-
-static inline void aiColor2Float4(const struct aiColor4D &color, float *dest)
-{
-    dest[0] = color.r;
-    dest[1] = color.g;
-    dest[2] = color.b;
-    dest[3] = color.a;
-}
-
-static void aiSetAssetMaterial(const aiMaterial *material, Asset *asset)
-{
-    int textureIndex = 0;
-    aiString texturePath;
-    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == AI_SUCCESS) {
-        GLuint textureID = asset->userData()->textures[texturePath.data];
-        glBindTexture(GL_TEXTURE_2D, textureID);
-    }
-    else {
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    aiColor4D ambient, diffuse, emission, specular;
-    float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
-        aiColor2Float4(ambient, color);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
-    }
-    else {
-        float defaultAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
-    }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
-        aiColor2Float4(diffuse, color);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
-    }
-    else {
-        float defaultDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
-    }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
-        aiColor2Float4(emission, color);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
-    }
-    else {
-        float defaultEmission[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, defaultEmission);
-    }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
-        aiColor2Float4(specular, color);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
-    }
-    else {
-        float defaultSpecular[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
-    }
-    float shininess, strength;
-    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
-    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
-    if (ret1 == AI_SUCCESS && ret2 == AI_SUCCESS) {
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess * strength);
-    }
-    else if (ret1 == AI_SUCCESS) {
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-    }
-    else {
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
-    }
-    int wireframe, twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS && wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == AI_SUCCESS && twoside)
-        glEnable(GL_CULL_FACE);
-    else
-        glDisable(GL_CULL_FACE);
-}
-
-static void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, Asset *asset)
-{
-    GLenum faceMode;
-    struct aiMatrix4x4 m = node->mTransformation;
-    const btScalar &scaleFactor = asset->scale();
-    const btVector3 &pos = asset->position();
-    // translate
-    m.a4 = pos.x();
-    m.b4 = pos.y();
-    m.c4 = pos.z();
-    // scale
-    m.a1 = scaleFactor;
-    m.b2 = scaleFactor;
-    m.c3 = scaleFactor;
-    m.Transpose();
-    glPushMatrix();
-    glMultMatrixf(reinterpret_cast<const float *>(&m));
-    const uint32_t nMeshes = node->mNumMeshes;
-    for (uint32_t i = 0; i < nMeshes; i++) {
-        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const aiVector3D *vertices = mesh->mVertices;
-        const aiVector3D *normals = mesh->mNormals;
-        const aiColor4D *colors = mesh->mColors[0];
-        const bool hasNormals = normals ? true : false;
-        const bool hasColors = colors ? true : false;
-        const bool hasTexCoords = mesh->HasTextureCoords(0);
-        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
-        aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], asset);
-        hasNormals ? glEnable(GL_LIGHTING) : glDisable(GL_LIGHTING);
-        hasColors ? glEnable(GL_COLOR_MATERIAL) : glDisable(GL_COLOR_MATERIAL);
-        const uint32_t nFaces = mesh->mNumFaces;
-        for (uint32_t j = 0; j < nFaces; j++) {
-            const struct aiFace &face = mesh->mFaces[j];
-            const uint32_t nIndices = face.mNumIndices;
-            switch (nIndices) {
-            case 1:
-                faceMode = GL_POINTS;
-                break;
-            case 2:
-                faceMode = GL_LINES;
-                break;
-            case 3:
-                faceMode = GL_TRIANGLES;
-                break;
-            default:
-                faceMode = GL_POLYGON;
-                break;
-            }
-            glBegin(faceMode);
-            for (uint32_t k = 0; k < nIndices; k++) {
-                int vertexIndex = face.mIndices[k];
-                if (hasColors)
-                    aiColor4f(colors[vertexIndex]);
-                if (hasTexCoords) {
-                    const aiVector3D &p = texcoords[vertexIndex];
-                    glTexCoord2f(p.x, 1.0f - p.y);
-                }
-                if (hasNormals)
-                    glNormal3fv(&normals[vertexIndex].x);
-                glVertex3fv(&vertices[vertexIndex].x);
-            }
-            glEnd();
-        }
-    }
-    const uint32_t nChildNodes = node->mNumChildren;
-    for (uint32_t i = 0; i < nChildNodes; i++)
-        aiDrawAssetRecurse(scene, node->mChildren[i], asset);
-    glPopMatrix();
-}
-
-void aiDrawAsset(Asset *asset)
-{
-    const aiScene *a = asset->getScene();
-    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-    aiDrawAssetRecurse(a, a->mRootNode, asset);
-    glPopAttrib();
-}
-
-#else
-
-#define aiDrawAsset(asset)
-
-#endif /* VPVL_LINK_ASSIMP */
 
 void Renderer::clearSurface()
 {
@@ -1256,7 +1452,7 @@ void Renderer::drawAssets()
 {
     uint32_t nAssets = m_assets.count();
     for (uint32_t i = 0; i < nAssets; i++) {
-        aiDrawAsset(m_assets[i]);
+        aiDrawAsset(m_assets[i], m_scene);
     }
 }
 

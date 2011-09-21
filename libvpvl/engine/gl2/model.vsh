@@ -26,8 +26,8 @@ vec2 makeSphereMap(vec3 position, vec3 normal) {
 
 void main() {
     vec4 position4 = vec4(inPosition, kOne);
-    outPosition = vec3(modelViewMatrix * position4);
-    outNormal = vec3(normalize(normalMatrix * vec4(inNormal, kOne)));
+    outPosition = (modelViewMatrix * position4).xyz;
+    outNormal = normalize(normalMatrix * vec4(inNormal, kOne)).xyz;
     outMainTexCoord = hasSingleSphereMap ? makeSphereMap(outPosition, outNormal) : inTexCoord;
     outSubTexCoord = hasMultipleSphereMap ? makeSphereMap(outPosition, outNormal) : inTexCoord;
     outToonTexCoord = inToonTexCoord;

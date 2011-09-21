@@ -37,7 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl/vpvl.h>
-#include <vpvl/gl/Renderer.h>
+#include <vpvl/gl2/Renderer.h>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -195,6 +195,12 @@ public:
     const std::string loadShader(ShaderType type) {
         std::string file;
         switch (type) {
+        case kAssetVertexShader:
+            file = "asset.vsh";
+            break;
+        case kAssetFragmentShader:
+            file = "asset.fsh";
+            break;
         case kEdgeVertexShader:
             file = "edge.vsh";
             break;
@@ -262,7 +268,9 @@ private:
 
 }
 
-static Uint32 UpdateTimer(Uint32 internal, void *data)
+namespace {
+
+Uint32 UpdateTimer(Uint32 internal, void *data)
 {
     Renderer *renderer = static_cast<Renderer *>(data);
     vpvl::Scene *scene = renderer->scene();
@@ -270,6 +278,8 @@ static Uint32 UpdateTimer(Uint32 internal, void *data)
     scene->updateProjection(0);
     scene->advanceMotion(0.5);
     return internal;
+}
+
 }
 
 class UI

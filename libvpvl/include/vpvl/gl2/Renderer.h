@@ -74,6 +74,8 @@ public:
         kEdgeFragmentShader,
         kModelVertexShader,
         kModelFragmentShader,
+        kAssetVertexShader,
+        kAssetFragmentShader,
         kShadowVertexShader,
         kShadowFragmentShader
     };

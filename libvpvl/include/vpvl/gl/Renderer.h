@@ -45,7 +45,11 @@
 #ifdef VPVL_USE_ALLEGRO5
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_opengl.h>
+#ifdef __APPLE__
+#include <OpenGL/glu.h>
+#else
 #include <GL/glu.h>
+#endif
 #else
 #include <GL/glew.h>
 #endif
