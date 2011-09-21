@@ -60,7 +60,8 @@ public:
           m_modelViewUniformLocation(0),
           m_projectionUniformLocation(0),
           m_positionAttributeLocation(0),
-          m_normalAttributeLocation(0)
+          m_normalAttributeLocation(0),
+          m_message(0)
     {
     }
     ~ShaderProgram() {
@@ -68,6 +69,8 @@ public:
             glDeleteProgram(m_program);
             m_program = 0;
         }
+        delete m_message;
+        m_message = 0;
         m_modelViewUniformLocation = 0;
         m_projectionUniformLocation = 0;
         m_positionAttributeLocation = 0;
@@ -90,10 +93,10 @@ public:
                 GLint len;
                 glGetShaderiv(program, GL_INFO_LOG_LENGTH, &len);
                 if (len > 0) {
-                    char *message = new char[len];
-                    glGetProgramInfoLog(program, len, NULL, message);
-                    m_delegate->log(IDelegate::kLogWarning, "%s", message);
-                    delete[] message;
+                    delete m_message;
+                    m_message = new char[len];
+                    glGetProgramInfoLog(program, len, NULL, m_message);
+                    m_delegate->log(IDelegate::kLogWarning, "%s", m_message);
                 }
                 glDeleteProgram(program);
                 return false;
@@ -137,7 +140,7 @@ protected:
     GLuint m_program;
 
 private:
-    GLuint compileShader(const char *source, GLenum type) const {
+    GLuint compileShader(const char *source, GLenum type) {
         GLuint shader = glCreateShader(type);
         glShaderSource(shader, 1, &source, NULL);
         glCompileShader(shader);
@@ -147,10 +150,10 @@ private:
             GLint len;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
             if (len > 0) {
-                char *message = new char[len];
-                glGetShaderInfoLog(shader, len, NULL, message);
-                m_delegate->log(IDelegate::kLogWarning, "%s", message);
-                delete[] message;
+                delete m_message;
+                m_message = new char[len];
+                glGetShaderInfoLog(shader, len, NULL, m_message);
+                m_delegate->log(IDelegate::kLogWarning, "%s", m_message);
             }
             glDeleteShader(shader);
             return 0;
@@ -163,6 +166,7 @@ private:
     GLuint m_projectionUniformLocation;
     GLuint m_positionAttributeLocation;
     GLuint m_normalAttributeLocation;
+    char *m_message;
 };
 
 class EdgeProgram : public ShaderProgram {
@@ -892,6 +896,20 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 
 Renderer::~Renderer()
 {
+    vpvl::Array<vpvl::PMDModel *> models;
+    models.copy(m_scene->models());
+    const uint32_t nModels = models.count();
+    for (uint32_t i = 0; i < nModels; i++) {
+        vpvl::PMDModel *model = models[i];
+        unloadModel(model);
+    }
+    vpvl::Array<vpvl::Asset *> assets;
+    assets.copy(m_assets);
+    const uint32_t nAssets = assets.count();
+    for (uint32_t i = 0; i < nAssets; i++) {
+        vpvl::Asset *asset = assets[i];
+        unloadAsset(asset);
+    }
     delete m_edgeProgram;
     m_edgeProgram = 0;
     delete m_modelProgram;
@@ -1040,6 +1058,7 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
     userData->materials = materialPrivates;
     model->setUserData(userData);
     m_delegate->log(IDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
+    m_scene->addModel(model);
 }
 
 void Renderer::unloadModel(const vpvl::PMDModel *model)

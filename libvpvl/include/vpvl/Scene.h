@@ -99,6 +99,9 @@ public:
     void updateModelView(int ellapsedTimeForMove);
     void updateProjection(int ellapsedTimeForMove);
 
+    const Array<PMDModel *> &models() const {
+        return m_models;
+    }
     const btVector4 &lightColor() const {
         return m_lightColor;
     }
