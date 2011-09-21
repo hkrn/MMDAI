@@ -414,17 +414,17 @@ private:
             m_model = 0;
             return false;
         }
-        m_renderer.loadModel(m_model, internal::kModelDir);
+        vpvl::Scene *scene = m_renderer.scene();
+        //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
+        scene->setWorld(m_world);
 
+        m_renderer.loadModel(m_model, internal::kModelDir);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
         loadAsset(internal::kStageDir, internal::kStageName);
         loadAsset(internal::kStageDir, internal::kStage2Name);
 #endif
-
-        vpvl::Scene *scene = m_renderer.scene();
-        scene->addModel(m_model);
 
         internal::slurpFile(internal::kMotion, m_motionData, size);
         if (!m_motion.load(m_motionData, size))
@@ -437,9 +437,6 @@ private:
             m_delegate.log(IDelegate::kLogWarning, "Failed parsing the camera motion, skipped...");
         else
             scene->setCameraMotion(&m_camera);
-
-        //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
-        scene->setWorld(m_world);
 
         return true;
     }
