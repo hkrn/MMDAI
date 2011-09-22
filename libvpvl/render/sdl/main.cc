@@ -501,9 +501,6 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
 #endif /* VPVL_NO_BULLET */
-#ifdef VPVL_LINK_ASSIMP
-    vpvl::Array<Assimp::Importer *> m_importers;
-#endif /* VPVL_LINK_ASSIMP */
     internal::Delegate m_delegate;
     Renderer m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */
