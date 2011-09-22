@@ -39,7 +39,41 @@
 #include <allegro5/allegro_opengl.h>
 
 #include <vpvl/vpvl.h>
-#include <vpvl/gl/Renderer.h>
+#include <vpvl/gl2/Renderer.h>
+
+#ifndef VPVL_NO_BULLET
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#else
+VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
+#endif
+
+#ifdef VPVL_LINK_ASSIMP
+#include <assimp.hpp>
+#include <DefaultLogger.h>
+#include <Logger.h>
+#include <aiPostProcess.h>
+#else
+VPVL_DECLARE_HANDLE(aiScene)
+#endif
+
+#if defined(VPVL_HAS_ICU)
+#include <unicode/ucnv.h>
+#elif defined(VPVL_HAS_ICONV)
+#include <iconv.h>
+#endif
+
+#ifndef VPVL_HAS_ICONV
+#define iconv_open(to, from) 0
+#define iconv_close(iconv)
+typedef void* iconv_t;
+#endif
+
+#if defined(VPVL_GL2_RENDERER_H_)
+using namespace vpvl::gl2;
+#elif defined(VPVL_GL_RENDERER_H_)
+using namespace vpvl::gl;
+#endif
 
 namespace internal
 {
@@ -49,11 +83,11 @@ static const int kHeight = 600;
 static const int kFPS = 60;
 
 static const std::string kSystemDir = "render/res/system";
-static const std::string kModelDir = "render/res/default";
+static const std::string kModelDir = "render/res/lat";
 static const std::string kStageDir = "render/res/stage";
 static const std::string kMotion = "test/res/motion.vmd";
 static const std::string kCamera = "test/res/camera.vmd";
-static const std::string kModelName = "miku.pmd";
+static const std::string kModelName = "normal.pmd";
 static const std::string kStageName = "stage.x";
 
 static const std::string concatPath(const std::string &dir, const std::string &name) {
@@ -75,7 +109,7 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
     }
 }
 
-class Delegate : public vpvl::gl::Delegate
+class Delegate : public IDelegate
 {
 public:
     Delegate(const std::string &system) : m_system(system) {
@@ -124,9 +158,81 @@ public:
         }
         return loadTexture(path, textureID);
     }
+    void log(LogLevel /* level */, const char *format, ...) {
+        va_list ap;
+        va_start(ap, format);
+        vfprintf(stderr, format, ap);
+        fprintf(stderr, "%s", "\n");
+        va_end(ap);
+    }
+#ifdef VPVL_GL2_RENDERER_H_
+    const std::string loadShader(ShaderType type) {
+        std::string file;
+        switch (type) {
+        case kAssetVertexShader:
+            file = "asset.vsh";
+            break;
+        case kAssetFragmentShader:
+            file = "asset.fsh";
+            break;
+        case kEdgeVertexShader:
+            file = "edge.vsh";
+            break;
+        case kEdgeFragmentShader:
+            file = "edge.fsh";
+            break;
+        case kModelVertexShader:
+            file = "model.vsh";
+            break;
+        case kModelFragmentShader:
+            file = "model.fsh";
+            break;
+        case kShadowVertexShader:
+            file = "shadow.vsh";
+            break;
+        case kShadowFragmentShader:
+            file = "shadow.fsh";
+            break;
+        }
+        uint8_t *data;
+        size_t size;
+        std::string path = m_system + "/" + file;
+        slurpFile(path, data, size);
+        log(kLogInfo, "Loaded a shader: %s", path.c_str());
+        return std::string(reinterpret_cast<const char *>(data), size);
+    }
+#endif
     const std::string toUnicode(const uint8_t *value) {
-        /* do nothing */
+#if defined(VPVL_HAS_ICU)
+        UnicodeString str(reinterpret_cast<const char *>(value), "shift_jis");
+        size_t inlen = str.length(), outlen = inlen * 3;
+        char *dest = new char[outlen];
+        size_t size = str.extract(0, inlen, dest, outlen, "utf-8");
+        dest[size] = '\0';
+        std::string result(dest);
+        delete[] dest;
+        return result;
+#elif defined(VPVL_HAS_ICONV)
+        char *inbuf = strdup(reinterpret_cast<const char *>(value)), *pinbuf = inbuf;
+        size_t inbuflen = strlen(inbuf), outbuflen = inbuflen * 3;
+        char *outbuf = new char[outbuflen], *poutbuf = outbuf;
+        if (iconv(m_iconv, &inbuf, &inbuflen, &outbuf, &outbuflen) >= 0) {
+            *outbuf = '\0';
+        }
+        else {
+            free(pinbuf);
+            delete[] poutbuf;
+            log(kLogWarning, "Cannot convert string: %s", inbuf);
+            return std::string("");
+        }
+        size_t len = strlen(poutbuf);
+        std::string result(poutbuf);
+        free(pinbuf);
+        delete[] poutbuf;
+        return result;
+#else
         return reinterpret_cast<const char *>(value);
+#endif
     }
 
 private:
@@ -140,19 +246,17 @@ class UI
 public:
     UI(int argc, char **argv)
         : m_delegate(internal::kSystemDir),
-          m_renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS),
+          m_renderer(0),
           m_display(NULL),
           m_queue(NULL),
           m_modelData(0),
           m_argc(argc),
           m_argv(argv)
     {
-        if (!al_init()) {
-            fprintf(stderr, "failed initializing allegro5\n");
-            abort();
-        }
+        m_renderer = new Renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS);
     }
     ~UI() {
+        delete m_renderer;
         al_destroy_event_queue(m_queue);
         al_uninstall_keyboard();
         al_uninstall_system();
@@ -160,8 +264,13 @@ public:
     }
 
     bool initialize() {
+        if (!al_init()) {
+            fprintf(stderr, "failed initializing allegro5\n");
+            abort();
+        }
         al_install_keyboard();
         al_init_image_addon();
+
         al_set_new_display_flags(ALLEGRO_OPENGL);
         al_set_new_display_option(ALLEGRO_RED_SIZE, 8, ALLEGRO_SUGGEST);
         al_set_new_display_option(ALLEGRO_GREEN_SIZE, 8, ALLEGRO_SUGGEST);
@@ -176,21 +285,26 @@ public:
             fprintf(stderr, "failed initializing display\n");
             return false;
         }
+#ifdef VPVL_GL2_RENDERER_H_
+        m_renderer->createPrograms();
+#endif
+
         m_queue = al_create_event_queue();
         m_timer = al_create_timer(1.0 / internal::kFPS);
         al_register_event_source(m_queue, al_get_keyboard_event_source());
         al_register_event_source(m_queue, al_get_display_event_source(m_display));
         al_register_event_source(m_queue, al_get_timer_event_source(m_timer));
+
         size_t size = 0;
         internal::slurpFile(internal::concatPath(internal::kModelDir, internal::kModelName), m_modelData, size);
-        if (!m_model.load(m_modelData, size)) {
+        vpvl::PMDModel *model = new vpvl::PMDModel();
+        if (!model->load(m_modelData, size)) {
             fprintf(stderr, "Failed parsing the model\n");
+            delete model;
             return false;
         }
-        m_renderer.loadModel(&m_model, internal::kModelDir);
-        vpvl::Scene *scene = m_renderer.scene();
-        m_renderer.setLighting();
-        scene->addModel(&m_model);
+        m_renderer->loadModel(model, internal::kModelDir);
+
         return true;
     }
     int execute() {
@@ -214,25 +328,25 @@ public:
             draw();
             al_flip_display();
         }
+        al_stop_timer(m_timer);
         return 0;
     }
 
 protected:
     virtual void update() {
-        vpvl::Scene *scene = m_renderer.scene();
-        scene->updateModelView(0.5);
+        vpvl::Scene *scene = m_renderer->scene();
+        scene->updateModelView(0.0);
         scene->updateProjection(0);
-        scene->update(0);
+        scene->advanceMotion(0.0f);
     }
     virtual void draw() {
-        m_renderer.initializeSurface();
-        m_renderer.drawSurface();
+        m_renderer->initializeSurface();
+        m_renderer->drawSurface();
     }
 
 private:
     internal::Delegate m_delegate;
-    vpvl::gl::Renderer m_renderer;
-    vpvl::PMDModel m_model;
+    Renderer *m_renderer;
     ALLEGRO_DISPLAY *m_display;
     ALLEGRO_EVENT_QUEUE *m_queue;
     ALLEGRO_TIMER *m_timer;
