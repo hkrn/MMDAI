@@ -293,7 +293,7 @@ public:
           m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0f, 400.0f), 1024),
       #endif /* VPVL_NO_BULLET */
           m_delegate(internal::kSystemDir),
-          m_renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS),
+          m_renderer(0),
           m_model(0),
           m_modelData(0),
           m_motionData(0),
@@ -302,6 +302,7 @@ public:
           m_argc(argc),
           m_argv(argv)
     {
+        m_renderer = new Renderer(&m_delegate, internal::kWidth, internal::kHeight, internal::kFPS);
 #ifndef VPVL_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
         m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
@@ -309,11 +310,10 @@ public:
 #endif /* VPVL_NO_BULLET */
     }
     ~UI() {
-        m_renderer.unloadModel(m_model);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::DefaultLogger::kill();
 #endif
-        delete m_model;
+        delete m_renderer;
         delete m_world;
         delete[] m_modelData;
         delete[] m_motionData;
@@ -345,9 +345,8 @@ public:
         }
 
 #ifdef VPVL_GL2_RENDERER_H_
-        m_renderer.createPrograms();
+        m_renderer->createPrograms();
 #endif
-
         if (!loadScene())
             return false;
 
@@ -355,7 +354,7 @@ public:
     }
     int execute() {
         uint32_t interval = static_cast<uint32_t>(1000.0f / internal::kFPS);
-        SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, &m_renderer);
+        SDL_TimerID timerID = SDL_AddTimer(interval, UpdateTimer, m_renderer);
         bool quit = false;
         while (true) {
             pollEvent(quit);
@@ -371,8 +370,8 @@ public:
 protected:
     virtual void draw() {
         glClearColor(0, 0, 1, 1);
-        m_renderer.initializeSurface();
-        m_renderer.drawSurface();
+        m_renderer->initializeSurface();
+        m_renderer->drawSurface();
     }
 
 private:
@@ -407,18 +406,17 @@ private:
     bool loadScene() {
         size_t size = 0;
         internal::slurpFile(internal::concatPath(internal::kModelDir, internal::kModelName), m_modelData, size);
-        m_model = new vpvl::PMDModel();
-        if (!m_model->load(m_modelData, size)) {
+        vpvl::PMDModel *model = new vpvl::PMDModel();
+        if (!model->load(m_modelData, size)) {
             m_delegate.log(IDelegate::kLogWarning, "Failed parsing the model");
-            delete m_model;
-            m_model = 0;
+            delete model;
             return false;
         }
-        vpvl::Scene *scene = m_renderer.scene();
+        vpvl::Scene *scene = m_renderer->scene();
         //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
         scene->setWorld(m_world);
 
-        m_renderer.loadModel(m_model, internal::kModelDir);
+        m_renderer->loadModel(model, internal::kModelDir);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
@@ -444,7 +442,7 @@ private:
         vpvl::Asset *asset = new vpvl::Asset();
         const std::string path = internal::concatPath(dir, name);
         if (asset->load(path.c_str())) {
-            m_renderer.loadAsset(asset, dir);
+            m_renderer->loadAsset(asset, dir);
             return asset;
         }
         else {
@@ -473,12 +471,12 @@ private:
             }
             case SDL_VIDEORESIZE: {
                 const SDL_ResizeEvent &e = event.resize;
-                m_renderer.resize(e.w, e.h);
+                m_renderer->resize(e.w, e.h);
             }
             case SDL_MOUSEMOTION: {
                 const SDL_MouseMotionEvent &e = event.motion;
                 if (e.state == SDL_PRESSED) {
-                    vpvl::Scene *scene = m_renderer.scene();
+                    vpvl::Scene *scene = m_renderer->scene();
                     btVector3 pos = scene->position(), angle = scene->angle();
                     float fovy = scene->fovy(), distance = scene->distance();
                     angle.setValue(angle.x() + e.yrel, angle.y() + e.xrel, angle.z());
@@ -502,7 +500,7 @@ private:
     btSequentialImpulseConstraintSolver m_solver;
 #endif /* VPVL_NO_BULLET */
     internal::Delegate m_delegate;
-    Renderer m_renderer;
+    Renderer *m_renderer;
     vpvl::PMDModel *m_model; /* for destruction order problem with btDiscreteDynamicsWorld */
     vpvl::VMDMotion m_motion;
     vpvl::VMDMotion m_camera;
