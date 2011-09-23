@@ -15,7 +15,7 @@ exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
 # Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lassimp
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 win32:LIBS += -lglew32
 unix:LIBS += -lGLEW
 

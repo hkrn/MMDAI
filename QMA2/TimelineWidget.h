@@ -12,10 +12,6 @@ class VMDMotion;
 class VPDPose;
 }
 
-namespace internal {
-class TimelineTableModel;
-}
-
 class MotionBaseModel;
 
 class QTableView;

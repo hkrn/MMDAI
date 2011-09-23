@@ -76,6 +76,48 @@ bool Delegate::loadToonTexture(const std::string &name, const std::string &dir, 
     return loadTexture(std::string(path.toUtf8()), textureID);
 }
 
+
+const std::string Delegate::loadShader(ShaderType type) {
+    QString filename;
+    switch (type) {
+    case kAssetVertexShader:
+        filename = "asset.vsh";
+        break;
+    case kAssetFragmentShader:
+        filename = "asset.fsh";
+        break;
+    case kEdgeVertexShader:
+        filename = "edge.vsh";
+        break;
+    case kEdgeFragmentShader:
+        filename = "edge.fsh";
+        break;
+    case kModelVertexShader:
+        filename = "model.vsh";
+        break;
+    case kModelFragmentShader:
+        filename = "model.fsh";
+        break;
+    case kShadowVertexShader:
+        filename = "shadow.vsh";
+        break;
+    case kShadowFragmentShader:
+        filename = "shadow.fsh";
+        break;
+    }
+    const QString path = QString(":/shaders/%1").arg(filename);
+    QFile file(path);
+    if (file.open(QFile::ReadOnly)) {
+        QByteArray bytes = file.readAll();
+        file.close();
+        log(kLogInfo, "Loaded a shader: %s", qPrintable(path));
+        return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+    }
+    else {
+        return std::string();
+    }
+}
+
 void Delegate::log(LogLevel level, const char *format...)
 {
     QString message;

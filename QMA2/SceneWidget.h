@@ -47,7 +47,7 @@
 #include <vpvl/Bone.h>
 
 namespace vpvl {
-namespace gl {
+namespace gl2 {
 class Renderer;
 }
 class Asset;
@@ -166,7 +166,7 @@ private:
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
-    vpvl::gl::Renderer *m_renderer;
+    vpvl::gl2::Renderer *m_renderer;
     vpvl::Bone *m_bone;
     Delegate *m_delegate;
     SceneLoader *m_loader;

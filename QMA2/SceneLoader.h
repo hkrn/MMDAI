@@ -44,7 +44,7 @@
 
 namespace vpvl
 {
-namespace gl
+namespace gl2
 {
 class Renderer;
 }
@@ -62,7 +62,7 @@ public:
     typedef QHash<QString, vpvl::Asset *> AssetList;
     typedef QMultiHash<vpvl::PMDModel *, vpvl::VMDMotion *> MotionList;
 
-    explicit SceneLoader(vpvl::gl::Renderer *renderer);
+    explicit SceneLoader(vpvl::gl2::Renderer *renderer);
     ~SceneLoader();
 
     bool deleteAsset(vpvl::Asset *asset);
@@ -86,7 +86,7 @@ private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
     void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
 
-    vpvl::gl::Renderer *m_renderer;
+    vpvl::gl2::Renderer *m_renderer;
     vpvl::VMDMotion *m_camera;
     ModelList m_models;
     AssetList m_assets;

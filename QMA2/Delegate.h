@@ -40,11 +40,11 @@
 #include <GL/glew.h>
 #include <QtCore/QString>
 #include <QtGui/QImage>
-#include <vpvl/gl/Renderer.h>
+#include <vpvl/gl2/Renderer.h>
 
 class QGLWidget;
 
-class Delegate : public vpvl::gl::IDelegate
+class Delegate : public vpvl::gl2::IDelegate
 {
 public:
     explicit Delegate(QGLWidget *wiget);
@@ -53,6 +53,7 @@ public:
     bool loadTexture(const std::string &path, GLuint &textureID);
     bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID);
     void log(LogLevel level, const char *format...);
+    const std::string loadShader(ShaderType type);
     const std::string toUnicode(const uint8_t *value);
 
 private:

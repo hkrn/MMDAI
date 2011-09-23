@@ -40,9 +40,9 @@
 
 #include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
-#include <vpvl/gl/Renderer.h>
+#include <vpvl/gl2/Renderer.h>
 
-SceneLoader::SceneLoader(vpvl::gl::Renderer *renderer)
+SceneLoader::SceneLoader(vpvl::gl2::Renderer *renderer)
     : m_renderer(renderer),
       m_camera(0)
 {
@@ -196,7 +196,6 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
         model = new vpvl::PMDModel();
         if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             m_renderer->loadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
-            m_renderer->scene()->addModel(model);
             QString key = internal::toQString(model);
             qDebug() << key << baseName;
             if (m_models.contains(key)) {
@@ -283,14 +282,6 @@ void SceneLoader::release()
         vpvl::VMDMotion *motion = i.value();
         model->removeMotion(motion);
         delete motion;
-    }
-    foreach (vpvl::PMDModel *model, m_models) {
-        m_renderer->unloadModel(model);
-        delete model;
-    }
-    foreach (vpvl::Asset *asset, m_assets) {
-        m_renderer->unloadAsset(asset);
-        delete asset;
     }
     m_models.clear();
     m_motions.clear();

@@ -6,7 +6,7 @@
 #include <vpvl/vpvl.h>
 #include "util.h"
 
-namespace internal {
+namespace {
 
 class TimelineItemDelegate : public QItemDelegate {
 public:
@@ -34,9 +34,9 @@ public:
     }
 };
 
-class TableView : public QTableView {
+class TimelineTableView : public QTableView {
 public:
-    TableView(QWidget *parent = 0) : QTableView(parent) {
+    TimelineTableView(QWidget *parent = 0) : QTableView(parent) {
     }
 protected:
     int sizeHintForColumn(int /* column */) const {
@@ -51,10 +51,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QWidget(parent),
     m_tableView(0)
 {
-    m_tableView = new internal::TableView();
+    m_tableView = new TimelineTableView();
     m_tableView->setShowGrid(true);
     m_tableView->setModel(base);
-    internal::TimelineItemDelegate *delegate = new internal::TimelineItemDelegate(this);
+    TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     m_tableView->horizontalHeader()->setResizeMode(QHeaderView::Fixed);
     m_tableView->setItemDelegate(delegate);
     m_tableView->resizeColumnsToContents();

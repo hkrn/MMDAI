@@ -47,7 +47,7 @@
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
-#include <vpvl/gl/Renderer.h>
+#include <vpvl/gl2/Renderer.h>
 #include "util.h"
 
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
@@ -509,7 +509,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
     GLenum err;
-    if (!vpvl::gl::Renderer::initializeGLEW(err))
+    if (!vpvl::gl2::Renderer::initializeGLEW(err))
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
@@ -517,10 +517,11 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-    m_renderer = new vpvl::gl::Renderer(m_delegate, width(), height(), m_defaultFPS);
+    m_renderer = new vpvl::gl2::Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
     m_grid->initialize();
+    m_renderer->createPrograms();
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
     if (m_playing)
