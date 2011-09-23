@@ -83,7 +83,7 @@ Scene::Scene(int width, int height, int fps)
       m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lightPosition(0.5f, 1.0f, 0.5f),
       m_lightAmbient(1.2f, 1.2f, 1.2f, 1.0f),
-      m_lightDiffuse(0.0f, 0.0f, 0.0f, 0.0f),
+      m_lightDiffuse(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightSpecular(0.6f, 0.6f, 0.6f, 1.0f),
       m_currentPosition(0.0f, 10.0f, 0.0f),
       m_position(m_currentPosition),
