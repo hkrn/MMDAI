@@ -4,9 +4,11 @@ uniform mat4 modelViewMatrix;
 uniform mat4 normalMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 transformMatrix;
+attribute vec4 inColor;
 attribute vec3 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
+varying vec4 outColor;
 varying vec3 outPosition;
 varying vec3 outNormal;
 varying vec2 outTexCoord;
@@ -18,6 +20,7 @@ void main() {
     mat4 transformedNormalMatrix = normalMatrix * transformMatrix;
     outPosition = (transformedModelViewMatrix * position4).xyz;
     outNormal = normalize(transformedNormalMatrix * vec4(inNormal, kOne)).xyz;
+    outColor = inColor;
     outTexCoord = inTexCoord;
     gl_Position = projectionMatrix * transformedModelViewMatrix * position4;
 }

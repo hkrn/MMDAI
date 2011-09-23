@@ -1,4 +1,4 @@
-/* Phong shading implementation for model fragment shader */
+/* Phong shading implementation for asset fragment shader */
 
 uniform vec4 lightColor;
 uniform vec3 lightPosition;
@@ -12,6 +12,7 @@ uniform vec4 materialSpecular;
 uniform float materialShininess;
 uniform bool hasTexture;
 uniform sampler2D mainTexture;
+varying vec4 outColor;
 varying vec3 outPosition;
 varying vec3 outNormal;
 varying vec2 outTexCoord;
@@ -21,7 +22,7 @@ void main() {
     vec3 normal = normalize(outNormal);
     vec3 light = normalize(lightPosition - outPosition);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightAmbient * materialAmbient + materialEmission;
+    vec4 color = lightAmbient * materialAmbient + outColor + materialEmission;
     if (diffuse != kZero) {
         vec3 view = normalize(outPosition);
         vec3 halfway = normalize(light - view);

@@ -69,7 +69,7 @@ public:
             glDeleteProgram(m_program);
             m_program = 0;
         }
-        delete m_message;
+        delete[] m_message;
         m_message = 0;
         m_modelViewUniformLocation = 0;
         m_projectionUniformLocation = 0;
@@ -93,7 +93,7 @@ public:
                 GLint len;
                 glGetShaderiv(program, GL_INFO_LOG_LENGTH, &len);
                 if (len > 0) {
-                    delete m_message;
+                    delete[] m_message;
                     m_message = new char[len];
                     glGetProgramInfoLog(program, len, NULL, m_message);
                     m_delegate->log(IDelegate::kLogWarning, "%s", m_message);
@@ -150,7 +150,7 @@ private:
             GLint len;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
             if (len > 0) {
-                delete m_message;
+                delete[] m_message;
                 m_message = new char[len];
                 glGetShaderInfoLog(shader, len, NULL, m_message);
                 m_delegate->log(IDelegate::kLogWarning, "%s", m_message);
@@ -398,6 +398,7 @@ public:
     AssetProgram(IDelegate *delegate)
         : ShadowProgram(delegate),
           m_texCoordAttributeLocation(0),
+          m_colorAttributeLocation(0),
           m_normalMatrixUniformLocation(0),
           m_transformMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
@@ -410,6 +411,7 @@ public:
     }
     ~AssetProgram() {
         m_texCoordAttributeLocation = 0;
+        m_colorAttributeLocation = 0;
         m_normalMatrixUniformLocation = 0;
         m_transformMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
@@ -425,6 +427,7 @@ public:
         bool ret = ShadowProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
+            m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
             m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
@@ -447,6 +450,10 @@ public:
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_texCoordAttributeLocation);
         glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setColor(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_colorAttributeLocation);
+        glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setNormalMatrix(const float value[16]) {
         glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_TRUE, value);
@@ -480,6 +487,7 @@ public:
 
 private:
     GLuint m_texCoordAttributeLocation;
+    GLuint m_colorAttributeLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_transformMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
@@ -566,7 +574,7 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
                 }
                 else {
                     assetVertex.color.setZero();
-                    assetVertex.color.setW(0.0f);
+                    assetVertex.color.setW(1.0f);
                 }
                 if (hasTexCoords) {
                     const aiVector3D &p = texcoords[vertexIndex];
@@ -701,7 +709,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     const GLvoid *vertexPtr = 0;
     const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
-    // const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
     const uint32_t nMeshes = node->mNumMeshes;
     const size_t stride = sizeof(AssetVertex);
     vpvl::gl2::AssetProgram *program = userData->programs[node];
@@ -727,7 +735,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
         program->setPosition(vertexPtr, stride);
         program->setNormal(normalPtr, stride);
         program->setTexCoord(texcoordPtr, stride);
-        //glColorPointer(4, GL_FLOAT, stride, colorPtr);
+        program->setColor(colorPtr, stride);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         program->resetTextureState();
