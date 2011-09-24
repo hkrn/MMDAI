@@ -13,6 +13,10 @@ public:
     TimelineItemDelegate(QObject *parent = 0) : QItemDelegate(parent) {
     }
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+        if (index.column() == 0) {
+            QItemDelegate::paint(painter, option, index);
+            return;
+        }
         if (index.column() % 5 == 0 && !(option.state & QStyle::State_Selected))
             painter->fillRect(option.rect, qApp->palette().alternateBase());
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
@@ -34,13 +38,9 @@ public:
     }
 };
 
-class TimelineTableView : public QTableView {
+class TimelineTreeView : public QTreeView {
 public:
-    TimelineTableView(QWidget *parent = 0) : QTableView(parent) {
-    }
-protected:
-    int sizeHintForColumn(int /* column */) const {
-        return 16;
+    TimelineTreeView(QWidget *parent = 0) : QTreeView(parent) {
     }
 };
 
@@ -49,41 +49,38 @@ protected:
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                QWidget *parent) :
     QWidget(parent),
-    m_tableView(0)
+    m_treeView(0)
 {
-    m_tableView = new TimelineTableView();
-    m_tableView->setShowGrid(true);
-    m_tableView->setModel(base);
+    m_treeView = new TimelineTreeView();
+    m_treeView->setModel(base);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
-    m_tableView->horizontalHeader()->setResizeMode(QHeaderView::Fixed);
-    m_tableView->setItemDelegate(delegate);
-    m_tableView->resizeColumnsToContents();
-    connect(m_tableView->selectionModel(),
+    m_treeView->setItemDelegate(delegate);
+    connect(m_treeView->selectionModel(),
             SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(setCurrentIndex(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->columnCount());
-    connect(m_spinBox, SIGNAL(valueChanged(int)), m_tableView, SLOT(selectColumn(int)));
+    connect(m_spinBox, SIGNAL(valueChanged(int)), m_treeView, SLOT(selectColumn(int)));
     spinboxLayout->addSpacing(250);
     spinboxLayout->addWidget(new QLabel(tr("Frame index")));
     spinboxLayout->addWidget(m_spinBox);
     spinboxLayout->addSpacing(250);
     layout->addLayout(spinboxLayout);
-    layout->addWidget(m_tableView);
+    layout->addWidget(m_treeView);
     layout->setContentsMargins(QMargins());
     setLayout(layout);
 }
 
 TimelineWidget::~TimelineWidget()
 {
-    delete m_tableView;
+    delete m_treeView;
 }
 
 const QModelIndex TimelineWidget::selectedIndex() const
 {
-    QModelIndexList indices = m_tableView->selectionModel()->selectedIndexes();
+    QModelIndexList indices = m_treeView->selectionModel()->selectedIndexes();
     if (!indices.isEmpty()) {
         QModelIndex index = indices.first();
         if (index.isValid())

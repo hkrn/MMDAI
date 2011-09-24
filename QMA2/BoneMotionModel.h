@@ -5,6 +5,7 @@
 #include <LinearMath/btVector3.h>
 #include <LinearMath/btQuaternion.h>
 
+class BoneTreeItem;
 class SceneWidget;
 class VPDFile;
 
@@ -25,9 +26,17 @@ public:
         kRotation
     };
     typedef QPair<int, vpvl::Bone *> Frame;
+    typedef QMap<QString, BoneTreeItem *> Keys;
+    typedef QHash<QModelIndex, QVariant> Values;
 
     BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent = 0);
     ~BoneMotionModel();
+
+    QVariant data(const QModelIndex &index, int role) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    QModelIndex parent(const QModelIndex &child) const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
@@ -49,6 +58,8 @@ public:
     QList<vpvl::Bone *> bonesByIndices(const QModelIndexList &indices) const;
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
+    const QModelIndex frameToIndex(BoneTreeItem *item, int frameIndex) const;
+    const Keys keys() const { return m_keys[m_model]; }
     vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
 
@@ -65,11 +76,14 @@ signals:
 
 protected:
     void clearKeys();
+    void clearValues();
 
 private:
     const QMatrix4x4 modelviewMatrix() const;
 
-    QList<vpvl::Bone *> m_bones;
+    BoneTreeItem *m_root;
+    QHash<vpvl::PMDModel *, Keys> m_keys;
+    QHash<vpvl::PMDModel *, Values> m_values;
     QList<vpvl::Bone *> m_selected;
     const SceneWidget *m_sceneWidget;
     vpvl::PMDModel::State *m_state;

@@ -103,6 +103,49 @@ FaceMotionModel::~FaceMotionModel()
 {
 }
 
+int FaceMotionModel::rowCount(const QModelIndex & /* parent */) const
+{
+    return keys().count();
+}
+
+QVariant FaceMotionModel::data(const QModelIndex &index, int role) const
+{
+    if (index.isValid()) {
+        switch(role) {
+        case kBinaryDataRole:
+            return values().value(QPair<int, int>(index.column(), index.row()));
+        case kNameRole:
+        case Qt::DisplayRole:
+            return keys()[index.row()];
+        }
+    }
+    return QVariant();
+}
+
+bool FaceMotionModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (m_model && index.isValid() && role == Qt::EditRole) {
+        m_values[m_model].insert(QPair<int, int>(index.column(), index.row()), value);
+        setModified(true);
+        emit dataChanged(index, index);
+        return true;
+    }
+    return false;
+}
+
+QVariant FaceMotionModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (!m_model || role != Qt::DisplayRole)
+        return QVariant();
+    switch (orientation) {
+    case Qt::Vertical:
+        return keys()[section];
+    case Qt::Horizontal:
+        return " "; //QString("%1").setNum(section + 1);
+    }
+    return QVariant();
+}
+
 void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
     if (m_model) {
@@ -311,5 +354,12 @@ void FaceMotionModel::setWeight(float value, vpvl::Face *face)
 void FaceMotionModel::clearKeys()
 {
     m_faces.clear();
-    MotionBaseModel::clearKeys();
+    m_keys[m_model].clear();
+    m_keys.remove(m_model);
+}
+
+void FaceMotionModel::clearValues()
+{
+    m_values[m_model].clear();
+    m_values.remove(m_model);
 }

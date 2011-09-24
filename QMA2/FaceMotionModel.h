@@ -8,10 +8,18 @@ class FaceMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
+    typedef QStringList Keys;
+    typedef QHash< QPair<int, int>, QVariant > Values;
+
     typedef QPair<int, vpvl::Face *> Frame;
 
     FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~FaceMotionModel();
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
@@ -27,6 +35,11 @@ public:
     void setWeight(float value);
     void setWeight(float value, vpvl::Face *face);
 
+    const Keys keys() const { return keys(m_model); }
+    const Keys keys(vpvl::PMDModel *model) const { return m_keys[model]; }
+    const Values values() const { return values(m_model); }
+    const Values values(vpvl::PMDModel *model) const { return m_values[model]; }
+
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
@@ -36,8 +49,12 @@ public slots:
 
 protected:
     void clearKeys();
+    void clearValues();
+    void appendKey(const QString &key, vpvl::PMDModel *model) { m_keys[model].append(key); }
 
 private:
+    QHash<vpvl::PMDModel *, Keys> m_keys;
+    QHash<vpvl::PMDModel *, Values> m_values;
     QList<vpvl::Face *> m_faces;
     QList<vpvl::Face *> m_selected;
     vpvl::PMDModel::State *m_state;

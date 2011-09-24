@@ -2,6 +2,7 @@
 #define GRID_H
 
 #include <GL/glew.h>
+#include <vpvl/Scene.h>
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
 
@@ -75,9 +76,17 @@ public:
         glEndList();
     }
 
-    void draw() const {
-        if (m_enabled)
+    void draw(vpvl::Scene *scene) const {
+        if (m_enabled) {
+            float modelview[16], projection[16];
+            glMatrixMode(GL_PROJECTION);
+            scene->getProjectionMatrix(projection);
+            glLoadMatrixf(projection);
+            glMatrixMode(GL_MODELVIEW);
+            scene->getModelViewMatrix(modelview);
+            glLoadMatrixf(modelview);
             glCallList(m_list);
+        }
     }
 
     bool isEnabled() const {

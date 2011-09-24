@@ -563,7 +563,7 @@ void SceneWidget::paintGL()
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
-    m_grid->draw();
+    m_grid->draw(m_renderer->scene());
     // pre shadow
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, ~0);

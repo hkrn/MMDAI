@@ -14,7 +14,7 @@ class VPDPose;
 
 class MotionBaseModel;
 
-class QTableView;
+class QTreeView;
 class QSettings;
 class QSpinBox;
 
@@ -27,7 +27,7 @@ public:
     ~TimelineWidget();
 
     const QModelIndex selectedIndex() const;
-    QTableView *tableView() const { return m_tableView; }
+    QTreeView *tableView() const { return m_treeView; }
 
 public slots:
     void setCurrentIndex(const QModelIndex index);
@@ -38,7 +38,7 @@ signals:
 private:
     QSettings *m_settings;
     QSpinBox *m_spinBox;
-    QTableView *m_tableView;
+    QTreeView *m_treeView;
 };
 
 #endif // TIMLINEWIDGET_H
