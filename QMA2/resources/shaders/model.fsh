@@ -24,17 +24,22 @@ varying vec2 outToonTexCoord;
 const float kZero = 0.0;
 const float kAlphaThreshold = 0.05;
 
+// parameter adjustment (depends on toon shading)
+const vec4 kAmbient = vec4(1.5, 1.5, 1.5, 1.0);
+const vec4 kDiffuse = vec4(0.0, 0.0, 0.0, 1.0);
+const vec4 kSpecular = vec4(0.75, 0.75, 0.75, 1.0);
+
 void main() {
     vec3 normal = normalize(outNormal);
     vec3 light = normalize(lightPosition - outPosition);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightAmbient * materialAmbient;
+    vec4 color = kAmbient * lightAmbient * materialAmbient;
     if (diffuse != kZero) {
         vec3 view = normalize(outPosition);
         vec3 halfway = normalize(light - view);
         float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
-        color += (lightDiffuse * materialDiffuse) * diffuse
-               + (lightSpecular * materialSpecular) * specular;
+        color += (kDiffuse * lightDiffuse * materialDiffuse) * diffuse
+              + (kSpecular * lightSpecular * materialSpecular) * specular;
     }
     if (hasMainTexture) {
         if (isMainAdditive) {
