@@ -17,16 +17,17 @@ public:
             QItemDelegate::paint(painter, option, index);
             return;
         }
-        if (index.column() % 5 == 0 && !(option.state & QStyle::State_Selected))
+        // column index 0 is row header
+        if ((index.column() - 1) % 5 == 0)
             painter->fillRect(option.rect, qApp->palette().alternateBase());
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
             painter->setPen(Qt::NoPen);
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(option.palette.foreground());
             const QRect &rect = option.rect;
-            int width = rect.width();
+            int width = rect.height();
             int height = width;
-            int xoffset = rect.x();
+            int xoffset = rect.x() + ((rect.width() - width) / 2);
             int yoffset = rect.y() + ((rect.height() - height) / 2);
             QPolygon polygon;
             polygon.append(QPoint(xoffset, yoffset + height / 2));
@@ -41,6 +42,8 @@ public:
 class TimelineTreeView : public QTreeView {
 public:
     TimelineTreeView(QWidget *parent = 0) : QTreeView(parent) {
+        setExpandsOnDoubleClick(true);
+        setUniformRowHeights(true);
     }
 };
 
@@ -53,6 +56,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
 {
     m_treeView = new TimelineTreeView();
     m_treeView->setModel(base);
+    QHeaderView *header = m_treeView->header();
+    header->setResizeMode(QHeaderView::Fixed);
+    header->setResizeMode(0, QHeaderView::ResizeToContents);
+    header->setDefaultSectionSize(15);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     m_treeView->setItemDelegate(delegate);
     connect(m_treeView->selectionModel(),
@@ -91,7 +98,7 @@ const QModelIndex TimelineWidget::selectedIndex() const
 
 void TimelineWidget::setCurrentIndex(const QModelIndex index)
 {
-    int frameIndex = index.column();
+    int frameIndex = qMax(index.column() - 1, 0);
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
 }

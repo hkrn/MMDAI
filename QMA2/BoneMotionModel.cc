@@ -4,7 +4,8 @@
 #include "util.h"
 #include <vpvl/vpvl.h>
 
-class BoneTreeItem {
+class BoneTreeItem
+{
 public:
     BoneTreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, BoneTreeItem *parent)
         : m_name(name),
@@ -823,7 +824,8 @@ const QModelIndex BoneMotionModel::frameToIndex(BoneTreeItem *item, int frameInd
 {
     int rowIndex = item->rowIndex();
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
-    const QModelIndex modelIndex = index(rowIndex, frameIndex, parentIndex);
+    // column index 0 is row header
+    const QModelIndex modelIndex = index(rowIndex, frameIndex + 1, parentIndex);
     if (!modelIndex.isValid())
         createIndex(rowIndex, frameIndex, item);
     return modelIndex;
