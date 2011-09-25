@@ -108,6 +108,7 @@ public slots:
     void resetCamera();
     void setLightColor(const btVector4 &color);
     void setLightPosition(const btVector3 &position);
+    const QPointF objectCoordinates(const QPoint &input);
 
     void rotate(float x, float y);
     void translate(float x, float y);

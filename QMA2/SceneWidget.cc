@@ -413,6 +413,35 @@ void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
+const QPointF SceneWidget::objectCoordinates(const QPoint &input)
+{
+    // This implementation based on the below page.
+    // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
+    vpvl::Scene *scene = m_renderer->scene();
+    float modelviewMatrixf[16], projectionMatrixf[16];
+    GLdouble modelviewMatrixd[16], projectionMatrixd[16];
+    const GLint viewport[4] = { 0, 0, width(), height() };
+    scene->getModelViewMatrix(modelviewMatrixf);
+    scene->getProjectionMatrix(projectionMatrixf);
+    for (int i = 0; i < 16; i++) {
+        modelviewMatrixd[i] = modelviewMatrixf[i];
+        projectionMatrixd[i] = projectionMatrixf[i];
+    }
+    int wx = input.x(), wy = width() - input.y();
+    double cx, cy, cz, fx, fy, fz;
+    gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
+    gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
+    btVector3 camera(cx, cy, cz), far(fx, fy, fz), pointInPlane(0, 0, 0), planeNormal(0, 0, -1);
+    far -= camera;
+    far /= camera.length();
+    pointInPlane -= camera;
+    far *= planeNormal.dot(pointInPlane) / planeNormal.dot(far);
+    QPointF output;
+    output.setX(far.x() + camera.x());
+    output.setY(far.y() + camera.y());
+    return output;
+}
+
 void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
 {
     m_bone = bones.isEmpty() ? 0 : bones.last();
