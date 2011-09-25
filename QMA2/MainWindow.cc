@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     restoreState(m_settings.value("mainWindow/state").toByteArray());
     setCentralWidget(m_sceneWidget);
     setWindowTitle(buildWindowTitle());
+    statusBar()->show();
 }
 
 MainWindow::~MainWindow()
@@ -606,7 +607,7 @@ const QString MainWindow::buildWindowTitle()
         title += " - " + internal::toQString(m_model);
     if (m_bone)
         title += " - " + internal::toQString(m_bone);
-    return title;
+    return title + "[*]";
 }
 
 const QString MainWindow::buildWindowTitle(int fps)

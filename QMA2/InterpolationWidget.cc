@@ -88,7 +88,6 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
     m_graphWidget = new InterpolationGraphWidget(bmm);
     m_graphWidget->setMinimumSize(128, 128);
     m_graphWidget->setMaximumSize(128, 128);
-    qDebug() << m_graphWidget->size();
     QVBoxLayout *layout = new QVBoxLayout();
     QHBoxLayout *c = new QHBoxLayout();
     QPushButton *button = new QPushButton(tr("Reset"));
