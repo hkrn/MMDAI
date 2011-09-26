@@ -29,4 +29,18 @@
         <file alias="shadow.fsh">shaders/shadow.fsh</file>
         <file alias="shadow.vsh">shaders/shadow.vsh</file>
     </qresource>
+    <qresource prefix="/icons">
+        <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>
+        <file alias="x-disable-rotate.png">images/icons/x-disable-rotate.png</file>
+        <file alias="x-enable-move.png">images/icons/x-enable-move.png</file>
+        <file alias="x-enable-rotate.png">images/icons/x-enable-rotate.png</file>
+        <file alias="y-disable-move.png">images/icons/y-disable-move.png</file>
+        <file alias="y-disable-rotate.png">images/icons/y-disable-rotate.png</file>
+        <file alias="y-enable-move.png">images/icons/y-enable-move.png</file>
+        <file alias="y-enable-rotate.png">images/icons/y-enable-rotate.png</file>
+        <file alias="z-disable-move.png">images/icons/z-disable-move.png</file>
+        <file alias="z-disable-rotate.png">images/icons/z-disable-rotate.png</file>
+        <file alias="z-enable-move.png">images/icons/z-enable-move.png</file>
+        <file alias="z-enable-rotate.png">images/icons/z-enable-rotate.png</file>
+    </qresource>
 </RCC>

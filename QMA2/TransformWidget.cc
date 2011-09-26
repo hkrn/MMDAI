@@ -171,8 +171,8 @@ TransformWidget::TransformWidget(QSettings *settings,
     UIGetRotateButtons(buttons, ui);
     foreach (TransformButton *button, buttons)
         button->setBoneMotionModel(bmm);
-    connect(ui->bones->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-            this, SLOT(on_bones_selectionChanged(QItemSelection,QItemSelection)));
+    //connect(ui->bones->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+    //        this, SLOT(on_bones_selectionChanged(QItemSelection,QItemSelection)));
     connect(ui->faces->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             this, SLOT(on_faces_selectionChanged(QItemSelection,QItemSelection)));
     restoreGeometry(m_settings->value("transformWidget/geometry").toByteArray());

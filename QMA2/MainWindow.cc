@@ -105,7 +105,7 @@ void MainWindow::setCurrentModel(vpvl::PMDModel *model)
 void MainWindow::newFile()
 {
     if (maybeSave()) {
-        //m_sceneWidget->setEmptyMotion();
+        m_sceneWidget->setEmptyMotion(m_sceneWidget->selectedModel());
         m_boneMotionModel->deleteMotion();
         m_faceMotionModel->deleteMotion();
     }

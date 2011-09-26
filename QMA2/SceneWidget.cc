@@ -40,6 +40,7 @@
 
 #include "Application.h"
 #include "Delegate.h"
+#include "Handles.h"
 #include "Grid.h"
 #include "SceneLoader.h"
 #include "World.h"
@@ -58,6 +59,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_grid(0),
     m_world(0),
     m_settings(settings),
+    m_handles(0),
     m_prevElapsed(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
@@ -65,11 +67,14 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0),
     m_visibleBones(false),
-    m_playing(false)
+    m_playing(false),
+    m_enableBoneMove(false),
+    m_enableBoneRotate(false)
 {
     m_delegate = new Delegate(this);
     m_grid = new Grid();
     m_world = new World(m_defaultFPS);
+    m_handles = new Handles();
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -77,6 +82,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
 
 SceneWidget::~SceneWidget()
 {
+    delete m_handles;
+    m_handles = 0;
     delete m_renderer;
     m_renderer = 0;
     delete m_grid;
@@ -557,6 +564,7 @@ void SceneWidget::initializeGL()
         scene->setWorld(m_world->mutableWorld());
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
+    m_handles->load(this);
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
@@ -610,8 +618,6 @@ void SceneWidget::paintGL()
     glColorMask(1, 1, 1, 1);
     glDepthMask(1);
     glStencilFunc(GL_EQUAL, 2, ~0);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
@@ -619,12 +625,14 @@ void SceneWidget::paintGL()
     m_renderer->drawAssets();
     m_renderer->drawModels();
     drawBones();
+    m_handles->draw(this);
     emit motionDidFinished(m_loader->stoppedMotions());
 }
 
 void SceneWidget::resizeGL(int w, int h)
 {
     m_renderer->resize(w, h);
+    m_handles->resize(w, h);
 }
 
 void SceneWidget::timerEvent(QTimerEvent *event)

@@ -69,6 +69,8 @@ class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
+    typedef struct Handles Handles;
+
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
@@ -176,6 +178,7 @@ private:
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
+    Handles *m_handles;
     float m_prevElapsed;
     int m_frameCount;
     int m_currentFPS;
@@ -184,6 +187,8 @@ private:
     int m_internalTimerID;
     bool m_visibleBones;
     bool m_playing;
+    bool m_enableBoneMove;
+    bool m_enableBoneRotate;
 
     Q_DISABLE_COPY(SceneWidget)
 };

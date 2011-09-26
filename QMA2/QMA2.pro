@@ -108,7 +108,8 @@ HEADERS  += MainWindow.h \
     World.h \
     SceneLoader.h \
     Grid.h \
-    Application.h
+    Application.h \
+    Handles.h
 
 RESOURCES += resources/QMA2.qrc
 
