@@ -80,9 +80,6 @@ public:
         image.load(":icons/z-disable-rotate.png");
         m_z.disableRotate.size = image.size();
         m_z.disableRotate.textureID = widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
-        // XXX
-        m_enableMove = true;
-        m_enableRotate = true;
     }
     void resize(int width, int height) {
         qreal baseX = width - 240, xoffset = 80, yoffset = 96;
@@ -122,6 +119,11 @@ public:
         }
     }
     void draw(QGLWidget *widget) {
+        QPainter painter(widget);
+        painter.beginNativePainting();
+        glEnable(GL_MULTISAMPLE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_LIGHTING);
         glMatrixMode(GL_PROJECTION);
@@ -151,6 +153,7 @@ public:
         }
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LIGHTING);
+        painter.endNativePainting();
     }
 
     void setMovable(bool value) {

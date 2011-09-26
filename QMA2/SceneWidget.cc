@@ -452,6 +452,14 @@ const QPointF SceneWidget::objectCoordinates(const QPoint &input)
 void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
 {
     m_bone = bones.isEmpty() ? 0 : bones.last();
+    if (m_bone) {
+        m_handles->setMovable(m_bone->isMovable());
+        m_handles->setRotateable(m_bone->isRotateable());
+    }
+    else {
+        m_handles->setMovable(false);
+        m_handles->setRotateable(false);
+    }
 }
 
 void SceneWidget::rotate(float x, float y)
