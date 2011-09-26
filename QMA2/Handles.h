@@ -118,6 +118,51 @@ public:
             m_z.disableRotate.rect.setSize(m_z.disableRotate.size);
         }
     }
+    bool testHit(const QPoint &p, QRectF &rect) {
+        bool hitMove = true, hitRotate = true;
+        QPoint pos(p.x(), m_height - p.y());
+        if (m_enableMove) {
+            if (m_x.enableMove.rect.contains(pos))
+                rect = m_x.enableMove.rect;
+            else if (m_y.enableMove.rect.contains(pos))
+                rect = m_y.enableMove.rect;
+            else if (m_z.enableMove.rect.contains(pos))
+                rect = m_z.enableMove.rect;
+            else
+                hitMove = false;
+        }
+        else {
+            if (m_x.disableMove.rect.contains(pos))
+                rect = m_x.disableMove.rect;
+            else if (m_y.disableMove.rect.contains(pos))
+                rect = m_y.disableMove.rect;
+            else if (m_z.disableMove.rect.contains(pos))
+                rect = m_z.disableMove.rect;
+            else
+                hitMove = false;
+        }
+        if (m_enableRotate) {
+            if (m_x.enableRotate.rect.contains(pos))
+                rect = m_x.enableRotate.rect;
+            else if (m_y.enableRotate.rect.contains(pos))
+                rect = m_y.enableRotate.rect;
+            else if (m_z.enableRotate.rect.contains(pos))
+                rect = m_z.enableRotate.rect;
+            else
+                hitRotate = false;
+        }
+        else {
+            if (m_x.disableRotate.rect.contains(pos))
+                rect = m_x.disableRotate.rect;
+            else if (m_y.disableRotate.rect.contains(pos))
+                rect = m_y.disableRotate.rect;
+            else if (m_z.disableRotate.rect.contains(pos))
+                rect = m_z.disableRotate.rect;
+            else
+                hitRotate = false;
+        }
+        return hitMove || hitRotate;
+    }
     void draw(QGLWidget *widget) {
         QPainter painter(widget);
         painter.beginNativePainting();
