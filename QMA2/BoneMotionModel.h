@@ -32,11 +32,11 @@ public:
     BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent = 0);
     ~BoneMotionModel();
 
-    QVariant data(const QModelIndex &index, int role) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-    QModelIndex parent(const QModelIndex &child) const;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    virtual QVariant data(const QModelIndex &index, int role) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    virtual QModelIndex parent(const QModelIndex &child) const;
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
@@ -50,13 +50,9 @@ public:
     void setMode(int value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
-    void translate(int coordinate, float value);
-    void rotate(int coordinate, float value);
-    void selectBones(QList<vpvl::Bone *> bones);
+    void selectBones(const QList<vpvl::Bone *> &bones);
     vpvl::Bone *selectBone(int rowIndex);
     vpvl::Bone *findBone(const QString &name);
-    QList<vpvl::Bone *> bonesByIndices(const QModelIndexList &indices) const;
-    QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
 
     const QModelIndex frameToIndex(BoneTreeItem *item, int frameIndex) const;
     const Keys keys() const { return m_keys[m_model]; }
@@ -69,6 +65,8 @@ public slots:
     void deleteMotion();
     void deleteModel();
     void deleteFrame(const QModelIndex &index);
+    void translate(int coordinate, float value);
+    void rotate(int coordinate, float value);
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);

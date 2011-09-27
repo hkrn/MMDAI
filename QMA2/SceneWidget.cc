@@ -66,6 +66,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_defaultFPS(60),
     m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0),
+    m_handleFlags(0),
     m_visibleBones(false),
     m_playing(false),
     m_enableBoneMove(false),
@@ -578,6 +579,30 @@ void SceneWidget::initializeGL()
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     m_prevPos = event->pos();
+    QRectF rect;
+    if (m_handles->testHit(m_prevPos, m_handleFlags, rect)) {
+        event->accept();
+    }
+#if 0
+    else {
+        vpvl::PMDModel *model = m_renderer->selectedModel();
+        if (model) {
+            const vpvl::BoneList &bones = model->bones();
+            const uint32_t nbones = bones.count();
+            const QPointF &pos = objectCoordinates(m_prevPos);
+            btVector3 origin(pos.x(), pos.y() - m_renderer->scene()->position().y(), 0.0f);
+            qDebug() << "start";
+            for (uint32_t i = 0; i < nbones; i++) {
+                vpvl::Bone *bone = bones[i];
+                btVector3 boneOrigin = bone->localTransform().getOrigin();
+                boneOrigin.setZ(0.0f);
+                qDebug() << internal::toQString(bone) << "distance" << boneOrigin.distance(origin)
+                         << "origin" << origin.x() << origin.y() << "bone" << boneOrigin.x() << boneOrigin.y();
+            }
+            event->ignore();
+        }
+    }
+#endif
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
@@ -585,7 +610,26 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         QPoint diff = event->pos() - m_prevPos;
-        if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
+        if (m_handleFlags & Handles::kEnable) {
+            float value = diff.y() * 0.1f;
+            if (m_handleFlags & Handles::kMove) {
+                if (m_handleFlags & Handles::kX)
+                    emit handleDidMove('X', value);
+                else if (m_handleFlags & Handles::kY)
+                    emit handleDidMove('Y', value);
+                else if (m_handleFlags & Handles::kZ)
+                    emit handleDidMove('Z', value);
+            }
+            else if (m_handleFlags & Handles::kRotate) {
+                if (m_handleFlags & Handles::kX)
+                    emit handleDidRotate('X', value);
+                else if (m_handleFlags & Handles::kY)
+                    emit handleDidRotate('Y', value);
+                else if (m_handleFlags & Handles::kZ)
+                    emit handleDidRotate('Z', value);
+            }
+        }
+        else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             vpvl::Scene *scene = m_renderer->scene();
             btVector3 position = scene->lightPosition();
             btQuaternion rx(0.0f, diff.y() * vpvl::radian(0.1f), 0.0f),

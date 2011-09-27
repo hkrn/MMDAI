@@ -19,6 +19,15 @@ public:
         Texture enableRotate;
         Texture disableRotate;
     };
+    enum Flags {
+        kEnable = 0x1,
+        kDisable = 0x2,
+        kMove = 0x4,
+        kRotate = 0x8,
+        kX = 0x16,
+        kY = 0x32,
+        kZ = 0x64
+    };
 
     Handles()
         : m_width(0),
@@ -85,83 +94,91 @@ public:
         qreal baseX = width - 240, xoffset = 80, yoffset = 96;
         m_width = width;
         m_height = height;
-        if (m_enableMove) {
-            m_x.enableMove.rect.setTopLeft(QPointF(baseX, yoffset));
-            m_x.enableMove.rect.setSize(m_x.enableMove.size);
-            m_y.enableMove.rect.setTopLeft(QPointF(baseX + xoffset, yoffset));
-            m_y.enableMove.rect.setSize(m_y.enableMove.size);
-            m_z.enableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, yoffset));
-            m_z.enableMove.rect.setSize(m_z.enableMove.size);
-        }
-        else {
-            m_x.disableMove.rect.setTopLeft(QPointF(baseX, yoffset));
-            m_x.disableMove.rect.setSize(m_x.disableMove.size);
-            m_y.disableMove.rect.setTopLeft(QPointF(baseX + xoffset, yoffset));
-            m_y.disableMove.rect.setSize(m_y.disableMove.size);
-            m_z.disableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, yoffset));
-            m_z.disableMove.rect.setSize(m_z.disableMove.size);
-        }
-        if (m_enableRotate) {
-            m_x.enableRotate.rect.setTopLeft(QPointF(baseX, 0));
-            m_x.enableRotate.rect.setSize(m_x.enableRotate.size);
-            m_y.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset, 0));
-            m_y.enableRotate.rect.setSize(m_y.enableRotate.size);
-            m_z.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, 0));
-            m_z.enableRotate.rect.setSize(m_z.enableRotate.size);
-        }
-        else {
-            m_x.disableRotate.rect.setTopLeft(QPointF(baseX, 0));
-            m_x.disableRotate.rect.setSize(m_x.disableRotate.size);
-            m_y.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset, 0));
-            m_y.disableRotate.rect.setSize(m_y.disableRotate.size);
-            m_z.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, 0));
-            m_z.disableRotate.rect.setSize(m_z.disableRotate.size);
-        }
+        m_x.enableMove.rect.setTopLeft(QPointF(baseX, yoffset));
+        m_x.enableMove.rect.setSize(m_x.enableMove.size);
+        m_y.enableMove.rect.setTopLeft(QPointF(baseX + xoffset, yoffset));
+        m_y.enableMove.rect.setSize(m_y.enableMove.size);
+        m_z.enableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, yoffset));
+        m_z.enableMove.rect.setSize(m_z.enableMove.size);
+        m_x.disableMove.rect.setTopLeft(QPointF(baseX, yoffset));
+        m_x.disableMove.rect.setSize(m_x.disableMove.size);
+        m_y.disableMove.rect.setTopLeft(QPointF(baseX + xoffset, yoffset));
+        m_y.disableMove.rect.setSize(m_y.disableMove.size);
+        m_z.disableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, yoffset));
+        m_z.disableMove.rect.setSize(m_z.disableMove.size);
+        m_x.enableRotate.rect.setTopLeft(QPointF(baseX, 0));
+        m_x.enableRotate.rect.setSize(m_x.enableRotate.size);
+        m_y.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset, 0));
+        m_y.enableRotate.rect.setSize(m_y.enableRotate.size);
+        m_z.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, 0));
+        m_z.enableRotate.rect.setSize(m_z.enableRotate.size);
+        m_x.disableRotate.rect.setTopLeft(QPointF(baseX, 0));
+        m_x.disableRotate.rect.setSize(m_x.disableRotate.size);
+        m_y.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset, 0));
+        m_y.disableRotate.rect.setSize(m_y.disableRotate.size);
+        m_z.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, 0));
+        m_z.disableRotate.rect.setSize(m_z.disableRotate.size);
     }
-    bool testHit(const QPoint &p, QRectF &rect) {
-        bool hitMove = true, hitRotate = true;
+    bool testHit(const QPoint &p, int &flags, QRectF &rect) {
         QPoint pos(p.x(), m_height - p.y());
+        flags = 0;
         if (m_enableMove) {
-            if (m_x.enableMove.rect.contains(pos))
+            if (m_x.enableMove.rect.contains(pos)) {
                 rect = m_x.enableMove.rect;
-            else if (m_y.enableMove.rect.contains(pos))
+                flags = kEnable | kMove | kX;
+            }
+            else if (m_y.enableMove.rect.contains(pos)) {
                 rect = m_y.enableMove.rect;
-            else if (m_z.enableMove.rect.contains(pos))
+                flags = kEnable | kMove | kY;
+            }
+            else if (m_z.enableMove.rect.contains(pos)) {
                 rect = m_z.enableMove.rect;
-            else
-                hitMove = false;
+                flags = kEnable | kMove | kZ;
+            }
         }
         else {
-            if (m_x.disableMove.rect.contains(pos))
+            if (m_x.disableMove.rect.contains(pos)) {
                 rect = m_x.disableMove.rect;
-            else if (m_y.disableMove.rect.contains(pos))
+                flags = kDisable | kMove | kX;
+            }
+            else if (m_y.disableMove.rect.contains(pos)) {
                 rect = m_y.disableMove.rect;
-            else if (m_z.disableMove.rect.contains(pos))
+                flags = kDisable | kMove | kY;
+            }
+            else if (m_z.disableMove.rect.contains(pos)) {
                 rect = m_z.disableMove.rect;
-            else
-                hitMove = false;
+                flags = kDisable | kMove | kZ;
+            }
         }
         if (m_enableRotate) {
-            if (m_x.enableRotate.rect.contains(pos))
+            if (m_x.enableRotate.rect.contains(pos)) {
                 rect = m_x.enableRotate.rect;
-            else if (m_y.enableRotate.rect.contains(pos))
+                flags = kEnable | kRotate | kX;
+            }
+            else if (m_y.enableRotate.rect.contains(pos)) {
                 rect = m_y.enableRotate.rect;
-            else if (m_z.enableRotate.rect.contains(pos))
+                flags = kEnable | kRotate | kY;
+            }
+            else if (m_z.enableRotate.rect.contains(pos)) {
                 rect = m_z.enableRotate.rect;
-            else
-                hitRotate = false;
+                flags = kEnable | kRotate | kZ;
+            }
         }
         else {
-            if (m_x.disableRotate.rect.contains(pos))
+            if (m_x.disableRotate.rect.contains(pos)) {
                 rect = m_x.disableRotate.rect;
-            else if (m_y.disableRotate.rect.contains(pos))
+                flags = kDisable | kRotate | kX;
+            }
+            else if (m_y.disableRotate.rect.contains(pos)) {
                 rect = m_y.disableRotate.rect;
-            else if (m_z.disableRotate.rect.contains(pos))
+                flags = kDisable | kRotate | kY;
+            }
+            else if (m_z.disableRotate.rect.contains(pos)) {
                 rect = m_z.disableRotate.rect;
-            else
-                hitRotate = false;
+                flags = kDisable | kRotate | kZ;
+            }
         }
-        return hitMove || hitRotate;
+        return flags != 0;
     }
     void draw(QGLWidget *widget) {
         QPainter painter(widget);

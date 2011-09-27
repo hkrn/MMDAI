@@ -772,15 +772,16 @@ void BoneMotionModel::rotate(int coordinate, float value)
     emit boneRotationDidChange(selected, dest);
 }
 
-void BoneMotionModel::selectBones(QList<vpvl::Bone *> bones)
+void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 {
     m_selected = bones;
 }
 
-vpvl::Bone *BoneMotionModel::selectBone(int rowIndex)
+vpvl::Bone *BoneMotionModel::selectBone(int /* rowIndex */)
 {
     m_selected.clear();
-    vpvl::Bone *bone = 0; //m_bones[rowIndex];
+    vpvl::Bone *bone = 0;
+        //m_bones[rowIndex];
     //m_selected.append(bone);
     return bone;
 }
@@ -794,30 +795,6 @@ vpvl::Bone *BoneMotionModel::findBone(const QString &name)
             return bone;
     }
     return 0;
-}
-
-QList<vpvl::Bone *> BoneMotionModel::bonesByIndices(const QModelIndexList &indices) const
-{
-    QList<vpvl::Bone *> bones;
-    foreach (QModelIndex index, indices) {
-        if (index.isValid()) {
-            BoneTreeItem *item = static_cast<BoneTreeItem *>(index.internalPointer());
-            bones.append(item->bone());
-        }
-    }
-    return bones;
-}
-
-QList<vpvl::Bone *> BoneMotionModel::bonesFromIndices(const QModelIndexList &indices) const
-{
-    QList<vpvl::Bone *> bones;
-    foreach (QModelIndex index, indices) {
-        if (index.isValid()) {
-            BoneTreeItem *item = static_cast<BoneTreeItem *>(index.internalPointer());
-            bones.append(item->bone());
-        }
-    }
-    return bones;
 }
 
 const QModelIndex BoneMotionModel::frameToIndex(BoneTreeItem *item, int frameIndex) const

@@ -148,6 +148,8 @@ signals:
     void sceneDidPlay();
     void sceneDidPause();
     void sceneDidStop();
+    void handleDidMove(int coordinate, float value);
+    void handleDidRotate(int coordinate, float value);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -185,6 +187,7 @@ private:
     int m_defaultFPS;
     int m_interval;
     int m_internalTimerID;
+    int m_handleFlags;
     bool m_visibleBones;
     bool m_playing;
     bool m_enableBoneMove;

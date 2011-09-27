@@ -7,7 +7,8 @@
 #include <vpvl/vpvl.h>
 #include "util.h"
 
-namespace {
+namespace
+{
 
 static BoneMotionModel *UICastBoneModel(Ui::TransformWidget *ui)
 {
@@ -56,10 +57,11 @@ static QModelIndexList UISelectRowIndices(const QItemSelectionRange &range)
 static QList<vpvl::Bone *> UISelectBonesBySelection(const Ui::TransformWidget *ui, const QItemSelection &selection)
 {
     QList<vpvl::Bone *> bones;
-    BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(ui->bones->model());
+    BoneListModel *bmm = qobject_cast<BoneListModel *>(ui->bones->model());
     foreach (QItemSelectionRange range, selection) {
-        foreach (vpvl::Bone *bone, bmm->bonesByIndices(UISelectRowIndices(range)))
-            bones.append(bone);
+        QList<vpvl::Bone *> children = bmm->bonesByIndices(UISelectRowIndices(range));
+        foreach (vpvl::Bone *child, children)
+            bones.append(child);
     }
     return bones;
 }
@@ -97,6 +99,74 @@ static void UIToggleBoneButtons(const Ui::TransformWidget *ui, bool movable, boo
         button->setEnabled(rotateable);
 }
 
+}
+
+BoneListModel::BoneListModel(BoneMotionModel *model)
+    : m_model(model)
+{
+    connect(m_model, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(changeModel(vpvl::PMDModel*)));
+}
+
+BoneListModel::~BoneListModel()
+{
+}
+
+QVariant BoneListModel::data(const QModelIndex &index, int role) const
+{
+    if (index.isValid()) {
+        switch(role) {
+        case Qt::DisplayRole:
+            const vpvl::Bone *bone = m_bones[index.row()];
+            const QString name = internal::toQString(bone);
+            return name;
+        }
+    }
+    return QVariant();
+}
+
+int BoneListModel::rowCount(const QModelIndex & /* parent */) const
+{
+    return m_bones.count();
+}
+
+int BoneListModel::columnCount(const QModelIndex & /* parent */) const
+{
+    return 1;
+}
+
+void BoneListModel::changeModel(vpvl::PMDModel * /* model */)
+{
+    vpvl::PMDModel *model = m_model->selectedModel();
+    if (model) {
+        const vpvl::BoneList &bones = model->bones();
+        const uint32_t nbones = bones.count();
+        m_bones.clear();
+        for (uint32_t i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            if (bone->isMovable() || bone->isRotateable())
+                m_bones.append(bone);
+        }
+    }
+    reset();
+}
+
+
+QList<vpvl::Bone *> BoneListModel::bonesByIndices(const QModelIndexList &indices) const
+{
+    return bonesFromIndices(indices);
+}
+
+QList<vpvl::Bone *> BoneListModel::bonesFromIndices(const QModelIndexList &indices) const
+{
+    QList<vpvl::Bone *> ret;
+    vpvl::PMDModel *model = m_model->selectedModel();
+    if (!model)
+        return ret;
+    foreach (QModelIndex index, indices) {
+        if (index.isValid())
+            ret.append(m_bones[index.row()]);
+    }
+    return ret;
 }
 
 TransformButton::TransformButton(QWidget *parent) :
@@ -161,18 +231,20 @@ TransformWidget::TransformWidget(QSettings *settings,
                                  QWidget *parent)
     : QWidget(parent),
       ui(new Ui::TransformWidget),
+      m_bmm(0),
       m_settings(settings)
 {
     QList<TransformButton *> buttons;
+    m_bmm = new BoneListModel(bmm);
     ui->setupUi(this);
-    ui->bones->setModel(bmm);
+    ui->bones->setModel(m_bmm);
     ui->faces->setModel(fmm);
     UIGetTransformButtons(buttons, ui);
     UIGetRotateButtons(buttons, ui);
     foreach (TransformButton *button, buttons)
         button->setBoneMotionModel(bmm);
-    //connect(ui->bones->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-    //        this, SLOT(on_bones_selectionChanged(QItemSelection,QItemSelection)));
+    connect(ui->bones->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            this, SLOT(on_bones_selectionChanged(QItemSelection,QItemSelection)));
     connect(ui->faces->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             this, SLOT(on_faces_selectionChanged(QItemSelection,QItemSelection)));
     restoreGeometry(m_settings->value("transformWidget/geometry").toByteArray());
@@ -180,6 +252,7 @@ TransformWidget::TransformWidget(QSettings *settings,
 
 TransformWidget::~TransformWidget()
 {
+    delete m_bmm;
     delete ui;
 }
 

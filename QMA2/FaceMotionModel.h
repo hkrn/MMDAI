@@ -16,10 +16,10 @@ public:
     FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~FaceMotionModel();
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role);
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    virtual QVariant data(const QModelIndex &index, int role) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role);
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);

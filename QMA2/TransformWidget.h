@@ -21,6 +21,29 @@ class BoneMotionModel;
 class FaceMotionModel;
 class QSettings;
 
+class BoneListModel : public QAbstractListModel
+{
+    Q_OBJECT
+
+public:
+    BoneListModel(BoneMotionModel *model);
+    ~BoneListModel();
+
+    virtual QVariant data(const QModelIndex &index, int role) const;
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+
+    QList<vpvl::Bone *> bonesByIndices(const QModelIndexList &indices) const;
+    QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
+
+private slots:
+    void changeModel(vpvl::PMDModel *model);
+
+private:
+    BoneMotionModel *m_model;
+    QList<vpvl::Bone *> m_bones;
+};
+
 class TransformButton : public QPushButton
 {
     Q_OBJECT
@@ -89,6 +112,7 @@ private slots:
 
 private:
     Ui::TransformWidget *ui;
+    BoneListModel *m_bmm;
     QSettings *m_settings;
     QItemSelection m_selectedBones;
 };
