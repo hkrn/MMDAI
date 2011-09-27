@@ -91,32 +91,32 @@ public:
         m_z.disableRotate.textureID = widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     }
     void resize(int width, int height) {
-        qreal baseX = width - 240, xoffset = 80, yoffset = 96;
+        qreal baseX = width - 104, baseY = 8, xoffset = 32, yoffset = 36;
         m_width = width;
         m_height = height;
-        m_x.enableMove.rect.setTopLeft(QPointF(baseX, yoffset));
+        m_x.enableMove.rect.setTopLeft(QPointF(baseX, baseY + yoffset));
         m_x.enableMove.rect.setSize(m_x.enableMove.size);
-        m_y.enableMove.rect.setTopLeft(QPointF(baseX + xoffset, yoffset));
+        m_y.enableMove.rect.setTopLeft(QPointF(baseX + xoffset, baseY + yoffset));
         m_y.enableMove.rect.setSize(m_y.enableMove.size);
-        m_z.enableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, yoffset));
+        m_z.enableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, baseY + yoffset));
         m_z.enableMove.rect.setSize(m_z.enableMove.size);
-        m_x.disableMove.rect.setTopLeft(QPointF(baseX, yoffset));
+        m_x.disableMove.rect.setTopLeft(QPointF(baseX, baseY + yoffset));
         m_x.disableMove.rect.setSize(m_x.disableMove.size);
-        m_y.disableMove.rect.setTopLeft(QPointF(baseX + xoffset, yoffset));
+        m_y.disableMove.rect.setTopLeft(QPointF(baseX + xoffset, baseY + yoffset));
         m_y.disableMove.rect.setSize(m_y.disableMove.size);
-        m_z.disableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2, yoffset));
+        m_z.disableMove.rect.setTopLeft(QPointF(baseX + xoffset * 2,  baseY + yoffset));
         m_z.disableMove.rect.setSize(m_z.disableMove.size);
-        m_x.enableRotate.rect.setTopLeft(QPointF(baseX, 0));
+        m_x.enableRotate.rect.setTopLeft(QPointF(baseX, baseY));
         m_x.enableRotate.rect.setSize(m_x.enableRotate.size);
-        m_y.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset, 0));
+        m_y.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset, baseY));
         m_y.enableRotate.rect.setSize(m_y.enableRotate.size);
-        m_z.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, 0));
+        m_z.enableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, baseY));
         m_z.enableRotate.rect.setSize(m_z.enableRotate.size);
-        m_x.disableRotate.rect.setTopLeft(QPointF(baseX, 0));
+        m_x.disableRotate.rect.setTopLeft(QPointF(baseX, baseY));
         m_x.disableRotate.rect.setSize(m_x.disableRotate.size);
-        m_y.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset, 0));
+        m_y.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset, baseY));
         m_y.disableRotate.rect.setSize(m_y.disableRotate.size);
-        m_z.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, 0));
+        m_z.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, baseY));
         m_z.disableRotate.rect.setSize(m_z.disableRotate.size);
     }
     bool testHit(const QPoint &p, int &flags, QRectF &rect) {
