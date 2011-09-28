@@ -51,7 +51,6 @@ public:
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
     void selectBones(const QList<vpvl::Bone *> &bones);
-    vpvl::Bone *selectBone(int rowIndex);
     vpvl::Bone *findBone(const QString &name);
 
     const QModelIndex frameToIndex(BoneTreeItem *item, int frameIndex) const;

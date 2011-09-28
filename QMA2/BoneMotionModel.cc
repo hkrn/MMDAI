@@ -777,15 +777,6 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
     m_selected = bones;
 }
 
-vpvl::Bone *BoneMotionModel::selectBone(int /* rowIndex */)
-{
-    m_selected.clear();
-    vpvl::Bone *bone = 0;
-        //m_bones[rowIndex];
-    //m_selected.append(bone);
-    return bone;
-}
-
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)
 {
     QByteArray bytes = internal::getTextCodec()->fromUnicode(name);

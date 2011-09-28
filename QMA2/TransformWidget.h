@@ -35,6 +35,7 @@ public:
 
     QList<vpvl::Bone *> bonesByIndices(const QModelIndexList &indices) const;
     QList<vpvl::Bone *> bonesFromIndices(const QModelIndexList &indices) const;
+    void selectBones(const QList<vpvl::Bone *> &bones);
 
 private slots:
     void changeModel(vpvl::PMDModel *model);

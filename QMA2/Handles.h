@@ -20,13 +20,13 @@ public:
         Texture disableRotate;
     };
     enum Flags {
-        kEnable = 0x1,
-        kDisable = 0x2,
-        kMove = 0x4,
-        kRotate = 0x8,
-        kX = 0x16,
-        kY = 0x32,
-        kZ = 0x64
+        kEnable = 1,
+        kDisable = 2,
+        kMove = 4,
+        kRotate = 8,
+        kX = 16,
+        kY = 32,
+        kZ = 64
     };
 
     Handles()

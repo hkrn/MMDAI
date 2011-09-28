@@ -10,9 +10,9 @@
 namespace
 {
 
-static BoneMotionModel *UICastBoneModel(Ui::TransformWidget *ui)
+static BoneListModel *UICastBoneModel(Ui::TransformWidget *ui)
 {
-    return reinterpret_cast<BoneMotionModel *>(ui->bones->model());
+    return reinterpret_cast<BoneListModel *>(ui->bones->model());
 }
 
 static FaceMotionModel *UICastFaceModel(Ui::TransformWidget *ui)
@@ -134,6 +134,11 @@ int BoneListModel::columnCount(const QModelIndex & /* parent */) const
     return 1;
 }
 
+void BoneListModel::selectBones(const QList<vpvl::Bone *> &bones)
+{
+    m_model->selectBones(bones);
+}
+
 void BoneListModel::changeModel(vpvl::PMDModel * /* model */)
 {
     vpvl::PMDModel *model = m_model->selectedModel();
@@ -149,7 +154,6 @@ void BoneListModel::changeModel(vpvl::PMDModel * /* model */)
     }
     reset();
 }
-
 
 QList<vpvl::Bone *> BoneListModel::bonesByIndices(const QModelIndexList &indices) const
 {

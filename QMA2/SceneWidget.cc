@@ -611,8 +611,8 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         Qt::KeyboardModifiers modifiers = event->modifiers();
         QPoint diff = event->pos() - m_prevPos;
         if (m_handleFlags & Handles::kEnable) {
-            float value = diff.y() * 0.1f;
             if (m_handleFlags & Handles::kMove) {
+                const float value = diff.y() * 0.1f;
                 if (m_handleFlags & Handles::kX)
                     emit handleDidMove('X', value);
                 else if (m_handleFlags & Handles::kY)
@@ -621,6 +621,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                     emit handleDidMove('Z', value);
             }
             else if (m_handleFlags & Handles::kRotate) {
+                const float value = vpvl::radian(diff.y() * 0.1f);
                 if (m_handleFlags & Handles::kX)
                     emit handleDidRotate('X', value);
                 else if (m_handleFlags & Handles::kY)
@@ -645,6 +646,10 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         m_prevPos = event->pos();
     }
+}
+
+void SceneWidget::mouseReleaseEvent(QMouseEvent * /* event */)
+{
 }
 
 void SceneWidget::paintGL()

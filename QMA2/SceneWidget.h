@@ -160,6 +160,7 @@ protected:
     void initializeGL();
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void paintGL();
     void resizeGL(int w, int h);
     void timerEvent(QTimerEvent *event);
