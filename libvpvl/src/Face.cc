@@ -93,7 +93,7 @@ Face::Face()
 Face::~Face()
 {
     internal::zerofill(m_name, sizeof(m_name));
-    m_vertices.clear();
+    m_vertices.releaseAll();
     m_type = kOther;
     m_weight = 0.0f;
 }

@@ -68,7 +68,7 @@ FaceAnimation::FaceAnimation()
 
 FaceAnimation::~FaceAnimation()
 {
-    m_name2node.clear();
+    m_name2node.releaseAll();
     m_model = 0;
 }
 
@@ -121,7 +121,7 @@ void FaceAnimation::attachModel(PMDModel *model)
 void FaceAnimation::refresh()
 {
     if (m_model) {
-        m_name2node.clear();
+        m_name2node.releaseAll();
         buildInternalNodes(m_model);
     }
 }

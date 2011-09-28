@@ -108,15 +108,6 @@ public:
         return m_values.at(i);
     }
     void clear() {
-        uint32_t size = m_values.size();
-        for (uint32_t i = 0; i < size; i++)
-            delete m_values[i];
-        m_values.clear();
-    }
-    void clearArray() {
-        uint32_t size = m_values.size();
-        for (uint32_t i = 0; i < size; i++)
-            delete[] m_values[i];
         m_values.clear();
     }
     void copy(const Array &items) {
@@ -124,6 +115,18 @@ public:
     }
     uint32_t count() const {
         return m_values.size();
+    }
+    void releaseAll() {
+        uint32_t size = m_values.size();
+        for (uint32_t i = 0; i < size; i++)
+            delete m_values[i];
+        m_values.clear();
+    }
+    void releaseArrayAll() {
+        uint32_t size = m_values.size();
+        for (uint32_t i = 0; i < size; i++)
+            delete[] m_values[i];
+        m_values.clear();
     }
     void remove(const T &item) {
         m_values.remove(item);
@@ -157,9 +160,6 @@ public:
     }
 
     void clear() {
-        uint32_t nNodes = m_values.size();
-        for (uint32_t i = 0; i < nNodes; i++)
-            delete *m_values.getAtIndex(i);
         m_values.clear();
     }
     uint32_t count() const {
@@ -170,6 +170,12 @@ public:
     }
     void insert(const K &key, const V &value) {
         m_values.insert(key, value);
+    }
+    void releaseAll() {
+        uint32_t nNodes = m_values.size();
+        for (uint32_t i = 0; i < nNodes; i++)
+            delete *m_values.getAtIndex(i);
+        m_values.clear();
     }
     const V *value(uint32_t index) const {
         return m_values.getAtIndex(index);

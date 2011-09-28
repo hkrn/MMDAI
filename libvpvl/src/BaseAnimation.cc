@@ -60,7 +60,7 @@ BaseAnimation::BaseAnimation(float smearDefault) :
 
 BaseAnimation::~BaseAnimation()
 {
-    m_frames.clear();
+    m_frames.releaseAll();
     m_lastIndex = 0;
     m_lastLoopStartIndex = 0;
     m_maxFrame = 0.0f;

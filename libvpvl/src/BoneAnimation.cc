@@ -96,7 +96,7 @@ BoneAnimation::BoneAnimation()
 
 BoneAnimation::~BoneAnimation()
 {
-    m_name2node.clear();
+    m_name2node.releaseAll();
     m_model = 0;
     m_hasCenterBoneAnimation = false;
 }
@@ -157,7 +157,7 @@ void BoneAnimation::attachModel(PMDModel *model)
 void BoneAnimation::refresh()
 {
     if (m_model) {
-        m_name2node.clear();
+        m_name2node.releaseAll();
         buildInternalNodes(m_model);
     }
 }
