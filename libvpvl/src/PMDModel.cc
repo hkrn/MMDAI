@@ -84,6 +84,7 @@ PMDModel::PMDModel()
       m_edgeIndicesPointer(0),
       m_edgeIndicesCount(0),
       m_rotationOffset(0.0f, 0.0f, 0.0f, 1.0f),
+      m_edgeColor(0.0f, 0.0f, 0.0f, 1.0f),
       m_positionOffset(0.0f, 0.0f, 0.0f),
       m_lightPosition(0.0f, 0.0f, 0.0f),
       m_error(kNoError),
@@ -947,6 +948,7 @@ void PMDModel::release()
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
     leaveWorld(m_world);
     m_rotationOffset.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_edgeColor.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_positionOffset.setZero();
     m_lightPosition.setZero();
     m_vertices.releaseAll();
