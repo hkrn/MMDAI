@@ -172,7 +172,7 @@ public:
      *
      * @param tr The result value of transform
      */
-    void getSkinTransform(btTransform &tr);
+    void getSkinTransform(btTransform &tr) const;
 
     /**
      * Get the name of this bone.

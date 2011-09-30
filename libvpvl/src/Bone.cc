@@ -247,7 +247,7 @@ void Bone::updateTransform(const btQuaternion &q)
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
 }
 
-void Bone::getSkinTransform(btTransform &tr)
+void Bone::getSkinTransform(btTransform &tr) const
 {
     tr = m_localTransform * m_transformMoveToOrigin;
 }
