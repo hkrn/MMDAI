@@ -630,7 +630,7 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
 {
     int textureIndex = 0;
     aiString texturePath;
-    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == AI_SUCCESS) {
+    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         GLuint textureID = asset->userData()->textures[texturePath.data];
         program->setMainTexture(textureID);
     }
@@ -639,28 +639,28 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
     }
     aiColor4D ambient, diffuse, emission, specular;
     btVector4 color(0.0f, 0.0f, 0.0f, 0.0f);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
         aiColor2Float4(ambient, color);
         program->setMaterialAmbient(color);
     }
     else {
-        program->setMaterialAmbient(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
+        program->setMaterialAmbient(btVector4(0.2f, 0.2f, 0.2f, 1.0f));
     }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         aiColor2Float4(diffuse, color);
         program->setMaterialDiffuse(color);
     }
     else {
-        program->setMaterialDiffuse(btVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        program->setMaterialDiffuse(btVector4(0.8f, 0.8f, 0.8f, 1.0f));
     }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
         aiColor2Float4(emission, color);
         program->setMaterialEmission(color);
     }
     else {
         program->setMaterialEmission(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
     }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
         aiColor2Float4(specular, color);
         program->setMaterialSpecular(color);
     }
@@ -670,21 +670,21 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
-    if (ret1 == AI_SUCCESS && ret2 == AI_SUCCESS) {
+    if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
         program->setMaterialShininess(shininess * strength);
     }
-    else if (ret1 == AI_SUCCESS) {
+    else if (ret1 == aiReturn_SUCCESS) {
         program->setMaterialShininess(shininess);
     }
     else {
         program->setMaterialShininess(0.0f);
     }
     int wireframe, twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS && wireframe)
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == AI_SUCCESS && twoside)
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside)
         glEnable(GL_CULL_FACE);
     else
         glDisable(GL_CULL_FACE);
@@ -695,15 +695,30 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     struct aiMatrix4x4 m = node->mTransformation;
     const btScalar &scaleFactor = asset->scaleFactor();
     const btVector3 &pos = asset->position();
+    const vpvl::Bone *bone = asset->parentBone();
     float matrix[16];
+    if (bone) {
+        const btTransform &tr = bone->localTransform();
+        const btVector3 &pos = tr.getOrigin();
+        const btMatrix3x3 &mat = tr.getBasis();
+        btScalar submat[12];
+        mat.getOpenGLSubMatrix(submat);
+        m.a4 += pos.x(); m.b4 += pos.y(); m.c4 += pos.z();
+        //m.a1 = submat[0]; m.a2 = submat[1]; m.a3 = submat[2];
+        //m.b1 = submat[4]; m.b2 = submat[5]; m.b3 = submat[6];
+        //m.c1 = submat[8]; m.c2 = submat[9]; m.c3 = submat[10];
+        m.a1 = submat[0]; m.a2 = submat[4]; m.a3 = submat[8];
+        m.b1 = submat[1]; m.b2 = submat[5]; m.b3 = submat[9];
+        m.c1 = submat[2]; m.c2 = submat[6]; m.c3 = submat[10];
+    }
     // translate
-    m.a4 = pos.x();
-    m.b4 = pos.y();
-    m.c4 = pos.z();
+    m.a4 += pos.x();
+    m.b4 += pos.y();
+    m.c4 += pos.z();
     // scale
-    m.a1 = scaleFactor;
-    m.b2 = scaleFactor;
-    m.c3 = scaleFactor;
+    m.a1 *= scaleFactor;
+    m.b2 *= scaleFactor;
+    m.c3 *= scaleFactor;
     vpvl::AssetUserData *userData = asset->userData();
     AssetVertex v;
     const GLvoid *vertexPtr = 0;
@@ -1211,25 +1226,19 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     glCullFace(GL_BACK);
 #endif
 
-    const float alpha = 1.0f;
     const size_t stride = model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
     const vpvl::PMDModelUserData *modelPrivate = model->userData();
-    btVector3 color(0, 0, 0);
-    color.setW(1);
 
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
-
-    if (model == m_selected)
-        color *= alpha;
 
     m_edgeProgram->bind();
     size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
     glBufferData(GL_ARRAY_BUFFER, len, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
-    m_edgeProgram->setColor(color);
+    m_edgeProgram->setColor(model->edgeColor());
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
     m_edgeProgram->setPosition(0, stride);
