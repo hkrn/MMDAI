@@ -452,7 +452,7 @@ private:
     int16_t m_id;
     Type m_type;
     btTransform m_localTransform;
-    btTransform m_transformMoveToOrigin;
+    btTransform m_localToOriginTransform;
     btVector3 m_originPosition;
     btVector3 m_position;
     btVector3 m_offset;

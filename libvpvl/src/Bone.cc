@@ -102,7 +102,7 @@ Bone::Bone()
 {
     internal::zerofill(m_name, sizeof(m_name));
     m_localTransform.setIdentity();
-    m_transformMoveToOrigin.setIdentity();
+    m_localToOriginTransform.setIdentity();
 }
 
 Bone::~Bone()
@@ -111,7 +111,7 @@ Bone::~Bone()
     m_id = -1;
     m_type = kUnknown;
     m_localTransform.setIdentity();
-    m_transformMoveToOrigin.setIdentity();
+    m_localToOriginTransform.setIdentity();
     m_originPosition.setZero();
     m_position.setZero();
     m_offset.setZero();
@@ -151,7 +151,7 @@ void Bone::read(const uint8_t *data, int16_t id)
     m_originPosition.setValue(pos[0], pos[1], pos[2]);
 #endif
     m_localTransform.setOrigin(m_originPosition);
-    m_transformMoveToOrigin.setOrigin(-m_originPosition);
+    m_localToOriginTransform.setOrigin(-m_originPosition);
     m_id = id;
     m_parentBoneID = chunk.parentBoneID;
     m_childBoneID = chunk.childBoneID;
@@ -249,7 +249,7 @@ void Bone::updateTransform(const btQuaternion &q)
 
 void Bone::getSkinTransform(btTransform &tr) const
 {
-    tr = m_localTransform * m_transformMoveToOrigin;
+    tr = m_localTransform * m_localToOriginTransform;
 }
 
 } /* namespace vpvl */
