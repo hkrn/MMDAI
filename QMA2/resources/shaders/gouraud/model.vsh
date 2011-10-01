@@ -14,8 +14,8 @@ uniform vec4 materialSpecular;
 uniform float materialShininess;
 uniform bool hasSingleSphereMap;
 uniform bool hasMultipleSphereMap;
-attribute vec3 inPosition;
-attribute vec3 inNormal;
+attribute vec4 inPosition;
+attribute vec4 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonTexCoord;
 varying vec4 outColor;
@@ -39,8 +39,8 @@ vec2 makeSphereMap(vec4 position, vec3 normal) {
 }
 
 void main() {
-    vec4 position = (modelViewMatrix * vec4(inPosition, kOne));
-    vec3 normal = normalize(normalMatrix * vec4(inNormal, kOne)).xyz;
+    vec4 position = modelViewMatrix * inPosition;
+    vec3 normal = normalize(normalMatrix * inNormal).xyz;
     vec3 light = normalize(lightPosition - position.xyz);
     float diffuse = max(dot(light, normal), kZero);
     //vec4 color = kAmbient * lightAmbient * materialAmbient;

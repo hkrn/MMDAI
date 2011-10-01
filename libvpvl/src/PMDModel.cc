@@ -401,9 +401,10 @@ void PMDModel::updateSkinVertices()
             const btVector3 &n1 = transform1.getBasis() * normal;
             const btVector3 &v2 = transform2 * position;
             const btVector3 &n2 = transform2.getBasis() * normal;
-            skin.position = v2.lerp(v1, weight);
-            skin.normal = n2.lerp(n1, weight);
+            skin.position.setInterpolate3(v2, v1, weight);
+            skin.normal.setInterpolate3(n2, n1, weight);
         }
+        skin.position.setW(1.0f);
     }
 }
 

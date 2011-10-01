@@ -129,11 +129,11 @@ public:
     }
     void setPosition(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_positionAttributeLocation);
-        glVertexAttribPointer(m_positionAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+        glVertexAttribPointer(m_positionAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_normalAttributeLocation);
-        glVertexAttribPointer(m_normalAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+        glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
 
 protected:
@@ -592,6 +592,7 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
                 }
                 const aiVector3D &v = vertices[vertexIndex];
                 assetVertex.position.setValue(v.x, v.y, v.z);
+                assetVertex.position.setW(1.0f);
                 assetVertices.push_back(assetVertex);
                 indices.push_back(index);
                 index++;
@@ -700,16 +701,13 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     if (bone) {
         const btTransform &tr = bone->localTransform();
         const btVector3 &pos = tr.getOrigin();
-        const btMatrix3x3 &mat = tr.getBasis();
+        const btMatrix3x3 &mat = tr.getBasis().inverse();
         btScalar submat[12];
         mat.getOpenGLSubMatrix(submat);
         m.a4 += pos.x(); m.b4 += pos.y(); m.c4 += pos.z();
-        //m.a1 = submat[0]; m.a2 = submat[1]; m.a3 = submat[2];
-        //m.b1 = submat[4]; m.b2 = submat[5]; m.b3 = submat[6];
-        //m.c1 = submat[8]; m.c2 = submat[9]; m.c3 = submat[10];
-        m.a1 = submat[0]; m.a2 = submat[4]; m.a3 = submat[8];
-        m.b1 = submat[1]; m.b2 = submat[5]; m.b3 = submat[9];
-        m.c1 = submat[2]; m.c2 = submat[6]; m.c3 = submat[10];
+        m.a1 = submat[0]; m.a2 = submat[1]; m.a3 = submat[2];
+        m.b1 = submat[4]; m.b2 = submat[5]; m.b3 = submat[6];
+        m.c1 = submat[8]; m.c2 = submat[9]; m.c3 = submat[10];
     }
     // translate
     m.a4 += pos.x();
@@ -830,11 +828,6 @@ struct PMDModelUserData {
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
     PMDModelMaterialPrivate *materials;
-};
-
-struct XModelUserData {
-    GLuint listID;
-    vpvl::Hash<vpvl::HashString, GLuint> textures;
 };
 
 namespace gl2
