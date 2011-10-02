@@ -569,6 +569,21 @@ void SceneWidget::initializeGL()
     m_renderer->createPrograms();
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
+    const btVector4 &color = scene->lightColor();
+    const btScalar &intensity = 0.6f;
+#if 1 // MMD like toon
+    const btVector3 &a = color * intensity * 2.0f;
+    const btVector3 &d = color * 0.0f;
+    const btVector3 &s = color * intensity;
+#else // no toon
+    const btVector3 &a = color;
+    const btVector3 &d = color * intensity;
+    const btVector3 &s = color;
+#endif
+    const btVector4 ambient(a.x(), a.y(), a.z(), 1.0f);
+    const btVector4 diffuse(d.x(), d.y(), d.z(), 1.0f);
+    const btVector4 specular(s.x(), s.y(), s.z(), 1.0f);
+    scene->setLightComponent(ambient, diffuse, specular);
     if (m_playing)
         scene->setWorld(m_world->mutableWorld());
     m_timer.start();
