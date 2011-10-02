@@ -269,6 +269,28 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
 {
     if (model) {
         vpvl::VMDMotion *motion = new vpvl::VMDMotion();
+        const vpvl::BoneList &bones = model->bones();
+        const uint32_t nbones = bones.count();
+        vpvl::BoneAnimation *boneAnimation = motion->mutableBoneAnimation();
+        for (uint32_t i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            if (bone->isMovable() || bone->isRotateable()) {
+                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+                frame->setFrameIndex(0);
+                frame->setName(bone->name());
+                boneAnimation->addKeyFrame(frame);
+            }
+        }
+        const vpvl::FaceList &faces = model->faces();
+        const uint32_t nfaces = faces.count();
+        vpvl::FaceAnimation *faceAnimation = motion->mutableFaceAnimation();
+        for (uint32_t i = 0; i < nfaces; i++) {
+            vpvl::Face *face = faces[i];
+            vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+            frame->setFrameIndex(0);
+            frame->setName(face->name());
+            faceAnimation->addKeyFrame(frame);
+        }
         m_loader->setModelMotion(motion, model);
         emit motionDidAdd(motion, model);
     }
