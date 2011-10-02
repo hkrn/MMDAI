@@ -5,6 +5,53 @@
 namespace
 {
 
+class TreeItem : public MotionBaseModel::ITreeItem
+{
+public:
+    TreeItem(const QString &name, vpvl::Face *face, bool isRoot, TreeItem *parent)
+        : m_name(name),
+          m_parent(parent),
+          m_face(face),
+          m_isRoot(isRoot)
+    {
+    }
+    ~TreeItem() {
+        qDeleteAll(m_children);
+    }
+
+    void addChild(ITreeItem *item) {
+        m_children.append(static_cast<TreeItem *>(item));
+    }
+    ITreeItem *parent() const {
+        return m_parent;
+    }
+    ITreeItem *child(int row) const {
+        return m_children.value(row);
+    }
+    const QString &name() const {
+        return m_name;
+    }
+    vpvl::Face *face() const {
+        return m_face;
+    }
+    bool isRoot() const {
+        return m_isRoot;
+    }
+    int rowIndex() const {
+        return m_parent ? m_parent->m_children.indexOf(const_cast<TreeItem *>(this)) : 0;
+    }
+    int countChildren() const {
+        return m_children.count();
+    }
+
+private:
+    QList<TreeItem *> m_children;
+    QString m_name;
+    TreeItem *m_parent;
+    vpvl::Face *m_face;
+    bool m_isRoot;
+};
+
 class CopyFramesCommand : public QUndoCommand
 {
 public:
@@ -97,53 +144,11 @@ FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
     : MotionBaseModel(undo, parent),
       m_state(0)
 {
+    m_root = new TreeItem("", 0, true, 0);
 }
 
 FaceMotionModel::~FaceMotionModel()
 {
-}
-
-int FaceMotionModel::rowCount(const QModelIndex & /* parent */) const
-{
-    return keys().count();
-}
-
-QVariant FaceMotionModel::data(const QModelIndex &index, int role) const
-{
-    if (index.isValid()) {
-        switch(role) {
-        case kBinaryDataRole:
-            return values().value(QPair<int, int>(index.column(), index.row()));
-        case kNameRole:
-        case Qt::DisplayRole:
-            return keys()[index.row()];
-        }
-    }
-    return QVariant();
-}
-
-bool FaceMotionModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    if (m_model && index.isValid() && role == Qt::EditRole) {
-        m_values[m_model].insert(QPair<int, int>(index.column(), index.row()), value);
-        setModified(true);
-        emit dataChanged(index, index);
-        return true;
-    }
-    return false;
-}
-
-QVariant FaceMotionModel::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    if (!m_model || role != Qt::DisplayRole)
-        return QVariant();
-    switch (orientation) {
-    case Qt::Vertical:
-        return keys()[section];
-    case Qt::Horizontal:
-        return " "; //QString("%1").setNum(section + 1);
-    }
-    return QVariant();
 }
 
 void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
@@ -194,9 +199,9 @@ void FaceMotionModel::setFrames(const QList<Frame> &frames)
         int frameIndex = pair.first;
         vpvl::Face *face = pair.second;
         key = internal::toQString(face->name());
-        int i = keys().indexOf(key);
-        if (i != -1) {
-            const QModelIndex &modelIndex = index(i, frameIndex);
+        const Keys keys = this->keys();
+        if (keys.contains(key)) {
+            const QModelIndex &modelIndex = frameToIndex(keys[key], frameIndex);
             vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
             vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
             newFrame->setName(face->name());
@@ -224,17 +229,45 @@ void FaceMotionModel::resetAllFaces()
 
 void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
-    m_faces.clear();
     clearKeys();
     if (model) {
         const vpvl::FaceList &faces = model->facesForUI();
         uint32_t nFaces = faces.count();
-        Keys k = keys(model);
+        TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, static_cast<TreeItem *>(m_root));
+        TreeItem *eye = new TreeItem(tr("Eye"), 0, false, static_cast<TreeItem *>(m_root));
+        TreeItem *lip = new TreeItem(tr("Lip"), 0, false, static_cast<TreeItem *>(m_root));
+        TreeItem *other = new TreeItem(tr("Other"), 0, false, static_cast<TreeItem *>(m_root));
+        Keys &keys = m_keys[model];
         for (uint32_t i = 0; i < nFaces; i++) {
             vpvl::Face *face = faces[i];
-            appendKey(internal::toQString(face), model);
-            m_faces.append(face);
+            const QString name = internal::toQString(face);
+            TreeItem *child, *parent = 0;
+            switch (face->type()) {
+            case vpvl::Face::kEyeblow:
+                parent = eyeblow;
+                break;
+            case vpvl::Face::kEye:
+                parent = eye;
+                break;
+            case vpvl::Face::kLip:
+                parent = lip;
+                break;
+            case vpvl::Face::kOther:
+                parent = other;
+                break;
+            default:
+                break;
+            }
+            if (parent) {
+                child = new TreeItem(name, face, false, parent);
+                parent->addChild(child);
+                keys.insert(name, child);
+            }
         }
+        m_root->addChild(eyeblow);
+        m_root->addChild(eye);
+        m_root->addChild(lip);
+        m_root->addChild(other);
     }
     MotionBaseModel::setPMDModel(model);
     qDebug("Set a model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
@@ -250,17 +283,18 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             QString key = internal::toQString(name);
-            int foundIndex = keys().indexOf(key);
-            if (foundIndex != -1) {
+            const Keys keys = this->keys();
+            if (keys.contains(key)) {
                 uint32_t frameIndex = frame->frameIndex();
-                QModelIndex modelIndex = index(i, frameIndex);
+                QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
+                ITreeItem *item = keys[key];
+                const QModelIndex &modelIndex = frameToIndex(item, frameIndex);
                 vpvl::FaceKeyFrame newFrame;
                 newFrame.setName(name);
                 newFrame.setWeight(frame->weight());
                 newFrame.setFrameIndex(frameIndex);
-                QByteArray bytes(vpvl::FaceKeyFrame::strideSize(), '0');
                 newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
-                setData(modelIndex, bytes, Qt::EditRole);
+                setData(modelIndex, bytes);
             }
         }
         m_motion = motion;
@@ -283,16 +317,19 @@ void FaceMotionModel::deleteMotion()
 
 void FaceMotionModel::deleteModel()
 {
-    m_faces.clear();
     deleteMotion();
     clearKeys();
+    delete m_root;
+    m_root = new TreeItem("", 0, true, 0);
     setPMDModel(0);
     reset();
 }
 
 void FaceMotionModel::deleteFrame(const QModelIndex &index)
 {
-    m_motion->mutableFaceAnimation()->deleteKeyFrame(index.column(), m_faces[index.row()]->name());
+    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+    vpvl::Face *face = item->face();
+    m_motion->mutableFaceAnimation()->deleteKeyFrame(index.column(), face->name());
     setData(index, kInvalidData, Qt::EditRole);
 }
 
@@ -301,40 +338,15 @@ void FaceMotionModel::selectFaces(QList<vpvl::Face *> faces)
     m_selected = faces;
 }
 
-vpvl::Face *FaceMotionModel::selectFace(int rowIndex)
-{
-    m_selected.clear();
-    vpvl::Face *face = m_faces[rowIndex];
-    m_selected.append(face);
-    return face;
-}
-
 vpvl::Face *FaceMotionModel::findFace(const QString &name)
 {
     QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
-    foreach (vpvl::Face *face, m_faces) {
+    foreach (ITreeItem *item, keys()) {
+        vpvl::Face *face = static_cast<TreeItem *>(item)->face();
         if (!qstrcmp(reinterpret_cast<const char *>(face->name()), bytes))
             return face;
     }
     return 0;
-}
-
-QList<vpvl::Face *> FaceMotionModel::facesByIndices(const QModelIndexList &indices)
-{
-    QList<vpvl::Face *> faces;
-    foreach (QModelIndex index, indices) {
-        if (index.isValid())
-            faces.append(m_faces[index.row()]);
-    }
-    return faces;
-}
-
-QList<vpvl::Face *> FaceMotionModel::facesFromIndices(const QModelIndexList &indices)
-{
-    QList<vpvl::Face *> faces;
-    foreach (QModelIndex index, indices)
-        faces.append(index.isValid() ? m_faces[index.row()] : 0);
-    return faces;
 }
 
 void FaceMotionModel::setWeight(float value)
@@ -349,17 +361,4 @@ void FaceMotionModel::setWeight(float value, vpvl::Face *face)
         face->setWeight(value);
         updateModel();
     }
-}
-
-void FaceMotionModel::clearKeys()
-{
-    m_faces.clear();
-    m_keys[m_model].clear();
-    m_keys.remove(m_model);
-}
-
-void FaceMotionModel::clearValues()
-{
-    m_values[m_model].clear();
-    m_values.remove(m_model);
 }

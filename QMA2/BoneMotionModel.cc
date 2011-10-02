@@ -4,27 +4,30 @@
 #include "util.h"
 #include <vpvl/vpvl.h>
 
-class BoneTreeItem
+namespace
+{
+
+class TreeItem : public MotionBaseModel::ITreeItem
 {
 public:
-    BoneTreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, BoneTreeItem *parent)
+    TreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, TreeItem *parent)
         : m_name(name),
           m_parent(parent),
           m_bone(bone),
           m_isRoot(isRoot)
     {
     }
-    ~BoneTreeItem() {
+    ~TreeItem() {
         qDeleteAll(m_children);
     }
 
-    void addChild(BoneTreeItem *item) {
-        m_children.append(item);
+    void addChild(ITreeItem *item) {
+        m_children.append(static_cast<TreeItem *>(item));
     }
-    BoneTreeItem *parent() const {
+    ITreeItem *parent() const {
         return m_parent;
     }
-    BoneTreeItem *child(int row) const {
+    ITreeItem *child(int row) const {
         return m_children.value(row);
     }
     const QString &name() const {
@@ -37,22 +40,19 @@ public:
         return m_isRoot;
     }
     int rowIndex() const {
-        return m_parent ? m_parent->m_children.indexOf(const_cast<BoneTreeItem *>(this)) : 0;
+        return m_parent ? m_parent->m_children.indexOf(const_cast<TreeItem *>(this)) : 0;
     }
     int countChildren() const {
         return m_children.count();
     }
 
 private:
-    QList<BoneTreeItem *> m_children;
+    QList<TreeItem *> m_children;
     QString m_name;
-    BoneTreeItem *m_parent;
+    TreeItem *m_parent;
     vpvl::Bone *m_bone;
     bool m_isRoot;
 };
-
-namespace
-{
 
 class CopyFramesCommand : public QUndoCommand
 {
@@ -119,7 +119,7 @@ private:
     void execute() {
         QTextCodec *codec = internal::getTextCodec();
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
-        const QMap<QString, BoneTreeItem *> &bones = m_bmm->keys();
+        const QMap<QString, MotionBaseModel::ITreeItem *> &bones = m_bmm->keys();
         vpvl::Quaternion rotation;
         foreach (VPDFile::Bone *bone, m_pose->bones()) {
             const QString &key = bone->name;
@@ -316,92 +316,22 @@ private:
 
 BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent) :
     MotionBaseModel(undo, parent),
-    m_root(0),
     m_sceneWidget(scene),
     m_state(0),
     m_mode(kLocal)
 {
-    m_root = new BoneTreeItem("", 0, true, 0);
+    m_root = new TreeItem("", 0, true, 0);
 }
 
 BoneMotionModel::~BoneMotionModel()
 {
-    delete m_root;
-}
-
-QVariant BoneMotionModel::data(const QModelIndex &index, int role) const
-{
-    if (!index.isValid())
-        return QVariant();
-
-    if (role == Qt::DisplayRole && index.column() == 0) {
-        BoneTreeItem *item = static_cast<BoneTreeItem *>(index.internalPointer());
-        return item->name();
-    }
-    else if (role == kBinaryDataRole && m_model) {
-        QVariant value = m_values[m_model].value(index);
-        return value;
-    }
-    else {
-        return QVariant();
-    }
-}
-
-bool BoneMotionModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    if (m_model && index.isValid() && role == Qt::EditRole) {
-        m_values[m_model].insert(index, value);
-        setModified(true);
-        emit dataChanged(index, index);
-        return true;
-    }
-    return false;
-}
-
-QModelIndex BoneMotionModel::index(int row, int column, const QModelIndex &parent) const
-{
-    if (!hasIndex(row, column, parent))
-        return QModelIndex();
-
-    BoneTreeItem *parentItem = 0;
-    if (!parent.isValid())
-        parentItem = m_root;
-    else
-        parentItem = static_cast<BoneTreeItem *>(parent.internalPointer());
-
-    BoneTreeItem *childItem = parentItem->child(row);
-    return childItem ? createIndex(row, column, childItem) : QModelIndex();
-}
-
-QModelIndex BoneMotionModel::parent(const QModelIndex &child) const
-{
-    if (!child.isValid())
-        return QModelIndex();
-
-    BoneTreeItem *childItem = static_cast<BoneTreeItem *>(child.internalPointer());
-    BoneTreeItem *parentItem = childItem->parent();
-    return parentItem == m_root ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
-}
-
-int BoneMotionModel::rowCount(const QModelIndex &parent) const
-{
-    BoneTreeItem *parentItem;
-    if (parent.column() > 0)
-        return 0;
-
-    if (!parent.isValid())
-        parentItem = m_root;
-    else
-        parentItem = static_cast<BoneTreeItem *>(parent.internalPointer());
-
-    return parentItem->countChildren();
 }
 
 void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
     if (m_model) {
         vpvl::BoneAnimation *animation = motion->mutableBoneAnimation();
-        foreach (const QVariant &value, m_values[m_model]) {
+        foreach (const QVariant &value, values()) {
             vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
             const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -451,7 +381,7 @@ void BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
 {
     if (model == m_model) {
         VPDFile::BoneList bones;
-        foreach (BoneTreeItem *item, keys()) {
+        foreach (ITreeItem *item, keys()) {
             const QModelIndex &modelIndex = frameToIndex(item, frameIndex);
             QVariant variant = modelIndex.data(BoneMotionModel::kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
@@ -497,11 +427,11 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             const QString category = internal::toQString(names[i]).trimmed();
             const vpvl::BoneList *bones = allBones[i];
             const uint32_t bonesCount = bones->count();
-            BoneTreeItem *parent = new BoneTreeItem(category, 0, false, m_root);
+            TreeItem *parent = new TreeItem(category, 0, false, static_cast<TreeItem *>(m_root));
             for (uint32_t j = 0; j < bonesCount; j++) {
                 vpvl::Bone *bone = bones->at(j);
                 const QString name = internal::toQString(bone);
-                BoneTreeItem *child = new BoneTreeItem(name, bone, false, parent);
+                TreeItem *child = new TreeItem(name, bone, false, parent);
                 parent->addChild(child);
                 keys.insert(name, child);
             }
@@ -526,7 +456,7 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
             if (keys.contains(key)) {
                 uint32_t frameIndex = frame->frameIndex();
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
-                BoneTreeItem *item = keys[key];
+                ITreeItem *item = keys[key];
                 const QModelIndex &modelIndex = frameToIndex(item, frameIndex);
                 vpvl::BoneKeyFrame newFrame;
                 newFrame.setName(name);
@@ -540,7 +470,7 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                     newFrame.setInterpolationParameter(type, x1, x2, y1, y2);
                 }
                 newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
-                setData(modelIndex, bytes, Qt::EditRole);
+                setData(modelIndex, bytes);
             }
         }
         m_motion = motion;
@@ -566,7 +496,7 @@ void BoneMotionModel::deleteModel()
     deleteMotion();
     clearKeys();
     delete m_root;
-    m_root = new BoneTreeItem("", 0, true, 0);
+    m_root = new TreeItem("", 0, true, 0);
     setPMDModel(0);
     reset();
 }
@@ -574,7 +504,7 @@ void BoneMotionModel::deleteModel()
 void BoneMotionModel::deleteFrame(const QModelIndex &index)
 {
     if (index.isValid()) {
-        BoneTreeItem *item = static_cast<BoneTreeItem *>(index.internalPointer());
+        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         vpvl::Bone *bone = item->bone();
         m_motion->mutableBoneAnimation()->deleteKeyFrame(index.column(), bone->name());
         setData(index, kInvalidData, Qt::EditRole);
@@ -780,34 +710,12 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)
 {
     QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
-    foreach (BoneTreeItem *item, keys()) {
-        vpvl::Bone *bone = item->bone();
+    foreach (ITreeItem *item, keys()) {
+        vpvl::Bone *bone = static_cast<TreeItem *>(item)->bone();
         if (!qstrcmp(reinterpret_cast<const char *>(bone->name()), bytes))
             return bone;
     }
     return 0;
-}
-
-const QModelIndex BoneMotionModel::frameToIndex(BoneTreeItem *item, int frameIndex) const
-{
-    int rowIndex = item->rowIndex();
-    const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
-    // column index 0 is row header
-    const QModelIndex modelIndex = index(rowIndex, frameIndex + 1, parentIndex);
-    if (!modelIndex.isValid())
-        createIndex(rowIndex, frameIndex, item);
-    return modelIndex;
-}
-
-void BoneMotionModel::clearKeys()
-{
-    m_keys.clear();
-}
-
-void BoneMotionModel::clearValues()
-{
-    m_values[m_model].clear();
-    m_values.remove(m_model);
 }
 
 const QMatrix4x4 BoneMotionModel::modelviewMatrix() const

@@ -15,9 +15,9 @@ static BoneListModel *UICastBoneModel(Ui::TransformWidget *ui)
     return reinterpret_cast<BoneListModel *>(ui->bones->model());
 }
 
-static FaceMotionModel *UICastFaceModel(Ui::TransformWidget *ui)
+static FaceListModel *UICastFaceModel(Ui::TransformWidget *ui)
 {
-    return reinterpret_cast<FaceMotionModel *>(ui->faces->model());
+    return reinterpret_cast<FaceListModel *>(ui->faces->model());
 }
 
 static void UIGetRotateButtons(QList<TransformButton *> &buttons,
@@ -74,7 +74,7 @@ static QList<vpvl::Bone *> UISelectBones(const Ui::TransformWidget *ui)
 static QList<vpvl::Face *> UISelectFacesBySelection(const Ui::TransformWidget *ui, const QItemSelection &selection)
 {
     QList<vpvl::Face *> faces;
-    FaceMotionModel *fmm = qobject_cast<FaceMotionModel *>(ui->faces->model());
+    FaceListModel *fmm = qobject_cast<FaceListModel *>(ui->faces->model());
     foreach (QItemSelectionRange range, selection) {
         foreach (vpvl::Face *face, fmm->facesByIndices(UISelectRowIndices(range)))
             faces.append(face);
@@ -173,6 +173,93 @@ QList<vpvl::Bone *> BoneListModel::bonesFromIndices(const QModelIndexList &indic
     return ret;
 }
 
+FaceListModel::FaceListModel(FaceMotionModel *model)
+    : m_model(model)
+{
+    connect(m_model, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(changeModel(vpvl::PMDModel*)));
+}
+
+FaceListModel::~FaceListModel()
+{
+}
+
+QVariant FaceListModel::data(const QModelIndex &index, int role) const
+{
+    if (index.isValid()) {
+        switch(role) {
+        case Qt::DisplayRole:
+            const vpvl::Face *bone = m_faces[index.row()];
+            const QString name = internal::toQString(bone);
+            return name;
+        }
+    }
+    return QVariant();
+}
+
+int FaceListModel::rowCount(const QModelIndex & /* parent */) const
+{
+    return m_faces.count();
+}
+
+int FaceListModel::columnCount(const QModelIndex & /* parent */) const
+{
+    return 1;
+}
+
+void FaceListModel::selectFaces(const QList<vpvl::Face *> &faces)
+{
+    m_model->selectFaces(faces);
+}
+
+void FaceListModel::startTransform()
+{
+    m_model->startTransform();
+}
+
+void FaceListModel::commitTransform()
+{
+    m_model->commitTransform();
+}
+
+void FaceListModel::setWeight(float value)
+{
+    m_model->setWeight(value);
+}
+
+void FaceListModel::changeModel(vpvl::PMDModel * /* model */)
+{
+    vpvl::PMDModel *model = m_model->selectedModel();
+    if (model) {
+        const vpvl::FaceList &faces = model->faces();
+        const uint32_t nfaces = faces.count();
+        m_faces.clear();
+        for (uint32_t i = 0; i < nfaces; i++) {
+            vpvl::Face *face = faces[i];
+            if (face->type() != vpvl::Face::kBase)
+                m_faces.append(face);
+        }
+    }
+    reset();
+}
+
+QList<vpvl::Face *> FaceListModel::facesByIndices(const QModelIndexList &indices) const
+{
+    return facesFromIndices(indices);
+}
+
+QList<vpvl::Face *> FaceListModel::facesFromIndices(const QModelIndexList &indices) const
+{
+    QList<vpvl::Face *> ret;
+    vpvl::PMDModel *model = m_model->selectedModel();
+    if (!model)
+        return ret;
+    foreach (QModelIndex index, indices) {
+        if (index.isValid())
+            ret.append(m_faces[index.row()]);
+    }
+    return ret;
+}
+
 TransformButton::TransformButton(QWidget *parent) :
     QPushButton(parent),
     m_boneMotionModel(0),
@@ -235,14 +322,16 @@ TransformWidget::TransformWidget(QSettings *settings,
                                  QWidget *parent)
     : QWidget(parent),
       ui(new Ui::TransformWidget),
-      m_bmm(0),
+      m_boneList(0),
+      m_faceList(0),
       m_settings(settings)
 {
     QList<TransformButton *> buttons;
-    m_bmm = new BoneListModel(bmm);
+    m_boneList = new BoneListModel(bmm);
+    m_faceList = new FaceListModel(fmm);
     ui->setupUi(this);
-    ui->bones->setModel(m_bmm);
-    ui->faces->setModel(fmm);
+    ui->bones->setModel(m_boneList);
+    ui->faces->setModel(m_faceList);
     UIGetTransformButtons(buttons, ui);
     UIGetRotateButtons(buttons, ui);
     foreach (TransformButton *button, buttons)
@@ -256,7 +345,8 @@ TransformWidget::TransformWidget(QSettings *settings,
 
 TransformWidget::~TransformWidget()
 {
-    delete m_bmm;
+    delete m_boneList;
+    delete m_faceList;
     delete ui;
 }
 
