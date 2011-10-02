@@ -154,7 +154,13 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
 
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 {
+    btVector4 red(1.0f, 0.0f, 0.0f, 1.0f), black(0.0f, 0.0f, 0.0f, 1.0f);
+    vpvl::PMDModel *model = m_renderer->selectedModel();
+    if (model)
+        model->setEdgeColor(black);
     m_renderer->setSelectedModel(value);
+    if (value)
+        value->setEdgeColor(red);
     emit modelDidSelect(value);
 }
 
@@ -435,7 +441,7 @@ const QPointF SceneWidget::objectCoordinates(const QPoint &input)
         modelviewMatrixd[i] = modelviewMatrixf[i];
         projectionMatrixd[i] = projectionMatrixf[i];
     }
-    int wx = input.x(), wy = width() - input.y();
+    int wx = input.x(), wy = height() - input.y();
     double cx, cy, cz, fx, fy, fz;
     gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
     gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
@@ -598,22 +604,30 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     if (m_handles->testHit(m_prevPos, m_handleFlags, rect)) {
         event->accept();
     }
-#if 0
+#if 1
     else {
         vpvl::PMDModel *model = m_renderer->selectedModel();
         if (model) {
+            const QPointF &pos = objectCoordinates(m_prevPos);
             const vpvl::BoneList &bones = model->bones();
             const uint32_t nbones = bones.count();
-            const QPointF &pos = objectCoordinates(m_prevPos);
-            btVector3 origin(pos.x(), pos.y() - m_renderer->scene()->position().y(), 0.0f);
-            qDebug() << "start";
+            btVector3 origin(pos.x(), pos.y(), 0.0f);
+            vpvl::Bone *nearestBone = 0;
+            btScalar nearestDistance = 0.2f;
             for (uint32_t i = 0; i < nbones; i++) {
                 vpvl::Bone *bone = bones[i];
                 btVector3 boneOrigin = bone->localTransform().getOrigin();
                 boneOrigin.setZ(0.0f);
-                qDebug() << internal::toQString(bone) << "distance" << boneOrigin.distance(origin)
-                         << "origin" << origin.x() << origin.y() << "bone" << boneOrigin.x() << boneOrigin.y();
+                btScalar distance = boneOrigin.distance(origin);
+                if (distance < nearestDistance) {
+                    nearestBone = bone;
+                    nearestDistance = distance;
+                }
             }
+            if (nearestBone)
+                qDebug() << "nearest bone is" << internal::toQString(nearestBone);
+            else
+                qDebug() << "nearest bone is not found";
             event->ignore();
         }
     }
