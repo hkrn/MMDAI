@@ -91,26 +91,37 @@ static void SetSearchPaths(const QCoreApplication &app)
     QDir::setSearchPaths("MMDAITranslations", paths);
 }
 
-static void LoadTranslations(QCoreApplication &app, QTranslator &appTr, QTranslator &qtTr)
+typedef QSharedPointer<QTranslator> QTranslatorPtr;
+
+static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &translators)
 {
     const QString locale = QLocale::system().name();
-    qtTr.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-    appTr.load("MMDAI2_" + locale, QDir("MMDAITranslations:/").absolutePath());
-    app.installTranslator(&qtTr);
-    app.installTranslator(&appTr);
+    QTranslator *translator = new QTranslator();
+    translator->load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+    app.installTranslator(translator);
+    translators.append(QTranslatorPtr(translator));
+    QString base = QDir("MMDAITranslations:/").absolutePath();
+    translator = new QTranslator();
+    translator->load("MMDAI1_" + locale, base);
+    app.installTranslator(translator);
+    translators.append(QTranslatorPtr(translator));
+    translator = new QTranslator();
+    translator->load("MMDAI2_" + locale, base);
+    app.installTranslator(translator);
+    translators.append(QTranslatorPtr(translator));
 }
 
 int main(int argc, char *argv[])
 {
     Application a(argc, argv);
-    QTranslator appTranslator, qtTranslator;
+    QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
     a.setApplicationVersion("0.2.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     SetSearchPaths(a);
-    LoadTranslations(a, appTranslator, qtTranslator);
+    LoadTranslations(a, translators);
 
     MainWindow w;
     if (w.validateLibraryVersion()) {
