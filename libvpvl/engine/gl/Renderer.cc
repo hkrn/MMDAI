@@ -184,7 +184,7 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset)
 {
     int textureIndex = 0;
     aiString texturePath;
-    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == AI_SUCCESS) {
+    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         GLuint textureID = asset->userData()->textures[texturePath.data];
         glBindTexture(GL_TEXTURE_2D, textureID);
     }
@@ -193,23 +193,23 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset)
     }
     aiColor4D ambient, diffuse, emission, specular;
     float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
         aiColor2Float4(ambient, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
     }
     else {
-        float defaultAmbient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        float defaultAmbient[4] = { 0.8f, 0.8f, 0.8f, 0.8f };
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
     }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         aiColor2Float4(diffuse, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
     }
     else {
-        float defaultDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        float defaultDiffuse[4] = { 0.2f, 0.2f, 0.2f, 0.2f };
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
     }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
         aiColor2Float4(emission, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
     }
@@ -217,7 +217,7 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset)
         float defaultEmission[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, defaultEmission);
     }
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular)) {
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
         aiColor2Float4(specular, color);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
     }
@@ -228,21 +228,21 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset)
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
-    if (ret1 == AI_SUCCESS && ret2 == AI_SUCCESS) {
+    if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess * strength);
     }
-    else if (ret1 == AI_SUCCESS) {
+    else if (ret1 == aiReturn_SUCCESS) {
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
     }
     else {
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
     }
     int wireframe, twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == AI_SUCCESS && wireframe)
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == AI_SUCCESS && twoside)
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside)
         glEnable(GL_CULL_FACE);
     else
         glDisable(GL_CULL_FACE);
@@ -434,13 +434,20 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 
 Renderer::~Renderer()
 {
-#ifdef VPVL_LINK_ASSIMP
-    const uint32_t nAssets = m_assets.count();
-    for (uint32_t i = 0; i < nAssets; i++) {
-        Asset *asset = m_assets[i];
-        delete asset->userData();
+    vpvl::Array<vpvl::PMDModel *> models;
+    models.copy(m_scene->models());
+    const uint32_t nModels = models.count();
+    for (uint32_t i = 0; i < nModels; i++) {
+        vpvl::PMDModel *model = models[i];
+        unloadModel(model);
     }
-#endif
+    vpvl::Array<vpvl::Asset *> assets;
+    assets.copy(m_assets);
+    const uint32_t nAssets = assets.count();
+    for (uint32_t i = 0; i < nAssets; i++) {
+        vpvl::Asset *asset = assets[i];
+        unloadAsset(asset);
+    }
     m_assets.clear();
     delete m_debugDrawer;
     m_debugDrawer = 0;
@@ -472,25 +479,6 @@ void Renderer::resize(int width, int height)
 {
     m_scene->setWidth(width);
     m_scene->setHeight(height);
-}
-
-void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate) const
-{
-    double modelViewMatrixd[16], projectionMatrixd[16], winX = 0, winY = 0, x = 0, y = 0, z = 0;
-    float modelViewMatrixf[16], projectionMatrixf[16], winZ = 0;
-    int view[4];
-    m_scene->getModelViewMatrix(modelViewMatrixf);
-    m_scene->getProjectionMatrix(projectionMatrixf);
-    for (int i = 0; i < 16; i++) {
-        modelViewMatrixd[i] = modelViewMatrixf[i];
-        projectionMatrixd[i] = projectionMatrixf[i];
-    }
-    glGetIntegerv(GL_VIEWPORT, view);
-    winX = px;
-    winY = view[3] - py;
-    glReadPixels(static_cast<GLint>(winX), static_cast<GLint>(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
-    gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
-    coordinate.setValue(static_cast<btScalar>(x), static_cast<btScalar>(y), static_cast<btScalar>(z));
 }
 
 void Renderer::setDebugDrawer(btDynamicsWorld *world)
@@ -568,6 +556,7 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
     userData->materials = materialPrivates;
     model->setUserData(userData);
     m_delegate->log(IDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
+    m_scene->addModel(model);
 }
 
 void Renderer::unloadModel(const vpvl::PMDModel *model)
@@ -823,22 +812,14 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     glCullFace(GL_BACK);
 #endif
 
-    const float alpha = 1.0f;
     const size_t stride = model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
     const vpvl::PMDModelUserData *modelPrivate = model->userData();
-    btVector4 color;
-
-    if (model == m_selected)
-        color.setValue(1.0f, 0.0f, 0.0f, alpha);
-    else
-        color.setValue(0.0f, 0.0f, 0.0f, alpha);
-
     glDisable(GL_LIGHTING);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * stride, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glVertexPointer(3, GL_FLOAT, stride, 0);
-    glColor4fv(static_cast<const btScalar *>(color));
+    glColor4fv(static_cast<const Scalar *>(model->edgeColor()));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
