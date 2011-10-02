@@ -54,12 +54,18 @@ Delegate::~Delegate()
 bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
 {
     QString pathString = QString::fromLocal8Bit(path.c_str());
-    if (!QFileInfo(pathString).exists()) {
+    QFileInfo info(pathString);
+    if (info.isDir() || !info.exists()) {
         return false;
     }
     uint8_t *rawData = 0;
     QImage image = pathString.endsWith(".tga", Qt::CaseInsensitive)
             ? loadTGA(pathString, rawData) : QImage(pathString).rgbSwapped();
+    if (pathString.endsWith(".sph") || pathString.endsWith(".spa")) {
+        QTransform transform;
+        transform.scale(1, -1);
+        image = image.transformed(transform);
+    }
     QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
     textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
                                       image.depth() == 32 ? GL_RGBA : GL_RGB, options);
