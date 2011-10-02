@@ -64,6 +64,12 @@ int MotionBaseModel::columnCount(const QModelIndex & /* parent */) const
     return 1800;
 }
 
+void MotionBaseModel::markAsNew(vpvl::PMDModel *model)
+{
+    if (model == m_model)
+        setModified(false);
+}
+
 void MotionBaseModel::refreshModel()
 {
     updateModel();

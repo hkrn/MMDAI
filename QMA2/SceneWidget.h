@@ -136,6 +136,7 @@ signals:
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
+    void newMotionDidSet(vpvl::PMDModel *model);
     void assetDidAdd(vpvl::Asset *asset);
     void assetWillDelete(vpvl::Asset *asset);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);

@@ -586,6 +586,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(sceneDidPlay()), this, SLOT(startSceneUpdate()));
     connect(m_sceneWidget, SIGNAL(sceneDidPause()), this, SLOT(stopSceneUpdate()));
     connect(m_sceneWidget, SIGNAL(sceneDidStop()), this, SLOT(stopSceneUpdate()));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_faceMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
 }
 
 void MainWindow::startSceneUpdate()

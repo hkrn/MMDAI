@@ -47,6 +47,7 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
 public slots:
+    void markAsNew(vpvl::PMDModel *model);
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
     virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void deleteMotion() = 0;

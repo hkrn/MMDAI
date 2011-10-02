@@ -172,6 +172,7 @@ void SceneWidget::addModel()
     if (model && !m_playing) {
         setEmptyMotion(model);
         model->updateImmediate();
+        emit newMotionDidSet(model);
     }
 }
 
