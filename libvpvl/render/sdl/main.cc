@@ -225,7 +225,9 @@ public:
         std::string path = m_system + "/" + file;
         slurpFile(path, data, size);
         log(kLogInfo, "Loaded a shader: %s", path.c_str());
-        return std::string(reinterpret_cast<const char *>(data), size);
+        std::string content(reinterpret_cast<const char *>(data), size);
+        delete[] data;
+        return content;
     }
 #endif
     const std::string toUnicode(const uint8_t *value) {
@@ -234,8 +236,11 @@ public:
         size_t inlen = str.length(), outlen = inlen * 3;
         char *dest = new char[outlen];
         size_t size = str.extract(0, inlen, dest, outlen, "utf-8");
-        dest[size] = '\0';
-        std::string result(dest);
+        std::string result;
+        if (size > 0) {
+            dest[size] = '\0';
+            result = std::string(dest);
+        }
         delete[] dest;
         return result;
 #elif defined(VPVL_HAS_ICONV)
@@ -446,6 +451,7 @@ private:
             return asset;
         }
         else {
+            delete asset;
             m_delegate.log(IDelegate::kLogWarning,
                            "Failed parsing the asset %s, skipped...",
                            path.c_str());
@@ -514,8 +520,15 @@ private:
 
 int main(int argc, char *argv[])
 {
+#if 1
     UI ui(argc, argv);
     if (!ui.initialize())
         return -1;
     return ui.execute();
+#else
+    UI *ui = new UI(argc, argv);
+    ui->initialize();
+    delete ui;
+    return 0;
+#endif
 }

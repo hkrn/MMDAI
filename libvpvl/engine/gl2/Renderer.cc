@@ -931,6 +931,8 @@ Renderer::~Renderer()
         vpvl::Asset *asset = assets[i];
         unloadAsset(asset);
     }
+    models.releaseAll();
+    assets.releaseAll();
     delete m_edgeProgram;
     m_edgeProgram = 0;
     delete m_modelProgram;
@@ -1437,9 +1439,7 @@ void Renderer::unloadAsset(Asset *asset)
             }
         }
         aiUnloadAssetRecursive(scene, scene->mRootNode, userData);
-        delete asset;
         delete userData;
-        m_assets.remove(asset);
     }
 #else
     (void) asset;
