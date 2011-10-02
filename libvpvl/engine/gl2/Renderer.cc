@@ -983,25 +983,6 @@ void Renderer::resize(int width, int height)
     m_scene->setHeight(height);
 }
 
-void Renderer::getObjectCoordinate(int px, int py, btVector3 &coordinate) const
-{
-    double modelViewMatrixd[16], projectionMatrixd[16], winX = 0, winY = 0, x = 0, y = 0, z = 0;
-    float modelViewMatrixf[16], projectionMatrixf[16], winZ = 0;
-    int view[4];
-    m_scene->getModelViewMatrix(modelViewMatrixf);
-    m_scene->getProjectionMatrix(projectionMatrixf);
-    for (int i = 0; i < 16; i++) {
-        modelViewMatrixd[i] = modelViewMatrixf[i];
-        projectionMatrixd[i] = projectionMatrixf[i];
-    }
-    glGetIntegerv(GL_VIEWPORT, view);
-    winX = px;
-    winY = view[3] - py;
-    glReadPixels(static_cast<GLint>(winX), static_cast<GLint>(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
-    gluUnProject(winX, winY, winZ, modelViewMatrixd, projectionMatrixd, view, &x, &y, &z);
-    coordinate.setValue(static_cast<btScalar>(x), static_cast<btScalar>(y), static_cast<btScalar>(z));
-}
-
 void Renderer::setDebugDrawer(btDynamicsWorld *world)
 {
     static_cast<DebugDrawer *>(m_debugDrawer)->setWorld(world);
