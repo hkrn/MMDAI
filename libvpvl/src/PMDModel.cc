@@ -61,16 +61,16 @@ public:
 
 struct SkinVertex
 {
-    btVector3 position;
-    btVector3 normal;
-    btVector3 texureCoord;
+    Vector3 position;
+    Vector3 normal;
+    Vector3 texureCoord;
 };
 
 struct State
 {
     const PMDModel *model;
-    Array<btVector3> positions;
-    Array<btQuaternion> rotations;
+    Array<Vector3> positions;
+    Array<Quaternion> rotations;
     Array<float> weights;
 };
 
@@ -97,7 +97,7 @@ PMDModel::PMDModel()
     internal::zerofill(&m_comment, sizeof(m_comment));
     internal::zerofill(&m_englishName, sizeof(m_englishName));
     internal::zerofill(&m_englishComment, sizeof(m_englishComment));
-    m_rootBone.setRotation(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f));
+    m_rootBone.setRotation(Quaternion(0.0f, 0.0f, 0.0f, 1.0f));
     m_rootBone.updateTransform();
 }
 
@@ -380,27 +380,27 @@ void PMDModel::updateSkinVertices()
         const float weight = vertex->weight();
         if (weight >= 1.0f - kMinBoneWeight) {
             const int16_t bone1 = vertex->bone1();
-            const btTransform &transform = m_skinningTransform[bone1];
+            const Transform &transform = m_skinningTransform[bone1];
             skin.position = transform * vertex->position();
             skin.normal = transform.getBasis() * vertex->normal();
         }
         else if (weight <= kMinBoneWeight) {
             const int16_t bone2 = vertex->bone2();
-            const btTransform &transform = m_skinningTransform[bone2];
+            const Transform &transform = m_skinningTransform[bone2];
             skin.position = transform * vertex->position();
             skin.normal = transform.getBasis() * vertex->normal();
         }
         else {
             const int16_t bone1 = vertex->bone1();
             const int16_t bone2 = vertex->bone2();
-            const btVector3 &position = vertex->position();
-            const btVector3 &normal = vertex->normal();
-            const btTransform &transform1 = m_skinningTransform[bone1];
-            const btTransform &transform2 = m_skinningTransform[bone2];
-            const btVector3 &v1 = transform1 * position;
-            const btVector3 &n1 = transform1.getBasis() * normal;
-            const btVector3 &v2 = transform2 * position;
-            const btVector3 &n2 = transform2.getBasis() * normal;
+            const Vector3 &position = vertex->position();
+            const Vector3 &normal = vertex->normal();
+            const Transform &transform1 = m_skinningTransform[bone1];
+            const Transform &transform2 = m_skinningTransform[bone2];
+            const Vector3 &v1 = transform1 * position;
+            const Vector3 &n1 = transform1.getBasis() * normal;
+            const Vector3 &v2 = transform2 * position;
+            const Vector3 &n2 = transform2.getBasis() * normal;
             skin.position.setInterpolate3(v2, v1, weight);
             skin.normal.setInterpolate3(n2, n1, weight);
         }
@@ -408,7 +408,7 @@ void PMDModel::updateSkinVertices()
     }
 }
 
-void PMDModel::updateToon(const btVector3 &lightDirection)
+void PMDModel::updateToon(const Vector3 &lightDirection)
 {
     const uint32_t nVertices = m_vertices.count();
     for (int i = 0; i < nVertices; i++) {
@@ -444,11 +444,11 @@ void PMDModel::updateIndices()
 #endif
 }
 
-float PMDModel::boundingSphereRange(btVector3 &center)
+float PMDModel::boundingSphereRange(Vector3 &center)
 {
     float max = 0.0f;
     Bone *bone = Bone::centerBone(&m_bones);
-    btVector3 pos = bone->localTransform().getOrigin();
+    Vector3 pos = bone->localTransform().getOrigin();
     const uint32_t nVertices = m_vertices.count();
     for (int i = 0; i < nVertices; i++) {
         const float r2 = pos.distance2(m_skinnedVertices[i].position);
@@ -929,7 +929,7 @@ void PMDModel::parseRigidBodies(const DataInfo &info)
 
 void PMDModel::parseConstraints(const DataInfo &info)
 {
-    btVector3 offset = m_rootBone.offset();
+    Vector3 offset = m_rootBone.offset();
     uint8_t *ptr = const_cast<uint8_t *>(info.constraintsPtr);
     const uint32_t nconstraints = info.constranitsCount;
     m_constraints.reserve(nconstraints);
@@ -1021,7 +1021,7 @@ size_t PMDModel::strideSize(StrideType type) const
         return sizeof(SkinVertex);
     case kEdgeVerticesStride:
     case kToonTextureStride:
-        return sizeof(btVector3);
+        return sizeof(Vector3);
     case kIndicesStride:
     case kEdgeIndicesStride:
         return sizeof(uint16_t);

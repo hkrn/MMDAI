@@ -75,16 +75,16 @@ public:
     const uint8_t *subTextureName() const {
         return m_subTextureName;
     }
-    const btVector4 &ambient() const {
+    const Vector4 &ambient() const {
         return m_ambient;
     }
-    const btVector4 &averageColor() const {
+    const Vector4 &averageColor() const {
         return m_averageColor;
     }
-    const btVector4 &diffuse() const {
+    const Vector4 &diffuse() const {
         return m_diffuse;
     }
-    const btVector4 &specular() const {
+    const Vector4 &specular() const {
         return m_specular;
     }
     float opacity() const {
@@ -121,16 +121,16 @@ public:
     void setSubTextureName(const uint8_t *value) {
         copyBytesSafe(m_subTextureName, value, sizeof(m_subTextureName));
     }
-    void setAmbient(const btVector4 &value) {
+    void setAmbient(const Vector4 &value) {
         m_ambient = value;
     }
-    void setAverageColor(const btVector4 &value) {
+    void setAverageColor(const Vector4 &value) {
         m_averageColor = value;
     }
-    void setDiffuse(const btVector4 &value) {
+    void setDiffuse(const Vector4 &value) {
         m_diffuse = value;
     }
-    void setSpecular(const btVector4 &value) {
+    void setSpecular(const Vector4 &value) {
         m_specular = value;
     }
     void setOpacity(float value) {
@@ -147,10 +147,10 @@ private:
     uint8_t m_rawName[kNameSize];
     uint8_t m_mainTextureName[kNameSize];
     uint8_t m_subTextureName[kNameSize];
-    btVector4 m_ambient;
-    btVector4 m_averageColor;
-    btVector4 m_diffuse;
-    btVector4 m_specular;
+    Vector4 m_ambient;
+    Vector4 m_averageColor;
+    Vector4 m_diffuse;
+    Vector4 m_specular;
     float m_opacity;
     float m_shiness;
     uint32_t m_nindices;

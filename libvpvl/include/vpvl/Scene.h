@@ -87,10 +87,10 @@ public:
     void resetCamera();
     void seekMotion(float frameIndex);
     void setCameraPerspective(CameraAnimation *camera);
-    void setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
-    void setLightComponent(const btVector4 &ambient, const btVector4 &diffuse, const btVector4 &specular);
-    void setLightSource(const btVector4 &color, const btVector3 &position);
+    void setLightComponent(const Vector4 &ambient, const Vector4 &diffuse, const Vector4 &specular);
+    void setLightSource(const Vector4 &color, const Vector3 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
     void advanceMotion(float deltaFrame);
@@ -102,25 +102,25 @@ public:
     const Array<PMDModel *> &models() const {
         return m_models;
     }
-    const btVector4 &lightColor() const {
+    const Vector4 &lightColor() const {
         return m_lightColor;
     }
-    const btVector3 &lightPosition() const {
+    const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
-    const btVector4 &lightAmbient() const {
+    const Vector4 &lightAmbient() const {
         return m_lightAmbient;
     }
-    const btVector4 &lightDiffuse() const {
+    const Vector4 &lightDiffuse() const {
         return m_lightDiffuse;
     }
-    const btVector4 &lightSpecular() const {
+    const Vector4 &lightSpecular() const {
         return m_lightSpecular;
     }
-    const btVector3 &angle() const {
+    const Vector3 &angle() const {
         return m_angle;
     }
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
     float distance() const {
@@ -162,21 +162,21 @@ private:
     btDiscreteDynamicsWorld *m_world;
     Array<PMDModel *> m_models;
     VMDMotion *m_cameraMotion;
-    btTransform m_modelview;
-    btQuaternion m_currentRotation;
-    btQuaternion m_rotation;
-    btQuaternion m_viewMoveRotation;
-    btVector4 m_lightColor;
-    btVector3 m_lightPosition;
-    btVector4 m_lightAmbient;
-    btVector4 m_lightDiffuse;
-    btVector4 m_lightSpecular;
-    btVector3 m_currentPosition;
-    btVector3 m_position;
-    btVector3 m_viewMovePosition;
-    btVector3 m_angle;
-    btVector3 m_currentDistance;
-    btVector3 m_viewMoveDistance;
+    Transform m_modelview;
+    Quaternion m_currentRotation;
+    Quaternion m_rotation;
+    Quaternion m_viewMoveRotation;
+    Vector4 m_lightColor;
+    Vector3 m_lightPosition;
+    Vector4 m_lightAmbient;
+    Vector4 m_lightDiffuse;
+    Vector4 m_lightSpecular;
+    Vector3 m_currentPosition;
+    Vector3 m_position;
+    Vector3 m_viewMovePosition;
+    Vector3 m_angle;
+    Vector3 m_currentDistance;
+    Vector3 m_viewMoveDistance;
     float m_projection[16];
     float m_distance;
     float m_currentFovy;

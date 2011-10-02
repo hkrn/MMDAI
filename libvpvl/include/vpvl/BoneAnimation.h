@@ -71,7 +71,7 @@ public:
 
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
-    void takeSnap(const btVector3 &center);
+    void takeSnap(const Vector3 &center);
     void reset();
     void refresh();
 
@@ -122,8 +122,8 @@ private:
                              float w,
                              uint32_t at);
     static void lerpVector3(const BoneKeyFrame *keyFrame,
-                            const btVector3 &from,
-                            const btVector3 &to,
+                            const Vector3 &from,
+                            const Vector3 &to,
                             float w,
                             uint32_t at,
                             float &value);

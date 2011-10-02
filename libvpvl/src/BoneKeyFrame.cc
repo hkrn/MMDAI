@@ -173,7 +173,7 @@ BaseKeyFrame *BoneKeyFrame::clone() const
 
 void BoneKeyFrame::getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const
 {
-    btQuadWord &w = getInterpolationParameterInternal(type);
+    QuadWord &w = getInterpolationParameterInternal(type);
     x1 = static_cast<int8_t>(w.x());
     y1 = static_cast<int8_t>(w.y());
     x2 = static_cast<int8_t>(w.z());
@@ -186,10 +186,10 @@ void BoneKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1, 
     int8_t table[kTableSize];
     internal::zerofill(table, sizeof(table));
     for (int i = 0; i < 4; i++) {
-        // x1 => btQuadWord#x():0
-        // y1 => btQuadWord#y():1
-        // x2 => btQuadWord#z():2
-        // y2 => btQuadWord#w():3
+        // x1 => QuadWord#x():0
+        // y1 => QuadWord#y():1
+        // x2 => QuadWord#z():2
+        // y2 => QuadWord#w():3
         table[i * kMax + kX] = m_parameter.x[i];
         table[i * kMax + kY] = m_parameter.y[i];
         table[i * kMax + kZ] = m_parameter.z[i];
@@ -229,24 +229,24 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
 
 void BoneKeyFrame::setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2)
 {
-    btQuadWord &w = getInterpolationParameterInternal(type);
+    QuadWord &w = getInterpolationParameterInternal(type);
     w.setX(x1);
     w.setY(y1);
     w.setZ(x2);
     w.setW(y2);
 }
 
-btQuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
+QuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
 {
     switch (type) {
     case kX:
-        return const_cast<btQuadWord &>(m_parameter.x);
+        return const_cast<QuadWord &>(m_parameter.x);
     case kY:
-        return const_cast<btQuadWord &>(m_parameter.y);
+        return const_cast<QuadWord &>(m_parameter.y);
     case kZ:
-        return const_cast<btQuadWord &>(m_parameter.z);
+        return const_cast<QuadWord &>(m_parameter.z);
     case kRotation:
-        return const_cast<btQuadWord &>(m_parameter.rotation);
+        return const_cast<QuadWord &>(m_parameter.rotation);
     }
 }
 

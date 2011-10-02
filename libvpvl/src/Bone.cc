@@ -219,7 +219,7 @@ void Bone::build(BoneList *bones, Bone *rootBone)
 
 void Bone::updateRotation()
 {
-    btQuaternion q;
+    Quaternion q;
     switch (m_type) {
     case kUnderRotate:
         q = m_rotation * m_targetBone->m_rotation;
@@ -239,7 +239,7 @@ void Bone::updateTransform()
     updateTransform(m_rotation);
 }
 
-void Bone::updateTransform(const btQuaternion &q)
+void Bone::updateTransform(const Quaternion &q)
 {
     m_localTransform.setOrigin(m_position + m_offset);
     m_localTransform.setRotation(q);
@@ -247,7 +247,7 @@ void Bone::updateTransform(const btQuaternion &q)
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
 }
 
-void Bone::getSkinTransform(btTransform &tr) const
+void Bone::getSkinTransform(Transform &tr) const
 {
     tr = m_localTransform * m_localToOriginTransform;
 }

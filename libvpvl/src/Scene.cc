@@ -62,16 +62,16 @@ const float Scene::kFovySpeedRate = 0.9f;
 class SceneModelDistancePredication
 {
 public:
-    SceneModelDistancePredication(const btTransform &transform)
+    SceneModelDistancePredication(const Transform &transform)
         : m_transform(transform) {
     }
     bool operator()(const PMDModel *left, const PMDModel *right) {
-        const btVector3 &positionLeft = m_transform * Bone::centerBone(&left->bones())->localTransform().getOrigin();
-        const btVector3 &positionRight = m_transform * Bone::centerBone(&right->bones())->localTransform().getOrigin();
+        const Vector3 &positionLeft = m_transform * Bone::centerBone(&left->bones())->localTransform().getOrigin();
+        const Vector3 &positionRight = m_transform * Bone::centerBone(&right->bones())->localTransform().getOrigin();
         return positionLeft.z() < positionRight.z();
     }
 private:
-    const btTransform m_transform;
+    const Transform m_transform;
 };
 
 Scene::Scene(int width, int height, int fps)
@@ -176,7 +176,7 @@ void Scene::removeModel(PMDModel *model)
 
 void Scene::resetCamera()
 {
-    setCameraPerspective(btVector3(0.0f, 10.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
+    setCameraPerspective(Vector3(0.0f, 10.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
 }
 
 void Scene::seekMotion(float frameIndex)
@@ -203,7 +203,7 @@ void Scene::setCameraPerspective(CameraAnimation *camera)
     setCameraPerspective(camera->position(), camera->angle(), camera->fovy(), camera->distance());
 }
 
-void Scene::setCameraPerspective(const btVector3 &position, const btVector3 &angle, float fovy, float distance)
+void Scene::setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance)
 {
     m_position = position;
     m_angle = angle;
@@ -217,14 +217,14 @@ void Scene::setCameraMotion(VMDMotion *motion)
     m_cameraMotion = motion;
 }
 
-void Scene::setLightComponent(const btVector4 &ambient, const btVector4 &diffuse, const btVector4 &specular)
+void Scene::setLightComponent(const Vector4 &ambient, const Vector4 &diffuse, const Vector4 &specular)
 {
     m_lightAmbient = ambient;
     m_lightDiffuse = diffuse;
     m_lightSpecular = specular;
 }
 
-void Scene::setLightSource(const btVector4 &color, const btVector3 &position)
+void Scene::setLightSource(const Vector4 &color, const Vector3 &position)
 {
     m_lightColor = color;
     m_lightPosition = position;
@@ -280,7 +280,7 @@ void Scene::advanceMotion(float deltaFrame)
     // Updating world simulation
 #ifndef VPVL_NO_BULLET
     if (m_world) {
-        btScalar sec = deltaFrame / kFPS;
+        Scalar sec = deltaFrame / kFPS;
         if (sec > 1.0f)
             m_world->stepSimulation(sec, 1, sec);
         else
@@ -343,8 +343,8 @@ void Scene::updateModelView(int ellapsedTimeForMove)
             }
         }
         else {
-            const btVector3 position = m_position - m_currentPosition;
-            const btQuaternion rotation = m_rotation - m_currentRotation;
+            const Vector3 position = m_position - m_currentPosition;
+            const Quaternion rotation = m_rotation - m_currentRotation;
             if (position.length2() > kMinMoveDiff) {
                 /* current * 0.9 + target * 0.1 */
                 m_currentPosition = m_currentPosition.lerp(m_position, 1.0f - kMoveSpeedRate);
@@ -408,8 +408,8 @@ void Scene::updateProjectionMatrix()
 
 void Scene::updateRotationFromAngle()
 {
-    static const btVector3 x(1.0f, 0.0f, 0.0f), y(0.0f, 1.0f, 0.0f), z(0.0f, 0.0f, 1.0f);
-    btQuaternion rz(z, radian(m_angle.z())), rx(x, radian(m_angle.x())), ry(y, radian(m_angle.y()));
+    static const Vector3 x(1.0f, 0.0f, 0.0f), y(0.0f, 1.0f, 0.0f), z(0.0f, 0.0f, 1.0f);
+    Quaternion rz(z, radian(m_angle.z())), rx(x, radian(m_angle.x())), ry(y, radian(m_angle.y()));
     m_rotation = rz * rx * ry;
 }
 

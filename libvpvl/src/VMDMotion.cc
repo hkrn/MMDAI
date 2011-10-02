@@ -224,10 +224,10 @@ void VMDMotion::attachModel(PMDModel *model)
         if (m_enableRelocation && m_boneMotion.hasCenterBoneAnimation()) {
             Bone *root = model->mutableRootBone();
             Bone *center = Bone::centerBone(&model->bones());
-            btTransform transform = root->localTransform().inverse();
-            btVector3 position = transform * center->localTransform().getOrigin();
-            btVector3 centerPosition = center->originPosition();
-            btVector3 offset = position - centerPosition;
+            Transform transform = root->localTransform().inverse();
+            Vector3 position = transform * center->localTransform().getOrigin();
+            Vector3 centerPosition = center->originPosition();
+            Vector3 offset = position - centerPosition;
             offset.setY(0.0f);
             m_boneMotion.setOverrideFirst(offset);
             m_faceMotion.setOverrideFirst(offset);

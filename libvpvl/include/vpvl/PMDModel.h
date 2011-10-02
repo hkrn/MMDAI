@@ -238,7 +238,7 @@ public:
 
     void updateSkins();
     void updateImmediate();
-    float boundingSphereRange(btVector3 &center);
+    float boundingSphereRange(Vector3 &center);
 
     /**
      * Reset all bones of the model to initial state.
@@ -451,16 +451,16 @@ public:
     bool isSimulationEnabled() const {
         return m_enableSimulation;
     }
-    const btQuaternion &rotationOffset() const {
+    const Quaternion &rotationOffset() const {
         return m_rotationOffset;
     }
-    const btVector4 &edgeColor() const {
+    const Vector4 &edgeColor() const {
         return m_edgeColor;
     }
-    const btVector3 &positionOffset() const {
+    const Vector3 &positionOffset() const {
         return m_positionOffset;
     }
-    const btVector3 &lightPosition() const {
+    const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
     PMDModelUserData *userData() const {
@@ -536,16 +536,16 @@ public:
     void setBaseBone(Bone *value) {
         m_baseBone = value;
     }
-    void setRotationOffset(const btQuaternion &value) {
+    void setRotationOffset(const Quaternion &value) {
         m_rotationOffset = value;
     }
-    void setEdgeColor(const btVector4 &value) {
+    void setEdgeColor(const Vector4 &value) {
         m_edgeColor = value;
     }
-    void setPositionOffset(const btVector3 &value) {
+    void setPositionOffset(const Vector3 &value) {
         m_positionOffset = value;
     }
-    void setLightPosition(const btVector3 &value) {
+    void setLightPosition(const Vector3 &value) {
         m_lightPosition = value.normalized();
     }
     void setEdgeOffset(float value) {
@@ -581,7 +581,7 @@ private:
     void updateAllFaces();
     void updateShadowTextureCoords(float coef);
     void updateSkinVertices();
-    void updateToon(const btVector3 &lightPosition);
+    void updateToon(const Vector3 &lightPosition);
     void updateIndices();
 
     uint8_t m_name[kNameSize];
@@ -605,10 +605,10 @@ private:
     Hash<HashString, Face *> m_name2face;
     Array<VMDMotion *> m_motions;
     Array<uint8_t *> m_boneCategoryNames;
-    Array<btTransform> m_skinningTransform;
-    Array<btVector3> m_edgeVertices;
-    Array<btVector3> m_toonTextureCoords;
-    Array<btVector3> m_shadowTextureCoords;
+    Array<Transform> m_skinningTransform;
+    Array<Vector3> m_edgeVertices;
+    Array<Vector3> m_toonTextureCoords;
+    Array<Vector3> m_shadowTextureCoords;
     Array<BoneList *> m_bonesForUI;
     BoneList m_rotatedBones;
     Bone **m_orderedBones;
@@ -619,10 +619,10 @@ private:
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;
-    btQuaternion m_rotationOffset;
-    btVector4 m_edgeColor;
-    btVector3 m_positionOffset;
-    btVector3 m_lightPosition;
+    Quaternion m_rotationOffset;
+    Vector4 m_edgeColor;
+    Vector3 m_positionOffset;
+    Vector3 m_lightPosition;
     Error m_error;
     uint32_t m_boundingSphereStep;
     float m_edgeOffset;

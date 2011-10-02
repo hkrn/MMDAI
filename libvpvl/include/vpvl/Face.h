@@ -48,7 +48,7 @@ namespace vpvl
 struct FaceVertex
 {
     uint32_t id;
-    btVector3 position;
+    Vector3 position;
 };
 
 /**

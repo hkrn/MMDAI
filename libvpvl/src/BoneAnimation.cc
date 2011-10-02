@@ -47,10 +47,10 @@ const float BoneAnimation::kStartingMarginFrame = 20.0f;
 struct BoneAnimationInternal {
     Bone *bone;
     BoneKeyFrameList keyFrames;
-    btVector3 position;
-    btVector3 snapPosition;
-    btQuaternion rotation;
-    btQuaternion snapRotation;
+    Vector3 position;
+    Vector3 snapPosition;
+    Quaternion rotation;
+    Quaternion snapRotation;
     uint32_t lastIndex;
 };
 
@@ -70,14 +70,14 @@ float BoneAnimation::weightValue(const BoneKeyFrame *keyFrame, float w, uint32_t
 }
 
 void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
-                                const btVector3 &from,
-                                const btVector3 &to,
+                                const Vector3 &from,
+                                const Vector3 &to,
                                 float w,
                                 uint32_t at,
                                 float &value)
 {
-    const float valueFrom = static_cast<const btScalar *>(from)[at];
-    const float valueTo = static_cast<const btScalar *>(to)[at];
+    const float valueFrom = static_cast<const Scalar *>(from)[at];
+    const float valueTo = static_cast<const Scalar *>(to)[at];
     if (keyFrame->linear()[at]) {
         value = internal::lerp(valueFrom, valueTo, w);
     }
@@ -133,7 +133,7 @@ void BoneAnimation::seek(float frameAt)
     }
 }
 
-void BoneAnimation::takeSnap(const btVector3 &center)
+void BoneAnimation::takeSnap(const Vector3 &center)
 {
     const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {
@@ -237,8 +237,8 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
     const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);
-    btVector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
-    btQuaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
+    Vector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
+    Quaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
     if (m_overrideFirst && (k1 == 0 || frameIndexFrom <= m_lastLoopStartIndex)) {
         if (nFrames > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
             frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);

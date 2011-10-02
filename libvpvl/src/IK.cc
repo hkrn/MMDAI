@@ -138,21 +138,21 @@ void IK::read(const uint8_t *data, BoneList *bones)
 
 void IK::solve()
 {
-    const btVector3 destPosition = m_destination->localTransform().getOrigin();
-    const btVector3 xAxis(1.0f, 0.0f, 0.0f);
+    const Vector3 destPosition = m_destination->localTransform().getOrigin();
+    const Vector3 xAxis(1.0f, 0.0f, 0.0f);
     int nbones = m_bones.count();
     for (int i = nbones - 1; i >= 0; i--)
         m_bones[i]->updateTransform();
     m_target->updateTransform();
-    const btQuaternion originTargetRotation = m_target->rotation();
-    btQuaternion q;
+    const Quaternion originTargetRotation = m_target->rotation();
+    Quaternion q;
     for (int i = 0; i < m_iteration; i++) {
         for (int j = 0; j < nbones; j++) {
             Bone *bone = m_bones[j];
-            const btVector3 targetPosition = m_target->localTransform().getOrigin();
-            const btTransform transform = bone->localTransform().inverse();
-            btVector3 localDestination = transform * destPosition;
-            btVector3 localTarget = transform * targetPosition;
+            const Vector3 targetPosition = m_target->localTransform().getOrigin();
+            const Transform transform = bone->localTransform().inverse();
+            Vector3 localDestination = transform * destPosition;
+            Vector3 localTarget = transform * targetPosition;
             if (localDestination.distance2(localTarget) < kMinDistance) {
                 i = m_iteration;
                 break;
@@ -166,7 +166,7 @@ void IK::solve()
             if (fabsf(angle) < kMinAngle)
                 continue;
             btClamp(angle, -m_angleConstraint, m_angleConstraint);
-            btVector3 axis = localTarget.cross(localDestination);
+            Vector3 axis = localTarget.cross(localDestination);
             if (axis.length2() < kMinAxis && i > 0)
                 continue;
             axis.normalize();
@@ -176,7 +176,7 @@ void IK::solve()
                     q.setRotation(xAxis, fabsf(angle));
                 }
                 else {
-                    btScalar x, y, z, cx, cy, cz;
+                    Scalar x, y, z, cx, cy, cz;
                     btMatrix3x3 matrix;
                     matrix.setRotation(q);
                     matrix.getEulerZYX(z, y, x);
@@ -194,7 +194,7 @@ void IK::solve()
                 bone->setRotation(q * bone->rotation());
             }
             else {
-                btQuaternion tmp = bone->rotation();
+                Quaternion tmp = bone->rotation();
                 tmp *= q;
                 bone->setRotation(tmp);
             }

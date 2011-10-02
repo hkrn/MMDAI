@@ -59,10 +59,10 @@ public:
     };
     struct InterpolationParameter
     {
-        btQuadWord x;
-        btQuadWord y;
-        btQuadWord z;
-        btQuadWord rotation;
+        QuadWord x;
+        QuadWord y;
+        QuadWord z;
+        QuadWord rotation;
     };
 
     BoneKeyFrame();
@@ -117,7 +117,7 @@ public:
      *
      * @return A value of position value
      */
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
 
@@ -126,7 +126,7 @@ public:
      *
      * @return A value of rotation value
      */
-    const btQuaternion &rotation() const {
+    const Quaternion &rotation() const {
         return m_rotation;
     }
 
@@ -160,7 +160,7 @@ public:
      *
      * @param value A value of position value
      */
-    void setPosition(const btVector3 &value) {
+    void setPosition(const Vector3 &value) {
         m_position = value;
     }
 
@@ -169,18 +169,18 @@ public:
      *
      * @param value A value of rotation value
      */
-    void setRotation(const btQuaternion &value) {
+    void setRotation(const Quaternion &value) {
         m_rotation = value;
     }
 
 private:
     void setInterpolationTable(const int8_t *table);
     void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
-    btQuadWord &getInterpolationParameterInternal(InterpolationType type) const;
+    QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     uint8_t m_name[kNameSize];
-    btVector3 m_position;
-    btQuaternion m_rotation;
+    Vector3 m_position;
+    Quaternion m_rotation;
     bool m_linear[4];
     float *m_interpolationTable[4];
     int8_t m_rawInterpolationTable[kTableSize];

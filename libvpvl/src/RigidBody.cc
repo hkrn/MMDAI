@@ -78,7 +78,7 @@ struct RigidBodyChunk
 class AlignedMotionState : public btMotionState
 {
 public:
-    AlignedMotionState(const btTransform &startTransform, const btTransform &boneTransform, Bone *bone)
+    AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, Bone *bone)
         : m_bone(bone),
           m_boneTransform(boneTransform),
           m_inversedBoneTransform(boneTransform.inverse()),
@@ -103,15 +103,15 @@ public:
     }
 private:
     Bone *m_bone;
-    btTransform m_boneTransform;
-    btTransform m_inversedBoneTransform;
-    btTransform m_worldTransform;
+    Transform m_boneTransform;
+    Transform m_inversedBoneTransform;
+    Transform m_worldTransform;
 };
 
 class KinematicMotionState : public btMotionState
 {
 public:
-    KinematicMotionState(const btTransform &boneTransform, Bone *bone)
+    KinematicMotionState(const Transform &boneTransform, Bone *bone)
         : m_bone(bone),
           m_boneTransform(boneTransform)
     {
@@ -129,7 +129,7 @@ public:
     }
 private:
     Bone *m_bone;
-    btTransform m_boneTransform;
+    Transform m_boneTransform;
 };
 #endif /* VPVL_NO_BULLET */
 
@@ -211,7 +211,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         m_shape = new btSphereShape(width);
         break;
     case 1:
-        m_shape = new btBoxShape(btVector3(width, height, depth));
+        m_shape = new btBoxShape(Vector3(width, height, depth));
         break;
     case 2:
         m_shape = new btCapsuleShape(width, height);
@@ -219,8 +219,8 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
     }
 
     if (m_shape) {
-        btVector3 localInertia(0.0f, 0.0f, 0.0f);
-        btScalar massValue = 0.0f;
+        Vector3 localInertia(0.0f, 0.0f, 0.0f);
+        Scalar massValue = 0.0f;
         if (type != 0) {
             massValue = mass;
             if (massValue != 0.0f)
@@ -239,11 +239,11 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
 #endif /* VPVL_COORDINATE_OPENGL */
         m_transform.setBasis(basis);
 #ifdef VPVL_COORDINATE_OPENGL
-        m_transform.setOrigin(btVector3(pos[0], pos[1], -pos[2]));
+        m_transform.setOrigin(Vector3(pos[0], pos[1], -pos[2]));
 #else  /* VPVL_COORDINATE_OPENGL */
-        m_transform.setOrigin(btVector3(pos[0], pos[1], pos[2]));
+        m_transform.setOrigin(Vector3(pos[0], pos[1], pos[2]));
 #endif /* VPVL_COORDINATE_OPENGL */
-        btTransform startTransform;
+        Transform startTransform;
         startTransform.setIdentity();
         startTransform.setOrigin(bone->localTransform().getOrigin());
         startTransform *= m_transform;
@@ -303,7 +303,7 @@ void RigidBody::setKinematic(bool value)
         m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     }
     else {
-        btTransform transform;
+        Transform transform;
         m_kinematicMotionState->getWorldTransform(transform);
         m_motionState->setWorldTransform(transform);
         m_body->setMotionState(m_motionState);

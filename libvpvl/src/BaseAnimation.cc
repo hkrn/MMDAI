@@ -166,7 +166,7 @@ void BaseAnimation::deleteKeyFrames(int frameIndex)
     }
 }
 
-void BaseAnimation::setOverrideFirst(const btVector3 &center)
+void BaseAnimation::setOverrideFirst(const Vector3 &center)
 {
     takeSnap(center);
     m_overrideFirst = true;

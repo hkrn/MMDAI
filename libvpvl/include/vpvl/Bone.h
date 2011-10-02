@@ -165,14 +165,14 @@ public:
      *
      * @param q The quaternion value to rotate
      */
-    void updateTransform(const btQuaternion &q);
+    void updateTransform(const Quaternion &q);
 
     /**
      * Get transform value for skinning
      *
      * @param tr The result value of transform
      */
-    void getSkinTransform(btTransform &tr) const;
+    void getSkinTransform(Transform &tr) const;
 
     /**
      * Get the name of this bone.
@@ -251,7 +251,7 @@ public:
      *
      * @return local transform object
      */
-    const btTransform &localTransform() const {
+    const Transform &localTransform() const {
         return m_localTransform;
     }
 
@@ -260,7 +260,7 @@ public:
      *
      * @return offset of this bone
      */
-    const btVector3 &offset() const {
+    const Vector3 &offset() const {
         return m_offset;
     }
 
@@ -273,7 +273,7 @@ public:
      *
      * @return original position of this bone
      */
-    const btVector3 &originPosition() const {
+    const Vector3 &originPosition() const {
         return m_originPosition;
     }
 
@@ -282,7 +282,7 @@ public:
      *
      * @return position of this bone
      */
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
 
@@ -291,7 +291,7 @@ public:
      *
      * @return rotation of this bone
      */
-    const btQuaternion &rotation() const {
+    const Quaternion &rotation() const {
         return m_rotation;
     }
 
@@ -363,7 +363,7 @@ public:
      *
      * @param value transform object
      */
-    void setLocalTransform(const btTransform &value) {
+    void setLocalTransform(const Transform &value) {
         m_localTransform = value;
     }
 
@@ -372,7 +372,7 @@ public:
      *
      * @param value offset of this bone
      */
-    void setOffset(const btVector3 &value) {
+    void setOffset(const Vector3 &value) {
         m_offset = value;
     }
 
@@ -381,7 +381,7 @@ public:
      *
      * @param value position of this bone
      */
-    void setPosition(const btVector3 &value) {
+    void setPosition(const Vector3 &value) {
         m_position = value;
     }
 
@@ -390,7 +390,7 @@ public:
      *
      * @param value rotation of this bone
      */
-    void setRotation(const btQuaternion &value) {
+    void setRotation(const Quaternion &value) {
         m_rotation = value;
     }
 
@@ -451,12 +451,12 @@ private:
     uint8_t m_categoryIndex;
     int16_t m_id;
     Type m_type;
-    btTransform m_localTransform;
-    btTransform m_localToOriginTransform;
-    btVector3 m_originPosition;
-    btVector3 m_position;
-    btVector3 m_offset;
-    btQuaternion m_rotation;
+    Transform m_localTransform;
+    Transform m_localToOriginTransform;
+    Vector3 m_originPosition;
+    Vector3 m_position;
+    Vector3 m_offset;
+    Quaternion m_rotation;
     float m_rotateCoef;
     Bone *m_parentBone;
     Bone *m_childBone;

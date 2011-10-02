@@ -40,8 +40,7 @@
 #define VPVL_INTERNAL_UTIL_H_
 
 #include "vpvl/config.h"
-#include "LinearMath/btVector3.h"
-#include "LinearMath/btQuaternion.h"
+#include "vpvl/Common.h"
 #include <string.h>
 
 #if defined(WIN32)
@@ -55,8 +54,8 @@ namespace internal
 
 static const int kCurrentVersion = VPVL_VERSION;
 static const char *const kCurrentVersionString = VPVL_VERSION_STRING;
-static const btVector3 kZeroV = btVector3(0.0f, 0.0f, 0.0f);
-static const btQuaternion kZeroQ = btQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+static const Vector3 kZeroV = Vector3(0.0f, 0.0f, 0.0f);
+static const Quaternion kZeroQ = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 static inline float spline1(const float t, const float p1, const float p2)
 {

@@ -71,7 +71,7 @@ public:
 
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
-    void takeSnap(const btVector3 &center);
+    void takeSnap(const Vector3 &center);
 
     /**
      * Attach this to the model.

@@ -58,14 +58,14 @@ float CameraAnimation::weightValue(const CameraKeyFrame *keyFrame, float w, uint
 }
 
 void CameraAnimation::lerpVector3(const CameraKeyFrame *keyFrame,
-                               const btVector3 &from,
-                               const btVector3 &to,
+                               const Vector3 &from,
+                               const Vector3 &to,
                                float w,
                                uint32_t at,
                                float &value)
 {
-    const float valueFrom = static_cast<const btScalar *>(from)[at];
-    const float valueTo = static_cast<const btScalar *>(to)[at];
+    const float valueFrom = static_cast<const Scalar *>(from)[at];
+    const float valueTo = static_cast<const Scalar *>(to)[at];
     if (keyFrame->linear()[at]) {
         value = valueFrom * (1.0f - w) + valueTo * w;
     }
@@ -145,9 +145,9 @@ void CameraAnimation::seek(float frameAt)
     CameraKeyFrame *keyFrameForInterpolation = const_cast<CameraKeyFrame *>(keyFrameTo);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
-    btVector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();
+    Vector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();
     float distanceTo = keyFrameTo->distance(), fovyTo = keyFrameTo->fovy();
-    btVector3 positionTo = keyFrameTo->position(), angleTo = keyFrameTo->angle();
+    Vector3 positionTo = keyFrameTo->position(), angleTo = keyFrameTo->angle();
     if (frameIndexFrom != frameIndexTo) {
         if (currentFrame <= frameIndexFrom) {
             m_distance = distanceFrom;
@@ -205,7 +205,7 @@ void CameraAnimation::seek(float frameAt)
     }
 }
 
-void CameraAnimation::takeSnap(const btVector3 & /* center */)
+void CameraAnimation::takeSnap(const Vector3 & /* center */)
 {
 }
 

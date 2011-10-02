@@ -95,8 +95,8 @@ private:
     btCollisionShape *m_shape;
     btRigidBody *m_body;
     btMotionState *m_motionState;
-    btTransform m_transform;
-    btTransform m_invertedTransform;
+    Transform m_transform;
+    Transform m_invertedTransform;
     btMotionState *m_kinematicMotionState;
     uint16_t m_groupID;
     uint16_t m_groupMask;

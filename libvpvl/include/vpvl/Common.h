@@ -89,6 +89,13 @@ typedef unsigned int uint32_t;
 namespace vpvl
 {
 
+typedef btQuadWord QuadWord;
+typedef btQuaternion Quaternion;
+typedef btScalar Scalar;
+typedef btTransform Transform;
+typedef btVector3 Vector3;
+typedef btVector4 Vector4;
+
 template<typename T>
 class Array
 {

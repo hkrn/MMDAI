@@ -67,7 +67,7 @@ public:
 
     static size_t stride();
 
-    void read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset);
+    void read(const uint8_t *data, const RigidBodyList &bodies, const Vector3 &offset);
 
     const uint8_t *name() const {
         return m_name;

@@ -85,7 +85,7 @@ Constraint::~Constraint()
     m_constraint = 0;
 }
 
-void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const btVector3 &offset)
+void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const Vector3 &offset)
 {
 #ifndef VPVL_NO_BULLET
     ConstraintChunk chunk;
@@ -103,7 +103,7 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
 
     int nbodies = bodies.count();
     if (bodyID1 >= 0 && bodyID1 < nbodies &&bodyID2 >= 0 && bodyID2 < nbodies) {
-        btTransform transform;
+        Transform transform;
         btMatrix3x3 basis;
         transform.setIdentity();
 #ifdef VPVL_COORDINATE_OPENGL
@@ -117,24 +117,24 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const bt
 #endif /* VPVL_COORDINATE_OPENGL */
         transform.setBasis(basis);
 #ifdef VPVL_COORDINATE_OPENGL
-        transform.setOrigin(btVector3(pos[0], pos[1], -pos[2]) + offset);
+        transform.setOrigin(Vector3(pos[0], pos[1], -pos[2]) + offset);
 #else  /* VPVL_COORDINATE_OPENGL */
-        transform.setOrigin(btVector3(pos[0], pos[1], pos[2]) + offset);
+        transform.setOrigin(Vector3(pos[0], pos[1], pos[2]) + offset);
 #endif /* VPVL_COORDINATE_OPENGL */
         btRigidBody *bodyA = bodies[bodyID1]->body(), *bodyB = bodies[bodyID2]->body();
-        btTransform transformA = bodyA->getWorldTransform().inverse() * transform,
+        Transform transformA = bodyA->getWorldTransform().inverse() * transform,
                 transformB = bodyB->getWorldTransform().inverse() * transform;
         m_constraint = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
 #ifdef VPVL_COORDINATE_OPENGL
-        m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], -limitPosFrom[2]));
-        m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], -limitPosTo[2]));
-        m_constraint->setAngularUpperLimit(btVector3(-limitRotFrom[0], -limitRotFrom[1], limitRotTo[2]));
-        m_constraint->setAngularLowerLimit(btVector3(-limitRotTo[0], -limitRotTo[1], limitRotFrom[2]));
+        m_constraint->setLinearUpperLimit(Vector3(limitPosTo[0], limitPosTo[1], -limitPosFrom[2]));
+        m_constraint->setLinearLowerLimit(Vector3(limitPosFrom[0], limitPosFrom[1], -limitPosTo[2]));
+        m_constraint->setAngularUpperLimit(Vector3(-limitRotFrom[0], -limitRotFrom[1], limitRotTo[2]));
+        m_constraint->setAngularLowerLimit(Vector3(-limitRotTo[0], -limitRotTo[1], limitRotFrom[2]));
 #else  /* VPVL_COORDINATE_OPENGL */
-        m_constraint->setLinearUpperLimit(btVector3(limitPosTo[0], limitPosTo[1], limitPosTo[2]));
-        m_constraint->setLinearLowerLimit(btVector3(limitPosFrom[0], limitPosFrom[1], limitPosFrom[2]));
-        m_constraint->setAngularUpperLimit(btVector3(limitRotTo[0], limitRotTo[1], limitRotTo[2]));
-        m_constraint->setAngularLowerLimit(btVector3(limitRotFrom[0], limitRotFrom[1], limitRotFrom[2]));
+        m_constraint->setLinearUpperLimit(Vector3(limitPosTo[0], limitPosTo[1], limitPosTo[2]));
+        m_constraint->setLinearLowerLimit(Vector3(limitPosFrom[0], limitPosFrom[1], limitPosFrom[2]));
+        m_constraint->setAngularUpperLimit(Vector3(limitRotTo[0], limitRotTo[1], limitRotTo[2]));
+        m_constraint->setAngularLowerLimit(Vector3(limitRotFrom[0], limitRotFrom[1], limitRotFrom[2]));
 #endif /* VPVL_COORDINATE_OPENGL */
 
         for (int i = 0; i < 6; i++) {

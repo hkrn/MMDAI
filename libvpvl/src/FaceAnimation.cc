@@ -100,7 +100,7 @@ void FaceAnimation::seek(float frameAt)
     }
 }
 
-void FaceAnimation::takeSnap(const btVector3 & /* center */)
+void FaceAnimation::takeSnap(const Vector3 & /* center */)
 {
     const uint32_t nNodes = m_name2node.count();
     for (uint32_t i = 0; i < nNodes; i++) {

@@ -59,12 +59,12 @@ public:
     };
     struct InterpolationParameter
     {
-        btQuadWord x;
-        btQuadWord y;
-        btQuadWord z;
-        btQuadWord rotation;
-        btQuadWord distance;
-        btQuadWord fovy;
+        QuadWord x;
+        QuadWord y;
+        QuadWord z;
+        QuadWord rotation;
+        QuadWord distance;
+        QuadWord fovy;
     };
 
     CameraKeyFrame();
@@ -137,7 +137,7 @@ public:
      *
      * @return A value of position value
      */
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
 
@@ -146,7 +146,7 @@ public:
      *
      * @return A value of angle value
      */
-    const btVector3 &angle() const {
+    const Vector3 &angle() const {
         return m_angle;
     }
 
@@ -200,7 +200,7 @@ public:
      *
      * @param value A value of position
      */
-    void setPosition(const btVector3 &value) {
+    void setPosition(const Vector3 &value) {
         m_position = value;
     }
 
@@ -209,20 +209,20 @@ public:
      *
      * @param value A value of angle
      */
-    void setAngle(const btVector3 &value) {
+    void setAngle(const Vector3 &value) {
         m_angle = value;
     }
 
 private:
     void setInterpolationTable(const int8_t *table);
     void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
-    btQuadWord &getInterpolationParameterInternal(InterpolationType type) const;
+    QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     uint8_t m_name[2];
     float m_distance;
     float m_fovy;
-    btVector3 m_position;
-    btVector3 m_angle;
+    Vector3 m_position;
+    Vector3 m_angle;
     bool m_noPerspective;
     bool m_linear[6];
     float *m_interpolationTable[6];

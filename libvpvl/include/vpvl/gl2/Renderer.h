@@ -132,7 +132,7 @@ public:
     void initializeSurface();
     bool createPrograms();
     void resize(int width, int height);
-    void getObjectCoordinate(int px, int py, btVector3 &coordinate) const;
+    void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
     void setDebugDrawer(btDynamicsWorld *world);
     void loadModel(vpvl::PMDModel *model, const std::string &dir);
     void unloadModel(const vpvl::PMDModel *model);

@@ -82,16 +82,16 @@ public:
             m_name = name;
         }
     }
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
-    void setPosition(const btVector3 &value) {
+    void setPosition(const Vector3 &value) {
         m_position = value;
     }
-    const btScalar &scaleFactor() const {
+    const Scalar &scaleFactor() const {
         return m_scale;
     }
-    void setScaleFactor(const btScalar &value) {
+    void setScaleFactor(const Scalar &value) {
         m_scale = value;
     }
     uint32_t loadFlags() const {
@@ -121,8 +121,8 @@ private:
     const aiScene *m_scene;
     AssetUserData *m_userData;
     Bone *m_parentBone;
-    btVector3 m_position;
-    btScalar m_scale;
+    Vector3 m_position;
+    Scalar m_scale;
     uint32_t m_flags;
     const char *m_name;
 

@@ -64,10 +64,10 @@ public:
 
     void read(const uint8_t *data);
 
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
-    const btVector3 &normal() const {
+    const Vector3 &normal() const {
         return m_normal;
     }
     float u() const {
@@ -89,10 +89,10 @@ public:
         return m_edge;
     }
 
-    void setPosition(const btVector3 &value) {
+    void setPosition(const Vector3 &value) {
         m_position = value;
     }
-    void setNormal(const btVector3 &value) {
+    void setNormal(const Vector3 &value) {
         m_normal = value;
     }
     void setU(float value) {
@@ -109,8 +109,8 @@ public:
     }
 
 private:
-    btVector3 m_position;
-    btVector3 m_normal;
+    Vector3 m_position;
+    Vector3 m_normal;
     float m_u;
     float m_v;
     int16_t m_bone1;

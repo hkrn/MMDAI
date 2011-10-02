@@ -137,7 +137,7 @@ void Material::read(const uint8_t *data)
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);
     m_diffuse.setValue(diffuse[0], diffuse[1], diffuse[2], 1.0f);
     m_specular.setValue(specular[0], specular[1], specular[2], 1.0f);
-    btVector3 ac((m_diffuse + m_ambient) * 0.5f);
+    Vector3 ac((m_diffuse + m_ambient) * 0.5f);
     m_averageColor.setValue(ac.x(), ac.y(), ac.z(), 1.0f);
     m_opacity = alpha;
     m_shiness = shiness;

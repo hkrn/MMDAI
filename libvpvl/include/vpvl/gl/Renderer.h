@@ -54,8 +54,8 @@
 #include <GL/glew.h>
 #endif
 
-class btDynamicsWorld;
-class btIDebugDraw;
+class DynamicsWorld;
+class IDebugDraw;
 
 namespace vpvl
 {
@@ -110,14 +110,14 @@ public:
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
     }
-    btIDebugDraw *debugDrawer() const {
+    IDebugDraw *debugDrawer() const {
         return m_debugDrawer;
     }
 
     void initializeSurface();
     void resize(int width, int height);
-    void getObjectCoordinate(int px, int py, btVector3 &coordinate) const;
-    void setDebugDrawer(btDynamicsWorld *world);
+    void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
+    void setDebugDrawer(DynamicsWorld *world);
     void loadModel(vpvl::PMDModel *model, const std::string &dir);
     void unloadModel(const vpvl::PMDModel *model);
     void updateModelBuffer(const vpvl::PMDModel *model);
@@ -143,7 +143,7 @@ private:
     vpvl::PMDModel *m_selected;
     vpvl::gl::IDelegate *m_delegate;
     AssetList m_assets;
-    btIDebugDraw *m_debugDrawer;
+    IDebugDraw *m_debugDrawer;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

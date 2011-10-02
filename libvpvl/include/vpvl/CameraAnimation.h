@@ -66,7 +66,7 @@ public:
 
     void read(const uint8_t *data, uint32_t size);
     void seek(float frameAt);
-    void takeSnap(const btVector3 &center);
+    void takeSnap(const Vector3 &center);
     void reset();
     void refresh();
 
@@ -85,7 +85,7 @@ public:
      *
      * @return A position (X, Y, Z)
      */
-    const btVector3 &position() const {
+    const Vector3 &position() const {
         return m_position;
     }
 
@@ -94,7 +94,7 @@ public:
      *
      * @return An angle (X, Y, Z) in degree
      */
-    const btVector3 &angle() const {
+    const Vector3 &angle() const {
         return m_angle;
     }
 
@@ -121,14 +121,14 @@ private:
                              float w,
                              uint32_t at);
     static void lerpVector3(const CameraKeyFrame *keyFrame,
-                            const btVector3 &from,
-                            const btVector3 &to,
+                            const Vector3 &from,
+                            const Vector3 &to,
                             float w,
                             uint32_t at,
                             float &value);
 
-    btVector3 m_position;
-    btVector3 m_angle;
+    Vector3 m_position;
+    Vector3 m_angle;
     float m_distance;
     float m_fovy;
     uint32_t m_lastIndex;

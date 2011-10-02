@@ -90,7 +90,7 @@ public:
      *
      * @param center A position of center
      */
-    virtual void takeSnap(const btVector3 &center) = 0;
+    virtual void takeSnap(const Vector3 &center) = 0;
 
     /**
      * Seek from the previous to the next frame with delta.
@@ -174,7 +174,7 @@ public:
      *
      * @param center A position of center
      */
-    void setOverrideFirst(const btVector3 &center);
+    void setOverrideFirst(const Vector3 &center);
 
     /**
      * Get the blend rate.
