@@ -95,6 +95,7 @@ typedef btScalar Scalar;
 typedef btTransform Transform;
 typedef btVector3 Vector3;
 typedef btVector4 Vector4;
+typedef Vector4 Color;
 
 template<typename T>
 class Array

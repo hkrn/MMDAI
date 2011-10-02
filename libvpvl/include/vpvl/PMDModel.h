@@ -454,7 +454,7 @@ public:
     const Quaternion &rotationOffset() const {
         return m_rotationOffset;
     }
-    const Vector4 &edgeColor() const {
+    const Color &edgeColor() const {
         return m_edgeColor;
     }
     const Vector3 &positionOffset() const {
@@ -539,7 +539,7 @@ public:
     void setRotationOffset(const Quaternion &value) {
         m_rotationOffset = value;
     }
-    void setEdgeColor(const Vector4 &value) {
+    void setEdgeColor(const Color &value) {
         m_edgeColor = value;
     }
     void setPositionOffset(const Vector3 &value) {
@@ -620,7 +620,7 @@ private:
     uint16_t *m_edgeIndicesPointer;
     uint32_t m_edgeIndicesCount;
     Quaternion m_rotationOffset;
-    Vector4 m_edgeColor;
+    Color m_edgeColor;
     Vector3 m_positionOffset;
     Vector3 m_lightPosition;
     Error m_error;

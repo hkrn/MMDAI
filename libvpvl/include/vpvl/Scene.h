@@ -89,8 +89,8 @@ public:
     void setCameraPerspective(CameraAnimation *camera);
     void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
-    void setLightComponent(const Vector4 &ambient, const Vector4 &diffuse, const Vector4 &specular);
-    void setLightSource(const Vector4 &color, const Vector3 &position);
+    void setLightComponent(const Color &ambient, const Color &diffuse, const Color &specular);
+    void setLightSource(const Color &color, const Vector3 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
     void advanceMotion(float deltaFrame);
@@ -102,19 +102,19 @@ public:
     const Array<PMDModel *> &models() const {
         return m_models;
     }
-    const Vector4 &lightColor() const {
+    const Color &lightColor() const {
         return m_lightColor;
     }
     const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
-    const Vector4 &lightAmbient() const {
+    const Color &lightAmbient() const {
         return m_lightAmbient;
     }
-    const Vector4 &lightDiffuse() const {
+    const Color &lightDiffuse() const {
         return m_lightDiffuse;
     }
-    const Vector4 &lightSpecular() const {
+    const Color &lightSpecular() const {
         return m_lightSpecular;
     }
     const Vector3 &angle() const {
@@ -166,11 +166,11 @@ private:
     Quaternion m_currentRotation;
     Quaternion m_rotation;
     Quaternion m_viewMoveRotation;
-    Vector4 m_lightColor;
+    Color m_lightColor;
     Vector3 m_lightPosition;
-    Vector4 m_lightAmbient;
-    Vector4 m_lightDiffuse;
-    Vector4 m_lightSpecular;
+    Color m_lightAmbient;
+    Color m_lightDiffuse;
+    Color m_lightSpecular;
     Vector3 m_currentPosition;
     Vector3 m_position;
     Vector3 m_viewMovePosition;
