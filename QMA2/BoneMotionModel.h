@@ -2,8 +2,6 @@
 #define BONEMOTIONMODEL_H
 
 #include "MotionBaseModel.h"
-#include <LinearMath/btVector3.h>
-#include <LinearMath/btQuaternion.h>
 
 class BoneTreeItem;
 class SceneWidget;
@@ -68,8 +66,8 @@ public slots:
     void rotate(int coordinate, float value);
 
 signals:
-    void bonePositionDidChange(vpvl::Bone *bone, const btVector3 &pos);
-    void boneRotationDidChange(vpvl::Bone *bone, const btQuaternion &rot);
+    void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
+    void boneRotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &rot);
 
 protected:
     void clearKeys();

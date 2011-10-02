@@ -260,8 +260,8 @@ TransformWidget::~TransformWidget()
     delete ui;
 }
 
-void TransformWidget::setCameraPerspective(const btVector3 & /* pos */,
-                                           const btVector3 &angle,
+void TransformWidget::setCameraPerspective(const vpvl::Vector3 & /* pos */,
+                                           const vpvl::Vector3 &angle,
                                            float /* fovy */,
                                            float /* distance */)
 {

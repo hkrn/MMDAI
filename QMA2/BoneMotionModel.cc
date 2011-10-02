@@ -120,11 +120,11 @@ private:
         QTextCodec *codec = internal::getTextCodec();
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const QMap<QString, BoneTreeItem *> &bones = m_bmm->keys();
-        btQuaternion rotation;
+        vpvl::Quaternion rotation;
         foreach (VPDFile::Bone *bone, m_pose->bones()) {
             const QString &key = bone->name;
             if (bones.contains(key)) {
-                const btVector4 &v = bone->rotation;
+                const vpvl::Vector4 &v = bone->rotation;
                 const QModelIndex &modelIndex = m_bmm->frameToIndex(bones[key], m_frameIndex);
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
@@ -458,10 +458,10 @@ void BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
                 VPDFile::Bone *bone = new VPDFile::Bone();
                 vpvl::BoneKeyFrame frame;
                 frame.read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-                const btQuaternion &q = frame.rotation();
+                const vpvl::Quaternion &q = frame.rotation();
                 bone->name = internal::toQString(&frame);
                 bone->position = frame.position();
-                bone->rotation = btVector4(q.x(), q.y(), q.z(), q.w());
+                bone->rotation = vpvl::Vector4(q.x(), q.y(), q.z(), q.w());
                 bones.append(bone);
             }
         }
@@ -584,8 +584,8 @@ void BoneMotionModel::deleteFrame(const QModelIndex &index)
 void BoneMotionModel::resetBone(ResetType type)
 {
     foreach (vpvl::Bone *selected, m_selected) {
-        btVector3 pos = selected->position();
-        btQuaternion rot = selected->rotation();
+        vpvl::Vector3 pos = selected->position();
+        vpvl::Quaternion rot = selected->rotation();
         switch (type) {
         case kX:
             pos.setX(0.0f);
@@ -636,7 +636,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
     if (!isBoneSelected())
         return;
     foreach (vpvl::Bone *selected, m_selected) {
-        btVector3 pos = selected->position();
+        vpvl::Vector3 pos = selected->position();
         switch (coordinate) {
         case 'x':
         case 'X':
@@ -664,7 +664,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     if (!isBoneSelected())
         return;
     vpvl::Bone *selected = m_selected.last();
-    btQuaternion rot = selected->rotation();
+    vpvl::Quaternion rot = selected->rotation();
     switch (coordinate) {
     case 'x':
     case 'X':
@@ -688,9 +688,9 @@ void BoneMotionModel::setRotation(int coordinate, float value)
 
 void BoneMotionModel::translate(int coordinate, float value)
 {
-    btVector3 pos, dest;
+    vpvl::Vector3 pos, dest;
     foreach (vpvl::Bone *selected, m_selected) {
-        const btVector3 &current = selected->position();
+        const vpvl::Vector3 &current = selected->position();
         switch (coordinate) {
         case 'x':
         case 'X':
@@ -710,11 +710,11 @@ void BoneMotionModel::translate(int coordinate, float value)
         switch (m_mode) {
         case kView: {
             QVector4D r = modelviewMatrix() * QVector4D(pos.x(), pos.y(), pos.z(), 0.0f);
-            dest = btTransform(selected->rotation(), current) * btVector3(r.x(), r.y(), r.z());
+            dest = vpvl::Transform(selected->rotation(), current) * vpvl::Vector3(r.x(), r.y(), r.z());
             break;
         }
         case kLocal: {
-            dest = btTransform(selected->rotation(), current) * pos;
+            dest = vpvl::Transform(selected->rotation(), current) * pos;
             break;
         }
         case kGlobal: {
@@ -735,8 +735,8 @@ void BoneMotionModel::rotate(int coordinate, float value)
     if (!isBoneSelected())
         return;
     vpvl::Bone *selected = m_selected.last();
-    const btQuaternion &current = selected->rotation();
-    btQuaternion rot, dest;
+    const vpvl::Quaternion &current = selected->rotation();
+    vpvl::Quaternion rot, dest;
     switch (coordinate) {
     case 'x':
     case 'X':
@@ -757,7 +757,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
     case kView: {
         QVector4D r = modelviewMatrix() * QVector4D(rot.x(), rot.y(), rot.z(), rot.w());
         r.normalize();
-        dest = current * btQuaternion(r.x(), r.y(), r.z(), r.w());
+        dest = current * vpvl::Quaternion(r.x(), r.y(), r.z(), r.w());
         break;
     }
     case kLocal: {

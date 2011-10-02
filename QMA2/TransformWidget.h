@@ -5,7 +5,7 @@
 #include <QtGui/QItemSelection>
 #include <QtGui/QPushButton>
 #include <QtGui/QWidget>
-#include <LinearMath/btVector3.h>
+#include <vpvl/Common.h>
 
 namespace vpvl {
 class Bone;
@@ -53,7 +53,7 @@ public:
     explicit TransformButton(QWidget *parent = 0);
     ~TransformButton();
 
-    void setAngle(const btVector3 &value) { m_angle = value; }
+    void setAngle(const vpvl::Vector3 &value) { m_angle = value; }
     void setBoneMotionModel(BoneMotionModel *value) { m_boneMotionModel = value; }
 
 public slots:
@@ -66,7 +66,7 @@ protected:
 
 private:
     BoneMotionModel *m_boneMotionModel;
-    btVector3 m_angle;
+    vpvl::Vector3 m_angle;
     QCursor m_cursor;
     QPoint m_drag;
     QPoint m_pos;
@@ -90,7 +90,7 @@ public:
     ~TransformWidget();
 
 public slots:
-    void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
 
 signals:
     void boneDidRegister(vpvl::Bone *bone);

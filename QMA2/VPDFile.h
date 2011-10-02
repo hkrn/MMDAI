@@ -4,7 +4,7 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QTextStream>
-#include <LinearMath/btVector3.h>
+#include <vpvl/Common.h>
 
 namespace vpvl {
 class Bone;
@@ -17,8 +17,8 @@ public:
     struct Bone
     {
         QString name;
-        btVector3 position;
-        btVector4 rotation;
+        vpvl::Vector3 position;
+        vpvl::Vector4 rotation;
     };
     typedef QList<Bone *> BoneList;
 

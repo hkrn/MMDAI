@@ -2,8 +2,7 @@
 #define PERSPECTIONWIDGET_H
 
 #include <QtGui/QWidget>
-
-class btVector3;
+#include <vpvl/Common.h>
 
 class CameraPerspectiveWidget : public QWidget
 {
@@ -19,7 +18,7 @@ public slots:
     void setCameraPerspectiveRight();
 
 signals:
-    void cameraPerspectiveDidChange(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
+    void cameraPerspectiveDidChange(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
 };
 
 #endif // PERSPECTIONWIDGET_H

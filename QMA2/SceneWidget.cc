@@ -154,7 +154,7 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
 
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 {
-    btVector4 red(1.0f, 0.0f, 0.0f, 1.0f), black(0.0f, 0.0f, 0.0f, 1.0f);
+    vpvl::Color red(1.0f, 0.0f, 0.0f, 1.0f), black(0.0f, 0.0f, 0.0f, 1.0f);
     vpvl::PMDModel *model = m_renderer->selectedModel();
     if (model)
         model->setEdgeColor(black);
@@ -422,24 +422,24 @@ void SceneWidget::resetCamera()
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
-void SceneWidget::setLightColor(const btVector4 &color)
+void SceneWidget::setLightColor(const vpvl::Color &color)
 {
     vpvl::Scene *scene = m_renderer->scene();
     scene->setLightSource(color, scene->lightPosition());
     emit lightColorDidSet(color);
 }
 
-void SceneWidget::setLightPosition(const btVector3 &position)
+void SceneWidget::setLightPosition(const vpvl::Vector3 &position)
 {
     vpvl::Scene *scene = m_renderer->scene();
     scene->setLightSource(scene->lightColor(), position);
     emit lightPositionDidSet(position);
 }
 
-void SceneWidget::setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance)
+void SceneWidget::setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    btVector3 posValue, angleValue;
+    vpvl::Vector3 posValue, angleValue;
     float fovyValue, distanceValue;
     posValue = !pos ? scene->position() : *pos;
     angleValue = !angle ? scene->angle() : *angle;
@@ -467,7 +467,7 @@ const QPointF SceneWidget::objectCoordinates(const QPoint &input)
     double cx, cy, cz, fx, fy, fz;
     gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
     gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
-    btVector3 camera(cx, cy, cz), far(fx, fy, fz), pointInPlane(0, 0, 0), planeNormal(0, 0, -1);
+    vpvl::Vector3 camera(cx, cy, cz), far(fx, fy, fz), pointInPlane(0, 0, 0), planeNormal(0, 0, -1);
     far -= camera;
     far /= camera.length();
     pointInPlane -= camera;
@@ -494,7 +494,7 @@ void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
 void SceneWidget::rotate(float x, float y)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    btVector3 pos = scene->position(), angle = scene->angle();
+    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
     angle.setValue(angle.x() + x, angle.y() + y, angle.z());
     scene->setCameraPerspective(pos, angle, fovy, distance);
@@ -504,7 +504,7 @@ void SceneWidget::rotate(float x, float y)
 void SceneWidget::translate(float x, float y)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    btVector3 pos = scene->position(), angle = scene->angle();
+    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
     pos.setValue(pos.x() + x, pos.y() + y, pos.z());
     scene->setCameraPerspective(pos, angle, fovy, distance);
@@ -514,7 +514,7 @@ void SceneWidget::translate(float x, float y)
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    btVector3 pos = scene->position(), angle = scene->angle();
+    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
     float fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
@@ -597,20 +597,20 @@ void SceneWidget::initializeGL()
     m_renderer->createPrograms();
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
-    const btVector4 &color = scene->lightColor();
-    const btScalar &intensity = 0.6f;
+    const vpvl::Color &color = scene->lightColor();
+    const vpvl::Scalar &intensity = 0.6f;
 #if 1 // MMD like toon
-    const btVector3 &a = color * intensity * 2.0f;
-    const btVector3 &d = color * 0.0f;
-    const btVector3 &s = color * intensity;
+    const vpvl::Vector3 &a = color * intensity * 2.0f;
+    const vpvl::Vector3 &d = color * 0.0f;
+    const vpvl::Vector3 &s = color * intensity;
 #else // no toon
-    const btVector3 &a = color;
-    const btVector3 &d = color * intensity;
-    const btVector3 &s = color;
+    const vpvl::Vector3 &a = color;
+    const vpvl::Vector3 &d = color * intensity;
+    const vpvl::Vector3 &s = color;
 #endif
-    const btVector4 ambient(a.x(), a.y(), a.z(), 1.0f);
-    const btVector4 diffuse(d.x(), d.y(), d.z(), 1.0f);
-    const btVector4 specular(s.x(), s.y(), s.z(), 1.0f);
+    const vpvl::Color ambient(a.x(), a.y(), a.z(), 1.0f);
+    const vpvl::Color diffuse(d.x(), d.y(), d.z(), 1.0f);
+    const vpvl::Color specular(s.x(), s.y(), s.z(), 1.0f);
     scene->setLightComponent(ambient, diffuse, specular);
     if (m_playing)
         scene->setWorld(m_world->mutableWorld());
@@ -633,14 +633,14 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             const QPointF &pos = objectCoordinates(m_prevPos);
             const vpvl::BoneList &bones = model->bones();
             const uint32_t nbones = bones.count();
-            btVector3 origin(pos.x(), pos.y(), 0.0f);
+            vpvl::Vector3 origin(pos.x(), pos.y(), 0.0f);
             vpvl::Bone *nearestBone = 0;
-            btScalar nearestDistance = 0.2f;
+            vpvl::Scalar nearestDistance = 0.2f;
             for (uint32_t i = 0; i < nbones; i++) {
                 vpvl::Bone *bone = bones[i];
-                btVector3 boneOrigin = bone->localTransform().getOrigin();
+                vpvl::Vector3 boneOrigin = bone->localTransform().getOrigin();
                 boneOrigin.setZ(0.0f);
-                btScalar distance = boneOrigin.distance(origin);
+                vpvl::Scalar distance = boneOrigin.distance(origin);
                 if (distance < nearestDistance) {
                     nearestBone = bone;
                     nearestDistance = distance;
@@ -683,8 +683,8 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             vpvl::Scene *scene = m_renderer->scene();
-            btVector3 position = scene->lightPosition();
-            btQuaternion rx(0.0f, diff.y() * vpvl::radian(0.1f), 0.0f),
+            vpvl::Vector3 position = scene->lightPosition();
+            vpvl::Quaternion rx(0.0f, diff.y() * vpvl::radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * vpvl::radian(0.1f), 0.0f);
             position = position * btMatrix3x3(rx * ry);
             scene->setLightSource(scene->lightColor(), position);

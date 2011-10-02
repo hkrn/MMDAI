@@ -22,14 +22,14 @@ BoneDialog::~BoneDialog()
     delete ui;
 }
 
-void BoneDialog::setPosition(const btVector3 &pos)
+void BoneDialog::setPosition(const vpvl::Vector3 &pos)
 {
     ui->XPositionSpinBox->setValue(pos.x());
     ui->YPositionSpinBox->setValue(pos.y());
     ui->ZPositionSpinBox->setValue(pos.z());
 }
 
-void BoneDialog::setRotation(const btQuaternion &rot)
+void BoneDialog::setRotation(const vpvl::Quaternion &rot)
 {
     ui->XAxisSpinBox->setValue(vpvl::degree(rot.x()));
     ui->YAxisSpinBox->setValue(vpvl::degree(rot.y()));

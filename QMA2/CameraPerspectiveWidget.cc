@@ -35,30 +35,30 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
 
 void CameraPerspectiveWidget::setCameraPerspectiveFront()
 {
-    btVector3 angle(0, 0, 0);
+    vpvl::Vector3 angle(0, 0, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveBack()
 {
-    btVector3 angle(0, 180, 0);
+    vpvl::Vector3 angle(0, 180, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveTop()
 {
-    btVector3 angle(90, 0, 0);
+    vpvl::Vector3 angle(90, 0, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveLeft()
 {
-    btVector3 angle(0, -90, 0);
+    vpvl::Vector3 angle(0, -90, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveRight()
 {
-    btVector3 angle(0, 90, 0);
+    vpvl::Vector3 angle(0, 90, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }

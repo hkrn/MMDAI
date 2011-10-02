@@ -145,8 +145,8 @@ void VPDFile::save(QTextStream &stream)
     stream << headerTemplate.arg(m_bones.size());
     uint32_t i = 0;
     foreach (Bone *bone, m_bones) {
-        const btVector3 &pos = bone->position;
-        const btVector4 &rot = bone->rotation;
+        const vpvl::Vector3 &pos = bone->position;
+        const vpvl::Vector4 &rot = bone->rotation;
 #ifdef VPVL_COORDINATE_OPENGL
         stream << QString().sprintf(boneTemplate, i, qPrintable(bone->name),
                                     pos.x(), pos.y(), -pos.z(),
@@ -168,9 +168,9 @@ void VPDFile::makePose(vpvl::PMDModel *model)
         bytes = codec->fromUnicode(b->name);
         vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
         if (bone) {
-            btVector3 pos = b->position;
-            btVector4 rot = b->rotation;
-            const btQuaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
+            vpvl::Vector3 pos = b->position;
+            vpvl::Vector4 rot = b->rotation;
+            const vpvl::Quaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
             bone->setPosition(pos);
             bone->setRotation(rotation);
         }

@@ -42,8 +42,8 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
         QString name = model->data(index, BoneMotionModel::kNameRole).toString();
         bone.setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
         // FIXME: should use constant value
-        bone.setPosition(btVector3(0, 0, 0));
-        bone.setRotation(btQuaternion(0, 0, 0, 1));
+        bone.setPosition(vpvl::Vector3(0, 0, 0));
+        bone.setRotation(vpvl::Quaternion(0, 0, 0, 1));
         boneFrames.append(BoneMotionModel::Frame(index.column(), &bone));
     }
     model->setFrames(boneFrames);

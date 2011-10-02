@@ -246,8 +246,8 @@ void MainWindow::setBones(const QList<vpvl::Bone *> &bones)
     updateInformation();
 }
 
-void MainWindow::setCameraPerspective(const btVector3 &pos,
-                                      const btVector3 &angle,
+void MainWindow::setCameraPerspective(const vpvl::Vector3 &pos,
+                                      const vpvl::Vector3 &angle,
                                       float fovy,
                                       float distance)
 {
@@ -574,8 +574,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(setFrameAtCurrentIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(setCurrentFPS(int)));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(btVector3,btVector3,float,float)), this, SLOT(setCameraPerspective(btVector3,btVector3,float,float)));
-    connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(btVector3*,btVector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(btVector3*,btVector3*,float*,float*)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), this, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
+    connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     //connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)), m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
     //connect(m_sceneWidget, SIGNAL(modelDidDelete(vpvl::PMDModel*)), m_tabWidget->interpolationWidget(), SLOT(disable()));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));

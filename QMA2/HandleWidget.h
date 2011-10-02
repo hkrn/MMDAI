@@ -19,7 +19,7 @@ public:
 
 public slots:
     void setBone(vpvl::Bone *value);
-    void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
 
 private:
     void createHandles(QGraphicsScene *scene);

@@ -31,7 +31,7 @@ public:
     QRectF boundingRect() const {
         return m_rect;
     }
-    void setAngle(const btVector3 &angle) {
+    void setAngle(const vpvl::Vector3 &angle) {
         m_rotation.setEulerZYX(vpvl::radian(angle.z()), vpvl::radian(angle.y()), vpvl::radian(angle.x()));
     }
     void setBone(const vpvl::BoneList &bones) {
@@ -57,13 +57,13 @@ protected:
             moveBones(pos);
         m_prev = current;
     }
-    void translateBones(const btVector3 &v) {
+    void translateBones(const vpvl::Vector3 &v) {
         uint32_t nBones = m_bones.count();
         switch (handleMode()) {
         case kView: {
             for (uint32_t i = 0; i < nBones; i++) {
                 vpvl::Bone *bone = m_bones[i];
-                btTransform tr(m_rotation, bone->position());
+                vpvl::Transform tr(m_rotation, bone->position());
                 bone->setPosition(tr * v);
             }
             break;
@@ -71,7 +71,7 @@ protected:
         case kLocal: {
             for (uint32_t i = 0; i < nBones; i++) {
                 vpvl::Bone *bone = m_bones[i];
-                btTransform tr(bone->rotation(), bone->position());
+                vpvl::Transform tr(bone->rotation(), bone->position());
                 bone->setPosition(tr * v);
             }
             break;
@@ -91,7 +91,7 @@ protected:
     QPen m_pen;
 
 private:
-    btQuaternion m_rotation;
+    vpvl::Quaternion m_rotation;
     vpvl::BoneList m_bones;
     HandleMode m_mode;
     QPointF m_prev;
@@ -117,7 +117,7 @@ public:
 
 protected:
     void moveBones(QPointF &diff) {
-        btVector3 v(diff.x(), 0.0f, 0.0f);
+        vpvl::Vector3 v(diff.x(), 0.0f, 0.0f);
         translateBones(v);
     }
 };
@@ -141,7 +141,7 @@ public:
 
 protected:
     void moveBones(QPointF &diff) {
-        btVector3 v(0.0f, diff.y(), 0.0f);
+        vpvl::Vector3 v(0.0f, diff.y(), 0.0f);
         translateBones(v);
     }
 };
@@ -197,7 +197,10 @@ void HandleWidget::setBone(vpvl::Bone *value)
     }
 }
 
-void HandleWidget::setCameraPerspective(const btVector3 & /* pos */, const btVector3 &angle, float /* fovy */, float /* distance */)
+void HandleWidget::setCameraPerspective(const vpvl::Vector3 & /* pos */,
+                                        const vpvl::Vector3 &angle,
+                                        float /* fovy */,
+                                        float /* distance */)
 {
     m_xHandle->setAngle(angle);
     m_yHandle->setAngle(angle);

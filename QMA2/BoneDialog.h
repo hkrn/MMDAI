@@ -2,8 +2,6 @@
 #define BONEDIALOG_H
 
 #include <QtGui/QDialog>
-#include <LinearMath/btQuaternion.h>
-#include <LinearMath/btVector3.h>
 #include <vpvl/PMDModel.h>
 
 namespace Ui {
@@ -21,8 +19,8 @@ public:
     ~BoneDialog();
 
 private slots:
-    void setPosition(const btVector3 &pos);
-    void setRotation(const btQuaternion &rot);
+    void setPosition(const vpvl::Vector3 &pos);
+    void setRotation(const vpvl::Quaternion &rot);
     void on_XPositionSpinBox_valueChanged(double value);
     void on_YPositionSpinBox_valueChanged(double value);
     void on_ZPositionSpinBox_valueChanged(double value);

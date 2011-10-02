@@ -43,7 +43,6 @@
 #include <GL/glew.h>
 #include <QtOpenGL/QGLWidget>
 
-#include <LinearMath/btVector3.h>
 #include <vpvl/Bone.h>
 
 namespace vpvl {
@@ -108,15 +107,15 @@ public slots:
     void deleteModel(vpvl::PMDModel *model);
     void deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void resetCamera();
-    void setLightColor(const btVector4 &color);
-    void setLightPosition(const btVector3 &position);
+    void setLightColor(const vpvl::Color &color);
+    void setLightPosition(const vpvl::Vector3 &position);
     const QPointF objectCoordinates(const QPoint &input);
 
     void rotate(float x, float y);
     void translate(float x, float y);
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
-    void setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
+    void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
@@ -140,10 +139,10 @@ signals:
     void assetDidAdd(vpvl::Asset *asset);
     void assetWillDelete(vpvl::Asset *asset);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
-    void lightColorDidSet(const btVector4 &color);
-    void lightPositionDidSet(const btVector3 &position);
+    void lightColorDidSet(const vpvl::Color &color);
+    void lightPositionDidSet(const vpvl::Vector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
-    void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void cameraPerspectiveDidSet(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();

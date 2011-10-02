@@ -3,7 +3,7 @@
 
 #include <QtCore/QSettings>
 #include <QtGui/QMainWindow>
-#include <LinearMath/btVector3.h>
+#include <vpvl/Common.h>
 
 namespace vpvl {
 class Asset;
@@ -53,7 +53,7 @@ private slots:
     void setCurrentFPS(int value);
     void setModel(vpvl::PMDModel *value);
     void setBones(const QList<vpvl::Bone*> &bones);
-    void setCameraPerspective(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
@@ -89,8 +89,8 @@ private:
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;
-    btVector3 m_position;
-    btVector3 m_angle;
+    vpvl::Vector3 m_position;
+    vpvl::Vector3 m_angle;
     float m_fovy;
     float m_distance;
     int m_currentFPS;
