@@ -9,13 +9,12 @@ AssetWidget::AssetWidget(QWidget *parent) :
     QWidget(parent),
     m_assetComboBox(0)
 {
-    QLabel *label = 0;
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QHBoxLayout *subLayout = new QHBoxLayout();
     m_assetComboBox = new QComboBox();
     connect(m_assetComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentAsset(int)));
     subLayout->addWidget(m_assetComboBox, 1);
-    m_removeButton = new QPushButton(tr("Remove"));
+    m_removeButton = new QPushButton();
     connect(m_removeButton, SIGNAL(clicked()), this, SLOT(removeAsset()));
     subLayout->addWidget(m_removeButton);
     mainLayout->addLayout(subLayout);
@@ -27,8 +26,8 @@ AssetWidget::AssetWidget(QWidget *parent) :
     mainLayout->addLayout(subLayout);
     int index = 0;
     QGridLayout *formLayout = new QGridLayout();
-    label = new QLabel(tr("Position"));
-    formLayout->addWidget(label, index, 0);
+    m_positionLabel = new QLabel();
+    formLayout->addWidget(m_positionLabel, index, 0);
     m_px = new QDoubleSpinBox();
     m_px->setRange(-10000.0, 10000.0);
     connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
@@ -42,8 +41,8 @@ AssetWidget::AssetWidget(QWidget *parent) :
     connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     formLayout->addWidget(m_pz, index, 3);
     index++;
-    label = new QLabel(tr("Rotation"));
-    formLayout->addWidget(label, index, 0);
+    m_rotationLabel = new QLabel();
+    formLayout->addWidget(m_rotationLabel, index, 0);
     m_rx = new QDoubleSpinBox();
     m_rx->setRange(-180.0, 180.0);
     m_rx->setSingleStep(0.1);
@@ -61,27 +60,37 @@ AssetWidget::AssetWidget(QWidget *parent) :
     formLayout->addWidget(m_rz, index, 3);
     mainLayout->addLayout(formLayout);
     subLayout = new QHBoxLayout();
-    label = new QLabel(tr("Scale"));
-    subLayout->addWidget(label);
+    m_scaleLabel = new QLabel();
+    subLayout->addWidget(m_scaleLabel);
     m_scale = new QDoubleSpinBox();
     m_scale->setSingleStep(0.1);
     m_scale->setRange(0.01, 10000.0);
     connect(m_scale, SIGNAL(valueChanged(double)), this, SLOT(updateScaleFactor(double)));
     subLayout->addWidget(m_scale);
-    label = new QLabel(tr("Opacity"));
-    subLayout->addWidget(label);
+    m_opacityLabel = new QLabel();
+    subLayout->addWidget(m_opacityLabel);
     m_opacity = new QDoubleSpinBox();
     m_opacity->setSingleStep(0.01);
     m_opacity->setRange(0.0, 1.0);
     connect(m_opacity, SIGNAL(valueChanged(double)), this, SLOT(updateOpacity(double)));
     subLayout->addWidget(m_opacity);
     mainLayout->addLayout(subLayout);
+    retranslate();
     setLayout(mainLayout);
     setEnable(false);
 }
 
 AssetWidget::~AssetWidget()
 {
+}
+
+void AssetWidget::retranslate()
+{
+    m_removeButton->setText(tr("Remove"));
+    m_positionLabel->setText(tr("Position"));
+    m_rotationLabel->setText(tr("Rotation"));
+    m_scaleLabel->setText(tr("Scale"));
+    m_opacityLabel->setText(tr("Opacity"));
 }
 
 void AssetWidget::addAsset(vpvl::Asset *asset)

@@ -9,6 +9,7 @@ class Asset;
 
 class QComboBox;
 class QDoubleSpinBox;
+class QLabel;
 class QPushButton;
 
 class AssetWidget : public QWidget
@@ -18,12 +19,13 @@ public:
     explicit AssetWidget(QWidget *parent = 0);
     ~AssetWidget();
 
-signals:
-    void assetDidRemove(vpvl::Asset *asset);
-
 public slots:
     void addAsset(vpvl::Asset *asset);
     void removeAsset(vpvl::Asset *asset);
+    void retranslate();
+
+signals:
+    void assetDidRemove(vpvl::Asset *asset);
 
 private slots:
     void removeAsset();
@@ -51,6 +53,10 @@ private:
     QDoubleSpinBox *m_rz;
     QDoubleSpinBox *m_scale;
     QDoubleSpinBox *m_opacity;
+    QLabel *m_positionLabel;
+    QLabel *m_rotationLabel;
+    QLabel *m_scaleLabel;
+    QLabel *m_opacityLabel;
     QList<vpvl::Asset *> m_assets;
     vpvl::Asset *m_currentAsset;
 };
