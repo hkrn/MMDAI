@@ -55,7 +55,9 @@ Asset::Asset()
       m_scene(0),
       m_parentBone(0),
       m_position(0.0f, 0.0f, 0.0f),
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_scale(10.0f),
+      m_opacity(1.0f),
       m_flags(aiProcessPreset_TargetRealtime_Quality),
       m_name(0)
 {
@@ -68,7 +70,9 @@ Asset::~Asset()
     m_name = 0;
     m_flags = 0;
     m_scale = 0.0f;
+    m_opacity = 0.0f;
     m_position.setZero();
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_scene = 0;
     delete m_importer;
     m_importer = 0;
@@ -100,7 +104,9 @@ Asset::Asset()
     : m_importer(0),
       m_scene(0),
       m_position(0.0f, 0.0f, 0.0f),
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_scale(10.0f),
+      m_opacity(1.0f),
       m_flags(0),
       m_name(0)
 {
@@ -111,7 +117,9 @@ Asset::~Asset()
     m_name = 0;
     m_flags = 0;
     m_scale = 0.0f;
+    m_opacity = 0.0f;
     m_position.setZero();
+    m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_scene = 0;
     m_importer = 0;
 }

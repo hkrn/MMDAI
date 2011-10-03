@@ -88,11 +88,23 @@ public:
     void setPosition(const Vector3 &value) {
         m_position = value;
     }
+    const Quaternion &rotation() const {
+        return m_rotation;
+    }
+    void setRotation(const Quaternion &value) {
+        m_rotation = value;
+    }
     const Scalar &scaleFactor() const {
         return m_scale;
     }
     void setScaleFactor(const Scalar &value) {
         m_scale = value;
+    }
+    const Scalar &opacity() const {
+        return m_opacity;
+    }
+    void setOpacity(const Scalar &value) {
+        m_opacity = value;
     }
     uint32_t loadFlags() const {
         return m_flags;
@@ -122,7 +134,9 @@ private:
     AssetUserData *m_userData;
     Bone *m_parentBone;
     Vector3 m_position;
+    Quaternion m_rotation;
     Scalar m_scale;
+    Scalar m_opacity;
     uint32_t m_flags;
     const char *m_name;
 
