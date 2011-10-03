@@ -20,22 +20,31 @@ TabWidget::TabWidget(QSettings *settings, BoneMotionModel *bmm, FaceMotionModel 
     m_camera = new CameraPerspectiveWidget();
     m_face = new FaceWidget(fmm);
     m_interpolation = new InterpolationWidget(bmm);
-    QTabWidget *tabWidget = new QTabWidget();
-    tabWidget->addTab(m_asset, tr("Asset"));
-    tabWidget->addTab(m_camera, tr("Camera"));
-    tabWidget->addTab(m_face, tr("Face"));
-    tabWidget->addTab(m_interpolation, tr("Interpolation"));
+    m_tabWidget = new QTabWidget();
+    m_tabWidget->addTab(m_asset, "");
+    m_tabWidget->addTab(m_camera, "");
+    m_tabWidget->addTab(m_face, "");
+    m_tabWidget->addTab(m_interpolation, "");
     QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(tabWidget);
+    layout->addWidget(m_tabWidget);
     layout->setContentsMargins(10, 10, 10, 10);
+    retranslate();
     setMinimumSize(332, 265);
     setLayout(layout);
     restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
-    setWindowTitle(tr("Motion Tabs"));
 }
 
 TabWidget::~TabWidget()
 {
+}
+
+void TabWidget::retranslate()
+{
+    m_tabWidget->setTabText(0, tr("Asset"));
+    m_tabWidget->setTabText(1, tr("Camera"));
+    m_tabWidget->setTabText(2, tr("Face"));
+    m_tabWidget->setTabText(3, tr("Interpolation"));
+    setWindowTitle(tr("Motion Tabs"));
 }
 
 void TabWidget::closeEvent(QCloseEvent *event)

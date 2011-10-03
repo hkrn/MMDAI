@@ -69,20 +69,27 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->columnCount());
+    m_label = new QLabel();
     connect(m_spinBox, SIGNAL(valueChanged(int)), m_treeView, SLOT(selectColumn(int)));
     spinboxLayout->addSpacing(250);
-    spinboxLayout->addWidget(new QLabel(tr("Frame index")));
+    spinboxLayout->addWidget(m_label);
     spinboxLayout->addWidget(m_spinBox);
     spinboxLayout->addSpacing(250);
     layout->addLayout(spinboxLayout);
     layout->addWidget(m_treeView);
     layout->setContentsMargins(QMargins());
+    retranslate();
     setLayout(layout);
 }
 
 TimelineWidget::~TimelineWidget()
 {
     delete m_treeView;
+}
+
+void TimelineWidget::retranslate()
+{
+    m_label->setText(tr("Frame Index"));
 }
 
 const QModelIndex TimelineWidget::selectedIndex() const

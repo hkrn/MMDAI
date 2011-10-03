@@ -10,6 +10,8 @@ class Face;
 
 class FaceMotionModel;
 class QComboBox;
+class QLabel;
+class QPushButton;
 class QSlider;
 
 class FaceWidget : public QWidget
@@ -22,6 +24,7 @@ public:
     explicit FaceWidget(FaceMotionModel *fmm, QWidget *parent = 0);
 
 public slots:
+    void retranslate();
     void setPMDModel(vpvl::PMDModel *model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
@@ -47,6 +50,14 @@ private:
     QComboBox *m_lips;
     QComboBox *m_eyeblows;
     QComboBox *m_others;
+    QLabel *m_eyeLabel;
+    QLabel *m_lipLabel;
+    QLabel *m_eyeblowLabel;
+    QLabel *m_otherLabel;
+    QPushButton *m_eyeRegistButton;
+    QPushButton *m_lipRegistButton;
+    QPushButton *m_eyeblowRegistButton;
+    QPushButton *m_otherRegistButton;
     FaceMotionModel *m_faceMotionModel;
 };
 

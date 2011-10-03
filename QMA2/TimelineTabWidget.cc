@@ -91,9 +91,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(m_tabWidget);
+    retranslate();
     setLayout(layout);
     restoreGeometry(m_settings->value("timelineTabWidget/geometry").toByteArray());
-    setWindowTitle(tr("Motion Timeline"));
 }
 
 TimelineTabWidget::~TimelineTabWidget()
@@ -105,6 +105,13 @@ void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
     QModelIndex index = m_boneTimeline->selectedIndex();
     if (index.isValid())
         UIGetBoneModel(m_boneTimeline)->loadPose(pose, model, index.column());
+}
+
+void TimelineTabWidget::retranslate()
+{
+    m_boneTimeline->retranslate();
+    m_faceTimeline->retranslate();
+    setWindowTitle(tr("Motion Timeline"));
 }
 
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)

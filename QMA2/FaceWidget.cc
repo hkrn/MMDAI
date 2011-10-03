@@ -13,63 +13,60 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     m_others(0),
     m_faceMotionModel(fmm)
 {
-    QLabel *label = 0;
-    QPushButton *button = 0;
     QSlider *slider = 0;
-    QString buttonLabel = tr("Regist");
 
     QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
     QHBoxLayout *eyeHBoxLayout = new QHBoxLayout();
-    label = new QLabel(tr("Eye"));
-    button = new QPushButton(buttonLabel);
+    m_eyeLabel = new QLabel();
+    m_eyeRegistButton = new QPushButton();
     m_eyes = new QComboBox();
     slider = createSlider();
-    connect(button, SIGNAL(clicked()), this, SLOT(registerEye()));
+    connect(m_eyeRegistButton, SIGNAL(clicked()), this, SLOT(registerEye()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
-    eyeHBoxLayout->addWidget(label);
-    eyeHBoxLayout->addWidget(button);
+    eyeHBoxLayout->addWidget(m_eyeLabel);
+    eyeHBoxLayout->addWidget(m_eyeRegistButton);
     eyeVBoxLayout->addLayout(eyeHBoxLayout);
     eyeVBoxLayout->addWidget(m_eyes);
     eyeVBoxLayout->addWidget(slider);
 
     QVBoxLayout *lipVBoxLayout = new QVBoxLayout();
     QHBoxLayout *lipHBoxLayout = new QHBoxLayout();
-    label = new QLabel(tr("Lip"));
-    button = new QPushButton(buttonLabel);
+    m_lipLabel = new QLabel();
+    m_lipRegistButton = new QPushButton();
     m_lips = new QComboBox();
     slider = createSlider();
-    connect(button, SIGNAL(clicked()), this, SLOT(registerLip()));
+    connect(m_lipRegistButton, SIGNAL(clicked()), this, SLOT(registerLip()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
-    lipHBoxLayout->addWidget(label);
-    lipHBoxLayout->addWidget(button);
+    lipHBoxLayout->addWidget(m_lipLabel);
+    lipHBoxLayout->addWidget(m_lipRegistButton);
     lipVBoxLayout->addLayout(lipHBoxLayout);
     lipVBoxLayout->addWidget(m_lips);
     lipVBoxLayout->addWidget(slider);
 
     QVBoxLayout *eyeblowVBoxLayout = new QVBoxLayout();
     QHBoxLayout *eyeblowHBoxLayout = new QHBoxLayout();
-    label = new QLabel(tr("Eyeblow"));
-    button = new QPushButton(buttonLabel);
+    m_eyeblowLabel = new QLabel();
+    m_eyeblowRegistButton = new QPushButton();
     m_eyeblows = new QComboBox();
     slider = createSlider();
-    connect(button, SIGNAL(clicked()), this, SLOT(registerEyeblow()));
+    connect(m_eyeblowRegistButton, SIGNAL(clicked()), this, SLOT(registerEyeblow()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
-    eyeblowHBoxLayout->addWidget(label);
-    eyeblowHBoxLayout->addWidget(button);
+    eyeblowHBoxLayout->addWidget(m_eyeblowLabel);
+    eyeblowHBoxLayout->addWidget(m_eyeblowRegistButton);
     eyeblowVBoxLayout->addLayout(eyeblowHBoxLayout);
     eyeblowVBoxLayout->addWidget(m_eyeblows);
     eyeblowVBoxLayout->addWidget(slider);
 
     QVBoxLayout *otherVBoxLayout = new QVBoxLayout();
     QHBoxLayout *otherHBoxLayout = new QHBoxLayout();
-    label = new QLabel(tr("Other"));
-    button = new QPushButton(buttonLabel);
+    m_otherLabel = new QLabel();
+    m_otherRegistButton = new QPushButton();
     m_others = new QComboBox();
     slider = createSlider();
-    connect(button, SIGNAL(clicked()), this, SLOT(registerOther()));
+    connect(m_otherRegistButton, SIGNAL(clicked()), this, SLOT(registerOther()));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
-    otherHBoxLayout->addWidget(label);
-    otherHBoxLayout->addWidget(button);
+    otherHBoxLayout->addWidget(m_otherLabel);
+    otherHBoxLayout->addWidget(m_otherRegistButton);
     otherVBoxLayout->addLayout(otherHBoxLayout);
     otherVBoxLayout->addWidget(m_others);
     otherVBoxLayout->addWidget(slider);
@@ -79,10 +76,24 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     layout->addLayout(lipVBoxLayout, 0, 1);
     layout->addLayout(eyeblowVBoxLayout, 1, 0);
     layout->addLayout(otherVBoxLayout, 1, 1);
+    retranslate();
     setLayout(layout);
 
     connect(m_faceMotionModel, SIGNAL(modelDidChange(vpvl::PMDModel*)),
             this, SLOT(setPMDModel(vpvl::PMDModel*)));
+}
+
+void FaceWidget::retranslate()
+{
+    QString buttonText = tr("Regist");
+    m_eyeRegistButton->setText(buttonText);
+    m_lipRegistButton->setText(buttonText);
+    m_eyeblowRegistButton->setText(buttonText);
+    m_otherRegistButton->setText(buttonText);
+    m_eyeLabel->setText(tr("Eye"));
+    m_lipLabel->setText(tr("Lip"));
+    m_eyeblowLabel->setText(tr("Eyeblow"));
+    m_otherLabel->setText(tr("Other"));
 }
 
 void FaceWidget::setPMDModel(vpvl::PMDModel *model)

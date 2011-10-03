@@ -34,6 +34,7 @@ public:
 
 public slots:
     void loadPose(VPDFile *pose, vpvl::PMDModel *model);
+    void retranslate();
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
     void setFrameAtCurrentIndex(vpvl::Bone *bone);
     void setFrameAtCurrentIndex(vpvl::Face *face);

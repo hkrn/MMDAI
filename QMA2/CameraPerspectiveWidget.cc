@@ -6,31 +6,41 @@
 CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     QWidget(parent)
 {
-    QHBoxLayout *hlayout = 0;
-    QPushButton *button = 0;
-    QVBoxLayout *layout = new QVBoxLayout();
-    hlayout = new QHBoxLayout();
-    button = new QPushButton(tr("Front"));
-    connect(button, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
-    hlayout->addWidget(button);
-    button = new QPushButton(tr("Back"));
-    connect(button, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
-    hlayout->addWidget(button);
-    button = new QPushButton(tr("Top"));
-    connect(button, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
-    hlayout->addWidget(button);
-    layout->addLayout(hlayout);
-    hlayout = new QHBoxLayout();
-    button = new QPushButton(tr("Left"));
-    connect(button, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
-    hlayout->addWidget(button);
-    button = new QPushButton(tr("Right"));
-    connect(button, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
-    hlayout->addWidget(button);
-    button = new QPushButton(tr("Camera"));
-    hlayout->addWidget(button);
-    layout->addLayout(hlayout);
-    setLayout(layout);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QHBoxLayout *subLayout = 0;
+    subLayout = new QHBoxLayout();
+    m_frontLabel = new QPushButton();
+    connect(m_frontLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
+    subLayout->addWidget(m_frontLabel);
+    m_backLabel = new QPushButton();
+    connect(m_backLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
+    subLayout->addWidget(m_backLabel);
+    m_topLabel = new QPushButton();
+    connect(m_topLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
+    subLayout->addWidget(m_topLabel);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
+    m_leftLabel = new QPushButton();
+    connect(m_leftLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
+    subLayout->addWidget(m_leftLabel);
+    m_rightLabel = new QPushButton();
+    connect(m_rightLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
+    subLayout->addWidget(m_rightLabel);
+    m_cameraLabel = new QPushButton();
+    subLayout->addWidget(m_cameraLabel);
+    mainLayout->addLayout(subLayout);
+    retranslate();
+    setLayout(mainLayout);
+}
+
+void CameraPerspectiveWidget::retranslate()
+{
+    m_frontLabel->setText(tr("Front"));
+    m_backLabel->setText(tr("Back"));
+    m_topLabel->setText(tr("Top"));
+    m_leftLabel->setText(tr("Left"));
+    m_rightLabel->setText(tr("Right"));
+    m_cameraLabel->setText(tr("Camera"));
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveFront()
