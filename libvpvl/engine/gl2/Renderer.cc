@@ -933,7 +933,7 @@ Renderer::~Renderer()
         unloadAsset(asset);
     }
     models.releaseAll();
-    assets.releaseAll();
+    assets.clear();
     delete m_edgeProgram;
     m_edgeProgram = 0;
     delete m_modelProgram;
@@ -1399,7 +1399,7 @@ void Renderer::loadAsset(Asset *asset, const std::string &dir)
 #endif
 }
 
-void Renderer::unloadAsset(Asset *asset)
+void Renderer::unloadAsset(Asset *&asset)
 {
 #ifdef VPVL_LINK_ASSIMP
     if (asset) {
@@ -1424,6 +1424,7 @@ void Renderer::unloadAsset(Asset *asset)
         delete userData;
         delete asset;
         m_assets.remove(asset);
+        asset = 0;
     }
 #else
     (void) asset;

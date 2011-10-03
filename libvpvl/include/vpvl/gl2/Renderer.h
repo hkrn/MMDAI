@@ -144,7 +144,7 @@ public:
     void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
     void drawBoneTransform(vpvl::Bone *bone);
     void loadAsset(Asset *asset, const std::string &dir);
-    void unloadAsset(Asset *asset);
+    void unloadAsset(Asset *&asset);
 
     void clearSurface();
     void preShadow();
