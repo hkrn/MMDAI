@@ -61,7 +61,6 @@ bool SceneLoader::deleteAsset(vpvl::Asset *asset)
     if (!key.isNull()) {
         m_renderer->unloadAsset(asset);
         m_assets.remove(key);
-        delete asset;
         return true;
     }
     return false;

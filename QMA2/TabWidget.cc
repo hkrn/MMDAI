@@ -1,4 +1,6 @@
 #include "TabWidget.h"
+
+#include "AssetWidget.h"
 #include "CameraPerspectiveWidget.h"
 #include "FaceMotionModel.h"
 #include "FaceWidget.h"
@@ -9,13 +11,17 @@
 TabWidget::TabWidget(QSettings *settings, BoneMotionModel *bmm, FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
+    m_asset(0),
     m_camera(0),
-    m_face(0)
+    m_face(0),
+    m_interpolation(0)
 {
+    m_asset = new AssetWidget();
     m_camera = new CameraPerspectiveWidget();
     m_face = new FaceWidget(fmm);
     m_interpolation = new InterpolationWidget(bmm);
     QTabWidget *tabWidget = new QTabWidget();
+    tabWidget->addTab(m_asset, tr("Asset"));
     tabWidget->addTab(m_camera, tr("Camera"));
     tabWidget->addTab(m_face, tr("Face"));
     tabWidget->addTab(m_interpolation, tr("Interpolation"));

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+#include "AssetWidget.h"
 #include "BoneDialog.h"
 #include "BoneMotionModel.h"
 #include "CameraPerspectiveWidget.h"
@@ -588,6 +589,9 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(sceneDidStop()), this, SLOT(stopSceneUpdate()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_faceMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
+    connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), m_tabWidget->assetWidget(), SLOT(addAsset(vpvl::Asset*)));
+    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), m_tabWidget->assetWidget(), SLOT(removeAsset(vpvl::Asset*)));
+    connect(m_tabWidget->assetWidget(), SIGNAL(assetDidRemove(vpvl::Asset*)), m_sceneWidget, SLOT(deleteAsset(vpvl::Asset*)));
 }
 
 void MainWindow::startSceneUpdate()

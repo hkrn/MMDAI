@@ -104,6 +104,7 @@ public slots:
     void setCamera();
     vpvl::VMDMotion *setCamera(const QString &path);
     void deleteSelectedModel();
+    void deleteAsset(vpvl::Asset *asset);
     void deleteModel(vpvl::PMDModel *model);
     void deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void resetCamera();

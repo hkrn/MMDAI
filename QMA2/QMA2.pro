@@ -90,7 +90,8 @@ SOURCES += main.cc\
     VPDFile.cc \
     LicenseWidget.cc \
     Delegate.cc \
-    SceneLoader.cc
+    SceneLoader.cc \
+    AssetWidget.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -114,7 +115,8 @@ HEADERS  += MainWindow.h \
     SceneLoader.h \
     Grid.h \
     Application.h \
-    Handles.h
+    Handles.h \
+    AssetWidget.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
@@ -124,3 +126,5 @@ FORMS += \
     TransformWidget.ui \
     #MainWindow.ui \
     BoneDialog.ui
+
+

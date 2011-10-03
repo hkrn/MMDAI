@@ -66,6 +66,10 @@ static inline const QString toQString(const uint8_t *value) {
     return getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
 }
 
+static inline const QString toQString(const vpvl::Asset *value) {
+    return value ? toQString(reinterpret_cast<const uint8_t *>(value->name())) : noneString();
+}
+
 static inline const QString toQString(const vpvl::PMDModel *value) {
     return value ? toQString(value->name()) : noneString();
 }

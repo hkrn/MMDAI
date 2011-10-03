@@ -406,6 +406,11 @@ void SceneWidget::deleteSelectedModel()
     }
 }
 
+void SceneWidget::deleteAsset(vpvl::Asset *asset)
+{
+    m_loader->deleteAsset(asset);
+}
+
 void SceneWidget::deleteModel(vpvl::PMDModel *model)
 {
     m_loader->deleteModel(model);
