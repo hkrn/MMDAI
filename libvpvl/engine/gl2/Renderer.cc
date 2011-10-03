@@ -709,6 +709,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
         m.b1 = submat[4]; m.b2 = submat[5]; m.b3 = submat[6];
         m.c1 = submat[8]; m.c2 = submat[9]; m.c3 = submat[10];
     }
+
     // translate
     m.a4 += pos.x();
     m.b4 += pos.y();
@@ -1421,6 +1422,8 @@ void Renderer::unloadAsset(Asset *asset)
         }
         aiUnloadAssetRecursive(scene, scene->mRootNode, userData);
         delete userData;
+        delete asset;
+        m_assets.remove(asset);
     }
 #else
     (void) asset;
