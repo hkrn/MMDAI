@@ -534,14 +534,6 @@ struct AssetUserData
 namespace
 {
 
-inline void aiColor2Float4(const struct aiColor4D &color, btVector4 &dest)
-{
-    dest.setX(color.r);
-    dest.setY(color.g);
-    dest.setZ(color.b);
-    dest.setW(color.a);
-}
-
 void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData, vpvl::gl2::IDelegate *delegate)
 {
     const uint32_t nMeshes = node->mNumMeshes;
@@ -641,32 +633,32 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
     aiColor4D ambient, diffuse, emission, specular;
     btVector4 color(0.0f, 0.0f, 0.0f, 0.0f);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
-        aiColor2Float4(ambient, color);
+        color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
         program->setMaterialAmbient(color);
     }
     else {
         program->setMaterialAmbient(btVector4(0.2f, 0.2f, 0.2f, 1.0f));
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
-        aiColor2Float4(diffuse, color);
+        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
         program->setMaterialDiffuse(color);
     }
     else {
         program->setMaterialDiffuse(btVector4(0.8f, 0.8f, 0.8f, 1.0f));
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
-        aiColor2Float4(emission, color);
+        color.setValue(emission.r, emission.g, emission.b, emission.a);
         program->setMaterialEmission(color);
     }
     else {
         program->setMaterialEmission(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
-        aiColor2Float4(specular, color);
+        color.setValue(specular.r, specular.g, specular.b, specular.a);
         program->setMaterialSpecular(color);
     }
     else {
-        program->setMaterialSpecular(btVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        program->setMaterialSpecular(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
     }
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
