@@ -677,7 +677,14 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
         program->setMaterialShininess(shininess);
     }
     else {
-        program->setMaterialShininess(0.0f);
+        program->setMaterialShininess(15.0f);
+    }
+    float opacity;
+    if (aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS) {
+        program->setOpacity(opacity * asset->opacity());
+    }
+    else {
+        program->setOpacity(asset->opacity());
     }
     int wireframe, twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
@@ -739,7 +746,6 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setLightDiffuse(s->lightDiffuse());
     program->setLightPosition(s->lightPosition());
     program->setLightSpecular(s->lightSpecular());
-    program->setOpacity(asset->opacity());
     for (uint32_t i = 0; i < nMeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = userData->vbo[mesh];
