@@ -5,6 +5,7 @@
 
 namespace vpvl {
 class Asset;
+class PMDModel;
 }
 
 class QComboBox;
@@ -22,6 +23,8 @@ public:
 public slots:
     void addAsset(vpvl::Asset *asset);
     void removeAsset(vpvl::Asset *asset);
+    void addModel(vpvl::PMDModel *model);
+    void removeModel(vpvl::PMDModel *model);
     void retranslate();
 
 signals:
@@ -31,6 +34,8 @@ private slots:
     void removeAsset();
     void changeCurrentAsset(int index);
     void changeCurrentAsset(vpvl::Asset *asset);
+    void changeCurrentModel(int index);
+    void changeParentBone(int index);
     void updatePositionX(double value);
     void updatePositionY(double value);
     void updatePositionZ(double value);
@@ -44,6 +49,8 @@ private:
     void setEnable(bool value);
 
     QComboBox *m_assetComboBox;
+    QComboBox *m_modelComboBox;
+    QComboBox *m_modelBonesComboBox;
     QPushButton *m_removeButton;
     QDoubleSpinBox *m_px;
     QDoubleSpinBox *m_py;
@@ -58,7 +65,9 @@ private:
     QLabel *m_scaleLabel;
     QLabel *m_opacityLabel;
     QList<vpvl::Asset *> m_assets;
+    QList<vpvl::PMDModel *> m_models;
     vpvl::Asset *m_currentAsset;
+    vpvl::PMDModel *m_currentModel;
 };
 
 #endif // ASSETWIDGET_H

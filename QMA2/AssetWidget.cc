@@ -7,7 +7,8 @@
 
 AssetWidget::AssetWidget(QWidget *parent) :
     QWidget(parent),
-    m_assetComboBox(0)
+    m_currentAsset(0),
+    m_currentModel(0)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QHBoxLayout *subLayout = new QHBoxLayout();
@@ -19,10 +20,13 @@ AssetWidget::AssetWidget(QWidget *parent) :
     subLayout->addWidget(m_removeButton);
     mainLayout->addLayout(subLayout);
     subLayout = new QHBoxLayout();
-    QComboBox *combo = new QComboBox();
-    subLayout->addWidget(combo);
-    combo = new QComboBox();
-    subLayout->addWidget(combo);
+    m_modelComboBox = new QComboBox();
+    m_modelComboBox->addItem("");
+    connect(m_modelComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentModel(int)));
+    subLayout->addWidget(m_modelComboBox);
+    m_modelBonesComboBox = new QComboBox();
+    connect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
+    subLayout->addWidget(m_modelBonesComboBox);
     mainLayout->addLayout(subLayout);
     int index = 0;
     QGridLayout *formLayout = new QGridLayout();
@@ -91,6 +95,7 @@ void AssetWidget::retranslate()
     m_rotationLabel->setText(tr("Rotation"));
     m_scaleLabel->setText(tr("Scale"));
     m_opacityLabel->setText(tr("Opacity"));
+    m_modelComboBox->setItemText(0, tr("Ground"));
 }
 
 void AssetWidget::addAsset(vpvl::Asset *asset)
@@ -112,6 +117,23 @@ void AssetWidget::removeAsset(vpvl::Asset *asset)
         if (m_assets.count() == 0)
             setEnable(false);
         emit assetDidRemove(asset);
+    }
+}
+
+void AssetWidget::addModel(vpvl::PMDModel *model)
+{
+    m_models.append(model);
+    m_modelComboBox->addItem(internal::toQString(model));
+}
+
+void AssetWidget::removeModel(vpvl::PMDModel *model)
+{
+    int index = m_models.indexOf(model);
+    if (index >= 0) {
+        m_models.removeAt(index);
+        m_modelComboBox->removeItem(index);
+        m_modelComboBox->setCurrentIndex(0);
+        m_modelBonesComboBox->clear();
     }
 }
 
@@ -139,6 +161,31 @@ void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
     m_scale->setValue(asset->scaleFactor());
     m_opacity->setValue(asset->opacity());
     m_currentAsset = asset;
+}
+
+void AssetWidget::changeCurrentModel(int index)
+{
+    if (index > 0) {
+        vpvl::PMDModel *model = m_models[index - 1];
+        m_currentModel = model;
+        m_modelBonesComboBox->clear();
+        const vpvl::BoneList &bones = model->bones();
+        const uint32_t nbones = bones.count();
+        for (uint32_t i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            m_modelBonesComboBox->addItem(internal::toQString(bone), i);
+        }
+    }
+    else if (m_currentAsset) {
+        m_modelBonesComboBox->clear();
+        m_currentAsset->setParentBone(0);
+    }
+}
+
+void AssetWidget::changeParentBone(int index)
+{
+    vpvl::Bone *bone = m_currentModel->bones().at(index);
+    m_currentAsset->setParentBone(bone);
 }
 
 void AssetWidget::updatePositionX(double value)
@@ -210,6 +257,8 @@ void AssetWidget::updateOpacity(double value)
 void AssetWidget::setEnable(bool value)
 {
     m_removeButton->setEnabled(value);
+    m_modelComboBox->setEnabled(value);
+    m_modelBonesComboBox->setEnabled(value);
     m_px->setEnabled(value);
     m_py->setEnabled(value);
     m_pz->setEnabled(value);

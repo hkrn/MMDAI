@@ -592,6 +592,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), m_tabWidget->assetWidget(), SLOT(addAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), m_tabWidget->assetWidget(), SLOT(removeAsset(vpvl::Asset*)));
     connect(m_tabWidget->assetWidget(), SIGNAL(assetDidRemove(vpvl::Asset*)), m_sceneWidget, SLOT(deleteAsset(vpvl::Asset*)));
+    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), m_tabWidget->assetWidget(), SLOT(addModel(vpvl::PMDModel*)));
+    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_tabWidget->assetWidget(), SLOT(removeModel(vpvl::PMDModel*)));
 }
 
 void MainWindow::startSceneUpdate()
