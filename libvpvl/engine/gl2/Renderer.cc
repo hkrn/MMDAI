@@ -1453,8 +1453,10 @@ void Renderer::drawShadow()
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
-        updateModelBuffer(model);
-        drawModelShadow(model);
+        if (model->isVisible()) {
+            updateModelBuffer(model);
+            drawModelShadow(model);
+        }
     }
 }
 
@@ -1481,8 +1483,10 @@ void Renderer::drawModels()
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
-        drawModel(model);
-        drawModelEdge(model);
+        if (model->isVisible()) {
+            drawModel(model);
+            drawModelEdge(model);
+        }
     }
 }
 

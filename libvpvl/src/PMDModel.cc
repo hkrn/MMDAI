@@ -91,7 +91,8 @@ PMDModel::PMDModel()
       m_boundingSphereStep(kBoundingSpherePointsMin),
       m_edgeOffset(0.03f),
       m_selfShadowDensityCoef(0.0f),
-      m_enableSimulation(false)
+      m_enableSimulation(false),
+      m_visible(false)
 {
     internal::zerofill(&m_name, sizeof(m_name));
     internal::zerofill(&m_comment, sizeof(m_comment));
@@ -973,6 +974,8 @@ void PMDModel::release()
     m_edgeIndicesPointer = 0;
     m_edgeIndicesCount = 0;
     m_error = kNoError;
+    m_enableSimulation = false;
+    m_visible = false;
 }
 
 void PMDModel::sortBones()

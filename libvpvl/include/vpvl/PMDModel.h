@@ -451,6 +451,9 @@ public:
     bool isSimulationEnabled() const {
         return m_enableSimulation;
     }
+    bool isVisible() const {
+        return m_visible;
+    }
     const Quaternion &rotationOffset() const {
         return m_rotationOffset;
     }
@@ -554,6 +557,9 @@ public:
     void setEnableSimulation(bool value) {
         m_enableSimulation = value;
     }
+    void setVisible(bool value) {
+        m_visible = value;
+    }
     void setUserData(PMDModelUserData *value) {
         m_userData = value;
     }
@@ -628,6 +634,7 @@ private:
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
     bool m_enableSimulation;
+    bool m_visible;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(PMDModel)
 };

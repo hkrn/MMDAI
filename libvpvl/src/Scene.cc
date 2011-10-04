@@ -144,6 +144,7 @@ void Scene::addModel(PMDModel *model)
     sortRenderingOrder();
     model->setLightPosition(m_lightPosition);
     model->joinWorld(m_world);
+    model->setVisible(true);
 }
 
 PMDModel **Scene::getRenderingOrder(size_t &size)
