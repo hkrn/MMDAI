@@ -210,7 +210,8 @@ void BoneKeyFrame::setName(const uint8_t *value)
     copyBytesSafe(m_name, value, sizeof(m_name));
 }
 
-void BoneKeyFrame::setInterpolationTable(const int8_t *table) {
+void BoneKeyFrame::setInterpolationTable(const int8_t *table)
+{
     for (int i = 0; i < kMax; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;
     int8_t x1, y1, x2, y2;

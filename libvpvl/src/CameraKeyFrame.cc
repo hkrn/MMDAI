@@ -225,7 +225,8 @@ void CameraKeyFrame::setName(const uint8_t * /* name */)
 {
 }
 
-void CameraKeyFrame::setInterpolationTable(const int8_t *table) {
+void CameraKeyFrame::setInterpolationTable(const int8_t *table)
+{
     for (int i = 0; i < kMax; i++)
         m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;
     int8_t x1, y1, x2, y2;
