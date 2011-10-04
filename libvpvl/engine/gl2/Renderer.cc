@@ -406,7 +406,8 @@ public:
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_hasTextureUniformLocation(0),
-          m_mainTextureUniformLocation(0)
+          m_mainTextureUniformLocation(0),
+          m_opacityUniformLocation(0)
     {
     }
     ~AssetProgram() {
@@ -421,6 +422,7 @@ public:
         m_materialShininessUniformLocation = 0;
         m_hasTextureUniformLocation = 0;
         m_mainTextureUniformLocation = 0;
+        m_opacityUniformLocation = 0;
     }
 
     bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
@@ -437,6 +439,7 @@ public:
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
             m_hasTextureUniformLocation = glGetUniformLocation(m_program, "hasTexture");
             m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+            m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
         }
         return ret;
     }
@@ -476,6 +479,9 @@ public:
     void setMaterialShininess(float value) {
         glUniform1f(m_materialShininessUniformLocation, value);
     }
+    void setOpacity(float value) {
+        glUniform1f(m_opacityUniformLocation, value);
+    }
     void setMainTexture(GLuint value) {
         if (value) {
             glActiveTexture(GL_TEXTURE0);
@@ -497,6 +503,7 @@ private:
     GLuint m_materialShininessUniformLocation;
     GLuint m_hasTextureUniformLocation;
     GLuint m_mainTextureUniformLocation;
+    GLuint m_opacityUniformLocation;
 };
 
 }
@@ -732,6 +739,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setLightDiffuse(s->lightDiffuse());
     program->setLightPosition(s->lightPosition());
     program->setLightSpecular(s->lightSpecular());
+    program->setOpacity(asset->opacity());
     for (uint32_t i = 0; i < nMeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = userData->vbo[mesh];

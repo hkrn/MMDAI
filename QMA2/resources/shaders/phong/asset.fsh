@@ -10,6 +10,7 @@ uniform vec4 materialDiffuse;
 uniform vec4 materialEmission;
 uniform vec4 materialSpecular;
 uniform float materialShininess;
+uniform float opacity;
 uniform bool hasTexture;
 uniform sampler2D mainTexture;
 varying vec4 outColor;
@@ -33,6 +34,7 @@ void main() {
     if (hasTexture) {
         color *= texture2D(mainTexture, outTexCoord);
     }
+    color.a = opacity;
     gl_FragColor = color;
 }
 
