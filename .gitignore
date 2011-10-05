@@ -16,6 +16,7 @@ ipch
 julius-*
 Makefile*
 moc_*
+opencv*
 open_jtalk-*
 QMACustom.pri
 portaudio*
