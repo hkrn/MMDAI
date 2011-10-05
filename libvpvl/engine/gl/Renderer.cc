@@ -237,6 +237,7 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset)
     else {
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
     }
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
     int wireframe, twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -462,6 +463,8 @@ void Renderer::initializeSurface()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_NORMALIZE);
+    glShadeModel(GL_SMOOTH);
     glCullFace(GL_BACK);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
