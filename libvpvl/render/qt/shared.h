@@ -37,7 +37,14 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl/vpvl.h>
+
+#ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
+using namespace vpvl::gl2;
+#else
+#include <vpvl/gl/Renderer.h>
+using namespace vpvl::gl;
+#endif
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
@@ -57,12 +64,6 @@ VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #include <aiPostProcess.h>
 #else
 VPVL_DECLARE_HANDLE(aiScene)
-#endif
-
-#if defined(VPVL_GL2_RENDERER_H_)
-using namespace vpvl::gl2;
-#elif defined(VPVL_GL_RENDERER_H_)
-using namespace vpvl::gl;
 #endif
 
 namespace
@@ -430,7 +431,7 @@ private:
 
         const vpvl::Color &color = scene->lightColor();
         const vpvl::Scalar &intensity = 0.6f;
-    #if 1 // MMD like toon
+    #if 0 // MMD like toon
         const vpvl::Vector3 &a = color * intensity * 2.0f;
         const vpvl::Vector3 &d = color * 0.0f;
         const vpvl::Vector3 &s = color * intensity;

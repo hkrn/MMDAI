@@ -37,7 +37,14 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl/vpvl.h>
+
+#ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
+using namespace vpvl::gl2;
+#else
+#include <vpvl/gl/Renderer.h>
+using namespace vpvl::gl;
+#endif
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -71,12 +78,6 @@ VPVL_DECLARE_HANDLE(aiScene)
 #define iconv_open(to, from) 0
 #define iconv_close(iconv)
 typedef void* iconv_t;
-#endif
-
-#if defined(VPVL_GL2_RENDERER_H_)
-using namespace vpvl::gl2;
-#elif defined(VPVL_GL_RENDERER_H_)
-using namespace vpvl::gl;
 #endif
 
 namespace internal

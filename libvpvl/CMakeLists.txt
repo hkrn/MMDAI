@@ -166,11 +166,17 @@ option(VPVL_NO_BULLET "Build libvpvl without BulletPhysics except LinearMath (de
 
 # intercept to add source
 option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
+option(VPVL_USE_GLSL "Include OpenGL renderer class using GLSL shaders (default is ON)" ON)
 if(VPVL_OPENGL_RENDERER)
-  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl2 vpvl_gl_sources)
-  set(VPVL_COORDINATE_OPENGL ON BOOL)
+  if(VPVL_USE_GLSL)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl2 vpvl_gl_sources)
+    list(APPEND vpvl_public_headers include/vpvl/gl2/Renderer.h)
+  else()
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl vpvl_gl_sources)
+    list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
+  endif()
   list(APPEND vpvl_sources ${vpvl_gl_sources})
-  list(APPEND vpvl_public_headers include/vpvl/gl2/Renderer.h)
+  set(VPVL_COORDINATE_OPENGL ON BOOL)
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
