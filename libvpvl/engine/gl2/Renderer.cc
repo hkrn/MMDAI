@@ -553,10 +553,10 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
         const aiVector3D *normals = mesh->mNormals;
-        const aiColor4D *colors = mesh->mColors[0];
         const bool hasNormals = mesh->HasNormals();
         const bool hasColors = mesh->HasVertexColors(0);
         const bool hasTexCoords = mesh->HasTextureCoords(0);
+        const aiColor4D *colors = hasColors ? mesh->mColors[0] : 0;
         const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
         AssetVertices &assetVertices = userData->vertices[mesh];
         AssetIndices &indices = userData->indices[mesh];
@@ -699,31 +699,20 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
 
 void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *asset, vpvl::Scene *s)
 {
-    struct aiMatrix4x4 m = node->mTransformation;
     const btScalar &scaleFactor = asset->scaleFactor();
-    const btVector3 &pos = asset->position();
     const vpvl::Bone *bone = asset->parentBone();
     float matrix[16];
+    aiVector3D aiS, aiP;
+    aiQuaternion aiQ;
+    node->mTransformation.Decompose(aiS, aiQ, aiP);
+    btTransform transform(btMatrix3x3(btQuaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
+                          .scaled(btVector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
+                          btVector3(aiP.x,aiP.y, aiP.z) + asset->position());
     if (bone) {
-        const btTransform &tr = bone->localTransform();
-        const btVector3 &pos = tr.getOrigin();
-        const btMatrix3x3 &mat = tr.getBasis().inverse();
-        btScalar submat[12];
-        mat.getOpenGLSubMatrix(submat);
-        m.a4 += pos.x(); m.b4 += pos.y(); m.c4 += pos.z();
-        m.a1 = submat[0]; m.a2 = submat[1]; m.a3 = submat[2];
-        m.b1 = submat[4]; m.b2 = submat[5]; m.b3 = submat[6];
-        m.c1 = submat[8]; m.c2 = submat[9]; m.c3 = submat[10];
+        const btTransform &boneTransform = bone->localTransform();
+        transform.setBasis(boneTransform.getBasis() * transform.getBasis());
+        transform.setOrigin(boneTransform.getOrigin() + transform.getOrigin());
     }
-
-    // translate
-    m.a4 += pos.x();
-    m.b4 += pos.y();
-    m.c4 += pos.z();
-    // scale
-    m.a1 *= scaleFactor;
-    m.b2 *= scaleFactor;
-    m.c3 *= scaleFactor;
     vpvl::AssetUserData *userData = asset->userData();
     AssetVertex v;
     const GLvoid *vertexPtr = 0;
@@ -740,7 +729,8 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setProjectionMatrix(matrix);
     s->getInvertedModelViewMatrix(matrix);
     program->setNormalMatrix(matrix);
-    program->setTransformMatrix(reinterpret_cast<const float *>(&m));
+    transform.getOpenGLMatrix(matrix);
+    program->setTransformMatrix(matrix);
     program->setLightAmbient(s->lightAmbient());
     program->setLightColor(s->lightColor());
     program->setLightDiffuse(s->lightDiffuse());
