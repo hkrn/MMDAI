@@ -11,7 +11,7 @@ void main() {
     if (hasTexture) {
         color *= texture2D(mainTexture, outTexCoord);
     }
-    color.a = opacity;
+    color *= opacity;
     gl_FragColor = color;
 }
 
