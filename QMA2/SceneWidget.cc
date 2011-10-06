@@ -604,14 +604,14 @@ void SceneWidget::initializeGL()
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
     const vpvl::Color &color = scene->lightColor();
+#if 0 // MMD like toon
     const vpvl::Scalar &intensity = 0.6f;
-#if 1 // MMD like toon
     const vpvl::Vector3 &a = color * intensity * 2.0f;
     const vpvl::Vector3 &d = color * 0.0f;
     const vpvl::Vector3 &s = color * intensity;
 #else // no toon
     const vpvl::Vector3 &a = color;
-    const vpvl::Vector3 &d = color * intensity;
+    const vpvl::Vector3 &d = color;
     const vpvl::Vector3 &s = color;
 #endif
     const vpvl::Color ambient(a.x(), a.y(), a.z(), 1.0f);
@@ -714,30 +714,8 @@ void SceneWidget::paintGL()
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
+    m_renderer->drawSurface();
     m_grid->draw(m_renderer->scene());
-    // pre shadow
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glColorMask(0, 0, 0, 0);
-    glDepthMask(0);
-    glStencilFunc(GL_EQUAL, 1, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-    glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
-    // draw shadows
-    m_renderer->drawShadow();
-    // post shadow
-    glPopMatrix();
-    glColorMask(1, 1, 1, 1);
-    glDepthMask(1);
-    glStencilFunc(GL_EQUAL, 2, ~0);
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-    // draw all assets and models
-    m_renderer->drawAssets();
-    m_renderer->drawModels();
     drawBones();
     m_handles->draw(this);
     emit motionDidFinished(m_loader->stoppedMotions());
