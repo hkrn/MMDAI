@@ -406,7 +406,7 @@ public:
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_hasTextureUniformLocation(0),
-          m_mainTextureUniformLocation(0),
+          m_textureUniformLocation(0),
           m_opacityUniformLocation(0)
     {
     }
@@ -421,7 +421,7 @@ public:
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_hasTextureUniformLocation = 0;
-        m_mainTextureUniformLocation = 0;
+        m_textureUniformLocation = 0;
         m_opacityUniformLocation = 0;
     }
 
@@ -438,7 +438,7 @@ public:
             m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
             m_hasTextureUniformLocation = glGetUniformLocation(m_program, "hasTexture");
-            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+            m_textureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
             m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
         }
         return ret;
@@ -459,10 +459,10 @@ public:
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setNormalMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_TRUE, value);
+        glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setTransformMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_TRUE, value);
+        glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const btVector4 &value) {
         glUniform4fv(m_materialAmbientUniformLocation, 1, value);
@@ -482,11 +482,11 @@ public:
     void setOpacity(float value) {
         glUniform1f(m_opacityUniformLocation, value);
     }
-    void setMainTexture(GLuint value) {
+    void setTexture(GLuint value) {
         if (value) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_mainTextureUniformLocation, 0);
+            glUniform1i(m_textureUniformLocation, 0);
             glUniform1i(m_hasTextureUniformLocation, 1);
         }
     }
@@ -502,7 +502,7 @@ private:
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_hasTextureUniformLocation;
-    GLuint m_mainTextureUniformLocation;
+    GLuint m_textureUniformLocation;
     GLuint m_opacityUniformLocation;
 };
 
@@ -554,8 +554,8 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
         const aiVector3D *vertices = mesh->mVertices;
         const aiVector3D *normals = mesh->mNormals;
         const aiColor4D *colors = mesh->mColors[0];
-        const bool hasNormals = normals ? true : false;
-        const bool hasColors = colors ? true : false;
+        const bool hasNormals = mesh->HasNormals();
+        const bool hasColors = mesh->HasVertexColors(0);
         const bool hasTexCoords = mesh->HasTextureCoords(0);
         const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
         AssetVertices &assetVertices = userData->vertices[mesh];
@@ -577,7 +577,7 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
                 }
                 if (hasTexCoords) {
                     const aiVector3D &p = texcoords[vertexIndex];
-                    assetVertex.texcoord.setValue(p.x, 1.0f - p.y, 0.0f);
+                    assetVertex.texcoord.setValue(p.x, p.y, 0.0f);
                 }
                 else {
                     assetVertex.texcoord.setZero();
@@ -632,10 +632,10 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
     aiString texturePath;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         GLuint textureID = asset->userData()->textures[texturePath.data];
-        program->setMainTexture(textureID);
+        program->setTexture(textureID);
     }
     else {
-        program->setMainTexture(0);
+        program->setTexture(0);
     }
     aiColor4D ambient, diffuse, emission, specular;
     btVector4 color(0.0f, 0.0f, 0.0f, 0.0f);
