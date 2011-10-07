@@ -81,7 +81,7 @@ public:
     void addModel(PMDModel *model);
     PMDModel **getRenderingOrder(size_t &size);
     void getModelViewMatrix(float matrix[16]) const;
-    void getInvertedModelViewMatrix(float matrix[16]) const;
+    void getNormalMatrix(float matrix[9]) const;
     void getProjectionMatrix(float matrix[16]) const;
     void removeModel(PMDModel *model);
     void resetCamera();

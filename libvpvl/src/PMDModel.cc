@@ -414,7 +414,8 @@ void PMDModel::updateToon(const Vector3 &lightDirection)
     const uint32_t nVertices = m_vertices.count();
     for (int i = 0; i < nVertices; i++) {
         const SkinVertex &skin = m_skinnedVertices[i];
-        m_toonTextureCoords[i].setValue(0.0f, (1.0f - lightDirection.dot(skin.normal)) * 0.5f, 0.0f);
+        const float v = (1.0f - lightDirection.dot(skin.normal)) * 0.5f;
+        m_toonTextureCoords[i].setValue(0.0f, v, 0.0f);
         if (!m_vertices[i]->isEdgeEnabled())
             m_edgeVertices[i] = skin.position;
         else

@@ -67,7 +67,7 @@ Asset::Asset()
 
 Asset::~Asset()
 {
-    delete m_name;
+    delete[] m_name;
     m_name = 0;
     m_flags = 0;
     m_scale = 0.0f;
@@ -89,6 +89,13 @@ bool Asset::load(const uint8_t *data, size_t size)
 {
     m_scene = m_importer->ReadFileFromMemory(data, size, m_flags);
     return m_scene != NULL;
+}
+
+void Asset::setName(const char *name)
+{
+    delete[] m_name;
+    m_name = new char[strlen(name) + 1];
+    strcpy(m_name, name);
 }
 
 #else /* VPVL_LINK_ASSIMP */
@@ -133,6 +140,10 @@ bool Asset::load(const char * /* path */)
 bool Asset::load(const uint8_t * /* data */, size_t /* size */)
 {
     return false;
+}
+
+void Asset::setName(const char * /* name */)
+{
 }
 
 #endif /* VPVL_LINK_ASSIMP */

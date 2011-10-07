@@ -325,8 +325,8 @@ public:
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
         glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setNormalMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_TRUE, value);
+    void setNormalMatrix(const float value[9]) {
+        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const btVector4 &value) {
         glUniform4fv(m_materialAmbientUniformLocation, 1, value);
@@ -459,9 +459,9 @@ public:
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setNormalMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
+        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setTransformMatrix(const float value[16]) {
+    void setTransformMatrix(const float value[9]) {
         glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const btVector4 &value) {
@@ -701,7 +701,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
 {
     const btScalar &scaleFactor = asset->scaleFactor();
     const vpvl::Bone *bone = asset->parentBone();
-    float matrix[16];
+    float matrix4x4[16], matrix3x3[9];
     aiVector3D aiS, aiP;
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
@@ -723,14 +723,14 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     const size_t stride = sizeof(AssetVertex);
     vpvl::gl2::AssetProgram *program = userData->programs[node];
     program->bind();
-    s->getModelViewMatrix(matrix);
-    program->setModelViewMatrix(matrix);
-    s->getProjectionMatrix(matrix);
-    program->setProjectionMatrix(matrix);
-    s->getInvertedModelViewMatrix(matrix);
-    program->setNormalMatrix(matrix);
-    transform.getOpenGLMatrix(matrix);
-    program->setTransformMatrix(matrix);
+    s->getModelViewMatrix(matrix4x4);
+    program->setModelViewMatrix(matrix4x4);
+    s->getProjectionMatrix(matrix4x4);
+    program->setProjectionMatrix(matrix4x4);
+    s->getNormalMatrix(matrix3x3);
+    program->setNormalMatrix(matrix3x3);
+    transform.getOpenGLMatrix(matrix4x4);
+    program->setTransformMatrix(matrix4x4);
     program->setLightAmbient(s->lightAmbient());
     program->setLightColor(s->lightColor());
     program->setLightDiffuse(s->lightDiffuse());
@@ -1109,13 +1109,13 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kTextureCoordsStride)), stride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
 
-    float matrix[16];
-    m_scene->getModelViewMatrix(matrix);
-    m_modelProgram->setModelViewMatrix(matrix);
-    m_scene->getProjectionMatrix(matrix);
-    m_modelProgram->setProjectionMatrix(matrix);
-    m_scene->getInvertedModelViewMatrix(matrix);
-    m_modelProgram->setNormalMatrix(matrix);
+    float matrix4x4[16], matrix3x3[9];
+    m_scene->getModelViewMatrix(matrix4x4);
+    m_modelProgram->setModelViewMatrix(matrix4x4);
+    m_scene->getProjectionMatrix(matrix4x4);
+    m_modelProgram->setProjectionMatrix(matrix4x4);
+    m_scene->getNormalMatrix(matrix3x3);
+    m_modelProgram->setNormalMatrix(matrix3x3);
     m_modelProgram->setLightAmbient(m_scene->lightAmbient());
     m_modelProgram->setLightColor(m_scene->lightColor());
     m_modelProgram->setLightDiffuse(m_scene->lightDiffuse());

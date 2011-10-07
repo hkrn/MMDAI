@@ -158,9 +158,13 @@ void Scene::getModelViewMatrix(float matrix[]) const
     m_modelview.getOpenGLMatrix(matrix);
 }
 
-void Scene::getInvertedModelViewMatrix(float matrix[]) const
+void Scene::getNormalMatrix(float matrix[]) const
 {
-    m_modelview.inverse().getOpenGLMatrix(matrix);
+    float v[12];
+    m_modelview.getBasis().inverse().transpose().getOpenGLSubMatrix(v);
+    matrix[0] = v[0]; matrix[1] = v[1]; matrix[2] = v[2];
+    matrix[3] = v[4]; matrix[4] = v[5]; matrix[5] = v[6];
+    matrix[6] = v[8]; matrix[7] = v[9]; matrix[8] = v[10];
 }
 
 void Scene::getProjectionMatrix(float matrix[]) const
