@@ -102,17 +102,17 @@ public:
     bool isEdgeEnabled() const {
         return m_edge;
     }
-    bool isMultiplicationSphereMain() const {
-        return m_isMultiplicationSphereMain;
+    bool isMainSphereModulate() const {
+        return m_mainSphereModulate;
     }
-    bool isAdditionalSphereMain() const {
-        return m_isAdditionalSphereMain;
+    bool isMainSphereAdd() const {
+        return m_mainSphereAdd;
     }
-    bool isMultiplicationSphereSecond() const {
-        return m_isMultiplicationSphereSub;
+    bool isSubSphereModulate() const {
+        return m_subSphereModulate;
     }
-    bool isAdditionalSphereSub() const {
-        return m_isAdditionalSphereSub;
+    bool isSubSphereAdd() const {
+        return m_subSphereAdd;
     }
 
     void setMainTextureName(const uint8_t *value) {
@@ -156,10 +156,10 @@ private:
     uint32_t m_nindices;
     uint8_t m_toonID;
     bool m_edge;
-    bool m_isMultiplicationSphereMain;
-    bool m_isAdditionalSphereMain;
-    bool m_isMultiplicationSphereSub;
-    bool m_isAdditionalSphereSub;
+    bool m_mainSphereModulate;
+    bool m_mainSphereAdd;
+    bool m_subSphereModulate;
+    bool m_subSphereAdd;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Material)
 };

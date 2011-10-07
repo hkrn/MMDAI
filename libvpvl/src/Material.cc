@@ -74,10 +74,10 @@ Material::Material()
       m_nindices(0),
       m_toonID(0),
       m_edge(false),
-      m_isMultiplicationSphereMain(false),
-      m_isAdditionalSphereMain(false),
-      m_isMultiplicationSphereSub(false),
-      m_isAdditionalSphereSub(false)
+      m_mainSphereModulate(false),
+      m_mainSphereAdd(false),
+      m_subSphereModulate(false),
+      m_subSphereAdd(false)
 {
     internal::zerofill(m_mainTextureName, sizeof(m_mainTextureName));
     internal::zerofill(m_subTextureName, sizeof(m_subTextureName));
@@ -96,10 +96,10 @@ Material::~Material()
     m_nindices = 0;
     m_toonID = 0;
     m_edge = false;
-    m_isMultiplicationSphereMain = false;
-    m_isAdditionalSphereMain = false;
-    m_isMultiplicationSphereSub = false;
-    m_isAdditionalSphereSub = false;
+    m_mainSphereModulate = false;
+    m_mainSphereAdd = false;
+    m_subSphereModulate = false;
+    m_subSphereAdd = false;
 }
 
 void Material::read(const uint8_t *data)
@@ -123,15 +123,15 @@ void Material::read(const uint8_t *data)
         *p = 0;
         copyBytesSafe(m_mainTextureName, name, sizeof(m_mainTextureName));
         copyBytesSafe(m_subTextureName, p + 1, sizeof(m_subTextureName));
-        m_isMultiplicationSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".sph") != NULL;
-        m_isAdditionalSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
-        m_isMultiplicationSphereSub = strstr(reinterpret_cast<const char *>(m_subTextureName), ".sph") != NULL;
-        m_isAdditionalSphereSub = strstr(reinterpret_cast<const char *>(m_subTextureName), ".spa") != NULL;
+        m_mainSphereModulate = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".sph") != NULL;
+        m_mainSphereAdd = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
+        m_subSphereModulate = strstr(reinterpret_cast<const char *>(m_subTextureName), ".sph") != NULL;
+        m_subSphereAdd = strstr(reinterpret_cast<const char *>(m_subTextureName), ".spa") != NULL;
     }
     else {
         copyBytesSafe(m_mainTextureName, name, sizeof(m_mainTextureName));
-        m_isMultiplicationSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".sph") != NULL;
-        m_isAdditionalSphereMain = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
+        m_mainSphereModulate = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".sph") != NULL;
+        m_mainSphereAdd = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
     }
 
     m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);

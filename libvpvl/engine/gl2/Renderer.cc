@@ -825,8 +825,8 @@ enum VertexBufferObjectType {
 };
 
 struct PMDModelMaterialPrivate {
-    GLuint primaryTextureID;
-    GLuint secondTextureID;
+    GLuint mainTextureID;
+    GLuint subTextureID;
 };
 
 const std::string CanonicalizePath(const std::string &path)
@@ -1026,22 +1026,22 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
         const std::string primary = m_delegate->toUnicode(material->mainTextureName());
         const std::string second = m_delegate->toUnicode(material->subTextureName());
         PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
-        materialPrivate.primaryTextureID = 0;
-        materialPrivate.secondTextureID = 0;
+        materialPrivate.mainTextureID = 0;
+        materialPrivate.subTextureID = 0;
         if (!primary.empty()) {
             if (m_delegate->loadTexture(dir + "/" + primary, textureID)) {
-                materialPrivate.primaryTextureID = textureID;
+                materialPrivate.mainTextureID = textureID;
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
         if (!second.empty()) {
             if (m_delegate->loadTexture(dir + "/" + second, textureID)) {
-                materialPrivate.secondTextureID = textureID;
+                materialPrivate.subTextureID = textureID;
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
         }
-        hasSingleSphere |= material->isMultiplicationSphereMain() && !material->isAdditionalSphereSub();
-        hasMultipleSphere |= material->isAdditionalSphereSub();
+        hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
+        hasMultipleSphere |= material->isSubSphereAdd();
     }
     userData->hasSingleSphereMap = hasSingleSphere;
     userData->hasMultipleSphereMap = hasMultipleSphere;
@@ -1097,8 +1097,8 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
         vpvl::PMDModelUserData *userData = model->userData();
         for (uint32_t i = 0; i < nMaterials; i++) {
             PMDModelMaterialPrivate &materialPrivate = userData->materials[i];
-            glDeleteTextures(1, &materialPrivate.primaryTextureID);
-            glDeleteTextures(1, &materialPrivate.secondTextureID);
+            glDeleteTextures(1, &materialPrivate.mainTextureID);
+            glDeleteTextures(1, &materialPrivate.subTextureID);
         }
         for (uint32_t i = 1; i < vpvl::PMDModel::kSystemTextureMax; i++) {
             glDeleteTextures(1, &userData->toonTextureID[i]);
@@ -1194,13 +1194,13 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             m_modelProgram->setMaterialSpecular(specular);
         }
         m_modelProgram->setMaterialShininess(material->shiness());
-        m_modelProgram->setMainTexture(materialPrivate.primaryTextureID);
+        m_modelProgram->setMainTexture(materialPrivate.mainTextureID);
         m_modelProgram->setToonTexture(userData->toonTextureID[material->toonID()]);
-        m_modelProgram->setSubTexture(materialPrivate.secondTextureID);
-        m_modelProgram->setIsMainSphereMap(material->isAdditionalSphereMain() || material->isMultiplicationSphereMain());
-        m_modelProgram->setIsMainAdditive(material->isAdditionalSphereMain());
-        m_modelProgram->setIsSubSphereMap(material->isAdditionalSphereSub() || material->isMultiplicationSphereSecond());
-        m_modelProgram->setIsSubAdditive(material->isAdditionalSphereSub());
+        m_modelProgram->setSubTexture(materialPrivate.subTextureID);
+        m_modelProgram->setIsMainSphereMap(material->isMainSphereAdd() || material->isMainSphereModulate());
+        m_modelProgram->setIsMainAdditive(material->isMainSphereAdd());
+        m_modelProgram->setIsSubSphereMap(material->isSubSphereAdd() || material->isSubSphereModulate());
+        m_modelProgram->setIsSubAdditive(material->isSubSphereAdd());
         material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
 
         // draw
