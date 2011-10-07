@@ -165,6 +165,55 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
     return asset;
 }
 
+vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir)
+{
+    QFile file(dir.absoluteFilePath(baseName));
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        stream.setCodec("Shift-JIS");
+        QString name = stream.readLine();
+        QString file = stream.readLine();
+        float scaleFactor = stream.readLine().toFloat();
+        QStringList position = stream.readLine().split(',');
+        QStringList rotation = stream.readLine().split(',');
+        QString bone = stream.readLine();
+        bool enableShadow = stream.readLine().toInt() == 1;
+        vpvl::Asset *asset = loadAsset(file, dir);
+        if (asset) {
+            if (!name.isEmpty()) {
+                QByteArray bytes = internal::fromQString(name);
+                asset->setName(bytes.constData());
+            }
+            if (scaleFactor > 0)
+                asset->setScaleFactor(scaleFactor);
+            if (position.count() == 3) {
+                float x = position.at(0).toFloat();
+                float y = position.at(1).toFloat();
+                float z = position.at(2).toFloat();
+                asset->setPosition(vpvl::Vector3(x, y, z));
+            }
+            if (rotation.count() == 3) {
+                float x = rotation.at(0).toFloat();
+                float y = rotation.at(1).toFloat();
+                float z = rotation.at(2).toFloat();
+                asset->setRotation(vpvl::Quaternion(x, y, z));
+            }
+            vpvl::PMDModel *model = m_renderer->selectedModel();
+            if (!bone.isEmpty() && model) {
+                QByteArray bytes = internal::fromQString(name);
+                vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                asset->setParentBone(bone);
+            }
+            Q_UNUSED(enableShadow);
+        }
+        return asset;
+    }
+    else {
+        qWarning("Cannot load %s: %s", qPrintable(baseName), qPrintable(file.errorString()));
+        return 0;
+    }
+}
+
 vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
 {
     QFile file(path);
@@ -285,6 +334,27 @@ void SceneLoader::release()
     m_models.clear();
     m_motions.clear();
     m_assets.clear();
+}
+
+void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
+{
+    QFile file(path);
+    if (file.open(QFile::WriteOnly)) {
+        QTextStream stream(&file);
+        stream.setCodec("Shift-JIS");
+        stream << internal::toQString(asset);
+        stream << "asset.x";
+        stream << asset->scaleFactor();
+        const vpvl::Vector3 &position = asset->position();
+        stream << QString("%1,%2,%3").arg(position.x(), position.y(), position.z());
+        const vpvl::Quaternion &rotation = asset->rotation();
+        stream << QString("%1,%2,%3").arg(rotation.x(), rotation.y(), rotation.z());
+        stream << internal::toQString(asset->parentBone());
+        stream << 0;
+    }
+    else {
+        qWarning("Cannot load %s: %s", qPrintable(QFileInfo(path).baseName()), qPrintable(file.errorString()));
+    }
 }
 
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)

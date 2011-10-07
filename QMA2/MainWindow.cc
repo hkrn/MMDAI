@@ -281,6 +281,10 @@ void MainWindow::buildUI()
     connect(m_actionLoadModelPose, SIGNAL(triggered()), m_sceneWidget, SLOT(insertPoseToSelectedModel()));
     m_actionSaveModelPose = new QAction(this);
     connect(m_actionSaveModelPose, SIGNAL(triggered()), this, SLOT(saveModelPose()));
+    m_actionLoadAssetMetadata = new QAction(this);
+    connect(m_actionLoadAssetMetadata, SIGNAL(triggered()), m_sceneWidget, SLOT(addAssetFromMetadata()));
+    m_actionSaveAssetMetadata = new QAction(this);
+    connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
     m_actionSaveMotion = new QAction(this);
     connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveAs()));
     m_actionExit = new QAction(this);
@@ -372,6 +376,9 @@ void MainWindow::buildUI()
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionLoadModelPose);
     m_menuFile->addAction(m_actionSaveModelPose);
+    m_menuFile->addSeparator();
+    m_menuFile->addAction(m_actionLoadAssetMetadata);
+    m_menuFile->addAction(m_actionSaveAssetMetadata);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionSaveMotion);
     m_menuFile->addSeparator();
@@ -470,6 +477,10 @@ void MainWindow::retranslate()
     m_actionLoadModelPose->setStatusTip(tr("Load a model pose to the selected model."));
     m_actionSaveModelPose->setText(tr("Save model pose"));
     m_actionSaveModelPose->setStatusTip(tr("Save selected frame bones as a model pose file."));
+    m_actionLoadAssetMetadata->setText(tr("Load asset metadata"));
+    m_actionLoadAssetMetadata->setStatusTip(tr("Load asset from VAC file."));
+    m_actionSaveAssetMetadata->setText(tr("Save asset metadata"));
+    m_actionSaveAssetMetadata->setStatusTip(tr("Save selected asset metadata as a VAC."));
     m_actionSetCamera->setText(tr("Set camera motion"));
     m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
@@ -735,4 +746,9 @@ void MainWindow::openBoneDialog()
         QMessageBox::warning(this, tr("The model or the bone is not selected."),
                              tr("Select a model or a bone to open this dialog"));
     }
+}
+
+void MainWindow::saveAssetMetadata()
+{
+    m_sceneWidget->saveMetadataFromAsset(m_tabWidget->assetWidget()->currentAsset());
 }

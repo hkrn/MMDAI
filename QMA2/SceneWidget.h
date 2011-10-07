@@ -99,6 +99,8 @@ public slots:
     void setEmptyMotion(vpvl::PMDModel *model);
     void addAsset();
     vpvl::Asset *addAsset(const QString &path);
+    vpvl::Asset *addAssetFromMetadata();
+    void saveMetadataFromAsset(vpvl::Asset *asset);
     void insertPoseToSelectedModel();
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     void setCamera();

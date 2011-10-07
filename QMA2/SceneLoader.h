@@ -72,6 +72,7 @@ public:
     vpvl::PMDModel *findModel(const QString &name) const;
     QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
     vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
+    vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
     vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadModelMotion(const QString &path);
@@ -79,6 +80,7 @@ public:
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
     VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
     void release();
+    void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
 

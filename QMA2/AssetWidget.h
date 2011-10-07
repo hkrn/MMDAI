@@ -1,6 +1,7 @@
 #ifndef ASSETWIDGET_H
 #define ASSETWIDGET_H
 
+#include <QtCore/QTextStream>
 #include <QtGui/QWidget>
 
 namespace vpvl {
@@ -16,9 +17,13 @@ class QPushButton;
 class AssetWidget : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit AssetWidget(QWidget *parent = 0);
     ~AssetWidget();
+
+    vpvl::Asset *currentAsset() const { return m_currentAsset; }
+    vpvl::PMDModel *currentModel() const { return m_currentModel; }
 
 public slots:
     void addAsset(vpvl::Asset *asset);

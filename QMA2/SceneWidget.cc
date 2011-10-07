@@ -311,7 +311,7 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
     QFileInfo fi(path);
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
-        QProgressDialog *progress = getProgressDialog("Loading the stage...", 0);
+        QProgressDialog *progress = getProgressDialog("Loading the asset...", 0);
         asset = m_loader->loadAsset(fi.fileName(), fi.dir());
         if (asset)
             emit assetDidAdd(asset);
@@ -321,6 +321,34 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
         delete progress;
     }
     return asset;
+}
+
+vpvl::Asset *SceneWidget::addAssetFromMetadata()
+{
+    QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory",
+                                tr("Open VAC file"),
+                                tr("MMD accessory metadata (*.vac)")));
+    vpvl::Asset *asset = 0;
+    if (fi.exists()) {
+        QProgressDialog *progress = getProgressDialog("Loading the asset...", 0);
+        asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir());
+        if (asset)
+            emit assetDidAdd(asset);
+        else
+            QMessageBox::warning(this, tr("Loading asset error"),
+                                 tr("%1 cannot be loaded").arg(fi.fileName()));
+        delete progress;
+    }
+    return asset;
+}
+
+void SceneWidget::saveMetadataFromAsset(vpvl::Asset *asset)
+{
+    if (asset) {
+        QString filename = QFileDialog::getSaveFileName(this, tr("Open VAC file"), "",
+                                                        tr("MMD accessory metadata (*.vac)"));
+        m_loader->saveMetadataFromAsset(filename, asset);
+    }
 }
 
 void SceneWidget::insertPoseToSelectedModel()

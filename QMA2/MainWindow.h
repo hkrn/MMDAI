@@ -64,6 +64,7 @@ private slots:
     void resetBoneRotation();
     void resetAllBones();
     void openBoneDialog();
+    void saveAssetMetadata();
 
     void startSceneUpdate();
     void stopSceneUpdate();
@@ -102,6 +103,8 @@ private:
     QAction *m_actionSaveMotion;
     QAction *m_actionLoadModelPose;
     QAction *m_actionSaveModelPose;
+    QAction *m_actionLoadAssetMetadata;
+    QAction *m_actionSaveAssetMetadata;
     QAction *m_actionSetCamera;
     QAction *m_actionExit;
     QAction *m_actionAbout;
