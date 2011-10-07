@@ -602,6 +602,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 
     const vpvl::PMDModelUserData *userData = model->userData();
     size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
+    glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -617,16 +618,11 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     // toon
     if (enableToon) {
         glActiveTexture(GL_TEXTURE1);
-        glEnable(GL_TEXTURE_2D);
         glClientActiveTexture(GL_TEXTURE1);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelToonTexCoords]);
-        // shadow map
         stride = model->strideSize(vpvl::PMDModel::kToonTextureStride);
-        if (false)
-            glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_DYNAMIC_DRAW);
-        else
-            glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
         glTexCoordPointer(2, GL_FLOAT, stride, 0);
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
@@ -634,19 +630,15 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     bool hasSingleSphereMap = false, hasMultipleSphereMap = false;
     // first sphere map
     if (userData->hasSingleSphereMap) {
-        glEnable(GL_TEXTURE_2D);
         glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
         glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
         hasSingleSphereMap = true;
     }
     // second sphere map
     if (userData->hasMultipleSphereMap) {
         glActiveTexture(GL_TEXTURE2);
-        glEnable(GL_TEXTURE_2D);
         glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
         glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-        glDisable(GL_TEXTURE_2D);
         glActiveTexture(GL_TEXTURE0);
         hasMultipleSphereMap = true;
     }
@@ -654,38 +646,41 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     const vpvl::MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const uint32_t nMaterials = materials.count();
-    btVector4 average, ambient, diffuse, specular;
+    btVector3 average, ambient, diffuse, specular;
     uint32_t offset = 0;
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         // toon
-        const float alpha = material->opacity();
+        float alpha = material->opacity();
+        if (alpha > 0.99f)
+            alpha = 1.0f;
         if (enableToon) {
             average = material->averageColor();
-            average.setW(average.w() * alpha);
             specular = material->specular();
-            specular.setW(specular.w() * alpha);
+            average.setW(alpha);
+            specular.setW(alpha);
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, static_cast<const GLfloat *>(average));
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
         }
         else {
             ambient = material->ambient();
-            ambient.setW(ambient.w() * alpha);
             diffuse = material->diffuse();
-            diffuse.setW(diffuse.w() * alpha);
             specular = material->specular();
-            specular.setW(specular.w() * alpha);
+            ambient.setW(alpha);
+            diffuse.setW(alpha);
+            specular.setW(alpha);
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, static_cast<const GLfloat *>(ambient));
             glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, static_cast<const GLfloat *>(diffuse));
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, static_cast<const GLfloat *>(specular));
         }
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shiness());
-        material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
+        alpha < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
+        glEnable(GL_TEXTURE_2D);
         glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         // has texture
         if (materialPrivate.primaryTextureID > 0) {
-            glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, materialPrivate.primaryTextureID);
             if (hasSingleSphereMap) {
                 // is sphere map
@@ -703,7 +698,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             }
         }
         else {
-            glDisable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
         // toon
         if (enableToon) {
@@ -713,10 +708,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
+        glActiveTexture(GL_TEXTURE2);
         if (hasMultipleSphereMap) {
             // second sphere
-            glActiveTexture(GL_TEXTURE2);
-            glEnable(GL_TEXTURE_2D);
             if (materialPrivate.secondTextureID > 0) {
                 // is second sphere
                 if (material->isAdditionalSphereSub())
@@ -724,22 +718,20 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
                 else
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
                 glBindTexture(GL_TEXTURE_2D, materialPrivate.secondTextureID);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
             }
             else {
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
+        }
+        else {
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
         // draw
         const uint32_t nIndices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, reinterpret_cast<GLvoid *>(offset));
         offset += (nIndices << 1);
-        // is aux sphere map
-        if (material->isAdditionalSphereMain()) {
-            glActiveTexture(GL_TEXTURE0);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        }
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
