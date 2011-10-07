@@ -1,9 +1,9 @@
 /* Gouraud shading implementation for asset vertex shader */
 
 uniform mat4 modelViewMatrix;
-uniform mat4 normalMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 transformMatrix;
+uniform mat3 normalMatrix;
 uniform vec4 lightColor;
 uniform vec3 lightPosition;
 uniform vec4 lightAmbient;
@@ -25,9 +25,9 @@ const float kZero = 0.0;
 
 void main() {
     mat4 transformedModelViewMatrix = modelViewMatrix * transformMatrix;
-    mat4 transformedNormalMatrix = normalMatrix * transformMatrix;
+    mat3 transformedNormalMatrix = normalMatrix;// * transformMatrix;
     vec4 position = transformedModelViewMatrix * inPosition;
-    vec3 normal = normalize(transformedNormalMatrix * inNormal).xyz;
+    vec3 normal = normalize(transformedNormalMatrix * inNormal.xyz);
     vec3 light = normalize(lightPosition - position.xyz);
     float diffuse = max(dot(light, normal), kZero);
     vec4 color = lightAmbient * materialAmbient + inColor + materialEmission;

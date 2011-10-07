@@ -129,6 +129,9 @@ public:
     float fovy() const {
         return m_fovy;
     }
+    float lightIntensity() const {
+        return m_lightIntensity;
+    }
     int width() const {
         return m_width;
     }
@@ -139,6 +142,9 @@ public:
         return m_preferredFPS;
     }
 
+    void setLightIntensity(float value) {
+        m_lightIntensity = value;
+    }
     void setWidth(int value) {
         m_width = value;
         updateProjectionMatrix();
@@ -182,6 +188,7 @@ private:
     float m_currentFovy;
     float m_fovy;
     float m_viewMoveFovy;
+    float m_lightIntensity;
     int m_viewMoveTime;
     int m_preferredFPS;
     int m_width;

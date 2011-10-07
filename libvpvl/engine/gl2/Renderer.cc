@@ -259,10 +259,15 @@ public:
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
+          m_lightIntensityUniformLocation(0),
           m_hasSingleSphereMapUniformLocation(0),
           m_hasMultipleSphereMapUniformLocation(0),
           m_hasMainTextureUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
+          m_isMainSphereMapUniformLocation(0),
+          m_isSubSphereMapUniformLocation(0),
+          m_isMainAdditiveUniformLocation(0),
+          m_isSubAdditiveUniformLocation(0),
           m_mainTextureUniformLocation(0),
           m_subTextureUniformLocation(0),
           m_toonTextureUniformLocation(0)
@@ -276,10 +281,15 @@ public:
         m_materialDiffuseUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
+        m_lightIntensityUniformLocation = 0;
         m_hasSingleSphereMapUniformLocation = 0;
         m_hasMultipleSphereMapUniformLocation = 0;
         m_hasMainTextureUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
+        m_isMainSphereMapUniformLocation = 0;
+        m_isSubSphereMapUniformLocation = 0;
+        m_isMainAdditiveUniformLocation = 0;
+        m_isSubAdditiveUniformLocation = 0;
         m_mainTextureUniformLocation = 0;
         m_subTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
@@ -295,10 +305,13 @@ public:
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
             m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
+            m_lightIntensityUniformLocation = glGetUniformLocation(m_program, "lightIntensity");
             m_hasSingleSphereMapUniformLocation = glGetUniformLocation(m_program, "hasSingleSphereMap");
             m_hasMultipleSphereMapUniformLocation = glGetUniformLocation(m_program, "hasMultipleSphereMap");
             m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
             m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
+            m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
+            m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
             m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
             m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
             m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
@@ -314,6 +327,8 @@ public:
     void resetTextureState() {
         glUniform1i(m_hasMainTextureUniformLocation, 0);
         glUniform1i(m_hasSubTextureUniformLocation, 0);
+        glUniform1i(m_isMainSphereMapUniformLocation, 0);
+        glUniform1i(m_isSubSphereMapUniformLocation, 0);
         glUniform1i(m_isMainAdditiveUniformLocation, 0);
         glUniform1i(m_isSubAdditiveUniformLocation, 0);
     }
@@ -340,11 +355,20 @@ public:
     void setMaterialShininess(float value) {
         glUniform1f(m_materialShininessUniformLocation, value);
     }
+    void setLightIntensity(float value) {
+        glUniform1f(m_lightIntensityUniformLocation, value);
+    }
     void setHasSingleSphereMap(bool value) {
         glUniform1i(m_hasSingleSphereMapUniformLocation, value ? 1 : 0);
     }
     void setHasMultipleSphereMap(bool value) {
         glUniform1i(m_hasMultipleSphereMapUniformLocation, value ? 1 : 0);
+    }
+    void setIsMainSphereMap(bool value) {
+        glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
+    }
+    void setIsSubSphereMap(bool value) {
+        glUniform1i(m_isSubSphereMapUniformLocation, value ? 1 : 0);
     }
     void setIsMainAdditive(bool value) {
         glUniform1i(m_isMainAdditiveUniformLocation, value ? 1 : 0);
@@ -382,10 +406,13 @@ private:
     GLuint m_materialDiffuseUniformLocation;
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
+    GLuint m_lightIntensityUniformLocation;
     GLuint m_hasSingleSphereMapUniformLocation;
     GLuint m_hasMultipleSphereMapUniformLocation;
     GLuint m_hasMainTextureUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
+    GLuint m_isMainSphereMapUniformLocation;
+    GLuint m_isSubSphereMapUniformLocation;
     GLuint m_isMainAdditiveUniformLocation;
     GLuint m_isSubAdditiveUniformLocation;
     GLuint m_mainTextureUniformLocation;
@@ -1121,6 +1148,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setLightDiffuse(m_scene->lightDiffuse());
     m_modelProgram->setLightPosition(m_scene->lightPosition());
     m_modelProgram->setLightSpecular(m_scene->lightSpecular());
+    m_modelProgram->setLightIntensity(m_scene->lightIntensity());
 
     const bool enableToon = true;
     // toon
@@ -1169,7 +1197,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         m_modelProgram->setMainTexture(materialPrivate.primaryTextureID);
         m_modelProgram->setToonTexture(userData->toonTextureID[material->toonID()]);
         m_modelProgram->setSubTexture(materialPrivate.secondTextureID);
+        m_modelProgram->setIsMainSphereMap(material->isAdditionalSphereMain() || material->isMultiplicationSphereMain());
         m_modelProgram->setIsMainAdditive(material->isAdditionalSphereMain());
+        m_modelProgram->setIsSubSphereMap(material->isAdditionalSphereSub() || material->isMultiplicationSphereSecond());
         m_modelProgram->setIsSubAdditive(material->isAdditionalSphereSub());
         material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
 

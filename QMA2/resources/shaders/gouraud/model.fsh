@@ -17,7 +17,7 @@ void main() {
     vec4 color = outColor;
     if (hasMainTexture) {
         if (isMainAdditive) {
-            color += texture2D(mainTexture, outMainTexCoord) + texture2D(toonTexture, outToonTexCoord);
+            color += texture2D(mainTexture, outMainTexCoord) * texture2D(toonTexture, outToonTexCoord);
         }
         else {
             color *= texture2D(mainTexture, outMainTexCoord) * texture2D(toonTexture, outToonTexCoord);
@@ -27,7 +27,7 @@ void main() {
         color *= texture2D(toonTexture, outToonTexCoord);
     }
     if (hasSubTexture) {
-        if (isMainAdditive || isSubAdditive) {
+        if (isSubAdditive) {
             color += texture2D(subTexture, outSubTexCoord);
         }
         else {
