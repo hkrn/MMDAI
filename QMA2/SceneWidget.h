@@ -85,7 +85,7 @@ public:
     vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
     vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     vpvl::Asset *addAsset(const QString &path);
-    vpvl::Asset *addAssetFromMetadata();
+    vpvl::Asset *addAssetFromMetadata(const QString &path);
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
     const QPointF objectCoordinates(const QPoint &input);
@@ -103,6 +103,7 @@ public slots:
     void insertMotionToSelectedModel();
     void setEmptyMotion(vpvl::PMDModel *model);
     void addAsset();
+    void addAssetFromMetadata();
     void saveMetadataFromAsset(vpvl::Asset *asset);
     void insertPoseToSelectedModel();
     void setCamera();

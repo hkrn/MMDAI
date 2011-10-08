@@ -322,11 +322,17 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
     return asset;
 }
 
-vpvl::Asset *SceneWidget::addAssetFromMetadata()
+
+void SceneWidget::addAssetFromMetadata()
 {
-    QFileInfo fi(openFileDialog("sceneWidget/lastAssetDirectory",
-                                tr("Open VAC file"),
-                                tr("MMD accessory metadata (*.vac)")));
+    addAssetFromMetadata(openFileDialog("sceneWidget/lastAssetDirectory",
+                                        tr("Open VAC file"),
+                                        tr("MMD accessory metadata (*.vac)")));
+}
+
+vpvl::Asset *SceneWidget::addAssetFromMetadata(const QString &path)
+{
+    QFileInfo fi(path);
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the asset...", 0);
@@ -344,7 +350,8 @@ vpvl::Asset *SceneWidget::addAssetFromMetadata()
 void SceneWidget::saveMetadataFromAsset(vpvl::Asset *asset)
 {
     if (asset) {
-        QString filename = QFileDialog::getSaveFileName(this, tr("Open VAC file"), "",
+        QString filename = QFileDialog::getSaveFileName(this, tr("Save %1 as VAC file")
+                                                        .arg(internal::toQString(asset)), "",
                                                         tr("MMD accessory metadata (*.vac)"));
         m_loader->saveMetadataFromAsset(filename, asset);
     }
