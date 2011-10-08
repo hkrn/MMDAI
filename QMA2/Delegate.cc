@@ -76,10 +76,11 @@ bool Delegate::loadTexture(const std::string &path, GLuint &textureID)
 
 bool Delegate::loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID)
 {
-    QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + QString::fromLocal8Bit(name.c_str());
+    QString filename = QString::fromLocal8Bit(name.c_str());
+    QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
     if (!QFile::exists(path))
-        path = QString(":/textures/%1").arg(name.c_str());
-    return loadTexture(std::string(path.toUtf8()), textureID);
+        path = QString(":/textures/%1").arg(filename);
+    return loadTexture(std::string(path.toLocal8Bit()), textureID);
 }
 
 

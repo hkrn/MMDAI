@@ -528,14 +528,14 @@ const QPointF SceneWidget::objectCoordinates(const QPoint &input)
     double cx, cy, cz, fx, fy, fz;
     gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
     gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
-    vpvl::Vector3 camera(cx, cy, cz), far(fx, fy, fz), pointInPlane(0, 0, 0), planeNormal(0, 0, -1);
-    far -= camera;
-    far /= camera.length();
+    vpvl::Vector3 camera(cx, cy, cz), zfar(fx, fy, fz), pointInPlane(0, 0, 0), planeNormal(0, 0, -1);
+    zfar -= camera;
+    zfar /= camera.length();
     pointInPlane -= camera;
-    far *= planeNormal.dot(pointInPlane) / planeNormal.dot(far);
+    zfar *= planeNormal.dot(pointInPlane) / planeNormal.dot(zfar);
     QPointF output;
-    output.setX(far.x() + camera.x());
-    output.setY(far.y() + camera.y());
+    output.setX(zfar.x() + camera.x());
+    output.setY(zfar.y() + camera.y());
     return output;
 }
 

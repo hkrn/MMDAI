@@ -57,6 +57,7 @@ class VMDMotion;
 
 class Delegate;
 class Grid;
+class Handles;
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
@@ -68,8 +69,6 @@ class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 public:
-    typedef struct Handles Handles;
-
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
