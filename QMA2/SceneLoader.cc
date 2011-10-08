@@ -144,8 +144,10 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
                 int i = 0;
                 while (true) {
                     QString tmpKey = QString("%1%2").arg(key).arg(i);
-                    if (!m_assets.contains(tmpKey))
+                    if (!m_assets.contains(tmpKey)) {
                         key = tmpKey;
+                        break;
+                    }
                     i++;
                 }
             }
@@ -172,17 +174,20 @@ vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const Q
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
         QString name = stream.readLine();
-        QString file = stream.readLine();
+        QString filename = stream.readLine();
         float scaleFactor = stream.readLine().toFloat();
         QStringList position = stream.readLine().split(',');
         QStringList rotation = stream.readLine().split(',');
         QString bone = stream.readLine();
         bool enableShadow = stream.readLine().toInt() == 1;
-        vpvl::Asset *asset = loadAsset(file, dir);
+        vpvl::Asset *asset = loadAsset(filename, dir);
         if (asset) {
             if (!name.isEmpty()) {
-                QByteArray bytes = internal::fromQString(name);
+                const QByteArray &bytes = internal::fromQString(name);
                 asset->setName(bytes.constData());
+            }
+            if (!filename.isEmpty()) {
+                m_name2assets.insert(filename, asset);
             }
             if (scaleFactor > 0)
                 asset->setScaleFactor(scaleFactor);
@@ -250,8 +255,10 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
                 int i = 0;
                 while (true) {
                     QString tmpKey = QString("%1%2").arg(key).arg(i);
-                    if (!m_models.contains(tmpKey))
+                    if (!m_models.contains(tmpKey)) {
                         key = tmpKey;
+                        break;
+                    }
                     i++;
                 }
             }
@@ -342,18 +349,22 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
     if (file.open(QFile::WriteOnly)) {
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
-        stream << internal::toQString(asset);
-        stream << "asset.x";
-        stream << asset->scaleFactor();
+        const char lineSeparator[] = "\r\n";
+        stream << internal::toQString(asset) << lineSeparator;
+        stream << m_name2assets.key(asset) << lineSeparator;
+        stream << asset->scaleFactor() << lineSeparator;
         const vpvl::Vector3 &position = asset->position();
-        stream << QString("%1,%2,%3").arg(position.x(), position.y(), position.z());
+        stream << QString("%1,%2,%3").arg(position.x(), 0, 'f', 1)
+                  .arg(position.y(), 0, 'f', 1).arg(position.z(), 0, 'f', 1) << lineSeparator;
         const vpvl::Quaternion &rotation = asset->rotation();
-        stream << QString("%1,%2,%3").arg(rotation.x(), rotation.y(), rotation.z());
-        stream << internal::toQString(asset->parentBone());
-        stream << 0;
+        stream << QString("%1,%2,%3").arg(rotation.x(), 0, 'f', 1)
+                  .arg(rotation.y(), 0, 'f', 1).arg(rotation.z(), 0, 'f', 1) << lineSeparator;
+        const vpvl::Bone *bone = asset->parentBone();
+        stream << (bone ? internal::toQString(bone) : "地面") << lineSeparator;
+        stream << 1 << lineSeparator;
     }
     else {
-        qWarning("Cannot load %s: %s", qPrintable(QFileInfo(path).baseName()), qPrintable(file.errorString()));
+        qWarning("Cannot load %s: %s", qPrintable(path), qPrintable(file.errorString()));
     }
 }
 

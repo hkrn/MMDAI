@@ -93,6 +93,7 @@ private:
     ModelList m_models;
     AssetList m_assets;
     MotionList m_motions;
+    QMap<QString, vpvl::Asset*> m_name2assets;
 
     Q_DISABLE_COPY(SceneLoader)
 };

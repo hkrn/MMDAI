@@ -479,8 +479,8 @@ void MainWindow::retranslate()
     m_actionSaveModelPose->setStatusTip(tr("Save selected frame bones as a model pose file."));
     m_actionLoadAssetMetadata->setText(tr("Load asset metadata"));
     m_actionLoadAssetMetadata->setStatusTip(tr("Load asset from VAC file."));
-    m_actionSaveAssetMetadata->setText(tr("Save asset metadata"));
-    m_actionSaveAssetMetadata->setStatusTip(tr("Save selected asset metadata as a VAC."));
+    m_actionSaveAssetMetadata->setText(tr("Save current asset metadata"));
+    m_actionSaveAssetMetadata->setStatusTip(tr("Save current asset metadata as a VAC."));
     m_actionSetCamera->setText(tr("Set camera motion"));
     m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
