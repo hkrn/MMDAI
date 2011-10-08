@@ -268,9 +268,9 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
         m_root->addChild(eye);
         m_root->addChild(lip);
         m_root->addChild(other);
+        MotionBaseModel::setPMDModel(model);
+        qDebug("Set a model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
     }
-    MotionBaseModel::setPMDModel(model);
-    qDebug("Set a model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
     reset();
 }
 

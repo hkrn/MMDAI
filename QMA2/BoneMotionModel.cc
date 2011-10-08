@@ -437,9 +437,9 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             }
             m_root->addChild(parent);
         }
+        MotionBaseModel::setPMDModel(model);
+        qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
     }
-    MotionBaseModel::setPMDModel(model);
-    qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
     reset();
 }
 
@@ -621,14 +621,15 @@ void BoneMotionModel::translate(int coordinate, float value)
     vpvl::Vector3 pos, dest;
     foreach (vpvl::Bone *selected, m_selected) {
         const vpvl::Vector3 &current = selected->position();
+        // invert X and Y for compatibility of MMD behavior
         switch (coordinate) {
         case 'x':
         case 'X':
-            pos.setValue(value, 0, 0);
+            pos.setValue(-value, 0, 0);
             break;
         case 'y':
         case 'Y':
-            pos.setValue(0, value, 0);
+            pos.setValue(0, -value, 0);
             break;
         case 'z':
         case 'Z':
@@ -667,6 +668,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
     vpvl::Bone *selected = m_selected.last();
     const vpvl::Quaternion &current = selected->rotation();
     vpvl::Quaternion rot, dest;
+    // invert Z for compatibility of MMD behavior
     switch (coordinate) {
     case 'x':
     case 'X':
@@ -678,7 +680,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
         break;
     case 'z':
     case 'Z':
-        rot.setEulerZYX(value, 0, 0);
+        rot.setEulerZYX(-value, 0, 0);
         break;
     default:
         qFatal("Unexpected coordinate value: %c", coordinate);
