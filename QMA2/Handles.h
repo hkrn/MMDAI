@@ -33,7 +33,8 @@ public:
         : m_width(0),
           m_height(0),
           m_enableMove(false),
-          m_enableRotate(false)
+          m_enableRotate(false),
+          m_visible(true)
     {
     }
     ~Handles() {
@@ -181,6 +182,8 @@ public:
         return flags != 0;
     }
     void draw(QGLWidget *widget) {
+        if (!m_visible)
+            return;
         QPainter painter(widget);
         painter.beginNativePainting();
         glEnable(GL_MULTISAMPLE);
@@ -224,6 +227,9 @@ public:
     void setRotateable(bool value) {
         m_enableRotate = value;
     }
+    void setVisible(bool value) {
+        m_visible = value;
+    }
 
 private:
     Handle m_x;
@@ -233,6 +239,7 @@ private:
     int m_height;
     bool m_enableMove;
     bool m_enableRotate;
+    bool m_visible;
 };
 
 #endif // HANDLES_H

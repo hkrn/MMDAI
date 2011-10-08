@@ -78,6 +78,7 @@ public:
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setPreferredFPS(int value);
+    void setHandlesVisible(bool value);
 
     vpvl::PMDModel *addModel(const QString &path);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);

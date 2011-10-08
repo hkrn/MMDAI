@@ -119,20 +119,10 @@ bool MainWindow::save()
 
 bool MainWindow::saveAs()
 {
-    const QString name = "mainWindow/lastVMDDirectory";
-    const QString path = m_settings.value(name).toString();
-    const QString filename = QFileDialog::getSaveFileName(this,
-                                                          tr("Save Motion as a VMD file"),
-                                                          path,
-                                                          tr("VMD file (*.vmd)"));
-    bool ret = false;
-    if (!filename.isEmpty()) {
-        ret = saveFile(filename);
-        QDir dir(filename);
-        dir.cdUp();
-        m_settings.setValue(name, dir.absolutePath());
-    }
-    return ret;
+    const QString &filename = openSaveDialog("mainWindow/lastVMDDirectory",
+                                             tr("Save Motion as a VMD file"),
+                                             tr("VMD file (*.vmd)"));
+    return !filename.isEmpty() ? saveFile(filename) : false;
 }
 
 bool MainWindow::saveFile(const QString &filename)
@@ -287,6 +277,8 @@ void MainWindow::buildUI()
     connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
     m_actionSaveMotion = new QAction(this);
     connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveAs()));
+    m_actionSaveImage = new QAction(this);
+    connect(m_actionSaveImage, SIGNAL(triggered()), this, SLOT(saveImage()));
     m_actionExit = new QAction(this);
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
@@ -392,6 +384,7 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionSaveAssetMetadata);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionSaveMotion);
+    m_menuFile->addAction(m_actionSaveImage);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
@@ -496,6 +489,8 @@ void MainWindow::retranslate()
     m_actionLoadAssetMetadata->setStatusTip(tr("Load asset from VAC file."));
     m_actionSaveAssetMetadata->setText(tr("Save current asset metadata"));
     m_actionSaveAssetMetadata->setStatusTip(tr("Save current asset metadata as a VAC."));
+    m_actionSaveImage->setText(tr("Save scene as image"));
+    m_actionSaveImage->setStatusTip(tr("Save current scene as an image."));
     m_actionSetCamera->setText(tr("Set camera motion"));
     m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
@@ -678,12 +673,9 @@ void MainWindow::deleteSelectedModel()
 
 void MainWindow::saveModelPose()
 {
-    const QString name = "mainWindow/lastVPDDirectory";
-    const QString path = m_settings.value(name).toString();
-    const QString filename = QFileDialog::getSaveFileName(this,
-                                                          tr("Save model pose as a VPD file"),
-                                                          path,
-                                                          tr("VPD file (*.vpd)"));
+    const QString &filename = openSaveDialog("mainWindow/lastVPDDirectory",
+                                             tr("Save model pose as a VPD file"),
+                                             tr("VPD file (*.vpd)"));
     if (!filename.isEmpty()) {
         QFile file(filename);
         if (file.open(QFile::WriteOnly)) {
@@ -697,9 +689,6 @@ void MainWindow::saveModelPose()
         else {
             qWarning("Failed saving VPD: %s", qPrintable(file.errorString()));
         }
-        QDir dir(filename);
-        dir.cdUp();
-        m_settings.setValue(name, dir.absolutePath());
     }
 }
 
@@ -772,4 +761,40 @@ void MainWindow::openBoneDialog()
 void MainWindow::saveAssetMetadata()
 {
     m_sceneWidget->saveMetadataFromAsset(m_tabWidget->assetWidget()->currentAsset());
+}
+
+void MainWindow::saveImage()
+{
+    const QString &filename = openSaveDialog("mainWindow/lastImageDirectory",
+                                             tr("Save scene as image"),
+                                             tr("Image (*bmp, *.jpg, *.png)"));
+    if (!filename.isEmpty()) {
+        vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
+        bool visibleGrid = m_sceneWidget->isGridVisible();
+        m_sceneWidget->setGridVisible(false);
+        m_sceneWidget->setHandlesVisible(false);
+        m_sceneWidget->setSelectedModel(0);
+        m_sceneWidget->updateGL();
+        QImage image = m_sceneWidget->grabFrameBuffer(true);
+        m_sceneWidget->setGridVisible(visibleGrid);
+        m_sceneWidget->setHandlesVisible(true);
+        m_sceneWidget->setSelectedModel(selected);
+        m_sceneWidget->updateGL();
+        if (!image.isNull())
+            image.save(filename);
+        else
+            qWarning("Failed saving scene as an image: %s", qPrintable(filename));
+    }
+}
+
+const QString MainWindow::openSaveDialog(const QString &name, const QString &desc, const QString &exts)
+{
+    const QString path = m_settings.value(name).toString();
+    const QString fileName = QFileDialog::getSaveFileName(this, desc, path, exts);
+    if (!fileName.isEmpty()) {
+        QDir dir(fileName);
+        dir.cdUp();
+        m_settings.setValue(name, dir.absolutePath());
+    }
+    return fileName;
 }

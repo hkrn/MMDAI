@@ -65,6 +65,7 @@ private slots:
     void resetAllBones();
     void openBoneDialog();
     void saveAssetMetadata();
+    void saveImage();
 
     void startSceneUpdate();
     void stopSceneUpdate();
@@ -77,6 +78,7 @@ private:
     void retranslate();
     void connectWidgets();
     void updateInformation();
+    const QString openSaveDialog(const QString &name, const QString &desc, const QString &exts);
 
     QSettings m_settings;
     QUndoGroup *m_undo;
@@ -100,12 +102,13 @@ private:
     QAction *m_actionAddAsset;
     QAction *m_actionInsertToAllModels;
     QAction *m_actionInsertToSelectedModel;
+    QAction *m_actionSetCamera;
     QAction *m_actionSaveMotion;
     QAction *m_actionLoadModelPose;
     QAction *m_actionSaveModelPose;
     QAction *m_actionLoadAssetMetadata;
     QAction *m_actionSaveAssetMetadata;
-    QAction *m_actionSetCamera;
+    QAction *m_actionSaveImage;
     QAction *m_actionExit;
     QAction *m_actionAbout;
     QAction *m_actionAboutQt;

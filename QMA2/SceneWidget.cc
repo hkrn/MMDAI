@@ -163,6 +163,11 @@ void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
     emit modelDidSelect(value);
 }
 
+void SceneWidget::setHandlesVisible(bool value)
+{
+    m_handles->setVisible(value);
+}
+
 void SceneWidget::addModel()
 {
     vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",
