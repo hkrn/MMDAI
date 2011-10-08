@@ -151,6 +151,7 @@ void AssetWidget::changeCurrentAsset(int index)
 void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
 {
     const vpvl::Vector3 &position = asset->position();
+    m_currentAsset = asset;
     m_px->setValue(position.x());
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
@@ -160,7 +161,6 @@ void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
     m_rz->setValue(vpvl::degree(rotation.z()));
     m_scale->setValue(asset->scaleFactor());
     m_opacity->setValue(asset->opacity());
-    m_currentAsset = asset;
 }
 
 void AssetWidget::changeCurrentModel(int index)
