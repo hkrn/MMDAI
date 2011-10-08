@@ -16,7 +16,7 @@ uniform vec4 materialSpecular;
 uniform float materialShininess;
 attribute vec4 inColor;
 attribute vec4 inPosition;
-attribute vec4 inNormal;
+attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 varying vec4 outColor;
 varying vec2 outTexCoord;
@@ -25,12 +25,11 @@ const float kZero = 0.0;
 
 void main() {
     mat4 transformedModelViewMatrix = modelViewMatrix * transformMatrix;
-    mat3 transformedNormalMatrix = normalMatrix;// * transformMatrix;
     vec4 position = transformedModelViewMatrix * inPosition;
-    vec3 normal = normalize(transformedNormalMatrix * inNormal.xyz);
+    vec3 normal = normalize(normalMatrix * inNormal);
     vec3 light = normalize(lightPosition - position.xyz);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightAmbient * materialAmbient + inColor + materialEmission;
+    vec4 color = lightColor * lightAmbient * materialAmbient + inColor + materialEmission;
     if (diffuse != kZero) {
         vec3 view = normalize(position.xyz);
         vec3 halfway = normalize(light - view);
