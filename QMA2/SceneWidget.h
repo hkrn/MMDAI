@@ -91,6 +91,7 @@ public:
     const QPointF objectCoordinates(const QPoint &input);
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
+    bool isPhysicsEnabled() const { return m_enablePhysics; }
 
 public slots:
     void play();
@@ -118,6 +119,7 @@ public slots:
     void seekMotion(float frameIndex);
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void setGridVisible(bool value);
+    void setPhysicsEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
@@ -196,6 +198,7 @@ private:
     bool m_playing;
     bool m_enableBoneMove;
     bool m_enableBoneRotate;
+    bool m_enablePhysics;
 
     Q_DISABLE_COPY(SceneWidget)
 };

@@ -70,7 +70,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_visibleBones(false),
     m_playing(false),
     m_enableBoneMove(false),
-    m_enableBoneRotate(false)
+    m_enableBoneRotate(false),
+    m_enablePhysics(false)
 {
     m_delegate = new Delegate(this);
     m_grid = new Grid();
@@ -98,7 +99,6 @@ SceneWidget::~SceneWidget()
 void SceneWidget::play()
 {
     m_playing = true;
-    m_renderer->scene()->setWorld(m_world->mutableWorld());
     m_timer.restart();
     emit sceneDidPlay();
 }
@@ -113,7 +113,6 @@ void SceneWidget::stop()
 {
     m_playing = false;
     m_renderer->scene()->resetMotion();
-    m_renderer->scene()->setWorld(0);
     emit sceneDidStop();
 }
 
@@ -493,6 +492,12 @@ void SceneWidget::setGridVisible(bool value)
     m_grid->setEnable(value);
 }
 
+void SceneWidget::setPhysicsEnable(bool value)
+{
+    m_renderer->scene()->setWorld(value ? m_world->mutableWorld() : 0);
+    m_enablePhysics = value;
+}
+
 const QPointF SceneWidget::objectCoordinates(const QPoint &input)
 {
     // This implementation based on the below page.
@@ -657,7 +662,7 @@ void SceneWidget::initializeGL()
     const vpvl::Color specular(s.x(), s.y(), s.z(), 1.0f);
     scene->setLightComponent(ambient, diffuse, specular);
     if (m_playing)
-        scene->setWorld(m_world->mutableWorld());
+        setPhysicsEnable(true);
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
     m_handles->load(this);

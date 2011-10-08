@@ -113,6 +113,8 @@ private:
     QAction *m_actionPause;
     QAction *m_actionStop;
     QAction *m_actionShowGrid;
+    QAction *m_actionShowBones;
+    QAction *m_actionEnablePhysics;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;
@@ -126,7 +128,6 @@ private:
     QAction *m_actionResetCamera;
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
-    QAction *m_actionShowBones;
     QAction *m_actionBoneXPosZero;
     QAction *m_actionBoneYPosZero;
     QAction *m_actionBoneZPosZero;

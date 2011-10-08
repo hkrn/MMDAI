@@ -305,6 +305,10 @@ void MainWindow::buildUI()
     m_actionShowBones->setCheckable(true);
     m_actionShowBones->setChecked(m_sceneWidget->isBoneWireframeVisible());
     connect(m_actionShowBones, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setBoneWireframeVisible(bool)));
+    m_actionEnablePhysics = new QAction(this);
+    m_actionEnablePhysics->setCheckable(true);
+    m_actionEnablePhysics->setChecked(m_sceneWidget->isPhysicsEnabled());
+    connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setPhysicsEnable(bool)));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -398,6 +402,7 @@ void MainWindow::buildUI()
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionShowGrid);
     m_menuProject->addAction(m_actionShowBones);
+    m_menuProject->addAction(m_actionEnablePhysics);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -507,6 +512,8 @@ void MainWindow::retranslate()
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
     m_actionShowBones->setText(tr("Show bone wireframe"));
     m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe"));
+    m_actionEnablePhysics->setText(tr("Enable physics simulation"));
+    m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomIn->setShortcut(tr("+"));
