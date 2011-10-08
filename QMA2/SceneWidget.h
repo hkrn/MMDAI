@@ -79,32 +79,32 @@ public:
     void setSelectedModel(vpvl::PMDModel *value);
     void setPreferredFPS(int value);
 
-    bool isDisplayBones() const { return m_visibleBones; }
-    void setDisplayBones(bool value) { m_visibleBones = value; }
+    vpvl::PMDModel *addModel(const QString &path);
+    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
+    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
+    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
+    vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    vpvl::Asset *addAsset(const QString &path);
+    vpvl::Asset *addAssetFromMetadata();
+    VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
+    vpvl::VMDMotion *setCamera(const QString &path);
+    const QPointF objectCoordinates(const QPoint &input);
+    bool isGridVisible() const;
+    bool isBoneWireframeVisible() const { return m_visibleBones; }
 
 public slots:
     void play();
     void pause();
     void stop();
     void clear();
-
     void addModel();
-    vpvl::PMDModel *addModel(const QString &path);
     void insertMotionToAllModels();
-    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     void insertMotionToSelectedModel();
-    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
-    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
-    vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void setEmptyMotion(vpvl::PMDModel *model);
     void addAsset();
-    vpvl::Asset *addAsset(const QString &path);
-    vpvl::Asset *addAssetFromMetadata();
     void saveMetadataFromAsset(vpvl::Asset *asset);
     void insertPoseToSelectedModel();
-    VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     void setCamera();
-    vpvl::VMDMotion *setCamera(const QString &path);
     void deleteSelectedModel();
     void deleteAsset(vpvl::Asset *asset);
     void deleteModel(vpvl::PMDModel *model);
@@ -112,13 +112,12 @@ public slots:
     void resetCamera();
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);
-    const QPointF objectCoordinates(const QPoint &input);
-
     void rotate(float x, float y);
     void translate(float x, float y);
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
+    void setGridVisible(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
@@ -131,6 +130,7 @@ public slots:
     void translateLeft() { translate(-1.0f, 0.0f); }
     void translateRight() { translate(1.0f, 0.0f); }
     void revertSelectedModel() { setSelectedModel(0); }
+    void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
 
 signals:

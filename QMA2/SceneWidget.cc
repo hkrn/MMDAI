@@ -483,6 +483,16 @@ void SceneWidget::setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle,
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
+bool SceneWidget::isGridVisible() const
+{
+    return m_grid->isEnabled();
+}
+
+void SceneWidget::setGridVisible(bool value)
+{
+    m_grid->setEnable(value);
+}
+
 const QPointF SceneWidget::objectCoordinates(const QPoint &input)
 {
     // This implementation based on the below page.

@@ -112,6 +112,7 @@ private:
     QAction *m_actionPlay;
     QAction *m_actionPause;
     QAction *m_actionStop;
+    QAction *m_actionShowGrid;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;

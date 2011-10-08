@@ -297,6 +297,14 @@ void MainWindow::buildUI()
     connect(m_actionPause, SIGNAL(triggered()), m_sceneWidget, SLOT(pause()));
     m_actionStop = new QAction(this);
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
+    m_actionShowGrid = new QAction(this);
+    m_actionShowGrid->setCheckable(true);
+    m_actionShowGrid->setChecked(m_sceneWidget->isGridVisible());
+    connect(m_actionShowGrid, SIGNAL(toggled(bool)), m_sceneWidget, SLOT(setGridVisible(bool)));
+    m_actionShowBones = new QAction(this);
+    m_actionShowBones->setCheckable(true);
+    m_actionShowBones->setChecked(m_sceneWidget->isBoneWireframeVisible());
+    connect(m_actionShowBones, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setBoneWireframeVisible(bool)));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -320,7 +328,6 @@ void MainWindow::buildUI()
     connect(m_actionTranslateRight, SIGNAL(triggered()), m_sceneWidget, SLOT(translateRight()));
     m_actionResetCamera = new QAction(this);
     connect(m_actionResetCamera, SIGNAL(triggered()), m_sceneWidget, SLOT(resetCamera()));
-    m_actionShowBones = new QAction(this);
 
     m_actionRevertSelectedModel = new QAction(this);
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
@@ -388,6 +395,9 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionPlay);
     m_menuProject->addAction(m_actionPause);
     m_menuProject->addAction(m_actionStop);
+    m_menuProject->addSeparator();
+    m_menuProject->addAction(m_actionShowGrid);
+    m_menuProject->addAction(m_actionShowBones);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -493,6 +503,10 @@ void MainWindow::retranslate()
     m_actionPause->setStatusTip(tr("Pause current scene."));
     m_actionStop->setText(tr("Stop"));
     m_actionStop->setStatusTip(tr("Stop current scene."));
+    m_actionShowGrid->setText(tr("Show grid"));
+    m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
+    m_actionShowBones->setText(tr("Show bone wireframe"));
+    m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe"));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomIn->setShortcut(tr("+"));
