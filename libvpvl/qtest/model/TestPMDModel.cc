@@ -220,10 +220,10 @@ void TestPMDModel::parseMaterial()
     QCOMPARE(material.countIndices(), quint32(2));
     QCOMPARE(material.toonID(), quint8(0));
     QVERIFY(material.isEdgeEnabled());
-    QVERIFY(material.isMultiplicationSphereMain());
-    QVERIFY(!material.isMultiplicationSphereSecond());
-    QVERIFY(!material.isAdditionalSphereMain());
-    QVERIFY(material.isAdditionalSphereSub());
+    QVERIFY(material.isMainSphereModulate());
+    QVERIFY(!material.isMainSphereAdd());
+    QVERIFY(!material.isSubSphereModulate());
+    QVERIFY(material.isSubSphereAdd());
 }
 
 void TestPMDModel::parseRigidBody()

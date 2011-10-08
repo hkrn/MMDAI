@@ -21,4 +21,4 @@ linux-* {
 
 LIBS += -L../../debug/lib -lvpvl_debug -L../../../bullet/debug/lib \
         -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lGLEW
-INCLUDEPATH += ../../include ../../../bullet/src
+INCLUDEPATH += ../../include ../../debug/include ../../../bullet/src
