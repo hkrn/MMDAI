@@ -41,7 +41,6 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#define VPVL_LINK_ASSIMP
 #ifdef VPVL_LINK_ASSIMP
 #include <aiScene.h>
 #include <map>
@@ -260,8 +259,6 @@ public:
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_lightIntensityUniformLocation(0),
-          m_hasSingleSphereMapUniformLocation(0),
-          m_hasMultipleSphereMapUniformLocation(0),
           m_hasMainTextureUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
           m_isMainSphereMapUniformLocation(0),
@@ -282,8 +279,6 @@ public:
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_lightIntensityUniformLocation = 0;
-        m_hasSingleSphereMapUniformLocation = 0;
-        m_hasMultipleSphereMapUniformLocation = 0;
         m_hasMainTextureUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
         m_isMainSphereMapUniformLocation = 0;
@@ -306,8 +301,6 @@ public:
             m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
             m_lightIntensityUniformLocation = glGetUniformLocation(m_program, "lightIntensity");
-            m_hasSingleSphereMapUniformLocation = glGetUniformLocation(m_program, "hasSingleSphereMap");
-            m_hasMultipleSphereMapUniformLocation = glGetUniformLocation(m_program, "hasMultipleSphereMap");
             m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
             m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
             m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
@@ -358,12 +351,6 @@ public:
     void setLightIntensity(float value) {
         glUniform1f(m_lightIntensityUniformLocation, value);
     }
-    void setHasSingleSphereMap(bool value) {
-        glUniform1i(m_hasSingleSphereMapUniformLocation, value ? 1 : 0);
-    }
-    void setHasMultipleSphereMap(bool value) {
-        glUniform1i(m_hasMultipleSphereMapUniformLocation, value ? 1 : 0);
-    }
     void setIsMainSphereMap(bool value) {
         glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
     }
@@ -407,8 +394,6 @@ private:
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_lightIntensityUniformLocation;
-    GLuint m_hasSingleSphereMapUniformLocation;
-    GLuint m_hasMultipleSphereMapUniformLocation;
     GLuint m_hasMainTextureUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
     GLuint m_isMainSphereMapUniformLocation;
@@ -1165,8 +1150,6 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     const uint32_t nMaterials = materials.count();
     btVector4 average, ambient, diffuse, specular;
     uint32_t offset = 0;
-    m_modelProgram->setHasSingleSphereMap(userData->hasSingleSphereMap);
-    m_modelProgram->setHasMultipleSphereMap(userData->hasMultipleSphereMap);
 
     for (uint32_t i = 0; i < nMaterials; i++) {
         const vpvl::Material *material = materials[i];

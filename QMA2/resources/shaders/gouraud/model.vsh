@@ -15,8 +15,6 @@ uniform float materialShininess;
 uniform float lightIntensity;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
-uniform bool hasSingleSphereMap;
-uniform bool hasMultipleSphereMap;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
