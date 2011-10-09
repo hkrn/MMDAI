@@ -472,10 +472,6 @@ void Renderer::initializeSurface()
     glAlphaFunc(GL_GEQUAL, 0.05f);
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
-    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_scene->lightPosition()));
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(m_scene->lightDiffuse()));
-    glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(m_scene->lightAmbient()));
-    glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(m_scene->lightSpecular()));
 }
 
 void Renderer::resize(int width, int height)
@@ -517,8 +513,8 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
         }
-        hasSingleSphere |= material->isMultiplicationSphereMain() && !material->isAdditionalSphereSub();
-        hasMultipleSphere |= material->isAdditionalSphereSub();
+        hasSingleSphere |= material->isMainSphereAdd() && !material->isSubSphereAdd();
+        hasMultipleSphere |= material->isSubSphereAdd();
     }
     userData->hasSingleSphereMap = hasSingleSphere;
     userData->hasMultipleSphereMap = hasMultipleSphere;
@@ -684,9 +680,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             glBindTexture(GL_TEXTURE_2D, materialPrivate.primaryTextureID);
             if (hasSingleSphereMap) {
                 // is sphere map
-                if (material->isMultiplicationSphereMain() || material->isAdditionalSphereMain()) {
+                if (material->isMainSphereAdd() || material->isMainSphereModulate()) {
                     // is second sphere map
-                    if (material->isAdditionalSphereMain())
+                    if (material->isMainSphereAdd())
                         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                     glEnable(GL_TEXTURE_GEN_S);
                     glEnable(GL_TEXTURE_GEN_T);
@@ -713,7 +709,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
             // second sphere
             if (materialPrivate.secondTextureID > 0) {
                 // is second sphere
-                if (material->isAdditionalSphereSub())
+                if (material->isSubSphereAdd())
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
                 else
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -1077,6 +1073,10 @@ void Renderer::postShadow()
 
 void Renderer::drawAssets()
 {
+    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_scene->lightPosition()));
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(m_scene->lightDiffuse()));
+    glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(m_scene->lightAmbient()));
+    glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(m_scene->lightSpecular()));
     uint32_t nAssets = m_assets.count();
     for (uint32_t i = 0; i < nAssets; i++) {
         glPushMatrix();
@@ -1087,6 +1087,18 @@ void Renderer::drawAssets()
 
 void Renderer::drawModels()
 {
+    const vpvl::Color &color = m_scene->lightColor();
+    const vpvl::Scalar &intensity = 0.6f;
+    const vpvl::Vector3 &a = color * intensity * 2.0f;
+    const vpvl::Vector3 &d = color * 0.0f;
+    const vpvl::Vector3 &s = color * intensity;
+    const vpvl::Color ambient(a.x(), a.y(), a.z(), 1.0f);
+    const vpvl::Color diffuse(d.x(), d.y(), d.z(), 1.0f);
+    const vpvl::Color specular(s.x(), s.y(), s.z(), 1.0f);
+    glLightfv(GL_LIGHT0, GL_POSITION, static_cast<const btScalar *>(m_scene->lightPosition()));
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, static_cast<const btScalar *>(diffuse));
+    glLightfv(GL_LIGHT0, GL_AMBIENT, static_cast<const btScalar *>(ambient));
+    glLightfv(GL_LIGHT0, GL_SPECULAR, static_cast<const btScalar *>(specular));
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
