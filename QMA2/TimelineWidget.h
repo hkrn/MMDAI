@@ -2,6 +2,7 @@
 #define TIMELINEWIDGET_H
 
 #include <QtCore/QModelIndex>
+#include <QtGui/QTreeView>
 #include <QtGui/QWidget>
 
 namespace vpvl {
@@ -18,6 +19,17 @@ class QLabel;
 class QTreeView;
 class QSettings;
 class QSpinBox;
+
+class TimelineTreeView : public QTreeView
+{
+    Q_OBJECT
+
+public:
+    TimelineTreeView(QWidget *parent = 0);
+
+public slots:
+    void selectFrameIndex(int frameIndex);
+};
 
 class TimelineWidget : public QWidget
 {
@@ -37,6 +49,9 @@ public slots:
 
 signals:
     void motionDidSeek(float column);
+
+private slots:
+    void setFrameIndex(int frameIndex);
 
 private:
     QLabel *m_label;

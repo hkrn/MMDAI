@@ -81,6 +81,7 @@ public slots:
 signals:
     void modelDidChange(vpvl::PMDModel *model);
     void motionDidModify(bool value);
+    void motionDidUpdate();
 
 protected:
     void clearKeys();

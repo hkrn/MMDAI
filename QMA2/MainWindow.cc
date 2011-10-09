@@ -621,6 +621,8 @@ void MainWindow::connectWidgets()
     connect(m_tabWidget->assetWidget(), SIGNAL(assetDidRemove(vpvl::Asset*)), m_sceneWidget, SLOT(deleteAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), m_tabWidget->assetWidget(), SLOT(addModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_tabWidget->assetWidget(), SLOT(removeModel(vpvl::PMDModel*)));
+    connect(m_boneMotionModel, SIGNAL(motionDidUpdate()), m_sceneWidget, SLOT(updateGL()));
+    connect(m_faceMotionModel, SIGNAL(motionDidUpdate()), m_sceneWidget, SLOT(updateGL()));
 }
 
 void MainWindow::startSceneUpdate()

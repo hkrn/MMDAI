@@ -80,9 +80,8 @@ public:
           m_pose(0),
           m_frameIndex(frameIndex)
     {
-        int nBones = m_bmm->rowCount();
-        for (int i = 0; i < nBones; i++) {
-            const QModelIndex &index = bmm->index(i, frameIndex);
+        foreach (MotionBaseModel::ITreeItem *item, m_bmm->keys().values()) {
+            const QModelIndex &index = m_bmm->frameToIndex(item, frameIndex);
             if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                 m_indices.append(index);
         }
@@ -96,9 +95,8 @@ public:
     virtual void undo() {
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         animation->deleteKeyFrames(m_frameIndex);
-        int nBones = m_bmm->rowCount();
-        for (int i = 0; i < nBones; i++) {
-            const QModelIndex &index = m_bmm->index(i, m_frameIndex);
+        foreach (MotionBaseModel::ITreeItem *item, m_bmm->keys().values()) {
+            const QModelIndex &index = m_bmm->frameToIndex(item, m_frameIndex);
             m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
         }
         foreach (const QModelIndex &index, m_indices) {
@@ -156,13 +154,13 @@ public:
         : QUndoCommand(),
           m_bmm(bmm)
     {
-        int nBones = m_bmm->rowCount();
         QHash<int, bool> indexProceeded;
+        QList<MotionBaseModel::ITreeItem*> items = m_bmm->keys().values();
         foreach (const BoneMotionModel::Frame &frame, frames) {
             int frameIndex = frame.first;
             if (!indexProceeded[frameIndex]) {
-                for (int i = 0; i < nBones; i++) {
-                    const QModelIndex &index = bmm->index(i, frameIndex);
+                foreach (MotionBaseModel::ITreeItem *item, items) {
+                    const QModelIndex &index = m_bmm->frameToIndex(item, frameIndex);
                     if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                         m_indices.append(index);
                 }
@@ -178,11 +176,10 @@ public:
 
     virtual void undo() {
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
-        int nBones = m_bmm->rowCount();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyFrames(frameIndex);
-            for (int i = 0; i < nBones; i++) {
-                const QModelIndex &index = m_bmm->index(i, frameIndex);
+            foreach (MotionBaseModel::ITreeItem *item, m_bmm->keys().values()) {
+                const QModelIndex &index = m_bmm->frameToIndex(item, frameIndex);
                 m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
             }
         }

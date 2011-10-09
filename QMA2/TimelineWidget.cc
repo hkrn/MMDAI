@@ -39,14 +39,26 @@ public:
     }
 };
 
-class TimelineTreeView : public QTreeView {
-public:
-    TimelineTreeView(QWidget *parent = 0) : QTreeView(parent) {
-        setExpandsOnDoubleClick(true);
-        setUniformRowHeights(true);
-    }
-};
+}
 
+TimelineTreeView::TimelineTreeView(QWidget *parent)
+    : QTreeView(parent)
+{
+    setExpandsOnDoubleClick(true);
+    setUniformRowHeights(true);
+}
+
+void TimelineTreeView::selectFrameIndex(int frameIndex)
+{
+    QItemSelection selection;
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
+    foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
+        const QModelIndex &index = m->frameToIndex(item, frameIndex);
+        selection.append(QItemSelectionRange(index));
+    }
+    QItemSelectionModel *sm = selectionModel();
+    sm->select(sm->selection(), QItemSelectionModel::Deselect);
+    sm->select(selection, QItemSelectionModel::Select);
 }
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
@@ -54,32 +66,34 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QWidget(parent),
     m_treeView(0)
 {
-    m_treeView = new TimelineTreeView();
-    m_treeView->setModel(base);
-    QHeaderView *header = m_treeView->header();
+    TimelineTreeView *treeView = new TimelineTreeView();
+    treeView->setModel(base);
+    QHeaderView *header = treeView->header();
     header->setResizeMode(QHeaderView::Fixed);
     header->setResizeMode(0, QHeaderView::ResizeToContents);
     header->setDefaultSectionSize(15);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
-    m_treeView->setItemDelegate(delegate);
-    connect(m_treeView->selectionModel(),
+    treeView->setItemDelegate(delegate);
+    connect(treeView->selectionModel(),
             SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this, SLOT(setCurrentIndex(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->columnCount());
+    connect(m_spinBox, SIGNAL(valueChanged(int)), treeView, SLOT(selectFrameIndex(int)));
+    connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setFrameIndex(int)));
     m_label = new QLabel();
-    connect(m_spinBox, SIGNAL(valueChanged(int)), m_treeView, SLOT(selectColumn(int)));
     spinboxLayout->addSpacing(250);
     spinboxLayout->addWidget(m_label);
     spinboxLayout->addWidget(m_spinBox);
     spinboxLayout->addSpacing(250);
     layout->addLayout(spinboxLayout);
-    layout->addWidget(m_treeView);
+    layout->addWidget(treeView);
     layout->setContentsMargins(QMargins());
     retranslate();
     setLayout(layout);
+    m_treeView = treeView;
 }
 
 TimelineWidget::~TimelineWidget()
@@ -100,12 +114,17 @@ const QModelIndex TimelineWidget::selectedIndex() const
         if (index.isValid())
             return index;
     }
-    return QModelIndex();
+    return m_treeView->model()->index(0, 0);
 }
 
 void TimelineWidget::setCurrentIndex(const QModelIndex index)
 {
     int frameIndex = qMax(index.column() - 1, 0);
+    setFrameIndex(frameIndex);
+}
+
+void TimelineWidget::setFrameIndex(int frameIndex)
+{
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
 }

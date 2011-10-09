@@ -156,6 +156,7 @@ void MotionBaseModel::refreshModel()
 {
     updateModel();
     reset();
+    emit motionDidUpdate();
 }
 
 void MotionBaseModel::updateModel()
