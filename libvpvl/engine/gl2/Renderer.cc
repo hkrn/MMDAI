@@ -1085,7 +1085,7 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
             glDeleteTextures(1, &materialPrivate.mainTextureID);
             glDeleteTextures(1, &materialPrivate.subTextureID);
         }
-        for (uint32_t i = 1; i < vpvl::PMDModel::kSystemTextureMax; i++) {
+        for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
             glDeleteTextures(1, &userData->toonTextureID[i]);
         }
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
