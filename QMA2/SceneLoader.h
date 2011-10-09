@@ -42,6 +42,8 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 
+#include <vpvl/Common.h>
+
 namespace vpvl
 {
 #ifdef VPVL_USE_GLSL

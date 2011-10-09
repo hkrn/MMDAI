@@ -41,6 +41,7 @@
 #include <QtCore/QString>
 #include <QtGui/QImage>
 
+#include <vpvl/Common.h>
 #ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
 #else

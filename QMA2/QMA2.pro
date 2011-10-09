@@ -20,7 +20,7 @@ win32:LIBS += -lglew32
 unix:LIBS += -lGLEW
 
 # VPVL and others configuration
-INCLUDEPATH += ../libvpvl/include ../bullet/src
+INCLUDEPATH += ../libvpvl/include ../libvpvl/debug/include ../bullet/src
 win32:INCLUDEPATH += ../libvpvl/msvc-build/include
 
 # configuration by build type
