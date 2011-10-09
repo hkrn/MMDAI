@@ -44,12 +44,19 @@
 #include "Grid.h"
 #include "SceneLoader.h"
 #include "World.h"
+#include "util.h"
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
+
+#ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
-#include "util.h"
+using namespace vpvl::gl2;
+#else
+#include <vpvl/gl/Renderer.h>
+using namespace vpvl::gl;
+#endif
 
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -643,7 +650,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
     GLenum err;
-    if (!vpvl::gl2::Renderer::initializeGLEW(err))
+    if (!Renderer::initializeGLEW(err))
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
@@ -651,11 +658,13 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-    m_renderer = new vpvl::gl2::Renderer(m_delegate, width(), height(), m_defaultFPS);
+    m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_renderer->setDebugDrawer(m_world->mutableWorld());
     m_grid->initialize();
+#ifdef VPVL_USE_GLSL
     m_renderer->createPrograms();
+#endif
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
     const vpvl::Color &color = scene->lightColor();

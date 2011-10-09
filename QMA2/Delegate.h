@@ -40,10 +40,16 @@
 #include <GL/glew.h>
 #include <QtCore/QString>
 #include <QtGui/QImage>
+
+#ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
+#else
+#include <vpvl/gl/Renderer.h>
+#endif
 
 class QGLWidget;
 
+#ifdef VPVL_USE_GLSL
 class Delegate : public vpvl::gl2::IDelegate
 {
 public:
@@ -63,5 +69,25 @@ private:
 
     Q_DISABLE_COPY(Delegate)
 };
+#else
+class Delegate : public vpvl::gl::IDelegate
+{
+public:
+    explicit Delegate(QGLWidget *wiget);
+    ~Delegate();
+
+    bool loadTexture(const std::string &path, GLuint &textureID);
+    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID);
+    void log(LogLevel level, const char *format...);
+    const std::string toUnicode(const uint8_t *value);
+
+private:
+    static QImage loadTGA(const QString &path, uint8_t *&rawData);
+
+    QGLWidget *m_widget;
+
+    Q_DISABLE_COPY(Delegate)
+};
+#endif
 
 #endif // DELEGATE_H

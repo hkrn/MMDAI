@@ -44,9 +44,14 @@
 #include <QtOpenGL/QGLWidget>
 
 #include <vpvl/Bone.h>
+#include <vpvl/Common.h>
 
 namespace vpvl {
+#ifdef VPVL_USE_GLSL
 namespace gl2 {
+#else
+namespace gl {
+#endif
 class Renderer;
 }
 class Asset;
@@ -178,7 +183,12 @@ private:
     QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
+#ifdef VPVL_USE_GLSL
     vpvl::gl2::Renderer *m_renderer;
+#else
+    vpvl::gl::Renderer *m_renderer;
+#endif
+
     vpvl::Bone *m_bone;
     Delegate *m_delegate;
     SceneLoader *m_loader;

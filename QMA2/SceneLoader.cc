@@ -40,9 +40,16 @@
 
 #include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
 
-SceneLoader::SceneLoader(vpvl::gl2::Renderer *renderer)
+#ifdef VPVL_USE_GLSL
+#include <vpvl/gl2/Renderer.h>
+using namespace vpvl::gl2;
+#else
+#include <vpvl/gl/Renderer.h>
+using namespace vpvl::gl;
+#endif
+
+SceneLoader::SceneLoader(Renderer *renderer)
     : m_renderer(renderer),
       m_camera(0)
 {

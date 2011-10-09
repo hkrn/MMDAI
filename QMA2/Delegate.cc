@@ -83,7 +83,7 @@ bool Delegate::loadToonTexture(const std::string &name, const std::string &dir, 
     return loadTexture(std::string(path.toLocal8Bit()), textureID);
 }
 
-
+#ifdef VPVL_USE_GLSL
 const std::string Delegate::loadShader(ShaderType type) {
     QString filename;
     switch (type) {
@@ -124,6 +124,7 @@ const std::string Delegate::loadShader(ShaderType type) {
         return std::string();
     }
 }
+#endif
 
 void Delegate::log(LogLevel level, const char *format...)
 {
