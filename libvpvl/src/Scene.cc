@@ -95,7 +95,7 @@ Scene::Scene(int width, int height, int fps)
       m_currentFovy(16.0f),
       m_fovy(m_currentFovy),
       m_viewMoveFovy(m_currentFovy),
-      m_lightIntensity(0.75f),
+      m_lightIntensity(0.6f),
       m_viewMoveTime(-1),
       m_preferredFPS(fps),
       m_width(width),
