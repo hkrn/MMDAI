@@ -39,7 +39,7 @@ void main() {
     vec3 normal = normalize(normalMatrix * inNormal);
     vec3 light = normalize(lightPosition - position.xyz);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = (lightColor * lightIntensity * 2.0) * materialAmbient;
+    vec4 color = (lightColor * lightIntensity * kTwo) * materialAmbient;
     if (diffuse != kZero) {
         vec3 view = normalize(position.xyz);
         vec3 halfway = normalize(light - view);
