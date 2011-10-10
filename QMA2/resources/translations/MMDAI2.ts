@@ -902,27 +902,27 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../MainWindow.cc" line="741"/>
         <location filename="../../MainWindow.cc" line="763"/>
         <source>The model or the bone is not selected.</source>
-        <translation>モデル化ボーンが選択されていません。</translation>
+        <translation>モデルまたはボーンが選択されていません。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="709"/>
         <source>Select a model or a bone to reset X position of the bone</source>
-        <translation>モデルかボーンを選択して下さい</translation>
+        <translation>モデルまたはボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="720"/>
         <source>Select a model or a bone to reset Y position of the bone</source>
-        <translation>モデルかボーンを選択して下さい</translation>
+        <translation>モデルまたはボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="731"/>
         <source>Select a model or a bone to reset Z position of the bone</source>
-        <translation>モデルかボーンを選択して下さい</translation>
+        <translation>モデルまたはボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="742"/>
         <source>Select a model or a bone to reset rotation of the bone</source>
-        <translation>モデルかボーンを選択して下さい</translation>
+        <translation>モデルまたはボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="752"/>
@@ -937,7 +937,7 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     <message>
         <location filename="../../MainWindow.cc" line="764"/>
         <source>Select a model or a bone to open this dialog</source>
-        <translation>モデル化ボーンを選択して下さい</translation>
+        <translation>モデルまたはボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="777"/>
@@ -1146,7 +1146,6 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../TransformWidget.ui" line="95"/>
-        <location filename="../../TransformWidget.ui" line="178"/>
         <source>Transform</source>
         <translation>変形</translation>
     </message>
@@ -1172,6 +1171,11 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../TransformWidget.ui" line="222"/>
         <source>Z</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../../TransformWidget.ui" line="178"/>
+        <source>Translate</source>
+        <translation>移動</translation>
     </message>
     <message>
         <location filename="../../TransformWidget.ui" line="232"/>

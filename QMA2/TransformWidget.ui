@@ -175,7 +175,7 @@ QPushButton:disabled { color:gray }</string>
                 </size>
                </property>
                <property name="text">
-                <string>Transform</string>
+                <string>Translate</string>
                </property>
               </widget>
              </item>
