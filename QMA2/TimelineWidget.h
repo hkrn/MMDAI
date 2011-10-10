@@ -20,17 +20,6 @@ class QTreeView;
 class QSettings;
 class QSpinBox;
 
-class TimelineTreeView : public QTreeView
-{
-    Q_OBJECT
-
-public:
-    TimelineTreeView(QWidget *parent = 0);
-
-public slots:
-    void selectFrameIndex(int frameIndex);
-};
-
 class TimelineWidget : public QWidget
 {
     Q_OBJECT
@@ -40,12 +29,13 @@ public:
                             QWidget *parent = 0);
     ~TimelineWidget();
 
-    const QModelIndex selectedIndex() const;
+    int frameIndex() const;
     QTreeView *tableView() const { return m_treeView; }
 
 public slots:
     void retranslate();
-    void setCurrentIndex(const QModelIndex index);
+    void setCurrentColumnIndex(const QModelIndex &index);
+    void setCurrentRowIndex(const QModelIndex &index);
 
 signals:
     void motionDidSeek(float column);
@@ -58,6 +48,7 @@ private:
     QSettings *m_settings;
     QSpinBox *m_spinBox;
     QTreeView *m_treeView;
+    QModelIndex m_index;
 };
 
 #endif // TIMLINEWIDGET_H

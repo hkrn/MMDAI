@@ -102,9 +102,7 @@ TimelineTabWidget::~TimelineTabWidget()
 
 void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
 {
-    QModelIndex index = m_boneTimeline->selectedIndex();
-    if (index.isValid())
-        UIGetBoneModel(m_boneTimeline)->loadPose(pose, model, index.column());
+    UIGetBoneModel(m_boneTimeline)->loadPose(pose, model, m_boneTimeline->frameIndex());
 }
 
 void TimelineTabWidget::retranslate()
@@ -116,30 +114,22 @@ void TimelineTabWidget::retranslate()
 
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 {
-    QModelIndex index = m_boneTimeline->selectedIndex();
-    if (index.isValid())
-        UIGetBoneModel(m_boneTimeline)->savePose(pose, model, index.column());
+    UIGetBoneModel(m_boneTimeline)->savePose(pose, model, m_boneTimeline->frameIndex());
 }
 
 
 void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Bone *bone)
 {
-    QModelIndex index = m_boneTimeline->selectedIndex();
-    if (index.isValid()) {
-        QList<BoneMotionModel::Frame> boneFrames;
-        boneFrames.append(BoneMotionModel::Frame(index.column(), bone));
-        UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
-    }
+    QList<BoneMotionModel::Frame> boneFrames;
+    boneFrames.append(BoneMotionModel::Frame(m_boneTimeline->frameIndex(), bone));
+    UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
 }
 
 void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Face *face)
 {
-    QModelIndex index = m_faceTimeline->selectedIndex();
-    if (index.isValid()) {
-        QList<FaceMotionModel::Frame> faceFrames;
-        faceFrames.append(FaceMotionModel::Frame(index.column(), face));
-        UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
-    }
+    QList<FaceMotionModel::Frame> faceFrames;
+    faceFrames.append(FaceMotionModel::Frame(m_faceTimeline->frameIndex(), face));
+    UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
 }
 
 void TimelineTabWidget::insertFrame()

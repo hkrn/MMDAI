@@ -23,7 +23,10 @@ public:
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
             painter->setPen(Qt::NoPen);
             painter->setRenderHint(QPainter::Antialiasing);
-            painter->setBrush(option.palette.foreground());
+            if (option.state & QStyle::State_Selected)
+                painter->setBrush(option.palette.highlight());
+            else
+                painter->setBrush(option.palette.foreground());
             const QRect &rect = option.rect;
             int width = rect.height();
             int height = width;
@@ -39,26 +42,26 @@ public:
     }
 };
 
-}
-
-TimelineTreeView::TimelineTreeView(QWidget *parent)
-    : QTreeView(parent)
+class TimelineTreeView : public QTreeView
 {
-    setExpandsOnDoubleClick(true);
-    setUniformRowHeights(true);
-}
-
-void TimelineTreeView::selectFrameIndex(int frameIndex)
-{
-    QItemSelection selection;
-    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
-    foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
-        const QModelIndex &index = m->frameToIndex(item, frameIndex);
-        selection.append(QItemSelectionRange(index));
+public:
+    TimelineTreeView(QWidget *parent = 0)
+        : QTreeView(parent) {
+        setExpandsOnDoubleClick(true);
+        setUniformRowHeights(true);
     }
-    QItemSelectionModel *sm = selectionModel();
-    sm->select(sm->selection(), QItemSelectionModel::Deselect);
-    sm->select(selection, QItemSelectionModel::Select);
+    void selectFrameIndex(int frameIndex) {
+        QItemSelection selection;
+        MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
+        foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
+            const QModelIndex &index = m->frameToIndex(item, frameIndex);
+            selection.append(QItemSelectionRange(index));
+        }
+        QItemSelectionModel *sm = selectionModel();
+        sm->select(selection, QItemSelectionModel::ClearAndSelect);
+    }
+};
+
 }
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
@@ -74,14 +77,13 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     header->setDefaultSectionSize(15);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     treeView->setItemDelegate(delegate);
-    connect(treeView->selectionModel(),
-            SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this, SLOT(setCurrentIndex(QModelIndex)));
+    QItemSelectionModel *sm = treeView->selectionModel();
+    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
+    connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->columnCount());
-    connect(m_spinBox, SIGNAL(valueChanged(int)), treeView, SLOT(selectFrameIndex(int)));
     connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setFrameIndex(int)));
     m_label = new QLabel();
     spinboxLayout->addSpacing(250);
@@ -106,25 +108,30 @@ void TimelineWidget::retranslate()
     m_label->setText(tr("Frame Index"));
 }
 
-const QModelIndex TimelineWidget::selectedIndex() const
+int TimelineWidget::frameIndex() const
 {
-    QModelIndexList indices = m_treeView->selectionModel()->selectedIndexes();
+    const QModelIndexList &indices = m_treeView->selectionModel()->selectedIndexes();
     if (!indices.isEmpty()) {
-        QModelIndex index = indices.first();
+        const QModelIndex &index = indices.first();
         if (index.isValid())
-            return index;
+            return index.column() - 1;
     }
-    return m_treeView->model()->index(0, 0);
+    return 0;
 }
 
-void TimelineWidget::setCurrentIndex(const QModelIndex index)
+void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
 {
     int frameIndex = qMax(index.column() - 1, 0);
     setFrameIndex(frameIndex);
 }
 
+void TimelineWidget::setCurrentRowIndex(const QModelIndex & /* index */)
+{
+}
+
 void TimelineWidget::setFrameIndex(int frameIndex)
 {
+    static_cast<TimelineTreeView*>(m_treeView)->selectFrameIndex(frameIndex);
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
 }

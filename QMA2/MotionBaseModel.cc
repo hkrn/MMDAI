@@ -70,6 +70,14 @@ bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, i
     return false;
 }
 
+QVariant MotionBaseModel::headerData(int /* section */, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        return QVariant();
+    }
+    return QVariant();
+}
+
 QModelIndex MotionBaseModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent))
