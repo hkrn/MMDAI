@@ -56,7 +56,6 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   resources.files = resources/translations/MMDAI2_ja.qm \
-                    ../QMA1/res/translations/MMDAI1_ja.qm \
                     $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
   resources.path = Contents/Resources
   QMAKE_BUNDLE_DATA += resources

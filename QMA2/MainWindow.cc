@@ -511,7 +511,7 @@ void MainWindow::retranslate()
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
     m_actionShowBones->setText(tr("Show bone wireframe"));
-    m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe"));
+    m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe."));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionZoomIn->setText(tr("Zoom in"));

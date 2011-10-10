@@ -348,7 +348,7 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     <message>
         <location filename="../../MainWindow.cc" line="487"/>
         <source>Save motion as VMD</source>
-        <translation>モーションを VMD 賭して保存</translation>
+        <translation>モーションを VMD として保存</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="488"/>
@@ -482,9 +482,13 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>ボーンフレームの表示</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="514"/>
         <source>Show or hide bone wireframe</source>
-        <translation type="unfinished">ボーンフレームを表示または非表示にします。</translation>
+        <translation type="obsolete">ボーンフレームを表示または非表示にします。</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="514"/>
+        <source>Show or hide bone wireframe.</source>
+        <translation>ボーンフレームを表示または非表示にします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="515"/>
@@ -534,362 +538,362 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     <message>
         <location filename="../../MainWindow.cc" line="524"/>
         <source>Rotate up the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を上に回転します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="525"/>
         <source>Ctrl+Up</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="526"/>
         <source>Rotate down</source>
-        <translation type="unfinished"></translation>
+        <translation>下に回転</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="527"/>
         <source>Rotate down the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を下に回転します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="528"/>
         <source>Ctrl+Down</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="529"/>
         <source>Rotate left</source>
-        <translation type="unfinished"></translation>
+        <translation>左に回転</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="530"/>
         <source>Rotate left the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を左に回転します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="531"/>
         <source>Ctrl+Left</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="532"/>
         <source>Rotate right</source>
-        <translation type="unfinished"></translation>
+        <translation>右に回転</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="533"/>
         <source>Rotate right the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を右に回転します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="534"/>
         <source>Ctrl+Right</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="535"/>
         <source>Translate up</source>
-        <translation type="unfinished"></translation>
+        <translation>上に移動</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="536"/>
         <source>Translate up the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を上に移動します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="537"/>
         <source>Shift+Up</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="538"/>
         <source>Translate down</source>
-        <translation type="unfinished"></translation>
+        <translation>下に移動</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="539"/>
         <source>Translate down the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を下に移動します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="540"/>
         <source>Shift+Down</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="541"/>
         <source>Translate left</source>
-        <translation type="unfinished"></translation>
+        <translation>左に移動</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="542"/>
         <source>Translate left the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を左に移動します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="543"/>
         <source>Shift+Left</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="544"/>
         <source>Translate right</source>
-        <translation type="unfinished"></translation>
+        <translation>右に移動</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="545"/>
         <source>Translate right the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>場面を右に移動します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="546"/>
         <source>Shift+Right</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="547"/>
         <source>Reset camera</source>
-        <translation type="unfinished"></translation>
+        <translation>カメラ視点をリセット</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="548"/>
         <source>Reset camera perspective.</source>
-        <translation type="unfinished"></translation>
+        <translation>カメラの視点をリセットします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="549"/>
         <source>Revert selected model</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルを未選択にする</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="550"/>
         <source>Revert the selected model.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルを未選択状態にします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="551"/>
         <source>Delete selected model</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルを削除</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="552"/>
         <source>Delete the selected model from the scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルを場面から削除します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="553"/>
         <source>Ctrl+Shift+Backspace</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="554"/>
         <source>Make X position of bone zero</source>
-        <translation type="unfinished"></translation>
+        <translation>ボーンの X 位置を 0 にする</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="555"/>
         <source>Reset X axis of the selected bone to the selected model.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルのボーンの X 位置を 0 にリセットします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="556"/>
         <source>Make Y position of bone zero</source>
-        <translation type="unfinished"></translation>
+        <translation>ボーンの Y 位置を 0 にする</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="557"/>
         <source>Reset Y axis of the selected bone to the selected model.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルのボーンの Y 位置を 0 にリセットします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="558"/>
         <source>Make Z position of bone zero</source>
-        <translation type="unfinished"></translation>
+        <translation>ボーンの Z 位置を 0 にする</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="559"/>
         <source>Reset Z axis of the selected bone to the selected model.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルのボーンの Z 位置を 0 にリセットします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="560"/>
         <source>Make rotation of bone zero</source>
-        <translation type="unfinished"></translation>
+        <translation>回転を 0 にする</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="561"/>
         <source>Reset rotation of the selected bone to the selected model.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルのボーンの回転を 0 にリセットします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="562"/>
         <source>Reset all bone&apos;s position and rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>全てのボーンの位置を回転をリセットする</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="563"/>
         <source>Reset all bone&apos;s position and rotation to the selected model.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたモデルのすべてのボーンの位置及び回転を 0 にリセットします。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="564"/>
         <source>Open bone dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>ボーンダイアログを開く</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="565"/>
         <source>Open bone dialog to change position or rotation of the bone manually.</source>
-        <translation type="unfinished"></translation>
+        <translation>ボーンの位置と回転を主導で変更するためのボーンダイアログを開きます。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="566"/>
         <source>Insert empty keyframe</source>
-        <translation type="unfinished"></translation>
+        <translation>空のキーフレームを挿入</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="567"/>
         <source>Insert an empty keyframe to the selected keyframe.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたフレームに空のキーフレームを挿入します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="568"/>
         <source>Delete selected keyframe</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたキーフレームを削除</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="569"/>
         <source>Delete a selected keyframe.</source>
-        <translation type="unfinished"></translation>
+        <translation>選択されたキーフレームを削除します。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="570"/>
         <source>Ctrl+Z</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="571"/>
         <source>Ctrl+Shift+Z</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="572"/>
         <source>Tab</source>
-        <translation type="unfinished"></translation>
+        <translation>タブ</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="573"/>
         <source>Open tab window.</source>
-        <translation type="unfinished"></translation>
+        <translation>タブウィンドウを開きます。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="574"/>
         <source>Timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムライン</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="575"/>
         <source>Open timeline window.</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムラインウィンドウを開きます。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="576"/>
         <source>Transform</source>
-        <translation type="unfinished"></translation>
+        <translation>変形ビュー</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="577"/>
         <source>Open transform window.</source>
-        <translation type="unfinished"></translation>
+        <translation>変形ビューを開きます。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="578"/>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <translation>MMDAI2 について</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="579"/>
         <source>About this application.</source>
-        <translation type="unfinished"></translation>
+        <translation>このアプリケーションについてです。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="580"/>
         <source>Alt+Q, Alt+/</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="581"/>
         <source>About Qt</source>
-        <translation type="unfinished"></translation>
+        <translation>Qt について</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="582"/>
         <source>About Qt.</source>
-        <translation type="unfinished"></translation>
+        <translation>Qt についてです。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="583"/>
         <source>&amp;File</source>
-        <translation type="unfinished"></translation>
+        <translation>ファイル (&amp;F)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="584"/>
         <source>&amp;Project</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクト (&amp;P)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="585"/>
         <source>&amp;Scene</source>
-        <translation type="unfinished"></translation>
+        <translation>場面 (&amp;S)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="586"/>
         <source>&amp;Model</source>
-        <translation type="unfinished"></translation>
+        <translation>モデル (&amp;M)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="587"/>
         <source>&amp;Bone</source>
-        <translation type="unfinished"></translation>
+        <translation>ボーン (&amp;B)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="588"/>
         <source>Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>フレーム</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="589"/>
         <source>&amp;View</source>
-        <translation type="unfinished"></translation>
+        <translation>ビュー (&amp;V)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="590"/>
         <source>Select asset</source>
-        <translation type="unfinished"></translation>
+        <translation>アクセサリを選択</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="591"/>
         <source>Select model</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを選択</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="592"/>
         <source>&amp;Help</source>
-        <translation type="unfinished"></translation>
+        <translation>ヘルプ (&amp;H)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="660"/>
         <source>: Rendering Scene (FPS: %1)</source>
-        <translation type="unfinished"></translation>
+        <translation>: レンダリング中 (FPS: %1)</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="684"/>
         <source>Save model pose as a VPD file</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルのポーズを VPD として保存</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="685"/>
         <source>VPD file (*.vpd)</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="708"/>
@@ -898,47 +902,47 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../MainWindow.cc" line="741"/>
         <location filename="../../MainWindow.cc" line="763"/>
         <source>The model or the bone is not selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>モデル化ボーンが選択されていません。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="709"/>
         <source>Select a model or a bone to reset X position of the bone</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルかボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="720"/>
         <source>Select a model or a bone to reset Y position of the bone</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルかボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="731"/>
         <source>Select a model or a bone to reset Z position of the bone</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルかボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="742"/>
         <source>Select a model or a bone to reset rotation of the bone</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルかボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="752"/>
         <source>The model is not selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルが選択されていません。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="752"/>
         <source>Select a model to reset bones</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを選択してください</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="764"/>
         <source>Select a model or a bone to open this dialog</source>
-        <translation type="unfinished"></translation>
+        <translation>モデル化ボーンを選択して下さい</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="777"/>
         <source>Image (*bmp, *.jpg, *.png)</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
