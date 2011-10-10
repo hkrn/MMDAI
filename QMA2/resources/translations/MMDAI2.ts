@@ -121,7 +121,7 @@
     <message>
         <location filename="../../FaceMotionModel.cc" line="238"/>
         <source>Lip</source>
-        <translation>口</translation>
+        <translation>口唇</translation>
     </message>
     <message>
         <location filename="../../FaceMotionModel.cc" line="239"/>
@@ -144,7 +144,7 @@
     <message>
         <location filename="../../FaceWidget.cc" line="94"/>
         <source>Lip</source>
-        <translation>口</translation>
+        <translation>口唇</translation>
     </message>
     <message>
         <location filename="../../FaceWidget.cc" line="95"/>
