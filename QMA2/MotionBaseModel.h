@@ -62,6 +62,7 @@ public:
     void discardState();
     void updateModel();
     void refreshModel();
+    int maxFrameCount() const;
 
     vpvl::PMDModel *selectedModel() const { return m_model; }
     vpvl::VMDMotion *currentMotion() const { return m_motion; }

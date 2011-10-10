@@ -153,7 +153,7 @@ void MotionBaseModel::discardState()
 
 int MotionBaseModel::columnCount(const QModelIndex & /* parent */) const
 {
-    return 54000 + 2;
+    return maxFrameCount() + 2;
 }
 
 void MotionBaseModel::markAsNew(vpvl::PMDModel *model)
@@ -167,6 +167,11 @@ void MotionBaseModel::refreshModel()
     updateModel();
     reset();
     emit motionDidUpdate();
+}
+
+int MotionBaseModel::maxFrameCount() const
+{
+    return 54000;
 }
 
 void MotionBaseModel::updateModel()

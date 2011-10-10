@@ -83,7 +83,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QVBoxLayout *layout = new QVBoxLayout();
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     m_spinBox = new QSpinBox();
-    m_spinBox->setMaximum(base->columnCount());
+    m_spinBox->setMaximum(base->maxFrameCount());
     connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setFrameIndex(int)));
     m_label = new QLabel();
     spinboxLayout->addSpacing(250);
