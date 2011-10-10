@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_angle(0.0f, 0.0f, 0.0f),
     m_fovy(0.0f),
     m_distance(0.0f),
-    m_currentFPS(0)
+    m_currentFPS(-1)
 {
     m_undo = new QUndoGroup(this);
     m_licenseWidget = new LicenseWidget();
@@ -217,12 +217,6 @@ void MainWindow::deleteAsset(vpvl::Asset *asset)
     }
     if (actionToRemove)
         m_menuRetainAssets->removeAction(actionToRemove);
-}
-
-void MainWindow::setCurrentFPS(int value)
-{
-    m_currentFPS = value;
-    updateInformation();
 }
 
 void MainWindow::setModel(vpvl::PMDModel *value)
@@ -606,7 +600,6 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_faceMotionModel, SLOT(deleteModel()));
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(setFrameAtCurrentIndex(vpvl::Face*)));
-    connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(setCurrentFPS(int)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), this, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     //connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)), m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
@@ -632,32 +625,32 @@ void MainWindow::connectWidgets()
 
 void MainWindow::startSceneUpdate()
 {
-    setWindowTitle(buildWindowTitle(0));
+    m_currentFPS = 0;
+    updateInformation();
 }
 
 void MainWindow::stopSceneUpdate()
 {
-    setWindowTitle(buildWindowTitle());
+    m_currentFPS = -1;
+    updateInformation();
 }
 
 void MainWindow::updateFPS(int fps)
 {
-    setWindowTitle(buildWindowTitle(fps));
+    m_currentFPS = fps;
+    updateInformation();
 }
 
-const QString MainWindow::buildWindowTitle()
+const QString MainWindow::buildWindowTitle() const
 {
     QString title = qAppName();
     if (m_model)
         title += " - " + internal::toQString(m_model);
     if (m_bone)
         title += " - " + internal::toQString(m_bone);
+    if (m_currentFPS >= 0)
+        title += tr(": Rendering Scene (FPS: %1)").arg(m_currentFPS);
     return title + "[*]";
-}
-
-const QString MainWindow::buildWindowTitle(int fps)
-{
-    return buildWindowTitle() + tr(": Rendering Scene (FPS: %1)").arg(fps);
 }
 
 void MainWindow::insertMotionToAllModels()

@@ -50,7 +50,6 @@ private slots:
     void deleteModel(vpvl::PMDModel *model);
     void addAsset(vpvl::Asset *asset);
     void deleteAsset(vpvl::Asset *asset);
-    void setCurrentFPS(int value);
     void setModel(vpvl::PMDModel *value);
     void setBones(const QList<vpvl::Bone*> &bones);
     void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
@@ -71,8 +70,7 @@ private slots:
     void startSceneUpdate();
     void stopSceneUpdate();
     void updateFPS(int fps);
-    const QString buildWindowTitle();
-    const QString buildWindowTitle(int fps);
+    const QString buildWindowTitle() const;
 
 private:
     void buildUI();
