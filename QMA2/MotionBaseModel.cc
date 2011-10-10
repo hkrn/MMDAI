@@ -73,9 +73,9 @@ bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, i
 QVariant MotionBaseModel::headerData(int /* section */, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-        return QVariant();
+        return kInvalidData;
     }
-    return QVariant();
+    return kInvalidData;
 }
 
 QModelIndex MotionBaseModel::index(int row, int column, const QModelIndex &parent) const
@@ -130,8 +130,10 @@ const QModelIndex MotionBaseModel::frameToIndex(ITreeItem *item, int frameIndex)
 
 void MotionBaseModel::saveState()
 {
-    if (m_model)
+    if (m_model) {
+        m_model->discardState(m_state);
         m_state = m_model->saveState();
+    }
 }
 
 void MotionBaseModel::restoreState()
@@ -151,7 +153,7 @@ void MotionBaseModel::discardState()
 
 int MotionBaseModel::columnCount(const QModelIndex & /* parent */) const
 {
-    return 1800;
+    return 54000 + 2;
 }
 
 void MotionBaseModel::markAsNew(vpvl::PMDModel *model)
