@@ -261,6 +261,8 @@ void MainWindow::buildUI()
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
     connect(m_actionAddAsset, SIGNAL(triggered()), m_sceneWidget, SLOT(addAsset()));
+    m_actionNewMotion = new QAction(this);
+    connect(m_actionNewMotion, SIGNAL(triggered()), this, SLOT(addNewMotion()));
     m_actionInsertToAllModels = new QAction(this);
     connect(m_actionInsertToAllModels, SIGNAL(triggered()), m_sceneWidget, SLOT(insertMotionToAllModels()));
     m_actionInsertToSelectedModel = new QAction(this);
@@ -373,6 +375,7 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionAddModel);
     m_menuFile->addAction(m_actionAddAsset);
     m_menuFile->addSeparator();
+    m_menuFile->addAction(m_actionNewMotion);
     m_menuFile->addAction(m_actionInsertToAllModels);
     m_menuFile->addAction(m_actionInsertToSelectedModel);
     m_menuFile->addAction(m_actionSetCamera);
@@ -473,6 +476,8 @@ void MainWindow::retranslate()
     m_actionAddAsset->setStatusTip(tr("Add an asset to the scene."));
     m_actionAddAsset->setShortcut(tr("Ctrl+Shift+A"));
     m_actionAddAsset->setEnabled(vpvl::Asset::isSupported());
+    m_actionNewMotion->setText(tr("New motion"));
+    m_actionNewMotion->setStatusTip(tr("Insert a new motion to the selected model."));
     m_actionInsertToAllModels->setText(tr("Insert to all models"));
     m_actionInsertToAllModels->setStatusTip(tr("Insert a motion to the all models."));
     m_actionInsertToAllModels->setShortcut(tr("Ctrl+Shift+V"));
@@ -786,6 +791,19 @@ void MainWindow::saveImage()
             image.save(filename);
         else
             qWarning("Failed saving scene as an image: %s", qPrintable(filename));
+    }
+}
+
+void MainWindow::addNewMotion()
+{
+    if (maybeSave()) {
+        vpvl::PMDModel *model = m_sceneWidget->selectedModel();
+        m_sceneWidget->deleteMotion(m_boneMotionModel->currentMotion(), model);
+        m_boneMotionModel->deleteMotion();
+        m_faceMotionModel->deleteMotion();
+        m_sceneWidget->setEmptyMotion(model);
+        m_boneMotionModel->markAsNew(model);
+        m_faceMotionModel->markAsNew(model);
     }
 }
 
