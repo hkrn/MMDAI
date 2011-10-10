@@ -166,7 +166,7 @@ void MotionBaseModel::refreshModel()
 {
     updateModel();
     reset();
-    emit motionDidUpdate();
+    emit motionDidUpdate(m_model);
 }
 
 int MotionBaseModel::maxFrameCount() const

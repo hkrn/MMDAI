@@ -93,7 +93,7 @@ public:
     vpvl::Asset *addAssetFromMetadata(const QString &path);
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
-    const QPointF objectCoordinates(const QPoint &input);
+    const QPointF objectCoordinates(const QPoint &input) const;
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
@@ -138,6 +138,7 @@ public slots:
     void translateLeft() { translate(-1.0f, 0.0f); }
     void translateRight() { translate(1.0f, 0.0f); }
     void revertSelectedModel() { setSelectedModel(0); }
+    void updateMotion() { seekMotion(m_frameIndex); }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
 
@@ -199,6 +200,7 @@ private:
     QPoint m_prevPos;
     Handles *m_handles;
     float m_prevElapsed;
+    float m_frameIndex;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;

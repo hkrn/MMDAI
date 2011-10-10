@@ -68,6 +68,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_settings(settings),
     m_handles(0),
     m_prevElapsed(0.0f),
+    m_frameIndex(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
@@ -414,6 +415,7 @@ void SceneWidget::seekMotion(float frameIndex)
     scene->updateProjection(0);
     scene->seekMotion(frameIndex);
     updateGL();
+    m_frameIndex = frameIndex;
 }
 
 void SceneWidget::setCamera()
@@ -517,7 +519,7 @@ void SceneWidget::setPhysicsEnable(bool value)
     m_enablePhysics = value;
 }
 
-const QPointF SceneWidget::objectCoordinates(const QPoint &input)
+const QPointF SceneWidget::objectCoordinates(const QPoint &input) const
 {
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
