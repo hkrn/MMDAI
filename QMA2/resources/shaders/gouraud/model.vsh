@@ -36,16 +36,15 @@ vec2 makeSphereMap(vec4 position, vec3 normal) {
 
 void main() {
     vec4 position = modelViewMatrix * inPosition;
+    vec3 light = normalize(((modelViewMatrix * vec4(lightPosition, kOne)).xyz) - position.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec3 light = normalize(lightPosition - position.xyz);
-    float diffuse = max(dot(light, normal), kZero);
     vec4 color = (lightColor * lightIntensity * kTwo) * materialAmbient;
+    float diffuse = max(dot(normal, light), kZero);
     if (diffuse != kZero) {
         vec3 view = normalize(position.xyz);
         vec3 halfway = normalize(light - view);
         float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
-        color += (kZero * lightDiffuse * materialDiffuse) * diffuse
-              + (lightColor * lightSpecular * materialSpecular) * specular;
+        color += (lightColor * lightIntensity) * materialSpecular * specular;
     }
     outColor = color;
     outMainTexCoord = isMainSphereMap ? makeSphereMap(position, normal) : inTexCoord;
