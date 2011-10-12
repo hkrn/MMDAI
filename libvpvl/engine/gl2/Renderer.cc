@@ -418,6 +418,7 @@ public:
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_hasTextureUniformLocation(0),
+          m_hasColorVertexUniformLocation(0),
           m_textureUniformLocation(0),
           m_opacityUniformLocation(0)
     {
@@ -433,6 +434,7 @@ public:
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_hasTextureUniformLocation = 0;
+        m_hasColorVertexUniformLocation = 0;
         m_textureUniformLocation = 0;
         m_opacityUniformLocation = 0;
     }
@@ -450,6 +452,7 @@ public:
             m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
             m_hasTextureUniformLocation = glGetUniformLocation(m_program, "hasTexture");
+            m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
             m_textureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
             m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
         }
@@ -469,6 +472,9 @@ public:
     void setColor(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_colorAttributeLocation);
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setHasColor(bool value) {
+        glUniform1f(m_hasColorVertexUniformLocation, value ? 1 : 0);
     }
     void setNormalMatrix(const float value[16]) {
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
@@ -514,6 +520,7 @@ private:
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_hasTextureUniformLocation;
+    GLuint m_hasColorVertexUniformLocation;
     GLuint m_textureUniformLocation;
     GLuint m_opacityUniformLocation;
 };
@@ -758,6 +765,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
         program->setNormal(normalPtr, stride);
         program->setTexCoord(texcoordPtr, stride);
         program->setColor(colorPtr, stride);
+        program->setHasColor(mesh->HasVertexColors(0));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         program->resetTextureState();
@@ -1359,10 +1367,10 @@ void Renderer::drawBoneTransform(vpvl::Bone *bone)
         glDisable(GL_LIGHTING);
         glDisable(GL_TEXTURE_2D);
         glPushMatrix();
-        btTransform t = bone->localTransform();
+        const btTransform &t = bone->localTransform();
         btScalar orthoLen = 1.0f;
         if (bone->hasParent()) {
-            btTransform pt = bone->parent()->localTransform();
+            const btTransform &pt = bone->parent()->localTransform();
             orthoLen = btMin(orthoLen, pt.getOrigin().distance(t.getOrigin()));
         }
         m_debugDrawer->drawTransform(t, orthoLen);

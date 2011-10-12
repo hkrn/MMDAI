@@ -14,6 +14,7 @@ uniform vec4 materialDiffuse;
 uniform vec4 materialEmission;
 uniform vec4 materialSpecular;
 uniform float materialShininess;
+uniform bool hasColorVertex;
 attribute vec4 inColor;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
@@ -29,7 +30,14 @@ void main() {
     vec3 normal = normalize(normalMatrix * inNormal);
     vec3 light = normalize(lightPosition - position.xyz);
     float diffuse = max(dot(light, normal), kZero);
-    vec4 color = lightColor * lightAmbient * materialAmbient + inColor + materialEmission;
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    if (hasColorVertex) {
+        color += lightColor * inColor;
+    }
+    else {
+        color += lightColor * lightAmbient * materialAmbient;
+    }
+    color += materialEmission;
     if (diffuse != kZero) {
         vec3 view = normalize(position.xyz);
         vec3 halfway = normalize(light - view);
