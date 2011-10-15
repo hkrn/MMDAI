@@ -271,9 +271,10 @@ endif()
 
 # extra renderer program with Qt
 option(VPVL_BUILD_QT "Build a renderer program using Qt 4.7 (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
+option(VPVL_BUILD_QT_WITH_OPENCV "Build a renderer program with recording feature using OpenCV (default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_QT)
   find_package(Qt4 4.7 REQUIRED QtCore QtGui QtOpenGL)
-  if(1)
+  if(VPVL_BUILD_QT_WITH_OPENCV)
     find_package(OpenCV)
     set(vpvl_qt_sources render/qt/extended.cc)
     add_executable(vpvl_qt ${vpvl_qt_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
