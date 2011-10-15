@@ -998,7 +998,7 @@ void PMDModel::release()
     m_edgeIndicesCount = 0;
     m_error = kNoError;
     m_enableSimulation = false;
-    m_enableToon = false;
+    m_enableToon = true;
     m_visible = false;
 }
 
