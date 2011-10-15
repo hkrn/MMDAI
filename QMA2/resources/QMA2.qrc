@@ -5,6 +5,7 @@
         <file alias="Qt">licenses/Qt</file>
         <file alias="MMDAgent">licenses/MMDAgent</file>
         <file alias="GLEW">licenses/GLEW</file>
+        <file alias="OpenCV">licenses/OpenCV</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>

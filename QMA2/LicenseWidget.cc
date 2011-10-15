@@ -84,6 +84,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+    addLibrary("OpenCV", "New BSD", "http://opencv.willowgarage.com", "OpenCV");
     addLibrary("Open Asset Import Library", "New BSD", "http://assimp.sf.net", "Assimp");
     addLibrary("OpenGL Extension Wranger", "New BSD", "http://glew.sf.net", "GLEW");
     addLibrary("BulletPhysics", "zlib", "http://bulletphysics.org/wordpress/", "Bullet");
