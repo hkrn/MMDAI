@@ -327,7 +327,8 @@ int VMDMotion::maxFrameIndex() const
 
 bool VMDMotion::isReachedTo(float atEnd) const
 {
-    return m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd;
+    // force inactive motion is reached
+    return !m_active || (m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd);
 }
 
 bool VMDMotion::isFull() const
