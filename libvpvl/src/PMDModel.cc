@@ -271,12 +271,21 @@ void PMDModel::resetMotion()
     updateBoneFromSimulation();
 }
 
-bool PMDModel::isMotionReached(float atEnd)
+int PMDModel::maxFrameIndex() const
+{
+    const uint32_t nMotions = m_motions.count();
+    int max = 0;
+    for (uint32_t i = 0; i < nMotions; i++)
+        btSetMax(max, m_motions[i]->maxFrameIndex());
+    return max;
+}
+
+bool PMDModel::isMotionReachedTo(float frameIndex) const
 {
     const uint32_t nMotions = m_motions.count();
     bool ret = true;
     for (uint32_t i = 0; i < nMotions; i++)
-        ret = ret && m_motions[i]->isReached(atEnd);
+        ret = ret && m_motions[i]->isReachedTo(frameIndex);
     return ret;
 }
 

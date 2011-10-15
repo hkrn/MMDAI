@@ -213,12 +213,19 @@ public:
     void resetMotion();
 
     /**
-     * Check whether all motions of the model are reached to the end.
+     * Returns the max frame index of all motions.
+     *
+     * @return max frame index
+     */
+    int maxFrameIndex() const;
+
+    /**
+     * Check whether all motions of the model are reached to the frame index.
      *
      * @param atEnd A frame index to check
-     * @return True if all motions are reached to the end
+     * @return True if all motions are reached to the frame index
      */
-    bool isMotionReached(float atEnd);
+    bool isMotionReachedTo(float frameIndex) const;
 
     /**
      * Seek all motions of the model to the specified frame index.

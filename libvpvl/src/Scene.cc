@@ -322,12 +322,26 @@ void Scene::resetMotion()
     }
 }
 
-bool Scene::isMotionReached(float atEnd)
+int Scene::maxFrameIndex() const
+{
+    const uint32_t nModels = m_models.count();
+    int max = 0;
+    for (uint32_t i = 0; i < nModels; i++)
+        btSetMax(max, m_models[i]->maxFrameIndex());
+    return max;
+}
+
+bool Scene::isMotionFinished() const
+{
+    return isMotionReachedTo(maxFrameIndex());
+}
+
+bool Scene::isMotionReachedTo(float atEnd) const
 {
     const uint32_t nModels = m_models.count();
     bool ret = true;
     for (uint32_t i = 0; i < nModels; i++)
-        ret = ret && m_models[i]->isMotionReached(atEnd);
+        ret = ret && m_models[i]->isMotionReachedTo(atEnd);
     return ret;
 }
 

@@ -320,13 +320,12 @@ void VMDMotion::reset()
     m_faceMotion.reset();
 }
 
-bool VMDMotion::isReached() const
+int VMDMotion::maxFrameIndex() const
 {
-    return m_boneMotion.currentIndex() >= m_boneMotion.maxIndex()
-            && m_faceMotion.currentIndex()>= m_faceMotion.maxIndex();
+    return btMax(m_boneMotion.maxIndex(), m_faceMotion.maxIndex());
 }
 
-bool VMDMotion::isReached(float atEnd) const
+bool VMDMotion::isReachedTo(float atEnd) const
 {
     return m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd;
 }
