@@ -554,8 +554,8 @@ void MainWindow::retranslate()
     m_actionSaveAssetMetadata->setStatusTip(tr("Save current asset metadata as a VAC."));
     m_actionExportImage->setText(tr("Export scene as image"));
     m_actionExportImage->setStatusTip(tr("Export current scene as an image."));
-    m_actionExportVideo->setText(tr("Export all scene as video"));
-    m_actionExportVideo->setStatusTip(tr("Export whole scene as a video."));
+    m_actionExportVideo->setText(tr("Export scene as video"));
+    m_actionExportVideo->setStatusTip(tr("Export current scene as a video."));
     m_actionSetCamera->setText(tr("Set camera motion"));
     m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
@@ -855,16 +855,29 @@ void MainWindow::exportImage()
 
 void MainWindow::exportVideo()
 {
-    delete m_exportingVideoDialog;
-    m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
-    m_exportingVideoDialog->show();
+    if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+        delete m_exportingVideoDialog;
+        m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
+        m_exportingVideoDialog->show();
+    }
+    else {
+        QMessageBox::warning(this, tr("No motion to export."),
+                             tr("Create or load a motion."));
+    }
 }
 
 void MainWindow::startExportingVideo()
 {
     m_exportingVideoDialog->close();
+    int fromIndex = m_exportingVideoDialog->fromIndex();
+    int toIndex = m_exportingVideoDialog->toIndex();
+    if (fromIndex == toIndex) {
+        QMessageBox::warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
+                             tr("Specify different value of \"Index from\" and \"Index to\"."));
+        return;
+    }
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
-                                             tr("Export whole scene as video"),
+                                             tr("Export scene as video"),
                                              tr("Video (*.avi)"));
     if (!filename.isEmpty()) {
         QProgressDialog *progress = new QProgressDialog(this);
@@ -882,8 +895,6 @@ void MainWindow::startExportingVideo()
         if (writer.isOpened()) {
             const vpvl::Scene *scene = m_sceneWidget->scene();
             const QString &format = tr("Exporting frame %1 of %2...");
-            int fromIndex = m_exportingVideoDialog->fromIndex();
-            int toIndex = m_exportingVideoDialog->toIndex();
             int maxRangeIndex = toIndex - fromIndex;
             progress->setRange(0, maxRangeIndex);
             m_sceneWidget->stop();
@@ -930,7 +941,7 @@ void MainWindow::startExportingVideo()
         }
         else {
             QMessageBox::warning(this, tr("Failed exporting video."),
-                                 tr("Specified filepath cannot write to save video."));
+                                 tr("Specified filepath cannot write to export a video."));
         }
         delete progress;
     }
