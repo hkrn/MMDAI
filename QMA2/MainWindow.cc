@@ -20,6 +20,64 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "util.h"
 
+ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *scene) : QDialog(parent)
+{
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    m_widthBox = new QSpinBox();
+    m_widthBox->setRange(scene->minimumWidth(), scene->maximumWidth());
+    m_heightBox = new QSpinBox();
+    m_heightBox->setRange(scene->minimumHeight(), scene->maximumHeight());
+    m_fromIndexBox = new QSpinBox();
+    int maxFrameIndex = scene->scene()->maxFrameIndex();
+    m_fromIndexBox->setRange(0, maxFrameIndex);
+    m_toIndexBox = new QSpinBox();
+    m_toIndexBox->setRange(0, maxFrameIndex);
+    m_toIndexBox->setValue(maxFrameIndex);
+    m_includeGridBox = new QCheckBox(tr("Include grid field"));
+    QGridLayout *gridLayout = new QGridLayout();
+    gridLayout->addWidget(new QLabel(tr("Width")), 0, 0);
+    gridLayout->addWidget(m_widthBox, 0, 1);
+    gridLayout->addWidget(new QLabel(tr("Height")), 0, 2);
+    gridLayout->addWidget(m_heightBox, 0, 3);
+    gridLayout->addWidget(new QLabel(tr("Keyframe from")), 1, 0);
+    gridLayout->addWidget(m_fromIndexBox, 1, 1);
+    gridLayout->addWidget(new QLabel(tr("Keyframe to")), 1, 2);
+    gridLayout->addWidget(m_toIndexBox, 1, 3);
+    mainLayout->addLayout(gridLayout);
+    mainLayout->addWidget(m_includeGridBox, 0, Qt::AlignCenter);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+    connect(buttons, SIGNAL(accepted()), parent, SLOT(startExportingVideo()));
+    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
+    mainLayout->addWidget(buttons);
+    setWindowTitle(tr("Exporting video setting"));
+    setLayout(mainLayout);
+}
+
+int ExportVideoDialog::sceneWidth() const
+{
+    return m_widthBox->value();
+}
+
+int ExportVideoDialog::sceneHeight() const
+{
+    return m_heightBox->value();
+}
+
+int ExportVideoDialog::fromIndex() const
+{
+    return m_fromIndexBox->value();
+}
+
+int ExportVideoDialog::toIndex() const
+{
+    return m_toIndexBox->value();
+}
+
+bool ExportVideoDialog::includesGrid() const
+{
+    return m_includeGridBox->isChecked();
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
@@ -31,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_transformWidget(0),
     m_boneMotionModel(0),
     m_faceMotionModel(0),
+    m_exportingVideoDialog(0),
     m_model(0),
     m_bone(0),
     m_position(0.0f, 0.0f, 0.0f),
@@ -275,11 +334,11 @@ void MainWindow::buildUI()
     connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
     m_actionSaveMotion = new QAction(this);
     connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveAs()));
-    m_actionSaveImage = new QAction(this);
-    connect(m_actionSaveImage, SIGNAL(triggered()), this, SLOT(saveImage()));
+    m_actionExportImage = new QAction(this);
+    connect(m_actionExportImage, SIGNAL(triggered()), this, SLOT(exportImage()));
+    m_actionExportVideo = new QAction(this);
+    connect(m_actionExportVideo, SIGNAL(triggered()), this, SLOT(exportVideo()));
     m_actionExit = new QAction(this);
-    m_actionSaveVideo = new QAction(this);
-    connect(m_actionSaveVideo, SIGNAL(triggered()), this, SLOT(saveVideo()));
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
@@ -385,8 +444,8 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionSaveAssetMetadata);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionSaveMotion);
-    m_menuFile->addAction(m_actionSaveImage);
-    m_menuFile->addAction(m_actionSaveVideo);
+    m_menuFile->addAction(m_actionExportImage);
+    m_menuFile->addAction(m_actionExportVideo);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
@@ -477,10 +536,10 @@ void MainWindow::retranslate()
     m_actionAddAsset->setEnabled(vpvl::Asset::isSupported());
     m_actionNewMotion->setText(tr("New motion"));
     m_actionNewMotion->setStatusTip(tr("Insert a new motion to the selected model."));
-    m_actionInsertToAllModels->setText(tr("Insert to all models"));
+    m_actionInsertToAllModels->setText(tr("Insert motion to all models"));
     m_actionInsertToAllModels->setStatusTip(tr("Insert a motion to the all models."));
     m_actionInsertToAllModels->setShortcut(tr("Ctrl+Shift+V"));
-    m_actionInsertToSelectedModel->setText(tr("Insert to selected model"));
+    m_actionInsertToSelectedModel->setText(tr("Insert motion to selected model"));
     m_actionInsertToSelectedModel->setStatusTip(tr("Insert a motion to the selected model."));
     m_actionInsertToSelectedModel->setShortcut(tr("Ctrl+Alt+Shift+V"));
     m_actionSaveMotion->setText(tr("Save motion as VMD"));
@@ -493,10 +552,10 @@ void MainWindow::retranslate()
     m_actionLoadAssetMetadata->setStatusTip(tr("Load asset from VAC file."));
     m_actionSaveAssetMetadata->setText(tr("Save current asset metadata"));
     m_actionSaveAssetMetadata->setStatusTip(tr("Save current asset metadata as a VAC."));
-    m_actionSaveImage->setText(tr("Save scene as image"));
-    m_actionSaveImage->setStatusTip(tr("Save current scene as an image."));
-    m_actionSaveVideo->setText(tr("Save all scene as video"));
-    m_actionSaveVideo->setStatusTip(tr("Save whole scene as a video."));
+    m_actionExportImage->setText(tr("Export scene as image"));
+    m_actionExportImage->setStatusTip(tr("Export current scene as an image."));
+    m_actionExportVideo->setText(tr("Export all scene as video"));
+    m_actionExportVideo->setStatusTip(tr("Export whole scene as a video."));
     m_actionSetCamera->setText(tr("Set camera motion"));
     m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
@@ -770,10 +829,10 @@ void MainWindow::saveAssetMetadata()
     m_sceneWidget->saveMetadataFromAsset(m_tabWidget->assetWidget()->currentAsset());
 }
 
-void MainWindow::saveImage()
+void MainWindow::exportImage()
 {
     const QString &filename = openSaveDialog("mainWindow/lastImageDirectory",
-                                             tr("Save scene as image"),
+                                             tr("Export scene as image"),
                                              tr("Image (*bmp, *.jpg, *.png)"));
     if (!filename.isEmpty()) {
         vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
@@ -790,56 +849,87 @@ void MainWindow::saveImage()
         if (!image.isNull())
             image.save(filename);
         else
-            qWarning("Failed saving scene as an image: %s", qPrintable(filename));
+            qWarning("Failed exporting scene as an image: %s", qPrintable(filename));
     }
 }
 
-void MainWindow::saveVideo()
+void MainWindow::exportVideo()
 {
+    delete m_exportingVideoDialog;
+    m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
+    m_exportingVideoDialog->show();
+}
+
+void MainWindow::startExportingVideo()
+{
+    m_exportingVideoDialog->close();
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
-                                             tr("Save whole scene as video"),
+                                             tr("Export whole scene as video"),
                                              tr("Video (*.avi)"));
     if (!filename.isEmpty()) {
         QProgressDialog *progress = new QProgressDialog(this);
-        progress->setLabelText(tr("Exporting video..."));
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::WindowModal);
+#ifdef Q_OS_MACX
         int fourcc = CV_FOURCC('a', 'v', 'c', '1');
+#else
+        int fourcc = CV_FOURCC('D', 'I', 'B', ' ');
+#endif
         int fps = m_sceneWidget->preferredFPS();
-        cv::Size size(m_sceneWidget->width(), m_sceneWidget->height());
-        cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, size);
+        cv::Size vsize(m_exportingVideoDialog->sceneWidth(), m_exportingVideoDialog->sceneHeight());
+        cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, vsize);
         m_sceneWidget->setPreferredFPS(30);
         if (writer.isOpened()) {
             const vpvl::Scene *scene = m_sceneWidget->scene();
-            progress->setRange(0, scene->maxFrameIndex());
+            const QString &format = tr("Exporting frame %1 of %2...");
+            int fromIndex = m_exportingVideoDialog->fromIndex();
+            int toIndex = m_exportingVideoDialog->toIndex();
+            int maxRangeIndex = toIndex - fromIndex;
+            progress->setRange(0, maxRangeIndex);
             m_sceneWidget->stop();
             m_sceneWidget->seekMotion(0.0f);
+            m_sceneWidget->advanceMotion(fromIndex);
+            const QRect mainGeomtry = geometry();
+            const QSize sceneSize(vsize.width, vsize.height),
+                    minSize = minimumSize(), maxSize = maximumSize();
+            QSizePolicy policy = sizePolicy();
+            m_sceneWidget->resize(sceneSize);
+            adjustSize();
+            setMinimumSize(size());
+            setMaximumSize(size());
+            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
             vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
             bool visibleGrid = m_sceneWidget->isGridVisible();
-            m_sceneWidget->setGridVisible(false);
+            m_sceneWidget->setGridVisible(m_exportingVideoDialog->includesGrid());
             m_sceneWidget->setHandlesVisible(false);
             m_sceneWidget->setSelectedModel(0);
-            while (!scene->isMotionFinished()) {
+            m_sceneWidget->updateGL();
+            progress->setLabelText(format.arg(0).arg(maxRangeIndex));
+            while (!scene->isMotionReachedTo(toIndex)) {
                 if (progress->wasCanceled())
                     break;
                 QImage image = m_sceneWidget->grabFrameBuffer(true);
-                m_sceneWidget->updateGL();
                 cv::Mat mat(image.height(), image.width(), CV_8UC4, image.bits(), image.bytesPerLine());
                 cv::Mat mat2(mat.rows, mat.cols, CV_8UC3);
                 int fromTo[] = { 0, 0, 1, 1, 2, 2 };
                 cv::mixChannels(&mat, 1, &mat2, 1, fromTo, 3);
                 writer << mat2;
-                progress->setValue(progress->value() + 1);
+                int value = progress->value() + 1;
+                progress->setValue(value);
+                progress->setLabelText(format.arg(value).arg(maxRangeIndex));
                 m_sceneWidget->advanceMotion(1.0f);
             }
             m_sceneWidget->setGridVisible(visibleGrid);
             m_sceneWidget->setHandlesVisible(true);
             m_sceneWidget->setSelectedModel(selected);
             m_sceneWidget->setPreferredFPS(fps);
-            progress->setResult(1);
+            setSizePolicy(policy);
+            setMinimumSize(minSize);
+            setMaximumSize(maxSize);
+            setGeometry(mainGeomtry);
         }
         else {
-            QMessageBox::warning(this, tr("Failed saving video."),
+            QMessageBox::warning(this, tr("Failed exporting video."),
                                  tr("Specified filepath cannot write to save video."));
         }
         delete progress;

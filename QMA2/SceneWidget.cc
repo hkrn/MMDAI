@@ -213,8 +213,9 @@ void SceneWidget::insertMotionToAllModels()
     vpvl::VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastVMDDirectory",
                                                                      tr("Open VMD (for model) file"),
                                                                      tr("VMD file (*.vmd)")));
-    if (motion)
-        selectedModel()->updateImmediate();
+    vpvl::PMDModel *selected = selectedModel();
+    if (motion && selected)
+        selected->updateImmediate();
 }
 
 vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)

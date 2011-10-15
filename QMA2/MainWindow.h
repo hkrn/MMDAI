@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QtCore/QSettings>
+#include <QtGui/QDialog>
 #include <QtGui/QMainWindow>
 #include <vpvl/Common.h>
 
@@ -16,12 +17,16 @@ class MainWindow;
 }
 
 class BoneMotionModel;
+class ExportVideoDialog;
 class FaceMotionModel;
 class LicenseWidget;
 class SceneWidget;
 class TabWidget;
 class TimelineTabWidget;
 class TransformWidget;
+class QCheckBox;
+class QPushButton;
+class QSpinBox;
 class QUndoGroup;
 
 class MainWindow : public QMainWindow
@@ -64,8 +69,9 @@ private slots:
     void resetAllBones();
     void openBoneDialog();
     void saveAssetMetadata();
-    void saveImage();
-    void saveVideo();
+    void exportImage();
+    void exportVideo();
+    void startExportingVideo();
     void addNewMotion();
 
     void startSceneUpdate();
@@ -89,6 +95,7 @@ private:
     TransformWidget *m_transformWidget;
     BoneMotionModel *m_boneMotionModel;
     FaceMotionModel *m_faceMotionModel;
+    ExportVideoDialog *m_exportingVideoDialog;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;
@@ -109,8 +116,8 @@ private:
     QAction *m_actionSaveModelPose;
     QAction *m_actionLoadAssetMetadata;
     QAction *m_actionSaveAssetMetadata;
-    QAction *m_actionSaveImage;
-    QAction *m_actionSaveVideo;
+    QAction *m_actionExportImage;
+    QAction *m_actionExportVideo;
     QAction *m_actionExit;
     QAction *m_actionAbout;
     QAction *m_actionAboutQt;
@@ -157,6 +164,27 @@ private:
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
     QMenu *m_menuHelp;
+};
+
+class ExportVideoDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    ExportVideoDialog(MainWindow *parent, SceneWidget *scene);
+
+    int sceneWidth() const;
+    int sceneHeight() const;
+    int fromIndex() const;
+    int toIndex() const;
+    bool includesGrid() const;
+
+private:
+    QSpinBox *m_widthBox;
+    QSpinBox *m_heightBox;
+    QSpinBox *m_fromIndexBox;
+    QSpinBox *m_toIndexBox;
+    QCheckBox *m_includeGridBox;
 };
 
 #endif // MAINWINDOW_H
