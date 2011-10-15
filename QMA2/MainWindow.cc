@@ -16,6 +16,8 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "util.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -276,6 +278,8 @@ void MainWindow::buildUI()
     m_actionSaveImage = new QAction(this);
     connect(m_actionSaveImage, SIGNAL(triggered()), this, SLOT(saveImage()));
     m_actionExit = new QAction(this);
+    m_actionSaveVideo = new QAction(this);
+    connect(m_actionSaveVideo, SIGNAL(triggered()), this, SLOT(saveVideo()));
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
@@ -382,6 +386,7 @@ void MainWindow::buildUI()
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionSaveMotion);
     m_menuFile->addAction(m_actionSaveImage);
+    m_menuFile->addAction(m_actionSaveVideo);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
@@ -490,6 +495,8 @@ void MainWindow::retranslate()
     m_actionSaveAssetMetadata->setStatusTip(tr("Save current asset metadata as a VAC."));
     m_actionSaveImage->setText(tr("Save scene as image"));
     m_actionSaveImage->setStatusTip(tr("Save current scene as an image."));
+    m_actionSaveVideo->setText(tr("Save all scene as video"));
+    m_actionSaveVideo->setStatusTip(tr("Save whole scene as a video."));
     m_actionSetCamera->setText(tr("Set camera motion"));
     m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
@@ -784,6 +791,58 @@ void MainWindow::saveImage()
             image.save(filename);
         else
             qWarning("Failed saving scene as an image: %s", qPrintable(filename));
+    }
+}
+
+void MainWindow::saveVideo()
+{
+    const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
+                                             tr("Save whole scene as video"),
+                                             tr("Video (*.avi)"));
+    if (!filename.isEmpty()) {
+        QProgressDialog *progress = new QProgressDialog(this);
+        progress->setLabelText(tr("Exporting video..."));
+        progress->setCancelButtonText(tr("Cancel"));
+        progress->setWindowModality(Qt::WindowModal);
+        int fourcc = CV_FOURCC('a', 'v', 'c', '1');
+        int fps = m_sceneWidget->preferredFPS();
+        cv::Size size(m_sceneWidget->width(), m_sceneWidget->height());
+        cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, size);
+        m_sceneWidget->setPreferredFPS(30);
+        if (writer.isOpened()) {
+            const vpvl::Scene *scene = m_sceneWidget->scene();
+            progress->setRange(0, scene->maxFrameIndex());
+            m_sceneWidget->stop();
+            m_sceneWidget->seekMotion(0.0f);
+            vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
+            bool visibleGrid = m_sceneWidget->isGridVisible();
+            m_sceneWidget->setGridVisible(false);
+            m_sceneWidget->setHandlesVisible(false);
+            m_sceneWidget->setSelectedModel(0);
+            while (!scene->isMotionFinished()) {
+                if (progress->wasCanceled())
+                    break;
+                QImage image = m_sceneWidget->grabFrameBuffer(true);
+                m_sceneWidget->updateGL();
+                cv::Mat mat(image.height(), image.width(), CV_8UC4, image.bits(), image.bytesPerLine());
+                cv::Mat mat2(mat.rows, mat.cols, CV_8UC3);
+                int fromTo[] = { 0, 0, 1, 1, 2, 2 };
+                cv::mixChannels(&mat, 1, &mat2, 1, fromTo, 3);
+                writer << mat2;
+                progress->setValue(progress->value() + 1);
+                m_sceneWidget->advanceMotion(1.0f);
+            }
+            m_sceneWidget->setGridVisible(visibleGrid);
+            m_sceneWidget->setHandlesVisible(true);
+            m_sceneWidget->setSelectedModel(selected);
+            m_sceneWidget->setPreferredFPS(fps);
+            progress->setResult(1);
+        }
+        else {
+            QMessageBox::warning(this, tr("Failed saving video."),
+                                 tr("Specified filepath cannot write to save video."));
+        }
+        delete progress;
     }
 }
 

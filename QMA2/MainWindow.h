@@ -65,6 +65,7 @@ private slots:
     void openBoneDialog();
     void saveAssetMetadata();
     void saveImage();
+    void saveVideo();
     void addNewMotion();
 
     void startSceneUpdate();
@@ -109,6 +110,7 @@ private:
     QAction *m_actionLoadAssetMetadata;
     QAction *m_actionSaveAssetMetadata;
     QAction *m_actionSaveImage;
+    QAction *m_actionSaveVideo;
     QAction *m_actionExit;
     QAction *m_actionAbout;
     QAction *m_actionAboutQt;

@@ -94,9 +94,11 @@ public:
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
     const QPointF objectCoordinates(const QPoint &input) const;
+    int preferredFPS() const { return m_defaultFPS; }
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
+    bool isPlaying() const { return m_playing; }
 
 public slots:
     void play();
