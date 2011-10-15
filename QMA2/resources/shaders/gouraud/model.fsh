@@ -13,6 +13,8 @@ varying vec2 outSubTexCoord;
 varying vec2 outToonTexCoord;
 const float kAlphaThreshold = 0.05;
 
+#define ENABLE_ALPHA_TEST 1
+
 void main() {
     vec4 color = outColor;
     if (hasMainTexture) {
@@ -34,6 +36,13 @@ void main() {
             color *= texture2D(subTexture, outSubTexCoord);
         }
     }
+#if ENABLE_ALPHA_TEST
+    if (color.a >= kAlphaThreshold)
+        gl_FragColor = color;
+    else
+        discard;
+#else
     gl_FragColor = color;
+#endif
 }
 
