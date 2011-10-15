@@ -104,6 +104,7 @@ PMDModel::PMDModel()
       m_edgeOffset(0.03f),
       m_selfShadowDensityCoef(0.0f),
       m_enableSimulation(false),
+      m_enableToon(true),
       m_visible(false)
 {
     internal::zerofill(&m_name, sizeof(m_name));
@@ -997,6 +998,7 @@ void PMDModel::release()
     m_edgeIndicesCount = 0;
     m_error = kNoError;
     m_enableSimulation = false;
+    m_enableToon = false;
     m_visible = false;
 }
 

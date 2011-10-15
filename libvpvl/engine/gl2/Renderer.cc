@@ -1143,7 +1143,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setLightSpecular(m_scene->lightSpecular());
     m_modelProgram->setLightIntensity(m_scene->lightIntensity());
 
-    const bool enableToon = true;
+    const bool enableToon = model->isToonEnabled();
     // toon
     if (enableToon) {
         // shadow map

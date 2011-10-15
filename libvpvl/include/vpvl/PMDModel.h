@@ -458,6 +458,9 @@ public:
     bool isSimulationEnabled() const {
         return m_enableSimulation;
     }
+    bool isToonEnabled() const {
+        return m_enableToon;
+    }
     bool isVisible() const {
         return m_visible;
     }
@@ -561,8 +564,8 @@ public:
     void setEdgeOffset(float value) {
         m_edgeOffset = value * 0.03f;
     }
-    void setEnableSimulation(bool value) {
-        m_enableSimulation = value;
+    void setToonEnable(bool value) {
+        m_enableToon = value;
     }
     void setVisible(bool value) {
         m_visible = value;
@@ -641,6 +644,7 @@ private:
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
     bool m_enableSimulation;
+    bool m_enableToon;
     bool m_visible;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(PMDModel)
