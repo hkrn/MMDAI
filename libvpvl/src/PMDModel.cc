@@ -45,6 +45,8 @@
 VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
+#include <float.h>
+
 namespace vpvl
 {
 
@@ -58,6 +60,16 @@ public:
         return left->priority() > right->priority();
     }
 };
+
+#pragma pack(push, 1)
+struct Header
+{
+    uint8_t signature[3];
+    float version;
+    uint8_t name[20];
+    uint8_t comment[256];
+};
+#pragma pack(pop)
 
 struct SkinVertex
 {
@@ -501,32 +513,32 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     // Header[3] + Version[4] + Name[20] + Comment[256]
-    if (!data || 283 > rest) {
+    if (!data || sizeof(Header) > rest) {
         m_error = kInvalidHeaderError;
         return false;
     }
 
     uint8_t *ptr = const_cast<uint8_t *>(data);
+    Header *header = reinterpret_cast<Header *>(ptr);
     info.basePtr = ptr;
 
     // Check the signature and version is correct
-    if (memcmp(ptr, "Pmd", 3) != 0) {
+    if (memcmp(header->signature, "Pmd", 3) != 0) {
         m_error = kInvalidSignatureError;
         return false;
     }
-    ptr += 3;
-    if (1.0f != *reinterpret_cast<float *>(ptr)) {
+    float max = FLT_MIN;
+    float actual = header->version;
+    if (1.0f != header->version) {
         m_error = kInvalidVersionError;
         return false;
     }
 
     // Name and Comment (in Shift-JIS)
-    ptr += sizeof(float);
-    info.namePtr = ptr;
-    ptr += kNameSize;
-    info.commentPtr = ptr;
-    ptr += kDescriptionSize;
-    rest -= 283;
+    info.namePtr = header->name;
+    info.commentPtr = header->comment;
+    ptr += sizeof(Header);
+    rest -= sizeof(Header);
 
     size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
             nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
