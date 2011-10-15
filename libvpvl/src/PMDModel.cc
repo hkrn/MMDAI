@@ -537,8 +537,6 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidSignatureError;
         return false;
     }
-    float max = FLT_MIN;
-    float actual = header->version;
     if (1.0f != header->version) {
         m_error = kInvalidVersionError;
         return false;
