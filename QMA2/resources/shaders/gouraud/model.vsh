@@ -4,7 +4,7 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 lightColor;
-uniform vec3 lightPosition;
+uniform vec4 lightPosition;
 uniform vec4 lightAmbient;
 uniform vec4 lightDiffuse;
 uniform vec4 lightSpecular;
@@ -36,7 +36,7 @@ vec2 makeSphereMap(vec4 position, vec3 normal) {
 
 void main() {
     vec4 position = modelViewMatrix * inPosition;
-    vec3 light = normalize(((modelViewMatrix * vec4(lightPosition, kOne)).xyz) - position.xyz);
+    vec3 light = normalize(normalize((modelViewMatrix * lightPosition).xyz) - position.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
     vec4 color = (lightColor * lightIntensity * kTwo) * materialAmbient;
     float diffuse = max(dot(normal, light), kZero);

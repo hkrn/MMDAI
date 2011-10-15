@@ -226,8 +226,8 @@ public:
     void setLightColor(const btVector4 &value) {
         glUniform4fv(m_lightColorUniformLocation, 1, value);
     }
-    void setLightPosition(const btVector3 &value) {
-        glUniform3fv(m_lightPositionUniformLocation, 1, value);
+    void setLightPosition(const btVector4 &value) {
+        glUniform4fv(m_lightPositionUniformLocation, 1, value);
     }
     void setLightAmbient(const btVector4 &value) {
         glUniform4fv(m_lightAmbientUniformLocation, 1, value);
@@ -753,7 +753,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setLightAmbient(s->lightAmbient());
     program->setLightColor(s->lightColor());
     program->setLightDiffuse(s->lightDiffuse());
-    program->setLightPosition(s->lightPosition());
+    program->setLightPosition(s->lightPosition4());
     program->setLightSpecular(s->lightSpecular());
     for (uint32_t i = 0; i < nMeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -1139,7 +1139,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setLightAmbient(m_scene->lightAmbient());
     m_modelProgram->setLightColor(m_scene->lightColor());
     m_modelProgram->setLightDiffuse(m_scene->lightDiffuse());
-    m_modelProgram->setLightPosition(m_scene->lightPosition());
+    m_modelProgram->setLightPosition(m_scene->lightPosition4());
     m_modelProgram->setLightSpecular(m_scene->lightSpecular());
     m_modelProgram->setLightIntensity(m_scene->lightIntensity());
 
@@ -1267,7 +1267,7 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     m_shadowProgram->setLightAmbient(m_scene->lightAmbient());
     m_shadowProgram->setLightColor(m_scene->lightColor());
     m_shadowProgram->setLightDiffuse(m_scene->lightDiffuse());
-    m_shadowProgram->setLightPosition(m_scene->lightPosition());
+    m_shadowProgram->setLightPosition(m_scene->lightPosition4());
     m_shadowProgram->setLightSpecular(m_scene->lightSpecular());
     m_shadowProgram->setModelViewMatrix(modelViewMatrix);
     m_shadowProgram->setProjectionMatrix(projectionMatrix);

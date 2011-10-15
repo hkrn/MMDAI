@@ -107,6 +107,9 @@ public:
     const Color &lightColor() const {
         return m_lightColor;
     }
+    const Vector4 &lightPosition4() const {
+        return m_lightPosition;
+    }
     const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
@@ -175,7 +178,7 @@ private:
     Quaternion m_rotation;
     Quaternion m_viewMoveRotation;
     Color m_lightColor;
-    Vector3 m_lightPosition;
+    Vector4 m_lightPosition;
     Color m_lightAmbient;
     Color m_lightDiffuse;
     Color m_lightSpecular;
