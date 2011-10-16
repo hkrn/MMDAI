@@ -81,6 +81,10 @@ macx {
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
+  # must add -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" to libvpvl and bullet
+  CONFIG(release, debug|release) {
+    CONFIG += x86 x86_64
+  }
 }
 else:linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
