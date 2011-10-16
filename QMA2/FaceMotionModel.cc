@@ -299,6 +299,7 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         }
         m_motion = motion;
         refreshModel();
+        setModified(false);
         qDebug("Loaded a motion to the model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
     }
     else {
