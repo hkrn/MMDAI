@@ -13,12 +13,15 @@
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
 #include "VPDFile.h"
+#include "util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+
+#ifdef OPENCV_FOUND
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "util.h"
+#endif
 
 ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *scene) : QDialog(parent)
 {
@@ -871,6 +874,7 @@ void MainWindow::exportImage()
 
 void MainWindow::exportVideo()
 {
+#ifdef OPENCV_FOUND
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
         delete m_exportingVideoDialog;
         m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
@@ -880,10 +884,15 @@ void MainWindow::exportVideo()
         QMessageBox::warning(this, tr("No motion to export."),
                              tr("Create or load a motion."));
     }
+#else
+    QMessageBox::warning(this, tr("Exporting video feature is not supported."),
+                         tr("Exporting video is disabled because OpenCV is not linked."));
+#endif
 }
 
 void MainWindow::startExportingVideo()
 {
+#ifdef OPENCV_FOUND
     m_exportingVideoDialog->close();
     int fromIndex = m_exportingVideoDialog->fromIndex();
     int toIndex = m_exportingVideoDialog->toIndex();
@@ -979,6 +988,7 @@ void MainWindow::startExportingVideo()
         }
         delete progress;
     }
+#endif
 }
 
 void MainWindow::addNewMotion()

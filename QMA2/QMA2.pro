@@ -32,14 +32,28 @@ CONFIG(debug, debug|release) {
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
-  exists(../opencv/debug/lib):LIBS += -L../opencv/debug/lib -lopencv_core -lopencv_highgui
+  exists(../opencv/debug/lib) {
+    LIBS += -L../opencv/debug/lib -lopencv_core -lopencv_highgui
+    DEFINES += OPENCV_FOUND
+  }
+  exists(../opencv/msvc-build/lib/Debug) {
+    LIBS += -L../opencv/msvc-build/lib/Debug -lopencv_core231d -lopencv_highgui231d
+    DEFINES += OPENCV_FOUND
+  }
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
-  exists(../opencv/release/lib):LIBS += -L../opencv/release/lib -lopencv_core -lopencv_highgui
+  exists(../opencv/release/lib) {
+    LIBS += -L../opencv/release/lib -lopencv_core -lopencv_highgui
+    DEFINES += OPENCV_FOUND
+  }
+  exists(../opencv/msvc-build/lib/Release) {
+    LIBS += -L../opencv/msvc-build/lib/Release -lopencv_core231 -lopencv_highgui231
+    DEFINES += OPENCV_FOUND
+  }
 }
 
 # based on QtCreator's qmake spec
