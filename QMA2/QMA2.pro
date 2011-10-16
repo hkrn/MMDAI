@@ -14,6 +14,8 @@ exists(../glew/include):INCLUDEPATH += ../glew/include
 exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 exists(../opencv/include):INCLUDEPATH += ../opencv/include
+exists(../opencv/modules/core/include):INCLUDEPATH += ../opencv/modules/core/include
+exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highgui/include
 
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath

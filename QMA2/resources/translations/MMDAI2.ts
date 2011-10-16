@@ -265,7 +265,7 @@
         <translation>%1 について</translation>
     </message>
     <message>
-        <location filename="../../LicenseWidget.cc" line="124"/>
+        <location filename="../../LicenseWidget.cc" line="125"/>
         <source>%1&apos;s license</source>
         <translation>%1 のライセンス</translation>
     </message>
@@ -516,7 +516,7 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="557"/>
-        <location filename="../../MainWindow.cc" line="880"/>
+        <location filename="../../MainWindow.cc" line="885"/>
         <source>Export scene as video</source>
         <translation>場面を動画として出力</translation>
     </message>
@@ -1005,27 +1005,37 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>「フレーム開始」と「フレーム終了」の値を異なる値にしてください。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="944"/>
+        <location filename="../../MainWindow.cc" line="880"/>
+        <source>Value of &quot;Index from&quot; is bigger than &quot;Index to&quot;.</source>
+        <translation>「フレーム開始」の値が「フレーム終了」の値より大きいです。</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="881"/>
+        <source>&quot;Index from&quot; must be less than &quot;Index to&quot;.</source>
+        <translation>「フレーム開始」は「フレーム終了」より小さくしなければなりません。</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="949"/>
         <source>Specified filepath cannot write to export a video.</source>
         <translation>指定されたファイルパスに動画を出力することが出来ませんでした。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="881"/>
+        <location filename="../../MainWindow.cc" line="886"/>
         <source>Video (*.avi)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="884"/>
+        <location filename="../../MainWindow.cc" line="889"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="897"/>
+        <location filename="../../MainWindow.cc" line="902"/>
         <source>Exporting frame %1 of %2...</source>
         <translation>%2 フレームのうち %1 フレームを出力中...</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="943"/>
+        <location filename="../../MainWindow.cc" line="948"/>
         <source>Failed exporting video.</source>
         <translation>動画の出力に失敗しました。</translation>
     </message>

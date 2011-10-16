@@ -23,12 +23,12 @@
 ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *scene) : QDialog(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
+    int maxFrameIndex = scene->scene()->maxFrameIndex();
     m_widthBox = new QSpinBox();
     m_widthBox->setRange(scene->minimumWidth(), scene->maximumWidth());
     m_heightBox = new QSpinBox();
     m_heightBox->setRange(scene->minimumHeight(), scene->maximumHeight());
     m_fromIndexBox = new QSpinBox();
-    int maxFrameIndex = scene->scene()->maxFrameIndex();
     m_fromIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
@@ -874,6 +874,11 @@ void MainWindow::startExportingVideo()
     if (fromIndex == toIndex) {
         QMessageBox::warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
                              tr("Specify different value of \"Index from\" and \"Index to\"."));
+        return;
+    }
+    else if (fromIndex > toIndex) {
+        QMessageBox::warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
+                             tr("\"Index from\" must be less than \"Index to\"."));
         return;
     }
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
