@@ -110,7 +110,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
-    setCentralWidget(m_sceneWidget);
     setWindowTitle(buildWindowTitle());
     statusBar()->show();
 }
@@ -145,6 +144,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
         m_settings.setValue("mainWindow/visibleTabs", m_tabWidget->isVisible());
         m_settings.setValue("mainWindow/visibleTimeline", m_timelineTabWidget->isVisible());
         m_settings.setValue("mainWindow/visibleTransform", m_transformWidget->isVisible());
+        m_settings.setValue("mainWindow/leftSplitterGeometry", m_leftSplitter->saveGeometry());
+        m_settings.setValue("mainWindow/leftSplitterState", m_leftSplitter->saveState());
+        m_settings.setValue("mainWindow/mainSplitterGeometry", m_mainSplitter->saveGeometry());
+        m_settings.setValue("mainWindow/mainSplitterState", m_mainSplitter->saveState());
         event->accept();
     }
     else {
@@ -499,8 +502,8 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
     m_menuView = new QMenu(this);
-    m_menuView->addAction(m_actionViewTab);
-    m_menuView->addAction(m_actionViewTimeline);
+    //m_menuView->addAction(m_actionViewTab);
+    //m_menuView->addAction(m_actionViewTimeline);
     m_menuView->addAction(m_actionViewTransform);
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
@@ -514,13 +517,26 @@ void MainWindow::buildUI()
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
+    resize(980, 674);
 
-    bool visibleTabs = m_settings.value("mainWindow/visibleTabs", QVariant(false)).toBool();
-    bool visibleTimeline = m_settings.value("mainWindow/visibleTimeline", QVariant(false)).toBool();
     bool visibleTransform = m_settings.value("mainWindow/visibleTransform", QVariant(false)).toBool();
-    m_tabWidget->setVisible(visibleTabs);
-    m_timelineTabWidget->setVisible(visibleTimeline);
     m_transformWidget->setVisible(visibleTransform);
+    m_leftSplitter = new QSplitter(Qt::Vertical);
+    m_leftSplitter->setStretchFactor(0, 1);
+    m_leftSplitter->setStretchFactor(1, 0);
+    m_leftSplitter->addWidget(m_timelineTabWidget);
+    m_leftSplitter->addWidget(m_tabWidget);
+    m_leftSplitter->restoreGeometry(m_settings.value("mainWindow/leftSplitterGeometry").toByteArray());
+    m_leftSplitter->restoreState(m_settings.value("mainWindow/leftSplitterState").toByteArray());
+    m_mainSplitter = new QSplitter(Qt::Horizontal);
+    m_mainSplitter->setStretchFactor(0, 0);
+    m_mainSplitter->setStretchFactor(1, 1);
+    m_mainSplitter->addWidget(m_leftSplitter);
+    m_mainSplitter->addWidget(m_sceneWidget);
+    m_mainSplitter->restoreGeometry(m_settings.value("mainWindow/mainSplitterGeometry").toByteArray());
+    m_mainSplitter->restoreState(m_settings.value("mainWindow/mainSplitterState").toByteArray());
+    setCentralWidget(m_mainSplitter);
+    m_mainSplitter->setFocus();
 
     retranslate();
 }
@@ -889,43 +905,51 @@ void MainWindow::startExportingVideo()
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::WindowModal);
 #ifdef Q_OS_MACX
-        int fourcc = CV_FOURCC('a', 'v', 'c', '1');
+        int fourcc = CV_FOURCC('p', 'n', 'g', ' ');
 #else
         int fourcc = CV_FOURCC('D', 'I', 'B', ' ');
 #endif
         int fps = m_sceneWidget->preferredFPS();
-        cv::Size vsize(m_exportingVideoDialog->sceneWidth(), m_exportingVideoDialog->sceneHeight());
-        cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, vsize);
+        int width = m_exportingVideoDialog->sceneWidth();
+        int height = m_exportingVideoDialog->sceneHeight();
+        cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, cv::Size(width, height));
         m_sceneWidget->setPreferredFPS(30);
         if (writer.isOpened()) {
             const vpvl::Scene *scene = m_sceneWidget->scene();
             const QString &format = tr("Exporting frame %1 of %2...");
             int maxRangeIndex = toIndex - fromIndex;
             progress->setRange(0, maxRangeIndex);
-            m_sceneWidget->stop();
-            m_sceneWidget->seekMotion(0.0f);
-            m_sceneWidget->advanceMotion(fromIndex);
             const QRect mainGeomtry = geometry();
-            const QSize sceneSize(vsize.width, vsize.height),
-                    minSize = minimumSize(), maxSize = maximumSize();
+            const QSize minSize = minimumSize(), maxSize = maximumSize(),
+                    videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
             QSizePolicy policy = sizePolicy();
-            m_sceneWidget->resize(sceneSize);
+            int handleWidth = m_mainSplitter->handleWidth();
+            m_leftSplitter->hide();
+            m_mainSplitter->setHandleWidth(0);
+            statusBar()->hide();
+            resize(videoSize);
+            setMinimumSize(videoSize);
+            setMaximumSize(videoSize);
             adjustSize();
-            setMinimumSize(size());
-            setMaximumSize(size());
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
             vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
             bool visibleGrid = m_sceneWidget->isGridVisible();
+            m_sceneWidget->stop();
+            m_sceneWidget->seekMotion(0.0f);
+            m_sceneWidget->advanceMotion(fromIndex);
             m_sceneWidget->setGridVisible(m_exportingVideoDialog->includesGrid());
             m_sceneWidget->setHandlesVisible(false);
             m_sceneWidget->setSelectedModel(0);
+            m_sceneWidget->resize(videoSize);
             m_sceneWidget->updateGL();
             progress->setLabelText(format.arg(0).arg(maxRangeIndex));
             while (!scene->isMotionReachedTo(toIndex)) {
                 if (progress->wasCanceled())
                     break;
-                QImage image = m_sceneWidget->grabFrameBuffer(true);
-                cv::Mat mat(image.height(), image.width(), CV_8UC4, image.bits(), image.bytesPerLine());
+                QImage image = m_sceneWidget->grabFrameBuffer();
+                if (image.width() != width || image.height() != height)
+                    image = image.scaled(width, height);
+                cv::Mat mat(height, width, CV_8UC4, image.bits(), image.bytesPerLine());
                 cv::Mat mat2(mat.rows, mat.cols, CV_8UC3);
                 int fromTo[] = { 0, 0, 1, 1, 2, 2 };
                 cv::mixChannels(&mat, 1, &mat2, 1, fromTo, 3);
@@ -934,11 +958,16 @@ void MainWindow::startExportingVideo()
                 progress->setValue(value);
                 progress->setLabelText(format.arg(value).arg(maxRangeIndex));
                 m_sceneWidget->advanceMotion(1.0f);
+                m_sceneWidget->resize(videoSize);
             }
             m_sceneWidget->setGridVisible(visibleGrid);
             m_sceneWidget->setHandlesVisible(true);
             m_sceneWidget->setSelectedModel(selected);
             m_sceneWidget->setPreferredFPS(fps);
+            m_sceneWidget->resize(sceneSize);
+            m_mainSplitter->setHandleWidth(handleWidth);
+            m_leftSplitter->show();
+            statusBar()->show();
             setSizePolicy(policy);
             setMinimumSize(minSize);
             setMaximumSize(maxSize);

@@ -27,6 +27,7 @@ class TransformWidget;
 class QCheckBox;
 class QPushButton;
 class QSpinBox;
+class QSplitter;
 class QUndoGroup;
 
 class MainWindow : public QMainWindow
@@ -105,6 +106,8 @@ private:
     float m_distance;
     int m_currentFPS;
 
+    QSplitter *m_mainSplitter;
+    QSplitter *m_leftSplitter;
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
     QAction *m_actionNewMotion;

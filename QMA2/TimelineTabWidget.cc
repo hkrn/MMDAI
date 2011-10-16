@@ -8,7 +8,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-namespace {
+namespace
+{
 
 static const int kBoneTabIndex = 0;
 static const int kFaceTabIndex = 1;
@@ -67,10 +68,6 @@ static void UIModelInsertFaceFrame(TimelineWidget *timeline)
 
 }
 
-const QString TimelineTabWidget::kBone = QT_TR_NOOP_UTF8("Bone");
-const QString TimelineTabWidget::kCamera = QT_TR_NOOP_UTF8("Camera");
-const QString TimelineTabWidget::kFace = QT_TR_NOOP_UTF8("Face");
-
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
                                      FaceMotionModel *fmm,
@@ -82,9 +79,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
-    m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, kBone);
+    m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
     m_faceTimeline = new TimelineWidget(fmm, this);
-    m_tabWidget->insertTab(kFaceTabIndex, m_faceTimeline, kFace);
+    m_tabWidget->insertTab(kFaceTabIndex, m_faceTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
@@ -107,6 +104,8 @@ void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
 
 void TimelineTabWidget::retranslate()
 {
+    m_tabWidget->setTabText(0, tr("Bone"));
+    m_tabWidget->setTabText(1, tr("Face"));
     m_boneTimeline->retranslate();
     m_faceTimeline->retranslate();
     setWindowTitle(tr("Motion Timeline"));

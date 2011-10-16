@@ -80,21 +80,20 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QItemSelectionModel *sm = treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
     connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
-    QVBoxLayout *layout = new QVBoxLayout();
-    QHBoxLayout *spinboxLayout = new QHBoxLayout();
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->maxFrameCount());
     connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setFrameIndex(int)));
     m_label = new QLabel();
-    spinboxLayout->addSpacing(250);
+    QHBoxLayout *spinboxLayout = new QHBoxLayout();
     spinboxLayout->addWidget(m_label);
     spinboxLayout->addWidget(m_spinBox);
-    spinboxLayout->addSpacing(250);
-    layout->addLayout(spinboxLayout);
-    layout->addWidget(treeView);
-    layout->setContentsMargins(QMargins());
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addLayout(spinboxLayout);
+    mainLayout->addWidget(treeView);
+    mainLayout->setAlignment(spinboxLayout, Qt::AlignCenter);
+    mainLayout->setContentsMargins(QMargins());
     retranslate();
-    setLayout(layout);
+    setLayout(mainLayout);
     m_treeView = treeView;
 }
 

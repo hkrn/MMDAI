@@ -27,9 +27,8 @@ TabWidget::TabWidget(QSettings *settings, BoneMotionModel *bmm, FaceMotionModel 
     m_tabWidget->addTab(m_interpolation, "");
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
-    layout->setContentsMargins(10, 10, 10, 10);
     retranslate();
-    setMinimumSize(332, 265);
+    setMinimumSize(320, 270);
     setLayout(layout);
     restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
 }

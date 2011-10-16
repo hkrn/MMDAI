@@ -40,11 +40,6 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-namespace
-{
-const char *kEmptyString = QT_TR_NOOP("(none)");
-}
-
 namespace internal
 {
 
@@ -53,9 +48,10 @@ static inline QTextCodec *getTextCodec() {
     return codec;
 }
 
-static inline const QString noneString()
+static inline const QString &noneString()
 {
-    return QApplication::tr(kEmptyString);
+    static const QString none = "(none)";
+    return none;
 }
 
 static inline const QByteArray fromQString(const QString &value) {

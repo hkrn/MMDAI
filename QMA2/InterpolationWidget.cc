@@ -88,23 +88,30 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
     m_graphWidget = new InterpolationGraphWidget(bmm);
     m_graphWidget->setMinimumSize(128, 128);
     m_graphWidget->setMaximumSize(128, 128);
-    QVBoxLayout *layout = new QVBoxLayout();
     QHBoxLayout *c = new QHBoxLayout();
     QPushButton *button = new QPushButton(tr("Reset"));
     connect(button, SIGNAL(clicked()), this, SLOT(resetInterpolation()));
     c->addWidget(m_comboBox);
     c->addWidget(button);
-    layout->addLayout(c);
-    QHBoxLayout *x = new QHBoxLayout();
-    createSpinBox(x, "x1", 20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int)));
-    createSpinBox(x, "x2", 107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int)));
-    layout->addLayout(x);
-    QHBoxLayout *y = new QHBoxLayout();
-    createSpinBox(y, "y1", 20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int)));
-    createSpinBox(y, "y2", 107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int)));
-    layout->addLayout(y);
-    layout->addWidget(m_graphWidget, Qt::AlignVCenter);
-    setLayout(layout);
+    QGridLayout *gridLayout = new QGridLayout();
+    gridLayout->addWidget(new QLabel("X1"), 0, 0);
+    gridLayout->addWidget(createSpinBox(20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int))), 0, 1);
+    gridLayout->addWidget(new QLabel("X2"), 1, 0);
+    gridLayout->addWidget(createSpinBox(107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int))), 1, 1);
+    gridLayout->addWidget(new QLabel("Y1"), 2, 0);
+    gridLayout->addWidget(createSpinBox(20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int))), 2, 1);
+    gridLayout->addWidget(new QLabel("Y2"), 3, 0);
+    gridLayout->addWidget(createSpinBox(107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int))), 3, 1);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addLayout(c);
+    QHBoxLayout *subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_graphWidget);
+    subLayout->addLayout(gridLayout);
+    subLayout->setAlignment(gridLayout, Qt::AlignCenter);
+    mainLayout->addLayout(subLayout);
+    //mainLayout->addWidget(m_graphWidget, Qt::AlignVCenter);
+    //mainLayout->setAlignment(gridLayout, Qt::AlignCenter);
+    setLayout(mainLayout);
     setEnabled(false);
 }
 
@@ -112,7 +119,7 @@ InterpolationWidget::~InterpolationWidget()
 {
 }
 
-void InterpolationWidget::setMode(const QString &mode)
+void InterpolationWidget::setMode(TimelineTabWidget::Type mode)
 {
     bool enabled = true;
     m_comboBox->clear();
@@ -150,17 +157,14 @@ void InterpolationWidget::resetInterpolation()
     m_graphWidget->setY2(107);
 }
 
-void InterpolationWidget::createSpinBox(QHBoxLayout *layout,
-                                        const QString &label,
-                                        int defaultValue,
+QSpinBox *InterpolationWidget::createSpinBox(int defaultValue,
                                         const char *signal,
                                         const char *slot)
 {
     QSpinBox *spinBox = new QSpinBox();
     spinBox->setRange(0, 127);
-    layout->addWidget(new QLabel(label), Qt::AlignCenter);
-    layout->addWidget(spinBox);
     connect(spinBox, SIGNAL(valueChanged(int)), m_graphWidget, slot);
     connect(m_graphWidget, signal, spinBox, SLOT(setValue(int)));
     spinBox->setValue(defaultValue);
+    return spinBox;
 }

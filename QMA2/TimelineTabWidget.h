@@ -22,9 +22,11 @@ class TimelineTabWidget : public QWidget
     Q_OBJECT
 
 public:
-    static const QString kBone;
-    static const QString kCamera;
-    static const QString kFace;
+    enum Type {
+        kBone,
+        kFace,
+        kCamera
+    };
 
     explicit TimelineTabWidget(QSettings *settings,
                                BoneMotionModel *bmm,
@@ -43,7 +45,7 @@ public slots:
 
 signals:
     void motionDidSeek(float frameIndex);
-    void currentTabDidChange(const QString &name);
+    void currentTabDidChange(Type type);
 
 private slots:
     void setCurrentTabIndex(int index);

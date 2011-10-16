@@ -2,6 +2,7 @@
 #define INTERPOLATIONWIDGET_H
 
 #include <QtGui/QWidget>
+#include "TimelineTabWidget.h"
 
 class BoneMotionModel;
 class QComboBox;
@@ -43,6 +44,8 @@ private:
     QPoint m_p2;
 };
 
+class QSpinBox;
+
 class InterpolationWidget : public QWidget
 {
     Q_OBJECT
@@ -51,17 +54,15 @@ public:
     explicit InterpolationWidget(BoneMotionModel *bmm, QWidget *parent = 0);
     ~InterpolationWidget();
 
-public slots:
-    void setMode(const QString &mode);
+private slots:
+    void setMode(TimelineTabWidget::Type mode);
     void disable();
     void resetInterpolation();
 
 private:
-    void createSpinBox(QHBoxLayout *layout,
-                       const QString &label,
-                       int defaultValue,
-                       const char *signal,
-                       const char *slot);
+    QSpinBox *createSpinBox(int defaultValue,
+                            const char *signal,
+                            const char *slot);
 
     QComboBox *m_comboBox;
     InterpolationGraphWidget *m_graphWidget;
