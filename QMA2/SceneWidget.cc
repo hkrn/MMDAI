@@ -60,6 +60,7 @@ using namespace vpvl::gl;
 
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+    m_renderer(0),
     m_bone(0),
     m_delegate(0),
     m_loader(0),
