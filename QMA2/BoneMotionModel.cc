@@ -54,23 +54,6 @@ private:
     bool m_isRoot;
 };
 
-class CopyFramesCommand : public QUndoCommand
-{
-public:
-    CopyFramesCommand(BoneMotionModel *model)
-        : QUndoCommand(),
-          m_model(model)
-    {
-    }
-    virtual ~CopyFramesCommand() {}
-
-    void undo() {}
-    void redo() {}
-
-private:
-    BoneMotionModel *m_model;
-};
-
 class LoadPoseCommand : public QUndoCommand
 {
 public:
@@ -172,6 +155,10 @@ public:
         execute();
     }
     virtual ~SetFramesCommand() {
+        foreach (BoneMotionModel::Frame pair, m_frames) {
+            vpvl::BoneKeyFrame *frame = pair.second;
+            delete frame;
+        }
     }
 
     virtual void undo() {
@@ -203,9 +190,9 @@ private:
         vpvl::Bone *selected = m_bmm->selectedBone();
         foreach (const BoneMotionModel::Frame &pair, m_frames) {
             int frameIndex = pair.first;
-            vpvl::Bone *bone = pair.second;
-            if (bone) {
-                key = internal::toQString(bone->name());
+            vpvl::BoneKeyFrame *frame = pair.second;
+            if (frame) {
+                key = internal::toQString(frame->name());
             }
             else if (selected) {
                 key = internal::toQString(selected->name());
@@ -220,9 +207,9 @@ private:
                 vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
                 /* FIXME: interpolation */
                 newFrame->setDefaultInterpolationParameter();
-                newFrame->setName(bone->name());
-                newFrame->setPosition(bone->position());
-                newFrame->setRotation(bone->rotation());
+                newFrame->setName(frame->name());
+                newFrame->setPosition(frame->position());
+                newFrame->setRotation(frame->rotation());
                 newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 animation->addKeyFrame(newFrame);
@@ -341,9 +328,25 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
-void BoneMotionModel::copyFrames(int /* frameIndex */)
+void BoneMotionModel::copyFrames(int frameIndex)
 {
     if (m_model && m_motion) {
+        m_frames.releaseAll();
+        m_motion->boneAnimation().copyKeyFrames(frameIndex, m_frames);
+    }
+}
+
+void BoneMotionModel::pasteFrame(int frameIndex)
+{
+    if (m_model && m_motion && m_frames.count() != 0) {
+        QList<Frame> frames;
+        uint32_t nFrames = m_frames.count();
+        for (uint32_t i = 0; i < nFrames; i++) {
+            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]);
+            frames.append(Frame(frameIndex, frame));
+        }
+        addUndoCommand(new SetFramesCommand(this, frames));
+        m_frames.clear();
     }
 }
 
@@ -405,7 +408,7 @@ void BoneMotionModel::setFrames(const QList<Frame> &frames)
         addUndoCommand(new SetFramesCommand(this, frames));
     }
     else {
-        qWarning("No model or motion to register a bone frame.");
+        qWarning("No model or motion to register bone frames.");
         return;
     }
 }

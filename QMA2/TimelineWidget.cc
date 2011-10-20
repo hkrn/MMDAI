@@ -72,6 +72,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     TimelineTreeView *treeView = new TimelineTreeView();
     treeView->setModel(base);
     QHeaderView *header = treeView->header();
+    header->setSortIndicatorShown(false);
     header->setResizeMode(QHeaderView::Fixed);
     header->setResizeMode(0, QHeaderView::ResizeToContents);
     header->setDefaultSectionSize(15);

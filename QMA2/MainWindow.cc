@@ -408,6 +408,10 @@ void MainWindow::buildUI()
     m_actionBoneDialog = new QAction(this);
     connect(m_actionBoneDialog, SIGNAL(triggered()), this, SLOT(openBoneDialog()));
 
+    m_actionCopy = new QAction(this);
+    connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
+    m_actionPaste = new QAction(this);
+    connect(m_actionPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteFrame()));
     m_actionInsertEmptyFrame = new QAction(this);
     connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertFrame()));
     m_actionDeleteSelectedFrame = new QAction(this);
@@ -501,6 +505,8 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
     m_menuFrame->addSeparator();
+    m_menuFrame->addAction(m_actionCopy);
+    m_menuFrame->addAction(m_actionPaste);
     m_menuFrame->addAction(m_actionUndoFrame);
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
@@ -646,6 +652,12 @@ void MainWindow::retranslate()
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
     m_actionDeleteSelectedFrame->setStatusTip(tr("Delete a selected keyframe."));
+    m_actionCopy->setText(tr("Copy"));
+    m_actionCopy->setStatusTip(tr("Copy a selected keyframe."));
+    m_actionCopy->setShortcut(tr("Ctrl+C"));
+    m_actionPaste->setText(tr("Paste"));
+    m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
+    m_actionPaste->setShortcut(tr("Ctrl+V"));
     m_actionUndoFrame->setShortcut(tr("Ctrl+Z"));
     m_actionRedoFrame->setShortcut(tr("Ctrl+Shift+Z"));
     m_actionViewTab->setText(tr("Tab"));
@@ -706,6 +718,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_tabWidget->assetWidget(), SLOT(removeModel(vpvl::PMDModel*)));
     connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
 }
 
 void MainWindow::startSceneUpdate()

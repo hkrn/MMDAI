@@ -2,6 +2,11 @@
 #define BONEMOTIONMODEL_H
 
 #include "MotionBaseModel.h"
+#include "vpvl/BaseAnimation.h"
+
+namespace vpvl {
+class BoneKeyFrame;
+}
 
 class SceneWidget;
 class VPDFile;
@@ -22,13 +27,14 @@ public:
         kZ,
         kRotation
     };
-    typedef QPair<int, vpvl::Bone *> Frame;
+    typedef QPair<int, vpvl::BoneKeyFrame *> Frame;
 
     BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent = 0);
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
+    void pasteFrame(int frameIndex);
     void startTransform();
     void commitTransform();
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
@@ -61,6 +67,7 @@ private:
     const QMatrix4x4 modelviewMatrix() const;
 
     QList<vpvl::Bone *> m_selected;
+    vpvl::BaseKeyFrameList m_frames;
     const SceneWidget *m_sceneWidget;
     vpvl::PMDModel::State *m_state;
     TransformType m_mode;

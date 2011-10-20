@@ -39,13 +39,11 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
     QTextCodec *codec = internal::getTextCodec();
     QList<BoneMotionModel::Frame> boneFrames;
     foreach (QModelIndex index, indices) {
-        vpvl::Bone bone;
+        vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
         QString name = model->data(index, BoneMotionModel::kNameRole).toString();
-        bone.setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
-        // FIXME: should use constant value
-        bone.setPosition(vpvl::Vector3(0, 0, 0));
-        bone.setRotation(vpvl::Quaternion(0, 0, 0, 1));
-        boneFrames.append(BoneMotionModel::Frame(index.column(), &bone));
+        frame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
+        frame->setDefaultInterpolationParameter();
+        boneFrames.append(BoneMotionModel::Frame(index.column(), frame));
     }
     model->setFrames(boneFrames);
 }
@@ -57,11 +55,11 @@ static void UIModelInsertFaceFrame(TimelineWidget *timeline)
     QTextCodec *codec = internal::getTextCodec();
     QList<FaceMotionModel::Frame> faceFrames;
     foreach (QModelIndex index, indices) {
-        vpvl::Face face;
+        vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
         QString name = model->data(index, BoneMotionModel::kNameRole).toString();
-        face.setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
-        face.setWeight(0);
-        faceFrames.append(FaceMotionModel::Frame(index.column(), &face));
+        frame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
+        frame->setWeight(0);
+        faceFrames.append(FaceMotionModel::Frame(index.column(), frame));
     }
     model->setFrames(faceFrames);
 }
@@ -120,15 +118,23 @@ void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Bone *bone)
 {
     QList<BoneMotionModel::Frame> boneFrames;
-    boneFrames.append(BoneMotionModel::Frame(m_boneTimeline->frameIndex(), bone));
+    vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+    boneFrames.append(BoneMotionModel::Frame(m_boneTimeline->frameIndex(), frame));
     UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
 }
 
 void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Face *face)
 {
     QList<FaceMotionModel::Frame> faceFrames;
-    faceFrames.append(FaceMotionModel::Frame(m_faceTimeline->frameIndex(), face));
+    vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+    faceFrames.append(FaceMotionModel::Frame(m_faceTimeline->frameIndex(), frame));
     UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
+}
+
+void TimelineTabWidget::setCurrentFrameIndexZero()
+{
+    m_boneTimeline->setFrameIndex(0);
+    m_faceTimeline->setFrameIndex(0);
 }
 
 void TimelineTabWidget::insertFrame()
@@ -151,6 +157,31 @@ void TimelineTabWidget::deleteFrame()
         break;
     case kFaceTabIndex:
         UIModelDeleteFrame(m_faceTimeline);
+        break;
+    }
+}
+
+
+void TimelineTabWidget::copyFrame()
+{
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex:
+        UIGetBoneModel(m_boneTimeline)->copyFrames(m_boneTimeline->frameIndex());
+        break;
+    case kFaceTabIndex:
+        UIGetFaceModel(m_faceTimeline)->copyFrames(m_faceTimeline->frameIndex());
+        break;
+    }
+}
+
+void TimelineTabWidget::pasteFrame()
+{
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex:
+        UIGetBoneModel(m_boneTimeline)->pasteFrame(m_boneTimeline->frameIndex());
+        break;
+    case kFaceTabIndex:
+        UIGetFaceModel(m_faceTimeline)->pasteFrame(m_faceTimeline->frameIndex());
         break;
     }
 }

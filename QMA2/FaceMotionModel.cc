@@ -52,55 +52,132 @@ private:
     bool m_isRoot;
 };
 
-class CopyFramesCommand : public QUndoCommand
-{
-public:
-    CopyFramesCommand(FaceMotionModel *model)
-        : QUndoCommand(),
-          m_model(model)
-    {
-    }
-    virtual ~CopyFramesCommand() {}
-
-    void undo() {}
-    void redo() {}
-
-private:
-    FaceMotionModel *m_model;
-};
-
 class SetFramesCommand : public QUndoCommand
 {
 public:
-    SetFramesCommand(FaceMotionModel *model)
+    SetFramesCommand(FaceMotionModel *bmm, const QList<FaceMotionModel::Frame> &frames)
         : QUndoCommand(),
-          m_model(model)
+          m_fmm(bmm)
     {
+        QHash<int, bool> indexProceeded;
+        QList<MotionBaseModel::ITreeItem*> items = m_fmm->keys().values();
+        foreach (const FaceMotionModel::Frame &frame, frames) {
+            int frameIndex = frame.first;
+            if (!indexProceeded[frameIndex]) {
+                foreach (MotionBaseModel::ITreeItem *item, items) {
+                    const QModelIndex &index = m_fmm->frameToIndex(item, frameIndex);
+                    if (index.data(FaceMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
+                        m_indices.append(index);
+                }
+                indexProceeded[frameIndex] = true;
+            }
+        }
+        m_frames = frames;
+        m_frameIndices = indexProceeded.keys();
+        execute();
     }
-    virtual ~SetFramesCommand() {}
+    virtual ~SetFramesCommand() {
+        foreach (FaceMotionModel::Frame pair, m_frames) {
+            vpvl::FaceKeyFrame *frame = pair.second;
+            delete frame;
+        }
+    }
 
-    void undo() {}
-    void redo() {}
+    virtual void undo() {
+        vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
+        foreach (int frameIndex, m_frameIndices) {
+            animation->deleteKeyFrames(frameIndex);
+            foreach (MotionBaseModel::ITreeItem *item, m_fmm->keys().values()) {
+                const QModelIndex &index = m_fmm->frameToIndex(item, frameIndex);
+                m_fmm->setData(index, FaceMotionModel::kInvalidData, Qt::EditRole);
+            }
+        }
+        foreach (const QModelIndex &index, m_indices) {
+            const QByteArray &bytes = index.data(FaceMotionModel::kBinaryDataRole).toByteArray();
+            m_fmm->setData(index, bytes, Qt::EditRole);
+            vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+            frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            animation->addKeyFrame(frame);
+        }
+    }
+    virtual void redo() {
+        execute();
+    }
 
 private:
-    FaceMotionModel *m_model;
+    void execute() {
+        QString key;
+        vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
+        const FaceMotionModel::Keys &keys = m_fmm->keys();
+        vpvl::Face *selected = m_fmm->selectedFace();
+        foreach (const FaceMotionModel::Frame &pair, m_frames) {
+            int frameIndex = pair.first;
+            vpvl::FaceKeyFrame *frame = pair.second;
+            if (frame) {
+                key = internal::toQString(frame->name());
+            }
+            else if (selected) {
+                key = internal::toQString(selected->name());
+            }
+            else {
+                qWarning("No bone is selected or null");
+                continue;
+            }
+            if (keys.contains(key)) {
+                const QModelIndex &modelIndex = m_fmm->frameToIndex(keys[key], frameIndex);
+                QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
+                vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
+                newFrame->setName(frame->name());
+                newFrame->setWeight(frame->weight());
+                newFrame->setFrameIndex(frameIndex);
+                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                animation->addKeyFrame(newFrame);
+                animation->refresh();
+                m_fmm->setData(modelIndex, bytes, Qt::EditRole);
+            }
+            else {
+                qWarning("Tried registering not face key frame: %s", qPrintable(key));
+                continue;
+            }
+        }
+        m_fmm->refreshModel();
+    }
+
+    QList<int> m_frameIndices;
+    QModelIndexList m_indices;
+    QList<FaceMotionModel::Frame> m_frames;
+    FaceMotionModel *m_fmm;
 };
 
 class ResetAllCommand : public QUndoCommand
 {
 public:
-    ResetAllCommand(FaceMotionModel *model)
+    ResetAllCommand(vpvl::PMDModel *model)
         : QUndoCommand(),
           m_model(model)
     {
+        m_state = model->saveState();
     }
-    virtual ~ResetAllCommand() {}
+    virtual ~ResetAllCommand() {
+        m_model->discardState(m_state);
+    }
 
-    void undo() {}
-    void redo() {}
+    void undo() {
+        m_model->restoreState(m_state);
+        m_model->updateImmediate();
+    }
+    void redo() {
+        execute();
+    }
 
 private:
-    FaceMotionModel *m_model;
+    void execute() {
+        m_model->resetAllFaces();
+        m_model->updateImmediate();
+    }
+
+    vpvl::PMDModel *m_model;
+    vpvl::PMDModel::State *m_state;
 };
 
 class SetFaceCommand : public QUndoCommand
@@ -168,8 +245,26 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
-void FaceMotionModel::copyFrames(int /* frameIndex */)
+void FaceMotionModel::copyFrames(int frameIndex)
 {
+    if (m_model && m_motion) {
+        m_frames.releaseAll();
+        m_motion->faceAnimation().copyKeyFrames(frameIndex, m_frames);
+    }
+}
+
+void FaceMotionModel::pasteFrame(int frameIndex)
+{
+    if (m_model && m_motion && m_frames.count() != 0) {
+        QList<Frame> frames;
+        uint32_t nFrames = m_frames.count();
+        for (uint32_t i = 0; i < nFrames; i++) {
+            vpvl::FaceKeyFrame *frame = static_cast<vpvl::FaceKeyFrame *>(m_frames[i]);
+            frames.append(Frame(frameIndex, frame));
+        }
+        addUndoCommand(new SetFramesCommand(this, frames));
+        m_frames.clear();
+    }
 }
 
 void FaceMotionModel::startTransform()
@@ -190,41 +285,19 @@ void FaceMotionModel::commitTransform()
 
 void FaceMotionModel::setFrames(const QList<Frame> &frames)
 {
-    if (!m_model || !m_motion) {
-        qWarning("No model or motion to register a bone frame.");
-        return;
+    if (m_model && m_motion) {
+        addUndoCommand(new SetFramesCommand(this, frames));
     }
-    QString key;
-    foreach (Frame pair, frames) {
-        int frameIndex = pair.first;
-        vpvl::Face *face = pair.second;
-        key = internal::toQString(face->name());
-        const Keys keys = this->keys();
-        if (keys.contains(key)) {
-            const QModelIndex &modelIndex = frameToIndex(keys[key], frameIndex);
-            vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
-            vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
-            newFrame->setName(face->name());
-            newFrame->setWeight(face->weight());
-            newFrame->setFrameIndex(frameIndex);
-            QByteArray bytes(vpvl::FaceKeyFrame::strideSize(), '0');
-            newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-            animation->addKeyFrame(newFrame);
-            animation->refresh();
-            setData(modelIndex, bytes, Qt::EditRole);
-        }
-        else {
-            qWarning("Tried registering not face key frame: %s", qPrintable(key));
-        }
+    else {
+        qWarning("No model or motion to register face frames.");
+        return;
     }
 }
 
 void FaceMotionModel::resetAllFaces()
 {
-    if (m_model) {
-        m_model->resetAllFaces();
-        updateModel();
-    }
+    if (m_model)
+        addUndoCommand(new ResetAllCommand(m_model));
 }
 
 void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)

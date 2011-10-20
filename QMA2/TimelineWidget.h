@@ -36,12 +36,10 @@ public slots:
     void retranslate();
     void setCurrentColumnIndex(const QModelIndex &index);
     void setCurrentRowIndex(const QModelIndex &index);
+    void setFrameIndex(int frameIndex);
 
 signals:
     void motionDidSeek(float column);
-
-private slots:
-    void setFrameIndex(int frameIndex);
 
 private:
     QLabel *m_label;

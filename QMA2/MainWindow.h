@@ -151,6 +151,8 @@ private:
     QAction *m_actionBoneDialog;
     QAction *m_actionInsertEmptyFrame;
     QAction *m_actionDeleteSelectedFrame;
+    QAction *m_actionCopy;
+    QAction *m_actionPaste;
     QAction *m_actionUndoFrame;
     QAction *m_actionRedoFrame;
     QAction *m_actionViewTab;
