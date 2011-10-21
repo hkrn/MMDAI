@@ -521,7 +521,7 @@ void SceneWidget::setPhysicsEnable(bool value)
     m_enablePhysics = value;
 }
 
-const QPointF SceneWidget::objectCoordinates(const QPoint &input) const
+const QPointF SceneWidget::objectCoordinates(const QPointF &input) const
 {
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
@@ -535,8 +535,7 @@ const QPointF SceneWidget::objectCoordinates(const QPoint &input) const
         modelviewMatrixd[i] = modelviewMatrixf[i];
         projectionMatrixd[i] = projectionMatrixf[i];
     }
-    int wx = input.x(), wy = height() - input.y();
-    double cx, cy, cz, fx, fy, fz;
+    GLdouble wx = input.x(), wy = height() - input.y(), cx, cy, cz, fx, fy, fz;
     gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
     gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
     vpvl::Vector3 camera(cx, cy, cz), zfar(fx, fy, fz), pointInPlane(0, 0, 0), planeNormal(0, 0, -1);
@@ -695,39 +694,38 @@ void SceneWidget::initializeGL()
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
-    m_prevPos = event->pos();
+    const QPoint &pos = event->pos();
     QRectF rect;
-    if (m_handles->testHit(m_prevPos, m_handleFlags, rect)) {
-        event->accept();
-    }
-#if 1
-    else {
-        vpvl::PMDModel *model = m_renderer->selectedModel();
-        if (model) {
-            const QPointF &pos = objectCoordinates(m_prevPos);
-            const vpvl::BoneList &bones = model->bones();
-            const uint32_t nbones = bones.count();
-            vpvl::Vector3 origin(pos.x(), pos.y(), 0.0f);
-            vpvl::Bone *nearestBone = 0;
-            vpvl::Scalar nearestDistance = 0.2f;
-            for (uint32_t i = 0; i < nbones; i++) {
-                vpvl::Bone *bone = bones[i];
-                vpvl::Vector3 boneOrigin = bone->localTransform().getOrigin();
-                boneOrigin.setZ(0.0f);
-                vpvl::Scalar distance = boneOrigin.distance(origin);
-                if (distance < nearestDistance) {
-                    nearestBone = bone;
-                    nearestDistance = distance;
-                }
+    m_prevPos = pos;
+    m_handles->testHit(pos, m_handleFlags, rect);
+}
+
+void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    vpvl::PMDModel *model = m_renderer->selectedModel();
+    if (model) {
+        const QPointF &pos = objectCoordinates(event->posF());
+        const vpvl::BoneList &bones = model->bones();
+        const uint32_t nbones = bones.count();
+        vpvl::Vector3 origin(pos.x(), pos.y(), 0.0f);
+        vpvl::Bone *nearestBone = 0;
+        vpvl::Scalar nearestDistance = 0.2f;
+        for (uint32_t i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            vpvl::Vector3 boneOrigin = bone->localTransform().getOrigin();
+            boneOrigin.setZ(0.0f);
+            vpvl::Scalar distance = boneOrigin.distance(origin);
+            if (distance < nearestDistance) {
+                nearestBone = bone;
+                nearestDistance = distance;
             }
-            if (nearestBone)
-                qDebug() << "nearest bone is" << internal::toQString(nearestBone);
-            else
-                qDebug() << "nearest bone is not found";
-            event->ignore();
         }
+        if (nearestBone)
+            qDebug() << "nearest bone is" << internal::toQString(nearestBone);
+        else
+            qDebug() << "nearest bone is not found";
+        event->ignore();
     }
-#endif
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)

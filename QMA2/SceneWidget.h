@@ -93,7 +93,7 @@ public:
     vpvl::Asset *addAssetFromMetadata(const QString &path);
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
-    const QPointF objectCoordinates(const QPoint &input) const;
+    const QPointF objectCoordinates(const QPointF &input) const;
     int preferredFPS() const { return m_defaultFPS; }
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
@@ -173,6 +173,7 @@ protected:
     void dropEvent(QDropEvent *event);
     void initializeGL();
     void mousePressEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void paintGL();
