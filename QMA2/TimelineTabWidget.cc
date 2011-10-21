@@ -112,6 +112,29 @@ void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
     UIGetBoneModel(m_boneTimeline)->savePose(pose, model, m_boneTimeline->frameIndex());
 }
 
+
+void TimelineTabWidget::addBoneFrameAtCurrentIndex(vpvl::Bone *bone)
+{
+    QList<BoneMotionModel::Frame> boneFrames;
+    vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+    frame->setDefaultInterpolationParameter();
+    frame->setName(bone->name());
+    frame->setPosition(bone->position());
+    frame->setRotation(bone->rotation());
+    boneFrames.append(BoneMotionModel::Frame(m_boneTimeline->frameIndex(), frame));
+    UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
+}
+
+void TimelineTabWidget::addFaceFrameAtCurrentIndex(vpvl::Face *face)
+{
+    QList<FaceMotionModel::Frame> faceFrames;
+    vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+    frame->setName(face->name());
+    frame->setWeight(face->weight());
+    faceFrames.append(FaceMotionModel::Frame(m_faceTimeline->frameIndex(), frame));
+    UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
+}
+
 void TimelineTabWidget::setCurrentFrameIndexZero()
 {
     m_boneTimeline->setFrameIndex(0);

@@ -44,6 +44,8 @@ signals:
 
 private slots:
     void retranslate();
+    void addBoneFrameAtCurrentIndex(vpvl::Bone *bone);
+    void addFaceFrameAtCurrentIndex(vpvl::Face *face);
     void setCurrentFrameIndexZero();
     void insertFrame();
     void deleteFrame();
