@@ -36,21 +36,19 @@ public:
 
 public slots:
     void loadPose(VPDFile *pose, vpvl::PMDModel *model);
-    void retranslate();
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
-    void setFrameAtCurrentIndex(vpvl::Bone *bone);
-    void setFrameAtCurrentIndex(vpvl::Face *face);
-    void setCurrentFrameIndexZero();
-    void insertFrame();
-    void deleteFrame();
-    void copyFrame();
-    void pasteFrame();
 
 signals:
     void motionDidSeek(float frameIndex);
     void currentTabDidChange(Type type);
 
 private slots:
+    void retranslate();
+    void setCurrentFrameIndexZero();
+    void insertFrame();
+    void deleteFrame();
+    void copyFrame();
+    void pasteFrame();
     void setCurrentTabIndex(int index);
 
 private:

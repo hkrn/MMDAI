@@ -117,9 +117,6 @@ public:
                              QWidget *parent = 0);
     ~TransformWidget();
 
-public slots:
-    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
-
 signals:
     void boneDidRegister(vpvl::Bone *bone);
     void faceDidRegister(vpvl::Face *face);
@@ -128,6 +125,7 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
+    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
     void on_faces_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void on_bones_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void on_faceWeightSlider_valueChanged(int value);

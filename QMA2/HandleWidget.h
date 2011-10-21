@@ -17,7 +17,7 @@ public:
     explicit HandleWidget(QWidget *parent = 0);
     ~HandleWidget();
 
-public slots:
+private slots:
     void setBone(vpvl::Bone *value);
     void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
 

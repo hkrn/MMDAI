@@ -13,16 +13,16 @@ class CameraPerspectiveWidget : public QWidget
 public:
     explicit CameraPerspectiveWidget(QWidget *parent = 0);
 
-public slots:
+signals:
+    void cameraPerspectiveDidChange(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
+
+private slots:
     void retranslate();
     void setCameraPerspectiveFront();
     void setCameraPerspectiveBack();
     void setCameraPerspectiveTop();
     void setCameraPerspectiveLeft();
     void setCameraPerspectiveRight();
-
-signals:
-    void cameraPerspectiveDidChange(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
 
 private:
     QPushButton *m_frontLabel;

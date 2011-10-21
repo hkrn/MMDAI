@@ -23,18 +23,16 @@ public:
 
     explicit FaceWidget(FaceMotionModel *fmm, QWidget *parent = 0);
 
-public slots:
+signals:
+    void faceDidRegister(vpvl::Face *face);
+
+private slots:
     void retranslate();
     void setPMDModel(vpvl::PMDModel *model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
     void setEyeblowWeight(int value);
     void setOtherWeight(int value);
-
-signals:
-    void faceDidRegister(vpvl::Face *face);
-
-private slots:
     void registerEye();
     void registerLip();
     void registerEyeblow();

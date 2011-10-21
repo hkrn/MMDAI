@@ -31,11 +31,11 @@ public:
     FaceWidget *faceWidget() const { return m_face; }
     InterpolationWidget *interpolationWidget() const { return m_interpolation; }
 
-public slots:
-    void retranslate();
-
 protected:
     void closeEvent(QCloseEvent *event);
+
+private slots:
+    void retranslate();
 
 private:
     QTabWidget *m_tabWidget;

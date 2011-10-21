@@ -104,31 +104,12 @@ void TimelineTabWidget::retranslate()
 {
     m_tabWidget->setTabText(0, tr("Bone"));
     m_tabWidget->setTabText(1, tr("Face"));
-    m_boneTimeline->retranslate();
-    m_faceTimeline->retranslate();
     setWindowTitle(tr("Motion Timeline"));
 }
 
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 {
     UIGetBoneModel(m_boneTimeline)->savePose(pose, model, m_boneTimeline->frameIndex());
-}
-
-
-void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Bone *bone)
-{
-    QList<BoneMotionModel::Frame> boneFrames;
-    vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
-    boneFrames.append(BoneMotionModel::Frame(m_boneTimeline->frameIndex(), frame));
-    UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
-}
-
-void TimelineTabWidget::setFrameAtCurrentIndex(vpvl::Face *face)
-{
-    QList<FaceMotionModel::Frame> faceFrames;
-    vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
-    faceFrames.append(FaceMotionModel::Frame(m_faceTimeline->frameIndex(), frame));
-    UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
 }
 
 void TimelineTabWidget::setCurrentFrameIndexZero()
