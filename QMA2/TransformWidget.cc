@@ -379,7 +379,6 @@ void TransformWidget::on_faces_selectionChanged(const QItemSelection &selected,
     }
     ui->faceWeightSpinBox->setValue(weight);
     ui->faceWeightSlider->setValue(weight * 100.0f);
-    emit facesDidSelect(selectedFaces);
 }
 
 void TransformWidget::on_bones_selectionChanged(const QItemSelection &selected,
@@ -395,7 +394,6 @@ void TransformWidget::on_bones_selectionChanged(const QItemSelection &selected,
         rotateable = rotateable && bone->isRotateable();
     }
     UIToggleBoneButtons(ui, movable, rotateable);
-    emit bonesDidSelect(selectedBones);
 }
 
 void TransformWidget::on_faceWeightSlider_valueChanged(int value)

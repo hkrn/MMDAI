@@ -708,6 +708,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
 void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 {
     m_selected = bones;
+    emit bonesDidSelect(bones);
 }
 
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)

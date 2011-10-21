@@ -45,7 +45,6 @@ public:
     void setMode(int value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
-    void selectBones(const QList<vpvl::Bone *> &bones);
     vpvl::Bone *findBone(const QString &name);
     vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
@@ -58,10 +57,12 @@ public slots:
     void deleteFrame(const QModelIndex &index);
     void translate(int coordinate, float value);
     void rotate(int coordinate, float value);
+    void selectBones(const QList<vpvl::Bone *> &bones);
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
     void boneRotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &rot);
+    void bonesDidSelect(const QList<vpvl::Bone *> &bones);
 
 private:
     const QMatrix4x4 modelviewMatrix() const;

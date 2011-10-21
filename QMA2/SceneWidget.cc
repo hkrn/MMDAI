@@ -709,7 +709,7 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
         const uint32_t nbones = bones.count();
         vpvl::Vector3 origin(pos.x(), pos.y(), 0.0f);
         vpvl::Bone *nearestBone = 0;
-        vpvl::Scalar nearestDistance = 0.2f;
+        vpvl::Scalar nearestDistance = 0.25f;
         for (uint32_t i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             vpvl::Vector3 boneOrigin = bone->localTransform().getOrigin();
@@ -720,10 +720,12 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
                 nearestDistance = distance;
             }
         }
-        if (nearestBone)
+        if (nearestBone && nearestBone->isVisible()) {
             qDebug() << "nearest bone is" << internal::toQString(nearestBone);
-        else
-            qDebug() << "nearest bone is not found";
+            QList<vpvl::Bone *> bones;
+            bones.append(nearestBone);
+            emit boneDidSelect(bones);
+        }
         event->ignore();
     }
 }

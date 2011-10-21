@@ -407,9 +407,10 @@ void FaceMotionModel::deleteFrame(const QModelIndex &index)
     setData(index, kInvalidData, Qt::EditRole);
 }
 
-void FaceMotionModel::selectFaces(QList<vpvl::Face *> faces)
+void FaceMotionModel::selectFaces(const QList<vpvl::Face *> &faces)
 {
     m_selected = faces;
+    emit facesDidSelect(faces);
 }
 
 vpvl::Face *FaceMotionModel::findFace(const QString &name)

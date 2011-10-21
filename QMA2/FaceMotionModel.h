@@ -25,7 +25,6 @@ public:
     void commitTransform();
     void setFrames(const QList<Frame> &frames);
     void resetAllFaces();
-    void selectFaces(QList<vpvl::Face *> faces);
     vpvl::Face *findFace(const QString &name);
     void setWeight(float value);
     void setWeight(float value, vpvl::Face *face);
@@ -38,6 +37,10 @@ public slots:
     void deleteMotion();
     void deleteModel();
     void deleteFrame(const QModelIndex &index);
+    void selectFaces(const QList<vpvl::Face *> &faces);
+
+signals:
+    void facesDidSelect(const QList<vpvl::Face *> &faces);
 
 private:
     QList<vpvl::Face *> m_selected;
