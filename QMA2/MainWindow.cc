@@ -149,7 +149,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
-    setWindowTitle(buildWindowTitle());
+    setWindowTitle(qAppName());
     statusBar()->show();
 }
 
@@ -320,35 +320,6 @@ void MainWindow::deleteAsset(vpvl::Asset *asset)
     }
     if (actionToRemove)
         m_menuRetainAssets->removeAction(actionToRemove);
-}
-
-void MainWindow::setModel(vpvl::PMDModel *value)
-{
-    m_model = value;
-    updateInformation();
-}
-
-void MainWindow::setBones(const QList<vpvl::Bone *> &bones)
-{
-    m_bone = bones.isEmpty() ? 0 : bones.last();
-    updateInformation();
-}
-
-void MainWindow::setCameraPerspective(const vpvl::Vector3 &pos,
-                                      const vpvl::Vector3 &angle,
-                                      float fovy,
-                                      float distance)
-{
-    m_position = pos;
-    m_angle = angle;
-    m_fovy = fovy;
-    m_distance = distance;
-    updateInformation();
-}
-
-void MainWindow::updateInformation()
-{
-    setWindowTitle(buildWindowTitle());
 }
 
 void MainWindow::buildUI()
@@ -561,7 +532,6 @@ void MainWindow::buildUI()
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
-    connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
     resize(980, 674);
 
     bool visibleTransform = m_settings.value("mainWindow/visibleTransform", QVariant(false)).toBool();
@@ -732,7 +702,6 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), m_faceMotionModel, SLOT(deleteModel()));
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceFrameAtCurrentIndex(vpvl::Face*)));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), this, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     //connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(QString)), m_tabWidget->interpolationWidget(), SLOT(setMode(QString)));
     //connect(m_sceneWidget, SIGNAL(modelDidDelete(vpvl::PMDModel*)), m_tabWidget->interpolationWidget(), SLOT(disable()));
@@ -740,10 +709,6 @@ void MainWindow::connectWidgets()
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
     connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(setBones(QList<vpvl::Bone*>)));
-    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), this, SLOT(setBones(QList<vpvl::Bone*>)));
-    connect(m_sceneWidget, SIGNAL(sceneDidPlay()), this, SLOT(startSceneUpdate()));
-    connect(m_sceneWidget, SIGNAL(sceneDidPause()), this, SLOT(stopSceneUpdate()));
-    connect(m_sceneWidget, SIGNAL(sceneDidStop()), this, SLOT(stopSceneUpdate()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_faceMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), m_tabWidget->assetWidget(), SLOT(addAsset(vpvl::Asset*)));
@@ -755,36 +720,6 @@ void MainWindow::connectWidgets()
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-}
-
-void MainWindow::startSceneUpdate()
-{
-    m_currentFPS = 0;
-    updateInformation();
-}
-
-void MainWindow::stopSceneUpdate()
-{
-    m_currentFPS = -1;
-    updateInformation();
-}
-
-void MainWindow::updateFPS(int fps)
-{
-    m_currentFPS = fps;
-    updateInformation();
-}
-
-const QString MainWindow::buildWindowTitle() const
-{
-    QString title = qAppName();
-    if (m_model)
-        title += " - " + internal::toQString(m_model);
-    if (m_bone)
-        title += " - " + internal::toQString(m_bone);
-    if (m_currentFPS >= 0)
-        title += tr(": Rendering Scene (FPS: %1)").arg(m_currentFPS);
-    return title + "[*]";
 }
 
 void MainWindow::insertMotionToAllModels()
