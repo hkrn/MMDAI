@@ -50,7 +50,7 @@ static inline QTextCodec *getTextCodec() {
 
 static inline const QString &noneString()
 {
-    static const QString none = "(none)";
+    static const QString none = QApplication::tr("(none)");
     return none;
 }
 
