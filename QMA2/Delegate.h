@@ -49,8 +49,6 @@
 #include <vpvl/gl/Renderer.h>
 #endif
 
-class QGLWidget;
-
 namespace internal {
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
@@ -66,12 +64,10 @@ public:
         : m_widget(widget)
     {
     }
-    ~Delegate()
-    {
+    ~Delegate() {
     }
 
-    bool loadTexture(const std::string &path, GLuint &textureID)
-    {
+    bool loadTexture(const std::string &path, GLuint &textureID) {
         QString pathString = QString::fromLocal8Bit(path.c_str());
         QFileInfo info(pathString);
         if (info.isDir() || !info.exists()) {
@@ -92,8 +88,7 @@ public:
         qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
         return textureID != 0;
     }
-    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID)
-    {
+    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
         QString filename = QString::fromLocal8Bit(name.c_str());
         QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
         if (!QFile::exists(path))
@@ -142,8 +137,7 @@ public:
         }
     }
 #endif
-    void log(LogLevel level, const char *format...)
-    {
+    void log(LogLevel level, const char *format...) {
         QString message;
         va_list ap;
         va_start(ap, format);
@@ -159,8 +153,7 @@ public:
         }
         va_end(ap);
     }
-    const std::string toUnicode(const uint8_t *value)
-    {
+    const std::string toUnicode(const uint8_t *value) {
         return std::string(internal::toQString(value).toUtf8());
     }
 
