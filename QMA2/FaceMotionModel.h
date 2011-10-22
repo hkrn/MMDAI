@@ -49,7 +49,9 @@ class FaceMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    typedef QPair<int, vpvl::FaceKeyFrame *> Frame;
+    typedef QSharedPointer<vpvl::FaceKeyFrame> KeyFramePtr;
+    typedef QPair<int, KeyFramePtr> KeyFramePair;
+    typedef QList<KeyFramePair> KeyFramePairList;
 
     FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~FaceMotionModel();
@@ -59,7 +61,7 @@ public:
     void pasteFrame(int frameIndex);
     void startTransform();
     void commitTransform();
-    void setFrames(const QList<Frame> &frames);
+    void setFrames(const KeyFramePairList &frames);
     void resetAllFaces();
     vpvl::Face *findFace(const QString &name);
     void setWeight(float value);

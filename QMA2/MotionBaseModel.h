@@ -75,6 +75,7 @@ public:
 
     typedef QMap<QString, ITreeItem *> Keys;
     typedef QHash<QModelIndex, QVariant> Values;
+    typedef QList<ITreeItem *> TreeItemList;
 
     static const QVariant kInvalidData;
 

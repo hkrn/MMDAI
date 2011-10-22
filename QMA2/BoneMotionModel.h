@@ -63,7 +63,9 @@ public:
         kZ,
         kRotation
     };
-    typedef QPair<int, vpvl::BoneKeyFrame *> Frame;
+    typedef QSharedPointer<vpvl::BoneKeyFrame> KeyFramePtr;
+    typedef QPair<int, KeyFramePtr> KeyFramePair;
+    typedef QList<KeyFramePair> KeyFramePairList;
 
     BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent = 0);
     ~BoneMotionModel();
@@ -75,7 +77,7 @@ public:
     void commitTransform();
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
-    void setFrames(const QList<Frame> &frames);
+    void setFrames(const KeyFramePairList &frames);
     void resetBone(ResetType type);
     void resetAllBones();
     void setMode(int value);

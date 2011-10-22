@@ -91,13 +91,13 @@ private:
 class SetFramesCommand : public QUndoCommand
 {
 public:
-    SetFramesCommand(FaceMotionModel *bmm, const QList<FaceMotionModel::Frame> &frames)
+    SetFramesCommand(FaceMotionModel *bmm, const FaceMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
           m_fmm(bmm)
     {
         QHash<int, bool> indexProceeded;
-        QList<MotionBaseModel::ITreeItem*> items = m_fmm->keys().values();
-        foreach (const FaceMotionModel::Frame &frame, frames) {
+        const MotionBaseModel::TreeItemList &items = m_fmm->keys().values();
+        foreach (const FaceMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
             if (!indexProceeded[frameIndex]) {
                 foreach (MotionBaseModel::ITreeItem *item, items) {
@@ -113,10 +113,6 @@ public:
         execute();
     }
     virtual ~SetFramesCommand() {
-        foreach (FaceMotionModel::Frame pair, m_frames) {
-            vpvl::FaceKeyFrame *frame = pair.second;
-            delete frame;
-        }
     }
 
     virtual void undo() {
@@ -146,9 +142,10 @@ private:
         vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         const FaceMotionModel::Keys &keys = m_fmm->keys();
         vpvl::Face *selected = m_fmm->selectedFace();
-        foreach (const FaceMotionModel::Frame &pair, m_frames) {
+        foreach (const FaceMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
-            vpvl::FaceKeyFrame *frame = pair.second;
+            FaceMotionModel::KeyFramePtr ptr = pair.second;
+            vpvl::FaceKeyFrame *frame = ptr.data();
             if (frame) {
                 key = internal::toQString(frame->name());
             }
@@ -181,7 +178,7 @@ private:
 
     QList<int> m_frameIndices;
     QModelIndexList m_indices;
-    QList<FaceMotionModel::Frame> m_frames;
+    FaceMotionModel::KeyFramePairList m_frames;
     FaceMotionModel *m_fmm;
 };
 
@@ -292,11 +289,11 @@ void FaceMotionModel::copyFrames(int frameIndex)
 void FaceMotionModel::pasteFrame(int frameIndex)
 {
     if (m_model && m_motion && m_frames.count() != 0) {
-        QList<Frame> frames;
+        FaceMotionModel::KeyFramePairList frames;
         uint32_t nFrames = m_frames.count();
         for (uint32_t i = 0; i < nFrames; i++) {
             vpvl::FaceKeyFrame *frame = static_cast<vpvl::FaceKeyFrame *>(m_frames[i]);
-            frames.append(Frame(frameIndex, frame));
+            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
         m_frames.clear();
@@ -319,7 +316,7 @@ void FaceMotionModel::commitTransform()
     }
 }
 
-void FaceMotionModel::setFrames(const QList<Frame> &frames)
+void FaceMotionModel::setFrames(const KeyFramePairList &frames)
 {
     if (m_model && m_motion) {
         addUndoCommand(new SetFramesCommand(this, frames));
@@ -349,7 +346,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
         Keys &keys = m_keys[model];
         for (uint32_t i = 0; i < nFaces; i++) {
             vpvl::Face *face = faces[i];
-            const QString name = internal::toQString(face);
+            const QString &name = internal::toQString(face);
             TreeItem *child, *parent = 0;
             switch (face->type()) {
             case vpvl::Face::kEyeblow:
@@ -391,8 +388,8 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         for (uint32_t i = 0; i < nFaceFrames; i++) {
             vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
-            QString key = internal::toQString(name);
-            const Keys keys = this->keys();
+            const QString &key = internal::toQString(name);
+            const Keys &keys = this->keys();
             if (keys.contains(key)) {
                 uint32_t frameIndex = frame->frameIndex();
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
@@ -451,7 +448,7 @@ void FaceMotionModel::selectFaces(const QList<vpvl::Face *> &faces)
 
 vpvl::Face *FaceMotionModel::findFace(const QString &name)
 {
-    QByteArray bytes = internal::getTextCodec()->fromUnicode(name);
+    const QByteArray &bytes = internal::getTextCodec()->fromUnicode(name);
     foreach (ITreeItem *item, keys()) {
         vpvl::Face *face = static_cast<TreeItem *>(item)->face();
         if (!qstrcmp(reinterpret_cast<const char *>(face->name()), bytes))
