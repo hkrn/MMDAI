@@ -86,6 +86,16 @@ static inline const QString toQString(const vpvl::FaceKeyFrame *value) {
     return value ? toQString(value->name()) : noneString();
 }
 
+static inline void dumpBones(vpvl::PMDModel *model) {
+    const vpvl::BoneList &bones = model->bones();
+    const uint32_t nBones = bones.count();
+    for (uint32_t i = 0; i < nBones; i++) {
+        vpvl::Bone *bone = bones[i];
+        const vpvl::Vector3 &pos = bone->localTransform().getOrigin();
+        qDebug() << internal::toQString(bone) << QVector3D(pos.x(), pos.y(), pos.z());
+    }
+}
+
 }
 
 #endif // UTIL_H
