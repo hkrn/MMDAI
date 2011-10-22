@@ -64,6 +64,7 @@ namespace internal {
 class Delegate;
 class Grid;
 class Handles;
+class InfoPanel;
 class World;
 }
 
@@ -197,8 +198,9 @@ private:
     vpvl::gl::Renderer *m_renderer;
 #endif
     internal::Delegate *m_delegate;
-    internal::Handles *m_handles;
     internal::Grid *m_grid;
+    internal::Handles *m_handles;
+    internal::InfoPanel *m_info;
     internal::World *m_world;
     vpvl::Bone *m_bone;
     SceneLoader *m_loader;

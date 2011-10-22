@@ -40,8 +40,9 @@
 
 #include "Application.h"
 #include "Delegate.h"
-#include "Handles.h"
 #include "Grid.h"
+#include "Handles.h"
+#include "InfoPanel.h"
 #include "SceneLoader.h"
 #include "World.h"
 #include "util.h"
@@ -63,8 +64,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
     m_delegate(0),
-    m_handles(0),
     m_grid(0),
+    m_handles(0),
+    m_info(0),
     m_world(0),
     m_bone(0),
     m_loader(0),
@@ -85,8 +87,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
 {
     m_delegate = new Delegate(this);
     m_grid = new Grid();
+    m_info = new InfoPanel(this);
     m_world = new World(m_defaultFPS);
-    m_handles = new Handles();
+    m_handles = new Handles(this);
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -96,6 +99,8 @@ SceneWidget::~SceneWidget()
 {
     delete m_handles;
     m_handles = 0;
+    delete m_info;
+    m_info = 0;
     delete m_renderer;
     m_renderer = 0;
     delete m_grid;
@@ -168,6 +173,8 @@ void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
     if (model)
         model->setEdgeColor(black);
     m_renderer->setSelectedModel(value);
+    m_info->setModel(value);
+    m_info->update();
     if (value)
         value->setEdgeColor(red);
     emit modelDidSelect(value);
@@ -552,15 +559,18 @@ const QPointF SceneWidget::objectCoordinates(const QPointF &input) const
 
 void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
 {
-    m_bone = bones.isEmpty() ? 0 : bones.last();
-    if (m_bone) {
-        m_handles->setMovable(m_bone->isMovable());
-        m_handles->setRotateable(m_bone->isRotateable());
+    vpvl::Bone *bone = bones.isEmpty() ? 0 : bones.last();
+    m_info->setBone(bone);
+    m_info->update();
+    if (bone) {
+        m_handles->setMovable(bone->isMovable());
+        m_handles->setRotateable(bone->isRotateable());
     }
     else {
         m_handles->setMovable(false);
         m_handles->setRotateable(false);
     }
+    m_bone = bone;
 }
 
 void SceneWidget::rotate(float x, float y)
@@ -690,7 +700,12 @@ void SceneWidget::initializeGL()
         setPhysicsEnable(true);
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
-    m_handles->load(this);
+    m_handles->load();
+    m_info->load();
+    m_info->setModel(0);
+    m_info->setBone(0);
+    m_info->setFPS(0.0f);
+    m_info->update();
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
@@ -780,13 +795,17 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 
 void SceneWidget::paintGL()
 {
+    QPainter painter(this);
     qglClearColor(Qt::white);
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
     m_renderer->drawSurface();
     m_grid->draw(m_renderer->scene());
     drawBones();
-    m_handles->draw(this);
+    painter.beginNativePainting();
+    m_handles->draw();
+    m_info->draw();
+    painter.endNativePainting();
     emit motionDidFinished(m_loader->stoppedMotions());
 }
 
@@ -794,6 +813,7 @@ void SceneWidget::resizeGL(int w, int h)
 {
     m_renderer->resize(w, h);
     m_handles->resize(w, h);
+    m_info->resize(w, h);
 }
 
 void SceneWidget::timerEvent(QTimerEvent *event)
@@ -833,6 +853,8 @@ void SceneWidget::updateFPS()
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
         m_timer.restart();
+        m_info->setFPS(m_currentFPS);
+        m_info->update();
         emit fpsDidUpdate(m_currentFPS);
     }
     m_frameCount++;
