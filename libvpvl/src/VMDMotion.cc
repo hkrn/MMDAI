@@ -258,7 +258,11 @@ void VMDMotion::advance(float deltaFrame)
         m_model->smearAllBonesToDefault(m_beginningNonControlledBlend / 10.0f);
         m_model->smearAllFacesToDefault(m_beginningNonControlledBlend / 10.0f);
     }
-    if (m_active) {
+    if (deltaFrame == 0.0f) {
+        m_boneMotion.advance(deltaFrame);
+        m_faceMotion.advance(deltaFrame);
+    }
+    else if (m_active) {
         // Started gracefully finish
         if (m_endingBoneBlend != 0.0f || m_endingFaceBlend != 0.0f) {
             m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
