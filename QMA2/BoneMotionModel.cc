@@ -342,6 +342,7 @@ BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QOb
 
 BoneMotionModel::~BoneMotionModel()
 {
+    m_frames.releaseAll();
 }
 
 void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
@@ -375,11 +376,35 @@ void BoneMotionModel::pasteFrame(int frameIndex)
         KeyFramePairList frames;
         uint32_t nFrames = m_frames.count();
         for (uint32_t i = 0; i < nFrames; i++) {
-            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]);
+            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
-        m_frames.clear();
+    }
+}
+
+void BoneMotionModel::pasteReversedFrame(int frameIndex)
+{
+    QTextCodec *codec = internal::getTextCodec();
+    const QByteArray &right = codec->fromUnicode("右");
+    const QByteArray &left = codec->fromUnicode("左");
+    if (m_model && m_motion && m_frames.count() != 0) {
+        KeyFramePairList frames;
+        uint32_t nFrames = m_frames.count();
+        for (uint32_t i = 0; i < nFrames; i++) {
+            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
+            const QString name(reinterpret_cast<const char *>(frame->name()));
+            if (name.startsWith(right) || name.startsWith(left)) {
+                vpvl::Vector3 position = frame->position();
+                vpvl::Quaternion rotation = frame->rotation();
+                position.setX(-position.x());
+                rotation.setX(-rotation.x());
+                frame->setPosition(position);
+                frame->setRotation(rotation);
+            }
+            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+        }
+        addUndoCommand(new SetFramesCommand(this, frames));
     }
 }
 

@@ -96,6 +96,18 @@ static inline void dumpBones(vpvl::PMDModel *model) {
     }
 }
 
+static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames) {
+    uint32_t nFrames = frames.count();
+    for (uint32_t i = 0; i < nFrames; i++) {
+        vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(frames[i]);
+        const vpvl::Vector3 &p = frame->position();
+        const vpvl::Quaternion &q = frame->rotation();
+        qDebug() << internal::toQString(frame)
+                 << QVector3D(p.x(), p.y(), p.z())
+                 << QQuaternion(q.w(), q.x(), q.y(), q.z());
+    }
+}
+
 }
 
 #endif // UTIL_H

@@ -185,6 +185,11 @@ void SceneWidget::setHandlesVisible(bool value)
     m_handles->setVisible(value);
 }
 
+void SceneWidget::setInfoPanelVisible(bool value)
+{
+    m_info->setVisible(value);
+}
+
 void SceneWidget::addModel()
 {
     vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",

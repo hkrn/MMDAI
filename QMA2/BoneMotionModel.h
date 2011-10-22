@@ -73,6 +73,7 @@ public:
     void saveMotion(vpvl::VMDMotion *motion);
     void copyFrames(int frameIndex);
     void pasteFrame(int frameIndex);
+    void pasteReversedFrame(int frameIndex);
     void startTransform();
     void commitTransform();
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);

@@ -87,6 +87,7 @@ private slots:
     void deleteFrame();
     void copyFrame();
     void pasteFrame();
+    void pasteReversedFrame();
     void setCurrentTabIndex(int index);
 
 private:

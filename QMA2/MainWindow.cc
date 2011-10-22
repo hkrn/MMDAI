@@ -419,6 +419,8 @@ void MainWindow::buildUI()
     connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
     m_actionPaste = new QAction(this);
     connect(m_actionPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteFrame()));
+    m_actionReversedPaste = new QAction(this);
+    connect(m_actionReversedPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteReversedFrame()));
     m_actionInsertEmptyFrame = new QAction(this);
     connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertFrame()));
     m_actionDeleteSelectedFrame = new QAction(this);
@@ -514,6 +516,7 @@ void MainWindow::buildUI()
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionCopy);
     m_menuFrame->addAction(m_actionPaste);
+    m_menuFrame->addAction(m_actionReversedPaste);
     m_menuFrame->addAction(m_actionUndoFrame);
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
@@ -664,6 +667,9 @@ void MainWindow::retranslate()
     m_actionPaste->setText(tr("Paste"));
     m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
     m_actionPaste->setShortcut(QKeySequence::Paste);
+    m_actionReversedPaste->setText(tr("Paste with reversed"));
+    m_actionReversedPaste->setStatusTip(tr("Paste a selected keyframe with reversed."));
+    m_actionReversedPaste->setShortcut(tr("Alt+Ctrl+V"));
     m_actionUndoFrame->setShortcut(QKeySequence::Undo);
     m_actionRedoFrame->setShortcut(QKeySequence::Redo);
     m_actionViewTab->setText(tr("Tab"));
@@ -842,11 +848,13 @@ void MainWindow::exportImage()
         bool visibleGrid = m_sceneWidget->isGridVisible();
         m_sceneWidget->setGridVisible(false);
         m_sceneWidget->setHandlesVisible(false);
+        m_sceneWidget->setInfoPanelVisible(false);
         m_sceneWidget->setSelectedModel(0);
         m_sceneWidget->updateGL();
         QImage image = m_sceneWidget->grabFrameBuffer(true);
         m_sceneWidget->setGridVisible(visibleGrid);
         m_sceneWidget->setHandlesVisible(true);
+        m_sceneWidget->setInfoPanelVisible(true);
         m_sceneWidget->setSelectedModel(selected);
         m_sceneWidget->updateGL();
         if (!image.isNull())
@@ -932,6 +940,7 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->advanceMotion(fromIndex);
             m_sceneWidget->setGridVisible(m_exportingVideoDialog->includesGrid());
             m_sceneWidget->setHandlesVisible(false);
+            m_sceneWidget->setInfoPanelVisible(false);
             m_sceneWidget->setSelectedModel(0);
             m_sceneWidget->resize(videoSize);
             m_sceneWidget->updateGL();
@@ -955,6 +964,7 @@ void MainWindow::startExportingVideo()
             }
             m_sceneWidget->setGridVisible(visibleGrid);
             m_sceneWidget->setHandlesVisible(true);
+            m_sceneWidget->setInfoPanelVisible(true);
             m_sceneWidget->setSelectedModel(selected);
             m_sceneWidget->setPreferredFPS(fps);
             m_sceneWidget->resize(sceneSize);

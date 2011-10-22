@@ -259,6 +259,7 @@ FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
 
 FaceMotionModel::~FaceMotionModel()
 {
+    m_frames.releaseAll();
 }
 
 void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
@@ -292,11 +293,10 @@ void FaceMotionModel::pasteFrame(int frameIndex)
         FaceMotionModel::KeyFramePairList frames;
         uint32_t nFrames = m_frames.count();
         for (uint32_t i = 0; i < nFrames; i++) {
-            vpvl::FaceKeyFrame *frame = static_cast<vpvl::FaceKeyFrame *>(m_frames[i]);
+            vpvl::FaceKeyFrame *frame = static_cast<vpvl::FaceKeyFrame *>(m_frames[i]->clone());
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
-        m_frames.clear();
     }
 }
 

@@ -226,6 +226,17 @@ void TimelineTabWidget::pasteFrame()
     }
 }
 
+void TimelineTabWidget::pasteReversedFrame()
+{
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex:
+        UIGetBoneModel(m_boneTimeline)->pasteReversedFrame(m_boneTimeline->frameIndex());
+        break;
+    default:
+        pasteFrame();
+    }
+}
+
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
     switch (index) {
