@@ -622,7 +622,7 @@ void MainWindow::retranslate()
     m_actionSetCamera->setShortcut(tr("Ctrl+Shift+C"));
     m_actionExit->setText(tr("Exit"));
     m_actionExit->setStatusTip(tr("Exit this application."));
-    m_actionExit->setShortcut(tr("Ctrl+Q"));
+    m_actionExit->setShortcut(QKeySequence::Quit);
     m_actionPlay->setText(tr("Play"));
     m_actionPlay->setStatusTip(tr("Play current scene."));
     m_actionPause->setText(tr("Pause"));
@@ -637,10 +637,10 @@ void MainWindow::retranslate()
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
-    m_actionZoomIn->setShortcut(tr("+"));
+    m_actionZoomIn->setShortcut(QKeySequence::ZoomIn);
     m_actionZoomOut->setText(tr("Zoom out"));
     m_actionZoomOut->setStatusTip(tr("Zoom out the scene."));
-    m_actionZoomOut->setShortcut(tr("-"));
+    m_actionZoomOut->setShortcut(QKeySequence::ZoomOut);
     m_actionRotateUp->setText(tr("Rotate up"));
     m_actionRotateUp->setStatusTip(tr("Rotate up the scene."));
     m_actionRotateUp->setShortcut(tr("Ctrl+Up"));
@@ -690,12 +690,12 @@ void MainWindow::retranslate()
     m_actionDeleteSelectedFrame->setStatusTip(tr("Delete a selected keyframe."));
     m_actionCopy->setText(tr("Copy"));
     m_actionCopy->setStatusTip(tr("Copy a selected keyframe."));
-    m_actionCopy->setShortcut(tr("Ctrl+C"));
+    m_actionCopy->setShortcut(QKeySequence::Copy);
     m_actionPaste->setText(tr("Paste"));
     m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
-    m_actionPaste->setShortcut(tr("Ctrl+V"));
-    m_actionUndoFrame->setShortcut(tr("Ctrl+Z"));
-    m_actionRedoFrame->setShortcut(tr("Ctrl+Shift+Z"));
+    m_actionPaste->setShortcut(QKeySequence::Paste);
+    m_actionUndoFrame->setShortcut(QKeySequence::Undo);
+    m_actionRedoFrame->setShortcut(QKeySequence::Redo);
     m_actionViewTab->setText(tr("Tab"));
     m_actionViewTab->setStatusTip(tr("Open tab window."));
     m_actionViewTimeline->setText(tr("Timeline"));
