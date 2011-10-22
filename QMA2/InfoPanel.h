@@ -58,6 +58,7 @@ public:
           m_fontMetrics(m_font),
           m_rect(0, 0, 256, 256),
           m_textureID(0),
+          m_fps(0.0f),
           m_width(0),
           m_height(0),
           m_visible(true)
@@ -75,14 +76,25 @@ public:
     }
     void update() {
         int height = m_fontMetrics.height();
-        QImage texture(m_rect.size(), QImage::Format_ARGB32);
+        QImage texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied);
         texture.fill(0);
         QPainter painter(&texture);
         painter.setFont(m_font);
         painter.setRenderHint(QPainter::TextAntialiasing);
-        painter.drawText(0, height, m_modelText);
-        painter.drawText(0, height * 2, m_boneText);
-        painter.drawText(0, height * 3, m_FPSText);
+        static const QString kModelPrefix("Model: ");
+        static const int kModelPrefixWidth = m_fontMetrics.width(kModelPrefix);
+        painter.setPen(Qt::blue);
+        painter.drawText(0, height, kModelPrefix);
+        painter.setPen(Qt::red);
+        painter.drawText(kModelPrefixWidth, height, m_model);
+        painter.setPen(Qt::blue);
+        painter.drawText(0, height * 2, "Bone: ");
+        painter.setPen(Qt::red);
+        painter.drawText(kModelPrefixWidth, height * 2, m_bone);
+        if (m_fps > 0.0f) {
+            painter.setPen(Qt::black);
+            painter.drawText(0, height * 3, QString("FPS: %1").arg(m_fps));
+        }
         painter.end();
         deleteTexture();
         m_textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(texture.rgbSwapped()));
@@ -106,13 +118,13 @@ public:
     }
 
     void setModel(vpvl::PMDModel *model) {
-        m_modelText = QString("Model: %1").arg(internal::toQString(model));
+        m_model = internal::toQString(model);
     }
     void setBone(vpvl::Bone *bone) {
-        m_boneText = QString("Bone: %1").arg(internal::toQString(bone));
+        m_bone = internal::toQString(bone);
     }
     void setFPS(float value) {
-        m_FPSText = QString("FPS: %1").arg(value);
+        m_fps = value;
     }
     void setVisible(bool value) {
         m_visible = value;
@@ -130,10 +142,10 @@ private:
     QFont m_font;
     QFontMetrics m_fontMetrics;
     QRect m_rect;
-    QString m_modelText;
-    QString m_boneText;
-    QString m_FPSText;
+    QString m_model;
+    QString m_bone;
     GLuint m_textureID;
+    float m_fps;
     int m_width;
     int m_height;
     bool m_visible;
