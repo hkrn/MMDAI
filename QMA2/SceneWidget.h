@@ -60,15 +60,18 @@ class Scene;
 class VMDMotion;
 }
 
+namespace internal {
 class Delegate;
 class Grid;
 class Handles;
+class World;
+}
+
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
 class Script;
 class VPDFile;
-class World;
 
 class SceneWidget : public QGLWidget
 {
@@ -193,16 +196,15 @@ private:
 #else
     vpvl::gl::Renderer *m_renderer;
 #endif
-
+    internal::Delegate *m_delegate;
+    internal::Handles *m_handles;
+    internal::Grid *m_grid;
+    internal::World *m_world;
     vpvl::Bone *m_bone;
-    Delegate *m_delegate;
     SceneLoader *m_loader;
-    Grid *m_grid;
-    World *m_world;
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
-    Handles *m_handles;
     float m_prevElapsed;
     float m_frameIndex;
     int m_frameCount;

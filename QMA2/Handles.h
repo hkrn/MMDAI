@@ -5,6 +5,8 @@
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
 
+namespace internal {
+
 class Handles
 {
 public:
@@ -241,5 +243,7 @@ private:
     bool m_enableRotate;
     bool m_visible;
 };
+
+}
 
 #endif // HANDLES_H

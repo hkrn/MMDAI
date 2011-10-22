@@ -40,6 +40,8 @@
 #include <QtCore/QObject>
 #include <btBulletDynamicsCommon.h>
 
+namespace internal {
+
 class World {
 public:
     explicit World(int defaultFPS)
@@ -70,5 +72,7 @@ private:
 
     Q_DISABLE_COPY(World)
 };
+
+}
 
 #endif // WORLD_H

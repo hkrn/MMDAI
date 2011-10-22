@@ -6,6 +6,8 @@
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
 
+namespace internal {
+
 class Grid {
 public:
     static const int kLimit = 50;
@@ -118,5 +120,7 @@ private:
     GLuint m_list;
     bool m_enabled;
 };
+
+}
 
 #endif // GRID_H

@@ -57,17 +57,18 @@ using namespace vpvl::gl2;
 #include <vpvl/gl/Renderer.h>
 using namespace vpvl::gl;
 #endif
+using namespace internal;
 
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
-    m_bone(0),
     m_delegate(0),
-    m_loader(0),
+    m_handles(0),
     m_grid(0),
     m_world(0),
+    m_bone(0),
+    m_loader(0),
     m_settings(settings),
-    m_handles(0),
     m_prevElapsed(0.0f),
     m_frameIndex(0.0f),
     m_frameCount(0),

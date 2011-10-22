@@ -111,7 +111,6 @@ SOURCES += main.cc\
     InterpolationWidget.cc \
     VPDFile.cc \
     LicenseWidget.cc \
-    Delegate.cc \
     SceneLoader.cc \
     AssetWidget.cc
 
@@ -138,7 +137,8 @@ HEADERS  += MainWindow.h \
     Grid.h \
     Application.h \
     Handles.h \
-    AssetWidget.h
+    AssetWidget.h \
+    InfoPanel.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
@@ -148,5 +148,6 @@ FORMS += \
     TransformWidget.ui \
     #MainWindow.ui \
     BoneDialog.ui
+
 
 
