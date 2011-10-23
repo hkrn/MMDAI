@@ -189,9 +189,9 @@ void Scene::resetCamera()
 void Scene::seekMotion(float frameIndex)
 {
     sortRenderingOrder();
-    const uint32_t nModels = m_models.count();
+    const int nmodels = m_models.count();
     // Updating model
-    for (uint32_t i = 0; i < nModels; i++) {
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->seekMotion(frameIndex);
@@ -235,8 +235,8 @@ void Scene::setLightSource(const Vector4 &color, const Vector3 &position)
 {
     m_lightColor = color;
     m_lightPosition.setValue(position.x(), position.y(), position.z(), 1.0f);
-    const uint32_t nModels = m_models.count();
-    for (uint32_t i = 0; i < nModels; i++) {
+    const int nmodels = m_models.count();
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->setLightPosition(position);
     }
@@ -255,17 +255,17 @@ void Scene::setViewMove(int viewMoveTime)
 
 void Scene::setWorld(btDiscreteDynamicsWorld *world)
 {
-    const uint32_t nModels = m_models.count();
+    const int nmodels = m_models.count();
     // Remove rigid bodies and constraints from the current world
     // before setting the new world
     if (m_world) {
-        for (uint32_t i = 0; i < nModels; i++) {
+        for (int i = 0; i < nmodels; i++) {
             PMDModel *model = m_models[i];
             model->leaveWorld(m_world);
         }
     }
     if (world) {
-        for (uint32_t i = 0; i < nModels; i++) {
+        for (int i = 0; i < nmodels; i++) {
             PMDModel *model = m_models[i];
             model->joinWorld(world);
         }
@@ -276,9 +276,9 @@ void Scene::setWorld(btDiscreteDynamicsWorld *world)
 void Scene::advanceMotion(float deltaFrame)
 {
     sortRenderingOrder();
-    const uint32_t nModels = m_models.count();
+    const int nmodels = m_models.count();
     // Updating model
-    for (uint32_t i = 0; i < nModels; i++) {
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->advanceMotion(deltaFrame);
@@ -305,9 +305,9 @@ void Scene::advanceMotion(float deltaFrame)
 void Scene::resetMotion()
 {
     sortRenderingOrder();
-    const uint32_t nModels = m_models.count();
+    const int nmodels = m_models.count();
     // Updating model
-    for (uint32_t i = 0; i < nModels; i++) {
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->resetMotion();
@@ -324,9 +324,9 @@ void Scene::resetMotion()
 
 int Scene::maxFrameIndex() const
 {
-    const uint32_t nModels = m_models.count();
+    const int nmodels = m_models.count();
     int max = 0;
-    for (uint32_t i = 0; i < nModels; i++)
+    for (int i = 0; i < nmodels; i++)
         btSetMax(max, m_models[i]->maxFrameIndex());
     return max;
 }
@@ -338,9 +338,9 @@ bool Scene::isMotionFinished() const
 
 bool Scene::isMotionReachedTo(float atEnd) const
 {
-    const uint32_t nModels = m_models.count();
+    const int nmodels = m_models.count();
     bool ret = true;
-    for (uint32_t i = 0; i < nModels; i++)
+    for (int i = 0; i < nmodels; i++)
         ret = ret && m_models[i]->isMotionReachedTo(atEnd);
     return ret;
 }

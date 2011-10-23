@@ -159,13 +159,13 @@ public:
     PMDModel();
     ~PMDModel();
 
-    static const uint32_t kBoundingSpherePoints = 1000;
-    static const uint32_t kBoundingSpherePointsMax = 20;
-    static const uint32_t kBoundingSpherePointsMin = 5;
-    static const uint32_t kSystemTextureMax = 11;
-    static const uint32_t kNameSize = 20;
-    static const uint32_t kDescriptionSize = 256;
-    static const uint32_t kBoneCategoryNameSize = 50;
+    static const int kBoundingSpherePoints = 1000;
+    static const int kBoundingSpherePointsMax = 20;
+    static const int kBoundingSpherePointsMin = 5;
+    static const int kSystemTextureMax = 11;
+    static const int kNameSize = 20;
+    static const int kDescriptionSize = 256;
+    static const int kBoneCategoryNameSize = 50;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
 
@@ -438,7 +438,7 @@ public:
     BoneList *mutableBones() {
         return &m_bones;
     }
-    const uint8_t *toonTexture(uint32_t index) const {
+    const uint8_t *toonTexture(int index) const {
         if (index >= kSystemTextureMax)
             return NULL;
         return m_textures[index];
@@ -634,13 +634,13 @@ private:
     PMDModelUserData *m_userData;
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
-    uint32_t m_edgeIndicesCount;
+    int m_edgeIndicesCount;
     Quaternion m_rotationOffset;
     Color m_edgeColor;
     Vector3 m_positionOffset;
     Vector3 m_lightPosition;
     Error m_error;
-    uint32_t m_boundingSphereStep;
+    int m_boundingSphereStep;
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
     bool m_enableSimulation;

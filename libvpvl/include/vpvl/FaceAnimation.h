@@ -69,7 +69,7 @@ public:
 
     static const float kStartingMarginFrame;
 
-    void read(const uint8_t *data, uint32_t size);
+    void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void takeSnap(const Vector3 &center);
 
@@ -108,7 +108,7 @@ public:
      * @param i A frame index to get key frame
      * @return A camera key frame associated with index
      */
-    FaceKeyFrame *frameAt(uint32_t i) const {
+    FaceKeyFrame *frameAt(int i) const {
         return static_cast<FaceKeyFrame *>(m_frames[i]);
     }
 

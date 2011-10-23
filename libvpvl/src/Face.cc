@@ -46,14 +46,14 @@ namespace vpvl
 
 struct FaceVertexChunk
 {
-    uint32_t vertexID;
+    int vertexID;
     float position[3];
 };
 
 struct FaceChunk
 {
     uint8_t name[20];
-    uint32_t nvertices;
+    int nvertices;
     uint8_t type;
 };
 
@@ -103,14 +103,14 @@ void Face::read(const uint8_t *data)
     FaceChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
-    uint32_t nvertices = chunk.nvertices;
+    const int nvertices = chunk.nvertices;
     Type type = static_cast<Type>(chunk.type);
     m_type = type;
     uint8_t *ptr = const_cast<uint8_t *>(data);
     ptr += sizeof(chunk);
     if (nvertices > 0) {
         FaceVertexChunk vc;
-        for (uint32_t i = 0; i < nvertices; i++) {
+        for (int i = 0; i < nvertices; i++) {
             FaceVertex *vertex = new FaceVertex();
             internal::copyBytes(reinterpret_cast<uint8_t *>(&vc), ptr, sizeof(vc));
             vertex->id = vc.vertexID;
@@ -128,18 +128,18 @@ void Face::read(const uint8_t *data)
 
 void Face::convertIndices(const Face *base)
 {
-    const uint32_t nvertices = m_vertices.count();
-    const uint32_t baseNVertices = base->m_vertices.count();
+    const int nvertices = m_vertices.count();
+    const int baseNVertices = base->m_vertices.count();
     if (m_type != kBase) {
-        for (uint32_t i = 0; i < nvertices; i++) {
-            uint32_t relID = m_vertices[i]->id;
+        for (int i = 0; i < nvertices; i++) {
+            int relID = m_vertices[i]->id;
             if (relID >= baseNVertices)
                 relID -= kMaxVertexID;
             m_vertices[i]->id = base->m_vertices[relID]->id;
         }
     }
     else {
-        for (uint32_t i = 0; i < nvertices; i++) {
+        for (int i = 0; i < nvertices; i++) {
             if (m_vertices[i]->id >= kMaxVertexID)
                 m_vertices[i]->id -= kMaxVertexID;
         }
@@ -148,11 +148,11 @@ void Face::convertIndices(const Face *base)
 
 void Face::setVertices(VertexList &vertices)
 {
-    const uint32_t nv = vertices.count();
-    const uint32_t nfv = m_vertices.count();
-    for (uint32_t i = 0; i < nfv; i++) {
+    const int nv = vertices.count();
+    const int nfv = m_vertices.count();
+    for (int i = 0; i < nfv; i++) {
         const FaceVertex *fv = m_vertices[i];
-        const uint32_t id = fv->id;
+        int id = fv->id;
         if (id < nv)
             vertices[id]->setPosition(fv->position);
     }
@@ -160,11 +160,11 @@ void Face::setVertices(VertexList &vertices)
 
 void Face::setVertices(VertexList &vertices, float rate)
 {
-    const uint32_t nv = vertices.count();
-    const uint32_t nfv = m_vertices.count();
-    for (uint32_t i = 0; i < nfv; i++) {
+    const int nv = vertices.count();
+    const int nfv = m_vertices.count();
+    for (int i = 0; i < nfv; i++) {
         const FaceVertex *fv = m_vertices[i];
-        const uint32_t id = fv->id;
+        int id = fv->id;
         if (id < nv) {
             Vertex *vertex = vertices[id];
             vertex->setPosition(vertex->position() + fv->position * rate);

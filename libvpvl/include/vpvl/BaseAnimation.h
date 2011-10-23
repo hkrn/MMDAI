@@ -76,7 +76,7 @@ public:
      * @param data The buffer to read and parse
      * @param size Size of the buffer
      */
-    virtual void read(const uint8_t *data, uint32_t size) = 0;
+    virtual void read(const uint8_t *data, int size) = 0;
 
     /**
      * Seek the Animation to the given value index.
@@ -259,8 +259,8 @@ public:
 
 protected:
     BaseKeyFrameList m_frames;
-    uint32_t m_lastIndex;
-    uint32_t m_lastLoopStartIndex;
+    int m_lastIndex;
+    int m_lastLoopStartIndex;
     const float m_smearDefault;
     float m_maxFrame;
     float m_currentFrame;

@@ -169,7 +169,7 @@ void Bone::reset()
 
 void Bone::build(BoneList *bones, Bone *rootBone)
 {
-    uint32_t nbones = bones->count();
+    const int nbones = bones->count();
     // The bone has a parent bone and in the the current bones
     if (m_parentBoneID != -1 && m_parentBoneID < nbones) {
         m_parentBone = bones->at(m_parentBoneID);

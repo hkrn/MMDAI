@@ -109,10 +109,10 @@ public:
     void add(const T &item) {
         m_values.push_back(item);
     }
-    const T &at(uint32_t i) const {
+    const T &at(int i) const {
         return m_values.at(i);
     }
-    T &at(uint32_t i) {
+    T &at(int i) {
         return m_values.at(i);
     }
     void clear() {
@@ -121,35 +121,35 @@ public:
     void copy(const Array &items) {
         m_values.copyFromArray(items.m_values);
     }
-    uint32_t count() const {
+    int count() const {
         return m_values.size();
     }
     void releaseAll() {
-        uint32_t size = m_values.size();
-        for (uint32_t i = 0; i < size; i++)
+        const int size = m_values.size();
+        for (int i = 0; i < size; i++)
             delete m_values[i];
         m_values.clear();
     }
     void releaseArrayAll() {
-        uint32_t size = m_values.size();
-        for (uint32_t i = 0; i < size; i++)
+        const int size = m_values.size();
+        for (int i = 0; i < size; i++)
             delete[] m_values[i];
         m_values.clear();
     }
     void remove(const T &item) {
         m_values.remove(item);
     }
-    void reserve(uint32_t size) {
+    void reserve(int size) {
         m_values.reserve(size);
     }
     template <typename Comparable>
     void sort(Comparable comparable) {
         m_values.quickSort(comparable);
     }
-    const T &operator[](uint32_t i) const {
+    const T &operator[](int i) const {
         return m_values[i];
     }
-    T &operator[](uint32_t i) {
+    T &operator[](int i) {
         return m_values[i];
     }
 
@@ -170,7 +170,7 @@ public:
     void clear() {
         m_values.clear();
     }
-    uint32_t count() const {
+    int count() const {
         return m_values.size();
     }
     const V *find(const K &key) const {
@@ -180,12 +180,12 @@ public:
         m_values.insert(key, value);
     }
     void releaseAll() {
-        uint32_t nNodes = m_values.size();
-        for (uint32_t i = 0; i < nNodes; i++)
+        const int nNodes = m_values.size();
+        for (int i = 0; i < nNodes; i++)
             delete *m_values.getAtIndex(i);
         m_values.clear();
     }
-    const V *value(uint32_t index) const {
+    const V *value(int index) const {
         return m_values.getAtIndex(index);
     }
     V *operator[](const K &key) {

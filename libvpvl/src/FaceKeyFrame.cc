@@ -47,7 +47,7 @@ namespace vpvl
 struct FaceKeyFrameChunk
 {
     uint8_t name[15];
-    uint32_t frameIndex;
+    int frameIndex;
     float weight;
 };
 
@@ -86,7 +86,7 @@ void FaceKeyFrame::write(uint8_t *data) const
 {
     FaceKeyFrameChunk chunk;
     copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
-    chunk.frameIndex = static_cast<uint32_t>(m_frameIndex);
+    chunk.frameIndex = static_cast<int>(m_frameIndex);
     chunk.weight = m_weight;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }

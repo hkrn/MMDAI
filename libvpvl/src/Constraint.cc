@@ -54,8 +54,8 @@ namespace vpvl
 struct ConstraintChunk
 {
     uint8_t name[Constraint::kNameSize];
-    uint32_t bodyIDA;
-    uint32_t bodyIDB;
+    int bodyIDA;
+    int bodyIDB;
     float position[3];
     float rotation[3];
     float limitPositionFrom[3];

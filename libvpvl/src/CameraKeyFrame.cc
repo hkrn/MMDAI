@@ -46,12 +46,12 @@ namespace vpvl
 
 struct CameraKeyFrameChunk
 {
-    uint32_t frameIndex;
+    int frameIndex;
     float distance;
     float position[3];
     float angle[3];
     int8_t interpolationTable[24];
-    uint32_t viewAngle;
+    int viewAngle;
     uint8_t noPerspective;
 };
 
@@ -145,8 +145,8 @@ void CameraKeyFrame::read(const uint8_t *data)
 void CameraKeyFrame::write(uint8_t *data) const
 {
     CameraKeyFrameChunk chunk;
-    chunk.frameIndex = static_cast<uint32_t>(m_frameIndex);
-    chunk.viewAngle = static_cast<uint32_t>(m_fovy);
+    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    chunk.viewAngle = static_cast<int>(m_fovy);
     chunk.noPerspective = m_noPerspective ? 1 : 0;
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();

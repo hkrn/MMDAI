@@ -51,7 +51,7 @@ struct BoneAnimationInternal {
     Vector3 snapPosition;
     Quaternion rotation;
     Quaternion snapRotation;
-    uint32_t lastIndex;
+    int lastIndex;
 };
 
 class BoneAnimationKeyFramePredication
@@ -62,7 +62,7 @@ public:
     }
 };
 
-float BoneAnimation::weightValue(const BoneKeyFrame *keyFrame, float w, uint32_t at)
+float BoneAnimation::weightValue(const BoneKeyFrame *keyFrame, float w, int at)
 {
     const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
     const float *v = keyFrame->interpolationTable()[at];
@@ -73,7 +73,7 @@ void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
                                 const Vector3 &from,
                                 const Vector3 &to,
                                 float w,
-                                uint32_t at,
+                                int at,
                                 float &value)
 {
     const float valueFrom = static_cast<const Scalar *>(from)[at];
@@ -101,11 +101,11 @@ BoneAnimation::~BoneAnimation()
     m_hasCenterBoneAnimation = false;
 }
 
-void BoneAnimation::read(const uint8_t *data, uint32_t size)
+void BoneAnimation::read(const uint8_t *data, int size)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
-    for (uint32_t i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         BoneKeyFrame *frame = new BoneKeyFrame();
         frame->read(ptr);
         ptr += frame->stride();
@@ -115,8 +115,8 @@ void BoneAnimation::read(const uint8_t *data, uint32_t size)
 
 void BoneAnimation::seek(float frameAt)
 {
-    const uint32_t nNodes = m_name2node.count();
-    for (uint32_t i = 0; i < nNodes; i++) {
+    const int nnodes = m_name2node.count();
+    for (int i = 0; i < nnodes; i++) {
         BoneAnimationInternal *node = *m_name2node.value(i);
         if (m_ignoreOneKeyFrame && node->keyFrames.count() <= 1)
             continue;
@@ -135,8 +135,8 @@ void BoneAnimation::seek(float frameAt)
 
 void BoneAnimation::takeSnap(const Vector3 &center)
 {
-    const uint32_t nNodes = m_name2node.count();
-    for (uint32_t i = 0; i < nNodes; i++) {
+    const int nnodes = m_name2node.count();
+    for (int i = 0; i < nnodes; i++) {
         BoneAnimationInternal *node = *m_name2node.value(i);
         Bone *bone = node->bone;
         node->snapPosition = bone->position();
@@ -164,10 +164,10 @@ void BoneAnimation::refresh()
 
 void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
 {
-    const uint32_t nFrames = m_frames.count();
+    const int nframes = m_frames.count();
     const uint8_t *centerBoneName = Bone::centerBoneName();
     const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
-    for (uint32_t i = 0; i < nFrames; i++) {
+    for (int i = 0; i < nframes; i++) {
         BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
         BoneAnimationInternal **ptr = m_name2node[name], *node;
@@ -193,8 +193,8 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
         }
     }
 
-    const uint32_t nNodes = m_name2node.count();
-    for (uint32_t i = 0; i < nNodes; i++) {
+    const int nnodes = m_name2node.count();
+    for (int i = 0; i < nnodes; i++) {
         BoneAnimationInternal *node = *m_name2node.value(i);
         BoneKeyFrameList &frames = node->keyFrames;
         frames.sort(BoneAnimationKeyFramePredication());
@@ -205,15 +205,15 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
 void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
 {
     BoneKeyFrameList &kframes = node->keyFrames;
-    const uint32_t nFrames = kframes.count();
-    BoneKeyFrame *lastKeyFrame = kframes[nFrames - 1];
+    const int nframes = kframes.count();
+    BoneKeyFrame *lastKeyFrame = kframes[nframes - 1];
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->frameIndex())
         currentFrame = lastKeyFrame->frameIndex();
 
-    uint32_t k1 = 0, k2 = 0, lastIndex = node->lastIndex;
+    int k1 = 0, k2 = 0, lastIndex = node->lastIndex;
     if (currentFrame >= kframes[lastIndex]->frameIndex()) {
-        for (uint32_t i = lastIndex; i < nFrames; i++) {
+        for (int i = lastIndex; i < nframes; i++) {
             if (currentFrame <= kframes[i]->frameIndex()) {
                 k2 = i;
                 break;
@@ -221,7 +221,7 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
         }
     }
     else {
-        for (uint32_t i = 0; i <= lastIndex && i < nFrames; i++) {
+        for (int i = 0; i <= lastIndex && i < nframes; i++) {
             if (currentFrame <= kframes[i]->frameIndex()) {
                 k2 = i;
                 break;
@@ -229,8 +229,8 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
         }
     }
 
-    if (k2 >= nFrames)
-        k2 = nFrames - 1;
+    if (k2 >= nframes)
+        k2 = nframes - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
     node->lastIndex = k1;
 
@@ -240,7 +240,7 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
     Vector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
     Quaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
     if (m_overrideFirst && (k1 == 0 || frameIndexFrom <= m_lastLoopStartIndex)) {
-        if (nFrames > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
+        if (nframes > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
             frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
             positionFrom = node->snapPosition;
             rotationFrom = node->snapRotation;
@@ -257,7 +257,7 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
             rotationTo = keyFrameFrom->rotation();
             keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameFrom);
         }
-        else if (nFrames > 1) {
+        else if (nframes > 1) {
             frameIndexFrom = m_lastLoopStartIndex + m_smearIndex;
             currentFrame = frameAt;
             positionFrom = keyFrameFrom->position();
@@ -311,8 +311,8 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
 void BoneAnimation::reset()
 {
     BaseAnimation::reset();
-    const uint32_t nNodes = m_name2node.count();
-    for (uint32_t i = 0; i < nNodes; i++) {
+    const int nnodes = m_name2node.count();
+    for (int i = 0; i < nnodes; i++) {
         BoneAnimationInternal *node = *m_name2node.value(i);
         node->lastIndex = 0;
     }

@@ -64,7 +64,7 @@ public:
     CameraAnimation();
     ~CameraAnimation();
 
-    void read(const uint8_t *data, uint32_t size);
+    void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void takeSnap(const Vector3 &center);
     void reset();
@@ -76,7 +76,7 @@ public:
      * @param i A frame index to get key frame
      * @return A camera key frame associated with index
      */
-    CameraKeyFrame *frameAt(uint32_t i) const {
+    CameraKeyFrame *frameAt(int i) const {
         return static_cast<CameraKeyFrame *>(m_frames[i]);
     }
 
@@ -119,19 +119,18 @@ public:
 private:
     static float weightValue(const CameraKeyFrame *keyFrame,
                              float w,
-                             uint32_t at);
+                             int at);
     static void lerpVector3(const CameraKeyFrame *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
                             float w,
-                            uint32_t at,
+                            int at,
                             float &value);
 
     Vector3 m_position;
     Vector3 m_angle;
     float m_distance;
     float m_fovy;
-    uint32_t m_lastIndex;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(CameraAnimation)
 };

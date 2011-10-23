@@ -117,8 +117,8 @@ void BaseAnimation::addKeyFrame(BaseKeyFrame *frame)
 
 void BaseAnimation::copyKeyFrames(int frameIndex, BaseKeyFrameList &frames) const
 {
-    const uint32_t nFrames = m_frames.count();
-    for (uint32_t i = 0; i < nFrames; i++) {
+    const int nframes = m_frames.count();
+    for (int i = 0; i < nframes; i++) {
         BaseKeyFrame *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex)
             frames.add(frame->clone());
@@ -127,10 +127,10 @@ void BaseAnimation::copyKeyFrames(int frameIndex, BaseKeyFrameList &frames) cons
 
 void BaseAnimation::deleteKeyFrame(int frameIndex, const uint8_t *value)
 {
-    const uint32_t nFrames = m_frames.count();
+    const int nframes = m_frames.count();
     const size_t len = strlen(reinterpret_cast<const char *>(value));
     BaseKeyFrame *frameToRemove = 0;
-    for (uint32_t i = 0; i < nFrames; i++) {
+    for (int i = 0; i < nframes; i++) {
         BaseKeyFrame *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex && internal::stringEquals(value, frame->name(), len)) {
             frameToRemove = frame;
@@ -147,16 +147,16 @@ void BaseAnimation::deleteKeyFrame(int frameIndex, const uint8_t *value)
 
 void BaseAnimation::deleteKeyFrames(int frameIndex)
 {
-    const uint32_t nFrames = m_frames.count();
+    const int nframes = m_frames.count();
     BaseKeyFrameList framesToRemove;
-    for (uint32_t i = 0; i < nFrames; i++) {
+    for (int i = 0; i < nframes; i++) {
         BaseKeyFrame *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex)
             framesToRemove.add(frame);
     }
-    const uint32_t nFramesToRemove = framesToRemove.count();
+    const int nFramesToRemove = framesToRemove.count();
     if (nFramesToRemove) {
-        for (uint32_t i = 0; i < nFramesToRemove; i++) {
+        for (int i = 0; i < nFramesToRemove; i++) {
             BaseKeyFrame *frame = framesToRemove[i];
             m_frames.remove(frame);
             delete frame;

@@ -50,7 +50,7 @@ public:
     }
 };
 
-float CameraAnimation::weightValue(const CameraKeyFrame *keyFrame, float w, uint32_t at)
+float CameraAnimation::weightValue(const CameraKeyFrame *keyFrame, float w, int at)
 {
     const uint16_t index = static_cast<int16_t>(w * CameraKeyFrame::kTableSize);
     const float *v = keyFrame->interpolationTable()[at];
@@ -61,7 +61,7 @@ void CameraAnimation::lerpVector3(const CameraKeyFrame *keyFrame,
                                const Vector3 &from,
                                const Vector3 &to,
                                float w,
-                               uint32_t at,
+                               int at,
                                float &value)
 {
     const float valueFrom = static_cast<const Scalar *>(from)[at];
@@ -80,8 +80,7 @@ CameraAnimation::CameraAnimation()
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_distance(0.0f),
-      m_fovy(0.0f),
-      m_lastIndex(0)
+      m_fovy(0.0f)
 {
 }
 
@@ -93,12 +92,12 @@ CameraAnimation::~CameraAnimation()
     m_fovy = 0.0f;
 }
 
-void CameraAnimation::read(const uint8_t *data, uint32_t size)
+void CameraAnimation::read(const uint8_t *data, int size)
 {
     if (size > 0) {
         uint8_t *ptr = const_cast<uint8_t *>(data);
         m_frames.reserve(size);
-        for (uint32_t i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             CameraKeyFrame *frame = new CameraKeyFrame();
             frame->read(ptr);
             ptr += frame->stride();
@@ -111,15 +110,15 @@ void CameraAnimation::read(const uint8_t *data, uint32_t size)
 
 void CameraAnimation::seek(float frameAt)
 {
-    const uint32_t nFrames = m_frames.count();
-    CameraKeyFrame *lastKeyFrame = static_cast<CameraKeyFrame *>(m_frames[nFrames - 1]);
+    const int nframes = m_frames.count();
+    CameraKeyFrame *lastKeyFrame = static_cast<CameraKeyFrame *>(m_frames[nframes - 1]);
     float currentFrame = frameAt;
     if (currentFrame > lastKeyFrame->frameIndex())
         currentFrame = lastKeyFrame->frameIndex();
 
-    uint32_t k1 = 0, k2 = 0;
+    int k1 = 0, k2 = 0;
     if (currentFrame >= m_frames[m_lastIndex]->frameIndex()) {
-        for (uint32_t i = m_lastIndex; i < nFrames; i++) {
+        for (int i = m_lastIndex; i < nframes; i++) {
             if (currentFrame <= m_frames[i]->frameIndex()) {
                 k2 = i;
                 break;
@@ -127,7 +126,7 @@ void CameraAnimation::seek(float frameAt)
         }
     }
     else {
-        for (uint32_t i = 0; i <= m_lastIndex && i < nFrames; i++) {
+        for (int i = 0; i <= m_lastIndex && i < nframes; i++) {
             if (currentFrame <= m_frames[i]->frameIndex()) {
                 k2 = i;
                 break;
@@ -135,8 +134,8 @@ void CameraAnimation::seek(float frameAt)
         }
     }
 
-    if (k2 >= nFrames)
-        k2 = nFrames - 1;
+    if (k2 >= nframes)
+        k2 = nframes - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
     m_lastIndex = k1;
 

@@ -104,11 +104,11 @@ inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     assert(ptr != NULL);
-    if (sizeof(uint32_t) > rest)
+    if (sizeof(int) > rest)
         return false;
-    size = *reinterpret_cast<uint32_t *>(ptr);
-    ptr += sizeof(uint32_t);
-    rest -= sizeof(uint32_t);
+    size = *reinterpret_cast<int *>(ptr);
+    ptr += sizeof(int);
+    rest -= sizeof(int);
     return true;
 }
 

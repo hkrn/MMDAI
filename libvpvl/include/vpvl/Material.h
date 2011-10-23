@@ -93,7 +93,7 @@ public:
     float shiness() const {
         return m_shiness;
     }
-    uint32_t countIndices() const {
+    int countIndices() const {
         return m_nindices;
     }
     uint8_t toonID() const {
@@ -153,7 +153,7 @@ private:
     Color m_specular;
     float m_opacity;
     float m_shiness;
-    uint32_t m_nindices;
+    int m_nindices;
     uint8_t m_toonID;
     bool m_edge;
     bool m_mainSphereModulate;

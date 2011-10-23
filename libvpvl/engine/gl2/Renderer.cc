@@ -562,13 +562,13 @@ namespace
 
 void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData, vpvl::gl2::IDelegate *delegate)
 {
-    const uint32_t nMeshes = node->mNumMeshes;
+    const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
     vpvl::gl2::AssetProgram *program = new vpvl::gl2::AssetProgram(delegate);
     program->load(delegate->loadShader(vpvl::gl2::IDelegate::kAssetVertexShader).c_str(),
                   delegate->loadShader(vpvl::gl2::IDelegate::kAssetFragmentShader).c_str());
     userData->programs[node] = program;
-    for (uint32_t i = 0; i < nMeshes; i++) {
+    for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
         const aiVector3D *normals = mesh->mNormals;
@@ -579,12 +579,12 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
         const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
         AssetVertices &assetVertices = userData->vertices[mesh];
         AssetIndices &indices = userData->indices[mesh];
-        const uint32_t nFaces = mesh->mNumFaces;
-        uint32_t index = 0;
-        for (uint32_t j = 0; j < nFaces; j++) {
+        const unsigned int nfaces = mesh->mNumFaces;
+        int index = 0;
+        for (unsigned int j = 0; j < nfaces; j++) {
             const struct aiFace &face = mesh->mFaces[j];
-            const uint32_t nIndices = face.mNumIndices;
-            for (uint32_t k = 0; k < nIndices; k++) {
+            const unsigned int nindices = face.mNumIndices;
+            for (unsigned int k = 0; k < nindices; k++) {
                 int vertexIndex = face.mIndices[k];
                 if (hasColors) {
                     const aiColor4D &c = colors[vertexIndex];
@@ -625,23 +625,23 @@ void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetU
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
     }
-    const uint32_t nChildNodes = node->mNumChildren;
-    for (uint32_t i = 0; i < nChildNodes; i++)
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
         aiLoadAssetRecursive(scene, node->mChildren[i], userData, delegate);
 }
 
 void aiUnloadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData)
 {
-    const uint32_t nMeshes = node->mNumMeshes;
-    for (uint32_t i = 0; i < nMeshes; i++) {
+    const unsigned int nmeshes = node->mNumMeshes;
+    for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = userData->vbo[mesh];
         glDeleteBuffers(1, &vbo.vertices);
         glDeleteBuffers(1, &vbo.indices);
     }
     delete userData->programs[node];
-    const uint32_t nChildNodes = node->mNumChildren;
-    for (uint32_t i = 0; i < nChildNodes; i++)
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
         aiUnloadAssetRecursive(scene, node->mChildren[i], userData);
 }
 
@@ -738,7 +738,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
-    const uint32_t nMeshes = node->mNumMeshes;
+    const unsigned int nmeshes = node->mNumMeshes;
     const size_t stride = sizeof(AssetVertex);
     vpvl::gl2::AssetProgram *program = userData->programs[node];
     program->bind();
@@ -755,7 +755,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setLightDiffuse(s->lightDiffuse());
     program->setLightPosition(s->lightPosition4());
     program->setLightSpecular(s->lightSpecular());
-    for (uint32_t i = 0; i < nMeshes; i++) {
+    for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = userData->vbo[mesh];
         const AssetIndices &indices = userData->indices[mesh];
@@ -771,8 +771,8 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
         program->resetTextureState();
     }
     program->unbind();
-    const uint32_t nChildNodes = node->mNumChildren;
-    for (uint32_t i = 0; i < nChildNodes; i++)
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
         aiDrawAssetRecurse(scene, node->mChildren[i], asset, s);
 }
 
@@ -936,15 +936,15 @@ Renderer::~Renderer()
 {
     vpvl::Array<vpvl::PMDModel *> models;
     models.copy(m_scene->models());
-    const uint32_t nModels = models.count();
-    for (uint32_t i = 0; i < nModels; i++) {
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
         vpvl::PMDModel *model = models[i];
         unloadModel(model);
     }
     vpvl::Array<vpvl::Asset *> assets;
     assets.copy(m_assets);
-    const uint32_t nAssets = assets.count();
-    for (uint32_t i = 0; i < nAssets; i++) {
+    const int nassets = assets.count();
+    for (int i = 0; i < nassets; i++) {
         vpvl::Asset *asset = assets[i];
         unloadAsset(asset);
     }
@@ -1009,12 +1009,12 @@ void Renderer::setDebugDrawer(btDynamicsWorld *world)
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
 {
     const vpvl::MaterialList &materials = model->materials();
-    const uint32_t nMaterials = materials.count();
+    const int nmaterials = materials.count();
     GLuint textureID = 0;
     vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
-    PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nMaterials];
+    PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nmaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
-    for (uint32_t i = 0; i < nMaterials; i++) {
+    for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const std::string primary = m_delegate->toUnicode(material->mainTextureName());
         const std::string second = m_delegate->toUnicode(material->subTextureName());
@@ -1067,7 +1067,7 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
         glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
-    for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
+    for (int i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
@@ -1086,14 +1086,14 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
 {
     if (model) {
         const vpvl::MaterialList &materials = model->materials();
-        const uint32_t nMaterials = materials.count();
+        const int nmaterials = materials.count();
         vpvl::PMDModelUserData *userData = model->userData();
-        for (uint32_t i = 0; i < nMaterials; i++) {
+        for (int i = 0; i < nmaterials; i++) {
             PMDModelMaterialPrivate &materialPrivate = userData->materials[i];
             glDeleteTextures(1, &materialPrivate.mainTextureID);
             glDeleteTextures(1, &materialPrivate.subTextureID);
         }
-        for (uint32_t i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
+        for (int i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
             glDeleteTextures(1, &userData->toonTextureID[i]);
         }
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
@@ -1155,11 +1155,11 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 
     const vpvl::MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
-    const uint32_t nMaterials = materials.count();
+    const int nmaterials = materials.count();
     btVector4 average, ambient, diffuse, specular;
-    uint32_t offset = 0;
+    size_t offset = 0;
 
-    for (uint32_t i = 0; i < nMaterials; i++) {
+    for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         // toon
@@ -1195,9 +1195,9 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
 
         // draw
-        const uint32_t nIndices = material->countIndices();
-        glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
-        offset += (nIndices << 1);
+        const int nindices = material->countIndices();
+        glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        offset += (nindices << 1);
         m_modelProgram->resetTextureState();
     }
 
@@ -1287,13 +1287,13 @@ void Renderer::drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, boo
 {
     const vpvl::BoneList &bones = model->bones();
     btVector3 color;
-    uint32_t nBones = bones.count();
+    const int nbones = bones.count();
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
     glPushMatrix();
 
-    for (uint32_t i = 0; i < nBones; i++) {
+    for (int i = 0; i < nbones; i++) {
         const vpvl::Bone *bone = bones[i], *parent = bone->parent();
         vpvl::Bone::Type type = bone->type();
         if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
@@ -1384,12 +1384,12 @@ void Renderer::loadAsset(Asset *asset, const std::string &dir)
 {
 #ifdef VPVL_LINK_ASSIMP
     const aiScene *scene = asset->getScene();
-    const uint32_t nMaterials = scene->mNumMaterials;
+    const unsigned int nmaterials = scene->mNumMaterials;
     AssetUserData *userData = new AssetUserData();
     aiString texturePath;
     std::string path, canonicalized, filename;
     asset->setUserData(userData);
-    for (uint32_t i = 0; i < nMaterials; i++) {
+    for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
         GLuint textureID;
@@ -1421,10 +1421,10 @@ void Renderer::unloadAsset(Asset *&asset)
 #ifdef VPVL_LINK_ASSIMP
     if (asset) {
         const aiScene *scene = asset->getScene();
-        const uint32_t nMaterials = scene->mNumMaterials;
+        const unsigned int nmaterials = scene->mNumMaterials;
         AssetUserData *userData = asset->userData();
         aiString texturePath;
-        for (uint32_t i = 0; i < nMaterials; i++) {
+        for (unsigned int i = 0; i < nmaterials; i++) {
             aiMaterial *material = scene->mMaterials[i];
             aiReturn found = AI_SUCCESS;
             GLuint textureID;
@@ -1488,8 +1488,8 @@ void Renderer::postShadow()
 
 void Renderer::drawAssets()
 {
-    uint32_t nAssets = m_assets.count();
-    for (uint32_t i = 0; i < nAssets; i++) {
+    const int nassets = m_assets.count();
+    for (int i = 0; i < nassets; i++) {
         aiDrawAsset(m_assets[i], m_scene);
     }
 }

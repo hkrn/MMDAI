@@ -69,7 +69,7 @@ public:
 
     static const float kStartingMarginFrame;
 
-    void read(const uint8_t *data, uint32_t size);
+    void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void takeSnap(const Vector3 &center);
     void reset();
@@ -95,7 +95,7 @@ public:
      * @param i A frame index to get key frame
      * @return A bone key frame associated with index
      */
-    BoneKeyFrame *frameAt(uint32_t i) const {
+    BoneKeyFrame *frameAt(int i) const {
         return static_cast<BoneKeyFrame *>(m_frames[i]);
     }
 
@@ -120,12 +120,12 @@ public:
 private:
     static float weightValue(const BoneKeyFrame *keyFrame,
                              float w,
-                             uint32_t at);
+                             int at);
     static void lerpVector3(const BoneKeyFrame *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
                             float w,
-                            uint32_t at,
+                            int at,
                             float &value);
     void buildInternalNodes(vpvl::PMDModel *model);
     void calculateFrames(float frameAt, BoneAnimationInternal *node);

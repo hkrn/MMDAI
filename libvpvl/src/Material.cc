@@ -53,7 +53,7 @@ struct MaterialChunk
     float ambient[3];
     uint8_t toonID;
     uint8_t edge;
-    uint32_t nindices;
+    int nindices;
     uint8_t textureName[Material::kNameSize];
 };
 
@@ -113,7 +113,7 @@ void Material::read(const uint8_t *data)
     float *ambient = chunk.ambient;
     uint8_t toonID = chunk.toonID;
     uint8_t edge = chunk.edge;
-    uint32_t nindices = chunk.nindices;
+    int nindices = chunk.nindices;
     uint8_t name[20], *p;
     copyBytesSafe(name, chunk.textureName, sizeof(name));
     copyBytesSafe(m_rawName, chunk.textureName, sizeof(m_rawName));

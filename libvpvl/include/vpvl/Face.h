@@ -47,7 +47,7 @@ namespace vpvl
 
 struct FaceVertex
 {
-    uint32_t id;
+    int id;
     Vector3 position;
 };
 
@@ -81,7 +81,7 @@ public:
     ~Face();
 
     static const int kNameSize = 20;
-    static const uint32_t kMaxVertexID = 65536;
+    static const int kMaxVertexID = 65536;
 
     /**
      * Get byte size of all faces.
