@@ -91,21 +91,36 @@ static inline void dumpBones(vpvl::PMDModel *model) {
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         vpvl::Bone *bone = bones[i];
-        const vpvl::Vector3 &pos = bone->localTransform().getOrigin();
-        qDebug() << internal::toQString(bone) << QVector3D(pos.x(), pos.y(), pos.z());
+        const vpvl::Transform &transform = bone->localTransform();
+        const vpvl::Vector3 &p = transform.getOrigin();
+        const vpvl::Quaternion &q = transform.getRotation();
+        qDebug().nospace() << "index=" << i
+                           << " name=" << internal::toQString(bone)
+                           << " position=" << QVector3D(p.x(), p.y(), p.z())
+                           << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
     }
+}
+
+static inline void dumpBoneKeyFrame(const vpvl::BoneKeyFrame *frame, int index = 0) {
+    const vpvl::Vector3 &p = frame->position();
+    const vpvl::Quaternion &q = frame->rotation();
+    qDebug().nospace() << "index=" << index
+                       << " frameIndex=" << frame->frameIndex()
+                       << " name=" << internal::toQString(frame)
+                       << " position=" << QVector3D(p.x(), p.y(), p.z())
+                       << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
+}
+
+static inline void dumpBoneAnimation(const vpvl::BoneAnimation &animation) {
+    const int nframes = animation.countKeyFrames();
+    for (int i = 0; i < nframes; i++)
+        dumpBoneKeyFrame(static_cast<vpvl::BoneKeyFrame *>(animation.frameAt(i)), i);
 }
 
 static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames) {
     const int nframes = frames.count();
-    for (int i = 0; i < nframes; i++) {
-        vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(frames[i]);
-        const vpvl::Vector3 &p = frame->position();
-        const vpvl::Quaternion &q = frame->rotation();
-        qDebug() << internal::toQString(frame)
-                 << QVector3D(p.x(), p.y(), p.z())
-                 << QQuaternion(q.w(), q.x(), q.y(), q.z());
-    }
+    for (int i = 0; i < nframes; i++)
+        dumpBoneKeyFrame(static_cast<vpvl::BoneKeyFrame *>(frames[i]), i);
 }
 
 }
