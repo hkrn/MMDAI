@@ -128,11 +128,6 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_treeView(0)
 {
     TimelineTreeView *treeView = new TimelineTreeView();
-    QItemSelectionModel *sm = treeView->selectionModel();
-    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
-    connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
-    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(reexpand()));
-    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(setCurrentFrameIndexBySpinBox()));
     treeView->setModel(base);
     QHeaderView *header = treeView->header();
     header->setSortIndicatorShown(false);
@@ -153,6 +148,11 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     mainLayout->addWidget(treeView);
     mainLayout->setAlignment(spinboxLayout, Qt::AlignCenter);
     mainLayout->setContentsMargins(QMargins());
+    QItemSelectionModel *sm = treeView->selectionModel();
+    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
+    connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
+    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(reexpand()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(setCurrentFrameIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout);
     m_treeView = treeView;

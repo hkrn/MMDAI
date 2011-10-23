@@ -162,8 +162,8 @@ protected:
 
 private slots:
     void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
-    void on_faces_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
-    void on_bones_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void facesSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void bonesSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void on_faceWeightSlider_valueChanged(int value);
     void on_faceWeightSpinBox_valueChanged(double value);
     void on_faceWeightSlider_sliderPressed();
@@ -172,6 +172,7 @@ private slots:
     void on_registerButton_clicked();
 
 private:
+
     Ui::TransformWidget *ui;
     BoneListModel *m_boneList;
     FaceListModel *m_faceList;
