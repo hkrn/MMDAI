@@ -115,14 +115,10 @@ void BaseAnimation::addKeyFrame(BaseKeyFrame *frame)
         refresh();
 }
 
-void BaseAnimation::copyKeyFrames(int frameIndex, BaseKeyFrameList &frames) const
+void BaseAnimation::replaceKeyFrame(BaseKeyFrame *frame)
 {
-    const int nframes = m_frames.count();
-    for (int i = 0; i < nframes; i++) {
-        BaseKeyFrame *frame = m_frames[i];
-        if (frame->frameIndex() == frameIndex)
-            frames.add(frame->clone());
-    }
+    deleteKeyFrame(frame->frameIndex(), frame->name());
+    addKeyFrame(frame);
 }
 
 void BaseAnimation::deleteKeyFrame(int frameIndex, const uint8_t *value)

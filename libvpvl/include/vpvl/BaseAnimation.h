@@ -130,6 +130,16 @@ public:
     void addKeyFrame(BaseKeyFrame *frame);
 
     /**
+     * Replace a key frame.
+     *
+     * If a key frame name and index are same is found,
+     * replace it (delete and add). Otherwise same as addKeyFrame.
+     *
+     * @param frame A key frame to be replaced (or add)
+     */
+    void replaceKeyFrame(BaseKeyFrame *frame);
+
+    /**
      * Count all of key frames.
      *
      * @return size of all key frames
@@ -137,16 +147,6 @@ public:
     int countKeyFrames() const {
         return m_frames.count();
     }
-
-    /**
-     * Copy key frames associated with an index.
-     *
-     * This method clone all key frames and add them to the frames argument.
-     * You should call clear method of the frames argument at destruction.
-     *
-     * @return copied key frames
-     */
-    void copyKeyFrames(int frameIndex, BaseKeyFrameList &frames) const;
 
     /**
      * Delete a key frame associated with an index and a name.
