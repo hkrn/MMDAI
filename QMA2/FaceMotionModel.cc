@@ -128,7 +128,7 @@ public:
             m_fmm->setData(index, bytes, Qt::EditRole);
             vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addKeyFrame(frame);
+            animation->replaceKeyFrame(frame);
         }
         animation->refresh();
         m_fmm->refreshModel();
@@ -157,7 +157,7 @@ public:
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::FaceKeyFrame *newFrame = static_cast<vpvl::FaceKeyFrame *>(frame->clone());
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                animation->addKeyFrame(newFrame);
+                animation->replaceKeyFrame(newFrame);
                 m_fmm->setData(modelIndex, bytes, Qt::EditRole);
             }
             else {
@@ -269,7 +269,16 @@ void FaceMotionModel::copyFrames(int frameIndex)
 {
     if (m_model && m_motion) {
         m_frames.releaseAll();
-        m_motion->faceAnimation().copyKeyFrames(frameIndex, m_frames);
+        foreach (MotionBaseModel::ITreeItem *item, keys().values()) {
+            const QModelIndex &index = frameToIndex(item, frameIndex);
+            QVariant variant = index.data(kBinaryDataRole);
+            if (variant.canConvert(QVariant::ByteArray)) {
+                QByteArray bytes = variant.toByteArray();
+                vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+                frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                m_frames.add(frame);
+            }
+        }
     }
 }
 

@@ -122,7 +122,7 @@ public:
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addKeyFrame(frame);
+            animation->replaceKeyFrame(frame);
         }
         animation->refresh();
         m_bmm->refreshModel();
@@ -147,7 +147,7 @@ public:
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 m_bmm->setData(modelIndex, bytes, Qt::EditRole);
-                animation->addKeyFrame(newFrame);
+                animation->replaceKeyFrame(newFrame);
             }
         }
         animation->refresh();
@@ -201,10 +201,9 @@ public:
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addKeyFrame(frame);
+            animation->replaceKeyFrame(frame);
         }
         animation->refresh();
-        internal::dumpBoneAnimation(*animation);
         m_bmm->refreshModel();
     }
     virtual void redo() {
@@ -232,7 +231,7 @@ public:
                 vpvl::BoneKeyFrame *newFrame = static_cast<vpvl::BoneKeyFrame *>(frame->clone());
                 newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                animation->addKeyFrame(newFrame);
+                animation->replaceKeyFrame(newFrame);
                 m_bmm->setData(modelIndex, bytes);
             }
             else {
@@ -240,7 +239,6 @@ public:
                 continue;
             }
         }
-        internal::dumpBoneAnimation(*animation);
         animation->refresh();
         m_bmm->refreshModel();
     }
