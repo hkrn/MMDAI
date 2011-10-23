@@ -54,9 +54,10 @@ class InfoPanel
 public:
     InfoPanel(QGLWidget *widget)
         : m_widget(widget),
+          m_rect(0, 0, 256, 256),
+          m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
           m_fontMetrics(m_font),
-          m_rect(0, 0, 256, 256),
           m_textureID(0),
           m_fps(0.0f),
           m_width(0),
@@ -76,9 +77,8 @@ public:
     }
     void update() {
         int height = m_fontMetrics.height();
-        QImage texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied);
-        texture.fill(0);
-        QPainter painter(&texture);
+        m_texture.fill(0);
+        QPainter painter(&m_texture);
         painter.setFont(m_font);
         painter.setRenderHint(QPainter::TextAntialiasing);
         static const QString kModelPrefix("Model: ");
@@ -97,7 +97,7 @@ public:
         }
         painter.end();
         deleteTexture();
-        m_textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(texture.rgbSwapped()));
+        m_textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(m_texture.rgbSwapped()));
     }
     void draw() {
         if (!m_visible)
@@ -139,9 +139,10 @@ private:
     }
 
     QGLWidget *m_widget;
+    QRect m_rect;
+    QImage m_texture;
     QFont m_font;
     QFontMetrics m_fontMetrics;
-    QRect m_rect;
     QString m_model;
     QString m_bone;
     GLuint m_textureID;
