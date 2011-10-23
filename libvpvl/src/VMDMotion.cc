@@ -322,6 +322,8 @@ void VMDMotion::reset()
     m_faceMotion.seek(0.0f);
     m_boneMotion.reset();
     m_faceMotion.reset();
+    m_active = true;
+    m_status = kRunning;
 }
 
 int VMDMotion::maxFrameIndex() const
