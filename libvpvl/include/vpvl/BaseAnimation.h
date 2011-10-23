@@ -134,7 +134,7 @@ public:
      *
      * @return size of all key frames
      */
-    size_t countKeyFrames() const {
+    int countKeyFrames() const {
         return m_frames.count();
     }
 
