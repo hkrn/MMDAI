@@ -78,26 +78,44 @@ public:
     }
 };
 
-class TimelineTreeView : public QTreeView
-{
-public:
-    TimelineTreeView(QWidget *parent = 0)
-        : QTreeView(parent) {
-        setExpandsOnDoubleClick(true);
-        setUniformRowHeights(true);
-    }
-    void selectFrameIndex(int frameIndex) {
-        QItemSelection selection;
-        MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
-        foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
-            const QModelIndex &index = m->frameToIndex(item, frameIndex);
-            selection.append(QItemSelectionRange(index));
-        }
-        QItemSelectionModel *sm = selectionModel();
-        sm->select(selection, QItemSelectionModel::ClearAndSelect);
-    }
-};
+}
 
+TimelineTreeView::TimelineTreeView(QWidget *parent)
+    : QTreeView(parent) {
+    setExpandsOnDoubleClick(true);
+    setUniformRowHeights(true);
+    connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(addCollapsed(QModelIndex)));
+    connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(addExpanded(QModelIndex)));
+}
+
+TimelineTreeView::~TimelineTreeView()
+{
+}
+
+void TimelineTreeView::selectFrameIndex(int frameIndex)
+{
+    QItemSelection selection;
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
+    foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
+        const QModelIndex &index = m->frameToIndex(item, frameIndex);
+        selection.append(QItemSelectionRange(index));
+    }
+    QItemSelectionModel *sm = selectionModel();
+    sm->select(selection, QItemSelectionModel::ClearAndSelect);
+}
+const QModelIndexList &TimelineTreeView::expandedIndices() const
+{
+    return m_expanded;
+}
+
+void TimelineTreeView::addCollapsed(const QModelIndex &index)
+{
+    m_expanded.removeOne(index);
+}
+void TimelineTreeView::addExpanded(const QModelIndex &index)
+{
+    if (!m_expanded.contains(index))
+        m_expanded.append(index);
 }
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
@@ -106,6 +124,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_treeView(0)
 {
     TimelineTreeView *treeView = new TimelineTreeView();
+    QItemSelectionModel *sm = treeView->selectionModel();
+    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
+    connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
+    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(reexpand()));
     treeView->setModel(base);
     QHeaderView *header = treeView->header();
     header->setSortIndicatorShown(false);
@@ -114,9 +136,6 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     header->setDefaultSectionSize(15);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     treeView->setItemDelegate(delegate);
-    QItemSelectionModel *sm = treeView->selectionModel();
-    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
-    connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->maxFrameCount());
     connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setFrameIndex(int)));
@@ -170,4 +189,11 @@ void TimelineWidget::setFrameIndex(int frameIndex)
     static_cast<TimelineTreeView*>(m_treeView)->selectFrameIndex(frameIndex);
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
+}
+
+void TimelineWidget::reexpand()
+{
+    TimelineTreeView *view = static_cast<TimelineTreeView *>(m_treeView);
+    foreach (const QModelIndex &index, view->expandedIndices())
+        m_treeView->expand(index);
 }

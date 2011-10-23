@@ -56,6 +56,26 @@ class QTreeView;
 class QSettings;
 class QSpinBox;
 
+
+class TimelineTreeView : public QTreeView
+{
+    Q_OBJECT
+
+public:
+    TimelineTreeView(QWidget *parent = 0);
+    ~TimelineTreeView();
+
+    void selectFrameIndex(int frameIndex);
+    const QModelIndexList &expandedIndices() const;
+
+private slots:
+    void addCollapsed(const QModelIndex &index);
+    void addExpanded(const QModelIndex &index);
+
+private:
+    QModelIndexList m_expanded;
+};
+
 class TimelineWidget : public QWidget
 {
     Q_OBJECT
@@ -66,7 +86,7 @@ public:
     ~TimelineWidget();
 
     int frameIndex() const;
-    QTreeView *tableView() const { return m_treeView; }
+    TimelineTreeView *treeView() const { return m_treeView; }
 
 public slots:
     void setFrameIndex(int frameIndex);
@@ -78,12 +98,13 @@ private slots:
     void retranslate();
     void setCurrentColumnIndex(const QModelIndex &index);
     void setCurrentRowIndex(const QModelIndex &index);
+    void reexpand();
 
 private:
+    TimelineTreeView *m_treeView;
     QLabel *m_label;
     QSettings *m_settings;
     QSpinBox *m_spinBox;
-    QTreeView *m_treeView;
     QModelIndex m_index;
 };
 

@@ -52,18 +52,19 @@ static const int kFaceTabIndex = 1;
 
 static BoneMotionModel *UIGetBoneModel(TimelineWidget *timeline)
 {
-    return static_cast<BoneMotionModel *>(timeline->tableView()->model());
+    return static_cast<BoneMotionModel *>(timeline->treeView()->model());
 }
 
 static FaceMotionModel *UIGetFaceModel(TimelineWidget *timeline)
 {
-    return static_cast<FaceMotionModel *>(timeline->tableView()->model());
+    return static_cast<FaceMotionModel *>(timeline->treeView()->model());
 }
 
 static void UIModelDeleteFrame(TimelineWidget *timeline)
 {
-    MotionBaseModel *model = static_cast<MotionBaseModel *>(timeline->tableView()->model());
-    QModelIndexList indices = timeline->tableView()->selectionModel()->selectedIndexes();
+    TimelineTreeView *view = timeline->treeView();
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
+    QModelIndexList indices = view->selectionModel()->selectedIndexes();
     foreach (QModelIndex index, indices)
         model->deleteFrame(index);
 }
@@ -71,7 +72,7 @@ static void UIModelDeleteFrame(TimelineWidget *timeline)
 static void UIModelInsertBoneFrame(TimelineWidget *timeline)
 {
     BoneMotionModel *model = UIGetBoneModel(timeline);
-    QModelIndexList indices = timeline->tableView()->selectionModel()->selectedIndexes();
+    QModelIndexList indices = timeline->treeView()->selectionModel()->selectedIndexes();
     QTextCodec *codec = internal::getTextCodec();
     BoneMotionModel::KeyFramePairList boneFrames;
     foreach (QModelIndex index, indices) {
@@ -87,7 +88,7 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
 static void UIModelInsertFaceFrame(TimelineWidget *timeline)
 {
     FaceMotionModel *model = UIGetFaceModel(timeline);
-    QModelIndexList indices = timeline->tableView()->selectionModel()->selectedIndexes();
+    QModelIndexList indices = timeline->treeView()->selectionModel()->selectedIndexes();
     QTextCodec *codec = internal::getTextCodec();
     FaceMotionModel::KeyFramePairList faceFrames;
     foreach (QModelIndex index, indices) {
