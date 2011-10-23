@@ -121,12 +121,16 @@ void SceneWidget::play()
 void SceneWidget::pause()
 {
     m_playing = false;
+    m_info->setFPS(0);
+    m_info->update();
     emit sceneDidPause();
 }
 
 void SceneWidget::stop()
 {
     m_playing = false;
+    m_info->setFPS(0);
+    m_info->update();
     m_renderer->scene()->resetMotion();
     emit sceneDidStop();
 }
@@ -304,7 +308,7 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
             vpvl::Bone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
                 vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
-                frame->setFrameIndex(0);
+                frame->setDefaultInterpolationParameter();
                 frame->setName(bone->name());
                 boneAnimation->addKeyFrame(frame);
             }
@@ -315,7 +319,6 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
         for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
             vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
-            frame->setFrameIndex(0);
             frame->setName(face->name());
             faceAnimation->addKeyFrame(frame);
         }
