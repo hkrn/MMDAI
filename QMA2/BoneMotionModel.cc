@@ -105,7 +105,6 @@ public:
                 m_indices.append(index);
         }
         m_pose = pose->clone();
-        execute();
     }
     virtual ~LoadPoseCommand() {
         delete m_pose;
@@ -129,11 +128,6 @@ public:
         m_bmm->refreshModel();
     }
     virtual void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         QTextCodec *codec = internal::getTextCodec();
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &bones = m_bmm->keys();
@@ -160,6 +154,7 @@ private:
         m_bmm->refreshModel();
     }
 
+private:
     QModelIndexList m_indices;
     BoneMotionModel *m_bmm;
     VPDFile *m_pose;
@@ -188,7 +183,6 @@ public:
         }
         m_frames = frames;
         m_frameIndices = indexProceeded.keys();
-        execute();
     }
     virtual ~SetFramesCommand() {
     }
@@ -210,14 +204,10 @@ public:
             animation->addKeyFrame(frame);
         }
         animation->refresh();
+        internal::dumpBoneAnimation(*animation);
         m_bmm->refreshModel();
     }
     virtual void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         QString key;
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &keys = m_bmm->keys();
@@ -240,19 +230,22 @@ private:
                 const QModelIndex &modelIndex = m_bmm->frameToIndex(keys[key], frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::BoneKeyFrame *newFrame = static_cast<vpvl::BoneKeyFrame *>(frame->clone());
+                newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 animation->addKeyFrame(newFrame);
-                m_bmm->setData(modelIndex, bytes, Qt::EditRole);
+                m_bmm->setData(modelIndex, bytes);
             }
             else {
                 qWarning("Tried registering not bone key frame: %s", qPrintable(key));
                 continue;
             }
         }
+        internal::dumpBoneAnimation(*animation);
         animation->refresh();
         m_bmm->refreshModel();
     }
 
+private:
     QList<int> m_frameIndices;
     QModelIndexList m_indices;
     BoneMotionModel::KeyFramePairList m_frames;
@@ -277,15 +270,11 @@ public:
         m_model->updateImmediate();
     }
     void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         m_model->resetAllBones();
         m_model->updateImmediate();
     }
 
+private:
     vpvl::PMDModel *m_model;
     vpvl::PMDModel::State *m_state;
 };
@@ -311,15 +300,11 @@ public:
         m_model->updateImmediate();
     }
     void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         m_model->restoreState(m_newState);
         m_model->updateImmediate();
     }
 
+private:
     vpvl::PMDModel *m_model;
     vpvl::PMDModel::State *m_newState;
     vpvl::PMDModel::State *m_oldState;
@@ -362,7 +347,16 @@ void BoneMotionModel::copyFrames(int frameIndex)
 {
     if (m_model && m_motion) {
         m_frames.releaseAll();
-        m_motion->boneAnimation().copyKeyFrames(frameIndex, m_frames);
+        foreach (MotionBaseModel::ITreeItem *item, keys().values()) {
+            const QModelIndex &index = frameToIndex(item, frameIndex);
+            QVariant variant = index.data(kBinaryDataRole);
+            if (variant.canConvert(QVariant::ByteArray)) {
+                QByteArray bytes = variant.toByteArray();
+                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+                frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                m_frames.add(frame);
+            }
+        }
     }
 }
 
@@ -394,7 +388,6 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
                 vpvl::Vector3 position = frame->position();
                 vpvl::Quaternion rotation = frame->rotation();
                 position.setX(-position.x());
-                rotation.setX(-rotation.x());
                 frame->setPosition(position);
                 frame->setRotation(rotation);
             }

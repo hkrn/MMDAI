@@ -110,7 +110,6 @@ public:
         }
         m_frames = frames;
         m_frameIndices = indexProceeded.keys();
-        execute();
     }
     virtual ~SetFramesCommand() {
     }
@@ -135,11 +134,6 @@ public:
         m_fmm->refreshModel();
     }
     virtual void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         QString key;
         vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         const FaceMotionModel::Keys &keys = m_fmm->keys();
@@ -175,6 +169,7 @@ private:
         m_fmm->refreshModel();
     }
 
+private:
     QList<int> m_frameIndices;
     QModelIndexList m_indices;
     FaceMotionModel::KeyFramePairList m_frames;
@@ -199,15 +194,11 @@ public:
         m_model->updateImmediate();
     }
     void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         m_model->resetAllFaces();
         m_model->updateImmediate();
     }
 
+private:
     vpvl::PMDModel *m_model;
     vpvl::PMDModel::State *m_state;
 };
@@ -233,15 +224,11 @@ public:
         m_model->updateImmediate();
     }
     void redo() {
-        execute();
-    }
-
-private:
-    void execute() {
         m_model->restoreState(m_newState);
         m_model->updateImmediate();
     }
 
+private:
     vpvl::PMDModel *m_model;
     vpvl::PMDModel::State *m_newState;
     vpvl::PMDModel::State *m_oldState;
