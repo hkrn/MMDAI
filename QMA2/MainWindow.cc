@@ -187,6 +187,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         m_settings.setValue("mainWindow/leftSplitterState", m_leftSplitter->saveState());
         m_settings.setValue("mainWindow/mainSplitterGeometry", m_mainSplitter->saveGeometry());
         m_settings.setValue("mainWindow/mainSplitterState", m_mainSplitter->saveState());
+        qApp->sendEvent(m_sceneWidget, event);
         event->accept();
     }
     else {
@@ -324,7 +325,6 @@ void MainWindow::deleteAsset(vpvl::Asset *asset)
 
 void MainWindow::buildUI()
 {
-
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
@@ -604,10 +604,13 @@ void MainWindow::retranslate()
     m_actionStop->setStatusTip(tr("Stop current scene."));
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
+    m_actionShowGrid->setShortcut(tr("Ctrl+Shift+G"));
     m_actionShowBones->setText(tr("Show bone wireframe"));
     m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe."));
+    m_actionShowBones->setShortcut(tr("Ctrl+Shift+B"));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
+    m_actionEnablePhysics->setShortcut(tr("Ctrl+Shift+P"));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomIn->setShortcut(QKeySequence::ZoomIn);

@@ -90,6 +90,10 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_info = new InfoPanel(this);
     m_world = new World(m_defaultFPS);
     m_handles = new Handles(this);
+     // must be delay to execute on initializeGL
+    m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
+    setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
+    setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -624,6 +628,9 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
+    m_settings->setValue("sceneWidget/isBoneWireframeVisible", m_visibleBones);
+    m_settings->setValue("sceneWidget/isGridVisible", m_grid->isEnabled());
+    m_settings->setValue("sceneWidget/isPhysicsEnabled", m_enablePhysics);
     killTimer(m_internalTimerID);
     event->accept();
 }
@@ -704,7 +711,7 @@ void SceneWidget::initializeGL()
     const vpvl::Color diffuse(d.x(), d.y(), d.z(), 1.0f);
     const vpvl::Color specular(s.x(), s.y(), s.z(), 1.0f);
     scene->setLightComponent(ambient, diffuse, specular);
-    if (m_playing)
+    if (m_playing || m_enablePhysics)
         setPhysicsEnable(true);
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
