@@ -535,7 +535,6 @@ void MainWindow::buildUI()
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
-    resize(980, 674);
 
     bool visibleTransform = m_settings.value("mainWindow/visibleTransform", QVariant(false)).toBool();
     m_transformWidget->setVisible(visibleTransform);
@@ -673,6 +672,8 @@ void MainWindow::retranslate()
     m_actionReversedPaste->setText(tr("Paste with reversed"));
     m_actionReversedPaste->setStatusTip(tr("Paste a selected keyframe with reversed."));
     m_actionReversedPaste->setShortcut(tr("Alt+Ctrl+V"));
+    // NOT IMPLEMENTED
+    m_actionReversedPaste->setEnabled(false);
     m_actionUndoFrame->setShortcut(QKeySequence::Undo);
     m_actionRedoFrame->setShortcut(QKeySequence::Redo);
     m_actionViewTab->setText(tr("Tab"));
