@@ -131,6 +131,8 @@ void BoneAnimation::seek(float frameAt)
             bone->setRotation(bone->rotation().slerp(node->rotation, m_blendRate));
         }
     }
+    m_previousFrame = m_currentFrame;
+    m_currentFrame = frameAt;
 }
 
 void BoneAnimation::takeSnap(const Vector3 &center)

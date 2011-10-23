@@ -98,6 +98,8 @@ void FaceAnimation::seek(float frameAt)
         else
             face->setWeight(face->weight() * (1.0f - m_blendRate) + node->weight * m_blendRate);
     }
+    m_previousFrame = m_currentFrame;
+    m_currentFrame = frameAt;
 }
 
 void FaceAnimation::takeSnap(const Vector3 & /* center */)
