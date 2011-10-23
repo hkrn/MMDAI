@@ -298,9 +298,9 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
     if (model) {
         vpvl::VMDMotion *motion = new vpvl::VMDMotion();
         const vpvl::BoneList &bones = model->bones();
-        const uint32_t nbones = bones.count();
+        const int nbones = bones.count();
         vpvl::BoneAnimation *boneAnimation = motion->mutableBoneAnimation();
-        for (uint32_t i = 0; i < nbones; i++) {
+        for (int i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
                 vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
@@ -310,9 +310,9 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
             }
         }
         const vpvl::FaceList &faces = model->faces();
-        const uint32_t nfaces = faces.count();
+        const int nfaces = faces.count();
         vpvl::FaceAnimation *faceAnimation = motion->mutableFaceAnimation();
-        for (uint32_t i = 0; i < nfaces; i++) {
+        for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
             vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
             frame->setFrameIndex(0);
@@ -727,11 +727,11 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
     if (model) {
         const QPointF &pos = objectCoordinates(event->posF());
         const vpvl::BoneList &bones = model->bones();
-        const uint32_t nbones = bones.count();
+        const int nbones = bones.count();
         vpvl::Vector3 origin(pos.x(), pos.y(), 0.0f);
         vpvl::Bone *nearestBone = 0;
         vpvl::Scalar nearestDistance = 10000.0f;
-        for (uint32_t i = 0; i < nbones; i++) {
+        for (int i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             vpvl::Vector3 boneOrigin = bone->localTransform().getOrigin();
             boneOrigin.setZ(0.0f);

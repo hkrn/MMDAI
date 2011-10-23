@@ -94,10 +94,10 @@ protected:
         m_prev = current;
     }
     void translateBones(const vpvl::Vector3 &v) {
-        uint32_t nBones = m_bones.count();
+        const int nbones = m_bones.count();
         switch (handleMode()) {
         case kView: {
-            for (uint32_t i = 0; i < nBones; i++) {
+            for (int i = 0; i < nbones; i++) {
                 vpvl::Bone *bone = m_bones[i];
                 vpvl::Transform tr(m_rotation, bone->position());
                 bone->setPosition(tr * v);
@@ -105,7 +105,7 @@ protected:
             break;
         }
         case kLocal: {
-            for (uint32_t i = 0; i < nBones; i++) {
+            for (int i = 0; i < nbones; i++) {
                 vpvl::Bone *bone = m_bones[i];
                 vpvl::Transform tr(bone->rotation(), bone->position());
                 bone->setPosition(tr * v);
@@ -113,7 +113,7 @@ protected:
             break;
         }
         case kGlobal: {
-            for (uint32_t i = 0; i < nBones; i++) {
+            for (int i = 0; i < nbones; i++) {
                 vpvl::Bone *bone = m_bones[i];
                 bone->setPosition(bone->position() + v);
             }

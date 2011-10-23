@@ -206,8 +206,8 @@ void AssetWidget::changeCurrentModel(int index)
         m_currentModel = model;
         m_modelBonesComboBox->clear();
         const vpvl::BoneList &bones = model->bones();
-        const uint32_t nbones = bones.count();
-        for (uint32_t i = 0; i < nbones; i++) {
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             m_modelBonesComboBox->addItem(internal::toQString(bone), i);
         }

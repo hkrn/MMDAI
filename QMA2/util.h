@@ -88,8 +88,8 @@ static inline const QString toQString(const vpvl::FaceKeyFrame *value) {
 
 static inline void dumpBones(vpvl::PMDModel *model) {
     const vpvl::BoneList &bones = model->bones();
-    const uint32_t nBones = bones.count();
-    for (uint32_t i = 0; i < nBones; i++) {
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
         vpvl::Bone *bone = bones[i];
         const vpvl::Vector3 &pos = bone->localTransform().getOrigin();
         qDebug() << internal::toQString(bone) << QVector3D(pos.x(), pos.y(), pos.z());
@@ -97,8 +97,8 @@ static inline void dumpBones(vpvl::PMDModel *model) {
 }
 
 static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames) {
-    uint32_t nFrames = frames.count();
-    for (uint32_t i = 0; i < nFrames; i++) {
+    const int nframes = frames.count();
+    for (int i = 0; i < nframes; i++) {
         vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(frames[i]);
         const vpvl::Vector3 &p = frame->position();
         const vpvl::Quaternion &q = frame->rotation();

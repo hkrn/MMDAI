@@ -290,8 +290,8 @@ void FaceMotionModel::pasteFrame(int frameIndex)
 {
     if (m_model && m_motion && m_frames.count() != 0) {
         FaceMotionModel::KeyFramePairList frames;
-        uint32_t nFrames = m_frames.count();
-        for (uint32_t i = 0; i < nFrames; i++) {
+        const int nframes = m_frames.count();
+        for (int i = 0; i < nframes; i++) {
             vpvl::FaceKeyFrame *frame = static_cast<vpvl::FaceKeyFrame *>(m_frames[i]->clone());
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
         }
@@ -337,13 +337,13 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     clearKeys();
     if (model) {
         const vpvl::FaceList &faces = model->facesForUI();
-        uint32_t nFaces = faces.count();
+        const int nfaces = faces.count();
         TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, static_cast<TreeItem *>(m_root));
         TreeItem *eye = new TreeItem(tr("Eye"), 0, false, static_cast<TreeItem *>(m_root));
         TreeItem *lip = new TreeItem(tr("Lip"), 0, false, static_cast<TreeItem *>(m_root));
         TreeItem *other = new TreeItem(tr("Other"), 0, false, static_cast<TreeItem *>(m_root));
         Keys &keys = m_keys[model];
-        for (uint32_t i = 0; i < nFaces; i++) {
+        for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
             const QString &name = internal::toQString(face);
             TreeItem *child, *parent = 0;
@@ -383,14 +383,14 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::FaceAnimation &animation = motion->faceAnimation();
-        uint32_t nFaceFrames = animation.countKeyFrames();
-        for (uint32_t i = 0; i < nFaceFrames; i++) {
+        const int nFaceFrames = animation.countKeyFrames();
+        for (int i = 0; i < nFaceFrames; i++) {
             vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             const QString &key = internal::toQString(name);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
-                uint32_t frameIndex = frame->frameIndex();
+                int frameIndex = static_cast<int>(frame->frameIndex());
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 ITreeItem *item = keys[key];
                 const QModelIndex &modelIndex = frameToIndex(item, frameIndex);

@@ -370,8 +370,8 @@ void BoneMotionModel::pasteFrame(int frameIndex)
 {
     if (m_model && m_motion && m_frames.count() != 0) {
         KeyFramePairList frames;
-        uint32_t nFrames = m_frames.count();
-        for (uint32_t i = 0; i < nFrames; i++) {
+        const int nframes = m_frames.count();
+        for (int i = 0; i < nframes; i++) {
             vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
         }
@@ -386,8 +386,8 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
     const QByteArray &left = codec->fromUnicode("左");
     if (m_model && m_motion && m_frames.count() != 0) {
         KeyFramePairList frames;
-        uint32_t nFrames = m_frames.count();
-        for (uint32_t i = 0; i < nFrames; i++) {
+        const int nframes = m_frames.count();
+        for (int i = 0; i < nframes; i++) {
             vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
             const QString name(reinterpret_cast<const char *>(frame->name()));
             if (name.startsWith(right) || name.startsWith(left)) {
@@ -471,18 +471,18 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
     clearKeys();
     if (model) {
-        const uint32_t namesCount = model->boneCategoryNames().count();
+        const int namesCount = model->boneCategoryNames().count();
         vpvl::Array<vpvl::BoneList *> allBones;
         vpvl::Array<uint8_t *> names;
         allBones.copy(model->bonesForUI());
         names.copy(model->boneCategoryNames());
         Keys &keys = m_keys[model];
-        for (uint32_t i = 0; i < namesCount; i++) {
+        for (int i = 0; i < namesCount; i++) {
             const QString &category = internal::toQString(names[i]).trimmed();
             const vpvl::BoneList *bones = allBones[i];
-            const uint32_t bonesCount = bones->count();
+            const int bonesCount = bones->count();
             TreeItem *parent = new TreeItem(category, 0, false, static_cast<TreeItem *>(m_root));
-            for (uint32_t j = 0; j < bonesCount; j++) {
+            for (int j = 0; j < bonesCount; j++) {
                 vpvl::Bone *bone = bones->at(j);
                 const QString &name = internal::toQString(bone);
                 TreeItem *child = new TreeItem(name, bone, false, parent);
@@ -501,14 +501,14 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     if (model == m_model) {
         const vpvl::BoneAnimation &animation = motion->boneAnimation();
-        const uint32_t nBoneFrames = animation.countKeyFrames();
+        const int nBoneFrames = animation.countKeyFrames();
         const Keys &keys = this->keys();
-        for (uint32_t i = 0; i < nBoneFrames; i++) {
+        for (int i = 0; i < nBoneFrames; i++) {
             const vpvl::BoneKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             const QString &key = internal::toQString(name);
             if (keys.contains(key)) {
-                uint32_t frameIndex = frame->frameIndex();
+                int frameIndex = static_cast<int>(frame->frameIndex());
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 ITreeItem *item = keys[key];
                 const QModelIndex &modelIndex = frameToIndex(item, frameIndex);

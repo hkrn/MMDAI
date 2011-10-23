@@ -180,9 +180,9 @@ void BoneListModel::changeModel(vpvl::PMDModel * /* model */)
     vpvl::PMDModel *model = m_model->selectedModel();
     if (model) {
         const vpvl::BoneList &bones = model->bones();
-        const uint32_t nbones = bones.count();
+        const int nbones = bones.count();
         m_bones.clear();
-        for (uint32_t i = 0; i < nbones; i++) {
+        for (int i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable())
                 m_bones.append(bone);
@@ -267,9 +267,9 @@ void FaceListModel::changeModel(vpvl::PMDModel * /* model */)
     vpvl::PMDModel *model = m_model->selectedModel();
     if (model) {
         const vpvl::FaceList &faces = model->faces();
-        const uint32_t nfaces = faces.count();
+        const int nfaces = faces.count();
         m_faces.clear();
-        for (uint32_t i = 0; i < nfaces; i++) {
+        for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
             if (face->type() != vpvl::Face::kBase)
                 m_faces.append(face);
