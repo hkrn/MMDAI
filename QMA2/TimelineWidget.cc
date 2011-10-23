@@ -44,10 +44,12 @@
 
 namespace {
 
-class TimelineItemDelegate : public QItemDelegate {
+class TimelineItemDelegate : public QItemDelegate
+{
 public:
     TimelineItemDelegate(QObject *parent = 0) : QItemDelegate(parent) {
     }
+
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
         if (index.column() == 0) {
             QItemDelegate::paint(painter, option, index);
@@ -103,6 +105,7 @@ void TimelineTreeView::selectFrameIndex(int frameIndex)
     QItemSelectionModel *sm = selectionModel();
     sm->select(selection, QItemSelectionModel::ClearAndSelect);
 }
+
 const QModelIndexList &TimelineTreeView::expandedIndices() const
 {
     return m_expanded;
@@ -112,6 +115,7 @@ void TimelineTreeView::addCollapsed(const QModelIndex &index)
 {
     m_expanded.removeOne(index);
 }
+
 void TimelineTreeView::addExpanded(const QModelIndex &index)
 {
     if (!m_expanded.contains(index))
@@ -128,6 +132,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
     connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
     connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(reexpand()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(setCurrentFrameIndexBySpinBox()));
     treeView->setModel(base);
     QHeaderView *header = treeView->header();
     header->setSortIndicatorShown(false);
@@ -186,9 +191,15 @@ void TimelineWidget::setCurrentRowIndex(const QModelIndex & /* index */)
 
 void TimelineWidget::setFrameIndex(int frameIndex)
 {
-    static_cast<TimelineTreeView*>(m_treeView)->selectFrameIndex(frameIndex);
+    static_cast<MotionBaseModel *>(m_treeView->model())->setFrameIndex(frameIndex);
+    m_treeView->selectFrameIndex(frameIndex);
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
+}
+
+void TimelineWidget::setCurrentFrameIndexBySpinBox()
+{
+    setFrameIndex(m_spinBox->value());
 }
 
 void TimelineWidget::reexpand()

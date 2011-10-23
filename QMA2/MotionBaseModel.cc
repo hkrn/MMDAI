@@ -48,6 +48,7 @@ MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     m_motion(0),
     m_state(0),
     m_undo(undo),
+    m_frameIndex(0),
     m_modified(false)
 {
 }
@@ -198,8 +199,10 @@ int MotionBaseModel::maxFrameCount() const
 
 void MotionBaseModel::updateModel()
 {
-    if (m_model)
+    if (m_model) {
+        m_model->seekMotion(m_frameIndex);
         m_model->updateImmediate();
+    }
 }
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)

@@ -374,19 +374,17 @@ void BoneMotionModel::pasteFrame(int frameIndex)
 void BoneMotionModel::pasteReversedFrame(int frameIndex)
 {
     QTextCodec *codec = internal::getTextCodec();
-    const QByteArray &right = codec->fromUnicode("右");
-    const QByteArray &left = codec->fromUnicode("左");
+    const QString &right = "右";
+    const QString &left = "左";
     if (m_model && m_motion && m_frames.count() != 0) {
         KeyFramePairList frames;
         const int nframes = m_frames.count();
         for (int i = 0; i < nframes; i++) {
             vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
-            const QString name(reinterpret_cast<const char *>(frame->name()));
+            const QString name(codec->toUnicode(reinterpret_cast<const char *>(frame->name())));
             if (name.startsWith(right) || name.startsWith(left)) {
-                vpvl::Vector3 position = frame->position();
                 vpvl::Quaternion rotation = frame->rotation();
-                position.setX(-position.x());
-                frame->setPosition(position);
+                //rotation.setValue(rotation.x(), -rotation.y(), -rotation.z());
                 frame->setRotation(rotation);
             }
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));

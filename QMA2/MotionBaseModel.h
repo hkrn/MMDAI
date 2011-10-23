@@ -103,6 +103,7 @@ public:
 
     vpvl::PMDModel *selectedModel() const { return m_model; }
     vpvl::VMDMotion *currentMotion() const { return m_motion; }
+    void setFrameIndex(int value) { m_frameIndex = value; }
     void setModified(bool value) { m_modified = value; motionDidModify(value); }
     bool isModified() const { return m_modified; }
     const Keys keys() const { return m_keys[m_model]; }
@@ -138,6 +139,7 @@ private:
     vpvl::PMDModel::State *m_state;
     QHash<vpvl::PMDModel *, QUndoStack *> m_stacks;
     QUndoGroup *m_undo;
+    int m_frameIndex;
     bool m_modified;
 };
 
