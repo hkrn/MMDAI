@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(VPVL_VERSION_MAJOR 0)
-set(VPVL_VERSION_COMPAT 6)
+set(VPVL_VERSION_COMPAT 7)
 set(VPVL_VERSION_MINOR 0)
 
 # set library version
@@ -167,10 +167,16 @@ option(VPVL_NO_BULLET "Build libvpvl without BulletPhysics except LinearMath (de
 # intercept to add source
 option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
 option(VPVL_USE_GLSL "Include OpenGL renderer class using GLSL shaders (default is ON)" ON)
+option(VPVL_USE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER)
   if(VPVL_USE_GLSL)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl2 vpvl_gl_sources)
     list(APPEND vpvl_public_headers include/vpvl/gl2/Renderer.h)
+    list(APPEND vpvl_internal_headers include/vpvl/internal/gl2.h)
+    if(VPVL_USE_NVIDIA_CG)
+      aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/cg vpvl_gl_sources)
+      list(APPEND vpvl_public_headers include/vpvl/cg/Renderer.h)
+    endif()
   else()
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl vpvl_gl_sources)
     list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
@@ -251,6 +257,12 @@ if(VPVL_OPENGL_RENDERER)
   include_directories(${OPENGL_INCLUDE_DIR})
   if(NOT VPVL_USE_ALLEGRO5)
     link_glew(vpvl)
+  endif()
+  if(VPVL_USE_NVIDIA_CG)
+    find_library(Cg_LIBRARY Cg)
+    find_path(Cg_INCLUDE_DIR cg.h)
+    target_link_libraries(vpvl ${Cg_LIBRARY})
+    include_directories(${Cg_INCLUDE_DIR})
   endif()
 endif()
 

@@ -36,66 +36,33 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_GL2_RENDERER_H_
-#define VPVL_GL2_RENDERER_H_
+#ifndef VPVL_CG_RENDERER_H_
+#define VPVL_CG_RENDERER_H_
 
 #include <string>
-#include "vpvl/Common.h"
+#include "vpvl/Asset.h"
+#include "vpvl/gl2/Renderer.h"
 
-#ifdef VPVL_USE_ALLEGRO5
-#include <allegro5/allegro5.h>
-#include <allegro5/allegro_opengl.h>
 #ifdef __APPLE__
-#include <OpenGL/glu.h>
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
 #else
-#include <GL/glu.h>
+#include <cg.h>
+#include <cgGL.h>
 #endif
-#else
-#include <GL/glew.h>
-#endif
-
-class btDynamicsWorld;
-class btIDebugDraw;
 
 namespace vpvl
 {
 
-class Asset;
-class Bone;
-class PMDModel;
-class Scene;
-
-namespace gl2
+namespace cg
 {
 
 struct PMDModelUserData;
-class EdgeProgram;
-class ModelProgram;
-class ShadowProgram;
 
-class VPVL_API IDelegate
+class VPVL_API IDelegate : public vpvl::gl2::IDelegate
 {
 public:
-    enum LogLevel {
-        kLogInfo,
-        kLogWarning
-    };
-    enum ShaderType {
-        kEdgeVertexShader,
-        kEdgeFragmentShader,
-        kModelVertexShader,
-        kModelFragmentShader,
-        kAssetVertexShader,
-        kAssetFragmentShader,
-        kShadowVertexShader,
-        kShadowFragmentShader
-    };
-
-    virtual bool loadTexture(const std::string &path, GLuint &textureID) = 0;
-    virtual bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
-    virtual void log(LogLevel level, const char *format, ...) = 0;
-    virtual const std::string loadShader(ShaderType type) = 0;
-    virtual const std::string toUnicode(const uint8_t *value) = 0;
+    virtual bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) = 0;
 };
 
 /**
@@ -108,67 +75,20 @@ public:
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL_API Renderer
+class VPVL_API Renderer : public vpvl::gl2::Renderer
 {
 public:
-    static bool initializeGLEW(GLenum &err);
-
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
-    vpvl::Scene *scene() const {
-        return m_scene;
-    }
-    vpvl::PMDModel *selectedModel() const {
-        return m_selected;
-    }
-    void setSelectedModel(vpvl::PMDModel *value) {
-        m_selected = value;
-    }
-
-    btIDebugDraw *debugDrawer() const {
-        return m_debugDrawer;
-    }
-
-    void initializeSurface();
-    bool createPrograms();
-    void resize(int width, int height);
-    void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
-    void setDebugDrawer(btDynamicsWorld *world);
     void loadModel(vpvl::PMDModel *model, const std::string &dir);
     void unloadModel(const vpvl::PMDModel *model);
-    void updateModelBuffer(const vpvl::PMDModel *model) const;
     void drawModel(const vpvl::PMDModel *model);
-    void drawModelEdge(const vpvl::PMDModel *model);
-    void drawModelShadow(const vpvl::PMDModel *model);
-    void drawModelBones(bool drawSpheres, bool drawLines);
-    void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
-    void drawBoneTransform(vpvl::Bone *bone);
-    void loadAsset(Asset *asset, const std::string &dir);
-    void unloadAsset(Asset *&asset);
-
-    void clearSurface();
-    void preShadow();
-    void drawShadow();
-    void postShadow();
-    void drawAssets();
-    void drawModels();
-    void drawSurface();
-
-protected:
-    void loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
-    void unloadModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model);
-
-    IDelegate *m_delegate;
-    vpvl::Scene *m_scene;
-    Array<vpvl::Asset *> m_assets;
 
 private:
-    EdgeProgram *m_edgeProgram;
-    ModelProgram *m_modelProgram;
-    ShadowProgram *m_shadowProgram;
-    vpvl::PMDModel *m_selected;
-    btIDebugDraw *m_debugDrawer;
+    void drawModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model);
+
+    CGcontext m_context;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

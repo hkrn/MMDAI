@@ -38,6 +38,7 @@
 
 #include <vpvl/vpvl.h>
 #include <vpvl/gl2/Renderer.h>
+#include <vpvl/internal/gl2.h>
 
 #include <btBulletDynamicsCommon.h>
 
@@ -805,23 +806,6 @@ void aiDrawAsset(vpvl::Asset *asset, vpvl::Scene *s)
 
 namespace {
 
-enum VertexBufferObjectType {
-    kModelVertices,
-    kModelNormals,
-    kModelColors,
-    kModelTexCoords,
-    kModelToonTexCoords,
-    kEdgeVertices,
-    kEdgeIndices,
-    kShadowIndices,
-    kVertexBufferObjectMax
-};
-
-struct PMDModelMaterialPrivate {
-    GLuint mainTextureID;
-    GLuint subTextureID;
-};
-
 const std::string CanonicalizePath(const std::string &path)
 {
     const std::string from("\\"), to("/");
@@ -838,14 +822,6 @@ const std::string CanonicalizePath(const std::string &path)
 
 namespace vpvl
 {
-
-struct PMDModelUserData {
-    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
-    GLuint vertexBufferObjects[kVertexBufferObjectMax];
-    bool hasSingleSphereMap;
-    bool hasMultipleSphereMap;
-    PMDModelMaterialPrivate *materials;
-};
 
 namespace gl2
 {
@@ -1008,10 +984,14 @@ void Renderer::setDebugDrawer(btDynamicsWorld *world)
 
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
 {
+    loadModel0(new vpvl::gl2::PMDModelUserData(), model, dir);
+}
+
+void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir)
+{
     const vpvl::MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
-    vpvl::PMDModelUserData *userData = new vpvl::PMDModelUserData;
     PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nmaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (int i = 0; i < nmaterials; i++) {
@@ -1084,10 +1064,14 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
 
 void Renderer::unloadModel(const vpvl::PMDModel *model)
 {
+    unloadModel0(static_cast<vpvl::gl2::PMDModelUserData *>(model->userData()), model);
+}
+
+void Renderer::unloadModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model)
+{
     if (model) {
         const vpvl::MaterialList &materials = model->materials();
         const int nmaterials = materials.count();
-        vpvl::PMDModelUserData *userData = model->userData();
         for (int i = 0; i < nmaterials; i++) {
             PMDModelMaterialPrivate &materialPrivate = userData->materials[i];
             glDeleteTextures(1, &materialPrivate.mainTextureID);
@@ -1106,8 +1090,9 @@ void Renderer::unloadModel(const vpvl::PMDModel *model)
 
 void Renderer::updateModelBuffer(const vpvl::PMDModel *model) const
 {
+    vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     size_t size = model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride);
-    glBindBuffer(GL_ARRAY_BUFFER, model->userData()->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, size, model->verticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -1120,7 +1105,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     glCullFace(GL_FRONT);
 #endif
 
-    const vpvl::PMDModelUserData *userData = model->userData();
+    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
     m_modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
@@ -1221,7 +1206,7 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 #endif
 
     const size_t stride = model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
-    const vpvl::PMDModelUserData *modelPrivate = model->userData();
+    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
 
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
@@ -1229,9 +1214,9 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 
     m_edgeProgram->bind();
     size_t len = model->vertices().count() * stride;
-    glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeVertices]);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeVertices]);
     glBufferData(GL_ARRAY_BUFFER, len, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kEdgeIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
     m_edgeProgram->setColor(model->edgeColor());
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
@@ -1252,7 +1237,7 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     return;
 
     const size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride);
-    const vpvl::PMDModelUserData *modelPrivate = model->userData();
+    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
 
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
@@ -1260,9 +1245,9 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
 
     glDisable(GL_CULL_FACE);
     size_t len = model->vertices().count() * stride;
-    glBindBuffer(GL_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, len, model->verticesPointer(), GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelPrivate->vertexBufferObjects[kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     m_shadowProgram->bind();
     m_shadowProgram->setLightAmbient(m_scene->lightAmbient());
     m_shadowProgram->setLightColor(m_scene->lightColor());

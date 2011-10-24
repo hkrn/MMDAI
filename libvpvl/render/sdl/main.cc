@@ -38,7 +38,10 @@
 
 #include <vpvl/vpvl.h>
 
-#ifdef VPVL_USE_GLSL
+#if defined(VPVL_USE_NVIDIA_CG)
+#include <vpvl/cg/Renderer.h>
+using namespace vpvl::cg;
+#elif defined(VPVL_USE_GLSL)
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
 #else
@@ -192,6 +195,11 @@ public:
         fprintf(stderr, "%s", "\n");
         va_end(ap);
     }
+#ifdef VPVL_USE_NVIDIA_CG
+    bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) {
+        return false;
+    }
+#endif
 #ifdef VPVL_GL2_RENDERER_H_
     const std::string loadShader(ShaderType type) {
         std::string file;

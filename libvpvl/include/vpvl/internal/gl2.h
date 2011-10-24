@@ -34,38 +34,54 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_CONFIG_H_
-#define VPVL_CONFIG_H_
+#ifndef VPVL_INTERNAL_GL2_H_
+#define VPVL_INTERNAL_GL2_H_
 
-/* use OpenGL coordinate system */
-#cmakedefine VPVL_COORDINATE_OPENGL
+#include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
-/* use Allegro5 OpenGL extensions instead of GLEW */
-#cmakedefine VPVL_USE_ALLEGRO5
+namespace vpvl
+{
 
-/* Build libvpvl without BulletPhysics except LinearMath */
-#cmakedefine VPVL_NO_BULLET
+struct PMDModelUserData
+{
+    int unused;
+};
 
-/* Build libvpvl with Open Asset Import Library */
-#cmakedefine VPVL_LINK_ASSIMP
+namespace gl2
+{
 
-/* Build libvpvl's renderer with GLSL shader */
-#cmakedefine VPVL_USE_GLSL
+enum VertexBufferObjectType
+{
+    kModelVertices,
+    kModelNormals,
+    kModelColors,
+    kModelTexCoords,
+    kModelToonTexCoords,
+    kEdgeVertices,
+    kEdgeIndices,
+    kShadowIndices,
+    kVertexBufferObjectMax
+};
 
-/* Build libvpvl's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
-#cmakedefine VPVL_USE_NVIDIA_CG
+struct PMDModelMaterialPrivate
+{
+    GLuint mainTextureID;
+    GLuint subTextureID;
+};
 
-/* version */
-#define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
-#define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@
-#define VPVL_VERSION_MINOR @VPVL_VERSION_MINOR@
+struct PMDModelUserData : vpvl::PMDModelUserData
+{
+    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
+    GLuint vertexBufferObjects[kVertexBufferObjectMax];
+    bool hasSingleSphereMap;
+    bool hasMultipleSphereMap;
+    PMDModelMaterialPrivate *materials;
+};
 
-#define VPVL_MAKE_VERSION(major, compat, minor) \
-    (((major) << 16) | ((compat) << 8) | (minor))
-#define VPVL_VERSION VPVL_MAKE_VERSION(VPVL_VERSION_MAJOR, \
-                                       VPVL_VERSION_COMPAT, \
-                                       VPVL_VERSION_MINOR)
+}
 
-#define VPVL_VERSION_STRING "@VPVL_VERSION@"
+}
 
 #endif
+
