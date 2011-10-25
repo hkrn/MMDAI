@@ -61,6 +61,7 @@ class VMDMotion;
 }
 
 namespace internal {
+class DebugDrawer;
 class Delegate;
 class Grid;
 class Handles;
@@ -198,6 +199,7 @@ private:
 #else
     vpvl::gl::Renderer *m_renderer;
 #endif
+    internal::DebugDrawer *m_debugDrawer;
     internal::Delegate *m_delegate;
     internal::Grid *m_grid;
     internal::Handles *m_handles;

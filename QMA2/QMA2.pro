@@ -29,6 +29,7 @@ win32:INCLUDEPATH += ../libvpvl/msvc-build/include
 # configuration by build type
 CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
+  macx:LIBS        += -framework Cg
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
@@ -43,6 +44,7 @@ CONFIG(debug, debug|release) {
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
+  macx:LIBS        += -framework Cg
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
@@ -138,7 +140,8 @@ HEADERS  += MainWindow.h \
     Application.h \
     Handles.h \
     AssetWidget.h \
-    InfoPanel.h
+    InfoPanel.h \
+    DebugDrawer.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
@@ -148,6 +151,7 @@ FORMS += \
     TransformWidget.ui \
     #MainWindow.ui \
     BoneDialog.ui
+
 
 
 

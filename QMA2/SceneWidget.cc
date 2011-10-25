@@ -39,6 +39,7 @@
 #include "SceneWidget.h"
 
 #include "Application.h"
+#include "DebugDrawer.h"
 #include "Delegate.h"
 #include "Grid.h"
 #include "Handles.h"
@@ -63,6 +64,7 @@ using namespace internal;
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
+    m_debugDrawer(0),
     m_delegate(0),
     m_grid(0),
     m_handles(0),
@@ -85,6 +87,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableBoneRotate(false),
     m_enablePhysics(false)
 {
+    m_debugDrawer = new DebugDrawer();
     m_delegate = new Delegate(this);
     m_grid = new Grid();
     m_info = new InfoPanel(this);
@@ -689,7 +692,7 @@ void SceneWidget::initializeGL()
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
-    m_renderer->setDebugDrawer(m_world->mutableWorld());
+    m_debugDrawer->setWorld(m_world->mutableWorld());
     m_grid->initialize();
 #ifdef VPVL_USE_GLSL
     m_renderer->createPrograms();
@@ -861,8 +864,8 @@ void SceneWidget::wheelEvent(QWheelEvent *event)
 void SceneWidget::drawBones()
 {
     if (m_visibleBones)
-        m_renderer->drawModelBones(true, true);
-    m_renderer->drawBoneTransform(m_bone);
+        m_debugDrawer->drawModelBones(selectedModel(), true, true);
+    m_debugDrawer->drawBoneTransform(m_bone);
 }
 
 void SceneWidget::updateFPS()

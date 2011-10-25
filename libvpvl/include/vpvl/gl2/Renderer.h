@@ -126,10 +126,6 @@ public:
         m_selected = value;
     }
 
-    btIDebugDraw *debugDrawer() const {
-        return m_debugDrawer;
-    }
-
     void initializeSurface();
     bool createPrograms();
     void resize(int width, int height);
@@ -168,7 +164,6 @@ private:
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
     vpvl::PMDModel *m_selected;
-    btIDebugDraw *m_debugDrawer;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

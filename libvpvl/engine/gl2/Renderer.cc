@@ -826,61 +826,6 @@ namespace vpvl
 namespace gl2
 {
 
-class DebugDrawer : public btIDebugDraw
-{
-public:
-    DebugDrawer() : m_world(0) {}
-    virtual ~DebugDrawer() {}
-
-    void draw3dText(const btVector3 & /* location */, const char *textString) {
-        fprintf(stderr, "[INFO]: %s\n", textString);
-    }
-    void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int /* lifeTime */, const btVector3 &color) {
-        const btVector3 to = PointOnB + normalOnB * distance;
-        glBegin(GL_LINES);
-        glColor3fv(color);
-        glVertex3fv(PointOnB);
-        glVertex3fv(to);
-        glEnd();
-    }
-    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
-        glBegin(GL_LINES);
-        glColor3fv(color);
-        glVertex3fv(from);
-        glVertex3fv(to);
-        glEnd();
-    }
-    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &fromColor, const btVector3 &toColor) {
-        glBegin(GL_LINES);
-        glColor3fv(fromColor);
-        glVertex3fv(from);
-        glColor3fv(toColor);
-        glVertex3fv(to);
-        glEnd();
-    }
-    void reportErrorWarning(const char *warningString) {
-        fprintf(stderr, "[ERROR]: %s\n", warningString);
-    }
-    int getDebugMode() const {
-        return m_flags;
-    }
-    void setDebugMode(int debugMode) {
-        m_flags = debugMode;
-    }
-
-    void render() {
-        if (m_world)
-            m_world->debugDrawWorld();
-    }
-    void setWorld(btDynamicsWorld *value) {
-        m_world = value;
-    }
-
-private:
-    btDynamicsWorld *m_world;
-    int m_flags;
-};
-
 bool Renderer::initializeGLEW(GLenum &err)
 {
 #ifndef VPVL_USE_ALLEGRO5
@@ -898,13 +843,11 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_modelProgram(0),
       m_shadowProgram(0),
       m_scene(0),
-      m_selected(0),
-      m_debugDrawer(0)
+      m_selected(0)
 {
     m_edgeProgram = new EdgeProgram(delegate);
     m_modelProgram = new ModelProgram(delegate);
     m_shadowProgram = new ShadowProgram(delegate);
-    m_debugDrawer = new DebugDrawer();
     m_scene = new vpvl::Scene(width, height, fps);
 }
 
@@ -932,8 +875,6 @@ Renderer::~Renderer()
     m_modelProgram = 0;
     delete m_shadowProgram;
     m_shadowProgram = 0;
-    delete m_debugDrawer;
-    m_debugDrawer = 0;
     delete m_scene;
     m_scene = 0;
 }
@@ -974,12 +915,6 @@ void Renderer::resize(int width, int height)
 {
     m_scene->setWidth(width);
     m_scene->setHeight(height);
-}
-
-void Renderer::setDebugDrawer(btDynamicsWorld *world)
-{
-    static_cast<DebugDrawer *>(m_debugDrawer)->setWorld(world);
-    world->setDebugDrawer(m_debugDrawer);
 }
 
 void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
@@ -1237,109 +1172,6 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     m_shadowProgram->unbind();
     glEnable(GL_CULL_FACE);
-}
-
-void Renderer::drawModelBones(bool drawSpheres, bool drawLines)
-{
-    if (m_selected)
-        drawModelBones(m_selected, drawSpheres, drawLines);
-}
-
-void Renderer::drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines)
-{
-    const vpvl::BoneList &bones = model->bones();
-    btVector3 color;
-    const int nbones = bones.count();
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-    glPushMatrix();
-
-    for (int i = 0; i < nbones; i++) {
-        const vpvl::Bone *bone = bones[i], *parent = bone->parent();
-        vpvl::Bone::Type type = bone->type();
-        if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
-            continue;
-        const btTransform &transform = bone->localTransform();
-        if (drawSpheres && type != vpvl::Bone::kInvisible) {
-            float scale;
-            if (bone->isSimulated()) {
-                color.setValue(0.8f, 0.8f, 0.0f);
-                scale = 0.1f;
-            }
-            else {
-                switch (type) {
-                case vpvl::Bone::kIKDestination:
-                    color.setValue(0.7f, 0.2f, 0.2f);
-                    scale = 0.25f;
-                    break;
-                case vpvl::Bone::kUnderIK:
-                    color.setValue(0.8f, 0.5f, 0.0f);
-                    scale = 0.15f;
-                    break;
-                case vpvl::Bone::kIKTarget:
-                    color.setValue(1.0f, 0.0f, 0.0f);
-                    scale = 0.15f;
-                    break;
-                case vpvl::Bone::kUnderRotate:
-                case vpvl::Bone::kTwist:
-                case vpvl::Bone::kFollowRotate:
-                    color.setValue(0.0f, 0.8f, 0.2f);
-                    scale = 0.15f;
-                    break;
-                default:
-                    if (bone->hasMotionIndependency()) {
-                        color.setValue(0.0f, 1.0f, 1.0f);
-                        scale = 0.25f;
-                    } else {
-                        color.setValue(0.0f, 0.5f, 1.0f);
-                        scale = 0.15f;
-                    }
-                    break;
-                }
-            }
-            m_debugDrawer->drawSphere(transform.getOrigin(), scale, color);
-        }
-        if (!drawLines || !parent || type == vpvl::Bone::kIKDestination)
-            continue;
-        if (type == vpvl::Bone::kInvisible) {
-            color.setValue(0.5f, 0.4f, 0.5f);
-        }
-        else if (bone->isSimulated()) {
-            color.setValue(0.7f, 0.7f, 0.0f);
-        }
-        else if (type == vpvl::Bone::kUnderIK || type == vpvl::Bone::kIKTarget) {
-            color.setValue(0.8f, 0.5f, 0.3f);
-        }
-        else {
-            color.setValue(0.5f, 0.6f, 1.0f);
-        }
-        m_debugDrawer->drawLine(parent->localTransform().getOrigin(), transform.getOrigin(), color);
-    }
-
-    glPopMatrix();
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-}
-
-void Renderer::drawBoneTransform(vpvl::Bone *bone)
-{
-    if (bone) {
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glPushMatrix();
-        const btTransform &t = bone->localTransform();
-        btScalar orthoLen = 1.0f;
-        if (bone->hasParent()) {
-            const btTransform &pt = bone->parent()->localTransform();
-            orthoLen = btMin(orthoLen, pt.getOrigin().distance(t.getOrigin()));
-        }
-        m_debugDrawer->drawTransform(t, orthoLen);
-        glPopMatrix();
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_LIGHTING);
-    }
 }
 
 void Renderer::loadAsset(Asset *asset, const std::string &dir)
