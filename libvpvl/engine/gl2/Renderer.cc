@@ -1099,12 +1099,6 @@ void Renderer::updateModelBuffer(const vpvl::PMDModel *model) const
 
 void Renderer::drawModel(const vpvl::PMDModel *model)
 {
-#ifndef VPVL_COORDINATE_OPENGL
-    glPushMatrix();
-    glScalef(1.0f, 1.0f, -1.0f);
-    glCullFace(GL_FRONT);
-#endif
-
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
     m_modelProgram->bind();
@@ -1188,22 +1182,10 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 
     m_modelProgram->unbind();
     glEnable(GL_CULL_FACE);
-
-#ifndef VPVL_COORDINATE_OPENGL
-    glPopMatrix();
-    glCullFace(GL_BACK);
-#endif
 }
 
 void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 {
-#ifdef VPVL_COORDINATE_OPENGL
-    glCullFace(GL_FRONT);
-#else
-    glPushMatrix();
-    glScalef(1.0f, 1.0f, -1.0f);
-    glCullFace(GL_BACK);
-#endif
 
     const size_t stride = model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
@@ -1221,15 +1203,10 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
     m_edgeProgram->setPosition(0, stride);
-    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
-    m_edgeProgram->unbind();
-
-#ifdef VPVL_COORDINATE_OPENGL
-    glCullFace(GL_BACK);
-#else
-    glPopMatrix();
     glCullFace(GL_FRONT);
-#endif
+    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
+    glCullFace(GL_BACK);
+    m_edgeProgram->unbind();
 }
 
 void Renderer::drawModelShadow(const vpvl::PMDModel *model)
