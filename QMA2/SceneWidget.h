@@ -206,6 +206,7 @@ private:
     internal::InfoPanel *m_info;
     internal::World *m_world;
     vpvl::Bone *m_bone;
+    vpvl::Vector3 m_doubleClickedPos;
     SceneLoader *m_loader;
     QSettings *m_settings;
     QElapsedTimer m_timer;

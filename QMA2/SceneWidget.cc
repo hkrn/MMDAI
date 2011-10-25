@@ -71,6 +71,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_info(0),
     m_world(0),
     m_bone(0),
+    m_doubleClickedPos(0.0f, 0.0f, 0.0f),
     m_loader(0),
     m_settings(settings),
     m_prevElapsed(0.0f),
@@ -763,6 +764,7 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
             bones.append(nearestBone);
             emit boneDidSelect(bones);
         }
+        m_doubleClickedPos = origin;
         event->ignore();
     }
 }
@@ -863,8 +865,10 @@ void SceneWidget::wheelEvent(QWheelEvent *event)
 
 void SceneWidget::drawBones()
 {
-    if (m_visibleBones)
+    if (m_visibleBones) {
         m_debugDrawer->drawModelBones(selectedModel(), true, true);
+        m_debugDrawer->drawPosition(m_doubleClickedPos);
+    }
     m_debugDrawer->drawBoneTransform(m_bone);
 }
 

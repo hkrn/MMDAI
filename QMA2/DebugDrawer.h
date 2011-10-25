@@ -191,6 +191,15 @@ public:
             glEnable(GL_LIGHTING);
         }
     }
+    void drawPosition(const vpvl::Vector3 &pos) {
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+        glPushMatrix();
+        drawSphere(pos, 0.25f, vpvl::Vector3(1, 0, 0));
+        glPopMatrix();
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LIGHTING);
+    }
 
 private:
     btDynamicsWorld *m_world;
