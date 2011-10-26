@@ -171,6 +171,11 @@ private:
     QAction *m_actionResetCamera;
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
+    QAction *m_actionTranslateModelUp;
+    QAction *m_actionTranslateModelDown;
+    QAction *m_actionTranslateModelLeft;
+    QAction *m_actionTranslateModelRight;
+    QAction *m_actionResetModelPosition;
     QAction *m_actionBoneXPosZero;
     QAction *m_actionBoneYPosZero;
     QAction *m_actionBoneZPosZero;

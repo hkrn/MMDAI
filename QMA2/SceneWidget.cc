@@ -609,6 +609,26 @@ void SceneWidget::translate(float x, float y)
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
+void SceneWidget::translateModel(float x, float y)
+{
+    vpvl::PMDModel *model = selectedModel();
+    if (model) {
+        vpvl::Vector3 p = model->positionOffset();
+        p.setValue(p.x() + x, p.y(), p.z() + y);
+        model->setPositionOffset(p);
+        model->updateImmediate();
+    }
+}
+
+void SceneWidget::resetModelPosition()
+{
+    vpvl::PMDModel *model = selectedModel();
+    if (model) {
+        model->setPositionOffset(vpvl::Vector3(0.0f, 0.0f, 0.0f));
+        model->updateImmediate();
+    }
+}
+
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
     vpvl::Scene *scene = m_renderer->scene();

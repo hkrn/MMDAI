@@ -129,6 +129,8 @@ public slots:
     void setLightPosition(const vpvl::Vector3 &position);
     void rotate(float x, float y);
     void translate(float x, float y);
+    void translateModel(float x, float y);
+    void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
@@ -145,6 +147,10 @@ public slots:
     void translateDown() { translate(0.0f, -1.0f); }
     void translateLeft() { translate(-1.0f, 0.0f); }
     void translateRight() { translate(1.0f, 0.0f); }
+    void translateModelUp() { translateModel(0.0f, 0.5f); }
+    void translateModelDown() { translateModel(0.0f, -0.5f); }
+    void translateModelLeft() { translateModel(-0.5f, 0.0f); }
+    void translateModelRight() { translateModel(0.5f, 0.0f); }
     void revertSelectedModel() { setSelectedModel(0); }
     void updateMotion() { seekMotion(m_frameIndex); }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
