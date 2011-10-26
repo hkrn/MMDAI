@@ -316,7 +316,6 @@ BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QOb
     m_state(0),
     m_mode(kLocal)
 {
-    m_root = new TreeItem("", 0, true, 0);
 }
 
 BoneMotionModel::~BoneMotionModel()
@@ -458,30 +457,39 @@ void BoneMotionModel::setFrames(const KeyFramePairList &frames)
 
 void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
-    clearKeys();
     if (model) {
-        const int namesCount = model->boneCategoryNames().count();
-        vpvl::Array<vpvl::BoneList *> allBones;
-        vpvl::Array<uint8_t *> names;
-        allBones.copy(model->bonesForUI());
-        names.copy(model->boneCategoryNames());
-        Keys &keys = m_keys[model];
-        for (int i = 0; i < namesCount; i++) {
-            const QString &category = internal::toQString(names[i]).trimmed();
-            const vpvl::BoneList *bones = allBones[i];
-            const int bonesCount = bones->count();
-            TreeItem *parent = new TreeItem(category, 0, false, static_cast<TreeItem *>(m_root));
-            for (int j = 0; j < bonesCount; j++) {
-                vpvl::Bone *bone = bones->at(j);
-                const QString &name = internal::toQString(bone);
-                TreeItem *child = new TreeItem(name, bone, false, parent);
-                parent->addChild(child);
-                keys.insert(name, child);
+        if (!hasPMDModel(model)) {
+            RootPtr ptr(new TreeItem("", 0, true, 0));
+            TreeItem *r = static_cast<TreeItem *>(ptr.data());
+            vpvl::Array<vpvl::BoneList *> allBones;
+            vpvl::Array<uint8_t *> names;
+            allBones.copy(model->bonesForUI());
+            names.copy(model->boneCategoryNames());
+            Keys keys;
+            const int namesCount = model->boneCategoryNames().count();
+            for (int i = 0; i < namesCount; i++) {
+                const QString &category = internal::toQString(names[i]).trimmed();
+                const vpvl::BoneList *bones = allBones[i];
+                const int bonesCount = bones->count();
+                TreeItem *parent = new TreeItem(category, 0, false, r);
+                for (int j = 0; j < bonesCount; j++) {
+                    vpvl::Bone *bone = bones->at(j);
+                    const QString &name = internal::toQString(bone);
+                    TreeItem *child = new TreeItem(name, bone, false, parent);
+                    parent->addChild(child);
+                    keys.insert(name, child);
+                }
+                r->addChild(parent);
             }
-            m_root->addChild(parent);
+            addPMDModel(model, ptr, keys);
         }
-        MotionBaseModel::setPMDModel(model);
+        else {
+            addPMDModel(model, root(model), Keys());
+        }
         qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
+    }
+    else {
+        m_model = 0;
     }
     reset();
 }
@@ -529,7 +537,6 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 void BoneMotionModel::deleteMotion()
 {
     m_selected.clear();
-    m_values[m_model].clear();
     setModified(false);
     reset();
     resetAllBones();
@@ -538,10 +545,7 @@ void BoneMotionModel::deleteMotion()
 void BoneMotionModel::deleteModel()
 {
     deleteMotion();
-    clearKeys();
-    delete m_root;
-    m_root = new TreeItem("", 0, true, 0);
-    setPMDModel(0);
+    removePMDModel(m_model);
     reset();
 }
 

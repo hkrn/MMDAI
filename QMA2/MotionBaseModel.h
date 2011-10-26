@@ -76,6 +76,8 @@ public:
     typedef QMap<QString, ITreeItem *> Keys;
     typedef QHash<QModelIndex, QVariant> Values;
     typedef QList<ITreeItem *> TreeItemList;
+    typedef QSharedPointer<ITreeItem> RootPtr;
+    typedef QSharedPointer<QUndoStack> UndoStackPtr;
 
     static const QVariant kInvalidData;
 
@@ -124,20 +126,23 @@ signals:
     void motionDidUpdate(vpvl::PMDModel *model);
 
 protected:
-    void clearKeys();
-    void clearValues();
     void addUndoCommand(QUndoCommand *command);
+    void addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys);
+    void removePMDModel(vpvl::PMDModel *model);
+    bool hasPMDModel(vpvl::PMDModel *model) const { return m_roots.contains(model); }
     const Values values() const { return m_values[m_model]; }
+    RootPtr root() const { return root(m_model); }
+    RootPtr root(vpvl::PMDModel *model) const { return m_roots[model]; }
 
-    ITreeItem *m_root;
     vpvl::PMDModel *m_model;
     vpvl::VMDMotion *m_motion;
-    QHash<vpvl::PMDModel *, Keys> m_keys;
-    QHash<vpvl::PMDModel *, Values> m_values;
 
 private:
     vpvl::PMDModel::State *m_state;
-    QHash<vpvl::PMDModel *, QUndoStack *> m_stacks;
+    QHash<vpvl::PMDModel *, Keys> m_keys;
+    QHash<vpvl::PMDModel *, Values> m_values;
+    QHash<vpvl::PMDModel *, RootPtr> m_roots;
+    QHash<vpvl::PMDModel *, UndoStackPtr> m_stacks;
     QUndoGroup *m_undo;
     int m_frameIndex;
     bool m_modified;

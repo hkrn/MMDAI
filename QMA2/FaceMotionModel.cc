@@ -240,7 +240,6 @@ FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
     : MotionBaseModel(undo, parent),
       m_state(0)
 {
-    m_root = new TreeItem("", 0, true, 0);
 }
 
 FaceMotionModel::~FaceMotionModel()
@@ -330,47 +329,56 @@ void FaceMotionModel::resetAllFaces()
 
 void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
-    clearKeys();
     if (model) {
-        const vpvl::FaceList &faces = model->facesForUI();
-        const int nfaces = faces.count();
-        TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, static_cast<TreeItem *>(m_root));
-        TreeItem *eye = new TreeItem(tr("Eye"), 0, false, static_cast<TreeItem *>(m_root));
-        TreeItem *lip = new TreeItem(tr("Lip"), 0, false, static_cast<TreeItem *>(m_root));
-        TreeItem *other = new TreeItem(tr("Other"), 0, false, static_cast<TreeItem *>(m_root));
-        Keys &keys = m_keys[model];
-        for (int i = 0; i < nfaces; i++) {
-            vpvl::Face *face = faces[i];
-            const QString &name = internal::toQString(face);
-            TreeItem *child, *parent = 0;
-            switch (face->type()) {
-            case vpvl::Face::kEyeblow:
-                parent = eyeblow;
-                break;
-            case vpvl::Face::kEye:
-                parent = eye;
-                break;
-            case vpvl::Face::kLip:
-                parent = lip;
-                break;
-            case vpvl::Face::kOther:
-                parent = other;
-                break;
-            default:
-                break;
+        if (!hasPMDModel(model)) {
+            RootPtr ptr(new TreeItem("", 0, true, 0));
+            TreeItem *r = static_cast<TreeItem *>(ptr.data());
+            TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, static_cast<TreeItem *>(r));
+            TreeItem *eye = new TreeItem(tr("Eye"), 0, false, static_cast<TreeItem *>(r));
+            TreeItem *lip = new TreeItem(tr("Lip"), 0, false, static_cast<TreeItem *>(r));
+            TreeItem *other = new TreeItem(tr("Other"), 0, false, static_cast<TreeItem *>(r));
+            const vpvl::FaceList &faces = model->facesForUI();
+            const int nfaces = faces.count();
+            Keys keys;
+            for (int i = 0; i < nfaces; i++) {
+                vpvl::Face *face = faces[i];
+                const QString &name = internal::toQString(face);
+                TreeItem *child, *parent = 0;
+                switch (face->type()) {
+                case vpvl::Face::kEyeblow:
+                    parent = eyeblow;
+                    break;
+                case vpvl::Face::kEye:
+                    parent = eye;
+                    break;
+                case vpvl::Face::kLip:
+                    parent = lip;
+                    break;
+                case vpvl::Face::kOther:
+                    parent = other;
+                    break;
+                default:
+                    break;
+                }
+                if (parent) {
+                    child = new TreeItem(name, face, false, parent);
+                    parent->addChild(child);
+                    keys.insert(name, child);
+                }
             }
-            if (parent) {
-                child = new TreeItem(name, face, false, parent);
-                parent->addChild(child);
-                keys.insert(name, child);
-            }
+            r->addChild(eyeblow);
+            r->addChild(eye);
+            r->addChild(lip);
+            r->addChild(other);
+            addPMDModel(model, ptr, keys);
         }
-        m_root->addChild(eyeblow);
-        m_root->addChild(eye);
-        m_root->addChild(lip);
-        m_root->addChild(other);
-        MotionBaseModel::setPMDModel(model);
+        else {
+            addPMDModel(model, root(model), Keys());
+        }
         qDebug("Set a model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
+    }
+    else {
+        m_model = 0;
     }
     reset();
 }
@@ -411,7 +419,6 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 void FaceMotionModel::deleteMotion()
 {
     m_selected.clear();
-    clearValues();
     setModified(false);
     reset();
     resetAllFaces();
@@ -420,10 +427,7 @@ void FaceMotionModel::deleteMotion()
 void FaceMotionModel::deleteModel()
 {
     deleteMotion();
-    clearKeys();
-    delete m_root;
-    m_root = new TreeItem("", 0, true, 0);
-    setPMDModel(0);
+    removePMDModel(m_model);
     reset();
 }
 

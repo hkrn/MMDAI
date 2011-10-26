@@ -43,7 +43,6 @@ const QVariant MotionBaseModel::kInvalidData = QVariant();
 
 MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     QAbstractTableModel(parent),
-    m_root(0),
     m_model(0),
     m_motion(0),
     m_state(0),
@@ -51,6 +50,9 @@ MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     m_frameIndex(0),
     m_modified(false)
 {
+    m_roots.insert(0, RootPtr(0));
+    m_keys.insert(0, Keys());
+    m_values.insert(0, Values());
 }
 
 MotionBaseModel::~MotionBaseModel()
@@ -59,9 +61,6 @@ MotionBaseModel::~MotionBaseModel()
         m_model->discardState(m_state);
     if (m_state)
         qWarning("It seems memory leak occured: m_state");
-    qDeleteAll(m_stacks);
-    delete m_root;
-    m_root = 0;
 }
 
 QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
@@ -108,7 +107,7 @@ QModelIndex MotionBaseModel::index(int row, int column, const QModelIndex &paren
 
     ITreeItem *parentItem = 0;
     if (!parent.isValid())
-        parentItem = m_root;
+        parentItem = root().data();
     else
         parentItem = static_cast<ITreeItem *>(parent.internalPointer());
 
@@ -123,7 +122,7 @@ QModelIndex MotionBaseModel::parent(const QModelIndex &child) const
 
     ITreeItem *childItem = static_cast<ITreeItem *>(child.internalPointer());
     ITreeItem *parentItem = childItem->parent();
-    return parentItem == m_root ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
+    return parentItem == root() ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
 }
 
 int MotionBaseModel::rowCount(const QModelIndex &parent) const
@@ -132,10 +131,14 @@ int MotionBaseModel::rowCount(const QModelIndex &parent) const
     if (parent.column() > 0)
         return 0;
 
-    if (!parent.isValid())
-        parentItem = m_root;
-    else
+    if (!parent.isValid()) {
+        parentItem = root().data();
+        if (!parentItem)
+            return 0;
+    }
+    else {
         parentItem = static_cast<ITreeItem *>(parent.internalPointer());
+    }
 
     return parentItem->countChildren();
 }
@@ -207,31 +210,38 @@ void MotionBaseModel::updateModel()
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)
 {
-    m_undo->activeStack()->push(command);
+    QUndoStack *activeStack = m_undo->activeStack();
+    if (activeStack)
+        activeStack->push(command);
 }
 
-void MotionBaseModel::setPMDModel(vpvl::PMDModel *model)
+void MotionBaseModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys)
 {
     if (!m_stacks.contains(model)) {
         QUndoStack *stack = new QUndoStack();
-        m_stacks.insert(model, stack);
+        m_stacks.insert(model, UndoStackPtr(stack));
         m_undo->addStack(stack);
         m_undo->setActiveStack(stack);
     }
     else {
-        m_undo->setActiveStack(m_stacks[model]);
+        m_undo->setActiveStack(m_stacks[model].data());
     }
+    if (!m_roots.contains(model))
+        m_roots.insert(model, root);
+    if (!m_keys.contains(model))
+        m_keys.insert(model, keys);
+    if (!m_values.contains(model))
+        m_values.insert(model, Values());
     m_model = model;
     emit modelDidChange(model);
 }
 
-void MotionBaseModel::clearKeys()
+void MotionBaseModel::removePMDModel(vpvl::PMDModel *model)
 {
-    m_keys.clear();
-}
-
-void MotionBaseModel::clearValues()
-{
-    m_values[m_model].clear();
-    m_values.remove(m_model);
+    m_model = 0;
+    m_undo->setActiveStack(0);
+    m_values[model].clear();
+    m_keys[model].clear();
+    m_stacks.remove(model);
+    m_roots.remove(model);
 }
