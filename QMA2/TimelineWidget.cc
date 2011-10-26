@@ -86,6 +86,7 @@ TimelineTreeView::TimelineTreeView(QWidget *parent)
     : QTreeView(parent) {
     setExpandsOnDoubleClick(true);
     setUniformRowHeights(true);
+    setSortingEnabled(false);
     connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(addCollapsed(QModelIndex)));
     connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(addExpanded(QModelIndex)));
 }
@@ -191,8 +192,10 @@ void TimelineWidget::setCurrentRowIndex(const QModelIndex & /* index */)
 
 void TimelineWidget::setFrameIndex(int frameIndex)
 {
-    static_cast<MotionBaseModel *>(m_treeView->model())->setFrameIndex(frameIndex);
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(m_treeView->model());
+    model->setFrameIndex(frameIndex);
     m_treeView->selectFrameIndex(frameIndex);
+    m_treeView->scrollTo(model->index(0, frameIndex));
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
 }
