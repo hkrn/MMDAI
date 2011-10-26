@@ -91,8 +91,8 @@ public:
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void deleteMotion();
-    void deleteModel();
+    void removeMotion();
+    void removeModel();
     void deleteFrame(const QModelIndex &index);
     void translate(int coordinate, float value);
     void rotate(int coordinate, float value);

@@ -534,7 +534,7 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     }
 }
 
-void BoneMotionModel::deleteMotion()
+void BoneMotionModel::removeMotion()
 {
     m_selected.clear();
     setModified(false);
@@ -542,9 +542,9 @@ void BoneMotionModel::deleteMotion()
     resetAllBones();
 }
 
-void BoneMotionModel::deleteModel()
+void BoneMotionModel::removeModel()
 {
-    deleteMotion();
+    removeMotion();
     removePMDModel(m_model);
     reset();
 }

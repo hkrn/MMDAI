@@ -211,8 +211,8 @@ void MainWindow::newFile()
 {
     if (maybeSave()) {
         m_sceneWidget->setEmptyMotion(m_sceneWidget->selectedModel());
-        m_boneMotionModel->deleteMotion();
-        m_faceMotionModel->deleteMotion();
+        m_boneMotionModel->removeMotion();
+        m_faceMotionModel->removeMotion();
     }
 }
 
@@ -1024,8 +1024,8 @@ void MainWindow::addNewMotion()
     if (maybeSave()) {
         vpvl::PMDModel *model = m_sceneWidget->selectedModel();
         m_sceneWidget->deleteMotion(m_boneMotionModel->currentMotion(), model);
-        m_boneMotionModel->deleteMotion();
-        m_faceMotionModel->deleteMotion();
+        m_boneMotionModel->removeMotion();
+        m_faceMotionModel->removeMotion();
         m_sceneWidget->setEmptyMotion(model);
         m_boneMotionModel->markAsNew(model);
         m_faceMotionModel->markAsNew(model);

@@ -416,7 +416,7 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     }
 }
 
-void FaceMotionModel::deleteMotion()
+void FaceMotionModel::removeMotion()
 {
     m_selected.clear();
     setModified(false);
@@ -424,9 +424,9 @@ void FaceMotionModel::deleteMotion()
     resetAllFaces();
 }
 
-void FaceMotionModel::deleteModel()
+void FaceMotionModel::removeModel()
 {
-    deleteMotion();
+    removeMotion();
     removePMDModel(m_model);
     reset();
 }

@@ -116,8 +116,8 @@ public slots:
     void markAsNew(vpvl::PMDModel *model);
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
     virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
-    virtual void deleteMotion() = 0;
-    virtual void deleteModel() = 0;
+    virtual void removeMotion() = 0;
+    virtual void removeModel() = 0;
     virtual void deleteFrame(const QModelIndex &index) = 0;
 
 signals:
