@@ -273,7 +273,7 @@ void SceneWidget::insertMotionToSelectedModel()
 
 vpvl::VMDMotion *SceneWidget::insertMotionToSelectedModel(const QString &path)
 {
-    return insertMotionToModel(path, m_renderer->selectedModel());
+    return insertMotionToModel(path, selectedModel());
 }
 
 vpvl::VMDMotion *SceneWidget::insertMotionToModel(const QString &path, vpvl::PMDModel *model)
@@ -398,7 +398,7 @@ void SceneWidget::saveMetadataFromAsset(vpvl::Asset *asset)
 
 void SceneWidget::insertPoseToSelectedModel()
 {
-    vpvl::PMDModel *model = m_renderer->selectedModel();
+    vpvl::PMDModel *model = selectedModel();
     VPDFile *pose = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastVPDDirectory",
                                                              tr("Open VPD file"),
                                                              tr("VPD file (*.vpd)")),
@@ -469,9 +469,10 @@ vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
 
 void SceneWidget::deleteSelectedModel()
 {
-    vpvl::PMDModel *selected = m_renderer->selectedModel();
+    vpvl::PMDModel *selected = selectedModel();
     emit modelWillDelete(selected);
     if (m_loader->deleteModel(selected)) {
+        setSelectedModel(0);
         emit modelDidSelect(0);
     }
     else {
@@ -679,7 +680,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
         const QList<QUrl> urls = mimeData->urls();
-        vpvl::PMDModel *model = m_renderer->selectedModel();
+        vpvl::PMDModel *model = selectedModel();
         foreach (const QUrl url, urls) {
             QString path = url.toLocalFile();
             if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
@@ -757,7 +758,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 
 void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    vpvl::PMDModel *model = m_renderer->selectedModel();
+    vpvl::PMDModel *model = selectedModel();
     if (model) {
         const QPointF &pos = objectCoordinates(event->posF());
         const vpvl::BoneList &bones = model->bones();
