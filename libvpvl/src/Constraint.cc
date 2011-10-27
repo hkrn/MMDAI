@@ -93,6 +93,17 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const Ve
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
     int32_t bodyID1 = chunk.bodyIDA;
     int32_t bodyID2 = chunk.bodyIDB;
+
+#ifdef VPVL_BUILD_IOS
+    float pos[3], rot[3], limitPosFrom[3], limitPosTo[3], limitRotFrom[3], limitRotTo[3], stiffness[6];
+    memcpy(pos, &chunk.position, sizeof(pos));
+    memcpy(rot, &chunk.rotation, sizeof(rot));
+    memcpy(limitPosFrom, &chunk.limitPositionFrom, sizeof(limitPosFrom));
+    memcpy(limitPosTo, &chunk.limitPositionTo, sizeof(limitPosTo));
+    memcpy(limitRotFrom, &chunk.limitRotationFrom, sizeof(limitRotFrom));
+    memcpy(limitRotTo, &chunk.limitRotationTo, sizeof(limitRotTo));
+    memcpy(stiffness, &chunk.stiffness, sizeof(stiffness));
+#else
     float *pos = chunk.position;
     float *rot = chunk.rotation;
     float *limitPosFrom = chunk.limitPositionFrom;
@@ -100,6 +111,7 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const Ve
     float *limitRotFrom = chunk.limitRotationFrom;
     float *limitRotTo = chunk.limitRotationTo;
     float *stiffness = chunk.stiffness;
+#endif
 
     int nbodies = bodies.count();
     if (bodyID1 >= 0 && bodyID1 < nbodies &&bodyID2 >= 0 && bodyID2 < nbodies) {

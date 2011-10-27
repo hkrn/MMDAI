@@ -828,7 +828,7 @@ namespace gl2
 
 bool Renderer::initializeGLEW(GLenum &err)
 {
-#ifndef VPVL_USE_ALLEGRO5
+#if !defined(VPVL_USE_ALLEGRO5) && !defined(VPVL_BUILD_IOS)
     err = glewInit();
     return err == GLEW_OK;
 #else
@@ -882,7 +882,9 @@ Renderer::~Renderer()
 void Renderer::initializeSurface()
 {
     glClearStencil(0);
+#ifndef VPVL_BUILD_IOS
     glEnable(GL_MULTISAMPLE);
+#endif
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

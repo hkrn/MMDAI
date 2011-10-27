@@ -114,7 +114,12 @@ void Face::read(const uint8_t *data)
             FaceVertex *vertex = new FaceVertex();
             internal::copyBytes(reinterpret_cast<uint8_t *>(&vc), ptr, sizeof(vc));
             vertex->id = vc.vertexID;
+#ifdef VPVL_BUILD_IOS
+            float pos[3];
+            memcpy(pos, &vc.position, sizeof(pos));
+#else
             float *pos = vc.position;
+#endif
 #ifdef VPVL_COORDINATE_OPENGL
             vertex->position.setValue(pos[0], pos[1], -pos[2]);
 #else

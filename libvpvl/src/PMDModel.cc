@@ -537,7 +537,13 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidSignatureError;
         return false;
     }
+#ifdef VPVL_BUILD_IOS
+    float version;
+    memcpy(&version, &header->version, sizeof(version));
+    if (1.0f != version) {
+#else
     if (1.0f != header->version) {
+#endif
         m_error = kInvalidVersionError;
         return false;
     }

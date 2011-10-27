@@ -185,6 +185,20 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
     uint8_t collisionGroupID = chunk.collisionGroupID;
     uint16_t collisionMask = chunk.collsionMask;
     int8_t shapeType = chunk.shapeType;
+
+#ifdef VPVL_BUILD_IOS
+    float width, height, depth, pos[3], rot[3], mass, linearDamping, angularDamping, restitution, friction;
+    memcpy(&width, &chunk.width, sizeof(width));
+    memcpy(&height, &chunk.height, sizeof(height));
+    memcpy(&depth, &chunk.depth, sizeof(depth));
+    memcpy(pos, &chunk.position, sizeof(pos));
+    memcpy(rot, &chunk.rotation, sizeof(rot));
+    memcpy(&mass, &chunk.mass, sizeof(mass));
+    memcpy(&linearDamping, &chunk.linearDamping, sizeof(linearDamping));
+    memcpy(&angularDamping, &chunk.angularDamping, sizeof(angularDamping));
+    memcpy(&restitution, &chunk.restitution, sizeof(restitution));
+    memcpy(&friction, &chunk.friction, sizeof(friction));
+#else
     float width = chunk.width;
     float height = chunk.height;
     float depth = chunk.depth;
@@ -195,6 +209,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
     float angularDamping = chunk.angularDamping;
     float restitution = chunk.restitution;
     float friction = chunk.friction;
+#endif
     uint8_t type = chunk.type;
 
     Bone *bone = 0;

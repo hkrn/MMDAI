@@ -136,7 +136,13 @@ void Bone::read(const uint8_t *data, int16_t id)
     copyBytesSafe(m_name, chunk.name, sizeof(m_name));
     Type type = static_cast<Type>(chunk.type);
     int16_t targetBoneID = chunk.targetBoneID;
+
+#ifdef VPVL_BUILD_IOS
+    float pos[3];
+    memcpy(pos, &chunk.position, sizeof(pos));
+#else
     float *pos = chunk.position;
+#endif
 
     // Knee bone treats as a special bone to constraint X for IK
     static const uint8_t kneeName[] = { 0x82, 0xd0, 0x82, 0xb4, 0x0 };

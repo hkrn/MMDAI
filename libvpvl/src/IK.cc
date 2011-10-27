@@ -110,7 +110,13 @@ void IK::read(const uint8_t *data, BoneList *bones)
     int16_t targetBoneID = chunk.targetBoneID;
     uint8_t nlinks = chunk.nlinks;
     uint16_t niterations = chunk.niterations;
+    
+#ifdef VPVL_BUILD_IOS
+    float angleConstraint;
+    memcpy(&angleConstraint, &chunk.angleConstraint, sizeof(angleConstraint));
+#else
     float angleConstraint = chunk.angleConstraint;
+#endif
 
     Array<int16_t> boneIKs;
     int nbones = bones->count();

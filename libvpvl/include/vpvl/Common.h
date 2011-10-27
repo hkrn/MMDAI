@@ -41,6 +41,8 @@
 
 #include "vpvl/config.h"
 
+#define VPVL_BUILD_IOS
+
 #if defined(WIN32) && !(defined(__MINGW__) || defined(__MINGW32__))
 typedef char int8_t;
 typedef unsigned char uint8_t;

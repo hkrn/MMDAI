@@ -92,10 +92,20 @@ void Vertex::read(const uint8_t *data)
 {
     VertexChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+
+#ifdef VPVL_BUILD_IOS
     float *pos = chunk.position;
     float *normal = chunk.normal;
     float u = chunk.u;
     float v = chunk.v;
+#else
+    float pos[3], normal[3], u, v;
+    memcpy(pos, &chunk.position, sizeof(pos));
+    memcpy(normal, &chunk.normal, sizeof(normal));
+    memcpy(&u, &chunk.u, sizeof(u));
+    memcpy(&v, &chunk.v, sizeof(v));
+#endif
+
     int16_t bone1 = chunk.parentBoneID;
     int16_t bone2 = chunk.childBoneID;
     uint8_t weight = chunk.weight;

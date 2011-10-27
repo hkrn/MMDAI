@@ -310,3 +310,6 @@ if(VPVL_OPENGL_RENDERER AND VPVL_USE_ALLEGRO5 AND VPVL_BUILD_A5)
   target_link_libraries(vpvl_a5 vpvl ${ALLEG5_LIBRARY_MAIN} ${ALLEG5_LIBRARY_IMAGE} opencv_core opencv_highgui)
   link_icu_or_iconv(vpvl_a5)
 endif()
+
+option(VPVL_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
+
