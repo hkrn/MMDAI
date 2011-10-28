@@ -49,15 +49,15 @@
 #include <OpenGL/glu.h>
 #else
 #include <GL/glu.h>
-#endif
+#endif /* __APPLE__ */
 #else
 #ifdef VPVL_BUILD_IOS
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #else
 #include <GL/glew.h>
-#endif
-#endif
+#endif /* VPVL_BUILD_IOS */
+#endif /* VPVL_USE_ALLEGRO5 */
 
 class btDynamicsWorld;
 class btIDebugDraw;

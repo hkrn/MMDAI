@@ -55,6 +55,9 @@
 /* Build libvpvl's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
 #cmakedefine VPVL_USE_NVIDIA_CG
 
+/* Build libvpvl for iOS */
+#cmakedefine VPVL_BUILD_IOS
+
 /* version */
 #define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
 #define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@
