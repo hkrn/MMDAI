@@ -61,6 +61,7 @@ public:
     void pasteFrame(int frameIndex);
     void startTransform();
     void commitTransform();
+    void selectByIndex(const QModelIndex &index);
     void setFrames(const KeyFramePairList &frames);
     void resetAllFaces();
     vpvl::Face *findFace(const QString &name);

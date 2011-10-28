@@ -46,11 +46,12 @@ namespace
 class TreeItem : public MotionBaseModel::ITreeItem
 {
 public:
-    TreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, TreeItem *parent)
+    TreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, bool isCategory, TreeItem *parent)
         : m_name(name),
           m_parent(parent),
           m_bone(bone),
-          m_isRoot(isRoot)
+          m_isRoot(isRoot),
+          m_isCategory(isCategory)
     {
     }
     ~TreeItem() {
@@ -75,6 +76,9 @@ public:
     bool isRoot() const {
         return m_isRoot;
     }
+    bool isCategory() const {
+        return m_isCategory;
+    }
     int rowIndex() const {
         return m_parent ? m_parent->m_children.indexOf(const_cast<TreeItem *>(this)) : 0;
     }
@@ -88,6 +92,7 @@ private:
     TreeItem *m_parent;
     vpvl::Bone *m_bone;
     bool m_isRoot;
+    bool m_isCategory;
 };
 
 class LoadPoseCommand : public QUndoCommand
@@ -408,6 +413,18 @@ void BoneMotionModel::commitTransform()
     }
 }
 
+void BoneMotionModel::selectByIndex(const QModelIndex &index)
+{
+    if (m_model) {
+        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+        QByteArray bytes = internal::fromQString(item->name());
+        vpvl::Bone *bone = m_model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        QList<vpvl::Bone *> bones;
+        bones.append(bone);
+        selectBones(bones);
+    }
+}
+
 void BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
@@ -459,7 +476,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
     if (model) {
         if (!hasPMDModel(model)) {
-            RootPtr ptr(new TreeItem("", 0, true, 0));
+            RootPtr ptr(new TreeItem("", 0, true, false, 0));
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
             vpvl::Array<vpvl::BoneList *> allBones;
             vpvl::Array<uint8_t *> names;
@@ -471,11 +488,11 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
                 const QString &category = internal::toQString(names[i]).trimmed();
                 const vpvl::BoneList *bones = allBones[i];
                 const int bonesCount = bones->count();
-                TreeItem *parent = new TreeItem(category, 0, false, r);
+                TreeItem *parent = new TreeItem(category, 0, false, true, r);
                 for (int j = 0; j < bonesCount; j++) {
                     vpvl::Bone *bone = bones->at(j);
                     const QString &name = internal::toQString(bone);
-                    TreeItem *child = new TreeItem(name, bone, false, parent);
+                    TreeItem *child = new TreeItem(name, bone, false, false, parent);
                     parent->addChild(child);
                     keys.insert(name, child);
                 }

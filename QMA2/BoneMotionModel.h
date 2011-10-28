@@ -76,6 +76,7 @@ public:
     void pasteReversedFrame(int frameIndex);
     void startTransform();
     void commitTransform();
+    void selectByIndex(const QModelIndex &index);
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void setFrames(const KeyFramePairList &frames);

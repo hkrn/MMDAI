@@ -107,6 +107,19 @@ void TimelineTreeView::selectFrameIndex(int frameIndex)
     sm->select(selection, QItemSelectionModel::ClearAndSelect);
 }
 
+void TimelineTreeView::mousePressEvent(QMouseEvent *event)
+{
+    const QModelIndex &index = indexAt(event->pos());
+    if (index.column() == 0) {
+        MotionBaseModel::ITreeItem *item = static_cast<MotionBaseModel::ITreeItem *>(index.internalPointer());
+        if (!item->isRoot() && !item->isCategory()) {
+            selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+            static_cast<MotionBaseModel *>(model())->selectByIndex(index);
+        }
+    }
+    QTreeView::mousePressEvent(event);
+}
+
 const QModelIndexList &TimelineTreeView::expandedIndices() const
 {
     return m_expanded;
@@ -130,16 +143,19 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
 {
     TimelineTreeView *treeView = new TimelineTreeView();
     treeView->setModel(base);
+    treeView->setSelectionMode(QAbstractItemView::SingleSelection);
     QHeaderView *header = treeView->header();
+    connect(header, SIGNAL(sectionPressed(int)), this, SLOT(setCurrentFrameIndexBySection(int)));
     header->setSortIndicatorShown(false);
     header->setResizeMode(QHeaderView::Fixed);
     header->setResizeMode(0, QHeaderView::ResizeToContents);
+    header->setClickable(true);
     header->setDefaultSectionSize(15);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     treeView->setItemDelegate(delegate);
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->maxFrameCount());
-    connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setFrameIndex(int)));
+    connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setCurrentFrameIndex(int)));
     m_label = new QLabel();
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     spinboxLayout->addWidget(m_label);
@@ -151,7 +167,6 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     mainLayout->setContentsMargins(QMargins());
     QItemSelectionModel *sm = treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
-    connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentRowIndex(QModelIndex)));
     connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(reexpand()));
     connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(setCurrentFrameIndexBySpinBox()));
     retranslate();
@@ -161,7 +176,6 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
 
 TimelineWidget::~TimelineWidget()
 {
-    delete m_treeView;
 }
 
 void TimelineWidget::retranslate()
@@ -183,14 +197,10 @@ int TimelineWidget::frameIndex() const
 void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
 {
     int frameIndex = qMax(index.column() - 1, 0);
-    setFrameIndex(frameIndex);
+    setCurrentFrameIndex(frameIndex);
 }
 
-void TimelineWidget::setCurrentRowIndex(const QModelIndex & /* index */)
-{
-}
-
-void TimelineWidget::setFrameIndex(int frameIndex)
+void TimelineWidget::setCurrentFrameIndex(int frameIndex)
 {
     MotionBaseModel *model = static_cast<MotionBaseModel *>(m_treeView->model());
     model->setFrameIndex(frameIndex);
@@ -202,7 +212,13 @@ void TimelineWidget::setFrameIndex(int frameIndex)
 
 void TimelineWidget::setCurrentFrameIndexBySpinBox()
 {
-    setFrameIndex(m_spinBox->value());
+    setCurrentFrameIndex(m_spinBox->value());
+}
+
+void TimelineWidget::setCurrentFrameIndexBySection(int frameIndex)
+{
+    if (frameIndex > 0)
+        setCurrentFrameIndex(frameIndex - 1);
 }
 
 void TimelineWidget::reexpand()

@@ -44,11 +44,12 @@ namespace
 class TreeItem : public MotionBaseModel::ITreeItem
 {
 public:
-    TreeItem(const QString &name, vpvl::Face *face, bool isRoot, TreeItem *parent)
+    TreeItem(const QString &name, vpvl::Face *face, bool isRoot, bool isCategory, TreeItem *parent)
         : m_name(name),
           m_parent(parent),
           m_face(face),
-          m_isRoot(isRoot)
+          m_isRoot(isRoot),
+          m_isCategory(isCategory)
     {
     }
     ~TreeItem() {
@@ -73,6 +74,9 @@ public:
     bool isRoot() const {
         return m_isRoot;
     }
+    bool isCategory() const {
+        return m_isCategory;
+    }
     int rowIndex() const {
         return m_parent ? m_parent->m_children.indexOf(const_cast<TreeItem *>(this)) : 0;
     }
@@ -86,6 +90,7 @@ private:
     TreeItem *m_parent;
     vpvl::Face *m_face;
     bool m_isRoot;
+    bool m_isCategory;
 };
 
 class SetFramesCommand : public QUndoCommand
@@ -310,6 +315,18 @@ void FaceMotionModel::commitTransform()
     }
 }
 
+void FaceMotionModel::selectByIndex(const QModelIndex &index)
+{
+    if (m_model) {
+        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+        QByteArray bytes = internal::fromQString(item->name());
+        vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        QList<vpvl::Face *> faces;
+        faces.append(face);
+        selectFaces(faces);
+    }
+}
+
 void FaceMotionModel::setFrames(const KeyFramePairList &frames)
 {
     if (m_model && m_motion) {
@@ -331,12 +348,12 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
     if (model) {
         if (!hasPMDModel(model)) {
-            RootPtr ptr(new TreeItem("", 0, true, 0));
+            RootPtr ptr(new TreeItem("", 0, true, false, 0));
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
-            TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, static_cast<TreeItem *>(r));
-            TreeItem *eye = new TreeItem(tr("Eye"), 0, false, static_cast<TreeItem *>(r));
-            TreeItem *lip = new TreeItem(tr("Lip"), 0, false, static_cast<TreeItem *>(r));
-            TreeItem *other = new TreeItem(tr("Other"), 0, false, static_cast<TreeItem *>(r));
+            TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, true, static_cast<TreeItem *>(r));
+            TreeItem *eye = new TreeItem(tr("Eye"), 0, false, true, static_cast<TreeItem *>(r));
+            TreeItem *lip = new TreeItem(tr("Lip"), 0, false, true, static_cast<TreeItem *>(r));
+            TreeItem *other = new TreeItem(tr("Other"), 0, false, true, static_cast<TreeItem *>(r));
             const vpvl::FaceList &faces = model->facesForUI();
             const int nfaces = faces.count();
             Keys keys;
@@ -361,7 +378,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
                     break;
                 }
                 if (parent) {
-                    child = new TreeItem(name, face, false, parent);
+                    child = new TreeItem(name, face, false, false, parent);
                     parent->addChild(child);
                     keys.insert(name, child);
                 }

@@ -68,6 +68,9 @@ public:
     void selectFrameIndex(int frameIndex);
     const QModelIndexList &expandedIndices() const;
 
+protected:
+    virtual void mousePressEvent(QMouseEvent *event);
+
 private slots:
     void addCollapsed(const QModelIndex &index);
     void addExpanded(const QModelIndex &index);
@@ -89,7 +92,7 @@ public:
     TimelineTreeView *treeView() const { return m_treeView; }
 
 public slots:
-    void setFrameIndex(int frameIndex);
+    void setCurrentFrameIndex(int frameIndex);
 
 signals:
     void motionDidSeek(float column);
@@ -97,8 +100,8 @@ signals:
 private slots:
     void retranslate();
     void setCurrentColumnIndex(const QModelIndex &index);
-    void setCurrentRowIndex(const QModelIndex &index);
     void setCurrentFrameIndexBySpinBox();
+    void setCurrentFrameIndexBySection(int frameIndex);
     void reexpand();
 
 private:

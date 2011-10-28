@@ -63,6 +63,7 @@ public:
         virtual ITreeItem *child(int row) const = 0;
         virtual const QString &name() const = 0;
         virtual bool isRoot() const = 0;
+        virtual bool isCategory() const = 0;
         virtual int rowIndex() const = 0;
         virtual int countChildren() const = 0;
     };
@@ -96,6 +97,7 @@ public:
     virtual void copyFrames(int frameIndex) = 0;
     virtual void startTransform() = 0;
     virtual void commitTransform() = 0;
+    virtual void selectByIndex(const QModelIndex &index) = 0;
     void saveState();
     void restoreState();
     void discardState();

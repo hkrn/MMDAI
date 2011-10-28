@@ -174,8 +174,8 @@ void TimelineTabWidget::addFaceFrameAtCurrentIndex(vpvl::Face *face)
 
 void TimelineTabWidget::setCurrentFrameIndexZero()
 {
-    m_boneTimeline->setFrameIndex(0);
-    m_faceTimeline->setFrameIndex(0);
+    m_boneTimeline->setCurrentFrameIndex(0);
+    m_faceTimeline->setCurrentFrameIndex(0);
 }
 
 void TimelineTabWidget::insertFrame()
