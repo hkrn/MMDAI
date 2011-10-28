@@ -65,8 +65,10 @@ static void UIModelDeleteFrame(TimelineWidget *timeline)
     TimelineTreeView *view = timeline->treeView();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
     QModelIndexList indices = view->selectionModel()->selectedIndexes();
-    foreach (QModelIndex index, indices)
-        model->deleteFrame(index);
+    foreach (QModelIndex index, indices) {
+        if (index.column() > 1)
+            model->deleteFrame(index);
+    }
 }
 
 static void UIModelInsertBoneFrame(TimelineWidget *timeline)
