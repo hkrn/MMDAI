@@ -99,6 +99,8 @@ public slots:
     void translate(vpvl::Bone *bone, const vpvl::Vector3 &v);
     void rotate(int coordinate, float value);
     void selectBones(const QList<vpvl::Bone *> &bones);
+    void setLocalTransformMode() { m_mode = kLocal; }
+    void setGlobalTransformMode() { m_mode = kGlobal; }
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);

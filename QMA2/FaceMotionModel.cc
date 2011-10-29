@@ -483,6 +483,6 @@ void FaceMotionModel::setWeight(float value, vpvl::Face *face)
 {
     if (face) {
         face->setWeight(value);
-        updateModel();
+        m_model->updateImmediate();
     }
 }

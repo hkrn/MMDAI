@@ -229,7 +229,7 @@ void SceneWidget::addModel()
                                                     tr("PMD file (*.pmd)")));
     if (model && !m_playing) {
         setEmptyMotion(model);
-        model->updateImmediate();
+        model->advanceMotion(0.0f);
         emit newMotionDidSet(model);
     }
 }
@@ -261,7 +261,7 @@ void SceneWidget::insertMotionToAllModels()
                                                                      tr("VMD file (*.vmd)")));
     vpvl::PMDModel *selected = selectedModel();
     if (motion && selected)
-        selected->updateImmediate();
+        selected->advanceMotion(0.0f);
 }
 
 vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
@@ -773,7 +773,22 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     const QPoint &pos = event->pos();
     QRectF rect;
     m_prevPos = pos;
-    m_handles->testHit(pos, m_handleFlags, rect);
+    int flag;
+    if (m_handles->testHit(pos, flag, rect)) {
+        switch (flag) {
+        case Handles::kLocal:
+            m_handles->setLocal(false);
+            emit globalTransformDidSelect();
+            break;
+        case Handles::kGlobal:
+            m_handles->setLocal(true);
+            emit localTransformDidSelect();
+            break;
+        default:
+            break;
+        }
+    }
+    m_handleFlags = flag;
 }
 
 void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
@@ -861,6 +876,7 @@ void SceneWidget::paintGL()
 {
     QPainter painter(this);
     qglClearColor(Qt::white);
+    glEnable(GL_MULTISAMPLE);
     m_renderer->initializeSurface();
     m_renderer->clearSurface();
     m_renderer->drawSurface();

@@ -181,6 +181,8 @@ signals:
     void handleDidMove(int coordinate, float value);
     void handleDidRotate(int coordinate, float value);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
+    void localTransformDidSelect();
+    void globalTransformDidSelect();
 
 protected:
     void closeEvent(QCloseEvent *event);

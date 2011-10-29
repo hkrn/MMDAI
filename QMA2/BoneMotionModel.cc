@@ -649,7 +649,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
         selected->setPosition(pos);
-        updateModel();
+        m_model->updateImmediate();
         emit bonePositionDidChange(selected, pos);
     }
 }
@@ -677,7 +677,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
         qFatal("Unexpected coordinate value: %c", coordinate);
     }
     selected->setRotation(rot);
-    updateModel();
+    m_model->updateImmediate();
     emit boneRotationDidChange(selected, rot);
 }
 
@@ -729,7 +729,7 @@ void BoneMotionModel::translate(vpvl::Bone *bone, const vpvl::Vector3 &v)
         break;
     }
     bone->setPosition(dest);
-    updateModel();
+    m_model->updateImmediate();
     emit bonePositionDidChange(bone, dest);
 }
 
@@ -772,7 +772,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
         break;
     }
     selected->setRotation(dest);
-    updateModel();
+    m_model->updateImmediate();
     emit boneRotationDidChange(selected, dest);
 }
 

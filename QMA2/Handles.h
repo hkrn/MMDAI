@@ -58,13 +58,16 @@ public:
         Texture disableRotate;
     };
     enum Flags {
-        kEnable = 1,
-        kDisable = 2,
-        kMove = 4,
-        kRotate = 8,
-        kX = 16,
-        kY = 32,
-        kZ = 64
+        kNone    = 0x0,
+        kEnable  = 0x1,
+        kDisable = 0x2,
+        kMove    = 0x4,
+        kRotate  = 0x8,
+        kX       = 0x10,
+        kY       = 0x20,
+        kZ       = 0x40,
+        kGlobal  = 0x80,
+        kLocal   = 0x100
     };
 
     Handles(QGLWidget *widget)
@@ -73,6 +76,7 @@ public:
           m_height(0),
           m_enableMove(false),
           m_enableRotate(false),
+          m_isLocal(true),
           m_visible(true)
     {
     }
@@ -89,6 +93,8 @@ public:
         m_widget->deleteTexture(m_x.disableRotate.textureID);
         m_widget->deleteTexture(m_y.disableRotate.textureID);
         m_widget->deleteTexture(m_z.disableRotate.textureID);
+        m_widget->deleteTexture(m_global.textureID);
+        m_widget->deleteTexture(m_local.textureID);
     }
 
     void load() {
@@ -129,6 +135,12 @@ public:
         image.load(":icons/z-disable-rotate.png");
         m_z.disableRotate.size = image.size();
         m_z.disableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+        image.load(":icons/global.png");
+        m_global.size = image.size();
+        m_global.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+        image.load(":icons/local.png");
+        m_local.size = image.size();
+        m_local.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     }
     void resize(int width, int height) {
         qreal baseX = width - 104, baseY = 4, xoffset = 32, yoffset = 40;
@@ -158,10 +170,14 @@ public:
         m_y.disableRotate.rect.setSize(m_y.disableRotate.size);
         m_z.disableRotate.rect.setTopLeft(QPointF(baseX + xoffset * 2, baseY + yoffset));
         m_z.disableRotate.rect.setSize(m_z.disableRotate.size);
+        m_global.rect.setTopLeft(QPointF(baseX, baseY + yoffset * 2));
+        m_global.rect.setSize(m_global.size);
+        m_local.rect.setTopLeft(QPointF(baseX + (m_global.size.width() - m_local.size.width()) / 2, baseY + yoffset * 2));
+        m_local.rect.setSize(m_local.size);
     }
     bool testHit(const QPoint &p, int &flags, QRectF &rect) {
         QPoint pos(p.x(), m_height - p.y());
-        flags = 0;
+        flags = kNone;
         if (m_enableMove) {
             if (m_x.enableMove.rect.contains(pos)) {
                 rect = m_x.enableMove.rect;
@@ -218,7 +234,19 @@ public:
                 flags = kDisable | kRotate | kZ;
             }
         }
-        return flags != 0;
+        if (m_isLocal) {
+            if (m_local.rect.contains(pos)) {
+                rect = m_local.rect;
+                flags = kLocal;
+            }
+        }
+        else {
+            if (m_global.rect.contains(pos)) {
+                rect = m_global.rect;
+                flags = kGlobal;
+            }
+        }
+        return flags != kNone;
     }
     void draw() {
         if (!m_visible)
@@ -252,6 +280,10 @@ public:
             m_widget->drawTexture(m_y.disableRotate.rect, m_y.disableRotate.textureID);
             m_widget->drawTexture(m_z.disableRotate.rect, m_z.disableRotate.textureID);
         }
+        if (m_isLocal)
+            m_widget->drawTexture(m_local.rect, m_local.textureID);
+        else
+            m_widget->drawTexture(m_global.rect, m_global.textureID);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LIGHTING);
     }
@@ -262,6 +294,9 @@ public:
     void setRotateable(bool value) {
         m_enableRotate = value;
     }
+    void setLocal(bool value) {
+        m_isLocal = value;
+    }
     void setVisible(bool value) {
         m_visible = value;
     }
@@ -271,10 +306,13 @@ private:
     Handle m_x;
     Handle m_y;
     Handle m_z;
+    Texture m_global;
+    Texture m_local;
     int m_width;
     int m_height;
     bool m_enableMove;
     bool m_enableRotate;
+    bool m_isLocal;
     bool m_visible;
 };
 
