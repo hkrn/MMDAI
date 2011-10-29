@@ -741,7 +741,7 @@ void MainWindow::retranslate()
     m_actionTranslateModelRight->setStatusTip(tr("Translate the selected model right."));
     m_actionTranslateModelRight->setShortcut(tr("Ctrl+Shift+Right"));
     m_actionResetModelPosition->setText(tr("Reset model position"));
-    m_actionResetModelPosition->setStatusTip(tr("Reset the position of selected model to zero"));
+    m_actionResetModelPosition->setStatusTip(tr("Reset the position of selected model to zero."));
     m_actionBoneXPosZero->setText(tr("Make X position of bone zero"));
     m_actionBoneXPosZero->setStatusTip(tr("Reset X axis of the selected bone to the selected model."));
     m_actionBoneYPosZero->setText(tr("Make Y position of bone zero"));
