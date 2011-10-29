@@ -81,6 +81,7 @@ public:
     typedef QSharedPointer<QUndoStack> UndoStackPtr;
 
     static const QVariant kInvalidData;
+    static int toFrameIndex(const QModelIndex &index);
 
     MotionBaseModel(QUndoGroup *undo, QObject *parent = 0);
     virtual ~MotionBaseModel();

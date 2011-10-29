@@ -55,8 +55,7 @@ public:
             QItemDelegate::paint(painter, option, index);
             return;
         }
-        // column index 0 is row header
-        if ((index.column() - 1) % 5 == 0)
+        if (MotionBaseModel::toFrameIndex(index) % 5 == 0)
             painter->fillRect(option.rect, qApp->palette().alternateBase());
         painter->setPen(Qt::NoPen);
         painter->setRenderHint(QPainter::Antialiasing);
@@ -199,14 +198,14 @@ int TimelineWidget::frameIndex() const
     if (!indices.isEmpty()) {
         const QModelIndex &index = indices.first();
         if (index.isValid())
-            return index.column() - 1;
+            return MotionBaseModel::toFrameIndex(index);
     }
     return 0;
 }
 
 void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
 {
-    int frameIndex = qMax(index.column() - 1, 0);
+    int frameIndex = MotionBaseModel::toFrameIndex(index);
     setCurrentFrameIndex(frameIndex);
 }
 

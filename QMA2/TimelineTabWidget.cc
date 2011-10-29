@@ -275,7 +275,7 @@ void TimelineTabWidget::addBoneKeyFramesByIndices(const QModelIndexList &indices
     BoneMotionModel *bmm = UIGetBoneModel(m_boneTimeline);
     vpvl::PMDModel *model = bmm->selectedModel();
     foreach (const QModelIndex &index, indices) {
-        int frameIndex = index.column() - 1;
+        int frameIndex = MotionBaseModel::toFrameIndex(index);
         if (frameIndex > 0) {
             const QByteArray &name = bmm->nameFromIndex(index);
             vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
@@ -298,7 +298,7 @@ void TimelineTabWidget::addFaceKeyFramesByIndices(const QModelIndexList &indices
     FaceMotionModel *fmm = UIGetFaceModel(m_faceTimeline);
     vpvl::PMDModel *model = fmm->selectedModel();
     foreach (const QModelIndex &index, indices) {
-        int frameIndex = index.column() - 1;
+        int frameIndex = MotionBaseModel::toFrameIndex(index);
         if (frameIndex > 0) {
             const QByteArray &name = fmm->nameFromIndex(index);
             vpvl::Face *face = model->findFace(reinterpret_cast<const uint8_t *>(name.constData()));

@@ -41,6 +41,12 @@
 
 const QVariant MotionBaseModel::kInvalidData = QVariant();
 
+int MotionBaseModel::toFrameIndex(const QModelIndex &index)
+{
+    // column index 0 is row header
+    return qMax(index.column() - 1, 0);
+}
+
 MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),
