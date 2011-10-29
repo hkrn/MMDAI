@@ -104,6 +104,9 @@ public:
     const Array<PMDModel *> &models() const {
         return m_models;
     }
+    const Transform &modelViewTransform() const {
+        return m_modelview;
+    }
     const Color &lightColor() const {
         return m_lightColor;
     }

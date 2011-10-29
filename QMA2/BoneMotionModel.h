@@ -96,6 +96,7 @@ public slots:
     void removeModel();
     void deleteFrame(const QModelIndex &index);
     void translate(int coordinate, float value);
+    void translate(vpvl::Bone *bone, const vpvl::Vector3 &v);
     void rotate(int coordinate, float value);
     void selectBones(const QList<vpvl::Bone *> &bones);
 

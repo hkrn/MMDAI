@@ -683,47 +683,54 @@ void BoneMotionModel::setRotation(int coordinate, float value)
 
 void BoneMotionModel::translate(int coordinate, float value)
 {
-    vpvl::Vector3 pos, dest;
+    vpvl::Vector3 v;
     foreach (vpvl::Bone *selected, m_selected) {
-        const vpvl::Vector3 &current = selected->position();
         // invert X and Y for compatibility of MMD behavior
         switch (coordinate) {
         case 'x':
         case 'X':
-            pos.setValue(-value, 0, 0);
+            v.setValue(-value, 0, 0);
             break;
         case 'y':
         case 'Y':
-            pos.setValue(0, -value, 0);
+            v.setValue(0, -value, 0);
             break;
         case 'z':
         case 'Z':
-            pos.setValue(0, 0, value);
+            v.setValue(0, 0, value);
             break;
         default:
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
-        switch (m_mode) {
-        case kView: {
-            QVector4D r = modelviewMatrix() * QVector4D(pos.x(), pos.y(), pos.z(), 0.0f);
-            dest = vpvl::Transform(selected->rotation(), current) * vpvl::Vector3(r.x(), r.y(), r.z());
-            break;
-        }
-        case kLocal: {
-            dest = vpvl::Transform(selected->rotation(), current) * pos;
-            break;
-        }
-        case kGlobal: {
-            dest = current + pos;
-            break;
-        }
-        default:
-            break;
-        }
-        selected->setPosition(dest);
-        updateModel();
-        emit bonePositionDidChange(selected, dest);
+        translate(selected, v);
     }
+}
+
+void BoneMotionModel::translate(vpvl::Bone *bone, const vpvl::Vector3 &v)
+{
+    vpvl::Vector3 dest;
+    switch (m_mode) {
+    case kView: {
+        const vpvl::Vector3 &v2 = m_sceneWidget->scene()->modelViewTransform() * v;
+        dest = vpvl::Transform(bone->rotation(), bone->position()) * v2;
+        //const QVector4D &r = modelviewMatrix() * QVector4D(v.x(), v.y(), v.z(), 0.0f);
+        //dest = vpvl::Transform(bone->rotation(), bone->position()) * vpvl::Vector3(r.x(), r.y(), r.z());
+        break;
+    }
+    case kLocal: {
+        dest = vpvl::Transform(bone->rotation(), bone->position()) * v;
+        break;
+    }
+    case kGlobal: {
+        dest = bone->position() + v;
+        break;
+    }
+    default:
+        break;
+    }
+    bone->setPosition(dest);
+    updateModel();
+    emit bonePositionDidChange(bone, dest);
 }
 
 void BoneMotionModel::rotate(int coordinate, float value)
