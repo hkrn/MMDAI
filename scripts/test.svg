@@ -572,7 +572,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="3"
      inkscape:cx="535.7666"
-     inkscape:cy="515.67502"
+     inkscape:cy="817.52389"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -597,7 +597,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -756,7 +756,34 @@
          sodipodi:end="11.873984"
          sodipodi:open="true" />
     </g>
-  </g>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3506"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Sans"
+       transform="translate(3,0)"><flowRegion
+         id="flowRegion3508"><rect
+           id="rect3510"
+           width="204.33333"
+           height="48"
+           x="429.33334"
+           y="194.36218"
+           style="fill:#4d4d4d" /></flowRegion><flowPara
+         id="flowPara3512">Local</flowPara><flowPara
+         id="flowPara3516" /><flowPara
+         id="flowPara3514" /></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3518"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Sans"
+       transform="translate(8,2.3333333)"><flowRegion
+         id="flowRegion3520"><rect
+           id="rect3522"
+           width="226.33333"
+           height="48.666668"
+           x="422"
+           y="153.69551"
+           style="fill:#4d4d4d" /></flowRegion><flowPara
+         id="flowPara3524">Global</flowPara><flowPara
+         id="flowPara3526" /></flowRoot>  </g>
   <g
      inkscape:groupmode="layer"
      id="layer2"
