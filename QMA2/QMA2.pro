@@ -99,7 +99,6 @@ SOURCES += main.cc\
            MainWindow.cc \
            SceneWidget.cc \
            TimelineWidget.cc \
-    HandleWidget.cc \
     FaceWidget.cc \
     CameraPerspectiveWidget.cc \
     TransformWidget.cc \
@@ -118,7 +117,7 @@ SOURCES += main.cc\
 HEADERS  += MainWindow.h \
             SceneWidget.h \
             TimelineWidget.h \
-    HandleWidget.h \
+    Handles.h \
     FaceWidget.h \
     CameraPerspectiveWidget.h \
     TransformWidget.h \
@@ -137,7 +136,6 @@ HEADERS  += MainWindow.h \
     SceneLoader.h \
     Grid.h \
     Application.h \
-    Handles.h \
     AssetWidget.h \
     InfoPanel.h \
     DebugDrawer.h
