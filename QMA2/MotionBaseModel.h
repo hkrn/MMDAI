@@ -98,6 +98,7 @@ public:
     virtual void startTransform() = 0;
     virtual void commitTransform() = 0;
     virtual void selectByIndex(const QModelIndex &index) = 0;
+    virtual const QByteArray nameFromIndex(const QModelIndex &index) const = 0;
     void saveState();
     void restoreState();
     void discardState();

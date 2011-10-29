@@ -62,6 +62,8 @@ public:
     void startTransform();
     void commitTransform();
     void selectByIndex(const QModelIndex &index);
+    const QByteArray nameFromIndex(const QModelIndex &index) const;
+
     void setFrames(const KeyFramePairList &frames);
     void resetAllFaces();
     vpvl::Face *findFace(const QString &name);

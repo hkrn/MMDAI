@@ -77,6 +77,8 @@ public:
     void startTransform();
     void commitTransform();
     void selectByIndex(const QModelIndex &index);
+    const QByteArray nameFromIndex(const QModelIndex &index) const;
+
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void setFrames(const KeyFramePairList &frames);

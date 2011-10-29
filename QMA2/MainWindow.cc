@@ -254,6 +254,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    int key = event->key();
+    if (key == Qt::Key_Enter || key == Qt::Key_Return)
+        m_timelineTabWidget->addKeyFramesFromSelectedIndices();
+}
+
 void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());

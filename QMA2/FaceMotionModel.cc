@@ -327,6 +327,12 @@ void FaceMotionModel::selectByIndex(const QModelIndex &index)
     }
 }
 
+const QByteArray FaceMotionModel::nameFromIndex(const QModelIndex &index) const
+{
+    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+    return internal::fromQString(item->name());
+}
+
 void FaceMotionModel::setFrames(const KeyFramePairList &frames)
 {
     if (m_model && m_motion) {

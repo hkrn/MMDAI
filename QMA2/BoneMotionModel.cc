@@ -425,6 +425,12 @@ void BoneMotionModel::selectByIndex(const QModelIndex &index)
     }
 }
 
+const QByteArray BoneMotionModel::nameFromIndex(const QModelIndex &index) const
+{
+    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+    return internal::fromQString(item->name());
+}
+
 void BoneMotionModel::loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
