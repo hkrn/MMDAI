@@ -149,7 +149,7 @@ int MotionBaseModel::rowCount(const QModelIndex &parent) const
     return parentItem->countChildren();
 }
 
-const QModelIndex MotionBaseModel::frameToIndex(ITreeItem *item, int frameIndex) const
+const QModelIndex MotionBaseModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
 {
     int rowIndex = item->rowIndex();
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);

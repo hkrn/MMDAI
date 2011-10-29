@@ -72,7 +72,7 @@ static void UIModelDeleteFrame(TimelineWidget *timeline)
     QModelIndexList indices = view->selectionModel()->selectedIndexes();
     foreach (QModelIndex index, indices) {
         if (index.column() > 1)
-            model->deleteFrame(index);
+            model->deleteFrameByModelIndex(index);
     }
 }
 
@@ -143,10 +143,10 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        addBoneKeyFramesByIndices(UIGetSelectionModel(m_boneTimeline)->selectedIndexes());
+        addBoneKeyFramesByModelIndices(UIGetSelectionModel(m_boneTimeline)->selectedIndexes());
         break;
     case kFaceTabIndex:
-        addFaceKeyFramesByIndices(UIGetSelectionModel(m_faceTimeline)->selectedIndexes());
+        addFaceKeyFramesByModelIndices(UIGetSelectionModel(m_faceTimeline)->selectedIndexes());
         break;
     }
 }
@@ -269,7 +269,7 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     }
 }
 
-void TimelineTabWidget::addBoneKeyFramesByIndices(const QModelIndexList &indices)
+void TimelineTabWidget::addBoneKeyFramesByModelIndices(const QModelIndexList &indices)
 {
     BoneMotionModel::KeyFramePairList boneFrames;
     BoneMotionModel *bmm = UIGetBoneModel(m_boneTimeline);
@@ -277,7 +277,7 @@ void TimelineTabWidget::addBoneKeyFramesByIndices(const QModelIndexList &indices
     foreach (const QModelIndex &index, indices) {
         int frameIndex = MotionBaseModel::toFrameIndex(index);
         if (frameIndex > 0) {
-            const QByteArray &name = bmm->nameFromIndex(index);
+            const QByteArray &name = bmm->nameFromModelIndex(index);
             vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
             if (bone) {
                 vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
@@ -292,7 +292,7 @@ void TimelineTabWidget::addBoneKeyFramesByIndices(const QModelIndexList &indices
     bmm->setFrames(boneFrames);
 }
 
-void TimelineTabWidget::addFaceKeyFramesByIndices(const QModelIndexList &indices)
+void TimelineTabWidget::addFaceKeyFramesByModelIndices(const QModelIndexList &indices)
 {
     FaceMotionModel::KeyFramePairList faceFrames;
     FaceMotionModel *fmm = UIGetFaceModel(m_faceTimeline);
@@ -300,7 +300,7 @@ void TimelineTabWidget::addFaceKeyFramesByIndices(const QModelIndexList &indices
     foreach (const QModelIndex &index, indices) {
         int frameIndex = MotionBaseModel::toFrameIndex(index);
         if (frameIndex > 0) {
-            const QByteArray &name = fmm->nameFromIndex(index);
+            const QByteArray &name = fmm->nameFromModelIndex(index);
             vpvl::Face *face = model->findFace(reinterpret_cast<const uint8_t *>(name.constData()));
             if (face) {
                 vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();

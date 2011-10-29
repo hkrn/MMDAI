@@ -106,7 +106,7 @@ public:
             int frameIndex = frame.first;
             if (!indexProceeded[frameIndex]) {
                 foreach (MotionBaseModel::ITreeItem *item, items) {
-                    const QModelIndex &index = m_fmm->frameToIndex(item, frameIndex);
+                    const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(FaceMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                         m_indices.append(index);
                 }
@@ -124,7 +124,7 @@ public:
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyFrames(frameIndex);
             foreach (MotionBaseModel::ITreeItem *item, m_fmm->keys().values()) {
-                const QModelIndex &index = m_fmm->frameToIndex(item, frameIndex);
+                const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                 m_fmm->setData(index, FaceMotionModel::kInvalidData, Qt::EditRole);
             }
         }
@@ -158,7 +158,7 @@ public:
                 continue;
             }
             if (keys.contains(key)) {
-                const QModelIndex &modelIndex = m_fmm->frameToIndex(keys[key], frameIndex);
+                const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(keys[key], frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::FaceKeyFrame *newFrame = static_cast<vpvl::FaceKeyFrame *>(frame->clone());
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
@@ -274,7 +274,7 @@ void FaceMotionModel::copyFrames(int frameIndex)
     if (m_model && m_motion) {
         m_frames.releaseAll();
         foreach (MotionBaseModel::ITreeItem *item, keys().values()) {
-            const QModelIndex &index = frameToIndex(item, frameIndex);
+            const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
             QVariant variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 QByteArray bytes = variant.toByteArray();
@@ -315,7 +315,7 @@ void FaceMotionModel::commitTransform()
     }
 }
 
-void FaceMotionModel::selectByIndex(const QModelIndex &index)
+void FaceMotionModel::selectByModelIndex(const QModelIndex &index)
 {
     if (m_model) {
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
@@ -327,7 +327,7 @@ void FaceMotionModel::selectByIndex(const QModelIndex &index)
     }
 }
 
-const QByteArray FaceMotionModel::nameFromIndex(const QModelIndex &index) const
+const QByteArray FaceMotionModel::nameFromModelIndex(const QModelIndex &index) const
 {
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     return internal::fromQString(item->name());
@@ -420,7 +420,7 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 int frameIndex = static_cast<int>(frame->frameIndex());
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 ITreeItem *item = keys[key];
-                const QModelIndex &modelIndex = frameToIndex(item, frameIndex);
+                const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
                 vpvl::FaceKeyFrame newFrame;
                 newFrame.setName(name);
                 newFrame.setWeight(frame->weight());
@@ -454,7 +454,7 @@ void FaceMotionModel::removeModel()
     reset();
 }
 
-void FaceMotionModel::deleteFrame(const QModelIndex &index)
+void FaceMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
 {
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     vpvl::Face *face = item->face();

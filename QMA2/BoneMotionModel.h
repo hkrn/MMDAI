@@ -76,8 +76,8 @@ public:
     void pasteReversedFrame(int frameIndex);
     void startTransform();
     void commitTransform();
-    void selectByIndex(const QModelIndex &index);
-    const QByteArray nameFromIndex(const QModelIndex &index) const;
+    void selectByModelIndex(const QModelIndex &index);
+    const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
@@ -96,7 +96,7 @@ public slots:
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void removeMotion();
     void removeModel();
-    void deleteFrame(const QModelIndex &index);
+    void deleteFrameByModelIndex(const QModelIndex &index);
     void translate(int coordinate, float value);
     void translate(vpvl::Bone *bone, const vpvl::Vector3 &v);
     void rotate(int coordinate, float value);

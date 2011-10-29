@@ -109,7 +109,7 @@ void TimelineTreeView::selectFrameIndex(int frameIndex)
     QItemSelection selection;
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
     foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
-        const QModelIndex &index = m->frameToIndex(item, frameIndex);
+        const QModelIndex &index = m->frameIndexToModelIndex(item, frameIndex);
         selection.append(QItemSelectionRange(index));
     }
     QItemSelectionModel *sm = selectionModel();
@@ -123,13 +123,13 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
         MotionBaseModel::ITreeItem *item = static_cast<MotionBaseModel::ITreeItem *>(index.internalPointer());
         if (!item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            static_cast<MotionBaseModel *>(model())->selectByIndex(index);
+            static_cast<MotionBaseModel *>(model())->selectByModelIndex(index);
         }
     }
     QTreeView::mousePressEvent(event);
 }
 
-const QModelIndexList &TimelineTreeView::expandedIndices() const
+const QModelIndexList &TimelineTreeView::expandedModelIndices() const
 {
     return m_expanded;
 }
@@ -233,6 +233,6 @@ void TimelineWidget::setCurrentFrameIndexBySection(int frameIndex)
 void TimelineWidget::reexpand()
 {
     TimelineTreeView *view = static_cast<TimelineTreeView *>(m_treeView);
-    foreach (const QModelIndex &index, view->expandedIndices())
+    foreach (const QModelIndex &index, view->expandedModelIndices())
         m_treeView->expand(index);
 }

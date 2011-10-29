@@ -72,8 +72,8 @@
 #ifndef LICENSEWIDGET_H
 #define LICENSEWIDGET_H
 
-#include <QModelIndex>
-#include <QWidget>
+#include <QtGui/QAbstractItemView>
+#include <QtGui/QWidget>
 
 class QTextEdit;
 

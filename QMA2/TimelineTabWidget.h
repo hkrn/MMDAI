@@ -94,8 +94,8 @@ private slots:
     void setCurrentTabIndex(int index);
 
 private:
-    void addBoneKeyFramesByIndices(const QModelIndexList &indices);
-    void addFaceKeyFramesByIndices(const QModelIndexList &indices);
+    void addBoneKeyFramesByModelIndices(const QModelIndexList &indices);
+    void addFaceKeyFramesByModelIndices(const QModelIndexList &indices);
 
     QSettings *m_settings;
     QTabWidget *m_tabWidget;

@@ -66,7 +66,7 @@ public:
     ~TimelineTreeView();
 
     void selectFrameIndex(int frameIndex);
-    const QModelIndexList &expandedIndices() const;
+    const QModelIndexList &expandedModelIndices() const;
 
 protected:
     virtual void mousePressEvent(QMouseEvent *event);

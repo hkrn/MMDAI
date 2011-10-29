@@ -92,14 +92,14 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
     QModelIndex parent(const QModelIndex &child) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    const QModelIndex frameToIndex(ITreeItem *item, int frameIndex) const;
+    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     virtual void copyFrames(int frameIndex) = 0;
     virtual void startTransform() = 0;
     virtual void commitTransform() = 0;
-    virtual void selectByIndex(const QModelIndex &index) = 0;
-    virtual const QByteArray nameFromIndex(const QModelIndex &index) const = 0;
+    virtual void selectByModelIndex(const QModelIndex &index) = 0;
+    virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
     void saveState();
     void restoreState();
     void discardState();
@@ -122,7 +122,7 @@ public slots:
     virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void removeMotion() = 0;
     virtual void removeModel() = 0;
-    virtual void deleteFrame(const QModelIndex &index) = 0;
+    virtual void deleteFrameByModelIndex(const QModelIndex &index) = 0;
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);

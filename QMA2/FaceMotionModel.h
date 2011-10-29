@@ -61,8 +61,8 @@ public:
     void pasteFrame(int frameIndex);
     void startTransform();
     void commitTransform();
-    void selectByIndex(const QModelIndex &index);
-    const QByteArray nameFromIndex(const QModelIndex &index) const;
+    void selectByModelIndex(const QModelIndex &index);
+    const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
     void resetAllFaces();
@@ -77,7 +77,7 @@ public slots:
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void removeMotion();
     void removeModel();
-    void deleteFrame(const QModelIndex &index);
+    void deleteFrameByModelIndex(const QModelIndex &index);
     void selectFaces(const QList<vpvl::Face *> &faces);
 
 signals:
