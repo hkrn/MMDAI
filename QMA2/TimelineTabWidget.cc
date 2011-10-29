@@ -143,10 +143,10 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        addBoneKeyFramesFromSelectedIndices();
+        addBoneKeyFramesByIndices(UIGetSelectionModel(m_boneTimeline)->selectedIndexes());
         break;
     case kFaceTabIndex:
-        addFaceKeyFramesFromSelectedIndices();
+        addFaceKeyFramesByIndices(UIGetSelectionModel(m_faceTimeline)->selectedIndexes());
         break;
     }
 }
@@ -269,12 +269,12 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     }
 }
 
-void TimelineTabWidget::addBoneKeyFramesFromSelectedIndices()
+void TimelineTabWidget::addBoneKeyFramesByIndices(const QModelIndexList &indices)
 {
     BoneMotionModel::KeyFramePairList boneFrames;
     BoneMotionModel *bmm = UIGetBoneModel(m_boneTimeline);
     vpvl::PMDModel *model = bmm->selectedModel();
-    foreach (const QModelIndex &index, UIGetSelectionModel(m_boneTimeline)->selectedIndexes()) {
+    foreach (const QModelIndex &index, indices) {
         int frameIndex = index.column() - 1;
         if (frameIndex > 0) {
             const QByteArray &name = bmm->nameFromIndex(index);
@@ -292,12 +292,12 @@ void TimelineTabWidget::addBoneKeyFramesFromSelectedIndices()
     bmm->setFrames(boneFrames);
 }
 
-void TimelineTabWidget::addFaceKeyFramesFromSelectedIndices()
+void TimelineTabWidget::addFaceKeyFramesByIndices(const QModelIndexList &indices)
 {
     FaceMotionModel::KeyFramePairList faceFrames;
     FaceMotionModel *fmm = UIGetFaceModel(m_faceTimeline);
     vpvl::PMDModel *model = fmm->selectedModel();
-    foreach (const QModelIndex &index, UIGetSelectionModel(m_faceTimeline)->selectedIndexes()) {
+    foreach (const QModelIndex &index, indices) {
         int frameIndex = index.column() - 1;
         if (frameIndex > 0) {
             const QByteArray &name = fmm->nameFromIndex(index);
@@ -306,7 +306,7 @@ void TimelineTabWidget::addFaceKeyFramesFromSelectedIndices()
                 vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
                 frame->setName(face->name());
                 frame->setWeight(face->weight());
-                faceFrames.append(FaceMotionModel::KeyFramePair(index.column(), FaceMotionModel::KeyFramePtr(frame)));
+                faceFrames.append(FaceMotionModel::KeyFramePair(frameIndex, FaceMotionModel::KeyFramePtr(frame)));
             }
         }
     }

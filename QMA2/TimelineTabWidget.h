@@ -37,7 +37,8 @@
 #ifndef TIMELINETABWIDGET_H
 #define TIMELINETABWIDGET_H
 
-#include <QWidget>
+#include <QtGui/QWidget>
+#include <QtGui/QAbstractItemView>
 
 namespace vpvl {
 class Bone;
@@ -93,8 +94,8 @@ private slots:
     void setCurrentTabIndex(int index);
 
 private:
-    void addBoneKeyFramesFromSelectedIndices();
-    void addFaceKeyFramesFromSelectedIndices();
+    void addBoneKeyFramesByIndices(const QModelIndexList &indices);
+    void addFaceKeyFramesByIndices(const QModelIndexList &indices);
 
     QSettings *m_settings;
     QTabWidget *m_tabWidget;
