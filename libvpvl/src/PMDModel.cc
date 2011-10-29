@@ -448,7 +448,9 @@ void PMDModel::updateToon(const Vector3 &lightDirection)
 void PMDModel::updateImmediate()
 {
     updateRootBone();
-    advanceMotion(0);
+    updateAllBones();
+    updateAllFaces();
+    updateBoneFromSimulation();
     updateSkins();
 }
 
