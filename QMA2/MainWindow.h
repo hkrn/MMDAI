@@ -61,6 +61,7 @@ class TabWidget;
 class TimelineTabWidget;
 class TransformWidget;
 class QCheckBox;
+class QDoubleSpinBox;
 class QPushButton;
 class QSpinBox;
 class QSplitter;
@@ -107,6 +108,7 @@ private slots:
     void exportVideo();
     void startExportingVideo();
     void addNewMotion();
+    void openEdgeOffsetDialog();
 
 private:
     void buildUI();
@@ -171,6 +173,7 @@ private:
     QAction *m_actionResetCamera;
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
+    QAction *m_actionEdgeOffsetDialog;
     QAction *m_actionTranslateModelUp;
     QAction *m_actionTranslateModelDown;
     QAction *m_actionTranslateModelLeft;
@@ -211,6 +214,7 @@ class ExportVideoDialog : public QDialog
 
 public:
     ExportVideoDialog(MainWindow *parent, SceneWidget *scene);
+    ~ExportVideoDialog();
 
     int sceneWidth() const;
     int sceneHeight() const;
@@ -224,6 +228,29 @@ private:
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
     QCheckBox *m_includeGridBox;
+};
+
+class EdgeOffsetDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    EdgeOffsetDialog(MainWindow *parent, SceneWidget *scene);
+    ~EdgeOffsetDialog();
+
+protected:
+    void closeEvent(QCloseEvent *event);
+
+private slots:
+    void setEdgeOffset(double value);
+    void commit();
+    void rollback();
+
+private:
+    QDoubleSpinBox *m_spinBox;
+    SceneWidget *m_sceneWidget;
+    vpvl::PMDModel *m_selected;
+    float m_edgeOffset;
 };
 
 #endif // MAINWINDOW_H

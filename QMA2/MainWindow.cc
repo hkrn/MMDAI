@@ -92,6 +92,10 @@ ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *scene) : Q
     setLayout(mainLayout);
 }
 
+ExportVideoDialog::~ExportVideoDialog()
+{
+}
+
 int ExportVideoDialog::sceneWidth() const
 {
     return m_widthBox->value();
@@ -115,6 +119,61 @@ int ExportVideoDialog::toIndex() const
 bool ExportVideoDialog::includesGrid() const
 {
     return m_includeGridBox->isChecked();
+}
+
+EdgeOffsetDialog::EdgeOffsetDialog(MainWindow *parent, SceneWidget *scene)
+    : QDialog(parent),
+      m_spinBox(0),
+      m_sceneWidget(scene),
+      m_selected(scene->selectedModel()),
+      m_edgeOffset(scene->modelEdgeOffset())
+{
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QLabel *label = new QLabel(tr("Model edge offset value"));
+    m_spinBox = new QDoubleSpinBox();
+    connect(m_spinBox, SIGNAL(valueChanged(double)), this, SLOT(setEdgeOffset(double)));
+    m_spinBox->setValue(m_edgeOffset);
+    m_spinBox->setSingleStep(0.1f);
+    m_spinBox->setRange(0.0f, 2.0f);
+    QHBoxLayout *subLayout = new QHBoxLayout();
+    subLayout->addWidget(label);
+    subLayout->addWidget(m_spinBox);
+    mainLayout->addLayout(subLayout);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+    connect(buttons, SIGNAL(accepted()), this, SLOT(commit()));
+    connect(buttons, SIGNAL(rejected()), this, SLOT(rollback()));
+    mainLayout->addWidget(buttons);
+    setWindowTitle(tr("Edge offset dialog"));
+    setLayout(mainLayout);
+    m_sceneWidget->hideSelectedModelEdge();
+}
+
+EdgeOffsetDialog::~EdgeOffsetDialog()
+{
+}
+
+void EdgeOffsetDialog::closeEvent(QCloseEvent * /* event */)
+{
+    m_sceneWidget->showSelectedModelEdge();
+}
+
+void EdgeOffsetDialog::setEdgeOffset(double value)
+{
+    m_selected->setEdgeOffset(value);
+    m_sceneWidget->setModelEdgeOffset(m_edgeOffset);
+    m_sceneWidget->updateMotion();
+}
+
+void EdgeOffsetDialog::commit()
+{
+    m_selected->setEdgeOffset(m_spinBox->value());
+    close();
+}
+
+void EdgeOffsetDialog::rollback()
+{
+    m_selected->setEdgeOffset(m_edgeOffset);
+    close();
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -401,6 +460,8 @@ void MainWindow::buildUI()
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
     connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
+    m_actionEdgeOffsetDialog = new QAction(this);
+    connect(m_actionEdgeOffsetDialog, SIGNAL(triggered()), this, SLOT(openEdgeOffsetDialog()));
     m_actionTranslateModelUp = new QAction(this);
     connect(m_actionTranslateModelUp, SIGNAL(triggered()), m_sceneWidget, SLOT(translateModelUp()));
     m_actionTranslateModelDown = new QAction(this);
@@ -511,6 +572,7 @@ void MainWindow::buildUI()
         m_menuScene->addMenu(m_menuRetainAssets);
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
+    m_menuModel->addAction(m_actionEdgeOffsetDialog);
     m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionTranslateModelUp);
     m_menuModel->addAction(m_actionTranslateModelDown);
@@ -663,6 +725,9 @@ void MainWindow::retranslate()
     m_actionDeleteSelectedModel->setText(tr("Delete selected model"));
     m_actionDeleteSelectedModel->setStatusTip(tr("Delete the selected model from the scene."));
     m_actionDeleteSelectedModel->setShortcut(tr("Ctrl+Shift+Backspace"));
+    m_actionEdgeOffsetDialog->setText(tr("Open model edge offset dialog"));
+    m_actionEdgeOffsetDialog->setStatusTip(tr("Open a dialog to change edge offset of selected model."));
+    m_actionEdgeOffsetDialog->setShortcut(tr("Ctrl+Shift+E"));
     m_actionTranslateModelUp->setText(tr("Translate selected model up"));
     m_actionTranslateModelUp->setStatusTip(tr("Translate the selected model up."));
     m_actionTranslateModelUp->setShortcut(tr("Ctrl+Shift+Up"));
@@ -1029,6 +1094,18 @@ void MainWindow::addNewMotion()
         m_sceneWidget->setEmptyMotion(model);
         m_boneMotionModel->markAsNew(model);
         m_faceMotionModel->markAsNew(model);
+    }
+}
+
+void MainWindow::openEdgeOffsetDialog()
+{
+    if (m_sceneWidget->selectedModel()) {
+        EdgeOffsetDialog *dialog = new EdgeOffsetDialog(this, m_sceneWidget);
+        dialog->exec();
+    }
+    else {
+        QMessageBox::warning(this, tr("The model is not selected."),
+                             tr("Select a model to chage edge offset value."));
     }
 }
 

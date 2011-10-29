@@ -89,6 +89,8 @@ public:
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
+    void showSelectedModelEdge();
+    void hideSelectedModelEdge();
 
     vpvl::PMDModel *addModel(const QString &path);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
@@ -100,6 +102,7 @@ public:
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
     const QPointF objectCoordinates(const QPointF &input) const;
+    float modelEdgeOffset() const { return m_selectedEdgeOffset; }
     int preferredFPS() const { return m_defaultFPS; }
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
@@ -153,6 +156,7 @@ public slots:
     void translateModelRight() { translateModel(0.5f, 0.0f); }
     void revertSelectedModel() { setSelectedModel(0); }
     void updateMotion() { seekMotion(m_frameIndex); }
+    void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
 
@@ -218,6 +222,7 @@ private:
     QElapsedTimer m_timer;
     QPoint m_prevPos;
     float m_prevElapsed;
+    float m_selectedEdgeOffset;
     float m_frameIndex;
     int m_frameCount;
     int m_currentFPS;

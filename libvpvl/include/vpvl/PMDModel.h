@@ -453,7 +453,7 @@ public:
         return m_baseBone;
     }
     float edgeOffset() const {
-        return m_edgeOffset;
+        return m_edgeOffset / 0.03f;
     }
     bool isSimulationEnabled() const {
         return m_enableSimulation;

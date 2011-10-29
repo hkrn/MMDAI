@@ -75,6 +75,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_loader(0),
     m_settings(settings),
     m_prevElapsed(0.0f),
+    m_selectedEdgeOffset(0.0f),
     m_frameIndex(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
@@ -180,15 +181,11 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
 
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 {
-    vpvl::Color red(1.0f, 0.0f, 0.0f, 1.0f), black(0.0f, 0.0f, 0.0f, 1.0f);
-    vpvl::PMDModel *model = m_renderer->selectedModel();
-    if (model)
-        model->setEdgeColor(black);
+    hideSelectedModelEdge();
     m_renderer->setSelectedModel(value);
     m_info->setModel(value);
     m_info->update();
-    if (value)
-        value->setEdgeColor(red);
+    showSelectedModelEdge();
     emit modelDidSelect(value);
 }
 
@@ -200,6 +197,29 @@ void SceneWidget::setHandlesVisible(bool value)
 void SceneWidget::setInfoPanelVisible(bool value)
 {
     m_info->setVisible(value);
+}
+
+void SceneWidget::showSelectedModelEdge()
+{
+    static const vpvl::Color red(1.0f, 0.0f, 0.0f, 1.0f);
+    vpvl::PMDModel *model = m_renderer->selectedModel();
+    if (model) {
+        m_selectedEdgeOffset = model->edgeOffset();
+        model->setEdgeOffset(1.0f);
+        model->setEdgeColor(red);
+        updateMotion();
+    }
+}
+
+void SceneWidget::hideSelectedModelEdge()
+{
+    static const vpvl::Color black(0.0f, 0.0f, 0.0f, 1.0f);
+    vpvl::PMDModel *model = m_renderer->selectedModel();
+    if (model) {
+        model->setEdgeOffset(m_selectedEdgeOffset);
+        model->setEdgeColor(black);
+        updateMotion();
+    }
 }
 
 void SceneWidget::addModel()
