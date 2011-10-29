@@ -58,25 +58,35 @@ public:
         // column index 0 is row header
         if ((index.column() - 1) % 5 == 0)
             painter->fillRect(option.rect, qApp->palette().alternateBase());
+        painter->setPen(Qt::NoPen);
+        painter->setRenderHint(QPainter::Antialiasing);
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
-            painter->setPen(Qt::NoPen);
-            painter->setRenderHint(QPainter::Antialiasing);
             if (option.state & QStyle::State_Selected)
                 painter->setBrush(option.palette.highlight());
             else
                 painter->setBrush(option.palette.foreground());
-            const QRect &rect = option.rect;
-            int width = rect.height();
-            int height = width;
-            int xoffset = rect.x() + ((rect.width() - width) / 2);
-            int yoffset = rect.y() + ((rect.height() - height) / 2);
-            QPolygon polygon;
-            polygon.append(QPoint(xoffset, yoffset + height / 2));
-            polygon.append(QPoint(xoffset + width / 2, yoffset + height));
-            polygon.append(QPoint(xoffset + width, yoffset + height / 2));
-            polygon.append(QPoint(xoffset + width / 2, yoffset ));
-            painter->drawPolygon(polygon);
+            drawDiamond(painter, option);
         }
+        else if (option.state & QStyle::State_Selected) {
+            painter->fillRect(option.rect, option.palette.highlight());
+            painter->setBrush(option.palette.base());
+            drawDiamond(painter, option);
+        }
+    }
+
+private:
+    void drawDiamond(QPainter *painter, const QStyleOptionViewItem &option) const {
+        const QRect &rect = option.rect;
+        int width = rect.height();
+        int height = width;
+        int xoffset = rect.x() + ((rect.width() - width) / 2);
+        int yoffset = rect.y() + ((rect.height() - height) / 2);
+        QPolygon polygon;
+        polygon.append(QPoint(xoffset, yoffset + height / 2));
+        polygon.append(QPoint(xoffset + width / 2, yoffset + height));
+        polygon.append(QPoint(xoffset + width, yoffset + height / 2));
+        polygon.append(QPoint(xoffset + width / 2, yoffset ));
+        painter->drawPolygon(polygon);
     }
 };
 
@@ -138,19 +148,19 @@ void TimelineTreeView::addExpanded(const QModelIndex &index)
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                QWidget *parent) :
-    QWidget(parent),
-    m_treeView(0)
+    QWidget(parent)
 {
     TimelineTreeView *treeView = new TimelineTreeView();
     treeView->setModel(base);
-    treeView->setSelectionMode(QAbstractItemView::SingleSelection);
+    treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
+    treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     QHeaderView *header = treeView->header();
     connect(header, SIGNAL(sectionPressed(int)), this, SLOT(setCurrentFrameIndexBySection(int)));
     header->setSortIndicatorShown(false);
     header->setResizeMode(QHeaderView::Fixed);
     header->setResizeMode(0, QHeaderView::ResizeToContents);
     header->setClickable(true);
-    header->setDefaultSectionSize(15);
+    header->setDefaultSectionSize(16);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     treeView->setItemDelegate(delegate);
     m_spinBox = new QSpinBox();
