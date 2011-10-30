@@ -159,6 +159,7 @@ public slots:
     void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
+    void loadFile(const QString &file);
 
 signals:
     void modelDidAdd(vpvl::PMDModel *model);

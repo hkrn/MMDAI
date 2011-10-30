@@ -4,34 +4,97 @@
   <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
-     <key>NSHumanReadableCopyright</key>
-     <string>(C) 2010-2011 hkrn</string>
-     <key>CFBundleIconFile</key>
-     <string>@ICON@</string>
-     <key>CFBundlePackageType</key>
-     <string>APPL</string>
-     <key>CFBundleSignature</key>
-     <string>@TYPEINFO@</string>
-     <key>CFBundleExecutable</key>
-     <string>@EXECUTABLE@</string>
-     <key>CFBundleIdentifier</key>
-     <string>com.github.mmdai</string>
-     <key>CFBundleVersion</key>
-     <string>0.6.0</string>
-     <key>CFBundleShortVersionString</key>
-     <string>0.6.0</string>
-     <key>CFBundleGetInfoString</key>
-     <string>MMDAI2 is an application to edit VMD motion</string>
-     <key>LSArchitecturePriority</key>
-     <array>
-       <string>x86_64</string>
-       <string>i386</string>
-     </array>
-     <key>LSMinimumSystemVersionByArchitecture</key>
-     <dict>
-       <key>x86_64</key>
-       <string>10.6</string>
-     </dict>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>pmd</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>Polygon Model Data</string>
+        <key>CFBundleTypeRole</key>
+        <string>Viewer</string>
+        <key>LSHandlerRank</key>
+        <string>Alternate</string>
+      </dict>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>x</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>DirectX Mesh File</string>
+        <key>CFBundleTypeRole</key>
+        <string>Viewer</string>
+        <key>LSHandlerRank</key>
+        <string>Alternate</string>
+      </dict>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>vmd</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>VOCALOID Motion Data</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+      </dict>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>vpd</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>VOCALOID Pose Data</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+      </dict>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>vac</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>Accessory metadata</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+      </dict>
+    </array>
+    <key>NSHumanReadableCopyright</key>
+    <string>(C) 2010-2011 hkrn</string>
+    <key>CFBundleIconFile</key>
+    <string>@ICON@</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>@TYPEINFO@</string>
+    <key>CFBundleExecutable</key>
+    <string>@EXECUTABLE@</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.github.mmdai</string>
+    <key>CFBundleVersion</key>
+    <string>0.6.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.6.0</string>
+    <key>CFBundleGetInfoString</key>
+    <string>MMDAI2 is an application to edit VMD motion</string>
+    <key>LSArchitecturePriority</key>
+    <array>
+      <string>x86_64</string>
+      <string>i386</string>
+    </array>
+    <key>LSMinimumSystemVersionByArchitecture</key>
+    <dict>
+      <key>x86_64</key>
+      <string>10.6</string>
+    </dict>
   </dict>
 </plist>
 

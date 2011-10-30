@@ -95,7 +95,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_info = new InfoPanel(this);
     m_world = new World(m_defaultFPS);
     m_handles = new Handles(this);
-     // must be delay to execute on initializeGL
+    // must be delay to execute on initializeGL
     m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
     setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
     setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
@@ -423,7 +423,7 @@ void SceneWidget::insertPoseToSelectedModel()
                                                              tr("Open VPD file"),
                                                              tr("VPD file (*.vpd)")),
                                               model);
-    if (pose)
+    if (pose && model)
         model->updateImmediate();
 }
 
@@ -650,6 +650,35 @@ void SceneWidget::resetModelPosition()
     }
 }
 
+void SceneWidget::loadFile(const QString &file)
+{
+    if (file.endsWith(".pmd", Qt::CaseInsensitive)) {
+        vpvl::PMDModel *model = addModel(file);
+        if (model && !m_playing) {
+            setEmptyMotion(model);
+            model->advanceMotion(0.0f);
+            emit newMotionDidSet(model);
+        }
+    }
+    else if (file.endsWith(".vmd", Qt::CaseInsensitive)) {
+        vpvl::VMDMotion *motion = insertMotionToModel(file, selectedModel());
+        if (motion)
+            advanceMotion(0.0f);
+    }
+    else if (file.endsWith(".x", Qt::CaseInsensitive)) {
+        addAsset(file);
+    }
+    else if (file.endsWith(".vpd", Qt::CaseInsensitive)) {
+        vpvl::PMDModel *model = selectedModel();
+        VPDFile *pose = insertPoseToSelectedModel(file, model);
+        if (pose && model)
+            model->updateImmediate();
+    }
+    else if (file.endsWith(".vac", Qt::CaseInsensitive)) {
+        addAssetFromMetadata(file);
+    }
+}
+
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
     vpvl::Scene *scene = m_renderer->scene();
@@ -700,23 +729,10 @@ void SceneWidget::dropEvent(QDropEvent *event)
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
         const QList<QUrl> urls = mimeData->urls();
-        vpvl::PMDModel *model = selectedModel();
         foreach (const QUrl url, urls) {
-            QString path = url.toLocalFile();
-            if (path.endsWith(".pmd", Qt::CaseInsensitive)) {
-                QFileInfo modelPath(path);
-                vpvl::PMDModel *model = m_loader->loadModel(modelPath.baseName(), modelPath.dir());
-                if (model) {
-                    emit modelDidAdd(model);
-                    setSelectedModel(model);
-                }
-            }
-            else if (path.endsWith(".vmd") && model) {
-                vpvl::VMDMotion *motion = m_loader->loadModelMotion(path, model);
-                if (motion)
-                    emit motionDidAdd(motion, model);
-            }
-            qDebug() << "Proceeded a dropped file:" << path;
+            const QString &file = url.toLocalFile();
+            loadFile(file);
+            qDebug() << "Proceeded a dropped file:" << file;
         }
     }
 }
