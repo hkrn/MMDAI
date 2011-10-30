@@ -83,6 +83,8 @@ signals:
 
 private slots:
     void retranslate();
+    void addBoneKeyFramesFromSelectedIndices();
+    void addFaceKeyFramesFromSelectedIndices();
     void addBoneFrameAtCurrentIndex(vpvl::Bone *bone);
     void addFaceFrameAtCurrentIndex(vpvl::Face *face);
     void setCurrentFrameIndexZero();

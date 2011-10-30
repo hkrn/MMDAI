@@ -166,9 +166,11 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_spinBox->setMaximum(base->maxFrameCount());
     connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setCurrentFrameIndex(int)));
     m_label = new QLabel();
+    m_button = new QPushButton();
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     spinboxLayout->addWidget(m_label);
     spinboxLayout->addWidget(m_spinBox);
+    spinboxLayout->addWidget(m_button);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(spinboxLayout);
     mainLayout->addWidget(treeView);
@@ -190,6 +192,7 @@ TimelineWidget::~TimelineWidget()
 void TimelineWidget::retranslate()
 {
     m_label->setText(tr("Frame Index"));
+    m_button->setText(tr("Register"));
 }
 
 int TimelineWidget::frameIndex() const

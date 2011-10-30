@@ -52,6 +52,7 @@ class VPDPose;
 class MotionBaseModel;
 
 class QLabel;
+class QPushButton;
 class QTreeView;
 class QSettings;
 class QSpinBox;
@@ -90,6 +91,7 @@ public:
 
     int frameIndex() const;
     TimelineTreeView *treeView() const { return m_treeView; }
+    QPushButton *button() const { return m_button; }
 
 public slots:
     void setCurrentFrameIndex(int frameIndex);
@@ -107,6 +109,7 @@ private slots:
 private:
     TimelineTreeView *m_treeView;
     QLabel *m_label;
+    QPushButton *m_button;
     QSettings *m_settings;
     QSpinBox *m_spinBox;
     QModelIndex m_index;

@@ -127,6 +127,8 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    connect(m_boneTimeline->button(), SIGNAL(clicked()), this, SLOT(addBoneKeyFramesFromSelectedIndices()));
+    connect(m_faceTimeline->button(), SIGNAL(clicked()), this, SLOT(addFaceKeyFramesFromSelectedIndices()));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(m_tabWidget);
@@ -143,10 +145,10 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        addBoneKeyFramesByModelIndices(UIGetSelectionModel(m_boneTimeline)->selectedIndexes());
+        addBoneKeyFramesFromSelectedIndices();
         break;
     case kFaceTabIndex:
-        addFaceKeyFramesByModelIndices(UIGetSelectionModel(m_faceTimeline)->selectedIndexes());
+        addFaceKeyFramesFromSelectedIndices();
         break;
     }
 }
@@ -163,11 +165,20 @@ void TimelineTabWidget::retranslate()
     setWindowTitle(tr("Motion Timeline"));
 }
 
+void TimelineTabWidget::addBoneKeyFramesFromSelectedIndices()
+{
+    addBoneKeyFramesByModelIndices(UIGetSelectionModel(m_boneTimeline)->selectedIndexes());
+}
+
+void TimelineTabWidget::addFaceKeyFramesFromSelectedIndices()
+{
+    addFaceKeyFramesByModelIndices(UIGetSelectionModel(m_faceTimeline)->selectedIndexes());
+}
+
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 {
     UIGetBoneModel(m_boneTimeline)->savePose(pose, model, m_boneTimeline->frameIndex());
 }
-
 
 void TimelineTabWidget::addBoneFrameAtCurrentIndex(vpvl::Bone *bone)
 {
