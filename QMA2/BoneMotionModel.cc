@@ -576,7 +576,8 @@ void BoneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
     if (index.isValid()) {
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         vpvl::Bone *bone = item->bone();
-        m_motion->mutableBoneAnimation()->deleteKeyFrame(index.column(), bone->name());
+        if (bone)
+            m_motion->mutableBoneAnimation()->deleteKeyFrame(index.column(), bone->name());
         setData(index, kInvalidData, Qt::EditRole);
     }
 }

@@ -456,10 +456,13 @@ void FaceMotionModel::removeModel()
 
 void FaceMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
 {
-    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-    vpvl::Face *face = item->face();
-    m_motion->mutableFaceAnimation()->deleteKeyFrame(index.column(), face->name());
-    setData(index, kInvalidData, Qt::EditRole);
+    if (index.isValid()) {
+        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+        vpvl::Face *face = item->face();
+        if (face)
+            m_motion->mutableFaceAnimation()->deleteKeyFrame(index.column(), face->name());
+        setData(index, kInvalidData, Qt::EditRole);
+    }
 }
 
 void FaceMotionModel::selectFaces(const QList<vpvl::Face *> &faces)
