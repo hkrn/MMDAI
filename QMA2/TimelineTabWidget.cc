@@ -80,14 +80,14 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
 {
     BoneMotionModel *model = UIGetBoneModel(timeline);
     QModelIndexList indices = timeline->treeView()->selectionModel()->selectedIndexes();
-    QTextCodec *codec = internal::getTextCodec();
     BoneMotionModel::KeyFramePairList boneFrames;
     foreach (QModelIndex index, indices) {
         vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
-        QString name = model->data(index, BoneMotionModel::kNameRole).toString();
-        frame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
+        QByteArray name = model->nameFromModelIndex(index);
+        int frameIndex = MotionBaseModel::toFrameIndex(index);
+        frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
         frame->setDefaultInterpolationParameter();
-        boneFrames.append(BoneMotionModel::KeyFramePair(index.column(), BoneMotionModel::KeyFramePtr(frame)));
+        boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame)));
     }
     model->setFrames(boneFrames);
 }
@@ -96,14 +96,14 @@ static void UIModelInsertFaceFrame(TimelineWidget *timeline)
 {
     FaceMotionModel *model = UIGetFaceModel(timeline);
     QModelIndexList indices = timeline->treeView()->selectionModel()->selectedIndexes();
-    QTextCodec *codec = internal::getTextCodec();
     FaceMotionModel::KeyFramePairList faceFrames;
     foreach (QModelIndex index, indices) {
         vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
-        QString name = model->data(index, BoneMotionModel::kNameRole).toString();
-        frame->setName(reinterpret_cast<const uint8_t *>(codec->fromUnicode(name).constData()));
+        QByteArray name = model->nameFromModelIndex(index);
+        int frameIndex = MotionBaseModel::toFrameIndex(index);
+        frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
         frame->setWeight(0);
-        faceFrames.append(FaceMotionModel::KeyFramePair(index.column(), FaceMotionModel::KeyFramePtr(frame)));
+        faceFrames.append(FaceMotionModel::KeyFramePair(frameIndex, FaceMotionModel::KeyFramePtr(frame)));
     }
     model->setFrames(faceFrames);
 }

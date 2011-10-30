@@ -71,9 +71,8 @@ public:
                                QWidget *parent = 0);
     ~TimelineTabWidget();
 
-    void addKeyFramesFromSelectedIndices();
-
 public slots:
+    void addKeyFramesFromSelectedIndices();
     void loadPose(VPDFile *pose, vpvl::PMDModel *model);
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
 
