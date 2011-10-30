@@ -57,7 +57,7 @@ void TestVMDMotion::parseMotion()
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
         QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countKeyFrames()));
-        QCOMPARE(result.cameraKeyFrameCount, motion.cameraAnimation().countKeyFrames());
+        QCOMPARE(result.cameraKeyFrameCount, size_t(motion.cameraAnimation().countKeyFrames()));
         QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().countKeyFrames()));
         QCOMPARE(motion.error(), vpvl::VMDMotion::kNoError);
     }

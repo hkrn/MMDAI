@@ -85,7 +85,7 @@ void TestInternal::size32()
     QByteArray bytes;
     QBuffer buffer(&bytes);
     QDataStream stream(&buffer);
-    quint32 expected = 4294967295;
+    quint32 expected = INT_MAX;
     buffer.open(QBuffer::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << expected;
@@ -142,14 +142,14 @@ void TestInternal::clearAll()
     array.add(new int(1));
     array.add(new int(2));
     array.add(new int(3));
-    array.clear();
-    QCOMPARE(array.count(), uint32_t(0));
+    array.releaseAll();
+    QCOMPARE(array.count(), 0);
     vpvl::Hash<vpvl::HashString, int*> hash;
     hash.insert(vpvl::HashString("foo"), new int(1));
     hash.insert(vpvl::HashString("bar"), new int(2));
     hash.insert(vpvl::HashString("baz"), new int(3));
-    hash.clear();
-    QCOMPARE(hash.count(), uint32_t(0));
+    hash.releaseAll();
+    QCOMPARE(hash.count(), 0);
 }
 
 void TestInternal::version()

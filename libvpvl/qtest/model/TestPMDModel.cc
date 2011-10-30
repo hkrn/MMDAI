@@ -217,7 +217,7 @@ void TestPMDModel::parseMaterial()
     QVERIFY(material.specular() == btVector4(0.5f, 0.6f, 0.7f, 1.0f));
     QCOMPARE(material.opacity(), 0.3f);
     QCOMPARE(material.shiness(), 0.4f);
-    QCOMPARE(material.countIndices(), quint32(2));
+    QCOMPARE(material.countIndices(), 2);
     QCOMPARE(material.toonID(), quint8(0));
     QVERIFY(material.isEdgeEnabled());
     QVERIFY(material.isMainSphereModulate());
