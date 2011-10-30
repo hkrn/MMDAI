@@ -1120,14 +1120,13 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 
 void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 {
-
+    if (model->edgeOffset() == 0.0f)
+        return;
     const size_t stride = model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
-
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
-
     m_edgeProgram->bind();
     size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeVertices]);
