@@ -112,10 +112,8 @@ void CameraAnimation::seek(float frameAt)
 {
     const int nframes = m_frames.count();
     CameraKeyFrame *lastKeyFrame = static_cast<CameraKeyFrame *>(m_frames[nframes - 1]);
-    float currentFrame = frameAt;
-    if (currentFrame > lastKeyFrame->frameIndex())
-        currentFrame = lastKeyFrame->frameIndex();
-
+    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
     if (currentFrame >= m_frames[m_lastIndex]->frameIndex()) {
         for (int i = m_lastIndex; i < nframes; i++) {

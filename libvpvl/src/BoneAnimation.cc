@@ -169,6 +169,7 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
     const int nframes = m_frames.count();
     const uint8_t *centerBoneName = Bone::centerBoneName();
     const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
+    // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
         BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
@@ -194,7 +195,7 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
             }
         }
     }
-
+    // Sort frames from each internal nodes by frame index ascend
     const int nnodes = m_name2node.count();
     for (int i = 0; i < nnodes; i++) {
         BoneAnimationInternal *node = *m_name2node.value(i);
@@ -209,10 +210,8 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
     BoneKeyFrameList &kframes = node->keyFrames;
     const int nframes = kframes.count();
     BoneKeyFrame *lastKeyFrame = kframes[nframes - 1];
-    float currentFrame = frameAt;
-    if (currentFrame > lastKeyFrame->frameIndex())
-        currentFrame = lastKeyFrame->frameIndex();
-
+    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0, lastIndex = node->lastIndex;
     if (currentFrame >= kframes[lastIndex]->frameIndex()) {
         for (int i = lastIndex; i < nframes; i++) {

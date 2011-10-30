@@ -131,6 +131,7 @@ void FaceAnimation::refresh()
 void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
 {
     const int nframes = m_frames.count();
+    // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
         FaceKeyFrame *frame = static_cast<FaceKeyFrame *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
@@ -152,7 +153,7 @@ void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
             }
         }
     }
-
+    // Sort frames from each internal nodes by frame index ascend
     const int nnodes = m_name2node.count();
     for (int i = 0; i < nnodes; i++) {
         FaceAnimationInternal *node = *m_name2node.value(i);
@@ -177,13 +178,11 @@ void FaceAnimation::calculateFrames(float frameAt, FaceAnimationInternal *node)
     FaceKeyFrameList &kframes = node->keyFrames;
     const int nframes = kframes.count();
     FaceKeyFrame *lastKeyFrame = kframes.at(nframes - 1);
-    float currentFrame = frameAt;
-    if (currentFrame > lastKeyFrame->frameIndex())
-        currentFrame = lastKeyFrame->frameIndex();
-
-    int k1 = 0, k2 = 0;
-    if (currentFrame >= kframes.at(node->lastIndex)->frameIndex()) {
-        for (int i = node->lastIndex; i < nframes; i++) {
+    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    // Find the next frame index bigger than the frame index of last key frame
+    int k1 = 0, k2 = 0, lastIndex = node->lastIndex;
+    if (currentFrame >= kframes.at(lastIndex)->frameIndex()) {
+        for (int i = lastIndex; i < nframes; i++) {
             if (currentFrame <= kframes.at(i)->frameIndex()) {
                 k2 = i;
                 break;
@@ -191,7 +190,7 @@ void FaceAnimation::calculateFrames(float frameAt, FaceAnimationInternal *node)
         }
     }
     else {
-        for (int i = 0; i <= node->lastIndex && i < nframes; i++) {
+        for (int i = 0; i <= lastIndex && i < nframes; i++) {
             if (currentFrame <= m_frames.at(i)->frameIndex()) {
                 k2 = i;
                 break;
