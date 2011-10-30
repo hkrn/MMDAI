@@ -68,6 +68,9 @@ unix {
   RCC_DIR = $${OUT_PWD}/.rcc
   UI_DIR = $${OUT_PWD}/.uic
 }
+win32 {
+  RC_FILE = resources/icons/app.rc
+}
 macx {
   ICON = resources/icons/app.icns
   QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
