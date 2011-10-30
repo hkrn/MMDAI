@@ -79,7 +79,6 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event);
-    void keyPressEvent(QKeyEvent *event);
 
 private slots:
     void newFile();
@@ -186,6 +185,7 @@ private:
     QAction *m_actionBoneRotationZero;
     QAction *m_actionBoneResetAll;
     QAction *m_actionBoneDialog;
+    QAction *m_actionRegisterFrame;
     QAction *m_actionInsertEmptyFrame;
     QAction *m_actionDeleteSelectedFrame;
     QAction *m_actionCopy;

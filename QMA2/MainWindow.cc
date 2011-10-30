@@ -254,13 +254,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    int key = event->key();
-    if (key == Qt::Key_Enter || key == Qt::Key_Return)
-        m_timelineTabWidget->addKeyFramesFromSelectedIndices();
-}
-
 void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
@@ -493,6 +486,8 @@ void MainWindow::buildUI()
     m_actionBoneDialog = new QAction(this);
     connect(m_actionBoneDialog, SIGNAL(triggered()), this, SLOT(openBoneDialog()));
 
+    m_actionRegisterFrame = new QAction(this);
+    connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
     m_actionCopy = new QAction(this);
     connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
     m_actionPaste = new QAction(this);
@@ -585,6 +580,7 @@ void MainWindow::buildUI()
     m_menuModel->addAction(m_actionTranslateModelDown);
     m_menuModel->addAction(m_actionTranslateModelLeft);
     m_menuModel->addAction(m_actionTranslateModelRight);
+    m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionResetModelPosition);
     m_menuBar->addMenu(m_menuModel);
     m_menuBone = new QMenu(this);
@@ -596,6 +592,7 @@ void MainWindow::buildUI()
     m_menuBone->addAction(m_actionBoneDialog);
     m_menuBar->addMenu(m_menuBone);
     m_menuFrame = new QMenu(this);
+    m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
     m_menuFrame->addSeparator();
@@ -761,10 +758,15 @@ void MainWindow::retranslate()
     m_actionBoneResetAll->setStatusTip(tr("Reset all bone's position and rotation to the selected model."));
     m_actionBoneDialog->setText(tr("Open bone dialog"));
     m_actionBoneDialog->setStatusTip(tr("Open bone dialog to change position or rotation of the bone manually."));
+    m_actionRegisterFrame->setText(tr("Register keyframe"));
+    m_actionRegisterFrame->setStatusTip(tr("Register keyframes by selected indices from the timeline."));
+    m_actionRegisterFrame->setShortcut(tr("Ctrl+E"));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
+    m_actionInsertEmptyFrame->setShortcut(tr("Ctrl+I"));
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
     m_actionDeleteSelectedFrame->setStatusTip(tr("Delete a selected keyframe."));
+    m_actionDeleteSelectedFrame->setShortcut(tr("Ctrl+K"));
     m_actionCopy->setText(tr("Copy"));
     m_actionCopy->setStatusTip(tr("Copy a selected keyframe."));
     m_actionCopy->setShortcut(QKeySequence::Copy);
