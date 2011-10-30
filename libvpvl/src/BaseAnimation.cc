@@ -76,7 +76,8 @@ BaseAnimation::~BaseAnimation()
 
 void BaseAnimation::advance(float deltaFrame)
 {
-    seek(m_currentFrame + deltaFrame);
+    seek(m_currentFrame);
+    m_currentFrame += deltaFrame;
 }
 
 void BaseAnimation::rewind(float target, float deltaFrame)

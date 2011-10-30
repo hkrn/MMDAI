@@ -200,6 +200,8 @@ void CameraAnimation::seek(float frameAt)
         m_angle = angleFrom;
         m_fovy = fovyFrom;
     }
+    m_previousFrame = m_currentFrame;
+    m_currentFrame = frameAt;
 }
 
 void CameraAnimation::takeSnap(const Vector3 & /* center */)
