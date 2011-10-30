@@ -834,6 +834,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_sceneWidget, SIGNAL(globalTransformDidSelect()), m_boneMotionModel, SLOT(setGlobalTransformMode()));
     connect(m_sceneWidget, SIGNAL(localTransformDidSelect()), m_boneMotionModel, SLOT(setLocalTransformMode()));
+    connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceFrameAtCurrentIndex(vpvl::Face*)));
 }
 
 void MainWindow::insertMotionToAllModels()

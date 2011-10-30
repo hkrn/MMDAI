@@ -182,24 +182,28 @@ void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 
 void TimelineTabWidget::addBoneFrameAtCurrentIndex(vpvl::Bone *bone)
 {
-    BoneMotionModel::KeyFramePairList boneFrames;
-    vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
-    frame->setDefaultInterpolationParameter();
-    frame->setName(bone->name());
-    frame->setPosition(bone->position());
-    frame->setRotation(bone->rotation());
-    boneFrames.append(BoneMotionModel::KeyFramePair(m_boneTimeline->frameIndex(), BoneMotionModel::KeyFramePtr(frame)));
-    UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
+    if (bone) {
+        BoneMotionModel::KeyFramePairList boneFrames;
+        vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+        frame->setDefaultInterpolationParameter();
+        frame->setName(bone->name());
+        frame->setPosition(bone->position());
+        frame->setRotation(bone->rotation());
+        boneFrames.append(BoneMotionModel::KeyFramePair(m_boneTimeline->frameIndex(), BoneMotionModel::KeyFramePtr(frame)));
+        UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
+    }
 }
 
 void TimelineTabWidget::addFaceFrameAtCurrentIndex(vpvl::Face *face)
 {
-    FaceMotionModel::KeyFramePairList faceFrames;
-    vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
-    frame->setName(face->name());
-    frame->setWeight(face->weight());
-    faceFrames.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(frame)));
-    UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
+    if (face) {
+        FaceMotionModel::KeyFramePairList faceFrames;
+        vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+        frame->setName(face->name());
+        frame->setWeight(face->weight());
+        faceFrames.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(frame)));
+        UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
+    }
 }
 
 void TimelineTabWidget::setCurrentFrameIndexZero()
