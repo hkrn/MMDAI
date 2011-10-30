@@ -148,10 +148,10 @@ public:
             FaceMotionModel::KeyFramePtr ptr = pair.second;
             vpvl::FaceKeyFrame *frame = ptr.data();
             if (frame) {
-                key = internal::toQString(frame->name());
+                key = internal::toQString(frame);
             }
             else if (selected) {
-                key = internal::toQString(selected->name());
+                key = internal::toQString(selected);
             }
             else {
                 qWarning("No bone is selected or null");

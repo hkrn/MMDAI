@@ -221,10 +221,10 @@ public:
             BoneMotionModel::KeyFramePtr data = pair.second;
             vpvl::BoneKeyFrame *frame = data.data();
             if (frame) {
-                key = internal::toQString(frame->name());
+                key = internal::toQString(frame);
             }
             else if (selected) {
-                key = internal::toQString(selected->name());
+                key = internal::toQString(selected);
             }
             else {
                 qWarning("No bone is selected or null");
@@ -377,7 +377,6 @@ void BoneMotionModel::pasteFrame(int frameIndex)
 
 void BoneMotionModel::pasteReversedFrame(int frameIndex)
 {
-    QTextCodec *codec = internal::getTextCodec();
     const QString &right = "右";
     const QString &left = "左";
     if (m_model && m_motion && m_frames.count() != 0) {
@@ -385,7 +384,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
         const int nframes = m_frames.count();
         for (int i = 0; i < nframes; i++) {
             vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
-            const QString name(codec->toUnicode(reinterpret_cast<const char *>(frame->name())));
+            const QString name = internal::toQString(frame);
             if (name.startsWith(right) || name.startsWith(left)) {
                 vpvl::Quaternion rotation = frame->rotation();
                 //rotation.setValue(rotation.x(), -rotation.y(), -rotation.z());

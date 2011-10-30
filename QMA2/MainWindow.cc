@@ -368,7 +368,7 @@ void MainWindow::deleteModel(vpvl::PMDModel *model)
 
 void MainWindow::addAsset(vpvl::Asset *asset)
 {
-    QString name(asset->name());
+    QString name = internal::toQString(asset);
     QAction *action = new QAction(name, this);
     action->setStatusTip(tr("Select an asset %1").arg(name));
     //connect(action, SIGNAL(triggered()), this, SLOT(selectCurrentModel()));
@@ -378,7 +378,7 @@ void MainWindow::addAsset(vpvl::Asset *asset)
 void MainWindow::deleteAsset(vpvl::Asset *asset)
 {
     QAction *actionToRemove = 0;
-    QString name(asset->name());
+    QString name = internal::toQString(asset);
     foreach (QAction *action, m_menuRetainAssets->actions()) {
         if (action->text() == name) {
             actionToRemove = action;
