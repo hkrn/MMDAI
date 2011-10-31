@@ -64,7 +64,7 @@ public:
           m_message(0)
     {
     }
-    ~ShaderProgram() {
+    virtual ~ShaderProgram() {
         if (m_program) {
             glDeleteProgram(m_program);
             m_program = 0;
@@ -77,7 +77,7 @@ public:
         m_normalAttributeLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
         GLuint vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
         GLuint fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
         if (vertexShader && fragmentShader) {
@@ -113,10 +113,10 @@ public:
             return false;
         }
     }
-    void bind() {
+    virtual void bind() {
         glUseProgram(m_program);
     }
-    void unbind() {
+    virtual void unbind() {
         glUseProgram(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -180,7 +180,7 @@ public:
         m_colorUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
         bool ret = ShaderProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret)
             m_colorUniformLocation = glGetUniformLocation(m_program, "color");
@@ -197,6 +197,16 @@ private:
 class ShadowProgram : public ShaderProgram {
 public:
     ShadowProgram(IDelegate *delegate)
+        : ShaderProgram(delegate)
+    {
+    }
+    ~ShadowProgram() {
+    }
+};
+
+class ObjectProgram : public ShaderProgram {
+public:
+    ObjectProgram(IDelegate *delegate)
         : ShaderProgram(delegate),
           m_lightColorUniformLocation(0),
           m_lightPositionUniformLocation(0),
@@ -205,7 +215,7 @@ public:
           m_lightSpecularUniformLocation(0)
     {
     }
-    ~ShadowProgram() {
+    ~ObjectProgram() {
         m_lightColorUniformLocation = 0;
         m_lightPositionUniformLocation = 0;
         m_lightAmbientUniformLocation = 0;
@@ -213,7 +223,7 @@ public:
         m_lightSpecularUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
         bool ret = ShaderProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret) {
             m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
@@ -248,10 +258,10 @@ private:
     GLuint m_lightSpecularUniformLocation;
 };
 
-class ModelProgram : public ShadowProgram {
+class ModelProgram : public ObjectProgram {
 public:
     ModelProgram(IDelegate *delegate)
-        : ShadowProgram(delegate),
+        : ObjectProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
           m_normalMatrixUniformLocation(0),
@@ -291,8 +301,8 @@ public:
         m_toonTextureUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = ShadowProgram::load(vertexShaderSource, fragmentShaderSource);
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
@@ -314,11 +324,11 @@ public:
         }
         return ret;
     }
-    void bind() {
-        ShadowProgram::bind();
+    virtual void bind() {
+        ObjectProgram::bind();
         resetTextureState();
     }
-    void resetTextureState() {
+    virtual void resetTextureState() {
         glUniform1i(m_hasMainTextureUniformLocation, 0);
         glUniform1i(m_hasSubTextureUniformLocation, 0);
         glUniform1i(m_isMainSphereMapUniformLocation, 0);
@@ -406,10 +416,59 @@ private:
     GLuint m_toonTextureUniformLocation;
 };
 
-class AssetProgram : public ShadowProgram {
+class ExtendedModelProgram : public ModelProgram {
+public:
+    ExtendedModelProgram(IDelegate *delegate)
+        : ModelProgram(delegate),
+          m_biasMatrixUniformLocation(0),
+          m_shadowTextureUniformLocation(0)
+    {
+    }
+    ~ExtendedModelProgram() {
+        m_biasMatrixUniformLocation = 0;
+        m_shadowTextureUniformLocation = 0;
+    }
+
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+        bool ret = ModelProgram::load(vertexShaderSource, fragmentShaderSource);
+        if (ret) {
+            m_biasMatrixUniformLocation = glGetUniformLocation(m_program, "biasMatrix");
+            m_shadowTextureUniformLocation = glGetUniformLocation(m_program, "shadowTexture");
+        }
+    }
+    virtual void bind() {
+        static const float matrix[] = {
+            0.5f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.5f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.5f, 0.0f,
+            0.5f, 0.5f, 0.5f, 1.0f
+        };
+        ModelProgram::bind();
+        resetTextureState();
+        glUniformMatrix4fv(m_biasMatrixUniformLocation, 1, GL_FALSE, matrix);
+    }
+    virtual void resetTextureState() {
+        ModelProgram::resetTextureState();
+        glUniform1i(m_shadowTextureUniformLocation, 0);
+    }
+
+    void setShadowTexture(GLuint value) {
+        if (value) {
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, value);
+            glUniform1i(m_shadowTextureUniformLocation, 3);
+        }
+    }
+
+private:
+    GLuint m_biasMatrixUniformLocation;
+    GLuint m_shadowTextureUniformLocation;
+};
+
+class AssetProgram : public ObjectProgram {
 public:
     AssetProgram(IDelegate *delegate)
-        : ShadowProgram(delegate),
+        : ObjectProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_colorAttributeLocation(0),
           m_normalMatrixUniformLocation(0),
@@ -440,8 +499,8 @@ public:
         m_opacityUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = ShadowProgram::load(vertexShaderSource, fragmentShaderSource);
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
@@ -459,13 +518,14 @@ public:
         }
         return ret;
     }
-    void bind() {
-        ShadowProgram::bind();
+    virtual void bind() {
+        ObjectProgram::bind();
         resetTextureState();
     }
-    void resetTextureState() {
+    virtual void resetTextureState() {
         glUniform1i(m_hasTextureUniformLocation, 0);
     }
+
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_texCoordAttributeLocation);
         glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -843,16 +903,17 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_modelProgram(0),
       m_shadowProgram(0),
       m_scene(0),
-      m_selected(0)
+      m_selected(0),
+      m_depthTextureID(0),
+      m_frameBufferID(0)
 {
-    m_edgeProgram = new EdgeProgram(delegate);
-    m_modelProgram = new ModelProgram(delegate);
-    m_shadowProgram = new ShadowProgram(delegate);
     m_scene = new vpvl::Scene(width, height, fps);
 }
 
 Renderer::~Renderer()
 {
+    glDeleteFramebuffers(1, &m_frameBufferID);
+    glDeleteTextures(1, &m_depthTextureID);
     vpvl::Array<vpvl::PMDModel *> models;
     models.copy(m_scene->models());
     const int nmodels = models.count();
@@ -896,17 +957,81 @@ bool Renderer::createPrograms()
     std::string fragmentShader;
     vertexShader = m_delegate->loadShader(IDelegate::kEdgeVertexShader);
     fragmentShader = m_delegate->loadShader(IDelegate::kEdgeFragmentShader);
-    ret = m_edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-    if (!ret)
+    EdgeProgram *edgeProgram = new EdgeProgram(m_delegate);
+    ret = edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+    if (!ret) {
+        delete edgeProgram;
         return ret;
-    vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
-    fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
-    ret = m_modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-    if (!ret)
-        return ret;
-    vertexShader = m_delegate->loadShader(IDelegate::kShadowVertexShader);
-    fragmentShader = m_delegate->loadShader(IDelegate::kShadowFragmentShader);
-    ret = m_shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+    }
+    if (m_depthTextureID && m_frameBufferID) {
+        ExtendedModelProgram *modelProgram = new ExtendedModelProgram(m_delegate);
+        vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
+        fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
+        ret = modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+        if (!ret) {
+            delete edgeProgram;
+            delete modelProgram;
+            return ret;
+        }
+        ShadowProgram *shadowProgram = new ShadowProgram(m_delegate);
+        vertexShader = m_delegate->loadShader(IDelegate::kShadowVertexShader);
+        fragmentShader = m_delegate->loadShader(IDelegate::kShadowFragmentShader);
+        ret = shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+        if (!ret) {
+            delete edgeProgram;
+            delete modelProgram;
+            delete shadowProgram;
+            return ret;
+        }
+        m_modelProgram = modelProgram;
+        m_shadowProgram = shadowProgram;
+    }
+    else {
+        ModelProgram *modelProgram = new ModelProgram(m_delegate);
+        vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
+        fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
+        ret = modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+        if (!ret) {
+            delete edgeProgram;
+            delete modelProgram;
+            return ret;
+        }
+        m_modelProgram = modelProgram;
+    }
+    m_edgeProgram = edgeProgram;
+    return ret;
+}
+
+bool Renderer::createShadowFrameBuffers()
+{
+    bool ret = true;
+    int width = 1024;
+    int height = width;
+    glGenTextures(1, &m_depthTextureID);
+    glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glGenFramebuffers(1, &m_frameBufferID);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureID, 0);
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status == GL_FRAMEBUFFER_COMPLETE) {
+        m_delegate->log(IDelegate::kLogInfo,
+                        "Created a framebuffer (textureID = %d, frameBufferID = %d)",
+                        m_depthTextureID,
+                        m_frameBufferID);
+    }
+    else {
+        m_delegate->log(IDelegate::kLogWarning, "Failed creating a framebuffer: %d", status);
+        ret = false;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return ret;
 }
 
@@ -1035,6 +1160,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 {
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
+
     m_modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     m_modelProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)), stride);
@@ -1055,6 +1181,10 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setLightPosition(m_scene->lightPosition4());
     m_modelProgram->setLightSpecular(m_scene->lightSpecular());
     m_modelProgram->setLightIntensity(m_scene->lightIntensity());
+    if (m_depthTextureID && m_frameBufferID) {
+        ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
+        modelProgram->setShadowTexture(m_depthTextureID);
+    }
 
     const bool enableToon = model->isToonEnabled();
     // toon
@@ -1144,32 +1274,22 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
 
 void Renderer::drawModelShadow(const vpvl::PMDModel *model)
 {
-    return;
-
     const size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride);
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
-
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
-
-    glDisable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
     size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, len, model->verticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     m_shadowProgram->bind();
-    m_shadowProgram->setLightAmbient(m_scene->lightAmbient());
-    m_shadowProgram->setLightColor(m_scene->lightColor());
-    m_shadowProgram->setLightDiffuse(m_scene->lightDiffuse());
-    m_shadowProgram->setLightPosition(m_scene->lightPosition4());
-    m_shadowProgram->setLightSpecular(m_scene->lightSpecular());
     m_shadowProgram->setModelViewMatrix(modelViewMatrix);
     m_shadowProgram->setProjectionMatrix(projectionMatrix);
     m_shadowProgram->setPosition(0, stride);
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     m_shadowProgram->unbind();
-    glEnable(GL_CULL_FACE);
 }
 
 void Renderer::loadAsset(Asset *asset, const std::string &dir)
@@ -1240,42 +1360,41 @@ void Renderer::unloadAsset(Asset *&asset)
 #endif
 }
 
+
 void Renderer::clearSurface()
 {
     glViewport(0, 0, m_scene->width(), m_scene->height());
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-}
-
-void Renderer::preShadow()
-{
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, 1, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-    glColorMask(0, 0, 0, 0);
-    glDepthMask(0);
-    glDisable(GL_DEPTH_TEST);
 }
 
 void Renderer::drawShadow()
 {
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
-    for (size_t i = 0; i < size; i++) {
-        vpvl::PMDModel *model = models[i];
-        if (model->isVisible()) {
-            updateModelBuffer(model);
-            drawModelShadow(model);
+    if (m_depthTextureID && m_frameBufferID) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
+        glViewport(0, 0, 1024, 1024);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glCullFace(GL_FRONT);
+        for (size_t i = 0; i < size; i++) {
+            vpvl::PMDModel *model = models[i];
+            if (model->isVisible()) {
+                updateModelBuffer(model);
+                drawModelShadow(model);
+            }
+        }
+        glCullFace(GL_BACK);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    else {
+        for (size_t i = 0; i < size; i++) {
+            vpvl::PMDModel *model = models[i];
+            if (model->isVisible())
+                updateModelBuffer(model);
         }
     }
-}
-
-void Renderer::postShadow()
-{
-    glColorMask(1, 1, 1, 1);
-    glDepthMask(1);
-    glStencilFunc(GL_EQUAL, 2, ~0);
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void Renderer::drawAssets()
@@ -1301,12 +1420,10 @@ void Renderer::drawModels()
 
 void Renderer::drawSurface()
 {
-    clearSurface();
-    preShadow();
     drawShadow();
-    postShadow();
-    drawAssets();
+    clearSurface();
     drawModels();
+    drawAssets();
 }
 
 }

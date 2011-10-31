@@ -76,6 +76,7 @@ namespace gl2
 struct PMDModelUserData;
 class EdgeProgram;
 class ModelProgram;
+class ObjectProgram;
 class ShadowProgram;
 
 class VPVL_API IDelegate
@@ -130,9 +131,16 @@ public:
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
     }
+    GLuint shadowTexture() const {
+        return m_depthTextureID;
+    }
+    GLuint shadowFrameBuffer() const {
+        return m_frameBufferID;
+    }
 
     void initializeSurface();
     bool createPrograms();
+    bool createShadowFrameBuffers();
     void resize(int width, int height);
     void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
     void setDebugDrawer(btDynamicsWorld *world);
@@ -149,9 +157,7 @@ public:
     void unloadAsset(Asset *&asset);
 
     void clearSurface();
-    void preShadow();
     void drawShadow();
-    void postShadow();
     void drawAssets();
     void drawModels();
     void drawSurface();
@@ -169,6 +175,8 @@ private:
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
     vpvl::PMDModel *m_selected;
+    GLuint m_depthTextureID;
+    GLuint m_frameBufferID;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

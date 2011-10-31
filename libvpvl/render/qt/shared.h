@@ -339,6 +339,7 @@ protected:
             qFatal("Unable to init GLEW: %s", glewGetErrorString(err));
 
 #ifdef VPVL_GL2_RENDERER_H_
+        m_renderer->createShadowFrameBuffers();
         m_renderer->createPrograms();
 #endif
         if (!loadScene())

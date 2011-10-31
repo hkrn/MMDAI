@@ -2,6 +2,7 @@
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
+uniform mat4 biasMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 lightColor;
 uniform vec4 lightPosition;
@@ -20,6 +21,7 @@ attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonTexCoord;
 varying vec4 outColor;
+varying vec4 outShadowTexCoord;
 varying vec2 outMainTexCoord;
 varying vec2 outSubTexCoord;
 varying vec2 outToonTexCoord;
@@ -46,10 +48,12 @@ void main() {
         float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
         color += (lightColor * lightIntensity) * materialSpecular * specular;
     }
+    vec4 outPosition = projectionMatrix * position;
     outColor = color;
+    outShadowTexCoord = biasMatrix * outPosition;
     outMainTexCoord = isMainSphereMap ? makeSphereMap(position, normal) : inTexCoord;
     outSubTexCoord = isSubSphereMap ? makeSphereMap(position, normal) : inTexCoord;
     outToonTexCoord = inToonTexCoord;
-    gl_Position = projectionMatrix * position;
+    gl_Position = outPosition;
 }
 
