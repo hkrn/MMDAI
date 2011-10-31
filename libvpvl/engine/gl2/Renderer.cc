@@ -886,17 +886,6 @@ namespace vpvl
 namespace gl2
 {
 
-bool Renderer::initializeGLEW(GLenum &err)
-{
-#if !defined(VPVL_USE_ALLEGRO5) && !defined(VPVL_BUILD_IOS)
-    err = glewInit();
-    return err == GLEW_OK;
-#else
-    (void) err;
-    return true;
-#endif
-}
-
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : m_delegate(delegate),
       m_edgeProgram(0),

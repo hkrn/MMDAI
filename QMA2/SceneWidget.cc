@@ -52,13 +52,17 @@
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
 
+#ifdef Q_OS_WIN32
+#include <GL/glew.h>
+#endif /* Q_OS_WIN32 */
+
 #ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
 #else
 #include <vpvl/gl/Renderer.h>
 using namespace vpvl::gl;
-#endif
+#endif /* VPVL_USE_GLSL */
 using namespace internal;
 
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
@@ -739,11 +743,13 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
+#ifdef Q_OS_WIN32
     GLenum err;
     if (!Renderer::initializeGLEW(err))
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
+#endif
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));

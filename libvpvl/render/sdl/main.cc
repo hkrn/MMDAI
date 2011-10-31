@@ -352,12 +352,6 @@ public:
         if (!initializeSurface(internal::kWidth, internal::kHeight))
             return false;
 
-        GLenum err;
-        if (!Renderer::initializeGLEW(err)) {
-            m_delegate.log(IDelegate::kLogWarning, "Unable to init GLEW: %s", glewGetErrorString(err));
-            return false;
-        }
-
 #ifdef VPVL_GL2_RENDERER_H_
         m_renderer->createPrograms();
 #endif

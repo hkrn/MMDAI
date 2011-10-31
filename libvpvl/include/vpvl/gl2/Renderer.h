@@ -42,22 +42,17 @@
 #include <string>
 #include "vpvl/Common.h"
 
-#ifdef VPVL_USE_ALLEGRO5
-#include <allegro5/allegro5.h>
-#include <allegro5/allegro_opengl.h>
-#ifdef __APPLE__
-#include <OpenGL/glu.h>
-#else
-#include <GL/glu.h>
-#endif /* __APPLE__ */
-#else
 #ifdef VPVL_BUILD_IOS
 #include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
 #else
-#include <GL/glew.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif /* __APPLE__ */
 #endif /* VPVL_BUILD_IOS */
-#endif /* VPVL_USE_ALLEGRO5 */
 
 class btDynamicsWorld;
 class btIDebugDraw;
@@ -117,8 +112,6 @@ public:
 class VPVL_API Renderer
 {
 public:
-    static bool initializeGLEW(GLenum &err);
-
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
