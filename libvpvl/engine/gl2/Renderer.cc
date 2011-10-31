@@ -37,7 +37,6 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
 #include <vpvl/internal/gl2.h>
 
 #include <btBulletDynamicsCommon.h>
@@ -435,6 +434,7 @@ public:
             m_biasMatrixUniformLocation = glGetUniformLocation(m_program, "biasMatrix");
             m_shadowTextureUniformLocation = glGetUniformLocation(m_program, "shadowTexture");
         }
+        return ret;
     }
     virtual void bind() {
         static const float matrix[] = {

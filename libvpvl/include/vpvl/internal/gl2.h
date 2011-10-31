@@ -37,6 +37,10 @@
 #ifndef VPVL_INTERNAL_GL2_H_
 #define VPVL_INTERNAL_GL2_H_
 
+#ifdef WIN32
+#include <GL/glew.h>
+#endif
+
 #include <vpvl/vpvl.h>
 #include <vpvl/gl2/Renderer.h>
 

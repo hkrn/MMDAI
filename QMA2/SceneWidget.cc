@@ -36,11 +36,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "SceneWidget.h"
-
-#ifdef Q_OS_WIN32
+#include <qglobal.h>
+#ifdef Q_OS_WIN
 #include <GL/glew.h>
-#endif /* Q_OS_WIN32 */
+#endif /* Q_OS_WIN */
+
+#include "SceneWidget.h"
 
 #include "Application.h"
 #include "DebugDrawer.h"
@@ -744,8 +745,8 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
 #ifdef Q_OS_WIN32
-    GLenum err;
-    if (!Renderer::initializeGLEW(err))
+    GLenum err = glewInit();
+    if (err != GLEW_OK)
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     else
         qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));

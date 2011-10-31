@@ -34,6 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <qglobal.h>
+#ifdef Q_OS_WIN
+#include <GL/glew.h>
+#endif /* Q_OS_WIN */
+
 #include "SceneLoader.h"
 #include "VPDFile.h"
 #include "util.h"
