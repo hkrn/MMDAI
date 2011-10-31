@@ -37,7 +37,6 @@
 #ifndef INFOPANEL_H
 #define INFOPANEL_H
 
-#include <GL/glew.h>
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
 #include "util.h"

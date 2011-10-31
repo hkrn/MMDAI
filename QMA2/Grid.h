@@ -37,7 +37,6 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include <GL/glew.h>
 #include <vpvl/Scene.h>
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>

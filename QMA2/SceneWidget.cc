@@ -38,6 +38,10 @@
 
 #include "SceneWidget.h"
 
+#ifdef Q_OS_WIN32
+#include <GL/glew.h>
+#endif /* Q_OS_WIN32 */
+
 #include "Application.h"
 #include "DebugDrawer.h"
 #include "Delegate.h"
@@ -51,10 +55,6 @@
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
-
-#ifdef Q_OS_WIN32
-#include <GL/glew.h>
-#endif /* Q_OS_WIN32 */
 
 #ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>

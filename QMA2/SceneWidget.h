@@ -40,7 +40,6 @@
 #define SCENEWIDGET_H
 
 #include <QtCore/QElapsedTimer>
-#include <GL/glew.h>
 #include <QtOpenGL/QGLWidget>
 
 #include <vpvl/Bone.h>

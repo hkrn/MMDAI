@@ -37,7 +37,6 @@
 #ifndef DELEGATE_H
 #define DELEGATE_H
 
-#include <GL/glew.h>
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
 #include "util.h"
