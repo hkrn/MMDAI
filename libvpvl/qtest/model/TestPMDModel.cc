@@ -39,6 +39,34 @@ static vpvl::Bone *CreateBone(int id)
     return bone;
 }
 
+static vpvl::RigidBody *CreateRigidBody(QByteArray &bytes, vpvl::BoneList *bones)
+{
+    bytes.clear();
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream.writeRawData(TestPMDModel::kTestString, vpvl::RigidBody::kNameSize);
+    stream << quint16(0xffff)         // bone
+           << quint8(3)               // collision group ID
+           << quint16(2)              // collision mask
+           << quint8(0)               // shape type
+           << 4.0f                    // width
+           << 5.0f                    // height
+           << 6.0f                    // depth
+           << 7.0f << 8.0f << 9.0f    // position
+           << 10.0f << 11.0f << 12.0f // rotation
+           << 0.1f                    // mass
+           << 0.2f                    // linearDamping
+           << 0.3f                    // angularDamping
+           << 0.4f                    // restitution
+           << 0.5f                    // friction
+           << quint8(1)               // type
+              ;
+    vpvl::RigidBody *body = new vpvl::RigidBody();
+    body->read(reinterpret_cast<const uint8_t *>(bytes.constData()), bones);
+    return body;
+}
+
 static void TestBone(const vpvl::Bone &bone)
 {
     QCOMPARE(QString(reinterpret_cast<const char *>(bone.name())), QString(TestPMDModel::kTestString));
@@ -173,12 +201,12 @@ void TestPMDModel::parseBone()
 
 void TestPMDModel::parseConstraint()
 {
-    QByteArray bytes;
+    QByteArray bytes, bytes2, bytes3;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream.writeRawData(kTestString, vpvl::Constraint::kNameSize);
-    stream << qint32(1) << qint32(2)  // bodyID
+    stream << qint32(0) << qint32(1)  // bodyID
            << 4.0f << 5.0 << 6.0f     // position
            << 7.0f << 8.0f << 9.0f    // rotation
            << 10.0f << 11.0f << 12.0f // limitPositionFrom
@@ -191,11 +219,18 @@ void TestPMDModel::parseConstraint()
     QCOMPARE(size_t(bytes.size()), vpvl::Constraint::stride());
     vpvl::Constraint constaint;
     vpvl::RigidBodyList bodies;
-    bodies.add(new vpvl::RigidBody());
-    bodies.add(new vpvl::RigidBody());
+    vpvl::BoneList bones;
+    bones.add(CreateBone(1));
+    bodies.add(CreateRigidBody(bytes3, &bones));
+    bodies.add(CreateRigidBody(bytes3, &bones));
     btVector3 offset(1.0f, 2.0f, 3.0f);
     constaint.read(reinterpret_cast<const uint8_t *>(bytes.constData()), bodies, offset);
     QCOMPARE(QString(reinterpret_cast<const char *>(constaint.name())), QString(kTestString));
+    bytes2 = bytes;
+    bytes.clear();
+    bytes.resize(vpvl::Constraint::stride());
+    constaint.write(reinterpret_cast<uint8_t *>(bytes.data()));
+    QCOMPARE(bytes2, bytes);
     bodies.releaseAll();
 }
 
@@ -297,41 +332,26 @@ void TestPMDModel::parseMaterial()
 
 void TestPMDModel::parseRigidBody()
 {
-    QByteArray bytes;
-    QDataStream stream(&bytes, QIODevice::WriteOnly);
-    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeRawData(kTestString, vpvl::RigidBody::kNameSize);
-    stream << quint16(0xffff)         // bone
-           << quint8(3)               // collision group ID
-           << quint16(2)              // collision mask
-           << quint8(0)               // shape type
-           << 4.0f                    // width
-           << 5.0f                    // height
-           << 6.0f                    // depth
-           << 7.0f << 8.0f << 9.0f    // position
-           << 10.0f << 11.0f << 12.0f // rotation
-           << 0.1f                    // mass
-           << 0.2f                    // linearDamping
-           << 0.3f                    // angularDamping
-           << 0.4f                    // restitution
-           << 0.5f                    // friction
-           << quint8(1)               // type
-              ;
-    QCOMPARE(size_t(bytes.size()), vpvl::RigidBody::stride());
-    vpvl::RigidBody body;
+    QByteArray bytes, bytes2;
     vpvl::BoneList bones;
     bones.add(CreateBone(1));
-    body.read(reinterpret_cast<const uint8_t *>(bytes.constData()), &bones);
-    QCOMPARE(QString(reinterpret_cast<const char *>(body.name())), QString(kTestString));
-    btRigidBody *b = body.body();
+    vpvl::RigidBody *body = CreateRigidBody(bytes, &bones);
+    QCOMPARE(size_t(bytes.size()), vpvl::RigidBody::stride());
+    body->read(reinterpret_cast<const uint8_t *>(bytes.constData()), &bones);
+    QCOMPARE(QString(reinterpret_cast<const char *>(body->name())), QString(kTestString));
+    btRigidBody *b = body->body();
     QVERIFY(b != 0);
     QCOMPARE(b->getLinearDamping(), 0.2f);
     QCOMPARE(b->getAngularDamping(), 0.3f);
     QCOMPARE(b->getRestitution(), 0.4f);
     QCOMPARE(b->getFriction(), 0.5f);
-    QCOMPARE(body.groupID(), quint16(8));
-    QCOMPARE(body.groupMask(), quint16(2));
+    QCOMPARE(body->groupID(), quint16(8));
+    QCOMPARE(body->groupMask(), quint16(2));
+    bytes2 = bytes;
+    bytes.clear();
+    bytes.resize(vpvl::RigidBody::stride());
+    body->write(reinterpret_cast<uint8_t *>(bytes.data()));
+    QCOMPARE(bytes2, bytes);
     bones.releaseAll();
 }
 
