@@ -398,6 +398,7 @@ protected:
         glClearColor(0, 0, 1, 1);
         m_renderer->initializeSurface();
         m_renderer->drawSurface();
+        m_renderer->shadowTexture();
     }
 
 private:
