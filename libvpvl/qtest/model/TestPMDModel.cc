@@ -26,6 +26,86 @@ private Q_SLOTS:
     void parseVertex();
 };
 
+namespace
+{
+
+static vpvl::Bone *CreateBone(int id)
+{
+    QByteArray bytes;
+    bytes.resize(vpvl::Bone::stride());
+    bytes.fill(0);
+    vpvl::Bone *bone = new vpvl::Bone();
+    bone->read(reinterpret_cast<const uint8_t *>(bytes.constData()), id);
+    return bone;
+}
+
+static void TestBone(const vpvl::Bone &bone)
+{
+    QCOMPARE(QString(reinterpret_cast<const char *>(bone.name())), QString(TestPMDModel::kTestString));
+    QCOMPARE(bone.id(), qint16(7));
+    QCOMPARE(bone.type(), vpvl::Bone::kTwist);
+#ifdef VPVL_COORDINATE_OPENGL
+    QVERIFY(bone.originPosition() == btVector3(4, 5, -6));
+#else
+    QVERIFY(bone.originPosition() == btVector3(4, 5, 6));
+#endif
+}
+
+static void TestFace(vpvl::Face &face)
+{
+    QCOMPARE(QString(reinterpret_cast<const char *>(face.name())), QString(TestPMDModel::kTestString));
+    QCOMPARE(face.type(), vpvl::Face::kBase);
+    vpvl::VertexList vertices;
+    vpvl::Vertex *vertex = new vpvl::Vertex();
+    vertices.add(vertex);
+    face.setVertices(vertices);
+#ifdef VPVL_COORDINATE_OPENGL
+    QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, -3.0f));
+#else
+    QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, 3.0f));
+#endif
+    vertices.releaseAll();
+}
+
+static void TestMaterial(const vpvl::Material &material, const QString &path)
+{
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.rawName())), QString(path));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.mainTextureName())), QString("main.sph"));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.subTextureName())), QString("sub.spa"));
+    QVERIFY(material.ambient() == btVector4(0.8f, 0.9f, 1.0f, 1.0f));
+    QVERIFY(material.averageColor() == btVector4(0.4f, 0.5f, 0.6f, 1.0f));
+    QVERIFY(material.diffuse() == btVector4(0.0f, 0.1f, 0.2f, 1.0f));
+    QVERIFY(material.specular() == btVector4(0.5f, 0.6f, 0.7f, 1.0f));
+    QCOMPARE(material.opacity(), 0.3f);
+    QCOMPARE(material.shiness(), 0.4f);
+    QCOMPARE(material.countIndices(), 2);
+    QCOMPARE(material.toonID(), quint8(0));
+    QVERIFY(material.isEdgeEnabled());
+    QVERIFY(material.isMainSphereModulate());
+    QVERIFY(!material.isMainSphereAdd());
+    QVERIFY(!material.isSubSphereModulate());
+    QVERIFY(material.isSubSphereAdd());
+}
+
+static void TestVertex(const vpvl::Vertex &vertex)
+{
+#ifdef VPVL_COORDINATE_OPENGL
+    QVERIFY(vertex.position() == btVector3(0.0f, 1.0f, -2.0f));
+    QVERIFY(vertex.normal() == btVector3(3.0f, 4.0f, -5.0f));
+#else
+    QVERIFY(vertex.position() == btVector3(0.0f, 1.0f, 2.0f));
+    QVERIFY(vertex.normal() == btVector3(3.0f, 4.0f, 5.0f));
+#endif
+    QCOMPARE(vertex.u(), 6.0f);
+    QCOMPARE(vertex.v(), 7.0f);
+    QCOMPARE(vertex.bone1(), qint16(8));
+    QCOMPARE(vertex.bone2(), qint16(9));
+    QCOMPARE(vertex.weight(), 1.0f);
+    QVERIFY(!vertex.isEdgeEnabled());
+}
+
+}
+
 const char *TestPMDModel::kTestString = "0123456789012345678";
 
 TestPMDModel::TestPMDModel()
@@ -79,17 +159,16 @@ void TestPMDModel::parseBone()
            << qint16(3)                 // target
            << 4.0f << 5.0f << 6.0f      // position
               ;
-    QCOMPARE(size_t(bytes.size()), vpvl::Bone::stride());
-    vpvl::Bone bone;
+    size_t stride = vpvl::Bone::stride();
+    QCOMPARE(size_t(bytes.size()), stride);
+    vpvl::Bone bone, bone2;
     bone.read(reinterpret_cast<const uint8_t *>(bytes.constData()), 7);
-    QCOMPARE(QString(reinterpret_cast<const char *>(bone.name())), QString(kTestString));
-    QCOMPARE(bone.id(), qint16(7));
-    QCOMPARE(bone.type(), vpvl::Bone::kTwist);
-#ifdef VPVL_COORDINATE_OPENGL
-    QVERIFY(bone.originPosition() == btVector3(4, 5, -6));
-#else
-    QVERIFY(bone.originPosition() == btVector3(4, 5, 6));
-#endif
+    TestBone(bone);
+    bytes.clear();
+    bytes.resize(vpvl::Bone::stride());
+    bone.write(reinterpret_cast<uint8_t *>(bytes.data()));
+    bone2.read(reinterpret_cast<const uint8_t *>(bytes.data()), 7);
+    TestBone(bone);
 }
 
 void TestPMDModel::parseConstraint()
@@ -117,7 +196,7 @@ void TestPMDModel::parseConstraint()
     btVector3 offset(1.0f, 2.0f, 3.0f);
     constaint.read(reinterpret_cast<const uint8_t *>(bytes.constData()), bodies, offset);
     QCOMPARE(QString(reinterpret_cast<const char *>(constaint.name())), QString(kTestString));
-    bodies.clear();
+    bodies.releaseAll();
 }
 
 void TestPMDModel::parseFace()
@@ -134,7 +213,6 @@ void TestPMDModel::parseFace()
               ;
     const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
     QCOMPARE(size_t(bytes.size()), vpvl::Face::stride(ptr));
-    vpvl::Face face;
     bool ok = false;
     size_t size = vpvl::Face::totalSize(ptr, bytes.size(), 1, ok);
     QVERIFY(ok);
@@ -142,24 +220,19 @@ void TestPMDModel::parseFace()
     size = vpvl::Face::totalSize(ptr, bytes.size(), 2, ok);
     QVERIFY(!ok);
     QCOMPARE(size, size_t(0));
+    vpvl::Face face, face2;
     face.read(ptr);
-    QCOMPARE(QString(reinterpret_cast<const char *>(face.name())), QString(kTestString));
-    QCOMPARE(face.type(), vpvl::Face::kBase);
-    vpvl::VertexList vertices;
-    vpvl::Vertex *vertex = new vpvl::Vertex();
-    vertices.add(vertex);
-    face.setVertices(vertices);
-#ifdef VPVL_COORDINATE_OPENGL
-    QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, -3.0f));
-#else
-    QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, 3.0f));
-#endif
-    vertices.clear();
+    TestFace(face);
+    bytes.clear();
+    bytes.resize(face.estimateSize());
+    face.write(reinterpret_cast<uint8_t *>(bytes.data()));
+    face2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
+    TestFace(face2);
 }
 
 void TestPMDModel::parseIK()
 {
-    QByteArray bytes;
+    QByteArray bytes, bytes2;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -168,11 +241,10 @@ void TestPMDModel::parseIK()
            << qint8(1)                  // nlinks
            << qint16(2)                 // niterations
            << 4.0f                      // constaint
-           << uint16_t(3)
+           << uint16_t(2)
               ;
     const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
     QCOMPARE(size_t(bytes.size()), vpvl::IK::stride(ptr));
-    vpvl::IK ik;
     bool ok = false;
     size_t size = vpvl::IK::totalSize(ptr, bytes.size(), 1, ok);
     QVERIFY(ok);
@@ -181,10 +253,17 @@ void TestPMDModel::parseIK()
     QVERIFY(!ok);
     QCOMPARE(size, size_t(0));
     vpvl::BoneList bones;
-    bones.add(new vpvl::Bone());
-    bones.add(new vpvl::Bone());
+    bones.add(CreateBone(0));
+    bones.add(CreateBone(1));
+    bones.add(CreateBone(2));
+    vpvl::IK ik;
     ik.read(ptr, &bones);
-    bones.clear();
+    bytes2 = bytes;
+    bytes.clear();
+    bytes.resize(ik.estimateSize());
+    ik.write(reinterpret_cast<uint8_t *>(bytes.data()));
+    QCOMPARE(bytes2, bytes);
+    bones.releaseAll();
 }
 
 void TestPMDModel::parseMaterial()
@@ -206,24 +285,14 @@ void TestPMDModel::parseMaterial()
     const char path[] = "main.sph*sub.spa";
     stream.writeRawData(path, vpvl::Material::kNameSize);
     QCOMPARE(size_t(bytes.size()), vpvl::Material::stride());
-    vpvl::Material material;
+    vpvl::Material material, material2;
     material.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.rawName())), QString(path));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.mainTextureName())), QString("main.sph"));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.subTextureName())), QString("sub.spa"));
-    QVERIFY(material.ambient() == btVector4(0.8f, 0.9f, 1.0f, 1.0f));
-    QVERIFY(material.averageColor() == btVector4(0.4f, 0.5f, 0.6f, 1.0f));
-    QVERIFY(material.diffuse() == btVector4(0.0f, 0.1f, 0.2f, 1.0f));
-    QVERIFY(material.specular() == btVector4(0.5f, 0.6f, 0.7f, 1.0f));
-    QCOMPARE(material.opacity(), 0.3f);
-    QCOMPARE(material.shiness(), 0.4f);
-    QCOMPARE(material.countIndices(), 2);
-    QCOMPARE(material.toonID(), quint8(0));
-    QVERIFY(material.isEdgeEnabled());
-    QVERIFY(material.isMainSphereModulate());
-    QVERIFY(!material.isMainSphereAdd());
-    QVERIFY(!material.isSubSphereModulate());
-    QVERIFY(material.isSubSphereAdd());
+    TestMaterial(material, path);
+    bytes.clear();
+    bytes.resize(vpvl::Material::stride());
+    material.write(reinterpret_cast<uint8_t *>(bytes.data()));
+    material2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
+    TestMaterial(material2, path);
 }
 
 void TestPMDModel::parseRigidBody()
@@ -252,7 +321,7 @@ void TestPMDModel::parseRigidBody()
     QCOMPARE(size_t(bytes.size()), vpvl::RigidBody::stride());
     vpvl::RigidBody body;
     vpvl::BoneList bones;
-    bones.add(new vpvl::Bone());
+    bones.add(CreateBone(1));
     body.read(reinterpret_cast<const uint8_t *>(bytes.constData()), &bones);
     QCOMPARE(QString(reinterpret_cast<const char *>(body.name())), QString(kTestString));
     btRigidBody *b = body.body();
@@ -263,7 +332,7 @@ void TestPMDModel::parseRigidBody()
     QCOMPARE(b->getFriction(), 0.5f);
     QCOMPARE(body.groupID(), quint16(8));
     QCOMPARE(body.groupMask(), quint16(2));
-    bones.clear();
+    bones.releaseAll();
 }
 
 void TestPMDModel::parseVertex()
@@ -281,21 +350,14 @@ void TestPMDModel::parseVertex()
            << quint8(1)            // no edge
               ;
     QCOMPARE(size_t(bytes.size()), vpvl::Vertex::stride());
-    vpvl::Vertex vertex;
+    vpvl::Vertex vertex, vertex2;
     vertex.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-#ifdef VPVL_COORDINATE_OPENGL
-    QVERIFY(vertex.position() == btVector3(0.0f, 1.0f, -2.0f));
-    QVERIFY(vertex.normal() == btVector3(3.0f, 4.0f, -5.0f));
-#else
-    QVERIFY(vertex.position() == btVector3(0.0f, 1.0f, 2.0f));
-    QVERIFY(vertex.normal() == btVector3(3.0f, 4.0f, 5.0f));
-#endif
-    QCOMPARE(vertex.u(), 6.0f);
-    QCOMPARE(vertex.v(), 7.0f);
-    QCOMPARE(vertex.bone1(), qint16(8));
-    QCOMPARE(vertex.bone2(), qint16(9));
-    QCOMPARE(vertex.weight(), 1.0f);
-    QVERIFY(!vertex.isEdgeEnabled());
+    TestVertex(vertex);
+    bytes.clear();
+    bytes.resize(vpvl::Material::stride());
+    vertex.write(reinterpret_cast<uint8_t *>(bytes.data()));
+    vertex2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
+    TestVertex(vertex2);
 }
 
 QTEST_APPLESS_MAIN(TestPMDModel)

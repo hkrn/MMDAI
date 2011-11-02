@@ -69,6 +69,7 @@ public:
     static size_t stride();
 
     void read(const uint8_t *data, BoneList *bones);
+    void write(uint8_t *data) const;
     void transformBone();
     void setKinematic(bool value);
 
@@ -98,8 +99,16 @@ private:
     Transform m_transform;
     Transform m_invertedTransform;
     btMotionState *m_kinematicMotionState;
+    Vector3 m_position;
+    Vector3 m_rotation;
+    float m_width;
+    float m_height;
+    float m_depth;
+    float m_mass;
     uint16_t m_groupID;
     uint16_t m_groupMask;
+    uint8_t m_collisionGroupID;
+    uint8_t m_shapeType;
     uint8_t m_type;
     bool m_noBone;
 

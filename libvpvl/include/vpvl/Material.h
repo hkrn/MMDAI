@@ -65,6 +65,7 @@ public:
     static size_t stride();
 
     void read(const uint8_t *data);
+    void write(uint8_t *data) const;
 
     const uint8_t *rawName() const {
         return m_rawName;

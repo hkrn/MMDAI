@@ -129,4 +129,29 @@ void Vertex::read(const uint8_t *data)
     m_edge = edge == 0;
 }
 
+void Vertex::write(uint8_t *data) const
+{
+    VertexChunk chunk;
+#ifdef VPVL_COORDINATE_OPENGL
+    chunk.position[2] = -m_position.z();
+    chunk.normal[2] = -m_normal.z();
+#else
+    chunk.position[2] = m_position.z();
+    chunk.normal[2] = m_normal.z();
+#endif
+    chunk.position[0] = m_position.x();
+    chunk.position[1] = m_position.y();
+    chunk.normal[0] = m_normal.x();
+    chunk.normal[1] = m_normal.y();
+    chunk.u = m_u;
+    chunk.v = m_v;
+    chunk.parentBoneID = m_bone1;
+    chunk.childBoneID = m_bone2;
+    chunk.weight = m_weight * 100.0f;
+    chunk.edge = m_edge ? 0 : 1;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
+                        reinterpret_cast<const uint8_t *>(&chunk),
+                        sizeof(chunk));
+}
+
 }

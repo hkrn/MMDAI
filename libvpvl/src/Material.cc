@@ -146,4 +146,27 @@ void Material::read(const uint8_t *data)
     m_nindices = nindices;
 }
 
+void Material::write(uint8_t *data) const
+{
+    MaterialChunk chunk;
+    copyBytesSafe(chunk.textureName, m_rawName, sizeof(chunk.textureName));
+    chunk.diffuse[0] = m_diffuse.x();
+    chunk.diffuse[1] = m_diffuse.y();
+    chunk.diffuse[2] = m_diffuse.z();
+    chunk.alpha = m_opacity;
+    chunk.shiness = m_shiness;
+    chunk.specular[0] = m_specular.x();
+    chunk.specular[1] = m_specular.y();
+    chunk.specular[2] = m_specular.z();
+    chunk.ambient[0] = m_ambient.x();
+    chunk.ambient[1] = m_ambient.y();
+    chunk.ambient[2] = m_ambient.z();
+    chunk.toonID = m_toonID == 0 ? 0xff : m_toonID - 1;
+    chunk.edge = m_edge;
+    chunk.nindices = m_nindices;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
+                        reinterpret_cast<const uint8_t *>(&chunk),
+                        sizeof(chunk));
+}
+
 }

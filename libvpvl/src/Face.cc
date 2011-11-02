@@ -131,6 +131,44 @@ void Face::read(const uint8_t *data)
     }
 }
 
+size_t Face::estimateSize() const
+{
+    return sizeof(FaceChunk) + m_vertices.count() * sizeof(FaceVertexChunk);
+}
+
+void Face::write(uint8_t *data) const
+{
+    FaceChunk chunk;
+    int nvertices = m_vertices.count();
+    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    chunk.nvertices = nvertices;
+    chunk.type = m_type;
+    uint8_t *ptr = data;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
+                        reinterpret_cast<const uint8_t *>(&chunk),
+                        sizeof(chunk));
+    ptr += sizeof(chunk);
+    if (nvertices > 0) {
+        FaceVertexChunk vc;
+        for (int i = 0; i < nvertices; i++) {
+            FaceVertex *vertex = m_vertices[i];
+            const Vector3 &p = vertex->position;
+            vc.vertexID = vertex->id;
+            vc.position[0] = p.x();
+            vc.position[1] = p.y();
+#ifdef VPVL_COORDINATE_OPENGL
+            vc.position[2] = -p.z();
+#else
+            vc.position[2] = p.z();
+#endif
+            internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
+                                reinterpret_cast<const uint8_t *>(&vc),
+                                sizeof(vc));
+            ptr += sizeof(vc);
+        }
+    }
+}
+
 void Face::convertIndices(const Face *base)
 {
     const int nvertices = m_vertices.count();

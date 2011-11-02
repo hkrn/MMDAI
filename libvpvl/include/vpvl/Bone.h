@@ -128,6 +128,8 @@ public:
      */
     void read(const uint8_t *data, int16_t id);
 
+    void write(uint8_t *data) const;
+
     /**
      * Reset all bone states.
      *

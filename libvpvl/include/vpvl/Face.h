@@ -109,6 +109,10 @@ public:
      */
     void read(const uint8_t *data);
 
+    size_t estimateSize() const;
+
+    void write(uint8_t *data) const;
+
     /**
      * Convert indices of this face by the face.
      *

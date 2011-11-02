@@ -68,6 +68,7 @@ public:
     static size_t stride();
 
     void read(const uint8_t *data, const RigidBodyList &bodies, const Vector3 &offset);
+    void write(uint8_t *data) const;
 
     const uint8_t *name() const {
         return m_name;
@@ -83,6 +84,15 @@ public:
 private:
     uint8_t m_name[kNameSize];
     btGeneric6DofSpringConstraint *m_constraint;
+    Vector3 m_position;
+    Vector3 m_rotation;
+    Vector3 m_limitPositionFrom;
+    Vector3 m_limitPositionTo;
+    Vector3 m_limitRotationFrom;
+    Vector3 m_limitRotationTo;
+    float m_stiffness[6];
+    int m_bodyA;
+    int m_bodyB;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Constraint)
 };

@@ -116,7 +116,7 @@ public:
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     bool load(const uint8_t *data, size_t size);
     size_t estimateSize();
-    void save(uint8_t *data);
+    void save(uint8_t *data) const;
     void attachModel(PMDModel *model);
     void seek(float frameIndex);
     void advance(float deltaFrame);

@@ -146,8 +146,16 @@ RigidBody::RigidBody()
       m_body(0),
       m_motionState(0),
       m_kinematicMotionState(0),
+      m_position(0.0f, 0.0f, 0.0f),
+      m_rotation(0.0f, 0.0f, 0.0f),
+      m_width(0.0f),
+      m_height(0.0f),
+      m_depth(0.0f),
+      m_mass(0.0f),
       m_groupID(0),
       m_groupMask(0),
+      m_collisionGroupID(0),
+      m_shapeType(0),
       m_type(0),
       m_noBone(false)
 {
@@ -167,8 +175,16 @@ RigidBody::~RigidBody()
     m_motionState = 0;
     delete m_kinematicMotionState;
     m_kinematicMotionState = 0;
+    m_position.setZero();
+    m_rotation.setZero();
+    m_width = 0.0f;
+    m_height = 0.0f;
+    m_depth = 0.0f;
+    m_mass = 0.0f;
     m_groupID = 0;
     m_groupMask = 0;
+    m_collisionGroupID = 0;
+    m_shapeType = 0;
     m_type = 0;
     m_noBone = false;
     m_transform.setIdentity();
@@ -292,11 +308,47 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
         m_groupMask = collisionMask;
         m_type = type;
         m_invertedTransform = m_transform.inverse();
+        m_position.setValue(pos[0], pos[1], pos[2]);
+        m_rotation.setValue(rot[0], rot[1], rot[2]);
+        m_width = width;
+        m_height = height;
+        m_depth = depth;
+        m_mass = mass;
+        m_collisionGroupID = collisionGroupID;
+        m_shapeType = shapeType;
     }
 #else  /* VPVL_NO_BULLET */
     (void) data;
     (void) bones;
 #endif /* VPVL_NO_BULLET */
+}
+
+void RigidBody::write(uint8_t *data) const
+{
+    RigidBodyChunk chunk;
+    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    chunk.boneID = m_noBone ? 0xffff : m_bone->id();
+    chunk.collisionGroupID = m_collisionGroupID;
+    chunk.collsionMask = m_groupMask;
+    chunk.shapeType = m_shapeType;
+    chunk.width = m_width;
+    chunk.height = m_height;
+    chunk.depth = m_depth;
+    chunk.position[0] = m_position.x();
+    chunk.position[1] = m_position.y();
+    chunk.position[2] = m_position.z();
+    chunk.rotation[0] = m_rotation.x();
+    chunk.rotation[1] = m_rotation.y();
+    chunk.rotation[2] = m_rotation.z();
+    chunk.mass = m_mass;
+    chunk.linearDamping = m_body->getLinearDamping();
+    chunk.angularDamping = m_body->getAngularDamping();
+    chunk.restitution = m_body->getRestitution();
+    chunk.friction = m_body->getFriction();
+    chunk.type = m_type;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
+                        reinterpret_cast<const uint8_t *>(&chunk),
+                        sizeof(chunk));
 }
 
 void RigidBody::transformBone()

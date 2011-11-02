@@ -90,7 +90,8 @@ IK::IK()
     : m_destination(0),
       m_target(0),
       m_iteration(0),
-      m_angleConstraint(0.0f)
+      m_angleConstraint(0.0f),
+      m_rawAngleConstraint(0.0f)
 {
 }
 
@@ -100,6 +101,7 @@ IK::~IK()
     m_target = 0;
     m_iteration = 0;
     m_angleConstraint = 0.0f;
+    m_rawAngleConstraint = 0.0f;
 }
 
 void IK::read(const uint8_t *data, BoneList *bones)
@@ -110,7 +112,7 @@ void IK::read(const uint8_t *data, BoneList *bones)
     int16_t targetBoneID = chunk.targetBoneID;
     uint8_t nlinks = chunk.nlinks;
     uint16_t niterations = chunk.niterations;
-    
+
 #ifdef VPVL_BUILD_IOS
     float angleConstraint;
     memcpy(&angleConstraint, &chunk.angleConstraint, sizeof(angleConstraint));
@@ -134,10 +136,41 @@ void IK::read(const uint8_t *data, BoneList *bones)
         m_target = bones->at(targetBoneID);
         m_iteration = niterations;
         m_angleConstraint = angleConstraint * IK::kPi;
+        m_rawAngleConstraint = angleConstraint;
         m_bones.reserve(nlinks);
         for (int i = 0; i < nlinks; i++) {
             Bone *bone = bones->at(boneIKs[i]);
             m_bones.add(bone);
+        }
+    }
+}
+
+size_t IK::estimateSize() const
+{
+    return sizeof(IKChunk) + m_bones.count() * sizeof(int16_t);
+}
+
+void IK::write(uint8_t *data) const
+{
+    IKChunk chunk;
+    int nlinks = m_bones.count();
+    chunk.destBoneID = m_destination->id();
+    chunk.targetBoneID = m_target->id();
+    chunk.nlinks = nlinks;
+    chunk.niterations = m_iteration;
+    chunk.angleConstraint = m_rawAngleConstraint;
+    uint8_t *ptr = data;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
+                        reinterpret_cast<const uint8_t *>(&chunk),
+                        sizeof(chunk));
+    ptr += sizeof(chunk);
+    if (nlinks > 0) {
+        for (int i = 0; i < nlinks; i++) {
+            int16_t boneID = m_bones.at(i)->id();
+            internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
+                                reinterpret_cast<const uint8_t *>(&boneID),
+                                sizeof(boneID));
+            ptr += sizeof(boneID);
         }
     }
 }

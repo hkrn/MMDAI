@@ -172,7 +172,7 @@ size_t VMDMotion::estimateSize()
             + m_cameraMotion.countKeyFrames() * CameraKeyFrame::strideSize();
 }
 
-void VMDMotion::save(uint8_t *data)
+void VMDMotion::save(uint8_t *data) const
 {
     internal::copyBytes(data, kSignature, kSignatureSize);
     data += kSignatureSize;

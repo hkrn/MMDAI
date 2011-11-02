@@ -70,6 +70,8 @@ public:
     static size_t stride(const uint8_t *data);
 
     void read(const uint8_t *data, BoneList *bones);
+    size_t estimateSize() const;
+    void write(uint8_t *data) const;
     void solve();
 
     bool isSimulated() const {
@@ -82,6 +84,7 @@ private:
     BoneList m_bones;
     uint16_t m_iteration;
     float m_angleConstraint;
+    float m_rawAngleConstraint;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(IK)
 };

@@ -63,6 +63,7 @@ public:
     static size_t stride();
 
     void read(const uint8_t *data);
+    void write(uint8_t *data) const;
 
     const Vector3 &position() const {
         return m_position;

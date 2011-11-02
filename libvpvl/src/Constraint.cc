@@ -73,14 +73,32 @@ size_t Constraint::stride()
 }
 
 Constraint::Constraint()
-    : m_constraint(0)
+    : m_constraint(0),
+      m_position(0.0f, 0.0f, 0.0f),
+      m_rotation(0.0f, 0.0f, 0.0f),
+      m_limitPositionFrom(0.0f, 0.0f, 0.0f),
+      m_limitPositionTo(0.0f, 0.0f, 0.0f),
+      m_limitRotationFrom(0.0f, 0.0f, 0.0f),
+      m_limitRotationTo(0.0f, 0.0f, 0.0f),
+      m_bodyA(0),
+      m_bodyB(0)
 {
     internal::zerofill(m_name, sizeof(m_name));
+    internal::zerofill(m_stiffness, sizeof(m_stiffness));
 }
 
 Constraint::~Constraint()
 {
     internal::zerofill(m_name, sizeof(m_name));
+    internal::zerofill(m_stiffness, sizeof(m_stiffness));
+    m_position.setZero();
+    m_rotation.setZero();
+    m_limitPositionFrom.setZero();
+    m_limitPositionTo.setZero();
+    m_limitRotationFrom.setZero();
+    m_limitRotationTo.setZero();
+    m_bodyA = 0;
+    m_bodyB = 0;
     delete m_constraint;
     m_constraint = 0;
 }
@@ -155,12 +173,55 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const Ve
                 m_constraint->setStiffness(i, stiffness[i]);
             }
         }
+        internal::copyBytes(reinterpret_cast<uint8_t *>(m_stiffness),
+                            reinterpret_cast<const uint8_t *>(stiffness),
+                            sizeof(chunk.stiffness));
+        m_position.setValue(pos[0], pos[1], pos[2]);
+        m_rotation.setValue(rot[0], rot[1], rot[2]);
+        m_limitPositionFrom.setValue(limitPosFrom[0], limitPosFrom[1], limitPosFrom[2]);
+        m_limitPositionTo.setValue(limitPosTo[0], limitPosTo[1], limitPosTo[2]);
+        m_limitRotationFrom.setValue(limitRotFrom[0], limitRotFrom[1], limitRotFrom[2]);
+        m_limitRotationTo.setValue(limitRotTo[0], limitRotTo[1], limitRotTo[2]);
+        m_bodyA = bodyID1;
+        m_bodyB = bodyID2;
     }
 #else  /* VPVL_NO_BULLET */
     (void) data;
     (void) bodies;
     (void) offset;
 #endif /* VPVL_NO_BULLET */
+}
+
+void Constraint::write(uint8_t *data) const
+{
+    ConstraintChunk chunk;
+    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    chunk.bodyIDA = m_bodyA;
+    chunk.bodyIDB = m_bodyB;
+    chunk.position[0] = m_position.x();
+    chunk.position[1] = m_position.y();
+    chunk.position[2] = m_position.z();
+    chunk.rotation[0] = m_rotation.x();
+    chunk.rotation[1] = m_rotation.y();
+    chunk.rotation[2] = m_rotation.z();
+    chunk.limitPositionFrom[0] = m_limitPositionFrom.x();
+    chunk.limitPositionFrom[1] = m_limitPositionFrom.y();
+    chunk.limitPositionFrom[2] = m_limitPositionFrom.z();
+    chunk.limitPositionTo[0] = m_limitPositionTo.x();
+    chunk.limitPositionTo[1] = m_limitPositionTo.y();
+    chunk.limitPositionTo[2] = m_limitPositionTo.z();
+    chunk.limitRotationFrom[0] = m_limitRotationFrom.x();
+    chunk.limitRotationFrom[1] = m_limitRotationFrom.y();
+    chunk.limitRotationFrom[2] = m_limitRotationFrom.z();
+    chunk.limitRotationTo[0] = m_limitRotationTo.x();
+    chunk.limitRotationTo[1] = m_limitRotationTo.y();
+    chunk.limitRotationTo[2] = m_limitRotationTo.z();
+    internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.stiffness),
+                        reinterpret_cast<const uint8_t *>(m_stiffness),
+                        sizeof(chunk.stiffness));
+    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
+                        reinterpret_cast<const uint8_t *>(&chunk),
+                        sizeof(chunk));
 }
 
 } /* namespace vpvl */
