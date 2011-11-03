@@ -155,8 +155,8 @@ void TestPMDModel::parseFile()
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        vpvl::PMDModel model;
-        vpvl::PMDModel::DataInfo result;
+        vpvl::PMDModel model, model2;
+        vpvl::PMDModel::DataInfo result, result2;
         QVERIFY(model.preparse(data, size, result));
         QVERIFY(model.load(data, size));
         QCOMPARE(result.verticesCount, size_t(model.vertices().count()));
@@ -168,7 +168,29 @@ void TestPMDModel::parseFile()
         QCOMPARE(result.constranitsCount, size_t(model.constraints().count()));
         QCOMPARE(reinterpret_cast<const char *>(model.englishName()), "Miku Hatsune");
         QCOMPARE(model.error(), vpvl::PMDModel::kNoError);
-        QCOMPARE(model.estimateSize(), size);
+        size_t estimated = model.estimateSize();
+        QCOMPARE(estimated, size);
+        QByteArray bytes2;
+        bytes2.resize(estimated);
+        bytes2.fill(0);
+        uint8_t *toBeWritten = reinterpret_cast<uint8_t *>(bytes2.data());
+        model.save(toBeWritten);
+        QVERIFY(model2.preparse(toBeWritten, size, result2));
+        QVERIFY(model2.load(toBeWritten, size));
+        QCOMPARE(result2.verticesCount, size_t(model.vertices().count()));
+        QCOMPARE(result2.materialsCount, size_t(model.materials().count()));
+        QCOMPARE(result2.bonesCount, size_t(model.bones().count()));
+        QCOMPARE(result2.IKsCount, size_t(model.IKs().count()));
+        QCOMPARE(result2.facesCount, size_t(model.faces().count()));
+        QCOMPARE(result2.rigidBodiesCount, size_t(model.rigidBodies().count()));
+        QCOMPARE(result2.constranitsCount, size_t(model.constraints().count()));
+        QCOMPARE(reinterpret_cast<const char *>(model2.englishName()), "Miku Hatsune");
+        QCOMPARE(model2.error(), vpvl::PMDModel::kNoError);
+#if 1
+        QFile file("/Users/hkrn/test.pmd");
+        file.open(QFile::WriteOnly);
+        file.write(bytes2);
+#endif
     }
     else {
         QSKIP("Require a model to test this", SkipSingle);
@@ -231,7 +253,7 @@ void TestPMDModel::parseConstraint()
     bytes.clear();
     bytes.resize(vpvl::Constraint::stride());
     constaint.write(reinterpret_cast<uint8_t *>(bytes.data()));
-    QCOMPARE(bytes, bytes2);
+    QCOMPARE(bytes2, bytes);
     bodies.releaseAll();
 }
 
@@ -298,7 +320,7 @@ void TestPMDModel::parseIK()
     bytes.clear();
     bytes.resize(ik.estimateSize());
     ik.write(reinterpret_cast<uint8_t *>(bytes.data()));
-    QCOMPARE(bytes, bytes2);
+    QCOMPARE(bytes2, bytes);
     bones.releaseAll();
 }
 
@@ -352,7 +374,7 @@ void TestPMDModel::parseRigidBody()
     bytes.clear();
     bytes.resize(vpvl::RigidBody::stride());
     body->write(reinterpret_cast<uint8_t *>(bytes.data()));
-    QCOMPARE(bytes, bytes2);
+    QCOMPARE(bytes2, bytes);
     bones.releaseAll();
 }
 

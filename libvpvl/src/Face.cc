@@ -44,6 +44,13 @@ namespace vpvl
 
 #pragma pack(push, 1)
 
+struct FaceVertex
+{
+    int id;
+    int rawID;
+    Vector3 position;
+};
+
 struct FaceVertexChunk
 {
     int vertexID;
@@ -114,6 +121,7 @@ void Face::read(const uint8_t *data)
             FaceVertex *vertex = new FaceVertex();
             internal::copyBytes(reinterpret_cast<uint8_t *>(&vc), ptr, sizeof(vc));
             vertex->id = vc.vertexID;
+            vertex->rawID = vc.vertexID;
 #ifdef VPVL_BUILD_IOS
             float pos[3];
             memcpy(pos, &vc.position, sizeof(pos));
@@ -144,16 +152,14 @@ void Face::write(uint8_t *data) const
     chunk.nvertices = nvertices;
     chunk.type = m_type;
     uint8_t *ptr = data;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
-                        reinterpret_cast<const uint8_t *>(&chunk),
-                        sizeof(chunk));
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
     ptr += sizeof(chunk);
     if (nvertices > 0) {
         FaceVertexChunk vc;
         for (int i = 0; i < nvertices; i++) {
             FaceVertex *vertex = m_vertices[i];
             const Vector3 &p = vertex->position;
-            vc.vertexID = vertex->id;
+            vc.vertexID = vertex->rawID;
             vc.position[0] = p.x();
             vc.position[1] = p.y();
 #ifdef VPVL_COORDINATE_OPENGL
@@ -161,9 +167,7 @@ void Face::write(uint8_t *data) const
 #else
             vc.position[2] = p.z();
 #endif
-            internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
-                                reinterpret_cast<const uint8_t *>(&vc),
-                                sizeof(vc));
+            internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&vc), sizeof(vc));
             ptr += sizeof(vc);
         }
     }

@@ -164,9 +164,7 @@ void Material::write(uint8_t *data) const
     chunk.toonID = m_toonID == 0 ? 0xff : m_toonID - 1;
     chunk.edge = m_edge;
     chunk.nindices = m_nindices;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
-                        reinterpret_cast<const uint8_t *>(&chunk),
-                        sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
 }

@@ -346,9 +346,7 @@ void RigidBody::write(uint8_t *data) const
     chunk.restitution = m_body->getRestitution();
     chunk.friction = m_body->getFriction();
     chunk.type = m_type;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
-                        reinterpret_cast<const uint8_t *>(&chunk),
-                        sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
 void RigidBody::transformBone()

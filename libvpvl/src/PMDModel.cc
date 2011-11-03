@@ -702,13 +702,14 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     // Extra texture path (100 * 10)
-    if (1000 > rest) {
+    size_t customTextureNameSize = kCustomTextureMax * kCustomTextureNameMax;
+    if (customTextureNameSize > rest) {
         m_error = kExtraTextureNamesError;
         return false;
     }
     info.toonTextureNamesPtr = ptr;
-    ptr += 1000;
-    rest -= 1000;
+    ptr += customTextureNameSize;
+    rest -= customTextureNameSize;
 
     if (rest == 0)
         return true;
@@ -781,7 +782,7 @@ size_t PMDModel::estimateSize() const
             + sizeof(uint8_t)  + kBoneCategoryNameSize * nBoneCategories
             + sizeof(uint32_t)  // Bones for UI
             + sizeof(uint8_t)   // have english names
-            + 1000              // texture names
+            + kCustomTextureMax * kCustomTextureNameMax
             + sizeof(uint32_t) + m_rigidBodies.count() * RigidBody::stride()
             + sizeof(uint32_t) + m_constraints.count() * Constraint::stride();
     for (int i = 0; i < nIKs; i++)
@@ -802,6 +803,138 @@ size_t PMDModel::estimateSize() const
 
 void PMDModel::save(uint8_t *data) const
 {
+    Header header;
+    header.version = 1.0f;
+    internal::copyBytes(header.signature, reinterpret_cast<const uint8_t *>("Pmd"), sizeof(header.signature));
+    internal::copyBytes(header.name, m_name, sizeof(header.name));
+    internal::copyBytes(header.comment, m_comment, sizeof(header.comment));
+    uint8_t *ptr = data;
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&header), sizeof(header));
+    ptr += sizeof(header);
+    int nvertices = m_vertices.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nvertices), sizeof(nvertices));
+    ptr += sizeof(nvertices);
+    for (int i = 0; i < nvertices; i++) {
+        m_vertices.at(i)->write(ptr);
+        ptr += Vertex::stride();
+    }
+    int nindices = m_indices.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nindices), sizeof(nindices));
+    ptr += sizeof(nindices);
+    for (int i = 0; i < nindices; i++) {
+        internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&m_indices[i]), sizeof(uint16_t));
+        ptr += sizeof(uint16_t);
+    }
+    int nmaterilals = m_materials.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nmaterilals), sizeof(nmaterilals));
+    ptr += sizeof(nmaterilals);
+    for (int i = 0; i < nmaterilals; i++) {
+        m_materials.at(i)->write(ptr);
+        ptr += Material::stride();
+    }
+    uint16_t nbones = m_bones.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nbones), sizeof(nbones));
+    ptr += sizeof(nbones);
+    for (int i = 0; i < nbones; i++) {
+        m_bones.at(i)->write(ptr);
+        ptr += Bone::stride();
+    }
+    uint16_t nIKs = m_IKs.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nIKs), sizeof(nIKs));
+    ptr += sizeof(nIKs);
+    for (int i = 0; i < nIKs; i++) {
+        IK *IK = m_IKs[i];
+        IK->write(ptr);
+        ptr += IK->estimateSize();
+    }
+    uint16_t nfaces = m_faces.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nfaces), sizeof(nfaces));
+    ptr += sizeof(nfaces);
+    for (int i = 0; i < nfaces; i++) {
+        Face *face = m_faces[i];
+        face->write(ptr);
+        ptr += face->estimateSize();
+    }
+    uint8_t nFacesForUI = m_facesForUI.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nFacesForUI), sizeof(nFacesForUI));
+    ptr += sizeof(nFacesForUI);
+    for (int i = 0; i < nFacesForUI; i++) {
+        uint16_t index = m_facesForUIIndices.at(i);
+        internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&index), sizeof(index));
+        ptr += sizeof(index);
+    }
+    uint8_t nBoneCategoryNames = m_boneCategoryNames.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nBoneCategoryNames), sizeof(nBoneCategoryNames));
+    ptr += sizeof(nBoneCategoryNames);
+    int nBonesForUI = 0;
+    for (int i = 0; i < nBoneCategoryNames; i++) {
+        const uint8_t *name = m_boneCategoryNames.at(i);
+        internal::copyBytes(ptr, name, kBoneCategoryNameSize);
+        ptr += kBoneCategoryNameSize;
+        nBonesForUI += m_bonesForUI[i]->count();
+    }
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nBonesForUI), sizeof(nBonesForUI));
+    ptr += sizeof(nBonesForUI);
+    for (int i = 0; i < nBoneCategoryNames; i++) {
+        BoneList *bones = m_bonesForUI.at(i);
+        int nBonesInCategory = bones->count();
+        for (int j = 0; j < nBonesInCategory; j++) {
+            uint16_t boneID = bones->at(j)->id();
+            internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&boneID), sizeof(boneID));
+            ptr += sizeof(boneID);
+            uint8_t categoryIndex = i + 1;
+            internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&categoryIndex), sizeof(categoryIndex));
+            ptr += sizeof(categoryIndex);
+        }
+    }
+    uint8_t hasEnglish = 0;
+    if (m_englishName[0]) {
+        hasEnglish = 1;
+        internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&hasEnglish), sizeof(hasEnglish));
+        ptr += sizeof(hasEnglish);
+        internal::copyBytes(ptr, m_englishName, sizeof(m_englishName));
+        ptr += sizeof(m_englishName);
+        internal::copyBytes(ptr, m_englishComment, sizeof(m_englishComment));
+        ptr += sizeof(m_englishComment);
+        for (int i = 0; i < nbones; i++) {
+            internal::copyBytes(ptr, m_bones.at(i)->englishName(), Bone::kNameSize);
+            ptr += Bone::kNameSize;
+        }
+        for (int i = 0; i < nfaces; i++) {
+            Face *face = m_faces[i];
+            if (face->type() != Face::kBase) {
+                internal::copyBytes(ptr, face->englishName(), Face::kNameSize);
+                ptr += Face::kNameSize;
+            }
+        }
+        for (int i = 0; i < nBoneCategoryNames; i++) {
+            const uint8_t *name = m_boneCategoryEnglishNames.at(i);
+            internal::copyBytes(ptr, name, kBoneCategoryNameSize);
+            ptr += kBoneCategoryNameSize;
+        }
+    }
+    else {
+        internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&hasEnglish), sizeof(hasEnglish));
+        ptr += sizeof(hasEnglish);
+    }
+    for (int i = 0; i < kCustomTextureMax; i++) {
+        internal::copyBytes(ptr, m_textures[i], kCustomTextureNameMax);
+        ptr += kCustomTextureNameMax;
+    }
+    int nRigidBodies = m_rigidBodies.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nRigidBodies), sizeof(nRigidBodies));
+    ptr += sizeof(nRigidBodies);
+    for (int i = 0; i < nRigidBodies; i++) {
+        m_rigidBodies.at(i)->write(ptr);
+        ptr += RigidBody::stride();
+    }
+    int nconstraints = m_constraints.count();
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&nconstraints), sizeof(nconstraints));
+    ptr += sizeof(nconstraints);
+    for (int i = 0; i < nconstraints; i++) {
+        m_constraints.at(i)->write(ptr);
+        ptr += Constraint::stride();
+    }
 }
 
 void PMDModel::parseHeader(const DataInfo &info)
@@ -928,7 +1061,9 @@ void PMDModel::parseFacesForUI(const DataInfo &info)
         uint16_t faceIndex = *ptr;
         if (faceIndex < nfaces) {
             Face *face = m_faces[faceIndex];
+            // XXX: out of index risk
             m_facesForUI.add(face);
+            m_facesForUIIndices.add(faceIndex);
         }
         ptr++;
     }
@@ -937,12 +1072,19 @@ void PMDModel::parseFacesForUI(const DataInfo &info)
 void PMDModel::parseBoneCategoryNames(const DataInfo &info)
 {
     const uint8_t nBoneCategoryNames = info.boneCategoryNamesCount;
-    const uint8_t *ptr = const_cast<uint8_t *>(info.boneCategoryNamesPtr);
+    uint8_t *ptr = const_cast<uint8_t *>(info.boneCategoryNamesPtr);
+    uint8_t *englishPtr = const_cast<uint8_t *>(info.englishBoneFramesPtr);
     for (int i = 0; i < nBoneCategoryNames; i++) {
         uint8_t *name = new uint8_t[kBoneCategoryNameSize];
         copyBytesSafe(name, ptr, kBoneCategoryNameSize);
         m_boneCategoryNames.add(name);
         ptr += kBoneCategoryNameSize;
+        if (englishPtr) {
+            uint8_t *englishName = new uint8_t[kBoneCategoryNameSize];
+            copyBytesSafe(englishName, englishPtr, kBoneCategoryNameSize);
+            m_boneCategoryEnglishNames.add(englishName);
+            englishPtr += kBoneCategoryNameSize;
+        }
     }
 }
 
@@ -1029,6 +1171,7 @@ void PMDModel::release()
     m_constraints.releaseAll();
     m_bonesForUI.releaseAll();
     m_boneCategoryNames.releaseArrayAll();
+    m_boneCategoryEnglishNames.releaseArrayAll();
     delete[] m_orderedBones;
     delete[] m_skinnedVertices;
     delete[] m_indicesPointer;

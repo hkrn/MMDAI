@@ -160,16 +160,12 @@ void IK::write(uint8_t *data) const
     chunk.niterations = m_iteration;
     chunk.angleConstraint = m_rawAngleConstraint;
     uint8_t *ptr = data;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
-                        reinterpret_cast<const uint8_t *>(&chunk),
-                        sizeof(chunk));
+    internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
     ptr += sizeof(chunk);
     if (nlinks > 0) {
         for (int i = 0; i < nlinks; i++) {
             int16_t boneID = m_bones.at(i)->id();
-            internal::copyBytes(reinterpret_cast<uint8_t *>(ptr),
-                                reinterpret_cast<const uint8_t *>(&boneID),
-                                sizeof(boneID));
+            internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&boneID), sizeof(boneID));
             ptr += sizeof(boneID);
         }
     }

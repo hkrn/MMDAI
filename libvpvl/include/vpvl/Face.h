@@ -45,11 +45,7 @@
 namespace vpvl
 {
 
-struct FaceVertex
-{
-    int id;
-    Vector3 position;
-};
+struct FaceVertex;
 
 /**
  * @file

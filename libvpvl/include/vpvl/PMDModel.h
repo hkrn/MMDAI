@@ -162,6 +162,8 @@ public:
     static const int kBoundingSpherePoints = 1000;
     static const int kBoundingSpherePointsMax = 20;
     static const int kBoundingSpherePointsMin = 5;
+    static const int kCustomTextureMax = 10;
+    static const int kCustomTextureNameMax = 100;
     static const int kSystemTextureMax = 11;
     static const int kNameSize = 20;
     static const int kDescriptionSize = 256;
@@ -608,7 +610,7 @@ private:
     uint8_t m_comment[kDescriptionSize];
     uint8_t m_englishName[kNameSize];
     uint8_t m_englishComment[kDescriptionSize];
-    uint8_t m_textures[10][100];
+    uint8_t m_textures[kCustomTextureMax][kCustomTextureNameMax];
     VertexList m_vertices;
     IndexList m_indices;
     MaterialList m_materials;
@@ -625,11 +627,13 @@ private:
     Hash<HashString, Face *> m_name2face;
     Array<VMDMotion *> m_motions;
     Array<uint8_t *> m_boneCategoryNames;
+    Array<uint8_t *> m_boneCategoryEnglishNames;
     Array<Transform> m_skinningTransform;
     Array<Vector3> m_edgeVertices;
     Array<Vector3> m_toonTextureCoords;
     Array<Vector3> m_shadowTextureCoords;
     Array<BoneList *> m_bonesForUI;
+    Array<uint16_t> m_facesForUIIndices;
     BoneList m_rotatedBones;
     Bone **m_orderedBones;
     Array<bool> m_isIKSimulated;

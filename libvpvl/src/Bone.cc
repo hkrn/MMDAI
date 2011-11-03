@@ -176,9 +176,7 @@ void Bone::write(uint8_t *data) const
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
     chunk.position[2] = m_position.z();
-    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
-                        reinterpret_cast<const uint8_t *>(&chunk),
-                        sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
 void Bone::reset()

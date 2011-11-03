@@ -219,9 +219,7 @@ void Constraint::write(uint8_t *data) const
     internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.stiffness),
                         reinterpret_cast<const uint8_t *>(m_stiffness),
                         sizeof(chunk.stiffness));
-    internal::copyBytes(reinterpret_cast<uint8_t *>(data),
-                        reinterpret_cast<const uint8_t *>(&chunk),
-                        sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
 } /* namespace vpvl */
