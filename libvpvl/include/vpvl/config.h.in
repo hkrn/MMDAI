@@ -58,6 +58,9 @@
 /* Build libvpvl for iOS */
 #cmakedefine VPVL_BUILD_IOS
 
+/* Build libvpvl linking with GLEW */
+#cmakedefine VPVL_LINK_GLEW
+
 /* version */
 #define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
 #define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@

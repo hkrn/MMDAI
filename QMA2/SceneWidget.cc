@@ -36,10 +36,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <qglobal.h>
-#ifdef Q_OS_WIN
+/* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
+#include <vpvl/vpvl.h>
+#ifdef VPVL_LINK_GLEW
 #include <GL/glew.h>
-#endif /* Q_OS_WIN */
+#endif /* VPVL_LINK_GLEW */
 
 #include "SceneWidget.h"
 
@@ -55,7 +56,6 @@
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
-#include <vpvl/vpvl.h>
 
 #ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
@@ -744,7 +744,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
-#ifdef Q_OS_WIN32
+#ifdef VPVL_LINK_GLEW
     GLenum err = glewInit();
     if (err != GLEW_OK)
         qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));

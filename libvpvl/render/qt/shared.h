@@ -38,6 +38,10 @@
 
 #include <vpvl/vpvl.h>
 
+#ifdef VPVL_LINK_GLEW
+#include <GL/glew.h>
+#endif
+
 #if defined(VPVL_USE_NVIDIA_CG)
 #include <vpvl/cg/Renderer.h>
 using namespace vpvl::cg;
@@ -334,6 +338,13 @@ public:
 
 protected:
     virtual void initializeGL() {
+#ifndef Q_OS_MAC
+    GLenum err = glewInit();
+    if (err != GLEW_OK)
+        qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
+    else
+        qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
+#endif
 #ifdef VPVL_GL2_RENDERER_H_
         m_renderer->createShadowFrameBuffers();
         m_renderer->createPrograms();

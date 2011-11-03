@@ -38,6 +38,10 @@
 
 #include <vpvl/vpvl.h>
 
+#ifdef VPVL_LINK_GLEW
+#include <GL/glew.h>
+#endif
+
 #if defined(VPVL_USE_NVIDIA_CG)
 #include <vpvl/cg/Renderer.h>
 using namespace vpvl::cg;

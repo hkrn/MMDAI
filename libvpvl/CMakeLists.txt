@@ -185,16 +185,6 @@ if(VPVL_OPENGL_RENDERER)
   set(VPVL_COORDINATE_OPENGL ON BOOL)
 endif()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
-               "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h")
-set(vpvl_public_headers ${vpvl_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-if(NOT WIN32)
-  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc DESTINATION ${PKGCONFIG_INSTALL_PREFIX})
-endif()
-
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
 
@@ -240,23 +230,14 @@ if(APPLE)
   set_target_properties(vpvl PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
-  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/Common.h
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
-else()
-  install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
-      PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
-endif()
-
 # link with OpenGL and GLEW
 if(VPVL_OPENGL_RENDERER)
   find_package(OpenGL REQUIRED)
   target_link_libraries(vpvl ${OPENGL_LIBRARIES})
   include_directories(${OPENGL_INCLUDE_DIR})
-  if(NOT VPVL_USE_ALLEGRO5 AND WIN32)
+  if(NOT VPVL_USE_ALLEGRO5 AND NOT APPLE)
     link_glew(vpvl)
+    set(VPVL_LINK_GLEW ON BOOL)
   endif()
   if(VPVL_USE_NVIDIA_CG)
     find_library(Cg_LIBRARY Cg)
@@ -312,4 +293,26 @@ if(VPVL_OPENGL_RENDERER AND VPVL_USE_ALLEGRO5 AND VPVL_BUILD_A5)
 endif()
 
 option(VPVL_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
+
+# generate configuration
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h")
+set(vpvl_public_headers ${vpvl_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+if(NOT WIN32)
+  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc DESTINATION ${PKGCONFIG_INSTALL_PREFIX})
+endif()
+
+# install configuration
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
+  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/Common.h
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
+else()
+  install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
+      PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
+endif()
 

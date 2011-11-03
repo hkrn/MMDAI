@@ -37,11 +37,12 @@
 #ifndef VPVL_INTERNAL_GL2_H_
 #define VPVL_INTERNAL_GL2_H_
 
-#ifdef WIN32
-#include <GL/glew.h>
-#endif
-
+/* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl/vpvl.h>
+#ifdef VPVL_LINK_GLEW
+#include <GL/glew.h>
+#endif /* VPVL_LINK_GLEW */
+
 #include <vpvl/gl2/Renderer.h>
 
 namespace vpvl

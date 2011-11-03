@@ -36,7 +36,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <vpvl/vpvl.h>
 #include <vpvl/internal/gl2.h>
 
 #include <btBulletDynamicsCommon.h>
