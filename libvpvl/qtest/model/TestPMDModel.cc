@@ -168,6 +168,7 @@ void TestPMDModel::parseFile()
         QCOMPARE(result.constranitsCount, size_t(model.constraints().count()));
         QCOMPARE(reinterpret_cast<const char *>(model.englishName()), "Miku Hatsune");
         QCOMPARE(model.error(), vpvl::PMDModel::kNoError);
+        QCOMPARE(model.estimateSize(), size);
     }
     else {
         QSKIP("Require a model to test this", SkipSingle);
@@ -230,7 +231,7 @@ void TestPMDModel::parseConstraint()
     bytes.clear();
     bytes.resize(vpvl::Constraint::stride());
     constaint.write(reinterpret_cast<uint8_t *>(bytes.data()));
-    QCOMPARE(bytes2, bytes);
+    QCOMPARE(bytes, bytes2);
     bodies.releaseAll();
 }
 
@@ -297,7 +298,7 @@ void TestPMDModel::parseIK()
     bytes.clear();
     bytes.resize(ik.estimateSize());
     ik.write(reinterpret_cast<uint8_t *>(bytes.data()));
-    QCOMPARE(bytes2, bytes);
+    QCOMPARE(bytes, bytes2);
     bones.releaseAll();
 }
 
@@ -351,7 +352,7 @@ void TestPMDModel::parseRigidBody()
     bytes.clear();
     bytes.resize(vpvl::RigidBody::stride());
     body->write(reinterpret_cast<uint8_t *>(bytes.data()));
-    QCOMPARE(bytes2, bytes);
+    QCOMPARE(bytes, bytes2);
     bones.releaseAll();
 }
 

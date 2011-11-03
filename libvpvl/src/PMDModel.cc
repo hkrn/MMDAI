@@ -766,6 +766,44 @@ bool PMDModel::load(const uint8_t *data, size_t size)
     return false;
 }
 
+size_t PMDModel::estimateSize() const
+{
+    const int nIKs = m_IKs.count(), nbones = m_bones.count(),
+            nfaces = m_faces.count(), nBoneCategories = m_boneCategoryNames.count();
+    size_t size = sizeof(Header)
+            + sizeof(uint32_t) + m_vertices.count() * Vertex::stride()
+            + sizeof(uint32_t) + m_indices.count() * sizeof(int16_t)
+            + sizeof(uint32_t) + m_materials.count() * Material::stride()
+            + sizeof(uint16_t) + m_bones.count() * Bone::stride()
+            + sizeof(uint16_t)  // IK
+            + sizeof(uint16_t)  // face
+            + sizeof(uint8_t)  + sizeof(uint16_t) * m_facesForUI.count()
+            + sizeof(uint8_t)  + kBoneCategoryNameSize * nBoneCategories
+            + sizeof(uint32_t)  // Bones for UI
+            + sizeof(uint8_t)   // have english names
+            + 1000              // texture names
+            + sizeof(uint32_t) + m_rigidBodies.count() * RigidBody::stride()
+            + sizeof(uint32_t) + m_constraints.count() * Constraint::stride();
+    for (int i = 0; i < nIKs; i++)
+        size += m_IKs.at(i)->estimateSize();
+    for (int i = 0; i < nfaces; i++)
+        size += m_faces.at(i)->estimateSize();
+    for (int i = 0; i < nBoneCategories; i++) {
+        BoneList *bones = m_bonesForUI.at(i);
+        size += (sizeof(uint16_t) + sizeof(uint8_t)) * bones->count();
+    }
+    const size_t englishBoneNamesSize = Bone::kNameSize * nbones;
+    const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneCategories;
+    const size_t englishFaceNamesSize = nfaces > 0 ? (nfaces - 1) * Face::kNameSize : 0;
+    size += kNameSize + kDescriptionSize + englishBoneNamesSize
+            + englishFaceNamesSize + englishBoneCategoryNameSize;
+    return size;
+}
+
+void PMDModel::save(uint8_t *data) const
+{
+}
+
 void PMDModel::parseHeader(const DataInfo &info)
 {
     setName(info.namePtr);

@@ -366,6 +366,10 @@ public:
      */
     bool load(const uint8_t *data, size_t size);
 
+    size_t estimateSize() const;
+
+    void save(uint8_t *data) const;
+
     /**
      * Returns the name of this model.
      *
