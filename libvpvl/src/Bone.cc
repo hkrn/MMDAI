@@ -173,9 +173,13 @@ void Bone::write(uint8_t *data) const
     chunk.childBoneID = m_childBoneID;
     chunk.type = m_type;
     chunk.targetBoneID = m_targetBoneID;
-    chunk.position[0] = m_position.x();
-    chunk.position[1] = m_position.y();
-    chunk.position[2] = m_position.z();
+    chunk.position[0] = m_originPosition.x();
+    chunk.position[1] = m_originPosition.y();
+#ifdef VPVL_COORDINATE_OPENGL
+    chunk.position[2] = -m_originPosition.z();
+#else
+    chunk.position[2] = m_originPosition.z();
+#endif
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 

@@ -218,10 +218,11 @@ void TestPMDModel::parseBone()
     bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::Bone::stride());
+    bytes.fill(0);
     bone.write(reinterpret_cast<uint8_t *>(bytes.data()));
     bone2.read(reinterpret_cast<const uint8_t *>(bytes.data()), 7);
     QCOMPARE(bytes2, bytes);
-    TestBone(bone);
+    TestBone(bone2);
 }
 
 void TestPMDModel::parseConstraint()
@@ -254,6 +255,7 @@ void TestPMDModel::parseConstraint()
     bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::Constraint::stride());
+    bytes.fill(0);
     constaint.write(reinterpret_cast<uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
     bodies.releaseAll();
@@ -286,6 +288,7 @@ void TestPMDModel::parseFace()
     bytes2 = bytes;
     bytes.clear();
     bytes.resize(face.estimateSize());
+    bytes.fill(0);
     face.write(reinterpret_cast<uint8_t *>(bytes.data()));
     face2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
@@ -323,6 +326,7 @@ void TestPMDModel::parseIK()
     bytes2 = bytes;
     bytes.clear();
     bytes.resize(ik.estimateSize());
+    bytes.fill(0);
     ik.write(reinterpret_cast<uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
     bones.releaseAll();
@@ -340,7 +344,7 @@ void TestPMDModel::parseMaterial()
            << 0.4f                 // shiness
            << 0.5f << 0.6f << 0.7f // specular
            << 0.8f << 0.9f << 1.0f // ambient
-           << quint8(255)            // toonID
+           << quint8(255)          // toonID
            << quint8(1)            // edge
            << quint32(2)           // nindices
               ;
@@ -353,6 +357,7 @@ void TestPMDModel::parseMaterial()
     bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::Material::stride());
+    bytes.fill(0);
     material.write(reinterpret_cast<uint8_t *>(bytes.data()));
     material2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
@@ -379,6 +384,7 @@ void TestPMDModel::parseRigidBody()
     bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::RigidBody::stride());
+    bytes.fill(0);
     body->write(reinterpret_cast<uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
     bones.releaseAll();
@@ -404,7 +410,8 @@ void TestPMDModel::parseVertex()
     TestVertex(vertex);
     bytes2 = bytes;
     bytes.clear();
-    bytes.resize(vpvl::Material::stride());
+    bytes.resize(vpvl::Vertex::stride());
+    bytes.fill(0);
     vertex.write(reinterpret_cast<uint8_t *>(bytes.data()));
     vertex2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);

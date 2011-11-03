@@ -162,7 +162,7 @@ void Material::write(uint8_t *data) const
     chunk.ambient[1] = m_ambient.y();
     chunk.ambient[2] = m_ambient.z();
     chunk.toonID = m_toonID == 0 ? 0xff : m_toonID - 1;
-    chunk.edge = m_edge;
+    chunk.edge = m_edge ? 1 : 0;
     chunk.nindices = m_nindices;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
