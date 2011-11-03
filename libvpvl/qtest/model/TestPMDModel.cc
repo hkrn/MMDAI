@@ -199,7 +199,7 @@ void TestPMDModel::parseFile()
 
 void TestPMDModel::parseBone()
 {
-    QByteArray bytes;
+    QByteArray bytes, bytes2;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -215,10 +215,12 @@ void TestPMDModel::parseBone()
     vpvl::Bone bone, bone2;
     bone.read(reinterpret_cast<const uint8_t *>(bytes.constData()), 7);
     TestBone(bone);
+    bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::Bone::stride());
     bone.write(reinterpret_cast<uint8_t *>(bytes.data()));
     bone2.read(reinterpret_cast<const uint8_t *>(bytes.data()), 7);
+    QCOMPARE(bytes2, bytes);
     TestBone(bone);
 }
 
@@ -259,7 +261,7 @@ void TestPMDModel::parseConstraint()
 
 void TestPMDModel::parseFace()
 {
-    QByteArray bytes;
+    QByteArray bytes, bytes2;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -281,10 +283,12 @@ void TestPMDModel::parseFace()
     vpvl::Face face, face2;
     face.read(ptr);
     TestFace(face);
+    bytes2 = bytes;
     bytes.clear();
     bytes.resize(face.estimateSize());
     face.write(reinterpret_cast<uint8_t *>(bytes.data()));
     face2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
+    QCOMPARE(bytes2, bytes);
     TestFace(face2);
 }
 
@@ -327,7 +331,7 @@ void TestPMDModel::parseIK()
 void TestPMDModel::parseMaterial()
 {
     // TODO: should rename primary to main, second to sub
-    QByteArray bytes;
+    QByteArray bytes, bytes2;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -346,10 +350,12 @@ void TestPMDModel::parseMaterial()
     vpvl::Material material, material2;
     material.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     TestMaterial(material, path);
+    bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::Material::stride());
     material.write(reinterpret_cast<uint8_t *>(bytes.data()));
     material2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
+    QCOMPARE(bytes2, bytes);
     TestMaterial(material2, path);
 }
 
@@ -380,7 +386,7 @@ void TestPMDModel::parseRigidBody()
 
 void TestPMDModel::parseVertex()
 {
-    QByteArray bytes;
+    QByteArray bytes, bytes2;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -396,10 +402,12 @@ void TestPMDModel::parseVertex()
     vpvl::Vertex vertex, vertex2;
     vertex.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     TestVertex(vertex);
+    bytes2 = bytes;
     bytes.clear();
     bytes.resize(vpvl::Material::stride());
     vertex.write(reinterpret_cast<uint8_t *>(bytes.data()));
     vertex2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
+    QCOMPARE(bytes2, bytes);
     TestVertex(vertex2);
 }
 
