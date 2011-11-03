@@ -50,7 +50,7 @@ struct CameraKeyFrameChunk
     float distance;
     float position[3];
     float angle[3];
-    int8_t interpolationTable[24];
+    int8_t interpolationTable[CameraKeyFrame::kTableSize];
     int viewAngle;
     uint8_t noPerspective;
 };

@@ -46,11 +46,11 @@ namespace vpvl
 
 struct BoneKeyFrameChunk
 {
-    uint8_t name[15];
+    uint8_t name[BoneKeyFrame::kNameSize];
     int frameIndex;
     float position[3];
     float rotation[4];
-    int8_t interpolationTable[64];
+    int8_t interpolationTable[BoneKeyFrame::kTableSize];
 };
 
 #pragma pack(pop)
@@ -109,7 +109,7 @@ void BoneKeyFrame::read(const uint8_t *data)
 {
     BoneKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    setName(chunk.name);
     float *pos = chunk.position;
     float *rot = chunk.rotation;
 
@@ -135,7 +135,7 @@ void BoneKeyFrame::read(const uint8_t *data)
 void BoneKeyFrame::write(uint8_t *data) const
 {
     BoneKeyFrameChunk chunk;
-    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
     chunk.frameIndex = static_cast<int>(m_frameIndex);
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();

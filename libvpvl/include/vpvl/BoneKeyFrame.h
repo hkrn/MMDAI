@@ -178,7 +178,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
-    uint8_t m_name[kNameSize];
+    uint8_t m_name[kNameSize + 1];
     Vector3 m_position;
     Quaternion m_rotation;
     bool m_linear[4];

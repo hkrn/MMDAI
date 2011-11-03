@@ -94,7 +94,7 @@ public:
     }
 
 private:
-    uint8_t m_name[kNameSize];
+    uint8_t m_name[kNameSize + 1];
     float m_weight;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(FaceKeyFrame)

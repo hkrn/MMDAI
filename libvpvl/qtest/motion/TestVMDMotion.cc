@@ -31,7 +31,7 @@ private:
     void testCameraInterpolationMatrix(const int8_t matrix[24], const vpvl::CameraKeyFrame &frame);
 };
 
-const char *TestVMDMotion::kTestString = "01234567890123";
+const char *TestVMDMotion::kTestString = "012345678901234";
 
 TestVMDMotion::TestVMDMotion()
 {
