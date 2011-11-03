@@ -114,7 +114,7 @@ void Material::read(const uint8_t *data)
     uint8_t toonID = chunk.toonID;
     uint8_t edge = chunk.edge;
     int nindices = chunk.nindices;
-    uint8_t name[20], *p;
+    uint8_t name[kNameSize + 1], *p;
     copyBytesSafe(name, chunk.textureName, sizeof(name));
     copyBytesSafe(m_rawName, chunk.textureName, sizeof(m_rawName));
 
@@ -149,7 +149,7 @@ void Material::read(const uint8_t *data)
 void Material::write(uint8_t *data) const
 {
     MaterialChunk chunk;
-    copyBytesSafe(chunk.textureName, m_rawName, sizeof(chunk.textureName));
+    internal::copyBytes(chunk.textureName, m_rawName, sizeof(chunk.textureName));
     chunk.diffuse[0] = m_diffuse.x();
     chunk.diffuse[1] = m_diffuse.y();
     chunk.diffuse[2] = m_diffuse.z();

@@ -448,8 +448,8 @@ public:
     }
 
 private:
-    uint8_t m_name[kNameSize];
-    uint8_t m_englishName[kNameSize];
+    uint8_t m_name[kNameSize + 1];
+    uint8_t m_englishName[kNameSize + 1];
     uint8_t m_categoryIndex;
     int16_t m_id;
     Type m_type;

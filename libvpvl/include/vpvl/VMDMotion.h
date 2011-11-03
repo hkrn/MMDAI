@@ -199,7 +199,7 @@ private:
     void parseSelfShadowFrames(const DataInfo &info);
     void release();
 
-    uint8_t m_name[20];
+    uint8_t m_name[kNameSize + 1];
     PMDModel *m_model;
     DataInfo m_result;
     BoneAnimation m_boneMotion;

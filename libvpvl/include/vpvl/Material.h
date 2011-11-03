@@ -145,9 +145,9 @@ public:
     }
 
 private:
-    uint8_t m_rawName[kNameSize];
-    uint8_t m_mainTextureName[kNameSize];
-    uint8_t m_subTextureName[kNameSize];
+    uint8_t m_rawName[kNameSize + 1];
+    uint8_t m_mainTextureName[kNameSize + 1];
+    uint8_t m_subTextureName[kNameSize + 1];
     Color m_ambient;
     Color m_averageColor;
     Color m_diffuse;

@@ -108,7 +108,7 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const Ve
 #ifndef VPVL_NO_BULLET
     ConstraintChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    setName(chunk.name);
     int32_t bodyID1 = chunk.bodyIDA;
     int32_t bodyID2 = chunk.bodyIDB;
 
@@ -195,7 +195,7 @@ void Constraint::read(const uint8_t *data, const RigidBodyList &bodies, const Ve
 void Constraint::write(uint8_t *data) const
 {
     ConstraintChunk chunk;
-    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
     chunk.bodyIDA = m_bodyA;
     chunk.bodyIDB = m_bodyB;
     chunk.position[0] = m_position.x();

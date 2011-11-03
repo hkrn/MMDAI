@@ -91,7 +91,7 @@ public:
     }
 
 private:
-    uint8_t m_name[kNameSize];
+    uint8_t m_name[kNameSize + 1];
     Bone *m_bone;
     btCollisionShape *m_shape;
     btRigidBody *m_body;

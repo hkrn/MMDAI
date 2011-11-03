@@ -82,7 +82,7 @@ public:
     }
 
 private:
-    uint8_t m_name[kNameSize];
+    uint8_t m_name[kNameSize + 1];
     btGeneric6DofSpringConstraint *m_constraint;
     Vector3 m_position;
     Vector3 m_rotation;

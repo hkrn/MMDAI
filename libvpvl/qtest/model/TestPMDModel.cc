@@ -134,7 +134,7 @@ static void TestVertex(const vpvl::Vertex &vertex)
 
 }
 
-const char *TestPMDModel::kTestString = "0123456789012345678";
+const char *TestPMDModel::kTestString = "01234567890123456789";
 
 TestPMDModel::TestPMDModel()
 {
@@ -186,11 +186,6 @@ void TestPMDModel::parseFile()
         QCOMPARE(result2.constranitsCount, size_t(model.constraints().count()));
         QCOMPARE(reinterpret_cast<const char *>(model2.englishName()), "Miku Hatsune");
         QCOMPARE(model2.error(), vpvl::PMDModel::kNoError);
-#if 1
-        QFile file("/Users/hkrn/test.pmd");
-        file.open(QFile::WriteOnly);
-        file.write(bytes2);
-#endif
     }
     else {
         QSKIP("Require a model to test this", SkipSingle);

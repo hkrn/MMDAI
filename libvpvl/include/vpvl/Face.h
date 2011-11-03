@@ -194,8 +194,8 @@ public:
     }
 
 private:
-    uint8_t m_name[kNameSize];
-    uint8_t m_englishName[kNameSize];
+    uint8_t m_name[kNameSize + 1];
+    uint8_t m_englishName[kNameSize + 1];
     Type m_type;
     Array<FaceVertex *> m_vertices;
     float m_weight;

@@ -166,7 +166,7 @@ public:
     static const int kCustomTextureNameMax = 100;
     static const int kSystemTextureMax = 11;
     static const int kNameSize = 20;
-    static const int kDescriptionSize = 256;
+    static const int kCommentSize = 256;
     static const int kBoneCategoryNameSize = 50;
     static const float kMinBoneWeight;
     static const float kMinFaceWeight;
@@ -606,11 +606,11 @@ private:
     void updateToon(const Vector3 &lightPosition);
     void updateIndices();
 
-    uint8_t m_name[kNameSize];
-    uint8_t m_comment[kDescriptionSize];
-    uint8_t m_englishName[kNameSize];
-    uint8_t m_englishComment[kDescriptionSize];
-    uint8_t m_textures[kCustomTextureMax][kCustomTextureNameMax];
+    uint8_t m_name[kNameSize + 1];
+    uint8_t m_comment[kCommentSize + 1];
+    uint8_t m_englishName[kNameSize + 1];
+    uint8_t m_englishComment[kCommentSize + 1];
+    uint8_t m_textures[kCustomTextureMax][kCustomTextureNameMax + 1];
     VertexList m_vertices;
     IndexList m_indices;
     MaterialList m_materials;

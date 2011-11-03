@@ -54,7 +54,7 @@ namespace vpvl
 
 struct RigidBodyChunk
 {
-    uint8_t name[Constraint::kNameSize];
+    uint8_t name[RigidBody::kNameSize];
     uint16_t boneID;
     uint8_t collisionGroupID;
     uint16_t collsionMask;
@@ -196,7 +196,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
 #ifndef VPVL_NO_BULLET
     RigidBodyChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    setName(chunk.name);
     uint16_t boneID = chunk.boneID;
     uint8_t collisionGroupID = chunk.collisionGroupID;
     uint16_t collisionMask = chunk.collsionMask;
@@ -326,7 +326,7 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
 void RigidBody::write(uint8_t *data) const
 {
     RigidBodyChunk chunk;
-    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
     chunk.boneID = m_noBone ? 0xffff : m_bone->id();
     chunk.collisionGroupID = m_collisionGroupID;
     chunk.collsionMask = m_groupMask;

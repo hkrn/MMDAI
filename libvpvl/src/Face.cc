@@ -59,7 +59,7 @@ struct FaceVertexChunk
 
 struct FaceChunk
 {
-    uint8_t name[20];
+    uint8_t name[Face::kNameSize];
     int nvertices;
     uint8_t type;
 };
@@ -109,7 +109,7 @@ void Face::read(const uint8_t *data)
 {
     FaceChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    setName(chunk.name);
     const int nvertices = chunk.nvertices;
     Type type = static_cast<Type>(chunk.type);
     m_type = type;
@@ -148,7 +148,7 @@ void Face::write(uint8_t *data) const
 {
     FaceChunk chunk;
     int nvertices = m_vertices.count();
-    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
     chunk.nvertices = nvertices;
     chunk.type = m_type;
     uint8_t *ptr = data;

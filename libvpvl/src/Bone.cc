@@ -133,7 +133,7 @@ void Bone::read(const uint8_t *data, int16_t id)
 {
     BoneChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    copyBytesSafe(m_name, chunk.name, sizeof(m_name));
+    setName(chunk.name);
     Type type = static_cast<Type>(chunk.type);
     int16_t targetBoneID = chunk.targetBoneID;
 
@@ -168,7 +168,7 @@ void Bone::read(const uint8_t *data, int16_t id)
 void Bone::write(uint8_t *data) const
 {
     BoneChunk chunk;
-    copyBytesSafe(chunk.name, m_name, sizeof(chunk.name));
+    internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
     chunk.parentBoneID = m_parentBoneID;
     chunk.childBoneID = m_childBoneID;
     chunk.type = m_type;

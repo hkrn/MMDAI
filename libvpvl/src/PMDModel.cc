@@ -66,8 +66,8 @@ struct Header
 {
     uint8_t signature[3];
     float version;
-    uint8_t name[20];
-    uint8_t comment[256];
+    uint8_t name[PMDModel::kNameSize];
+    uint8_t comment[PMDModel::kCommentSize];
 };
 #pragma pack(pop)
 
@@ -684,14 +684,14 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
         const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * Face::kNameSize : 0;
         const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneFrames;
         const size_t required = englishBoneNamesSize + englishFaceNamesSize + englishBoneCategoryNameSize;
-        if ((required + kNameSize + kDescriptionSize) > rest) {
+        if ((required + kNameSize + kCommentSize) > rest) {
             m_error = kEnglishNamesError;
             return false;
         }
         info.englishNamePtr = ptr;
         ptr += kNameSize;
         info.englishCommentPtr = ptr;
-        ptr += kDescriptionSize;
+        ptr += kCommentSize;
         info.englishBoneNamesPtr = ptr;
         ptr += englishBoneNamesSize;
         info.englishFaceNamesPtr = ptr;
@@ -796,7 +796,7 @@ size_t PMDModel::estimateSize() const
     const size_t englishBoneNamesSize = Bone::kNameSize * nbones;
     const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneCategories;
     const size_t englishFaceNamesSize = nfaces > 0 ? (nfaces - 1) * Face::kNameSize : 0;
-    size += kNameSize + kDescriptionSize + englishBoneNamesSize
+    size += kNameSize + kCommentSize + englishBoneNamesSize
             + englishFaceNamesSize + englishBoneCategoryNameSize;
     return size;
 }
@@ -892,10 +892,10 @@ void PMDModel::save(uint8_t *data) const
         hasEnglish = 1;
         internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&hasEnglish), sizeof(hasEnglish));
         ptr += sizeof(hasEnglish);
-        internal::copyBytes(ptr, m_englishName, sizeof(m_englishName));
-        ptr += sizeof(m_englishName);
-        internal::copyBytes(ptr, m_englishComment, sizeof(m_englishComment));
-        ptr += sizeof(m_englishComment);
+        internal::copyBytes(ptr, m_englishName, kNameSize);
+        ptr += kNameSize;
+        internal::copyBytes(ptr, m_englishComment, kCommentSize);
+        ptr += kCommentSize;
         for (int i = 0; i < nbones; i++) {
             internal::copyBytes(ptr, m_bones.at(i)->englishName(), Bone::kNameSize);
             ptr += Bone::kNameSize;
