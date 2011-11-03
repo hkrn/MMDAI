@@ -245,8 +245,16 @@ public:
      */
     void advanceMotion(float deltaFrame);
 
+    /**
+     * Update skin vertices, toon texture coordinates and edge vertices of the model.
+     */
     void updateSkins();
+
+    /**
+     * Update skins and transforms all bones and faces of the model without seeking the motion.
+     */
     void updateImmediate();
+
     float boundingSphereRange(Vector3 &center);
 
     /**
@@ -348,6 +356,43 @@ public:
     const void *edgeVerticesPointer() const;
 
     /**
+     * Returns the texture name of the index.
+     *
+     * @param index Index of the texture
+     * @return Texture name of the index
+     */
+    const uint8_t *toonTexture(int index) const;
+
+    /**
+     * Sets texture names of the model.
+     *
+     * setToonTextures() requires (PMDModel::kCustomTextureNameMax * 10) bytes buffer.
+     *
+     * @param texture names to set
+     */
+    void setToonTextures(const uint8_t *ptr);
+
+    /**
+     * Return the bone of the name.
+     *
+     * If the bone of the name is not found, returns 0.
+     *
+     * @param name Name to find the bone
+     * @return Bone pointer of the name
+     */
+    Bone *findBone(const uint8_t *name) const;
+
+    /**
+     * Return the face of the name.
+     *
+     * If the face of the name is not found, returns 0.
+     *
+     * @param name Name to find the face
+     * @return Face pointer of the name
+     */
+    Face *findFace(const uint8_t *name) const;
+
+    /**
      * parse and validate if the buffer can load as a model from memory.
      *
      * @param data The buffer to load
@@ -444,11 +489,6 @@ public:
     BoneList *mutableBones() {
         return &m_bones;
     }
-    const uint8_t *toonTexture(int index) const {
-        if (index >= kSystemTextureMax)
-            return NULL;
-        return m_textures[index];
-    }
     const Bone &rootBone() const {
         return m_rootBone;
     }
@@ -484,16 +524,6 @@ public:
     }
     PMDModelUserData *userData() const {
         return m_userData;
-    }
-    Bone *findBone(const uint8_t *name) const {
-        const HashString key(reinterpret_cast<const char *>(name));
-        Bone **ptr = const_cast<Bone **>(m_name2bone.find(key));
-        return ptr ? *ptr : 0;
-    }
-    Face *findFace(const uint8_t *name) const {
-        const HashString key(reinterpret_cast<const char *>(name));
-        Face **ptr = const_cast<Face **>(m_name2face.find(key));
-        return ptr ? *ptr : 0;
     }
     Error error() const {
         return m_error;
@@ -545,13 +575,6 @@ public:
         copyBytesSafe(m_englishComment, value, sizeof(m_englishComment));
     }
 
-    void setToonTextures(const uint8_t *ptr) {
-        uint8_t *p = const_cast<uint8_t *>(ptr);
-        for (int i = 0; i < 10; i++) {
-            copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
-            p += sizeof(m_textures[i]);
-        }
-    }
     void setBaseBone(Bone *value) {
         m_baseBone = value;
     }

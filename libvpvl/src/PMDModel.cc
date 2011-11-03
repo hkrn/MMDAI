@@ -1288,4 +1288,34 @@ const void *PMDModel::edgeVerticesPointer() const
     return &m_edgeVertices[0];
 }
 
+const uint8_t *PMDModel::toonTexture(int index) const
+{
+    if (index >= kSystemTextureMax)
+        return 0;
+    return m_textures[index];
+}
+
+void PMDModel::setToonTextures(const uint8_t *ptr)
+{
+    uint8_t *p = const_cast<uint8_t *>(ptr);
+    for (int i = 0; i < 10; i++) {
+        copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
+        p += kCustomTextureNameMax;
+    }
+}
+
+Bone *PMDModel::findBone(const uint8_t *name) const
+{
+    const HashString key(reinterpret_cast<const char *>(name));
+    Bone **ptr = const_cast<Bone **>(m_name2bone.find(key));
+    return ptr ? *ptr : 0;
+}
+
+Face *PMDModel::findFace(const uint8_t *name) const
+{
+    const HashString key(reinterpret_cast<const char *>(name));
+    Face **ptr = const_cast<Face **>(m_name2face.find(key));
+    return ptr ? *ptr : 0;
+}
+
 }
