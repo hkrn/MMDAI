@@ -149,7 +149,15 @@ void Material::read(const uint8_t *data)
 void Material::write(uint8_t *data) const
 {
     MaterialChunk chunk;
-    internal::copyBytes(chunk.textureName, m_rawName, sizeof(chunk.textureName));
+    if (m_subTextureName) {
+        uint8_t name[kNameSize + 1], *p;
+        snprintf(reinterpret_cast<char *>(name), sizeof(name),
+                 "%s*%s", m_mainTextureName, m_subTextureName);
+        internal::copyBytes(chunk.textureName, name, sizeof(chunk.textureName));
+    }
+    else {
+        internal::copyBytes(chunk.textureName, m_mainTextureName, sizeof(chunk.textureName));
+    }
     chunk.diffuse[0] = m_diffuse.x();
     chunk.diffuse[1] = m_diffuse.y();
     chunk.diffuse[2] = m_diffuse.z();
