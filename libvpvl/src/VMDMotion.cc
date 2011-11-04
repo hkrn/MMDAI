@@ -52,8 +52,8 @@ const float VMDMotion::kDefaultPriority = 0.0f;
 
 VMDMotion::VMDMotion()
     : m_model(0),
-      m_error(kNoError),
       m_status(kRunning),
+      m_error(kNoError),
       m_onEnd(2),
       m_loopAt(kDefaultLoopAtFrame),
       m_priority(kDefaultPriority),
