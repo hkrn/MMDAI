@@ -20,7 +20,6 @@ exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highg
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 win32:LIBS += -lglew32
-unix:LIBS += -lGLEW
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../libvpvl/debug/include ../bullet/src
@@ -97,6 +96,7 @@ else:linux-* {
   QMA_RPATH = $$join(QMAKE_RPATHDIR, ":")
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
+   LIBS += -lGLEW
 }
 
 SOURCES += main.cc\
