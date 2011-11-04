@@ -116,8 +116,14 @@ void CameraKeyFrame::read(const uint8_t *data)
 {
     CameraKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+#ifdef VPVL_BUILD_IOS
+    float pos[3], angle[3];
+    memcpy(pos, &chunk.position, sizeof(pos));
+    memcpy(angle, &chunk.angle, sizeof(angle));
+#else
     float *pos = chunk.position;
     float *angle = chunk.angle;
+#endif
 
     m_frameIndex = static_cast<float>(chunk.frameIndex);
     m_fovy = static_cast<float>(chunk.viewAngle);

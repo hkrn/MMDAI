@@ -110,8 +110,14 @@ void BoneKeyFrame::read(const uint8_t *data)
     BoneKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     setName(chunk.name);
+#ifdef VPVL_BUILD_IOS
+    float pos[3], rot[4];
+    memcpy(pos, &chunk.position, sizeof(pos));
+    memcpy(rot, &chunk.rotation, sizeof(rot));
+#else
     float *pos = chunk.position;
     float *rot = chunk.rotation;
+#endif
 
     m_frameIndex = static_cast<float>(chunk.frameIndex);
 #ifdef VPVL_COORDINATE_OPENGL

@@ -79,7 +79,11 @@ void FaceKeyFrame::read(const uint8_t *data)
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     setName(chunk.name);
     m_frameIndex = static_cast<float>(chunk.frameIndex);
+#ifdef VPVL_BUILD_IOS
+    memcpy(&m_weight, &chunk.weight, sizeof(m_weight));
+#else
     m_weight = chunk.weight;
+#endif
 }
 
 void FaceKeyFrame::write(uint8_t *data) const
