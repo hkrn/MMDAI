@@ -125,7 +125,10 @@ Windows と Linux は手動でパッケージングする必要があります�
 
 <pre><code>cd QMA2-qmake-build-desktop
 mkdir Locales
+cp -r $QT_PLUGINS Plugins
+rm -rf Plugins/bearer Plugins/graphicssystems Plugins/qmltooling
 cp ../QMA2/resources/translations/MMDAI2_ja.qm Locales
+zip -r MMDAI2.zip MMDAI* Plugins Locales
 </code></pre>
 
 MacOSX は osx_deploy.sh でデプロイ可能です。実行するとフレームワーク及びライブラリが全て入った MMDAI.app と
