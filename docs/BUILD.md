@@ -94,3 +94,43 @@ alias assimp_prod='cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON -DENABLE_BOOST_WORKAROUND=
 alias opencv_dev='cmake -DBUILD_SHARED_LIBS=ON -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE="Debug"'
 alias opencv_prod='cmake -DBUILD_SHARED_LIBS=ON-DBUILD_TESTS=OFF -DOPENCV_BUILD_3RDPARTY_LIBS=TRUE -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
 </code></pre>
+
+QMA2 (a.k.a VPVM or MMDAI2)
+===========================
+Qt を全面的に使用しているため、Qt の 4.7 以降がインストールされている必要があります。
+
+## 翻訳ファイルをの作成
+lrelease を使った方法です。Linguist を使う場合は QMA2/resources/translations/MMDAI2.ts を読み込み、
+QMA2/resources/translations/MMDAI2_ja.qm としてリリースしてください。
+
+<pre><code>cd QMA2/resources/translations
+lrelease MMDAI2.ts -qm MMDAI2_ja.qm
+</code></pre>
+
+## ビルド
+qmake を使った方法です。QtCreator を使う場合は QMA2.pro を読み込ませてください。ここでは QMA2 があるディレクトリに
+事前にビルドするディレクトリを作成します。MacOSX の場合はパッケージングを行うスクリプトの関係で QMA2-release-build か
+QMA2-debug-build という名前でディレクトリを作成する必要があります。
+
+<pre><code># 事前にビルドするディレクトリを作成する
+mkdir QMA2-release-build
+cd QMA2-release-build
+# Visual Studio のプロジェクトとして作成する場合は "qmake -tp vc"
+qmake ../QMA2/QMA2.pro
+make
+</code></pre>
+
+## パッケージング
+Windows と Linux は手動でパッケージングする必要があります。
+
+<pre><code>cd QMA2-qmake-build-desktop
+mkdir Locales
+cp ../QMA2/resources/translations/MMDAI2_ja.qm Locales
+</code></pre>
+
+MacOSX は osx_deploy.sh でデプロイ可能です。実行するとフレームワーク及びライブラリが全て入った MMDAI.app と
+そのディスクイメージファイルである MMDAI2.dmg が作成されます。
+
+<pre><code>cd QMA2-release-build
+../scripts/osx_deploy.sh
+</code></pre>
