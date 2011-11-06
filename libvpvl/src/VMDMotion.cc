@@ -326,7 +326,7 @@ void VMDMotion::reset()
     m_status = kRunning;
 }
 
-int VMDMotion::maxFrameIndex() const
+float VMDMotion::maxFrameIndex() const
 {
     return btMax(m_boneMotion.maxIndex(), m_faceMotion.maxIndex());
 }

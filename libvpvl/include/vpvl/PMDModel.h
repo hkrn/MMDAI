@@ -219,7 +219,7 @@ public:
      *
      * @return max frame index
      */
-    int maxFrameIndex() const;
+    float maxFrameIndex() const;
 
     /**
      * Check whether all motions of the model are reached to the frame index.

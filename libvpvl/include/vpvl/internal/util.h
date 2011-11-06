@@ -194,6 +194,16 @@ inline void zerofill(void *ptr, size_t size)
 #endif
 }
 
+inline int snprintf(uint8_t *buffer, size_t size, const char *format, ...)
+{
+    assert(buffer != NULL && size > 0);
+    va_list ap;
+    va_start(ap, format);
+    int ret = vsnprintf(reinterpret_cast<char *>(buffer), size, format, ap);
+    va_end(ap);
+    return ret;
+}
+
 }
 }
 

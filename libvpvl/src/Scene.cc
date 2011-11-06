@@ -322,10 +322,10 @@ void Scene::resetMotion()
     }
 }
 
-int Scene::maxFrameIndex() const
+float Scene::maxFrameIndex() const
 {
     const int nmodels = m_models.count();
-    int max = 0;
+    float max = 0.0f;
     for (int i = 0; i < nmodels; i++)
         btSetMax(max, m_models[i]->maxFrameIndex());
     return max;

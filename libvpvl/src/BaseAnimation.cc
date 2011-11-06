@@ -120,7 +120,7 @@ void BaseAnimation::replaceKeyFrame(BaseKeyFrame *frame)
     addKeyFrame(frame);
 }
 
-void BaseAnimation::deleteKeyFrame(int frameIndex, const uint8_t *value)
+void BaseAnimation::deleteKeyFrame(float frameIndex, const uint8_t *value)
 {
     const int nframes = m_frames.count();
     const size_t len = strlen(reinterpret_cast<const char *>(value));

@@ -121,7 +121,7 @@ public:
     void seek(float frameIndex);
     void advance(float deltaFrame);
     void reset();
-    int maxFrameIndex() const;
+    float maxFrameIndex() const;
     bool isReachedTo(float frameIndex) const;
     bool isFull() const;
     void setFull(bool value);

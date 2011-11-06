@@ -210,12 +210,12 @@ void CameraKeyFrame::setInterpolationParameter(InterpolationType type, int8_t x1
         // x2 => QuadWord#y():1
         // y1 => QuadWord#z():2
         // y2 => QuadWord#w():3
-        table[i * kMax + kX] = m_parameter.x[i];
-        table[i * kMax + kY] = m_parameter.y[i];
-        table[i * kMax + kZ] = m_parameter.z[i];
-        table[i * kMax + kRotation] = m_parameter.rotation[i];
-        table[i * kMax + kDistance] = m_parameter.distance[i];
-        table[i * kMax + kFovy] = m_parameter.fovy[i];
+        table[i * kMax + kX] = static_cast<int8_t>(m_parameter.x[i]);
+        table[i * kMax + kY] = static_cast<int8_t>(m_parameter.y[i]);
+        table[i * kMax + kZ] = static_cast<int8_t>(m_parameter.z[i]);
+        table[i * kMax + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
+        table[i * kMax + kDistance] = static_cast<int8_t>(m_parameter.distance[i]);
+        table[i * kMax + kFovy] = static_cast<int8_t>(m_parameter.fovy[i]);
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));

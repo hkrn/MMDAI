@@ -534,7 +534,7 @@ public:
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setHasColor(bool value) {
-        glUniform1f(m_hasColorVertexUniformLocation, value ? 1 : 0);
+        glUniform1i(m_hasColorVertexUniformLocation, value ? 1 : 0);
     }
     void setNormalMatrix(const float value[16]) {
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);

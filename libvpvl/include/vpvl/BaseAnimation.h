@@ -157,7 +157,7 @@ public:
      * @param frameIndex A frame index to delete
      * @param name A name to delete
      */
-    void deleteKeyFrame(int frameIndex, const uint8_t *name);
+    void deleteKeyFrame(float frameIndex, const uint8_t *name);
 
     /**
      * Delete key frames associated with an index.

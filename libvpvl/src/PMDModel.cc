@@ -272,10 +272,10 @@ void PMDModel::resetMotion()
     updateBoneFromSimulation();
 }
 
-int PMDModel::maxFrameIndex() const
+float PMDModel::maxFrameIndex() const
 {
     const int nmotions = m_motions.count();
-    int max = 0;
+    float max = 0.0f;
     for (int i = 0; i < nmotions; i++)
         btSetMax(max, m_motions[i]->maxFrameIndex());
     return max;

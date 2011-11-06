@@ -95,7 +95,7 @@ public:
     void setWorld(btDiscreteDynamicsWorld *world);
     void advanceMotion(float deltaFrame);
     void resetMotion();
-    int maxFrameIndex() const;
+    float maxFrameIndex() const;
     bool isMotionFinished() const;
     bool isMotionReachedTo(float frameIndex) const;
     void updateModelView(int ellapsedTimeForMove);

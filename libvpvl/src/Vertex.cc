@@ -147,7 +147,7 @@ void Vertex::write(uint8_t *data) const
     chunk.v = m_v;
     chunk.parentBoneID = m_bone1;
     chunk.childBoneID = m_bone2;
-    chunk.weight = m_weight * 100.0f;
+    chunk.weight = static_cast<uint8_t>(m_weight * 100.0f);
     chunk.edge = m_edge ? 0 : 1;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }

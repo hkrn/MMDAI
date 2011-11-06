@@ -150,9 +150,8 @@ void Material::write(uint8_t *data) const
 {
     MaterialChunk chunk;
     if (m_subTextureName) {
-        uint8_t name[kNameSize + 1], *p;
-        snprintf(reinterpret_cast<char *>(name), sizeof(name),
-                 "%s*%s", m_mainTextureName, m_subTextureName);
+        uint8_t name[kNameSize + 1];
+        internal::snprintf(name, sizeof(name), "%s*%s", m_mainTextureName, m_subTextureName);
         internal::copyBytes(chunk.textureName, name, sizeof(chunk.textureName));
     }
     else {
