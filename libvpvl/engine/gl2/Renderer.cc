@@ -184,7 +184,7 @@ public:
             m_colorUniformLocation = glGetUniformLocation(m_program, "color");
         return ret;
     }
-    void setColor(const btVector3 &value) {
+    void setColor(const Vector3 &value) {
         glUniform4fv(m_colorUniformLocation, 1, value);
     }
 
@@ -232,19 +232,19 @@ public:
         }
         return ret;
     }
-    void setLightColor(const btVector4 &value) {
+    void setLightColor(const Color &value) {
         glUniform4fv(m_lightColorUniformLocation, 1, value);
     }
-    void setLightPosition(const btVector3 &value) {
+    void setLightPosition(const Vector3 &value) {
         glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
-    void setLightAmbient(const btVector4 &value) {
+    void setLightAmbient(const Color &value) {
         glUniform4fv(m_lightAmbientUniformLocation, 1, value);
     }
-    void setLightDiffuse(const btVector4 &value) {
+    void setLightDiffuse(const Color &value) {
         glUniform4fv(m_lightDiffuseUniformLocation, 1, value);
     }
-    void setLightSpecular(const btVector4 &value) {
+    void setLightSpecular(const Color &value) {
         glUniform4fv(m_lightSpecularUniformLocation, 1, value);
     }
 
@@ -345,13 +345,13 @@ public:
     void setNormalMatrix(const float value[9]) {
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setMaterialAmbient(const btVector4 &value) {
+    void setMaterialAmbient(const Color &value) {
         glUniform4fv(m_materialAmbientUniformLocation, 1, value);
     }
-    void setMaterialDiffuse(const btVector4 &value) {
+    void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
-    void setMaterialSpecular(const btVector4 &value) {
+    void setMaterialSpecular(const Color &value) {
         glUniform4fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(float value) {
@@ -542,16 +542,16 @@ public:
     void setTransformMatrix(const float value[9]) {
         glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setMaterialAmbient(const btVector4 &value) {
+    void setMaterialAmbient(const Color &value) {
         glUniform4fv(m_materialAmbientUniformLocation, 1, value);
     }
-    void setMaterialDiffuse(const btVector4 &value) {
+    void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
-    void setMaterialEmission(const btVector4 &value) {
+    void setMaterialEmission(const Color &value) {
         glUniform4fv(m_materialEmissionUniformLocation, 1, value);
     }
-    void setMaterialSpecular(const btVector4 &value) {
+    void setMaterialSpecular(const Color &value) {
         glUniform4fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(float value) {
@@ -593,10 +593,10 @@ namespace
 {
 struct AssetVertex
 {
-    btVector3 position;
-    btVector3 normal;
-    btVector3 texcoord;
-    btVector4 color;
+    vpvl::Vector3 position;
+    vpvl::Vector3 normal;
+    vpvl::Vector3 texcoord;
+    vpvl::Color color;
 };
 struct AssetVBO
 {
@@ -717,34 +717,34 @@ void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl
         program->setTexture(0);
     }
     aiColor4D ambient, diffuse, emission, specular;
-    btVector4 color(0.0f, 0.0f, 0.0f, 0.0f);
+    vpvl::Color color(0.0f, 0.0f, 0.0f, 0.0f);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
         color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
         program->setMaterialAmbient(color);
     }
     else {
-        program->setMaterialAmbient(btVector4(0.2f, 0.2f, 0.2f, 1.0f));
+        program->setMaterialAmbient(vpvl::Color(0.2f, 0.2f, 0.2f, 1.0f));
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
         program->setMaterialDiffuse(color);
     }
     else {
-        program->setMaterialDiffuse(btVector4(0.8f, 0.8f, 0.8f, 1.0f));
+        program->setMaterialDiffuse(vpvl::Color(0.8f, 0.8f, 0.8f, 1.0f));
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
         color.setValue(emission.r, emission.g, emission.b, emission.a);
         program->setMaterialEmission(color);
     }
     else {
-        program->setMaterialEmission(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
+        program->setMaterialEmission(vpvl::Color(0.0f, 0.0f, 0.0f, 1.0f));
     }
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
         color.setValue(specular.r, specular.g, specular.b, specular.a);
         program->setMaterialSpecular(color);
     }
     else {
-        program->setMaterialSpecular(btVector4(0.0f, 0.0f, 0.0f, 1.0f));
+        program->setMaterialSpecular(vpvl::Color(0.0f, 0.0f, 0.0f, 1.0f));
     }
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
@@ -784,11 +784,11 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     aiVector3D aiS, aiP;
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
-    btTransform transform(btMatrix3x3(btQuaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
-                          .scaled(btVector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
-                          btVector3(aiP.x,aiP.y, aiP.z) + asset->position());
+    vpvl::Transform transform(btMatrix3x3(vpvl::Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
+                              .scaled(vpvl::Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
+                              vpvl::Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
     if (bone) {
-        const btTransform &boneTransform = bone->localTransform();
+        const vpvl::Transform &boneTransform = bone->localTransform();
         transform.setBasis(boneTransform.getBasis() * transform.getBasis());
         transform.setOrigin(boneTransform.getOrigin() + transform.getOrigin());
     }
@@ -1187,7 +1187,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     const vpvl::MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const int nmaterials = materials.count();
-    btVector4 average, ambient, diffuse, specular;
+    Color average, ambient, diffuse, specular;
     size_t offset = 0;
 
     for (int i = 0; i < nmaterials; i++) {
