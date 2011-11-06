@@ -457,17 +457,19 @@ void PMDModel::updateImmediate()
 void PMDModel::updateIndices()
 {
     const int nindices = m_indices.count();
-    m_indicesPointer = new uint16_t[nindices];
-    internal::copyBytes(reinterpret_cast<uint8_t *>(m_indicesPointer),
-                        reinterpret_cast<const uint8_t *>(&m_indices[0]),
-                        sizeof(uint16_t) * nindices);
+    if (nindices > 0) {
+        m_indicesPointer = new uint16_t[nindices];
+        internal::copyBytes(reinterpret_cast<uint8_t *>(m_indicesPointer),
+                            reinterpret_cast<const uint8_t *>(&m_indices[0]),
+                            sizeof(uint16_t) * nindices);
 #ifdef VPVL_COORDINATE_OPENGL
-    for (int i = 0; i < nindices; i += 3) {
-        const uint16_t index = m_indicesPointer[i];
-        m_indicesPointer[i] = m_indicesPointer[i + 1];
-        m_indicesPointer[i + 1] = index;
-    }
+        for (int i = 0; i < nindices; i += 3) {
+            const uint16_t index = m_indicesPointer[i];
+            m_indicesPointer[i] = m_indicesPointer[i + 1];
+            m_indicesPointer[i + 1] = index;
+        }
 #endif
+    }
 }
 
 float PMDModel::boundingSphereRange(Vector3 &center)
