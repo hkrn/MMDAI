@@ -379,18 +379,38 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
 {
     const QString &right = "右";
     const QString &left = "左";
+    QHash<QString, int> registered;
     if (m_model && m_motion && m_frames.count() != 0) {
         KeyFramePairList frames;
         const int nframes = m_frames.count();
         for (int i = 0; i < nframes; i++) {
-            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
+            vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]), *newFrame = 0;
             const QString name = internal::toQString(frame);
-            if (name.startsWith(right) || name.startsWith(left)) {
-                vpvl::Quaternion rotation = frame->rotation();
-                //rotation.setValue(rotation.x(), -rotation.y(), -rotation.z());
-                frame->setRotation(rotation);
+            if (!registered.contains(name)) {
+                bool isRight = name.startsWith(right);
+                bool isLeft = name.startsWith(left);
+                if (isRight || isLeft) {
+                    QString key = name;
+                    if (isRight)
+                        key.replace(right, left);
+                    else if (isLeft)
+                        key.replace(left, right);
+                    QByteArray bytes = internal::fromQString(key);
+                    newFrame = static_cast<vpvl::BoneKeyFrame *>(frame->clone());
+                    newFrame->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                    vpvl::Vector3 position = newFrame->position();
+                    position.setValue(-position.x(), position.y(), position.z());
+                    newFrame->setPosition(position);
+                    vpvl::Quaternion rotation = newFrame->rotation();
+                    rotation.setValue(rotation.x(), -rotation.y(), -rotation.z(), rotation.w());
+                    newFrame->setRotation(rotation);
+                    registered[key] = 1;
+                }
             }
-            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+            else {
+                newFrame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]->clone());
+            }
+            frames.append(KeyFramePair(frameIndex, KeyFramePtr(newFrame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
     }
@@ -576,9 +596,11 @@ void BoneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
     if (index.isValid()) {
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         vpvl::Bone *bone = item->bone();
-        if (bone)
-            m_motion->mutableBoneAnimation()->deleteKeyFrame(index.column(), bone->name());
-        setData(index, kInvalidData, Qt::EditRole);
+        if (bone) {
+            vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
+            animation->deleteKeyFrame(toFrameIndex(index), bone->name());
+        }
+        setData(index, kInvalidData);
     }
 }
 

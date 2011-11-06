@@ -459,8 +459,10 @@ void FaceMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
     if (index.isValid()) {
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         vpvl::Face *face = item->face();
-        if (face)
-            m_motion->mutableFaceAnimation()->deleteKeyFrame(index.column(), face->name());
+        if (face) {
+            vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
+            animation->deleteKeyFrame(toFrameIndex(index), face->name());
+        }
         setData(index, kInvalidData, Qt::EditRole);
     }
 }
