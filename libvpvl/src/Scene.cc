@@ -81,10 +81,10 @@ Scene::Scene(int width, int height, int fps)
       m_rotation(m_currentRotation),
       m_viewMoveRotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
-      m_lightPosition(0.5f, 1.0f, 0.5f, 1.0f),
       m_lightAmbient(1.0f, 1.0f, 1.0f, 1.0f),
       m_lightDiffuse(1.0f, 1.0f, 1.0f, 1.0f),
       m_lightSpecular(1.0f, 1.0f, 1.0f, 1.0f),
+      m_lightPosition(0.5f, 1.0f, 0.5f),
       m_currentPosition(0.0f, 10.0f, 0.0f),
       m_position(m_currentPosition),
       m_viewMovePosition(m_currentPosition),
@@ -234,7 +234,7 @@ void Scene::setLightComponent(const Vector4 &ambient, const Vector4 &diffuse, co
 void Scene::setLightSource(const Vector4 &color, const Vector3 &position)
 {
     m_lightColor = color;
-    m_lightPosition.setValue(position.x(), position.y(), position.z(), 1.0f);
+    m_lightPosition.setValue(position.x(), position.y(), position.z());
     const int nmodels = m_models.count();
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];

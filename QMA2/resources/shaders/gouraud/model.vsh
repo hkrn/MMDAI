@@ -5,10 +5,10 @@ uniform mat4 projectionMatrix;
 uniform mat4 biasMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 lightColor;
-uniform vec4 lightPosition;
 uniform vec4 lightAmbient;
 uniform vec4 lightDiffuse;
 uniform vec4 lightSpecular;
+uniform vec3 lightPosition;
 uniform vec4 materialAmbient;
 uniform vec4 materialDiffuse;
 uniform vec4 materialSpecular;
@@ -30,29 +30,30 @@ const float kOne = 1.0;
 const float kHalf = 0.5;
 const float kZero = 0.0;
 
-vec2 makeSphereMap(vec4 position, vec3 normal) {
-    vec3 R = reflect(position.xyz, normal);
+vec2 makeSphereMap(vec3 position, vec3 normal) {
+    vec3 R = reflect(position, normal);
     float M = kTwo * sqrt(R.x * R.x + R.y * R.y + (R.z + kOne) * (R.z + kOne));
     return vec2(R.x / M + kHalf, R.y / M + kHalf);
 }
 
 void main() {
     vec4 position = modelViewMatrix * inPosition;
-    vec3 light = normalize(normalize((modelViewMatrix * lightPosition).xyz) - position.xyz);
+    vec3 view = normalize(position.xyz);
+    vec3 light = normalize(normalMatrix * lightPosition - position.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 color = (lightColor * lightIntensity * kTwo) * materialAmbient;
+    vec4 color = lightColor * lightAmbient * materialAmbient;
     float diffuse = max(dot(normal, light), kZero);
     if (diffuse != kZero) {
-        vec3 view = normalize(position.xyz);
         vec3 halfway = normalize(light - view);
         float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
-        color += (lightColor * lightIntensity) * materialSpecular * specular;
+        //color += lightDiffuse * materialDiffuse * diffuse;
+        color += lightSpecular * materialSpecular * specular;
     }
     vec4 outPosition = projectionMatrix * position;
     outColor = color;
     outShadowTexCoord = biasMatrix * outPosition;
-    outMainTexCoord = isMainSphereMap ? makeSphereMap(position, normal) : inTexCoord;
-    outSubTexCoord = isSubSphereMap ? makeSphereMap(position, normal) : inTexCoord;
+    outMainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
+    outSubTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     outToonTexCoord = inToonTexCoord;
     gl_Position = outPosition;
 }

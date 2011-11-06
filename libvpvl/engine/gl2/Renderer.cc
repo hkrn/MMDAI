@@ -235,8 +235,8 @@ public:
     void setLightColor(const btVector4 &value) {
         glUniform4fv(m_lightColorUniformLocation, 1, value);
     }
-    void setLightPosition(const btVector4 &value) {
-        glUniform4fv(m_lightPositionUniformLocation, 1, value);
+    void setLightPosition(const btVector3 &value) {
+        glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
     void setLightAmbient(const btVector4 &value) {
         glUniform4fv(m_lightAmbientUniformLocation, 1, value);
@@ -813,7 +813,7 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setLightAmbient(s->lightAmbient());
     program->setLightColor(s->lightColor());
     program->setLightDiffuse(s->lightDiffuse());
-    program->setLightPosition(s->lightPosition4());
+    program->setLightPosition(s->lightPosition());
     program->setLightSpecular(s->lightSpecular());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -1166,7 +1166,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setLightAmbient(m_scene->lightAmbient());
     m_modelProgram->setLightColor(m_scene->lightColor());
     m_modelProgram->setLightDiffuse(m_scene->lightDiffuse());
-    m_modelProgram->setLightPosition(m_scene->lightPosition4());
+    m_modelProgram->setLightPosition(m_scene->lightPosition());
     m_modelProgram->setLightSpecular(m_scene->lightSpecular());
     m_modelProgram->setLightIntensity(m_scene->lightIntensity());
     if (m_depthTextureID && m_frameBufferID) {
