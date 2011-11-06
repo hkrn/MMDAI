@@ -98,8 +98,8 @@ static void TestFace(vpvl::Face &face)
 static void TestMaterial(const vpvl::Material &material, const QString &path)
 {
     QCOMPARE(QString(reinterpret_cast<const char *>(material.rawName())), QString(path));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.mainTextureName())), QString("main.sph"));
-    QCOMPARE(QString(reinterpret_cast<const char *>(material.subTextureName())), QString("sub.spa"));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.mainTextureName())), QString("main12.sph"));
+    QCOMPARE(QString(reinterpret_cast<const char *>(material.subTextureName())), QString("sub12.spa"));
     QVERIFY(material.ambient() == btVector4(0.8f, 0.9f, 1.0f, 1.0f));
     QVERIFY(material.averageColor() == btVector4(0.4f, 0.5f, 0.6f, 1.0f));
     QVERIFY(material.diffuse() == btVector4(0.0f, 0.1f, 0.2f, 1.0f));
@@ -343,8 +343,8 @@ void TestPMDModel::parseMaterial()
            << quint8(1)            // edge
            << quint32(2)           // nindices
               ;
-    const char path[] = "main.sph*sub.spa";
-    stream.writeRawData(path, vpvl::Material::kNameSize);
+    const char path[] = "main12.sph*sub12.spa";
+    stream.writeRawData(path, strlen(path));
     QCOMPARE(size_t(bytes.size()), vpvl::Material::stride());
     vpvl::Material material, material2;
     material.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
