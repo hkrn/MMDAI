@@ -11,6 +11,8 @@
         <array>
           <string>pmd</string>
         </array>
+        <key>CFBundleTypeIcon</key>
+        <string>@ICON@</string>
         <key>CFBundleTypeName</key>
         <string>Polygon Model Data</string>
         <key>CFBundleTypeRole</key>
@@ -23,6 +25,8 @@
         <array>
           <string>x</string>
         </array>
+        <key>CFBundleTypeIcon</key>
+        <string>@ICON@</string>
         <key>CFBundleTypeName</key>
         <string>DirectX Mesh File</string>
         <key>CFBundleTypeRole</key>
@@ -35,6 +39,8 @@
         <array>
           <string>vmd</string>
         </array>
+        <key>CFBundleTypeIcon</key>
+        <string>@ICON@</string>
         <key>CFBundleTypeName</key>
         <string>VOCALOID Motion Data</string>
         <key>CFBundleTypeRole</key>
@@ -47,6 +53,8 @@
         <array>
           <string>vpd</string>
         </array>
+        <key>CFBundleTypeIcon</key>
+        <string>@ICON@</string>
         <key>CFBundleTypeName</key>
         <string>VOCALOID Pose Data</string>
         <key>CFBundleTypeRole</key>
@@ -59,6 +67,8 @@
         <array>
           <string>vac</string>
         </array>
+        <key>CFBundleTypeIcon</key>
+        <string>@ICON@</string>
         <key>CFBundleTypeName</key>
         <string>Accessory metadata</string>
         <key>CFBundleTypeRole</key>

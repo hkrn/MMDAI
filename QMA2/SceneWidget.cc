@@ -102,6 +102,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_handles = new Handles(this);
     // must be delay to execute on initializeGL
     m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
+    connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
     setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
     setAcceptDrops(true);
