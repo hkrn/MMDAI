@@ -177,7 +177,7 @@ void VMDMotion::save(uint8_t *data) const
     internal::copyBytes(data, kSignature, kSignatureSize);
     data += kSignatureSize;
     internal::copyBytes(data, m_name, sizeof(m_name));
-    data += sizeof(m_name);
+    data += kNameSize;
     int nBoneFrames = m_boneMotion.countKeyFrames();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
     data += sizeof(nBoneFrames);
