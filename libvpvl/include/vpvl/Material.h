@@ -79,9 +79,6 @@ public:
     const Color &ambient() const {
         return m_ambient;
     }
-    const Color &averageColor() const {
-        return m_averageColor;
-    }
     const Color &diffuse() const {
         return m_diffuse;
     }
@@ -125,9 +122,6 @@ public:
     void setAmbient(const Color &value) {
         m_ambient = value;
     }
-    void setAverageColor(const Color &value) {
-        m_averageColor = value;
-    }
     void setDiffuse(const Color &value) {
         m_diffuse = value;
     }
@@ -149,7 +143,6 @@ private:
     uint8_t m_mainTextureName[kNameSize + 1];
     uint8_t m_subTextureName[kNameSize + 1];
     Color m_ambient;
-    Color m_averageColor;
     Color m_diffuse;
     Color m_specular;
     float m_opacity;

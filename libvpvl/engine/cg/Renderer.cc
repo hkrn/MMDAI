@@ -128,24 +128,14 @@ public:
     void setMaterial(const vpvl::Material *material, const vpvl::gl2::PMDModelMaterialPrivate &materialPrivate, bool enableToon) {
         Color average, ambient, diffuse, specular;
         float alpha = material->opacity();
-        if (enableToon) {
-            average = material->averageColor();
-            average.setW(average.w() * alpha);
-            specular = material->specular();
-            specular.setW(specular.w() * alpha);
-            setParameter4fv(m_materialAmbient, average);
-            setParameter4fv(m_materialDiffuse, average);
-        }
-        else {
-            ambient = material->ambient();
-            ambient.setW(ambient.w() * alpha);
-            diffuse = material->diffuse();
-            diffuse.setW(diffuse.w() * alpha);
-            specular = material->specular();
-            specular.setW(specular.w() * alpha);
-            setParameter4fv(m_materialAmbient, ambient);
-            setParameter4fv(m_materialDiffuse, diffuse);
-        }
+        ambient = material->ambient();
+        ambient.setW(ambient.w() * alpha);
+        diffuse = material->diffuse();
+        diffuse.setW(diffuse.w() * alpha);
+        specular = material->specular();
+        specular.setW(specular.w() * alpha);
+        setParameter4fv(m_materialAmbient, ambient);
+        setParameter4fv(m_materialDiffuse, diffuse);
         setParameter4fv(m_materialSpecular, specular);
         setParameter1f(m_materialShininess, material->shiness());
         cgGLSetTextureParameter(m_materialTexture, materialPrivate.mainTextureID);

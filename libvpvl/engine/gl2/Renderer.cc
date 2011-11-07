@@ -1195,26 +1195,15 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         // toon
         const float alpha = material->opacity();
-        if (enableToon) {
-            average = material->averageColor();
-            average.setW(average.w() * alpha);
-            specular = material->specular();
-            specular.setW(specular.w() * alpha);
-            m_modelProgram->setMaterialAmbient(average);
-            m_modelProgram->setMaterialDiffuse(average);
-            m_modelProgram->setMaterialSpecular(specular);
-        }
-        else {
-            ambient = material->ambient();
-            ambient.setW(ambient.w() * alpha);
-            diffuse = material->diffuse();
-            diffuse.setW(diffuse.w() * alpha);
-            specular = material->specular();
-            specular.setW(specular.w() * alpha);
-            m_modelProgram->setMaterialAmbient(ambient);
-            m_modelProgram->setMaterialDiffuse(diffuse);
-            m_modelProgram->setMaterialSpecular(specular);
-        }
+        ambient = material->ambient();
+        ambient.setW(ambient.w() * alpha);
+        diffuse = material->diffuse();
+        diffuse.setW(diffuse.w() * alpha);
+        specular = material->specular();
+        specular.setW(specular.w() * alpha);
+        m_modelProgram->setMaterialAmbient(ambient);
+        m_modelProgram->setMaterialDiffuse(diffuse);
+        m_modelProgram->setMaterialSpecular(specular);
         m_modelProgram->setMaterialShininess(material->shiness());
         m_modelProgram->setMainTexture(materialPrivate.mainTextureID);
         m_modelProgram->setToonTexture(userData->toonTextureID[material->toonID()]);
