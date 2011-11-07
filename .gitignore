@@ -35,7 +35,6 @@ Win32
 *.idb
 *.ncb
 *.pdb
-*.qm
 *.o
 *.opensdf
 *.pc

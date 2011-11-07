@@ -46,4 +46,7 @@
         <file alias="global.png">images/icons/global.png</file>
         <file alias="local.png">images/icons/local.png</file>
     </qresource>
+    <qresource prefix="/translations">
+        <file alias="MMDAI2_ja">translations/MMDAI2_ja.qm</file>
+    </qresource>
 </RCC>

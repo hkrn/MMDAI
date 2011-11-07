@@ -44,18 +44,16 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
 {
     QVBoxLayout *layout = new QVBoxLayout();
     QLabel *copyrightLabel = new QLabel();
-    copyrightLabel->setText(tr("<h3>%1 %2+alpha</h3>"
-                               "<h4>MMDAI2 is an application to edit motion compatible with MMD ("
-                               "<a href='http://www.geocities.jp/higuchuu4/index.htm'>MikuMikuDance</a> "
-                               "created by Yuu Higuchi). This doesn't intend to be the successor of MMD.</h4>"
-                               "Copyright (C) 2010-2011 "
-                               "Nagoya Institute of Technology Department of Computer Science (MMDAgent), "
-                               "hkrn (MMDAI) All rights reserved."
-                               "<br><br>"
-                               "Below table is a list of libraries MMDAI uses. "
-                               "Double click a row to show the license text or open the website")
+    copyrightLabel->setText(QString("<h3>%1 %2+alpha</h3>"
+                                    "Copyright (C) 2009-2011 Nagoya Institute of Technology Department of Computer Science (MMDAgent)<br>"
+                                    "Copyright (C) 2010-2011 hkrn (MMDAI and VPVM) All rights reserved.<br><br>%3<br><br>%4")
                             .arg(qApp->applicationName())
-                            .arg(qApp->applicationVersion()));
+                            .arg(qApp->applicationVersion())
+                            .arg(tr("MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD ("
+                                    "<a href='http://www.geocities.jp/higuchuu4/index.htm'>MikuMikuDance</a> "
+                                    "created by Yuu Higuchi). This doesn't intend to be the successor of MMD."))
+                            .arg(tr("Below table is a list of libraries MMDAI2 uses. "
+                                    "Double click a row to show the license text or open the website")));
     copyrightLabel->setWordWrap(true);
     layout->addWidget(copyrightLabel);
     QTreeView *tree = new QTreeView();
@@ -69,7 +67,6 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     tree->setModel(model);
     tree->setEditTriggers(QTreeView::NoEditTriggers);
     layout->addWidget(tree);
-#if 1
     QLabel *aboutIconLabel = new QLabel;
     aboutIconLabel->setText(
                 tr("%1's icon is based on <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>."
@@ -78,7 +75,6 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     aboutIconLabel->setOpenExternalLinks(true);
     aboutIconLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
     layout->addWidget(aboutIconLabel);
-#endif
     setWindowTitle(QString(tr("About %1")).arg(qApp->applicationName()));
     resize(600, 450);
     setLayout(layout);
@@ -97,9 +93,9 @@ LicenseWidget::~LicenseWidget()
 }
 
 void LicenseWidget::addLibrary(const QString &name,
-                                  const QString &license,
-                                  const QString &website,
-                                  const QString &path)
+                               const QString &license,
+                               const QString &website,
+                               const QString &path)
 {
     m_path.insert(name, path);
     m_model->insertRow(0);

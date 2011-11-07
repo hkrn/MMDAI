@@ -100,13 +100,8 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
     translator->load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
     app.installTranslator(translator);
     translators.append(QTranslatorPtr(translator));
-    QString base = QDir("MMDAITranslations:/").absolutePath();
     translator = new QTranslator();
-    translator->load("MMDAI1_" + locale, base);
-    app.installTranslator(translator);
-    translators.append(QTranslatorPtr(translator));
-    translator = new QTranslator();
-    translator->load("MMDAI2_" + locale, base);
+    translator->load(":/translations/MMDAI2_" + locale);
     app.installTranslator(translator);
     translators.append(QTranslatorPtr(translator));
 }
