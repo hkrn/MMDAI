@@ -248,14 +248,6 @@
 <context>
     <name>LicenseWidget</name>
     <message>
-        <source>VPVM (MMDAI2) is an application to edit or create a motion compatible with MMD (&lt;a href=&apos;http://www.geocities.jp/higuchuu4/index.htm&apos;&gt;MikuMikuDance&lt;/a&gt; created by Yuu Higuchi). This doesn&apos;t intend to be the successor of MMD.</source>
-        <translation type="obsolete">VPVM (MMDAI2) はMMD (樋口優作成の&lt;a href=&apos;http://www.geocities.jp/higuchuu4/index.htm&apos;&gt;MikuMikuDance&lt;/a&gt;) 互換のモーションを作成または編集するアプリケーションです。MMD の後継として作られていません。</translation>
-    </message>
-    <message>
-        <source>Below table is a list of libraries VPVM (MMDAI2) uses. Double click a row to show the license text or open the website</source>
-        <translation type="obsolete">以下の表は VPVM (MMDAI2) が使用しているライブラリです。行をダブルクリックすることでライセンスを表示あるいはウェブサイトに開くことができます</translation>
-    </message>
-    <message>
         <location filename="../../LicenseWidget.cc" line="52"/>
         <source>MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD (&lt;a href=&apos;http://www.geocities.jp/higuchuu4/index.htm&apos;&gt;MikuMikuDance&lt;/a&gt; created by Yuu Higuchi). This doesn&apos;t intend to be the successor of MMD.</source>
         <translation>MMDAI2 (VPVM になるかも) はMMD (樋口優作成の&lt;a href=&apos;http://www.geocities.jp/higuchuu4/index.htm&apos;&gt;MikuMikuDance&lt;/a&gt;) 互換のモーションを作成または編集するアプリケーションです。MMD の後継として作られていません。</translation>
@@ -282,16 +274,16 @@
     </message>
     <message>
         <location filename="../../LicenseWidget.cc" line="72"/>
-        <source>%1&apos;s icon is based on &lt;a href=&apos;http://innoce.nobody.jp/&apos;&gt;Lat&apos;s Miku model&lt;/a&gt;.</source>
-        <translation>%1のアイコンは&lt;a href=&apos;http://innoce.nobody.jp/&apos;&gt;Lat 式ミク&lt;/a&gt;をベースとしています。</translation>
+        <source>%1&apos;s icon is based on &lt;a href=&apos;http://innoce.nobody.jp/&apos;&gt;Lat&apos;s Miku model&lt;/a&gt;.&lt;br&gt;MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.&lt;br&gt;VOCALOID is the trademark of YAMAHA Corporation.</source>
+        <translation type="unfinished">%1のアイコンは&lt;a href=&apos;http://innoce.nobody.jp/&apos;&gt;Lat 式ミク&lt;/a&gt;をベースとしています。&lt;br&gt;初音ミク及びその他 CV シリーズは CRYPTON FUTURE MEDIA, INC. の製品です。&lt;br&gt;VOCALOID 及びボーカロイドはヤマハ株式会社の登録商標です。</translation>
     </message>
     <message>
-        <location filename="../../LicenseWidget.cc" line="78"/>
+        <location filename="../../LicenseWidget.cc" line="80"/>
         <source>About %1</source>
         <translation>%1 について</translation>
     </message>
     <message>
-        <location filename="../../LicenseWidget.cc" line="121"/>
+        <location filename="../../LicenseWidget.cc" line="123"/>
         <source>%1&apos;s license</source>
         <translation>%1 のライセンス</translation>
     </message>

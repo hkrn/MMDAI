@@ -69,7 +69,9 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     layout->addWidget(tree);
     QLabel *aboutIconLabel = new QLabel;
     aboutIconLabel->setText(
-                tr("%1's icon is based on <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>."
+                tr("%1's icon is based on <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>.<br>"
+                   "MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
+                   "VOCALOID is the trademark of YAMAHA Corporation."
                    "").arg(qApp->applicationName()));
     aboutIconLabel->setWordWrap(true);
     aboutIconLabel->setOpenExternalLinks(true);
