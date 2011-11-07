@@ -92,7 +92,8 @@ private:
 }
 
 TimelineTreeView::TimelineTreeView(QWidget *parent)
-    : QTreeView(parent) {
+    : QTreeView(parent)
+{
     setExpandsOnDoubleClick(true);
     setUniformRowHeights(true);
     setSortingEnabled(false);
@@ -145,6 +146,22 @@ void TimelineTreeView::addExpanded(const QModelIndex &index)
         m_expanded.append(index);
 }
 
+TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation, QWidget *parent)
+    : QHeaderView(orientation, parent)
+{
+    setDefaultAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+    setResizeMode(QHeaderView::Fixed);
+    setClickable(true);
+    setMovable(false);
+    setStretchLastSection(true);
+    setSortIndicatorShown(false);
+    setDefaultSectionSize(16);
+}
+
+TimelineHeaderView::~TimelineHeaderView()
+{
+}
+
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                QWidget *parent) :
     QWidget(parent)
@@ -153,13 +170,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     treeView->setModel(base);
     treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
     treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    QHeaderView *header = treeView->header();
+    TimelineHeaderView *header = new TimelineHeaderView(Qt::Horizontal);
+    treeView->setHeader(header);
     connect(header, SIGNAL(sectionPressed(int)), this, SLOT(setCurrentFrameIndexBySection(int)));
-    header->setSortIndicatorShown(false);
-    header->setResizeMode(QHeaderView::Fixed);
     header->setResizeMode(0, QHeaderView::ResizeToContents);
-    header->setClickable(true);
-    header->setDefaultSectionSize(16);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     treeView->setItemDelegate(delegate);
     m_spinBox = new QSpinBox();
@@ -183,6 +197,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     retranslate();
     setLayout(mainLayout);
     m_treeView = treeView;
+    m_headerView = header;
 }
 
 TimelineWidget::~TimelineWidget()

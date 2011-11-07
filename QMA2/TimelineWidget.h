@@ -38,6 +38,7 @@
 #define TIMELINEWIDGET_H
 
 #include <QtCore/QModelIndex>
+#include <QtGui/QHeaderView>
 #include <QtGui/QTreeView>
 #include <QtGui/QWidget>
 
@@ -63,7 +64,7 @@ class TimelineTreeView : public QTreeView
     Q_OBJECT
 
 public:
-    TimelineTreeView(QWidget *parent = 0);
+    explicit TimelineTreeView(QWidget *parent = 0);
     ~TimelineTreeView();
 
     void selectFrameIndex(int frameIndex);
@@ -78,6 +79,13 @@ private slots:
 
 private:
     QModelIndexList m_expanded;
+};
+
+class TimelineHeaderView : public QHeaderView
+{
+public:
+    explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
+    virtual ~TimelineHeaderView();
 };
 
 class TimelineWidget : public QWidget
@@ -108,6 +116,7 @@ private slots:
 
 private:
     TimelineTreeView *m_treeView;
+    TimelineHeaderView *m_headerView;
     QLabel *m_label;
     QPushButton *m_button;
     QSettings *m_settings;
