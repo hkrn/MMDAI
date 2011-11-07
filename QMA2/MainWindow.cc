@@ -432,6 +432,10 @@ void MainWindow::buildUI()
     m_actionEnablePhysics->setCheckable(true);
     m_actionEnablePhysics->setChecked(m_sceneWidget->isPhysicsEnabled());
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setPhysicsEnable(bool)));
+    m_actionShowModelDialog = new QAction(this);
+    m_actionShowModelDialog->setCheckable(true);
+    m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
+    connect(m_actionShowModelDialog, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setShowModelDialog(bool)));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -549,6 +553,7 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionShowGrid);
     m_menuProject->addAction(m_actionShowBones);
     m_menuProject->addAction(m_actionEnablePhysics);
+    m_menuProject->addAction(m_actionShowModelDialog);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -692,6 +697,8 @@ void MainWindow::retranslate()
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionEnablePhysics->setShortcut(tr("Ctrl+Shift+P"));
+    m_actionShowModelDialog->setText(tr("Show model dialog"));
+    m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomIn->setShortcut(QKeySequence::ZoomIn);

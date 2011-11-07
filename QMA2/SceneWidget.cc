@@ -92,7 +92,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_playing(false),
     m_enableBoneMove(false),
     m_enableBoneRotate(false),
-    m_enablePhysics(false)
+    m_enablePhysics(false),
+    m_showModelDialog(false)
 {
     m_debugDrawer = new DebugDrawer();
     m_delegate = new Delegate(this);
@@ -105,6 +106,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
     setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
+    setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -240,16 +242,24 @@ void SceneWidget::addModel()
     }
 }
 
-vpvl::PMDModel *SceneWidget::addModel(const QString &path)
+vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
 {
     QFileInfo fi(path);
     vpvl::PMDModel *model = 0;
     if (fi.exists()) {
         QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
-        model = m_loader->loadModel(fi.fileName(), fi.dir());
+        const QDir &dir = fi.dir();
+        model = m_loader->loadModel(fi.fileName(), dir);
         if (model) {
-            emit modelDidAdd(model);
-            setSelectedModel(model);
+            if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
+                m_loader->addModel(model, dir);
+                emit modelDidAdd(model);
+                setSelectedModel(model);
+            }
+            else {
+                delete model;
+                model = 0;
+            }
         }
         else {
             QMessageBox::warning(this, tr("Loading model error"),
@@ -711,6 +721,7 @@ void SceneWidget::closeEvent(QCloseEvent *event)
     m_settings->setValue("sceneWidget/isBoneWireframeVisible", m_visibleBones);
     m_settings->setValue("sceneWidget/isGridVisible", m_grid->isEnabled());
     m_settings->setValue("sceneWidget/isPhysicsEnabled", m_enablePhysics);
+    m_settings->setValue("sceneWidget/showModelDialog", m_showModelDialog);
     killTimer(m_internalTimerID);
     event->accept();
 }
@@ -927,6 +938,16 @@ void SceneWidget::timerEvent(QTimerEvent *event)
 void SceneWidget::wheelEvent(QWheelEvent *event)
 {
     zoom(event->delta() > 0, event->modifiers());
+}
+
+bool SceneWidget::acceptAddingModel(vpvl::PMDModel *model)
+{
+    QMessageBox mbox;
+    QString comment = internal::toQString(model->comment());
+    mbox.setText(tr("Model Information of \"%1\"").arg(internal::toQString(model->name())));
+    mbox.setInformativeText(comment.replace("\n", "<br>"));
+    mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    return mbox.exec() == QMessageBox::Ok;
 }
 
 void SceneWidget::drawBones()

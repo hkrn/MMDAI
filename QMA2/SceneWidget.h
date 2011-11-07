@@ -91,7 +91,7 @@ public:
     void showSelectedModelEdge();
     void hideSelectedModelEdge();
 
-    vpvl::PMDModel *addModel(const QString &path);
+    vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
     vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
@@ -107,6 +107,7 @@ public:
     bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     bool isPlaying() const { return m_playing; }
+    bool showModelDialog() const { return m_showModelDialog; }
 
 public slots:
     void play();
@@ -157,6 +158,7 @@ public slots:
     void updateMotion() { seekMotion(m_frameIndex); }
     void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
+    void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
 
@@ -201,6 +203,7 @@ protected:
     void wheelEvent(QWheelEvent *event);
 
 private:
+    bool acceptAddingModel(vpvl::PMDModel *model);
     void drawBones();
     void updateFPS();
     QProgressDialog *getProgressDialog(const QString &label, int max);
@@ -237,6 +240,7 @@ private:
     bool m_enableBoneMove;
     bool m_enableBoneRotate;
     bool m_enablePhysics;
+    bool m_showModelDialog;
 
     Q_DISABLE_COPY(SceneWidget)
 };

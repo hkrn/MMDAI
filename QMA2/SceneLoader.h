@@ -75,6 +75,7 @@ public:
 #endif
     ~SceneLoader();
 
+    void addModel(vpvl::PMDModel *model, const QDir &dir);
     bool deleteAsset(vpvl::Asset *asset);
     bool deleteModel(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::PMDModel *model);

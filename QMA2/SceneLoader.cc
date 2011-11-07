@@ -65,6 +65,25 @@ SceneLoader::~SceneLoader()
     release();
 }
 
+void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
+{
+    QString key = internal::toQString(model);
+    m_renderer->loadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
+    if (m_models.contains(key)) {
+        int i = 0;
+        while (true) {
+            QString tmpKey = QString("%1%2").arg(key).arg(i);
+            if (!m_models.contains(tmpKey)) {
+                key = tmpKey;
+                break;
+            }
+            i++;
+        }
+    }
+    setBaseBone(model);
+    m_models.insert(key, model);
+}
+
 bool SceneLoader::deleteAsset(vpvl::Asset *asset)
 {
     if (!asset)
@@ -259,25 +278,7 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
         model = new vpvl::PMDModel();
-        if (model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            m_renderer->loadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
-            QString key = internal::toQString(model);
-            qDebug() << key << baseName;
-            if (m_models.contains(key)) {
-                int i = 0;
-                while (true) {
-                    QString tmpKey = QString("%1%2").arg(key).arg(i);
-                    if (!m_models.contains(tmpKey)) {
-                        key = tmpKey;
-                        break;
-                    }
-                    i++;
-                }
-            }
-            setBaseBone(model);
-            m_models.insert(key, model);
-        }
-        else {
+        if (!model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             delete model;
             model = 0;
         }
