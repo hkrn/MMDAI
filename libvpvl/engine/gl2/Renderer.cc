@@ -1187,7 +1187,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     const vpvl::MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const int nmaterials = materials.count();
-    Color average, ambient, diffuse, specular;
+    Color ambient, diffuse, specular;
     size_t offset = 0;
 
     for (int i = 0; i < nmaterials; i++) {
