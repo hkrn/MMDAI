@@ -18,11 +18,10 @@ varying vec4 outShadowTexCoord;
 varying vec2 outMainTexCoord;
 varying vec2 outSubTexCoord;
 varying vec2 outToonTexCoord;
-const vec4 kOne4 = vec4(1.0, 1.0, 1.0, 1.0);
 const float kTwo = 2.0;
 const float kOne = 1.0;
 const float kHalf = 0.5;
-const float kZero = 0.0;
+const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
 
 vec2 makeSphereMap(vec3 position, vec3 normal) {
     vec3 R = reflect(position, normal);
