@@ -765,21 +765,6 @@ void SceneWidget::initializeGL()
 #endif
     vpvl::Scene *scene = m_renderer->scene();
     scene->setViewMove(0);
-    const vpvl::Color &color = scene->lightColor();
-#if 0 // MMD like toon
-    const vpvl::Scalar &intensity = 0.6f;
-    const vpvl::Vector3 &a = color * intensity * 2.0f;
-    const vpvl::Vector3 &d = color * 0.0f;
-    const vpvl::Vector3 &s = color * intensity;
-#else // no toon
-    const vpvl::Vector3 &a = color;
-    const vpvl::Vector3 &d = color;
-    const vpvl::Vector3 &s = color;
-#endif
-    const vpvl::Color ambient(a.x(), a.y(), a.z(), 1.0f);
-    const vpvl::Color diffuse(d.x(), d.y(), d.z(), 1.0f);
-    const vpvl::Color specular(s.x(), s.y(), s.z(), 1.0f);
-    scene->setLightComponent(ambient, diffuse, specular);
     if (m_playing || m_enablePhysics)
         setPhysicsEnable(true);
     m_timer.start();

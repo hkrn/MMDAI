@@ -427,6 +427,7 @@ private:
         scene->setWorld(m_world);
 
         m_renderer->loadModel(model, kModelDir);
+        model->setEdgeOffset(0.0f);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
@@ -445,22 +446,6 @@ private:
             m_delegate.log(IDelegate::kLogWarning, "Failed parsing the camera motion, skipped...");
         else
             scene->setCameraMotion(&m_camera);
-
-        const vpvl::Color &color = scene->lightColor();
-        const vpvl::Scalar &intensity = 0.6f;
-    #if 0 // MMD like toon
-        const vpvl::Vector3 &a = color * intensity * 2.0f;
-        const vpvl::Vector3 &d = color * 0.0f;
-        const vpvl::Vector3 &s = color * intensity;
-    #else // no toon
-        const vpvl::Vector3 &a = color;
-        const vpvl::Vector3 &d = color * intensity;
-        const vpvl::Vector3 &s = color;
-    #endif
-        const vpvl::Color ambient(a.x(), a.y(), a.z(), 1.0f);
-        const vpvl::Color diffuse(d.x(), d.y(), d.z(), 1.0f);
-        const vpvl::Color specular(s.x(), s.y(), s.z(), 1.0f);
-        scene->setLightComponent(ambient, diffuse, specular);
 
         return true;
     }

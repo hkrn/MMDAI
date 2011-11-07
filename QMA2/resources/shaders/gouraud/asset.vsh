@@ -32,10 +32,10 @@ void main() {
     float diffuse = max(dot(light, normal), kZero);
     vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
     if (hasColorVertex) {
-        color += lightColor * inColor;
+        color += inColor;
     }
     else {
-        color += lightColor * lightAmbient * materialAmbient;
+        color += lightAmbient * materialAmbient;
     }
     color += materialEmission;
     if (diffuse != kZero) {
