@@ -21,12 +21,12 @@
         <file alias="toon10.bmp">images/toon10.bmp</file>
     </qresource>
     <qresource prefix="/shaders">
-        <file alias="asset.fsh">shaders/gouraud/asset.fsh</file>
-        <file alias="asset.vsh">shaders/gouraud/asset.vsh</file>
+        <file alias="asset.fsh">shaders/asset.fsh</file>
+        <file alias="asset.vsh">shaders/asset.vsh</file>
         <file alias="edge.fsh">shaders/edge.fsh</file>
         <file alias="edge.vsh">shaders/edge.vsh</file>
-        <file alias="model.fsh">shaders/gouraud/model.fsh</file>
-        <file alias="model.vsh">shaders/gouraud/model.vsh</file>
+        <file alias="model.fsh">shaders/model.fsh</file>
+        <file alias="model.vsh">shaders/model.vsh</file>
         <file alias="shadow.fsh">shaders/shadow.fsh</file>
         <file alias="shadow.vsh">shaders/shadow.vsh</file>
     </qresource>
