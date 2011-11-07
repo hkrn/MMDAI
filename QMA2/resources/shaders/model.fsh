@@ -23,16 +23,12 @@ void main() {
     if (hasMainTexture) {
         if (isMainAdditive) {
             color += texture2D(mainTexture, outMainTexCoord);
-            color *= texture2D(toonTexture, outToonTexCoord);
         }
         else {
             color *= texture2D(mainTexture, outMainTexCoord);
-            color *= texture2D(toonTexture, outToonTexCoord);
         }
     }
-    else {
-        color *= texture2D(toonTexture, outToonTexCoord);
-    }
+    color *= texture2D(toonTexture, outToonTexCoord);
     if (hasSubTexture) {
         if (isSubAdditive) {
             color += texture2D(subTexture, outSubTexCoord);
