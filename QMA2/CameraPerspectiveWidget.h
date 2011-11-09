@@ -40,6 +40,8 @@
 #include <QtGui/QWidget>
 #include <vpvl/Common.h>
 
+class QDoubleSpinBox;
+class QLabel;
 class QPushButton;
 
 class CameraPerspectiveWidget : public QWidget
@@ -48,6 +50,9 @@ class CameraPerspectiveWidget : public QWidget
 
 public:
     explicit CameraPerspectiveWidget(QWidget *parent = 0);
+
+public slots:
+    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
 
 signals:
     void cameraPerspectiveDidChange(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
@@ -59,14 +64,38 @@ private slots:
     void setCameraPerspectiveTop();
     void setCameraPerspectiveLeft();
     void setCameraPerspectiveRight();
+    void updatePositionX(double value);
+    void updatePositionY(double value);
+    void updatePositionZ(double value);
+    void updateRotationX(double value);
+    void updateRotationY(double value);
+    void updateRotationZ(double value);
+    void updateFovy(double value);
+    void updateDistance(double value);
 
 private:
+    vpvl::Vector3 m_currentPosition;
+    vpvl::Vector3 m_currentAngle;
     QPushButton *m_frontLabel;
     QPushButton *m_backLabel;
     QPushButton *m_topLabel;
     QPushButton *m_leftLabel;
     QPushButton *m_rightLabel;
     QPushButton *m_cameraLabel;
+    QLabel *m_positionLabel;
+    QLabel *m_rotationLabel;
+    QLabel *m_fovyLabel;
+    QLabel *m_distanceLabel;
+    QDoubleSpinBox *m_px;
+    QDoubleSpinBox *m_py;
+    QDoubleSpinBox *m_pz;
+    QDoubleSpinBox *m_rx;
+    QDoubleSpinBox *m_ry;
+    QDoubleSpinBox *m_rz;
+    QDoubleSpinBox *m_fovy;
+    QDoubleSpinBox *m_distance;
+    float m_currentFovy;
+    float m_currentDistance;
 };
 
 #endif // PERSPECTIONWIDGET_H

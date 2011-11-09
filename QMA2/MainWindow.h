@@ -56,6 +56,7 @@ class BoneMotionModel;
 class ExportVideoDialog;
 class FaceMotionModel;
 class LicenseWidget;
+class SceneMotionModel;
 class SceneWidget;
 class TabWidget;
 class TimelineTabWidget;
@@ -126,6 +127,7 @@ private:
     TransformWidget *m_transformWidget;
     BoneMotionModel *m_boneMotionModel;
     FaceMotionModel *m_faceMotionModel;
+    SceneMotionModel *m_sceneMotionModel;
     ExportVideoDialog *m_exportingVideoDialog;
 
     vpvl::PMDModel *m_model;

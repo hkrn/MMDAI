@@ -786,6 +786,7 @@ void SceneWidget::initializeGL()
     m_info->setBone(0);
     m_info->setFPS(0.0f);
     m_info->update();
+    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)

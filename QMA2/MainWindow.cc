@@ -44,6 +44,7 @@
 #include "FaceWidget.h"
 #include "InterpolationWidget.h"
 #include "LicenseWidget.h"
+#include "SceneMotionModel.h"
 #include "SceneWidget.h"
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
@@ -187,6 +188,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_transformWidget(0),
     m_boneMotionModel(0),
     m_faceMotionModel(0),
+    m_sceneMotionModel(0),
     m_exportingVideoDialog(0),
     m_model(0),
     m_bone(0),
@@ -201,6 +203,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneWidget = new SceneWidget(&m_settings);
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
     m_faceMotionModel = new FaceMotionModel(m_undo, this);
+    m_sceneMotionModel = new SceneMotionModel(m_undo, this);
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
@@ -842,6 +845,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(globalTransformDidSelect()), m_boneMotionModel, SLOT(setGlobalTransformMode()));
     connect(m_sceneWidget, SIGNAL(localTransformDidSelect()), m_boneMotionModel, SLOT(setLocalTransformMode()));
     connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
+            m_tabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
 }
 
 void MainWindow::insertMotionToAllModels()
