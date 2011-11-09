@@ -53,7 +53,7 @@ public:
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    explicit FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~FaceMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);

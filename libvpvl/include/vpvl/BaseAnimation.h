@@ -66,7 +66,7 @@ public:
      *
      * @param smearDefault The smear default value
      */
-    BaseAnimation(float smearDefault);
+    explicit BaseAnimation(float smearDefault);
 
     virtual ~BaseAnimation();
 
