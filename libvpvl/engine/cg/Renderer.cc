@@ -120,9 +120,6 @@ public:
         setMatrixParameter(m_projectionMatrix, matrix4x4);
     }
     void setLight(const vpvl::Scene *scene) {
-        setParameter4fv(m_lightAmbient, scene->lightAmbient());
-        setParameter4fv(m_lightDiffuse, scene->lightDiffuse());
-        setParameter4fv(m_lightSpecular, scene->lightSpecular());
         setParameter4fv(m_lightPosition, scene->lightPosition());
     }
     void setMaterial(const vpvl::Material *material, const vpvl::gl2::PMDModelMaterialPrivate &materialPrivate, bool enableToon) {

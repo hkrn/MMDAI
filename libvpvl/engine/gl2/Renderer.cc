@@ -207,18 +207,12 @@ public:
     ObjectProgram(IDelegate *delegate)
         : ShaderProgram(delegate),
           m_lightColorUniformLocation(0),
-          m_lightPositionUniformLocation(0),
-          m_lightAmbientUniformLocation(0),
-          m_lightDiffuseUniformLocation(0),
-          m_lightSpecularUniformLocation(0)
+          m_lightPositionUniformLocation(0)
     {
     }
     ~ObjectProgram() {
         m_lightColorUniformLocation = 0;
         m_lightPositionUniformLocation = 0;
-        m_lightAmbientUniformLocation = 0;
-        m_lightDiffuseUniformLocation = 0;
-        m_lightSpecularUniformLocation = 0;
     }
 
     virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
@@ -226,9 +220,6 @@ public:
         if (ret) {
             m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
             m_lightPositionUniformLocation = glGetUniformLocation(m_program, "lightPosition");
-            m_lightAmbientUniformLocation = glGetUniformLocation(m_program, "lightAmbient");
-            m_lightDiffuseUniformLocation = glGetUniformLocation(m_program, "lightDiffuse");
-            m_lightSpecularUniformLocation = glGetUniformLocation(m_program, "lightSpecular");
         }
         return ret;
     }
@@ -238,22 +229,10 @@ public:
     void setLightPosition(const Vector3 &value) {
         glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
-    void setLightAmbient(const Color &value) {
-        glUniform4fv(m_lightAmbientUniformLocation, 1, value);
-    }
-    void setLightDiffuse(const Color &value) {
-        glUniform4fv(m_lightDiffuseUniformLocation, 1, value);
-    }
-    void setLightSpecular(const Color &value) {
-        glUniform4fv(m_lightSpecularUniformLocation, 1, value);
-    }
 
 private:
     GLuint m_lightColorUniformLocation;
     GLuint m_lightPositionUniformLocation;
-    GLuint m_lightAmbientUniformLocation;
-    GLuint m_lightDiffuseUniformLocation;
-    GLuint m_lightSpecularUniformLocation;
 };
 
 class ModelProgram : public ObjectProgram {
@@ -265,9 +244,6 @@ public:
           m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
-          m_materialSpecularUniformLocation(0),
-          m_materialShininessUniformLocation(0),
-          m_lightIntensityUniformLocation(0),
           m_hasMainTextureUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
           m_isMainSphereMapUniformLocation(0),
@@ -285,9 +261,6 @@ public:
         m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
-        m_materialSpecularUniformLocation = 0;
-        m_materialShininessUniformLocation = 0;
-        m_lightIntensityUniformLocation = 0;
         m_hasMainTextureUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
         m_isMainSphereMapUniformLocation = 0;
@@ -307,9 +280,6 @@ public:
             m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-            m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
-            m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-            m_lightIntensityUniformLocation = glGetUniformLocation(m_program, "lightIntensity");
             m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
             m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
             m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
@@ -351,15 +321,6 @@ public:
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
-    void setMaterialSpecular(const Color &value) {
-        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
-    }
-    void setMaterialShininess(float value) {
-        glUniform1f(m_materialShininessUniformLocation, value);
-    }
-    void setLightIntensity(float value) {
-        glUniform1f(m_lightIntensityUniformLocation, value);
-    }
     void setIsMainSphereMap(bool value) {
         glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
     }
@@ -400,9 +361,6 @@ private:
     GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
-    GLuint m_materialSpecularUniformLocation;
-    GLuint m_materialShininessUniformLocation;
-    GLuint m_lightIntensityUniformLocation;
     GLuint m_hasMainTextureUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
     GLuint m_isMainSphereMapUniformLocation;
@@ -810,11 +768,8 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
     program->setNormalMatrix(matrix3x3);
     transform.getOpenGLMatrix(matrix4x4);
     program->setTransformMatrix(matrix4x4);
-    program->setLightAmbient(s->lightAmbient());
     program->setLightColor(s->lightColor());
-    program->setLightDiffuse(s->lightDiffuse());
     program->setLightPosition(s->lightPosition());
-    program->setLightSpecular(s->lightSpecular());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = userData->vbo[mesh];
@@ -1163,12 +1118,8 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setProjectionMatrix(matrix4x4);
     m_scene->getNormalMatrix(matrix3x3);
     m_modelProgram->setNormalMatrix(matrix3x3);
-    m_modelProgram->setLightAmbient(m_scene->lightAmbient());
     m_modelProgram->setLightColor(m_scene->lightColor());
-    m_modelProgram->setLightDiffuse(m_scene->lightDiffuse());
     m_modelProgram->setLightPosition(m_scene->lightPosition());
-    m_modelProgram->setLightSpecular(m_scene->lightSpecular());
-    m_modelProgram->setLightIntensity(m_scene->lightIntensity());
     if (m_depthTextureID && m_frameBufferID) {
         ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
         modelProgram->setShadowTexture(m_depthTextureID);
@@ -1187,24 +1138,19 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     const vpvl::MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const int nmaterials = materials.count();
-    Color ambient, diffuse, specular;
+    Color ambient, diffuse;
     size_t offset = 0;
 
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
-        // toon
-        const float alpha = material->opacity();
+        const float opacity = material->opacity();
         ambient = material->ambient();
-        ambient.setW(ambient.w() * alpha);
+        ambient.setW(ambient.w() * opacity);
         diffuse = material->diffuse();
-        diffuse.setW(diffuse.w() * alpha);
-        specular = material->specular();
-        specular.setW(specular.w() * alpha);
+        diffuse.setW(diffuse.w() * opacity);
         m_modelProgram->setMaterialAmbient(ambient);
         m_modelProgram->setMaterialDiffuse(diffuse);
-        m_modelProgram->setMaterialSpecular(specular);
-        m_modelProgram->setMaterialShininess(material->shiness());
         m_modelProgram->setMainTexture(materialPrivate.mainTextureID);
         m_modelProgram->setToonTexture(userData->toonTextureID[material->toonID()]);
         m_modelProgram->setSubTexture(materialPrivate.subTextureID);
@@ -1212,9 +1158,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
         m_modelProgram->setIsMainAdditive(material->isMainSphereAdd());
         m_modelProgram->setIsSubSphereMap(material->isSubSphereAdd() || material->isSubSphereModulate());
         m_modelProgram->setIsSubAdditive(material->isSubSphereAdd());
-        material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
-
-        // draw
+        opacity < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
         const int nindices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += (nindices << 1);

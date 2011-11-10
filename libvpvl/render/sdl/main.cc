@@ -292,8 +292,8 @@ Uint32 UpdateTimer(Uint32 internal, void *data)
 {
     Renderer *renderer = static_cast<Renderer *>(data);
     vpvl::Scene *scene = renderer->scene();
-    scene->updateModelView(0);
-    scene->updateProjection(0);
+    scene->updateModelView();
+    scene->updateProjection();
     scene->advanceMotion(0.5);
     return internal;
 }

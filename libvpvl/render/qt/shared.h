@@ -363,8 +363,8 @@ protected:
         if (diff < 0)
             diff = elapsed;
         vpvl::Scene *scene = m_renderer->scene();
-        scene->updateModelView(0);
-        scene->updateProjection(0);
+        scene->updateModelView();
+        scene->updateProjection();
         scene->advanceMotion(diff);
         updateGL();
     }

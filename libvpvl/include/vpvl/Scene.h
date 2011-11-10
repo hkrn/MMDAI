@@ -89,7 +89,6 @@ public:
     void setCameraPerspective(CameraAnimation *camera);
     void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
-    void setLightComponent(const Color &ambient, const Color &diffuse, const Color &specular);
     void setLightSource(const Color &color, const Vector3 &position);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
@@ -98,8 +97,8 @@ public:
     float maxFrameIndex() const;
     bool isMotionFinished() const;
     bool isMotionReachedTo(float frameIndex) const;
-    void updateModelView(int ellapsedTimeForMove);
-    void updateProjection(int ellapsedTimeForMove);
+    void updateModelView();
+    void updateProjection();
 
     const Array<PMDModel *> &models() const {
         return m_models;
@@ -113,15 +112,6 @@ public:
     const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
-    const Color &lightAmbient() const {
-        return m_lightAmbient;
-    }
-    const Color &lightDiffuse() const {
-        return m_lightDiffuse;
-    }
-    const Color &lightSpecular() const {
-        return m_lightSpecular;
-    }
     const Vector3 &angle() const {
         return m_angle;
     }
@@ -134,9 +124,6 @@ public:
     float fovy() const {
         return m_fovy;
     }
-    float lightIntensity() const {
-        return m_lightIntensity;
-    }
     int width() const {
         return m_width;
     }
@@ -147,16 +134,13 @@ public:
         return m_preferredFPS;
     }
 
-    void setLightIntensity(float value) {
-        m_lightIntensity = value;
-    }
     void setWidth(int value) {
         m_width = value;
-        updateProjectionMatrix();
+        updateProjection();
     }
     void setHeight(int value) {
         m_height = value;
-        updateProjectionMatrix();
+        updateProjection();
     }
     void setPreferredFPS(int value) {
         m_preferredFPS = value;
@@ -164,37 +148,20 @@ public:
 
 private:
     void sortRenderingOrder();
-    void updateModelViewMatrix();
-    void updateProjectionMatrix();
     void updateRotationFromAngle();
-    bool updateDistance(int ellapsedTimeForMove);
-    bool updateFovy(int ellapsedTimeForMove);
 
     btDiscreteDynamicsWorld *m_world;
     Array<PMDModel *> m_models;
     VMDMotion *m_cameraMotion;
     Transform m_modelview;
-    Quaternion m_currentRotation;
     Quaternion m_rotation;
-    Quaternion m_viewMoveRotation;
     Color m_lightColor;
-    Color m_lightAmbient;
-    Color m_lightDiffuse;
-    Color m_lightSpecular;
     Vector3 m_lightPosition;
-    Vector3 m_currentPosition;
     Vector3 m_position;
-    Vector3 m_viewMovePosition;
     Vector3 m_angle;
-    Vector3 m_currentDistance;
-    Vector3 m_viewMoveDistance;
     float m_projection[16];
     float m_distance;
-    float m_currentFovy;
     float m_fovy;
-    float m_viewMoveFovy;
-    float m_lightIntensity;
-    int m_viewMoveTime;
     int m_preferredFPS;
     int m_width;
     int m_height;
