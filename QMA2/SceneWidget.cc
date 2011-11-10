@@ -464,8 +464,8 @@ VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, vpvl::P
 void SceneWidget::advanceMotion(float frameIndex)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    scene->updateModelView(0);
-    scene->updateProjection(0);
+    scene->updateModelView();
+    scene->updateProjection();
     scene->advanceMotion(frameIndex);
     updateGL();
 }
@@ -473,8 +473,8 @@ void SceneWidget::advanceMotion(float frameIndex)
 void SceneWidget::seekMotion(float frameIndex)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    scene->updateModelView(0);
-    scene->updateProjection(0);
+    scene->updateModelView();
+    scene->updateProjection();
     scene->seekMotion(frameIndex);
     updateGL();
     m_frameIndex = frameIndex;
@@ -775,7 +775,6 @@ void SceneWidget::initializeGL()
     m_renderer->createPrograms();
 #endif
     vpvl::Scene *scene = m_renderer->scene();
-    scene->setViewMove(0);
     if (m_playing || m_enablePhysics)
         setPhysicsEnable(true);
     m_timer.start();
@@ -921,8 +920,8 @@ void SceneWidget::timerEvent(QTimerEvent *event)
 {
     if (event->timerId() == m_internalTimerID) {
         vpvl::Scene *scene = m_renderer->scene();
-        scene->updateModelView(0);
-        scene->updateProjection(0);
+        scene->updateModelView();
+        scene->updateProjection();
         if (m_playing) {
             float elapsed = m_timer.elapsed() / static_cast<float>(vpvl::Scene::kFPS);
             float diff = elapsed - m_prevElapsed;
