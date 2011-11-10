@@ -67,6 +67,17 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 {
 }
 
+void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
+{
+    vpvl::BoneKeyFrame *frame = frames.last().data();
+    vpvl::QuadWord value(0.0f, 0.0f, 0.0f, 0.0f);
+    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kX, m_boneIP.x);
+    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kY, m_boneIP.y);
+    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_boneIP.z);
+    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_boneIP.rotation);
+    updateValues(true);
+}
+
 void InterpolationGraphWidget::setX1(int value)
 {
     m_p1.setX(value);
@@ -318,13 +329,7 @@ void InterpolationWidget::resetInterpolation()
 
 void InterpolationWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
 {
-    vpvl::BoneKeyFrame *frame = frames.last().data();
-    vpvl::QuadWord value;
-    frame->getInterpolationParameter(static_cast<vpvl::BoneKeyFrame::InterpolationType>(m_comboBox->currentIndex()), value);
-    m_graphWidget->setX1(value.x());
-    m_graphWidget->setY1(value.y());
-    m_graphWidget->setX2(value.z());
-    m_graphWidget->setY2(value.w());
+    m_graphWidget->setBoneKeyFrames(frames);
 }
 
 QSpinBox *InterpolationWidget::createSpinBox(int defaultValue,

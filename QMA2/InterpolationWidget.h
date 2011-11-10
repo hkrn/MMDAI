@@ -62,6 +62,7 @@ public:
     explicit InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent = 0);
     ~InterpolationGraphWidget();
 
+    void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
     void setType(Type value) { m_type = value; }
 
 public slots:
