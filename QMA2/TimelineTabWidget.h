@@ -78,7 +78,7 @@ public slots:
 
 signals:
     void motionDidSeek(float frameIndex);
-    void currentTabDidChange(Type type);
+    void currentTabDidChange(int type);
 
 private slots:
     void retranslate();
@@ -93,6 +93,7 @@ private slots:
     void pasteFrame();
     void pasteReversedFrame();
     void setCurrentTabIndex(int index);
+    void notifyCurrentTabIndex();
 
 private:
     void addBoneKeyFramesByModelIndices(const QModelIndexList &indices);

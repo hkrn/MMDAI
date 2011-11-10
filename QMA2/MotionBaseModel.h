@@ -82,6 +82,7 @@ public:
 
     static const QVariant kInvalidData;
     static int toFrameIndex(const QModelIndex &index);
+    static int toModelIndex(int frameIndex);
 
     MotionBaseModel(QUndoGroup *undo, QObject *parent = 0);
     virtual ~MotionBaseModel();
@@ -113,6 +114,7 @@ public:
     void setModified(bool value) { m_modified = value; motionDidModify(value); }
     bool isModified() const { return m_modified; }
     const Keys keys() const { return m_keys[m_model]; }
+    int currentFrameIndex() const { return m_frameIndex; }
 
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 

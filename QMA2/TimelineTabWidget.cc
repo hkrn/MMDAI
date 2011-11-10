@@ -284,6 +284,11 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     }
 }
 
+void TimelineTabWidget::notifyCurrentTabIndex()
+{
+    setCurrentTabIndex(m_tabWidget->currentIndex());
+}
+
 void TimelineTabWidget::addBoneKeyFramesByModelIndices(const QModelIndexList &indices)
 {
     BoneMotionModel::KeyFramePairList boneFrames;

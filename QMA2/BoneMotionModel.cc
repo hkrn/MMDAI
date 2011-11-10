@@ -171,7 +171,8 @@ class SetFramesCommand : public QUndoCommand
 public:
     SetFramesCommand(BoneMotionModel *bmm, const BoneMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
-          m_bmm(bmm)
+          m_bmm(bmm),
+          m_parameter(bmm->interpolationParameter())
     {
         QHash<int, bool> indexProceeded;
         const BoneMotionModel::TreeItemList &items = m_bmm->keys().values();
@@ -234,6 +235,10 @@ public:
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(keys[key], frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::BoneKeyFrame *newFrame = static_cast<vpvl::BoneKeyFrame *>(frame->clone());
+                newFrame->setInterpolationParameter(vpvl::BoneKeyFrame::kX, m_parameter.x);
+                newFrame->setInterpolationParameter(vpvl::BoneKeyFrame::kY, m_parameter.y);
+                newFrame->setInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_parameter.z);
+                newFrame->setInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_parameter.rotation);
                 newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 animation->replaceKeyFrame(newFrame);
@@ -253,6 +258,7 @@ private:
     QModelIndexList m_indices;
     BoneMotionModel::KeyFramePairList m_frames;
     BoneMotionModel *m_bmm;
+    vpvl::BoneKeyFrame::InterpolationParameter m_parameter;
 };
 
 class ResetAllCommand : public QUndoCommand
@@ -556,11 +562,11 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 newFrame.setPosition(frame->position());
                 newFrame.setRotation(frame->rotation());
                 newFrame.setFrameIndex(frameIndex);
-                int8_t x1, x2, y1, y2;
+                vpvl::QuadWord v;
                 for (int i = 0; i < vpvl::BoneKeyFrame::kMax; i++) {
                     vpvl::BoneKeyFrame::InterpolationType type = static_cast<vpvl::BoneKeyFrame::InterpolationType>(i);
-                    frame->getInterpolationParameter(type, x1, x2, y1, y2);
-                    newFrame.setInterpolationParameter(type, x1, x2, y1, y2);
+                    frame->getInterpolationParameter(type, v);
+                    newFrame.setInterpolationParameter(type, v);
                 }
                 newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
                 setData(modelIndex, bytes);
@@ -807,7 +813,21 @@ void BoneMotionModel::rotate(int coordinate, float value)
 void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 {
     m_selected = bones;
-    emit bonesDidSelect(bones);
+    if (!bones.isEmpty())
+        emit bonesDidSelect(bones);
+    int frameIndex = currentFrameIndex();
+    QHash<QString, int> keys;
+    foreach (vpvl::Bone *bone, bones)
+        keys.insert(internal::toQString(bone), 0);
+    QList<KeyFramePtr> frames;
+    vpvl::BoneKeyFrame frame;
+    foreach (const QVariant &variant, values()) {
+        frame.read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+        if (keys.contains(internal::toQString(&frame)) && frameIndex == frame.frameIndex())
+            frames.append(KeyFramePtr(static_cast<vpvl::BoneKeyFrame *>(frame.clone())));
+    }
+    if (!frames.isEmpty())
+        emit boneFramesDidSelect(frames);
 }
 
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)

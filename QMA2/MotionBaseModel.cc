@@ -47,6 +47,12 @@ int MotionBaseModel::toFrameIndex(const QModelIndex &index)
     return qMax(index.column() - 1, 0);
 }
 
+int MotionBaseModel::toModelIndex(int frameIndex)
+{
+    // column index 0 is row header
+    return qMax(frameIndex + 1, 0);
+}
+
 MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
     QAbstractTableModel(parent),
     m_model(0),

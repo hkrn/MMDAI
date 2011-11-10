@@ -39,10 +39,7 @@
 
 #include "MotionBaseModel.h"
 #include "vpvl/BaseAnimation.h"
-
-namespace vpvl {
-class BoneKeyFrame;
-}
+#include "vpvl/BoneKeyFrame.h"
 
 class SceneWidget;
 class VPDFile;
@@ -63,6 +60,7 @@ public:
         kZ,
         kRotation
     };
+
     typedef QSharedPointer<vpvl::BoneKeyFrame> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
@@ -90,6 +88,8 @@ public:
     vpvl::Bone *findBone(const QString &name);
     vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
+    const vpvl::BoneKeyFrame::InterpolationParameter &interpolationParameter() const { return m_interpolationParameter; }
+    void setInterpolationParameter(const vpvl::BoneKeyFrame::InterpolationParameter &value) { m_interpolationParameter = value; }
 
 public slots:
     void setPMDModel(vpvl::PMDModel *model);
@@ -108,6 +108,7 @@ signals:
     void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
     void boneRotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &rot);
     void bonesDidSelect(const QList<vpvl::Bone *> &bones);
+    void boneFramesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
     const QMatrix4x4 modelviewMatrix() const;
@@ -116,6 +117,7 @@ private:
     vpvl::BaseKeyFrameList m_frames;
     const SceneWidget *m_sceneWidget;
     vpvl::PMDModel::State *m_state;
+    vpvl::BoneKeyFrame::InterpolationParameter m_interpolationParameter;
     TransformType m_mode;
 };
 

@@ -38,9 +38,11 @@
 #define INTERPOLATIONWIDGET_H
 
 #include <QtGui/QWidget>
-#include "TimelineTabWidget.h"
+#include <vpvl/BoneKeyFrame.h>
+#include <vpvl/CameraKeyFrame.h>
 
-class BoneMotionModel;
+#include "BoneMotionModel.h"
+
 class QComboBox;
 class QHBoxLayout;
 
@@ -49,10 +51,18 @@ class InterpolationGraphWidget : public QWidget
     Q_OBJECT
 
 public:
-    static const int kCircleWidth = 5;
+    static const int kCircleWidth = 8;
+    static const int kMin = 0;
+    static const int kMax = 127;
+    enum Type {
+        kBone,
+        kCamera
+    };
 
     explicit InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent = 0);
     ~InterpolationGraphWidget();
+
+    void setType(Type value) { m_type = value; }
 
 public slots:
     void setX1(int value);
@@ -72,12 +82,23 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event);
     void paintEvent(QPaintEvent *event);
 
+private slots:
+    void setIndex(int value);
+
 private:
-    void updateValues();
+    void updateValues(bool import);
+    void setValue(vpvl::QuadWord &q, bool import);
+    void setDefault(vpvl::QuadWord &q);
 
     BoneMotionModel *m_boneMotionModel;
+    vpvl::BoneKeyFrame::InterpolationParameter m_boneIP;
+    vpvl::CameraKeyFrame::InterpolationParameter m_cameraIP;
     QPoint m_p1;
     QPoint m_p2;
+    Type m_type;
+    int m_index;
+    bool m_p1Clicked;
+    bool m_p2Clicked;
 };
 
 class QSpinBox;
@@ -91,9 +112,10 @@ public:
     ~InterpolationWidget();
 
 private slots:
-    void setMode(TimelineTabWidget::Type mode);
+    void setMode(int mode);
     void disable();
     void resetInterpolation();
+    void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
     QSpinBox *createSpinBox(int defaultValue,
