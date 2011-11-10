@@ -27,11 +27,19 @@ private Q_SLOTS:
     void cameraInterpolation();
 
 private:
-    void testBoneInterpolationMatrix(const int8_t matrix[16], const vpvl::BoneKeyFrame &frame);
-    void testCameraInterpolationMatrix(const int8_t matrix[24], const vpvl::CameraKeyFrame &frame);
+    void testBoneInterpolationMatrix(const btQuadWord p[4], const vpvl::BoneKeyFrame &frame);
+    void testCameraInterpolationMatrix(const btQuadWord p[6], const vpvl::CameraKeyFrame &frame);
 };
 
 const char *TestVMDMotion::kTestString = "012345678901234";
+
+static void CompareQuadWord(const btQuadWord &actual, const btQuadWord &expected)
+{
+    QCOMPARE(actual.x(), expected.x());
+    QCOMPARE(actual.y(), expected.y());
+    QCOMPARE(actual.z(), expected.z());
+    QCOMPARE(actual.w(), expected.w());
+}
 
 TestVMDMotion::TestVMDMotion()
 {
@@ -96,10 +104,15 @@ void TestVMDMotion::saveBoneKeyFrame()
     frame.setName(reinterpret_cast<const uint8_t *>(kTestString));
     frame.setPosition(pos);
     frame.setRotation(rot);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kX,         8,  9, 10, 11);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kY,        12, 13, 14, 15);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kZ,        16, 17, 18, 19);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kRotation, 20, 21, 22, 23);
+    btQuadWord px(8, 9, 10, 11),
+            py(12, 13, 14, 15),
+            pz(16, 17, 18, 19),
+            pr(20, 21, 22, 23),
+            p[] = { px, py, pz, pr };
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kX, px);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kY, py);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kZ, pz);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kRotation, pr);
     uint8_t data[vpvl::BoneKeyFrame::strideSize()];
     frame.write(data);
     newFrame.read(data);
@@ -108,20 +121,14 @@ void TestVMDMotion::saveBoneKeyFrame()
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QVERIFY(newFrame.position() == pos);
     QVERIFY(newFrame.rotation() == rot);
-    int8_t matrix[] = {
-         8,  9, 10, 11,
-        12, 13, 14, 15,
-        16, 17, 18, 19,
-        20, 21, 22, 23
-    };
-    testBoneInterpolationMatrix(matrix, frame);
+    testBoneInterpolationMatrix(p, frame);
     cloned = static_cast<vpvl::BoneKeyFrame *>(frame.clone());
     QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
              QString(reinterpret_cast<const char *>(frame.name())));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->position() == pos);
     QVERIFY(cloned->rotation() == rot);
-    testBoneInterpolationMatrix(matrix, *cloned);
+    testBoneInterpolationMatrix(p, *cloned);
     delete cloned;
 }
 
@@ -134,12 +141,19 @@ void TestVMDMotion::saveCameraKeyFrame()
     frame.setAngle(angle);
     frame.setDistance(7);
     frame.setFovy(8);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kX,         9, 10, 11, 12);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kY,        13, 14, 15, 16);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kZ,        17, 18, 19, 20);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kRotation, 21, 22, 23, 24);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kDistance, 25, 26, 27, 28);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kFovy,     29, 30, 31, 32);
+    btQuadWord px(9, 10, 11, 12),
+            py(13, 14, 15, 16),
+            pz(17, 18, 19, 20),
+            pr(21, 22, 23, 24),
+            pd(25, 26, 27, 28),
+            pf(29, 30, 31, 32),
+            p[] = { px, py, pz, pr, pd, pf };
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kX, px);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kY, py);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kZ, pz);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kRotation, pr);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kDistance, pd);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kFovy, pf);
     uint8_t data[vpvl::CameraKeyFrame::strideSize()];
     frame.write(data);
     newFrame.read(data);
@@ -151,15 +165,7 @@ void TestVMDMotion::saveCameraKeyFrame()
     QVERIFY(qFuzzyCompare(newFrame.angle().z(), frame.angle().z()));
     QVERIFY(newFrame.distance() == frame.distance());
     QVERIFY(newFrame.fovy() == frame.fovy());
-    int8_t matrix[] = {
-         9, 10, 11, 12,
-        13, 14, 15, 16,
-        17, 18, 19, 20,
-        21, 22, 23, 24,
-        25, 26, 27, 28,
-        29, 30, 31, 32
-    };
-    testCameraInterpolationMatrix(matrix, frame);
+    testCameraInterpolationMatrix(p, frame);
     cloned = static_cast<vpvl::CameraKeyFrame *>(frame.clone());
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->position() == frame.position());
@@ -169,7 +175,7 @@ void TestVMDMotion::saveCameraKeyFrame()
     QVERIFY(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
     QVERIFY(cloned->distance() == frame.distance());
     QVERIFY(cloned->fovy() == frame.fovy());
-    testCameraInterpolationMatrix(matrix, *cloned);
+    testCameraInterpolationMatrix(p, *cloned);
     delete cloned;
 }
 
@@ -296,110 +302,79 @@ void TestVMDMotion::parseFaceKeyFrame()
 void TestVMDMotion::boneInterpolation()
 {
     vpvl::BoneKeyFrame frame;
-    int8_t x1, x2, y1, y2;
-    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kX, x1, x2, y1, y2);
-    QCOMPARE(x1, int8_t(0));
-    QCOMPARE(x2, int8_t(0));
-    QCOMPARE(y1, int8_t(0));
-    QCOMPARE(y2, int8_t(0));
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kX, 1, 2, 3, 4);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kY, 5, 6, 7, 8);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kZ, 9, 10, 11, 12);
-    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kRotation, 13, 14, 15, 16);
-    const int8_t matrix[] = {
-         1,  2,  3,  4,
-         5,  6,  7,  8,
-         9, 10, 11, 12,
-        13, 14, 15, 16
-    };
-    testBoneInterpolationMatrix(matrix, frame);
+    btQuadWord n;
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kX, n);
+    CompareQuadWord(n, btQuadWord(0.0f, 0.0f, 0.0f, 0.0f));
+    btQuadWord px(8, 9, 10, 11),
+            py(12, 13, 14, 15),
+            pz(16, 17, 18, 19),
+            pr(20, 21, 22, 23),
+            p[] = { px, py, pz, pr };
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kX, px);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kY, py);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kZ, pz);
+    frame.setInterpolationParameter(vpvl::BoneKeyFrame::kRotation, pr);
+    testBoneInterpolationMatrix(p, frame);
 }
 
 void TestVMDMotion::cameraInterpolation()
 {
     vpvl::CameraKeyFrame frame;
-    int8_t x1, x2, y1, y2;
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, x1, x2, y1, y2);
-    QCOMPARE(x1, int8_t(0));
-    QCOMPARE(x2, int8_t(0));
-    QCOMPARE(y1, int8_t(0));
-    QCOMPARE(y2, int8_t(0));
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kX, 1, 2, 3, 4);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kY, 5, 6, 7, 8);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kZ, 9, 10, 11, 12);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kRotation, 13, 14, 15, 16);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kDistance, 17, 18, 19, 20);
-    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kFovy, 21, 22, 23, 24);
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, x1, x2, y1, y2);
-    const int8_t matrix[] = {
-         1,  2,  3,  4,
-         5,  6,  7,  8,
-         9, 10, 11, 12,
-        13, 14, 15, 16,
-        17, 18, 19, 20,
-        21, 22, 23, 24
-    };
-    testCameraInterpolationMatrix(matrix, frame);
+    btQuadWord n;
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, n);
+    CompareQuadWord(n, btQuadWord(0.0f, 0.0f, 0.0f, 0.0f));
+    btQuadWord px(9, 10, 11, 12),
+            py(13, 14, 15, 16),
+            pz(17, 18, 19, 20),
+            pr(21, 22, 23, 24),
+            pd(25, 26, 27, 28),
+            pf(29, 30, 31, 32),
+            p[] = { px, py, pz, pr, pd, pf };
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kX, px);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kY, py);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kZ, pz);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kRotation, pr);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kDistance, pd);
+    frame.setInterpolationParameter(vpvl::CameraKeyFrame::kFovy, pf);
+    testCameraInterpolationMatrix(p, frame);
 }
 
-void TestVMDMotion::testBoneInterpolationMatrix(const int8_t matrix[], const vpvl::BoneKeyFrame &frame)
+void TestVMDMotion::testBoneInterpolationMatrix(const btQuadWord p[], const vpvl::BoneKeyFrame &frame)
 {
-    int8_t x1, y1, x2, y2;
-    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kX, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[0]);
-    QCOMPARE(x2, matrix[1]);
-    QCOMPARE(y1, matrix[2]);
-    QCOMPARE(y2, matrix[3]);
-    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kY, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[4]);
-    QCOMPARE(x2, matrix[5]);
-    QCOMPARE(y1, matrix[6]);
-    QCOMPARE(y2, matrix[7]);
-    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kZ, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[8]);
-    QCOMPARE(x2, matrix[9]);
-    QCOMPARE(y1, matrix[10]);
-    QCOMPARE(y2, matrix[11]);
-    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[12]);
-    QCOMPARE(x2, matrix[13]);
-    QCOMPARE(y1, matrix[14]);
-    QCOMPARE(y2, matrix[15]);
+    btQuadWord actual, expected = p[0];
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kX, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[1];
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kY, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[2];
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kZ, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[3];
+    frame.getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, actual);
+    CompareQuadWord(actual, expected);
 }
 
-void TestVMDMotion::testCameraInterpolationMatrix(const int8_t matrix[], const vpvl::CameraKeyFrame &frame)
+void TestVMDMotion::testCameraInterpolationMatrix(const btQuadWord p[], const vpvl::CameraKeyFrame &frame)
 {
-    int8_t x1, y1, x2, y2;
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[0]);
-    QCOMPARE(x2, matrix[1]);
-    QCOMPARE(y1, matrix[2]);
-    QCOMPARE(y2, matrix[3]);
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kY, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[4]);
-    QCOMPARE(x2, matrix[5]);
-    QCOMPARE(y1, matrix[6]);
-    QCOMPARE(y2, matrix[7]);
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kZ, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[8]);
-    QCOMPARE(x2, matrix[9]);
-    QCOMPARE(y1, matrix[10]);
-    QCOMPARE(y2, matrix[11]);
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kRotation, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[12]);
-    QCOMPARE(x2, matrix[13]);
-    QCOMPARE(y1, matrix[14]);
-    QCOMPARE(y2, matrix[15]);
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kDistance, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[16]);
-    QCOMPARE(x2, matrix[17]);
-    QCOMPARE(y1, matrix[18]);
-    QCOMPARE(y2, matrix[19]);
-    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kFovy, x1, x2, y1, y2);
-    QCOMPARE(x1, matrix[20]);
-    QCOMPARE(x2, matrix[21]);
-    QCOMPARE(y1, matrix[22]);
-    QCOMPARE(y2, matrix[23]);
+    btQuadWord actual, expected = p[0];
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kX, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[1];
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kY, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[2];
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kZ, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[3];
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kRotation, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[4];
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kDistance, actual);
+    CompareQuadWord(actual, expected);
+    expected = p[5];
+    frame.getInterpolationParameter(vpvl::CameraKeyFrame::kFovy, actual);
+    CompareQuadWord(actual, expected);
 }
 
 QTEST_APPLESS_MAIN(TestVMDMotion)

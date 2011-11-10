@@ -71,6 +71,7 @@ public:
     ~CameraKeyFrame();
 
     static const int kTableSize = 24;
+    static const QuadWord kDefaultInterpolationParameterValue;
 
     static size_t strideSize();
     size_t stride() const;
@@ -84,29 +85,23 @@ public:
     void setDefaultInterpolationParameter();
 
     /**
-     * Get the interpolation values with the type.
+     * Returns the interpolation values with the type.
      *
      * @param type An interpolation type
-     * @param x1 A value of X1
-     * @param x2 A value of X2
-     * @param y1 A value of Y1
-     * @param y2 A value of Y2
+     * @param An interpolation parameter to be get
      */
-    void getInterpolationParameter(InterpolationType type, int8_t &x1, int8_t &x2, int8_t &y1, int8_t &y2) const;
+    void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
 
     /**
      * Set the interpolation values with the type.
      *
-     * @param type An interpolation type
-     * @param x1 A value of X1
-     * @param x2 A value of X2
-     * @param y1 A value of Y1
-     * @param y2 A value of Y2
+     * @param An interpolation type
+     * @param An interpolation parameter to set
      */
-    void setInterpolationParameter(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
+    void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
     /**
-     * Get empty name
+     * Returns empty name
      *
      * The camera key frame doesn't have name.
      *
@@ -115,7 +110,7 @@ public:
     const uint8_t *name() const;
 
     /**
-     * Get the distance of this keyframe.
+     * Returns the distance of this keyframe.
      *
      * @return A value of distance value
      */
@@ -124,7 +119,7 @@ public:
     }
 
     /**
-     * Get the fovy of this keyframe.
+     * Returns the fovy of this keyframe.
      *
      * @return A value of fovy value
      */
@@ -133,7 +128,7 @@ public:
     }
 
     /**
-     * Get the position of this keyframe.
+     * Returns the position of this keyframe.
      *
      * @return A value of position value
      */
@@ -142,7 +137,7 @@ public:
     }
 
     /**
-     * Get the angle of this keyframe.
+     * Returns the angle of this keyframe.
      *
      * @return A value of angle value
      */
@@ -151,7 +146,7 @@ public:
     }
 
     /**
-     * Get whether this keyframe is linear.
+     * Returns whether this keyframe is linear.
      *
      * @return True if this keyframe is linear
      */
@@ -160,7 +155,7 @@ public:
     }
 
     /**
-     * Get the interpolation values of this keyframe.
+     * Returns the interpolation values of this keyframe.
      *
      * @return An array of interpolation values
      */
@@ -215,7 +210,7 @@ public:
 
 private:
     void setInterpolationTable(const int8_t *table);
-    void setInterpolationParameterInternal(InterpolationType type, int8_t x1, int8_t x2, int8_t y1, int8_t y2);
+    void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     uint8_t m_name[2];
