@@ -252,6 +252,7 @@ void TestPMDModel::parseConstraint()
     bytes.fill(0);
     constaint.write(reinterpret_cast<uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
+    bones.releaseAll();
     bodies.releaseAll();
 }
 
@@ -365,7 +366,6 @@ void TestPMDModel::parseRigidBody()
     bones.add(CreateBone(1));
     vpvl::RigidBody *body = CreateRigidBody(bytes, &bones);
     QCOMPARE(size_t(bytes.size()), vpvl::RigidBody::stride());
-    body->read(reinterpret_cast<const uint8_t *>(bytes.constData()), &bones);
     QCOMPARE(QString(reinterpret_cast<const char *>(body->name())), QString(kTestString));
     btRigidBody *b = body->body();
     QVERIFY(b != 0);
@@ -380,6 +380,7 @@ void TestPMDModel::parseRigidBody()
     bytes.resize(vpvl::RigidBody::stride());
     bytes.fill(0);
     body->write(reinterpret_cast<uint8_t *>(bytes.data()));
+    delete body;
     QCOMPARE(bytes2, bytes);
     bones.releaseAll();
 }
