@@ -101,7 +101,6 @@ static void TestMaterial(const vpvl::Material &material, const QString &path)
     QCOMPARE(QString(reinterpret_cast<const char *>(material.mainTextureName())), QString("main12.sph"));
     QCOMPARE(QString(reinterpret_cast<const char *>(material.subTextureName())), QString("sub12.spa"));
     QVERIFY(material.ambient() == btVector4(0.8f, 0.9f, 1.0f, 1.0f));
-    QVERIFY(material.averageColor() == btVector4(0.4f, 0.5f, 0.6f, 1.0f));
     QVERIFY(material.diffuse() == btVector4(0.0f, 0.1f, 0.2f, 1.0f));
     QVERIFY(material.specular() == btVector4(0.5f, 0.6f, 0.7f, 1.0f));
     QCOMPARE(material.opacity(), 0.3f);
