@@ -1,5 +1,3 @@
-/* Gouraud shading implementation for model vertex shader */
-
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 biasMatrix;

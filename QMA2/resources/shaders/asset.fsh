@@ -1,5 +1,8 @@
-/* Gouraud shading implementation for asset fragment shader */
+#ifdef GL_ES
+precision highp float;
+#endif
 
+uniform bool hasMainTexture;
 uniform float opacity;
 uniform bool hasTexture;
 uniform sampler2D mainTexture;

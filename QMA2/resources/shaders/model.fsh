@@ -1,4 +1,6 @@
-/* Gourand shading implementation for model fragment shader */
+#ifdef GL_ES
+precision highp float;
+#endif
 
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
