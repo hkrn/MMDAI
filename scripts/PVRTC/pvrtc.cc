@@ -46,12 +46,15 @@ int main(int argc, char *argv[])
                 mainTexture.save(dest.absoluteFilePath(png));
                 QString pvr = main;
                 pvr.replace(".bmp", ".pvr");
+                pvr.replace(".png", ".pvr");
                 QProcess process;
                 QStringList args;
                 if (!QFile::exists(dest.absoluteFilePath(pvr))) {
+                    args << "--bits-per-pixel-2";
+                    args << "--channel-weighting-perceptual";
+                    args << "--alpha-is-opacity";
                     args << "-e";
                     args << "PVRTC";
-                    args << "--bits-per-pixel-2";
                     args << "-o";
                     args << dest.absoluteFilePath(pvr);
                     args << "-f";
