@@ -211,7 +211,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
-    setWindowTitle(QString("%1[*]").arg(qAppName()));
+    setWindowTitle(QString("[*]%1").arg(qAppName()));
     statusBar()->show();
 }
 
