@@ -1004,13 +1004,13 @@ void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel 
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
         if (!primary.empty()) {
-            if (m_delegate->loadTexture(dir + "/" + primary, textureID)) {
+            if (m_delegate->loadTexture(dir + "/" + primary, textureID, false)) {
                 materialPrivate.mainTextureID = textureID;
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
         if (!second.empty()) {
-            if (m_delegate->loadTexture(dir + "/" + second, textureID)) {
+            if (m_delegate->loadTexture(dir + "/" + second, textureID, false)) {
                 materialPrivate.subTextureID = textureID;
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
@@ -1045,16 +1045,12 @@ void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel 
                     userData->vertexBufferObjects[kModelTexCoords]);
     if (m_delegate->loadToonTexture("toon0.bmp", dir, textureID)) {
         userData->toonTextureID[0] = textureID;
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (int i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
-            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
@@ -1233,7 +1229,7 @@ void Renderer::loadAsset(Asset *asset, const std::string &dir)
             if (userData->textures[path] == 0) {
                 canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
                 filename = dir + "/" + canonicalized;
-                if (m_delegate->loadTexture(filename, textureID)) {
+                if (m_delegate->loadTexture(filename, textureID, false)) {
                     userData->textures[path] = textureID;
                     m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }

@@ -140,7 +140,7 @@ public:
         m_iconv = 0;
     }
 
-    bool loadTexture(const std::string &path, GLuint &textureID) {
+    bool loadTexture(const std::string &path, GLuint &textureID, bool isToon) {
         static const GLfloat priority = 1.0f;
         SDL_Surface *surface = IMG_Load(path.c_str());
         if (surface) {
@@ -150,6 +150,10 @@ public:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            if (!isToon) {
+                glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            }
             GLenum format, internal;
             if (surface->format->BitsPerPixel == 32) {
                 format = surface->format->Rmask & 0xff ? GL_RGBA : GL_BGRA;
@@ -164,6 +168,8 @@ public:
             else {
                 log(kLogWarning, "Unknown image format: %s", path.c_str());
                 SDL_FreeSurface(surface);
+                glDeleteTextures(1, &textureID);
+                textureID = 0;
                 return false;
             }
             SDL_LockSurface(surface);
@@ -190,7 +196,7 @@ public:
                 return false;
             }
         }
-        return loadTexture(path, textureID);
+        return loadTexture(path, textureID, true);
     }
     void log(LogLevel /* level */, const char *format, ...) {
         va_list ap;

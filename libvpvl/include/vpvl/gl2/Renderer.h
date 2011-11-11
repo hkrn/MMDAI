@@ -92,7 +92,7 @@ public:
         kShadowFragmentShader
     };
 
-    virtual bool loadTexture(const std::string &path, GLuint &textureID) = 0;
+    virtual bool loadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
     virtual bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
     virtual void log(LogLevel level, const char *format, ...) = 0;
     virtual const std::string loadShader(ShaderType type) = 0;
