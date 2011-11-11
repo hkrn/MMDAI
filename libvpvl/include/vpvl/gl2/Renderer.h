@@ -92,8 +92,8 @@ public:
         kShadowFragmentShader
     };
 
-    virtual bool loadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
-    virtual bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
+    virtual bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
+    virtual bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
     virtual void log(LogLevel level, const char *format, ...) = 0;
     virtual const std::string loadShader(ShaderType type) = 0;
     virtual const std::string toUnicode(const uint8_t *value) = 0;
@@ -137,8 +137,8 @@ public:
     void resize(int width, int height);
     void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
     void setDebugDrawer(btDynamicsWorld *world);
-    void loadModel(vpvl::PMDModel *model, const std::string &dir);
-    void unloadModel(const vpvl::PMDModel *model);
+    void uploadModel(vpvl::PMDModel *model, const std::string &dir);
+    void deleteModel(const vpvl::PMDModel *model);
     void updateModelBuffer(const vpvl::PMDModel *model) const;
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
@@ -146,8 +146,8 @@ public:
     void drawModelBones(bool drawSpheres, bool drawLines);
     void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
     void drawBoneTransform(vpvl::Bone *bone);
-    void loadAsset(Asset *asset, const std::string &dir);
-    void unloadAsset(Asset *&asset);
+    void uploadAsset(Asset *asset, const std::string &dir);
+    void deleteAsset(Asset *&asset);
 
     void clearSurface();
     void drawShadow();
@@ -156,8 +156,8 @@ public:
     void drawSurface();
 
 protected:
-    void loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
-    void unloadModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model);
+    void uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
+    void deleteModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model);
 
     IDelegate *m_delegate;
     vpvl::Scene *m_scene;

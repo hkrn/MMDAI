@@ -862,14 +862,14 @@ Renderer::~Renderer()
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         vpvl::PMDModel *model = models[i];
-        unloadModel(model);
+        deleteModel(model);
     }
     vpvl::Array<vpvl::Asset *> assets;
     assets.copy(m_assets);
     const int nassets = assets.count();
     for (int i = 0; i < nassets; i++) {
         vpvl::Asset *asset = assets[i];
-        unloadAsset(asset);
+        deleteAsset(asset);
     }
     models.releaseAll();
     assets.clear();
@@ -984,12 +984,12 @@ void Renderer::resize(int width, int height)
     m_scene->setHeight(height);
 }
 
-void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
+void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
 {
-    loadModel0(new vpvl::gl2::PMDModelUserData(), model, dir);
+    uploadModel0(new vpvl::gl2::PMDModelUserData(), model, dir);
 }
 
-void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir)
+void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir)
 {
     const vpvl::MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
@@ -1004,13 +1004,13 @@ void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel 
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
         if (!primary.empty()) {
-            if (m_delegate->loadTexture(dir + "/" + primary, textureID, false)) {
+            if (m_delegate->uploadTexture(dir + "/" + primary, textureID, false)) {
                 materialPrivate.mainTextureID = textureID;
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
         if (!second.empty()) {
-            if (m_delegate->loadTexture(dir + "/" + second, textureID, false)) {
+            if (m_delegate->uploadTexture(dir + "/" + second, textureID, false)) {
                 materialPrivate.subTextureID = textureID;
                 m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
@@ -1043,13 +1043,13 @@ void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel 
     m_delegate->log(IDelegate::kLogInfo,
                     "Binding texture coordinates to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kModelTexCoords]);
-    if (m_delegate->loadToonTexture("toon0.bmp", dir, textureID)) {
+    if (m_delegate->uploadToonTexture("toon0.bmp", dir, textureID)) {
         userData->toonTextureID[0] = textureID;
         m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (int i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
-        if (m_delegate->loadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
+        if (m_delegate->uploadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
             m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
@@ -1060,12 +1060,12 @@ void Renderer::loadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel 
     m_scene->addModel(model);
 }
 
-void Renderer::unloadModel(const vpvl::PMDModel *model)
+void Renderer::deleteModel(const vpvl::PMDModel *model)
 {
-    unloadModel0(static_cast<vpvl::gl2::PMDModelUserData *>(model->userData()), model);
+    deleteModel0(static_cast<vpvl::gl2::PMDModelUserData *>(model->userData()), model);
 }
 
-void Renderer::unloadModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model)
+void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model)
 {
     if (model) {
         const vpvl::MaterialList &materials = model->materials();
@@ -1209,7 +1209,7 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     m_shadowProgram->unbind();
 }
 
-void Renderer::loadAsset(Asset *asset, const std::string &dir)
+void Renderer::uploadAsset(Asset *asset, const std::string &dir)
 {
 #ifdef VPVL_LINK_ASSIMP
     const aiScene *scene = asset->getScene();
@@ -1229,7 +1229,7 @@ void Renderer::loadAsset(Asset *asset, const std::string &dir)
             if (userData->textures[path] == 0) {
                 canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
                 filename = dir + "/" + canonicalized;
-                if (m_delegate->loadTexture(filename, textureID, false)) {
+                if (m_delegate->uploadTexture(filename, textureID, false)) {
                     userData->textures[path] = textureID;
                     m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
@@ -1245,7 +1245,7 @@ void Renderer::loadAsset(Asset *asset, const std::string &dir)
 #endif
 }
 
-void Renderer::unloadAsset(Asset *&asset)
+void Renderer::deleteAsset(Asset *&asset)
 {
 #ifdef VPVL_LINK_ASSIMP
     if (asset) {

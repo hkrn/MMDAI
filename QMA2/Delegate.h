@@ -66,7 +66,7 @@ public:
     ~Delegate() {
     }
 
-    bool loadTexture(const std::string &path, GLuint &textureID, bool isToon) {
+    bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
         QString pathString = QString::fromLocal8Bit(path.c_str());
         QFileInfo info(pathString);
         if (info.isDir() || !info.exists()) {
@@ -91,12 +91,12 @@ public:
         qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
         return textureID != 0;
     }
-    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
+    bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
         QString filename = QString::fromLocal8Bit(name.c_str());
         QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
         if (!QFile::exists(path))
             path = QString(":/textures/%1").arg(filename);
-        return loadTexture(std::string(path.toLocal8Bit()), textureID, true);
+        return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
     }
 #ifdef VPVL_USE_GLSL
     const std::string loadShader(ShaderType type) {

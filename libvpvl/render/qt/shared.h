@@ -203,7 +203,7 @@ public:
     {
     }
 
-    bool loadTexture(const std::string &path, GLuint &textureID, bool isToon) {
+    bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
         QString pathString = QString::fromLocal8Bit(path.c_str());
         if (!QFileInfo(pathString).exists()) {
             return false;
@@ -222,7 +222,7 @@ public:
         qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
         return textureID != 0;
     }
-    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
+    bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
         QFileInfo info((dir + "/" + name).c_str());
         if (!info.exists()) {
             info.setFile((m_system + "/" + name).c_str());
@@ -231,7 +231,7 @@ public:
                 return false;
             }
         }
-        return loadTexture(std::string(info.absoluteFilePath().toUtf8()), textureID, true);
+        return uploadTexture(std::string(info.absoluteFilePath().toUtf8()), textureID, true);
     }
     void log(LogLevel /* level */, const char *format, ...) {
         va_list ap;
@@ -430,7 +430,7 @@ private:
         //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
         scene->setWorld(m_world);
 
-        m_renderer->loadModel(model, kModelDir);
+        m_renderer->uploadModel(model, kModelDir);
         model->setEdgeOffset(0.0f);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
@@ -457,7 +457,7 @@ private:
         vpvl::Asset *asset = new vpvl::Asset();
         const std::string path = internal::concatPath(dir, name);
         if (asset->load(path.c_str())) {
-            m_renderer->loadAsset(asset, dir);
+            m_renderer->uploadAsset(asset, dir);
             return asset;
         }
         else {

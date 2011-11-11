@@ -241,7 +241,7 @@ Renderer::~Renderer()
     m_context = 0;
 }
 
-void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
+void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
 {
     vpvl::cg::PMDModelUserData *userData = new vpvl::cg::PMDModelUserData();
     vpvl::cg::IDelegate *delegate = static_cast<vpvl::cg::IDelegate *>(m_delegate);
@@ -259,15 +259,15 @@ void Renderer::loadModel(vpvl::PMDModel *model, const std::string &dir)
                             m_delegate->toUnicode(model->name()).c_str(), message);
         }
     }
-    loadModel0(userData, model, dir);
+    uploadModel0(userData, model, dir);
 }
 
-void Renderer::unloadModel(const vpvl::PMDModel *model)
+void Renderer::deleteModel(const vpvl::PMDModel *model)
 {
     vpvl::cg::PMDModelUserData *userData = static_cast<vpvl::cg::PMDModelUserData *>(model->userData());
     delete userData->parameters;
     userData->parameters = 0;
-    unloadModel0(userData, model);
+    deleteModel0(userData, model);
 }
 
 void Renderer::drawModel(const vpvl::PMDModel *model)

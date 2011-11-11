@@ -140,7 +140,7 @@ public:
         m_iconv = 0;
     }
 
-    bool loadTexture(const std::string &path, GLuint &textureID, bool isToon) {
+    bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
         static const GLfloat priority = 1.0f;
         SDL_Surface *surface = IMG_Load(path.c_str());
         if (surface) {
@@ -186,7 +186,7 @@ public:
             return false;
         }
     }
-    bool loadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
+    bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
         struct stat sb;
         std::string path = dir + "/" + name;
         if (!(stat(path.c_str(), &sb) != -1 && S_ISREG(sb.st_mode))) {
@@ -196,7 +196,7 @@ public:
                 return false;
             }
         }
-        return loadTexture(path, textureID, true);
+        return uploadTexture(path, textureID, true);
     }
     void log(LogLevel /* level */, const char *format, ...) {
         va_list ap;
@@ -434,7 +434,7 @@ private:
         //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
         scene->setWorld(m_world);
 
-        m_renderer->loadModel(model, internal::kModelDir);
+        m_renderer->uploadModel(model, internal::kModelDir);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
@@ -460,7 +460,7 @@ private:
         vpvl::Asset *asset = new vpvl::Asset();
         const std::string path = internal::concatPath(dir, name);
         if (asset->load(path.c_str())) {
-            m_renderer->loadAsset(asset, dir);
+            m_renderer->uploadAsset(asset, dir);
             return asset;
         }
         else {

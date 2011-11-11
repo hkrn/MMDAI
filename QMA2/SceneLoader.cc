@@ -68,7 +68,7 @@ SceneLoader::~SceneLoader()
 void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
 {
     QString key = internal::toQString(model);
-    m_renderer->loadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
+    m_renderer->uploadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
     if (m_models.contains(key)) {
         int i = 0;
         while (true) {
@@ -90,7 +90,7 @@ bool SceneLoader::deleteAsset(vpvl::Asset *asset)
         return false;
     const QString &key = m_assets.key(asset);
     if (!key.isNull()) {
-        m_renderer->unloadAsset(asset);
+        m_renderer->deleteAsset(asset);
         m_assets.remove(key);
         return true;
     }
@@ -105,7 +105,7 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
     if (!key.isNull()) {
         deleteModelMotion(model);
         m_renderer->scene()->removeModel(model);
-        m_renderer->unloadModel(model);
+        m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
         m_models.remove(key);
         delete model;
@@ -187,7 +187,7 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             memcpy(name, assetName.constData(), assetName.size());
             name[assetName.size()] = 0;
             asset->setName(name);
-            m_renderer->loadAsset(asset, std::string(dir.absolutePath().toLocal8Bit()));
+            m_renderer->uploadAsset(asset, std::string(dir.absolutePath().toLocal8Bit()));
             m_assets[key] = asset;
         }
         else {

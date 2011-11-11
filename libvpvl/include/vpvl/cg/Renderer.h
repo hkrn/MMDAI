@@ -81,8 +81,8 @@ public:
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
-    void loadModel(vpvl::PMDModel *model, const std::string &dir);
-    void unloadModel(const vpvl::PMDModel *model);
+    void uploadModel(vpvl::PMDModel *model, const std::string &dir);
+    void deleteModel(const vpvl::PMDModel *model);
     void drawModel(const vpvl::PMDModel *model);
 
 private:
