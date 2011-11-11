@@ -42,8 +42,6 @@
 namespace vpvl
 {
 
-const float BoneAnimation::kStartingMarginFrame = 20.0f;
-
 struct BoneAnimationInternal {
     Bone *bone;
     BoneKeyFrameList keyFrames;
@@ -88,7 +86,7 @@ void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
 }
 
 BoneAnimation::BoneAnimation()
-    : BaseAnimation(kStartingMarginFrame),
+    : BaseAnimation(),
       m_model(0),
       m_hasCenterBoneAnimation(false)
 {
@@ -118,18 +116,10 @@ void BoneAnimation::seek(float frameAt)
     const int nnodes = m_name2node.count();
     for (int i = 0; i < nnodes; i++) {
         BoneAnimationInternal *node = *m_name2node.value(i);
-        if (m_ignoreOneKeyFrame && node->keyFrames.count() <= 1)
-            continue;
         calculateFrames(frameAt, node);
         Bone *bone = node->bone;
-        if (m_blendRate == 1.0f) {
-            bone->setPosition(node->position);
-            bone->setRotation(node->rotation);
-        }
-        else {
-            bone->setPosition(bone->position().lerp(node->position, m_blendRate));
-            bone->setRotation(bone->rotation().slerp(node->rotation, m_blendRate));
-        }
+        bone->setPosition(node->position);
+        bone->setRotation(node->rotation);
     }
     m_previousFrame = m_currentFrame;
     m_currentFrame = frameAt;
@@ -238,45 +228,10 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
     const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);
-    Vector3 positionFrom(0.0f, 0.0f, 0.0f), positionTo(0.0f, 0.0f, 0.0f);
-    Quaternion rotationFrom(0.0f, 0.0f, 0.0f, 1.0f), rotationTo(0.0f, 0.0f, 0.0f, 1.0f);
-    if (m_overrideFirst && (k1 == 0 || frameIndexFrom <= m_lastLoopStartIndex)) {
-        if (nframes > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
-            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
-            positionFrom = node->snapPosition;
-            rotationFrom = node->snapRotation;
-            positionTo = keyFrameTo->position();
-            rotationTo = keyFrameTo->rotation();
-        }
-        else if (frameAt - frameIndexFrom < m_smearIndex) {
-            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
-            frameIndexTo = m_lastLoopStartIndex + m_smearIndex;
-            currentFrame = frameAt;
-            positionFrom = node->snapPosition;
-            rotationFrom = node->snapRotation;
-            positionTo = keyFrameFrom->position();
-            rotationTo = keyFrameFrom->rotation();
-            keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameFrom);
-        }
-        else if (nframes > 1) {
-            frameIndexFrom = m_lastLoopStartIndex + m_smearIndex;
-            currentFrame = frameAt;
-            positionFrom = keyFrameFrom->position();
-            rotationFrom = keyFrameFrom->rotation();
-            positionTo = keyFrameTo->position();
-            rotationTo = keyFrameTo->rotation();
-        }
-        else {
-            positionFrom = keyFrameFrom->position();
-            rotationFrom = keyFrameFrom->rotation();
-        }
-    }
-    else {
-        positionFrom = keyFrameFrom->position();
-        rotationFrom = keyFrameFrom->rotation();
-        positionTo = keyFrameTo->position();
-        rotationTo = keyFrameTo->rotation();
-    }
+    const Vector3 &positionFrom = keyFrameFrom->position();
+    const Quaternion &rotationFrom = keyFrameFrom->rotation();
+    const Vector3 &positionTo = keyFrameTo->position();
+    const Quaternion &rotationTo = keyFrameTo->rotation();
 
     if (frameIndexFrom != frameIndexTo) {
         if (currentFrame <= frameIndexFrom) {

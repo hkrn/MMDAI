@@ -76,7 +76,7 @@ void CameraAnimation::lerpVector3(const CameraKeyFrame *keyFrame,
 }
 
 CameraAnimation::CameraAnimation()
-    : BaseAnimation(0.0f),
+    : BaseAnimation(),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_distance(0.0f),

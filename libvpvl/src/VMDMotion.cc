@@ -47,26 +47,14 @@ const uint8_t *kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion D
 namespace vpvl
 {
 
-const float VMDMotion::kDefaultLoopAtFrame = 0.0f;
 const float VMDMotion::kDefaultPriority = 0.0f;
 
 VMDMotion::VMDMotion()
     : m_model(0),
       m_status(kRunning),
       m_error(kNoError),
-      m_onEnd(2),
-      m_loopAt(kDefaultLoopAtFrame),
       m_priority(kDefaultPriority),
-      m_endingBoneBlend(0.0f),
-      m_endingFaceBlend(0.0f),
-      m_endingBoneBlendFrames(20.0f),
-      m_endingFaceBlendFrames(5.0f),
-      m_motionBlendRate(1.0f),
-      m_beginningNonControlledBlend(0.0f),
-      m_active(false),
-      m_enableSmooth(false),
-      m_enableRelocation(false),
-      m_ignoreStatic(false)
+      m_active(false)
 {
     internal::zerofill(&m_name, sizeof(m_name));
 }
@@ -215,103 +203,30 @@ void VMDMotion::attachModel(PMDModel *model)
         return;
     m_model = model;
     m_active = true;
-    m_endingBoneBlend = 0.0f;
-    m_endingFaceBlend = 0.0f;
     m_boneMotion.attachModel(model);
     m_faceMotion.attachModel(model);
-    if (m_enableSmooth) {
-        // The model is relocated to the specified offset and save the current motion state.
-        if (m_enableRelocation && m_boneMotion.hasCenterBoneAnimation()) {
-            Bone *root = model->mutableRootBone();
-            Bone *center = Bone::centerBone(&model->bones());
-            Transform transform = root->localTransform().inverse();
-            Vector3 position = transform * center->localTransform().getOrigin();
-            Vector3 centerPosition = center->originPosition();
-            Vector3 offset = position - centerPosition;
-            offset.setY(0.0f);
-            m_boneMotion.setOverrideFirst(offset);
-            m_faceMotion.setOverrideFirst(offset);
-            root->setOffset(root->offset() + offset);
-            root->updateTransform();
-        }
-        // Save the current motion state for loop
-        else {
-            m_boneMotion.setOverrideFirst(internal::kZeroV);
-            m_faceMotion.setOverrideFirst(internal::kZeroV);
-        }
-    }
 }
 
 void VMDMotion::seek(float frameIndex)
 {
-    m_boneMotion.setBlendRate(m_boneMotion.blendRate());
-    m_faceMotion.setBlendRate(1.0f);
     m_boneMotion.seek(frameIndex);
     m_faceMotion.seek(frameIndex);
 }
 
 void VMDMotion::advance(float deltaFrame)
 {
-    if (m_beginningNonControlledBlend > 0.0f) {
-        m_beginningNonControlledBlend -= deltaFrame;
-        btSetMax(m_beginningNonControlledBlend, 0.0f);
-        m_model->smearAllBonesToDefault(m_beginningNonControlledBlend / 10.0f);
-        m_model->smearAllFacesToDefault(m_beginningNonControlledBlend / 10.0f);
-    }
     if (deltaFrame == 0.0f) {
         m_boneMotion.advance(deltaFrame);
         m_faceMotion.advance(deltaFrame);
     }
     else if (m_active) {
-        // Started gracefully finish
-        if (m_endingBoneBlend != 0.0f || m_endingFaceBlend != 0.0f) {
-            m_boneMotion.setBlendRate(m_motionBlendRate * m_endingBoneBlend / m_endingBoneBlendFrames);
-            m_faceMotion.setBlendRate(m_endingFaceBlend / m_endingFaceBlendFrames);
-            m_boneMotion.advance(deltaFrame);
-            m_faceMotion.advance(deltaFrame);
-            m_endingBoneBlend -= deltaFrame;
-            m_endingFaceBlend -= deltaFrame;
-            btSetMax(m_endingBoneBlend, 0.0f);
-            btSetMax(m_endingFaceBlend, 0.0f);
-            // The motion's blend rate is zero (finish), it should be marked as end
-            if (m_endingBoneBlend == 0.0f || m_endingFaceBlend == 0.0f) {
-                m_active = false;
-                m_status = kStopped;
-            }
-        }
-        else {
-            // The motion is active and continue to advance
-            m_boneMotion.setBlendRate(m_boneMotion.blendRate());
-            m_faceMotion.setBlendRate(1.0f);
-            m_boneMotion.advance(deltaFrame);
-            m_faceMotion.advance(deltaFrame);
-            if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
-                    m_faceMotion.currentIndex() >= m_faceMotion.maxIndex()) {
-                switch (m_onEnd) {
-                case 0: // none
-                    break;
-                case 1: // loop
-                    if (m_boneMotion.maxIndex() != 0.0f) {
-                        m_boneMotion.rewind(m_loopAt, deltaFrame);
-                        m_status = kLooped;
-                    }
-                    if (m_faceMotion.maxIndex() != 0.0f) {
-                        m_faceMotion.rewind(m_loopAt, deltaFrame);
-                        m_status = kLooped;
-                    }
-                    break;
-                case 2: // gracefully finish
-                    if (m_enableSmooth) {
-                        m_endingBoneBlend = m_endingBoneBlendFrames;
-                        m_endingFaceBlend = m_endingFaceBlendFrames;
-                    }
-                    else {
-                        m_active = false;
-                        m_status = kStopped;
-                    }
-                    break;
-                }
-            }
+        // The motion is active and continue to advance
+        m_boneMotion.advance(deltaFrame);
+        m_faceMotion.advance(deltaFrame);
+        if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
+                m_faceMotion.currentIndex() >= m_faceMotion.maxIndex()) {
+            m_active = false;
+            m_status = kStopped;
         }
     }
 }
@@ -335,19 +250,6 @@ bool VMDMotion::isReachedTo(float atEnd) const
 {
     // force inactive motion is reached
     return !m_active || (m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd);
-}
-
-bool VMDMotion::isFull() const
-{
-    return m_boneMotion.isIgnoreOneKeyFrame() && m_faceMotion.isIgnoreOneKeyFrame();
-}
-
-void VMDMotion::setFull(bool value)
-{
-    bool ignoreOneKeyFrame = value ? false : true;
-    m_boneMotion.setIgnoreOneKeyFrame(ignoreOneKeyFrame);
-    m_faceMotion.setIgnoreOneKeyFrame(ignoreOneKeyFrame);
-    m_beginningNonControlledBlend = ignoreOneKeyFrame ? 0.0f : 10.0f;
 }
 
 void VMDMotion::parseHeader(const DataInfo &info)
@@ -383,19 +285,8 @@ void VMDMotion::release()
     internal::zerofill(&m_name, sizeof(m_name));
     m_model = 0;
     m_status = kRunning;
-    m_onEnd = 0;
-    m_loopAt = kDefaultLoopAtFrame;
     m_priority = kDefaultPriority;
-    m_endingBoneBlend = 0.0f;
-    m_endingFaceBlend = 0.0f;
-    m_endingBoneBlendFrames = 20.0f;
-    m_endingFaceBlendFrames = 5.0f;
-    m_motionBlendRate = 1.0f;
-    m_beginningNonControlledBlend = 0.0f;
     m_active = false;
-    m_enableSmooth = false;
-    m_enableRelocation = false;
-    m_ignoreStatic = false;
 }
 
 }

@@ -62,11 +62,9 @@ class VPVL_API BaseAnimation
 public:
 
     /**
-     * Constructor that set the smear default value to a given value.
-     *
-     * @param smearDefault The smear default value
+     * Constructor
      */
-    explicit BaseAnimation(float smearDefault);
+    explicit BaseAnimation();
 
     virtual ~BaseAnimation();
 
@@ -84,13 +82,6 @@ public:
      * @param frameAt A frame index to seek
      */
     virtual void seek(float frameAt) = 0;
-
-    /**
-     * Save the current animation state.
-     *
-     * @param center A position of center
-     */
-    virtual void takeSnap(const Vector3 &center) = 0;
 
     /**
      * Seek from the previous to the next frame with delta.
@@ -170,22 +161,6 @@ public:
     void deleteKeyFrames(int frameIndex);
 
     /**
-     * Save the current Animation state.
-     *
-     * @param center A position of center
-     */
-    void setOverrideFirst(const Vector3 &center);
-
-    /**
-     * Get the blend rate.
-     *
-     * @return The blend rate value
-     */
-    float blendRate() const {
-        return m_blendRate;
-    }
-
-    /**
      * Get the previous frame index.
      *
      * @return The previous frame index
@@ -222,24 +197,6 @@ public:
     }
 
     /**
-     * Returnes ignore just one key frame.
-     *
-     * @param True if ignore
-     */
-    bool isIgnoreOneKeyFrame() const {
-        return m_ignoreOneKeyFrame;
-    }
-
-    /**
-     * Set the blend rate.
-     *
-     * @param value The blend rate value
-     */
-    void setBlendRate(float value) {
-        m_blendRate = value;
-    }
-
-    /**
      * Set calling refresh method automatically after modifying key frames.
      *
      * @param value True if calling refresh automatically
@@ -248,29 +205,13 @@ public:
         m_automaticRefresh = value;
     }
 
-    /**
-     * Set ignore just one key frame.
-     *
-     * @param True if ignore
-     */
-    void setIgnoreOneKeyFrame(bool value) {
-        m_ignoreOneKeyFrame = value;
-    }
-
 protected:
     BaseKeyFrameList m_frames;
     int m_lastIndex;
-    int m_lastLoopStartIndex;
-    const float m_smearDefault;
     float m_maxFrame;
     float m_currentFrame;
     float m_previousFrame;
-    float m_lastLoopStartFrame;
-    float m_blendRate;
-    float m_smearIndex;
-    bool m_overrideFirst;
     bool m_automaticRefresh;
-    bool m_ignoreOneKeyFrame;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

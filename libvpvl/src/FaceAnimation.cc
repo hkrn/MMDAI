@@ -42,8 +42,6 @@
 namespace vpvl
 {
 
-const float FaceAnimation::kStartingMarginFrame = 6.0f;
-
 struct FaceAnimationInternal {
     Face *face;
     FaceKeyFrameList keyFrames;
@@ -61,7 +59,7 @@ public:
 };
 
 FaceAnimation::FaceAnimation()
-    : BaseAnimation(kStartingMarginFrame),
+    : BaseAnimation(),
       m_model(0)
 {
 }
@@ -89,14 +87,9 @@ void FaceAnimation::seek(float frameAt)
     const int nnodes = m_name2node.count();
     for (int i = 0; i < nnodes; i++) {
         FaceAnimationInternal *node = *m_name2node.value(i);
-        if (m_ignoreOneKeyFrame && node->keyFrames.count() <= 1)
-            continue;
         calculateFrames(frameAt, node);
         Face *face = node->face;
-        if (m_blendRate == 1.0f)
-            face->setWeight(node->weight);
-        else
-            face->setWeight(face->weight() * (1.0f - m_blendRate) + node->weight * m_blendRate);
+        face->setWeight(node->weight);
     }
     m_previousFrame = m_currentFrame;
     m_currentFrame = frameAt;
@@ -205,33 +198,8 @@ void FaceAnimation::calculateFrames(float frameAt, FaceAnimationInternal *node)
 
     const FaceKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
-    float weightFrom = 0.0f, weightTo = 0.0f;
-    if (m_overrideFirst && (k1 == 0 || frameIndexFrom <= m_lastLoopStartIndex)) {
-        if (nframes > 1 && frameIndexTo < m_lastLoopStartIndex + 60.0f) {
-            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
-            weightFrom = node->snapWeight;
-            weightTo = keyFrameTo->weight();
-        }
-        else if (frameAt - frameIndexFrom < m_smearIndex) {
-            frameIndexFrom = static_cast<float>(m_lastLoopStartIndex);
-            frameIndexTo = m_lastLoopStartIndex + m_smearIndex;
-            currentFrame = frameAt;
-            weightFrom = node->snapWeight;
-            weightTo = keyFrameFrom->weight();
-        }
-        else if (nframes > 1) {
-            frameIndexFrom = m_lastLoopStartIndex + m_smearIndex;
-            weightFrom = keyFrameFrom->weight();
-            weightTo = keyFrameTo->weight();
-        }
-        else {
-            weightFrom = keyFrameFrom->weight();
-        }
-    }
-    else {
-        weightFrom = keyFrameFrom->weight();
-        weightTo = keyFrameTo->weight();
-    }
+    float weightFrom = keyFrameFrom->weight();
+    float weightTo = keyFrameTo->weight();
 
     if (frameIndexFrom != frameIndexTo) {
         const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);

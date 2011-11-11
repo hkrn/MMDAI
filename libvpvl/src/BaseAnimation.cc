@@ -42,19 +42,12 @@
 namespace vpvl
 {
 
-BaseAnimation::BaseAnimation(float smearDefault) :
-    m_lastIndex(0),
-    m_lastLoopStartIndex(0),
-    m_smearDefault(smearDefault),
-    m_maxFrame(0.0f),
-    m_currentFrame(0.0f),
-    m_previousFrame(0.0f),
-    m_lastLoopStartFrame(0.0f),
-    m_blendRate(1.0f),
-    m_smearIndex(smearDefault),
-    m_overrideFirst(false),
-    m_automaticRefresh(true),
-    m_ignoreOneKeyFrame(false)
+BaseAnimation::BaseAnimation()
+    : m_lastIndex(0),
+      m_maxFrame(0.0f),
+      m_currentFrame(0.0f),
+      m_previousFrame(0.0f),
+      m_automaticRefresh(true)
 {
 }
 
@@ -62,16 +55,10 @@ BaseAnimation::~BaseAnimation()
 {
     m_frames.releaseAll();
     m_lastIndex = 0;
-    m_lastLoopStartIndex = 0;
     m_maxFrame = 0.0f;
     m_currentFrame = 0.0f;
     m_previousFrame = 0.0f;
-    m_lastLoopStartFrame = 0.0f;
-    m_blendRate = 1.0f;
-    m_smearIndex = 0;
-    m_overrideFirst = false;
     m_automaticRefresh = true;
-    m_ignoreOneKeyFrame = false;
 }
 
 void BaseAnimation::advance(float deltaFrame)
@@ -84,27 +71,12 @@ void BaseAnimation::rewind(float target, float deltaFrame)
 {
     m_currentFrame = m_previousFrame + deltaFrame - m_maxFrame + target;
     m_previousFrame = target;
-    if (m_overrideFirst) {
-        // save current Animation state for loop
-        takeSnap(internal::kZeroV);
-        m_lastLoopStartFrame = target;
-        if (m_maxFrame >= m_smearDefault) {
-            m_smearIndex = m_smearDefault;
-        }
-        else {
-            m_smearIndex -= m_maxFrame + 1.0f;
-            btSetMax(m_smearIndex, 0.0f);
-        }
-    }
 }
 
 void BaseAnimation::reset()
 {
     m_currentFrame = 0.0f;
     m_previousFrame = 0.0f;
-    m_lastLoopStartFrame = 0.0f;
-    m_blendRate = 1.0f;
-    m_smearIndex = m_smearDefault;
 }
 
 void BaseAnimation::addKeyFrame(BaseKeyFrame *frame)
@@ -159,13 +131,6 @@ void BaseAnimation::deleteKeyFrames(int frameIndex)
         if (m_automaticRefresh)
             refresh();
     }
-}
-
-void BaseAnimation::setOverrideFirst(const Vector3 &center)
-{
-    takeSnap(center);
-    m_overrideFirst = true;
-    m_smearIndex = m_smearDefault;
 }
 
 }

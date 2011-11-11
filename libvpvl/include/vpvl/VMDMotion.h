@@ -108,7 +108,6 @@ public:
     static const int kSignatureSize = 30;
     static const int kNameSize = 20;
     static const float kDefaultPriority;
-    static const float kDefaultLoopAtFrame;
 
     VMDMotion();
     ~VMDMotion();
@@ -123,8 +122,6 @@ public:
     void reset();
     float maxFrameIndex() const;
     bool isReachedTo(float frameIndex) const;
-    bool isFull() const;
-    void setFull(bool value);
 
     const uint8_t *name() const {
         return m_name;
@@ -159,35 +156,14 @@ public:
     FaceAnimation *mutableFaceAnimation() {
         return &m_faceMotion;
     }
-    float loopAt() const {
-        return m_loopAt;
-    }
     float priority() const {
         return m_priority;
-    }
-    bool isLoop() const {
-        return m_onEnd == 1;
-    }
-    bool enableSmooth() const {
-        return m_enableSmooth;
-    }
-    bool enableRelocation() const {
-        return m_enableRelocation;
     }
     bool isActive() const {
         return m_active;
     }
     void setPriority(float value) {
         m_priority = value;
-    }
-    void setLoop(bool value) {
-        m_onEnd = value ? 1 : 2;
-    }
-    void setEnableSmooth(bool value) {
-        m_enableSmooth = value;
-    }
-    void setEnableRelocation(bool value) {
-        m_enableRelocation = value;
     }
 
 private:
@@ -207,19 +183,8 @@ private:
     FaceAnimation m_faceMotion;
     MotionStatus m_status;
     Error m_error;
-    uint8_t m_onEnd;
-    float m_loopAt;
     float m_priority;
-    float m_endingBoneBlend;
-    float m_endingFaceBlend;
-    float m_endingBoneBlendFrames;
-    float m_endingFaceBlendFrames;
-    float m_motionBlendRate;
-    float m_beginningNonControlledBlend;
     bool m_active;
-    bool m_enableSmooth;
-    bool m_enableRelocation;
-    bool m_ignoreStatic;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(VMDMotion)
 };
