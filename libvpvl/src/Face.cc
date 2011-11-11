@@ -71,6 +71,10 @@ size_t Face::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
     size_t size = 0;
     uint8_t *ptr = const_cast<uint8_t *>(data);
     for (size_t i = 0; i < count; i++) {
+        if (sizeof(FaceVertexChunk) > rest) {
+            ok = false;
+            return 0;
+        }
         size_t required = stride(ptr);
         if (required > rest) {
             ok = false;
