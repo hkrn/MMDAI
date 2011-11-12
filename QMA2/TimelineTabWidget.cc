@@ -37,6 +37,7 @@
 #include "TimelineTabWidget.h"
 #include "BoneMotionModel.h"
 #include "FaceMotionModel.h"
+#include "SceneMotionModel.h"
 #include "TimelineWidget.h"
 #include "VPDFile.h"
 #include "util.h"
@@ -47,8 +48,9 @@
 namespace
 {
 
-static const int kBoneTabIndex = 0;
-static const int kFaceTabIndex = 1;
+static const int kSceneTabIndex = 0;
+static const int kBoneTabIndex = 1;
+static const int kFaceTabIndex = 2;
 
 static BoneMotionModel *UIGetBoneModel(TimelineWidget *timeline)
 {
@@ -58,6 +60,11 @@ static BoneMotionModel *UIGetBoneModel(TimelineWidget *timeline)
 static FaceMotionModel *UIGetFaceModel(TimelineWidget *timeline)
 {
     return static_cast<FaceMotionModel *>(timeline->treeView()->model());
+}
+
+static SceneMotionModel *UIGetSceneModel(TimelineWidget *timeline)
+{
+    return static_cast<SceneMotionModel *>(timeline->treeView()->model());
 }
 
 static QItemSelectionModel *UIGetSelectionModel(TimelineWidget *timeline)
@@ -113,20 +120,25 @@ static void UIModelInsertFaceFrame(TimelineWidget *timeline)
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
                                      FaceMotionModel *fmm,
+                                     SceneMotionModel *smm,
                                      QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
     m_boneTimeline(0),
-    m_faceTimeline(0)
+    m_faceTimeline(0),
+    m_sceneTimeline(0)
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
     m_faceTimeline = new TimelineWidget(fmm, this);
     m_tabWidget->insertTab(kFaceTabIndex, m_faceTimeline, "");
+    m_sceneTimeline = new TimelineWidget(smm, this);
+    m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_boneTimeline->button(), SIGNAL(clicked()), this, SLOT(addBoneKeyFramesFromSelectedIndices()));
     connect(m_faceTimeline->button(), SIGNAL(clicked()), this, SLOT(addFaceKeyFramesFromSelectedIndices()));
     QVBoxLayout *layout = new QVBoxLayout();
@@ -160,8 +172,9 @@ void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
 
 void TimelineTabWidget::retranslate()
 {
-    m_tabWidget->setTabText(0, tr("Bone"));
-    m_tabWidget->setTabText(1, tr("Face"));
+    m_tabWidget->setTabText(kBoneTabIndex, tr("Bone"));
+    m_tabWidget->setTabText(kFaceTabIndex, tr("Face"));
+    m_tabWidget->setTabText(kSceneTabIndex, tr("Scene"));
     setWindowTitle(tr("Motion Timeline"));
 }
 

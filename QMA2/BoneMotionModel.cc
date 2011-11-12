@@ -43,7 +43,7 @@
 namespace
 {
 
-class TreeItem : public MotionBaseModel::ITreeItem
+class TreeItem : public PMDMotionModel::ITreeItem
 {
 public:
     TreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, bool isCategory, TreeItem *parent)
@@ -104,7 +104,7 @@ public:
           m_pose(0),
           m_frameIndex(frameIndex)
     {
-        foreach (MotionBaseModel::ITreeItem *item, m_bmm->keys().values()) {
+        foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
             if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                 m_indices.append(index);
@@ -118,9 +118,9 @@ public:
     virtual void undo() {
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         animation->deleteKeyFrames(m_frameIndex);
-        foreach (MotionBaseModel::ITreeItem *item, m_bmm->keys().values()) {
+        foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, m_frameIndex);
-            m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
+            m_bmm->setData(index, QVariant());
         }
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
@@ -179,7 +179,7 @@ public:
         foreach (const BoneMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
             if (!indexProceeded[frameIndex]) {
-                foreach (MotionBaseModel::ITreeItem *item, items) {
+                foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                         m_indices.append(index);
@@ -197,9 +197,9 @@ public:
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyFrames(frameIndex);
-            foreach (MotionBaseModel::ITreeItem *item, m_bmm->keys().values()) {
+            foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
                 const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
-                m_bmm->setData(index, BoneMotionModel::kInvalidData, Qt::EditRole);
+                m_bmm->setData(index, QVariant());
             }
         }
         foreach (const QModelIndex &index, m_indices) {
@@ -322,7 +322,7 @@ private:
 }
 
 BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent) :
-    MotionBaseModel(undo, parent),
+    PMDMotionModel(undo, parent),
     m_sceneWidget(scene),
     m_state(0),
     m_mode(kLocal)
@@ -355,7 +355,7 @@ void BoneMotionModel::copyFrames(int frameIndex)
 {
     if (m_model && m_motion) {
         m_frames.releaseAll();
-        foreach (MotionBaseModel::ITreeItem *item, keys().values()) {
+        foreach (PMDMotionModel::ITreeItem *item, keys().values()) {
             const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
             QVariant variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
@@ -534,6 +534,8 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
         else {
             addPMDModel(model, root(model), Keys());
         }
+        m_model = model;
+        emit modelDidChange(model);
         qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
     }
     else {
@@ -606,7 +608,7 @@ void BoneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
             vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
             animation->deleteKeyFrame(toFrameIndex(index), bone->name());
         }
-        setData(index, kInvalidData);
+        setData(index, QVariant());
     }
 }
 

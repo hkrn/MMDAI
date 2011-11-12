@@ -34,61 +34,72 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef FACEMOTIONMODEL_H
-#define FACEMOTIONMODEL_H
+#include "SceneMotionModel.h"
 
-#include "PMDMotionModel.h"
-#include "vpvl/BaseAnimation.h"
-
-namespace vpvl {
-class FaceKeyFrame;
+SceneMotionModel::SceneMotionModel(QUndoGroup *undo, QObject *parent) :
+    MotionBaseModel(undo, parent)
+{
 }
 
-class FaceMotionModel : public PMDMotionModel
+SceneMotionModel::~SceneMotionModel()
 {
-    Q_OBJECT
+}
 
-public:
-    typedef QSharedPointer<vpvl::FaceKeyFrame> KeyFramePtr;
-    typedef QPair<int, KeyFramePtr> KeyFramePair;
-    typedef QList<KeyFramePair> KeyFramePairList;
+int SceneMotionModel::rowCount(const QModelIndex & /* parent */) const
+{
+    return 1;
+}
 
-    explicit FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
-    ~FaceMotionModel();
+QVariant SceneMotionModel::data(const QModelIndex & /* index */, int /* role */) const
+{
+    return QVariant();
+}
 
-    void saveMotion(vpvl::VMDMotion *motion);
-    void copyFrames(int frameIndex);
-    void pasteFrame(int frameIndex);
-    void startTransform();
-    void commitTransform();
-    void selectByModelIndex(const QModelIndex &index);
-    const QByteArray nameFromModelIndex(const QModelIndex &index) const;
+QVariant SceneMotionModel::headerData(int /* section */, Qt::Orientation /* orientation */, int /* role */) const
+{
+    return QVariant();
+}
 
-    void setFrames(const KeyFramePairList &frames);
-    void resetAllFaces();
-    vpvl::Face *findFace(const QString &name);
-    void setWeight(float value);
-    void setWeight(float value, vpvl::Face *face);
-    vpvl::Face *selectedFace() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
-    bool isFaceSelected() const { return m_model != 0 && selectedFace() != 0; }
+int SceneMotionModel::columnCount(const QModelIndex & /* parent */) const
+{
+    return maxFrameCount() + 2;
+}
 
-public slots:
-    void setPMDModel(vpvl::PMDModel *model);
-    void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void removeMotion();
-    void removeModel();
-    void deleteFrameByModelIndex(const QModelIndex &index);
-    void selectFaces(const QList<vpvl::Face *> &faces);
+int SceneMotionModel::maxFrameCount() const
+{
+    return 54000;
+}
 
-signals:
-    void facesDidSelect(const QList<vpvl::Face *> &faces);
+void SceneMotionModel::saveMotion(vpvl::VMDMotion * /* motion */)
+{
+}
 
-private:
-    QList<vpvl::Face *> m_selected;
-    vpvl::BaseKeyFrameList m_frames;
-    vpvl::PMDModel::State *m_state;
 
-    Q_DISABLE_COPY(FaceMotionModel)
-};
+void SceneMotionModel::copyFrames(int /* frameIndex */)
+{
+}
 
-#endif // FACEMOTIONMODEL_H
+void SceneMotionModel::pasteFrame(int /* frameIndex */)
+{
+}
+
+void SceneMotionModel::selectByModelIndex(const QModelIndex & /* index */)
+{
+}
+
+const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index */) const
+{
+    return QByteArray();
+}
+
+void SceneMotionModel::loadMotion(vpvl::VMDMotion * /* motion */)
+{
+}
+
+void SceneMotionModel::removeMotion()
+{
+}
+
+void SceneMotionModel::deleteFrameByModelIndex(const QModelIndex & /* index */)
+{
+}

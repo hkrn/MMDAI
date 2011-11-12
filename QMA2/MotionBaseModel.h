@@ -38,121 +38,80 @@
 #define MOTIONBASEMODEL_H
 
 #include <QtCore/QString>
+#include <QtCore/QVariant>
 #include <QtGui/QAbstractItemView>
-#include <vpvl/PMDModel.h>
+#include <QtGui/QUndoStack>
+#include <QtGui/QUndoGroup>
 
 namespace vpvl {
 class VMDMotion;
 class VPDPose;
 }
 
-class QUndoCommand;
-class QUndoGroup;
-class QUndoStack;
-
 class MotionBaseModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
-    class ITreeItem
-    {
-    public:
-        virtual void addChild(ITreeItem *item) = 0;
-        virtual ITreeItem *parent() const = 0;
-        virtual ITreeItem *child(int row) const = 0;
-        virtual const QString &name() const = 0;
-        virtual bool isRoot() const = 0;
-        virtual bool isCategory() const = 0;
-        virtual int rowIndex() const = 0;
-        virtual int countChildren() const = 0;
-    };
-
     enum DataRole
     {
         kNameRole = 0x1000,
         kBinaryDataRole
     };
 
-    typedef QMap<QString, ITreeItem *> Keys;
-    typedef QHash<QModelIndex, QVariant> Values;
-    typedef QList<ITreeItem *> TreeItemList;
-    typedef QSharedPointer<ITreeItem> RootPtr;
-    typedef QSharedPointer<QUndoStack> UndoStackPtr;
+    static int toFrameIndex(const QModelIndex &index) {
+        // column index 0 is row header
+        return qMax(index.column() - 1, 0);
+    }
+    static int toModelIndex(int frameIndex) {
+        // column index 0 is row header
+        return qMax(frameIndex + 1, 0);
+    }
 
-    static const QVariant kInvalidData;
-    static int toFrameIndex(const QModelIndex &index);
-    static int toModelIndex(int frameIndex);
-
-    MotionBaseModel(QUndoGroup *undo, QObject *parent = 0);
-    virtual ~MotionBaseModel();
-
-    QVariant data(const QModelIndex &index, int role) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-    QModelIndex parent(const QModelIndex &child) const;
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
+    MotionBaseModel(QUndoGroup *undo, QObject *parent = 0)
+        : QAbstractTableModel(parent),
+          m_motion(0),
+          m_undo(undo),
+          m_frameIndex(0),
+          m_modified(false)
+    {
+    }
+    virtual ~MotionBaseModel() {
+    }
 
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     virtual void copyFrames(int frameIndex) = 0;
-    virtual void startTransform() = 0;
-    virtual void commitTransform() = 0;
     virtual void selectByModelIndex(const QModelIndex &index) = 0;
     virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
-    void saveState();
-    void restoreState();
-    void discardState();
-    void updateModel();
-    void refreshModel();
-    int maxFrameCount() const;
+    virtual int maxFrameCount() const = 0;
+    virtual bool isTreeModel() const = 0;
 
-    vpvl::PMDModel *selectedModel() const { return m_model; }
     vpvl::VMDMotion *currentMotion() const { return m_motion; }
     void setFrameIndex(int value) { m_frameIndex = value; }
     void setModified(bool value) { m_modified = value; motionDidModify(value); }
     bool isModified() const { return m_modified; }
-    const Keys keys() const { return m_keys[m_model]; }
     int currentFrameIndex() const { return m_frameIndex; }
 
-    int columnCount(const QModelIndex &parent = QModelIndex()) const;
-
 public slots:
-    void markAsNew(vpvl::PMDModel *model);
-    virtual void setPMDModel(vpvl::PMDModel *model) = 0;
-    virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void removeMotion() = 0;
-    virtual void removeModel() = 0;
     virtual void deleteFrameByModelIndex(const QModelIndex &index) = 0;
 
 signals:
-    void modelDidChange(vpvl::PMDModel *model);
     void motionDidModify(bool value);
-    void motionDidUpdate(vpvl::PMDModel *model);
 
 protected:
-    void addUndoCommand(QUndoCommand *command);
-    void addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys);
-    void removePMDModel(vpvl::PMDModel *model);
-    bool hasPMDModel(vpvl::PMDModel *model) const { return m_roots.contains(model); }
-    const Values values() const { return m_values[m_model]; }
-    RootPtr root() const { return root(m_model); }
-    RootPtr root(vpvl::PMDModel *model) const { return m_roots[model]; }
+    void addUndoCommand(QUndoCommand *command) {
+        QUndoStack *activeStack = m_undo->activeStack();
+        if (activeStack)
+            activeStack->push(command);
+    }
 
-    vpvl::PMDModel *m_model;
     vpvl::VMDMotion *m_motion;
-
-private:
-    vpvl::PMDModel::State *m_state;
-    QHash<vpvl::PMDModel *, Keys> m_keys;
-    QHash<vpvl::PMDModel *, Values> m_values;
-    QHash<vpvl::PMDModel *, RootPtr> m_roots;
-    QHash<vpvl::PMDModel *, UndoStackPtr> m_stacks;
     QUndoGroup *m_undo;
     int m_frameIndex;
     bool m_modified;
 
+private:
     Q_DISABLE_COPY(MotionBaseModel)
 };
 

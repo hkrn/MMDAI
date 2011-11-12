@@ -34,40 +34,22 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "MotionBaseModel.h"
+#include "PMDMotionModel.h"
 #include "util.h"
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-const QVariant MotionBaseModel::kInvalidData = QVariant();
-
-int MotionBaseModel::toFrameIndex(const QModelIndex &index)
-{
-    // column index 0 is row header
-    return qMax(index.column() - 1, 0);
-}
-
-int MotionBaseModel::toModelIndex(int frameIndex)
-{
-    // column index 0 is row header
-    return qMax(frameIndex + 1, 0);
-}
-
-MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent) :
-    QAbstractTableModel(parent),
+PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
+    MotionBaseModel(undo, parent),
     m_model(0),
-    m_motion(0),
-    m_state(0),
-    m_undo(undo),
-    m_frameIndex(0),
-    m_modified(false)
+    m_state(0)
 {
     m_roots.insert(0, RootPtr(0));
     m_keys.insert(0, Keys());
     m_values.insert(0, Values());
 }
 
-MotionBaseModel::~MotionBaseModel()
+PMDMotionModel::~PMDMotionModel()
 {
     if (m_model)
         m_model->discardState(m_state);
@@ -75,7 +57,7 @@ MotionBaseModel::~MotionBaseModel()
         qWarning("It seems memory leak occured: m_state");
 }
 
-QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
+QVariant PMDMotionModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
         return QVariant();
@@ -93,7 +75,7 @@ QVariant MotionBaseModel::data(const QModelIndex &index, int role) const
     }
 }
 
-bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, int role)
+bool PMDMotionModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     if (m_model && index.isValid() && role == Qt::EditRole) {
         m_values[m_model].insert(index, value);
@@ -104,15 +86,12 @@ bool MotionBaseModel::setData(const QModelIndex &index, const QVariant &value, i
     return false;
 }
 
-QVariant MotionBaseModel::headerData(int /* section */, Qt::Orientation orientation, int role) const
+QVariant PMDMotionModel::headerData(int /* section */, Qt::Orientation /* orientation */, int /* role */) const
 {
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-        return kInvalidData;
-    }
-    return kInvalidData;
+    return QVariant();
 }
 
-QModelIndex MotionBaseModel::index(int row, int column, const QModelIndex &parent) const
+QModelIndex PMDMotionModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent))
         return QModelIndex();
@@ -127,7 +106,7 @@ QModelIndex MotionBaseModel::index(int row, int column, const QModelIndex &paren
     return childItem ? createIndex(row, column, childItem) : QModelIndex();
 }
 
-QModelIndex MotionBaseModel::parent(const QModelIndex &child) const
+QModelIndex PMDMotionModel::parent(const QModelIndex &child) const
 {
     if (!child.isValid())
         return QModelIndex();
@@ -137,7 +116,7 @@ QModelIndex MotionBaseModel::parent(const QModelIndex &child) const
     return parentItem == root() ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
 }
 
-int MotionBaseModel::rowCount(const QModelIndex &parent) const
+int PMDMotionModel::rowCount(const QModelIndex &parent) const
 {
     ITreeItem *parentItem;
     if (parent.column() > 0)
@@ -155,7 +134,7 @@ int MotionBaseModel::rowCount(const QModelIndex &parent) const
     return parentItem->countChildren();
 }
 
-const QModelIndex MotionBaseModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
+const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
 {
     int rowIndex = item->rowIndex();
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
@@ -166,7 +145,7 @@ const QModelIndex MotionBaseModel::frameIndexToModelIndex(ITreeItem *item, int f
     return modelIndex;
 }
 
-void MotionBaseModel::saveState()
+void PMDMotionModel::saveState()
 {
     if (m_model) {
         m_model->discardState(m_state);
@@ -174,7 +153,7 @@ void MotionBaseModel::saveState()
     }
 }
 
-void MotionBaseModel::restoreState()
+void PMDMotionModel::restoreState()
 {
     if (m_model) {
         m_model->restoreState(m_state);
@@ -183,36 +162,36 @@ void MotionBaseModel::restoreState()
     }
 }
 
-void MotionBaseModel::discardState()
+void PMDMotionModel::discardState()
 {
     if (m_model)
         m_model->discardState(m_state);
 }
 
-int MotionBaseModel::columnCount(const QModelIndex & /* parent */) const
+int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
 {
     return m_model ? maxFrameCount() + 2 : 1;
 }
 
-void MotionBaseModel::markAsNew(vpvl::PMDModel *model)
+void PMDMotionModel::markAsNew(vpvl::PMDModel *model)
 {
     if (model == m_model)
         setModified(false);
 }
 
-void MotionBaseModel::refreshModel()
+void PMDMotionModel::refreshModel()
 {
     updateModel();
     reset();
     emit motionDidUpdate(m_model);
 }
 
-int MotionBaseModel::maxFrameCount() const
+int PMDMotionModel::maxFrameCount() const
 {
     return 54000;
 }
 
-void MotionBaseModel::updateModel()
+void PMDMotionModel::updateModel()
 {
     if (m_model) {
         m_model->seekMotion(m_frameIndex);
@@ -220,14 +199,7 @@ void MotionBaseModel::updateModel()
     }
 }
 
-void MotionBaseModel::addUndoCommand(QUndoCommand *command)
-{
-    QUndoStack *activeStack = m_undo->activeStack();
-    if (activeStack)
-        activeStack->push(command);
-}
-
-void MotionBaseModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys)
+void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys)
 {
     if (!m_stacks.contains(model)) {
         QUndoStack *stack = new QUndoStack();
@@ -244,11 +216,9 @@ void MotionBaseModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, co
         m_keys.insert(model, keys);
     if (!m_values.contains(model))
         m_values.insert(model, Values());
-    m_model = model;
-    emit modelDidChange(model);
 }
 
-void MotionBaseModel::removePMDModel(vpvl::PMDModel *model)
+void PMDMotionModel::removePMDModel(vpvl::PMDModel *model)
 {
     m_model = 0;
     m_undo->setActiveStack(0);

@@ -108,23 +108,27 @@ TimelineTreeView::~TimelineTreeView()
 void TimelineTreeView::selectFrameIndex(int frameIndex)
 {
     QItemSelection selection;
-    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
-    foreach (MotionBaseModel::ITreeItem *item, m->keys().values()) {
-        const QModelIndex &index = m->frameIndexToModelIndex(item, frameIndex);
-        selection.append(QItemSelectionRange(index));
+    MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
+    if (mbm->isTreeModel()) {
+        PMDMotionModel *pmm = static_cast<PMDMotionModel *>(mbm);
+        foreach (PMDMotionModel::ITreeItem *item, pmm->keys().values()) {
+            const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
+            selection.append(QItemSelectionRange(index));
+        }
+        QItemSelectionModel *sm = selectionModel();
+        sm->select(selection, QItemSelectionModel::ClearAndSelect);
     }
-    QItemSelectionModel *sm = selectionModel();
-    sm->select(selection, QItemSelectionModel::ClearAndSelect);
 }
 
 void TimelineTreeView::mousePressEvent(QMouseEvent *event)
 {
     const QModelIndex &index = indexAt(event->pos());
-    if (index.column() == 0) {
-        MotionBaseModel::ITreeItem *item = static_cast<MotionBaseModel::ITreeItem *>(index.internalPointer());
+    MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
+    if (index.column() == 0 && mbm->isTreeModel()) {
+        PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
         if (!item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            static_cast<MotionBaseModel *>(model())->selectByModelIndex(index);
+            mbm->selectByModelIndex(index);
         }
     }
     QTreeView::mousePressEvent(event);

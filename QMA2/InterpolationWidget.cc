@@ -298,7 +298,7 @@ void InterpolationWidget::setMode(int mode)
         m_comboBox->addItem(tr("Rotation"));
         m_graphWidget->setType(InterpolationGraphWidget::kBone);
     }
-    else if (mode == TimelineTabWidget::kCamera) {
+    else if (mode == TimelineTabWidget::kScene) {
         m_comboBox->addItem(tr("X axis"));
         m_comboBox->addItem(tr("Y axis"));
         m_comboBox->addItem(tr("Z axis"));

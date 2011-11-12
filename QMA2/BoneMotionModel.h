@@ -37,14 +37,14 @@
 #ifndef BONEMOTIONMODEL_H
 #define BONEMOTIONMODEL_H
 
-#include "MotionBaseModel.h"
+#include "PMDMotionModel.h"
 #include "vpvl/BaseAnimation.h"
 #include "vpvl/BoneKeyFrame.h"
 
 class SceneWidget;
 class VPDFile;
 
-class BoneMotionModel : public MotionBaseModel
+class BoneMotionModel : public PMDMotionModel
 {
     Q_OBJECT
 

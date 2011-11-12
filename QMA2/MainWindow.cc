@@ -44,7 +44,7 @@
 #include "FaceWidget.h"
 #include "InterpolationWidget.h"
 #include "LicenseWidget.h"
-//#include "SceneMotionModel.h"
+#include "SceneMotionModel.h"
 #include "SceneWidget.h"
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
@@ -203,9 +203,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneWidget = new SceneWidget(&m_settings);
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
     m_faceMotionModel = new FaceMotionModel(m_undo, this);
-    //m_sceneMotionModel = new SceneMotionModel(m_undo, this);
+    m_sceneMotionModel = new SceneMotionModel(m_undo, this);
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
-    m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
+    m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     buildUI();
     connectWidgets();

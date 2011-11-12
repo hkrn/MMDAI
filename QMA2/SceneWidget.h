@@ -77,6 +77,7 @@ class VPDFile;
 class SceneWidget : public QGLWidget
 {
     Q_OBJECT
+
 public:
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();

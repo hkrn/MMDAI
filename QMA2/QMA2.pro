@@ -107,7 +107,7 @@ SOURCES += main.cc\
     CameraPerspectiveWidget.cc \
     TransformWidget.cc \
     TabWidget.cc \
-    MotionBaseModel.cc \
+    PMDMotionModel.cc \
     BoneMotionModel.cc \
     FaceMotionModel.cc \
     BoneDialog.cc \
@@ -116,7 +116,8 @@ SOURCES += main.cc\
     VPDFile.cc \
     LicenseWidget.cc \
     SceneLoader.cc \
-    AssetWidget.cc
+    AssetWidget.cc \
+    SceneMotionModel.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -142,7 +143,9 @@ HEADERS  += MainWindow.h \
     Application.h \
     AssetWidget.h \
     InfoPanel.h \
-    DebugDrawer.h
+    DebugDrawer.h \
+    SceneMotionModel.h \
+    PMDMotionModel.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
@@ -152,6 +155,9 @@ FORMS += \
     TransformWidget.ui \
     #MainWindow.ui \
     BoneDialog.ui
+
+
+
 
 
 
