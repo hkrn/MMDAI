@@ -87,6 +87,8 @@ public:
 private:
     BoneList m_bones;
     Error m_error;
+
+    Q_DISABLE_COPY(VPDFile)
 };
 
 #endif // VPDFILE_H

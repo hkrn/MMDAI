@@ -119,6 +119,8 @@ private:
     vpvl::PMDModel::State *m_state;
     vpvl::BoneKeyFrame::InterpolationParameter m_interpolationParameter;
     TransformType m_mode;
+
+    Q_DISABLE_COPY(BoneMotionModel)
 };
 
 #endif // BONEMOTIONMODEL_H

@@ -109,6 +109,8 @@ private:
     QList<vpvl::PMDModel *> m_models;
     vpvl::Asset *m_currentAsset;
     vpvl::PMDModel *m_currentModel;
+
+    Q_DISABLE_COPY(AssetWidget)
 };
 
 #endif // ASSETWIDGET_H

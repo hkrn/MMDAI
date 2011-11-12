@@ -96,6 +96,8 @@ private:
     QDoubleSpinBox *m_distance;
     float m_currentFovy;
     float m_currentDistance;
+
+    Q_DISABLE_COPY(CameraPerspectiveWidget)
 };
 
 #endif // PERSPECTIONWIDGET_H

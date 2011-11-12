@@ -69,6 +69,8 @@ private slots:
 private:
     Ui::BoneDialog *ui;
     BoneMotionModel *m_boneMotionModel;
+
+    Q_DISABLE_COPY(BoneDialog)
 };
 
 #endif // BONEDIALOG_H

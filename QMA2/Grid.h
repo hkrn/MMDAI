@@ -37,6 +37,8 @@
 #ifndef GRID_H
 #define GRID_H
 
+#include <QtGlobal>
+
 #include <vpvl/Scene.h>
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btVector3.h>
@@ -154,6 +156,8 @@ private:
     GLuint m_ibo;
     GLuint m_list;
     bool m_enabled;
+
+    Q_DISABLE_COPY(Grid)
 };
 
 }

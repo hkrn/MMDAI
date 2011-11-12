@@ -314,6 +314,8 @@ private:
     bool m_enableRotate;
     bool m_isLocal;
     bool m_visible;
+
+    Q_DISABLE_COPY(Handles)
 };
 
 }

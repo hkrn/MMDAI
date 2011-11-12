@@ -79,6 +79,8 @@ private slots:
 
 private:
     QModelIndexList m_expanded;
+
+    Q_DISABLE_COPY(TimelineTreeView)
 };
 
 class TimelineHeaderView : public QHeaderView
@@ -86,6 +88,9 @@ class TimelineHeaderView : public QHeaderView
 public:
     explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
     virtual ~TimelineHeaderView();
+
+private:
+    Q_DISABLE_COPY(TimelineHeaderView)
 };
 
 class TimelineWidget : public QWidget
@@ -122,6 +127,8 @@ private:
     QSettings *m_settings;
     QSpinBox *m_spinBox;
     QModelIndex m_index;
+
+    Q_DISABLE_COPY(TimelineWidget)
 };
 
 #endif // TIMLINEWIDGET_H

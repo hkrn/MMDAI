@@ -59,6 +59,9 @@ protected:
         }
         return QApplication::event(event);
     }
+
+private:
+    Q_DISABLE_COPY(Application)
 };
 
 #endif // APPLICATION_H

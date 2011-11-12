@@ -149,6 +149,8 @@ private:
     int m_width;
     int m_height;
     bool m_visible;
+
+    Q_DISABLE_COPY(InfoPanel)
 };
 
 }

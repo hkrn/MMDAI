@@ -93,6 +93,8 @@ private:
     QPushButton *m_eyeblowRegistButton;
     QPushButton *m_otherRegistButton;
     FaceMotionModel *m_faceMotionModel;
+
+    Q_DISABLE_COPY(FaceWidget)
 };
 
 #endif // FACEWIDGET_H

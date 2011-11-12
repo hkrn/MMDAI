@@ -152,6 +152,8 @@ private:
     QUndoGroup *m_undo;
     int m_frameIndex;
     bool m_modified;
+
+    Q_DISABLE_COPY(MotionBaseModel)
 };
 
 #endif // MOTIONBASEMODEL_H

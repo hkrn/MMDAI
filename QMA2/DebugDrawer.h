@@ -204,6 +204,8 @@ public:
 private:
     btDynamicsWorld *m_world;
     int m_flags;
+
+    Q_DISABLE_COPY(DebugDrawer)
 };
 
 }

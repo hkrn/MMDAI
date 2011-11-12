@@ -210,6 +210,8 @@ private:
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
     QMenu *m_menuHelp;
+
+    Q_DISABLE_COPY(MainWindow)
 };
 
 class ExportVideoDialog : public QDialog
@@ -232,6 +234,8 @@ private:
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
     QCheckBox *m_includeGridBox;
+
+    Q_DISABLE_COPY(ExportVideoDialog)
 };
 
 class EdgeOffsetDialog : public QDialog
@@ -255,6 +259,8 @@ private:
     SceneWidget *m_sceneWidget;
     vpvl::PMDModel *m_selected;
     float m_edgeOffset;
+
+    Q_DISABLE_COPY(EdgeOffsetDialog)
 };
 
 #endif // MAINWINDOW_H

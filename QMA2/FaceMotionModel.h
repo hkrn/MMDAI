@@ -87,6 +87,8 @@ private:
     QList<vpvl::Face *> m_selected;
     vpvl::BaseKeyFrameList m_frames;
     vpvl::PMDModel::State *m_state;
+
+    Q_DISABLE_COPY(FaceMotionModel)
 };
 
 #endif // FACEMOTIONMODEL_H

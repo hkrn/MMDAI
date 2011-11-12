@@ -80,6 +80,7 @@ class QTextEdit;
 class LicenseWidget : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit LicenseWidget(QWidget *parent = 0);
     ~LicenseWidget();
@@ -96,6 +97,8 @@ private:
     QAbstractItemModel *m_model;
     QTextEdit *m_text;
     QHash<QString, QString> m_path;
+
+    Q_DISABLE_COPY(LicenseWidget)
 };
 
 #endif // QMALICENSEWIDGET_H

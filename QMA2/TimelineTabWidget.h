@@ -52,6 +52,7 @@ class QTabWidget;
 class TimelineWidget;
 class BoneMotionModel;
 class FaceMotionModel;
+class SceneMotionModel;
 class VPDFile;
 
 class TimelineTabWidget : public QWidget
@@ -62,12 +63,13 @@ public:
     enum Type {
         kBone,
         kFace,
-        kCamera
+        kScene
     };
 
     explicit TimelineTabWidget(QSettings *settings,
                                BoneMotionModel *bmm,
                                FaceMotionModel *fmm,
+                               SceneMotionModel *smm,
                                QWidget *parent = 0);
     ~TimelineTabWidget();
 
@@ -103,6 +105,9 @@ private:
     QTabWidget *m_tabWidget;
     TimelineWidget *m_boneTimeline;
     TimelineWidget *m_faceTimeline;
+    TimelineWidget *m_sceneTimeline;
+
+    Q_DISABLE_COPY(TimelineTabWidget)
 };
 
 #endif // TIMELINETABWIDGET_H

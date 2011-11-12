@@ -100,6 +100,8 @@ private:
     int m_index;
     bool m_p1Clicked;
     bool m_p2Clicked;
+
+    Q_DISABLE_COPY(InterpolationGraphWidget)
 };
 
 class QSpinBox;
@@ -125,6 +127,8 @@ private:
 
     QComboBox *m_comboBox;
     InterpolationGraphWidget *m_graphWidget;
+
+    Q_DISABLE_COPY(InterpolationWidget)
 };
 
 #endif // INTERPOLATIONWIDGET_H

@@ -80,6 +80,8 @@ private:
     CameraPerspectiveWidget *m_camera;
     FaceWidget *m_face;
     InterpolationWidget *m_interpolation;
+
+    Q_DISABLE_COPY(TabWidget)
 };
 
 #endif // TABWIDGET_H
