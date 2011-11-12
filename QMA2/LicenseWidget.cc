@@ -45,8 +45,11 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     QLabel *copyrightLabel = new QLabel();
     copyrightLabel->setText(QString("<h3>%1 %2+alpha</h3>"
+                                    "<div style='font-size:10px'><p>"
                                     "Copyright (C) 2009-2011 Nagoya Institute of Technology Department of Computer Science (MMDAgent)<br>"
-                                    "Copyright (C) 2010-2011 hkrn (MMDAI and VPVM) All rights reserved.<br><br>%3<br><br>%4")
+                                    "Copyright (C) 2010-2011 hkrn (MMDAI and VPVM)"
+                                    "</p>"
+                                    "<p>%3</p><p>%4</p></div>")
                             .arg(qApp->applicationName())
                             .arg(qApp->applicationVersion())
                             .arg(tr("MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD ("
@@ -69,10 +72,11 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     layout->addWidget(tree);
     QLabel *aboutIconLabel = new QLabel;
     aboutIconLabel->setText(
+                "<div style='font-size:10px'>" +
                 tr("%1's icon is based on <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>.<br>"
                    "MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
                    "VOCALOID is the trademark of YAMAHA Corporation."
-                   "").arg(qApp->applicationName()));
+                   "").arg(qApp->applicationName()) + "</div>");
     aboutIconLabel->setWordWrap(true);
     aboutIconLabel->setOpenExternalLinks(true);
     aboutIconLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
