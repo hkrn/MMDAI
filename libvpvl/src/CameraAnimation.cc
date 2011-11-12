@@ -58,11 +58,11 @@ float CameraAnimation::weightValue(const CameraKeyFrame *keyFrame, float w, int 
 }
 
 void CameraAnimation::lerpVector3(const CameraKeyFrame *keyFrame,
-                               const Vector3 &from,
-                               const Vector3 &to,
-                               float w,
-                               int at,
-                               float &value)
+                                 const Vector3 &from,
+                                 const Vector3 &to,
+                                 float w,
+                                 int at,
+                                 float &value)
 {
     const float valueFrom = static_cast<const Scalar *>(from)[at];
     const float valueTo = static_cast<const Scalar *>(to)[at];
@@ -202,10 +202,6 @@ void CameraAnimation::seek(float frameAt)
     }
     m_previousFrame = m_currentFrame;
     m_currentFrame = frameAt;
-}
-
-void CameraAnimation::takeSnap(const Vector3 & /* center */)
-{
 }
 
 void CameraAnimation::reset()

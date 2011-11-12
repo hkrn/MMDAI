@@ -69,7 +69,6 @@ public:
 
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
-    void takeSnap(const Vector3 &center);
     void reset();
     void refresh();
 

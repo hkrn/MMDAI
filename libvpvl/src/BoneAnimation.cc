@@ -46,9 +46,7 @@ struct BoneAnimationInternal {
     Bone *bone;
     BoneKeyFrameList keyFrames;
     Vector3 position;
-    Vector3 snapPosition;
     Quaternion rotation;
-    Quaternion snapRotation;
     int lastIndex;
 };
 
@@ -125,19 +123,6 @@ void BoneAnimation::seek(float frameAt)
     m_currentFrame = frameAt;
 }
 
-void BoneAnimation::takeSnap(const Vector3 &center)
-{
-    const int nnodes = m_name2node.count();
-    for (int i = 0; i < nnodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.value(i);
-        Bone *bone = node->bone;
-        node->snapPosition = bone->position();
-        if (bone->hasMotionIndependency())
-            node->snapPosition -= center;
-        node->snapRotation = bone->rotation();
-    }
-}
-
 void BoneAnimation::attachModel(PMDModel *model)
 {
     if (!m_model) {
@@ -179,8 +164,6 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
                 node->lastIndex = 0;
                 node->position.setZero();
                 node->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-                node->snapPosition.setZero();
-                node->snapRotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
                 m_name2node.insert(name, node);
             }
         }

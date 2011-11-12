@@ -46,7 +46,6 @@ struct FaceAnimationInternal {
     Face *face;
     FaceKeyFrameList keyFrames;
     float weight;
-    float snapWeight;
     int lastIndex;
 };
 
@@ -95,16 +94,6 @@ void FaceAnimation::seek(float frameAt)
     m_currentFrame = frameAt;
 }
 
-void FaceAnimation::takeSnap(const Vector3 & /* center */)
-{
-    const int nnodes = m_name2node.count();
-    for (int i = 0; i < nnodes; i++) {
-        FaceAnimationInternal *node = *m_name2node.value(i);
-        const Face *face = node->face;
-        node->snapWeight = face->weight();
-    }
-}
-
 void FaceAnimation::attachModel(PMDModel *model)
 {
     if (!m_model) {
@@ -141,7 +130,6 @@ void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
                 node->face = face;
                 node->lastIndex = 0;
                 node->weight = 0.0f;
-                node->snapWeight = 0.0f;
                 m_name2node.insert(name, node);
             }
         }
