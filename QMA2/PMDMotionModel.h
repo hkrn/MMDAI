@@ -57,36 +57,13 @@ class PMDMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    class ITreeItem
-    {
-    public:
-        virtual void addChild(ITreeItem *item) = 0;
-        virtual ITreeItem *parent() const = 0;
-        virtual ITreeItem *child(int row) const = 0;
-        virtual const QString &name() const = 0;
-        virtual bool isRoot() const = 0;
-        virtual bool isCategory() const = 0;
-        virtual int rowIndex() const = 0;
-        virtual int countChildren() const = 0;
-    };
-
-    typedef QMap<QString, ITreeItem *> Keys;
-    typedef QHash<QModelIndex, QVariant> Values;
-    typedef QList<ITreeItem *> TreeItemList;
-    typedef QSharedPointer<ITreeItem> RootPtr;
-    typedef QSharedPointer<QUndoStack> UndoStackPtr;
-
     explicit PMDMotionModel(QUndoGroup *undo, QObject *parent = 0);
     virtual ~PMDMotionModel();
 
     virtual QVariant data(const QModelIndex &index, int role) const;
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-    virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-    virtual QModelIndex parent(const QModelIndex &child) const;
-    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
-
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
+
     virtual void copyFrames(int frameIndex) = 0;
     virtual void startTransform() = 0;
     virtual void commitTransform() = 0;
@@ -118,8 +95,9 @@ protected:
     void removePMDModel(vpvl::PMDModel *model);
     bool hasPMDModel(vpvl::PMDModel *model) const { return m_roots.contains(model); }
     const Values values() const { return m_values[m_model]; }
-    RootPtr root() const { return root(m_model); }
-    RootPtr root(vpvl::PMDModel *model) const { return m_roots[model]; }
+    RootPtr rootPtr() const { return rootPtr(m_model); }
+    RootPtr rootPtr(vpvl::PMDModel *model) const { return m_roots[model]; }
+    virtual ITreeItem *root() const { return rootPtr().data(); }
 
     vpvl::PMDModel *m_model;
 

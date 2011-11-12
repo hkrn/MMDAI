@@ -47,11 +47,11 @@ public:
     explicit SceneMotionModel(QUndoGroup *undo, QObject *parent = 0);
     ~SceneMotionModel();
 
-    virtual int rowCount(const QModelIndex &parent) const;
     virtual QVariant data(const QModelIndex &index, int role) const;
-    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual int maxFrameCount() const;
+    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
     virtual bool isTreeModel() const { return false; }
 
     void saveMotion(vpvl::VMDMotion *motion);
@@ -65,10 +65,13 @@ public slots:
     virtual void deleteFrameByModelIndex(const QModelIndex &index);
     void loadMotion(vpvl::VMDMotion *motion);
 
+protected:
+    virtual ITreeItem *root() const { return m_root; }
+
 private:
-    vpvl::VMDMotion *m_motion;
-    int m_frameIndex;
-    bool m_modified;
+    Values m_cameraData;
+    ITreeItem *m_root;
+    ITreeItem *m_camera;
 
     Q_DISABLE_COPY(SceneMotionModel)
 };

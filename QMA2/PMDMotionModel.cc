@@ -86,60 +86,11 @@ bool PMDMotionModel::setData(const QModelIndex &index, const QVariant &value, in
     return false;
 }
 
-QVariant PMDMotionModel::headerData(int /* section */, Qt::Orientation /* orientation */, int /* role */) const
-{
-    return QVariant();
-}
-
-QModelIndex PMDMotionModel::index(int row, int column, const QModelIndex &parent) const
-{
-    if (!hasIndex(row, column, parent))
-        return QModelIndex();
-
-    ITreeItem *parentItem = 0;
-    if (!parent.isValid())
-        parentItem = root().data();
-    else
-        parentItem = static_cast<ITreeItem *>(parent.internalPointer());
-
-    ITreeItem *childItem = parentItem->child(row);
-    return childItem ? createIndex(row, column, childItem) : QModelIndex();
-}
-
-QModelIndex PMDMotionModel::parent(const QModelIndex &child) const
-{
-    if (!child.isValid())
-        return QModelIndex();
-
-    ITreeItem *childItem = static_cast<ITreeItem *>(child.internalPointer());
-    ITreeItem *parentItem = childItem->parent();
-    return parentItem == root() ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
-}
-
-int PMDMotionModel::rowCount(const QModelIndex &parent) const
-{
-    ITreeItem *parentItem;
-    if (parent.column() > 0)
-        return 0;
-
-    if (!parent.isValid()) {
-        parentItem = root().data();
-        if (!parentItem)
-            return 0;
-    }
-    else {
-        parentItem = static_cast<ITreeItem *>(parent.internalPointer());
-    }
-
-    return parentItem->countChildren();
-}
-
 const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
 {
     int rowIndex = item->rowIndex();
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
-    // column index 0 is row header
-    const QModelIndex modelIndex = index(rowIndex, frameIndex + 1, parentIndex);
+    const QModelIndex modelIndex = index(rowIndex, toModelIndex(frameIndex), parentIndex);
     if (!modelIndex.isValid())
         createIndex(rowIndex, frameIndex, item);
     return modelIndex;

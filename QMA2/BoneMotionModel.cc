@@ -43,7 +43,7 @@
 namespace
 {
 
-class TreeItem : public PMDMotionModel::ITreeItem
+class TreeItem : public MotionBaseModel::ITreeItem
 {
 public:
     TreeItem(const QString &name, vpvl::Bone *bone, bool isRoot, bool isCategory, TreeItem *parent)
@@ -532,7 +532,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             addPMDModel(model, ptr, keys);
         }
         else {
-            addPMDModel(model, root(model), Keys());
+            addPMDModel(model, rootPtr(model), Keys());
         }
         m_model = model;
         emit modelDidChange(model);
