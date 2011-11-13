@@ -479,6 +479,7 @@ void SceneWidget::advanceMotion(float frameIndex)
     scene->updateProjection();
     scene->advanceMotion(frameIndex);
     updateGL();
+    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
 void SceneWidget::seekMotion(float frameIndex)
@@ -488,6 +489,7 @@ void SceneWidget::seekMotion(float frameIndex)
     scene->updateProjection();
     scene->seekMotion(frameIndex);
     updateGL();
+    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
     m_frameIndex = frameIndex;
 }
 
