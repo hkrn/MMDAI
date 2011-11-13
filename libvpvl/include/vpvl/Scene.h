@@ -66,14 +66,6 @@ public:
     static const int kFPS = 30;
     static const float kFrustumNear;
     static const float kFrustumFar;
-    static const float kMinMoveDiff;
-    static const float kMoveSpeedRate;
-    static const float kMinSpinDiff;
-    static const float kSpinSpeedRate;
-    static const float kMinDistanceDiff;
-    static const float kDistanceSpeedRate;
-    static const float kMinFovyDiff;
-    static const float kFovySpeedRate;
 
     Scene(int width, int height, int fps);
     ~Scene();
