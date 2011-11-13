@@ -80,6 +80,7 @@ public:
         return m_isCategory;
     }
     int rowIndex() const {
+        /* 自分が親行に対して何番目にあるかを求める */
         return m_parent ? m_parent->m_children.indexOf(const_cast<TreeItem *>(this)) : 0;
     }
     int countChildren() const {
@@ -104,6 +105,7 @@ public:
           m_pose(0),
           m_frameIndex(frameIndex)
     {
+        /* 現在のフレームにある全てのボーンのキーフレーム情報を参照する。キーフレームがあれば undo のために保存しておく */
         foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
             if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
@@ -117,11 +119,16 @@ public:
 
     virtual void undo() {
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
+        /* 現在のフレームを削除しておき、さらに全てのボーンのモデルのデータを空にしておく(=削除) */
         animation->deleteKeyFrames(m_frameIndex);
         foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, m_frameIndex);
             m_bmm->setData(index, QVariant());
         }
+        /*
+         * コンストラクタで保存したボーン情報を復元して置換する。注意点として replaceKeyFrame でメモリの所有者が
+         * vpvl::BoneAnimation に移動するのでこちらで管理する必要がなくなる
+         */
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
@@ -129,6 +136,10 @@ public:
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyFrame(frame);
         }
+        /*
+         * BoneAnimation の内部データの更新も忘れずに。モデルをリセットした上で、
+         * モーションを更新するために PMD を現在のフレームに強制シークしておく
+         */
         animation->refresh();
         m_bmm->refreshModel();
     }
@@ -137,9 +148,15 @@ public:
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &bones = m_bmm->keys();
         vpvl::Quaternion rotation;
+        /* ポーズにあるボーン情報を参照する */
         foreach (VPDFile::Bone *bone, m_pose->bones()) {
             const QString &key = bone->name;
+            /* ポーズにあるボーンがモデルの方に実在する */
             if (bones.contains(key)) {
+                /*
+                 * ポーズにあるボーン情報を元にキーフレームを作成し、モデルに登録した上で現在登録されているキーフレームを置換する
+                 * replaceKeyFrame でメモリの所有者が vpvl::BoneAnimation に移動する点は同じ
+                 */
                 const vpvl::Vector4 &v = bone->rotation;
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(bones[key], m_frameIndex);
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
@@ -155,6 +172,7 @@ public:
                 animation->replaceKeyFrame(newFrame);
             }
         }
+        /* #undo のコメント通りのため、省略 */
         animation->refresh();
         m_bmm->refreshModel();
     }
@@ -176,9 +194,12 @@ public:
     {
         QHash<int, bool> indexProceeded;
         const BoneMotionModel::TreeItemList &items = m_bmm->keys().values();
+        /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
         foreach (const BoneMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
+            /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded[frameIndex]) {
+                /* モデルの全てのボーンを対象にデータがあるか確認し、あれば保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
@@ -194,6 +215,7 @@ public:
     }
 
     virtual void undo() {
+        /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyFrames(frameIndex);
@@ -202,6 +224,7 @@ public:
                 m_bmm->setData(index, QVariant());
             }
         }
+        /* コンストラクタで保存したボーン情報を復元して置換する */
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
@@ -209,6 +232,7 @@ public:
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyFrame(frame);
         }
+        /* LoadPoseCommand#undo の通りのため、省略 */
         animation->refresh();
         m_bmm->refreshModel();
     }
@@ -217,10 +241,12 @@ public:
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &keys = m_bmm->keys();
         vpvl::Bone *selected = m_bmm->selectedBone();
+        /* すべてのキーフレーム情報を登録する */
         foreach (const BoneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
             BoneMotionModel::KeyFramePtr data = pair.second;
             vpvl::BoneKeyFrame *frame = data.data();
+            /* キーフレームの対象ボーン名を取得する */
             if (frame) {
                 key = internal::toQString(frame);
             }
@@ -231,7 +257,9 @@ public:
                 qWarning("No bone is selected or null");
                 continue;
             }
+            /* モデルにボーン名が存在するかを確認する */
             if (keys.contains(key)) {
+                /* キーフレームをコピーし、対象のインデックスに移す。そしてモデルに登録した上で現在登録されているキーフレームを置換する */
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(keys[key], frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::BoneKeyFrame *newFrame = static_cast<vpvl::BoneKeyFrame *>(frame->clone());
@@ -249,6 +277,7 @@ public:
                 continue;
             }
         }
+        /* LoadPoseCommand#undo の通りのため、省略 */
         animation->refresh();
         m_bmm->refreshModel();
     }
@@ -268,17 +297,21 @@ public:
         : QUndoCommand(),
           m_model(model)
     {
+        /* 全てのボーンの情報を保存しておく */
         m_state = model->saveState();
     }
     virtual ~ResetAllCommand() {
+        /* discardState は必ず呼び出すこと */
         m_model->discardState(m_state);
     }
 
     void undo() {
+        /* コンストラクタで保存したボーン情報を復元し、シークせずにモデルを更新しておく */
         m_model->restoreState(m_state);
         m_model->updateImmediate();
     }
     void redo() {
+        /* 全てのボーンをリセットし、シークせずにモデルを更新しておく */
         m_model->resetAllBones();
         m_model->updateImmediate();
     }
@@ -297,18 +330,22 @@ public:
           m_newState(0),
           m_oldState(state)
     {
+        /* 前と後の全てのボーンの情報を保存しておく */
         m_newState = m_model->saveState();
     }
     virtual ~SetBoneCommand() {
+        /* コンストラクタで saveState が呼ばれる前提なので両方解放しておく */
         m_model->discardState(m_newState);
         m_model->discardState(m_oldState);
     }
 
     void undo() {
+        /* コンストラクタで呼ばれる前のボーン情報を復元し、シークせずにモデルを更新しておく */
         m_model->restoreState(m_oldState);
         m_model->updateImmediate();
     }
     void redo() {
+        /* コンストラクタで呼ばれた時点のボーン情報を復元し、シークせずにモデルを更新しておく */
         m_model->restoreState(m_newState);
         m_model->updateImmediate();
     }
@@ -337,6 +374,7 @@ BoneMotionModel::~BoneMotionModel()
 void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
     if (m_model) {
+        /* モデルの ByteArray を vpvl::BoneKeyFrame に読ませて積んでおくだけの簡単な処理 */
         vpvl::BoneAnimation *animation = motion->mutableBoneAnimation();
         foreach (const QVariant &value, values()) {
             vpvl::BoneKeyFrame *newFrame = new vpvl::BoneKeyFrame();
@@ -354,7 +392,9 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 void BoneMotionModel::copyFrames(int frameIndex)
 {
     if (m_model && m_motion) {
+        /* メモリリーク防止のため、前回呼ばれた copyFrames で作成したデータを破棄しておく */
         m_frames.releaseAll();
+        /* モデル内のすべてのボーン名を参照し、データがあるものだけを vpvl::BoneKeyFrame に移しておく */
         foreach (PMDMotionModel::ITreeItem *item, keys().values()) {
             const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
             QVariant variant = index.data(kBinaryDataRole);
@@ -370,7 +410,12 @@ void BoneMotionModel::copyFrames(int frameIndex)
 
 void BoneMotionModel::pasteFrame(int frameIndex)
 {
+    /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && m_frames.count() != 0) {
+        /*
+         * m_frames のデータを引数のフレームインデックスと一緒に積ませて SetFramesCommand として作成する
+         * m_frames のデータは破棄されないので、#copyFrames で破棄するようになってる
+         */
         KeyFramePairList frames;
         const int nframes = m_frames.count();
         for (int i = 0; i < nframes; i++) {
@@ -386,15 +431,19 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
     const QString &right = "右";
     const QString &left = "左";
     QHash<QString, int> registered;
+    /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && m_frames.count() != 0) {
         KeyFramePairList frames;
         const int nframes = m_frames.count();
+        /* 基本的な処理は pasteFrame と同等だが、「左」「右」の名前を持つボーンは特別扱い */
         for (int i = 0; i < nframes; i++) {
             vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]), *newFrame = 0;
             const QString name = internal::toQString(frame);
+            /* 二重登録防止のため、「左」「右」はどちらか出てきたら処理は一回のみ */
             if (!registered.contains(name)) {
                 bool isRight = name.startsWith(right);
                 bool isLeft = name.startsWith(left);
+                /* 最初の名前に「左」「右」が入っている場合、置換した上で位置と回転の値を左右反転させる */
                 if (isRight || isLeft) {
                     QString key = name;
                     if (isRight)
@@ -425,6 +474,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
 void BoneMotionModel::startTransform()
 {
     if (m_model) {
+        /* モデルの状態を保存しておく。もちろんメモリリーク防止のため、前の状態は破棄しておく */
         m_model->discardState(m_state);
         m_state = m_model->saveState();
     }
@@ -433,6 +483,10 @@ void BoneMotionModel::startTransform()
 void BoneMotionModel::commitTransform()
 {
     if (m_model && m_state) {
+        /*
+         * startTransform で保存したモデルの状態を SetBoneCommand に渡す
+         * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
+         */
         addUndoCommand(new SetBoneCommand(m_model, m_state));
         m_state = 0;
     }
@@ -441,17 +495,21 @@ void BoneMotionModel::commitTransform()
 void BoneMotionModel::selectByModelIndex(const QModelIndex &index)
 {
     if (m_model) {
+        /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Bone の順番で対象のボーンを求めて選択状態にする作業 */
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         QByteArray bytes = internal::fromQString(item->name());
         vpvl::Bone *bone = m_model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        QList<vpvl::Bone *> bones;
-        bones.append(bone);
-        selectBones(bones);
+        if (bone) {
+            QList<vpvl::Bone *> bones;
+            bones.append(bone);
+            selectBones(bones);
+        }
     }
 }
 
 const QByteArray BoneMotionModel::nameFromModelIndex(const QModelIndex &index) const
 {
+    /* メソッド名の通り QModelIndex に入ってる TreeIndex でボーン名を求める */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     return internal::fromQString(item->name());
 }
@@ -471,6 +529,7 @@ void BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
 {
     if (model == m_model) {
         VPDFile::BoneList bones;
+        /* モデルにある全てのボーンを参照し、現在のキーフレームでデータが入ってるものを VPDFile::Bone に変換する */
         foreach (ITreeItem *item, keys()) {
             const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
             const QVariant &variant = modelIndex.data(BoneMotionModel::kBinaryDataRole);
@@ -506,7 +565,9 @@ void BoneMotionModel::setFrames(const KeyFramePairList &frames)
 void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
     if (model) {
+        /* PMD の二重登録防止 */
         if (!hasPMDModel(model)) {
+            /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
             vpvl::Array<vpvl::BoneList *> allBones;
@@ -515,11 +576,13 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             names.copy(model->boneCategoryNames());
             Keys keys;
             const int namesCount = model->boneCategoryNames().count();
+            /* ボーンのカテゴリからルートの子供であるカテゴリアイテムを作成する */
             for (int i = 0; i < namesCount; i++) {
                 const QString &category = internal::toQString(names[i]).trimmed();
                 const vpvl::BoneList *bones = allBones[i];
                 const int bonesCount = bones->count();
                 TreeItem *parent = new TreeItem(category, 0, false, true, r);
+                /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
                 for (int j = 0; j < bonesCount; j++) {
                     vpvl::Bone *bone = bones->at(j);
                     const QString &name = internal::toQString(bone);
@@ -527,11 +590,13 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
                     parent->addChild(child);
                     keys.insert(name, child);
                 }
+                /* カテゴリアイテムをルートアイテムに追加 */
                 r->addChild(parent);
             }
             addPMDModel(model, ptr, keys);
         }
         else {
+            /* キーリストが空ですがモデルが存在し、スキップされるので実害なし */
             addPMDModel(model, rootPtr(model), Keys());
         }
         m_model = model;
@@ -541,15 +606,18 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
     else {
         m_model = 0;
     }
+    /* テーブルモデルを更新 */
     reset();
 }
 
 void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
+    /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {
         const vpvl::BoneAnimation &animation = motion->boneAnimation();
         const int nBoneFrames = animation.countKeyFrames();
         const Keys &keys = this->keys();
+        /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nBoneFrames; i++) {
             const vpvl::BoneKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
@@ -558,6 +626,7 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 int frameIndex = static_cast<int>(frame->frameIndex());
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 ITreeItem *item = keys[key];
+                /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
                 vpvl::BoneKeyFrame newFrame;
                 newFrame.setName(name);
@@ -571,9 +640,11 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                     newFrame.setInterpolationParameter(type, v);
                 }
                 newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+                /* キーフレームのバイナリデータが QModelIndex の QVariant に登録される。この方が管理が楽になる */
                 setData(modelIndex, bytes);
             }
         }
+        /* 読み込まれたモーションを現在のモーションとして登録する。あとは LoadCommand#undo と同じ */
         m_motion = motion;
         refreshModel();
         setModified(false);
@@ -586,15 +657,19 @@ void BoneMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 void BoneMotionModel::removeMotion()
 {
+    /* 選択されたボーンとモデルに登録されているデータが削除される。ボーン名は削除されない */
     m_selected.clear();
     setModified(false);
     removePMDMotion(m_model);
     reset();
-    resetAllBones();
 }
 
 void BoneMotionModel::removeModel()
 {
+    /*
+     * モーション削除に加えて PMD を論理削除する。巻き戻し情報も削除されるため巻戻しが不可になる
+     * PMD は SceneLoader で管理されるため、PMD のメモリの解放はしない
+     */
     removeMotion();
     removePMDModel(m_model);
     reset();
@@ -603,6 +678,7 @@ void BoneMotionModel::removeModel()
 void BoneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
 {
     if (index.isValid()) {
+        /* QModelIndex にあるボーンとフレームインデックスからキーフレームを削除する */
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         vpvl::Bone *bone = item->bone();
         if (bone) {
@@ -722,7 +798,7 @@ void BoneMotionModel::translate(int coordinate, float value)
 {
     vpvl::Vector3 v;
     foreach (vpvl::Bone *selected, m_selected) {
-        // invert X and Y for compatibility of MMD behavior
+        /* X と Y は MMD と挙動を合わせるため、値を反転させておく */
         switch (coordinate) {
         case 'x':
         case 'X':
@@ -777,7 +853,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
     vpvl::Bone *selected = m_selected.last();
     const vpvl::Quaternion &current = selected->rotation();
     vpvl::Quaternion rot, dest;
-    // invert Z for compatibility of MMD behavior
+    /* Z 軸は MMD と挙動を合わせるため、値を反転しておく */
     switch (coordinate) {
     case 'x':
     case 'X':
@@ -819,11 +895,13 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
     if (!bones.isEmpty())
         emit bonesDidSelect(bones);
     int frameIndex = currentFrameIndex();
+    /* ボーン名が存在かどうかをチェックするためだけのハッシュを作成しておく。int は飾り */
     QHash<QString, int> keys;
     foreach (vpvl::Bone *bone, bones)
         keys.insert(internal::toQString(bone), 0);
     QList<KeyFramePtr> frames;
     vpvl::BoneKeyFrame frame;
+    /* モデルのデータを参照し、キーが存在するかつ現在のフレームインデックスと同じであるものを現在選択されているキーフレームのリストに追加する */
     foreach (const QVariant &variant, values()) {
         frame.read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
         if (keys.contains(internal::toQString(&frame)) && frameIndex == frame.frameIndex())
@@ -835,6 +913,7 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)
 {
+    /* 挙動は QString を扱っていること以外 PMDModel#findBone と同じ */
     const QByteArray &bytes = internal::getTextCodec()->fromUnicode(name);
     foreach (ITreeItem *item, keys()) {
         vpvl::Bone *bone = static_cast<TreeItem *>(item)->bone();

@@ -155,6 +155,7 @@ void AssetWidget::retranslate()
 
 void AssetWidget::addAsset(vpvl::Asset *asset)
 {
+    /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
     m_assets.append(asset);
     m_assetComboBox->addItem(internal::toQString(asset));
     m_assetComboBox->setCurrentIndex(m_assetComboBox->count() - 1);
@@ -166,6 +167,7 @@ void AssetWidget::removeAsset(vpvl::Asset *asset)
 {
     int index = m_assets.indexOf(asset);
     if (index >= 0) {
+        /* 該当するアセットが見つかったら表示項目から削除し、実際にアセットを削除。アセットが空なら表示を無効にしておく */
         vpvl::Asset *asset = m_assets[index];
         m_assets.removeAt(index);
         m_assetComboBox->removeItem(index);
@@ -177,6 +179,10 @@ void AssetWidget::removeAsset(vpvl::Asset *asset)
 
 void AssetWidget::addModel(vpvl::PMDModel *model)
 {
+    /*
+     * アセットがモデルの特定ボーンに対して選択できるようにするための処理
+     * モデルは SceneLoader が管理するのでポインタのみ。解放してはいけない
+     */
     m_models.append(model);
     m_modelComboBox->addItem(internal::toQString(model));
 }
@@ -185,6 +191,7 @@ void AssetWidget::removeModel(vpvl::PMDModel *model)
 {
     int index = m_models.indexOf(model);
     if (index >= 0) {
+        /* モデルが見つかればモデルとそのボーンリストを表示上から削除する。実際にモデルを削除をしない */
         m_models.removeAt(index);
         m_modelComboBox->removeItem(index);
         m_modelComboBox->setCurrentIndex(0);
@@ -205,6 +212,7 @@ void AssetWidget::changeCurrentAsset(int index)
 
 void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
 {
+    /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
     const vpvl::Vector3 &position = asset->position();
     m_currentAsset = asset;
     m_px->setValue(position.x());
@@ -221,6 +229,7 @@ void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
 void AssetWidget::changeCurrentModel(int index)
 {
     if (index > 0) {
+        /* モデルのボーンリストを一旦空にして対象のモデルのボーンリストに更新しておく */
         vpvl::PMDModel *model = m_models[index - 1];
         m_currentModel = model;
         m_modelBonesComboBox->clear();
@@ -232,6 +241,7 @@ void AssetWidget::changeCurrentModel(int index)
         }
     }
     else if (m_currentAsset) {
+        /* 「地面」用。こちらは全くボーンを持たないのでボーンリストを削除した上でアセットの親ボーンを無効にしておく */
         m_modelBonesComboBox->clear();
         m_currentAsset->setParentBone(0);
     }
