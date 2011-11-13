@@ -77,6 +77,7 @@ public:
 
     void addModel(vpvl::PMDModel *model, const QDir &dir);
     bool deleteAsset(vpvl::Asset *asset);
+    void deleteCameraMotion();
     bool deleteModel(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
@@ -92,6 +93,7 @@ public:
     VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
     void release();
     void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
+    void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
 

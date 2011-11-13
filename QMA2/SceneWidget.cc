@@ -344,10 +344,10 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(vpvl::VMDMotion *motion, vpvl:
 void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
 {
     if (model) {
-        vpvl::VMDMotion *motion = new vpvl::VMDMotion();
+        vpvl::VMDMotion *modelMotion = new vpvl::VMDMotion();
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
-        vpvl::BoneAnimation *boneAnimation = motion->mutableBoneAnimation();
+        vpvl::BoneAnimation *boneAnimation = modelMotion->mutableBoneAnimation();
         for (int i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
@@ -359,15 +359,26 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
         }
         const vpvl::FaceList &faces = model->faces();
         const int nfaces = faces.count();
-        vpvl::FaceAnimation *faceAnimation = motion->mutableFaceAnimation();
+        vpvl::FaceAnimation *faceAnimation = modelMotion->mutableFaceAnimation();
         for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
             vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
             frame->setName(face->name());
             faceAnimation->addKeyFrame(frame);
         }
-        m_loader->setModelMotion(motion, model);
-        emit motionDidAdd(motion, model);
+        m_loader->setModelMotion(modelMotion, model);
+        emit motionDidAdd(modelMotion, model);
+        vpvl::VMDMotion *cameralMotion = new vpvl::VMDMotion();
+        vpvl::CameraAnimation *cameraAnimation = cameralMotion->mutableCameraAnimation();
+        vpvl::CameraKeyFrame *frame = new vpvl::CameraKeyFrame();
+        vpvl::Scene *scene = m_renderer->scene();
+        frame->setPosition(scene->position());
+        frame->setAngle(scene->angle());
+        frame->setFovy(scene->fovy());
+        frame->setDistance(scene->distance());
+        cameraAnimation->addKeyFrame(frame);
+        m_loader->setCameraMotion(cameralMotion);
+        emit cameraMotionDidSet(cameralMotion);
     }
     else
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
@@ -693,6 +704,12 @@ void SceneWidget::loadFile(const QString &file)
     else if (file.endsWith(".vac", Qt::CaseInsensitive)) {
         addAssetFromMetadata(file);
     }
+}
+
+void SceneWidget::deleteCameraMotion()
+{
+    m_loader->deleteCameraMotion();
+    emit cameraMotionDidSet(0);
 }
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)

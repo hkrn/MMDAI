@@ -162,6 +162,7 @@ public slots:
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
+    void deleteCameraMotion();
 
 signals:
     void modelDidAdd(vpvl::PMDModel *model);

@@ -97,6 +97,15 @@ bool SceneLoader::deleteAsset(vpvl::Asset *asset)
     return false;
 }
 
+void SceneLoader::deleteCameraMotion()
+{
+    vpvl::Scene *scene = m_renderer->scene();
+    scene->setCameraMotion(0);
+    scene->resetCamera();
+    delete m_camera;
+    m_camera = 0;
+}
+
 bool SceneLoader::deleteModel(vpvl::PMDModel *model)
 {
     if (!model)
@@ -258,9 +267,7 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
         QByteArray data = file.readAll();
         motion = new vpvl::VMDMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            delete m_camera;
-            m_camera = motion;
-            m_renderer->scene()->setCameraMotion(motion);
+            setCameraMotion(motion);
         }
         else {
             delete motion;
@@ -397,6 +404,13 @@ void SceneLoader::setBaseBone(vpvl::PMDModel *model)
     }
     if (!found)
         model->setBaseBone(model->mutableRootBone());
+}
+
+void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)
+{
+    delete m_camera;
+    m_camera = motion;
+    m_renderer->scene()->setCameraMotion(motion);
 }
 
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)

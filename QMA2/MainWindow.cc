@@ -1117,9 +1117,12 @@ void MainWindow::addNewMotion()
         m_sceneWidget->deleteMotion(m_boneMotionModel->currentMotion(), model);
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
+        m_sceneMotionModel->removeMotion();
         m_sceneWidget->setEmptyMotion(model);
         m_boneMotionModel->markAsNew(model);
         m_faceMotionModel->markAsNew(model);
+        m_sceneMotionModel->setModified(false);
+        m_sceneWidget->deleteCameraMotion();
     }
 }
 

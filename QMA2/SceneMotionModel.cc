@@ -231,28 +231,30 @@ const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* ind
 
 void SceneMotionModel::loadMotion(vpvl::VMDMotion *motion)
 {
-    const vpvl::CameraAnimation &animation = motion->cameraAnimation();
-    const int nCameraFrames = animation.countKeyFrames();
-    for (int i = 0; i < nCameraFrames; i++) {
-        const vpvl::CameraKeyFrame *frame = animation.frameAt(i);
-        int frameIndex = static_cast<int>(frame->frameIndex());
-        QByteArray bytes(vpvl::CameraKeyFrame::strideSize(), '0');
-        const QModelIndex &modelIndex = frameIndexToModelIndex(m_camera, frameIndex);
-        // It seems to use CameraKeyFrame#clone()
-        vpvl::CameraKeyFrame newFrame;
-        newFrame.setPosition(frame->position());
-        newFrame.setAngle(frame->angle());
-        newFrame.setFovy(frame->fovy());
-        newFrame.setDistance(frame->distance());
-        newFrame.setFrameIndex(frameIndex);
-        vpvl::QuadWord v;
-        for (int i = 0; i < vpvl::CameraKeyFrame::kMax; i++) {
-            vpvl::CameraKeyFrame::InterpolationType type = static_cast<vpvl::CameraKeyFrame::InterpolationType>(i);
-            frame->getInterpolationParameter(type, v);
-            newFrame.setInterpolationParameter(type, v);
+    if (motion) {
+        const vpvl::CameraAnimation &animation = motion->cameraAnimation();
+        const int nCameraFrames = animation.countKeyFrames();
+        for (int i = 0; i < nCameraFrames; i++) {
+            const vpvl::CameraKeyFrame *frame = animation.frameAt(i);
+            int frameIndex = static_cast<int>(frame->frameIndex());
+            QByteArray bytes(vpvl::CameraKeyFrame::strideSize(), '0');
+            const QModelIndex &modelIndex = frameIndexToModelIndex(m_camera, frameIndex);
+            // It seems to use CameraKeyFrame#clone()
+            vpvl::CameraKeyFrame newFrame;
+            newFrame.setPosition(frame->position());
+            newFrame.setAngle(frame->angle());
+            newFrame.setFovy(frame->fovy());
+            newFrame.setDistance(frame->distance());
+            newFrame.setFrameIndex(frameIndex);
+            vpvl::QuadWord v;
+            for (int i = 0; i < vpvl::CameraKeyFrame::kMax; i++) {
+                vpvl::CameraKeyFrame::InterpolationType type = static_cast<vpvl::CameraKeyFrame::InterpolationType>(i);
+                frame->getInterpolationParameter(type, v);
+                newFrame.setInterpolationParameter(type, v);
+            }
+            newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+            setData(modelIndex, bytes);
         }
-        newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
-        setData(modelIndex, bytes);
     }
 }
 
@@ -260,6 +262,7 @@ void SceneMotionModel::removeMotion()
 {
     m_cameraData.clear();
     setModified(false);
+    reset();
 }
 
 void SceneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
