@@ -848,8 +848,6 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
             m_tabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
-    connect(m_boneMotionModel, SIGNAL(boneFramesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
-            m_tabWidget->interpolationWidget(), SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
     connect(m_sceneWidget, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
 }
 

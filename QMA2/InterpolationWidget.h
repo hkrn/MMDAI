@@ -62,7 +62,6 @@ public:
     explicit InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent = 0);
     ~InterpolationGraphWidget();
 
-    void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
     void setType(Type value) { m_type = value; }
 
 public slots:
@@ -84,6 +83,7 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private slots:
+    void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
     void setIndex(int value);
 
 private:
@@ -118,7 +118,6 @@ private slots:
     void setMode(int mode);
     void disable();
     void resetInterpolation();
-    void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
     QSpinBox *createSpinBox(int defaultValue,

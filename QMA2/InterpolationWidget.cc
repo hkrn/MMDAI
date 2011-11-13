@@ -253,8 +253,11 @@ void InterpolationGraphWidget::setDefault(vpvl::QuadWord &q)
 InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
     : QWidget(parent)
 {
+
     m_comboBox = new QComboBox();
     m_graphWidget = new InterpolationGraphWidget(bmm);
+    connect(bmm, SIGNAL(boneFramesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
+            m_graphWidget, SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
     connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));
     QHBoxLayout *c = new QHBoxLayout();
     QPushButton *button = new QPushButton(tr("Reset"));
@@ -325,11 +328,6 @@ void InterpolationWidget::resetInterpolation()
     m_graphWidget->setY1(20);
     m_graphWidget->setX2(107);
     m_graphWidget->setY2(107);
-}
-
-void InterpolationWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
-{
-    m_graphWidget->setBoneKeyFrames(frames);
 }
 
 QSpinBox *InterpolationWidget::createSpinBox(int defaultValue,
