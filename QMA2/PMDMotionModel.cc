@@ -173,8 +173,17 @@ void PMDMotionModel::removePMDModel(vpvl::PMDModel *model)
 {
     m_model = 0;
     m_undo->setActiveStack(0);
-    m_values[model].clear();
-    m_keys[model].clear();
+    m_values.remove(model);
+    m_keys.remove(model);
     m_stacks.remove(model);
     m_roots.remove(model);
+}
+
+void PMDMotionModel::removePMDMotion(vpvl::PMDModel *model)
+{
+    if (m_values.contains(model))
+        m_values[model].clear();
+    QUndoStack *stack = m_undo->activeStack();
+    if (stack)
+        stack->clear();
 }

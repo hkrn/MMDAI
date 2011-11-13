@@ -588,6 +588,7 @@ void BoneMotionModel::removeMotion()
 {
     m_selected.clear();
     setModified(false);
+    removePMDMotion(m_model);
     reset();
     resetAllBones();
 }

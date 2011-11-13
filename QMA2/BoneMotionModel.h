@@ -92,10 +92,10 @@ public:
     void setInterpolationParameter(const vpvl::BoneKeyFrame::InterpolationParameter &value) { m_interpolationParameter = value; }
 
 public slots:
+    void removeModel();
+    void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void removeMotion();
-    void removeModel();
     void deleteFrameByModelIndex(const QModelIndex &index);
     void translate(int coordinate, float value);
     void translate(vpvl::Bone *bone, const vpvl::Vector3 &v);

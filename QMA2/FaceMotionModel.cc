@@ -445,6 +445,7 @@ void FaceMotionModel::removeMotion()
 {
     m_selected.clear();
     setModified(false);
+    removePMDMotion(m_model);
     reset();
     resetAllFaces();
 }

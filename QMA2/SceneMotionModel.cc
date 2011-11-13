@@ -186,7 +186,7 @@ const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int 
 {
     int rowIndex = item->rowIndex();
     QModelIndex modelIndex;
-    if (rowIndex == 0) {
+    if (rowIndex == m_camera->rowIndex()) {
         modelIndex = index(rowIndex, toModelIndex(frameIndex), QModelIndex());
         if (!modelIndex.isValid())
             createIndex(rowIndex, frameIndex, item);
@@ -200,8 +200,16 @@ const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int 
     return modelIndex;
 }
 
-void SceneMotionModel::saveMotion(vpvl::VMDMotion * /* motion */)
+void SceneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
+    vpvl::CameraAnimation *animation = motion->mutableCameraAnimation();
+    foreach (const QVariant &value, m_cameraData) {
+        vpvl::CameraKeyFrame *newFrame = new vpvl::CameraKeyFrame();
+        const QByteArray &bytes = value.toByteArray();
+        newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        animation->addKeyFrame(newFrame);
+    }
+    setModified(false);
 }
 
 void SceneMotionModel::copyFrames(int /* frameIndex */)
@@ -250,8 +258,17 @@ void SceneMotionModel::loadMotion(vpvl::VMDMotion *motion)
 
 void SceneMotionModel::removeMotion()
 {
+    m_cameraData.clear();
+    setModified(false);
 }
 
-void SceneMotionModel::deleteFrameByModelIndex(const QModelIndex & /* index */)
+void SceneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
 {
+    if (index.isValid()) {
+        if (index.row() == m_camera->rowIndex()) {
+            vpvl::CameraAnimation *animation = m_motion->mutableCameraAnimation();
+            animation->deleteKeyFrame(toFrameIndex(index), reinterpret_cast<const uint8_t *>(""));
+        }
+        setData(index, QVariant());
+    }
 }

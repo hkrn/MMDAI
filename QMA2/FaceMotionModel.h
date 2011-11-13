@@ -73,10 +73,10 @@ public:
     bool isFaceSelected() const { return m_model != 0 && selectedFace() != 0; }
 
 public slots:
+    void removeModel();
+    void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void removeMotion();
-    void removeModel();
     void deleteFrameByModelIndex(const QModelIndex &index);
     void selectFaces(const QList<vpvl::Face *> &faces);
 

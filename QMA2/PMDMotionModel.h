@@ -91,8 +91,9 @@ signals:
     void motionDidUpdate(vpvl::PMDModel *model);
 
 protected:
-    void addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys);
     void removePMDModel(vpvl::PMDModel *model);
+    void removePMDMotion(vpvl::PMDModel *model);
+    void addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys);
     bool hasPMDModel(vpvl::PMDModel *model) const { return m_roots.contains(model); }
     const Values values() const { return m_values[m_model]; }
     RootPtr rootPtr() const { return rootPtr(m_model); }
