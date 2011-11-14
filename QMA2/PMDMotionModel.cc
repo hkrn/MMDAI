@@ -44,6 +44,7 @@ PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     m_model(0),
     m_state(0)
 {
+    /* 空のモデルのデータを予め入れておく */
     m_roots.insert(0, RootPtr(0));
     m_keys.insert(0, Keys());
     m_values.insert(0, Values());
@@ -63,10 +64,12 @@ QVariant PMDMotionModel::data(const QModelIndex &index, int role) const
         return QVariant();
 
     if (role == Qt::DisplayRole && index.column() == 0) {
+        /* アイテムの名前(カテゴリ名とかボーン名とか頂点モーフ名とか)を返す */
         ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
         return item->name();
     }
     else if (role == kBinaryDataRole && m_model) {
+        /* BaseKeyFrame#write によって書き出されたキーフレームのバイナリのデータを返す */
         QVariant value = m_values[m_model].value(index);
         return value;
     }
@@ -89,8 +92,11 @@ bool PMDMotionModel::setData(const QModelIndex &index, const QVariant &value, in
 const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
 {
     int rowIndex = item->rowIndex();
+    /* カテゴリ名を含むアイテム */
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
+    /* ボーン名または頂点モーフ名を含むアイテム */
     const QModelIndex modelIndex = index(rowIndex, toModelIndex(frameIndex), parentIndex);
+    /* モデルのインデックスが存在しなければ作成しておき、自動的にそのインデックスが存在するように処理する */
     if (!modelIndex.isValid())
         createIndex(rowIndex, frameIndex, item);
     return modelIndex;
@@ -98,6 +104,7 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
 
 void PMDMotionModel::saveState()
 {
+    /* 前の状態を破棄する機能がついた saveState のラッパー */
     if (m_model) {
         m_model->discardState(m_state);
         m_state = m_model->saveState();
@@ -106,6 +113,7 @@ void PMDMotionModel::saveState()
 
 void PMDMotionModel::restoreState()
 {
+    /* 復元とモデル状態の更新、現在の状態を破棄する機能がついた restoreState のラッパー */
     if (m_model) {
         m_model->restoreState(m_state);
         m_model->updateImmediate();
@@ -121,6 +129,7 @@ void PMDMotionModel::discardState()
 
 int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
 {
+    /* カラムは常に1つ以上存在するようにしないと assertion error が発生する */
     return m_model ? maxFrameCount() + 2 : 1;
 }
 
@@ -132,6 +141,7 @@ void PMDMotionModel::markAsNew(vpvl::PMDModel *model)
 
 void PMDMotionModel::refreshModel()
 {
+    /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
     updateModel();
     reset();
     emit motionDidUpdate(m_model);
@@ -152,6 +162,7 @@ void PMDMotionModel::updateModel()
 
 void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys)
 {
+    /* モデルが新規の場合はそのモデルの巻き戻しスタックを作成し、そうでない場合は該当のモデルの巻戻しスタックを有効にする */
     if (!m_stacks.contains(model)) {
         QUndoStack *stack = new QUndoStack();
         m_stacks.insert(model, UndoStackPtr(stack));
@@ -161,6 +172,7 @@ void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, con
     else {
         m_undo->setActiveStack(m_stacks[model].data());
     }
+    /* 各モデル毎のルートアイテム、ボーンまたは頂点モーフのキー名、テーブルのデータを作成する */
     if (!m_roots.contains(model))
         m_roots.insert(model, root);
     if (!m_keys.contains(model))
@@ -171,6 +183,7 @@ void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, con
 
 void PMDMotionModel::removePMDModel(vpvl::PMDModel *model)
 {
+    /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_model = 0;
     m_undo->setActiveStack(0);
     m_values.remove(model);
@@ -181,6 +194,7 @@ void PMDMotionModel::removePMDModel(vpvl::PMDModel *model)
 
 void PMDMotionModel::removePMDMotion(vpvl::PMDModel *model)
 {
+    /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))
         m_values[model].clear();
     QUndoStack *stack = m_undo->activeStack();

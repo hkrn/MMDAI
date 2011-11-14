@@ -273,6 +273,10 @@ void MainWindow::setCurrentModel(vpvl::PMDModel *model)
 void MainWindow::newFile()
 {
     if (maybeSave()) {
+        /*
+         * 空のモーションを作成し、テーブル内のデータを破棄する
+         * removeMotion は vpvl::VMDMotion を関知しないので setEmptyMotion と衝突しない
+         */
         m_sceneWidget->setEmptyMotion(m_sceneWidget->selectedModel());
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
@@ -294,9 +298,11 @@ bool MainWindow::saveAs()
 
 bool MainWindow::saveFile(const QString &filename)
 {
+    /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
     vpvl::VMDMotion motion;
     m_boneMotionModel->saveMotion(&motion);
     m_faceMotionModel->saveMotion(&motion);
+    m_sceneMotionModel->saveMotion(&motion);
     size_t size = motion.estimateSize();
     uint8_t *buffer = new uint8_t[size];
     motion.save(buffer);
@@ -342,6 +348,7 @@ void MainWindow::revertSelectedModel()
 
 void MainWindow::addModel(vpvl::PMDModel *model)
 {
+    /* 追加されたモデルをモデル選択のメニューに追加する */
     QString name = internal::toQString(model);
     QAction *action = new QAction(name, this);
     action->setStatusTip(tr("Select a model %1").arg(name));
@@ -351,6 +358,7 @@ void MainWindow::addModel(vpvl::PMDModel *model)
 
 void MainWindow::deleteModel(vpvl::PMDModel *model)
 {
+    /* 削除されたモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
     QString name = internal::toQString(model);
     foreach (QAction *action, m_menuRetainModels->actions()) {
@@ -365,6 +373,7 @@ void MainWindow::deleteModel(vpvl::PMDModel *model)
 
 void MainWindow::addAsset(vpvl::Asset *asset)
 {
+    /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
     QString name = internal::toQString(asset);
     QAction *action = new QAction(name, this);
     action->setStatusTip(tr("Select an asset %1").arg(name));
@@ -374,6 +383,7 @@ void MainWindow::addAsset(vpvl::Asset *asset)
 
 void MainWindow::deleteAsset(vpvl::Asset *asset)
 {
+    /* 削除されたアクセサリをアクセサリ選択のメニューから削除する */
     QAction *actionToRemove = 0;
     QString name = internal::toQString(asset);
     foreach (QAction *action, m_menuRetainAssets->actions()) {
@@ -1031,6 +1041,7 @@ void MainWindow::startExportingVideo()
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::WindowModal);
 #ifdef Q_OS_MACX
+        /* MacOSX では非圧縮の場合どうも QTKit では DIB ではなく PNG で書き出さないとうまくいかない様子 */
         int fourcc = CV_FOURCC('p', 'n', 'g', ' ');
 #else
         int fourcc = CV_FOURCC('D', 'I', 'B', ' ');
@@ -1045,6 +1056,7 @@ void MainWindow::startExportingVideo()
             const QString &format = tr("Exporting frame %1 of %2...");
             int maxRangeIndex = toIndex - fromIndex;
             progress->setRange(0, maxRangeIndex);
+            /* 画面を復元するために一時的に情報を保持。mainGeometry はコピーを持たないといけないので参照であってはならない */
             const QRect mainGeomtry = geometry();
             const QSize minSize = minimumSize(), maxSize = maximumSize(),
                     videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
@@ -1053,6 +1065,7 @@ void MainWindow::startExportingVideo()
             m_leftSplitter->hide();
             m_mainSplitter->setHandleWidth(0);
             statusBar()->hide();
+            /* 動画書き出し用の設定に変更 */
             resize(videoSize);
             setMinimumSize(videoSize);
             setMaximumSize(videoSize);
@@ -1060,6 +1073,7 @@ void MainWindow::startExportingVideo()
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
             vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
             bool visibleGrid = m_sceneWidget->isGridVisible();
+            /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
             m_sceneWidget->stop();
             m_sceneWidget->seekMotion(0.0f);
             m_sceneWidget->advanceMotion(fromIndex);
@@ -1070,6 +1084,7 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->resize(videoSize);
             m_sceneWidget->updateGL();
             progress->setLabelText(format.arg(0).arg(maxRangeIndex));
+            /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
             while (!scene->isMotionReachedTo(toIndex)) {
                 if (progress->wasCanceled())
                     break;
@@ -1087,6 +1102,7 @@ void MainWindow::startExportingVideo()
                 m_sceneWidget->advanceMotion(1.0f);
                 m_sceneWidget->resize(videoSize);
             }
+            /* 画面情報を復元 */
             m_sceneWidget->setGridVisible(visibleGrid);
             m_sceneWidget->setHandlesVisible(true);
             m_sceneWidget->setInfoPanelVisible(true);
@@ -1122,7 +1138,6 @@ void MainWindow::addNewMotion()
         m_boneMotionModel->markAsNew(model);
         m_faceMotionModel->markAsNew(model);
         m_sceneMotionModel->setModified(false);
-        m_sceneWidget->deleteCameraMotion();
     }
 }
 
