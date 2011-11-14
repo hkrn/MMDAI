@@ -130,15 +130,16 @@ public:
           m_smm(smm),
           m_cameraTreeItem(cameraTreeItem)
     {
-        QHash<int, bool> indexProceeded;
+        QList<int> indices;
         foreach (const SceneMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
             const QModelIndex &index = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
             if (index.data(SceneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                 m_indices.append(index);
+            indices.append(frameIndex);
         }
         m_frames = frames;
-        m_frameIndices = indexProceeded.keys();
+        m_frameIndices = indices;
     }
     virtual ~SetFramesCommand() {
     }
@@ -158,6 +159,7 @@ public:
             animation->replaceKeyFrame(frame);
         }
         animation->refresh();
+        m_smm->refreshScene();
     }
     virtual void redo() {
         vpvl::CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
@@ -173,6 +175,7 @@ public:
             m_smm->setData(modelIndex, bytes);
         }
         animation->refresh();
+        m_smm->refreshScene();
     }
 
 private:
@@ -354,6 +357,7 @@ void SceneMotionModel::loadMotion(vpvl::VMDMotion *motion)
             newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
             setData(modelIndex, bytes);
         }
+        m_motion = motion;
     }
 }
 
@@ -363,6 +367,11 @@ void SceneMotionModel::setFrames(const KeyFramePairList &frames)
         addUndoCommand(new SetFramesCommand(this, frames, m_cameraTreeItem));
     else
         qWarning("No motion to register camera frames.");
+}
+
+void SceneMotionModel::refreshScene()
+{
+    reset();
 }
 
 void SceneMotionModel::removeMotion()

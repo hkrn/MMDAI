@@ -73,6 +73,7 @@ public:
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
+    void refreshScene();
 
 public slots:
     virtual void removeMotion();

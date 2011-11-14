@@ -141,7 +141,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_boneTimeline->button(), SIGNAL(clicked()), this, SLOT(addBoneKeyFramesFromSelectedIndices()));
     connect(m_faceTimeline->button(), SIGNAL(clicked()), this, SLOT(addFaceKeyFramesFromSelectedIndices()));
-    connect(m_sceneTimeline->button(), SIGNAL(clicked()), this, SLOT(addSceneKeyFramesFromSelectedIndice()));
+    connect(m_sceneTimeline->button(), SIGNAL(clicked()), this, SLOT(addSceneKeyFramesFromSelectedIndices()));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(m_tabWidget);
