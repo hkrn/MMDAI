@@ -282,11 +282,13 @@ const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int 
 void SceneMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
     vpvl::CameraAnimation *animation = motion->mutableCameraAnimation();
-    foreach (const QVariant &value, m_cameraData) {
-        vpvl::CameraKeyFrame *newFrame = new vpvl::CameraKeyFrame();
-        const QByteArray &bytes = value.toByteArray();
-        newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        animation->addKeyFrame(newFrame);
+    if (m_cameraData.size() > 1) {
+        foreach (const QVariant &value, m_cameraData) {
+            vpvl::CameraKeyFrame *newFrame = new vpvl::CameraKeyFrame();
+            const QByteArray &bytes = value.toByteArray();
+            newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            animation->addKeyFrame(newFrame);
+        }
     }
     setModified(false);
 }
@@ -343,6 +345,7 @@ const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* ind
 
 void SceneMotionModel::loadMotion(vpvl::VMDMotion *motion)
 {
+    m_cameraData.clear();
     if (motion) {
         const vpvl::CameraAnimation &animation = motion->cameraAnimation();
         const int nCameraFrames = animation.countKeyFrames();
@@ -369,6 +372,7 @@ void SceneMotionModel::loadMotion(vpvl::VMDMotion *motion)
         }
         m_motion = motion;
     }
+    reset();
 }
 
 void SceneMotionModel::setFrames(const KeyFramePairList &frames)
