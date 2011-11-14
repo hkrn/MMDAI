@@ -37,12 +37,14 @@
 #include "InterpolationWidget.h"
 #include "TimelineTabWidget.h"
 #include "BoneMotionModel.h"
+#include "SceneMotionModel.h"
 
 #include <QtGui/QtGui>
 
-InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent)
+InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent),
       m_boneMotionModel(bmm),
+      m_sceneMotionModel(smm),
       m_type(kBone),
       m_index(0),
       m_p1Clicked(false),
@@ -223,6 +225,7 @@ void InterpolationGraphWidget::updateValues(bool import)
             qWarning("Out of camera combo index: %d", m_index);
             break;
         }
+        m_sceneMotionModel->setCameraInterpolationParameter(m_cameraIP);
         break;
     }
     update();
@@ -250,12 +253,12 @@ void InterpolationGraphWidget::setDefault(vpvl::QuadWord &q)
     q.setValue(20, 20, 107, 107);
 }
 
-InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, QWidget *parent)
+InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent)
 {
 
     m_comboBox = new QComboBox();
-    m_graphWidget = new InterpolationGraphWidget(bmm);
+    m_graphWidget = new InterpolationGraphWidget(bmm, smm);
     connect(bmm, SIGNAL(boneFramesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
             m_graphWidget, SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
     connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));

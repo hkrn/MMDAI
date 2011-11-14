@@ -50,6 +50,7 @@ class FaceMotionModel;
 class FaceWidget;
 class InterpolationWidget;
 class QSettings;
+class SceneMotionModel;
 
 class TabWidget : public QWidget
 {
@@ -59,6 +60,7 @@ public:
     explicit TabWidget(QSettings *settings,
                        BoneMotionModel *bmm,
                        FaceMotionModel *fmm,
+                       SceneMotionModel *smm,
                        QWidget *parent = 0);
     ~TabWidget();
 

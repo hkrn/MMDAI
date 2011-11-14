@@ -205,7 +205,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
     m_faceMotionModel = new FaceMotionModel(m_undo, this);
     m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
-    m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
+    m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     buildUI();

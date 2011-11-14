@@ -38,7 +38,7 @@
 #define SCENEMOTIONMODEL_H
 
 #include "MotionBaseModel.h"
-#include "vpvl/BaseKeyFrame.h"
+#include "vpvl/CameraKeyFrame.h"
 
 namespace vpvl {
 class Scene;
@@ -74,6 +74,12 @@ public:
 
     void setFrames(const KeyFramePairList &frames);
     void refreshScene();
+    const vpvl::CameraKeyFrame::InterpolationParameter &cameraInterpolationParameter() const {
+        return m_cameraInterpolationParameter;
+    }
+    void setCameraInterpolationParameter(const vpvl::CameraKeyFrame::InterpolationParameter &value) {
+        m_cameraInterpolationParameter = value;
+    }
 
 public slots:
     virtual void removeMotion();
@@ -87,6 +93,7 @@ private:
     const SceneWidget *m_sceneWidget;
     QModelIndex m_cameraIndex;
     Values m_cameraData;
+    vpvl::CameraKeyFrame::InterpolationParameter m_cameraInterpolationParameter;
     ITreeItem *m_rootTreeItem;
     ITreeItem *m_cameraTreeItem;
 

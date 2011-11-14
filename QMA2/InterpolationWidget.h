@@ -45,6 +45,7 @@
 
 class QComboBox;
 class QHBoxLayout;
+class SceneMotionModel;
 
 class InterpolationGraphWidget : public QWidget
 {
@@ -59,7 +60,7 @@ public:
         kCamera
     };
 
-    explicit InterpolationGraphWidget(BoneMotionModel *bmm, QWidget *parent = 0);
+    InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
     ~InterpolationGraphWidget();
 
     void setType(Type value) { m_type = value; }
@@ -92,6 +93,7 @@ private:
     void setDefault(vpvl::QuadWord &q);
 
     BoneMotionModel *m_boneMotionModel;
+    SceneMotionModel *m_sceneMotionModel;
     vpvl::BoneKeyFrame::InterpolationParameter m_boneIP;
     vpvl::CameraKeyFrame::InterpolationParameter m_cameraIP;
     QPoint m_p1;
@@ -111,7 +113,7 @@ class InterpolationWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit InterpolationWidget(BoneMotionModel *bmm, QWidget *parent = 0);
+    explicit InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
     ~InterpolationWidget();
 
 private slots:

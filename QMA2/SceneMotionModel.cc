@@ -120,6 +120,7 @@ private:
     ITreeItem *m_parent;
 };
 
+/* 今のところカメラフレームしか対応していないため、暫定実装になってる */
 class SetFramesCommand : public QUndoCommand
 {
 public:
@@ -128,7 +129,8 @@ public:
                      SceneMotionModel::ITreeItem *cameraTreeItem)
         : QUndoCommand(),
           m_smm(smm),
-          m_cameraTreeItem(cameraTreeItem)
+          m_cameraTreeItem(cameraTreeItem),
+          m_parameter(smm->cameraInterpolationParameter())
     {
         QList<int> indices;
         foreach (const SceneMotionModel::KeyFramePair &frame, frames) {
@@ -168,8 +170,15 @@ public:
             SceneMotionModel::KeyFramePtr ptr = pair.second;
             vpvl::CameraKeyFrame *frame = static_cast<vpvl::CameraKeyFrame *>(ptr.data());
             const QModelIndex &modelIndex = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
-            QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
+            QByteArray bytes(vpvl::CameraKeyFrame::strideSize(), '0');
             vpvl::CameraKeyFrame *newFrame = static_cast<vpvl::CameraKeyFrame *>(frame->clone());
+            newFrame->setInterpolationParameter(vpvl::CameraKeyFrame::kX, m_parameter.x);
+            newFrame->setInterpolationParameter(vpvl::CameraKeyFrame::kY, m_parameter.y);
+            newFrame->setInterpolationParameter(vpvl::CameraKeyFrame::kZ, m_parameter.z);
+            newFrame->setInterpolationParameter(vpvl::CameraKeyFrame::kRotation, m_parameter.rotation);
+            newFrame->setInterpolationParameter(vpvl::CameraKeyFrame::kFovy, m_parameter.fovy);
+            newFrame->setInterpolationParameter(vpvl::CameraKeyFrame::kDistance, m_parameter.distance);
+            newFrame->setFrameIndex(frameIndex);
             newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
             animation->replaceKeyFrame(newFrame);
             m_smm->setData(modelIndex, bytes);
@@ -184,6 +193,7 @@ private:
     SceneMotionModel::KeyFramePairList m_frames;
     SceneMotionModel *m_smm;
     SceneMotionModel::ITreeItem *m_cameraTreeItem;
+    vpvl::CameraKeyFrame::InterpolationParameter m_parameter;
 };
 
 }

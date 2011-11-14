@@ -44,7 +44,11 @@
 
 #include <QtGui/QtGui>
 
-TabWidget::TabWidget(QSettings *settings, BoneMotionModel *bmm, FaceMotionModel *fmm, QWidget *parent) :
+TabWidget::TabWidget(QSettings *settings,
+                     BoneMotionModel *bmm,
+                     FaceMotionModel *fmm,
+                     SceneMotionModel *smm,
+                     QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
     m_asset(0),
@@ -55,7 +59,7 @@ TabWidget::TabWidget(QSettings *settings, BoneMotionModel *bmm, FaceMotionModel 
     m_asset = new AssetWidget();
     m_camera = new CameraPerspectiveWidget();
     m_face = new FaceWidget(fmm);
-    m_interpolation = new InterpolationWidget(bmm);
+    m_interpolation = new InterpolationWidget(bmm, smm);
     m_tabWidget = new QTabWidget();
     m_tabWidget->addTab(m_asset, "");
     m_tabWidget->addTab(m_camera, "");
