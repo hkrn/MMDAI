@@ -65,10 +65,11 @@ public:
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent = 0);
+    BoneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent = 0);
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
+    void addKeyFramesByModelIndices(const QModelIndexList &indices);
     void copyFrames(int frameIndex);
     void pasteFrame(int frameIndex);
     void pasteReversedFrame(int frameIndex);
@@ -113,9 +114,9 @@ signals:
 private:
     const QMatrix4x4 modelviewMatrix() const;
 
+    const SceneWidget *m_sceneWidget;
     QList<vpvl::Bone *> m_selected;
     vpvl::BaseKeyFrameList m_frames;
-    const SceneWidget *m_sceneWidget;
     vpvl::PMDModel::State *m_state;
     vpvl::BoneKeyFrame::InterpolationParameter m_interpolationParameter;
     TransformType m_mode;

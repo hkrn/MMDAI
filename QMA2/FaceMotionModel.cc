@@ -269,6 +269,26 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
+void FaceMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
+{
+    KeyFramePairList faceFrames;
+    vpvl::PMDModel *model = selectedModel();
+    foreach (const QModelIndex &index, indices) {
+        int frameIndex = toFrameIndex(index);
+        if (frameIndex >= 0) {
+            const QByteArray &name = nameFromModelIndex(index);
+            vpvl::Face *face = model->findFace(reinterpret_cast<const uint8_t *>(name.constData()));
+            if (face) {
+                vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+                frame->setName(face->name());
+                frame->setWeight(face->weight());
+                faceFrames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+            }
+        }
+    }
+    setFrames(faceFrames);
+}
+
 void FaceMotionModel::copyFrames(int frameIndex)
 {
     if (m_model && m_motion) {

@@ -86,6 +86,7 @@ private slots:
     void retranslate();
     void addBoneKeyFramesFromSelectedIndices();
     void addFaceKeyFramesFromSelectedIndices();
+    void addSceneKeyFramesFromSelectedIndices();
     void addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone);
     void addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face);
     void setCurrentFrameIndexZero();
@@ -98,9 +99,6 @@ private slots:
     void notifyCurrentTabIndex();
 
 private:
-    void addBoneKeyFramesByModelIndices(const QModelIndexList &indices);
-    void addFaceKeyFramesByModelIndices(const QModelIndexList &indices);
-
     QSettings *m_settings;
     QTabWidget *m_tabWidget;
     TimelineWidget *m_boneTimeline;

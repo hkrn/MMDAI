@@ -358,9 +358,9 @@ private:
 
 }
 
-BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *scene, QObject *parent) :
+BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent) :
     PMDMotionModel(undo, parent),
-    m_sceneWidget(scene),
+    m_sceneWidget(sceneWidget),
     m_state(0),
     m_mode(kLocal)
 {
@@ -387,6 +387,30 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
     else {
         qWarning("No model is selected to save motion.");
     }
+}
+
+void BoneMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
+{
+    KeyFramePairList boneFrames;
+    vpvl::PMDModel *model = selectedModel();
+    /* モデルのインデックスを参照し、存在するボーンに対してボーンの現在の値からボーンのキーフレームにコピーする */
+    foreach (const QModelIndex &index, indices) {
+        int frameIndex = toFrameIndex(index);
+        if (frameIndex >= 0) {
+            const QByteArray &name = nameFromModelIndex(index);
+            vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
+            if (bone) {
+                /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
+                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+                frame->setDefaultInterpolationParameter();
+                frame->setName(bone->name());
+                frame->setPosition(bone->position());
+                frame->setRotation(bone->rotation());
+                boneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+            }
+        }
+    }
+    setFrames(boneFrames);
 }
 
 void BoneMotionModel::copyFrames(int frameIndex)
@@ -553,13 +577,10 @@ void BoneMotionModel::savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIn
 
 void BoneMotionModel::setFrames(const KeyFramePairList &frames)
 {
-    if (m_model && m_motion) {
+    if (m_model && m_motion)
         addUndoCommand(new SetFramesCommand(this, frames));
-    }
-    else {
+    else
         qWarning("No model or motion to register bone frames.");
-        return;
-    }
 }
 
 void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)

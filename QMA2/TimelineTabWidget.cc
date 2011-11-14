@@ -141,6 +141,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_boneTimeline->button(), SIGNAL(clicked()), this, SLOT(addBoneKeyFramesFromSelectedIndices()));
     connect(m_faceTimeline->button(), SIGNAL(clicked()), this, SLOT(addFaceKeyFramesFromSelectedIndices()));
+    connect(m_sceneTimeline->button(), SIGNAL(clicked()), this, SLOT(addSceneKeyFramesFromSelectedIndice()));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(m_tabWidget);
@@ -180,12 +181,23 @@ void TimelineTabWidget::retranslate()
 
 void TimelineTabWidget::addBoneKeyFramesFromSelectedIndices()
 {
-    addBoneKeyFramesByModelIndices(UIGetSelectionModel(m_boneTimeline)->selectedIndexes());
+    BoneMotionModel *model = UIGetBoneModel(m_boneTimeline);
+    QItemSelectionModel *selection = UIGetSelectionModel(m_boneTimeline);
+    model->addKeyFramesByModelIndices(selection->selectedIndexes());
 }
 
 void TimelineTabWidget::addFaceKeyFramesFromSelectedIndices()
 {
-    addFaceKeyFramesByModelIndices(UIGetSelectionModel(m_faceTimeline)->selectedIndexes());
+    FaceMotionModel *model = UIGetFaceModel(m_faceTimeline);
+    QItemSelectionModel *selection = UIGetSelectionModel(m_faceTimeline);
+    model->addKeyFramesByModelIndices(selection->selectedIndexes());
+}
+
+void TimelineTabWidget::addSceneKeyFramesFromSelectedIndices()
+{
+    SceneMotionModel *model = UIGetSceneModel(m_sceneTimeline);
+    QItemSelectionModel *selection = UIGetSelectionModel(m_sceneTimeline);
+    model->addKeyFramesByModelIndices(selection->selectedIndexes());
 }
 
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
@@ -223,6 +235,7 @@ void TimelineTabWidget::setCurrentFrameIndexZero()
 {
     m_boneTimeline->setCurrentFrameIndex(0);
     m_faceTimeline->setCurrentFrameIndex(0);
+    m_sceneTimeline->setCurrentFrameIndex(0);
 }
 
 void TimelineTabWidget::insertFrame()
@@ -246,6 +259,9 @@ void TimelineTabWidget::deleteFrame()
     case kFaceTabIndex:
         UIModelDeleteFrame(m_faceTimeline);
         break;
+    case kSceneTabIndex:
+        UIModelDeleteFrame(m_sceneTimeline);
+        break;
     }
 }
 
@@ -259,6 +275,8 @@ void TimelineTabWidget::copyFrame()
     case kFaceTabIndex:
         UIGetFaceModel(m_faceTimeline)->copyFrames(m_faceTimeline->frameIndex());
         break;
+    case kSceneTabIndex:
+        UIGetSceneModel(m_sceneTimeline)->copyFrames(m_sceneTimeline->frameIndex());
     }
 }
 
@@ -270,6 +288,9 @@ void TimelineTabWidget::pasteFrame()
         break;
     case kFaceTabIndex:
         UIGetFaceModel(m_faceTimeline)->pasteFrame(m_faceTimeline->frameIndex());
+        break;
+    case kSceneTabIndex:
+        UIGetSceneModel(m_sceneTimeline)->pasteFrame(m_sceneTimeline->frameIndex());
         break;
     }
 }
@@ -294,54 +315,13 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     case kFaceTabIndex:
         emit currentTabDidChange(kFace);
         break;
+    case kSceneTabIndex:
+        emit currentTabDidChange(kScene);
+        break;
     }
 }
 
 void TimelineTabWidget::notifyCurrentTabIndex()
 {
     setCurrentTabIndex(m_tabWidget->currentIndex());
-}
-
-void TimelineTabWidget::addBoneKeyFramesByModelIndices(const QModelIndexList &indices)
-{
-    BoneMotionModel::KeyFramePairList boneFrames;
-    BoneMotionModel *bmm = UIGetBoneModel(m_boneTimeline);
-    vpvl::PMDModel *model = bmm->selectedModel();
-    foreach (const QModelIndex &index, indices) {
-        int frameIndex = MotionBaseModel::toFrameIndex(index);
-        if (frameIndex >= 0) {
-            const QByteArray &name = bmm->nameFromModelIndex(index);
-            vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
-            if (bone) {
-                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
-                frame->setDefaultInterpolationParameter();
-                frame->setName(bone->name());
-                frame->setPosition(bone->position());
-                frame->setRotation(bone->rotation());
-                boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame)));
-            }
-        }
-    }
-    bmm->setFrames(boneFrames);
-}
-
-void TimelineTabWidget::addFaceKeyFramesByModelIndices(const QModelIndexList &indices)
-{
-    FaceMotionModel::KeyFramePairList faceFrames;
-    FaceMotionModel *fmm = UIGetFaceModel(m_faceTimeline);
-    vpvl::PMDModel *model = fmm->selectedModel();
-    foreach (const QModelIndex &index, indices) {
-        int frameIndex = MotionBaseModel::toFrameIndex(index);
-        if (frameIndex >= 0) {
-            const QByteArray &name = fmm->nameFromModelIndex(index);
-            vpvl::Face *face = model->findFace(reinterpret_cast<const uint8_t *>(name.constData()));
-            if (face) {
-                vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
-                frame->setName(face->name());
-                frame->setWeight(face->weight());
-                faceFrames.append(FaceMotionModel::KeyFramePair(frameIndex, FaceMotionModel::KeyFramePtr(frame)));
-            }
-        }
-    }
-    fmm->setFrames(faceFrames);
 }
