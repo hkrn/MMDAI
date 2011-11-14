@@ -38,13 +38,24 @@
 #define SCENEMOTIONMODEL_H
 
 #include "MotionBaseModel.h"
+#include "vpvl/BaseKeyFrame.h"
+
+namespace vpvl {
+class Scene;
+}
+
+class SceneWidget;
 
 class SceneMotionModel : public MotionBaseModel
 {
     Q_OBJECT
 
 public:
-    explicit SceneMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    typedef QSharedPointer<vpvl::BaseKeyFrame> KeyFramePtr;
+    typedef QPair<int, KeyFramePtr> KeyFramePair;
+    typedef QList<KeyFramePair> KeyFramePairList;
+
+    explicit SceneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent = 0);
     ~SceneMotionModel();
 
     virtual QVariant data(const QModelIndex &index, int role) const;
@@ -55,10 +66,13 @@ public:
     virtual bool isTreeModel() const { return false; }
 
     void saveMotion(vpvl::VMDMotion *motion);
+    void addKeyFramesByModelIndices(const QModelIndexList &indices);
     void copyFrames(int frameIndex);
     void pasteFrame(int frameIndex);
     void selectByModelIndex(const QModelIndex &index);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
+
+    void setFrames(const KeyFramePairList &frames);
 
 public slots:
     virtual void removeMotion();
@@ -66,12 +80,14 @@ public slots:
     void loadMotion(vpvl::VMDMotion *motion);
 
 protected:
-    virtual ITreeItem *root() const { return m_root; }
+    virtual ITreeItem *root() const { return m_rootTreeItem; }
 
 private:
+    const SceneWidget *m_sceneWidget;
+    QModelIndex m_cameraIndex;
     Values m_cameraData;
-    ITreeItem *m_root;
-    ITreeItem *m_camera;
+    ITreeItem *m_rootTreeItem;
+    ITreeItem *m_cameraTreeItem;
 
     Q_DISABLE_COPY(SceneMotionModel)
 };
