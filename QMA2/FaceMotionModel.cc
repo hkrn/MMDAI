@@ -78,6 +78,7 @@ public:
         return m_isCategory;
     }
     int rowIndex() const {
+        /* 自分が親行に対して何番目にあるかを求める */
         return m_parent ? m_parent->m_children.indexOf(const_cast<TreeItem *>(this)) : 0;
     }
     int countChildren() const {
@@ -102,9 +103,12 @@ public:
     {
         QHash<int, bool> indexProceeded;
         const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
+        /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
         foreach (const FaceMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
+            /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded[frameIndex]) {
+                /* モデルの全ての頂点モーフを対象にデータがあるか確認し、あれば保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(FaceMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
@@ -120,6 +124,7 @@ public:
     }
 
     virtual void undo() {
+        /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
         vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyFrames(frameIndex);
@@ -128,6 +133,7 @@ public:
                 m_fmm->setData(index, QVariant());
             }
         }
+        /* コンストラクタで保存した頂点モーフ情報を復元して置換する */
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(FaceMotionModel::kBinaryDataRole).toByteArray();
             m_fmm->setData(index, bytes, Qt::EditRole);
@@ -135,6 +141,10 @@ public:
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyFrame(frame);
         }
+        /*
+         * FaceAnimation の内部データの更新も忘れずに。モデルをリセットした上で、
+         * モーションを更新するために PMD を現在のフレームに強制シークしておく
+         */
         animation->refresh();
         m_fmm->refreshModel();
     }
@@ -143,10 +153,12 @@ public:
         vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         const FaceMotionModel::Keys &keys = m_fmm->keys();
         vpvl::Face *selected = m_fmm->selectedFace();
+        /* すべてのキーフレーム情報を登録する */
         foreach (const FaceMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
             FaceMotionModel::KeyFramePtr ptr = pair.second;
             vpvl::FaceKeyFrame *frame = ptr.data();
+            /* キーフレームの対象頂点モーフ名を取得する */
             if (frame) {
                 key = internal::toQString(frame);
             }
@@ -157,7 +169,13 @@ public:
                 qWarning("No bone is selected or null");
                 continue;
             }
+            /* モデルに頂点モーフ名が存在するかを確認する */
             if (keys.contains(key)) {
+                /*
+                 * キーフレームをコピーし、対象のモデルのインデックスに移す。
+                 * そしてモデルにデータを登録した上で現在登録されているキーフレームを置換する
+                 * (前のキーフレームの情報が入ってる可能性があるので、それ故に重複が発生することを防ぐ)
+                 */
                 const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(keys[key], frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::FaceKeyFrame *newFrame = static_cast<vpvl::FaceKeyFrame *>(frame->clone());
@@ -170,6 +188,7 @@ public:
                 continue;
             }
         }
+        /* SetFramesCommand#undo の通りのため、省略 */
         animation->refresh();
         m_fmm->refreshModel();
     }
@@ -188,17 +207,21 @@ public:
         : QUndoCommand(),
           m_model(model)
     {
+        /* 全ての頂点モーフの情報を保存しておく */
         m_state = model->saveState();
     }
     virtual ~ResetAllCommand() {
+        /* discardState は必ず呼び出すこと */
         m_model->discardState(m_state);
     }
 
     void undo() {
+        /* コンストラクタで保存したボーン情報を復元し、シークせずにモデルを更新しておく */
         m_model->restoreState(m_state);
         m_model->updateImmediate();
     }
     void redo() {
+        /* 全てのボーンをリセットし、シークせずにモデルを更新しておく */
         m_model->resetAllFaces();
         m_model->updateImmediate();
     }
@@ -217,18 +240,22 @@ public:
           m_newState(0),
           m_oldState(state)
     {
+        /* 前と後の全ての頂点モーフの情報を保存しておく */
         m_newState = m_model->saveState();
     }
     virtual ~SetFaceCommand() {
+        /* コンストラクタで saveState が呼ばれる前提なので両方解放しておく */
         m_model->discardState(m_newState);
         m_model->discardState(m_oldState);
     }
 
     void undo() {
+        /* コンストラクタで呼ばれる前の頂点モーフ情報を復元し、シークせずにモデルを更新しておく */
         m_model->restoreState(m_oldState);
         m_model->updateImmediate();
     }
     void redo() {
+        /* コンストラクタで呼ばれた時点の頂点モーフ情報を復元し、シークせずにモデルを更新しておく */
         m_model->restoreState(m_newState);
         m_model->updateImmediate();
     }
@@ -255,6 +282,7 @@ FaceMotionModel::~FaceMotionModel()
 void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
 {
     if (m_model) {
+        /* モデルの ByteArray を vpvl::BoneKeyFrame に読ませて積んでおくだけの簡単な処理 */
         vpvl::FaceAnimation *animation = motion->mutableFaceAnimation();
         foreach (QVariant value, values()) {
             vpvl::FaceKeyFrame *newFrame = new vpvl::FaceKeyFrame();
@@ -273,6 +301,7 @@ void FaceMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList faceFrames;
     vpvl::PMDModel *model = selectedModel();
+    /* モデルのインデックスを参照し、存在する頂点モーフに対して頂点モーフの現在の重み係数から頂点モーフのキーフレームにコピーする */
     foreach (const QModelIndex &index, indices) {
         int frameIndex = toFrameIndex(index);
         if (frameIndex >= 0) {
@@ -322,6 +351,7 @@ void FaceMotionModel::pasteFrame(int frameIndex)
 void FaceMotionModel::startTransform()
 {
     if (m_model) {
+        /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */
         m_model->discardState(m_state);
         m_state = m_model->saveState();
     }
@@ -330,6 +360,10 @@ void FaceMotionModel::startTransform()
 void FaceMotionModel::commitTransform()
 {
     if (m_model && m_state) {
+        /*
+         * startTransform で保存したモデルの状態を SetBoneCommand に渡す
+         * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
+         */
         addUndoCommand(new SetFaceCommand(m_model, m_state));
         m_state = 0;
     }
@@ -338,12 +372,16 @@ void FaceMotionModel::commitTransform()
 void FaceMotionModel::selectByModelIndex(const QModelIndex &index)
 {
     if (m_model) {
+        /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         QByteArray bytes = internal::fromQString(item->name());
         vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        QList<vpvl::Face *> faces;
-        faces.append(face);
-        selectFaces(faces);
+        /* 対象の頂点モーフが発見した場合のみ選択状態にする */
+        if (face) {
+            QList<vpvl::Face *> faces;
+            faces.append(face);
+            selectFaces(faces);
+        }
     }
 }
 
@@ -373,8 +411,11 @@ void FaceMotionModel::resetAllFaces()
 void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
     if (model) {
+        /* PMD の二重登録防止 */
         if (!hasPMDModel(model)) {
+            /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
+            /* 予め決められたカテゴリのアイテムを作成する */
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
             TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, true, static_cast<TreeItem *>(r));
             TreeItem *eye = new TreeItem(tr("Eye"), 0, false, true, static_cast<TreeItem *>(r));
@@ -387,6 +428,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
                 vpvl::Face *face = faces[i];
                 const QString &name = internal::toQString(face);
                 TreeItem *child, *parent = 0;
+                /* カテゴリ毎に頂点モーフを追加して整理する */
                 switch (face->type()) {
                 case vpvl::Face::kEyeblow:
                     parent = eyeblow;
@@ -403,12 +445,14 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
                 default:
                     break;
                 }
+                /* 何も属さない Base を除いてカテゴリアイテムに追加する */
                 if (parent) {
                     child = new TreeItem(name, face, false, false, parent);
                     parent->addChild(child);
                     keys.insert(name, child);
                 }
             }
+            /* カテゴリアイテムをルートに追加する */
             r->addChild(eyeblow);
             r->addChild(eye);
             r->addChild(lip);
@@ -425,14 +469,17 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     else {
         m_model = 0;
     }
+    /* テーブルモデルを更新 */
     reset();
 }
 
 void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
+    /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {
         const vpvl::FaceAnimation &animation = motion->faceAnimation();
         const int nFaceFrames = animation.countKeyFrames();
+        /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nFaceFrames; i++) {
             vpvl::FaceKeyFrame *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
@@ -442,6 +489,7 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 int frameIndex = static_cast<int>(frame->frameIndex());
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 ITreeItem *item = keys[key];
+                /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
                 vpvl::FaceKeyFrame newFrame;
                 newFrame.setName(name);
@@ -451,6 +499,7 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
                 setData(modelIndex, bytes);
             }
         }
+        /* 読み込まれたモーションを現在のモーションとして登録する。あとは SetFramesCommand#undo と同じ */
         m_motion = motion;
         refreshModel();
         setModified(false);
@@ -463,15 +512,19 @@ void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 void FaceMotionModel::removeMotion()
 {
+    /* 選択された頂点モーフとモデルに登録されているデータが削除される。頂点モーフ名は削除されない */
     m_selected.clear();
     setModified(false);
     removePMDMotion(m_model);
     reset();
-    resetAllFaces();
 }
 
 void FaceMotionModel::removeModel()
 {
+    /*
+     * モーション削除に加えて PMD を論理削除する。巻き戻し情報も削除されるため巻戻しが不可になる
+     * PMD は SceneLoader で管理されるため、PMD のメモリの解放はしない
+     */
     removeMotion();
     removePMDModel(m_model);
     reset();
@@ -480,6 +533,7 @@ void FaceMotionModel::removeModel()
 void FaceMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
 {
     if (index.isValid()) {
+        /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを削除する */
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         vpvl::Face *face = item->face();
         if (face) {
@@ -498,6 +552,7 @@ void FaceMotionModel::selectFaces(const QList<vpvl::Face *> &faces)
 
 vpvl::Face *FaceMotionModel::findFace(const QString &name)
 {
+    /* QString を扱っていること以外 PMDModel#findFace と同じ */
     const QByteArray &bytes = internal::getTextCodec()->fromUnicode(name);
     foreach (ITreeItem *item, keys()) {
         vpvl::Face *face = static_cast<TreeItem *>(item)->face();

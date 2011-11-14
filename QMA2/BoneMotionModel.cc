@@ -259,7 +259,11 @@ public:
             }
             /* モデルにボーン名が存在するかを確認する */
             if (keys.contains(key)) {
-                /* キーフレームをコピーし、対象のインデックスに移す。そしてモデルに登録した上で現在登録されているキーフレームを置換する */
+                /*
+                 * キーフレームをコピーし、対象のモデルのインデックスに移す。
+                 * そしてモデルにデータを登録した上で現在登録されているキーフレームを置換する
+                 * (前のキーフレームの情報が入ってる可能性があるので、それ故に重複が発生することを防ぐ)
+                 */
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(keys[key], frameIndex);
                 QByteArray bytes(vpvl::BoneKeyFrame::strideSize(), '0');
                 vpvl::BoneKeyFrame *newFrame = static_cast<vpvl::BoneKeyFrame *>(frame->clone());
@@ -498,7 +502,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
 void BoneMotionModel::startTransform()
 {
     if (m_model) {
-        /* モデルの状態を保存しておく。もちろんメモリリーク防止のため、前の状態は破棄しておく */
+        /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */
         m_model->discardState(m_state);
         m_state = m_model->saveState();
     }
@@ -523,6 +527,7 @@ void BoneMotionModel::selectByModelIndex(const QModelIndex &index)
         TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
         QByteArray bytes = internal::fromQString(item->name());
         vpvl::Bone *bone = m_model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        /* 対象のボーンが発見した場合のみ選択状態にする */
         if (bone) {
             QList<vpvl::Bone *> bones;
             bones.append(bone);
@@ -533,7 +538,6 @@ void BoneMotionModel::selectByModelIndex(const QModelIndex &index)
 
 const QByteArray BoneMotionModel::nameFromModelIndex(const QModelIndex &index) const
 {
-    /* メソッド名の通り QModelIndex に入ってる TreeIndex でボーン名を求める */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     return internal::fromQString(item->name());
 }
@@ -934,7 +938,7 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)
 {
-    /* 挙動は QString を扱っていること以外 PMDModel#findBone と同じ */
+    /* QString を扱っていること以外 PMDModel#findBone と同じ */
     const QByteArray &bytes = internal::getTextCodec()->fromUnicode(name);
     foreach (ITreeItem *item, keys()) {
         vpvl::Bone *bone = static_cast<TreeItem *>(item)->bone();
