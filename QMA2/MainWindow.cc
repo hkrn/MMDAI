@@ -323,7 +323,7 @@ bool MainWindow::saveFile(const QString &filename)
 
 bool MainWindow::maybeSave()
 {
-    if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified()) {
+    if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified() || m_sceneMotionModel->isModified()) {
         QMessageBox::StandardButton ret;
         ret = QMessageBox::warning(this,
                                    qAppName(),
