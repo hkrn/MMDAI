@@ -242,8 +242,10 @@ void Scene::advanceMotion(float deltaFrame)
     // Updating camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
-        camera->advance(deltaFrame);
-        setCameraPerspective(camera);
+        if (camera->countKeyFrames() > 0) {
+            camera->advance(deltaFrame);
+            setCameraPerspective(camera);
+        }
     }
 }
 
