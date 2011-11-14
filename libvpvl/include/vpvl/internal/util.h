@@ -145,13 +145,13 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
 
 inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
 {
-    assert(s1 != NULL && s2 != NULL && max > 0);
+    assert(s1 != NULL && s2 != NULL);
     return strncmp(reinterpret_cast<const char *>(s1), reinterpret_cast<const char *>(s2), max) == 0;
 }
 
 inline bool stringEquals(const char *s1, const char *s2, size_t max)
 {
-    assert(s1 != NULL && s2 != NULL && max > 0);
+    assert(s1 != NULL && s2 != NULL);
     return strncmp(s1, s2, max) == 0;
 }
 
