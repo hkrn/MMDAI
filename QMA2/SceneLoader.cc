@@ -128,7 +128,6 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
         m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
         m_models.remove(key);
-        delete model;
         return true;
     }
     return false;

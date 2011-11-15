@@ -262,7 +262,7 @@ void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
     uploadModel0(userData, model, dir);
 }
 
-void Renderer::deleteModel(const vpvl::PMDModel *model)
+void Renderer::deleteModel(vpvl::PMDModel *&model)
 {
     vpvl::cg::PMDModelUserData *userData = static_cast<vpvl::cg::PMDModelUserData *>(model->userData());
     delete userData->parameters;

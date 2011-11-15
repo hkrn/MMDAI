@@ -871,8 +871,6 @@ Renderer::~Renderer()
         vpvl::Asset *asset = assets[i];
         deleteAsset(asset);
     }
-    models.releaseAll();
-    assets.clear();
     delete m_edgeProgram;
     m_edgeProgram = 0;
     delete m_modelProgram;
@@ -1060,12 +1058,12 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     m_scene->addModel(model);
 }
 
-void Renderer::deleteModel(const vpvl::PMDModel *model)
+void Renderer::deleteModel(vpvl::PMDModel *&model)
 {
     deleteModel0(static_cast<vpvl::gl2::PMDModelUserData *>(model->userData()), model);
 }
 
-void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model)
+void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *&model)
 {
     if (model) {
         const vpvl::MaterialList &materials = model->materials();
@@ -1082,7 +1080,9 @@ void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::P
         delete[] userData->materials;
         delete userData;
         m_delegate->log(IDelegate::kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
-        m_scene->removeModel(const_cast<vpvl::PMDModel *>(model));
+        m_scene->removeModel(model);
+        delete model;
+        model = 0;
     }
 }
 

@@ -82,7 +82,7 @@ public:
     virtual ~Renderer();
 
     void uploadModel(vpvl::PMDModel *model, const std::string &dir);
-    void deleteModel(const vpvl::PMDModel *model);
+    void deleteModel(vpvl::PMDModel *&model);
     void drawModel(const vpvl::PMDModel *model);
 
 private:

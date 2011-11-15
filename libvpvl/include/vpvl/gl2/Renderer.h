@@ -138,7 +138,7 @@ public:
     void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
     void setDebugDrawer(btDynamicsWorld *world);
     void uploadModel(vpvl::PMDModel *model, const std::string &dir);
-    void deleteModel(const vpvl::PMDModel *model);
+    void deleteModel(vpvl::PMDModel *&model);
     void updateModelBuffer(const vpvl::PMDModel *model) const;
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
@@ -157,7 +157,7 @@ public:
 
 protected:
     void uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
-    void deleteModel0(vpvl::gl2::PMDModelUserData *userData, const vpvl::PMDModel *model);
+    void deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *&model);
 
     IDelegate *m_delegate;
     vpvl::Scene *m_scene;
