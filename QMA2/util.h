@@ -43,7 +43,8 @@
 namespace internal
 {
 
-static inline QTextCodec *getTextCodec() {
+static inline QTextCodec *getTextCodec()
+{
     static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     return codec;
 }
@@ -54,39 +55,48 @@ static inline const QString &noneString()
     return none;
 }
 
-static inline const QByteArray fromQString(const QString &value) {
+static inline const QByteArray fromQString(const QString &value)
+{
     return getTextCodec()->fromUnicode(value);
 }
 
-static inline const QString toQString(const uint8_t *value) {
+static inline const QString toQString(const uint8_t *value)
+{
     return getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
 }
 
-static inline const QString toQString(const vpvl::Asset *value) {
-    return value ? toQString(reinterpret_cast<const uint8_t *>(value->name())) : noneString();
+static inline const QString toQString(const vpvl::Asset *value)
+{
+    return value ? QString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::PMDModel *value) {
+static inline const QString toQString(const vpvl::PMDModel *value)
+{
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::Bone *value) {
+static inline const QString toQString(const vpvl::Bone *value)
+{
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::Face *value) {
+static inline const QString toQString(const vpvl::Face *value)
+{
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::BoneKeyFrame *value) {
+static inline const QString toQString(const vpvl::BoneKeyFrame *value)
+{
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::FaceKeyFrame *value) {
+static inline const QString toQString(const vpvl::FaceKeyFrame *value)
+{
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline void dumpBones(vpvl::PMDModel *model) {
+static inline void dumpBones(vpvl::PMDModel *model)
+{
     const vpvl::BoneList &bones = model->bones();
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -101,7 +111,8 @@ static inline void dumpBones(vpvl::PMDModel *model) {
     }
 }
 
-static inline void dumpBoneKeyFrame(const vpvl::BoneKeyFrame *frame, int index = 0) {
+static inline void dumpBoneKeyFrame(const vpvl::BoneKeyFrame *frame, int index = 0)
+{
     const vpvl::Vector3 &p = frame->position();
     const vpvl::Quaternion &q = frame->rotation();
     qDebug().nospace() << "index=" << index
@@ -111,13 +122,15 @@ static inline void dumpBoneKeyFrame(const vpvl::BoneKeyFrame *frame, int index =
                        << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
 }
 
-static inline void dumpBoneAnimation(const vpvl::BoneAnimation &animation) {
+static inline void dumpBoneAnimation(const vpvl::BoneAnimation &animation)
+{
     const int nframes = animation.countKeyFrames();
     for (int i = 0; i < nframes; i++)
         dumpBoneKeyFrame(static_cast<vpvl::BoneKeyFrame *>(animation.frameAt(i)), i);
 }
 
-static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames) {
+static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames)
+{
     const int nframes = frames.count();
     for (int i = 0; i < nframes; i++)
         dumpBoneKeyFrame(static_cast<vpvl::BoneKeyFrame *>(frames[i]), i);
