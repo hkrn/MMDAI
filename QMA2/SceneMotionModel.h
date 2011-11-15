@@ -85,6 +85,7 @@ public slots:
     virtual void removeMotion();
     virtual void deleteFrameByModelIndex(const QModelIndex &index);
     void loadMotion(vpvl::VMDMotion *motion);
+    void markAsNew() { setModified(false); }
 
 protected:
     virtual ITreeItem *root() const { return m_rootTreeItem; }

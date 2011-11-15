@@ -81,10 +81,10 @@ public:
     const Keys keys() const { return m_keys[m_model]; }
 
 public slots:
-    void markAsNew(vpvl::PMDModel *model);
     virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
     virtual void setPMDModel(vpvl::PMDModel *model) = 0;
     virtual void removeModel() = 0;
+    void markAsNew(vpvl::PMDModel *model);
 
 signals:
     void modelDidChange(vpvl::PMDModel *model);

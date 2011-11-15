@@ -861,6 +861,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
     connect(m_sceneWidget, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
 }
 
 void MainWindow::insertMotionToAllModels()
