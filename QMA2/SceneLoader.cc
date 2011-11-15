@@ -68,7 +68,12 @@ SceneLoader::~SceneLoader()
 void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
 {
     QString key = internal::toQString(model);
+    /*
+     * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
+     * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
+     */
     m_renderer->uploadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
+    /* モデル名が重複していれば連番で名前を作成する */
     if (m_models.contains(key)) {
         int i = 0;
         while (true) {
@@ -81,6 +86,7 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
         }
     }
     setBaseBone(model);
+    /* モデルを SceneLoader にヒモ付けする */
     m_models.insert(key, model);
 }
 
@@ -88,6 +94,7 @@ bool SceneLoader::deleteAsset(vpvl::Asset *asset)
 {
     if (!asset)
         return false;
+    /* アクセサリをレンダリングエンジンから削除し、SceneLoader のヒモ付けも解除する */
     const QString &key = m_assets.key(asset);
     if (!key.isNull()) {
         m_renderer->deleteAsset(asset);
@@ -99,6 +106,7 @@ bool SceneLoader::deleteAsset(vpvl::Asset *asset)
 
 void SceneLoader::deleteCameraMotion()
 {
+    /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
     vpvl::Scene *scene = m_renderer->scene();
     scene->setCameraMotion(0);
     scene->resetCamera();
@@ -110,10 +118,13 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
 {
     if (!model)
         return false;
+    /*
+     * まずモデルに紐づいたモーションを削除し、その後にモデルをレンダリングエンジンから削除し、
+     * SceneLoader のヒモ付けも解除する
+     */
     const QString &key = m_models.key(model);
     if (!key.isNull()) {
         deleteModelMotion(model);
-        m_renderer->scene()->removeModel(model);
         m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
         m_models.remove(key);
@@ -127,6 +138,7 @@ bool SceneLoader::deleteModelMotion(vpvl::PMDModel *model)
 {
     if (!model)
         return false;
+    /* モデルにヒモ付いた全てのモーションを解除し、削除する */
     if (m_motions.contains(model)) {
         QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
         while (i.hasNext()) {
@@ -145,6 +157,7 @@ bool SceneLoader::deleteModelMotion(vpvl::PMDModel *model)
 
 bool SceneLoader::deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
+    /* 引数で渡されたモデルにヒモ付いたモーションを解除し、削除する */
     if (m_motions.contains(model)) {
         QMutableHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
         while (i.hasNext()) {
@@ -175,11 +188,15 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
 {
     QFile file(dir.absoluteFilePath(baseName));
     vpvl::Asset *asset = 0;
+    /*
+     * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
+     */
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
         asset = new vpvl::Asset();
         if (asset->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             QString key = baseName;
+            /* アクセサリ名が重複していれば連番で名前を作成する */
             if (m_assets.contains(key)) {
                 int i = 0;
                 while (true) {
@@ -191,6 +208,7 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
                     i++;
                 }
             }
+            /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             const QByteArray &assetName = baseName.toUtf8();
             char *name = new char[assetName.size() + 1];
             memcpy(name, assetName.constData(), assetName.size());
@@ -210,15 +228,23 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
 vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir)
 {
     QFile file(dir.absoluteFilePath(baseName));
+    /* VAC 形式からアクセサリを読み込む。VAC は Shift_JIS で読み込む必要がある */
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
+        /* 1行目: アクセサリ名 */
         QString name = stream.readLine();
+        /* 2行目: ファイル名 */
         QString filename = stream.readLine();
+        /* 3行目: アクセサリの拡大率 */
         float scaleFactor = stream.readLine().toFloat();
+        /* 4行目: アクセサリの位置パラメータ */
         QStringList position = stream.readLine().split(',');
+        /* 5行目: アクセサリの回転パラメータ */
         QStringList rotation = stream.readLine().split(',');
+        /* 6行目: アクセサリに紐付ける親ボーン(未実装) */
         QString bone = stream.readLine();
+        /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
         vpvl::Asset *asset = loadAsset(filename, dir);
         if (asset) {
@@ -261,6 +287,7 @@ vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const Q
 
 vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
 {
+    /* カメラモーションをファイルから読み込み、場面オブジェクトに設定する */
     QFile file(path);
     vpvl::VMDMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
@@ -279,6 +306,10 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
 
 vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
 {
+    /*
+     * モデルをファイルから読み込む。レンダリングエンジンに送るには addModel を呼び出す必要がある
+     * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
+     */
     const QString &path = dir.absoluteFilePath(baseName);
     QFile file(path);
     vpvl::PMDModel *model = 0;
@@ -295,6 +326,7 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
 
 vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path)
 {
+    /* モーションをファイルから読み込む。モデルへの追加は setModelMotion を使う必要がある */
     QFile file(path);
     vpvl::VMDMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
@@ -310,6 +342,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path)
 
 vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models)
 {
+    /* モーションをファイルから読み込み、対象の全てのモデルに対してモーションを適用する */
     vpvl::VMDMotion *motion = loadModelMotion(path);
     if (motion) {
         foreach (vpvl::PMDModel *model, m_models) {
@@ -322,6 +355,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<vpvl::P
 
 vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDModel *model)
 {
+    /* loadModelMotion に setModelMotion の追加が入ったショートカット的なメソッド */
     vpvl::VMDMotion *motion = loadModelMotion(path);
     if (motion)
         setModelMotion(motion, model);
@@ -331,6 +365,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDMode
 
 VPDFile *SceneLoader::loadModelPose(const QString &path, vpvl::PMDModel * /* model */)
 {
+    /* ポーズをファイルから読み込む。処理の関係上 makePose は呼ばない */
     QFile file(path);
     VPDFile *pose = 0;
     if (file.open(QFile::ReadOnly)) {
@@ -366,6 +401,7 @@ void SceneLoader::release()
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
 {
+    /* 現在のアセットの位置情報からファイルに書き出す。行毎の意味は loadMetadataFromAsset を参照 */
     QFile file(path);
     if (file.open(QFile::WriteOnly)) {
         QTextStream stream(&file);
@@ -421,6 +457,7 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions()
 {
+    /* 停止されたモーションを取得する (MMDAI2 上では使っていない) */
     QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
     QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
     while (i.hasNext()) {
