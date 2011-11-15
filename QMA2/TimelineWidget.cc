@@ -243,7 +243,7 @@ void TimelineWidget::setCurrentFrameIndex(int frameIndex)
     MotionBaseModel *model = static_cast<MotionBaseModel *>(m_treeView->model());
     model->setFrameIndex(frameIndex);
     m_treeView->selectFrameIndex(frameIndex);
-    m_treeView->scrollTo(model->index(0, frameIndex));
+    m_treeView->scrollTo(model->index(0, frameIndex + 1));
     m_spinBox->setValue(frameIndex);
     emit motionDidSeek(static_cast<float>(frameIndex));
 }
