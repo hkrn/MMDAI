@@ -76,8 +76,8 @@ static void UIModelDeleteFrame(TimelineWidget *timeline)
 {
     TimelineTreeView *view = timeline->treeView();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
-    QModelIndexList indices = view->selectionModel()->selectedIndexes();
-    foreach (QModelIndex index, indices) {
+    const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+    foreach (const QModelIndex &index, indices) {
         if (index.column() > 1)
             model->deleteFrameByModelIndex(index);
     }
@@ -86,9 +86,9 @@ static void UIModelDeleteFrame(TimelineWidget *timeline)
 static void UIModelInsertBoneFrame(TimelineWidget *timeline)
 {
     BoneMotionModel *model = UIGetBoneModel(timeline);
-    QModelIndexList indices = timeline->treeView()->selectionModel()->selectedIndexes();
+    const QModelIndexList &indices = timeline->treeView()->selectionModel()->selectedIndexes();
     BoneMotionModel::KeyFramePairList boneFrames;
-    foreach (QModelIndex index, indices) {
+    foreach (const QModelIndex &index, indices) {
         vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
         QByteArray name = model->nameFromModelIndex(index);
         int frameIndex = MotionBaseModel::toFrameIndex(index);
@@ -102,9 +102,9 @@ static void UIModelInsertBoneFrame(TimelineWidget *timeline)
 static void UIModelInsertFaceFrame(TimelineWidget *timeline)
 {
     FaceMotionModel *model = UIGetFaceModel(timeline);
-    QModelIndexList indices = timeline->treeView()->selectionModel()->selectedIndexes();
+    const QModelIndexList &indices = timeline->treeView()->selectionModel()->selectedIndexes();
     FaceMotionModel::KeyFramePairList faceFrames;
-    foreach (QModelIndex index, indices) {
+    foreach (const QModelIndex &index, indices) {
         vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
         QByteArray name = model->nameFromModelIndex(index);
         int frameIndex = MotionBaseModel::toFrameIndex(index);
