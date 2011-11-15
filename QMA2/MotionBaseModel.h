@@ -79,8 +79,11 @@ public:
     };
 
     static int toFrameIndex(const QModelIndex &index) {
+        return toFrameIndex(index.column());
+    }
+    static int toFrameIndex(int modelColumnIndex) {
         // column index 0 is row header
-        return qMax(index.column() - 1, 0);
+        return qMax(modelColumnIndex - 1, 0);
     }
     static int toModelIndex(int frameIndex) {
         // column index 0 is row header

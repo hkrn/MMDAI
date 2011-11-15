@@ -85,9 +85,17 @@ private:
 
 class TimelineHeaderView : public QHeaderView
 {
+    Q_OBJECT
+
 public:
     explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
     virtual ~TimelineHeaderView();
+
+signals:
+    void frameIndexDidSelect(int frameIndex);
+
+protected:
+    void mousePressEvent(QMouseEvent *e);
 
 private:
     Q_DISABLE_COPY(TimelineHeaderView)

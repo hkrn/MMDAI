@@ -61,14 +61,13 @@ public:
         painter->setRenderHint(QPainter::Antialiasing);
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
             if (option.state & QStyle::State_Selected)
-                painter->setBrush(option.palette.highlight());
+                painter->setBrush(Qt::red);
             else
                 painter->setBrush(option.palette.foreground());
             drawDiamond(painter, option);
         }
         else if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, option.palette.highlight());
-            painter->setBrush(option.palette.base());
+            painter->setBrush(option.palette.highlight());
             drawDiamond(painter, option);
         }
     }
@@ -166,6 +165,13 @@ TimelineHeaderView::~TimelineHeaderView()
 {
 }
 
+void TimelineHeaderView::mousePressEvent(QMouseEvent *e)
+{
+    int modelIndex = logicalIndexAt(e->pos());
+    emit frameIndexDidSelect(MotionBaseModel::toFrameIndex(modelIndex));
+    QHeaderView::mousePressEvent(e);
+}
+
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                QWidget *parent) :
     QWidget(parent)
@@ -175,6 +181,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
     treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     TimelineHeaderView *header = new TimelineHeaderView(Qt::Horizontal);
+    connect(header, SIGNAL(frameIndexDidSelect(int)), this, SLOT(setCurrentFrameIndex(int)));
     treeView->setHeader(header);
     connect(header, SIGNAL(sectionPressed(int)), this, SLOT(setCurrentFrameIndexBySection(int)));
     header->setResizeMode(0, QHeaderView::ResizeToContents);
