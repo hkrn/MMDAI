@@ -600,6 +600,12 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             allBones.copy(model->bonesForUI());
             names.copy(model->boneCategoryNames());
             Keys keys;
+            /* センターボーンはカテゴリに位置するがカテゴリではないという特殊な扱い */
+            vpvl::Bone *cb = vpvl::Bone::centerBone(&model->bones());
+            const QString &cbname = internal::toQString(cb);
+            TreeItem *cbitem = new TreeItem(cbname, cb, false, false, r);
+            keys.insert(cbname, cbitem);
+            r->addChild(cbitem);
             const int namesCount = model->boneCategoryNames().count();
             /* ボーンのカテゴリからルートの子供であるカテゴリアイテムを作成する */
             for (int i = 0; i < namesCount; i++) {

@@ -94,8 +94,16 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
     int rowIndex = item->rowIndex();
     /* カテゴリ名を含むアイテム */
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
-    /* ボーン名または頂点モーフ名を含むアイテム */
-    const QModelIndex modelIndex = index(rowIndex, toModelIndex(frameIndex), parentIndex);
+    const ITreeItem *parentItem = static_cast<ITreeItem *>(parentIndex.internalPointer());
+    QModelIndex modelIndex;
+    if (parentItem->isCategory()) {
+        /* ボーン名または頂点モーフ名を含むアイテム */
+        modelIndex = index(rowIndex, toModelIndex(frameIndex), parentIndex);
+    }
+    else {
+        /* センターのような特殊な扱いを持つボーン */
+        modelIndex = index(rowIndex, toModelIndex(frameIndex));
+    }
     /* モデルのインデックスが存在しなければ作成しておき、自動的にそのインデックスが存在するように処理する */
     if (!modelIndex.isValid())
         createIndex(rowIndex, frameIndex, item);
