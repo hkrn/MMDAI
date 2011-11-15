@@ -295,7 +295,9 @@ InterpolationWidget::~InterpolationWidget()
 
 void InterpolationWidget::setMode(int mode)
 {
-    bool enabled = true;
+    // まだ動作上のバグがあるので修正するまで無効にせざるを得ない
+    // bool enabled = true;
+    bool enabled = false;
     m_comboBox->clear();
     if (mode == TimelineTabWidget::kBone) {
         m_comboBox->addItem(tr("X axis"));
