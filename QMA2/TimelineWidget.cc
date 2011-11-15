@@ -51,14 +51,17 @@ public:
     }
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+        /* ボーンまたは頂点モーフの名前を表示する部分は継承元のクラスに描画を任せる */
         if (index.column() == 0) {
             QItemDelegate::paint(painter, option, index);
             return;
         }
+        /* キーフレームのインデックスが5で割り切れる場合は背景を白ではない色にする */
         if (MotionBaseModel::toFrameIndex(index) % 5 == 0)
             painter->fillRect(option.rect, qApp->palette().alternateBase());
         painter->setPen(Qt::NoPen);
         painter->setRenderHint(QPainter::Antialiasing);
+        /* モデルのデータにキーフレームのバイナリが含まれていればダイアモンドマークを表示する */
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
             if (option.state & QStyle::State_Selected)
                 painter->setBrush(Qt::red);
@@ -106,6 +109,7 @@ TimelineTreeView::~TimelineTreeView()
 
 void TimelineTreeView::selectFrameIndex(int frameIndex)
 {
+    /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
     QItemSelection selection;
     MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
     if (mbm->isTreeModel()) {
@@ -121,10 +125,13 @@ void TimelineTreeView::selectFrameIndex(int frameIndex)
 
 void TimelineTreeView::mousePressEvent(QMouseEvent *event)
 {
+    /* ボーンまたは頂点モーフの名前から対象を選択する処理 */
     const QModelIndex &index = indexAt(event->pos());
     MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
+    /* 場面タブは除外する */
     if (index.column() == 0 && mbm->isTreeModel()) {
         PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
+        /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
         if (!item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
             mbm->selectByModelIndex(index);
@@ -167,6 +174,7 @@ TimelineHeaderView::~TimelineHeaderView()
 
 void TimelineHeaderView::mousePressEvent(QMouseEvent *e)
 {
+    /* setMovable(false) にすると何故か sectionPressed が効かなくなるので mousePressEvent でシグナルを発行する */
     int modelIndex = logicalIndexAt(e->pos());
     emit frameIndexDidSelect(MotionBaseModel::toFrameIndex(modelIndex));
     QHeaderView::mousePressEvent(e);
@@ -183,7 +191,6 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     TimelineHeaderView *header = new TimelineHeaderView(Qt::Horizontal);
     connect(header, SIGNAL(frameIndexDidSelect(int)), this, SLOT(setCurrentFrameIndex(int)));
     treeView->setHeader(header);
-    connect(header, SIGNAL(sectionPressed(int)), this, SLOT(setCurrentFrameIndexBySection(int)));
     header->setResizeMode(0, QHeaderView::ResizeToContents);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     treeView->setItemDelegate(delegate);
@@ -223,6 +230,7 @@ void TimelineWidget::retranslate()
 
 int TimelineWidget::frameIndex() const
 {
+    /* 選択状態のモデルインデックスの最初のインデックスからキーフレームのインデックスを求める */
     const QModelIndexList &indices = m_treeView->selectionModel()->selectedIndexes();
     if (!indices.isEmpty()) {
         const QModelIndex &index = indices.first();
@@ -240,11 +248,13 @@ void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
 
 void TimelineWidget::setCurrentFrameIndex(int frameIndex)
 {
+    /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
     MotionBaseModel *model = static_cast<MotionBaseModel *>(m_treeView->model());
     model->setFrameIndex(frameIndex);
     m_treeView->selectFrameIndex(frameIndex);
     m_treeView->scrollTo(model->index(0, frameIndex + 1));
     m_spinBox->setValue(frameIndex);
+    /* モーション移動を行わせるようにシグナルを発行する */
     emit motionDidSeek(static_cast<float>(frameIndex));
 }
 
@@ -253,14 +263,9 @@ void TimelineWidget::setCurrentFrameIndexBySpinBox()
     setCurrentFrameIndex(m_spinBox->value());
 }
 
-void TimelineWidget::setCurrentFrameIndexBySection(int frameIndex)
-{
-    if (frameIndex > 0)
-        setCurrentFrameIndex(frameIndex - 1);
-}
-
 void TimelineWidget::reexpand()
 {
+    /* QAbstractTableModel#reset が行われると QTreeView では閉じてしまうので、開閉状態を reset 前に戻す */
     TimelineTreeView *view = static_cast<TimelineTreeView *>(m_treeView);
     foreach (const QModelIndex &index, view->expandedModelIndices())
         m_treeView->expand(index);

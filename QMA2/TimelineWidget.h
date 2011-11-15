@@ -124,7 +124,6 @@ private slots:
     void retranslate();
     void setCurrentColumnIndex(const QModelIndex &index);
     void setCurrentFrameIndexBySpinBox();
-    void setCurrentFrameIndexBySection(int frameIndex);
     void reexpand();
 
 private:
