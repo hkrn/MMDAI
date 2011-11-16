@@ -2,11 +2,19 @@ libvpvl
 =======
 libvpvl は CMake (http://cmake.org) をビルドシステムとして採用しています。そのため、CMake を事前にインストールする必要があります。
 
-## デバッグ版のビルド
+## libvpvl のビルド
 
 libvpvl は BulletPhysics に依存しているため、まず BulletPhysics をビルドしておく必要があります。
+また、assimp もビルドしておきます。
+
+### デバッグ版のビルド
+デバッグ版は依存関係による再ビルドを減らすため、共有ライブラリとしてビルドしておきます。
+
+#### bullet
+
 <pre><code>// MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
-$ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/
+$ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/ bullet
+$ cd bullet
 $ mkdir debug
 $ cd debug
 // BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
@@ -14,29 +22,63 @@ $ cmake -DBUILD_SHARED_LIBS=ON -DBUILD_DEMOS=OFF -DBUILD_EXTRAS=OFF -DCMAKE_BUIL
 $ make
 </code></pre>
 
-以下は libvpvl を共有ライブラリとしてデバッグ版をビルドする手順です
-<pre><code>$ mkdir debug
+#### assimp
+
+<pre><code>// 予め assimp--2.0.863-sdk.zip をダウンロードしておく
+$ unzip assimp--2.0.863-sdk.zip
+$ mv assimp--2.0.863-sdk assimp
+$ cd assimp
+// ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
+// また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
+$ cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON  -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Debug"
+$ make
+</code></pre>
+
+#### libvpvl
+
+<pre><code>$ cd libvpvl
+$ mkdir debug
 $ cd debug
-$ cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE="Debug" ..
+// QMA2 がビルド可能な設定にする
+$ cmake -DBUILD_SHARED_LIBS=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_USE_GLSL=ON -DCMAKE_BUILD_TYPE="Debug" ..
 $ make
 </code></pre>
 
 ### リリース版のビルド
+リリース版は Bullet と libvpvl を静的ライブラリとしてビルドします。assimp は CMakeFile が共有ライブラリとして
+ビルドするように強制されているため、共有ライブラリとしてビルドします。
 
 #### Bullet
+
 <pre><code>// MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
-$ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/
+$ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/ bullet
+$ cd bullet
 $ mkdir release
 $ cd release
 // BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
-$ cmake -DBUILD_SHARED_LIBS=ON -DBUILD_DEMOS=OFF -DBUILD_EXTRAS=OFF -DCMAKE_BUILD_TYPE="Release" -DLIBRARY_OUTPUT_PATH=`pwd`/lib ..
+$ cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_DEMOS=OFF -DBUILD_EXTRAS=OFF -DCMAKE_BUILD_TYPE="Release" -DLIBRARY_OUTPUT_PATH=`pwd`/lib -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
 
-#### libvpvl (共有ライブラリとしてビルドする場合)
-<pre><code>$ mkdir release
+#### assimp
+
+<pre><code>// 予め assimp--2.0.863-sdk.zip をダウンロードしておく
+$ unzip assimp--2.0.863-sdk.zip
+$ mv assimp--2.0.863-sdk assimp
+$ cd assimp
+// ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
+// また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
+$ cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"
+$ make
+</code></pre>
+
+#### libvpvl
+
+<pre><code>$ cd libvpvl
+$ mkdir release
 $ cd release
-$ cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE="Release" ..
+// QMA2 がビルド可能な設定にする
+$ cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_USE_GLSL=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
 
