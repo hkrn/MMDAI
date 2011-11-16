@@ -54,28 +54,28 @@ static const int kFaceTabIndex = 2;
 
 static BoneMotionModel *UIGetBoneModel(TimelineWidget *timeline)
 {
-    return static_cast<BoneMotionModel *>(timeline->treeView()->model());
+    return qobject_cast<BoneMotionModel *>(timeline->treeView()->model());
 }
 
 static FaceMotionModel *UIGetFaceModel(TimelineWidget *timeline)
 {
-    return static_cast<FaceMotionModel *>(timeline->treeView()->model());
+    return qobject_cast<FaceMotionModel *>(timeline->treeView()->model());
 }
 
 static SceneMotionModel *UIGetSceneModel(TimelineWidget *timeline)
 {
-    return static_cast<SceneMotionModel *>(timeline->treeView()->model());
+    return qobject_cast<SceneMotionModel *>(timeline->treeView()->model());
 }
 
 static QItemSelectionModel *UIGetSelectionModel(TimelineWidget *timeline)
 {
-    return static_cast<QItemSelectionModel *>(timeline->treeView()->selectionModel());
+    return qobject_cast<QItemSelectionModel *>(timeline->treeView()->selectionModel());
 }
 
 static void UIModelDeleteFrame(TimelineWidget *timeline)
 {
     TimelineTreeView *view = timeline->treeView();
-    MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
+    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(view->model());
     const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
     foreach (const QModelIndex &index, indices) {
         if (index.column() > 1)
