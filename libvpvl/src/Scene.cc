@@ -163,8 +163,10 @@ void Scene::seekMotion(float frameIndex)
     // Updating camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
-        camera->seek(frameIndex);
-        setCameraPerspective(camera);
+        if (camera->countKeyFrames() > 0) {
+            camera->seek(frameIndex);
+            setCameraPerspective(camera);
+        }
     }
 }
 
