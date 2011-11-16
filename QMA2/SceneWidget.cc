@@ -372,6 +372,7 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
         vpvl::CameraAnimation *cameraAnimation = cameralMotion->mutableCameraAnimation();
         vpvl::CameraKeyFrame *frame = new vpvl::CameraKeyFrame();
         vpvl::Scene *scene = m_renderer->scene();
+        frame->setDefaultInterpolationParameter();
         frame->setPosition(scene->position());
         frame->setAngle(scene->angle());
         frame->setFovy(scene->fovy());
