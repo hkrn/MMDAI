@@ -334,8 +334,16 @@ void SceneMotionModel::pasteFrame(int frameIndex)
     }
 }
 
-void SceneMotionModel::selectByModelIndex(const QModelIndex & /* index */)
+void SceneMotionModel::selectByModelIndex(const QModelIndex &index)
 {
+    QList<KeyFramePtr> frames;
+    const QVariant &data = index.data(kBinaryDataRole);
+    if (data.canConvert(QVariant::ByteArray)) {
+        vpvl::CameraKeyFrame *frame = new vpvl::CameraKeyFrame();
+        frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
+        frames.append(KeyFramePtr(frame));
+        cameraFrameDidSelect(frames);
+    }
 }
 
 const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index */) const

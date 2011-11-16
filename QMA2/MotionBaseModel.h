@@ -144,7 +144,6 @@ public:
     virtual void selectByModelIndex(const QModelIndex &index) = 0;
     virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
     virtual int maxFrameCount() const = 0;
-    virtual bool isTreeModel() const = 0;
 
     vpvl::VMDMotion *currentMotion() const { return m_motion; }
     void setFrameIndex(int value) { m_frameIndex = value; }

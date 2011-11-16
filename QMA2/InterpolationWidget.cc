@@ -40,6 +40,7 @@
 #include "SceneMotionModel.h"
 
 #include <QtGui/QtGui>
+#include <vpvl/vpvl.h>
 
 InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent),
@@ -72,11 +73,22 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
 {
     vpvl::BoneKeyFrame *frame = frames.last().data();
-    vpvl::QuadWord value(0.0f, 0.0f, 0.0f, 0.0f);
     frame->getInterpolationParameter(vpvl::BoneKeyFrame::kX, m_boneIP.x);
     frame->getInterpolationParameter(vpvl::BoneKeyFrame::kY, m_boneIP.y);
     frame->getInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_boneIP.z);
     frame->getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_boneIP.rotation);
+    updateValues(true);
+}
+
+void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)
+{
+    vpvl::CameraKeyFrame *frame = static_cast<vpvl::CameraKeyFrame *>(frames.last().data());
+    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kX, m_cameraIP.x);
+    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kY, m_cameraIP.y);
+    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kZ, m_cameraIP.z);
+    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kRotation, m_cameraIP.rotation);
+    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kFovy, m_cameraIP.fovy);
+    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kDistance, m_cameraIP.distance);
     updateValues(true);
 }
 
@@ -261,6 +273,8 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel 
     m_graphWidget = new InterpolationGraphWidget(bmm, smm);
     connect(bmm, SIGNAL(boneFramesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
             m_graphWidget, SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
+    connect(smm, SIGNAL(cameraFrameDidSelect(QList<SceneMotionModel::KeyFramePtr>)),
+            m_graphWidget, SLOT(setCameraKeyFrames(QList<SceneMotionModel::KeyFramePtr>)));
     connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));
     QHBoxLayout *c = new QHBoxLayout();
     QPushButton *button = new QPushButton(tr("Reset"));
@@ -296,8 +310,7 @@ InterpolationWidget::~InterpolationWidget()
 void InterpolationWidget::setMode(int mode)
 {
     // まだ動作上のバグがあるので修正するまで無効にせざるを得ない
-    // bool enabled = true;
-    bool enabled = false;
+    bool enabled = true;
     m_comboBox->clear();
     if (mode == TimelineTabWidget::kBone) {
         m_comboBox->addItem(tr("X axis"));

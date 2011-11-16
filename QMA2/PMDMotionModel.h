@@ -68,7 +68,6 @@ public:
     virtual void startTransform() = 0;
     virtual void commitTransform() = 0;
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    virtual bool isTreeModel() const { return true; }
 
     void saveState();
     void restoreState();

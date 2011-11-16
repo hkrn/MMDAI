@@ -42,6 +42,7 @@
 #include <vpvl/CameraKeyFrame.h>
 
 #include "BoneMotionModel.h"
+#include "SceneMotionModel.h"
 
 class QComboBox;
 class QHBoxLayout;
@@ -85,6 +86,7 @@ protected:
 
 private slots:
     void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
+    void setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames);
     void setIndex(int value);
 
 private:

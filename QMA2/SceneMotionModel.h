@@ -63,7 +63,6 @@ public:
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual int maxFrameCount() const;
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
-    virtual bool isTreeModel() const { return false; }
 
     void saveMotion(vpvl::VMDMotion *motion);
     void addKeyFramesByModelIndices(const QModelIndexList &indices);
@@ -86,6 +85,9 @@ public slots:
     virtual void deleteFrameByModelIndex(const QModelIndex &index);
     void loadMotion(vpvl::VMDMotion *motion);
     void markAsNew() { setModified(false); }
+
+signals:
+    void cameraFrameDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
 
 protected:
     virtual ITreeItem *root() const { return m_rootTreeItem; }

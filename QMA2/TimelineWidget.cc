@@ -37,6 +37,7 @@
 #include "TimelineWidget.h"
 #include "BoneMotionModel.h"
 #include "FaceMotionModel.h"
+#include "SceneMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -111,14 +112,17 @@ void TimelineTreeView::selectFrameIndex(int frameIndex)
 {
     /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
     QItemSelection selection;
-    MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
-    if (mbm->isTreeModel()) {
-        PMDMotionModel *pmm = static_cast<PMDMotionModel *>(mbm);
+    if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(model())) {
         foreach (PMDMotionModel::ITreeItem *item, pmm->keys().values()) {
             const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
             selection.append(QItemSelectionRange(index));
         }
         QItemSelectionModel *sm = selectionModel();
+        sm->select(selection, QItemSelectionModel::ClearAndSelect);
+    }
+    else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(model())) {
+        QItemSelectionModel *sm = selectionModel();
+        selection.append(QItemSelectionRange(smm->index(0, MotionBaseModel::toModelIndex(frameIndex))));
         sm->select(selection, QItemSelectionModel::ClearAndSelect);
     }
 }
@@ -127,15 +131,19 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
 {
     /* ボーンまたは頂点モーフの名前から対象を選択する処理 */
     const QModelIndex &index = indexAt(event->pos());
-    MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
+    PMDMotionModel *pmm = 0;
+    QAbstractItemModel *m = model();
     /* 場面タブは除外する */
-    if (index.column() == 0 && mbm->isTreeModel()) {
+    if (index.column() == 0 && (pmm = qobject_cast<PMDMotionModel *>(m))) {
         PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
         /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
         if (!item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            mbm->selectByModelIndex(index);
+            pmm->selectByModelIndex(index);
         }
+    }
+    else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {
+        smm->selectByModelIndex(index);
     }
     QTreeView::mousePressEvent(event);
 }
@@ -249,7 +257,7 @@ void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
 void TimelineWidget::setCurrentFrameIndex(int frameIndex)
 {
     /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
-    MotionBaseModel *model = static_cast<MotionBaseModel *>(m_treeView->model());
+    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
     model->setFrameIndex(frameIndex);
     m_treeView->selectFrameIndex(frameIndex);
     m_treeView->scrollTo(model->index(0, frameIndex + 1));
@@ -266,7 +274,6 @@ void TimelineWidget::setCurrentFrameIndexBySpinBox()
 void TimelineWidget::reexpand()
 {
     /* QAbstractTableModel#reset が行われると QTreeView では閉じてしまうので、開閉状態を reset 前に戻す */
-    TimelineTreeView *view = static_cast<TimelineTreeView *>(m_treeView);
-    foreach (const QModelIndex &index, view->expandedModelIndices())
+    foreach (const QModelIndex &index, m_treeView->expandedModelIndices())
         m_treeView->expand(index);
 }
