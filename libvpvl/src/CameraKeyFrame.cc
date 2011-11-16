@@ -63,9 +63,9 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
 {
     static const int8_t zero = 0;
     v.setX(btMax(table[i +  0], zero)); // x1
-    v.setY(btMax(table[i +  4], zero)); // y1
-    v.setZ(btMax(table[i +  8], zero)); // x2
-    v.setW(btMax(table[i + 12], zero)); // y2
+    v.setY(btMax(table[i +  6], zero)); // y1
+    v.setZ(btMax(table[i + 12], zero)); // x2
+    v.setW(btMax(table[i + 18], zero)); // y2
 }
 
 CameraKeyFrame::CameraKeyFrame()
@@ -209,12 +209,13 @@ void CameraKeyFrame::setInterpolationParameter(InterpolationType type, const Qua
         // x2 => QuadWord#y():1
         // y1 => QuadWord#z():2
         // y2 => QuadWord#w():3
-        table[i * kMax + kX] = static_cast<int8_t>(m_parameter.x[i]);
-        table[i * kMax + kY] = static_cast<int8_t>(m_parameter.y[i]);
-        table[i * kMax + kZ] = static_cast<int8_t>(m_parameter.z[i]);
-        table[i * kMax + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
-        table[i * kMax + kDistance] = static_cast<int8_t>(m_parameter.distance[i]);
-        table[i * kMax + kFovy] = static_cast<int8_t>(m_parameter.fovy[i]);
+        int index = i * kMax;
+        table[index + kX] = static_cast<int8_t>(m_parameter.x[i]);
+        table[index + kY] = static_cast<int8_t>(m_parameter.y[i]);
+        table[index + kZ] = static_cast<int8_t>(m_parameter.z[i]);
+        table[index + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
+        table[index + kDistance] = static_cast<int8_t>(m_parameter.distance[i]);
+        table[index + kFovy] = static_cast<int8_t>(m_parameter.fovy[i]);
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));

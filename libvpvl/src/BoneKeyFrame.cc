@@ -195,10 +195,11 @@ void BoneKeyFrame::setInterpolationParameter(InterpolationType type, const QuadW
         // y1 => QuadWord#y():1
         // x2 => QuadWord#z():2
         // y2 => QuadWord#w():3
-        table[i * kMax + kX] = static_cast<int8_t>(m_parameter.x[i]);
-        table[i * kMax + kY] = static_cast<int8_t>(m_parameter.y[i]);
-        table[i * kMax + kZ] = static_cast<int8_t>(m_parameter.z[i]);
-        table[i * kMax + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
+        int index = i * kMax;
+        table[index + kX] = static_cast<int8_t>(m_parameter.x[i]);
+        table[index + kY] = static_cast<int8_t>(m_parameter.y[i]);
+        table[index + kZ] = static_cast<int8_t>(m_parameter.z[i]);
+        table[index + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
