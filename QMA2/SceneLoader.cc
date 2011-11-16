@@ -292,7 +292,8 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
     if (file.open(QFile::ReadOnly)) {
         QByteArray data = file.readAll();
         motion = new vpvl::VMDMotion();
-        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
+                && motion->cameraAnimation().countKeyFrames() > 0) {
             setCameraMotion(motion);
         }
         else {
