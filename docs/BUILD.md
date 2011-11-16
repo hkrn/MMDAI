@@ -4,32 +4,39 @@ libvpvl は CMake (http://cmake.org) をビルドシステムとして採用し�
 
 ## libvpvl のビルド
 
-libvpvl は BulletPhysics に依存しているため、まず BulletPhysics をビルドしておく必要があります。
-また、assimp もビルドしておきます。
+libvpvl は BulletPhysics (http://bulletphysics.org/) に依存しているため、まず BulletPhysics をビルドしておく必要があります。
+また、assimp (http://assimp.sf.net) もビルドしておきます。Windows と Linux では GLEW が必要です。GLEW はバイナリとして入手しやすいので、
+GLEW についてはバイナリ版を使ったほうがビルド作業が楽になります。
+
+以下の項目は MacOSX と Linux を対象にしています。Windows では以下の条件を除けば同じ方法でビルド可能です。
+
+  - debug/release の代わりに msvc-build というディレクトリを作成する
+  - cmake または cmake-gui を使って MSVC9 (Visual Studio 2008) のプロジェクトとして作成する
+    - Visual Studio 2008 Express でもビルド可能。実際バイナリ作成は Express で行なっている。
 
 ### デバッグ版のビルド
 デバッグ版は依存関係による再ビルドを減らすため、共有ライブラリとしてビルドしておきます。
 
 #### bullet
 
-<pre><code>// MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
+<pre><code># MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
 $ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/ bullet
 $ cd bullet
 $ mkdir debug
 $ cd debug
-// BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
+# BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
 $ cmake -DBUILD_SHARED_LIBS=ON -DBUILD_DEMOS=OFF -DBUILD_EXTRAS=OFF -DCMAKE_BUILD_TYPE="Debug" -DLIBRARY_OUTPUT_PATH=`pwd`/lib ..
 $ make
 </code></pre>
 
 #### assimp
 
-<pre><code>// 予め assimp--2.0.863-sdk.zip をダウンロードしておく
+<pre><code># 予め assimp--2.0.863-sdk.zip をダウンロードしておく
 $ unzip assimp--2.0.863-sdk.zip
 $ mv assimp--2.0.863-sdk assimp
 $ cd assimp
-// ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
-// また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
+# ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
+# また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
 $ cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON  -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Debug"
 $ make
 </code></pre>
@@ -39,7 +46,7 @@ $ make
 <pre><code>$ cd libvpvl
 $ mkdir debug
 $ cd debug
-// QMA2 がビルド可能な設定にする
+# QMA2 がビルド可能な設定にする
 $ cmake -DBUILD_SHARED_LIBS=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_USE_GLSL=ON -DCMAKE_BUILD_TYPE="Debug" ..
 $ make
 </code></pre>
@@ -50,24 +57,24 @@ $ make
 
 #### Bullet
 
-<pre><code>// MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
+<pre><code># MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
 $ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/ bullet
 $ cd bullet
 $ mkdir release
 $ cd release
-// BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
+# BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
 $ cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_DEMOS=OFF -DBUILD_EXTRAS=OFF -DCMAKE_BUILD_TYPE="Release" -DLIBRARY_OUTPUT_PATH=`pwd`/lib -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
 
 #### assimp
 
-<pre><code>// 予め assimp--2.0.863-sdk.zip をダウンロードしておく
+<pre><code># 予め assimp--2.0.863-sdk.zip をダウンロードしておく
 $ unzip assimp--2.0.863-sdk.zip
 $ mv assimp--2.0.863-sdk assimp
 $ cd assimp
-// ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
-// また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
+# ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
+# また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
 $ cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"
 $ make
 </code></pre>
@@ -77,7 +84,7 @@ $ make
 <pre><code>$ cd libvpvl
 $ mkdir release
 $ cd release
-// QMA2 がビルド可能な設定にする
+# QMA2 がビルド可能な設定にする
 $ cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_USE_GLSL=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
@@ -142,6 +149,8 @@ QMA2 (a.k.a VPVM or MMDAI2)
 Qt を全面的に使用しているため、Qt の 4.7 以降がインストールされている必要があります。
 
 ## 翻訳ファイルをの作成
+※ 現在この作業は QMA2 を開発する時のみ必要です。ビルドするだけならこの作業は必要ありません。
+
 lrelease を使った方法です。Linguist を使う場合は QMA2/resources/translations/MMDAI2.ts を読み込み、
 QMA2/resources/translations/MMDAI2_ja.qm としてリリースしてください。
 
@@ -154,10 +163,13 @@ qmake を使った方法です。QtCreator を使う場合は QMA2.pro を読み
 事前にビルドするディレクトリを作成します。MacOSX の場合はパッケージングを行うスクリプトの関係で QMA2-release-build か
 QMA2-debug-build という名前でディレクトリを作成する必要があります。
 
+Windows では qmake 使って Visual Studio 2008 用のプロジェクトファイルを生成する必要があります。qmake ではプロジェクト
+ファイルのみ生成されるので、保存する際はソリューションファイルも保存してください。
+
 <pre><code># 事前にビルドするディレクトリを作成する
 mkdir QMA2-release-build
 cd QMA2-release-build
-# Visual Studio のプロジェクトとして作成する場合は "qmake -tp vc"
+# Visual Studio 2008 のプロジェクトとして作成する場合は "qmake -tp vc ../QMA2/QMA2.pro" とする。その場合 make コマンドは実行しないこと
 qmake ../QMA2/QMA2.pro
 make
 </code></pre>
