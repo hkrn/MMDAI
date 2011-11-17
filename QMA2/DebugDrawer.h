@@ -99,12 +99,13 @@ public:
         if (!model)
             return;
 
+        static const btVector3 size(0.1, 0.1, 0.1);
         const vpvl::BoneList &bones = model->bones();
         btVector3 color;
         const int nbones = bones.count();
+        glUseProgram(0);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
         glPushMatrix();
 
         for (int i = 0; i < nbones; i++) {
@@ -150,7 +151,8 @@ public:
                         break;
                     }
                 }
-                drawSphere(transform.getOrigin(), scale, color);
+                const btVector3 &o = transform.getOrigin();
+                drawAabb(o - size, o + size, color);
             }
             if (!drawLines || !parent || type == vpvl::Bone::kIKDestination)
                 continue;
@@ -177,7 +179,6 @@ public:
         if (bone) {
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_LIGHTING);
-            glDisable(GL_TEXTURE_2D);
             glPushMatrix();
             const btTransform &t = bone->localTransform();
             btScalar orthoLen = 1.0f;
