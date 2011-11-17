@@ -125,8 +125,8 @@ public:
     int preferredFPS() const {
         return m_preferredFPS;
     }
-    bool isSkinningEnabled() const {
-        return m_enableSkinning;
+    bool isSoftwareSkinningEnabled() const {
+        return m_enableSoftwareSkinning;
     }
 
     void setWidth(int value) {
@@ -140,8 +140,8 @@ public:
     void setPreferredFPS(int value) {
         m_preferredFPS = value;
     }
-    void setEnableSkinning(bool value) {
-        m_enableSkinning = value;
+    void setSoftwareSkinningEnable(bool value) {
+        m_enableSoftwareSkinning = value;
     }
 
 private:
@@ -164,7 +164,7 @@ private:
     int m_preferredFPS;
     int m_width;
     int m_height;
-    bool m_enableSkinning;
+    bool m_enableSoftwareSkinning;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Scene)
 };

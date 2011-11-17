@@ -79,7 +79,7 @@ Scene::Scene(int width, int height, int fps)
       m_preferredFPS(fps),
       m_width(width),
       m_height(height),
-      m_enableSkinning(true)
+      m_enableSoftwareSkinning(true)
 {
     m_lightColor.setW(1.0f);
     updateProjection();
@@ -102,7 +102,7 @@ Scene::~Scene()
     m_preferredFPS = 0;
     m_width = 0;
     m_height = 0;
-    m_enableSkinning = false;
+    m_enableSoftwareSkinning = false;
 }
 
 void Scene::addModel(PMDModel *model)
@@ -341,7 +341,7 @@ void Scene::updateRotationFromAngle()
 
 void Scene::updateSkin()
 {
-    if (m_enableSkinning) {
+    if (m_enableSoftwareSkinning) {
         const int nmodels = m_models.count();
         for (int i = 0; i < nmodels; i++) {
             PMDModel *model = m_models[i];
