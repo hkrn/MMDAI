@@ -101,7 +101,7 @@ public:
     vpvl::Asset *addAssetFromMetadata(const QString &path);
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
-    const QPointF objectCoordinates(const QPointF &input) const;
+    void getObjectCoordinates(const QPointF &input, vpvl::Vector3 &camera, vpvl::Vector3 &zfar) const;
     float modelEdgeOffset() const { return m_selectedEdgeOffset; }
     int preferredFPS() const { return m_defaultFPS; }
     bool isGridVisible() const;
@@ -223,7 +223,6 @@ private:
     internal::InfoPanel *m_info;
     internal::World *m_world;
     vpvl::Bone *m_bone;
-    vpvl::Vector3 m_doubleClickedPos;
     SceneLoader *m_loader;
     QSettings *m_settings;
     QElapsedTimer m_timer;
