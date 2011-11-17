@@ -1105,7 +1105,6 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)), stride);
     m_modelProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kNormalsStride)), stride);
     m_modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kTextureCoordsStride)), stride);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
 
     float matrix4x4[16], matrix3x3[9];
     m_scene->getModelViewMatrix(matrix4x4);
@@ -1126,9 +1125,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     if (enableToon) {
         // shadow map
         stride = model->strideSize(vpvl::PMDModel::kToonTextureStride);
-        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelToonTexCoords]);
-        glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
-        m_modelProgram->setToonTexCoord(0, stride);
+        m_modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kToonTextureStride)), stride);
     }
 
     const vpvl::MaterialList &materials = model->materials();
@@ -1137,6 +1134,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     Color ambient, diffuse;
     size_t offset = 0;
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];

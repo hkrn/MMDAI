@@ -78,7 +78,8 @@ Scene::Scene(int width, int height, int fps)
       m_fovy(16.0f),
       m_preferredFPS(fps),
       m_width(width),
-      m_height(height)
+      m_height(height),
+      m_enableSkinning(true)
 {
     m_lightColor.setW(1.0f);
     updateProjection();
@@ -101,6 +102,7 @@ Scene::~Scene()
     m_preferredFPS = 0;
     m_width = 0;
     m_height = 0;
+    m_enableSkinning = false;
 }
 
 void Scene::addModel(PMDModel *model)
@@ -158,8 +160,8 @@ void Scene::seekMotion(float frameIndex)
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->seekMotion(frameIndex);
-        model->updateSkins();
     }
+    updateSkin();
     // Updating camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
@@ -229,8 +231,8 @@ void Scene::advanceMotion(float deltaFrame)
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->advanceMotion(deltaFrame);
-        model->updateSkins();
     }
+    updateSkin();
     // Updating world simulation
 #ifndef VPVL_NO_BULLET
     if (m_world) {
@@ -260,8 +262,8 @@ void Scene::resetMotion()
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->resetMotion();
-        model->updateSkins();
     }
+    updateSkin();
     // Updating camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
@@ -335,6 +337,17 @@ void Scene::updateRotationFromAngle()
     static const Vector3 x(1.0f, 0.0f, 0.0f), y(0.0f, 1.0f, 0.0f), z(0.0f, 0.0f, 1.0f);
     Quaternion rz(z, radian(m_angle.z())), rx(x, radian(m_angle.x())), ry(y, radian(m_angle.y()));
     m_rotation = rz * rx * ry;
+}
+
+void Scene::updateSkin()
+{
+    if (m_enableSkinning) {
+        const int nmodels = m_models.count();
+        for (int i = 0; i < nmodels; i++) {
+            PMDModel *model = m_models[i];
+            model->updateSkins();
+         }
+    }
 }
 
 }

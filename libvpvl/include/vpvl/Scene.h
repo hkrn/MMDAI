@@ -125,6 +125,9 @@ public:
     int preferredFPS() const {
         return m_preferredFPS;
     }
+    bool isSkinningEnabled() const {
+        return m_enableSkinning;
+    }
 
     void setWidth(int value) {
         m_width = value;
@@ -137,10 +140,14 @@ public:
     void setPreferredFPS(int value) {
         m_preferredFPS = value;
     }
+    void setEnableSkinning(bool value) {
+        m_enableSkinning = value;
+    }
 
 private:
     void sortRenderingOrder();
     void updateRotationFromAngle();
+    void updateSkin();
 
     btDiscreteDynamicsWorld *m_world;
     Array<PMDModel *> m_models;
@@ -157,6 +164,7 @@ private:
     int m_preferredFPS;
     int m_width;
     int m_height;
+    bool m_enableSkinning;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Scene)
 };

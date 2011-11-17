@@ -75,7 +75,7 @@ struct SkinVertex
 {
     Vector3 position;
     Vector3 normal;
-    Vector3 texureCoord;
+    Vector4 textureCoord;
 };
 
 struct State
@@ -126,7 +126,6 @@ void PMDModel::prepare()
     const int nvertices = m_vertices.count();
     m_skinnedVertices = new SkinVertex[nvertices];
     m_edgeVertices.reserve(nvertices);
-    m_toonTextureCoords.reserve(nvertices);
     m_edgeIndicesPointer = new uint16_t[m_indices.count()];
     uint16_t *from = m_indicesPointer, *to = m_edgeIndicesPointer;
     const int nmaterials = m_materials.count();
@@ -144,7 +143,7 @@ void PMDModel::prepare()
     // Therefore no updating texture coordinates, set texture coordinates here
     for (int i = 0; i < nvertices; i++) {
         const Vertex *vertex = m_vertices[i];
-        m_skinnedVertices[i].texureCoord.setValue(vertex->u(), vertex->v(), 0);
+        m_skinnedVertices[i].textureCoord.setValue(vertex->u(), vertex->v(), 0.0f, 0.0f);
     }
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -435,9 +434,9 @@ void PMDModel::updateToon(const Vector3 &lightDirection)
 {
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
-        const SkinVertex &skin = m_skinnedVertices[i];
+        SkinVertex &skin = m_skinnedVertices[i];
         const float v = (1.0f - lightDirection.dot(skin.normal)) * 0.5f;
-        m_toonTextureCoords[i].setValue(0.0f, v, 0.0f);
+        skin.textureCoord.setW(v);
         if (!m_vertices[i]->isEdgeEnabled())
             m_edgeVertices[i] = skin.position;
         else
@@ -1234,9 +1233,9 @@ size_t PMDModel::strideSize(StrideType type) const
     case kVerticesStride:
     case kNormalsStride:
     case kTextureCoordsStride:
+    case kToonTextureStride:
         return sizeof(SkinVertex);
     case kEdgeVerticesStride:
-    case kToonTextureStride:
         return sizeof(Vector3);
     case kIndicesStride:
     case kEdgeIndicesStride:
@@ -1252,14 +1251,15 @@ size_t PMDModel::strideOffset(StrideType type) const
     switch (type) {
     case kVerticesStride:
     case kEdgeVerticesStride:
-    case kToonTextureStride:
     case kIndicesStride:
     case kEdgeIndicesStride:
         return 0;
     case kNormalsStride:
         return reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
     case kTextureCoordsStride:
-        return reinterpret_cast<const uint8_t *>(&v.texureCoord) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.textureCoord.x()) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kToonTextureStride:
+        return reinterpret_cast<const uint8_t *>(&v.textureCoord.z()) - reinterpret_cast<const uint8_t *>(&v.position);
     default:
         return 0;
     }
@@ -1277,12 +1277,12 @@ const void *PMDModel::normalsPointer() const
 
 const void *PMDModel::textureCoordsPointer() const
 {
-    return &m_skinnedVertices[0].texureCoord;
+    return &m_skinnedVertices[0].textureCoord.x();
 }
 
 const void *PMDModel::toonTextureCoordsPointer() const
 {
-    return &m_toonTextureCoords[0];
+    return &m_skinnedVertices[0].textureCoord.z();
 }
 
 const void *PMDModel::edgeVerticesPointer() const

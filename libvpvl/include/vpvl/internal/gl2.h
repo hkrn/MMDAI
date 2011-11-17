@@ -62,7 +62,6 @@ enum VertexBufferObjectType
     kModelNormals,
     kModelColors,
     kModelTexCoords,
-    kModelToonTexCoords,
     kEdgeVertices,
     kEdgeIndices,
     kShadowIndices,

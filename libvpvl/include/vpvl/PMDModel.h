@@ -653,7 +653,6 @@ private:
     Array<uint8_t *> m_boneCategoryEnglishNames;
     Array<Transform> m_skinningTransform;
     Array<Vector3> m_edgeVertices;
-    Array<Vector3> m_toonTextureCoords;
     Array<Vector3> m_shadowTextureCoords;
     Array<BoneList *> m_bonesForUI;
     Array<uint16_t> m_facesForUIIndices;

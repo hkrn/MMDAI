@@ -288,7 +288,6 @@ void Renderer::drawModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl
     glClientActiveTexture(GL_TEXTURE0);
     stride = model->strideOffset(vpvl::PMDModel::kTextureCoordsStride);
     glTexCoordPointer(2, GL_FLOAT, vsize * stride, reinterpret_cast<const GLvoid *>(stride));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[vpvl::gl2::kShadowIndices]);
 
     p->setMatrix(m_scene);
     p->setLight(m_scene);
@@ -296,9 +295,7 @@ void Renderer::drawModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl
     const bool enableToon = model->isToonEnabled();
     // toon
     if (enableToon) {
-        stride = model->strideSize(vpvl::PMDModel::kToonTextureStride);
-        glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[vpvl::gl2::kModelToonTexCoords]);
-        glBufferData(GL_ARRAY_BUFFER, vsize * stride, model->toonTextureCoordsPointer(), GL_DYNAMIC_DRAW);
+        stride = model->strideOffset(vpvl::PMDModel::kToonTextureStride);
         glClientActiveTexture(GL_TEXTURE1);
         glTexCoordPointer(2, GL_FLOAT, vsize * stride, reinterpret_cast<const GLvoid *>(stride));
     }
@@ -311,6 +308,7 @@ void Renderer::drawModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl
     p->setVertexCount(vsize);
     p->setSubsetCount(nmaterials);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[vpvl::gl2::kShadowIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const vpvl::gl2::PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
