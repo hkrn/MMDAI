@@ -22,20 +22,31 @@ const float kZero = 0.0;
 void main() {
     mat4 transformedModelViewMatrix = modelViewMatrix * transformMatrix;
     vec4 position = transformedModelViewMatrix * inPosition;
+#if 1
+    vec4 color = vec4(materialAmbient.rgb * lightColor.rgb + materialDiffuse.rgb * lightColor.rgb, materialDiffuse.a);
+#else
     vec3 normal = normalize(normalMatrix * inNormal);
     vec3 light = normalize(normalMatrix * lightPosition - position.xyz);
-    float diffuse = max(dot(light, normal), kZero);
-    vec4 color = materialAmbient;
-    color += materialEmission;
     if (hasColorVertex) {
-        color += inColor;
+        color = materialAmbient * inColor;
     }
+    else {
+        color = materialAmbient;
+    }
+    color += materialEmission;
+    float diffuse = max(dot(light, normal), kZero);
     if (diffuse != kZero) {
         vec3 view = normalize(position.xyz);
         vec3 halfway = normalize(light - view);
         float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
-        color += materialDiffuse * diffuse + materialSpecular * specular;
+        if (hasColorVertex) {
+            color += materialDiffuse * diffuse * inColor + materialSpecular * specular;
+        }
+        else {
+            color += materialDiffuse * diffuse + materialSpecular * specular;
+        }
     }
+#endif
     outColor = color;
     outTexCoord = inTexCoord;
     gl_Position = projectionMatrix * position;
