@@ -8,7 +8,7 @@ MMDAI is a fork project of [MMDAgent](http://www.mmdagent.jp "MMDAgent") to supp
 MMDAI とは MMDAgent からフォークしたプロジェクトです。
 主な目的はクロスプラットフォームで動かせるようにすることです。
 
-名前にあるとおり MMD (MikuMikuDance) で使われているモデルやモーションの読み込みが可能です。
+名前にあるとおり MMD ([MikuMikuDance](http://www.geocities.jp/higuchuu4/index.htm "MikuMikuDance")) で使われているモデルやモーションの読み込みが可能です。
 あくまで MMD 互換であり、完全に同じ結果になることは全く保証されていません。
 
 VPVM (a.k.a. MMDAI2) は MMDAI から音声認識機能を取り除き、モーション編集及び動画の書き出しを
@@ -45,7 +45,7 @@ VPVM は VOCALOID Promotion Video Maker の頭文字をとっており、VPVL �
 
 MMDAgent と同じく修正 BSD ライセンスの下で配布されています。LICENSE を参照してください。
 
-ただし MMDAI/MMDAI2 は Qt を必要とするため、MMDAI/MMDAI2 を元に改造して派生品として作成しかつ利用規約に
+ただし MMDAI/MMDAI2 は [Qt](http://qt.nokia.com "Qt") を必要とするため、MMDAI/MMDAI2 を元に改造して派生品として作成しかつ利用規約に
 リバースエンジニアリングをも禁止して配布したい場合は Qt の商用ライセンスを購入する必要があります。
 開発ではなく単純に利用するだけならもちろん無料で利用可能です。
 
