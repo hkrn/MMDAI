@@ -1,7 +1,7 @@
 MMDAI
 =====
 
-MMDAI is a fork project of MMDAgent (http://www.mmdagent.jp) to support cross platform
+MMDAI is a fork project of [MMDAgent](http://www.mmdagent.jp "MMDAgent") to support cross platform
 
 # これは何?
 
@@ -26,7 +26,11 @@ VPVM (a.k.a. MMDAI2) は MMDAI から音声認識機能を取り除き、モー�
 
 # 使い方
 
-VPVM については docs/VPVM.md を参照してください。MMDAI は docs/MMDAI.md を参照してください。
+VPVM については [docs/VPVM.md](docs/VPVM.md "VPVM.md") を参照してください。MMDAI は [docs/MMDAI.md](docs/MMDAI.md "MMDAI.md") を参照してください。
+
+# ビルド方法
+
+VPVM については [docs/BUILD.md](docs/BUILD.md "BUILD.md") にあります。
 
 # 名前の由来
 
@@ -47,5 +51,5 @@ MMDAgent と同じく修正 BSD ライセンスの下で配布されています
 
 # 開発者
 
-AUTHORS.md を参照してください
+[AUTHORS.md](AUTHORS.md "AUTHORS.md") を参照してください
 
