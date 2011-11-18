@@ -12,11 +12,11 @@ Nagoya Institute of Technology Department of Computer Science: The original auth
 
 # VPVM (a.k.a. MMDAI2)
 
-  -  @shimacpyon <hikarin users.sourceforge.jp>
+  -  [@shimacpyon](https://twitter.com/shimacpyon "shimacpyon") &lt;hikarin at users.sourceforge.jp&gt;
 
 # MMDAI
 
-  - @shimacpyon <hikarin users.sourceforge.jp>: The founder of MMDAI
-  - @witch_kazumin: Created the first distribution of linux binaries
-  - @iRi_E: Created the distribtion of Debian package, and found and reported some bugs
+  - [@shimacpyon](https://twitter.com/shimacpyon "shimacpyon") &lt;hikarin at users.sourceforge.jp&gt;: The founder of MMDAI
+  - [@witch_kazumin](https://twitter.com/witch_kazumin "witch_kazumin"): Created the first distribution of linux binaries
+  - [@iRi_E](https://twitter.com/iRi_E "iRi_E"): Created the distribtion of Debian package, and found and reported some bugs
 
