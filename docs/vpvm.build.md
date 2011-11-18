@@ -1,12 +1,12 @@
 libvpvl
 =======
-libvpvl は CMake (http://cmake.org) をビルドシステムとして採用しています。そのため、CMake を事前にインストールする必要があります。
+libvpvl は [CMake](http://cmake.org "CMake") をビルドシステムとして採用しています。そのため、CMake を事前にインストールする必要があります。
 
 ## libvpvl のビルド
 
-libvpvl は BulletPhysics (http://bulletphysics.org/) に依存しているため、まず BulletPhysics をビルドしておく必要があります。
-また、assimp (http://assimp.sf.net) もビルドしておきます。Windows と Linux では GLEW が必要です。GLEW はバイナリとして入手しやすいので、
-GLEW についてはバイナリ版を使ったほうがビルド作業が楽になります。
+libvpvl は [Bullet Physics](http://bulletphysics.org/ "Bullet Physics") に依存しているため、まず Bullet Physics をビルドしておく必要があります。
+また、[Open Asset Import Library](http://assimp.sf.net "Open Asset Import Library") もビルドしておきます。Windows と Linux では [GLEW](http://glew.sf.net "GLEW") が必要です。
+GLEW はバイナリとして入手しやすいので、GLEW についてはバイナリ版を使ったほうがビルド作業が楽になります。
 
 以下の項目は MacOSX と Linux を対象にしています。Windows では以下の条件を除けば同じ方法でビルド可能です。
 
@@ -19,7 +19,7 @@ GLEW についてはバイナリ版を使ったほうがビルド作業が楽に
 
 #### bullet
 
-<pre><code># MacOSX でビルドする場合は 2.77 にしないとビルドに失敗するっぽい?
+<pre><code># MacOSX でビルドする場合は 2.77 にしないとビルドに失敗する様子
 $ svn co http://bullet.googlecode.com/svn/tags/bullet-2.78/ bullet
 $ cd bullet
 $ mkdir debug
@@ -101,7 +101,7 @@ libvpvl を LinearMath を除く BulletPhysics のライブラリを使用せず
 
 #### VPVL_OPENGL_RENDERER
 libvpvl に OpenGL レンダリングエンジンを追加してビルドします。このオプションを有効にする際 OpenGL のライブラリが必要です。
-また、MacOSX 以外では追加で GLEW (http://glew.sf.net/) が必要になります。
+また、MacOSX 以外では追加で [GLEW](http://glew.sf.net/ "GLEW") が必要になります。
 
 #### VPVL_USE_GLSL
 固定シェーダではなくプログラマブルシェーダを使ったレンダリングエンジンでビルドします。このオプションを使用するときは
@@ -111,16 +111,16 @@ libvpvl に OpenGL レンダリングエンジンを追加してビルドしま�
 HLSL と互換な Cg が利用可能なレンダリングエンジンをビルドします。現在まだこのレンダリングエンジンは未完成です。
 
 #### VPVL_LINK_ASSIMP
-Open Asset Import Library (http://assimp.sf.net) を有効にしてビルドします。これはアクセサリで用いられる X 形式のファイルを
+[Open Asset Import Library](http://assimp.sf.net "Open Asset Import Library") を有効にしてビルドします。これはアクセサリで用いられる X 形式のファイルを
 取り扱うのに必要です。無効にした場合は X 形式のファイルを読むことが出来ません。
 
 #### VPVL_BUILD_SDL
-SDL を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
-また、事前に SDL (http://www.libsdl.org) がインストールされている必要があります。
+[SDL](http://www.libsdl.org "SDL") を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
+また、事前に SDL がインストールされている必要があります。
 
 #### VPVL_BUILD_QT
-Qt を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
-また、事前に Qt (http://qt.nokia.com) がインストールされている必要があります。
+[Qt](http://qt.nokia.com "Qt") を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
+また、事前に Qt がインストールされている必要があります。
 
 MacOSX で 32/64bit のバイナリを生成したい場合は -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" を指定してください
 
@@ -146,7 +146,7 @@ alias opencv_prod='cmake -DBUILD_SHARED_LIBS=ON-DBUILD_TESTS=OFF -DOPENCV_BUILD_
 
 QMA2 (a.k.a VPVM or MMDAI2)
 ===========================
-Qt を全面的に使用しているため、Qt の 4.7 以降がインストールされている必要があります。
+[Qt](http://qt.nokia.com "Qt") を全面的に使用しているため、Qt の 4.7 以降がインストールされている必要があります。
 
 ## 翻訳ファイルをの作成
 ※ 現在この作業は QMA2 を開発する時のみ必要です。ビルドするだけならこの作業は必要ありません。
