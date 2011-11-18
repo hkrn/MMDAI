@@ -24,6 +24,9 @@ VPVM (a.k.a. MMDAI2) は MMDAI から音声認識機能を取り除き、モー�
   - MacOSX 10.7 64bit
   - Fedora 15 64bit
 
+公式で配布されているバイナリは Windows 版の x86 と MacOSX 版の x86/x64 両対応のユニバーサルバイナリのみです。
+Linux 版はバイナリを配布しておらず、また配布する予定は現状ありません。「ビルド方法」に基づいてソースからビルドして下さい。
+
 # 使い方
 
 VPVM については [docs/vpvm.usage.md](docs/vpvm.usage.md "vpvm.usage.md") を参照してください。MMDAI は [docs/MMDAI.md](docs/MMDAI.md "MMDAI.md") を参照してください。
