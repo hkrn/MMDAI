@@ -26,7 +26,7 @@ VPVM (a.k.a. MMDAI2) は MMDAI から音声認識機能を取り除き、モー�
 
 # 使い方
 
-VPVM については [docs/HOWTO.VPVM.md](docs/VPVM.md "HOWTO.VPVM.md") を参照してください。MMDAI は [docs/MMDAI.md](docs/MMDAI.md "MMDAI.md") を参照してください。
+VPVM については [docs/HOWTO.VPVM.md](docs/HOWTO.VPVM.md "HOWTO.VPVM.md") を参照してください。MMDAI は [docs/MMDAI.md](docs/MMDAI.md "MMDAI.md") を参照してください。
 
 # ビルド方法
 
