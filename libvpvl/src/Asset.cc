@@ -58,7 +58,7 @@ Asset::Asset()
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_scale(10.0f),
       m_opacity(1.0f),
-      m_flags(aiProcessPreset_TargetRealtime_Quality | aiProcess_Triangulate | aiProcess_FlipUVs),
+      m_flags(aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs),
       m_name(0)
 {
     m_importer = new Assimp::Importer();
