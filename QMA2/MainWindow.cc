@@ -516,6 +516,10 @@ void MainWindow::buildUI()
     connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertFrame()));
     m_actionDeleteSelectedFrame = new QAction(this);
     connect(m_actionDeleteSelectedFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(deleteFrame()));
+    m_actionNextFrame = new QAction(this);
+    connect(m_actionNextFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(nextFrame()));
+    m_actionPreviousFrame = new QAction(this);
+    connect(m_actionPreviousFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(previousFrame()));
     m_actionUndoFrame = m_undo->createUndoAction(this);
     m_actionRedoFrame = m_undo->createRedoAction(this);
 
@@ -614,6 +618,9 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
+    m_menuFrame->addSeparator();
+    m_menuFrame->addAction(m_actionNextFrame);
+    m_menuFrame->addAction(m_actionPreviousFrame);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionCopy);
     m_menuFrame->addAction(m_actionPaste);
@@ -788,6 +795,12 @@ void MainWindow::retranslate()
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
     m_actionDeleteSelectedFrame->setStatusTip(tr("Delete a selected keyframe."));
     m_actionDeleteSelectedFrame->setShortcut(tr("Ctrl+K"));
+    m_actionNextFrame->setText(tr("Next keyframe"));
+    m_actionNextFrame->setStatusTip(tr("Select a next keyframe from the current keyframe."));
+    m_actionNextFrame->setShortcut(QKeySequence::Forward);
+    m_actionPreviousFrame->setText(tr("Previous keyframe"));
+    m_actionPreviousFrame->setStatusTip(tr("Select a previous keyframe from the current keyframe."));
+    m_actionPreviousFrame->setShortcut(QKeySequence::Back);
     m_actionCopy->setText(tr("Copy"));
     m_actionCopy->setStatusTip(tr("Copy a selected keyframe."));
     m_actionCopy->setShortcut(QKeySequence::Copy);

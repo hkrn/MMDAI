@@ -191,6 +191,8 @@ private:
     QAction *m_actionRegisterFrame;
     QAction *m_actionInsertEmptyFrame;
     QAction *m_actionDeleteSelectedFrame;
+    QAction *m_actionNextFrame;
+    QAction *m_actionPreviousFrame;
     QAction *m_actionCopy;
     QAction *m_actionPaste;
     QAction *m_actionReversedPaste;

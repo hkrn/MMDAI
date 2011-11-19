@@ -95,10 +95,14 @@ private slots:
     void copyFrame();
     void pasteFrame();
     void pasteReversedFrame();
+    void nextFrame();
+    void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
 
 private:
+    void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
+
     QSettings *m_settings;
     QTabWidget *m_tabWidget;
     TimelineWidget *m_boneTimeline;

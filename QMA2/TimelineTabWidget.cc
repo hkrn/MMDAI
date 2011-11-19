@@ -306,6 +306,16 @@ void TimelineTabWidget::pasteReversedFrame()
     }
 }
 
+void TimelineTabWidget::nextFrame()
+{
+    seekFrameIndexFromCurrentFrameIndex(1);
+}
+
+void TimelineTabWidget::previousFrame()
+{
+    seekFrameIndexFromCurrentFrameIndex(-1);
+}
+
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
     switch (index) {
@@ -324,4 +334,18 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
 void TimelineTabWidget::notifyCurrentTabIndex()
 {
     setCurrentTabIndex(m_tabWidget->currentIndex());
+}
+
+void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)
+{
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex:
+        m_boneTimeline->setCurrentFrameIndex(m_boneTimeline->frameIndex() + frameIndex);
+        break;
+    case kFaceTabIndex:
+        m_faceTimeline->setCurrentFrameIndex(m_faceTimeline->frameIndex() + frameIndex);
+        break;
+    case kSceneTabIndex:
+        m_sceneTimeline->setCurrentFrameIndex(m_sceneTimeline->frameIndex() + frameIndex);
+    }
 }
