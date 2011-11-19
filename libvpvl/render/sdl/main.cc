@@ -301,7 +301,6 @@ Uint32 UpdateTimer(Uint32 internal, void *data)
     scene->updateModelView();
     scene->updateProjection();
     scene->advanceMotion(0.5);
-    renderer->updateAllModel();
     return internal;
 }
 
@@ -389,6 +388,7 @@ public:
 protected:
     virtual void draw() {
         glClearColor(0, 0, 1, 1);
+        m_renderer->updateAllModel();
         m_renderer->initializeSurface();
         m_renderer->drawSurface();
     }
