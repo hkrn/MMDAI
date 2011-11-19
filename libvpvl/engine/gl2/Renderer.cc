@@ -1053,6 +1053,8 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     }
     userData->materials = materialPrivates;
     model->setUserData(userData);
+    model->updateImmediate();
+    updateModel(model);
     m_delegate->log(IDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
     m_scene->addModel(model);
 }
@@ -1085,12 +1087,27 @@ void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     }
 }
 
-void Renderer::updateModelBuffer(const vpvl::PMDModel *model) const
+void Renderer::updateAllModel() const
+{
+    size_t size = 0;
+    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+    for (size_t i = 0; i < size; i++) {
+        vpvl::PMDModel *model = models[i];
+        if (model->isVisible())
+            updateModel(model);
+    }
+}
+
+void Renderer::updateModel(const vpvl::PMDModel *model) const
 {
     vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
-    size_t size = model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride);
+    const size_t size = model->vertices().count();
+    const size_t vs = size * model->strideSize(vpvl::PMDModel::kVerticesStride);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, size, model->verticesPointer(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vs, model->verticesPointer(), GL_DYNAMIC_DRAW);
+    const size_t es = size * model->strideSize(vpvl::PMDModel::kEdgeVerticesStride);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeVertices]);
+    glBufferData(GL_ARRAY_BUFFER, es, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -1172,9 +1189,7 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
     m_edgeProgram->bind();
-    size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeVertices]);
-    glBufferData(GL_ARRAY_BUFFER, len, model->edgeVerticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
     m_edgeProgram->setColor(model->edgeColor());
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
@@ -1194,9 +1209,7 @@ void Renderer::drawModelShadow(const vpvl::PMDModel *model)
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
     glCullFace(GL_FRONT);
-    size_t len = model->vertices().count() * stride;
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, len, model->verticesPointer(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     m_shadowProgram->bind();
     m_shadowProgram->setModelViewMatrix(modelViewMatrix);
@@ -1294,20 +1307,11 @@ void Renderer::drawShadow()
         glCullFace(GL_FRONT);
         for (size_t i = 0; i < size; i++) {
             vpvl::PMDModel *model = models[i];
-            if (model->isVisible()) {
-                updateModelBuffer(model);
+            if (model->isVisible())
                 drawModelShadow(model);
-            }
         }
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-    else {
-        for (size_t i = 0; i < size; i++) {
-            vpvl::PMDModel *model = models[i];
-            if (model->isVisible())
-                updateModelBuffer(model);
-        }
     }
 }
 

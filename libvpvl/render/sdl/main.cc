@@ -301,6 +301,7 @@ Uint32 UpdateTimer(Uint32 internal, void *data)
     scene->updateModelView();
     scene->updateProjection();
     scene->advanceMotion(0.5);
+    renderer->updateAllModel();
     return internal;
 }
 
@@ -453,6 +454,7 @@ private:
             m_delegate.log(IDelegate::kLogWarning, "Failed parsing the camera motion, skipped...");
         else
             scene->setCameraMotion(&m_camera);
+        m_renderer->updateAllModel();
 
         return true;
     }

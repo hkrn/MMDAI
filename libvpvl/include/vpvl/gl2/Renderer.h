@@ -139,7 +139,8 @@ public:
     void setDebugDrawer(btDynamicsWorld *world);
     void uploadModel(vpvl::PMDModel *model, const std::string &dir);
     void deleteModel(vpvl::PMDModel *&model);
-    void updateModelBuffer(const vpvl::PMDModel *model) const;
+    void updateAllModel() const;
+    void updateModel(const vpvl::PMDModel *model) const;
     void drawModel(const vpvl::PMDModel *model);
     void drawModelEdge(const vpvl::PMDModel *model);
     void drawModelShadow(const vpvl::PMDModel *model);

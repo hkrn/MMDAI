@@ -930,6 +930,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         vpvl::Scene *scene = m_renderer->scene();
         scene->updateModelView();
         scene->updateProjection();
+        m_renderer->updateAllModel();
         if (m_playing) {
             float elapsed = m_timer.elapsed() / static_cast<float>(vpvl::Scene::kFPS);
             float diff = elapsed - m_prevElapsed;

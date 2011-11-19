@@ -370,6 +370,7 @@ protected:
         scene->updateModelView();
         scene->updateProjection();
         scene->advanceMotion(diff);
+        m_renderer->updateAllModel();
         updateGL();
     }
     virtual void mousePressEvent(QMouseEvent *event) {
@@ -450,6 +451,7 @@ private:
             m_delegate.log(IDelegate::kLogWarning, "Failed parsing the camera motion, skipped...");
         else
             scene->setCameraMotion(&m_camera);
+        m_renderer->updateAllModel();
 
         return true;
     }
