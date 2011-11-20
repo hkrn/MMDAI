@@ -1053,6 +1053,7 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     }
     userData->materials = materialPrivates;
     model->setUserData(userData);
+    model->setLightPosition(m_scene->lightPosition());
     model->updateImmediate();
     updateModel(model);
     m_delegate->log(IDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
