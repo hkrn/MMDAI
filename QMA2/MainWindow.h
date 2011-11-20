@@ -48,14 +48,12 @@ class Bone;
 class PMDModel;
 }
 
-namespace Ui {
-class MainWindow;
-}
-
 class BoneMotionModel;
+class BoneUIDelegate;
 class ExportVideoDialog;
 class FaceMotionModel;
 class LicenseWidget;
+class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
 class TabWidget;
@@ -98,18 +96,14 @@ private slots:
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
     void saveModelPose();
-    void resetBoneX();
-    void resetBoneY();
-    void resetBoneZ();
-    void resetBoneRotation();
-    void resetAllBones();
-    void openBoneDialog();
     void saveAssetMetadata();
     void exportImage();
     void exportVideo();
     void startExportingVideo();
     void addNewMotion();
     void openEdgeOffsetDialog();
+    void startPlayingScene();
+    void openPlaySettingDialog();
 
 private:
     void buildUI();
@@ -129,6 +123,8 @@ private:
     FaceMotionModel *m_faceMotionModel;
     SceneMotionModel *m_sceneMotionModel;
     ExportVideoDialog *m_exportingVideoDialog;
+    PlaySettingDialog *m_playSettingDialog;
+    BoneUIDelegate *m_boneUIDelegate;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;
@@ -157,8 +153,7 @@ private:
     QAction *m_actionAbout;
     QAction *m_actionAboutQt;
     QAction *m_actionPlay;
-    QAction *m_actionPause;
-    QAction *m_actionStop;
+    QAction *m_actionPlaySettings;
     QAction *m_actionShowGrid;
     QAction *m_actionShowBones;
     QAction *m_actionEnablePhysics;
@@ -214,55 +209,6 @@ private:
     QMenu *m_menuHelp;
 
     Q_DISABLE_COPY(MainWindow)
-};
-
-class ExportVideoDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    ExportVideoDialog(MainWindow *parent, SceneWidget *scene);
-    ~ExportVideoDialog();
-
-    int sceneWidth() const;
-    int sceneHeight() const;
-    int fromIndex() const;
-    int toIndex() const;
-    bool includesGrid() const;
-
-private:
-    QSpinBox *m_widthBox;
-    QSpinBox *m_heightBox;
-    QSpinBox *m_fromIndexBox;
-    QSpinBox *m_toIndexBox;
-    QCheckBox *m_includeGridBox;
-
-    Q_DISABLE_COPY(ExportVideoDialog)
-};
-
-class EdgeOffsetDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    EdgeOffsetDialog(MainWindow *parent, SceneWidget *scene);
-    ~EdgeOffsetDialog();
-
-protected:
-    void closeEvent(QCloseEvent *event);
-
-private slots:
-    void setEdgeOffset(double value);
-    void commit();
-    void rollback();
-
-private:
-    QDoubleSpinBox *m_spinBox;
-    SceneWidget *m_sceneWidget;
-    vpvl::PMDModel *m_selected;
-    float m_edgeOffset;
-
-    Q_DISABLE_COPY(EdgeOffsetDialog)
 };
 
 #endif // MAINWINDOW_H

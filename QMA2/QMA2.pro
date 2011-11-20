@@ -117,7 +117,11 @@ SOURCES += main.cc\
     LicenseWidget.cc \
     SceneLoader.cc \
     AssetWidget.cc \
-    SceneMotionModel.cc
+    SceneMotionModel.cc \
+    BoneUIDelegate.cc \
+    ExportVideoDialog.cc \
+    PlaySettingDialog.cc \
+    EdgeOffsetDialog.cc
 
 HEADERS  += MainWindow.h \
             SceneWidget.h \
@@ -145,7 +149,11 @@ HEADERS  += MainWindow.h \
     InfoPanel.h \
     DebugDrawer.h \
     SceneMotionModel.h \
-    PMDMotionModel.h
+    PMDMotionModel.h \
+    BoneUIDelegate.h \
+    ExportVideoDialog.h \
+    PlaySettingDialog.h \
+    EdgeOffsetDialog.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
@@ -155,6 +163,14 @@ FORMS += \
     TransformWidget.ui \
     #MainWindow.ui \
     BoneDialog.ui
+
+
+
+
+
+
+
+
 
 
 

@@ -38,12 +38,16 @@
 
 #include "AssetWidget.h"
 #include "BoneDialog.h"
+#include "BoneUIDelegate.h"
 #include "BoneMotionModel.h"
 #include "CameraPerspectiveWidget.h"
+#include "EdgeOffsetDialog.h"
+#include "ExportVideoDialog.h"
 #include "FaceMotionModel.h"
 #include "FaceWidget.h"
 #include "InterpolationWidget.h"
 #include "LicenseWidget.h"
+#include "PlaySettingDialog.h"
 #include "SceneMotionModel.h"
 #include "SceneWidget.h"
 #include "TabWidget.h"
@@ -60,123 +64,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #endif
 
-ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *scene) : QDialog(parent)
-{
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    int maxFrameIndex = scene->scene()->maxFrameIndex();
-    m_widthBox = new QSpinBox();
-    m_widthBox->setRange(scene->minimumWidth(), scene->maximumWidth());
-    m_heightBox = new QSpinBox();
-    m_heightBox->setRange(scene->minimumHeight(), scene->maximumHeight());
-    m_fromIndexBox = new QSpinBox();
-    m_fromIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexBox = new QSpinBox();
-    m_toIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexBox->setValue(maxFrameIndex);
-    m_includeGridBox = new QCheckBox(tr("Include grid field"));
-    QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(new QLabel(tr("Width")), 0, 0);
-    gridLayout->addWidget(m_widthBox, 0, 1);
-    gridLayout->addWidget(new QLabel(tr("Height")), 0, 2);
-    gridLayout->addWidget(m_heightBox, 0, 3);
-    gridLayout->addWidget(new QLabel(tr("Keyframe from")), 1, 0);
-    gridLayout->addWidget(m_fromIndexBox, 1, 1);
-    gridLayout->addWidget(new QLabel(tr("Keyframe to")), 1, 2);
-    gridLayout->addWidget(m_toIndexBox, 1, 3);
-    mainLayout->addLayout(gridLayout);
-    mainLayout->addWidget(m_includeGridBox, 0, Qt::AlignCenter);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    connect(buttons, SIGNAL(accepted()), parent, SLOT(startExportingVideo()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
-    mainLayout->addWidget(buttons);
-    setWindowTitle(tr("Exporting video setting"));
-    setLayout(mainLayout);
-}
-
-ExportVideoDialog::~ExportVideoDialog()
-{
-}
-
-int ExportVideoDialog::sceneWidth() const
-{
-    return m_widthBox->value();
-}
-
-int ExportVideoDialog::sceneHeight() const
-{
-    return m_heightBox->value();
-}
-
-int ExportVideoDialog::fromIndex() const
-{
-    return m_fromIndexBox->value();
-}
-
-int ExportVideoDialog::toIndex() const
-{
-    return m_toIndexBox->value();
-}
-
-bool ExportVideoDialog::includesGrid() const
-{
-    return m_includeGridBox->isChecked();
-}
-
-EdgeOffsetDialog::EdgeOffsetDialog(MainWindow *parent, SceneWidget *scene)
-    : QDialog(parent),
-      m_spinBox(0),
-      m_sceneWidget(scene),
-      m_selected(scene->selectedModel()),
-      m_edgeOffset(scene->modelEdgeOffset())
-{
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QLabel *label = new QLabel(tr("Model edge offset value"));
-    m_spinBox = new QDoubleSpinBox();
-    connect(m_spinBox, SIGNAL(valueChanged(double)), this, SLOT(setEdgeOffset(double)));
-    m_spinBox->setValue(m_edgeOffset);
-    m_spinBox->setSingleStep(0.1f);
-    m_spinBox->setRange(0.0f, 2.0f);
-    QHBoxLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(label);
-    subLayout->addWidget(m_spinBox);
-    mainLayout->addLayout(subLayout);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    connect(buttons, SIGNAL(accepted()), this, SLOT(commit()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(rollback()));
-    mainLayout->addWidget(buttons);
-    setWindowTitle(tr("Edge offset dialog"));
-    setLayout(mainLayout);
-    m_sceneWidget->hideSelectedModelEdge();
-}
-
-EdgeOffsetDialog::~EdgeOffsetDialog()
-{
-}
-
-void EdgeOffsetDialog::closeEvent(QCloseEvent * /* event */)
-{
-    m_sceneWidget->showSelectedModelEdge();
-}
-
-void EdgeOffsetDialog::setEdgeOffset(double value)
-{
-    m_selected->setEdgeOffset(value);
-    m_sceneWidget->setModelEdgeOffset(m_edgeOffset);
-    m_sceneWidget->updateMotion();
-}
-
-void EdgeOffsetDialog::commit()
-{
-    m_selected->setEdgeOffset(m_spinBox->value());
-    close();
-}
-
-void EdgeOffsetDialog::rollback()
-{
-    m_selected->setEdgeOffset(m_edgeOffset);
-    close();
-}
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
@@ -190,6 +77,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_faceMotionModel(0),
     m_sceneMotionModel(0),
     m_exportingVideoDialog(0),
+    m_playSettingDialog(0),
+    m_boneUIDelegate(0),
     m_model(0),
     m_bone(0),
     m_position(0.0f, 0.0f, 0.0f),
@@ -208,6 +97,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
+    m_boneUIDelegate = new BoneUIDelegate(m_boneMotionModel, this);
     buildUI();
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
@@ -218,10 +108,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_undo;
     delete m_licenseWidget;
+    delete m_sceneWidget;
+    delete m_boneMotionModel;
+    delete m_faceMotionModel;
+    delete m_sceneMotionModel;
     delete m_tabWidget;
     delete m_timelineTabWidget;
     delete m_transformWidget;
+    delete m_boneUIDelegate;
     delete m_menuBar;
 }
 
@@ -429,11 +325,9 @@ void MainWindow::buildUI()
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
     m_actionPlay = new QAction(this);
-    connect(m_actionPlay, SIGNAL(triggered()), m_sceneWidget, SLOT(play()));
-    m_actionPause = new QAction(this);
-    connect(m_actionPause, SIGNAL(triggered()), m_sceneWidget, SLOT(pause()));
-    m_actionStop = new QAction(this);
-    connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
+    connect(m_actionPlay, SIGNAL(triggered()), this, SLOT(startPlayingScene()));
+    m_actionPlaySettings = new QAction(this);
+    connect(m_actionPlaySettings, SIGNAL(triggered()), this, SLOT(openPlaySettingDialog()));
     m_actionShowGrid = new QAction(this);
     m_actionShowGrid->setCheckable(true);
     m_actionShowGrid->setChecked(m_sceneWidget->isGridVisible());
@@ -565,8 +459,7 @@ void MainWindow::buildUI()
     m_menuBar->addMenu(m_menuFile);
     m_menuProject = new QMenu(this);
     m_menuProject->addAction(m_actionPlay);
-    m_menuProject->addAction(m_actionPause);
-    m_menuProject->addAction(m_actionStop);
+    m_menuProject->addAction(m_actionPlaySettings);
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionShowGrid);
     m_menuProject->addAction(m_actionShowBones);
@@ -705,10 +598,8 @@ void MainWindow::retranslate()
     m_actionExit->setShortcut(QKeySequence::Quit);
     m_actionPlay->setText(tr("Play"));
     m_actionPlay->setStatusTip(tr("Play current scene."));
-    m_actionPause->setText(tr("Pause"));
-    m_actionPause->setStatusTip(tr("Pause current scene."));
-    m_actionStop->setText(tr("Stop"));
-    m_actionStop->setStatusTip(tr("Stop current scene."));
+    m_actionPlaySettings->setText(tr("Play settings"));
+    m_actionPlaySettings->setStatusTip(tr("Open a dialog to set settings of playing scene."));
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
     m_actionShowGrid->setShortcut(tr("Ctrl+Shift+G"));
@@ -916,72 +807,6 @@ void MainWindow::saveModelPose()
     }
 }
 
-void MainWindow::resetBoneX()
-{
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kX);
-    }
-    else {
-        QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset X position of the bone"));
-    }
-}
-
-void MainWindow::resetBoneY()
-{
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kY);
-    }
-    else {
-        QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset Y position of the bone"));
-    }
-}
-
-void MainWindow::resetBoneZ()
-{
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kZ);
-    }
-    else {
-        QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset Z position of the bone"));
-    }
-}
-
-void MainWindow::resetBoneRotation()
-{
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kRotation);
-    }
-    else {
-        QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset rotation of the bone"));
-    }
-}
-
-void MainWindow::resetAllBones()
-{
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetAllBones();
-    }
-    else {
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to reset bones"));
-    }
-}
-
-void MainWindow::openBoneDialog()
-{
-    if (m_boneMotionModel->isBoneSelected()) {
-        BoneDialog *dialog = new BoneDialog(m_boneMotionModel, this);
-        dialog->exec();
-    }
-    else {
-        QMessageBox::warning(this, tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to open this dialog"));
-    }
-}
-
 void MainWindow::saveAssetMetadata()
 {
     m_sceneWidget->saveMetadataFromAsset(m_tabWidget->assetWidget()->currentAsset());
@@ -1018,7 +843,7 @@ void MainWindow::exportVideo()
 #ifdef OPENCV_FOUND
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
         delete m_exportingVideoDialog;
-        m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
+        m_exportingVideoDialog = new ExportVideoDialog(this, &m_settings, m_sceneWidget);
         m_exportingVideoDialog->show();
     }
     else {
@@ -1164,6 +989,23 @@ void MainWindow::openEdgeOffsetDialog()
     else {
         QMessageBox::warning(this, tr("The model is not selected."),
                              tr("Select a model to chage edge offset value."));
+    }
+}
+
+void MainWindow::startPlayingScene()
+{
+}
+
+void MainWindow::openPlaySettingDialog()
+{
+    if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+        delete m_playSettingDialog;
+        m_playSettingDialog = new PlaySettingDialog(this, &m_settings, m_sceneWidget);
+        m_playSettingDialog->show();
+    }
+    else {
+        QMessageBox::warning(this, tr("No motion to export."),
+                             tr("Create or load a motion."));
     }
 }
 
