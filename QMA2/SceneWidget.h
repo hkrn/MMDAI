@@ -83,6 +83,7 @@ public:
     ~SceneWidget();
 
     const vpvl::Scene *scene() const;
+    vpvl::Scene *mutableScene();
     vpvl::PMDModel *findModel(const QString &name) const;
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);

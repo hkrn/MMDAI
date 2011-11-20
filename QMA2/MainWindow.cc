@@ -994,6 +994,49 @@ void MainWindow::openEdgeOffsetDialog()
 
 void MainWindow::startPlayingScene()
 {
+    if (!m_playSettingDialog)
+        m_playSettingDialog = new PlaySettingDialog(this, &m_settings, m_sceneWidget);
+    const QString &format = tr("Playing scene frame %1 of %2...");
+    vpvl::Scene *scene = m_sceneWidget->mutableScene();
+    bool loop = m_playSettingDialog->isLoop();
+    int fromIndex = m_playSettingDialog->fromIndex();
+    int toIndex = m_playSettingDialog->toIndex();
+    int maxRangeIndex = toIndex - fromIndex;
+    QProgressDialog *progress = new QProgressDialog(this);
+    vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
+    progress->setCancelButtonText(tr("Cancel"));
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setRange(0, maxRangeIndex);
+    m_sceneWidget->stop();
+    m_sceneWidget->seekMotion(0.0f);
+    m_sceneWidget->advanceMotion(fromIndex);
+    m_sceneWidget->setHandlesVisible(false);
+    m_sceneWidget->setInfoPanelVisible(false);
+    m_sceneWidget->setSelectedModel(0);
+    m_sceneWidget->updateGL();
+    progress->setLabelText(format.arg(0).arg(maxRangeIndex));
+    // TODO: implement this as timer event
+    while (true) {
+        bool isReached = scene->isMotionReachedTo(toIndex);
+        if ((!loop && isReached) || progress->wasCanceled())
+            break;
+        int value = 0;
+        if (isReached) {
+            scene->resetMotion();
+            m_sceneWidget->advanceMotion(fromIndex);
+        }
+        else
+            value = progress->value() + 1;
+        m_sceneWidget->updateGL();
+        m_sceneWidget->advanceMotion(1.0f);
+        progress->setValue(value);
+        progress->setLabelText(format.arg(value).arg(maxRangeIndex));
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+    m_sceneWidget->setHandlesVisible(true);
+    m_sceneWidget->setInfoPanelVisible(true);
+    m_sceneWidget->setSelectedModel(selected);
+    delete progress;
 }
 
 void MainWindow::openPlaySettingDialog()
