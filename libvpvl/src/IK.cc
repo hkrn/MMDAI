@@ -188,8 +188,8 @@ void IK::solve()
     for (int i = 0; i < m_iteration; i++) {
         for (int j = 0; j < nbones; j++) {
             Bone *bone = m_bones[j];
-            const Vector3 targetPosition = m_target->localTransform().getOrigin();
-            const Transform transform = bone->localTransform().inverse();
+            const Vector3 &targetPosition = m_target->localTransform().getOrigin();
+            const Transform &transform = bone->localTransform().inverse();
             Vector3 localDestination = transform * destPosition;
             Vector3 localTarget = transform * targetPosition;
             if (localDestination.distance2(localTarget) < kMinDistance) {
