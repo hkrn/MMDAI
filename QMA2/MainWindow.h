@@ -97,6 +97,7 @@ private slots:
     void openRecentFile();
     void addRecentFile(const QString &filename);
     void updateRecentFiles();
+    void clearRecentFiles();
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
     void addAsset(vpvl::Asset *asset);
@@ -147,6 +148,7 @@ private:
     QSplitter *m_mainSplitter;
     QSplitter *m_leftSplitter;
     QAction *m_actionRecentFiles[kMaxRecentFiles];
+    QAction *m_actionClearRecentFiles;
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
     QAction *m_actionNewMotion;

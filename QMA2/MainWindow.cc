@@ -368,6 +368,12 @@ void MainWindow::updateRecentFiles()
         m_actionRecentFiles[i]->setVisible(false);
 }
 
+void MainWindow::clearRecentFiles()
+{
+    m_settings.setValue("mainWindow/recentFiles", QStringList());
+    updateRecentFiles();
+}
+
 void MainWindow::addModel(vpvl::PMDModel *model)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
@@ -551,6 +557,8 @@ void MainWindow::buildUI()
     m_actionViewTransform = new QAction(this);
     connect(m_actionViewTransform, SIGNAL(triggered()), m_transformWidget, SLOT(show()));
 
+    m_actionClearRecentFiles = new QAction(this);
+    connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
     m_actionAbout = new QAction(this);
     connect(m_actionAbout, SIGNAL(triggered()), m_licenseWidget, SLOT(show()));
     m_actionAbout->setMenuRole(QAction::AboutRole);
@@ -623,6 +631,8 @@ void MainWindow::buildUI()
         m_actionRecentFiles[i] = action;
         m_menuRecentFiles->addAction(action);
     }
+    m_menuRecentFiles->addSeparator();
+    m_menuRecentFiles->addAction(m_actionClearRecentFiles);
     m_menuFile->addMenu(m_menuRecentFiles);
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
@@ -852,6 +862,8 @@ void MainWindow::retranslate()
     m_actionAbout->setShortcut(tr("Alt+Q, Alt+/"));
     m_actionAboutQt->setText(tr("About Qt"));
     m_actionAboutQt->setStatusTip(tr("About Qt."));
+    m_actionClearRecentFiles->setText(tr("Clear recent files history"));
+    m_actionClearRecentFiles->setStatusTip(tr("Clear the history of recently opened files."));
     m_menuFile->setTitle(tr("&File"));
     m_menuProject->setTitle(tr("&Project"));
     m_menuScene->setTitle(tr("&Scene"));
