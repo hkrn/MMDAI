@@ -209,7 +209,6 @@ private:
     bool acceptAddingModel(vpvl::PMDModel *model);
     void drawBones();
     void updateFPS();
-    QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 #ifdef VPVL_USE_GLSL

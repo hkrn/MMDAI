@@ -66,6 +66,22 @@ using namespace vpvl::gl;
 #endif /* VPVL_USE_GLSL */
 using namespace internal;
 
+namespace {
+
+typedef QSharedPointer<QProgressDialog> ProgressDialogPtr;
+
+ProgressDialogPtr UIGetProgressDialog(const QString &label, int max)
+{
+    QProgressDialog *progress = new QProgressDialog(label, QApplication::tr("Cancel"), 0, max);
+    progress->setMinimumDuration(0);
+    progress->setRange(0, 1);
+    progress->setValue(0);
+    progress->setWindowModality(Qt::WindowModal);
+    return ProgressDialogPtr(progress);
+}
+
+}
+
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
@@ -251,14 +267,14 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
     QFileInfo fi(path);
     vpvl::PMDModel *model = 0;
     if (fi.exists()) {
-        QProgressDialog *progress = getProgressDialog("Loading the model...", 0);
         const QDir &dir = fi.dir();
         model = m_loader->loadModel(fi.fileName(), dir);
         if (model) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
+                ProgressDialogPtr progress = UIGetProgressDialog("Loading the model...", 0);
                 m_loader->addModel(model, dir);
+                progress.data()->setValue(1);
                 emit modelDidAdd(model);
-                setSelectedModel(model);
             }
             else {
                 delete model;
@@ -269,7 +285,6 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
             QMessageBox::warning(this, tr("Loading model error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
         }
-        delete progress;
     }
     return model;
 }
@@ -401,14 +416,15 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
     QFileInfo fi(path);
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
-        QProgressDialog *progress = getProgressDialog("Loading the asset...", 0);
+        ProgressDialogPtr progress = UIGetProgressDialog("Loading the asset...", 0);
         asset = m_loader->loadAsset(fi.fileName(), fi.dir());
-        if (asset)
+        if (asset) {
+            progress.data()->setValue(1);
             emit assetDidAdd(asset);
+        }
         else
             QMessageBox::warning(this, tr("Loading asset error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
-        delete progress;
     }
     return asset;
 }
@@ -426,14 +442,15 @@ vpvl::Asset *SceneWidget::addAssetFromMetadata(const QString &path)
     QFileInfo fi(path);
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
-        QProgressDialog *progress = getProgressDialog("Loading the asset...", 0);
+        ProgressDialogPtr progress = UIGetProgressDialog("Loading the asset...", 0);
         asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir());
-        if (asset)
+        if (asset) {
+            progress.data()->setValue(1);
             emit assetDidAdd(asset);
+        }
         else
             QMessageBox::warning(this, tr("Loading asset error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
-        delete progress;
     }
     return asset;
 }
@@ -982,15 +999,6 @@ void SceneWidget::updateFPS()
         emit fpsDidUpdate(m_currentFPS);
     }
     m_frameCount++;
-}
-
-QProgressDialog *SceneWidget::getProgressDialog(const QString &label, int max)
-{
-    QProgressDialog *progress = new QProgressDialog(label, tr("Cancel"), 0, max, this);
-    progress->setMinimumDuration(0);
-    progress->setValue(0);
-    progress->setWindowModality(Qt::WindowModal);
-    return progress;
 }
 
 const QString SceneWidget::openFileDialog(const QString &name, const QString &desc, const QString &exts)
