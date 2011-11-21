@@ -100,10 +100,6 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
         /* ボーン名または頂点モーフ名を含むアイテム */
         modelIndex = index(rowIndex, toModelIndex(frameIndex), parentIndex);
     }
-    else {
-        /* センターのような特殊な扱いを持つボーン */
-        modelIndex = index(rowIndex, toModelIndex(frameIndex));
-    }
     /* モデルのインデックスが存在しなければ作成しておき、自動的にそのインデックスが存在するように処理する */
     if (!modelIndex.isValid())
         createIndex(rowIndex, frameIndex, item);

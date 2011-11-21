@@ -600,12 +600,19 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             allBones.copy(model->bonesForUI());
             names.copy(model->boneCategoryNames());
             Keys keys;
-            /* センターボーンはカテゴリに位置するがカテゴリではないという特殊な扱い */
-            vpvl::Bone *cb = vpvl::Bone::centerBone(&model->bones());
-            const QString &cbname = internal::toQString(cb);
-            TreeItem *cbitem = new TreeItem(cbname, cb, false, false, r);
-            keys.insert(cbname, cbitem);
-            r->addChild(cbitem);
+            /*
+             * センターボーンはセンターボーン専用でカテゴリをつける。以前はカテゴリではないが表示上カテゴリに位置していたが、
+             * モーションを読み込んだ時モデルのインデックス作成において処理速度が大幅に落ちてしまったことが 0.9.0 で判明したため、
+             * このような扱いにしている
+             * TODO: 別のカテゴリにつけられたセンターボーンをもつモデルの対処
+             */
+            vpvl::Bone *centerBone = vpvl::Bone::centerBone(&model->bones());
+            const QString &centerBoneName = internal::toQString(centerBone);
+            TreeItem *centerBoneCategory = new TreeItem(centerBoneName, 0, false, true, r);
+            TreeItem *centerBoneItem = new TreeItem(centerBoneName, centerBone, false, false, centerBoneCategory);
+            keys.insert(centerBoneName, centerBoneItem);
+            centerBoneCategory->addChild(centerBoneItem);
+            r->addChild(centerBoneCategory);
             const int namesCount = model->boneCategoryNames().count();
             /* ボーンのカテゴリからルートの子供であるカテゴリアイテムを作成する */
             for (int i = 0; i < namesCount; i++) {
