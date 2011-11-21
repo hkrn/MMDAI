@@ -75,6 +75,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    static const int kMaxRecentFiles = 10;
+
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
@@ -92,6 +94,9 @@ private slots:
     void selectModel();
     void setCurrentModel(vpvl::PMDModel *model);
     void revertSelectedModel();
+    void openRecentFile();
+    void addRecentFile(const QString &filename);
+    void updateRecentFiles();
     void addModel(vpvl::PMDModel *model);
     void deleteModel(vpvl::PMDModel *model);
     void addAsset(vpvl::Asset *asset);
@@ -141,6 +146,7 @@ private:
 
     QSplitter *m_mainSplitter;
     QSplitter *m_leftSplitter;
+    QAction *m_actionRecentFiles[kMaxRecentFiles];
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
     QAction *m_actionNewMotion;
@@ -211,6 +217,7 @@ private:
     QMenu *m_menuView;
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
+    QMenu *m_menuRecentFiles;
     QMenu *m_menuHelp;
 
     Q_DISABLE_COPY(MainWindow)

@@ -334,6 +334,40 @@ void MainWindow::revertSelectedModel()
     m_sceneWidget->setSelectedModel(0);
 }
 
+void MainWindow::openRecentFile()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action)
+        m_sceneWidget->loadFile(action->data().toString());
+}
+
+void MainWindow::addRecentFile(const QString &filename)
+{
+    QStringList files = m_settings.value("mainWindow/recentFiles").toStringList();
+    files.removeAll(filename);
+    files.prepend(filename);
+    while (files.size() > kMaxRecentFiles)
+        files.removeLast();
+    m_settings.setValue("mainWindow/recentFiles", files);
+    updateRecentFiles();
+}
+
+void MainWindow::updateRecentFiles()
+{
+    QStringList files = m_settings.value("mainWindow/recentFiles").toStringList();
+    int maxFiles = kMaxRecentFiles, nRecentFiles = qMin(files.size(), maxFiles);
+    QFileInfo fileInfo;
+    for (int i = 0; i < nRecentFiles; i++) {
+        QAction *action = m_actionRecentFiles[i];
+        fileInfo.setFile(files[i]);
+        action->setText(tr("&%1 %2").arg(i + 1).arg(fileInfo.fileName()));
+        action->setData(files[i]);
+        action->setVisible(true);
+    }
+    for (int i = nRecentFiles; i < kMaxRecentFiles; i++)
+        m_actionRecentFiles[i]->setVisible(false);
+}
+
 void MainWindow::addModel(vpvl::PMDModel *model)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
@@ -479,17 +513,17 @@ void MainWindow::buildUI()
     connect(m_actionResetModelPosition, SIGNAL(triggered()), m_sceneWidget, SLOT(resetModelPosition()));
 
     m_actionBoneXPosZero = new QAction(this);
-    connect(m_actionBoneXPosZero, SIGNAL(triggered()), this, SLOT(resetBoneX()));
+    connect(m_actionBoneXPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneX()));
     m_actionBoneYPosZero = new QAction(this);
-    connect(m_actionBoneYPosZero, SIGNAL(triggered()), this, SLOT(resetBoneY()));
+    connect(m_actionBoneYPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneY()));
     m_actionBoneZPosZero = new QAction(this);
-    connect(m_actionBoneZPosZero, SIGNAL(triggered()), this, SLOT(resetBoneZ()));
+    connect(m_actionBoneZPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneZ()));
     m_actionBoneRotationZero = new QAction(this);
-    connect(m_actionBoneRotationZero, SIGNAL(triggered()), this, SLOT(resetBoneRotation()));
+    connect(m_actionBoneRotationZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneRotation()));
     m_actionBoneResetAll = new QAction(this);
-    connect(m_actionBoneResetAll, SIGNAL(triggered()), this, SLOT(resetAllBones()));
+    connect(m_actionBoneResetAll, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetAllBones()));
     m_actionBoneDialog = new QAction(this);
-    connect(m_actionBoneDialog, SIGNAL(triggered()), this, SLOT(openBoneDialog()));
+    connect(m_actionBoneDialog, SIGNAL(triggered()), m_boneUIDelegate, SLOT(openBoneDialog()));
 
     m_actionRegisterFrame = new QAction(this);
     connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
@@ -581,6 +615,15 @@ void MainWindow::buildUI()
     m_menuRetainAssets = new QMenu(this);
     if (vpvl::Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
+    m_menuRecentFiles = new QMenu(this);
+    for (int i = 0; i < kMaxRecentFiles; i++) {
+        QAction *action = new QAction(this);
+        connect(action, SIGNAL(triggered()), this, SLOT(openRecentFile()));
+        action->setVisible(false);
+        m_actionRecentFiles[i] = action;
+        m_menuRecentFiles->addAction(action);
+    }
+    m_menuFile->addMenu(m_menuRecentFiles);
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
     m_menuModel->addAction(m_actionEdgeOffsetDialog);
@@ -624,6 +667,7 @@ void MainWindow::buildUI()
     m_menuHelp->addAction(m_actionAboutQt);
     m_menuBar->addMenu(m_menuHelp);
 
+    connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), this, SLOT(addModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
@@ -647,6 +691,7 @@ void MainWindow::buildUI()
     m_mainSplitter->restoreGeometry(m_settings.value("mainWindow/mainSplitterGeometry").toByteArray());
     m_mainSplitter->restoreState(m_settings.value("mainWindow/mainSplitterState").toByteArray());
     setCentralWidget(m_mainSplitter);
+    updateRecentFiles();
     m_mainSplitter->setFocus();
 
     retranslate();
@@ -816,6 +861,7 @@ void MainWindow::retranslate()
     m_menuView->setTitle(tr("&View"));
     m_menuRetainAssets->setTitle(tr("Select asset"));
     m_menuRetainModels->setTitle(tr("Select model"));
+    m_menuRecentFiles->setTitle(tr("Open recent files"));
     m_menuHelp->setTitle(tr("&Help"));
 }
 

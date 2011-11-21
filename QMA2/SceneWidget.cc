@@ -274,6 +274,7 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
                 ProgressDialogPtr progress = UIGetProgressDialog("Loading the model...", 0);
                 m_loader->addModel(model, dir);
                 progress.data()->setValue(1);
+                emit fileDidLoad(path);
                 emit modelDidAdd(model);
             }
             else {
@@ -308,6 +309,7 @@ vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
         if (motion) {
             foreach (vpvl::PMDModel *model, models)
                 emit motionDidAdd(motion, model);
+            emit fileDidLoad(path);
         }
         else {
             QMessageBox::warning(this, tr("Loading model motion error"),
@@ -337,8 +339,10 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(const QString &path, vpvl::PMD
     if (model) {
         if (QFile::exists(path)) {
             motion = m_loader->loadModelMotion(path, model);
-            if (motion)
+            if (motion) {
+                emit fileDidLoad(path);
                 emit motionDidAdd(motion, model);
+            }
             else
                 QMessageBox::warning(this, tr("Loading model motion error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
@@ -420,6 +424,7 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
         asset = m_loader->loadAsset(fi.fileName(), fi.dir());
         if (asset) {
             progress.data()->setValue(1);
+            emit fileDidLoad(path);
             emit assetDidAdd(asset);
         }
         else
@@ -529,8 +534,10 @@ vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
     vpvl::VMDMotion *motion = 0;
     if (QFile::exists(path)) {
         motion = m_loader->loadCameraMotion(path);
-        if (motion)
+        if (motion) {
+            emit fileDidLoad(path);
             emit cameraMotionDidSet(motion);
+        }
         else
             QMessageBox::warning(this, tr("Loading camera motion error"),
                                  tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));

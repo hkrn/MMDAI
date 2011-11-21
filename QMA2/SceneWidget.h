@@ -166,6 +166,7 @@ public slots:
     void deleteCameraMotion();
 
 signals:
+    void fileDidLoad(const QString &filename);
     void modelDidAdd(vpvl::PMDModel *model);
     void modelWillDelete(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
