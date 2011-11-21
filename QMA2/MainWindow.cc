@@ -64,6 +64,96 @@
 #include <opencv2/highgui/highgui.hpp>
 #endif
 
+namespace internal {
+
+class Player : QObject {
+public:
+    Player(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
+        : QObject(),
+          m_sceneWidget(sceneWidget),
+          m_dialog(dialog),
+          m_progress(0),
+          m_format(tr("Playing scene frame %1 of %2...")),
+          m_selected(0),
+          m_timerID(0),
+          m_fromIndex(0),
+          m_toIndex(0),
+          m_maxIndex(0),
+          m_loop(false)
+    {
+    }
+    ~Player() {
+    }
+
+    void start() {
+        m_fromIndex = m_dialog->fromIndex();
+        m_toIndex = m_dialog->toIndex();
+        m_loop = m_dialog->isLoop();
+        m_selected = m_sceneWidget->selectedModel();
+        m_sceneWidget->stop();
+        m_sceneWidget->seekMotion(0.0f);
+        m_sceneWidget->advanceMotion(m_fromIndex);
+        m_sceneWidget->setHandlesVisible(false);
+        m_sceneWidget->setInfoPanelVisible(false);
+        m_sceneWidget->setSelectedModel(0);
+        m_sceneWidget->updateGL();
+        m_progress = new QProgressDialog();
+        m_progress->setCancelButtonText(tr("Cancel"));
+        m_progress->setWindowModality(Qt::WindowModal);
+        int maxRangeIndex = m_toIndex - m_fromIndex;
+        m_progress->setRange(0, maxRangeIndex);
+        m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
+        m_timerID = startTimer(vpvl::Scene::kFPS / 1000.0);
+    }
+    bool isActive() const {
+        return m_timerID != 0;
+    }
+
+protected:
+    void timerEvent(QTimerEvent *event) {
+        if (event->timerId() == m_timerID) {
+            vpvl::Scene *scene = m_sceneWidget->mutableScene();
+            bool isReached = scene->isMotionReachedTo(m_toIndex);
+            if ((!m_loop && isReached) || m_progress->wasCanceled()) {
+                killTimer(m_timerID);
+                m_sceneWidget->setHandlesVisible(true);
+                m_sceneWidget->setInfoPanelVisible(true);
+                m_sceneWidget->setSelectedModel(m_selected);
+                delete m_progress;
+                m_progress = 0;
+                m_timerID = 0;
+                return;
+            }
+            int value;
+            if (isReached) {
+                value = m_fromIndex;
+                scene->resetMotion();
+                m_sceneWidget->advanceMotion(value);
+            }
+            else {
+                value = m_progress->value() + 1;
+                m_sceneWidget->advanceMotion(1.0f);
+            }
+            m_progress->setValue(value);
+            m_progress->setLabelText(m_format.arg(value).arg(m_toIndex - m_fromIndex));
+        }
+    }
+
+private:
+    SceneWidget *m_sceneWidget;
+    PlaySettingDialog *m_dialog;
+    QProgressDialog *m_progress;
+    QString m_format;
+    vpvl::PMDModel *m_selected;
+    int m_timerID;
+    int m_fromIndex;
+    int m_toIndex;
+    int m_maxIndex;
+    bool m_loop;
+};
+
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
@@ -79,6 +169,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
     m_boneUIDelegate(0),
+    m_player(0),
     m_model(0),
     m_bone(0),
     m_position(0.0f, 0.0f, 0.0f),
@@ -118,6 +209,7 @@ MainWindow::~MainWindow()
     delete m_timelineTabWidget;
     delete m_transformWidget;
     delete m_boneUIDelegate;
+    delete m_player;
     delete m_menuBar;
 }
 
@@ -921,7 +1013,6 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->setInfoPanelVisible(false);
             m_sceneWidget->setSelectedModel(0);
             m_sceneWidget->resize(videoSize);
-            m_sceneWidget->updateGL();
             progress->setLabelText(format.arg(0).arg(maxRangeIndex));
             /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
             while (!scene->isMotionReachedTo(toIndex)) {
@@ -994,49 +1085,18 @@ void MainWindow::openEdgeOffsetDialog()
 
 void MainWindow::startPlayingScene()
 {
-    if (!m_playSettingDialog)
-        m_playSettingDialog = new PlaySettingDialog(this, &m_settings, m_sceneWidget);
-    const QString &format = tr("Playing scene frame %1 of %2...");
-    vpvl::Scene *scene = m_sceneWidget->mutableScene();
-    bool loop = m_playSettingDialog->isLoop();
-    int fromIndex = m_playSettingDialog->fromIndex();
-    int toIndex = m_playSettingDialog->toIndex();
-    int maxRangeIndex = toIndex - fromIndex;
-    QProgressDialog *progress = new QProgressDialog(this);
-    vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
-    progress->setCancelButtonText(tr("Cancel"));
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setRange(0, maxRangeIndex);
-    m_sceneWidget->stop();
-    m_sceneWidget->seekMotion(0.0f);
-    m_sceneWidget->advanceMotion(fromIndex);
-    m_sceneWidget->setHandlesVisible(false);
-    m_sceneWidget->setInfoPanelVisible(false);
-    m_sceneWidget->setSelectedModel(0);
-    m_sceneWidget->updateGL();
-    progress->setLabelText(format.arg(0).arg(maxRangeIndex));
-    // TODO: implement this as timer event
-    while (true) {
-        bool isReached = scene->isMotionReachedTo(toIndex);
-        if ((!loop && isReached) || progress->wasCanceled())
-            break;
-        int value = 0;
-        if (isReached) {
-            scene->resetMotion();
-            m_sceneWidget->advanceMotion(fromIndex);
-        }
-        else
-            value = progress->value() + 1;
-        m_sceneWidget->updateGL();
-        m_sceneWidget->advanceMotion(1.0f);
-        progress->setValue(value);
-        progress->setLabelText(format.arg(value).arg(maxRangeIndex));
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+        if (!m_playSettingDialog)
+            m_playSettingDialog = new PlaySettingDialog(this, &m_settings, m_sceneWidget);
+        if (!m_player)
+            m_player = new internal::Player(m_sceneWidget, m_playSettingDialog);
+        if (!m_player->isActive())
+            m_player->start();
     }
-    m_sceneWidget->setHandlesVisible(true);
-    m_sceneWidget->setInfoPanelVisible(true);
-    m_sceneWidget->setSelectedModel(selected);
-    delete progress;
+    else {
+        QMessageBox::warning(this, tr("No motion to export."),
+                             tr("Create or load a motion."));
+    }
 }
 
 void MainWindow::openPlaySettingDialog()

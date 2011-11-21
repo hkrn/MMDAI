@@ -42,6 +42,10 @@
 #include <QtGui/QMainWindow>
 #include <vpvl/Common.h>
 
+namespace internal {
+class Player;
+}
+
 namespace vpvl {
 class Asset;
 class Bone;
@@ -125,6 +129,7 @@ private:
     ExportVideoDialog *m_exportingVideoDialog;
     PlaySettingDialog *m_playSettingDialog;
     BoneUIDelegate *m_boneUIDelegate;
+    internal::Player *m_player;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;
