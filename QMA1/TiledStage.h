@@ -43,15 +43,18 @@
 #include <QtGui/QMatrix4x4>
 #include <LinearMath/btVector3.h>
 
-class btRigidBody;
+namespace internal {
 class Delegate;
-class TiledStageInternal;
 class World;
+}
+
+class btRigidBody;
+class TiledStageInternal;
 
 class TiledStage
 {
 public:
-    TiledStage(Delegate *delegate, World *world);
+    TiledStage(internal::Delegate *delegate, internal::World *world);
     ~TiledStage();
 
     void loadFloor(const QString &path);
@@ -71,8 +74,8 @@ private:
     TiledStageInternal *m_floor;
     TiledStageInternal *m_background;
     btRigidBody *m_floorRigidBody;
-    Delegate *m_delegate;
-    World *m_world;
+    internal::Delegate *m_delegate;
+    internal::World *m_world;
     QMatrix4x4 m_matrix;
 
     Q_DISABLE_COPY(TiledStage)

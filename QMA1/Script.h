@@ -81,8 +81,8 @@ struct ScriptArgument {
     }
 };
 
+class ExtendedSceneWidget;
 class QBasicTimer;
-class SceneWidget;
 
 class Script : public QObject
 {
@@ -95,7 +95,7 @@ public:
     static const QString kEPS;
     static const QString kLipSyncName;
 
-    explicit Script(SceneWidget *parent);
+    explicit Script(ExtendedSceneWidget *parent);
     ~Script();
 
     bool load(QTextStream &stream);
@@ -138,7 +138,7 @@ private:
     bool parseColor(const QString &value, btVector4 &v) const;
     bool parseRotation(const QString &value, btQuaternion &v) const;
 
-    SceneWidget *m_parent;
+    ExtendedSceneWidget *m_parent;
     QLinkedList<State *> m_states;
     State *m_currentState;
     JuliusSpeechRecognitionEngine m_recog;

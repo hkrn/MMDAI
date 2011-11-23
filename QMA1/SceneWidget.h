@@ -40,14 +40,17 @@
 #define SCENEWIDGET_H
 
 #include <QtCore/QElapsedTimer>
-#include <GL/glew.h>
 #include <QtOpenGL/QGLWidget>
 
-#include <LinearMath/btVector3.h>
 #include <vpvl/Bone.h>
+#include <vpvl/Common.h>
 
 namespace vpvl {
+#ifdef VPVL_USE_GLSL
+namespace gl2 {
+#else
 namespace gl {
+#endif
 class Renderer;
 }
 class Asset;
@@ -56,66 +59,88 @@ class Scene;
 class VMDMotion;
 }
 
+namespace internal {
+class DebugDrawer;
 class Delegate;
-class PlayerWidget;
+class Grid;
+class Handles;
+class InfoPanel;
+class World;
+}
+
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
 class Script;
-class TiledStage;
 class VPDFile;
-class World;
 
 class SceneWidget : public QGLWidget
 {
     Q_OBJECT
+
 public:
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
-    vpvl::PMDModel *findModel(const QString &name);
+    const vpvl::Scene *scene() const;
+    vpvl::Scene *mutableScene();
+    vpvl::PMDModel *findModel(const QString &name) const;
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setPreferredFPS(int value);
+    void setHandlesVisible(bool value);
+    void setInfoPanelVisible(bool value);
+    void showSelectedModelEdge();
+    void hideSelectedModelEdge();
 
-    TiledStage *tiledStage() const { return m_tiledStage; }
-    Script *script() const { return m_script; }
-
-    bool isDisplayBones() const { return m_visibleBones; }
-    void setDisplayBones(bool value) { m_visibleBones = value; }
+    vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
+    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
+    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
+    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
+    vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    vpvl::Asset *addAsset(const QString &path);
+    vpvl::Asset *addAssetFromMetadata(const QString &path);
+    VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
+    vpvl::VMDMotion *setCamera(const QString &path);
+    void getObjectCoordinates(const QPointF &input, vpvl::Vector3 &camera, vpvl::Vector3 &zfar) const;
+    float modelEdgeOffset() const { return m_selectedEdgeOffset; }
+    int preferredFPS() const { return m_defaultFPS; }
+    bool isGridVisible() const;
+    bool isBoneWireframeVisible() const { return m_visibleBones; }
+    bool isPhysicsEnabled() const { return m_enablePhysics; }
+    bool isPlaying() const { return m_playing; }
+    bool showModelDialog() const { return m_showModelDialog; }
 
 public slots:
     void play();
     void pause();
     void stop();
     void clear();
-
     void addModel();
-    vpvl::PMDModel *addModel(const QString &path);
     void insertMotionToAllModels();
-    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     void insertMotionToSelectedModel();
-    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
-    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
-    vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void setEmptyMotion(vpvl::PMDModel *model);
     void addAsset();
-    vpvl::Asset *addAsset(const QString &path);
+    void addAssetFromMetadata();
+    void saveMetadataFromAsset(vpvl::Asset *asset);
+    void insertPoseToSelectedModel();
     void setCamera();
-    vpvl::VMDMotion *setCamera(const QString &path);
     void deleteSelectedModel();
+    void deleteAsset(vpvl::Asset *asset);
     void deleteModel(vpvl::PMDModel *model);
     void deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void resetCamera();
-    void setLightColor(const btVector4 &color);
-    void setLightPosition(const btVector3 &position);
-    void loadScript();
-    void loadScript(const QString &filename);
-
+    void setLightColor(const vpvl::Color &color);
+    void setLightPosition(const vpvl::Vector3 &position);
     void rotate(float x, float y);
     void translate(float x, float y);
+    void translateModel(float x, float y);
+    void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
-    void setCameraPerspective(btVector3 *pos, btVector3 *angle, float *fovy, float *distance);
+    void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
+    void setGridVisible(bool value);
+    void setPhysicsEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
@@ -127,26 +152,42 @@ public slots:
     void translateDown() { translate(0.0f, -1.0f); }
     void translateLeft() { translate(-1.0f, 0.0f); }
     void translateRight() { translate(1.0f, 0.0f); }
+    void translateModelUp() { translateModel(0.0f, 0.5f); }
+    void translateModelDown() { translateModel(0.0f, -0.5f); }
+    void translateModelLeft() { translateModel(-0.5f, 0.0f); }
+    void translateModelRight() { translateModel(0.5f, 0.0f); }
     void revertSelectedModel() { setSelectedModel(0); }
+    void updateMotion() { seekMotion(m_frameIndex); }
+    void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
+    void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
+    void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setBones(const QList<vpvl::Bone *> &bones);
+    void loadFile(const QString &file);
+    void deleteCameraMotion();
 
 signals:
+    void fileDidLoad(const QString &filename);
     void modelDidAdd(vpvl::PMDModel *model);
     void modelWillDelete(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
+    void newMotionDidSet(vpvl::PMDModel *model);
     void assetDidAdd(vpvl::Asset *asset);
     void assetWillDelete(vpvl::Asset *asset);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
-    void lightColorDidSet(const btVector4 &color);
-    void lightPositionDidSet(const btVector3 &position);
+    void lightColorDidSet(const vpvl::Color &color);
+    void lightPositionDidSet(const vpvl::Vector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
-    void cameraPerspectiveDidSet(const btVector3 &pos, const btVector3 &angle, float fovy, float distance);
+    void cameraPerspectiveDidSet(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();
     void sceneDidStop();
+    void handleDidMove(int coordinate, float value);
+    void handleDidRotate(int coordinate, float value);
+    void boneDidSelect(const QList<vpvl::Bone *> &bones);
+    void localTransformDidSelect();
+    void globalTransformDidSelect();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -156,37 +197,52 @@ protected:
     void dropEvent(QDropEvent *event);
     void initializeGL();
     void mousePressEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void paintGL();
     void resizeGL(int w, int h);
     void timerEvent(QTimerEvent *event);
     void wheelEvent(QWheelEvent *event);
-
-private:
-    void drawBones();
-    void updateFPS();
-    QProgressDialog *getProgressDialog(const QString &label, int max);
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
+#ifdef VPVL_USE_GLSL
+    vpvl::gl2::Renderer *m_renderer;
+#else
     vpvl::gl::Renderer *m_renderer;
-    vpvl::Bone *m_bone;
-    Delegate *m_delegate;
-    PlayerWidget *m_player;
+#endif
+    internal::Delegate *m_delegate;
+    internal::World *m_world;
     SceneLoader *m_loader;
-    Script *m_script;
-    TiledStage *m_tiledStage;
-    World *m_world;
-    QSettings *m_settings;
+    int m_interval;
+
+private:
+    bool acceptAddingModel(vpvl::PMDModel *model);
+    void drawBones();
+    void updateFPS();
+
+    internal::DebugDrawer *m_debugDrawer;
+    internal::Grid *m_grid;
+    internal::Handles *m_handles;
+    internal::InfoPanel *m_info;
+    vpvl::Bone *m_bone;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
+    QSettings *m_settings;
     float m_prevElapsed;
+    float m_selectedEdgeOffset;
+    float m_frameIndex;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;
-    int m_interval;
+    int m_handleFlags;
     int m_internalTimerID;
     bool m_visibleBones;
     bool m_playing;
+    bool m_enableBoneMove;
+    bool m_enableBoneRotate;
+    bool m_enablePhysics;
+    bool m_showModelDialog;
 
     Q_DISABLE_COPY(SceneWidget)
 };

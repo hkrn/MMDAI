@@ -64,7 +64,7 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
-  ICON = ../QMA/res/MMDAI.icns
+  ICON = ../obsoletes/QMA/res/MMDAI.icns
   QMAKE_INFO_PLIST = res/Info.plist
   resources.files = res/translations/MMDAI1_ja.qm \
                     $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
@@ -82,8 +82,7 @@ else:linux-* {
   QMAKE_RPATHDIR =
 }
 
-SOURCES += Delegate.cc \
-           LicenseWidget.cc \
+SOURCES += LicenseWidget.cc \
            SceneLoader.cc \
            SceneWidget.cc \
            main.cc \
@@ -93,7 +92,9 @@ SOURCES += Delegate.cc \
            LipSync.cc \
            OpenJTalkSpeechEngine.cc \
            JuliusSpeechRecognitionEngine.cc \
-           LoggerWidget.cc
+           LoggerWidget.cc \
+           ExtendedSceneWidget.cc \
+           VPDFile.cc
 
 HEADERS  += Delegate.h \
             World.h \
@@ -108,7 +109,9 @@ HEADERS  += Delegate.h \
             OpenJTalkSpeechEngine.h \
             JuliusSpeechRecognitionEngine.h \
             LoggerWidget.h \
-    Application.h
+            Application.h \
+            ExtendedSceneWidget.h \
+            VPDFile.h
 
 CODECFORTR = UTF-8
 RESOURCES += ../QMA2/resources/QMA2.qrc \

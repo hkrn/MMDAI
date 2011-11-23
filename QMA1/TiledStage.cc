@@ -45,7 +45,7 @@
 
 class TiledStageInternal {
 public:
-    TiledStageInternal(Delegate *delegate, const QVector3D &normal)
+    TiledStageInternal(internal::Delegate *delegate, const QVector3D &normal)
         : m_delegate(delegate),
           m_listID(0),
           m_textureID(0)
@@ -94,7 +94,7 @@ public:
         m_textureID = 0;
     }
     void load(const QString &path) {
-        m_delegate->loadTexture(path.toStdString(), m_textureID);
+        m_delegate->uploadTexture(path.toStdString(), m_textureID, false);
     }
     void render(bool cullface, bool hasColor) {
         const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
@@ -171,7 +171,7 @@ private:
         }
     }
 
-    Delegate *m_delegate;
+    internal::Delegate *m_delegate;
     QMatrix3x4 m_matrix;
     qreal m_vertices[12];
     float m_normals[12];
@@ -224,7 +224,7 @@ void ShadowMatrix(const QVector4D &plane, const QVector4D &position, QMatrix4x4 
 
 }
 
-TiledStage::TiledStage(Delegate *delegate, World *world)
+TiledStage::TiledStage(internal::Delegate *delegate, internal::World *world)
     : m_floor(0),
       m_background(0),
       m_floorRigidBody(0),

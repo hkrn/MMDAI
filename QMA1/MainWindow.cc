@@ -36,9 +36,9 @@
 
 #include "MainWindow.h"
 
+#include "ExtendedSceneWidget.h"
 #include "LicenseWidget.h"
 #include "LoggerWidget.h"
-#include "SceneWidget.h"
 #include "Script.h"
 #include "util.h"
 
@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_licenseWidget = new LicenseWidget();
     m_loggerWidget = new LoggerWidget(&m_settings);
-    m_sceneWidget = new SceneWidget(&m_settings);
+    m_sceneWidget = new ExtendedSceneWidget(&m_settings);
     resize(900, 720);
     setMinimumSize(QSize(640, 480));
     setCentralWidget(m_sceneWidget);

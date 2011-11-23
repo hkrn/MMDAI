@@ -42,9 +42,15 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 
+#include <vpvl/Common.h>
+
 namespace vpvl
 {
+#ifdef VPVL_USE_GLSL
+namespace gl2
+#else
 namespace gl
+#endif
 {
 class Renderer;
 }
@@ -62,35 +68,50 @@ public:
     typedef QHash<QString, vpvl::Asset *> AssetList;
     typedef QMultiHash<vpvl::PMDModel *, vpvl::VMDMotion *> MotionList;
 
+#ifdef VPVL_USE_GLSL
+    explicit SceneLoader(vpvl::gl2::Renderer *renderer);
+#else
     explicit SceneLoader(vpvl::gl::Renderer *renderer);
+#endif
     ~SceneLoader();
 
+    void addModel(vpvl::PMDModel *model, const QDir &dir);
     bool deleteAsset(vpvl::Asset *asset);
+    void deleteCameraMotion();
     bool deleteModel(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::PMDModel *model);
     bool deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     vpvl::PMDModel *findModel(const QString &name) const;
     QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
     vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
+    vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
     vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadModelMotion(const QString &path);
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
-    VPDFile *loadPose(const QString &path, vpvl::PMDModel *model);
+    VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
     void release();
+    void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
+    void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
 
 private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
     void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void setBaseBone(vpvl::PMDModel *model);
 
+#ifdef VPVL_USE_GLSL
+    vpvl::gl2::Renderer *m_renderer;
+#else
     vpvl::gl::Renderer *m_renderer;
+#endif
     vpvl::VMDMotion *m_camera;
     ModelList m_models;
     AssetList m_assets;
     MotionList m_motions;
+    QMap<QString, vpvl::Asset*> m_name2assets;
 
     Q_DISABLE_COPY(SceneLoader)
 };

@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,45 +36,44 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef WORLD_H
-#define WORLD_H
+#ifndef EXTENDEDSCENEWIDGET_H
+#define EXTENDEDSCENEWIDGET_H
 
-#include <QtCore/QObject>
-#include <btBulletDynamicsCommon.h>
+#include "SceneWidget.h"
 
-namespace internal {
+class Script;
+class TiledStage;
 
-class World {
+class ExtendedSceneWidget : public SceneWidget
+{
+    Q_OBJECT
+
 public:
-    explicit World(int defaultFPS)
-        : m_dispatcher(&m_config),
-          m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0, 400.0f), 1024),
-          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
-    {
-        m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
-        setPreferredFPS(defaultFPS);
-    }
-    ~World()
-    {
-    }
+    explicit ExtendedSceneWidget(QSettings *settings, QWidget *parent = 0);
+    ~ExtendedSceneWidget();
 
-    btDiscreteDynamicsWorld *mutableWorld() {
-        return &m_world;
-    }
-    void setPreferredFPS(int value) {
-        m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / value);
-    }
+    TiledStage *tiledStage() const { return m_tiledStage; }
+    Script *script() const { return m_script; }
+
+public slots:
+    void clear();
+    void loadScript();
+    void loadScript(const QString &filename);
+    void setEmptyMotion(vpvl::PMDModel *model);
+
+signals:
+    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
+
+protected:
+    void dropEvent(QDropEvent *event);
+    void initializeGL();
+    void paintGL();
 
 private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher m_dispatcher;
-    btAxisSweep3 m_broadphase;
-    btSequentialImpulseConstraintSolver m_solver;
-    btDiscreteDynamicsWorld m_world;
+    Script *m_script;
+    TiledStage *m_tiledStage;
 
-    Q_DISABLE_COPY(World)
+    Q_DISABLE_COPY(ExtendedSceneWidget)
 };
 
-}
-
-#endif // WORLD_H
+#endif // SCENEWIDGET_H

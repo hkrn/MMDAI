@@ -38,7 +38,7 @@
 
 #include "Script.h"
 
-#include "SceneWidget.h"
+#include "ExtendedSceneWidget.h"
 #include "TiledStage.h"
 #include "util.h"
 
@@ -158,7 +158,7 @@ static void DumpScriptStates(QLinkedList<State *> states)
 const QString Script::kEPS = "<eps>";
 const QString Script::kLipSyncName = "LipSync";
 
-Script::Script(SceneWidget *parent)
+Script::Script(ExtendedSceneWidget *parent)
     : QObject(parent),
       m_parent(parent),
       m_currentState(0),
@@ -476,26 +476,26 @@ void Script::handleCommand(const ScriptArgument &output)
             vpvl::VMDMotion *motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 bool value = false;
-                motion->setEnableRelocation(true);
-                motion->setEnableSmooth(true);
+                //motion->setEnableRelocation(true);
+                //motion->setEnableSmooth(true);
                 if (argc >= 4) {
                     parseEnable(argv[3], "FULL", "PART", value);
-                    motion->setFull(value);
+                    //motion->setFull(value);
                 }
                 if (argc >= 5) {
                     parseEnable(argv[4], "LOOP", "ONCE", value);
-                    motion->setLoop(value);
+                    //motion->setLoop(value);
                 }
                 if (argc >= 6) {
                     parseEnable(argv[5], "ON", "OFF", value);
-                    motion->setEnableSmooth(value);
+                    //motion->setEnableSmooth(value);
                 }
                 if (argc >= 7) {
                     parseEnable(argv[6], "ON", "OFF", value);
-                    motion->setEnableRelocation(value);
+                    //motion->setEnableRelocation(value);
                 }
                 if (argc >= 8) {
-                    motion->setPriority(argv[7].toFloat());
+                    //motion->setPriority(argv[7].toFloat());
                 }
                 m_motions.insert(motionName, motion);
                 Arguments a; a << modelName << motionName;
@@ -521,17 +521,17 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
             vpvl::PMDModel *model = m_models.value(modelName);
             vpvl::VMDMotion *motion = m_motions.value(motionName);
-            bool full = motion->isFull();
-            bool loop = motion->isLoop();
-            bool enableSmooth = motion->enableSmooth();
-            bool enableRelocation = motion->enableRelocation();
+            //bool full = motion->isFull();
+            //bool loop = motion->isLoop();
+            //bool enableSmooth = motion->enableSmooth();
+            //bool enableRelocation = motion->enableRelocation();
             m_parent->deleteMotion(motion, model);
             motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
-                motion->setFull(full);
-                motion->setLoop(loop);
-                motion->setEnableSmooth(enableSmooth);
-                motion->setEnableRelocation(enableRelocation);
+                //motion->setFull(full);
+                //motion->setLoop(loop);
+                //motion->setEnableSmooth(enableSmooth);
+                //motion->setEnableRelocation(enableRelocation);
                 m_motions.remove(motionName);
                 m_motions.insert(motionName, motion);
                 Arguments a;  a << modelName << motionName;
@@ -637,7 +637,7 @@ void Script::handleCommand(const ScriptArgument &output)
             vpvl::VMDMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
             if (newLipSyncMotion) {
                 vpvl::VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
-                newLipSyncMotion->setFull(false);
+                //newLipSyncMotion->setFull(false);
                 m_parent->deleteMotion(oldLipSyncMotion, model);
                 m_parent->insertMotionToModel(newLipSyncMotion, model);
             }
