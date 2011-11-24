@@ -370,7 +370,7 @@ void PMDModel::updateAllFaces()
 {
     const int nfaces = m_faces.count();
     if (nfaces > 0)
-        m_baseFace->setVertices(m_vertices);
+        m_baseFace->setBaseVertices(m_vertices);
     for (int i = 0; i < nfaces; i++) {
         Face *face = m_faces[i];
         const float weight = face->weight();
@@ -462,7 +462,7 @@ void PMDModel::updateImmediate()
 
 void PMDModel::updateBoneMatrices()
 {
-    int nbones = m_bones.count();
+    const int nbones = m_bones.count();
     if (m_boneMatrices.count() == 0)
         m_boneMatrices.reserve(nbones << 4);
     Transform transform;
@@ -475,11 +475,12 @@ void PMDModel::updateBoneMatrices()
 
 void PMDModel::updatePosition()
 {
-    int nvertices = m_vertices.count();
+    const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
         const Vertex *vertex = m_vertices[i];
-        SkinVertex &skinnedVertex = m_skinnedVertices[i];
-        //skinnedVertex.position = vertex->position();
+        Vector3 &position = m_skinnedVertices[i].position;
+        position = vertex->position();
+        position.setW(1.0f);
     }
 }
 
