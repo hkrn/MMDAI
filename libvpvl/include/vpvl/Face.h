@@ -117,11 +117,11 @@ public:
     void convertIndices(const Face *base);
 
     /**
-     * Transform vertices with this face.
+     * Transform vertices with this face (kBase).
      *
      * @param vertices The vertices to transform
      */
-    void setVertices(VertexList &vertices);
+    void setBaseVertices(VertexList &vertices);
 
     /**
      * Transform vertices with this face by rate.

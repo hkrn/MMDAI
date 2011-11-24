@@ -197,7 +197,7 @@ void Face::convertIndices(const Face *base)
     }
 }
 
-void Face::setVertices(VertexList &vertices)
+void Face::setBaseVertices(VertexList &vertices)
 {
     const int nv = vertices.count();
     const int nfv = m_vertices.count();
