@@ -118,7 +118,10 @@ public:
         kTextureCoordsStride,
         kToonTextureStride,
         kIndicesStride,
-        kEdgeIndicesStride
+        kEdgeIndicesStride,
+        kFirstBoneIndexStride,
+        kSecondBoneIndexStride,
+        kBoneWeightStride
     };
 
     struct DataInfo
@@ -255,6 +258,10 @@ public:
      */
     void updateImmediate();
 
+    void updateBoneMatrices();
+
+    void updatePosition();
+
     float boundingSphereRange(Vector3 &center);
 
     /**
@@ -355,6 +362,14 @@ public:
      */
     const void *edgeVerticesPointer() const;
 
+    const void *firstBoneIndexPointer() const;
+
+    const void *secondBoneIndexPointer() const;
+
+    const void *boneWeightPointer() const;
+
+    const float *boneMatricesPointer() const;
+
     /**
      * Returns the texture name of the index.
      *
@@ -413,8 +428,18 @@ public:
      */
     bool load(const uint8_t *data, size_t size);
 
+    /**
+     * Estimate buffer size to save.
+     *
+     * @return Allocate size to save
+     */
     size_t estimateSize() const;
 
+    /**
+     * Save and write PMD data to the buffer.
+     *
+     * @param A buffer that is allocated size with PMDModel#estimateSize()
+     */
     void save(uint8_t *data) const;
 
     /**
@@ -652,10 +677,10 @@ private:
     Array<uint8_t *> m_boneCategoryNames;
     Array<uint8_t *> m_boneCategoryEnglishNames;
     Array<Transform> m_skinningTransform;
-    Array<Vector3> m_edgeVertices;
     Array<Vector3> m_shadowTextureCoords;
     Array<BoneList *> m_bonesForUI;
     Array<uint16_t> m_facesForUIIndices;
+    Array<float> m_boneMatrices;
     BoneList m_rotatedBones;
     Bone **m_orderedBones;
     Array<bool> m_isIKSimulated;

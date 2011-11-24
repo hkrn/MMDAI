@@ -76,6 +76,8 @@ struct SkinVertex
     Vector3 position;
     Vector3 normal;
     Vector4 textureCoord;
+    Vector3 bone;
+    Vector3 edge;
 };
 
 struct State
@@ -125,11 +127,10 @@ void PMDModel::prepare()
     m_skinningTransform.reserve(m_bones.count());
     const int nvertices = m_vertices.count();
     m_skinnedVertices = new SkinVertex[nvertices];
-    m_edgeVertices.reserve(nvertices);
     m_edgeIndicesPointer = new uint16_t[m_indices.count()];
     uint16_t *from = m_indicesPointer, *to = m_edgeIndicesPointer;
     const int nmaterials = m_materials.count();
-    // create edge vertices (copy model vertices if the material is enabled)
+    // Create edge vertices (copy model vertices if the material is enabled)
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = m_materials[i];
         int nindices = material->countIndices();
@@ -140,11 +141,17 @@ void PMDModel::prepare()
         }
         from += nindices;
     }
-    // Therefore no updating texture coordinates, set texture coordinates here
+    // Initialize skin vertices and set values from vertex
     for (int i = 0; i < nvertices; i++) {
         const Vertex *vertex = m_vertices[i];
-        m_skinnedVertices[i].textureCoord.setValue(vertex->u(), vertex->v(), 0.0f, 0.0f);
+        SkinVertex &skinnedVertex = m_skinnedVertices[i];
+        skinnedVertex.position = vertex->position();
+        skinnedVertex.normal = vertex->normal();
+        skinnedVertex.textureCoord.setValue(vertex->u(), vertex->v(), 0.0f, 0.0f);
+        skinnedVertex.bone.setValue(vertex->bone1(), vertex->bone2(), vertex->weight());
+        skinnedVertex.edge.setZero();
     }
+    // Find kUnderRotate or kFollowRotate bones to update rotation value after IK
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
@@ -438,9 +445,9 @@ void PMDModel::updateToon(const Vector3 &lightDirection)
         const float v = (1.0f - lightDirection.dot(skin.normal)) * 0.5f;
         skin.textureCoord.setW(v);
         if (!m_vertices[i]->isEdgeEnabled())
-            m_edgeVertices[i] = skin.position;
+            skin.edge = skin.position;
         else
-            m_edgeVertices[i] = skin.position + skin.normal * m_edgeOffset;
+            skin.edge = skin.position + skin.normal * m_edgeOffset;
     }
 }
 
@@ -451,6 +458,29 @@ void PMDModel::updateImmediate()
     updateAllFaces();
     updateBoneFromSimulation();
     updateSkins();
+}
+
+void PMDModel::updateBoneMatrices()
+{
+    int nbones = m_bones.count();
+    if (m_boneMatrices.count() == 0)
+        m_boneMatrices.reserve(nbones << 4);
+    Transform transform;
+    for (int i = 0; i < nbones; i++) {
+        vpvl::Bone *bone = m_bones[i];
+        bone->getSkinTransform(transform);
+        transform.getOpenGLMatrix(&m_boneMatrices[i << 4]);
+    }
+}
+
+void PMDModel::updatePosition()
+{
+    int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        const Vertex *vertex = m_vertices[i];
+        SkinVertex &skinnedVertex = m_skinnedVertices[i];
+        //skinnedVertex.position = vertex->position();
+    }
 }
 
 void PMDModel::updateIndices()
@@ -1234,9 +1264,11 @@ size_t PMDModel::strideSize(StrideType type) const
     case kNormalsStride:
     case kTextureCoordsStride:
     case kToonTextureStride:
-        return sizeof(SkinVertex);
     case kEdgeVerticesStride:
-        return sizeof(Vector3);
+    case kFirstBoneIndexStride:
+    case kSecondBoneIndexStride:
+    case kBoneWeightStride:
+        return sizeof(SkinVertex);
     case kIndicesStride:
     case kEdgeIndicesStride:
         return sizeof(uint16_t);
@@ -1247,10 +1279,9 @@ size_t PMDModel::strideSize(StrideType type) const
 
 size_t PMDModel::strideOffset(StrideType type) const
 {
-    SkinVertex v;
+    static const SkinVertex v;
     switch (type) {
     case kVerticesStride:
-    case kEdgeVerticesStride:
     case kIndicesStride:
     case kEdgeIndicesStride:
         return 0;
@@ -1260,6 +1291,14 @@ size_t PMDModel::strideOffset(StrideType type) const
         return reinterpret_cast<const uint8_t *>(&v.textureCoord.x()) - reinterpret_cast<const uint8_t *>(&v.position);
     case kToonTextureStride:
         return reinterpret_cast<const uint8_t *>(&v.textureCoord.z()) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kFirstBoneIndexStride:
+        return reinterpret_cast<const uint8_t *>(&v.bone.x()) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kSecondBoneIndexStride:
+        return reinterpret_cast<const uint8_t *>(&v.bone.y()) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kBoneWeightStride:
+        return reinterpret_cast<const uint8_t *>(&v.bone.z()) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kEdgeVerticesStride:
+        return reinterpret_cast<const uint8_t *>(&v.edge) - reinterpret_cast<const uint8_t *>(&v.position);
     default:
         return 0;
     }
@@ -1287,7 +1326,27 @@ const void *PMDModel::toonTextureCoordsPointer() const
 
 const void *PMDModel::edgeVerticesPointer() const
 {
-    return &m_edgeVertices[0];
+    return &m_skinnedVertices[0].edge;
+}
+
+const void *PMDModel::firstBoneIndexPointer() const
+{
+    return &m_skinnedVertices[0].bone.x();
+}
+
+const void *PMDModel::secondBoneIndexPointer() const
+{
+    return &m_skinnedVertices[0].bone.y();
+}
+
+const void *PMDModel::boneWeightPointer() const
+{
+    return &m_skinnedVertices[0].bone.z();
+}
+
+const float *PMDModel::boneMatricesPointer() const
+{
+    return &m_boneMatrices[0];
 }
 
 const uint8_t *PMDModel::toonTexture(int index) const

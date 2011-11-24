@@ -59,10 +59,6 @@ namespace gl2
 enum VertexBufferObjectType
 {
     kModelVertices,
-    kModelNormals,
-    kModelColors,
-    kModelTexCoords,
-    kEdgeVertices,
     kEdgeIndices,
     kShadowIndices,
     kVertexBufferObjectMax
