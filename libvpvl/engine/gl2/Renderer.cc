@@ -1136,11 +1136,10 @@ void Renderer::updateModel(vpvl::PMDModel *model)
         model->updateBoneMatrices();
         model->updatePosition();
     }
-    const size_t size = model->vertices().count();
-    const size_t vs = size * model->strideSize(vpvl::PMDModel::kVerticesStride);
     vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vs, model->verticesPointer());
+    glBufferSubData(GL_ARRAY_BUFFER, 0, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
+                    model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
