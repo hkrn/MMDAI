@@ -41,7 +41,7 @@ void main() {
     mat4 matrix2 = boneMatrices[int(inSecondBoneIndex)];
     vec4 position = modelViewMatrix * doSkinning(inPosition, matrix1, matrix2);
     vec3 view = normalize(position.xyz);
-    vec3 normal = normalize(normalMatrix * doSkinning(vec4(inNormal, 1.0), matrix1, matrix2).xyz);
+    vec3 normal = normalize(normalMatrix * doSkinning(vec4(inNormal, 0.0), matrix1, matrix2).xyz);
     vec4 color = min(materialAmbient + lightColor * materialDiffuse, kOne4);
     vec4 outPosition = projectionMatrix * position;
     outColor = color;
