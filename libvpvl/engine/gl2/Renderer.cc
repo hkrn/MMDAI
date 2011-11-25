@@ -131,7 +131,7 @@ public:
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_normalAttributeLocation);
-        glVertexAttribPointer(m_normalAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+        glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
 
 protected:
@@ -171,24 +171,48 @@ class EdgeProgram : public ShaderProgram {
 public:
     EdgeProgram(IDelegate *delegate)
         : ShaderProgram(delegate),
+          m_boneAttributesAttributeLocation(0),
+          m_edgeAttributeLocation(0),
+          m_boneMatricesUniformLocation(0),
           m_colorUniformLocation(0)
     {
     }
     ~EdgeProgram() {
+        m_boneAttributesAttributeLocation = 0;
+        m_edgeAttributeLocation = 0;
+        m_boneMatricesUniformLocation = 0;
         m_colorUniformLocation = 0;
     }
 
     virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
         bool ret = ShaderProgram::load(vertexShaderSource, fragmentShaderSource);
-        if (ret)
+        if (ret) {
+            m_boneAttributesAttributeLocation = glGetAttribLocation(m_program, "inBoneAttributes");
+            m_edgeAttributeLocation = glGetAttribLocation(m_program, "inEdgeOffset");
+            m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
             m_colorUniformLocation = glGetUniformLocation(m_program, "color");
+        }
         return ret;
+    }
+    void setBoneAttributes(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_boneAttributesAttributeLocation);
+        glVertexAttribPointer(m_boneAttributesAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setEdge(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_edgeAttributeLocation);
+        glVertexAttribPointer(m_edgeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setBoneMatrices(const GLfloat *ptr, GLsizei size) {
+        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, ptr);
     }
     void setColor(const Vector3 &value) {
         glUniform4fv(m_colorUniformLocation, 1, value);
     }
 
 private:
+    GLuint m_boneAttributesAttributeLocation;
+    GLuint m_edgeAttributeLocation;
+    GLuint m_boneMatricesUniformLocation;
     GLuint m_colorUniformLocation;
 };
 
@@ -1158,7 +1182,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
 
     const bool enableToon = model->isToonEnabled();
     // toon
-    if (enableToon) {
+    if (enableToon && model->isSoftwareSkinningEnabled()) {
         // shadow map
         m_modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kToonTextureStride)),
                                         model->strideSize(vpvl::PMDModel::kToonTextureStride));
@@ -1213,8 +1237,21 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     m_edgeProgram->setColor(model->edgeColor());
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
-    m_shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kEdgeVerticesStride)),
-                                 model->strideSize(vpvl::PMDModel::kEdgeVerticesStride));
+    if (!model->isSoftwareSkinningEnabled()) {
+        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
+                                   model->strideSize(vpvl::PMDModel::kVerticesStride));
+        m_edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kNormalsStride)),
+                                 model->strideSize(vpvl::PMDModel::kNormalsStride));
+        m_edgeProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kBoneAttributesStride)),
+                                          model->strideSize(vpvl::PMDModel::kBoneAttributesStride));
+        m_edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kEdgeVerticesStride)),
+                               model->strideSize(vpvl::PMDModel::kEdgeVerticesStride));
+        m_edgeProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
+    }
+    else {
+        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kEdgeVerticesStride)),
+                                   model->strideSize(vpvl::PMDModel::kEdgeVerticesStride));
+    }
     glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glCullFace(GL_BACK);

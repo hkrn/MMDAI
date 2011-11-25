@@ -257,7 +257,7 @@ public:
             file = "asset.fsh";
             break;
         case kEdgeVertexShader:
-            file = "edge.vsh";
+            file = m_hardwareSkinning ? "edge_hws.vsh" : "edge.vsh";
             break;
         case kEdgeFragmentShader:
             file = "edge.fsh";
