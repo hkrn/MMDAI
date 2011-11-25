@@ -111,6 +111,7 @@ void Scene::addModel(PMDModel *model)
     sortRenderingOrder();
     model->setLightPosition(m_lightPosition);
     model->joinWorld(m_world);
+    model->setSoftwareSkinningEnable(m_enableSoftwareSkinning);
     model->setVisible(true);
 }
 
@@ -160,8 +161,8 @@ void Scene::seekMotion(float frameIndex)
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->seekMotion(frameIndex);
+        model->updateSkins();
     }
-    updateSkin();
     // Updating camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
@@ -202,6 +203,16 @@ void Scene::setLightSource(const Vector4 &color, const Vector3 &position)
     }
 }
 
+void Scene::setSoftwareSkinningEnable(bool value)
+{
+    const int nmodels = m_models.count();
+    for (int i = 0; i < nmodels; i++) {
+        PMDModel *model = m_models[i];
+        model->setSoftwareSkinningEnable(value);
+    }
+    m_enableSoftwareSkinning = value;
+}
+
 void Scene::setWorld(btDiscreteDynamicsWorld *world)
 {
     const int nmodels = m_models.count();
@@ -231,8 +242,8 @@ void Scene::advanceMotion(float deltaFrame)
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->advanceMotion(deltaFrame);
+        model->updateSkins();
     }
-    updateSkin();
     // Updating world simulation
 #ifndef VPVL_NO_BULLET
     if (m_world) {
@@ -262,8 +273,8 @@ void Scene::resetMotion()
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->resetMotion();
+        model->updateSkins();
     }
-    updateSkin();
     // Updating camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
@@ -337,17 +348,6 @@ void Scene::updateRotationFromAngle()
     static const Vector3 x(1.0f, 0.0f, 0.0f), y(0.0f, 1.0f, 0.0f), z(0.0f, 0.0f, 1.0f);
     Quaternion rz(z, radian(m_angle.z())), rx(x, radian(m_angle.x())), ry(y, radian(m_angle.y()));
     m_rotation = rz * rx * ry;
-}
-
-void Scene::updateSkin()
-{
-    if (m_enableSoftwareSkinning) {
-        const int nmodels = m_models.count();
-        for (int i = 0; i < nmodels; i++) {
-            PMDModel *model = m_models[i];
-            model->updateSkins();
-         }
-    }
 }
 
 }

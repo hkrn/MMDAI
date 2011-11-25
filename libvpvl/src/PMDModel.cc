@@ -106,6 +106,7 @@ PMDModel::PMDModel()
       m_edgeOffset(0.03f),
       m_selfShadowDensityCoef(0.0f),
       m_enableSimulation(false),
+      m_enableSoftwareSkinning(true),
       m_enableToon(true),
       m_visible(false)
 {
@@ -332,8 +333,14 @@ void PMDModel::advanceMotion(float deltaFrame)
 
 void PMDModel::updateSkins()
 {
-    updateSkinVertices();
-    updateToon(m_lightPosition);
+    if (m_enableSoftwareSkinning) {
+        updateSkinVertices();
+        updateToon(m_lightPosition);
+    }
+    else {
+        updateBoneMatrices();
+        updatePosition();
+    }
 }
 
 void PMDModel::updateAllBones()
@@ -1216,8 +1223,6 @@ void PMDModel::release()
     m_edgeIndicesPointer = 0;
     m_edgeIndicesCount = 0;
     m_error = kNoError;
-    m_enableSimulation = false;
-    m_enableToon = true;
     m_visible = false;
 }
 
@@ -1364,6 +1369,12 @@ void PMDModel::setToonTextures(const uint8_t *ptr)
         copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
         p += kCustomTextureNameMax;
     }
+}
+
+void PMDModel::setSoftwareSkinningEnable(bool value)
+{
+    m_enableSoftwareSkinning = value;
+    updateSkins();
 }
 
 Bone *PMDModel::findBone(const uint8_t *name) const

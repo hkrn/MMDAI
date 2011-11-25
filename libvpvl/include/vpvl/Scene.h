@@ -82,6 +82,7 @@ public:
     void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
     void setLightSource(const Color &color, const Vector3 &position);
+    void setSoftwareSkinningEnable(bool value);
     void setViewMove(int viewMoveTime);
     void setWorld(btDiscreteDynamicsWorld *world);
     void advanceMotion(float deltaFrame);
@@ -140,14 +141,10 @@ public:
     void setPreferredFPS(int value) {
         m_preferredFPS = value;
     }
-    void setSoftwareSkinningEnable(bool value) {
-        m_enableSoftwareSkinning = value;
-    }
 
 private:
     void sortRenderingOrder();
     void updateRotationFromAngle();
-    void updateSkin();
 
     btDiscreteDynamicsWorld *m_world;
     Array<PMDModel *> m_models;

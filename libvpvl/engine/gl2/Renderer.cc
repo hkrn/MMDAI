@@ -1132,10 +1132,6 @@ void Renderer::updateAllModel()
 
 void Renderer::updateModel(vpvl::PMDModel *model)
 {
-    if (!m_scene->isSoftwareSkinningEnabled()) {
-        model->updateBoneMatrices();
-        model->updatePosition();
-    }
     vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
@@ -1156,7 +1152,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kTextureCoordsStride)),
                                 model->strideSize(vpvl::PMDModel::kTextureCoordsStride));
 
-    if (!m_scene->isSoftwareSkinningEnabled()) {
+    if (!model->isSoftwareSkinningEnabled()) {
         m_modelProgram->setFirstBoneIndex(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kFirstBoneIndexStride)),
                                           model->strideSize(vpvl::PMDModel::kFirstBoneIndexStride));
         m_modelProgram->setSecondBoneIndex(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kSecondBoneIndexStride)),

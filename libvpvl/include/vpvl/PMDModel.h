@@ -258,10 +258,6 @@ public:
      */
     void updateImmediate();
 
-    void updateBoneMatrices();
-
-    void updatePosition();
-
     float boundingSphereRange(Vector3 &center);
 
     /**
@@ -386,6 +382,8 @@ public:
      * @param texture names to set
      */
     void setToonTextures(const uint8_t *ptr);
+
+    void setSoftwareSkinningEnable(bool value);
 
     /**
      * Return the bone of the name.
@@ -532,6 +530,9 @@ public:
     bool isToonEnabled() const {
         return m_enableToon;
     }
+    bool isSoftwareSkinningEnabled() const {
+        return m_enableSoftwareSkinning;
+    }
     bool isVisible() const {
         return m_visible;
     }
@@ -653,6 +654,8 @@ private:
     void updateSkinVertices();
     void updateToon(const Vector3 &lightPosition);
     void updateIndices();
+    void updateBoneMatrices();
+    void updatePosition();
 
     uint8_t m_name[kNameSize + 1];
     uint8_t m_comment[kCommentSize + 1];
@@ -699,6 +702,7 @@ private:
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
     bool m_enableSimulation;
+    bool m_enableSoftwareSkinning;
     bool m_enableToon;
     bool m_visible;
 
