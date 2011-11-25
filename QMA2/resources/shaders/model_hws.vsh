@@ -13,9 +13,7 @@ attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonTexCoord;
-attribute float inFirstBoneIndex;
-attribute float inSecondBoneIndex;
-attribute float inBoneWeight;
+attribute vec3 inBoneAttributes;
 varying vec4 outColor;
 varying vec4 outShadowTexCoord;
 varying vec2 outMainTexCoord;
@@ -27,7 +25,8 @@ const float kHalf = 0.5;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
 
 vec4 doSkinning(vec4 position, mat4 matrix1, mat4 matrix2) {
-    return inBoneWeight * (matrix1 * position) + (1.0 - inBoneWeight) * (matrix2 * position);
+    float weight = inBoneAttributes.z;
+    return weight * (matrix1 * position) + (1.0 - weight) * (matrix2 * position);
 }
 
 vec2 makeSphereMap(vec3 position, vec3 normal) {
@@ -37,8 +36,8 @@ vec2 makeSphereMap(vec3 position, vec3 normal) {
 }
 
 void main() {
-    mat4 matrix1 = boneMatrices[int(inFirstBoneIndex)];
-    mat4 matrix2 = boneMatrices[int(inSecondBoneIndex)];
+    mat4 matrix1 = boneMatrices[int(inBoneAttributes.x)];
+    mat4 matrix2 = boneMatrices[int(inBoneAttributes.y)];
     vec4 position = modelViewMatrix * doSkinning(inPosition, matrix1, matrix2);
     vec3 view = normalize(position.xyz);
     vec3 normal = normalize(normalMatrix * doSkinning(vec4(inNormal, 0.0), matrix1, matrix2).xyz);

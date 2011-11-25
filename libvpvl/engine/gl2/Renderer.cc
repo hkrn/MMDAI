@@ -241,9 +241,7 @@ public:
         : ObjectProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
-          m_firstBoneIndexAttributeLocation(0),
-          m_secondBoneIndexAttributeLocation(0),
-          m_boneWeightAttributeLocation(0),
+          m_boneAttributesAttributeLocation(0),
           m_boneMatricesUniformLocation(0),
           m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
@@ -262,9 +260,7 @@ public:
     ~ModelProgram() {
         m_texCoordAttributeLocation = 0;
         m_toonTexCoordAttributeLocation = 0;
-        m_firstBoneIndexAttributeLocation = 0;
-        m_secondBoneIndexAttributeLocation = 0;
-        m_boneWeightAttributeLocation = 0;
+        m_boneAttributesAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
         m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
@@ -285,9 +281,7 @@ public:
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
-            m_firstBoneIndexAttributeLocation = glGetAttribLocation(m_program, "inFirstBoneIndex");
-            m_secondBoneIndexAttributeLocation = glGetAttribLocation(m_program, "inSecondBoneIndex");
-            m_boneWeightAttributeLocation = glGetAttribLocation(m_program, "inBoneWeight");
+            m_boneAttributesAttributeLocation = glGetAttribLocation(m_program, "inBoneAttributes");
             m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
             m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
@@ -324,17 +318,9 @@ public:
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
         glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setFirstBoneIndex(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_firstBoneIndexAttributeLocation);
-        glVertexAttribPointer(m_firstBoneIndexAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setSecondBoneIndex(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_secondBoneIndexAttributeLocation);
-        glVertexAttribPointer(m_secondBoneIndexAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setBoneWeight(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneWeightAttributeLocation);
-        glVertexAttribPointer(m_boneWeightAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
+    void setBoneAttributes(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_boneAttributesAttributeLocation);
+        glVertexAttribPointer(m_boneAttributesAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneMatrices(const GLfloat *ptr, GLsizei size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, ptr);
@@ -385,9 +371,7 @@ public:
 private:
     GLuint m_texCoordAttributeLocation;
     GLuint m_toonTexCoordAttributeLocation;
-    GLuint m_firstBoneIndexAttributeLocation;
-    GLuint m_secondBoneIndexAttributeLocation;
-    GLuint m_boneWeightAttributeLocation;
+    GLuint m_boneAttributesAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
@@ -1153,12 +1137,8 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
                                 model->strideSize(vpvl::PMDModel::kTextureCoordsStride));
 
     if (!model->isSoftwareSkinningEnabled()) {
-        m_modelProgram->setFirstBoneIndex(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kFirstBoneIndexStride)),
-                                          model->strideSize(vpvl::PMDModel::kFirstBoneIndexStride));
-        m_modelProgram->setSecondBoneIndex(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kSecondBoneIndexStride)),
-                                           model->strideSize(vpvl::PMDModel::kSecondBoneIndexStride));
-        m_modelProgram->setBoneWeight(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kBoneWeightStride)),
-                                      model->strideSize(vpvl::PMDModel::kBoneWeightStride));
+        m_modelProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kBoneAttributesStride)),
+                                          model->strideSize(vpvl::PMDModel::kBoneAttributesStride));
         m_modelProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
     }
 

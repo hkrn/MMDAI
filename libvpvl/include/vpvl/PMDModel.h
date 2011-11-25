@@ -119,9 +119,7 @@ public:
         kToonTextureStride,
         kIndicesStride,
         kEdgeIndicesStride,
-        kFirstBoneIndexStride,
-        kSecondBoneIndexStride,
-        kBoneWeightStride
+        kBoneAttributesStride
     };
 
     struct DataInfo
@@ -358,11 +356,7 @@ public:
      */
     const void *edgeVerticesPointer() const;
 
-    const void *firstBoneIndexPointer() const;
-
-    const void *secondBoneIndexPointer() const;
-
-    const void *boneWeightPointer() const;
+    const void *boneAttributesPointer() const;
 
     const float *boneMatricesPointer() const;
 

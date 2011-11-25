@@ -485,9 +485,11 @@ void PMDModel::updatePosition()
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
         const Vertex *vertex = m_vertices[i];
-        Vector3 &position = m_skinnedVertices[i].position;
+        SkinVertex &skinnedVertex = m_skinnedVertices[i];
+        Vector3 &position = skinnedVertex.position;
         position = vertex->position();
         position.setW(1.0f);
+        skinnedVertex.edge.setW(vertex->isEdgeEnabled() ? m_edgeOffset : 0.0f);
     }
 }
 
@@ -1271,9 +1273,7 @@ size_t PMDModel::strideSize(StrideType type) const
     case kTextureCoordsStride:
     case kToonTextureStride:
     case kEdgeVerticesStride:
-    case kFirstBoneIndexStride:
-    case kSecondBoneIndexStride:
-    case kBoneWeightStride:
+    case kBoneAttributesStride:
         return sizeof(SkinVertex);
     case kIndicesStride:
     case kEdgeIndicesStride:
@@ -1297,12 +1297,8 @@ size_t PMDModel::strideOffset(StrideType type) const
         return reinterpret_cast<const uint8_t *>(&v.textureCoord.x()) - reinterpret_cast<const uint8_t *>(&v.position);
     case kToonTextureStride:
         return reinterpret_cast<const uint8_t *>(&v.textureCoord.z()) - reinterpret_cast<const uint8_t *>(&v.position);
-    case kFirstBoneIndexStride:
-        return reinterpret_cast<const uint8_t *>(&v.bone.x()) - reinterpret_cast<const uint8_t *>(&v.position);
-    case kSecondBoneIndexStride:
-        return reinterpret_cast<const uint8_t *>(&v.bone.y()) - reinterpret_cast<const uint8_t *>(&v.position);
-    case kBoneWeightStride:
-        return reinterpret_cast<const uint8_t *>(&v.bone.z()) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kBoneAttributesStride:
+        return reinterpret_cast<const uint8_t *>(&v.bone) - reinterpret_cast<const uint8_t *>(&v.position);
     case kEdgeVerticesStride:
         return reinterpret_cast<const uint8_t *>(&v.edge) - reinterpret_cast<const uint8_t *>(&v.position);
     default:
@@ -1335,19 +1331,9 @@ const void *PMDModel::edgeVerticesPointer() const
     return &m_skinnedVertices[0].edge;
 }
 
-const void *PMDModel::firstBoneIndexPointer() const
+const void *PMDModel::boneAttributesPointer() const
 {
-    return &m_skinnedVertices[0].bone.x();
-}
-
-const void *PMDModel::secondBoneIndexPointer() const
-{
-    return &m_skinnedVertices[0].bone.y();
-}
-
-const void *PMDModel::boneWeightPointer() const
-{
-    return &m_skinnedVertices[0].bone.z();
+    return &m_skinnedVertices[0].bone;
 }
 
 const float *PMDModel::boneMatricesPointer() const
