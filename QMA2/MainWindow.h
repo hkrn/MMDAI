@@ -114,6 +114,8 @@ private slots:
     void openEdgeOffsetDialog();
     void startPlayingScene();
     void openPlaySettingDialog();
+    void selectNextModel();
+    void selectPreviousModel();
 
 private:
     void buildUI();
@@ -182,6 +184,8 @@ private:
     QAction *m_actionTranslateLeft;
     QAction *m_actionTranslateRight;
     QAction *m_actionResetCamera;
+    QAction *m_actionSelectNextModel;
+    QAction *m_actionSelectPreviousModel;
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
     QAction *m_actionEdgeOffsetDialog;

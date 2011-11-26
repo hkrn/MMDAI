@@ -64,6 +64,24 @@
 #include <opencv2/highgui/highgui.hpp>
 #endif
 
+namespace {
+
+static int FindIndexOfActions(vpvl::PMDModel *model, const QList<QAction *> &actions)
+{
+    const QString &name = internal::toQString(model);
+    int i = 0, found = -1;
+    foreach (QAction *action, actions) {
+        if (action->text() == name) {
+            found = i;
+            break;
+        }
+        i++;
+    }
+    return found;
+}
+
+}
+
 namespace internal {
 
 class Player : QObject {
@@ -501,6 +519,10 @@ void MainWindow::buildUI()
     m_actionResetCamera = new QAction(this);
     connect(m_actionResetCamera, SIGNAL(triggered()), m_sceneWidget, SLOT(resetCamera()));
 
+    m_actionSelectNextModel = new QAction(this);
+    connect(m_actionSelectNextModel, SIGNAL(triggered()), this, SLOT(selectNextModel()));
+    m_actionSelectPreviousModel = new QAction(this);
+    connect(m_actionSelectPreviousModel, SIGNAL(triggered()), this, SLOT(selectPreviousModel()));
     m_actionRevertSelectedModel = new QAction(this);
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
@@ -634,8 +656,12 @@ void MainWindow::buildUI()
     m_menuRecentFiles->addSeparator();
     m_menuRecentFiles->addAction(m_actionClearRecentFiles);
     m_menuFile->addMenu(m_menuRecentFiles);
+    m_menuModel->addAction(m_actionSelectNextModel);
+    m_menuModel->addAction(m_actionSelectPreviousModel);
+    m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
+    m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionEdgeOffsetDialog);
     m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionTranslateModelUp);
@@ -791,6 +817,12 @@ void MainWindow::retranslate()
     m_actionTranslateRight->setShortcut(tr("Shift+Right"));
     m_actionResetCamera->setText(tr("Reset camera"));
     m_actionResetCamera->setStatusTip(tr("Reset camera perspective."));
+    m_actionSelectNextModel->setText(tr("Select next model"));
+    m_actionSelectNextModel->setStatusTip(tr("Select the next model"));
+    m_actionSelectNextModel->setShortcut(QKeySequence::SelectNextPage);
+    m_actionSelectPreviousModel->setText(tr("Select previous model"));
+    m_actionSelectPreviousModel->setStatusTip(tr("Select the previous model"));
+    m_actionSelectPreviousModel->setShortcut(QKeySequence::SelectPreviousPage);
     m_actionRevertSelectedModel->setText(tr("Revert selected model"));
     m_actionRevertSelectedModel->setStatusTip(tr("Revert the selected model."));
     m_actionDeleteSelectedModel->setText(tr("Delete selected model"));
@@ -1168,6 +1200,30 @@ void MainWindow::openPlaySettingDialog()
     else {
         QMessageBox::warning(this, tr("No motion to export."),
                              tr("Create or load a motion."));
+    }
+}
+
+void MainWindow::selectNextModel()
+{
+    const QList<QAction *> &actions = m_menuRetainModels->actions();
+    if (!actions.isEmpty()) {
+        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        if (index == -1 || index == actions.length() - 1)
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.first()->text()));
+        else
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index + 1)->text()));
+    }
+}
+
+void MainWindow::selectPreviousModel()
+{
+    const QList<QAction *> &actions = m_menuRetainModels->actions();
+    if (!actions.isEmpty()) {
+        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        if (index == -1 || index == 0)
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.last()->text()));
+        else
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index - 1)->text()));
     }
 }
 
