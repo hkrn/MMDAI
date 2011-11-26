@@ -86,7 +86,7 @@ static void TestFace(vpvl::Face &face)
     vpvl::VertexList vertices;
     vpvl::Vertex *vertex = new vpvl::Vertex();
     vertices.add(vertex);
-    face.setVertices(vertices);
+    face.setBaseVertices(vertices);
 #ifdef VPVL_COORDINATE_OPENGL
     QVERIFY(vertex->position() == btVector3(1.0f, 2.0f, -3.0f));
 #else
