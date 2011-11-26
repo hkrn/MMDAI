@@ -591,6 +591,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
     if (model) {
         /* PMD の二重登録防止 */
+        vpvl::Bone *centerBone;
         if (!hasPMDModel(model)) {
             /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
@@ -606,7 +607,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
              * このような扱いにしている
              * TODO: 別のカテゴリにつけられたセンターボーンをもつモデルの対処
              */
-            vpvl::Bone *centerBone = vpvl::Bone::centerBone(&model->bones());
+            centerBone = vpvl::Bone::centerBone(&model->bones());
             const QString &centerBoneName = internal::toQString(centerBone);
             TreeItem *centerBoneCategory = new TreeItem(centerBoneName, 0, false, true, r);
             TreeItem *centerBoneItem = new TreeItem(centerBoneName, centerBone, false, false, centerBoneCategory);
@@ -634,11 +635,16 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
             addPMDModel(model, ptr, keys);
         }
         else {
-            /* キーリストが空ですがモデルが存在し、スキップされるので実害なし */
+            /* キーリストが空でもモデルが存在し、スキップされるので実害なし */
+            centerBone = vpvl::Bone::centerBone(&model->bones());
             addPMDModel(model, rootPtr(model), Keys());
         }
         m_model = model;
         emit modelDidChange(model);
+        /* 予めセンターボーンを選択しておく */
+        QList<vpvl::Bone *> bones;
+        bones.append(centerBone);
+        selectBones(bones);
         qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
     }
     else {
