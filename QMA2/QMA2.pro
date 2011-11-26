@@ -160,9 +160,7 @@ RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
 
 FORMS += \
-    TransformWidget.ui \
-    #MainWindow.ui \
-    BoneDialog.ui
+    TransformWidget.ui
 
 
 

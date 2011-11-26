@@ -38,13 +38,11 @@
 #define BONEDIALOG_H
 
 #include <QtGui/QDialog>
-#include <vpvl/PMDModel.h>
-
-namespace Ui {
-    class BoneDialog;
-}
+#include <vpvl/Common.h>
 
 class BoneMotionModel;
+class QDoubleSpinBox;
+class QLabel;
 
 class BoneDialog : public QDialog
 {
@@ -55,19 +53,31 @@ public:
     ~BoneDialog();
 
 private slots:
-    void setPosition(const vpvl::Vector3 &pos);
-    void setRotation(const vpvl::Quaternion &rot);
-    void on_XPositionSpinBox_valueChanged(double value);
-    void on_YPositionSpinBox_valueChanged(double value);
-    void on_ZPositionSpinBox_valueChanged(double value);
-    void on_XAxisSpinBox_valueChanged(double value);
-    void on_YAxisSpinBox_valueChanged(double value);
-    void on_ZAxisSpinBox_valueChanged(double value);
-    void on_buttonBox_accepted();
-    void on_buttonBox_rejected();
+    void retranslate();
+    void setPosition(const vpvl::Vector3 &position);
+    void setRotation(const vpvl::Quaternion &rotation);
+    void setXPosition(double value);
+    void setYPosition(double value);
+    void setZPosition(double value);
+    void setXAngle(double value);
+    void setYAngle(double value);
+    void setZAngle(double value);
+    void dialogAccepted();
+    void dialogRejected();
 
 private:
-    Ui::BoneDialog *ui;
+    QLabel *m_xPositionLabel;
+    QLabel *m_yPositionLabel;
+    QLabel *m_zPositionLabel;
+    QLabel *m_xAngleLabel;
+    QLabel *m_yAngleLabel;
+    QLabel *m_zAngleLabel;
+    QDoubleSpinBox *m_xPosition;
+    QDoubleSpinBox *m_yPosition;
+    QDoubleSpinBox *m_zPosition;
+    QDoubleSpinBox *m_xAngle;
+    QDoubleSpinBox *m_yAngle;
+    QDoubleSpinBox *m_zAngle;
     BoneMotionModel *m_boneMotionModel;
 
     Q_DISABLE_COPY(BoneDialog)
