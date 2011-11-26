@@ -85,7 +85,6 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
             i++;
         }
     }
-    setBaseBone(model);
     /* モデルを SceneLoader にヒモ付けする */
     m_models.insert(key, model);
 }
@@ -423,23 +422,6 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
     else {
         qWarning("Cannot load %s: %s", qPrintable(path), qPrintable(file.errorString()));
     }
-}
-
-void SceneLoader::setBaseBone(vpvl::PMDModel *model)
-{
-    const QString allParent = "全ての親";
-    const vpvl::BoneList &bones = model->bones();
-    int nbones = bones.count();
-    bool found = false;
-    for (int i = 0; i < nbones; i++) {
-        vpvl::Bone *bone = bones[i];
-        if (internal::toQString(bone) == allParent) {
-            model->setBaseBone(bone);
-            found = true;
-        }
-    }
-    if (!found)
-        model->setBaseBone(model->mutableRootBone());
 }
 
 void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)

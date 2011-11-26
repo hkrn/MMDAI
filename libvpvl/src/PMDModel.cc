@@ -311,11 +311,12 @@ void PMDModel::seekMotion(float frameIndex)
 
 void PMDModel::updateRootBone()
 {
+    m_rootBone.setPosition(m_positionOffset);
+    m_rootBone.setRotation(m_rotationOffset);
+    m_rootBone.updateTransform();
     if (m_baseBone) {
-        m_rootBone.setPosition(m_positionOffset);
-        m_rootBone.setRotation(m_rotationOffset);
-        m_rootBone.updateTransform();
         m_rootBone.setLocalTransform(m_baseBone->localTransform() * m_rootBone.localTransform());
+        m_rootBone.updateTransform();
     }
 }
 

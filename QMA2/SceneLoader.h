@@ -100,7 +100,6 @@ public:
 private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
     void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void setBaseBone(vpvl::PMDModel *model);
 
 #ifdef VPVL_USE_GLSL
     vpvl::gl2::Renderer *m_renderer;
