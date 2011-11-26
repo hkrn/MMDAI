@@ -649,6 +649,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
     }
     else {
         m_model = 0;
+        selectBones(QList<vpvl::Bone *>());
     }
     /* テーブルモデルを更新 */
     reset();
@@ -936,8 +937,7 @@ void BoneMotionModel::rotate(int coordinate, float value)
 void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 {
     m_selected = bones;
-    if (!bones.isEmpty())
-        emit bonesDidSelect(bones);
+    emit bonesDidSelect(bones);
     int frameIndex = currentFrameIndex();
     /* ボーン名が存在かどうかをチェックするためだけのハッシュを作成しておく。int は飾り */
     QHash<QString, int> keys;
@@ -951,8 +951,7 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
         if (keys.contains(internal::toQString(&frame)) && frameIndex == frame.frameIndex())
             frames.append(KeyFramePtr(static_cast<vpvl::BoneKeyFrame *>(frame.clone())));
     }
-    if (!frames.isEmpty())
-        emit boneFramesDidSelect(frames);
+    emit boneFramesDidSelect(frames);
 }
 
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)

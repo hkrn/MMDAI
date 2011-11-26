@@ -176,7 +176,7 @@ void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, con
     else {
         m_undo->setActiveStack(m_stacks[model].data());
     }
-    /* 各モデル毎のルートアイテム、ボーンまたは頂点モーフのキー名、テーブルのデータを作成する */
+    /* 各モデル毎のルートアイテム、ボーンまたは頂点モーフのキー名、テーブルのデータを作成する。作成済みの場合は何も処理しない */
     if (!m_roots.contains(model))
         m_roots.insert(model, root);
     if (!m_keys.contains(model))

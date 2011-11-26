@@ -72,12 +72,14 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 
 void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
 {
-    vpvl::BoneKeyFrame *frame = frames.last().data();
-    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kX, m_boneIP.x);
-    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kY, m_boneIP.y);
-    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_boneIP.z);
-    frame->getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_boneIP.rotation);
-    updateValues(true);
+    if (!frames.isEmpty()) {
+        vpvl::BoneKeyFrame *frame = frames.last().data();
+        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kX, m_boneIP.x);
+        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kY, m_boneIP.y);
+        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_boneIP.z);
+        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_boneIP.rotation);
+        updateValues(true);
+    }
 }
 
 void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)

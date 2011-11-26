@@ -645,7 +645,7 @@ void SceneWidget::getObjectCoordinates(const QPointF &input, vpvl::Vector3 &came
     zfar.setValue(fx, fy, fz);
 }
 
-void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
+void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
 {
     vpvl::Bone *bone = bones.isEmpty() ? 0 : bones.last();
     m_info->setBone(bone);
