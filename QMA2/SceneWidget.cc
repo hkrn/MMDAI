@@ -268,11 +268,12 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
     vpvl::PMDModel *model = 0;
     if (fi.exists()) {
         const QDir &dir = fi.dir();
-        model = m_loader->loadModel(fi.fileName(), dir);
+        const QString &base = fi.fileName();
+        model = m_loader->loadModel(base, dir);
         if (model) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
                 ProgressDialogPtr progress = UIGetProgressDialog("Loading the model...", 0);
-                m_loader->addModel(model, dir);
+                m_loader->addModel(model, base, dir);
                 progress.data()->setValue(1);
                 emit fileDidLoad(path);
                 emit modelDidAdd(model);

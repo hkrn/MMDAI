@@ -65,9 +65,15 @@ SceneLoader::~SceneLoader()
     release();
 }
 
-void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
+void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir)
 {
-    QString key = internal::toQString(model);
+    /* モデル名が空っぽの場合はファイル名から補完しておく */
+    QString key = internal::toQString(model).trimmed();
+    if (key.isEmpty()) {
+        const QByteArray bytes = internal::fromQString(baseName);
+        model->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        key = baseName;
+    }
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
