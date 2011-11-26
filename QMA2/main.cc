@@ -109,6 +109,7 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
 int main(int argc, char *argv[])
 {
     Application a(argc, argv);
+    QWidget fake;
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
     a.setApplicationVersion("0.10.0");
@@ -118,12 +119,24 @@ int main(int argc, char *argv[])
     SetSearchPaths(a);
     LoadTranslations(a, translators);
 
-    MainWindow w;
-    if (w.validateLibraryVersion()) {
+    int result = -1;
+    if (!vpvl::isLibraryVersionCorrect(VPVL_VERSION)) {
+        QMessageBox::warning(&fake,
+                             a.tr("libvpvl version mismatch"),
+                             a.tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
+                                  "Please replace libvpvl to correct version or reinstall MMDAI.")
+                             .arg(VPVL_VERSION_STRING).arg(vpvl::libraryVersionString()));
+        return result;
+    }
+
+    try {
+        MainWindow w;
         w.show();
-        return a.exec();
+        result = a.exec();
+    } catch (std::exception &e) {
+        QMessageBox::warning(&fake,
+                             a.tr("Exception caught"),
+                             a.tr("Exception caught: %1").arg(e.what()));
     }
-    else {
-        return -1;
-    }
+    return result;
 }
