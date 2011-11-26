@@ -91,7 +91,7 @@ public:
           m_sceneWidget(sceneWidget),
           m_dialog(dialog),
           m_progress(0),
-          m_format(tr("Playing scene frame %1 of %2...")),
+          m_format(QApplication::tr("Playing scene frame %1 of %2...")),
           m_selected(0),
           m_timerID(0),
           m_fromIndex(0),
@@ -116,7 +116,7 @@ public:
         m_sceneWidget->setSelectedModel(0);
         m_sceneWidget->updateGL();
         m_progress = new QProgressDialog();
-        m_progress->setCancelButtonText(tr("Cancel"));
+        m_progress->setCancelButtonText(QApplication::tr("Cancel"));
         m_progress->setWindowModality(Qt::WindowModal);
         int maxRangeIndex = m_toIndex - m_fromIndex;
         m_progress->setRange(0, maxRangeIndex);
@@ -805,10 +805,10 @@ void MainWindow::retranslate()
     m_actionResetCamera->setText(tr("Reset camera"));
     m_actionResetCamera->setStatusTip(tr("Reset camera perspective."));
     m_actionSelectNextModel->setText(tr("Select next model"));
-    m_actionSelectNextModel->setStatusTip(tr("Select the next model"));
+    m_actionSelectNextModel->setStatusTip(tr("Select the next model."));
     m_actionSelectNextModel->setShortcut(QKeySequence::SelectNextPage);
     m_actionSelectPreviousModel->setText(tr("Select previous model"));
-    m_actionSelectPreviousModel->setStatusTip(tr("Select the previous model"));
+    m_actionSelectPreviousModel->setStatusTip(tr("Select the previous model."));
     m_actionSelectPreviousModel->setShortcut(QKeySequence::SelectPreviousPage);
     m_actionRevertSelectedModel->setText(tr("Revert selected model"));
     m_actionRevertSelectedModel->setStatusTip(tr("Revert the selected model."));

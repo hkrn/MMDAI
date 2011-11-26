@@ -122,8 +122,8 @@ int main(int argc, char *argv[])
     int result = -1;
     if (!vpvl::isLibraryVersionCorrect(VPVL_VERSION)) {
         QMessageBox::warning(&fake,
-                             a.tr("libvpvl version mismatch"),
-                             a.tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
+                             QApplication::tr("libvpvl version mismatch"),
+                             QApplication::tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
                                   "Please replace libvpvl to correct version or reinstall MMDAI.")
                              .arg(VPVL_VERSION_STRING).arg(vpvl::libraryVersionString()));
         return result;
@@ -135,8 +135,8 @@ int main(int argc, char *argv[])
         result = a.exec();
     } catch (std::exception &e) {
         QMessageBox::warning(&fake,
-                             a.tr("Exception caught"),
-                             a.tr("Exception caught: %1").arg(e.what()));
+                             QApplication::tr("Exception caught"),
+                             QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     return result;
 }
