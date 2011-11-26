@@ -104,6 +104,7 @@ public:
         kRigidBodiesError,
         kConstraintsSizeError,
         kConstraintsError,
+        kNoBoneError,
         kMaxErrors
     };
 

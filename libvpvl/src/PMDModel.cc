@@ -645,6 +645,10 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kBonesError;
         return false;
     }
+    if (nBones == 0) {
+        m_error = kNoBoneError;
+        return false;
+    }
     info.bonesCount = nBones;
 
     // IKs
