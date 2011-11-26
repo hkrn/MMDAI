@@ -75,6 +75,8 @@ public:
         uint8_t *rawData = 0;
         QImage image = pathString.endsWith(".tga", Qt::CaseInsensitive)
                 ? loadTGA(pathString, rawData) : QImage(pathString).rgbSwapped();
+        if (image.isNull())
+            return false;
         if (pathString.endsWith(".sph") || pathString.endsWith(".spa")) {
             QTransform transform;
             transform.scale(1, -1);
