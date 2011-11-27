@@ -110,7 +110,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enablePhysics(false),
     m_showModelDialog(false)
 {
-    m_debugDrawer = new DebugDrawer();
+    m_debugDrawer = new DebugDrawer(this);
     m_delegate = new Delegate(this);
     m_grid = new Grid();
     m_info = new InfoPanel(this);
