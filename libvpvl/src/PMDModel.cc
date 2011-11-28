@@ -102,7 +102,6 @@ PMDModel::PMDModel()
       m_positionOffset(0.0f, 0.0f, 0.0f),
       m_lightPosition(0.0f, 0.0f, 0.0f),
       m_error(kNoError),
-      m_boundingSphereStep(kBoundingSpherePointsMin),
       m_edgeOffset(0.03f),
       m_selfShadowDensityCoef(0.0f),
       m_enableSimulation(false),
@@ -166,10 +165,6 @@ void PMDModel::prepare()
     for (int i = 0; i < nIKs; i++) {
         m_isIKSimulated.add(m_IKs[i]->isSimulated());
     }
-    m_boundingSphereStep = nvertices / kBoundingSpherePoints;
-    int min = kBoundingSpherePointsMin;
-    int max = kBoundingSpherePointsMax;
-    btClamp(m_boundingSphereStep, min, max);
 }
 
 void PMDModel::addMotion(VMDMotion *motion)
@@ -512,20 +507,16 @@ void PMDModel::updateIndices()
     }
 }
 
-float PMDModel::boundingSphereRange(Vector3 &center)
+void PMDModel::getBoundingSphere(Vector3 &center, float &radius) const
 {
     float max = 0.0f;
-    Bone *bone = Bone::centerBone(&m_bones);
-    Vector3 pos = bone->localTransform().getOrigin();
+    Bone *centerBone = Bone::centerBone(&m_bones);
+    const Vector3 &centerBoneOrigin = centerBone->localTransform().getOrigin();
     const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        const float r2 = pos.distance2(m_skinnedVertices[i].position);
-        if (max < r2)
-            max = r2;
-    }
-    max = sqrtf(max) * 1.1f;
-    center = pos;
-    return max;
+    for (int i = 0; i < nvertices; i++)
+        btSetMax(max, centerBoneOrigin.distance2(m_skinnedVertices[i].position));
+    radius = sqrtf(max) * 1.1f;
+    center = centerBoneOrigin;
 }
 
 void PMDModel::resetAllBones()

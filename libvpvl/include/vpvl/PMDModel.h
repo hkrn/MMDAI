@@ -161,9 +161,6 @@ public:
     PMDModel();
     ~PMDModel();
 
-    static const int kBoundingSpherePoints = 1000;
-    static const int kBoundingSpherePointsMax = 20;
-    static const int kBoundingSpherePointsMin = 5;
     static const int kCustomTextureMax = 10;
     static const int kCustomTextureNameMax = 100;
     static const int kSystemTextureMax = 11;
@@ -257,7 +254,7 @@ public:
      */
     void updateImmediate();
 
-    float boundingSphereRange(Vector3 &center);
+    void getBoundingSphere(Vector3 &center, float &radius) const;
 
     /**
      * Reset all bones of the model to initial state.
@@ -693,7 +690,6 @@ private:
     Vector3 m_positionOffset;
     Vector3 m_lightPosition;
     Error m_error;
-    int m_boundingSphereStep;
     float m_edgeOffset;
     float m_selfShadowDensityCoef;
     bool m_enableSimulation;
