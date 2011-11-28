@@ -137,8 +137,7 @@ void CameraAnimation::seek(float frameAt)
     k1 = k2 <= 1 ? 0 : k2 - 1;
     m_lastIndex = k1;
 
-    const CameraKeyFrame *keyFrameFrom = static_cast<CameraKeyFrame *>(m_frames.at(k1)),
-            *keyFrameTo = static_cast<CameraKeyFrame *>(m_frames.at(k2));
+    const CameraKeyFrame *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
     CameraKeyFrame *keyFrameForInterpolation = const_cast<CameraKeyFrame *>(keyFrameTo);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
