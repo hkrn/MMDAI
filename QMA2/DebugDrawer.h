@@ -123,7 +123,8 @@ public:
         btTransform tr = btTransform::getIdentity();
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *parent = bone->parent();
-            if (i == 0 || !bone->isVisible() || !parent->isVisible())
+            if (!parent || bone->parent()->id() == 0 ||
+                    !bone->isVisible() || !parent->isVisible())
                 continue;
             //vpvl::Bone::Type type = bone->type();
             const btTransform &boneTransform = bone->localTransform(),
