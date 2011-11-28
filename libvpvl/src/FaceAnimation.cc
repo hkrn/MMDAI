@@ -196,6 +196,8 @@ void FaceAnimation::calculateFrames(float frameAt, FaceAnimationInternal *node)
     else {
         node->weight = weightFrom;
     }
+    m_previousFrame = m_currentFrame;
+    m_currentFrame = frameAt;
 }
 
 }
