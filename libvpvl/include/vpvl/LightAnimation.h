@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,30 +36,76 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl_vpvl_H_
-#define vpvl_vpvl_H_
+#ifndef VPVL_LIGHTANIMATION_H_
+#define VPVL_LIGHTANIMATION_H_
 
-#include "vpvl/Common.h"
-#include "vpvl/Asset.h"
 #include "vpvl/BaseAnimation.h"
-#include "vpvl/BaseKeyFrame.h"
-#include "vpvl/Bone.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/BoneAnimation.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/CameraAnimation.h"
-#include "vpvl/Constraint.h"
-#include "vpvl/Face.h"
-#include "vpvl/FaceKeyFrame.h"
-#include "vpvl/FaceAnimation.h"
-#include "vpvl/IK.h"
-#include "vpvl/LightKeyFrame.h"
-#include "vpvl/LightAnimation.h"
-#include "vpvl/Material.h"
-#include "vpvl/PMDModel.h"
-#include "vpvl/RigidBody.h"
-#include "vpvl/Scene.h"
-#include "vpvl/Vertex.h"
-#include "vpvl/VMDMotion.h"
 
-#endif /* vpvl_vpvl_H_ */
+namespace vpvl
+{
+
+class LightKeyFrame;
+typedef Array<LightKeyFrame *> LightKeyFrameList;
+
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * CameraAnimation class represents a camera Animation that includes many camera key frames
+ * of a Vocaloid Motion Data object inherits BaseAnimation.
+ */
+
+class VPVL_API LightAnimation : public BaseAnimation
+{
+public:
+    LightAnimation();
+    ~LightAnimation();
+
+    void read(const uint8_t *data, int size);
+    void seek(float frameAt);
+    void takeSnap(const Vector3 &center);
+    void reset();
+    void refresh();
+
+    /**
+     * Get a light key frame associated with index.
+     *
+     * @param i A frame index to get key frame
+     * @return A light key frame associated with index
+     */
+    LightKeyFrame *frameAt(int i) const {
+        return static_cast<LightKeyFrame *>(m_frames[i]);
+    }
+
+    /**
+     * Returns light color.
+     *
+     * @return A color value (R, G, B)
+     */
+    const Vector3 &color() const {
+        return m_color;
+    }
+
+    /**
+     * Returns light direction.
+     *
+     * @return A direction value (X, Y, Z)
+     */
+    const Vector3 &direction() const {
+        return m_direction;
+    }
+
+private:
+    Vector3 m_color;
+    Vector3 m_direction;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(LightAnimation)
+};
+
+}
+
+#endif
+

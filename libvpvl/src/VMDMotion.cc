@@ -87,7 +87,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     rest -= kSignatureSize + kNameSize;
 
     // Bone key frame
-    size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames;
+    size_t nBoneKeyFrames, nFaceKeyFrames, nCameraKeyFrames, nLightKeyFrames;
     if (!internal::size32(ptr, rest, nBoneKeyFrames)) {
         m_error = kBoneKeyFramesSizeError;
         return false;
@@ -123,6 +123,18 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     info.cameraKeyFrameCount = nCameraKeyFrames;
 
+    // Light key frame
+    if (!internal::size32(ptr, rest, nLightKeyFrames)) {
+        m_error = kLightKeyFramesSizeError;
+        return false;
+    }
+    info.lightKeyFramePtr = ptr;
+    if (!internal::validateSize(ptr, LightKeyFrame::strideSize(), nLightKeyFrames, rest)) {
+        m_error = kCameraKeyFramesError;
+        return false;
+    }
+    info.lightKeyFrameCount = nLightKeyFrames;
+
     return true;
 }
 
@@ -157,7 +169,8 @@ size_t VMDMotion::estimateSize()
     return kSignatureSize + kNameSize + sizeof(int) * 5
             + m_boneMotion.countKeyFrames() * BoneKeyFrame::strideSize()
             + m_faceMotion.countKeyFrames() * FaceKeyFrame::strideSize()
-            + m_cameraMotion.countKeyFrames() * CameraKeyFrame::strideSize();
+            + m_cameraMotion.countKeyFrames() * CameraKeyFrame::strideSize()
+            + m_lightMotion.countKeyFrames() * LightKeyFrame::strideSize();
 }
 
 void VMDMotion::save(uint8_t *data) const
@@ -190,9 +203,15 @@ void VMDMotion::save(uint8_t *data) const
         frame->write(data);
         data += CameraKeyFrame::strideSize();
     }
+    int nLightFrames = m_lightMotion.countKeyFrames();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames));
+    data += sizeof(nLightFrames);
+    for (int i = 0; i < nLightFrames; i++) {
+        LightKeyFrame *frame = m_lightMotion.frameAt(i);
+        frame->write(data);
+        data += LightKeyFrame::strideSize();
+    }
     int empty = 0;
-    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
-    data += sizeof(empty);
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
     data += sizeof(empty);
 }
@@ -272,8 +291,9 @@ void VMDMotion::parseCameraFrames(const DataInfo &info)
     m_cameraMotion.read(info.cameraKeyFramePtr, info.cameraKeyFrameCount);
 }
 
-void VMDMotion::parseLightFrames(const DataInfo & /* info */)
+void VMDMotion::parseLightFrames(const DataInfo &info)
 {
+    m_lightMotion.read(info.lightKeyFramePtr, info.lightKeyFrameCount);
 }
 
 void VMDMotion::parseSelfShadowFrames(const DataInfo & /* info */)

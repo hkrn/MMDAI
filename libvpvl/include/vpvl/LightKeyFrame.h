@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,30 +36,87 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl_vpvl_H_
-#define vpvl_vpvl_H_
+#ifndef VPVL_LIGHTKEYFRAME_H_
+#define VPVL_LIGHTKEYFRAME_H_
 
-#include "vpvl/Common.h"
-#include "vpvl/Asset.h"
-#include "vpvl/BaseAnimation.h"
 #include "vpvl/BaseKeyFrame.h"
-#include "vpvl/Bone.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/BoneAnimation.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/CameraAnimation.h"
-#include "vpvl/Constraint.h"
-#include "vpvl/Face.h"
-#include "vpvl/FaceKeyFrame.h"
-#include "vpvl/FaceAnimation.h"
-#include "vpvl/IK.h"
-#include "vpvl/LightKeyFrame.h"
-#include "vpvl/LightAnimation.h"
-#include "vpvl/Material.h"
-#include "vpvl/PMDModel.h"
-#include "vpvl/RigidBody.h"
-#include "vpvl/Scene.h"
-#include "vpvl/Vertex.h"
-#include "vpvl/VMDMotion.h"
 
-#endif /* vpvl_vpvl_H_ */
+namespace vpvl
+{
+
+class VPVL_API LightKeyFrame : public BaseKeyFrame
+{
+public:
+    LightKeyFrame();
+    ~LightKeyFrame();
+
+    static size_t strideSize();
+
+    size_t stride() const;
+    void read(const uint8_t *data);
+    void write(uint8_t *data) const;
+    BaseKeyFrame *clone() const;
+
+    /**
+     * Returns empty value.
+     *
+     * @return null name
+     */
+    const uint8_t *name() const;
+
+    /**
+     * Returns light color of this keyframe.
+     *
+     * @return A value of light color
+     */
+    Vector3 color() const {
+        return m_color;
+    }
+
+    /**
+     * Returns light direction of this keyframe.
+     *
+     * @return A value of light direction
+     */
+    Vector3 direction() const {
+        return m_direction;
+    }
+
+    /**
+     * Set the name of this keyframe.
+     *
+     * This method do nothing.
+     *
+     * @param value A value of name
+     */
+    void setName(const uint8_t *value);
+
+    /**
+     * Set light color of this keyframe.
+     *
+     * @param A value of light color
+     */
+    void setColor(Vector3 value) {
+        m_color = value;
+    }
+
+    /**
+     * Set light direction of this keyframe.
+     *
+     * @param A value of light direction
+     */
+    void setDirection(Vector3 value) {
+        m_direction = value;
+    }
+
+private:
+    uint8_t m_name[2];
+    Vector3 m_color;
+    Vector3 m_direction;
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(LightKeyFrame)
+};
+
+}
+
+#endif

@@ -26,6 +26,8 @@ set(vpvl_public_headers
     include/vpvl/FaceKeyFrame.h
     include/vpvl/FaceAnimation.h
     include/vpvl/IK.h
+    include/vpvl/LightKeyFrame.h
+    include/vpvl/LightAnimation.h
     include/vpvl/Material.h
     include/vpvl/PMDModel.h
     include/vpvl/RigidBody.h

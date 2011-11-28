@@ -42,6 +42,7 @@
 #include "vpvl/BoneAnimation.h"
 #include "vpvl/CameraAnimation.h"
 #include "vpvl/FaceAnimation.h"
+#include "vpvl/LightAnimation.h"
 
 class PMDModel;
 
@@ -76,6 +77,8 @@ public:
         kFaceKeyFramesError,
         kCameraKeyFramesSizeError,
         kCameraKeyFramesError,
+        kLightKeyFramesSizeError,
+        kLightKeyFramesError,
         kMaxErrors
     };
 
@@ -141,6 +144,9 @@ public:
     const FaceAnimation &faceAnimation() const {
         return m_faceMotion;
     }
+    const LightAnimation &lightAnimation() const {
+        return m_lightMotion;
+    }
     const MotionStatus &status() const {
         return m_status;
     }
@@ -155,6 +161,9 @@ public:
     }
     FaceAnimation *mutableFaceAnimation() {
         return &m_faceMotion;
+    }
+    LightAnimation *mutableLightAnimation() {
+        return &m_lightMotion;
     }
     float priority() const {
         return m_priority;
@@ -181,6 +190,7 @@ private:
     BoneAnimation m_boneMotion;
     CameraAnimation m_cameraMotion;
     FaceAnimation m_faceMotion;
+    LightAnimation m_lightMotion;
     MotionStatus m_status;
     Error m_error;
     float m_priority;

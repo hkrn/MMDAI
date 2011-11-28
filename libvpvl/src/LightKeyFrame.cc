@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,30 +36,93 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl_vpvl_H_
-#define vpvl_vpvl_H_
+#include "vpvl/vpvl.h"
+#include "vpvl/internal/util.h"
 
-#include "vpvl/Common.h"
-#include "vpvl/Asset.h"
-#include "vpvl/BaseAnimation.h"
-#include "vpvl/BaseKeyFrame.h"
-#include "vpvl/Bone.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/BoneAnimation.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/CameraAnimation.h"
-#include "vpvl/Constraint.h"
-#include "vpvl/Face.h"
-#include "vpvl/FaceKeyFrame.h"
-#include "vpvl/FaceAnimation.h"
-#include "vpvl/IK.h"
-#include "vpvl/LightKeyFrame.h"
-#include "vpvl/LightAnimation.h"
-#include "vpvl/Material.h"
-#include "vpvl/PMDModel.h"
-#include "vpvl/RigidBody.h"
-#include "vpvl/Scene.h"
-#include "vpvl/Vertex.h"
-#include "vpvl/VMDMotion.h"
+namespace vpvl
+{
 
-#endif /* vpvl_vpvl_H_ */
+#pragma pack(push, 1)
+
+struct LightKeyFrameChunk
+{
+    int frameIndex;
+    float color[3];
+    float direction[3];
+};
+
+#pragma pack(pop)
+
+LightKeyFrame::LightKeyFrame()
+    : BaseKeyFrame(),
+      m_color(0.0f, 0.0f, 0.0f),
+      m_direction(0.0f, 0.0f, 0.0f)
+{
+    internal::zerofill(m_name, sizeof(m_name));
+}
+LightKeyFrame::~LightKeyFrame()
+{
+    internal::zerofill(m_name, sizeof(m_name));
+    m_color.setZero();
+    m_direction.setZero();
+}
+
+size_t LightKeyFrame::strideSize()
+{
+    return sizeof(LightKeyFrameChunk);
+}
+
+size_t LightKeyFrame::stride() const
+{
+    return strideSize();
+}
+
+void LightKeyFrame::read(const uint8_t *data)
+{
+    LightKeyFrameChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    m_frameIndex = static_cast<float>(chunk.frameIndex);
+#ifdef VPVL_BUILD_IOS
+    float color[3], direction()[4];
+    memcpy(color, &chunk.position, sizeof(color));
+    memcpy(direction, &chunk.rotation, sizeof(direction));
+#else
+    float *color = chunk.color;
+    float *direction = chunk.direction;
+#endif
+    m_color.setValue(color[0], color[1], color[2]);
+    m_direction.setValue(direction[0], direction[1], direction[2]);
+}
+
+void LightKeyFrame::write(uint8_t *data) const
+{
+    LightKeyFrameChunk chunk;
+    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    chunk.color[0] = m_color.x();
+    chunk.color[1] = m_color.y();
+    chunk.color[2] = m_color.z();
+    chunk.direction[0] = m_direction.x();
+    chunk.direction[1] = m_direction.y();
+    chunk.direction[2] = m_direction.z();
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+BaseKeyFrame *LightKeyFrame::clone() const
+{
+    LightKeyFrame *frame = new LightKeyFrame();
+    frame->m_frameIndex = m_frameIndex;
+    frame->m_color = m_color;
+    frame->m_direction = m_direction;
+    return frame;
+}
+
+const uint8_t *LightKeyFrame::name() const
+{
+    return m_name;
+}
+
+void LightKeyFrame::setName(const uint8_t * /* value */)
+{
+}
+
+}
