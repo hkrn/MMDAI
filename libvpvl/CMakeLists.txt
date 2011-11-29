@@ -10,7 +10,7 @@ set(VPVL_VERSION_COMPATIBLE "${VPVL_VERSION_MAJOR}.${VPVL_VERSION_COMPAT}.0")
 
 # project configuration
 project(libvpvl)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src vpvl_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl_sources)
 set(vpvl_public_headers
     include/vpvl/Asset.h
     include/vpvl/BaseAnimation.h
@@ -172,19 +172,25 @@ option(VPVL_USE_GLSL "Include OpenGL renderer class using GLSL shaders (default 
 option(VPVL_USE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER)
   if(VPVL_USE_GLSL)
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl2 vpvl_gl_sources)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl_gl_sources)
     list(APPEND vpvl_public_headers include/vpvl/gl2/Renderer.h)
     list(APPEND vpvl_internal_headers include/vpvl/internal/gl2.h)
     if(VPVL_USE_NVIDIA_CG)
-      aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/cg vpvl_gl_sources)
+      aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl_gl_sources)
       list(APPEND vpvl_public_headers include/vpvl/cg/Renderer.h)
     endif()
   else()
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/engine/gl vpvl_gl_sources)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl vpvl_gl_sources)
     list(APPEND vpvl_public_headers include/vpvl/gl/Renderer.h)
   endif()
   list(APPEND vpvl_sources ${vpvl_gl_sources})
   set(VPVL_COORDINATE_OPENGL ON BOOL)
+endif()
+
+option(VPVL_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
+if(VPVL_ENABLE_PROJECT)
+  list(APPEND vpvl_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/project/Project.cc)
+  list(APPEND vpvl_public_headers include/vpvl/Project.h)
 endif()
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
@@ -247,6 +253,13 @@ if(VPVL_OPENGL_RENDERER)
     target_link_libraries(vpvl ${Cg_LIBRARY})
     include_directories(${Cg_INCLUDE_DIR})
   endif()
+endif()
+
+# link with libxml2
+if(VPVL_ENABLE_PROJECT)
+  find_package(LibXml2 REQUIRED)
+  target_link_libraries(vpvl ${LIBXML2_LIBRARIES})
+  include_directories(${LIBXML2_INCLUDE_DIR})
 endif()
 
 # extra renderer program with SDL
