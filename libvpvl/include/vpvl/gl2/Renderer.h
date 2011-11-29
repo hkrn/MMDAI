@@ -124,6 +124,9 @@ public:
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
     }
+    void setShadowTexture(GLuint value) {
+        m_shadowTexture = value;
+    }
 
     void initializeSurface();
     bool createPrograms();
@@ -156,6 +159,7 @@ private:
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
     vpvl::PMDModel *m_selected;
+    GLuint m_shadowTexture;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

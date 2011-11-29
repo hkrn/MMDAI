@@ -884,7 +884,8 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_modelProgram(0),
       m_shadowProgram(0),
       m_scene(0),
-      m_selected(0)
+      m_selected(0),
+      m_shadowTexture(0)
 {
     m_scene = new vpvl::Scene(width, height, fps);
 }
@@ -1113,8 +1114,10 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
     m_modelProgram->setNormalMatrix(matrix3x3);
     m_modelProgram->setLightColor(m_scene->lightColor());
     m_modelProgram->setLightPosition(m_scene->lightPosition());
-    //ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
-    //modelProgram->setShadowTexture(m_depthTextureID);
+    if (m_shadowTexture) {
+        ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
+        modelProgram->setShadowTexture(m_shadowTexture);
+    }
 
     const bool enableToon = model->isToonEnabled();
     // toon
