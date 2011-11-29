@@ -134,12 +134,14 @@ public:
     void updateModel(vpvl::PMDModel *model);
     void renderModel(const vpvl::PMDModel *model);
     void renderModelEdge(const vpvl::PMDModel *model);
+    void renderModelShadow(const vpvl::PMDModel *model);
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
 
     void clear();
     void renderAssets();
     void renderModels();
+    void renderModelsShadow();
 
 protected:
     void uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);

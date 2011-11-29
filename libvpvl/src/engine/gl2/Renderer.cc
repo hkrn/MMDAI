@@ -1159,6 +1159,24 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
+void Renderer::renderModelShadow(const vpvl::PMDModel *model)
+{
+    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    float modelViewMatrix[16], projectionMatrix[16];
+    m_scene->getModelViewMatrix(modelViewMatrix);
+    m_scene->getProjectionMatrix(projectionMatrix);
+    glCullFace(GL_FRONT);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    m_shadowProgram->bind();
+    m_shadowProgram->setModelViewMatrix(modelViewMatrix);
+    m_shadowProgram->setProjectionMatrix(projectionMatrix);
+    m_shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
+                                 model->strideSize(vpvl::PMDModel::kVerticesStride));
+    glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
+    m_shadowProgram->unbind();
+}
+
 void Renderer::renderModelEdge(const vpvl::PMDModel *model)
 {
     if (model->edgeOffset() == 0.0f)
@@ -1273,9 +1291,8 @@ void Renderer::clear()
 void Renderer::renderAssets()
 {
     const int nassets = m_assets.count();
-    for (int i = 0; i < nassets; i++) {
+    for (int i = 0; i < nassets; i++)
         aiDrawAsset(m_assets[i], m_scene);
-    }
 }
 
 void Renderer::renderModels()
@@ -1288,6 +1305,17 @@ void Renderer::renderModels()
             renderModel(model);
             renderModelEdge(model);
         }
+    }
+}
+
+void Renderer::renderModelsShadow()
+{
+    size_t size = 0;
+    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+    for (size_t i = 0; i < size; i++) {
+        vpvl::PMDModel *model = models[i];
+        if (model->isVisible())
+            renderModelShadow(model);
     }
 }
 
