@@ -83,10 +83,10 @@ public:
 
     void uploadModel(vpvl::PMDModel *model, const std::string &dir);
     void deleteModel(vpvl::PMDModel *&model);
-    void drawModel(const vpvl::PMDModel *model);
+    void renderModel(const vpvl::PMDModel *model);
 
 private:
-    void drawModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model);
+    void renderModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model);
 
     CGcontext m_context;
 

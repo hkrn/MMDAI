@@ -61,6 +61,9 @@
 /* Build libvpvl linking with GLEW */
 #cmakedefine VPVL_LINK_GLEW
 
+/* Build libvpvl with project file support */
+#cmakedefine VPVL_ENABLE_PROJECT
+
 /* version */
 #define VPVL_VERSION_MAJOR @VPVL_VERSION_MAJOR@
 #define VPVL_VERSION_COMPAT @VPVL_VERSION_COMPAT@

@@ -124,37 +124,22 @@ public:
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
     }
-    GLuint shadowTexture() const {
-        return m_depthTextureID;
-    }
-    GLuint shadowFrameBuffer() const {
-        return m_frameBufferID;
-    }
 
     void initializeSurface();
     bool createPrograms();
-    bool createShadowFrameBuffers();
     void resize(int width, int height);
-    void getObjectCoordinate(int px, int py, Vector3 &coordinate) const;
-    void setDebugDrawer(btDynamicsWorld *world);
     void uploadModel(vpvl::PMDModel *model, const std::string &dir);
     void deleteModel(vpvl::PMDModel *&model);
     void updateAllModel();
     void updateModel(vpvl::PMDModel *model);
-    void drawModel(const vpvl::PMDModel *model);
-    void drawModelEdge(const vpvl::PMDModel *model);
-    void drawModelShadow(const vpvl::PMDModel *model);
-    void drawModelBones(bool drawSpheres, bool drawLines);
-    void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines);
-    void drawBoneTransform(vpvl::Bone *bone);
+    void renderModel(const vpvl::PMDModel *model);
+    void renderModelEdge(const vpvl::PMDModel *model);
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
 
-    void clearSurface();
-    void drawShadow();
-    void drawAssets();
-    void drawModels();
-    void drawSurface();
+    void clear();
+    void renderAssets();
+    void renderModels();
 
 protected:
     void uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
@@ -169,8 +154,6 @@ private:
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
     vpvl::PMDModel *m_selected;
-    GLuint m_depthTextureID;
-    GLuint m_frameBufferID;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

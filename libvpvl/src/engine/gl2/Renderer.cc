@@ -884,17 +884,13 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_modelProgram(0),
       m_shadowProgram(0),
       m_scene(0),
-      m_selected(0),
-      m_depthTextureID(0),
-      m_frameBufferID(0)
+      m_selected(0)
 {
     m_scene = new vpvl::Scene(width, height, fps);
 }
 
 Renderer::~Renderer()
 {
-    glDeleteFramebuffers(1, &m_frameBufferID);
-    glDeleteTextures(1, &m_depthTextureID);
     vpvl::Array<vpvl::PMDModel *> models;
     models.copy(m_scene->models());
     const int nmodels = models.count();
@@ -942,75 +938,17 @@ bool Renderer::createPrograms()
         delete edgeProgram;
         return ret;
     }
-    if (m_depthTextureID && m_frameBufferID) {
-        ExtendedModelProgram *modelProgram = new ExtendedModelProgram(m_delegate);
-        vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
-        fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
-        ret = modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-        if (!ret) {
-            delete edgeProgram;
-            delete modelProgram;
-            return ret;
-        }
-        ShadowProgram *shadowProgram = new ShadowProgram(m_delegate);
-        vertexShader = m_delegate->loadShader(IDelegate::kShadowVertexShader);
-        fragmentShader = m_delegate->loadShader(IDelegate::kShadowFragmentShader);
-        ret = shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-        if (!ret) {
-            delete edgeProgram;
-            delete modelProgram;
-            delete shadowProgram;
-            return ret;
-        }
-        m_modelProgram = modelProgram;
-        m_shadowProgram = shadowProgram;
+    ModelProgram *modelProgram = new ExtendedModelProgram(m_delegate);
+    vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
+    fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
+    ret = modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+    if (!ret) {
+        delete edgeProgram;
+        delete modelProgram;
+        return ret;
     }
-    else {
-        ModelProgram *modelProgram = new ModelProgram(m_delegate);
-        vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
-        fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
-        ret = modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-        if (!ret) {
-            delete edgeProgram;
-            delete modelProgram;
-            return ret;
-        }
-        m_modelProgram = modelProgram;
-    }
+    m_modelProgram = modelProgram;
     m_edgeProgram = edgeProgram;
-    return ret;
-}
-
-bool Renderer::createShadowFrameBuffers()
-{
-    bool ret = true;
-    int width = 1024;
-    int height = width;
-    glGenTextures(1, &m_depthTextureID);
-    glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glGenFramebuffers(1, &m_frameBufferID);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureID, 0);
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status == GL_FRAMEBUFFER_COMPLETE) {
-        m_delegate->log(IDelegate::kLogInfo,
-                        "Created a framebuffer (textureID = %d, frameBufferID = %d)",
-                        m_depthTextureID,
-                        m_frameBufferID);
-    }
-    else {
-        m_delegate->log(IDelegate::kLogWarning, "Failed creating a framebuffer: %d", status);
-        ret = false;
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return ret;
 }
 
@@ -1147,7 +1085,7 @@ void Renderer::updateModel(vpvl::PMDModel *model)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Renderer::drawModel(const vpvl::PMDModel *model)
+void Renderer::renderModel(const vpvl::PMDModel *model)
 {
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
 
@@ -1175,10 +1113,8 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     m_modelProgram->setNormalMatrix(matrix3x3);
     m_modelProgram->setLightColor(m_scene->lightColor());
     m_modelProgram->setLightPosition(m_scene->lightPosition());
-    if (m_depthTextureID && m_frameBufferID) {
-        ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
-        modelProgram->setShadowTexture(m_depthTextureID);
-    }
+    //ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
+    //modelProgram->setShadowTexture(m_depthTextureID);
 
     const bool enableToon = model->isToonEnabled();
     // toon
@@ -1223,7 +1159,7 @@ void Renderer::drawModel(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
-void Renderer::drawModelEdge(const vpvl::PMDModel *model)
+void Renderer::renderModelEdge(const vpvl::PMDModel *model)
 {
     if (model->edgeOffset() == 0.0f)
         return;
@@ -1243,7 +1179,7 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
         m_edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kNormalsStride)),
                                  model->strideSize(vpvl::PMDModel::kNormalsStride));
         m_edgeProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kBoneAttributesStride)),
-                                          model->strideSize(vpvl::PMDModel::kBoneAttributesStride));
+                                         model->strideSize(vpvl::PMDModel::kBoneAttributesStride));
         m_edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kEdgeVerticesStride)),
                                model->strideSize(vpvl::PMDModel::kEdgeVerticesStride));
         m_edgeProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
@@ -1256,24 +1192,6 @@ void Renderer::drawModelEdge(const vpvl::PMDModel *model)
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glCullFace(GL_BACK);
     m_edgeProgram->unbind();
-}
-
-void Renderer::drawModelShadow(const vpvl::PMDModel *model)
-{
-    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
-    float modelViewMatrix[16], projectionMatrix[16];
-    m_scene->getModelViewMatrix(modelViewMatrix);
-    m_scene->getProjectionMatrix(projectionMatrix);
-    glCullFace(GL_FRONT);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
-    m_shadowProgram->bind();
-    m_shadowProgram->setModelViewMatrix(modelViewMatrix);
-    m_shadowProgram->setProjectionMatrix(projectionMatrix);
-    m_shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
-                                 model->strideSize(vpvl::PMDModel::kVerticesStride));
-    glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
-    m_shadowProgram->unbind();
 }
 
 void Renderer::uploadAsset(Asset *asset, const std::string &dir)
@@ -1345,34 +1263,14 @@ void Renderer::deleteAsset(Asset *&asset)
 }
 
 
-void Renderer::clearSurface()
+void Renderer::clear()
 {
     glViewport(0, 0, m_scene->width(), m_scene->height());
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
-void Renderer::drawShadow()
-{
-    size_t size = 0;
-    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
-    if (m_depthTextureID && m_frameBufferID) {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
-        glViewport(0, 0, 1024, 1024);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glCullFace(GL_FRONT);
-        for (size_t i = 0; i < size; i++) {
-            vpvl::PMDModel *model = models[i];
-            if (model->isVisible())
-                drawModelShadow(model);
-        }
-        glCullFace(GL_BACK);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-}
-
-void Renderer::drawAssets()
+void Renderer::renderAssets()
 {
     const int nassets = m_assets.count();
     for (int i = 0; i < nassets; i++) {
@@ -1380,25 +1278,17 @@ void Renderer::drawAssets()
     }
 }
 
-void Renderer::drawModels()
+void Renderer::renderModels()
 {
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
         if (model->isVisible()) {
-            drawModel(model);
-            drawModelEdge(model);
+            renderModel(model);
+            renderModelEdge(model);
         }
     }
-}
-
-void Renderer::drawSurface()
-{
-    drawShadow();
-    clearSurface();
-    drawModels();
-    drawAssets();
 }
 
 }

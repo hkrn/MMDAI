@@ -270,13 +270,13 @@ void Renderer::deleteModel(vpvl::PMDModel *&model)
     deleteModel0(userData, model);
 }
 
-void Renderer::drawModel(const vpvl::PMDModel *model)
+void Renderer::renderModel(const vpvl::PMDModel *model)
 {
     vpvl::cg::PMDModelUserData *userData = static_cast<vpvl::cg::PMDModelUserData *>(model->userData());
-    userData->parameters ? drawModel0(userData, model) : vpvl::gl2::Renderer::drawModel(model);
+    userData->parameters ? renderModel0(userData, model) : vpvl::gl2::Renderer::renderModel(model);
 }
 
-void Renderer::drawModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model)
+void Renderer::renderModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model)
 {
     EffectParameters *p = userData->parameters;
     size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
