@@ -363,6 +363,7 @@ public:
             return false;
 
 #ifdef VPVL_GL2_RENDERER_H_
+        m_renderer->initializeSurface();
         m_renderer->createPrograms();
 #endif
         if (!loadScene())
@@ -390,7 +391,9 @@ protected:
         glClearColor(0, 0, 1, 1);
         m_renderer->updateAllModel();
         m_renderer->initializeSurface();
-        m_renderer->drawSurface();
+        m_renderer->clear();
+        m_renderer->renderModels();
+        m_renderer->renderAssets();
     }
 
 private:

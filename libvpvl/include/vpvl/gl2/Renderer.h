@@ -73,6 +73,7 @@ class EdgeProgram;
 class ModelProgram;
 class ObjectProgram;
 class ShadowProgram;
+class ZPlotProgram;
 
 class VPVL_API IDelegate
 {
@@ -89,7 +90,9 @@ public:
         kAssetVertexShader,
         kAssetFragmentShader,
         kShadowVertexShader,
-        kShadowFragmentShader
+        kShadowFragmentShader,
+        kZPlotVertexShader,
+        kZPlotFragmentShader
     };
 
     virtual bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
@@ -124,12 +127,10 @@ public:
     void setSelectedModel(vpvl::PMDModel *value) {
         m_selected = value;
     }
-    void setShadowTexture(GLuint value) {
-        m_shadowTexture = value;
-    }
 
     void initializeSurface();
     bool createPrograms();
+    bool createShadowFrameBuffers();
     void resize(int width, int height);
     void uploadModel(vpvl::PMDModel *model, const std::string &dir);
     void deleteModel(vpvl::PMDModel *&model);
@@ -138,6 +139,7 @@ public:
     void renderModel(const vpvl::PMDModel *model);
     void renderModelEdge(const vpvl::PMDModel *model);
     void renderModelShadow(const vpvl::PMDModel *model);
+    void renderModelZPlot(const vpvl::PMDModel *model);
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
 
@@ -145,6 +147,7 @@ public:
     void renderAssets();
     void renderModels();
     void renderModelsShadow();
+    void renderZPlot();
 
 protected:
     void uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
@@ -158,8 +161,10 @@ private:
     EdgeProgram *m_edgeProgram;
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
+    ZPlotProgram *m_zplotProgram;
     vpvl::PMDModel *m_selected;
-    GLuint m_shadowTexture;
+    GLuint m_depthTextureID;
+    GLuint m_frameBufferID;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

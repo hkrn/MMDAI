@@ -1,5 +1,9 @@
+#define ENABLE_SHADOW 1
 #ifdef GL_ES
 precision highp float;
+#define ENABLE_ALPHA_TEST 0
+#else
+#define ENABLE_ALPHA_TEST 1
 #endif
 
 uniform bool hasMainTexture;
@@ -9,45 +13,40 @@ uniform bool isSubAdditive;
 uniform sampler2D mainTexture;
 uniform sampler2D subTexture;
 uniform sampler2D toonTexture;
-uniform sampler2D shadowTexture;
+uniform sampler2DShadow shadowTexture;
 varying vec4 outColor;
+varying vec4 outTexCoord;
 varying vec4 outShadowTexCoord;
-varying vec2 outMainTexCoord;
-varying vec2 outSubTexCoord;
+varying vec4 outDepth;
 varying vec2 outToonTexCoord;
 const float kAlphaThreshold = 0.05;
-
-#define ENABLE_ALPHA_TEST 1
-#define ENABLE_SHADOW 0
+const float kOne = 1.0;
+const float kZero = 0.0;
+const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
 void main() {
+#if ENABLE_SHADOW
+    vec4 color = outDepth + (outColor - outDepth) * shadow2DProj(shadowTexture, outShadowTexCoord);
+#else
     vec4 color = outColor;
+#endif
     if (hasMainTexture) {
         if (isMainAdditive) {
-            color += texture2D(mainTexture, outMainTexCoord);
+            color += texture2D(mainTexture, outTexCoord.xy);
         }
         else {
-            color *= texture2D(mainTexture, outMainTexCoord);
+            color *= texture2D(mainTexture, outTexCoord.xy);
         }
     }
     color *= texture2D(toonTexture, outToonTexCoord);
     if (hasSubTexture) {
         if (isSubAdditive) {
-            color += texture2D(subTexture, outSubTexCoord);
+            color += texture2D(subTexture, outTexCoord.zw);
         }
         else {
-            color *= texture2D(subTexture, outSubTexCoord);
+            color *= texture2D(subTexture, outTexCoord.zw);
         }
     }
-#if ENABLE_SHADOW
-    vec4 shadowTexCoord = outShadowTexCoord / outShadowTexCoord.w;
-    shadowTexCoord.z += 0.0005;
-    float distanceFromLight = texture2D(shadowTexture, shadowTexCoord.st).z;
-    if (shadowTexCoord.w > 0.0) {
-        float shadow = distanceFromLight < shadowTexCoord.z ? 0.5 : 1.0;
-        color *= shadow;
-    }
-#endif
 #if ENABLE_ALPHA_TEST
     if (color.a >= kAlphaThreshold)
         gl_FragColor = color;

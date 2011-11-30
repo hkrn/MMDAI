@@ -82,8 +82,8 @@ namespace
     static const std::string kSystemDir = "render/res/system";
     static const std::string kModelDir = "render/res/lat";
     static const std::string kStageDir = "render/res/stage";
-    static const std::string kMotion = "render/res/motion.vmd";
-    static const std::string kCamera = "render/res/camera.vmd";
+    static const std::string kMotion = "render/res/motion.vmd.404";
+    static const std::string kCamera = "render/res/camera.vmd.404";
     static const std::string kModelName = "normal.pmd";
     static const std::string kStageName = "stage.x";
     static const std::string kStage2Name = "stage2.x";
@@ -274,6 +274,12 @@ public:
         case kShadowFragmentShader:
             file = "shadow.fsh";
             break;
+        case kZPlotVertexShader:
+            file = "zplot.vsh";
+            break;
+        case kZPlotFragmentShader:
+            file = "zplot.fsh";
+            break;
         }
         QByteArray bytes;
         std::string path = m_system + "/" + file;
@@ -356,11 +362,12 @@ protected:
             qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
 #endif
 #ifdef VPVL_GL2_RENDERER_H_
-        bool hardwareSkinning = true;
+        bool hardwareSkinning = false;
         m_delegate.setHardwareSkinningEnable(hardwareSkinning);
         m_renderer->scene()->setSoftwareSkinningEnable(!hardwareSkinning);
-        m_renderer->createShadowFrameBuffers();
-        m_renderer->createPrograms();
+        m_renderer->initializeSurface();
+        if (!m_renderer->createPrograms() || !m_renderer->createShadowFrameBuffers())
+            exit(-1);
 #endif
         if (!loadScene())
             qFatal("Unable to load scene");
@@ -422,8 +429,10 @@ protected:
     virtual void paintGL() {
         glClearColor(0, 0, 1, 1);
         m_renderer->initializeSurface();
-        m_renderer->drawSurface();
-        m_renderer->shadowTexture();
+        m_renderer->clear();
+        m_renderer->renderZPlot();
+        m_renderer->renderModels();
+        m_renderer->renderAssets();
     }
 
 private:

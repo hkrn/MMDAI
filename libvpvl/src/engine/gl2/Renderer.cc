@@ -45,10 +45,36 @@
 #include <map>
 #endif
 
+#include <OpenGL/glu.h>
+
 namespace vpvl
 {
 namespace gl2
 {
+
+const float kShadowMappingTextureWidth = 1024;
+const float kShadowMappingTextureHeight = 1024;
+
+static void CreateLookAt(const Vector3 &eye, float matrix[16])
+{
+    glMatrixMode(GL_MODELVIEW);
+    gluLookAt(eye.x(), eye.y(), eye.z(), 0, 0, 0, 0, 1, 0);
+    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+    /*
+    static const Vector3 zero(0.0f, 0.0f, 0.0f), up(0.0f, 1.0f, 0.0f);
+    const Vector3 &z = (zero - eye).normalized();
+    const Vector3 &x = z.cross(up).normalized();
+    const Vector3 &y = x.cross(z);
+    float m[] = {
+        x.x(), x.y(), x.z(), 0.0f,
+        y.x(), y.y(), y.z(), 0.0f,
+        -z.z(), -z.z(), -z.z(), 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    memcpy(matrix, m, sizeof(float) * 16);
+    */
+}
+
 class ShaderProgram
 {
 public:
@@ -83,6 +109,7 @@ public:
             glAttachShader(program, vertexShader);
             glAttachShader(program, fragmentShader);
             glLinkProgram(program);
+            glValidateProgram(program);
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             GLint linked;
@@ -226,6 +253,16 @@ public:
     }
 };
 
+class ZPlotProgram : public ShaderProgram {
+public:
+    ZPlotProgram(IDelegate *delegate)
+        : ShaderProgram(delegate)
+    {
+    }
+    ~ZPlotProgram() {
+    }
+};
+
 class ObjectProgram : public ShaderProgram {
 public:
     ObjectProgram(IDelegate *delegate)
@@ -267,6 +304,7 @@ public:
           m_toonTexCoordAttributeLocation(0),
           m_boneAttributesAttributeLocation(0),
           m_boneMatricesUniformLocation(0),
+          m_lightViewMatrixUniformLocation(0),
           m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
@@ -286,6 +324,7 @@ public:
         m_toonTexCoordAttributeLocation = 0;
         m_boneAttributesAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
+        m_lightViewMatrixUniformLocation = 0;
         m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
@@ -307,6 +346,7 @@ public:
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
             m_boneAttributesAttributeLocation = glGetAttribLocation(m_program, "inBoneAttributes");
             m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+            m_lightViewMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewMatrix");
             m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
@@ -324,15 +364,6 @@ public:
     }
     virtual void bind() {
         ObjectProgram::bind();
-        resetTextureState();
-    }
-    virtual void resetTextureState() {
-        glUniform1i(m_hasMainTextureUniformLocation, 0);
-        glUniform1i(m_hasSubTextureUniformLocation, 0);
-        glUniform1i(m_isMainSphereMapUniformLocation, 0);
-        glUniform1i(m_isSubSphereMapUniformLocation, 0);
-        glUniform1i(m_isMainAdditiveUniformLocation, 0);
-        glUniform1i(m_isSubAdditiveUniformLocation, 0);
     }
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_texCoordAttributeLocation);
@@ -370,12 +401,21 @@ public:
     void setIsSubAdditive(bool value) {
         glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
     }
+    void setLightPosition(const Vector3 &value) {
+        float matrix[16];
+        CreateLookAt(value, matrix);
+        glUniformMatrix4fv(m_lightViewMatrixUniformLocation, 1, GL_FALSE, matrix);
+        ObjectProgram::setLightPosition(value);
+    }
     void setMainTexture(GLuint value) {
         if (value) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, value);
             glUniform1i(m_mainTextureUniformLocation, 0);
             glUniform1i(m_hasMainTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasMainTextureUniformLocation, 0);
         }
     }
     void setSubTexture(GLuint value) {
@@ -384,6 +424,9 @@ public:
             glBindTexture(GL_TEXTURE_2D, value);
             glUniform1i(m_subTextureUniformLocation, 2);
             glUniform1i(m_hasSubTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasSubTextureUniformLocation, 0);
         }
     }
     void setToonTexture(GLuint value) {
@@ -397,6 +440,7 @@ private:
     GLuint m_toonTexCoordAttributeLocation;
     GLuint m_boneAttributesAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
+    GLuint m_lightViewMatrixUniformLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
@@ -440,12 +484,7 @@ public:
             0.5f, 0.5f, 0.5f, 1.0f
         };
         ModelProgram::bind();
-        resetTextureState();
         glUniformMatrix4fv(m_biasMatrixUniformLocation, 1, GL_FALSE, matrix);
-    }
-    virtual void resetTextureState() {
-        ModelProgram::resetTextureState();
-        glUniform1i(m_shadowTextureUniformLocation, 0);
     }
 
     void setShadowTexture(GLuint value) {
@@ -514,13 +553,6 @@ public:
         }
         return ret;
     }
-    virtual void bind() {
-        ObjectProgram::bind();
-        resetTextureState();
-    }
-    virtual void resetTextureState() {
-        glUniform1i(m_hasTextureUniformLocation, 0);
-    }
 
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_texCoordAttributeLocation);
@@ -563,6 +595,9 @@ public:
             glBindTexture(GL_TEXTURE_2D, value);
             glUniform1i(m_textureUniformLocation, 0);
             glUniform1i(m_hasTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasTextureUniformLocation, 0);
         }
     }
 
@@ -821,7 +856,6 @@ void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *a
         program->setHasColor(mesh->HasVertexColors(0));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-        program->resetTextureState();
     }
     program->unbind();
     const unsigned int nChildNodes = node->mNumChildren;
@@ -885,7 +919,8 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_shadowProgram(0),
       m_scene(0),
       m_selected(0),
-      m_shadowTexture(0)
+      m_frameBufferID(0),
+      m_depthTextureID(0)
 {
     m_scene = new vpvl::Scene(width, height, fps);
 }
@@ -906,6 +941,10 @@ Renderer::~Renderer()
         vpvl::Asset *asset = assets[i];
         deleteAsset(asset);
     }
+    glDeleteFramebuffers(1, &m_frameBufferID);
+    m_frameBufferID = 0;
+    glDeleteTextures(1, &m_depthTextureID);
+    m_depthTextureID = 0;
     delete m_edgeProgram;
     m_edgeProgram = 0;
     delete m_modelProgram;
@@ -928,28 +967,60 @@ void Renderer::initializeSurface()
 
 bool Renderer::createPrograms()
 {
-    bool ret = false;
     std::string vertexShader;
     std::string fragmentShader;
     vertexShader = m_delegate->loadShader(IDelegate::kEdgeVertexShader);
     fragmentShader = m_delegate->loadShader(IDelegate::kEdgeFragmentShader);
-    EdgeProgram *edgeProgram = new EdgeProgram(m_delegate);
-    ret = edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-    if (!ret) {
-        delete edgeProgram;
-        return ret;
-    }
-    ModelProgram *modelProgram = new ExtendedModelProgram(m_delegate);
+    m_edgeProgram = new EdgeProgram(m_delegate);
+    if (!m_edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
+        return false;
+    m_modelProgram = new ExtendedModelProgram(m_delegate);
     vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
     fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
-    ret = modelProgram->load(vertexShader.c_str(), fragmentShader.c_str());
-    if (!ret) {
-        delete edgeProgram;
-        delete modelProgram;
-        return ret;
+    if (!m_modelProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
+        return false;
+    m_shadowProgram = new ShadowProgram(m_delegate);
+    vertexShader = m_delegate->loadShader(IDelegate::kShadowVertexShader);
+    fragmentShader = m_delegate->loadShader(IDelegate::kShadowFragmentShader);
+    if (!m_shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
+        return false;
+    m_zplotProgram = new ZPlotProgram(m_delegate);
+    vertexShader = m_delegate->loadShader(IDelegate::kZPlotVertexShader);
+    fragmentShader = m_delegate->loadShader(IDelegate::kZPlotFragmentShader);
+    return m_zplotProgram->load(vertexShader.c_str(), fragmentShader.c_str());
+}
+
+bool Renderer::createShadowFrameBuffers()
+{
+    bool ret = true;
+    glGenTextures(1, &m_depthTextureID);
+    glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, kShadowMappingTextureWidth, kShadowMappingTextureHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glGenFramebuffers(1, &m_frameBufferID);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureID, 0);
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status == GL_FRAMEBUFFER_COMPLETE) {
+        m_delegate->log(IDelegate::kLogInfo,
+                        "Created a framebuffer (textureID = %d, frameBufferID = %d)",
+                        m_depthTextureID,
+                        m_frameBufferID);
     }
-    m_modelProgram = modelProgram;
-    m_edgeProgram = edgeProgram;
+    else {
+        m_delegate->log(IDelegate::kLogWarning, "Failed creating a framebuffer: %d", status);
+        ret = false;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return ret;
 }
 
@@ -1114,15 +1185,11 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
     m_modelProgram->setNormalMatrix(matrix3x3);
     m_modelProgram->setLightColor(m_scene->lightColor());
     m_modelProgram->setLightPosition(m_scene->lightPosition());
-    if (m_shadowTexture) {
+    if (m_depthTextureID) {
         ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
-        modelProgram->setShadowTexture(m_shadowTexture);
+        modelProgram->setShadowTexture(m_depthTextureID);
     }
-
-    const bool enableToon = model->isToonEnabled();
-    // toon
-    if (enableToon && model->isSoftwareSkinningEnabled()) {
-        // shadow map
+    if (model->isToonEnabled() && model->isSoftwareSkinningEnabled()) {
         m_modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kToonTextureStride)),
                                         model->strideSize(vpvl::PMDModel::kToonTextureStride));
     }
@@ -1155,7 +1222,6 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
         const int nindices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += (nindices << 1);
-        m_modelProgram->resetTextureState();
     }
 
     m_modelProgram->unbind();
@@ -1168,7 +1234,6 @@ void Renderer::renderModelShadow(const vpvl::PMDModel *model)
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
-    glCullFace(GL_FRONT);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     m_shadowProgram->bind();
@@ -1178,6 +1243,36 @@ void Renderer::renderModelShadow(const vpvl::PMDModel *model)
                                  model->strideSize(vpvl::PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     m_shadowProgram->unbind();
+}
+
+void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
+{
+    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    float modelViewMatrix[16], projectionMatrix[16];
+    m_scene->getProjectionMatrix(projectionMatrix);
+    m_scene->getModelViewMatrix(modelViewMatrix);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    Vector3 center;
+    Scalar radius, angle = 15.0f;
+    model->getBoundingSphere(center, radius);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    Scalar eye = radius / btSin(vpvl::radian(angle * 0.5));
+    gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
+    Vector3 eyev = m_scene->lightPosition() * eye + center;
+    gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
+    glGetFloatv(GL_MODELVIEW, modelViewMatrix);
+    m_zplotProgram->bind();
+    m_zplotProgram->setModelViewMatrix(modelViewMatrix);
+    m_zplotProgram->setProjectionMatrix(projectionMatrix);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(4.0f, 4.0f);
+    m_zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
+                                 model->strideSize(vpvl::PMDModel::kVerticesStride));
+    glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    m_zplotProgram->unbind();
 }
 
 void Renderer::renderModelEdge(const vpvl::PMDModel *model)
@@ -1287,8 +1382,7 @@ void Renderer::deleteAsset(Asset *&asset)
 void Renderer::clear()
 {
     glViewport(0, 0, m_scene->width(), m_scene->height());
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::renderAssets()
@@ -1315,10 +1409,34 @@ void Renderer::renderModelsShadow()
 {
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+    glCullFace(GL_FRONT);
     for (size_t i = 0; i < size; i++) {
         vpvl::PMDModel *model = models[i];
         if (model->isVisible())
             renderModelShadow(model);
+    }
+    glCullFace(GL_BACK);
+}
+
+void Renderer::renderZPlot()
+{
+    if (m_depthTextureID && m_frameBufferID) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
+        glViewport(0, 0, kShadowMappingTextureWidth, kShadowMappingTextureHeight);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glCullFace(GL_FRONT);
+        size_t size = 0;
+        vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+        for (size_t i = 0; i < size; i++) {
+            vpvl::PMDModel *model = models[i];
+            if (model->isVisible())
+                renderModelZPlot(model);
+        }
+        glCullFace(GL_BACK);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, m_scene->width(), m_scene->height());
     }
 }
 
