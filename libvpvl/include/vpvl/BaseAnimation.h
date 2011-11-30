@@ -158,7 +158,7 @@ public:
      *
      * @param frameIndex A frame index to delete
      */
-    void deleteKeyFrames(int frameIndex);
+    void deleteKeyFrames(float frameIndex);
 
     /**
      * Get the previous frame index.

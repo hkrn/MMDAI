@@ -45,8 +45,6 @@
 VPVL_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
-#include <float.h>
-
 namespace vpvl
 {
 
@@ -445,7 +443,7 @@ void PMDModel::updateToon(const Vector3 &lightDirection)
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
         SkinVertex &skin = m_skinnedVertices[i];
-        const float v = (1.0f - lightDirection.dot(skin.normal)) * 0.5f;
+        const Scalar &v = (1.0f - lightDirection.dot(skin.normal)) * 0.5f;
         skin.textureCoord.setW(v);
         if (!m_vertices[i]->isEdgeEnabled())
             skin.edge = skin.position;
@@ -507,15 +505,15 @@ void PMDModel::updateIndices()
     }
 }
 
-void PMDModel::getBoundingSphere(Vector3 &center, float &radius) const
+void PMDModel::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
-    float max = 0.0f;
+    Scalar max = 0.0f;
     Bone *centerBone = Bone::centerBone(&m_bones);
     const Vector3 &centerBoneOrigin = centerBone->localTransform().getOrigin();
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++)
         btSetMax(max, centerBoneOrigin.distance2(m_skinnedVertices[i].position));
-    radius = sqrtf(max) * 1.1f;
+    radius = btSqrt(max) * 1.1f;
     center = centerBoneOrigin;
 }
 

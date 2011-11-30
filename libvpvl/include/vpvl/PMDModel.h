@@ -254,7 +254,7 @@ public:
      */
     void updateImmediate();
 
-    void getBoundingSphere(Vector3 &center, float &radius) const;
+    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
 
     /**
      * Reset all bones of the model to initial state.

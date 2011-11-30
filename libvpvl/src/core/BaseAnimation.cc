@@ -112,7 +112,7 @@ void BaseAnimation::deleteKeyFrame(float frameIndex, const uint8_t *value)
     }
 }
 
-void BaseAnimation::deleteKeyFrames(int frameIndex)
+void BaseAnimation::deleteKeyFrames(float frameIndex)
 {
     const int nframes = m_frames.count();
     BaseKeyFrameList framesToRemove;

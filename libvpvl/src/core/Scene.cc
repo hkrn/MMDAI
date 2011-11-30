@@ -324,7 +324,7 @@ void Scene::updateProjection()
     const float aspect = static_cast<float>(m_width) / m_height;
     // borrowed code from http://www.geeks3d.com/20090729/howto-perspective-projection-matrix-in-opengl/
     static const float kPIOver360 = kPI / 360.0f;
-    const float xymax = kFrustumNear * tanf(m_fovy * kPIOver360);
+    const float xymax = kFrustumNear * btTan(m_fovy * kPIOver360);
     const float xmin = -xymax;
     const float ymin = -xymax;
     const float width = xymax - xmin;

@@ -198,11 +198,11 @@ void IK::solve()
             }
             localDestination.normalize();
             localTarget.normalize();
-            const float dot = localDestination.dot(localTarget);
+            const Scalar &dot = localDestination.dot(localTarget);
             if (dot > 1.0f)
                 continue;
-            float angle = acosf(dot);
-            if (fabsf(angle) < kMinAngle)
+            Scalar angle = btAcos(dot);
+            if (btFabs(angle) < kMinAngle)
                 continue;
             btClamp(angle, -m_angleConstraint, m_angleConstraint);
             Vector3 axis = localTarget.cross(localDestination);
@@ -212,7 +212,7 @@ void IK::solve()
             q.setRotation(axis, angle);
             if (bone->isConstraintedXCoordinateForIK()) {
                 if (i == 0) {
-                    q.setRotation(xAxis, fabsf(angle));
+                    q.setRotation(xAxis, btFabs(angle));
                 }
                 else {
                     Scalar x, y, z, cx, cy, cz;
@@ -226,7 +226,7 @@ void IK::solve()
                     if (kMinRotationSum > x + cx)
                         x = kMinRotationSum - cx;
                     btClamp(x, -m_angleConstraint, m_angleConstraint);
-                    if (fabsf(x) < kMinRotation)
+                    if (btFabs(x) < kMinRotation)
                         continue;
                     q.setEulerZYX(0.0f, 0.0f, x);
                 }
