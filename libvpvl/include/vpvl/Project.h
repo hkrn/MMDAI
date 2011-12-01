@@ -55,6 +55,8 @@ namespace vpvl
 class VPVL_API Project
 {
 public:
+    typedef struct Parser Parser;
+
     Project();
     ~Project();
 
@@ -63,6 +65,8 @@ public:
     void save(const char *path);
 
 private:
+    Parser *m_parser;
+    xmlSAXHandler m_handler;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Project)
 };
