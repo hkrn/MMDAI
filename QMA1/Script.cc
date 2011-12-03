@@ -388,14 +388,11 @@ void Script::handleCommand(const ScriptArgument &output)
         vpvl::PMDModel *model = m_parent->addModel(path);
         if (model) {
             if (argc >= 3) {
-                btVector3 position;
+                vpvl::Vector3 position;
                 parsePosition(argv[2], position);
                 model->setPositionOffset(position);
-                vpvl::Bone *rootBone = model->mutableRootBone();
-                rootBone->setOffset(position);
-                rootBone->updateTransform();
                 if (argc >= 4) {
-                    btQuaternion rotation;
+                    vpvl::Quaternion rotation;
                     parseRotation(argv[3], rotation);
                     model->setRotationOffset(rotation);
                 }
@@ -412,7 +409,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 }
                 else {
                     vpvl::Bone *bone = vpvl::Bone::centerBone(parentModel->mutableBones());
-                    model->setBaseBone(bone);
+                    model->setPositionOffset(parentModel->positionOffset() + bone->position());
                 }
             }
             model->updateImmediate();
@@ -591,7 +588,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
-        btVector4 color;
+        vpvl::Vector4 color;
         parseColor(argv[0], color);
         m_parent->setLightColor(color);
         Arguments a; a << color.x() << color.y() << color.z() << color.w();
@@ -602,7 +599,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
-        btVector3 position;
+        vpvl::Vector3 position;
         parsePosition(argv[0], position);
         m_parent->setLightPosition(position);
         Arguments a; a << position.x() << position.y() << position.z();
@@ -663,7 +660,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 qWarning("%s", qPrintable(tr("[%1] Failed loading camera motion: %2").arg(type).arg(path)));
         }
         else if (argc == 3 || argc == 4) {
-            btVector3 position, angle;
+            vpvl::Vector3 position, angle;
             parsePosition(argv[0], position);
             parsePosition(argv[1], angle);
             float distance = argv.at(2).toFloat();
@@ -918,7 +915,7 @@ bool Script::parseEnable(const QString &value, const QString &enable, const QStr
     return false;
 }
 
-bool Script::parsePosition(const QString &value, btVector3 &v) const
+bool Script::parsePosition(const QString &value, vpvl::Vector3 &v) const
 {
     QStringList xyz = value.split(',');
     if (xyz.count() == 3) {
@@ -935,7 +932,7 @@ bool Script::parsePosition(const QString &value, btVector3 &v) const
     return false;
 }
 
-bool Script::parseColor(const QString &value, btVector4 &v) const
+bool Script::parseColor(const QString &value, vpvl::Vector4 &v) const
 {
     QStringList xyz = value.split(',');
     if (xyz.count() == 4) {
@@ -953,7 +950,7 @@ bool Script::parseColor(const QString &value, btVector4 &v) const
     return false;
 }
 
-bool Script::parseRotation(const QString &value, btQuaternion &v) const
+bool Script::parseRotation(const QString &value, vpvl::Quaternion &v) const
 {
     QStringList xyz = value.split(',');
     if (xyz.count() == 3) {

@@ -106,13 +106,12 @@ public:
             glNewList(m_listID, GL_COMPILE_AND_EXECUTE);
             if (!cullface)
                 glDisable(GL_CULL_FACE);
-            glPushMatrix();
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, m_textureID);
-#if 1
+            glDisable(GL_LIGHTING);
             glActiveTexture(GL_TEXTURE0);
             glClientActiveTexture(GL_TEXTURE0);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, m_textureID);
             glEnableClientState(GL_VERTEX_ARRAY);
             glEnableClientState(GL_NORMAL_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -131,23 +130,8 @@ public:
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#else
-            glNormal3f(normal.x(), normal.y(), normal.z());
-            glColor4(0.1f, 0.1f, 0.1f, 0.6f);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, m_y);
-            glVertex3d(m_matrix(0, 0), m_matrix(0, 1), m_matrix(0, 2));
-            glTexCoord2f(m_x, m_y);
-            glVertex3d(m_matrix(1, 0), m_matrix(1, 1), m_matrix(1, 2));
-            glTexCoord2f(m_x, 0.0f);
-            glVertex3d(m_matrix(2, 0), m_matrix(2, 1), m_matrix(2, 2));
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex3d(m_matrix(3, 0), m_matrix(3, 1), m_matrix(3, 2));
-            glEnd();
-#endif
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_TEXTURE_2D);
-            glPopMatrix();
             if (!cullface)
                 glEnable(GL_CULL_FACE);
             glEndList();

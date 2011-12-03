@@ -154,7 +154,7 @@ void ExtendedSceneWidget::paintGL()
     glStencilFunc(GL_ALWAYS, 1, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     m_tiledStage->renderFloor();
-    glColorMask(0, 0, 0, 0);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(0);
     glStencilFunc(GL_EQUAL, 1, ~0);
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
@@ -162,11 +162,10 @@ void ExtendedSceneWidget::paintGL()
     glPushMatrix();
     m_tiledStage->shadowMatrix().copyDataTo(matrix);
     glMultMatrixd(matrix);
-    // draw shadows
     //m_renderer->drawShadow();
     // post shadow
     glPopMatrix();
-    glColorMask(1, 1, 1, 1);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(1);
     glStencilFunc(GL_EQUAL, 2, ~0);
     glDisable(GL_LIGHTING);
