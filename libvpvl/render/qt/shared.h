@@ -428,7 +428,7 @@ protected:
     }
     virtual void paintGL() {
         glClearColor(0, 0, 1, 1);
-        m_renderer->renderZPlot();
+        //m_renderer->renderZPlot();
         m_renderer->clear();
         //m_renderer->renderShadow();
         m_renderer->renderAllModels();
