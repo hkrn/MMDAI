@@ -809,6 +809,7 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+    glEnable(GL_MULTISAMPLE);
     m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_debugDrawer->setWorld(m_world->mutableWorld());
@@ -827,6 +828,7 @@ void SceneWidget::initializeGL()
     m_info->setBone(0);
     m_info->setFPS(0.0f);
     m_info->update();
+    m_renderer->initializeSurface();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
@@ -935,9 +937,9 @@ void SceneWidget::paintGL()
     QPainter painter(this);
     qglClearColor(Qt::white);
     glEnable(GL_MULTISAMPLE);
-    m_renderer->initializeSurface();
-    m_renderer->clearSurface();
-    m_renderer->drawSurface();
+    m_renderer->clear();
+    m_renderer->renderAllModels();
+    m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
     drawBones();
     painter.beginNativePainting();

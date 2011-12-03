@@ -128,6 +128,12 @@ public:
         case kShadowFragmentShader:
             filename = "shadow.fsh";
             break;
+        case kZPlotVertexShader:
+            filename = "zplot.vsh";
+            break;
+        case kZPlotFragmentShader:
+            filename = "zplot.fsh";
+            break;
         }
         const QString path = QString(":/shaders/%1").arg(filename);
         QFile file(path);

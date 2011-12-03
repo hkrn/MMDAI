@@ -29,6 +29,8 @@
         <file alias="model.vsh">shaders/model.vsh</file>
         <file alias="shadow.fsh">shaders/shadow.fsh</file>
         <file alias="shadow.vsh">shaders/shadow.vsh</file>
+        <file alias="zplot.fsh">shaders/zplot.fsh</file>
+        <file alias="zplot.vsh">shaders/zplot.vsh</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>
