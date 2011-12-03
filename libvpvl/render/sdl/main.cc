@@ -392,8 +392,8 @@ protected:
         m_renderer->updateAllModel();
         m_renderer->initializeSurface();
         m_renderer->clear();
-        m_renderer->renderModels();
-        m_renderer->renderAssets();
+        m_renderer->renderAllModels();
+        m_renderer->renderAllAssets();
     }
 
 private:

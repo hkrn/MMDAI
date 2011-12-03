@@ -428,11 +428,11 @@ protected:
     }
     virtual void paintGL() {
         glClearColor(0, 0, 1, 1);
-        m_renderer->initializeSurface();
-        m_renderer->clear();
         m_renderer->renderZPlot();
-        m_renderer->renderModels();
-        m_renderer->renderAssets();
+        m_renderer->clear();
+        //m_renderer->renderShadow();
+        m_renderer->renderAllModels();
+        m_renderer->renderAllAssets();
     }
 
 private:

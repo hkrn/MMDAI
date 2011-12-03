@@ -243,16 +243,6 @@ private:
     GLuint m_colorUniformLocation;
 };
 
-class ShadowProgram : public ShaderProgram {
-public:
-    ShadowProgram(IDelegate *delegate)
-        : ShaderProgram(delegate)
-    {
-    }
-    ~ShadowProgram() {
-    }
-};
-
 class ZPlotProgram : public ShaderProgram {
 public:
     ZPlotProgram(IDelegate *delegate)
@@ -294,6 +284,16 @@ public:
 private:
     GLuint m_lightColorUniformLocation;
     GLuint m_lightPositionUniformLocation;
+};
+
+class ShadowProgram : public ObjectProgram {
+public:
+    ShadowProgram(IDelegate *delegate)
+        : ObjectProgram(delegate)
+    {
+    }
+    ~ShadowProgram() {
+    }
 };
 
 class ModelProgram : public ObjectProgram {
@@ -1239,6 +1239,8 @@ void Renderer::renderModelShadow(const vpvl::PMDModel *model)
     m_shadowProgram->bind();
     m_shadowProgram->setModelViewMatrix(modelViewMatrix);
     m_shadowProgram->setProjectionMatrix(projectionMatrix);
+    m_shadowProgram->setLightColor(m_scene->lightColor());
+    m_shadowProgram->setLightPosition(m_scene->lightPosition());
     m_shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
                                  model->strideSize(vpvl::PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
@@ -1385,14 +1387,14 @@ void Renderer::clear()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::renderAssets()
+void Renderer::renderAllAssets()
 {
     const int nassets = m_assets.count();
     for (int i = 0; i < nassets; i++)
         aiDrawAsset(m_assets[i], m_scene);
 }
 
-void Renderer::renderModels()
+void Renderer::renderAllModels()
 {
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
@@ -1405,7 +1407,7 @@ void Renderer::renderModels()
     }
 }
 
-void Renderer::renderModelsShadow()
+void Renderer::renderShadow()
 {
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
@@ -1436,7 +1438,6 @@ void Renderer::renderZPlot()
         glCullFace(GL_BACK);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, m_scene->width(), m_scene->height());
     }
 }
 

@@ -144,9 +144,9 @@ public:
     void deleteAsset(Asset *&asset);
 
     void clear();
-    void renderAssets();
-    void renderModels();
-    void renderModelsShadow();
+    void renderAllAssets();
+    void renderAllModels();
+    void renderShadow();
     void renderZPlot();
 
 protected:
