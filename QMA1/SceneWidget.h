@@ -161,7 +161,7 @@ public slots:
     void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
-    void setBones(const QList<vpvl::Bone *> &bones);
+    void selectBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
     void deleteCameraMotion();
 
@@ -171,6 +171,7 @@ signals:
     void modelWillDelete(vpvl::PMDModel *model);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
     void newMotionDidSet(vpvl::PMDModel *model);
     void assetDidAdd(vpvl::Asset *asset);
     void assetWillDelete(vpvl::Asset *asset);
@@ -214,7 +215,6 @@ protected:
     internal::Delegate *m_delegate;
     internal::World *m_world;
     SceneLoader *m_loader;
-    int m_interval;
 
 private:
     bool acceptAddingModel(vpvl::PMDModel *model);
@@ -226,17 +226,18 @@ private:
     internal::Handles *m_handles;
     internal::InfoPanel *m_info;
     vpvl::Bone *m_bone;
+    QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
-    QSettings *m_settings;
     float m_prevElapsed;
     float m_selectedEdgeOffset;
     float m_frameIndex;
     int m_frameCount;
     int m_currentFPS;
     int m_defaultFPS;
-    int m_handleFlags;
+    int m_interval;
     int m_internalTimerID;
+    int m_handleFlags;
     bool m_visibleBones;
     bool m_playing;
     bool m_enableBoneMove;

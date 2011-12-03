@@ -39,6 +39,9 @@
 #ifndef DEBUGDRAWER_H
 #define DEBUGDRAWER_H
 
+#include "SceneWidget.h"
+#include "util.h"
+
 #include <QtCore/QObject>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
@@ -48,7 +51,10 @@ namespace internal {
 class DebugDrawer : public btIDebugDraw
 {
 public:
-    DebugDrawer() : m_world(0) {}
+    DebugDrawer(SceneWidget *sceneWidget)
+        : m_sceneWidget(sceneWidget),
+          m_world(0)
+    {}
     virtual ~DebugDrawer() {}
 
     void draw3dText(const btVector3 & /* location */, const char *textString) {
@@ -95,83 +101,58 @@ public:
         m_world = value;
     }
 
-    void drawModelBones(const vpvl::PMDModel *model, bool drawSpheres, bool drawLines) {
+    void drawModelBones(const vpvl::PMDModel *model, bool /* drawSpheres */, bool /* drawLines */) {
         if (!model)
             return;
 
-        static const btVector3 size(0.1, 0.1, 0.1);
-        const vpvl::BoneList &bones = model->bones();
-        btVector3 color;
-        const int nbones = bones.count();
         glUseProgram(0);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_LIGHTING);
-        glPushMatrix();
 
+        btAlignedObjectArray<btVector3> vertices;
+        static const int indices[] = {
+            0, 1, 5, 3, 0, 2, 5, 4, 1, 2, 3, 4
+        };
+
+        float matrix[16];
+        vpvl::Transform mv = m_sceneWidget->scene()->modelViewTransform();
+        mv.getOpenGLMatrix(matrix);
+
+        const vpvl::BoneList &bones = model->bones();
+        const int nbones = bones.count();
+        btTransform tr = btTransform::getIdentity();
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *parent = bone->parent();
-            vpvl::Bone::Type type = bone->type();
-            if (type == vpvl::Bone::kIKTarget && parent && parent->isSimulated())
+            if (!parent || bone->parent()->id() == 0 ||
+                    !bone->isVisible() || !parent->isVisible())
                 continue;
-            const btTransform &transform = bone->localTransform();
-            if (drawSpheres && type != vpvl::Bone::kInvisible) {
-                float scale;
-                if (bone->isSimulated()) {
-                    color.setValue(0.8f, 0.8f, 0.0f);
-                    scale = 0.1f;
-                }
-                else {
-                    switch (type) {
-                    case vpvl::Bone::kIKDestination:
-                        color.setValue(0.7f, 0.2f, 0.2f);
-                        scale = 0.25f;
-                        break;
-                    case vpvl::Bone::kUnderIK:
-                        color.setValue(0.8f, 0.5f, 0.0f);
-                        scale = 0.15f;
-                        break;
-                    case vpvl::Bone::kIKTarget:
-                        color.setValue(1.0f, 0.0f, 0.0f);
-                        scale = 0.15f;
-                        break;
-                    case vpvl::Bone::kUnderRotate:
-                    case vpvl::Bone::kTwist:
-                    case vpvl::Bone::kFollowRotate:
-                        color.setValue(0.0f, 0.8f, 0.2f);
-                        scale = 0.15f;
-                        break;
-                    default:
-                        if (bone->hasMotionIndependency()) {
-                            color.setValue(0.0f, 1.0f, 1.0f);
-                            scale = 0.25f;
-                        } else {
-                            color.setValue(0.0f, 0.5f, 1.0f);
-                            scale = 0.15f;
-                        }
-                        break;
-                    }
-                }
-                const btVector3 &o = transform.getOrigin();
-                drawAabb(o - size, o + size, color);
-            }
-            if (!drawLines || !parent || type == vpvl::Bone::kIKDestination)
-                continue;
-            if (type == vpvl::Bone::kInvisible) {
-                color.setValue(0.5f, 0.4f, 0.5f);
-            }
-            else if (bone->isSimulated()) {
-                color.setValue(0.7f, 0.7f, 0.0f);
-            }
-            else if (type == vpvl::Bone::kUnderIK || type == vpvl::Bone::kIKTarget) {
-                color.setValue(0.8f, 0.5f, 0.3f);
-            }
-            else {
-                color.setValue(0.5f, 0.6f, 1.0f);
-            }
-            drawLine(parent->localTransform().getOrigin(), transform.getOrigin(), color);
+            //vpvl::Bone::Type type = bone->type();
+            const btTransform &boneTransform = bone->localTransform(),
+                    &parentTransform = parent->localTransform();
+            const btVector3 &origin = boneTransform.getOrigin(),
+                    &parentOrigin = parentTransform.getOrigin();
+            glPushMatrix();
+            glLoadMatrixf(matrix);
+            vertices.clear();
+            vertices.push_back(origin);
+            btScalar s = btMin(0.25, parentOrigin.distance(origin) * 0.1);
+            tr.setOrigin(btVector3(s, s, 0.0));
+            vertices.push_back(tr * origin);
+            tr.setOrigin(btVector3(0.0, s, s));
+            vertices.push_back(tr * origin);
+            tr.setOrigin(btVector3(-s, s, 0.0));
+            vertices.push_back(tr * origin);
+            tr.setOrigin(btVector3(0.0, s, -s));
+            vertices.push_back(tr * origin);
+            vertices.push_back(parentOrigin);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(3, GL_FLOAT, sizeof(btVector3), &vertices[0]);
+            glColor3f(0, 0, 1);
+            glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glPopMatrix();
         }
 
-        glPopMatrix();
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LIGHTING);
     }
@@ -203,6 +184,7 @@ public:
     }
 
 private:
+    SceneWidget *m_sceneWidget;
     btDynamicsWorld *m_world;
     int m_flags;
 

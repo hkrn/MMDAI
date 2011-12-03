@@ -65,9 +65,15 @@ SceneLoader::~SceneLoader()
     release();
 }
 
-void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
+void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir)
 {
-    QString key = internal::toQString(model);
+    /* モデル名が空っぽの場合はファイル名から補完しておく */
+    QString key = internal::toQString(model).trimmed();
+    if (key.isEmpty()) {
+        const QByteArray bytes = internal::fromQString(baseName);
+        model->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        key = baseName;
+    }
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
@@ -85,7 +91,6 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QDir &dir)
             i++;
         }
     }
-    setBaseBone(model);
     /* モデルを SceneLoader にヒモ付けする */
     m_models.insert(key, model);
 }
@@ -423,23 +428,6 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
     else {
         qWarning("Cannot load %s: %s", qPrintable(path), qPrintable(file.errorString()));
     }
-}
-
-void SceneLoader::setBaseBone(vpvl::PMDModel *model)
-{
-    const QString allParent = "全ての親";
-    const vpvl::BoneList &bones = model->bones();
-    int nbones = bones.count();
-    bool found = false;
-    for (int i = 0; i < nbones; i++) {
-        vpvl::Bone *bone = bones[i];
-        if (internal::toQString(bone) == allParent) {
-            model->setBaseBone(bone);
-            found = true;
-        }
-    }
-    if (!found)
-        model->setBaseBone(model->mutableRootBone());
 }
 
 void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)

@@ -88,7 +88,6 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_delegate(0),
     m_world(0),
     m_loader(0),
-    m_interval(0),
     m_debugDrawer(0),
     m_grid(0),
     m_handles(0),
@@ -101,8 +100,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_frameCount(0),
     m_currentFPS(0),
     m_defaultFPS(60),
-    m_handleFlags(0),
+    m_interval(1000.0f / m_defaultFPS),
     m_internalTimerID(0),
+    m_handleFlags(0),
     m_visibleBones(false),
     m_playing(false),
     m_enableBoneMove(false),
@@ -110,8 +110,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enablePhysics(false),
     m_showModelDialog(false)
 {
-    m_interval = 1000.0f / m_defaultFPS;
-    m_debugDrawer = new DebugDrawer();
+    m_debugDrawer = new DebugDrawer(this);
     m_delegate = new Delegate(this);
     m_grid = new Grid();
     m_info = new InfoPanel(this);
@@ -269,11 +268,12 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
     vpvl::PMDModel *model = 0;
     if (fi.exists()) {
         const QDir &dir = fi.dir();
-        model = m_loader->loadModel(fi.fileName(), dir);
+        const QString &base = fi.fileName();
+        model = m_loader->loadModel(base, dir);
         if (model) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
                 ProgressDialogPtr progress = UIGetProgressDialog("Loading the model...", 0);
-                m_loader->addModel(model, dir);
+                m_loader->addModel(model, base, dir);
                 progress.data()->setValue(1);
                 emit fileDidLoad(path);
                 emit modelDidAdd(model);
@@ -646,7 +646,7 @@ void SceneWidget::getObjectCoordinates(const QPointF &input, vpvl::Vector3 &came
     zfar.setValue(fx, fy, fz);
 }
 
-void SceneWidget::setBones(const QList<vpvl::Bone *> &bones)
+void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
 {
     vpvl::Bone *bone = bones.isEmpty() ? 0 : bones.last();
     m_info->setBone(bone);
@@ -809,6 +809,7 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+    glEnable(GL_MULTISAMPLE);
     m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_debugDrawer->setWorld(m_world->mutableWorld());
@@ -827,6 +828,7 @@ void SceneWidget::initializeGL()
     m_info->setBone(0);
     m_info->setFPS(0.0f);
     m_info->update();
+    m_renderer->initializeSurface();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
@@ -935,15 +937,16 @@ void SceneWidget::paintGL()
     QPainter painter(this);
     qglClearColor(Qt::white);
     glEnable(GL_MULTISAMPLE);
-    m_renderer->initializeSurface();
-    m_renderer->clearSurface();
-    m_renderer->drawSurface();
+    m_renderer->clear();
+    m_renderer->renderAllModels();
+    m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
     drawBones();
     painter.beginNativePainting();
     m_handles->draw();
     m_info->draw();
     painter.endNativePainting();
+    emit motionDidFinished(m_loader->stoppedMotions());
 }
 
 void SceneWidget::resizeGL(int w, int h)

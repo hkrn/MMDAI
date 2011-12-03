@@ -140,7 +140,7 @@ void ExtendedSceneWidget::paintGL()
     qreal matrix[16];
     float matrixf[16];
     qglClearColor(Qt::darkBlue);
-    glEnable(GL_MULTISAMPLE);
+    m_renderer->clear();
     glMatrixMode(GL_PROJECTION);
     m_renderer->scene()->getProjectionMatrix(matrixf);
     glLoadMatrixf(matrixf);
@@ -148,8 +148,6 @@ void ExtendedSceneWidget::paintGL()
     m_renderer->scene()->getModelViewMatrix(matrixf);
     glLoadMatrixf(matrixf);
     m_tiledStage->updateShadowMatrix(m_renderer->scene()->lightPosition());
-    m_renderer->initializeSurface();
-    m_renderer->clearSurface();
     m_tiledStage->renderBackground();
     // pre shadow
     glEnable(GL_STENCIL_TEST);
@@ -178,8 +176,7 @@ void ExtendedSceneWidget::paintGL()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     // draw all assets and models
-    m_renderer->drawAssets();
-    m_renderer->drawModels();
-    //drawBones();
+    m_renderer->renderAllAssets();
+    m_renderer->renderAllModels();
     emit motionDidFinished(m_loader->stoppedMotions());
 }
