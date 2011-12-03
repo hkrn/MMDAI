@@ -1,4 +1,4 @@
-#define ENABLE_SHADOW 1
+#define ENABLE_SHADOW 0
 #ifdef GL_ES
 precision highp float;
 #define ENABLE_ALPHA_TEST 0
