@@ -54,7 +54,7 @@ unix {
   UI_DIR = $${OUT_PWD}/.uic
 }
 win32 {
-  RC_FILE = ../QMA/res/MMDAI.rc
+  RC_FILE = ../obsoletes/QMA/res/MMDAI.rc
 }
 macx {
   QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
@@ -65,8 +65,8 @@ macx {
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
   ICON = ../obsoletes/QMA/res/MMDAI.icns
-  QMAKE_INFO_PLIST = res/Info.plist
-  resources.files = res/translations/MMDAI1_ja.qm \
+  QMAKE_INFO_PLIST = resources/Info.plist
+  resources.files = resources/translations/MMDAI1_ja.qm \
                     $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
   resources.path = Contents/Resources
   QMAKE_BUNDLE_DATA += resources
@@ -121,5 +121,5 @@ HEADERS  += \
 
 CODECFORTR = UTF-8
 RESOURCES += ../QMA2/resources/QMA2.qrc \
-             res/QMA1.qrc
-TRANSLATIONS += res/translations/MMDAI1.ts
+             resources/QMA1.qrc
+TRANSLATIONS += resources/translations/MMDAI1.ts
