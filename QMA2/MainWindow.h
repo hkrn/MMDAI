@@ -57,6 +57,7 @@ class BoneUIDelegate;
 class ExportVideoDialog;
 class FaceMotionModel;
 class LicenseWidget;
+class LoggerWidget;
 class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
@@ -114,6 +115,7 @@ private slots:
     void openPlaySettingDialog();
     void selectNextModel();
     void selectPreviousModel();
+    void showLicenseWidget();
 
 private:
     void buildUI();
@@ -125,6 +127,7 @@ private:
     QSettings m_settings;
     QUndoGroup *m_undo;
     LicenseWidget *m_licenseWidget;
+    LoggerWidget *m_loggerWidget;
     SceneWidget *m_sceneWidget;
     TabWidget *m_tabWidget;
     TimelineTabWidget *m_timelineTabWidget;
@@ -208,9 +211,8 @@ private:
     QAction *m_actionReversedPaste;
     QAction *m_actionUndoFrame;
     QAction *m_actionRedoFrame;
-    QAction *m_actionViewTab;
-    QAction *m_actionViewTimeline;
     QAction *m_actionViewTransform;
+    QAction *m_actionViewLogMessage;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
     QMenu *m_menuProject;

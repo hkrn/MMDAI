@@ -86,6 +86,7 @@ SOURCES += main.cc \
     ../QMA2/common/SceneWidget.cc \
     ../QMA2/common/VPDFile.cc \
     ../QMA2/common/SceneLoader.cc \
+    ../QMA2/common/LoggerWidget.cc \
     LicenseWidget.cc \
     MainWindow.cc \
     Script.cc \
@@ -93,7 +94,6 @@ SOURCES += main.cc \
     LipSync.cc \
     OpenJTalkSpeechEngine.cc \
     JuliusSpeechRecognitionEngine.cc \
-    LoggerWidget.cc \
     ExtendedSceneWidget.cc \
 
 INCLUDEPATH += ../QMA2/common
@@ -109,6 +109,7 @@ HEADERS  += \
     ../QMA2/common/VPDFile.h \
     ../QMA2/common/InfoPanel.h \
     ../QMA2/common/DebugDrawer.h \
+    ../QMA2/common/LoggerWidget.h \
     LicenseWidget.h \
     MainWindow.h \
     Script.h \
@@ -116,7 +117,6 @@ HEADERS  += \
     LipSync.h \
     OpenJTalkSpeechEngine.h \
     JuliusSpeechRecognitionEngine.h \
-    LoggerWidget.h \
     ExtendedSceneWidget.h \
 
 CODECFORTR = UTF-8

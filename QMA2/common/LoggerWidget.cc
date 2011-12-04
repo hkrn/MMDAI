@@ -49,6 +49,19 @@ static void LoggerWidgetHandleMessage(QtMsgType /* type */, const char *message)
     fprintf(stderr, "%s %s\n", qPrintable(datetime), message);
 }
 
+LoggerWidget *LoggerWidget::createInstance(QSettings *settings)
+{
+    if (!g_instance)
+        g_instance = new LoggerWidget(settings);
+    return g_instance;
+}
+
+void LoggerWidget::destroyInstance()
+{
+    delete g_instance;
+    g_instance = 0;
+}
+
 LoggerWidget::LoggerWidget(QSettings *settings, QWidget *parent)
     : QWidget(parent),
       m_settings(settings),

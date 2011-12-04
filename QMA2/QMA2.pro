@@ -103,6 +103,7 @@ SOURCES += main.cc \
     common/SceneWidget.cc \
     common/VPDFile.cc \
     common/SceneLoader.cc \
+    common/LoggerWidget.cc \
     MainWindow.cc \
     TimelineWidget.cc \
     FaceWidget.cc \
@@ -135,6 +136,7 @@ HEADERS  += \
     common/VPDFile.h \
     common/InfoPanel.h \
     common/DebugDrawer.h \
+    common/LoggerWidget.h \
     MainWindow.h \
     TimelineWidget.h \
     FaceWidget.h \

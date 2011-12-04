@@ -52,6 +52,7 @@
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
+#include "common/LoggerWidget.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
@@ -177,6 +178,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
     m_undo(0),
     m_licenseWidget(0),
+    m_loggerWidget(0),
     m_sceneWidget(0),
     m_tabWidget(0),
     m_timelineTabWidget(0),
@@ -197,7 +199,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_currentFPS(-1)
 {
     m_undo = new QUndoGroup(this);
-    m_licenseWidget = new LicenseWidget();
     m_sceneWidget = new SceneWidget(&m_settings);
     /* SceneWidget で渡しているのは vpvl::Scene が initializeGL で初期化されるという特性のため */
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
@@ -207,6 +208,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_boneUIDelegate = new BoneUIDelegate(m_boneMotionModel, this);
+    m_loggerWidget = LoggerWidget::createInstance(&m_settings);
     buildUI();
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
@@ -559,17 +561,15 @@ void MainWindow::buildUI()
     m_actionUndoFrame = m_undo->createUndoAction(this);
     m_actionRedoFrame = m_undo->createRedoAction(this);
 
-    m_actionViewTab = new QAction(this);
-    connect(m_actionViewTab, SIGNAL(triggered()), m_tabWidget, SLOT(show()));
-    m_actionViewTimeline = new QAction(this);
-    connect(m_actionViewTimeline, SIGNAL(triggered()), m_timelineTabWidget, SLOT(show()));
     m_actionViewTransform = new QAction(this);
     connect(m_actionViewTransform, SIGNAL(triggered()), m_transformWidget, SLOT(show()));
+    m_actionViewLogMessage = new QAction(this);
+    connect(m_actionViewLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
 
     m_actionClearRecentFiles = new QAction(this);
     connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
     m_actionAbout = new QAction(this);
-    connect(m_actionAbout, SIGNAL(triggered()), m_licenseWidget, SLOT(show()));
+    connect(m_actionAbout, SIGNAL(triggered()), this, SLOT(showLicenseWidget()));
     m_actionAbout->setMenuRole(QAction::AboutRole);
     m_actionAboutQt = new QAction(this);
     connect(m_actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
@@ -681,9 +681,8 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
     m_menuView = new QMenu(this);
-    //m_menuView->addAction(m_actionViewTab);
-    //m_menuView->addAction(m_actionViewTimeline);
     m_menuView->addAction(m_actionViewTransform);
+    m_menuView->addAction(m_actionViewLogMessage);
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
@@ -863,12 +862,10 @@ void MainWindow::retranslate()
     m_actionReversedPaste->setShortcut(tr("Alt+Ctrl+V"));
     m_actionUndoFrame->setShortcut(QKeySequence::Undo);
     m_actionRedoFrame->setShortcut(QKeySequence::Redo);
-    m_actionViewTab->setText(tr("Tab"));
-    m_actionViewTab->setStatusTip(tr("Open tab window."));
-    m_actionViewTimeline->setText(tr("Timeline"));
-    m_actionViewTimeline->setStatusTip(tr("Open timeline window."));
     m_actionViewTransform->setText(tr("Transform"));
     m_actionViewTransform->setStatusTip(tr("Open transform window."));
+    m_actionViewLogMessage->setText(tr("Logger Window"));
+    m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAbout->setShortcut(tr("Alt+Q, Alt+/"));
@@ -1213,6 +1210,13 @@ void MainWindow::selectPreviousModel()
         else
             m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index - 1)->text()));
     }
+}
+
+void MainWindow::showLicenseWidget()
+{
+    if (!m_licenseWidget)
+        m_licenseWidget = new LicenseWidget();
+    m_licenseWidget->show();
 }
 
 const QString MainWindow::openSaveDialog(const QString &name, const QString &desc, const QString &exts)

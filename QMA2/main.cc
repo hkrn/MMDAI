@@ -37,6 +37,7 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 #include "common/Application.h"
+#include "common/LoggerWidget.h"
 #include "MainWindow.h"
 
 static void SetSearchPaths(const QCoreApplication &app)
@@ -138,5 +139,7 @@ int main(int argc, char *argv[])
                              QApplication::tr("Exception caught"),
                              QApplication::tr("Exception caught: %1").arg(e.what()));
     }
+    LoggerWidget::destroyInstance();
+
     return result;
 }

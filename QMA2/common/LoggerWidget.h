@@ -50,7 +50,9 @@ class LoggerWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit LoggerWidget(QSettings *settings, QWidget *parent = 0);
+    static LoggerWidget *createInstance(QSettings *settings);
+    static void destroyInstance();
+
     ~LoggerWidget();
 
     void addMessage(const QString &message);
@@ -63,6 +65,8 @@ private slots:
     void clear();
 
 private:
+    explicit LoggerWidget(QSettings *settings, QWidget *parent = 0);
+
     QSettings *m_settings;
     QTextEdit *m_textEdit;
 
