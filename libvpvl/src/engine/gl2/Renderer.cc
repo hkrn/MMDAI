@@ -45,8 +45,6 @@
 #include <map>
 #endif
 
-#include <OpenGL/glu.h>
-
 namespace vpvl
 {
 namespace gl2

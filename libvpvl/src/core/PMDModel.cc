@@ -1279,7 +1279,7 @@ size_t PMDModel::strideSize(StrideType type) const
 
 size_t PMDModel::strideOffset(StrideType type) const
 {
-    static const SkinVertex v;
+    static SkinVertex v;
     switch (type) {
     case kVerticesStride:
     case kIndicesStride:
