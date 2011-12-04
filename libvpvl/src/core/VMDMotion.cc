@@ -230,6 +230,7 @@ void VMDMotion::seek(float frameIndex)
 {
     m_boneMotion.seek(frameIndex);
     m_faceMotion.seek(frameIndex);
+    m_active = maxFrameIndex() > frameIndex;
 }
 
 void VMDMotion::advance(float deltaFrame)
