@@ -91,6 +91,9 @@ class Script : public QObject
 public:
     typedef struct State State;
     typedef QList<QVariant> Arguments;
+    struct MotionParameter {
+        bool isLoopEnabled;
+    };
 
     static const QString kEPS;
     static const QString kLipSyncName;
@@ -148,6 +151,7 @@ private:
     QMap<QString, vpvl::PMDModel *> m_models;
     QMap<QString, vpvl::VMDMotion *> m_motions;
     QMap<QString, QBasicTimer *> m_timers;
+    QHash<vpvl::VMDMotion *, MotionParameter> m_motionParameters;
     QQueue<ScriptArgument> m_queue;
     QTimer m_timer;
     QDir m_dir;

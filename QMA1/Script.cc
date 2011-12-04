@@ -329,6 +329,13 @@ void Script::handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMot
     while (iterator.hasNext()) {
         iterator.next();
         vpvl::VMDMotion *motion = iterator.value();
+        if (m_motionParameters.contains(motion)) {
+            const MotionParameter &parameter = m_motionParameters.value(motion);
+            if (parameter.isLoopEnabled) {
+                motion->seek(0.0f);
+                continue;
+            }
+        }
         const QString &name = m_motions.key(motion);
         if (!name.isEmpty()) {
             vpvl::PMDModel *model = iterator.key();
@@ -472,16 +479,16 @@ void Script::handleCommand(const ScriptArgument &output)
             vpvl::PMDModel *model = m_models.value(modelName);
             vpvl::VMDMotion *motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
+                MotionParameter parameter;
                 bool value = false;
-                //motion->setEnableRelocation(true);
-                //motion->setEnableSmooth(true);
+                parameter.isLoopEnabled = false;
                 if (argc >= 4) {
                     parseEnable(argv[3], "FULL", "PART", value);
-                    //motion->setFull(value);
+                    motion->setNullFrameEnable(value);
                 }
                 if (argc >= 5) {
                     parseEnable(argv[4], "LOOP", "ONCE", value);
-                    //motion->setLoop(value);
+                    parameter.isLoopEnabled = value;
                 }
                 if (argc >= 6) {
                     parseEnable(argv[5], "ON", "OFF", value);
@@ -495,6 +502,7 @@ void Script::handleCommand(const ScriptArgument &output)
                     //motion->setPriority(argv[7].toFloat());
                 }
                 m_motions.insert(motionName, motion);
+                m_motionParameters.insert(motion, parameter);
                 Arguments a; a << modelName << motionName;
                 emit eventDidPost(kMotionAddEvent, a);
             }
@@ -518,19 +526,25 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
             vpvl::PMDModel *model = m_models.value(modelName);
             vpvl::VMDMotion *motion = m_motions.value(motionName);
-            //bool full = motion->isFull();
-            //bool loop = motion->isLoop();
+            bool isNullFrameEnabled = motion->isNullFrameEnabled();
+            bool isLoopEnabled = false;
+            if (m_motionParameters.contains(motion)) {
+                const MotionParameter &parameter = m_motionParameters.value(motion);
+                isLoopEnabled = parameter.isLoopEnabled;
+            }
             //bool enableSmooth = motion->enableSmooth();
             //bool enableRelocation = motion->enableRelocation();
             m_parent->deleteMotion(motion, model);
             motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
-                //motion->setFull(full);
-                //motion->setLoop(loop);
+                MotionParameter parameter;
+                parameter.isLoopEnabled = isLoopEnabled;
+                motion->setNullFrameEnable(isNullFrameEnabled);
                 //motion->setEnableSmooth(enableSmooth);
                 //motion->setEnableRelocation(enableRelocation);
                 m_motions.remove(motionName);
                 m_motions.insert(motionName, motion);
+                m_motionParameters.insert(motion, parameter);
                 Arguments a;  a << modelName << motionName;
                 emit eventDidPost(kMotionChangeEvent, a);
             }
