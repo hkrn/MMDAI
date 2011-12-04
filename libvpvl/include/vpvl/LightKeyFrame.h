@@ -96,7 +96,7 @@ public:
      *
      * @param A value of light color
      */
-    void setColor(Vector3 value) {
+    void setColor(const Vector3 &value) {
         m_color = value;
     }
 
@@ -105,7 +105,7 @@ public:
      *
      * @param A value of light direction
      */
-    void setDirection(Vector3 value) {
+    void setDirection(const Vector3 &value) {
         m_direction = value;
     }
 

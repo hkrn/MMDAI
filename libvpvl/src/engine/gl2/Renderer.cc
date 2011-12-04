@@ -50,8 +50,8 @@ namespace vpvl
 namespace gl2
 {
 
-const float kShadowMappingTextureWidth = 1024;
-const float kShadowMappingTextureHeight = 1024;
+const GLsizei kShadowMappingTextureWidth = 1024;
+const GLsizei kShadowMappingTextureHeight = 1024;
 
 static void CreateLookAt(const Vector3 &eye, float matrix[16])
 {
@@ -1301,7 +1301,7 @@ void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
     model->getBoundingSphere(center, radius);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Scalar eye = radius / btSin(vpvl::radian(angle * 0.5));
+    Scalar eye = radius / btSin(vpvl::radian(angle * 0.5f));
     gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
     Vector3 eyev = m_scene->lightPosition() * eye + center;
     gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
