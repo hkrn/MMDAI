@@ -185,6 +185,7 @@ Script::~Script()
 
 bool Script::load(QTextStream &stream)
 {
+    /* モデル特有のリップシンク設定ファイルがない時用のリップシンク設定ファイルを予め読み込む */
     bool ret = loadScript(stream);
     QFile file(":/lipsync/global");
     if (file.open(QFile::ReadOnly)) {
@@ -205,11 +206,13 @@ void Script::loadGlobalLipSync(QTextStream &stream)
 
 bool Script::loadScript(QTextStream &stream)
 {
+    /* スクリプトは仕様上 Shift_JIS として書かれているので Shift_JIS を強制させる */
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     QString sep = codec->toUnicode("\\");
     stream.setCodec("Shift-JIS");
     while (!stream.atEnd()) {
         QString line = stream.readLine().trimmed();
+        /* 空白を除去し、先頭がコメント(#)の場合はその行は無視する */
         if (!line.isEmpty() && line[0] != '#') {
             QStringList tokens = line.replace(sep, "/").split(QRegExp("\\s+"), QString::SkipEmptyParts);
             if (tokens.count() == 4) {
@@ -265,6 +268,7 @@ void Script::timerEvent(QTimerEvent *event)
     QString key;
     QBasicTimer *timer = 0;
     const int id = event->timerId();
+    /* スクリプト特有のタイマーを探し、見つかったら停止してイベント (kTimerStopEvent) を発動させる */
     while (iterator.hasNext()) {
         iterator.next();
         timer = iterator.value();
@@ -287,6 +291,7 @@ void Script::timerEvent(QTimerEvent *event)
 
 void Script::execute()
 {
+    /* イベントキューからコマンドを処理する */
     while (m_queue.size() > 0) {
         ScriptArgument output, input = m_queue.dequeue();
         setTransition(input, output);
@@ -298,6 +303,7 @@ void Script::execute()
 
 void Script::handleEvent(const QString &type, const QList<QVariant> &arguments)
 {
+    /* イベントが飛んできた場合イベントキューに積ませる (次回の execute で実行される) */
     QStringList strings;
     foreach (QVariant arg, arguments) {
         strings << arg.toString();
@@ -324,6 +330,7 @@ void Script::handleModelDelete(vpvl::PMDModel *model)
 
 void Script::handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions)
 {
+    /* ループさせる場合を除いてモーションが終了したらそのモーションは削除する */
     Arguments a;
     QMapIterator<vpvl::PMDModel *, vpvl::VMDMotion *> iterator(motions);
     while (iterator.hasNext()) {
@@ -369,6 +376,7 @@ const QString Script::canonicalizePath(const QString &path)
 
 void Script::executeEplisons()
 {
+    /* 条件指定なしのコマンド実行を行う */
     ScriptArgument output, eps(Script::kEPS, QStringList());
     while (setTransition(eps, output)) {
         if (output.type != Script::kEPS)
@@ -385,6 +393,7 @@ void Script::handleCommand(const ScriptArgument &output)
     const QString kInvalidArgumentVariant = tr("[%1] Invalid argument count (expected %2 or between %3 and %4, actual is %5)");
     const QString kModelNotFound = tr("[%1] Model %2 is not found");
     int argc = output.arguments.count();
+    /* モデルの追加 */
     if (type == kModelAddCommand) {
         if (argc < 2 || argc > 6) {
             qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(2).arg(6).arg(argc)));
@@ -428,6 +437,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(tr("[%1] Failed loading the model %2: %3").arg(type).arg(modelName).arg(path)));
         }
     }
+    /* モデルの変更 */
     else if (type == kModelChangeCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
@@ -452,6 +462,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", kModelNotFound.arg(type).arg(modelName).toUtf8().constData());
         }
     }
+    /* モデル削除 */
     else if (type == kModelDeleteCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -467,6 +478,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
         }
     }
+    /* モーション追加 */
     else if (type == kMotionAddCommand) {
         if (argc < 3 || argc > 8) {
             qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(3).arg(8).arg(argc)));
@@ -515,6 +527,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
         }
     }
+    /* モーション変更 */
     else if (type == kMotionChangeCommand) {
         if (argc != 3) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
@@ -556,6 +569,7 @@ void Script::handleCommand(const ScriptArgument &output)
         else
             qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
     }
+    /* モーション削除 */
     else if (type == kMotionDeleteCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
@@ -572,6 +586,11 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
         }
     }
+    /* ステージ追加
+     * - 引数が2つの場合はフロアと背景の画像を読み込む
+     * - 引数が1つの場合はPMDとして読み込む
+     * - いずれも SceneWidget ではなく Script が管理するため、GUI 上から変更できない
+     */
     else if (type == kStageCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -597,6 +616,7 @@ void Script::handleCommand(const ScriptArgument &output)
             }
         }
     }
+    /* 光源の色変更 */
     else if (type == kLightColorCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -608,6 +628,7 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << color.x() << color.y() << color.z() << color.w();
         emit eventDidPost(kLightColorEvent, a);
     }
+    /* 光源の方向変更 */
     else if (type == kLightDirectionCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -619,6 +640,7 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << position.x() << position.y() << position.z();
         emit eventDidPost(kLightDirectionEvent, a);
     }
+    /* OpenJTalk による音声出力の開始 */
     else if (type == OpenJTalkSpeechEngine::kSynthStartCommand) {
         if (argc != 3) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
@@ -629,6 +651,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &text = argv[2];
         m_speech.speech(name, style, text);
     }
+    /* OpenJTalk による音声出力の終了(実装していない) */
     else if (type == OpenJTalkSpeechEngine::kSynthStopCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -636,6 +659,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         // NOT SUPPORTED
     }
+    /* OpenJTalk によるリップシンクモーションの開始 */
     else if (type == OpenJTalkSpeechEngine::kLipSyncStartCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
@@ -654,6 +678,7 @@ void Script::handleCommand(const ScriptArgument &output)
             }
         }
     }
+    /* OpenJTalk によるリップシンクモーションの終了 */
     else if (type == OpenJTalkSpeechEngine::kLipSyncStopCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -667,6 +692,11 @@ void Script::handleCommand(const ScriptArgument &output)
             m_motions.remove(kLipSyncName);
         }
     }
+    /*
+     * カメラコマンド
+     * - 引数が1つの場合はカメラモーションの読み込み
+     * - 引数が3つまたは4つの場合はカメラ視点の変更を行う
+     */
     else if (type == kCameraCommand) {
         if (argc == 1) {
             const QString &path = canonicalizePath(argv[0]);
@@ -678,13 +708,16 @@ void Script::handleCommand(const ScriptArgument &output)
             parsePosition(argv[0], position);
             parsePosition(argv[1], angle);
             float distance = argv.at(2).toFloat();
-            float fovy = argv.at(3).toFloat();
-            m_parent->setCameraPerspective(&position, &angle, &fovy, &distance);
+            float fovy = 0;
+            if (argc >= 4)
+                fovy = argv.at(3).toFloat();
+            m_parent->setCameraPerspective(&position, &angle, fovy > 0 ? &fovy : 0, &distance);
         }
         else {
             qWarning("%s", qPrintable(kInvalidArgumentVariant.arg(type).arg(1).arg(3).arg(4).arg(argc)));
         }
     }
+    /* スクリプト特有の変数の設定 */
     else if (type == kValueSetCommand) {
         if (argc != 2 && argc != 3) {
             qWarning("%s", qPrintable(kInvalidArgumentRanged.arg(type).arg(2).arg(3).arg(argc)));
@@ -710,6 +743,7 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << key;
         emit eventDidPost(kValueSetEvent, a);
     }
+    /* スクリプト特有の変数の削除 */
     else if (type == kValueUnsetCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -722,6 +756,15 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kValueUnsetEvent, a);
         }
     }
+    /*
+     * スクリプト特有の変数の評価
+     * - EQ: 変数Aと変数Bが同一であることの評価 (A == B)
+     * - NE: 変数Aと変数Bが同一ではないことの評価 (A != B)
+     * - LT: 変数Aが変数Bより大きいことの評価 (A > B)
+     * - LE: 変数Aが変数Bと同一または大きいことの評価 (A >= B)
+     * - GT: 変数Aが変数Bより小さいことの評価 (A < B)
+     * - GE: 変数Aが変数Bと同一または小さいことの評価 (A <= B)
+     */
     else if (type == kValueEvaluateCommand) {
         if (argc != 3) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(3).arg(argc)));
@@ -761,6 +804,7 @@ void Script::handleCommand(const ScriptArgument &output)
         Arguments a; a << key << op << value << (ret ? "TRUE" : "FALSE");
         emit eventDidPost(kValueEvaluateEvent, a);
     }
+    /* スクリプト特有のタイマーの開始 */
     else if (type == kTimerStartCommand) {
         if (argc != 2) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
@@ -790,6 +834,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(tr("[%1] Invalid second: %2").arg(type).arg(value)));
         }
     }
+    /* スクリプト特有のタイマーの停止 */
     else if (type == kTimerStopCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
@@ -805,6 +850,7 @@ void Script::handleCommand(const ScriptArgument &output)
             emit eventDidPost(kTimerStopEvent, a);
         }
     }
+    /* プログラムの開始 */
     else if (type == kExecuteCommand) {
         if (argc != 1) {
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(2).arg(argc)));
@@ -871,6 +917,7 @@ bool Script::setTransition(const ScriptArgument &input,
     output.type = kEPS;
     output.arguments.clear();
 
+    /* 現在の状態がないまたは現在の状態に対して次の状態がない場合は何もさせないようにする */
     if (!m_currentState || m_currentState->arcs.isEmpty())
         return jumped;
 
@@ -879,9 +926,11 @@ bool Script::setTransition(const ScriptArgument &input,
         const QStringList &arcargs = arc->input.arguments;
         const int argc = args.count();
         const int arcargc = arcargs.count();
+        /* RECOG_EVENT_STOP は引数(単語)が複数あるため、特別扱いになっている */
         if (input.type == "RECOG_EVENT_STOP") {
             for (int i = 0; i < argc; i++) {
                 jumped = false;
+                /* 一致する単語を探し、ひとつでも見つかれば該当の状態遷移に進ませる */
                 for (int j = 0; j < arcargc; j++) {
                     if (args[i] == arcargs[i]) {
                         jumped = true;
@@ -892,6 +941,7 @@ bool Script::setTransition(const ScriptArgument &input,
                     break;
             }
         }
+        /* 条件となるイベントと引数が同一であれば該当の状態遷移に進ませる */
         else if (input.type == arc->input.type && argc == arcargc) {
             jumped = true;
             for (int i = 0; i < argc; i++) {
@@ -901,6 +951,7 @@ bool Script::setTransition(const ScriptArgument &input,
                 }
             }
         }
+        /* 条件に一致するものがあったら該当の状態遷移を設定する */
         if (jumped) {
             output = arc->output;
             m_currentState = arc->nextState;
@@ -913,6 +964,7 @@ bool Script::setTransition(const ScriptArgument &input,
 
 bool Script::parseEnable(const QString &value, const QString &enable, const QString &disable, bool &output) const
 {
+    /* TRUE または FALSE を boolean にキャストする処理 */
     if (enable == value) {
         output = true;
         return true;
@@ -931,6 +983,7 @@ bool Script::parseEnable(const QString &value, const QString &enable, const QStr
 
 bool Script::parsePosition(const QString &value, vpvl::Vector3 &v) const
 {
+    /* x,y,z を vpvl::Vector3(x, y, z) にキャストする処理 */
     QStringList xyz = value.split(',');
     if (xyz.count() == 3) {
         v.setZero();
@@ -948,6 +1001,7 @@ bool Script::parsePosition(const QString &value, vpvl::Vector3 &v) const
 
 bool Script::parseColor(const QString &value, vpvl::Vector4 &v) const
 {
+    /* r,g,b,a を vpvl::Color(r,g,b,a) にキャストする処理 */
     QStringList xyz = value.split(',');
     if (xyz.count() == 4) {
         v.setX(xyz.at(0).toFloat());
@@ -966,6 +1020,7 @@ bool Script::parseColor(const QString &value, vpvl::Vector4 &v) const
 
 bool Script::parseRotation(const QString &value, vpvl::Quaternion &v) const
 {
+    /* x,y,z を vpvl::Quaternion (setEulerZYX 経由で設定する) にキャストする処理 */
     QStringList xyz = value.split(',');
     if (xyz.count() == 3) {
         float z = vpvl::radian(xyz.at(2).toFloat());

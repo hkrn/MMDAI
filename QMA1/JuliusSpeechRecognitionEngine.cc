@@ -70,6 +70,7 @@ public:
 
 protected:
     void run() {
+        /* j_recognize_stream は処理をブロックするので、スレッドとして分離しておく */
         int ret = j_recognize_stream(m_recog);
         qDebug("j_recognize_stream returned %d", ret);
     }
@@ -93,7 +94,7 @@ static void BeginRecognition(Recog *recog, void *ptr)
 
 static void GetRecognitionResult(Recog *recog, void *ptr)
 {
-    /* get status */
+    /* 音声認識のプロセスが動いているかを確認する */
     RecogProcess *process = recog->process_list;
     if (!process->live || process->result.status < 0)
         return;
@@ -104,6 +105,7 @@ static void GetRecognitionResult(Recog *recog, void *ptr)
     WORD_ID *words = sentence->word;
     int nwords = sentence->word_num;
     bool first = true;
+    /* 単語ごとにわかれているので、カンマでつなげてひとつの文章にしておく */
     for (int i = 0; i < nwords; i++) {
         char *str = process->lm->winfo->woutput[words[i]];
         if (qstrlen(str) > 0) {
@@ -115,6 +117,7 @@ static void GetRecognitionResult(Recog *recog, void *ptr)
         }
     }
 
+    /* 単語が取得できていれば kRecogStopEvent を投げて対応するコマンドの処理を行う */
     if (!first) {
         JuliusSpeechRecognitionEngine *engine = static_cast<JuliusSpeechRecognitionEngine *>(ptr);
         qDebug("Recognized as %s", qPrintable(ret));
@@ -160,9 +163,11 @@ JuliusSpeechRecognitionEngine::~JuliusSpeechRecognitionEngine()
 
 void JuliusSpeechRecognitionEngine::load(const QDir &dir, const QString &baseName)
 {
+    /* 音声認識エンジンの初期化が行われているかもしれないので、終了するまで待機(ブロック)する */
     if (m_watcher.isRunning())
         m_watcher.waitForFinished();
     release();
+    /* 音声認識エンジン初期化の処理は重いので、非同期処理(スレッドを作成して分離)として行う */
     m_watcher.setFuture(QtConcurrent::run(this, &JuliusSpeechRecognitionEngine::initialize, dir, baseName));
 #ifndef Q_OS_MAC // freeze all menu on MacOSX
     m_tray->show();
@@ -180,7 +185,10 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
     QString path;
     QDir resdir("MMDAIResources:AppData/Julius");
 
+    /* ログが標準出力に書き出されるので、無視しておく */
     jlog_set_output(NULL);
+
+    /* 言語モデルの読み込み */
     path = resdir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz");
     qstrncpy(buf, QString("-d %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     Jconf *jconf = j_config_load_string_new(buf);
@@ -188,30 +196,35 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
         qWarning("%s", qPrintable(tr("Failed loading language model for Julius: %1").arg(path)));
         return false;
     }
+    /* システム辞書の読み込み */
     path = resdir.absoluteFilePath("lang_m/web.60k.htkdic");
     qstrncpy(buf, QString("-v %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading system dictionary for Julius: %1").arg(path)));
         return false;
     }
+    /* 音響モデルの読み込み */
     path = resdir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm");
     qstrncpy(buf, QString("-h %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading acoustic model for Julius: %1").arg(path)));
         return false;
     }
+    /* トライフォンの読み込み */
     path = resdir.absoluteFilePath("phone_m/tri_tied.list.bin");
     qstrncpy(buf, QString("-hlist %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading triphone list for Julius: %1").arg(path)));
         return false;
     }
+    /* Julius 設定ファイルの読み込み */
     path = resdir.absoluteFilePath("jconf.txt").toUtf8();
     qstrncpy(buf, path.toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_file(jconf, buf)) {
         qWarning("%s", qPrintable(tr("Failed loading configuration for Julius: %1").arg(path)));
         return false;
     }
+    /* ユーザ辞書の読み込み */
     QFile userDict(dir.absoluteFilePath(QString("%1.dic").arg(baseName)));
     if (userDict.exists()) {
         path = userDict.fileName().toUtf8();
@@ -219,7 +232,7 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
         j_add_dict(jconf->lm_root, buf);
     }
 
-    /* create instance */
+    /* 設定から音声認識エンジンのインスタンスを作成し、コールバックを設定しておく */
     Recog *recog = j_create_instance_from_jconf(jconf);
     if (recog) {
         callback_add(recog, CALLBACK_EVENT_RECOGNITION_BEGIN, BeginRecognition, this);
@@ -229,6 +242,7 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
             qWarning("%s", qPrintable(tr("Failed initialize adin or stream")));
             return false;
         }
+        /* 音声認識処理はブロックするので非同期処理として行う */
         m_internal = new JuliusSpeechRecognitionEngineInternal();
         m_internal->jconf = jconf;
         m_internal->recog = recog;
@@ -264,6 +278,7 @@ void JuliusSpeechRecognitionEngine::engineDidInitalize()
 
 void JuliusSpeechRecognitionEngine::release()
 {
+    /* 音声認識処理スレッドの停止 */
     if (m_thread) {
         m_thread->stop();
         m_thread->wait();
@@ -274,6 +289,7 @@ void JuliusSpeechRecognitionEngine::release()
         Recog *recog = m_internal->recog;
         if (recog)
             j_recog_free(recog);
+        /* 何故かここでクラッシュしてしまう。もちろんメモリリークを起こしてしまう */
 #if 0
         JConf *jconf = m_internal->jconf;
         if (jconf)
