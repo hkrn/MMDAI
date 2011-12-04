@@ -53,6 +53,7 @@ public:
     static LoggerWidget *createInstance(QSettings *settings);
     static void destroyInstance();
 
+    explicit LoggerWidget(QSettings *settings, QWidget *parent = 0);
     ~LoggerWidget();
 
     void addMessage(const QString &message);
@@ -65,8 +66,6 @@ private slots:
     void clear();
 
 private:
-    explicit LoggerWidget(QSettings *settings, QWidget *parent = 0);
-
     QSettings *m_settings;
     QTextEdit *m_textEdit;
 
