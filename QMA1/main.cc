@@ -83,7 +83,7 @@ static void SetSearchPaths(const QCoreApplication &app)
 #ifdef Q_OS_MAC
     const QString translationPath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
-    const QString translationPath(resourcePath + "/Locales");
+    const QString translationPath(resourcePath + "/locales");
 #endif
 #endif
     paths.clear();

@@ -74,12 +74,18 @@ macx {
     CONFIG += x86_64
   }
 }
-else:linux-* {
+linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
   QMAKE_RPATHDIR += \$\$ORIGIN/..
   QMA_RPATH = $$join(QMAKE_RPATHDIR, ":")
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
+}
+!macx {
+  translations.files = resources/translations/MMDAI1_ja.qm \
+                    $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
+  translations.path = /locales
+  INSTALLS += translations
 }
 
 SOURCES += main.cc \
