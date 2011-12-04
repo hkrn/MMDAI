@@ -192,8 +192,8 @@ public:
      *
      * @return True if calling refresh automatically
      */
-    bool isEnabledAutomaticRefresh() const {
-        return m_automaticRefresh;
+    bool isAutomaticRefreshEnabled() const {
+        return m_enableAutomaticRefresh;
     }
 
     /**
@@ -201,8 +201,8 @@ public:
      *
      * @param value True if calling refresh automatically
      */
-    void setEnableAutomaticRefresh(bool value) {
-        m_automaticRefresh = value;
+    void setAutomaticRefreshEnable(bool value) {
+        m_enableAutomaticRefresh = value;
     }
 
 protected:
@@ -211,7 +211,7 @@ protected:
     float m_maxFrame;
     float m_currentFrame;
     float m_previousFrame;
-    bool m_automaticRefresh;
+    bool m_enableAutomaticRefresh;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

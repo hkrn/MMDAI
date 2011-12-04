@@ -271,6 +271,17 @@ bool VMDMotion::isReachedTo(float atEnd) const
     return !m_active || (m_boneMotion.currentIndex() >= atEnd && m_faceMotion.currentIndex() >= atEnd);
 }
 
+bool VMDMotion::isNullFrameEnabled() const
+{
+    return m_boneMotion.isNullFrameEnabled() && m_faceMotion.isNullFrameEnabled();
+}
+
+void VMDMotion::setNullFrameEnable(bool value)
+{
+    m_boneMotion.setNullFrameEnable(value);
+    m_faceMotion.setNullFrameEnable(value);
+}
+
 void VMDMotion::parseHeader(const DataInfo &info)
 {
     copyBytesSafe(m_name, info.namePtr, sizeof(m_name));

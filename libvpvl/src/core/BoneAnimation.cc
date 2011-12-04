@@ -42,12 +42,21 @@
 namespace vpvl
 {
 
-struct BoneAnimationInternal {
+struct InternalKeyFrameList {
     Bone *bone;
     BoneKeyFrameList keyFrames;
     Vector3 position;
     Quaternion rotation;
     int lastIndex;
+
+    bool isNull() const {
+        if (keyFrames.count() == 1) {
+            const BoneKeyFrame *keyFrame = keyFrames[0];
+            return keyFrame->position() == internal::kZeroV &&
+                    keyFrame->rotation() == internal::kZeroV;
+        }
+        return false;
+    }
 };
 
 class BoneAnimationKeyFramePredication
@@ -86,13 +95,14 @@ void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
 BoneAnimation::BoneAnimation()
     : BaseAnimation(),
       m_model(0),
-      m_hasCenterBoneAnimation(false)
+      m_hasCenterBoneAnimation(false),
+      m_enableNullFrame(false)
 {
 }
 
 BoneAnimation::~BoneAnimation()
 {
-    m_name2node.releaseAll();
+    m_name2keyframes.releaseAll();
     m_model = 0;
     m_hasCenterBoneAnimation = false;
 }
@@ -111,13 +121,15 @@ void BoneAnimation::read(const uint8_t *data, int size)
 
 void BoneAnimation::seek(float frameAt)
 {
-    const int nnodes = m_name2node.count();
+    const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.value(i);
-        calculateFrames(frameAt, node);
-        Bone *bone = node->bone;
-        bone->setPosition(node->position);
-        bone->setRotation(node->rotation);
+        InternalKeyFrameList *keyFrames = *m_name2keyframes.value(i);
+        if (m_enableNullFrame && keyFrames->isNull())
+            continue;
+        calculateFrames(frameAt, keyFrames);
+        Bone *bone = keyFrames->bone;
+        bone->setPosition(keyFrames->position);
+        bone->setRotation(keyFrames->rotation);
     }
     m_previousFrame = m_currentFrame;
     m_currentFrame = frameAt;
@@ -126,7 +138,7 @@ void BoneAnimation::seek(float frameAt)
 void BoneAnimation::attachModel(PMDModel *model)
 {
     if (!m_model) {
-        buildInternalNodes(model);
+        buildInternalKeyFrameList(model);
         m_model = model;
     }
 }
@@ -134,12 +146,12 @@ void BoneAnimation::attachModel(PMDModel *model)
 void BoneAnimation::refresh()
 {
     if (m_model) {
-        m_name2node.releaseAll();
-        buildInternalNodes(m_model);
+        m_name2keyframes.releaseAll();
+        buildInternalKeyFrameList(m_model);
     }
 }
 
-void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
+void BoneAnimation::buildInternalKeyFrameList(vpvl::PMDModel *model)
 {
     const int nframes = m_frames.count();
     const uint8_t *centerBoneName = Bone::centerBoneName();
@@ -148,7 +160,7 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
     for (int i = 0; i < nframes; i++) {
         BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
-        BoneAnimationInternal **ptr = m_name2node[name], *node;
+        InternalKeyFrameList **ptr = m_name2keyframes[name], *node;
         if (ptr) {
             node = *ptr;
             node->keyFrames.add(frame);
@@ -158,34 +170,34 @@ void BoneAnimation::buildInternalNodes(vpvl::PMDModel *model)
         else {
             Bone *bone = model->findBone(frame->name());
             if (bone) {
-                node = new BoneAnimationInternal();
+                node = new InternalKeyFrameList();
                 node->keyFrames.add(frame);
                 node->bone = bone;
                 node->lastIndex = 0;
                 node->position.setZero();
                 node->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-                m_name2node.insert(name, node);
+                m_name2keyframes.insert(name, node);
             }
         }
     }
     // Sort frames from each internal nodes by frame index ascend
-    const int nnodes = m_name2node.count();
+    const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.value(i);
+        InternalKeyFrameList *node = *m_name2keyframes.value(i);
         BoneKeyFrameList &frames = node->keyFrames;
         frames.sort(BoneAnimationKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.count() - 1]->frameIndex());
     }
 }
 
-void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
+void BoneAnimation::calculateFrames(float frameAt, InternalKeyFrameList *keyFrames)
 {
-    BoneKeyFrameList &kframes = node->keyFrames;
+    BoneKeyFrameList &kframes = keyFrames->keyFrames;
     const int nframes = kframes.count();
     BoneKeyFrame *lastKeyFrame = kframes[nframes - 1];
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
-    int k1 = 0, k2 = 0, lastIndex = node->lastIndex;
+    int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
     if (currentFrame >= kframes[lastIndex]->frameIndex()) {
         for (int i = lastIndex; i < nframes; i++) {
             if (currentFrame <= kframes[i]->frameIndex()) {
@@ -206,7 +218,7 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
     if (k2 >= nframes)
         k2 = nframes - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
-    node->lastIndex = k1;
+    keyFrames->lastIndex = k1;
 
     const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
@@ -218,12 +230,12 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
 
     if (frameIndexFrom != frameIndexTo) {
         if (currentFrame <= frameIndexFrom) {
-            node->position = positionFrom;
-            node->rotation = rotationFrom;
+            keyFrames->position = positionFrom;
+            keyFrames->rotation = rotationFrom;
         }
         else if (currentFrame >= frameIndexTo) {
-            node->position = positionTo;
-            node->rotation = rotationTo;
+            keyFrames->position = positionTo;
+            keyFrames->rotation = rotationTo;
         }
         else {
             const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
@@ -231,29 +243,29 @@ void BoneAnimation::calculateFrames(float frameAt, BoneAnimationInternal *node)
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);
-            node->position.setValue(x, y, z);
+            keyFrames->position.setValue(x, y, z);
             if (keyFrameForInterpolation->linear()[3]) {
-                node->rotation = rotationFrom.slerp(rotationTo, w);
+                keyFrames->rotation = rotationFrom.slerp(rotationTo, w);
             }
             else {
                 const float w2 = weightValue(keyFrameForInterpolation, w, 3);
-                node->rotation = rotationFrom.slerp(rotationTo, w2);
+                keyFrames->rotation = rotationFrom.slerp(rotationTo, w2);
             }
         }
     }
     else {
-        node->position = positionFrom;
-        node->rotation = rotationFrom;
+        keyFrames->position = positionFrom;
+        keyFrames->rotation = rotationFrom;
     }
 }
 
 void BoneAnimation::reset()
 {
     BaseAnimation::reset();
-    const int nnodes = m_name2node.count();
+    const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        BoneAnimationInternal *node = *m_name2node.value(i);
-        node->lastIndex = 0;
+        InternalKeyFrameList *keyframes = *m_name2keyframes.value(i);
+        keyframes->lastIndex = 0;
     }
 }
 

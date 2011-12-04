@@ -48,7 +48,6 @@ class Bone;
 class BoneKeyFrame;
 class PMDModel;
 typedef Array<BoneKeyFrame *> BoneKeyFrameList;
-typedef struct BoneAnimationInternal BoneAnimationInternal;
 
 /**
  * @file
@@ -64,6 +63,8 @@ typedef struct BoneAnimationInternal BoneAnimationInternal;
 class VPVL_API BoneAnimation : public BaseAnimation
 {
 public:
+    typedef struct InternalKeyFrameList InternalKeyFarmeList;
+
     BoneAnimation();
     ~BoneAnimation();
 
@@ -105,6 +106,14 @@ public:
         return m_hasCenterBoneAnimation;
     }
 
+    bool isNullFrameEnabled() const {
+        return m_enableNullFrame;
+    }
+
+    void setNullFrameEnable(bool value) {
+        m_enableNullFrame = value;
+    }
+
     /**
      * Get an attached model of this animation.
      *
@@ -124,12 +133,13 @@ private:
                             float w,
                             int at,
                             float &value);
-    void buildInternalNodes(vpvl::PMDModel *model);
-    void calculateFrames(float frameAt, BoneAnimationInternal *node);
+    void buildInternalKeyFrameList(vpvl::PMDModel *model);
+    void calculateFrames(float frameAt, InternalKeyFrameList *keyFrames);
 
-    Hash<HashString, BoneAnimationInternal *> m_name2node;
+    Hash<HashString, InternalKeyFrameList *> m_name2keyframes;
     PMDModel *m_model;
     bool m_hasCenterBoneAnimation;
+    bool m_enableNullFrame;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(BoneAnimation)
 };

@@ -44,10 +44,10 @@
 #include "vpvl/FaceAnimation.h"
 #include "vpvl/LightAnimation.h"
 
-class PMDModel;
-
 namespace vpvl
 {
+
+class PMDModel;
 
 /**
  * @file
@@ -125,6 +125,8 @@ public:
     void reset();
     float maxFrameIndex() const;
     bool isReachedTo(float frameIndex) const;
+    bool isNullFrameEnabled() const;
+    void setNullFrameEnable(bool value);
 
     const uint8_t *name() const {
         return m_name;

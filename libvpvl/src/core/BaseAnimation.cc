@@ -47,7 +47,7 @@ BaseAnimation::BaseAnimation()
       m_maxFrame(0.0f),
       m_currentFrame(0.0f),
       m_previousFrame(0.0f),
-      m_automaticRefresh(true)
+      m_enableAutomaticRefresh(true)
 {
 }
 
@@ -58,7 +58,7 @@ BaseAnimation::~BaseAnimation()
     m_maxFrame = 0.0f;
     m_currentFrame = 0.0f;
     m_previousFrame = 0.0f;
-    m_automaticRefresh = true;
+    m_enableAutomaticRefresh = true;
 }
 
 void BaseAnimation::advance(float deltaFrame)
@@ -82,7 +82,7 @@ void BaseAnimation::reset()
 void BaseAnimation::addKeyFrame(BaseKeyFrame *frame)
 {
     m_frames.add(frame);
-    if (m_automaticRefresh)
+    if (m_enableAutomaticRefresh)
         refresh();
 }
 
@@ -107,7 +107,7 @@ void BaseAnimation::deleteKeyFrame(float frameIndex, const uint8_t *value)
     if (frameToRemove) {
         m_frames.remove(frameToRemove);
         delete frameToRemove;
-        if (m_automaticRefresh)
+        if (m_enableAutomaticRefresh)
             refresh();
     }
 }
@@ -128,7 +128,7 @@ void BaseAnimation::deleteKeyFrames(float frameIndex)
             m_frames.remove(frame);
             delete frame;
         }
-        if (m_automaticRefresh)
+        if (m_enableAutomaticRefresh)
             refresh();
     }
 }

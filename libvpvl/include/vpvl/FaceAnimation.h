@@ -47,7 +47,6 @@ namespace vpvl
 class Face;
 class FaceKeyFrame;
 class PMDModel;
-typedef struct FaceAnimationInternal FaceAnimationInternal;
 typedef Array<FaceKeyFrame *> FaceKeyFrameList;
 
 /**
@@ -64,10 +63,10 @@ typedef Array<FaceKeyFrame *> FaceKeyFrameList;
 class VPVL_API FaceAnimation : public BaseAnimation
 {
 public:
+    typedef struct InternalKeyFrameList InternalKeyFrameList;
+
     FaceAnimation();
     ~FaceAnimation();
-
-    static const float kStartingMarginFrame;
 
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
@@ -120,12 +119,21 @@ public:
         return m_model;
     }
 
+    bool isNullFrameEnabled() const {
+        return m_enableNullFrame;
+    }
+
+    void setNullFrameEnable(bool value) {
+        m_enableNullFrame = value;
+    }
+
 private:
     void buildInternalNodes(vpvl::PMDModel *model);
-    void calculateFrames(float frameAt, FaceAnimationInternal *node);
+    void calculateFrames(float frameAt, InternalKeyFrameList *keyFrames);
 
-    Hash<HashString, FaceAnimationInternal *> m_name2node;
+    Hash<HashString, InternalKeyFrameList *> m_name2keyframes;
     PMDModel *m_model;
+    bool m_enableNullFrame;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(FaceAnimation)
 };
