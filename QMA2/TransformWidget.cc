@@ -41,7 +41,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
-#include "util.h"
+#include "common/util.h"
 
 namespace
 {

@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "FaceMotionModel.h"
-#include "util.h"
+#include "common/util.h"
 #include <vpvl/vpvl.h>
 
 namespace

@@ -1,6 +1,6 @@
 #include "EdgeOffsetDialog.h"
 #include "MainWindow.h"
-#include "SceneWidget.h"
+#include "common/SceneWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

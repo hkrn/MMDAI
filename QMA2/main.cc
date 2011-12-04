@@ -36,7 +36,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
-#include "Application.h"
+#include "common/Application.h"
 #include "MainWindow.h"
 
 static void SetSearchPaths(const QCoreApplication &app)

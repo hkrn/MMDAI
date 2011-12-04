@@ -39,7 +39,7 @@
 #ifndef DEBUGDRAWER_H
 #define DEBUGDRAWER_H
 
-#include "SceneWidget.h"
+#include "common/SceneWidget.h"
 #include "util.h"
 
 #include <QtCore/QObject>

@@ -39,7 +39,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
-#include "util.h"
+#include "common/util.h"
 
 FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),

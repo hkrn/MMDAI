@@ -49,12 +49,12 @@
 #include "LicenseWidget.h"
 #include "PlaySettingDialog.h"
 #include "SceneMotionModel.h"
-#include "SceneWidget.h"
 #include "TabWidget.h"
 #include "TimelineTabWidget.h"
 #include "TransformWidget.h"
-#include "VPDFile.h"
-#include "util.h"
+#include "common/SceneWidget.h"
+#include "common/VPDFile.h"
+#include "common/util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

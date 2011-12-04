@@ -99,10 +99,12 @@ else:linux-* {
    LIBS += -lGLEW
 }
 
-SOURCES += main.cc\
-           MainWindow.cc \
-           SceneWidget.cc \
-           TimelineWidget.cc \
+SOURCES += main.cc \
+    common/SceneWidget.cc \
+    common/VPDFile.cc \
+    common/SceneLoader.cc \
+    MainWindow.cc \
+    TimelineWidget.cc \
     FaceWidget.cc \
     CameraPerspectiveWidget.cc \
     TransformWidget.cc \
@@ -113,9 +115,7 @@ SOURCES += main.cc\
     BoneDialog.cc \
     TimelineTabWidget.cc \
     InterpolationWidget.cc \
-    VPDFile.cc \
     LicenseWidget.cc \
-    SceneLoader.cc \
     AssetWidget.cc \
     SceneMotionModel.cc \
     BoneUIDelegate.cc \
@@ -123,14 +123,23 @@ SOURCES += main.cc\
     PlaySettingDialog.cc \
     EdgeOffsetDialog.cc
 
-HEADERS  += MainWindow.h \
-            SceneWidget.h \
-            TimelineWidget.h \
-    Handles.h \
+HEADERS  += \
+    common/SceneWidget.h \
+    common/Handles.h \
+    common/util.h \
+    common/Delegate.h \
+    common/World.h \
+    common/SceneLoader.h \
+    common/Grid.h \
+    common/Application.h \
+    common/VPDFile.h \
+    common/InfoPanel.h \
+    common/DebugDrawer.h \
+    MainWindow.h \
+    TimelineWidget.h \
     FaceWidget.h \
     CameraPerspectiveWidget.h \
     TransformWidget.h \
-    util.h \
     TabWidget.h \
     MotionBaseModel.h \
     BoneMotionModel.h \
@@ -138,16 +147,8 @@ HEADERS  += MainWindow.h \
     BoneDialog.h \
     TimelineTabWidget.h \
     InterpolationWidget.h \
-    VPDFile.h \
     LicenseWidget.h \
-    Delegate.h \
-    World.h \
-    SceneLoader.h \
-    Grid.h \
-    Application.h \
     AssetWidget.h \
-    InfoPanel.h \
-    DebugDrawer.h \
     SceneMotionModel.h \
     PMDMotionModel.h \
     BoneUIDelegate.h \

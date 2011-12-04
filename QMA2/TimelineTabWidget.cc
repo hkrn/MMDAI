@@ -39,8 +39,8 @@
 #include "FaceMotionModel.h"
 #include "SceneMotionModel.h"
 #include "TimelineWidget.h"
-#include "VPDFile.h"
-#include "util.h"
+#include "common/VPDFile.h"
+#include "common/util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

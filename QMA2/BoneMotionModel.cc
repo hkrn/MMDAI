@@ -35,9 +35,9 @@
 /* ----------------------------------------------------------------- */
 
 #include "BoneMotionModel.h"
-#include "SceneWidget.h"
-#include "VPDFile.h"
-#include "util.h"
+#include "common/SceneWidget.h"
+#include "common/VPDFile.h"
+#include "common/util.h"
 #include <vpvl/vpvl.h>
 
 namespace
