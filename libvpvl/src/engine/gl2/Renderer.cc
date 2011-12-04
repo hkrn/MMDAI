@@ -55,6 +55,7 @@ const GLsizei kShadowMappingTextureHeight = 1024;
 
 static void CreateLookAt(const Vector3 &eye, float matrix[16])
 {
+#ifndef VPVL_BUILD_IOS
     glMatrixMode(GL_MODELVIEW);
     gluLookAt(eye.x(), eye.y(), eye.z(), 0, 0, 0, 0, 1, 0);
     glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
@@ -71,6 +72,7 @@ static void CreateLookAt(const Vector3 &eye, float matrix[16])
     };
     memcpy(matrix, m, sizeof(float) * 16);
     */
+#endif
 }
 
 class ShaderProgram
@@ -1005,6 +1007,7 @@ bool Renderer::createPrograms()
 bool Renderer::createShadowFrameBuffers()
 {
     bool ret = true;
+#ifndef  VPVL_BUILD_IOS
     glGenTextures(1, &m_depthTextureID);
     glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, kShadowMappingTextureWidth, kShadowMappingTextureHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
@@ -1033,6 +1036,7 @@ bool Renderer::createShadowFrameBuffers()
         ret = false;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
     return ret;
 }
 
@@ -1290,6 +1294,7 @@ void Renderer::renderModelShadow(const vpvl::PMDModel *model)
 
 void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
 {
+#ifndef VPVL_BUILD_IOS
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getProjectionMatrix(projectionMatrix);
@@ -1316,6 +1321,7 @@ void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     glDisable(GL_POLYGON_OFFSET_FILL);
     m_zplotProgram->unbind();
+#endif
 }
 
 void Renderer::renderModelEdge(const vpvl::PMDModel *model)

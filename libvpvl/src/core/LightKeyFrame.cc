@@ -83,9 +83,9 @@ void LightKeyFrame::read(const uint8_t *data)
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     m_frameIndex = static_cast<float>(chunk.frameIndex);
 #ifdef VPVL_BUILD_IOS
-    float color[3], direction()[4];
-    memcpy(color, &chunk.position, sizeof(color));
-    memcpy(direction, &chunk.rotation, sizeof(direction));
+    float color[3], direction[4];
+    memcpy(color, &chunk.color, sizeof(color));
+    memcpy(direction, &chunk.direction, sizeof(direction));
 #else
     float *color = chunk.color;
     float *direction = chunk.direction;
