@@ -565,7 +565,7 @@ void OpenJTalkSpeechEngine::load(const QDir &dir, const QString &baseName)
     if (m_base.isEmpty()) {
         const QString base = dir.absolutePath();
         const QString config = dir.absoluteFilePath(QString("%1.ojt").arg(baseName));
-        const QString resdir = QDir("MMDAIResources:AppData/Open_JTalk").absolutePath();
+        const QString resdir = QDir("MMDAIResources:OpenJTalk").absolutePath();
         if (QFile::exists(base) && QFile::exists(config) && QFile::exists(resdir)) {
             m_base = base;
             m_config = config;

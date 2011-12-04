@@ -56,6 +56,19 @@ unix {
 
 translations.files = resources/translations/MMDAI1_ja.qm \
                      $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
+julius.files = resources/AppData/Julius/jconf.txt \
+               resources/AppData/Julius/lang_m/web.60k.8-8.bingramv5.gz \
+               resources/AppData/Julius/lang_m/web.60k.htkdic \
+               resources/AppData/Julius/phone_m/clustered.mmf.16mix.all.julius.binhmm \
+               resources/AppData/Julius/phone_m/tri_tied.list.bin
+openjtalk.files = resources/AppData/Open_JTalk/char.bin \
+                  resources/AppData/Open_JTalk/left-id.def \
+                  resources/AppData/Open_JTalk/matrix.bin \
+                  resources/AppData/Open_JTalk/pos-id.def \
+                  resources/AppData/Open_JTalk/rewrite.def \
+                  resources/AppData/Open_JTalk/right-id.def \
+                  resources/AppData/Open_JTalk/sys.dic \
+                  resources/AppData/Open_JTalk/unk.dic
 
 win32 {
   RC_FILE = ../obsoletes/QMA/res/MMDAI.rc
@@ -71,7 +84,9 @@ macx {
   ICON = ../obsoletes/QMA/res/MMDAI.icns
   QMAKE_INFO_PLIST = resources/Info.plist
   translations.path = Contents/Resources
-  QMAKE_BUNDLE_DATA += translations
+  julius.path = Contents/Resources/Julius
+  openjtalk.path = Contents/Resources/OpenJTalk
+  QMAKE_BUNDLE_DATA += translations julius openjtalk
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -85,7 +100,9 @@ linux-* {
 }
 !macx {
   translations.path = /locales
-  INSTALLS += translations
+  julius.path = /resources/Julius
+  openjtalk.path = /resources/OpenJTalk
+  INSTALLS += translations julius openjtalk
 }
 
 SOURCES += main.cc \

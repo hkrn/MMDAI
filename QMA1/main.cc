@@ -69,8 +69,10 @@ static void SetSearchPaths(const QCoreApplication &app)
     /* set path to find resources such as model, motion etc. */
 #ifdef QMA_RESOURCE_PATH
     const QString resourcePath(QMA_RESOURCE_PATH);
+#elif defined(Q_OS_MAC)
+    const QString resourcePath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
-    const QString resourcePath(applicationPath);
+    const QString resourcePath(applicationPath + "/resources");
 #endif
     paths.clear();
     paths.append(resourcePath);
@@ -80,10 +82,10 @@ static void SetSearchPaths(const QCoreApplication &app)
 #ifdef QMA_TRANSLATION_PATH
     const QString translationPath(QMA_TRANSLATION_PATH);
 #else
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC)
     const QString translationPath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
-    const QString translationPath(resourcePath + "/locales");
+    const QString translationPath(applicationPath + "/locales");
 #endif
 #endif
     paths.clear();

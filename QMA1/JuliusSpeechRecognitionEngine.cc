@@ -183,13 +183,13 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
 {
     char buf[BUFSIZ];
     QString path;
-    QDir resdir("MMDAIResources:AppData/Julius");
+    QDir resdir("MMDAIResources:Julius");
 
     /* ログが標準出力に書き出されるので、無視しておく */
     jlog_set_output(NULL);
 
     /* 言語モデルの読み込み */
-    path = resdir.absoluteFilePath("lang_m/web.60k.8-8.bingramv5.gz");
+    path = resdir.absoluteFilePath("web.60k.8-8.bingramv5.gz");
     qstrncpy(buf, QString("-d %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     Jconf *jconf = j_config_load_string_new(buf);
     if (!jconf) {
@@ -197,21 +197,21 @@ bool JuliusSpeechRecognitionEngine::initialize(const QDir &dir, const QString &b
         return false;
     }
     /* システム辞書の読み込み */
-    path = resdir.absoluteFilePath("lang_m/web.60k.htkdic");
+    path = resdir.absoluteFilePath("web.60k.htkdic");
     qstrncpy(buf, QString("-v %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading system dictionary for Julius: %1").arg(path)));
         return false;
     }
     /* 音響モデルの読み込み */
-    path = resdir.absoluteFilePath("phone_m/clustered.mmf.16mix.all.julius.binhmm");
+    path = resdir.absoluteFilePath("clustered.mmf.16mix.all.julius.binhmm");
     qstrncpy(buf, QString("-h %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading acoustic model for Julius: %1").arg(path)));
         return false;
     }
     /* トライフォンの読み込み */
-    path = resdir.absoluteFilePath("phone_m/tri_tied.list.bin");
+    path = resdir.absoluteFilePath("tri_tied.list.bin");
     qstrncpy(buf, QString("-hlist %1").arg(path).toLocal8Bit().constData(), sizeof(buf));
     if (j_config_load_string(jconf, buf) < 0) {
         qWarning("%s", qPrintable(tr("Failed loading triphone list for Julius: %1").arg(path)));
