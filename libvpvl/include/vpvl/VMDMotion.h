@@ -82,16 +82,6 @@ public:
         kMaxErrors
     };
 
-    /**
-     * Status of current motion.
-     */
-    enum MotionStatus
-    {
-        kRunning,
-        kLooped,
-        kStopped
-    };
-
     struct DataInfo
     {
         const uint8_t *basePtr;
@@ -149,9 +139,6 @@ public:
     const LightAnimation &lightAnimation() const {
         return m_lightMotion;
     }
-    const MotionStatus &status() const {
-        return m_status;
-    }
     const DataInfo &result() const {
         return m_result;
     }
@@ -193,7 +180,6 @@ private:
     CameraAnimation m_cameraMotion;
     FaceAnimation m_faceMotion;
     LightAnimation m_lightMotion;
-    MotionStatus m_status;
     Error m_error;
     float m_priority;
     bool m_active;

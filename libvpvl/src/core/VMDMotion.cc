@@ -51,7 +51,6 @@ const float VMDMotion::kDefaultPriority = 0.0f;
 
 VMDMotion::VMDMotion()
     : m_model(0),
-      m_status(kRunning),
       m_error(kNoError),
       m_priority(kDefaultPriority),
       m_active(false)
@@ -246,7 +245,6 @@ void VMDMotion::advance(float deltaFrame)
         if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
                 m_faceMotion.currentIndex() >= m_faceMotion.maxIndex()) {
             m_active = false;
-            m_status = kStopped;
         }
     }
 }
@@ -258,7 +256,6 @@ void VMDMotion::reset()
     m_boneMotion.reset();
     m_faceMotion.reset();
     m_active = true;
-    m_status = kRunning;
 }
 
 float VMDMotion::maxFrameIndex() const
@@ -316,7 +313,6 @@ void VMDMotion::release()
 {
     internal::zerofill(&m_name, sizeof(m_name));
     m_model = 0;
-    m_status = kRunning;
     m_priority = kDefaultPriority;
     m_active = false;
 }
