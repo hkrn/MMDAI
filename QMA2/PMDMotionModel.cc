@@ -35,7 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #include "PMDMotionModel.h"
-#include "util.h"
+#include "common/util.h"
+
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 

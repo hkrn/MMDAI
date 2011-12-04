@@ -38,10 +38,10 @@
 #include "BoneMotionModel.h"
 #include "FaceMotionModel.h"
 #include "SceneMotionModel.h"
+#include "common/util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
-#include "util.h"
 
 namespace {
 
