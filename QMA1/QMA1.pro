@@ -82,36 +82,42 @@ else:linux-* {
   QMAKE_RPATHDIR =
 }
 
-SOURCES += LicenseWidget.cc \
-           SceneLoader.cc \
-           SceneWidget.cc \
-           main.cc \
-           MainWindow.cc \
-           Script.cc \
-           TiledStage.cc \
-           LipSync.cc \
-           OpenJTalkSpeechEngine.cc \
-           JuliusSpeechRecognitionEngine.cc \
-           LoggerWidget.cc \
-           ExtendedSceneWidget.cc \
-           VPDFile.cc
+SOURCES += main.cc \
+    ../QMA2/common/SceneWidget.cc \
+    ../QMA2/common/VPDFile.cc \
+    ../QMA2/common/SceneLoader.cc \
+    LicenseWidget.cc \
+    MainWindow.cc \
+    Script.cc \
+    TiledStage.cc \
+    LipSync.cc \
+    OpenJTalkSpeechEngine.cc \
+    JuliusSpeechRecognitionEngine.cc \
+    LoggerWidget.cc \
+    ExtendedSceneWidget.cc \
 
-HEADERS  += Delegate.h \
-            World.h \
-            LicenseWidget.h \
-            SceneLoader.h \
-            SceneWidget.h \
-            util.h \
-            MainWindow.h \
-            Script.h \
-            TiledStage.h \
-            LipSync.h \
-            OpenJTalkSpeechEngine.h \
-            JuliusSpeechRecognitionEngine.h \
-            LoggerWidget.h \
-            Application.h \
-            ExtendedSceneWidget.h \
-            VPDFile.h
+INCLUDEPATH += ../QMA2/common
+HEADERS  += \
+    ../QMA2/common/SceneWidget.h \
+    ../QMA2/common/Handles.h \
+    ../QMA2/common/util.h \
+    ../QMA2/common/Delegate.h \
+    ../QMA2/common/World.h \
+    ../QMA2/common/SceneLoader.h \
+    ../QMA2/common/Grid.h \
+    ../QMA2/common/Application.h \
+    ../QMA2/common/VPDFile.h \
+    ../QMA2/common/InfoPanel.h \
+    ../QMA2/common/DebugDrawer.h \
+    LicenseWidget.h \
+    MainWindow.h \
+    Script.h \
+    TiledStage.h \
+    LipSync.h \
+    OpenJTalkSpeechEngine.h \
+    JuliusSpeechRecognitionEngine.h \
+    LoggerWidget.h \
+    ExtendedSceneWidget.h \
 
 CODECFORTR = UTF-8
 RESOURCES += ../QMA2/resources/QMA2.qrc \
