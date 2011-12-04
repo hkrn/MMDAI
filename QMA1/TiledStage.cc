@@ -38,6 +38,10 @@
 
 #include "TiledStage.h"
 
+#ifndef Q_OS_DARWIN
+#include <GL/glew.h>
+#endif
+
 #include "Delegate.h"
 #include "World.h"
 #include <btBulletDynamicsCommon.h>
