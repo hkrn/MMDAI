@@ -17,25 +17,25 @@ int main(int argc, char *argv[])
 
     if (argc != 4)
         return showUsage();
-    QDir source(argv[1]), dest(argv[2]);
+    const QDir source(argv[1]), dest(argv[2]);
     if (!source.isReadable() || !dest.isReadable())
         return showUsage();
-    QString filename = argv[3];
+    const QString &filename = argv[3];
     QFile file(source.absoluteFilePath(filename));
     if (file.isReadable())
         return showUsage();
 
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     if (file.open(QFile::ReadOnly)) {
-        QByteArray bytes = file.readAll();
+        const QByteArray &bytes = file.readAll();
         vpvl::PMDModel model;
         if (model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             const vpvl::MaterialList &materials = model.materials();
             int nmaterials = materials.count();
             for (int i = 0; i < nmaterials; i++) {
                 vpvl::Material *material = materials[i];
-                QString main(reinterpret_cast<const char *>(material->mainTextureName())),
-                        sub(reinterpret_cast<const char *>(material->subTextureName()));
+                const QString main(reinterpret_cast<const char *>(material->mainTextureName())),
+                              sub(reinterpret_cast<const char *>(material->subTextureName()));
                 if (main.isEmpty() && sub.isEmpty())
                     continue;
                 if (sub.endsWith(".sph") || sub.endsWith(".spa"))
@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
                 QImage mainTexture(source.absoluteFilePath(main));
                 QString png = main;
                 png.replace(".bmp", ".png");
+                if (mainTexture.width() > 512 && mainTexture.height() > 512)
+                    mainTexture = mainTexture.scaled(512, 512, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
                 mainTexture.save(dest.absoluteFilePath(png));
                 QString pvr = main;
                 pvr.replace(".bmp", ".pvr");
