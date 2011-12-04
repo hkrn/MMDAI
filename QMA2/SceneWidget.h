@@ -205,11 +205,6 @@ protected:
     void resizeGL(int w, int h);
     void timerEvent(QTimerEvent *event);
     void wheelEvent(QWheelEvent *event);
-
-private:
-    bool acceptAddingModel(vpvl::PMDModel *model);
-    void drawBones();
-    void updateFPS();
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 #ifdef VPVL_USE_GLSL
@@ -217,14 +212,20 @@ private:
 #else
     vpvl::gl::Renderer *m_renderer;
 #endif
-    internal::DebugDrawer *m_debugDrawer;
     internal::Delegate *m_delegate;
+    internal::World *m_world;
+    SceneLoader *m_loader;
+
+private:
+    bool acceptAddingModel(vpvl::PMDModel *model);
+    void drawBones();
+    void updateFPS();
+
+    internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::Handles *m_handles;
     internal::InfoPanel *m_info;
-    internal::World *m_world;
     vpvl::Bone *m_bone;
-    SceneLoader *m_loader;
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
