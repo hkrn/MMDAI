@@ -84,7 +84,7 @@ static void SetSearchPaths(const QCoreApplication &app)
 #ifdef Q_OS_MAC
     const QString translationPath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
-    const QString translationPath(resourcePath + "/Locales");
+    const QString translationPath(resourcePath + "/locales");
 #endif
 #endif
     paths.clear();
@@ -96,13 +96,14 @@ typedef QSharedPointer<QTranslator> QTranslatorPtr;
 
 static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &translators)
 {
-    const QString locale = QLocale::system().name();
+    const QString &dir = QDir("MMDAITranslations:/").absolutePath();
+    const QString &locale = QLocale::system().name();
     QTranslator *translator = new QTranslator();
-    translator->load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+    translator->load("qt_" + locale, dir);
     app.installTranslator(translator);
     translators.append(QTranslatorPtr(translator));
     translator = new QTranslator();
-    translator->load(":/translations/MMDAI2_" + locale);
+    translator->load("MMDAI2_" + locale, dir);
     app.installTranslator(translator);
     translators.append(QTranslatorPtr(translator));
 }

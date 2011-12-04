@@ -93,9 +93,10 @@ static void SetSearchPaths(const QCoreApplication &app)
 
 static void LoadTranslations(QCoreApplication &app, QTranslator &appTr, QTranslator &qtTr)
 {
-    const QString locale = QLocale::system().name();
-    qtTr.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-    appTr.load("MMDAI1_" + locale, QDir("MMDAITranslations:/").absolutePath());
+    const QString &dir = QDir("MMDAITranslations:/").absolutePath();
+    const QString &locale = QLocale::system().name();
+    qtTr.load("qt_" + locale, dir);
+    appTr.load("MMDAI1_" + locale, dir);
     app.installTranslator(&qtTr);
     app.installTranslator(&appTr);
 }
