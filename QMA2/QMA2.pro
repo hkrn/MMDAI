@@ -67,6 +67,9 @@ unix {
   RCC_DIR = $${OUT_PWD}/.rcc
   UI_DIR = $${OUT_PWD}/.uic
 }
+
+translations.files = resources/translations/MMDAI2_ja.qm \
+                     $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
 win32 {
   RC_FILE = resources/icons/app.rc
 }
@@ -78,10 +81,8 @@ macx {
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-  resources.files = resources/translations/MMDAI2_ja.qm \
-                    $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
-  resources.path = Contents/Resources
-  QMAKE_BUNDLE_DATA += resources
+  translations.path = Contents/Resources
+  QMAKE_BUNDLE_DATA += translations
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -99,8 +100,6 @@ linux-* {
    LIBS += -lGLEW
 }
 !macx {
-  translations.files = resources/translations/MMDAI2_ja.qm \
-                    $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
   translations.path = /locales
   INSTALLS += translations
 }

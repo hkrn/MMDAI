@@ -53,6 +53,10 @@ unix {
   RCC_DIR = $${OUT_PWD}/.rcc
   UI_DIR = $${OUT_PWD}/.uic
 }
+
+translations.files = resources/translations/MMDAI1_ja.qm \
+                     $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
+
 win32 {
   RC_FILE = ../obsoletes/QMA/res/MMDAI.rc
 }
@@ -66,10 +70,8 @@ macx {
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
   ICON = ../obsoletes/QMA/res/MMDAI.icns
   QMAKE_INFO_PLIST = resources/Info.plist
-  resources.files = resources/translations/MMDAI1_ja.qm \
-                    $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
-  resources.path = Contents/Resources
-  QMAKE_BUNDLE_DATA += resources
+  translations.path = Contents/Resources
+  QMAKE_BUNDLE_DATA += translations
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -82,8 +84,6 @@ linux-* {
   QMAKE_RPATHDIR =
 }
 !macx {
-  translations.files = resources/translations/MMDAI1_ja.qm \
-                    $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
   translations.path = /locales
   INSTALLS += translations
 }
