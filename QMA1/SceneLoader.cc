@@ -451,7 +451,7 @@ const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions
     while (i.hasNext()) {
         i.next();
         vpvl::VMDMotion *motion = i.value();
-        if (motion->status() == vpvl::VMDMotion::kStopped && motion->isReachedTo(motion->maxFrameIndex())) {
+        if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex())) {
             vpvl::PMDModel *model = i.key();
             ret.insert(model, motion);
         }
