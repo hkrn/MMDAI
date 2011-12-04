@@ -81,12 +81,10 @@ static void SetSearchPaths(const QCoreApplication &app)
     /* load translation files from Qt's system path and resource path */
 #ifdef QMA_TRANSLATION_PATH
     const QString translationPath(QMA_TRANSLATION_PATH);
-#else
-#if defined(Q_OS_MAC)
+#elif defined(Q_OS_MAC)
     const QString translationPath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
     const QString translationPath(applicationPath + "/locales");
-#endif
 #endif
     paths.clear();
     paths.append(translationPath);
