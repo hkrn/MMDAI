@@ -298,7 +298,7 @@ public:
     }
 
     virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = ShaderProgram::load(vertexShaderSource, fragmentShaderSource);
+        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret) {
             m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
         }
@@ -1244,42 +1244,25 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
-static void CreateShadowMatrix(const Scalar &size, const Vector3 &dir, GLfloat matrix[16])
-{
-    const Vector3 v1(size, 0.0f, size), v2(size, 0.0f, -size), v3(-size, 0.0f, -size);
-    const Vector3 &v21 = v2 - v1, &v31 = v3 - v1;
-    Vector3 plane = v21.cross(v31);
-    plane.setY(-plane.y());
-    plane.setW(-plane.dot(v1));
-    const Scalar &dot = plane.dot(dir), &lx = dir.x(), &ly = dir.y(), &lz = dir.z(),
-            &px = plane.x(), &py = plane.y(), &pz = plane.z(), &pw = plane.w();
-    matrix[0]  =  dot - (lx * px);
-    matrix[1]  = 0.0f - (lx * py);
-    matrix[2]  = 0.0f - (lx * pz);
-    matrix[3]  = 0.0f - (lx * pw);
-    matrix[4]  = 0.0f - (ly * px);
-    matrix[5]  =  dot - (ly * py);
-    matrix[6]  = 0.0f - (ly * pz);
-    matrix[7]  = 0.0f - (ly * pw);
-    matrix[8]  = 0.0f - (lz * px);
-    matrix[9]  = 0.0f - (lz * py);
-    matrix[10] =  dot - (lz * pz);
-    matrix[11] = 0.0f - (lz * pw),
-    matrix[12] = 0.0f;
-    matrix[13] = 0.0f;
-    matrix[14] = 0.0f;
-    matrix[15] = dot;
-}
-
 void Renderer::renderModelShadow(const vpvl::PMDModel *model)
 {
+    static const Vector3 plane(0.0f, 1.0f, 0.0f);
     const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    const Vector3 &light = m_scene->lightPosition();
+    const Scalar dot = plane.dot(light);
     float modelViewMatrix[16], projectionMatrix[16], shadowMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
-    CreateShadowMatrix(25.0f, m_scene->lightPosition(), shadowMatrix);
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            int index = (i << 2) + j;
+            shadowMatrix[index] = -plane[i] * light[j];
+            if (i == j)
+                shadowMatrix[index] += dot;
+        }
+    }
     m_shadowProgram->bind();
     m_shadowProgram->setModelViewMatrix(modelViewMatrix);
     m_shadowProgram->setProjectionMatrix(projectionMatrix);
@@ -1432,8 +1415,7 @@ void Renderer::clear()
 {
     glViewport(0, 0, m_scene->width(), m_scene->height());
     glEnable(GL_DEPTH_TEST);
-    glClearStencil(0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::renderAllAssets()

@@ -4,6 +4,6 @@ uniform mat4 shadowMatrix;
 attribute vec4 inPosition;
 
 void main() {
-    gl_Position = projectionMatrix * modelViewMatrix * inPosition;
+    gl_Position = projectionMatrix * modelViewMatrix * shadowMatrix * inPosition;
 }
 
