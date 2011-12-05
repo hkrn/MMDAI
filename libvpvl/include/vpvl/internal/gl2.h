@@ -72,7 +72,7 @@ struct PMDModelMaterialPrivate
 
 struct PMDModelUserData : vpvl::PMDModelUserData
 {
-    GLuint toonTextureID[vpvl::PMDModel::kSystemTextureMax];
+    GLuint toonTextureID[vpvl::PMDModel::kCustomTextureMax];
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;

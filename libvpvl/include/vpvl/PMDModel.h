@@ -161,9 +161,8 @@ public:
     PMDModel();
     ~PMDModel();
 
-    static const int kCustomTextureMax = 10;
+    static const int kCustomTextureMax = 11;
     static const int kCustomTextureNameMax = 100;
-    static const int kSystemTextureMax = 11;
     static const int kNameSize = 20;
     static const int kCommentSize = 256;
     static const int kBoneCategoryNameSize = 50;

@@ -1109,7 +1109,7 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
         userData->toonTextureID[0] = textureID;
         m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
-    for (int i = 0; i < vpvl::PMDModel::kSystemTextureMax - 1; i++) {
+    for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->uploadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
@@ -1140,7 +1140,7 @@ void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
             glDeleteTextures(1, &materialPrivate.mainTextureID);
             glDeleteTextures(1, &materialPrivate.subTextureID);
         }
-        for (int i = 0; i < vpvl::PMDModel::kSystemTextureMax; i++) {
+        for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
             glDeleteTextures(1, &userData->toonTextureID[i]);
         }
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);

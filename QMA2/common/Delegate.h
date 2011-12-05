@@ -67,7 +67,7 @@ public:
     }
 
     bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
-        QString pathString = QString::fromLocal8Bit(path.c_str());
+        const QString &pathString = QString::fromLocal8Bit(path.c_str());
         QFileInfo info(pathString);
         if (info.isDir() || !info.exists()) {
             return false;
@@ -94,7 +94,7 @@ public:
         return textureID != 0;
     }
     bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
-        QString filename = QString::fromLocal8Bit(name.c_str());
+        const QString &filename = QString::fromLocal8Bit(name.c_str());
         QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
         if (!QFile::exists(path))
             path = QString(":/textures/%1").arg(filename);

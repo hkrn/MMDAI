@@ -737,7 +737,7 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     // Extra texture path (100 * 10)
-    size_t customTextureNameSize = kCustomTextureMax * kCustomTextureNameMax;
+    size_t customTextureNameSize = (kCustomTextureMax - 1) * kCustomTextureNameMax;
     if (customTextureNameSize > rest) {
         m_error = kExtraTextureNamesError;
         return false;
@@ -817,7 +817,7 @@ size_t PMDModel::estimateSize() const
             + sizeof(uint8_t)  + kBoneCategoryNameSize * nBoneCategories
             + sizeof(uint32_t)  // Bones for UI
             + sizeof(uint8_t)   // have english names
-            + kCustomTextureMax * kCustomTextureNameMax
+            + ((kCustomTextureMax - 1) * kCustomTextureNameMax)
             + sizeof(uint32_t) + m_rigidBodies.count() * RigidBody::stride()
             + sizeof(uint32_t) + m_constraints.count() * Constraint::stride();
     for (int i = 0; i < nIKs; i++)
@@ -952,7 +952,7 @@ void PMDModel::save(uint8_t *data) const
         internal::copyBytes(ptr, reinterpret_cast<const uint8_t *>(&hasEnglish), sizeof(hasEnglish));
         ptr += sizeof(hasEnglish);
     }
-    for (int i = 0; i < kCustomTextureMax; i++) {
+    for (int i = 0; i < kCustomTextureMax - 1; i++) {
         internal::copyBytes(ptr, m_textures[i], kCustomTextureNameMax);
         ptr += kCustomTextureNameMax;
     }
@@ -1337,7 +1337,7 @@ const float *PMDModel::boneMatricesPointer() const
 
 const uint8_t *PMDModel::toonTexture(int index) const
 {
-    if (index >= kSystemTextureMax)
+    if (index >= kCustomTextureMax)
         return 0;
     return m_textures[index];
 }
@@ -1345,9 +1345,15 @@ const uint8_t *PMDModel::toonTexture(int index) const
 void PMDModel::setToonTextures(const uint8_t *ptr)
 {
     uint8_t *p = const_cast<uint8_t *>(ptr);
-    for (int i = 0; i < 10; i++) {
-        copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
-        p += kCustomTextureNameMax;
+    if (p) {
+        for (int i = 0; i < kCustomTextureMax; i++) {
+            copyBytesSafe(m_textures[i], p, sizeof(m_textures[i]));
+            p += kCustomTextureNameMax;
+        }
+    }
+    else {
+        for (int i = 0; i < kCustomTextureMax; i++)
+            internal::snprintf(m_textures[i], kCustomTextureNameMax, "toon%02d.bmp", i + 1);
     }
 }
 

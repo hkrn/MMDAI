@@ -174,6 +174,7 @@ void TestPMDModel::parseFile()
         bytes2.fill(0);
         uint8_t *toBeWritten = reinterpret_cast<uint8_t *>(bytes2.data());
         model.save(toBeWritten);
+        model2.preparse(toBeWritten, size, result2);
         QVERIFY(model2.preparse(toBeWritten, size, result2));
         QVERIFY(model2.load(toBeWritten, size));
         QCOMPARE(result2.verticesCount, size_t(model.vertices().count()));
