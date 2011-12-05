@@ -938,6 +938,7 @@ void SceneWidget::paintGL()
     qglClearColor(Qt::white);
     glEnable(GL_MULTISAMPLE);
     m_renderer->clear();
+    m_renderer->renderProjectiveShadow();
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());

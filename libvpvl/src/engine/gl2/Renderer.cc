@@ -1438,7 +1438,7 @@ void Renderer::renderAllModels()
     }
 }
 
-void Renderer::renderShadow()
+void Renderer::renderProjectiveShadow()
 {
     size_t size = 0;
     vpvl::PMDModel **models = m_scene->getRenderingOrder(size);

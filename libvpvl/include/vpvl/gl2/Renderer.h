@@ -146,7 +146,7 @@ public:
     void clear();
     void renderAllAssets();
     void renderAllModels();
-    void renderShadow();
+    void renderProjectiveShadow();
     void renderZPlot();
 
 protected:
