@@ -43,6 +43,10 @@
 #include <QtGui/QMatrix4x4>
 #include <LinearMath/btVector3.h>
 
+namespace vpvl {
+class Scene;
+}
+
 namespace internal {
 class Delegate;
 class World;
@@ -54,7 +58,7 @@ class TiledStageInternal;
 class TiledStage
 {
 public:
-    TiledStage(internal::Delegate *delegate, internal::World *world);
+    TiledStage(const vpvl::Scene *scene, internal::Delegate *delegate, internal::World *world);
     ~TiledStage();
 
     void loadFloor(const QString &path);
@@ -62,21 +66,17 @@ public:
     void renderFloor();
     void renderBackground();
     void setSize(float width, float height, float depth);
-    void updateShadowMatrix(const btVector3 &position);
-    const QMatrix4x4 &shadowMatrix() const {
-        return m_matrix;
-    }
 
 private:
     void buildFloor(float width, float height);
     void destroyFloor();
 
+    const vpvl::Scene *m_scene;
     TiledStageInternal *m_floor;
     TiledStageInternal *m_background;
     btRigidBody *m_floorRigidBody;
     internal::Delegate *m_delegate;
     internal::World *m_world;
-    QMatrix4x4 m_matrix;
 
     Q_DISABLE_COPY(TiledStage)
 };

@@ -49,8 +49,9 @@
 
 class TiledStageInternal {
 public:
-    TiledStageInternal(internal::Delegate *delegate, const QVector3D &normal)
-        : m_delegate(delegate),
+    TiledStageInternal(const vpvl::Scene *scene, internal::Delegate *delegate, const QVector3D &normal)
+        : m_scene(scene),
+          m_delegate(delegate),
           m_listID(0),
           m_textureID(0)
     {
@@ -102,6 +103,13 @@ public:
     }
     void render(bool cullface, bool hasColor) {
         const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
+        float matrix[16];
+        m_scene->getProjectionMatrix(matrix);
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(matrix);
+        m_scene->getModelViewMatrix(matrix);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(matrix);
         if (m_listID) {
             glCallList(m_listID);
         }
@@ -159,6 +167,7 @@ private:
         }
     }
 
+    const vpvl::Scene *m_scene;
     internal::Delegate *m_delegate;
     QMatrix3x4 m_matrix;
     qreal m_vertices[12];
@@ -171,55 +180,14 @@ private:
     GLuint m_textureID;
 };
 
-namespace
-{
-
-void FindPlane(TiledStageInternal *internal, QVector4D &plane)
-{
-    const QMatrix3x4 &v = internal->vertices();
-    float v0x = v(2, 0) - v(1, 0);
-    float v0y = v(2, 1) - v(1, 1);
-    float v0z = v(2, 2) - v(1, 2);
-    float v1x = v(3, 0) - v(1, 0);
-    float v1y = v(3, 1) - v(1, 1);
-    float v1z = v(3, 2) - v(1, 2);
-    plane.setX(  v0y * v1z - v0z * v1y);
-    plane.setY(-(v0x * v1z - v0z * v1x));
-    plane.setZ(  v0x * v1y - v0y * v1x);
-    plane.setW(-(plane.x() * v(1, 0) + plane.y() * v(1, 1) + plane.z() * v(1, 2)));
-}
-
-void ShadowMatrix(const QVector4D &plane, const QVector4D &position, QMatrix4x4 &matrix)
-{
-    qreal dot = QVector4D::dotProduct(plane, position);
-    matrix(0, 0) =  dot - position.x() * plane.x();
-    matrix(1, 0) = 0.0f - position.x() * plane.y();
-    matrix(2, 0) = 0.0f - position.x() * plane.z();
-    matrix(3, 0) = 0.0f - position.x() * plane.w();
-    matrix(0, 1) = 0.0f - position.y() * plane.x();
-    matrix(1, 1) =  dot - position.y() * plane.y();
-    matrix(2, 1) = 0.0f - position.y() * plane.z();
-    matrix(3, 1) = 0.0f - position.y() * plane.w();
-    matrix(0, 2) = 0.0f - position.z() * plane.x();
-    matrix(1, 2) = 0.0f - position.z() * plane.y();
-    matrix(2, 2) =  dot - position.z() * plane.z();
-    matrix(3, 2) = 0.0f - position.z() * plane.w();
-    matrix(0, 3) = 0.0f - position.w() * plane.x();
-    matrix(1, 3) = 0.0f - position.w() * plane.y();
-    matrix(2, 3) = 0.0f - position.w() * plane.z();
-    matrix(3, 3) =  dot - position.w() * plane.w();
-}
-
-}
-
-TiledStage::TiledStage(internal::Delegate *delegate, internal::World *world)
-    : m_floor(0),
+TiledStage::TiledStage(const vpvl::Scene *scene, internal::Delegate *delegate, internal::World *world)
+    : m_scene(scene),
+      m_floor(0),
       m_background(0),
       m_floorRigidBody(0),
       m_delegate(delegate),
       m_world(world)
 {
-    m_matrix.setToIdentity();
 }
 
 TiledStage::~TiledStage()
@@ -234,7 +202,7 @@ TiledStage::~TiledStage()
 void TiledStage::loadFloor(const QString &path)
 {
     delete m_floor;
-    m_floor = new TiledStageInternal(m_delegate, QVector3D(0.0f, 1.0f, 0.0f));
+    m_floor = new TiledStageInternal(m_scene, m_delegate, QVector3D(0.0f, 1.0f, 0.0f));
     m_floor->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
@@ -242,7 +210,7 @@ void TiledStage::loadFloor(const QString &path)
 void TiledStage::loadBackground(const QString &path)
 {
     delete m_background;
-    m_background = new TiledStageInternal(m_delegate, QVector3D(0.0f, 0.0f, 1.0f));
+    m_background = new TiledStageInternal(m_scene, m_delegate, QVector3D(0.0f, 0.0f, 1.0f));
     m_background->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
@@ -292,19 +260,6 @@ void TiledStage::setSize(float width, float height, float depth)
         vertices(3, 1) = height;
         vertices(3, 2) = -depth;
         m_background->setVertices(vertices);
-    }
-}
-
-void TiledStage::updateShadowMatrix(const btVector3 &position)
-{
-    if (m_floor) {
-        QVector4D plane, direction;
-        direction.setX(position.x());
-        direction.setY(position.y());
-        direction.setZ(position.z());
-        direction.setW(0.0f);
-        FindPlane(m_floor, plane);
-        ShadowMatrix(plane, direction, m_matrix);
     }
 }
 

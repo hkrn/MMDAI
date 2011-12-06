@@ -58,7 +58,6 @@ ExtendedSceneWidget::ExtendedSceneWidget(QSettings *settings, QWidget *parent)
       m_script(0),
       m_tiledStage(0)
 {
-    m_tiledStage = new TiledStage(m_delegate, m_world);
 }
 
 ExtendedSceneWidget::~ExtendedSceneWidget()
@@ -128,6 +127,7 @@ void ExtendedSceneWidget::initializeGL()
 {
     SceneWidget::initializeGL();
     QStringList arguments = qApp->arguments();
+    m_tiledStage = new TiledStage(scene(), m_delegate, m_world);
     if (arguments.count() == 2)
         loadScript(arguments[1]);
     else
@@ -137,44 +137,11 @@ void ExtendedSceneWidget::initializeGL()
 
 void ExtendedSceneWidget::paintGL()
 {
-    qreal matrix[16];
-    float matrixf[16];
     qglClearColor(Qt::darkBlue);
     m_renderer->clear();
-    glMatrixMode(GL_PROJECTION);
-    m_renderer->scene()->getProjectionMatrix(matrixf);
-    glLoadMatrixf(matrixf);
-    glMatrixMode(GL_MODELVIEW);
-    m_renderer->scene()->getModelViewMatrix(matrixf);
-    glLoadMatrixf(matrixf);
-    m_tiledStage->updateShadowMatrix(m_renderer->scene()->lightPosition());
+    m_renderer->renderProjectiveShadow();
     m_tiledStage->renderBackground();
-    // pre shadow
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     m_tiledStage->renderFloor();
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glDepthMask(0);
-    glStencilFunc(GL_EQUAL, 1, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-    glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
-    m_tiledStage->shadowMatrix().copyDataTo(matrix);
-    glMultMatrixd(matrix);
-    //m_renderer->drawShadow();
-    // post shadow
-    glPopMatrix();
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(1);
-    glStencilFunc(GL_EQUAL, 2, ~0);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-    m_tiledStage->renderFloor();
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-    // draw all assets and models
     m_renderer->renderAllAssets();
     m_renderer->renderAllModels();
     emit motionDidFinished(m_loader->stoppedMotions());
