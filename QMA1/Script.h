@@ -117,6 +117,7 @@ public slots:
 
 signals:
     void eventDidPost(const QString &type, const QList<QVariant> &arguments);
+    void modelWillDelete(vpvl::PMDModel *model);
 
 protected:
     void timerEvent(QTimerEvent *event);

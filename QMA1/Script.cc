@@ -470,7 +470,11 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            m_parent->deleteModel(m_models.value(modelName));
+            vpvl::PMDModel *model = m_models.value(modelName);
+            /* 処理内容の関係で deleteModel() じゃないと modelWillDelete が呼ばれないのでここで signal を発行 */
+            emit modelWillDelete(model);
+            m_parent->deleteModel(model);
+            m_parent->setSelectedModel(0);
             Arguments a; a << modelName;
             emit eventDidPost(kModelDeleteEvent, a);
         }

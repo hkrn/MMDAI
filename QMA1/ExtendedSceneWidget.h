@@ -62,6 +62,7 @@ public slots:
     void setEmptyMotion(vpvl::PMDModel *model);
 
 signals:
+    void scriptDidLoaded(const QString &filename);
     void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
 
 protected:

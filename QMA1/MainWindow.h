@@ -76,6 +76,9 @@ private slots:
     void updateFPS(int fps);
     void executeCommand();
     void executeEvent();
+    void loadScript(const QString &filename);
+    void selectNextModel();
+    void selectPreviousModel();
 
 private:
     void startSceneUpdate();
@@ -123,6 +126,8 @@ private:
     QAction *m_actionTranslateLeft;
     QAction *m_actionTranslateRight;
     QAction *m_actionResetCamera;
+    QAction *m_actionSelectNextModel;
+    QAction *m_actionSelectPreviousModel;
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
     QAction *m_actionShowBones;

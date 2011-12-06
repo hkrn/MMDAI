@@ -57,6 +57,20 @@ void ConstructScriptArguments(const QString &input, QString &command, QList<QVar
         arguments << string;
 }
 
+static int FindIndexOfActions(vpvl::PMDModel *model, const QList<QAction *> &actions)
+{
+    const QString &name = internal::toQString(model);
+    int i = 0, found = -1;
+    foreach (QAction *action, actions) {
+        if (action->text() == name) {
+            found = i;
+            break;
+        }
+        i++;
+    }
+    return found;
+}
+
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -240,6 +254,35 @@ void MainWindow::executeEvent()
         script->handleEvent(event, arguments);
 }
 
+void MainWindow::loadScript(const QString & /* filename */)
+{
+    connect(m_sceneWidget->script(), SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
+}
+
+void MainWindow::selectNextModel()
+{
+    const QList<QAction *> &actions = m_menuRetainModels->actions();
+    if (!actions.isEmpty()) {
+        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        if (index == -1 || index == actions.length() - 1)
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.first()->text()));
+        else
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index + 1)->text()));
+    }
+}
+
+void MainWindow::selectPreviousModel()
+{
+    const QList<QAction *> &actions = m_menuRetainModels->actions();
+    if (!actions.isEmpty()) {
+        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        if (index == -1 || index == 0)
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.last()->text()));
+        else
+            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index - 1)->text()));
+    }
+}
+
 const QString MainWindow::buildWindowTitle()
 {
     QString title = qAppName();
@@ -312,6 +355,10 @@ void MainWindow::buildMenuBar()
     connect(m_actionResetCamera, SIGNAL(triggered()), m_sceneWidget, SLOT(resetCamera()));
     m_actionShowBones = new QAction(this);
 
+    m_actionSelectNextModel = new QAction(this);
+    connect(m_actionSelectNextModel, SIGNAL(triggered()), this, SLOT(selectNextModel()));
+    m_actionSelectPreviousModel = new QAction(this);
+    connect(m_actionSelectPreviousModel, SIGNAL(triggered()), this, SLOT(selectPreviousModel()));
     m_actionRevertSelectedModel = new QAction(this);
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
@@ -388,6 +435,9 @@ void MainWindow::buildMenuBar()
     m_menuRetainAssets = new QMenu(this);
     if (vpvl::Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
+    m_menuModel->addAction(m_actionSelectNextModel);
+    m_menuModel->addAction(m_actionSelectPreviousModel);
+    m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
     m_menuBar->addMenu(m_menuModel);
@@ -403,6 +453,7 @@ void MainWindow::buildMenuBar()
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
+    connect(m_sceneWidget, SIGNAL(scriptDidLoaded(QString)), this, SLOT(loadScript(QString)));
 
     retranslate();
 }
@@ -477,6 +528,12 @@ void MainWindow::retranslate()
     m_actionTranslateRight->setShortcut(tr("Shift+Right"));
     m_actionResetCamera->setText(tr("Reset camera"));
     m_actionResetCamera->setStatusTip(tr("Reset camera perspective."));
+    m_actionSelectNextModel->setText(tr("Select next model"));
+    m_actionSelectNextModel->setStatusTip(tr("Select the next model."));
+    m_actionSelectNextModel->setShortcut(QKeySequence::SelectNextPage);
+    m_actionSelectPreviousModel->setText(tr("Select previous model"));
+    m_actionSelectPreviousModel->setStatusTip(tr("Select the previous model."));
+    m_actionSelectPreviousModel->setShortcut(QKeySequence::SelectPreviousPage);
     m_actionRevertSelectedModel->setText(tr("Revert selected model"));
     m_actionRevertSelectedModel->setStatusTip(tr("Revert the selected model."));
     m_actionDeleteSelectedModel->setText(tr("Delete selected model"));

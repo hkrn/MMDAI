@@ -92,6 +92,7 @@ void ExtendedSceneWidget::loadScript(const QString &filename)
         m_script = new Script(this);
         m_script->setDir(QFileInfo(file).absoluteDir());
         m_script->load(stream);
+        emit scriptDidLoaded(filename);
         const QFileInfo info(file);
         const QDir &dir = info.dir();
         m_script->loadSpeechEngine(dir, info.baseName());
