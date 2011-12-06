@@ -1339,12 +1339,12 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     <message>
         <location filename="../../main.cc" line="138"/>
         <source>Exception caught</source>
-        <translation>例外の補足</translation>
+        <translation>例外の捕捉</translation>
     </message>
     <message>
         <location filename="../../main.cc" line="139"/>
         <source>Exception caught: %1</source>
-        <translation>例外を補足しました: %1</translation>
+        <translation>例外を捕捉しました: %1</translation>
     </message>
 </context>
 <context>
