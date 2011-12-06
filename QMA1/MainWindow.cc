@@ -365,6 +365,7 @@ void MainWindow::retranslate()
 {
     m_actionLoadScript->setText(tr("Load script"));
     m_actionLoadScript->setToolTip(tr("Load a script"));
+    m_actionLoadScript->setShortcut(tr("Ctrl+Shift+S"));
     m_actionAddModel->setText(tr("Add model"));
     m_actionAddModel->setToolTip(tr("Add a model to the scene."));
     m_actionAddModel->setShortcut(tr("Ctrl+Shift+M"));
