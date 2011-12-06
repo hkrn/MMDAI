@@ -49,43 +49,37 @@
 
 class TiledStageInternal {
 public:
+    struct TileStageVertex {
+        vpvl::Vector3 position;
+        vpvl::Vector3 normal;
+        vpvl::Vector3 texcoord;
+        vpvl::Color color;
+    };
+
     TiledStageInternal(const vpvl::Scene *scene, internal::Delegate *delegate, const QVector3D &normal)
         : m_scene(scene),
           m_delegate(delegate),
           m_listID(0),
           m_textureID(0)
     {
-        const float normals[] = {
-            normal.x(), normal.y(), normal.z(),
-            normal.x(), normal.y(), normal.z(),
-            normal.x(), normal.y(), normal.z(),
-            normal.x(), normal.y(), normal.z()
-        };
-        const float colors[] = {
-            0.1f, 0.1f, 0.1f, 0.6f,
-            0.1f, 0.1f, 0.1f, 0.6f,
-            0.1f, 0.1f, 0.1f, 0.6f,
-            0.1f, 0.1f, 0.1f, 0.6f
-        };
-        const float coords[] = {
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f
-        };
+        TileStageVertex vertex;
+        vertex.position.setZero();
+        vertex.normal.setValue(normal.x(), normal.y(), normal.z());
+        vertex.color.setValue(0.1f, 0.1f, 0.1f, 0.6f);
+        vertex.texcoord.setValue(0.0f, 1.0f, 0.0f);
+        m_vertices.add(vertex);
+        vertex.texcoord.setValue(1.0f, 1.0f, 0.0f);
+        m_vertices.add(vertex);
+        vertex.texcoord.setValue(1.0f, 0.0f, 0.0f);
+        m_vertices.add(vertex);
+        vertex.texcoord.setValue(0.0f, 0.0f, 0.0f);
+        m_vertices.add(vertex);
         const uint16_t indices[] = { 3, 2, 0, 0, 2, 1 };
-        memcpy(m_normals, normals, sizeof(normals));
-        memcpy(m_colors, colors, sizeof(colors));
-        memcpy(m_texcoords, coords, sizeof(coords));
         memcpy(m_indices, indices, sizeof(indices));
         glGenBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[1]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(m_normals), m_normals, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[2]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(m_colors), m_colors, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[3]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(m_texcoords), m_texcoords, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[4]);
+        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
+        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(TileStageVertex), &m_vertices[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(m_indices), m_indices, GL_STATIC_DRAW);
         m_matrix.setToIdentity();
     }
@@ -114,6 +108,7 @@ public:
             glCallList(m_listID);
         }
         else {
+            static TileStageVertex v;
             m_listID = glGenLists(1);
             glNewList(m_listID, GL_COMPILE_AND_EXECUTE);
             if (!cullface)
@@ -128,16 +123,16 @@ public:
             glEnableClientState(GL_NORMAL_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
-            glVertexPointer(3, GL_DOUBLE, 0, 0);
-            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[1]);
-            glNormalPointer(GL_FLOAT, 0, 0);
+            glVertexPointer(3, GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(0));
+            size_t offset = reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
+            glNormalPointer(GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(offset));
             if (hasColor) {
-                glBindBuffer(GL_ARRAY_BUFFER, m_buffers[2]);
-                glColorPointer(4, GL_FLOAT, 0, 0);
+                offset = reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
+                glColorPointer(4, GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(offset));
             }
-            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[3]);
-            glTexCoordPointer(2, GL_FLOAT, 0, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[4]);
+            offset = reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(offset));
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
@@ -153,9 +148,12 @@ public:
         return m_matrix;
     }
     void setVertices(const QMatrix3x4 &vertices) {
-        vertices.copyDataTo(m_vertices);
+        for (int i = 0; i < 4; i++)
+            m_vertices[i].position.setValue(vertices(i, 0), vertices(i, 1), vertices(i, 2));
+        glDeleteBuffers(1, &m_buffers[0]);
+        glGenBuffers(1, &m_buffers[0]);
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(TileStageVertex), &m_vertices[0], GL_STATIC_DRAW);
         m_matrix = vertices;
     }
 
@@ -170,13 +168,10 @@ private:
     const vpvl::Scene *m_scene;
     internal::Delegate *m_delegate;
     QMatrix3x4 m_matrix;
-    qreal m_vertices[12];
-    float m_normals[12];
-    float m_colors[12];
-    float m_texcoords[8];
+    vpvl::Array<TileStageVertex> m_vertices;
     uint16_t m_indices[6];
     GLuint m_listID;
-    GLuint m_buffers[5];
+    GLuint m_buffers[2];
     GLuint m_textureID;
 };
 
