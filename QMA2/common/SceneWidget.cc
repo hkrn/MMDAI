@@ -552,7 +552,6 @@ void SceneWidget::deleteSelectedModel()
     emit modelWillDelete(selected);
     if (m_loader->deleteModel(selected)) {
         setSelectedModel(0);
-        emit modelDidSelect(0);
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected or exist."),
