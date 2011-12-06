@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_currentFPS(0)
 {
     m_licenseWidget = new LicenseWidget();
-    m_loggerWidget = new LoggerWidget(&m_settings);
+    m_loggerWidget = LoggerWidget::createInstance(&m_settings);
     m_sceneWidget = new ExtendedSceneWidget(&m_settings);
     resize(900, 720);
     setMinimumSize(QSize(640, 480));
@@ -84,21 +84,47 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete m_menuBar;
-    delete m_loggerWidget;
     delete m_licenseWidget;
 }
 
-bool MainWindow::validateLibraryVersion()
+void MainWindow::openRecentFile()
 {
-    if (!vpvl::isLibraryVersionCorrect(VPVL_VERSION)) {
-        QMessageBox::warning(this,
-                             tr("libvpvl version mismatch"),
-                             tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
-                                "Please replace libvpvl to correct version or reinstall MMDAI.")
-                             .arg(VPVL_VERSION_STRING).arg(vpvl::libraryVersionString()));
-        return false;
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action)
+        m_sceneWidget->loadFile(action->data().toString());
+}
+
+void MainWindow::addRecentFile(const QString &filename)
+{
+    QStringList files = m_settings.value("mainWindow/recentFiles").toStringList();
+    files.removeAll(filename);
+    files.prepend(filename);
+    while (files.size() > kMaxRecentFiles)
+        files.removeLast();
+    m_settings.setValue("mainWindow/recentFiles", files);
+    updateRecentFiles();
+}
+
+void MainWindow::updateRecentFiles()
+{
+    QStringList files = m_settings.value("mainWindow/recentFiles").toStringList();
+    int maxFiles = kMaxRecentFiles, nRecentFiles = qMin(files.size(), maxFiles);
+    QFileInfo fileInfo;
+    for (int i = 0; i < nRecentFiles; i++) {
+        QAction *action = m_actionRecentFiles[i];
+        fileInfo.setFile(files[i]);
+        action->setText(tr("&%1 %2").arg(i + 1).arg(fileInfo.fileName()));
+        action->setData(files[i]);
+        action->setVisible(true);
     }
-    return true;
+    for (int i = nRecentFiles; i < kMaxRecentFiles; i++)
+        m_actionRecentFiles[i]->setVisible(false);
+}
+
+void MainWindow::clearRecentFiles()
+{
+    m_settings.setValue("mainWindow/recentFiles", QStringList());
+    updateRecentFiles();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -253,6 +279,10 @@ void MainWindow::buildMenuBar()
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
     m_actionShowLogMessage = new QAction(this);
     connect(m_actionShowLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
+    m_actionShowModelDialog = new QAction(this);
+    m_actionShowModelDialog->setCheckable(true);
+    m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
+    connect(m_actionShowModelDialog, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setShowModelDialog(bool)));
     m_actionExecuteCommand = new QAction(this);
     connect(m_actionExecuteCommand, SIGNAL(triggered()), this, SLOT(executeCommand()));
     m_actionExecuteEvent = new QAction(this);
@@ -287,6 +317,8 @@ void MainWindow::buildMenuBar()
     m_actionDeleteSelectedModel = new QAction(this);
     connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
 
+    m_actionClearRecentFiles = new QAction(this);
+    connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
     m_actionAbout = new QAction(this);
     connect(m_actionAbout, SIGNAL(triggered()), m_licenseWidget, SLOT(show()));
     m_actionAbout->setMenuRole(QAction::AboutRole);
@@ -308,6 +340,18 @@ void MainWindow::buildMenuBar()
     m_menuFile->addAction(m_actionInsertToAllModels);
     m_menuFile->addAction(m_actionInsertToSelectedModel);
     m_menuFile->addAction(m_actionSetCamera);
+    m_menuRecentFiles = new QMenu(this);
+    for (int i = 0; i < kMaxRecentFiles; i++) {
+        QAction *action = new QAction(this);
+        connect(action, SIGNAL(triggered()), this, SLOT(openRecentFile()));
+        action->setVisible(false);
+        m_actionRecentFiles[i] = action;
+        m_menuRecentFiles->addAction(action);
+    }
+    m_menuRecentFiles->addSeparator();
+    m_menuRecentFiles->addAction(m_actionClearRecentFiles);
+    m_menuFile->addSeparator();
+    m_menuFile->addMenu(m_menuRecentFiles);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
@@ -317,6 +361,7 @@ void MainWindow::buildMenuBar()
     m_menuScript->addAction(m_actionStop);
     m_menuScript->addSeparator();
     m_menuScript->addAction(m_actionShowLogMessage);
+    m_menuScript->addAction(m_actionShowModelDialog);
     m_menuScript->addSeparator();
     m_menuScript->addAction(m_actionExecuteCommand);
     m_menuScript->addAction(m_actionExecuteEvent);
@@ -351,6 +396,7 @@ void MainWindow::buildMenuBar()
     m_menuHelp->addAction(m_actionAboutQt);
     m_menuBar->addMenu(m_menuHelp);
 
+    connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), this, SLOT(addModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
@@ -393,6 +439,8 @@ void MainWindow::retranslate()
     m_actionStop->setStatusTip(tr("Stop current scene."));
     m_actionShowLogMessage->setText(tr("Open log message window"));
     m_actionShowLogMessage->setToolTip(tr("Open a window of log messages such as script."));
+    m_actionShowModelDialog->setText(tr("Show model dialog"));
+    m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
     m_actionExecuteCommand->setText(tr("Execute command"));
     m_actionExecuteCommand->setStatusTip(tr("Execute command to the script."));
     m_actionExecuteEvent->setText(tr("Execute event"));
@@ -439,11 +487,14 @@ void MainWindow::retranslate()
     m_actionAbout->setShortcut(tr("Alt+Q, Alt+/"));
     m_actionAboutQt->setText(tr("About Qt"));
     m_actionAboutQt->setStatusTip(tr("About Qt."));
+    m_actionClearRecentFiles->setText(tr("Clear recent files history"));
+    m_actionClearRecentFiles->setStatusTip(tr("Clear the history of recently opened files."));
     m_menuFile->setTitle(tr("&File"));
     m_menuScript->setTitle(tr("Script"));
     m_menuScene->setTitle(tr("&Scene"));
     m_menuModel->setTitle(tr("&Model"));
     m_menuRetainAssets->setTitle(tr("Select asset"));
     m_menuRetainModels->setTitle(tr("Select model"));
+    m_menuRecentFiles->setTitle(tr("Open recent files"));
     m_menuHelp->setTitle(tr("&Help"));
 }

@@ -128,11 +128,11 @@ void ExtendedSceneWidget::initializeGL()
     SceneWidget::initializeGL();
     QStringList arguments = qApp->arguments();
     m_tiledStage = new TiledStage(scene(), m_delegate, m_world);
+    setShowModelDialog(false);
     if (arguments.count() == 2)
         loadScript(arguments[1]);
     else
         play();
-    setShowModelDialog(false);
 }
 
 void ExtendedSceneWidget::paintGL()

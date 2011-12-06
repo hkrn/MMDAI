@@ -54,15 +54,19 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    static const int kMaxRecentFiles = 10;
+
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
-    bool validateLibraryVersion();
 
 protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
+    void openRecentFile();
+    void addRecentFile(const QString &filename);
+    void updateRecentFiles();
+    void clearRecentFiles();
     void selectCurrentModel();
     void setCurrentModel(vpvl::PMDModel *value);
     void addModel(vpvl::PMDModel *model);
@@ -90,6 +94,8 @@ private:
     vpvl::PMDModel *m_model;
     int m_currentFPS;
 
+    QAction *m_actionRecentFiles[kMaxRecentFiles];
+    QAction *m_actionClearRecentFiles;
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
     QAction *m_actionInsertToAllModels;
@@ -103,6 +109,7 @@ private:
     QAction *m_actionPause;
     QAction *m_actionStop;
     QAction *m_actionShowLogMessage;
+    QAction *m_actionShowModelDialog;
     QAction *m_actionExecuteCommand;
     QAction *m_actionExecuteEvent;
     QAction *m_actionZoomIn;
@@ -126,6 +133,7 @@ private:
     QMenu *m_menuModel;
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
+    QMenu *m_menuRecentFiles;
     QMenu *m_menuHelp;
 
     Q_DISABLE_COPY(MainWindow)

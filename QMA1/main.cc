@@ -37,6 +37,7 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 #include "Application.h"
+#include "LoggerWidget.h"
 #include "MainWindow.h"
 
 static void SetSearchPaths(const QCoreApplication &app)
@@ -104,6 +105,7 @@ static void LoadTranslations(QCoreApplication &app, QTranslator &appTr, QTransla
 int main(int argc, char *argv[])
 {
     Application a(argc, argv);
+    QWidget fake;
     QTranslator appTranslator, qtTranslator;
     a.setApplicationName("MMDAI");
     a.setApplicationVersion("2.0.0");
@@ -113,12 +115,26 @@ int main(int argc, char *argv[])
     SetSearchPaths(a);
     LoadTranslations(a, appTranslator, qtTranslator);
 
-    MainWindow w;
-    if (w.validateLibraryVersion()) {
+    int result = -1;
+    if (!vpvl::isLibraryVersionCorrect(VPVL_VERSION)) {
+        QMessageBox::warning(&fake,
+                             QApplication::tr("libvpvl version mismatch"),
+                             QApplication::tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
+                                  "Please replace libvpvl to correct version or reinstall MMDAI.")
+                             .arg(VPVL_VERSION_STRING).arg(vpvl::libraryVersionString()));
+        return result;
+    }
+
+    try {
+        MainWindow w;
         w.show();
-        return a.exec();
+        result = a.exec();
+    } catch (std::exception &e) {
+        QMessageBox::warning(&fake,
+                             QApplication::tr("Exception caught"),
+                             QApplication::tr("Exception caught: %1").arg(e.what()));
     }
-    else {
-        return -1;
-    }
+    LoggerWidget::destroyInstance();
+
+    return result;
 }
