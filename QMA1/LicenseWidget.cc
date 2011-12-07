@@ -82,6 +82,8 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+    addLibrary("MMDAgent Dictionary Model", "Other", "http://mmdagent.jp", "Dictionary");
+    addLibrary("MMDAgent Acoustic Model", "New BSD", "http://mmdagent.jp", "Acoustic");
     addLibrary("PortAudio", "MIT/X11", "http://portaudio.com", "PortAudio");
     addLibrary("MeCab", "GPL/LGPL/New BSD", "http://mecab.sf.net", "mecab");
     addLibrary("hts_engine API", "New BSD", "http://hts-engine.sf.net", "HTSEngine");

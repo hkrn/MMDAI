@@ -5,6 +5,8 @@
         <file alias="mecab">licenses/mecab</file>
         <file alias="OpenJTalk">licenses/OpenJTalk</file>
         <file alias="PortAudio">licenses/PortAudio</file>
+        <file alias="Acoustic">licenses/Acoustic</file>
+        <file alias="Dictionary">licenses/Dictionary</file>
     </qresource>
     <qresource prefix="/lipsync">
         <file alias="global">global.lip</file>
