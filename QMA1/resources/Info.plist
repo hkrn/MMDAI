@@ -38,9 +38,9 @@
      <key>CFBundleIdentifier</key>
      <string>com.github.mmdai</string>
      <key>CFBundleVersion</key>
-     <string>2.0</string>
+     <string>2.1</string>
      <key>CFBundleShortVersionString</key>
-     <string>2.0</string>
+     <string>2.1</string>
      <key>CFBundleGetInfoString</key>
      <string>MMDAI is an application to interact MMD models with voice forked from MMDAgent</string>
      <key>LSArchitecturePriority</key>
