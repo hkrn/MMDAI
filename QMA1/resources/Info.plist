@@ -12,7 +12,7 @@
           <string>fst</string>
         </array>
         <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
+        <string>app.icns</string>
         <key>CFBundleTypeName</key>
         <string>MMDAgent Finite State Transition File</string>
         <key>CFBundleTypeOSTypes</key>
@@ -28,13 +28,13 @@
      <key>NSHumanReadableCopyright</key>
      <string>(C) 2010-2011 hkrn</string>
      <key>CFBundleIconFile</key>
-     <string>@ICON@</string>
+     <string>app.icns</string>
      <key>CFBundlePackageType</key>
      <string>APPL</string>
      <key>CFBundleSignature</key>
-     <string>@TYPEINFO@</string>
+     <string>????</string>
      <key>CFBundleExecutable</key>
-     <string>@EXECUTABLE@</string>
+     <string>MMDAI</string>
      <key>CFBundleIdentifier</key>
      <string>com.github.mmdai</string>
      <key>CFBundleVersion</key>

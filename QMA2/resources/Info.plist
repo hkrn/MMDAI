@@ -12,7 +12,7 @@
           <string>pmd</string>
         </array>
         <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
+        <string>app.icns</string>
         <key>CFBundleTypeName</key>
         <string>Polygon Model Data</string>
         <key>CFBundleTypeRole</key>
@@ -26,7 +26,7 @@
           <string>x</string>
         </array>
         <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
+        <string>app.icns</string>
         <key>CFBundleTypeName</key>
         <string>DirectX Mesh File</string>
         <key>CFBundleTypeRole</key>
@@ -40,7 +40,7 @@
           <string>vmd</string>
         </array>
         <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
+        <string>app.icns</string>
         <key>CFBundleTypeName</key>
         <string>VOCALOID Motion Data</string>
         <key>CFBundleTypeRole</key>
@@ -54,7 +54,7 @@
           <string>vpd</string>
         </array>
         <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
+        <string>app.icns</string>
         <key>CFBundleTypeName</key>
         <string>VOCALOID Pose Data</string>
         <key>CFBundleTypeRole</key>
@@ -68,7 +68,7 @@
           <string>vac</string>
         </array>
         <key>CFBundleTypeIcon</key>
-        <string>@ICON@</string>
+        <string>app.icns</string>
         <key>CFBundleTypeName</key>
         <string>Accessory metadata</string>
         <key>CFBundleTypeRole</key>
@@ -80,13 +80,13 @@
     <key>NSHumanReadableCopyright</key>
     <string>(C) 2010-2011 hkrn</string>
     <key>CFBundleIconFile</key>
-    <string>@ICON@</string>
+    <string>app.icns</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
-    <string>@TYPEINFO@</string>
+    <string>????</string>
     <key>CFBundleExecutable</key>
-    <string>@EXECUTABLE@</string>
+    <string>MMDAI2</string>
     <key>CFBundleIdentifier</key>
     <string>com.github.mmdai</string>
     <key>CFBundleVersion</key>
