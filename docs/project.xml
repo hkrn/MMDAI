@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<vpvm:project version="1.0">
+  <vpvm:settings>
+    <width>640</width>
+    <height>480</height>
+    <showInformation>true</showInformation>
+    <showGrid>true</showGrid>
+    <preferredFPS>30</preferredFPS>
+  </vpvm:settings>
+  <vpvm:physics enable="true" />
+  <vpvm:models>
+    <vpvm:model name="foo">
+      <path>/foo/bar/baz</path>
+      <edge>1.0</edge>
+      <position>1,2,3</position>
+    </vpvm:model>
+  </vpvm:models>
+  <vpvm:assets>
+    <vpvm:asset name="bar">
+      <path>/foo/bar/baz</path>
+    </vpvm:asset>
+  </vpvm:assets>
+  <vpvm:motions>
+    <vpvm:motion model="foo">
+      <comment>This is a test.</comment>
+      <animation type="bone">
+        <keyframe name="bar" index="0" position="1,2,3" rotation="1,2,3,4"
+          interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
+        <keyframe name="baz" index="0" position="1,2,3" rotation="1,2,3,4"
+          interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
+      </animation>
+      <animation type="vertices">
+        <keyframe name="bar" index="0" weight="0.0" />
+        <keyframe name="baz" index="1" weight="1.0" />
+      </animation>
+      <animation type="camera">
+        <keyframe index="0" position="1,2,3" angle="1,2,3" distance="0" fovy="0"
+          interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24" />
+        <keyframe index="1" position="1,2,3" angle="1,2,3" distance="0" fovy="0"
+          interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24" />
+      </animation>
+      <animation type="light">
+        <keyframe index="0" color="1,2,3" direction="1,2,3" />
+        <keyframe index="1" color="1,2,3" direction="1,2,3" />
+      </animation>
+    </vpvm:motion>
+    <vpvm:motion type="ik" model="foo">
+      <keyframe name="bar" index="0" enable="true" />
+      <keyframe name="baz" index="0" enable="true" />
+    </vpvm:motion>
+    <vpvm:motion type="asset" asset="foo">
+      <keyframe index="0" visible="true" model="null" bone="null" position="1,2,3"
+        rotation="1,2,3" scale="10.0" opacity="1.0" />
+      <keyframe index="1" visible="true" model="null" bone="null" position="1,2,3"
+        rotation="1,2,3" scale="10.0" opacity="1.0" />
+    </vpvm:motion>
+  </vpvm:motions>
+</vpvm:project>
+
