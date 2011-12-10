@@ -65,6 +65,7 @@ public:
         kLightMotion
     };
     typedef Hash<HashString, std::string> StringHash;
+    typedef Hash<HashPtr, StringHash *> PtrHash;
 
     Parser()
         : state(kInitial),
@@ -100,6 +101,7 @@ public:
         depth--;
         fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
+
     static const char *toString(State s) {
         switch (s) {
         case kInitial:
@@ -163,6 +165,12 @@ public:
         while (stream >> item)
             tokens.add(item);
     }
+    static void setQuadWordValues(const Array<std::string> &tokens, QuadWord &value, int offset) {
+        value.setX(internal::stringToFloat(tokens.at(offset + 0).c_str()));
+        value.setY(internal::stringToFloat(tokens.at(offset + 1).c_str()));
+        value.setZ(internal::stringToFloat(tokens.at(offset + 2).c_str()));
+        value.setW(internal::stringToFloat(tokens.at(offset + 3).c_str()));
+    }
     static bool createVector3(const Array<std::string> &tokens, Vector3 &value) {
         if (tokens.count() == 3) {
             value.setX(internal::stringToFloat(tokens.at(0).c_str()));
@@ -187,10 +195,10 @@ public:
                              const xmlChar *localname,
                              const xmlChar *prefix,
                              const xmlChar * /* URI */,
-                             int /* nNamespaces */,
+                             int /* nnamespaces */,
                              const xmlChar ** /* namespaces */,
-                             int nAttributes,
-                             int /* nDefaulted */,
+                             int nattributes,
+                             int /* ndefaulted */,
                              const xmlChar **attributes)
     {
         Parser *self = static_cast<Parser *>(context);
@@ -218,25 +226,25 @@ public:
         }
         else if (self->depth == 2) {
             if (self->state == kSettings) {
-                strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key));
+                strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key) - 1);
             }
             if (self->state == kModels && equals(prefix, localname, "model")) {
                 self->currentModel = new PMDModel();
                 StringHash *values = new StringHash();
                 self->localModelSettingValues.add(values);
-                self->localModelSettings.insert(btHashPtr(self->currentModel), values);
+                self->localModelSettings.insert(self->currentModel, values);
                 self->pushState(kModel);
             }
             else if (self->state == kAssets && equals(prefix, localname, "asset")) {
                 self->currentAsset = new Asset();
                 StringHash *values = new StringHash();
                 self->localAssetSettingValues.add(values);
-                self->localAssetSettings.insert(btHashPtr(self->currentModel), values);
+                self->localAssetSettings.insert(self->currentModel, values);
                 self->pushState(kAsset);
             }
             else if (self->state == kMotions && equals(prefix, localname, "motion")) {
                 bool found = false;
-                for (int i = 0; i < nAttributes; i++, index += 5) {
+                for (int i = 0; i < nattributes; i++, index += 5) {
                     if (!equals(attributes[index], "type"))
                         continue;
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index + 3]), sizeof(attributeName));
@@ -258,10 +266,10 @@ public:
         }
         else if (self->depth == 3) {
             if (self->state == kModel || self->state == kAsset) {
-                strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key));
+                strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key) - 1);
             }
             else if (self->state == kAnimation && equals(localname, "animation")) {
-                for (int i = 0; i < nAttributes; i++, index += 5) {
+                for (int i = 0; i < nattributes; i++, index += 5) {
                     if (!equals(attributes[index], "type"))
                         continue;
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index + 3]), sizeof(attributeName));
@@ -293,12 +301,14 @@ public:
             Array<std::string> tokens;
             Vector3 vec3;
             Vector4 vec4;
-            BaseKeyFrame *keyframe;
+            QuadWord qw;
             std::string value;
             switch (self->state) {
             case kBoneMotion:
-                keyframe = new BoneKeyFrame();
-                for (int i = 0; i < nAttributes; i++, index += 5) {
+            {
+                BoneKeyFrame *keyframe = new BoneKeyFrame();
+                keyframe->setDefaultInterpolationParameter();
+                for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "name", 4) == 0) {
@@ -318,7 +328,7 @@ public:
 #else
                             vec3.setValue(vec3.x(), vec3.y(), vec3.z());
 #endif
-                            reinterpret_cast<BoneKeyFrame *>(keyframe)->setPosition(vec3);
+                            keyframe->setPosition(vec3);
                         }
                     }
                     else if (strncmp(attributeName, "rotation", 8) == 0) {
@@ -331,17 +341,27 @@ public:
 #else
                             rotation.setValue(vec4.x(), vec4.y(), vec4.z(), vec4.w());
 #endif
-                            reinterpret_cast<BoneKeyFrame *>(keyframe)->setRotation(rotation);
+                            keyframe->setRotation(rotation);
                         }
                     }
                     else if (strncmp(attributeName, "interpolation", 12) == 0) {
+                        newString(attributes, index, value);
+                        splitString(value, tokens);
+                        if (tokens.count() == 16) {
+                            for (int i = 0; i < 4; i++) {
+                                setQuadWordValues(tokens, qw, i * 4);
+                                keyframe->setInterpolationParameter(static_cast<BoneKeyFrame::InterpolationType>(i), qw);
+                            }
+                        }
                     }
                 }
                 self->currentMotion->mutableBoneAnimation()->addKeyFrame(keyframe);
                 break;
+            }
             case kVerticesMotion:
-                keyframe = new FaceKeyFrame();
-                for (int i = 0; i < nAttributes; i++, index += 5) {
+            {
+                FaceKeyFrame *keyframe = new FaceKeyFrame();
+                for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "name", 4) == 0) {
@@ -354,18 +374,22 @@ public:
                     }
                     else if (strncmp(attributeName, "weight", 6) == 0) {
                         newString(attributes, index, value);
-                        reinterpret_cast<FaceKeyFrame *>(keyframe)->setWeight(internal::stringToFloat(value.c_str()));
+                        keyframe->setWeight(internal::stringToFloat(value.c_str()));
                     }
                 }
+                self->currentMotion->mutableFaceAnimation()->addKeyFrame(keyframe);
                 break;
+            }
             case kCameraMotion:
-                keyframe = new CameraKeyFrame();
-                for (int i = 0; i < nAttributes; i++, index += 5) {
+            {
+                CameraKeyFrame *keyframe = new CameraKeyFrame();
+                keyframe->setDefaultInterpolationParameter();
+                for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "fovy", 4) == 0) {
                         newString(attributes, index, value);
-                        reinterpret_cast<CameraKeyFrame *>(keyframe)->setFovy(internal::stringToFloat(value.c_str()));
+                        keyframe->setFovy(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
@@ -392,20 +416,31 @@ public:
 #else
                             vec3.setValue(vec3.x(), vec3.y(), vec3.z());
 #endif
-                            reinterpret_cast<CameraKeyFrame *>(keyframe)->setPosition(vec3);
+                            keyframe->setPosition(vec3);
                         }
                     }
                     else if (strncmp(attributeName, "distance", 8) == 0) {
                         newString(attributes, index, value);
-                        reinterpret_cast<CameraKeyFrame *>(keyframe)->setDistance(internal::stringToFloat(value.c_str()));
+                        keyframe->setDistance(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "interpolation", 12) == 0) {
+                        newString(attributes, index, value);
+                        splitString(value, tokens);
+                        if (tokens.count() == 24) {
+                            for (int i = 0; i < 6; i++) {
+                                setQuadWordValues(tokens, qw, i * 4);
+                                keyframe->setInterpolationParameter(static_cast<CameraKeyFrame::InterpolationType>(i), qw);
+                            }
+                        }
                     }
                 }
+                self->currentMotion->mutableCameraAnimation()->addKeyFrame(keyframe);
                 break;
+            }
             case kLightMotion:
-                keyframe = new LightKeyFrame();
-                for (int i = 0; i < nAttributes; i++, index += 5) {
+            {
+                LightKeyFrame *keyframe = new LightKeyFrame();
+                for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "index", 5) == 0) {
@@ -416,16 +451,18 @@ public:
                         newString(attributes, index, value);
                         splitString(value, tokens);
                         if (createVector3(tokens, vec3))
-                            reinterpret_cast<LightKeyFrame *>(keyframe)->setColor(vec3);
+                            keyframe->setColor(vec3);
                     }
                     else if (strncmp(attributeName, "direction", 9) == 0) {
                         newString(attributes, index, value);
                         splitString(value, tokens);
                         if (createVector3(tokens, vec3))
-                            reinterpret_cast<LightKeyFrame *>(keyframe)->setDirection(vec3);
+                            keyframe->setDirection(vec3);
                     }
                 }
+                self->currentMotion->mutableLightAnimation()->addKeyFrame(keyframe);
                 break;
+            }
             }
         }
     }
@@ -436,19 +473,31 @@ public:
         Parser *self = static_cast<Parser *>(context);
         if (self->state == kSettings) {
             std::string value(reinterpret_cast<const char *>(character), len);
-            self->globalSettings.insert(HashString(self->key), value);
+            const char *key = reinterpret_cast<const char *>(self->key);
+            if (key)
+                fprintf(stderr, "%s: (%ld) => %p\n", key, value.size(), self->globalSettings.find(key));
+            if (key) {
+                self->globalSettings.insert(key, value);
+                fprintf(stderr, "INSERTED %s => %s\n", key, value.c_str());
+            }
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(character), len);
-            StringHash **values = self->localModelSettings[btHashPtr(self->currentModel)];
-            if (values)
-                (*values)->insert(HashString(self->key), value);
+            StringHash **values = self->localModelSettings[self->currentModel];
+            if (values) {
+                const char *key = reinterpret_cast<const char *>(self->key);
+                if (key)
+                    (*values)->insert(key, value);
+            }
         }
         else if (self->state == kAsset) {
             std::string value(reinterpret_cast<const char *>(character), len);
             StringHash **values = self->localAssetSettings[self->currentAsset];
-            if (values)
-                (*values)->insert(HashString(self->key), value);
+            if (values) {
+                const char *key = reinterpret_cast<const char *>(self->key);
+                if (key)
+                    (*values)->insert(key, value);
+            }
         }
     }
     static void endElement(void *context,
@@ -541,8 +590,8 @@ public:
     StringHash globalSettings;
     Array<StringHash *> localModelSettingValues;
     Array<StringHash *> localAssetSettingValues;
-    Hash<btHashPtr, StringHash *> localModelSettings;
-    Hash<btHashPtr, StringHash *> localAssetSettings;
+    PtrHash localModelSettings;
+    PtrHash localAssetSettings;
     Asset *currentAsset;
     PMDModel *currentModel;
     VMDMotion *currentMotion;
@@ -584,5 +633,96 @@ void Project::save(const char * /* path */)
 {
 }
 
-} /* namespace vpvl */
+const Array<Asset *> &Project::assets() const
+{
+    return m_parser->assets;
+}
 
+const Array<PMDModel *> &Project::models() const
+{
+    return m_parser->models;
+}
+
+const Array<VMDMotion *> &Project::motions() const
+{
+    return m_parser->motions;
+}
+
+const std::string Project::globalSetting(const char *key) const
+{
+    std::string *value = const_cast<std::string *>(m_parser->globalSettings.find(key));
+    fprintf(stderr, "%s => %p", key, value);
+    return value ? *value : std::string();
+}
+
+const std::string Project::localAssetSetting(Asset *asset, const char *key) const
+{
+    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localAssetSettings.find(asset));
+    if (values) {
+        std::string *value = const_cast<std::string *>((*values)->find(key));
+        if (value)
+            return *value;
+    }
+    return std::string();
+}
+
+const std::string Project::localModelSetting(PMDModel *model, const char *key) const
+{
+    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localModelSettings.find(model));
+    if (values) {
+        std::string *value = const_cast<std::string *>((*values)->find(key));
+        if (value)
+            return *value;
+    }
+    return std::string();
+}
+
+Array<Asset *> *Project::mutableAssets()
+{
+    return &m_parser->assets;
+}
+
+Array<PMDModel *> *Project::mutableModels()
+{
+    return &m_parser->models;
+}
+
+Array<VMDMotion *> *Project::mutableMotions()
+{
+    return &m_parser->motions;
+}
+
+void Project::setGlobalSetting(const char *key, std::string &value)
+{
+    m_parser->globalSettings.insert(key, value);
+}
+
+void Project::setLocalAssetSetting(Asset *asset, const char *key, const std::string &value) const
+{
+    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localAssetSettings.find(asset));
+    if (!values) {
+        Parser::StringHash *hash = new Parser::StringHash();
+        hash->insert(key, value);
+        m_parser->localAssetSettingValues.add(hash);
+        m_parser->localAssetSettings.insert(asset, hash);
+    }
+    else {
+        (*values)->insert(key, value);
+    }
+}
+
+void Project::setLocalModelSetting(PMDModel *model, const char *key, const std::string &value) const
+{
+    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localModelSettings.find(model));
+    if (!values) {
+        Parser::StringHash *hash = new Parser::StringHash();
+        hash->insert(key, value);
+        m_parser->localModelSettingValues.add(hash);
+        m_parser->localModelSettings.insert(model, hash);
+    }
+    else {
+        (*values)->insert(key, value);
+    }
+}
+
+} /* namespace vpvl */

@@ -196,6 +196,7 @@ private:
     btHashMap<K, V> m_values;
 };
 typedef btHashString HashString;
+typedef btHashPtr HashPtr;
 
 static const float kPI = 3.14159265358979323846f;
 

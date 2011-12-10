@@ -38,10 +38,16 @@
 #define VPVL_PROJECT_H_
 
 #include <libxml2/libxml/SAX2.h>
+#include <string>
+
 #include "vpvl/Common.h"
 
 namespace vpvl
 {
+
+class Asset;
+class PMDModel;
+class VMDMotion;
 
 /**
  * @file
@@ -63,6 +69,20 @@ public:
     bool load(const char *path);
     bool load(const uint8_t *data, size_t size);
     void save(const char *path);
+
+    const Array<Asset *> &assets() const;
+    const Array<PMDModel *> &models() const;
+    const Array<VMDMotion *> &motions() const;
+    const std::string globalSetting(const char *key) const;
+    const std::string localAssetSetting(Asset *asset, const char *key) const;
+    const std::string localModelSetting(PMDModel *model, const char *key) const;
+
+    Array<Asset *> *mutableAssets();
+    Array<PMDModel *> *mutableModels();
+    Array<VMDMotion *> *mutableMotions();
+    void setGlobalSetting(const char *key, std::string &value);
+    void setLocalAssetSetting(Asset *asset, const char *key, const std::string &value) const;
+    void setLocalModelSetting(PMDModel *model, const char *key, const std::string &value) const;
 
 private:
     Parser *m_parser;
