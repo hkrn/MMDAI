@@ -44,7 +44,7 @@
 namespace vpvl
 {
 
-struct Parser {
+struct Handler {
 public:
     enum State {
         kInitial,
@@ -68,7 +68,7 @@ public:
     typedef Hash<HashPtr, StringHash *> PtrHash;
     const static int kBufferSize = 32;
 
-    Parser()
+    Handler()
         : state(kInitial),
           depth(0),
           currentAsset(0),
@@ -77,7 +77,7 @@ public:
     {
         internal::zerofill(key, sizeof(key));
     }
-    ~Parser() {
+    ~Handler() {
         state = kInitial;
         depth = 0;
         assets.releaseAll();
@@ -219,7 +219,7 @@ public:
                              int /* ndefaulted */,
                              const xmlChar **attributes)
     {
-        Parser *self = static_cast<Parser *>(context);
+        Handler *self = static_cast<Handler *>(context);
         char attributeName[kBufferSize];
         int index = 0;
         if (self->depth == 0 && equals(prefix, localname, "project")) {
@@ -488,7 +488,7 @@ public:
                            const xmlChar *character,
                            int len)
     {
-        Parser *self = static_cast<Parser *>(context);
+        Handler *self = static_cast<Handler *>(context);
         const char *key = 0;
         if (self->state == kSettings) {
             std::string value(reinterpret_cast<const char *>(character), len);
@@ -513,7 +513,7 @@ public:
                            const xmlChar *prefix,
                            const xmlChar * /* URI */)
     {
-        Parser *self = static_cast<Parser *>(context);
+        Handler *self = static_cast<Handler *>(context);
         if (self->depth == 4 && !equals(localname, "keyframe")) {
             self->popState(kAnimation);
         }
@@ -585,12 +585,12 @@ public:
     }
     static void error(void *context, const char *format, ...)
     {
-        Parser *self = static_cast<Parser *>(context);
+        Handler *self = static_cast<Handler *>(context);
         (void) self;
     }
     static void warning(void *context, const char *format, ...)
     {
-        Parser *self = static_cast<Parser *>(context);
+        Handler *self = static_cast<Handler *>(context);
         (void) self;
     }
 
@@ -612,33 +612,33 @@ public:
 };
 
 Project::Project()
-    : m_parser(0)
+    : m_handler(0)
 {
-    internal::zerofill(&m_handler, sizeof(m_handler));
-    m_parser = new Parser();
-    m_handler.initialized = XML_SAX2_MAGIC;
-    m_handler.startElementNs = &Parser::startElement;
-    m_handler.endElementNs = &Parser::endElement;
-    m_handler.characters = &Parser::characters;
-    m_handler.warning = &Parser::warning;
-    m_handler.error = &Parser::error;
+    internal::zerofill(&m_sax, sizeof(m_sax));
+    m_handler = new Handler();
+    m_sax.initialized = XML_SAX2_MAGIC;
+    m_sax.startElementNs = &Handler::startElement;
+    m_sax.endElementNs = &Handler::endElement;
+    m_sax.characters = &Handler::characters;
+    m_sax.warning = &Handler::warning;
+    m_sax.error = &Handler::error;
 }
 
 Project::~Project()
 {
-    internal::zerofill(&m_handler, sizeof(m_handler));
-    delete m_parser;
-    m_parser = 0;
+    internal::zerofill(&m_sax, sizeof(m_sax));
+    delete m_handler;
+    m_handler = 0;
 }
 
 bool Project::load(const char *path)
 {
-    return xmlSAXUserParseFile(&m_handler, m_parser, path) == 0 && m_parser->depth == 0;
+    return xmlSAXUserParseFile(&m_sax, m_handler, path) == 0 && m_handler->depth == 0;
 }
 
 bool Project::load(const uint8_t *data, size_t size)
 {
-    return xmlSAXUserParseMemory(&m_handler, m_parser, reinterpret_cast<const char *>(data), size) == 0;
+    return xmlSAXUserParseMemory(&m_sax, m_handler, reinterpret_cast<const char *>(data), size) == 0;
 }
 
 void Project::save(const char * /* path */)
@@ -647,28 +647,28 @@ void Project::save(const char * /* path */)
 
 const Array<Asset *> &Project::assets() const
 {
-    return m_parser->assets;
+    return m_handler->assets;
 }
 
 const Array<PMDModel *> &Project::models() const
 {
-    return m_parser->models;
+    return m_handler->models;
 }
 
 const Array<VMDMotion *> &Project::motions() const
 {
-    return m_parser->motions;
+    return m_handler->motions;
 }
 
 const std::string Project::globalSetting(const char *key) const
 {
-    std::string *value = const_cast<std::string *>(m_parser->globalSettings.find(key));
+    std::string *value = const_cast<std::string *>(m_handler->globalSettings.find(key));
     return value ? *value : std::string();
 }
 
 const std::string Project::localAssetSetting(Asset *asset, const char *key) const
 {
-    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localAssetSettings.find(asset));
+    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localAssetSettings.find(asset));
     if (values) {
         std::string *value = const_cast<std::string *>((*values)->find(key));
         if (value)
@@ -679,7 +679,7 @@ const std::string Project::localAssetSetting(Asset *asset, const char *key) cons
 
 const std::string Project::localModelSetting(PMDModel *model, const char *key) const
 {
-    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localModelSettings.find(model));
+    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localModelSettings.find(model));
     if (values) {
         std::string *value = const_cast<std::string *>((*values)->find(key));
         if (value)
@@ -690,33 +690,33 @@ const std::string Project::localModelSetting(PMDModel *model, const char *key) c
 
 Array<Asset *> *Project::mutableAssets()
 {
-    return &m_parser->assets;
+    return &m_handler->assets;
 }
 
 Array<PMDModel *> *Project::mutableModels()
 {
-    return &m_parser->models;
+    return &m_handler->models;
 }
 
 Array<VMDMotion *> *Project::mutableMotions()
 {
-    return &m_parser->motions;
+    return &m_handler->motions;
 }
 
 void Project::setGlobalSetting(const char *key, std::string &value)
 {
-    m_parser->globalSettings.insert(key, value);
+    m_handler->globalSettings.insert(key, value);
 }
 
 void Project::setLocalAssetSetting(Asset *asset, const char *key, const std::string &value) const
 {
-    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localAssetSettings.find(asset));
+    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localAssetSettings.find(asset));
     if (!values) {
-        Parser::StringHash *hash = new Parser::StringHash();
-        const char *k = m_parser->copyKey(key);
+        Handler::StringHash *hash = new Handler::StringHash();
+        const char *k = m_handler->copyKey(key);
         hash->insert(k, value);
-        m_parser->localAssetSettingValues.add(hash);
-        m_parser->localAssetSettings.insert(asset, hash);
+        m_handler->localAssetSettingValues.add(hash);
+        m_handler->localAssetSettings.insert(asset, hash);
     }
     else {
         (*values)->insert(key, value);
@@ -725,13 +725,13 @@ void Project::setLocalAssetSetting(Asset *asset, const char *key, const std::str
 
 void Project::setLocalModelSetting(PMDModel *model, const char *key, const std::string &value) const
 {
-    Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localModelSettings.find(model));
+    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localModelSettings.find(model));
     if (!values) {
-        Parser::StringHash *hash = new Parser::StringHash();
-        const char *k = m_parser->copyKey(key);
+        Handler::StringHash *hash = new Handler::StringHash();
+        const char *k = m_handler->copyKey(key);
         hash->insert(k, value);
-        m_parser->localModelSettingValues.add(hash);
-        m_parser->localModelSettings.insert(model, hash);
+        m_handler->localModelSettingValues.add(hash);
+        m_handler->localModelSettings.insert(model, hash);
     }
     else {
         (*values)->insert(key, value);

@@ -61,7 +61,7 @@ class VMDMotion;
 class VPVL_API Project
 {
 public:
-    typedef struct Parser Parser;
+    typedef struct Handler Handler;
 
     Project();
     ~Project();
@@ -85,8 +85,8 @@ public:
     void setLocalModelSetting(PMDModel *model, const char *key, const std::string &value) const;
 
 private:
-    Parser *m_parser;
-    xmlSAXHandler m_handler;
+    Handler *m_handler;
+    xmlSAXHandler m_sax;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Project)
 };
