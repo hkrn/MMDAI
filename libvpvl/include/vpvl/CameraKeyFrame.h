@@ -146,6 +146,15 @@ public:
     }
 
     /**
+     * Returns if this keyframe is perspective.
+     *
+     * @return True if perspective
+     */
+    bool isPerspective() const {
+        return !m_noPerspective;
+    }
+
+    /**
      * Returns whether this keyframe is linear.
      *
      * @return True if this keyframe is linear
@@ -206,6 +215,15 @@ public:
      */
     void setAngle(const Vector3 &value) {
         m_angle = value;
+    }
+
+    /**
+     * Set boolean this keyframe is perspective.
+     *
+     * @return True if perspective
+     */
+    void setPerspective(bool value) {
+        m_noPerspective = !value;
     }
 
 private:
