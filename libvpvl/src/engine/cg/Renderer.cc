@@ -244,7 +244,7 @@ Renderer::~Renderer()
 void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
 {
     vpvl::cg::PMDModelUserData *userData = new vpvl::cg::PMDModelUserData();
-    vpvl::cg::IDelegate *delegate = static_cast<vpvl::cg::IDelegate *>(m_delegate);
+    vpvl::cg::Renderer::IDelegate *delegate = static_cast<vpvl::cg::Renderer::IDelegate *>(m_delegate);
     std::string source;
     userData->parameters = 0;
     if (delegate->loadEffect(model, dir, source)) {

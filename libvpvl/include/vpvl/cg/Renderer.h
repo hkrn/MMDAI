@@ -59,12 +59,6 @@ namespace cg
 
 struct PMDModelUserData;
 
-class VPVL_API IDelegate : public gl2::Renderer::IDelegate
-{
-public:
-    virtual bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) = 0;
-};
-
 /**
  * @file
  * @author Nagoya Institute of Technology Department of Computer Science
@@ -78,6 +72,12 @@ public:
 class VPVL_API Renderer : public vpvl::gl2::Renderer
 {
 public:
+    class VPVL_API IDelegate : public gl2::Renderer::IDelegate
+    {
+    public:
+        virtual bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) = 0;
+    };
+
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
