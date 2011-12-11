@@ -32,6 +32,7 @@ set(vpvl_public_headers
     include/vpvl/PMDModel.h
     include/vpvl/RigidBody.h
     include/vpvl/Scene.h
+    include/vpvl/SceneUtil.h
     include/vpvl/Vertex.h
     include/vpvl/VMDMotion.h
     include/vpvl/vpvl.h

@@ -321,26 +321,8 @@ void Scene::updateModelView()
 
 void Scene::updateProjection()
 {
-    const float aspect = static_cast<float>(m_width) / m_height;
-    // borrowed code from http://www.geeks3d.com/20090729/howto-perspective-projection-matrix-in-opengl/
-    static const float kPIOver360 = kPI / 360.0f;
-    const float xymax = kFrustumNear * btTan(m_fovy * kPIOver360);
-    const float xmin = -xymax;
-    const float ymin = -xymax;
-    const float width = xymax - xmin;
-    const float height = xymax - ymin;
-    const float depth = kFrustumFar - kFrustumNear;
-    const float q = -(kFrustumFar + kFrustumNear) / depth;
-    const float qn = -2 * (kFrustumFar * kFrustumNear) / depth;
-    const float w = (2 * kFrustumNear / width) / aspect;
-    const float h = 2 * kFrustumNear / height;
-    const float matrix[16] = {
-        w, 0.0f, 0.0f, 0.0f,
-        0.0f, h, 0.0f, 0.0f,
-        0.0f, 0.0f, q, -1.0f,
-        0.0f, 0.0f, qn, 0.0f
-    };
-    memcpy(m_projection, matrix, sizeof(matrix));
+    const Scalar &aspect = m_width / static_cast<const Scalar>(m_height);
+    SceneUtil::perspective(m_fovy, aspect, kFrustumNear, kFrustumFar, m_projection);
 }
 
 void Scene::updateRotationFromAngle()

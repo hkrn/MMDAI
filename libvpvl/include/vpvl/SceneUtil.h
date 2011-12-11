@@ -34,35 +34,89 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl_vpvl_H_
-#define vpvl_vpvl_H_
+#ifndef VPVL_SCENEUTIL_H_
+#define VPVL_SCENEUTIL_H_
 
 #include "vpvl/Common.h"
-#include "vpvl/Asset.h"
-#include "vpvl/BaseAnimation.h"
-#include "vpvl/BaseKeyFrame.h"
-#include "vpvl/Bone.h"
-#include "vpvl/BoneKeyFrame.h"
-#include "vpvl/BoneAnimation.h"
-#include "vpvl/CameraKeyFrame.h"
-#include "vpvl/CameraAnimation.h"
-#include "vpvl/Constraint.h"
-#include "vpvl/Face.h"
-#include "vpvl/FaceKeyFrame.h"
-#include "vpvl/FaceAnimation.h"
-#include "vpvl/IK.h"
-#include "vpvl/LightKeyFrame.h"
-#include "vpvl/LightAnimation.h"
-#include "vpvl/Material.h"
-#include "vpvl/PMDModel.h"
-#include "vpvl/RigidBody.h"
-#include "vpvl/Scene.h"
-#include "vpvl/SceneUtil.h"
-#include "vpvl/Vertex.h"
-#include "vpvl/VMDMotion.h"
 
-#ifdef VPVL_ENABLE_PROJECT
-#include "vpvl/Project.h"
+namespace vpvl
+{
+
+class VPVL_API SceneUtil
+{
+public:
+    static void perspective(const Scalar &fovy,
+                            const Scalar &aspect,
+                            const Scalar &znear,
+                            const Scalar &zfar,
+                            float matrix[16])
+    {
+        const Scalar &top = znear * btTan(radian(fovy * 0.5));
+        const Scalar &bottom = -top;
+        const Scalar &right = aspect * top;
+        const Scalar &left = -right;
+        frustum(left, right, bottom, top, znear, zfar, matrix);
+    }
+    static void frustum(const Scalar &left,
+                        const Scalar &right,
+                        const Scalar &bottom,
+                        const Scalar &top,
+                        const Scalar &znear,
+                        const Scalar &zfar,
+                        float matrix[16])
+    {
+        const float &znear2 = znear * 2.0f;
+        const float &r2l = (right - left);
+        const float &t2b = (top - bottom);
+        const float &f2n = (zfar - znear);
+        const float &a = znear2 / r2l;
+        const float &b = znear2 / t2b;
+        const float &c = (right + left) / r2l;
+        const float &d = (top + bottom) / t2b;
+        const float &e = -(zfar + znear) / f2n;
+        const float &f = -znear2 * zfar / f2n;
+        const float m[16] = {
+            a, 0, 0, 0,
+            0, b, 0, 0,
+            c, d, e, -1,
+            0, 0, f, 0
+        };
+        memcpy(matrix, m, sizeof(m));
+    }
+    static void ortho(const Scalar &left,
+                      const Scalar &right,
+                      const Scalar &bottom,
+                      const Scalar &top,
+                      const Scalar &znear,
+                      const Scalar &zfar,
+                      float matrix[16])
+    {
+        const float &r2l = (right - left);
+        const float &t2b = (top - bottom);
+        const float &f2n = (zfar - znear);
+        const float &a = 2.0f / r2l;
+        const float &b = 2.0f / t2b;
+        const float &c = -2.0f / f2n;
+        const float &d = (right + left) / r2l;
+        const float &e = (top + bottom) / t2b;
+        const float &f = (zfar + znear) / f2n;
+        const float m[16] = {
+            a, 0, 0, d,
+            0, b, 0, e,
+            0, 0, c, f,
+            0, 0, 0, 1
+        };
+        memcpy(matrix, m, sizeof(m));
+    }
+
+private:
+    SceneUtil();
+    ~SceneUtil();
+
+    VPVL_DISABLE_COPY_AND_ASSIGN(SceneUtil)
+};
+
+}
+
 #endif
 
-#endif /* vpvl_vpvl_H_ */
