@@ -66,6 +66,7 @@ public:
     };
     typedef Hash<HashString, std::string> StringHash;
     typedef Hash<HashPtr, StringHash *> PtrHash;
+    const static int kBufferSize = 32;
 
     Parser()
         : state(kInitial),
@@ -219,7 +220,7 @@ public:
                              const xmlChar **attributes)
     {
         Parser *self = static_cast<Parser *>(context);
-        char attributeName[32];
+        char attributeName[kBufferSize];
         int index = 0;
         if (self->depth == 0 && equals(prefix, localname, "project")) {
             self->pushState(kProject);
@@ -593,7 +594,7 @@ public:
         (void) self;
     }
 
-    char key[32];
+    char key[kBufferSize];
     Array<Asset *> assets;
     Array<PMDModel *> models;
     Array<VMDMotion *> motions;
