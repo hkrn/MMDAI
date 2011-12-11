@@ -74,6 +74,7 @@ public:
           currentModel(0),
           currentMotion(0)
     {
+        internal::zerofill(key, sizeof(key));
     }
     ~Parser() {
         state = kInitial;
@@ -81,6 +82,7 @@ public:
         assets.releaseAll();
         models.releaseAll();
         motions.releaseAll();
+        keys.releaseArrayAll();
         localModelSettingValues.releaseAll();
         localAssetSettingValues.releaseAll();
         delete currentAsset;
@@ -94,12 +96,27 @@ public:
     void pushState(State s) {
         state = s;
         depth++;
-        fprintf(stderr, "PUSH: depth = %d, state = %s\n", depth, toString(state));
+        // fprintf(stderr, "PUSH: depth = %d, state = %s\n", depth, toString(state));
     }
     void popState(State s) {
         state = s;
         depth--;
-        fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
+        // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
+    }
+    const char *copyKey() {
+        return copyKey(key);
+    }
+    const char *copyKey(const char *k) {
+        if (k && k[0] != 0) {
+            size_t len = strlen(k);
+            char *newKey = new char[len + 1];
+            strncpy(newKey, k, len);
+            keys.add(newKey);
+            return newKey;
+        }
+        else {
+            return 0;
+        }
     }
 
     static const char *toString(State s) {
@@ -239,7 +256,7 @@ public:
                 self->currentAsset = new Asset();
                 StringHash *values = new StringHash();
                 self->localAssetSettingValues.add(values);
-                self->localAssetSettings.insert(self->currentModel, values);
+                self->localAssetSettings.insert(self->currentAsset, values);
                 self->pushState(kAsset);
             }
             else if (self->state == kMotions && equals(prefix, localname, "motion")) {
@@ -471,33 +488,23 @@ public:
                            int len)
     {
         Parser *self = static_cast<Parser *>(context);
+        const char *key = 0;
         if (self->state == kSettings) {
             std::string value(reinterpret_cast<const char *>(character), len);
-            const char *key = reinterpret_cast<const char *>(self->key);
-            if (key)
-                fprintf(stderr, "%s: (%ld) => %p\n", key, value.size(), self->globalSettings.find(key));
-            if (key) {
+            if (key = self->copyKey())
                 self->globalSettings.insert(key, value);
-                fprintf(stderr, "INSERTED %s => %s\n", key, value.c_str());
-            }
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(character), len);
             StringHash **values = self->localModelSettings[self->currentModel];
-            if (values) {
-                const char *key = reinterpret_cast<const char *>(self->key);
-                if (key)
-                    (*values)->insert(key, value);
-            }
+            if (values && (key = self->copyKey()))
+                (*values)->insert(key, value);
         }
         else if (self->state == kAsset) {
             std::string value(reinterpret_cast<const char *>(character), len);
             StringHash **values = self->localAssetSettings[self->currentAsset];
-            if (values) {
-                const char *key = reinterpret_cast<const char *>(self->key);
-                if (key)
-                    (*values)->insert(key, value);
-            }
+            if (values && (key = self->copyKey()))
+                (*values)->insert(key, value);
         }
     }
     static void endElement(void *context,
@@ -517,6 +524,7 @@ public:
                     self->currentAsset = 0;
                     self->popState(kAssets);
                 }
+                internal::zerofill(self->key, sizeof(self->key));
                 break;
             case kModel:
                 if (equals(prefix, localname, "model")) {
@@ -524,6 +532,7 @@ public:
                     self->currentModel = 0;
                     self->popState(kModels);
                 }
+                internal::zerofill(self->key, sizeof(self->key));
                 break;
             case kAnimation:
                 if (equals(prefix, localname, "motion")) {
@@ -559,6 +568,7 @@ public:
             case kSettings:
                 if (equals(prefix, localname, "settings"))
                     self->popState(kProject);
+                internal::zerofill(self->key, sizeof(self->key));
                 break;
             case kPhysics:
                 if (equals(prefix, localname, "physics"))
@@ -588,6 +598,7 @@ public:
     Array<PMDModel *> models;
     Array<VMDMotion *> motions;
     StringHash globalSettings;
+    Array<char *> keys;
     Array<StringHash *> localModelSettingValues;
     Array<StringHash *> localAssetSettingValues;
     PtrHash localModelSettings;
@@ -651,7 +662,6 @@ const Array<VMDMotion *> &Project::motions() const
 const std::string Project::globalSetting(const char *key) const
 {
     std::string *value = const_cast<std::string *>(m_parser->globalSettings.find(key));
-    fprintf(stderr, "%s => %p", key, value);
     return value ? *value : std::string();
 }
 
@@ -702,7 +712,8 @@ void Project::setLocalAssetSetting(Asset *asset, const char *key, const std::str
     Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localAssetSettings.find(asset));
     if (!values) {
         Parser::StringHash *hash = new Parser::StringHash();
-        hash->insert(key, value);
+        const char *k = m_parser->copyKey(key);
+        hash->insert(k, value);
         m_parser->localAssetSettingValues.add(hash);
         m_parser->localAssetSettings.insert(asset, hash);
     }
@@ -716,7 +727,8 @@ void Project::setLocalModelSetting(PMDModel *model, const char *key, const std::
     Parser::StringHash **values = const_cast<Parser::StringHash **>(m_parser->localModelSettings.find(model));
     if (!values) {
         Parser::StringHash *hash = new Parser::StringHash();
-        hash->insert(key, value);
+        const char *k = m_parser->copyKey(key);
+        hash->insert(k, value);
         m_parser->localModelSettingValues.add(hash);
         m_parser->localModelSettings.insert(model, hash);
     }
