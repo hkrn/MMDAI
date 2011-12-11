@@ -69,7 +69,7 @@ public:
      *
      * @return A value of light color
      */
-    Vector3 color() const {
+    const Vector3 &color() const {
         return m_color;
     }
 
@@ -78,7 +78,7 @@ public:
      *
      * @return A value of light direction
      */
-    Vector3 direction() const {
+    const Vector3 &direction() const {
         return m_direction;
     }
 
