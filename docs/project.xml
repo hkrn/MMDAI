@@ -9,49 +9,57 @@
   </vpvm:settings>
   <vpvm:physics enable="true" />
   <vpvm:models>
-    <vpvm:model name="foo">
-      <path>/foo/bar/baz</path>
+    <vpvm:model name="foo_model">
+      <path>model:/foo/bar/baz</path>
       <edge>1.0</edge>
       <position>1,2,3</position>
     </vpvm:model>
+    <vpvm:model name="bar_model">
+      <path>model:/baz/bar/foo</path>
+      <edge>0.5</edge>
+      <position>3,2,1</position>
+    </vpvm:model>
   </vpvm:models>
   <vpvm:assets>
-    <vpvm:asset name="bar">
-      <path>/foo/bar/baz</path>
+    <vpvm:asset name="foo_asset">
+      <path>asset:/foo/bar/baz</path>
+    </vpvm:asset>
+    <vpvm:asset name="bar_asset">
+      <path>asset:/baz/bar/foo</path>
     </vpvm:asset>
   </vpvm:assets>
   <vpvm:motions>
     <vpvm:motion model="foo">
       <comment>This is a test.</comment>
       <animation type="bone">
-        <keyframe name="bar" index="0" position="1,2,3" rotation="1,2,3,4"
+        <keyframe name="bar" index="1" position="1,2,3" rotation="1,2,3,4"
           interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
-        <keyframe name="baz" index="0" position="1,2,3" rotation="1,2,3,4"
-          interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
+        <keyframe name="baz" index="2" position="3,1,2" rotation="4,3,2,1"
+          interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1" />
       </animation>
       <animation type="vertices">
-        <keyframe name="bar" index="0" weight="0.0" />
-        <keyframe name="baz" index="1" weight="1.0" />
+        <keyframe name="bar" index="1" weight="0.0" />
+        <keyframe name="baz" index="2" weight="1.0" />
       </animation>
       <animation type="camera">
-        <keyframe index="0" position="1,2,3" angle="1,2,3" distance="0" fovy="0"
+        <keyframe index="1" position="1,2,3" angle="1,2,3" distance="150" fovy="15"
           interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24" />
-        <keyframe index="1" position="1,2,3" angle="1,2,3" distance="0" fovy="0"
-          interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24" />
+        <keyframe index="2" position="3,1,2" angle="3,1,2" distance="300" fovy="30"
+          interpolation="24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1" />
       </animation>
       <animation type="light">
-        <keyframe index="0" color="1,2,3" direction="1,2,3" />
         <keyframe index="1" color="1,2,3" direction="1,2,3" />
+        <keyframe index="2" color="3,1,2" direction="3,1,2" />
       </animation>
     </vpvm:motion>
     <vpvm:motion type="ik" model="foo">
-      <keyframe name="bar" index="0" enable="true" />
-      <keyframe name="baz" index="0" enable="true" />
+      <keyframe name="bar" index="1" enable="true" />
+      <keyframe name="baz" index="2" enable="true" />
     </vpvm:motion>
     <vpvm:motion type="asset" asset="foo">
-      <keyframe index="0" visible="true" model="null" bone="null" position="1,2,3"
-        rotation="1,2,3" scale="10.0" opacity="1.0" />
       <keyframe index="1" visible="true" model="null" bone="null" position="1,2,3"
+        rotation="1,2,3" scale="10.0" opacity="1.0" />
+      <keyframe index="2" visible="true" model="null" bone="null" position="1,2,3"
         rotation="1,2,3" scale="10.0" opacity="1.0" />
     </vpvm:motion>
   </vpvm:motions>
