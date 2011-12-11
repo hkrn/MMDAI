@@ -5,8 +5,10 @@ TEMPLATE = app
 # Linux, Darwin(OSX), etc...
 exists(/opt/local/lib):LIBS += -L/opt/local/lib
 exists(/opt/local/include):INCLUDEPATH += /opt/local/include
+exists(/opt/local/include/libxml2):INCLUDEPATH += /opt/local/include/libxml2
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
+exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # GLEW and assimp and OpenCV
 exists(../glew/lib):LIBS += -L../glew/lib

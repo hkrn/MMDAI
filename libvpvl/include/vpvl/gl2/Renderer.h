@@ -75,7 +75,17 @@ class ObjectProgram;
 class ShadowProgram;
 class ZPlotProgram;
 
-class VPVL_API IDelegate
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Bone class represents a bone of a Polygon Model Data object.
+ */
+
+class VPVL_API Renderer
 {
 public:
     enum LogLevel {
@@ -94,27 +104,16 @@ public:
         kZPlotVertexShader,
         kZPlotFragmentShader
     };
+    class VPVL_API IDelegate
+    {
+    public:
+        virtual bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
+        virtual bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
+        virtual void log(LogLevel level, const char *format, ...) = 0;
+        virtual const std::string loadShader(ShaderType type) = 0;
+        virtual const std::string toUnicode(const uint8_t *value) = 0;
+    };
 
-    virtual bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
-    virtual bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
-    virtual void log(LogLevel level, const char *format, ...) = 0;
-    virtual const std::string loadShader(ShaderType type) = 0;
-    virtual const std::string toUnicode(const uint8_t *value) = 0;
-};
-
-/**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * Bone class represents a bone of a Polygon Model Data object.
- */
-
-class VPVL_API Renderer
-{
-public:
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 

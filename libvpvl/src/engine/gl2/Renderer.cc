@@ -78,7 +78,7 @@ static void CreateLookAt(const Vector3 &eye, float matrix[16])
 class ShaderProgram
 {
 public:
-    ShaderProgram(IDelegate *delegate)
+    ShaderProgram(Renderer::IDelegate *delegate)
         : m_program(0),
           m_delegate(delegate),
           m_modelViewUniformLocation(0),
@@ -121,7 +121,7 @@ public:
                     delete[] m_message;
                     m_message = new char[len];
                     glGetProgramInfoLog(program, len, NULL, m_message);
-                    m_delegate->log(IDelegate::kLogWarning, "%s", m_message);
+                    m_delegate->log(Renderer::kLogWarning, "%s", m_message);
                 }
                 glDeleteProgram(program);
                 return false;
@@ -131,7 +131,7 @@ public:
             m_positionAttributeLocation = glGetAttribLocation(program, "inPosition");
             m_normalAttributeLocation = glGetAttribLocation(program, "inNormal");
             m_program = program;
-            m_delegate->log(IDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
+            m_delegate->log(Renderer::kLogInfo, "Created a shader program (ID=%d)", m_program);
             return true;
         }
         else {
@@ -178,7 +178,7 @@ private:
                 delete[] m_message;
                 m_message = new char[len];
                 glGetShaderInfoLog(shader, len, NULL, m_message);
-                m_delegate->log(IDelegate::kLogWarning, "%s", m_message);
+                m_delegate->log(Renderer::kLogWarning, "%s", m_message);
             }
             glDeleteShader(shader);
             return 0;
@@ -186,7 +186,7 @@ private:
         return shader;
     }
 
-    IDelegate *m_delegate;
+    Renderer::IDelegate *m_delegate;
     GLuint m_modelViewUniformLocation;
     GLuint m_projectionUniformLocation;
     GLuint m_positionAttributeLocation;
@@ -196,7 +196,7 @@ private:
 
 class EdgeProgram : public ShaderProgram {
 public:
-    EdgeProgram(IDelegate *delegate)
+    EdgeProgram(Renderer::IDelegate *delegate)
         : ShaderProgram(delegate),
           m_boneAttributesAttributeLocation(0),
           m_edgeAttributeLocation(0),
@@ -245,7 +245,7 @@ private:
 
 class ZPlotProgram : public ShaderProgram {
 public:
-    ZPlotProgram(IDelegate *delegate)
+    ZPlotProgram(Renderer::IDelegate *delegate)
         : ShaderProgram(delegate)
     {
     }
@@ -255,7 +255,7 @@ public:
 
 class ObjectProgram : public ShaderProgram {
 public:
-    ObjectProgram(IDelegate *delegate)
+    ObjectProgram(Renderer::IDelegate *delegate)
         : ShaderProgram(delegate),
           m_lightColorUniformLocation(0),
           m_lightPositionUniformLocation(0)
@@ -288,7 +288,7 @@ private:
 
 class ShadowProgram : public ObjectProgram {
 public:
-    ShadowProgram(IDelegate *delegate)
+    ShadowProgram(Renderer::IDelegate *delegate)
         : ObjectProgram(delegate),
           m_shadowMatrixUniformLocation(0)
     {
@@ -314,7 +314,7 @@ private:
 
 class ModelProgram : public ObjectProgram {
 public:
-    ModelProgram(IDelegate *delegate)
+    ModelProgram(Renderer::IDelegate *delegate)
         : ObjectProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
@@ -473,7 +473,7 @@ private:
 
 class ExtendedModelProgram : public ModelProgram {
 public:
-    ExtendedModelProgram(IDelegate *delegate)
+    ExtendedModelProgram(Renderer::IDelegate *delegate)
         : ModelProgram(delegate),
           m_biasMatrixUniformLocation(0),
           m_shadowTextureUniformLocation(0)
@@ -518,7 +518,7 @@ private:
 
 class AssetProgram : public ObjectProgram {
 public:
-    AssetProgram(IDelegate *delegate)
+    AssetProgram(Renderer::IDelegate *delegate)
         : ObjectProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_colorAttributeLocation(0),
@@ -668,13 +668,15 @@ struct AssetUserData
 namespace
 {
 
-void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData, vpvl::gl2::IDelegate *delegate)
+using namespace vpvl::gl2;
+
+void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData, Renderer::IDelegate *delegate)
 {
     const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
-    vpvl::gl2::AssetProgram *program = new vpvl::gl2::AssetProgram(delegate);
-    program->load(delegate->loadShader(vpvl::gl2::IDelegate::kAssetVertexShader).c_str(),
-                  delegate->loadShader(vpvl::gl2::IDelegate::kAssetFragmentShader).c_str());
+    vpvl::gl2::AssetProgram *program = new AssetProgram(delegate);
+    program->load(delegate->loadShader(Renderer::kAssetVertexShader).c_str(),
+                  delegate->loadShader(Renderer::kAssetFragmentShader).c_str());
     userData->programs[node] = program;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -983,24 +985,24 @@ bool Renderer::createPrograms()
 {
     std::string vertexShader;
     std::string fragmentShader;
-    vertexShader = m_delegate->loadShader(IDelegate::kEdgeVertexShader);
-    fragmentShader = m_delegate->loadShader(IDelegate::kEdgeFragmentShader);
+    vertexShader = m_delegate->loadShader(kEdgeVertexShader);
+    fragmentShader = m_delegate->loadShader(kEdgeFragmentShader);
     m_edgeProgram = new EdgeProgram(m_delegate);
     if (!m_edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
     m_modelProgram = new ExtendedModelProgram(m_delegate);
-    vertexShader = m_delegate->loadShader(IDelegate::kModelVertexShader);
-    fragmentShader = m_delegate->loadShader(IDelegate::kModelFragmentShader);
+    vertexShader = m_delegate->loadShader(kModelVertexShader);
+    fragmentShader = m_delegate->loadShader(kModelFragmentShader);
     if (!m_modelProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
     m_shadowProgram = new ShadowProgram(m_delegate);
-    vertexShader = m_delegate->loadShader(IDelegate::kShadowVertexShader);
-    fragmentShader = m_delegate->loadShader(IDelegate::kShadowFragmentShader);
+    vertexShader = m_delegate->loadShader(kShadowVertexShader);
+    fragmentShader = m_delegate->loadShader(kShadowFragmentShader);
     if (!m_shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
     m_zplotProgram = new ZPlotProgram(m_delegate);
-    vertexShader = m_delegate->loadShader(IDelegate::kZPlotVertexShader);
-    fragmentShader = m_delegate->loadShader(IDelegate::kZPlotFragmentShader);
+    vertexShader = m_delegate->loadShader(kZPlotVertexShader);
+    fragmentShader = m_delegate->loadShader(kZPlotFragmentShader);
     return m_zplotProgram->load(vertexShader.c_str(), fragmentShader.c_str());
 }
 
@@ -1026,13 +1028,13 @@ bool Renderer::createShadowFrameBuffers()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureID, 0);
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status == GL_FRAMEBUFFER_COMPLETE) {
-        m_delegate->log(IDelegate::kLogInfo,
+        m_delegate->log(kLogInfo,
                         "Created a framebuffer (textureID = %d, frameBufferID = %d)",
                         m_depthTextureID,
                         m_frameBufferID);
     }
     else {
-        m_delegate->log(IDelegate::kLogWarning, "Failed creating a framebuffer: %d", status);
+        m_delegate->log(kLogWarning, "Failed creating a framebuffer: %d", status);
         ret = false;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1068,13 +1070,13 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
         if (!primary.empty()) {
             if (m_delegate->uploadTexture(dir + "/" + primary, textureID, false)) {
                 materialPrivate.mainTextureID = textureID;
-                m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
+                m_delegate->log(kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
         if (!second.empty()) {
             if (m_delegate->uploadTexture(dir + "/" + second, textureID, false)) {
                 materialPrivate.subTextureID = textureID;
-                m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
+                m_delegate->log(kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
         }
         hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
@@ -1082,7 +1084,7 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     }
     userData->hasSingleSphereMap = hasSingleSphere;
     userData->hasMultipleSphereMap = hasMultipleSphere;
-    m_delegate->log(IDelegate::kLogInfo,
+    m_delegate->log(kLogInfo,
                     "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
                     hasSingleSphere ? "true" : "false",
                     hasMultipleSphere ? "true" : "false");
@@ -1090,30 +1092,30 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(vpvl::PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
-    m_delegate->log(IDelegate::kLogInfo,
+    m_delegate->log(kLogInfo,
                     "Binding edge indices to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(vpvl::PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
-    m_delegate->log(IDelegate::kLogInfo,
+    m_delegate->log(kLogInfo,
                     "Binding indices to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kShadowIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
-    m_delegate->log(IDelegate::kLogInfo,
+    m_delegate->log(kLogInfo,
                     "Binding model vertices to the vertex buffer object (ID=%d)",
                     userData->vertexBufferObjects[kModelVertices]);
     if (m_delegate->uploadToonTexture("toon0.bmp", dir, textureID)) {
         userData->toonTextureID[0] = textureID;
-        m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+        m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->uploadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             userData->toonTextureID[i + 1] = textureID;
-            m_delegate->log(IDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+            m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
     userData->materials = materialPrivates;
@@ -1121,7 +1123,7 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
     model->setLightPosition(m_scene->lightPosition());
     model->updateImmediate();
     updateModel(model);
-    m_delegate->log(IDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
+    m_delegate->log(kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
     m_scene->addModel(model);
 }
 
@@ -1146,7 +1148,7 @@ void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
         delete[] userData->materials;
         delete userData;
-        m_delegate->log(IDelegate::kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
+        m_delegate->log(kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
         m_scene->removeModel(model);
         delete model;
         model = 0;
@@ -1364,7 +1366,7 @@ void Renderer::uploadAsset(Asset *asset, const std::string &dir)
                 filename = dir + "/" + canonicalized;
                 if (m_delegate->uploadTexture(filename, textureID, false)) {
                     userData->textures[path] = textureID;
-                    m_delegate->log(IDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
+                    m_delegate->log(kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;

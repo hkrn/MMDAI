@@ -60,4 +60,8 @@
 #include "vpvl/Vertex.h"
 #include "vpvl/VMDMotion.h"
 
+#ifdef VPVL_ENABLE_PROJECT
+#include "vpvl/Project.h"
+#endif
+
 #endif /* vpvl_vpvl_H_ */

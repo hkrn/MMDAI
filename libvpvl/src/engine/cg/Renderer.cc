@@ -254,7 +254,7 @@ void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
         }
         else {
             const char *message = cgGetErrorString(cgGetError());
-            m_delegate->log(IDelegate::kLogWarning,
+            m_delegate->log(Renderer::kLogWarning,
                             "Loading an effect (%s) error: %s",
                             m_delegate->toUnicode(model->name()).c_str(), message);
         }

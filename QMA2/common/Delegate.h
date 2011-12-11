@@ -53,9 +53,11 @@ namespace internal {
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
 #ifdef VPVL_USE_GLSL
-class Delegate : public vpvl::gl2::IDelegate
+using namespace vpvl::gl2;
+class Delegate : public Renderer::IDelegate
 #else
-class Delegate : public vpvl::gl::IDelegate
+using namespace vpvl::gl;
+class Delegate : public IDelegate
 #endif
 {
 public:
@@ -101,37 +103,37 @@ public:
         return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
     }
 #ifdef VPVL_USE_GLSL
-    const std::string loadShader(ShaderType type) {
+    const std::string loadShader(Renderer::ShaderType type) {
         QString filename;
         switch (type) {
-        case kAssetVertexShader:
+        case Renderer::kAssetVertexShader:
             filename = "asset.vsh";
             break;
-        case kAssetFragmentShader:
+        case Renderer::kAssetFragmentShader:
             filename = "asset.fsh";
             break;
-        case kEdgeVertexShader:
+        case Renderer::kEdgeVertexShader:
             filename = "edge.vsh";
             break;
-        case kEdgeFragmentShader:
+        case Renderer::kEdgeFragmentShader:
             filename = "edge.fsh";
             break;
-        case kModelVertexShader:
+        case Renderer::kModelVertexShader:
             filename = "model.vsh";
             break;
-        case kModelFragmentShader:
+        case Renderer::kModelFragmentShader:
             filename = "model.fsh";
             break;
-        case kShadowVertexShader:
+        case Renderer::kShadowVertexShader:
             filename = "shadow.vsh";
             break;
-        case kShadowFragmentShader:
+        case Renderer::kShadowFragmentShader:
             filename = "shadow.fsh";
             break;
-        case kZPlotVertexShader:
+        case Renderer::kZPlotVertexShader:
             filename = "zplot.vsh";
             break;
-        case kZPlotFragmentShader:
+        case Renderer::kZPlotFragmentShader:
             filename = "zplot.fsh";
             break;
         }
@@ -140,7 +142,7 @@ public:
         if (file.open(QFile::ReadOnly)) {
             QByteArray bytes = file.readAll();
             file.close();
-            log(kLogInfo, "Loaded a shader: %s", qPrintable(path));
+            log(Renderer::kLogInfo, "Loaded a shader: %s", qPrintable(path));
             return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
         }
         else {
@@ -148,17 +150,17 @@ public:
         }
     }
 #endif
-    void log(LogLevel level, const char *format...) {
+    void log(Renderer::LogLevel level, const char *format...) {
         QString message;
         va_list ap;
         va_start(ap, format);
         message.vsprintf(format, ap);
         switch (level) {
-        case kLogInfo:
+        case Renderer::kLogInfo:
         default:
             qDebug("%s", qPrintable(message));
             break;
-        case kLogWarning:
+        case Renderer::kLogWarning:
             qWarning("%s", qPrintable(message));
             break;
         }

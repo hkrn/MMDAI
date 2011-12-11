@@ -228,13 +228,13 @@ public:
         if (!info.exists()) {
             info.setFile((m_system + "/" + name).c_str());
             if (!info.exists()) {
-                log(kLogWarning, "%s is not found, skipped...", qPrintable(info.fileName()));
+                log(Renderer::kLogWarning, "%s is not found, skipped...", qPrintable(info.fileName()));
                 return false;
             }
         }
         return uploadTexture(std::string(info.absoluteFilePath().toUtf8()), textureID, true);
     }
-    void log(LogLevel /* level */, const char *format, ...) {
+    void log(Renderer::LogLevel /* level */, const char *format, ...) {
         va_list ap;
         va_start(ap, format);
         vfprintf(stderr, format, ap);
@@ -247,44 +247,44 @@ public:
     }
 #endif
 #ifdef VPVL_GL2_RENDERER_H_
-    const std::string loadShader(ShaderType type) {
+    const std::string loadShader(Renderer::ShaderType type) {
         std::string file;
         switch (type) {
-        case kAssetVertexShader:
+        case Renderer::kAssetVertexShader:
             file = "asset.vsh";
             break;
-        case kAssetFragmentShader:
+        case Renderer::kAssetFragmentShader:
             file = "asset.fsh";
             break;
-        case kEdgeVertexShader:
+        case Renderer::kEdgeVertexShader:
             file = m_hardwareSkinning ? "edge_hws.vsh" : "edge.vsh";
             break;
-        case kEdgeFragmentShader:
+        case Renderer::kEdgeFragmentShader:
             file = "edge.fsh";
             break;
-        case kModelVertexShader:
+        case Renderer::kModelVertexShader:
             file = m_hardwareSkinning ? "model_hws.vsh" : "model.vsh";
             break;
-        case kModelFragmentShader:
+        case Renderer::kModelFragmentShader:
             file = "model.fsh";
             break;
-        case kShadowVertexShader:
+        case Renderer::kShadowVertexShader:
             file = "shadow.vsh";
             break;
-        case kShadowFragmentShader:
+        case Renderer::kShadowFragmentShader:
             file = "shadow.fsh";
             break;
-        case kZPlotVertexShader:
+        case Renderer::kZPlotVertexShader:
             file = "zplot.vsh";
             break;
-        case kZPlotFragmentShader:
+        case Renderer::kZPlotFragmentShader:
             file = "zplot.fsh";
             break;
         }
         QByteArray bytes;
         std::string path = m_system + "/" + file;
         if (slurpFile(path, bytes)) {
-            log(kLogInfo, "Loaded a shader: %s", path.c_str());
+            log(Renderer::kLogInfo, "Loaded a shader: %s", path.c_str());
             return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
         }
         else {
@@ -441,7 +441,7 @@ private:
         vpvl::PMDModel *model = new vpvl::PMDModel();
         if (!internal::slurpFile(internal::concatPath(kModelDir, kModelName), bytes) ||
                 !model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the model");
+            m_delegate.log(Renderer::kLogWarning, "Failed parsing the model");
             delete model;
             return false;
         }
@@ -460,13 +460,13 @@ private:
 
         if (!internal::slurpFile(kMotion, bytes) ||
                 !m_motion.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
-            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the model motion, skipped...");
+            m_delegate.log(Renderer::kLogWarning, "Failed parsing the model motion, skipped...");
         else
             model->addMotion(&m_motion);
 
         if (!internal::slurpFile(kCamera, bytes) ||
                 !m_camera.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
-            m_delegate.log(IDelegate::kLogWarning, "Failed parsing the camera motion, skipped...");
+            m_delegate.log(Renderer::kLogWarning, "Failed parsing the camera motion, skipped...");
         else
             scene->setCameraMotion(&m_camera);
         m_renderer->updateAllModel();
@@ -481,7 +481,7 @@ private:
             return asset;
         }
         else {
-            m_delegate.log(IDelegate::kLogWarning,
+            m_delegate.log(Renderer::kLogWarning,
                            "Failed parsing the asset %s, skipped...",
                            path.c_str());
             return 0;
