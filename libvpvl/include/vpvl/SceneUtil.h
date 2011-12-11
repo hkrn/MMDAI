@@ -51,7 +51,7 @@ public:
                             const Scalar &zfar,
                             float matrix[16])
     {
-        const Scalar &top = znear * btTan(radian(fovy * 0.5));
+        const Scalar &top = znear * btTan(radian(fovy * 0.5f));
         const Scalar &bottom = -top;
         const Scalar &right = aspect * top;
         const Scalar &left = -right;
