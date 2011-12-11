@@ -109,8 +109,9 @@ public:
     }
     const char *copyKey(const char *k) {
         if (k && k[0] != 0) {
-            size_t len = strlen(k);
-            char *newKey = new char[len + 1];
+            size_t len = strlen(k), asize = len + 1;
+            char *newKey = new char[asize];
+            internal::zerofill(newKey, asize);
             strncpy(newKey, k, len);
             keys.add(newKey);
             return newKey;
@@ -317,9 +318,9 @@ public:
         }
         else if (self->depth == 4 && equals(localname, "keyframe")) {
             Array<std::string> tokens;
-            Vector3 vec3;
-            Vector4 vec4;
-            QuadWord qw;
+            Vector3 vec3(0, 0, 0);
+            Vector4 vec4(0, 0, 0, 0);
+            QuadWord qw(0, 0, 0, 0);
             std::string value;
             switch (self->state) {
             case kBoneMotion:
