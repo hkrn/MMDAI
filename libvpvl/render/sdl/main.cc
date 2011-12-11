@@ -124,7 +124,7 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
     }
 }
 
-class Delegate : public IDelegate
+class Delegate : public Renderer::IDelegate
 {
 public:
     Delegate(const std::string &system)

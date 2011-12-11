@@ -191,7 +191,7 @@ static bool slurpFile(const std::string &path, QByteArray &bytes) {
     }
 }
 
-class Delegate : public IDelegate
+class Delegate : public Renderer::IDelegate
 {
 public:
     Delegate(QGLWidget *widget, const std::string &system)
