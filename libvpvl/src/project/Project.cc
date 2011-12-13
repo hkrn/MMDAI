@@ -36,10 +36,14 @@
 
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
-#include "vpvl/Project.h"
+
+#include <libxml2/libxml/xmlwriter.h>
 
 #include <string>
 #include <sstream>
+
+#define VPVL_XML_RC(rc) { if (rc < 0) { fprintf(stderr, "Failed at %s:%d\n", __FILE__, __LINE__); return false; } }
+#define VPVL_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
 
 namespace vpvl
 {
@@ -66,7 +70,8 @@ public:
     };
     typedef Hash<HashString, std::string> StringHash;
     typedef Hash<HashPtr, StringHash *> PtrHash;
-    const static int kBufferSize = 32;
+    const static int kAttributeBufferSize = 32;
+    const static int kElementContentBufferSize = 128;
 
     Handler()
         : state(kInitial),
@@ -119,6 +124,168 @@ public:
         else {
             return 0;
         }
+    }
+
+    bool save(xmlTextWriterPtr &writer) {
+        uint8_t buffer[kElementContentBufferSize];
+        if (!writer)
+            return false;
+        VPVL_XML_RC(xmlTextWriterSetIndent(writer, 1));
+        VPVL_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("project"), 0));
+        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("version"), VPVL_CAST_XC("0.1")));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("settings"), 0));
+        int nsettings = globalSettings.count();
+        for (int i = 0; i < nsettings; i++) {
+            const std::string *value = globalSettings.value(i);
+            VPVL_XML_RC(xmlTextWriterWriteElement(writer, VPVL_CAST_XC("setting"), VPVL_CAST_XC(value->c_str())));
+        }
+        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("physics"), 0));
+        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("enable"), VPVL_CAST_XC("true")));
+        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:physics */
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("models"), 0));
+        int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            PMDModel *model = models.at(i);
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("model"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(model->name())));
+            VPVL_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("assets"), 0));
+        int nassets = assets.count();
+        for (int i = 0; i < nassets; i++) {
+            Asset *asset = assets.at(i);
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("asset"), 0));
+            //VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(asset->name())));
+            VPVL_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("motions"), 0));
+        int nmotions = motions.count(), nframes = 0;
+        Quaternion ix, iy, iz, ir, ifv, idt;
+        for (int i = 0; i < nmotions; i++) {
+            VMDMotion *motion = motions.at(i);
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("motion"), 0));
+            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("bone")));
+            const BoneAnimation &ba = motion->boneAnimation();
+            nframes = ba.countKeyFrames();
+            for (int j = 0; j < nframes; j++) {
+                const BoneKeyFrame *frame = ba.frameAt(j);
+                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(frame->name())));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
+                const Vector3 &position = frame->position();
+                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", position.x(), position.y(), -position.z());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("position"), VPVL_CAST_XC(buffer)));
+                const Quaternion &rotation = frame->rotation();
+                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f,%.f",
+                                   -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("rotation"), VPVL_CAST_XC(buffer)));
+                frame->getInterpolationParameter(BoneKeyFrame::kX, ix);
+                frame->getInterpolationParameter(BoneKeyFrame::kY, iy);
+                frame->getInterpolationParameter(BoneKeyFrame::kZ, iz);
+                frame->getInterpolationParameter(BoneKeyFrame::kRotation, ir);
+                internal::snprintf(buffer, sizeof(buffer),
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f"
+                                   , ix.x(), ix.y(), ix.z(), ix.w()
+                                   , iy.x(), iy.y(), iy.z(), iy.w()
+                                   , iz.x(), iz.y(), iz.z(), iz.w()
+                                   , ir.x(), ir.y(), ir.z(), ir.w()
+                                   );
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("interpolation"), VPVL_CAST_XC(buffer)));
+                VPVL_XML_RC(xmlTextWriterEndElement(writer));
+            }
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("vertices")));
+            const FaceAnimation &fa = motion->faceAnimation();
+            nframes = fa.countKeyFrames();
+            for (int j = 0; j < nframes; j++) {
+                const FaceKeyFrame *frame = fa.frameAt(j);
+                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(frame->name())));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
+                internal::snprintf(buffer, sizeof(buffer), "%.2f", frame->weight());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("weight"), VPVL_CAST_XC(buffer)));
+                VPVL_XML_RC(xmlTextWriterEndElement(writer));
+            }
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("camera")));
+            const CameraAnimation &ca = motion->cameraAnimation();
+            nframes = ca.countKeyFrames();
+            for (int j = 0; j < nframes; j++) {
+                const CameraKeyFrame *frame = ca.frameAt(j);
+                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
+                const Vector3 &position = frame->position();
+                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", position.x(), position.y(), -position.z());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("position"), VPVL_CAST_XC(buffer)));
+                const Vector3 &angle = frame->angle();
+                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f",
+                                   vpvl::radian(-angle.x()), vpvl::radian(-angle.y()), vpvl::radian(-angle.z()));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("rotation"), VPVL_CAST_XC(buffer)));
+                internal::snprintf(buffer, sizeof(buffer), "%.f", frame->fovy());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("fovy"), VPVL_CAST_XC(buffer)));
+                internal::snprintf(buffer, sizeof(buffer), "%.f", frame->distance());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("distance"), VPVL_CAST_XC(buffer)));
+                frame->getInterpolationParameter(CameraKeyFrame::kX, ix);
+                frame->getInterpolationParameter(CameraKeyFrame::kY, iy);
+                frame->getInterpolationParameter(CameraKeyFrame::kZ, iz);
+                frame->getInterpolationParameter(CameraKeyFrame::kRotation, ir);
+                frame->getInterpolationParameter(CameraKeyFrame::kFovy, ifv);
+                frame->getInterpolationParameter(CameraKeyFrame::kDistance, idt);
+                internal::snprintf(buffer, sizeof(buffer),
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f,"
+                                   "%.f,%.f,%.f,%.f"
+                                   , ix.x(), ix.y(), ix.z(), ix.w()
+                                   , iy.x(), iy.y(), iy.z(), iy.w()
+                                   , iz.x(), iz.y(), iz.z(), iz.w()
+                                   , ir.x(), ir.y(), ir.z(), ir.w()
+                                   , idt.x(), idt.y(), idt.z(), idt.w()
+                                   , ifv.x(), ifv.y(), ifv.z(), ifv.w()
+                                   );
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("interpolation"), VPVL_CAST_XC(buffer)));
+                VPVL_XML_RC(xmlTextWriterEndElement(writer));
+            }
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("light")));
+            const LightAnimation &la = motion->lightAnimation();
+            nframes = la.countKeyFrames();
+            for (int j = 0; j < nframes; j++) {
+                const LightKeyFrame *frame = la.frameAt(j);
+                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
+                const Vector3 &color = frame->color();
+                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", color.x(), color.y(), color.z());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("color"), VPVL_CAST_XC(buffer)));
+                const Vector3 &direction = frame->direction();
+                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", direction.x(), direction.y(), direction.z());
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("direction"), VPVL_CAST_XC(buffer)));
+                VPVL_XML_RC(xmlTextWriterEndElement(writer));
+            }
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
+        }
+        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motions */
+        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:project */
+        VPVL_XML_RC(xmlTextWriterEndDocument(writer));
+        return true;
     }
 
     static const char *toString(State s) {
@@ -221,7 +388,7 @@ public:
                              const xmlChar **attributes)
     {
         Handler *self = static_cast<Handler *>(context);
-        char attributeName[kBufferSize];
+        char attributeName[kAttributeBufferSize];
         int index = 0;
         if (self->depth == 0 && equals(prefix, localname, "project")) {
             self->pushState(kProject);
@@ -595,7 +762,7 @@ public:
         (void) self;
     }
 
-    char key[kBufferSize];
+    char key[kAttributeBufferSize];
     Array<Asset *> assets;
     Array<PMDModel *> models;
     Array<VMDMotion *> motions;
@@ -642,7 +809,15 @@ bool Project::load(const uint8_t *data, size_t size)
     return xmlSAXUserParseMemory(&m_sax, m_handler, reinterpret_cast<const char *>(data), size) == 0;
 }
 
-void Project::save(const char * /* path */)
+bool Project::save(const char *path)
+{
+    xmlTextWriterPtr ptr = xmlNewTextWriterFilename(path, 0);
+    bool ret = m_handler->save(ptr);
+    xmlFreeTextWriter(ptr);
+    return ret;
+}
+
+bool Project::save(uint8_t * /* data */, size_t /* size */)
 {
 }
 
