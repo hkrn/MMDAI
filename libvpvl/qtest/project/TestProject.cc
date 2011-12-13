@@ -52,6 +52,7 @@ public:
 
 private Q_SLOTS:
     void load();
+    void save();
 
 private:
     static void testGlobalSettings(const Project &project);
@@ -87,7 +88,29 @@ void TestProject::load()
     testFaceAnimation(motions);
     testCameraAnimation(motions);
     testLightAnimation(motions);
-    project.save("/Users/hkrn/test.xml");
+}
+
+void TestProject::save()
+{
+    Delegate delegate;
+    Project project(&delegate);
+    QVERIFY(project.load("project.xml"));
+    QTemporaryFile file;
+    file.open();
+    file.setAutoRemove(true);
+    project.save(file.fileName().toUtf8());
+    Project project2(&delegate);
+    QVERIFY(project2.load(file.fileName().toUtf8()));
+    const Array<Asset *> &assets = project2.assets();
+    QCOMPARE(assets.count(), 2);
+    const Array<PMDModel *> &models = project2.models();
+    QCOMPARE(models.count(), 2);
+    const Array<VMDMotion *> &motions = project2.motions();
+    QCOMPARE(motions.count(), 1);
+    testBoneAnimation(motions);
+    testFaceAnimation(motions);
+    testCameraAnimation(motions);
+    testLightAnimation(motions);
 }
 
 void TestProject::testGlobalSettings(const Project &project)

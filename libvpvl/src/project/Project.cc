@@ -157,7 +157,7 @@ public:
             VPVL_XML_RC(xmlTextWriterEndElement(writer));
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("assets"), 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("assets"), 0));
         int nassets = assets.count();
         for (int i = 0; i < nassets; i++) {
             Asset *asset = assets.at(i);
@@ -238,7 +238,7 @@ public:
                 const Vector3 &angle = frame->angle();
                 internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f",
                                    vpvl::radian(-angle.x()), vpvl::radian(-angle.y()), vpvl::radian(-angle.z()));
-                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("rotation"), VPVL_CAST_XC(buffer)));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("angle"), VPVL_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.f", frame->fovy());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("fovy"), VPVL_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.f", frame->distance());
