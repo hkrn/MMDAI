@@ -6,12 +6,49 @@
 
 using namespace vpvl;
 
+namespace
+{
+
+class Delegate : public Project::IDelegate
+{
+public:
+    Delegate()
+        : m_codec(QTextCodec::codecForName("Shift-JIS"))
+    {
+    }
+    ~Delegate() {
+    }
+
+    const std::string toUnicode(const uint8_t *string) {
+        if (string) {
+            const char *s = reinterpret_cast<const char *>(string);
+            const QString &s2 = m_codec->toUnicode(s, strlen(s));
+            return s2.toStdString();
+        }
+        return "";
+    }
+    void error(const char *format, va_list ap) {
+        fprintf(stderr, "ERROR: ");
+        vfprintf(stderr, format, ap);
+    }
+    void warning(const char *format, va_list ap) {
+        fprintf(stderr, "WARN: ");
+        vfprintf(stderr, format, ap);
+    }
+
+private:
+    const QTextCodec *m_codec;
+};
+
+}
+
 class TestProject : public QObject
 {
     Q_OBJECT
 
 public:
     TestProject();
+    ~TestProject();
 
 private Q_SLOTS:
     void load();
@@ -29,9 +66,14 @@ TestProject::TestProject()
 {
 }
 
+TestProject::~TestProject()
+{
+}
+
 void TestProject::load()
 {
-    Project project;
+    Delegate delegate;
+    Project project(&delegate);
     QVERIFY(project.load("project.xml"));
     const Array<Asset *> &assets = project.assets();
     QCOMPARE(assets.count(), 2);
@@ -45,6 +87,7 @@ void TestProject::load()
     testFaceAnimation(motions);
     testCameraAnimation(motions);
     testLightAnimation(motions);
+    project.save("/Users/hkrn/test.xml");
 }
 
 void TestProject::testGlobalSettings(const Project &project)

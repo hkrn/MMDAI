@@ -61,14 +61,22 @@ class VMDMotion;
 class VPVL_API Project
 {
 public:
+    class IDelegate
+    {
+    public:
+        virtual const std::string toUnicode(const uint8_t *string) = 0;
+        virtual void error(const char *format, va_list ap) = 0;
+        virtual void warning(const char *format, va_list ap) = 0;
+    };
     typedef struct Handler Handler;
 
-    Project();
+    Project(IDelegate *delegate);
     ~Project();
 
     bool load(const char *path);
     bool load(const uint8_t *data, size_t size);
-    void save(const char *path);
+    bool save(const char *path);
+    bool save(uint8_t *data, size_t size);
 
     const Array<Asset *> &assets() const;
     const Array<PMDModel *> &models() const;

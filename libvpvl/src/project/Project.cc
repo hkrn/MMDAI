@@ -73,8 +73,9 @@ public:
     const static int kAttributeBufferSize = 32;
     const static int kElementContentBufferSize = 128;
 
-    Handler()
-        : state(kInitial),
+    Handler(Project::IDelegate *delegate)
+        : delegate(delegate),
+          state(kInitial),
           depth(0),
           currentAsset(0),
           currentModel(0),
@@ -130,26 +131,29 @@ public:
         uint8_t buffer[kElementContentBufferSize];
         if (!writer)
             return false;
+        static const xmlChar *kPrefix = reinterpret_cast<const xmlChar *>(projectPrefix());
+        static const xmlChar *kNSURI = reinterpret_cast<const xmlChar *>(projectNamespaceURI());
         VPVL_XML_RC(xmlTextWriterSetIndent(writer, 1));
         VPVL_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("project"), 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("project"), kNSURI));
         VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("version"), VPVL_CAST_XC("0.1")));
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("settings"), 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("settings"), 0));
         int nsettings = globalSettings.count();
         for (int i = 0; i < nsettings; i++) {
-            const std::string *value = globalSettings.value(i);
-            VPVL_XML_RC(xmlTextWriterWriteElement(writer, VPVL_CAST_XC("setting"), VPVL_CAST_XC(value->c_str())));
+            const std::string &value = delegate->toUnicode(reinterpret_cast<const uint8_t *>(globalSettings.value(i)->c_str()));
+            VPVL_XML_RC(xmlTextWriterWriteElement(writer, VPVL_CAST_XC("setting"), VPVL_CAST_XC(value.c_str())));
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("physics"), 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("physics"), 0));
         VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("enable"), VPVL_CAST_XC("true")));
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:physics */
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("models"), 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("models"), 0));
         int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             PMDModel *model = models.at(i);
-            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("model"), 0));
-            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(model->name())));
+            const std::string &name = delegate->toUnicode(model->name());
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("model"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
             VPVL_XML_RC(xmlTextWriterEndElement(writer));
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
@@ -157,24 +161,25 @@ public:
         int nassets = assets.count();
         for (int i = 0; i < nassets; i++) {
             Asset *asset = assets.at(i);
-            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("asset"), 0));
-            //VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(asset->name())));
+            const std::string &name = delegate->toUnicode(reinterpret_cast<const uint8_t *>(asset->name()));
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("asset"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
             VPVL_XML_RC(xmlTextWriterEndElement(writer));
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("motions"), 0));
+        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motions"), 0));
         int nmotions = motions.count(), nframes = 0;
         Quaternion ix, iy, iz, ir, ifv, idt;
         for (int i = 0; i < nmotions; i++) {
             VMDMotion *motion = motions.at(i);
-            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, VPVL_CAST_XC("vpvl"), VPVL_CAST_XC("motion"), 0));
-            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motion"), 0));
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("bone")));
             const BoneAnimation &ba = motion->boneAnimation();
             nframes = ba.countKeyFrames();
             for (int j = 0; j < nframes; j++) {
                 const BoneKeyFrame *frame = ba.frameAt(j);
-                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(frame->name())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
@@ -203,13 +208,13 @@ public:
                 VPVL_XML_RC(xmlTextWriterEndElement(writer));
             }
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("vertices")));
             const FaceAnimation &fa = motion->faceAnimation();
             nframes = fa.countKeyFrames();
             for (int j = 0; j < nframes; j++) {
                 const FaceKeyFrame *frame = fa.frameAt(j);
-                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(frame->name())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
@@ -218,13 +223,13 @@ public:
                 VPVL_XML_RC(xmlTextWriterEndElement(writer));
             }
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("camera")));
             const CameraAnimation &ca = motion->cameraAnimation();
             nframes = ca.countKeyFrames();
             for (int j = 0; j < nframes; j++) {
                 const CameraKeyFrame *frame = ca.frameAt(j);
-                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
@@ -262,13 +267,13 @@ public:
                 VPVL_XML_RC(xmlTextWriterEndElement(writer));
             }
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("animation")));
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("light")));
             const LightAnimation &la = motion->lightAnimation();
             nframes = la.countKeyFrames();
             for (int j = 0; j < nframes; j++) {
                 const LightKeyFrame *frame = la.frameAt(j);
-                VPVL_XML_RC(xmlTextWriterStartElement(writer, VPVL_CAST_XC("keyframe")));
+                VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 const Vector3 &color = frame->color();
@@ -288,6 +293,12 @@ public:
         return true;
     }
 
+    static const char *projectPrefix() {
+        return "vpvm";
+    }
+    static const char *projectNamespaceURI() {
+        return "https://github.com/hkrn/MMDAI/";
+    }
     static const char *toString(State s) {
         switch (s) {
         case kInitial:
@@ -328,7 +339,8 @@ public:
     }
 
     static bool equals(const xmlChar *prefix, const xmlChar *localname, const char *dst) {
-        return equals(prefix, "vpvm") && equals(localname, dst);
+        static const char *kPrefix = projectPrefix();
+        return equals(prefix, kPrefix) && equals(localname, dst);
     }
 
     static bool equals(const xmlChar *name, const char *dst) {
@@ -454,7 +466,7 @@ public:
             if (self->state == kModel || self->state == kAsset) {
                 strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key) - 1);
             }
-            else if (self->state == kAnimation && equals(localname, "animation")) {
+            else if (self->state == kAnimation && equals(prefix, localname, "animation")) {
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     if (!equals(attributes[index], "type"))
                         continue;
@@ -474,7 +486,7 @@ public:
                     }
                 }
             }
-            else if (equals(localname, "keyframe")) {
+            else if (equals(prefix, localname, "keyframe")) {
                 switch (self->state) {
                 case kIKMotion:
                     break;
@@ -754,15 +766,22 @@ public:
     static void error(void *context, const char *format, ...)
     {
         Handler *self = static_cast<Handler *>(context);
-        (void) self;
+        va_list ap;
+        va_start(ap, format);
+        self->delegate->error(format, ap);
+        va_end(ap);
     }
     static void warning(void *context, const char *format, ...)
     {
         Handler *self = static_cast<Handler *>(context);
-        (void) self;
+        va_list ap;
+        va_start(ap, format);
+        self->delegate->warning(format, ap);
+        va_end(ap);
     }
 
     char key[kAttributeBufferSize];
+    Project::IDelegate *delegate;
     Array<Asset *> assets;
     Array<PMDModel *> models;
     Array<VMDMotion *> motions;
@@ -779,11 +798,11 @@ public:
     int depth;
 };
 
-Project::Project()
+Project::Project(IDelegate *delegate)
     : m_handler(0)
 {
     internal::zerofill(&m_sax, sizeof(m_sax));
-    m_handler = new Handler();
+    m_handler = new Handler(delegate);
     m_sax.initialized = XML_SAX2_MAGIC;
     m_sax.startElementNs = &Handler::startElement;
     m_sax.endElementNs = &Handler::endElement;
