@@ -877,17 +877,17 @@ const Array<VMDMotion *> &Project::motions() const
     return m_handler->motions;
 }
 
-const std::string Project::globalSetting(const std::string &key) const
+const std::string &Project::globalSetting(const std::string &key) const
 {
     return m_handler->globalSettings[key];
 }
 
-const std::string Project::localAssetSetting(Asset *asset, const std::string &key) const
+const std::string &Project::localAssetSetting(Asset *asset, const std::string &key) const
 {
     return m_handler->localAssetSettings[asset][key];
 }
 
-const std::string Project::localModelSetting(PMDModel *model, const std::string &key) const
+const std::string &Project::localModelSetting(PMDModel *model, const std::string &key) const
 {
     return m_handler->localModelSettings[model][key];
 }

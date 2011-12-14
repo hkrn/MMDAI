@@ -85,9 +85,9 @@ public:
     const Array<Asset *> &assets() const;
     const Array<PMDModel *> &models() const;
     const Array<VMDMotion *> &motions() const;
-    const std::string globalSetting(const std::string &key) const;
-    const std::string localAssetSetting(Asset *asset, const std::string &key) const;
-    const std::string localModelSetting(PMDModel *model, const std::string &key) const;
+    const std::string &globalSetting(const std::string &key) const;
+    const std::string &localAssetSetting(Asset *asset, const std::string &key) const;
+    const std::string &localModelSetting(PMDModel *model, const std::string &key) const;
 
     Array<Asset *> *mutableAssets();
     Array<PMDModel *> *mutableModels();
