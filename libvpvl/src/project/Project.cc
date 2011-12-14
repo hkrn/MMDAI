@@ -113,11 +113,9 @@ public:
         for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
             if (it->first.empty() || it->second.empty())
                 continue;
-            const std::string &name = delegate->toUnicode(it->first);
-            const std::string &value = delegate->toUnicode(it->second);
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL_CAST_XC("value"), 0));
-            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
-            VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(value.c_str())))
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(it->first.c_str())));
+            VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(it->second.c_str())))
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
         }
     }
@@ -176,8 +174,9 @@ public:
             nframes = ba.countKeyFrames();
             for (int j = 0; j < nframes; j++) {
                 const BoneKeyFrame *frame = ba.frameAt(j);
+                const std::string &name = delegate->toUnicode(std::string(reinterpret_cast<const char *>(frame->name())));
                 VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
-                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(frame->name())));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
@@ -211,8 +210,9 @@ public:
             nframes = fa.countKeyFrames();
             for (int j = 0; j < nframes; j++) {
                 const FaceKeyFrame *frame = fa.frameAt(j);
+                const std::string &name = delegate->toUnicode(std::string(reinterpret_cast<const char *>(frame->name())));
                 VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
-                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(frame->name())));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.2f", frame->weight());
