@@ -69,6 +69,7 @@ private:
 Scene::Scene(int width, int height, int fps)
     : m_world(0),
       m_cameraMotion(0),
+      m_lightMotion(0),
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightColor(0.6f, 0.6f, 0.6f, 1.0f),
       m_lightPosition(-0.5f, 1.0f, 0.5f),
@@ -91,6 +92,7 @@ Scene::~Scene()
     internal::zerofill(m_projection, sizeof(m_projection));
     setWorld(0);
     m_cameraMotion = 0;
+    m_lightMotion = 0;
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_lightColor.setZero();
     m_lightPosition.setZero();
@@ -156,19 +158,27 @@ void Scene::seekMotion(float frameIndex)
 {
     sortRenderingOrder();
     const int nmodels = m_models.count();
-    // Updating model
+    // Updating (Seeking) models and each motions
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->seekMotion(frameIndex);
         model->updateSkins();
     }
-    // Updating camera motion
+    // Updating (Seeking) camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         if (camera->countKeyFrames() > 0) {
             camera->seek(frameIndex);
             setCameraPerspective(camera);
+        }
+    }
+    // Updating (Seeking) light motion
+    if (m_lightMotion) {
+        LightAnimation *light = m_lightMotion->mutableLightAnimation();
+        if (light->countKeyFrames() > 0) {
+            light->seek(frameIndex);
+            setLightSource(light);
         }
     }
 }
@@ -190,6 +200,18 @@ void Scene::setCameraPerspective(const Vector3 &position, const Vector3 &angle, 
 void Scene::setCameraMotion(VMDMotion *motion)
 {
     m_cameraMotion = motion;
+}
+
+void Scene::setLightMotion(VMDMotion *motion)
+{
+    m_lightMotion = motion;
+}
+
+void Scene::setLightSource(LightAnimation *light)
+{
+    const Vector3 &color = light->color();
+    m_lightColor.setValue(color.x(), color.y(), color.z(), m_lightColor.w());
+    m_lightPosition = light->direction();
 }
 
 void Scene::setLightSource(const Vector4 &color, const Vector3 &position)
@@ -237,14 +259,14 @@ void Scene::advanceMotion(float deltaFrame)
 {
     sortRenderingOrder();
     const int nmodels = m_models.count();
-    // Updating model
+    // Updating (Advance) models and each motions
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->advanceMotion(deltaFrame);
         model->updateSkins();
     }
-    // Updating world simulation
+    // Updating (Advance) world simulation
 #ifndef VPVL_NO_BULLET
     if (m_world) {
         Scalar sec = deltaFrame / kFPS;
@@ -254,12 +276,20 @@ void Scene::advanceMotion(float deltaFrame)
             m_world->stepSimulation(sec, m_preferredFPS, 1.0f / m_preferredFPS);
     }
 #endif /* VPVL_NO_BULLET */
-    // Updating camera motion
+    // Updating (Advance) camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         if (camera->countKeyFrames() > 0) {
             camera->advance(deltaFrame);
             setCameraPerspective(camera);
+        }
+    }
+    // Updating (Advance) light motion
+    if (m_lightMotion) {
+        LightAnimation *light = m_lightMotion->mutableLightAnimation();
+        if (light->countKeyFrames() > 0) {
+            light->advance(deltaFrame);
+            setLightSource(light);
         }
     }
 }
@@ -268,19 +298,26 @@ void Scene::resetMotion()
 {
     sortRenderingOrder();
     const int nmodels = m_models.count();
-    // Updating model
+    // Updating (Resetting) models and each motions
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = m_models[i];
         model->updateRootBone();
         model->resetMotion();
         model->updateSkins();
     }
-    // Updating camera motion
+    // Updating (Resetting) camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
         camera->seek(0.0f);
         camera->reset();
         setCameraPerspective(camera);
+    }
+    // Updating (Resetting) light motion
+    if (m_cameraMotion) {
+        LightAnimation *light = m_cameraMotion->mutableLightAnimation();
+        light->seek(0.0f);
+        light->reset();
+        setLightSource(light);
     }
 }
 

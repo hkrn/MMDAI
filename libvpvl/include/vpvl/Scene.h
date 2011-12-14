@@ -47,6 +47,7 @@ namespace vpvl
 {
 
 class CameraAnimation;
+class LightAnimation;
 class PMDModel;
 class VMDMotion;
 
@@ -81,6 +82,8 @@ public:
     void setCameraPerspective(CameraAnimation *camera);
     void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
+    void setLightMotion(VMDMotion *motion);
+    void setLightSource(LightAnimation *light);
     void setLightSource(const Color &color, const Vector3 &position);
     void setSoftwareSkinningEnable(bool value);
     void setViewMove(int viewMoveTime);
@@ -149,6 +152,7 @@ private:
     btDiscreteDynamicsWorld *m_world;
     Array<PMDModel *> m_models;
     VMDMotion *m_cameraMotion;
+    VMDMotion *m_lightMotion;
     Transform m_modelview;
     Quaternion m_rotation;
     Color m_lightColor;
