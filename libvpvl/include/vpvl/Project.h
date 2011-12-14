@@ -78,7 +78,7 @@ public:
     bool load(const char *path);
     bool load(const uint8_t *data, size_t size);
     bool save(const char *path);
-    bool save(uint8_t *data, size_t size);
+    bool save(xmlBufferPtr &buffer);
 
     float version() const;
     bool isPhysicsEnabled() const;

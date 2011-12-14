@@ -844,8 +844,12 @@ bool Project::save(const char *path)
     return ret;
 }
 
-bool Project::save(uint8_t * /* data */, size_t /* size */)
+bool Project::save(xmlBufferPtr &buffer)
 {
+    xmlTextWriterPtr ptr = xmlNewTextWriterMemory(buffer, 0);
+    bool ret = m_handler->save(ptr);
+    xmlFreeTextWriter(ptr);
+    return ret;
 }
 
 float Project::version() const
