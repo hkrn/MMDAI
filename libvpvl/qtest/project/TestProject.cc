@@ -19,13 +19,9 @@ public:
     ~Delegate() {
     }
 
-    const std::string toUnicode(const uint8_t *string) {
-        if (string) {
-            const char *s = reinterpret_cast<const char *>(string);
-            const QString &s2 = m_codec->toUnicode(s, strlen(s));
-            return s2.toStdString();
-        }
-        return "";
+    const std::string toUnicode(const std::string &value) {
+        const QString &encoded = m_codec->toUnicode(value.c_str());
+        return encoded.toStdString();
     }
     void error(const char *format, va_list ap) {
         fprintf(stderr, "ERROR: ");
@@ -76,6 +72,8 @@ void TestProject::load()
     Delegate delegate;
     Project project(&delegate);
     QVERIFY(project.load("project.xml"));
+    QCOMPARE(project.version(), 0.1f);
+    QVERIFY(project.isPhysicsEnabled());
     const Array<Asset *> &assets = project.assets();
     QCOMPARE(assets.count(), 2);
     const Array<PMDModel *> &models = project.models();
@@ -101,12 +99,16 @@ void TestProject::save()
     project.save(file.fileName().toUtf8());
     Project project2(&delegate);
     QVERIFY(project2.load(file.fileName().toUtf8()));
+    QCOMPARE(project2.version(), 0.1f);
+    QVERIFY(project2.isPhysicsEnabled());
     const Array<Asset *> &assets = project2.assets();
     QCOMPARE(assets.count(), 2);
     const Array<PMDModel *> &models = project2.models();
     QCOMPARE(models.count(), 2);
     const Array<VMDMotion *> &motions = project2.motions();
     QCOMPARE(motions.count(), 1);
+    testGlobalSettings(project2);
+    testLocalSettings(project2, assets, models);
     testBoneAnimation(motions);
     testFaceAnimation(motions);
     testCameraAnimation(motions);

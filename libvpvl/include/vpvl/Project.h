@@ -64,11 +64,13 @@ public:
     class IDelegate
     {
     public:
-        virtual const std::string toUnicode(const uint8_t *string) = 0;
+        virtual const std::string toUnicode(const std::string &value) = 0;
         virtual void error(const char *format, va_list ap) = 0;
         virtual void warning(const char *format, va_list ap) = 0;
     };
     typedef struct Handler Handler;
+
+    static const float kCurrentVersion;
 
     Project(IDelegate *delegate);
     ~Project();
@@ -78,19 +80,22 @@ public:
     bool save(const char *path);
     bool save(uint8_t *data, size_t size);
 
+    float version() const;
+    bool isPhysicsEnabled() const;
     const Array<Asset *> &assets() const;
     const Array<PMDModel *> &models() const;
     const Array<VMDMotion *> &motions() const;
-    const std::string globalSetting(const char *key) const;
-    const std::string localAssetSetting(Asset *asset, const char *key) const;
-    const std::string localModelSetting(PMDModel *model, const char *key) const;
+    const std::string globalSetting(const std::string &key) const;
+    const std::string localAssetSetting(Asset *asset, const std::string &key) const;
+    const std::string localModelSetting(PMDModel *model, const std::string &key) const;
 
     Array<Asset *> *mutableAssets();
     Array<PMDModel *> *mutableModels();
     Array<VMDMotion *> *mutableMotions();
-    void setGlobalSetting(const char *key, std::string &value);
-    void setLocalAssetSetting(Asset *asset, const char *key, const std::string &value) const;
-    void setLocalModelSetting(PMDModel *model, const char *key, const std::string &value) const;
+    void setPhysicsEnable(bool value);
+    void setGlobalSetting(const std::string &key, std::string &value);
+    void setLocalAssetSetting(Asset *asset, const std::string &key, const std::string &value);
+    void setLocalModelSetting(PMDModel *model, const std::string &key, const std::string &value);
 
 private:
     Handler *m_handler;

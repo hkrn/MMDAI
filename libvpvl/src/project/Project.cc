@@ -41,6 +41,7 @@
 
 #include <string>
 #include <sstream>
+#include <map>
 
 #define VPVL_XML_RC(rc) { if (rc < 0) { fprintf(stderr, "Failed at %s:%d\n", __FILE__, __LINE__); return false; } }
 #define VPVL_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
@@ -68,20 +69,20 @@ public:
         kCameraMotion,
         kLightMotion
     };
-    typedef Hash<HashString, std::string> StringHash;
-    typedef Hash<HashPtr, StringHash *> PtrHash;
+    typedef std::map<std::string, std::string> StringMap;
     const static int kAttributeBufferSize = 32;
     const static int kElementContentBufferSize = 128;
 
     Handler(Project::IDelegate *delegate)
         : delegate(delegate),
-          state(kInitial),
-          depth(0),
           currentAsset(0),
           currentModel(0),
-          currentMotion(0)
+          currentMotion(0),
+          state(kInitial),
+          depth(0),
+          version(0.0f),
+          enablePhysics(false)
     {
-        internal::zerofill(key, sizeof(key));
     }
     ~Handler() {
         state = kInitial;
@@ -89,9 +90,6 @@ public:
         assets.releaseAll();
         models.releaseAll();
         motions.releaseAll();
-        keys.releaseArrayAll();
-        localModelSettingValues.releaseAll();
-        localAssetSettingValues.releaseAll();
         delete currentAsset;
         currentAsset = 0;
         delete currentModel;
@@ -110,23 +108,19 @@ public:
         depth--;
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
-    const char *copyKey() {
-        return copyKey(key);
-    }
-    const char *copyKey(const char *k) {
-        if (k && k[0] != 0) {
-            size_t len = strlen(k), asize = len + 1;
-            char *newKey = new char[asize];
-            internal::zerofill(newKey, asize);
-            strncpy(newKey, k, len);
-            keys.add(newKey);
-            return newKey;
-        }
-        else {
-            return 0;
-        }
-    }
 
+    bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr &writer) {
+        for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
+            if (it->first.empty() || it->second.empty())
+                continue;
+            const std::string &name = delegate->toUnicode(it->first);
+            const std::string &value = delegate->toUnicode(it->second);
+            VPVL_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL_CAST_XC("value"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
+            VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(value.c_str())))
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
+        }
+    }
     bool save(xmlTextWriterPtr &writer) {
         uint8_t buffer[kElementContentBufferSize];
         if (!writer)
@@ -136,35 +130,38 @@ public:
         VPVL_XML_RC(xmlTextWriterSetIndent(writer, 1));
         VPVL_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("project"), kNSURI));
-        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("version"), VPVL_CAST_XC("0.1")));
+        internal::snprintf(buffer, sizeof(buffer), "%.1f", Project::kCurrentVersion);
+        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("version"), VPVL_CAST_XC(buffer)));
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("settings"), 0));
-        int nsettings = globalSettings.count();
-        for (int i = 0; i < nsettings; i++) {
-            const std::string &value = delegate->toUnicode(reinterpret_cast<const uint8_t *>(globalSettings.value(i)->c_str()));
-            VPVL_XML_RC(xmlTextWriterWriteElement(writer, VPVL_CAST_XC("setting"), VPVL_CAST_XC(value.c_str())));
-        }
+        if(!writeStringMap(kPrefix, globalSettings, writer))
+            return false;
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("physics"), 0));
-        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("enable"), VPVL_CAST_XC("true")));
+        const xmlChar *isPhysicsEnabled = enablePhysics ? VPVL_CAST_XC("true") : VPVL_CAST_XC("false");
+        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("enabled"), isPhysicsEnabled));
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:physics */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("models"), 0));
         int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             PMDModel *model = models.at(i);
-            const std::string &name = delegate->toUnicode(model->name());
+            const std::string &name = delegate->toUnicode(std::string(reinterpret_cast<const char *>(model->name())));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("model"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
-            VPVL_XML_RC(xmlTextWriterEndElement(writer));
+            if(!writeStringMap(kPrefix, localModelSettings[model], writer))
+                return false;
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("assets"), 0));
         int nassets = assets.count();
         for (int i = 0; i < nassets; i++) {
             Asset *asset = assets.at(i);
-            const std::string &name = delegate->toUnicode(reinterpret_cast<const uint8_t *>(asset->name()));
+            const std::string &name = delegate->toUnicode(std::string(asset->name() ? asset->name() : ""));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("asset"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
-            VPVL_XML_RC(xmlTextWriterEndElement(writer));
+            if(!writeStringMap(kPrefix, localAssetSettings[asset], writer))
+                return false;
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motions"), 0));
@@ -401,8 +398,15 @@ public:
     {
         Handler *self = static_cast<Handler *>(context);
         char attributeName[kAttributeBufferSize];
+        std::string value;
         int index = 0;
         if (self->depth == 0 && equals(prefix, localname, "project")) {
+            for (int i = 0; i < nattributes; i++, index += 5) {
+                if (equals(attributes[index], "version")) {
+                    newString(attributes, i, value);
+                    self->version = internal::stringToFloat(value.c_str());
+                }
+            }
             self->pushState(kProject);
         }
         else if (self->depth == 1 && self->state == kProject) {
@@ -410,6 +414,12 @@ public:
                 self->pushState(kSettings);
             }
             else if (equals(prefix, localname, "physics")) {
+                for (int i = 0; i < nattributes; i++, index += 5) {
+                    if (equals(attributes[index], "enabled")) {
+                        newString(attributes, i, value);
+                        self->enablePhysics = value == "true";
+                    }
+                }
                 self->pushState(kPhysics);
             }
             else if (equals(prefix, localname, "models")) {
@@ -423,21 +433,20 @@ public:
             }
         }
         else if (self->depth == 2) {
-            if (self->state == kSettings) {
-                strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key) - 1);
+            if (self->state == kSettings && equals(prefix, localname, "value")) {
+                for (int i = 0; i < nattributes; i++, index += 5) {
+                    if (equals(attributes[index], "name")) {
+                        newString(attributes, i, value);
+                        self->key = value;
+                    }
+                }
             }
             if (self->state == kModels && equals(prefix, localname, "model")) {
                 self->currentModel = new PMDModel();
-                StringHash *values = new StringHash();
-                self->localModelSettingValues.add(values);
-                self->localModelSettings.insert(self->currentModel, values);
                 self->pushState(kModel);
             }
             else if (self->state == kAssets && equals(prefix, localname, "asset")) {
                 self->currentAsset = new Asset();
-                StringHash *values = new StringHash();
-                self->localAssetSettingValues.add(values);
-                self->localAssetSettings.insert(self->currentAsset, values);
                 self->pushState(kAsset);
             }
             else if (self->state == kMotions && equals(prefix, localname, "motion")) {
@@ -463,8 +472,13 @@ public:
             }
         }
         else if (self->depth == 3) {
-            if (self->state == kModel || self->state == kAsset) {
-                strncpy(self->key, reinterpret_cast<const char *>(localname), sizeof(self->key) - 1);
+            if ((self->state == kModel || self->state == kAsset) && equals(prefix, localname, "value")) {
+                for (int i = 0; i < nattributes; i++, index += 5) {
+                    if (equals(attributes[index], "name")) {
+                        newString(attributes, i, value);
+                        self->key = value;
+                    }
+                }
             }
             else if (self->state == kAnimation && equals(prefix, localname, "animation")) {
                 for (int i = 0; i < nattributes; i++, index += 5) {
@@ -500,7 +514,6 @@ public:
             Vector3 vec3(0, 0, 0);
             Vector4 vec4(0, 0, 0, 0);
             QuadWord qw(0, 0, 0, 0);
-            std::string value;
             switch (self->state) {
             case kBoneMotion:
             {
@@ -669,23 +682,17 @@ public:
                            int len)
     {
         Handler *self = static_cast<Handler *>(context);
-        const char *key = 0;
         if (self->state == kSettings) {
             std::string value(reinterpret_cast<const char *>(character), len);
-            if (key = self->copyKey())
-                self->globalSettings.insert(key, value);
+            self->globalSettings[self->key] = value;
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(character), len);
-            StringHash **values = self->localModelSettings[self->currentModel];
-            if (values && (key = self->copyKey()))
-                (*values)->insert(key, value);
+            self->localModelSettings[self->currentModel][self->key] = value;
         }
         else if (self->state == kAsset) {
             std::string value(reinterpret_cast<const char *>(character), len);
-            StringHash **values = self->localAssetSettings[self->currentAsset];
-            if (values && (key = self->copyKey()))
-                (*values)->insert(key, value);
+            self->localAssetSettings[self->currentAsset][self->key] = value;
         }
     }
     static void endElement(void *context,
@@ -705,7 +712,7 @@ public:
                     self->currentAsset = 0;
                     self->popState(kAssets);
                 }
-                internal::zerofill(self->key, sizeof(self->key));
+                self->key = "";
                 break;
             case kModel:
                 if (equals(prefix, localname, "model")) {
@@ -713,7 +720,7 @@ public:
                     self->currentModel = 0;
                     self->popState(kModels);
                 }
-                internal::zerofill(self->key, sizeof(self->key));
+                self->key = "";
                 break;
             case kAnimation:
                 if (equals(prefix, localname, "motion")) {
@@ -749,7 +756,7 @@ public:
             case kSettings:
                 if (equals(prefix, localname, "settings"))
                     self->popState(kProject);
-                internal::zerofill(self->key, sizeof(self->key));
+                self->key = "";
                 break;
             case kPhysics:
                 if (equals(prefix, localname, "physics"))
@@ -780,23 +787,24 @@ public:
         va_end(ap);
     }
 
-    char key[kAttributeBufferSize];
     Project::IDelegate *delegate;
     Array<Asset *> assets;
     Array<PMDModel *> models;
     Array<VMDMotion *> motions;
-    StringHash globalSettings;
-    Array<char *> keys;
-    Array<StringHash *> localModelSettingValues;
-    Array<StringHash *> localAssetSettingValues;
-    PtrHash localModelSettings;
-    PtrHash localAssetSettings;
+    StringMap globalSettings;
+    std::map<PMDModel *, StringMap> localModelSettings;
+    std::map<Asset *, StringMap> localAssetSettings;
+    std::string key;
     Asset *currentAsset;
     PMDModel *currentModel;
     VMDMotion *currentMotion;
     State state;
+    float version;
     int depth;
+    bool enablePhysics;
 };
+
+const float Project::kCurrentVersion = 0.1f;
 
 Project::Project(IDelegate *delegate)
     : m_handler(0)
@@ -840,6 +848,16 @@ bool Project::save(uint8_t * /* data */, size_t /* size */)
 {
 }
 
+float Project::version() const
+{
+    return m_handler->version;
+}
+
+bool Project::isPhysicsEnabled() const
+{
+    return m_handler->enablePhysics;
+}
+
 const Array<Asset *> &Project::assets() const
 {
     return m_handler->assets;
@@ -855,32 +873,19 @@ const Array<VMDMotion *> &Project::motions() const
     return m_handler->motions;
 }
 
-const std::string Project::globalSetting(const char *key) const
+const std::string Project::globalSetting(const std::string &key) const
 {
-    std::string *value = const_cast<std::string *>(m_handler->globalSettings.find(key));
-    return value ? *value : std::string();
+    return m_handler->globalSettings[key];
 }
 
-const std::string Project::localAssetSetting(Asset *asset, const char *key) const
+const std::string Project::localAssetSetting(Asset *asset, const std::string &key) const
 {
-    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localAssetSettings.find(asset));
-    if (values) {
-        std::string *value = const_cast<std::string *>((*values)->find(key));
-        if (value)
-            return *value;
-    }
-    return std::string();
+    return m_handler->localAssetSettings[asset][key];
 }
 
-const std::string Project::localModelSetting(PMDModel *model, const char *key) const
+const std::string Project::localModelSetting(PMDModel *model, const std::string &key) const
 {
-    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localModelSettings.find(model));
-    if (values) {
-        std::string *value = const_cast<std::string *>((*values)->find(key));
-        if (value)
-            return *value;
-    }
-    return std::string();
+    return m_handler->localModelSettings[model][key];
 }
 
 Array<Asset *> *Project::mutableAssets()
@@ -898,39 +903,24 @@ Array<VMDMotion *> *Project::mutableMotions()
     return &m_handler->motions;
 }
 
-void Project::setGlobalSetting(const char *key, std::string &value)
+void Project::setPhysicsEnable(bool value)
 {
-    m_handler->globalSettings.insert(key, value);
+    m_handler->enablePhysics = value;
 }
 
-void Project::setLocalAssetSetting(Asset *asset, const char *key, const std::string &value) const
+void Project::setGlobalSetting(const std::string &key, std::string &value)
 {
-    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localAssetSettings.find(asset));
-    if (!values) {
-        Handler::StringHash *hash = new Handler::StringHash();
-        const char *k = m_handler->copyKey(key);
-        hash->insert(k, value);
-        m_handler->localAssetSettingValues.add(hash);
-        m_handler->localAssetSettings.insert(asset, hash);
-    }
-    else {
-        (*values)->insert(key, value);
-    }
+    m_handler->globalSettings[key] = value;
 }
 
-void Project::setLocalModelSetting(PMDModel *model, const char *key, const std::string &value) const
+void Project::setLocalAssetSetting(Asset *asset, const std::string &key, const std::string &value)
 {
-    Handler::StringHash **values = const_cast<Handler::StringHash **>(m_handler->localModelSettings.find(model));
-    if (!values) {
-        Handler::StringHash *hash = new Handler::StringHash();
-        const char *k = m_handler->copyKey(key);
-        hash->insert(k, value);
-        m_handler->localModelSettingValues.add(hash);
-        m_handler->localModelSettings.insert(model, hash);
-    }
-    else {
-        (*values)->insert(key, value);
-    }
+    m_handler->localAssetSettings[asset][key] = value;
+}
+
+void Project::setLocalModelSetting(PMDModel *model, const std::string &key, const std::string &value)
+{
+    m_handler->localModelSettings[model][key] = value;
 }
 
 } /* namespace vpvl */
