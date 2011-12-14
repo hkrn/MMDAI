@@ -139,9 +139,10 @@ public:
                 continue;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL_CAST_XC("value"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(it->first.c_str())));
-            VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(it->second.c_str())))
-                    VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
+            VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(it->second.c_str())));
+            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
         }
+        return true;
     }
     bool save(xmlTextWriterPtr &writer) {
         uint8_t buffer[kElementContentBufferSize];
