@@ -49,6 +49,9 @@ public:
 private Q_SLOTS:
     void load();
     void save();
+    void handleAssets();
+    void handleModels();
+    void handleMotions();
 
 private:
     static void testGlobalSettings(const Project &project);
@@ -113,6 +116,45 @@ void TestProject::save()
     testFaceAnimation(motions);
     testCameraAnimation(motions);
     testLightAnimation(motions);
+}
+
+void TestProject::handleAssets()
+{
+    Delegate delegate;
+    Project project(&delegate);
+    Asset *asset = new Asset();
+    QVERIFY(!project.containsAsset(asset));
+    project.addAsset(asset);
+    QVERIFY(project.containsAsset(asset));
+    project.removeAsset(asset);
+    QVERIFY(!project.containsAsset(asset));
+    QVERIFY(!asset);
+}
+
+void TestProject::handleModels()
+{
+    Delegate delegate;
+    Project project(&delegate);
+    PMDModel *model = new PMDModel();
+    QVERIFY(!project.containsModel(model));
+    project.addModel(model);
+    QVERIFY(project.containsModel(model));
+    project.removeModel(model);
+    QVERIFY(!project.containsModel(model));
+    QVERIFY(!model);
+}
+
+void TestProject::handleMotions()
+{
+    Delegate delegate;
+    Project project(&delegate);
+    VMDMotion *motion = new VMDMotion();
+    QVERIFY(!project.containsMotion(motion));
+    project.addMotion(motion);
+    QVERIFY(project.containsMotion(motion));
+    project.removeMotion(motion);
+    QVERIFY(!project.containsMotion(motion));
+    QVERIFY(!motion);
 }
 
 void TestProject::testGlobalSettings(const Project &project)

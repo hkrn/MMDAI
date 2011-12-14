@@ -72,6 +72,7 @@ public:
     typedef std::map<std::string, std::string> StringMap;
     const static int kAttributeBufferSize = 32;
     const static int kElementContentBufferSize = 128;
+    const static std::string kEmpty;
 
     Handler(Project::IDelegate *delegate)
         : delegate(delegate),
@@ -108,7 +109,30 @@ public:
         depth--;
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
-
+    bool containsAsset(Asset *asset) const {
+        int nassets = assets.count();
+        for (int i = 0; i < nassets; i++) {
+            if (assets.at(i) == asset)
+                return true;
+        }
+        return false;
+    }
+    bool containsModel(PMDModel *model) const {
+        int nassets = models.count();
+        for (int i = 0; i < nassets; i++) {
+            if (models.at(i) == model)
+                return true;
+        }
+        return false;
+    }
+    bool containsMotion(VMDMotion *motion) const {
+        int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            if (motions.at(i) == motion)
+                return true;
+        }
+        return false;
+    }
     bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr &writer) {
         for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
             if (it->first.empty() || it->second.empty())
@@ -116,7 +140,7 @@ public:
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL_CAST_XC("value"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(it->first.c_str())));
             VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(it->second.c_str())))
-            VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
+                    VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
         }
     }
     bool save(xmlTextWriterPtr &writer) {
@@ -334,7 +358,6 @@ public:
             return "kUnknown";
         }
     }
-
     static bool equals(const xmlChar *prefix, const xmlChar *localname, const char *dst) {
         static const char *kPrefix = projectPrefix();
         return equals(prefix, kPrefix) && equals(localname, dst);
@@ -804,6 +827,7 @@ public:
     bool enablePhysics;
 };
 
+const std::string Handler::kEmpty = "";
 const float Project::kCurrentVersion = 0.1f;
 
 Project::Project(IDelegate *delegate)
@@ -884,27 +908,63 @@ const std::string &Project::globalSetting(const std::string &key) const
 
 const std::string &Project::localAssetSetting(Asset *asset, const std::string &key) const
 {
-    return m_handler->localAssetSettings[asset][key];
+    return containsAsset(asset) ? m_handler->localAssetSettings[asset][key] : Handler::kEmpty;
 }
 
 const std::string &Project::localModelSetting(PMDModel *model, const std::string &key) const
 {
-    return m_handler->localModelSettings[model][key];
+    return containsModel(model) ? m_handler->localModelSettings[model][key] : Handler::kEmpty;
 }
 
-Array<Asset *> *Project::mutableAssets()
+bool Project::containsAsset(Asset *asset) const
 {
-    return &m_handler->assets;
+    return m_handler->containsAsset(asset);
 }
 
-Array<PMDModel *> *Project::mutableModels()
+bool Project::containsModel(PMDModel *model) const
 {
-    return &m_handler->models;
+    return m_handler->containsModel(model);
 }
 
-Array<VMDMotion *> *Project::mutableMotions()
+bool Project::containsMotion(VMDMotion *motion) const
 {
-    return &m_handler->motions;
+    return m_handler->containsMotion(motion);
+}
+
+void Project::addAsset(Asset *asset)
+{
+    m_handler->assets.add(asset);
+}
+
+void Project::addModel(PMDModel *model)
+{
+    m_handler->models.add(model);
+}
+
+void Project::addMotion(VMDMotion *motion)
+{
+    m_handler->motions.add(motion);
+}
+
+void Project::removeAsset(Asset *&asset)
+{
+    m_handler->assets.remove(asset);
+    delete asset;
+    asset = 0;
+}
+
+void Project::removeModel(PMDModel *&model)
+{
+    m_handler->models.remove(model);
+    delete model;
+    model = 0;
+}
+
+void Project::removeMotion(VMDMotion *&motion)
+{
+    m_handler->motions.remove(motion);
+    delete motion;
+    motion = 0;
 }
 
 void Project::setPhysicsEnable(bool value)
@@ -919,12 +979,14 @@ void Project::setGlobalSetting(const std::string &key, std::string &value)
 
 void Project::setLocalAssetSetting(Asset *asset, const std::string &key, const std::string &value)
 {
-    m_handler->localAssetSettings[asset][key] = value;
+    if (containsAsset(asset))
+        m_handler->localAssetSettings[asset][key] = value;
 }
 
 void Project::setLocalModelSetting(PMDModel *model, const std::string &key, const std::string &value)
 {
-    m_handler->localModelSettings[model][key] = value;
+    if (containsModel(model))
+        m_handler->localModelSettings[model][key] = value;
 }
 
 } /* namespace vpvl */

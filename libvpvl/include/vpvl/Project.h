@@ -88,10 +88,17 @@ public:
     const std::string &globalSetting(const std::string &key) const;
     const std::string &localAssetSetting(Asset *asset, const std::string &key) const;
     const std::string &localModelSetting(PMDModel *model, const std::string &key) const;
+    bool containsAsset(Asset *asset) const;
+    bool containsModel(PMDModel *model) const;
+    bool containsMotion(VMDMotion *motion) const;
 
-    Array<Asset *> *mutableAssets();
-    Array<PMDModel *> *mutableModels();
-    Array<VMDMotion *> *mutableMotions();
+    void addAsset(Asset *asset);
+    void addModel(PMDModel *model);
+    void addMotion(VMDMotion *motion);
+    void removeAsset(Asset *&asset);
+    void removeModel(PMDModel *&model);
+    void removeMotion(VMDMotion *&motion);
+
     void setPhysicsEnable(bool value);
     void setGlobalSetting(const std::string &key, std::string &value);
     void setLocalAssetSetting(Asset *asset, const std::string &key, const std::string &value);
