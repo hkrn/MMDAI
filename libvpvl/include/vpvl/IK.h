@@ -60,12 +60,6 @@ public:
     IK();
     ~IK();
 
-    static const float kPi;
-    static const float kMinDistance;
-    static const float kMinAngle;
-    static const float kMinAxis;
-    static const float kMinRotationSum;
-    static const float kMinRotation;
     static size_t totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok);
     static size_t stride(const uint8_t *data);
 

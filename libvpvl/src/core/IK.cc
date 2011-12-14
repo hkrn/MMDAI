@@ -39,15 +39,17 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
 
+namespace
+{
+const float kMinDistance    = 0.0001f;
+const float kMinAngle       = 0.00000001f;
+const float kMinAxis        = 0.0000001f;
+const float kMinRotationSum = 0.002f;
+const float kMinRotation    = 0.00001f;
+}
+
 namespace vpvl
 {
-
-const float IK::kPi             = 3.1415926f;
-const float IK::kMinDistance    = 0.0001f;
-const float IK::kMinAngle       = 0.00000001f;
-const float IK::kMinAxis        = 0.0000001f;
-const float IK::kMinRotationSum = 0.002f;
-const float IK::kMinRotation    = 0.00001f;
 
 #pragma pack(push, 1)
 
@@ -139,7 +141,7 @@ void IK::read(const uint8_t *data, BoneList *bones)
         m_destination = bones->at(destBoneID);
         m_target = bones->at(targetBoneID);
         m_iteration = niterations;
-        m_angleConstraint = angleConstraint * IK::kPi;
+        m_angleConstraint = angleConstraint * vpvl::kPI;
         m_rawAngleConstraint = angleConstraint;
         m_bones.reserve(nlinks);
         for (int i = 0; i < nlinks; i++) {
@@ -221,8 +223,8 @@ void IK::solve()
                     matrix.getEulerZYX(z, y, x);
                     matrix.setRotation(bone->rotation());
                     matrix.getEulerZYX(cz, cy, cx);
-                    if (x + cx > kPi)
-                        x = kPi - cx;
+                    if (x + cx > vpvl::kPI)
+                        x = vpvl::kPI - cx;
                     if (kMinRotationSum > x + cx)
                         x = kMinRotationSum - cx;
                     btClamp(x, -m_angleConstraint, m_angleConstraint);
