@@ -91,7 +91,11 @@ void LightKeyFrame::read(const uint8_t *data)
     float *direction = chunk.direction;
 #endif
     m_color.setValue(color[0], color[1], color[2]);
+#ifdef VPVL_COORDINATE_OPENGL
+    m_direction.setValue(-direction[0], -direction[1], direction[2]);
+#else
     m_direction.setValue(direction[0], direction[1], direction[2]);
+#endif
 }
 
 void LightKeyFrame::write(uint8_t *data) const
@@ -101,8 +105,13 @@ void LightKeyFrame::write(uint8_t *data) const
     chunk.color[0] = m_color.x();
     chunk.color[1] = m_color.y();
     chunk.color[2] = m_color.z();
+#ifdef VPVL_COORDINATE_OPENGL
+    chunk.direction[0] = -m_direction.x();
+    chunk.direction[1] = -m_direction.y();
+#else
     chunk.direction[0] = m_direction.x();
     chunk.direction[1] = m_direction.y();
+#endif
     chunk.direction[2] = m_direction.z();
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }

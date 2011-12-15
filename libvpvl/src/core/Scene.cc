@@ -72,7 +72,7 @@ Scene::Scene(int width, int height, int fps)
       m_lightMotion(0),
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightColor(0.6f, 0.6f, 0.6f, 1.0f),
-      m_lightPosition(-0.5f, 1.0f, 0.5f),
+      m_lightPosition(0.5f, 1.0f, 0.5f),
       m_position(0.0f, 10.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_distance(100.0f),
