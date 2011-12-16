@@ -122,7 +122,7 @@ PMDModel::~PMDModel()
 
 void PMDModel::prepare()
 {
-    m_skinningTransform.reserve(m_bones.count());
+    m_skinningTransform.resize(m_bones.count());
     const int nvertices = m_vertices.count();
     m_skinnedVertices = new SkinVertex[nvertices];
     m_edgeIndicesPointer = new uint16_t[m_indices.count()];

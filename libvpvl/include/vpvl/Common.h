@@ -142,6 +142,9 @@ public:
     void reserve(int size) {
         m_values.reserve(size);
     }
+    void resize(int size) {
+        m_values.resize(size);
+    }
     template <typename Comparable>
     void sort(Comparable comparable) {
         m_values.quickSort(comparable);
