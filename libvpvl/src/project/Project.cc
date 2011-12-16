@@ -167,9 +167,7 @@ public:
         int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             PMDModel *model = models.at(i);
-            const std::string &name = delegate->toUnicode(std::string(reinterpret_cast<const char *>(model->name())));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("model"), 0));
-            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
             if(!writeStringMap(kPrefix, localModelSettings[model], writer))
                 return false;
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
@@ -179,9 +177,7 @@ public:
         int nassets = assets.count();
         for (int i = 0; i < nassets; i++) {
             Asset *asset = assets.at(i);
-            const std::string &name = delegate->toUnicode(std::string(asset->name() ? asset->name() : ""));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("asset"), 0));
-            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
             if(!writeStringMap(kPrefix, localAssetSettings[asset], writer))
                 return false;
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
@@ -829,10 +825,14 @@ public:
 };
 
 const std::string Handler::kEmpty = "";
-const std::string Project::kSettingSpecialKeyPrefix = "vpvm:";
-const std::string Project::kSettingNameKey = Project::kSettingSpecialKeyPrefix + "name";
-const std::string Project::kSettingURIKey = Project::kSettingSpecialKeyPrefix + "URI";
+const std::string Project::kSettingNameKey = "name";
+const std::string Project::kSettingURIKey = "uri";
 const float Project::kCurrentVersion = 0.1f;
+
+bool Project::isReservedSettingKey(const std::string &key)
+{
+    return key.find(kSettingNameKey) == 0 || key.find(kSettingURIKey) == 0;
+}
 
 Project::Project(IDelegate *delegate)
     : m_handler(0)
@@ -1018,13 +1018,13 @@ void Project::setGlobalSetting(const std::string &key, std::string &value)
 
 void Project::setAssetSetting(Asset *asset, const std::string &key, const std::string &value)
 {
-    if (containsAsset(asset) && key.find(kSettingSpecialKeyPrefix) != 0)
+    if (containsAsset(asset) && !isReservedSettingKey(key))
         m_handler->localAssetSettings[asset][key] = value;
 }
 
 void Project::setModelSetting(PMDModel *model, const std::string &key, const std::string &value)
 {
-    if (containsModel(model) && key.find(kSettingSpecialKeyPrefix) != 0)
+    if (containsModel(model) && !isReservedSettingKey(key))
         m_handler->localModelSettings[model][key] = value;
 }
 

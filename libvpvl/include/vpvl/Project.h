@@ -71,9 +71,10 @@ public:
     typedef struct Handler Handler;
 
     static const float kCurrentVersion;
-    static const std::string kSettingSpecialKeyPrefix;
     static const std::string kSettingNameKey;
     static const std::string kSettingURIKey;
+
+    static bool isReservedSettingKey(const std::string &key);
 
     Project(IDelegate *delegate);
     ~Project();

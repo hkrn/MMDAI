@@ -180,11 +180,11 @@ void TestProject::testGlobalSettings(const Project &project)
 
 void TestProject::testLocalSettings(const Project &project, const Array<Asset *> &assets, const Array<PMDModel *> &models)
 {
-    QCOMPARE(project.assetSetting(assets.at(0), "path").c_str(), "asset:/foo/bar/baz");
-    QCOMPARE(project.modelSetting(models.at(0), "path").c_str(), "model:/foo/bar/baz");
+    QCOMPARE(project.assetSetting(assets.at(0), Project::kSettingURIKey).c_str(), "asset:/foo/bar/baz");
+    QCOMPARE(project.modelSetting(models.at(0), Project::kSettingURIKey).c_str(), "model:/foo/bar/baz");
     QCOMPARE(project.modelSetting(models.at(0), "edge").c_str(), "1.0");
-    QCOMPARE(project.assetSetting(assets.at(1), "path").c_str(), "asset:/baz/bar/foo");
-    QCOMPARE(project.modelSetting(models.at(1), "path").c_str(), "model:/baz/bar/foo");
+    QCOMPARE(project.assetSetting(assets.at(1), Project::kSettingURIKey).c_str(), "asset:/baz/bar/foo");
+    QCOMPARE(project.modelSetting(models.at(1), Project::kSettingURIKey).c_str(), "model:/baz/bar/foo");
     QCOMPARE(project.modelSetting(models.at(1), "edge").c_str(), "0.5");
 }
 
