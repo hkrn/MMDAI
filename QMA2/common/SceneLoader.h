@@ -43,6 +43,7 @@
 #include <QtCore/QString>
 
 #include <vpvl/Common.h>
+#include <vpvl/Project.h>
 
 namespace vpvl
 {
@@ -64,8 +65,6 @@ class VPDFile;
 class SceneLoader
 {
 public:
-    typedef QHash<QString, vpvl::PMDModel *> ModelList;
-    typedef QHash<QString, vpvl::Asset *> AssetList;
     typedef QMultiHash<vpvl::PMDModel *, vpvl::VMDMotion *> MotionList;
 
 #ifdef VPVL_USE_GLSL
@@ -91,8 +90,10 @@ public:
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
     VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
+    bool loadProject(const QString &path);
     void release();
     void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
+    void saveProject(const QString &path);
     void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
@@ -106,11 +107,11 @@ private:
 #else
     vpvl::gl::Renderer *m_renderer;
 #endif
-    vpvl::VMDMotion *m_camera;
-    ModelList m_models;
-    AssetList m_assets;
     MotionList m_motions;
     QMap<QString, vpvl::Asset*> m_name2assets;
+    vpvl::Project *m_project;
+    vpvl::Project::IDelegate *m_delegate;
+    vpvl::VMDMotion *m_camera;
 
     Q_DISABLE_COPY(SceneLoader)
 };

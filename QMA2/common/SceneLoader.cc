@@ -54,10 +54,45 @@ using namespace vpvl::gl2;
 using namespace vpvl::gl;
 #endif
 
+namespace
+{
+
+class Delegate : public vpvl::Project::IDelegate
+{
+public:
+    Delegate()
+        : m_codec(0)
+    {
+        m_codec = QTextCodec::codecForName("Shift-JIS");
+    }
+    ~Delegate()
+    {
+    }
+
+    const std::string toUnicode(const std::string &value) {
+        return m_codec->toUnicode(value.c_str()).toStdString();
+    }
+    void error(const char *format, va_list ap) {
+        qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
+    }
+    void warning(const char *format, va_list ap) {
+        qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
+    }
+
+private:
+    QTextCodec *m_codec;
+};
+
+}
+
 SceneLoader::SceneLoader(Renderer *renderer)
     : m_renderer(renderer),
+      m_project(0),
+      m_delegate(0),
       m_camera(0)
 {
+    m_delegate = new Delegate();
+    m_project = new vpvl::Project(m_delegate);
 }
 
 SceneLoader::~SceneLoader()
@@ -80,11 +115,11 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
      */
     m_renderer->uploadModel(model, std::string(dir.absolutePath().toLocal8Bit()));
     /* モデル名が重複していれば連番で名前を作成する */
-    if (m_models.contains(key)) {
+    if (m_project->modelFromName(key.toStdString())) {
         int i = 0;
         while (true) {
             QString tmpKey = QString("%1%2").arg(key).arg(i);
-            if (!m_models.contains(tmpKey)) {
+            if (!m_project->modelFromName(tmpKey.toStdString())) {
                 key = tmpKey;
                 break;
             }
@@ -92,7 +127,7 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
         }
     }
     /* モデルを SceneLoader にヒモ付けする */
-    m_models.insert(key, model);
+    m_project->addModel(model, key.toStdString());
 }
 
 bool SceneLoader::deleteAsset(vpvl::Asset *asset)
@@ -100,10 +135,9 @@ bool SceneLoader::deleteAsset(vpvl::Asset *asset)
     if (!asset)
         return false;
     /* アクセサリをレンダリングエンジンから削除し、SceneLoader のヒモ付けも解除する */
-    const QString &key = m_assets.key(asset);
-    if (!key.isNull()) {
+    if (m_project->containsAsset(asset)) {
         m_renderer->deleteAsset(asset);
-        m_assets.remove(key);
+        m_project->deleteAsset(asset);
         return true;
     }
     return false;
@@ -127,12 +161,11 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
      * まずモデルに紐づいたモーションを削除し、その後にモデルをレンダリングエンジンから削除し、
      * SceneLoader のヒモ付けも解除する
      */
-    const QString &key = m_models.key(model);
-    if (!key.isNull()) {
+    if (m_project->containsModel(model)) {
         deleteModelMotion(model);
         m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
-        m_models.remove(key);
+        m_project->deleteModel(model);
         return true;
     }
     return false;
@@ -180,7 +213,7 @@ bool SceneLoader::deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *mod
 
 vpvl::PMDModel *SceneLoader::findModel(const QString &name) const
 {
-    return m_models.value(name);
+    return m_project->modelFromName(name.toStdString());
 }
 
 QList<vpvl::VMDMotion *> SceneLoader::findModelMotions(vpvl::PMDModel *model) const
@@ -196,16 +229,32 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
     if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
+        const QByteArray &data = file.readAll();
         asset = new vpvl::Asset();
         if (asset->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             QString key = baseName;
+            QList<vpvl::PMDModel *> flm;
+            const vpvl::Array<vpvl::PMDModel *> &models = m_project->models();
+            int nmodels = models.count();
+            for (int i = 0; i < nmodels; i++) {
+                vpvl::PMDModel *model = models[i];
+                const std::string &uri = m_project->modelSetting(model, vpvl::Project::kSettingURIKey);
+                QFile file(QString::fromStdString(uri));
+                if (file.open(QFile::ReadOnly)) {
+                    const QByteArray &bytes = file.readAll();
+                    if (model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+                        m_renderer->updateModel(model);
+                        continue;
+                    }
+                }
+                flm.append(model);
+            }
             /* アクセサリ名が重複していれば連番で名前を作成する */
-            if (m_assets.contains(key)) {
+            if (m_project->assetFromName(key.toStdString())) {
                 int i = 0;
                 while (true) {
                     QString tmpKey = QString("%1%2").arg(key).arg(i);
-                    if (!m_assets.contains(tmpKey)) {
+                    if (!m_project->assetFromName(tmpKey.toStdString())) {
                         key = tmpKey;
                         break;
                     }
@@ -214,12 +263,13 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             }
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             const QByteArray &assetName = baseName.toUtf8();
-            char *name = new char[assetName.size() + 1];
-            memcpy(name, assetName.constData(), assetName.size());
-            name[assetName.size()] = 0;
-            asset->setName(name);
-            m_renderer->uploadAsset(asset, std::string(dir.absolutePath().toLocal8Bit()));
-            m_assets[key] = asset;
+            char *rawName = new char[assetName.size() + 1];
+            memcpy(rawName, assetName.constData(), assetName.size());
+            rawName[assetName.size()] = 0;
+            asset->setName(rawName);
+            const std::string &name = std::string(dir.absolutePath().toLocal8Bit());
+            m_renderer->uploadAsset(asset, name);
+            m_project->addAsset(asset, name);
         }
         else {
             delete asset;
@@ -295,7 +345,7 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
     QFile file(path);
     vpvl::VMDMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
+        const QByteArray &data = file.readAll();
         motion = new vpvl::VMDMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
                 && motion->cameraAnimation().countKeyFrames() > 0) {
@@ -319,7 +369,7 @@ vpvl::PMDModel *SceneLoader::loadModel(const QString &baseName, const QDir &dir)
     QFile file(path);
     vpvl::PMDModel *model = 0;
     if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
+        const QByteArray &data = file.readAll();
         model = new vpvl::PMDModel();
         if (!model->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             delete model;
@@ -335,7 +385,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path)
     QFile file(path);
     vpvl::VMDMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
-        QByteArray data = file.readAll();
+        const QByteArray &data = file.readAll();
         motion = new vpvl::VMDMotion();
         if (!motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             delete motion;
@@ -350,7 +400,10 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<vpvl::P
     /* モーションをファイルから読み込み、対象の全てのモデルに対してモーションを適用する */
     vpvl::VMDMotion *motion = loadModelMotion(path);
     if (motion) {
-        foreach (vpvl::PMDModel *model, m_models) {
+        const vpvl::Array<vpvl::PMDModel *> &m = m_project->models();
+        int nmodels = m.count();
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = m.at(i);
             setModelMotion(motion, model);
             models.append(model);
         }
@@ -387,10 +440,60 @@ VPDFile *SceneLoader::loadModelPose(const QString &path, vpvl::PMDModel * /* mod
     return pose;
 }
 
+bool SceneLoader::loadProject(const QString &path)
+{
+    delete m_project;
+    m_project = new vpvl::Project(m_delegate);
+    bool ret = m_project->load(path.toLocal8Bit().constData());
+    if (ret) {
+        QList<vpvl::PMDModel *> flm;
+        /* vpvl::Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
+        const vpvl::Array<vpvl::PMDModel *> &models = m_project->models();
+        int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = models[i];
+            const std::string &uri = m_project->modelSetting(model, vpvl::Project::kSettingURIKey);
+            QFile file(QString::fromStdString(uri));
+            if (file.open(QFile::ReadOnly)) {
+                const QByteArray &bytes = file.readAll();
+                if (model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+                    m_renderer->uploadModel(model, QFileInfo(file).dir().absolutePath().toStdString());
+                    continue;
+                }
+            }
+            /* 読み込みに失敗したモデルは後で vpvl::Project から削除するため失敗したリストに追加する */
+            flm.append(model);
+        }
+        /* vpvl::Project はアクセサリのインスタンスを作成しか行わないので、ここでアクセサリとそのリソースの読み込みを行う */
+        QList<vpvl::Asset *> fla;
+        const vpvl::Array<vpvl::Asset *> &assets = m_project->assets();
+        int nassets = assets.count();
+        for (int i = 0; i < nassets; i++) {
+            vpvl::Asset *asset = assets[i];
+            const std::string &uri = m_project->assetSetting(asset, vpvl::Project::kSettingURIKey);
+            QFile file(QString::fromStdString(uri));
+            if (file.open(QFile::ReadOnly)) {
+                const QByteArray &bytes = file.readAll();
+                if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+                    m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
+                    continue;
+                }
+            }
+            /* 読み込みに失敗したアクセサリは後で vpvl::Project から削除するため失敗したリストに追加する */
+            fla.append(asset);
+        }
+        /* 読み込みに失敗したモデルとアクセサリを vpvl::Project から削除する */
+        foreach (vpvl::PMDModel *model, flm)
+            m_project->deleteModel(model);
+        foreach (vpvl::Asset *asset, fla)
+            m_project->deleteAsset(asset);
+        /* ここで PMDModel と VMDMotion のヒモ付をする必要があるのだが vpvl::Project が該当部分についてまだ未実装 */
+    }
+    return ret;
+}
+
 void SceneLoader::release()
 {
-    delete m_camera;
-    m_camera = 0;
     QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
     while (i.hasNext()) {
         i.next();
@@ -399,9 +502,13 @@ void SceneLoader::release()
         model->removeMotion(motion);
         delete motion;
     }
-    m_models.clear();
     m_motions.clear();
-    m_assets.clear();
+    delete m_delegate;
+    m_delegate = 0;
+    delete m_project;
+    m_project = 0;
+    delete m_camera;
+    m_camera = 0;
 }
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
@@ -428,6 +535,11 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
     else {
         qWarning("Cannot load %s: %s", qPrintable(path), qPrintable(file.errorString()));
     }
+}
+
+void SceneLoader::saveProject(const QString &path)
+{
+    m_project->save(path.toLocal8Bit().constData());
 }
 
 void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)

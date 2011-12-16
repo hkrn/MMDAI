@@ -20,7 +20,7 @@ exists(../opencv/modules/core/include):INCLUDEPATH += ../opencv/modules/core/inc
 exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highgui/include
 
 # Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lxml2
 win32:LIBS += -lglew32
 
 # VPVL and others configuration
