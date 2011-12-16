@@ -73,6 +73,7 @@ public:
     static const float kCurrentVersion;
     static const std::string kSettingSpecialKeyPrefix;
     static const std::string kSettingNameKey;
+    static const std::string kSettingURIKey;
 
     Project(IDelegate *delegate);
     ~Project();
@@ -90,6 +91,8 @@ public:
     const std::string &globalSetting(const std::string &key) const;
     const std::string &assetSetting(Asset *asset, const std::string &key) const;
     const std::string &modelSetting(PMDModel *model, const std::string &key) const;
+    Asset *assetFromName(const std::string &name) const;
+    PMDModel *modelFromName(const std::string &name) const;
     bool containsAsset(Asset *asset) const;
     bool containsModel(PMDModel *model) const;
     bool containsMotion(VMDMotion *motion) const;

@@ -831,6 +831,7 @@ public:
 const std::string Handler::kEmpty = "";
 const std::string Project::kSettingSpecialKeyPrefix = "vpvm:";
 const std::string Project::kSettingNameKey = Project::kSettingSpecialKeyPrefix + "name";
+const std::string Project::kSettingURIKey = Project::kSettingSpecialKeyPrefix + "URI";
 const float Project::kCurrentVersion = 0.1f;
 
 Project::Project(IDelegate *delegate)
@@ -917,6 +918,28 @@ const std::string &Project::assetSetting(Asset *asset, const std::string &key) c
 const std::string &Project::modelSetting(PMDModel *model, const std::string &key) const
 {
     return containsModel(model) ? m_handler->localModelSettings[model][key] : Handler::kEmpty;
+}
+
+Asset *Project::assetFromName(const std::string &name) const
+{
+    int nassets = assets().count();
+    for (int i = 0; i < nassets; i++) {
+        Asset *asset = assets().at(i);
+        if (assetSetting(asset, kSettingNameKey) == name)
+            return asset;
+    }
+    return 0;
+}
+
+PMDModel *Project::modelFromName(const std::string &name) const
+{
+    int nmdoels = models().count();
+    for (int i = 0; i < nmdoels; i++) {
+        PMDModel *model = models().at(i);
+        if (modelSetting(model, kSettingNameKey) == name)
+            return model;
+    }
+    return 0;
 }
 
 bool Project::containsAsset(Asset *asset) const

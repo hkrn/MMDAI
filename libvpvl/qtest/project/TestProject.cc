@@ -128,6 +128,8 @@ void TestProject::handleAssets()
     QVERIFY(project.containsAsset(asset));
     project.addAsset(asset, "bar");
     QCOMPARE(project.assetSetting(asset, Project::kSettingNameKey).c_str(), "foo");
+    QCOMPARE(project.assetFromName("foo"), asset);
+    QCOMPARE(project.assetFromName("no_such_asset"), static_cast<Asset*>(0));
     Asset *ptr = asset;
     project.deleteAsset(asset);
     QVERIFY(!project.containsAsset(asset));
@@ -146,6 +148,8 @@ void TestProject::handleModels()
     QVERIFY(project.containsModel(model));
     project.addModel(model, "bar");
     QCOMPARE(project.modelSetting(model, Project::kSettingNameKey).c_str(), "foo");
+    QCOMPARE(project.modelFromName("foo"), model);
+    QCOMPARE(project.modelFromName("no_such_model"), static_cast<PMDModel*>(0));
     PMDModel *ptr = model;
     project.deleteModel(model);
     QVERIFY(!project.containsModel(model));
