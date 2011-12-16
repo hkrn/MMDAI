@@ -71,6 +71,8 @@ public:
     typedef struct Handler Handler;
 
     static const float kCurrentVersion;
+    static const std::string kSettingSpecialKeyPrefix;
+    static const std::string kSettingNameKey;
 
     Project(IDelegate *delegate);
     ~Project();
@@ -86,23 +88,23 @@ public:
     const Array<PMDModel *> &models() const;
     const Array<VMDMotion *> &motions() const;
     const std::string &globalSetting(const std::string &key) const;
-    const std::string &localAssetSetting(Asset *asset, const std::string &key) const;
-    const std::string &localModelSetting(PMDModel *model, const std::string &key) const;
+    const std::string &assetSetting(Asset *asset, const std::string &key) const;
+    const std::string &modelSetting(PMDModel *model, const std::string &key) const;
     bool containsAsset(Asset *asset) const;
     bool containsModel(PMDModel *model) const;
     bool containsMotion(VMDMotion *motion) const;
 
-    void addAsset(Asset *asset);
-    void addModel(PMDModel *model);
+    void addAsset(Asset *asset, const std::string &name);
+    void addModel(PMDModel *model, const std::string &name);
     void addMotion(VMDMotion *motion);
-    void removeAsset(Asset *&asset);
-    void removeModel(PMDModel *&model);
-    void removeMotion(VMDMotion *&motion);
+    void deleteAsset(Asset *&asset);
+    void deleteModel(PMDModel *&model);
+    void deleteMotion(VMDMotion *&motion);
 
     void setPhysicsEnable(bool value);
     void setGlobalSetting(const std::string &key, std::string &value);
-    void setLocalAssetSetting(Asset *asset, const std::string &key, const std::string &value);
-    void setLocalModelSetting(PMDModel *model, const std::string &key, const std::string &value);
+    void setAssetSetting(Asset *asset, const std::string &key, const std::string &value);
+    void setModelSetting(PMDModel *model, const std::string &key, const std::string &value);
 
 private:
     Handler *m_handler;

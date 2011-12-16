@@ -124,11 +124,16 @@ void TestProject::handleAssets()
     Project project(&delegate);
     Asset *asset = new Asset();
     QVERIFY(!project.containsAsset(asset));
-    project.addAsset(asset);
+    project.addAsset(asset, "foo");
     QVERIFY(project.containsAsset(asset));
-    project.removeAsset(asset);
+    project.addAsset(asset, "bar");
+    QCOMPARE(project.assetSetting(asset, Project::kSettingNameKey).c_str(), "foo");
+    Asset *ptr = asset;
+    project.deleteAsset(asset);
     QVERIFY(!project.containsAsset(asset));
     QVERIFY(!asset);
+    project.deleteAsset(ptr);
+    QVERIFY(ptr);
 }
 
 void TestProject::handleModels()
@@ -137,11 +142,16 @@ void TestProject::handleModels()
     Project project(&delegate);
     PMDModel *model = new PMDModel();
     QVERIFY(!project.containsModel(model));
-    project.addModel(model);
+    project.addModel(model, "foo");
     QVERIFY(project.containsModel(model));
-    project.removeModel(model);
+    project.addModel(model, "bar");
+    QCOMPARE(project.modelSetting(model, Project::kSettingNameKey).c_str(), "foo");
+    PMDModel *ptr = model;
+    project.deleteModel(model);
     QVERIFY(!project.containsModel(model));
     QVERIFY(!model);
+    project.deleteModel(ptr);
+    QVERIFY(ptr);
 }
 
 void TestProject::handleMotions()
@@ -152,7 +162,7 @@ void TestProject::handleMotions()
     QVERIFY(!project.containsMotion(motion));
     project.addMotion(motion);
     QVERIFY(project.containsMotion(motion));
-    project.removeMotion(motion);
+    project.deleteMotion(motion);
     QVERIFY(!project.containsMotion(motion));
     QVERIFY(!motion);
 }
@@ -166,12 +176,12 @@ void TestProject::testGlobalSettings(const Project &project)
 
 void TestProject::testLocalSettings(const Project &project, const Array<Asset *> &assets, const Array<PMDModel *> &models)
 {
-    QCOMPARE(project.localAssetSetting(assets.at(0), "path").c_str(), "asset:/foo/bar/baz");
-    QCOMPARE(project.localModelSetting(models.at(0), "path").c_str(), "model:/foo/bar/baz");
-    QCOMPARE(project.localModelSetting(models.at(0), "edge").c_str(), "1.0");
-    QCOMPARE(project.localAssetSetting(assets.at(1), "path").c_str(), "asset:/baz/bar/foo");
-    QCOMPARE(project.localModelSetting(models.at(1), "path").c_str(), "model:/baz/bar/foo");
-    QCOMPARE(project.localModelSetting(models.at(1), "edge").c_str(), "0.5");
+    QCOMPARE(project.assetSetting(assets.at(0), "path").c_str(), "asset:/foo/bar/baz");
+    QCOMPARE(project.modelSetting(models.at(0), "path").c_str(), "model:/foo/bar/baz");
+    QCOMPARE(project.modelSetting(models.at(0), "edge").c_str(), "1.0");
+    QCOMPARE(project.assetSetting(assets.at(1), "path").c_str(), "asset:/baz/bar/foo");
+    QCOMPARE(project.modelSetting(models.at(1), "path").c_str(), "model:/baz/bar/foo");
+    QCOMPARE(project.modelSetting(models.at(1), "edge").c_str(), "0.5");
 }
 
 void TestProject::testBoneAnimation(const Array<VMDMotion *> &motions)

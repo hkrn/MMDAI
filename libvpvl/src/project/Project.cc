@@ -816,8 +816,8 @@ public:
     Array<PMDModel *> models;
     Array<VMDMotion *> motions;
     StringMap globalSettings;
-    std::map<PMDModel *, StringMap> localModelSettings;
     std::map<Asset *, StringMap> localAssetSettings;
+    std::map<PMDModel *, StringMap> localModelSettings;
     std::string key;
     Asset *currentAsset;
     PMDModel *currentModel;
@@ -829,6 +829,8 @@ public:
 };
 
 const std::string Handler::kEmpty = "";
+const std::string Project::kSettingSpecialKeyPrefix = "vpvm:";
+const std::string Project::kSettingNameKey = Project::kSettingSpecialKeyPrefix + "name";
 const float Project::kCurrentVersion = 0.1f;
 
 Project::Project(IDelegate *delegate)
@@ -907,12 +909,12 @@ const std::string &Project::globalSetting(const std::string &key) const
     return m_handler->globalSettings[key];
 }
 
-const std::string &Project::localAssetSetting(Asset *asset, const std::string &key) const
+const std::string &Project::assetSetting(Asset *asset, const std::string &key) const
 {
     return containsAsset(asset) ? m_handler->localAssetSettings[asset][key] : Handler::kEmpty;
 }
 
-const std::string &Project::localModelSetting(PMDModel *model, const std::string &key) const
+const std::string &Project::modelSetting(PMDModel *model, const std::string &key) const
 {
     return containsModel(model) ? m_handler->localModelSettings[model][key] : Handler::kEmpty;
 }
@@ -932,40 +934,53 @@ bool Project::containsMotion(VMDMotion *motion) const
     return m_handler->containsMotion(motion);
 }
 
-void Project::addAsset(Asset *asset)
+void Project::addAsset(Asset *asset, const std::string &name)
 {
-    m_handler->assets.add(asset);
+    if (!containsAsset(asset)) {
+        m_handler->assets.add(asset);
+        m_handler->localAssetSettings[asset][kSettingNameKey] = name;
+    }
 }
 
-void Project::addModel(PMDModel *model)
+void Project::addModel(PMDModel *model, const std::string &name)
 {
-    m_handler->models.add(model);
+    if (!containsModel(model)) {
+        m_handler->models.add(model);
+        m_handler->localModelSettings[model][kSettingNameKey] = name;
+    }
 }
 
 void Project::addMotion(VMDMotion *motion)
 {
-    m_handler->motions.add(motion);
+    if (!containsMotion(motion))
+        m_handler->motions.add(motion);
 }
 
-void Project::removeAsset(Asset *&asset)
+void Project::deleteAsset(Asset *&asset)
 {
-    m_handler->assets.remove(asset);
-    delete asset;
-    asset = 0;
+    if (containsAsset(asset)) {
+        m_handler->assets.remove(asset);
+        delete asset;
+        asset = 0;
+    }
 }
 
-void Project::removeModel(PMDModel *&model)
+void Project::deleteModel(PMDModel *&model)
 {
-    m_handler->models.remove(model);
-    delete model;
-    model = 0;
+    if (containsModel(model)) {
+        m_handler->models.remove(model);
+        delete model;
+        model = 0;
+    }
 }
 
-void Project::removeMotion(VMDMotion *&motion)
+void Project::deleteMotion(VMDMotion *&motion)
 {
-    m_handler->motions.remove(motion);
-    delete motion;
-    motion = 0;
+    if (containsMotion(motion)) {
+        m_handler->motions.remove(motion);
+        delete motion;
+        motion = 0;
+    }
 }
 
 void Project::setPhysicsEnable(bool value)
@@ -978,15 +993,15 @@ void Project::setGlobalSetting(const std::string &key, std::string &value)
     m_handler->globalSettings[key] = value;
 }
 
-void Project::setLocalAssetSetting(Asset *asset, const std::string &key, const std::string &value)
+void Project::setAssetSetting(Asset *asset, const std::string &key, const std::string &value)
 {
-    if (containsAsset(asset))
+    if (containsAsset(asset) && key.find(kSettingSpecialKeyPrefix) != 0)
         m_handler->localAssetSettings[asset][key] = value;
 }
 
-void Project::setLocalModelSetting(PMDModel *model, const std::string &key, const std::string &value)
+void Project::setModelSetting(PMDModel *model, const std::string &key, const std::string &value)
 {
-    if (containsModel(model))
+    if (containsModel(model) && key.find(kSettingSpecialKeyPrefix) != 0)
         m_handler->localModelSettings[model][key] = value;
 }
 
