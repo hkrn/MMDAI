@@ -263,9 +263,9 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             }
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             const QByteArray &assetName = baseName.toUtf8();
-            char *rawName = new char[assetName.size() + 1];
-            memcpy(rawName, assetName.constData(), assetName.size());
-            rawName[assetName.size()] = 0;
+            int len = assetName.size();
+            char *rawName = new char[len + 1];
+            strncpy(rawName, assetName.constData(), len);
             asset->setName(rawName);
             const std::string &name = std::string(dir.absolutePath().toLocal8Bit());
             m_renderer->uploadAsset(asset, name);
