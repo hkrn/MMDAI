@@ -34,9 +34,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "BoneDialog.h"
-#include "BoneMotionModel.h"
 #include "common/util.h"
+#include "dialogs/BoneDialog.h"
+#include "models/BoneMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

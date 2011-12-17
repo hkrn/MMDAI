@@ -34,10 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "BoneMotionModel.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
+#include "models/BoneMotionModel.h"
 #include <vpvl/vpvl.h>
 
 namespace

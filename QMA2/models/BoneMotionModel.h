@@ -37,9 +37,10 @@
 #ifndef BONEMOTIONMODEL_H
 #define BONEMOTIONMODEL_H
 
-#include "PMDMotionModel.h"
-#include "vpvl/BaseAnimation.h"
-#include "vpvl/BoneKeyFrame.h"
+#include "models/PMDMotionModel.h"
+
+#include <vpvl/BaseAnimation.h>
+#include <vpvl/BoneKeyFrame.h>
 
 class SceneWidget;
 class VPDFile;

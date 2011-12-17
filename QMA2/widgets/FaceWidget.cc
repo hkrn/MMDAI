@@ -34,12 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "FaceWidget.h"
-#include "FaceMotionModel.h"
+#include "common/util.h"
+#include "models/FaceMotionModel.h"
+#include "widgets/FaceWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
-#include "common/util.h"
 
 FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),

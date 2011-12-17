@@ -37,12 +37,12 @@
 #ifndef INTERPOLATIONWIDGET_H
 #define INTERPOLATIONWIDGET_H
 
+#include "models/BoneMotionModel.h"
+#include "models/SceneMotionModel.h"
+
 #include <QtGui/QWidget>
 #include <vpvl/BoneKeyFrame.h>
 #include <vpvl/CameraKeyFrame.h>
-
-#include "BoneMotionModel.h"
-#include "SceneMotionModel.h"
 
 class QComboBox;
 class QHBoxLayout;

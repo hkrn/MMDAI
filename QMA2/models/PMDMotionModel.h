@@ -37,7 +37,7 @@
 #ifndef PMDMOTIONMODEL_H
 #define PMDMOTIONMODEL_H
 
-#include "MotionBaseModel.h"
+#include "models/MotionBaseModel.h"
 
 #include <QtCore/QString>
 #include <QtGui/QAbstractItemView>

@@ -34,13 +34,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "TimelineTabWidget.h"
-#include "BoneMotionModel.h"
-#include "FaceMotionModel.h"
-#include "SceneMotionModel.h"
-#include "TimelineWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
+#include "models/BoneMotionModel.h"
+#include "models/FaceMotionModel.h"
+#include "models/SceneMotionModel.h"
+#include "widgets/TimelineTabWidget.h"
+#include "widgets/TimelineWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

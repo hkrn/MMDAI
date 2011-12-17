@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "CameraPerspectiveWidget.h"
+#include "widgets/CameraPerspectiveWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

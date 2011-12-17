@@ -34,9 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "AssetWidget.h"
-
 #include "common/util.h"
+#include "widgets/AssetWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

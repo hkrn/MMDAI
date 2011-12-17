@@ -37,8 +37,9 @@
 #ifndef FACEMOTIONMODEL_H
 #define FACEMOTIONMODEL_H
 
-#include "PMDMotionModel.h"
-#include "vpvl/BaseAnimation.h"
+#include "models/PMDMotionModel.h"
+
+#include <vpvl/BaseAnimation.h>
 
 namespace vpvl {
 class FaceKeyFrame;

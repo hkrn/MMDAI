@@ -37,8 +37,9 @@
 #ifndef SCENEMOTIONMODEL_H
 #define SCENEMOTIONMODEL_H
 
-#include "MotionBaseModel.h"
-#include "vpvl/CameraKeyFrame.h"
+#include "models/MotionBaseModel.h"
+
+#include <vpvl/CameraKeyFrame.h>
 
 namespace vpvl {
 class Scene;

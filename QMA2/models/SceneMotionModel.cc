@@ -34,8 +34,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "SceneMotionModel.h"
 #include "common/SceneWidget.h"
+#include "models/SceneMotionModel.h"
+
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 

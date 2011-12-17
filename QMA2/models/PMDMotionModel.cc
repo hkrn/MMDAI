@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "PMDMotionModel.h"
 #include "common/util.h"
+#include "models/PMDMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

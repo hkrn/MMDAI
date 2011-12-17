@@ -1,5 +1,5 @@
-#include "PlaySettingDialog.h"
 #include "common/SceneWidget.h"
+#include "dialogs/PlaySettingDialog.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

@@ -34,13 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "TabWidget.h"
-
-#include "AssetWidget.h"
-#include "CameraPerspectiveWidget.h"
-#include "FaceMotionModel.h"
-#include "FaceWidget.h"
-#include "InterpolationWidget.h"
+#include "models/FaceMotionModel.h"
+#include "widgets/AssetWidget.h"
+#include "widgets/CameraPerspectiveWidget.h"
+#include "widgets/FaceWidget.h"
+#include "widgets/InterpolationWidget.h"
+#include "widgets/TabWidget.h"
 
 #include <QtGui/QtGui>
 

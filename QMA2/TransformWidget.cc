@@ -34,10 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "models/BoneMotionModel.h"
+#include "models/FaceMotionModel.h"
 #include "TransformWidget.h"
 #include "ui_TransformWidget.h"
-#include "BoneMotionModel.h"
-#include "FaceMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

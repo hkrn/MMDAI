@@ -1,6 +1,6 @@
-#include "ExportVideoDialog.h"
-#include "MainWindow.h"
 #include "common/SceneWidget.h"
+#include "dialogs/ExportVideoDialog.h"
+#include "MainWindow.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

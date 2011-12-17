@@ -34,10 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "InterpolationWidget.h"
-#include "TimelineTabWidget.h"
-#include "BoneMotionModel.h"
-#include "SceneMotionModel.h"
+#include "models/BoneMotionModel.h"
+#include "models/SceneMotionModel.h"s
+#include "widgets/InterpolationWidget.h"
+#include "widgets/TimelineTabWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>

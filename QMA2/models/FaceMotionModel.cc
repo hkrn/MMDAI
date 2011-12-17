@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "FaceMotionModel.h"
 #include "common/util.h"
+#include "models/FaceMotionModel.h"
 #include <vpvl/vpvl.h>
 
 namespace

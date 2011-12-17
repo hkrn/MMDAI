@@ -123,13 +123,13 @@ SOURCES += main.cc \
     widgets/TimelineWidget.cc \
     widgets/FaceWidget.cc \
     widgets/CameraPerspectiveWidget.cc \
-    widgets/TransformWidget.cc \
     widgets/TabWidget.cc \
     widgets/TimelineTabWidget.cc \
     widgets/InterpolationWidget.cc \
     widgets/LicenseWidget.cc \
     widgets/AssetWidget.cc \
     MainWindow.cc \
+    TransformWidget.cc \
     BoneUIDelegate.cc
 
 HEADERS  += \
@@ -157,13 +157,13 @@ HEADERS  += \
     widgets/TimelineWidget.h \
     widgets/FaceWidget.h \
     widgets/CameraPerspectiveWidget.h \
-    widgets/TransformWidget.h \
     widgets/TabWidget.h \
     widgets/TimelineTabWidget.h \
     widgets/InterpolationWidget.h \
     widgets/LicenseWidget.h \
     widgets/AssetWidget.h \
     MainWindow.h \
+    TransformWidget.h \
     BoneUIDelegate.h
 
 CODECFORTR = UTF-8
@@ -171,7 +171,7 @@ RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
 
 FORMS += \
-    TransformWidget.ui
+    widgets/TransformWidget.ui
 
 
 
