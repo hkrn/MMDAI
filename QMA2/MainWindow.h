@@ -85,11 +85,10 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
-    void newFile();
-    bool save();
-    bool saveAs();
-    bool saveFile(const QString &filename);
-    bool maybeSave();
+    void newMotionFile();
+    void newProjectFile();
+    void saveMotion();
+    void saveProject();
     void selectModel();
     void setCurrentModel(vpvl::PMDModel *model);
     void revertSelectedModel();
@@ -118,6 +117,14 @@ private slots:
     void showLicenseWidget();
 
 private:
+    bool saveMotionAs();
+    bool saveMotionAs(QString &filename);
+    bool saveMotionFile(const QString &filename);
+    bool saveProjectAs(QString &filename);
+    bool saveProjectFile(const QString &filename);
+    bool maybeSaveMotion();
+    bool maybeSaveProject();
+    bool confirmSave(bool &canClose);
     void buildUI();
     void bindActions();
     void retranslate();
@@ -140,6 +147,8 @@ private:
     PlaySettingDialog *m_playSettingDialog;
     BoneUIDelegate *m_boneUIDelegate;
     internal::Player *m_player;
+    QString m_currentProjectFilename;
+    QString m_currentMotionFilename;
 
     vpvl::PMDModel *m_model;
     vpvl::Bone *m_bone;

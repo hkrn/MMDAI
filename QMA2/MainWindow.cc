@@ -236,7 +236,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (maybeSave()) {
+    if (maybeSaveProject()) {
         m_settings.setValue("mainWindow/geometry", saveGeometry());
         m_settings.setValue("mainWindow/state", saveState());
         m_settings.setValue("mainWindow/visibleTabs", m_tabWidget->isVisible());
@@ -266,9 +266,9 @@ void MainWindow::setCurrentModel(vpvl::PMDModel *model)
     m_model = model;
 }
 
-void MainWindow::newFile()
+void MainWindow::newMotionFile()
 {
-    if (maybeSave()) {
+    if (maybeSaveMotion()) {
         /*
          * 空のモーションを作成し、テーブル内のデータを破棄する
          * removeMotion は vpvl::VMDMotion を関知しないので setEmptyMotion と衝突しない
@@ -279,62 +279,30 @@ void MainWindow::newFile()
     }
 }
 
-bool MainWindow::save()
+void MainWindow::newProjectFile()
 {
-    return saveAs();
+    if (maybeSaveProject()) {
+        m_sceneWidget->clear();
+        m_boneMotionModel->removeMotion();
+        m_faceMotionModel->removeMotion();
+        m_sceneMotionModel->removeMotion();
+    }
 }
 
-bool MainWindow::saveAs()
+void MainWindow::saveMotion()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastVMDDirectory",
-                                             tr("Save Motion as a VMD file"),
-                                             tr("VMD file (*.vmd)"));
-    return !filename.isEmpty() ? saveFile(filename) : false;
+    if (m_currentMotionFilename.isEmpty())
+        saveMotionAs(m_currentMotionFilename);
+    else
+        saveMotionFile(m_currentMotionFilename);
 }
 
-bool MainWindow::saveFile(const QString &filename)
+void MainWindow::saveProject()
 {
-    /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
-    vpvl::VMDMotion motion;
-    m_boneMotionModel->saveMotion(&motion);
-    m_faceMotionModel->saveMotion(&motion);
-    m_sceneMotionModel->saveMotion(&motion);
-    size_t size = motion.estimateSize();
-    uint8_t *buffer = new uint8_t[size];
-    motion.save(buffer);
-    QFile file(filename);
-    bool ret = true;
-    if (file.open(QFile::WriteOnly)) {
-        file.write(reinterpret_cast<const char *>(buffer), size);
-        file.close();
-        qDebug("Saved a motion: %s", qPrintable(filename));
-    }
-    else {
-        qWarning("Failed exporting VMD: %s", qPrintable(file.errorString()));
-        ret = false;
-    }
-    delete[] buffer;
-    return ret;
-}
-
-bool MainWindow::maybeSave()
-{
-    if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified() || m_sceneMotionModel->isModified()) {
-        QMessageBox::StandardButton ret;
-        ret = QMessageBox::warning(this,
-                                   qAppName(),
-                                   tr("Do you want to save your changes?"),
-                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        switch (ret) {
-        case QMessageBox::Save:
-            return save();
-        case QMessageBox::Cancel:
-            return false;
-        default:
-            return true;
-        }
-    }
-    return true;
+    if (m_currentProjectFilename.isEmpty())
+        saveProjectAs(m_currentProjectFilename);
+    else
+        saveProjectFile(m_currentProjectFilename);
 }
 
 void MainWindow::revertSelectedModel()
@@ -433,10 +401,101 @@ void MainWindow::deleteAsset(vpvl::Asset *asset)
         m_menuRetainAssets->removeAction(actionToRemove);
 }
 
+bool MainWindow::saveMotionAs()
+{
+    QString s;
+    return saveMotionAs(s);
+}
+
+bool MainWindow::saveMotionAs(QString &filename)
+{
+    filename = openSaveDialog("mainWindow/lastVMDDirectory",
+                              tr("Save Motion as a VMD file"),
+                              tr("VMD file (*.vmd)"));
+    return !filename.isEmpty() ? saveMotionFile(filename) : false;
+}
+
+bool MainWindow::saveMotionFile(const QString &filename)
+{
+    /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
+    vpvl::VMDMotion motion;
+    m_boneMotionModel->saveMotion(&motion);
+    m_faceMotionModel->saveMotion(&motion);
+    m_sceneMotionModel->saveMotion(&motion);
+    size_t size = motion.estimateSize();
+    uint8_t *buffer = new uint8_t[size];
+    motion.save(buffer);
+    QFile file(filename);
+    bool ret = true;
+    if (file.open(QFile::WriteOnly)) {
+        file.write(reinterpret_cast<const char *>(buffer), size);
+        file.close();
+        qDebug("Saved a motion: %s", qPrintable(filename));
+    }
+    else {
+        qWarning("Failed exporting VMD: %s", qPrintable(file.errorString()));
+        ret = false;
+    }
+    delete[] buffer;
+    return ret;
+}
+
+bool MainWindow::saveProjectAs(QString &filename)
+{
+    filename = openSaveDialog("mainWindow/lastProjectDirectory",
+                              tr("Save Projct as a VPVM file"),
+                              tr("VPVM file (*.vpvm)"));
+    return !filename.isEmpty() ? saveProjectFile(filename) : false;
+}
+
+bool MainWindow::saveProjectFile(const QString & /* filename */)
+{
+    /* TODO: implement this! */
+    return true;
+}
+
+bool MainWindow::maybeSaveMotion()
+{
+    bool canClose;
+    if (confirmSave(canClose))
+        saveMotion();
+    return canClose;
+}
+
+bool MainWindow::maybeSaveProject()
+{
+    bool canClose;
+    if (confirmSave(canClose))
+        saveProject();
+    return canClose;
+}
+
+bool MainWindow::confirmSave(bool &canClose)
+{
+    canClose = true;
+    if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified() || m_sceneMotionModel->isModified()) {
+        QMessageBox::StandardButton ret;
+        ret = QMessageBox::warning(this,
+                                   qAppName(),
+                                   tr("Do you want to save your changes?"),
+                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        switch (ret) {
+        case QMessageBox::Save:
+            return true;
+        case QMessageBox::Cancel:
+            canClose = false;
+            break;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
 void MainWindow::buildUI()
 {
     m_actionNewProject = new QAction(this);
-    //connect(m_actionNewProject, SIGNAL(triggered()), this, SLOT(newFile()));
+    connect(m_actionNewProject, SIGNAL(triggered()), this, SLOT(newProjectFile()));
     m_actionNewMotion = new QAction(this);
     connect(m_actionNewMotion, SIGNAL(triggered()), this, SLOT(addNewMotion()));
     m_actionLoadProject = new QAction(this);
@@ -460,9 +519,9 @@ void MainWindow::buildUI()
     m_actionSaveAssetMetadata = new QAction(this);
     connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
     m_actionSaveProject = new QAction(this);
-    //connect(m_actionSaveProject, SIGNAL(triggered()), this, SLOT(saveAs()));
+    connect(m_actionSaveProject, SIGNAL(triggered()), this, SLOT(saveProject()));
     m_actionSaveMotion = new QAction(this);
-    connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveAs()));
+    connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveMotion()));
     m_actionExportImage = new QAction(this);
     connect(m_actionExportImage, SIGNAL(triggered()), this, SLOT(exportImage()));
     m_actionExportVideo = new QAction(this);
@@ -725,7 +784,7 @@ void MainWindow::buildUI()
     m_actionSelectModelOnToolBar = toolbar->addAction("");
     m_actionAddAssetOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addAsset()));
     m_actionInsertMotionOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
-    m_actionCreateMotionOnToolBar = toolbar->addAction("", this, SLOT(newFile()));
+    m_actionCreateMotionOnToolBar = toolbar->addAction("", this, SLOT(newMotionFile()));
     m_actionDeleteModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(deleteSelectedModel()));
     addToolBar(toolbar);
 
@@ -1005,19 +1064,19 @@ void MainWindow::connectWidgets()
 
 void MainWindow::insertMotionToAllModels()
 {
-    if (maybeSave())
+    if (maybeSaveMotion())
         m_sceneWidget->insertMotionToAllModels();
 }
 
 void MainWindow::insertMotionToSelectedModel()
 {
-    if (maybeSave())
+    if (maybeSaveMotion())
         m_sceneWidget->insertMotionToSelectedModel();
 }
 
 void MainWindow::deleteSelectedModel()
 {
-    if (maybeSave())
+    if (maybeSaveMotion())
         m_sceneWidget->deleteSelectedModel();
 }
 
@@ -1201,7 +1260,7 @@ void MainWindow::startExportingVideo()
 
 void MainWindow::addNewMotion()
 {
-    if (maybeSave()) {
+    if (maybeSaveMotion()) {
         vpvl::PMDModel *model = m_sceneWidget->selectedModel();
         m_sceneWidget->deleteMotion(m_boneMotionModel->currentMotion(), model);
         m_boneMotionModel->removeMotion();
