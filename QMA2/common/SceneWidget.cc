@@ -322,11 +322,18 @@ vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
 
 void SceneWidget::insertMotionToSelectedModel()
 {
-    vpvl::VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastVMDDirectory",
-                                                                         tr("Open VMD (for model) file"),
-                                                                         tr("VMD file (*.vmd)")));
-    if (motion)
-        advanceMotion(0.0f);
+    vpvl::PMDModel *model = selectedModel();
+    if (model) {
+        vpvl::VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastVMDDirectory",
+                                                                             tr("Open VMD (for model) file"),
+                                                                             tr("VMD file (*.vmd)")));
+        if (motion)
+            advanceMotion(0.0f);
+    }
+    else {
+        QMessageBox::warning(this, tr("The model is not selected."),
+                             tr("Select a model to insert the motion"));
+    }
 }
 
 vpvl::VMDMotion *SceneWidget::insertMotionToSelectedModel(const QString &path)
@@ -348,10 +355,6 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(const QString &path, vpvl::PMD
                 QMessageBox::warning(this, tr("Loading model motion error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
-    }
-    else {
-        QMessageBox::warning(this, tr("The model is not selected."),
-                             tr("Select a model to insert the motion"));
     }
     return motion;
 }
