@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2011  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -111,7 +109,7 @@ public:
 
         btAlignedObjectArray<btVector3> vertices;
         static const int indices[] = {
-            0, 1, 5, 3, 0, 2, 5, 4, 1, 2, 3, 4
+            0, 1, 2, 3
         };
 
         float matrix[16];
@@ -122,29 +120,24 @@ public:
         const int nbones = bones.count();
         btTransform tr = btTransform::getIdentity();
         for (int i = 0; i < nbones; i++) {
-            const vpvl::Bone *bone = bones[i], *parent = bone->parent();
-            if (!parent || bone->parent()->id() == 0 ||
-                    !bone->isVisible() || !parent->isVisible())
+            const vpvl::Bone *bone = bones[i], *child = bone->child();
+            if (!child || !bone->isVisible() || bone->id() == 0)
                 continue;
             //vpvl::Bone::Type type = bone->type();
             const btTransform &boneTransform = bone->localTransform(),
-                    &parentTransform = parent->localTransform();
+                    &childTransform = child->localTransform();
             const btVector3 &origin = boneTransform.getOrigin(),
-                    &parentOrigin = parentTransform.getOrigin();
+                    &childOrigin = childTransform.getOrigin();
             glPushMatrix();
             glLoadMatrixf(matrix);
             vertices.clear();
-            vertices.push_back(origin);
-            btScalar s = btMin(0.25, parentOrigin.distance(origin) * 0.1);
-            tr.setOrigin(btVector3(s, s, 0.0));
+            btScalar s = 0.1f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+            tr.setOrigin(btVector3(s, 0.0f, 0.0));
             vertices.push_back(tr * origin);
-            tr.setOrigin(btVector3(0.0, s, s));
+            vertices.push_back(childOrigin);
+            tr.setOrigin(btVector3(-s, 0.0f, s));
             vertices.push_back(tr * origin);
-            tr.setOrigin(btVector3(-s, s, 0.0));
-            vertices.push_back(tr * origin);
-            tr.setOrigin(btVector3(0.0, s, -s));
-            vertices.push_back(tr * origin);
-            vertices.push_back(parentOrigin);
+            vertices.push_back(childOrigin);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, sizeof(btVector3), &vertices[0]);
             glColor3f(0, 0, 1);
