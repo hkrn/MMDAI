@@ -119,6 +119,7 @@ private slots:
 
 private:
     void buildUI();
+    void bindActions();
     void retranslate();
     void connectWidgets();
     void updateInformation();
