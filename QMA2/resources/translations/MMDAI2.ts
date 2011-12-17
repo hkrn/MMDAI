@@ -1405,7 +1405,7 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../SceneWidget.cc" line="353"/>
         <location filename="../../SceneWidget.cc" line="408"/>
         <source>Select a model to insert the motion</source>
-        <translation>モーションを挿入するモデルの選択</translation>
+        <translation>モーションを挿入するモデルを選択してください</translation>
     </message>
     <message>
         <location filename="../../SceneWidget.cc" line="414"/>
