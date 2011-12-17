@@ -152,12 +152,15 @@ private:
     QSplitter *m_leftSplitter;
     QAction *m_actionRecentFiles[kMaxRecentFiles];
     QAction *m_actionClearRecentFiles;
+    QAction *m_actionNewProject;
+    QAction *m_actionNewMotion;
+    QAction *m_actionLoadProject;
     QAction *m_actionAddModel;
     QAction *m_actionAddAsset;
-    QAction *m_actionNewMotion;
     QAction *m_actionInsertToAllModels;
     QAction *m_actionInsertToSelectedModel;
     QAction *m_actionSetCamera;
+    QAction *m_actionSaveProject;
     QAction *m_actionSaveMotion;
     QAction *m_actionLoadModelPose;
     QAction *m_actionSaveModelPose;

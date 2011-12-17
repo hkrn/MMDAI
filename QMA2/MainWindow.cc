@@ -435,12 +435,16 @@ void MainWindow::deleteAsset(vpvl::Asset *asset)
 
 void MainWindow::buildUI()
 {
+    m_actionNewProject = new QAction(this);
+    //connect(m_actionNewProject, SIGNAL(triggered()), this, SLOT(newFile()));
+    m_actionNewMotion = new QAction(this);
+    connect(m_actionNewMotion, SIGNAL(triggered()), this, SLOT(addNewMotion()));
+    m_actionLoadProject = new QAction(this);
+    //connect(m_actionLoadProject, SIGNAL(triggered()), this, SLOT(newFile()));
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
     connect(m_actionAddAsset, SIGNAL(triggered()), m_sceneWidget, SLOT(addAsset()));
-    m_actionNewMotion = new QAction(this);
-    connect(m_actionNewMotion, SIGNAL(triggered()), this, SLOT(addNewMotion()));
     m_actionInsertToAllModels = new QAction(this);
     connect(m_actionInsertToAllModels, SIGNAL(triggered()), m_sceneWidget, SLOT(insertMotionToAllModels()));
     m_actionInsertToSelectedModel = new QAction(this);
@@ -455,6 +459,8 @@ void MainWindow::buildUI()
     connect(m_actionLoadAssetMetadata, SIGNAL(triggered()), m_sceneWidget, SLOT(addAssetFromMetadata()));
     m_actionSaveAssetMetadata = new QAction(this);
     connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
+    m_actionSaveProject = new QAction(this);
+    //connect(m_actionSaveProject, SIGNAL(triggered()), this, SLOT(saveAs()));
     m_actionSaveMotion = new QAction(this);
     connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveAs()));
     m_actionExportImage = new QAction(this);
@@ -582,13 +588,18 @@ void MainWindow::buildUI()
     m_menuBar = menuBar();
 #endif
     m_menuFile = new QMenu(this);
+    m_menuFile->addAction(m_actionNewProject);
+    m_menuFile->addAction(m_actionNewMotion);
+    m_menuFile->addAction(m_actionLoadProject);
+    m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionAddModel);
     m_menuFile->addAction(m_actionAddAsset);
-    m_menuFile->addSeparator();
-    m_menuFile->addAction(m_actionNewMotion);
     m_menuFile->addAction(m_actionInsertToAllModels);
     m_menuFile->addAction(m_actionInsertToSelectedModel);
     m_menuFile->addAction(m_actionSetCamera);
+    m_menuFile->addSeparator();
+    m_menuFile->addAction(m_actionSaveProject);
+    m_menuFile->addAction(m_actionSaveMotion);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionLoadModelPose);
     m_menuFile->addAction(m_actionSaveModelPose);
@@ -596,7 +607,6 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionLoadAssetMetadata);
     m_menuFile->addAction(m_actionSaveAssetMetadata);
     m_menuFile->addSeparator();
-    m_menuFile->addAction(m_actionSaveMotion);
     m_menuFile->addAction(m_actionExportImage);
     m_menuFile->addAction(m_actionExportVideo);
     m_menuFile->addSeparator();
@@ -724,6 +734,12 @@ void MainWindow::buildUI()
 
 void MainWindow::retranslate()
 {
+    m_actionNewProject->setText(tr("New project"));
+    m_actionNewProject->setStatusTip(tr("Create a new project."));
+    m_actionNewMotion->setText(tr("New motion"));
+    m_actionNewMotion->setStatusTip(tr("Insert a new motion to the selected model."));
+    m_actionLoadProject->setText(tr("Load project"));
+    m_actionLoadProject->setStatusTip(tr("Load a project to the scene."));
     m_actionAddModel->setText(tr("Add model"));
     m_actionAddModel->setStatusTip(tr("Add a model to the scene."));
     m_actionAddModel->setShortcut(tr("Ctrl+Shift+M"));
@@ -731,14 +747,14 @@ void MainWindow::retranslate()
     m_actionAddAsset->setStatusTip(tr("Add an asset to the scene."));
     m_actionAddAsset->setShortcut(tr("Ctrl+Shift+A"));
     m_actionAddAsset->setEnabled(vpvl::Asset::isSupported());
-    m_actionNewMotion->setText(tr("New motion"));
-    m_actionNewMotion->setStatusTip(tr("Insert a new motion to the selected model."));
     m_actionInsertToAllModels->setText(tr("Insert motion to all models"));
     m_actionInsertToAllModels->setStatusTip(tr("Insert a motion to the all models."));
     m_actionInsertToAllModels->setShortcut(tr("Ctrl+Shift+V"));
     m_actionInsertToSelectedModel->setText(tr("Insert motion to selected model"));
     m_actionInsertToSelectedModel->setStatusTip(tr("Insert a motion to the selected model."));
     m_actionInsertToSelectedModel->setShortcut(tr("Ctrl+Alt+Shift+V"));
+    m_actionSaveProject->setText(tr("Save project"));
+    m_actionSaveProject->setStatusTip(tr("Save current project as a file."));
     m_actionSaveMotion->setText(tr("Save motion as VMD"));
     m_actionSaveMotion->setStatusTip(tr("Export bone key frames and face key frames as a VMD."));
     m_actionLoadModelPose->setText(tr("Load model pose"));
