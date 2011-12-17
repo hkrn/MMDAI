@@ -213,6 +213,12 @@ private:
     QAction *m_actionRedoFrame;
     QAction *m_actionViewTransform;
     QAction *m_actionViewLogMessage;
+    QAction *m_actionAddModelOnToolBar;
+    QAction *m_actionAddAssetOnToolBar;
+    QAction *m_actionSelectModelOnToolBar;
+    QAction *m_actionCreateMotionOnToolBar;
+    QAction *m_actionInsertMotionOnToolBar;
+    QAction *m_actionDeleteModelOnToolBar;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
     QMenu *m_menuProject;

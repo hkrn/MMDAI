@@ -215,6 +215,7 @@ MainWindow::MainWindow(QWidget *parent) :
     restoreState(m_settings.value("mainWindow/state").toByteArray());
     setWindowTitle(QString("[*]%1").arg(qAppName()));
     statusBar()->show();
+    setUnifiedTitleAndToolBarOnMac(true);
 }
 
 MainWindow::~MainWindow()
@@ -709,6 +710,15 @@ void MainWindow::buildUI()
     updateRecentFiles();
     m_mainSplitter->setFocus();
 
+    QToolBar *toolbar = new QToolBar();
+    m_actionAddModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addModel()));
+    m_actionSelectModelOnToolBar = toolbar->addAction("");
+    m_actionAddAssetOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addAsset()));
+    m_actionInsertMotionOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
+    m_actionCreateMotionOnToolBar = toolbar->addAction("", this, SLOT(newFile()));
+    m_actionDeleteModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(deleteSelectedModel()));
+    addToolBar(toolbar);
+
     retranslate();
 }
 
@@ -873,6 +883,15 @@ void MainWindow::retranslate()
     m_actionAboutQt->setStatusTip(tr("About Qt."));
     m_actionClearRecentFiles->setText(tr("Clear recent files history"));
     m_actionClearRecentFiles->setStatusTip(tr("Clear the history of recently opened files."));
+    m_actionAddModelOnToolBar->setText(m_actionAddModel->text());
+    m_actionAddModelOnToolBar->setStatusTip(m_actionAddModel->statusTip());
+    m_actionAddAssetOnToolBar->setText(m_actionAddAsset->text());
+    m_actionAddAssetOnToolBar->setStatusTip(m_actionAddAsset->statusTip());
+    m_actionInsertMotionOnToolBar->setText(tr("Add motion"));
+    m_actionInsertMotionOnToolBar->setStatusTip(m_actionInsertToSelectedModel->toolTip());
+    m_actionSelectModelOnToolBar->setText(tr("Select model"));
+    m_actionCreateMotionOnToolBar->setText(tr("Cerate motion"));
+    m_actionDeleteModelOnToolBar->setText(tr("Delete model"));
     m_menuFile->setTitle(tr("&File"));
     m_menuProject->setTitle(tr("&Project"));
     m_menuScene->setTitle(tr("&Scene"));
