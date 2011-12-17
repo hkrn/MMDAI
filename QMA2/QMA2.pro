@@ -112,25 +112,25 @@ SOURCES += main.cc \
     common/VPDFile.cc \
     common/SceneLoader.cc \
     common/LoggerWidget.cc \
+    models/PMDMotionModel.cc \
+    models/BoneMotionModel.cc \
+    models/FaceMotionModel.cc \
+    models/SceneMotionModel.cc \
+    dialogs/BoneDialog.cc \
+    dialogs/ExportVideoDialog.cc \
+    dialogs/PlaySettingDialog.cc \
+    dialogs/EdgeOffsetDialog.cc \
+    widgets/TimelineWidget.cc \
+    widgets/FaceWidget.cc \
+    widgets/CameraPerspectiveWidget.cc \
+    widgets/TransformWidget.cc \
+    widgets/TabWidget.cc \
+    widgets/TimelineTabWidget.cc \
+    widgets/InterpolationWidget.cc \
+    widgets/LicenseWidget.cc \
+    widgets/AssetWidget.cc \
     MainWindow.cc \
-    TimelineWidget.cc \
-    FaceWidget.cc \
-    CameraPerspectiveWidget.cc \
-    TransformWidget.cc \
-    TabWidget.cc \
-    PMDMotionModel.cc \
-    BoneMotionModel.cc \
-    FaceMotionModel.cc \
-    BoneDialog.cc \
-    TimelineTabWidget.cc \
-    InterpolationWidget.cc \
-    LicenseWidget.cc \
-    AssetWidget.cc \
-    SceneMotionModel.cc \
-    BoneUIDelegate.cc \
-    ExportVideoDialog.cc \
-    PlaySettingDialog.cc \
-    EdgeOffsetDialog.cc
+    BoneUIDelegate.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -145,26 +145,26 @@ HEADERS  += \
     common/InfoPanel.h \
     common/DebugDrawer.h \
     common/LoggerWidget.h \
+    models/MotionBaseModel.h \
+    models/BoneMotionModel.h \
+    models/FaceMotionModel.h \
+    models/SceneMotionModel.h \
+    models/PMDMotionModel.h \
+    dialogs/BoneDialog.h \
+    dialogs/ExportVideoDialog.h \
+    dialogs/PlaySettingDialog.h \
+    dialogs/EdgeOffsetDialog.h \
+    widgets/TimelineWidget.h \
+    widgets/FaceWidget.h \
+    widgets/CameraPerspectiveWidget.h \
+    widgets/TransformWidget.h \
+    widgets/TabWidget.h \
+    widgets/TimelineTabWidget.h \
+    widgets/InterpolationWidget.h \
+    widgets/LicenseWidget.h \
+    widgets/AssetWidget.h \
     MainWindow.h \
-    TimelineWidget.h \
-    FaceWidget.h \
-    CameraPerspectiveWidget.h \
-    TransformWidget.h \
-    TabWidget.h \
-    MotionBaseModel.h \
-    BoneMotionModel.h \
-    FaceMotionModel.h \
-    BoneDialog.h \
-    TimelineTabWidget.h \
-    InterpolationWidget.h \
-    LicenseWidget.h \
-    AssetWidget.h \
-    SceneMotionModel.h \
-    PMDMotionModel.h \
-    BoneUIDelegate.h \
-    ExportVideoDialog.h \
-    PlaySettingDialog.h \
-    EdgeOffsetDialog.h
+    BoneUIDelegate.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
