@@ -102,8 +102,8 @@ public:
     bool isDirty() const { return m_dirty; }
     void setDirty(bool value) { m_dirty = value; }
 
-    void addAsset(Asset *asset, const std::string &name);
-    void addModel(PMDModel *model, const std::string &name);
+    void addAsset(Asset *asset);
+    void addModel(PMDModel *model);
     void addMotion(VMDMotion *motion);
     void deleteAsset(Asset *&asset);
     void deleteModel(PMDModel *&model);

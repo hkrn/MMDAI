@@ -952,20 +952,18 @@ bool Project::containsMotion(VMDMotion *motion) const
     return m_handler->containsMotion(motion);
 }
 
-void Project::addAsset(Asset *asset, const std::string &name)
+void Project::addAsset(Asset *asset)
 {
     if (!containsAsset(asset)) {
         m_handler->assets.add(asset);
-        m_handler->localAssetSettings[asset][kSettingNameKey] = name;
         setDirty(true);
     }
 }
 
-void Project::addModel(PMDModel *model, const std::string &name)
+void Project::addModel(PMDModel *model)
 {
     if (!containsModel(model)) {
         m_handler->models.add(model);
-        m_handler->localModelSettings[model][kSettingNameKey] = name;
         setDirty(true);
     }
 }
@@ -1038,7 +1036,7 @@ void Project::setGlobalSetting(const std::string &key, std::string &value)
 
 void Project::setAssetSetting(Asset *asset, const std::string &key, const std::string &value)
 {
-    if (containsAsset(asset) && !isReservedSettingKey(key)) {
+    if (containsAsset(asset)) {
         m_handler->localAssetSettings[asset][key] = value;
         setDirty(true);
     }
@@ -1046,7 +1044,7 @@ void Project::setAssetSetting(Asset *asset, const std::string &key, const std::s
 
 void Project::setModelSetting(PMDModel *model, const std::string &key, const std::string &value)
 {
-    if (containsModel(model) && !isReservedSettingKey(key)) {
+    if (containsModel(model)) {
         m_handler->localModelSettings[model][key] = value;
         setDirty(true);
     }

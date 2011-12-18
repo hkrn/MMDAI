@@ -127,7 +127,10 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
         }
     }
     /* モデルを SceneLoader にヒモ付けする */
-    m_project->addModel(model, key.toStdString());
+    const QString &filename = dir.absoluteFilePath(baseName);
+    m_project->addModel(model);
+    m_project->setModelSetting(model, vpvl::Project::kSettingNameKey, key.toStdString());
+    m_project->setModelSetting(model, vpvl::Project::kSettingURIKey, internal::toStdStringUtf8(filename));
 }
 
 void SceneLoader::createProject()
@@ -280,7 +283,10 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             asset->setName(rawName);
             const std::string &name = std::string(dir.absolutePath().toLocal8Bit());
             m_renderer->uploadAsset(asset, name);
-            m_project->addAsset(asset, name);
+            const QString &filename = dir.absoluteFilePath(baseName);
+            m_project->addAsset(asset);
+            m_project->setAssetSetting(asset, vpvl::Project::kSettingNameKey, baseName.toStdString());
+            m_project->setAssetSetting(asset, vpvl::Project::kSettingURIKey, internal::toStdStringUtf8(filename));
         }
         else {
             delete asset;
