@@ -330,14 +330,18 @@ void TestVMDMotion::parseLightKeyFrame()
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << quint32(1)           // frame index
            << 0.2f << 0.3f << 0.4f // color
-           << 5.0f << 6.0f << 7.0f // direction
+           << 0.5f << 0.6f << 0.7f // direction
               ;
     QCOMPARE(size_t(bytes.size()), LightKeyFrame::strideSize());
     LightKeyFrame frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(frame.frameIndex(), 1.0f);
     QVERIFY(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
-    QVERIFY(frame.direction() == Vector3(5.0f, 6.0f, 7.0f));
+#ifdef VPVL_COORDINATE_OPENGL
+    QVERIFY(frame.direction() == Vector3(-0.5f, -0.6f, 0.7f));
+#else
+    QVERIFY(frame.direction() == Vector3(0.5f, 0.6f, 0.7f));
+#endif
 }
 
 void TestVMDMotion::boneInterpolation()
