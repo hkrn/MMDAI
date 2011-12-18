@@ -456,23 +456,23 @@ bool MainWindow::saveProjectFile(const QString & /* filename */)
 
 bool MainWindow::maybeSaveMotion()
 {
-    bool canClose;
-    if (confirmSave(canClose))
+    bool cancel;
+    if (confirmSave(cancel))
         saveMotion();
-    return canClose;
+    return !cancel;
 }
 
 bool MainWindow::maybeSaveProject()
 {
-    bool canClose;
-    if (confirmSave(canClose))
+    bool cancel;
+    if (confirmSave(cancel))
         saveProject();
-    return canClose;
+    return !cancel;
 }
 
-bool MainWindow::confirmSave(bool &canClose)
+bool MainWindow::confirmSave(bool &cancel)
 {
-    canClose = true;
+    cancel = false;
     if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified() || m_sceneMotionModel->isModified()) {
         QMessageBox::StandardButton ret;
         ret = QMessageBox::warning(this,
@@ -483,7 +483,7 @@ bool MainWindow::confirmSave(bool &canClose)
         case QMessageBox::Save:
             return true;
         case QMessageBox::Cancel:
-            canClose = false;
+            cancel = true;
             break;
         default:
             break;

@@ -124,7 +124,7 @@ private:
     bool saveProjectFile(const QString &filename);
     bool maybeSaveMotion();
     bool maybeSaveProject();
-    bool confirmSave(bool &canClose);
+    bool confirmSave(bool &cancel);
     void buildUI();
     void bindActions();
     void retranslate();
