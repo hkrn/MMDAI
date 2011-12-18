@@ -313,8 +313,8 @@ void Scene::resetMotion()
         setCameraPerspective(camera);
     }
     // Updating (Resetting) light motion
-    if (m_cameraMotion) {
-        LightAnimation *light = m_cameraMotion->mutableLightAnimation();
+    if (m_lightMotion) {
+        LightAnimation *light = m_lightMotion->mutableLightAnimation();
         light->seek(0.0f);
         light->reset();
         setLightSource(light);
