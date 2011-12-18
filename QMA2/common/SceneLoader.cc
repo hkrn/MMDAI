@@ -286,7 +286,7 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
             const QString &filename = dir.absoluteFilePath(baseName);
             m_project->addAsset(asset);
             m_project->setAssetSetting(asset, vpvl::Project::kSettingNameKey, baseName.toStdString());
-            m_project->setAssetSetting(asset, vpvl::Project::kSettingURIKey, internal::toStdStringUtf8(filename));
+            m_project->setAssetSetting(asset, vpvl::Project::kSettingURIKey, filename.toStdString());
         }
         else {
             delete asset;
