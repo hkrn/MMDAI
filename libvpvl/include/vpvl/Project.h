@@ -104,6 +104,8 @@ public:
     void deleteAsset(Asset *&asset);
     void deleteModel(PMDModel *&model);
     void deleteMotion(VMDMotion *&motion);
+    void removeAsset(Asset *asset);
+    void removeModel(PMDModel *model);
 
     void setPhysicsEnable(bool value);
     void setGlobalSetting(const std::string &key, std::string &value);

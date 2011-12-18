@@ -63,6 +63,7 @@ namespace vpvl
 class Asset;
 class Bone;
 class PMDModel;
+class Project;
 class Scene;
 
 namespace gl2
@@ -141,6 +142,7 @@ public:
     void renderModelZPlot(const vpvl::PMDModel *model);
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
+    void releaseProject(vpvl::Project *project);
 
     void clear();
     void renderAllAssets();

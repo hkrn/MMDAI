@@ -1006,6 +1006,18 @@ void Project::deleteMotion(VMDMotion *&motion)
     }
 }
 
+void Project::removeAsset(Asset *asset)
+{
+    if (containsAsset(asset))
+        m_handler->assets.remove(asset);
+}
+
+void Project::removeModel(PMDModel *model)
+{
+    if (containsModel(model))
+        m_handler->models.remove(model);
+}
+
 void Project::setPhysicsEnable(bool value)
 {
     m_handler->enablePhysics = value;

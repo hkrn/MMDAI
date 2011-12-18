@@ -1474,5 +1474,27 @@ void Renderer::renderZPlot()
     }
 }
 
+void Renderer::releaseProject(vpvl::Project *project)
+{
+#ifdef VPVL_ENABLE_PROJECT
+    const vpvl::Array<vpvl::Asset *> &assets = project->assets();
+    int nassets = assets.count();
+    for (int i = 0; i < nassets; i++) {
+        vpvl::Asset *asset = assets[i];
+        project->removeAsset(asset);
+        deleteAsset(asset);
+    }
+    const vpvl::Array<vpvl::PMDModel *> &models = project->models();
+    int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        vpvl::PMDModel *model = models[i];
+        project->removeModel(model);
+        deleteModel(model);
+    }
+#else
+    (void) project;
+#endif
+}
+
 }
 }
