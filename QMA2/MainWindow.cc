@@ -282,10 +282,22 @@ void MainWindow::newMotionFile()
 void MainWindow::newProjectFile()
 {
     if (maybeSaveProject()) {
-        m_sceneWidget->clear();
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
+        m_sceneWidget->clear();
+    }
+}
+
+void MainWindow::loadProject()
+{
+    if (maybeSaveProject()) {
+        m_boneMotionModel->removeMotion();
+        m_faceMotionModel->removeMotion();
+        m_sceneMotionModel->removeMotion();
+        m_sceneWidget->loadProject(m_sceneWidget->openFileDialog("mainWindow/lastProjectDirectory",
+                                                                 tr("Open VPVM file"),
+                                                                 tr("VPVM file (*.vpvm)")));
     }
 }
 
@@ -448,32 +460,37 @@ bool MainWindow::saveProjectAs(QString &filename)
     return !filename.isEmpty() ? saveProjectFile(filename) : false;
 }
 
-bool MainWindow::saveProjectFile(const QString & /* filename */)
+bool MainWindow::saveProjectFile(const QString &filename)
 {
-    /* TODO: implement this! */
+    m_sceneWidget->saveProject(filename);
     return true;
 }
 
 bool MainWindow::maybeSaveMotion()
 {
-    bool cancel;
-    if (confirmSave(cancel))
+    bool cancel, cond = m_boneMotionModel->isModified()
+            || m_faceMotionModel->isModified()
+            || m_sceneMotionModel->isModified();
+    if (confirmSave(cond, cancel))
         saveMotion();
     return !cancel;
 }
 
 bool MainWindow::maybeSaveProject()
 {
-    bool cancel;
-    if (confirmSave(cancel))
+    bool cancel, cond = m_boneMotionModel->isModified()
+            || m_faceMotionModel->isModified()
+            || m_sceneMotionModel->isModified()
+            || m_sceneWidget->isProjectModified();
+    if (confirmSave(cond, cancel))
         saveProject();
     return !cancel;
 }
 
-bool MainWindow::confirmSave(bool &cancel)
+bool MainWindow::confirmSave(bool condition, bool &cancel)
 {
     cancel = false;
-    if (m_boneMotionModel->isModified() || m_faceMotionModel->isModified() || m_sceneMotionModel->isModified()) {
+    if (condition) {
         QMessageBox::StandardButton ret;
         ret = QMessageBox::warning(this,
                                    qAppName(),
@@ -499,7 +516,7 @@ void MainWindow::buildUI()
     m_actionNewMotion = new QAction(this);
     connect(m_actionNewMotion, SIGNAL(triggered()), this, SLOT(addNewMotion()));
     m_actionLoadProject = new QAction(this);
-    //connect(m_actionLoadProject, SIGNAL(triggered()), this, SLOT(newFile()));
+    connect(m_actionLoadProject, SIGNAL(triggered()), this, SLOT(loadProject()));
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);

@@ -93,6 +93,9 @@ public:
     void showSelectedModelEdge();
     void hideSelectedModelEdge();
 
+    bool loadProject(const QString &filename);
+    void saveProject(const QString &filename);
+    bool isProjectModified() const;
     vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
@@ -110,6 +113,7 @@ public:
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     bool isPlaying() const { return m_playing; }
     bool showModelDialog() const { return m_showModelDialog; }
+    const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 public slots:
     void play();
@@ -205,7 +209,6 @@ protected:
     void resizeGL(int w, int h);
     void timerEvent(QTimerEvent *event);
     void wheelEvent(QWheelEvent *event);
-    const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 #ifdef VPVL_USE_GLSL
     vpvl::gl2::Renderer *m_renderer;

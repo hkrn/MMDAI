@@ -87,6 +87,7 @@ protected:
 private slots:
     void newMotionFile();
     void newProjectFile();
+    void loadProject();
     void saveMotion();
     void saveProject();
     void selectModel();
@@ -124,7 +125,7 @@ private:
     bool saveProjectFile(const QString &filename);
     bool maybeSaveMotion();
     bool maybeSaveProject();
-    bool confirmSave(bool &cancel);
+    bool confirmSave(bool condition, bool &cancel);
     void buildUI();
     void bindActions();
     void retranslate();

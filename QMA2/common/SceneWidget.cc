@@ -143,6 +143,22 @@ SceneWidget::~SceneWidget()
     m_world = 0;
 }
 
+bool SceneWidget::loadProject(const QString &filename)
+{
+    clear();
+    return m_loader->loadProject(filename);
+}
+
+void SceneWidget::saveProject(const QString &filename)
+{
+    m_loader->saveProject(filename);
+}
+
+bool SceneWidget::isProjectModified() const
+{
+    return m_loader->isProjectModified();
+}
+
 void SceneWidget::play()
 {
     m_playing = true;
@@ -170,7 +186,9 @@ void SceneWidget::stop()
 void SceneWidget::clear()
 {
     stop();
+    setSelectedModel(0);
     m_loader->release();
+    m_loader->createProject();
 }
 
 const vpvl::Scene *SceneWidget::scene() const

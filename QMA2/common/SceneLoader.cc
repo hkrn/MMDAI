@@ -130,6 +130,12 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
     m_project->addModel(model, key.toStdString());
 }
 
+void SceneLoader::createProject()
+{
+    if (!m_project)
+        m_project = new vpvl::Project(m_delegate);
+}
+
 bool SceneLoader::deleteAsset(vpvl::Asset *asset)
 {
     if (!asset)
@@ -219,6 +225,11 @@ vpvl::PMDModel *SceneLoader::findModel(const QString &name) const
 QList<vpvl::VMDMotion *> SceneLoader::findModelMotions(vpvl::PMDModel *model) const
 {
     return m_motions.values(model);
+}
+
+bool SceneLoader::isProjectModified() const
+{
+    return m_project->isDirty();
 }
 
 vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
@@ -502,6 +513,12 @@ void SceneLoader::release()
         model->removeMotion(motion);
         delete motion;
     }
+    /*
+      releaseProject は Project 内にある全ての Asset と PMDModel のインスタンスを Renderer クラスから物理削除し、
+      Project クラスから論理削除 (remove*) を行う。Project が物理削除 (delete*) を行なってしまうと Renderer クラスで
+      物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
+     */
+    m_renderer->releaseProject(m_project);
     m_motions.clear();
     delete m_delegate;
     m_delegate = 0;

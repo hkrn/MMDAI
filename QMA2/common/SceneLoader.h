@@ -75,6 +75,7 @@ public:
     ~SceneLoader();
 
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir);
+    void createProject();
     bool deleteAsset(vpvl::Asset *asset);
     void deleteCameraMotion();
     bool deleteModel(vpvl::PMDModel *model);
@@ -82,6 +83,7 @@ public:
     bool deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     vpvl::PMDModel *findModel(const QString &name) const;
     QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
+    bool isProjectModified() const;
     vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
     vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
