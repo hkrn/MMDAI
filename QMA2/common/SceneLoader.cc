@@ -127,10 +127,10 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
         }
     }
     /* モデルを SceneLoader にヒモ付けする */
-    const QString &filename = dir.absoluteFilePath(baseName);
+    const QString &path = dir.absoluteFilePath(baseName);
     m_project->addModel(model);
     m_project->setModelSetting(model, vpvl::Project::kSettingNameKey, key.toStdString());
-    m_project->setModelSetting(model, vpvl::Project::kSettingURIKey, internal::toStdStringUtf8(filename));
+    m_project->setModelSetting(model, vpvl::Project::kSettingURIKey, path.toStdString());
 }
 
 void SceneLoader::createProject()
@@ -247,22 +247,6 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir)
         asset = new vpvl::Asset();
         if (asset->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             QString key = baseName;
-            QList<vpvl::PMDModel *> flm;
-            const vpvl::Array<vpvl::PMDModel *> &models = m_project->models();
-            int nmodels = models.count();
-            for (int i = 0; i < nmodels; i++) {
-                vpvl::PMDModel *model = models[i];
-                const std::string &uri = m_project->modelSetting(model, vpvl::Project::kSettingURIKey);
-                QFile file(QString::fromStdString(uri));
-                if (file.open(QFile::ReadOnly)) {
-                    const QByteArray &bytes = file.readAll();
-                    if (model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-                        m_renderer->updateModel(model);
-                        continue;
-                    }
-                }
-                flm.append(model);
-            }
             /* アクセサリ名が重複していれば連番で名前を作成する */
             if (m_project->assetFromName(key.toStdString())) {
                 int i = 0;

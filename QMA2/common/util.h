@@ -95,12 +95,6 @@ static inline const QString toQString(const vpvl::FaceKeyFrame *value)
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const std::string toStdStringUtf8(const QString &value)
-{
-    const QByteArray &bytes = value.toUtf8();
-    return std::string(bytes.constData(), bytes.length());
-}
-
 static inline void dumpBones(vpvl::PMDModel *model)
 {
     const vpvl::BoneList &bones = model->bones();
