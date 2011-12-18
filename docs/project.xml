@@ -9,23 +9,27 @@
  </vpvm:settings>
  <vpvm:physics enabled="true"/>
  <vpvm:models>
-  <vpvm:model name="foo">
+  <vpvm:model>
+   <vpvm:value name="name">foo</vpvm:value>
+   <vpvm:value name="uri">model:/foo/bar/baz</vpvm:value>
    <vpvm:value name="edge">1.0</vpvm:value>
-   <vpvm:value name="path">model:/foo/bar/baz</vpvm:value>
    <vpvm:value name="position">1,2,3</vpvm:value>
   </vpvm:model>
-  <vpvm:model name="bar">
+  <vpvm:model>
+   <vpvm:value name="name">bar</vpvm:value>
+   <vpvm:value name="uri">model:/baz/bar/foo</vpvm:value>
    <vpvm:value name="edge">0.5</vpvm:value>
-   <vpvm:value name="path">model:/baz/bar/foo</vpvm:value>
    <vpvm:value name="position">3,2,1</vpvm:value>
   </vpvm:model>
  </vpvm:models>
  <vpvm:assets>
-  <vpvm:asset name="foo">
-   <vpvm:value name="path">asset:/foo/bar/baz</vpvm:value>
+  <vpvm:asset>
+   <vpvm:value name="name">foo</vpvm:value>
+   <vpvm:value name="uri">asset:/foo/bar/baz</vpvm:value>
   </vpvm:asset>
-  <vpvm:asset name="bar">
-   <vpvm:value name="path">asset:/baz/bar/foo</vpvm:value>
+  <vpvm:asset>
+   <vpvm:value name="name">bar</vpvm:value>
+   <vpvm:value name="uri">asset:/baz/bar/foo</vpvm:value>
   </vpvm:asset>
  </vpvm:assets>
  <vpvm:motions>
