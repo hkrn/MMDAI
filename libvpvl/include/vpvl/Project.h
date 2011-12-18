@@ -42,6 +42,8 @@
 
 #include "vpvl/Common.h"
 
+typedef struct _xmlTextWriter* xmlTextWriterPtr;
+
 namespace vpvl
 {
 
@@ -97,6 +99,8 @@ public:
     bool containsAsset(Asset *asset) const;
     bool containsModel(PMDModel *model) const;
     bool containsMotion(VMDMotion *motion) const;
+    bool isDirty() const { return m_dirty; }
+    void setDirty(bool value) { m_dirty = value; }
 
     void addAsset(Asset *asset, const std::string &name);
     void addModel(PMDModel *model, const std::string &name);
@@ -113,8 +117,11 @@ public:
     void setModelSetting(PMDModel *model, const std::string &key, const std::string &value);
 
 private:
+    bool save0(xmlTextWriterPtr ptr);
+
     Handler *m_handler;
     xmlSAXHandler m_sax;
+    bool m_dirty;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Project)
 };

@@ -38,7 +38,6 @@
 #include "vpvl/internal/util.h"
 
 #include <libxml2/libxml/xmlwriter.h>
-
 #include <string>
 #include <sstream>
 #include <map>
@@ -835,7 +834,8 @@ bool Project::isReservedSettingKey(const std::string &key)
 }
 
 Project::Project(IDelegate *delegate)
-    : m_handler(0)
+    : m_handler(0),
+      m_dirty(false)
 {
     internal::zerofill(&m_sax, sizeof(m_sax));
     m_handler = new Handler(delegate);
@@ -852,6 +852,7 @@ Project::~Project()
     internal::zerofill(&m_sax, sizeof(m_sax));
     delete m_handler;
     m_handler = 0;
+    m_dirty = false;
 }
 
 bool Project::load(const char *path)
@@ -866,18 +867,12 @@ bool Project::load(const uint8_t *data, size_t size)
 
 bool Project::save(const char *path)
 {
-    xmlTextWriterPtr ptr = xmlNewTextWriterFilename(path, 0);
-    bool ret = m_handler->save(ptr);
-    xmlFreeTextWriter(ptr);
-    return ret;
+    return save0(xmlNewTextWriterFilename(path, 0));
 }
 
 bool Project::save(xmlBufferPtr &buffer)
 {
-    xmlTextWriterPtr ptr = xmlNewTextWriterMemory(buffer, 0);
-    bool ret = m_handler->save(ptr);
-    xmlFreeTextWriter(ptr);
-    return ret;
+    return save0(xmlNewTextWriterMemory(buffer, 0));
 }
 
 float Project::version() const
@@ -962,6 +957,7 @@ void Project::addAsset(Asset *asset, const std::string &name)
     if (!containsAsset(asset)) {
         m_handler->assets.add(asset);
         m_handler->localAssetSettings[asset][kSettingNameKey] = name;
+        setDirty(true);
     }
 }
 
@@ -970,13 +966,16 @@ void Project::addModel(PMDModel *model, const std::string &name)
     if (!containsModel(model)) {
         m_handler->models.add(model);
         m_handler->localModelSettings[model][kSettingNameKey] = name;
+        setDirty(true);
     }
 }
 
 void Project::addMotion(VMDMotion *motion)
 {
-    if (!containsMotion(motion))
+    if (!containsMotion(motion)) {
         m_handler->motions.add(motion);
+        setDirty(true);
+    }
 }
 
 void Project::deleteAsset(Asset *&asset)
@@ -985,6 +984,7 @@ void Project::deleteAsset(Asset *&asset)
         m_handler->assets.remove(asset);
         delete asset;
         asset = 0;
+        setDirty(true);
     }
 }
 
@@ -994,6 +994,7 @@ void Project::deleteModel(PMDModel *&model)
         m_handler->models.remove(model);
         delete model;
         model = 0;
+        setDirty(true);
     }
 }
 
@@ -1003,41 +1004,61 @@ void Project::deleteMotion(VMDMotion *&motion)
         m_handler->motions.remove(motion);
         delete motion;
         motion = 0;
+        setDirty(true);
     }
 }
 
 void Project::removeAsset(Asset *asset)
 {
-    if (containsAsset(asset))
+    if (containsAsset(asset)) {
         m_handler->assets.remove(asset);
+        setDirty(true);
+    }
 }
 
 void Project::removeModel(PMDModel *model)
 {
-    if (containsModel(model))
+    if (containsModel(model)) {
         m_handler->models.remove(model);
+        setDirty(true);
+    }
 }
 
 void Project::setPhysicsEnable(bool value)
 {
     m_handler->enablePhysics = value;
+    setDirty(true);
 }
 
 void Project::setGlobalSetting(const std::string &key, std::string &value)
 {
     m_handler->globalSettings[key] = value;
+    setDirty(true);
 }
 
 void Project::setAssetSetting(Asset *asset, const std::string &key, const std::string &value)
 {
-    if (containsAsset(asset) && !isReservedSettingKey(key))
+    if (containsAsset(asset) && !isReservedSettingKey(key)) {
         m_handler->localAssetSettings[asset][key] = value;
+        setDirty(true);
+    }
 }
 
 void Project::setModelSetting(PMDModel *model, const std::string &key, const std::string &value)
 {
-    if (containsModel(model) && !isReservedSettingKey(key))
+    if (containsModel(model) && !isReservedSettingKey(key)) {
         m_handler->localModelSettings[model][key] = value;
+        setDirty(true);
+    }
+}
+
+bool Project::save0(xmlTextWriterPtr ptr)
+{
+    bool ret = m_handler->save(ptr);
+    xmlFreeTextWriter(ptr);
+    if (ret)
+        m_dirty = false;
+    return ret;
 }
 
 } /* namespace vpvl */

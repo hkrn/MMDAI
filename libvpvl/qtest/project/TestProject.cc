@@ -2,7 +2,6 @@
 #include <QtTest/QtTest>
 
 #include <vpvl/vpvl.h>
-#include <vpvl/Project.h>
 
 using namespace vpvl;
 
@@ -75,6 +74,7 @@ void TestProject::load()
     Delegate delegate;
     Project project(&delegate);
     QVERIFY(project.load("project.xml"));
+    QVERIFY(!project.isDirty());
     QCOMPARE(project.version(), 0.1f);
     QVERIFY(project.isPhysicsEnabled());
     const Array<Asset *> &assets = project.assets();
@@ -99,7 +99,9 @@ void TestProject::save()
     QTemporaryFile file;
     file.open();
     file.setAutoRemove(true);
+    project.setDirty(true);
     project.save(file.fileName().toUtf8());
+    QVERIFY(!project.isDirty());
     Project project2(&delegate);
     QVERIFY(project2.load(file.fileName().toUtf8()));
     QCOMPARE(project2.version(), 0.1f);
@@ -122,53 +124,67 @@ void TestProject::handleAssets()
 {
     Delegate delegate;
     Project project(&delegate);
-    Asset *asset = new Asset();
-    QVERIFY(!project.containsAsset(asset));
+    Asset *asset = new Asset(), *ptr = asset;
+    QVERIFY(!project.containsAsset(ptr));
     project.addAsset(asset, "foo");
-    QVERIFY(project.containsAsset(asset));
+    QVERIFY(project.isDirty());
+    QVERIFY(project.containsAsset(ptr));
+    project.setDirty(false);
     project.addAsset(asset, "bar");
+    QVERIFY(!project.isDirty());
     QCOMPARE(project.assetSetting(asset, Project::kSettingNameKey).c_str(), "foo");
     QCOMPARE(project.assetFromName("foo"), asset);
     QCOMPARE(project.assetFromName("no_such_asset"), static_cast<Asset*>(0));
-    Asset *ptr = asset;
     project.deleteAsset(asset);
-    QVERIFY(!project.containsAsset(asset));
+    QVERIFY(!project.containsAsset(ptr));
+    QVERIFY(project.isDirty());
     QVERIFY(!asset);
+    project.setDirty(false);
     project.deleteAsset(ptr);
-    QVERIFY(ptr);
+    QVERIFY(!project.isDirty());
 }
 
 void TestProject::handleModels()
 {
     Delegate delegate;
     Project project(&delegate);
-    PMDModel *model = new PMDModel();
-    QVERIFY(!project.containsModel(model));
+    PMDModel *model = new PMDModel(), *ptr = model;
+    QVERIFY(!project.containsModel(ptr));
     project.addModel(model, "foo");
-    QVERIFY(project.containsModel(model));
+    QVERIFY(project.isDirty());
+    QVERIFY(project.containsModel(ptr));
+    project.setDirty(false);
     project.addModel(model, "bar");
+    QVERIFY(!project.isDirty());
     QCOMPARE(project.modelSetting(model, Project::kSettingNameKey).c_str(), "foo");
     QCOMPARE(project.modelFromName("foo"), model);
     QCOMPARE(project.modelFromName("no_such_model"), static_cast<PMDModel*>(0));
-    PMDModel *ptr = model;
     project.deleteModel(model);
-    QVERIFY(!project.containsModel(model));
+    QVERIFY(!project.containsModel(ptr));
+    QVERIFY(project.isDirty());
     QVERIFY(!model);
+    project.setDirty(false);
     project.deleteModel(ptr);
-    QVERIFY(ptr);
+    QVERIFY(!project.isDirty());
 }
 
 void TestProject::handleMotions()
 {
     Delegate delegate;
     Project project(&delegate);
-    VMDMotion *motion = new VMDMotion();
-    QVERIFY(!project.containsMotion(motion));
+    VMDMotion *motion = new VMDMotion(), *ptr = motion;
+    QVERIFY(!project.containsMotion(ptr));
     project.addMotion(motion);
-    QVERIFY(project.containsMotion(motion));
+    QVERIFY(project.isDirty());
+    QVERIFY(project.containsMotion(ptr));
+    project.setDirty(false);
     project.deleteMotion(motion);
-    QVERIFY(!project.containsMotion(motion));
+    QVERIFY(!project.containsMotion(ptr));
+    QVERIFY(project.isDirty());
     QVERIFY(!motion);
+    project.setDirty(false);
+    project.deleteMotion(ptr);
+    QVERIFY(!project.isDirty());
 }
 
 void TestProject::testGlobalSettings(const Project &project)
