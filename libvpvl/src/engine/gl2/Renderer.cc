@@ -1488,6 +1488,7 @@ void Renderer::releaseProject(vpvl::Project *project)
     int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         vpvl::PMDModel *model = models[i];
+        model->deleteAllMotions();
         project->removeModel(model);
         deleteModel(model);
     }

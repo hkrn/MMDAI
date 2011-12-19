@@ -220,6 +220,29 @@ void PMDModel::removeMotion(VMDMotion *motion)
     m_motions.remove(motion);
 }
 
+void PMDModel::removeAllMotions()
+{
+    m_motions.clear();
+}
+
+void PMDModel::deleteMotion(VMDMotion *&motion)
+{
+    const int nmotions = m_motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        VMDMotion *m = m_motions[i];
+        if (m == motion) {
+            removeMotion(motion);
+            delete motion;
+            motion = 0;
+        }
+    }
+}
+
+void PMDModel::deleteAllMotions()
+{
+    m_motions.releaseAll();
+}
+
 void PMDModel::discardState(State *&state) const
 {
     delete state;

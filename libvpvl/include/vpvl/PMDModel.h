@@ -208,6 +208,23 @@ public:
     void removeMotion(VMDMotion *motion);
 
     /**
+     * Detach all motions from the model.
+     */
+    void removeAllMotions();
+
+    /**
+     * Detach a motion and delete it from the model.
+     *
+     * @param motion A motion to delete
+     */
+    void deleteMotion(VMDMotion *&motion);
+
+    /**
+     * Detach all motions and delete them from the model.
+     */
+    void deleteAllMotions();
+
+    /**
      * Reset all motions of the model and seek to zero.
      */
     void resetMotion();
@@ -499,6 +516,9 @@ public:
     }
     const ConstraintList &constraints() const {
         return m_constraints;
+    }
+    const Array<VMDMotion *> &motions() const {
+        return m_motions;
     }
     BoneList *mutableBones() {
         return &m_bones;
