@@ -69,16 +69,20 @@ public:
     }
 
     bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
-        const QString &pathString = QString::fromLocal8Bit(path.c_str());
+        QString pathString = QString::fromLocal8Bit(path.c_str());
+        pathString.replace("\\", "/");
         QFileInfo info(pathString);
         if (info.isDir() || !info.exists()) {
+            qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
             return false;
         }
         uint8_t *rawData = 0;
         QImage image = pathString.endsWith(".tga", Qt::CaseInsensitive)
                 ? loadTGA(pathString, rawData) : QImage(pathString).rgbSwapped();
-        if (image.isNull())
+        if (image.isNull()) {
+            qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
             return false;
+        }
         if (pathString.endsWith(".sph") || pathString.endsWith(".spa")) {
             QTransform transform;
             transform.scale(1, -1);
@@ -98,6 +102,7 @@ public:
     bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
         const QString &filename = QString::fromLocal8Bit(name.c_str());
         QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
+        path.replace("\\", "/");
         if (!QFile::exists(path))
             path = QString(":/textures/%1").arg(filename);
         return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
