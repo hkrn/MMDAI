@@ -171,7 +171,7 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
      * SceneLoader のヒモ付けも解除する
      */
     if (m_project->containsModel(model)) {
-        deleteModelMotion(model);
+        model->deleteAllMotions();
         m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
         m_project->deleteModel(model);
@@ -180,54 +180,9 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
     return false;
 }
 
-bool SceneLoader::deleteModelMotion(vpvl::PMDModel *model)
-{
-    if (!model)
-        return false;
-    /* モデルにヒモ付いた全てのモーションを解除し、削除する */
-    if (m_motions.contains(model)) {
-        QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
-        while (i.hasNext()) {
-            i.next();
-            if (i.key() == model) {
-                vpvl::VMDMotion *motion = i.value();
-                model->removeMotion(motion);
-                delete motion;
-            }
-        }
-        m_motions.remove(model);
-        return true;
-    }
-    return false;
-}
-
-bool SceneLoader::deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
-{
-    /* 引数で渡されたモデルにヒモ付いたモーションを解除し、削除する */
-    if (m_motions.contains(model)) {
-        QMutableHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
-        while (i.hasNext()) {
-            i.next();
-            if (i.key() == model && i.value() == motion) {
-                model->removeMotion(motion);
-                m_motions.remove(model, motion);
-                delete motion;
-                break;
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
 vpvl::PMDModel *SceneLoader::findModel(const QString &name) const
 {
     return m_project->modelFromName(name.toStdString());
-}
-
-QList<vpvl::VMDMotion *> SceneLoader::findModelMotions(vpvl::PMDModel *model) const
-{
-    return m_motions.values(model);
 }
 
 bool SceneLoader::isProjectModified() const
@@ -495,21 +450,12 @@ bool SceneLoader::loadProject(const QString &path)
 
 void SceneLoader::release()
 {
-    QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
-    while (i.hasNext()) {
-        i.next();
-        vpvl::PMDModel *model = i.key();
-        vpvl::VMDMotion *motion = i.value();
-        model->removeMotion(motion);
-        delete motion;
-    }
     /*
       releaseProject は Project 内にある全ての Asset と PMDModel のインスタンスを Renderer クラスから物理削除し、
       Project クラスから論理削除 (remove*) を行う。Project が物理削除 (delete*) を行なってしまうと Renderer クラスで
       物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
      */
     m_renderer->releaseProject(m_project);
-    m_motions.clear();
     delete m_delegate;
     m_delegate = 0;
     delete m_project;
@@ -559,13 +505,14 @@ void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     model->addMotion(motion);
-    m_motions.insert(model, motion);
+    m_project->addMotion(motion);
 }
 
 const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions()
 {
     /* 停止されたモーションを取得する (MMDAI2 上では使っていない) */
     QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
+    /*
     QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
     while (i.hasNext()) {
         i.next();
@@ -575,5 +522,6 @@ const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions
             ret.insert(model, motion);
         }
     }
+    */
     return ret;
 }

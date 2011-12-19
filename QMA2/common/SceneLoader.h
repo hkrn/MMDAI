@@ -65,8 +65,6 @@ class VPDFile;
 class SceneLoader
 {
 public:
-    typedef QMultiHash<vpvl::PMDModel *, vpvl::VMDMotion *> MotionList;
-
 #ifdef VPVL_USE_GLSL
     explicit SceneLoader(vpvl::gl2::Renderer *renderer);
 #else
@@ -79,8 +77,6 @@ public:
     bool deleteAsset(vpvl::Asset *asset);
     void deleteCameraMotion();
     bool deleteModel(vpvl::PMDModel *model);
-    bool deleteModelMotion(vpvl::PMDModel *model);
-    bool deleteModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     vpvl::PMDModel *findModel(const QString &name) const;
     QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
     bool isProjectModified() const;
@@ -109,7 +105,6 @@ private:
 #else
     vpvl::gl::Renderer *m_renderer;
 #endif
-    MotionList m_motions;
     QMap<QString, vpvl::Asset*> m_name2assets;
     vpvl::Project *m_project;
     vpvl::Project::IDelegate *m_delegate;

@@ -704,6 +704,7 @@ void BoneMotionModel::removeMotion()
 {
     /* 選択されたボーンとモデルに登録されているデータが削除される。ボーン名は削除されない */
     m_selected.clear();
+    m_motion = 0;
     setModified(false);
     removePMDMotion(m_model);
     reset();

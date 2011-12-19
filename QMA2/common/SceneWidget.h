@@ -132,7 +132,6 @@ public slots:
     void deleteSelectedModel();
     void deleteAsset(vpvl::Asset *asset);
     void deleteModel(vpvl::PMDModel *model);
-    void deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void resetCamera();
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);

@@ -590,11 +590,6 @@ void SceneWidget::deleteModel(vpvl::PMDModel *model)
     m_loader->deleteModel(model);
 }
 
-void SceneWidget::deleteMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
-{
-    m_loader->deleteModelMotion(motion, model);
-}
-
 void SceneWidget::resetCamera()
 {
     vpvl::Scene *scene = m_renderer->scene();

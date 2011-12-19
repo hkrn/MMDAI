@@ -1279,7 +1279,8 @@ void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
         vpvl::PMDModel *model = m_sceneWidget->selectedModel();
-        m_sceneWidget->deleteMotion(m_boneMotionModel->currentMotion(), model);
+        vpvl::VMDMotion *motion = m_boneMotionModel->currentMotion();
+        model->deleteMotion(motion);
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
