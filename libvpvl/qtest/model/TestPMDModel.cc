@@ -26,6 +26,7 @@ private Q_SLOTS:
     void parseMaterial();
     void parseRigidBody();
     void parseVertex();
+    void handleMotions();
 };
 
 namespace
@@ -414,6 +415,31 @@ void TestPMDModel::parseVertex()
     vertex2.read(reinterpret_cast<const uint8_t *>(bytes.data()));
     QCOMPARE(bytes2, bytes);
     TestVertex(vertex2);
+}
+
+void TestPMDModel::handleMotions()
+{
+    PMDModel model;
+    VMDMotion *motion = new VMDMotion(), *motion2 = new VMDMotion(), *motion3 = new VMDMotion();
+    QCOMPARE(model.motions().count(), 0);
+    model.addMotion(motion);
+    QCOMPARE(model.motions().count(), 1);
+    model.removeMotion(motion);
+    QCOMPARE(model.motions().count(), 0);
+    model.addMotion(motion);
+    model.addMotion(motion2);
+    QCOMPARE(model.motions().count(), 2);
+    model.removeAllMotions();
+    QCOMPARE(model.motions().count(), 0);
+    model.addMotion(motion);
+    model.deleteMotion(motion);
+    QCOMPARE(model.motions().count(), 0);
+    QVERIFY(!motion);
+    model.addMotion(motion2);
+    model.addMotion(motion3);
+    QCOMPARE(model.motions().count(), 2);
+    model.deleteAllMotions();
+    QCOMPARE(model.motions().count(), 0);
 }
 
 QTEST_APPLESS_MAIN(TestPMDModel)
