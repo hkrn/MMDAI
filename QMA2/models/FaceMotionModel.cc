@@ -266,6 +266,14 @@ private:
     vpvl::PMDModel::State *m_oldState;
 };
 
+static vpvl::Face *FaceFromModelIndex(const QModelIndex &index, vpvl::PMDModel *model)
+{
+    /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
+    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+    QByteArray bytes = internal::fromQString(item->name());
+    return model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
+}
+
 }
 
 FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
@@ -369,19 +377,17 @@ void FaceMotionModel::commitTransform()
     }
 }
 
-void FaceMotionModel::selectByModelIndex(const QModelIndex &index)
+void FaceMotionModel::selectByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
-        /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
-        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-        QByteArray bytes = internal::fromQString(item->name());
-        vpvl::Face *face = m_model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        /* 対象の頂点モーフが発見した場合のみ選択状態にする */
-        if (face) {
-            QList<vpvl::Face *> faces;
-            faces.append(face);
-            selectFaces(faces);
+        QList<vpvl::Face *> faces;
+        foreach (const QModelIndex &index, indices) {
+            vpvl::Face *face = FaceFromModelIndex(index, m_model);
+            if (face)
+                faces.append(face);
         }
+        if (!faces.isEmpty())
+            selectFaces(faces);
     }
 }
 

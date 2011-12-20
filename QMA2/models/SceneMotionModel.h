@@ -69,7 +69,7 @@ public:
     void addKeyFramesByModelIndices(const QModelIndexList &indices);
     void copyFrames(int frameIndex);
     void pasteFrame(int frameIndex);
-    void selectByModelIndex(const QModelIndex &index);
+    void selectByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);

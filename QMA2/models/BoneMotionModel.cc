@@ -360,6 +360,14 @@ private:
     vpvl::PMDModel::State *m_oldState;
 };
 
+static vpvl::Bone *BoneFromModelIndex(const QModelIndex &index, vpvl::PMDModel *model)
+{
+    /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Bone の順番で対象のボーンを求めて選択状態にする作業 */
+    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+    QByteArray bytes = internal::fromQString(item->name());
+    return model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+}
+
 }
 
 BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent) :
@@ -520,19 +528,18 @@ void BoneMotionModel::commitTransform()
     }
 }
 
-void BoneMotionModel::selectByModelIndex(const QModelIndex &index)
+void BoneMotionModel::selectByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
-        /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Bone の順番で対象のボーンを求めて選択状態にする作業 */
-        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-        QByteArray bytes = internal::fromQString(item->name());
-        vpvl::Bone *bone = m_model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
-        /* 対象のボーンが発見した場合のみ選択状態にする */
-        if (bone) {
-            QList<vpvl::Bone *> bones;
-            bones.append(bone);
-            selectBones(bones);
+        QList<vpvl::Bone *> bones;
+        foreach (const QModelIndex &index, indices) {
+            vpvl::Bone *bone = BoneFromModelIndex(index, m_model);
+            if (bone)
+                bones.append(bone);
         }
+        qDebug() << indices << bones;
+        if (!bones.isEmpty())
+            selectBones(bones);
     }
 }
 

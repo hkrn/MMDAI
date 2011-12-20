@@ -119,8 +119,13 @@ public:
     void setModel(vpvl::PMDModel *model) {
         m_model = internal::toQString(model);
     }
-    void setBone(vpvl::Bone *bone) {
-        m_bone = internal::toQString(bone);
+    void setBones(const QList<vpvl::Bone *> &bones, const QString &alterTextOnMultiple) {
+        if (bones.count() > 1)
+            m_bone = alterTextOnMultiple;
+        else if (bones.count() == 1)
+            m_bone = internal::toQString(bones.first());
+        else
+            m_bone = internal::toQString(static_cast<vpvl::Bone *>(0));
     }
     void setFPS(float value) {
         m_fps = value;

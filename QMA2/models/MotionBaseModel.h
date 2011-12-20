@@ -136,12 +136,17 @@ public:
         }
         return parentItem->countChildren();
     }
+    virtual void selectByModelIndex(const QModelIndex &index) {
+        QModelIndexList indices;
+        indices.append(index);
+        selectByModelIndices(indices);
+    }
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
     virtual void addKeyFramesByModelIndices(const QModelIndexList &indices) = 0;
     virtual void copyFrames(int frameIndex) = 0;
-    virtual void selectByModelIndex(const QModelIndex &index) = 0;
+    virtual void selectByModelIndices(const QModelIndexList &indices) = 0;
     virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
     virtual int maxFrameCount() const = 0;
 

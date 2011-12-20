@@ -663,18 +663,19 @@ void SceneWidget::getObjectCoordinates(const QPointF &input, vpvl::Vector3 &came
 
 void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
 {
-    vpvl::Bone *bone = bones.isEmpty() ? 0 : bones.last();
-    m_info->setBone(bone);
+    m_info->setBones(bones, tr("(multiple)"));
     m_info->update();
-    if (bone) {
+    if (bones.count() > 0) {
+        vpvl::Bone *bone = bones.first();
         m_handles->setMovable(bone->isMovable());
         m_handles->setRotateable(bone->isRotateable());
+        m_bone = bone;
     }
     else {
         m_handles->setMovable(false);
         m_handles->setRotateable(false);
+        m_bone = 0;
     }
-    m_bone = bone;
 }
 
 void SceneWidget::rotate(float x, float y)
@@ -840,7 +841,7 @@ void SceneWidget::initializeGL()
     m_handles->load();
     m_info->load();
     m_info->setModel(0);
-    m_info->setBone(0);
+    m_info->setBones(QList<vpvl::Bone *>(), "");
     m_info->setFPS(0.0f);
     m_info->update();
     m_renderer->initializeSurface();

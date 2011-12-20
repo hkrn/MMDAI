@@ -168,7 +168,7 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
         /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
         if (!item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            pmm->selectByModelIndex(index);
+            pmm->selectByModelIndices(selectionModel()->selection().indexes());
         }
     }
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {

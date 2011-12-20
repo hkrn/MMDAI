@@ -76,7 +76,7 @@ public:
     void pasteReversedFrame(int frameIndex);
     void startTransform();
     void commitTransform();
-    void selectByModelIndex(const QModelIndex &index);
+    void selectByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
