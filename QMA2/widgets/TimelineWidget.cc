@@ -60,23 +60,52 @@ public:
         /* キーフレームのインデックスが5で割り切れる場合は背景を白ではない色にする */
         if (MotionBaseModel::toFrameIndex(index) % 5 == 0)
             painter->fillRect(option.rect, qApp->palette().alternateBase());
-        painter->setPen(Qt::NoPen);
         painter->setRenderHint(QPainter::Antialiasing);
+        MotionBaseModel::ITreeItem *item = static_cast<MotionBaseModel::ITreeItem *>(index.internalPointer());
+        /* カテゴリ内のボーンリストにひとつでもキーフレームが含まれていればダイアモンドマークを表示する */
+        const PMDMotionModel *m = qobject_cast<const PMDMotionModel *>(index.model());
+        if (m && item->isCategory()) {
+            int nchildren = item->countChildren(), frameIndex = MotionBaseModel::toFrameIndex(index.column());
+            bool dataFound = false;
+            for (int i = 0; i < nchildren; i++) {
+                const QModelIndex &mi = m->frameIndexToModelIndex(item->child(i), frameIndex);
+                if (mi.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
+                    dataFound = true;
+                    break;
+                }
+            }
+            if (dataFound)
+                drawRedDiamond(painter, option, false);
+        }
         /* モデルのデータにキーフレームのバイナリが含まれていればダイアモンドマークを表示する */
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
-            if (option.state & QStyle::State_Selected)
-                painter->setBrush(Qt::red);
-            else
-                painter->setBrush(option.palette.foreground());
-            drawDiamond(painter, option);
+            drawRedDiamond(painter, option, true);
         }
         else if (option.state & QStyle::State_Selected) {
+            painter->setPen(Qt::NoPen);
             painter->setBrush(option.palette.highlight());
             drawDiamond(painter, option);
         }
     }
 
 private:
+    void drawRedDiamond(QPainter *painter, const QStyleOptionViewItem &option, bool fill) const {
+        if (option.state & QStyle::State_Selected) {
+            painter->setBrush(Qt::red);
+            painter->setPen(Qt::NoPen);
+        }
+        else {
+            if (fill) {
+                painter->setBrush(option.palette.foreground());
+                painter->setPen(Qt::NoPen);
+            }
+            else {
+                painter->setBrush(Qt::NoBrush);
+                painter->setPen(Qt::black);
+            }
+        }
+        drawDiamond(painter, option);
+    }
     void drawDiamond(QPainter *painter, const QStyleOptionViewItem &option) const {
         const QRect &rect = option.rect;
         int width = rect.height();
