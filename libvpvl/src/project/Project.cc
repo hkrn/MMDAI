@@ -987,28 +987,28 @@ const std::string &Project::modelSetting(PMDModel *model, const std::string &key
     return containsModel(model) ? m_handler->localModelSettings[model][key] : Handler::kEmpty;
 }
 
-const std::vector<std::string> Project::assetUUIDs() const
+const Project::UUIDList Project::assetUUIDs() const
 {
     const Handler::AssetMap &assets = m_handler->assets;
-    std::vector<std::string> uuids;
+    Project::UUIDList uuids;
     for (Handler::AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++)
         uuids.push_back((*it).first);
     return uuids;
 }
 
-const std::vector<std::string> Project::modelUUIDs() const
+const Project::UUIDList Project::modelUUIDs() const
 {
     const Handler::PMDModelMap &models = m_handler->models;
-    std::vector<std::string> uuids;
+    Project::UUIDList uuids;
     for (Handler::PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++)
         uuids.push_back((*it).first);
     return uuids;
 }
 
-const std::vector<std::string> Project::motionUUIDs() const
+const Project::UUIDList Project::motionUUIDs() const
 {
     const Handler::VMDMotionMap &motions = m_handler->motions;
-    std::vector<std::string> uuids;
+    Project::UUIDList uuids;
     for (Handler::VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
         uuids.push_back((*it).first);
     return uuids;
