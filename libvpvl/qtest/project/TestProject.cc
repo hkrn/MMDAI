@@ -178,6 +178,7 @@ void TestProject::handleMotions()
     PMDModel *model = new PMDModel();
     VMDMotion *motion = new VMDMotion(), *ptr = motion;
     QVERIFY(!project.containsMotion(ptr));
+    project.addModel(model, "");
     project.addMotion(motion, model, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsMotion(ptr));
