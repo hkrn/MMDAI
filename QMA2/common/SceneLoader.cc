@@ -237,17 +237,17 @@ vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const Q
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
         /* 1行目: アクセサリ名 */
-        QString name = stream.readLine();
+        const QString &name = stream.readLine();
         /* 2行目: ファイル名 */
-        QString filename = stream.readLine();
+        const QString &filename = stream.readLine();
         /* 3行目: アクセサリの拡大率 */
         float scaleFactor = stream.readLine().toFloat();
         /* 4行目: アクセサリの位置パラメータ */
-        QStringList position = stream.readLine().split(',');
+        const QStringList &position = stream.readLine().split(',');
         /* 5行目: アクセサリの回転パラメータ */
-        QStringList rotation = stream.readLine().split(',');
+        const QStringList &rotation = stream.readLine().split(',');
         /* 6行目: アクセサリに紐付ける親ボーン(未実装) */
-        QString bone = stream.readLine();
+        const QString &bone = stream.readLine();
         /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
         vpvl::Asset *asset = loadAsset(filename, dir, uuid);
@@ -275,7 +275,7 @@ vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const Q
             }
             vpvl::PMDModel *model = m_renderer->selectedModel();
             if (!bone.isEmpty() && model) {
-                QByteArray bytes = internal::fromQString(name);
+                const QByteArray &bytes = internal::fromQString(name);
                 vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 asset->setParentBone(bone);
             }
@@ -350,7 +350,7 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<vpvl::P
     /* モーションをファイルから読み込み、対象の全てのモデルに対してモーションを適用する */
     vpvl::VMDMotion *motion = loadModelMotion(path);
     if (motion) {
-        const std::vector<std::string> &modelUUIDs = m_project->modelUUIDs();
+        const vpvl::Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         int nmodels = modelUUIDs.size();
         for (int i = 0; i < nmodels; i++) {
             vpvl::PMDModel *model = m_project->model(modelUUIDs[i]);
@@ -402,8 +402,8 @@ bool SceneLoader::loadProject(const QString &path)
         int nmodels = modelUUIDs.size();
         for (int i = 0; i < nmodels; i++) {
             vpvl::PMDModel *model = m_project->model(modelUUIDs[i]);
+            const std::string &name = m_project->modelSetting(model, vpvl::Project::kSettingNameKey);
             const std::string &uri = m_project->modelSetting(model, vpvl::Project::kSettingURIKey);
-            qDebug() << QString::fromStdString(uri) << QString::fromStdString(m_project->modelSetting(model, vpvl::Project::kSettingNameKey));
             QFile file(QString::fromStdString(uri));
             if (file.open(QFile::ReadOnly)) {
                 const QByteArray &bytes = file.readAll();
@@ -414,7 +414,7 @@ bool SceneLoader::loadProject(const QString &path)
             }
             /* 読み込みに失敗したモデルは後で vpvl::Project から削除するため失敗したリストに追加する */
             qWarning("Model \"%s\" at \"%s\" cannot be loaded: %s",
-                     qPrintable(internal::toQString(model)),
+                     name.c_str(),
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
             flm.append(model);
