@@ -446,6 +446,7 @@ bool SceneLoader::loadProject(const QString &path)
             m_project->deleteModel(model);
         foreach (vpvl::Asset *asset, fla)
             m_project->deleteAsset(asset);
+        /* FIXME: モデルとアクセサリ、モーションの追加の通知 */
     }
     return ret;
 }
@@ -561,17 +562,13 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions()
 {
     /* 停止されたモーションを取得する (MMDAI2 上では使っていない) */
+    const vpvl::Project::UUIDList &uuids = m_project->motionUUIDs();
+    const int nmotions = uuids.size();
     QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
-    /*
-    QHashIterator<vpvl::PMDModel *, vpvl::VMDMotion *> i(m_motions);
-    while (i.hasNext()) {
-        i.next();
-        vpvl::VMDMotion *motion = i.value();
-        if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex())) {
-            vpvl::PMDModel *model = i.key();
-            ret.insert(model, motion);
-        }
+    for (int i = 0; i < nmotions; i++) {
+        vpvl::VMDMotion *motion = m_project->motion(uuids[i]);
+        if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex()))
+            ret.insert(motion->parentModel(), motion);
     }
-    */
     return ret;
 }
