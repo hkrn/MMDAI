@@ -532,14 +532,20 @@ void BoneMotionModel::selectByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
         QList<vpvl::Bone *> bones;
+        QList<KeyFramePtr> frames;
+        qDebug() << indices;
         foreach (const QModelIndex &index, indices) {
             vpvl::Bone *bone = BoneFromModelIndex(index, m_model);
             if (bone)
                 bones.append(bone);
+            const QVariant &data = index.data(kBinaryDataRole);
+            if (data.canConvert(QVariant::ByteArray)) {
+                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+                frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
+                frames.append(KeyFramePtr(frame));
+            }
         }
-        qDebug() << indices << bones;
-        if (!bones.isEmpty())
-            selectBones(bones);
+        emit boneFramesDidSelect(frames);
     }
 }
 
@@ -946,20 +952,6 @@ void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)
 {
     m_selected = bones;
     emit bonesDidSelect(bones);
-    int frameIndex = currentFrameIndex();
-    /* ボーン名が存在かどうかをチェックするためだけのハッシュを作成しておく。int は飾り */
-    QHash<QString, int> keys;
-    foreach (vpvl::Bone *bone, bones)
-        keys.insert(internal::toQString(bone), 0);
-    QList<KeyFramePtr> frames;
-    vpvl::BoneKeyFrame frame;
-    /* モデルのデータを参照し、キーが存在するかつ現在のフレームインデックスと同じであるものを現在選択されているキーフレームのリストに追加する */
-    foreach (const QVariant &variant, values()) {
-        frame.read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-        if (keys.contains(internal::toQString(&frame)) && frameIndex == frame.frameIndex())
-            frames.append(KeyFramePtr(static_cast<vpvl::BoneKeyFrame *>(frame.clone())));
-    }
-    emit boneFramesDidSelect(frames);
 }
 
 vpvl::Bone *BoneMotionModel::findBone(const QString &name)
