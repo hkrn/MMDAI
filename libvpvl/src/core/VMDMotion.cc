@@ -217,12 +217,20 @@ void VMDMotion::save(uint8_t *data) const
 
 void VMDMotion::attachModel(PMDModel *model)
 {
-    if (m_model)
+    if (!model || m_model)
         return;
     m_model = model;
     m_active = true;
     m_boneMotion.attachModel(model);
     m_faceMotion.attachModel(model);
+}
+
+void VMDMotion::detachModel(PMDModel *model)
+{
+    if (!model || !m_model)
+        return;
+    m_model = 0;
+    m_active = false;
 }
 
 void VMDMotion::seek(float frameIndex)

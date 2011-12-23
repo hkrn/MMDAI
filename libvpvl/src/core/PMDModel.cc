@@ -167,10 +167,21 @@ void PMDModel::prepare()
 
 void PMDModel::addMotion(VMDMotion *motion)
 {
-    motion->attachModel(this);
-    m_motions.add(motion);
-    // FIXME: priority issue of compatibility with MMDAgent
-    // m_motions.sort(VMDMotionPriorityPredication());
+    if (!containsMotion(motion)) {
+        motion->attachModel(this);
+        m_motions.add(motion);
+        // FIXME: priority issue of compatibility with MMDAgent
+        // m_motions.sort(VMDMotionPriorityPredication());
+    }
+}
+
+bool PMDModel::containsMotion(VMDMotion *motion) const
+{
+    const int nmotions = m_motions.count();
+    for (int i = 0; i < nmotions; i++)
+        if (m_motions[i] == motion)
+            return true;
+    return false;
 }
 
 void PMDModel::joinWorld(btDiscreteDynamicsWorld *world)
@@ -217,11 +228,15 @@ void PMDModel::leaveWorld(btDiscreteDynamicsWorld *world)
 
 void PMDModel::removeMotion(VMDMotion *motion)
 {
+    motion->detachModel(this);
     m_motions.remove(motion);
 }
 
 void PMDModel::removeAllMotions()
 {
+    const int nmotions = m_motions.count();
+    for (int i = 0; i < nmotions; i++)
+        m_motions[i]->detachModel(this);
     m_motions.clear();
 }
 

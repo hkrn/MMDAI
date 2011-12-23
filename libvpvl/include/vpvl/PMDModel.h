@@ -173,10 +173,18 @@ public:
      * Add and attach a motion to the model.
      *
      * This method sort motions by priority automatically after adding the motion.
+     * The motion is already attached, this method does nothing.
      *
      * @param motion A motion to attach
      */
     void addMotion(VMDMotion *motion);
+
+    /**
+     * Returns the motion is attached to the model.
+     *
+     * @param True if the motion is attached
+     */
+    bool containsMotion(VMDMotion *motion) const;
 
     /**
      * Set the physics world to join the model.
@@ -215,6 +223,8 @@ public:
     /**
      * Detach a motion and delete it from the model.
      *
+     * First argument motion will be deleted and set to null.
+     *
      * @param motion A motion to delete
      */
     void deleteMotion(VMDMotion *&motion);
@@ -247,7 +257,7 @@ public:
     /**
      * Seek all motions of the model to the specified frame index.
      *
-     * @param A frame index to seek
+     * @param frameIndex A frame index to seek
      */
     void seekMotion(float frameIndex);
 
@@ -256,7 +266,7 @@ public:
     /**
      * Advance all motions of the model relative with current frame index.
      *
-     * @param A delta frame index to advance
+     * @param deltaFrame A delta frame index to advance
      */
     void advanceMotion(float deltaFrame);
 
@@ -270,6 +280,12 @@ public:
      */
     void updateImmediate();
 
+    /**
+     * Calculate bounding sphere of the model.
+     *
+     * @param center The center origin of the model to be set
+     * @param radius The raius value of the model to be set
+     */
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
 
     /**
@@ -314,7 +330,7 @@ public:
      * State will retain memory even if the model is restored,
      * You must release state with discardState.
      *
-     * @param Current state of the model
+     * @param state Current state of the model
      * @return True if the model is restored
      * @see discardState
      * @see saveState
@@ -370,8 +386,18 @@ public:
      */
     const void *edgeVerticesPointer() const;
 
+    /**
+     * Returns the base adderess of bone attributes pointer.
+     *
+     * @return Address of bone attributes
+     */
     const void *boneAttributesPointer() const;
 
+    /**
+     * Returns the base adderess of bone matrices pointer.
+     *
+     * @return Address of bone matrices
+     */
     const float *boneMatricesPointer() const;
 
     /**
@@ -391,6 +417,22 @@ public:
      */
     void setToonTextures(const uint8_t *ptr);
 
+    /**
+     * Enable software (CPU not GPU) skinning.
+     *
+     * If this method is called with true, do CPU based skinning, updateSkinVertices() and
+     * updateToon() will be called internally. As a result, verticesPointer(), normalsPointer(),
+     * edgeVerticesPointer() and #toonTextureCoordsPointer() will be modified.
+     *
+     * If this method is called with false, doesn't do skinning, updatePosition() and
+     * updateBoneMatrices() will be called internally. As a result, just setting vertex origin
+     * position and bone matrices. Skinning must be done at the other.
+     * (e.g. Shader skinning or GPGPU based skinning).
+     *
+     * Default behavior is CPU based skinning, isSoftwareSkinningEnabled() returns true.
+     *
+     * @param True if software skinning is enabled
+     */
     void setSoftwareSkinningEnable(bool value);
 
     /**
