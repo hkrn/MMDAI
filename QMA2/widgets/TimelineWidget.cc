@@ -160,10 +160,9 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
 {
     /* ボーンまたは頂点モーフの名前から対象を選択する処理 */
     const QModelIndex &index = indexAt(event->pos());
-    PMDMotionModel *pmm = 0;
     QAbstractItemModel *m = model();
-    /* 場面タブは除外する */
-    if (index.column() == 0 && (pmm = qobject_cast<PMDMotionModel *>(m))) {
+    /* ボーンまた頂点モーフのモデルである PMDMotionModel のクラスである */
+    if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(m)) {
         PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
         /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
         if (!item->isRoot() && !item->isCategory()) {
@@ -171,8 +170,12 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
             pmm->selectByModelIndices(selectionModel()->selection().indexes());
         }
     }
+    /* 場面のモデルである SceneMotionModel のクラスである */
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {
-        smm->selectByModelIndex(index);
+        SceneMotionModel::ITreeItem *item = static_cast<SceneMotionModel::ITreeItem *>(index.internalPointer());
+        /* ルートでもカテゴリでもなく、カメラまたは照明のキーフレームが選択されていることを確認する */
+        if (!item->isRoot() && !item->isCategory())
+            smm->selectByModelIndex(index);
     }
     QTreeView::mousePressEvent(event);
 }
@@ -289,7 +292,7 @@ void TimelineWidget::setCurrentFrameIndex(int frameIndex)
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
     model->setFrameIndex(frameIndex);
     m_treeView->selectFrameIndex(frameIndex);
-    m_treeView->scrollTo(model->index(0, frameIndex + 1));
+    m_treeView->scrollTo(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
     emit motionDidSeek(static_cast<float>(frameIndex));
