@@ -72,6 +72,9 @@ public:
     const static int kAttributeBufferSize = 32;
     const static int kElementContentBufferSize = 128;
     const static std::string kEmpty;
+    typedef std::map<std::string, Asset *> AssetMap;
+    typedef std::map<std::string, PMDModel *> PMDModelMap;
+    typedef std::map<std::string, VMDMotion *> VMDMotionMap;
 
     Handler(Project::IDelegate *delegate)
         : delegate(delegate),
@@ -87,9 +90,15 @@ public:
     ~Handler() {
         state = kInitial;
         depth = 0;
-        assets.releaseAll();
-        models.releaseAll();
-        motions.releaseAll();
+        for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++)
+            delete (*it).second;
+        assets.clear();
+        for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++)
+            delete (*it).second;
+        models.clear();
+        for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
+            delete (*it).second;
+        motions.clear();
         delete currentAsset;
         currentAsset = 0;
         delete currentModel;
@@ -108,29 +117,57 @@ public:
         depth--;
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
+    const std::string modelUUID(PMDModel *model) const {
+        for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            if ((*it).second == model)
+                return (*it).first;
+        }
+        return "";
+    }
     bool containsAsset(Asset *asset) const {
-        int nassets = assets.count();
-        for (int i = 0; i < nassets; i++) {
-            if (assets.at(i) == asset)
+        for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            if ((*it).second == asset)
                 return true;
         }
         return false;
     }
     bool containsModel(PMDModel *model) const {
-        int nassets = models.count();
-        for (int i = 0; i < nassets; i++) {
-            if (models.at(i) == model)
+        for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            if ((*it).second == model)
                 return true;
         }
         return false;
     }
     bool containsMotion(VMDMotion *motion) const {
-        int nmotions = motions.count();
-        for (int i = 0; i < nmotions; i++) {
-            if (motions.at(i) == motion)
+        for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            if ((*it).second == motion)
                 return true;
         }
         return false;
+    }
+    void removeAsset(Asset *asset) {
+        for (AssetMap::iterator it = assets.begin(); it != assets.end(); it++) {
+            if ((*it).second == asset) {
+                assets.erase(it);
+                break;
+            }
+        }
+    }
+    bool removeModel(PMDModel *model) {
+        for (PMDModelMap::iterator it = models.begin(); it != models.end(); it++) {
+            if ((*it).second == model) {
+                models.erase(it);
+                break;
+            }
+        }
+    }
+    bool removeMotion(VMDMotion *motion) {
+        for (VMDMotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
+            if ((*it).second == motion) {
+                motions.erase(it);
+                break;
+            }
+        }
     }
     bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr &writer) {
         for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
@@ -142,6 +179,9 @@ public:
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
         }
         return true;
+    }
+    const std::string modelName(PMDModel *model) const {
+        return delegate->toUnicode(std::string(reinterpret_cast<const char *>(model->name())));
     }
     bool save(xmlTextWriterPtr &writer) {
         uint8_t buffer[kElementContentBufferSize];
@@ -163,31 +203,39 @@ public:
         VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("enabled"), isPhysicsEnabled));
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:physics */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("models"), 0));
-        int nmodels = models.count();
-        for (int i = 0; i < nmodels; i++) {
-            PMDModel *model = models.at(i);
+        for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            const std::string &uuid = (*it).first;
+            PMDModel *model = (*it).second;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("model"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(uuid.c_str())));
             if(!writeStringMap(kPrefix, localModelSettings[model], writer))
                 return false;
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("assets"), 0));
-        int nassets = assets.count();
-        for (int i = 0; i < nassets; i++) {
-            Asset *asset = assets.at(i);
+        for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            const std::string &uuid = (*it).first;
+            Asset *asset = (*it).second;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("asset"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(uuid.c_str())));
             if(!writeStringMap(kPrefix, localAssetSettings[asset], writer))
                 return false;
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
         }
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motions"), 0));
-        int nmotions = motions.count(), nframes = 0;
+        int nframes = 0;
         Quaternion ix, iy, iz, ir, ifv, idt;
-        for (int i = 0; i < nmotions; i++) {
-            VMDMotion *motion = motions.at(i);
+        for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            const std::string &motionUUID = (*it).first;
+            VMDMotion *motion = (*it).second;
+            const std::string &modelUUID = this->modelUUID(motion->parentModel());
+            if (modelUUID.empty())
+                continue;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motion"), 0));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("model"), VPVL_CAST_XC(modelUUID.c_str())));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(motionUUID.c_str())));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("bone")));
             const BoneAnimation &ba = motion->boneAnimation();
@@ -422,7 +470,7 @@ public:
         if (self->depth == 0 && equals(prefix, localname, "project")) {
             for (int i = 0; i < nattributes; i++, index += 5) {
                 if (equals(attributes[index], "version")) {
-                    newString(attributes, i, value);
+                    newString(attributes, index, value);
                     self->version = internal::stringToFloat(value.c_str());
                 }
             }
@@ -435,7 +483,7 @@ public:
             else if (equals(prefix, localname, "physics")) {
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     if (equals(attributes[index], "enabled")) {
-                        newString(attributes, i, value);
+                        newString(attributes, index, value);
                         self->enablePhysics = value == "true";
                     }
                 }
@@ -455,24 +503,48 @@ public:
             if (self->state == kSettings && equals(prefix, localname, "value")) {
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     if (equals(attributes[index], "name")) {
-                        newString(attributes, i, value);
+                        newString(attributes, index, value);
                         self->key = value;
                     }
                 }
             }
             if (self->state == kModels && equals(prefix, localname, "model")) {
                 self->currentModel = new PMDModel();
+                for (int i = 0; i < nattributes; i++, index += 5) {
+                    if (equals(attributes[index], "uuid")) {
+                        newString(attributes, index, value);
+                        self->uuid = value;
+                    }
+                }
                 self->pushState(kModel);
             }
             else if (self->state == kAssets && equals(prefix, localname, "asset")) {
                 self->currentAsset = new Asset();
+                for (int i = 0; i < nattributes; i++, index += 5) {
+                    if (equals(attributes[index], "uuid")) {
+                        newString(attributes, index, value);
+                        self->uuid = value;
+                    }
+                }
                 self->pushState(kAsset);
             }
             else if (self->state == kMotions && equals(prefix, localname, "motion")) {
                 bool found = false;
                 for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (!equals(attributes[index], "type"))
+                    const xmlChar *name = attributes[index];
+                    if (equals(name, "uuid")) {
+                        newString(attributes, index, value);
+                        self->uuid = value;
                         continue;
+                    }
+                    else if (equals(name, "model")) {
+                        newString(attributes, index, value);
+                        self->parentModel = value;
+                        continue;
+                    }
+                    else if (!equals(name, "type")) {
+                        continue;
+                    }
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index + 3]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "ik", 2) == 0) {
@@ -494,7 +566,7 @@ public:
             if ((self->state == kModel || self->state == kAsset) && equals(prefix, localname, "value")) {
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     if (equals(attributes[index], "name")) {
-                        newString(attributes, i, value);
+                        newString(attributes, index, value);
                         self->key = value;
                     }
                 }
@@ -508,14 +580,14 @@ public:
                     if (strncmp(attributeName, "bone", 4) == 0) {
                         self->pushState(kBoneMotion);
                     }
-                    else if (strncmp(attributeName, "vertices", 8) == 0) {
-                        self->pushState(kVerticesMotion);
+                    else if (strncmp(attributeName, "light", 5) == 0) {
+                        self->pushState(kLightMotion);
                     }
                     else if (strncmp(attributeName, "camera", 6) == 0) {
                         self->pushState(kCameraMotion);
                     }
-                    else if (strncmp(attributeName, "light", 5) == 0) {
-                        self->pushState(kLightMotion);
+                    else if (strncmp(attributeName, "vertices", 8) == 0) {
+                        self->pushState(kVerticesMotion);
                     }
                 }
             }
@@ -727,24 +799,37 @@ public:
             switch (self->state) {
             case kAsset:
                 if (equals(prefix, localname, "asset")) {
-                    self->assets.add(self->currentAsset);
-                    self->currentAsset = 0;
+                    if (!self->uuid.empty()) {
+                        self->assets[self->uuid] = self->currentAsset;
+                        self->currentAsset = 0;
+                    }
                     self->popState(kAssets);
+                    self->uuid = "";
                 }
                 self->key = "";
                 break;
             case kModel:
                 if (equals(prefix, localname, "model")) {
-                    self->models.add(self->currentModel);
-                    self->currentModel = 0;
+                    if (!self->uuid.empty()) {
+                        self->models[self->uuid] = self->currentModel;
+                        self->currentModel = 0;
+                    }
                     self->popState(kModels);
+                    self->uuid = "";
                 }
                 self->key = "";
                 break;
             case kAnimation:
                 if (equals(prefix, localname, "motion")) {
-                    self->motions.add(self->currentMotion);
-                    self->currentMotion = 0;
+                    if (!self->uuid.empty() && !self->parentModel.empty()) {
+                        PMDModel *model = self->models[self->parentModel];
+                        if (model) {
+                            model->addMotion(self->currentMotion);
+                            self->motions[self->uuid] = self->currentMotion;
+                            self->currentMotion = 0;
+                        }
+                    }
+                    self->uuid = self->parentModel = "";
                     self->popState(kMotions);
                 }
                 break;
@@ -807,13 +892,15 @@ public:
     }
 
     Project::IDelegate *delegate;
-    Array<Asset *> assets;
-    Array<PMDModel *> models;
-    Array<VMDMotion *> motions;
+    AssetMap assets;
+    PMDModelMap models;
+    VMDMotionMap motions;
     StringMap globalSettings;
     std::map<Asset *, StringMap> localAssetSettings;
     std::map<PMDModel *, StringMap> localModelSettings;
     std::string key;
+    std::string uuid;
+    std::string parentModel;
     Asset *currentAsset;
     PMDModel *currentModel;
     VMDMotion *currentMotion;
@@ -885,21 +972,6 @@ bool Project::isPhysicsEnabled() const
     return m_handler->enablePhysics;
 }
 
-const Array<Asset *> &Project::assets() const
-{
-    return m_handler->assets;
-}
-
-const Array<PMDModel *> &Project::models() const
-{
-    return m_handler->models;
-}
-
-const Array<VMDMotion *> &Project::motions() const
-{
-    return m_handler->motions;
-}
-
 const std::string &Project::globalSetting(const std::string &key) const
 {
     return m_handler->globalSettings[key];
@@ -915,26 +987,46 @@ const std::string &Project::modelSetting(PMDModel *model, const std::string &key
     return containsModel(model) ? m_handler->localModelSettings[model][key] : Handler::kEmpty;
 }
 
-Asset *Project::assetFromName(const std::string &name) const
+const std::vector<std::string> Project::assetUUIDs() const
 {
-    int nassets = assets().count();
-    for (int i = 0; i < nassets; i++) {
-        Asset *asset = assets().at(i);
-        if (assetSetting(asset, kSettingNameKey) == name)
-            return asset;
-    }
-    return 0;
+    const Handler::AssetMap &assets = m_handler->assets;
+    std::vector<std::string> uuids;
+    for (Handler::AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++)
+        uuids.push_back((*it).first);
+    return uuids;
 }
 
-PMDModel *Project::modelFromName(const std::string &name) const
+const std::vector<std::string> Project::modelUUIDs() const
 {
-    int nmdoels = models().count();
-    for (int i = 0; i < nmdoels; i++) {
-        PMDModel *model = models().at(i);
-        if (modelSetting(model, kSettingNameKey) == name)
-            return model;
-    }
-    return 0;
+    const Handler::PMDModelMap &models = m_handler->models;
+    std::vector<std::string> uuids;
+    for (Handler::PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++)
+        uuids.push_back((*it).first);
+    return uuids;
+}
+
+const std::vector<std::string> Project::motionUUIDs() const
+{
+    const Handler::VMDMotionMap &motions = m_handler->motions;
+    std::vector<std::string> uuids;
+    for (Handler::VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
+        uuids.push_back((*it).first);
+    return uuids;
+}
+
+Asset *Project::asset(const std::string &uuid) const
+{
+    return m_handler->assets[uuid];
+}
+
+PMDModel *Project::model(const std::string &uuid) const
+{
+    return m_handler->models[uuid];
+}
+
+VMDMotion *Project::motion(const std::string &uuid) const
+{
+    return m_handler->motions[uuid];
 }
 
 bool Project::containsAsset(Asset *asset) const
@@ -952,26 +1044,27 @@ bool Project::containsMotion(VMDMotion *motion) const
     return m_handler->containsMotion(motion);
 }
 
-void Project::addAsset(Asset *asset)
+void Project::addAsset(Asset *asset, const std::string &uuid)
 {
     if (!containsAsset(asset)) {
-        m_handler->assets.add(asset);
+        m_handler->assets[uuid] = asset;
         setDirty(true);
     }
 }
 
-void Project::addModel(PMDModel *model)
+void Project::addModel(PMDModel *model, const std::string &uuid)
 {
     if (!containsModel(model)) {
-        m_handler->models.add(model);
+        m_handler->models[uuid] = model;
         setDirty(true);
     }
 }
 
-void Project::addMotion(VMDMotion *motion)
+void Project::addMotion(VMDMotion *motion, PMDModel *model, const std::string &uuid)
 {
     if (!containsMotion(motion)) {
-        m_handler->motions.add(motion);
+        m_handler->motions[uuid] = motion;
+        model->addMotion(motion);
         setDirty(true);
     }
 }
@@ -979,7 +1072,7 @@ void Project::addMotion(VMDMotion *motion)
 void Project::deleteAsset(Asset *&asset)
 {
     if (containsAsset(asset)) {
-        m_handler->assets.remove(asset);
+        m_handler->removeAsset(asset);
         delete asset;
         asset = 0;
         setDirty(true);
@@ -989,19 +1082,18 @@ void Project::deleteAsset(Asset *&asset)
 void Project::deleteModel(PMDModel *&model)
 {
     if (containsModel(model)) {
-        m_handler->models.remove(model);
+        m_handler->removeModel(model);
         delete model;
         model = 0;
         setDirty(true);
     }
 }
 
-void Project::deleteMotion(VMDMotion *&motion)
+void Project::deleteMotion(VMDMotion *&motion, PMDModel *model)
 {
     if (containsMotion(motion)) {
-        m_handler->motions.remove(motion);
-        delete motion;
-        motion = 0;
+        m_handler->removeMotion(motion);
+        model->deleteMotion(motion);
         setDirty(true);
     }
 }
@@ -1009,7 +1101,7 @@ void Project::deleteMotion(VMDMotion *&motion)
 void Project::removeAsset(Asset *asset)
 {
     if (containsAsset(asset)) {
-        m_handler->assets.remove(asset);
+        m_handler->removeAsset(asset);
         setDirty(true);
     }
 }
@@ -1017,8 +1109,16 @@ void Project::removeAsset(Asset *asset)
 void Project::removeModel(PMDModel *model)
 {
     if (containsModel(model)) {
-        m_handler->models.remove(model);
+        m_handler->removeModel(model);
         setDirty(true);
+    }
+}
+
+void Project::removeMotion(VMDMotion *motion, PMDModel *model)
+{
+    if (containsMotion(motion)) {
+        m_handler->removeMotion(motion);
+        model->removeMotion(motion);
     }
 }
 

@@ -39,6 +39,7 @@
 
 #include <libxml2/libxml/SAX2.h>
 #include <string>
+#include <vector>
 
 #include "vpvl/Common.h"
 
@@ -88,28 +89,30 @@ public:
 
     float version() const;
     bool isPhysicsEnabled() const;
-    const Array<Asset *> &assets() const;
-    const Array<PMDModel *> &models() const;
-    const Array<VMDMotion *> &motions() const;
     const std::string &globalSetting(const std::string &key) const;
     const std::string &assetSetting(Asset *asset, const std::string &key) const;
     const std::string &modelSetting(PMDModel *model, const std::string &key) const;
-    Asset *assetFromName(const std::string &name) const;
-    PMDModel *modelFromName(const std::string &name) const;
+    const std::vector<std::string> assetUUIDs() const;
+    const std::vector<std::string> modelUUIDs() const;
+    const std::vector<std::string> motionUUIDs() const;
+    Asset *asset(const std::string &uuid) const;
+    PMDModel *model(const std::string &uuid) const;
+    VMDMotion *motion(const std::string &uuid) const;
     bool containsAsset(Asset *asset) const;
     bool containsModel(PMDModel *model) const;
     bool containsMotion(VMDMotion *motion) const;
     bool isDirty() const { return m_dirty; }
     void setDirty(bool value) { m_dirty = value; }
 
-    void addAsset(Asset *asset);
-    void addModel(PMDModel *model);
-    void addMotion(VMDMotion *motion);
+    void addAsset(Asset *asset, const std::string &uuid);
+    void addModel(PMDModel *model, const std::string &uuid);
+    void addMotion(VMDMotion *motion, PMDModel *model, const std::string &uuid);
     void deleteAsset(Asset *&asset);
     void deleteModel(PMDModel *&model);
-    void deleteMotion(VMDMotion *&motion);
+    void deleteMotion(VMDMotion *&motion, PMDModel *model);
     void removeAsset(Asset *asset);
     void removeModel(PMDModel *model);
+    void removeMotion(VMDMotion *motion, PMDModel *model);
 
     void setPhysicsEnable(bool value);
     void setGlobalSetting(const std::string &key, std::string &value);

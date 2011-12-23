@@ -42,6 +42,12 @@ class TestProject : public QObject
     Q_OBJECT
 
 public:
+    static const std::string kModel1UUID;
+    static const std::string kModel2UUID;
+    static const std::string kAsset1UUID;
+    static const std::string kAsset2UUID;
+    static const std::string kMotionUUID;
+
     TestProject();
     ~TestProject();
 
@@ -54,12 +60,18 @@ private Q_SLOTS:
 
 private:
     static void testGlobalSettings(const Project &project);
-    static void testLocalSettings(const Project &project, const Array<Asset *> &assets, const Array<PMDModel *> &models);
-    static void testBoneAnimation(const Array<VMDMotion *> &motions);
-    static void testFaceAnimation(const Array<VMDMotion *> &motions);
-    static void testCameraAnimation(const Array<VMDMotion *> &motions);
-    static void testLightAnimation(const Array<VMDMotion *> &motions);
+    static void testLocalSettings(const Project &project);
+    static void testBoneAnimation(const VMDMotion *motion);
+    static void testFaceAnimation(const VMDMotion *motion);
+    static void testCameraAnimation(const VMDMotion *motion);
+    static void testLightAnimation(const VMDMotion *motion);
 };
+
+const std::string TestProject::kAsset1UUID = "EEBC6A85-F333-429A-ADF8-B6188908A517";
+const std::string TestProject::kAsset2UUID = "D4403C60-3D6C-4051-9B28-51DEFE021F59";
+const std::string TestProject::kModel1UUID = "D41F00F2-FB75-4BFC-8DE8-0B1390F862F6";
+const std::string TestProject::kModel2UUID = "B18ACADC-89FD-4945-9192-8E8FBC849E52";
+const std::string TestProject::kMotionUUID = "E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6";
 
 TestProject::TestProject()
 {
@@ -73,29 +85,28 @@ void TestProject::load()
 {
     Delegate delegate;
     Project project(&delegate);
-    QVERIFY(project.load("project.xml"));
+    QVERIFY(project.load("../../../docs/project.xml"));
     QVERIFY(!project.isDirty());
     QCOMPARE(project.version(), 0.1f);
     QVERIFY(project.isPhysicsEnabled());
-    const Array<Asset *> &assets = project.assets();
-    QCOMPARE(assets.count(), 2);
-    const Array<PMDModel *> &models = project.models();
-    QCOMPARE(models.count(), 2);
-    const Array<VMDMotion *> &motions = project.motions();
-    QCOMPARE(motions.count(), 1);
+    QCOMPARE(project.assetUUIDs().size(), size_t(2));
+    QCOMPARE(project.modelUUIDs().size(), size_t(2));
+    QCOMPARE(project.motionUUIDs().size(), size_t(1));
     testGlobalSettings(project);
-    testLocalSettings(project, assets, models);
-    testBoneAnimation(motions);
-    testFaceAnimation(motions);
-    testCameraAnimation(motions);
-    testLightAnimation(motions);
+    testLocalSettings(project);
+    VMDMotion *motion = project.motion(kMotionUUID);
+    QCOMPARE(motion->parentModel(), project.model(kModel1UUID));
+    testBoneAnimation(motion);
+    testFaceAnimation(motion);
+    testCameraAnimation(motion);
+    testLightAnimation(motion);
 }
 
 void TestProject::save()
 {
     Delegate delegate;
     Project project(&delegate);
-    QVERIFY(project.load("project.xml"));
+    QVERIFY(project.load("../../../docs/project.xml"));
     QTemporaryFile file;
     file.open();
     file.setAutoRemove(true);
@@ -106,30 +117,30 @@ void TestProject::save()
     QVERIFY(project2.load(file.fileName().toUtf8()));
     QCOMPARE(project2.version(), 0.1f);
     QVERIFY(project2.isPhysicsEnabled());
-    const Array<Asset *> &assets = project2.assets();
-    QCOMPARE(assets.count(), 2);
-    const Array<PMDModel *> &models = project2.models();
-    QCOMPARE(models.count(), 2);
-    const Array<VMDMotion *> &motions = project2.motions();
-    QCOMPARE(motions.count(), 1);
+    QCOMPARE(project2.assetUUIDs().size(), size_t(2));
+    QCOMPARE(project2.modelUUIDs().size(), size_t(2));
+    QCOMPARE(project2.motionUUIDs().size(), size_t(1));
     testGlobalSettings(project2);
-    testLocalSettings(project2, assets, models);
-    testBoneAnimation(motions);
-    testFaceAnimation(motions);
-    testCameraAnimation(motions);
-    testLightAnimation(motions);
+    testLocalSettings(project2);
+    VMDMotion *motion = project2.motion(kMotionUUID);
+    QCOMPARE(motion->parentModel(), project2.model(kModel1UUID));
+    testBoneAnimation(motion);
+    testFaceAnimation(motion);
+    testCameraAnimation(motion);
+    testLightAnimation(motion);
 }
 
 void TestProject::handleAssets()
 {
+    const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
     Project project(&delegate);
     Asset *asset = new Asset(), *ptr = asset;
     QVERIFY(!project.containsAsset(ptr));
-    project.addAsset(asset);
+    project.addAsset(asset, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsAsset(ptr));
-    QCOMPARE(project.assetFromName("no_such_asset"), static_cast<Asset*>(0));
+    QCOMPARE(project.asset("no_such_asset"), static_cast<Asset*>(0));
     project.deleteAsset(asset);
     QVERIFY(!project.containsAsset(ptr));
     QVERIFY(project.isDirty());
@@ -141,14 +152,15 @@ void TestProject::handleAssets()
 
 void TestProject::handleModels()
 {
+    const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
     Project project(&delegate);
     PMDModel *model = new PMDModel(), *ptr = model;
     QVERIFY(!project.containsModel(ptr));
-    project.addModel(model);
+    project.addModel(model, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsModel(ptr));
-    QCOMPARE(project.modelFromName("no_such_model"), static_cast<PMDModel*>(0));
+    QCOMPARE(project.model("no_such_model"), static_cast<PMDModel*>(0));
     project.deleteModel(model);
     QVERIFY(!project.containsModel(ptr));
     QVERIFY(project.isDirty());
@@ -160,20 +172,24 @@ void TestProject::handleModels()
 
 void TestProject::handleMotions()
 {
+    const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
     Project project(&delegate);
+    PMDModel *model = new PMDModel();
     VMDMotion *motion = new VMDMotion(), *ptr = motion;
     QVERIFY(!project.containsMotion(ptr));
-    project.addMotion(motion);
+    project.addMotion(motion, model, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsMotion(ptr));
+    QVERIFY(model->containsMotion(motion));
     project.setDirty(false);
-    project.deleteMotion(motion);
+    project.deleteMotion(motion, model);
     QVERIFY(!project.containsMotion(ptr));
     QVERIFY(project.isDirty());
+    QVERIFY(!model->containsMotion(motion));
     QVERIFY(!motion);
     project.setDirty(false);
-    project.deleteMotion(ptr);
+    project.deleteMotion(ptr, model);
     QVERIFY(!project.isDirty());
 }
 
@@ -184,19 +200,21 @@ void TestProject::testGlobalSettings(const Project &project)
     QCOMPARE(project.globalSetting("height").c_str(), "480");
 }
 
-void TestProject::testLocalSettings(const Project &project, const Array<Asset *> &assets, const Array<PMDModel *> &models)
+void TestProject::testLocalSettings(const Project &project)
 {
-    QCOMPARE(project.assetSetting(assets.at(0), Project::kSettingURIKey).c_str(), "asset:/foo/bar/baz");
-    QCOMPARE(project.modelSetting(models.at(0), Project::kSettingURIKey).c_str(), "model:/foo/bar/baz");
-    QCOMPARE(project.modelSetting(models.at(0), "edge").c_str(), "1.0");
-    QCOMPARE(project.assetSetting(assets.at(1), Project::kSettingURIKey).c_str(), "asset:/baz/bar/foo");
-    QCOMPARE(project.modelSetting(models.at(1), Project::kSettingURIKey).c_str(), "model:/baz/bar/foo");
-    QCOMPARE(project.modelSetting(models.at(1), "edge").c_str(), "0.5");
+    Asset *asset1 = project.asset(kAsset1UUID), *asset2 = project.asset(kAsset2UUID);
+    PMDModel *model1 = project.model(kModel1UUID), *model2 = project.model(kModel2UUID);
+    QCOMPARE(project.assetSetting(asset1, Project::kSettingURIKey).c_str(), "asset:/foo/bar/baz");
+    QCOMPARE(project.modelSetting(model1, Project::kSettingURIKey).c_str(), "model:/foo/bar/baz");
+    QCOMPARE(project.modelSetting(model1, "edge").c_str(), "1.0");
+    QCOMPARE(project.assetSetting(asset2, Project::kSettingURIKey).c_str(), "asset:/baz/bar/foo");
+    QCOMPARE(project.modelSetting(model2, Project::kSettingURIKey).c_str(), "model:/baz/bar/foo");
+    QCOMPARE(project.modelSetting(model2, "edge").c_str(), "0.5");
 }
 
-void TestProject::testBoneAnimation(const Array<VMDMotion *> &motions)
+void TestProject::testBoneAnimation(const VMDMotion *motion)
 {
-    const BoneAnimation &ba = motions.at(0)->boneAnimation();
+    const BoneAnimation &ba = motion->boneAnimation();
     QuadWord q;
     QCOMPARE(ba.countKeyFrames(), 2);
     QCOMPARE(ba.frameAt(0)->frameIndex(), 1.0f);
@@ -219,9 +237,9 @@ void TestProject::testBoneAnimation(const Array<VMDMotion *> &motions)
     }
 }
 
-void TestProject::testFaceAnimation(const Array<VMDMotion *> &motions)
+void TestProject::testFaceAnimation(const VMDMotion *motion)
 {
-    const FaceAnimation &fa = motions.at(0)->faceAnimation();
+    const FaceAnimation &fa = motion->faceAnimation();
     QCOMPARE(fa.countKeyFrames(), 2);
     QCOMPARE(fa.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(reinterpret_cast<const char *>(fa.frameAt(0)->name()), "bar");
@@ -231,9 +249,9 @@ void TestProject::testFaceAnimation(const Array<VMDMotion *> &motions)
     QCOMPARE(fa.frameAt(1)->weight(), 1.0f);
 }
 
-void TestProject::testCameraAnimation(const Array<VMDMotion *> &motions)
+void TestProject::testCameraAnimation(const VMDMotion *motion)
 {
-    const CameraAnimation &ca = motions.at(0)->cameraAnimation();
+    const CameraAnimation &ca = motion->cameraAnimation();
     QuadWord q;
     QCOMPARE(ca.countKeyFrames(), 2);
     QCOMPARE(ca.frameAt(0)->frameIndex(), 1.0f);
@@ -258,9 +276,9 @@ void TestProject::testCameraAnimation(const Array<VMDMotion *> &motions)
     }
 }
 
-void TestProject::testLightAnimation(const Array<VMDMotion *> &motions)
+void TestProject::testLightAnimation(const VMDMotion *motion)
 {
-    const LightAnimation &la = motions.at(0)->lightAnimation();
+    const LightAnimation &la = motion->lightAnimation();
     QCOMPARE(la.countKeyFrames(), 2);
     QCOMPARE(la.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(la.frameAt(0)->color(), Vector3(1, 2, 3));

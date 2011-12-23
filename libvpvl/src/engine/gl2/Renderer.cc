@@ -1477,19 +1477,17 @@ void Renderer::renderZPlot()
 void Renderer::releaseProject(vpvl::Project *project)
 {
 #ifdef VPVL_ENABLE_PROJECT
-    const vpvl::Array<vpvl::Asset *> &assets = project->assets();
-    int nassets = assets.count();
-    for (int i = 0; i < nassets; i++) {
-        vpvl::Asset *asset = assets[i];
+    const std::vector<std::string> &assetUUIDs = project->assetUUIDs();
+    for (std::vector<std::string>::const_iterator it = assetUUIDs.begin(); it != assetUUIDs.end(); it++) {
+        vpvl::Asset *asset = project->asset(*it);
         project->removeAsset(asset);
         deleteAsset(asset);
     }
-    const vpvl::Array<vpvl::PMDModel *> &models = project->models();
-    int nmodels = models.count();
-    for (int i = 0; i < nmodels; i++) {
-        vpvl::PMDModel *model = models[i];
-        model->deleteAllMotions();
+    const std::vector<std::string> &modelUUIDs = project->modelUUIDs();
+    for (std::vector<std::string>::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
+        vpvl::PMDModel *model = project->model(*it);
         project->removeModel(model);
+        model->deleteAllMotions();
         deleteModel(model);
     }
 #else
