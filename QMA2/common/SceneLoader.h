@@ -41,6 +41,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QMap>
 #include <QtCore/QString>
+#include <QtCore/QUuid>
 
 #include <vpvl/Common.h>
 #include <vpvl/Project.h>
@@ -72,16 +73,19 @@ public:
 #endif
     ~SceneLoader();
 
-    void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir);
+    void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
     bool deleteAsset(vpvl::Asset *asset);
     void deleteCameraMotion();
     bool deleteModel(vpvl::PMDModel *model);
-    vpvl::PMDModel *findModel(const QString &name) const;
+    vpvl::Asset *findAsset(const QUuid &uuid) const;
+    vpvl::PMDModel *findModel(const QUuid &uuid) const;
+    const QUuid findUUID(vpvl::Asset *asset) const;
+    const QUuid findUUID(vpvl::PMDModel *model) const;
     QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
     bool isProjectModified() const;
-    vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir);
-    vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir);
+    vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir, QUuid &uuid);
+    vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
     vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir);
     vpvl::VMDMotion *loadModelMotion(const QString &path);

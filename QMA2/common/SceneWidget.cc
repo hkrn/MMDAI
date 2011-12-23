@@ -291,10 +291,11 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
         if (model) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
                 ProgressDialogPtr progress = UIGetProgressDialog("Loading the model...", 0);
-                m_loader->addModel(model, base, dir);
+                QUuid uuid;
+                m_loader->addModel(model, base, dir, uuid);
                 progress.data()->setValue(1);
                 emit fileDidLoad(path);
-                emit modelDidAdd(model);
+                emit modelDidAdd(model, uuid);
             }
             else {
                 delete model;
@@ -413,11 +414,12 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
         ProgressDialogPtr progress = UIGetProgressDialog("Loading the asset...", 0);
-        asset = m_loader->loadAsset(fi.fileName(), fi.dir());
+        QUuid uuid;
+        asset = m_loader->loadAsset(fi.fileName(), fi.dir(), uuid);
         if (asset) {
             progress.data()->setValue(1);
             emit fileDidLoad(path);
-            emit assetDidAdd(asset);
+            emit assetDidAdd(asset, uuid);
         }
         else
             QMessageBox::warning(this, tr("Loading asset error"),
@@ -439,11 +441,12 @@ vpvl::Asset *SceneWidget::addAssetFromMetadata(const QString &path)
     QFileInfo fi(path);
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
+        QUuid uuid;
         ProgressDialogPtr progress = UIGetProgressDialog("Loading the asset...", 0);
-        asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir());
+        asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid);
         if (asset) {
             progress.data()->setValue(1);
-            emit assetDidAdd(asset);
+            emit assetDidAdd(asset, uuid);
         }
         else
             QMessageBox::warning(this, tr("Loading asset error"),
@@ -540,7 +543,7 @@ vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
 void SceneWidget::deleteSelectedModel()
 {
     vpvl::PMDModel *selected = selectedModel();
-    emit modelWillDelete(selected);
+    emit modelWillDelete(selected, m_loader->findUUID(selected));
     if (m_loader->deleteModel(selected)) {
         setSelectedModel(0);
     }
@@ -552,6 +555,7 @@ void SceneWidget::deleteSelectedModel()
 
 void SceneWidget::deleteAsset(vpvl::Asset *asset)
 {
+    emit assetWillDelete(asset, m_loader->findUUID(asset));
     m_loader->deleteAsset(asset);
 }
 

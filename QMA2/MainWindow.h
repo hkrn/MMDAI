@@ -38,6 +38,7 @@
 #define MAINWINDOW_H
 
 #include <QtCore/QSettings>
+#include <QtCore/QUuid>
 #include <QtGui/QDialog>
 #include <QtGui/QMainWindow>
 #include <vpvl/Common.h>
@@ -97,10 +98,10 @@ private slots:
     void addRecentFile(const QString &filename);
     void updateRecentFiles();
     void clearRecentFiles();
-    void addModel(vpvl::PMDModel *model);
-    void deleteModel(vpvl::PMDModel *model);
-    void addAsset(vpvl::Asset *asset);
-    void deleteAsset(vpvl::Asset *asset);
+    void addModel(vpvl::PMDModel *model, const QUuid &uuid);
+    void deleteModel(vpvl::PMDModel *model, const QUuid &uuid);
+    void addAsset(vpvl::Asset *asset, const QUuid &uuid);
+    void deleteAsset(vpvl::Asset *asset, const QUuid &uuid);
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
     void deleteSelectedModel();

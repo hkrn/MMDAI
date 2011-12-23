@@ -40,6 +40,7 @@
 #define SCENEWIDGET_H
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QUuid>
 #include <QtOpenGL/QGLWidget>
 
 #include <vpvl/Bone.h>
@@ -170,14 +171,14 @@ public slots:
 
 signals:
     void fileDidLoad(const QString &filename);
-    void modelDidAdd(vpvl::PMDModel *model);
-    void modelWillDelete(vpvl::PMDModel *model);
+    void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);
+    void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
     void newMotionDidSet(vpvl::PMDModel *model);
-    void assetDidAdd(vpvl::Asset *asset);
-    void assetWillDelete(vpvl::Asset *asset);
+    void assetDidAdd(vpvl::Asset *asset, const QUuid &uuid);
+    void assetWillDelete(vpvl::Asset *asset, const QUuid &uuid);
     void cameraMotionDidSet(vpvl::VMDMotion *motion);
     void lightColorDidSet(const vpvl::Color &color);
     void lightPositionDidSet(const vpvl::Vector3 &position);

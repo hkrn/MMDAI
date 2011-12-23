@@ -38,6 +38,7 @@
 #define ASSETWIDGET_H
 
 #include <QtCore/QTextStream>
+#include <QtCore/QUuid>
 #include <QtGui/QWidget>
 
 namespace vpvl {
