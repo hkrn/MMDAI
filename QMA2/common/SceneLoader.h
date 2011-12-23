@@ -89,6 +89,8 @@ public:
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
     VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
     bool loadProject(const QString &path);
+    vpvl::VMDMotion *newCameraMotion() const;
+    vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
     void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
     void saveProject(const QString &path);

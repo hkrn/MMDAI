@@ -448,6 +448,53 @@ bool SceneLoader::loadProject(const QString &path)
     return ret;
 }
 
+vpvl::VMDMotion *SceneLoader::newCameraMotion() const
+{
+    /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
+    vpvl::VMDMotion *newCameraMotion = new vpvl::VMDMotion();
+    vpvl::CameraAnimation *cameraAnimation = newCameraMotion->mutableCameraAnimation();
+    vpvl::CameraKeyFrame *frame = new vpvl::CameraKeyFrame();
+    vpvl::Scene *scene = m_renderer->scene();
+    frame->setDefaultInterpolationParameter();
+    frame->setPosition(scene->position());
+    frame->setAngle(scene->angle());
+    frame->setFovy(scene->fovy());
+    frame->setDistance(scene->distance());
+    cameraAnimation->addKeyFrame(frame);
+    return newCameraMotion;
+}
+
+vpvl::VMDMotion *SceneLoader::newModelMotion(vpvl::PMDModel *model) const
+{
+    /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
+    vpvl::VMDMotion *newModelMotion = 0;
+    if (model) {
+        newModelMotion = new vpvl::VMDMotion();
+        const vpvl::BoneList &bones = model->bones();
+        const int nbones = bones.count();
+        vpvl::BoneAnimation *boneAnimation = newModelMotion->mutableBoneAnimation();
+        for (int i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            if (bone->isMovable() || bone->isRotateable()) {
+                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+                frame->setDefaultInterpolationParameter();
+                frame->setName(bone->name());
+                boneAnimation->addKeyFrame(frame);
+            }
+        }
+        const vpvl::FaceList &faces = model->faces();
+        const int nfaces = faces.count();
+        vpvl::FaceAnimation *faceAnimation = newModelMotion->mutableFaceAnimation();
+        for (int i = 0; i < nfaces; i++) {
+            vpvl::Face *face = faces[i];
+            vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+            frame->setName(face->name());
+            faceAnimation->addKeyFrame(frame);
+        }
+    }
+    return newModelMotion;
+}
+
 void SceneLoader::release()
 {
     /*

@@ -389,42 +389,12 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(vpvl::VMDMotion *motion, vpvl:
 void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
 {
     if (model) {
-        vpvl::VMDMotion *modelMotion = new vpvl::VMDMotion();
-        const vpvl::BoneList &bones = model->bones();
-        const int nbones = bones.count();
-        vpvl::BoneAnimation *boneAnimation = modelMotion->mutableBoneAnimation();
-        for (int i = 0; i < nbones; i++) {
-            vpvl::Bone *bone = bones[i];
-            if (bone->isMovable() || bone->isRotateable()) {
-                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
-                frame->setDefaultInterpolationParameter();
-                frame->setName(bone->name());
-                boneAnimation->addKeyFrame(frame);
-            }
-        }
-        const vpvl::FaceList &faces = model->faces();
-        const int nfaces = faces.count();
-        vpvl::FaceAnimation *faceAnimation = modelMotion->mutableFaceAnimation();
-        for (int i = 0; i < nfaces; i++) {
-            vpvl::Face *face = faces[i];
-            vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
-            frame->setName(face->name());
-            faceAnimation->addKeyFrame(frame);
-        }
+        vpvl::VMDMotion *modelMotion = m_loader->newModelMotion(model);
         m_loader->setModelMotion(modelMotion, model);
         emit motionDidAdd(modelMotion, model);
-        vpvl::VMDMotion *cameralMotion = new vpvl::VMDMotion();
-        vpvl::CameraAnimation *cameraAnimation = cameralMotion->mutableCameraAnimation();
-        vpvl::CameraKeyFrame *frame = new vpvl::CameraKeyFrame();
-        vpvl::Scene *scene = m_renderer->scene();
-        frame->setDefaultInterpolationParameter();
-        frame->setPosition(scene->position());
-        frame->setAngle(scene->angle());
-        frame->setFovy(scene->fovy());
-        frame->setDistance(scene->distance());
-        cameraAnimation->addKeyFrame(frame);
-        m_loader->setCameraMotion(cameralMotion);
-        emit cameraMotionDidSet(cameralMotion);
+        vpvl::VMDMotion *cameraMotion = m_loader->newCameraMotion();
+        m_loader->setCameraMotion(cameraMotion);
+        emit cameraMotionDidSet(cameraMotion);
     }
     else
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
