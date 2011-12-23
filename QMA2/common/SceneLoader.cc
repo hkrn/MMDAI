@@ -558,9 +558,10 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
-        vpvl::VMDMotion *motion = motions[i];
-        m_project->removeMotion(motion, model);
+        /* 先に PMDModel#deleteMotion を呼んでから Project#removeMotion を呼ばないとメモリリークになる */
+        vpvl::VMDMotion *motion = motions[i], *ptr = motion;
         model->deleteMotion(motion);
+        m_project->removeMotion(ptr, model);
     }
     model->addMotion(motion);
     m_project->addMotion(motion, model, uuid.toStdString());
