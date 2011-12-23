@@ -424,11 +424,17 @@ void TestPMDModel::handleMotions()
     QCOMPARE(model.motions().count(), 0);
     model.addMotion(motion);
     QCOMPARE(model.motions().count(), 1);
+    QVERIFY(model.containsMotion(motion));
+    model.addMotion(motion);
+    QCOMPARE(model.motions().count(), 1);
     model.removeMotion(motion);
     QCOMPARE(model.motions().count(), 0);
+    QVERIFY(!model.containsMotion(motion));
     model.addMotion(motion);
     model.addMotion(motion2);
     QCOMPARE(model.motions().count(), 2);
+    QVERIFY(model.containsMotion(motion));
+    QVERIFY(model.containsMotion(motion2));
     model.removeAllMotions();
     QCOMPARE(model.motions().count(), 0);
     model.addMotion(motion);
