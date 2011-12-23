@@ -180,20 +180,19 @@ void Face::write(uint8_t *data) const
 void Face::convertIndices(const Face *base)
 {
     const int nvertices = m_vertices.count();
-    const int baseNVertices = base->m_vertices.count();
+    const int nBaseVertices = base->m_vertices.count();
     if (m_type != kBase) {
         for (int i = 0; i < nvertices; i++) {
             int relID = m_vertices[i]->id;
-            if (relID >= baseNVertices)
-                relID -= kMaxVertexID;
+            if (relID < 0 || relID >= nBaseVertices)
+                continue;
             m_vertices[i]->id = base->m_vertices[relID]->id;
         }
     }
     else {
-        for (int i = 0; i < nvertices; i++) {
-            if (m_vertices[i]->id >= kMaxVertexID)
-                m_vertices[i]->id -= kMaxVertexID;
-        }
+        int max = kMaxVertexID;
+        for (int i = 0; i < nvertices; i++)
+            btSetMin(m_vertices[i]->id, max);
     }
 }
 

@@ -1107,7 +1107,7 @@ void PMDModel::parseFaces(const DataInfo &info)
     for (int i = 0; i < nfaces; i++) {
         Face *face = new Face();
         face->read(ptr);
-        if (face->type() == Face::kBase)
+        if (!m_baseFace && face->type() == Face::kBase)
             m_baseFace = baseFace = face;
         else if (englishPtr) {
             const uint8_t *englishNamePtr = englishPtr + Face::kNameSize * i;
@@ -1119,9 +1119,8 @@ void PMDModel::parseFaces(const DataInfo &info)
         m_faces.add(face);
     }
     if (baseFace) {
-        for (int i = 0; i < nfaces; i++) {
+        for (int i = 0; i < nfaces; i++)
             m_faces[i]->convertIndices(baseFace);
-        }
     }
 }
 
