@@ -1038,7 +1038,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*)));
+    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
     connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
     connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
