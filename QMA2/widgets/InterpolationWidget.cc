@@ -72,14 +72,17 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 
 void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
 {
-    if (!frames.isEmpty()) {
-        vpvl::BoneKeyFrame *frame = frames.last().data();
+    bool enabled = false;
+    if (frames.count() == 1) {
+        vpvl::BoneKeyFrame *frame = frames.first().data();
         frame->getInterpolationParameter(vpvl::BoneKeyFrame::kX, m_boneIP.x);
         frame->getInterpolationParameter(vpvl::BoneKeyFrame::kY, m_boneIP.y);
         frame->getInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_boneIP.z);
         frame->getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_boneIP.rotation);
         updateValues(true);
+        enabled = true;
     }
+    setEnabled(enabled);
 }
 
 void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)
@@ -170,20 +173,22 @@ void InterpolationGraphWidget::mouseReleaseEvent(QMouseEvent * /* event */)
 void InterpolationGraphWidget::paintEvent(QPaintEvent * /* event */)
 {
     QPainter painter(this);
-    QPainterPath path;
-    QPoint p1 = m_p1, p2 = m_p2;
-    p1.setY(127 - p1.y());
-    p2.setY(qAbs(p2.y() - 127));
-    path.moveTo(QPoint(0, 127));
-    path.cubicTo(p1, p2, QPoint(127, 0));
-    painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect(), Qt::white);
-    painter.drawPath(path);
-    painter.setBrush(Qt::red);
-    painter.setPen(Qt::NoPen);
-    int half = kCircleWidth / 2;
-    painter.drawEllipse(p1.x() - half, p1.y() - half, kCircleWidth, kCircleWidth);
-    painter.drawEllipse(p2.x() - half, p2.y() - half, kCircleWidth, kCircleWidth);
+    if (isEnabled()) {
+        QPainterPath path;
+        QPoint p1 = m_p1, p2 = m_p2;
+        p1.setY(127 - p1.y());
+        p2.setY(qAbs(p2.y() - 127));
+        path.moveTo(QPoint(0, 127));
+        path.cubicTo(p1, p2, QPoint(127, 0));
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.drawPath(path);
+        painter.setBrush(Qt::red);
+        painter.setPen(Qt::NoPen);
+        int half = kCircleWidth / 2;
+        painter.drawEllipse(p1.x() - half, p1.y() - half, kCircleWidth, kCircleWidth);
+        painter.drawEllipse(p2.x() - half, p2.y() - half, kCircleWidth, kCircleWidth);
+    }
 }
 
 void InterpolationGraphWidget::setIndex(int value)
@@ -311,7 +316,6 @@ InterpolationWidget::~InterpolationWidget()
 
 void InterpolationWidget::setMode(int mode)
 {
-    // まだ動作上のバグがあるので修正するまで無効にせざるを得ない
     bool enabled = true;
     m_comboBox->clear();
     if (mode == TimelineTabWidget::kBone) {
