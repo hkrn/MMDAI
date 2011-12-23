@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <vpvm:project version="0.1" xmlns:vpvm="https://github.com/hkrn/MMDAI/">
  <vpvm:settings>
-  <vpvm:value dummy="dummy" name="height">480</vpvm:value>
-  <vpvm:value dummy="dummy" name="preferredFPS">30</vpvm:value>
-  <vpvm:value dummy="dummy" name="showGrid">true</vpvm:value>
-  <vpvm:value dummy="dummy" name="showInformation">true</vpvm:value>
-  <vpvm:value dummy="dummy" name="width">640</vpvm:value>
+  <vpvm:value dummy="dummy" name="height"><![CDATA[480]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="preferredFPS"><![CDATA[30]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="showGrid"><![CDATA[true]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="showInformation"><![CDATA[true]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="width"><![CDATA[640]]></vpvm:value>
  </vpvm:settings>
  <vpvm:physics dummy="dummy" enabled="true"/>
  <vpvm:models>
   <vpvm:model dummy="dummy" uuid="D41F00F2-FB75-4BFC-8DE8-0B1390F862F6">
-   <vpvm:value dummy="dummy" name="name">foo</vpvm:value>
-   <vpvm:value dummy="dummy" name="uri">model:/foo/bar/baz</vpvm:value>
-   <vpvm:value dummy="dummy" name="edge">1.0</vpvm:value>
-   <vpvm:value dummy="dummy" name="position">1,2,3</vpvm:value>
+   <vpvm:value dummy="dummy" name="name"><![CDATA[foo]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[model:/foo/bar/baz]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="edge"><![CDATA[1.0]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="position"><![CDATA[1,2,3]]></vpvm:value>
   </vpvm:model>
   <vpvm:model dummy="dummy" uuid="B18ACADC-89FD-4945-9192-8E8FBC849E52">
-   <vpvm:value dummy="dummy" name="name">bar</vpvm:value>
-   <vpvm:value dummy="dummy" name="uri">model:/baz/bar/foo</vpvm:value>
-   <vpvm:value dummy="dummy" name="edge">0.5</vpvm:value>
-   <vpvm:value dummy="dummy" name="position">3,2,1</vpvm:value>
+   <vpvm:value dummy="dummy" name="name"><![CDATA[bar]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[model:/baz/bar/foo]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="edge"><![CDATA[0.5]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="position"><![CDATA[3,2,1]]></vpvm:value>
   </vpvm:model>
  </vpvm:models>
  <vpvm:assets>
   <vpvm:asset dummy="dummy" uuid="EEBC6A85-F333-429A-ADF8-B6188908A517">
-   <vpvm:value dummy="dummy" name="name">foo</vpvm:value>
-   <vpvm:value dummy="dummy" name="uri">asset:/foo/bar/baz</vpvm:value>
+   <vpvm:value dummy="dummy" name="name"><![CDATA[foo]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[asset:/foo/bar/baz]]></vpvm:value>
   </vpvm:asset>
   <vpvm:asset dummy="dummy" uuid="D4403C60-3D6C-4051-9B28-51DEFE021F59">
-   <vpvm:value dummy="dummy" name="name">bar</vpvm:value>
-   <vpvm:value dummy="dummy" name="uri">asset:/baz/bar/foo</vpvm:value>
+   <vpvm:value dummy="dummy" name="name"><![CDATA[bar]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[asset:/baz/bar/foo]]></vpvm:value>
   </vpvm:asset>
  </vpvm:assets>
  <vpvm:motions>

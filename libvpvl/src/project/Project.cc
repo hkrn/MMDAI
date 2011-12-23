@@ -168,7 +168,7 @@ public:
                 continue;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL_CAST_XC("value"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(it->first.c_str())));
-            VPVL_XML_RC(xmlTextWriterWriteString(writer, VPVL_CAST_XC(it->second.c_str())));
+            VPVL_XML_RC(xmlTextWriterWriteCDATA(writer, VPVL_CAST_XC(it->second.c_str())));
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
         }
         return true;
@@ -761,21 +761,21 @@ public:
             }
         }
     }
-    static void characters(void *context,
-                           const xmlChar *character,
+    static void cdataBlock(void *context,
+                           const xmlChar *cdata,
                            int len)
     {
         Handler *self = static_cast<Handler *>(context);
         if (self->state == kSettings) {
-            std::string value(reinterpret_cast<const char *>(character), len);
+            std::string value(reinterpret_cast<const char *>(cdata), len);
             self->globalSettings[self->key] = value;
         }
         else if (self->state == kModel) {
-            std::string value(reinterpret_cast<const char *>(character), len);
+            std::string value(reinterpret_cast<const char *>(cdata), len);
             self->localModelSettings[self->currentModel][self->key] = value;
         }
         else if (self->state == kAsset) {
-            std::string value(reinterpret_cast<const char *>(character), len);
+            std::string value(reinterpret_cast<const char *>(cdata), len);
             self->localAssetSettings[self->currentAsset][self->key] = value;
         }
     }
@@ -923,7 +923,7 @@ Project::Project(IDelegate *delegate)
     m_sax.initialized = XML_SAX2_MAGIC;
     m_sax.startElementNs = &Handler::startElement;
     m_sax.endElementNs = &Handler::endElement;
-    m_sax.characters = &Handler::characters;
+    m_sax.cdataBlock = &Handler::cdataBlock;
     m_sax.warning = &Handler::warning;
     m_sax.error = &Handler::error;
 }
