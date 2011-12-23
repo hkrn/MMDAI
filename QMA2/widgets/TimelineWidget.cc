@@ -165,7 +165,7 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
     if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(m)) {
         PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
         /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
-        if (!item->isRoot() && !item->isCategory()) {
+        if (item && !item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
             pmm->selectByModelIndices(selectionModel()->selection().indexes());
         }
@@ -174,7 +174,7 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {
         SceneMotionModel::ITreeItem *item = static_cast<SceneMotionModel::ITreeItem *>(index.internalPointer());
         /* ルートでもカテゴリでもなく、カメラまたは照明のキーフレームが選択されていることを確認する */
-        if (!item->isRoot() && !item->isCategory())
+        if (item && !item->isRoot() && !item->isCategory())
             smm->selectByModelIndex(index);
     }
     QTreeView::mousePressEvent(event);
