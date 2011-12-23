@@ -121,7 +121,7 @@ public:
     const uint8_t *name() const {
         return m_name;
     }
-    PMDModel *attachedModel() const {
+    PMDModel *parentModel() const {
         return m_model;
     }
     Error error() const {
