@@ -72,9 +72,9 @@ public:
     const static int kAttributeBufferSize = 32;
     const static int kElementContentBufferSize = 128;
     const static std::string kEmpty;
-    typedef std::map<std::string, Asset *> AssetMap;
-    typedef std::map<std::string, PMDModel *> PMDModelMap;
-    typedef std::map<std::string, VMDMotion *> VMDMotionMap;
+    typedef std::map<Project::UUID, Asset *> AssetMap;
+    typedef std::map<Project::UUID, PMDModel *> PMDModelMap;
+    typedef std::map<Project::UUID, VMDMotion *> VMDMotionMap;
 
     Handler(Project::IDelegate *delegate)
         : delegate(delegate),
@@ -117,33 +117,26 @@ public:
         depth--;
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
-    const std::string modelUUID(PMDModel *model) const {
+    const Project::UUID &assetUUID(Asset *asset) const {
+        for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            if ((*it).second == asset)
+                return (*it).first;
+        }
+        return Project::kNullUUID;
+    }
+    const Project::UUID &modelUUID(PMDModel *model) const {
         for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
             if ((*it).second == model)
                 return (*it).first;
         }
-        return "";
+        return Project::kNullUUID;
     }
-    bool containsAsset(Asset *asset) const {
-        for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            if ((*it).second == asset)
-                return true;
-        }
-        return false;
-    }
-    bool containsModel(PMDModel *model) const {
-        for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            if ((*it).second == model)
-                return true;
-        }
-        return false;
-    }
-    bool containsMotion(VMDMotion *motion) const {
+    const Project::UUID &motionUUID(VMDMotion *motion) const {
         for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
             if ((*it).second == motion)
-                return true;
+                return (*it).first;
         }
-        return false;
+        return Project::kNullUUID;
     }
     void removeAsset(Asset *asset) {
         for (AssetMap::iterator it = assets.begin(); it != assets.end(); it++) {
@@ -911,6 +904,7 @@ public:
 };
 
 const std::string Handler::kEmpty = "";
+const Project::UUID Project::kNullUUID = "00000000-0000-0000-0000-000000000000";
 const std::string Project::kSettingNameKey = "name";
 const std::string Project::kSettingURIKey = "uri";
 const float Project::kCurrentVersion = 0.1f;
@@ -1029,19 +1023,34 @@ VMDMotion *Project::motion(const std::string &uuid) const
     return m_handler->motions[uuid];
 }
 
+const Project::UUID &Project::assetUUID(Asset *asset) const
+{
+    return m_handler->assetUUID(asset);
+}
+
+const Project::UUID &Project::modelUUID(PMDModel *model) const
+{
+    return m_handler->modelUUID(model);
+}
+
+const Project::UUID &Project::motionUUID(VMDMotion *motion) const
+{
+    return m_handler->motionUUID(motion);
+}
+
 bool Project::containsAsset(Asset *asset) const
 {
-    return m_handler->containsAsset(asset);
+    return assetUUID(asset) != kNullUUID;
 }
 
 bool Project::containsModel(PMDModel *model) const
 {
-    return m_handler->containsModel(model);
+    return modelUUID(model) != kNullUUID;
 }
 
 bool Project::containsMotion(VMDMotion *motion) const
 {
-    return m_handler->containsMotion(motion);
+    return motionUUID(motion) != kNullUUID;
 }
 
 void Project::addAsset(Asset *asset, const std::string &uuid)

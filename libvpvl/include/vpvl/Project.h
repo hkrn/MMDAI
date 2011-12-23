@@ -72,8 +72,10 @@ public:
         virtual void warning(const char *format, va_list ap) = 0;
     };
     typedef struct Handler Handler;
-    typedef std::vector<std::string> UUIDList;
+    typedef std::string UUID;
+    typedef std::vector<UUID> UUIDList;
 
+    static const UUID kNullUUID;
     static const float kCurrentVersion;
     static const std::string kSettingNameKey;
     static const std::string kSettingURIKey;
@@ -99,6 +101,9 @@ public:
     Asset *asset(const std::string &uuid) const;
     PMDModel *model(const std::string &uuid) const;
     VMDMotion *motion(const std::string &uuid) const;
+    const UUID &assetUUID(Asset *asset) const;
+    const UUID &modelUUID(PMDModel *asset) const;
+    const UUID &motionUUID(VMDMotion *motion) const;
     bool containsAsset(Asset *asset) const;
     bool containsModel(PMDModel *model) const;
     bool containsMotion(VMDMotion *motion) const;
