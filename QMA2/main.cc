@@ -110,6 +110,8 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
 
 int main(int argc, char *argv[])
 {
+    LIBXML_TEST_VERSION;
+
     Application a(argc, argv);
     QWidget fake;
     QList<QTranslatorPtr> translators;
@@ -141,6 +143,8 @@ int main(int argc, char *argv[])
                              QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     LoggerWidget::destroyInstance();
+    xmlCleanupParser();
+    xmlMemoryDump();
 
     return result;
 }
