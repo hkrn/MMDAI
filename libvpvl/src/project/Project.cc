@@ -246,10 +246,10 @@ public:
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
-                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", position.x(), position.y(), -position.z());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("position"), VPVL_CAST_XC(buffer)));
                 const Quaternion &rotation = frame->rotation();
-                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f,%.f",
+                internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
                                    -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("rotation"), VPVL_CAST_XC(buffer)));
                 frame->getInterpolationParameter(BoneKeyFrame::kX, ix);
@@ -281,7 +281,7 @@ public:
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
-                internal::snprintf(buffer, sizeof(buffer), "%.2f", frame->weight());
+                internal::snprintf(buffer, sizeof(buffer), "%.4f", frame->weight());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("weight"), VPVL_CAST_XC(buffer)));
                 VPVL_XML_RC(xmlTextWriterEndElement(writer));
             }
@@ -296,15 +296,15 @@ public:
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
-                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", position.x(), position.y(), -position.z());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("position"), VPVL_CAST_XC(buffer)));
                 const Vector3 &angle = frame->angle();
-                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f",
+                internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
                                    vpvl::radian(-angle.x()), vpvl::radian(-angle.y()), vpvl::radian(-angle.z()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("angle"), VPVL_CAST_XC(buffer)));
-                internal::snprintf(buffer, sizeof(buffer), "%.f", frame->fovy());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f", frame->fovy());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("fovy"), VPVL_CAST_XC(buffer)));
-                internal::snprintf(buffer, sizeof(buffer), "%.f", frame->distance());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f", frame->distance());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("distance"), VPVL_CAST_XC(buffer)));
                 frame->getInterpolationParameter(CameraKeyFrame::kX, ix);
                 frame->getInterpolationParameter(CameraKeyFrame::kY, iy);
@@ -340,10 +340,10 @@ public:
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
                 const Vector3 &color = frame->color();
-                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", color.x(), color.y(), color.z());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", color.x(), color.y(), color.z());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("color"), VPVL_CAST_XC(buffer)));
                 const Vector3 &direction = frame->direction();
-                internal::snprintf(buffer, sizeof(buffer), "%.f,%.f,%.f", direction.x(), direction.y(), direction.z());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", direction.x(), direction.y(), direction.z());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("direction"), VPVL_CAST_XC(buffer)));
                 VPVL_XML_RC(xmlTextWriterEndElement(writer));
             }
