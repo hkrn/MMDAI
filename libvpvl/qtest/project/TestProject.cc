@@ -18,9 +18,13 @@ public:
     ~Delegate() {
     }
 
-    const std::string toUnicode(const std::string &value) {
+    const std::string toUnicode(const std::string &value) const {
         const QString &encoded = m_codec->toUnicode(value.c_str());
         return encoded.toStdString();
+    }
+    const std::string fromUnicode(const std::string &value) const {
+        const QByteArray &decoded = m_codec->fromUnicode(value.c_str());
+        return std::string(decoded.constData(), decoded.length());
     }
     void error(const char *format, va_list ap) {
         fprintf(stderr, "ERROR: ");

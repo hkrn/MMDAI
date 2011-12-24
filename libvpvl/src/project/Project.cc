@@ -613,7 +613,7 @@ public:
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "name", 4) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setName(reinterpret_cast<const uint8_t *>(value.c_str()));
+                        keyframe->setName(reinterpret_cast<const uint8_t *>(self->delegate->fromUnicode(value).c_str()));
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
@@ -666,7 +666,7 @@ public:
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "name", 4) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setName(reinterpret_cast<const uint8_t *>(value.c_str()));
+                        keyframe->setName(reinterpret_cast<const uint8_t *>(self->delegate->fromUnicode(value).c_str()));
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
