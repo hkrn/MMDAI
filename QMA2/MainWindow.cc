@@ -38,6 +38,7 @@
 #include "MainWindow.h"
 
 #include "common/LoggerWidget.h"
+#include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
@@ -258,7 +259,7 @@ void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action)
-        m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(action->text()));
+        m_sceneWidget->setSelectedModel(m_sceneWidget->sceneLoader()->findModel(action->text()));
 }
 
 void MainWindow::setCurrentModel(vpvl::PMDModel *model)
@@ -292,12 +293,13 @@ void MainWindow::newProjectFile()
 void MainWindow::loadProject()
 {
     if (maybeSaveProject()) {
+        const QString &filename = m_sceneWidget->openFileDialog("mainWindow/lastProjectDirectory",
+                                                                tr("Open VPVM file"),
+                                                                tr("VPVM file (*.vpvm)"));
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
-        m_sceneWidget->loadProject(m_sceneWidget->openFileDialog("mainWindow/lastProjectDirectory",
-                                                                 tr("Open VPVM file"),
-                                                                 tr("VPVM file (*.vpvm)")));
+        m_sceneWidget->sceneLoader()->loadProject(filename);
     }
 }
 
@@ -374,9 +376,12 @@ void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
     m_sceneWidget->setSelectedModel(model);
 }
 
-void MainWindow::deleteModel(vpvl::PMDModel * /* model */, const QUuid &uuid)
+void MainWindow::deleteModel(vpvl::PMDModel *model, const QUuid &uuid)
 {
-    /* 削除されたモデルをモデル選択のメニューから削除する */
+    /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
+    if (model == m_sceneWidget->selectedModel())
+        m_sceneWidget->setSelectedModel(0);
+    /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
     const QString &uuidString = uuid.toString();
     foreach (QAction *action, m_menuRetainModels->actions()) {
@@ -464,7 +469,7 @@ bool MainWindow::saveProjectAs(QString &filename)
 
 bool MainWindow::saveProjectFile(const QString &filename)
 {
-    m_sceneWidget->saveProject(filename);
+    m_sceneWidget->sceneLoader()->saveProject(filename);
     return true;
 }
 
@@ -483,7 +488,7 @@ bool MainWindow::maybeSaveProject()
     bool cancel, cond = m_boneMotionModel->isModified()
             || m_faceMotionModel->isModified()
             || m_sceneMotionModel->isModified()
-            || m_sceneWidget->isProjectModified();
+            || m_sceneWidget->sceneLoader()->isProjectModified();
     if (confirmSave(cond, cancel))
         saveProject();
     return !cancel;
@@ -1031,39 +1036,50 @@ void MainWindow::retranslate()
     m_menuHelp->setTitle(tr("&Help"));
 }
 
+void MainWindow::connectSceneLoader()
+{
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    AssetWidget *assetWidget = m_tabWidget->assetWidget();
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), this, SLOT(addModel(vpvl::PMDModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
+    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_tabWidget->interpolationWidget(), SLOT(disable()));
+    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), assetWidget, SLOT(addAsset(vpvl::Asset*)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), assetWidget, SLOT(removeAsset(vpvl::Asset*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), assetWidget, SLOT(addModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), assetWidget, SLOT(removeModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
+    connect(loader, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
+    connect(loader, SIGNAL(projectDidLoad()), m_sceneWidget, SLOT(updateGL()));
+    connect(assetWidget, SIGNAL(assetDidRemove(vpvl::Asset*)), loader, SLOT(deleteAsset(vpvl::Asset*)));
+}
+
 void MainWindow::connectWidgets()
 {
+    connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), this, SLOT(addModel(vpvl::PMDModel*,QUuid)));
-    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
-    connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(handleDidMove(int,float)), m_boneMotionModel, SLOT(translate(int,float)));
     connect(m_sceneWidget, SIGNAL(handleDidRotate(int,float)), m_boneMotionModel, SLOT(rotate(int,float)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)), m_timelineTabWidget, SLOT(addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone*)));
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(removeModel()));
-    connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_tabWidget->interpolationWidget(), SLOT(setMode(int)));
-    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_tabWidget->interpolationWidget(), SLOT(disable()));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
     connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_faceMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), m_tabWidget->assetWidget(), SLOT(addAsset(vpvl::Asset*)));
-    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), m_tabWidget->assetWidget(), SLOT(removeAsset(vpvl::Asset*)));
-    connect(m_tabWidget->assetWidget(), SIGNAL(assetDidRemove(vpvl::Asset*)), m_sceneWidget, SLOT(deleteAsset(vpvl::Asset*)));
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_tabWidget->assetWidget(), SLOT(addModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_tabWidget->assetWidget(), SLOT(removeModel(vpvl::PMDModel*)));
     connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
@@ -1073,9 +1089,6 @@ void MainWindow::connectWidgets()
     connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
             m_tabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
-    connect(m_sceneWidget, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
-    connect(m_sceneWidget, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
@@ -1340,11 +1353,12 @@ void MainWindow::selectNextModel()
 {
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
+        const SceneLoader *loader = m_sceneWidget->sceneLoader();
         int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
         if (index == -1 || index == actions.length() - 1)
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.first()->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index + 1)->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.at(index + 1)->text()));
     }
 }
 
@@ -1352,11 +1366,12 @@ void MainWindow::selectPreviousModel()
 {
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
+        const SceneLoader *loader = m_sceneWidget->sceneLoader();
         int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
         if (index == -1 || index == 0)
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.last()->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index - 1)->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.at(index - 1)->text()));
     }
 }
 

@@ -69,8 +69,12 @@ public:
     {
     }
 
-    const std::string toUnicode(const std::string &value) {
+    const std::string toUnicode(const std::string &value) const {
         return m_codec->toUnicode(value.c_str()).toStdString();
+    }
+    const std::string fromUnicode(const std::string &value) const {
+        const QByteArray &bytes = m_codec->fromUnicode(value.c_str());
+        return std::string(bytes.constData(), bytes.length());
     }
     void error(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
@@ -86,7 +90,8 @@ private:
 }
 
 SceneLoader::SceneLoader(Renderer *renderer)
-    : m_renderer(renderer),
+    : QObject(),
+      m_renderer(renderer),
       m_project(0),
       m_delegate(0),
       m_camera(0)
@@ -119,6 +124,7 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
     m_project->addModel(model, uuid.toString().toStdString());
     m_project->setModelSetting(model, vpvl::Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, vpvl::Project::kSettingURIKey, path.toStdString());
+    emit modelDidAdd(model, uuid);
 }
 
 void SceneLoader::createProject()
@@ -127,17 +133,15 @@ void SceneLoader::createProject()
         m_project = new vpvl::Project(m_delegate);
 }
 
-bool SceneLoader::deleteAsset(vpvl::Asset *asset)
+void SceneLoader::deleteAsset(vpvl::Asset *asset)
 {
-    if (!asset)
-        return false;
     /* アクセサリをレンダリングエンジンから削除し、SceneLoader のヒモ付けも解除する */
-    if (m_project->containsAsset(asset)) {
+    if (asset && m_project->containsAsset(asset)) {
+        const QUuid uuid(m_project->assetUUID(asset).c_str());
+        emit assetWillDelete(asset, uuid);
         m_renderer->deleteAsset(asset);
         m_project->deleteAsset(asset);
-        return true;
     }
-    return false;
 }
 
 void SceneLoader::deleteCameraMotion()
@@ -150,10 +154,8 @@ void SceneLoader::deleteCameraMotion()
     m_camera = 0;
 }
 
-bool SceneLoader::deleteModel(vpvl::PMDModel *model)
+void SceneLoader::deleteModel(vpvl::PMDModel *model)
 {
-    if (!model)
-        return false;
     /*
      * まずモデルに紐づいたモーションを全て削除し、その後にモデルをレンダリングエンジンから削除し、
      * Project クラスから論理削除する。順番が重要でこの順番で行う必要があり、変更してはいけない。
@@ -161,14 +163,14 @@ bool SceneLoader::deleteModel(vpvl::PMDModel *model)
      * Project で論理削除する(二重解放になるので Project クラスで物理削除してはいけない)。
      */
     if (m_project->containsModel(model)) {
+        const QUuid uuid(m_project->modelUUID(model).c_str());
+        emit modelWillDelete(model, uuid);
         vpvl::PMDModel *ptr = model;
         model->deleteAllMotions();
         m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
         m_project->removeModel(ptr);
-        return true;
     }
-    return false;
 }
 
 vpvl::Asset *SceneLoader::findAsset(const QUuid &uuid) const
@@ -390,7 +392,7 @@ VPDFile *SceneLoader::loadModelPose(const QString &path, vpvl::PMDModel * /* mod
     return pose;
 }
 
-bool SceneLoader::loadProject(const QString &path)
+void SceneLoader::loadProject(const QString &path)
 {
     delete m_project;
     m_project = new vpvl::Project(m_delegate);
@@ -409,6 +411,14 @@ bool SceneLoader::loadProject(const QString &path)
                 const QByteArray &bytes = file.readAll();
                 if (model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     m_renderer->uploadModel(model, QFileInfo(file).dir().absolutePath().toStdString());
+                    emit modelDidAdd(model, QUuid(m_project->modelUUID(model).c_str()));
+                    const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
+                    const int nmotions = motions.count();
+                    for (int i = 0; i < nmotions; i++) {
+                        vpvl::VMDMotion *motion = motions[i];
+                        motion->reload();
+                        emit motionDidAdd(motion, model, QUuid(m_project->motionUUID(motion).c_str()));
+                    }
                     continue;
                 }
             }
@@ -431,6 +441,7 @@ bool SceneLoader::loadProject(const QString &path)
                 const QByteArray &bytes = file.readAll();
                 if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
+                    emit assetDidAdd(asset, QUuid(m_project->assetUUID(asset).c_str()));
                     continue;
                 }
             }
@@ -447,8 +458,8 @@ bool SceneLoader::loadProject(const QString &path)
         foreach (vpvl::Asset *asset, fla)
             m_project->deleteAsset(asset);
         /* FIXME: モデルとアクセサリ、モーションの追加の通知 */
+        emit projectDidLoad();
     }
-    return ret;
 }
 
 vpvl::VMDMotion *SceneLoader::newCameraMotion() const
@@ -543,13 +554,17 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
 void SceneLoader::saveProject(const QString &path)
 {
     m_project->save(path.toLocal8Bit().constData());
+    emit projectDidSave();
 }
 
 void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)
 {
-    delete m_camera;
+    const QUuid &uuid = QUuid::createUuid();
+    m_project->deleteMotion(m_camera, 0);
     m_camera = motion;
+    m_project->addMotion(motion, 0, uuid.toString().toStdString());
     m_renderer->scene()->setCameraMotion(motion);
+    emit cameraMotionDidSet(motion, uuid);
 }
 
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
@@ -565,6 +580,7 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     }
     model->addMotion(motion);
     m_project->addMotion(motion, model, uuid.toStdString());
+    emit motionDidAdd(motion, model, uuid);
 }
 
 const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions()

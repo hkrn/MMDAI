@@ -86,6 +86,7 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private slots:
+    void connectSceneLoader();
     void newMotionFile();
     void newProjectFile();
     void loadProject();

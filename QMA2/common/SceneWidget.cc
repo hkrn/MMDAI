@@ -143,20 +143,9 @@ SceneWidget::~SceneWidget()
     m_world = 0;
 }
 
-bool SceneWidget::loadProject(const QString &filename)
+SceneLoader *SceneWidget::sceneLoader() const
 {
-    clear();
-    return m_loader->loadProject(filename);
-}
-
-void SceneWidget::saveProject(const QString &filename)
-{
-    m_loader->saveProject(filename);
-}
-
-bool SceneWidget::isProjectModified() const
-{
-    return m_loader->isProjectModified();
+    return m_loader;
 }
 
 void SceneWidget::play()
@@ -199,11 +188,6 @@ const vpvl::Scene *SceneWidget::scene() const
 vpvl::Scene *SceneWidget::mutableScene()
 {
     return m_renderer->scene();
-}
-
-vpvl::PMDModel *SceneWidget::findModel(const QString &name) const
-{
-    return m_loader->findModel(name);
 }
 
 void SceneWidget::setPreferredFPS(int value)
@@ -295,7 +279,6 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
                 m_loader->addModel(model, base, dir, uuid);
                 progress.data()->setValue(1);
                 emit fileDidLoad(path);
-                emit modelDidAdd(model, uuid);
             }
             else {
                 delete model;
@@ -327,8 +310,6 @@ vpvl::VMDMotion *SceneWidget::insertMotionToAllModels(const QString &path)
         QList<vpvl::PMDModel *> models;
         motion = m_loader->loadModelMotion(path, models);
         if (motion) {
-            foreach (vpvl::PMDModel *model, models)
-                emit motionDidAdd(motion, model);
             emit fileDidLoad(path);
         }
         else {
@@ -368,23 +349,14 @@ vpvl::VMDMotion *SceneWidget::insertMotionToModel(const QString &path, vpvl::PMD
             motion = m_loader->loadModelMotion(path, model);
             if (motion) {
                 emit fileDidLoad(path);
-                emit motionDidAdd(motion, model);
             }
-            else
+            else {
                 QMessageBox::warning(this, tr("Loading model motion error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            }
         }
     }
     return motion;
-}
-
-vpvl::VMDMotion *SceneWidget::insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
-{
-    if (motion && model) {
-        m_loader->setModelMotion(motion, model);
-        return motion;
-    }
-    return 0;
 }
 
 void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
@@ -392,10 +364,8 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
     if (model) {
         vpvl::VMDMotion *modelMotion = m_loader->newModelMotion(model);
         m_loader->setModelMotion(modelMotion, model);
-        emit motionDidAdd(modelMotion, model);
         vpvl::VMDMotion *cameraMotion = m_loader->newCameraMotion();
         m_loader->setCameraMotion(cameraMotion);
-        emit cameraMotionDidSet(cameraMotion);
     }
     else
         QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
@@ -419,11 +389,11 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
         if (asset) {
             progress.data()->setValue(1);
             emit fileDidLoad(path);
-            emit assetDidAdd(asset, uuid);
         }
-        else
+        else {
             QMessageBox::warning(this, tr("Loading asset error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
+        }
     }
     return asset;
 }
@@ -446,11 +416,11 @@ vpvl::Asset *SceneWidget::addAssetFromMetadata(const QString &path)
         asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid);
         if (asset) {
             progress.data()->setValue(1);
-            emit assetDidAdd(asset, uuid);
         }
-        else
+        else {
             QMessageBox::warning(this, tr("Loading asset error"),
                                  tr("%1 cannot be loaded").arg(fi.fileName()));
+        }
     }
     return asset;
 }
@@ -482,11 +452,10 @@ VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, vpvl::P
     if (model) {
         if (QFile::exists(filename)) {
             pose = m_loader->loadModelPose(filename, model);
-            if (pose)
-                emit modelDidMakePose(pose, model);
-            else
+            if (!pose) {
                 QMessageBox::warning(this, tr("Loading model pose error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
+            }
         }
     }
     else
@@ -531,11 +500,11 @@ vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
         motion = m_loader->loadCameraMotion(path);
         if (motion) {
             emit fileDidLoad(path);
-            emit cameraMotionDidSet(motion);
         }
-        else
+        else {
             QMessageBox::warning(this, tr("Loading camera motion error"),
                                  tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+        }
     }
     return motion;
 }
@@ -543,25 +512,7 @@ vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
 void SceneWidget::deleteSelectedModel()
 {
     vpvl::PMDModel *selected = selectedModel();
-    emit modelWillDelete(selected, m_loader->findUUID(selected));
-    if (m_loader->deleteModel(selected)) {
-        setSelectedModel(0);
-    }
-    else {
-        QMessageBox::warning(this, tr("The model is not selected or exist."),
-                             tr("Select a model to delete"));
-    }
-}
-
-void SceneWidget::deleteAsset(vpvl::Asset *asset)
-{
-    emit assetWillDelete(asset, m_loader->findUUID(asset));
-    m_loader->deleteAsset(asset);
-}
-
-void SceneWidget::deleteModel(vpvl::PMDModel *model)
-{
-    m_loader->deleteModel(model);
+    m_loader->deleteModel(selected);
 }
 
 void SceneWidget::resetCamera()
@@ -721,12 +672,6 @@ void SceneWidget::loadFile(const QString &file)
     }
 }
 
-void SceneWidget::deleteCameraMotion()
-{
-    m_loader->deleteCameraMotion();
-    emit cameraMotionDidSet(0);
-}
-
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
     vpvl::Scene *scene = m_renderer->scene();
@@ -820,6 +765,7 @@ void SceneWidget::initializeGL()
     m_info->update();
     m_renderer->initializeSurface();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+    emit initailizeGLContextDidDone();
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)

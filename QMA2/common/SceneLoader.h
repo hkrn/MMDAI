@@ -63,8 +63,10 @@ class VMDMotion;
 
 class VPDFile;
 
-class SceneLoader
+class SceneLoader : public QObject
 {
+    Q_OBJECT
+
 public:
 #ifdef VPVL_USE_GLSL
     explicit SceneLoader(vpvl::gl2::Renderer *renderer);
@@ -73,11 +75,6 @@ public:
 #endif
     ~SceneLoader();
 
-    void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
-    void createProject();
-    bool deleteAsset(vpvl::Asset *asset);
-    void deleteCameraMotion();
-    bool deleteModel(vpvl::PMDModel *model);
     vpvl::Asset *findAsset(const QUuid &uuid) const;
     vpvl::PMDModel *findModel(const QUuid &uuid) const;
     const QUuid findUUID(vpvl::Asset *asset) const;
@@ -92,15 +89,33 @@ public:
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
     VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
-    bool loadProject(const QString &path);
     vpvl::VMDMotion *newCameraMotion() const;
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
+    const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
+
+public slots:
+    void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
+    void createProject();
+    void deleteAsset(vpvl::Asset *asset);
+    void deleteCameraMotion();
+    void deleteModel(vpvl::PMDModel *model);
+    void loadProject(const QString &path);
     void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
     void saveProject(const QString &path);
     void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
+
+signals:
+    void projectDidLoad();
+    void projectDidSave();
+    void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);
+    void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
+    void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
+    void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QUuid &uuid);
+    void assetDidAdd(vpvl::Asset *asset, const QUuid &uuid);
+    void assetWillDelete(vpvl::Asset *asset, const QUuid &uuid);
+    void cameraMotionDidSet(vpvl::VMDMotion *motion, const QUuid &uuid);
 
 private:
     void insertModel(vpvl::PMDModel *model, const QString &name);

@@ -83,9 +83,9 @@ public:
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
+    SceneLoader *sceneLoader() const;
     const vpvl::Scene *scene() const;
     vpvl::Scene *mutableScene();
-    vpvl::PMDModel *findModel(const QString &name) const;
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setPreferredFPS(int value);
@@ -94,14 +94,10 @@ public:
     void showSelectedModelEdge();
     void hideSelectedModelEdge();
 
-    bool loadProject(const QString &filename);
-    void saveProject(const QString &filename);
-    bool isProjectModified() const;
     vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
     vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
     vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
-    vpvl::VMDMotion *insertMotionToModel(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     vpvl::Asset *addAsset(const QString &path);
     vpvl::Asset *addAssetFromMetadata(const QString &path);
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
@@ -131,8 +127,6 @@ public slots:
     void insertPoseToSelectedModel();
     void setCamera();
     void deleteSelectedModel();
-    void deleteAsset(vpvl::Asset *asset);
-    void deleteModel(vpvl::PMDModel *model);
     void resetCamera();
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);
@@ -167,19 +161,12 @@ public slots:
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void selectBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
-    void deleteCameraMotion();
 
 signals:
+    void initailizeGLContextDidDone();
     void fileDidLoad(const QString &filename);
-    void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);
-    void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
-    void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
-    void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
     void newMotionDidSet(vpvl::PMDModel *model);
-    void assetDidAdd(vpvl::Asset *asset, const QUuid &uuid);
-    void assetWillDelete(vpvl::Asset *asset, const QUuid &uuid);
-    void cameraMotionDidSet(vpvl::VMDMotion *motion);
     void lightColorDidSet(const vpvl::Color &color);
     void lightPositionDidSet(const vpvl::Vector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
