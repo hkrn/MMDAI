@@ -257,6 +257,13 @@ void VMDMotion::advance(float deltaFrame)
     }
 }
 
+void VMDMotion::reload()
+{
+    m_boneMotion.refresh();
+    m_faceMotion.refresh();
+    reset();
+}
+
 void VMDMotion::reset()
 {
     m_boneMotion.seek(0.0f);

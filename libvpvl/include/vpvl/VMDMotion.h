@@ -113,6 +113,7 @@ public:
     void detachModel(PMDModel *model);
     void seek(float frameIndex);
     void advance(float deltaFrame);
+    void reload();
     void reset();
     float maxFrameIndex() const;
     bool isReachedTo(float frameIndex) const;
