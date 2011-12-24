@@ -231,7 +231,7 @@ public:
             VMDMotion *motion = (*it).second;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motion"), 0));
             const std::string &modelUUID = this->modelUUID(motion->parentModel());
-            if (!modelUUID.empty())
+            if (modelUUID != Project::kNullUUID)
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("model"), VPVL_CAST_XC(modelUUID.c_str())));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(motionUUID.c_str())));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
@@ -909,7 +909,7 @@ public:
 };
 
 const std::string Handler::kEmpty = "";
-const Project::UUID Project::kNullUUID = "00000000-0000-0000-0000-000000000000";
+const Project::UUID Project::kNullUUID = "{00000000-0000-0000-0000-000000000000}";
 const std::string Project::kSettingNameKey = "name";
 const std::string Project::kSettingURIKey = "uri";
 const float Project::kCurrentVersion = 0.1f;
