@@ -118,6 +118,8 @@ public:
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
     const Project::UUID &assetUUID(Asset *asset) const {
+        if (!asset)
+            return Project::kNullUUID;
         for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
             if ((*it).second == asset)
                 return (*it).first;
@@ -125,6 +127,8 @@ public:
         return Project::kNullUUID;
     }
     const Project::UUID &modelUUID(PMDModel *model) const {
+        if (!model)
+            return Project::kNullUUID;
         for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
             if ((*it).second == model)
                 return (*it).first;
@@ -132,6 +136,8 @@ public:
         return Project::kNullUUID;
     }
     const Project::UUID &motionUUID(VMDMotion *motion) const {
+        if (!motion)
+            return Project::kNullUUID;
         for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
             if ((*it).second == motion)
                 return (*it).first;
@@ -223,11 +229,10 @@ public:
         for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
             const std::string &motionUUID = (*it).first;
             VMDMotion *motion = (*it).second;
-            const std::string &modelUUID = this->modelUUID(motion->parentModel());
-            if (modelUUID.empty())
-                continue;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motion"), 0));
-            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("model"), VPVL_CAST_XC(modelUUID.c_str())));
+            const std::string &modelUUID = this->modelUUID(motion->parentModel());
+            if (!modelUUID.empty())
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("model"), VPVL_CAST_XC(modelUUID.c_str())));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(motionUUID.c_str())));
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("bone")));
@@ -1073,7 +1078,8 @@ void Project::addMotion(VMDMotion *motion, PMDModel *model, const std::string &u
 {
     if (!containsMotion(motion)) {
         m_handler->motions[uuid] = motion;
-        model->addMotion(motion);
+        if (model)
+            model->addMotion(motion);
         setDirty(true);
     }
 }
@@ -1102,7 +1108,8 @@ void Project::deleteMotion(VMDMotion *&motion, PMDModel *model)
 {
     if (containsMotion(motion)) {
         m_handler->removeMotion(motion);
-        model->deleteMotion(motion);
+        if (model)
+            model->deleteMotion(motion);
         setDirty(true);
     }
 }
@@ -1127,7 +1134,8 @@ void Project::removeMotion(VMDMotion *motion, PMDModel *model)
 {
     if (containsMotion(motion)) {
         m_handler->removeMotion(motion);
-        model->removeMotion(motion);
+        if (model)
+            model->removeMotion(motion);
     }
 }
 
