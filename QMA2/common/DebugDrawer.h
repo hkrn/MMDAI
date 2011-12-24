@@ -44,6 +44,12 @@
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
 
+#ifdef Q_OS_DARWIN
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
 namespace internal {
 
 class DebugDrawer : public btIDebugDraw
@@ -107,7 +113,7 @@ public:
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_LIGHTING);
 
-        btAlignedObjectArray<btVector3> vertices;
+        vpvl::Array<vpvl::Vector3> vertices;
         static const int indices[] = {
             0, 1, 2, 3
         };
@@ -118,29 +124,47 @@ public:
 
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
-        btTransform tr = btTransform::getIdentity();
+        vpvl::Transform tr = vpvl::Transform::getIdentity();
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *child = bone->child();
-            if (!child || !bone->isVisible() || bone->id() == 0)
+            if (!bone->isMovable() && !bone->isRotateable())
                 continue;
-            //vpvl::Bone::Type type = bone->type();
-            const btTransform &boneTransform = bone->localTransform(),
+            const vpvl::Transform &boneTransform = bone->localTransform(),
                     &childTransform = child->localTransform();
-            const btVector3 &origin = boneTransform.getOrigin(),
+            const vpvl::Vector3 &origin = boneTransform.getOrigin(),
                     &childOrigin = childTransform.getOrigin();
             glPushMatrix();
             glLoadMatrixf(matrix);
+            glPushMatrix();
+            glTranslatef(origin.x(), origin.y(), origin.z());
+            const vpvl::Scalar &s = 0.075f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+            const int kSlides = 32, kRings = kSlides;
+            if (bone == m_sceneWidget->selectedBone()) {
+                const float kInnerRadius = 0.05, kOuterRadius = 1.0;
+                glPushMatrix();
+                glColor4f(0, 0, 1, 0.5);
+                glutSolidTorus(kInnerRadius, kOuterRadius, kSlides, kRings);
+                glRotatef(90, 1, 0, 0);
+                glColor4f(0, 1, 0, 0.5);
+                glutSolidTorus(kInnerRadius, kOuterRadius, kSlides, kRings);
+                glRotatef(90, 0, 1, 0);
+                glColor4f(1, 0, 0, 0.5);
+                glutSolidTorus(kInnerRadius, kOuterRadius, kSlides, kRings);
+                glPopMatrix();
+            }
+            glColor4f(0, 0, 1, 0.5);
+            glutSolidSphere(s, kSlides, kRings);
+            glPopMatrix();
             vertices.clear();
-            btScalar s = 0.1f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-            tr.setOrigin(btVector3(s, 0.0f, 0.0));
-            vertices.push_back(tr * origin);
-            vertices.push_back(childOrigin);
-            tr.setOrigin(btVector3(-s, 0.0f, s));
-            vertices.push_back(tr * origin);
-            vertices.push_back(childOrigin);
+            tr.setOrigin(vpvl::Vector3(s, 0.0f, 0.0));
+            vertices.add(tr * origin);
+            vertices.add(childOrigin);
+            tr.setOrigin(vpvl::Vector3(-s, 0.0f, 0.0));
+            vertices.add(tr * origin);
+            vertices.add(childOrigin);
             glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, sizeof(btVector3), &vertices[0]);
             glColor3f(0, 0, 1);
+            glVertexPointer(3, GL_FLOAT, sizeof(vpvl::Vector3), &vertices[0]);
             glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
             glDisableClientState(GL_VERTEX_ARRAY);
             glPopMatrix();
@@ -154,10 +178,10 @@ public:
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_LIGHTING);
             glPushMatrix();
-            const btTransform &t = bone->localTransform();
-            btScalar orthoLen = 1.0f;
+            const vpvl::Transform &t = bone->localTransform();
+            vpvl::Scalar orthoLen = 1.0f;
             if (bone->hasParent()) {
-                const btTransform &pt = bone->parent()->localTransform();
+                const vpvl::Transform &pt = bone->parent()->localTransform();
                 orthoLen = btMin(orthoLen, pt.getOrigin().distance(t.getOrigin()));
             }
             drawTransform(t, orthoLen);

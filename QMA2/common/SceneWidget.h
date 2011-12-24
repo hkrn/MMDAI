@@ -103,6 +103,7 @@ public:
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
     void getObjectCoordinates(const QPointF &input, vpvl::Vector3 &camera, vpvl::Vector3 &zfar) const;
+    vpvl::Bone *selectedBone() const { return m_bone; }
     float modelEdgeOffset() const { return m_selectedEdgeOffset; }
     int preferredFPS() const { return m_defaultFPS; }
     bool isGridVisible() const;
