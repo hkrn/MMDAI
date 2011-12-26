@@ -110,7 +110,7 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
     /* モデル名が空っぽの場合はファイル名から補完しておく */
     const QString &key = internal::toQString(model).trimmed();
     if (key.isEmpty()) {
-        const QByteArray bytes = internal::fromQString(baseName);
+        const QByteArray &bytes = internal::fromQString(baseName);
         model->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
     }
     /*
@@ -569,7 +569,7 @@ void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)
 
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
-    const QString &uuid = QUuid::createUuid().toString();
+    const QUuid &uuid = QUuid::createUuid();
     const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
@@ -579,7 +579,7 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         m_project->removeMotion(ptr, model);
     }
     model->addMotion(motion);
-    m_project->addMotion(motion, model, uuid.toStdString());
+    m_project->addMotion(motion, model, uuid.toString().toStdString());
     emit motionDidAdd(motion, model, uuid);
 }
 
