@@ -73,15 +73,15 @@ AssetWidget::AssetWidget(QWidget *parent) :
     m_positionLabel = new QLabel();
     gridLayout->addWidget(m_positionLabel, 0, 1, Qt::AlignCenter);
     m_px = new QDoubleSpinBox();
-    m_px->setRange(-10000.0, 10000.0);
+    m_px->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
     connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     gridLayout->addWidget(m_px, 1, 1);
     m_py = new QDoubleSpinBox();
-    m_py->setRange(-10000.0, 10000.0);
+    m_py->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
     connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
     gridLayout->addWidget(m_py, 2, 1);
     m_pz = new QDoubleSpinBox();
-    m_pz->setRange(-10000.0, 10000.0);
+    m_pz->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
     connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     gridLayout->addWidget(m_pz, 3, 1);
     m_rotationLabel = new QLabel();
