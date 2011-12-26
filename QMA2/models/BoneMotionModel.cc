@@ -474,7 +474,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
         /* 基本的な処理は pasteFrame と同等だが、「左」「右」の名前を持つボーンは特別扱い */
         for (int i = 0; i < nframes; i++) {
             vpvl::BoneKeyFrame *frame = static_cast<vpvl::BoneKeyFrame *>(m_frames[i]), *newFrame = 0;
-            const QString name = internal::toQString(frame);
+            const QString &name = internal::toQString(frame);
             /* 二重登録防止のため、「左」「右」はどちらか出てきたら処理は一回のみ */
             if (!registered.contains(name)) {
                 bool isRight = name.startsWith(right);

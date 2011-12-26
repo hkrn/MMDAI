@@ -144,7 +144,7 @@ void FaceWidget::setPMDModel(vpvl::PMDModel *model)
         for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
             const uint8_t *name = face->name();
-            const QString utf8Name = internal::toQString(face);
+            const QString &utf8Name = internal::toQString(face);
             switch (face->type()) {
             case vpvl::Face::kEye:
                 m_eyes->addItem(utf8Name, name);

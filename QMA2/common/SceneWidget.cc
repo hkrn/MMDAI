@@ -722,7 +722,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
 {
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
-        const QList<QUrl> urls = mimeData->urls();
+        const QList<QUrl> &urls = mimeData->urls();
         foreach (const QUrl url, urls) {
             const QString &file = url.toLocalFile();
             loadFile(file);
@@ -812,7 +812,7 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
                 break;
             }
         }
-        if (nearestBone && nearestBone->isVisible()) {
+        if (nearestBone && (nearestBone->isMovable() || nearestBone->isRotateable())) {
             QList<vpvl::Bone *> bones;
             bones.append(nearestBone);
             emit boneDidSelect(bones);
@@ -950,8 +950,8 @@ void SceneWidget::updateFPS()
 
 const QString SceneWidget::openFileDialog(const QString &name, const QString &desc, const QString &exts)
 {
-    const QString path = m_settings->value(name).toString();
-    const QString fileName = QFileDialog::getOpenFileName(this, desc, path, exts);
+    const QString &path = m_settings->value(name).toString();
+    const QString &fileName = QFileDialog::getOpenFileName(this, desc, path, exts);
     if (!fileName.isEmpty()) {
         QDir dir(fileName);
         dir.cdUp();

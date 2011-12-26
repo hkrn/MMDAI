@@ -102,13 +102,13 @@ void LoggerWidget::addMessage(const QString &message)
 
 void LoggerWidget::save()
 {
-    const QString name = "loggerWidget/lastLogDirectory";
-    const QString path = m_settings->value(name).toString();
-    const QString content = m_textEdit->toPlainText();
-    const QString filename = QFileDialog::getSaveFileName(this,
-                                                          tr("Save script log"),
-                                                          path,
-                                                          tr("Log file (*.log)"));
+    const QString &name = "loggerWidget/lastLogDirectory";
+    const QString &path = m_settings->value(name).toString();
+    const QString &content = m_textEdit->toPlainText();
+    const QString &filename = QFileDialog::getSaveFileName(this,
+                                                           tr("Save script log"),
+                                                           path,
+                                                           tr("Log file (*.log)"));
     if (!filename.isEmpty()) {
         QDir dir(filename);
         dir.cdUp();
