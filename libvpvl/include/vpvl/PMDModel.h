@@ -682,11 +682,28 @@ public:
         m_userData = value;
     }
 
+    /* primitive operations of PMDModel to build and save PMD object */
+    void setIndices(const IndexList &value);
+    void addVertex(Vertex *value);
+    void removeVertex(Vertex *value);
+    void addMaterial(Material *value);
+    void removeMaterial(Material *value);
+    void addBone(Bone *value);
+    void removeBone(Bone *value);
+    void addIK(IK *value);
+    void removeIK(IK *value);
+    void addFace(Face *value);
+    void removeFace(Face *value);
+    void addRigidBody(RigidBody *value);
+    void removeRigidBody(RigidBody *value);
+    void addConstraint(Constraint *value);
+    void removeConstraint(Constraint *value);
+
 private:
     void parseHeader(const DataInfo &info);
     void parseVertices(const DataInfo &info);
     void parseIndices(const DataInfo &info);
-    void parseMatrials(const DataInfo &info);
+    void parseMaterials(const DataInfo &info);
     void parseBones(const DataInfo &info);
     void parseIKs(const DataInfo &info);
     void parseFaces(const DataInfo &info);

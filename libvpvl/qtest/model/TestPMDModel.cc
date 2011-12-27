@@ -13,6 +13,8 @@ class TestPMDModel : public QObject
 
 public:
     static const char *kTestString;
+    static const uint8_t *kName;
+    static const uint8_t *kEnglishName;
 
     TestPMDModel();
 
@@ -27,6 +29,13 @@ private Q_SLOTS:
     void parseRigidBody();
     void parseVertex();
     void handleMotions();
+    void mutateIndices();
+    void mutateMaterials();
+    void mutateBones();
+    void mutateIKs();
+    void mutateFaces();
+    void mutateRigidBodies();
+    void mutateConstraints();
 };
 
 namespace
@@ -137,6 +146,8 @@ static void TestVertex(const Vertex &vertex)
 }
 
 const char *TestPMDModel::kTestString = "01234567890123456789";
+const uint8_t *TestPMDModel::kName = reinterpret_cast<const uint8_t *>("kName");
+const uint8_t *TestPMDModel::kEnglishName = reinterpret_cast<const uint8_t *>("kEnglishName");
 
 TestPMDModel::TestPMDModel()
 {
@@ -446,6 +457,97 @@ void TestPMDModel::handleMotions()
     QCOMPARE(model.motions().count(), 2);
     model.deleteAllMotions();
     QCOMPARE(model.motions().count(), 0);
+}
+
+void TestPMDModel::mutateIndices()
+{
+    PMDModel model;
+    IndexList indices, empty;
+    indices.add(1);
+    indices.add(2);
+    indices.add(3);
+    model.setIndices(indices);
+    QCOMPARE(model.indices().count(), 3);
+    model.setIndices(empty);
+    QCOMPARE(model.indices().count(), 0);
+}
+
+void TestPMDModel::mutateMaterials()
+{
+    PMDModel model;
+    Material *material = new Material();
+    model.addMaterial(material);
+    QCOMPARE(model.materials().count(), 1);
+    model.removeMaterial(material);
+    QCOMPARE(model.materials().count(), 0);
+    delete material;
+}
+
+void TestPMDModel::mutateBones()
+{
+    PMDModel model;
+    Bone *bone = new Bone();
+    bone->setName(kName);
+    bone->setEnglishName(kEnglishName);
+    model.addBone(bone);
+    QCOMPARE(model.bones().count(), 1);
+    QCOMPARE(model.findBone(kName), bone);
+    QCOMPARE(model.findBone(kEnglishName), bone);
+    model.removeBone(bone);
+    QCOMPARE(model.bones().count(), 0);
+    QCOMPARE(model.findBone(kName), static_cast<Bone *>(0));
+    QCOMPARE(model.findBone(kEnglishName), static_cast<Bone *>(0));
+    delete bone;
+}
+
+void TestPMDModel::mutateIKs()
+{
+    PMDModel model;
+    IK *ik = new IK();
+    model.addIK(ik);
+    QCOMPARE(model.IKs().count(), 1);
+    model.removeIK(ik);
+    QCOMPARE(model.IKs().count(), 0);
+    delete ik;
+}
+
+void TestPMDModel::mutateFaces()
+{
+    PMDModel model;
+    Face *face = new Face();
+    face->setName(kName);
+    face->setEnglishName(kEnglishName);
+    model.addFace(face);
+    QCOMPARE(model.faces().count(), 1);
+    QCOMPARE(model.findFace(kName), face);
+    QCOMPARE(model.findFace(kEnglishName), face);
+    model.removeFace(face);
+    QCOMPARE(model.bones().count(), 0);
+    QCOMPARE(model.findFace(kName), static_cast<Face *>(0));
+    QCOMPARE(model.findFace(kEnglishName), static_cast<Face *>(0));
+    delete face;
+}
+
+void TestPMDModel::mutateRigidBodies()
+{
+    PMDModel model;
+    RigidBody *rigidBody = new RigidBody();
+    model.addRigidBody(rigidBody);
+    QCOMPARE(model.rigidBodies().count(), 1);
+    model.removeRigidBody(rigidBody);
+    QCOMPARE(model.rigidBodies().count(), 0);
+    delete rigidBody;
+}
+
+void TestPMDModel::mutateConstraints()
+{
+    PMDModel model;
+    Constraint *constraint = new Constraint();
+    model.addConstraint(constraint);
+    QCOMPARE(model.constraints().count(), 1);
+    model.removeConstraint(constraint);
+    QCOMPARE(model.constraints().count(), 0);
+    delete constraint;
 }
 
 QTEST_APPLESS_MAIN(TestPMDModel)

@@ -823,7 +823,7 @@ bool PMDModel::load(const uint8_t *data, size_t size)
         parseHeader(info);
         parseVertices(info);
         parseIndices(info);
-        parseMatrials(info);
+        parseMaterials(info);
         parseBones(info);
         parseIKs(info);
         parseFaces(info);
@@ -1041,7 +1041,7 @@ void PMDModel::parseIndices(const DataInfo &info)
     updateIndices();
 }
 
-void PMDModel::parseMatrials(const DataInfo &info)
+void PMDModel::parseMaterials(const DataInfo &info)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.materialsPtr);
     const int nmaterials = info.materialsCount;
@@ -1412,6 +1412,98 @@ Face *PMDModel::findFace(const uint8_t *name) const
     const HashString key(reinterpret_cast<const char *>(name));
     Face **ptr = const_cast<Face **>(m_name2face.find(key));
     return ptr ? *ptr : 0;
+}
+
+void PMDModel::setIndices(const IndexList &value)
+{
+    m_indices.clear();
+    m_indices.copy(value);
+    updateIndices();
+}
+
+void PMDModel::addVertex(Vertex *value)
+{
+    m_vertices.add(value);
+}
+
+void PMDModel::removeVertex(Vertex *value)
+{
+    m_vertices.remove(value);
+}
+
+void PMDModel::addMaterial(Material *value)
+{
+    m_materials.add(value);
+}
+
+void PMDModel::removeMaterial(Material *value)
+{
+    m_materials.remove(value);
+}
+
+void PMDModel::addBone(Bone *value)
+{
+    value->build(&m_bones, &m_rootBone);
+    m_bones.add(value);
+    m_name2bone.insert(reinterpret_cast<const char *>(value->name()), value);
+    m_name2bone.insert(reinterpret_cast<const char *>(value->englishName()), value);
+    // TODO: implement adding bone for UI
+    sortBones();
+}
+
+void PMDModel::removeBone(Bone *value)
+{
+    m_name2bone.remove(reinterpret_cast<const char *>(value->name()));
+    m_name2bone.remove(reinterpret_cast<const char *>(value->englishName()));
+    m_bones.remove(value);
+    // TODO: implement removing bone for UI
+    sortBones();
+}
+
+void PMDModel::addIK(IK *value)
+{
+    m_IKs.add(value);
+}
+
+void PMDModel::removeIK(IK *value)
+{
+    m_IKs.remove(value);
+}
+
+void PMDModel::addFace(Face *value)
+{
+    m_faces.add(value);
+    m_name2face.insert(reinterpret_cast<const char *>(value->name()), value);
+    m_name2face.insert(reinterpret_cast<const char *>(value->englishName()), value);
+    // TODO: implement adding face for UI
+}
+
+void PMDModel::removeFace(Face *value)
+{
+    m_name2face.remove(reinterpret_cast<const char *>(value->name()));
+    m_name2face.remove(reinterpret_cast<const char *>(value->englishName()));
+    m_faces.remove(value);
+    // TODO: implement removing face for UI
+}
+
+void PMDModel::addRigidBody(RigidBody *value)
+{
+    m_rigidBodies.add(value);
+}
+
+void PMDModel::removeRigidBody(RigidBody *value)
+{
+    m_rigidBodies.remove(value);
+}
+
+void PMDModel::addConstraint(Constraint *value)
+{
+    m_constraints.add(value);
+}
+
+void PMDModel::removeConstraint(Constraint *value)
+{
+    m_constraints.remove(value);
 }
 
 }

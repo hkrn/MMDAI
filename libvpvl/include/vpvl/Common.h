@@ -188,6 +188,9 @@ public:
             delete *m_values.getAtIndex(i);
         m_values.clear();
     }
+    void remove(const K &key) {
+        m_values.remove(key);
+    }
     const V *value(int index) const {
         return m_values.getAtIndex(index);
     }
