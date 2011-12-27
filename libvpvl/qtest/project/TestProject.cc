@@ -269,7 +269,10 @@ void TestProject::testCameraAnimation(const VMDMotion *motion)
     QCOMPARE(ca.countKeyFrames(), 2);
     QCOMPARE(ca.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(ca.frameAt(0)->position(), Vector3(1, 2, -3));
-    QCOMPARE(ca.frameAt(0)->angle(), Vector3(-degree(1), -degree(2), -degree(3)));
+    const Vector3 &angle1 = ca.frameAt(0)->angle();
+    QVERIFY(qFuzzyCompare(angle1.x(), -degree(1)));
+    QVERIFY(qFuzzyCompare(angle1.y(), -degree(2)));
+    QVERIFY(qFuzzyCompare(angle1.z(), -degree(3)));
     QCOMPARE(ca.frameAt(0)->fovy(), 15.0f);
     QCOMPARE(ca.frameAt(0)->distance(), 150.0f);
     for (int i = 0; i < CameraKeyFrame::kMax; i++) {
@@ -279,7 +282,10 @@ void TestProject::testCameraAnimation(const VMDMotion *motion)
     }
     QCOMPARE(ca.frameAt(1)->frameIndex(), 2.0f);
     QCOMPARE(ca.frameAt(1)->position(), Vector3(3, 1, -2));
-    QCOMPARE(ca.frameAt(1)->angle(), Vector3(-degree(3), -degree(1), -degree(2)));
+    const Vector3 &angle2 = ca.frameAt(1)->angle();
+    QVERIFY(qFuzzyCompare(angle2.x(), -degree(3)));
+    QVERIFY(qFuzzyCompare(angle2.y(), -degree(1)));
+    QVERIFY(qFuzzyCompare(angle2.z(), -degree(2)));
     QCOMPARE(ca.frameAt(1)->fovy(), 30.0f);
     QCOMPARE(ca.frameAt(1)->distance(), 300.0f);
     for (int i = CameraKeyFrame::kMax - 1; i >= 0; i--) {
