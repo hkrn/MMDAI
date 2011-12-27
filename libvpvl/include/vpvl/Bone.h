@@ -338,114 +338,77 @@ public:
      *
      * @param value the name of this bone
      */
-    void setName(const uint8_t *value) {
-        copyBytesSafe(m_name, value, sizeof(m_name));
-    }
+    void setName(const uint8_t *value);
 
     /**
      * Set the name of this bone in English.
      *
      * @param value the name of this bone in English
      */
-    void setEnglishName(const uint8_t *value) {
-        copyBytesSafe(m_englishName, value, sizeof(m_englishName));
-    }
+    void setEnglishName(const uint8_t *value);
 
     /**
      * Set an index of the category of this bone.
      *
      * @param value an index of the category of this bone
      */
-    void setCategoryIndex(uint8_t value) {
-        m_categoryIndex = value;
-    }
+    void setCategoryIndex(uint8_t value);
 
     /**
      * Set transform object
      *
      * @param value transform object
      */
-    void setLocalTransform(const Transform &value) {
-        m_localTransform = value;
-    }
+    void setLocalTransform(const Transform &value);
 
     /**
      * Set offset of this bone.
      *
      * @param value offset of this bone
      */
-    void setOffset(const Vector3 &value) {
-        m_offset = value;
-    }
+    void setOffset(const Vector3 &value);
 
     /**
      * Set position of this bone.
      *
      * @param value position of this bone
      */
-    void setPosition(const Vector3 &value) {
-        m_position = value;
-    }
+    void setPosition(const Vector3 &value);
 
     /**
      * Set rotation of this bone.
      *
      * @param value rotation of this bone
      */
-    void setRotation(const Quaternion &value) {
-        m_rotation = value;
-    }
+    void setRotation(const Quaternion &value);
 
     /**
      * Set this bone is simulated.
      *
      * @param value whether this bone is simulated
      */
-    void setSimulated(bool value) {
-        m_simulated = value;
-    }
+    void setSimulated(bool value);
 
     /**
      * Get whether this bone is movable
      *
      * @return true if this bone is movable
      */
-    bool isMovable() const {
-        switch (m_type) {
-        case kRotateAndMove:
-        case kIKDestination:
-        case kUnderIK:
-            return true;
-        default:
-            return false;
-        }
-    }
+    bool isMovable() const;
 
     /**
      * Get whether this bone is rotateable
      *
      * @return true if this bone is rotateable
      */
-    bool isRotateable() const {
-        return isVisible();
-    }
+    bool isRotateable() const;
 
     /**
      * Get whether this bone is visible
      *
      * @return true if this bone is visible
      */
-    bool isVisible() const {
-        switch (m_type) {
-        case kUnknown:
-        case kIKTarget:
-        case kInvisible:
-        case kFollowRotate:
-            return false;
-        default:
-            return true;
-        }
-    }
+    bool isVisible() const;
 
 private:
     uint8_t m_name[kNameSize + 1];

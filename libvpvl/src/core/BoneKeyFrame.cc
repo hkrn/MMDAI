@@ -121,13 +121,13 @@ void BoneKeyFrame::read(const uint8_t *data)
     float *rot = chunk.rotation;
 #endif
 
-    m_frameIndex = static_cast<float>(chunk.frameIndex);
+    setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL_COORDINATE_OPENGL
-    m_position.setValue(pos[0], pos[1], -pos[2]);
-    m_rotation.setValue(-rot[0], -rot[1], rot[2], rot[3]);
+    setPosition(Vector3(pos[0], pos[1], -pos[2]));
+    setRotation(Quaternion(-rot[0], -rot[1], rot[2], rot[3]));
 #else
-    m_position.setValue(pos[0], pos[1], pos[2]);
-    m_rotation.setValue(rot[0], rot[1], rot[2], rot[3]);
+    setPosition(Vector3(pos[0], pos[1], pos[2]));
+    setRotation(Quaternion(rot[0], rot[1], rot[2], rot[3]));
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
@@ -171,9 +171,9 @@ BaseKeyFrame *BoneKeyFrame::clone() const
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->m_frameIndex = m_frameIndex;
-    frame->m_position = m_position;
-    frame->m_rotation = m_rotation;
+    frame->setFrameIndex(m_frameIndex);
+    frame->setPosition(m_position);
+    frame->setRotation(m_rotation);
     frame->m_parameter = m_parameter;
     frame->setInterpolationTable(m_rawInterpolationTable);
     return frame;
@@ -260,6 +260,16 @@ QuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);
         return q;
     }
+}
+
+void BoneKeyFrame::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void BoneKeyFrame::setRotation(const Quaternion &value)
+{
+    m_rotation = value;
 }
 
 }

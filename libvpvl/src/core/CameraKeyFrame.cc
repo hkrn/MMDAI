@@ -129,17 +129,17 @@ void CameraKeyFrame::read(const uint8_t *data)
     float *angle = chunk.angle;
 #endif
 
-    m_frameIndex = static_cast<float>(chunk.frameIndex);
-    m_fovy = static_cast<float>(chunk.viewAngle);
-    m_noPerspective = chunk.noPerspective == 1;
+    setFrameIndex(static_cast<float>(chunk.frameIndex));
+    setFovy(static_cast<float>(chunk.viewAngle));
+    setPerspective(chunk.noPerspective == 0);
 #ifdef VPVL_COORDINATE_OPENGL
-    m_distance = -chunk.distance;
-    m_position.setValue(pos[0], pos[1], -pos[2]);
-    m_angle.setValue(-degree(angle[0]), -degree(angle[1]), degree(angle[2]));
+    setDistance(-chunk.distance);
+    setPosition(Vector3(pos[0], pos[1], -pos[2]));
+    setAngle(Vector3(-degree(angle[0]), -degree(angle[1]), degree(angle[2])));
 #else
-    m_distance = chunk.distance;
-    m_position.setValue(pos[0], pos[1], pos[2]);
-    m_angle.setValue(degree(angle[0]), degree(angle[1]), degree(angle[2]));
+    setDistance(chunk.distance);
+    setPosition(Vector3(pos[0], pos[1], pos[2]));
+    setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
@@ -281,6 +281,31 @@ QuadWord &CameraKeyFrame::getInterpolationParameterInternal(InterpolationType ty
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);
         return q;
     }
+}
+
+void CameraKeyFrame::setDistance(float value)
+{
+    m_distance = value;
+}
+
+void CameraKeyFrame::setFovy(float value)
+{
+    m_fovy = value;
+}
+
+void CameraKeyFrame::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void CameraKeyFrame::setAngle(const Vector3 &value)
+{
+    m_angle = value;
+}
+
+void CameraKeyFrame::setPerspective(bool value)
+{
+    m_noPerspective = !value;
 }
 
 }

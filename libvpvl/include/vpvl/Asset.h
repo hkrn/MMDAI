@@ -80,48 +80,35 @@ public:
     const Vector3 &position() const {
         return m_position;
     }
-    void setPosition(const Vector3 &value) {
-        m_position = value;
-    }
     const Quaternion &rotation() const {
         return m_rotation;
-    }
-    void setRotation(const Quaternion &value) {
-        m_rotation = value;
     }
     const Scalar &scaleFactor() const {
         return m_scale;
     }
-    void setScaleFactor(const Scalar &value) {
-        m_scale = value;
-    }
     const Scalar &opacity() const {
         return m_opacity;
-    }
-    void setOpacity(const Scalar &value) {
-        m_opacity = value;
     }
     uint32_t loadFlags() const {
         return m_flags;
     }
-    void setLoadFlags(uint32_t value) {
-        m_flags = value;
-    }
     Bone *parentBone() const {
         return m_parentBone;
-    }
-    void setParentBone(Bone *value) {
-        m_parentBone = value;
     }
     AssetUserData *userData() const {
         return m_userData;
     }
-    void setUserData(AssetUserData *value) {
-        m_userData = value;
-    }
     const aiScene *getScene() const {
         return m_scene;
     }
+
+    void setPosition(const Vector3 &value);
+    void setRotation(const Quaternion &value);
+    void setScaleFactor(const Scalar &value);
+    void setOpacity(const Scalar &value);
+    void setLoadFlags(uint32_t value);
+    void setParentBone(Bone *value);
+    void setUserData(AssetUserData *value);
 
 private:
     Assimp::Importer *m_importer;

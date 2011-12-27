@@ -276,4 +276,74 @@ void Bone::getSkinTransform(Transform &tr) const
     tr = m_localTransform * m_localToOriginTransform;
 }
 
+void Bone::setName(const uint8_t *value)
+{
+    copyBytesSafe(m_name, value, sizeof(m_name));
+}
+
+void Bone::setEnglishName(const uint8_t *value)
+{
+    copyBytesSafe(m_englishName, value, sizeof(m_englishName));
+}
+
+void Bone::setCategoryIndex(uint8_t value)
+{
+    m_categoryIndex = value;
+}
+
+void Bone::setLocalTransform(const Transform &value)
+{
+    m_localTransform = value;
+}
+
+void Bone::setOffset(const Vector3 &value)
+{
+    m_offset = value;
+}
+
+void Bone::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void Bone::setRotation(const Quaternion &value)
+{
+    m_rotation = value;
+}
+
+void Bone::setSimulated(bool value)
+{
+    m_simulated = value;
+}
+
+bool Bone::isMovable() const
+{
+    switch (m_type) {
+    case kRotateAndMove:
+    case kIKDestination:
+    case kUnderIK:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool Bone::isRotateable() const
+{
+    return isVisible();
+}
+
+bool Bone::isVisible() const
+{
+    switch (m_type) {
+    case kUnknown:
+    case kIKTarget:
+    case kInvisible:
+    case kFollowRotate:
+        return false;
+    default:
+        return true;
+    }
+}
+
 } /* namespace vpvl */

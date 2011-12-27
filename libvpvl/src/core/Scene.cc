@@ -344,6 +344,23 @@ bool Scene::isMotionReachedTo(float atEnd) const
     return ret;
 }
 
+void Scene::setWidth(int value)
+{
+    m_width = value;
+    updateProjection();
+}
+
+void Scene::setHeight(int value)
+{
+    m_height = value;
+    updateProjection();
+}
+
+void Scene::setPreferredFPS(int value)
+{
+    m_preferredFPS = value;
+}
+
 void Scene::sortRenderingOrder()
 {
     m_models.sort(SceneModelDistancePredication(m_modelview));

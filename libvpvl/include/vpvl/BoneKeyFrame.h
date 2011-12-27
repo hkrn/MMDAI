@@ -155,18 +155,14 @@ public:
      *
      * @param value A value of position value
      */
-    void setPosition(const Vector3 &value) {
-        m_position = value;
-    }
+    void setPosition(const Vector3 &value);
 
     /**
      * Set the rotation to the target bone of this keyframe.
      *
      * @param value A value of rotation value
      */
-    void setRotation(const Quaternion &value) {
-        m_rotation = value;
-    }
+    void setRotation(const Quaternion &value);
 
 private:
     void setInterpolationTable(const int8_t *table);

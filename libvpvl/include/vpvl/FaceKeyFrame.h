@@ -89,9 +89,7 @@ public:
      *
      * @param A value of weight of the face
      */
-    void setWeight(float value) {
-        m_weight = value;
-    }
+    void setWeight(float value);
 
 private:
     uint8_t m_name[kNameSize + 1];

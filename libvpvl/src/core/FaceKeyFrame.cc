@@ -78,11 +78,13 @@ void FaceKeyFrame::read(const uint8_t *data)
     FaceKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     setName(chunk.name);
-    m_frameIndex = static_cast<float>(chunk.frameIndex);
+    setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL_BUILD_IOS
-    memcpy(&m_weight, &chunk.weight, sizeof(m_weight));
+    float weight;
+    memcpy(&weight, &chunk.weight, sizeof(weight));
+    setWeight(weight);
 #else
-    m_weight = chunk.weight;
+    setWeight(chunk.weight);
 #endif
 }
 
@@ -98,9 +100,9 @@ void FaceKeyFrame::write(uint8_t *data) const
 BaseKeyFrame *FaceKeyFrame::clone() const
 {
     FaceKeyFrame *frame = new FaceKeyFrame();
-    internal::copyBytes(frame->m_name, m_name, kNameSize);
-    frame->m_frameIndex = m_frameIndex;
-    frame->m_weight = m_weight;
+    frame->setName(m_name);
+    frame->setFrameIndex(m_frameIndex);
+    frame->setWeight(m_weight);
     return frame;
 }
 
@@ -112,6 +114,11 @@ const uint8_t *FaceKeyFrame::name() const
 void FaceKeyFrame::setName(const uint8_t *value)
 {
     copyBytesSafe(m_name, value, sizeof(m_name));
+}
+
+void FaceKeyFrame::setWeight(float value)
+{
+    m_weight = value;
 }
 
 }

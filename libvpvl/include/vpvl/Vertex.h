@@ -44,6 +44,8 @@
 namespace vpvl
 {
 
+class Bone;
+
 /**
  * @file
  * @author Nagoya Institute of Technology Department of Computer Science
@@ -90,24 +92,13 @@ public:
         return m_edge;
     }
 
-    void setPosition(const Vector3 &value) {
-        m_position = value;
-    }
-    void setNormal(const Vector3 &value) {
-        m_normal = value;
-    }
-    void setU(float value) {
-        m_u = value;
-    }
-    void setV(float value) {
-        m_v = value;
-    }
-    void setWeight(float value) {
-        m_weight = value;
-    }
-    void setEdgeEnable(bool value) {
-        m_edge = value;
-    }
+    void setPosition(const Vector3 &value);
+    void setNormal(const Vector3 &value);
+    void setTexCoord(float u, float v);
+    void setBones(int16_t bone1ID, int16_t bone2ID);
+    void setBones(Bone *bone1, Bone *bone2);
+    void setWeight(float value);
+    void setEdgeEnable(bool value);
 
 private:
     Vector3 m_position;

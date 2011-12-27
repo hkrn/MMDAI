@@ -222,4 +222,19 @@ void Face::setVertices(VertexList &vertices, float rate)
     }
 }
 
+void Face::setName(const uint8_t *value)
+{
+    copyBytesSafe(m_name, value, sizeof(m_name));
+}
+
+void Face::setEnglishName(const uint8_t *value)
+{
+    copyBytesSafe(m_englishName, value, sizeof(m_englishName));
+}
+
+void Face::setWeight(float value)
+{
+    m_weight = value;
+}
+
 } /* namespace vpvl */

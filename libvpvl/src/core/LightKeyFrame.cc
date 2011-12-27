@@ -90,11 +90,11 @@ void LightKeyFrame::read(const uint8_t *data)
     float *color = chunk.color;
     float *direction = chunk.direction;
 #endif
-    m_color.setValue(color[0], color[1], color[2]);
+    setColor(Vector3(color[0], color[1], color[2]));
 #ifdef VPVL_COORDINATE_OPENGL
-    m_direction.setValue(-direction[0], -direction[1], direction[2]);
+    setDirection(Vector3(-direction[0], -direction[1], direction[2]));
 #else
-    m_direction.setValue(direction[0], direction[1], direction[2]);
+    setDirection(Vector3(direction[0], direction[1], direction[2]));
 #endif
 }
 
@@ -119,9 +119,9 @@ void LightKeyFrame::write(uint8_t *data) const
 BaseKeyFrame *LightKeyFrame::clone() const
 {
     LightKeyFrame *frame = new LightKeyFrame();
-    frame->m_frameIndex = m_frameIndex;
-    frame->m_color = m_color;
-    frame->m_direction = m_direction;
+    frame->setFrameIndex(m_frameIndex);
+    frame->setColor(m_color);
+    frame->setDirection(m_direction);
     return frame;
 }
 
@@ -132,6 +132,16 @@ const uint8_t *LightKeyFrame::name() const
 
 void LightKeyFrame::setName(const uint8_t * /* value */)
 {
+}
+
+void LightKeyFrame::setColor(const Vector3 &value)
+{
+    m_color = value;
+}
+
+void LightKeyFrame::setDirection(const Vector3 &value)
+{
+    m_direction = value;
 }
 
 }

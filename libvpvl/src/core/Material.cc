@@ -132,14 +132,14 @@ void Material::read(const uint8_t *data)
         m_mainSphereAdd = strstr(reinterpret_cast<const char *>(m_mainTextureName), ".spa") != NULL;
     }
 
-    m_ambient.setValue(ambient[0], ambient[1], ambient[2], 1.0f);
-    m_diffuse.setValue(diffuse[0], diffuse[1], diffuse[2], 1.0f);
-    m_specular.setValue(specular[0], specular[1], specular[2], 1.0f);
-    m_opacity = alpha;
-    m_shiness = shiness;
-    m_toonID = toonID == 0xff ? 0 : toonID + 1;
-    m_edge = edge ? true : false;
-    m_nindices = nindices;
+    setAmbient(Color(ambient[0], ambient[1], ambient[2], 1.0f));
+    setDiffuse(Color(diffuse[0], diffuse[1], diffuse[2], 1.0f));
+    setSpecular(Color(specular[0], specular[1], specular[2], 1.0f));
+    setOpacity(alpha);
+    setShiness(shiness);
+    setEdgeEnabled(edge);
+    setToonID(toonID);
+    setIndexSize(nindices);
 }
 
 void Material::write(uint8_t *data) const
@@ -168,6 +168,56 @@ void Material::write(uint8_t *data) const
     chunk.edge = m_edge ? 1 : 0;
     chunk.nindices = m_nindices;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+void Material::setMainTextureName(const uint8_t *value)
+{
+    copyBytesSafe(m_mainTextureName, value, sizeof(m_mainTextureName));
+}
+
+void Material::setSubTextureName(const uint8_t *value)
+{
+    copyBytesSafe(m_subTextureName, value, sizeof(m_subTextureName));
+}
+
+void Material::setAmbient(const Color &value)
+{
+    m_ambient = value;
+}
+
+void Material::setDiffuse(const Color &value)
+{
+    m_diffuse = value;
+}
+
+void Material::setSpecular(const Color &value)
+{
+    m_specular = value;
+}
+
+void Material::setOpacity(float value)
+{
+    m_opacity = value;
+}
+
+void Material::setShiness(float value)
+{
+    m_shiness = value;
+}
+
+void Material::setEdgeEnabled(bool value)
+{
+    m_edge = value;
+}
+
+void Material::setToonID(uint8_t value)
+{
+    m_toonID = value == 0xff ? 0 : value + 1;
+}
+
+void Material::setIndexSize(int value)
+{
+    m_nindices = value;
 }
 
 }

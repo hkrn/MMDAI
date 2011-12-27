@@ -96,18 +96,14 @@ public:
      *
      * @param A value of light color
      */
-    void setColor(const Vector3 &value) {
-        m_color = value;
-    }
+    void setColor(const Vector3 &value);
 
     /**
      * Set light direction of this keyframe.
      *
      * @param A value of light direction
      */
-    void setDirection(const Vector3 &value) {
-        m_direction = value;
-    }
+    void setDirection(const Vector3 &value);
 
 private:
     uint8_t m_name[2];

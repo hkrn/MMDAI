@@ -112,21 +112,19 @@ void Vertex::read(const uint8_t *data)
     uint8_t edge = chunk.edge;
 
 #ifdef VPVL_COORDINATE_OPENGL
-    m_position.setValue(pos[0], pos[1], -pos[2]);
+    setPosition(Vector3(pos[0], pos[1], -pos[2]));
 #else
-    m_position.setValue(pos[0], pos[1], pos[2]);
+    setPosition(Vector3(pos[0], pos[1], pos[2]));
 #endif
 #ifdef VPVL_COORDINATE_OPENGL
-    m_normal.setValue(normal[0], normal[1], -normal[2]);
+    setNormal(Vector3(normal[0], normal[1], -normal[2]));
 #else
-    m_normal.setValue(normal[0], normal[1], normal[2]);
+    setNormal(Vector3(normal[0], normal[1], normal[2]));
 #endif
-    m_u = u;
-    m_v = v;
-    m_bone1 = bone1;
-    m_bone2 = bone2;
-    m_weight = weight * 0.01f;
-    m_edge = edge == 0;
+    setTexCoord(u, v);
+    setBones(bone1, bone2);
+    setWeight(weight);
+    setEdgeEnable(edge == 0);
 }
 
 void Vertex::write(uint8_t *data) const
@@ -150,6 +148,43 @@ void Vertex::write(uint8_t *data) const
     chunk.weight = static_cast<uint8_t>(m_weight * 100.0f);
     chunk.edge = m_edge ? 0 : 1;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+void Vertex::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void Vertex::setNormal(const Vector3 &value)
+{
+    m_normal = value;
+}
+
+void Vertex::setTexCoord(float u, float v)
+{
+    m_u = u;
+    m_v = v;
+}
+
+void Vertex::setBones(Bone *bone1, Bone *bone2)
+{
+    setBones(bone1->id(), bone2->id());
+}
+
+void Vertex::setBones(int16_t bone1ID, int16_t bone2ID)
+{
+    m_bone1 = bone1ID;
+    m_bone2 = bone2ID;
+}
+
+void Vertex::setWeight(float value)
+{
+    m_weight = value * 0.01f;
+}
+
+void Vertex::setEdgeEnable(bool value)
+{
+    m_edge = value;
 }
 
 }

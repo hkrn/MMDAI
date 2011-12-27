@@ -39,20 +39,15 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
 
-namespace
-{
-const uint8_t *kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
-}
 
 namespace vpvl
 {
 
-const float VMDMotion::kDefaultPriority = 0.0f;
+const uint8_t *VMDMotion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
 
 VMDMotion::VMDMotion()
     : m_model(0),
       m_error(kNoError),
-      m_priority(kDefaultPriority),
       m_active(false)
 {
     internal::zerofill(&m_name, sizeof(m_name));
@@ -328,7 +323,6 @@ void VMDMotion::release()
 {
     internal::zerofill(&m_name, sizeof(m_name));
     m_model = 0;
-    m_priority = kDefaultPriority;
     m_active = false;
 }
 

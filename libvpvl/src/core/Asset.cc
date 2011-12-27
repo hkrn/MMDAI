@@ -148,5 +148,40 @@ void Asset::setName(const char * /* name */)
 
 #endif /* VPVL_LINK_ASSIMP */
 
+void Asset::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void Asset::setRotation(const Quaternion &value)
+{
+    m_rotation = value;
+}
+
+void Asset::setScaleFactor(const Scalar &value)
+{
+    m_scale = value;
+}
+
+void Asset::setOpacity(const Scalar &value)
+{
+    m_opacity = value;
+}
+
+void Asset::setLoadFlags(uint32_t value)
+{
+    m_flags = value;
+}
+
+void Asset::setParentBone(Bone *value)
+{
+    m_parentBone = value;
+}
+
+void Asset::setUserData(AssetUserData *value)
+{
+    m_userData = value;
+}
+
 } /* namespace vpvl */
 

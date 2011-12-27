@@ -113,30 +113,16 @@ public:
         return m_subSphereAdd;
     }
 
-    void setMainTextureName(const uint8_t *value) {
-        copyBytesSafe(m_mainTextureName, value, sizeof(m_mainTextureName));
-    }
-    void setSubTextureName(const uint8_t *value) {
-        copyBytesSafe(m_subTextureName, value, sizeof(m_subTextureName));
-    }
-    void setAmbient(const Color &value) {
-        m_ambient = value;
-    }
-    void setDiffuse(const Color &value) {
-        m_diffuse = value;
-    }
-    void setSpecular(const Color &value) {
-        m_specular = value;
-    }
-    void setOpacity(float value) {
-        m_opacity = value;
-    }
-    void setShiness(float value) {
-        m_shiness = value;
-    }
-    void setEdgeEnabled(bool value) {
-        m_edge = value;
-    }
+    void setMainTextureName(const uint8_t *value);
+    void setSubTextureName(const uint8_t *value);
+    void setAmbient(const Color &value);
+    void setDiffuse(const Color &value);
+    void setSpecular(const Color &value);
+    void setOpacity(float value);
+    void setShiness(float value);
+    void setEdgeEnabled(bool value);
+    void setToonID(uint8_t value);
+    void setIndexSize(int value);
 
 private:
     uint8_t m_rawName[kNameSize + 1];

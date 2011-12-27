@@ -186,45 +186,35 @@ public:
      *
      * @param value A value of distance
      */
-    void setDistance(float value) {
-        m_distance = value;
-    }
+    void setDistance(float value);
 
     /**
      * Set the fovy of this keyframe.
      *
      * @param value A value of fovy
      */
-    void setFovy(float value) {
-        m_fovy = value;
-    }
+    void setFovy(float value);
 
     /**
      * Set the position of this keyframe.
      *
      * @param value A value of position
      */
-    void setPosition(const Vector3 &value) {
-        m_position = value;
-    }
+    void setPosition(const Vector3 &value);
 
     /**
      * Set the angle of this keyframe.
      *
      * @param value A value of angle
      */
-    void setAngle(const Vector3 &value) {
-        m_angle = value;
-    }
+    void setAngle(const Vector3 &value);
 
     /**
      * Set boolean this keyframe is perspective.
      *
      * @return True if perspective
      */
-    void setPerspective(bool value) {
-        m_noPerspective = !value;
-    }
+    void setPerspective(bool value);
 
 private:
     void setInterpolationTable(const int8_t *table);

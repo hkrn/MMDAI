@@ -137,17 +137,16 @@ void IK::read(const uint8_t *data, BoneList *bones)
     }
 
     if (destBoneID >= 0 && destBoneID < nbones && targetBoneID >= 0 && targetBoneID < nbones) {
+        BoneList boneIKs2;
         nlinks = boneIKs.count();
-        m_destination = bones->at(destBoneID);
-        m_target = bones->at(targetBoneID);
-        m_iteration = niterations;
-        m_angleConstraint = angleConstraint * vpvl::kPI;
-        m_rawAngleConstraint = angleConstraint;
-        m_bones.reserve(nlinks);
+        boneIKs2.reserve(nlinks);
         for (int i = 0; i < nlinks; i++) {
             Bone *bone = bones->at(boneIKs[i]);
-            m_bones.add(bone);
+            boneIKs2.add(bone);
         }
+        setAngleConstraint(angleConstraint);
+        setIterationSize(niterations);
+        setBones(bones->at(destBoneID), bones->at(targetBoneID), boneIKs2);
     }
 }
 
@@ -246,6 +245,25 @@ void IK::solve()
     }
     m_target->setRotation(originTargetRotation);
     m_target->updateTransform();
+}
+
+void IK::setBones(Bone *destination, Bone *target, const BoneList &boneIKs)
+{
+    m_destination = destination;
+    m_target = target;
+    m_bones.clear();
+    m_bones.copy(boneIKs);
+}
+
+void IK::setAngleConstraint(float value)
+{
+    m_rawAngleConstraint = value;
+    m_angleConstraint = value * vpvl::kPI;
+}
+
+void IK::setIterationSize(uint16_t value)
+{
+    m_iteration = value;
 }
 
 }

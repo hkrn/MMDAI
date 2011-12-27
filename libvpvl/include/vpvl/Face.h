@@ -171,27 +171,21 @@ public:
      *
      * @param value the name of this face
      */
-    void setName(const uint8_t *value) {
-        copyBytesSafe(m_name, value, sizeof(m_name));
-    }
+    void setName(const uint8_t *value);
 
     /**
      * Set the name of this face in English.
      *
      * @param value the name of this face in English
      */
-    void setEnglishName(const uint8_t *value) {
-        copyBytesSafe(m_englishName, value, sizeof(m_englishName));
-    }
+    void setEnglishName(const uint8_t *value);
 
     /**
      * Set weight of this face.
      *
      * @param weight A weight value of this face
      */
-    void setWeight(float value) {
-        m_weight = value;
-    }
+    void setWeight(float value);
 
 private:
     uint8_t m_name[kNameSize + 1];

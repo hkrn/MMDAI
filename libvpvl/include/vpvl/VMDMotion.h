@@ -98,9 +98,9 @@ public:
         size_t selfShadowKeyFrameCount;
     };
 
+    static const uint8_t *kSignature;
     static const int kSignatureSize = 30;
     static const int kNameSize = 20;
-    static const float kDefaultPriority;
 
     VMDMotion();
     ~VMDMotion();
@@ -156,14 +156,8 @@ public:
     LightAnimation *mutableLightAnimation() {
         return &m_lightMotion;
     }
-    float priority() const {
-        return m_priority;
-    }
     bool isActive() const {
         return m_active;
-    }
-    void setPriority(float value) {
-        m_priority = value;
     }
 
 private:
@@ -183,7 +177,6 @@ private:
     FaceAnimation m_faceMotion;
     LightAnimation m_lightMotion;
     Error m_error;
-    float m_priority;
     bool m_active;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(VMDMotion)

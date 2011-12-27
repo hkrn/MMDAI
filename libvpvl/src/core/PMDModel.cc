@@ -51,14 +51,6 @@ namespace vpvl
 const float PMDModel::kMinBoneWeight = 0.0001f;
 const float PMDModel::kMinFaceWeight = 0.001f;
 
-class VMDMotionPriorityPredication
-{
-public:
-    bool operator()(const VMDMotion *left, const VMDMotion *right) {
-        return left->priority() > right->priority();
-    }
-};
-
 #pragma pack(push, 1)
 struct Header
 {
@@ -170,8 +162,6 @@ void PMDModel::addMotion(VMDMotion *motion)
     if (!containsMotion(motion)) {
         motion->attachModel(this);
         m_motions.add(motion);
-        // FIXME: priority issue of compatibility with MMDAgent
-        // m_motions.sort(VMDMotionPriorityPredication());
     }
 }
 

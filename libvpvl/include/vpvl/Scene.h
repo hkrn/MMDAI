@@ -82,11 +82,14 @@ public:
     void setCameraPerspective(CameraAnimation *camera);
     void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
     void setCameraMotion(VMDMotion *motion);
+    void setHeight(int value);
     void setLightMotion(VMDMotion *motion);
     void setLightSource(LightAnimation *light);
     void setLightSource(const Color &color, const Vector3 &position);
+    void setPreferredFPS(int value);
     void setSoftwareSkinningEnable(bool value);
     void setViewMove(int viewMoveTime);
+    void setWidth(int value);
     void setWorld(btDiscreteDynamicsWorld *world);
     void advanceMotion(float deltaFrame);
     void resetMotion();
@@ -131,18 +134,6 @@ public:
     }
     bool isSoftwareSkinningEnabled() const {
         return m_enableSoftwareSkinning;
-    }
-
-    void setWidth(int value) {
-        m_width = value;
-        updateProjection();
-    }
-    void setHeight(int value) {
-        m_height = value;
-        updateProjection();
-    }
-    void setPreferredFPS(int value) {
-        m_preferredFPS = value;
     }
 
 private:

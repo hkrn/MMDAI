@@ -72,6 +72,10 @@ public:
         return m_bones.count() > 0 ? m_bones[0]->isSimulated() : false;
     }
 
+    void setBones(Bone *destination, Bone *target, const BoneList &boneIKs);
+    void setAngleConstraint(float value);
+    void setIterationSize(uint16_t value);
+
 private:
     Bone *m_destination;
     Bone *m_target;
