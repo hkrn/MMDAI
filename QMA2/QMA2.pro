@@ -131,7 +131,8 @@ SOURCES += main.cc \
     widgets/AssetWidget.cc \
     MainWindow.cc \
     TransformWidget.cc \
-    BoneUIDelegate.cc
+    BoneUIDelegate.cc \
+    common/Handles.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -173,6 +174,7 @@ TRANSLATIONS += resources/translations/MMDAI2.ts
 
 FORMS += \
     widgets/TransformWidget.ui
+
 
 
 

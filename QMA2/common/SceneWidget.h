@@ -64,11 +64,11 @@ namespace internal {
 class DebugDrawer;
 class Delegate;
 class Grid;
-class Handles;
 class InfoPanel;
 class World;
 }
 
+class Handles;
 class QProgressDialog;
 class QSettings;
 class SceneLoader;
@@ -214,9 +214,9 @@ private:
 
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
-    internal::Handles *m_handles;
     internal::InfoPanel *m_info;
     vpvl::Bone *m_bone;
+    Handles *m_handles;
     QSettings *m_settings;
     QElapsedTimer m_timer;
     QPoint m_prevPos;
