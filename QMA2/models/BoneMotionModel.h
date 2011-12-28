@@ -113,8 +113,6 @@ signals:
     void boneFramesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
-    const QMatrix4x4 modelviewMatrix() const;
-
     const SceneWidget *m_sceneWidget;
     QList<vpvl::Bone *> m_selected;
     vpvl::BaseKeyFrameList m_frames;

@@ -42,6 +42,7 @@
 #include <vpvl/CameraKeyFrame.h>
 
 namespace vpvl {
+class PMDModel;
 class Scene;
 }
 
@@ -89,6 +90,7 @@ public slots:
 
 signals:
     void cameraFrameDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
+    void motionDidUpdate(vpvl::PMDModel *model);
 
 protected:
     virtual ITreeItem *root() const { return m_rootTreeItem; }

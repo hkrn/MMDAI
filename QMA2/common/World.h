@@ -62,6 +62,29 @@ public:
     void setPreferredFPS(int value) {
         m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / value);
     }
+    void addTriangleMeshShape(btTriangleMeshShape *shape, btTriangleMesh *mesh) {
+        m_shapes.push_back(shape);
+        m_meshes.push_back(mesh);
+    }
+    void deleteAllObjects() {
+        const int nobjects = m_world.getNumCollisionObjects();
+        for (int i = nobjects - 1; i >= 0; i--) {
+            btCollisionObject *object = m_world.getCollisionObjectArray().at(i);
+            btRigidBody *body = btRigidBody::upcast(object);
+            btMotionState *state = 0;
+            if (body && (state = body->getMotionState()))
+                delete state;
+            m_world.removeCollisionObject(object);
+            delete object;
+        }
+        const int nshapes = m_shapes.size();
+        for (int i = 0; i < nshapes; i++) {
+            btTriangleMeshShape *shape = m_shapes[i];
+            btTriangleMesh *mesh = m_meshes[i];
+            delete shape;
+            delete mesh;
+        }
+    }
 
 private:
     btDefaultCollisionConfiguration m_config;
@@ -69,6 +92,8 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
+    btAlignedObjectArray<btTriangleMeshShape *> m_shapes;
+    btAlignedObjectArray<btTriangleMesh *> m_meshes;
 
     Q_DISABLE_COPY(World)
 };

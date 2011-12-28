@@ -41,6 +41,20 @@
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
 
+#include <vpvl/Common.h>
+
+namespace vpvl {
+class Asset;
+}
+
+namespace internal {
+class World;
+}
+
+class btBvhTriangleMeshShape;
+class btTriangleMesh;
+class SceneWidget;
+
 class Handles
 {
 public:
@@ -49,12 +63,29 @@ public:
         QRectF rect;
         GLuint textureID;
     };
-    struct Handle {
+    struct ImageHandle {
         Texture enableMove;
         Texture disableMove;
         Texture enableRotate;
         Texture disableRotate;
     };
+    struct Vertex {
+        vpvl::Vector3 position;
+        vpvl::Vector3 normal;
+    };
+    struct Model {
+        vpvl::Array<Vertex> vertices;
+        vpvl::Array<uint16_t> indices;
+        GLuint indicesBuffer;
+        GLuint verticesBuffer;
+    };
+    struct ModelHandle {
+        vpvl::Asset *asset;
+        Model x;
+        Model y;
+        Model z;
+    };
+
     enum Flags {
         kNone    = 0x0,
         kEnable  = 0x1,
@@ -68,12 +99,16 @@ public:
         kLocal   = 0x100
     };
 
-    Handles(QGLWidget *widget);
+    Handles(SceneWidget *parent);
     ~Handles();
 
     void load();
     void resize(int width, int height);
-    bool testHit(const QPoint &p, int &flags, QRectF &rect);
+    bool testHit(const QPointF &p,
+                 const vpvl::Vector3 &rayFrom,
+                 const vpvl::Vector3 &rayTo,
+                 int &flags,
+                 QRectF &rect);
     void draw();
 
     void setMovable(bool value);
@@ -82,10 +117,20 @@ public:
     void setVisible(bool value);
 
 private:
-    QGLWidget *m_widget;
-    Handle m_x;
-    Handle m_y;
-    Handle m_z;
+    void drawImageHandles();
+    void drawModelHandles();
+    void drawModelHandle(const Handles::Model &model, const QColor &color);
+    void loadImageHandles();
+    void loadModelHandles();
+
+    internal::World *m_world;
+    SceneWidget *m_widget;
+    QGLShaderProgram m_program;
+    ModelHandle m_rotationHandle;
+    ModelHandle m_translateHandle;
+    ImageHandle m_x;
+    ImageHandle m_y;
+    ImageHandle m_z;
     Texture m_global;
     Texture m_local;
     int m_width;

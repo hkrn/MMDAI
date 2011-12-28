@@ -931,7 +931,9 @@ void BoneMotionModel::rotate(int coordinate, float value)
     }
     switch (m_mode) {
     case kView: {
-        QVector4D r = modelviewMatrix() * QVector4D(rot.x(), rot.y(), rot.z(), rot.w());
+        float matrix[16];
+        m_sceneWidget->scene()->getModelViewMatrix(matrix);
+        QVector4D r = internal::toMatrix4x4(matrix) * QVector4D(rot.x(), rot.y(), rot.z(), rot.w());
         r.normalize();
         dest = current * vpvl::Quaternion(r.x(), r.y(), r.z(), r.w());
         break;
@@ -964,14 +966,4 @@ vpvl::Bone *BoneMotionModel::findBone(const QString &name)
             return bone;
     }
     return 0;
-}
-
-const QMatrix4x4 BoneMotionModel::modelviewMatrix() const
-{
-    float modelviewf[16];
-    qreal modelviewd[16];
-    m_sceneWidget->scene()->getModelViewMatrix(modelviewf);
-    for (int i = 0; i < 16; i++)
-        modelviewd[i] = modelviewf[i];
-    return QMatrix4x4(modelviewd);
 }

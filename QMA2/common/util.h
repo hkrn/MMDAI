@@ -136,6 +136,15 @@ static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames)
         dumpBoneKeyFrame(static_cast<vpvl::BoneKeyFrame *>(frames[i]), i);
 }
 
+
+static inline const QMatrix4x4 toMatrix4x4(float matrixf[16])
+{
+    qreal matrixd[16];
+    for (int i = 0; i < 16; i++)
+        matrixd[i] = matrixf[i];
+    return QMatrix4x4(matrixd);
+}
+
 }
 
 #endif // UTIL_H

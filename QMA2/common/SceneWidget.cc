@@ -770,11 +770,13 @@ void SceneWidget::initializeGL()
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
-    const QPoint &pos = event->pos();
+    const QPointF &pos = event->posF();
     QRectF rect;
-    m_prevPos = pos;
     int flag;
-    if (m_handles->testHit(pos, flag, rect)) {
+    m_prevPos = pos;
+    vpvl::Vector3 znear, zfar;
+    getObjectCoordinates(pos, znear, zfar);
+    if (m_handles->testHit(pos, znear, zfar, flag, rect)) {
         switch (flag) {
         case Handles::kLocal:
             m_handles->setLocal(false);
@@ -825,7 +827,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
-        QPoint diff = event->pos() - m_prevPos;
+        QPointF diff = event->posF() - m_prevPos;
         if (m_handleFlags & Handles::kEnable) {
             if (m_handleFlags & Handles::kMove) {
                 const float value = diff.y() * 0.1f;

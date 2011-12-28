@@ -31,6 +31,8 @@
         <file alias="shadow.vsh">shaders/shadow.vsh</file>
         <file alias="zplot.fsh">shaders/zplot.fsh</file>
         <file alias="zplot.vsh">shaders/zplot.vsh</file>
+        <file alias="handle.fsh">shaders/handle.fsh</file>
+        <file alias="handle.vsh">shaders/handle.vsh</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>
@@ -47,5 +49,9 @@
         <file alias="z-enable-rotate.png">images/icons/z-enable-rotate.png</file>
         <file alias="global.png">images/icons/global.png</file>
         <file alias="local.png">images/icons/local.png</file>
+    </qresource>
+    <qresource prefix="/models">
+        <file alias="rotation.3ds">blender/rotation.3ds</file>
+        <file alias="translation.3ds">blender/translation.3ds</file>
     </qresource>
 </RCC>

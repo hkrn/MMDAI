@@ -219,7 +219,7 @@ private:
     Handles *m_handles;
     QSettings *m_settings;
     QElapsedTimer m_timer;
-    QPoint m_prevPos;
+    QPointF m_prevPos;
     float m_prevElapsed;
     float m_selectedEdgeOffset;
     float m_frameIndex;
