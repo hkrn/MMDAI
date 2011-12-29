@@ -594,11 +594,13 @@ void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
         vpvl::Bone *bone = bones.first();
         m_handles->setMovable(bone->isMovable());
         m_handles->setRotateable(bone->isRotateable());
+        m_handles->setBone(bone);
         m_bone = bone;
     }
     else {
         m_handles->setMovable(false);
         m_handles->setRotateable(false);
+        m_handles->setBone(0);
         m_bone = 0;
     }
 }

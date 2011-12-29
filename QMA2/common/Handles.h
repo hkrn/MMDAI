@@ -45,14 +45,12 @@
 
 namespace vpvl {
 class Asset;
-}
-
-namespace internal {
-class World;
+class Bone;
 }
 
 class btBvhTriangleMeshShape;
 class btTriangleMesh;
+class HandlesStaticWorld;
 class SceneWidget;
 
 class Handles
@@ -116,6 +114,7 @@ public:
                  QRectF &rect);
     void draw();
 
+    void setBone(vpvl::Bone *value);
     void setMovable(bool value);
     void setRotateable(bool value);
     void setLocal(bool value);
@@ -128,7 +127,8 @@ private:
     void loadImageHandles();
     void loadModelHandles();
 
-    internal::World *m_world;
+    vpvl::Bone *m_bone;
+    HandlesStaticWorld *m_world;
     SceneWidget *m_widget;
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;

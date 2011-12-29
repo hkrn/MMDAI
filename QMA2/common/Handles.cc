@@ -42,11 +42,81 @@
 #include <vpvl/vpvl.h>
 #include <aiScene.h>
 
+class HandlesStaticWorld {
+public:
+    HandlesStaticWorld()
+        : m_dispatcher(&m_config),
+          m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0, 400.0f), 1024),
+          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
+    {
+    }
+    ~HandlesStaticWorld()
+    {
+    }
+
+    void addTriangleMeshShape(btTriangleMeshShape *shape, btTriangleMesh *mesh) {
+        m_shapes.push_back(shape);
+        m_meshes.push_back(mesh);
+    }
+    btDiscreteDynamicsWorld *world() {
+        return &m_world;
+    }
+    void deleteAllObjects() {
+        const int nobjects = m_world.getNumCollisionObjects();
+        for (int i = nobjects - 1; i >= 0; i--) {
+            btCollisionObject *object = m_world.getCollisionObjectArray().at(i);
+            btRigidBody *body = btRigidBody::upcast(object);
+            btMotionState *state = 0;
+            if (body && (state = body->getMotionState()))
+                delete state;
+            m_world.removeCollisionObject(object);
+            delete object;
+        }
+        const int nshapes = m_shapes.size();
+        for (int i = 0; i < nshapes; i++) {
+            btTriangleMeshShape *shape = m_shapes[i];
+            btTriangleMesh *mesh = m_meshes[i];
+            delete shape;
+            delete mesh;
+        }
+    }
+
+private:
+    btDefaultCollisionConfiguration m_config;
+    btCollisionDispatcher m_dispatcher;
+    btAxisSweep3 m_broadphase;
+    btSequentialImpulseConstraintSolver m_solver;
+    btDiscreteDynamicsWorld m_world;
+    btAlignedObjectArray<btTriangleMeshShape *> m_shapes;
+    btAlignedObjectArray<btTriangleMesh *> m_meshes;
+};
+
 namespace {
 
 const QColor &kRed = QColor::fromRgb(255, 0, 0, 127);
 const QColor &kGreen = QColor::fromRgb(0, 255, 0, 127);
 const QColor &kBlue = QColor::fromRgb(0, 0, 255, 127);
+
+class MotionState : public btMotionState
+{
+public:
+    MotionState() : m_bone(0) {}
+    ~MotionState() {}
+
+    void getWorldTransform(btTransform &worldTrans) const {
+        worldTrans.setBasis(btMatrix3x3::getIdentity());
+        if (m_bone)
+            worldTrans.setOrigin(m_bone->position() + m_bone->originPosition());
+        else
+            worldTrans.setOrigin(btVector3(0, 0, 0));
+    }
+    void setWorldTransform(const btTransform & /* worldTrans */) {
+    }
+    void setBone(vpvl::Bone *value) { m_bone = value; }
+
+private:
+    vpvl::Bone *m_bone;
+};
 
 static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
 {
@@ -71,7 +141,7 @@ static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
     }
 }
 
-static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, internal::World *world)
+static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, HandlesStaticWorld *world)
 {
     LoadStaticModel(mesh, model);
     btTriangleMesh *triangleMesh = new btTriangleMesh();
@@ -87,18 +157,21 @@ static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, intern
     const btScalar &mass = 0.0f;
     const btVector3 localInertia(0.0f, 0.0f, 0.0f);
     btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(triangleMesh, true);
-    btDefaultMotionState *state = new btDefaultMotionState();
+    btMotionState *state = new MotionState();
     btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape, localInertia);
     btRigidBody *body = new btRigidBody(info);
+    body->setActivationState(DISABLE_DEACTIVATION);
+    body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
     body->setUserPointer(&model);
     world->addTriangleMeshShape(shape, triangleMesh);
-    world->mutableWorld()->addRigidBody(body);
+    world->world()->addRigidBody(body);
 }
 
 }
 
 Handles::Handles(SceneWidget *parent)
-    : m_world(0),
+    : m_bone(0),
+      m_world(0),
       m_widget(parent),
       m_width(0),
       m_height(0),
@@ -107,7 +180,7 @@ Handles::Handles(SceneWidget *parent)
       m_isLocal(true),
       m_visible(true)
 {
-    m_world = new internal::World(0);
+    m_world = new HandlesStaticWorld();
     m_rotationHandle.asset = 0;
     m_translationHandle.asset = 0;
 }
@@ -189,7 +262,7 @@ bool Handles::testHit(const QPointF &p,
     const QPointF pos(p.x(), m_height - p.y());
     flags = kNone;
     btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
-    m_world->mutableWorld()->rayTest(rayFrom, rayTo, callback);
+    m_world->world()->rayTest(rayFrom, rayTo, callback);
     if (callback.hasHit()) {
         const btVector3 &pick = callback.m_hitPointWorld;
         btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
@@ -287,6 +360,21 @@ void Handles::draw()
     drawImageHandles();
 }
 
+void Handles::setBone(vpvl::Bone *value)
+{
+    m_bone = value;
+    btDiscreteDynamicsWorld *world = m_world->world();
+    int nobjects = world->getNumCollisionObjects();
+    for (int i = 0; i < nobjects; i++) {
+        btCollisionObject *object = world->getCollisionObjectArray().at(i);
+        btRigidBody *body = btRigidBody::upcast(object);
+        btMotionState *state = 0;
+        if (body && (state = body->getMotionState()))
+            static_cast<MotionState *>(state)->setBone(value);
+    }
+    world->stepSimulation(1);
+}
+
 void Handles::setMovable(bool value)
 {
     m_enableMove = value;
@@ -347,8 +435,7 @@ void Handles::drawImageHandles()
 
 void Handles::drawModelHandles()
 {
-    vpvl::Bone *bone = m_widget->selectedBone();
-    if (!m_program.isLinked() || !bone)
+    if (!m_program.isLinked() || !m_bone)
         return;
     float matrix[16];
     const vpvl::Scene *scene = m_widget->scene();
@@ -362,7 +449,7 @@ void Handles::drawModelHandles()
     glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
     vpvl::Transform transform;
     transform.setIdentity();
-    transform.setOrigin(bone->position() + bone->originPosition());
+    transform.setOrigin(m_bone->position() + m_bone->originPosition());
     transform.getOpenGLMatrix(matrix);
     glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
     drawModel(m_rotationHandle.x, kRed);
