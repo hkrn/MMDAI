@@ -95,7 +95,7 @@ public:
     virtual void setWorldTransform(const btTransform &worldTrans)
     {
         m_worldTransform = worldTrans;
-        btMatrix3x3 matrix = worldTrans.getBasis();
+        const btMatrix3x3 &matrix = worldTrans.getBasis();
         m_worldTransform.setOrigin(internal::kZeroV);
         m_worldTransform = m_boneTransform * m_worldTransform;
         m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
@@ -135,9 +135,7 @@ private:
 
 size_t RigidBody::stride()
 {
-    return kNameSize + sizeof(int16_t) + sizeof(int8_t)
-            + sizeof(uint16_t) + sizeof(uint8_t)
-            + (sizeof(float) * 14) + sizeof(uint8_t);
+    return sizeof(RigidBodyChunk);
 }
 
 RigidBody::RigidBody()
