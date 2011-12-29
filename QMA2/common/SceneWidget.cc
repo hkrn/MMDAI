@@ -882,6 +882,9 @@ void SceneWidget::paintGL()
     m_grid->draw(m_renderer->scene());
     drawBones();
     painter.beginNativePainting();
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_handles->draw();
     m_info->draw();
     painter.endNativePainting();

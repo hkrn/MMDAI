@@ -76,14 +76,19 @@ public:
     struct Model {
         vpvl::Array<Vertex> vertices;
         vpvl::Array<uint16_t> indices;
-        GLuint indicesBuffer;
-        GLuint verticesBuffer;
     };
-    struct ModelHandle {
+    struct RotationHandle {
         vpvl::Asset *asset;
         Model x;
         Model y;
         Model z;
+        GLuint indicesBuffer;
+        GLuint verticesBuffer;
+    };
+    struct TranslationHandle : public RotationHandle {
+        Model axisX;
+        Model axisY;
+        Model axisZ;
     };
 
     enum Flags {
@@ -119,15 +124,15 @@ public:
 private:
     void drawImageHandles();
     void drawModelHandles();
-    void drawModelHandle(const Handles::Model &model, const QColor &color);
+    void drawModel(const Handles::Model &model, const QColor &color);
     void loadImageHandles();
     void loadModelHandles();
 
     internal::World *m_world;
     SceneWidget *m_widget;
     QGLShaderProgram m_program;
-    ModelHandle m_rotationHandle;
-    ModelHandle m_translateHandle;
+    RotationHandle m_rotationHandle;
+    TranslationHandle m_translationHandle;
     ImageHandle m_x;
     ImageHandle m_y;
     ImageHandle m_z;

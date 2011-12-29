@@ -44,12 +44,6 @@
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
 
-#ifdef Q_OS_DARWIN
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-
 namespace internal {
 
 class DebugDrawer : public btIDebugDraw
@@ -133,28 +127,8 @@ public:
                     &childTransform = child->localTransform();
             const vpvl::Vector3 &origin = boneTransform.getOrigin(),
                     &childOrigin = childTransform.getOrigin();
-            glPushMatrix();
-            glLoadMatrixf(matrix);
-            glPushMatrix();
-            glTranslatef(origin.x(), origin.y(), origin.z());
             const vpvl::Scalar &s = 0.075f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-            const int kSlides = 32, kRings = kSlides;
-            if (bone == m_sceneWidget->selectedBone()) {
-                const float kInnerRadius = 0.05, kOuterRadius = 1.0;
-                glPushMatrix();
-                glColor4f(0, 0, 1, 0.5);
-                glutSolidTorus(kInnerRadius, kOuterRadius, kSlides, kRings);
-                glRotatef(90, 1, 0, 0);
-                glColor4f(0, 1, 0, 0.5);
-                glutSolidTorus(kInnerRadius, kOuterRadius, kSlides, kRings);
-                glRotatef(90, 0, 1, 0);
-                glColor4f(1, 0, 0, 0.5);
-                glutSolidTorus(kInnerRadius, kOuterRadius, kSlides, kRings);
-                glPopMatrix();
-            }
-            glColor4f(0, 0, 1, 0.5);
-            glutSolidSphere(s, kSlides, kRings);
-            glPopMatrix();
+            glPushMatrix();
             vertices.clear();
             tr.setOrigin(vpvl::Vector3(s, 0.0f, 0.0));
             vertices.add(tr * origin);

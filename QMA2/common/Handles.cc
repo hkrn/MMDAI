@@ -42,6 +42,61 @@
 #include <vpvl/vpvl.h>
 #include <aiScene.h>
 
+namespace {
+
+const QColor &kRed = QColor::fromRgb(255, 0, 0, 127);
+const QColor &kGreen = QColor::fromRgb(0, 255, 0, 127);
+const QColor &kBlue = QColor::fromRgb(0, 0, 255, 127);
+
+static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
+{
+    const aiVector3D *meshVertices = mesh->mVertices;
+    const aiVector3D *meshNormals = mesh->mNormals;
+    const unsigned int nfaces = mesh->mNumFaces;
+    int index = 0;
+    for (unsigned int i = 0; i < nfaces; i++) {
+        const struct aiFace &face = mesh->mFaces[i];
+        const unsigned int nindices = face.mNumIndices;
+        for (unsigned int j = 0; j < nindices; j++) {
+            const int vertexIndex = face.mIndices[j];
+            const aiVector3D &v = meshVertices[vertexIndex];
+            const aiVector3D &n = meshNormals[vertexIndex];
+            Handles::Vertex vertex;
+            vertex.position.setValue(v.x, v.y, v.z);
+            vertex.position.setW(1);
+            vertex.normal.setValue(n.x, n.y, n.z);
+            model.vertices.add(vertex);
+            model.indices.add(index++);
+        }
+    }
+}
+
+static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, internal::World *world)
+{
+    LoadStaticModel(mesh, model);
+    btTriangleMesh *triangleMesh = new btTriangleMesh();
+    const vpvl::Array<Handles::Vertex> &vertices = model.vertices;
+    const int nfaces = vertices.count() / 3;
+    for (int i = 0; i < nfaces; i++) {
+        int index = i * 3;
+        triangleMesh->addTriangle(vertices[index + 0].position,
+                                  vertices[index + 1].position,
+                                  vertices[index + 2].position);
+    }
+    /* TODO: track moving */
+    const btScalar &mass = 0.0f;
+    const btVector3 localInertia(0.0f, 0.0f, 0.0f);
+    btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(triangleMesh, true);
+    btDefaultMotionState *state = new btDefaultMotionState();
+    btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape, localInertia);
+    btRigidBody *body = new btRigidBody(info);
+    body->setUserPointer(&model);
+    world->addTriangleMeshShape(shape, triangleMesh);
+    world->mutableWorld()->addRigidBody(body);
+}
+
+}
+
 Handles::Handles(SceneWidget *parent)
     : m_world(0),
       m_widget(parent),
@@ -52,9 +107,9 @@ Handles::Handles(SceneWidget *parent)
       m_isLocal(true),
       m_visible(true)
 {
-    m_world = new internal::World(30);
+    m_world = new internal::World(0);
     m_rotationHandle.asset = 0;
-    m_translateHandle.asset = 0;
+    m_translationHandle.asset = 0;
 }
 
 Handles::~Handles()
@@ -76,15 +131,17 @@ Handles::~Handles()
     m_world->deleteAllObjects();
     delete m_world;
     delete m_rotationHandle.asset;
-    delete m_translateHandle.asset;
+    delete m_translationHandle.asset;
 }
 
 void Handles::load()
 {
     loadImageHandles();
-    m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
-    m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
-    if (m_program.link())
+    bool isShaderLoaded = true;
+    isShaderLoaded &= m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
+    isShaderLoaded &= m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
+    isShaderLoaded &= m_program.link();
+    if (isShaderLoaded)
         loadModelHandles();
 }
 
@@ -134,19 +191,24 @@ bool Handles::testHit(const QPointF &p,
     btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
     m_world->mutableWorld()->rayTest(rayFrom, rayTo, callback);
     if (callback.hasHit()) {
+        const btVector3 &pick = callback.m_hitPointWorld;
         btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
-        Q_UNUSED(body);
-        btVector3 pick = callback.m_hitPointWorld;
         Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
         /* TODO: implement emit signal of rotation handles */
-        if (model == &m_rotationHandle.x)
-            qDebug() << "X" << pick.x() << pick.y() << pick.z();
+        if (model == &m_translationHandle.x)
+            qDebug() << "TX" << pick.x() << pick.y() << pick.z();
+        else if (model == &m_translationHandle.y)
+            qDebug() << "TY" << pick.x() << pick.y() << pick.z();
+        else if (model == &m_translationHandle.z)
+            qDebug() << "TZ" << pick.x() << pick.y() << pick.z();
+        else if (model == &m_rotationHandle.x)
+            qDebug() << "RX" << pick.x() << pick.y() << pick.z();
         else if (model == &m_rotationHandle.y)
-            qDebug() << "Y" << pick.x() << pick.y() << pick.z();
+            qDebug() << "RY" << pick.x() << pick.y() << pick.z();
         else if (model == &m_rotationHandle.z)
-            qDebug() << "Z" << pick.x() << pick.y() << pick.z();
+            qDebug() << "RZ" << pick.x() << pick.y() << pick.z();
     }
-    if (m_enableMove) {
+    else if (m_enableMove) {
         if (m_x.enableMove.rect.contains(pos)) {
             rect = m_x.enableMove.rect;
             flags = kEnable | kMove | kX;
@@ -221,8 +283,6 @@ void Handles::draw()
 {
     if (!m_visible)
         return;
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     drawModelHandles();
     drawImageHandles();
 }
@@ -249,6 +309,7 @@ void Handles::setVisible(bool value)
 
 void Handles::drawImageHandles()
 {
+    glUseProgram(0);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glMatrixMode(GL_PROJECTION);
@@ -286,54 +347,46 @@ void Handles::drawImageHandles()
 
 void Handles::drawModelHandles()
 {
-    float m[16];
+    vpvl::Bone *bone = m_widget->selectedBone();
+    if (!m_program.isLinked() || !bone)
+        return;
+    float matrix[16];
     const vpvl::Scene *scene = m_widget->scene();
-#if 0
+    m_program.bind();
     int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
     int projectionMatrix = m_program.uniformLocation("projectionMatrix");
-    int lightPosition = m_program.uniformLocation("lightPosition");
-    m_program.bind();
-    scene->getModelViewMatrix(m);
-    m_program.setUniformValue(modelViewMatrix, internal::toMatrix4x4(m));
-    scene->getProjectionMatrix(m);
-    m_program.setUniformValue(projectionMatrix, internal::toMatrix4x4(m));
-    drawModelHandle(m_rotationHandle.x, QColor::fromRgb(255, 0, 0));
+    int boneMatrix = m_program.uniformLocation("boneMatrix");
+    scene->getModelViewMatrix(matrix);
+    glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+    scene->getProjectionMatrix(matrix);
+    glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+    vpvl::Transform transform;
+    transform.setIdentity();
+    transform.setOrigin(bone->position() + bone->originPosition());
+    transform.getOpenGLMatrix(matrix);
+    glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
+    drawModel(m_rotationHandle.x, kRed);
+    drawModel(m_rotationHandle.y, kGreen);
+    drawModel(m_rotationHandle.z, kBlue);
+    drawModel(m_translationHandle.x, kRed);
+    drawModel(m_translationHandle.y, kGreen);
+    drawModel(m_translationHandle.z, kBlue);
+    drawModel(m_translationHandle.axisX, kRed);
+    drawModel(m_translationHandle.axisY, kGreen);
+    drawModel(m_translationHandle.axisZ, kBlue);
     m_program.release();
-#else
-    glMatrixMode(GL_PROJECTION);
-    scene->getProjectionMatrix(m);
-    glLoadMatrixf(m);
-    glMatrixMode(GL_MODELVIEW);
-    scene->getModelViewMatrix(m);
-    glLoadMatrixf(m);
-    drawModelHandle(m_rotationHandle.x, QColor::fromRgb(255, 0, 0));
-    drawModelHandle(m_rotationHandle.y, QColor::fromRgb(0, 255, 0));
-    drawModelHandle(m_rotationHandle.z, QColor::fromRgb(0, 0, 255));
-#endif
 }
 
-void Handles::drawModelHandle(const Handles::Model &model, const QColor &color)
+void Handles::drawModel(const Handles::Model &model, const QColor &color)
 {
     const Handles::Vertex &ptr = model.vertices.at(0);
     const GLfloat *vertexPtr = reinterpret_cast<const GLfloat *>(&ptr.position.x());
-    const GLfloat *normalPtr = reinterpret_cast<const GLfloat *>(&ptr.normal.x());
-#if 0
     int inPosition = m_program.attributeLocation("inPosition");
     m_program.setUniformValue("color", color);
     m_program.enableAttributeArray(inPosition);
-    m_program.setAttributeArray(inPosition, vertexPtr, 3, sizeof(Handles::Vertex));
+    m_program.setAttributeArray(inPosition, vertexPtr, 4, sizeof(Handles::Vertex));
     glDrawElements(GL_TRIANGLES, model.indices.count(), GL_UNSIGNED_SHORT, &model.indices[0]);
     m_program.disableAttributeArray(inPosition);
-#else
-    Q_UNUSED(color);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(Handles::Vertex), vertexPtr);
-    glNormalPointer(GL_FLOAT, sizeof(Handles::Vertex), normalPtr);
-    glDrawElements(GL_TRIANGLES, model.indices.count(), GL_UNSIGNED_SHORT, &model.indices[0]);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-#endif
 }
 
 void Handles::loadImageHandles()
@@ -383,42 +436,6 @@ void Handles::loadImageHandles()
     m_local.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
 }
 
-static void LoadHandleModel(const aiMesh *mesh, Handles::Model &model, internal::World *world)
-{
-    const aiVector3D *meshVertices = mesh->mVertices;
-    const aiVector3D *meshNormals = mesh->mNormals;
-    const unsigned int nfaces = mesh->mNumFaces;
-    int index = 0;
-    btTriangleMesh *triangleMesh = new btTriangleMesh();
-    for (unsigned int i = 0; i < nfaces; i++) {
-        const struct aiFace &face = mesh->mFaces[i];
-        const unsigned int nindices = face.mNumIndices;
-        for (unsigned int j = 0; j < nindices; j++) {
-            const int vertexIndex = face.mIndices[j];
-            const aiVector3D &v = meshVertices[vertexIndex];
-            const aiVector3D &n = meshNormals[vertexIndex];
-            Handles::Vertex vertex;
-            vertex.position.setValue(v.x, v.y, v.z);
-            vertex.position.setW(1);
-            vertex.normal.setValue(n.x, n.y, n.z);
-            model.vertices.add(vertex);
-            model.indices.add(index++);
-        }
-        triangleMesh->addTriangle(model.vertices.at(i * 3 + 0).position,
-                                  model.vertices.at(i * 3 + 1).position,
-                                  model.vertices.at(i * 3 + 2).position);
-    }
-    const btScalar &mass = 0.0f;
-    const btVector3 localInertia(0.0f, 0.0f, 0.0f);
-    btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(triangleMesh, true);
-    btDefaultMotionState *state = new btDefaultMotionState();
-    btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape, localInertia);
-    btRigidBody *body = new btRigidBody(info);
-    body->setUserPointer(&model);
-    world->addTriangleMeshShape(shape, triangleMesh);
-    world->mutableWorld()->addRigidBody(body);
-}
-
 void Handles::loadModelHandles()
 {
     QFile rotationHandleFile(":models/rotation.3ds");
@@ -426,21 +443,24 @@ void Handles::loadModelHandles()
         const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
         vpvl::Asset *asset = new vpvl::Asset();
         asset->load(reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData()), rotationHandleBytes.size());
-        const aiScene *scene = asset->getScene();
-        LoadHandleModel(scene->mMeshes[0], m_rotationHandle.x, m_world);
-        LoadHandleModel(scene->mMeshes[1], m_rotationHandle.y, m_world);
-        LoadHandleModel(scene->mMeshes[2], m_rotationHandle.z, m_world);
+        aiMesh **meshes = asset->getScene()->mMeshes;
+        LoadTrackableModel(meshes[0], m_rotationHandle.x, m_world);
+        LoadTrackableModel(meshes[1], m_rotationHandle.y, m_world);
+        LoadTrackableModel(meshes[2], m_rotationHandle.z, m_world);
         m_rotationHandle.asset = asset;
     }
-    QFile translateHandleFile(":models/translation.3ds");
-    if (translateHandleFile.open(QFile::ReadOnly)) {
-        const QByteArray &translateHandleBytes = translateHandleFile.readAll();
+    QFile translationHandleFile(":models/translation.3ds");
+    if (translationHandleFile.open(QFile::ReadOnly)) {
+        const QByteArray &translationHandleBytes = translationHandleFile.readAll();
         vpvl::Asset *asset = new vpvl::Asset();
-        asset->load(reinterpret_cast<const uint8_t *>(translateHandleBytes.constData()), translateHandleBytes.size());
-        // const aiScene *scene = handle->getScene();
-        // LoadHandleModel(scene->mMeshes[0], m_translateHandle.x);
-        // LoadHandleModel(scene->mMeshes[1], m_translateHandle.y);
-        // LoadHandleModel(scene->mMeshes[2], m_translateHandle.z);
-        m_translateHandle.asset = asset;
+        asset->load(reinterpret_cast<const uint8_t *>(translationHandleBytes.constData()), translationHandleBytes.size());
+        aiMesh **meshes = asset->getScene()->mMeshes;
+        LoadTrackableModel(meshes[0], m_translationHandle.y, m_world);
+        LoadTrackableModel(meshes[1], m_translationHandle.x, m_world);
+        LoadTrackableModel(meshes[2], m_translationHandle.z, m_world);
+        LoadStaticModel(meshes[3], m_translationHandle.axisX);
+        LoadStaticModel(meshes[4], m_translationHandle.axisY);
+        LoadStaticModel(meshes[5], m_translationHandle.axisZ);
+        m_translationHandle.asset = asset;
     }
 }
