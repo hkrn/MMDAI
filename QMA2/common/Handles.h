@@ -99,7 +99,8 @@ public:
         kY       = 0x20,
         kZ       = 0x40,
         kGlobal  = 0x80,
-        kLocal   = 0x100
+        kLocal   = 0x100,
+        kModel   = 0x200
     };
 
     Handles(SceneWidget *parent);
@@ -107,11 +108,13 @@ public:
 
     void load();
     void resize(int width, int height);
-    bool testHit(const QPointF &p,
-                 const vpvl::Vector3 &rayFrom,
-                 const vpvl::Vector3 &rayTo,
-                 int &flags,
-                 QRectF &rect);
+    bool testHitModel(const vpvl::Vector3 &rayFrom,
+                      const vpvl::Vector3 &rayTo,
+                      int &flags,
+                      vpvl::Vector3 &pick);
+    bool testHitImage(const QPointF &p,
+                      int &flags,
+                      QRectF &rect);
     void draw();
 
     void setBone(vpvl::Bone *value);

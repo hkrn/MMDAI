@@ -102,7 +102,7 @@ public:
     vpvl::Asset *addAssetFromMetadata(const QString &path);
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
-    void getObjectCoordinates(const QPointF &input, vpvl::Vector3 &camera, vpvl::Vector3 &zfar) const;
+    void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
     vpvl::Bone *selectedBone() const { return m_bone; }
     float modelEdgeOffset() const { return m_selectedEdgeOffset; }
     int preferredFPS() const { return m_defaultFPS; }
@@ -209,8 +209,8 @@ protected:
 
 private:
     bool acceptAddingModel(vpvl::PMDModel *model);
-    void drawBones();
     void updateFPS();
+    void changeCursorIfHitTrackableModel(const QPointF &pos);
 
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;

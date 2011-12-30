@@ -125,6 +125,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
+    setMouseTracking(true);
 }
 
 SceneWidget::~SceneWidget()
@@ -565,7 +566,7 @@ void SceneWidget::setPhysicsEnable(bool value)
     m_enablePhysics = value;
 }
 
-void SceneWidget::getObjectCoordinates(const QPointF &input, vpvl::Vector3 &camera, vpvl::Vector3 &zfar) const
+void SceneWidget::makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const
 {
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
@@ -582,8 +583,8 @@ void SceneWidget::getObjectCoordinates(const QPointF &input, vpvl::Vector3 &came
     GLdouble wx = input.x(), wy = height() - input.y(), cx, cy, cz, fx, fy, fz;
     gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
     gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
-    camera.setValue(cx, cy, cz);
-    zfar.setValue(fx, fy, fz);
+    rayFrom.setValue(cx, cy, cz);
+    rayTo.setValue(fx, fy, fz);
 }
 
 void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
@@ -774,12 +775,10 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     const QPointF &pos = event->posF();
     QRectF rect;
-    int flag;
+    int flags;
     m_prevPos = pos;
-    vpvl::Vector3 znear, zfar;
-    getObjectCoordinates(pos, znear, zfar);
-    if (m_handles->testHit(pos, znear, zfar, flag, rect)) {
-        switch (flag) {
+    if (m_handles->testHitImage(pos, flags, rect)) {
+        switch (flags) {
         case Handles::kLocal:
             m_handles->setLocal(false);
             emit globalTransformDidSelect();
@@ -791,8 +790,15 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         default:
             break;
         }
+        m_handleFlags = flags;
+        return;
     }
-    m_handleFlags = flag;
+    { /* only in move or rotate mode */
+        vpvl::Vector3 rayFrom, rayTo, pick;
+        makeRay(pos, rayFrom, rayTo);
+        if (m_handles->testHitModel(rayFrom, rayTo, flags, pick))
+            m_handleFlags = flags;
+    }
 }
 
 void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
@@ -802,7 +808,7 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
         static const vpvl::Vector3 size(0.1, 0.1, 0.1);
         const QPointF &pos = event->posF();
         vpvl::Vector3 znear, zfar, normal;
-        getObjectCoordinates(pos, znear, zfar);
+        makeRay(pos, znear, zfar);
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
         vpvl::Bone *nearestBone = 0;
@@ -830,7 +836,17 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         QPointF diff = event->posF() - m_prevPos;
-        if (m_handleFlags & Handles::kEnable) {
+        if (m_handleFlags & Handles::kModel) {
+            /* move or rotate by model handle */
+            int flags;
+            vpvl::Vector3 rayFrom, rayTo, pick;
+            makeRay(event->posF(), rayFrom, rayTo);
+            if (m_handles->testHitModel(rayFrom, rayTo, flags, pick))
+                setCursor(Qt::ClosedHandCursor);
+            else
+                unsetCursor();
+        }
+        else if (m_handleFlags & Handles::kEnable) {
             if (m_handleFlags & Handles::kMove) {
                 const float value = diff.y() * 0.1f;
                 if (m_handleFlags & Handles::kX)
@@ -865,11 +881,17 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             rotate(diff.y() * 0.5f, diff.x() * 0.5f);
         }
         m_prevPos = event->pos();
+        return;
+    }
+    { /* only in move or rotate mode */
+        changeCursorIfHitTrackableModel(event->posF());
     }
 }
 
-void SceneWidget::mouseReleaseEvent(QMouseEvent * /* event */)
+void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+    changeCursorIfHitTrackableModel(event->posF());
+    m_handleFlags = Handles::kNone;
 }
 
 void SceneWidget::paintGL()
@@ -882,7 +904,8 @@ void SceneWidget::paintGL()
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
-    drawBones();
+    if (m_visibleBones)
+        m_debugDrawer->drawModelBones(selectedModel(), true, true);
     painter.beginNativePainting();
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
@@ -935,13 +958,6 @@ bool SceneWidget::acceptAddingModel(vpvl::PMDModel *model)
     return mbox.exec() == QMessageBox::Ok;
 }
 
-void SceneWidget::drawBones()
-{
-    if (m_visibleBones)
-        m_debugDrawer->drawModelBones(selectedModel(), true, true);
-    m_debugDrawer->drawBoneTransform(m_bone);
-}
-
 void SceneWidget::updateFPS()
 {
     if (m_timer.elapsed() > 1000) {
@@ -965,4 +981,15 @@ const QString SceneWidget::openFileDialog(const QString &name, const QString &de
         m_settings->setValue(name, dir.absolutePath());
     }
     return fileName;
+}
+
+void SceneWidget::changeCursorIfHitTrackableModel(const QPointF &pos)
+{
+    int flags;
+    vpvl::Vector3 rayFrom, rayTo, pick;
+    makeRay(pos, rayFrom, rayTo);
+    if (m_handles->testHitModel(rayFrom, rayTo, flags, pick))
+        setCursor(Qt::OpenHandCursor);
+    else
+        unsetCursor();
 }

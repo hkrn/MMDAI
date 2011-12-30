@@ -253,35 +253,48 @@ void Handles::resize(int width, int height)
     m_local.rect.setSize(m_local.size);
 }
 
-bool Handles::testHit(const QPointF &p,
-                      const vpvl::Vector3 &rayFrom,
-                      const vpvl::Vector3 &rayTo,
-                      int &flags,
-                      QRectF &rect)
+bool Handles::testHitModel(const vpvl::Vector3 &rayFrom,
+                           const vpvl::Vector3 &rayTo,
+                           int &flags,
+                           vpvl::Vector3 &pick)
+{
+    flags = kNone;
+    if (m_bone) {
+        btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
+        m_world->world()->rayTest(rayFrom, rayTo, callback);
+        if (callback.hasHit()) {
+            btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
+            Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
+            if (m_bone->isMovable()) {
+                if (model == &m_translationHandle.x)
+                    flags = kModel | kMove | kX;
+                else if (model == &m_translationHandle.y)
+                    flags = kModel | kMove | kY;
+                else if (model == &m_translationHandle.z)
+                    flags = kModel | kMove | kZ;
+            }
+            if (m_bone->isRotateable()) {
+                if (model == &m_rotationHandle.x)
+                    flags = kModel | kRotate | kX;
+                else if (model == &m_rotationHandle.y)
+                    flags = kModel | kRotate | kY;
+                else if (model == &m_rotationHandle.z)
+                    flags = kModel | kRotate | kZ;
+            }
+            pick = callback.m_hitPointWorld;
+            return flags != kNone;
+        }
+    }
+    return false;
+}
+
+bool Handles::testHitImage(const QPointF &p,
+                           int &flags,
+                           QRectF &rect)
 {
     const QPointF pos(p.x(), m_height - p.y());
     flags = kNone;
-    btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
-    m_world->world()->rayTest(rayFrom, rayTo, callback);
-    if (callback.hasHit()) {
-        const btVector3 &pick = callback.m_hitPointWorld;
-        btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
-        Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
-        /* TODO: implement emit signal of rotation handles */
-        if (model == &m_translationHandle.x)
-            qDebug() << "TX" << pick.x() << pick.y() << pick.z();
-        else if (model == &m_translationHandle.y)
-            qDebug() << "TY" << pick.x() << pick.y() << pick.z();
-        else if (model == &m_translationHandle.z)
-            qDebug() << "TZ" << pick.x() << pick.y() << pick.z();
-        else if (model == &m_rotationHandle.x)
-            qDebug() << "RX" << pick.x() << pick.y() << pick.z();
-        else if (model == &m_rotationHandle.y)
-            qDebug() << "RY" << pick.x() << pick.y() << pick.z();
-        else if (model == &m_rotationHandle.z)
-            qDebug() << "RZ" << pick.x() << pick.y() << pick.z();
-    }
-    else if (m_enableMove) {
+    if (m_enableMove) {
         if (m_x.enableMove.rect.contains(pos)) {
             rect = m_x.enableMove.rect;
             flags = kEnable | kMove | kX;
@@ -452,15 +465,19 @@ void Handles::drawModelHandles()
     transform.setOrigin(m_bone->position() + m_bone->originPosition());
     transform.getOpenGLMatrix(matrix);
     glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
-    drawModel(m_rotationHandle.x, kRed);
-    drawModel(m_rotationHandle.y, kGreen);
-    drawModel(m_rotationHandle.z, kBlue);
-    drawModel(m_translationHandle.x, kRed);
-    drawModel(m_translationHandle.y, kGreen);
-    drawModel(m_translationHandle.z, kBlue);
-    drawModel(m_translationHandle.axisX, kRed);
-    drawModel(m_translationHandle.axisY, kGreen);
-    drawModel(m_translationHandle.axisZ, kBlue);
+    if (m_bone->isRotateable()) {
+        drawModel(m_rotationHandle.x, kRed);
+        drawModel(m_rotationHandle.y, kGreen);
+        drawModel(m_rotationHandle.z, kBlue);
+    }
+    if (m_bone->isMovable()) {
+        drawModel(m_translationHandle.x, kRed);
+        drawModel(m_translationHandle.y, kGreen);
+        drawModel(m_translationHandle.z, kBlue);
+        drawModel(m_translationHandle.axisX, kRed);
+        drawModel(m_translationHandle.axisY, kGreen);
+        drawModel(m_translationHandle.axisZ, kBlue);
+    }
     m_program.release();
 }
 
@@ -531,8 +548,8 @@ void Handles::loadModelHandles()
         vpvl::Asset *asset = new vpvl::Asset();
         asset->load(reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData()), rotationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
-        LoadTrackableModel(meshes[0], m_rotationHandle.x, m_world);
-        LoadTrackableModel(meshes[1], m_rotationHandle.y, m_world);
+        LoadTrackableModel(meshes[1], m_rotationHandle.x, m_world);
+        LoadTrackableModel(meshes[0], m_rotationHandle.y, m_world);
         LoadTrackableModel(meshes[2], m_rotationHandle.z, m_world);
         m_rotationHandle.asset = asset;
     }
@@ -542,12 +559,12 @@ void Handles::loadModelHandles()
         vpvl::Asset *asset = new vpvl::Asset();
         asset->load(reinterpret_cast<const uint8_t *>(translationHandleBytes.constData()), translationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
-        LoadTrackableModel(meshes[0], m_translationHandle.y, m_world);
-        LoadTrackableModel(meshes[1], m_translationHandle.x, m_world);
-        LoadTrackableModel(meshes[2], m_translationHandle.z, m_world);
+        LoadTrackableModel(meshes[0], m_translationHandle.x, m_world);
+        LoadTrackableModel(meshes[2], m_translationHandle.y, m_world);
+        LoadTrackableModel(meshes[1], m_translationHandle.z, m_world);
         LoadStaticModel(meshes[3], m_translationHandle.axisX);
-        LoadStaticModel(meshes[4], m_translationHandle.axisY);
-        LoadStaticModel(meshes[5], m_translationHandle.axisZ);
+        LoadStaticModel(meshes[5], m_translationHandle.axisY);
+        LoadStaticModel(meshes[4], m_translationHandle.axisZ);
         m_translationHandle.asset = asset;
     }
 }
