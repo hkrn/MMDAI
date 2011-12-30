@@ -4,19 +4,19 @@ Blender を使って作成したモデルのプロジェクトです。
 * toruses.blend
 Add Torus * 3 を使って作成。回転軸用。
 - Add Torus の基本作成プロパティ
--- Major Raius: 1.00
--- Minor Raius: 0.075
--- Major Segment 24
--- Minor Segment 24
+-- Major Raius: 2.00
+-- Minor Raius: 0.15
+-- Major Segment 16
+-- Minor Segment 16
 
 * transform.blend
 Add Cone * 3 + Add Cylinder * 3 を使って作成。移動軸用。
 - Add Cone の基本作成プロパティ
 -- Vertices: 16
--- Radius: 0.05
--- Depth: 0.1
+-- Radius: 0.25
+-- Depth: 0.75
 - Add Cylinder の基本作成プロパティ
 -- Vertices: 3
--- Radius: 0.01
--- Depth: 1.0
+-- Radius: 0.05
+-- Depth: 3.0
 
