@@ -170,7 +170,8 @@ static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, Handle
 }
 
 Handles::Handles(SceneWidget *parent)
-    : m_bone(0),
+    : QObject(parent),
+      m_bone(0),
       m_world(0),
       m_widget(parent),
       m_width(0),
@@ -385,7 +386,7 @@ void Handles::setBone(vpvl::Bone *value)
         if (body && (state = body->getMotionState()))
             static_cast<MotionState *>(state)->setBone(value);
     }
-    world->stepSimulation(1);
+    updateBone();
 }
 
 void Handles::setMovable(bool value)
@@ -406,6 +407,11 @@ void Handles::setLocal(bool value)
 void Handles::setVisible(bool value)
 {
     m_visible = value;
+}
+
+void Handles::updateBone()
+{
+    m_world->world()->stepSimulation(1);
 }
 
 void Handles::drawImageHandles()

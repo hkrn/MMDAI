@@ -37,6 +37,7 @@
 #include "BoneUIDelegate.h"
 #include "MainWindow.h"
 
+#include "common/Handles.h"
 #include "common/LoggerWidget.h"
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
@@ -1092,6 +1093,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(m_boneMotionModel, SIGNAL(bonePositionDidChange(vpvl::Bone*,vpvl::Vector3)), m_sceneWidget->handles(), SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(boneRotationDidChange(vpvl::Bone*,vpvl::Quaternion)), m_sceneWidget->handles(), SLOT(updateBone()));
 }
 
 void MainWindow::insertMotionToAllModels()

@@ -53,8 +53,10 @@ class btTriangleMesh;
 class HandlesStaticWorld;
 class SceneWidget;
 
-class Handles
+class Handles : public QObject
 {
+    Q_OBJECT
+
 public:
     struct Texture {
         QSize size;
@@ -122,6 +124,9 @@ public:
     void setRotateable(bool value);
     void setLocal(bool value);
     void setVisible(bool value);
+
+private slots:
+    void updateBone();
 
 private:
     void drawImageHandles();

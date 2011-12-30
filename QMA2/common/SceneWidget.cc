@@ -92,6 +92,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_grid(0),
     m_info(0),
     m_bone(0),
+    m_prevPos3D(0.0f, 0.0f, 0.0f),
     m_handles(0),
     m_settings(settings),
     m_prevElapsed(0.0f),
@@ -776,7 +777,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     const QPointF &pos = event->posF();
     QRectF rect;
     int flags;
-    m_prevPos = pos;
+    m_prevPos2D = pos;
     if (m_handles->testHitImage(pos, flags, rect)) {
         switch (flags) {
         case Handles::kLocal:
@@ -835,34 +836,57 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
-        QPointF diff = event->posF() - m_prevPos;
+        QPointF diff = event->posF() - m_prevPos2D;
         if (m_handleFlags & Handles::kModel) {
-            /* move or rotate by model handle */
             int flags;
             vpvl::Vector3 rayFrom, rayTo, pick;
             makeRay(event->posF(), rayFrom, rayTo);
-            if (m_handles->testHitModel(rayFrom, rayTo, flags, pick))
+            if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
+                if (flags & Handles::kMove) {
+                    float value = m_prevPos3D.isZero() ? 0.0f : (pick - m_prevPos3D).length();
+                    // FIXME: getting direction
+                    if (flags & Handles::kX)
+                        emit handleDidMove('X', value);
+                    else if (flags & Handles::kY)
+                        emit handleDidMove('Y', value);
+                    else if (flags & Handles::kZ)
+                        emit handleDidMove('Z', value);
+                }
+                else if (flags & Handles::kRotate) {
+                    const float value = 0.0f; // vpvl::radian(diff.y()) * 0.1f;
+                    // FIXME: getting degree
+                    if (flags & Handles::kX)
+                        emit handleDidRotate('X', value);
+                    else if (flags & Handles::kY)
+                        emit handleDidRotate('Y', value);
+                    else if (flags & Handles::kZ)
+                        emit handleDidRotate('Z', value);
+                }
+                m_prevPos3D = pick;
                 setCursor(Qt::ClosedHandCursor);
-            else
+            }
+            else {
                 unsetCursor();
+            }
         }
         else if (m_handleFlags & Handles::kEnable) {
-            if (m_handleFlags & Handles::kMove) {
+            int flags = m_handleFlags;
+            if (flags & Handles::kMove) {
                 const float value = diff.y() * 0.1f;
-                if (m_handleFlags & Handles::kX)
+                if (flags & Handles::kX)
                     emit handleDidMove('X', value);
-                else if (m_handleFlags & Handles::kY)
+                else if (flags & Handles::kY)
                     emit handleDidMove('Y', value);
-                else if (m_handleFlags & Handles::kZ)
+                else if (flags & Handles::kZ)
                     emit handleDidMove('Z', value);
             }
-            else if (m_handleFlags & Handles::kRotate) {
-                const float value = vpvl::radian(diff.y() * 0.1f);
-                if (m_handleFlags & Handles::kX)
+            else if (flags & Handles::kRotate) {
+                const float value = vpvl::radian(diff.y()) * 0.1f;
+                if (flags & Handles::kX)
                     emit handleDidRotate('X', value);
-                else if (m_handleFlags & Handles::kY)
+                else if (flags & Handles::kY)
                     emit handleDidRotate('Y', value);
-                else if (m_handleFlags & Handles::kZ)
+                else if (flags & Handles::kZ)
                     emit handleDidRotate('Z', value);
             }
         }
@@ -880,7 +904,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         else {
             rotate(diff.y() * 0.5f, diff.x() * 0.5f);
         }
-        m_prevPos = event->pos();
+        m_prevPos2D = event->posF();
         return;
     }
     { /* only in move or rotate mode */

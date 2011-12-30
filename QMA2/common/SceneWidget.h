@@ -103,6 +103,7 @@ public:
     VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
     void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
+    Handles *handles() const { return m_handles; }
     vpvl::Bone *selectedBone() const { return m_bone; }
     float modelEdgeOffset() const { return m_selectedEdgeOffset; }
     int preferredFPS() const { return m_defaultFPS; }
@@ -216,10 +217,11 @@ private:
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
     vpvl::Bone *m_bone;
+    vpvl::Vector3 m_prevPos3D;
+    QPointF m_prevPos2D;
     Handles *m_handles;
     QSettings *m_settings;
     QElapsedTimer m_timer;
-    QPointF m_prevPos;
     float m_prevElapsed;
     float m_selectedEdgeOffset;
     float m_frameIndex;
