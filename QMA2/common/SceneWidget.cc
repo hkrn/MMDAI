@@ -126,6 +126,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
+    /* 通常はマウスを動かしても mouseMove が呼ばれないため、マウスが動いたら常時 mouseEvent を呼ぶようにする */
     setMouseTracking(true);
 }
 
@@ -194,6 +195,7 @@ vpvl::Scene *SceneWidget::mutableScene()
 
 void SceneWidget::setPreferredFPS(int value)
 {
+    /* 一旦前のタイマーを止めてから新しい FPS に基づく間隔でタイマーを開始する */
     if (value > 0) {
         m_defaultFPS = value;
         m_interval = 1000.0f / value;
@@ -213,6 +215,7 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
 
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 {
+    /* 当該モデルのエッジを赤くし、情報パネルに選択されたモデルの名前を更新する */
     hideSelectedModelEdge();
     m_renderer->setSelectedModel(value);
     m_info->setModel(value);
@@ -233,6 +236,7 @@ void SceneWidget::setInfoPanelVisible(bool value)
 
 void SceneWidget::showSelectedModelEdge()
 {
+    /* インスタンスにモデルのエッジ情報を保存してから強制的に太さを 1.0 にした上で赤くする */
     static const vpvl::Color red(1.0f, 0.0f, 0.0f, 1.0f);
     vpvl::PMDModel *model = m_renderer->selectedModel();
     if (model) {
@@ -245,6 +249,7 @@ void SceneWidget::showSelectedModelEdge()
 
 void SceneWidget::hideSelectedModelEdge()
 {
+    /* インスタンスに保存された元のモデルのエッジの情報を復元する */
     static const vpvl::Color black(0.0f, 0.0f, 0.0f, 1.0f);
     vpvl::PMDModel *model = m_renderer->selectedModel();
     if (model) {
@@ -256,6 +261,7 @@ void SceneWidget::hideSelectedModelEdge()
 
 void SceneWidget::addModel()
 {
+    /* モデル追加と共に空のモーションを作成する */
     vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",
                                                     tr("Open PMD file"),
                                                     tr("PMD file (*.pmd)")));
@@ -297,6 +303,7 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
 
 void SceneWidget::insertMotionToAllModels()
 {
+    /* モーションを追加したら即座に反映させるために advanceMotion(0.0f) を呼んでおく */
     vpvl::VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastVMDDirectory",
                                                                      tr("Open VMD (for model) file"),
                                                                      tr("VMD file (*.vmd)")));
@@ -477,6 +484,7 @@ void SceneWidget::advanceMotion(float frameIndex)
 
 void SceneWidget::seekMotion(float frameIndex)
 {
+    /* advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある */
     vpvl::Scene *scene = m_renderer->scene();
     scene->updateModelView();
     scene->updateProjection();
@@ -540,6 +548,7 @@ void SceneWidget::setLightPosition(const vpvl::Vector3 &position)
 
 void SceneWidget::setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance)
 {
+    /* 変更しないことを示す NULL かどうかを判定するために引数をポインタに設定している */
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 posValue, angleValue;
     float fovyValue, distanceValue;
@@ -619,6 +628,7 @@ void SceneWidget::rotate(float x, float y)
 
 void SceneWidget::translate(float x, float y)
 {
+    // FIXME: direction
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
@@ -629,6 +639,7 @@ void SceneWidget::translate(float x, float y)
 
 void SceneWidget::translateModel(float x, float y)
 {
+    // FIXME: direction
     vpvl::PMDModel *model = selectedModel();
     if (model) {
         vpvl::Vector3 p = model->positionOffset();
@@ -649,6 +660,7 @@ void SceneWidget::resetModelPosition()
 
 void SceneWidget::loadFile(const QString &file)
 {
+    /* モデルファイル */
     if (file.endsWith(".pmd", Qt::CaseInsensitive)) {
         vpvl::PMDModel *model = addModel(file);
         if (model && !m_playing) {
@@ -657,20 +669,24 @@ void SceneWidget::loadFile(const QString &file)
             emit newMotionDidSet(model);
         }
     }
+    /* モーションファイル */
     else if (file.endsWith(".vmd", Qt::CaseInsensitive)) {
         vpvl::VMDMotion *motion = insertMotionToModel(file, selectedModel());
         if (motion)
             advanceMotion(0.0f);
     }
+    /* アクセサリファイル */
     else if (file.endsWith(".x", Qt::CaseInsensitive)) {
         addAsset(file);
     }
+    /* ポーズファイル */
     else if (file.endsWith(".vpd", Qt::CaseInsensitive)) {
         vpvl::PMDModel *model = selectedModel();
         VPDFile *pose = insertPoseToSelectedModel(file, model);
         if (pose && model)
             model->updateImmediate();
     }
+    /* アクセサリ情報ファイル */
     else if (file.endsWith(".vac", Qt::CaseInsensitive)) {
         addAssetFromMetadata(file);
     }
@@ -749,9 +765,11 @@ void SceneWidget::initializeGL()
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     glEnable(GL_MULTISAMPLE);
+    /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
     m_debugDrawer->setWorld(m_world->mutableWorld());
+    /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->initialize();
 #ifdef VPVL_USE_GLSL
     m_renderer->createPrograms();
@@ -761,7 +779,9 @@ void SceneWidget::initializeGL()
         setPhysicsEnable(true);
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
+    /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->load();
+    /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
     m_info->setModel(0);
     m_info->setBones(QList<vpvl::Bone *>(), "");
@@ -778,6 +798,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     QRectF rect;
     int flags;
     m_prevPos2D = pos;
+    /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     if (m_handles->testHitImage(pos, flags, rect)) {
         switch (flags) {
         case Handles::kLocal:
@@ -837,11 +858,14 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         QPointF diff = event->posF() - m_prevPos2D;
+        /* モデルのハンドルがクリックされた */
         if (m_handleFlags & Handles::kModel) {
             int flags;
             vpvl::Vector3 rayFrom, rayTo, pick;
             makeRay(event->posF(), rayFrom, rayTo);
+            /* モデルのハンドルがクリック中であるか? 入っている場合はグーのカーソルに変更し、入ってない場合は元のカーソルに戻す */
             if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
+                /* 移動ハンドルである(矢印の先端) */
                 if (flags & Handles::kMove) {
                     float value = m_prevPos3D.isZero() ? 0.0f : (pick - m_prevPos3D).length();
                     // FIXME: getting direction
@@ -852,6 +876,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                     else if (flags & Handles::kZ)
                         emit handleDidMove('Z', value);
                 }
+                /* 回転ハンドルである(ドーナツ) */
                 else if (flags & Handles::kRotate) {
                     const float value = 0.0f; // vpvl::radian(diff.y()) * 0.1f;
                     // FIXME: getting degree
@@ -869,8 +894,10 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                 unsetCursor();
             }
         }
+        /* 有効な右下のハンドルがクリックされた */
         else if (m_handleFlags & Handles::kEnable) {
             int flags = m_handleFlags;
+            /* 移動ハンドルである */
             if (flags & Handles::kMove) {
                 const float value = diff.y() * 0.1f;
                 if (flags & Handles::kX)
@@ -880,6 +907,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                 else if (flags & Handles::kZ)
                     emit handleDidMove('Z', value);
             }
+            /* 回転ハンドルである */
             else if (flags & Handles::kRotate) {
                 const float value = vpvl::radian(diff.y()) * 0.1f;
                 if (flags & Handles::kX)
@@ -890,6 +918,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                     emit handleDidRotate('Z', value);
             }
         }
+        /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             vpvl::Scene *scene = m_renderer->scene();
             vpvl::Vector3 position = scene->lightPosition();
@@ -898,9 +927,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             position = position * btMatrix3x3(rx * ry);
             scene->setLightSource(scene->lightColor(), position);
         }
+        /* 場面の移動 */
         else if (modifiers & Qt::ShiftModifier) {
             translate(diff.x() * -0.1f, diff.y() * 0.1f);
         }
+        /* 場面の回転 (X と Y が逆転している点に注意) */
         else {
             rotate(diff.y() * 0.5f, diff.x() * 0.5f);
         }
@@ -923,6 +954,7 @@ void SceneWidget::paintGL()
     QPainter painter(this);
     qglClearColor(Qt::white);
     glEnable(GL_MULTISAMPLE);
+    /* 場面全体の描写 */
     m_renderer->clear();
     m_renderer->renderProjectiveShadow();
     m_renderer->renderAllModels();
@@ -930,6 +962,7 @@ void SceneWidget::paintGL()
     m_grid->draw(m_renderer->scene());
     if (m_visibleBones)
         m_debugDrawer->drawModelBones(selectedModel(), true, true);
+    /* 情報パネルとハンドルの描写 (Qt 特有の描写を使うため、beginNativePainting() を呼んでおく) */
     painter.beginNativePainting();
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
@@ -949,12 +982,14 @@ void SceneWidget::resizeGL(int w, int h)
 
 void SceneWidget::timerEvent(QTimerEvent *event)
 {
+    /* タイマーが生きている => 描写命令を出す */
     if (event->timerId() == m_internalTimerID) {
         vpvl::Scene *scene = m_renderer->scene();
         scene->updateModelView();
         scene->updateProjection();
         m_renderer->updateAllModel();
         if (m_playing) {
+            /* タイマーの仕様上一定ではないため、差分をここで吸収する */
             float elapsed = m_timer.elapsed() / static_cast<float>(vpvl::Scene::kFPS);
             float diff = elapsed - m_prevElapsed;
             m_prevElapsed = elapsed;
@@ -974,6 +1009,7 @@ void SceneWidget::wheelEvent(QWheelEvent *event)
 
 bool SceneWidget::acceptAddingModel(vpvl::PMDModel *model)
 {
+    /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
     QString comment = internal::toQString(model->comment());
     mbox.setText(tr("Model Information of \"%1\"").arg(internal::toQString(model->name())));
@@ -984,6 +1020,7 @@ bool SceneWidget::acceptAddingModel(vpvl::PMDModel *model)
 
 void SceneWidget::updateFPS()
 {
+    /* 1秒ごとの FPS はここで計算しておく。1秒過ぎたら updateFPS を呼んだ回数を求め、タイマーを再起動させる */
     if (m_timer.elapsed() > 1000) {
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
@@ -997,6 +1034,7 @@ void SceneWidget::updateFPS()
 
 const QString SceneWidget::openFileDialog(const QString &name, const QString &desc, const QString &exts)
 {
+    /* ファイルが選択されている場合はファイルが格納されているディレクトリを指す絶対パスを設定に保存しておく */
     const QString &path = m_settings->value(name).toString();
     const QString &fileName = QFileDialog::getOpenFileName(this, desc, path, exts);
     if (!fileName.isEmpty()) {
@@ -1009,6 +1047,7 @@ const QString SceneWidget::openFileDialog(const QString &name, const QString &de
 
 void SceneWidget::changeCursorIfHitTrackableModel(const QPointF &pos)
 {
+    /* モデルのハンドルに入ってる場合は手のひら状のカーソルに変更にし、そうでない場合元のカーソルに戻すだけの処理 */
     int flags;
     vpvl::Vector3 rayFrom, rayTo, pick;
     makeRay(pos, rayFrom, rayTo);
