@@ -72,17 +72,6 @@ static QItemSelectionModel *UIGetSelectionModel(TimelineWidget *timeline)
     return qobject_cast<QItemSelectionModel *>(timeline->treeView()->selectionModel());
 }
 
-static void UIModelDeleteFrame(TimelineWidget *timeline)
-{
-    TimelineTreeView *view = timeline->treeView();
-    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(view->model());
-    const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
-    foreach (const QModelIndex &index, indices) {
-        if (index.column() > 1)
-            model->deleteFrameByModelIndex(index);
-    }
-}
-
 static void UIModelInsertBoneFrame(TimelineWidget *timeline)
 {
     BoneMotionModel *model = UIGetBoneModel(timeline);
@@ -252,47 +241,32 @@ void TimelineTabWidget::insertFrame()
 
 void TimelineTabWidget::deleteFrame()
 {
-    switch (m_tabWidget->currentIndex()) {
-    case kBoneTabIndex:
-        UIModelDeleteFrame(m_boneTimeline);
-        break;
-    case kFaceTabIndex:
-        UIModelDeleteFrame(m_faceTimeline);
-        break;
-    case kSceneTabIndex:
-        UIModelDeleteFrame(m_sceneTimeline);
-        break;
+    if (TimelineWidget *timeline = currentSelectedTimelineWidget()) {
+        TimelineTreeView *view = timeline->treeView();
+        MotionBaseModel *model = qobject_cast<MotionBaseModel *>(view->model());
+        const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+        foreach (const QModelIndex &index, indices) {
+            if (index.column() > 1)
+                model->deleteFrameByModelIndex(index);
+        }
     }
 }
 
 
 void TimelineTabWidget::copyFrame()
 {
-    switch (m_tabWidget->currentIndex()) {
-    case kBoneTabIndex:
-        UIGetBoneModel(m_boneTimeline)->copyFrames(m_boneTimeline->frameIndex());
-        break;
-    case kFaceTabIndex:
-        UIGetFaceModel(m_faceTimeline)->copyFrames(m_faceTimeline->frameIndex());
-        break;
-    case kSceneTabIndex:
-        UIGetSceneModel(m_sceneTimeline)->copyFrames(m_sceneTimeline->frameIndex());
-    }
+    TimelineWidget *timeline = currentSelectedTimelineWidget();
+    MotionBaseModel *model = currentSelectedModel();
+    if (timeline && model)
+        model->copyFrames(timeline->frameIndex());
 }
 
 void TimelineTabWidget::pasteFrame()
 {
-    switch (m_tabWidget->currentIndex()) {
-    case kBoneTabIndex:
-        UIGetBoneModel(m_boneTimeline)->pasteFrame(m_boneTimeline->frameIndex());
-        break;
-    case kFaceTabIndex:
-        UIGetFaceModel(m_faceTimeline)->pasteFrame(m_faceTimeline->frameIndex());
-        break;
-    case kSceneTabIndex:
-        UIGetSceneModel(m_sceneTimeline)->pasteFrame(m_sceneTimeline->frameIndex());
-        break;
-    }
+    TimelineWidget *timeline = currentSelectedTimelineWidget();
+    MotionBaseModel *model = currentSelectedModel();
+    if (timeline && model)
+        model->pasteFrames(timeline->frameIndex());
 }
 
 void TimelineTabWidget::pasteReversedFrame()
@@ -336,16 +310,48 @@ void TimelineTabWidget::notifyCurrentTabIndex()
     setCurrentTabIndex(m_tabWidget->currentIndex());
 }
 
+void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
+{
+    if (TimelineWidget *widget = currentSelectedTimelineWidget()) {
+        if (fromIndex > toIndex)
+            qSwap(fromIndex, toIndex);
+        QList<int> frameIndices;
+        for (int i = fromIndex; i <= toIndex; i++)
+            frameIndices.append(i);
+        widget->treeView()->selectFrameIndices(frameIndices, true);
+    }
+}
+
 void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)
+{
+    if (TimelineWidget *timeline = currentSelectedTimelineWidget())
+        timeline->setCurrentFrameIndex(timeline->frameIndex() + frameIndex);
+}
+
+TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidget() const
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        m_boneTimeline->setCurrentFrameIndex(m_boneTimeline->frameIndex() + frameIndex);
-        break;
+        return m_boneTimeline;
     case kFaceTabIndex:
-        m_faceTimeline->setCurrentFrameIndex(m_faceTimeline->frameIndex() + frameIndex);
-        break;
+        return m_faceTimeline;
     case kSceneTabIndex:
-        m_sceneTimeline->setCurrentFrameIndex(m_sceneTimeline->frameIndex() + frameIndex);
+        return m_sceneTimeline;
+    default:
+        return 0;
+    }
+}
+
+MotionBaseModel *TimelineTabWidget::currentSelectedModel() const
+{
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex:
+        return static_cast<MotionBaseModel *>(m_boneTimeline->treeView()->model());
+    case kFaceTabIndex:
+        return static_cast<MotionBaseModel *>(m_faceTimeline->treeView()->model());
+    case kSceneTabIndex:
+        return static_cast<MotionBaseModel *>(m_sceneTimeline->treeView()->model());
+    default:
+        return 0;
     }
 }

@@ -68,6 +68,7 @@ public:
     ~TimelineTreeView();
 
     void selectFrameIndex(int frameIndex);
+    void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     const QModelIndexList &expandedModelIndices() const;
 
 protected:

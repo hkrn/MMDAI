@@ -443,7 +443,7 @@ void BoneMotionModel::copyFrames(int frameIndex)
     }
 }
 
-void BoneMotionModel::pasteFrame(int frameIndex)
+void BoneMotionModel::pasteFrames(int frameIndex)
 {
     /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && m_frames.count() != 0) {

@@ -57,6 +57,7 @@ class BoneMotionModel;
 class BoneUIDelegate;
 class ExportVideoDialog;
 class FaceMotionModel;
+class FrameSelectionDialog;
 class LicenseWidget;
 class LoggerWidget;
 class PlaySettingDialog;
@@ -118,6 +119,7 @@ private slots:
     void selectNextModel();
     void selectPreviousModel();
     void showLicenseWidget();
+    void openFrameSelectionDialog();
 
 private:
     bool saveMotionAs();
@@ -148,6 +150,7 @@ private:
     SceneMotionModel *m_sceneMotionModel;
     ExportVideoDialog *m_exportingVideoDialog;
     PlaySettingDialog *m_playSettingDialog;
+    FrameSelectionDialog *m_frameSelectionDialog;
     BoneUIDelegate *m_boneUIDelegate;
     internal::Player *m_player;
     QString m_currentProjectFilename;
@@ -218,6 +221,7 @@ private:
     QAction *m_actionBoneResetAll;
     QAction *m_actionBoneDialog;
     QAction *m_actionRegisterFrame;
+    QAction *m_actionSelectFrameDialog;
     QAction *m_actionInsertEmptyFrame;
     QAction *m_actionDeleteSelectedFrame;
     QAction *m_actionNextFrame;

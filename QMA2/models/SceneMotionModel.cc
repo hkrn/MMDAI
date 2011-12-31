@@ -321,7 +321,7 @@ void SceneMotionModel::copyFrames(int frameIndex)
     m_cameraIndex = frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
 }
 
-void SceneMotionModel::pasteFrame(int frameIndex)
+void SceneMotionModel::pasteFrames(int frameIndex)
 {
     if (m_cameraIndex.isValid()) {
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);

@@ -139,19 +139,35 @@ TimelineTreeView::~TimelineTreeView()
 
 void TimelineTreeView::selectFrameIndex(int frameIndex)
 {
+    QList<int> frameIndices;
+    frameIndices.append(frameIndex);
+    selectFrameIndices(frameIndices, false);
+}
+
+void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly)
+{
     /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
     QItemSelection selection;
     if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(model())) {
         foreach (PMDMotionModel::ITreeItem *item, pmm->keys().values()) {
-            const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
-            selection.append(QItemSelectionRange(index));
+            foreach (int frameIndex, frameIndices) {
+                const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
+                if (registeredOnly && !index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
+                    continue;
+                selection.append(QItemSelectionRange(index));
+            }
         }
         QItemSelectionModel *sm = selectionModel();
         sm->select(selection, QItemSelectionModel::ClearAndSelect);
     }
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(model())) {
         QItemSelectionModel *sm = selectionModel();
-        selection.append(QItemSelectionRange(smm->index(0, MotionBaseModel::toModelIndex(frameIndex))));
+        foreach (int frameIndex, frameIndices) {
+            const QModelIndex &index = smm->index(0, MotionBaseModel::toModelIndex(frameIndex));
+            if (registeredOnly && !index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
+                continue;
+            selection.append(QItemSelectionRange(index));
+        }
         sm->select(selection, QItemSelectionModel::ClearAndSelect);
     }
 }

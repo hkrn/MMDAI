@@ -69,7 +69,7 @@ public:
     void saveMotion(vpvl::VMDMotion *motion);
     void addKeyFramesByModelIndices(const QModelIndexList &indices);
     void copyFrames(int frameIndex);
-    void pasteFrame(int frameIndex);
+    void pasteFrames(int frameIndex);
     void selectByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 

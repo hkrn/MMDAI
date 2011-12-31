@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,86 +34,43 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETABWIDGET_H
-#define TIMELINETABWIDGET_H
+#include "FrameSelectionDialog.h"
+#include "common/SceneWidget.h"
 
-#include <QtGui/QWidget>
-#include <QtGui/QAbstractItemView>
+#include <QtGui/QtGui>
+#include <vpvl/vpvl.h>
 
-namespace vpvl {
-class Bone;
-class Face;
-class PMDModel;
-class VPDPose;
+FrameSelectionDialog::FrameSelectionDialog(QWidget *parent) :
+    QDialog(parent)
+{
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    m_fromIndexBox = new QSpinBox();
+    m_toIndexBox = new QSpinBox();
+    QFormLayout *formLayout = new QFormLayout();
+    formLayout->addRow(tr("Keyframe from"), m_fromIndexBox);
+    formLayout->addRow(tr("Keyframe to"), m_toIndexBox);
+    mainLayout->addLayout(formLayout);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+    mainLayout->addWidget(buttons);
+    connect(buttons, SIGNAL(accepted()), this, SLOT(emitFrameIndices()));
+    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
+    connect(this, SIGNAL(frameIndicesDidSelect(int,int)), this, SLOT(close()));
+    setWindowTitle(tr("Frame selection"));
+    setLayout(mainLayout);
 }
 
-class QSettings;
-class QTabWidget;
-class TimelineWidget;
-class BoneMotionModel;
-class FaceMotionModel;
-class MotionBaseModel;
-class SceneMotionModel;
-class VPDFile;
-
-class TimelineTabWidget : public QWidget
+FrameSelectionDialog::~FrameSelectionDialog()
 {
-    Q_OBJECT
+}
 
-public:
-    enum Type {
-        kBone,
-        kFace,
-        kScene
-    };
+void FrameSelectionDialog::setMaxFrameIndex(int value)
+{
+    m_fromIndexBox->setRange(0, value);
+    m_toIndexBox->setRange(0, value);
+    m_toIndexBox->setValue(value);
+}
 
-    explicit TimelineTabWidget(QSettings *settings,
-                               BoneMotionModel *bmm,
-                               FaceMotionModel *fmm,
-                               SceneMotionModel *smm,
-                               QWidget *parent = 0);
-    ~TimelineTabWidget();
-
-public slots:
-    void addKeyFramesFromSelectedIndices();
-    void loadPose(VPDFile *pose, vpvl::PMDModel *model);
-    void savePose(VPDFile *pose, vpvl::PMDModel *model);
-
-signals:
-    void motionDidSeek(float frameIndex);
-    void currentTabDidChange(int type);
-
-private slots:
-    void retranslate();
-    void addBoneKeyFramesFromSelectedIndices();
-    void addFaceKeyFramesFromSelectedIndices();
-    void addSceneKeyFramesFromSelectedIndices();
-    void addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone);
-    void addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face);
-    void setCurrentFrameIndexZero();
-    void insertFrame();
-    void deleteFrame();
-    void copyFrame();
-    void pasteFrame();
-    void pasteReversedFrame();
-    void nextFrame();
-    void previousFrame();
-    void setCurrentTabIndex(int index);
-    void notifyCurrentTabIndex();
-    void selectFrameIndices(int fromIndex, int toIndex);
-
-private:
-    void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
-    TimelineWidget *currentSelectedTimelineWidget() const;
-    MotionBaseModel *currentSelectedModel() const;
-
-    QSettings *m_settings;
-    QTabWidget *m_tabWidget;
-    TimelineWidget *m_boneTimeline;
-    TimelineWidget *m_faceTimeline;
-    TimelineWidget *m_sceneTimeline;
-
-    Q_DISABLE_COPY(TimelineTabWidget)
-};
-
-#endif // TIMELINETABWIDGET_H
+void FrameSelectionDialog::emitFrameIndices()
+{
+    emit frameIndicesDidSelect(m_fromIndexBox->value(), m_toIndexBox->value());
+}

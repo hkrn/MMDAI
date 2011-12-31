@@ -46,6 +46,7 @@
 #include "dialogs/BoneDialog.h"
 #include "dialogs/EdgeOffsetDialog.h"
 #include "dialogs/ExportVideoDialog.h"
+#include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/FaceMotionModel.h"
@@ -190,6 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneMotionModel(0),
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
+    m_frameSelectionDialog(0),
     m_boneUIDelegate(0),
     m_player(0),
     m_model(0),
@@ -222,6 +224,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_frameSelectionDialog;
     delete m_undo;
     delete m_licenseWidget;
     delete m_sceneWidget;
@@ -635,6 +638,8 @@ void MainWindow::buildUI()
 
     m_actionRegisterFrame = new QAction(this);
     connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
+    m_actionSelectFrameDialog = new QAction(this);
+    connect(m_actionSelectFrameDialog, SIGNAL(triggered()), this, SLOT(openFrameSelectionDialog()));
     m_actionCopy = new QAction(this);
     connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
     m_actionPaste = new QAction(this);
@@ -763,6 +768,7 @@ void MainWindow::buildUI()
     m_menuBar->addMenu(m_menuBone);
     m_menuFrame = new QMenu(this);
     m_menuFrame->addAction(m_actionRegisterFrame);
+    m_menuFrame->addAction(m_actionSelectFrameDialog);
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
     m_menuFrame->addSeparator();
@@ -871,6 +877,7 @@ void MainWindow::bindActions()
     m_actionBoneResetAll->setShortcut(m_settings.value(kPrefix + "boneResetAll").toString());
     m_actionBoneDialog->setShortcut(m_settings.value(kPrefix + "boneDialog").toString());
     m_actionRegisterFrame->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
+    m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrame").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
@@ -991,6 +998,8 @@ void MainWindow::retranslate()
     m_actionBoneDialog->setStatusTip(tr("Open bone dialog to change position or rotation of the bone manually."));
     m_actionRegisterFrame->setText(tr("Register keyframe"));
     m_actionRegisterFrame->setStatusTip(tr("Register keyframes by selected indices from the timeline."));
+    m_actionSelectFrameDialog->setText(tr("Open frame selection dialog"));
+    m_actionSelectFrameDialog->setStatusTip(tr("Open frame selection dialog to select multiple frame indices."));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
@@ -1381,6 +1390,17 @@ void MainWindow::showLicenseWidget()
     if (!m_licenseWidget)
         m_licenseWidget = new LicenseWidget();
     m_licenseWidget->show();
+}
+
+void MainWindow::openFrameSelectionDialog()
+{
+    if (!m_frameSelectionDialog) {
+        m_frameSelectionDialog = new FrameSelectionDialog(this);
+        connect(m_frameSelectionDialog, SIGNAL(frameIndicesDidSelect(int,int)),
+                m_timelineTabWidget, SLOT(selectFrameIndices(int,int)));
+    }
+    m_frameSelectionDialog->setMaxFrameIndex(m_sceneWidget->scene()->maxFrameIndex());
+    m_frameSelectionDialog->show();
 }
 
 const QString MainWindow::openSaveDialog(const QString &name, const QString &desc, const QString &exts)

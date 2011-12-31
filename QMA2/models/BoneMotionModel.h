@@ -67,7 +67,7 @@ public:
     void saveMotion(vpvl::VMDMotion *motion);
     void addKeyFramesByModelIndices(const QModelIndexList &indices);
     void copyFrames(int frameIndex);
-    void pasteFrame(int frameIndex);
+    void pasteFrames(int frameIndex);
     void pasteReversedFrame(int frameIndex);
     void startTransform();
     void commitTransform();

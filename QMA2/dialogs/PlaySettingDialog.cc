@@ -5,7 +5,8 @@
 #include <vpvl/vpvl.h>
 
 PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, QSettings *settings, SceneWidget *scene)
-    : m_settings(settings)
+    : QDialog(),
+      m_settings(settings)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     int maxFrameIndex = scene->scene()->maxFrameIndex();

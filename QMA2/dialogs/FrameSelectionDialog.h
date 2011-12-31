@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,86 +34,37 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETABWIDGET_H
-#define TIMELINETABWIDGET_H
+#ifndef FRAMESELECTIONDIALOG_H
+#define FRAMESELECTIONDIALOG_H
 
-#include <QtGui/QWidget>
-#include <QtGui/QAbstractItemView>
-
-namespace vpvl {
-class Bone;
-class Face;
-class PMDModel;
-class VPDPose;
-}
+#include <QtGui/QDialog>
 
 class QSettings;
-class QTabWidget;
-class TimelineWidget;
-class BoneMotionModel;
-class FaceMotionModel;
-class MotionBaseModel;
-class SceneMotionModel;
-class VPDFile;
+class QSpinBox;
+class SceneWidget;
 
-class TimelineTabWidget : public QWidget
+class FrameSelectionDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    enum Type {
-        kBone,
-        kFace,
-        kScene
-    };
+    FrameSelectionDialog(QWidget *parent);
+    ~FrameSelectionDialog();
 
-    explicit TimelineTabWidget(QSettings *settings,
-                               BoneMotionModel *bmm,
-                               FaceMotionModel *fmm,
-                               SceneMotionModel *smm,
-                               QWidget *parent = 0);
-    ~TimelineTabWidget();
-
-public slots:
-    void addKeyFramesFromSelectedIndices();
-    void loadPose(VPDFile *pose, vpvl::PMDModel *model);
-    void savePose(VPDFile *pose, vpvl::PMDModel *model);
+    void setMaxFrameIndex(int value);
 
 signals:
-    void motionDidSeek(float frameIndex);
-    void currentTabDidChange(int type);
+    void frameIndicesDidSelect(int fromIndex, int toIndex);
 
 private slots:
-    void retranslate();
-    void addBoneKeyFramesFromSelectedIndices();
-    void addFaceKeyFramesFromSelectedIndices();
-    void addSceneKeyFramesFromSelectedIndices();
-    void addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone);
-    void addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face);
-    void setCurrentFrameIndexZero();
-    void insertFrame();
-    void deleteFrame();
-    void copyFrame();
-    void pasteFrame();
-    void pasteReversedFrame();
-    void nextFrame();
-    void previousFrame();
-    void setCurrentTabIndex(int index);
-    void notifyCurrentTabIndex();
-    void selectFrameIndices(int fromIndex, int toIndex);
+    void emitFrameIndices();
 
 private:
-    void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
-    TimelineWidget *currentSelectedTimelineWidget() const;
-    MotionBaseModel *currentSelectedModel() const;
-
     QSettings *m_settings;
-    QTabWidget *m_tabWidget;
-    TimelineWidget *m_boneTimeline;
-    TimelineWidget *m_faceTimeline;
-    TimelineWidget *m_sceneTimeline;
+    QSpinBox *m_fromIndexBox;
+    QSpinBox *m_toIndexBox;
 
-    Q_DISABLE_COPY(TimelineTabWidget)
+    Q_DISABLE_COPY(FrameSelectionDialog)
 };
 
-#endif // TIMELINETABWIDGET_H
+#endif // FRAMESELECTIONDIALOG_H

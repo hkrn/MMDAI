@@ -343,7 +343,7 @@ void FaceMotionModel::copyFrames(int frameIndex)
     }
 }
 
-void FaceMotionModel::pasteFrame(int frameIndex)
+void FaceMotionModel::pasteFrames(int frameIndex)
 {
     if (m_model && m_motion && m_frames.count() != 0) {
         FaceMotionModel::KeyFramePairList frames;
