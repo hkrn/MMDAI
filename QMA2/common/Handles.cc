@@ -129,11 +129,10 @@ public:
     ~MotionState() {}
 
     void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans.setBasis(btMatrix3x3::getIdentity());
         if (m_bone)
-            worldTrans.setOrigin(m_bone->position() + m_bone->originPosition());
+            worldTrans = m_bone->localTransform();
         else
-            worldTrans.setOrigin(btVector3(0, 0, 0));
+            worldTrans.setIdentity();
     }
     void setWorldTransform(const btTransform & /* worldTrans */) {
     }
@@ -413,7 +412,7 @@ void Handles::draw()
 
 const vpvl::Vector3 Handles::angle(const vpvl::Vector3 &pos) const
 {
-    return (pos - (m_bone->position() + m_bone->originPosition())).normalized();
+    return (pos - m_bone->localTransform().getOrigin()).normalized();
 }
 
 void Handles::setBone(vpvl::Bone *value)
@@ -537,10 +536,7 @@ void Handles::drawModelHandles()
     glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
     scene->getProjectionMatrix(matrix);
     glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
-    vpvl::Transform transform;
-    transform.setIdentity();
-    transform.setOrigin(m_bone->position() + m_bone->originPosition());
-    transform.getOpenGLMatrix(matrix);
+    m_bone->localTransform().getOpenGLMatrix(matrix);
     glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
