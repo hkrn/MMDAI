@@ -867,10 +867,9 @@ void BoneMotionModel::translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 
     vpvl::Vector3 dest;
     switch (mode) {
     case 'V': {
-        const vpvl::Vector3 &value2 = m_sceneWidget->scene()->modelViewTransform() * value;
+        const vpvl::Transform &modelViewTransform = m_sceneWidget->scene()->modelViewTransform();
+        const vpvl::Vector3 &value2 = modelViewTransform.getBasis() * value;
         dest = vpvl::Transform(bone->rotation(), bone->position()) * value2;
-        //const QVector4D &r = modelviewMatrix() * QVector4D(v.x(), v.y(), v.z(), 0.0f);
-        //dest = vpvl::Transform(bone->rotation(), bone->position()) * vpvl::Vector3(r.x(), r.y(), r.z());
         break;
     }
     case 'L': {
@@ -918,11 +917,12 @@ void BoneMotionModel::rotate(int coordinate, int mode, float value)
     }
     switch (mode) {
     case 'V': {
-        float matrix[16];
-        m_sceneWidget->scene()->getModelViewMatrix(matrix);
-        QVector4D r = internal::toMatrix4x4(matrix) * QVector4D(rot.x(), rot.y(), rot.z(), rot.w());
-        r.normalize();
-        dest = current * vpvl::Quaternion(r.x(), r.y(), r.z(), r.w());
+        float matrixf[16];
+        m_sceneWidget->scene()->getModelViewMatrix(matrixf);
+        const QMatrix4x4 &m = internal::toMatrix4x4(matrixf);
+        const QVector4D &r = (m * QVector4D(rot.x(), rot.y(), rot.z(), rot.w())).normalized();
+        rot.setValue(r.x(), r.y(), r.z(), r.w());
+        dest = current * rot;
         break;
     }
     case 'L': {
