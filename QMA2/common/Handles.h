@@ -118,6 +118,7 @@ public:
                       int &flags,
                       QRectF &rect);
     void draw();
+    const vpvl::Vector3 angle(const vpvl::Vector3 &pos) const;
 
     void setBone(vpvl::Bone *value);
     void setMovable(bool value);

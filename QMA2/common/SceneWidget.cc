@@ -95,6 +95,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_prevPos3D(0.0f, 0.0f, 0.0f),
     m_handles(0),
     m_settings(settings),
+    m_prevAngle(0.0f),
     m_prevElapsed(0.0f),
     m_selectedEdgeOffset(0.0f),
     m_frameIndex(0.0f),
@@ -865,27 +866,49 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             makeRay(event->posF(), rayFrom, rayTo);
             /* モデルのハンドルがクリック中であるか? 入っている場合はグーのカーソルに変更し、入ってない場合は元のカーソルに戻す */
             if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
+                const vpvl::Vector3 directionX(1.0f, 0.0f, 0.0f),
+                        directionY(0.0f, 1.0f, 0.0f),
+                        directionZ(0.0f, 0.0f, 1.0f),
+                        &diff = pick - m_prevPos3D;
                 /* 移動ハンドルである(矢印の先端) */
-                if (flags & Handles::kMove) {
-                    float value = m_prevPos3D.isZero() ? 0.0f : (pick - m_prevPos3D).length();
-                    // FIXME: getting direction
-                    if (flags & Handles::kX)
+                if (flags & Handles::kMove && !diff.isZero()) {
+                    float value = m_prevPos3D.isZero() ? 0.0f : diff.length();
+                    if (flags & Handles::kX) {
+                        if (directionX.dot(diff.normalized()) >= 0)
+                            value = -value;
                         emit handleDidMove('X', value);
-                    else if (flags & Handles::kY)
+                    }
+                    else if (flags & Handles::kY) {
+                        if (directionY.dot(diff.normalized()) >= 0)
+                            value = -value;
                         emit handleDidMove('Y', value);
-                    else if (flags & Handles::kZ)
+                    }
+                    else if (flags & Handles::kZ) {
+                        if (directionZ.dot(diff.normalized()) < 0)
+                            value = -value;
                         emit handleDidMove('Z', value);
+                    }
                 }
                 /* 回転ハンドルである(ドーナツ) */
                 else if (flags & Handles::kRotate) {
-                    const float value = 0.0f; // vpvl::radian(diff.y()) * 0.1f;
-                    // FIXME: getting degree
-                    if (flags & Handles::kX)
-                        emit handleDidRotate('X', value);
-                    else if (flags & Handles::kY)
-                        emit handleDidRotate('Y', value);
-                    else if (flags & Handles::kZ)
-                        emit handleDidRotate('Z', value);
+                    const vpvl::Vector3 &angle = m_handles->angle(pick);
+                    int axis = 0;
+                    float value = 0.0f;
+                    if (flags & Handles::kX) {
+                        value = btAcos(angle.y());
+                        axis = 'X';
+                    }
+                    else if (flags & Handles::kY) {
+                        value = btAcos(angle.z());
+                        axis = 'Y';
+                    }
+                    else if (flags & Handles::kZ) {
+                        value = btAcos(angle.x());
+                        axis = 'Z';
+                    }
+                    if (m_prevAngle > 0.0f)
+                        emit handleDidRotate(axis, value - m_prevAngle);
+                    m_prevAngle = value;
                 }
                 m_prevPos3D = pick;
                 setCursor(Qt::ClosedHandCursor);
@@ -899,7 +922,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             int flags = m_handleFlags;
             /* 移動ハンドルである */
             if (flags & Handles::kMove) {
-                const float value = diff.y() * 0.1f;
+                const float &value = diff.y() * 0.1f;
                 if (flags & Handles::kX)
                     emit handleDidMove('X', value);
                 else if (flags & Handles::kY)
@@ -909,7 +932,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             }
             /* 回転ハンドルである */
             else if (flags & Handles::kRotate) {
-                const float value = vpvl::radian(diff.y()) * 0.1f;
+                const float &value = vpvl::radian(diff.y()) * 0.1f;
                 if (flags & Handles::kX)
                     emit handleDidRotate('X', value);
                 else if (flags & Handles::kY)
@@ -947,6 +970,8 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     changeCursorIfHitTrackableModel(event->posF());
     m_handleFlags = Handles::kNone;
+    m_prevAngle = 0.0f;
+    m_prevPos3D.setZero();
 }
 
 void SceneWidget::paintGL()

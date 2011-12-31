@@ -374,6 +374,11 @@ void Handles::draw()
     drawImageHandles();
 }
 
+const vpvl::Vector3 Handles::angle(const vpvl::Vector3 &pos) const
+{
+    return (pos - (m_bone->position() + m_bone->originPosition())).normalized();
+}
+
 void Handles::setBone(vpvl::Bone *value)
 {
     m_bone = value;
