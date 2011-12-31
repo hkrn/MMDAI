@@ -120,6 +120,7 @@ private:
 
 static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
 {
+    /* Open Asset Import Library を使って読み込んだモデルを VBO が利用出来る形に再構築 */
     const aiVector3D *meshVertices = mesh->mVertices;
     const aiVector3D *meshNormals = mesh->mNormals;
     const unsigned int nfaces = mesh->mNumFaces;
@@ -143,6 +144,7 @@ static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
 
 static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, HandlesStaticWorld *world)
 {
+    /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
     LoadStaticModel(mesh, model);
     btTriangleMesh *triangleMesh = new btTriangleMesh();
     const vpvl::Array<Handles::Vertex> &vertices = model.vertices;
@@ -153,13 +155,16 @@ static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, Handle
                                   vertices[index + 1].position,
                                   vertices[index + 2].position);
     }
-    /* TODO: track moving */
     const btScalar &mass = 0.0f;
     const btVector3 localInertia(0.0f, 0.0f, 0.0f);
     btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(triangleMesh, true);
     btMotionState *state = new MotionState();
     btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape, localInertia);
     btRigidBody *body = new btRigidBody(info);
+    /*
+     * Bone の位置情報を元に動かす静的なオブジェクトであるため KinematicObject として処理する
+     * これを行わないと stepSimulation で進めても MotionState で Bone の位置情報を引いて更新する処理が行われない
+     */
     body->setActivationState(DISABLE_DEACTIVATION);
     body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
     body->setUserPointer(&model);
@@ -222,6 +227,7 @@ void Handles::load()
 
 void Handles::resize(int width, int height)
 {
+    /* ウィンドウの大きさが変わったら判定がずれないように全ての画像のハンドルの位置情報を更新しておく */
     qreal baseX = width - 104, baseY = 4, xoffset = 32, yoffset = 40;
     m_width = width;
     m_height = height;
@@ -422,6 +428,7 @@ void Handles::setVisibilityFlags(int value)
 
 void Handles::updateBone()
 {
+    /* ボーンの位置情報を更新したら stepSimulation で MotionState を経由してハンドルの位置情報に反映させる */
     m_world->world()->stepSimulation(1);
 }
 
@@ -563,6 +570,7 @@ void Handles::loadImageHandles()
 
 void Handles::loadModelHandles()
 {
+    /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
     QFile rotationHandleFile(":models/rotation.3ds");
     if (rotationHandleFile.open(QFile::ReadOnly)) {
         const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
@@ -574,6 +582,7 @@ void Handles::loadModelHandles()
         LoadTrackableModel(meshes[2], m_rotationHandle.z, m_world);
         m_rotationHandle.asset = asset;
     }
+    /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
     QFile translationHandleFile(":models/translation.3ds");
     if (translationHandleFile.open(QFile::ReadOnly)) {
         const QByteArray &translationHandleBytes = translationHandleFile.readAll();
