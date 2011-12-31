@@ -49,6 +49,7 @@ class Bone;
 }
 
 class btBvhTriangleMeshShape;
+class btRigidBody;
 class btTriangleMesh;
 class HandlesStaticWorld;
 class SceneWidget;
@@ -76,6 +77,7 @@ public:
     struct Model {
         vpvl::Array<Vertex> vertices;
         vpvl::Array<uint16_t> indices;
+        btRigidBody *body;
     };
     struct RotationHandle {
         vpvl::Asset *asset;

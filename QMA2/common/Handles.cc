@@ -47,48 +47,72 @@ public:
     HandlesStaticWorld()
         : m_dispatcher(&m_config),
           m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
-          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
+          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
+          m_filtered(false)
     {
     }
     ~HandlesStaticWorld()
     {
-    }
-
-    void addTriangleMeshShape(btTriangleMeshShape *shape, btTriangleMesh *mesh) {
-        m_shapes.push_back(shape);
-        m_meshes.push_back(mesh);
-    }
-    btDiscreteDynamicsWorld *world() {
-        return &m_world;
-    }
-    void deleteAllObjects() {
+        const btCollisionObjectArray &objects = m_world.getCollisionObjectArray();
         const int nobjects = m_world.getNumCollisionObjects();
         for (int i = nobjects - 1; i >= 0; i--) {
-            btCollisionObject *object = m_world.getCollisionObjectArray().at(i);
+            btCollisionObject *object = objects.at(i);
             btRigidBody *body = btRigidBody::upcast(object);
             btMotionState *state = 0;
             if (body && (state = body->getMotionState()))
                 delete state;
             m_world.removeCollisionObject(object);
-            delete object;
-        }
-        const int nshapes = m_shapes.size();
-        for (int i = 0; i < nshapes; i++) {
-            btTriangleMeshShape *shape = m_shapes[i];
-            btTriangleMesh *mesh = m_meshes[i];
-            delete shape;
+            btBvhTriangleMeshShape *shape = static_cast<btBvhTriangleMeshShape *>(body->getCollisionShape());
+            btStridingMeshInterface *mesh = shape->getMeshInterface();
             delete mesh;
+            delete shape;
+            delete object;
         }
     }
 
+    btDiscreteDynamicsWorld *world() {
+        return &m_world;
+    }
+    void addRigidBody(btRigidBody *body) {
+        m_world.addRigidBody(body);
+        m_bodies.append(body);
+    }
+    void filterObjects(const QList<btRigidBody *> &visibles) {
+        const btCollisionObjectArray &objects = m_world.getCollisionObjectArray();
+        const int nobjects = m_world.getNumCollisionObjects();
+        for (int i = nobjects - 1; i >= 0; i--) {
+            btCollisionObject *object = objects.at(i);
+            btRigidBody *body = btRigidBody::upcast(object);
+            if (!visibles.contains(body))
+                m_world.removeCollisionObject(body);
+        }
+        m_filtered = true;
+    }
+    void restoreObjects() {
+        if (!m_filtered)
+            return;
+        const btCollisionObjectArray &objects = m_world.getCollisionObjectArray();
+        const int nobjects = m_world.getNumCollisionObjects();
+        for (int i = nobjects - 1; i >= 0; i--)
+            m_world.removeCollisionObject(objects[i]);
+        foreach (btRigidBody *body, m_bodies)
+            m_world.addRigidBody(body);
+        /*
+         * filterObjects で削除された btRigidBody のボーンが古い位置情報のままになっているため、
+         * stepSimulation で MotionState を経由して新しい位置情報に更新させる必要がある
+         */
+        m_world.stepSimulation(1);
+        m_filtered = false;
+    }
+
 private:
+    QList<btRigidBody *> m_bodies;
     btDefaultCollisionConfiguration m_config;
     btCollisionDispatcher m_dispatcher;
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
-    btAlignedObjectArray<btTriangleMeshShape *> m_shapes;
-    btAlignedObjectArray<btTriangleMesh *> m_meshes;
+    bool m_filtered;
 };
 
 namespace {
@@ -140,6 +164,7 @@ static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
             model.indices.add(index++);
         }
     }
+    model.body = 0;
 }
 
 static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, HandlesStaticWorld *world)
@@ -168,8 +193,8 @@ static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, Handle
     body->setActivationState(DISABLE_DEACTIVATION);
     body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
     body->setUserPointer(&model);
-    world->addTriangleMeshShape(shape, triangleMesh);
-    world->world()->addRigidBody(body);
+    world->addRigidBody(body);
+    model.body = body;
 }
 
 }
@@ -208,7 +233,6 @@ Handles::~Handles()
     m_widget->deleteTexture(m_z.disableRotate.textureID);
     m_widget->deleteTexture(m_global.textureID);
     m_widget->deleteTexture(m_local.textureID);
-    m_world->deleteAllObjects();
     delete m_world;
     delete m_rotationHandle.asset;
     delete m_translationHandle.asset;
@@ -423,6 +447,29 @@ void Handles::setVisible(bool value)
 
 void Handles::setVisibilityFlags(int value)
 {
+    if (value == kVisibleAll) {
+        m_world->restoreObjects();
+    }
+    else {
+        QList<btRigidBody *> bodies;
+        if (value & kMove) {
+            if (value & kX)
+                bodies.append(m_translationHandle.x.body);
+            else if (value & kY)
+                bodies.append(m_translationHandle.y.body);
+            else if (value & kZ)
+                bodies.append(m_translationHandle.z.body);
+        }
+        if (value & kRotate) {
+            if (value & kX)
+                bodies.append(m_rotationHandle.x.body);
+            else if (value & kY)
+                bodies.append(m_rotationHandle.y.body);
+            else if (value & kZ)
+                bodies.append(m_rotationHandle.z.body);
+        }
+        m_world->filterObjects(bodies);
+    }
     m_visibilityFlags = value;
 }
 
