@@ -819,8 +819,10 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     { /* only in move or rotate mode */
         vpvl::Vector3 rayFrom, rayTo, pick;
         makeRay(pos, rayFrom, rayTo);
-        if (m_handles->testHitModel(rayFrom, rayTo, flags, pick))
+        if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
             m_handleFlags = flags;
+            m_handles->setVisibilityFlags(flags);
+        }
     }
 }
 
@@ -860,7 +862,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         Qt::KeyboardModifiers modifiers = event->modifiers();
         QPointF diff = event->posF() - m_prevPos2D;
         /* モデルのハンドルがクリックされた */
-        if (m_handleFlags & Handles::kModel) {
+        if (m_handleFlags & Handles::kView) {
             int flags;
             vpvl::Vector3 rayFrom, rayTo, pick;
             makeRay(event->posF(), rayFrom, rayTo);
@@ -969,6 +971,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     changeCursorIfHitTrackableModel(event->posF());
+    m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_handleFlags = Handles::kNone;
     m_prevAngle = 0.0f;
     m_prevPos3D.setZero();

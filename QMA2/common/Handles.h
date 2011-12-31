@@ -92,17 +92,18 @@ public:
     };
 
     enum Flags {
-        kNone    = 0x0,
-        kEnable  = 0x1,
-        kDisable = 0x2,
-        kMove    = 0x4,
-        kRotate  = 0x8,
-        kX       = 0x10,
-        kY       = 0x20,
-        kZ       = 0x40,
-        kGlobal  = 0x80,
-        kLocal   = 0x100,
-        kModel   = 0x200
+        kNone       = 0x0,
+        kEnable     = 0x1,
+        kDisable    = 0x2,
+        kMove       = 0x4,
+        kRotate     = 0x8,
+        kX          = 0x10,
+        kY          = 0x20,
+        kZ          = 0x40,
+        kGlobal     = 0x80,
+        kLocal      = 0x100,
+        kView       = 0x200,
+        kVisibleAll = kMove | kRotate | kX | kY | kZ | kView
     };
 
     Handles(SceneWidget *parent);
@@ -125,6 +126,7 @@ public:
     void setRotateable(bool value);
     void setLocal(bool value);
     void setVisible(bool value);
+    void setVisibilityFlags(int value);
 
 private slots:
     void updateBone();
@@ -132,7 +134,9 @@ private slots:
 private:
     void drawImageHandles();
     void drawModelHandles();
-    void drawModel(const Handles::Model &model, const QColor &color);
+    void drawModel(const Handles::Model &model,
+                   const QColor &color,
+                   int requiredVisibilityFlags);
     void loadImageHandles();
     void loadModelHandles();
 
@@ -149,6 +153,7 @@ private:
     Texture m_local;
     int m_width;
     int m_height;
+    int m_visibilityFlags;
     bool m_enableMove;
     bool m_enableRotate;
     bool m_isLocal;

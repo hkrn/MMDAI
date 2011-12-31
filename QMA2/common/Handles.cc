@@ -176,6 +176,7 @@ Handles::Handles(SceneWidget *parent)
       m_widget(parent),
       m_width(0),
       m_height(0),
+      m_visibilityFlags(kVisibleAll),
       m_enableMove(false),
       m_enableRotate(false),
       m_isLocal(true),
@@ -266,21 +267,21 @@ bool Handles::testHitModel(const vpvl::Vector3 &rayFrom,
         if (callback.hasHit()) {
             btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
             Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
-            if (m_bone->isMovable()) {
-                if (model == &m_translationHandle.x)
-                    flags = kModel | kMove | kX;
-                else if (model == &m_translationHandle.y)
-                    flags = kModel | kMove | kY;
-                else if (model == &m_translationHandle.z)
-                    flags = kModel | kMove | kZ;
+            if (m_bone->isMovable() && m_visibilityFlags & kMove) {
+                if (model == &m_translationHandle.x && (m_visibilityFlags & kX))
+                    flags = kView | kMove | kX;
+                else if (model == &m_translationHandle.y && (m_visibilityFlags & kY))
+                    flags = kView | kMove | kY;
+                else if (model == &m_translationHandle.z && (m_visibilityFlags & kZ))
+                    flags = kView | kMove | kZ;
             }
-            if (m_bone->isRotateable()) {
-                if (model == &m_rotationHandle.x)
-                    flags = kModel | kRotate | kX;
-                else if (model == &m_rotationHandle.y)
-                    flags = kModel | kRotate | kY;
-                else if (model == &m_rotationHandle.z)
-                    flags = kModel | kRotate | kZ;
+            if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
+                if (model == &m_rotationHandle.x && (m_visibilityFlags & kX))
+                    flags = kView | kRotate | kX;
+                else if (model == &m_rotationHandle.y && (m_visibilityFlags & kY))
+                    flags = kView | kRotate | kY;
+                else if (model == &m_rotationHandle.z && (m_visibilityFlags & kZ))
+                    flags = kView | kRotate | kZ;
             }
             pick = callback.m_hitPointWorld;
             return flags != kNone;
@@ -414,6 +415,11 @@ void Handles::setVisible(bool value)
     m_visible = value;
 }
 
+void Handles::setVisibilityFlags(int value)
+{
+    m_visibilityFlags = value;
+}
+
 void Handles::updateBone()
 {
     m_world->world()->stepSimulation(1);
@@ -476,32 +482,36 @@ void Handles::drawModelHandles()
     transform.setOrigin(m_bone->position() + m_bone->originPosition());
     transform.getOpenGLMatrix(matrix);
     glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
-    if (m_bone->isRotateable()) {
-        drawModel(m_rotationHandle.x, kRed);
-        drawModel(m_rotationHandle.y, kGreen);
-        drawModel(m_rotationHandle.z, kBlue);
+    if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
+        drawModel(m_rotationHandle.x, kRed, kX);
+        drawModel(m_rotationHandle.y, kGreen, kY);
+        drawModel(m_rotationHandle.z, kBlue, kZ);
     }
-    if (m_bone->isMovable()) {
-        drawModel(m_translationHandle.x, kRed);
-        drawModel(m_translationHandle.y, kGreen);
-        drawModel(m_translationHandle.z, kBlue);
-        drawModel(m_translationHandle.axisX, kRed);
-        drawModel(m_translationHandle.axisY, kGreen);
-        drawModel(m_translationHandle.axisZ, kBlue);
+    if (m_bone->isMovable() && m_visibilityFlags & kMove) {
+        drawModel(m_translationHandle.x, kRed, kX);
+        drawModel(m_translationHandle.y, kGreen, kY);
+        drawModel(m_translationHandle.z, kBlue, kZ);
+        drawModel(m_translationHandle.axisX, kRed, kX);
+        drawModel(m_translationHandle.axisY, kGreen, kY);
+        drawModel(m_translationHandle.axisZ, kBlue, kZ);
     }
     m_program.release();
 }
 
-void Handles::drawModel(const Handles::Model &model, const QColor &color)
+void Handles::drawModel(const Handles::Model &model,
+                        const QColor &color,
+                        int requiredVisibilityFlags)
 {
-    const Handles::Vertex &ptr = model.vertices.at(0);
-    const GLfloat *vertexPtr = reinterpret_cast<const GLfloat *>(&ptr.position.x());
-    int inPosition = m_program.attributeLocation("inPosition");
-    m_program.setUniformValue("color", color);
-    m_program.enableAttributeArray(inPosition);
-    m_program.setAttributeArray(inPosition, vertexPtr, 4, sizeof(Handles::Vertex));
-    glDrawElements(GL_TRIANGLES, model.indices.count(), GL_UNSIGNED_SHORT, &model.indices[0]);
-    m_program.disableAttributeArray(inPosition);
+    if (m_visibilityFlags & requiredVisibilityFlags) {
+        const Handles::Vertex &ptr = model.vertices.at(0);
+        const GLfloat *vertexPtr = reinterpret_cast<const GLfloat *>(&ptr.position.x());
+        int inPosition = m_program.attributeLocation("inPosition");
+        m_program.setUniformValue("color", color);
+        m_program.enableAttributeArray(inPosition);
+        m_program.setAttributeArray(inPosition, vertexPtr, 4, sizeof(Handles::Vertex));
+        glDrawElements(GL_TRIANGLES, model.indices.count(), GL_UNSIGNED_SHORT, &model.indices[0]);
+        m_program.disableAttributeArray(inPosition);
+    }
 }
 
 void Handles::loadImageHandles()
@@ -579,3 +589,4 @@ void Handles::loadModelHandles()
         m_translationHandle.asset = asset;
     }
 }
+
