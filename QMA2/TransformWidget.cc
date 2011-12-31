@@ -307,11 +307,6 @@ TransformButton::~TransformButton()
 {
 }
 
-void TransformButton::setMode(int value)
-{
-    m_boneMotionModel->setMode(value);
-}
-
 void TransformButton::mousePressEvent(QMouseEvent *event)
 {
     m_pos = event->pos();
@@ -333,10 +328,10 @@ void TransformButton::mouseMoveEvent(QMouseEvent *event)
         float value = p.y() * 0.1;
         switch (type) {
         case 'r':
-            m_boneMotionModel->rotate(coordinate, vpvl::radian(value));
+            m_boneMotionModel->rotate(coordinate, 'L', vpvl::radian(value));
             break;
         case 't':
-            m_boneMotionModel->translate(coordinate, value);
+            m_boneMotionModel->translate(coordinate, 'L', value);
             break;
         }
         m_pos = event->pos();
@@ -350,6 +345,11 @@ void TransformButton::mouseReleaseEvent(QMouseEvent * /* event */)
     m_pos.setX(0);
     m_pos.setY(0);
     m_boneMotionModel->commitTransform();
+}
+
+void TransformButton::setMode(int value)
+{
+    m_mode = value;
 }
 
 TransformWidget::TransformWidget(QSettings *settings,
@@ -458,6 +458,18 @@ void TransformWidget::on_faceWeightSlider_sliderReleased()
 
 void TransformWidget::on_comboBox_currentIndexChanged(int index)
 {
+    int mode = 0;
+    switch (index) {
+    case 0:
+        mode = 'L';
+        break;
+    case 1:
+        mode = 'G';
+        break;
+    case 2:
+        mode = 'V';
+        break;
+    }
     foreach (TransformButton *button, UIGetAllButtons(ui))
         button->setMode(index);
 }

@@ -121,6 +121,7 @@ public:
     void draw();
     const vpvl::Vector3 angle(const vpvl::Vector3 &pos) const;
 
+    bool isLocal() const { return m_isLocal; }
     void setBone(vpvl::Bone *value);
     void setMovable(bool value);
     void setRotateable(bool value);

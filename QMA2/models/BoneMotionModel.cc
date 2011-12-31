@@ -373,8 +373,7 @@ static vpvl::Bone *BoneFromModelIndex(const QModelIndex &index, vpvl::PMDModel *
 BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent) :
     PMDMotionModel(undo, parent),
     m_sceneWidget(sceneWidget),
-    m_state(0),
-    m_mode(kLocal)
+    m_state(0)
 {
 }
 
@@ -783,21 +782,6 @@ void BoneMotionModel::resetAllBones()
         addUndoCommand(new ResetAllCommand(m_model));
 }
 
-void BoneMotionModel::setMode(int value)
-{
-    switch (value) {
-    case 0:
-        m_mode = kLocal;
-        break;
-    case 1:
-        m_mode = kGlobal;
-        break;
-    case 2:
-        m_mode = kView;
-        break;
-    }
-}
-
 void BoneMotionModel::setPosition(int coordinate, float value)
 {
     if (!isBoneSelected())
@@ -853,7 +837,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     emit boneRotationDidChange(selected, rot);
 }
 
-void BoneMotionModel::translate(int coordinate, float value)
+void BoneMotionModel::translate(int coordinate, int mode, float value)
 {
     vpvl::Vector3 v;
     foreach (vpvl::Bone *selected, m_selected) {
@@ -874,38 +858,40 @@ void BoneMotionModel::translate(int coordinate, float value)
         default:
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
-        translate(selected, v);
+        translate(mode, selected, v);
     }
 }
 
-void BoneMotionModel::translate(vpvl::Bone *bone, const vpvl::Vector3 &v)
+void BoneMotionModel::translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value)
 {
     vpvl::Vector3 dest;
-    switch (m_mode) {
-    case kView: {
-        const vpvl::Vector3 &v2 = m_sceneWidget->scene()->modelViewTransform() * v;
-        dest = vpvl::Transform(bone->rotation(), bone->position()) * v2;
+    switch (mode) {
+    case 'V': {
+        const vpvl::Vector3 &value2 = m_sceneWidget->scene()->modelViewTransform() * value;
+        dest = vpvl::Transform(bone->rotation(), bone->position()) * value2;
         //const QVector4D &r = modelviewMatrix() * QVector4D(v.x(), v.y(), v.z(), 0.0f);
         //dest = vpvl::Transform(bone->rotation(), bone->position()) * vpvl::Vector3(r.x(), r.y(), r.z());
         break;
     }
-    case kLocal: {
-        dest = vpvl::Transform(bone->rotation(), bone->position()) * v;
+    case 'L': {
+        dest = vpvl::Transform(bone->rotation(), bone->position()) * value;
         break;
     }
-    case kGlobal: {
-        dest = bone->position() + v;
+    case 'G': {
+        dest = bone->position() + value;
         break;
     }
-    default:
+    default: {
+        qFatal("Unexpected mode: %c", mode);
         break;
+    }
     }
     bone->setPosition(dest);
     m_model->updateImmediate();
     emit bonePositionDidChange(bone, dest);
 }
 
-void BoneMotionModel::rotate(int coordinate, float value)
+void BoneMotionModel::rotate(int coordinate, int mode, float value)
 {
     if (!isBoneSelected())
         return;
@@ -928,9 +914,10 @@ void BoneMotionModel::rotate(int coordinate, float value)
         break;
     default:
         qFatal("Unexpected coordinate value: %c", coordinate);
+        break;
     }
-    switch (m_mode) {
-    case kView: {
+    switch (mode) {
+    case 'V': {
         float matrix[16];
         m_sceneWidget->scene()->getModelViewMatrix(matrix);
         QVector4D r = internal::toMatrix4x4(matrix) * QVector4D(rot.x(), rot.y(), rot.z(), rot.w());
@@ -938,12 +925,17 @@ void BoneMotionModel::rotate(int coordinate, float value)
         dest = current * vpvl::Quaternion(r.x(), r.y(), r.z(), r.w());
         break;
     }
-    case kLocal: {
+    case 'L': {
         dest = current * rot;
         break;
     }
-    default:
+    case 'G': {
         break;
+    }
+    default: {
+        qFatal("Unexpected mode: %c", mode);
+        break;
+    }
     }
     selected->setRotation(dest);
     m_model->updateImmediate();

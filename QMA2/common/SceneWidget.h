@@ -177,11 +177,9 @@ signals:
     void sceneDidPlay();
     void sceneDidPause();
     void sceneDidStop();
-    void handleDidMove(int coordinate, float value);
-    void handleDidRotate(int coordinate, float value);
+    void handleDidMove(int mode, int coordinate, float value);
+    void handleDidRotate(int mode, int coordinate, float value);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
-    void localTransformDidSelect();
-    void globalTransformDidSelect();
 
 protected:
     void closeEvent(QCloseEvent *event);

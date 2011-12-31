@@ -119,6 +119,7 @@ public:
 
     void setAngle(const vpvl::Vector3 &value) { m_angle = value; }
     void setBoneMotionModel(BoneMotionModel *value) { m_boneMotionModel = value; }
+    int mode() const { return m_mode; }
 
 public slots:
     void setMode(int value);
@@ -134,6 +135,7 @@ private:
     QCursor m_cursor;
     QPoint m_drag;
     QPoint m_pos;
+    int m_mode;
 };
 
 class TransformWidget : public QWidget

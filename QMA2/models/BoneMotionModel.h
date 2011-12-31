@@ -50,11 +50,6 @@ class BoneMotionModel : public PMDMotionModel
     Q_OBJECT
 
 public:
-    enum TransformType {
-        kLocal,
-        kGlobal,
-        kView
-    };
     enum ResetType {
         kX,
         kY,
@@ -84,7 +79,6 @@ public:
     void setFrames(const KeyFramePairList &frames);
     void resetBone(ResetType type);
     void resetAllBones();
-    void setMode(int value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
     vpvl::Bone *findBone(const QString &name);
@@ -99,12 +93,10 @@ public slots:
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void deleteFrameByModelIndex(const QModelIndex &index);
-    void translate(int coordinate, float value);
-    void translate(vpvl::Bone *bone, const vpvl::Vector3 &v);
-    void rotate(int coordinate, float value);
+    void translate(int coordinate, int mode, float value);
+    void translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value);
+    void rotate(int coordinate, int mode, float value);
     void selectBones(const QList<vpvl::Bone *> &bones);
-    void setLocalTransformMode() { m_mode = kLocal; }
-    void setGlobalTransformMode() { m_mode = kGlobal; }
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
@@ -118,7 +110,6 @@ private:
     vpvl::BaseKeyFrameList m_frames;
     vpvl::PMDModel::State *m_state;
     vpvl::BoneKeyFrame::InterpolationParameter m_interpolationParameter;
-    TransformType m_mode;
 
     Q_DISABLE_COPY(BoneMotionModel)
 };

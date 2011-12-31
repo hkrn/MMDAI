@@ -802,13 +802,12 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     if (m_handles->testHitImage(pos, flags, rect)) {
         switch (flags) {
+        /* ローカルとグローバルの切り替えなので、値を反転して設定する必要がある */
         case Handles::kLocal:
             m_handles->setLocal(false);
-            emit globalTransformDidSelect();
             break;
         case Handles::kGlobal:
             m_handles->setLocal(true);
-            emit localTransformDidSelect();
             break;
         default:
             break;
@@ -863,33 +862,35 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         QPointF diff = event->posF() - m_prevPos2D;
         /* モデルのハンドルがクリックされた */
         if (m_handleFlags & Handles::kView) {
-            int flags;
+            int flags, mode = 'V';
             vpvl::Vector3 rayFrom, rayTo, pick;
             makeRay(event->posF(), rayFrom, rayTo);
             /* モデルのハンドルがクリック中であるか? 入っている場合はグーのカーソルに変更し、入ってない場合は元のカーソルに戻す */
             if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
-                const vpvl::Vector3 directionX(1.0f, 0.0f, 0.0f),
-                        directionY(0.0f, 1.0f, 0.0f),
+                const vpvl::Vector3 directionX(-1.0f, 0.0f, 0.0f),
+                        directionY(0.0f, -1.0f, 0.0f),
                         directionZ(0.0f, 0.0f, 1.0f),
                         &diff = pick - m_prevPos3D;
                 /* 移動ハンドルである(矢印の先端) */
                 if (flags & Handles::kMove && !diff.isZero()) {
+                    int coordinate = 0;
                     float value = m_prevPos3D.isZero() ? 0.0f : diff.length();
                     if (flags & Handles::kX) {
-                        if (directionX.dot(diff.normalized()) >= 0)
+                        if (directionX.dot(diff.normalized()) < 0)
                             value = -value;
-                        emit handleDidMove('X', value);
+                        coordinate = 'X';
                     }
                     else if (flags & Handles::kY) {
-                        if (directionY.dot(diff.normalized()) >= 0)
+                        if (directionY.dot(diff.normalized()) < 0)
                             value = -value;
-                        emit handleDidMove('Y', value);
+                        coordinate = 'Y';
                     }
                     else if (flags & Handles::kZ) {
                         if (directionZ.dot(diff.normalized()) < 0)
                             value = -value;
-                        emit handleDidMove('Z', value);
+                        coordinate = 'Z';
                     }
+                    emit handleDidMove(coordinate, mode, value);
                 }
                 /* 回転ハンドルである(ドーナツ) */
                 else if (flags & Handles::kRotate) {
@@ -909,7 +910,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                         axis = 'Z';
                     }
                     if (m_prevAngle > 0.0f)
-                        emit handleDidRotate(axis, value - m_prevAngle);
+                        emit handleDidRotate(axis, mode, value - m_prevAngle);
                     m_prevAngle = value;
                 }
                 m_prevPos3D = pick;
@@ -922,25 +923,26 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         /* 有効な右下のハンドルがクリックされた */
         else if (m_handleFlags & Handles::kEnable) {
             int flags = m_handleFlags;
+            int mode = m_handles->isLocal() ? 'L' : 'G';
             /* 移動ハンドルである */
             if (flags & Handles::kMove) {
                 const float &value = diff.y() * 0.1f;
                 if (flags & Handles::kX)
-                    emit handleDidMove('X', value);
+                    emit handleDidMove('X', mode, value);
                 else if (flags & Handles::kY)
-                    emit handleDidMove('Y', value);
+                    emit handleDidMove('Y', mode, value);
                 else if (flags & Handles::kZ)
-                    emit handleDidMove('Z', value);
+                    emit handleDidMove('Z', mode, value);
             }
             /* 回転ハンドルである */
             else if (flags & Handles::kRotate) {
                 const float &value = vpvl::radian(diff.y()) * 0.1f;
                 if (flags & Handles::kX)
-                    emit handleDidRotate('X', value);
+                    emit handleDidRotate('X', mode, value);
                 else if (flags & Handles::kY)
-                    emit handleDidRotate('Y', value);
+                    emit handleDidRotate('Y', mode, value);
                 else if (flags & Handles::kZ)
-                    emit handleDidRotate('Z', value);
+                    emit handleDidRotate('Z', mode, value);
             }
         }
         /* 光源移動 */

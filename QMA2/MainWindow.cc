@@ -1069,8 +1069,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(handleDidMove(int,float)), m_boneMotionModel, SLOT(translate(int,float)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(int,float)), m_boneMotionModel, SLOT(rotate(int,float)));
+    connect(m_sceneWidget, SIGNAL(handleDidMove(int,int,float)), m_boneMotionModel, SLOT(translate(int,int,float)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(int,int,float)), m_boneMotionModel, SLOT(rotate(int,int,float)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)), m_timelineTabWidget, SLOT(addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
@@ -1085,8 +1085,6 @@ void MainWindow::connectWidgets()
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-    connect(m_sceneWidget, SIGNAL(globalTransformDidSelect()), m_boneMotionModel, SLOT(setGlobalTransformMode()));
-    connect(m_sceneWidget, SIGNAL(localTransformDidSelect()), m_boneMotionModel, SLOT(setLocalTransformMode()));
     connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
             m_tabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
