@@ -37,6 +37,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include "util.h" /* for internal::kWorldAabbSize */
+
 #include <QtCore/QObject>
 #include <btBulletDynamicsCommon.h>
 
@@ -46,7 +48,7 @@ class World {
 public:
     explicit World(int defaultFPS)
         : m_dispatcher(&m_config),
-          m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0, 400.0f), 1024),
+          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
         m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));

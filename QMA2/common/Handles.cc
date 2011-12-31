@@ -46,7 +46,7 @@ class HandlesStaticWorld {
 public:
     HandlesStaticWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0, 400.0f), 1024),
+          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
     }

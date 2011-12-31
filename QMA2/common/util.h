@@ -43,6 +43,8 @@
 namespace internal
 {
 
+const static vpvl::Vector3 kWorldAabbSize(vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+
 static inline QTextCodec *getTextCodec()
 {
     static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
