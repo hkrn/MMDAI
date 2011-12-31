@@ -818,7 +818,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     { /* only in move or rotate mode */
         vpvl::Vector3 rayFrom, rayTo, pick;
         makeRay(pos, rayFrom, rayTo);
-        if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
+        if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
             m_handleFlags = flags;
             m_handles->setVisibilityFlags(flags);
         }
@@ -866,7 +866,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             vpvl::Vector3 rayFrom, rayTo, pick;
             makeRay(event->posF(), rayFrom, rayTo);
             /* モデルのハンドルがクリック中であるか? 入っている場合はグーのカーソルに変更し、入ってない場合は元のカーソルに戻す */
-            if (m_handles->testHitModel(rayFrom, rayTo, flags, pick)) {
+            if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
                 const vpvl::Vector3 directionX(-1.0f, 0.0f, 0.0f),
                         directionY(0.0f, -1.0f, 0.0f),
                         directionZ(0.0f, 0.0f, 1.0f),
@@ -1081,7 +1081,7 @@ void SceneWidget::changeCursorIfHitTrackableModel(const QPointF &pos)
     int flags;
     vpvl::Vector3 rayFrom, rayTo, pick;
     makeRay(pos, rayFrom, rayTo);
-    if (m_handles->testHitModel(rayFrom, rayTo, flags, pick))
+    if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
         setCursor(Qt::OpenHandCursor);
     else
         unsetCursor();

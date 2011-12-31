@@ -115,6 +115,7 @@ public:
     void resize(int width, int height);
     bool testHitModel(const vpvl::Vector3 &rayFrom,
                       const vpvl::Vector3 &rayTo,
+                      bool setTracked,
                       int &flags,
                       vpvl::Vector3 &pick);
     bool testHitImage(const QPointF &p,
@@ -149,6 +150,7 @@ private:
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;
     TranslationHandle m_translationHandle;
+    Model *m_trackedHandle;
     ImageHandle m_x;
     ImageHandle m_y;
     ImageHandle m_z;
