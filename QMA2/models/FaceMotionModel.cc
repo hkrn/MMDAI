@@ -356,7 +356,7 @@ void FaceMotionModel::pasteFrames(int frameIndex)
     }
 }
 
-void FaceMotionModel::startTransform()
+void FaceMotionModel::saveTransform()
 {
     if (m_model) {
         /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */

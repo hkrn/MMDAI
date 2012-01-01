@@ -65,7 +65,7 @@ public:
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     virtual void copyFrames(int frameIndex) = 0;
-    virtual void startTransform() = 0;
+    virtual void saveTransform() = 0;
     virtual void commitTransform() = 0;
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
 

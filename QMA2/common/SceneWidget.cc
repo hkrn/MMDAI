@@ -821,6 +821,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
             m_handleFlags = flags;
             m_handles->setVisibilityFlags(flags);
+            emit handleDidGrab();
         }
     }
 }
@@ -977,6 +978,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     m_handleFlags = Handles::kNone;
     m_prevAngle = 0.0f;
     m_prevPos3D.setZero();
+    emit handleDidRelease();
 }
 
 void SceneWidget::paintGL()

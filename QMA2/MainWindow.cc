@@ -1102,6 +1102,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(m_boneMotionModel, SIGNAL(bonePositionDidChange(vpvl::Bone*,vpvl::Vector3)), m_sceneWidget->handles(), SLOT(updateBone()));
     connect(m_boneMotionModel, SIGNAL(boneRotationDidChange(vpvl::Bone*,vpvl::Quaternion)), m_sceneWidget->handles(), SLOT(updateBone()));
+    connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
+    connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
 }
 
 void MainWindow::insertMotionToAllModels()

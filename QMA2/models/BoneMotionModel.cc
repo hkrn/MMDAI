@@ -506,7 +506,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
     }
 }
 
-void BoneMotionModel::startTransform()
+void BoneMotionModel::saveTransform()
 {
     if (m_model) {
         /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */

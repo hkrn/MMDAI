@@ -249,7 +249,7 @@ void FaceListModel::selectFaces(const QList<vpvl::Face *> &faces)
 
 void FaceListModel::startTransform()
 {
-    m_model->startTransform();
+    m_model->saveTransform();
 }
 
 void FaceListModel::commitTransform()
@@ -312,7 +312,7 @@ void TransformButton::mousePressEvent(QMouseEvent *event)
     m_pos = event->pos();
     m_drag = mapToGlobal(m_pos);
     m_cursor = cursor();
-    m_boneMotionModel->startTransform();
+    m_boneMotionModel->saveTransform();
     QBitmap transparent(32, 32);
     transparent.fill(Qt::color0);
     qApp->setOverrideCursor(QCursor(transparent, transparent));

@@ -69,8 +69,6 @@ public:
     void copyFrames(int frameIndex);
     void pasteFrames(int frameIndex);
     void pasteReversedFrame(int frameIndex);
-    void startTransform();
-    void commitTransform();
     void selectByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
@@ -97,6 +95,8 @@ public slots:
     void translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value);
     void rotate(int coordinate, int mode, float value);
     void selectBones(const QList<vpvl::Bone *> &bones);
+    void saveTransform();
+    void commitTransform();
 
 signals:
     void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);

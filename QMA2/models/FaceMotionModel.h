@@ -61,7 +61,7 @@ public:
     void addKeyFramesByModelIndices(const QModelIndexList &indices);
     void copyFrames(int frameIndex);
     void pasteFrames(int frameIndex);
-    void startTransform();
+    void saveTransform();
     void commitTransform();
     void selectByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;

@@ -177,6 +177,8 @@ signals:
     void sceneDidPlay();
     void sceneDidPause();
     void sceneDidStop();
+    void handleDidGrab();
+    void handleDidRelease();
     void handleDidMove(int mode, int coordinate, float value);
     void handleDidRotate(int mode, int coordinate, float value);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
