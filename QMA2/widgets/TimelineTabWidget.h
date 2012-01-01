@@ -78,6 +78,7 @@ public slots:
     void addKeyFramesFromSelectedIndices();
     void loadPose(VPDFile *pose, vpvl::PMDModel *model);
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
+    void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
     void motionDidSeek(float frameIndex);
@@ -100,7 +101,6 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void selectFrameIndices(int fromIndex, int toIndex);
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);

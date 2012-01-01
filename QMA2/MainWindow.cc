@@ -638,6 +638,8 @@ void MainWindow::buildUI()
 
     m_actionRegisterFrame = new QAction(this);
     connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
+    m_actionSelectAllFrames = new QAction(this);
+    connect(m_actionSelectAllFrames, SIGNAL(triggered()), this, SLOT(selectAllRegisteredKeyFrames()));
     m_actionSelectFrameDialog = new QAction(this);
     connect(m_actionSelectFrameDialog, SIGNAL(triggered()), this, SLOT(openFrameSelectionDialog()));
     m_actionCopy = new QAction(this);
@@ -768,7 +770,9 @@ void MainWindow::buildUI()
     m_menuBar->addMenu(m_menuBone);
     m_menuFrame = new QMenu(this);
     m_menuFrame->addAction(m_actionRegisterFrame);
+    m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
+    m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
     m_menuFrame->addSeparator();
@@ -778,6 +782,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionCopy);
     m_menuFrame->addAction(m_actionPaste);
     m_menuFrame->addAction(m_actionReversedPaste);
+    m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionUndoFrame);
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
@@ -877,7 +882,8 @@ void MainWindow::bindActions()
     m_actionBoneResetAll->setShortcut(m_settings.value(kPrefix + "boneResetAll").toString());
     m_actionBoneDialog->setShortcut(m_settings.value(kPrefix + "boneDialog").toString());
     m_actionRegisterFrame->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
-    m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrame").toString());
+    m_actionSelectAllFrames->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
+    m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
@@ -998,8 +1004,10 @@ void MainWindow::retranslate()
     m_actionBoneDialog->setStatusTip(tr("Open bone dialog to change position or rotation of the bone manually."));
     m_actionRegisterFrame->setText(tr("Register keyframe"));
     m_actionRegisterFrame->setStatusTip(tr("Register keyframes by selected indices from the timeline."));
-    m_actionSelectFrameDialog->setText(tr("Open frame selection dialog"));
-    m_actionSelectFrameDialog->setStatusTip(tr("Open frame selection dialog to select multiple frame indices."));
+    m_actionSelectAllFrames->setText(tr("Select all keyframes"));
+    m_actionSelectAllFrames->setStatusTip(tr("Select all registered keyframes."));
+    m_actionSelectFrameDialog->setText(tr("Open keyframe range selection dialog"));
+    m_actionSelectFrameDialog->setStatusTip(tr("Open keyframe range selection dialog to select multiple frame indices."));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
@@ -1403,6 +1411,11 @@ void MainWindow::openFrameSelectionDialog()
     }
     m_frameSelectionDialog->setMaxFrameIndex(m_sceneWidget->scene()->maxFrameIndex());
     m_frameSelectionDialog->show();
+}
+
+void MainWindow::selectAllRegisteredKeyFrames()
+{
+    m_timelineTabWidget->selectFrameIndices(0, m_sceneWidget->scene()->maxFrameIndex());
 }
 
 const QString MainWindow::openSaveDialog(const QString &name, const QString &desc, const QString &exts)

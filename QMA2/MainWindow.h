@@ -120,6 +120,7 @@ private slots:
     void selectPreviousModel();
     void showLicenseWidget();
     void openFrameSelectionDialog();
+    void selectAllRegisteredKeyFrames();
 
 private:
     bool saveMotionAs();
@@ -221,6 +222,7 @@ private:
     QAction *m_actionBoneResetAll;
     QAction *m_actionBoneDialog;
     QAction *m_actionRegisterFrame;
+    QAction *m_actionSelectAllFrames;
     QAction *m_actionSelectFrameDialog;
     QAction *m_actionInsertEmptyFrame;
     QAction *m_actionDeleteSelectedFrame;

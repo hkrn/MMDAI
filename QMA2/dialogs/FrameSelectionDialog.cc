@@ -55,7 +55,7 @@ FrameSelectionDialog::FrameSelectionDialog(QWidget *parent) :
     connect(buttons, SIGNAL(accepted()), this, SLOT(emitFrameIndices()));
     connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
     connect(this, SIGNAL(frameIndicesDidSelect(int,int)), this, SLOT(close()));
-    setWindowTitle(tr("Frame selection"));
+    setWindowTitle(tr("Keyframe range selection dialog"));
     setLayout(mainLayout);
 }
 
