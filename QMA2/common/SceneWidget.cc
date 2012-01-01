@@ -912,7 +912,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                     value *= 2.0f;
                     if (!m_handles->isAngleZero()) {
                         float diff = m_handles->diffAngle(value);
-                        emit handleDidRotate(axis, mode, btFabs(diff), false);
+                        emit handleDidRotate(axis, mode, btFabs(diff), diff < 0);
                     }
                     m_handles->setAngle(value);
                 }
