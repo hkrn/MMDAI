@@ -1442,12 +1442,17 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>カメラモーションの読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="605"/>
+        <location filename="../../common/SceneWidget.cc" line="532"/>
+        <source>Do you want to delete the model &quot;%1&quot;? This cannot undo.</source>
+        <translation>モデル「%1」を削除しますか？削除すると巻き戻せなくなります。</translation>
+    </message>
+    <message>
+        <location filename="../../common/SceneWidget.cc" line="614"/>
         <source>(multiple)</source>
         <translation>(複数)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="1049"/>
+        <location filename="../../common/SceneWidget.cc" line="1058"/>
         <source>Model Information of &quot;%1&quot;</source>
         <translation>「%1」のモデル情報</translation>
     </message>

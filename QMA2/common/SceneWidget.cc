@@ -525,7 +525,16 @@ vpvl::VMDMotion *SceneWidget::setCamera(const QString &path)
 void SceneWidget::deleteSelectedModel()
 {
     vpvl::PMDModel *selected = selectedModel();
-    m_loader->deleteModel(selected);
+    if (selected) {
+        QMessageBox::StandardButton ret;
+        ret = QMessageBox::warning(this,
+                                   qAppName(),
+                                   tr("Do you want to delete the model \"%1\"? This cannot undo.")
+                                   .arg(internal::toQString(selected)),
+                                   QMessageBox::Yes | QMessageBox::No);
+        if (ret == QMessageBox::Yes)
+            m_loader->deleteModel(selected);
+    }
 }
 
 void SceneWidget::resetCamera()
