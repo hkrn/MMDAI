@@ -122,11 +122,36 @@ const QColor &kGreen = QColor::fromRgb(0, 255, 0, 127);
 const QColor &kBlue = QColor::fromRgb(0, 0, 255, 127);
 const QColor &kYellow = QColor::fromRgb(255, 255, 0, 127);
 
-class MotionState : public btMotionState
+class BoneHandleMotionState : public btMotionState
 {
 public:
-    MotionState() : m_bone(0) {}
-    ~MotionState() {}
+    BoneHandleMotionState() : m_bone(0) {}
+    virtual ~BoneHandleMotionState() {}
+
+    void setWorldTransform(const btTransform & /* worldTrans */) {
+    }
+    void setBone(vpvl::Bone *value) { m_bone = value; }
+
+protected:
+    vpvl::Bone *m_bone;
+};
+
+class RotationHandleMotionState : public BoneHandleMotionState
+{
+public:
+    RotationHandleMotionState() : BoneHandleMotionState() {}
+
+    void getWorldTransform(btTransform &worldTrans) const {
+        worldTrans.setIdentity();
+        if (m_bone)
+            worldTrans.setOrigin(m_bone->localTransform().getOrigin());
+    }
+};
+
+class TranslationHandleMotionState : public BoneHandleMotionState
+{
+public:
+    TranslationHandleMotionState() : BoneHandleMotionState() {}
 
     void getWorldTransform(btTransform &worldTrans) const {
         if (m_bone)
@@ -134,12 +159,6 @@ public:
         else
             worldTrans.setIdentity();
     }
-    void setWorldTransform(const btTransform & /* worldTrans */) {
-    }
-    void setBone(vpvl::Bone *value) { m_bone = value; }
-
-private:
-    vpvl::Bone *m_bone;
 };
 
 static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
@@ -167,7 +186,10 @@ static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
     model.body = 0;
 }
 
-static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, HandlesStaticWorld *world)
+static void LoadTrackableModel(const aiMesh *mesh,
+                               HandlesStaticWorld *world,
+                               BoneHandleMotionState *state,
+                               Handles::Model &model)
 {
     /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
     LoadStaticModel(mesh, model);
@@ -183,7 +205,6 @@ static void LoadTrackableModel(const aiMesh *mesh, Handles::Model &model, Handle
     const btScalar &mass = 0.0f;
     const btVector3 localInertia(0.0f, 0.0f, 0.0f);
     btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(triangleMesh, true);
-    btMotionState *state = new MotionState();
     btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape, localInertia);
     btRigidBody *body = new btRigidBody(info);
     /*
@@ -425,7 +446,7 @@ void Handles::setBone(vpvl::Bone *value)
         btRigidBody *body = btRigidBody::upcast(object);
         btMotionState *state = 0;
         if (body && (state = body->getMotionState()))
-            static_cast<MotionState *>(state)->setBone(value);
+            static_cast<BoneHandleMotionState *>(state)->setBone(value);
     }
     updateBone();
 }
@@ -536,13 +557,18 @@ void Handles::drawModelHandles()
     glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
     scene->getProjectionMatrix(matrix);
     glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
-    m_bone->localTransform().getOpenGLMatrix(matrix);
+    const vpvl::Transform &boneTransform = m_bone->localTransform();
+    vpvl::Transform transform = vpvl::Transform::getIdentity();
+    transform.setOrigin(m_bone->localTransform().getOrigin());
+    transform.getOpenGLMatrix(matrix);
     glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
         drawModel(m_rotationHandle.z, kBlue, kZ);
     }
+    boneTransform.getOpenGLMatrix(matrix);
+    glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
@@ -626,9 +652,9 @@ void Handles::loadModelHandles()
         vpvl::Asset *asset = new vpvl::Asset();
         asset->load(reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData()), rotationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
-        LoadTrackableModel(meshes[1], m_rotationHandle.x, m_world);
-        LoadTrackableModel(meshes[0], m_rotationHandle.y, m_world);
-        LoadTrackableModel(meshes[2], m_rotationHandle.z, m_world);
+        LoadTrackableModel(meshes[1], m_world, new RotationHandleMotionState(), m_rotationHandle.x);
+        LoadTrackableModel(meshes[0], m_world, new RotationHandleMotionState(), m_rotationHandle.y);
+        LoadTrackableModel(meshes[2], m_world, new RotationHandleMotionState(), m_rotationHandle.z);
         m_rotationHandle.asset = asset;
     }
     /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
@@ -638,9 +664,9 @@ void Handles::loadModelHandles()
         vpvl::Asset *asset = new vpvl::Asset();
         asset->load(reinterpret_cast<const uint8_t *>(translationHandleBytes.constData()), translationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
-        LoadTrackableModel(meshes[0], m_translationHandle.x, m_world);
-        LoadTrackableModel(meshes[2], m_translationHandle.y, m_world);
-        LoadTrackableModel(meshes[1], m_translationHandle.z, m_world);
+        LoadTrackableModel(meshes[0], m_world, new TranslationHandleMotionState(), m_translationHandle.x);
+        LoadTrackableModel(meshes[2], m_world, new TranslationHandleMotionState(), m_translationHandle.y);
+        LoadTrackableModel(meshes[1], m_world, new TranslationHandleMotionState(), m_translationHandle.z);
         LoadStaticModel(meshes[3], m_translationHandle.axisX);
         LoadStaticModel(meshes[5], m_translationHandle.axisY);
         LoadStaticModel(meshes[4], m_translationHandle.axisZ);
