@@ -812,7 +812,7 @@ void MainWindow::buildUI()
 
     QToolBar *toolbar = new QToolBar();
     m_actionAddModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addModel()));
-    m_actionSelectModelOnToolBar = toolbar->addAction("");
+    //m_actionSelectModelOnToolBar = toolbar->addAction("");
     m_actionAddAssetOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addAsset()));
     m_actionInsertMotionOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
     m_actionCreateMotionOnToolBar = toolbar->addAction("", this, SLOT(newMotionFile()));
@@ -1030,7 +1030,7 @@ void MainWindow::retranslate()
     m_actionAddAssetOnToolBar->setStatusTip(m_actionAddAsset->statusTip());
     m_actionInsertMotionOnToolBar->setText(tr("Add motion"));
     m_actionInsertMotionOnToolBar->setStatusTip(m_actionInsertToSelectedModel->toolTip());
-    m_actionSelectModelOnToolBar->setText(tr("Select model"));
+    //m_actionSelectModelOnToolBar->setText(tr("Select model"));
     m_actionCreateMotionOnToolBar->setText(tr("Cerate motion"));
     m_actionDeleteModelOnToolBar->setText(tr("Delete model"));
     m_menuFile->setTitle(tr("&File"));
@@ -1328,7 +1328,7 @@ void MainWindow::openEdgeOffsetDialog()
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."),
-                             tr("Select a model to chage edge offset value."));
+                             tr("Select a model to chage edge offset value (\"Model\" > \"Select model\")"));
     }
 }
 

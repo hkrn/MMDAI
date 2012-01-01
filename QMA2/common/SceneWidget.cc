@@ -340,7 +340,7 @@ void SceneWidget::insertMotionToSelectedModel()
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."),
-                             tr("Select a model to insert the motion"));
+                             tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
     }
 }
 
@@ -376,7 +376,9 @@ void SceneWidget::setEmptyMotion(vpvl::PMDModel *model)
         m_loader->setCameraMotion(cameraMotion);
     }
     else
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to insert the motion"));
+        QMessageBox::warning(this,
+                             tr("The model is not selected."),
+                             tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
 }
 
 void SceneWidget::addAsset()
@@ -467,7 +469,9 @@ VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, vpvl::P
         }
     }
     else
-        QMessageBox::warning(this, tr("The model is not selected."), tr("Select a model to set the pose"));
+        QMessageBox::warning(this,
+                             tr("The model is not selected."),
+                             tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
     return pose;
 }
 
