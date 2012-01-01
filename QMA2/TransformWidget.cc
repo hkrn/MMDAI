@@ -328,7 +328,7 @@ void TransformButton::mouseMoveEvent(QMouseEvent *event)
         float value = p.y() * 0.1;
         switch (type) {
         case 'r':
-            m_boneMotionModel->rotate(coordinate, 'L', vpvl::radian(value));
+            m_boneMotionModel->rotate(coordinate, 'L', vpvl::radian(value), false);
             break;
         case 't':
             m_boneMotionModel->translate(coordinate, 'L', value);

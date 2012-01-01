@@ -124,6 +124,16 @@ public:
     void draw();
     const vpvl::Vector3 angle(const vpvl::Vector3 &pos) const;
 
+    void setPoint3D(const vpvl::Vector3 &value);
+    void setPoint2D(const QPointF &value);
+    void setAngle(float value);
+    void setRotateDirection(bool value);
+    const vpvl::Vector3 diffPoint3D(const vpvl::Vector3 &value) const;
+    const QPointF diffPoint2D(const QPointF &value) const;
+    float diffAngle(float value) const;
+    bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
+    bool isAngleZero() const { return m_prevAngle == 0.0f; }
+
     bool isLocal() const { return m_isLocal; }
     void setBone(vpvl::Bone *value);
     void setMovable(bool value);
@@ -156,6 +166,9 @@ private:
     ImageHandle m_z;
     Texture m_global;
     Texture m_local;
+    vpvl::Vector3 m_prevPos3D;
+    QPointF m_prevPos2D;
+    float m_prevAngle;
     int m_width;
     int m_height;
     int m_visibilityFlags;

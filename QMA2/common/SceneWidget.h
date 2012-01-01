@@ -180,7 +180,7 @@ signals:
     void handleDidGrab();
     void handleDidRelease();
     void handleDidMove(int mode, int coordinate, float value);
-    void handleDidRotate(int mode, int coordinate, float value);
+    void handleDidRotate(int mode, int coordinate, float value, bool minus);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
 
 protected:
@@ -217,12 +217,9 @@ private:
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
     vpvl::Bone *m_bone;
-    vpvl::Vector3 m_prevPos3D;
-    QPointF m_prevPos2D;
     Handles *m_handles;
     QSettings *m_settings;
     QElapsedTimer m_timer;
-    float m_prevAngle;
     float m_prevElapsed;
     float m_selectedEdgeOffset;
     float m_frameIndex;

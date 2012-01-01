@@ -890,7 +890,7 @@ void BoneMotionModel::translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 
     emit bonePositionDidChange(bone, dest);
 }
 
-void BoneMotionModel::rotate(int coordinate, int mode, float value)
+void BoneMotionModel::rotate(int coordinate, int mode, float value, bool minus)
 {
     if (!isBoneSelected())
         return;
@@ -921,7 +921,7 @@ void BoneMotionModel::rotate(int coordinate, int mode, float value)
         m_sceneWidget->scene()->getModelViewMatrix(matrixf);
         const QMatrix4x4 &m = internal::toMatrix4x4(matrixf);
         const QVector4D &r = (m * QVector4D(rot.x(), rot.y(), rot.z(), rot.w())).normalized();
-        rot.setValue(r.x(), r.y(), r.z(), r.w());
+        rot.setValue(r.x(), r.y(), r.z(), minus ? r.w() : -r.w());
         dest = current * rot;
         break;
     }

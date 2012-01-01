@@ -226,6 +226,8 @@ Handles::Handles(SceneWidget *parent)
       m_world(0),
       m_widget(parent),
       m_trackedHandle(0),
+      m_prevPos3D(0.0f, 0.0f, 0.0f),
+      m_prevAngle(0.0f),
       m_width(0),
       m_height(0),
       m_visibilityFlags(kVisibleAll),
@@ -434,6 +436,36 @@ void Handles::draw()
 const vpvl::Vector3 Handles::angle(const vpvl::Vector3 &pos) const
 {
     return (pos - m_bone->localTransform().getOrigin()).normalized();
+}
+
+void Handles::setPoint3D(const vpvl::Vector3 &value)
+{
+    m_prevPos3D = value;
+}
+
+void Handles::setPoint2D(const QPointF &value)
+{
+    m_prevPos2D = value;
+}
+
+void Handles::setAngle(float value)
+{
+    m_prevAngle = value;
+}
+
+const vpvl::Vector3 Handles::diffPoint3D(const vpvl::Vector3 &value) const
+{
+    return value - m_prevPos3D;
+}
+
+const QPointF Handles::diffPoint2D(const QPointF &value) const
+{
+    return value - m_prevPos2D;
+}
+
+float Handles::diffAngle(float value) const
+{
+    return value - m_prevAngle;
 }
 
 void Handles::setBone(vpvl::Bone *value)

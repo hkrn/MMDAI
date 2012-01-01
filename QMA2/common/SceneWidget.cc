@@ -92,10 +92,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_grid(0),
     m_info(0),
     m_bone(0),
-    m_prevPos3D(0.0f, 0.0f, 0.0f),
     m_handles(0),
     m_settings(settings),
-    m_prevAngle(0.0f),
     m_prevElapsed(0.0f),
     m_selectedEdgeOffset(0.0f),
     m_frameIndex(0.0f),
@@ -798,7 +796,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     const QPointF &pos = event->posF();
     QRectF rect;
     int flags;
-    m_prevPos2D = pos;
+    m_handles->setPoint2D(pos);
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     if (m_handles->testHitImage(pos, flags, rect)) {
         switch (flags) {
@@ -821,6 +819,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
             m_handleFlags = flags;
             m_handles->setVisibilityFlags(flags);
+            setCursor(Qt::ClosedHandCursor);
             emit handleDidGrab();
         }
     }
@@ -860,7 +859,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
-        QPointF diff = event->posF() - m_prevPos2D;
+        QPointF diff = m_handles->diffPoint2D(event->posF());
         /* モデルのハンドルがクリックされた */
         if (m_handleFlags & Handles::kView) {
             int flags, mode = 'V';
@@ -871,11 +870,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                 const vpvl::Vector3 directionX(-1.0f, 0.0f, 0.0f),
                         directionY(0.0f, -1.0f, 0.0f),
                         directionZ(0.0f, 0.0f, 1.0f),
-                        &diff = pick - m_prevPos3D;
+                        &diff = m_handles->diffPoint3D(pick);
                 /* 移動ハンドルである(矢印の先端) */
                 if (flags & Handles::kMove && !diff.isZero()) {
                     int coordinate = 0;
-                    float value = m_prevPos3D.isZero() ? 0.0f : diff.length();
+                    float value = m_handles->isPoint3DZero() ? 0.0f : diff.length();
                     if (flags & Handles::kX) {
                         if (directionX.dot(diff.normalized()) < 0)
                             value = -value;
@@ -910,15 +909,14 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                         value = btAcos(angle.x());
                         axis = 'Z';
                     }
-                    if (m_prevAngle > 0.0f)
-                        emit handleDidRotate(axis, mode, value - m_prevAngle);
-                    m_prevAngle = value;
+                    value *= 2.0f;
+                    if (!m_handles->isAngleZero()) {
+                        float diff = m_handles->diffAngle(value);
+                        emit handleDidRotate(axis, mode, btFabs(diff), false);
+                    }
+                    m_handles->setAngle(value);
                 }
-                m_prevPos3D = pick;
-                setCursor(Qt::ClosedHandCursor);
-            }
-            else {
-                unsetCursor();
+                m_handles->setPoint3D(pick);
             }
         }
         /* 有効な右下のハンドルがクリックされた */
@@ -939,11 +937,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             else if (flags & Handles::kRotate) {
                 const float &value = vpvl::radian(diff.y()) * 0.1f;
                 if (flags & Handles::kX)
-                    emit handleDidRotate('X', mode, value);
+                    emit handleDidRotate('X', mode, value, false);
                 else if (flags & Handles::kY)
-                    emit handleDidRotate('Y', mode, value);
+                    emit handleDidRotate('Y', mode, value, false);
                 else if (flags & Handles::kZ)
-                    emit handleDidRotate('Z', mode, value);
+                    emit handleDidRotate('Z', mode, value, false);
             }
         }
         /* 光源移動 */
@@ -963,7 +961,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         else {
             rotate(diff.y() * 0.5f, diff.x() * 0.5f);
         }
-        m_prevPos2D = event->posF();
+        m_handles->setPoint2D(event->posF());
         return;
     }
     { /* only in move or rotate mode */
@@ -976,8 +974,8 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     changeCursorIfHitTrackableModel(event->posF());
     m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_handleFlags = Handles::kNone;
-    m_prevAngle = 0.0f;
-    m_prevPos3D.setZero();
+    m_handles->setAngle(0.0f);
+    m_handles->setPoint3D(vpvl::Vector3(0.0f, 0.0f, 0.0f));
     emit handleDidRelease();
 }
 

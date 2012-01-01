@@ -93,7 +93,7 @@ public slots:
     void deleteFrameByModelIndex(const QModelIndex &index);
     void translate(int coordinate, int mode, float value);
     void translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value);
-    void rotate(int coordinate, int mode, float value);
+    void rotate(int coordinate, int mode, float value, bool minus);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void saveTransform();
     void commitTransform();

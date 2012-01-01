@@ -1079,7 +1079,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(handleDidMove(int,int,float)), m_boneMotionModel, SLOT(translate(int,int,float)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(int,int,float)), m_boneMotionModel, SLOT(rotate(int,int,float)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(int,int,float,bool)), m_boneMotionModel, SLOT(rotate(int,int,float,bool)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)), m_timelineTabWidget, SLOT(addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
