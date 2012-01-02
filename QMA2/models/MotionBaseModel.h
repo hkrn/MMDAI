@@ -45,7 +45,6 @@
 
 namespace vpvl {
 class VMDMotion;
-class VPDPose;
 }
 
 class MotionBaseModel : public QAbstractTableModel
