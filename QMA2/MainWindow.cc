@@ -277,18 +277,22 @@ void MainWindow::newMotionFile()
 {
     if (maybeSaveMotion()) {
         /*
-         * 空のモーションを作成し、テーブル内のデータを破棄する
-         * removeMotion は vpvl::VMDMotion を関知しないので setEmptyMotion と衝突しない
+         * PMDMotionModel のデータを空にしてから新規のモーションを作成する
+         * なお、PMDMotionModel のデータは vpvl::VMDMotion とは独立している
          */
-        m_sceneWidget->setEmptyMotion(m_sceneWidget->selectedModel());
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
+        m_sceneWidget->setEmptyMotion(m_sceneWidget->selectedModel());
     }
 }
 
 void MainWindow::newProjectFile()
 {
     if (maybeSaveProject()) {
+        /*
+         * カメラを含むモーションとモデルを全て削除してからプロジェクトを新規に作成する
+         * SceneWidget#clear は内部的に削除と同時に新しい空のプロジェクトが作成される
+         */
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
