@@ -474,6 +474,7 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     }
     else {
         m_model = 0;
+        emit modelDidChange(0);
     }
     /* テーブルモデルを更新 */
     reset();
@@ -534,6 +535,7 @@ void FaceMotionModel::removeModel()
     removeMotion();
     removePMDModel(m_model);
     reset();
+    emit modelDidChange(0);
 }
 
 void FaceMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)

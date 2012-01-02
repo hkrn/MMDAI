@@ -296,6 +296,12 @@ int TimelineWidget::frameIndex() const
     return 0;
 }
 
+void TimelineWidget::setEnableFrameIndexSpinBox(bool value)
+{
+    m_spinBox->setEnabled(value);
+    m_button->setEnabled(value);
+}
+
 void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
 {
     int frameIndex = MotionBaseModel::toFrameIndex(index);

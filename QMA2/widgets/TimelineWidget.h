@@ -112,6 +112,8 @@ public:
     ~TimelineWidget();
 
     int frameIndex() const;
+    void setEnableFrameIndexSpinBox(bool value);
+
     TimelineTreeView *treeView() const { return m_treeView; }
     QPushButton *button() const { return m_button; }
 

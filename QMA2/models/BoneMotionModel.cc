@@ -662,6 +662,7 @@ void BoneMotionModel::setPMDModel(vpvl::PMDModel *model)
     else {
         m_model = 0;
         selectBones(QList<vpvl::Bone *>());
+        emit modelDidChange(0);
     }
     /* テーブルモデルを更新 */
     reset();
@@ -731,6 +732,7 @@ void BoneMotionModel::removeModel()
     removeMotion();
     removePMDModel(m_model);
     reset();
+    emit modelDidChange(0);
 }
 
 void BoneMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)

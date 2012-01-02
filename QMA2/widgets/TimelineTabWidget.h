@@ -101,6 +101,8 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
+    void toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model);
+    void toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model);
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);

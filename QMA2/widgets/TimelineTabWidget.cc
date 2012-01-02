@@ -75,8 +75,10 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
+    m_boneTimeline->setEnableFrameIndexSpinBox(false);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
     m_faceTimeline = new TimelineWidget(fmm, this);
+    m_faceTimeline->setEnableFrameIndexSpinBox(false);
     m_tabWidget->insertTab(kFaceTabIndex, m_faceTimeline, "");
     m_sceneTimeline = new TimelineWidget(smm, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
@@ -87,6 +89,8 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_boneTimeline->button(), SIGNAL(clicked()), this, SLOT(addBoneKeyFramesFromSelectedIndices()));
     connect(m_faceTimeline->button(), SIGNAL(clicked()), this, SLOT(addFaceKeyFramesFromSelectedIndices()));
     connect(m_sceneTimeline->button(), SIGNAL(clicked()), this, SLOT(addSceneKeyFramesFromSelectedIndices()));
+    connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneFrameIndexSpinBox(vpvl::PMDModel*)));
+    connect(fmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceFrameIndexSpinBox(vpvl::PMDModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(m_tabWidget);
@@ -295,6 +299,16 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
 void TimelineTabWidget::notifyCurrentTabIndex()
 {
     setCurrentTabIndex(m_tabWidget->currentIndex());
+}
+
+void TimelineTabWidget::toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model)
+{
+    m_boneTimeline->setEnableFrameIndexSpinBox(model ? true : false);
+}
+
+void TimelineTabWidget::toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model)
+{
+    m_faceTimeline->setEnableFrameIndexSpinBox(model ? true : false);
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)

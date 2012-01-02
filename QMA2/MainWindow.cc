@@ -262,8 +262,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
-    if (action)
-        m_sceneWidget->setSelectedModel(m_sceneWidget->sceneLoader()->findModel(action->text()));
+    if (action) {
+        const QUuid uuid(action->data().toString());
+        m_sceneWidget->setSelectedModel(m_sceneWidget->sceneLoader()->findModel(uuid));
+    }
 }
 
 void MainWindow::setCurrentModel(vpvl::PMDModel *model)
