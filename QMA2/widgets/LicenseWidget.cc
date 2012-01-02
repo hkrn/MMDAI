@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -47,7 +47,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     copyrightLabel->setText(QString("<h3>%1 %2+alpha</h3>"
                                     "<div style='font-size:10px'><p>"
                                     "Copyright (C) 2009-2011 Nagoya Institute of Technology Department of Computer Science (MMDAgent)<br>"
-                                    "Copyright (C) 2010-2011 hkrn (MMDAI and VPVM)"
+                                    "Copyright (C) 2010-2012 hkrn (MMDAI and VPVM)"
                                     "</p>"
                                     "<p>%3</p><p>%4</p></div>")
                             .arg(qApp->applicationName())
