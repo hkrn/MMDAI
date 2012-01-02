@@ -77,7 +77,6 @@ public:
     typedef std::vector<UUID> UUIDList;
 
     static const UUID kNullUUID;
-    static const float kCurrentVersion;
     static const std::string kSettingNameKey;
     static const std::string kSettingURIKey;
 
@@ -91,7 +90,7 @@ public:
     bool save(const char *path);
     bool save(xmlBufferPtr &buffer);
 
-    float version() const;
+    const std::string &version() const;
     bool isPhysicsEnabled() const;
     const std::string &globalSetting(const std::string &key) const;
     const std::string &assetSetting(Asset *asset, const std::string &key) const;

@@ -83,7 +83,6 @@ public:
           currentMotion(0),
           state(kInitial),
           depth(0),
-          version(0.0f),
           enablePhysics(false)
     {
     }
@@ -191,7 +190,7 @@ public:
         VPVL_XML_RC(xmlTextWriterSetIndent(writer, 1));
         VPVL_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("project"), kNSURI));
-        internal::snprintf(buffer, sizeof(buffer), "%.1f", Project::kCurrentVersion);
+        internal::snprintf(buffer, sizeof(buffer), "%s", libraryVersionString());
         VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("version"), VPVL_CAST_XC(buffer)));
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("settings"), 0));
         if(!writeStringMap(kPrefix, globalSettings, writer))
@@ -469,7 +468,7 @@ public:
             for (int i = 0; i < nattributes; i++, index += 5) {
                 if (equals(attributes[index], "version")) {
                     newString(attributes, index, value);
-                    self->version = internal::stringToFloat(value.c_str());
+                    self->version = value;
                 }
             }
             self->pushState(kProject);
@@ -896,6 +895,7 @@ public:
     StringMap globalSettings;
     std::map<Asset *, StringMap> localAssetSettings;
     std::map<PMDModel *, StringMap> localModelSettings;
+    std::string version;
     std::string key;
     std::string uuid;
     std::string parentModel;
@@ -903,7 +903,6 @@ public:
     PMDModel *currentModel;
     VMDMotion *currentMotion;
     State state;
-    float version;
     int depth;
     bool enablePhysics;
 };
@@ -912,7 +911,6 @@ const std::string Handler::kEmpty = "";
 const Project::UUID Project::kNullUUID = "{00000000-0000-0000-0000-000000000000}";
 const std::string Project::kSettingNameKey = "name";
 const std::string Project::kSettingURIKey = "uri";
-const float Project::kCurrentVersion = 0.1f;
 
 bool Project::isReservedSettingKey(const std::string &key)
 {
@@ -961,7 +959,7 @@ bool Project::save(xmlBufferPtr &buffer)
     return save0(xmlNewTextWriterMemory(buffer, 0));
 }
 
-float Project::version() const
+const std::string &Project::version() const
 {
     return m_handler->version;
 }
