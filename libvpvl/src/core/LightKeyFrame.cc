@@ -53,31 +53,31 @@ struct LightKeyFrameChunk
 
 #pragma pack(pop)
 
-LightKeyFrame::LightKeyFrame()
-    : BaseKeyFrame(),
+LightKeyframe::LightKeyframe()
+    : BaseKeyframe(),
       m_color(0.0f, 0.0f, 0.0f),
       m_direction(0.0f, 0.0f, 0.0f)
 {
     internal::zerofill(m_name, sizeof(m_name));
 }
-LightKeyFrame::~LightKeyFrame()
+LightKeyframe::~LightKeyframe()
 {
     internal::zerofill(m_name, sizeof(m_name));
     m_color.setZero();
     m_direction.setZero();
 }
 
-size_t LightKeyFrame::strideSize()
+size_t LightKeyframe::strideSize()
 {
     return sizeof(LightKeyFrameChunk);
 }
 
-size_t LightKeyFrame::stride() const
+size_t LightKeyframe::stride() const
 {
     return strideSize();
 }
 
-void LightKeyFrame::read(const uint8_t *data)
+void LightKeyframe::read(const uint8_t *data)
 {
     LightKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
@@ -98,7 +98,7 @@ void LightKeyFrame::read(const uint8_t *data)
 #endif
 }
 
-void LightKeyFrame::write(uint8_t *data) const
+void LightKeyframe::write(uint8_t *data) const
 {
     LightKeyFrameChunk chunk;
     chunk.frameIndex = static_cast<int>(m_frameIndex);
@@ -116,30 +116,30 @@ void LightKeyFrame::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
-BaseKeyFrame *LightKeyFrame::clone() const
+BaseKeyframe *LightKeyframe::clone() const
 {
-    LightKeyFrame *frame = new LightKeyFrame();
+    LightKeyframe *frame = new LightKeyframe();
     frame->setFrameIndex(m_frameIndex);
     frame->setColor(m_color);
     frame->setDirection(m_direction);
     return frame;
 }
 
-const uint8_t *LightKeyFrame::name() const
+const uint8_t *LightKeyframe::name() const
 {
     return m_name;
 }
 
-void LightKeyFrame::setName(const uint8_t * /* value */)
+void LightKeyframe::setName(const uint8_t * /* value */)
 {
 }
 
-void LightKeyFrame::setColor(const Vector3 &value)
+void LightKeyframe::setColor(const Vector3 &value)
 {
     m_color = value;
 }
 
-void LightKeyFrame::setDirection(const Vector3 &value)
+void LightKeyframe::setDirection(const Vector3 &value)
 {
     m_direction = value;
 }

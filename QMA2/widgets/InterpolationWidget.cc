@@ -74,11 +74,11 @@ void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::Key
 {
     bool enabled = false;
     if (frames.count() == 1) {
-        vpvl::BoneKeyFrame *frame = frames.first().data();
-        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kX, m_boneIP.x);
-        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kY, m_boneIP.y);
-        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kZ, m_boneIP.z);
-        frame->getInterpolationParameter(vpvl::BoneKeyFrame::kRotation, m_boneIP.rotation);
+        vpvl::BoneKeyframe *frame = frames.first().data();
+        frame->getInterpolationParameter(vpvl::BoneKeyframe::kX, m_boneIP.x);
+        frame->getInterpolationParameter(vpvl::BoneKeyframe::kY, m_boneIP.y);
+        frame->getInterpolationParameter(vpvl::BoneKeyframe::kZ, m_boneIP.z);
+        frame->getInterpolationParameter(vpvl::BoneKeyframe::kRotation, m_boneIP.rotation);
         updateValues(true);
         enabled = true;
     }
@@ -87,13 +87,13 @@ void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::Key
 
 void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)
 {
-    vpvl::CameraKeyFrame *frame = static_cast<vpvl::CameraKeyFrame *>(frames.last().data());
-    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kX, m_cameraIP.x);
-    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kY, m_cameraIP.y);
-    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kZ, m_cameraIP.z);
-    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kRotation, m_cameraIP.rotation);
-    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kFovy, m_cameraIP.fovy);
-    frame->getInterpolationParameter(vpvl::CameraKeyFrame::kDistance, m_cameraIP.distance);
+    vpvl::CameraKeyframe *frame = static_cast<vpvl::CameraKeyframe *>(frames.last().data());
+    frame->getInterpolationParameter(vpvl::CameraKeyframe::kX, m_cameraIP.x);
+    frame->getInterpolationParameter(vpvl::CameraKeyframe::kY, m_cameraIP.y);
+    frame->getInterpolationParameter(vpvl::CameraKeyframe::kZ, m_cameraIP.z);
+    frame->getInterpolationParameter(vpvl::CameraKeyframe::kRotation, m_cameraIP.rotation);
+    frame->getInterpolationParameter(vpvl::CameraKeyframe::kFovy, m_cameraIP.fovy);
+    frame->getInterpolationParameter(vpvl::CameraKeyframe::kDistance, m_cameraIP.distance);
     updateValues(true);
 }
 

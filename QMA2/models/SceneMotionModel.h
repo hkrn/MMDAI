@@ -53,7 +53,7 @@ class SceneMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl::BaseKeyFrame> KeyFramePtr;
+    typedef QSharedPointer<vpvl::BaseKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
@@ -75,10 +75,10 @@ public:
 
     void setFrames(const KeyFramePairList &frames);
     void refreshScene();
-    const vpvl::CameraKeyFrame::InterpolationParameter &cameraInterpolationParameter() const {
+    const vpvl::CameraKeyframe::InterpolationParameter &cameraInterpolationParameter() const {
         return m_cameraInterpolationParameter;
     }
-    void setCameraInterpolationParameter(const vpvl::CameraKeyFrame::InterpolationParameter &value) {
+    void setCameraInterpolationParameter(const vpvl::CameraKeyframe::InterpolationParameter &value) {
         m_cameraInterpolationParameter = value;
     }
 
@@ -99,7 +99,7 @@ private:
     const SceneWidget *m_sceneWidget;
     QModelIndex m_cameraIndex;
     Values m_cameraData;
-    vpvl::CameraKeyFrame::InterpolationParameter m_cameraInterpolationParameter;
+    vpvl::CameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
     ITreeItem *m_rootTreeItem;
     ITreeItem *m_cameraTreeItem;
 

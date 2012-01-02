@@ -46,16 +46,16 @@ namespace vpvl
 
 struct BoneKeyFrameChunk
 {
-    uint8_t name[BoneKeyFrame::kNameSize];
+    uint8_t name[BoneKeyframe::kNameSize];
     int frameIndex;
     float position[3];
     float rotation[4];
-    int8_t interpolationTable[BoneKeyFrame::kTableSize];
+    int8_t interpolationTable[BoneKeyframe::kTableSize];
 };
 
 #pragma pack(pop)
 
-const QuadWord BoneKeyFrame::kDefaultInterpolationParameterValue = QuadWord(20, 20, 107, 107);
+const QuadWord BoneKeyframe::kDefaultInterpolationParameterValue = QuadWord(20, 20, 107, 107);
 
 static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
 {
@@ -66,8 +66,8 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
     v.setW(btMax(table[i + 12], zero)); // y2
 }
 
-BoneKeyFrame::BoneKeyFrame()
-    : BaseKeyFrame(),
+BoneKeyframe::BoneKeyframe()
+    : BaseKeyframe(),
       m_position(0.0f, 0.0f, 0.0f),
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f)
 {
@@ -78,7 +78,7 @@ BoneKeyFrame::BoneKeyFrame()
     internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
-BoneKeyFrame::~BoneKeyFrame()
+BoneKeyframe::~BoneKeyframe()
 {
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
@@ -91,23 +91,23 @@ BoneKeyFrame::~BoneKeyFrame()
     internal::zerofill(&m_parameter, sizeof(m_parameter));
 }
 
-size_t BoneKeyFrame::strideSize()
+size_t BoneKeyframe::strideSize()
 {
     return sizeof(BoneKeyFrameChunk);
 }
 
-size_t BoneKeyFrame::stride() const
+size_t BoneKeyframe::stride() const
 {
     return strideSize();
 }
 
-void BoneKeyFrame::setDefaultInterpolationParameter()
+void BoneKeyframe::setDefaultInterpolationParameter()
 {
     for (int i = 0; i < kMax; i++)
         setInterpolationParameter(static_cast<InterpolationType>(i), kDefaultInterpolationParameterValue);
 }
 
-void BoneKeyFrame::read(const uint8_t *data)
+void BoneKeyframe::read(const uint8_t *data)
 {
     BoneKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
@@ -140,7 +140,7 @@ void BoneKeyFrame::read(const uint8_t *data)
     setInterpolationTable(m_rawInterpolationTable);
 }
 
-void BoneKeyFrame::write(uint8_t *data) const
+void BoneKeyframe::write(uint8_t *data) const
 {
     BoneKeyFrameChunk chunk;
     internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
@@ -164,9 +164,9 @@ void BoneKeyFrame::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
-BaseKeyFrame *BoneKeyFrame::clone() const
+BaseKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyFrame *frame = new BoneKeyFrame();
+    BoneKeyframe *frame = new BoneKeyframe();
     internal::copyBytes(frame->m_name, m_name, kNameSize);
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
@@ -179,13 +179,13 @@ BaseKeyFrame *BoneKeyFrame::clone() const
     return frame;
 }
 
-void BoneKeyFrame::getInterpolationParameter(InterpolationType type, QuadWord &value) const
+void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
 {
     QuadWord &w = getInterpolationParameterInternal(type);
     value.setValue(w.x(), w.y(), w.z(), w.w());
 }
 
-void BoneKeyFrame::setInterpolationParameter(InterpolationType type, const QuadWord &value)
+void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
     setInterpolationParameterInternal(type, value);
     int8_t table[kTableSize];
@@ -206,17 +206,17 @@ void BoneKeyFrame::setInterpolationParameter(InterpolationType type, const QuadW
     setInterpolationTable(table);
 }
 
-const uint8_t *BoneKeyFrame::name() const
+const uint8_t *BoneKeyframe::name() const
 {
     return m_name;
 }
 
-void BoneKeyFrame::setName(const uint8_t *value)
+void BoneKeyframe::setName(const uint8_t *value)
 {
     copyBytesSafe(m_name, value, sizeof(m_name));
 }
 
-void BoneKeyFrame::setInterpolationTable(const int8_t *table)
+void BoneKeyframe::setInterpolationTable(const int8_t *table)
 {
     for (int i = 0; i < kMax; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;
@@ -239,13 +239,13 @@ void BoneKeyFrame::setInterpolationTable(const int8_t *table)
     }
 }
 
-void BoneKeyFrame::setInterpolationParameterInternal(InterpolationType type, const QuadWord &value)
+void BoneKeyframe::setInterpolationParameterInternal(InterpolationType type, const QuadWord &value)
 {
     QuadWord &w = getInterpolationParameterInternal(type);
     w.setValue(value.x(), value.y(), value.z(), value.w());
 }
 
-QuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type) const
+QuadWord &BoneKeyframe::getInterpolationParameterInternal(InterpolationType type) const
 {
     switch (type) {
     case kX:
@@ -262,12 +262,12 @@ QuadWord &BoneKeyFrame::getInterpolationParameterInternal(InterpolationType type
     }
 }
 
-void BoneKeyFrame::setPosition(const Vector3 &value)
+void BoneKeyframe::setPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void BoneKeyFrame::setRotation(const Quaternion &value)
+void BoneKeyframe::setRotation(const Quaternion &value)
 {
     m_rotation = value;
 }

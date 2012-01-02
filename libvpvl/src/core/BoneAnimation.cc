@@ -51,7 +51,7 @@ struct InternalKeyFrameList {
 
     bool isNull() const {
         if (keyFrames.count() == 1) {
-            const BoneKeyFrame *keyFrame = keyFrames[0];
+            const BoneKeyframe *keyFrame = keyFrames[0];
             return keyFrame->position() == internal::kZeroV &&
                     keyFrame->rotation() == internal::kZeroV;
         }
@@ -62,19 +62,19 @@ struct InternalKeyFrameList {
 class BoneAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BoneKeyFrame *left, const BoneKeyFrame *right) {
+    bool operator()(const BoneKeyframe *left, const BoneKeyframe *right) {
         return left->frameIndex() < right->frameIndex();
     }
 };
 
-float BoneAnimation::weightValue(const BoneKeyFrame *keyFrame, float w, int at)
+float BoneAnimation::weightValue(const BoneKeyframe *keyFrame, float w, int at)
 {
-    const uint16_t index = static_cast<int16_t>(w * BoneKeyFrame::kTableSize);
+    const uint16_t index = static_cast<int16_t>(w * BoneKeyframe::kTableSize);
     const float *v = keyFrame->interpolationTable()[at];
-    return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyFrame::kTableSize - index);
+    return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyframe::kTableSize - index);
 }
 
-void BoneAnimation::lerpVector3(const BoneKeyFrame *keyFrame,
+void BoneAnimation::lerpVector3(const BoneKeyframe *keyFrame,
                                 const Vector3 &from,
                                 const Vector3 &to,
                                 float w,
@@ -112,7 +112,7 @@ void BoneAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
     for (int i = 0; i < size; i++) {
-        BoneKeyFrame *frame = new BoneKeyFrame();
+        BoneKeyframe *frame = new BoneKeyframe();
         frame->read(ptr);
         ptr += frame->stride();
         m_frames.add(frame);
@@ -158,7 +158,7 @@ void BoneAnimation::buildInternalKeyFrameList(vpvl::PMDModel *model)
     const size_t len = strlen(reinterpret_cast<const char *>(centerBoneName));
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
-        BoneKeyFrame *frame = static_cast<BoneKeyFrame *>(m_frames.at(i));
+        BoneKeyframe *frame = static_cast<BoneKeyframe *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
         InternalKeyFrameList **ptr = m_name2keyframes[name], *node;
         if (ptr) {
@@ -194,7 +194,7 @@ void BoneAnimation::calculateFrames(float frameAt, InternalKeyFrameList *keyFram
 {
     BoneKeyFrameList &kframes = keyFrames->keyFrames;
     const int nframes = kframes.count();
-    BoneKeyFrame *lastKeyFrame = kframes[nframes - 1];
+    BoneKeyframe *lastKeyFrame = kframes[nframes - 1];
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
@@ -220,9 +220,9 @@ void BoneAnimation::calculateFrames(float frameAt, InternalKeyFrameList *keyFram
     k1 = k2 <= 1 ? 0 : k2 - 1;
     keyFrames->lastIndex = k1;
 
-    const BoneKeyFrame *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
+    const BoneKeyframe *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
-    BoneKeyFrame *keyFrameForInterpolation = const_cast<BoneKeyFrame *>(keyFrameTo);
+    BoneKeyframe *keyFrameForInterpolation = const_cast<BoneKeyframe *>(keyFrameTo);
     const Vector3 &positionFrom = keyFrameFrom->position();
     const Quaternion &rotationFrom = keyFrameFrom->rotation();
     const Vector3 &positionTo = keyFrameTo->position();

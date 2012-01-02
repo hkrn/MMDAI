@@ -45,9 +45,9 @@ namespace vpvl
 {
 
 class Bone;
-class BoneKeyFrame;
+class BoneKeyframe;
 class PMDModel;
-typedef Array<BoneKeyFrame *> BoneKeyFrameList;
+typedef Array<BoneKeyframe *> BoneKeyFrameList;
 
 /**
  * @file
@@ -93,8 +93,8 @@ public:
      * @param i A frame index to get key frame
      * @return A bone key frame associated with index
      */
-    BoneKeyFrame *frameAt(int i) const {
-        return static_cast<BoneKeyFrame *>(m_frames[i]);
+    BoneKeyframe *frameAt(int i) const {
+        return static_cast<BoneKeyframe *>(m_frames[i]);
     }
 
     /**
@@ -124,10 +124,10 @@ public:
     }
 
 private:
-    static float weightValue(const BoneKeyFrame *keyFrame,
+    static float weightValue(const BoneKeyframe *keyFrame,
                              float w,
                              int at);
-    static void lerpVector3(const BoneKeyFrame *keyFrame,
+    static void lerpVector3(const BoneKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
                             float w,

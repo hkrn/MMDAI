@@ -237,9 +237,9 @@ public:
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("bone")));
             const BoneAnimation &ba = motion->boneAnimation();
-            nframes = ba.countKeyFrames();
+            nframes = ba.countKeyframes();
             for (int j = 0; j < nframes; j++) {
-                const BoneKeyFrame *frame = ba.frameAt(j);
+                const BoneKeyframe *frame = ba.frameAt(j);
                 const std::string &name = delegate->toUnicode(std::string(reinterpret_cast<const char *>(frame->name())));
                 VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
@@ -252,10 +252,10 @@ public:
                 internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
                                    -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("rotation"), VPVL_CAST_XC(buffer)));
-                frame->getInterpolationParameter(BoneKeyFrame::kX, ix);
-                frame->getInterpolationParameter(BoneKeyFrame::kY, iy);
-                frame->getInterpolationParameter(BoneKeyFrame::kZ, iz);
-                frame->getInterpolationParameter(BoneKeyFrame::kRotation, ir);
+                frame->getInterpolationParameter(BoneKeyframe::kX, ix);
+                frame->getInterpolationParameter(BoneKeyframe::kY, iy);
+                frame->getInterpolationParameter(BoneKeyframe::kZ, iz);
+                frame->getInterpolationParameter(BoneKeyframe::kRotation, ir);
                 internal::snprintf(buffer, sizeof(buffer),
                                    "%.f,%.f,%.f,%.f,"
                                    "%.f,%.f,%.f,%.f,"
@@ -273,9 +273,9 @@ public:
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("vertices")));
             const FaceAnimation &fa = motion->faceAnimation();
-            nframes = fa.countKeyFrames();
+            nframes = fa.countKeyframes();
             for (int j = 0; j < nframes; j++) {
-                const FaceKeyFrame *frame = fa.frameAt(j);
+                const FaceKeyframe *frame = fa.frameAt(j);
                 const std::string &name = delegate->toUnicode(std::string(reinterpret_cast<const char *>(frame->name())));
                 VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("name"), VPVL_CAST_XC(name.c_str())));
@@ -289,9 +289,9 @@ public:
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("camera")));
             const CameraAnimation &ca = motion->cameraAnimation();
-            nframes = ca.countKeyFrames();
+            nframes = ca.countKeyframes();
             for (int j = 0; j < nframes; j++) {
-                const CameraKeyFrame *frame = ca.frameAt(j);
+                const CameraKeyframe *frame = ca.frameAt(j);
                 VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
@@ -306,12 +306,12 @@ public:
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("fovy"), VPVL_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.8f", frame->distance());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("distance"), VPVL_CAST_XC(buffer)));
-                frame->getInterpolationParameter(CameraKeyFrame::kX, ix);
-                frame->getInterpolationParameter(CameraKeyFrame::kY, iy);
-                frame->getInterpolationParameter(CameraKeyFrame::kZ, iz);
-                frame->getInterpolationParameter(CameraKeyFrame::kRotation, ir);
-                frame->getInterpolationParameter(CameraKeyFrame::kFovy, ifv);
-                frame->getInterpolationParameter(CameraKeyFrame::kDistance, idt);
+                frame->getInterpolationParameter(CameraKeyframe::kX, ix);
+                frame->getInterpolationParameter(CameraKeyframe::kY, iy);
+                frame->getInterpolationParameter(CameraKeyframe::kZ, iz);
+                frame->getInterpolationParameter(CameraKeyframe::kRotation, ir);
+                frame->getInterpolationParameter(CameraKeyframe::kFovy, ifv);
+                frame->getInterpolationParameter(CameraKeyframe::kDistance, idt);
                 internal::snprintf(buffer, sizeof(buffer),
                                    "%.f,%.f,%.f,%.f,"
                                    "%.f,%.f,%.f,%.f,"
@@ -333,9 +333,9 @@ public:
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("light")));
             const LightAnimation &la = motion->lightAnimation();
-            nframes = la.countKeyFrames();
+            nframes = la.countKeyframes();
             for (int j = 0; j < nframes; j++) {
-                const LightKeyFrame *frame = la.frameAt(j);
+                const LightKeyframe *frame = la.frameAt(j);
                 VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("keyframe"), 0));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("index"), VPVL_CAST_XC(buffer)));
@@ -606,7 +606,7 @@ public:
             switch (self->state) {
             case kBoneMotion:
             {
-                BoneKeyFrame *keyframe = new BoneKeyFrame();
+                BoneKeyframe *keyframe = new BoneKeyframe();
                 keyframe->setDefaultInterpolationParameter();
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
@@ -650,17 +650,17 @@ public:
                         if (tokens.count() == 16) {
                             for (int i = 0; i < 4; i++) {
                                 setQuadWordValues(tokens, qw, i * 4);
-                                keyframe->setInterpolationParameter(static_cast<BoneKeyFrame::InterpolationType>(i), qw);
+                                keyframe->setInterpolationParameter(static_cast<BoneKeyframe::InterpolationType>(i), qw);
                             }
                         }
                     }
                 }
-                self->currentMotion->mutableBoneAnimation()->addKeyFrame(keyframe);
+                self->currentMotion->mutableBoneAnimation()->addKeyframe(keyframe);
                 break;
             }
             case kVerticesMotion:
             {
-                FaceKeyFrame *keyframe = new FaceKeyFrame();
+                FaceKeyframe *keyframe = new FaceKeyframe();
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
@@ -677,12 +677,12 @@ public:
                         keyframe->setWeight(internal::stringToFloat(value.c_str()));
                     }
                 }
-                self->currentMotion->mutableFaceAnimation()->addKeyFrame(keyframe);
+                self->currentMotion->mutableFaceAnimation()->addKeyframe(keyframe);
                 break;
             }
             case kCameraMotion:
             {
-                CameraKeyFrame *keyframe = new CameraKeyFrame();
+                CameraKeyframe *keyframe = new CameraKeyframe();
                 keyframe->setDefaultInterpolationParameter();
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
@@ -704,7 +704,7 @@ public:
 #else
                             vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
 #endif
-                            reinterpret_cast<CameraKeyFrame *>(keyframe)->setAngle(vec3);
+                            reinterpret_cast<CameraKeyframe *>(keyframe)->setAngle(vec3);
                         }
                     }
                     else if (strncmp(attributeName, "position", 8) == 0) {
@@ -729,17 +729,17 @@ public:
                         if (tokens.count() == 24) {
                             for (int i = 0; i < 6; i++) {
                                 setQuadWordValues(tokens, qw, i * 4);
-                                keyframe->setInterpolationParameter(static_cast<CameraKeyFrame::InterpolationType>(i), qw);
+                                keyframe->setInterpolationParameter(static_cast<CameraKeyframe::InterpolationType>(i), qw);
                             }
                         }
                     }
                 }
-                self->currentMotion->mutableCameraAnimation()->addKeyFrame(keyframe);
+                self->currentMotion->mutableCameraAnimation()->addKeyframe(keyframe);
                 break;
             }
             case kLightMotion:
             {
-                LightKeyFrame *keyframe = new LightKeyFrame();
+                LightKeyframe *keyframe = new LightKeyframe();
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
@@ -760,7 +760,7 @@ public:
                             keyframe->setDirection(vec3);
                     }
                 }
-                self->currentMotion->mutableLightAnimation()->addKeyFrame(keyframe);
+                self->currentMotion->mutableLightAnimation()->addKeyframe(keyframe);
                 break;
             }
             }

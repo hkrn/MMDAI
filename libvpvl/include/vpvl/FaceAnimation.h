@@ -45,9 +45,9 @@ namespace vpvl
 {
 
 class Face;
-class FaceKeyFrame;
+class FaceKeyframe;
 class PMDModel;
-typedef Array<FaceKeyFrame *> FaceKeyFrameList;
+typedef Array<FaceKeyframe *> FaceKeyFrameList;
 
 /**
  * @file
@@ -106,8 +106,8 @@ public:
      * @param i A frame index to get key frame
      * @return A camera key frame associated with index
      */
-    FaceKeyFrame *frameAt(int i) const {
-        return static_cast<FaceKeyFrame *>(m_frames[i]);
+    FaceKeyframe *frameAt(int i) const {
+        return static_cast<FaceKeyframe *>(m_frames[i]);
     }
 
     /**

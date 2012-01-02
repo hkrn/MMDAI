@@ -86,48 +86,48 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kBoneKeyFramesSizeError;
         return false;
     }
-    info.boneKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, BoneKeyFrame::strideSize(), nBoneKeyFrames, rest)) {
+    info.boneKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, BoneKeyframe::strideSize(), nBoneKeyFrames, rest)) {
         m_error = kBoneKeyFramesError;
         return false;
     }
-    info.boneKeyFrameCount = nBoneKeyFrames;
+    info.boneKeyframeCount = nBoneKeyFrames;
 
     // Face key frame
     if (!internal::size32(ptr, rest, nFaceKeyFrames)) {
         m_error = kFaceKeyFramesSizeError;
         return false;
     }
-    info.faceKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, FaceKeyFrame::strideSize(), nFaceKeyFrames, rest)) {
+    info.faceKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, FaceKeyframe::strideSize(), nFaceKeyFrames, rest)) {
         m_error = kFaceKeyFramesError;
         return false;
     }
-    info.faceKeyFrameCount = nFaceKeyFrames;
+    info.faceKeyframeCount = nFaceKeyFrames;
 
     // Camera key frame
     if (!internal::size32(ptr, rest, nCameraKeyFrames)) {
         m_error = kCameraKeyFramesSizeError;
         return false;
     }
-    info.cameraKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, CameraKeyFrame::strideSize(), nCameraKeyFrames, rest)) {
+    info.cameraKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, CameraKeyframe::strideSize(), nCameraKeyFrames, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
-    info.cameraKeyFrameCount = nCameraKeyFrames;
+    info.cameraKeyframeCount = nCameraKeyFrames;
 
     // Light key frame
     if (!internal::size32(ptr, rest, nLightKeyFrames)) {
         m_error = kLightKeyFramesSizeError;
         return false;
     }
-    info.lightKeyFramePtr = ptr;
-    if (!internal::validateSize(ptr, LightKeyFrame::strideSize(), nLightKeyFrames, rest)) {
+    info.lightKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, LightKeyframe::strideSize(), nLightKeyFrames, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
-    info.lightKeyFrameCount = nLightKeyFrames;
+    info.lightKeyframeCount = nLightKeyFrames;
 
     return true;
 }
@@ -161,10 +161,10 @@ size_t VMDMotion::estimateSize()
      * selfshadow size (empty)
      */
     return kSignatureSize + kNameSize + sizeof(int) * 5
-            + m_boneMotion.countKeyFrames() * BoneKeyFrame::strideSize()
-            + m_faceMotion.countKeyFrames() * FaceKeyFrame::strideSize()
-            + m_cameraMotion.countKeyFrames() * CameraKeyFrame::strideSize()
-            + m_lightMotion.countKeyFrames() * LightKeyFrame::strideSize();
+            + m_boneMotion.countKeyframes() * BoneKeyframe::strideSize()
+            + m_faceMotion.countKeyframes() * FaceKeyframe::strideSize()
+            + m_cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
+            + m_lightMotion.countKeyframes() * LightKeyframe::strideSize();
 }
 
 void VMDMotion::save(uint8_t *data) const
@@ -173,37 +173,37 @@ void VMDMotion::save(uint8_t *data) const
     data += kSignatureSize;
     internal::copyBytes(data, m_name, sizeof(m_name));
     data += kNameSize;
-    int nBoneFrames = m_boneMotion.countKeyFrames();
+    int nBoneFrames = m_boneMotion.countKeyframes();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
     data += sizeof(nBoneFrames);
     for (int i = 0; i < nBoneFrames; i++) {
-        BoneKeyFrame *frame = m_boneMotion.frameAt(i);
+        BoneKeyframe *frame = m_boneMotion.frameAt(i);
         frame->write(data);
-        data += BoneKeyFrame::strideSize();
+        data += BoneKeyframe::strideSize();
     }
-    int nFaceFrames = m_faceMotion.countKeyFrames();
+    int nFaceFrames = m_faceMotion.countKeyframes();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nFaceFrames), sizeof(nFaceFrames));
     data += sizeof(nFaceFrames);
     for (int i = 0; i < nFaceFrames; i++) {
-        FaceKeyFrame *frame = m_faceMotion.frameAt(i);
+        FaceKeyframe *frame = m_faceMotion.frameAt(i);
         frame->write(data);
-        data += FaceKeyFrame::strideSize();
+        data += FaceKeyframe::strideSize();
     }
-    int nCameraFrames = m_cameraMotion.countKeyFrames();
+    int nCameraFrames = m_cameraMotion.countKeyframes();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
     data += sizeof(nCameraFrames);
     for (int i = 0; i < nCameraFrames; i++) {
-        CameraKeyFrame *frame = m_cameraMotion.frameAt(i);
+        CameraKeyframe *frame = m_cameraMotion.frameAt(i);
         frame->write(data);
-        data += CameraKeyFrame::strideSize();
+        data += CameraKeyframe::strideSize();
     }
-    int nLightFrames = m_lightMotion.countKeyFrames();
+    int nLightFrames = m_lightMotion.countKeyframes();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames));
     data += sizeof(nLightFrames);
     for (int i = 0; i < nLightFrames; i++) {
-        LightKeyFrame *frame = m_lightMotion.frameAt(i);
+        LightKeyframe *frame = m_lightMotion.frameAt(i);
         frame->write(data);
-        data += LightKeyFrame::strideSize();
+        data += LightKeyframe::strideSize();
     }
     int empty = 0;
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
@@ -297,22 +297,22 @@ void VMDMotion::parseHeader(const DataInfo &info)
 
 void VMDMotion::parseBoneFrames(const DataInfo &info)
 {
-    m_boneMotion.read(info.boneKeyFramePtr, info.boneKeyFrameCount);
+    m_boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
 }
 
 void VMDMotion::parseFaceFrames(const DataInfo &info)
 {
-    m_faceMotion.read(info.faceKeyFramePtr, info.faceKeyFrameCount);
+    m_faceMotion.read(info.faceKeyframePtr, info.faceKeyframeCount);
 }
 
 void VMDMotion::parseCameraFrames(const DataInfo &info)
 {
-    m_cameraMotion.read(info.cameraKeyFramePtr, info.cameraKeyFrameCount);
+    m_cameraMotion.read(info.cameraKeyframePtr, info.cameraKeyframeCount);
 }
 
 void VMDMotion::parseLightFrames(const DataInfo &info)
 {
-    m_lightMotion.read(info.lightKeyFramePtr, info.lightKeyFrameCount);
+    m_lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
 }
 
 void VMDMotion::parseSelfShadowFrames(const DataInfo & /* info */)

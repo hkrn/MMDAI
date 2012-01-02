@@ -45,7 +45,7 @@ namespace vpvl
 class LightAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BaseKeyFrame *left, const BaseKeyFrame *right) {
+    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
         return left->frameIndex() < right->frameIndex();
     }
 };
@@ -69,7 +69,7 @@ void LightAnimation::read(const uint8_t *data, int size)
         uint8_t *ptr = const_cast<uint8_t *>(data);
         m_frames.reserve(size);
         for (int i = 0; i < size; i++) {
-            LightKeyFrame *frame = new LightKeyFrame();
+            LightKeyframe *frame = new LightKeyframe();
             frame->read(ptr);
             ptr += frame->stride();
             m_frames.add(frame);
@@ -82,7 +82,7 @@ void LightAnimation::read(const uint8_t *data, int size)
 void LightAnimation::seek(float frameAt)
 {
     const int nframes = m_frames.count();
-    LightKeyFrame *lastKeyFrame = static_cast<LightKeyFrame *>(m_frames[nframes - 1]);
+    LightKeyframe *lastKeyFrame = static_cast<LightKeyframe *>(m_frames[nframes - 1]);
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
@@ -108,7 +108,7 @@ void LightAnimation::seek(float frameAt)
     k1 = k2 <= 1 ? 0 : k2 - 1;
     m_lastIndex = k1;
 
-    const LightKeyFrame *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
+    const LightKeyframe *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     const Vector3 &colorFrom = keyFrameFrom->color(), &directionFrom = keyFrameFrom->direction();
     const Vector3 &colorTo = keyFrameTo->color(), &directionTo = keyFrameTo->direction();

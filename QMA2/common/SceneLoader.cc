@@ -300,7 +300,7 @@ vpvl::VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
         const QByteArray &data = file.readAll();
         motion = new vpvl::VMDMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
-                && motion->cameraAnimation().countKeyFrames() > 0) {
+                && motion->cameraAnimation().countKeyframes() > 0) {
             setCameraMotion(motion);
         }
         else {
@@ -467,14 +467,14 @@ vpvl::VMDMotion *SceneLoader::newCameraMotion() const
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
     vpvl::VMDMotion *newCameraMotion = new vpvl::VMDMotion();
     vpvl::CameraAnimation *cameraAnimation = newCameraMotion->mutableCameraAnimation();
-    vpvl::CameraKeyFrame *frame = new vpvl::CameraKeyFrame();
+    vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
     vpvl::Scene *scene = m_renderer->scene();
     frame->setDefaultInterpolationParameter();
     frame->setPosition(scene->position());
     frame->setAngle(scene->angle());
     frame->setFovy(scene->fovy());
     frame->setDistance(scene->distance());
-    cameraAnimation->addKeyFrame(frame);
+    cameraAnimation->addKeyframe(frame);
     return newCameraMotion;
 }
 
@@ -490,10 +490,10 @@ vpvl::VMDMotion *SceneLoader::newModelMotion(vpvl::PMDModel *model) const
         for (int i = 0; i < nbones; i++) {
             vpvl::Bone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
-                vpvl::BoneKeyFrame *frame = new vpvl::BoneKeyFrame();
+                vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
                 frame->setDefaultInterpolationParameter();
                 frame->setName(bone->name());
-                boneAnimation->addKeyFrame(frame);
+                boneAnimation->addKeyframe(frame);
             }
         }
         const vpvl::FaceList &faces = model->faces();
@@ -501,9 +501,9 @@ vpvl::VMDMotion *SceneLoader::newModelMotion(vpvl::PMDModel *model) const
         vpvl::FaceAnimation *faceAnimation = newModelMotion->mutableFaceAnimation();
         for (int i = 0; i < nfaces; i++) {
             vpvl::Face *face = faces[i];
-            vpvl::FaceKeyFrame *frame = new vpvl::FaceKeyFrame();
+            vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
             frame->setName(face->name());
-            faceAnimation->addKeyFrame(frame);
+            faceAnimation->addKeyframe(frame);
         }
     }
     return newModelMotion;

@@ -168,7 +168,7 @@ void Scene::seekMotion(float frameIndex)
     // Updating (Seeking) camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
-        if (camera->countKeyFrames() > 0) {
+        if (camera->countKeyframes() > 0) {
             camera->seek(frameIndex);
             setCameraPerspective(camera);
         }
@@ -176,7 +176,7 @@ void Scene::seekMotion(float frameIndex)
     // Updating (Seeking) light motion
     if (m_lightMotion) {
         LightAnimation *light = m_lightMotion->mutableLightAnimation();
-        if (light->countKeyFrames() > 0) {
+        if (light->countKeyframes() > 0) {
             light->seek(frameIndex);
             setLightSource(light);
         }
@@ -279,7 +279,7 @@ void Scene::advanceMotion(float deltaFrame)
     // Updating (Advance) camera motion
     if (m_cameraMotion) {
         CameraAnimation *camera = m_cameraMotion->mutableCameraAnimation();
-        if (camera->countKeyFrames() > 0) {
+        if (camera->countKeyframes() > 0) {
             camera->advance(deltaFrame);
             setCameraPerspective(camera);
         }
@@ -287,7 +287,7 @@ void Scene::advanceMotion(float deltaFrame)
     // Updating (Advance) light motion
     if (m_lightMotion) {
         LightAnimation *light = m_lightMotion->mutableLightAnimation();
-        if (light->countKeyFrames() > 0) {
+        if (light->countKeyframes() > 0) {
             light->advance(deltaFrame);
             setLightSource(light);
         }

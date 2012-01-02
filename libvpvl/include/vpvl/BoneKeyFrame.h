@@ -46,7 +46,7 @@ namespace vpvl
 
 class Bone;
 
-class VPVL_API BoneKeyFrame : public BaseKeyFrame
+class VPVL_API BoneKeyframe : public BaseKeyframe
 {
 public:
     enum InterpolationType
@@ -65,8 +65,8 @@ public:
         QuadWord rotation;
     };
 
-    BoneKeyFrame();
-    ~BoneKeyFrame();
+    BoneKeyframe();
+    ~BoneKeyframe();
 
     static const int kNameSize = 15;
     static const int kTableSize = 64;
@@ -77,7 +77,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyFrame *clone() const;
+    BaseKeyframe *clone() const;
 
     /**
      * Set the default values of the interpolation parameter.
@@ -177,7 +177,7 @@ private:
     int8_t m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(BoneKeyFrame)
+    VPVL_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)
 };
 
 }

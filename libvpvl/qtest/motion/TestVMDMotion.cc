@@ -18,21 +18,21 @@ private Q_SLOTS:
     void parseEmpty();
     void parseMotion();
     void parseCamera();
-    void parseBoneKeyFrame();
-    void parseCameraKeyFrame();
-    void parseFaceKeyFrame();
-    void parseLightKeyFrame();
-    void saveBoneKeyFrame();
-    void saveCameraKeyFrame();
-    void saveFaceKeyFrame();
-    void saveLightKeyFrame();
+    void parseBoneKeyframe();
+    void parseCameraKeyframe();
+    void parseFaceKeyframe();
+    void parseLightKeyframe();
+    void saveBoneKeyframe();
+    void saveCameraKeyframe();
+    void saveFaceKeyframe();
+    void saveLightKeyframe();
     void saveMotion();
     void boneInterpolation();
     void cameraInterpolation();
 
 private:
-    void testBoneInterpolationMatrix(const QuadWord p[4], const BoneKeyFrame &frame);
-    void testCameraInterpolationMatrix(const QuadWord p[6], const CameraKeyFrame &frame);
+    void testBoneInterpolationMatrix(const QuadWord p[4], const BoneKeyframe &frame);
+    void testCameraInterpolationMatrix(const QuadWord p[6], const CameraKeyframe &frame);
 };
 
 const char *TestVMDMotion::kTestString = "012345678901234";
@@ -68,9 +68,9 @@ void TestVMDMotion::parseMotion()
         VMDMotion::DataInfo result;
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
-        QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countKeyFrames()));
-        QCOMPARE(result.cameraKeyFrameCount, size_t(motion.cameraAnimation().countKeyFrames()));
-        QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().countKeyFrames()));
+        QCOMPARE(result.boneKeyframeCount, size_t(motion.boneAnimation().countKeyframes()));
+        QCOMPARE(result.cameraKeyframeCount, size_t(motion.cameraAnimation().countKeyframes()));
+        QCOMPARE(result.faceKeyframeCount, size_t(motion.faceAnimation().countKeyframes()));
         QCOMPARE(motion.error(), VMDMotion::kNoError);
     }
     else {
@@ -89,9 +89,9 @@ void TestVMDMotion::parseCamera()
         VMDMotion::DataInfo result;
         QVERIFY(motion.preparse(data, size, result));
         QVERIFY(motion.load(data, size));
-        QCOMPARE(result.boneKeyFrameCount, size_t(motion.boneAnimation().countKeyFrames()));
-        QCOMPARE(result.cameraKeyFrameCount, size_t(motion.cameraAnimation().countKeyFrames()));
-        QCOMPARE(result.faceKeyFrameCount, size_t(motion.faceAnimation().countKeyFrames()));
+        QCOMPARE(result.boneKeyframeCount, size_t(motion.boneAnimation().countKeyframes()));
+        QCOMPARE(result.cameraKeyframeCount, size_t(motion.cameraAnimation().countKeyframes()));
+        QCOMPARE(result.faceKeyframeCount, size_t(motion.faceAnimation().countKeyframes()));
         QCOMPARE(motion.error(), VMDMotion::kNoError);
     }
     else {
@@ -99,9 +99,9 @@ void TestVMDMotion::parseCamera()
     }
 }
 
-void TestVMDMotion::saveBoneKeyFrame()
+void TestVMDMotion::saveBoneKeyframe()
 {
-    BoneKeyFrame frame, newFrame, *cloned;
+    BoneKeyframe frame, newFrame, *cloned;
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
     frame.setFrameIndex(42);
@@ -113,11 +113,11 @@ void TestVMDMotion::saveBoneKeyFrame()
             pz(16, 17, 18, 19),
             pr(20, 21, 22, 23);
     QuadWord p[] = { px, py, pz, pr };
-    frame.setInterpolationParameter(BoneKeyFrame::kX, px);
-    frame.setInterpolationParameter(BoneKeyFrame::kY, py);
-    frame.setInterpolationParameter(BoneKeyFrame::kZ, pz);
-    frame.setInterpolationParameter(BoneKeyFrame::kRotation, pr);
-    uint8_t data[BoneKeyFrame::strideSize()];
+    frame.setInterpolationParameter(BoneKeyframe::kX, px);
+    frame.setInterpolationParameter(BoneKeyframe::kY, py);
+    frame.setInterpolationParameter(BoneKeyframe::kZ, pz);
+    frame.setInterpolationParameter(BoneKeyframe::kRotation, pr);
+    uint8_t data[BoneKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     QCOMPARE(QString(reinterpret_cast<const char *>(newFrame.name())),
@@ -126,7 +126,7 @@ void TestVMDMotion::saveBoneKeyFrame()
     QVERIFY(newFrame.position() == pos);
     QVERIFY(newFrame.rotation() == rot);
     testBoneInterpolationMatrix(p, frame);
-    cloned = static_cast<BoneKeyFrame *>(frame.clone());
+    cloned = static_cast<BoneKeyframe *>(frame.clone());
     QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
              QString(reinterpret_cast<const char *>(frame.name())));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
@@ -136,9 +136,9 @@ void TestVMDMotion::saveBoneKeyFrame()
     delete cloned;
 }
 
-void TestVMDMotion::saveCameraKeyFrame()
+void TestVMDMotion::saveCameraKeyframe()
 {
-    CameraKeyFrame frame, newFrame, *cloned;
+    CameraKeyframe frame, newFrame, *cloned;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
     frame.setFrameIndex(42);
     frame.setPosition(pos);
@@ -152,13 +152,13 @@ void TestVMDMotion::saveCameraKeyFrame()
             pd(25, 26, 27, 28),
             pf(29, 30, 31, 32);
     QuadWord p[] = { px, py, pz, pr, pd, pf };
-    frame.setInterpolationParameter(CameraKeyFrame::kX, px);
-    frame.setInterpolationParameter(CameraKeyFrame::kY, py);
-    frame.setInterpolationParameter(CameraKeyFrame::kZ, pz);
-    frame.setInterpolationParameter(CameraKeyFrame::kRotation, pr);
-    frame.setInterpolationParameter(CameraKeyFrame::kDistance, pd);
-    frame.setInterpolationParameter(CameraKeyFrame::kFovy, pf);
-    uint8_t data[CameraKeyFrame::strideSize()];
+    frame.setInterpolationParameter(CameraKeyframe::kX, px);
+    frame.setInterpolationParameter(CameraKeyframe::kY, py);
+    frame.setInterpolationParameter(CameraKeyframe::kZ, pz);
+    frame.setInterpolationParameter(CameraKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
+    frame.setInterpolationParameter(CameraKeyframe::kFovy, pf);
+    uint8_t data[CameraKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
@@ -170,7 +170,7 @@ void TestVMDMotion::saveCameraKeyFrame()
     QVERIFY(newFrame.distance() == frame.distance());
     QVERIFY(newFrame.fovy() == frame.fovy());
     testCameraInterpolationMatrix(p, frame);
-    cloned = static_cast<CameraKeyFrame *>(frame.clone());
+    cloned = static_cast<CameraKeyframe *>(frame.clone());
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->position() == frame.position());
     // for radian and degree calculation
@@ -183,19 +183,19 @@ void TestVMDMotion::saveCameraKeyFrame()
     delete cloned;
 }
 
-void TestVMDMotion::saveFaceKeyFrame()
+void TestVMDMotion::saveFaceKeyframe()
 {
-    FaceKeyFrame frame, newFrame, *cloned;
+    FaceKeyframe frame, newFrame, *cloned;
     frame.setFrameIndex(42);
     frame.setWeight(0.5);
-    uint8_t data[FaceKeyFrame::strideSize()];
+    uint8_t data[FaceKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     QCOMPARE(QString(reinterpret_cast<const char *>(newFrame.name())),
              QString(reinterpret_cast<const char *>(frame.name())));
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QCOMPARE(newFrame.weight(), frame.weight());
-    cloned = static_cast<FaceKeyFrame *>(frame.clone());
+    cloned = static_cast<FaceKeyframe *>(frame.clone());
     QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
              QString(reinterpret_cast<const char *>(frame.name())));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
@@ -203,20 +203,20 @@ void TestVMDMotion::saveFaceKeyFrame()
     delete cloned;
 }
 
-void TestVMDMotion::saveLightKeyFrame()
+void TestVMDMotion::saveLightKeyframe()
 {
-    LightKeyFrame frame, newFrame, *cloned;
+    LightKeyframe frame, newFrame, *cloned;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
     frame.setFrameIndex(42);
     frame.setColor(color);
     frame.setDirection(direction);
-    uint8_t data[LightKeyFrame::strideSize()];
+    uint8_t data[LightKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QVERIFY(newFrame.color() == frame.color());
     QVERIFY(newFrame.direction() == frame.direction());
-    cloned = static_cast<LightKeyFrame *>(frame.clone());
+    cloned = static_cast<LightKeyframe *>(frame.clone());
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->color() == frame.color());
     QVERIFY(cloned->direction() == frame.direction());
@@ -246,20 +246,20 @@ void TestVMDMotion::saveMotion()
     }
 }
 
-void TestVMDMotion::parseBoneKeyFrame()
+void TestVMDMotion::parseBoneKeyframe()
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeRawData(kTestString, BoneKeyFrame::kNameSize);
+    stream.writeRawData(kTestString, BoneKeyframe::kNameSize);
     stream << quint32(1)                   // frame index
            << 2.0f << 3.0f << 4.0f         // position
            << 5.0f << 6.0f << 7.0f << 8.0f // rotation
               ;
-    stream.writeRawData(kTestString, BoneKeyFrame::kTableSize);
-    QCOMPARE(size_t(bytes.size()), BoneKeyFrame::strideSize());
-    BoneKeyFrame frame;
+    stream.writeRawData(kTestString, BoneKeyframe::kTableSize);
+    QCOMPARE(size_t(bytes.size()), BoneKeyframe::strideSize());
+    BoneKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(QString(reinterpret_cast<const char *>(frame.name())), QString(kTestString));
     QCOMPARE(frame.frameIndex(), 1.0f);
@@ -272,7 +272,7 @@ void TestVMDMotion::parseBoneKeyFrame()
 #endif
 }
 
-void TestVMDMotion::parseCameraKeyFrame()
+void TestVMDMotion::parseCameraKeyframe()
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -283,12 +283,12 @@ void TestVMDMotion::parseCameraKeyFrame()
            << 2.0f << 3.0f << 4.0f // position
            << 5.0f << 6.0f << 7.0f // angle
               ;
-    stream.writeRawData("", CameraKeyFrame::kTableSize);
+    stream.writeRawData("", CameraKeyframe::kTableSize);
     stream << quint32(8)           // view angle (fovy)
            << quint8(1)            // no perspective
               ;
-    QCOMPARE(size_t(bytes.size()), CameraKeyFrame::strideSize());
-    CameraKeyFrame frame;
+    QCOMPARE(size_t(bytes.size()), CameraKeyframe::strideSize());
+    CameraKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(frame.frameIndex(), 1.0f);
 #ifdef VPVL_COORDINATE_OPENGL
@@ -304,25 +304,25 @@ void TestVMDMotion::parseCameraKeyFrame()
     // TODO: perspective flag
 }
 
-void TestVMDMotion::parseFaceKeyFrame()
+void TestVMDMotion::parseFaceKeyframe()
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeRawData(kTestString, FaceKeyFrame::kNameSize);
+    stream.writeRawData(kTestString, FaceKeyframe::kNameSize);
     stream << quint32(1) // frame index
            << 0.5f       // weight
               ;
-    QCOMPARE(size_t(bytes.size()), FaceKeyFrame::strideSize());
-    FaceKeyFrame frame;
+    QCOMPARE(size_t(bytes.size()), FaceKeyframe::strideSize());
+    FaceKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(QString(reinterpret_cast<const char *>(frame.name())), QString(kTestString));
     QCOMPARE(frame.frameIndex(), 1.0f);
     QCOMPARE(frame.weight(), 0.5f);
 }
 
-void TestVMDMotion::parseLightKeyFrame()
+void TestVMDMotion::parseLightKeyframe()
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -332,8 +332,8 @@ void TestVMDMotion::parseLightKeyFrame()
            << 0.2f << 0.3f << 0.4f // color
            << 0.5f << 0.6f << 0.7f // direction
               ;
-    QCOMPARE(size_t(bytes.size()), LightKeyFrame::strideSize());
-    LightKeyFrame frame;
+    QCOMPARE(size_t(bytes.size()), LightKeyframe::strideSize());
+    LightKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QCOMPARE(frame.frameIndex(), 1.0f);
     QVERIFY(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
@@ -346,27 +346,27 @@ void TestVMDMotion::parseLightKeyFrame()
 
 void TestVMDMotion::boneInterpolation()
 {
-    BoneKeyFrame frame;
+    BoneKeyframe frame;
     QuadWord n;
-    frame.getInterpolationParameter(BoneKeyFrame::kX, n);
+    frame.getInterpolationParameter(BoneKeyframe::kX, n);
     CompareQuadWord(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
             pr(20, 21, 22, 23);
     QuadWord p[] = { px, py, pz, pr };
-    frame.setInterpolationParameter(BoneKeyFrame::kX, px);
-    frame.setInterpolationParameter(BoneKeyFrame::kY, py);
-    frame.setInterpolationParameter(BoneKeyFrame::kZ, pz);
-    frame.setInterpolationParameter(BoneKeyFrame::kRotation, pr);
+    frame.setInterpolationParameter(BoneKeyframe::kX, px);
+    frame.setInterpolationParameter(BoneKeyframe::kY, py);
+    frame.setInterpolationParameter(BoneKeyframe::kZ, pz);
+    frame.setInterpolationParameter(BoneKeyframe::kRotation, pr);
     testBoneInterpolationMatrix(p, frame);
 }
 
 void TestVMDMotion::cameraInterpolation()
 {
-    CameraKeyFrame frame;
+    CameraKeyframe frame;
     QuadWord n;
-    frame.getInterpolationParameter(CameraKeyFrame::kX, n);
+    frame.getInterpolationParameter(CameraKeyframe::kX, n);
     CompareQuadWord(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
@@ -375,50 +375,50 @@ void TestVMDMotion::cameraInterpolation()
             pd(25, 26, 27, 28),
             pf(29, 30, 31, 32);
     QuadWord p[] = { px, py, pz, pr, pd, pf };
-    frame.setInterpolationParameter(CameraKeyFrame::kX, px);
-    frame.setInterpolationParameter(CameraKeyFrame::kY, py);
-    frame.setInterpolationParameter(CameraKeyFrame::kZ, pz);
-    frame.setInterpolationParameter(CameraKeyFrame::kRotation, pr);
-    frame.setInterpolationParameter(CameraKeyFrame::kDistance, pd);
-    frame.setInterpolationParameter(CameraKeyFrame::kFovy, pf);
+    frame.setInterpolationParameter(CameraKeyframe::kX, px);
+    frame.setInterpolationParameter(CameraKeyframe::kY, py);
+    frame.setInterpolationParameter(CameraKeyframe::kZ, pz);
+    frame.setInterpolationParameter(CameraKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
+    frame.setInterpolationParameter(CameraKeyframe::kFovy, pf);
     testCameraInterpolationMatrix(p, frame);
 }
 
-void TestVMDMotion::testBoneInterpolationMatrix(const QuadWord p[], const BoneKeyFrame &frame)
+void TestVMDMotion::testBoneInterpolationMatrix(const QuadWord p[], const BoneKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
-    frame.getInterpolationParameter(BoneKeyFrame::kX, actual);
+    frame.getInterpolationParameter(BoneKeyframe::kX, actual);
     CompareQuadWord(actual, expected);
     expected = p[1];
-    frame.getInterpolationParameter(BoneKeyFrame::kY, actual);
+    frame.getInterpolationParameter(BoneKeyframe::kY, actual);
     CompareQuadWord(actual, expected);
     expected = p[2];
-    frame.getInterpolationParameter(BoneKeyFrame::kZ, actual);
+    frame.getInterpolationParameter(BoneKeyframe::kZ, actual);
     CompareQuadWord(actual, expected);
     expected = p[3];
-    frame.getInterpolationParameter(BoneKeyFrame::kRotation, actual);
+    frame.getInterpolationParameter(BoneKeyframe::kRotation, actual);
     CompareQuadWord(actual, expected);
 }
 
-void TestVMDMotion::testCameraInterpolationMatrix(const QuadWord p[], const CameraKeyFrame &frame)
+void TestVMDMotion::testCameraInterpolationMatrix(const QuadWord p[], const CameraKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
-    frame.getInterpolationParameter(CameraKeyFrame::kX, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kX, actual);
     CompareQuadWord(actual, expected);
     expected = p[1];
-    frame.getInterpolationParameter(CameraKeyFrame::kY, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kY, actual);
     CompareQuadWord(actual, expected);
     expected = p[2];
-    frame.getInterpolationParameter(CameraKeyFrame::kZ, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kZ, actual);
     CompareQuadWord(actual, expected);
     expected = p[3];
-    frame.getInterpolationParameter(CameraKeyFrame::kRotation, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kRotation, actual);
     CompareQuadWord(actual, expected);
     expected = p[4];
-    frame.getInterpolationParameter(CameraKeyFrame::kDistance, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kDistance, actual);
     CompareQuadWord(actual, expected);
     expected = p[5];
-    frame.getInterpolationParameter(CameraKeyFrame::kFovy, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kFovy, actual);
     CompareQuadWord(actual, expected);
 }
 

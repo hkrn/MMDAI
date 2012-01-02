@@ -57,7 +57,7 @@ public:
         kRotation
     };
 
-    typedef QSharedPointer<vpvl::BoneKeyFrame> KeyFramePtr;
+    typedef QSharedPointer<vpvl::BoneKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
@@ -82,8 +82,8 @@ public:
     vpvl::Bone *findBone(const QString &name);
     vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
-    const vpvl::BoneKeyFrame::InterpolationParameter &interpolationParameter() const { return m_interpolationParameter; }
-    void setInterpolationParameter(const vpvl::BoneKeyFrame::InterpolationParameter &value) { m_interpolationParameter = value; }
+    const vpvl::BoneKeyframe::InterpolationParameter &interpolationParameter() const { return m_interpolationParameter; }
+    void setInterpolationParameter(const vpvl::BoneKeyframe::InterpolationParameter &value) { m_interpolationParameter = value; }
 
 public slots:
     void removeModel();
@@ -109,7 +109,7 @@ private:
     QList<vpvl::Bone *> m_selected;
     vpvl::BaseKeyFrameList m_frames;
     vpvl::PMDModel::State *m_state;
-    vpvl::BoneKeyFrame::InterpolationParameter m_interpolationParameter;
+    vpvl::BoneKeyframe::InterpolationParameter m_interpolationParameter;
 
     Q_DISABLE_COPY(BoneMotionModel)
 };

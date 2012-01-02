@@ -45,19 +45,19 @@ namespace vpvl
 class CameraAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BaseKeyFrame *left, const BaseKeyFrame *right) {
+    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
         return left->frameIndex() < right->frameIndex();
     }
 };
 
-float CameraAnimation::weightValue(const CameraKeyFrame *keyFrame, float w, int at)
+float CameraAnimation::weightValue(const CameraKeyframe *keyFrame, float w, int at)
 {
-    const uint16_t index = static_cast<int16_t>(w * CameraKeyFrame::kTableSize);
+    const uint16_t index = static_cast<int16_t>(w * CameraKeyframe::kTableSize);
     const float *v = keyFrame->interpolationTable()[at];
-    return v[index] + (v[index + 1] - v[index]) * (w * CameraKeyFrame::kTableSize - index);
+    return v[index] + (v[index + 1] - v[index]) * (w * CameraKeyframe::kTableSize - index);
 }
 
-void CameraAnimation::lerpVector3(const CameraKeyFrame *keyFrame,
+void CameraAnimation::lerpVector3(const CameraKeyframe *keyFrame,
                                  const Vector3 &from,
                                  const Vector3 &to,
                                  float w,
@@ -98,7 +98,7 @@ void CameraAnimation::read(const uint8_t *data, int size)
         uint8_t *ptr = const_cast<uint8_t *>(data);
         m_frames.reserve(size);
         for (int i = 0; i < size; i++) {
-            CameraKeyFrame *frame = new CameraKeyFrame();
+            CameraKeyframe *frame = new CameraKeyframe();
             frame->read(ptr);
             ptr += frame->stride();
             m_frames.add(frame);
@@ -111,7 +111,7 @@ void CameraAnimation::read(const uint8_t *data, int size)
 void CameraAnimation::seek(float frameAt)
 {
     const int nframes = m_frames.count();
-    CameraKeyFrame *lastKeyFrame = static_cast<CameraKeyFrame *>(m_frames[nframes - 1]);
+    CameraKeyframe *lastKeyFrame = static_cast<CameraKeyframe *>(m_frames[nframes - 1]);
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
@@ -137,8 +137,8 @@ void CameraAnimation::seek(float frameAt)
     k1 = k2 <= 1 ? 0 : k2 - 1;
     m_lastIndex = k1;
 
-    const CameraKeyFrame *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
-    CameraKeyFrame *keyFrameForInterpolation = const_cast<CameraKeyFrame *>(keyFrameTo);
+    const CameraKeyframe *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
+    CameraKeyframe *keyFrameForInterpolation = const_cast<CameraKeyframe *>(keyFrameTo);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
     Vector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();

@@ -44,12 +44,12 @@
 namespace vpvl
 {
 
-class VPVL_API BaseKeyFrame
+class VPVL_API BaseKeyframe
 {
 public:
-    BaseKeyFrame() : m_frameIndex(0) {
+    BaseKeyframe() : m_frameIndex(0) {
     }
-    virtual ~BaseKeyFrame() {
+    virtual ~BaseKeyframe() {
         m_frameIndex = 0;
     }
 
@@ -84,7 +84,7 @@ public:
      *
      * @return copied key frame
      */
-    virtual BaseKeyFrame *clone() const = 0;
+    virtual BaseKeyframe *clone() const = 0;
 
     /**
      * Get the target bone name of this keyframe.
@@ -121,7 +121,7 @@ public:
 protected:
     float m_frameIndex;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(BaseKeyFrame)
+    VPVL_DISABLE_COPY_AND_ASSIGN(BaseKeyframe)
 };
 
 }

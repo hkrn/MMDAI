@@ -46,11 +46,11 @@ namespace vpvl
 
 class Face;
 
-class VPVL_API FaceKeyFrame : public BaseKeyFrame
+class VPVL_API FaceKeyframe : public BaseKeyframe
 {
 public:
-    FaceKeyFrame();
-    ~FaceKeyFrame();
+    FaceKeyframe();
+    ~FaceKeyframe();
 
     static const int kNameSize = 15;
 
@@ -59,7 +59,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyFrame *clone() const;
+    BaseKeyframe *clone() const;
 
     /**
      * Get the target face name of this keyframe.
@@ -95,7 +95,7 @@ private:
     uint8_t m_name[kNameSize + 1];
     float m_weight;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(FaceKeyFrame)
+    VPVL_DISABLE_COPY_AND_ASSIGN(FaceKeyframe)
 };
 
 }

@@ -44,8 +44,8 @@
 namespace vpvl
 {
 
-class LightKeyFrame;
-typedef Array<LightKeyFrame *> LightKeyFrameList;
+class LightKeyframe;
+typedef Array<LightKeyframe *> LightKeyFrameList;
 
 /**
  * @file
@@ -76,8 +76,8 @@ public:
      * @param i A frame index to get key frame
      * @return A light key frame associated with index
      */
-    LightKeyFrame *frameAt(int i) const {
-        return static_cast<LightKeyFrame *>(m_frames[i]);
+    LightKeyframe *frameAt(int i) const {
+        return static_cast<LightKeyframe *>(m_frames[i]);
     }
 
     /**

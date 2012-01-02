@@ -46,34 +46,34 @@ namespace vpvl
 
 struct FaceKeyFrameChunk
 {
-    uint8_t name[FaceKeyFrame::kNameSize];
+    uint8_t name[FaceKeyframe::kNameSize];
     int frameIndex;
     float weight;
 };
 
 #pragma pack(pop)
 
-FaceKeyFrame::FaceKeyFrame()
-    : BaseKeyFrame(), m_weight(0.0f)
+FaceKeyframe::FaceKeyframe()
+    : BaseKeyframe(), m_weight(0.0f)
 {
     internal::zerofill(m_name, sizeof(m_name));
 }
-FaceKeyFrame::~FaceKeyFrame()
+FaceKeyframe::~FaceKeyframe()
 {
     internal::zerofill(m_name, sizeof(m_name));
 }
 
-size_t FaceKeyFrame::strideSize()
+size_t FaceKeyframe::strideSize()
 {
     return sizeof(FaceKeyFrameChunk);
 }
 
-size_t FaceKeyFrame::stride() const
+size_t FaceKeyframe::stride() const
 {
     return strideSize();
 }
 
-void FaceKeyFrame::read(const uint8_t *data)
+void FaceKeyframe::read(const uint8_t *data)
 {
     FaceKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
@@ -88,7 +88,7 @@ void FaceKeyFrame::read(const uint8_t *data)
 #endif
 }
 
-void FaceKeyFrame::write(uint8_t *data) const
+void FaceKeyframe::write(uint8_t *data) const
 {
     FaceKeyFrameChunk chunk;
     internal::copyBytes(chunk.name, m_name, sizeof(chunk.name));
@@ -97,26 +97,26 @@ void FaceKeyFrame::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
-BaseKeyFrame *FaceKeyFrame::clone() const
+BaseKeyframe *FaceKeyframe::clone() const
 {
-    FaceKeyFrame *frame = new FaceKeyFrame();
+    FaceKeyframe *frame = new FaceKeyframe();
     frame->setName(m_name);
     frame->setFrameIndex(m_frameIndex);
     frame->setWeight(m_weight);
     return frame;
 }
 
-const uint8_t *FaceKeyFrame::name() const
+const uint8_t *FaceKeyframe::name() const
 {
     return m_name;
 }
 
-void FaceKeyFrame::setName(const uint8_t *value)
+void FaceKeyframe::setName(const uint8_t *value)
 {
     copyBytesSafe(m_name, value, sizeof(m_name));
 }
 
-void FaceKeyFrame::setWeight(float value)
+void FaceKeyframe::setWeight(float value)
 {
     m_weight = value;
 }

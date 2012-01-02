@@ -44,8 +44,8 @@
 namespace vpvl
 {
 
-class CameraKeyFrame;
-typedef Array<CameraKeyFrame *> CameraKeyFrameList;
+class CameraKeyframe;
+typedef Array<CameraKeyframe *> CameraKeyFrameList;
 
 /**
  * @file
@@ -76,8 +76,8 @@ public:
      * @param i A frame index to get key frame
      * @return A camera key frame associated with index
      */
-    CameraKeyFrame *frameAt(int i) const {
-        return static_cast<CameraKeyFrame *>(m_frames[i]);
+    CameraKeyframe *frameAt(int i) const {
+        return static_cast<CameraKeyframe *>(m_frames[i]);
     }
 
     /**
@@ -117,10 +117,10 @@ public:
     }
 
 private:
-    static float weightValue(const CameraKeyFrame *keyFrame,
+    static float weightValue(const CameraKeyframe *keyFrame,
                              float w,
                              int at);
-    static void lerpVector3(const CameraKeyFrame *keyFrame,
+    static void lerpVector3(const CameraKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
                             float w,

@@ -96,8 +96,8 @@ private:
 
     BoneMotionModel *m_boneMotionModel;
     SceneMotionModel *m_sceneMotionModel;
-    vpvl::BoneKeyFrame::InterpolationParameter m_boneIP;
-    vpvl::CameraKeyFrame::InterpolationParameter m_cameraIP;
+    vpvl::BoneKeyframe::InterpolationParameter m_boneIP;
+    vpvl::CameraKeyframe::InterpolationParameter m_cameraIP;
     QPoint m_p1;
     QPoint m_p2;
     Type m_type;

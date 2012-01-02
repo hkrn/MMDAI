@@ -44,7 +44,7 @@
 namespace vpvl
 {
 
-class VPVL_API CameraKeyFrame : public BaseKeyFrame
+class VPVL_API CameraKeyframe : public BaseKeyframe
 {
 public:
     enum InterpolationType
@@ -67,8 +67,8 @@ public:
         QuadWord fovy;
     };
 
-    CameraKeyFrame();
-    ~CameraKeyFrame();
+    CameraKeyframe();
+    ~CameraKeyframe();
 
     static const int kTableSize = 24;
     static const QuadWord kDefaultInterpolationParameterValue;
@@ -77,7 +77,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyFrame *clone() const;
+    BaseKeyframe *clone() const;
 
     /**
      * Set the default values of the interpolation parameter.
@@ -232,7 +232,7 @@ private:
     int8_t m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(CameraKeyFrame)
+    VPVL_DISABLE_COPY_AND_ASSIGN(CameraKeyframe)
 };
 
 }

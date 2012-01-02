@@ -42,7 +42,7 @@
 #include <vpvl/BaseAnimation.h>
 
 namespace vpvl {
-class FaceKeyFrame;
+class FaceKeyframe;
 }
 
 class FaceMotionModel : public PMDMotionModel
@@ -50,7 +50,7 @@ class FaceMotionModel : public PMDMotionModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl::FaceKeyFrame> KeyFramePtr;
+    typedef QSharedPointer<vpvl::FaceKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 

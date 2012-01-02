@@ -86,16 +86,16 @@ public:
     {
         const uint8_t *basePtr;
         const uint8_t *namePtr;
-        const uint8_t *boneKeyFramePtr;
-        size_t boneKeyFrameCount;
-        const uint8_t *faceKeyFramePtr;
-        size_t faceKeyFrameCount;
-        const uint8_t *cameraKeyFramePtr;
-        size_t cameraKeyFrameCount;
-        const uint8_t *lightKeyFramePtr;
-        size_t lightKeyFrameCount;
-        const uint8_t *selfShadowKeyFramePtr;
-        size_t selfShadowKeyFrameCount;
+        const uint8_t *boneKeyframePtr;
+        size_t boneKeyframeCount;
+        const uint8_t *faceKeyframePtr;
+        size_t faceKeyframeCount;
+        const uint8_t *cameraKeyframePtr;
+        size_t cameraKeyframeCount;
+        const uint8_t *lightKeyframePtr;
+        size_t lightKeyframeCount;
+        const uint8_t *selfShadowKeyframePtr;
+        size_t selfShadowKeyframeCount;
     };
 
     static const uint8_t *kSignature;

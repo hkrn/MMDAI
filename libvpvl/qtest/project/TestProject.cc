@@ -229,23 +229,23 @@ void TestProject::testBoneAnimation(const VMDMotion *motion)
 {
     const BoneAnimation &ba = motion->boneAnimation();
     QuadWord q;
-    QCOMPARE(ba.countKeyFrames(), 2);
+    QCOMPARE(ba.countKeyframes(), 2);
     QCOMPARE(ba.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(reinterpret_cast<const char *>(ba.frameAt(0)->name()), "bar");
     QCOMPARE(ba.frameAt(0)->position(), Vector3(1, 2, -3));
     QCOMPARE(ba.frameAt(0)->rotation(), Quaternion(-1, -2, 3, 4));
-    for (int i = 0; i < BoneKeyFrame::kMax; i++) {
+    for (int i = 0; i < BoneKeyframe::kMax; i++) {
         int offset = i * 4;
-        ba.frameAt(0)->getInterpolationParameter(static_cast<BoneKeyFrame::InterpolationType>(i), q);
+        ba.frameAt(0)->getInterpolationParameter(static_cast<BoneKeyframe::InterpolationType>(i), q);
         QCOMPARE(q, QuadWord(offset + 1, offset + 2, offset + 3, offset + 4));
     }
     QCOMPARE(ba.frameAt(1)->frameIndex(), 2.0f);
     QCOMPARE(reinterpret_cast<const char *>(ba.frameAt(1)->name()), "baz");
     QCOMPARE(ba.frameAt(1)->position(), Vector3(3, 1, -2));
     QCOMPARE(ba.frameAt(1)->rotation(), Quaternion(-4, -3, 2, 1));
-    for (int i = BoneKeyFrame::kMax - 1; i >= 0; i--) {
-        int offset = (BoneKeyFrame::kMax - 1 - i) * 4;
-        ba.frameAt(1)->getInterpolationParameter(static_cast<BoneKeyFrame::InterpolationType>(i), q);
+    for (int i = BoneKeyframe::kMax - 1; i >= 0; i--) {
+        int offset = (BoneKeyframe::kMax - 1 - i) * 4;
+        ba.frameAt(1)->getInterpolationParameter(static_cast<BoneKeyframe::InterpolationType>(i), q);
         QCOMPARE(q, QuadWord(offset + 4, offset + 3, offset + 2, offset + 1));
     }
 }
@@ -253,7 +253,7 @@ void TestProject::testBoneAnimation(const VMDMotion *motion)
 void TestProject::testFaceAnimation(const VMDMotion *motion)
 {
     const FaceAnimation &fa = motion->faceAnimation();
-    QCOMPARE(fa.countKeyFrames(), 2);
+    QCOMPARE(fa.countKeyframes(), 2);
     QCOMPARE(fa.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(reinterpret_cast<const char *>(fa.frameAt(0)->name()), "bar");
     QCOMPARE(fa.frameAt(0)->weight(), 0.0f);
@@ -266,7 +266,7 @@ void TestProject::testCameraAnimation(const VMDMotion *motion)
 {
     const CameraAnimation &ca = motion->cameraAnimation();
     QuadWord q;
-    QCOMPARE(ca.countKeyFrames(), 2);
+    QCOMPARE(ca.countKeyframes(), 2);
     QCOMPARE(ca.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(ca.frameAt(0)->position(), Vector3(1, 2, -3));
     const Vector3 &angle1 = ca.frameAt(0)->angle();
@@ -275,9 +275,9 @@ void TestProject::testCameraAnimation(const VMDMotion *motion)
     QVERIFY(qFuzzyCompare(angle1.z(), -degree(3)));
     QCOMPARE(ca.frameAt(0)->fovy(), 15.0f);
     QCOMPARE(ca.frameAt(0)->distance(), 150.0f);
-    for (int i = 0; i < CameraKeyFrame::kMax; i++) {
+    for (int i = 0; i < CameraKeyframe::kMax; i++) {
         int offset = i * 4;
-        ca.frameAt(0)->getInterpolationParameter(static_cast<CameraKeyFrame::InterpolationType>(i), q);
+        ca.frameAt(0)->getInterpolationParameter(static_cast<CameraKeyframe::InterpolationType>(i), q);
         QCOMPARE(q, QuadWord(offset + 1, offset + 2, offset + 3, offset + 4));
     }
     QCOMPARE(ca.frameAt(1)->frameIndex(), 2.0f);
@@ -288,9 +288,9 @@ void TestProject::testCameraAnimation(const VMDMotion *motion)
     QVERIFY(qFuzzyCompare(angle2.z(), -degree(2)));
     QCOMPARE(ca.frameAt(1)->fovy(), 30.0f);
     QCOMPARE(ca.frameAt(1)->distance(), 300.0f);
-    for (int i = CameraKeyFrame::kMax - 1; i >= 0; i--) {
-        int offset = (CameraKeyFrame::kMax - 1 - i) * 4;
-        ca.frameAt(1)->getInterpolationParameter(static_cast<CameraKeyFrame::InterpolationType>(i), q);
+    for (int i = CameraKeyframe::kMax - 1; i >= 0; i--) {
+        int offset = (CameraKeyframe::kMax - 1 - i) * 4;
+        ca.frameAt(1)->getInterpolationParameter(static_cast<CameraKeyframe::InterpolationType>(i), q);
         QCOMPARE(q, QuadWord(offset + 4, offset + 3, offset + 2, offset + 1));
     }
 }
@@ -298,7 +298,7 @@ void TestProject::testCameraAnimation(const VMDMotion *motion)
 void TestProject::testLightAnimation(const VMDMotion *motion)
 {
     const LightAnimation &la = motion->lightAnimation();
-    QCOMPARE(la.countKeyFrames(), 2);
+    QCOMPARE(la.countKeyframes(), 2);
     QCOMPARE(la.frameAt(0)->frameIndex(), 1.0f);
     QCOMPARE(la.frameAt(0)->color(), Vector3(1, 2, 3));
     QCOMPARE(la.frameAt(0)->direction(), Vector3(1, 2, 3));

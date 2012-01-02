@@ -44,8 +44,8 @@
 namespace vpvl
 {
 
-class BaseKeyFrame;
-typedef Array<BaseKeyFrame *> BaseKeyFrameList;
+class BaseKeyframe;
+typedef Array<BaseKeyframe *> BaseKeyFrameList;
 
 /**
  * @file
@@ -118,7 +118,7 @@ public:
      *
      * @param frame A key frame to be added
      */
-    void addKeyFrame(BaseKeyFrame *frame);
+    void addKeyframe(BaseKeyframe *frame);
 
     /**
      * Replace a key frame.
@@ -128,14 +128,14 @@ public:
      *
      * @param frame A key frame to be replaced (or add)
      */
-    void replaceKeyFrame(BaseKeyFrame *frame);
+    void replaceKeyframe(BaseKeyframe *frame);
 
     /**
      * Count all of key frames.
      *
      * @return size of all key frames
      */
-    int countKeyFrames() const {
+    int countKeyframes() const {
         return m_frames.count();
     }
 
@@ -148,7 +148,7 @@ public:
      * @param frameIndex A frame index to delete
      * @param name A name to delete
      */
-    void deleteKeyFrame(float frameIndex, const uint8_t *name);
+    void deleteKeyframe(float frameIndex, const uint8_t *name);
 
     /**
      * Delete key frames associated with an index.
@@ -158,7 +158,7 @@ public:
      *
      * @param frameIndex A frame index to delete
      */
-    void deleteKeyFrames(float frameIndex);
+    void deleteKeyframes(float frameIndex);
 
     /**
      * Get the previous frame index.

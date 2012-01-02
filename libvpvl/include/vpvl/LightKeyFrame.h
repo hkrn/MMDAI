@@ -44,18 +44,18 @@
 namespace vpvl
 {
 
-class VPVL_API LightKeyFrame : public BaseKeyFrame
+class VPVL_API LightKeyframe : public BaseKeyframe
 {
 public:
-    LightKeyFrame();
-    ~LightKeyFrame();
+    LightKeyframe();
+    ~LightKeyframe();
 
     static size_t strideSize();
 
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyFrame *clone() const;
+    BaseKeyframe *clone() const;
 
     /**
      * Returns empty value.
@@ -110,7 +110,7 @@ private:
     Vector3 m_color;
     Vector3 m_direction;
 
-    VPVL_DISABLE_COPY_AND_ASSIGN(LightKeyFrame)
+    VPVL_DISABLE_COPY_AND_ASSIGN(LightKeyframe)
 };
 
 }
