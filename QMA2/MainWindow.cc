@@ -820,9 +820,9 @@ void MainWindow::buildUI()
     QToolBar *toolbar = new QToolBar();
     m_actionAddModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addModel()));
     //m_actionSelectModelOnToolBar = toolbar->addAction("");
-    m_actionAddAssetOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addAsset()));
-    m_actionInsertMotionOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
     m_actionCreateMotionOnToolBar = toolbar->addAction("", this, SLOT(newMotionFile()));
+    m_actionInsertMotionOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
+    m_actionAddAssetOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addAsset()));
     m_actionDeleteModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(deleteSelectedModel()));
     addToolBar(toolbar);
 
