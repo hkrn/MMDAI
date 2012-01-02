@@ -137,7 +137,7 @@ void Material::read(const uint8_t *data)
     setSpecular(Color(specular[0], specular[1], specular[2], 1.0f));
     setOpacity(alpha);
     setShiness(shiness);
-    setEdgeEnabled(edge);
+    setEdgeEnabled(edge == 1);
     setToonID(toonID);
     setIndexSize(nindices);
 }
