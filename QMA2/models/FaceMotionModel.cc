@@ -305,7 +305,7 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
-void FaceMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
+void FaceMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList faceFrames;
     vpvl::PMDModel *model = selectedModel();
@@ -326,7 +326,7 @@ void FaceMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
     setFrames(faceFrames);
 }
 
-void FaceMotionModel::copyFrames(int frameIndex)
+void FaceMotionModel::copyKeyframes(int frameIndex)
 {
     if (m_model && m_motion) {
         m_frames.releaseAll();
@@ -343,7 +343,7 @@ void FaceMotionModel::copyFrames(int frameIndex)
     }
 }
 
-void FaceMotionModel::pasteFrames(int frameIndex)
+void FaceMotionModel::pasteKeyframes(int frameIndex)
 {
     if (m_model && m_motion && m_frames.count() != 0) {
         FaceMotionModel::KeyFramePairList frames;
@@ -377,7 +377,7 @@ void FaceMotionModel::commitTransform()
     }
 }
 
-void FaceMotionModel::selectByModelIndices(const QModelIndexList &indices)
+void FaceMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
         QList<vpvl::Face *> faces;
@@ -536,7 +536,7 @@ void FaceMotionModel::removeModel()
     reset();
 }
 
-void FaceMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
+void FaceMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)
 {
     if (index.isValid()) {
         /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを削除する */

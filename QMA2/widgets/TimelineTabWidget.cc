@@ -57,7 +57,7 @@ static void UIAddKeyframesFromSelectedIndices(TimelineWidget *widget)
     TimelineTreeView *view = widget->treeView();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
     QItemSelectionModel *selection = static_cast<QItemSelectionModel *>(view->selectionModel());
-    model->addKeyFramesByModelIndices(selection->selectedIndexes());
+    model->addKeyframesByModelIndices(selection->selectedIndexes());
 }
 
 }
@@ -229,7 +229,7 @@ void TimelineTabWidget::deleteFrame()
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         foreach (const QModelIndex &index, indices) {
             if (index.column() > 1)
-                model->deleteFrameByModelIndex(index);
+                model->deleteKeyframeByModelIndex(index);
         }
     }
 }
@@ -240,7 +240,7 @@ void TimelineTabWidget::copyFrame()
     TimelineWidget *timeline = currentSelectedTimelineWidget();
     MotionBaseModel *model = currentSelectedModel();
     if (timeline && model)
-        model->copyFrames(timeline->frameIndex());
+        model->copyKeyframes(timeline->frameIndex());
 }
 
 void TimelineTabWidget::pasteFrame()
@@ -248,7 +248,7 @@ void TimelineTabWidget::pasteFrame()
     TimelineWidget *timeline = currentSelectedTimelineWidget();
     MotionBaseModel *model = currentSelectedModel();
     if (timeline && model)
-        model->pasteFrames(timeline->frameIndex());
+        model->pasteKeyframes(timeline->frameIndex());
 }
 
 void TimelineTabWidget::pasteReversedFrame()

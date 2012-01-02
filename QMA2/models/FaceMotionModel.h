@@ -58,12 +58,12 @@ public:
     ~FaceMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void addKeyFramesByModelIndices(const QModelIndexList &indices);
-    void copyFrames(int frameIndex);
-    void pasteFrames(int frameIndex);
+    void addKeyframesByModelIndices(const QModelIndexList &indices);
+    void copyKeyframes(int frameIndex);
+    void pasteKeyframes(int frameIndex);
     void saveTransform();
     void commitTransform();
-    void selectByModelIndices(const QModelIndexList &indices);
+    void selectKeyframesByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
@@ -79,7 +79,7 @@ public slots:
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void deleteFrameByModelIndex(const QModelIndex &index);
+    void deleteKeyframeByModelIndex(const QModelIndex &index);
     void selectFaces(const QList<vpvl::Face *> &faces);
 
 signals:

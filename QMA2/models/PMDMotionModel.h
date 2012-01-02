@@ -64,7 +64,7 @@ public:
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
-    virtual void copyFrames(int frameIndex) = 0;
+    virtual void copyKeyframes(int frameIndex) = 0;
     virtual void saveTransform() = 0;
     virtual void commitTransform() = 0;
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;

@@ -183,7 +183,7 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
         /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
         if (item && !item->isRoot() && !item->isCategory()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            pmm->selectByModelIndices(selectionModel()->selection().indexes());
+            pmm->selectKeyframesByModelIndices(selectionModel()->selection().indexes());
         }
     }
     /* 場面のモデルである SceneMotionModel のクラスである */
@@ -191,7 +191,7 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
         SceneMotionModel::ITreeItem *item = static_cast<SceneMotionModel::ITreeItem *>(index.internalPointer());
         /* ルートでもカテゴリでもなく、カメラまたは照明のキーフレームが選択されていることを確認する */
         if (item && !item->isRoot() && !item->isCategory())
-            smm->selectByModelIndex(index);
+            smm->selectKeyframesByModelIndex(index);
     }
     QTreeView::mousePressEvent(event);
 }

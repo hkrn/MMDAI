@@ -294,7 +294,7 @@ void SceneMotionModel::saveMotion(vpvl::VMDMotion *motion)
     setModified(false);
 }
 
-void SceneMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
+void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList sceneFrames;
     foreach (const QModelIndex &index, indices) {
@@ -316,12 +316,12 @@ void SceneMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices
     setFrames(sceneFrames);
 }
 
-void SceneMotionModel::copyFrames(int frameIndex)
+void SceneMotionModel::copyKeyframes(int frameIndex)
 {
     m_cameraIndex = frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
 }
 
-void SceneMotionModel::pasteFrames(int frameIndex)
+void SceneMotionModel::pasteKeyframes(int frameIndex)
 {
     if (m_cameraIndex.isValid()) {
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
@@ -335,7 +335,7 @@ void SceneMotionModel::pasteFrames(int frameIndex)
     }
 }
 
-void SceneMotionModel::selectByModelIndices(const QModelIndexList &indices)
+void SceneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
 {
     QList<KeyFramePtr> frames;
     foreach (const QModelIndex &index, indices) {
@@ -407,7 +407,7 @@ void SceneMotionModel::removeMotion()
     reset();
 }
 
-void SceneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
+void SceneMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)
 {
     if (index.isValid()) {
         ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());

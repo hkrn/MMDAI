@@ -400,7 +400,7 @@ void BoneMotionModel::saveMotion(vpvl::VMDMotion *motion)
     }
 }
 
-void BoneMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
+void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList boneFrames;
     vpvl::PMDModel *model = selectedModel();
@@ -424,7 +424,7 @@ void BoneMotionModel::addKeyFramesByModelIndices(const QModelIndexList &indices)
     setFrames(boneFrames);
 }
 
-void BoneMotionModel::copyFrames(int frameIndex)
+void BoneMotionModel::copyKeyframes(int frameIndex)
 {
     if (m_model && m_motion) {
         /* メモリリーク防止のため、前回呼ばれた copyFrames で作成したデータを破棄しておく */
@@ -443,7 +443,7 @@ void BoneMotionModel::copyFrames(int frameIndex)
     }
 }
 
-void BoneMotionModel::pasteFrames(int frameIndex)
+void BoneMotionModel::pasteKeyframes(int frameIndex)
 {
     /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && m_frames.count() != 0) {
@@ -527,7 +527,7 @@ void BoneMotionModel::commitTransform()
     }
 }
 
-void BoneMotionModel::selectByModelIndices(const QModelIndexList &indices)
+void BoneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
         QList<vpvl::Bone *> bones;
@@ -733,7 +733,7 @@ void BoneMotionModel::removeModel()
     reset();
 }
 
-void BoneMotionModel::deleteFrameByModelIndex(const QModelIndex &index)
+void BoneMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)
 {
     if (index.isValid()) {
         /* QModelIndex にあるボーンとフレームインデックスからキーフレームを削除する */

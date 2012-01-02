@@ -136,18 +136,18 @@ public:
         }
         return parentItem->countChildren();
     }
-    virtual void selectByModelIndex(const QModelIndex &index) {
+    virtual void selectKeyframesByModelIndex(const QModelIndex &index) {
         QModelIndexList indices;
         indices.append(index);
-        selectByModelIndices(indices);
+        selectKeyframesByModelIndices(indices);
     }
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
-    virtual void addKeyFramesByModelIndices(const QModelIndexList &indices) = 0;
-    virtual void copyFrames(int frameIndex) = 0;
-    virtual void pasteFrames(int frameIndex) = 0;
-    virtual void selectByModelIndices(const QModelIndexList &indices) = 0;
+    virtual void addKeyframesByModelIndices(const QModelIndexList &indices) = 0;
+    virtual void copyKeyframes(int frameIndex) = 0;
+    virtual void pasteKeyframes(int frameIndex) = 0;
+    virtual void selectKeyframesByModelIndices(const QModelIndexList &indices) = 0;
     virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
     virtual int maxFrameCount() const = 0;
 
@@ -159,7 +159,7 @@ public:
 
 public slots:
     virtual void removeMotion() = 0;
-    virtual void deleteFrameByModelIndex(const QModelIndex &index) = 0;
+    virtual void deleteKeyframeByModelIndex(const QModelIndex &index) = 0;
 
 signals:
     void motionDidModify(bool value);
