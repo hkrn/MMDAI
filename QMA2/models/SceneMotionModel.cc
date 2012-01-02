@@ -347,7 +347,7 @@ void SceneMotionModel::selectByModelIndices(const QModelIndexList &indices)
         }
     }
     if (!frames.isEmpty())
-        cameraFrameDidSelect(frames);
+        keyframesDidSelect(frames);
 }
 
 const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index */) const

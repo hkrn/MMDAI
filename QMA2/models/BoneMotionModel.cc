@@ -544,7 +544,7 @@ void BoneMotionModel::selectByModelIndices(const QModelIndexList &indices)
                 frames.append(KeyFramePtr(frame));
             }
         }
-        emit boneFramesDidSelect(frames);
+        emit keyframesDidSelect(frames);
     }
 }
 
@@ -806,7 +806,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
         }
         selected->setPosition(pos);
         m_model->updateImmediate();
-        emit bonePositionDidChange(selected, pos);
+        emit positionDidChange(selected, pos);
     }
 }
 
@@ -834,7 +834,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     }
     selected->setRotation(rot);
     m_model->updateImmediate();
-    emit boneRotationDidChange(selected, rot);
+    emit rotationDidChange(selected, rot);
 }
 
 void BoneMotionModel::translate(int coordinate, int mode, float value)
@@ -887,7 +887,7 @@ void BoneMotionModel::translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 
     }
     bone->setPosition(dest);
     m_model->updateImmediate();
-    emit bonePositionDidChange(bone, dest);
+    emit positionDidChange(bone, dest);
 }
 
 void BoneMotionModel::rotate(int coordinate, int mode, float value, bool minus)
@@ -939,7 +939,7 @@ void BoneMotionModel::rotate(int coordinate, int mode, float value, bool minus)
     }
     selected->setRotation(dest);
     m_model->updateImmediate();
-    emit boneRotationDidChange(selected, dest);
+    emit rotationDidChange(selected, dest);
 }
 
 void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)

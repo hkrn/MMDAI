@@ -89,7 +89,7 @@ public slots:
     void markAsNew() { setModified(false); }
 
 signals:
-    void cameraFrameDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
+    void keyframesDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
     void motionDidUpdate(vpvl::PMDModel *model);
 
 protected:

@@ -99,10 +99,10 @@ public slots:
     void commitTransform();
 
 signals:
-    void bonePositionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
-    void boneRotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &rot);
+    void positionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
+    void rotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &rot);
     void bonesDidSelect(const QList<vpvl::Bone *> &bones);
-    void boneFramesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
+    void keyframesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
     const SceneWidget *m_sceneWidget;

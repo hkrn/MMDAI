@@ -278,9 +278,9 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel 
 
     m_comboBox = new QComboBox();
     m_graphWidget = new InterpolationGraphWidget(bmm, smm);
-    connect(bmm, SIGNAL(boneFramesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
+    connect(bmm, SIGNAL(keyframesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
             m_graphWidget, SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
-    connect(smm, SIGNAL(cameraFrameDidSelect(QList<SceneMotionModel::KeyFramePtr>)),
+    connect(smm, SIGNAL(keyframesDidSelect(QList<SceneMotionModel::KeyFramePtr>)),
             m_graphWidget, SLOT(setCameraKeyFrames(QList<SceneMotionModel::KeyFramePtr>)));
     connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));
     QHBoxLayout *c = new QHBoxLayout();
