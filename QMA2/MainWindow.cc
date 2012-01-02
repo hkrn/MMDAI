@@ -1089,6 +1089,8 @@ void MainWindow::connectSceneLoader()
 
 void MainWindow::connectWidgets()
 {
+    CameraPerspectiveWidget *cameraWidget = m_tabWidget->cameraPerspectiveWidget();
+    Handles *handles = m_sceneWidget->handles();
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
@@ -1096,7 +1098,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidRotate(int,int,float,bool)), m_boneMotionModel, SLOT(rotate(int,int,float,bool)));
     connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)), m_timelineTabWidget, SLOT(addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone*)));
     connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
-    connect(m_tabWidget->cameraPerspectiveWidget(), SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)),
+            m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_tabWidget->interpolationWidget(), SLOT(setMode(int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
@@ -1110,12 +1113,13 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
-            m_tabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
+            cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl::Bone*,vpvl::Vector3)), m_sceneWidget->handles(), SLOT(updateBone()));
-    connect(m_boneMotionModel, SIGNAL(rotationDidChange(vpvl::Bone*,vpvl::Quaternion)), m_sceneWidget->handles(), SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl::Bone*,vpvl::Vector3)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(rotationDidChange(vpvl::Bone*,vpvl::Quaternion)), handles, SLOT(updateBone()));
+    connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
 }
