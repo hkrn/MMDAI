@@ -52,56 +52,12 @@ static const int kSceneTabIndex = 0;
 static const int kBoneTabIndex = 1;
 static const int kFaceTabIndex = 2;
 
-static BoneMotionModel *UIGetBoneModel(TimelineWidget *timeline)
+static void UIAddKeyframesFromSelectedIndices(TimelineWidget *widget)
 {
-    return qobject_cast<BoneMotionModel *>(timeline->treeView()->model());
-}
-
-static FaceMotionModel *UIGetFaceModel(TimelineWidget *timeline)
-{
-    return qobject_cast<FaceMotionModel *>(timeline->treeView()->model());
-}
-
-static SceneMotionModel *UIGetSceneModel(TimelineWidget *timeline)
-{
-    return qobject_cast<SceneMotionModel *>(timeline->treeView()->model());
-}
-
-static QItemSelectionModel *UIGetSelectionModel(TimelineWidget *timeline)
-{
-    return qobject_cast<QItemSelectionModel *>(timeline->treeView()->selectionModel());
-}
-
-static void UIModelInsertBoneFrame(TimelineWidget *timeline)
-{
-    BoneMotionModel *model = UIGetBoneModel(timeline);
-    const QModelIndexList &indices = timeline->treeView()->selectionModel()->selectedIndexes();
-    BoneMotionModel::KeyFramePairList boneFrames;
-    foreach (const QModelIndex &index, indices) {
-        vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
-        QByteArray name = model->nameFromModelIndex(index);
-        int frameIndex = MotionBaseModel::toFrameIndex(index);
-        frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
-        frame->setDefaultInterpolationParameter();
-        boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame)));
-    }
-    model->setFrames(boneFrames);
-}
-
-static void UIModelInsertFaceFrame(TimelineWidget *timeline)
-{
-    FaceMotionModel *model = UIGetFaceModel(timeline);
-    const QModelIndexList &indices = timeline->treeView()->selectionModel()->selectedIndexes();
-    FaceMotionModel::KeyFramePairList faceFrames;
-    foreach (const QModelIndex &index, indices) {
-        vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
-        QByteArray name = model->nameFromModelIndex(index);
-        int frameIndex = MotionBaseModel::toFrameIndex(index);
-        frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
-        frame->setWeight(0);
-        faceFrames.append(FaceMotionModel::KeyFramePair(frameIndex, FaceMotionModel::KeyFramePtr(frame)));
-    }
-    model->setFrames(faceFrames);
+    TimelineTreeView *view = widget->treeView();
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
+    QItemSelectionModel *selection = static_cast<QItemSelectionModel *>(view->selectionModel());
+    model->addKeyFramesByModelIndices(selection->selectedIndexes());
 }
 
 }
@@ -157,7 +113,8 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
 
 void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
 {
-    UIGetBoneModel(m_boneTimeline)->loadPose(pose, model, m_boneTimeline->frameIndex());
+    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+    m->loadPose(pose, model, m_boneTimeline->frameIndex());
 }
 
 void TimelineTabWidget::retranslate()
@@ -170,28 +127,23 @@ void TimelineTabWidget::retranslate()
 
 void TimelineTabWidget::addBoneKeyFramesFromSelectedIndices()
 {
-    BoneMotionModel *model = UIGetBoneModel(m_boneTimeline);
-    QItemSelectionModel *selection = UIGetSelectionModel(m_boneTimeline);
-    model->addKeyFramesByModelIndices(selection->selectedIndexes());
+    UIAddKeyframesFromSelectedIndices(m_boneTimeline);
 }
 
 void TimelineTabWidget::addFaceKeyFramesFromSelectedIndices()
 {
-    FaceMotionModel *model = UIGetFaceModel(m_faceTimeline);
-    QItemSelectionModel *selection = UIGetSelectionModel(m_faceTimeline);
-    model->addKeyFramesByModelIndices(selection->selectedIndexes());
+    UIAddKeyframesFromSelectedIndices(m_faceTimeline);
 }
 
 void TimelineTabWidget::addSceneKeyFramesFromSelectedIndices()
 {
-    SceneMotionModel *model = UIGetSceneModel(m_sceneTimeline);
-    QItemSelectionModel *selection = UIGetSelectionModel(m_sceneTimeline);
-    model->addKeyFramesByModelIndices(selection->selectedIndexes());
+    UIAddKeyframesFromSelectedIndices(m_sceneTimeline);
 }
 
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 {
-    UIGetBoneModel(m_boneTimeline)->savePose(pose, model, m_boneTimeline->frameIndex());
+    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+    m->savePose(pose, model, m_boneTimeline->frameIndex());
 }
 
 void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
@@ -204,7 +156,8 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
         frame->setPosition(bone->position());
         frame->setRotation(bone->rotation());
         boneFrames.append(BoneMotionModel::KeyFramePair(m_boneTimeline->frameIndex(), BoneMotionModel::KeyFramePtr(frame)));
-        UIGetBoneModel(m_boneTimeline)->setFrames(boneFrames);
+        BoneMotionModel *model = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+        model->setFrames(boneFrames);
     }
 }
 
@@ -216,7 +169,8 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face)
         frame->setName(face->name());
         frame->setWeight(face->weight());
         faceFrames.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(frame)));
-        UIGetFaceModel(m_faceTimeline)->setFrames(faceFrames);
+        FaceMotionModel *model = static_cast<FaceMotionModel *>(m_faceTimeline->treeView()->model());
+        model->setFrames(faceFrames);
     }
 }
 
@@ -231,11 +185,39 @@ void TimelineTabWidget::insertFrame()
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        UIModelInsertBoneFrame(m_boneTimeline);
+    {
+        TimelineTreeView *view = m_boneTimeline->treeView();
+        BoneMotionModel *model = static_cast<BoneMotionModel *>(view->model());
+        const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+        BoneMotionModel::KeyFramePairList boneFrames;
+        foreach (const QModelIndex &index, indices) {
+            vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
+            QByteArray name = model->nameFromModelIndex(index);
+            int frameIndex = MotionBaseModel::toFrameIndex(index);
+            frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
+            frame->setDefaultInterpolationParameter();
+            boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame)));
+        }
+        model->setFrames(boneFrames);
         break;
+    }
     case kFaceTabIndex:
-        UIModelInsertFaceFrame(m_faceTimeline);
+    {
+        TimelineTreeView *view = m_faceTimeline->treeView();
+        FaceMotionModel *model = static_cast<FaceMotionModel *>(view->model());
+        const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+        FaceMotionModel::KeyFramePairList faceFrames;
+        foreach (const QModelIndex &index, indices) {
+            vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
+            QByteArray name = model->nameFromModelIndex(index);
+            int frameIndex = MotionBaseModel::toFrameIndex(index);
+            frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
+            frame->setWeight(0);
+            faceFrames.append(FaceMotionModel::KeyFramePair(frameIndex, FaceMotionModel::KeyFramePtr(frame)));
+        }
+        model->setFrames(faceFrames);
         break;
+    }
     }
 }
 
@@ -273,10 +255,15 @@ void TimelineTabWidget::pasteReversedFrame()
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        UIGetBoneModel(m_boneTimeline)->pasteReversedFrame(m_boneTimeline->frameIndex());
+    {
+        BoneMotionModel *model = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+        model->pasteReversedFrame(m_boneTimeline->frameIndex());
         break;
+    }
     default:
+    {
         pasteFrame();
+    }
     }
 }
 
