@@ -21,12 +21,13 @@ exists(../opencv/modules/core/include):INCLUDEPATH += ../opencv/modules/core/inc
 exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highgui/include
 
 # Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lxml2
-win32:LIBS += -lglew32
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+unix:LIBS += -lxml2
+win32:LIBS += -L$$(CMAKE_PREFIX_PATH)/lib -lglew32 -llibxml2
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../libvpvl/debug/include ../bullet/src
-win32:INCLUDEPATH += ../libvpvl/msvc-build/include
+win32:INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include ../libvpvl/msvc-build/include
 
 # configuration by build type
 CONFIG(debug, debug|release) {

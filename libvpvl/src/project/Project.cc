@@ -151,7 +151,7 @@ public:
             }
         }
     }
-    bool removeModel(PMDModel *model) {
+    void removeModel(PMDModel *model) {
         for (PMDModelMap::iterator it = models.begin(); it != models.end(); it++) {
             if ((*it).second == model) {
                 models.erase(it);
@@ -159,7 +159,7 @@ public:
             }
         }
     }
-    bool removeMotion(VMDMotion *motion) {
+    void removeMotion(VMDMotion *motion) {
         for (VMDMotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
             if ((*it).second == motion) {
                 motions.erase(it);
