@@ -34,6 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <qglobal.h>
+#ifndef Q_OS_DARWIN
+#include <GL/glew.h>
+#endif /* Q_OS_DARWIN */
+
 #include "Handles.h"
 #include "SceneWidget.h"
 #include "World.h"

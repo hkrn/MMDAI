@@ -35,9 +35,9 @@
 /* ----------------------------------------------------------------- */
 
 #include <qglobal.h>
-#ifdef Q_OS_WIN
+#ifndef Q_OS_DARWIN
 #include <GL/glew.h>
-#endif /* Q_OS_WIN */
+#endif /* Q_OS_DARWIN */
 
 #include "SceneLoader.h"
 #include "VPDFile.h"
