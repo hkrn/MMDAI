@@ -86,6 +86,11 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+#ifdef Q_OS_WIN
+    addLibrary("zlib", "zlib", "http://zlib.net", "zlib");
+    addLibrary("libiconv", "LGPL", "http://www.gnu.org/software/libiconv/", "libiconv");
+#endif
+    addLibrary("libxml2", "MIT", "http://xmlsoft.org", "libxml2");
     addLibrary("OpenCV", "New BSD", "http://opencv.willowgarage.com", "OpenCV");
     addLibrary("Open Asset Import Library", "New BSD", "http://assimp.sf.net", "Assimp");
     addLibrary("OpenGL Extension Wranger", "New BSD", "http://glew.sf.net", "GLEW");
