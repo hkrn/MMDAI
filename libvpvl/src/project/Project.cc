@@ -37,7 +37,7 @@
 #include "vpvl/vpvl.h"
 #include "vpvl/internal/util.h"
 
-#include <libxml2/libxml/xmlwriter.h>
+#include <libxml/xmlwriter.h>
 #include <string>
 #include <sstream>
 #include <map>

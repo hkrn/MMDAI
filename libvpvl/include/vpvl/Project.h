@@ -37,7 +37,7 @@
 #ifndef VPVL_PROJECT_H_
 #define VPVL_PROJECT_H_
 
-#include <libxml2/libxml/SAX2.h>
+#include <libxml/SAX2.h>
 #include <string>
 #include <vector>
 
