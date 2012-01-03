@@ -535,14 +535,16 @@ void BoneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indic
         QList<vpvl::Bone *> bones;
         QList<KeyFramePtr> frames;
         foreach (const QModelIndex &index, indices) {
-            vpvl::Bone *bone = BoneFromModelIndex(index, m_model);
-            if (bone)
-                bones.append(bone);
-            const QVariant &data = index.data(kBinaryDataRole);
-            if (data.canConvert(QVariant::ByteArray)) {
-                vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
-                frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
-                frames.append(KeyFramePtr(frame));
+            if (index.isValid()) {
+                vpvl::Bone *bone = BoneFromModelIndex(index, m_model);
+                if (bone)
+                    bones.append(bone);
+                const QVariant &data = index.data(kBinaryDataRole);
+                if (data.canConvert(QVariant::ByteArray)) {
+                    vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
+                    frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
+                    frames.append(KeyFramePtr(frame));
+                }
             }
         }
         emit keyframesDidSelect(frames);
@@ -767,6 +769,20 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
         }
     }
     setFrames(keyframes);
+}
+
+void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
+{
+    QList<vpvl::Bone *> bones;
+    foreach (const QModelIndex &index, indices) {
+        if (index.isValid()) {
+            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+            if (vpvl::Bone *bone = item->bone())
+                bones.append(bone);
+        }
+    }
+    m_selected = bones;
+    emit bonesDidSelect(bones);
 }
 
 void BoneMotionModel::resetBone(ResetType type)

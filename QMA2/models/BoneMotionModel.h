@@ -88,6 +88,7 @@ public slots:
     void selectKeyframesByModelIndices(const QModelIndexList &indices);
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
+    void selectBonesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);

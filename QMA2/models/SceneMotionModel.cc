@@ -339,11 +339,13 @@ void SceneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indi
 {
     QList<KeyFramePtr> frames;
     foreach (const QModelIndex &index, indices) {
-        const QVariant &data = index.data(kBinaryDataRole);
-        if (data.canConvert(QVariant::ByteArray)) {
-            vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
-            frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
-            frames.append(KeyFramePtr(frame));
+        if (index.isValid()) {
+            const QVariant &data = index.data(kBinaryDataRole);
+            if (data.canConvert(QVariant::ByteArray)) {
+                vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
+                frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
+                frames.append(KeyFramePtr(frame));
+            }
         }
     }
     if (!frames.isEmpty())

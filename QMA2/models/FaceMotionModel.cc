@@ -384,9 +384,11 @@ void FaceMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indic
     if (m_model) {
         QList<vpvl::Face *> faces;
         foreach (const QModelIndex &index, indices) {
-            vpvl::Face *face = FaceFromModelIndex(index, m_model);
-            if (face)
-                faces.append(face);
+            if (index.isValid()) {
+                vpvl::Face *face = FaceFromModelIndex(index, m_model);
+                if (face)
+                    faces.append(face);
+            }
         }
         if (!faces.isEmpty())
             selectFaces(faces);
