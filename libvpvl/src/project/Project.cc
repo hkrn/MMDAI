@@ -64,7 +64,7 @@ public:
         kAssetMotion,
         kAnimation,
         kBoneMotion,
-        kVerticesMotion,
+        kMorphMotion,
         kCameraMotion,
         kLightMotion
     };
@@ -270,7 +270,7 @@ public:
             }
             VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("animation"), 0));
-            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("vertices")));
+            VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("type"), VPVL_CAST_XC("morph")));
             const FaceAnimation &fa = motion->faceAnimation();
             nframes = fa.countKeyframes();
             for (int j = 0; j < nframes; j++) {
@@ -389,7 +389,7 @@ public:
             return "kAnimation";
         case kBoneMotion:
             return "kBoneMotion";
-        case kVerticesMotion:
+        case kMorphMotion:
             return "kVerticesMotion";
         case kCameraMotion:
             return "kCameraMotion";
@@ -580,11 +580,11 @@ public:
                     else if (strncmp(attributeName, "light", 5) == 0) {
                         self->pushState(kLightMotion);
                     }
+                    else if (strncmp(attributeName, "morph", 5) == 0) {
+                        self->pushState(kMorphMotion);
+                    }
                     else if (strncmp(attributeName, "camera", 6) == 0) {
                         self->pushState(kCameraMotion);
-                    }
-                    else if (strncmp(attributeName, "vertices", 8) == 0) {
-                        self->pushState(kVerticesMotion);
                     }
                 }
             }
@@ -657,7 +657,7 @@ public:
                 self->currentMotion->mutableBoneAnimation()->addKeyframe(keyframe);
                 break;
             }
-            case kVerticesMotion:
+            case kMorphMotion:
             {
                 FaceKeyframe *keyframe = new FaceKeyframe();
                 for (int i = 0; i < nattributes; i++, index += 5) {
