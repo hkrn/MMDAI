@@ -130,6 +130,8 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     treeView->setModel(base);
     treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
     treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    connect(treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            treeView, SLOT(selectModelIndices(QItemSelection,QItemSelection)));
     TimelineHeaderView *header = new TimelineHeaderView(Qt::Horizontal);
     connect(header, SIGNAL(frameIndexDidSelect(int)), this, SLOT(setCurrentFrameIndex(int)));
     treeView->setHeader(header);

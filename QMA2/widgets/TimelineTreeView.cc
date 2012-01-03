@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "models/BoneMotionModel.h"
 #include "models/PMDMotionModel.h"
 #include "models/SceneMotionModel.h"
 #include "widgets/TimelineTreeView.h"
@@ -117,30 +118,6 @@ void TimelineTreeView::setKeyframeWeightBySelectedIndices(float value)
     m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), value);
 }
 
-void TimelineTreeView::mousePressEvent(QMouseEvent *event)
-{
-    /* ボーンまたは頂点モーフの名前から対象を選択する処理 */
-    const QModelIndex &index = indexAt(event->pos());
-    QAbstractItemModel *m = model();
-    /* ボーンまた頂点モーフのモデルである PMDMotionModel のクラスである */
-    if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(m)) {
-        PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
-        /* ルートでもカテゴリでもなく、ボーンまたは頂点フレームのキーフレームが選択されていることを確認する */
-        if (item && !item->isRoot() && !item->isCategory()) {
-            selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            pmm->selectKeyframesByModelIndices(selectionModel()->selection().indexes());
-        }
-    }
-    /* 場面のモデルである SceneMotionModel のクラスである */
-    else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {
-        SceneMotionModel::ITreeItem *item = static_cast<SceneMotionModel::ITreeItem *>(index.internalPointer());
-        /* ルートでもカテゴリでもなく、カメラまたは照明のキーフレームが選択されていることを確認する */
-        if (item && !item->isRoot() && !item->isCategory())
-            smm->selectKeyframesByModelIndex(index);
-    }
-    QTreeView::mousePressEvent(event);
-}
-
 const QModelIndexList &TimelineTreeView::expandedModelIndices() const
 {
     return m_expanded;
@@ -155,6 +132,57 @@ void TimelineTreeView::addExpanded(const QModelIndex &index)
 {
     if (!m_expanded.contains(index))
         m_expanded.append(index);
+}
+
+void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const QItemSelection & /* deselected */)
+{
+    QAbstractItemModel *m = model();
+    QModelIndexList names, indices;
+    /* ボーンまた頂点モーフのモデルである PMDMotionModel のクラスである */
+    if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(m)) {
+        QItemSelectionModel *sm = selectionModel();
+        foreach (const QModelIndex &index, selected.indexes()) {
+            PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
+            /* ボーンまたは頂点フレームのカテゴリ名またはキーフレームが選択されていることを確認する */
+            int column = index.column();
+            if (item && !item->isRoot()) {
+                if (item->isCategory()) {
+                    int nchildren = item->countChildren();
+                    for (int i = 0; i < nchildren; i++) {
+                        if (column == 0) {
+                            const QModelIndex &child = pmm->index(i, 0, index);
+                            names.append(child);
+                            sm->select(child, QItemSelectionModel::Select);
+                        }
+                        else {
+                            int frameIndex = PMDMotionModel::toFrameIndex(column);
+                            const QModelIndex &child = pmm->frameIndexToModelIndex(item->child(i), frameIndex);
+                            indices.append(child);
+                            sm->select(child, QItemSelectionModel::Select);
+                        }
+                    }
+                }
+                else {
+                    column == 0 ? names.append(index) : indices.append(index);
+                }
+            }
+        }
+        /* テーブルモデルがボーンの場合は該当ボーンを選択状態にする処理を入れる */
+        BoneMotionModel *bmm = 0;
+        if (!names.empty() && (bmm = qobject_cast<BoneMotionModel *>(pmm)))
+            bmm->selectBonesByModelIndices(names);
+        pmm->selectKeyframesByModelIndices(indices);
+    }
+    /* 場面のモデルである SceneMotionModel のクラスである */
+    else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {
+        foreach (const QModelIndex &index, selected.indexes()) {
+            SceneMotionModel::ITreeItem *item = static_cast<SceneMotionModel::ITreeItem *>(index.internalPointer());
+            /* ルートでもカテゴリでもなく、カメラまたは照明のキーフレームが選択されていることを確認する */
+            if (item && !item->isRoot() && !item->isCategory())
+                indices.append(index);
+        }
+        smm->selectKeyframesByModelIndices(indices);
+    }
 }
 
 TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation, QWidget *parent)
