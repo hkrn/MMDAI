@@ -138,7 +138,10 @@ private:
     void retranslate();
     void connectWidgets();
     void updateInformation();
-    const QString openSaveDialog(const QString &name, const QString &desc, const QString &exts);
+    const QString openSaveDialog(const QString &name,
+                                 const QString &desc,
+                                 const QString &exts,
+                                 const QString &defaultFilename);
 
     QSettings m_settings;
     QUndoGroup *m_undo;
