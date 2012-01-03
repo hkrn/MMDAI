@@ -54,6 +54,7 @@ public:
     void deleteKeyframesBySelectedIndices();
     void copyKeyframes(int frameIndex);
     void pasteKeyframes(int frameIndex);
+    void setKeyframeWeightBySelectedIndices(float value);
     const QModelIndexList &expandedModelIndices() const;
 
 public slots:

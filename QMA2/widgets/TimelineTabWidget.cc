@@ -120,6 +120,10 @@ void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
 
 void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
 {
+    /*
+     * 渡されたボーンの名前と位置と回転情報を元に新しいボーンのキーフレームとして登録する処理
+     * (BoneKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
+     */
     if (bone) {
         BoneMotionModel::KeyFramePairList boneFrames;
         vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
@@ -135,6 +139,10 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
 
 void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face)
 {
+    /*
+     * 渡された頂点モーフの名前と重み係数を元に新しい頂点モーフのキーフレームとして登録する処理
+     * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
+     */
     if (face) {
         FaceMotionModel::KeyFramePairList faceFrames;
         vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
@@ -268,6 +276,7 @@ void TimelineTabWidget::toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model)
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
 {
+    /* from と to の値が逆転していないかの検証 (本来は from <= to が正しい) */
     if (fromIndex > toIndex)
         qSwap(fromIndex, toIndex);
     QList<int> frameIndices;
@@ -278,6 +287,7 @@ void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
 
 void TimelineTabWidget::setKeyframeWeight(float value)
 {
+    currentSelectedTimelineWidget()->treeView()->setKeyframeWeightBySelectedIndices(value);
 }
 
 void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)

@@ -64,9 +64,9 @@ void TimelineTreeView::selectFrameIndex(int frameIndex)
 
 void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly)
 {
-    /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
     QItemSelection selection;
     if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(model())) {
+        /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
         foreach (PMDMotionModel::ITreeItem *item, pmm->keys().values()) {
             foreach (int frameIndex, frameIndices) {
                 const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
@@ -75,18 +75,17 @@ void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool r
                 selection.append(QItemSelectionRange(index));
             }
         }
-        QItemSelectionModel *sm = selectionModel();
-        sm->select(selection, QItemSelectionModel::ClearAndSelect);
+        selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
     }
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(model())) {
-        QItemSelectionModel *sm = selectionModel();
+        /* 現在のキーフレームのインデックスから現時点ではカメラフレームのみを選択する処理 */
         foreach (int frameIndex, frameIndices) {
             const QModelIndex &index = smm->index(0, MotionBaseModel::toModelIndex(frameIndex));
             if (registeredOnly && !index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                 continue;
             selection.append(QItemSelectionRange(index));
         }
-        sm->select(selection, QItemSelectionModel::ClearAndSelect);
+        selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
     }
 }
 
@@ -99,11 +98,7 @@ void TimelineTreeView::addKeyframesBySelectedIndices()
 void TimelineTreeView::deleteKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = qobject_cast<MotionBaseModel *>(model());
-    const QModelIndexList &indices = selectionModel()->selectedIndexes();
-    foreach (const QModelIndex &index, indices) {
-        if (index.column() > 1)
-            m->deleteKeyframeByModelIndex(index);
-    }
+    m->deleteKeyframesByModelIndices(selectionModel()->selectedIndexes());
 }
 
 void TimelineTreeView::copyKeyframes(int frameIndex)
@@ -114,6 +109,10 @@ void TimelineTreeView::copyKeyframes(int frameIndex)
 void TimelineTreeView::pasteKeyframes(int frameIndex)
 {
     static_cast<MotionBaseModel *>(model())->pasteKeyframes(frameIndex);
+}
+
+void TimelineTreeView::setKeyframeWeightBySelectedIndices(float /* value */)
+{
 }
 
 void TimelineTreeView::mousePressEvent(QMouseEvent *event)
