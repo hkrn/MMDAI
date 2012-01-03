@@ -534,7 +534,6 @@ void BoneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indic
     if (m_model) {
         QList<vpvl::Bone *> bones;
         QList<KeyFramePtr> frames;
-        qDebug() << indices;
         foreach (const QModelIndex &index, indices) {
             vpvl::Bone *bone = BoneFromModelIndex(index, m_model);
             if (bone)
