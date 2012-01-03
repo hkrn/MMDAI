@@ -102,6 +102,7 @@ public:
           m_fmm(bmm)
     {
         QHash<int, bool> indexProceeded;
+        /* 現在選択中のモデルにある全ての頂点モーフを取り出す */
         const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
         foreach (const FaceMotionModel::KeyFramePair &frame, frames) {
@@ -112,7 +113,7 @@ public:
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(FaceMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
-                        m_indices.append(index);
+                        m_modelIndices.append(index);
                 }
                 indexProceeded[frameIndex] = true;
             }
@@ -125,16 +126,17 @@ public:
 
     virtual void undo() {
         /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
+        const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
         vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyframes(frameIndex);
-            foreach (PMDMotionModel::ITreeItem *item, m_fmm->keys().values()) {
+            foreach (PMDMotionModel::ITreeItem *item, items) {
                 const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                 m_fmm->setData(index, QVariant());
             }
         }
         /* コンストラクタで保存したキーフレームの生データから頂点モーフのキーフレームに復元して置換する */
-        foreach (const QModelIndex &index, m_indices) {
+        foreach (const QModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.data(FaceMotionModel::kBinaryDataRole).toByteArray();
             m_fmm->setData(index, bytes, Qt::EditRole);
             vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
@@ -195,7 +197,7 @@ public:
 
 private:
     QList<int> m_frameIndices;
-    QModelIndexList m_indices;
+    QModelIndexList m_modelIndices;
     FaceMotionModel::KeyFramePairList m_frames;
     FaceMotionModel *m_fmm;
 };

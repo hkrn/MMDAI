@@ -109,7 +109,7 @@ public:
         foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
             if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
-                m_indices.append(index);
+                m_modelIndices.append(index);
         }
         m_pose = pose->clone();
     }
@@ -129,7 +129,7 @@ public:
          * コンストラクタで保存したボーン情報を復元して置換する。注意点として replaceKeyFrame でメモリの所有者が
          * vpvl::BoneAnimation に移動するのでこちらで管理する必要がなくなる
          */
-        foreach (const QModelIndex &index, m_indices) {
+        foreach (const QModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
@@ -178,7 +178,7 @@ public:
     }
 
 private:
-    QModelIndexList m_indices;
+    QModelIndexList m_modelIndices;
     BoneMotionModel *m_bmm;
     VPDFile *m_pose;
     int m_frameIndex;
@@ -193,6 +193,7 @@ public:
           m_parameter(bmm->interpolationParameter())
     {
         QHash<int, bool> indexProceeded;
+        /* 現在選択中のモデルにある全てのボーンを取り出す */
         const BoneMotionModel::TreeItemList &items = m_bmm->keys().values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
         foreach (const BoneMotionModel::KeyFramePair &frame, frames) {
@@ -203,7 +204,7 @@ public:
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
-                        m_indices.append(index);
+                        m_modelIndices.append(index);
                 }
                 indexProceeded[frameIndex] = true;
             }
@@ -216,16 +217,17 @@ public:
 
     virtual void undo() {
         /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
+        const BoneMotionModel::TreeItemList &items = m_bmm->keys().values();
         vpvl::BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyframes(frameIndex);
-            foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
+            foreach (PMDMotionModel::ITreeItem *item, items) {
                 const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
                 m_bmm->setData(index, QVariant());
             }
         }
         /* コンストラクタで保存したキーフレームの生データからボーンのキーフレームに復元して置換する */
-        foreach (const QModelIndex &index, m_indices) {
+        foreach (const QModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
             vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
@@ -288,7 +290,7 @@ public:
 
 private:
     QList<int> m_frameIndices;
-    QModelIndexList m_indices;
+    QModelIndexList m_modelIndices;
     BoneMotionModel::KeyFramePairList m_frames;
     BoneMotionModel *m_bmm;
     vpvl::BoneKeyframe::InterpolationParameter m_parameter;
