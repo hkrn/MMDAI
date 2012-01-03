@@ -34,77 +34,42 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SCENEMOTIONMODEL_H
-#define SCENEMOTIONMODEL_H
+#include "FrameWeightDialog.h"
+#include "common/SceneWidget.h"
 
-#include "models/MotionBaseModel.h"
+#include <QtGui/QtGui>
+#include <vpvl/vpvl.h>
 
-#include <vpvl/CameraKeyFrame.h>
-
-namespace vpvl {
-class PMDModel;
-class Scene;
+FrameWeightDialog::FrameWeightDialog(QWidget *parent) :
+    QDialog(parent)
+{
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    m_weightBox = new QDoubleSpinBox();
+    m_weightBox->setMinimum(0.01);
+    m_weightBox->setSingleStep(0.01);
+    QFormLayout *formLayout = new QFormLayout();
+    formLayout->addRow(tr("Keyframe weight"), m_weightBox);
+    mainLayout->addLayout(formLayout);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+    mainLayout->addWidget(buttons);
+    connect(buttons, SIGNAL(accepted()), this, SLOT(emitKeyframeWeight()));
+    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
+    connect(this, SIGNAL(keyframeWeightDidSet(float)), this, SLOT(close()));
+    resetValue();
+    setWindowTitle(tr("Keyframe weight dialog"));
+    setLayout(mainLayout);
 }
 
-class SceneWidget;
-
-class SceneMotionModel : public MotionBaseModel
+FrameWeightDialog::~FrameWeightDialog()
 {
-    Q_OBJECT
+}
 
-public:
-    typedef QSharedPointer<vpvl::BaseKeyframe> KeyFramePtr;
-    typedef QPair<int, KeyFramePtr> KeyFramePair;
-    typedef QList<KeyFramePair> KeyFramePairList;
+void FrameWeightDialog::resetValue()
+{
+    m_weightBox->setValue(1.0);
+}
 
-    explicit SceneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent = 0);
-    ~SceneMotionModel();
-
-    virtual QVariant data(const QModelIndex &index, int role) const;
-    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    virtual int maxFrameCount() const;
-    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
-
-    void saveMotion(vpvl::VMDMotion *motion);
-    void copyKeyframes(int frameIndex);
-    void pasteKeyframes(int frameIndex);
-    const QByteArray nameFromModelIndex(const QModelIndex &index) const;
-
-    void setFrames(const KeyFramePairList &frames);
-    void refreshScene();
-    const vpvl::CameraKeyframe::InterpolationParameter &cameraInterpolationParameter() const {
-        return m_cameraInterpolationParameter;
-    }
-    void setCameraInterpolationParameter(const vpvl::CameraKeyframe::InterpolationParameter &value) {
-        m_cameraInterpolationParameter = value;
-    }
-
-public slots:
-    void addKeyframesByModelIndices(const QModelIndexList &indices);
-    void selectKeyframesByModelIndices(const QModelIndexList &indices);
-    void deleteKeyframesByModelIndices(const QModelIndexList &indices);
-    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
-    void removeMotion();
-    void loadMotion(vpvl::VMDMotion *motion);
-    void markAsNew() { setModified(false); }
-
-signals:
-    void keyframesDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
-    void motionDidUpdate(vpvl::PMDModel *model);
-
-protected:
-    virtual ITreeItem *root() const { return m_rootTreeItem; }
-
-private:
-    const SceneWidget *m_sceneWidget;
-    QModelIndex m_cameraIndex;
-    Values m_cameraData;
-    vpvl::CameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
-    ITreeItem *m_rootTreeItem;
-    ITreeItem *m_cameraTreeItem;
-
-    Q_DISABLE_COPY(SceneMotionModel)
-};
-
-#endif // SCENEMOTIONMODEL_H
+void FrameWeightDialog::emitKeyframeWeight()
+{
+    emit keyframeWeightDidSet(m_weightBox->value());
+}

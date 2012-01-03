@@ -199,7 +199,7 @@ public:
             int frameIndex = frame.first;
             /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded[frameIndex]) {
-                /* モデルの全てのボーンを対象にデータがあるか確認し、あれば保存する */
+                /* モデルの全てのボーンを対象にデータがあるか確認し、存在している場合のみボーンのキーフレームの生データを保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
@@ -224,7 +224,7 @@ public:
                 m_bmm->setData(index, QVariant());
             }
         }
-        /* コンストラクタで保存したボーン情報を復元して置換する */
+        /* コンストラクタで保存したキーフレームの生データからボーンのキーフレームに復元して置換する */
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
             m_bmm->setData(index, bytes, Qt::EditRole);
@@ -737,18 +737,35 @@ void BoneMotionModel::removeModel()
 
 void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
+    vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             /* QModelIndex にあるボーンとフレームインデックスからキーフレームを削除する */
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            vpvl::Bone *bone = item->bone();
-            if (bone) {
-                vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
+            if (vpvl::Bone *bone = item->bone())
                 animation->deleteKeyframe(toFrameIndex(index), bone->name());
-            }
             setData(index, QVariant());
         }
     }
+}
+
+void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
+{
+    KeyFramePairList keyframes;
+    foreach (const QModelIndex &index, indices) {
+        if (index.isValid()) {
+            /* QModelIndex にあるボーンとフレームインデックスからキーフレームを取得し、値を補正する */
+            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+            if (vpvl::Bone *bone = item->bone()) {
+                vpvl::BoneKeyframe *keyframe = new vpvl::BoneKeyframe();
+                keyframe->setName(bone->name());
+                keyframe->setPosition(bone->position() * value);
+                keyframe->setRotation(bone->rotation() * value);
+                keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
+            }
+        }
+    }
+    setFrames(keyframes);
 }
 
 void BoneMotionModel::resetBone(ResetType type)

@@ -97,7 +97,7 @@ void TimelineTreeView::addKeyframesBySelectedIndices()
 
 void TimelineTreeView::deleteKeyframesBySelectedIndices()
 {
-    MotionBaseModel *m = qobject_cast<MotionBaseModel *>(model());
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
     m->deleteKeyframesByModelIndices(selectionModel()->selectedIndexes());
 }
 
@@ -111,8 +111,10 @@ void TimelineTreeView::pasteKeyframes(int frameIndex)
     static_cast<MotionBaseModel *>(model())->pasteKeyframes(frameIndex);
 }
 
-void TimelineTreeView::setKeyframeWeightBySelectedIndices(float /* value */)
+void TimelineTreeView::setKeyframeWeightBySelectedIndices(float value)
 {
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
+    m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), value);
 }
 
 void TimelineTreeView::mousePressEvent(QMouseEvent *event)

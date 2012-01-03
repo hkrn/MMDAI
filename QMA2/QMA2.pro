@@ -120,6 +120,7 @@ SOURCES += main.cc \
     models/SceneMotionModel.cc \
     dialogs/BoneDialog.cc \
     dialogs/ExportVideoDialog.cc \
+    dialogs/FrameWeightDialog.cc \
     dialogs/PlaySettingDialog.cc \
     dialogs/EdgeOffsetDialog.cc \
     widgets/TimelineWidget.cc \
@@ -127,6 +128,7 @@ SOURCES += main.cc \
     widgets/CameraPerspectiveWidget.cc \
     widgets/TabWidget.cc \
     widgets/TimelineTabWidget.cc \
+    widgets/TimelineTreeView.cc \
     widgets/InterpolationWidget.cc \
     widgets/LicenseWidget.cc \
     widgets/AssetWidget.cc \
@@ -156,6 +158,7 @@ HEADERS  += \
     models/PMDMotionModel.h \
     dialogs/BoneDialog.h \
     dialogs/ExportVideoDialog.h \
+    dialogs/FrameWeightDialog.h \
     dialogs/PlaySettingDialog.h \
     dialogs/EdgeOffsetDialog.h \
     widgets/TimelineWidget.h \
@@ -163,6 +166,7 @@ HEADERS  += \
     widgets/CameraPerspectiveWidget.h \
     widgets/TabWidget.h \
     widgets/TimelineTabWidget.h \
+    widgets/TimelineTreeView.h \
     widgets/InterpolationWidget.h \
     widgets/LicenseWidget.h \
     widgets/AssetWidget.h \

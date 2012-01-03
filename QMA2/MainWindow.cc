@@ -47,6 +47,7 @@
 #include "dialogs/EdgeOffsetDialog.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
+#include "dialogs/FrameWeightDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/FaceMotionModel.h"
@@ -192,6 +193,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
     m_frameSelectionDialog(0),
+    m_frameWeightDialog(0),
     m_boneUIDelegate(0),
     m_player(0),
     m_model(0),
@@ -224,6 +226,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete m_frameWeightDialog;
     delete m_frameSelectionDialog;
     delete m_undo;
     delete m_licenseWidget;
@@ -648,6 +651,8 @@ void MainWindow::buildUI()
     connect(m_actionSelectAllFrames, SIGNAL(triggered()), this, SLOT(selectAllRegisteredKeyFrames()));
     m_actionSelectFrameDialog = new QAction(this);
     connect(m_actionSelectFrameDialog, SIGNAL(triggered()), this, SLOT(openFrameSelectionDialog()));
+    m_actionFrameWeightDialog = new QAction(this);
+    connect(m_actionFrameWeightDialog, SIGNAL(triggered()), this, SLOT(openFrameWeightDialog()));
     m_actionCopy = new QAction(this);
     connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
     m_actionPaste = new QAction(this);
@@ -778,6 +783,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
+    m_menuFrame->addAction(m_actionFrameWeightDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
@@ -890,6 +896,7 @@ void MainWindow::bindActions()
     m_actionRegisterFrame->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
     m_actionSelectAllFrames->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
     m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog").toString());
+    m_actionFrameWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
@@ -1014,6 +1021,8 @@ void MainWindow::retranslate()
     m_actionSelectAllFrames->setStatusTip(tr("Select all registered keyframes."));
     m_actionSelectFrameDialog->setText(tr("Open keyframe range selection dialog"));
     m_actionSelectFrameDialog->setStatusTip(tr("Open keyframe range selection dialog to select multiple frame indices."));
+    m_actionFrameWeightDialog->setText(tr("Open keyframe weight dialog"));
+    m_actionFrameWeightDialog->setStatusTip(tr("Open keyframe weight dialog to set weight to selected registered keyframes."));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
@@ -1421,6 +1430,17 @@ void MainWindow::openFrameSelectionDialog()
     }
     m_frameSelectionDialog->setMaxFrameIndex(m_sceneWidget->scene()->maxFrameIndex());
     m_frameSelectionDialog->show();
+}
+
+void MainWindow::openFrameWeightDialog()
+{
+    if (!m_frameWeightDialog) {
+        m_frameWeightDialog = new FrameWeightDialog(this);
+        connect(m_frameWeightDialog, SIGNAL(keyframeWeightDidSet(float)),
+                m_timelineTabWidget, SLOT(setKeyframeWeight(float)));
+    }
+    m_frameWeightDialog->resetValue();
+    m_frameWeightDialog->show();
 }
 
 void MainWindow::selectAllRegisteredKeyFrames()

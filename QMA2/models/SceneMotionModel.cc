@@ -410,14 +410,18 @@ void SceneMotionModel::removeMotion()
 void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
     static const uint8_t *kNoName = reinterpret_cast<const uint8_t *>("");
+    vpvl::CameraAnimation *animation = m_motion->mutableCameraAnimation();
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
-            if (index.row() == m_cameraTreeItem->rowIndex() && item->isCategory()) {
-                vpvl::CameraAnimation *animation = m_motion->mutableCameraAnimation();
+            if (index.row() == m_cameraTreeItem->rowIndex() && item->isCategory())
                 animation->deleteKeyframe(toFrameIndex(index), kNoName);
-            }
             setData(index, QVariant());
         }
     }
+}
+
+void SceneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList & /* indices */, float /* value */)
+{
+    /* 現在この処理はまだ何も無い */
 }

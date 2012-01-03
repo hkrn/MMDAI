@@ -125,15 +125,15 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
      * (BoneKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (bone) {
-        BoneMotionModel::KeyFramePairList boneFrames;
-        vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
-        frame->setDefaultInterpolationParameter();
-        frame->setName(bone->name());
-        frame->setPosition(bone->position());
-        frame->setRotation(bone->rotation());
-        boneFrames.append(BoneMotionModel::KeyFramePair(m_boneTimeline->frameIndex(), BoneMotionModel::KeyFramePtr(frame)));
+        BoneMotionModel::KeyFramePairList keyframes;
+        vpvl::BoneKeyframe *keyframe = new vpvl::BoneKeyframe();
+        keyframe->setDefaultInterpolationParameter();
+        keyframe->setName(bone->name());
+        keyframe->setPosition(bone->position());
+        keyframe->setRotation(bone->rotation());
+        keyframes.append(BoneMotionModel::KeyFramePair(m_boneTimeline->frameIndex(), BoneMotionModel::KeyFramePtr(keyframe)));
         BoneMotionModel *model = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
-        model->setFrames(boneFrames);
+        model->setFrames(keyframes);
     }
 }
 
@@ -144,13 +144,13 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face)
      * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (face) {
-        FaceMotionModel::KeyFramePairList faceFrames;
-        vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
-        frame->setName(face->name());
-        frame->setWeight(face->weight());
-        faceFrames.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(frame)));
+        FaceMotionModel::KeyFramePairList keyframes;
+        vpvl::FaceKeyframe *keyframe = new vpvl::FaceKeyframe();
+        keyframe->setName(face->name());
+        keyframe->setWeight(face->weight());
+        keyframes.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(keyframe)));
         FaceMotionModel *model = static_cast<FaceMotionModel *>(m_faceTimeline->treeView()->model());
-        model->setFrames(faceFrames);
+        model->setFrames(keyframes);
     }
 }
 

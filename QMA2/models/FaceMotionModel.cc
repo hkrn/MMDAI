@@ -108,7 +108,7 @@ public:
             int frameIndex = frame.first;
             /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded[frameIndex]) {
-                /* モデルの全ての頂点モーフを対象にデータがあるか確認し、あれば保存する */
+                /* モデルの全ての頂点モーフを対象にデータがあるか確認し、存在している場合のみボーンのキーフレームの生データを保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                     if (index.data(FaceMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
@@ -133,7 +133,7 @@ public:
                 m_fmm->setData(index, QVariant());
             }
         }
-        /* コンストラクタで保存した頂点モーフ情報を復元して置換する */
+        /* コンストラクタで保存したキーフレームの生データから頂点モーフのキーフレームに復元して置換する */
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(FaceMotionModel::kBinaryDataRole).toByteArray();
             m_fmm->setData(index, bytes, Qt::EditRole);
@@ -540,18 +540,34 @@ void FaceMotionModel::removeModel()
 
 void FaceMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
+    vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを削除する */
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            vpvl::Face *face = item->face();
-            if (face) {
-                vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
+            if (vpvl::Face *face = item->face())
                 animation->deleteKeyframe(toFrameIndex(index), face->name());
-            }
             setData(index, QVariant());
         }
     }
+}
+
+void FaceMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
+{
+    KeyFramePairList keyframes;
+    foreach (const QModelIndex &index, indices) {
+        if (index.isValid()) {
+            /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを取得し、値を補正する */
+            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+            if (vpvl::Face *face = item->face()) {
+                vpvl::FaceKeyframe *keyframe = new vpvl::FaceKeyframe();
+                keyframe->setName(face->name());
+                keyframe->setWeight(face->weight() * value);
+                keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
+            }
+        }
+    }
+    setFrames(keyframes);
 }
 
 void FaceMotionModel::selectFaces(const QList<vpvl::Face *> &faces)
