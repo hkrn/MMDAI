@@ -34,85 +34,60 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETABWIDGET_H
-#define TIMELINETABWIDGET_H
+#ifndef TIMELINETREEVIEW_H
+#define TIMELINETREEVIEW_H
 
-#include <QtGui/QWidget>
-#include <QtGui/QAbstractItemView>
+#include <QtCore/QModelIndex>
+#include <QtGui/QHeaderView>
+#include <QtGui/QTreeView>
 
-namespace vpvl {
-class Bone;
-class Face;
-class PMDModel;
-class VPDPose;
-}
-
-class QSettings;
-class QTabWidget;
-class TimelineWidget;
-class BoneMotionModel;
-class FaceMotionModel;
-class MotionBaseModel;
-class SceneMotionModel;
-class VPDFile;
-
-class TimelineTabWidget : public QWidget
+class TimelineTreeView : public QTreeView
 {
     Q_OBJECT
 
 public:
-    enum Type {
-        kBone,
-        kFace,
-        kScene
-    };
+    explicit TimelineTreeView(QWidget *parent = 0);
+    ~TimelineTreeView();
 
-    explicit TimelineTabWidget(QSettings *settings,
-                               BoneMotionModel *bmm,
-                               FaceMotionModel *fmm,
-                               SceneMotionModel *smm,
-                               QWidget *parent = 0);
-    ~TimelineTabWidget();
+    void selectFrameIndex(int frameIndex);
+    void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
+    void deleteKeyframesBySelectedIndices();
+    void copyKeyframes(int frameIndex);
+    void pasteKeyframes(int frameIndex);
+    const QModelIndexList &expandedModelIndices() const;
 
 public slots:
-    void addKeyFramesFromSelectedIndices();
-    void loadPose(VPDFile *pose, vpvl::PMDModel *model);
-    void savePose(VPDFile *pose, vpvl::PMDModel *model);
-    void selectFrameIndices(int fromIndex, int toIndex);
-    void setKeyframeWeight(float value);
+    void addKeyframesBySelectedIndices();
 
-signals:
-    void motionDidSeek(float frameIndex);
-    void currentTabDidChange(int type);
+protected:
+    virtual void mousePressEvent(QMouseEvent *event);
 
 private slots:
-    void retranslate();
-    void addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone);
-    void addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face);
-    void setCurrentFrameIndexZero();
-    void insertFrame();
-    void deleteFrame();
-    void copyFrame();
-    void pasteFrame();
-    void pasteReversedFrame();
-    void nextFrame();
-    void previousFrame();
-    void setCurrentTabIndex(int index);
-    void notifyCurrentTabIndex();
-    void toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model);
-    void toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model);
+    void addCollapsed(const QModelIndex &index);
+    void addExpanded(const QModelIndex &index);
 
 private:
-    void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
-    TimelineWidget *currentSelectedTimelineWidget() const;
+    QModelIndexList m_expanded;
 
-    QSettings *m_settings;
-    QTabWidget *m_tabWidget;
-    TimelineWidget *m_boneTimeline;
-    TimelineWidget *m_faceTimeline;
-    TimelineWidget *m_sceneTimeline;
-
-    Q_DISABLE_COPY(TimelineTabWidget)
+    Q_DISABLE_COPY(TimelineTreeView)
 };
 
-#endif // TIMELINETABWIDGET_H
+class TimelineHeaderView : public QHeaderView
+{
+    Q_OBJECT
+
+public:
+    explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
+    virtual ~TimelineHeaderView();
+
+signals:
+    void frameIndexDidSelect(int frameIndex);
+
+protected:
+    void mousePressEvent(QMouseEvent *e);
+
+private:
+    Q_DISABLE_COPY(TimelineHeaderView)
+};
+
+#endif // TIMELINETREEVIEW_H

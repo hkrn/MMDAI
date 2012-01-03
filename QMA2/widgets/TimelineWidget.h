@@ -38,69 +38,16 @@
 #define TIMELINEWIDGET_H
 
 #include <QtCore/QModelIndex>
-#include <QtGui/QHeaderView>
-#include <QtGui/QTreeView>
 #include <QtGui/QWidget>
 
-namespace vpvl {
-class Bone;
-class Face;
-class PMDModel;
-class VMDMotion;
-class VPDPose;
-}
-
 class MotionBaseModel;
+class TimelineHeaderView;
+class TimelineTreeView;
 
 class QLabel;
 class QPushButton;
-class QTreeView;
 class QSettings;
 class QSpinBox;
-
-
-class TimelineTreeView : public QTreeView
-{
-    Q_OBJECT
-
-public:
-    explicit TimelineTreeView(QWidget *parent = 0);
-    ~TimelineTreeView();
-
-    void selectFrameIndex(int frameIndex);
-    void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
-    const QModelIndexList &expandedModelIndices() const;
-
-protected:
-    virtual void mousePressEvent(QMouseEvent *event);
-
-private slots:
-    void addCollapsed(const QModelIndex &index);
-    void addExpanded(const QModelIndex &index);
-
-private:
-    QModelIndexList m_expanded;
-
-    Q_DISABLE_COPY(TimelineTreeView)
-};
-
-class TimelineHeaderView : public QHeaderView
-{
-    Q_OBJECT
-
-public:
-    explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
-    virtual ~TimelineHeaderView();
-
-signals:
-    void frameIndexDidSelect(int frameIndex);
-
-protected:
-    void mousePressEvent(QMouseEvent *e);
-
-private:
-    Q_DISABLE_COPY(TimelineHeaderView)
-};
 
 class TimelineWidget : public QWidget
 {
@@ -115,7 +62,6 @@ public:
     void setEnableFrameIndexSpinBox(bool value);
 
     TimelineTreeView *treeView() const { return m_treeView; }
-    QPushButton *button() const { return m_button; }
 
 public slots:
     void setCurrentFrameIndex(int frameIndex);

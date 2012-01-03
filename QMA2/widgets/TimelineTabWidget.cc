@@ -40,6 +40,7 @@
 #include "models/FaceMotionModel.h"
 #include "models/SceneMotionModel.h"
 #include "widgets/TimelineTabWidget.h"
+#include "widgets/TimelineTreeView.h"
 #include "widgets/TimelineWidget.h"
 
 #include <QtGui/QtGui>
@@ -51,14 +52,6 @@ namespace
 static const int kSceneTabIndex = 0;
 static const int kBoneTabIndex = 1;
 static const int kFaceTabIndex = 2;
-
-static void UIAddKeyframesFromSelectedIndices(TimelineWidget *widget)
-{
-    TimelineTreeView *view = widget->treeView();
-    MotionBaseModel *model = static_cast<MotionBaseModel *>(view->model());
-    QItemSelectionModel *selection = static_cast<QItemSelectionModel *>(view->selectionModel());
-    model->addKeyframesByModelIndices(selection->selectedIndexes());
-}
 
 }
 
@@ -86,9 +79,6 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(m_boneTimeline->button(), SIGNAL(clicked()), this, SLOT(addBoneKeyFramesFromSelectedIndices()));
-    connect(m_faceTimeline->button(), SIGNAL(clicked()), this, SLOT(addFaceKeyFramesFromSelectedIndices()));
-    connect(m_sceneTimeline->button(), SIGNAL(clicked()), this, SLOT(addSceneKeyFramesFromSelectedIndices()));
     connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneFrameIndexSpinBox(vpvl::PMDModel*)));
     connect(fmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceFrameIndexSpinBox(vpvl::PMDModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
@@ -105,14 +95,7 @@ TimelineTabWidget::~TimelineTabWidget()
 
 void TimelineTabWidget::addKeyFramesFromSelectedIndices()
 {
-    switch (m_tabWidget->currentIndex()) {
-    case kBoneTabIndex:
-        addBoneKeyFramesFromSelectedIndices();
-        break;
-    case kFaceTabIndex:
-        addFaceKeyFramesFromSelectedIndices();
-        break;
-    }
+    currentSelectedTimelineWidget()->treeView()->addKeyframesBySelectedIndices();
 }
 
 void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
@@ -127,21 +110,6 @@ void TimelineTabWidget::retranslate()
     m_tabWidget->setTabText(kFaceTabIndex, tr("Face"));
     m_tabWidget->setTabText(kSceneTabIndex, tr("Scene"));
     setWindowTitle(tr("Motion Timeline"));
-}
-
-void TimelineTabWidget::addBoneKeyFramesFromSelectedIndices()
-{
-    UIAddKeyframesFromSelectedIndices(m_boneTimeline);
-}
-
-void TimelineTabWidget::addFaceKeyFramesFromSelectedIndices()
-{
-    UIAddKeyframesFromSelectedIndices(m_faceTimeline);
-}
-
-void TimelineTabWidget::addSceneKeyFramesFromSelectedIndices()
-{
-    UIAddKeyframesFromSelectedIndices(m_sceneTimeline);
 }
 
 void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
@@ -227,32 +195,19 @@ void TimelineTabWidget::insertFrame()
 
 void TimelineTabWidget::deleteFrame()
 {
-    if (TimelineWidget *timeline = currentSelectedTimelineWidget()) {
-        TimelineTreeView *view = timeline->treeView();
-        MotionBaseModel *model = qobject_cast<MotionBaseModel *>(view->model());
-        const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
-        foreach (const QModelIndex &index, indices) {
-            if (index.column() > 1)
-                model->deleteKeyframeByModelIndex(index);
-        }
-    }
+    currentSelectedTimelineWidget()->treeView()->deleteKeyframesBySelectedIndices();
 }
-
 
 void TimelineTabWidget::copyFrame()
 {
     TimelineWidget *timeline = currentSelectedTimelineWidget();
-    MotionBaseModel *model = currentSelectedModel();
-    if (timeline && model)
-        model->copyKeyframes(timeline->frameIndex());
+    timeline->treeView()->copyKeyframes(timeline->frameIndex());
 }
 
 void TimelineTabWidget::pasteFrame()
 {
     TimelineWidget *timeline = currentSelectedTimelineWidget();
-    MotionBaseModel *model = currentSelectedModel();
-    if (timeline && model)
-        model->pasteKeyframes(timeline->frameIndex());
+    timeline->treeView()->pasteKeyframes(timeline->frameIndex());
 }
 
 void TimelineTabWidget::pasteReversedFrame()
@@ -313,20 +268,22 @@ void TimelineTabWidget::toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model)
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
 {
-    if (TimelineWidget *widget = currentSelectedTimelineWidget()) {
-        if (fromIndex > toIndex)
-            qSwap(fromIndex, toIndex);
-        QList<int> frameIndices;
-        for (int i = fromIndex; i <= toIndex; i++)
-            frameIndices.append(i);
-        widget->treeView()->selectFrameIndices(frameIndices, true);
-    }
+    if (fromIndex > toIndex)
+        qSwap(fromIndex, toIndex);
+    QList<int> frameIndices;
+    for (int i = fromIndex; i <= toIndex; i++)
+        frameIndices.append(i);
+    currentSelectedTimelineWidget()->treeView()->selectFrameIndices(frameIndices, true);
+}
+
+void TimelineTabWidget::setKeyframeWeight(float value)
+{
 }
 
 void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)
 {
-    if (TimelineWidget *timeline = currentSelectedTimelineWidget())
-        timeline->setCurrentFrameIndex(timeline->frameIndex() + frameIndex);
+    TimelineWidget *timeline = currentSelectedTimelineWidget();
+    currentSelectedTimelineWidget()->setCurrentFrameIndex(timeline->frameIndex() + frameIndex);
 }
 
 TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidget() const
@@ -339,20 +296,7 @@ TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidget() const
     case kSceneTabIndex:
         return m_sceneTimeline;
     default:
-        return 0;
-    }
-}
-
-MotionBaseModel *TimelineTabWidget::currentSelectedModel() const
-{
-    switch (m_tabWidget->currentIndex()) {
-    case kBoneTabIndex:
-        return static_cast<MotionBaseModel *>(m_boneTimeline->treeView()->model());
-    case kFaceTabIndex:
-        return static_cast<MotionBaseModel *>(m_faceTimeline->treeView()->model());
-    case kSceneTabIndex:
-        return static_cast<MotionBaseModel *>(m_sceneTimeline->treeView()->model());
-    default:
+        qFatal("Unexpected tab index value: %d", m_tabWidget->currentIndex());
         return 0;
     }
 }
