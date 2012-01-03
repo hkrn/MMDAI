@@ -785,7 +785,8 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
-    m_menuFrame->addAction(m_actionFrameWeightDialog);
+    // TODO: reimplement this
+    //m_menuFrame->addAction(m_actionFrameWeightDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
@@ -1458,9 +1459,9 @@ const QString MainWindow::openSaveDialog(const QString &name,
                                          const QString &exts,
                                          const QString &defaultFilename)
 {
-    const QString &defaultPath = QDir::home().absoluteFilePath(defaultFilename);
-    const QString path = m_settings.value(name, defaultPath).toString();
-    const QString fileName = QFileDialog::getSaveFileName(this, desc, path, exts);
+    const QDir base(m_settings.value(name, QDir::homePath()).toString());
+    const QString &path = base.absoluteFilePath(defaultFilename);
+    const QString &fileName = QFileDialog::getSaveFileName(this, desc, path, exts);
     if (!fileName.isEmpty()) {
         QDir dir(fileName);
         dir.cdUp();
