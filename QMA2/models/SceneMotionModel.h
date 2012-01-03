@@ -67,10 +67,8 @@ public:
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void addKeyframesByModelIndices(const QModelIndexList &indices);
     void copyKeyframes(int frameIndex);
     void pasteKeyframes(int frameIndex);
-    void selectKeyframesByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
@@ -83,8 +81,10 @@ public:
     }
 
 public slots:
-    virtual void removeMotion();
-    virtual void deleteKeyframeByModelIndex(const QModelIndex &index);
+    void addKeyframesByModelIndices(const QModelIndexList &indices);
+    void selectKeyframesByModelIndices(const QModelIndexList &indices);
+    void deleteKeyframesByModelIndices(const QModelIndexList &indices);
+    void removeMotion();
     void loadMotion(vpvl::VMDMotion *motion);
     void markAsNew() { setModified(false); }
 

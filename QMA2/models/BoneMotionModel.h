@@ -65,11 +65,9 @@ public:
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void addKeyframesByModelIndices(const QModelIndexList &indices);
     void copyKeyframes(int frameIndex);
     void pasteKeyframes(int frameIndex);
     void pasteReversedFrame(int frameIndex);
-    void selectKeyframesByModelIndices(const QModelIndexList &indices);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
@@ -86,11 +84,13 @@ public:
     void setInterpolationParameter(const vpvl::BoneKeyframe::InterpolationParameter &value) { m_interpolationParameter = value; }
 
 public slots:
+    void addKeyframesByModelIndices(const QModelIndexList &indices);
+    void selectKeyframesByModelIndices(const QModelIndexList &indices);
+    void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void deleteKeyframeByModelIndex(const QModelIndex &index);
     void translate(int coordinate, int mode, float value);
     void translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value);
     void rotate(int coordinate, int mode, float value, bool minus);

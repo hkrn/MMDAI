@@ -735,17 +735,19 @@ void BoneMotionModel::removeModel()
     emit modelDidChange(0);
 }
 
-void BoneMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)
+void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    if (index.isValid()) {
-        /* QModelIndex にあるボーンとフレームインデックスからキーフレームを削除する */
-        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-        vpvl::Bone *bone = item->bone();
-        if (bone) {
-            vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
-            animation->deleteKeyframe(toFrameIndex(index), bone->name());
+    foreach (const QModelIndex &index, indices) {
+        if (index.isValid() && index.column() > 1) {
+            /* QModelIndex にあるボーンとフレームインデックスからキーフレームを削除する */
+            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+            vpvl::Bone *bone = item->bone();
+            if (bone) {
+                vpvl::BoneAnimation *animation = m_motion->mutableBoneAnimation();
+                animation->deleteKeyframe(toFrameIndex(index), bone->name());
+            }
+            setData(index, QVariant());
         }
-        setData(index, QVariant());
     }
 }
 

@@ -538,17 +538,19 @@ void FaceMotionModel::removeModel()
     emit modelDidChange(0);
 }
 
-void FaceMotionModel::deleteKeyframeByModelIndex(const QModelIndex &index)
+void FaceMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    if (index.isValid()) {
-        /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを削除する */
-        TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-        vpvl::Face *face = item->face();
-        if (face) {
-            vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
-            animation->deleteKeyframe(toFrameIndex(index), face->name());
+    foreach (const QModelIndex &index, indices) {
+        if (index.isValid() && index.column() > 1) {
+            /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを削除する */
+            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+            vpvl::Face *face = item->face();
+            if (face) {
+                vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
+                animation->deleteKeyframe(toFrameIndex(index), face->name());
+            }
+            setData(index, QVariant());
         }
-        setData(index, QVariant());
     }
 }
 
