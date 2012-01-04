@@ -96,6 +96,8 @@ private:
     bool m_isCategory;
 };
 
+typedef QPair<QModelIndex, QByteArray> ModelIndex;
+
 class LoadPoseCommand : public QUndoCommand
 {
 public:
@@ -108,8 +110,9 @@ public:
         /* 現在のフレームにある全てのボーンのキーフレーム情報を参照する。キーフレームがあれば undo のために保存しておく */
         foreach (PMDMotionModel::ITreeItem *item, m_bmm->keys().values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
-            if (index.data(BoneMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
-                m_modelIndices.append(index);
+            const QVariant &data = index.data(BoneMotionModel::kBinaryDataRole);
+            if (data.canConvert(QVariant::ByteArray))
+                m_modelIndices.append(ModelIndex(index, data.toByteArray()));
         }
         m_pose = pose->clone();
     }
@@ -129,9 +132,9 @@ public:
          * コンストラクタで保存したボーン情報を復元して置換する。注意点として replaceKeyFrame でメモリの所有者が
          * vpvl::BoneAnimation に移動するのでこちらで管理する必要がなくなる
          */
-        foreach (const QModelIndex &index, m_modelIndices) {
-            const QByteArray &bytes = index.data(BoneMotionModel::kBinaryDataRole).toByteArray();
-            m_bmm->setData(index, bytes, Qt::EditRole);
+        foreach (const ModelIndex &index, m_modelIndices) {
+            const QByteArray &bytes = index.second;
+            m_bmm->setData(index.first, bytes, Qt::EditRole);
             vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyframe(frame);
@@ -178,7 +181,7 @@ public:
     }
 
 private:
-    QModelIndexList m_modelIndices;
+    QList<ModelIndex> m_modelIndices;
     BoneMotionModel *m_bmm;
     VPDFile *m_pose;
     int m_frameIndex;
@@ -187,8 +190,6 @@ private:
 class SetFramesCommand : public QUndoCommand
 {
 public:
-    typedef QPair<QModelIndex, QByteArray> ModelIndex;
-
     SetFramesCommand(BoneMotionModel *bmm, const BoneMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
           m_bmm(bmm),
