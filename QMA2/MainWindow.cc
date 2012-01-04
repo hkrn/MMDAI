@@ -433,10 +433,10 @@ void MainWindow::deleteAsset(vpvl::Asset * /* asset */, const QUuid &uuid)
         m_menuRetainAssets->removeAction(actionToRemove);
 }
 
-bool MainWindow::saveMotionAs()
+void MainWindow::saveMotionAs()
 {
     QString s;
-    return saveMotionAs(s);
+    saveMotionAs(s);
 }
 
 bool MainWindow::saveMotionAs(QString &filename)
@@ -471,6 +471,12 @@ bool MainWindow::saveMotionFile(const QString &filename)
     }
     delete[] buffer;
     return ret;
+}
+
+void MainWindow::saveProjectAs()
+{
+    QString s;
+    saveProjectAs(s);
 }
 
 bool MainWindow::saveProjectAs(QString &filename)
@@ -559,8 +565,12 @@ void MainWindow::buildUI()
     connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
     m_actionSaveProject = new QAction(this);
     connect(m_actionSaveProject, SIGNAL(triggered()), this, SLOT(saveProject()));
+    m_actionSaveProjectAs = new QAction(this);
+    connect(m_actionSaveProjectAs, SIGNAL(triggered()), this, SLOT(saveProjectAs()));
     m_actionSaveMotion = new QAction(this);
     connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveMotion()));
+    m_actionSaveMotionAs = new QAction(this);
+    connect(m_actionSaveMotionAs, SIGNAL(triggered()), this, SLOT(saveMotionAs()));
     m_actionExportImage = new QAction(this);
     connect(m_actionExportImage, SIGNAL(triggered()), this, SLOT(exportImage()));
     m_actionExportVideo = new QAction(this);
@@ -703,7 +713,9 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionSetCamera);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionSaveProject);
+    m_menuFile->addAction(m_actionSaveProjectAs);
     m_menuFile->addAction(m_actionSaveMotion);
+    m_menuFile->addAction(m_actionSaveMotionAs);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionLoadModelPose);
     m_menuFile->addAction(m_actionSaveModelPose);
@@ -713,6 +725,16 @@ void MainWindow::buildUI()
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExportImage);
     m_menuFile->addAction(m_actionExportVideo);
+    m_menuRecentFiles = new QMenu(this);
+    for (int i = 0; i < kMaxRecentFiles; i++) {
+        QAction *action = new QAction(this);
+        connect(action, SIGNAL(triggered()), this, SLOT(openRecentFile()));
+        action->setVisible(false);
+        m_actionRecentFiles[i] = action;
+        m_menuRecentFiles->addAction(action);
+    }
+    m_menuRecentFiles->addSeparator();
+    m_menuRecentFiles->addAction(m_actionClearRecentFiles);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
@@ -747,16 +769,6 @@ void MainWindow::buildUI()
     m_menuRetainAssets = new QMenu(this);
     if (vpvl::Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
-    m_menuRecentFiles = new QMenu(this);
-    for (int i = 0; i < kMaxRecentFiles; i++) {
-        QAction *action = new QAction(this);
-        connect(action, SIGNAL(triggered()), this, SLOT(openRecentFile()));
-        action->setVisible(false);
-        m_actionRecentFiles[i] = action;
-        m_menuRecentFiles->addAction(action);
-    }
-    m_menuRecentFiles->addSeparator();
-    m_menuRecentFiles->addAction(m_actionClearRecentFiles);
     m_menuFile->addMenu(m_menuRecentFiles);
     m_menuModel->addAction(m_actionSelectNextModel);
     m_menuModel->addAction(m_actionSelectPreviousModel);
@@ -785,8 +797,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
-    // TODO: reimplement this
-    //m_menuFrame->addAction(m_actionFrameWeightDialog);
+    m_menuFrame->addAction(m_actionFrameWeightDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
@@ -854,7 +865,9 @@ void MainWindow::bindActions()
     m_actionInsertToAllModels->setShortcut(m_settings.value(kPrefix + "insertToAllModels", "Ctrl+Shift+V").toString());
     m_actionInsertToSelectedModel->setShortcut(m_settings.value(kPrefix + "insertToSelectedModel", "Ctrl+Alt+Shift+V").toString());
     m_actionSaveProject->setShortcut(m_settings.value(kPrefix + "saveProject", QKeySequence(QKeySequence::Save).toString()).toString());
-    m_actionSaveMotion->setShortcut(m_settings.value(kPrefix + "saveMotion", "Ctrl+Shift+S").toString());
+    m_actionSaveProjectAs->setShortcut(m_settings.value(kPrefix + "saveProjectAs", QKeySequence(QKeySequence::SaveAs).toString()).toString());
+    m_actionSaveMotion->setShortcut(m_settings.value(kPrefix + "saveMotion", "").toString());
+    m_actionSaveMotionAs->setShortcut(m_settings.value(kPrefix + "saveMotionAs", "").toString());
     m_actionLoadModelPose->setShortcut(m_settings.value(kPrefix + "loadModelPose").toString());
     m_actionSaveModelPose->setShortcut(m_settings.value(kPrefix + "saveModelPose").toString());
     m_actionLoadAssetMetadata->setShortcut(m_settings.value(kPrefix + "loadAssetMetadata").toString());
@@ -934,8 +947,12 @@ void MainWindow::retranslate()
     m_actionInsertToSelectedModel->setStatusTip(tr("Insert a motion to the selected model."));
     m_actionSaveProject->setText(tr("Save project"));
     m_actionSaveProject->setStatusTip(tr("Save current project as a file."));
-    m_actionSaveMotion->setText(tr("Save motion as VMD"));
-    m_actionSaveMotion->setStatusTip(tr("Export bone key frames and face key frames as a VMD."));
+    m_actionSaveProjectAs->setText(tr("Save project as"));
+    m_actionSaveProjectAs->setStatusTip(tr("Save current project as a new file."));
+    m_actionSaveMotion->setText(tr("Save motion"));
+    m_actionSaveMotion->setStatusTip(tr("Export all key frames as a VMD."));
+    m_actionSaveMotionAs->setText(tr("Save motion as"));
+    m_actionSaveMotionAs->setStatusTip(tr("Export all key frames as a new VMD."));
     m_actionLoadModelPose->setText(tr("Load model pose"));
     m_actionLoadModelPose->setStatusTip(tr("Load a model pose to the selected model."));
     m_actionSaveModelPose->setText(tr("Save model pose"));

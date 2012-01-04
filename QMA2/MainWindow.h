@@ -93,7 +93,9 @@ private slots:
     void newProjectFile();
     void loadProject();
     void saveMotion();
+    void saveMotionAs();
     void saveProject();
+    void saveProjectAs();
     void selectModel();
     void setCurrentModel(vpvl::PMDModel *model);
     void revertSelectedModel();
@@ -125,7 +127,6 @@ private slots:
     void selectAllRegisteredKeyFrames();
 
 private:
-    bool saveMotionAs();
     bool saveMotionAs(QString &filename);
     bool saveMotionFile(const QString &filename);
     bool saveProjectAs(QString &filename);
@@ -184,7 +185,9 @@ private:
     QAction *m_actionInsertToSelectedModel;
     QAction *m_actionSetCamera;
     QAction *m_actionSaveProject;
+    QAction *m_actionSaveProjectAs;
     QAction *m_actionSaveMotion;
+    QAction *m_actionSaveMotionAs;
     QAction *m_actionLoadModelPose;
     QAction *m_actionSaveModelPose;
     QAction *m_actionLoadAssetMetadata;
