@@ -97,6 +97,8 @@ private:
 class SetFramesCommand : public QUndoCommand
 {
 public:
+    typedef QPair<QModelIndex, QByteArray> ModelIndex;
+
     SetFramesCommand(FaceMotionModel *bmm, const FaceMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
           m_fmm(bmm)
@@ -112,8 +114,9 @@ public:
                 /* モデルの全ての頂点モーフを対象にデータがあるか確認し、存在している場合のみボーンのキーフレームの生データを保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
-                    if (index.data(FaceMotionModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
-                        m_modelIndices.append(index);
+                    const QVariant &data = index.data(FaceMotionModel::kBinaryDataRole);
+                    if (data.canConvert(QVariant::ByteArray))
+                        m_modelIndices.append(ModelIndex(index, data.toByteArray()));
                 }
                 indexProceeded[frameIndex] = true;
             }
@@ -136,9 +139,9 @@ public:
             }
         }
         /* コンストラクタで保存したキーフレームの生データから頂点モーフのキーフレームに復元して置換する */
-        foreach (const QModelIndex &index, m_modelIndices) {
-            const QByteArray &bytes = index.data(FaceMotionModel::kBinaryDataRole).toByteArray();
-            m_fmm->setData(index, bytes, Qt::EditRole);
+        foreach (const ModelIndex &index, m_modelIndices) {
+            const QByteArray &bytes = index.second;
+            m_fmm->setData(index.first, bytes, Qt::EditRole);
             vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyframe(frame);
@@ -197,7 +200,7 @@ public:
 
 private:
     QList<int> m_frameIndices;
-    QModelIndexList m_modelIndices;
+    QList<ModelIndex> m_modelIndices;
     FaceMotionModel::KeyFramePairList m_frames;
     FaceMotionModel *m_fmm;
 };
