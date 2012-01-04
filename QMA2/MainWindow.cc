@@ -219,7 +219,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connectWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
-    setWindowTitle(QString("[*]%1").arg(qAppName()));
+    updateWindowTitle();
     statusBar()->show();
     setUnifiedTitleAndToolBarOnMac(true);
 }
@@ -322,6 +322,7 @@ void MainWindow::saveMotion()
         saveMotionAs(m_currentMotionFilename);
     else
         saveMotionFile(m_currentMotionFilename);
+    updateWindowTitle();
 }
 
 void MainWindow::saveProject()
@@ -330,6 +331,7 @@ void MainWindow::saveProject()
         saveProjectAs(m_currentProjectFilename);
     else
         saveProjectFile(m_currentProjectFilename);
+    updateWindowTitle();
 }
 
 void MainWindow::revertSelectedModel()
@@ -435,8 +437,8 @@ void MainWindow::deleteAsset(vpvl::Asset * /* asset */, const QUuid &uuid)
 
 void MainWindow::saveMotionAs()
 {
-    QString s;
-    saveMotionAs(s);
+    saveMotionAs(m_currentMotionFilename);
+    updateWindowTitle();
 }
 
 bool MainWindow::saveMotionAs(QString &filename)
@@ -475,8 +477,8 @@ bool MainWindow::saveMotionFile(const QString &filename)
 
 void MainWindow::saveProjectAs()
 {
-    QString s;
-    saveProjectAs(s);
+    saveProjectAs(m_currentProjectFilename);
+    updateWindowTitle();
 }
 
 bool MainWindow::saveProjectAs(QString &filename)
@@ -1469,6 +1471,24 @@ void MainWindow::openFrameWeightDialog()
 void MainWindow::selectAllRegisteredKeyFrames()
 {
     m_timelineTabWidget->selectFrameIndices(0, m_sceneWidget->scene()->maxFrameIndex());
+}
+
+void MainWindow::updateWindowTitle()
+{
+    const QString &initial = "[*]";
+    QString value = initial;
+    if (!m_currentMotionFilename.isEmpty())
+        value += QFileInfo(m_currentMotionFilename).fileName();
+    if (!m_currentProjectFilename.isEmpty()) {
+        if (initial != value)
+            value += " - ";
+        value += QFileInfo(m_currentProjectFilename).fileName();
+    }
+    if (initial == value)
+        value += qAppName();
+    else
+        value += " - " + qAppName();
+    setWindowTitle(value);
 }
 
 const QString MainWindow::openSaveDialog(const QString &name,
