@@ -799,7 +799,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
-    m_menuFrame->addAction(m_actionFrameWeightDialog);
+    //m_menuFrame->addAction(m_actionFrameWeightDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
@@ -815,7 +815,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRedoFrame);
     m_menuBar->addMenu(m_menuFrame);
     m_menuView = new QMenu(this);
-    m_menuView->addAction(m_actionViewTransform);
+    //m_menuView->addAction(m_actionViewTransform);
     m_menuView->addAction(m_actionViewLogMessage);
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
@@ -1083,7 +1083,7 @@ void MainWindow::retranslate()
     m_menuScene->setTitle(tr("&Scene"));
     m_menuModel->setTitle(tr("&Model"));
     m_menuBone->setTitle(tr("&Bone"));
-    m_menuFrame->setTitle(tr("Frame"));
+    m_menuFrame->setTitle(tr("&Keyframe"));
     m_menuView->setTitle(tr("&View"));
     m_menuRetainAssets->setTitle(tr("Select asset"));
     m_menuRetainModels->setTitle(tr("Select model"));
