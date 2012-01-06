@@ -69,8 +69,12 @@ class World;
 }
 
 class Handles;
+class QGestureEvent;
+class QPanGesture;
+class QPinchGesture;
 class QProgressDialog;
 class QSettings;
+class QSwipeGesture;
 class SceneLoader;
 class Script;
 class VPDFile;
@@ -132,9 +136,9 @@ public slots:
     void resetCamera();
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);
-    void rotate(float x, float y);
-    void translate(float x, float y);
-    void translateModel(float x, float y);
+    void rotateScene(float deltaX, float deltaY);
+    void translateScene(float deltaX, float deltaY);
+    void translateModel(float deltaX, float deltaY);
     void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
@@ -144,14 +148,14 @@ public slots:
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
-    void rotateUp() { rotate(10.0f, 0.0f); }
-    void rotateDown() { rotate(-10.0f, 0.0f); }
-    void rotateLeft() { rotate(0.0f, 10.0f); }
-    void rotateRight() { rotate(0.0f, -10.0f); }
-    void translateUp() { translate(0.0f, 1.0f); }
-    void translateDown() { translate(0.0f, -1.0f); }
-    void translateLeft() { translate(-1.0f, 0.0f); }
-    void translateRight() { translate(1.0f, 0.0f); }
+    void rotateUp() { rotateScene(10.0f, 0.0f); }
+    void rotateDown() { rotateScene(-10.0f, 0.0f); }
+    void rotateLeft() { rotateScene(0.0f, 10.0f); }
+    void rotateRight() { rotateScene(0.0f, -10.0f); }
+    void translateUp() { translateScene(0.0f, 1.0f); }
+    void translateDown() { translateScene(0.0f, -1.0f); }
+    void translateLeft() { translateScene(-1.0f, 0.0f); }
+    void translateRight() { translateScene(1.0f, 0.0f); }
     void translateModelUp() { translateModel(0.0f, 0.5f); }
     void translateModelDown() { translateModel(0.0f, -0.5f); }
     void translateModelLeft() { translateModel(-0.5f, 0.0f); }
@@ -184,6 +188,7 @@ signals:
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
 
 protected:
+    bool event(QEvent *event);
     void closeEvent(QCloseEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
@@ -198,6 +203,10 @@ protected:
     void resizeGL(int w, int h);
     void timerEvent(QTimerEvent *event);
     void wheelEvent(QWheelEvent *event);
+    bool gestureEvent(QGestureEvent *event);
+    void panTriggered(QPanGesture *event);
+    void pinchTriggered(QPinchGesture *event);
+    void swipeTriggered(QSwipeGesture *event);
 
 #ifdef VPVL_USE_GLSL
     vpvl::gl2::Renderer *m_renderer;
@@ -220,6 +229,7 @@ private:
     Handles *m_handles;
     QSettings *m_settings;
     QElapsedTimer m_timer;
+    float m_lastDistance;
     float m_prevElapsed;
     float m_selectedEdgeOffset;
     float m_frameIndex;

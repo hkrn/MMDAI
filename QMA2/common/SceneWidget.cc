@@ -94,6 +94,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_bone(0),
     m_handles(0),
     m_settings(settings),
+    m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
     m_selectedEdgeOffset(0.0f),
     m_frameIndex(0.0f),
@@ -127,6 +128,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     setMinimumSize(540, 480);
     /* 通常はマウスを動かしても mouseMove が呼ばれないため、マウスが動いたら常時 mouseEvent を呼ぶようにする */
     setMouseTracking(true);
+    grabGesture(Qt::PanGesture);
+    grabGesture(Qt::PinchGesture);
+    grabGesture(Qt::SwipeGesture);
 }
 
 SceneWidget::~SceneWidget()
@@ -628,34 +632,34 @@ void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
     }
 }
 
-void SceneWidget::rotate(float x, float y)
+void SceneWidget::rotateScene(float deltaX, float deltaY)
 {
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
-    angle.setValue(angle.x() + x, angle.y() + y, angle.z());
+    angle.setValue(angle.x() + deltaX, angle.y() + deltaY, angle.z());
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
-void SceneWidget::translate(float x, float y)
+void SceneWidget::translateScene(float deltaX, float deltaY)
 {
     // FIXME: direction
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
-    pos.setValue(pos.x() + x, pos.y() + y, pos.z());
+    pos.setValue(pos.x() + deltaX, pos.y() + deltaY, pos.z());
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
-void SceneWidget::translateModel(float x, float y)
+void SceneWidget::translateModel(float deltaX, float deltaY)
 {
     // FIXME: direction
     vpvl::PMDModel *model = selectedModel();
     if (model) {
         vpvl::Vector3 p = model->positionOffset();
-        p.setValue(p.x() + x, p.y(), p.z() + y);
+        p.setValue(p.x() + deltaX, p.y(), p.z() + deltaY);
         model->setPositionOffset(p);
         model->updateImmediate();
     }
@@ -723,6 +727,13 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
     }
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
+}
+
+bool SceneWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::Gesture)
+        return gestureEvent(static_cast<QGestureEvent *>(event));
+    return QGLWidget::event(event);
 }
 
 void SceneWidget::closeEvent(QCloseEvent *event)
@@ -968,11 +979,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 場面の移動 */
         else if (modifiers & Qt::ShiftModifier) {
-            translate(diff.x() * -0.1f, diff.y() * 0.1f);
+            translateScene(diff.x() * -0.1f, diff.y() * 0.1f);
         }
         /* 場面の回転 (X と Y が逆転している点に注意) */
         else {
-            rotate(diff.y() * 0.5f, diff.x() * 0.5f);
+            rotateScene(diff.y() * 0.5f, diff.x() * 0.5f);
         }
         m_handles->setPoint2D(event->posF());
         return;
@@ -1048,6 +1059,60 @@ void SceneWidget::timerEvent(QTimerEvent *event)
 void SceneWidget::wheelEvent(QWheelEvent *event)
 {
     zoom(event->delta() > 0, event->modifiers());
+}
+
+bool SceneWidget::gestureEvent(QGestureEvent *event)
+{
+    if (QGesture *swipe = event->gesture(Qt::SwipeGesture))
+        swipeTriggered(static_cast<QSwipeGesture *>(swipe));
+    else if (QGesture *pan = event->gesture(Qt::PanGesture))
+        panTriggered(static_cast<QPanGesture *>(pan));
+    if (QGesture *pinch = event->gesture(Qt::PinchGesture))
+        pinchTriggered(static_cast<QPinchGesture *>(pinch));
+    return true;
+}
+
+void SceneWidget::panTriggered(QPanGesture *event)
+{
+    switch (event->state()) {
+    case Qt::GestureStarted:
+    case Qt::GestureUpdated:
+        setCursor(Qt::SizeAllCursor);
+        break;
+    default:
+        setCursor(Qt::ArrowCursor);
+        break;
+    }
+    const QPointF &delta = event->delta();
+    translateScene(delta.x() * -0.25, delta.y() * 0.25);
+}
+
+void SceneWidget::pinchTriggered(QPinchGesture *event)
+{
+    QPinchGesture::ChangeFlags flags = event->changeFlags();
+    vpvl::Scene *scene = m_renderer->scene();
+    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
+    float distance = scene->distance(), fovy = scene->fovy();
+    if (flags & QPinchGesture::RotationAngleChanged) {
+        qreal value = event->rotationAngle();
+        qreal lastValue = event->lastRotationAngle();
+        rotateScene(0, value - lastValue);
+    }
+    qreal scaleFactor = 1.0;
+    if (event->state() == Qt::GestureStarted)
+        m_lastDistance = distance;
+    if (flags & QPinchGesture::ScaleFactorChanged) {
+        scaleFactor = event->scaleFactor();
+        distance = m_lastDistance * scaleFactor;
+    }
+    if (scaleFactor != 1.0) {
+        scene->setCameraPerspective(pos, angle, fovy, distance);
+        emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
+    }
+}
+
+void SceneWidget::swipeTriggered(QSwipeGesture * /* event */)
+{
 }
 
 bool SceneWidget::acceptAddingModel(vpvl::PMDModel *model)
