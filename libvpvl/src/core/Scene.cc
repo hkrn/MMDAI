@@ -192,8 +192,8 @@ void Scene::setCameraPerspective(const Vector3 &position, const Vector3 &angle, 
 {
     m_position = position;
     m_angle = angle;
-    m_fovy = fovy;
-    m_distance = distance;
+    m_fovy = btClamped(fovy, 0.0f, 90.0f);
+    m_distance = btClamped(distance, kFrustumNear, kFrustumFar);
     updateRotationFromAngle();
 }
 
