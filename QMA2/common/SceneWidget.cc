@@ -646,8 +646,10 @@ void SceneWidget::rotateScene(const vpvl::Vector3 &delta)
 void SceneWidget::rotateModel(vpvl::PMDModel *model, const vpvl::Quaternion &delta)
 {
     if (model) {
-        model->setRotationOffset(model->rotationOffset() * delta);
+        const vpvl::Quaternion &rotation = model->rotationOffset();
+        model->setRotationOffset(rotation * delta);
         model->updateImmediate();
+        emit modelDidRotate(rotation);
     }
 }
 
@@ -666,8 +668,10 @@ void SceneWidget::translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &del
 {
     // FIXME: direction
     if (model) {
-        model->setPositionOffset(model->positionOffset() + delta);
+        const vpvl::Vector3 &position = model->positionOffset();
+        model->setPositionOffset(position + delta);
         model->updateImmediate();
+        emit modelDidMove(position);
     }
 }
 
@@ -675,8 +679,10 @@ void SceneWidget::resetModelPosition()
 {
     vpvl::PMDModel *model = selectedModel();
     if (model) {
+        const vpvl::Vector3 &position = model->positionOffset();
         model->setPositionOffset(vpvl::Vector3(0.0f, 0.0f, 0.0f));
         model->updateImmediate();
+        emit modelDidMove(position);
     }
 }
 
@@ -1086,7 +1092,8 @@ bool SceneWidget::gestureEvent(QGestureEvent *event)
 
 void SceneWidget::panTriggered(QPanGesture *event)
 {
-    switch (event->state()) {
+    const Qt::GestureState state = event->state();
+    switch (state) {
     case Qt::GestureStarted:
     case Qt::GestureUpdated:
         setCursor(Qt::SizeAllCursor);
@@ -1097,8 +1104,21 @@ void SceneWidget::panTriggered(QPanGesture *event)
     }
     const QPointF &delta = event->delta();
     const vpvl::Vector3 newDelta(delta.x() * -0.25, delta.y() * 0.25, 0.0f);
-    if (vpvl::Bone *bone = selectedBone())
-        emit handleDidMove(newDelta, bone, 'V');
+    if (vpvl::Bone *bone = selectedBone()) {
+        switch (state) {
+        case Qt::GestureStarted:
+            emit handleDidGrab();
+            break;
+        case Qt::GestureUpdated:
+            emit handleDidMove(newDelta, bone, 'V');
+            break;
+        case Qt::GestureFinished:
+            emit handleDidRelease();
+            break;
+        default:
+            break;
+        }
+    }
     else if (vpvl::PMDModel *model = selectedModel())
         translateModel(model, newDelta);
     else
@@ -1107,6 +1127,7 @@ void SceneWidget::panTriggered(QPanGesture *event)
 
 void SceneWidget::pinchTriggered(QPinchGesture *event)
 {
+    const Qt::GestureState state = event->state();
     QPinchGesture::ChangeFlags flags = event->changeFlags();
     vpvl::Scene *scene = m_renderer->scene();
     const vpvl::Vector3 &pos = scene->position(), &angle = scene->angle();
@@ -1118,7 +1139,19 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
         if (vpvl::Bone *bone = selectedBone()) {
             rotation.setEulerZYX(0.0f, -radian, 0.0f);
-            emit handleDidRotate(rotation, bone, 'V', false);
+            switch (state) {
+            case Qt::GestureStarted:
+                emit handleDidGrab();
+                break;
+            case Qt::GestureUpdated:
+                emit handleDidRotate(rotation, bone, 'V', false);
+                break;
+            case Qt::GestureFinished:
+                emit handleDidRelease();
+                break;
+            default:
+                break;
+            }
         }
         else if (vpvl::PMDModel *model = selectedModel()) {
             rotation.setEulerZYX(0.0f, -radian, 0.0f);
@@ -1129,7 +1162,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         }
     }
     qreal scaleFactor = 1.0;
-    if (event->state() == Qt::GestureStarted)
+    if (state == Qt::GestureStarted)
         m_lastDistance = distance;
     if (flags & QPinchGesture::ScaleFactorChanged) {
         scaleFactor = event->scaleFactor();

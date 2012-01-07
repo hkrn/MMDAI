@@ -180,6 +180,8 @@ signals:
     void lightColorDidSet(const vpvl::Color &color);
     void lightPositionDidSet(const vpvl::Vector3 &position);
     void modelDidSelect(vpvl::PMDModel *model);
+    void modelDidMove(const vpvl::Vector3 &lastPosition);
+    void modelDidRotate(const vpvl::Quaternion &lastRotation);
     void cameraPerspectiveDidSet(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
     void fpsDidUpdate(int fps);
     void sceneDidPlay();

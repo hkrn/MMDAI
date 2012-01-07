@@ -1140,6 +1140,8 @@ void MainWindow::connectWidgets()
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
+    connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
 }
 
 void MainWindow::insertMotionToAllModels()
