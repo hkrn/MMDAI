@@ -133,7 +133,6 @@ SOURCES += main.cc \
     widgets/LicenseWidget.cc \
     widgets/AssetWidget.cc \
     MainWindow.cc \
-    TransformWidget.cc \
     BoneUIDelegate.cc \
     common/Handles.cc \
     dialogs/FrameSelectionDialog.cc
@@ -171,31 +170,9 @@ HEADERS  += \
     widgets/LicenseWidget.h \
     widgets/AssetWidget.h \
     MainWindow.h \
-    TransformWidget.h \
     BoneUIDelegate.h \
     dialogs/FrameSelectionDialog.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
-
-FORMS += \
-    widgets/TransformWidget.ui
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
