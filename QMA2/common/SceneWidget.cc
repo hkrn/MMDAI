@@ -109,7 +109,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableBoneMove(false),
     m_enableBoneRotate(false),
     m_enablePhysics(false),
-    m_showModelDialog(false)
+    m_showModelDialog(false),
+    m_lockTouchEvent(false)
 {
     m_debugDrawer = new DebugDrawer(this);
     m_delegate = new Delegate(this);
@@ -655,8 +656,12 @@ void SceneWidget::translateScene(float deltaX, float deltaY)
 
 void SceneWidget::translateModel(float deltaX, float deltaY)
 {
+    translateModel(selectedModel(), deltaX, deltaY);
+}
+
+void SceneWidget::translateModel(vpvl::PMDModel *model, float deltaX, float deltaY)
+{
     // FIXME: direction
-    vpvl::PMDModel *model = selectedModel();
     if (model) {
         vpvl::Vector3 p = model->positionOffset();
         p.setValue(p.x() + deltaX, p.y(), p.z() + deltaY);
@@ -731,7 +736,7 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 
 bool SceneWidget::event(QEvent *event)
 {
-    if (event->type() == QEvent::Gesture)
+    if (event->type() == QEvent::Gesture && !m_lockTouchEvent)
         return gestureEvent(static_cast<QGestureEvent *>(event));
     return QGLWidget::event(event);
 }
@@ -820,6 +825,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     const QPointF &pos = event->posF();
     QRectF rect;
     int flags;
+    m_lockTouchEvent = true;
     m_handles->setPoint2D(pos);
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     if (m_handles->testHitImage(pos, flags, rect)) {
@@ -882,8 +888,8 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton) {
-        Qt::KeyboardModifiers modifiers = event->modifiers();
-        QPointF diff = m_handles->diffPoint2D(event->posF());
+        const Qt::KeyboardModifiers modifiers = event->modifiers();
+        const QPointF &diff = m_handles->diffPoint2D(event->posF());
         /* モデルのハンドルがクリックされた */
         if (m_handleFlags & Handles::kView) {
             int flags, mode = 'V';
@@ -897,46 +903,46 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                         &diff = m_handles->diffPoint3D(pick);
                 /* 移動ハンドルである(矢印の先端) */
                 if (flags & Handles::kMove && !diff.isZero()) {
-                    int coordinate = 0;
                     float value = m_handles->isPoint3DZero() ? 0.0f : diff.length();
+                    vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
                     if (flags & Handles::kX) {
                         if (directionX.dot(diff.normalized()) < 0)
                             value = -value;
-                        coordinate = 'X';
+                        delta.setX(value);
                     }
                     else if (flags & Handles::kY) {
                         if (directionY.dot(diff.normalized()) < 0)
                             value = -value;
-                        coordinate = 'Y';
+                        delta.setY(value);
                     }
                     else if (flags & Handles::kZ) {
                         if (directionZ.dot(diff.normalized()) < 0)
                             value = -value;
-                        coordinate = 'Z';
+                        delta.setZ(value);
                     }
-                    emit handleDidMove(coordinate, mode, value);
+                    emit handleDidMove(delta, 0, mode);
                 }
                 /* 回転ハンドルである(ドーナツ) */
                 else if (flags & Handles::kRotate) {
                     const vpvl::Vector3 &angle = m_handles->angle(pick);
-                    int axis = 0;
+                    vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
                     float value = 0.0f;
-                    if (flags & Handles::kX) {
+                    if (flags & Handles::kX)
                         value = btAcos(angle.y());
-                        axis = 'X';
-                    }
-                    else if (flags & Handles::kY) {
+                    else if (flags & Handles::kY)
                         value = btAcos(angle.z());
-                        axis = 'Y';
-                    }
-                    else if (flags & Handles::kZ) {
+                    else if (flags & Handles::kZ)
                         value = btAcos(angle.x());
-                        axis = 'Z';
-                    }
                     value *= 2.0f;
                     if (!m_handles->isAngleZero()) {
                         float diff = m_handles->diffAngle(value);
-                        emit handleDidRotate(axis, mode, btFabs(diff), diff < 0);
+                        if (flags & Handles::kX)
+                            delta.setEulerZYX(0.0f, 0.0f, -btFabs(diff));
+                        else if (flags & Handles::kY)
+                            delta.setEulerZYX(0.0f, -btFabs(diff), 0.0f);
+                        else if (flags & Handles::kZ)
+                            delta.setEulerZYX(-btFabs(diff), 0.0f, 0.0f);
+                        emit handleDidRotate(delta, 0, mode, diff < 0);
                     }
                     m_handles->setAngle(value);
                 }
@@ -950,22 +956,26 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             /* 移動ハンドルである */
             if (flags & Handles::kMove) {
                 const float &value = diff.y() * 0.1f;
+                vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
                 if (flags & Handles::kX)
-                    emit handleDidMove('X', mode, value);
+                    delta.setX(value);
                 else if (flags & Handles::kY)
-                    emit handleDidMove('Y', mode, value);
+                    delta.setY(value);
                 else if (flags & Handles::kZ)
-                    emit handleDidMove('Z', mode, value);
+                    delta.setZ(value);
+                emit handleDidMove(delta, 0, mode);
             }
             /* 回転ハンドルである */
             else if (flags & Handles::kRotate) {
                 const float &value = vpvl::radian(diff.y()) * 0.1f;
+                vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
                 if (flags & Handles::kX)
-                    emit handleDidRotate('X', mode, value, false);
+                    delta.setX(value);
                 else if (flags & Handles::kY)
-                    emit handleDidRotate('Y', mode, value, false);
+                    delta.setY(value);
                 else if (flags & Handles::kZ)
-                    emit handleDidRotate('Z', mode, value, false);
+                    delta.setZ(-value);
+                emit handleDidRotate(delta, 0, mode, false);
             }
         }
         /* 光源移動 */
@@ -1000,6 +1010,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(vpvl::Vector3(0.0f, 0.0f, 0.0f));
+    m_lockTouchEvent = false;
     emit handleDidRelease();
 }
 
@@ -1084,7 +1095,12 @@ void SceneWidget::panTriggered(QPanGesture *event)
         break;
     }
     const QPointF &delta = event->delta();
-    translateScene(delta.x() * -0.25, delta.y() * 0.25);
+    if (vpvl::PMDModel *model = selectedModel()) {
+        translateModel(model, delta.x() * 0.25, delta.y() * 0.25);
+    }
+    else {
+        translateScene(delta.x() * -0.25, delta.y() * 0.25);
+    }
 }
 
 void SceneWidget::pinchTriggered(QPinchGesture *event)

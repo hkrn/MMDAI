@@ -829,26 +829,27 @@ void BoneMotionModel::setPosition(int coordinate, float value)
     if (!isBoneSelected())
         return;
     foreach (vpvl::Bone *selected, m_selected) {
-        vpvl::Vector3 pos = selected->position();
+        const vpvl::Vector3 &lastPosition = selected->position();
+        vpvl::Vector3 position = lastPosition;
         switch (coordinate) {
         case 'x':
         case 'X':
-            pos.setX(value);
+            position.setX(value);
             break;
         case 'y':
         case 'Y':
-            pos.setY(value);
+            position.setY(value);
             break;
         case 'z':
         case 'Z':
-            pos.setZ(value);
+            position.setZ(value);
             break;
         default:
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
-        selected->setPosition(pos);
+        selected->setPosition(position);
         m_model->updateImmediate();
-        emit positionDidChange(selected, pos);
+        emit positionDidChange(selected, lastPosition);
     }
 }
 
@@ -857,69 +858,51 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     if (!isBoneSelected())
         return;
     vpvl::Bone *selected = m_selected.last();
-    vpvl::Quaternion rot = selected->rotation();
+    const vpvl::Quaternion &lastRotation = selected->rotation();
+    vpvl::Quaternion rotation = lastRotation;
     switch (coordinate) {
     case 'x':
     case 'X':
-        rot.setX(value);
+        rotation.setX(value);
         break;
     case 'y':
     case 'Y':
-        rot.setY(value);
+        rotation.setY(value);
         break;
     case 'z':
     case 'Z':
-        rot.setZ(value);
+        rotation.setZ(value);
         break;
     default:
         qFatal("Unexpected coordinate value: %c", coordinate);
     }
-    selected->setRotation(rot);
+    selected->setRotation(rotation);
     m_model->updateImmediate();
-    emit rotationDidChange(selected, rot);
+    emit rotationDidChange(selected, lastRotation);
 }
 
-void BoneMotionModel::translate(int coordinate, int mode, float value)
+void BoneMotionModel::translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode)
 {
-    vpvl::Vector3 v;
-    foreach (vpvl::Bone *selected, m_selected) {
-        /* X と Y は MMD と挙動を合わせるため、値を反転させておく */
-        switch (coordinate) {
-        case 'x':
-        case 'X':
-            v.setValue(-value, 0, 0);
-            break;
-        case 'y':
-        case 'Y':
-            v.setValue(0, -value, 0);
-            break;
-        case 'z':
-        case 'Z':
-            v.setValue(0, 0, value);
-            break;
-        default:
-            qFatal("Unexpected coordinate value: %c", coordinate);
-        }
-        translate(mode, selected, v);
+    if (!bone) {
+        if (isBoneSelected())
+            bone = selectedBone();
+        else
+            return;
     }
-}
-
-void BoneMotionModel::translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value)
-{
-    vpvl::Vector3 dest;
+    const vpvl::Vector3 &lastPosition = bone->position();
     switch (mode) {
     case 'V': {
         const vpvl::Transform &modelViewTransform = m_sceneWidget->scene()->modelViewTransform();
-        const vpvl::Vector3 &value2 = modelViewTransform.getBasis() * value;
-        dest = vpvl::Transform(bone->rotation(), bone->position()) * value2;
+        const vpvl::Vector3 &value2 = modelViewTransform.getBasis() * delta;
+        bone->setPosition(vpvl::Transform(bone->rotation(), lastPosition) * value2);
         break;
     }
     case 'L': {
-        dest = vpvl::Transform(bone->rotation(), bone->position()) * value;
+        bone->setPosition(vpvl::Transform(bone->rotation(), lastPosition) * delta);
         break;
     }
     case 'G': {
-        dest = bone->position() + value;
+        bone->setPosition(lastPosition + delta);
         break;
     }
     default: {
@@ -927,48 +910,30 @@ void BoneMotionModel::translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 
         break;
     }
     }
-    bone->setPosition(dest);
     m_model->updateImmediate();
-    emit positionDidChange(bone, dest);
+    emit positionDidChange(bone, lastPosition);
 }
 
-void BoneMotionModel::rotate(int coordinate, int mode, float value, bool minus)
+void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus)
 {
-    if (!isBoneSelected())
-        return;
-    vpvl::Bone *selected = m_selected.last();
-    const vpvl::Quaternion &current = selected->rotation();
-    vpvl::Quaternion rot, dest;
-    /* Z 軸は MMD と挙動を合わせるため、値を反転しておく */
-    switch (coordinate) {
-    case 'x':
-    case 'X':
-        rot.setEulerZYX(0, 0, value);
-        break;
-    case 'y':
-    case 'Y':
-        rot.setEulerZYX(0, value, 0);
-        break;
-    case 'z':
-    case 'Z':
-        rot.setEulerZYX(-value, 0, 0);
-        break;
-    default:
-        qFatal("Unexpected coordinate value: %c", coordinate);
-        break;
+    if (!bone) {
+        if (isBoneSelected())
+            bone = selectedBone();
+        else
+            return;
     }
+    const vpvl::Quaternion &lastRotation = bone->rotation();
     switch (mode) {
     case 'V': {
         float matrixf[16];
         m_sceneWidget->scene()->getModelViewMatrix(matrixf);
-        const QMatrix4x4 &m = internal::toMatrix4x4(matrixf);
-        const QVector4D &r = (m * QVector4D(rot.x(), rot.y(), rot.z(), rot.w())).normalized();
-        rot.setValue(r.x(), r.y(), r.z(), minus ? r.w() : -r.w());
-        dest = current * rot;
+        const QMatrix4x4 &matrix = internal::toMatrix4x4(matrixf);
+        const QVector4D &r = (matrix * QVector4D(delta.x(), delta.y(), delta.z(), delta.w())).normalized();
+        bone->setRotation(lastRotation * vpvl::Quaternion(r.x(), r.y(), r.z(), minus ? r.w() : -r.w()));
         break;
     }
     case 'L': {
-        dest = current * rot;
+        bone->setRotation(lastRotation * delta);
         break;
     }
     case 'G': {
@@ -979,9 +944,8 @@ void BoneMotionModel::rotate(int coordinate, int mode, float value, bool minus)
         break;
     }
     }
-    selected->setRotation(dest);
     m_model->updateImmediate();
-    emit rotationDidChange(selected, dest);
+    emit rotationDidChange(bone, lastRotation);
 }
 
 void BoneMotionModel::selectBones(const QList<vpvl::Bone *> &bones)

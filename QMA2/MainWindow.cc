@@ -59,7 +59,6 @@
 #include "widgets/LicenseWidget.h"
 #include "widgets/TabWidget.h"
 #include "widgets/TimelineTabWidget.h"
-#include "TransformWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -186,7 +185,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneWidget(0),
     m_tabWidget(0),
     m_timelineTabWidget(0),
-    m_transformWidget(0),
     m_boneMotionModel(0),
     m_faceMotionModel(0),
     m_sceneMotionModel(0),
@@ -212,7 +210,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
     m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
-    m_transformWidget = new TransformWidget(&m_settings, m_boneMotionModel, m_faceMotionModel);
     m_boneUIDelegate = new BoneUIDelegate(m_boneMotionModel, this);
     m_loggerWidget = LoggerWidget::createInstance(&m_settings);
     buildUI();
@@ -236,7 +233,6 @@ MainWindow::~MainWindow()
     delete m_sceneMotionModel;
     delete m_tabWidget;
     delete m_timelineTabWidget;
-    delete m_transformWidget;
     delete m_boneUIDelegate;
     delete m_player;
     delete m_menuBar;
@@ -249,7 +245,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
         m_settings.setValue("mainWindow/state", saveState());
         m_settings.setValue("mainWindow/visibleTabs", m_tabWidget->isVisible());
         m_settings.setValue("mainWindow/visibleTimeline", m_timelineTabWidget->isVisible());
-        m_settings.setValue("mainWindow/visibleTransform", m_transformWidget->isVisible());
         m_settings.setValue("mainWindow/leftSplitterGeometry", m_leftSplitter->saveGeometry());
         m_settings.setValue("mainWindow/leftSplitterState", m_leftSplitter->saveState());
         m_settings.setValue("mainWindow/mainSplitterGeometry", m_mainSplitter->saveGeometry());
@@ -684,8 +679,6 @@ void MainWindow::buildUI()
     m_actionUndoFrame = m_undo->createUndoAction(this);
     m_actionRedoFrame = m_undo->createRedoAction(this);
 
-    m_actionViewTransform = new QAction(this);
-    connect(m_actionViewTransform, SIGNAL(triggered()), m_transformWidget, SLOT(show()));
     m_actionViewLogMessage = new QAction(this);
     connect(m_actionViewLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
 
@@ -823,8 +816,6 @@ void MainWindow::buildUI()
     m_menuHelp->addAction(m_actionAboutQt);
     m_menuBar->addMenu(m_menuHelp);
 
-    bool visibleTransform = m_settings.value("mainWindow/visibleTransform", QVariant(false)).toBool();
-    m_transformWidget->setVisible(visibleTransform);
     m_leftSplitter = new QSplitter(Qt::Vertical);
     m_leftSplitter->setStretchFactor(0, 1);
     m_leftSplitter->setStretchFactor(1, 0);
@@ -1059,8 +1050,6 @@ void MainWindow::retranslate()
     m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
     m_actionReversedPaste->setText(tr("Paste with reversed"));
     m_actionReversedPaste->setStatusTip(tr("Paste a selected keyframe with reversed."));
-    m_actionViewTransform->setText(tr("Transform"));
-    m_actionViewTransform->setStatusTip(tr("Open transform window."));
     m_actionViewLogMessage->setText(tr("Logger Window"));
     m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
     m_actionAbout->setText(tr("About"));
@@ -1125,10 +1114,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(handleDidMove(int,int,float)), m_boneMotionModel, SLOT(translate(int,int,float)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(int,int,float,bool)), m_boneMotionModel, SLOT(rotate(int,int,float,bool)));
-    connect(m_transformWidget, SIGNAL(boneDidRegister(vpvl::Bone*)), m_timelineTabWidget, SLOT(addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone*)));
-    connect(m_transformWidget, SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
+    connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translate(vpvl::Vector3,vpvl::Bone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Quaternion,vpvl::Bone*,int,bool)), m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,bool)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)),
             m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_tabWidget->interpolationWidget(), SLOT(setMode(int)));

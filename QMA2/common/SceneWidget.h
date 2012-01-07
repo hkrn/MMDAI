@@ -139,6 +139,7 @@ public slots:
     void rotateScene(float deltaX, float deltaY);
     void translateScene(float deltaX, float deltaY);
     void translateModel(float deltaX, float deltaY);
+    void translateModel(vpvl::PMDModel *model, float deltaX, float deltaY);
     void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
@@ -146,6 +147,9 @@ public slots:
     void setGridVisible(bool value);
     void setPhysicsEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
+    void selectBones(const QList<vpvl::Bone *> &bones);
+    void loadFile(const QString &file);
+
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
     void rotateUp() { rotateScene(10.0f, 0.0f); }
@@ -165,8 +169,6 @@ public slots:
     void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
-    void selectBones(const QList<vpvl::Bone *> &bones);
-    void loadFile(const QString &file);
 
 signals:
     void initailizeGLContextDidDone();
@@ -183,8 +185,8 @@ signals:
     void sceneDidStop();
     void handleDidGrab();
     void handleDidRelease();
-    void handleDidMove(int mode, int coordinate, float value);
-    void handleDidRotate(int mode, int coordinate, float value, bool minus);
+    void handleDidMove(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode);
+    void handleDidRotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
 
 protected:
@@ -245,6 +247,7 @@ private:
     bool m_enableBoneRotate;
     bool m_enablePhysics;
     bool m_showModelDialog;
+    bool m_lockTouchEvent;
 
     Q_DISABLE_COPY(SceneWidget)
 };

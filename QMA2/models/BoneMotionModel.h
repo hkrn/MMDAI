@@ -93,16 +93,15 @@ public slots:
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void translate(int coordinate, int mode, float value);
-    void translate(int mode, vpvl::Bone *bone, const vpvl::Vector3 &value);
-    void rotate(int coordinate, int mode, float value, bool minus);
+    void translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode);
+    void rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void saveTransform();
     void commitTransform();
 
 signals:
-    void positionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &pos);
-    void rotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &rot);
+    void positionDidChange(vpvl::Bone *bone, const vpvl::Vector3 &lastPosition);
+    void rotationDidChange(vpvl::Bone *bone, const vpvl::Quaternion &lastRotation);
     void bonesDidSelect(const QList<vpvl::Bone *> &bones);
     void keyframesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
 

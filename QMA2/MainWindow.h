@@ -66,7 +66,6 @@ class SceneMotionModel;
 class SceneWidget;
 class TabWidget;
 class TimelineTabWidget;
-class TransformWidget;
 class QCheckBox;
 class QDoubleSpinBox;
 class QPushButton;
@@ -152,7 +151,6 @@ private:
     SceneWidget *m_sceneWidget;
     TabWidget *m_tabWidget;
     TimelineTabWidget *m_timelineTabWidget;
-    TransformWidget *m_transformWidget;
     BoneMotionModel *m_boneMotionModel;
     FaceMotionModel *m_faceMotionModel;
     SceneMotionModel *m_sceneMotionModel;
@@ -244,7 +242,6 @@ private:
     QAction *m_actionReversedPaste;
     QAction *m_actionUndoFrame;
     QAction *m_actionRedoFrame;
-    QAction *m_actionViewTransform;
     QAction *m_actionViewLogMessage;
     QAction *m_actionAddModelOnToolBar;
     QAction *m_actionAddAssetOnToolBar;
