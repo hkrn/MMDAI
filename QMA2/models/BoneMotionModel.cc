@@ -937,6 +937,7 @@ void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, in
         break;
     }
     case 'G': {
+        bone->setRotation(lastRotation * delta);
         break;
     }
     default: {

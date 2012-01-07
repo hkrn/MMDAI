@@ -633,39 +633,40 @@ void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
     }
 }
 
-void SceneWidget::rotateScene(float deltaX, float deltaY)
+void SceneWidget::rotateScene(const vpvl::Vector3 &delta)
 {
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
-    angle.setValue(angle.x() + deltaX, angle.y() + deltaY, angle.z());
+    angle += delta;
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
-void SceneWidget::translateScene(float deltaX, float deltaY)
+void SceneWidget::rotateModel(vpvl::PMDModel *model, const vpvl::Quaternion &delta)
+{
+    if (model) {
+        model->setRotationOffset(model->rotationOffset() * delta);
+        model->updateImmediate();
+    }
+}
+
+void SceneWidget::translateScene(const vpvl::Vector3 &delta)
 {
     // FIXME: direction
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 pos = scene->position(), angle = scene->angle();
     float fovy = scene->fovy(), distance = scene->distance();
-    pos.setValue(pos.x() + deltaX, pos.y() + deltaY, pos.z());
+    pos += delta;
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
 }
 
-void SceneWidget::translateModel(float deltaX, float deltaY)
-{
-    translateModel(selectedModel(), deltaX, deltaY);
-}
-
-void SceneWidget::translateModel(vpvl::PMDModel *model, float deltaX, float deltaY)
+void SceneWidget::translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta)
 {
     // FIXME: direction
     if (model) {
-        vpvl::Vector3 p = model->positionOffset();
-        p.setValue(p.x() + deltaX, p.y(), p.z() + deltaY);
-        model->setPositionOffset(p);
+        model->setPositionOffset(model->positionOffset() + delta);
         model->updateImmediate();
     }
 }
@@ -989,11 +990,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 場面の移動 */
         else if (modifiers & Qt::ShiftModifier) {
-            translateScene(diff.x() * -0.1f, diff.y() * 0.1f);
+            translateScene(vpvl::Vector3(diff.x() * -0.1f, diff.y() * 0.1f, 0.0f));
         }
         /* 場面の回転 (X と Y が逆転している点に注意) */
         else {
-            rotateScene(diff.y() * 0.5f, diff.x() * 0.5f);
+            rotateScene(vpvl::Vector3(diff.y() * 0.5f, diff.x() * 0.5f, 0.0f));
         }
         m_handles->setPoint2D(event->posF());
         return;
@@ -1095,24 +1096,37 @@ void SceneWidget::panTriggered(QPanGesture *event)
         break;
     }
     const QPointF &delta = event->delta();
-    if (vpvl::PMDModel *model = selectedModel()) {
-        translateModel(model, delta.x() * 0.25, delta.y() * 0.25);
-    }
-    else {
-        translateScene(delta.x() * -0.25, delta.y() * 0.25);
-    }
+    const vpvl::Vector3 newDelta(delta.x() * -0.25, delta.y() * 0.25, 0.0f);
+    if (vpvl::Bone *bone = selectedBone())
+        emit handleDidMove(newDelta, bone, 'V');
+    else if (vpvl::PMDModel *model = selectedModel())
+        translateModel(model, newDelta);
+    else
+        translateScene(newDelta);
 }
 
 void SceneWidget::pinchTriggered(QPinchGesture *event)
 {
     QPinchGesture::ChangeFlags flags = event->changeFlags();
     vpvl::Scene *scene = m_renderer->scene();
-    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
+    const vpvl::Vector3 &pos = scene->position(), &angle = scene->angle();
     float distance = scene->distance(), fovy = scene->fovy();
     if (flags & QPinchGesture::RotationAngleChanged) {
-        qreal value = event->rotationAngle();
-        qreal lastValue = event->lastRotationAngle();
-        rotateScene(0, value - lastValue);
+        qreal value = event->rotationAngle() - event->lastRotationAngle();
+        vpvl::Scalar radian = vpvl::radian(value);
+        vpvl::Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
+        /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
+        if (vpvl::Bone *bone = selectedBone()) {
+            rotation.setEulerZYX(0.0f, -radian, 0.0f);
+            emit handleDidRotate(rotation, bone, 'V', false);
+        }
+        else if (vpvl::PMDModel *model = selectedModel()) {
+            rotation.setEulerZYX(0.0f, -radian, 0.0f);
+            rotateModel(model, rotation);
+        }
+        else {
+            rotateScene(vpvl::Vector3(0.0f, value, 0.0f));
+        }
     }
     qreal scaleFactor = 1.0;
     if (event->state() == Qt::GestureStarted)

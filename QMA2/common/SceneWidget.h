@@ -136,10 +136,10 @@ public slots:
     void resetCamera();
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);
-    void rotateScene(float deltaX, float deltaY);
-    void translateScene(float deltaX, float deltaY);
-    void translateModel(float deltaX, float deltaY);
-    void translateModel(vpvl::PMDModel *model, float deltaX, float deltaY);
+    void rotateScene(const vpvl::Vector3 &delta);
+    void rotateModel(vpvl::PMDModel *model, const vpvl::Quaternion &delta);
+    void translateScene(const vpvl::Vector3 &delta);
+    void translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta);
     void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex);
@@ -152,19 +152,21 @@ public slots:
 
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
-    void rotateUp() { rotateScene(10.0f, 0.0f); }
-    void rotateDown() { rotateScene(-10.0f, 0.0f); }
-    void rotateLeft() { rotateScene(0.0f, 10.0f); }
-    void rotateRight() { rotateScene(0.0f, -10.0f); }
-    void translateUp() { translateScene(0.0f, 1.0f); }
-    void translateDown() { translateScene(0.0f, -1.0f); }
-    void translateLeft() { translateScene(-1.0f, 0.0f); }
-    void translateRight() { translateScene(1.0f, 0.0f); }
-    void translateModelUp() { translateModel(0.0f, 0.5f); }
-    void translateModelDown() { translateModel(0.0f, -0.5f); }
-    void translateModelLeft() { translateModel(-0.5f, 0.0f); }
-    void translateModelRight() { translateModel(0.5f, 0.0f); }
+    void rotateUp() { rotateScene(vpvl::Vector3(10.0f, 0.0f, 0.0f)); }
+    void rotateDown() { rotateScene(vpvl::Vector3(-10.0f, 0.0f, 0.0f)); }
+    void rotateLeft() { rotateScene(vpvl::Vector3(0.0f, 10.0f, 0.0f)); }
+    void rotateRight() { rotateScene(vpvl::Vector3(0.0f, -10.0f, 0.0f)); }
+    void translateUp() { translateScene(vpvl::Vector3(0.0f, 1.0f, 0.0f)); }
+    void translateDown() { translateScene(vpvl::Vector3(0.0f, -1.0f, 0.0f)); }
+    void translateLeft() { translateScene(vpvl::Vector3(-1.0f, 0.0f, 0.0f)); }
+    void translateRight() { translateScene(vpvl::Vector3(1.0f, 0.0f, 0.0f)); }
+    void translateModelUp() { translateModel(vpvl::Vector3(0.0f, 0.5f, 0.0f)); }
+    void translateModelDown() { translateModel(vpvl::Vector3(0.0f, -0.5f, 0.0f)); }
+    void translateModelLeft() { translateModel(vpvl::Vector3(-0.5f, 0.0f, 0.0f)); }
+    void translateModelRight() { translateModel(vpvl::Vector3(0.5f, 0.0f, 0.0f)); }
     void revertSelectedModel() { setSelectedModel(0); }
+    void rotateModel(const vpvl::Quaternion &delta) { rotateModel(selectedModel(), delta); }
+    void translateModel(const vpvl::Vector3 &delta) { translateModel(selectedModel(), delta); }
     void updateMotion() { seekMotion(m_frameIndex); }
     void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
