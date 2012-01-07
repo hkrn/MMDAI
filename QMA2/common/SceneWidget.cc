@@ -110,7 +110,10 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableBoneRotate(false),
     m_enablePhysics(false),
     m_showModelDialog(false),
-    m_lockTouchEvent(false)
+    m_lockTouchEvent(false),
+    m_enableMoveGesture(false),
+    m_enableRotateGesture(false),
+    m_enableScaleGesture(false)
 {
     m_debugDrawer = new DebugDrawer(this);
     m_delegate = new Delegate(this);
@@ -124,6 +127,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
     setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
+    setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
+    setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
+    setScaleGestureEnable(m_settings->value("sceneWidget/enableScaleGesture", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -754,6 +760,9 @@ void SceneWidget::closeEvent(QCloseEvent *event)
     m_settings->setValue("sceneWidget/isGridVisible", m_grid->isEnabled());
     m_settings->setValue("sceneWidget/isPhysicsEnabled", m_enablePhysics);
     m_settings->setValue("sceneWidget/showModelDialog", m_showModelDialog);
+    m_settings->setValue("sceneWidget/enableMoveGesture", m_enableMoveGesture);
+    m_settings->setValue("sceneWidget/enableRotateGesture", m_enableRotateGesture);
+    m_settings->setValue("sceneWidget/enableScaleGesture", m_enableScaleGesture);
     killTimer(m_internalTimerID);
     event->accept();
 }
@@ -1092,6 +1101,8 @@ bool SceneWidget::gestureEvent(QGestureEvent *event)
 
 void SceneWidget::panTriggered(QPanGesture *event)
 {
+    if (!m_enableMoveGesture)
+        return;
     const Qt::GestureState state = event->state();
     switch (state) {
     case Qt::GestureStarted:
@@ -1132,7 +1143,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
     vpvl::Scene *scene = m_renderer->scene();
     const vpvl::Vector3 &pos = scene->position(), &angle = scene->angle();
     float distance = scene->distance(), fovy = scene->fovy();
-    if (flags & QPinchGesture::RotationAngleChanged) {
+    if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();
         vpvl::Scalar radian = vpvl::radian(value);
         vpvl::Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1164,7 +1175,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
     qreal scaleFactor = 1.0;
     if (state == Qt::GestureStarted)
         m_lastDistance = distance;
-    if (flags & QPinchGesture::ScaleFactorChanged) {
+    if (m_enableScaleGesture && flags & QPinchGesture::ScaleFactorChanged) {
         scaleFactor = event->scaleFactor();
         distance = m_lastDistance * scaleFactor;
     }

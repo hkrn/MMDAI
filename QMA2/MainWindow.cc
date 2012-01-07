@@ -681,6 +681,18 @@ void MainWindow::buildUI()
 
     m_actionViewLogMessage = new QAction(this);
     connect(m_actionViewLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
+    m_actionEnableMoveGesture = new QAction(this);
+    m_actionEnableMoveGesture->setCheckable(true);
+    m_actionEnableMoveGesture->setChecked(m_sceneWidget->isMoveGestureEnabled());
+    connect(m_actionEnableMoveGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setMoveGestureEnable(bool)));
+    m_actionEnableRotateGesture = new QAction(this);
+    m_actionEnableRotateGesture->setCheckable(true);
+    m_actionEnableRotateGesture->setChecked(m_sceneWidget->isRotateGestureEnabled());
+    connect(m_actionEnableRotateGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setRotateGestureEnable(bool)));
+    m_actionEnableScaleGesture = new QAction(this);
+    m_actionEnableScaleGesture->setCheckable(true);
+    m_actionEnableScaleGesture->setChecked(m_sceneWidget->isRotateGestureEnabled());
+    connect(m_actionEnableScaleGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setScaleGestureEnable(bool)));
 
     m_actionClearRecentFiles = new QAction(this);
     connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
@@ -810,6 +822,10 @@ void MainWindow::buildUI()
     m_menuView = new QMenu(this);
     //m_menuView->addAction(m_actionViewTransform);
     m_menuView->addAction(m_actionViewLogMessage);
+    m_menuView->addSeparator();
+    m_menuView->addAction(m_actionEnableMoveGesture);
+    m_menuView->addAction(m_actionEnableRotateGesture);
+    m_menuView->addAction(m_actionEnableScaleGesture);
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
@@ -916,6 +932,9 @@ void MainWindow::bindActions()
     m_actionUndoFrame->setShortcut(m_settings.value(kPrefix + "undoFrame", QKeySequence(QKeySequence::Undo).toString()).toString());
     m_actionRedoFrame->setShortcut(m_settings.value(kPrefix + "redoFrame", QKeySequence(QKeySequence::Redo).toString()).toString());
     m_actionViewLogMessage->setShortcut(m_settings.value(kPrefix + "viewLogMessage").toString());
+    m_actionEnableMoveGesture->setShortcut(m_settings.value(kPrefix + "enableMoveGesture").toString());
+    m_actionEnableRotateGesture->setShortcut(m_settings.value(kPrefix + "enableRotateGesture").toString());
+    m_actionEnableScaleGesture->setShortcut(m_settings.value(kPrefix + "enableScaleGesture").toString());
     m_actionAbout->setShortcut(m_settings.value(kPrefix + "about", "Alt+Q, Alt+/").toString());
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
@@ -1052,6 +1071,12 @@ void MainWindow::retranslate()
     m_actionReversedPaste->setStatusTip(tr("Paste a selected keyframe with reversed."));
     m_actionViewLogMessage->setText(tr("Logger Window"));
     m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
+    m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
+    m_actionEnableMoveGesture->setStatusTip(tr("Enable moving scene/model/bone by pan gesture"));
+    m_actionEnableRotateGesture->setText(tr("Enable rotate gesture"));
+    m_actionEnableRotateGesture->setStatusTip(tr("Enable rotate scene/model/bone by pinch gesture"));
+    m_actionEnableScaleGesture->setText(tr("Enable scale gesture"));
+    m_actionEnableScaleGesture->setStatusTip(tr("Enable scale scene by pinch gesture"));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAboutQt->setText(tr("About Qt"));

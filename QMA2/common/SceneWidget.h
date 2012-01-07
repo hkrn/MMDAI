@@ -115,6 +115,9 @@ public:
     bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     bool isPlaying() const { return m_playing; }
+    bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
+    bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
+    bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
     bool showModelDialog() const { return m_showModelDialog; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
@@ -171,6 +174,9 @@ public slots:
     void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
+    void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
+    void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
+    void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
 
 signals:
     void initailizeGLContextDidDone();
@@ -252,6 +258,9 @@ private:
     bool m_enablePhysics;
     bool m_showModelDialog;
     bool m_lockTouchEvent;
+    bool m_enableMoveGesture;
+    bool m_enableRotateGesture;
+    bool m_enableScaleGesture;
 
     Q_DISABLE_COPY(SceneWidget)
 };

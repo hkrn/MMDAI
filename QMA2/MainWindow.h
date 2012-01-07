@@ -243,6 +243,9 @@ private:
     QAction *m_actionUndoFrame;
     QAction *m_actionRedoFrame;
     QAction *m_actionViewLogMessage;
+    QAction *m_actionEnableMoveGesture;
+    QAction *m_actionEnableRotateGesture;
+    QAction *m_actionEnableScaleGesture;
     QAction *m_actionAddModelOnToolBar;
     QAction *m_actionAddAssetOnToolBar;
     QAction *m_actionSelectModelOnToolBar;
