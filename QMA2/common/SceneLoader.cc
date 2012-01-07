@@ -222,6 +222,7 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QU
             m_project->addAsset(asset, uuid.toString().toStdString());
             m_project->setAssetSetting(asset, vpvl::Project::kSettingNameKey, baseName.toStdString());
             m_project->setAssetSetting(asset, vpvl::Project::kSettingURIKey, filename.toStdString());
+            emit assetDidAdd(asset, uuid);
         }
         else {
             delete asset;
