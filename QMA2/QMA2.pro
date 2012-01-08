@@ -31,7 +31,7 @@ win32:INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include ../libvpvl/msvc-build/include
 CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
   macx:LIBS        += -framework Cg -framework GLUT
-  linux:LIBS       += -lfreeglut
+  linux-*:LIBS     += -lGLU
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
