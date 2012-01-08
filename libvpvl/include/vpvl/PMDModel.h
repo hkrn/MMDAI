@@ -53,7 +53,6 @@ namespace vpvl
 {
 
 class VMDMotion;
-typedef struct PMDModelUserData PMDModelUserData;
 
 /**
  * @file
@@ -68,6 +67,12 @@ typedef struct PMDModelUserData PMDModelUserData;
 class VPVL_API PMDModel
 {
 public:
+    class UserData {
+    public:
+        UserData() {}
+        virtual ~UserData() {}
+    };
+
     typedef struct SkinVertex SkinVertex;
     typedef struct State State;
 
@@ -601,7 +606,7 @@ public:
     const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
-    PMDModelUserData *userData() const {
+    UserData *userData() const {
         return m_userData;
     }
     Error error() const {
@@ -678,7 +683,7 @@ public:
     void setVisible(bool value) {
         m_visible = value;
     }
-    void setUserData(PMDModelUserData *value) {
+    void setUserData(UserData *value) {
         m_userData = value;
     }
 
@@ -759,7 +764,7 @@ private:
     Array<bool> m_isIKSimulated;
     SkinVertex *m_skinnedVertices;
     btDiscreteDynamicsWorld *m_world;
-    PMDModelUserData *m_userData;
+    UserData *m_userData;
     uint16_t *m_indicesPointer;
     uint16_t *m_edgeIndicesPointer;
     int m_edgeIndicesCount;

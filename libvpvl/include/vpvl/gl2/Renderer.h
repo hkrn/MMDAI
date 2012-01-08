@@ -42,6 +42,14 @@
 #include <string>
 #include "vpvl/Common.h"
 
+#ifdef VPVL_LINK_ASSIMP
+#include <aiMaterial.h>
+#include <aiScene.h>
+#endif
+
+#ifdef VPVL_LINK_QT
+#include <QtOpenGL/QtOpenGL>
+#else
 #ifdef VPVL_BUILD_IOS
 #include <OpenGLES/ES2/gl.h>
 #else
@@ -53,6 +61,7 @@
 #include <GL/glu.h>
 #endif /* __APPLE__ */
 #endif /* VPVL_BUILD_IOS */
+#endif /* VPVL_LINK_QT */
 
 class btDynamicsWorld;
 class btIDebugDraw;
@@ -69,7 +78,7 @@ class Scene;
 namespace gl2
 {
 
-struct PMDModelUserData;
+class AssetProgram;
 class EdgeProgram;
 class ModelProgram;
 class ObjectProgram;
@@ -86,7 +95,11 @@ class ZPlotProgram;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
+#ifdef VPVL_LINK_QT
+class VPVL_API Renderer : protected QGLFunctions
+#else
 class VPVL_API Renderer
+#endif
 {
 public:
     enum LogLevel {
@@ -124,25 +137,26 @@ public:
     vpvl::PMDModel *selectedModel() const {
         return m_selected;
     }
-    void setSelectedModel(vpvl::PMDModel *value) {
+    void setSelectedModel(PMDModel *value) {
         m_selected = value;
     }
 
-    void initializeSurface();
     bool createPrograms();
+    void initializeSurface();
     bool createShadowFrameBuffers();
     void resize(int width, int height);
-    void uploadModel(vpvl::PMDModel *model, const std::string &dir);
-    void deleteModel(vpvl::PMDModel *&model);
+    void uploadModel(PMDModel *model, const std::string &dir);
+    void deleteModel(PMDModel *&model);
     void updateAllModel();
-    void updateModel(vpvl::PMDModel *model);
-    void renderModel(const vpvl::PMDModel *model);
-    void renderModelEdge(const vpvl::PMDModel *model);
-    void renderModelShadow(const vpvl::PMDModel *model);
-    void renderModelZPlot(const vpvl::PMDModel *model);
+    void updateModel(PMDModel *model);
+    void renderModel(const PMDModel *model);
+    void renderModelEdge(const PMDModel *model);
+    void renderModelShadow(const PMDModel *model);
+    void renderModelZPlot(const PMDModel *model);
+    void renderAsset(const Asset *asset);
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
-    void releaseProject(vpvl::Project *project);
+    void releaseProject(Project *project);
 
     void clear();
     void renderAllAssets();
@@ -151,14 +165,21 @@ public:
     void renderZPlot();
 
 protected:
-    void uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir);
-    void deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *&model);
+    void uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
+    void uploadAsset0(Asset::UserData *userData, Asset *asset, const std::string &dir);
 
     IDelegate *m_delegate;
     vpvl::Scene *m_scene;
     Array<vpvl::Asset *> m_assets;
 
 private:
+#ifdef VPVL_LINK_ASSIMP
+    void uploadAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData);
+    void deleteAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData);
+    void renderAssetRecurse(const aiScene *scene, const aiNode *node, const Asset *asset);
+    void setAssetMaterial(const aiMaterial *material, const vpvl::Asset *asset, AssetProgram *program);
+#endif
+
     EdgeProgram *m_edgeProgram;
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;

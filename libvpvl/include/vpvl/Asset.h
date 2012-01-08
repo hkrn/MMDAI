@@ -58,13 +58,17 @@ namespace vpvl
  * Asset class represents an accessory
  */
 
-typedef struct AssetUserData AssetUserData;
-
 class Bone;
 
 class VPVL_API Asset
 {
 public:
+    class UserData {
+    public:
+        UserData() {}
+        virtual ~UserData() {}
+    };
+
     static bool isSupported();
 
     Asset();
@@ -95,7 +99,7 @@ public:
     Bone *parentBone() const {
         return m_parentBone;
     }
-    AssetUserData *userData() const {
+    UserData *userData() const {
         return m_userData;
     }
     const aiScene *getScene() const {
@@ -108,12 +112,12 @@ public:
     void setOpacity(const Scalar &value);
     void setLoadFlags(uint32_t value);
     void setParentBone(Bone *value);
-    void setUserData(AssetUserData *value);
+    void setUserData(UserData *value);
 
 private:
     Assimp::Importer *m_importer;
     const aiScene *m_scene;
-    AssetUserData *m_userData;
+    UserData *m_userData;
     Bone *m_parentBone;
     Vector3 m_position;
     Quaternion m_rotation;

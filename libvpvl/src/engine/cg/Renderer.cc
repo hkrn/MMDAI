@@ -222,8 +222,12 @@ private:
     CGparameter m_subsetCount;
 };
 
-struct PMDModelUserData : vpvl::gl2::PMDModelUserData
+class PMDModelUserData : public gl2::PMDModelUserData
 {
+public:
+    PMDModelUserData() : gl2::PMDModelUserData() {}
+    ~PMDModelUserData() {}
+
     EffectParameters *parameters;
 };
 
@@ -243,8 +247,8 @@ Renderer::~Renderer()
 
 void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
 {
-    vpvl::cg::PMDModelUserData *userData = new vpvl::cg::PMDModelUserData();
-    vpvl::cg::Renderer::IDelegate *delegate = static_cast<vpvl::cg::Renderer::IDelegate *>(m_delegate);
+    PMDModelUserData *userData = new PMDModelUserData();
+    Renderer::IDelegate *delegate = static_cast<Renderer::IDelegate *>(m_delegate);
     std::string source;
     userData->parameters = 0;
     if (delegate->loadEffect(model, dir, source)) {
@@ -259,20 +263,20 @@ void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
                             m_delegate->toUnicode(model->name()).c_str(), message);
         }
     }
-    uploadModel0(userData, model, dir);
+    gl2::Renderer::uploadModel0(userData, model, dir);
 }
 
 void Renderer::deleteModel(vpvl::PMDModel *&model)
 {
-    vpvl::cg::PMDModelUserData *userData = static_cast<vpvl::cg::PMDModelUserData *>(model->userData());
+    PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     delete userData->parameters;
     userData->parameters = 0;
-    deleteModel0(userData, model);
+    gl2::Renderer::deleteModel(model);
 }
 
 void Renderer::renderModel(const vpvl::PMDModel *model)
 {
-    vpvl::cg::PMDModelUserData *userData = static_cast<vpvl::cg::PMDModelUserData *>(model->userData());
+    PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     userData->parameters ? renderModel0(userData, model) : vpvl::gl2::Renderer::renderModel(model);
 }
 

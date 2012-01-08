@@ -37,13 +37,10 @@
 #ifndef VPVL_INTERNAL_GL2_H_
 #define VPVL_INTERNAL_GL2_H_
 
-/* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl/vpvl.h>
-#ifdef VPVL_LINK_GLEW
-#include <GL/glew.h>
-#endif /* VPVL_LINK_GLEW */
 
 #include <vpvl/gl2/Renderer.h>
+#include <map>
 
 namespace vpvl
 {
@@ -70,14 +67,50 @@ struct PMDModelMaterialPrivate
     GLuint subTextureID;
 };
 
-struct PMDModelUserData : vpvl::PMDModelUserData
+class PMDModelUserData : public vpvl::PMDModel::UserData
 {
-    GLuint toonTextureID[vpvl::PMDModel::kCustomTextureMax];
+public:
+    PMDModelUserData() : PMDModel::UserData() {}
+    ~PMDModelUserData() {}
+
+    GLuint toonTextureID[PMDModel::kCustomTextureMax];
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
     PMDModelMaterialPrivate *materials;
 };
+
+#ifdef VPVL_LINK_ASSIMP
+struct AssetVertex
+{
+    vpvl::Vector4 position;
+    vpvl::Vector3 normal;
+    vpvl::Vector3 texcoord;
+    vpvl::Color color;
+};
+struct AssetVBO
+{
+    GLuint vertices;
+    GLuint indices;
+};
+typedef btAlignedObjectArray<AssetVertex> AssetVertices;
+typedef btAlignedObjectArray<uint32_t> AssetIndices;
+
+class AssetProgram;
+
+class AssetUserData : public vpvl::Asset::UserData
+{
+public:
+    AssetUserData() : Asset::UserData() {}
+    ~AssetUserData() {}
+
+    std::map<std::string, GLuint> textures;
+    std::map<const struct aiMesh *, AssetVertices> vertices;
+    std::map<const struct aiMesh *, AssetIndices> indices;
+    std::map<const struct aiMesh *, AssetVBO> vbo;
+    std::map<const struct aiNode *, vpvl::gl2::AssetProgram *> programs;
+};
+#endif
 
 }
 

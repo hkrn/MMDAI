@@ -178,7 +178,7 @@ void Asset::setParentBone(Bone *value)
     m_parentBone = value;
 }
 
-void Asset::setUserData(AssetUserData *value)
+void Asset::setUserData(UserData *value)
 {
     m_userData = value;
 }

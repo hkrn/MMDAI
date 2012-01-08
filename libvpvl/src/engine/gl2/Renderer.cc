@@ -57,7 +57,7 @@ static void CreateLookAt(const Vector3 &eye, float matrix[16])
 {
 #ifndef VPVL_BUILD_IOS
     glMatrixMode(GL_MODELVIEW);
-    gluLookAt(eye.x(), eye.y(), eye.z(), 0, 0, 0, 0, 1, 0);
+    //gluLookAt(eye.x(), eye.y(), eye.z(), 0, 0, 0, 0, 1, 0);
     glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
     /*
     static const Vector3 zero(0.0f, 0.0f, 0.0f), up(0.0f, 1.0f, 0.0f);
@@ -75,7 +75,11 @@ static void CreateLookAt(const Vector3 &eye, float matrix[16])
 #endif
 }
 
+#ifdef VPVL_LINK_QT
+class ShaderProgram : protected QGLFunctions
+#else
 class ShaderProgram
+#endif
 {
 public:
     ShaderProgram(Renderer::IDelegate *delegate)
@@ -100,6 +104,12 @@ public:
         m_positionAttributeLocation = 0;
         m_normalAttributeLocation = 0;
     }
+
+#ifdef VPVL_LINK_QT
+    virtual void initializeContext(const QGLContext *context) {
+        initializeGLFunctions(context);
+    }
+#endif
 
     virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
         GLuint vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
@@ -194,7 +204,8 @@ private:
     char *m_message;
 };
 
-class EdgeProgram : public ShaderProgram {
+class EdgeProgram : public ShaderProgram
+{
 public:
     EdgeProgram(Renderer::IDelegate *delegate)
         : ShaderProgram(delegate),
@@ -243,7 +254,8 @@ private:
     GLuint m_colorUniformLocation;
 };
 
-class ZPlotProgram : public ShaderProgram {
+class ZPlotProgram : public ShaderProgram
+{
 public:
     ZPlotProgram(Renderer::IDelegate *delegate)
         : ShaderProgram(delegate)
@@ -253,7 +265,8 @@ public:
     }
 };
 
-class ObjectProgram : public ShaderProgram {
+class ObjectProgram : public ShaderProgram
+{
 public:
     ObjectProgram(Renderer::IDelegate *delegate)
         : ShaderProgram(delegate),
@@ -286,7 +299,8 @@ private:
     GLuint m_lightPositionUniformLocation;
 };
 
-class ShadowProgram : public ObjectProgram {
+class ShadowProgram : public ObjectProgram
+{
 public:
     ShadowProgram(Renderer::IDelegate *delegate)
         : ObjectProgram(delegate),
@@ -312,7 +326,8 @@ private:
     GLuint m_shadowMatrixUniformLocation;
 };
 
-class ModelProgram : public ObjectProgram {
+class ModelProgram : public ObjectProgram
+{
 public:
     ModelProgram(Renderer::IDelegate *delegate)
         : ObjectProgram(delegate),
@@ -471,7 +486,8 @@ private:
     GLuint m_toonTextureUniformLocation;
 };
 
-class ExtendedModelProgram : public ModelProgram {
+class ExtendedModelProgram : public ModelProgram
+{
 public:
     ExtendedModelProgram(Renderer::IDelegate *delegate)
         : ModelProgram(delegate),
@@ -516,7 +532,8 @@ private:
     GLuint m_shadowTextureUniformLocation;
 };
 
-class AssetProgram : public ObjectProgram {
+class AssetProgram : public ObjectProgram
+{
 public:
     AssetProgram(Renderer::IDelegate *delegate)
         : ObjectProgram(delegate),
@@ -636,278 +653,6 @@ private:
 }
 }
 
-#ifdef VPVL_LINK_ASSIMP
-namespace
-{
-struct AssetVertex
-{
-    vpvl::Vector4 position;
-    vpvl::Vector3 normal;
-    vpvl::Vector3 texcoord;
-    vpvl::Color color;
-};
-struct AssetVBO
-{
-    GLuint vertices;
-    GLuint indices;
-};
-typedef btAlignedObjectArray<AssetVertex> AssetVertices;
-typedef btAlignedObjectArray<uint32_t> AssetIndices;
-}
-namespace vpvl
-{
-struct AssetUserData
-{
-    std::map<std::string, GLuint> textures;
-    std::map<const struct aiMesh *, AssetVertices> vertices;
-    std::map<const struct aiMesh *, AssetIndices> indices;
-    std::map<const struct aiMesh *, AssetVBO> vbo;
-    std::map<const struct aiNode *, vpvl::gl2::AssetProgram *> programs;
-};
-}
-namespace
-{
-
-using namespace vpvl::gl2;
-
-void aiLoadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData, Renderer::IDelegate *delegate)
-{
-    const unsigned int nmeshes = node->mNumMeshes;
-    AssetVertex assetVertex;
-    vpvl::gl2::AssetProgram *program = new AssetProgram(delegate);
-    program->load(delegate->loadShader(Renderer::kAssetVertexShader).c_str(),
-                  delegate->loadShader(Renderer::kAssetFragmentShader).c_str());
-    userData->programs[node] = program;
-    for (unsigned int i = 0; i < nmeshes; i++) {
-        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const aiVector3D *vertices = mesh->mVertices;
-        const aiVector3D *normals = mesh->mNormals;
-        const bool hasNormals = mesh->HasNormals();
-        const bool hasColors = mesh->HasVertexColors(0);
-        const bool hasTexCoords = mesh->HasTextureCoords(0);
-        const aiColor4D *colors = hasColors ? mesh->mColors[0] : 0;
-        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
-        AssetVertices &assetVertices = userData->vertices[mesh];
-        AssetIndices &indices = userData->indices[mesh];
-        const unsigned int nfaces = mesh->mNumFaces;
-        int index = 0;
-        for (unsigned int j = 0; j < nfaces; j++) {
-            const struct aiFace &face = mesh->mFaces[j];
-            const unsigned int nindices = face.mNumIndices;
-            for (unsigned int k = 0; k < nindices; k++) {
-                int vertexIndex = face.mIndices[k];
-                if (hasColors) {
-                    const aiColor4D &c = colors[vertexIndex];
-                    assetVertex.color.setValue(c.r, c.g, c.b, c.a);
-                }
-                else {
-                    assetVertex.color.setZero();
-                    assetVertex.color.setW(1.0f);
-                }
-                if (hasTexCoords) {
-                    const aiVector3D &p = texcoords[vertexIndex];
-                    assetVertex.texcoord.setValue(p.x, p.y, 0.0f);
-                }
-                else {
-                    assetVertex.texcoord.setZero();
-                }
-                if (hasNormals) {
-                    const aiVector3D &n = normals[vertexIndex];
-                    assetVertex.normal.setValue(n.x, n.y, n.z);
-                }
-                else {
-                    assetVertex.normal.setZero();
-                }
-                const aiVector3D &v = vertices[vertexIndex];
-                assetVertex.position.setValue(v.x, v.y, v.z, 1.0f);
-                assetVertices.push_back(assetVertex);
-                indices.push_back(index);
-                index++;
-            }
-        }
-        AssetVBO &vbo = userData->vbo[mesh];
-        size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
-        glGenBuffers(1, &vbo.vertices);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].position, GL_STATIC_DRAW);
-        glGenBuffers(1, &vbo.indices);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
-    }
-    const unsigned int nChildNodes = node->mNumChildren;
-    for (unsigned int i = 0; i < nChildNodes; i++)
-        aiLoadAssetRecursive(scene, node->mChildren[i], userData, delegate);
-}
-
-void aiUnloadAssetRecursive(const aiScene *scene, const aiNode *node, vpvl::AssetUserData *userData)
-{
-    const unsigned int nmeshes = node->mNumMeshes;
-    for (unsigned int i = 0; i < nmeshes; i++) {
-        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const AssetVBO &vbo = userData->vbo[mesh];
-        glDeleteBuffers(1, &vbo.vertices);
-        glDeleteBuffers(1, &vbo.indices);
-    }
-    delete userData->programs[node];
-    const unsigned int nChildNodes = node->mNumChildren;
-    for (unsigned int i = 0; i < nChildNodes; i++)
-        aiUnloadAssetRecursive(scene, node->mChildren[i], userData);
-}
-
-void aiSetAssetMaterial(const aiMaterial *material, vpvl::Asset *asset, vpvl::gl2::AssetProgram *program)
-{
-    int textureIndex = 0;
-    aiString texturePath;
-    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
-        GLuint textureID = asset->userData()->textures[texturePath.data];
-        program->setTexture(textureID);
-    }
-    else {
-        program->setTexture(0);
-    }
-    aiColor4D ambient, diffuse, emission, specular;
-    vpvl::Color color(0.0f, 0.0f, 0.0f, 0.0f);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
-        color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
-    }
-    else {
-        color.setValue(0.2f, 0.2f, 0.2f, 1.0f);
-    }
-    program->setMaterialAmbient(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
-        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
-    }
-    else {
-        color.setValue(0.8f, 0.8f, 0.8f, 1.0f);
-    }
-    program->setMaterialDiffuse(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
-        color.setValue(emission.r, emission.g, emission.b, emission.a);
-    }
-    else {
-        color.setValue(0.0f, 0.0f, 0.0f, 0.0f);
-    }
-    program->setMaterialEmission(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
-        color.setValue(specular.r, specular.g, specular.b, specular.a);
-    }
-    else {
-        color.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-    }
-    program->setMaterialSpecular(color);
-    float shininess, strength;
-    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
-    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
-    if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
-        program->setMaterialShininess(shininess * strength);
-    }
-    else if (ret1 == aiReturn_SUCCESS) {
-        program->setMaterialShininess(shininess);
-    }
-    else {
-        program->setMaterialShininess(15.0f);
-    }
-    float opacity;
-    if (aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS) {
-        program->setOpacity(opacity * asset->opacity());
-    }
-    else {
-        program->setOpacity(asset->opacity());
-    }
-    int wireframe, twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside)
-        glEnable(GL_CULL_FACE);
-    else
-        glDisable(GL_CULL_FACE);
-}
-
-void aiDrawAssetRecurse(const aiScene *scene, const aiNode *node, vpvl::Asset *asset, vpvl::Scene *s)
-{
-    const btScalar &scaleFactor = asset->scaleFactor();
-    const vpvl::Bone *bone = asset->parentBone();
-    float matrix4x4[16], matrix3x3[9];
-    aiVector3D aiS, aiP;
-    aiQuaternion aiQ;
-    node->mTransformation.Decompose(aiS, aiQ, aiP);
-    vpvl::Transform transform(btMatrix3x3(vpvl::Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
-                              .scaled(vpvl::Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
-                              vpvl::Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (bone) {
-        const vpvl::Transform &boneTransform = bone->localTransform();
-        transform.setBasis(boneTransform.getBasis() * transform.getBasis());
-        transform.setOrigin(boneTransform.getOrigin() + transform.getOrigin());
-    }
-    vpvl::AssetUserData *userData = asset->userData();
-    AssetVertex v;
-    const GLvoid *vertexPtr = 0;
-    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
-    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
-    const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
-    const unsigned int nmeshes = node->mNumMeshes;
-    const size_t stride = sizeof(AssetVertex);
-    vpvl::gl2::AssetProgram *program = userData->programs[node];
-    program->bind();
-    s->getModelViewMatrix(matrix4x4);
-    program->setModelViewMatrix(matrix4x4);
-    s->getProjectionMatrix(matrix4x4);
-    program->setProjectionMatrix(matrix4x4);
-    s->getNormalMatrix(matrix3x3);
-    program->setNormalMatrix(matrix3x3);
-    transform.getOpenGLMatrix(matrix4x4);
-    program->setTransformMatrix(matrix4x4);
-    program->setLightColor(s->lightColor());
-    program->setLightPosition(s->lightPosition());
-    for (unsigned int i = 0; i < nmeshes; i++) {
-        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const AssetVBO &vbo = userData->vbo[mesh];
-        const AssetIndices &indices = userData->indices[mesh];
-        aiSetAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], asset, program);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        program->setPosition(vertexPtr, stride);
-        program->setNormal(normalPtr, stride);
-        program->setTexCoord(texcoordPtr, stride);
-        program->setColor(colorPtr, stride);
-        program->setHasColor(mesh->HasVertexColors(0));
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-    }
-    program->unbind();
-    const unsigned int nChildNodes = node->mNumChildren;
-    for (unsigned int i = 0; i < nChildNodes; i++)
-        aiDrawAssetRecurse(scene, node->mChildren[i], asset, s);
-}
-
-void aiDrawAsset(vpvl::Asset *asset, vpvl::Scene *s)
-{
-    const aiScene *a = asset->getScene();
-    aiDrawAssetRecurse(a, a->mRootNode, asset, s);
-}
-
-}
-#else
-VPVL_DECLARE_HANDLE(aiNode)
-VPVL_DECLARE_HANDLE(aiScene)
-namespace vpvl
-{
-    namespace gl
-    {
-    VPVL_DECLARE_HANDLE(AssetInternal)
-    }
-}
-namespace
-{
-void aiDrawAsset(vpvl::Asset *asset, vpvl::Scene *s)
-{
-    (void) asset;
-    (void) s;
-}
-}
-#endif
-
 namespace {
 
 const std::string CanonicalizePath(const std::string &path)
@@ -931,7 +676,12 @@ namespace gl2
 {
 
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
-    : m_delegate(delegate),
+#ifdef VPVL_LINK_QT
+    :
+#else
+    : QGLFunctions(),
+#endif
+      m_delegate(delegate),
       m_edgeProgram(0),
       m_modelProgram(0),
       m_shadowProgram(0),
@@ -983,24 +733,32 @@ void Renderer::initializeSurface()
 
 bool Renderer::createPrograms()
 {
+    m_edgeProgram = new EdgeProgram(m_delegate);
+    m_modelProgram = new ExtendedModelProgram(m_delegate);
+    m_shadowProgram = new ShadowProgram(m_delegate);
+    m_zplotProgram = new ZPlotProgram(m_delegate);
+#ifdef VPVL_LINK_QT
+    const QGLContext *context = QGLContext::currentContext();
+    initializeGLFunctions(context);
+    m_edgeProgram->initializeContext(context);
+    m_modelProgram->initializeContext(context);
+    m_shadowProgram->initializeContext(context);
+    m_zplotProgram->initializeContext(context);
+#endif
     std::string vertexShader;
     std::string fragmentShader;
     vertexShader = m_delegate->loadShader(kEdgeVertexShader);
     fragmentShader = m_delegate->loadShader(kEdgeFragmentShader);
-    m_edgeProgram = new EdgeProgram(m_delegate);
     if (!m_edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
-    m_modelProgram = new ExtendedModelProgram(m_delegate);
     vertexShader = m_delegate->loadShader(kModelVertexShader);
     fragmentShader = m_delegate->loadShader(kModelFragmentShader);
     if (!m_modelProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
-    m_shadowProgram = new ShadowProgram(m_delegate);
     vertexShader = m_delegate->loadShader(kShadowVertexShader);
     fragmentShader = m_delegate->loadShader(kShadowFragmentShader);
     if (!m_shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
-    m_zplotProgram = new ZPlotProgram(m_delegate);
     vertexShader = m_delegate->loadShader(kZPlotVertexShader);
     fragmentShader = m_delegate->loadShader(kZPlotFragmentShader);
     return m_zplotProgram->load(vertexShader.c_str(), fragmentShader.c_str());
@@ -1050,11 +808,12 @@ void Renderer::resize(int width, int height)
 
 void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
 {
-    uploadModel0(new vpvl::gl2::PMDModelUserData(), model, dir);
+    uploadModel0(new PMDModelUserData(), model, dir);
 }
 
-void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *model, const std::string &dir)
+void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir)
 {
+    PMDModelUserData *casted = static_cast<PMDModelUserData *>(userData);
     const vpvl::MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
@@ -1082,44 +841,44 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
         hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
         hasMultipleSphere |= material->isSubSphereAdd();
     }
-    userData->hasSingleSphereMap = hasSingleSphere;
-    userData->hasMultipleSphereMap = hasMultipleSphere;
+    casted->hasSingleSphereMap = hasSingleSphere;
+    casted->hasMultipleSphereMap = hasMultipleSphere;
     m_delegate->log(kLogInfo,
                     "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
                     hasSingleSphere ? "true" : "false",
                     hasMultipleSphere ? "true" : "false");
-    glGenBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
+    glGenBuffers(kVertexBufferObjectMax, casted->vertexBufferObjects);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(vpvl::PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
     m_delegate->log(kLogInfo,
                     "Binding edge indices to the vertex buffer object (ID=%d)",
-                    userData->vertexBufferObjects[kEdgeIndices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+                    casted->vertexBufferObjects[kEdgeIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kShadowIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(vpvl::PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
     m_delegate->log(kLogInfo,
                     "Binding indices to the vertex buffer object (ID=%d)",
-                    userData->vertexBufferObjects[kShadowIndices]);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+                    casted->vertexBufferObjects[kShadowIndices]);
+    glBindBuffer(GL_ARRAY_BUFFER, casted->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
     m_delegate->log(kLogInfo,
                     "Binding model vertices to the vertex buffer object (ID=%d)",
-                    userData->vertexBufferObjects[kModelVertices]);
+                    casted->vertexBufferObjects[kModelVertices]);
     if (m_delegate->uploadToonTexture("toon0.bmp", dir, textureID)) {
-        userData->toonTextureID[0] = textureID;
+        casted->toonTextureID[0] = textureID;
         m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->uploadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
-            userData->toonTextureID[i + 1] = textureID;
+            casted->toonTextureID[i + 1] = textureID;
             m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
-    userData->materials = materialPrivates;
-    model->setUserData(userData);
+    casted->materials = materialPrivates;
+    model->setUserData(casted);
     model->setLightPosition(m_scene->lightPosition());
     model->updateImmediate();
     updateModel(model);
@@ -1129,12 +888,8 @@ void Renderer::uploadModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDMode
 
 void Renderer::deleteModel(vpvl::PMDModel *&model)
 {
-    deleteModel0(static_cast<vpvl::gl2::PMDModelUserData *>(model->userData()), model);
-}
-
-void Renderer::deleteModel0(vpvl::gl2::PMDModelUserData *userData, vpvl::PMDModel *&model)
-{
     if (model) {
+        PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
         const vpvl::MaterialList &materials = model->materials();
         const int nmaterials = materials.count();
         for (int i = 0; i < nmaterials; i++) {
@@ -1168,7 +923,7 @@ void Renderer::updateAllModel()
 
 void Renderer::updateModel(vpvl::PMDModel *model)
 {
-    vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
                     model->verticesPointer());
@@ -1177,7 +932,7 @@ void Renderer::updateModel(vpvl::PMDModel *model)
 
 void Renderer::renderModel(const vpvl::PMDModel *model)
 {
-    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
 
     m_modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
@@ -1249,7 +1004,7 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
 void Renderer::renderModelShadow(const vpvl::PMDModel *model)
 {
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
-    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     const Vector3 &light = m_scene->lightPosition();
     const Scalar dot = plane.dot(light);
     float modelViewMatrix[16], projectionMatrix[16], shadowMatrix[16];
@@ -1280,7 +1035,7 @@ void Renderer::renderModelShadow(const vpvl::PMDModel *model)
 void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
 {
 #ifndef VPVL_BUILD_IOS
-    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getProjectionMatrix(projectionMatrix);
     m_scene->getModelViewMatrix(modelViewMatrix);
@@ -1292,9 +1047,9 @@ void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     Scalar eye = radius / btSin(vpvl::radian(angle * 0.5f));
-    gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
+    //gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
     Vector3 eyev = m_scene->lightPosition() * eye + center;
-    gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
+    //gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
     glGetFloatv(GL_MODELVIEW, modelViewMatrix);
     m_zplotProgram->bind();
     m_zplotProgram->setModelViewMatrix(modelViewMatrix);
@@ -1313,7 +1068,7 @@ void Renderer::renderModelEdge(const vpvl::PMDModel *model)
 {
     if (model->edgeOffset() == 0.0f)
         return;
-    const vpvl::gl2::PMDModelUserData *userData = static_cast<vpvl::gl2::PMDModelUserData *>(model->userData());
+    const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     float modelViewMatrix[16], projectionMatrix[16];
     m_scene->getModelViewMatrix(modelViewMatrix);
     m_scene->getProjectionMatrix(projectionMatrix);
@@ -1344,15 +1099,33 @@ void Renderer::renderModelEdge(const vpvl::PMDModel *model)
     m_edgeProgram->unbind();
 }
 
+void Renderer::renderAsset(const vpvl::Asset *asset)
+{
+#ifdef VPVL_LINK_ASSIMP
+    const aiScene *a = asset->getScene();
+    renderAssetRecurse(a, a->mRootNode, asset);
+#endif
+}
+
 void Renderer::uploadAsset(Asset *asset, const std::string &dir)
+{
+#ifdef VPVL_LINK_ASSIMP
+    uploadAsset0(new AssetUserData(), asset, dir);
+#else
+    (void) asset;
+    (void) dir;
+#endif
+}
+
+void Renderer::uploadAsset0(Asset::UserData *userData, Asset *asset, const std::string &dir)
 {
 #ifdef VPVL_LINK_ASSIMP
     const aiScene *scene = asset->getScene();
     const unsigned int nmaterials = scene->mNumMaterials;
-    AssetUserData *userData = new AssetUserData();
+    AssetUserData *casted = static_cast<AssetUserData *>(userData);
     aiString texturePath;
     std::string path, canonicalized, filename;
-    asset->setUserData(userData);
+    asset->setUserData(casted);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -1361,20 +1134,21 @@ void Renderer::uploadAsset(Asset *asset, const std::string &dir)
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
-            if (userData->textures[path] == 0) {
+            if (casted->textures[path] == 0) {
                 canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
                 filename = dir + "/" + canonicalized;
                 if (m_delegate->uploadTexture(filename, textureID, false)) {
-                    userData->textures[path] = textureID;
+                    casted->textures[path] = textureID;
                     m_delegate->log(kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;
         }
     }
-    aiLoadAssetRecursive(scene, scene->mRootNode, userData, m_delegate);
+    uploadAssetRecurse(scene, scene->mRootNode, casted);
     m_assets.add(asset);
 #else
+    (void) userData;
     (void) asset;
     (void) dir;
 #endif
@@ -1386,7 +1160,7 @@ void Renderer::deleteAsset(Asset *&asset)
     if (asset) {
         const aiScene *scene = asset->getScene();
         const unsigned int nmaterials = scene->mNumMaterials;
-        AssetUserData *userData = asset->userData();
+        AssetUserData *userData = static_cast<AssetUserData *>(asset->userData());
         aiString texturePath;
         for (unsigned int i = 0; i < nmaterials; i++) {
             aiMaterial *material = scene->mMaterials[i];
@@ -1401,7 +1175,7 @@ void Renderer::deleteAsset(Asset *&asset)
                 textureIndex++;
             }
         }
-        aiUnloadAssetRecursive(scene, scene->mRootNode, userData);
+        deleteAssetRecurse(scene, scene->mRootNode, userData);
         delete userData;
         delete asset;
         m_assets.remove(asset);
@@ -1424,7 +1198,7 @@ void Renderer::renderAllAssets()
 {
     const int nassets = m_assets.count();
     for (int i = 0; i < nassets; i++)
-        aiDrawAsset(m_assets[i], m_scene);
+        renderAsset(m_assets[i]);
 }
 
 void Renderer::renderAllModels()
@@ -1494,6 +1268,225 @@ void Renderer::releaseProject(vpvl::Project *project)
     (void) project;
 #endif
 }
+
+#ifdef VPVL_LINK_ASSIMP
+void Renderer::uploadAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData)
+{
+    const unsigned int nmeshes = node->mNumMeshes;
+    AssetVertex assetVertex;
+    AssetUserData *casted = static_cast<AssetUserData *>(userData);
+    AssetProgram *program = new AssetProgram(m_delegate);
+#ifdef VPVL_LINK_QT
+    program->initializeContext(QGLContext::currentContext());
+#endif
+    program->load(m_delegate->loadShader(Renderer::kAssetVertexShader).c_str(),
+                  m_delegate->loadShader(Renderer::kAssetFragmentShader).c_str());
+    casted->programs[node] = program;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const aiVector3D *vertices = mesh->mVertices;
+        const aiVector3D *normals = mesh->mNormals;
+        const bool hasNormals = mesh->HasNormals();
+        const bool hasColors = mesh->HasVertexColors(0);
+        const bool hasTexCoords = mesh->HasTextureCoords(0);
+        const aiColor4D *colors = hasColors ? mesh->mColors[0] : 0;
+        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
+        AssetVertices &assetVertices = casted->vertices[mesh];
+        AssetIndices &indices = casted->indices[mesh];
+        const unsigned int nfaces = mesh->mNumFaces;
+        int index = 0;
+        for (unsigned int j = 0; j < nfaces; j++) {
+            const struct aiFace &face = mesh->mFaces[j];
+            const unsigned int nindices = face.mNumIndices;
+            for (unsigned int k = 0; k < nindices; k++) {
+                int vertexIndex = face.mIndices[k];
+                if (hasColors) {
+                    const aiColor4D &c = colors[vertexIndex];
+                    assetVertex.color.setValue(c.r, c.g, c.b, c.a);
+                }
+                else {
+                    assetVertex.color.setZero();
+                    assetVertex.color.setW(1.0f);
+                }
+                if (hasTexCoords) {
+                    const aiVector3D &p = texcoords[vertexIndex];
+                    assetVertex.texcoord.setValue(p.x, p.y, 0.0f);
+                }
+                else {
+                    assetVertex.texcoord.setZero();
+                }
+                if (hasNormals) {
+                    const aiVector3D &n = normals[vertexIndex];
+                    assetVertex.normal.setValue(n.x, n.y, n.z);
+                }
+                else {
+                    assetVertex.normal.setZero();
+                }
+                const aiVector3D &v = vertices[vertexIndex];
+                assetVertex.position.setValue(v.x, v.y, v.z, 1.0f);
+                assetVertices.push_back(assetVertex);
+                indices.push_back(index);
+                index++;
+            }
+        }
+        AssetVBO &vbo = casted->vbo[mesh];
+        size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
+        glGenBuffers(1, &vbo.vertices);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].position, GL_STATIC_DRAW);
+        glGenBuffers(1, &vbo.indices);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
+    }
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        uploadAssetRecurse(scene, node->mChildren[i], casted);
+}
+
+void Renderer::deleteAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData)
+{
+    const unsigned int nmeshes = node->mNumMeshes;
+    AssetUserData *casted = static_cast<AssetUserData *>(userData);
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const AssetVBO &vbo = casted->vbo[mesh];
+        glDeleteBuffers(1, &vbo.vertices);
+        glDeleteBuffers(1, &vbo.indices);
+    }
+    delete casted->programs[node];
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        deleteAssetRecurse(scene, node->mChildren[i], casted);
+}
+
+void Renderer::setAssetMaterial(const aiMaterial *material, const vpvl::Asset *asset, AssetProgram *program)
+{
+    int textureIndex = 0;
+    aiString texturePath;
+    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
+        AssetUserData *userData = static_cast<AssetUserData *>(asset->userData());
+        GLuint textureID = userData->textures[texturePath.data];
+        program->setTexture(textureID);
+    }
+    else {
+        program->setTexture(0);
+    }
+    aiColor4D ambient, diffuse, emission, specular;
+    vpvl::Color color(0.0f, 0.0f, 0.0f, 0.0f);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
+        color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
+    }
+    else {
+        color.setValue(0.2f, 0.2f, 0.2f, 1.0f);
+    }
+    program->setMaterialAmbient(color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
+        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+    }
+    else {
+        color.setValue(0.8f, 0.8f, 0.8f, 1.0f);
+    }
+    program->setMaterialDiffuse(color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
+        color.setValue(emission.r, emission.g, emission.b, emission.a);
+    }
+    else {
+        color.setValue(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+    program->setMaterialEmission(color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
+        color.setValue(specular.r, specular.g, specular.b, specular.a);
+    }
+    else {
+        color.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+    program->setMaterialSpecular(color);
+    float shininess, strength;
+    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
+    if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
+        program->setMaterialShininess(shininess * strength);
+    }
+    else if (ret1 == aiReturn_SUCCESS) {
+        program->setMaterialShininess(shininess);
+    }
+    else {
+        program->setMaterialShininess(15.0f);
+    }
+    float opacity;
+    if (aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS) {
+        program->setOpacity(opacity * asset->opacity());
+    }
+    else {
+        program->setOpacity(asset->opacity());
+    }
+    int wireframe, twoside;
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
+}
+
+void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, const Asset *asset)
+{
+    const btScalar &scaleFactor = asset->scaleFactor();
+    const vpvl::Bone *bone = asset->parentBone();
+    float matrix4x4[16], matrix3x3[9];
+    aiVector3D aiS, aiP;
+    aiQuaternion aiQ;
+    node->mTransformation.Decompose(aiS, aiQ, aiP);
+    vpvl::Transform transform(btMatrix3x3(vpvl::Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
+                              .scaled(vpvl::Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
+                              vpvl::Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
+    if (bone) {
+        const vpvl::Transform &boneTransform = bone->localTransform();
+        transform.setBasis(boneTransform.getBasis() * transform.getBasis());
+        transform.setOrigin(boneTransform.getOrigin() + transform.getOrigin());
+    }
+    AssetUserData *userData = static_cast<AssetUserData *>(asset->userData());
+    AssetVertex v;
+    const GLvoid *vertexPtr = 0;
+    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
+    const unsigned int nmeshes = node->mNumMeshes;
+    const size_t stride = sizeof(AssetVertex);
+    AssetProgram *program = userData->programs[node];
+    program->bind();
+    m_scene->getModelViewMatrix(matrix4x4);
+    program->setModelViewMatrix(matrix4x4);
+    m_scene->getProjectionMatrix(matrix4x4);
+    program->setProjectionMatrix(matrix4x4);
+    m_scene->getNormalMatrix(matrix3x3);
+    program->setNormalMatrix(matrix3x3);
+    transform.getOpenGLMatrix(matrix4x4);
+    program->setTransformMatrix(matrix4x4);
+    program->setLightColor(m_scene->lightColor());
+    program->setLightPosition(m_scene->lightPosition());
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const AssetVBO &vbo = userData->vbo[mesh];
+        const AssetIndices &indices = userData->indices[mesh];
+        setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], asset, program);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        program->setPosition(vertexPtr, stride);
+        program->setNormal(normalPtr, stride);
+        program->setTexCoord(texcoordPtr, stride);
+        program->setColor(colorPtr, stride);
+        program->setHasColor(mesh->HasVertexColors(0));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    }
+    program->unbind();
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        renderAssetRecurse(scene, node->mChildren[i], asset);
+}
+#endif
 
 }
 }
