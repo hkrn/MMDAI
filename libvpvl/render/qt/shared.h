@@ -354,21 +354,14 @@ public:
 
 protected:
     virtual void initializeGL() {
-#ifndef Q_OS_MAC
-        GLenum err = glewInit();
-        if (err != GLEW_OK)
-            qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
-        else
-            qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
-#endif
 #ifdef VPVL_GL2_RENDERER_H_
         bool hardwareSkinning = false;
         m_delegate.setHardwareSkinningEnable(hardwareSkinning);
         m_renderer->scene()->setSoftwareSkinningEnable(!hardwareSkinning);
-        m_renderer->initializeSurface();
         if (!m_renderer->createPrograms() || !m_renderer->createShadowFrameBuffers())
             exit(-1);
 #endif
+        m_renderer->initializeSurface();
         if (!loadScene())
             qFatal("Unable to load scene");
 
