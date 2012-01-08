@@ -103,7 +103,6 @@ public:
         if (!model)
             return;
 
-        glUseProgram(0);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_LIGHTING);
 

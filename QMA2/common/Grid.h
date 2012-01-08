@@ -38,7 +38,7 @@
 #define GRID_H
 
 #include <QtGlobal>
-#include <QtOpenGL/QtOpenGL>
+#include <QtOpenGL/qglfunctions.h>
 
 #include <vpvl/Scene.h>
 
@@ -55,12 +55,13 @@ public:
 
     Grid() : m_vbo(0), m_ibo(0), m_list(0), m_enabled(true) {}
     ~Grid() {
+		QGLFunctions func(QGLContext::currentContext());
         if (m_vbo) {
-            glDeleteBuffers(1, &m_vbo);
+            func.glDeleteBuffers(1, &m_vbo);
             m_vbo = 0;
         }
         if (m_ibo) {
-            glDeleteBuffers(1, &m_ibo);
+            func.glDeleteBuffers(1, &m_ibo);
             m_ibo = 0;
         }
         if (m_list) {
@@ -85,26 +86,27 @@ public:
         // Z coordinate (blue)
         addLine(zero, vpvl::Vector3(0.0f, 0.0f, kLimit), vpvl::Vector3(0.0f, 0.0f, 1.0f), index);
         m_list = glGenLists(1);
-        glGenBuffers(1, &m_vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(Vertex), &m_vertices[0].position, GL_STATIC_DRAW);
-        glGenBuffers(1, &m_ibo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.count() * sizeof(uint8_t), &m_indices[0], GL_STATIC_DRAW);
+		QGLFunctions func(QGLContext::currentContext());
+        func.glGenBuffers(1, &m_vbo);
+        func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        func.glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(Vertex), &m_vertices[0].position, GL_STATIC_DRAW);
+        func.glGenBuffers(1, &m_ibo);
+        func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        func.glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.count() * sizeof(uint8_t), &m_indices[0], GL_STATIC_DRAW);
         // start compiling to render with list cache
         glNewList(m_list, GL_COMPILE);
         glDisable(GL_LIGHTING);
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glVertexPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<GLvoid *>(0));
         glColorPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<GLvoid *>(sizeof(vpvl::Vector3)));
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
         glDrawElements(GL_LINES, m_indices.count(), GL_UNSIGNED_BYTE, 0);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        func.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glEnable(GL_LIGHTING);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);

@@ -35,9 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include <qglobal.h>
-#ifndef Q_OS_DARWIN
-#include <GL/glew.h>
-#endif /* Q_OS_DARWIN */
 
 #include "Handles.h"
 #include "SceneWidget.h"
@@ -544,7 +541,8 @@ void Handles::updateBone()
 
 void Handles::drawImageHandles()
 {
-    glUseProgram(0);
+    QGLFunctions func(QGLContext::currentContext());
+    func.glUseProgram(0);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glMatrixMode(GL_PROJECTION);
@@ -590,22 +588,23 @@ void Handles::drawModelHandles()
     int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
     int projectionMatrix = m_program.uniformLocation("projectionMatrix");
     int boneMatrix = m_program.uniformLocation("boneMatrix");
+	QGLFunctions func(QGLContext::currentContext());
     scene->getModelViewMatrix(matrix);
-    glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+    func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
     scene->getProjectionMatrix(matrix);
-    glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+    func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
     const vpvl::Transform &boneTransform = m_bone->localTransform();
     vpvl::Transform transform = vpvl::Transform::getIdentity();
     transform.setOrigin(m_bone->localTransform().getOrigin());
     transform.getOpenGLMatrix(matrix);
-    glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
+    func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
         drawModel(m_rotationHandle.z, kBlue, kZ);
     }
     boneTransform.getOpenGLMatrix(matrix);
-    glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
+    func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);

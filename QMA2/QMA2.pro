@@ -11,9 +11,7 @@ exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
-# GLEW and assimp and OpenCV
-exists(../glew/lib):LIBS += -L../glew/lib
-exists(../glew/include):INCLUDEPATH += ../glew/include
+# assimp and OpenCV
 exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 exists(../opencv/include):INCLUDEPATH += ../opencv/include
@@ -23,7 +21,7 @@ exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highg
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 unix:LIBS += -lxml2
-win32:LIBS += -L$$(CMAKE_PREFIX_PATH)/lib -lglew32 -llibxml2
+win32:LIBS += -L$$(CMAKE_PREFIX_PATH)/lib -llibxml2
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src
@@ -79,7 +77,7 @@ win32 {
   RC_FILE = resources/icons/app.rc
 }
 macx {
-  ICON = resources/icons/app.icns
+  #ICON = resources/icons/app.icns
   QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
   QMAKE_LFLAGS *= -mmacosx-version-min=10.5
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
@@ -101,7 +99,6 @@ linux-* {
   QMA_RPATH = $$join(QMAKE_RPATHDIR, ":")
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
-   LIBS += -lGLEW
 }
 !macx {
   translations.path = /locales

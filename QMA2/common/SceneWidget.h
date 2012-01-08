@@ -41,7 +41,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QUuid>
-#include <QtOpenGL/QGLWidget>
+#include <QtOpenGL/QtOpenGL>
 
 #include <vpvl/Bone.h>
 #include <vpvl/Common.h>
@@ -79,7 +79,7 @@ class SceneLoader;
 class Script;
 class VPDFile;
 
-class SceneWidget : public QGLWidget
+class SceneWidget : public QGLWidget, protected QGLFunctions
 {
     Q_OBJECT
 

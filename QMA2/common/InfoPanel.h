@@ -107,7 +107,7 @@ public:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        gluOrtho2D(0, m_width, 0, m_height);
+        glOrtho(0, m_width, 0, m_height, -1, 1);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glTranslatef(0, m_height - m_rect.height(), 0);

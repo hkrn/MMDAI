@@ -38,9 +38,6 @@
 
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl/vpvl.h>
-#ifdef VPVL_LINK_GLEW
-#include <GL/glew.h>
-#endif /* VPVL_LINK_GLEW */
 
 #include "SceneWidget.h"
 
@@ -56,6 +53,8 @@
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
+
+#include <GL/glu.h>
 
 #ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
@@ -79,6 +78,15 @@ ProgressDialogPtr UIGetProgressDialog(const QString &label, int max)
     progress->setWindowModality(Qt::WindowModal);
     return ProgressDialogPtr(progress);
 }
+
+#ifdef GL_MULTISAMPLE
+static inline void EnableMultisample()
+{
+	glEnable(GL_MULTISAMPLE);
+}
+#else
+#define EnableMultisample() (void) 0
+#endif
 
 }
 
@@ -797,18 +805,12 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
-#ifdef VPVL_LINK_GLEW
-    GLenum err = glewInit();
-    if (err != GLEW_OK)
-        qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
-    else
-        qDebug("GLEW version: %s", glewGetString(GLEW_VERSION));
-#endif
+	initializeGLFunctions(context());
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-    glEnable(GL_MULTISAMPLE);
+	EnableMultisample();
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
@@ -875,7 +877,7 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
     vpvl::PMDModel *model = selectedModel();
     if (model) {
-        static const vpvl::Vector3 size(0.1, 0.1, 0.1);
+        static const vpvl::Vector3 size(0.1f, 0.1f, 0.1f);
         const QPointF &pos = event->posF();
         vpvl::Vector3 znear, zfar, normal;
         makeRay(pos, znear, zfar);
@@ -1034,22 +1036,24 @@ void SceneWidget::paintGL()
 {
     QPainter painter(this);
     qglClearColor(Qt::white);
-    glEnable(GL_MULTISAMPLE);
+	EnableMultisample();
     /* 場面全体の描写 */
     m_renderer->clear();
     m_renderer->renderProjectiveShadow();
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
-    if (m_visibleBones)
+    if (m_visibleBones) {
+		glUseProgram(0);
         m_debugDrawer->drawModelBones(selectedModel(), true, true);
+	}
     /* 情報パネルとハンドルの描写 (Qt 特有の描写を使うため、beginNativePainting() を呼んでおく) */
     painter.beginNativePainting();
-    glEnable(GL_MULTISAMPLE);
+	EnableMultisample();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_handles->draw();
-    m_info->draw();
+    //m_info->draw();
     painter.endNativePainting();
     emit motionDidFinished(m_loader->stoppedMotions());
 }
