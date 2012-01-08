@@ -549,7 +549,7 @@ void Handles::drawImageHandles()
     glDisable(GL_LIGHTING);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, m_width, 0, m_height);
+    glOrtho(0, m_width, 0, m_height, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     if (m_enableMove) {

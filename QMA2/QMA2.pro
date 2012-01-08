@@ -85,7 +85,6 @@ macx {
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
-  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   translations.path = Contents/Resources
   QMAKE_BUNDLE_DATA += translations
   CONFIG(debug, debug|release) {
