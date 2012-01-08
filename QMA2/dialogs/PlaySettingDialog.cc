@@ -16,8 +16,7 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, QSettings *setti
     m_fromIndexBox->setValue(qBound(0, fromIndex, maxFrameIndex));
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
-    int toIndex = settings->value("playSettingDialog/toIndex", maxFrameIndex).toInt();
-    m_toIndexBox->setValue(qBound(0, toIndex, maxFrameIndex));
+    m_toIndexBox->setValue(maxFrameIndex);
     m_loopBox = new QCheckBox(tr("Loop"));
     m_loopBox->setChecked(settings->value("playSettingDialog/loop", false).toBool());
     QFormLayout *formLayout = new QFormLayout();

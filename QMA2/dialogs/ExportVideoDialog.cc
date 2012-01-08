@@ -25,8 +25,7 @@ ExportVideoDialog::ExportVideoDialog(MainWindow *parent, QSettings *settings, Sc
     m_fromIndexBox->setValue(qBound(0, fromIndex, maxFrameIndex));
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
-    int toIndex = settings->value("exportVideoDialog/toIndex", maxFrameIndex).toInt();
-    m_toIndexBox->setValue(qBound(0, toIndex, maxFrameIndex));
+    m_toIndexBox->setValue(maxFrameIndex);
     m_includeGridBox = new QCheckBox(tr("Include grid field"));
     m_includeGridBox->setChecked(settings->value("exportVideoDialog/includeGridBox", false).toBool());
     QGridLayout *gridLayout = new QGridLayout();
