@@ -49,6 +49,8 @@ class VPDPose;
 
 class QSettings;
 class QTabWidget;
+class FrameSelectionDialog;
+class FrameWeightDialog;
 class TimelineWidget;
 class BoneMotionModel;
 class FaceMotionModel;
@@ -66,6 +68,10 @@ public:
         kFace,
         kScene
     };
+
+    static const int kSceneTabIndex = 0;
+    static const int kBoneTabIndex = 1;
+    static const int kFaceTabIndex = 2;
 
     explicit TimelineTabWidget(QSettings *settings,
                                BoneMotionModel *bmm,
@@ -101,6 +107,9 @@ private slots:
     void notifyCurrentTabIndex();
     void toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model);
     void toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model);
+    void selectAllRegisteredKeyframes();
+    void openFrameSelectionDialog();
+    void openFrameWeightDialog();
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
@@ -111,6 +120,8 @@ private:
     TimelineWidget *m_boneTimeline;
     TimelineWidget *m_faceTimeline;
     TimelineWidget *m_sceneTimeline;
+    FrameSelectionDialog *m_frameSelectionDialog;
+    FrameWeightDialog *m_frameWeightDialog;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };

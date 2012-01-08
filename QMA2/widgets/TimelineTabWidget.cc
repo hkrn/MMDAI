@@ -36,6 +36,8 @@
 
 #include "common/VPDFile.h"
 #include "common/util.h"
+#include "dialogs/FrameSelectionDialog.h"
+#include "dialogs/FrameWeightDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/FaceMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -46,15 +48,6 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-namespace
-{
-
-static const int kSceneTabIndex = 0;
-static const int kBoneTabIndex = 1;
-static const int kFaceTabIndex = 2;
-
-}
-
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
                                      FaceMotionModel *fmm,
@@ -64,7 +57,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_settings(settings),
     m_boneTimeline(0),
     m_faceTimeline(0),
-    m_sceneTimeline(0)
+    m_sceneTimeline(0),
+    m_frameSelectionDialog(0),
+    m_frameWeightDialog(0)
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
@@ -272,6 +267,35 @@ void TimelineTabWidget::toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model)
 void TimelineTabWidget::toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model)
 {
     m_faceTimeline->setEnableFrameIndexSpinBox(model ? true : false);
+}
+
+void TimelineTabWidget::selectAllRegisteredKeyframes()
+{
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidget()->treeView()->model());
+    selectFrameIndices(0, model->maxFrameIndex());
+}
+
+void TimelineTabWidget::openFrameSelectionDialog()
+{
+    if (!m_frameSelectionDialog) {
+        m_frameSelectionDialog = new FrameSelectionDialog(this);
+        connect(m_frameSelectionDialog, SIGNAL(frameIndicesDidSelect(int,int)),
+                this, SLOT(selectFrameIndices(int,int)));
+    }
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidget()->treeView()->model());
+    m_frameSelectionDialog->setMaxFrameIndex(model->maxFrameIndex());
+    m_frameSelectionDialog->show();
+}
+
+void TimelineTabWidget::openFrameWeightDialog()
+{
+    if (!m_frameWeightDialog) {
+        m_frameWeightDialog = new FrameWeightDialog(this);
+        connect(m_frameWeightDialog, SIGNAL(keyframeWeightDidSet(float)),
+                this, SLOT(setKeyframeWeight(float)));
+    }
+    m_frameWeightDialog->resetValue();
+    m_frameWeightDialog->show();
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)

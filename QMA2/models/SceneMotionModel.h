@@ -64,6 +64,7 @@ public:
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual int maxFrameCount() const;
+    virtual int maxFrameIndex() const;
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     void saveMotion(vpvl::VMDMotion *motion);

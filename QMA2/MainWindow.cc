@@ -47,7 +47,6 @@
 #include "dialogs/EdgeOffsetDialog.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
-#include "dialogs/FrameWeightDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/FaceMotionModel.h"
@@ -190,8 +189,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneMotionModel(0),
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
-    m_frameSelectionDialog(0),
-    m_frameWeightDialog(0),
     m_boneUIDelegate(0),
     m_player(0),
     m_model(0),
@@ -223,8 +220,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete m_frameWeightDialog;
-    delete m_frameSelectionDialog;
     delete m_undo;
     delete m_licenseWidget;
     delete m_sceneWidget;
@@ -657,11 +652,11 @@ void MainWindow::buildUI()
     m_actionRegisterFrame = new QAction(this);
     connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
     m_actionSelectAllFrames = new QAction(this);
-    connect(m_actionSelectAllFrames, SIGNAL(triggered()), this, SLOT(selectAllRegisteredKeyFrames()));
+    connect(m_actionSelectAllFrames, SIGNAL(triggered()), m_timelineTabWidget, SLOT(selectAllRegisteredKeyframes()));
     m_actionSelectFrameDialog = new QAction(this);
-    connect(m_actionSelectFrameDialog, SIGNAL(triggered()), this, SLOT(openFrameSelectionDialog()));
+    connect(m_actionSelectFrameDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameSelectionDialog()));
     m_actionFrameWeightDialog = new QAction(this);
-    connect(m_actionFrameWeightDialog, SIGNAL(triggered()), this, SLOT(openFrameWeightDialog()));
+    connect(m_actionFrameWeightDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameWeightDialog()));
     m_actionCopy = new QAction(this);
     connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
     m_actionPaste = new QAction(this);
@@ -804,7 +799,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionRegisterFrame);
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
-    //m_menuFrame->addAction(m_actionFrameWeightDialog);
+    m_menuFrame->addAction(m_actionFrameWeightDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionInsertEmptyFrame);
     m_menuFrame->addAction(m_actionDeleteSelectedFrame);
@@ -1458,33 +1453,6 @@ void MainWindow::showLicenseWidget()
     if (!m_licenseWidget)
         m_licenseWidget = new LicenseWidget();
     m_licenseWidget->show();
-}
-
-void MainWindow::openFrameSelectionDialog()
-{
-    if (!m_frameSelectionDialog) {
-        m_frameSelectionDialog = new FrameSelectionDialog(this);
-        connect(m_frameSelectionDialog, SIGNAL(frameIndicesDidSelect(int,int)),
-                m_timelineTabWidget, SLOT(selectFrameIndices(int,int)));
-    }
-    m_frameSelectionDialog->setMaxFrameIndex(m_sceneWidget->scene()->maxFrameIndex());
-    m_frameSelectionDialog->show();
-}
-
-void MainWindow::openFrameWeightDialog()
-{
-    if (!m_frameWeightDialog) {
-        m_frameWeightDialog = new FrameWeightDialog(this);
-        connect(m_frameWeightDialog, SIGNAL(keyframeWeightDidSet(float)),
-                m_timelineTabWidget, SLOT(setKeyframeWeight(float)));
-    }
-    m_frameWeightDialog->resetValue();
-    m_frameWeightDialog->show();
-}
-
-void MainWindow::selectAllRegisteredKeyFrames()
-{
-    m_timelineTabWidget->selectFrameIndices(0, m_sceneWidget->scene()->maxFrameIndex());
 }
 
 void MainWindow::updateWindowTitle()

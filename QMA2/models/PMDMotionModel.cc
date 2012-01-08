@@ -157,6 +157,11 @@ int PMDMotionModel::maxFrameCount() const
     return 54000;
 }
 
+int PMDMotionModel::maxFrameIndex() const
+{
+    return m_motion ? m_motion->maxFrameIndex() : 0;
+}
+
 void PMDMotionModel::updateModel()
 {
     if (m_model) {

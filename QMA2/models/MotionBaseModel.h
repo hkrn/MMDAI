@@ -147,6 +147,7 @@ public:
     virtual void copyKeyframes(int frameIndex) = 0;
     virtual void pasteKeyframes(int frameIndex) = 0;
     virtual int maxFrameCount() const = 0;
+    virtual int maxFrameIndex() const = 0;
 
     vpvl::VMDMotion *currentMotion() const { return m_motion; }
     void setFrameIndex(int value) { m_frameIndex = value; }

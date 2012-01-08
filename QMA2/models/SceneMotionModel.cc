@@ -262,6 +262,11 @@ int SceneMotionModel::maxFrameCount() const
     return 54000;
 }
 
+int SceneMotionModel::maxFrameIndex() const
+{
+    return m_motion ? m_motion->maxFrameIndex() : 0;
+}
+
 const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
 {
     QModelIndex modelIndex;

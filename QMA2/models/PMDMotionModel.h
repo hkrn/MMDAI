@@ -74,6 +74,7 @@ public:
     void updateModel();
     void refreshModel();
     int maxFrameCount() const;
+    int maxFrameIndex() const;
 
     vpvl::PMDModel *selectedModel() const { return m_model; }
     const Keys keys() const { return m_keys[m_model]; }
