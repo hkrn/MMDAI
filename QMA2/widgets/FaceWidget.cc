@@ -43,69 +43,63 @@
 
 FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),
-    m_eyes(0),
-    m_lips(0),
-    m_eyeblows(0),
-    m_others(0),
     m_faceMotionModel(fmm)
 {
-    QSlider *slider = 0;
-
     QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
     QHBoxLayout *eyeHBoxLayout = new QHBoxLayout();
     m_eyeLabel = new QLabel();
     m_eyeRegistButton = new QPushButton();
     m_eyes = new QComboBox();
-    slider = createSlider();
+    m_eyeSlider = createSlider();
     connect(m_eyeRegistButton, SIGNAL(clicked()), this, SLOT(registerEye()));
-    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
+    connect(m_eyeSlider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
     eyeHBoxLayout->addWidget(m_eyeLabel);
     eyeHBoxLayout->addWidget(m_eyeRegistButton);
     eyeVBoxLayout->addLayout(eyeHBoxLayout);
     eyeVBoxLayout->addWidget(m_eyes);
-    eyeVBoxLayout->addWidget(slider);
+    eyeVBoxLayout->addWidget(m_eyeSlider);
 
     QVBoxLayout *lipVBoxLayout = new QVBoxLayout();
     QHBoxLayout *lipHBoxLayout = new QHBoxLayout();
     m_lipLabel = new QLabel();
     m_lipRegistButton = new QPushButton();
     m_lips = new QComboBox();
-    slider = createSlider();
+    m_lipSlider = createSlider();
     connect(m_lipRegistButton, SIGNAL(clicked()), this, SLOT(registerLip()));
-    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
+    connect(m_lipSlider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
     lipHBoxLayout->addWidget(m_lipLabel);
     lipHBoxLayout->addWidget(m_lipRegistButton);
     lipVBoxLayout->addLayout(lipHBoxLayout);
     lipVBoxLayout->addWidget(m_lips);
-    lipVBoxLayout->addWidget(slider);
+    lipVBoxLayout->addWidget(m_lipSlider);
 
     QVBoxLayout *eyeblowVBoxLayout = new QVBoxLayout();
     QHBoxLayout *eyeblowHBoxLayout = new QHBoxLayout();
     m_eyeblowLabel = new QLabel();
     m_eyeblowRegistButton = new QPushButton();
     m_eyeblows = new QComboBox();
-    slider = createSlider();
+    m_eyeblowSlider = createSlider();
     connect(m_eyeblowRegistButton, SIGNAL(clicked()), this, SLOT(registerEyeblow()));
-    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
+    connect(m_eyeblowSlider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
     eyeblowHBoxLayout->addWidget(m_eyeblowLabel);
     eyeblowHBoxLayout->addWidget(m_eyeblowRegistButton);
     eyeblowVBoxLayout->addLayout(eyeblowHBoxLayout);
     eyeblowVBoxLayout->addWidget(m_eyeblows);
-    eyeblowVBoxLayout->addWidget(slider);
+    eyeblowVBoxLayout->addWidget(m_eyeblowSlider);
 
     QVBoxLayout *otherVBoxLayout = new QVBoxLayout();
     QHBoxLayout *otherHBoxLayout = new QHBoxLayout();
     m_otherLabel = new QLabel();
     m_otherRegistButton = new QPushButton();
     m_others = new QComboBox();
-    slider = createSlider();
+    m_otherSlider = createSlider();
     connect(m_otherRegistButton, SIGNAL(clicked()), this, SLOT(registerOther()));
-    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
+    connect(m_otherSlider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
     otherHBoxLayout->addWidget(m_otherLabel);
     otherHBoxLayout->addWidget(m_otherRegistButton);
     otherVBoxLayout->addLayout(otherHBoxLayout);
     otherVBoxLayout->addWidget(m_others);
-    otherVBoxLayout->addWidget(slider);
+    otherVBoxLayout->addWidget(m_otherSlider);
 
     QGridLayout *layout = new QGridLayout();
     layout->addLayout(eyeVBoxLayout, 0, 0);
@@ -215,12 +209,32 @@ void FaceWidget::registerBase(const QComboBox *comboBox)
     }
 }
 
+void FaceWidget::updateFaceWeightValues()
+{
+    /* SceneWidget#seekMotion でモデルのモーフ値が変更済みなので、その値を取り出してスライダーに反映させる */
+    updateFaceWeight(m_eyes, m_eyeSlider);
+    updateFaceWeight(m_lips, m_lipSlider);
+    updateFaceWeight(m_eyeblows, m_eyeblowSlider);
+    updateFaceWeight(m_others, m_otherSlider);
+}
+
+void FaceWidget::updateFaceWeight(const QComboBox *comboBox, QSlider *slider)
+{
+    int index = comboBox->currentIndex();
+    if (index >= 0) {
+        vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
+        if (face)
+            slider->setValue(face->weight() * 100.0f);
+    }
+}
+
 void FaceWidget::setFaceWeight(const QComboBox *comboBox, int value)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
         vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
         if (face) {
+            /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             float weight = value / static_cast<float>(kSliderMaximumValue);
             m_faceMotionModel->setWeight(weight, face);
         }

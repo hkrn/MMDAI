@@ -73,10 +73,12 @@ private slots:
     void registerLip();
     void registerEyeblow();
     void registerOther();
+    void updateFaceWeightValues();
 
 private:
     void setFaceWeight(const QComboBox *comboBox, int value);
     void registerBase(const QComboBox *comboBox);
+    void updateFaceWeight(const QComboBox *comboBox, QSlider *slider);
     vpvl::Face *findFace(const QString &name);
     QSlider *createSlider();
 
@@ -84,6 +86,10 @@ private:
     QComboBox *m_lips;
     QComboBox *m_eyeblows;
     QComboBox *m_others;
+    QSlider *m_eyeSlider;
+    QSlider *m_lipSlider;
+    QSlider *m_eyeblowSlider;
+    QSlider *m_otherSlider;
     QLabel *m_eyeLabel;
     QLabel *m_lipLabel;
     QLabel *m_eyeblowLabel;

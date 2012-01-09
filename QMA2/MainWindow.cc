@@ -1162,6 +1162,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
+    connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_tabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
 }
 
 void MainWindow::insertMotionToAllModels()
