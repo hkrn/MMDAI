@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(VPVL_VERSION_MAJOR 0)
-set(VPVL_VERSION_COMPAT 12)
+set(VPVL_VERSION_COMPAT 13)
 set(VPVL_VERSION_MINOR 0)
 
 # set library version
@@ -246,7 +246,7 @@ endif()
 
 # link with OpenGL
 if(VPVL_OPENGL_RENDERER)
-  if(NOT VPVL_LINK_QT)
+  if(APPLE OR NOT VPVL_LINK_QT)
     find_package(OpenGL REQUIRED)
     target_link_libraries(vpvl ${OPENGL_LIBRARIES})
     include_directories(${OPENGL_INCLUDE_DIR})
