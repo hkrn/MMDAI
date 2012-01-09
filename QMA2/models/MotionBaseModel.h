@@ -150,10 +150,17 @@ public:
     virtual int maxFrameIndex() const = 0;
 
     vpvl::VMDMotion *currentMotion() const { return m_motion; }
-    void setFrameIndex(int value) { m_frameIndex = value; }
-    void setModified(bool value) { m_modified = value; motionDidModify(value); }
+    void setFrameIndex(int value) {
+        int old = m_frameIndex;
+        m_frameIndex = value;
+        emit frameIndexDidChange(value, old);
+    }
+    void setModified(bool value) {
+        m_modified = value;
+        emit motionDidModify(value);
+    }
     bool isModified() const { return m_modified; }
-    int currentFrameIndex() const { return m_frameIndex; }
+    int frameIndex() const { return m_frameIndex; }
 
 public slots:
     virtual void removeMotion() = 0;
@@ -164,6 +171,7 @@ public slots:
 
 signals:
     void motionDidModify(bool value);
+    void frameIndexDidChange(int newFrameIndex, int oldFrameIndex);
 
 protected:
     virtual ITreeItem *root() const = 0;
