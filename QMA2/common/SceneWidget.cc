@@ -853,7 +853,10 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     if (m_handles->testHitImage(pos, flags, rect)) {
         switch (flags) {
-        /* ローカルとグローバルの切り替えなので、値を反転して設定する必要がある */
+        /*
+         * ローカルとグローバルの切り替えなので、値を反転して設定する必要がある
+         * また、ローカルとグローバル、移動回転ハンドルはそれぞれフラグ値は排他的
+         */
         case Handles::kLocal:
             m_handles->setLocal(false);
             break;
@@ -861,6 +864,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             m_handles->setLocal(true);
             break;
         default:
+            setCursor(Qt::SizeVerCursor);
             break;
         }
         m_handleFlags = flags;
@@ -910,97 +914,16 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
+    const QPointF &pos = event->posF();
     if (event->buttons() & Qt::LeftButton) {
         const Qt::KeyboardModifiers modifiers = event->modifiers();
-        const QPointF &diff = m_handles->diffPoint2D(event->posF());
+        const QPointF &diff = m_handles->diffPoint2D(pos);
         /* モデルのハンドルがクリックされた */
-        if (m_handleFlags & Handles::kView) {
-            int flags, mode = 'V';
-            vpvl::Vector3 rayFrom, rayTo, pick;
-            makeRay(event->posF(), rayFrom, rayTo);
-            /* モデルのハンドルがクリック中であるか? 入っている場合はグーのカーソルに変更し、入ってない場合は元のカーソルに戻す */
-            if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
-                const vpvl::Vector3 directionX(-1.0f, 0.0f, 0.0f),
-                        directionY(0.0f, -1.0f, 0.0f),
-                        directionZ(0.0f, 0.0f, 1.0f),
-                        &diff = m_handles->diffPoint3D(pick);
-                /* 移動ハンドルである(矢印の先端) */
-                if (flags & Handles::kMove && !diff.isZero()) {
-                    float value = m_handles->isPoint3DZero() ? 0.0f : diff.length();
-                    vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
-                    if (flags & Handles::kX) {
-                        if (directionX.dot(diff.normalized()) < 0)
-                            value = -value;
-                        delta.setX(value);
-                    }
-                    else if (flags & Handles::kY) {
-                        if (directionY.dot(diff.normalized()) < 0)
-                            value = -value;
-                        delta.setY(value);
-                    }
-                    else if (flags & Handles::kZ) {
-                        if (directionZ.dot(diff.normalized()) < 0)
-                            value = -value;
-                        delta.setZ(value);
-                    }
-                    emit handleDidMove(delta, 0, mode);
-                }
-                /* 回転ハンドルである(ドーナツ) */
-                else if (flags & Handles::kRotate) {
-                    const vpvl::Vector3 &angle = m_handles->angle(pick);
-                    vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
-                    float value = 0.0f;
-                    if (flags & Handles::kX)
-                        value = btAcos(angle.y());
-                    else if (flags & Handles::kY)
-                        value = btAcos(angle.z());
-                    else if (flags & Handles::kZ)
-                        value = btAcos(angle.x());
-                    value *= 2.0f;
-                    if (!m_handles->isAngleZero()) {
-                        float diff = m_handles->diffAngle(value);
-                        if (flags & Handles::kX)
-                            delta.setEulerZYX(0.0f, 0.0f, -btFabs(diff));
-                        else if (flags & Handles::kY)
-                            delta.setEulerZYX(0.0f, -btFabs(diff), 0.0f);
-                        else if (flags & Handles::kZ)
-                            delta.setEulerZYX(-btFabs(diff), 0.0f, 0.0f);
-                        emit handleDidRotate(delta, 0, mode, diff < 0);
-                    }
-                    m_handles->setAngle(value);
-                }
-                m_handles->setPoint3D(pick);
-            }
-        }
+        if (m_handleFlags & Handles::kView)
+            grabModelHandleByRaycast(pos);
         /* 有効な右下のハンドルがクリックされた */
-        else if (m_handleFlags & Handles::kEnable) {
-            int flags = m_handleFlags;
-            int mode = m_handles->isLocal() ? 'L' : 'G';
-            /* 移動ハンドルである */
-            if (flags & Handles::kMove) {
-                const float &value = diff.y() * 0.1f;
-                vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
-                if (flags & Handles::kX)
-                    delta.setX(value);
-                else if (flags & Handles::kY)
-                    delta.setY(value);
-                else if (flags & Handles::kZ)
-                    delta.setZ(value);
-                emit handleDidMove(delta, 0, mode);
-            }
-            /* 回転ハンドルである */
-            else if (flags & Handles::kRotate) {
-                const float &value = vpvl::radian(diff.y()) * 0.1f;
-                vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
-                if (flags & Handles::kX)
-                    delta.setX(value);
-                else if (flags & Handles::kY)
-                    delta.setY(value);
-                else if (flags & Handles::kZ)
-                    delta.setZ(-value);
-                emit handleDidRotate(delta, 0, mode, false);
-            }
-        }
+        else if (m_handleFlags & Handles::kEnable)
+            grabImageHandle(diff);
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             vpvl::Scene *scene = m_renderer->scene();
@@ -1022,13 +945,13 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         return;
     }
     { /* only in move or rotate mode */
-        changeCursorIfHitTrackableModel(event->posF());
+        changeCursorIfHandlesHit(pos);
     }
 }
 
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    changeCursorIfHitTrackableModel(event->posF());
+    changeCursorIfHandlesHit(event->posF());
     m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
@@ -1235,14 +1158,110 @@ const QString SceneWidget::openFileDialog(const QString &name, const QString &de
     return fileName;
 }
 
-void SceneWidget::changeCursorIfHitTrackableModel(const QPointF &pos)
+void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
 {
     /* モデルのハンドルに入ってる場合は手のひら状のカーソルに変更にし、そうでない場合元のカーソルに戻すだけの処理 */
     int flags;
+    QRectF rect;
+    if (m_handles->testHitImage(pos, flags, rect) && flags & Handles::kEnable) {
+        setCursor(Qt::SizeVerCursor);
+    }
+    else {
+        vpvl::Vector3 rayFrom, rayTo, pick;
+        makeRay(pos, rayFrom, rayTo);
+        if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
+            setCursor(Qt::OpenHandCursor);
+        else
+            unsetCursor();
+    }
+}
+
+void SceneWidget::grabImageHandle(const QPointF &diff)
+{
+    int flags = m_handleFlags;
+    int mode = m_handles->isLocal() ? 'L' : 'G';
+    /* 移動ハンドルである */
+    if (flags & Handles::kMove) {
+        const float &value = diff.y() * 0.1f;
+        vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
+        if (flags & Handles::kX)
+            delta.setX(value);
+        else if (flags & Handles::kY)
+            delta.setY(value);
+        else if (flags & Handles::kZ)
+            delta.setZ(value);
+        emit handleDidMove(delta, 0, mode);
+    }
+    /* 回転ハンドルである */
+    else if (flags & Handles::kRotate) {
+        const float &value = vpvl::radian(diff.y()) * 0.1f;
+        vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
+        if (flags & Handles::kX)
+            delta.setX(value);
+        else if (flags & Handles::kY)
+            delta.setY(value);
+        else if (flags & Handles::kZ)
+            delta.setZ(-value);
+        emit handleDidRotate(delta, 0, mode, false);
+    }
+}
+
+void SceneWidget::grabModelHandleByRaycast(const QPointF &pos)
+{
+    int flags, mode = 'V';
     vpvl::Vector3 rayFrom, rayTo, pick;
     makeRay(pos, rayFrom, rayTo);
-    if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
-        setCursor(Qt::OpenHandCursor);
-    else
-        unsetCursor();
+    /* モデルのハンドルに当たっている場合のみモデルを動かす */
+    if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
+        const vpvl::Vector3 directionX(-1.0f, 0.0f, 0.0f),
+                directionY(0.0f, -1.0f, 0.0f),
+                directionZ(0.0f, 0.0f, 1.0f),
+                &diff = m_handles->diffPoint3D(pick);
+        /* 移動ハンドルである(矢印の先端) */
+        if (flags & Handles::kMove && !diff.isZero()) {
+            float value = m_handles->isPoint3DZero() ? 0.0f : diff.length();
+            vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
+            if (flags & Handles::kX) {
+                if (directionX.dot(diff.normalized()) < 0)
+                    value = -value;
+                delta.setX(value);
+            }
+            else if (flags & Handles::kY) {
+                if (directionY.dot(diff.normalized()) < 0)
+                    value = -value;
+                delta.setY(value);
+            }
+            else if (flags & Handles::kZ) {
+                if (directionZ.dot(diff.normalized()) < 0)
+                    value = -value;
+                delta.setZ(value);
+            }
+            emit handleDidMove(delta, 0, mode);
+        }
+        /* 回転ハンドルである(ドーナツ) */
+        else if (flags & Handles::kRotate) {
+            const vpvl::Vector3 &angle = m_handles->angle(pick);
+            vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
+            float value = 0.0f;
+            if (flags & Handles::kX)
+                value = btAcos(angle.y());
+            else if (flags & Handles::kY)
+                value = btAcos(angle.z());
+            else if (flags & Handles::kZ)
+                value = btAcos(angle.x());
+            value *= 2.0f;
+            if (!m_handles->isAngleZero()) {
+                float diff = m_handles->diffAngle(value);
+                if (flags & Handles::kX)
+                    delta.setEulerZYX(0.0f, 0.0f, -btFabs(diff));
+                else if (flags & Handles::kY)
+                    delta.setEulerZYX(0.0f, -btFabs(diff), 0.0f);
+                else if (flags & Handles::kZ)
+                    delta.setEulerZYX(-btFabs(diff), 0.0f, 0.0f);
+                emit handleDidRotate(delta, 0, mode, diff < 0);
+            }
+            m_handles->setAngle(value);
+        }
+        m_handles->setPoint3D(pick);
+    }
 }

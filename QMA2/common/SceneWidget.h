@@ -232,7 +232,9 @@ protected:
 private:
     bool acceptAddingModel(vpvl::PMDModel *model);
     void updateFPS();
-    void changeCursorIfHitTrackableModel(const QPointF &pos);
+    void changeCursorIfHandlesHit(const QPointF &pos);
+    void grabImageHandle(const QPointF &diff);
+    void grabModelHandleByRaycast(const QPointF &pos);
 
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
