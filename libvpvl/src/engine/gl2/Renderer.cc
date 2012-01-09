@@ -677,9 +677,9 @@ namespace gl2
 
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 #ifdef VPVL_LINK_QT
-    :
-#else
     : QGLFunctions(),
+#else
+    :
 #endif
       m_delegate(delegate),
       m_edgeProgram(0),
