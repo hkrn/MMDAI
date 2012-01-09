@@ -516,8 +516,9 @@ void SceneWidget::seekMotion(float frameIndex)
     scene->updateProjection();
     scene->seekMotion(frameIndex);
     updateGL();
-    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
     m_frameIndex = frameIndex;
+    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+    emit motionDidSeek(frameIndex);
 }
 
 void SceneWidget::setCamera()
@@ -1059,7 +1060,6 @@ void SceneWidget::paintGL()
     m_handles->draw();
     //m_info->draw();
     painter.endNativePainting();
-    emit motionDidFinished(m_loader->stoppedMotions());
 }
 
 void SceneWidget::resizeGL(int w, int h)

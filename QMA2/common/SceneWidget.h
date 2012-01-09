@@ -181,7 +181,6 @@ public slots:
 signals:
     void initailizeGLContextDidDone();
     void fileDidLoad(const QString &filename);
-    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
     void newMotionDidSet(vpvl::PMDModel *model);
     void lightColorDidSet(const vpvl::Color &color);
     void lightPositionDidSet(const vpvl::Vector3 &position);
@@ -198,6 +197,7 @@ signals:
     void handleDidMove(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode);
     void handleDidRotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
+    void motionDidSeek(float frameIndex);
 
 protected:
     bool event(QEvent *event);
