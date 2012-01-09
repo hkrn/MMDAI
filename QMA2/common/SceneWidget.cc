@@ -54,7 +54,11 @@
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
 
+#ifdef Q_OS_DARWIN
+#include <OpenGL/glu.h>
+#else
 #include <GL/glu.h>
+#endif
 
 #ifdef VPVL_USE_GLSL
 #include <vpvl/gl2/Renderer.h>
@@ -82,7 +86,7 @@ ProgressDialogPtr UIGetProgressDialog(const QString &label, int max)
 #ifdef GL_MULTISAMPLE
 static inline void EnableMultisample()
 {
-	glEnable(GL_MULTISAMPLE);
+    glEnable(GL_MULTISAMPLE);
 }
 #else
 #define EnableMultisample() (void) 0
@@ -805,12 +809,12 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
-	initializeGLFunctions(context());
+    initializeGLFunctions(context());
     qDebug("VPVL version: %s (%d)", VPVL_VERSION_STRING, VPVL_VERSION);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-	EnableMultisample();
+    EnableMultisample();
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
     m_loader = new SceneLoader(m_renderer);
@@ -1036,7 +1040,7 @@ void SceneWidget::paintGL()
 {
     QPainter painter(this);
     qglClearColor(Qt::white);
-	EnableMultisample();
+    EnableMultisample();
     /* 場面全体の描写 */
     m_renderer->clear();
     m_renderer->renderProjectiveShadow();
@@ -1044,12 +1048,12 @@ void SceneWidget::paintGL()
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
     if (m_visibleBones) {
-		glUseProgram(0);
+        glUseProgram(0);
         m_debugDrawer->drawModelBones(selectedModel(), true, true);
-	}
+    }
     /* 情報パネルとハンドルの描写 (Qt 特有の描写を使うため、beginNativePainting() を呼んでおく) */
     painter.beginNativePainting();
-	EnableMultisample();
+    EnableMultisample();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_handles->draw();
