@@ -361,6 +361,9 @@ protected:
         if (!m_renderer->createPrograms() || !m_renderer->createShadowFrameBuffers())
             exit(-1);
 #endif
+#ifdef VPVL_ENABLE_OPENCL
+        m_renderer->initializeCLContext();
+#endif
         m_renderer->initializeSurface();
         if (!loadScene())
             qFatal("Unable to load scene");

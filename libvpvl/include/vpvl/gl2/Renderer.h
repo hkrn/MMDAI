@@ -56,6 +56,7 @@
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
+#include <OpenGL/CGLCurrent.h>
 #else
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -67,6 +68,7 @@
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #include <OpenCL/cl_gl.h>
+#include <OpenCL/cl_gl_ext.h>
 #else
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
@@ -151,6 +153,9 @@ public:
         m_selected = value;
     }
 
+#ifdef VPVL_ENABLE_OPENCL
+    bool initializeCLContext();
+#endif
     bool createPrograms();
     void initializeSurface();
     bool createShadowFrameBuffers();
@@ -190,6 +195,12 @@ private:
     void setAssetMaterial(const aiMaterial *material, const vpvl::Asset *asset, AssetProgram *program);
 #endif
 
+#ifdef VPVL_ENABLE_OPENCL
+    cl_context m_context;
+    cl_command_queue m_queue;
+    cl_device_id m_device;
+    cl_kernel m_kernel;
+#endif
     EdgeProgram *m_edgeProgram;
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;

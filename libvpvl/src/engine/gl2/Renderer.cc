@@ -680,7 +680,13 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
     : QGLFunctions(),
 #else
     :
-#endif
+#ifdef VPVL_ENABLE_OPENCL
+      m_context(0),
+      m_queue(0),
+      m_device(0),
+      m_kernel(0),
+#endif /* VPVL_ENABLE_OPENCL */
+#endif /* VPVL_LINK_QT */
       m_delegate(delegate),
       m_edgeProgram(0),
       m_modelProgram(0),
@@ -695,6 +701,14 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 
 Renderer::~Renderer()
 {
+#ifdef VPVL_ENABLE_OPENCL
+    clReleaseKernel(m_kernel);
+    m_kernel = 0;
+    clReleaseCommandQueue(m_queue);
+    m_queue = 0;
+    clReleaseContext(m_context);
+    m_context = 0;
+#endif
     vpvl::Array<vpvl::PMDModel *> models;
     models.copy(m_scene->models());
     const int nmodels = models.count();
@@ -722,6 +736,78 @@ Renderer::~Renderer()
     delete m_scene;
     m_scene = 0;
 }
+
+#ifdef VPVL_ENABLE_OPENCL
+bool Renderer::initializeCLContext()
+{
+    cl_int err = 0;
+    cl_uint nplatforms;
+    err = clGetPlatformIDs(0, 0, &nplatforms);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
+        return false;
+    }
+    cl_platform_id *platforms = new cl_platform_id[nplatforms];
+    err = clGetPlatformIDs(nplatforms, platforms, 0);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed getting OpenCL platforms: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    for (int i = 0; i < nplatforms; i++) {
+        cl_char buffer[BUFSIZ];
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "%d: CL_PLATFORM_VENDOR: %s", i, buffer);
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "%d: CL_PLATFORM_NAME: %s", i, buffer);
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "%d: CL_PLATFORM_VERSION: %s", i, buffer);
+    }
+    cl_platform_id firstPlatform = platforms[0];
+    err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed getting OpenCL device: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    {
+        cl_char buffer[BUFSIZ];
+        cl_uint frequency, addressBits;
+        cl_device_type type;
+        clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
+        clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_NAME: %s", buffer);
+        clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
+        clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_TYPE: %d", type);
+        clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
+        clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
+        clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
+    }
+    cl_context_properties props[] = {
+        CL_CONTEXT_PLATFORM,
+        reinterpret_cast<cl_context_properties>(firstPlatform),
+#ifdef __APPLE__
+        CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+        reinterpret_cast<cl_context_properties>(CGLGetShareGroup(CGLGetCurrentContext())),
+#endif
+        0
+    };
+    m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed initialize OpenCL context: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    delete[] platforms;
+    return true;
+}
+#endif
 
 void Renderer::initializeSurface()
 {
