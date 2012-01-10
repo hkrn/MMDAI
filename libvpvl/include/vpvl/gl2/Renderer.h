@@ -63,6 +63,16 @@
 #endif /* VPVL_BUILD_IOS */
 #endif /* VPVL_LINK_QT */
 
+#ifdef VPVL_ENABLE_OPENCL
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#include <OpenCL/cl_gl.h>
+#else
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
+#endif /* __APPLE__ */
+#endif
+
 class btDynamicsWorld;
 class btIDebugDraw;
 
