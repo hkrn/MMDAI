@@ -205,12 +205,25 @@ public:
         fprintf(stderr, "%s", "\n");
         va_end(ap);
     }
-#ifdef VPVL_USE_NVIDIA_CG
-    bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) {
+    bool loadEffect(vpvl::PMDModel * /* model */, const std::string & /* dir */, std::string & /* source */) {
         return false;
     }
-#endif
-#ifdef VPVL_GL2_RENDERER_H_
+    const std::string loadKernel(Renderer::KernelType type) {
+        std::string file;
+        switch (type) {
+        case Renderer::kModelSkinningKernel:
+            file = "skinning.cl";
+            break;
+        }
+        uint8_t *data;
+        size_t size;
+        std::string path = m_system + "/" + file;
+        slurpFile(path, data, size);
+        log(Renderer::kLogInfo, "Loaded a shader: %s", path.c_str());
+        std::string content(reinterpret_cast<const char *>(data), size);
+        delete[] data;
+        return content;
+    }
     const std::string loadShader(Renderer::ShaderType type) {
         std::string file;
         switch (type) {
@@ -248,7 +261,6 @@ public:
         delete[] data;
         return content;
     }
-#endif
     const std::string toUnicode(const uint8_t *value) {
 #if defined(VPVL_HAS_ICU)
         UnicodeString str(reinterpret_cast<const char *>(value), "shift_jis");

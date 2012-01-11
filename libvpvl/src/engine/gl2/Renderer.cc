@@ -77,9 +77,9 @@ static void CreateLookAt(const Vector3 &eye, float matrix[16])
 
 #ifdef VPVL_LINK_QT
 class ShaderProgram : protected QGLFunctions
-#else
+        #else
 class ShaderProgram
-#endif
+        #endif
 {
 public:
     ShaderProgram(Renderer::IDelegate *delegate)
@@ -678,15 +678,16 @@ namespace gl2
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 #ifdef VPVL_LINK_QT
     : QGLFunctions(),
-#else
+      #else
     :
-#ifdef VPVL_ENABLE_OPENCL
+      #ifdef VPVL_ENABLE_OPENCL
       m_context(0),
       m_queue(0),
       m_device(0),
       m_kernel(0),
-#endif /* VPVL_ENABLE_OPENCL */
-#endif /* VPVL_LINK_QT */
+      m_program(0),
+      #endif /* VPVL_ENABLE_OPENCL */
+      #endif /* VPVL_LINK_QT */
       m_delegate(delegate),
       m_edgeProgram(0),
       m_modelProgram(0),
@@ -702,6 +703,8 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 Renderer::~Renderer()
 {
 #ifdef VPVL_ENABLE_OPENCL
+    clReleaseProgram(m_program);
+    m_program = 0;
     clReleaseKernel(m_kernel);
     m_kernel = 0;
     clReleaseCommandQueue(m_queue);
@@ -736,78 +739,6 @@ Renderer::~Renderer()
     delete m_scene;
     m_scene = 0;
 }
-
-#ifdef VPVL_ENABLE_OPENCL
-bool Renderer::initializeCLContext()
-{
-    cl_int err = 0;
-    cl_uint nplatforms;
-    err = clGetPlatformIDs(0, 0, &nplatforms);
-    if (err != CL_SUCCESS) {
-        m_delegate->log(kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
-        return false;
-    }
-    cl_platform_id *platforms = new cl_platform_id[nplatforms];
-    err = clGetPlatformIDs(nplatforms, platforms, 0);
-    if (err != CL_SUCCESS) {
-        m_delegate->log(kLogWarning, "Failed getting OpenCL platforms: %d", err);
-        delete[] platforms;
-        return false;
-    }
-    for (int i = 0; i < nplatforms; i++) {
-        cl_char buffer[BUFSIZ];
-        clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "%d: CL_PLATFORM_VENDOR: %s", i, buffer);
-        clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "%d: CL_PLATFORM_NAME: %s", i, buffer);
-        clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "%d: CL_PLATFORM_VERSION: %s", i, buffer);
-    }
-    cl_platform_id firstPlatform = platforms[0];
-    err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
-    if (err != CL_SUCCESS) {
-        m_delegate->log(kLogWarning, "Failed getting OpenCL device: %d", err);
-        delete[] platforms;
-        return false;
-    }
-    {
-        cl_char buffer[BUFSIZ];
-        cl_uint frequency, addressBits;
-        cl_device_type type;
-        clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
-        clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "CL_DEVICE_NAME: %s", buffer);
-        clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
-        clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
-        m_delegate->log(kLogInfo, "CL_DEVICE_TYPE: %d", type);
-        clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
-        m_delegate->log(kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
-        clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
-        m_delegate->log(kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
-        clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
-        m_delegate->log(kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
-    }
-    cl_context_properties props[] = {
-        CL_CONTEXT_PLATFORM,
-        reinterpret_cast<cl_context_properties>(firstPlatform),
-#ifdef __APPLE__
-        CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-        reinterpret_cast<cl_context_properties>(CGLGetShareGroup(CGLGetCurrentContext())),
-#endif
-        0
-    };
-    m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
-    if (err != CL_SUCCESS) {
-        m_delegate->log(kLogWarning, "Failed initialize OpenCL context: %d", err);
-        delete[] platforms;
-        return false;
-    }
-    delete[] platforms;
-    return true;
-}
-#endif
 
 void Renderer::initializeSurface()
 {
@@ -964,6 +895,15 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
         }
     }
     casted->materials = materialPrivates;
+#ifdef VPVL_ENABLE_OPENCL
+    cl_int err;
+    casted->vertexBufferForCL = clCreateFromGLBuffer(m_context,
+                                                     CL_MEM_READ_WRITE,
+                                                     casted->vertexBufferObjects[kModelVertices],
+                                                     &err);
+    if (err != CL_SUCCESS)
+        m_delegate->log(kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
+#endif
     model->setUserData(casted);
     model->setLightPosition(m_scene->lightPosition());
     model->updateImmediate();
@@ -986,6 +926,9 @@ void Renderer::deleteModel(vpvl::PMDModel *&model)
         for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
             glDeleteTextures(1, &userData->toonTextureID[i]);
         }
+#ifdef VPVL_ENABLE_OPENCL
+        clReleaseMemObject(userData->vertexBufferForCL);
+#endif
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
         delete[] userData->materials;
         delete userData;
@@ -1143,7 +1086,7 @@ void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(4.0f, 4.0f);
     m_zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
-                                 model->strideSize(vpvl::PMDModel::kVerticesStride));
+                                model->strideSize(vpvl::PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     glDisable(GL_POLYGON_OFFSET_FILL);
     m_zplotProgram->unbind();
@@ -1573,6 +1516,187 @@ void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, cons
         renderAssetRecurse(scene, node->mChildren[i], asset);
 }
 #endif
+
+bool Renderer::initializeAccelerator()
+{
+#ifdef VPVL_ENABLE_OPENCL
+    if (hasAcceleratorInitialized())
+        return true;
+    cl_int err = 0;
+    cl_uint nplatforms;
+    err = clGetPlatformIDs(0, 0, &nplatforms);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
+        return false;
+    }
+    cl_platform_id *platforms = new cl_platform_id[nplatforms];
+    err = clGetPlatformIDs(nplatforms, platforms, 0);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed getting OpenCL platforms: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    for (int i = 0; i < nplatforms; i++) {
+        cl_char buffer[BUFSIZ];
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
+    }
+    cl_platform_id firstPlatform = platforms[0];
+    err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed getting a OpenCL device: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    {
+        cl_char buffer[BUFSIZ];
+        cl_uint frequency, addressBits;
+        cl_device_type type;
+        clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
+        clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_NAME: %s", buffer);
+        clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
+        clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_TYPE: %d", type);
+        clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
+        clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
+        clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
+        m_delegate->log(kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
+    }
+    cl_context_properties props[] = {
+        CL_CONTEXT_PLATFORM,
+        reinterpret_cast<cl_context_properties>(firstPlatform),
+    #ifdef __APPLE__
+        CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+        reinterpret_cast<cl_context_properties>(CGLGetShareGroup(CGLGetCurrentContext())),
+    #endif
+        0
+    };
+    clReleaseContext(m_context);
+    m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed initialize a OpenCL context: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    clReleaseCommandQueue(m_queue);
+    m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
+        delete[] platforms;
+        return false;
+    }
+    delete[] platforms;
+    return true;
+#else
+    return true;
+#endif
+}
+
+bool Renderer::isAcceleratorAvailable()
+{
+#ifdef VPVL_ENABLE_OPENCL
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool Renderer::hasAcceleratorInitialized() const
+{
+#ifdef VPVL_ENABLE_OPENCL
+    return m_context != 0 && m_queue != 0;
+#else
+    return true;
+#endif
+}
+
+bool Renderer::hasAcceleratorKernelCompiled() const
+{
+#ifdef VPVL_ENABLE_OPENCL
+    return m_program != 0;
+#else
+    return true;
+#endif
+}
+bool Renderer::createAcceleratorKernel()
+{
+#ifdef VPVL_ENABLE_OPENCL
+    if (!m_context)
+        return false;
+    cl_int err;
+    const std::string &source = m_delegate->loadKernel(kModelSkinningKernel);
+    const char *sourceText = source.c_str();
+    const size_t sourceSize = source.size();
+    clReleaseProgram(m_program);
+    m_program = clCreateProgramWithSource(m_context, 1, &sourceText, &sourceSize, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed creating an OpenCL program: %d", err);
+        return false;
+    }
+    const char *flags = "-cl-mad-enable -DMAC -DGUID_ARG";
+    err = clBuildProgram(m_program, 1, &m_device, flags, 0, 0);
+    if (err != CL_SUCCESS) {
+        size_t buildLogSize;
+        clGetProgramBuildInfo(m_program, m_device, CL_PROGRAM_BUILD_LOG, 0, 0, &buildLogSize);
+        cl_char *buildLog = new cl_char[buildLogSize + 1];
+        clGetProgramBuildInfo(m_program, m_device, CL_PROGRAM_BUILD_LOG, buildLogSize, buildLog, 0);
+        buildLog[buildLogSize] = 0;
+        m_delegate->log(kLogWarning, "Failed building a program: %s", buildLog);
+        delete[] buildLog;
+        return false;
+    }
+    clReleaseKernel(m_kernel);
+    m_kernel = clCreateKernel(m_program, "main", &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed creating a kernel: %d", err);
+        return false;
+    }
+    return true;
+#else
+    return true;
+#endif
+}
+
+void Renderer::updateAllModelSkinning()
+{
+    if (!hasAcceleratorKernelCompiled())
+        return;
+#ifdef VPVL_ENABLE_OPENCL
+    size_t size = 0;
+    PMDModel **models = m_scene->getRenderingOrder(size);
+    for (size_t i = 0; i < size; i++) {
+        PMDModel *model = models[i];
+        if (model->isVisible())
+            updateModelSkinning(model);
+    }
+#endif
+}
+
+void Renderer::updateModelSkinning(PMDModel *model)
+{
+    if (!hasAcceleratorKernelCompiled())
+        return;
+#ifdef VPVL_ENABLE_OPENCL
+    /* force flushing OpenGL commands to acquire GL objects by OpenCL */
+    glFinish();
+    gl2::PMDModelUserData *userData = reinterpret_cast<gl2::PMDModelUserData *>(model->userData());
+    clEnqueueAcquireGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
+    /* TODO: implement this */
+    clEnqueueReleaseGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
+    clFinish(m_queue);
+#else
+    (void) model;
+#endif
+}
 
 }
 }

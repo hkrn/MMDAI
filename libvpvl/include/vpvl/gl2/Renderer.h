@@ -130,6 +130,10 @@ public:
         kZPlotVertexShader,
         kZPlotFragmentShader
     };
+    enum KernelType {
+        kModelSkinningKernel
+    };
+
     class VPVL_API IDelegate
     {
     public:
@@ -137,6 +141,7 @@ public:
         virtual bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
         virtual void log(LogLevel level, const char *format, ...) = 0;
         virtual const std::string loadShader(ShaderType type) = 0;
+        virtual const std::string loadKernel(KernelType type) = 0;
         virtual const std::string toUnicode(const uint8_t *value) = 0;
     };
 
@@ -153,9 +158,6 @@ public:
         m_selected = value;
     }
 
-#ifdef VPVL_ENABLE_OPENCL
-    bool initializeCLContext();
-#endif
     bool createPrograms();
     void initializeSurface();
     bool createShadowFrameBuffers();
@@ -179,6 +181,14 @@ public:
     void renderProjectiveShadow();
     void renderZPlot();
 
+    static bool isAcceleratorAvailable();
+    bool hasAcceleratorInitialized() const;
+    bool hasAcceleratorKernelCompiled() const;
+    bool initializeAccelerator();
+    bool createAcceleratorKernel();
+    void updateAllModelSkinning();
+    void updateModelSkinning(PMDModel *model);
+
 protected:
     void uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
     void uploadAsset0(Asset::UserData *userData, Asset *asset, const std::string &dir);
@@ -200,6 +210,7 @@ private:
     cl_command_queue m_queue;
     cl_device_id m_device;
     cl_kernel m_kernel;
+    cl_program m_program;
 #endif
     EdgeProgram *m_edgeProgram;
     ModelProgram *m_modelProgram;

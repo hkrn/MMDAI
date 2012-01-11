@@ -78,6 +78,9 @@ public:
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
     PMDModelMaterialPrivate *materials;
+#ifdef VPVL_ENABLE_OPENCL
+    cl_mem vertexBufferForCL;
+#endif
 };
 
 #ifdef VPVL_LINK_ASSIMP

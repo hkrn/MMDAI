@@ -241,12 +241,26 @@ public:
         fprintf(stderr, "%s", "\n");
         va_end(ap);
     }
-#ifdef VPVL_USE_NVIDIA_CG
-    bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) {
+    bool loadEffect(vpvl::PMDModel * /* model */, const std::string & /* dir */, std::string & /* source */) {
         return false;
     }
-#endif
-#ifdef VPVL_GL2_RENDERER_H_
+    const std::string loadKernel(Renderer::KernelType type) {
+        std::string file;
+        switch (type) {
+        case Renderer::kModelSkinningKernel:
+            file = "skinning.cl";
+            break;
+        }
+        QByteArray bytes;
+        std::string path = m_system + "/" + file;
+        if (slurpFile(path, bytes)) {
+            log(Renderer::kLogInfo, "Loaded a kernel: %s", path.c_str());
+            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+        }
+        else {
+            return std::string();
+        }
+    }
     const std::string loadShader(Renderer::ShaderType type) {
         std::string file;
         switch (type) {
@@ -291,14 +305,13 @@ public:
             return std::string();
         }
     }
-#endif
     const std::string toUnicode(const uint8_t *value) {
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         QString s = codec->toUnicode(reinterpret_cast<const char *>(value));
         return std::string(s.toUtf8());
     }
 
-    void setHardwareSkinningEnable(bool value) {
+    void setShaderSkinningEnable(bool value) {
         m_hardwareSkinning = value;
     }
 
@@ -354,15 +367,16 @@ public:
 
 protected:
     virtual void initializeGL() {
+        bool shaderSkinning = false;
+        m_delegate.setShaderSkinningEnable(shaderSkinning);
+        m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
+#ifdef VPVL_ENABLE_OPENCL
+        m_renderer->initializeAccelerator();
+        m_renderer->createAcceleratorKernel();
+#endif
 #ifdef VPVL_GL2_RENDERER_H_
-        bool hardwareSkinning = false;
-        m_delegate.setHardwareSkinningEnable(hardwareSkinning);
-        m_renderer->scene()->setSoftwareSkinningEnable(!hardwareSkinning);
         if (!m_renderer->createPrograms() || !m_renderer->createShadowFrameBuffers())
             exit(-1);
-#endif
-#ifdef VPVL_ENABLE_OPENCL
-        m_renderer->initializeCLContext();
 #endif
         m_renderer->initializeSurface();
         if (!loadScene())
