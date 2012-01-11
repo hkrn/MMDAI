@@ -823,7 +823,7 @@ void SceneWidget::initializeGL()
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->initialize();
 #ifdef VPVL_USE_GLSL
-    m_renderer->createPrograms();
+    m_renderer->createShaderPrograms();
 #endif
     vpvl::Scene *scene = m_renderer->scene();
     if (m_playing || m_enablePhysics)

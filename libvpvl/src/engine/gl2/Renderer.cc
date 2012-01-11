@@ -697,7 +697,7 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_frameBufferID(0),
       m_depthTextureID(0)
 {
-    m_scene = new vpvl::Scene(width, height, fps);
+    m_scene = new Scene(width, height, fps);
 }
 
 Renderer::~Renderer()
@@ -712,18 +712,18 @@ Renderer::~Renderer()
     clReleaseContext(m_context);
     m_context = 0;
 #endif
-    vpvl::Array<vpvl::PMDModel *> models;
+    Array<PMDModel *> models;
     models.copy(m_scene->models());
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
-        vpvl::PMDModel *model = models[i];
+        PMDModel *model = models[i];
         deleteModel(model);
     }
-    vpvl::Array<vpvl::Asset *> assets;
+    Array<Asset *> assets;
     assets.copy(m_assets);
     const int nassets = assets.count();
     for (int i = 0; i < nassets; i++) {
-        vpvl::Asset *asset = assets[i];
+        Asset *asset = assets[i];
         deleteAsset(asset);
     }
     glDeleteFramebuffers(1, &m_frameBufferID);
@@ -748,7 +748,7 @@ void Renderer::initializeSurface()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-bool Renderer::createPrograms()
+bool Renderer::createShaderPrograms()
 {
     m_edgeProgram = new EdgeProgram(m_delegate);
     m_modelProgram = new ExtendedModelProgram(m_delegate);
@@ -823,7 +823,7 @@ void Renderer::resize(int width, int height)
     m_scene->setHeight(height);
 }
 
-void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
+void Renderer::uploadModel(PMDModel *model, const std::string &dir)
 {
     uploadModel0(new PMDModelUserData(), model, dir);
 }
@@ -831,13 +831,13 @@ void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
 void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir)
 {
     PMDModelUserData *casted = static_cast<PMDModelUserData *>(userData);
-    const vpvl::MaterialList &materials = model->materials();
+    const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
     PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nmaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (int i = 0; i < nmaterials; i++) {
-        const vpvl::Material *material = materials[i];
+        const Material *material = materials[i];
         const std::string primary = m_delegate->toUnicode(material->mainTextureName());
         const std::string second = m_delegate->toUnicode(material->subTextureName());
         PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
@@ -866,19 +866,19 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
                     hasMultipleSphere ? "true" : "false");
     glGenBuffers(kVertexBufferObjectMax, casted->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kEdgeIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(vpvl::PMDModel::kEdgeIndicesStride),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
     m_delegate->log(kLogInfo,
                     "Binding edge indices to the vertex buffer object (ID=%d)",
                     casted->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kShadowIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(vpvl::PMDModel::kIndicesStride),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
     m_delegate->log(kLogInfo,
                     "Binding indices to the vertex buffer object (ID=%d)",
                     casted->vertexBufferObjects[kShadowIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, casted->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
+    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
     m_delegate->log(kLogInfo,
                     "Binding model vertices to the vertex buffer object (ID=%d)",
@@ -887,7 +887,7 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
         casted->toonTextureID[0] = textureID;
         m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
-    for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
+    for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->uploadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             casted->toonTextureID[i + 1] = textureID;
@@ -912,18 +912,18 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     m_scene->addModel(model);
 }
 
-void Renderer::deleteModel(vpvl::PMDModel *&model)
+void Renderer::deleteModel(PMDModel *&model)
 {
     if (model) {
         PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
-        const vpvl::MaterialList &materials = model->materials();
+        const MaterialList &materials = model->materials();
         const int nmaterials = materials.count();
         for (int i = 0; i < nmaterials; i++) {
             PMDModelMaterialPrivate &materialPrivate = userData->materials[i];
             glDeleteTextures(1, &materialPrivate.mainTextureID);
             glDeleteTextures(1, &materialPrivate.subTextureID);
         }
-        for (int i = 0; i < vpvl::PMDModel::kCustomTextureMax; i++) {
+        for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
             glDeleteTextures(1, &userData->toonTextureID[i]);
         }
 #ifdef VPVL_ENABLE_OPENCL
@@ -942,39 +942,39 @@ void Renderer::deleteModel(vpvl::PMDModel *&model)
 void Renderer::updateAllModel()
 {
     size_t size = 0;
-    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+    PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
-        vpvl::PMDModel *model = models[i];
+        PMDModel *model = models[i];
         if (model->isVisible())
             updateModel(model);
     }
 }
 
-void Renderer::updateModel(vpvl::PMDModel *model)
+void Renderer::updateModel(PMDModel *model)
 {
     PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, model->vertices().count() * model->strideSize(vpvl::PMDModel::kVerticesStride),
+    glBufferSubData(GL_ARRAY_BUFFER, 0, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
                     model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Renderer::renderModel(const vpvl::PMDModel *model)
+void Renderer::renderModel(const PMDModel *model)
 {
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
 
     m_modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    m_modelProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
-                                model->strideSize(vpvl::PMDModel::kVerticesStride));
-    m_modelProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kNormalsStride)),
-                              model->strideSize(vpvl::PMDModel::kNormalsStride));
-    m_modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kTextureCoordsStride)),
-                                model->strideSize(vpvl::PMDModel::kTextureCoordsStride));
+    m_modelProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
+                                model->strideSize(PMDModel::kVerticesStride));
+    m_modelProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kNormalsStride)),
+                              model->strideSize(PMDModel::kNormalsStride));
+    m_modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
+                                model->strideSize(PMDModel::kTextureCoordsStride));
 
     if (!model->isSoftwareSkinningEnabled()) {
-        m_modelProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kBoneAttributesStride)),
-                                          model->strideSize(vpvl::PMDModel::kBoneAttributesStride));
+        m_modelProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
+                                          model->strideSize(PMDModel::kBoneAttributesStride));
         m_modelProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
     }
 
@@ -992,11 +992,11 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
         modelProgram->setShadowTexture(m_depthTextureID);
     }
     if (model->isToonEnabled() && model->isSoftwareSkinningEnabled()) {
-        m_modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kToonTextureStride)),
-                                        model->strideSize(vpvl::PMDModel::kToonTextureStride));
+        m_modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
+                                        model->strideSize(PMDModel::kToonTextureStride));
     }
 
-    const vpvl::MaterialList &materials = model->materials();
+    const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const int nmaterials = materials.count();
     Color ambient, diffuse;
@@ -1004,7 +1004,7 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     for (int i = 0; i < nmaterials; i++) {
-        const vpvl::Material *material = materials[i];
+        const Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         const float opacity = material->opacity();
         ambient = material->ambient();
@@ -1030,7 +1030,7 @@ void Renderer::renderModel(const vpvl::PMDModel *model)
     glEnable(GL_CULL_FACE);
 }
 
-void Renderer::renderModelShadow(const vpvl::PMDModel *model)
+void Renderer::renderModelShadow(const PMDModel *model)
 {
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
@@ -1055,13 +1055,13 @@ void Renderer::renderModelShadow(const vpvl::PMDModel *model)
     m_shadowProgram->setShadowMatrix(shadowMatrix);
     m_shadowProgram->setLightColor(m_scene->lightColor());
     m_shadowProgram->setLightPosition(m_scene->lightPosition());
-    m_shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
-                                 model->strideSize(vpvl::PMDModel::kVerticesStride));
+    m_shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
+                                 model->strideSize(PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     m_shadowProgram->unbind();
 }
 
-void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
+void Renderer::renderModelZPlot(const PMDModel *model)
 {
 #ifndef VPVL_BUILD_IOS
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
@@ -1075,7 +1075,7 @@ void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
     model->getBoundingSphere(center, radius);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Scalar eye = radius / btSin(vpvl::radian(angle * 0.5f));
+    Scalar eye = radius / btSin(radian(angle * 0.5f));
     //gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
     Vector3 eyev = m_scene->lightPosition() * eye + center;
     //gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
@@ -1085,15 +1085,15 @@ void Renderer::renderModelZPlot(const vpvl::PMDModel *model)
     m_zplotProgram->setProjectionMatrix(projectionMatrix);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(4.0f, 4.0f);
-    m_zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
-                                model->strideSize(vpvl::PMDModel::kVerticesStride));
+    m_zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
+                                model->strideSize(PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     glDisable(GL_POLYGON_OFFSET_FILL);
     m_zplotProgram->unbind();
 #endif
 }
 
-void Renderer::renderModelEdge(const vpvl::PMDModel *model)
+void Renderer::renderModelEdge(const PMDModel *model)
 {
     if (model->edgeOffset() == 0.0f)
         return;
@@ -1108,19 +1108,19 @@ void Renderer::renderModelEdge(const vpvl::PMDModel *model)
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
     if (!model->isSoftwareSkinningEnabled()) {
-        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kVerticesStride)),
-                                   model->strideSize(vpvl::PMDModel::kVerticesStride));
-        m_edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kNormalsStride)),
-                                 model->strideSize(vpvl::PMDModel::kNormalsStride));
-        m_edgeProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kBoneAttributesStride)),
-                                         model->strideSize(vpvl::PMDModel::kBoneAttributesStride));
-        m_edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kEdgeVerticesStride)),
-                               model->strideSize(vpvl::PMDModel::kEdgeVerticesStride));
+        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
+                                   model->strideSize(PMDModel::kVerticesStride));
+        m_edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kNormalsStride)),
+                                 model->strideSize(PMDModel::kNormalsStride));
+        m_edgeProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
+                                         model->strideSize(PMDModel::kBoneAttributesStride));
+        m_edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
+                               model->strideSize(PMDModel::kEdgeVerticesStride));
         m_edgeProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
     }
     else {
-        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(vpvl::PMDModel::kEdgeVerticesStride)),
-                                   model->strideSize(vpvl::PMDModel::kEdgeVerticesStride));
+        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
+                                   model->strideSize(PMDModel::kEdgeVerticesStride));
     }
     glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
@@ -1128,7 +1128,7 @@ void Renderer::renderModelEdge(const vpvl::PMDModel *model)
     m_edgeProgram->unbind();
 }
 
-void Renderer::renderAsset(const vpvl::Asset *asset)
+void Renderer::renderAsset(const Asset *asset)
 {
 #ifdef VPVL_LINK_ASSIMP
     const aiScene *a = asset->getScene();
@@ -1233,9 +1233,9 @@ void Renderer::renderAllAssets()
 void Renderer::renderAllModels()
 {
     size_t size = 0;
-    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+    PMDModel **models = m_scene->getRenderingOrder(size);
     for (size_t i = 0; i < size; i++) {
-        vpvl::PMDModel *model = models[i];
+        PMDModel *model = models[i];
         if (model->isVisible()) {
             renderModel(model);
             renderModelEdge(model);
@@ -1246,10 +1246,10 @@ void Renderer::renderAllModels()
 void Renderer::renderProjectiveShadow()
 {
     size_t size = 0;
-    vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+    PMDModel **models = m_scene->getRenderingOrder(size);
     glCullFace(GL_FRONT);
     for (size_t i = 0; i < size; i++) {
-        vpvl::PMDModel *model = models[i];
+        PMDModel *model = models[i];
         if (model->isVisible())
             renderModelShadow(model);
     }
@@ -1265,9 +1265,9 @@ void Renderer::renderZPlot()
         glClear(GL_DEPTH_BUFFER_BIT);
         glCullFace(GL_FRONT);
         size_t size = 0;
-        vpvl::PMDModel **models = m_scene->getRenderingOrder(size);
+        PMDModel **models = m_scene->getRenderingOrder(size);
         for (size_t i = 0; i < size; i++) {
-            vpvl::PMDModel *model = models[i];
+            PMDModel *model = models[i];
             if (model->isVisible())
                 renderModelZPlot(model);
         }
@@ -1277,18 +1277,18 @@ void Renderer::renderZPlot()
     }
 }
 
-void Renderer::releaseProject(vpvl::Project *project)
+void Renderer::releaseProject(Project *project)
 {
 #ifdef VPVL_ENABLE_PROJECT
     const std::vector<std::string> &assetUUIDs = project->assetUUIDs();
     for (std::vector<std::string>::const_iterator it = assetUUIDs.begin(); it != assetUUIDs.end(); it++) {
-        vpvl::Asset *asset = project->asset(*it);
+        Asset *asset = project->asset(*it);
         project->removeAsset(asset);
         deleteAsset(asset);
     }
     const std::vector<std::string> &modelUUIDs = project->modelUUIDs();
     for (std::vector<std::string>::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
-        vpvl::PMDModel *model = project->model(*it);
+        PMDModel *model = project->model(*it);
         project->removeModel(model);
         model->deleteAllMotions();
         deleteModel(model);
@@ -1388,7 +1388,7 @@ void Renderer::deleteAssetRecurse(const aiScene *scene, const aiNode *node, Asse
         deleteAssetRecurse(scene, node->mChildren[i], casted);
 }
 
-void Renderer::setAssetMaterial(const aiMaterial *material, const vpvl::Asset *asset, AssetProgram *program)
+void Renderer::setAssetMaterial(const aiMaterial *material, const Asset *asset, AssetProgram *program)
 {
     int textureIndex = 0;
     aiString texturePath;
@@ -1401,7 +1401,7 @@ void Renderer::setAssetMaterial(const aiMaterial *material, const vpvl::Asset *a
         program->setTexture(0);
     }
     aiColor4D ambient, diffuse, emission, specular;
-    vpvl::Color color(0.0f, 0.0f, 0.0f, 0.0f);
+    Color color(0.0f, 0.0f, 0.0f, 0.0f);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
         color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
     }
@@ -1463,16 +1463,16 @@ void Renderer::setAssetMaterial(const aiMaterial *material, const vpvl::Asset *a
 void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, const Asset *asset)
 {
     const btScalar &scaleFactor = asset->scaleFactor();
-    const vpvl::Bone *bone = asset->parentBone();
+    const Bone *bone = asset->parentBone();
     float matrix4x4[16], matrix3x3[9];
     aiVector3D aiS, aiP;
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
-    vpvl::Transform transform(btMatrix3x3(vpvl::Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
-                              .scaled(vpvl::Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
-                              vpvl::Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
+    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
+                              .scaled(Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
+                              Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
     if (bone) {
-        const vpvl::Transform &boneTransform = bone->localTransform();
+        const Transform &boneTransform = bone->localTransform();
         transform.setBasis(boneTransform.getBasis() * transform.getBasis());
         transform.setOrigin(boneTransform.getOrigin() + transform.getOrigin());
     }

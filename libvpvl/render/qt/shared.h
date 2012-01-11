@@ -375,7 +375,7 @@ protected:
         m_renderer->createAcceleratorKernel();
 #endif
 #ifdef VPVL_GL2_RENDERER_H_
-        if (!m_renderer->createPrograms() || !m_renderer->createShadowFrameBuffers())
+        if (!m_renderer->createShaderPrograms() || !m_renderer->createShadowFrameBuffers())
             exit(-1);
 #endif
         m_renderer->initializeSurface();

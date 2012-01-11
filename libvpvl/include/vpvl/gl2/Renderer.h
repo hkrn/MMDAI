@@ -148,17 +148,17 @@ public:
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
-    vpvl::Scene *scene() const {
+    Scene *scene() const {
         return m_scene;
     }
-    vpvl::PMDModel *selectedModel() const {
+    PMDModel *selectedModel() const {
         return m_selected;
     }
     void setSelectedModel(PMDModel *value) {
         m_selected = value;
     }
 
-    bool createPrograms();
+    bool createShaderPrograms();
     void initializeSurface();
     bool createShadowFrameBuffers();
     void resize(int width, int height);
@@ -194,15 +194,15 @@ protected:
     void uploadAsset0(Asset::UserData *userData, Asset *asset, const std::string &dir);
 
     IDelegate *m_delegate;
-    vpvl::Scene *m_scene;
-    Array<vpvl::Asset *> m_assets;
+    Scene *m_scene;
+    Array<Asset *> m_assets;
 
 private:
 #ifdef VPVL_LINK_ASSIMP
     void uploadAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData);
     void deleteAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData);
     void renderAssetRecurse(const aiScene *scene, const aiNode *node, const Asset *asset);
-    void setAssetMaterial(const aiMaterial *material, const vpvl::Asset *asset, AssetProgram *program);
+    void setAssetMaterial(const aiMaterial *material, const Asset *asset, AssetProgram *program);
 #endif
 
 #ifdef VPVL_ENABLE_OPENCL
@@ -216,7 +216,7 @@ private:
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
     ZPlotProgram *m_zplotProgram;
-    vpvl::PMDModel *m_selected;
+    PMDModel *m_selected;
     GLuint m_depthTextureID;
     GLuint m_frameBufferID;
 

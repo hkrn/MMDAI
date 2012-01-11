@@ -69,24 +69,24 @@ struct PMDModelUserData;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL_API Renderer : public vpvl::gl2::Renderer
+class VPVL_API Renderer : public gl2::Renderer
 {
 public:
     class VPVL_API IDelegate : public gl2::Renderer::IDelegate
     {
     public:
-        virtual bool loadEffect(vpvl::PMDModel *model, const std::string &dir, std::string &source) = 0;
+        virtual bool loadEffect(PMDModel *model, const std::string &dir, std::string &source) = 0;
     };
 
     Renderer(IDelegate *delegate, int width, int height, int fps);
     virtual ~Renderer();
 
-    void uploadModel(vpvl::PMDModel *model, const std::string &dir);
-    void deleteModel(vpvl::PMDModel *&model);
-    void renderModel(const vpvl::PMDModel *model);
+    void uploadModel(PMDModel *model, const std::string &dir);
+    void deleteModel(PMDModel *&model);
+    void renderModel(const PMDModel *model);
 
 private:
-    void renderModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model);
+    void renderModel0(const cg::PMDModelUserData *userData, const PMDModel *model);
 
     CGcontext m_context;
 

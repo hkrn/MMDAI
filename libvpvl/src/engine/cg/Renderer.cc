@@ -112,17 +112,17 @@ public:
         }
     }
 
-    void setMatrix(const vpvl::Scene *scene) {
+    void setMatrix(const Scene *scene) {
         float matrix4x4[16];
         scene->getModelViewMatrix(matrix4x4);
         setMatrixParameter(m_viewMatrix, matrix4x4);
         scene->getProjectionMatrix(matrix4x4);
         setMatrixParameter(m_projectionMatrix, matrix4x4);
     }
-    void setLight(const vpvl::Scene *scene) {
+    void setLight(const Scene *scene) {
         setParameter4fv(m_lightPosition, scene->lightPosition());
     }
-    void setMaterial(const vpvl::Material *material, const vpvl::gl2::PMDModelMaterialPrivate &materialPrivate, bool enableToon) {
+    void setMaterial(const Material *material, const gl2::PMDModelMaterialPrivate &materialPrivate, bool enableToon) {
         Color average, ambient, diffuse, specular;
         float alpha = material->opacity();
         ambient = material->ambient();
@@ -144,7 +144,7 @@ public:
         cgGLSetParameter1f(m_parthf, 0);
         cgGLSetParameter1f(m_transp, 0);
     }
-    void setViewport(vpvl::Scene *scene) {
+    void setViewport(Scene *scene) {
         CGparameter p = m_viewport;
         float width = scene->width(), height = scene->height();
         while (p) {
@@ -232,7 +232,7 @@ public:
 };
 
 Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
-    : vpvl::gl2::Renderer(delegate, width, height, fps),
+    : gl2::Renderer(delegate, width, height, fps),
       m_context(0)
 {
     cgGLSetDebugMode(CG_TRUE);
@@ -245,7 +245,7 @@ Renderer::~Renderer()
     m_context = 0;
 }
 
-void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
+void Renderer::uploadModel(PMDModel *model, const std::string &dir)
 {
     PMDModelUserData *userData = new PMDModelUserData();
     Renderer::IDelegate *delegate = static_cast<Renderer::IDelegate *>(m_delegate);
@@ -266,7 +266,7 @@ void Renderer::uploadModel(vpvl::PMDModel *model, const std::string &dir)
     gl2::Renderer::uploadModel0(userData, model, dir);
 }
 
-void Renderer::deleteModel(vpvl::PMDModel *&model)
+void Renderer::deleteModel(PMDModel *&model)
 {
     PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     delete userData->parameters;
@@ -274,23 +274,23 @@ void Renderer::deleteModel(vpvl::PMDModel *&model)
     gl2::Renderer::deleteModel(model);
 }
 
-void Renderer::renderModel(const vpvl::PMDModel *model)
+void Renderer::renderModel(const PMDModel *model)
 {
     PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
-    userData->parameters ? renderModel0(userData, model) : vpvl::gl2::Renderer::renderModel(model);
+    userData->parameters ? renderModel0(userData, model) : gl2::Renderer::renderModel(model);
 }
 
-void Renderer::renderModel0(const vpvl::cg::PMDModelUserData *userData, const vpvl::PMDModel *model)
+void Renderer::renderModel0(const cg::PMDModelUserData *userData, const PMDModel *model)
 {
     EffectParameters *p = userData->parameters;
-    size_t stride = model->strideSize(vpvl::PMDModel::kVerticesStride), vsize = model->vertices().count();
+    size_t stride = model->strideSize(PMDModel::kVerticesStride), vsize = model->vertices().count();
 
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[vpvl::gl2::kModelVertices]);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[gl2::kModelVertices]);
     glVertexPointer(3, GL_FLOAT, vsize * stride, reinterpret_cast<const GLvoid *>(stride));
-    stride = model->strideOffset(vpvl::PMDModel::kNormalsStride);
+    stride = model->strideOffset(PMDModel::kNormalsStride);
     glNormalPointer(GL_FLOAT, vsize * stride, reinterpret_cast<const GLvoid *>(stride));
     glClientActiveTexture(GL_TEXTURE0);
-    stride = model->strideOffset(vpvl::PMDModel::kTextureCoordsStride);
+    stride = model->strideOffset(PMDModel::kTextureCoordsStride);
     glTexCoordPointer(2, GL_FLOAT, vsize * stride, reinterpret_cast<const GLvoid *>(stride));
 
     p->setMatrix(m_scene);
@@ -299,23 +299,23 @@ void Renderer::renderModel0(const vpvl::cg::PMDModelUserData *userData, const vp
     const bool enableToon = model->isToonEnabled();
     // toon
     if (enableToon) {
-        stride = model->strideOffset(vpvl::PMDModel::kToonTextureStride);
+        stride = model->strideOffset(PMDModel::kToonTextureStride);
         glClientActiveTexture(GL_TEXTURE1);
         glTexCoordPointer(2, GL_FLOAT, vsize * stride, reinterpret_cast<const GLvoid *>(stride));
     }
 
-    const vpvl::MaterialList &materials = model->materials();
-    const vpvl::gl2::PMDModelMaterialPrivate *materialPrivates = userData->materials;
+    const MaterialList &materials = model->materials();
+    const gl2::PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const int nmaterials = materials.count();
     size_t offset = 0;
     p->setViewport(m_scene);
     p->setVertexCount(vsize);
     p->setSubsetCount(nmaterials);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[vpvl::gl2::kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[gl2::kShadowIndices]);
     for (int i = 0; i < nmaterials; i++) {
-        const vpvl::Material *material = materials[i];
-        const vpvl::gl2::PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
+        const Material *material = materials[i];
+        const gl2::PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         const int nindices = material->countIndices();
         material->opacity() < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
         p->setMaterial(material, materialPrivate, enableToon);

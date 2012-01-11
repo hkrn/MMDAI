@@ -376,7 +376,7 @@ public:
 
 #ifdef VPVL_GL2_RENDERER_H_
         m_renderer->initializeSurface();
-        m_renderer->createPrograms();
+        m_renderer->createShaderPrograms();
 #endif
         if (!loadScene())
             return false;
