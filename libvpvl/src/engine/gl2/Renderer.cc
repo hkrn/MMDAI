@@ -957,6 +957,16 @@ void Renderer::updateModel(PMDModel *model)
     glBufferSubData(GL_ARRAY_BUFFER, 0, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
                     model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+#ifdef VPVL_ENABLE_OPENCL
+    if (hasAcceleratorKernelCompiled()) {
+        /* force flushing OpenGL commands to acquire GL objects by OpenCL */
+        glFinish();
+        clEnqueueAcquireGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
+        /* TODO: implement this */
+        clEnqueueReleaseGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
+        clFinish(m_queue);
+    }
+#endif
 }
 
 void Renderer::renderModel(const PMDModel *model)
@@ -1469,8 +1479,8 @@ void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, cons
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
     Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
-                              .scaled(Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
-                              Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
+                        .scaled(Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
+                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
     if (bone) {
         const Transform &boneTransform = bone->localTransform();
         transform.setBasis(boneTransform.getBasis() * transform.getBasis());
@@ -1663,38 +1673,6 @@ bool Renderer::createAcceleratorKernel()
     return true;
 #else
     return true;
-#endif
-}
-
-void Renderer::updateAllModelSkinning()
-{
-    if (!hasAcceleratorKernelCompiled())
-        return;
-#ifdef VPVL_ENABLE_OPENCL
-    size_t size = 0;
-    PMDModel **models = m_scene->getRenderingOrder(size);
-    for (size_t i = 0; i < size; i++) {
-        PMDModel *model = models[i];
-        if (model->isVisible())
-            updateModelSkinning(model);
-    }
-#endif
-}
-
-void Renderer::updateModelSkinning(PMDModel *model)
-{
-    if (!hasAcceleratorKernelCompiled())
-        return;
-#ifdef VPVL_ENABLE_OPENCL
-    /* force flushing OpenGL commands to acquire GL objects by OpenCL */
-    glFinish();
-    gl2::PMDModelUserData *userData = reinterpret_cast<gl2::PMDModelUserData *>(model->userData());
-    clEnqueueAcquireGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
-    /* TODO: implement this */
-    clEnqueueReleaseGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
-    clFinish(m_queue);
-#else
-    (void) model;
 #endif
 }
 

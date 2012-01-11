@@ -186,8 +186,6 @@ public:
     bool hasAcceleratorKernelCompiled() const;
     bool initializeAccelerator();
     bool createAcceleratorKernel();
-    void updateAllModelSkinning();
-    void updateModelSkinning(PMDModel *model);
 
 protected:
     void uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
