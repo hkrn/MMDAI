@@ -64,9 +64,6 @@
 #endif /* VPVL_BUILD_IOS */
 #endif /* VPVL_LINK_QT */
 
-// TODO: remove this
-#define VPVL_ENABLE_OPENCL
-
 #ifdef VPVL_ENABLE_OPENCL
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
@@ -210,7 +207,8 @@ private:
     cl_context m_context;
     cl_command_queue m_queue;
     cl_device_id m_device;
-    cl_kernel m_kernel;
+    cl_kernel m_updateBoneMatricesKernel;
+    cl_kernel m_performSkinningKernel;
     cl_program m_program;
 #endif
     EdgeProgram *m_edgeProgram;

@@ -290,8 +290,8 @@ protected:
         m_delegate.setShaderSkinningEnable(shaderSkinning);
         m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
 #ifdef VPVL_ENABLE_OPENCL
-        m_renderer->initializeAccelerator();
-        m_renderer->createAcceleratorKernel();
+        if (m_renderer->initializeAccelerator() && m_renderer->createAcceleratorKernel())
+            (void)0;//m_renderer->scene()->setSoftwareSkinningEnable(false);
 #endif
 #ifdef VPVL_GL2_RENDERER_H_
         if (!m_renderer->createShaderPrograms() || !m_renderer->createShadowFrameBuffers())

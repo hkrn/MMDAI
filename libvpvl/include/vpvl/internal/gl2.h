@@ -83,8 +83,16 @@ public:
     cl_mem boneMatricesBuffer;
     cl_mem originMatricesBuffer;
     cl_mem outputMatricesBuffer;
+    cl_mem weightsBuffer;
+    cl_mem bone1IndicesBuffer;
+    cl_mem bone2IndicesBuffer;
+    size_t localWGSizeForUpdateBoneMatrices;
+    size_t localWGSizeForPerformSkinning;
+    float *weights;
     float *boneTransform;
     float *originTransform;
+    int *bone1Indices;
+    int *bone2Indices;
     bool isBufferAllocated;
 #endif
 };
