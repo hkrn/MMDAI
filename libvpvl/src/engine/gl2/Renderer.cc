@@ -897,12 +897,36 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     casted->materials = materialPrivates;
 #ifdef VPVL_ENABLE_OPENCL
     cl_int err;
+    casted->vertexBufferForCL = 0;
+    casted->boneMatricesBuffer = 0;
+    casted->originMatricesBuffer = 0;
+    casted->outputMatricesBuffer = 0;
     casted->vertexBufferForCL = clCreateFromGLBuffer(m_context,
                                                      CL_MEM_READ_WRITE,
                                                      casted->vertexBufferObjects[kModelVertices],
                                                      &err);
     if (err != CL_SUCCESS)
         m_delegate->log(kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
+    int nallocs = model->bones().count() << 4;
+    int nsize = nallocs * sizeof(float);
+    casted->isBufferAllocated = true;
+    casted->boneMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nsize, 0, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed creating OpenCL bone matrices buffer");
+        casted->isBufferAllocated = false;
+    }
+    casted->originMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nsize, 0, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed creating OpenCL origin matrices buffer");
+        casted->isBufferAllocated = false;
+    }
+    casted->outputMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_WRITE, nsize, 0, &err);
+    if (err != CL_SUCCESS) {
+        m_delegate->log(kLogWarning, "Failed creating OpenCL output matrices buffer");
+        casted->isBufferAllocated = false;
+    }
+    casted->boneTransform = new float[nallocs];
+    casted->originTransform = new float[nallocs];
 #endif
     model->setUserData(casted);
     model->setLightPosition(m_scene->lightPosition());
@@ -927,7 +951,13 @@ void Renderer::deleteModel(PMDModel *&model)
             glDeleteTextures(1, &userData->toonTextureID[i]);
         }
 #ifdef VPVL_ENABLE_OPENCL
+        delete[] userData->boneTransform;
+        delete[] userData->originTransform;
         clReleaseMemObject(userData->vertexBufferForCL);
+        clReleaseMemObject(userData->boneMatricesBuffer);
+        clReleaseMemObject(userData->originMatricesBuffer);
+        clReleaseMemObject(userData->outputMatricesBuffer);
+        userData->isBufferAllocated = false;
 #endif
         glDeleteBuffers(kVertexBufferObjectMax, userData->vertexBufferObjects);
         delete[] userData->materials;
@@ -958,7 +988,61 @@ void Renderer::updateModel(PMDModel *model)
                     model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL_ENABLE_OPENCL
-    if (hasAcceleratorKernelCompiled()) {
+    if (hasAcceleratorKernelCompiled() && userData->isBufferAllocated) {
+        const BoneList &bones = model->bones();
+        const int nbones = bones.count();
+        Transform transform = Transform::getIdentity();
+        for (int i = 0; i < nbones; i++) {
+            Bone *bone = bones[i];
+            int index = i << 4;
+            bone->localTransform().getOpenGLMatrix(&userData->boneTransform[index]);
+            transform.setOrigin(bone->originPosition());
+            transform.getOpenGLMatrix(&userData->originTransform[index]);
+        }
+        size_t nsize = (nbones * sizeof(float)) << 4;
+        cl_int err;
+        err = clEnqueueWriteBuffer(m_queue, userData->boneMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed enqueue a command to write bone matrices buffer");
+            return;
+        }
+        err = clEnqueueWriteBuffer(m_queue, userData->originMatricesBuffer, CL_TRUE, 0, nsize, userData->originTransform, 0, 0, 0);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed enqueue a command to write origin matrices buffer");
+            return;
+        }
+        err = clSetKernelArg(m_kernel, 0, sizeof(userData->boneMatricesBuffer), &userData->boneMatricesBuffer);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 1st argument of kernel (boneMatricesBuffer)");
+            return;
+        }
+        err = clSetKernelArg(m_kernel, 1, sizeof(userData->originMatricesBuffer), &userData->originMatricesBuffer);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 2nd argument of kernel (originMatricesBuffer)");
+            return;
+        }
+        err = clSetKernelArg(m_kernel, 2, sizeof(int), &nbones);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 3th argument of kernel (nbones)");
+            return;
+        }
+        err = clSetKernelArg(m_kernel, 3, sizeof(userData->outputMatricesBuffer), &userData->outputMatricesBuffer);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 4rd argument of kernel (outputMatricesBuffer)");
+            return;
+        }
+        size_t local;
+        err = clGetKernelWorkGroupInfo(m_kernel, m_device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, 0);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE)");
+            return;
+        }
+        size_t global = local * ((nbones + (local - 1)) / local);
+        err = clEnqueueNDRangeKernel(m_queue, m_kernel, 1, 0, &global, &local, 0, 0, 0);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed enqueue executing kernel");
+            return;
+        }
         /* force flushing OpenGL commands to acquire GL objects by OpenCL */
         glFinish();
         clEnqueueAcquireGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
@@ -985,7 +1069,8 @@ void Renderer::renderModel(const PMDModel *model)
     if (!model->isSoftwareSkinningEnabled()) {
         m_modelProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
                                           model->strideSize(PMDModel::kBoneAttributesStride));
-        m_modelProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
+        // XXX: boneMatricesPointer is removed, we must implement updateBoneMatrices.
+        //m_modelProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
     }
 
     float matrix4x4[16], matrix3x3[9];
@@ -1126,7 +1211,8 @@ void Renderer::renderModelEdge(const PMDModel *model)
                                          model->strideSize(PMDModel::kBoneAttributesStride));
         m_edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
                                model->strideSize(PMDModel::kEdgeVerticesStride));
-        m_edgeProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
+        // XXX: boneMatricesPointer is removed, we must implement updateBoneMatrices alternative.
+        //m_edgeProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
     }
     else {
         m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
@@ -1665,7 +1751,7 @@ bool Renderer::createAcceleratorKernel()
         return false;
     }
     clReleaseKernel(m_kernel);
-    m_kernel = clCreateKernel(m_program, "main", &err);
+    m_kernel = clCreateKernel(m_program, "updateBoneMatrices", &err);
     if (err != CL_SUCCESS) {
         m_delegate->log(kLogWarning, "Failed creating a kernel: %d", err);
         return false;

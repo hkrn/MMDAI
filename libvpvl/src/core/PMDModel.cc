@@ -360,7 +360,6 @@ void PMDModel::updateSkins()
         updateToon(m_lightPosition);
     }
     else {
-        updateBoneMatrices();
         updatePosition();
     }
 }
@@ -487,19 +486,6 @@ void PMDModel::updateImmediate()
     updateAllFaces();
     updateBoneFromSimulation();
     updateSkins();
-}
-
-void PMDModel::updateBoneMatrices()
-{
-    const int nbones = m_bones.count();
-    if (m_boneMatrices.count() == 0)
-        m_boneMatrices.reserve(nbones << 4);
-    Transform transform;
-    for (int i = 0; i < nbones; i++) {
-        vpvl::Bone *bone = m_bones[i];
-        bone->getSkinTransform(transform);
-        transform.getOpenGLMatrix(&m_boneMatrices[i << 4]);
-    }
 }
 
 void PMDModel::updatePosition()
@@ -1355,11 +1341,6 @@ const void *PMDModel::edgeVerticesPointer() const
 const void *PMDModel::boneAttributesPointer() const
 {
     return &m_skinnedVertices[0].bone;
-}
-
-const float *PMDModel::boneMatricesPointer() const
-{
-    return &m_boneMatrices[0];
 }
 
 const uint8_t *PMDModel::toonTexture(int index) const

@@ -80,6 +80,12 @@ public:
     PMDModelMaterialPrivate *materials;
 #ifdef VPVL_ENABLE_OPENCL
     cl_mem vertexBufferForCL;
+    cl_mem boneMatricesBuffer;
+    cl_mem originMatricesBuffer;
+    cl_mem outputMatricesBuffer;
+    float *boneTransform;
+    float *originTransform;
+    bool isBufferAllocated;
 #endif
 };
 

@@ -64,6 +64,9 @@
 #endif /* VPVL_BUILD_IOS */
 #endif /* VPVL_LINK_QT */
 
+// TODO: remove this
+#define VPVL_ENABLE_OPENCL
+
 #ifdef VPVL_ENABLE_OPENCL
 #ifdef __APPLE__
 #include <OpenCL/cl.h>

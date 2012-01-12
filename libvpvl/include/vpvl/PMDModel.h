@@ -399,13 +399,6 @@ public:
     const void *boneAttributesPointer() const;
 
     /**
-     * Returns the base adderess of bone matrices pointer.
-     *
-     * @return Address of bone matrices
-     */
-    const float *boneMatricesPointer() const;
-
-    /**
      * Returns the texture name of the index.
      *
      * @param index Index of the texture
@@ -429,8 +422,8 @@ public:
      * updateToon() will be called internally. As a result, verticesPointer(), normalsPointer(),
      * edgeVerticesPointer() and #toonTextureCoordsPointer() will be modified.
      *
-     * If this method is called with false, doesn't do skinning, updatePosition() and
-     * updateBoneMatrices() will be called internally. As a result, just setting vertex origin
+     * If this method is called with false, doesn't do skinning, updatePosition() will be called
+     * internally. As a result, just setting vertex origin
      * position and bone matrices. Skinning must be done at the other.
      * (e.g. Shader skinning or GPGPU based skinning).
      *
@@ -729,7 +722,6 @@ private:
     void updateSkinVertices();
     void updateToon(const Vector3 &lightPosition);
     void updateIndices();
-    void updateBoneMatrices();
     void updatePosition();
 
     uint8_t m_name[kNameSize + 1];
@@ -758,7 +750,6 @@ private:
     Array<Vector3> m_shadowTextureCoords;
     Array<BoneList *> m_bonesForUI;
     Array<uint16_t> m_facesForUIIndices;
-    Array<float> m_boneMatrices;
     BoneList m_rotatedBones;
     Bone **m_orderedBones;
     Array<bool> m_isIKSimulated;
