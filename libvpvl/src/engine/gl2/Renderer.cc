@@ -500,6 +500,23 @@ class Accelerator {
 public:
     Accelerator() {}
     ~Accelerator() {}
+
+    bool isAvailable() const {
+        return false;
+    }
+    bool initializeContext() {
+        return true;
+    }
+    bool createKernelPrograms() {
+        return true;
+    }
+
+    void uploadModel(PMDModelUserData * /* userData */, const PMDModel * /* model */) {
+    }
+    void deleteModel(PMDModelUserData * /* userData */) {
+    }
+    void updateModel(PMDModelUserData * /* userData */, PMDModel * /* model */) {
+    }
 };
 
 #endif
