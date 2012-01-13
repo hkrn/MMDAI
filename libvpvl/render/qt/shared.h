@@ -84,7 +84,7 @@ namespace
     static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
     static const std::string kModelDir = "render/res/lat";
     static const std::string kStageDir = "render/res/stage";
-    static const std::string kMotion = "render/res/motion.vmd.404";
+    static const std::string kMotion = "render/res/motion.vmd";
     static const std::string kCamera = "render/res/camera.vmd.404";
     static const std::string kModelName = "normal.pmd";
     static const std::string kStageName = "stage.x";
@@ -290,8 +290,8 @@ protected:
         m_delegate.setShaderSkinningEnable(shaderSkinning);
         m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
 #ifdef VPVL_ENABLE_OPENCL
-        if (m_renderer->initializeAccelerator() && m_renderer->createAcceleratorKernel())
-            (void)0;//m_renderer->scene()->setSoftwareSkinningEnable(false);
+        if (m_renderer->initializeAccelerator())
+            m_renderer->scene()->setSoftwareSkinningEnable(false);
 #endif
 #ifdef VPVL_GL2_RENDERER_H_
         if (!m_renderer->createShaderPrograms() || !m_renderer->createShadowFrameBuffers())
@@ -379,7 +379,7 @@ private:
         scene->setWorld(m_world);
 
         m_renderer->uploadModel(model, kModelDir);
-        model->setEdgeOffset(0.0f);
+        model->setEdgeOffset(0.5f);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);

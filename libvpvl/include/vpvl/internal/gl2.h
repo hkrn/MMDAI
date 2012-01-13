@@ -42,6 +42,17 @@
 #include <vpvl/gl2/Renderer.h>
 #include <map>
 
+#ifdef VPVL_ENABLE_OPENCL
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#include <OpenCL/cl_gl.h>
+#include <OpenCL/cl_gl_ext.h>
+#else
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
+#endif /* __APPLE__ */
+#endif
+
 namespace vpvl
 {
 

@@ -64,20 +64,6 @@
 #endif /* VPVL_BUILD_IOS */
 #endif /* VPVL_LINK_QT */
 
-/* TODO: remove this */
-#define VPVL_ENABLE_OPENCL
-
-#ifdef VPVL_ENABLE_OPENCL
-#ifdef __APPLE__
-#include <OpenCL/cl.h>
-#include <OpenCL/cl_gl.h>
-#include <OpenCL/cl_gl_ext.h>
-#else
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
-#endif /* __APPLE__ */
-#endif
-
 class btDynamicsWorld;
 class btIDebugDraw;
 
@@ -93,6 +79,7 @@ class Scene;
 namespace gl2
 {
 
+class Accelerator;
 class AssetProgram;
 class EdgeProgram;
 class ModelProgram;
@@ -184,11 +171,9 @@ public:
     void renderProjectiveShadow();
     void renderZPlot();
 
-    static bool isAcceleratorAvailable();
-    bool hasAcceleratorInitialized() const;
-    bool hasAcceleratorKernelCompiled() const;
+    static bool isAcceleratorSupported();
+    bool isAcceleratorAvailable() const;
     bool initializeAccelerator();
-    bool createAcceleratorKernel();
 
 protected:
     void uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
@@ -206,18 +191,11 @@ private:
     void setAssetMaterial(const aiMaterial *material, const Asset *asset, AssetProgram *program);
 #endif
 
-#ifdef VPVL_ENABLE_OPENCL
-    cl_context m_context;
-    cl_command_queue m_queue;
-    cl_device_id m_device;
-    cl_kernel m_updateBoneMatricesKernel;
-    cl_kernel m_performSkinningKernel;
-    cl_program m_program;
-#endif
     EdgeProgram *m_edgeProgram;
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;
     ZPlotProgram *m_zplotProgram;
+    Accelerator *m_accelerator;
     PMDModel *m_selected;
     GLuint m_depthTextureID;
     GLuint m_frameBufferID;
