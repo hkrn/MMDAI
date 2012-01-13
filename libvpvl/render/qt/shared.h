@@ -38,14 +38,10 @@
 
 #include <vpvl/vpvl.h>
 
-#ifdef VPVL_LINK_GLEW
-#include <GL/glew.h>
-#endif
-
-#if defined(VPVL_USE_NVIDIA_CG)
+#if defined(VPVL_ENABLE_NVIDIA_CG)
 #include <vpvl/cg/Renderer.h>
 using namespace vpvl::cg;
-#elif defined(VPVL_USE_GLSL)
+#elif defined(VPVL_ENABLE_GLSL)
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
 #else

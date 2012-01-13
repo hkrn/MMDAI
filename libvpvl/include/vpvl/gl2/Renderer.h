@@ -45,11 +45,12 @@
 #ifdef VPVL_LINK_ASSIMP
 #include <aiMaterial.h>
 #include <aiScene.h>
-#endif
+#endif /* VPVL_LINK_ASSIMP */
 
 #ifdef VPVL_LINK_QT
 #include <QtOpenGL/QtOpenGL>
-#else
+#endif /* VPVL_LINK_QT */
+
 #ifdef VPVL_BUILD_IOS
 #include <OpenGLES/ES2/gl.h>
 #else
@@ -62,7 +63,6 @@
 #include <GL/glu.h>
 #endif /* __APPLE__ */
 #endif /* VPVL_BUILD_IOS */
-#endif /* VPVL_LINK_QT */
 
 class btDynamicsWorld;
 class btIDebugDraw;
