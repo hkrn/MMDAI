@@ -4,20 +4,20 @@ float4 matrixMultVector3(float16 *m, float4 *v);
 float4 matrixMultVector4(float16 *m, float4 *v)
 {
     return (float4)(
-       m->s0 * v->x + m->s1 * v->y + m->s2 * v->z + m->s3 * v->w,
-       m->s4 * v->x + m->s5 * v->y + m->s6 * v->z + m->s7 * v->w,
-       m->s8 * v->x + m->s9 * v->y + m->sa * v->z + m->sb * v->w,
-       m->sc * v->x + m->sd * v->y + m->se * v->z + m->sf * v->w
+       dot(m->s048c, *v) + m->s3,
+       dot(m->s159d, *v) + m->s7,
+       dot(m->s26ae, *v) + m->sb,
+       1.0
     );
 }
 
 float4 matrixMultVector3(float16 *m, float4 *v)
 {
     return (float4)(
-       m->s0 * v->x + m->s1 * v->y + m->s2 * v->z,
-       m->s4 * v->x + m->s5 * v->y + m->s6 * v->z,
-       m->s8 * v->x + m->s9 * v->y + m->sa * v->z,
-       0.0f
+       dot((float4)(m->s048, 0.0), *v),
+       dot((float4)(m->s159, 0.0), *v),
+       dot((float4)(m->s26a, 0.0), *v),
+       0.0
     );
 }
 
@@ -37,10 +37,13 @@ void performSkinning(const __global float16 *skinningMatrices,
                      const __global float *weights,
                      const __global int *bone1Indices,
                      const __global int *bone2Indices,
+                     const float4 lightPosition,
                      const int nvertices,
                      const int strideSize,
                      const int offsetPosition,
                      const int offsetNormal,
+                     const int offsetToonTexCoord,
+                     const int offsetEdge,
                      __global float4 *vertices)
 {
     int id = get_global_id(0);
@@ -58,8 +61,12 @@ void performSkinning(const __global float16 *skinningMatrices,
         float4 n1 = matrixMultVector3(&transform1, &normal);
         float4 n2 = matrixMultVector3(&transform2, &normal);
         float s = 1.0f - weight;
-        vertices[strideOffset + offsetPosition] = s * v2 + weight * v1;
-        vertices[strideOffset + offsetNormal] = s * n2 + weight * n1;
+        float4 position2 = s * v2 + weight * v1;
+        float4 normal2 = s * n2 + weight * n1;
+        vertices[strideOffset + offsetPosition] = position2;
+        vertices[strideOffset + offsetNormal] = normal2;
+        vertices[strideOffset + offsetToonTexCoord].w = (1.0 - dot(lightPosition, normal2)) * 0.5;
+        vertices[strideOffset + offsetEdge] = position2 + normal2 * vertices[strideOffset + offsetEdge];
     }
 }
 

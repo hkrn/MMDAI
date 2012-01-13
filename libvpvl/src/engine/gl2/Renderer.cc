@@ -1053,12 +1053,19 @@ void Renderer::updateModel(PMDModel *model)
         for (int i = 0; i < nbones; i++) {
             Bone *bone = bones[i];
             int index = i << 4;
+#define SOFTWARE_BONE_TRANSFORM
+#ifndef SOFTWARE_BONE_TRANSFORM
             bone->localTransform().getOpenGLMatrix(&userData->boneTransform[index]);
             transform.setOrigin(bone->originPosition());
             transform.getOpenGLMatrix(&userData->originTransform[index]);
+#else
+            bone->getSkinTransform(transform);
+            transform.getOpenGLMatrix(&userData->boneTransform[index]);
+#endif
         }
         size_t nsize = (nbones * sizeof(float)) << 4;
         cl_int err;
+#ifndef SOFTWARE_BONE_TRANSFORM
         err = clEnqueueWriteBuffer(m_queue, userData->boneMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
         if (err != CL_SUCCESS) {
             m_delegate->log(kLogWarning, "Failed enqueue a command to write bone matrices buffer");
@@ -1097,6 +1104,14 @@ void Renderer::updateModel(PMDModel *model)
             return;
         }
         clFinish(m_queue);
+#else
+        size_t local, global;
+        err = clEnqueueWriteBuffer(m_queue, userData->outputMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed enqueue a command to write output matrices buffer");
+            return;
+        }
+#endif
         /* force flushing OpenGL commands to acquire GL objects by OpenCL */
         glFinish();
         clEnqueueAcquireGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
@@ -1127,39 +1142,58 @@ void Renderer::updateModel(PMDModel *model)
         }
         err = clSetKernelArg(m_performSkinningKernel, 2, sizeof(userData->bone1IndicesBuffer), &userData->bone1IndicesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 2nd argument of kernel (bone1Indices)");
+            m_delegate->log(kLogWarning, "Failed setting 3rd argument of kernel (bone1Indices)");
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 3, sizeof(userData->bone2IndicesBuffer), &userData->bone2IndicesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 3rd argument of kernel (bone2Indices)");
+            m_delegate->log(kLogWarning, "Failed setting 4th argument of kernel (bone2Indices)");
             return;
         }
-        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(nvertices), &nvertices);
+        const Vector3 &lightPosition = model->lightPosition();
+        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightPosition), &lightPosition);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 5th argument of kernel (nvertices)");
+            m_delegate->log(kLogWarning, "Failed setting 5th argument of kernel (lightPosition)");
             return;
         }
-        err = clSetKernelArg(m_performSkinningKernel, 5, sizeof(strideSize), &strideSize);
+        err = clSetKernelArg(m_performSkinningKernel, 5, sizeof(nvertices), &nvertices);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 6th argument of kernel (strideSize)");
+            m_delegate->log(kLogWarning, "Failed setting 6th argument of kernel (nvertices)");
             return;
         }
-        size_t offsetPosition = model->strideOffset(PMDModel::kVerticesStride);
-        err = clSetKernelArg(m_performSkinningKernel, 6, sizeof(offsetPosition), &offsetPosition);
+        strideSize >>= 4;
+        err = clSetKernelArg(m_performSkinningKernel, 6, sizeof(strideSize), &strideSize);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 7th argument of kernel (offsetPosition)");
+            m_delegate->log(kLogWarning, "Failed setting 7th argument of kernel (strideSize)");
             return;
         }
-        size_t offsetNormal = model->strideOffset(PMDModel::kNormalsStride);
-        err = clSetKernelArg(m_performSkinningKernel, 7, sizeof(offsetNormal), &offsetNormal);
+        size_t offsetPosition = model->strideOffset(PMDModel::kVerticesStride) >> 4;
+        err = clSetKernelArg(m_performSkinningKernel, 7, sizeof(offsetPosition), &offsetPosition);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 8th argument of kernel (offsetNormal)");
+            m_delegate->log(kLogWarning, "Failed setting 8th argument of kernel (offsetPosition)");
             return;
         }
-        err = clSetKernelArg(m_performSkinningKernel, 8, sizeof(userData->vertexBufferForCL), &userData->vertexBufferForCL);
+        size_t offsetNormal = model->strideOffset(PMDModel::kNormalsStride) >> 4;
+        err = clSetKernelArg(m_performSkinningKernel, 8, sizeof(offsetNormal), &offsetNormal);
         if (err != CL_SUCCESS) {
-            m_delegate->log(kLogWarning, "Failed setting 9th argument of kernel (vertices)");
+            m_delegate->log(kLogWarning, "Failed setting 9th argument of kernel (offsetNormal)");
+            return;
+        }
+        size_t offsetToonTexture = model->strideOffset(PMDModel::kToonTextureStride) >> 4;
+        err = clSetKernelArg(m_performSkinningKernel, 9, sizeof(offsetToonTexture), &offsetToonTexture);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 10th argument of kernel (offsetTexCoord)");
+            return;
+        }
+        size_t offsetEdge = model->strideOffset(PMDModel::kEdgeVerticesStride) >> 4;
+        err = clSetKernelArg(m_performSkinningKernel, 10, sizeof(offsetEdge), &offsetEdge);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 11th argument of kernel (offsetEdge)");
+            return;
+        }
+        err = clSetKernelArg(m_performSkinningKernel, 11, sizeof(userData->vertexBufferForCL), &userData->vertexBufferForCL);
+        if (err != CL_SUCCESS) {
+            m_delegate->log(kLogWarning, "Failed setting 12th argument of kernel (vertices)");
             return;
         }
         local = userData->localWGSizeForUpdateBoneMatrices;
@@ -1208,7 +1242,7 @@ void Renderer::renderModel(const PMDModel *model)
         ExtendedModelProgram *modelProgram = static_cast<ExtendedModelProgram *>(m_modelProgram);
         modelProgram->setShadowTexture(m_depthTextureID);
     }
-    if (model->isToonEnabled() && model->isSoftwareSkinningEnabled()) {
+    if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || hasAcceleratorKernelCompiled())) {
         m_modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                         model->strideSize(PMDModel::kToonTextureStride));
     }
@@ -1324,7 +1358,7 @@ void Renderer::renderModelEdge(const PMDModel *model)
     m_edgeProgram->setColor(model->edgeColor());
     m_edgeProgram->setModelViewMatrix(modelViewMatrix);
     m_edgeProgram->setProjectionMatrix(projectionMatrix);
-    if (!model->isSoftwareSkinningEnabled()) {
+    if (!model->isSoftwareSkinningEnabled() && !hasAcceleratorKernelCompiled()) {
         m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                                    model->strideSize(PMDModel::kVerticesStride));
         m_edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kNormalsStride)),
