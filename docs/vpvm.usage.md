@@ -1,6 +1,8 @@
 VPVM の使い方ガイド
 =================
 
+## 現在 https://sites.google.com/site/mmdaiproject/home/mmdai2 の方が新しいです
+
 VPVM (a.k.a MMDAI2、以下 VPVM) は MikuMikuDance (以下 MMD) 互換のモーションを作成または編集するために作られたアプリケーションです。MMD のモデル及びモーションを読み込むことが可能です。本家 MMD と UI をあわせたところがありますが、操作体系が大きく異なります。
 
 # 目的別インデックス
