@@ -498,7 +498,7 @@ private:
 #else
 class Accelerator {
 public:
-    Accelerator() {}
+    Accelerator(Renderer::IDelegate * /* delegate */) {}
     ~Accelerator() {}
 
     bool isAvailable() const {
