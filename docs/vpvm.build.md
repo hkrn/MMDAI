@@ -37,7 +37,7 @@ $ mv assimp--2.0.863-sdk assimp
 $ cd assimp
 # ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
 # また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
-$ cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON  -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Debug"
+$ cmake -DBUILD_ASSIMP_TOOLS:BOOL=OFF  -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Debug"
 $ make
 </code></pre>
 
@@ -47,13 +47,15 @@ $ make
 $ mkdir debug
 $ cd debug
 # QMA2 がビルド可能な設定にする
-$ cmake -DBUILD_SHARED_LIBS=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_USE_GLSL=ON -DCMAKE_BUILD_TYPE="Debug" ..
+# OpenCL を有効にする場合は -DVPVL_ENABLE_OPENCL=ON を追加する
+$ cmake -DBUILD_SHARED_LIBS=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_ENABLE_GLSL=ON -DVPVL_LINK_QT=ON -DVPVL_ENABLE_PROJECT=ON -DCMAKE_BUILD_TYPE="Debug" ..
 $ make
 </code></pre>
 
 ### リリース版のビルド
 リリース版は Bullet と libvpvl を静的ライブラリとしてビルドします。assimp は CMakeFile が共有ライブラリとして
 ビルドするように強制されているため、共有ライブラリとしてビルドします。
+ただし、Linux 版では静的ビルドではうまく生成出来ないため、共有ライブラリとしてビルドする必要があります。
 
 #### Bullet
 
@@ -63,6 +65,7 @@ $ cd bullet
 $ mkdir release
 $ cd release
 # BUILD_DEMOS と BUILD_EXTRAS を無効にしておくとビルドが高速化する
+# Linux では BUILD_SHARED_LIBS=ON にしておく
 $ cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_DEMOS=OFF -DBUILD_EXTRAS=OFF -DCMAKE_BUILD_TYPE="Release" -DLIBRARY_OUTPUT_PATH=`pwd`/lib -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
@@ -75,7 +78,7 @@ $ mv assimp--2.0.863-sdk assimp
 $ cd assimp
 # ENABLE_BOOST_WORKAROUND をつけておくのはファイルサイズを小さくするため
 # また assimp に限り debug/release のディレクトリを作成せず直接ビルドする
-$ cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"
+$ cmake -DBUILD_ASSIMP_TOOLS:BOOL=OFF -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"
 $ make
 </code></pre>
 
@@ -85,7 +88,9 @@ $ make
 $ mkdir release
 $ cd release
 # QMA2 がビルド可能な設定にする
-$ cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_USE_GLSL=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
+# Linux では BUILD_SHARED_LIBS=ON にしておく
+# OpenCL を有効にする場合は -DVPVL_ENABLE_OPENCL=ON を追加する
+$ cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_ENABLE_GLSL=ON -DVPVL_LINK_QT=ON -DVPVL_ENABLE_PROJECT=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
 
@@ -101,26 +106,43 @@ libvpvl を LinearMath を除く BulletPhysics のライブラリを使用せず
 
 #### VPVL_OPENGL_RENDERER
 libvpvl に OpenGL レンダリングエンジンを追加してビルドします。このオプションを有効にする際 OpenGL のライブラリが必要です。
-また、MacOSX 以外では追加で [GLEW](http://glew.sf.net/ "GLEW") が必要になります。
+また、MacOSX 以外でかつ VPVL_LINK_QT を無効にしている場合は追加で [GLEW](http://glew.sf.net/ "GLEW") が必要になります。
+QMA2 をビルドするのに必須なオプションです。
 
-#### VPVL_USE_GLSL
+#### VPVL_ENABLE_GLSL
 固定シェーダではなくプログラマブルシェーダを使ったレンダリングエンジンでビルドします。このオプションを使用するときは
 必ず VPVL_OPENGL_RENDERER を有効にしてください。
+QMA2 をビルドするのに必須なオプションです。
 
-#### VPVL_USE_NVIDIA_CG
+### VPVL_ENABLE_PROJECT
+プロジェクトファイルの読み込み及び保存機能を libvpvl に追加します。
+libxml2 を使っているため、libxml2 をインストールする必要があります。
+QMA2 をビルドするのに必須なオプションです。
+
+### VPVL_ENABLE_OPENCL
+OpenCL を使った処理の高速化(主に頂点スキニング)を有効にします。
+MacOSX 版ではこのオプションを有効にしてリリースされています。
+
+#### VPVL_ENABLE_NVIDIA_CG
 HLSL と互換な Cg が利用可能なレンダリングエンジンをビルドします。現在まだこのレンダリングエンジンは未完成です。
 
 #### VPVL_LINK_ASSIMP
 [Open Asset Import Library](http://assimp.sf.net "Open Asset Import Library") を有効にしてビルドします。これはアクセサリで用いられる X 形式のファイルを
 取り扱うのに必要です。無効にした場合は X 形式のファイルを読むことが出来ません。
+QMA2 をビルドするのに必須なオプションです。
 
 #### VPVL_BUILD_SDL
 [SDL](http://www.libsdl.org "SDL") を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
 また、事前に SDL がインストールされている必要があります。
 
-#### VPVL_BUILD_QT
-[Qt](http://qt.nokia.com "Qt") を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
-また、事前に Qt がインストールされている必要があります。
+#### VPVL_LINK_QT
+libvpvl と [Qt](http://qt.nokia.com "Qt") をリンクします。必ず VPVL_OPENGL_RENDERER を有効にする必要があります。
+QMA2 をビルドするのに必須なオプションです。
+事前に Qt 4.8 がインストールされている必要があります。
+
+#### VPVL_BUILD_QT_RENDERER
+[Qt](http://qt.nokia.com "Qt") を使ったレンダリングプログラムを作成します。必ず VPVL_OPENGL_RENDERER と VPVL_LINK_QT を有効にする必要があります。
+また、事前に Qt 4.8 がインストールされている必要があります。
 
 MacOSX で 32/64bit のバイナリを生成したい場合は -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" を指定してください
 
@@ -135,18 +157,18 @@ alias hts_engine_prod='cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DCMAKE_BUILD_TYPE:STR
 alias open_jtalk_prod='cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DCMAKE_BUILD_TYPE:STRING="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
 alias julius_prod='cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DCMAKE_BUILD_TYPE:STRING="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
 alias bullet_dev='cmake -DCMAKE_BUILD_TYPE:STRING="Debug" -DBUILD_DEMOS:BOOL=ON -DBUILD_EXTRAS:BOOL=ON -DBUILD_MINICL_OPENCL_DEMOS:BOOL=ON -DBUILD_CPU_DEMOS:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DLIBRARY_OUTPUT_PATH=`pwd`/lib'
-alias bullet_prod='cmake -DCMAKE_BUILD_TYPE:STRING="Release" -DBUILD_DEMOS:BOOL=OFF -DBUILD_EXTRAS:BOOL=OFF -DBUILD_MINICL_OPENCL_DEMOS:BOOL=OFF -DBUILD_CPU_DEMOS:BOOL=OFF -DBUILD_SHARED_LIBS:BOOL=OFF -DLIBRARY_OUTPUT_PATH=`pwd`/lib -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden"'
-alias vpvl_dev='cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_OPENGL_RENDERER=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_BUILD_SDL=ON -DVPVL_BUILD_QT=ON -DVPVL_BUILD_QT_WITH_OPENCV=OFF -DCMAKE_BUILD_TYPE="Debug"'
-alias vpvl_prod='cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_OPENGL_RENDERER=ON -DVPVL_LINK_ASSIMP=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden"'
-alias assimp_dev='cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Debug"'
-alias assimp_prod='cmake -DBUILD_ASSIMP_TOOLS:BOOL=ON -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
+alias bullet_prod='cmake -DCMAKE_BUILD_TYPE:STRING="Release" -DBUILD_DEMOS:BOOL=OFF -DBUILD_EXTRAS:BOOL=OFF -DBUILD_MINICL_OPENCL_DEMOS:BOOL=OFF -DBUILD_CPU_DEMOS:BOOL=OFF -DBUILD_SHARED_LIBS:BOOL=OFF -DLIBRARY_OUTPUT_PATH=`pwd`/lib -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
+alias vpvl_dev='cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_OPENGL_RENDERER=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_BUILD_SDL=ON -DVPVL_BUILD_QT=ON -DVPVL_ENABLE_PROJECT=ON -DVPVL_LINK_QT=ON -DVPVL_BUILD_QT_RENDERER=ON -DCMAKE_BUILD_TYPE="Debug"'
+alias vpvl_prod='cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_OPENGL_RENDERER=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_ENABLE_PROJECT=ON -DVPVL_LINK_QT=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
+alias assimp_dev='cmake -DBUILD_ASSIMP_TOOLS:BOOL=OFF -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Debug"'
+alias assimp_prod='cmake -DBUILD_ASSIMP_TOOLS:BOOL=OFF -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
 alias opencv_dev='cmake -DBUILD_SHARED_LIBS=ON -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE="Debug"'
 alias opencv_prod='cmake -DBUILD_SHARED_LIBS=ON-DBUILD_TESTS=OFF -DOPENCV_BUILD_3RDPARTY_LIBS=TRUE -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64"'
 </code></pre>
 
 QMA2 (a.k.a VPVM or MMDAI2)
 ===========================
-[Qt](http://qt.nokia.com "Qt") を全面的に使用しているため、Qt の 4.7 以降がインストールされている必要があります。
+[Qt](http://qt.nokia.com "Qt") を全面的に使用しているため、Qt の 4.8 以降がインストールされている必要があります。
 
 ## 翻訳ファイルをの作成
 ※ 現在この作業は QMA2 を開発する時のみ必要です。ビルドするだけならこの作業は必要ありません。
@@ -160,15 +182,15 @@ lrelease MMDAI2.ts -qm MMDAI2_ja.qm
 
 ## ビルド
 qmake を使った方法です。QtCreator を使う場合は QMA2.pro を読み込ませてください。ここでは QMA2 があるディレクトリに
-事前にビルドするディレクトリを作成します。MacOSX の場合はパッケージングを行うスクリプトの関係で QMA2-release-build か
-QMA2-debug-build という名前でディレクトリを作成する必要があります。
+事前にビルドするディレクトリを作成します。MacOSX の場合はパッケージングを行うスクリプトの関係で QMA2-release-desktop か
+QMA2-debug-desktop という名前でディレクトリを作成する必要があります。
 
 Windows では qmake 使って Visual Studio 2008 用のプロジェクトファイルを生成する必要があります。qmake ではプロジェクト
 ファイルのみ生成されるので、保存する際はソリューションファイルも保存してください。
 
 <pre><code># 事前にビルドするディレクトリを作成する
-mkdir QMA2-release-build
-cd QMA2-release-build
+mkdir QMA2-release-desktop
+cd QMA2-release-desktop
 # Visual Studio 2008 のプロジェクトとして作成する場合は "qmake -tp vc ../QMA2/QMA2.pro" とする。その場合 make コマンドは実行しないこと
 qmake ../QMA2/QMA2.pro
 make
@@ -177,17 +199,17 @@ make
 ## パッケージング
 Windows と Linux は手動でパッケージングする必要があります。
 
-<pre><code>cd QMA2-qmake-build-desktop
-mkdir Locales
-cp -r $QT_PLUGINS Plugins
-rm -rf Plugins/bearer Plugins/graphicssystems Plugins/qmltooling
-cp ../QMA2/resources/translations/MMDAI2_ja.qm Locales
-zip -r MMDAI2.zip MMDAI* Plugins Locales
+Linux における手順は以下のとおりです。
+<pre><code>cd QMA2-release-desktop
+export INSTALL_ROOT=`pwd`
+make install
+zip -r MMDAI2.zip MMDAI2 lib plugins locales
 </code></pre>
 
 MacOSX は osx_deploy.sh でデプロイ可能です。実行するとフレームワーク及びライブラリが全て入った MMDAI.app と
 そのディスクイメージファイルである MMDAI2.dmg が作成されます。
 
-<pre><code>cd QMA2-release-build
+<pre><code>cd QMA2-release-desktop
 ../scripts/osx_deploy.sh
 </code></pre>
+
