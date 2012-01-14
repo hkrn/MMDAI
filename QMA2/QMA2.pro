@@ -18,11 +18,6 @@ exists(../opencv/include):INCLUDEPATH += ../opencv/include
 exists(../opencv/modules/core/include):INCLUDEPATH += ../opencv/modules/core/include
 exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highgui/include
 
-# Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
-unix:LIBS += -lxml2
-win32:LIBS += -L$$(CMAKE_PREFIX_PATH)/lib -llibxml2
-
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src
 win32:INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include ../libvpvl/msvc-build/include
@@ -46,6 +41,7 @@ CONFIG(debug, debug|release) {
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
+  linux-*:LIBS     += -lGLU
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl -lxml2
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
@@ -58,6 +54,11 @@ CONFIG(release, debug|release) {
     DEFINES += OPENCV_FOUND
   }
 }
+
+# Basic Configuration
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+unix:LIBS += -lxml2
+win32:LIBS += -L$$(CMAKE_PREFIX_PATH)/lib -llibxml2
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII
@@ -95,10 +96,23 @@ macx {
 }
 linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
-  QMAKE_RPATHDIR += \$\$ORIGIN/..
+  QMAKE_RPATHDIR += \$\$ORIGIN/lib
   QMA_RPATH = $$join(QMAKE_RPATHDIR, ":")
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
+  libraries.path = /lib
+  libraries.files = ../bullet/release/lib/libBulletCollision.so.* \
+                    ../bullet/release/lib/libBulletDynamics.so.* \
+                    ../bullet/release/lib/libBulletSoftBody.so.* \
+                    ../bullet/release/lib/libLinearMath.so.* \
+                    ../libvpvl/release/lib/libvpvl.so.* \
+                    ../assimp/lib/libassimp.so.2 \
+                    $$[QT_INSTALL_LIBS]/libQtCore.so.4 \
+                    $$[QT_INSTALL_LIBS]/libQtGui.so.4 \
+                    $$[QT_INSTALL_LIBS]/libQtOpenGL.so.4
+  plugins.path = /plugins
+  plugins.files = $$[QT_INSTALL_PLUGINS]/*
+  INSTALLS += libraries plugins
 }
 !macx {
   translations.path = /locales
