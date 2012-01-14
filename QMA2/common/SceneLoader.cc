@@ -43,7 +43,7 @@
 #include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
 
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
 #else

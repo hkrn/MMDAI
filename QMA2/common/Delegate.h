@@ -42,7 +42,7 @@
 #include "util.h"
 
 #include <vpvl/Common.h>
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 #include <vpvl/gl2/Renderer.h>
 #else
 #include <vpvl/gl/Renderer.h>
@@ -52,7 +52,7 @@ namespace internal {
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 using namespace vpvl::gl2;
 class Delegate : public Renderer::IDelegate
 #else
@@ -104,7 +104,6 @@ public:
             path = QString(":/textures/%1").arg(filename);
         return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
     }
-#ifdef VPVL_USE_GLSL
     const std::string loadShader(Renderer::ShaderType type) {
         QString filename;
         switch (type) {
@@ -151,7 +150,25 @@ public:
             return std::string();
         }
     }
-#endif
+    const std::string loadKernel(Renderer::KernelType type) {
+        QString filename;
+        switch (type) {
+        case Renderer::kModelSkinningKernel:
+            filename = "skinning.cl";
+            break;
+        }
+        const QString path = QString(":/kernels/%1").arg(filename);
+        QFile file(path);
+        if (file.open(QFile::ReadOnly)) {
+            QByteArray bytes = file.readAll();
+            file.close();
+            log(Renderer::kLogInfo, "Loaded a kernel: %s", qPrintable(path));
+            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+        }
+        else {
+            return std::string();
+        }
+    }
     void log(Renderer::LogLevel level, const char *format...) {
         QString message;
         va_list ap;

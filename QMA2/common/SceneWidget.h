@@ -47,7 +47,7 @@
 #include <vpvl/Common.h>
 
 namespace vpvl {
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 namespace gl2 {
 #else
 namespace gl {
@@ -220,7 +220,7 @@ protected:
     void pinchTriggered(QPinchGesture *event);
     void swipeTriggered(QSwipeGesture *event);
 
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
     vpvl::gl2::Renderer *m_renderer;
 #else
     vpvl::gl::Renderer *m_renderer;

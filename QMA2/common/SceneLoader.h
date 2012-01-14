@@ -48,7 +48,7 @@
 
 namespace vpvl
 {
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 namespace gl2
 #else
 namespace gl
@@ -68,7 +68,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
     explicit SceneLoader(vpvl::gl2::Renderer *renderer);
 #else
     explicit SceneLoader(vpvl::gl::Renderer *renderer);
@@ -121,7 +121,7 @@ private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
     void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
 
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
     vpvl::gl2::Renderer *m_renderer;
 #else
     vpvl::gl::Renderer *m_renderer;

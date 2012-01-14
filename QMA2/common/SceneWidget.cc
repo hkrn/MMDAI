@@ -60,13 +60,13 @@
 #include <GL/glu.h>
 #endif
 
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
 #else
 #include <vpvl/gl/Renderer.h>
 using namespace vpvl::gl;
-#endif /* VPVL_USE_GLSL */
+#endif /* VPVL_ENABLE_GLSL */
 using namespace internal;
 
 namespace {
@@ -822,7 +822,7 @@ void SceneWidget::initializeGL()
     m_debugDrawer->setWorld(m_world->mutableWorld());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->initialize();
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
     m_renderer->createShaderPrograms();
 #endif
     vpvl::Scene *scene = m_renderer->scene();
