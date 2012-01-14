@@ -1,7 +1,9 @@
 MMDAI
 =====
 
-MMDAI is a fork project of [MMDAgent](http://www.mmdagent.jp "MMDAgent") to support cross platform
+MMDAI is a project forked from [MMDAgent](http://www.mmdagent.jp "MMDAgent") to support cross platform.
+
+**MMDAI Project Portal: https://sites.google.com/site/mmdaiproject/**
 
 # これは何?
 
