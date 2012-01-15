@@ -94,6 +94,11 @@ static inline void EnableMultisample()
 
 }
 
+bool SceneWidget::isAccelerationSupported()
+{
+    return Renderer::isAcceleratorSupported();
+}
+
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
@@ -118,6 +123,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_handleFlags(0),
     m_visibleBones(false),
     m_playing(false),
+    m_enableAcceleration(false),
     m_enableBoneMove(false),
     m_enableBoneRotate(false),
     m_enablePhysics(false),
@@ -134,8 +140,9 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_info = new InfoPanel(this);
     m_world = new World(m_defaultFPS);
     m_handles = new Handles(this);
-    // must be delay to execute on initializeGL
+    /* enablePhycis と enableAcceleration は値の処理のみ。実際の処理は initializeGL で行う */
     m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
+    m_enableAcceleration = m_settings->value("sceneWidget/isAccelerationEnabled", false).toBool();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
     setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
@@ -614,6 +621,27 @@ void SceneWidget::setPhysicsEnable(bool value)
     m_enablePhysics = value;
 }
 
+void SceneWidget::setAccelerationEnable(bool value)
+{
+    if (isAccelerationSupported()) {
+        if (value) {
+            if (m_renderer->initializeAccelerator()) {
+                m_renderer->scene()->setSoftwareSkinningEnable(false);
+                m_enableAcceleration = value;
+                return;
+            }
+            else {
+                qWarning("%s", qPrintable(tr("Failed enabling acceleration and set fallback.")));
+            }
+        }
+    }
+    else {
+        qWarning("%s", qPrintable(tr("Acceleration is not supported on this platform and set fallback.")));
+    }
+    m_renderer->scene()->setSoftwareSkinningEnable(true);
+    m_enableAcceleration = value;
+}
+
 void SceneWidget::makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const
 {
     // This implementation based on the below page.
@@ -771,6 +799,7 @@ bool SceneWidget::event(QEvent *event)
 
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
+    m_settings->setValue("sceneWidget/isAccelerationEnabled", isAccelerationEnabled());
     m_settings->setValue("sceneWidget/isBoneWireframeVisible", isBoneWireframeVisible());
     m_settings->setValue("sceneWidget/isGridVisible", isGridVisible());
     m_settings->setValue("sceneWidget/isPhysicsEnabled", isPhysicsEnabled());
@@ -829,8 +858,12 @@ void SceneWidget::initializeGL()
     m_renderer->createShaderPrograms();
 #endif
     vpvl::Scene *scene = m_renderer->scene();
+    /* 物理演算に必要な World が initializeGL でインスタンスを生成するため、setPhysicsEnable はここで有効にする */
     if (m_playing || m_enablePhysics)
         setPhysicsEnable(true);
+    /* MMDAI では OpenCL でのコンテキスト初期化に OpenGL のコンテキストが必要なため、setAccelerationEnable はここで有効にする */
+    if (m_enableAcceleration)
+        setAccelerationEnable(true);
     m_timer.start();
     m_internalTimerID = startTimer(m_interval);
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */

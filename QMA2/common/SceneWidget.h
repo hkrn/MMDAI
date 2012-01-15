@@ -84,6 +84,8 @@ class SceneWidget : public QGLWidget, protected QGLFunctions
     Q_OBJECT
 
 public:
+    static bool isAccelerationSupported();
+
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
@@ -119,6 +121,7 @@ public:
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
     bool isUndoGestureEnabled() const { return m_enableUndoGesture; }
+    bool isAccelerationEnabled() const { return m_enableAcceleration; }
     bool showModelDialog() const { return m_showModelDialog; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
@@ -150,6 +153,7 @@ public slots:
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void setGridVisible(bool value);
     void setPhysicsEnable(bool value);
+    void setAccelerationEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
@@ -259,6 +263,7 @@ private:
     int m_handleFlags;
     bool m_visibleBones;
     bool m_playing;
+    bool m_enableAcceleration;
     bool m_enableBoneMove;
     bool m_enableBoneRotate;
     bool m_enablePhysics;

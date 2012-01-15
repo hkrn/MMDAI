@@ -57,4 +57,7 @@
         <file alias="rotation.3ds">blender/rotation.3ds</file>
         <file alias="translation.3ds">blender/translation.3ds</file>
     </qresource>
+    <qresource prefix="/kernels">
+        <file alias="skinning.cl">kernels/skinning.cl</file>
+    </qresource>
 </RCC>

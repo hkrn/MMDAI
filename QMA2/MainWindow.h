@@ -191,9 +191,10 @@ private:
     QAction *m_actionAboutQt;
     QAction *m_actionPlay;
     QAction *m_actionPlaySettings;
+    QAction *m_actionEnableAcceleration;
+    QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;
     QAction *m_actionShowBones;
-    QAction *m_actionEnablePhysics;
     QAction *m_actionShowModelDialog;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
