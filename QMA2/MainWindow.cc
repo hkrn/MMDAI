@@ -746,6 +746,7 @@ void MainWindow::buildUI()
     }
     m_menuRecentFiles->addSeparator();
     m_menuRecentFiles->addAction(m_actionClearRecentFiles);
+    m_menuFile->addMenu(m_menuRecentFiles);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
@@ -781,7 +782,6 @@ void MainWindow::buildUI()
     m_menuRetainAssets = new QMenu(this);
     if (vpvl::Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
-    m_menuFile->addMenu(m_menuRecentFiles);
     m_menuModel->addAction(m_actionSelectNextModel);
     m_menuModel->addAction(m_actionSelectPreviousModel);
     m_menuModel->addSeparator();
