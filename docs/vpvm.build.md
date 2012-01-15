@@ -1,12 +1,13 @@
 libvpvl
 =======
-libvpvl は [CMake](http://cmake.org "CMake") をビルドシステムとして採用しています。そのため、CMake を事前にインストールする必要があります。
+libvpvl は [CMake](http://cmake.org "CMake") をビルドシステムとして採用しています。そのため、まず CMake を事前にインストールする必要があります。
 
 ## libvpvl のビルド
 
 libvpvl は [Bullet Physics](http://bulletphysics.org/ "Bullet Physics") に依存しているため、まず Bullet Physics をビルドしておく必要があります。
-また、[Open Asset Import Library](http://assimp.sf.net "Open Asset Import Library") もビルドしておきます。Windows と Linux では [GLEW](http://glew.sf.net "GLEW") が必要です。
-GLEW はバイナリとして入手しやすいので、GLEW についてはバイナリ版を使ったほうがビルド作業が楽になります。
+また、[Open Asset Import Library](http://assimp.sf.net "Open Asset Import Library") もビルドしておきます。Qt とリンクせずに libvpvl を使う場合でかつ
+Windows または Linux でビルドする場合は [GLEW](http://glew.sf.net "GLEW") が必要です。GLEW はバイナリとして入手しやすいので、
+GLEW についてはバイナリ版を使ったほうがビルド作業が楽になります。
 
 以下の項目は MacOSX と Linux を対象にしています。Windows では以下の条件を除けば同じ方法でビルド可能です。
 
@@ -105,7 +106,7 @@ libvpvl を LinearMath を除く BulletPhysics のライブラリを使用せず
 物理シミュレーションが自動的に無効になります。
 
 #### VPVL_OPENGL_RENDERER
-libvpvl に OpenGL レンダリングエンジンを追加してビルドします。このオプションを有効にする際 OpenGL のライブラリが必要です。
+libvpvl に [OpenGL](http://www.khronos.org/opengl/ "OpenGL") レンダリングエンジンを追加してビルドします。このオプションを有効にする際 OpenGL のライブラリが必要です。
 また、MacOSX 以外でかつ VPVL_LINK_QT を無効にしている場合は追加で [GLEW](http://glew.sf.net/ "GLEW") が必要になります。
 QMA2 をビルドするのに必須なオプションです。
 
@@ -120,7 +121,7 @@ libxml2 を使っているため、libxml2 をインストールする必要が�
 QMA2 をビルドするのに必須なオプションです。
 
 #### VPVL_ENABLE_OPENCL
-OpenCL を使った処理の高速化(主に頂点スキニング)を有効にします。
+[OpenCL](http://www.khronos.org/opencl/ "OpenCL") を使った処理の高速化(主に頂点スキニング)を有効にします。
 MacOSX 版の QMA2 をビルドするのに必須なオプションです。
 
 #### VPVL_ENABLE_NVIDIA_CG
