@@ -90,9 +90,9 @@
     <key>CFBundleIdentifier</key>
     <string>com.github.mmdai</string>
     <key>CFBundleVersion</key>
-    <string>0.13.0</string>
+    <string>0.14.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.13.0</string>
+    <string>0.14.0</string>
     <key>CFBundleGetInfoString</key>
     <string>MMDAI2 is an application to edit VMD motion</string>
     <key>LSArchitecturePriority</key>
@@ -103,6 +103,8 @@
     <key>LSMinimumSystemVersionByArchitecture</key>
     <dict>
       <key>x86_64</key>
+      <string>10.6</string>
+      <key>i386</key>
       <string>10.6</string>
     </dict>
   </dict>
