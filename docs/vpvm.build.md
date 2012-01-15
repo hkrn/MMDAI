@@ -197,19 +197,21 @@ make
 </code></pre>
 
 ## パッケージング
-Windows と Linux は手動でパッケージングする必要があります。
+MacOSX は scripts/osx_deploy.sh でデプロイ可能です。実行すると MMDAI2.dmg が作成されます。
+これは実行するために必要なライブラリ及びフレームワークがすべて入った状態で作成され、
+展開してすぐに実行可能になります。
 
-Linux における手順は以下のとおりです。
-<pre><code>cd QMA2-release-desktop
-export INSTALL_ROOT=`pwd`
-make install
-zip -r MMDAI2.zip MMDAI2 lib plugins locales
-</code></pre>
-
-MacOSX は osx_deploy.sh でデプロイ可能です。実行するとフレームワーク及びライブラリが全て入った MMDAI.app と
-そのディスクイメージファイルである MMDAI2.dmg が作成されます。
-
+MacOSX 版の場合
 <pre><code>cd QMA2-release-desktop
 ../scripts/osx_deploy.sh
+</code></pre>
+
+Linux は scripts/linux_deploy.sh でデプロイ可能です。実行すると MMDAI2.zip が作成されます。
+MacOSX のデプロイスクリプトと同じく、実行に必要なライブラリが入った状態で作成され、
+展開して実行可能になりますが、全てのディストリビューションで実行可能であることは保証しません。
+
+Linux 版の場合
+<pre><code>cd QMA2-release-desktop
+../scripts/linux_deploy.sh
 </code></pre>
 
