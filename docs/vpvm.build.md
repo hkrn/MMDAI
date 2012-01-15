@@ -47,7 +47,7 @@ $ make
 $ mkdir debug
 $ cd debug
 # QMA2 がビルド可能な設定にする
-# OpenCL を有効にする場合は -DVPVL_ENABLE_OPENCL=ON を追加する
+# MacOSX 版では -DVPVL_ENABLE_OPENCL=ON を追加する
 $ cmake -DBUILD_SHARED_LIBS=ON -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_ENABLE_GLSL=ON -DVPVL_LINK_QT=ON -DVPVL_ENABLE_PROJECT=ON -DCMAKE_BUILD_TYPE="Debug" ..
 $ make
 </code></pre>
@@ -89,7 +89,7 @@ $ mkdir release
 $ cd release
 # QMA2 がビルド可能な設定にする
 # Linux では BUILD_SHARED_LIBS=ON にしておく
-# OpenCL を有効にする場合は -DVPVL_ENABLE_OPENCL=ON を追加する
+# MacOSX 版では -DVPVL_ENABLE_OPENCL=ON を追加する
 $ cmake -DBUILD_SHARED_LIBS=OFF -DVPVL_LINK_ASSIMP=ON -DVPVL_OPENGL_RENDERER=ON -DVPVL_ENABLE_GLSL=ON -DVPVL_LINK_QT=ON -DVPVL_ENABLE_PROJECT=ON -DCMAKE_BUILD_TYPE="Release" -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" ..
 $ make
 </code></pre>
@@ -114,14 +114,14 @@ QMA2 をビルドするのに必須なオプションです。
 必ず VPVL_OPENGL_RENDERER を有効にしてください。
 QMA2 をビルドするのに必須なオプションです。
 
-### VPVL_ENABLE_PROJECT
+#### VPVL_ENABLE_PROJECT
 プロジェクトファイルの読み込み及び保存機能を libvpvl に追加します。
 libxml2 を使っているため、libxml2 をインストールする必要があります。
 QMA2 をビルドするのに必須なオプションです。
 
-### VPVL_ENABLE_OPENCL
+#### VPVL_ENABLE_OPENCL
 OpenCL を使った処理の高速化(主に頂点スキニング)を有効にします。
-MacOSX 版ではこのオプションを有効にしてリリースされています。
+MacOSX 版の QMA2 をビルドするのに必須なオプションです。
 
 #### VPVL_ENABLE_NVIDIA_CG
 HLSL と互換な Cg が利用可能なレンダリングエンジンをビルドします。現在まだこのレンダリングエンジンは未完成です。
@@ -197,20 +197,23 @@ make
 </code></pre>
 
 ## パッケージング
+MacOSX と Linux 版ではパッケージングを行うためのスクリプトが用意されています。
+これらのスクリプトは実際にバイナリを作成する時に用いられるものです。
+
+### MacOSX 版
 MacOSX は scripts/osx_deploy.sh でデプロイ可能です。実行すると MMDAI2.dmg が作成されます。
 これは実行するために必要なライブラリ及びフレームワークがすべて入った状態で作成され、
 展開してすぐに実行可能になります。
 
-MacOSX 版の場合
 <pre><code>cd QMA2-release-desktop
 ../scripts/osx_deploy.sh
 </code></pre>
 
+### Linux 版
 Linux は scripts/linux_deploy.sh でデプロイ可能です。実行すると MMDAI2.zip が作成されます。
 MacOSX のデプロイスクリプトと同じく、実行に必要なライブラリが入った状態で作成され、
 展開して実行可能になりますが、全てのディストリビューションで実行可能であることは保証しません。
 
-Linux 版の場合
 <pre><code>cd QMA2-release-desktop
 ../scripts/linux_deploy.sh
 </code></pre>

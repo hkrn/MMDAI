@@ -17,6 +17,7 @@ ipch
 julius-*
 Makefile*
 moc_*
+OpenCV-*
 opencv*
 open_jtalk-*
 QMACustom.pri
