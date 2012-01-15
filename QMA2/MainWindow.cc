@@ -576,7 +576,8 @@ void MainWindow::buildUI()
     m_actionPlaySettings = new QAction(this);
     connect(m_actionPlaySettings, SIGNAL(triggered()), this, SLOT(openPlaySettingDialog()));
     m_actionEnableAcceleration = new QAction(this);
-    m_actionEnableAcceleration->setCheckable(SceneWidget::isAccelerationSupported());
+    m_actionEnableAcceleration->setCheckable(true);
+    m_actionEnableAcceleration->setEnabled(SceneWidget::isAccelerationSupported());
     m_actionEnableAcceleration->setChecked(m_sceneWidget->isAccelerationEnabled());
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setAccelerationEnable(bool)));
     m_actionEnablePhysics = new QAction(this);
@@ -892,7 +893,7 @@ void MainWindow::bindActions()
     m_actionExit->setShortcut(m_settings.value(kPrefix + "exit", QKeySequence(QKeySequence::Quit).toString()).toString());
     m_actionPlay->setShortcut(m_settings.value(kPrefix + "play").toString());
     m_actionPlaySettings->setShortcut(m_settings.value(kPrefix + "playSettings").toString());
-    m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration", "Ctrl+Shift+A").toString());
+    m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
     m_actionShowBones->setShortcut(m_settings.value(kPrefix + "showBones", "Ctrl+Shift+B").toString());
