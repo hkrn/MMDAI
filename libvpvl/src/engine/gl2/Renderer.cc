@@ -232,9 +232,9 @@ public:
         userData->outputMatricesBuffer = 0;
         userData->isBufferAllocated = true;
         userData->vertexBufferForCL = clCreateFromGLBuffer(m_context,
-                                                         CL_MEM_READ_WRITE,
-                                                         userData->vertexBufferObjects[kModelVertices],
-                                                         &err);
+                                                           CL_MEM_READ_WRITE,
+                                                           userData->vertexBufferObjects[kModelVertices],
+                                                           &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
             userData->isBufferAllocated = false;
@@ -1270,8 +1270,8 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
-        const std::string primary = m_delegate->toUnicode(material->mainTextureName());
-        const std::string second = m_delegate->toUnicode(material->subTextureName());
+        const std::string &primary = m_delegate->toUnicode(material->mainTextureName());
+        const std::string &second = m_delegate->toUnicode(material->subTextureName());
         PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
@@ -1428,6 +1428,8 @@ void Renderer::renderModel(const PMDModel *model)
     const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = userData->materials;
     const int nmaterials = materials.count();
+    const bool hasSingleSphereMap = userData->hasSingleSphereMap;
+    const bool hasMultipleSphereMap = userData->hasMultipleSphereMap;
     Color ambient, diffuse;
     size_t offset = 0;
 
@@ -1436,6 +1438,7 @@ void Renderer::renderModel(const PMDModel *model)
         const Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         const float opacity = material->opacity();
+        const bool isMainSphereAdd = material->isMainSphereAdd();
         ambient = material->ambient();
         ambient.setW(ambient.w() * opacity);
         diffuse = material->diffuse();
@@ -1444,11 +1447,14 @@ void Renderer::renderModel(const PMDModel *model)
         m_modelProgram->setMaterialDiffuse(diffuse);
         m_modelProgram->setMainTexture(materialPrivate.mainTextureID);
         m_modelProgram->setToonTexture(userData->toonTextureID[material->toonID()]);
-        m_modelProgram->setSubTexture(materialPrivate.subTextureID);
-        m_modelProgram->setIsMainSphereMap(material->isMainSphereAdd() || material->isMainSphereModulate());
-        m_modelProgram->setIsMainAdditive(material->isMainSphereAdd());
-        m_modelProgram->setIsSubSphereMap(material->isSubSphereAdd() || material->isSubSphereModulate());
-        m_modelProgram->setIsSubAdditive(material->isSubSphereAdd());
+        m_modelProgram->setIsMainSphereMap(isMainSphereAdd || material->isMainSphereModulate());
+        m_modelProgram->setIsMainAdditive(isMainSphereAdd);
+        if (hasMultipleSphereMap) {
+            const bool isSubSphereAdd = material->isSubSphereAdd();
+            m_modelProgram->setIsSubSphereMap(isSubSphereAdd || material->isSubSphereModulate());
+            m_modelProgram->setIsSubAdditive(isSubSphereAdd);
+            m_modelProgram->setSubTexture(materialPrivate.subTextureID);
+        }
         opacity < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
         const int nindices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
