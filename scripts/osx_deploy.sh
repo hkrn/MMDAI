@@ -11,12 +11,14 @@ else
   exit
 fi
 
-rm -r ${app_name}.app;
-rm ${app_name}.dmg;
+package_app_name=${app_name}.app
+package_dmg_name=${app_name}.dmg
+
+rm -rf ${package_app_name} ${package_dmg_name};
 make || exit;
-macdeployqt $app_name.app;
-echo "deployed $app_name.app";
-cd ${app_name}.app/Contents/Frameworks || exit;
+macdeployqt ${package_app_name};
+echo "deployed ${package_app_name}";
+cd ${package_app_name}/Contents/Frameworks || exit;
 rm -rf QtSql.framework;
 rm -rf QtXmlPatterns.framework;
 rm -rf QtDeclarative.framework;
@@ -30,5 +32,6 @@ rm -rf graphicssystems
 rm -rf qmltooling
 cd ../../.. || exit
 echo 'removed unused Qt plugins';
-hdiutil create ${app_name}.dmg -srcfolder ${app_name}.app -format UDZO -volname $app_name
+find ${package_app_name} -exec touch -t `date +%Y%m%d0000` {} \;
+hdiutil create ${package_dmg_name} -srcfolder ${package_app_name} -format UDZO -volname $app_name
 
