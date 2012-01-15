@@ -497,7 +497,8 @@ void PMDModel::updatePosition()
         Vector3 &position = skinnedVertex.position;
         position = vertex->position();
         position.setW(1.0f);
-        skinnedVertex.edge.setValue(vertex->isEdgeEnabled() ? m_edgeOffset : 0.0f, 0.0f, 0.0f);
+        float value = vertex->isEdgeEnabled() ? m_edgeOffset : 0.0f;
+        skinnedVertex.edge.setValue(value, value, value);
     }
 }
 
