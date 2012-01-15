@@ -1327,10 +1327,11 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
         }
     }
     casted->materials = materialPrivates;
+    model->setLightPosition(m_scene->lightPosition());
+    model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
     if (m_accelerator)
         m_accelerator->uploadModel(casted, model);
     model->setUserData(casted);
-    model->setLightPosition(m_scene->lightPosition());
     model->updateImmediate();
     updateModel(model);
     m_delegate->log(kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
