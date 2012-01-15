@@ -688,6 +688,10 @@ void MainWindow::buildUI()
     m_actionEnableScaleGesture->setCheckable(true);
     m_actionEnableScaleGesture->setChecked(m_sceneWidget->isRotateGestureEnabled());
     connect(m_actionEnableScaleGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setScaleGestureEnable(bool)));
+    m_actionEnableUndoGesture = new QAction(this);
+    m_actionEnableUndoGesture->setCheckable(true);
+    m_actionEnableUndoGesture->setChecked(m_sceneWidget->isUndoGestureEnabled());
+    connect(m_actionEnableUndoGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setUndoGestureEnable(bool)));
 
     m_actionClearRecentFiles = new QAction(this);
     connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
@@ -821,6 +825,7 @@ void MainWindow::buildUI()
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);
     m_menuView->addAction(m_actionEnableScaleGesture);
+    m_menuView->addAction(m_actionEnableUndoGesture);
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
@@ -930,6 +935,7 @@ void MainWindow::bindActions()
     m_actionEnableMoveGesture->setShortcut(m_settings.value(kPrefix + "enableMoveGesture").toString());
     m_actionEnableRotateGesture->setShortcut(m_settings.value(kPrefix + "enableRotateGesture").toString());
     m_actionEnableScaleGesture->setShortcut(m_settings.value(kPrefix + "enableScaleGesture").toString());
+    m_actionEnableUndoGesture->setShortcut(m_settings.value(kPrefix + "enableUndoGesture").toString());
     m_actionAbout->setShortcut(m_settings.value(kPrefix + "about", "Alt+Q, Alt+/").toString());
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
@@ -1067,11 +1073,13 @@ void MainWindow::retranslate()
     m_actionViewLogMessage->setText(tr("Logger Window"));
     m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
     m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
-    m_actionEnableMoveGesture->setStatusTip(tr("Enable moving scene/model/bone by pan gesture"));
+    m_actionEnableMoveGesture->setStatusTip(tr("Enable moving scene/model/bone by pan gesture."));
     m_actionEnableRotateGesture->setText(tr("Enable rotate gesture"));
-    m_actionEnableRotateGesture->setStatusTip(tr("Enable rotate scene/model/bone by pinch gesture"));
+    m_actionEnableRotateGesture->setStatusTip(tr("Enable rotate scene/model/bone by pinch gesture."));
     m_actionEnableScaleGesture->setText(tr("Enable scale gesture"));
-    m_actionEnableScaleGesture->setStatusTip(tr("Enable scale scene by pinch gesture"));
+    m_actionEnableScaleGesture->setStatusTip(tr("Enable scale scene by pinch gesture."));
+    m_actionEnableUndoGesture->setText(tr("Enable undo gesture"));
+    m_actionEnableUndoGesture->setStatusTip(tr("Enable undo or redo by swipe gesture."));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAboutQt->setText(tr("About Qt"));
@@ -1163,6 +1171,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_tabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
+    connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
+    connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
 }
 
 void MainWindow::insertMotionToAllModels()

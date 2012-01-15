@@ -118,6 +118,7 @@ public:
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
+    bool isUndoGestureEnabled() const { return m_enableUndoGesture; }
     bool showModelDialog() const { return m_showModelDialog; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
@@ -177,6 +178,7 @@ public slots:
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
+    void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 signals:
     void initailizeGLContextDidDone();
@@ -198,6 +200,8 @@ signals:
     void handleDidRotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
     void motionDidSeek(float frameIndex);
+    void undoDidRequest();
+    void redoDidRequest();
 
 protected:
     bool event(QEvent *event);
@@ -263,6 +267,7 @@ private:
     bool m_enableMoveGesture;
     bool m_enableRotateGesture;
     bool m_enableScaleGesture;
+    bool m_enableUndoGesture;
 
     Q_DISABLE_COPY(SceneWidget)
 };

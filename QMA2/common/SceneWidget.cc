@@ -125,7 +125,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_lockTouchEvent(false),
     m_enableMoveGesture(false),
     m_enableRotateGesture(false),
-    m_enableScaleGesture(false)
+    m_enableScaleGesture(false),
+    m_enableUndoGesture(false)
 {
     m_debugDrawer = new DebugDrawer(this);
     m_delegate = new Delegate(this);
@@ -142,6 +143,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
     setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
     setScaleGestureEnable(m_settings->value("sceneWidget/enableScaleGesture", true).toBool());
+    setUndoGestureEnable(m_settings->value("sceneWidget/enableUndoGesture", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -769,13 +771,14 @@ bool SceneWidget::event(QEvent *event)
 
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
-    m_settings->setValue("sceneWidget/isBoneWireframeVisible", m_visibleBones);
-    m_settings->setValue("sceneWidget/isGridVisible", m_grid->isEnabled());
-    m_settings->setValue("sceneWidget/isPhysicsEnabled", m_enablePhysics);
-    m_settings->setValue("sceneWidget/showModelDialog", m_showModelDialog);
-    m_settings->setValue("sceneWidget/enableMoveGesture", m_enableMoveGesture);
-    m_settings->setValue("sceneWidget/enableRotateGesture", m_enableRotateGesture);
-    m_settings->setValue("sceneWidget/enableScaleGesture", m_enableScaleGesture);
+    m_settings->setValue("sceneWidget/isBoneWireframeVisible", isBoneWireframeVisible());
+    m_settings->setValue("sceneWidget/isGridVisible", isGridVisible());
+    m_settings->setValue("sceneWidget/isPhysicsEnabled", isPhysicsEnabled());
+    m_settings->setValue("sceneWidget/showModelDialog", showModelDialog());
+    m_settings->setValue("sceneWidget/enableMoveGesture", isMoveGestureEnabled());
+    m_settings->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
+    m_settings->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());
+    m_settings->setValue("sceneWidget/enableUndoGesture", isUndoGestureEnabled());
     killTimer(m_internalTimerID);
     event->accept();
 }
@@ -1116,8 +1119,18 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
     }
 }
 
-void SceneWidget::swipeTriggered(QSwipeGesture * /* event */)
+void SceneWidget::swipeTriggered(QSwipeGesture *event)
 {
+    if (m_enableUndoGesture && event->state() == Qt::GestureFinished) {
+        const QSwipeGesture::SwipeDirection hdir = event->horizontalDirection();
+        const QSwipeGesture::SwipeDirection vdir = event->verticalDirection();
+        if (hdir == QSwipeGesture::Left || vdir == QSwipeGesture::Up) {
+            emit undoDidRequest();
+        }
+        else if (hdir == QSwipeGesture::Right || vdir == QSwipeGesture::Down) {
+            emit redoDidRequest();
+        }
+    }
 }
 
 bool SceneWidget::acceptAddingModel(vpvl::PMDModel *model)
