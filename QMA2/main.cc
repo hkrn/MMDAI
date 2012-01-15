@@ -44,9 +44,7 @@ static void SetSearchPaths(const QCoreApplication &app)
 {
     QStringList paths;
     QDir appDir(app.applicationDirPath()), appBaseDir = appDir;
-#if defined(Q_OS_WIN)
-    app.addLibraryPath(appDir.absoluteFilePath("Plugins"));
-#elif defined(Q_OS_MAC)
+#if defined(Q_OS_MAC)
     if (appDir.dirName() == "MacOS") {
         appDir.cdUp();
         // macdeployqt deploys on "@executable_path/../Plugins/"
@@ -55,6 +53,8 @@ static void SetSearchPaths(const QCoreApplication &app)
         appDir.cdUp();
         appDir.cdUp();
     }
+#else
+    app.addLibraryPath(appDir.absoluteFilePath("plugins"));
 #endif
     const QString applicationPath(appDir.absolutePath());
     /* set path to find configurations (e.g. MMDAI.fst) */
