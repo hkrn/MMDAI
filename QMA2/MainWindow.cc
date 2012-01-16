@@ -596,6 +596,10 @@ void MainWindow::buildUI()
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
     connect(m_actionShowModelDialog, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setShowModelDialog(bool)));
+    m_actionShowBlackBackground = new QAction(this);
+    m_actionShowBlackBackground->setCheckable(true);
+    m_actionShowBlackBackground->setChecked(m_sceneWidget->isBlackBackgroundEnabled());
+    connect(m_actionShowBlackBackground, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setBlackBackgroundEnable(bool)));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -756,9 +760,11 @@ void MainWindow::buildUI()
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionEnableAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
+    m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionShowGrid);
     m_menuProject->addAction(m_actionShowBones);
     m_menuProject->addAction(m_actionShowModelDialog);
+    m_menuProject->addAction(m_actionShowBlackBackground);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -898,6 +904,7 @@ void MainWindow::bindActions()
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
     m_actionShowBones->setShortcut(m_settings.value(kPrefix + "showBones", "Ctrl+Shift+B").toString());
     m_actionShowModelDialog->setShortcut(m_settings.value(kPrefix + "showModelDialog").toString());
+    m_actionShowBlackBackground->setShortcut(m_settings.value(kPrefix + "showBlackBackground").toString());
     m_actionZoomIn->setShortcut(m_settings.value(kPrefix + "zoomIn", QKeySequence(QKeySequence::ZoomIn).toString()).toString());
     m_actionZoomOut->setShortcut(m_settings.value(kPrefix + "zoomOut", QKeySequence(QKeySequence::ZoomOut).toString()).toString());
     m_actionRotateUp->setShortcut(m_settings.value(kPrefix + "rotateUp", "Ctrl+Up").toString());
@@ -1003,6 +1010,8 @@ void MainWindow::retranslate()
     m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe."));
     m_actionShowModelDialog->setText(tr("Show model dialog"));
     m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
+    m_actionShowBlackBackground->setText(tr("Set scene background black"));
+    m_actionShowBlackBackground->setStatusTip(tr("Toggle scene background black/white."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomOut->setText(tr("Zoom out"));

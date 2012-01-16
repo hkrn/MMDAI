@@ -122,6 +122,7 @@ public:
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
     bool isUndoGestureEnabled() const { return m_enableUndoGesture; }
     bool isAccelerationEnabled() const { return m_enableAcceleration; }
+    bool isBlackBackgroundEnabled() const { return m_enableBlackBackground; }
     bool showModelDialog() const { return m_showModelDialog; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
@@ -183,6 +184,7 @@ public slots:
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
+    void setBlackBackgroundEnable(bool value) { m_enableBlackBackground = value; }
 
 signals:
     void initailizeGLContextDidDone();
@@ -267,6 +269,7 @@ private:
     bool m_enableBoneMove;
     bool m_enableBoneRotate;
     bool m_enablePhysics;
+    bool m_enableBlackBackground;
     bool m_showModelDialog;
     bool m_lockTouchEvent;
     bool m_enableMoveGesture;

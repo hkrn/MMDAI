@@ -127,6 +127,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableBoneMove(false),
     m_enableBoneRotate(false),
     m_enablePhysics(false),
+    m_enableBlackBackground(false),
     m_showModelDialog(false),
     m_lockTouchEvent(false),
     m_enableMoveGesture(false),
@@ -151,6 +152,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
     setScaleGestureEnable(m_settings->value("sceneWidget/enableScaleGesture", true).toBool());
     setUndoGestureEnable(m_settings->value("sceneWidget/enableUndoGesture", true).toBool());
+    setBlackBackgroundEnable(m_settings->value("sceneWidget/enableBackBackground", false).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -804,6 +806,7 @@ void SceneWidget::closeEvent(QCloseEvent *event)
     m_settings->setValue("sceneWidget/isGridVisible", isGridVisible());
     m_settings->setValue("sceneWidget/isPhysicsEnabled", isPhysicsEnabled());
     m_settings->setValue("sceneWidget/showModelDialog", showModelDialog());
+    m_settings->setValue("sceneWidget/enableBackBackground", isBlackBackgroundEnabled());
     m_settings->setValue("sceneWidget/enableMoveGesture", isMoveGestureEnabled());
     m_settings->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
     m_settings->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());
@@ -999,7 +1002,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     QPainter painter(this);
-    qglClearColor(Qt::white);
+    qglClearColor(m_enableBlackBackground ? Qt::black : Qt::white);
     EnableMultisample();
     /* 場面全体の描写 */
     m_renderer->clear();
@@ -1017,7 +1020,7 @@ void SceneWidget::paintGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_handles->draw();
-    //m_info->draw();
+    m_info->draw();
     painter.endNativePainting();
 }
 
