@@ -83,6 +83,7 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event);
+    void contextMenuEvent(QContextMenuEvent *event);
 
 private slots:
     void connectSceneLoader();

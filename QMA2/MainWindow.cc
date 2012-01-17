@@ -252,6 +252,36 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+void MainWindow::contextMenuEvent(QContextMenuEvent *event)
+{
+    const QPoint &pos = event->globalPos();
+    if (m_sceneWidget->rect().contains(m_sceneWidget->mapFromGlobal(pos))) {
+        QMenu menu(this);
+        menu.addAction(m_actionAddModel);
+        menu.addAction(m_actionAddAsset);
+        menu.addAction(m_actionInsertToSelectedModel);
+        menu.addSeparator();
+        menu.addMenu(m_menuRetainModels);
+        menu.exec(pos);
+    }
+    else if (m_timelineTabWidget->rect().contains(m_timelineTabWidget->mapFromGlobal(pos))) {
+        QMenu menu(this);
+        menu.addAction(m_actionRegisterFrame);
+        menu.addAction(m_actionSelectAllFrames);
+        menu.addAction(m_actionSelectFrameDialog);
+        menu.addSeparator();
+        menu.addAction(m_actionCopy);
+        menu.addAction(m_actionPaste);
+        menu.addAction(m_actionReversedPaste);
+        menu.addSeparator();
+        menu.addAction(m_actionUndoFrame);
+        menu.addAction(m_actionRedoFrame);
+        menu.addSeparator();
+        menu.addAction(m_actionDeleteSelectedFrame);
+        menu.exec(pos);
+    }
+}
+
 void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
@@ -1160,8 +1190,10 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translate(vpvl::Vector3,vpvl::Bone*,int)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Quaternion,vpvl::Bone*,int,bool)), m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,bool)));
+    connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)),
+            m_boneMotionModel, SLOT(translate(vpvl::Vector3,vpvl::Bone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Quaternion,vpvl::Bone*,int,float)),
+            m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,float)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)),
             m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_tabWidget->interpolationWidget(), SLOT(setMode(int)));
@@ -1175,7 +1207,8 @@ void MainWindow::connectWidgets()
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-    connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
+    connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
+            m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
             cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
