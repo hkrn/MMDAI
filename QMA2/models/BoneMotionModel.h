@@ -93,8 +93,8 @@ public slots:
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode);
-    void rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus);
+    void translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int flags);
+    void rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int flags, float value);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void saveTransform();
     void commitTransform();

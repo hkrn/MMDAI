@@ -588,7 +588,7 @@ void Handles::drawModelHandles()
     int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
     int projectionMatrix = m_program.uniformLocation("projectionMatrix");
     int boneMatrix = m_program.uniformLocation("boneMatrix");
-	QGLFunctions func(QGLContext::currentContext());
+    QGLFunctions func(QGLContext::currentContext());
     scene->getModelViewMatrix(matrix);
     func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
     scene->getProjectionMatrix(matrix);

@@ -203,7 +203,7 @@ signals:
     void handleDidGrab();
     void handleDidRelease();
     void handleDidMove(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode);
-    void handleDidRotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus);
+    void handleDidRotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, float value);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
     void motionDidSeek(float frameIndex);
     void undoDidRequest();

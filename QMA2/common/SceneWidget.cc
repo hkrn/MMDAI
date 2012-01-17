@@ -1125,7 +1125,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
                 emit handleDidGrab();
                 break;
             case Qt::GestureUpdated:
-                emit handleDidRotate(rotation, bone, 'V', false);
+                emit handleDidRotate(rotation, bone, 'V', float(value));
                 break;
             case Qt::GestureFinished:
                 emit handleDidRelease();
@@ -1245,13 +1245,20 @@ void SceneWidget::grabImageHandle(const QPointF &diff)
     else if (flags & Handles::kRotate) {
         const float &value = vpvl::radian(diff.y()) * 0.1f;
         vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
-        if (flags & Handles::kX)
+        int axis = 0;
+        if (flags & Handles::kX) {
             delta.setX(value);
-        else if (flags & Handles::kY)
+            axis = 'X' << 8;
+        }
+        else if (flags & Handles::kY) {
             delta.setY(value);
-        else if (flags & Handles::kZ)
+            axis = 'Y' << 8;
+        }
+        else if (flags & Handles::kZ) {
             delta.setZ(-value);
-        emit handleDidRotate(delta, 0, mode, false);
+            axis = 'Z' << 8;
+        }
+        emit handleDidRotate(delta, 0, mode | axis, diff.y());
     }
 }
 
@@ -1307,7 +1314,7 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos)
                     delta.setEulerZYX(0.0f, -btFabs(diff), 0.0f);
                 else if (flags & Handles::kZ)
                     delta.setEulerZYX(-btFabs(diff), 0.0f, 0.0f);
-                emit handleDidRotate(delta, 0, mode, diff < 0);
+                emit handleDidRotate(delta, 0, mode, diff);
             }
             m_handles->setAngle(value);
         }

@@ -881,7 +881,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     emit rotationDidChange(selected, lastRotation);
 }
 
-void BoneMotionModel::translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode)
+void BoneMotionModel::translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int flags)
 {
     if (!bone) {
         if (isBoneSelected())
@@ -890,7 +890,7 @@ void BoneMotionModel::translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, in
             return;
     }
     const vpvl::Vector3 &lastPosition = bone->position();
-    switch (mode) {
+    switch (flags & 0xff) {
     case 'V': {
         const vpvl::Transform &modelViewTransform = m_sceneWidget->scene()->modelViewTransform();
         const vpvl::Vector3 &value2 = modelViewTransform.getBasis() * delta;
@@ -906,7 +906,7 @@ void BoneMotionModel::translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, in
         break;
     }
     default: {
-        qFatal("Unexpected mode: %c", mode);
+        qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
     }
@@ -914,7 +914,7 @@ void BoneMotionModel::translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, in
     emit positionDidChange(bone, lastPosition);
 }
 
-void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int mode, bool minus)
+void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int flags, float value)
 {
     if (!bone) {
         if (isBoneSelected())
@@ -923,17 +923,40 @@ void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, in
             return;
     }
     const vpvl::Quaternion &lastRotation = bone->rotation();
-    switch (mode) {
+    switch (flags & 0xff) {
     case 'V': {
         float matrixf[16];
         m_sceneWidget->scene()->getModelViewMatrix(matrixf);
         const QMatrix4x4 &matrix = internal::toMatrix4x4(matrixf);
         const QVector4D &r = (matrix * QVector4D(delta.x(), delta.y(), delta.z(), delta.w())).normalized();
-        bone->setRotation(lastRotation * vpvl::Quaternion(r.x(), r.y(), r.z(), minus ? r.w() : -r.w()));
+        bone->setRotation(lastRotation * vpvl::Quaternion(r.x(), r.y(), r.z(), value < 0 ? r.w() : -r.w()));
         break;
     }
     case 'L': {
-        bone->setRotation(lastRotation * delta);
+        if (const vpvl::Bone *child = bone->child()) {
+            const vpvl::Vector3 &boneOrigin = bone->localTransform().getOrigin();
+            const vpvl::Vector3 &childOrigin = child->localTransform().getOrigin();
+            vpvl::Vector3 axis = (childOrigin - boneOrigin).normalized();
+            switch ((flags & 0xff00) >> 8) {
+            case 'X': {
+                vpvl::Quaternion rot;
+                rot.setEulerZYX(0.0f, 0.0f, vpvl::radian(90.0f));
+                axis = btMatrix3x3(rot) * axis;
+                break;
+            }
+            case 'Z': {
+                vpvl::Quaternion rot;
+                rot.setEulerZYX(vpvl::radian(90.0f), 0.0f, 0.0f);
+                axis = btMatrix3x3(rot) * axis;
+                break;
+            }
+            }
+            vpvl::Quaternion rot(axis, vpvl::radian(value));
+            bone->setRotation(lastRotation * rot);
+        }
+        else {
+            bone->setRotation(lastRotation * delta);
+        }
         break;
     }
     case 'G': {
@@ -941,7 +964,7 @@ void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, in
         break;
     }
     default: {
-        qFatal("Unexpected mode: %c", mode);
+        qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
     }
