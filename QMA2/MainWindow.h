@@ -165,8 +165,9 @@ private:
     float m_distance;
     int m_currentFPS;
 
-    QSplitter *m_mainSplitter;
-    QSplitter *m_leftSplitter;
+    QDockWidget *m_timelineDockWidget;
+    QDockWidget *m_sceneDockWidget;
+    QToolBar *m_mainToolBar;
     QAction *m_actionRecentFiles[kMaxRecentFiles];
     QAction *m_actionClearRecentFiles;
     QAction *m_actionNewProject;

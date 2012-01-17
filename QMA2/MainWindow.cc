@@ -240,10 +240,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         m_settings.setValue("mainWindow/state", saveState());
         m_settings.setValue("mainWindow/visibleTabs", m_tabWidget->isVisible());
         m_settings.setValue("mainWindow/visibleTimeline", m_timelineTabWidget->isVisible());
-        m_settings.setValue("mainWindow/leftSplitterGeometry", m_leftSplitter->saveGeometry());
-        m_settings.setValue("mainWindow/leftSplitterState", m_leftSplitter->saveState());
-        m_settings.setValue("mainWindow/mainSplitterGeometry", m_mainSplitter->saveGeometry());
-        m_settings.setValue("mainWindow/mainSplitterState", m_mainSplitter->saveState());
+        m_settings.setValue("mainWindow/leftDockWidgetGeometry", m_timelineDockWidget->saveGeometry());
+        m_settings.setValue("mainWindow/rightDockWidgetGeometry", m_sceneDockWidget->saveGeometry());
         qApp->sendEvent(m_sceneWidget, event);
         event->accept();
     }
@@ -874,32 +872,25 @@ void MainWindow::buildUI()
     m_menuHelp->addAction(m_actionAboutQt);
     m_menuBar->addMenu(m_menuHelp);
 
-    m_leftSplitter = new QSplitter(Qt::Vertical);
-    m_leftSplitter->setStretchFactor(0, 1);
-    m_leftSplitter->setStretchFactor(1, 0);
-    m_leftSplitter->addWidget(m_timelineTabWidget);
-    m_leftSplitter->addWidget(m_tabWidget);
-    m_leftSplitter->restoreGeometry(m_settings.value("mainWindow/leftSplitterGeometry").toByteArray());
-    m_leftSplitter->restoreState(m_settings.value("mainWindow/leftSplitterState").toByteArray());
-    m_mainSplitter = new QSplitter(Qt::Horizontal);
-    m_mainSplitter->setStretchFactor(0, 0);
-    m_mainSplitter->setStretchFactor(1, 1);
-    m_mainSplitter->addWidget(m_leftSplitter);
-    m_mainSplitter->addWidget(m_sceneWidget);
-    m_mainSplitter->restoreGeometry(m_settings.value("mainWindow/mainSplitterGeometry").toByteArray());
-    m_mainSplitter->restoreState(m_settings.value("mainWindow/mainSplitterState").toByteArray());
-    setCentralWidget(m_mainSplitter);
+    m_timelineDockWidget = new QDockWidget();
+    m_timelineDockWidget->setWidget(m_timelineTabWidget);
+    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/leftDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget);
+    m_sceneDockWidget = new QDockWidget();
+    m_sceneDockWidget->setWidget(m_tabWidget);
+    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/rightDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_sceneDockWidget);
+    tabifyDockWidget(m_timelineDockWidget, m_sceneDockWidget);
+    setCentralWidget(m_sceneWidget);
     updateRecentFiles();
-    m_mainSplitter->setFocus();
 
-    QToolBar *toolbar = new QToolBar();
-    m_actionAddModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addModel()));
-    //m_actionSelectModelOnToolBar = toolbar->addAction("");
-    m_actionCreateMotionOnToolBar = toolbar->addAction("", this, SLOT(newMotionFile()));
-    m_actionInsertMotionOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
-    m_actionAddAssetOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(addAsset()));
-    m_actionDeleteModelOnToolBar = toolbar->addAction("", m_sceneWidget, SLOT(deleteSelectedModel()));
-    addToolBar(toolbar);
+    m_mainToolBar = new QToolBar();
+    m_actionAddModelOnToolBar = m_mainToolBar->addAction("", m_sceneWidget, SLOT(addModel()));
+    m_actionCreateMotionOnToolBar = m_mainToolBar->addAction("", this, SLOT(newMotionFile()));
+    m_actionInsertMotionOnToolBar = m_mainToolBar->addAction("", m_sceneWidget, SLOT(insertMotionToSelectedModel()));
+    m_actionAddAssetOnToolBar = m_mainToolBar->addAction("", m_sceneWidget, SLOT(addAsset()));
+    m_actionDeleteModelOnToolBar = m_mainToolBar->addAction("", m_sceneWidget, SLOT(deleteSelectedModel()));
+    addToolBar(m_mainToolBar);
 
     retranslate();
     bindActions();
@@ -987,6 +978,9 @@ void MainWindow::bindActions()
 
 void MainWindow::retranslate()
 {
+    m_mainToolBar->setWindowTitle(tr("Toolbar"));
+    m_timelineDockWidget->setWindowTitle(tr("Timeline"));
+    m_sceneDockWidget->setWindowTitle(tr("Scene"));
     m_actionNewProject->setText(tr("New project"));
     m_actionNewProject->setStatusTip(tr("Create a new project."));
     m_actionNewMotion->setText(tr("New motion"));
@@ -1361,9 +1355,9 @@ void MainWindow::startExportingVideo()
             const QSize minSize = minimumSize(), maxSize = maximumSize(),
                     videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
             QSizePolicy policy = sizePolicy();
-            int handleWidth = m_mainSplitter->handleWidth();
-            m_leftSplitter->hide();
-            m_mainSplitter->setHandleWidth(0);
+            //int handleWidth = m_mainSplitter->handleWidth();
+            //m_leftSplitter->hide();
+            //m_mainSplitter->setHandleWidth(0);
             statusBar()->hide();
             /* 動画書き出し用の設定に変更 */
             resize(videoSize);
@@ -1408,8 +1402,8 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->setSelectedModel(selected);
             m_sceneWidget->setPreferredFPS(fps);
             m_sceneWidget->resize(sceneSize);
-            m_mainSplitter->setHandleWidth(handleWidth);
-            m_leftSplitter->show();
+            //m_mainSplitter->setHandleWidth(handleWidth);
+            //m_leftSplitter->show();
             statusBar()->show();
             setSizePolicy(policy);
             setMinimumSize(minSize);

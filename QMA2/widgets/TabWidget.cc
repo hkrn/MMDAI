@@ -67,7 +67,7 @@ TabWidget::TabWidget(QSettings *settings,
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
-    setMinimumSize(320, 270);
+    setMinimumWidth(300);
     setLayout(layout);
     restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
 }

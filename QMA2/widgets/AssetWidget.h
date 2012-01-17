@@ -48,6 +48,7 @@ class PMDModel;
 
 class QComboBox;
 class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
 class QPushButton;
 
@@ -90,6 +91,10 @@ private slots:
 private:
     void setEnable(bool value);
 
+    QGroupBox *m_assetGroup;
+    QGroupBox *m_assignGroup;
+    QGroupBox *m_positionGroup;
+    QGroupBox *m_rotationGroup;
     QComboBox *m_assetComboBox;
     QComboBox *m_modelComboBox;
     QComboBox *m_modelBonesComboBox;
@@ -102,8 +107,6 @@ private:
     QDoubleSpinBox *m_rz;
     QDoubleSpinBox *m_scale;
     QDoubleSpinBox *m_opacity;
-    QLabel *m_positionLabel;
-    QLabel *m_rotationLabel;
     QLabel *m_scaleLabel;
     QLabel *m_opacityLabel;
     QList<vpvl::Asset *> m_assets;

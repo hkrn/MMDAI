@@ -41,6 +41,7 @@
 #include <vpvl/Common.h>
 
 class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
 class QPushButton;
 
@@ -76,14 +77,15 @@ private slots:
 private:
     vpvl::Vector3 m_currentPosition;
     vpvl::Vector3 m_currentAngle;
+    QGroupBox *m_presetGroup;
+    QGroupBox *m_positionGroup;
+    QGroupBox *m_rotationGroup;
     QPushButton *m_frontLabel;
     QPushButton *m_backLabel;
     QPushButton *m_topLabel;
     QPushButton *m_leftLabel;
     QPushButton *m_rightLabel;
     QPushButton *m_cameraLabel;
-    QLabel *m_positionLabel;
-    QLabel *m_rotationLabel;
     QLabel *m_fovyLabel;
     QLabel *m_distanceLabel;
     QDoubleSpinBox *m_px;

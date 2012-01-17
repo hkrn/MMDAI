@@ -306,6 +306,7 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel 
     mainLayout->addLayout(subLayout);
     //mainLayout->addWidget(m_graphWidget, Qt::AlignVCenter);
     //mainLayout->setAlignment(gridLayout, Qt::AlignCenter);
+    mainLayout->addStretch();
     setLayout(mainLayout);
     setEnabled(false);
 }

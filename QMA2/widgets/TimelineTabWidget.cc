@@ -77,7 +77,6 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneFrameIndexSpinBox(vpvl::PMDModel*)));
     connect(fmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceFrameIndexSpinBox(vpvl::PMDModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
-    layout->setContentsMargins(10, 10, 10, 10);
     layout->addWidget(m_tabWidget);
     retranslate();
     setLayout(layout);

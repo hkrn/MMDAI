@@ -46,7 +46,7 @@ class Face;
 
 class FaceMotionModel;
 class QComboBox;
-class QLabel;
+class QGroupBox;
 class QPushButton;
 class QSlider;
 
@@ -82,6 +82,10 @@ private:
     vpvl::Face *findFace(const QString &name);
     QSlider *createSlider();
 
+    QGroupBox *m_eyeGroup;
+    QGroupBox *m_lipGroup;
+    QGroupBox *m_eyeblowGroup;
+    QGroupBox *m_otherGroup;
     QComboBox *m_eyes;
     QComboBox *m_lips;
     QComboBox *m_eyeblows;
@@ -90,10 +94,6 @@ private:
     QSlider *m_lipSlider;
     QSlider *m_eyeblowSlider;
     QSlider *m_otherSlider;
-    QLabel *m_eyeLabel;
-    QLabel *m_lipLabel;
-    QLabel *m_eyeblowLabel;
-    QLabel *m_otherLabel;
     QPushButton *m_eyeRegistButton;
     QPushButton *m_lipRegistButton;
     QPushButton *m_eyeblowRegistButton;

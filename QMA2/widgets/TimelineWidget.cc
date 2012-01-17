@@ -148,10 +148,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     spinboxLayout->addWidget(m_label);
     spinboxLayout->addWidget(m_spinBox);
     spinboxLayout->addWidget(m_button);
+    spinboxLayout->setAlignment(Qt::AlignCenter);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(spinboxLayout);
     mainLayout->addWidget(treeView);
-    mainLayout->setAlignment(spinboxLayout, Qt::AlignCenter);
     mainLayout->setContentsMargins(QMargins());
     QItemSelectionModel *sm = treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
