@@ -265,6 +265,10 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
         menu.addAction(m_actionInsertToSelectedModel);
         menu.addSeparator();
         menu.addMenu(m_menuRetainModels);
+        menu.addSeparator();
+        menu.addAction(m_actionShowTimelineDock);
+        menu.addAction(m_actionShowSceneDock);
+        menu.addAction(m_actionShowModelDock);
         menu.exec(pos);
     }
     else if (m_timelineTabWidget->rect().contains(m_timelineTabWidget->mapFromGlobal(pos))) {
@@ -564,6 +568,21 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
 
 void MainWindow::buildUI()
 {
+    m_timelineDockWidget = new QDockWidget(this);
+    m_timelineDockWidget->setWidget(m_timelineTabWidget);
+    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget);
+    m_sceneDockWidget = new QDockWidget(this);
+    m_sceneDockWidget->setWidget(m_sceneTabWidget);
+    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/sceneDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_sceneDockWidget);
+    m_modelDockWidget = new QDockWidget(this);
+    m_modelDockWidget->setWidget(m_modelTabWidget);
+    m_modelDockWidget->restoreGeometry(m_settings.value("mainWindow/modelDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget);
+    tabifyDockWidget(m_timelineDockWidget, m_sceneDockWidget);
+    tabifyDockWidget(m_sceneDockWidget, m_modelDockWidget);
+
     m_actionNewProject = new QAction(this);
     connect(m_actionNewProject, SIGNAL(triggered()), this, SLOT(newProjectFile()));
     m_actionNewMotion = new QAction(this);
@@ -734,6 +753,12 @@ void MainWindow::buildUI()
     m_actionEnableUndoGesture->setCheckable(true);
     m_actionEnableUndoGesture->setChecked(m_sceneWidget->isUndoGestureEnabled());
     connect(m_actionEnableUndoGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setUndoGestureEnable(bool)));
+    m_actionShowTimelineDock = new QAction(this);
+    connect(m_actionShowTimelineDock, SIGNAL(triggered()), m_timelineDockWidget, SLOT(show()));
+    m_actionShowSceneDock = new QAction(this);
+    connect(m_actionShowSceneDock, SIGNAL(triggered()), m_sceneDockWidget, SLOT(show()));
+    m_actionShowModelDock = new QAction(this);
+    connect(m_actionShowModelDock, SIGNAL(triggered()), m_modelDockWidget, SLOT(show()));
 
     m_actionClearRecentFiles = new QAction(this);
     connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
@@ -867,6 +892,10 @@ void MainWindow::buildUI()
     //m_menuView->addAction(m_actionViewTransform);
     m_menuView->addAction(m_actionViewLogMessage);
     m_menuView->addSeparator();
+    m_menuView->addAction(m_actionShowTimelineDock);
+    m_menuView->addAction(m_actionShowSceneDock);
+    m_menuView->addAction(m_actionShowModelDock);
+    m_menuView->addSeparator();
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);
     m_menuView->addAction(m_actionEnableScaleGesture);
@@ -877,20 +906,6 @@ void MainWindow::buildUI()
     m_menuHelp->addAction(m_actionAboutQt);
     m_menuBar->addMenu(m_menuHelp);
 
-    m_timelineDockWidget = new QDockWidget(this);
-    m_timelineDockWidget->setWidget(m_timelineTabWidget);
-    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
-    addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget);
-    m_sceneDockWidget = new QDockWidget(this);
-    m_sceneDockWidget->setWidget(m_sceneTabWidget);
-    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/sceneDockWidgetGeometry").toByteArray());
-    addDockWidget(Qt::LeftDockWidgetArea, m_sceneDockWidget);
-    m_modelDockWidget = new QDockWidget(this);
-    m_modelDockWidget->setWidget(m_modelTabWidget);
-    m_modelDockWidget->restoreGeometry(m_settings.value("mainWindow/modelDockWidgetGeometry").toByteArray());
-    addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget);
-    tabifyDockWidget(m_timelineDockWidget, m_sceneDockWidget);
-    tabifyDockWidget(m_sceneDockWidget, m_modelDockWidget);
     setCentralWidget(m_sceneWidget);
     updateRecentFiles();
 
@@ -981,6 +996,9 @@ void MainWindow::bindActions()
     m_actionEnableRotateGesture->setShortcut(m_settings.value(kPrefix + "enableRotateGesture").toString());
     m_actionEnableScaleGesture->setShortcut(m_settings.value(kPrefix + "enableScaleGesture").toString());
     m_actionEnableUndoGesture->setShortcut(m_settings.value(kPrefix + "enableUndoGesture").toString());
+    m_actionShowTimelineDock->setShortcut(m_settings.value(kPrefix + "showTimelineDock").toString());
+    m_actionShowSceneDock->setShortcut(m_settings.value(kPrefix + "showSceneDock").toString());
+    m_actionShowModelDock->setShortcut(m_settings.value(kPrefix + "showModelDock").toString());
     m_actionAbout->setShortcut(m_settings.value(kPrefix + "about", "Alt+Q, Alt+/").toString());
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
@@ -1133,6 +1151,12 @@ void MainWindow::retranslate()
     m_actionEnableScaleGesture->setStatusTip(tr("Enable scale scene by pinch gesture."));
     m_actionEnableUndoGesture->setText(tr("Enable undo gesture"));
     m_actionEnableUndoGesture->setStatusTip(tr("Enable undo or redo by swipe gesture."));
+    m_actionShowTimelineDock->setText(tr("Show timeline tab"));
+    m_actionShowTimelineDock->setStatusTip(tr("Show timeline tab if it's closed."));
+    m_actionShowSceneDock->setText(tr("Show scene tab"));
+    m_actionShowSceneDock->setStatusTip(tr("Show scene tab if it's closed."));
+    m_actionShowModelDock->setText(tr("Show model tab"));
+    m_actionShowModelDock->setStatusTip(tr("Show model tab if it's closed."));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAboutQt->setText(tr("About Qt"));

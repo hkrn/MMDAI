@@ -247,6 +247,9 @@ private:
     QAction *m_actionEnableRotateGesture;
     QAction *m_actionEnableScaleGesture;
     QAction *m_actionEnableUndoGesture;
+    QAction *m_actionShowTimelineDock;
+    QAction *m_actionShowSceneDock;
+    QAction *m_actionShowModelDock;
     QAction *m_actionAddModelOnToolBar;
     QAction *m_actionAddAssetOnToolBar;
     QAction *m_actionSelectModelOnToolBar;
