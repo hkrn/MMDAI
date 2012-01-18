@@ -57,6 +57,7 @@ public slots:
 
 signals:
     void cameraPerspectiveDidChange(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
+    void cameraPerspectiveDidReset();
 
 private slots:
     void retranslate();

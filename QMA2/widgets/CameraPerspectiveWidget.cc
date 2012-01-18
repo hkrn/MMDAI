@@ -70,6 +70,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     gridLayout->addWidget(m_rightLabel, 1, 1);
     /* カメラ視点 */
     m_cameraLabel = new QPushButton();
+    connect(m_cameraLabel, SIGNAL(clicked()), this, SIGNAL(cameraPerspectiveDidReset()));
     gridLayout->addWidget(m_cameraLabel, 1, 2);
     m_presetGroup = new QGroupBox();
     m_presetGroup->setLayout(gridLayout);

@@ -1229,6 +1229,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateMotion()));
 }
 
 void MainWindow::insertMotionToAllModels()
