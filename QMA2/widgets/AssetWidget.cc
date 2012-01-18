@@ -47,9 +47,11 @@ AssetWidget::AssetWidget(QWidget *parent) :
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QHBoxLayout *subLayout = new QHBoxLayout();
+    /* アクセサリ選択 */
     m_assetComboBox = new QComboBox();
     connect(m_assetComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentAsset(int)));
     subLayout->addWidget(m_assetComboBox, 1);
+    /* アクセサリ削除 */
     m_removeButton = new QPushButton();
     connect(m_removeButton, SIGNAL(clicked()), this, SLOT(removeAsset()));
     subLayout->addWidget(m_removeButton);
@@ -57,16 +59,19 @@ AssetWidget::AssetWidget(QWidget *parent) :
     m_assetGroup->setLayout(subLayout);
     mainLayout->addWidget(m_assetGroup);
     subLayout = new QHBoxLayout();
+    /* 所属先のモデル選択 */
     m_modelComboBox = new QComboBox();
     m_modelComboBox->addItem("");
     connect(m_modelComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentModel(int)));
     subLayout->addWidget(m_modelComboBox);
+    /* 所属先のモデルのボーン選択 */
     m_modelBonesComboBox = new QComboBox();
     connect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
     subLayout->addWidget(m_modelBonesComboBox);
     m_assignGroup = new QGroupBox();
     m_assignGroup->setLayout(subLayout);
     mainLayout->addWidget(m_assignGroup);
+    /* 位置(X,Y,Z) */
     QFormLayout *formLayout = new QFormLayout();
     m_px = new QDoubleSpinBox();
     m_px->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
@@ -82,7 +87,7 @@ AssetWidget::AssetWidget(QWidget *parent) :
     formLayout->addRow("Z", m_pz);
     m_positionGroup = new QGroupBox();
     m_positionGroup->setLayout(formLayout);
-    mainLayout->addWidget(m_positionGroup);
+    /* 回転(X,Y,Z) */
     formLayout = new QFormLayout();
     m_rx = new QDoubleSpinBox();
     m_rx->setRange(-180.0, 180.0);
@@ -101,8 +106,12 @@ AssetWidget::AssetWidget(QWidget *parent) :
     formLayout->addRow("Z", m_rz);
     m_rotationGroup = new QGroupBox();
     m_rotationGroup->setLayout(formLayout);
-    mainLayout->addWidget(m_rotationGroup);
     subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_positionGroup);
+    subLayout->addWidget(m_rotationGroup);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
+    /* 拡大率 */
     m_scaleLabel = new QLabel();
     subLayout->addWidget(m_scaleLabel);
     m_scale = new QDoubleSpinBox();
@@ -110,6 +119,7 @@ AssetWidget::AssetWidget(QWidget *parent) :
     m_scale->setRange(0.01, 10000.0);
     connect(m_scale, SIGNAL(valueChanged(double)), this, SLOT(updateScaleFactor(double)));
     subLayout->addWidget(m_scale);
+    /* 不透明度 */
     m_opacityLabel = new QLabel();
     subLayout->addWidget(m_opacityLabel);
     m_opacity = new QDoubleSpinBox();

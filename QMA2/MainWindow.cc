@@ -56,6 +56,7 @@
 #include "widgets/FaceWidget.h"
 #include "widgets/InterpolationWidget.h"
 #include "widgets/LicenseWidget.h"
+#include "widgets/ModelTabWidget.h"
 #include "widgets/TabWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
@@ -182,7 +183,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_licenseWidget(0),
     m_loggerWidget(0),
     m_sceneWidget(0),
-    m_tabWidget(0),
+    m_sceneTabWidget(0),
+    m_modelTabWidget(0),
     m_timelineTabWidget(0),
     m_boneMotionModel(0),
     m_faceMotionModel(0),
@@ -205,7 +207,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
     m_faceMotionModel = new FaceMotionModel(m_undo, this);
     m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
-    m_tabWidget = new TabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
+    m_sceneTabWidget = new TabWidget(&m_settings);
+    m_modelTabWidget = new ModelTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
     m_boneUIDelegate = new BoneUIDelegate(m_boneMotionModel, this);
     m_loggerWidget = LoggerWidget::createInstance(&m_settings);
@@ -226,7 +229,8 @@ MainWindow::~MainWindow()
     delete m_boneMotionModel;
     delete m_faceMotionModel;
     delete m_sceneMotionModel;
-    delete m_tabWidget;
+    delete m_sceneTabWidget;
+    delete m_modelTabWidget;
     delete m_timelineTabWidget;
     delete m_boneUIDelegate;
     delete m_player;
@@ -238,10 +242,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (maybeSaveProject()) {
         m_settings.setValue("mainWindow/geometry", saveGeometry());
         m_settings.setValue("mainWindow/state", saveState());
-        m_settings.setValue("mainWindow/visibleTabs", m_tabWidget->isVisible());
+        m_settings.setValue("mainWindow/visibleTabs", m_sceneTabWidget->isVisible());
         m_settings.setValue("mainWindow/visibleTimeline", m_timelineTabWidget->isVisible());
-        m_settings.setValue("mainWindow/leftDockWidgetGeometry", m_timelineDockWidget->saveGeometry());
-        m_settings.setValue("mainWindow/rightDockWidgetGeometry", m_sceneDockWidget->saveGeometry());
+        m_settings.setValue("mainWindow/timelineDockWidgetGeometry", m_timelineDockWidget->saveGeometry());
+        m_settings.setValue("mainWindow/sceneDockWidgetGeometry", m_sceneDockWidget->saveGeometry());
+        m_settings.setValue("mainWindow/modelDockWidgetGeometry", m_modelDockWidget->saveGeometry());
         qApp->sendEvent(m_sceneWidget, event);
         event->accept();
     }
@@ -872,15 +877,20 @@ void MainWindow::buildUI()
     m_menuHelp->addAction(m_actionAboutQt);
     m_menuBar->addMenu(m_menuHelp);
 
-    m_timelineDockWidget = new QDockWidget();
+    m_timelineDockWidget = new QDockWidget(this);
     m_timelineDockWidget->setWidget(m_timelineTabWidget);
-    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/leftDockWidgetGeometry").toByteArray());
+    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
     addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget);
-    m_sceneDockWidget = new QDockWidget();
-    m_sceneDockWidget->setWidget(m_tabWidget);
-    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/rightDockWidgetGeometry").toByteArray());
+    m_sceneDockWidget = new QDockWidget(this);
+    m_sceneDockWidget->setWidget(m_sceneTabWidget);
+    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/sceneDockWidgetGeometry").toByteArray());
     addDockWidget(Qt::LeftDockWidgetArea, m_sceneDockWidget);
+    m_modelDockWidget = new QDockWidget(this);
+    m_modelDockWidget->setWidget(m_modelTabWidget);
+    m_modelDockWidget->restoreGeometry(m_settings.value("mainWindow/modelDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget);
     tabifyDockWidget(m_timelineDockWidget, m_sceneDockWidget);
+    tabifyDockWidget(m_sceneDockWidget, m_modelDockWidget);
     setCentralWidget(m_sceneWidget);
     updateRecentFiles();
 
@@ -981,6 +991,7 @@ void MainWindow::retranslate()
     m_mainToolBar->setWindowTitle(tr("Toolbar"));
     m_timelineDockWidget->setWindowTitle(tr("Timeline"));
     m_sceneDockWidget->setWindowTitle(tr("Scene"));
+    m_modelDockWidget->setWindowTitle(tr("Model"));
     m_actionNewProject->setText(tr("New project"));
     m_actionNewProject->setStatusTip(tr("Create a new project."));
     m_actionNewMotion->setText(tr("New motion"));
@@ -1153,7 +1164,7 @@ void MainWindow::retranslate()
 void MainWindow::connectSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
-    AssetWidget *assetWidget = m_tabWidget->assetWidget();
+    AssetWidget *assetWidget = m_sceneTabWidget->assetWidget();
     connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), this, SLOT(addModel(vpvl::PMDModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
@@ -1165,7 +1176,7 @@ void MainWindow::connectSceneLoader()
     //connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_tabWidget->interpolationWidget(), SLOT(disable()));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_modelTabWidget->interpolationWidget(), SLOT(disable()));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), assetWidget, SLOT(addAsset(vpvl::Asset*)));
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), assetWidget, SLOT(removeAsset(vpvl::Asset*)));
     connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), assetWidget, SLOT(addModel(vpvl::PMDModel*)));
@@ -1179,7 +1190,7 @@ void MainWindow::connectSceneLoader()
 
 void MainWindow::connectWidgets()
 {
-    CameraPerspectiveWidget *cameraWidget = m_tabWidget->cameraPerspectiveWidget();
+    CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Handles *handles = m_sceneWidget->handles();
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
@@ -1190,7 +1201,7 @@ void MainWindow::connectWidgets()
             m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,float)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)),
             m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
-    connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_tabWidget->interpolationWidget(), SLOT(setMode(int)));
+    connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_modelTabWidget->interpolationWidget(), SLOT(setMode(int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
     connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
@@ -1201,7 +1212,7 @@ void MainWindow::connectWidgets()
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-    connect(m_tabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
+    connect(m_modelTabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
             m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
             cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
@@ -1215,7 +1226,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_tabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
+    connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
 }
@@ -1262,7 +1273,7 @@ void MainWindow::saveModelPose()
 
 void MainWindow::saveAssetMetadata()
 {
-    m_sceneWidget->saveMetadataFromAsset(m_tabWidget->assetWidget()->currentAsset());
+    m_sceneWidget->saveMetadataFromAsset(m_sceneTabWidget->assetWidget()->currentAsset());
 }
 
 void MainWindow::exportImage()

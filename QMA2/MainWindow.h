@@ -59,6 +59,7 @@ class ExportVideoDialog;
 class FaceMotionModel;
 class LicenseWidget;
 class LoggerWidget;
+class ModelTabWidget;
 class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
@@ -145,7 +146,8 @@ private:
     LicenseWidget *m_licenseWidget;
     LoggerWidget *m_loggerWidget;
     SceneWidget *m_sceneWidget;
-    TabWidget *m_tabWidget;
+    TabWidget *m_sceneTabWidget;
+    ModelTabWidget *m_modelTabWidget;
     TimelineTabWidget *m_timelineTabWidget;
     BoneMotionModel *m_boneMotionModel;
     FaceMotionModel *m_faceMotionModel;
@@ -167,6 +169,7 @@ private:
 
     QDockWidget *m_timelineDockWidget;
     QDockWidget *m_sceneDockWidget;
+    QDockWidget *m_modelDockWidget;
     QToolBar *m_mainToolBar;
     QAction *m_actionRecentFiles[kMaxRecentFiles];
     QAction *m_actionClearRecentFiles;

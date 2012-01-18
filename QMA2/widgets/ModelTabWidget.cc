@@ -34,44 +34,53 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TABWIDGET_H
-#define TABWIDGET_H
+#include "ModelTabWidget.h"
 
-#include <QtGui/QTabWidget>
+#include "FaceWidget.h"
+#include "InterpolationWidget.h"
+#include "models/BoneMotionModel.h"
+#include "models/FaceMotionModel.h"
+#include "models/SceneMotionModel.h"
 
-namespace Ui {
-    class TabWidget;
+#include <QtGui/QtGui>
+
+ModelTabWidget::ModelTabWidget(QSettings *settings,
+                               BoneMotionModel *bmm,
+                               FaceMotionModel *fmm,
+                               SceneMotionModel *smm,
+                               QWidget *parent) :
+    QWidget(parent),
+    m_tabWidget(0),
+    m_settings(settings),
+    m_face(0),
+    m_interpolation(0)
+{
+    m_face = new FaceWidget(fmm);
+    m_interpolation = new InterpolationWidget(bmm, smm);
+    m_tabWidget = new QTabWidget();
+    m_tabWidget->addTab(m_face, "");
+    m_tabWidget->addTab(m_interpolation, "");
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(m_tabWidget);
+    retranslate();
+    setMinimumWidth(350);
+    setLayout(layout);
+    restoreGeometry(m_settings->value("modelTabWidget/geometry").toByteArray());
 }
 
-class AssetWidget;
-class CameraPerspectiveWidget;
-class QSettings;
-
-class TabWidget : public QWidget
+ModelTabWidget::~ModelTabWidget()
 {
-    Q_OBJECT
+}
 
-public:
-    explicit TabWidget(QSettings *settings,
-                       QWidget *parent = 0);
-    ~TabWidget();
+void ModelTabWidget::retranslate()
+{
+    m_tabWidget->setTabText(0, tr("Face"));
+    m_tabWidget->setTabText(1, tr("Interpolation"));
+    setWindowTitle(tr("Model Tabs"));
+}
 
-    AssetWidget *assetWidget() const { return m_asset; }
-    CameraPerspectiveWidget *cameraPerspectiveWidget() const { return m_camera; }
-
-protected:
-    void closeEvent(QCloseEvent *event);
-
-private slots:
-    void retranslate();
-
-private:
-    QTabWidget *m_tabWidget;
-    QSettings *m_settings;
-    AssetWidget *m_asset;
-    CameraPerspectiveWidget *m_camera;
-
-    Q_DISABLE_COPY(TabWidget)
-};
-
-#endif // TABWIDGET_H
+void ModelTabWidget::closeEvent(QCloseEvent *event)
+{
+    m_settings->setValue("modelTabWidget/geometry", saveGeometry());
+    event->accept();
+}

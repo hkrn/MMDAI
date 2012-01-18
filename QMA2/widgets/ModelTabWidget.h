@@ -34,30 +34,34 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TABWIDGET_H
-#define TABWIDGET_H
+#ifndef MODELTABWIDGET_H
+#define MODELTABWIDGET_H
 
-#include <QtGui/QTabWidget>
+#include <QtGui/QWidget>
 
-namespace Ui {
-    class TabWidget;
-}
-
-class AssetWidget;
-class CameraPerspectiveWidget;
+class BoneMotionModel;
+class FaceMotionModel;
+class FaceWidget;
+class InterpolationWidget;
+class QCloseEvent;
+class QTabWidget;
 class QSettings;
+class SceneMotionModel;
 
-class TabWidget : public QWidget
+class ModelTabWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit TabWidget(QSettings *settings,
-                       QWidget *parent = 0);
-    ~TabWidget();
+    explicit ModelTabWidget(QSettings *settings,
+                            BoneMotionModel *bmm,
+                            FaceMotionModel *fmm,
+                            SceneMotionModel *smm,
+                            QWidget *parent = 0);
+    ~ModelTabWidget();
 
-    AssetWidget *assetWidget() const { return m_asset; }
-    CameraPerspectiveWidget *cameraPerspectiveWidget() const { return m_camera; }
+    FaceWidget *faceWidget() const { return m_face; }
+    InterpolationWidget *interpolationWidget() const { return m_interpolation; }
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -68,10 +72,10 @@ private slots:
 private:
     QTabWidget *m_tabWidget;
     QSettings *m_settings;
-    AssetWidget *m_asset;
-    CameraPerspectiveWidget *m_camera;
+    FaceWidget *m_face;
+    InterpolationWidget *m_interpolation;
 
-    Q_DISABLE_COPY(TabWidget)
+    Q_DISABLE_COPY(ModelTabWidget)
 };
 
-#endif // TABWIDGET_H
+#endif // MODELWIDGET_H

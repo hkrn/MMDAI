@@ -45,6 +45,7 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),
     m_faceMotionModel(fmm)
 {
+    /* 目(左上) */
     QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
     m_eyeRegistButton = new QPushButton();
     m_eyes = new QComboBox();
@@ -56,7 +57,7 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     eyeVBoxLayout->addWidget(m_eyeRegistButton);
     m_eyeGroup = new QGroupBox();
     m_eyeGroup->setLayout(eyeVBoxLayout);
-
+    /* 口唇(右上) */
     QVBoxLayout *lipVBoxLayout = new QVBoxLayout();
     m_lipRegistButton = new QPushButton();
     m_lips = new QComboBox();
@@ -68,7 +69,7 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     lipVBoxLayout->addWidget(m_lipRegistButton);
     m_lipGroup = new QGroupBox();
     m_lipGroup->setLayout(lipVBoxLayout);
-
+    /* まゆ(左下) */
     QVBoxLayout *eyeblowVBoxLayout = new QVBoxLayout();
     m_eyeblowRegistButton = new QPushButton();
     m_eyeblows = new QComboBox();
@@ -80,7 +81,7 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     eyeblowVBoxLayout->addWidget(m_eyeblowRegistButton);
     m_eyeblowGroup = new QGroupBox();
     m_eyeblowGroup->setLayout(eyeblowVBoxLayout);
-
+    /* その他(右下) */
     QVBoxLayout *otherVBoxLayout = new QVBoxLayout();
     m_otherRegistButton = new QPushButton();
     m_others = new QComboBox();
@@ -92,16 +93,20 @@ FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     otherVBoxLayout->addWidget(m_otherRegistButton);
     m_otherGroup = new QGroupBox();
     m_otherGroup->setLayout(otherVBoxLayout);
-
+    /* レイアウト結合 */
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(m_eyeGroup);
-    mainLayout->addWidget(m_lipGroup);
-    mainLayout->addWidget(m_eyeblowGroup);
-    mainLayout->addWidget(m_otherGroup);
+    QHBoxLayout *subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_eyeGroup);
+    subLayout->addWidget(m_lipGroup);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_eyeblowGroup);
+    subLayout->addWidget(m_otherGroup);
+    mainLayout->addLayout(subLayout);
     mainLayout->addStretch();
     retranslate();
     setLayout(mainLayout);
-
+    setEnabled(false);
     connect(m_faceMotionModel, SIGNAL(modelDidChange(vpvl::PMDModel*)),
             this, SLOT(setPMDModel(vpvl::PMDModel*)));
 }
@@ -149,6 +154,10 @@ void FaceWidget::setPMDModel(vpvl::PMDModel *model)
                 break;
             }
         }
+        setEnabled(true);
+    }
+    else {
+        setEnabled(false);
     }
 }
 

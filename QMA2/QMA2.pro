@@ -143,6 +143,7 @@ SOURCES += main.cc \
     widgets/InterpolationWidget.cc \
     widgets/LicenseWidget.cc \
     widgets/AssetWidget.cc \
+    widgets/ModelTabWidget.cc \
     MainWindow.cc \
     BoneUIDelegate.cc \
     common/Handles.cc \
@@ -180,6 +181,7 @@ HEADERS  += \
     widgets/InterpolationWidget.h \
     widgets/LicenseWidget.h \
     widgets/AssetWidget.h \
+    widgets/ModelTabWidget.h \
     MainWindow.h \
     BoneUIDelegate.h \
     dialogs/FrameSelectionDialog.h
@@ -187,3 +189,5 @@ HEADERS  += \
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
+
+

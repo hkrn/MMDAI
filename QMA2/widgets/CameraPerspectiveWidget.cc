@@ -48,26 +48,33 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QGridLayout *gridLayout = new QGridLayout();
+    /* 前 */
     m_frontLabel = new QPushButton();
     connect(m_frontLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
     gridLayout->addWidget(m_frontLabel, 0, 0);
+    /* 後ろ */
     m_backLabel = new QPushButton();
     connect(m_backLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
     gridLayout->addWidget(m_backLabel, 0, 1);
+    /* トップ */
     m_topLabel = new QPushButton();
     connect(m_topLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
     gridLayout->addWidget(m_topLabel, 0, 2);
+    /* 左 */
     m_leftLabel = new QPushButton();
     connect(m_leftLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
     gridLayout->addWidget(m_leftLabel, 1, 0);
+    /* 右 */
     m_rightLabel = new QPushButton();
     connect(m_rightLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
     gridLayout->addWidget(m_rightLabel, 1, 1);
+    /* カメラ視点 */
     m_cameraLabel = new QPushButton();
     gridLayout->addWidget(m_cameraLabel, 1, 2);
     m_presetGroup = new QGroupBox();
     m_presetGroup->setLayout(gridLayout);
     mainLayout->addWidget(m_presetGroup);
+    /* 位置(X,Y,Z) */
     QFormLayout *formLayout = new QFormLayout();
     m_px = new QDoubleSpinBox();
     m_px->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
@@ -83,7 +90,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     formLayout->addRow("Z", m_pz);
     m_positionGroup = new QGroupBox();
     m_positionGroup->setLayout(formLayout);
-    mainLayout->addWidget(m_positionGroup);
+    /* 回転(X,Y,Z) */
     formLayout = new QFormLayout();
     m_rx = new QDoubleSpinBox();
     m_rx->setRange(-180.0, 180.0);
@@ -102,8 +109,12 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     formLayout->addRow("Z", m_rz);
     m_rotationGroup = new QGroupBox();
     m_rotationGroup->setLayout(formLayout);
-    mainLayout->addWidget(m_rotationGroup);
     QLayout *subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_positionGroup);
+    subLayout->addWidget(m_rotationGroup);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
+    /* 視野角 */
     m_fovyLabel = new QLabel();
     subLayout->addWidget(m_fovyLabel);
     m_fovy = new QDoubleSpinBox();
@@ -111,6 +122,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     m_fovy->setRange(0.1, 90.0);
     connect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
     subLayout->addWidget(m_fovy);
+    /* 距離 */
     m_distanceLabel = new QLabel();
     subLayout->addWidget(m_distanceLabel);
     m_distance = new QDoubleSpinBox();
