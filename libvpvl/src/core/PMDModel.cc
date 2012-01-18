@@ -201,13 +201,13 @@ void PMDModel::leaveWorld(btDiscreteDynamicsWorld *world)
     if (!world)
         return;
     const int nRigidBodies = m_rigidBodies.count();
-    for (int i = 0; i < nRigidBodies; i++) {
+    for (int i = nRigidBodies - 1; i >= 0; i--) {
         RigidBody *rigidBody = m_rigidBodies[i];
         rigidBody->setKinematic(true);
         world->removeCollisionObject(rigidBody->body());
     }
     const int nconstraints = m_constraints.count();
-    for (int i = 0; i < nconstraints; i++) {
+    for (int i = nconstraints - 1; i >= 0; i--) {
         Constraint *constraint = m_constraints[i];
         world->removeConstraint(constraint->constraint());
     }
