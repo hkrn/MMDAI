@@ -79,6 +79,19 @@ static void CreateLookAt(const Vector3 &eye, float matrix[16])
 class Accelerator
 {
 public:
+    static void initializeUserData(PMDModelUserData *userData) {
+        userData->vertexBufferForCL = 0;
+        userData->boneMatricesBuffer = 0;
+        userData->originMatricesBuffer = 0;
+        userData->outputMatricesBuffer = 0;
+        userData->boneTransform = 0;
+        userData->originTransform = 0;
+        userData->bone1Indices = 0;
+        userData->bone2Indices = 0;
+        userData->weights = 0;
+        userData->isBufferAllocated = false;
+    }
+
     Accelerator(Renderer::IDelegate *delegate)
         : m_delegate(delegate),
           m_context(0),
@@ -226,23 +239,13 @@ public:
         if (!isAvailable())
             return;
         cl_int err;
-        userData->vertexBufferForCL = 0;
-        userData->boneMatricesBuffer = 0;
-        userData->originMatricesBuffer = 0;
-        userData->outputMatricesBuffer = 0;
-        userData->boneTransform = 0;
-        userData->originTransform = 0;
-        userData->bone1Indices = 0;
-        userData->bone2Indices = 0;
-        userData->weights = 0;
-        userData->isBufferAllocated = true;
         userData->vertexBufferForCL = clCreateFromGLBuffer(m_context,
                                                            CL_MEM_READ_WRITE,
                                                            userData->vertexBufferObjects[kModelVertices],
                                                            &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         const int nBoneMatricesAllocs = model->bones().count() << 4;
         const int nBoneMatricesSize = nBoneMatricesAllocs * sizeof(float);
@@ -262,32 +265,31 @@ public:
         userData->boneMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         userData->originMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating originMatricesBuffer: %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         userData->outputMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_WRITE, nBoneMatricesSize, 0, &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating outputMatricesBuffer %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         userData->weightsBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(float), 0, &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating weightsBuffer: %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         userData->bone1IndicesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating bone1IndicesBuffer: %d", err);
-            userData->isBufferAllocated = false;
         }
         userData->bone2IndicesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed creating bone2IndicesBuffer: %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         err = clGetKernelWorkGroupInfo(m_updateBoneMatricesKernel,
                                        m_device,
@@ -297,7 +299,7 @@ public:
                                        0);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
         err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
                                        m_device,
@@ -307,8 +309,9 @@ public:
                                        0);
         if (err != CL_SUCCESS) {
             m_delegate->log(Renderer::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
-            userData->isBufferAllocated = false;
+            return;
         }
+        userData->isBufferAllocated = true;
     }
     void deleteModel(PMDModelUserData *userData) {
         if (!isAvailable())
@@ -503,6 +506,8 @@ private:
 #else
 class Accelerator {
 public:
+    static void initializeUserData(PMDModelUserData *userData) {}
+
     Accelerator(Renderer::IDelegate * /* delegate */) {}
     ~Accelerator() {}
 
@@ -1334,6 +1339,7 @@ void Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     casted->materials = materialPrivates;
     model->setLightPosition(m_scene->lightPosition());
     model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
+    Accelerator::initializeUserData(casted);
     if (m_accelerator)
         m_accelerator->uploadModel(casted, model);
     model->setUserData(casted);
