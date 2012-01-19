@@ -38,6 +38,7 @@
 
 #include "FaceWidget.h"
 #include "InterpolationWidget.h"
+#include "ModelInfoWidget.h"
 #include "models/BoneMotionModel.h"
 #include "models/FaceMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -52,14 +53,17 @@ ModelTabWidget::ModelTabWidget(QSettings *settings,
     QWidget(parent),
     m_tabWidget(0),
     m_settings(settings),
-    m_face(0),
-    m_interpolation(0)
+    m_faceWidget(0),
+    m_interpolationWidget(0),
+    m_modelInfoWidget(0)
 {
-    m_face = new FaceWidget(fmm);
-    m_interpolation = new InterpolationWidget(bmm, smm);
+    m_faceWidget = new FaceWidget(fmm);
+    m_interpolationWidget = new InterpolationWidget(bmm, smm);
+    m_modelInfoWidget = new ModelInfoWidget();
     m_tabWidget = new QTabWidget();
-    m_tabWidget->addTab(m_face, "");
-    m_tabWidget->addTab(m_interpolation, "");
+    m_tabWidget->addTab(m_modelInfoWidget, "");
+    m_tabWidget->addTab(m_faceWidget, "");
+    m_tabWidget->addTab(m_interpolationWidget, "");
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -74,8 +78,9 @@ ModelTabWidget::~ModelTabWidget()
 
 void ModelTabWidget::retranslate()
 {
-    m_tabWidget->setTabText(0, tr("Face"));
-    m_tabWidget->setTabText(1, tr("Interpolation"));
+    m_tabWidget->setTabText(0, tr("Information"));
+    m_tabWidget->setTabText(1, tr("Expressions"));
+    m_tabWidget->setTabText(2, tr("Interpolation"));
     setWindowTitle(tr("Model Tabs"));
 }
 

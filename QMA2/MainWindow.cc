@@ -56,6 +56,7 @@
 #include "widgets/FaceWidget.h"
 #include "widgets/InterpolationWidget.h"
 #include "widgets/LicenseWidget.h"
+#include "widgets/ModelInfoWidget.h"
 #include "widgets/ModelTabWidget.h"
 #include "widgets/TabWidget.h"
 #include "widgets/TimelineTabWidget.h"
@@ -1254,6 +1255,8 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateMotion()));
+    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
+            m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
 }
 
 void MainWindow::insertMotionToAllModels()

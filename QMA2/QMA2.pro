@@ -147,7 +147,8 @@ SOURCES += main.cc \
     MainWindow.cc \
     BoneUIDelegate.cc \
     common/Handles.cc \
-    dialogs/FrameSelectionDialog.cc
+    dialogs/FrameSelectionDialog.cc \
+    widgets/ModelInfoWidget.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -184,10 +185,13 @@ HEADERS  += \
     widgets/ModelTabWidget.h \
     MainWindow.h \
     BoneUIDelegate.h \
-    dialogs/FrameSelectionDialog.h
+    dialogs/FrameSelectionDialog.h \
+    widgets/ModelInfoWidget.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
+
+
 
 

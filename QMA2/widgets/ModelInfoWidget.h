@@ -34,51 +34,50 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELTABWIDGET_H
-#define MODELTABWIDGET_H
+#ifndef MODELINFOWIDGET_H
+#define MODELINFOWIDGET_H
 
 #include <QtGui/QWidget>
 
-class BoneMotionModel;
-class FaceMotionModel;
-class FaceWidget;
-class InterpolationWidget;
-class ModelInfoWidget;
-class QCloseEvent;
-class QTabWidget;
-class QSettings;
-class SceneMotionModel;
+namespace vpvl {
+class PMDModel;
+}
 
-class ModelTabWidget : public QWidget
+class QLabel;
+
+class ModelInfoWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ModelTabWidget(QSettings *settings,
-                            BoneMotionModel *bmm,
-                            FaceMotionModel *fmm,
-                            SceneMotionModel *smm,
-                            QWidget *parent = 0);
-    ~ModelTabWidget();
-
-    FaceWidget *faceWidget() const { return m_faceWidget; }
-    InterpolationWidget *interpolationWidget() const { return m_interpolationWidget; }
-    ModelInfoWidget *modelInfoWidget() const { return m_modelInfoWidget; }
-
-protected:
-    void closeEvent(QCloseEvent *event);
+    explicit ModelInfoWidget(QWidget *parent = 0);
+    ~ModelInfoWidget();
 
 private slots:
     void retranslate();
+    void setModel(vpvl::PMDModel *model);
 
 private:
-    QTabWidget *m_tabWidget;
-    QSettings *m_settings;
-    FaceWidget *m_faceWidget;
-    InterpolationWidget *m_interpolationWidget;
-    ModelInfoWidget *m_modelInfoWidget;
-
-    Q_DISABLE_COPY(ModelTabWidget)
+    QLabel *m_nameLabel;
+    QLabel *m_nameValueLabel;
+    QLabel *m_commentLabel;
+    QLabel *m_commentValueLabel;
+    QLabel *m_verticesCountLabel;
+    QLabel *m_verticesCountValueLabel;
+    QLabel *m_indicesCountLabel;
+    QLabel *m_indicesCountValueLabel;
+    QLabel *m_materialsCountLabel;
+    QLabel *m_materialsCountValueLabel;
+    QLabel *m_bonesCountLabel;
+    QLabel *m_bonesCountValueLabel;
+    QLabel *m_IKsCountLabel;
+    QLabel *m_IKsCountValueLabel;
+    QLabel *m_facesCountLabel;
+    QLabel *m_facesCountValueLabel;
+    QLabel *m_rigidBodiesCountLabel;
+    QLabel *m_rigidBodiesCountValueLabel;
+    QLabel *m_constrantsCountLabel;
+    QLabel *m_constrantsCountValueLabel;
 };
 
-#endif // MODELWIDGET_H
+#endif // MODELINFOWIDGET_H
