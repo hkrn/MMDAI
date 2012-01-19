@@ -79,7 +79,7 @@ ModelTabWidget::~ModelTabWidget()
 void ModelTabWidget::retranslate()
 {
     m_tabWidget->setTabText(0, tr("Information"));
-    m_tabWidget->setTabText(1, tr("Expressions"));
+    m_tabWidget->setTabText(1, tr("Face"));
     m_tabWidget->setTabText(2, tr("Interpolation"));
     setWindowTitle(tr("Model Tabs"));
 }
