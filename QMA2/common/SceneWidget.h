@@ -99,6 +99,8 @@ public:
     void setInfoPanelVisible(bool value);
     void showSelectedModelEdge();
     void hideSelectedModelEdge();
+    void startAutomaticRendering();
+    void stopAutomaticRendering();
 
     vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
@@ -112,7 +114,6 @@ public:
     Handles *handles() const { return m_handles; }
     vpvl::Bone *selectedBone() const { return m_bone; }
     float modelEdgeOffset() const { return m_selectedEdgeOffset; }
-    int preferredFPS() const { return m_defaultFPS; }
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
@@ -124,6 +125,7 @@ public:
     bool isAccelerationEnabled() const { return m_enableAcceleration; }
     bool isBlackBackgroundEnabled() const { return m_enableBlackBackground; }
     bool showModelDialog() const { return m_showModelDialog; }
+    internal::World *world() const { return m_world; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 public slots:
@@ -259,7 +261,6 @@ private:
     float m_frameIndex;
     int m_frameCount;
     int m_currentFPS;
-    int m_defaultFPS;
     int m_interval;
     int m_internalTimerID;
     int m_handleFlags;

@@ -42,6 +42,7 @@
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
+#include "common/World.h"
 #include "common/util.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/EdgeOffsetDialog.h"
@@ -98,6 +99,7 @@ public:
           m_progress(0),
           m_format(QApplication::tr("Playing scene frame %1 of %2...")),
           m_selected(0),
+          m_step(0.0f),
           m_timerID(0),
           m_fromIndex(0),
           m_toIndex(0),
@@ -114,8 +116,16 @@ public:
         m_loop = m_dialog->isLoop();
         m_selected = m_sceneWidget->selectedModel();
         m_sceneWidget->stop();
+        /* 物理暴走を防ぐために少し進めてから開始する */
+        if (m_sceneWidget->isPhysicsEnabled()) {
+            btDiscreteDynamicsWorld *world = m_sceneWidget->world()->mutableWorld();
+            m_sceneWidget->mutableScene()->setWorld(world);
+            world->stepSimulation(1, 60);
+        }
+        /* 赤いエッジが残るため、選択状態のモデルを未選択状態にし、場面を最初の位置に戻す */
         m_sceneWidget->seekMotion(0.0f);
         m_sceneWidget->advanceMotion(m_fromIndex);
+        /* ハンドルも情報パネルも消す */
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
         m_sceneWidget->setSelectedModel(0);
@@ -124,9 +134,13 @@ public:
         m_progress->setCancelButtonText(QApplication::tr("Cancel"));
         m_progress->setWindowModality(Qt::WindowModal);
         int maxRangeIndex = m_toIndex - m_fromIndex;
+        int preferredFPS = m_sceneWidget->scene()->preferredFPS();
         m_progress->setRange(0, maxRangeIndex);
         m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
-        m_timerID = startTimer(vpvl::Scene::kFPS / 1000.0);
+        /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
+        m_sceneWidget->stopAutomaticRendering();
+        m_timerID = startTimer(1000.0f / preferredFPS);
+        m_step = static_cast<float>(vpvl::Scene::kFPS) / preferredFPS;
     }
     bool isActive() const {
         return m_timerID != 0;
@@ -137,11 +151,20 @@ protected:
         if (event->timerId() == m_timerID) {
             vpvl::Scene *scene = m_sceneWidget->mutableScene();
             bool isReached = scene->isMotionReachedTo(m_toIndex);
+            /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
             if ((!m_loop && isReached) || m_progress->wasCanceled()) {
                 killTimer(m_timerID);
+                /* ハンドルと情報パネルを復帰させる */
                 m_sceneWidget->setHandlesVisible(true);
                 m_sceneWidget->setInfoPanelVisible(true);
                 m_sceneWidget->setSelectedModel(m_selected);
+                /* 再生が終わったら物理を無効にする */
+                if (m_sceneWidget->isPhysicsEnabled()) {
+                    m_sceneWidget->mutableScene()->setWorld(0);
+                    m_sceneWidget->updateMotion();
+                }
+                /* SceneWidget を常時レンダリング状態に戻しておく */
+                m_sceneWidget->startAutomaticRendering();
                 delete m_progress;
                 m_progress = 0;
                 m_timerID = 0;
@@ -149,13 +172,14 @@ protected:
             }
             int value;
             if (isReached) {
+                /* ループする場合は一旦リセットしてから開始位置に移動する */
                 value = m_fromIndex;
                 scene->resetMotion();
                 m_sceneWidget->advanceMotion(value);
             }
             else {
                 value = m_progress->value() + 1;
-                m_sceneWidget->advanceMotion(1.0f);
+                m_sceneWidget->advanceMotion(m_step);
             }
             m_progress->setValue(value);
             m_progress->setLabelText(m_format.arg(value).arg(m_toIndex - m_fromIndex));
@@ -168,6 +192,7 @@ private:
     QProgressDialog *m_progress;
     QString m_format;
     vpvl::PMDModel *m_selected;
+    float m_step;
     int m_timerID;
     int m_fromIndex;
     int m_toIndex;
@@ -1379,7 +1404,7 @@ void MainWindow::startExportingVideo()
 #else
         int fourcc = CV_FOURCC('D', 'I', 'B', ' ');
 #endif
-        int fps = m_sceneWidget->preferredFPS();
+        int fps = m_sceneWidget->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
         cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, cv::Size(width, height));

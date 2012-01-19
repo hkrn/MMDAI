@@ -117,8 +117,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_frameIndex(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
-    m_defaultFPS(60),
-    m_interval(1000.0f / m_defaultFPS),
+    m_interval(1000.0f / vpvl::Scene::kFPS),
     m_internalTimerID(0),
     m_handleFlags(0),
     m_visibleBones(false),
@@ -139,7 +138,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_delegate = new Delegate(this);
     m_grid = new Grid();
     m_info = new InfoPanel(this);
-    m_world = new World(m_defaultFPS);
+    m_world = new World(vpvl::Scene::kFPS);
     m_handles = new Handles(this);
     /* enablePhycis と enableAcceleration は値の処理のみ。実際の処理は initializeGL で行う */
     m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
@@ -216,6 +215,17 @@ void SceneWidget::clear()
     m_loader->createProject();
 }
 
+void SceneWidget::startAutomaticRendering()
+{
+    m_internalTimerID = startTimer(m_interval);
+}
+
+void SceneWidget::stopAutomaticRendering()
+{
+    killTimer(m_internalTimerID);
+    m_internalTimerID = 0;
+}
+
 const vpvl::Scene *SceneWidget::scene() const
 {
     return m_renderer->scene();
@@ -230,13 +240,12 @@ void SceneWidget::setPreferredFPS(int value)
 {
     /* 一旦前のタイマーを止めてから新しい FPS に基づく間隔でタイマーを開始する */
     if (value > 0) {
-        m_defaultFPS = value;
         m_interval = 1000.0f / value;
         m_world->setPreferredFPS(value);
         m_renderer->scene()->setPreferredFPS(value);
         if (m_internalTimerID) {
-            killTimer(m_internalTimerID);
-            m_internalTimerID = startTimer(m_interval);
+            stopAutomaticRendering();
+            startAutomaticRendering();
         }
     }
 }
@@ -515,6 +524,7 @@ void SceneWidget::advanceMotion(float frameIndex)
     scene->updateModelView();
     scene->updateProjection();
     scene->advanceMotion(frameIndex);
+    m_renderer->updateAllModel();
     updateGL();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
@@ -526,8 +536,9 @@ void SceneWidget::seekMotion(float frameIndex)
     scene->updateModelView();
     scene->updateProjection();
     scene->seekMotion(frameIndex);
-    updateGL();
+    m_renderer->updateAllModel();
     m_frameIndex = frameIndex;
+    updateGL();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
     emit motionDidSeek(frameIndex);
 }
@@ -619,7 +630,6 @@ void SceneWidget::setGridVisible(bool value)
 
 void SceneWidget::setPhysicsEnable(bool value)
 {
-    m_renderer->scene()->setWorld(value ? m_world->mutableWorld() : 0);
     m_enablePhysics = value;
 }
 
@@ -811,7 +821,7 @@ void SceneWidget::closeEvent(QCloseEvent *event)
     m_settings->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
     m_settings->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());
     m_settings->setValue("sceneWidget/enableUndoGesture", isUndoGestureEnabled());
-    killTimer(m_internalTimerID);
+    stopAutomaticRendering();
     event->accept();
 }
 
@@ -852,7 +862,7 @@ void SceneWidget::initializeGL()
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     EnableMultisample();
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    m_renderer = new Renderer(m_delegate, width(), height(), m_defaultFPS);
+    m_renderer = new Renderer(m_delegate, width(), height(), vpvl::Scene::kFPS);
     m_loader = new SceneLoader(m_renderer);
     m_debugDrawer->setWorld(m_world->mutableWorld());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
@@ -867,8 +877,6 @@ void SceneWidget::initializeGL()
     /* MMDAI では OpenCL でのコンテキスト初期化に OpenGL のコンテキストが必要なため、setAccelerationEnable はここで有効にする */
     if (m_enableAcceleration)
         setAccelerationEnable(true);
-    m_timer.start();
-    m_internalTimerID = startTimer(m_interval);
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->load();
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
@@ -878,6 +886,8 @@ void SceneWidget::initializeGL()
     m_info->setFPS(0.0f);
     m_info->update();
     m_renderer->initializeSurface();
+    m_timer.start();
+    startAutomaticRendering();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
     emit initailizeGLContextDidDone();
 }
