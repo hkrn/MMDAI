@@ -76,7 +76,11 @@ public:
             qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
             return false;
         }
+        QScopedArrayPointer<uint8_t> ptr;
         QImage image = QImage(pathString).rgbSwapped();
+        if (image.isNull() && pathString.endsWith(".tga", Qt::CaseInsensitive)) {
+            image = loadTGA(pathString, ptr);
+        }
         if (image.isNull()) {
             qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
             return false;
@@ -190,6 +194,86 @@ public:
     }
 
 private:
+    QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr) {
+        QFile file(path);
+        if (file.open(QFile::ReadOnly) && file.size() > 18) {
+            QByteArray data = file.readAll();
+            uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
+            uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
+            uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
+            if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
+                qWarning("Loaded TGA image type is not full color: %s", qPrintable(path));
+                return QImage();
+            }
+            uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
+            uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
+            uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
+            uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
+            if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
+                qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
+                         width, height, depth, qPrintable(path));
+                return QImage();
+            }
+            int component = depth >> 3;
+            uint8_t *body = ptr + 18 + field;
+            /* if RLE compressed, uncompress it */
+            size_t datalen = width * height * component;
+            ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
+            if (type == 10) {
+                uint8_t *uncompressed = uncompressedPtr.data();
+                uint8_t *src = body;
+                uint8_t *dst = uncompressed;
+                while (static_cast<size_t>(dst - uncompressed) < datalen) {
+                    int16_t len = (*src & 0x7f) + 1;
+                    if (*src & 0x80) {
+                        src++;
+                        for (int i = 0; i < len; i++) {
+                            memcpy(dst, src, component);
+                            dst += component;
+                        }
+                        src += component;
+                    }
+                    else {
+                        src++;
+                        memcpy(dst, src, component * len);
+                        dst += component * len;
+                        src += component * len;
+                    }
+                }
+                /* will load from uncompressed data */
+                body = uncompressed;
+            }
+            /* prepare texture data area */
+            datalen = (width * height) * 4;
+            dataPtr.reset(new uint8_t[datalen]);
+            ptr = dataPtr.data();
+            for (uint16_t h = 0; h < height; h++) {
+                uint8_t *line = NULL;
+                if (flags & 0x20) /* from up to bottom */
+                    line = body + h * width * component;
+                else /* from bottom to up */
+                    line = body + (height - 1 - h) * width * component;
+                for (uint16_t w = 0; w < width; w++) {
+                    uint32_t index = 0;
+                    if (flags & 0x10)/* from right to left */
+                        index = (width - 1 - w) * component;
+                    else /* from left to right */
+                        index = w * component;
+                    /* BGR or BGRA -> ARGB */
+                    *ptr++ = line[index + 2];
+                    *ptr++ = line[index + 1];
+                    *ptr++ = line[index + 0];
+                    *ptr++ = (depth == 32) ? line[index + 3] : 255;
+                }
+            }
+            return QImage(dataPtr.data(), width, height, QImage::Format_ARGB32);
+        }
+        else {
+            qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
+            return QImage();
+        }
+    }
+
     QGLWidget *m_widget;
 
     Q_DISABLE_COPY(Delegate)
