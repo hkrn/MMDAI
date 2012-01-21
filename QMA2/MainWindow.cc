@@ -42,7 +42,6 @@
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
-#include "common/World.h"
 #include "common/util.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/EdgeOffsetDialog.h"
@@ -116,12 +115,7 @@ public:
         m_loop = m_dialog->isLoop();
         m_selected = m_sceneWidget->selectedModel();
         m_sceneWidget->stop();
-        /* 物理暴走を防ぐために少し進めてから開始する */
-        if (m_sceneWidget->isPhysicsEnabled()) {
-            btDiscreteDynamicsWorld *world = m_sceneWidget->world()->mutableWorld();
-            m_sceneWidget->mutableScene()->setWorld(world);
-            world->stepSimulation(1, 60);
-        }
+        m_sceneWidget->startPhysicsSimulation();
         /* 赤いエッジが残るため、選択状態のモデルを未選択状態にし、場面を最初の位置に戻す */
         m_sceneWidget->seekMotion(0.0f);
         m_sceneWidget->advanceMotion(m_fromIndex);
@@ -159,10 +153,7 @@ protected:
                 m_sceneWidget->setInfoPanelVisible(true);
                 m_sceneWidget->setSelectedModel(m_selected);
                 /* 再生が終わったら物理を無効にする */
-                if (m_sceneWidget->isPhysicsEnabled()) {
-                    m_sceneWidget->mutableScene()->setWorld(0);
-                    m_sceneWidget->updateMotion();
-                }
+                m_sceneWidget->stopPhysicsSimulation();
                 /* SceneWidget を常時レンダリング状態に戻しておく */
                 m_sceneWidget->startAutomaticRendering();
                 delete m_progress;
@@ -1419,9 +1410,9 @@ void MainWindow::startExportingVideo()
             const QSize minSize = minimumSize(), maxSize = maximumSize(),
                     videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
             QSizePolicy policy = sizePolicy();
-            //int handleWidth = m_mainSplitter->handleWidth();
-            //m_leftSplitter->hide();
-            //m_mainSplitter->setHandleWidth(0);
+            m_timelineDockWidget->hide();
+            m_sceneDockWidget->hide();
+            m_modelDockWidget->hide();
             statusBar()->hide();
             /* 動画書き出し用の設定に変更 */
             resize(videoSize);
@@ -1433,6 +1424,8 @@ void MainWindow::startExportingVideo()
             bool visibleGrid = m_sceneWidget->isGridVisible();
             /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
             m_sceneWidget->stop();
+            m_sceneWidget->stopAutomaticRendering();
+            m_sceneWidget->startPhysicsSimulation();
             m_sceneWidget->seekMotion(0.0f);
             m_sceneWidget->advanceMotion(fromIndex);
             m_sceneWidget->setGridVisible(m_exportingVideoDialog->includesGrid());
@@ -1466,8 +1459,11 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->setSelectedModel(selected);
             m_sceneWidget->setPreferredFPS(fps);
             m_sceneWidget->resize(sceneSize);
-            //m_mainSplitter->setHandleWidth(handleWidth);
-            //m_leftSplitter->show();
+            m_sceneWidget->stopPhysicsSimulation();
+            m_sceneWidget->startAutomaticRendering();
+            m_timelineDockWidget->show();
+            m_sceneDockWidget->show();
+            m_modelDockWidget->show();
             statusBar()->show();
             setSizePolicy(policy);
             setMinimumSize(minSize);

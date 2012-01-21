@@ -226,6 +226,22 @@ void SceneWidget::stopAutomaticRendering()
     m_internalTimerID = 0;
 }
 
+void SceneWidget::startPhysicsSimulation()
+{
+    /* 物理暴走を防ぐために少し進めてから開始する */
+    if (isPhysicsEnabled()) {
+        btDiscreteDynamicsWorld *world = m_world->mutableWorld();
+        mutableScene()->setWorld(world);
+        world->stepSimulation(1, 60);
+    }
+}
+
+void SceneWidget::stopPhysicsSimulation()
+{
+    mutableScene()->setWorld(0);
+    updateMotion();
+}
+
 const vpvl::Scene *SceneWidget::scene() const
 {
     return m_renderer->scene();

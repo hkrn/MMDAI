@@ -101,6 +101,8 @@ public:
     void hideSelectedModelEdge();
     void startAutomaticRendering();
     void stopAutomaticRendering();
+    void startPhysicsSimulation();
+    void stopPhysicsSimulation();
 
     vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
@@ -125,7 +127,6 @@ public:
     bool isAccelerationEnabled() const { return m_enableAcceleration; }
     bool isBlackBackgroundEnabled() const { return m_enableBlackBackground; }
     bool showModelDialog() const { return m_showModelDialog; }
-    internal::World *world() const { return m_world; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 public slots:
