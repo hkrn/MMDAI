@@ -1,7 +1,4 @@
-float4 matrixMultVector4(float16 *m, float4 *v);
-float4 matrixMultVector3(float16 *m, float4 *v);
-
-float4 matrixMultVector4(float16 *m, float4 *v)
+static float4 matrixMultVector4(float16 *m, float4 *v)
 {
     return (float4)(
        dot(m->s048c, *v) + m->s3,
@@ -11,7 +8,7 @@ float4 matrixMultVector4(float16 *m, float4 *v)
     );
 }
 
-float4 matrixMultVector3(float16 *m, float4 *v)
+static float4 matrixMultVector3(float16 *m, float4 *v)
 {
     return (float4)(
        dot((float4)(m->s048, 0.0), *v),
