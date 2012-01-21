@@ -87,14 +87,13 @@ bool VideoEncoder::isOpened() const
 
 void VideoEncoder::run()
 {
+    const int fromTo[] = { 0, 0, 1, 1, 2, 2 };
     while (m_running) {
         if (m_images.size() > 0) {
-            qDebug() << m_images.size();
             const QImage &image = m_images.dequeue();
             uchar *data = const_cast<uchar *>(image.bits());
             cv::Mat mat(m_size.height(), m_size.width(), CV_8UC4, data, image.bytesPerLine());
             cv::Mat mat2(mat.rows, mat.cols, CV_8UC3);
-            int fromTo[] = { 0, 0, 1, 1, 2, 2 };
             cv::mixChannels(&mat, 1, &mat2, 1, fromTo, 3);
             m_writer->write(mat2);
         }
