@@ -36,6 +36,7 @@
 
 #include "BoneUIDelegate.h"
 #include "MainWindow.h"
+#include "VideoEncoder.h"
 
 #include "common/Handles.h"
 #include "common/LoggerWidget.h"
@@ -63,11 +64,6 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
-
-#ifdef OPENCV_FOUND
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#endif
 
 namespace {
 
@@ -209,6 +205,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
     m_boneUIDelegate(0),
+    m_videoEncoder(0),
     m_player(0),
     m_model(0),
     m_bone(0),
@@ -250,6 +247,7 @@ MainWindow::~MainWindow()
     delete m_modelTabWidget;
     delete m_timelineTabWidget;
     delete m_boneUIDelegate;
+    delete m_videoEncoder;
     delete m_player;
     delete m_menuBar;
 }
@@ -1349,20 +1347,21 @@ void MainWindow::exportImage()
 
 void MainWindow::exportVideo()
 {
-#ifdef OPENCV_FOUND
-    if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
-        delete m_exportingVideoDialog;
-        m_exportingVideoDialog = new ExportVideoDialog(this, &m_settings, m_sceneWidget);
-        m_exportingVideoDialog->show();
+    if (VideoEncoder::isSupported()) {
+        if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+            delete m_exportingVideoDialog;
+            m_exportingVideoDialog = new ExportVideoDialog(this, &m_settings, m_sceneWidget);
+            m_exportingVideoDialog->show();
+        }
+        else {
+            QMessageBox::warning(this, tr("No motion to export."),
+                                 tr("Create or load a motion."));
+        }
     }
     else {
-        QMessageBox::warning(this, tr("No motion to export."),
-                             tr("Create or load a motion."));
+        QMessageBox::warning(this, tr("Exporting video feature is not supported."),
+                             tr("Exporting video is disabled because OpenCV is not linked."));
     }
-#else
-    QMessageBox::warning(this, tr("Exporting video feature is not supported."),
-                         tr("Exporting video is disabled because OpenCV is not linked."));
-#endif
 }
 
 void MainWindow::startExportingVideo()
@@ -1389,18 +1388,17 @@ void MainWindow::startExportingVideo()
         QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::WindowModal);
-#ifdef Q_OS_MACX
-        /* MacOSX では非圧縮の場合どうも QTKit では DIB ではなく PNG で書き出さないとうまくいかない様子 */
-        int fourcc = CV_FOURCC('p', 'n', 'g', ' ');
-#else
-        int fourcc = CV_FOURCC('D', 'I', 'B', ' ');
-#endif
         int fps = m_sceneWidget->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
-        cv::VideoWriter writer(filename.toUtf8().constData(), fourcc, 29.97, cv::Size(width, height));
+        if (m_videoEncoder && !m_videoEncoder->isFinished()) {
+            emit encodingDidStopped();
+            m_videoEncoder->wait();
+        }
+        delete m_videoEncoder;
+        m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(), QSize(width, height), 29.97);
         m_sceneWidget->setPreferredFPS(30);
-        if (writer.isOpened()) {
+        if (m_videoEncoder->isOpened()) {
             const vpvl::Scene *scene = m_sceneWidget->scene();
             const QString &format = tr("Exporting frame %1 of %2...");
             int maxRangeIndex = toIndex - fromIndex;
@@ -1410,6 +1408,7 @@ void MainWindow::startExportingVideo()
             const QSize minSize = minimumSize(), maxSize = maximumSize(),
                     videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
             QSizePolicy policy = sizePolicy();
+            m_mainToolBar->hide();
             m_timelineDockWidget->hide();
             m_sceneDockWidget->hide();
             m_modelDockWidget->hide();
@@ -1434,24 +1433,24 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->setSelectedModel(0);
             m_sceneWidget->resize(videoSize);
             progress->setLabelText(format.arg(0).arg(maxRangeIndex));
+            connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
+            connect(this, SIGNAL(encodingDidStopped()), m_videoEncoder, SLOT(stop()));
             /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
+            m_videoEncoder->start();
             while (!scene->isMotionReachedTo(toIndex)) {
                 if (progress->wasCanceled())
                     break;
                 QImage image = m_sceneWidget->grabFrameBuffer();
                 if (image.width() != width || image.height() != height)
                     image = image.scaled(width, height);
-                cv::Mat mat(height, width, CV_8UC4, image.bits(), image.bytesPerLine());
-                cv::Mat mat2(mat.rows, mat.cols, CV_8UC3);
-                int fromTo[] = { 0, 0, 1, 1, 2, 2 };
-                cv::mixChannels(&mat, 1, &mat2, 1, fromTo, 3);
-                writer << mat2;
+                emit sceneDidRendered(image);
                 int value = progress->value() + 1;
                 progress->setValue(value);
                 progress->setLabelText(format.arg(value).arg(maxRangeIndex));
                 m_sceneWidget->advanceMotion(1.0f);
                 m_sceneWidget->resize(videoSize);
             }
+            emit encodingDidStopped();
             /* 画面情報を復元 */
             m_sceneWidget->setGridVisible(visibleGrid);
             m_sceneWidget->setHandlesVisible(true);
@@ -1461,6 +1460,7 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->resize(sceneSize);
             m_sceneWidget->stopPhysicsSimulation();
             m_sceneWidget->startAutomaticRendering();
+            m_mainToolBar->show();
             m_timelineDockWidget->show();
             m_sceneDockWidget->show();
             m_modelDockWidget->show();

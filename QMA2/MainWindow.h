@@ -65,6 +65,7 @@ class SceneMotionModel;
 class SceneWidget;
 class TabWidget;
 class TimelineTabWidget;
+class VideoEncoder;
 class QCheckBox;
 class QDoubleSpinBox;
 class QPushButton;
@@ -81,6 +82,10 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+signals:
+    void sceneDidRendered(const QImage &image);
+    void encodingDidStopped();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -155,6 +160,7 @@ private:
     ExportVideoDialog *m_exportingVideoDialog;
     PlaySettingDialog *m_playSettingDialog;
     BoneUIDelegate *m_boneUIDelegate;
+    VideoEncoder *m_videoEncoder;
     internal::Player *m_player;
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
