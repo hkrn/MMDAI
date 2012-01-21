@@ -933,25 +933,34 @@ void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, in
         break;
     }
     case 'L': {
+        /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
         if (const vpvl::Bone *child = bone->child()) {
-            const vpvl::Vector3 &boneOrigin = bone->localTransform().getOrigin();
-            const vpvl::Vector3 &childOrigin = child->localTransform().getOrigin();
-            vpvl::Vector3 axis = (childOrigin - boneOrigin).normalized();
+            const vpvl::Vector3 &boneOrigin = bone->originPosition();
+            const vpvl::Vector3 &childOrigin = child->originPosition();
+            /* 外積を使ってそれぞれの軸を求める */
+            const vpvl::Vector3 &axisX = (childOrigin - boneOrigin).normalized();
+            vpvl::Vector3 tmp1 = axisX;
+            tmp1.setY(-axisX.y());
+            const vpvl::Vector3 &axisZ = axisX.cross(tmp1).normalized();
+            vpvl::Vector3 tmp2 = axisZ;
+            tmp2.setZ(-axisZ.z());
+            const vpvl::Vector3 &axisY = tmp2.cross(-axisX).normalized();
+            vpvl::Quaternion rot = vpvl::Quaternion::getIdentity();
+            /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
             switch ((flags & 0xff00) >> 8) {
             case 'X': {
-                vpvl::Quaternion rot;
-                rot.setEulerZYX(0.0f, 0.0f, vpvl::radian(90.0f));
-                axis = btMatrix3x3(rot) * axis;
+                rot.setRotation(axisX, vpvl::radian(value));
+                break;
+            }
+            case 'Y': {
+                rot.setRotation(axisY, vpvl::radian(value));
                 break;
             }
             case 'Z': {
-                vpvl::Quaternion rot;
-                rot.setEulerZYX(vpvl::radian(90.0f), 0.0f, 0.0f);
-                axis = btMatrix3x3(rot) * axis;
+                rot.setRotation(axisZ, vpvl::radian(value));
                 break;
             }
             }
-            vpvl::Quaternion rot(axis, vpvl::radian(value));
             bone->setRotation(lastRotation * rot);
         }
         else {
