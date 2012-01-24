@@ -933,27 +933,34 @@ void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, in
         break;
     }
     case 'L': {
-        /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-        if (const vpvl::Bone *child = bone->child()) {
+        /* 座標系の関係でX軸とY軸は値を反転させる */
+        vpvl::Quaternion rot = vpvl::Quaternion::getIdentity();
+        const QString &name = internal::toQString(bone);
+        const vpvl::Bone *child = bone->child();
+        /* ボーン名によって特別扱いする必要がある */
+        if ((name.indexOf("指") != -1
+             || name.endsWith("腕")
+             || name.endsWith("ひじ")
+             || name.endsWith("手首")
+             ) && child) {
+            /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
             const vpvl::Vector3 &boneOrigin = bone->originPosition();
             const vpvl::Vector3 &childOrigin = child->originPosition();
             /* 外積を使ってそれぞれの軸を求める */
             const vpvl::Vector3 &axisX = (childOrigin - boneOrigin).normalized();
             vpvl::Vector3 tmp1 = axisX;
-            tmp1.setY(-axisX.y());
-            const vpvl::Vector3 &axisZ = axisX.cross(tmp1).normalized();
-            vpvl::Vector3 tmp2 = axisZ;
+            name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+            vpvl::Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
             tmp2.setZ(-axisZ.z());
-            const vpvl::Vector3 &axisY = tmp2.cross(-axisX).normalized();
-            vpvl::Quaternion rot = vpvl::Quaternion::getIdentity();
+            vpvl::Vector3 axisY = tmp2.cross(-axisX).normalized();
             /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
             switch ((flags & 0xff00) >> 8) {
             case 'X': {
-                rot.setRotation(axisX, vpvl::radian(value));
+                rot.setRotation(axisX, -vpvl::radian(value));
                 break;
             }
             case 'Y': {
-                rot.setRotation(axisY, vpvl::radian(value));
+                rot.setRotation(axisY, -vpvl::radian(value));
                 break;
             }
             case 'Z': {
@@ -964,7 +971,21 @@ void BoneMotionModel::rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, in
             bone->setRotation(lastRotation * rot);
         }
         else {
-            bone->setRotation(lastRotation * delta);
+            switch ((flags & 0xff00) >> 8) {
+            case 'X': {
+                rot.setRotation(vpvl::Vector3(1, 0, 0), -vpvl::radian(value));
+                break;
+            }
+            case 'Y': {
+                rot.setRotation(vpvl::Vector3(0, 1, 0), -vpvl::radian(value));
+                break;
+            }
+            case 'Z': {
+                rot.setRotation(vpvl::Vector3(0, 0, 1), vpvl::radian(value));
+                break;
+            }
+            }
+            bone->setRotation(lastRotation * rot);
         }
         break;
     }
