@@ -55,31 +55,37 @@ public:
     {}
     virtual ~DebugDrawer() {}
 
+    static void setLine(const btVector3 &from, const btVector3 &to, QVector3D *lines) {
+        lines[0].setX(from.x());
+        lines[0].setY(from.y());
+        lines[0].setZ(from.z());
+        lines[1].setX(to.x());
+        lines[1].setY(to.y());
+        lines[1].setZ(to.z());
+    }
     void draw3dText(const btVector3 & /* location */, const char *textString) {
         fprintf(stderr, "[INFO]: %s\n", textString);
     }
     void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int /* lifeTime */, const btVector3 &color) {
-        const btVector3 to = PointOnB + normalOnB * distance;
-        glBegin(GL_LINES);
-        glColor3fv(color);
-        glVertex3fv(PointOnB);
-        glVertex3fv(to);
-        glEnd();
+        QVector3D lines[2];
+        setLine(PointOnB, PointOnB + normalOnB * distance, lines);
+        m_program.setUniformValue("color", QColor::fromRgb(color.x() * 255, color.y() * 255, color.z() * 255));
+        m_program.setAttributeArray("inPosition", lines);
+        glDrawArrays(GL_LINES, 0, 2);
     }
     void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
-        glBegin(GL_LINES);
-        glColor3fv(color);
-        glVertex3fv(from);
-        glVertex3fv(to);
-        glEnd();
+        QVector3D lines[2];
+        setLine(from, to, lines);
+        m_program.setUniformValue("color", QColor::fromRgb(color.x() * 255, color.y() * 255, color.z() * 255));
+        m_program.setAttributeArray("inPosition", lines);
+        glDrawArrays(GL_LINES, 0, 2);
     }
-    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &fromColor, const btVector3 &toColor) {
-        glBegin(GL_LINES);
-        glColor3fv(fromColor);
-        glVertex3fv(from);
-        glColor3fv(toColor);
-        glVertex3fv(to);
-        glEnd();
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &fromColor, const btVector3 & /* toColor */) {
+        QVector3D lines[2];
+        setLine(from, to, lines);
+        m_program.setUniformValue("color", QColor::fromRgb(fromColor.x() * 255, fromColor.y() * 255, fromColor.z() * 255));
+        m_program.setAttributeArray("inPosition", lines);
+        glDrawArrays(GL_LINES, 0, 2);
     }
     void reportErrorWarning(const char *warningString) {
         fprintf(stderr, "[ERROR]: %s\n", warningString);
@@ -91,6 +97,11 @@ public:
         m_flags = debugMode;
     }
 
+    void initialize() {
+        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
+        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
+        m_program.link();
+    }
     void render() {
         if (m_world)
             m_world->debugDrawWorld();
@@ -100,24 +111,29 @@ public:
     }
 
     void drawModelBones(const vpvl::PMDModel *model, bool /* drawSpheres */, bool /* drawLines */) {
-        if (!model)
+        if (!model || !m_program.isLinked())
             return;
-
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_LIGHTING);
-
         vpvl::Array<vpvl::Vector3> vertices;
         static const int indices[] = {
             0, 1, 2, 3
         };
-
-        float matrix[16];
-        vpvl::Transform mv = m_sceneWidget->scene()->modelViewTransform();
-        mv.getOpenGLMatrix(matrix);
-
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
+        float matrix[16];
+        const vpvl::Scene *scene = m_sceneWidget->scene();
+        const vpvl::Bone *selected = m_sceneWidget->selectedBone();
         vpvl::Transform tr = vpvl::Transform::getIdentity();
+        QGLFunctions func(QGLContext::currentContext());
+        glDisable(GL_DEPTH_TEST);
+        m_program.bind();
+        scene->getModelViewMatrix(matrix);
+        int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
+        func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+        scene->getProjectionMatrix(matrix);
+        int projectionMatrix = m_program.uniformLocation("projectionMatrix");
+        func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+        m_program.setUniformValue("boneMatrix", QMatrix4x4());
+        m_program.enableAttributeArray("inPosition");
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *child = bone->child();
             if (!bone->isMovable() && !bone->isRotateable())
@@ -127,53 +143,94 @@ public:
             const vpvl::Vector3 &origin = boneTransform.getOrigin(),
                     &childOrigin = childTransform.getOrigin();
             const vpvl::Scalar &s = 0.075f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-            glPushMatrix();
             vertices.clear();
-            tr.setOrigin(vpvl::Vector3(s, 0.0f, 0.0));
+            tr.setOrigin(vpvl::Vector3(s, 0.0f, 0.0f));
             vertices.add(tr * origin);
             vertices.add(childOrigin);
-            tr.setOrigin(vpvl::Vector3(-s, 0.0f, 0.0));
+            tr.setOrigin(vpvl::Vector3(-s, 0.0f, 0.0f));
             vertices.add(tr * origin);
             vertices.add(childOrigin);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glColor3f(0, 0, 1);
-            glVertexPointer(3, GL_FLOAT, sizeof(vpvl::Vector3), &vertices[0]);
+            if (bone == selected) {
+                drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.0f, 0.0f));
+                m_program.setUniformValue("color", QColor::fromRgbF(1.0f, 0.0f, 0.0f));
+            }
+            else {
+                drawSphere(origin, 0.1f, vpvl::Vector3(0.0f, 0.0f, 1.0f));
+                m_program.setUniformValue("color", QColor::fromRgbF(0.0f, 0.0f, 1.0f));
+            }
+            m_program.setAttributeArray("inPosition",
+                                        reinterpret_cast<const GLfloat *>(&vertices[0]),
+                                        3,
+                                        sizeof(vpvl::Vector3));
             glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glPopMatrix();
         }
-
+        m_program.release();
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_LIGHTING);
     }
     void drawBoneTransform(vpvl::Bone *bone) {
-        if (bone) {
+        if (bone && m_program.isLinked()) {
+            float matrix[16];
+            const vpvl::Scene *scene = m_sceneWidget->scene();
+            QGLFunctions func(QGLContext::currentContext());
             glDisable(GL_DEPTH_TEST);
-            glDisable(GL_LIGHTING);
-            glPushMatrix();
-            const vpvl::Transform &t = bone->localTransform();
-            vpvl::Scalar orthoLen = 1.0f;
-            if (bone->hasParent()) {
-                const vpvl::Transform &pt = bone->parent()->localTransform();
-                orthoLen = btMin(orthoLen, pt.getOrigin().distance(t.getOrigin()));
+            m_program.bind();
+            scene->getModelViewMatrix(matrix);
+            int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
+            func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+            scene->getProjectionMatrix(matrix);
+            int projectionMatrix = m_program.uniformLocation("projectionMatrix");
+            func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+            m_program.setUniformValue("boneMatrix", QMatrix4x4());
+            m_program.enableAttributeArray("inPosition");
+            const QString &name = internal::toQString(bone);
+            const vpvl::Bone *child = bone->child();
+            if ((name.indexOf("指") != -1
+                 || name.endsWith("腕")
+                 || name.endsWith("ひじ")
+                 || name.endsWith("手首")
+                 ) && child) {
+                /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
+                const vpvl::Vector3 &boneOrigin = bone->originPosition();
+                const vpvl::Vector3 &childOrigin = child->originPosition();
+                /* 外積を使ってそれぞれの軸を求める */
+                const vpvl::Vector3 &axisX = (childOrigin - boneOrigin).normalized();
+                vpvl::Vector3 tmp1 = axisX;
+                name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+                vpvl::Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
+                tmp2.setZ(-axisZ.z());
+                vpvl::Vector3 axisY = tmp2.cross(-axisX).normalized();
+#if 1
+                const vpvl::Transform &transform = bone->localTransform();
+                const vpvl::Vector3 &origin = transform.getOrigin();
+                drawLine(origin, transform * (axisX * 2), vpvl::Vector3(1, 0, 0));
+                drawLine(origin, transform * (axisY * 2), vpvl::Vector3(0, 1, 0));
+                drawLine(origin, transform * (axisZ * 2), vpvl::Vector3(0, 0, 1));
+#else
+                btMatrix3x3 matrix(
+                            axisX.x(), axisX.y(), axisX.z(),
+                            axisY.x(), axisY.y(), axisY.z(),
+                            axisZ.x(), axisZ.y(), axisZ.z()
+                            );
+                const vpvl::Vector3 &origin = bone->localTransform().getOrigin();
+                vpvl::Transform transform(matrix, pos);
+                drawLine(origin, transform * vpvl::Vector3(1, 0, 0), vpvl::Vector3(1, 0, 0));
+                drawLine(origin, transform * vpvl::Vector3(0, 1, 0), vpvl::Vector3(0, 1, 0));
+                drawLine(origin, transform * vpvl::Vector3(0, 0, 1), vpvl::Vector3(0, 0, 1));
+#endif
             }
-            drawTransform(t, orthoLen);
-            glPopMatrix();
-            glEnable(GL_DEPTH_TEST);
-            glEnable(GL_LIGHTING);
+            else {
+                const vpvl::Transform &transform = bone->localTransform();
+                const vpvl::Vector3 &origin = transform.getOrigin();
+                drawLine(origin, transform * vpvl::Vector3(2, 0, 0), vpvl::Vector3(1, 0, 0));
+                drawLine(origin, transform * vpvl::Vector3(0, 2, 0), vpvl::Vector3(0, 1, 0));
+                drawLine(origin, transform * vpvl::Vector3(0, 0, 2), vpvl::Vector3(0, 0, 1));
+            }
+            m_program.release();
         }
-    }
-    void drawPosition(const vpvl::Vector3 &pos) {
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_LIGHTING);
-        glPushMatrix();
-        drawSphere(pos, 0.25f, vpvl::Vector3(1, 0, 0));
-        glPopMatrix();
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_LIGHTING);
     }
 
 private:
+    QGLShaderProgram m_program;
     SceneWidget *m_sceneWidget;
     btDynamicsWorld *m_world;
     int m_flags;
