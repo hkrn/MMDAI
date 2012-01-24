@@ -901,6 +901,7 @@ void SceneWidget::initializeGL()
     m_info->setBones(QList<vpvl::Bone *>(), "");
     m_info->setFPS(0.0f);
     m_info->update();
+    m_debugDrawer->initialize();
     m_renderer->initializeSurface();
     m_timer.start();
     startAutomaticRendering();
@@ -933,6 +934,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             break;
         }
         m_handleFlags = flags;
+        emit handleDidGrab();
         return;
     }
     { /* only in move or rotate mode */
@@ -1046,6 +1048,7 @@ void SceneWidget::paintGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_handles->draw();
+    m_debugDrawer->drawBoneTransform(selectedBone());
     m_info->draw();
     painter.endNativePainting();
 }
@@ -1255,9 +1258,11 @@ void SceneWidget::grabImageHandle(const QPointF &diff)
 {
     int flags = m_handleFlags;
     int mode = m_handles->isLocal() ? 'L' : 'G';
+    /* 意図する向きと実際の値が逆なので、反転させる */
+    float diffValue = -diff.y();
     /* 移動ハンドルである */
     if (flags & Handles::kMove) {
-        const float &value = diff.y() * 0.1f;
+        const float &value = diffValue * 0.1f;
         vpvl::Vector3 delta(0.0f, 0.0f, 0.0f);
         if (flags & Handles::kX)
             delta.setX(value);
@@ -1269,7 +1274,7 @@ void SceneWidget::grabImageHandle(const QPointF &diff)
     }
     /* 回転ハンドルである */
     else if (flags & Handles::kRotate) {
-        const float &value = vpvl::radian(diff.y()) * 0.1f;
+        const float &value = vpvl::radian(diffValue) * 0.1f;
         vpvl::Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
         int axis = 0;
         if (flags & Handles::kX) {
@@ -1284,7 +1289,7 @@ void SceneWidget::grabImageHandle(const QPointF &diff)
             delta.setZ(-value);
             axis = 'Z' << 8;
         }
-        emit handleDidRotate(delta, 0, mode | axis, diff.y());
+        emit handleDidRotate(delta, 0, mode | axis, diffValue);
     }
 }
 
