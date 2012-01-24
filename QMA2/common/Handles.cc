@@ -544,7 +544,6 @@ void Handles::drawImageHandles()
     QGLFunctions func(QGLContext::currentContext());
     func.glUseProgram(0);
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, m_width, 0, m_height, -1, 1);
@@ -575,7 +574,6 @@ void Handles::drawImageHandles()
     else
         m_widget->drawTexture(m_global.rect, m_global.textureID);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
 }
 
 void Handles::drawModelHandles()
