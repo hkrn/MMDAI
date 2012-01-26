@@ -80,12 +80,12 @@ public:
     void resetCamera();
     void seekMotion(float frameIndex);
     void setCameraPerspective(CameraAnimation *camera);
-    void setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const Vector3 &cameraPosition, const Vector3 &cameraAngle, float fovy, float cameraDistance);
     void setCameraMotion(VMDMotion *motion);
     void setHeight(int value);
     void setLightMotion(VMDMotion *motion);
     void setLightSource(LightAnimation *light);
-    void setLightSource(const Color &color, const Vector3 &position);
+    void setLightSource(const Color &color, const Vector3 &cameraPosition);
     void setPreferredFPS(int value);
     void setSoftwareSkinningEnable(bool value);
     void setViewMove(int viewMoveTime);
@@ -117,14 +117,14 @@ public:
     const Vector3 &lightPosition() const {
         return m_lightPosition;
     }
-    const Vector3 &angle() const {
-        return m_angle;
+    const Vector3 &cameraAngle() const {
+        return m_cameraAngle;
     }
-    const Vector3 &position() const {
-        return m_position;
+    const Vector3 &cameraPosition() const {
+        return m_cameraPosition;
     }
-    float distance() const {
-        return m_distance;
+    float cameraDistance() const {
+        return m_cameraDistance;
     }
     float fovy() const {
         return m_fovy;
@@ -154,10 +154,10 @@ private:
     Quaternion m_rotation;
     Color m_lightColor;
     Vector3 m_lightPosition;
-    Vector3 m_position;
-    Vector3 m_angle;
+    Vector3 m_cameraPosition;
+    Vector3 m_cameraAngle;
     float m_projection[16];
-    float m_distance;
+    float m_cameraDistance;
     float m_fovy;
     int m_preferredFPS;
     int m_width;

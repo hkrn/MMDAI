@@ -513,8 +513,8 @@ private:
                 const SDL_MouseMotionEvent &e = event.motion;
                 if (e.state == SDL_PRESSED) {
                     vpvl::Scene *scene = m_renderer->scene();
-                    btVector3 pos = scene->position(), angle = scene->angle();
-                    float fovy = scene->fovy(), distance = scene->distance();
+                    btVector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
+                    float fovy = scene->fovy(), distance = scene->cameraDistance();
                     angle.setValue(angle.x() + e.yrel, angle.y() + e.xrel, angle.z());
                     scene->setCameraPerspective(pos, angle, fovy, distance);
                 }

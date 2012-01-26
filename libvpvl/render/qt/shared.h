@@ -269,15 +269,15 @@ public:
 
     void rotate(float x, float y) {
         vpvl::Scene *scene = m_renderer->scene();
-        btVector3 angle = scene->angle();
+        btVector3 angle = scene->cameraAngle();
         angle.setValue(angle.x() + x, angle.y() + y, angle.z());
-        scene->setCameraPerspective(scene->position(), angle, scene->fovy(), scene->distance());
+        scene->setCameraPerspective(scene->cameraPosition(), angle, scene->fovy(), scene->cameraDistance());
     }
     void translate(float x, float y) {
         vpvl::Scene *scene = m_renderer->scene();
-        btVector3 pos = scene->position();
+        btVector3 pos = scene->cameraPosition();
         pos.setValue(pos.x() + x, pos.y() + y, pos.z());
-        scene->setCameraPerspective(pos, scene->angle(), scene->fovy(), scene->distance());
+        scene->setCameraPerspective(pos, scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     }
 
 protected:
@@ -333,7 +333,7 @@ protected:
     virtual void wheelEvent(QWheelEvent *event) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         vpvl::Scene *scene = m_renderer->scene();
-        float fovy = scene->fovy(), distance = scene->distance();
+        float fovy = scene->fovy(), distance = scene->cameraDistance();
         float fovyStep = 1.0f, distanceStep = 4.0f;
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             fovy = event->delta() > 0 ? fovy - fovyStep : fovy + fovyStep;
@@ -346,7 +346,7 @@ protected:
             if (distanceStep != 0.0f)
                 distance = event->delta() > 0 ? distance - distanceStep : distance + distanceStep;
         }
-        scene->setCameraPerspective(scene->position(), scene->angle(), fovy, distance);
+        scene->setCameraPerspective(scene->cameraPosition(), scene->cameraAngle(), fovy, distance);
     }
     virtual void resizeGL(int w, int h) {
         m_renderer->resize(w, h);

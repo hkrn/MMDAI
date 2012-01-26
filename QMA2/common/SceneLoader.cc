@@ -468,10 +468,10 @@ vpvl::VMDMotion *SceneLoader::newCameraMotion() const
     vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
     vpvl::Scene *scene = m_renderer->scene();
     frame->setDefaultInterpolationParameter();
-    frame->setPosition(scene->position());
-    frame->setAngle(scene->angle());
+    frame->setPosition(scene->cameraPosition());
+    frame->setAngle(scene->cameraAngle());
     frame->setFovy(scene->fovy());
-    frame->setDistance(scene->distance());
+    frame->setDistance(scene->cameraDistance());
     cameraAnimation->addKeyframe(frame);
     return newCameraMotion;
 }

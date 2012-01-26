@@ -310,10 +310,10 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
                 vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
                 const vpvl::Scene *scene = m_sceneWidget->scene();
                 frame->setDefaultInterpolationParameter();
-                frame->setPosition(scene->position());
-                frame->setAngle(scene->angle());
+                frame->setPosition(scene->cameraPosition());
+                frame->setAngle(scene->cameraAngle());
                 frame->setFovy(scene->fovy());
-                frame->setDistance(scene->distance());
+                frame->setDistance(scene->cameraDistance());
                 sceneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
             }
         }

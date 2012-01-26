@@ -521,7 +521,7 @@ void SceneWidget::advanceMotion(float frameIndex)
     scene->advanceMotion(frameIndex);
     m_renderer->updateAllModel();
     updateGL();
-    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+    emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
 }
 
 void SceneWidget::seekMotion(float frameIndex, bool force)
@@ -546,7 +546,7 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
     }
     m_renderer->updateAllModel();
     updateGL();
-    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+    emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     emit motionDidSeek(frameIndex);
 }
 
@@ -594,7 +594,7 @@ void SceneWidget::resetCamera()
 {
     vpvl::Scene *scene = m_renderer->scene();
     scene->resetCamera();
-    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+    emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
 }
 
 void SceneWidget::setLightColor(const vpvl::Color &color)
@@ -617,10 +617,10 @@ void SceneWidget::setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle,
     vpvl::Scene *scene = m_renderer->scene();
     vpvl::Vector3 posValue, angleValue;
     float fovyValue, distanceValue;
-    posValue = !pos ? scene->position() : *pos;
-    angleValue = !angle ? scene->angle() : *angle;
+    posValue = !pos ? scene->cameraPosition() : *pos;
+    angleValue = !angle ? scene->cameraAngle() : *angle;
     fovyValue = !fovy ? scene->fovy() : *fovy;
-    distanceValue = !distance ? scene->distance() : *distance;
+    distanceValue = !distance ? scene->cameraDistance() : *distance;
     scene->setCameraPerspective(posValue, angleValue, fovyValue, distanceValue);
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
@@ -704,8 +704,8 @@ void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
 void SceneWidget::rotateScene(const vpvl::Vector3 &delta)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
-    float fovy = scene->fovy(), distance = scene->distance();
+    vpvl::Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
+    float fovy = scene->fovy(), distance = scene->cameraDistance();
     angle += delta;
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
@@ -725,8 +725,8 @@ void SceneWidget::translateScene(const vpvl::Vector3 &delta)
 {
     // FIXME: direction
     vpvl::Scene *scene = m_renderer->scene();
-    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
-    float fovy = scene->fovy(), distance = scene->distance();
+    vpvl::Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
+    float fovy = scene->fovy(), distance = scene->cameraDistance();
     pos += delta;
     scene->setCameraPerspective(pos, angle, fovy, distance);
     emit cameraPerspectiveDidSet(pos, angle, fovy, distance);
@@ -791,8 +791,8 @@ void SceneWidget::loadFile(const QString &file)
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
     vpvl::Scene *scene = m_renderer->scene();
-    vpvl::Vector3 pos = scene->position(), angle = scene->angle();
-    float fovy = scene->fovy(), distance = scene->distance();
+    vpvl::Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
+    float fovy = scene->fovy(), distance = scene->cameraDistance();
     float fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
         fovy = up ? fovy - fovyStep : fovy + fovyStep;
@@ -896,7 +896,7 @@ void SceneWidget::initializeGL()
     m_renderer->initializeSurface();
     m_timer.start();
     startAutomaticRendering();
-    emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
+    emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     emit initailizeGLContextDidDone();
 }
 
@@ -1131,8 +1131,8 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
     const Qt::GestureState state = event->state();
     QPinchGesture::ChangeFlags flags = event->changeFlags();
     vpvl::Scene *scene = m_renderer->scene();
-    const vpvl::Vector3 &pos = scene->position(), &angle = scene->angle();
-    float distance = scene->distance(), fovy = scene->fovy();
+    const vpvl::Vector3 &pos = scene->cameraPosition(), &angle = scene->cameraAngle();
+    float distance = scene->cameraDistance(), fovy = scene->fovy();
     if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();
         vpvl::Scalar radian = vpvl::radian(value);

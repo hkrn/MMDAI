@@ -73,9 +73,9 @@ Scene::Scene(int width, int height, int fps)
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
       m_lightColor(0.6f, 0.6f, 0.6f, 1.0f),
       m_lightPosition(0.5f, 1.0f, 0.5f),
-      m_position(0.0f, 10.0f, 0.0f),
-      m_angle(0.0f, 0.0f, 0.0f),
-      m_distance(100.0f),
+      m_cameraPosition(0.0f, 10.0f, 0.0f),
+      m_cameraAngle(0.0f, 0.0f, 0.0f),
+      m_cameraDistance(100.0f),
       m_fovy(16.0f),
       m_preferredFPS(fps),
       m_width(width),
@@ -96,10 +96,10 @@ Scene::~Scene()
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_lightColor.setZero();
     m_lightPosition.setZero();
-    m_position.setZero();
-    m_angle.setZero();
+    m_cameraPosition.setZero();
+    m_cameraAngle.setZero();
     m_modelview.setIdentity();
-    m_distance = 0.0f;
+    m_cameraDistance = 0.0f;
     m_fovy = 0.0f;
     m_preferredFPS = 0;
     m_width = 0;
@@ -190,10 +190,10 @@ void Scene::setCameraPerspective(CameraAnimation *camera)
 
 void Scene::setCameraPerspective(const Vector3 &position, const Vector3 &angle, float fovy, float distance)
 {
-    m_position = position;
-    m_angle = angle;
+    m_cameraPosition = position;
+    m_cameraAngle = angle;
     m_fovy = btClamped(fovy, 0.0f, 90.0f);
-    m_distance = btClamped(distance, kFrustumNear, kFrustumFar);
+    m_cameraDistance = btClamped(distance, kFrustumNear, kFrustumFar);
     updateRotationFromAngle();
 }
 
@@ -370,7 +370,7 @@ void Scene::updateModelView()
 {
     m_modelview.setIdentity();
     m_modelview.setRotation(m_rotation);
-    m_modelview.setOrigin(m_modelview * (-m_position) - Vector3(0, 0, m_distance));
+    m_modelview.setOrigin(m_modelview * (-m_cameraPosition) - Vector3(0, 0, m_cameraDistance));
 }
 
 void Scene::updateProjection()
@@ -382,7 +382,7 @@ void Scene::updateProjection()
 void Scene::updateRotationFromAngle()
 {
     static const Vector3 x(1.0f, 0.0f, 0.0f), y(0.0f, 1.0f, 0.0f), z(0.0f, 0.0f, 1.0f);
-    Quaternion rz(z, radian(m_angle.z())), rx(x, radian(m_angle.x())), ry(y, radian(m_angle.y()));
+    Quaternion rz(z, radian(m_cameraAngle.z())), rx(x, radian(m_cameraAngle.x())), ry(y, radian(m_cameraAngle.y()));
     m_rotation = rz * rx * ry;
 }
 
