@@ -524,15 +524,27 @@ void SceneWidget::advanceMotion(float frameIndex)
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
 }
 
-void SceneWidget::seekMotion(float frameIndex)
+void SceneWidget::seekMotion(float frameIndex, bool force)
 {
     /* advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある */
     vpvl::Scene *scene = m_renderer->scene();
     scene->updateModelView();
     scene->updateProjection();
-    scene->seekMotion(frameIndex);
+    /* 同じフレームインデックスにシークする場合はカメラと照明は動かさないようにする。force で強制的に動かすことが出来る */
+    if (m_frameIndex == frameIndex && !force) {
+        vpvl::VMDMotion *cameraMotion = scene->cameraMotion();
+        vpvl::VMDMotion *lightMotion = scene->lightMotion();
+        scene->setCameraMotion(0);
+        scene->setLightMotion(0);
+        scene->seekMotion(frameIndex);
+        scene->setCameraMotion(cameraMotion);
+        scene->setLightMotion(lightMotion);
+    }
+    else {
+        scene->seekMotion(frameIndex);
+        m_frameIndex = frameIndex;
+    }
     m_renderer->updateAllModel();
-    m_frameIndex = frameIndex;
     updateGL();
     emit cameraPerspectiveDidSet(scene->position(), scene->angle(), scene->fovy(), scene->distance());
     emit motionDidSeek(frameIndex);

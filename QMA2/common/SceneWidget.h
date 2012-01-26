@@ -150,7 +150,7 @@ public slots:
     void translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta);
     void resetModelPosition();
     void advanceMotion(float frameIndex);
-    void seekMotion(float frameIndex);
+    void seekMotion(float frameIndex, bool force);
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void setGridVisible(bool value);
     void setPhysicsEnable(bool value);
@@ -177,7 +177,8 @@ public slots:
     void revertSelectedModel() { setSelectedModel(0); }
     void rotateModel(const vpvl::Quaternion &delta) { rotateModel(selectedModel(), delta); }
     void translateModel(const vpvl::Vector3 &delta) { translateModel(selectedModel(), delta); }
-    void updateMotion() { seekMotion(m_frameIndex); }
+    void updateSceneMotion() { seekMotion(m_frameIndex, true); }
+    void updateMotion() { seekMotion(m_frameIndex, false); }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }

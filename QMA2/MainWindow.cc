@@ -112,7 +112,7 @@ public:
         m_sceneWidget->stop();
         m_sceneWidget->startPhysicsSimulation();
         /* 赤いエッジが残るため、選択状態のモデルを未選択状態にし、場面を最初の位置に戻す */
-        m_sceneWidget->seekMotion(0.0f);
+        m_sceneWidget->seekMotion(0.0f, true);
         m_sceneWidget->advanceMotion(m_fromIndex);
         /* ハンドルも情報パネルも消す */
         m_sceneWidget->setHandlesVisible(false);
@@ -1260,7 +1260,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateMotion()));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
     connect(m_modelTabWidget->modelInfoWidget(), SIGNAL(edgeOffsetDidChange(double)),
@@ -1419,7 +1419,7 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->stop();
             m_sceneWidget->stopAutomaticRendering();
             m_sceneWidget->startPhysicsSimulation();
-            m_sceneWidget->seekMotion(0.0f);
+            m_sceneWidget->seekMotion(0.0f, true);
             m_sceneWidget->advanceMotion(fromIndex);
             m_sceneWidget->setGridVisible(m_exportingVideoDialog->includesGrid());
             m_sceneWidget->setHandlesVisible(false);
