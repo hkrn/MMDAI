@@ -102,6 +102,12 @@ public:
     const Array<PMDModel *> &models() const {
         return m_models;
     }
+    VMDMotion *cameraMotion() const {
+        return m_cameraMotion;
+    }
+    VMDMotion *lightMotion() const {
+        return m_lightMotion;
+    }
     const Transform &modelViewTransform() const {
         return m_modelview;
     }
