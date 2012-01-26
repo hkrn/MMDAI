@@ -150,6 +150,9 @@ SOURCES += main.cc \
     widgets/ModelInfoWidget.cc \
     VideoEncoder.cc
 
+OBJECTIVE_SOURCES += common/Transparent.mm
+macx:LIBS += -framework AppKit
+
 HEADERS  += \
     common/SceneWidget.h \
     common/Handles.h \
