@@ -81,6 +81,12 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     m_constrantsCountValueLabel = new QLabel();
     m_constrantsCountValueLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     m_constrantsCountValueLabel->setAlignment(Qt::AlignRight);
+    m_edgeOffsetLabel = new QLabel();
+    m_edgeOffsetSpinBox = new QDoubleSpinBox();
+    connect(m_edgeOffsetSpinBox, SIGNAL(valueChanged(double)), SIGNAL(edgeOffsetDidChange(double)));
+    m_edgeOffsetSpinBox->setEnabled(false);
+    m_edgeOffsetSpinBox->setSingleStep(0.1);
+    m_edgeOffsetSpinBox->setRange(0.0, 2.0);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(m_nameLabel);
     mainLayout->addWidget(m_nameValueLabel);
@@ -104,6 +110,9 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     gridLayout->addWidget(m_constrantsCountLabel, 6, 1);
     gridLayout->addWidget(m_constrantsCountValueLabel, 7, 1);
     mainLayout->addLayout(gridLayout);
+    QFormLayout *formLayout = new QFormLayout();
+    formLayout->addRow(m_edgeOffsetLabel, m_edgeOffsetSpinBox);
+    mainLayout->addLayout(formLayout);
     mainLayout->addStretch();
     setLayout(mainLayout);
     retranslate();
@@ -126,6 +135,7 @@ void ModelInfoWidget::retranslate()
     m_facesCountLabel->setText(tr("Number of morphs:"));
     m_rigidBodiesCountLabel->setText(tr("Number of rigid bodies:"));
     m_constrantsCountLabel->setText(tr("Number of constraints:"));
+    m_edgeOffsetLabel->setText(tr("Edge offset:"));
 }
 
 void ModelInfoWidget::setModel(vpvl::PMDModel *model)
@@ -141,6 +151,8 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model)
         m_facesCountValueLabel->setText(QString().sprintf("%d", model->faces().count()));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->rigidBodies().count()));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->constraints().count()));
+        m_edgeOffsetSpinBox->setValue(model->edgeOffset());
+        m_edgeOffsetSpinBox->setEnabled(true);
     }
     else {
         m_nameValueLabel->setText("N/A");
@@ -153,5 +165,7 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model)
         m_facesCountValueLabel->setText("0");
         m_rigidBodiesCountValueLabel->setText("0");
         m_constrantsCountValueLabel->setText("0");
+        m_edgeOffsetSpinBox->setValue(0.0f);
+        m_edgeOffsetSpinBox->setEnabled(false);
     }
 }

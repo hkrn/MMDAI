@@ -45,7 +45,6 @@
 #include "common/VPDFile.h"
 #include "common/util.h"
 #include "dialogs/BoneDialog.h"
-#include "dialogs/EdgeOffsetDialog.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/PlaySettingDialog.h"
@@ -699,8 +698,6 @@ void MainWindow::buildUI()
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
     connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
-    m_actionEdgeOffsetDialog = new QAction(this);
-    connect(m_actionEdgeOffsetDialog, SIGNAL(triggered()), this, SLOT(openEdgeOffsetDialog()));
     m_actionTranslateModelUp = new QAction(this);
     connect(m_actionTranslateModelUp, SIGNAL(triggered()), m_sceneWidget, SLOT(translateModelUp()));
     m_actionTranslateModelDown = new QAction(this);
@@ -867,8 +864,6 @@ void MainWindow::buildUI()
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
     m_menuModel->addSeparator();
-    m_menuModel->addAction(m_actionEdgeOffsetDialog);
-    m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionTranslateModelUp);
     m_menuModel->addAction(m_actionTranslateModelDown);
     m_menuModel->addAction(m_actionTranslateModelLeft);
@@ -981,7 +976,6 @@ void MainWindow::bindActions()
     m_actionSelectPreviousModel->setShortcut(m_settings.value(kPrefix + "selectPreviousModel", QKeySequence(QKeySequence::SelectPreviousPage).toString()).toString());
     m_actionRevertSelectedModel->setShortcut(m_settings.value(kPrefix + "revertSelectedModel").toString());
     m_actionDeleteSelectedModel->setShortcut(m_settings.value(kPrefix + "deleteSelectedModel", "Ctrl+Shift+Backspace").toString());
-    m_actionEdgeOffsetDialog->setShortcut(m_settings.value(kPrefix + "edgeOffsetDialog", "Ctrl+Shift+E").toString());
     m_actionTranslateModelUp->setShortcut(m_settings.value(kPrefix + "translateModelUp", "Ctrl+Shift+Up").toString());
     m_actionTranslateModelDown->setShortcut(m_settings.value(kPrefix + "translateModelDown", "Ctrl+Shift+Down").toString());
     m_actionTranslateModelLeft->setShortcut(m_settings.value(kPrefix + "translateModelLeft", "Ctrl+Shift+Left").toString());
@@ -1110,8 +1104,6 @@ void MainWindow::retranslate()
     m_actionRevertSelectedModel->setStatusTip(tr("Revert the selected model."));
     m_actionDeleteSelectedModel->setText(tr("Delete selected model"));
     m_actionDeleteSelectedModel->setStatusTip(tr("Delete the selected model from the scene."));
-    m_actionEdgeOffsetDialog->setText(tr("Open model edge offset dialog"));
-    m_actionEdgeOffsetDialog->setStatusTip(tr("Open a dialog to change edge offset of selected model."));
     m_actionTranslateModelUp->setText(tr("Translate selected model up"));
     m_actionTranslateModelUp->setStatusTip(tr("Translate the selected model up."));
     m_actionTranslateModelDown->setText(tr("Translate selected model down"));
@@ -1271,6 +1263,8 @@ void MainWindow::connectWidgets()
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
             m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
+    connect(m_modelTabWidget->modelInfoWidget(), SIGNAL(edgeOffsetDidChange(double)),
+            m_sceneWidget, SLOT(setModelEdgeOffset(double)));
 }
 
 void MainWindow::insertMotionToAllModels()
@@ -1494,18 +1488,6 @@ void MainWindow::addNewMotion()
             m_faceMotionModel->markAsNew(model);
             m_sceneMotionModel->setModified(false);
         }
-    }
-}
-
-void MainWindow::openEdgeOffsetDialog()
-{
-    if (m_sceneWidget->selectedModel()) {
-        EdgeOffsetDialog *dialog = new EdgeOffsetDialog(this, m_sceneWidget);
-        dialog->exec();
-    }
-    else {
-        QMessageBox::warning(this, tr("The model is not selected."),
-                             tr("Select a model to chage edge offset value (\"Model\" > \"Select model\")"));
     }
 }
 

@@ -113,7 +113,6 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_settings(settings),
     m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
-    m_selectedEdgeOffset(0.0f),
     m_frameIndex(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
@@ -273,13 +272,18 @@ vpvl::PMDModel *SceneWidget::selectedModel() const
 
 void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 {
-    /* 当該モデルのエッジを赤くし、情報パネルに選択されたモデルの名前を更新する */
-    hideSelectedModelEdge();
+    /* 情報パネルに選択されたモデルの名前を更新する */
     m_renderer->setSelectedModel(value);
     m_info->setModel(value);
     m_info->update();
-    showSelectedModelEdge();
     emit modelDidSelect(value);
+}
+
+void SceneWidget::setModelEdgeOffset(double value)
+{
+    if (vpvl::PMDModel *model = selectedModel())
+        model->setEdgeOffset(static_cast<float>(value));
+    updateMotion();
 }
 
 void SceneWidget::setHandlesVisible(bool value)
@@ -290,31 +294,6 @@ void SceneWidget::setHandlesVisible(bool value)
 void SceneWidget::setInfoPanelVisible(bool value)
 {
     m_info->setVisible(value);
-}
-
-void SceneWidget::showSelectedModelEdge()
-{
-    /* インスタンスにモデルのエッジ情報を保存してから強制的に太さを 1.0 にした上で赤くする */
-    static const vpvl::Color red(1.0f, 0.0f, 0.0f, 1.0f);
-    vpvl::PMDModel *model = m_renderer->selectedModel();
-    if (model) {
-        m_selectedEdgeOffset = model->edgeOffset();
-        model->setEdgeOffset(1.0f);
-        model->setEdgeColor(red);
-        updateMotion();
-    }
-}
-
-void SceneWidget::hideSelectedModelEdge()
-{
-    /* インスタンスに保存された元のモデルのエッジの情報を復元する */
-    static const vpvl::Color black(0.0f, 0.0f, 0.0f, 1.0f);
-    vpvl::PMDModel *model = m_renderer->selectedModel();
-    if (model) {
-        model->setEdgeOffset(m_selectedEdgeOffset);
-        model->setEdgeColor(black);
-        updateMotion();
-    }
 }
 
 void SceneWidget::addModel()

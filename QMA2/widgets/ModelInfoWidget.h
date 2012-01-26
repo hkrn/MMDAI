@@ -43,6 +43,7 @@ namespace vpvl {
 class PMDModel;
 }
 
+class QDoubleSpinBox;
 class QLabel;
 
 class ModelInfoWidget : public QWidget
@@ -52,6 +53,9 @@ class ModelInfoWidget : public QWidget
 public:
     explicit ModelInfoWidget(QWidget *parent = 0);
     ~ModelInfoWidget();
+
+signals:
+    void edgeOffsetDidChange(double value);
 
 private slots:
     void retranslate();
@@ -78,6 +82,8 @@ private:
     QLabel *m_rigidBodiesCountValueLabel;
     QLabel *m_constrantsCountLabel;
     QLabel *m_constrantsCountValueLabel;
+    QLabel *m_edgeOffsetLabel;
+    QDoubleSpinBox *m_edgeOffsetSpinBox;
 };
 
 #endif // MODELINFOWIDGET_H

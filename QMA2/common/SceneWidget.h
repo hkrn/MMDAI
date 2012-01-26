@@ -97,8 +97,6 @@ public:
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
-    void showSelectedModelEdge();
-    void hideSelectedModelEdge();
     void startAutomaticRendering();
     void stopAutomaticRendering();
     void startPhysicsSimulation();
@@ -115,7 +113,6 @@ public:
     void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
     Handles *handles() const { return m_handles; }
     vpvl::Bone *selectedBone() const { return m_bone; }
-    float modelEdgeOffset() const { return m_selectedEdgeOffset; }
     bool isGridVisible() const;
     bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
@@ -158,6 +155,7 @@ public slots:
     void setGridVisible(bool value);
     void setPhysicsEnable(bool value);
     void setAccelerationEnable(bool value);
+    void setModelEdgeOffset(double value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
@@ -180,7 +178,6 @@ public slots:
     void rotateModel(const vpvl::Quaternion &delta) { rotateModel(selectedModel(), delta); }
     void translateModel(const vpvl::Vector3 &delta) { translateModel(selectedModel(), delta); }
     void updateMotion() { seekMotion(m_frameIndex); }
-    void setModelEdgeOffset(float value) { m_selectedEdgeOffset = value; }
     void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
@@ -258,7 +255,6 @@ private:
     QElapsedTimer m_timer;
     float m_lastDistance;
     float m_prevElapsed;
-    float m_selectedEdgeOffset;
     float m_frameIndex;
     int m_frameCount;
     int m_currentFPS;

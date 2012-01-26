@@ -120,7 +120,6 @@ private slots:
     void exportVideo();
     void startExportingVideo();
     void addNewMotion();
-    void openEdgeOffsetDialog();
     void startPlayingScene();
     void openPlaySettingDialog();
     void selectNextModel();
@@ -223,7 +222,6 @@ private:
     QAction *m_actionSelectPreviousModel;
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
-    QAction *m_actionEdgeOffsetDialog;
     QAction *m_actionTranslateModelUp;
     QAction *m_actionTranslateModelDown;
     QAction *m_actionTranslateModelLeft;

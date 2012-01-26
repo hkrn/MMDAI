@@ -133,7 +133,6 @@ SOURCES += main.cc \
     dialogs/ExportVideoDialog.cc \
     dialogs/FrameWeightDialog.cc \
     dialogs/PlaySettingDialog.cc \
-    dialogs/EdgeOffsetDialog.cc \
     widgets/TimelineWidget.cc \
     widgets/FaceWidget.cc \
     widgets/CameraPerspectiveWidget.cc \
@@ -173,7 +172,6 @@ HEADERS  += \
     dialogs/ExportVideoDialog.h \
     dialogs/FrameWeightDialog.h \
     dialogs/PlaySettingDialog.h \
-    dialogs/EdgeOffsetDialog.h \
     widgets/TimelineWidget.h \
     widgets/FaceWidget.h \
     widgets/CameraPerspectiveWidget.h \
