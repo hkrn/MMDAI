@@ -32,7 +32,7 @@ void main() {
 #endif
     if (hasMainTexture) {
         if (isMainAdditive) {
-            color += texture2D(mainTexture, outTexCoord.xy);
+            color.rgb += texture2D(mainTexture, outTexCoord.xy).rgb;
         }
         else {
             color *= texture2D(mainTexture, outTexCoord.xy);
@@ -41,7 +41,7 @@ void main() {
     color *= texture2D(toonTexture, outToonTexCoord);
     if (hasSubTexture) {
         if (isSubAdditive) {
-            color += texture2D(subTexture, outTexCoord.zw);
+            color.rgb += texture2D(subTexture, outTexCoord.zw).rgb;
         }
         else {
             color *= texture2D(subTexture, outTexCoord.zw);
