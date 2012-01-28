@@ -238,6 +238,12 @@ void SceneWidget::startPhysicsSimulation()
 void SceneWidget::stopPhysicsSimulation()
 {
     mutableScene()->setWorld(0);
+    const vpvl::Array<vpvl::PMDModel *> &models = scene()->models();
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        vpvl::PMDModel *model = models[i];
+        model->resetAllBones();
+    }
     updateMotion();
 }
 
