@@ -146,6 +146,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     m_settings.setValue("mainWindow/geometry", saveGeometry());
     m_settings.setValue("mainWindow/state", saveState());
+    qApp->sendEvent(m_sceneWidget, event);
     event->accept();
 }
 
@@ -330,8 +331,11 @@ void MainWindow::buildMenuBar()
     connect(m_actionPause, SIGNAL(triggered()), m_sceneWidget, SLOT(pause()));
     m_actionStop = new QAction(this);
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
-    m_actionShowLogMessage = new QAction(this);
-    connect(m_actionShowLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
+    m_actionEnableAcceleration = new QAction(this);
+    m_actionEnableAcceleration->setCheckable(true);
+    m_actionEnableAcceleration->setEnabled(SceneWidget::isAccelerationSupported());
+    m_actionEnableAcceleration->setChecked(m_sceneWidget->isAccelerationEnabled());
+    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setAccelerationEnable(bool)));
     m_actionShowModelDialog = new QAction(this);
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
@@ -373,6 +377,21 @@ void MainWindow::buildMenuBar()
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
     connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
+
+    m_actionShowLogMessage = new QAction(this);
+    connect(m_actionShowLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
+    m_actionEnableMoveGesture = new QAction(this);
+    m_actionEnableMoveGesture->setCheckable(true);
+    m_actionEnableMoveGesture->setChecked(m_sceneWidget->isMoveGestureEnabled());
+    connect(m_actionEnableMoveGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setMoveGestureEnable(bool)));
+    m_actionEnableRotateGesture = new QAction(this);
+    m_actionEnableRotateGesture->setCheckable(true);
+    m_actionEnableRotateGesture->setChecked(m_sceneWidget->isRotateGestureEnabled());
+    connect(m_actionEnableRotateGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setRotateGestureEnable(bool)));
+    m_actionEnableScaleGesture = new QAction(this);
+    m_actionEnableScaleGesture->setCheckable(true);
+    m_actionEnableScaleGesture->setChecked(m_sceneWidget->isRotateGestureEnabled());
+    connect(m_actionEnableScaleGesture, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setScaleGestureEnable(bool)));
 
     m_actionClearRecentFiles = new QAction(this);
     connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
@@ -417,7 +436,7 @@ void MainWindow::buildMenuBar()
     m_menuScript->addAction(m_actionPause);
     m_menuScript->addAction(m_actionStop);
     m_menuScript->addSeparator();
-    m_menuScript->addAction(m_actionShowLogMessage);
+    m_menuScript->addAction(m_actionEnableAcceleration);
     m_menuScript->addAction(m_actionShowModelDialog);
     m_menuScript->addSeparator();
     m_menuScript->addAction(m_actionExecuteCommand);
@@ -451,6 +470,13 @@ void MainWindow::buildMenuBar()
     m_menuModel->addAction(m_actionRevertSelectedModel);
     m_menuModel->addAction(m_actionDeleteSelectedModel);
     m_menuBar->addMenu(m_menuModel);
+    m_menuView = new QMenu(this);
+    m_menuView->addAction(m_actionShowLogMessage);
+    m_menuView->addSeparator();
+    m_menuView->addAction(m_actionEnableMoveGesture);
+    m_menuView->addAction(m_actionEnableRotateGesture);
+    m_menuView->addAction(m_actionEnableScaleGesture);
+    m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
     m_menuHelp->addAction(m_actionAboutQt);
@@ -459,6 +485,7 @@ void MainWindow::buildMenuBar()
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
     connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
+    connect(m_sceneWidget, SIGNAL(scriptDidLoaded(QString)), this, SLOT(disableAcceleration()));
 
     retranslate();
 }
@@ -470,6 +497,11 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(addAsset(vpvl::Asset*,QUuid)));
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
+}
+
+void MainWindow::disableAcceleration()
+{
+    m_actionEnableAcceleration->setEnabled(false);
 }
 
 void MainWindow::retranslate()
@@ -502,8 +534,8 @@ void MainWindow::retranslate()
     m_actionPause->setStatusTip(tr("Pause current scene."));
     m_actionStop->setText(tr("Stop"));
     m_actionStop->setStatusTip(tr("Stop current scene."));
-    m_actionShowLogMessage->setText(tr("Open log message window"));
-    m_actionShowLogMessage->setToolTip(tr("Open a window of log messages such as script."));
+    m_actionEnableAcceleration->setText(tr("Enable acceleration"));
+    m_actionEnableAcceleration->setStatusTip(tr("Enable or disable acceleration using OpenCL if supported."));
     m_actionShowModelDialog->setText(tr("Show model dialog"));
     m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
     m_actionExecuteCommand->setText(tr("Execute command"));
@@ -553,6 +585,14 @@ void MainWindow::retranslate()
     m_actionDeleteSelectedModel->setText(tr("Delete selected model"));
     m_actionDeleteSelectedModel->setStatusTip(tr("Delete the selected model from the scene."));
     m_actionDeleteSelectedModel->setShortcut(tr("Ctrl+Shift+Backspace"));
+    m_actionShowLogMessage->setText(tr("Open log message window"));
+    m_actionShowLogMessage->setToolTip(tr("Open a window of log messages such as script."));
+    m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
+    m_actionEnableMoveGesture->setStatusTip(tr("Enable moving scene/model/bone by pan gesture."));
+    m_actionEnableRotateGesture->setText(tr("Enable rotate gesture"));
+    m_actionEnableRotateGesture->setStatusTip(tr("Enable rotate scene/model/bone by pinch gesture."));
+    m_actionEnableScaleGesture->setText(tr("Enable scale gesture"));
+    m_actionEnableScaleGesture->setStatusTip(tr("Enable scale scene by pinch gesture."));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAbout->setShortcut(tr("Alt+Q, Alt+/"));
@@ -564,6 +604,7 @@ void MainWindow::retranslate()
     m_menuScript->setTitle(tr("Script"));
     m_menuScene->setTitle(tr("&Scene"));
     m_menuModel->setTitle(tr("&Model"));
+    m_menuView->setTitle(tr("&View"));
     m_menuRetainAssets->setTitle(tr("Select asset"));
     m_menuRetainModels->setTitle(tr("Select model"));
     m_menuRecentFiles->setTitle(tr("Open recent files"));

@@ -134,6 +134,8 @@ void ExtendedSceneWidget::initializeGL()
         loadScript(arguments[1]);
     else
         play();
+    /* vpvl::Scene の初期値を変更したため、互換性のために視点を変更する */
+    mutableScene()->setCameraPerspective(scene()->cameraPosition(), scene()->cameraAngle(), 16.0f, 100.0f);
 }
 
 void ExtendedSceneWidget::paintGL()

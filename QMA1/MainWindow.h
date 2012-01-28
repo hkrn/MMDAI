@@ -80,6 +80,7 @@ private slots:
     void selectNextModel();
     void selectPreviousModel();
     void connectSceneLoader();
+    void disableAcceleration();
 
 private:
     void startSceneUpdate();
@@ -112,7 +113,7 @@ private:
     QAction *m_actionPlay;
     QAction *m_actionPause;
     QAction *m_actionStop;
-    QAction *m_actionShowLogMessage;
+    QAction *m_actionEnableAcceleration;
     QAction *m_actionShowModelDialog;
     QAction *m_actionExecuteCommand;
     QAction *m_actionExecuteEvent;
@@ -132,6 +133,10 @@ private:
     QAction *m_actionRevertSelectedModel;
     QAction *m_actionDeleteSelectedModel;
     QAction *m_actionShowBones;
+    QAction *m_actionShowLogMessage;
+    QAction *m_actionEnableMoveGesture;
+    QAction *m_actionEnableRotateGesture;
+    QAction *m_actionEnableScaleGesture;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
     QMenu *m_menuScript;
@@ -140,6 +145,7 @@ private:
     QMenu *m_menuRetainModels;
     QMenu *m_menuRetainAssets;
     QMenu *m_menuRecentFiles;
+    QMenu *m_menuView;
     QMenu *m_menuHelp;
 
     Q_DISABLE_COPY(MainWindow)
