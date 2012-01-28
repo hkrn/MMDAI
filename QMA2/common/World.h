@@ -51,7 +51,7 @@ public:
           m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
-        m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
+        m_world.setGravity(btVector3(0.0f, -9.8f, 0.0f));
         setPreferredFPS(defaultFPS);
     }
     ~World()
