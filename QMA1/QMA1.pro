@@ -1,11 +1,15 @@
 QT += core gui opengl
 TARGET = MMDAI
 TEMPLATE = app
+DEFINES += QMA_ENABLE_MULTIPLE_MOTION
 
 exists(/opt/local/lib):LIBS += -L/opt/local/lib
 exists(/opt/local/include):INCLUDEPATH += /opt/local/include
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
+exists(/opt/local/include/libxml2):INCLUDEPATH += /opt/local/include/libxml2
+exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
+exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # GLEW and assimp
 exists(../glew/lib):LIBS += -L../glew/lib
@@ -18,7 +22,7 @@ LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 win32:MMDA_PATH = ../../MMDAgent/MMDAgent
 win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib -L$${MMDA_PATH}/Library_Julius/lib \
       -L$${MMDA_PATH}/Library_Open_JTalk/lib -L$${MMDA_PATH}/Library_PortAudio/lib -lglew32 -ldsound
-unix:LIBS += -lGLEW -lOpenJTalk -lHTSEngine -ljulius -lportaudio
+unix:LIBS += -lGLEW -lOpenJTalk -lHTSEngine -ljulius -lportaudio -lxml2
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
@@ -110,6 +114,7 @@ SOURCES += main.cc \
     ../QMA2/common/VPDFile.cc \
     ../QMA2/common/SceneLoader.cc \
     ../QMA2/common/LoggerWidget.cc \
+    ../QMA2/common/Handles.cc \
     LicenseWidget.cc \
     MainWindow.cc \
     Script.cc \

@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "Script.h"
+#include "SceneLoader.h"
 
 #include "ExtendedSceneWidget.h"
 #include "TiledStage.h"
@@ -164,9 +165,11 @@ Script::Script(ExtendedSceneWidget *parent)
       m_currentState(0),
       m_stage(0)
 {
+    SceneLoader *loader = parent->sceneLoader();
+    loader->createProject();
     connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
-    connect(m_parent, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(handleModelDelete(vpvl::PMDModel*)));
-    connect(m_parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(handleModelDelete(vpvl::PMDModel*)));
+    connect(parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
             this, SLOT(handleFinishedMotion(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)));
     connect(&m_recog, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
     connect(&m_speech, SIGNAL(commandDidPost(QString,QList<QVariant>)), this, SLOT(handleCommand(QString,QList<QVariant>)));
@@ -180,7 +183,6 @@ Script::~Script()
     qDeleteAll(m_timers);
     m_parent = 0;
     m_currentState = 0;
-    m_parent = 0;
 }
 
 bool Script::load(QTextStream &stream)
@@ -333,20 +335,20 @@ void Script::handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMot
     /* ループさせる場合を除いてモーションが終了したらそのモーションは削除する */
     Arguments a;
     QMapIterator<vpvl::PMDModel *, vpvl::VMDMotion *> iterator(motions);
+    SceneLoader *loader = m_parent->sceneLoader();
     while (iterator.hasNext()) {
         iterator.next();
         vpvl::VMDMotion *motion = iterator.value();
         if (m_motionParameters.contains(motion)) {
             const MotionParameter &parameter = m_motionParameters.value(motion);
             if (parameter.isLoopEnabled) {
-                motion->seek(0.0f);
+                motion->reset();
                 continue;
             }
         }
         const QString &name = m_motions.key(motion);
         if (!name.isEmpty()) {
-            vpvl::PMDModel *model = iterator.key();
-            m_parent->deleteMotion(motion, model);
+            loader->deleteMotion(motion);
             m_motions.remove(name);
             a.clear(); a << name;
             emit eventDidPost(kMotionDeleteEvent, a);
@@ -392,6 +394,7 @@ void Script::handleCommand(const ScriptArgument &output)
     const QString kInvalidArgumentRanged = tr("[%1] Invalid argument count (expected between %2 and %3, actual is %4)");
     const QString kInvalidArgumentVariant = tr("[%1] Invalid argument count (expected %2 or between %3 and %4, actual is %5)");
     const QString kModelNotFound = tr("[%1] Model %2 is not found");
+    SceneLoader *loader = m_parent->sceneLoader();
     int argc = output.arguments.count();
     /* モデルの追加 */
     if (type == kModelAddCommand) {
@@ -447,7 +450,7 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName)) {
             vpvl::PMDModel *model = m_models.value(modelName);
             const QString &path = canonicalizePath(argv[1]);
-            m_parent->deleteModel(model);
+            loader->deleteModel(model);
             model = m_parent->addModel(path);
             if (model) {
                 m_models.remove(modelName);
@@ -473,7 +476,7 @@ void Script::handleCommand(const ScriptArgument &output)
             vpvl::PMDModel *model = m_models.value(modelName);
             /* 処理内容の関係で deleteModel() じゃないと modelWillDelete が呼ばれないのでここで signal を発行 */
             emit modelWillDelete(model);
-            m_parent->deleteModel(model);
+            loader->deleteModel(model);
             m_parent->setSelectedModel(0);
             Arguments a; a << modelName;
             emit eventDidPost(kModelDeleteEvent, a);
@@ -551,7 +554,7 @@ void Script::handleCommand(const ScriptArgument &output)
             }
             //bool enableSmooth = motion->enableSmooth();
             //bool enableRelocation = motion->enableRelocation();
-            m_parent->deleteMotion(motion, model);
+            loader->deleteMotion(motion);
             motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 MotionParameter parameter;
@@ -582,9 +585,8 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         const QString &motionName = argv[1];
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
-            vpvl::PMDModel *model = m_models.value(modelName);
             vpvl::VMDMotion *motion = m_motions.value(motionName);
-            m_parent->deleteMotion(motion, model);
+            loader->deleteMotion(motion);
         }
         else {
             qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
@@ -608,7 +610,7 @@ void Script::handleCommand(const ScriptArgument &output)
             stage->loadBackground(canonicalizePath(pair[1]));
         }
         else {
-            m_parent->deleteModel(m_stage);
+            loader->deleteModel(m_stage);
             const QString &path = canonicalizePath(argv[0]);
             vpvl::PMDModel *model = m_parent->addModel(path);
             if (model) {
@@ -677,8 +679,8 @@ void Script::handleCommand(const ScriptArgument &output)
             if (newLipSyncMotion) {
                 vpvl::VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
                 //newLipSyncMotion->setFull(false);
-                m_parent->deleteMotion(oldLipSyncMotion, model);
-                m_parent->insertMotionToModel(newLipSyncMotion, model);
+                loader->deleteMotion(oldLipSyncMotion);
+                loader->setModelMotion(newLipSyncMotion, model);
             }
         }
     }
@@ -690,9 +692,8 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            vpvl::PMDModel *model = m_models.value(modelName);
             vpvl::VMDMotion *motion = m_motions.value(kLipSyncName);
-            m_parent->deleteMotion(motion, model);
+            loader->deleteMotion(motion);
             m_motions.remove(kLipSyncName);
         }
     }
@@ -1038,4 +1039,22 @@ bool Script::parseRotation(const QString &value, vpvl::Quaternion &v) const
         qWarning("%s", qPrintable(tr("Unexpected value %1 to rotation").arg(value)));
     }
     return false;
+}
+
+const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> Script::stoppedMotions() const
+{
+    /* 停止されたモーションを取得 */
+    SceneLoader *loader = m_parent->sceneLoader();
+    QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
+    const QList<vpvl::PMDModel *> &models = loader->allModels();
+    foreach (vpvl::PMDModel *model, models) {
+        const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            vpvl::VMDMotion *motion = motions[i];
+            if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex()))
+                ret.insert(model, motion);
+        }
+    }
+    return ret;
 }

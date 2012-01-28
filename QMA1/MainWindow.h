@@ -38,6 +38,7 @@
 #define MAINWINDOW_H
 
 #include <QtCore/QSettings>
+#include <QtCore/QUuid>
 #include <QtGui/QMainWindow>
 
 namespace vpvl {
@@ -69,16 +70,16 @@ private slots:
     void clearRecentFiles();
     void selectCurrentModel();
     void setCurrentModel(vpvl::PMDModel *value);
-    void addModel(vpvl::PMDModel *model);
-    void deleteModel(vpvl::PMDModel *model);
-    void addAsset(vpvl::Asset *asset);
-    void deleteAsset(vpvl::Asset *asset);
+    void addModel(vpvl::PMDModel *model, const QUuid &uuid);
+    void deleteModel(vpvl::PMDModel *model, const QUuid &uuid);
+    void addAsset(vpvl::Asset *asset, const QUuid &uuid);
+    void deleteAsset(vpvl::Asset *asset, const QUuid &uuid);
     void updateFPS(int fps);
     void executeCommand();
     void executeEvent();
-    void loadScript(const QString &filename);
     void selectNextModel();
     void selectPreviousModel();
+    void connectSceneLoader();
 
 private:
     void startSceneUpdate();

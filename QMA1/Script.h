@@ -108,6 +108,7 @@ public:
     void loadSpeechRecognitionEngine(const QDir &dir, const QString &baseName);
     void start();
     void stop();
+    const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions() const;
 
     void setDir(const QDir &value) { m_dir = value; }
 

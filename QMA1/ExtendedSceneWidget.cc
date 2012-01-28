@@ -44,7 +44,7 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-#ifdef VPVL_USE_GLSL
+#ifdef VPVL_ENABLE_GLSL
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
 #else
@@ -145,5 +145,9 @@ void ExtendedSceneWidget::paintGL()
     m_tiledStage->renderFloor();
     m_renderer->renderAllAssets();
     m_renderer->renderAllModels();
-    emit motionDidFinished(m_loader->stoppedMotions());
+    if (m_script) {
+        const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions = m_script->stoppedMotions();
+        if (!motions.isEmpty())
+            emit motionDidFinished(motions);
+    }
 }

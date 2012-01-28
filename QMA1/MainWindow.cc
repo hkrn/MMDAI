@@ -39,6 +39,7 @@
 #include "ExtendedSceneWidget.h"
 #include "LicenseWidget.h"
 #include "LoggerWidget.h"
+#include "SceneLoader.h"
 #include "Script.h"
 #include "util.h"
 
@@ -152,7 +153,8 @@ void MainWindow::selectCurrentModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
-        vpvl::PMDModel *model = m_sceneWidget->findModel(action->text());
+        const QUuid uuid(action->data().toString());
+        vpvl::PMDModel *model = m_sceneWidget->sceneLoader()->findModel(uuid);
         m_sceneWidget->setSelectedModel(model);
     }
 }
@@ -163,21 +165,28 @@ void MainWindow::setCurrentModel(vpvl::PMDModel *value)
     updateInformation();
 }
 
-void MainWindow::addModel(vpvl::PMDModel *model)
+void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
 {
+    /* 追加されたモデルをモデル選択のメニューに追加する */
     QString name = internal::toQString(model);
     QAction *action = new QAction(name, this);
+    action->setData(uuid.toString());
     action->setStatusTip(tr("Select a model %1").arg(name));
     connect(action, SIGNAL(triggered()), this, SLOT(selectCurrentModel()));
     m_menuRetainModels->addAction(action);
+    m_sceneWidget->setSelectedModel(model);
 }
 
-void MainWindow::deleteModel(vpvl::PMDModel *model)
+void MainWindow::deleteModel(vpvl::PMDModel *model, const QUuid &uuid)
 {
+    /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
+    if (model == m_sceneWidget->selectedModel())
+        m_sceneWidget->setSelectedModel(0);
+    /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
-    QString name = internal::toQString(model);
+    const QString &uuidString = uuid.toString();
     foreach (QAction *action, m_menuRetainModels->actions()) {
-        if (action->text() == name) {
+        if (action->data() == uuidString) {
             actionToRemove = action;
             break;
         }
@@ -186,22 +195,24 @@ void MainWindow::deleteModel(vpvl::PMDModel *model)
         m_menuRetainModels->removeAction(actionToRemove);
 }
 
-
-void MainWindow::addAsset(vpvl::Asset *asset)
+void MainWindow::addAsset(vpvl::Asset *asset, const QUuid &uuid)
 {
-    QString name(asset->name());
+    /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
+    QString name = internal::toQString(asset);
     QAction *action = new QAction(name, this);
+    action->setData(uuid.toString());
     action->setStatusTip(tr("Select an asset %1").arg(name));
     //connect(action, SIGNAL(triggered()), this, SLOT(selectCurrentModel()));
     m_menuRetainAssets->addAction(action);
 }
 
-void MainWindow::deleteAsset(vpvl::Asset *asset)
+void MainWindow::deleteAsset(vpvl::Asset * /* asset */, const QUuid &uuid)
 {
+    /* 削除されたアクセサリをアクセサリ選択のメニューから削除する */
     QAction *actionToRemove = 0;
-    QString name(asset->name());
+    const QString &uuidString = uuid.toString();
     foreach (QAction *action, m_menuRetainAssets->actions()) {
-        if (action->text() == name) {
+        if (action->data() == uuidString) {
             actionToRemove = action;
             break;
         }
@@ -209,6 +220,7 @@ void MainWindow::deleteAsset(vpvl::Asset *asset)
     if (actionToRemove)
         m_menuRetainAssets->removeAction(actionToRemove);
 }
+
 
 void MainWindow::updateInformation()
 {
@@ -254,20 +266,16 @@ void MainWindow::executeEvent()
         script->handleEvent(event, arguments);
 }
 
-void MainWindow::loadScript(const QString & /* filename */)
-{
-    connect(m_sceneWidget->script(), SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
-}
-
 void MainWindow::selectNextModel()
 {
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
+        const SceneLoader *loader = m_sceneWidget->sceneLoader();
         int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
         if (index == -1 || index == actions.length() - 1)
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.first()->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index + 1)->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.at(index + 1)->text()));
     }
 }
 
@@ -275,11 +283,12 @@ void MainWindow::selectPreviousModel()
 {
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
+        const SceneLoader *loader = m_sceneWidget->sceneLoader();
         int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
         if (index == -1 || index == 0)
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.last()->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else
-            m_sceneWidget->setSelectedModel(m_sceneWidget->findModel(actions.at(index - 1)->text()));
+            m_sceneWidget->setSelectedModel(loader->findModel(actions.at(index - 1)->text()));
     }
 }
 
@@ -298,6 +307,7 @@ const QString MainWindow::buildWindowTitle(int fps)
 
 void MainWindow::buildMenuBar()
 {
+    connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
@@ -447,15 +457,19 @@ void MainWindow::buildMenuBar()
     m_menuBar->addMenu(m_menuHelp);
 
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
-    connect(m_sceneWidget, SIGNAL(modelDidAdd(vpvl::PMDModel*)), this, SLOT(addModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelWillDelete(vpvl::PMDModel*)), this, SLOT(deleteModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(assetDidAdd(vpvl::Asset*)), this, SLOT(addAsset(vpvl::Asset*)));
-    connect(m_sceneWidget, SIGNAL(assetWillDelete(vpvl::Asset*)), this, SLOT(deleteAsset(vpvl::Asset*)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
-    connect(m_sceneWidget, SIGNAL(scriptDidLoaded(QString)), this, SLOT(loadScript(QString)));
+    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
 
     retranslate();
+}
+
+void MainWindow::connectSceneLoader()
+{
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), this, SLOT(addModel(vpvl::PMDModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
+    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(addAsset(vpvl::Asset*,QUuid)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
 }
 
 void MainWindow::retranslate()

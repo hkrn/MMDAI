@@ -169,11 +169,11 @@ vpvl::VMDMotion *LipSync::createMotion(const QString &sequence)
         currentFrame = 0;
         QByteArray bytes = internal::fromQString(m_expressionNames.at(i));
         foreach (LipKeyFrame f, newFrames) {
-            vpvl::FaceKeyFrame *ff = new vpvl::FaceKeyFrame();
+            vpvl::FaceKeyframe *ff = new vpvl::FaceKeyframe();
             ff->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
             ff->setFrameIndex(currentFrame);
             ff->setWeight(blendRate(f.phone, i) * f.rate);
-            fa->addKeyFrame(ff);
+            fa->addKeyframe(ff);
             currentFrame += f.duration;
         }
     }

@@ -592,6 +592,7 @@ void SceneLoader::setCameraMotion(vpvl::VMDMotion *motion)
 void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 {
     const QUuid &uuid = QUuid::createUuid();
+#ifndef QMA_ENABLE_MULTIPLE_MOTION
     const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
@@ -600,6 +601,7 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
         model->deleteMotion(motion);
         m_project->removeMotion(ptr, model);
     }
+#endif
     model->addMotion(motion);
     m_project->addMotion(motion, model, uuid.toString().toStdString());
     emit motionDidAdd(motion, model, uuid);
