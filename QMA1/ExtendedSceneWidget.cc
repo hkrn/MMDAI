@@ -56,7 +56,8 @@ using namespace internal;
 ExtendedSceneWidget::ExtendedSceneWidget(QSettings *settings, QWidget *parent)
     : SceneWidget(settings, parent),
       m_script(0),
-      m_tiledStage(0)
+      m_tiledStage(0),
+      m_enableTransparent(false)
 {
 }
 
@@ -107,7 +108,7 @@ void ExtendedSceneWidget::loadScript(const QString &filename)
 
 void ExtendedSceneWidget::setEmptyMotion(vpvl::PMDModel * /* model */)
 {
-     // emit this
+    // emit this
 }
 
 void ExtendedSceneWidget::dropEvent(QDropEvent *event)
@@ -138,9 +139,16 @@ void ExtendedSceneWidget::initializeGL()
     mutableScene()->setCameraPerspective(scene()->cameraPosition(), scene()->cameraAngle(), 16.0f, 100.0f);
 }
 
+#ifdef Q_OS_MAC
+extern void UISetGLContextTransparent(bool value);
+#else
+#define UISetGLContextTransparent(value) (void)0
+#endif
+
 void ExtendedSceneWidget::paintGL()
 {
-    qglClearColor(Qt::darkBlue);
+    UISetGLContextTransparent(m_enableTransparent);
+    qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
     m_renderer->clear();
     m_renderer->renderProjectiveShadow();
     m_tiledStage->renderBackground();

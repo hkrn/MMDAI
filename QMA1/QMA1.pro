@@ -124,6 +124,9 @@ SOURCES += main.cc \
     JuliusSpeechRecognitionEngine.cc \
     ExtendedSceneWidget.cc \
 
+OBJECTIVE_SOURCES += Transparent.mm
+macx:LIBS += -framework AppKit
+
 INCLUDEPATH += ../QMA2/common
 HEADERS  += \
     ../QMA2/common/SceneWidget.h \

@@ -380,6 +380,10 @@ void MainWindow::buildMenuBar()
 
     m_actionShowLogMessage = new QAction(this);
     connect(m_actionShowLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
+    m_actionEnableTransparent = new QAction(this);
+    m_actionEnableTransparent->setCheckable(true);
+    m_actionEnableTransparent->setChecked(m_sceneWidget->isTransparentEnabled());
+    connect(m_actionEnableTransparent, SIGNAL(triggered(bool)), this, SLOT(toggleTransparentWindow(bool)));
     m_actionEnableMoveGesture = new QAction(this);
     m_actionEnableMoveGesture->setCheckable(true);
     m_actionEnableMoveGesture->setChecked(m_sceneWidget->isMoveGestureEnabled());
@@ -472,6 +476,7 @@ void MainWindow::buildMenuBar()
     m_menuBar->addMenu(m_menuModel);
     m_menuView = new QMenu(this);
     m_menuView->addAction(m_actionShowLogMessage);
+    m_menuView->addAction(m_actionEnableTransparent);
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);
@@ -502,6 +507,22 @@ void MainWindow::connectSceneLoader()
 void MainWindow::disableAcceleration()
 {
     m_actionEnableAcceleration->setEnabled(false);
+}
+
+void MainWindow::toggleTransparentWindow(bool value)
+{
+    Qt::WindowFlags flags = windowFlags();
+    if (value) {
+        statusBar()->hide();
+        flags |= Qt::FramelessWindowHint;
+    }
+    else {
+        statusBar()->show();
+        flags ^= Qt::FramelessWindowHint;
+    }
+    //setWindowFlags(flags);
+    setAttribute(Qt::WA_TranslucentBackground, value);
+    m_sceneWidget->setTransparentEnable(value);
 }
 
 void MainWindow::retranslate()
@@ -587,6 +608,8 @@ void MainWindow::retranslate()
     m_actionDeleteSelectedModel->setShortcut(tr("Ctrl+Shift+Backspace"));
     m_actionShowLogMessage->setText(tr("Open log message window"));
     m_actionShowLogMessage->setToolTip(tr("Open a window of log messages such as script."));
+    m_actionEnableTransparent->setText(tr("Enable transparent window"));
+    m_actionEnableTransparent->setToolTip(tr("Enable making a window transparent."));
     m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
     m_actionEnableMoveGesture->setStatusTip(tr("Enable moving scene/model/bone by pan gesture."));
     m_actionEnableRotateGesture->setText(tr("Enable rotate gesture"));

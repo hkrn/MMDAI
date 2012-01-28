@@ -1,8 +1,8 @@
 #import <Cocoa/Cocoa.h>
 
-void UISetGLContextTransparent()
+void UISetGLContextTransparent(bool value)
 {
-    GLint opacity = 0;
+    GLint opacity = value ? 0 : 1;
     NSOpenGLContext *context = [NSOpenGLContext currentContext];
     [context setValues:&opacity forParameter:NSOpenGLCPSurfaceOpacity];
 }

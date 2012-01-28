@@ -81,6 +81,7 @@ private slots:
     void selectPreviousModel();
     void connectSceneLoader();
     void disableAcceleration();
+    void toggleTransparentWindow(bool value);
 
 private:
     void startSceneUpdate();
@@ -134,6 +135,7 @@ private:
     QAction *m_actionDeleteSelectedModel;
     QAction *m_actionShowBones;
     QAction *m_actionShowLogMessage;
+    QAction *m_actionEnableTransparent;
     QAction *m_actionEnableMoveGesture;
     QAction *m_actionEnableRotateGesture;
     QAction *m_actionEnableScaleGesture;

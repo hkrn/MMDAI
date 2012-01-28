@@ -54,12 +54,14 @@ public:
 
     TiledStage *tiledStage() const { return m_tiledStage; }
     Script *script() const { return m_script; }
+    bool isTransparentEnabled() const { return m_enableTransparent; }
 
 public slots:
     void clear();
     void loadScript();
     void loadScript(const QString &filename);
     void setEmptyMotion(vpvl::PMDModel *model);
+    void setTransparentEnable(bool value) { m_enableTransparent = value; }
 
 signals:
     void scriptDidLoaded(const QString &filename);
@@ -73,6 +75,7 @@ protected:
 private:
     Script *m_script;
     TiledStage *m_tiledStage;
+    bool m_enableTransparent;
 
     Q_DISABLE_COPY(ExtendedSceneWidget)
 };
