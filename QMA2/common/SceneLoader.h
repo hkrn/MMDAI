@@ -75,11 +75,12 @@ public:
 #endif
     ~SceneLoader();
 
+    QList<vpvl::PMDModel *> allModels() const;
     vpvl::Asset *findAsset(const QUuid &uuid) const;
     vpvl::PMDModel *findModel(const QUuid &uuid) const;
+    vpvl::VMDMotion *findMotion(const QUuid &uuid) const;
     const QUuid findUUID(vpvl::Asset *asset) const;
     const QUuid findUUID(vpvl::PMDModel *model) const;
-    QList<vpvl::VMDMotion *> findModelMotions(vpvl::PMDModel *model) const;
     bool isProjectModified() const;
     vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir, QUuid &uuid);
     vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -92,14 +93,14 @@ public:
     vpvl::VMDMotion *newCameraMotion() const;
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
-    const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions();
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
     void deleteAsset(vpvl::Asset *asset);
     void deleteCameraMotion();
-    void deleteModel(vpvl::PMDModel *model);
+    void deleteModel(vpvl::PMDModel *&model);
+    void deleteMotion(vpvl::VMDMotion *&motion);
     void loadProject(const QString &path);
     void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
     void saveProject(const QString &path);
@@ -113,6 +114,7 @@ signals:
     void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QUuid &uuid);
+    void motionWillDelete(vpvl::VMDMotion *motion, const QUuid &uuid);
     void assetDidAdd(vpvl::Asset *asset, const QUuid &uuid);
     void assetWillDelete(vpvl::Asset *asset, const QUuid &uuid);
     void cameraMotionDidSet(vpvl::VMDMotion *motion, const QUuid &uuid);

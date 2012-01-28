@@ -124,6 +124,18 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
     emit modelDidAdd(model, uuid);
 }
 
+QList<vpvl::PMDModel *> SceneLoader::allModels() const
+{
+    const vpvl::Project::UUIDList &uuids = m_project->modelUUIDs();
+    QList<vpvl::PMDModel *> models;
+    vpvl::Project::UUIDList::const_iterator it = uuids.begin(), end = uuids.end();
+    while (it != end) {
+        models.append(m_project->model(*it));
+        it++;
+    }
+    return models;
+}
+
 void SceneLoader::createProject()
 {
     if (!m_project)
@@ -151,7 +163,7 @@ void SceneLoader::deleteCameraMotion()
     m_camera = 0;
 }
 
-void SceneLoader::deleteModel(vpvl::PMDModel *model)
+void SceneLoader::deleteModel(vpvl::PMDModel *&model)
 {
     /*
      * まずモデルに紐づいたモーションを全て削除し、その後にモデルをレンダリングエンジンから削除し、
@@ -170,6 +182,13 @@ void SceneLoader::deleteModel(vpvl::PMDModel *model)
     }
 }
 
+void SceneLoader::deleteMotion(vpvl::VMDMotion *&motion)
+{
+    const QUuid uuid(m_project->motionUUID(motion).c_str());
+    emit motionWillDelete(motion, uuid);
+    m_project->deleteMotion(motion, motion->parentModel());
+}
+
 vpvl::Asset *SceneLoader::findAsset(const QUuid &uuid) const
 {
     return m_project->asset(uuid.toString().toStdString());
@@ -178,6 +197,11 @@ vpvl::Asset *SceneLoader::findAsset(const QUuid &uuid) const
 vpvl::PMDModel *SceneLoader::findModel(const QUuid &uuid) const
 {
     return m_project->model(uuid.toString().toStdString());
+}
+
+vpvl::VMDMotion *SceneLoader::findMotion(const QUuid &uuid) const
+{
+    return m_project->motion(uuid.toString().toStdString());
 }
 
 const QUuid SceneLoader::findUUID(vpvl::Asset *asset) const
@@ -579,18 +603,4 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     model->addMotion(motion);
     m_project->addMotion(motion, model, uuid.toString().toStdString());
     emit motionDidAdd(motion, model, uuid);
-}
-
-const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> SceneLoader::stoppedMotions()
-{
-    /* 停止されたモーションを取得する (MMDAI2 上では使っていない) */
-    const vpvl::Project::UUIDList &uuids = m_project->motionUUIDs();
-    const int nmotions = uuids.size();
-    QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
-    for (int i = 0; i < nmotions; i++) {
-        vpvl::VMDMotion *motion = m_project->motion(uuids[i]);
-        if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex()))
-            ret.insert(motion->parentModel(), motion);
-    }
-    return ret;
 }
