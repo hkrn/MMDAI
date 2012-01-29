@@ -70,7 +70,7 @@ public:
 
     bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
         QString pathString = QString::fromLocal8Bit(path.c_str());
-        pathString.replace("\\", "/");
+        pathString.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
         QFileInfo info(pathString);
         if (info.isDir() || !info.exists()) {
             qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
