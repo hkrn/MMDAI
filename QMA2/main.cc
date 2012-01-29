@@ -39,6 +39,7 @@
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
 #include "MainWindow.h"
+#include "VideoEncoder.h"
 
 static void SetSearchPaths(const QCoreApplication &app)
 {
@@ -111,6 +112,11 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
 int main(int argc, char *argv[])
 {
     LIBXML_TEST_VERSION;
+    xmlInitMemory();
+    xmlInitCharEncodingHandlers();
+    xmlInitGlobals();
+    xmlInitParser();
+    VideoEncoder::initialize();
 
     Application a(argc, argv);
     QWidget fake;

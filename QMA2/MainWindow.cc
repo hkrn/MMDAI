@@ -1360,7 +1360,6 @@ void MainWindow::exportVideo()
 
 void MainWindow::startExportingVideo()
 {
-#ifdef OPENCV_FOUND
     m_exportingVideoDialog->close();
     int fromIndex = m_exportingVideoDialog->fromIndex();
     int toIndex = m_exportingVideoDialog->toIndex();
@@ -1392,7 +1391,7 @@ void MainWindow::startExportingVideo()
         delete m_videoEncoder;
         m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(), QSize(width, height), 29.97);
         m_sceneWidget->setPreferredFPS(30);
-        if (m_videoEncoder->isOpened()) {
+        if (true) {
             const vpvl::Scene *scene = m_sceneWidget->scene();
             const QString &format = tr("Exporting frame %1 of %2...");
             int maxRangeIndex = toIndex - fromIndex;
@@ -1470,7 +1469,6 @@ void MainWindow::startExportingVideo()
         }
         delete progress;
     }
-#endif
 }
 
 void MainWindow::addNewMotion()

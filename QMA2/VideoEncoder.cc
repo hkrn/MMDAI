@@ -36,18 +36,183 @@
 
 #include "VideoEncoder.h"
 #include <QtCore/QtCore>
+#include <QtGui/QtGui>
 
-#ifdef OPENCV_FOUND
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#define LIBAV_FOUND
+
+#ifdef LIBAV_FOUND
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+}
+
+namespace {
+
+static void OpenEncodingCodec(AVCodecContext *codecContext)
+{
+    AVCodec *codec = avcodec_find_encoder(codecContext->codec_id);
+    if (!codec)
+        throw std::bad_exception();
+    if (avcodec_open2(codecContext, codec, 0) < 0)
+        throw std::bad_exception();
+}
+
+double ComputePresentTimeStamp(AVStream *stream)
+{
+    return stream ? static_cast<double>(stream->pts.val) * stream->time_base.num / stream->time_base.den : 0.0;
+}
+
+void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet)
+{
+    if (codedFrame && codedFrame->pts != AV_NOPTS_VALUE)
+        packet.pts = av_rescale_q(codedFrame->pts, stream->codec->time_base, stream->time_base);
+}
+
+static AVStream *OpenAudioStream(AVFormatContext *formatContext,
+                                 AVOutputFormat *outputFormat,
+                                 int bitRate,
+                                 int sampleRate)
+{
+    AVStream *stream = av_new_stream(formatContext, 0);
+    AVCodecContext *codec = stream->codec;
+    codec->codec_id = outputFormat->audio_codec;
+    codec->codec_type = AVMEDIA_TYPE_AUDIO;
+    codec->sample_fmt = AV_SAMPLE_FMT_S16;
+    codec->bit_rate = bitRate;
+    codec->sample_rate = sampleRate;
+    codec->channels = 2;
+    if (outputFormat->flags & AVFMT_GLOBALHEADER)
+        codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
+    OpenEncodingCodec(codec);
+    return stream;
+}
+
+static void WriteAudioFrame(AVFormatContext *formatContext,
+                            AVStream *stream,
+                            const int16_t *samples,
+                            uint8_t *encodedFrameBuffer,
+                            size_t encodedFrameBufferSize)
+{
+    if (!samples)
+        return;
+    AVPacket packet;
+    av_init_packet(&packet);
+    packet.size = avcodec_encode_audio(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, samples);
+    RescalePresentTimeStamp(stream->codec->coded_frame, stream, packet);
+    packet.flags |= AV_PKT_FLAG_KEY;
+    packet.stream_index = stream->index;
+    packet.data = encodedFrameBuffer;
+    av_interleaved_write_frame(formatContext, &packet);
+}
+
+static AVStream *OpenVideoStream(AVFormatContext *formatContext,
+                                 AVOutputFormat *outputFormat,
+                                 const QSize &size,
+                                 int fps)
+{
+    AVStream *stream = av_new_stream(formatContext, 0);
+    AVCodecContext *codec = stream->codec;
+    codec->codec_id = outputFormat->video_codec;
+    codec->codec_type = AVMEDIA_TYPE_VIDEO;
+    codec->bit_rate = 300000;
+    codec->width = size.width();
+    codec->height = size.height();
+    codec->time_base.den = fps;
+    codec->time_base.num = 1;
+    codec->gop_size = 12;
+    codec->pix_fmt = PIX_FMT_YUV420P;
+    if (outputFormat->flags & AVFMT_GLOBALHEADER)
+        codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
+    OpenEncodingCodec(codec);
+    return stream;
+}
+
+static void WriteVideoFrame(AVFormatContext *formatContext,
+                            AVStream *stream,
+                            AVFrame *frame,
+                            uint8_t *encodedFrameBuffer,
+                            size_t encodedFrameBufferSize)
+{
+    AVPacket packet;
+    av_init_packet(&packet);
+    if (formatContext->oformat->flags & AVFMT_RAWPICTURE) {
+        packet.flags |= AV_PKT_FLAG_KEY;
+        packet.stream_index = stream->index;
+        packet.data = reinterpret_cast<uint8_t *>(frame);
+        packet.size = sizeof(AVPicture);
+        av_interleaved_write_frame(formatContext, &packet);
+    }
+    else {
+        int outputSize = avcodec_encode_video(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, frame);
+        if (outputSize > 0) {
+            AVFrame *codedFrame = stream->codec->coded_frame;
+            RescalePresentTimeStamp(stream->codec->coded_frame, stream, packet);
+            if (codedFrame->key_frame)
+                packet.flags |= AV_PKT_FLAG_KEY;
+            packet.stream_index = stream->index;
+            packet.data = encodedFrameBuffer;
+            packet.size = outputSize;
+            av_interleaved_write_frame(formatContext, &packet);
+        }
+    }
+}
+
+static AVOutputFormat *CreateVideoFormat(const QString &filename)
+{
+    AVOutputFormat *videoFormat = av_guess_format(0, filename.toLocal8Bit().constData(), 0);
+    if (!videoFormat)
+        videoFormat = av_guess_format("mpeg", 0, 0);
+    return videoFormat;
+}
+
+static AVFormatContext *CreateVideoFormatContext(AVOutputFormat *videoFormat, const QString &filename)
+{
+    AVFormatContext *videoFormatContext = avformat_alloc_context();
+    if (!videoFormatContext)
+        throw std::bad_alloc();
+    videoFormatContext->oformat = videoFormat;
+    snprintf(videoFormatContext->filename,
+             sizeof(videoFormatContext->filename),
+             "%s",
+             filename.toLocal8Bit().constData());
+    return videoFormatContext;
+}
+
+static AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format)
+{
+    AVFrame *frame = avcodec_alloc_frame();
+    int width = size.width(), height = size.height();
+    if (!frame)
+        throw std::bad_alloc();
+    int willAllocate = avpicture_get_size(format, width, height);
+    uint8_t *buffer = static_cast<uint8_t *>(av_malloc(willAllocate));
+    if (!buffer) {
+        av_free(frame);
+        throw std::bad_alloc();
+    }
+    avpicture_fill(reinterpret_cast<AVPicture *>(frame), buffer, format, width, height);
+    return frame;
+}
+
+}
 #endif
 
 bool VideoEncoder::isSupported()
 {
-#ifdef OPENCV_FOUND
+#ifdef LIBAV_FOUND
     return true;
 #else
     return false;
+#endif
+}
+
+void VideoEncoder::initialize()
+{
+#ifdef LIBAV_FOUND
+    avcodec_init();
+    avcodec_register_all();
+    av_register_all();
 #endif
 }
 
@@ -56,53 +221,142 @@ VideoEncoder::VideoEncoder(const QString &filename,
                            double fps,
                            QObject *parent)
     : QThread(parent),
-      m_writer(0),
+      m_filename(filename),
       m_size(size),
+      m_fps(fps),
       m_running(true)
 {
-#ifdef Q_OS_MACX
-        /* MacOSX では非圧縮の場合どうも QTKit では DIB ではなく PNG で書き出さないとうまくいかない様子 */
-        int fourcc = CV_FOURCC('p', 'n', 'g', ' ');
-#else
-        int fourcc = CV_FOURCC('D', 'I', 'B', ' ');
-#endif
-    m_writer = new cv::VideoWriter(filename.toUtf8().constData(),
-                                   fourcc,
-                                   fps,
-                                   cv::Size(size.width(), size.height()));
 }
 
 VideoEncoder::~VideoEncoder()
 {
     m_images.clear();
     m_running = false;
-    delete m_writer;
-    m_writer = 0;
-}
-
-bool VideoEncoder::isOpened() const
-{
-    return m_writer->isOpened();
 }
 
 void VideoEncoder::run()
 {
-    const int fromTo[] = { 0, 0, 1, 1, 2, 2 };
-    while (m_running) {
-        if (m_images.size() > 0) {
-            const QImage &image = m_images.dequeue();
-            uchar *data = const_cast<uchar *>(image.bits());
-            cv::Mat mat(m_size.height(), m_size.width(), CV_8UC4, data, image.bytesPerLine());
-            cv::Mat mat2(mat.rows, mat.cols, CV_8UC3);
-            cv::mixChannels(&mat, 1, &mat2, 1, fromTo, 3);
-            m_writer->write(mat2);
+#ifdef LIBAV_FOUND
+    AVOutputFormat *videoOutputFormat = 0;
+    AVFormatContext *videoFormatContext = 0;
+    AVStream *audioStream = 0;
+    AVStream *videoStream = 0;
+    AVFrame *videoFrame = 0, *tmpFrame = 0;
+    struct SwsContext *scaleContext = 0;
+    uint8_t *encodedAudioFrameBuffer = 0, *encodedVideoFrameBuffer = 0;
+    try {
+        size_t encodedAudioFrameBufferSize = 192000;
+        size_t encodedVideoFrameBufferSize = m_size.width() * m_size.height() * 4;
+        encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
+        encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
+        videoOutputFormat = CreateVideoFormat(m_filename);
+        videoFormatContext = CreateVideoFormatContext(videoOutputFormat, m_filename);
+        if (videoOutputFormat->audio_codec != CODEC_ID_NONE)
+            audioStream = OpenAudioStream(videoFormatContext, videoOutputFormat, 64000, 44100);
+        if (videoOutputFormat->video_codec != CODEC_ID_NONE)
+            videoStream = OpenVideoStream(videoFormatContext, videoOutputFormat, m_size, m_fps);
+        if (!(videoOutputFormat->flags & AVFMT_NOFILE)) {
+            if (avio_open(&videoFormatContext->pb, m_filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0)
+                throw std::bad_exception();
         }
+        scaleContext = sws_getContext(m_size.width(), m_size.height(),
+                                      PIX_FMT_RGB24,
+                                      m_size.width(), m_size.height(),
+                                      PIX_FMT_YUV420P,
+                                      SWS_BICUBIC, 0, 0, 0);
+        videoFrame = CreateVideoFrame(m_size, PIX_FMT_YUV420P),
+                tmpFrame = CreateVideoFrame(m_size, PIX_FMT_RGB24);
+        avformat_write_header(videoFormatContext, 0);
+        double audioPTS = 0.0, videoPTS = 0.0;
+        while (m_running) {
+            m_mutex.lock();
+            if (m_images.size() > 0) {
+                const QImage &image = m_images.dequeue();
+                m_mutex.unlock();
+                audioPTS = ComputePresentTimeStamp(audioStream);
+                videoPTS = ComputePresentTimeStamp(videoStream);
+                int width = image.width(), height = image.height();
+                for (int y = 0; y < height; y++) {
+                    int yh = y * height;
+                    for (int x = 0; x < width; x++) {
+                        int index = yh + x;
+                        const QRgb &rgb = image.pixel(x, y);
+#if 0
+                        tmpFrame->data[0][index] = qRed(rgb);
+                        tmpFrame->data[1][index] = qGreen(rgb);
+                        tmpFrame->data[2][index] = qBlue(rgb);
+                        tmpFrame->data[3][index] = qAlpha(rgb);
+#else
+                        uint8_t *data = tmpFrame->data[0];
+                        data[index + 0] = qRed(rgb);
+                        data[index + 1] = qGreen(rgb);
+                        data[index + 2] = qBlue(rgb);
+#endif
+                    }
+                }
+                sws_scale(scaleContext, tmpFrame->data, tmpFrame->linesize, 0, height,
+                          videoFrame->data, videoFrame->linesize);
+#if 0
+                if (!videoStream || (videoStream && audioStream && audioPTS < videoPTS))
+                    WriteAudioFrame(videoFormatContext,
+                                    audioStream,
+                                    0,
+                                    encodedAudioFrameBuffer,
+                                    encodedAudioFrameBufferSize);
+                else
+                    WriteVideoFrame(videoFormatContext,
+                                    videoStream,
+                                    videoFrame,
+                                    encodedVideoFrameBuffer,
+                                    encodedVideoFrameBufferSize);
+#else
+                WriteVideoFrame(videoFormatContext,
+                                videoStream,
+                                videoFrame,
+                                encodedVideoFrameBuffer,
+                                encodedVideoFrameBufferSize);
+#endif
+            }
+            else {
+                m_mutex.unlock();
+            }
+        }
+        av_write_trailer(videoFormatContext);
+        avcodec_close(videoStream->codec);
+    } catch (std::exception &e) {
+        qWarning() << e.what();
     }
+    delete[] encodedAudioFrameBuffer;
+    delete[] encodedVideoFrameBuffer;
+    if (scaleContext)
+        sws_freeContext(scaleContext);
+    if (videoFrame) {
+        avpicture_free(reinterpret_cast<AVPicture *>(videoFrame));
+        av_free(videoFrame);
+    }
+    if (tmpFrame) {
+        avpicture_free(reinterpret_cast<AVPicture *>(tmpFrame));
+        av_free(tmpFrame);
+    }
+    if (videoFormatContext) {
+        const int nstreams = videoFormatContext->nb_streams;
+        for (int i = 0; i < nstreams; i++) {
+            AVStream *stream = videoFormatContext->streams[i];
+            av_freep(&stream->codec);
+            av_freep(&stream);
+        }
+        if (!(videoFormatContext->flags & AVFMT_NOFILE) && videoFormatContext->pb)
+            avio_close(videoFormatContext->pb);
+        av_free(videoFormatContext);
+    }
+#endif
 }
 
 void VideoEncoder::enqueueImage(const QImage &image)
 {
+    m_mutex.lock();
     m_images.enqueue(image);
+    m_mutex.unlock();
 }
 
 void VideoEncoder::stop()

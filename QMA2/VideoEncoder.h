@@ -37,15 +37,12 @@
 #ifndef VIDEOENCODER_H
 #define VIDEOENCODER_H
 
+#include <QtCore/QFile>
+#include <QtCore/QMutex>
 #include <QtCore/QQueue>
-#include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtCore/QThread>
 #include <QtGui/QImage>
-
-namespace cv {
-class VideoWriter;
-}
 
 class VideoEncoder : public QThread
 {
@@ -53,14 +50,13 @@ class VideoEncoder : public QThread
 
 public:
     static bool isSupported();
+    static void initialize();
 
     explicit VideoEncoder(const QString &filename,
                           const QSize &size,
                           double fps,
                           QObject *parent = 0);
     ~VideoEncoder();
-
-    bool isOpened() const;
 
 protected:
     virtual void run();
@@ -70,9 +66,11 @@ private slots:
     void stop();
 
 private:
-    cv::VideoWriter *m_writer;
-    QSize m_size;
+    QString m_filename;
+    QMutex m_mutex;
     QQueue<QImage> m_images;
+    QSize m_size;
+    double m_fps;
     bool m_running;
 };
 

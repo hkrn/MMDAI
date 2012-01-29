@@ -2,25 +2,25 @@ QT += core gui opengl
 TARGET = MMDAI2
 TEMPLATE = app
 
+# CMake prefix path (mainly for win32)
+exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include
+exists(-L$$(CMAKE_PREFIX_PATH)/lib):LIBS += -L$$(CMAKE_PREFIX_PATH)/lib
+
 # Linux, Darwin(OSX), etc...
-exists(/opt/local/lib):LIBS += -L/opt/local/lib
-exists(/opt/local/include):INCLUDEPATH += /opt/local/include
-exists(/opt/local/include/libxml2):INCLUDEPATH += /opt/local/include/libxml2
-exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
+
+# libxml2
+exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
-# assimp and OpenCV
+# assimp
 exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
-exists(../opencv/include):INCLUDEPATH += ../opencv/include
-exists(../opencv/modules/core/include):INCLUDEPATH += ../opencv/modules/core/include
-exists(../opencv/modules/highgui/include):INCLUDEPATH += ../opencv/modules/highgui/include
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src
-win32:INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include ../libvpvl/msvc-build/include
+win32:INCLUDEPATH += ../libvpvl/msvc-build/include
 
 # configuration by build type
 CONFIG(debug, debug|release) {
@@ -30,14 +30,6 @@ CONFIG(debug, debug|release) {
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
-  exists(../opencv/debug/lib) {
-    LIBS += -L../opencv/debug/lib -lopencv_core -lopencv_highgui
-    DEFINES += OPENCV_FOUND
-  }
-  exists(../opencv/msvc-build/lib/Debug) {
-    LIBS += -L../opencv/msvc-build/lib/Debug -lopencv_core231d -lopencv_highgui231d
-    DEFINES += OPENCV_FOUND
-  }
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
@@ -46,20 +38,12 @@ CONFIG(release, debug|release) {
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl -lxml2
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
-  exists(../opencv/release/lib) {
-    LIBS += -L../opencv/release/lib -lopencv_core -lopencv_highgui
-    DEFINES += OPENCV_FOUND
-  }
-  exists(../opencv/msvc-build/lib/Release) {
-    LIBS += -L../opencv/msvc-build/lib/Release -lopencv_core231 -lopencv_highgui231
-    DEFINES += OPENCV_FOUND
-  }
 }
 
 # Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lavcodec -lavformat -lavutil -lswscale
 unix:LIBS += -lxml2
-win32:LIBS += -L$$(CMAKE_PREFIX_PATH)/lib -llibxml2
+win32:LIBS += -llibxml2
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII
@@ -191,9 +175,3 @@ HEADERS  += \
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
-
-
-
-
-
-
