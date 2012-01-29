@@ -4,11 +4,10 @@
         <file alias="libvpvl">licenses/MMDAI</file>
         <file alias="Qt">licenses/Qt</file>
         <file alias="MMDAgent">licenses/MMDAgent</file>
-        <file alias="GLEW">licenses/GLEW</file>
-        <file alias="OpenCV">licenses/OpenCV</file>
         <file alias="libxml2">licenses/libxml2</file>
         <file alias="libiconv">licenses/libiconv</file>
         <file alias="zlib">licenses/zlib</file>
+        <file alias="libav">licenses/libav</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>
