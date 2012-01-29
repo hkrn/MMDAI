@@ -184,7 +184,7 @@ void OpenJTalkSpeechEngineInternal::loadSetting(const QString &path, const QStri
                 i--;
                 continue;
             }
-            model = model.replace(QChar(0xa5), QChar('/'));
+            model.replace(QChar(0xa5), QChar('/')).replace(QChar('\\'), QChar('/'));
             m_models.append(path + "/" + model);
         }
         int nstyles = OpenJTalkSpeechEngineInternalGetCount(stream);
