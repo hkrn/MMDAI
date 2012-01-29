@@ -679,7 +679,8 @@ void Script::handleCommand(const ScriptArgument &output)
             if (newLipSyncMotion) {
                 vpvl::VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
                 //newLipSyncMotion->setFull(false);
-                loader->deleteMotion(oldLipSyncMotion);
+                if (oldLipSyncMotion)
+                    loader->deleteMotion(oldLipSyncMotion);
                 loader->setModelMotion(newLipSyncMotion, model);
             }
         }
