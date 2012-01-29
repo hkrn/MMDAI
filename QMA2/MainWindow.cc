@@ -349,7 +349,7 @@ void MainWindow::loadProject()
     if (maybeSaveProject()) {
         const QString &filename = m_sceneWidget->openFileDialog("mainWindow/lastProjectDirectory",
                                                                 tr("Open VPVM file"),
-                                                                tr("VPVM file (*.vpvm)"));
+                                                                tr("VPVM file (*.xml)"));
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
@@ -1375,7 +1375,7 @@ void MainWindow::startExportingVideo()
     }
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
                                              tr("Export scene as a video"),
-                                             tr("Video (*.avi)"),
+                                             "",// tr("Video (*.avi)"),
                                              tr("untitled.avi"));
     if (!filename.isEmpty()) {
         QProgressDialog *progress = new QProgressDialog(this);
@@ -1389,8 +1389,12 @@ void MainWindow::startExportingVideo()
             m_videoEncoder->wait();
         }
         delete m_videoEncoder;
-        m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(), QSize(width, height), 29.97);
-        m_sceneWidget->setPreferredFPS(30);
+        int sceneFPS = m_exportingVideoDialog->sceneFPS();
+        m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(),
+                                          QSize(width, height),
+                                          sceneFPS,
+                                          m_exportingVideoDialog->videoBitrate());
+        m_sceneWidget->setPreferredFPS(sceneFPS);
         if (true) {
             const vpvl::Scene *scene = m_sceneWidget->scene();
             const QString &format = tr("Exporting frame %1 of %2...");
@@ -1428,8 +1432,11 @@ void MainWindow::startExportingVideo()
             progress->setLabelText(format.arg(0).arg(maxRangeIndex));
             connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
             connect(this, SIGNAL(encodingDidStopped()), m_videoEncoder, SLOT(stop()));
+            /* 画面乱れが発生することがあるのでウィンドウがリサイズするのを一旦待つ */
+            QThread::currentThread()->wait(1000);
             /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
             m_videoEncoder->start();
+            float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(vpvl::Scene::kFPS)), totalAdvanced = 0.0f;
             while (!scene->isMotionReachedTo(toIndex)) {
                 if (progress->wasCanceled())
                     break;
@@ -1437,12 +1444,21 @@ void MainWindow::startExportingVideo()
                 if (image.width() != width || image.height() != height)
                     image = image.scaled(width, height);
                 emit sceneDidRendered(image);
-                int value = progress->value() + 1;
+                int value = progress->value();
+                if (totalAdvanced >= 1.0f) {
+                    value += 1;
+                    totalAdvanced = 0.0f;
+                }
                 progress->setValue(value);
                 progress->setLabelText(format.arg(value).arg(maxRangeIndex));
-                m_sceneWidget->advanceMotion(1.0f);
+                m_sceneWidget->advanceMotion(advanceSecond);
                 m_sceneWidget->resize(videoSize);
+                totalAdvanced += advanceSecond;
             }
+            QImage image = m_sceneWidget->grabFrameBuffer();
+            if (image.width() != width || image.height() != height)
+                image = image.scaled(width, height);
+            emit sceneDidRendered(image);
             emit encodingDidStopped();
             /* 画面情報を復元 */
             m_sceneWidget->setGridVisible(visibleGrid);

@@ -71,7 +71,7 @@ void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, 
 
 static AVStream *OpenAudioStream(AVFormatContext *formatContext,
                                  AVOutputFormat *outputFormat,
-                                 int bitRate,
+                                 int bitrate,
                                  int sampleRate)
 {
     AVStream *stream = av_new_stream(formatContext, 0);
@@ -79,7 +79,7 @@ static AVStream *OpenAudioStream(AVFormatContext *formatContext,
     codec->codec_id = outputFormat->audio_codec;
     codec->codec_type = AVMEDIA_TYPE_AUDIO;
     codec->sample_fmt = AV_SAMPLE_FMT_S16;
-    codec->bit_rate = bitRate;
+    codec->bit_rate = bitrate;
     codec->sample_rate = sampleRate;
     codec->channels = 2;
     if (outputFormat->flags & AVFMT_GLOBALHEADER)
@@ -109,13 +109,14 @@ static void WriteAudioFrame(AVFormatContext *formatContext,
 static AVStream *OpenVideoStream(AVFormatContext *formatContext,
                                  AVOutputFormat *outputFormat,
                                  const QSize &size,
+                                 int bitrate,
                                  int fps)
 {
     AVStream *stream = av_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
     codec->codec_id = outputFormat->video_codec;
     codec->codec_type = AVMEDIA_TYPE_VIDEO;
-    codec->bit_rate = 300000;
+    codec->bit_rate = bitrate;
     codec->width = size.width();
     codec->height = size.height();
     codec->time_base.den = fps;
@@ -147,7 +148,7 @@ static void WriteVideoFrame(AVFormatContext *formatContext,
         int outputSize = avcodec_encode_video(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, frame);
         if (outputSize > 0) {
             AVFrame *codedFrame = stream->codec->coded_frame;
-            RescalePresentTimeStamp(stream->codec->coded_frame, stream, packet);
+            RescalePresentTimeStamp(codedFrame, stream, packet);
             if (codedFrame->key_frame)
                 packet.flags |= AV_PKT_FLAG_KEY;
             packet.stream_index = stream->index;
@@ -196,7 +197,7 @@ static AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format)
 }
 
 }
-#endif
+#endif /* LIBAV_FOUND */
 
 bool VideoEncoder::isSupported()
 {
@@ -204,7 +205,7 @@ bool VideoEncoder::isSupported()
     return true;
 #else
     return false;
-#endif
+#endif /* LIBAV_FOUND */
 }
 
 void VideoEncoder::initialize()
@@ -213,17 +214,19 @@ void VideoEncoder::initialize()
     avcodec_init();
     avcodec_register_all();
     av_register_all();
-#endif
+#endif /* LIBAV_FOUND */
 }
 
 VideoEncoder::VideoEncoder(const QString &filename,
                            const QSize &size,
-                           double fps,
+                           int fps,
+                           int bitrate,
                            QObject *parent)
     : QThread(parent),
       m_filename(filename),
       m_size(size),
       m_fps(fps),
+      m_bitrate(bitrate),
       m_running(true)
 {
 }
@@ -245,58 +248,52 @@ void VideoEncoder::run()
     struct SwsContext *scaleContext = 0;
     uint8_t *encodedAudioFrameBuffer = 0, *encodedVideoFrameBuffer = 0;
     try {
+        int width = m_size.width(), height = m_size.height();
         size_t encodedAudioFrameBufferSize = 192000;
-        size_t encodedVideoFrameBufferSize = m_size.width() * m_size.height() * 4;
+        size_t encodedVideoFrameBufferSize = width * height * 4;
         encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
         encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
         videoOutputFormat = CreateVideoFormat(m_filename);
         videoFormatContext = CreateVideoFormatContext(videoOutputFormat, m_filename);
-        if (videoOutputFormat->audio_codec != CODEC_ID_NONE)
-            audioStream = OpenAudioStream(videoFormatContext, videoOutputFormat, 64000, 44100);
+        //if (videoOutputFormat->audio_codec != CODEC_ID_NONE)
+        //    audioStream = OpenAudioStream(videoFormatContext, videoOutputFormat, 64000, 44100);
         if (videoOutputFormat->video_codec != CODEC_ID_NONE)
-            videoStream = OpenVideoStream(videoFormatContext, videoOutputFormat, m_size, m_fps);
+            videoStream = OpenVideoStream(videoFormatContext, videoOutputFormat, m_size, m_bitrate, m_fps);
         if (!(videoOutputFormat->flags & AVFMT_NOFILE)) {
             if (avio_open(&videoFormatContext->pb, m_filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0)
                 throw std::bad_exception();
         }
-        scaleContext = sws_getContext(m_size.width(), m_size.height(),
-                                      PIX_FMT_RGB24,
-                                      m_size.width(), m_size.height(),
-                                      PIX_FMT_YUV420P,
+        scaleContext = sws_getContext(width, height, PIX_FMT_RGBA,
+                                      width, height, PIX_FMT_YUV420P,
                                       SWS_BICUBIC, 0, 0, 0);
         videoFrame = CreateVideoFrame(m_size, PIX_FMT_YUV420P),
-                tmpFrame = CreateVideoFrame(m_size, PIX_FMT_RGB24);
+                tmpFrame = CreateVideoFrame(m_size, PIX_FMT_RGBA);
         avformat_write_header(videoFormatContext, 0);
         double audioPTS = 0.0, videoPTS = 0.0;
-        while (m_running) {
+        bool remainQueue = true;
+        while (m_running || remainQueue) {
             m_mutex.lock();
             if (m_images.size() > 0) {
                 const QImage &image = m_images.dequeue();
                 m_mutex.unlock();
                 audioPTS = ComputePresentTimeStamp(audioStream);
                 videoPTS = ComputePresentTimeStamp(videoStream);
-                int width = image.width(), height = image.height();
-                for (int y = 0; y < height; y++) {
-                    int yh = y * height;
-                    for (int x = 0; x < width; x++) {
-                        int index = yh + x;
+                const int w = image.width(), h = image.height();
+                uint8_t *data = tmpFrame->data[0];
+                int stride = tmpFrame->linesize[0];
+                for (int y = 0; y < h; y++) {
+                    const int ystride = y * stride;
+                    for (int x = 0; x < w; x++) {
+                        int index = ystride + x * 4;
                         const QRgb &rgb = image.pixel(x, y);
-#if 0
-                        tmpFrame->data[0][index] = qRed(rgb);
-                        tmpFrame->data[1][index] = qGreen(rgb);
-                        tmpFrame->data[2][index] = qBlue(rgb);
-                        tmpFrame->data[3][index] = qAlpha(rgb);
-#else
-                        uint8_t *data = tmpFrame->data[0];
                         data[index + 0] = qRed(rgb);
                         data[index + 1] = qGreen(rgb);
                         data[index + 2] = qBlue(rgb);
-#endif
+                        data[index + 3] = qAlpha(rgb);
                     }
                 }
-                sws_scale(scaleContext, tmpFrame->data, tmpFrame->linesize, 0, height,
+                sws_scale(scaleContext, tmpFrame->data, tmpFrame->linesize, 0, h,
                           videoFrame->data, videoFrame->linesize);
-#if 0
                 if (!videoStream || (videoStream && audioStream && audioPTS < videoPTS))
                     WriteAudioFrame(videoFormatContext,
                                     audioStream,
@@ -309,16 +306,10 @@ void VideoEncoder::run()
                                     videoFrame,
                                     encodedVideoFrameBuffer,
                                     encodedVideoFrameBufferSize);
-#else
-                WriteVideoFrame(videoFormatContext,
-                                videoStream,
-                                videoFrame,
-                                encodedVideoFrameBuffer,
-                                encodedVideoFrameBufferSize);
-#endif
             }
             else {
                 m_mutex.unlock();
+                remainQueue = false;
             }
         }
         av_write_trailer(videoFormatContext);
@@ -349,7 +340,7 @@ void VideoEncoder::run()
             avio_close(videoFormatContext->pb);
         av_free(videoFormatContext);
     }
-#endif
+#endif /* LIBAV_FOUND */
 }
 
 void VideoEncoder::enqueueImage(const QImage &image)

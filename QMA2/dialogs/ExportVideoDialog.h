@@ -57,6 +57,8 @@ public:
     int sceneHeight() const;
     int fromIndex() const;
     int toIndex() const;
+    int videoBitrate() const;
+    int sceneFPS() const;
     bool includesGrid() const;
 
 signals:
@@ -70,6 +72,8 @@ private:
     QSpinBox *m_heightBox;
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
+    QSpinBox *m_videoBitrateBox;
+    QSpinBox *m_sceneFPSBox;
     QCheckBox *m_includeGridBox;
     QSettings *m_settings;
 
