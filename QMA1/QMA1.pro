@@ -3,17 +3,19 @@ TARGET = MMDAI
 TEMPLATE = app
 DEFINES += QMA_ENABLE_MULTIPLE_MOTION
 
-exists(/opt/local/lib):LIBS += -L/opt/local/lib
-exists(/opt/local/include):INCLUDEPATH += /opt/local/include
+# CMake prefix path (mainly for win32)
+exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include
+exists(-L$$(CMAKE_PREFIX_PATH)/lib):LIBS += -L$$(CMAKE_PREFIX_PATH)/lib
+
+# Linux, Darwin(OSX), etc...
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
 exists(/usr/local/include):INCLUDEPATH += /usr/local/include
-exists(/opt/local/include/libxml2):INCLUDEPATH += /opt/local/include/libxml2
+
+# libxml2
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
-# GLEW and assimp
-exists(../glew/lib):LIBS += -L../glew/lib
-exists(../glew/include):INCLUDEPATH += ../glew/include
+# assimp
 exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
@@ -22,7 +24,7 @@ LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 win32:MMDA_PATH = ../../MMDAgent/MMDAgent
 win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib -L$${MMDA_PATH}/Library_Julius/lib \
       -L$${MMDA_PATH}/Library_Open_JTalk/lib -L$${MMDA_PATH}/Library_PortAudio/lib -lglew32 -ldsound
-unix:LIBS += -lGLEW -lOpenJTalk -lHTSEngine -ljulius -lportaudio -lxml2
+unix:LIBS += -lOpenJTalk -lHTSEngine -ljulius -lportaudio -lxml2
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
