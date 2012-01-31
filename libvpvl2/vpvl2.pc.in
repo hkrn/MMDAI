@@ -1,0 +1,11 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_PREFIX@/lib
+includedir=@CMAKE_INSTALL_PREFIX@/include
+
+Name: @CMAKE_PROJECT_NAME@
+Requires: bullet
+Description: A library for loading MikuMikuDance's model (PMD/PMX) and motion (VMD).
+Version: @VPVL_VERSION@ 
+Libs: -L${libdir} -lvpvl
+Cflags: -I${includedir}
+
