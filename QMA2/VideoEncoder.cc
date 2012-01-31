@@ -71,12 +71,13 @@ void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, 
 
 static AVStream *OpenAudioStream(AVFormatContext *formatContext,
                                  AVOutputFormat *outputFormat,
+                                 CodecID codecID,
                                  int bitrate,
                                  int sampleRate)
 {
     AVStream *stream = av_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
-    codec->codec_id = outputFormat->audio_codec;
+    codec->codec_id = codecID;
     codec->codec_type = AVMEDIA_TYPE_AUDIO;
     codec->sample_fmt = AV_SAMPLE_FMT_S16;
     codec->bit_rate = bitrate;
@@ -108,13 +109,15 @@ static void WriteAudioFrame(AVFormatContext *formatContext,
 
 static AVStream *OpenVideoStream(AVFormatContext *formatContext,
                                  AVOutputFormat *outputFormat,
+                                 CodecID codecID,
+                                 PixelFormat pixelFormat,
                                  const QSize &size,
                                  int bitrate,
                                  int fps)
 {
     AVStream *stream = av_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
-    codec->codec_id = outputFormat->video_codec;
+    codec->codec_id = codecID;
     codec->codec_type = AVMEDIA_TYPE_VIDEO;
     codec->bit_rate = bitrate;
     codec->width = size.width();
@@ -122,7 +125,7 @@ static AVStream *OpenVideoStream(AVFormatContext *formatContext,
     codec->time_base.den = fps;
     codec->time_base.num = 1;
     codec->gop_size = 12;
-    codec->pix_fmt = PIX_FMT_YUV420P;
+    codec->pix_fmt = pixelFormat;
     if (outputFormat->flags & AVFMT_GLOBALHEADER)
         codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
     OpenEncodingCodec(codec);
@@ -220,13 +223,17 @@ void VideoEncoder::initialize()
 VideoEncoder::VideoEncoder(const QString &filename,
                            const QSize &size,
                            int fps,
-                           int bitrate,
+                           int videoBitrate,
+                           int audioBitrate,
+                           int audioSampleRate,
                            QObject *parent)
     : QThread(parent),
       m_filename(filename),
       m_size(size),
       m_fps(fps),
-      m_bitrate(bitrate),
+      m_videoBitrate(videoBitrate),
+      m_audioBitrate(audioBitrate),
+      m_audioSampleRate(audioSampleRate),
       m_running(true)
 {
 }
@@ -240,6 +247,8 @@ VideoEncoder::~VideoEncoder()
 void VideoEncoder::run()
 {
 #ifdef LIBAV_FOUND
+    CodecID videoCodecID = CODEC_ID_PNG;
+    PixelFormat sourcePixelFormat = PIX_FMT_RGBA, destPixelFormat = PIX_FMT_RGB24;
     AVOutputFormat *videoOutputFormat = 0;
     AVFormatContext *videoFormatContext = 0;
     AVStream *audioStream = 0;
@@ -255,19 +264,31 @@ void VideoEncoder::run()
         encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
         videoOutputFormat = CreateVideoFormat(m_filename);
         videoFormatContext = CreateVideoFormatContext(videoOutputFormat, m_filename);
-        //if (videoOutputFormat->audio_codec != CODEC_ID_NONE)
-        //    audioStream = OpenAudioStream(videoFormatContext, videoOutputFormat, 64000, 44100);
-        if (videoOutputFormat->video_codec != CODEC_ID_NONE)
-            videoStream = OpenVideoStream(videoFormatContext, videoOutputFormat, m_size, m_bitrate, m_fps);
+        /*
+        audioStream = OpenAudioStream(videoFormatContext,
+                                      videoOutputFormat,
+                                      videoOutputFormat->audio_codec,
+                                      m_audioBitrate,
+                                      m_audioSampleRate);
+                                      */
+        videoStream = OpenVideoStream(videoFormatContext,
+                                      videoOutputFormat,
+                                      videoCodecID,
+                                      destPixelFormat,
+                                      m_size,
+                                      m_videoBitrate,
+                                      m_fps);
         if (!(videoOutputFormat->flags & AVFMT_NOFILE)) {
             if (avio_open(&videoFormatContext->pb, m_filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0)
                 throw std::bad_exception();
         }
-        scaleContext = sws_getContext(width, height, PIX_FMT_RGBA,
-                                      width, height, PIX_FMT_YUV420P,
-                                      SWS_BICUBIC, 0, 0, 0);
-        videoFrame = CreateVideoFrame(m_size, PIX_FMT_YUV420P),
-                tmpFrame = CreateVideoFrame(m_size, PIX_FMT_RGBA);
+        if (sourcePixelFormat != destPixelFormat) {
+            scaleContext = sws_getContext(width, height, sourcePixelFormat,
+                                          width, height, destPixelFormat,
+                                          SWS_BICUBIC, 0, 0, 0);
+        }
+        videoFrame = CreateVideoFrame(m_size, destPixelFormat);
+        tmpFrame = CreateVideoFrame(m_size, sourcePixelFormat);
         avformat_write_header(videoFormatContext, 0);
         double audioPTS = 0.0, videoPTS = 0.0;
         bool remainQueue = true;
@@ -292,20 +313,25 @@ void VideoEncoder::run()
                         data[index + 3] = qAlpha(rgb);
                     }
                 }
-                sws_scale(scaleContext, tmpFrame->data, tmpFrame->linesize, 0, h,
-                          videoFrame->data, videoFrame->linesize);
-                if (!videoStream || (videoStream && audioStream && audioPTS < videoPTS))
+                if (scaleContext) {
+                    sws_scale(scaleContext,
+                              tmpFrame->data, tmpFrame->linesize, 0, h,
+                              videoFrame->data, videoFrame->linesize);
+                }
+                if (!videoStream || (videoStream && audioStream && audioPTS < videoPTS)) {
                     WriteAudioFrame(videoFormatContext,
                                     audioStream,
                                     0,
                                     encodedAudioFrameBuffer,
                                     encodedAudioFrameBufferSize);
-                else
+                }
+                else {
                     WriteVideoFrame(videoFormatContext,
                                     videoStream,
-                                    videoFrame,
+                                    scaleContext ? videoFrame : tmpFrame,
                                     encodedVideoFrameBuffer,
                                     encodedVideoFrameBufferSize);
+                }
             }
             else {
                 m_mutex.unlock();
@@ -319,8 +345,6 @@ void VideoEncoder::run()
     }
     delete[] encodedAudioFrameBuffer;
     delete[] encodedVideoFrameBuffer;
-    if (scaleContext)
-        sws_freeContext(scaleContext);
     if (videoFrame) {
         avpicture_free(reinterpret_cast<AVPicture *>(videoFrame));
         av_free(videoFrame);
@@ -329,6 +353,8 @@ void VideoEncoder::run()
         avpicture_free(reinterpret_cast<AVPicture *>(tmpFrame));
         av_free(tmpFrame);
     }
+    if (scaleContext)
+        sws_freeContext(scaleContext);
     if (videoFormatContext) {
         const int nstreams = videoFormatContext->nb_streams;
         for (int i = 0; i < nstreams; i++) {

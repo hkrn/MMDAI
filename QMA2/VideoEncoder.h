@@ -55,7 +55,9 @@ public:
     explicit VideoEncoder(const QString &filename,
                           const QSize &size,
                           int fps,
-                          int bitrate,
+                          int videoBitrate,
+                          int audioBitrate,
+                          int audioSampleRate,
                           QObject *parent = 0);
     ~VideoEncoder();
 
@@ -72,7 +74,9 @@ private:
     QQueue<QImage> m_images;
     QSize m_size;
     int m_fps;
-    int m_bitrate;
+    int m_videoBitrate;
+    int m_audioBitrate;
+    int m_audioSampleRate;
     bool m_running;
 };
 
