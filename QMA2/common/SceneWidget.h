@@ -84,6 +84,12 @@ class SceneWidget : public QGLWidget, protected QGLFunctions
     Q_OBJECT
 
 public:
+    enum EditMode {
+        kSelect,
+        kRotate,
+        kMove
+    };
+
     static bool isAccelerationSupported();
 
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
@@ -94,6 +100,7 @@ public:
     vpvl::Scene *mutableScene();
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
+    void setEditMode(EditMode value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
@@ -113,8 +120,8 @@ public:
     void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
     Handles *handles() const { return m_handles; }
     vpvl::Bone *selectedBone() const { return m_bone; }
+    EditMode editMode() const { return m_editMode; }
     bool isGridVisible() const;
-    bool isBoneWireframeVisible() const { return m_visibleBones; }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
@@ -179,7 +186,6 @@ public slots:
     void translateModel(const vpvl::Vector3 &delta) { translateModel(selectedModel(), delta); }
     void updateSceneMotion() { seekMotion(m_frameIndex, true); }
     void updateMotion() { seekMotion(m_frameIndex, false); }
-    void setBoneWireframeVisible(bool value) { m_visibleBones = value; }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
@@ -254,6 +260,7 @@ private:
     Handles *m_handles;
     QSettings *m_settings;
     QElapsedTimer m_timer;
+    EditMode m_editMode;
     float m_lastDistance;
     float m_prevElapsed;
     float m_frameIndex;
@@ -262,7 +269,6 @@ private:
     int m_interval;
     int m_internalTimerID;
     int m_handleFlags;
-    bool m_visibleBones;
     bool m_playing;
     bool m_enableAcceleration;
     bool m_enableBoneMove;

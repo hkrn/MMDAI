@@ -121,7 +121,8 @@ public:
     bool testHitImage(const QPointF &p,
                       int &flags,
                       QRectF &rect);
-    void draw();
+    void drawImageHandles();
+    void drawModelHandles();
     const vpvl::Vector3 angle(const vpvl::Vector3 &pos) const;
 
     void setPoint3D(const vpvl::Vector3 &value);
@@ -146,8 +147,6 @@ private slots:
     void updateBone();
 
 private:
-    void drawImageHandles();
-    void drawModelHandles();
     void drawModel(const Handles::Model &model,
                    const QColor &color,
                    int requiredVisibilityFlags);

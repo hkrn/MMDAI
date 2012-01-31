@@ -654,10 +654,6 @@ void MainWindow::buildUI()
     m_actionShowGrid->setCheckable(true);
     m_actionShowGrid->setChecked(m_sceneWidget->isGridVisible());
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), m_sceneWidget, SLOT(setGridVisible(bool)));
-    m_actionShowBones = new QAction(this);
-    m_actionShowBones->setCheckable(true);
-    m_actionShowBones->setChecked(m_sceneWidget->isBoneWireframeVisible());
-    connect(m_actionShowBones, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setBoneWireframeVisible(bool)));
     m_actionShowModelDialog = new QAction(this);
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
@@ -832,7 +828,6 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionEnablePhysics);
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionShowGrid);
-    m_menuProject->addAction(m_actionShowBones);
     m_menuProject->addAction(m_actionShowModelDialog);
     m_menuProject->addAction(m_actionShowBlackBackground);
     m_menuBar->addMenu(m_menuProject);
@@ -958,7 +953,6 @@ void MainWindow::bindActions()
     m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
-    m_actionShowBones->setShortcut(m_settings.value(kPrefix + "showBones", "Ctrl+Shift+B").toString());
     m_actionShowModelDialog->setShortcut(m_settings.value(kPrefix + "showModelDialog").toString());
     m_actionShowBlackBackground->setShortcut(m_settings.value(kPrefix + "showBlackBackground").toString());
     m_actionZoomIn->setShortcut(m_settings.value(kPrefix + "zoomIn", QKeySequence(QKeySequence::ZoomIn).toString()).toString());
@@ -1068,8 +1062,6 @@ void MainWindow::retranslate()
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
-    m_actionShowBones->setText(tr("Show bone wireframe"));
-    m_actionShowBones->setStatusTip(tr("Show or hide bone wireframe."));
     m_actionShowModelDialog->setText(tr("Show model dialog"));
     m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
     m_actionShowBlackBackground->setText(tr("Set scene background black"));
@@ -1393,7 +1385,9 @@ void MainWindow::startExportingVideo()
         m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(),
                                           QSize(width, height),
                                           sceneFPS,
-                                          m_exportingVideoDialog->videoBitrate());
+                                          m_exportingVideoDialog->videoBitrate(),
+                                          64000,
+                                          44100);
         m_sceneWidget->setPreferredFPS(sceneFPS);
         if (true) {
             const vpvl::Scene *scene = m_sceneWidget->scene();

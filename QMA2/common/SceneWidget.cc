@@ -111,6 +111,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_bone(0),
     m_handles(0),
     m_settings(settings),
+    m_editMode(kSelect),
     m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
     m_frameIndex(0.0f),
@@ -119,7 +120,6 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_interval(1000.0f / vpvl::Scene::kFPS),
     m_internalTimerID(0),
     m_handleFlags(0),
-    m_visibleBones(false),
     m_playing(false),
     m_enableAcceleration(false),
     m_enableBoneMove(false),
@@ -143,7 +143,6 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
     m_enableAcceleration = m_settings->value("sceneWidget/isAccelerationEnabled", false).toBool();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
-    setBoneWireframeVisible(m_settings->value("sceneWidget/isBoneWireframeVisible", false).toBool());
     setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
@@ -825,7 +824,6 @@ bool SceneWidget::event(QEvent *event)
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
     m_settings->setValue("sceneWidget/isAccelerationEnabled", isAccelerationEnabled());
-    m_settings->setValue("sceneWidget/isBoneWireframeVisible", isBoneWireframeVisible());
     m_settings->setValue("sceneWidget/isGridVisible", isGridVisible());
     m_settings->setValue("sceneWidget/isPhysicsEnabled", isPhysicsEnabled());
     m_settings->setValue("sceneWidget/showModelDialog", showModelDialog());
@@ -1035,7 +1033,7 @@ void SceneWidget::paintGL()
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
-    if (m_visibleBones) {
+    if (m_editMode == kSelect) {
         glUseProgram(0);
         m_debugDrawer->drawModelBones(selectedModel(), true, true);
     }
@@ -1044,7 +1042,9 @@ void SceneWidget::paintGL()
     EnableMultisample();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    m_handles->draw();
+    m_handles->drawImageHandles();
+    if (m_editMode == kRotate)
+        m_handles->drawModelHandles();
     m_debugDrawer->drawBoneTransform(selectedBone());
     m_info->draw();
     painter.endNativePainting();

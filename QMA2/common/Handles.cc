@@ -427,14 +427,6 @@ bool Handles::testHitImage(const QPointF &p,
     return flags != kNone;
 }
 
-void Handles::draw()
-{
-    if (!m_visible)
-        return;
-    drawModelHandles();
-    drawImageHandles();
-}
-
 const vpvl::Vector3 Handles::angle(const vpvl::Vector3 &pos) const
 {
     return (pos - m_bone->localTransform().getOrigin()).normalized();
@@ -541,6 +533,8 @@ void Handles::updateBone()
 
 void Handles::drawImageHandles()
 {
+    if (!m_visible)
+        return;
     QGLFunctions func(QGLContext::currentContext());
     func.glUseProgram(0);
     glDisable(GL_DEPTH_TEST);
@@ -578,7 +572,7 @@ void Handles::drawImageHandles()
 
 void Handles::drawModelHandles()
 {
-    if (!m_program.isLinked() || !m_bone)
+    if (!m_visible || !m_program.isLinked() || !m_bone)
         return;
     float matrix[16];
     const vpvl::Scene *scene = m_widget->scene();

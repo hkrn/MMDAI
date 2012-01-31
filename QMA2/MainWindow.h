@@ -204,7 +204,6 @@ private:
     QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;
-    QAction *m_actionShowBones;
     QAction *m_actionShowModelDialog;
     QAction *m_actionShowBlackBackground;
     QAction *m_actionZoomIn;
