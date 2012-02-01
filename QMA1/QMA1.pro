@@ -36,6 +36,7 @@ win32:INCLUDEPATH += ../libvpvl/msvc-build/include $${MMDA_PATH}
 CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug \
                       -lvpvl -lPortAudio_D -lhts_engine_API_D -lJulius_D -lOpen_JTalk_D -lws2_32
+  macx:LIBS        += -framework OpenCL
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
@@ -43,6 +44,7 @@ CONFIG(debug, debug|release) {
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
                       -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk -lws2_32
+  macx:LIBS        += -framework OpenCL
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
