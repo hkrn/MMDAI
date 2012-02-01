@@ -96,7 +96,7 @@ public:
     {
         m_worldTransform = worldTrans;
         const btMatrix3x3 &matrix = worldTrans.getBasis();
-        m_worldTransform.setOrigin(internal::kZeroV);
+        m_worldTransform.setOrigin(kZeroV);
         m_worldTransform = m_boneTransform * m_worldTransform;
         m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
         m_worldTransform.setBasis(matrix);

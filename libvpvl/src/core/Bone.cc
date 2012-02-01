@@ -250,7 +250,7 @@ void Bone::updateRotation()
         updateTransform(q);
         break;
     case kFollowRotate:
-        q = m_rotation * internal::kZeroQ.slerp(m_childBone->m_rotation, m_rotateCoef);
+        q = m_rotation * kZeroQ.slerp(m_childBone->m_rotation, m_rotateCoef);
         updateTransform(q);
         break;
     default:

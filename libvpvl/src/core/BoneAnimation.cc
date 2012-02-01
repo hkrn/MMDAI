@@ -52,8 +52,8 @@ struct InternalBoneKeyFrameList {
     bool isNull() const {
         if (keyFrames.count() == 1) {
             const BoneKeyframe *keyFrame = keyFrames[0];
-            return keyFrame->position() == internal::kZeroV &&
-                    keyFrame->rotation() == internal::kZeroQ;
+            return keyFrame->position() == kZeroV &&
+                    keyFrame->rotation() == kZeroQ;
         }
         return false;
     }

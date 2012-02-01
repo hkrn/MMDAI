@@ -553,8 +553,8 @@ void PMDModel::smearAllBonesToDefault(float rate)
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
-        bone->setPosition(internal::kZeroV.lerp(bone->position(), rate));
-        bone->setRotation(internal::kZeroQ.slerp(bone->rotation(), rate));
+        bone->setPosition(kZeroV.lerp(bone->position(), rate));
+        bone->setRotation(kZeroQ.slerp(bone->rotation(), rate));
     }
 }
 

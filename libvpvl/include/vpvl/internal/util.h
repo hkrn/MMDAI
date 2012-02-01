@@ -54,8 +54,6 @@ namespace internal
 
 static const int kCurrentVersion = VPVL_VERSION;
 static const char *const kCurrentVersionString = VPVL_VERSION_STRING;
-static const Vector3 kZeroV = Vector3(0.0f, 0.0f, 0.0f);
-static const Quaternion kZeroQ = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 static inline float spline1(const float t, const float p1, const float p2)
 {
