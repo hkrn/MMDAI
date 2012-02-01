@@ -170,12 +170,20 @@ void SceneLoader::deleteModel(vpvl::PMDModel *&model)
      * Project クラスから論理削除する。順番が重要でこの順番で行う必要があり、変更してはいけない。
      * deleteModel の引数は delete した上で 0 にされるので、delete される前のポインタを保持しておき、
      * Project で論理削除する(二重解放になるので Project クラスで物理削除してはいけない)。
+     *
+     * vpvl::Project にひもづけられるモーションの削除の観点を忘れていたので、
+     * モデルに属するモーションを Project から解除するように変更
      */
     if (m_project->containsModel(model)) {
         const QUuid uuid(m_project->modelUUID(model).c_str());
         emit modelWillDelete(model, uuid);
         vpvl::PMDModel *ptr = model;
-        model->deleteAllMotions();
+        const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
+        int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            vpvl::VMDMotion *motion = motions[i];
+            m_project->deleteMotion(motion, model);
+        }
         m_renderer->deleteModel(model);
         m_renderer->setSelectedModel(0);
         m_project->removeModel(ptr);

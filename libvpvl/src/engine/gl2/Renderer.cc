@@ -1736,8 +1736,13 @@ void Renderer::releaseProject(Project *project)
     const std::vector<std::string> &modelUUIDs = project->modelUUIDs();
     for (std::vector<std::string>::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         PMDModel *model = project->model(*it);
+        const Array<VMDMotion *> &motions = model->motions();
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            VMDMotion *motion = motions[i];
+            project->deleteMotion(motion, model);
+        }
         project->removeModel(model);
-        model->deleteAllMotions();
         deleteModel(model);
     }
 #else
