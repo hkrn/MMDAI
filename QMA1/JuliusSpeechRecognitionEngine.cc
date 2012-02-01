@@ -89,7 +89,7 @@ static void BeginRecognition(Recog *recog, void *ptr)
 {
     Q_UNUSED(recog);
     JuliusSpeechRecognitionEngine *engine = static_cast<JuliusSpeechRecognitionEngine*>(ptr);
-    JuliusSpeechRecognitionEngineSendEvent(engine, JuliusSpeechRecognitionEngine::kRecogStartEvent, QString());
+    JuliusSpeechRecognitionEngineSendEvent(engine, JuliusSpeechRecognitionEngine::kRecogStartEvent, QList<QVariant>());
 }
 
 static void GetRecognitionResult(Recog *recog, void *ptr)
@@ -100,28 +100,23 @@ static void GetRecognitionResult(Recog *recog, void *ptr)
         return;
 
     QString ret;
+    QList<QVariant> result;
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     Sentence *sentence = &process->result.sent[0];
     WORD_ID *words = sentence->word;
     int nwords = sentence->word_num;
-    bool first = true;
-    /* 単語ごとにわかれているので、カンマでつなげてひとつの文章にしておく */
+    /* 複数の単語を QList<QVariant> に変換してイベントの引数として使えるようにする */
     for (int i = 0; i < nwords; i++) {
         char *str = process->lm->winfo->woutput[words[i]];
-        if (qstrlen(str) > 0) {
-            if (!first)
-                ret += ",";
-            ret += codec->toUnicode(str);
-            if (first)
-                first = false;
-        }
+        if (qstrlen(str) > 0)
+            result << codec->toUnicode(str);
     }
 
     /* 単語が取得できていれば kRecogStopEvent を投げて対応するコマンドの処理を行う */
-    if (!first) {
+    if (!result.isEmpty()) {
         JuliusSpeechRecognitionEngine *engine = static_cast<JuliusSpeechRecognitionEngine *>(ptr);
         qDebug("Recognized as %s", qPrintable(ret));
-        JuliusSpeechRecognitionEngineSendEvent(engine, JuliusSpeechRecognitionEngine::kRecogStopEvent, ret);
+        JuliusSpeechRecognitionEngineSendEvent(engine, JuliusSpeechRecognitionEngine::kRecogStopEvent, result);
     }
     else {
         qWarning("Failed recognition");
@@ -130,12 +125,9 @@ static void GetRecognitionResult(Recog *recog, void *ptr)
 
 void JuliusSpeechRecognitionEngineSendEvent(JuliusSpeechRecognitionEngine *engine,
                                             const QString &type,
-                                            const QString &value)
+                                            const QList<QVariant> &arguments)
 {
-    QList<QVariant> a;
-    if (!value.isEmpty())
-        a << value;
-    emit engine->eventDidPost(type, a);
+    emit engine->eventDidPost(type, arguments);
 }
 
 const QString JuliusSpeechRecognitionEngine::kRecogStartEvent = "RECOG_EVENT_START";

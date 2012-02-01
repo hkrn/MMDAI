@@ -53,8 +53,8 @@ class JuliusSpeechRecognitionEngine : public QObject
     Q_OBJECT
 
     friend void JuliusSpeechRecognitionEngineSendEvent(JuliusSpeechRecognitionEngine *engine,
-	                                                   const QString &type,
-													   const QString &value);
+                                                       const QString &type,
+                                                       const QList<QVariant> &arguments);
 
 public:
     static const QString kRecogStartEvent;
@@ -79,7 +79,7 @@ private:
     QFutureWatcher<bool> m_watcher;
     QSystemTrayIcon *m_tray;
     QTranslator m_translator;
-	JuliusSpeechRecognitionEngineInternal *m_internal;
+        JuliusSpeechRecognitionEngineInternal *m_internal;
 
     Q_DISABLE_COPY(JuliusSpeechRecognitionEngine)
 };

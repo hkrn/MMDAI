@@ -502,7 +502,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 bool value = false;
                 parameter.isLoopEnabled = false;
                 if (argc >= 4) {
-                    parseEnable(argv[3], "FULL", "PART", value);
+                    parseEnable(argv[3], "PART", "FULL", value);
                     motion->setNullFrameEnable(value);
                 }
                 if (argc >= 5) {
@@ -587,6 +587,7 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
             vpvl::VMDMotion *motion = m_motions.value(motionName);
             loader->deleteMotion(motion);
+            m_motions.remove(motionName);
         }
         else {
             qWarning("%s", qPrintable(kModelNotFound.arg(type).arg(modelName)));
@@ -935,15 +936,16 @@ bool Script::setTransition(const ScriptArgument &input,
         /* RECOG_EVENT_STOP は引数(単語)が複数あるため、特別扱いになっている */
         if (input.type == "RECOG_EVENT_STOP") {
             for (int i = 0; i < argc; i++) {
+                const QString &arg = args[i];
                 jumped = false;
                 /* 一致する単語を探し、ひとつでも見つかれば該当の状態遷移に進ませる */
                 for (int j = 0; j < arcargc; j++) {
-                    if (args[i] == arcargs[i]) {
+                    if (arg == arcargs[j]) {
                         jumped = true;
                         break;
                     }
                 }
-                if (!jumped)
+                if (jumped)
                     break;
             }
         }
