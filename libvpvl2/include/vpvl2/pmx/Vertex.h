@@ -62,7 +62,7 @@ public:
     Vertex();
     ~Vertex();
 
-    bool preparse(const uint8_t *data, size_t &size);
+    static bool preparse(const uint8_t *data, size_t &size, size_t indexSize);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

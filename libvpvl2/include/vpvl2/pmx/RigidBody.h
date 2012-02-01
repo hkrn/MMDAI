@@ -69,12 +69,10 @@ public:
     RigidBody();
     ~RigidBody();
 
-    static bool preparse(const uint8_t *data, size_t &size);
+    static bool preparse(const uint8_t *data, size_t &size, size_t indexSize);
 
-    void read(const uint8_t *data, BoneList *bones);
+    void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    void transformBone();
-    void setKinematic(bool value);
 
     const uint8_t *name() const {
         return m_name;

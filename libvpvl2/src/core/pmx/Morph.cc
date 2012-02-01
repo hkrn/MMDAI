@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2012  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -36,67 +34,35 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMX_CONSTRAINT_H_
-#define VPVL2_PMX_CONSTRAINT_H_
-
-#include "vpvl2/pmx/RigidBody.h"
-
-class btGeneric6DofConstraint;
-class btGeneric6DofSpringConstraint;
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
 namespace vpvl2
 {
 namespace pmx
 {
 
-/**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * Constraint class represents a consraint of a Polygon Model Data object.
- */
-
-class VPVL2_API Constraint
+Morph::Morph()
 {
-public:
-    Constraint();
-    ~Constraint();
+}
 
-    static bool preparse(const uint8_t *data, size_t &size);
+Morph::~Morph()
+{
+}
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
+bool Morph::preparse(const uint8_t *data, size_t &rest, size_t indexSize)
+{
+    return true;
+}
 
-    const uint8_t *name() const {
-        return m_name;
-    }
-    btGeneric6DofConstraint *constraint() const {
-        return reinterpret_cast<btGeneric6DofConstraint *>(m_constraint);
-    }
+void Morph::read(const uint8_t *data)
+{
+}
 
-private:
-    uint8_t *m_name;
-    btGeneric6DofSpringConstraint *m_constraint;
-    Vector3 m_position;
-    Vector3 m_rotation;
-    Vector3 m_limitPositionFrom;
-    Vector3 m_limitPositionTo;
-    Vector3 m_limitRotationFrom;
-    Vector3 m_limitRotationTo;
-    float m_stiffness[6];
-    int m_bodyA;
-    int m_bodyB;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Constraint)
-};
-
-typedef Array<Constraint*> ConstraintList;
+void Morph::write(uint8_t *data) const
+{
+}
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-
-#endif
 

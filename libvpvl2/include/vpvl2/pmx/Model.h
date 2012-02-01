@@ -71,6 +71,23 @@ public:
         kInvalidHeaderError,
         kInvalidSignatureError,
         kInvalidVersionError,
+        kInvalidFlagSizeError,
+        kInvalidNameSizeError,
+        kInvalidEnglishNameSizeError,
+        kInvalidCommentSizeError,
+        kInvalidEnglishCommentSizeError,
+        kInvalidVerticesError,
+        kInvalidIndicesError,
+        kInvalidTextureSizeError,
+        kInvalidTextureError,
+        kInvalidMaterialsError,
+        kInvalidBonesError,
+        kInvalidMorphsError,
+        kInvalidDisplayNameSizeError,
+        kInvalidDisplayNameError,
+        kInvalidDisplayEnglishNameError,
+        kInvalidRigidBodiesError,
+        kInvalidConstraintsError,
         kMaxErrors
     };
 
@@ -78,7 +95,30 @@ public:
     {
         const uint8_t *basePtr;
         const uint8_t *namePtr;
+        bool isUTF8;
+        size_t additionalUVSize;
+        size_t vertexIndexSize;
+        size_t textureIndexSize;
+        size_t materialIndexSize;
+        size_t boneIndexSize;
+        size_t morphIndexSize;
+        size_t rigidBodyIndexSize;
+        size_t nameSize;
+        const uint8_t *englishNamePtr;
+        size_t englishNameSize;
         const uint8_t *commentPtr;
+        size_t commentSize;
+        const uint8_t *englishCommentPtr;
+        size_t englishCommentSize;
+        const uint8_t *verticesPtr;
+        const uint8_t *indicesPtr;
+        const uint8_t *texturesPtr;
+        const uint8_t *materialsPtr;
+        const uint8_t *bonesPtr;
+        const uint8_t *morphsPtr;
+        const uint8_t *displayNamesPtr;
+        const uint8_t *rigidBodiesPtr;
+        const uint8_t *constraintsPtr;
     };
 
     /**
@@ -97,6 +137,8 @@ public:
     bool load(const uint8_t *data, size_t size);
 
     void save(uint8_t *data) const;
+
+    Error error() const { return m_error; }
 
 private:
     void release();

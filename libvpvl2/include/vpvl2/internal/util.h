@@ -112,6 +112,20 @@ inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
+inline bool sizeVariant(uint8_t *&ptr, size_t &rest, size_t &size, size_t variant)
+{
+    assert(ptr != NULL);
+    switch (variant) {
+    case 1:
+        return size8(ptr, rest, size);
+    case 2:
+        return size16(ptr, rest, size);
+    case 4:
+    default:
+        return size32(ptr, rest, size);
+    }
+}
+
 inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
     assert(ptr != NULL);

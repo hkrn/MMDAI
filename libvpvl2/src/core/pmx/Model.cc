@@ -51,7 +51,7 @@ namespace pmx
 #pragma pack(push, 1)
 struct Header
 {
-    uint8_t signature[3];
+    uint8_t signature[4];
     float version;
 };
 #pragma pack(pop)
@@ -68,104 +68,168 @@ Model::~Model()
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
-    // Header[3] + Version[4] + Name[20] + Comment[256]
     if (!data || sizeof(Header) > rest) {
         m_error = kInvalidHeaderError;
         return false;
     }
-
+    // header
     uint8_t *ptr = const_cast<uint8_t *>(data);
     Header *header = reinterpret_cast<Header *>(ptr);
     info.basePtr = ptr;
 
     // Check the signature and version is correct
-    if (memcmp(header->signature, "PMX", 3) != 0) {
+    if (memcmp(header->signature, "PMX ", 4) != 0) {
         m_error = kInvalidSignatureError;
         return false;
     }
+
     // version
     if (header->version != 2.0) {
         m_error = kInvalidVersionError;
         return false;
     }
+
     // flags
-    if (sizeof(uint8_t) > rest) {
-        m_error = 0;
+    size_t flagSize;
+    if (!internal::size8(ptr, rest, flagSize) || flagSize != 8) {
+        m_error = kInvalidFlagSizeError;
         return false;
     }
+    info.isUTF8 = *reinterpret_cast<uint8_t *>(ptr);
+    info.additionalUVSize = *reinterpret_cast<uint8_t *>(ptr + 1);
+    info.vertexIndexSize = *reinterpret_cast<uint8_t *>(ptr + 2);
+    info.textureIndexSize = *reinterpret_cast<uint8_t *>(ptr + 3);
+    info.materialIndexSize = *reinterpret_cast<uint8_t *>(ptr + 4);
+    info.boneIndexSize = *reinterpret_cast<uint8_t *>(ptr + 5);
+    info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
+    info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
+    ptr += flagSize;
+
     // name
     size_t nameSize;
     if (!internal::size32(ptr, rest, nameSize)) {
-        m_error = 0;
+        m_error = kInvalidNameSizeError;
         return false;
     }
+    info.namePtr = ptr;
+    info.nameSize = nameSize;
+
     // english name
     size_t englishNameSize;
     if (!internal::size32(ptr, rest, englishNameSize)) {
-        m_error = 0;
+        m_error = kInvalidEnglishNameSizeError;
         return false;
     }
+    info.englishNamePtr = ptr;
+    info.englishNameSize = englishNameSize;
+
     // comment
     size_t commentSize;
     if (!internal::size32(ptr, rest, commentSize)) {
-        m_error = 0;
+        m_error = kInvalidCommentSizeError;
         return false;
     }
+    info.commentPtr = ptr;
+    info.commentSize = commentSize;
+
     // english comment
     size_t englishCommentSize;
     if (!internal::size32(ptr, rest, englishCommentSize)) {
-        m_error = 0;
+        m_error = kInvalidEnglishCommentSizeError;
         return false;
     }
+    info.englishCommentPtr = ptr;
+    info.englishCommentSize = englishCommentSize;
+
     // vertex size
-    if (!Vertex::preparse(ptr, rest)) {
-        m_error = 0;
+    info.verticesPtr = ptr + sizeof(int);
+    if (!Vertex::preparse(ptr, rest, info.vertexIndexSize)) {
+        m_error = kInvalidVerticesError;
         return false;
     }
+
     // indices
     size_t nindices;
+    info.indicesPtr = ptr + sizeof(int);
     if (!internal::size32(ptr, rest, nindices)) {
-        m_error = 0;
+        m_error = kInvalidIndicesError;
         return false;
     }
+
     // texture lookup table
-    if (sizeof(int) > rest) {
-        m_error = 0;
+    size_t ntextures;
+    if (!internal::size32(ptr, rest, ntextures)) {
+        m_error = kInvalidTextureSizeError;
         return false;
     }
-    int ntextures = *reinterpret_cast<int *>(ptr);
-    for (int i = 0; i < ntextures; i++) {
-        int nTextureSize;
+    info.texturesPtr = ptr;
+    for (size_t i = 0; i < ntextures; i++) {
+        size_t nTextureSize;
         if (!internal::size32(ptr, rest, nTextureSize)) {
-            m_error = 0;
+            m_error = kInvalidTextureError;
             return false;
         }
     }
+
     // material
-    if (!Material::preparse(ptr, rest)) {
-        m_error = 0;
+    info.materialsPtr = ptr + sizeof(int);
+    if (!Material::preparse(ptr, rest, info.materialIndexSize)) {
+        m_error = kInvalidMaterialsError;
         return false;
     }
+
     // bone
-    if (!Bone::preparse(ptr, rest)) {
-        m_error = 0;
+    info.bonesPtr = ptr + sizeof(int);
+    if (!Bone::preparse(ptr, rest, info.boneIndexSize)) {
+        m_error = kInvalidBonesError;
         return false;
     }
+
     // morph
-    if (!Morph::preparse(ptr, rest)) {
-        m_error = 0;
+    info.morphsPtr = ptr + sizeof(int);
+    if (!Morph::preparse(ptr, rest, info.morphIndexSize)) {
+        m_error = kInvalidMorphsError;
         return false;
     }
-    // TODO
+
+    // display name table
+    size_t nDisplayNames;
+    if (!internal::size32(ptr, rest, nDisplayNames)) {
+        m_error = kInvalidDisplayNameSizeError;
+        return false;
+    }
+    info.displayNamesPtr = ptr;
+    for (size_t i = 0; i < nDisplayNames; i++) {
+        size_t nNameSize;
+        if (!internal::size32(ptr, rest, nNameSize)) {
+            m_error = kInvalidTextureError;
+            return false;
+        }
+        size_t nEnglishNameSize;
+        if (!internal::size32(ptr, rest, nEnglishNameSize)) {
+            m_error = kInvalidTextureError;
+            return false;
+        }
+        if (sizeof(uint8_t) > rest) {
+            return false;
+        }
+        if (!internal::size32(ptr, rest, size)) {
+            return false;
+        }
+        // TODO:
+    }
 
     // rigidbody
-    if (!RigidBody::preparse(ptr, rest)) {
-        m_error = 0;
+    info.rigidBodiesPtr = ptr + sizeof(int);
+    if (!RigidBody::preparse(ptr, rest, info.rigidBodyIndexSize)) {
+        m_error = kInvalidRigidBodiesError;
         return false;
     }
+
     // constraint
+    info.constraintsPtr = ptr + sizeof(int);
     if (!Constraint::preparse(ptr, rest)) {
-        m_error = 0;
+        m_error = kInvalidConstraintsError;
         return false;
     }
 
@@ -187,7 +251,7 @@ void Model::save(uint8_t *data) const
 {
 }
 
-void release()
+void Model::release()
 {
 }
 
