@@ -42,7 +42,7 @@
 namespace vpvl
 {
 
-struct InternalKeyFrameList {
+struct InternalBoneKeyFrameList {
     Bone *bone;
     BoneKeyFrameList keyFrames;
     Vector3 position;
@@ -53,7 +53,7 @@ struct InternalKeyFrameList {
         if (keyFrames.count() == 1) {
             const BoneKeyframe *keyFrame = keyFrames[0];
             return keyFrame->position() == internal::kZeroV &&
-                    keyFrame->rotation() == internal::kZeroV;
+                    keyFrame->rotation() == internal::kZeroQ;
         }
         return false;
     }
@@ -123,7 +123,7 @@ void BoneAnimation::seek(float frameAt)
 {
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        InternalKeyFrameList *keyFrames = *m_name2keyframes.value(i);
+        InternalBoneKeyFrameList *keyFrames = *m_name2keyframes.value(i);
         if (m_enableNullFrame && keyFrames->isNull())
             continue;
         calculateFrames(frameAt, keyFrames);
@@ -160,7 +160,7 @@ void BoneAnimation::buildInternalKeyFrameList(vpvl::PMDModel *model)
     for (int i = 0; i < nframes; i++) {
         BoneKeyframe *frame = static_cast<BoneKeyframe *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
-        InternalKeyFrameList **ptr = m_name2keyframes[name], *node;
+        InternalBoneKeyFrameList **ptr = m_name2keyframes[name], *node;
         if (ptr) {
             node = *ptr;
             node->keyFrames.add(frame);
@@ -170,7 +170,7 @@ void BoneAnimation::buildInternalKeyFrameList(vpvl::PMDModel *model)
         else {
             Bone *bone = model->findBone(frame->name());
             if (bone) {
-                node = new InternalKeyFrameList();
+                node = new InternalBoneKeyFrameList();
                 node->keyFrames.add(frame);
                 node->bone = bone;
                 node->lastIndex = 0;
@@ -183,14 +183,14 @@ void BoneAnimation::buildInternalKeyFrameList(vpvl::PMDModel *model)
     // Sort frames from each internal nodes by frame index ascend
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        InternalKeyFrameList *node = *m_name2keyframes.value(i);
+        InternalBoneKeyFrameList *node = *m_name2keyframes.value(i);
         BoneKeyFrameList &frames = node->keyFrames;
         frames.sort(BoneAnimationKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.count() - 1]->frameIndex());
     }
 }
 
-void BoneAnimation::calculateFrames(float frameAt, InternalKeyFrameList *keyFrames)
+void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *keyFrames)
 {
     BoneKeyFrameList &kframes = keyFrames->keyFrames;
     const int nframes = kframes.count();
@@ -264,7 +264,7 @@ void BoneAnimation::reset()
     BaseAnimation::reset();
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        InternalKeyFrameList *keyframes = *m_name2keyframes.value(i);
+        InternalBoneKeyFrameList *keyframes = *m_name2keyframes.value(i);
         keyframes->lastIndex = 0;
     }
 }

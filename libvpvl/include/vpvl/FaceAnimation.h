@@ -63,7 +63,7 @@ typedef Array<FaceKeyframe *> FaceKeyFrameList;
 class VPVL_API FaceAnimation : public BaseAnimation
 {
 public:
-    typedef struct InternalKeyFrameList InternalKeyFrameList;
+    typedef struct InternalFaceKeyFrameList InternalFaceKeyFrameList;
 
     FaceAnimation();
     ~FaceAnimation();
@@ -129,9 +129,9 @@ public:
 
 private:
     void buildInternalNodes(vpvl::PMDModel *model);
-    void calculateFrames(float frameAt, InternalKeyFrameList *keyFrames);
+    void calculateFrames(float frameAt, InternalFaceKeyFrameList *keyFrames);
 
-    Hash<HashString, InternalKeyFrameList *> m_name2keyframes;
+    Hash<HashString, InternalFaceKeyFrameList *> m_name2keyframes;
     PMDModel *m_model;
     bool m_enableNullFrame;
 

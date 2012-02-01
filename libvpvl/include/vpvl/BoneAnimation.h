@@ -63,7 +63,7 @@ typedef Array<BoneKeyframe *> BoneKeyFrameList;
 class VPVL_API BoneAnimation : public BaseAnimation
 {
 public:
-    typedef struct InternalKeyFrameList InternalKeyFarmeList;
+    typedef struct InternalBoneKeyFrameList InternalBoneKeyFarmeList;
 
     BoneAnimation();
     ~BoneAnimation();
@@ -134,9 +134,9 @@ private:
                             int at,
                             float &value);
     void buildInternalKeyFrameList(vpvl::PMDModel *model);
-    void calculateFrames(float frameAt, InternalKeyFrameList *keyFrames);
+    void calculateFrames(float frameAt, InternalBoneKeyFrameList *keyFrames);
 
-    Hash<HashString, InternalKeyFrameList *> m_name2keyframes;
+    Hash<HashString, InternalBoneKeyFrameList *> m_name2keyframes;
     PMDModel *m_model;
     bool m_hasCenterBoneAnimation;
     bool m_enableNullFrame;

@@ -42,7 +42,7 @@
 namespace vpvl
 {
 
-struct InternalKeyFrameList {
+struct InternalFaceKeyFrameList {
     Face *face;
     FaceKeyFrameList keyFrames;
     float weight;
@@ -94,7 +94,7 @@ void FaceAnimation::seek(float frameAt)
 {
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        InternalKeyFrameList *keyFrames = *m_name2keyframes.value(i);
+        InternalFaceKeyFrameList *keyFrames = *m_name2keyframes.value(i);
         if (m_enableNullFrame && keyFrames->isNull())
             continue;
         calculateFrames(frameAt, keyFrames);
@@ -128,7 +128,7 @@ void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
     for (int i = 0; i < nframes; i++) {
         FaceKeyframe *frame = static_cast<FaceKeyframe *>(m_frames.at(i));
         HashString name(reinterpret_cast<const char *>(frame->name()));
-        InternalKeyFrameList **ptr = m_name2keyframes[name], *node;
+        InternalFaceKeyFrameList **ptr = m_name2keyframes[name], *node;
         if (ptr) {
             node = *ptr;
             node->keyFrames.add(frame);
@@ -136,7 +136,7 @@ void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
         else {
             Face *face = model->findFace(frame->name());
             if (face) {
-                node = new InternalKeyFrameList();
+                node = new InternalFaceKeyFrameList();
                 node->keyFrames.add(frame);
                 node->face = face;
                 node->lastIndex = 0;
@@ -148,7 +148,7 @@ void FaceAnimation::buildInternalNodes(vpvl::PMDModel *model)
     // Sort frames from each internal nodes by frame index ascend
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        InternalKeyFrameList *keyFrames = *m_name2keyframes.value(i);
+        InternalFaceKeyFrameList *keyFrames = *m_name2keyframes.value(i);
         FaceKeyFrameList &frames = keyFrames->keyFrames;
         frames.sort(FaceAnimationKeyFramePredication());
         btSetMax(m_maxFrame, frames[frames.count() - 1]->frameIndex());
@@ -160,12 +160,12 @@ void FaceAnimation::reset()
     BaseAnimation::reset();
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
-        InternalKeyFrameList *node = *m_name2keyframes.value(i);
+        InternalFaceKeyFrameList *node = *m_name2keyframes.value(i);
         node->lastIndex = 0;
     }
 }
 
-void FaceAnimation::calculateFrames(float frameAt, InternalKeyFrameList *keyFrames)
+void FaceAnimation::calculateFrames(float frameAt, InternalFaceKeyFrameList *keyFrames)
 {
     FaceKeyFrameList &kframes = keyFrames->keyFrames;
     const int nframes = kframes.count();
