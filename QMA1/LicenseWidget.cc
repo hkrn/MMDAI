@@ -46,7 +46,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     QLabel *copyrightLabel = new QLabel();
     copyrightLabel->setText(tr("<h3>%1 %2+beta</h3>"
                                "<h4>MMDAI is an application compatible with MMDAgent.</h4>"
-                               "Copyright (C) 2010-2011 "
+                               "Copyright (C) 2010-2012 "
                                "Nagoya Institute of Technology Department of Computer Science (MMDAgent), "
                                "hkrn (MMDAI) All rights reserved."
                                "<br><br>"
@@ -82,6 +82,9 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+    addLibrary("zlib", "zlib", "http://zlib.net", "zlib");
+    addLibrary("libiconv", "LGPL", "http://www.gnu.org/software/libiconv/", "libiconv");
+    addLibrary("libxml2", "MIT", "http://xmlsoft.org", "libxml2");
     addLibrary("MMDAgent Dictionary Model", "Other", "http://mmdagent.jp", "Dictionary");
     addLibrary("MMDAgent Acoustic Model", "New BSD", "http://mmdagent.jp", "Acoustic");
     addLibrary("PortAudio", "MIT/X11", "http://portaudio.com", "PortAudio");

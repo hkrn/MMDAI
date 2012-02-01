@@ -476,7 +476,7 @@ void MainWindow::buildMenuBar()
     m_menuBar->addMenu(m_menuModel);
     m_menuView = new QMenu(this);
     m_menuView->addAction(m_actionShowLogMessage);
-    m_menuView->addAction(m_actionEnableTransparent);
+    //m_menuView->addAction(m_actionEnableTransparent);
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);

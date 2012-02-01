@@ -7,6 +7,9 @@
         <file alias="PortAudio">licenses/PortAudio</file>
         <file alias="Acoustic">licenses/Acoustic</file>
         <file alias="Dictionary">licenses/Dictionary</file>
+        <file alias="libxml2">licenses/libxml2</file>
+        <file alias="libiconv">licenses/libiconv</file>
+        <file alias="zlib">licenses/zlib</file>
     </qresource>
     <qresource prefix="/lipsync">
         <file alias="global">global.lip</file>
