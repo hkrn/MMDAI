@@ -42,6 +42,20 @@ namespace vpvl2
 namespace pmx
 {
 
+#pragma pack(push, 1)
+
+struct VertexUnit {
+    float position[3];
+    float normal[3];
+    float texcoord[2];
+};
+
+struct AdditinalUVUnit {
+    float value[4];
+};
+
+#pragma pack(pop)
+
 Vertex::Vertex()
 {
 }
@@ -50,9 +64,47 @@ Vertex::~Vertex()
 {
 }
 
-bool Vertex::preparse(const uint8_t *data, size_t &rest, size_t indexSize)
+bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    return true;
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.verticesPtr = ptr;
+    size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
+    for (int i = 0; i < size; i++) {
+        if (baseSize > rest)
+            return false;
+        internal::drain(baseSize, ptr, rest);
+        size_t type;
+        /* bone type */
+        if (!internal::size8(ptr, rest, type))
+            return false;
+        size_t boneSize;
+        switch (type) {
+        case 0: /* BDEF1 */
+            boneSize = info.boneIndexSize;
+            break;
+        case 1: /* BDEF2 */
+            boneSize = info.boneIndexSize * 2 + sizeof(float);
+            break;
+        case 2: /* BDEF4 */
+            boneSize = info.boneIndexSize * 4 + sizeof(float) * 4;
+            break;
+        case 3: /* SDEF */
+            boneSize = info.boneIndexSize * 2 + sizeof(float) * 10;
+            break;
+        default: /* unexpected value */
+            assert(0);
+            return false;
+        }
+        boneSize += sizeof(float); /* edge */
+        if (boneSize > rest)
+            return false;
+        internal::drain(boneSize, ptr, rest);
+    }
+    info.verticesCount = size;
+    return rest > 0;
 }
 
 void Vertex::read(const uint8_t *data)

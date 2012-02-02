@@ -79,67 +79,65 @@ inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
     return ptr;
 }
 
+inline void drain(size_t size, uint8_t *&ptr, size_t &rest)
+{
+    ptr += size;
+    rest -= size;
+}
+
 inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr != NULL);
+    assert(ptr);
     if (sizeof(uint8_t) > rest)
         return false;
     size = *reinterpret_cast<uint8_t *>(ptr);
-    ptr += sizeof(uint8_t);
-    rest -= sizeof(uint8_t);
+    drain(sizeof(uint8_t), ptr, rest);
     return true;
 }
 
 inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr != NULL);
+    assert(ptr);
     if (sizeof(uint16_t) > rest)
         return false;
     size = *reinterpret_cast<uint16_t *>(ptr);
-    ptr += sizeof(uint16_t);
-    rest -= sizeof(uint16_t);
+    drain(sizeof(uint16_t), ptr, rest);
     return true;
 }
 
 inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr != NULL);
+    assert(ptr);
     if (sizeof(int) > rest)
         return false;
     size = *reinterpret_cast<int *>(ptr);
-    ptr += sizeof(int);
-    rest -= sizeof(int);
+    drain(sizeof(int), ptr, rest);
     return true;
 }
 
-inline bool sizeVariant(uint8_t *&ptr, size_t &rest, size_t &size, size_t variant)
+inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *text, size_t &size)
 {
-    assert(ptr != NULL);
-    switch (variant) {
-    case 1:
-        return size8(ptr, rest, size);
-    case 2:
-        return size16(ptr, rest, size);
-    case 4:
-    default:
-        return size32(ptr, rest, size);
-    }
+    assert(ptr);
+    if (!internal::size32(ptr, rest, size) || size > rest)
+        return false;
+    text = ptr;
+    internal::drain(size, ptr, rest);
+    return true;
 }
 
 inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
-    assert(ptr != NULL);
+    assert(ptr);
     size_t required = stride * size;
     if (required > rest)
         return false;
-    ptr += required;
-    rest -= required;
+    internal::drain(size, ptr, rest);
     return true;
 }
 
 inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
-    assert(table != NULL && size > 0);
+    assert(table && size > 0);
     for (int i = 0; i < size; i++) {
         const float in = static_cast<const float>(i) / size;
         float t = in;
@@ -159,19 +157,19 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
 
 inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
 {
-    assert(s1 != NULL && s2 != NULL);
+    assert(s1 && s2);
     return strncmp(reinterpret_cast<const char *>(s1), reinterpret_cast<const char *>(s2), max) == 0;
 }
 
 inline bool stringEquals(const char *s1, const char *s2, size_t max)
 {
-    assert(s1 != NULL && s2 != NULL);
+    assert(s1 && s2);
     return strncmp(s1, s2, max) == 0;
 }
 
 inline char *stringToken(char *str, const char *delim, char **ptr)
 {
-    assert(delim != NULL);
+    assert(delim);
 #if defined(__MINGW32__)
     return strtok(str, delim);
 #elif defined(WIN32)
@@ -183,13 +181,13 @@ inline char *stringToken(char *str, const char *delim, char **ptr)
 
 inline int stringToInt(const char *str)
 {
-    assert(str != NULL);
+    assert(str);
     return atoi(str);
 }
 
 inline float stringToFloat(const char *str)
 {
-    assert(str != NULL);
+    assert(str);
     char *p = 0;
 #if defined(WIN32)
     return static_cast<float>(strtod(str, &p));
@@ -200,7 +198,7 @@ inline float stringToFloat(const char *str)
 
 inline void zerofill(void *ptr, size_t size)
 {
-    assert(ptr != NULL && size > 0);
+    assert(ptr && size > 0);
 #if defined(WIN32) && !defined(__MINGW32__)
     SecureZeroMemory(ptr, size);
 #else
@@ -210,7 +208,7 @@ inline void zerofill(void *ptr, size_t size)
 
 inline int snprintf(uint8_t *buffer, size_t size, const char *format, ...)
 {
-    assert(buffer != NULL && size > 0);
+    assert(buffer && size > 0);
     va_list ap;
     va_start(ap, format);
     int ret = vsnprintf(reinterpret_cast<char *>(buffer), size, format, ap);

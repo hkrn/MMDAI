@@ -93,8 +93,8 @@ public:
 
     struct DataInfo
     {
-        const uint8_t *basePtr;
-        const uint8_t *namePtr;
+        uint8_t *basePtr;
+        uint8_t *namePtr;
         bool isUTF8;
         size_t additionalUVSize;
         size_t vertexIndexSize;
@@ -104,21 +104,30 @@ public:
         size_t morphIndexSize;
         size_t rigidBodyIndexSize;
         size_t nameSize;
-        const uint8_t *englishNamePtr;
+        uint8_t *englishNamePtr;
         size_t englishNameSize;
-        const uint8_t *commentPtr;
+        uint8_t *commentPtr;
         size_t commentSize;
-        const uint8_t *englishCommentPtr;
+        uint8_t *englishCommentPtr;
         size_t englishCommentSize;
-        const uint8_t *verticesPtr;
-        const uint8_t *indicesPtr;
-        const uint8_t *texturesPtr;
-        const uint8_t *materialsPtr;
-        const uint8_t *bonesPtr;
-        const uint8_t *morphsPtr;
-        const uint8_t *displayNamesPtr;
-        const uint8_t *rigidBodiesPtr;
-        const uint8_t *constraintsPtr;
+        uint8_t *verticesPtr;
+        size_t verticesCount;
+        uint8_t *indicesPtr;
+        size_t indicesCount;
+        uint8_t *texturesPtr;
+        size_t texturesCount;
+        uint8_t *materialsPtr;
+        size_t materialsCount;
+        uint8_t *bonesPtr;
+        size_t bonesCount;
+        uint8_t *morphsPtr;
+        size_t morphsCount;
+        uint8_t *displayNamesPtr;
+        size_t displayNamesCount;
+        uint8_t *rigidBodiesPtr;
+        size_t rigidBodiesCount;
+        uint8_t *constraintsPtr;
+        size_t constraintsCount;
     };
 
     /**

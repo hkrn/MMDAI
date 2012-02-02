@@ -50,7 +50,7 @@ Morph::~Morph()
 {
 }
 
-bool Morph::preparse(const uint8_t *data, size_t &rest, size_t indexSize)
+bool Morph::preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info)
 {
     return true;
 }

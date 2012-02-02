@@ -39,7 +39,7 @@
 #ifndef VPVL2_PMX_RIGIDBODY_H_
 #define VPVL2_PMX_RIGIDBODY_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/pmx/Model.h"
 
 class btCollisionShape;
 class btRigidBody;
@@ -69,7 +69,7 @@ public:
     RigidBody();
     ~RigidBody();
 
-    static bool preparse(const uint8_t *data, size_t &size, size_t indexSize);
+    static bool preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info);
 
     void read(const uint8_t *data);
     void write(uint8_t *data) const;

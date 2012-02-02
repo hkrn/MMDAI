@@ -42,6 +42,20 @@ namespace vpvl2
 namespace pmx
 {
 
+#pragma pack(push, 1)
+
+struct MaterialUnit {
+    float diffuse[4];
+    float specular[3];
+    float shininess;
+    float ambient[3];
+    uint8_t flags;
+    float edgeColor[4];
+    float edgeSize;
+};
+
+#pragma pack(pop)
+
 Material::Material()
 {
 }
@@ -50,8 +64,64 @@ Material::~Material()
 {
 }
 
-bool Material::preparse(const uint8_t *data, size_t &rest, size_t indexSize)
+bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.materialsPtr = ptr;
+    size_t nTextureIndexSize = info.textureIndexSize * 2;
+    for (size_t i = 0; i < size; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
+        /* name in Japanese */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* name in English */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        if (sizeof(MaterialUnit) > rest) {
+            return false;
+        }
+        internal::drain(sizeof(MaterialUnit), ptr, rest);
+        /* normal texture + sphere map texture */
+        if (nTextureIndexSize > rest) {
+            return false;
+        }
+        internal::drain(nTextureIndexSize, ptr, rest);
+        if (sizeof(uint16_t) > rest) {
+            return false;
+        }
+        bool isSharedToonTexture = *(ptr + sizeof(uint8_t)) == 1;
+        internal::drain(sizeof(uint16_t), ptr, rest);
+        if (isSharedToonTexture) {
+            /* shared toon texture index */
+            if (sizeof(uint8_t) > rest) {
+                return false;
+            }
+            internal::drain(sizeof(uint8_t), ptr, rest);
+        }
+        else {
+            /* independent toon texture index */
+            if (info.textureIndexSize > rest) {
+                return false;
+            }
+            internal::drain(info.textureIndexSize, ptr, rest);
+        }
+        /* free area */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* number of indices */
+        if (sizeof(int) > rest) {
+            return false;
+        }
+        internal::drain(sizeof(int), ptr, rest);
+    }
+    info.materialsCount = size;
     return true;
 }
 

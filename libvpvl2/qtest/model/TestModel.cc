@@ -37,6 +37,14 @@ void TestModel::parseEmpty()
 
 void TestModel::parseFile()
 {
+    Model model;
+    Model::DataInfo info;
+    QFile file("miku.pmx");
+    file.open(QFile::ReadOnly);
+    const QByteArray &bytes = file.readAll();
+    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+    const size_t size = file.size();
+    QVERIFY(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
 }
 
 QTEST_APPLESS_MAIN(TestModel)

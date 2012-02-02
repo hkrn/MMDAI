@@ -50,7 +50,7 @@ RigidBody::~RigidBody()
 {
 }
 
-bool RigidBody::preparse(const uint8_t *data, size_t &rest, size_t indexSize)
+bool RigidBody::preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info)
 {
     return true;
 }

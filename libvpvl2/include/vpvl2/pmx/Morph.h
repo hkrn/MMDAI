@@ -37,7 +37,7 @@
 #ifndef VPVL2_PMX_MORPH_H_
 #define VPVL2_PMX_MORPH_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/pmx/Model.h"
 
 namespace vpvl2
 {
@@ -62,7 +62,7 @@ public:
     Morph();
     ~Morph();
 
-    static bool preparse(const uint8_t *data, size_t &size, size_t indexSize);
+    static bool preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

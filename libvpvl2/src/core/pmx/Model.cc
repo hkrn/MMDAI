@@ -72,30 +72,31 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidHeaderError;
         return false;
     }
-    // header
+    /* header */
     uint8_t *ptr = const_cast<uint8_t *>(data);
     Header *header = reinterpret_cast<Header *>(ptr);
     info.basePtr = ptr;
 
-    // Check the signature and version is correct
+    /* Check the signature and version is correct */
     if (memcmp(header->signature, "PMX ", 4) != 0) {
         m_error = kInvalidSignatureError;
         return false;
     }
 
-    // version
+    /* version */
     if (header->version != 2.0) {
         m_error = kInvalidVersionError;
         return false;
     }
 
-    // flags
+    /* flags */
     size_t flagSize;
+    internal::drain(sizeof(Header), ptr, rest);
     if (!internal::size8(ptr, rest, flagSize) || flagSize != 8) {
         m_error = kInvalidFlagSizeError;
         return false;
     }
-    info.isUTF8 = *reinterpret_cast<uint8_t *>(ptr);
+    info.isUTF8 = *reinterpret_cast<uint8_t *>(ptr) == 1;
     info.additionalUVSize = *reinterpret_cast<uint8_t *>(ptr + 1);
     info.vertexIndexSize = *reinterpret_cast<uint8_t *>(ptr + 2);
     info.textureIndexSize = *reinterpret_cast<uint8_t *>(ptr + 3);
@@ -103,60 +104,46 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.boneIndexSize = *reinterpret_cast<uint8_t *>(ptr + 5);
     info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
     info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
-    ptr += flagSize;
+    internal::drain(flagSize, ptr, rest);
 
-    // name
-    size_t nameSize;
-    if (!internal::size32(ptr, rest, nameSize)) {
+    /* name in Japanese */
+    if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
         m_error = kInvalidNameSizeError;
         return false;
     }
-    info.namePtr = ptr;
-    info.nameSize = nameSize;
-
-    // english name
-    size_t englishNameSize;
-    if (!internal::size32(ptr, rest, englishNameSize)) {
+    /* name in English */
+    if (!internal::sizeText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
         m_error = kInvalidEnglishNameSizeError;
         return false;
     }
-    info.englishNamePtr = ptr;
-    info.englishNameSize = englishNameSize;
-
-    // comment
-    size_t commentSize;
-    if (!internal::size32(ptr, rest, commentSize)) {
+    /* comment in Japanese */
+    if (!internal::sizeText(ptr, rest, info.commentPtr, info.commentSize)) {
         m_error = kInvalidCommentSizeError;
         return false;
     }
-    info.commentPtr = ptr;
-    info.commentSize = commentSize;
-
-    // english comment
-    size_t englishCommentSize;
-    if (!internal::size32(ptr, rest, englishCommentSize)) {
+    /* comment in English */
+    if (!internal::sizeText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
         m_error = kInvalidEnglishCommentSizeError;
         return false;
     }
-    info.englishCommentPtr = ptr;
-    info.englishCommentSize = englishCommentSize;
 
-    // vertex size
-    info.verticesPtr = ptr + sizeof(int);
-    if (!Vertex::preparse(ptr, rest, info.vertexIndexSize)) {
+    /* vertex */
+    if (!Vertex::preparse(ptr, rest, info)) {
         m_error = kInvalidVerticesError;
         return false;
     }
 
-    // indices
+    /* indices */
     size_t nindices;
-    info.indicesPtr = ptr + sizeof(int);
-    if (!internal::size32(ptr, rest, nindices)) {
+    if (!internal::size32(ptr, rest, nindices) || nindices * info.vertexIndexSize > rest) {
         m_error = kInvalidIndicesError;
         return false;
     }
+    internal::drain(nindices * info.vertexIndexSize, ptr, rest);
+    info.indicesPtr = ptr;
+    info.indicesCount = nindices;
 
-    // texture lookup table
+    /* texture lookup table */
     size_t ntextures;
     if (!internal::size32(ptr, rest, ntextures)) {
         m_error = kInvalidTextureSizeError;
@@ -165,48 +152,46 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.texturesPtr = ptr;
     for (size_t i = 0; i < ntextures; i++) {
         size_t nTextureSize;
-        if (!internal::size32(ptr, rest, nTextureSize)) {
+        uint8_t *texturePtr;
+        if (!internal::sizeText(ptr, rest, texturePtr, nTextureSize)) {
             m_error = kInvalidTextureError;
             return false;
         }
     }
 
-    // material
-    info.materialsPtr = ptr + sizeof(int);
-    if (!Material::preparse(ptr, rest, info.materialIndexSize)) {
+    /* material */
+    if (!Material::preparse(ptr, rest, info)) {
         m_error = kInvalidMaterialsError;
         return false;
     }
 
-    // bone
-    info.bonesPtr = ptr + sizeof(int);
-    if (!Bone::preparse(ptr, rest, info.boneIndexSize)) {
+    /* bone */
+    if (!Bone::preparse(ptr, rest, info)) {
         m_error = kInvalidBonesError;
         return false;
     }
 
-    // morph
-    info.morphsPtr = ptr + sizeof(int);
-    if (!Morph::preparse(ptr, rest, info.morphIndexSize)) {
+    /* morph */
+    if (!Morph::preparse(ptr, rest, info)) {
         m_error = kInvalidMorphsError;
         return false;
     }
 
-    // display name table
+    /* display name table */
     size_t nDisplayNames;
-    if (!internal::size32(ptr, rest, nDisplayNames)) {
+    if (!internal::sizeText(ptr, rest, info.displayNamesPtr, nDisplayNames)) {
         m_error = kInvalidDisplayNameSizeError;
         return false;
     }
     info.displayNamesPtr = ptr;
     for (size_t i = 0; i < nDisplayNames; i++) {
         size_t nNameSize;
-        if (!internal::size32(ptr, rest, nNameSize)) {
+        uint8_t *namePtr;
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             m_error = kInvalidTextureError;
             return false;
         }
-        size_t nEnglishNameSize;
-        if (!internal::size32(ptr, rest, nEnglishNameSize)) {
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             m_error = kInvalidTextureError;
             return false;
         }
@@ -218,17 +203,16 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         }
         // TODO:
     }
+    info.displayNamesCount = nDisplayNames;
 
-    // rigidbody
-    info.rigidBodiesPtr = ptr + sizeof(int);
-    if (!RigidBody::preparse(ptr, rest, info.rigidBodyIndexSize)) {
+    /* rigid body */
+    if (!RigidBody::preparse(ptr, rest, info)) {
         m_error = kInvalidRigidBodiesError;
         return false;
     }
 
-    // constraint
-    info.constraintsPtr = ptr + sizeof(int);
-    if (!Constraint::preparse(ptr, rest)) {
+    /* constraint */
+    if (!Constraint::preparse(ptr, rest, info)) {
         m_error = kInvalidConstraintsError;
         return false;
     }

@@ -50,7 +50,7 @@ Constraint::~Constraint()
 {
 }
 
-bool Constraint::preparse(const uint8_t *data, size_t &rest)
+bool Constraint::preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info)
 {
     return true;
 }

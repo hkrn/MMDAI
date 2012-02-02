@@ -42,6 +42,14 @@ namespace vpvl2
 namespace pmx
 {
 
+#pragma pack(push, 1)
+
+struct BoneUnit {
+    float position[3];
+};
+
+#pragma pack(pop)
+
 Bone::Bone()
 {
 }
@@ -50,8 +58,104 @@ Bone::~Bone()
 {
 }
 
-bool Bone::preparse(const uint8_t *data, size_t &rest, size_t indexSize)
+bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.bonesPtr = ptr;
+    /* BoneUnit + boneIndexSize + hierarcy + flags */
+    size_t baseSize = sizeof(BoneUnit) + info.boneIndexSize + sizeof(int) + sizeof(uint16_t);
+    for (size_t i = 0; i < size; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
+        /* name in Japanese */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* name in English */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        if (baseSize > rest) {
+            return false;
+        }
+        internal::drain(baseSize, ptr, rest);
+        uint16_t flags = *reinterpret_cast<uint16_t *>(ptr - 2);
+        /* bone has destination */
+        bool isRelative = flags & 0x0001 == 1;
+        if (isRelative) {
+            if (info.boneIndexSize > rest) {
+                return false;
+            }
+            internal::drain(info.boneIndexSize, ptr, rest);
+        }
+        else {
+            if (sizeof(BoneUnit) > rest) {
+                return false;
+            }
+            internal::drain(sizeof(BoneUnit), ptr, rest);
+        }
+        /* bone is IK */
+        if (flags & 0x0020) {
+            /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
+            size_t extraSize = info.boneIndexSize + sizeof(int) + sizeof(float) + sizeof(int);
+            if (extraSize > rest) {
+                return false;
+            }
+            internal::drain(extraSize, ptr, rest);
+            int nlinks = *reinterpret_cast<int *>(ptr - sizeof(int));
+            for (int i = 0; i < nlinks; i++) {
+                if (info.boneIndexSize > rest) {
+                    return false;
+                }
+                internal::drain(info.boneIndexSize, ptr, rest);
+                size_t hasAngleConstraint;
+                if (!internal::size8(ptr, rest, hasAngleConstraint)) {
+                    return false;
+                }
+                if (hasAngleConstraint == 1) {
+                    extraSize = sizeof(BoneUnit) * 2;
+                    if (extraSize > rest) {
+                        return false;
+                    }
+                    internal::drain(extraSize, ptr, rest);
+                }
+            }
+        }
+        /* bone is additional rotation */
+        if (flags & 0x0100 || flags & 0x200) {
+            size_t extraSize = info.boneIndexSize + sizeof(float);
+            if (extraSize > rest) {
+                return false;
+            }
+            internal::drain(extraSize, ptr, rest);
+        }
+        /* axis of bone is fixed */
+        if (flags & 0x0400) {
+            if (sizeof(BoneUnit) > rest) {
+                return false;
+            }
+            internal::drain(sizeof(BoneUnit), ptr, rest);
+        }
+        /* axis of bone is local */
+        if (flags & 0x0800) {
+            size_t extraSize = sizeof(BoneUnit) * 2;
+            if (extraSize > rest) {
+                return false;
+            }
+            internal::drain(extraSize, ptr, rest);
+        }
+        /* bone is transformed after external parent bone transformation */
+        if (flags & 0x2000) {
+            if (sizeof(int) > rest) {
+                return false;
+            }
+            internal::drain(sizeof(int), ptr, rest);
+        }
+    }
+    info.bonesCount = size;
     return true;
 }
 
