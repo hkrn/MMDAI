@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2012  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -36,67 +34,83 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMX_CONSTRAINT_H_
-#define VPVL2_PMX_CONSTRAINT_H_
-
-#include "vpvl2/pmx/RigidBody.h"
-
-class btGeneric6DofConstraint;
-class btGeneric6DofSpringConstraint;
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
 namespace vpvl2
 {
 namespace pmx
 {
 
-/**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * Constraint class represents a consraint of a Polygon Model Data object.
- */
+#pragma pack(push, 1)
 
-class VPVL2_API Constraint
+struct JointUnit
 {
-public:
-    Constraint();
-    ~Constraint();
-
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-
-    const uint8_t *name() const {
-        return m_name;
-    }
-    btGeneric6DofConstraint *constraint() const {
-        return reinterpret_cast<btGeneric6DofConstraint *>(m_constraint);
-    }
-
-private:
-    uint8_t *m_name;
-    btGeneric6DofSpringConstraint *m_constraint;
-    Vector3 m_position;
-    Vector3 m_rotation;
-    Vector3 m_limitPositionFrom;
-    Vector3 m_limitPositionTo;
-    Vector3 m_limitRotationFrom;
-    Vector3 m_limitRotationTo;
-    float m_stiffness[6];
-    int m_bodyA;
-    int m_bodyB;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Constraint)
+    float position[3];
+    float rotation[3];
+    float positionLowerLimit[3];
+    float positionUpperLimit[3];
+    float rotationLowerLimit[3];
+    float rotationUpperLimit[3];
+    float positionStiffness[3];
+    float rotationStiffness[3];
 };
 
-typedef Array<Constraint*> ConstraintList;
+#pragma pack(pop)
+
+Joint::Joint()
+{
+}
+
+Joint::~Joint()
+{
+}
+
+bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+{
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.jointsPtr = ptr;
+    for (size_t i = 0; i < size; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
+        /* name in Japanese */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* name in English */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        size_t type;
+        if (!internal::size8(ptr, rest, type)) {
+            return false;
+        }
+        switch (type) {
+        case 0:
+            if (!internal::validateSize(ptr, info.rigidBodyIndexSize * 2 + sizeof(JointUnit), rest)) {
+                return false;
+            }
+            break;
+        default:
+            assert(0);
+            return false;
+        }
+    }
+    info.jointsCount = size;
+    return true;
+}
+
+void Joint::read(const uint8_t *data)
+{
+}
+
+void Joint::write(uint8_t *data) const
+{
+}
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-
-#endif
 

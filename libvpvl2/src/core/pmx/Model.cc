@@ -233,8 +233,8 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     /* constraint */
-    if (!Constraint::preparse(ptr, rest, info)) {
-        m_error = kInvalidConstraintsError;
+    if (!Joint::preparse(ptr, rest, info)) {
+        m_error = kInvalidJointsError;
         return false;
     }
 

@@ -39,11 +39,10 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Constraint.h"
-#include "vpvl2/pmx/IK.h"
-#include "vpvl2/pmx/Morph.h"
+#include "vpvl2/pmx/Joint.h"
 #include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
 

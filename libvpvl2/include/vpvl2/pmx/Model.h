@@ -87,7 +87,7 @@ public:
         kInvalidDisplayNameError,
         kInvalidDisplayEnglishNameError,
         kInvalidRigidBodiesError,
-        kInvalidConstraintsError,
+        kInvalidJointsError,
         kMaxErrors
     };
 
@@ -126,8 +126,8 @@ public:
         size_t displayNamesCount;
         uint8_t *rigidBodiesPtr;
         size_t rigidBodiesCount;
-        uint8_t *constraintsPtr;
-        size_t constraintsCount;
+        uint8_t *jointsPtr;
+        size_t jointsCount;
     };
 
     /**

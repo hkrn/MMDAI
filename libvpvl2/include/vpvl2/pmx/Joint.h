@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,83 +36,46 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#ifndef VPVL2_PMX_JOINT_H_
+#define VPVL2_PMX_JOINT_H_
+
+#include "vpvl2/pmx/RigidBody.h"
+
+class btGeneric6DofConstraint;
+class btGeneric6DofSpringConstraint;
 
 namespace vpvl2
 {
 namespace pmx
 {
 
-#pragma pack(push, 1)
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Constraint class represents a joint of a Polygon Model Data object.
+ */
 
-struct ConstraintUnit
+class VPVL2_API Joint
 {
-    float position[3];
-    float rotation[3];
-    float positionLowerLimit[3];
-    float positionUpperLimit[3];
-    float rotationLowerLimit[3];
-    float rotationUpperLimit[3];
-    float positionStiffness[3];
-    float rotationStiffness[3];
+public:
+    Joint();
+    ~Joint();
+
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+
+    void read(const uint8_t *data);
+    void write(uint8_t *data) const;
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
 };
-
-#pragma pack(pop)
-
-Constraint::Constraint()
-{
-}
-
-Constraint::~Constraint()
-{
-}
-
-bool Constraint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
-{
-    size_t size;
-    if (!internal::size32(ptr, rest, size)) {
-        return false;
-    }
-    info.constraintsPtr = ptr;
-    for (size_t i = 0; i < size; i++) {
-        size_t nNameSize;
-        uint8_t *namePtr;
-        /* name in Japanese */
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-            return false;
-        }
-        /* name in English */
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-            return false;
-        }
-        size_t type;
-        if (!internal::size8(ptr, rest, type)) {
-            return false;
-        }
-        switch (type) {
-        case 0:
-            if (!internal::validateSize(ptr, info.rigidBodyIndexSize * 2 + sizeof(ConstraintUnit), rest)) {
-                return false;
-            }
-            break;
-        default:
-            assert(0);
-            return false;
-        }
-    }
-    info.constraintsCount = size;
-    return true;
-}
-
-void Constraint::read(const uint8_t *data)
-{
-}
-
-void Constraint::write(uint8_t *data) const
-{
-}
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
+
+#endif
 
