@@ -42,6 +42,26 @@ namespace vpvl2
 namespace pmx
 {
 
+#pragma pack(push, 1)
+
+struct RigidBodyUnit
+{
+    uint8_t collisionGroupID;
+    uint16_t collsionMask;
+    uint8_t shapeType;
+    float size[3];
+    float position[3];
+    float rotation[3];
+    float mass;
+    float linearDamping;
+    float angularDamping;
+    float restitution;
+    float friction;
+    uint8_t type;
+};
+
+#pragma pack(pop)
+
 RigidBody::RigidBody()
 {
 }
@@ -50,8 +70,29 @@ RigidBody::~RigidBody()
 {
 }
 
-bool RigidBody::preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info)
+bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.rigidBodiesPtr = ptr;
+    for (size_t i = 0; i < size; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
+        /* name in Japanese */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* name in English */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        if (!internal::validateSize(ptr, info.boneIndexSize + sizeof(RigidBodyUnit), rest)) {
+            return false;
+        }
+    }
+    info.rigidBodiesCount = size;
     return true;
 }
 

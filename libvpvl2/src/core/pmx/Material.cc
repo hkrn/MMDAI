@@ -83,43 +83,38 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             return false;
         }
-        if (sizeof(MaterialUnit) > rest) {
+        if (!internal::validateSize(ptr, sizeof(MaterialUnit), rest)) {
             return false;
         }
-        internal::drain(sizeof(MaterialUnit), ptr, rest);
         /* normal texture + sphere map texture */
-        if (nTextureIndexSize > rest) {
+        if (!internal::validateSize(ptr, nTextureIndexSize, rest)) {
             return false;
         }
-        internal::drain(nTextureIndexSize, ptr, rest);
         if (sizeof(uint16_t) > rest) {
             return false;
         }
         bool isSharedToonTexture = *(ptr + sizeof(uint8_t)) == 1;
         internal::drain(sizeof(uint16_t), ptr, rest);
+        /* shared toon texture index */
         if (isSharedToonTexture) {
-            /* shared toon texture index */
-            if (sizeof(uint8_t) > rest) {
+            if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
                 return false;
             }
-            internal::drain(sizeof(uint8_t), ptr, rest);
         }
+        /* independent toon texture index */
         else {
-            /* independent toon texture index */
-            if (info.textureIndexSize > rest) {
+            if (!internal::validateSize(ptr, info.textureIndexSize, rest)) {
                 return false;
             }
-            internal::drain(info.textureIndexSize, ptr, rest);
         }
         /* free area */
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             return false;
         }
         /* number of indices */
-        if (sizeof(int) > rest) {
+        if (!internal::validateSize(ptr, sizeof(int), rest)) {
             return false;
         }
-        internal::drain(sizeof(int), ptr, rest);
     }
     info.materialsCount = size;
     return true;

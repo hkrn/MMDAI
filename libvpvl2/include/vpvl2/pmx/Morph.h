@@ -62,7 +62,7 @@ public:
     Morph();
     ~Morph();
 
-    static bool preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

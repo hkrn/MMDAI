@@ -42,6 +42,41 @@ namespace vpvl2
 namespace pmx
 {
 
+#pragma pack(push, 1)
+
+struct MorphUnit {
+    uint8_t category;
+    uint8_t type;
+    int size;
+};
+struct VertexMorph {
+    float position[3];
+};
+struct UVMorph {
+    float position[4];
+};
+struct BoneMorph {
+    float position[3];
+    float rotation[4];
+};
+struct MaterialMorph {
+    uint8_t operation;
+    float diffuse[4];
+    float specular[3];
+    float shininess;
+    float ambient[3];
+    float edgeColor[4];
+    float edgeSize;
+    float textureWeight[4];
+    float sphereTextureWeight[4];
+    float toonTextureWeight[4];
+};
+struct GroupMorph {
+    float weight;
+};
+
+#pragma pack(pop)
+
 Morph::Morph()
 {
 }
@@ -50,8 +85,62 @@ Morph::~Morph()
 {
 }
 
-bool Morph::preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info)
+bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.morphsPtr = ptr;
+    for (size_t i = 0; i < size; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
+        /* name in Japanese */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* name in English */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        if (sizeof(MorphUnit) > rest) {
+            return false;
+        }
+        MorphUnit *morph = reinterpret_cast<MorphUnit *>(ptr);
+        internal::drain(sizeof(MorphUnit), ptr, rest);
+        int nmorphs = morph->size;
+        size_t extraSize;
+        switch (morph->type) {
+        case 0: /* group */
+            extraSize = info.morphIndexSize + sizeof(GroupMorph);
+            break;
+        case 1: /* vertex */
+            extraSize = info.vertexIndexSize + sizeof(VertexMorph);
+            break;
+        case 2: /* bone */
+            extraSize = info.boneIndexSize + sizeof(BoneMorph);
+            break;
+        case 3: /* UV */
+        case 4: /* UV1 */
+        case 5: /* UV2 */
+        case 6: /* UV3 */
+        case 7: /* UV4 */
+            extraSize = info.vertexIndexSize + sizeof(UVMorph);
+            break;
+        case 8: /* material */
+            extraSize = info.materialIndexSize + sizeof(MaterialMorph);
+            break;
+        default:
+            assert(0);
+            return false;
+        }
+        for (int j = 0; j < nmorphs; j++) {
+            if (!internal::validateSize(ptr, extraSize, rest)) {
+                return false;
+            }
+        }
+    }
+    info.morphsCount = size;
     return true;
 }
 

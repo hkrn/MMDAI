@@ -135,6 +135,11 @@ inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest
     return true;
 }
 
+inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
+{
+    return validateSize(ptr, 1, stride, rest);
+}
+
 inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
     assert(table && size > 0);

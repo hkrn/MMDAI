@@ -69,7 +69,7 @@ public:
     RigidBody();
     ~RigidBody();
 
-    static bool preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
 
     void read(const uint8_t *data);
     void write(uint8_t *data) const;

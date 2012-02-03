@@ -42,6 +42,22 @@ namespace vpvl2
 namespace pmx
 {
 
+#pragma pack(push, 1)
+
+struct ConstraintUnit
+{
+    float position[3];
+    float rotation[3];
+    float positionLowerLimit[3];
+    float positionUpperLimit[3];
+    float rotationLowerLimit[3];
+    float rotationUpperLimit[3];
+    float positionStiffness[3];
+    float rotationStiffness[3];
+};
+
+#pragma pack(pop)
+
 Constraint::Constraint()
 {
 }
@@ -50,8 +66,40 @@ Constraint::~Constraint()
 {
 }
 
-bool Constraint::preparse(const uint8_t *data, size_t &rest, Model::DataInfo &info)
+bool Constraint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
+    size_t size;
+    if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    info.constraintsPtr = ptr;
+    for (size_t i = 0; i < size; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
+        /* name in Japanese */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        /* name in English */
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+            return false;
+        }
+        size_t type;
+        if (!internal::size8(ptr, rest, type)) {
+            return false;
+        }
+        switch (type) {
+        case 0:
+            if (!internal::validateSize(ptr, info.rigidBodyIndexSize * 2 + sizeof(ConstraintUnit), rest)) {
+                return false;
+            }
+            break;
+        default:
+            assert(0);
+            return false;
+        }
+    }
+    info.constraintsCount = size;
     return true;
 }
 

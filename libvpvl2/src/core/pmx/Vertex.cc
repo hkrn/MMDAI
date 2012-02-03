@@ -73,9 +73,9 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     info.verticesPtr = ptr;
     size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
     for (int i = 0; i < size; i++) {
-        if (baseSize > rest)
+        if (!internal::validateSize(ptr, baseSize, rest)) {
             return false;
-        internal::drain(baseSize, ptr, rest);
+        }
         size_t type;
         /* bone type */
         if (!internal::size8(ptr, rest, type))
@@ -99,9 +99,9 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             return false;
         }
         boneSize += sizeof(float); /* edge */
-        if (boneSize > rest)
+        if (!internal::validateSize(ptr, boneSize, rest)) {
             return false;
-        internal::drain(boneSize, ptr, rest);
+        }
     }
     info.verticesCount = size;
     return rest > 0;

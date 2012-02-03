@@ -78,81 +78,58 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             return false;
         }
-        if (baseSize > rest) {
+        if (!internal::validateSize(ptr, baseSize, rest)) {
             return false;
         }
-        internal::drain(baseSize, ptr, rest);
         uint16_t flags = *reinterpret_cast<uint16_t *>(ptr - 2);
         /* bone has destination */
         bool isRelative = flags & 0x0001 == 1;
         if (isRelative) {
-            if (info.boneIndexSize > rest) {
+            if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
                 return false;
             }
-            internal::drain(info.boneIndexSize, ptr, rest);
         }
         else {
-            if (sizeof(BoneUnit) > rest) {
+            if (!internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
                 return false;
             }
-            internal::drain(sizeof(BoneUnit), ptr, rest);
         }
         /* bone is IK */
         if (flags & 0x0020) {
             /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
             size_t extraSize = info.boneIndexSize + sizeof(int) + sizeof(float) + sizeof(int);
-            if (extraSize > rest) {
+            if (!internal::validateSize(ptr, extraSize, rest)) {
                 return false;
             }
-            internal::drain(extraSize, ptr, rest);
             int nlinks = *reinterpret_cast<int *>(ptr - sizeof(int));
             for (int i = 0; i < nlinks; i++) {
-                if (info.boneIndexSize > rest) {
+                if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
                     return false;
                 }
-                internal::drain(info.boneIndexSize, ptr, rest);
                 size_t hasAngleConstraint;
                 if (!internal::size8(ptr, rest, hasAngleConstraint)) {
                     return false;
                 }
-                if (hasAngleConstraint == 1) {
-                    extraSize = sizeof(BoneUnit) * 2;
-                    if (extraSize > rest) {
-                        return false;
-                    }
-                    internal::drain(extraSize, ptr, rest);
+                if (hasAngleConstraint == 1 && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
+                    return false;
                 }
             }
         }
         /* bone is additional rotation */
-        if (flags & 0x0100 || flags & 0x200) {
-            size_t extraSize = info.boneIndexSize + sizeof(float);
-            if (extraSize > rest) {
-                return false;
-            }
-            internal::drain(extraSize, ptr, rest);
+        if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, info.boneIndexSize + sizeof(float), rest)) {
+            return false;
         }
         /* axis of bone is fixed */
-        if (flags & 0x0400) {
-            if (sizeof(BoneUnit) > rest) {
-                return false;
-            }
-            internal::drain(sizeof(BoneUnit), ptr, rest);
+        if ((flags & 0x0400) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
+            return false;
         }
         /* axis of bone is local */
-        if (flags & 0x0800) {
-            size_t extraSize = sizeof(BoneUnit) * 2;
-            if (extraSize > rest) {
-                return false;
-            }
-            internal::drain(extraSize, ptr, rest);
+        if ((flags & 0x0800) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
+            return false;
         }
         /* bone is transformed after external parent bone transformation */
-        if (flags & 0x2000) {
-            if (sizeof(int) > rest) {
-                return false;
-            }
-            internal::drain(sizeof(int), ptr, rest);
+        if ((flags & 0x2000) && !internal::validateSize(ptr, sizeof(int), rest)) {
+            return false;
         }
     }
     info.bonesCount = size;

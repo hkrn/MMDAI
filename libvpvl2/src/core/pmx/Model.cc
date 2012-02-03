@@ -139,9 +139,9 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidIndicesError;
         return false;
     }
-    internal::drain(nindices * info.vertexIndexSize, ptr, rest);
     info.indicesPtr = ptr;
     info.indicesCount = nindices;
+    internal::drain(nindices * info.vertexIndexSize, ptr, rest);
 
     /* texture lookup table */
     size_t ntextures;
@@ -179,7 +179,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* display name table */
     size_t nDisplayNames;
-    if (!internal::sizeText(ptr, rest, info.displayNamesPtr, nDisplayNames)) {
+    if (!internal::size32(ptr, rest, nDisplayNames)) {
         m_error = kInvalidDisplayNameSizeError;
         return false;
     }
@@ -195,11 +195,32 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
             m_error = kInvalidTextureError;
             return false;
         }
-        if (sizeof(uint8_t) > rest) {
+        if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
             return false;
         }
         if (!internal::size32(ptr, rest, size)) {
             return false;
+        }
+        for (size_t j = 0; j < size; j++) {
+            size_t type;
+            if (!internal::size8(ptr, rest, type)) {
+                return false;
+            }
+            switch (type) {
+            case 0:
+                if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
+                    return false;
+                }
+                break;
+            case 1:
+                if (!internal::validateSize(ptr, info.morphIndexSize, rest)) {
+                    return false;
+                }
+                break;
+            default:
+                assert(0);
+                break;
+            }
         }
         // TODO:
     }
