@@ -49,16 +49,20 @@ struct MorphUnit {
     uint8_t type;
     int size;
 };
+
 struct VertexMorph {
     float position[3];
 };
+
 struct UVMorph {
     float position[4];
 };
+
 struct BoneMorph {
     float position[3];
     float rotation[4];
 };
+
 struct MaterialMorph {
     uint8_t operation;
     float diffuse[4];

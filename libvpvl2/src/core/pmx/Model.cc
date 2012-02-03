@@ -57,6 +57,12 @@ struct Header
 #pragma pack(pop)
 
 Model::Model()
+    : m_name(0),
+      m_englishName(0),
+      m_comment(0),
+      m_englishComment(0),
+      m_error(kNoError),
+      m_encoding(kUTF16)
 {
 }
 
@@ -247,6 +253,16 @@ bool Model::load(const uint8_t *data, size_t size)
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
         release();
+        parseNamesAndComments(info);
+        parseVertices(info);
+        parseIndices(info);
+        parseTextures(info);
+        parseMaterials(info);
+        parseBones(info);
+        parseMorphs(info);
+        parseDisplayNames(info);
+        parseRigidBodies(info);
+        parseJoints(info);
         return true;
     }
     return false;
@@ -257,6 +273,76 @@ void Model::save(uint8_t *data) const
 }
 
 void Model::release()
+{
+    m_vertices.releaseAll();
+    // m_texture.releaseAll();
+    m_materials.releaseAll();
+    m_bones.releaseAll();
+    m_morphs.releaseAll();
+    m_rigidBodies.releaseAll();
+    m_joints.releaseAll();
+    delete[] m_name;
+    m_name = 0;
+    delete[] m_englishName;
+    m_englishName = 0;
+    delete[] m_comment;
+    m_comment = 0;
+    delete[] m_englishComment;
+    m_englishComment = 0;
+    m_error = kNoError;
+}
+
+void Model::parseNamesAndComments(const DataInfo &info)
+{
+    m_encoding = info.isUTF8 ? kUTF8 : kUTF16;
+    m_name = internal::allocateText(info.namePtr, info.nameSize);
+    m_englishName = internal::allocateText(info.englishNamePtr, info.englishNameSize);
+    m_comment = internal::allocateText(info.commentPtr, info.commentSize);
+    m_englishComment = internal::allocateText(info.englishCommentPtr, info.englishCommentSize);
+}
+
+void Model::parseVertices(const DataInfo &info)
+{
+    const int nvertices = info.verticesCount;
+    uint8_t *ptr = info.verticesPtr;
+    size_t size;
+    for(int i = 0; i < nvertices; i++) {
+        Vertex *vertex = new Vertex();
+        vertex->read(ptr, info, size);
+        m_vertices.add(vertex);
+        ptr += size;
+    }
+}
+
+void Model::parseIndices(const DataInfo &info)
+{
+}
+
+void Model::parseTextures(const DataInfo &info)
+{
+}
+
+void Model::parseMaterials(const DataInfo &info)
+{
+}
+
+void Model::parseBones(const DataInfo &info)
+{
+}
+
+void Model::parseMorphs(const DataInfo &info)
+{
+}
+
+void Model::parseDisplayNames(const DataInfo &info)
+{
+}
+
+void Model::parseRigidBodies(const DataInfo &info)
+{
+}
+
+void Model::parseJoints(const DataInfo &info)
 {
 }
 

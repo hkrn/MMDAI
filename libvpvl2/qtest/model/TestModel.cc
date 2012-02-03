@@ -45,6 +45,7 @@ void TestModel::parseFile()
     const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
     const size_t size = file.size();
     QVERIFY(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
+    model.load(reinterpret_cast<const uint8_t *>(data), size);
 }
 
 QTEST_APPLESS_MAIN(TestModel)

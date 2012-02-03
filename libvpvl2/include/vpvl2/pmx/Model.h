@@ -53,6 +53,14 @@ namespace pmx
  * Model class represents a morph of a Polygon Model Extended object.
  */
 
+class Bone;
+class Joint;
+class Material;
+class Morph;
+class RigidBody;
+class Texture;
+class Vertex;
+
 class VPVL2_API Model
 {
 public:
@@ -89,6 +97,10 @@ public:
         kInvalidRigidBodiesError,
         kInvalidJointsError,
         kMaxErrors
+    };
+    enum Encoding {
+        kUTF8,
+        kUTF16
     };
 
     struct DataInfo
@@ -147,12 +159,40 @@ public:
 
     void save(uint8_t *data) const;
 
+    const uint8_t *name() const { return m_name; }
+    const uint8_t *englishName() const { return m_englishName; }
+    const uint8_t *comment() const { return m_comment; }
+    const uint8_t *englishComment() const { return m_englishComment; }
+    Encoding encoding() const { return m_encoding; }
     Error error() const { return m_error; }
 
 private:
     void release();
+    void parseNamesAndComments(const DataInfo &info);
+    void parseVertices(const DataInfo &info);
+    void parseIndices(const DataInfo &info);
+    void parseTextures(const DataInfo &info);
+    void parseMaterials(const DataInfo &info);
+    void parseBones(const DataInfo &info);
+    void parseMorphs(const DataInfo &info);
+    void parseDisplayNames(const DataInfo &info);
+    void parseRigidBodies(const DataInfo &info);
+    void parseJoints(const DataInfo &info);
 
+    Array<Vertex *> m_vertices;
+    Array<int> m_indices;
+    Array<Texture *> m_texture;
+    Array<Material *> m_materials;
+    Array<Bone *> m_bones;
+    Array<Morph *> m_morphs;
+    Array<RigidBody *> m_rigidBodies;
+    Array<Joint *> m_joints;
+    uint8_t *m_name;
+    uint8_t *m_englishName;
+    uint8_t *m_comment;
+    uint8_t *m_englishComment;
     Error m_error;
+    Encoding m_encoding;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };

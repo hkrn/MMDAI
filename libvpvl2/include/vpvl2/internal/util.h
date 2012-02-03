@@ -54,8 +54,6 @@ namespace internal
 
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
-static const Vector3 kZeroV = Vector3(0.0f, 0.0f, 0.0f);
-static const Quaternion kZeroQ = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 static inline float spline1(const float t, const float p1, const float p2)
 {
@@ -115,7 +113,7 @@ inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *text, size_t &size)
+inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t &size)
 {
     assert(ptr);
     if (!internal::size32(ptr, rest, size) || size > rest)
@@ -138,6 +136,36 @@ inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest
 inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
 {
     return validateSize(ptr, 1, stride, rest);
+}
+
+inline uint8_t *allocateText(const uint8_t *ptr, size_t size)
+{
+    uint8_t *s = new uint8_t[size + 1];
+    memcpy(s, ptr, size);
+    s[size] = 0;
+    return s;
+}
+
+inline int variantIndex(uint8_t *&ptr, size_t size)
+{
+    int result = 0;
+    switch (size) {
+    case 1:
+        result = *reinterpret_cast<uint8_t *>(ptr);
+        ptr += sizeof(uint8_t);
+        break;
+    case 2:
+        result = *reinterpret_cast<uint16_t *>(ptr);
+        ptr += sizeof(uint16_t);
+        break;
+    case 4:
+        result = *reinterpret_cast<int *>(ptr);
+        ptr += sizeof(int);
+        break;
+    default:
+        assert(0);
+    }
+    return result;
 }
 
 inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)

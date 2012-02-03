@@ -56,6 +56,13 @@ namespace pmx
 class VPVL2_API Vertex
 {
 public:
+    enum Type {
+        kBdef1,
+        kBdef2,
+        kBdef4,
+        kSdef
+    };
+
     /**
      * Constructor
      */
@@ -68,12 +75,47 @@ public:
      * Read and parse the buffer with id and sets it's result to the class.
      *
      * @param data The buffer to read and parse
+     * @param info Model information
+     * @param size Size of vertex to be output
      */
-    void read(const uint8_t *data);
-
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
+    const Vector3 &position() const { return m_position; }
+    const Vector3 &normal() const { return m_normal; }
+    const Vector3 &texcoord() const { return m_texcoord; }
+    const Vector3 &uv(int index) const { return index >= 0 && index < 4 ? m_uvs[index] : kZeroV; }
+    Type type() const { return m_type; }
+    float edge() const { return m_edge; }
+
 private:
+    Vector3 m_position;
+    Vector3 m_normal;
+    Vector3 m_texcoord;
+    Vector4 m_uvs[4];
+    Type m_type;
+    float m_edge;
+    union {
+        struct {
+            int index;
+        } bdef1;
+        struct {
+            int index[2];
+            float weight;
+        } bdef2;
+        struct {
+            int index[4];
+            float weight[4];
+        } bdef4;
+        struct {
+            int index[2];
+            float c[3];
+            float r0[3];
+            float r1[3];
+            float weight;
+        } sdef;
+    } m_bt;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };
 

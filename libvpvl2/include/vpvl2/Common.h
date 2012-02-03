@@ -205,6 +205,8 @@ typedef btHashString HashString;
 typedef btHashPtr HashPtr;
 
 static const float kPI = 3.14159265358979323846f;
+static const Vector3 &kZeroV = Vector3(0.0f, 0.0f, 0.0f);
+static const Quaternion &kZeroQ = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 /**
  * Get whether current library version is compatible with specified version.
