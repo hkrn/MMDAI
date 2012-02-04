@@ -38,8 +38,6 @@
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 
-#define LIBAV_FOUND
-
 #ifdef LIBAV_FOUND
 extern "C" {
 #include <libavcodec/avcodec.h>

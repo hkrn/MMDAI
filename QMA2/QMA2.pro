@@ -2,6 +2,8 @@ QT += core gui opengl
 TARGET = MMDAI2
 TEMPLATE = app
 
+DEFINES += LIBAV_FOUND
+
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include
 exists(-L$$(CMAKE_PREFIX_PATH)/lib):LIBS += -L$$(CMAKE_PREFIX_PATH)/lib
