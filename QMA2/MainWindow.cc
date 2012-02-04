@@ -93,11 +93,13 @@ public:
           m_progress(0),
           m_format(QApplication::tr("Playing scene frame %1 of %2...")),
           m_selected(0),
-          m_step(0.0f),
+          m_frameStep(0.0f),
+          m_totalStep(0.0f),
           m_timerID(0),
           m_fromIndex(0),
           m_toIndex(0),
           m_maxIndex(0),
+          m_prevSceneFPS(0),
           m_loop(false)
     {
     }
@@ -105,31 +107,36 @@ public:
     }
 
     void start() {
+        int sceneFPS = m_dialog->sceneFPS();
         m_fromIndex = m_dialog->fromIndex();
         m_toIndex = m_dialog->toIndex();
         m_loop = m_dialog->isLoop();
         m_selected = m_sceneWidget->selectedModel();
+        m_prevSceneFPS = m_sceneWidget->scene()->preferredFPS();
+        m_frameStep = 1.0f / (sceneFPS / static_cast<float>(vpvl::Scene::kFPS));
+        m_totalStep = 0.0f;
         m_sceneWidget->stop();
+        /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
+        m_sceneWidget->stopAutomaticRendering();
+        /* FPS を設定してから物理エンジンを有効にする(FPS設定を反映させるため) */
+        m_sceneWidget->setPreferredFPS(sceneFPS);
         m_sceneWidget->startPhysicsSimulation();
-        /* 赤いエッジが残るため、選択状態のモデルを未選択状態にし、場面を最初の位置に戻す */
+        /* 場面を最初の位置に戻して一定の位置に進ませる */
         m_sceneWidget->seekMotion(0.0f, true);
         m_sceneWidget->advanceMotion(m_fromIndex);
         /* ハンドルも情報パネルも消す */
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
         m_sceneWidget->setSelectedModel(0);
-        m_sceneWidget->updateGL();
+        /* 進捗ダイアログ作成 */
         m_progress = new QProgressDialog();
         m_progress->setCancelButtonText(QApplication::tr("Cancel"));
         m_progress->setWindowModality(Qt::WindowModal);
         int maxRangeIndex = m_toIndex - m_fromIndex;
-        int preferredFPS = m_sceneWidget->scene()->preferredFPS();
         m_progress->setRange(0, maxRangeIndex);
         m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
-        /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
-        m_sceneWidget->stopAutomaticRendering();
-        m_timerID = startTimer(1000.0f / preferredFPS);
-        m_step = static_cast<float>(vpvl::Scene::kFPS) / preferredFPS;
+        /* 再生用タイマー起動 */
+        m_timerID = startTimer(1000.0f / sceneFPS);
     }
     bool isActive() const {
         return m_timerID != 0;
@@ -149,6 +156,7 @@ protected:
                 m_sceneWidget->setSelectedModel(m_selected);
                 /* 再生が終わったら物理を無効にする */
                 m_sceneWidget->stopPhysicsSimulation();
+                m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
                 /* SceneWidget を常時レンダリング状態に戻しておく */
                 m_sceneWidget->startAutomaticRendering();
                 delete m_progress;
@@ -164,8 +172,13 @@ protected:
                 m_sceneWidget->advanceMotion(value);
             }
             else {
-                value = m_progress->value() + 1;
-                m_sceneWidget->advanceMotion(m_step);
+                value = m_progress->value();
+                if (m_totalStep >= 1.0f) {
+                    value += 1;
+                    m_totalStep = 0.0f;
+                }
+                m_sceneWidget->advanceMotion(m_frameStep);
+                m_totalStep += m_frameStep;
             }
             m_progress->setValue(value);
             m_progress->setLabelText(m_format.arg(value).arg(m_toIndex - m_fromIndex));
@@ -178,11 +191,13 @@ private:
     QProgressDialog *m_progress;
     QString m_format;
     vpvl::PMDModel *m_selected;
-    float m_step;
+    float m_frameStep;
+    float m_totalStep;
     int m_timerID;
     int m_fromIndex;
     int m_toIndex;
     int m_maxIndex;
+    int m_prevSceneFPS;
     bool m_loop;
 };
 

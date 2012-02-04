@@ -116,6 +116,7 @@ static AVStream *OpenVideoStream(AVFormatContext *formatContext,
     AVStream *stream = av_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
     codec->codec_id = codecID;
+    codec->me_method = 1;
     codec->codec_type = AVMEDIA_TYPE_VIDEO;
     codec->bit_rate = bitrate;
     codec->width = size.width();
@@ -246,7 +247,7 @@ void VideoEncoder::run()
 {
 #ifdef LIBAV_FOUND
     CodecID videoCodecID = CODEC_ID_PNG;
-    PixelFormat sourcePixelFormat = PIX_FMT_RGBA, destPixelFormat = PIX_FMT_RGB24;
+    PixelFormat sourcePixelFormat = PIX_FMT_RGBA, destPixelFormat = PIX_FMT_RGB32;
     AVOutputFormat *videoOutputFormat = 0;
     AVFormatContext *videoFormatContext = 0;
     AVStream *audioStream = 0;

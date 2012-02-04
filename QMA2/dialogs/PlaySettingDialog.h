@@ -55,6 +55,7 @@ public:
 
     int fromIndex() const;
     int toIndex() const;
+    int sceneFPS() const;
     bool isLoop() const;
 
 signals:
@@ -67,6 +68,7 @@ private:
     QSettings *m_settings;
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
+    QSpinBox *m_sceneFPSBox;
     QCheckBox *m_loopBox;
 
     Q_DISABLE_COPY(PlaySettingDialog)

@@ -17,11 +17,16 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, QSettings *setti
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox->setValue(maxFrameIndex);
+    m_sceneFPSBox = new QSpinBox();
+    m_sceneFPSBox->setRange(30, 240);
+    int sceneFPS = settings->value("playSettingDialog/sceneFPS", 30).toInt();
+    m_sceneFPSBox->setValue(sceneFPS);
     m_loopBox = new QCheckBox(tr("Loop"));
     m_loopBox->setChecked(settings->value("playSettingDialog/loop", false).toBool());
     QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(tr("Keyframe from"), m_fromIndexBox);
-    formLayout->addRow(tr("Keyframe to"), m_toIndexBox);
+    formLayout->addRow(tr("Keyframe from: "), m_fromIndexBox);
+    formLayout->addRow(tr("Keyframe to: "), m_toIndexBox);
+    formLayout->addRow(tr("Scene FPS: "), m_sceneFPSBox);
     mainLayout->addLayout(formLayout);
     mainLayout->addWidget(m_loopBox, 0, Qt::AlignCenter);
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
@@ -41,6 +46,7 @@ void PlaySettingDialog::saveSettings()
 {
     m_settings->setValue("playSettingDialog/fromIndex", m_fromIndexBox->value());
     m_settings->setValue("playSettingDialog/toIndex", m_toIndexBox->value());
+    m_settings->setValue("playSettingDialog/sceneFPS", m_sceneFPSBox->value());
     m_settings->setValue("playSettingDialog/loop", m_loopBox->isChecked());
     emit settingsDidSave();
 }
@@ -53,6 +59,11 @@ int PlaySettingDialog::fromIndex() const
 int PlaySettingDialog::toIndex() const
 {
     return m_toIndexBox->value();
+}
+
+int PlaySettingDialog::sceneFPS() const
+{
+    return m_sceneFPSBox->value();
 }
 
 bool PlaySettingDialog::isLoop() const
