@@ -63,7 +63,7 @@ win32 {
   RC_FILE = resources/icons/app.rc
 }
 macx {
-  #ICON = resources/icons/app.icns
+  ICON = resources/icons/app.icns
   QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
   QMAKE_LFLAGS *= -mmacosx-version-min=10.5
   QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/PlugIns/
