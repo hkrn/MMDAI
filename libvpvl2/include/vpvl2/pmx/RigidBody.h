@@ -71,43 +71,36 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
 
-    void read(const uint8_t *data);
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
-    const uint8_t *name() const {
-        return m_name;
-    }
-    btRigidBody *body() const {
-        return m_body;
-    }
-    uint16_t groupID() const {
-        return m_groupID;
-    }
-    uint16_t groupMask() const {
-        return m_groupMask;
-    }
+    const StaticString *name() const { return m_name; }
+    const StaticString *englishName() const { return m_englishName; }
+    int boneIndex() const { return m_boneIndex; }
+    const Vector3 &size() const { return m_size; }
+    const Vector3 &position() const { return m_position; }
+    const Vector3 &rotation() const { return m_rotation; }
+    float mass() const { return m_mass; }
 
 private:
-    uint8_t *m_name;
-    Bone *m_bone;
     btCollisionShape *m_shape;
     btRigidBody *m_body;
     btMotionState *m_motionState;
     Transform m_transform;
     Transform m_invertedTransform;
     btMotionState *m_kinematicMotionState;
+    StaticString *m_name;
+    StaticString *m_englishName;
+    int m_boneIndex;
+    Vector3 m_size;
     Vector3 m_position;
     Vector3 m_rotation;
-    float m_width;
-    float m_height;
-    float m_depth;
     float m_mass;
     uint16_t m_groupID;
     uint16_t m_groupMask;
     uint8_t m_collisionGroupID;
     uint8_t m_shapeType;
     uint8_t m_type;
-    bool m_noBone;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
 };

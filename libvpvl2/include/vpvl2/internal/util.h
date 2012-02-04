@@ -77,13 +77,13 @@ inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
     return ptr;
 }
 
-inline void drain(size_t size, uint8_t *&ptr, size_t &rest)
+static inline void drain(size_t size, uint8_t *&ptr, size_t &rest)
 {
     ptr += size;
     rest -= size;
 }
 
-inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
+static inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     assert(ptr);
     if (sizeof(uint8_t) > rest)
@@ -93,7 +93,7 @@ inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
+static inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     assert(ptr);
     if (sizeof(uint16_t) > rest)
@@ -103,7 +103,7 @@ inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
+static inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
     assert(ptr);
     if (sizeof(int) > rest)
@@ -113,7 +113,7 @@ inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
     return true;
 }
 
-inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t &size)
+static inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t &size)
 {
     assert(ptr);
     if (!internal::size32(ptr, rest, size) || size > rest)
@@ -123,7 +123,7 @@ inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t &size)
     return true;
 }
 
-inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
+static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
     assert(ptr);
     size_t required = stride * size;
@@ -133,20 +133,34 @@ inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest
     return true;
 }
 
-inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
+static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
 {
     return validateSize(ptr, 1, stride, rest);
 }
 
-inline uint8_t *allocateText(const uint8_t *ptr, size_t size)
+static int variantIndex(uint8_t *&ptr, size_t size)
 {
-    uint8_t *s = new uint8_t[size + 1];
-    memcpy(s, ptr, size);
-    s[size] = 0;
-    return s;
+    int result = 0;
+    switch (size) {
+    case 1:
+        result = *reinterpret_cast<int8_t *>(ptr);
+        ptr += sizeof(int8_t);
+        break;
+    case 2:
+        result = *reinterpret_cast<int16_t *>(ptr);
+        ptr += sizeof(int16_t);
+        break;
+    case 4:
+        result = *reinterpret_cast<int *>(ptr);
+        ptr += sizeof(int);
+        break;
+    default:
+        assert(0);
+    }
+    return result;
 }
 
-inline int variantIndex(uint8_t *&ptr, size_t size)
+static int variantIndexUnsigned(uint8_t *&ptr, size_t size)
 {
     int result = 0;
     switch (size) {
@@ -168,7 +182,7 @@ inline int variantIndex(uint8_t *&ptr, size_t size)
     return result;
 }
 
-inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
+static void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
     assert(table && size > 0);
     for (int i = 0; i < size; i++) {
@@ -188,19 +202,19 @@ inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
     table[size] = 1.0f;
 }
 
-inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
+static inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
 {
     assert(s1 && s2);
     return strncmp(reinterpret_cast<const char *>(s1), reinterpret_cast<const char *>(s2), max) == 0;
 }
 
-inline bool stringEquals(const char *s1, const char *s2, size_t max)
+static inline bool stringEquals(const char *s1, const char *s2, size_t max)
 {
     assert(s1 && s2);
     return strncmp(s1, s2, max) == 0;
 }
 
-inline char *stringToken(char *str, const char *delim, char **ptr)
+static inline char *stringToken(char *str, const char *delim, char **ptr)
 {
     assert(delim);
 #if defined(__MINGW32__)
@@ -212,13 +226,13 @@ inline char *stringToken(char *str, const char *delim, char **ptr)
 #endif
 }
 
-inline int stringToInt(const char *str)
+static inline int stringToInt(const char *str)
 {
     assert(str);
     return atoi(str);
 }
 
-inline float stringToFloat(const char *str)
+static inline float stringToFloat(const char *str)
 {
     assert(str);
     char *p = 0;
@@ -229,7 +243,7 @@ inline float stringToFloat(const char *str)
 #endif
 }
 
-inline void zerofill(void *ptr, size_t size)
+static inline void zerofill(void *ptr, size_t size)
 {
     assert(ptr && size > 0);
 #if defined(WIN32) && !defined(__MINGW32__)
@@ -239,7 +253,7 @@ inline void zerofill(void *ptr, size_t size)
 #endif
 }
 
-inline int snprintf(uint8_t *buffer, size_t size, const char *format, ...)
+static inline int snprintf(uint8_t *buffer, size_t size, const char *format, ...)
 {
     assert(buffer && size > 0);
     va_list ap;

@@ -75,6 +75,10 @@ Vertex::Vertex()
     : m_type(kBdef1),
       m_edge(0)
 {
+    for (int i = 0; i < 4; i++) {
+        m_uvs[i].setZero();
+        m_weight[i] = m_indices[i] = 0;
+    }
 }
 
 Vertex::~Vertex()
@@ -112,7 +116,6 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             boneSize = info.boneIndexSize * 2 + sizeof(SdefUnit);
             break;
         default: /* unexpected value */
-            assert(0);
             return false;
         }
         boneSize += sizeof(float); /* edge */
@@ -142,36 +145,34 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     ptr += sizeof(uint8_t);
     switch (m_type) {
     case kBdef1: { /* BDEF1 */
-        m_bt.bdef1.index = internal::variantIndex(ptr, info.boneIndexSize);
+        m_indices[0] = internal::variantIndex(ptr, info.boneIndexSize);
         break;
     }
     case kBdef2: { /* BDEF2 */
         for (int i = 0; i < 2; i++)
-            m_bt.bdef4.index[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_indices[i] = internal::variantIndex(ptr, info.boneIndexSize);
         const Bdef2Unit &unit = *reinterpret_cast<Bdef2Unit *>(ptr);
-        m_bt.bdef2.weight = unit.weight;
+        m_weight[0] = unit.weight;
         ptr += sizeof(Bdef2Unit);
         break;
     }
     case kBdef4: { /* BDEF4 */
         for (int i = 0; i < 4; i++)
-            m_bt.bdef4.index[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_indices[i] = internal::variantIndex(ptr, info.boneIndexSize);
         const Bdef4Unit &unit = *reinterpret_cast<Bdef4Unit *>(ptr);
         for (int i = 0; i < 4; i++)
-            m_bt.bdef4.weight[i] = unit.weight[i];
+            m_weight[i] = unit.weight[i];
         ptr += sizeof(Bdef4Unit);
         break;
     }
     case kSdef: { /* SDEF */
         for (int i = 0; i < 2; i++)
-            m_bt.bdef4.index[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_indices[i] = internal::variantIndex(ptr, info.boneIndexSize);
         const SdefUnit &unit = *reinterpret_cast<SdefUnit *>(ptr);
-        for (int i = 0; i < 3; i++) {
-            m_bt.sdef.c[i] = unit.c[i];
-            m_bt.sdef.r0[i] = unit.r0[i];
-            m_bt.sdef.r1[i] = unit.r1[i];
-        }
-        m_bt.sdef.weight = unit.weight;
+        m_c.setValue(unit.c[0], unit.c[1], unit.c[2]);
+        m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
+        m_r1.setValue(unit.r1[0], unit.r1[1], unit.r1[2]);
+        m_weight[0] = unit.weight;
         ptr += sizeof(SdefUnit);
         break;
     }

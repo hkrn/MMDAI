@@ -156,14 +156,15 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.texturesPtr = ptr;
+    size_t nNameSize;
+    uint8_t *namePtr;
     for (size_t i = 0; i < ntextures; i++) {
-        size_t nTextureSize;
-        uint8_t *texturePtr;
-        if (!internal::sizeText(ptr, rest, texturePtr, nTextureSize)) {
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             m_error = kInvalidTextureError;
             return false;
         }
     }
+    info.texturesCount = ntextures;
 
     /* material */
     if (!Material::preparse(ptr, rest, info)) {
@@ -191,8 +192,6 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     info.displayNamesPtr = ptr;
     for (size_t i = 0; i < nDisplayNames; i++) {
-        size_t nNameSize;
-        uint8_t *namePtr;
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             m_error = kInvalidTextureError;
             return false;
@@ -243,6 +242,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidJointsError;
         return false;
     }
+    info.endPtr = ptr;
 
     return true;
 }
@@ -272,22 +272,27 @@ void Model::save(uint8_t *data) const
 {
 }
 
+const StaticString *Model::texture(int index) const
+{
+    return index >= 0 && index < m_textures.count() ? m_textures.at(index) : 0;
+}
+
 void Model::release()
 {
     m_vertices.releaseAll();
-    // m_texture.releaseAll();
+    m_textures.releaseAll();
     m_materials.releaseAll();
     m_bones.releaseAll();
     m_morphs.releaseAll();
     m_rigidBodies.releaseAll();
     m_joints.releaseAll();
-    delete[] m_name;
+    delete m_name;
     m_name = 0;
-    delete[] m_englishName;
+    delete m_englishName;
     m_englishName = 0;
-    delete[] m_comment;
+    delete m_comment;
     m_comment = 0;
-    delete[] m_englishComment;
+    delete m_englishComment;
     m_englishComment = 0;
     m_error = kNoError;
 }
@@ -295,10 +300,10 @@ void Model::release()
 void Model::parseNamesAndComments(const DataInfo &info)
 {
     m_encoding = info.isUTF8 ? kUTF8 : kUTF16;
-    m_name = internal::allocateText(info.namePtr, info.nameSize);
-    m_englishName = internal::allocateText(info.englishNamePtr, info.englishNameSize);
-    m_comment = internal::allocateText(info.commentPtr, info.commentSize);
-    m_englishComment = internal::allocateText(info.englishCommentPtr, info.englishCommentSize);
+    m_name = new StaticString(info.namePtr, info.nameSize);
+    m_englishName = new StaticString(info.englishNamePtr, info.englishNameSize);
+    m_comment = new StaticString(info.commentPtr, info.commentSize);
+    m_englishComment = new StaticString(info.englishCommentPtr, info.englishCommentSize);
 }
 
 void Model::parseVertices(const DataInfo &info)
@@ -316,14 +321,38 @@ void Model::parseVertices(const DataInfo &info)
 
 void Model::parseIndices(const DataInfo &info)
 {
+    const int nindices = info.indicesCount;
+    uint8_t *ptr = info.indicesPtr;
+    size_t size = info.vertexIndexSize;
+    for(int i = 0; i < nindices; i++) {
+        m_indices.add(internal::variantIndexUnsigned(ptr, size));
+        ptr += size;
+    }
 }
 
 void Model::parseTextures(const DataInfo &info)
 {
+    const int ntextures = info.texturesCount;
+    uint8_t *ptr = info.texturesPtr;
+    uint8_t *texturePtr;
+    size_t nTextureSize, rest = SIZE_MAX;
+    for(int i = 0; i < ntextures; i++) {
+        internal::sizeText(ptr, rest, texturePtr, nTextureSize);
+        m_textures.add(new StaticString(texturePtr, nTextureSize));
+    }
 }
 
 void Model::parseMaterials(const DataInfo &info)
 {
+    const int nmaterials = info.materialsCount;
+    uint8_t *ptr = info.materialsPtr;
+    size_t size;
+    for(int i = 0; i < nmaterials; i++) {
+        Material *material = new Material();
+        material->read(ptr, info, size);
+        m_materials.add(material);
+        ptr += size;
+    }
 }
 
 void Model::parseBones(const DataInfo &info)
@@ -340,10 +369,28 @@ void Model::parseDisplayNames(const DataInfo &info)
 
 void Model::parseRigidBodies(const DataInfo &info)
 {
+    const int nRigidBodies = info.rigidBodiesCount;
+    uint8_t *ptr = info.rigidBodiesPtr;
+    size_t size;
+    for(int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = new RigidBody();
+        rigidBody->read(ptr, info, size);
+        m_rigidBodies.add(rigidBody);
+        ptr += size;
+    }
 }
 
 void Model::parseJoints(const DataInfo &info)
 {
+    const int nJoints = info.jointsCount;
+    uint8_t *ptr = info.jointsPtr;
+    size_t size;
+    for(int i = 0; i < nJoints; i++) {
+        Joint *joint = new Joint();
+        joint->read(ptr, info, size);
+        m_joints.add(joint);
+        ptr += size;
+    }
 }
 
 }

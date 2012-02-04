@@ -59,11 +59,37 @@ struct JointUnit
 #pragma pack(pop)
 
 Joint::Joint()
+    : m_name(0),
+      m_englishName(0),
+      m_position(kZeroV),
+      m_rotation(kZeroV),
+      m_positionLowerLimit(kZeroV),
+      m_rotationLowerLimit(kZeroV),
+      m_positionUpperLimit(kZeroV),
+      m_rotationUpperLimit(kZeroV),
+      m_positionStiffness(kZeroV),
+      m_rotationStiffness(kZeroV),
+      m_rigidBodyIndex1(0),
+      m_rigidBodyIndex2(0)
 {
 }
 
 Joint::~Joint()
 {
+    delete m_name;
+    m_name = 0;
+    delete m_englishName;
+    m_englishName = 0;
+    m_position.setZero();
+    m_rotation.setZero();
+    m_positionLowerLimit.setZero();
+    m_rotationLowerLimit.setZero();
+    m_positionUpperLimit.setZero();
+    m_rotationUpperLimit.setZero();
+    m_positionStiffness.setZero();
+    m_rotationStiffness.setZero();
+    m_rigidBodyIndex1 = 0;
+    m_rigidBodyIndex2 = 0;
 }
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -103,8 +129,37 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-void Joint::read(const uint8_t *data)
+void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
+    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
+    size_t nNameSize, rest = SIZE_MAX;
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_name = new StaticString(namePtr, nNameSize);
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize);
+    internal::size8(ptr, rest, nNameSize);
+    switch (nNameSize) {
+    case 0: {
+        m_rigidBodyIndex1 = internal::variantIndex(ptr, info.rigidBodyIndexSize);
+        m_rigidBodyIndex2 = internal::variantIndex(ptr, info.rigidBodyIndexSize);
+        const JointUnit &unit = *reinterpret_cast<JointUnit *>(ptr);
+        m_position.setValue(unit.position[0], unit.position[1], unit.position[2]);
+        m_rotation.setValue(unit.rotation[0], unit.rotation[1], unit.rotation[2]);
+        m_positionLowerLimit.setValue(unit.positionLowerLimit[0], unit.positionLowerLimit[1], unit.positionLowerLimit[2]);
+        m_rotationLowerLimit.setValue(unit.rotationLowerLimit[0], unit.rotationLowerLimit[1], unit.rotationLowerLimit[2]);
+        m_positionUpperLimit.setValue(unit.positionUpperLimit[0], unit.positionUpperLimit[1], unit.positionUpperLimit[2]);
+        m_rotationUpperLimit.setValue(unit.rotationUpperLimit[0], unit.rotationUpperLimit[1], unit.rotationUpperLimit[2]);
+        m_positionStiffness.setValue(unit.positionStiffness[0], unit.positionStiffness[1], unit.positionStiffness[2]);
+        m_rotationStiffness.setValue(unit.rotationStiffness[0], unit.rotationStiffness[1], unit.rotationStiffness[2]);
+        ptr += sizeof(unit);
+        break;
+    }
+    default: {
+        assert(0);
+        return;
+    }
+    }
+    size = ptr - start;
 }
 
 void Joint::write(uint8_t *data) const

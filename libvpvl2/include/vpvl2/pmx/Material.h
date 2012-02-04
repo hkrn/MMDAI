@@ -56,6 +56,13 @@ namespace pmx
 class VPVL2_API Material
 {
 public:
+    enum SphereTextureRenderMode {
+        kNone,
+        kModulate,
+        kAdditive,
+        kSubTexture
+    };
+
     /**
      * Constructor
      */
@@ -68,12 +75,46 @@ public:
      * Read and parse the buffer with id and sets it's result to the class.
      *
      * @param data The buffer to read and parse
+     * @param info Model information
+     * @param size Size of vertex to be output
      */
-    void read(const uint8_t *data);
-
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
+    const StaticString *name() const { return m_name; }
+    const StaticString *englishName() const { return m_englishName; }
+    const StaticString *userDataArea() const { return m_userDataArea; }
+    SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
+    const Color &ambient() const { return m_ambient; }
+    const Color &diffuse() const { return m_diffuse; }
+    const Color &specular() const { return m_specular; }
+    const Color &edgeColor() const { return m_edgeColor; }
+    float shininess() const { return m_shininess; }
+    float edgeSize() const { return m_edgeSize; }
+    int textureIndex() const { return m_textureIndex; }
+    int sphereTextureIndex() const { return m_sphereTextureIndex; }
+    int toonTextureIndex() const { return m_toonTextureIndex; }
+    int indices() const { return m_indices; }
+    bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
+
 private:
+    StaticString *m_name;
+    StaticString *m_englishName;
+    StaticString *m_userDataArea;
+    SphereTextureRenderMode m_sphereTextureRenderMode;
+    Color m_ambient;
+    Color m_diffuse;
+    Color m_specular;
+    Color m_edgeColor;
+    float m_shininess;
+    float m_edgeSize;
+    int m_textureIndex;
+    int m_sphereTextureIndex;
+    int m_toonTextureIndex;
+    int m_indices;
+    uint8_t m_flags;
+    bool m_useSharedToonTexture;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(Material)
 };
 

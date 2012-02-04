@@ -63,11 +63,37 @@ struct RigidBodyUnit
 #pragma pack(pop)
 
 RigidBody::RigidBody()
+    : m_name(0),
+      m_englishName(0),
+      m_boneIndex(0),
+      m_size(kZeroV),
+      m_position(kZeroV),
+      m_rotation(kZeroV),
+      m_mass(0),
+      m_groupID(0),
+      m_groupMask(0),
+      m_collisionGroupID(0),
+      m_shapeType(0),
+      m_type(0)
 {
 }
 
 RigidBody::~RigidBody()
 {
+    delete m_name;
+    m_name = 0;
+    delete m_englishName;
+    m_englishName = 0;
+    m_boneIndex = 0;
+    m_size.setZero();
+    m_position.setZero();
+    m_rotation.setZero();
+    m_mass = 0;
+    m_groupID = 0;
+    m_groupMask = 0;
+    m_collisionGroupID = 0;
+    m_shapeType = 0;
+    m_type = 0;
 }
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -96,8 +122,26 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-void RigidBody::read(const uint8_t *data)
+void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
+    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
+    size_t nNameSize, rest = SIZE_MAX;
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_name = new StaticString(namePtr, nNameSize);
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize);
+    m_boneIndex = internal::variantIndex(ptr, info.boneIndexSize);
+    const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
+    m_collisionGroupID = unit.collisionGroupID;
+    m_groupMask = unit.collsionMask;
+    m_shapeType = unit.shapeType;
+    m_size.setValue(unit.size[0], unit.size[1], unit.size[2]);
+    m_position.setValue(unit.position[0], unit.position[1], unit.position[2]);
+    m_rotation.setValue(unit.rotation[0], unit.rotation[1], unit.rotation[2]);
+    m_mass = unit.mass;
+    m_type = unit.type;
+    ptr += sizeof(unit);
+    size = ptr - start;
 }
 
 void RigidBody::write(uint8_t *data) const

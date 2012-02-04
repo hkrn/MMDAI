@@ -89,32 +89,17 @@ public:
     float edge() const { return m_edge; }
 
 private:
+    Vector4 m_uvs[4];
     Vector3 m_position;
     Vector3 m_normal;
     Vector3 m_texcoord;
-    Vector4 m_uvs[4];
+    Vector3 m_c;
+    Vector3 m_r0;
+    Vector3 m_r1;
     Type m_type;
     float m_edge;
-    union {
-        struct {
-            int index;
-        } bdef1;
-        struct {
-            int index[2];
-            float weight;
-        } bdef2;
-        struct {
-            int index[4];
-            float weight[4];
-        } bdef4;
-        struct {
-            int index[2];
-            float c[3];
-            float r0[3];
-            float r1[3];
-            float weight;
-        } sdef;
-    } m_bt;
+    float m_weight[4];
+    int m_indices[4];
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };

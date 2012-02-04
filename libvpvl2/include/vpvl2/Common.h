@@ -201,11 +201,37 @@ public:
 private:
     btHashMap<K, V> m_values;
 };
+
+class StaticString {
+public:
+    StaticString(const uint8_t *value, size_t length)
+        : m_value(0),
+          m_length(0)
+    {
+        m_value = new uint8_t[length + 1];
+        memcpy(m_value, value, length);
+        m_value[length] = 0;
+        m_length = length;
+    }
+    ~StaticString() {
+        delete[] m_value;
+        m_length = 0;
+    }
+
+    const uint8_t *value() const { return m_value; }
+    size_t length() const { return m_length; }
+
+private:
+    uint8_t *m_value;
+    size_t m_length;
+};
+
 typedef btHashString HashString;
 typedef btHashPtr HashPtr;
 
 static const float kPI = 3.14159265358979323846f;
 static const Vector3 &kZeroV = Vector3(0.0f, 0.0f, 0.0f);
+static const Color &kZeroC = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 static const Quaternion &kZeroQ = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 /**

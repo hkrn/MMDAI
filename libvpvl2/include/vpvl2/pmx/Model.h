@@ -58,7 +58,6 @@ class Joint;
 class Material;
 class Morph;
 class RigidBody;
-class Texture;
 class Vertex;
 
 class VPVL2_API Model
@@ -140,6 +139,7 @@ public:
         size_t rigidBodiesCount;
         uint8_t *jointsPtr;
         size_t jointsCount;
+        uint8_t *endPtr;
     };
 
     /**
@@ -159,10 +159,12 @@ public:
 
     void save(uint8_t *data) const;
 
-    const uint8_t *name() const { return m_name; }
-    const uint8_t *englishName() const { return m_englishName; }
-    const uint8_t *comment() const { return m_comment; }
-    const uint8_t *englishComment() const { return m_englishComment; }
+    const StaticString *name() const { return m_name; }
+    const StaticString *englishName() const { return m_englishName; }
+    const StaticString *comment() const { return m_comment; }
+    const StaticString *englishComment() const { return m_englishComment; }
+    const StaticString *texture(int index) const;
+    void getTextures(Array<StaticString *> &value) const { value.copy(m_textures); }
     Encoding encoding() const { return m_encoding; }
     Error error() const { return m_error; }
 
@@ -181,16 +183,16 @@ private:
 
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
-    Array<Texture *> m_texture;
+    Array<StaticString *> m_textures;
     Array<Material *> m_materials;
     Array<Bone *> m_bones;
     Array<Morph *> m_morphs;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
-    uint8_t *m_name;
-    uint8_t *m_englishName;
-    uint8_t *m_comment;
-    uint8_t *m_englishComment;
+    StaticString *m_name;
+    StaticString *m_englishName;
+    StaticString *m_comment;
+    StaticString *m_englishComment;
     Error m_error;
     Encoding m_encoding;
 

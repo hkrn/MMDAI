@@ -57,11 +57,45 @@ struct MaterialUnit {
 #pragma pack(pop)
 
 Material::Material()
+    : m_name(0),
+      m_englishName(0),
+      m_userDataArea(0),
+      m_sphereTextureRenderMode(kNone),
+      m_ambient(kZeroC),
+      m_diffuse(kZeroC),
+      m_specular(kZeroC),
+      m_shininess(0),
+      m_edgeSize(0),
+      m_textureIndex(0),
+      m_sphereTextureIndex(0),
+      m_toonTextureIndex(0),
+      m_indices(0),
+      m_flags(0),
+      m_useSharedToonTexture(false)
 {
 }
 
 Material::~Material()
 {
+    delete m_name;
+    m_name = 0;
+    delete m_englishName;
+    m_englishName = 0;
+    delete m_userDataArea;
+    m_userDataArea = 0;
+    m_sphereTextureRenderMode = kNone;
+    m_ambient.setZero();
+    m_diffuse.setZero();
+    m_specular.setZero();
+    m_userDataArea = 0;
+    m_shininess = 0;
+    m_edgeSize = 0;
+    m_textureIndex = 0;
+    m_sphereTextureIndex = 0;
+    m_toonTextureIndex = 0;
+    m_indices = 0;
+    m_flags = 0;
+    m_useSharedToonTexture = false;
 }
 
 bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -120,8 +154,41 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-void Material::read(const uint8_t *data)
+void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
+    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
+    size_t nNameSize, rest = SIZE_MAX;
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_name = new StaticString(namePtr, nNameSize);
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize);
+    const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
+    m_ambient.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
+    m_diffuse.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
+    m_specular.setValue(unit.specular[0], unit.specular[1], unit.specular[2], 0);
+    m_edgeColor.setValue(unit.edgeColor[0], unit.edgeColor[1], unit.edgeColor[2], unit.edgeColor[3]);
+    m_shininess = unit.shininess;
+    m_edgeSize = unit.edgeSize;
+    m_flags = unit.flags;
+    ptr += sizeof(unit);
+    m_textureIndex = internal::variantIndex(ptr, info.textureIndexSize);
+    m_sphereTextureIndex = internal::variantIndex(ptr, info.textureIndexSize);
+    internal::size8(ptr, rest, nNameSize);
+    m_sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(nNameSize);
+    internal::size8(ptr, rest, nNameSize);
+    m_useSharedToonTexture = nNameSize == 1;
+    if (m_useSharedToonTexture) {
+        internal::size8(ptr, rest, nNameSize);
+        m_toonTextureIndex = nNameSize;
+    }
+    else {
+        m_toonTextureIndex = internal::variantIndex(ptr, info.textureIndexSize);
+    }
+    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    m_userDataArea = new StaticString(namePtr, nNameSize);
+    internal::size32(ptr, rest, nNameSize);
+    m_indices = nNameSize;
+    size = ptr - start;
 }
 
 void Material::write(uint8_t *data) const

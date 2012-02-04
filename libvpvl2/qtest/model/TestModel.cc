@@ -5,6 +5,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
 
+using namespace vpvl2;
 using namespace vpvl2::pmx;
 
 class TestModel : public QObject
@@ -46,6 +47,9 @@ void TestModel::parseFile()
     const size_t size = file.size();
     QVERIFY(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
     model.load(reinterpret_cast<const uint8_t *>(data), size);
+    Array<StaticString *> textures;
+    model.getTextures(textures);
+    qDebug() << QByteArray(reinterpret_cast<const char *>(textures.at(0)->value()), textures.at(0)->length());
 }
 
 QTEST_APPLESS_MAIN(TestModel)

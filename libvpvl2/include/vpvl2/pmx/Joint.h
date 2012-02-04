@@ -67,10 +67,23 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
 
-    void read(const uint8_t *data);
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
 private:
+    StaticString *m_name;
+    StaticString *m_englishName;
+    Vector3 m_position;
+    Vector3 m_rotation;
+    Vector3 m_positionLowerLimit;
+    Vector3 m_rotationLowerLimit;
+    Vector3 m_positionUpperLimit;
+    Vector3 m_rotationUpperLimit;
+    Vector3 m_positionStiffness;
+    Vector3 m_rotationStiffness;
+    int m_rigidBodyIndex1;
+    int m_rigidBodyIndex2;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
 };
 
