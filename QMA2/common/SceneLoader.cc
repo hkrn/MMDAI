@@ -547,8 +547,6 @@ void SceneLoader::release()
       物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
      */
     m_renderer->releaseProject(m_project);
-    delete m_delegate;
-    m_delegate = 0;
     delete m_project;
     m_project = 0;
     delete m_camera;
