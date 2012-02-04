@@ -691,7 +691,7 @@ void SceneWidget::selectBones(const QList<vpvl::Bone *> &bones)
 {
     m_info->setBones(bones, tr("(multiple)"));
     m_info->update();
-    if (bones.count() > 0) {
+    if (!bones.isEmpty()) {
         vpvl::Bone *bone = bones.first();
         m_handles->setMovable(bone->isMovable());
         m_handles->setRotateable(bone->isRotateable());
@@ -932,45 +932,41 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         emit handleDidGrab();
         return;
     }
-    { /* only in move or rotate mode */
-        vpvl::Vector3 rayFrom, rayTo, pick;
-        makeRay(pos, rayFrom, rayTo);
-        if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
-            m_handleFlags = flags;
-            m_handles->setVisibilityFlags(flags);
-            setCursor(Qt::ClosedHandCursor);
-            emit handleDidGrab();
-        }
-    }
-}
-
-void SceneWidget::mouseDoubleClickEvent(QMouseEvent *event)
-{
-    vpvl::PMDModel *model = selectedModel();
-    if (model) {
-        static const vpvl::Vector3 size(0.1f, 0.1f, 0.1f);
-        const QPointF &pos = event->posF();
-        vpvl::Vector3 znear, zfar, normal;
-        makeRay(pos, znear, zfar);
-        const vpvl::BoneList &bones = model->bones();
-        const int nbones = bones.count();
-        vpvl::Bone *nearestBone = 0;
-        vpvl::Scalar hitLambda = 1.0f;
-        for (int i = 0; i < nbones; i++) {
-            vpvl::Bone *bone = bones[i];
-            const vpvl::Vector3 &o = bone->localTransform().getOrigin(),
-                    min = o - size, max = o + size;
-            if (btRayAabb(znear, zfar, min, max, hitLambda, normal)) {
-                nearestBone = bone;
-                break;
+    if (vpvl::PMDModel *model = selectedModel()) {
+        if (m_editMode == kSelect) {
+            static const vpvl::Vector3 size(0.1f, 0.1f, 0.1f);
+            const QPointF &pos = event->posF();
+            vpvl::Vector3 znear, zfar, normal;
+            makeRay(pos, znear, zfar);
+            const vpvl::BoneList &bones = model->bones();
+            const int nbones = bones.count();
+            vpvl::Bone *nearestBone = 0;
+            vpvl::Scalar hitLambda = 1.0f;
+            for (int i = 0; i < nbones; i++) {
+                vpvl::Bone *bone = bones[i];
+                const vpvl::Vector3 &o = bone->localTransform().getOrigin(),
+                        min = o - size, max = o + size;
+                if (btRayAabb(znear, zfar, min, max, hitLambda, normal)) {
+                    nearestBone = bone;
+                    break;
+                }
+            }
+            if (nearestBone && (nearestBone->isMovable() || nearestBone->isRotateable())) {
+                QList<vpvl::Bone *> bones;
+                bones.append(nearestBone);
+                emit boneDidSelect(bones);
             }
         }
-        if (nearestBone && (nearestBone->isMovable() || nearestBone->isRotateable())) {
-            QList<vpvl::Bone *> bones;
-            bones.append(nearestBone);
-            emit boneDidSelect(bones);
+        else if (m_editMode == kRotate) { /* only in move or rotate mode */
+            vpvl::Vector3 rayFrom, rayTo, pick;
+            makeRay(pos, rayFrom, rayTo);
+            if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
+                m_handleFlags = flags;
+                m_handles->setVisibilityFlags(flags);
+                setCursor(Qt::ClosedHandCursor);
+                emit handleDidGrab();
+            }
         }
-        event->ignore();
     }
 }
 
@@ -1006,9 +1002,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         m_handles->setPoint2D(event->posF());
         return;
     }
-    { /* only in move or rotate mode */
-        changeCursorIfHandlesHit(pos);
-    }
+    changeCursorIfHandlesHit(pos);
 }
 
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -1235,19 +1229,23 @@ const QString SceneWidget::openFileDialog(const QString &name, const QString &de
 
 void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
 {
-    /* モデルのハンドルに入ってる場合は手のひら状のカーソルに変更にし、そうでない場合元のカーソルに戻すだけの処理 */
     int flags;
     QRectF rect;
+    /* ハンドルアイコンの中に入っているか? */
     if (m_handles->testHitImage(pos, flags, rect) && flags & Handles::kEnable) {
         setCursor(Qt::SizeVerCursor);
     }
-    else {
+    /* 回転モードの場合は回転ハンドルに入っているか? */
+    else if (m_editMode == kRotate) {
         vpvl::Vector3 rayFrom, rayTo, pick;
         makeRay(pos, rayFrom, rayTo);
         if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
             setCursor(Qt::OpenHandCursor);
         else
             unsetCursor();
+    }
+    else {
+        unsetCursor();
     }
 }
 

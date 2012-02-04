@@ -100,7 +100,6 @@ public:
     vpvl::Scene *mutableScene();
     vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
-    void setEditMode(EditMode value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
@@ -157,7 +156,7 @@ public slots:
     void translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta);
     void resetModelPosition();
     void advanceMotion(float frameIndex);
-    void seekMotion(float frameIndex, bool force);
+    void seekMotion(float frameIndex, bool force = false);
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void setGridVisible(bool value);
     void setPhysicsEnable(bool value);
@@ -192,6 +191,7 @@ public slots:
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
     void setBlackBackgroundEnable(bool value) { m_enableBlackBackground = value; }
+    void setEditMode(SceneWidget::EditMode value) { m_editMode = value; }
 
 signals:
     void initailizeGLContextDidDone();
@@ -225,7 +225,6 @@ protected:
     void dropEvent(QDropEvent *event);
     void initializeGL();
     void mousePressEvent(QMouseEvent *event);
-    void mouseDoubleClickEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void paintGL();

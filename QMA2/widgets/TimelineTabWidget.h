@@ -39,6 +39,7 @@
 
 #include <QtGui/QWidget>
 #include <QtGui/QAbstractItemView>
+#include "common/SceneWidget.h"
 
 namespace vpvl {
 class Bone;
@@ -47,6 +48,9 @@ class PMDModel;
 class VPDPose;
 }
 
+class QAbstractButton;
+class QButtonGroup;
+class QRadioButton;
 class QSettings;
 class QTabWidget;
 class FrameSelectionDialog;
@@ -105,11 +109,18 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model);
-    void toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model);
+    void toggleBoneEnable(vpvl::PMDModel *model);
+    void toggleFaceEnable(vpvl::PMDModel *model);
+    void toggleBoneButtonsByBone(const QList<vpvl::Bone *> &bones);
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
+
+signals:
+    void editModeDidSet(SceneWidget::EditMode mode);
+
+private slots:
+    void selectButton(QAbstractButton *button);
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
@@ -120,6 +131,10 @@ private:
     TimelineWidget *m_boneTimeline;
     TimelineWidget *m_faceTimeline;
     TimelineWidget *m_sceneTimeline;
+    QButtonGroup *m_boneButtonGroup;
+    QRadioButton *m_boneSelectButton;
+    QRadioButton *m_boneRotateButton;
+    QRadioButton *m_boneMoveButton;
     FrameSelectionDialog *m_frameSelectionDialog;
     FrameWeightDialog *m_frameWeightDialog;
 

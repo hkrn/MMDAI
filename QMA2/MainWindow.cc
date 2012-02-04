@@ -1274,6 +1274,8 @@ void MainWindow::connectWidgets()
             m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
     connect(m_modelTabWidget->modelInfoWidget(), SIGNAL(edgeOffsetDidChange(double)),
             m_sceneWidget, SLOT(setModelEdgeOffset(double)));
+    connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)),
+            m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
 }
 
 void MainWindow::insertMotionToAllModels()

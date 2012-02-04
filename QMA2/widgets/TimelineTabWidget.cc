@@ -64,6 +64,25 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
     m_boneTimeline->setEnableFrameIndexSpinBox(false);
+    m_boneSelectButton = new QRadioButton();
+    m_boneSelectButton->setChecked(true);
+    m_boneSelectButton->setEnabled(false);
+    m_boneRotateButton = new QRadioButton();
+    m_boneRotateButton->setEnabled(false);
+    m_boneMoveButton = new QRadioButton();
+    m_boneMoveButton->setEnabled(false);
+    m_boneButtonGroup = new QButtonGroup();
+    connect(m_boneButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(selectButton(QAbstractButton*)));
+    m_boneButtonGroup->addButton(m_boneSelectButton);
+    m_boneButtonGroup->addButton(m_boneRotateButton);
+    m_boneButtonGroup->addButton(m_boneMoveButton);
+    QHBoxLayout *mainLayout = new QHBoxLayout();
+    mainLayout->addWidget(m_boneSelectButton);
+    mainLayout->addWidget(m_boneRotateButton);
+    mainLayout->addWidget(m_boneMoveButton);
+    mainLayout->setAlignment(Qt::AlignCenter);
+    /* hack bone timeline layout */
+    reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(mainLayout);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
     m_faceTimeline = new TimelineWidget(fmm, this);
     m_faceTimeline->setEnableFrameIndexSpinBox(false);
@@ -74,8 +93,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneFrameIndexSpinBox(vpvl::PMDModel*)));
-    connect(fmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceFrameIndexSpinBox(vpvl::PMDModel*)));
+    connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneEnable(vpvl::PMDModel*)));
+    connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), this, SLOT(toggleBoneButtonsByBone(QList<vpvl::Bone*>)));
+    connect(fmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceEnable(vpvl::PMDModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -100,6 +120,9 @@ void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
 
 void TimelineTabWidget::retranslate()
 {
+    m_boneSelectButton->setText(tr("Select"));
+    m_boneRotateButton->setText(tr("Rotate"));
+    m_boneMoveButton->setText(tr("Move"));
     m_tabWidget->setTabText(kBoneTabIndex, tr("Bone"));
     m_tabWidget->setTabText(kFaceTabIndex, tr("Face"));
     m_tabWidget->setTabText(kSceneTabIndex, tr("Scene"));
@@ -258,14 +281,37 @@ void TimelineTabWidget::notifyCurrentTabIndex()
     setCurrentTabIndex(m_tabWidget->currentIndex());
 }
 
-void TimelineTabWidget::toggleBoneFrameIndexSpinBox(vpvl::PMDModel *model)
+void TimelineTabWidget::toggleBoneEnable(vpvl::PMDModel *model)
 {
-    m_boneTimeline->setEnableFrameIndexSpinBox(model ? true : false);
+    bool value = model ? true : false;
+    m_boneTimeline->setEnableFrameIndexSpinBox(value);
+    m_boneSelectButton->setChecked(true);
+    m_boneSelectButton->setEnabled(value);
+    m_boneRotateButton->setEnabled(false);
+    m_boneMoveButton->setEnabled(false);
 }
 
-void TimelineTabWidget::toggleFaceFrameIndexSpinBox(vpvl::PMDModel *model)
+void TimelineTabWidget::toggleFaceEnable(vpvl::PMDModel *model)
 {
     m_faceTimeline->setEnableFrameIndexSpinBox(model ? true : false);
+}
+
+void TimelineTabWidget::toggleBoneButtonsByBone(const QList<vpvl::Bone *> &bones)
+{
+    if (!bones.isEmpty()) {
+        vpvl::Bone *bone = bones.first();
+        bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+        m_boneRotateButton->setCheckable(rotateable);
+        m_boneRotateButton->setEnabled(rotateable);
+        m_boneMoveButton->setCheckable(movable);
+        m_boneMoveButton->setEnabled(movable);
+    }
+    else {
+        m_boneRotateButton->setCheckable(false);
+        m_boneRotateButton->setEnabled(false);
+        m_boneMoveButton->setCheckable(false);
+        m_boneMoveButton->setEnabled(false);
+    }
 }
 
 void TimelineTabWidget::selectAllRegisteredKeyframes()
@@ -295,6 +341,16 @@ void TimelineTabWidget::openFrameWeightDialog()
     }
     m_frameWeightDialog->resetValue();
     m_frameWeightDialog->show();
+}
+
+void TimelineTabWidget::selectButton(QAbstractButton *button)
+{
+    if (button == m_boneSelectButton)
+        emit editModeDidSet(SceneWidget::kSelect);
+    else if (button == m_boneRotateButton)
+        emit editModeDidSet(SceneWidget::kRotate);
+    else if (button == m_boneMoveButton)
+        emit editModeDidSet(SceneWidget::kMove);
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)

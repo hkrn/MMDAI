@@ -576,6 +576,7 @@ void Handles::drawModelHandles()
         return;
     float matrix[16];
     const vpvl::Scene *scene = m_widget->scene();
+    glDisable(GL_DEPTH_TEST);
     m_program.bind();
     int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
     int projectionMatrix = m_program.uniformLocation("projectionMatrix");
@@ -606,6 +607,7 @@ void Handles::drawModelHandles()
         drawModel(m_translationHandle.axisZ, kBlue, kZ);
     }
     m_program.release();
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Handles::drawModel(const Handles::Model &model,
