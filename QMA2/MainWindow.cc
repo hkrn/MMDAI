@@ -350,10 +350,12 @@ void MainWindow::loadProject()
         const QString &filename = m_sceneWidget->openFileDialog("mainWindow/lastProjectDirectory",
                                                                 tr("Open VPVM file"),
                                                                 tr("VPVM file (*.xml)"));
-        m_boneMotionModel->removeMotion();
-        m_faceMotionModel->removeMotion();
-        m_sceneMotionModel->removeMotion();
-        m_sceneWidget->sceneLoader()->loadProject(filename);
+        if (!filename.isEmpty()) {
+            m_boneMotionModel->removeMotion();
+            m_faceMotionModel->removeMotion();
+            m_sceneMotionModel->removeMotion();
+            m_sceneWidget->sceneLoader()->loadProject(filename);
+        }
     }
 }
 
@@ -1367,7 +1369,7 @@ void MainWindow::startExportingVideo()
     }
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
                                              tr("Export scene as a video"),
-                                             "",// tr("Video (*.avi)"),
+                                             tr("Video (*.avi)"),
                                              tr("untitled.avi"));
     if (!filename.isEmpty()) {
         QProgressDialog *progress = new QProgressDialog(this);
