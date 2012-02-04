@@ -744,7 +744,7 @@ public:
         return ret;
     }
     void setLightColor(const Color &value) {
-        glUniform4fv(m_lightColorUniformLocation, 1, value);
+        glUniform3fv(m_lightColorUniformLocation, 1, value);
     }
     void setLightPosition(const Vector3 &value) {
         glUniform3fv(m_lightPositionUniformLocation, 1, value);
@@ -871,7 +871,7 @@ public:
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const Color &value) {
-        glUniform4fv(m_materialAmbientUniformLocation, 1, value);
+        glUniform3fv(m_materialAmbientUniformLocation, 1, value);
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);

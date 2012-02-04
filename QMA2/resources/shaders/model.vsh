@@ -3,8 +3,8 @@ uniform mat4 projectionMatrix;
 uniform mat4 lightViewMatrix;
 uniform mat4 biasMatrix;
 uniform mat3 normalMatrix;
-uniform vec4 lightColor;
-uniform vec4 materialAmbient;
+uniform vec3 lightColor;
+uniform vec3 materialAmbient;
 uniform vec4 materialDiffuse;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
@@ -20,7 +20,7 @@ varying vec2 outToonTexCoord;
 const float kTwo = 2.0;
 const float kOne = 1.0;
 const float kHalf = 0.5;
-const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
+const vec3 kOne3 = vec3(kOne, kOne, kOne);
 
 vec2 makeSphereMap(vec3 position, vec3 normal) {
     vec3 R = reflect(position, normal);
@@ -36,7 +36,8 @@ void main() {
     vec4 outPosition = projectionMatrix * position;
     vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
-    outColor = min(materialAmbient + lightColor * materialDiffuse, kOne4);
+    outColor.rgb = min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3);
+    outColor.a = materialDiffuse.a;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
     outShadowTexCoord = biasMatrix * lightPosition;
     outDepth = lightPosition;
