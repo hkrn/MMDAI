@@ -60,6 +60,7 @@ class FaceMotionModel;
 class LicenseWidget;
 class LoggerWidget;
 class ModelTabWidget;
+class PlayerWidget;
 class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
@@ -160,7 +161,7 @@ private:
     PlaySettingDialog *m_playSettingDialog;
     BoneUIDelegate *m_boneUIDelegate;
     VideoEncoder *m_videoEncoder;
-    internal::Player *m_player;
+    PlayerWidget *m_player;
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
 

@@ -1,58 +1,80 @@
+/* ----------------------------------------------------------------- */
+/*                                                                   */
+/*  Copyright (c) 2010-2012  hkrn                                    */
+/*                                                                   */
+/* All rights reserved.                                              */
+/*                                                                   */
+/* Redistribution and use in source and binary forms, with or        */
+/* without modification, are permitted provided that the following   */
+/* conditions are met:                                               */
+/*                                                                   */
+/* - Redistributions of source code must retain the above copyright  */
+/*   notice, this list of conditions and the following disclaimer.   */
+/* - Redistributions in binary form must reproduce the above         */
+/*   copyright notice, this list of conditions and the following     */
+/*   disclaimer in the documentation and/or other materials provided */
+/*   with the distribution.                                          */
+/* - Neither the name of the MMDAI project team nor the names of     */
+/*   its contributors may be used to endorse or promote products     */
+/*   derived from this software without specific prior written       */
+/*   permission.                                                     */
+/*                                                                   */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
+/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
+/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
+/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
+/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
+/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
+/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
+/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
+/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
+/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
+/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
+/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
+/* POSSIBILITY OF SUCH DAMAGE.                                       */
+/* ----------------------------------------------------------------- */
+
 #ifndef PLAYERWIDGET_H
 #define PLAYERWIDGET_H
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QHash>
-#include <GL/glew.h>
-#include <QtOpenGL/QGLWidget>
+#include <QTCore/QTimer>
+#include <QtGui/QProgressDialog>
 
 namespace vpvl {
-namespace gl {
-class Renderer;
-}
 class PMDModel;
-class Scene;
-class VMDMotion;
-class XModel;
 }
 
-class Delegate;
-class SceneLoader;
-class World;
+class SceneWidget;
+class PlaySettingDialog;
 
-class PlayerWidget : public QGLWidget
+class PlayerWidget : QObject
 {
     Q_OBJECT
-public:
-    static const QString kWindowTileFormat;
 
-    explicit PlayerWidget(SceneLoader *loader, QWidget *parent = 0);
+public:
+    PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog);
     ~PlayerWidget();
 
-    void play();
+    void start();
     void stop();
+    bool isActive() const;
 
-protected:
-    void initializeGL();
-    void paintGL();
-    void resizeGL(int w, int h);
-    void closeEvent(QCloseEvent *event);
-    void timerEvent(QTimerEvent *event);
+private slots:
+    void renderSceneFrame();
 
 private:
-    void updateFPS();
-
-    vpvl::gl::Renderer *m_renderer;
-    Delegate *m_delegate;
-    SceneLoader *m_parentLoader;
-    SceneLoader *m_thisLoader;
-    World *m_world;
-    QElapsedTimer m_timer;
-    int m_frameCount;
-    int m_currentFPS;
-    int m_defaultFPS;
-    int m_interval;
-    int m_internalTimerID;
+    QElapsedTimer m_elapsed;
+    int m_countForFPS;
+    QTimer m_timer;
+    SceneWidget *m_sceneWidget;
+    PlaySettingDialog *m_dialog;
+    QProgressDialog *m_progress;
+    QString m_format;
+    vpvl::PMDModel *m_selected;
+    float m_frameStep;
+    float m_totalStep;
+    int m_prevSceneFPS;
 };
 
 #endif // PLAYERWIDGET_H
