@@ -28,7 +28,9 @@ ExportVideoDialog::ExportVideoDialog(MainWindow *parent, QSettings *settings, Sc
     m_toIndexBox->setValue(maxFrameIndex);
     m_videoBitrateBox = new QSpinBox();
     m_videoBitrateBox->setRange(1, 100000);
-    int videoBitrate = settings->value("exportVideoDialog/videoBitrate", 1000).toInt();
+    /* 現在の実装は PNG の生形式で出力するため、ビットレート設定は反映されない */
+    m_videoBitrateBox->setEnabled(false);
+    int videoBitrate = settings->value("exportVideoDialog/videoBitrate", 10000).toInt();
     m_videoBitrateBox->setValue(videoBitrate);
     m_sceneFPSBox = new QSpinBox();
     m_sceneFPSBox->setRange(30, 240);

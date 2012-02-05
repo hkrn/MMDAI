@@ -1386,8 +1386,8 @@ void MainWindow::startExportingVideo()
     }
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
                                              tr("Export scene as a video"),
-                                             tr("Video (*.avi)"),
-                                             tr("untitled.avi"));
+                                             tr("Video (*.mov)"),
+                                             tr("untitled.mov"));
     if (!filename.isEmpty()) {
         QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
