@@ -94,6 +94,10 @@ linux-* {
                     ../bullet/release/lib/libLinearMath.so.* \
                     ../libvpvl/release/lib/libvpvl.so.* \
                     ../assimp/lib/libassimp.so.2 \
+                    ../libav/libavcodec/libavcodec.so.* \
+                    ../libav/libavformat/libavformat.so.* \
+                    ../libav/libavutil/libavutil.so.* \
+                    ../libav/libswscale/libswscale.so.* \
                     $$[QT_INSTALL_LIBS]/libQtCore.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtGui.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtOpenGL.so.4
