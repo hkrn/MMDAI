@@ -38,7 +38,7 @@
 #define PLAYERWIDGET_H
 
 #include <QtCore/QElapsedTimer>
-#include <QTCore/QTimer>
+#include <QtCore/QTimer>
 #include <QtGui/QProgressDialog>
 
 namespace vpvl {

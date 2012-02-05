@@ -39,6 +39,12 @@
 #include <QtGui/QtGui>
 
 #ifdef LIBAV_FOUND
+
+#ifndef INT64_C
+#define INT64_C(c) (c ## LL)
+#define UINT64_C(c) (c ## ULL)
+#endif
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
