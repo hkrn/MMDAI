@@ -17,10 +17,12 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, QSettings *setti
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox->setValue(maxFrameIndex);
-    m_sceneFPSBox = new QSpinBox();
-    m_sceneFPSBox->setRange(30, 240);
-    int sceneFPS = settings->value("playSettingDialog/sceneFPS", 30).toInt();
-    m_sceneFPSBox->setValue(sceneFPS);
+    m_sceneFPSBox = new QComboBox();
+    m_sceneFPSBox->addItem("30", 30);
+    m_sceneFPSBox->addItem("60", 60);
+    m_sceneFPSBox->addItem("120", 120);
+    int sceneFPSIndex = settings->value("playSettingDialog/sceneFPSIndex", 1).toInt();
+    m_sceneFPSBox->setCurrentIndex(sceneFPSIndex);
     m_loopBox = new QCheckBox(tr("Loop"));
     m_loopBox->setChecked(settings->value("playSettingDialog/loop", false).toBool());
     QFormLayout *formLayout = new QFormLayout();
@@ -46,7 +48,7 @@ void PlaySettingDialog::saveSettings()
 {
     m_settings->setValue("playSettingDialog/fromIndex", m_fromIndexBox->value());
     m_settings->setValue("playSettingDialog/toIndex", m_toIndexBox->value());
-    m_settings->setValue("playSettingDialog/sceneFPS", m_sceneFPSBox->value());
+    m_settings->setValue("playSettingDialog/sceneFPSIndex", m_sceneFPSBox->currentIndex());
     m_settings->setValue("playSettingDialog/loop", m_loopBox->isChecked());
     emit settingsDidSave();
 }
@@ -63,7 +65,7 @@ int PlaySettingDialog::toIndex() const
 
 int PlaySettingDialog::sceneFPS() const
 {
-    return m_sceneFPSBox->value();
+    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
 }
 
 bool PlaySettingDialog::isLoop() const
