@@ -32,10 +32,12 @@ ExportVideoDialog::ExportVideoDialog(MainWindow *parent, QSettings *settings, Sc
     m_videoBitrateBox->setEnabled(false);
     int videoBitrate = settings->value("exportVideoDialog/videoBitrate", 10000).toInt();
     m_videoBitrateBox->setValue(videoBitrate);
-    m_sceneFPSBox = new QSpinBox();
-    m_sceneFPSBox->setRange(30, 240);
-    int sceneFPS = settings->value("exportVideoDialog/sceneFPS", 30).toInt();
-    m_sceneFPSBox->setValue(sceneFPS);
+    m_sceneFPSBox = new QComboBox();
+    m_sceneFPSBox->addItem("30", 30);
+    m_sceneFPSBox->addItem("60", 60);
+    m_sceneFPSBox->addItem("120", 120);
+    int sceneFPSIndex = settings->value("exportVideoDialog/sceneFPSIndex", 1).toInt();
+    m_sceneFPSBox->setCurrentIndex(sceneFPSIndex);
     m_includeGridBox = new QCheckBox(tr("Include grid field"));
     m_includeGridBox->setChecked(settings->value("exportVideoDialog/includeGridBox", false).toBool());
     QGridLayout *gridLayout = new QGridLayout();
@@ -73,7 +75,7 @@ void ExportVideoDialog::saveSettings()
     m_settings->setValue("exportVideoDialog/fromIndex", m_fromIndexBox->value());
     m_settings->setValue("exportVideoDialog/toIndex", m_toIndexBox->value());
     m_settings->setValue("exportVideoDialog/videoBitrate", m_videoBitrateBox->value());
-    m_settings->setValue("exportVideoDialog/sceneFPS", m_sceneFPSBox->value());
+    m_settings->setValue("exportVideoDialog/sceneFPSIndex", m_sceneFPSBox->currentIndex());
     m_settings->setValue("exportVideoDialog/includeGridBox", m_includeGridBox->isChecked());
     emit settingsDidSave();
 }
@@ -105,7 +107,7 @@ int ExportVideoDialog::videoBitrate() const
 
 int ExportVideoDialog::sceneFPS() const
 {
-    return m_sceneFPSBox->value();
+    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
 }
 
 bool ExportVideoDialog::includesGrid() const

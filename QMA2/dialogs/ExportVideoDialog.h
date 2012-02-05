@@ -41,6 +41,7 @@
 
 class MainWindow;
 class QCheckBox;
+class QComboBox;
 class QSettings;
 class QSpinBox;
 class SceneWidget;
@@ -73,7 +74,7 @@ private:
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
     QSpinBox *m_videoBitrateBox;
-    QSpinBox *m_sceneFPSBox;
+    QComboBox *m_sceneFPSBox;
     QCheckBox *m_includeGridBox;
     QSettings *m_settings;
 
