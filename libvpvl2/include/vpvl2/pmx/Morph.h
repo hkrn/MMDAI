@@ -56,6 +56,44 @@ namespace pmx
 class VPVL2_API Morph
 {
 public:
+    struct Bone {
+        pmx::Bone *bone;
+        Vector3 position;
+        Quaternion rotation;
+        int index;
+    };
+    struct Group {
+        Morph *morph;
+        float weight;
+        int index;
+    };
+    struct Material {
+        pmx::Material *material;
+        Vector3 ambient;
+        Vector4 diffuse;
+        Vector3 specular;
+        Vector4 edgeColor;
+        Vector4 textureWeight;
+        Vector4 sphereTextureWeight;
+        Vector4 toonTextureWeight;
+        float shininess;
+        float edgeSize;
+        int index;
+        uint8_t operation;
+    };
+    struct UV {
+        pmx::Vertex *vertex;
+        Vector4 position;
+        int index;
+        int offset;
+    };
+    struct Vertex {
+        pmx::Vertex *vertex;
+        Vector3 position;
+        int index;
+    };
+
+
     /**
      * Constructor
      */
@@ -63,17 +101,42 @@ public:
     ~Morph();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadMorphs(const Array<Morph *> &morphs,
+                           const Array<pmx::Bone *> &bones,
+                           const Array<pmx::Material *> &materials,
+                           const Array<pmx::Vertex *> &vertices);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
      *
      * @param data The buffer to read and parse
      */
-    void read(const uint8_t *data);
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
 
     void write(uint8_t *data) const;
 
 private:
+    static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);
+    static bool loadGroups(const Array<Morph *> &morphs, Morph *morph);
+    static bool loadMaterials(const Array<pmx::Material *> &materials, Morph *morph);
+    static bool loadUVs(const Array<pmx::Vertex *> &uv, int offset, Morph *morph);
+    static bool loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph);
+    void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr);
+    void readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr);
+    void readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr);
+    void readUVs(const Model::DataInfo &info, int count, int offset, uint8_t *&ptr);
+    void readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr);
+
+    Array<Vertex> m_vertices;
+    Array<UV> m_uvs;
+    Array<Bone> m_bones;
+    Array<Material> m_materials;
+    Array<Group> m_groups;
+    StaticString *m_name;
+    StaticString *m_englishName;
+    uint8_t m_category;
+    uint8_t m_type;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)
 };
 

@@ -66,11 +66,15 @@ public:
     ~Joint();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadJoints(const Array<Joint *> &joints,
+                           const Array<RigidBody *> &rigidBodies);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
 private:
+    RigidBody *m_rigidBody1;
+    RigidBody *m_rigidBody2;
     StaticString *m_name;
     StaticString *m_englishName;
     Vector3 m_position;

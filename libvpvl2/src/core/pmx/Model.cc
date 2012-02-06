@@ -43,18 +43,25 @@
 vpvl2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
+namespace
+{
+
+#pragma pack(push, 1)
+
+    struct Header
+    {
+        uint8_t signature[4];
+        float version;
+    };
+
+#pragma pack(pop)
+
+}
+
 namespace vpvl2
 {
 namespace pmx
 {
-
-#pragma pack(push, 1)
-struct Header
-{
-    uint8_t signature[4];
-    float version;
-};
-#pragma pack(pop)
 
 Model::Model()
     : m_name(0),
@@ -223,8 +230,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
                 }
                 break;
             default:
-                assert(0);
-                break;
+                return false;
             }
         }
         // TODO:
@@ -263,6 +269,13 @@ bool Model::load(const uint8_t *data, size_t size)
         parseDisplayNames(info);
         parseRigidBodies(info);
         parseJoints(info);
+        if (!Bone::loadBones(m_bones)
+                || !Material::loadMaterials(m_materials, m_textures)
+                || !Vertex::loadVertices(m_vertices, m_bones)
+                || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
+                || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
+                || !Joint::loadJoints(m_joints, m_rigidBodies))
+            return false;
         return true;
     }
     return false;
@@ -357,10 +370,28 @@ void Model::parseMaterials(const DataInfo &info)
 
 void Model::parseBones(const DataInfo &info)
 {
+    const int nbones = info.bonesCount;
+    uint8_t *ptr = info.bonesPtr;
+    size_t size;
+    for(int i = 0; i < nbones; i++) {
+        Bone *bone = new Bone();
+        bone->read(ptr, info, size);
+        m_bones.add(bone);
+        ptr += size;
+    }
 }
 
 void Model::parseMorphs(const DataInfo &info)
 {
+    const int nmorphs = info.morphsCount;
+    uint8_t *ptr = info.morphsPtr;
+    size_t size;
+    for(int i = 0; i < nmorphs; i++) {
+        Morph *morph = new Morph();
+        morph->read(ptr, info, size);
+        m_morphs.add(morph);
+        ptr += size;
+    }
 }
 
 void Model::parseDisplayNames(const DataInfo &info)

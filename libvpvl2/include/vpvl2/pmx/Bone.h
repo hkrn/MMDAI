@@ -56,6 +56,8 @@ namespace pmx
 class VPVL2_API Bone
 {
 public:
+    struct IK;
+
     /**
      * Constructor
      */
@@ -63,17 +65,42 @@ public:
     ~Bone();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadBones(const Array<Bone *> &bones);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
      *
      * @param data The buffer to read and parse
      */
-    void read(const uint8_t *data);
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
 
     void write(uint8_t *data) const;
 
 private:
+    Array<IK *> m_ik;
+    Bone *m_parentBone;
+    Bone *m_offsetBone;
+    Bone *m_targetBone;
+    Bone *m_parentBoneBias;
+    StaticString *m_name;
+    StaticString *m_englishName;
+    Vector3 m_position;
+    Vector3 m_offset;
+    Vector3 m_fixedAxis;
+    Vector3 m_axisX;
+    Vector3 m_axisZ;
+    float m_constraintAngle;
+    float m_bias;
+    int m_parentBoneIndex;
+    int m_priority;
+    int m_offsetBoneIndex;
+    int m_targetBoneIndex;
+    int m_nloop;
+    int m_nlinks;
+    int m_parentBoneBiasIndex;
+    int m_globalID;
+    uint16_t m_flags;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(Bone)
 };
 

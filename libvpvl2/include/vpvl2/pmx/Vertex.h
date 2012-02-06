@@ -70,6 +70,8 @@ public:
     ~Vertex();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
+    static bool loadVertices(const Array<Vertex *> &vertices,
+                             const Array<Bone *> &bones);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -89,6 +91,7 @@ public:
     float edge() const { return m_edge; }
 
 private:
+    Bone *m_bones[4];
     Vector4 m_uvs[4];
     Vector3 m_position;
     Vector3 m_normal;
@@ -99,7 +102,7 @@ private:
     Type m_type;
     float m_edge;
     float m_weight[4];
-    int m_indices[4];
+    int m_boneIndices[4];
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };

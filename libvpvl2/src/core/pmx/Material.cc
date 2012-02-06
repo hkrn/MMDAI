@@ -37,9 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-namespace vpvl2
-{
-namespace pmx
+namespace
 {
 
 #pragma pack(push, 1)
@@ -56,10 +54,20 @@ struct MaterialUnit {
 
 #pragma pack(pop)
 
+}
+
+namespace vpvl2
+{
+namespace pmx
+{
+
 Material::Material()
     : m_name(0),
       m_englishName(0),
       m_userDataArea(0),
+      m_texture(0),
+      m_sphereTexture(0),
+      m_toonTexture(0),
       m_sphereTextureRenderMode(kNone),
       m_ambient(kZeroC),
       m_diffuse(kZeroC),
@@ -83,6 +91,9 @@ Material::~Material()
     m_englishName = 0;
     delete m_userDataArea;
     m_userDataArea = 0;
+    m_texture = 0;
+    m_sphereTexture = 0;
+    m_toonTexture = 0;
     m_sphereTextureRenderMode = kNone;
     m_ambient.setZero();
     m_diffuse.setZero();
@@ -151,6 +162,37 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
     }
     info.materialsCount = size;
+    return true;
+}
+
+bool Material::loadMaterials(const Array<Material *> &materials, const Array<StaticString *> &textures)
+{
+    const int nmaterials = materials.count();
+    const int ntextures = textures.count();
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = materials[i];
+        const int textureIndex = material->m_textureIndex;
+        if (textureIndex >= 0) {
+            if (textureIndex >= ntextures)
+                return false;
+            else
+                material->m_texture = textures[textureIndex];
+        }
+        const int sphereTextureIndex = material->m_sphereTextureIndex;
+        if (sphereTextureIndex >= 0) {
+            if (sphereTextureIndex >= ntextures)
+                return false;
+            else
+                material->m_sphereTexture = textures[sphereTextureIndex];
+        }
+        const int toonTextureIndex = material->m_toonTextureIndex;
+        if (toonTextureIndex >= 0) {
+            if (toonTextureIndex >= ntextures)
+                return false;
+            else
+                material->m_toonTexture = textures[toonTextureIndex];
+        }
+    }
     return true;
 }
 

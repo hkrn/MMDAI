@@ -37,9 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-namespace vpvl2
-{
-namespace pmx
+namespace
 {
 
 #pragma pack(push, 1)
@@ -71,13 +69,22 @@ struct SdefUnit {
 
 #pragma pack(pop)
 
+}
+
+namespace vpvl2
+{
+namespace pmx
+{
+
 Vertex::Vertex()
     : m_type(kBdef1),
       m_edge(0)
 {
     for (int i = 0; i < 4; i++) {
         m_uvs[i].setZero();
-        m_weight[i] = m_indices[i] = 0;
+        m_bones[i] = 0;
+        m_weight[i] = 0;
+        m_boneIndices[i] = -1;
     }
 }
 
@@ -127,12 +134,74 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return rest > 0;
 }
 
+bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones)
+{
+    const int nvertices = vertices.count();
+    const int nbones = bones.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = vertices[i];
+        switch (vertex->m_type) {
+        case kBdef1: {
+            int boneIndex = vertex->m_boneIndices[0];
+            if (boneIndex >= 0) {
+                if (boneIndex >= nbones)
+                    return false;
+                else
+                    vertex->m_bones[0] = bones[boneIndex];
+            }
+            break;
+        }
+        case kBdef2: {
+            for (int j = 0; j < 2; j++) {
+                int boneIndex = vertex->m_boneIndices[j];
+                if (boneIndex >= 0) {
+                    if (boneIndex >= nbones)
+                        return false;
+                    else
+                        vertex->m_bones[j] = bones[boneIndex];
+                }
+            }
+            break;
+        }
+        case kBdef4: {
+            for (int j = 0; j < 4; j++) {
+                int boneIndex = vertex->m_boneIndices[j];
+                if (boneIndex >= 0) {
+                    if (boneIndex >= nbones)
+                        return false;
+                    else
+                        vertex->m_bones[j] = bones[boneIndex];
+                }
+            }
+            break;
+        }
+        case kSdef: {
+            int boneIndex1 = vertex->m_boneIndices[0];
+            int boneIndex2 = vertex->m_boneIndices[1];
+            if (boneIndex1 >= 0 && boneIndex2 >= 0) {
+                if (boneIndex1 >= nbones || boneIndex2 >= nbones) {
+                    return false;
+                }
+                Bone *bone1 = bones[boneIndex1], *bone2 = bones[boneIndex2];
+                {
+                    vertex->m_bones[0] = bone1;
+                    vertex->m_bones[1] = bone2;
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
 void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data), *start = ptr;
     const VertexUnit &vertex = *reinterpret_cast<VertexUnit *>(ptr);
-    m_position.setValue(vertex.position[0], vertex.position[1], vertex.position[2]);
-    m_normal.setValue(vertex.normal[0], vertex.normal[1], vertex.normal[2]);
+    internal::setPosition(vertex.position, m_position);
+    internal::setPosition(vertex.normal, m_normal);
     m_texcoord.setValue(vertex.texcoord[0], vertex.texcoord[1], 0);
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
@@ -145,12 +214,12 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     ptr += sizeof(uint8_t);
     switch (m_type) {
     case kBdef1: { /* BDEF1 */
-        m_indices[0] = internal::variantIndex(ptr, info.boneIndexSize);
+        m_boneIndices[0] = internal::variantIndex(ptr, info.boneIndexSize);
         break;
     }
     case kBdef2: { /* BDEF2 */
         for (int i = 0; i < 2; i++)
-            m_indices[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_boneIndices[i] = internal::variantIndex(ptr, info.boneIndexSize);
         const Bdef2Unit &unit = *reinterpret_cast<Bdef2Unit *>(ptr);
         m_weight[0] = unit.weight;
         ptr += sizeof(Bdef2Unit);
@@ -158,7 +227,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     }
     case kBdef4: { /* BDEF4 */
         for (int i = 0; i < 4; i++)
-            m_indices[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_boneIndices[i] = internal::variantIndex(ptr, info.boneIndexSize);
         const Bdef4Unit &unit = *reinterpret_cast<Bdef4Unit *>(ptr);
         for (int i = 0; i < 4; i++)
             m_weight[i] = unit.weight[i];
@@ -167,7 +236,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     }
     case kSdef: { /* SDEF */
         for (int i = 0; i < 2; i++)
-            m_indices[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_boneIndices[i] = internal::variantIndex(ptr, info.boneIndexSize);
         const SdefUnit &unit = *reinterpret_cast<SdefUnit *>(ptr);
         m_c.setValue(unit.c[0], unit.c[1], unit.c[2]);
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);

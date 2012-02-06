@@ -182,6 +182,16 @@ static int variantIndexUnsigned(uint8_t *&ptr, size_t size)
     return result;
 }
 
+static void inline setPosition(const float *input, Vector3 &output)
+{
+    output.setValue(input[0], input[1], -input[2]);
+}
+
+static void inline setRotation(const float *input, Quaternion &output)
+{
+    output.setValue(input[0], -input[1], -input[2], input[3]);
+}
+
 static void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
     assert(table && size > 0);

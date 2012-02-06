@@ -37,9 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-namespace vpvl2
-{
-namespace pmx
+namespace
 {
 
 #pragma pack(push, 1)
@@ -58,8 +56,17 @@ struct JointUnit
 
 #pragma pack(pop)
 
+}
+
+namespace vpvl2
+{
+namespace pmx
+{
+
 Joint::Joint()
-    : m_name(0),
+    : m_rigidBody1(0),
+      m_rigidBody2(0),
+      m_name(0),
       m_englishName(0),
       m_position(kZeroV),
       m_rotation(kZeroV),
@@ -80,6 +87,8 @@ Joint::~Joint()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_rigidBody1 = 0;
+    m_rigidBody2 = 0;
     m_position.setZero();
     m_rotation.setZero();
     m_positionLowerLimit.setZero();
@@ -121,11 +130,34 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             }
             break;
         default:
-            assert(0);
             return false;
         }
     }
     info.jointsCount = size;
+    return true;
+}
+
+bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies)
+{
+    const int njoints = joints.count();
+    const int nRigidBodies = rigidBodies.count();
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = joints[i];
+        const int rigidBodyIndex1 = joint->m_rigidBodyIndex1;
+        if (rigidBodyIndex1 >= 0) {
+            if (rigidBodyIndex1 >= nRigidBodies)
+                return false;
+            else
+                joint->m_rigidBody1 = rigidBodies[rigidBodyIndex1];
+        }
+        const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
+        if (rigidBodyIndex2 >= 0) {
+            if (rigidBodyIndex2 >= nRigidBodies)
+                return false;
+            else
+                joint->m_rigidBody2 = rigidBodies[rigidBodyIndex2];
+        }
+    }
     return true;
 }
 

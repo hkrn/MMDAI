@@ -37,9 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-namespace vpvl2
-{
-namespace pmx
+namespace
 {
 
 #pragma pack(push, 1)
@@ -62,8 +60,16 @@ struct RigidBodyUnit
 
 #pragma pack(pop)
 
+}
+
+namespace vpvl2
+{
+namespace pmx
+{
+
 RigidBody::RigidBody()
-    : m_name(0),
+    : m_bone(0),
+      m_name(0),
       m_englishName(0),
       m_boneIndex(0),
       m_size(kZeroV),
@@ -84,6 +90,7 @@ RigidBody::~RigidBody()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_bone = 0;
     m_boneIndex = 0;
     m_size.setZero();
     m_position.setZero();
@@ -122,6 +129,23 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
+bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones)
+{
+    const int nRigidBodies = rigidBodies.count();
+    const int nbones = bones.count();
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = rigidBodies[i];
+        const int boneIndex = rigidBody->m_boneIndex;
+        if (boneIndex >= 0) {
+            if (boneIndex >= nbones)
+                return false;
+            else
+                rigidBody->m_bone = bones[boneIndex];
+        }
+    }
+    return true;
+}
+
 void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
@@ -136,7 +160,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_groupMask = unit.collsionMask;
     m_shapeType = unit.shapeType;
     m_size.setValue(unit.size[0], unit.size[1], unit.size[2]);
-    m_position.setValue(unit.position[0], unit.position[1], unit.position[2]);
+    internal::setPosition(unit.position, m_position);
     m_rotation.setValue(unit.rotation[0], unit.rotation[1], unit.rotation[2]);
     m_mass = unit.mass;
     m_type = unit.type;

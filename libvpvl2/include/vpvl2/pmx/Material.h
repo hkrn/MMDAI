@@ -70,6 +70,8 @@ public:
     ~Material();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
+    static bool loadMaterials(const Array<Material *> &materials,
+                              const Array<StaticString *> &textures);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -101,6 +103,9 @@ private:
     StaticString *m_name;
     StaticString *m_englishName;
     StaticString *m_userDataArea;
+    StaticString *m_texture;
+    StaticString *m_sphereTexture;
+    StaticString *m_toonTexture;
     SphereTextureRenderMode m_sphereTextureRenderMode;
     Color m_ambient;
     Color m_diffuse;

@@ -70,6 +70,8 @@ public:
     ~RigidBody();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies,
+                                const Array<Bone *> &bones);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
@@ -89,6 +91,7 @@ private:
     Transform m_transform;
     Transform m_invertedTransform;
     btMotionState *m_kinematicMotionState;
+    Bone *m_bone;
     StaticString *m_name;
     StaticString *m_englishName;
     int m_boneIndex;
