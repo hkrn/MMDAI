@@ -112,8 +112,10 @@ public:
      * @param data The buffer to read and parse
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-
     void write(uint8_t *data) const;
+
+    const StaticString *name() const { return m_name; }
+    const StaticString *englishName() const { return m_englishName; }
 
 private:
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);

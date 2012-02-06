@@ -159,12 +159,17 @@ public:
 
     void save(uint8_t *data) const;
 
+    const Array<Vertex *> &vertices() const { return m_vertices; }
+    const Array<int> &indices() const { return m_indices; }
+    const Array<StaticString *> &textures() const { return m_textures; }
+    const Array<Bone *> &bones() const { return m_bones; }
+    const Array<Morph *> &morphs() const { return m_morphs; }
+    const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
+    const Array<Joint *> &joints() const { return m_joints; }
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }
     const StaticString *comment() const { return m_comment; }
     const StaticString *englishComment() const { return m_englishComment; }
-    const StaticString *texture(int index) const;
-    void getTextures(Array<StaticString *> &value) const { value.copy(m_textures); }
     Encoding encoding() const { return m_encoding; }
     Error error() const { return m_error; }
 

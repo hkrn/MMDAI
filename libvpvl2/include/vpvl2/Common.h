@@ -205,24 +205,25 @@ private:
 class StaticString {
 public:
     StaticString(const uint8_t *value, size_t length)
-        : m_value(0),
+        : m_bytes(0),
           m_length(0)
     {
-        m_value = new uint8_t[length + 1];
-        memcpy(m_value, value, length);
-        m_value[length] = 0;
+        m_bytes = new uint8_t[length + 1];
+        memcpy(m_bytes, value, length);
+        m_bytes[length] = 0;
         m_length = length;
     }
     ~StaticString() {
-        delete[] m_value;
+        delete[] m_bytes;
         m_length = 0;
     }
 
-    const uint8_t *value() const { return m_value; }
+    const uint8_t *bytes() const { return m_bytes; }
+    const char *ptr() const { return reinterpret_cast<const char *>(m_bytes); }
     size_t length() const { return m_length; }
 
 private:
-    uint8_t *m_value;
+    uint8_t *m_bytes;
     size_t m_length;
 };
 

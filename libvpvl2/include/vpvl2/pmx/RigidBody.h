@@ -76,9 +76,9 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
+    Bone *bone() const { return m_bone; }
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }
-    int boneIndex() const { return m_boneIndex; }
     const Vector3 &size() const { return m_size; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &rotation() const { return m_rotation; }

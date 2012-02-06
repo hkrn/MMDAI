@@ -72,6 +72,11 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
 
+    RigidBody *rigidBody1() const { return m_rigidBody1; }
+    RigidBody *rigidBody2() const { return m_rigidBody2; }
+    const StaticString *name() const { return m_name; }
+    const StaticString *englishName() const { return m_englishName; }
+
 private:
     RigidBody *m_rigidBody1;
     RigidBody *m_rigidBody2;

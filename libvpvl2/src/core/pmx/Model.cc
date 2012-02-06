@@ -285,11 +285,6 @@ void Model::save(uint8_t *data) const
 {
 }
 
-const StaticString *Model::texture(int index) const
-{
-    return index >= 0 && index < m_textures.count() ? m_textures.at(index) : 0;
-}
-
 void Model::release()
 {
     m_vertices.releaseAll();

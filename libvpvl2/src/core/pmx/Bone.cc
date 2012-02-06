@@ -66,7 +66,7 @@ Bone::Bone()
     : m_parentBone(0),
       m_offsetBone(0),
       m_targetBone(0),
-      m_parentBoneBias(0),
+      m_parentBiasBone(0),
       m_name(0),
       m_englishName(0),
       m_position(kZeroV),
@@ -94,7 +94,7 @@ Bone::~Bone()
     m_parentBone = 0;
     m_offsetBone = 0;
     m_targetBone = 0;
-    m_parentBoneBias = 0;
+    m_parentBiasBone = 0;
     m_position.setZero();
     m_offset.setZero();
     m_fixedAxis.setZero();
@@ -219,7 +219,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
             if (parentBoneBiasID >= nbones)
                 return false;
             else
-                bone->m_parentBoneBias = bones[parentBoneBiasID];
+                bone->m_parentBiasBone = bones[parentBoneBiasID];
         }
     }
     return true;
