@@ -68,14 +68,14 @@ Joint::Joint()
       m_rigidBody2(0),
       m_name(0),
       m_englishName(0),
-      m_position(kZeroV),
-      m_rotation(kZeroV),
-      m_positionLowerLimit(kZeroV),
-      m_rotationLowerLimit(kZeroV),
-      m_positionUpperLimit(kZeroV),
-      m_rotationUpperLimit(kZeroV),
-      m_positionStiffness(kZeroV),
-      m_rotationStiffness(kZeroV),
+      m_position(kZeroV3),
+      m_rotation(kZeroV3),
+      m_positionLowerLimit(kZeroV3),
+      m_rotationLowerLimit(kZeroV3),
+      m_positionUpperLimit(kZeroV3),
+      m_rotationUpperLimit(kZeroV3),
+      m_positionStiffness(kZeroV3),
+      m_rotationStiffness(kZeroV3),
       m_rigidBodyIndex1(0),
       m_rigidBodyIndex2(0)
 {
@@ -166,9 +166,10 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = new StaticString(namePtr, nNameSize);
+    StaticString::Encoding encoding = info.encoding;
+    m_name = new StaticString(namePtr, nNameSize, encoding);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize, encoding);
     internal::size8(ptr, rest, nNameSize);
     switch (nNameSize) {
     case 0: {

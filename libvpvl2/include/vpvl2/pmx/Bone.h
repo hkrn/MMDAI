@@ -38,6 +38,7 @@
 #define VPVL2_PMX_BONE_H_
 
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
 
 namespace vpvl2
 {
@@ -74,6 +75,10 @@ public:
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
+    void mergeMorph(Morph::Bone *morph, float weight);
+    void performTransform();
+    const Vector3 &offset() const;
+    const Transform localTransform() const;
 
     Bone *parentBone() const { return m_parentBone; }
     Bone *offsetBone() const { return m_offsetBone; }
@@ -81,8 +86,7 @@ public:
     Bone *parentBiasBone() const { return m_parentBiasBone; }
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &offset() const { return m_offset; }
+    const Vector3 &origin() const { return m_origin; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }
@@ -110,7 +114,15 @@ private:
     Bone *m_parentBiasBone;
     StaticString *m_name;
     StaticString *m_englishName;
+    Quaternion m_rotation;
+    Quaternion m_extraRotation;
+    Quaternion m_morphRotation;
+    Transform m_localTransform;
+    Transform m_localToOrigin;
+    Vector3 m_origin;
     Vector3 m_position;
+    Vector3 m_extraPosition;
+    Vector3 m_morphPosition;
     Vector3 m_offset;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;

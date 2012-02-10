@@ -68,6 +68,7 @@ public:
         UserData() {}
         virtual ~UserData() {}
     };
+    struct SkinnedVertex;
 
     /**
       * Type of parsing errors.
@@ -97,16 +98,23 @@ public:
         kInvalidJointsError,
         kMaxErrors
     };
-    enum Encoding {
-        kUTF8,
-        kUTF16
+    enum StrideType {
+        kVertexStride,
+        kNormalStride,
+        kTexCoordStride,
+        kUVA0Stride,
+        kUVA1Stride,
+        kUVA2Stride,
+        kUVA3Stride,
+        kUVA4Stride,
+        kIndexStride
     };
 
     struct DataInfo
     {
         uint8_t *basePtr;
         uint8_t *namePtr;
-        bool isUTF8;
+        StaticString::Encoding encoding;
         size_t additionalUVSize;
         size_t vertexIndexSize;
         size_t textureIndexSize;
@@ -148,6 +156,9 @@ public:
     Model();
     ~Model();
 
+    static size_t strideOffset(StrideType type);
+    static size_t strideSize(StrideType type);
+
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
 
     /**
@@ -156,12 +167,19 @@ public:
      * @param data The buffer to read and parse
      */
     bool load(const uint8_t *data, size_t size);
-
     void save(uint8_t *data) const;
+
+    void setUserData(UserData *value);
+    void setVisible(bool value);
+    void updateImmediate();
+
+    const void *vertexPtr() const;
+    const void *indicesPtr() const;
 
     const Array<Vertex *> &vertices() const { return m_vertices; }
     const Array<int> &indices() const { return m_indices; }
     const Array<StaticString *> &textures() const { return m_textures; }
+    const Array<Material *> &materials() const { return m_materials; }
     const Array<Bone *> &bones() const { return m_bones; }
     const Array<Morph *> &morphs() const { return m_morphs; }
     const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
@@ -170,8 +188,9 @@ public:
     const StaticString *englishName() const { return m_englishName; }
     const StaticString *comment() const { return m_comment; }
     const StaticString *englishComment() const { return m_englishComment; }
-    Encoding encoding() const { return m_encoding; }
+    UserData *userData() const { return m_userData; }
     Error error() const { return m_error; }
+    bool isVisible() const { return m_visible; }
 
 private:
     void release();
@@ -194,12 +213,15 @@ private:
     Array<Morph *> m_morphs;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
+    SkinnedVertex *m_skinnedVertices;
+    int *m_skinnedIndices;
     StaticString *m_name;
     StaticString *m_englishName;
     StaticString *m_comment;
     StaticString *m_englishComment;
+    UserData *m_userData;
     Error m_error;
-    Encoding m_encoding;
+    bool m_visible;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };

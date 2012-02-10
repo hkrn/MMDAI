@@ -38,6 +38,7 @@
 #define VPVL2_PMX_MATERIAL_H_
 
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
 
 namespace vpvl2
 {
@@ -82,10 +83,14 @@ public:
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
+    void mergeMorph(Morph::Material *morph, float weight);
 
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }
     const StaticString *userDataArea() const { return m_userDataArea; }
+    const StaticString *mainTexture() const { return m_mainTexture; }
+    const StaticString *sphereTexture() const { return m_sphereTexture; }
+    const StaticString *toonTexture() const { return m_toonTexture; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
     const Color &ambient() const { return m_ambient; }
     const Color &diffuse() const { return m_diffuse; }
@@ -98,12 +103,17 @@ public:
     int toonTextureIndex() const { return m_toonTextureIndex; }
     int indices() const { return m_indices; }
     bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
+    bool isCullFaceDisabled() const { return m_flags & 0x01; }
+    bool hasShadow() const { return m_flags & 0x02; }
+    bool isShadowMapDrawn() const { return m_flags & 0x04; }
+    bool isSelfShadowDrawn() const { return m_flags & 0x08; }
+    bool isEdgeDrawn() const { return m_flags & 0x10; }
 
 private:
     StaticString *m_name;
     StaticString *m_englishName;
     StaticString *m_userDataArea;
-    StaticString *m_texture;
+    StaticString *m_mainTexture;
     StaticString *m_sphereTexture;
     StaticString *m_toonTexture;
     SphereTextureRenderMode m_sphereTextureRenderMode;

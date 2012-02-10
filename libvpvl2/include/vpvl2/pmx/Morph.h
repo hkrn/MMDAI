@@ -84,13 +84,13 @@ public:
     struct UV {
         pmx::Vertex *vertex;
         Vector4 position;
-        int index;
+        uint32_t index;
         int offset;
     };
     struct Vertex {
         pmx::Vertex *vertex;
         Vector3 position;
-        int index;
+        uint32_t index;
     };
 
 
@@ -113,6 +113,8 @@ public:
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
+
+    void performTransform(float weight);
 
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }

@@ -63,19 +63,77 @@ namespace vpvl2
 namespace pmx
 {
 
+struct Model::SkinnedVertex {
+    Vector3 position;
+    Vector3 normal;
+    Vector3 texcoord;
+    Vector4 uva0;
+    Vector4 uva1;
+    Vector4 uva2;
+    Vector4 uva3;
+    Vector4 uva4;
+};
+
 Model::Model()
-    : m_name(0),
+    : m_skinnedVertices(0),
+      m_skinnedIndices(0),
+      m_name(0),
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_userData(0),
       m_error(kNoError),
-      m_encoding(kUTF16)
+      m_visible(false)
 {
 }
 
 Model::~Model()
 {
     release();
+}
+
+size_t Model::strideOffset(StrideType type)
+{
+    const SkinnedVertex v;
+    switch (type) {
+    case kVertexStride:
+        return reinterpret_cast<const uint8_t *>(&v.position) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kNormalStride:
+        return reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kTexCoordStride:
+        return reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kUVA0Stride:
+        return reinterpret_cast<const uint8_t *>(&v.uva0) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kUVA1Stride:
+        return reinterpret_cast<const uint8_t *>(&v.uva1) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kUVA2Stride:
+        return reinterpret_cast<const uint8_t *>(&v.uva2) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kUVA3Stride:
+        return reinterpret_cast<const uint8_t *>(&v.uva3) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kUVA4Stride:
+        return reinterpret_cast<const uint8_t *>(&v.uva4) - reinterpret_cast<const uint8_t *>(&v.position);
+    default:
+        return 0;
+    }
+}
+
+size_t Model::strideSize(StrideType type)
+{
+    switch (type) {
+    case kVertexStride:
+    case kNormalStride:
+    case kTexCoordStride:
+    case kUVA0Stride:
+    case kUVA1Stride:
+    case kUVA2Stride:
+    case kUVA3Stride:
+    case kUVA4Stride:
+        return sizeof(SkinnedVertex);
+    case kIndexStride:
+        return sizeof(uint32_t);
+    default:
+        return 0;
+    }
 }
 
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
@@ -109,7 +167,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidFlagSizeError;
         return false;
     }
-    info.isUTF8 = *reinterpret_cast<uint8_t *>(ptr) == 1;
+    info.encoding = *reinterpret_cast<uint8_t *>(ptr) == 1 ? StaticString::kUTF8 : StaticString::kUTF16;
     info.additionalUVSize = *reinterpret_cast<uint8_t *>(ptr + 1);
     info.vertexIndexSize = *reinterpret_cast<uint8_t *>(ptr + 2);
     info.textureIndexSize = *reinterpret_cast<uint8_t *>(ptr + 3);
@@ -250,7 +308,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     info.endPtr = ptr;
 
-    return true;
+    return rest == 0;
 }
 
 bool Model::load(const uint8_t *data, size_t size)
@@ -285,6 +343,47 @@ void Model::save(uint8_t *data) const
 {
 }
 
+void Model::setUserData(UserData *value)
+{
+    m_userData = value;
+}
+
+void Model::setVisible(bool value)
+{
+    m_visible = value;
+}
+
+void Model::updateImmediate()
+{
+    const int nbones = m_bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        bone->performTransform();
+    }
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertices[i];
+        SkinnedVertex &v = m_skinnedVertices[i];
+        v.texcoord = vertex->texcoord();
+        v.uva0 = vertex->uv(0);
+        v.uva1 = vertex->uv(1);
+        v.uva2 = vertex->uv(2);
+        v.uva3 = vertex->uv(3);
+        v.uva4 = vertex->uv(4);
+        vertex->performSkinning(v.position, v.normal);
+    }
+}
+
+const void *Model::vertexPtr() const
+{
+    return &m_skinnedVertices[0].position;
+}
+
+const void *Model::indicesPtr() const
+{
+    return &m_skinnedIndices[0];
+}
+
 void Model::release()
 {
     m_vertices.releaseAll();
@@ -294,6 +393,10 @@ void Model::release()
     m_morphs.releaseAll();
     m_rigidBodies.releaseAll();
     m_joints.releaseAll();
+    delete[] m_skinnedVertices;
+    m_skinnedVertices = 0;
+    delete[] m_skinnedIndices;
+    m_skinnedIndices = 0;
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -307,11 +410,11 @@ void Model::release()
 
 void Model::parseNamesAndComments(const DataInfo &info)
 {
-    m_encoding = info.isUTF8 ? kUTF8 : kUTF16;
-    m_name = new StaticString(info.namePtr, info.nameSize);
-    m_englishName = new StaticString(info.englishNamePtr, info.englishNameSize);
-    m_comment = new StaticString(info.commentPtr, info.commentSize);
-    m_englishComment = new StaticString(info.englishCommentPtr, info.englishCommentSize);
+    StaticString::Encoding encoding = info.encoding;
+    m_name = new StaticString(info.namePtr, info.nameSize, encoding);
+    m_englishName = new StaticString(info.englishNamePtr, info.englishNameSize, encoding);
+    m_comment = new StaticString(info.commentPtr, info.commentSize, encoding);
+    m_englishComment = new StaticString(info.englishCommentPtr, info.englishCommentSize, encoding);
 }
 
 void Model::parseVertices(const DataInfo &info)
@@ -319,6 +422,8 @@ void Model::parseVertices(const DataInfo &info)
     const int nvertices = info.verticesCount;
     uint8_t *ptr = info.verticesPtr;
     size_t size;
+    delete[] m_skinnedVertices;
+    m_skinnedVertices = new SkinnedVertex[nvertices];
     for(int i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex();
         vertex->read(ptr, info, size);
@@ -332,10 +437,17 @@ void Model::parseIndices(const DataInfo &info)
     const int nindices = info.indicesCount;
     uint8_t *ptr = info.indicesPtr;
     size_t size = info.vertexIndexSize;
+    delete[] m_skinnedIndices;
+    m_skinnedIndices = new int[nindices];
     for(int i = 0; i < nindices; i++) {
-        m_indices.add(internal::variantIndexUnsigned(ptr, size));
-        ptr += size;
+        int index = internal::variantIndexUnsigned(ptr, size);
+        m_indices.add(index);
+        m_skinnedIndices[i] = index;
     }
+#ifdef VPVL2_COORDINATE_OPENGL
+    for (int i = 0; i < nindices; i += 3)
+        btSwap(m_skinnedIndices[i], m_skinnedIndices[i + 1]);
+#endif
 }
 
 void Model::parseTextures(const DataInfo &info)
@@ -344,9 +456,10 @@ void Model::parseTextures(const DataInfo &info)
     uint8_t *ptr = info.texturesPtr;
     uint8_t *texturePtr;
     size_t nTextureSize, rest = SIZE_MAX;
+    StaticString::Encoding encoding = info.encoding;
     for(int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
-        m_textures.add(new StaticString(texturePtr, nTextureSize));
+        m_textures.add(new StaticString(texturePtr, nTextureSize, encoding));
     }
 }
 

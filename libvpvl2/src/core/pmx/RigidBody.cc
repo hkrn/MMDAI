@@ -72,9 +72,9 @@ RigidBody::RigidBody()
       m_name(0),
       m_englishName(0),
       m_boneIndex(0),
-      m_size(kZeroV),
-      m_position(kZeroV),
-      m_rotation(kZeroV),
+      m_size(kZeroV3),
+      m_position(kZeroV3),
+      m_rotation(kZeroV3),
       m_mass(0),
       m_groupID(0),
       m_groupMask(0),
@@ -151,9 +151,10 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = new StaticString(namePtr, nNameSize);
+    StaticString::Encoding encoding = info.encoding;
+    m_name = new StaticString(namePtr, nNameSize, encoding);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize, encoding);
     m_boneIndex = internal::variantIndex(ptr, info.boneIndexSize);
     const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
     m_collisionGroupID = unit.collisionGroupID;

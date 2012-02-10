@@ -69,11 +69,19 @@ Bone::Bone()
       m_parentBiasBone(0),
       m_name(0),
       m_englishName(0),
-      m_position(kZeroV),
-      m_offset(kZeroV),
-      m_fixedAxis(kZeroV),
-      m_axisX(kZeroV),
-      m_axisZ(kZeroV),
+      m_rotation(Quaternion::getIdentity()),
+      m_extraRotation(Quaternion::getIdentity()),
+      m_morphRotation(Quaternion::getIdentity()),
+      m_localTransform(Transform::getIdentity()),
+      m_localToOrigin(Transform::getIdentity()),
+      m_origin(kZeroV3),
+      m_position(kZeroV3),
+      m_extraPosition(kZeroV3),
+      m_morphPosition(kZeroV3),
+      m_offset(kZeroV3),
+      m_fixedAxis(kZeroV3),
+      m_axisX(kZeroV3),
+      m_axisZ(kZeroV3),
       m_bias(0),
       m_parentBoneIndex(-1),
       m_priority(0),
@@ -96,6 +104,9 @@ Bone::~Bone()
     m_targetBone = 0;
     m_parentBiasBone = 0;
     m_position.setZero();
+    m_morphPosition.setZero();
+    m_localTransform.setIdentity();
+    m_localToOrigin.setIdentity();
     m_offset.setZero();
     m_fixedAxis.setZero();
     m_axisX.setZero();
@@ -230,11 +241,14 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = new StaticString(namePtr, nNameSize);
+    StaticString::Encoding encoding = info.encoding;
+    m_name = new StaticString(namePtr, nNameSize, encoding);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize, encoding);
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
-    internal::setPosition(unit.vector3, m_position);
+    internal::setPosition(unit.vector3, m_origin);
+    m_localTransform.setOrigin(m_origin);
+    m_localToOrigin.setOrigin(-m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
     m_priority = *reinterpret_cast<int *>(ptr);
@@ -309,6 +323,43 @@ void Bone::write(uint8_t *data) const
 {
 }
 
+void Bone::mergeMorph(Morph::Bone *morph, float weight)
+{
+    m_morphPosition = morph->position * weight;
+    m_morphRotation = morph->rotation * weight;
+}
+
+void Bone::performTransform()
+{
+    // TODO: rotation transform
+    Quaternion rotation = Quaternion::getIdentity();
+    m_localTransform.setRotation(rotation);
+    Vector3 position = kZeroV3;
+    if (hasPositionBias()) {
+        if (m_parentBone) {
+            if (m_parentBone->hasPositionBias())
+                position += m_parentBone->m_extraPosition + m_parentBone->m_morphPosition;
+            else
+                position += m_parentBone->m_position + m_parentBone->m_morphPosition;
+        }
+        position *= m_bias;
+        m_extraPosition = position + m_position + m_morphPosition;
+    }
+    position += m_position + m_morphPosition;
+    m_localTransform.setOrigin(position + offset());
+    if (m_parentBone)
+        m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+}
+
+const Vector3 &Bone::offset() const
+{
+    return m_offsetBone ? m_offsetBone->m_offset : m_offset;
+}
+
+const Transform Bone::localTransform() const
+{
+    return m_localTransform;// * m_localToOrigin;
+}
+
 } /* namespace pmx */
 } /* namespace vpvl2 */
-

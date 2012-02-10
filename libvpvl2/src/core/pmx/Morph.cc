@@ -300,9 +300,10 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = new StaticString(namePtr, nNameSize);
+    StaticString::Encoding encoding = info.encoding;
+    m_name = new StaticString(namePtr, nNameSize, encoding);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize, encoding);
     const MorphUnit &unit = *reinterpret_cast<const MorphUnit *>(ptr);
     m_category = unit.category;
     m_type = unit.type;
@@ -343,6 +344,50 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 
 void Morph::write(uint8_t *data) const
 {
+}
+
+void Morph::performTransform(float weight)
+{
+    int nmorphs;
+    switch (m_type) {
+    case 0: /* group */
+        nmorphs = m_groups.count();
+        break;
+    case 1: /* vertex */
+        nmorphs = m_vertices.count();
+        for (int i = 0; i < nmorphs; i++) {
+            Vertex &v = m_vertices[i];
+            v.vertex->mergeMorph(&v, weight);
+        }
+        break;
+    case 2: /* bone */
+        nmorphs = m_bones.count();
+        for (int i = 0; i < nmorphs; i++) {
+            Bone &v = m_bones[i];
+            v.bone->mergeMorph(&v, weight);
+        }
+        break;
+    case 3: /* UV */
+    case 4: /* UV1 */
+    case 5: /* UV2 */
+    case 6: /* UV3 */
+    case 7: /* UV4 */
+        nmorphs = m_uvs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            UV &v = m_uvs[i];
+            v.vertex->mergeMorph(&v, weight);
+        }
+        break;
+    case 8: /* material */
+        nmorphs = m_materials.count();
+        for (int i = 0; i < nmorphs; i++) {
+            Material &v = m_materials.at(0);
+            v.material->mergeMorph(&v, weight);
+        }
+        break;
+    default:
+        assert(0);
+    }
 }
 
 void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)

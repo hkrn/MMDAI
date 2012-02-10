@@ -34,85 +34,108 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMX_VERTEX_H_
-#define VPVL2_PMX_VERTEX_H_
+#ifndef VPVL2_INTERNAL_GL2_H_
+#define VPVL2_INTERNAL_GL2_H_
 
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
+#include <vpvl2/vpvl2.h>
+
+#include <vpvl2/gl2/Renderer.h>
+#include <map>
+
+#ifdef VPVL2_ENABLE_OPENCL
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#include <OpenCL/cl_gl.h>
+#include <OpenCL/cl_gl_ext.h>
+#else
+#include <CL/cl.h>
+#include <CL/cl_gl.h>
+#endif /* __APPLE__ */
+#endif
 
 namespace vpvl2
 {
-namespace pmx
+
+namespace gl2
 {
 
-/**
- * @file
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * Vertex class represents a morph of a Polygon Vertex Extended object.
- */
-
-class VPVL2_API Vertex
+enum VertexBufferObjectType
 {
-public:
-    enum Type {
-        kBdef1,
-        kBdef2,
-        kBdef4,
-        kSdef
-    };
-
-    /**
-     * Constructor
-     */
-    Vertex();
-    ~Vertex();
-
-    static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
-    static bool loadVertices(const Array<Vertex *> &vertices,
-                             const Array<Bone *> &bones);
-
-    /**
-     * Read and parse the buffer with id and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     * @param info Model information
-     * @param size Size of vertex to be output
-     */
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
-    void mergeMorph(Morph::UV *morph, float weight);
-    void mergeMorph(Morph::Vertex *morph, float weight);
-    void performSkinning(Vector3 &position, Vector3 &normal);
-
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &normal() const { return m_normal; }
-    const Vector3 &texcoord() const { return m_texcoord; }
-    const Vector4 &uv(int index) const;
-    Type type() const { return m_type; }
-    float edge() const { return m_edge; }
-
-private:
-    Bone *m_bones[4];
-    Vector4 m_uvs[4];
-    Vector3 m_position;
-    Vector3 m_normal;
-    Vector3 m_texcoord;
-    Vector3 m_c;
-    Vector3 m_r0;
-    Vector3 m_r1;
-    Type m_type;
-    float m_edge;
-    float m_weight[4];
-    int m_boneIndices[4];
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
+    kModelVertices,
+    kEdgeIndices,
+    kModelIndices,
+    kVertexBufferObjectMax
 };
 
-} /* namespace pmx */
-} /* namespace vpvl2 */
+struct PMXModelMaterialPrivate
+{
+    GLuint mainTextureID;
+    GLuint sphereTextureID;
+    GLuint toonTextureID;
+};
+
+class PMXModelUserData : public vpvl2::pmx::Model::UserData
+{
+public:
+    PMXModelUserData() : vpvl2::pmx::Model::UserData() {}
+    ~PMXModelUserData() {}
+
+    GLuint vertexBufferObjects[kVertexBufferObjectMax];
+    PMXModelMaterialPrivate *materials;
+#ifdef VPVL_ENABLE_OPENCL
+    cl_mem vertexBufferForCL;
+    cl_mem boneMatricesBuffer;
+    cl_mem originMatricesBuffer;
+    cl_mem outputMatricesBuffer;
+    cl_mem weightsBuffer;
+    cl_mem bone1IndicesBuffer;
+    cl_mem bone2IndicesBuffer;
+    size_t localWGSizeForUpdateBoneMatrices;
+    size_t localWGSizeForPerformSkinning;
+    float *weights;
+    float *boneTransform;
+    float *originTransform;
+    int *bone1Indices;
+    int *bone2Indices;
+    bool isBufferAllocated;
+#endif
+};
+
+#ifdef VPVL_LINK_ASSIMP
+struct AssetVertex
+{
+    vpvl::Vector4 position;
+    vpvl::Vector3 normal;
+    vpvl::Vector3 texcoord;
+    vpvl::Color color;
+};
+struct AssetVBO
+{
+    GLuint vertices;
+    GLuint indices;
+};
+typedef btAlignedObjectArray<AssetVertex> AssetVertices;
+typedef btAlignedObjectArray<uint32_t> AssetIndices;
+
+class AssetProgram;
+
+class AssetUserData : public vpvl::Asset::UserData
+{
+public:
+    AssetUserData() : Asset::UserData() {}
+    ~AssetUserData() {}
+
+    std::map<std::string, GLuint> textures;
+    std::map<const struct aiMesh *, AssetVertices> vertices;
+    std::map<const struct aiMesh *, AssetIndices> indices;
+    std::map<const struct aiMesh *, AssetVBO> vbo;
+    std::map<const struct aiNode *, vpvl::gl2::AssetProgram *> programs;
+};
+#endif
+
+}
+
+}
 
 #endif
 

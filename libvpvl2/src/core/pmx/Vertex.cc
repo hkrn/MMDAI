@@ -258,6 +258,50 @@ void Vertex::write(uint8_t *data) const
 {
 }
 
+void Vertex::mergeMorph(Morph::UV *morph, float weight)
+{
+    m_uvs[morph->offset] += morph->position * weight;
+}
+
+void Vertex::mergeMorph(Morph::Vertex *morph, float weight)
+{
+    m_position += morph->position * weight;
+}
+
+void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
+{
+    switch (m_type) {
+    case kBdef1: {
+        const Transform &transform = m_bones[0]->localTransform();
+        position = transform * m_position;
+        normal = transform.getBasis() * m_normal;
+        break;
+    }
+    case kBdef2:
+    case kSdef: {
+        const Transform &transformA = m_bones[0]->localTransform();
+        const Transform &transformB = m_bones[1]->localTransform();
+        const Vector3 &v1 = transformA * m_position;
+        const Vector3 &n1 = transformA.getBasis() * m_normal;
+        const Vector3 &v2 = transformB * m_position;
+        const Vector3 &n2 = transformB.getBasis() * m_normal;
+        float weight = m_weight[0];
+        position.setInterpolate3(v2, v1, weight);
+        normal.setInterpolate3(n2, n1, weight);
+        break;
+    }
+    case kBdef4: {
+        break;
+    }
+    }
+    position.setW(1);
+}
+
+const Vector4 &Vertex::uv(int index) const
+{
+    return index >= 0 && index < 4 ? m_uvs[index] : kZeroV4;
+}
+
 } /* namespace pmx */
 } /* namespace vpvl2 */
 

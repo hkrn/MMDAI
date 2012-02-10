@@ -184,12 +184,20 @@ static int variantIndexUnsigned(uint8_t *&ptr, size_t size)
 
 static void inline setPosition(const float *input, Vector3 &output)
 {
+#ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], input[1], -input[2]);
+#else
+    output.setValue(input[0], input[1], input[2]);
+#endif
 }
 
 static void inline setRotation(const float *input, Quaternion &output)
 {
+#ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], -input[1], -input[2], input[3]);
+#else
+    output.setValue(input[0], input[1], input[2], input[3]);
+#endif
 }
 
 static void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)

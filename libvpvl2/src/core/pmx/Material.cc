@@ -65,7 +65,7 @@ Material::Material()
     : m_name(0),
       m_englishName(0),
       m_userDataArea(0),
-      m_texture(0),
+      m_mainTexture(0),
       m_sphereTexture(0),
       m_toonTexture(0),
       m_sphereTextureRenderMode(kNone),
@@ -91,7 +91,7 @@ Material::~Material()
     m_englishName = 0;
     delete m_userDataArea;
     m_userDataArea = 0;
-    m_texture = 0;
+    m_mainTexture = 0;
     m_sphereTexture = 0;
     m_toonTexture = 0;
     m_sphereTextureRenderMode = kNone;
@@ -176,7 +176,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<Sta
             if (textureIndex >= ntextures)
                 return false;
             else
-                material->m_texture = textures[textureIndex];
+                material->m_mainTexture = textures[textureIndex];
         }
         const int sphereTextureIndex = material->m_sphereTextureIndex;
         if (sphereTextureIndex >= 0) {
@@ -186,7 +186,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<Sta
                 material->m_sphereTexture = textures[sphereTextureIndex];
         }
         const int toonTextureIndex = material->m_toonTextureIndex;
-        if (toonTextureIndex >= 0) {
+        if (!material->m_useSharedToonTexture && toonTextureIndex >= 0) {
             if (toonTextureIndex >= ntextures)
                 return false;
             else
@@ -201,9 +201,10 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = new StaticString(namePtr, nNameSize);
+    StaticString::Encoding encoding = info.encoding;
+    m_name = new StaticString(namePtr, nNameSize, encoding);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize);
+    m_englishName = new StaticString(namePtr, nNameSize, encoding);
     const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
     m_ambient.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
     m_diffuse.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
@@ -227,7 +228,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
         m_toonTextureIndex = internal::variantIndex(ptr, info.textureIndexSize);
     }
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_userDataArea = new StaticString(namePtr, nNameSize);
+    m_userDataArea = new StaticString(namePtr, nNameSize, info.encoding);
     internal::size32(ptr, rest, nNameSize);
     m_indices = nNameSize;
     size = ptr - start;
@@ -235,6 +236,17 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
 
 void Material::write(uint8_t *data) const
 {
+}
+
+void Material::mergeMorph(Morph::Material *morph, float weight)
+{
+    // TODO: morph->operation
+    m_ambient += morph->ambient * weight;
+    m_diffuse += morph->diffuse * weight;
+    m_specular += morph->specular * weight;
+    m_shininess += morph->shininess * weight;
+    m_edgeColor += morph->edgeColor * weight;
+    m_edgeSize += morph->edgeSize * weight;
 }
 
 } /* namespace pmx */

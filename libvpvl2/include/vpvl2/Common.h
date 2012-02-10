@@ -204,9 +204,14 @@ private:
 
 class StaticString {
 public:
-    StaticString(const uint8_t *value, size_t length)
+    enum Encoding {
+        kUTF8,
+        kUTF16
+    };
+    StaticString(const uint8_t *value, size_t length, Encoding encoding)
         : m_bytes(0),
-          m_length(0)
+          m_length(0),
+          m_encoding(encoding)
     {
         m_bytes = new uint8_t[length + 1];
         memcpy(m_bytes, value, length);
@@ -221,19 +226,21 @@ public:
     const uint8_t *bytes() const { return m_bytes; }
     const char *ptr() const { return reinterpret_cast<const char *>(m_bytes); }
     size_t length() const { return m_length; }
+    Encoding encoding() const { return m_encoding; }
 
 private:
     uint8_t *m_bytes;
     size_t m_length;
+    Encoding m_encoding;
 };
 
 typedef btHashString HashString;
 typedef btHashPtr HashPtr;
 
 static const float kPI = 3.14159265358979323846f;
-static const Vector3 &kZeroV = Vector3(0.0f, 0.0f, 0.0f);
+static const Vector3 &kZeroV3 = Vector3(0.0f, 0.0f, 0.0f);
+static const Vector4 &kZeroV4 = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 static const Color &kZeroC = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
-static const Quaternion &kZeroQ = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 
 /**
  * Get whether current library version is compatible with specified version.
