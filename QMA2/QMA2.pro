@@ -178,10 +178,12 @@ HEADERS  += \
     dialogs/FrameSelectionDialog.h \
     widgets/ModelInfoWidget.h \
     VideoEncoder.h \
-    widgets/PlayerWidget.h
+    widgets/PlayerWidget.h \
+    common/TextureDrawHelper.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
+
 
 

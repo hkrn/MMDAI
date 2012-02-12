@@ -43,6 +43,10 @@
 
 #include <vpvl/Common.h>
 
+namespace internal {
+class TextureDrawHelper;
+}
+
 namespace vpvl {
 class Asset;
 class Bone;
@@ -153,6 +157,7 @@ private:
     void loadImageHandles();
     void loadModelHandles();
 
+    internal::TextureDrawHelper *m_helper;
     vpvl::Bone *m_bone;
     HandlesStaticWorld *m_world;
     SceneWidget *m_widget;

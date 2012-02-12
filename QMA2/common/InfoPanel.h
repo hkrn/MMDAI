@@ -39,6 +39,7 @@
 
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
+#include "TextureDrawHelper.h"
 #include "util.h"
 
 namespace vpvl {
@@ -53,6 +54,7 @@ class InfoPanel
 public:
     InfoPanel(QGLWidget *widget)
         : m_widget(widget),
+          m_helper(0),
           m_rect(0, 0, 256, 256),
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
@@ -63,8 +65,11 @@ public:
           m_height(0),
           m_visible(true)
     {
+        m_helper = new TextureDrawHelper(widget);
     }
     ~InfoPanel() {
+        delete m_helper;
+        m_helper = 0;
         deleteTexture();
     }
 
@@ -73,6 +78,7 @@ public:
         m_height = height;
     }
     void load() {
+        m_helper->load();
     }
     void update() {
         int height = m_fontMetrics.height();
@@ -102,18 +108,8 @@ public:
         if (!m_visible)
             return;
         glDisable(GL_DEPTH_TEST);
-        glDisable(GL_LIGHTING);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, m_width, 0, m_height, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glTranslatef(0, m_height - m_rect.height(), 0);
-        m_widget->drawTexture(m_rect, m_textureID);
+        m_helper->draw(m_rect, QVector3D(0, m_height - m_rect.height(), 0), m_textureID);
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_LIGHTING);
     }
 
     void setModel(vpvl::PMDModel *model) {
@@ -143,6 +139,7 @@ private:
     }
 
     QGLWidget *m_widget;
+    TextureDrawHelper *m_helper;
     QRect m_rect;
     QImage m_texture;
     QFont m_font;

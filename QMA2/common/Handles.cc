@@ -38,6 +38,7 @@
 
 #include "Handles.h"
 #include "SceneWidget.h"
+#include "TextureDrawHelper.h"
 #include "World.h"
 #include "util.h"
 
@@ -224,6 +225,7 @@ static void LoadTrackableModel(const aiMesh *mesh,
 
 Handles::Handles(SceneWidget *parent)
     : QObject(parent),
+      m_helper(0),
       m_bone(0),
       m_world(0),
       m_widget(parent),
@@ -238,6 +240,7 @@ Handles::Handles(SceneWidget *parent)
       m_isLocal(true),
       m_visible(true)
 {
+    m_helper = new internal::TextureDrawHelper(parent);
     m_world = new HandlesStaticWorld();
     m_rotationHandle.asset = 0;
     m_translationHandle.asset = 0;
@@ -259,6 +262,7 @@ Handles::~Handles()
     m_widget->deleteTexture(m_z.disableRotate.textureID);
     m_widget->deleteTexture(m_global.textureID);
     m_widget->deleteTexture(m_local.textureID);
+    delete m_helper;
     delete m_world;
     delete m_rotationHandle.asset;
     delete m_translationHandle.asset;
@@ -266,6 +270,7 @@ Handles::~Handles()
 
 void Handles::load()
 {
+    m_helper->load();
     loadImageHandles();
     bool isShaderLoaded = true;
     isShaderLoaded &= m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
@@ -535,38 +540,31 @@ void Handles::drawImageHandles()
 {
     if (!m_visible)
         return;
-    QGLFunctions func(QGLContext::currentContext());
-    func.glUseProgram(0);
     glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, m_width, 0, m_height, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     if (m_enableMove) {
-        m_widget->drawTexture(m_x.enableMove.rect, m_x.enableMove.textureID);
-        m_widget->drawTexture(m_y.enableMove.rect, m_y.enableMove.textureID);
-        m_widget->drawTexture(m_z.enableMove.rect, m_z.enableMove.textureID);
+        m_helper->draw(m_x.enableMove.rect, m_x.enableMove.textureID);
+        m_helper->draw(m_y.enableMove.rect, m_y.enableMove.textureID);
+        m_helper->draw(m_z.enableMove.rect, m_z.enableMove.textureID);
     }
     else {
-        m_widget->drawTexture(m_x.disableMove.rect, m_x.disableMove.textureID);
-        m_widget->drawTexture(m_y.disableMove.rect, m_y.disableMove.textureID);
-        m_widget->drawTexture(m_z.disableMove.rect, m_z.disableMove.textureID);
+        m_helper->draw(m_x.disableMove.rect, m_x.disableMove.textureID);
+        m_helper->draw(m_y.disableMove.rect, m_y.disableMove.textureID);
+        m_helper->draw(m_z.disableMove.rect, m_z.disableMove.textureID);
     }
     if (m_enableRotate) {
-        m_widget->drawTexture(m_x.enableRotate.rect, m_x.enableRotate.textureID);
-        m_widget->drawTexture(m_y.enableRotate.rect, m_y.enableRotate.textureID);
-        m_widget->drawTexture(m_z.enableRotate.rect, m_z.enableRotate.textureID);
+        m_helper->draw(m_x.enableRotate.rect, m_x.enableRotate.textureID);
+        m_helper->draw(m_y.enableRotate.rect, m_y.enableRotate.textureID);
+        m_helper->draw(m_z.enableRotate.rect, m_z.enableRotate.textureID);
     }
     else {
-        m_widget->drawTexture(m_x.disableRotate.rect, m_x.disableRotate.textureID);
-        m_widget->drawTexture(m_y.disableRotate.rect, m_y.disableRotate.textureID);
-        m_widget->drawTexture(m_z.disableRotate.rect, m_z.disableRotate.textureID);
+        m_helper->draw(m_x.disableRotate.rect, m_x.disableRotate.textureID);
+        m_helper->draw(m_y.disableRotate.rect, m_y.disableRotate.textureID);
+        m_helper->draw(m_z.disableRotate.rect, m_z.disableRotate.textureID);
     }
     if (m_isLocal)
-        m_widget->drawTexture(m_local.rect, m_local.textureID);
+        m_helper->draw(m_local.rect, m_local.textureID);
     else
-        m_widget->drawTexture(m_global.rect, m_global.textureID);
+        m_helper->draw(m_global.rect, m_global.textureID);
     glEnable(GL_DEPTH_TEST);
 }
 

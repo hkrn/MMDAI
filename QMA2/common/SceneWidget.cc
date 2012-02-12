@@ -1018,30 +1018,20 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
-    QPainter painter(this);
     qglClearColor(m_enableBlackBackground ? Qt::black : Qt::white);
     EnableMultisample();
-    /* 場面全体の描写 */
     m_renderer->clear();
     m_renderer->renderProjectiveShadow();
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene());
-    if (m_editMode == kSelect) {
-        glUseProgram(0);
+    if (m_editMode == kSelect)
         m_debugDrawer->drawModelBones(selectedModel(), true, true);
-    }
-    /* 情報パネルとハンドルの描写 (Qt 特有の描写を使うため、beginNativePainting() を呼んでおく) */
-    painter.beginNativePainting();
-    EnableMultisample();
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_handles->drawImageHandles();
     if (m_editMode == kRotate)
         m_handles->drawModelHandles();
     m_debugDrawer->drawBoneTransform(selectedBone());
     m_info->draw();
-    painter.endNativePainting();
 }
 
 void SceneWidget::resizeGL(int w, int h)
