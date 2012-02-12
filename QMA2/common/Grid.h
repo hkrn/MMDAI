@@ -38,7 +38,8 @@
 #define GRID_H
 
 #include <QtGlobal>
-#include <QtOpenGL/qglfunctions.h>
+#include <QtOpenGL/QGLFunctions>
+#include <QtOpenGL/QGLShaderProgram>
 
 #include <vpvl/Scene.h>
 
@@ -55,7 +56,7 @@ public:
 
     Grid() : m_vbo(0), m_ibo(0), m_list(0), m_enabled(true) {}
     ~Grid() {
-		QGLFunctions func(QGLContext::currentContext());
+        QGLFunctions func(QGLContext::currentContext());
         if (m_vbo) {
             func.glDeleteBuffers(1, &m_vbo);
             m_vbo = 0;
@@ -70,7 +71,7 @@ public:
         }
     }
 
-    void initialize() {
+    void load() {
         // draw black grid
         static const vpvl::Vector3 zero(0.0f, 0.0f, 0.0f);
         static const vpvl::Vector3 lineColor(0.5f, 0.5f, 0.5f);
@@ -85,44 +86,41 @@ public:
         addLine(zero, vpvl::Vector3(0.0f, kLimit, 0.0f), vpvl::Vector3(0.0f, 1.0f, 0.0f), index);
         // Z coordinate (blue)
         addLine(zero, vpvl::Vector3(0.0f, 0.0f, kLimit), vpvl::Vector3(0.0f, 0.0f, 1.0f), index);
-        m_list = glGenLists(1);
-		QGLFunctions func(QGLContext::currentContext());
+        QGLFunctions func(QGLContext::currentContext());
         func.glGenBuffers(1, &m_vbo);
         func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         func.glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(Vertex), &m_vertices[0].position, GL_STATIC_DRAW);
         func.glGenBuffers(1, &m_ibo);
         func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
         func.glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.count() * sizeof(uint8_t), &m_indices[0], GL_STATIC_DRAW);
-        // start compiling to render with list cache
-        glNewList(m_list, GL_COMPILE);
-        glDisable(GL_LIGHTING);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
-        func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glVertexPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<GLvoid *>(0));
-        glColorPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<GLvoid *>(sizeof(vpvl::Vector3)));
-        func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-        glDrawElements(GL_LINES, m_indices.count(), GL_UNSIGNED_BYTE, 0);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_COLOR_ARRAY);
-        func.glBindBuffer(GL_ARRAY_BUFFER, 0);
-        func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glEnable(GL_LIGHTING);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_COLOR_ARRAY);
-        glEndList();
+        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
+        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+        m_program.link();
     }
 
-    void draw(vpvl::Scene *scene) const {
-        if (m_enabled) {
-            float modelview[16], projection[16];
-            glMatrixMode(GL_PROJECTION);
-            scene->getProjectionMatrix(projection);
-            glLoadMatrixf(projection);
-            glMatrixMode(GL_MODELVIEW);
-            scene->getModelViewMatrix(modelview);
-            glLoadMatrixf(modelview);
-            glCallList(m_list);
+    void draw(vpvl::Scene *scene) {
+        if (m_enabled && m_program.isLinked()) {
+            float matrix[16];
+            m_program.bind();
+            QGLFunctions func(QGLContext::currentContext());
+            func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+            func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+            scene->getModelViewMatrix(matrix);
+            int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
+            func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+            scene->getProjectionMatrix(matrix);
+            int projectionMatrix = m_program.uniformLocation("projectionMatrix");
+            func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+            int inPosition = m_program.attributeLocation("inPosition");
+            m_program.enableAttributeArray(inPosition);
+            m_program.setAttributeBuffer(inPosition, GL_FLOAT, 0, 3, sizeof(Vertex));
+            int inColor = m_program.attributeLocation("inColor");
+            m_program.enableAttributeArray(inColor);
+            m_program.setAttributeBuffer(inColor, GL_FLOAT, sizeof(vpvl::Vector3), 3, sizeof(Vertex));
+            glDrawElements(GL_LINES, m_indices.count(), GL_UNSIGNED_BYTE, 0);
+            func.glBindBuffer(GL_ARRAY_BUFFER, 0);
+            func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            m_program.release();
         }
     }
 
@@ -147,6 +145,7 @@ private:
         m_indices.add(index++);
     }
 
+    QGLShaderProgram m_program;
     vpvl::Array<Vertex> m_vertices;
     vpvl::Array<uint8_t> m_indices;
     GLuint m_vbo;

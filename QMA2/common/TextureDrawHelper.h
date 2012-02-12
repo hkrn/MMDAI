@@ -37,7 +37,8 @@
 #ifndef TEXTUREDRAWHELPER_H
 #define TEXTUREDRAWHELPER_H
 
-#include <QtOpenGL/QtOpenGL>
+#include <QtOpenGL/QGLShaderProgram>
+#include <QtOpenGL/QGLWidget>
 
 namespace internal {
 

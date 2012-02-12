@@ -37,6 +37,8 @@
         <file alias="handle.vsh">shaders/gui/handle.vsh</file>
         <file alias="texture.fsh">shaders/gui/texture.fsh</file>
         <file alias="texture.vsh">shaders/gui/texture.vsh</file>
+        <file alias="grid.fsh">shaders/gui/grid.fsh</file>
+        <file alias="grid.vsh">shaders/gui/grid.vsh</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>
