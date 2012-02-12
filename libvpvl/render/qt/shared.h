@@ -187,28 +187,28 @@ public:
             file = "asset.fsh";
             break;
         case Renderer::kEdgeVertexShader:
-            file = m_hardwareSkinning ? "edge_hws.vsh" : "edge.vsh";
+            file = m_hardwareSkinning ? "pmd/edge_hws.vsh" : "pmd/edge.vsh";
             break;
         case Renderer::kEdgeFragmentShader:
-            file = "edge.fsh";
+            file = "pmd/edge.fsh";
             break;
         case Renderer::kModelVertexShader:
-            file = m_hardwareSkinning ? "model_hws.vsh" : "model.vsh";
+            file = m_hardwareSkinning ? "pmd/model_hws.vsh" : "pmd/model.vsh";
             break;
         case Renderer::kModelFragmentShader:
-            file = "model.fsh";
+            file = "pmd/model.fsh";
             break;
         case Renderer::kShadowVertexShader:
-            file = "shadow.vsh";
+            file = "pmd/shadow.vsh";
             break;
         case Renderer::kShadowFragmentShader:
-            file = "shadow.fsh";
+            file = "pmd/shadow.fsh";
             break;
         case Renderer::kZPlotVertexShader:
-            file = "zplot.vsh";
+            file = "pmd/zplot.vsh";
             break;
         case Renderer::kZPlotFragmentShader:
-            file = "zplot.fsh";
+            file = "pmd/zplot.fsh";
             break;
         }
         QByteArray bytes;

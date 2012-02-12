@@ -25,14 +25,14 @@
     <qresource prefix="/shaders">
         <file alias="asset.fsh">shaders/asset.fsh</file>
         <file alias="asset.vsh">shaders/asset.vsh</file>
-        <file alias="edge.fsh">shaders/edge.fsh</file>
-        <file alias="edge.vsh">shaders/edge.vsh</file>
-        <file alias="model.fsh">shaders/model.fsh</file>
-        <file alias="model.vsh">shaders/model.vsh</file>
-        <file alias="shadow.fsh">shaders/shadow.fsh</file>
-        <file alias="shadow.vsh">shaders/shadow.vsh</file>
-        <file alias="zplot.fsh">shaders/zplot.fsh</file>
-        <file alias="zplot.vsh">shaders/zplot.vsh</file>
+        <file alias="edge.fsh">shaders/pmd/edge.fsh</file>
+        <file alias="edge.vsh">shaders/pmd/edge.vsh</file>
+        <file alias="model.fsh">shaders/pmd/model.fsh</file>
+        <file alias="model.vsh">shaders/pmd/model.vsh</file>
+        <file alias="shadow.fsh">shaders/pmd/shadow.fsh</file>
+        <file alias="shadow.vsh">shaders/pmd/shadow.vsh</file>
+        <file alias="zplot.fsh">shaders/pmd/zplot.fsh</file>
+        <file alias="zplot.vsh">shaders/pmd/zplot.vsh</file>
         <file alias="handle.fsh">shaders/handle.fsh</file>
         <file alias="handle.vsh">shaders/handle.vsh</file>
     </qresource>

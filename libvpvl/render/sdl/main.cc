@@ -235,22 +235,28 @@ public:
             file = "asset.fsh";
             break;
         case Renderer::kEdgeVertexShader:
-            file = "edge.vsh";
+            file = "pmd/edge.vsh";
             break;
         case Renderer::kEdgeFragmentShader:
-            file = "edge.fsh";
+            file = "pmd/edge.fsh";
             break;
         case Renderer::kModelVertexShader:
-            file = "model.vsh";
+            file = "pmd/model.vsh";
             break;
         case Renderer::kModelFragmentShader:
-            file = "model.fsh";
+            file = "pmd/model.fsh";
             break;
         case Renderer::kShadowVertexShader:
-            file = "shadow.vsh";
+            file = "pmd/shadow.vsh";
             break;
         case Renderer::kShadowFragmentShader:
-            file = "shadow.fsh";
+            file = "pmd/shadow.fsh";
+            break;
+        case Renderer::kZPlotVertexShader:
+            file = "pmd/zplot.vsh";
+            break;
+        case Renderer::kZPlotFragmentShader:
+            file = "pmd/zplot.fsh";
             break;
         }
         uint8_t *data;
