@@ -94,7 +94,9 @@ static const int kWidth = 800;
 static const int kHeight = 600;
 static const int kFPS = 60;
 
-static const std::string kSystemDir = "render/res/system";
+static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
+static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders";
+static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
 static const std::string kModelDir = "render/res/lat";
 static const std::string kStageDir = "render/res/stage";
 static const std::string kMotion = "gtest/res/motion.vmd";
@@ -127,9 +129,8 @@ static void slurpFile(const std::string &path, uint8_t *&data, size_t &size) {
 class Delegate : public Renderer::IDelegate
 {
 public:
-    Delegate(const std::string &system)
-        : m_system(system),
-          m_iconv(0)
+    Delegate()
+        : m_iconv(0)
     {
         m_iconv = iconv_open("UTF-8", "SHIFT-JIS");
         assert(m_iconv != reinterpret_cast<iconv_t *>(-1));
@@ -190,7 +191,7 @@ public:
         struct stat sb;
         std::string path = dir + "/" + name;
         if (!(stat(path.c_str(), &sb) != -1 && S_ISREG(sb.st_mode))) {
-            path = m_system + "/" + name;
+            path = kSystemTexturesDir + "/" + name;
             if (!(stat(path.c_str(), &sb) != -1 && S_ISREG(sb.st_mode))) {
                 log(Renderer::kLogWarning, "%s is not found, skipped...", path.c_str());
                 return false;
@@ -217,7 +218,7 @@ public:
         }
         uint8_t *data;
         size_t size;
-        std::string path = m_system + "/" + file;
+        std::string path = kKernelProgramsDir + "/" + file;
         slurpFile(path, data, size);
         log(Renderer::kLogInfo, "Loaded a shader: %s", path.c_str());
         std::string content(reinterpret_cast<const char *>(data), size);
@@ -254,7 +255,7 @@ public:
         }
         uint8_t *data;
         size_t size;
-        std::string path = m_system + "/" + file;
+        std::string path = kShaderProgramsDir + "/" + file;
         slurpFile(path, data, size);
         log(Renderer::kLogInfo, "Loaded a shader: %s", path.c_str());
         std::string content(reinterpret_cast<const char *>(data), size);
@@ -298,7 +299,6 @@ public:
     }
 
 private:
-    std::string m_system;
     iconv_t m_iconv;
 };
 
@@ -328,7 +328,7 @@ public:
           m_dispatcher(&m_config),
           m_broadphase(btVector3(-400.0f, -400.0f, -400.0f), btVector3(400.0f, 400.0f, 400.0f), 1024),
       #endif /* VPVL_NO_BULLET */
-          m_delegate(internal::kSystemDir),
+          m_delegate(),
           m_renderer(0),
           m_model(0),
           m_modelData(0),
