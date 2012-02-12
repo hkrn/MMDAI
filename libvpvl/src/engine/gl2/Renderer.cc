@@ -1061,16 +1061,16 @@ public:
         glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const Color &value) {
-        glUniform4fv(m_materialAmbientUniformLocation, 1, value);
+        glUniform3fv(m_materialAmbientUniformLocation, 1, value);
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
     void setMaterialEmission(const Color &value) {
-        glUniform4fv(m_materialEmissionUniformLocation, 1, value);
+        glUniform3fv(m_materialEmissionUniformLocation, 1, value);
     }
     void setMaterialSpecular(const Color &value) {
-        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+        glUniform3fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(float value) {
         glUniform1f(m_materialShininessUniformLocation, value);

@@ -2,12 +2,12 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 transformMatrix;
 uniform mat3 normalMatrix;
-uniform vec4 lightColor;
+uniform vec3 lightColor;
 uniform vec3 lightPosition;
-uniform vec4 materialAmbient;
+uniform vec3 materialAmbient;
 uniform vec4 materialDiffuse;
-uniform vec4 materialEmission;
-uniform vec4 materialSpecular;
+uniform vec3 materialEmission;
+uniform vec3 materialSpecular;
 uniform float materialShininess;
 uniform bool hasColorVertex;
 attribute vec4 inColor;
@@ -23,7 +23,7 @@ void main() {
     mat4 transformedModelViewMatrix = modelViewMatrix * transformMatrix;
     vec4 position = transformedModelViewMatrix * inPosition;
 #if 1
-    vec4 color = vec4(materialAmbient.rgb * lightColor.rgb + materialDiffuse.rgb * lightColor.rgb, materialDiffuse.a);
+    vec4 color = vec4(materialAmbient * lightColor + materialDiffuse.rgb * lightColor, materialDiffuse.a);
 #else
     vec3 normal = normalize(normalMatrix * inNormal);
     vec3 light = normalize(normalMatrix * lightPosition - position.xyz);
