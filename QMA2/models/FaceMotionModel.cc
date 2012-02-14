@@ -423,6 +423,9 @@ void FaceMotionModel::resetAllFaces()
 
 void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
 {
+    /* 引数のモデルが現在選択中のものであれば二重処理になってしまうので、スキップする */
+    if (m_model == model)
+        return;
     if (model) {
         /* PMD の二重登録防止 */
         if (!hasPMDModel(model)) {

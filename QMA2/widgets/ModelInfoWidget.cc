@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "ModelInfoWidget.h"
+#include "common/SceneLoader.h"
 #include "common/util.h"
 
 #include <QtGui/QtGui>
@@ -87,6 +88,9 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     m_edgeOffsetSpinBox->setEnabled(false);
     m_edgeOffsetSpinBox->setSingleStep(0.1);
     m_edgeOffsetSpinBox->setRange(0.0, 2.0);
+    m_projectiveShadowCheckbox = new QCheckBox();
+    connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidChange(bool)));
+    m_projectiveShadowCheckbox->setEnabled(false);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(m_nameLabel);
     mainLayout->addWidget(m_nameValueLabel);
@@ -112,11 +116,12 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     mainLayout->addLayout(gridLayout);
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(m_edgeOffsetLabel, m_edgeOffsetSpinBox);
+    formLayout->addWidget(m_projectiveShadowCheckbox);
     mainLayout->addLayout(formLayout);
     mainLayout->addStretch();
     setLayout(mainLayout);
     retranslate();
-    setModel(0);
+    setModel(0, 0);
 }
 
 ModelInfoWidget::~ModelInfoWidget()
@@ -136,9 +141,10 @@ void ModelInfoWidget::retranslate()
     m_rigidBodiesCountLabel->setText(tr("Number of rigid bodies:"));
     m_constrantsCountLabel->setText(tr("Number of constraints:"));
     m_edgeOffsetLabel->setText(tr("Edge offset:"));
+    m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
 }
 
-void ModelInfoWidget::setModel(vpvl::PMDModel *model)
+void ModelInfoWidget::setModel(vpvl::PMDModel *model, SceneLoader *loader)
 {
     if (model) {
         m_nameValueLabel->setText(internal::toQString(model->name()));
@@ -153,6 +159,13 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model)
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->constraints().count()));
         m_edgeOffsetSpinBox->setValue(model->edgeOffset());
         m_edgeOffsetSpinBox->setEnabled(true);
+        m_projectiveShadowCheckbox->setEnabled(true);
+        if (loader) {
+            m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
+        }
+        else {
+            m_projectiveShadowCheckbox->setChecked(false);
+        }
     }
     else {
         m_nameValueLabel->setText("N/A");
@@ -167,5 +180,6 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model)
         m_constrantsCountValueLabel->setText("0");
         m_edgeOffsetSpinBox->setValue(0.0f);
         m_edgeOffsetSpinBox->setEnabled(false);
+        m_projectiveShadowCheckbox->setEnabled(false);
     }
 }

@@ -127,7 +127,7 @@ public:
                       QRectF &rect);
     void drawImageHandles();
     void drawModelHandles();
-    const vpvl::Vector3 angle(const vpvl::Vector3 &pos) const;
+    const btScalar angle(const vpvl::Vector3 &pos) const;
 
     void setPoint3D(const vpvl::Vector3 &value);
     void setPoint2D(const QPointF &value);

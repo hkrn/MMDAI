@@ -432,9 +432,9 @@ bool Handles::testHitImage(const QPointF &p,
     return flags != kNone;
 }
 
-const vpvl::Vector3 Handles::angle(const vpvl::Vector3 &pos) const
+const btScalar Handles::angle(const vpvl::Vector3 &pos) const
 {
-    return (pos - m_bone->localTransform().getOrigin()).normalized();
+    return pos.angle(m_bone->localTransform().getOrigin());
 }
 
 void Handles::setPoint3D(const vpvl::Vector3 &value)

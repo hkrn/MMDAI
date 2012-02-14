@@ -221,7 +221,7 @@ void MainWindow::newMotionFile()
          */
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
-        m_sceneWidget->setEmptyMotion(m_sceneWidget->selectedModel());
+        m_sceneWidget->setEmptyMotion();
     }
 }
 
@@ -249,7 +249,7 @@ void MainWindow::loadProject()
             m_boneMotionModel->removeMotion();
             m_faceMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
-            m_sceneWidget->sceneLoader()->loadProject(filename);
+            m_sceneWidget->loadProject(filename);
         }
     }
 }
@@ -332,7 +332,7 @@ void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
 void MainWindow::deleteModel(vpvl::PMDModel *model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
-    if (model == m_sceneWidget->selectedModel())
+    if (model == m_sceneWidget->sceneLoader()->selectedModel())
         m_sceneWidget->setSelectedModel(0);
     /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -430,7 +430,7 @@ bool MainWindow::saveProjectAs(QString &filename)
 
 bool MainWindow::saveProjectFile(const QString &filename)
 {
-    m_sceneWidget->sceneLoader()->saveProject(filename);
+    m_sceneWidget->saveProject(filename);
     return true;
 }
 
@@ -1085,10 +1085,10 @@ void MainWindow::connectSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidget();
-    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), this, SLOT(addModel(vpvl::PMDModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
-    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), SLOT(addModel(vpvl::PMDModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
+    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
     //connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
@@ -1105,6 +1105,10 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
     connect(loader, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
     connect(loader, SIGNAL(projectDidLoad()), m_sceneWidget, SLOT(updateGL()));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
     connect(assetWidget, SIGNAL(assetDidRemove(vpvl::Asset*)), loader, SLOT(deleteAsset(vpvl::Asset*)));
 }
 
@@ -1112,19 +1116,15 @@ void MainWindow::connectWidgets()
 {
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Handles *handles = m_sceneWidget->handles();
-    connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), this, SLOT(connectSceneLoader()));
-    connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)),
-            m_boneMotionModel, SLOT(translate(vpvl::Vector3,vpvl::Bone*,int)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Quaternion,vpvl::Bone*,int,float)),
-            m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,float)));
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)),
-            m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
+    connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), SLOT(connectSceneLoader()));
+    connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
+    connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translate(vpvl::Vector3,vpvl::Bone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Quaternion,vpvl::Bone*,int,float)), m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,float)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_modelTabWidget->interpolationWidget(), SLOT(setMode(int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
-    connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
-    connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)), this, SLOT(setWindowModified(bool)));
+    connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
+    connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_faceMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
@@ -1132,13 +1132,9 @@ void MainWindow::connectWidgets()
     connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-    connect(m_modelTabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)),
-            m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)),
-            cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
+    connect(m_modelTabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl::Bone*,vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_boneMotionModel, SIGNAL(rotationDidChange(vpvl::Bone*,vpvl::Quaternion)), handles, SLOT(updateBone()));
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
@@ -1150,12 +1146,10 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)),
-            m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
-    connect(m_modelTabWidget->modelInfoWidget(), SIGNAL(edgeOffsetDidChange(double)),
-            m_sceneWidget, SLOT(setModelEdgeOffset(double)));
-    connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)),
-            m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
+    ModelInfoWidget *modelInfoWidget = m_modelTabWidget->modelInfoWidget();
+    connect(modelInfoWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
+    connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
+    connect(modelInfoWidget, SIGNAL(projectiveShadowDidChange(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
 }
 
 void MainWindow::insertMotionToAllModels()
@@ -1187,7 +1181,7 @@ void MainWindow::saveModelPose()
         if (file.open(QFile::WriteOnly)) {
             VPDFile pose;
             QTextStream stream(&file);
-            m_timelineTabWidget->savePose(&pose, m_sceneWidget->selectedModel());
+            m_timelineTabWidget->savePose(&pose, m_sceneWidget->sceneLoader()->selectedModel());
             pose.save(stream);
             file.close();
             qDebug("Saved a pose: %s", qPrintable(filename));
@@ -1210,7 +1204,7 @@ void MainWindow::exportImage()
                                              tr("Image (*.bmp, *.jpg, *.png)"),
                                              tr("untitled.png"));
     if (!filename.isEmpty()) {
-        vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
+        vpvl::PMDModel *selected = m_sceneWidget->sceneLoader()->selectedModel();
         bool visibleGrid = m_sceneWidget->isGridVisible();
         m_sceneWidget->setGridVisible(false);
         m_sceneWidget->setHandlesVisible(false);
@@ -1309,7 +1303,7 @@ void MainWindow::startExportingVideo()
             setMaximumSize(videoSize);
             adjustSize();
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-            vpvl::PMDModel *selected = m_sceneWidget->selectedModel();
+            vpvl::PMDModel *selected = m_sceneWidget->sceneLoader()->selectedModel();
             bool visibleGrid = m_sceneWidget->isGridVisible();
             /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
             m_sceneWidget->stop();
@@ -1383,7 +1377,7 @@ void MainWindow::startExportingVideo()
 void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
-        vpvl::PMDModel *model = m_sceneWidget->selectedModel();
+        vpvl::PMDModel *model = m_sceneWidget->sceneLoader()->selectedModel();
         vpvl::VMDMotion *motion = m_boneMotionModel->currentMotion();
         if (model && motion) {
             model->deleteMotion(motion);
@@ -1432,7 +1426,7 @@ void MainWindow::selectNextModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        int index = FindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
         if (index == -1 || index == actions.length() - 1)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
@@ -1445,7 +1439,7 @@ void MainWindow::selectPreviousModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        int index = FindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
         if (index == -1 || index == 0)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else

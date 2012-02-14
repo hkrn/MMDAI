@@ -43,8 +43,10 @@ namespace vpvl {
 class PMDModel;
 }
 
+class QCheckBox;
 class QDoubleSpinBox;
 class QLabel;
+class SceneLoader;
 
 class ModelInfoWidget : public QWidget
 {
@@ -56,10 +58,11 @@ public:
 
 signals:
     void edgeOffsetDidChange(double value);
+    void projectiveShadowDidChange(bool value);
 
 private slots:
     void retranslate();
-    void setModel(vpvl::PMDModel *model);
+    void setModel(vpvl::PMDModel *model, SceneLoader *loader);
 
 private:
     QLabel *m_nameLabel;
@@ -84,6 +87,7 @@ private:
     QLabel *m_constrantsCountValueLabel;
     QLabel *m_edgeOffsetLabel;
     QDoubleSpinBox *m_edgeOffsetSpinBox;
+    QCheckBox *m_projectiveShadowCheckbox;
 };
 
 #endif // MODELINFOWIDGET_H

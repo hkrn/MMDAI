@@ -94,6 +94,14 @@ public:
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
 
+    const vpvl::Vector3 worldGravity() const;
+    void setWorldGravity(const vpvl::Vector3 &value);
+    bool isProjectiveShadowEnabled(vpvl::PMDModel *model) const;
+    void setProjectiveShadowEnable(vpvl::PMDModel *model, bool value);
+    vpvl::PMDModel *selectedModel() const;
+    bool isModelSelected(vpvl::PMDModel *value) const;
+    void setSelectedModel(vpvl::PMDModel *value);
+
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
@@ -110,6 +118,7 @@ public slots:
 signals:
     void projectDidLoad();
     void projectDidSave();
+    void modelDidSelect(vpvl::PMDModel *model, SceneLoader *loader);
     void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);
     void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
@@ -131,6 +140,7 @@ private:
     QMap<QString, vpvl::Asset*> m_name2assets;
     vpvl::Project *m_project;
     vpvl::Project::IDelegate *m_delegate;
+    vpvl::PMDModel *m_selected;
     vpvl::VMDMotion *m_camera;
 
     Q_DISABLE_COPY(SceneLoader)

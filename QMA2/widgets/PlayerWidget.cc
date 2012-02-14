@@ -36,6 +36,7 @@
 
 #include "PlayerWidget.h"
 
+#include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "dialogs/PlaySettingDialog.h"
 
@@ -63,7 +64,7 @@ void PlayerWidget::start()
     if (isActive())
         return;
     int sceneFPS = m_dialog->sceneFPS();
-    m_selected = m_sceneWidget->selectedModel();
+    m_selected = m_sceneWidget->sceneLoader()->selectedModel();
     m_prevSceneFPS = m_sceneWidget->scene()->preferredFPS();
     m_frameStep = 1.0f / (sceneFPS / static_cast<float>(vpvl::Scene::kFPS));
     m_totalStep = 0.0f;

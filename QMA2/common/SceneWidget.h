@@ -98,7 +98,6 @@ public:
     SceneLoader *sceneLoader() const;
     const vpvl::Scene *scene() const;
     vpvl::Scene *mutableScene();
-    vpvl::PMDModel *selectedModel() const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
@@ -107,6 +106,8 @@ public:
     void stopAutomaticRendering();
     void startPhysicsSimulation();
     void stopPhysicsSimulation();
+    void loadProject(const QString &filename);
+    void saveProject(const QString &filename);
 
     vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
     vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
@@ -140,6 +141,7 @@ public slots:
     void addModel();
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
+    void setEmptyMotion();
     void setEmptyMotion(vpvl::PMDModel *model);
     void addAsset();
     void addAssetFromMetadata();
@@ -151,8 +153,10 @@ public slots:
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);
     void rotateScene(const vpvl::Vector3 &delta);
+    void rotateModel(const vpvl::Quaternion &delta);
     void rotateModel(vpvl::PMDModel *model, const vpvl::Quaternion &delta);
     void translateScene(const vpvl::Vector3 &delta);
+    void translateModel(const vpvl::Vector3 &delta);
     void translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta);
     void resetModelPosition();
     void advanceMotion(float frameIndex);
@@ -162,6 +166,7 @@ public slots:
     void setPhysicsEnable(bool value);
     void setAccelerationEnable(bool value);
     void setModelEdgeOffset(double value);
+    void setModelProjectiveShadowEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
@@ -181,8 +186,6 @@ public slots:
     void translateModelLeft() { translateModel(vpvl::Vector3(-0.5f, 0.0f, 0.0f)); }
     void translateModelRight() { translateModel(vpvl::Vector3(0.5f, 0.0f, 0.0f)); }
     void revertSelectedModel() { setSelectedModel(0); }
-    void rotateModel(const vpvl::Quaternion &delta) { rotateModel(selectedModel(), delta); }
-    void translateModel(const vpvl::Vector3 &delta) { translateModel(selectedModel(), delta); }
     void updateSceneMotion() { seekMotion(m_frameIndex, true); }
     void updateMotion() { seekMotion(m_frameIndex, false); }
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
@@ -199,7 +202,6 @@ signals:
     void newMotionDidSet(vpvl::PMDModel *model);
     void lightColorDidSet(const vpvl::Color &color);
     void lightPositionDidSet(const vpvl::Vector3 &position);
-    void modelDidSelect(vpvl::PMDModel *model);
     void modelDidMove(const vpvl::Vector3 &lastPosition);
     void modelDidRotate(const vpvl::Quaternion &lastRotation);
     void cameraPerspectiveDidSet(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);

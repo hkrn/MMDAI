@@ -61,6 +61,9 @@ public:
     btDiscreteDynamicsWorld *mutableWorld() {
         return &m_world;
     }
+    const btVector3 gravity() const {
+        return m_world.getGravity();
+    }
     void setGravity(const btVector3 &value) {
         m_world.setGravity(value);
     }

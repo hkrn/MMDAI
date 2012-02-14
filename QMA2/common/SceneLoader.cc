@@ -91,6 +91,7 @@ SceneLoader::SceneLoader(Renderer *renderer)
       m_renderer(renderer),
       m_project(0),
       m_delegate(0),
+      m_selected(0),
       m_camera(0)
 {
     m_delegate = new Delegate();
@@ -121,6 +122,7 @@ void SceneLoader::addModel(vpvl::PMDModel *model, const QString &baseName, const
     m_project->addModel(model, uuid.toString().toStdString());
     m_project->setModelSetting(model, vpvl::Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, vpvl::Project::kSettingURIKey, path.toStdString());
+    m_project->setModelSetting(model, "selected", "false");
     emit modelDidAdd(model, uuid);
 }
 
@@ -441,6 +443,8 @@ void SceneLoader::loadProject(const QString &path)
                 const QByteArray &bytes = file.readAll();
                 if (model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     m_renderer->uploadModel(model, QFileInfo(file).dir().absolutePath().toStdString());
+                    if (isModelSelected(model))
+                        setSelectedModel(model);
                     emit modelDidAdd(model, QUuid(m_project->modelUUID(model).c_str()));
                     const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
                     const int nmotions = motions.count();
@@ -611,4 +615,55 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     model->addMotion(motion);
     m_project->addMotion(motion, model, uuid.toString().toStdString());
     emit motionDidAdd(motion, model, uuid);
+}
+
+const vpvl::Vector3 SceneLoader::worldGravity() const
+{
+    const std::string &value = m_project->globalSetting("physics.gravity");
+    if (!value.empty()) {
+        QStringList gravity = QString::fromStdString(value).split(",");
+        if (gravity.length() == 3) {
+            float x = gravity.at(0).toFloat();
+            float y = gravity.at(1).toFloat();
+            float z = gravity.at(2).toFloat();
+            return vpvl::Vector3(x, y, z);
+        }
+    }
+    return vpvl::Vector3(0.0, -9.8, 0.0);
+}
+
+void SceneLoader::setWorldGravity(const vpvl::Vector3 &value)
+{
+    QString str;
+    str.sprintf("%.3f,%.3f,%.3f", value.x(), value.y(), value.z());
+    std::string gravity = str.toStdString();
+    m_project->setGlobalSetting("physics.gravity", gravity);
+}
+
+bool SceneLoader::isProjectiveShadowEnabled(vpvl::PMDModel *model) const
+{
+    const std::string &value = m_project->modelSetting(model, "projective_shadow");
+    return value == "true";
+}
+
+void SceneLoader::setProjectiveShadowEnable(vpvl::PMDModel *model, bool value)
+{
+    m_project->setModelSetting(model, "projective_shadow", value ? "true" : "false");
+}
+
+vpvl::PMDModel *SceneLoader::selectedModel() const
+{
+    return m_renderer->selectedModel();
+}
+
+bool SceneLoader::isModelSelected(vpvl::PMDModel *value) const
+{
+    return m_project->modelSetting(value, "selected") == "true";
+}
+
+void SceneLoader::setSelectedModel(vpvl::PMDModel *value)
+{
+    m_renderer->setSelectedModel(value);
+    m_project->setModelSetting(value, "selected", "true");
+    emit modelDidSelect(value, this);
 }
