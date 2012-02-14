@@ -82,8 +82,7 @@ public:
           currentModel(0),
           currentMotion(0),
           state(kInitial),
-          depth(0),
-          enablePhysics(false)
+          depth(0)
     {
     }
     ~Handler() {
@@ -196,10 +195,6 @@ public:
         if(!writeStringMap(kPrefix, globalSettings, writer))
             return false;
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
-        VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("physics"), 0));
-        const xmlChar *isPhysicsEnabled = enablePhysics ? VPVL_CAST_XC("true") : VPVL_CAST_XC("false");
-        VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("enabled"), isPhysicsEnabled));
-        VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:physics */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("models"), 0));
         for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
             const std::string &uuid = (*it).first;
@@ -478,12 +473,6 @@ public:
                 self->pushState(kSettings);
             }
             else if (equals(prefix, localname, "physics")) {
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (equals(attributes[index], "enabled")) {
-                        newString(attributes, index, value);
-                        self->enablePhysics = value == "true";
-                    }
-                }
                 self->pushState(kPhysics);
             }
             else if (equals(prefix, localname, "models")) {
@@ -904,7 +893,6 @@ public:
     VMDMotion *currentMotion;
     State state;
     int depth;
-    bool enablePhysics;
 };
 
 const std::string Handler::kEmpty = "";
@@ -962,11 +950,6 @@ bool Project::save(xmlBufferPtr &buffer)
 const std::string &Project::version() const
 {
     return m_handler->version;
-}
-
-bool Project::isPhysicsEnabled() const
-{
-    return m_handler->enablePhysics;
 }
 
 const std::string &Project::globalSetting(const std::string &key) const
@@ -1137,13 +1120,7 @@ void Project::removeMotion(VMDMotion *motion, PMDModel *model)
     }
 }
 
-void Project::setPhysicsEnable(bool value)
-{
-    m_handler->enablePhysics = value;
-    setDirty(true);
-}
-
-void Project::setGlobalSetting(const std::string &key, std::string &value)
+void Project::setGlobalSetting(const std::string &key, const std::string &value)
 {
     m_handler->globalSettings[key] = value;
     setDirty(true);

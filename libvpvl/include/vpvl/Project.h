@@ -91,7 +91,6 @@ public:
     bool save(xmlBufferPtr &buffer);
 
     const std::string &version() const;
-    bool isPhysicsEnabled() const;
     const std::string &globalSetting(const std::string &key) const;
     const std::string &assetSetting(Asset *asset, const std::string &key) const;
     const std::string &modelSetting(PMDModel *model, const std::string &key) const;
@@ -120,8 +119,7 @@ public:
     void removeModel(PMDModel *model);
     void removeMotion(VMDMotion *motion, PMDModel *model);
 
-    void setPhysicsEnable(bool value);
-    void setGlobalSetting(const std::string &key, std::string &value);
+    void setGlobalSetting(const std::string &key, const std::string &value);
     void setAssetSetting(Asset *asset, const std::string &key, const std::string &value);
     void setModelSetting(PMDModel *model, const std::string &key, const std::string &value);
 
