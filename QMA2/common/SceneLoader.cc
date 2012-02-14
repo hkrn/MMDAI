@@ -474,9 +474,9 @@ void SceneLoader::loadProject(const QString &path)
                     const vpvl::Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), vpvl::kZeroV);
                     model->setEdgeColor(vpvl::Color(color.x(), color.y(), color.z(), 1.0));
                     model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
+                    emit modelDidAdd(model, QUuid(m_project->modelUUID(model).c_str()));
                     if (isModelSelected(model))
                         setSelectedModel(model);
-                    emit modelDidAdd(model, QUuid(m_project->modelUUID(model).c_str()));
                     const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
                     const int nmotions = motions.count();
                     for (int i = 0; i < nmotions; i++) {
