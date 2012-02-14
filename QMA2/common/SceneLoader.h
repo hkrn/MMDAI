@@ -42,6 +42,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QUuid>
+#include <QtGui/QColor>
 
 #include <vpvl/Common.h>
 #include <vpvl/Project.h>
@@ -101,6 +102,8 @@ public:
     vpvl::PMDModel *selectedModel() const;
     bool isModelSelected(vpvl::PMDModel *value) const;
     void setSelectedModel(vpvl::PMDModel *value);
+    void setModelEdgeColor(vpvl::PMDModel *model, const QColor &value);
+    void setModelEdgeOffset(vpvl::PMDModel *model, float value);
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -140,7 +143,6 @@ private:
     QMap<QString, vpvl::Asset*> m_name2assets;
     vpvl::Project *m_project;
     vpvl::Project::IDelegate *m_delegate;
-    vpvl::PMDModel *m_selected;
     vpvl::VMDMotion *m_camera;
 
     Q_DISABLE_COPY(SceneLoader)

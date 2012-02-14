@@ -42,7 +42,8 @@
 #include <vpvl/vpvl.h>
 
 ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent),
+    m_edgeColorDialog(0)
 {
     m_nameLabel = new QLabel();
     m_nameValueLabel = new QLabel();
@@ -88,6 +89,8 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     m_edgeOffsetSpinBox->setEnabled(false);
     m_edgeOffsetSpinBox->setSingleStep(0.1);
     m_edgeOffsetSpinBox->setRange(0.0, 2.0);
+    m_edgeColorDialogOpenButton = new QPushButton();
+    connect(m_edgeColorDialogOpenButton, SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
     m_projectiveShadowCheckbox = new QCheckBox();
     connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidChange(bool)));
     m_projectiveShadowCheckbox->setEnabled(false);
@@ -114,10 +117,13 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     gridLayout->addWidget(m_constrantsCountLabel, 6, 1);
     gridLayout->addWidget(m_constrantsCountValueLabel, 7, 1);
     mainLayout->addLayout(gridLayout);
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(m_edgeOffsetLabel, m_edgeOffsetSpinBox);
-    formLayout->addWidget(m_projectiveShadowCheckbox);
-    mainLayout->addLayout(formLayout);
+    QHBoxLayout *subLayout = new QHBoxLayout();
+    subLayout->setAlignment(Qt::AlignCenter);
+    subLayout->addWidget(m_edgeOffsetLabel);
+    subLayout->addWidget(m_edgeOffsetSpinBox);
+    subLayout->addWidget(m_edgeColorDialogOpenButton);
+    mainLayout->addLayout(subLayout);
+    mainLayout->addWidget(m_projectiveShadowCheckbox);
     mainLayout->addStretch();
     setLayout(mainLayout);
     retranslate();
@@ -141,12 +147,20 @@ void ModelInfoWidget::retranslate()
     m_rigidBodiesCountLabel->setText(tr("Number of rigid bodies:"));
     m_constrantsCountLabel->setText(tr("Number of constraints:"));
     m_edgeOffsetLabel->setText(tr("Edge offset:"));
+    m_edgeColorDialogOpenButton->setText(tr("Color"));
     m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
+}
+
+void ModelInfoWidget::openEdgeColorDialog()
+{
+    createEdgeColorDialog();
+    m_edgeColorDialog->show();
 }
 
 void ModelInfoWidget::setModel(vpvl::PMDModel *model, SceneLoader *loader)
 {
     if (model) {
+        createEdgeColorDialog();
         m_nameValueLabel->setText(internal::toQString(model->name()));
         m_commentValueLabel->setText(internal::toQString(model->comment()));
         m_verticesCountValueLabel->setText(QString().sprintf("%d", model->vertices().count()));
@@ -160,6 +174,13 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setValue(model->edgeOffset());
         m_edgeOffsetSpinBox->setEnabled(true);
         m_projectiveShadowCheckbox->setEnabled(true);
+        const vpvl::Vector3 &color = model->edgeColor();
+        QColor c;
+        c.setRedF(color.x());
+        c.setGreenF(color.y());
+        c.setBlueF(color.z());
+        c.setAlphaF(1.0);
+        m_edgeColorDialog->setCurrentColor(c);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
         }
@@ -181,5 +202,14 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setValue(0.0f);
         m_edgeOffsetSpinBox->setEnabled(false);
         m_projectiveShadowCheckbox->setEnabled(false);
+    }
+}
+
+void ModelInfoWidget::createEdgeColorDialog()
+{
+    if (!m_edgeColorDialog) {
+        m_edgeColorDialog = new QColorDialog(this);
+        connect(m_edgeColorDialog, SIGNAL(currentColorChanged(QColor)), SIGNAL(edgeColorDidChange(QColor)));
+        m_edgeColorDialog->setOption(QColorDialog::NoButtons);
     }
 }

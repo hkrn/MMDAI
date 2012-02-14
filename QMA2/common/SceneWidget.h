@@ -166,6 +166,7 @@ public slots:
     void setPhysicsEnable(bool value);
     void setAccelerationEnable(bool value);
     void setModelEdgeOffset(double value);
+    void setModelEdgeColor(const QColor &color);
     void setModelProjectiveShadowEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void selectBones(const QList<vpvl::Bone *> &bones);

@@ -1150,6 +1150,7 @@ void MainWindow::connectWidgets()
     connect(modelInfoWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
     connect(modelInfoWidget, SIGNAL(projectiveShadowDidChange(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
+    connect(modelInfoWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
 }
 
 void MainWindow::insertMotionToAllModels()

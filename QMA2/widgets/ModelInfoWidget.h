@@ -44,8 +44,10 @@ class PMDModel;
 }
 
 class QCheckBox;
+class QColorDialog;
 class QDoubleSpinBox;
 class QLabel;
+class QPushButton;
 class SceneLoader;
 
 class ModelInfoWidget : public QWidget
@@ -58,13 +60,17 @@ public:
 
 signals:
     void edgeOffsetDidChange(double value);
+    void edgeColorDidChange(const QColor &color);
     void projectiveShadowDidChange(bool value);
 
 private slots:
     void retranslate();
+    void openEdgeColorDialog();
     void setModel(vpvl::PMDModel *model, SceneLoader *loader);
 
 private:
+    void createEdgeColorDialog();
+
     QLabel *m_nameLabel;
     QLabel *m_nameValueLabel;
     QLabel *m_commentLabel;
@@ -87,6 +93,8 @@ private:
     QLabel *m_constrantsCountValueLabel;
     QLabel *m_edgeOffsetLabel;
     QDoubleSpinBox *m_edgeOffsetSpinBox;
+    QPushButton *m_edgeColorDialogOpenButton;
+    QColorDialog *m_edgeColorDialog;
     QCheckBox *m_projectiveShadowCheckbox;
 };
 

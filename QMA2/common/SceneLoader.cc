@@ -84,6 +84,20 @@ private:
     QTextCodec *m_codec;
 };
 
+static const vpvl::Vector3 UIGetVector3(const std::string &value, const vpvl::Vector3 &def)
+{
+    if (!value.empty()) {
+        QStringList gravity = QString::fromStdString(value).split(",");
+        if (gravity.length() == 3) {
+            float x = gravity.at(0).toFloat();
+            float y = gravity.at(1).toFloat();
+            float z = gravity.at(2).toFloat();
+            return vpvl::Vector3(x, y, z);
+        }
+    }
+    return def;
+}
+
 }
 
 SceneLoader::SceneLoader(Renderer *renderer)
@@ -91,7 +105,6 @@ SceneLoader::SceneLoader(Renderer *renderer)
       m_renderer(renderer),
       m_project(0),
       m_delegate(0),
-      m_selected(0),
       m_camera(0)
 {
     m_delegate = new Delegate();
@@ -443,6 +456,10 @@ void SceneLoader::loadProject(const QString &path)
                 const QByteArray &bytes = file.readAll();
                 if (model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     m_renderer->uploadModel(model, QFileInfo(file).dir().absolutePath().toStdString());
+                    /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
+                    const vpvl::Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), vpvl::kZeroV);
+                    model->setEdgeColor(vpvl::Color(color.x(), color.y(), color.z(), 1.0));
+                    model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
                     if (isModelSelected(model))
                         setSelectedModel(model);
                     emit modelDidAdd(model, QUuid(m_project->modelUUID(model).c_str()));
@@ -619,23 +636,13 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 const vpvl::Vector3 SceneLoader::worldGravity() const
 {
-    const std::string &value = m_project->globalSetting("physics.gravity");
-    if (!value.empty()) {
-        QStringList gravity = QString::fromStdString(value).split(",");
-        if (gravity.length() == 3) {
-            float x = gravity.at(0).toFloat();
-            float y = gravity.at(1).toFloat();
-            float z = gravity.at(2).toFloat();
-            return vpvl::Vector3(x, y, z);
-        }
-    }
-    return vpvl::Vector3(0.0, -9.8, 0.0);
+    return UIGetVector3(m_project->globalSetting("physics.gravity"), vpvl::Vector3(0.0, -9.8, 0.0));
 }
 
 void SceneLoader::setWorldGravity(const vpvl::Vector3 &value)
 {
     QString str;
-    str.sprintf("%.3f,%.3f,%.3f", value.x(), value.y(), value.z());
+    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
     std::string gravity = str.toStdString();
     m_project->setGlobalSetting("physics.gravity", gravity);
 }
@@ -666,4 +673,23 @@ void SceneLoader::setSelectedModel(vpvl::PMDModel *value)
     m_renderer->setSelectedModel(value);
     m_project->setModelSetting(value, "selected", "true");
     emit modelDidSelect(value, this);
+}
+
+void SceneLoader::setModelEdgeOffset(vpvl::PMDModel *model, float value)
+{
+    QString str;
+    str.sprintf("%.5f", value);
+    std::string offset = str.toStdString();
+    model->setEdgeOffset(value);
+    m_project->setModelSetting(model, "edge.offset", offset);
+}
+
+void SceneLoader::setModelEdgeColor(vpvl::PMDModel *model, const QColor &value)
+{
+    QString str;
+    float red = value.redF(), green = value.greenF(), blue = value.blueF();
+    str.sprintf("%.5f,%.5f,%.5f", red, green, blue);
+    std::string color = str.toStdString();
+    model->setEdgeColor(vpvl::Color(red, green, blue, 1.0));
+    m_project->setModelSetting(model, "edge.color", color);
 }

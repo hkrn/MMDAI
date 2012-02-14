@@ -293,7 +293,14 @@ void SceneWidget::setSelectedModel(vpvl::PMDModel *value)
 void SceneWidget::setModelEdgeOffset(double value)
 {
     if (vpvl::PMDModel *model = m_loader->selectedModel())
-        model->setEdgeOffset(static_cast<float>(value));
+        m_loader->setModelEdgeOffset(model, static_cast<float>(value));
+    updateMotion();
+}
+
+void SceneWidget::setModelEdgeColor(const QColor &color)
+{
+    if (vpvl::PMDModel *model = m_loader->selectedModel())
+        m_loader->setModelEdgeColor(model, color);
     updateMotion();
 }
 
