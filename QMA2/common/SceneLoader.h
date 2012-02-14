@@ -69,6 +69,8 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
+    static bool isAccelerationSupported();
+
 #ifdef VPVL_ENABLE_GLSL
     explicit SceneLoader(vpvl::gl2::Renderer *renderer);
 #else
@@ -95,6 +97,10 @@ public:
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
 
+    bool isGridVisible() const;
+    bool isPhysicsEnabled() const;
+    bool isAccelerationEnabled() const;
+    bool isBlackBackgroundEnabled() const;
     const vpvl::Vector3 worldGravity() const;
     void setWorldGravity(const vpvl::Vector3 &value);
     bool isProjectiveShadowEnabled(vpvl::PMDModel *model) const;
@@ -117,6 +123,11 @@ public slots:
     void saveProject(const QString &path);
     void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+
+    void setGridVisible(bool value);
+    void setPhysicsEnabled(bool value);
+    void setAccelerationEnabled(bool value);
+    void setBlackBackgroundEnabled(bool value);
 
 signals:
     void projectDidLoad();

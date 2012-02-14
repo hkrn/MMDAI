@@ -250,6 +250,11 @@ void MainWindow::loadProject()
             m_faceMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
             m_sceneWidget->loadProject(filename);
+            SceneLoader *loader = m_sceneWidget->sceneLoader();
+            m_actionEnableAcceleration->setChecked(loader->isAccelerationEnabled());
+            m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
+            m_actionShowGrid->setChecked(loader->isGridVisible());
+            m_actionShowBlackBackground->setChecked(loader->isBlackBackgroundEnabled());
         }
     }
 }
@@ -430,6 +435,11 @@ bool MainWindow::saveProjectAs(QString &filename)
 
 bool MainWindow::saveProjectFile(const QString &filename)
 {
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    loader->setAccelerationEnabled(m_actionEnableAcceleration->isChecked());
+    loader->setPhysicsEnabled(m_actionEnablePhysics->isChecked());
+    loader->setGridVisible(m_actionShowGrid->isChecked());
+    loader->setBlackBackgroundEnabled(m_actionShowBlackBackground->isChecked());
     m_sceneWidget->saveProject(filename);
     return true;
 }
@@ -540,25 +550,19 @@ void MainWindow::buildUI()
     connect(m_actionPlaySettings, SIGNAL(triggered()), this, SLOT(openPlaySettingDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
-    m_actionEnableAcceleration->setEnabled(SceneWidget::isAccelerationSupported());
-    m_actionEnableAcceleration->setChecked(m_sceneWidget->isAccelerationEnabled());
-    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setAccelerationEnable(bool)));
+    m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
     m_actionEnablePhysics = new QAction(this);
     m_actionEnablePhysics->setCheckable(true);
-    m_actionEnablePhysics->setChecked(m_sceneWidget->isPhysicsEnabled());
-    connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setPhysicsEnable(bool)));
+    m_actionEnablePhysics->setChecked(true);
     m_actionShowGrid = new QAction(this);
     m_actionShowGrid->setCheckable(true);
-    m_actionShowGrid->setChecked(m_sceneWidget->isGridVisible());
-    connect(m_actionShowGrid, SIGNAL(toggled(bool)), m_sceneWidget, SLOT(setGridVisible(bool)));
+    m_actionShowGrid->setChecked(true);
     m_actionShowModelDialog = new QAction(this);
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
     connect(m_actionShowModelDialog, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setShowModelDialog(bool)));
     m_actionShowBlackBackground = new QAction(this);
     m_actionShowBlackBackground->setCheckable(true);
-    m_actionShowBlackBackground->setChecked(m_sceneWidget->isBlackBackgroundEnabled());
-    connect(m_actionShowBlackBackground, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setBlackBackgroundEnable(bool)));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -1109,6 +1113,10 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
+    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
+    connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
+    connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
+    connect(m_actionShowBlackBackground, SIGNAL(triggered(bool)), loader, SLOT(setBlackBackgroundEnabled(bool)));
     connect(assetWidget, SIGNAL(assetDidRemove(vpvl::Asset*)), loader, SLOT(deleteAsset(vpvl::Asset*)));
 }
 
@@ -1205,15 +1213,16 @@ void MainWindow::exportImage()
                                              tr("Image (*.bmp, *.jpg, *.png)"),
                                              tr("untitled.png"));
     if (!filename.isEmpty()) {
-        vpvl::PMDModel *selected = m_sceneWidget->sceneLoader()->selectedModel();
-        bool visibleGrid = m_sceneWidget->isGridVisible();
-        m_sceneWidget->setGridVisible(false);
+        SceneLoader *loader = m_sceneWidget->sceneLoader();
+        vpvl::PMDModel *selected = loader->selectedModel();
+        bool isGridVisible = loader->isGridVisible();
+        loader->setGridVisible(false);
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
         m_sceneWidget->setSelectedModel(0);
         m_sceneWidget->updateGL();
         QImage image = m_sceneWidget->grabFrameBuffer(true);
-        m_sceneWidget->setGridVisible(visibleGrid);
+        loader->setGridVisible(isGridVisible);
         m_sceneWidget->setHandlesVisible(true);
         m_sceneWidget->setInfoPanelVisible(true);
         m_sceneWidget->setSelectedModel(selected);
@@ -1304,15 +1313,16 @@ void MainWindow::startExportingVideo()
             setMaximumSize(videoSize);
             adjustSize();
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-            vpvl::PMDModel *selected = m_sceneWidget->sceneLoader()->selectedModel();
-            bool visibleGrid = m_sceneWidget->isGridVisible();
+            SceneLoader *loader = m_sceneWidget->sceneLoader();
+            vpvl::PMDModel *selected = loader->selectedModel();
+            bool isGridVisible = loader->isGridVisible();
             /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
             m_sceneWidget->stop();
             m_sceneWidget->stopAutomaticRendering();
             m_sceneWidget->startPhysicsSimulation();
             m_sceneWidget->seekMotion(0.0f, true);
             m_sceneWidget->advanceMotion(fromIndex);
-            m_sceneWidget->setGridVisible(m_exportingVideoDialog->includesGrid());
+            loader->setGridVisible(m_exportingVideoDialog->includesGrid());
             m_sceneWidget->setHandlesVisible(false);
             m_sceneWidget->setInfoPanelVisible(false);
             m_sceneWidget->setSelectedModel(0);
@@ -1349,7 +1359,7 @@ void MainWindow::startExportingVideo()
             emit sceneDidRendered(image);
             emit encodingDidStopped();
             /* 画面情報を復元 */
-            m_sceneWidget->setGridVisible(visibleGrid);
+            loader->setGridVisible(isGridVisible);
             m_sceneWidget->setHandlesVisible(true);
             m_sceneWidget->setInfoPanelVisible(true);
             m_sceneWidget->setSelectedModel(selected);

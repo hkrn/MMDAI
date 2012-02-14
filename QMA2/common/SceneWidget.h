@@ -90,8 +90,6 @@ public:
         kMove
     };
 
-    static bool isAccelerationSupported();
-
     explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
@@ -121,15 +119,11 @@ public:
     Handles *handles() const { return m_handles; }
     vpvl::Bone *selectedBone() const { return m_bone; }
     EditMode editMode() const { return m_editMode; }
-    bool isGridVisible() const;
-    bool isPhysicsEnabled() const { return m_enablePhysics; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
     bool isUndoGestureEnabled() const { return m_enableUndoGesture; }
-    bool isAccelerationEnabled() const { return m_enableAcceleration; }
-    bool isBlackBackgroundEnabled() const { return m_enableBlackBackground; }
     bool showModelDialog() const { return m_showModelDialog; }
     const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
@@ -162,9 +156,6 @@ public slots:
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex, bool force = false);
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
-    void setGridVisible(bool value);
-    void setPhysicsEnable(bool value);
-    void setAccelerationEnable(bool value);
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
     void setModelProjectiveShadowEnable(bool value);
@@ -194,7 +185,6 @@ public slots:
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
-    void setBlackBackgroundEnable(bool value) { m_enableBlackBackground = value; }
     void setEditMode(SceneWidget::EditMode value) { m_editMode = value; }
 
 signals:
@@ -272,11 +262,8 @@ private:
     int m_internalTimerID;
     int m_handleFlags;
     bool m_playing;
-    bool m_enableAcceleration;
     bool m_enableBoneMove;
     bool m_enableBoneRotate;
-    bool m_enablePhysics;
-    bool m_enableBlackBackground;
     bool m_showModelDialog;
     bool m_lockTouchEvent;
     bool m_enableMoveGesture;

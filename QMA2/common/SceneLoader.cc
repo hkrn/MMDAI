@@ -100,6 +100,11 @@ static const vpvl::Vector3 UIGetVector3(const std::string &value, const vpvl::Ve
 
 }
 
+bool SceneLoader::isAccelerationSupported()
+{
+    return Renderer::isAcceleratorSupported();
+}
+
 SceneLoader::SceneLoader(Renderer *renderer)
     : QObject(),
       m_renderer(renderer),
@@ -109,6 +114,13 @@ SceneLoader::SceneLoader(Renderer *renderer)
 {
     m_delegate = new Delegate();
     m_project = new vpvl::Project(m_delegate);
+    /*
+     * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
+     * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
+     */
+    m_project->setGlobalSetting("grid.visible", "true");
+    m_project->setGlobalSetting("physics.enabled", "true");
+    m_project->setDirty(false);
 }
 
 SceneLoader::~SceneLoader()
@@ -508,6 +520,7 @@ void SceneLoader::loadProject(const QString &path)
             m_project->deleteModel(model);
         foreach (vpvl::Asset *asset, fla)
             m_project->deleteAsset(asset);
+        m_project->setDirty(false);
         /* FIXME: モデルとアクセサリ、モーションの追加の通知 */
         emit projectDidLoad();
     }
@@ -636,15 +649,17 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
 
 const vpvl::Vector3 SceneLoader::worldGravity() const
 {
-    return UIGetVector3(m_project->globalSetting("physics.gravity"), vpvl::Vector3(0.0, -9.8, 0.0));
+    static const vpvl::Vector3 defaultGravity(0.0, -9.8, 0.0);
+    return m_project ? UIGetVector3(m_project->globalSetting("physics.gravity"), defaultGravity) : defaultGravity;
 }
 
 void SceneLoader::setWorldGravity(const vpvl::Vector3 &value)
 {
-    QString str;
-    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-    std::string gravity = str.toStdString();
-    m_project->setGlobalSetting("physics.gravity", gravity);
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+        m_project->setGlobalSetting("physics.gravity", str.toStdString());
+    }
 }
 
 bool SceneLoader::isProjectiveShadowEnabled(vpvl::PMDModel *model) const
@@ -679,9 +694,8 @@ void SceneLoader::setModelEdgeOffset(vpvl::PMDModel *model, float value)
 {
     QString str;
     str.sprintf("%.5f", value);
-    std::string offset = str.toStdString();
     model->setEdgeOffset(value);
-    m_project->setModelSetting(model, "edge.offset", offset);
+    m_project->setModelSetting(model, "edge.offset", str.toStdString());
 }
 
 void SceneLoader::setModelEdgeColor(vpvl::PMDModel *model, const QColor &value)
@@ -689,7 +703,71 @@ void SceneLoader::setModelEdgeColor(vpvl::PMDModel *model, const QColor &value)
     QString str;
     float red = value.redF(), green = value.greenF(), blue = value.blueF();
     str.sprintf("%.5f,%.5f,%.5f", red, green, blue);
-    std::string color = str.toStdString();
     model->setEdgeColor(vpvl::Color(red, green, blue, 1.0));
-    m_project->setModelSetting(model, "edge.color", color);
+    m_project->setModelSetting(model, "edge.color", str.toStdString());
+}
+
+bool SceneLoader::isGridVisible() const
+{
+    return m_project ? m_project->globalSetting("grid.visible") == "true" : true;
+}
+
+void SceneLoader::setGridVisible(bool value)
+{
+    /* 値が同じの場合は更新しない (Qt のスロット/シグナル経由での setDirty を抑制する) */
+    if (m_project && isGridVisible() != value)
+        m_project->setGlobalSetting("grid.visible", value ? "true" : "false");
+}
+
+bool SceneLoader::isPhysicsEnabled() const
+{
+    return m_project ? m_project->globalSetting("physics.enabled") == "true" : false;
+}
+
+void SceneLoader::setPhysicsEnabled(bool value)
+{
+    /* 値が同じの場合は更新しない (Qt のスロット/シグナル経由での setDirty を抑制する) */
+    if (m_project && isPhysicsEnabled() != value)
+        m_project->setGlobalSetting("physics.enabled", value ? "true" : "false");
+}
+
+bool SceneLoader::isAccelerationEnabled() const
+{
+    return m_project ? m_project->globalSetting("acceleration.enabled") == "true" : false;
+}
+
+void SceneLoader::setAccelerationEnabled(bool value)
+{
+    /* アクセレーションをサポートする場合のみ有効にする。しない場合は常に無効に設定 */
+    if (isAccelerationSupported()) {
+        if (value) {
+            if (m_renderer->initializeAccelerator()) {
+                m_renderer->scene()->setSoftwareSkinningEnable(false);
+                if (m_project && !isAccelerationEnabled())
+                    m_project->setGlobalSetting("acceleration.enabled", "true");
+                return;
+            }
+            else {
+                qWarning("%s", qPrintable(tr("Failed enabling acceleration and set fallback.")));
+            }
+        }
+    }
+    else {
+        qWarning("%s", qPrintable(tr("Acceleration is not supported on this platform and set fallback.")));
+    }
+    m_renderer->scene()->setSoftwareSkinningEnable(true);
+    if (m_project && isAccelerationEnabled())
+        m_project->setGlobalSetting("acceleration.enabled", "false");
+}
+
+bool SceneLoader::isBlackBackgroundEnabled() const
+{
+    return m_project ? m_project->globalSetting("background.black") == "true" : false;
+}
+
+void SceneLoader::setBlackBackgroundEnabled(bool value)
+{
+    /* 値が同じの場合は更新しない (Qt のスロット/シグナル経由での setDirty を抑制する) */
+    if (m_project && isBlackBackgroundEnabled() != value)
+        m_project->setGlobalSetting("background.black", value ? "true" : "false");
 }

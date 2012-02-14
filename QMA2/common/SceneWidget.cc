@@ -94,11 +94,6 @@ static inline void EnableMultisample()
 
 }
 
-bool SceneWidget::isAccelerationSupported()
-{
-    return Renderer::isAcceleratorSupported();
-}
-
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_renderer(0),
@@ -121,11 +116,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_internalTimerID(0),
     m_handleFlags(0),
     m_playing(false),
-    m_enableAcceleration(false),
     m_enableBoneMove(false),
     m_enableBoneRotate(false),
-    m_enablePhysics(false),
-    m_enableBlackBackground(false),
     m_showModelDialog(false),
     m_lockTouchEvent(false),
     m_enableMoveGesture(false),
@@ -139,17 +131,12 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_info = new InfoPanel(this);
     m_world = new World(vpvl::Scene::kFPS);
     m_handles = new Handles(this);
-    /* enablePhycis と enableAcceleration は値の処理のみ。実際の処理は initializeGL で行う */
-    m_enablePhysics = m_settings->value("sceneWidget/isPhysicsEnabled", false).toBool();
-    m_enableAcceleration = m_settings->value("sceneWidget/isAccelerationEnabled", false).toBool();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
-    setGridVisible(m_settings->value("sceneWidget/isGridVisible", true).toBool());
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
     setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
     setScaleGestureEnable(m_settings->value("sceneWidget/enableScaleGesture", true).toBool());
     setUndoGestureEnable(m_settings->value("sceneWidget/enableUndoGesture", true).toBool());
-    setBlackBackgroundEnable(m_settings->value("sceneWidget/enableBackBackground", false).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -227,7 +214,7 @@ void SceneWidget::stopAutomaticRendering()
 void SceneWidget::startPhysicsSimulation()
 {
     /* 物理暴走を防ぐために少し進めてから開始する */
-    if (isPhysicsEnabled()) {
+    if (m_loader && m_loader->isPhysicsEnabled()) {
         btDiscreteDynamicsWorld *world = m_world->mutableWorld();
         mutableScene()->setWorld(world);
         world->stepSimulation(1, 60);
@@ -655,42 +642,6 @@ void SceneWidget::setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle,
     emit cameraPerspectiveDidSet(posValue, angleValue, fovyValue, distanceValue);
 }
 
-bool SceneWidget::isGridVisible() const
-{
-    return m_grid->isEnabled();
-}
-
-void SceneWidget::setGridVisible(bool value)
-{
-    m_grid->setEnable(value);
-}
-
-void SceneWidget::setPhysicsEnable(bool value)
-{
-    m_enablePhysics = value;
-}
-
-void SceneWidget::setAccelerationEnable(bool value)
-{
-    if (isAccelerationSupported()) {
-        if (value) {
-            if (m_renderer->initializeAccelerator()) {
-                m_renderer->scene()->setSoftwareSkinningEnable(false);
-                m_enableAcceleration = value;
-                return;
-            }
-            else {
-                qWarning("%s", qPrintable(tr("Failed enabling acceleration and set fallback.")));
-            }
-        }
-    }
-    else {
-        qWarning("%s", qPrintable(tr("Acceleration is not supported on this platform and set fallback.")));
-    }
-    m_renderer->scene()->setSoftwareSkinningEnable(true);
-    m_enableAcceleration = value;
-}
-
 void SceneWidget::makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const
 {
     // This implementation based on the below page.
@@ -858,11 +809,7 @@ bool SceneWidget::event(QEvent *event)
 
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
-    m_settings->setValue("sceneWidget/isAccelerationEnabled", isAccelerationEnabled());
-    m_settings->setValue("sceneWidget/isGridVisible", isGridVisible());
-    m_settings->setValue("sceneWidget/isPhysicsEnabled", isPhysicsEnabled());
     m_settings->setValue("sceneWidget/showModelDialog", showModelDialog());
-    m_settings->setValue("sceneWidget/enableBackBackground", isBlackBackgroundEnabled());
     m_settings->setValue("sceneWidget/enableMoveGesture", isMoveGestureEnabled());
     m_settings->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
     m_settings->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());
@@ -918,11 +865,8 @@ void SceneWidget::initializeGL()
 #endif
     vpvl::Scene *scene = m_renderer->scene();
     /* 物理演算に必要な World が initializeGL でインスタンスを生成するため、setPhysicsEnable はここで有効にする */
-    if (m_playing || m_enablePhysics)
-        setPhysicsEnable(true);
-    /* MMDAI では OpenCL でのコンテキスト初期化に OpenGL のコンテキストが必要なため、setAccelerationEnable はここで有効にする */
-    if (m_enableAcceleration)
-        setAccelerationEnable(true);
+    //if (m_playing || m_enablePhysics)
+    //    setPhysicsEnable(true);
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->load();
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
@@ -1053,7 +997,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
-    qglClearColor(m_enableBlackBackground ? Qt::black : Qt::white);
+    qglClearColor(m_loader->isBlackBackgroundEnabled() ? Qt::black : Qt::white);
     EnableMultisample();
     m_renderer->clear();
     {
@@ -1069,7 +1013,7 @@ void SceneWidget::paintGL()
     }
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
-    m_grid->draw(m_renderer->scene());
+    m_grid->draw(m_renderer->scene(), m_loader->isGridVisible());
     if (m_editMode == kSelect)
         m_debugDrawer->drawModelBones(m_loader->selectedModel(), true, true);
     m_handles->drawImageHandles();

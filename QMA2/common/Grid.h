@@ -54,7 +54,7 @@ public:
 
     static const int kLimit = 50;
 
-    Grid() : m_vbo(0), m_ibo(0), m_list(0), m_enabled(true) {}
+    Grid() : m_vbo(0), m_ibo(0), m_list(0) {}
     ~Grid() {
         QGLFunctions func(QGLContext::currentContext());
         if (m_vbo) {
@@ -98,8 +98,8 @@ public:
         m_program.link();
     }
 
-    void draw(vpvl::Scene *scene) {
-        if (m_enabled && m_program.isLinked()) {
+    void draw(vpvl::Scene *scene, bool visible) {
+        if (visible && m_program.isLinked()) {
             float matrix[16];
             m_program.bind();
             QGLFunctions func(QGLContext::currentContext());
@@ -124,14 +124,6 @@ public:
         }
     }
 
-    bool isEnabled() const {
-        return m_enabled;
-    }
-
-    void setEnable(bool value) {
-        m_enabled = value;
-    }
-
 private:
     void addLine(const vpvl::Vector3 &from, const vpvl::Vector3 &to, const vpvl::Vector3 &color, uint8_t &index) {
         Vertex f, t;
@@ -151,7 +143,6 @@ private:
     GLuint m_vbo;
     GLuint m_ibo;
     GLuint m_list;
-    bool m_enabled;
 
     Q_DISABLE_COPY(Grid)
 };
