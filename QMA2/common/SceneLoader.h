@@ -103,13 +103,18 @@ public:
     bool isBlackBackgroundEnabled() const;
     const vpvl::Vector3 worldGravity() const;
     void setWorldGravity(const vpvl::Vector3 &value);
-    bool isProjectiveShadowEnabled(vpvl::PMDModel *model) const;
-    void setProjectiveShadowEnable(vpvl::PMDModel *model, bool value);
+    bool isProjectiveShadowEnabled(const vpvl::PMDModel *model) const;
+    void setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value);
     vpvl::PMDModel *selectedModel() const;
-    bool isModelSelected(vpvl::PMDModel *value) const;
+    bool isModelSelected(const vpvl::PMDModel *value) const;
     void setSelectedModel(vpvl::PMDModel *value);
     void setModelEdgeColor(vpvl::PMDModel *model, const QColor &value);
     void setModelEdgeOffset(vpvl::PMDModel *model, float value);
+    const vpvl::Vector3 assetPosition(const vpvl::Asset *asset);
+    void setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3 &value);
+    const vpvl::Vector3 assetRotation(const vpvl::Asset *asset);
+    float assetOpacity(const vpvl::Asset *asset);
+    float assetScale(const vpvl::Asset *asset);
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);

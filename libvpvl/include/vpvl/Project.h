@@ -92,20 +92,20 @@ public:
 
     const std::string &version() const;
     const std::string &globalSetting(const std::string &key) const;
-    const std::string &assetSetting(Asset *asset, const std::string &key) const;
-    const std::string &modelSetting(PMDModel *model, const std::string &key) const;
+    const std::string &assetSetting(const Asset *asset, const std::string &key) const;
+    const std::string &modelSetting(const PMDModel *model, const std::string &key) const;
     const UUIDList assetUUIDs() const;
     const UUIDList modelUUIDs() const;
     const UUIDList motionUUIDs() const;
     Asset *asset(const std::string &uuid) const;
     PMDModel *model(const std::string &uuid) const;
     VMDMotion *motion(const std::string &uuid) const;
-    const UUID &assetUUID(Asset *asset) const;
-    const UUID &modelUUID(PMDModel *asset) const;
-    const UUID &motionUUID(VMDMotion *motion) const;
-    bool containsAsset(Asset *asset) const;
-    bool containsModel(PMDModel *model) const;
-    bool containsMotion(VMDMotion *motion) const;
+    const UUID &assetUUID(const Asset *asset) const;
+    const UUID &modelUUID(const PMDModel *model) const;
+    const UUID &motionUUID(const VMDMotion *motion) const;
+    bool containsAsset(const Asset *asset) const;
+    bool containsModel(const PMDModel *model) const;
+    bool containsMotion(const VMDMotion *motion) const;
     bool isDirty() const { return m_dirty; }
     void setDirty(bool value) { m_dirty = value; }
 
@@ -120,8 +120,8 @@ public:
     void removeMotion(VMDMotion *motion, PMDModel *model);
 
     void setGlobalSetting(const std::string &key, const std::string &value);
-    void setAssetSetting(Asset *asset, const std::string &key, const std::string &value);
-    void setModelSetting(PMDModel *model, const std::string &key, const std::string &value);
+    void setAssetSetting(const Asset *asset, const std::string &key, const std::string &value);
+    void setModelSetting(const PMDModel *model, const std::string &key, const std::string &value);
 
 private:
     bool save0(xmlTextWriterPtr ptr);

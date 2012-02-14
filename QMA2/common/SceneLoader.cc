@@ -662,13 +662,13 @@ void SceneLoader::setWorldGravity(const vpvl::Vector3 &value)
     }
 }
 
-bool SceneLoader::isProjectiveShadowEnabled(vpvl::PMDModel *model) const
+bool SceneLoader::isProjectiveShadowEnabled(const vpvl::PMDModel *model) const
 {
     const std::string &value = m_project->modelSetting(model, "projective_shadow");
     return value == "true";
 }
 
-void SceneLoader::setProjectiveShadowEnable(vpvl::PMDModel *model, bool value)
+void SceneLoader::setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value)
 {
     m_project->setModelSetting(model, "projective_shadow", value ? "true" : "false");
 }
@@ -678,7 +678,7 @@ vpvl::PMDModel *SceneLoader::selectedModel() const
     return m_renderer->selectedModel();
 }
 
-bool SceneLoader::isModelSelected(vpvl::PMDModel *value) const
+bool SceneLoader::isModelSelected(const vpvl::PMDModel *value) const
 {
     return m_project->modelSetting(value, "selected") == "true";
 }
