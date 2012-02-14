@@ -113,8 +113,14 @@ public:
     const vpvl::Vector3 assetPosition(const vpvl::Asset *asset);
     void setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3 &value);
     const vpvl::Vector3 assetRotation(const vpvl::Asset *asset);
+    void setAssetRotation(const vpvl::Asset *asset, const vpvl::Vector3 &value);
     float assetOpacity(const vpvl::Asset *asset);
+    void setAssetOpacity(const vpvl::Asset *asset, float value);
     float assetScale(const vpvl::Asset *asset);
+    void setAssetScale(const vpvl::Asset *asset, float value);
+    vpvl::Asset *selectedAsset() const;
+    bool isAssetSelected(const vpvl::Asset *value) const;
+    void setSelectedAsset(vpvl::Asset *value);
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -143,6 +149,7 @@ signals:
     void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QUuid &uuid);
     void motionWillDelete(vpvl::VMDMotion *motion, const QUuid &uuid);
+    void assetDidSelect(vpvl::Asset *asset, SceneLoader *loader);
     void assetDidAdd(vpvl::Asset *asset, const QUuid &uuid);
     void assetWillDelete(vpvl::Asset *asset, const QUuid &uuid);
     void cameraMotionDidSet(vpvl::VMDMotion *motion, const QUuid &uuid);
@@ -159,6 +166,7 @@ private:
     QMap<QString, vpvl::Asset*> m_name2assets;
     vpvl::Project *m_project;
     vpvl::Project::IDelegate *m_delegate;
+    vpvl::Asset *m_asset;
     vpvl::VMDMotion *m_camera;
 
     Q_DISABLE_COPY(SceneLoader)

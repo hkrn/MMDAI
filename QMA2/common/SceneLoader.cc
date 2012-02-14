@@ -110,6 +110,7 @@ SceneLoader::SceneLoader(Renderer *renderer)
       m_renderer(renderer),
       m_project(0),
       m_delegate(0),
+      m_asset(0),
       m_camera(0)
 {
     m_delegate = new Delegate();
@@ -278,6 +279,7 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QU
             m_project->addAsset(asset, uuid.toString().toStdString());
             m_project->setAssetSetting(asset, vpvl::Project::kSettingNameKey, baseName.toStdString());
             m_project->setAssetSetting(asset, vpvl::Project::kSettingURIKey, filename.toStdString());
+            m_project->setAssetSetting(asset, "selected", "false");
             emit assetDidAdd(asset, uuid);
         }
         else {
@@ -505,6 +507,8 @@ void SceneLoader::loadProject(const QString &path)
                 if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
                     emit assetDidAdd(asset, QUuid(m_project->assetUUID(asset).c_str()));
+                    if (isAssetSelected(asset))
+                        setSelectedAsset(asset);
                     continue;
                 }
             }
@@ -770,4 +774,71 @@ void SceneLoader::setBlackBackgroundEnabled(bool value)
     /* 値が同じの場合は更新しない (Qt のスロット/シグナル経由での setDirty を抑制する) */
     if (m_project && isBlackBackgroundEnabled() != value)
         m_project->setGlobalSetting("background.black", value ? "true" : "false");
+}
+
+const vpvl::Vector3 SceneLoader::assetPosition(const vpvl::Asset *asset)
+{
+    return UIGetVector3(m_project->assetSetting(asset, "position"), vpvl::kZeroV);
+}
+
+void SceneLoader::setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3 &value)
+{
+    QString str;
+    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+    m_project->setAssetSetting(asset, "position", str.toStdString());
+}
+
+const vpvl::Vector3 SceneLoader::assetRotation(const vpvl::Asset *asset)
+{
+    return UIGetVector3(m_project->assetSetting(asset, "rotation"), vpvl::kZeroV);
+}
+
+void SceneLoader::setAssetRotation(const vpvl::Asset *asset, const vpvl::Vector3 &value)
+{
+    QString str;
+    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+    m_project->setAssetSetting(asset, "rotation", str.toStdString());
+}
+
+float SceneLoader::assetOpacity(const vpvl::Asset *asset)
+{
+    float value = QString::fromStdString(m_project->assetSetting(asset, "opacity")).toFloat();
+    return qBound(0.0f, value, 1.0f);
+}
+
+void SceneLoader::setAssetOpacity(const vpvl::Asset *asset, float value)
+{
+    QString str;
+    str.sprintf("%.5f", value);
+    m_project->setAssetSetting(asset, "opacity", str.toStdString());
+}
+
+float SceneLoader::assetScale(const vpvl::Asset *asset)
+{
+    float value = QString::fromStdString(m_project->assetSetting(asset, "scale")).toFloat();
+    return qBound(0.0001f, value, 10000.0f);
+}
+
+void SceneLoader::setAssetScale(const vpvl::Asset *asset, float value)
+{
+    QString str;
+    str.sprintf("%.5f", value);
+    m_project->setAssetSetting(asset, "scale", str.toStdString());
+}
+
+vpvl::Asset *SceneLoader::selectedAsset() const
+{
+    return m_asset;
+}
+
+bool SceneLoader::isAssetSelected(const vpvl::Asset *value) const
+{
+    return m_project->assetSetting(value, "selected") == "true";
+}
+
+void SceneLoader::setSelectedAsset(vpvl::Asset *value)
+{
+    m_asset = value;
+    m_project->setAssetSetting(value, "selected", "true");
+    emit assetDidSelect(value, this);
 }
