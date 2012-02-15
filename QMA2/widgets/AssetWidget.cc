@@ -210,20 +210,20 @@ void AssetWidget::changeCurrentAsset(int index)
 
 void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
 {
-    /* setAssetProperty からも呼ばれるので、選択したアセットと同じでないことをまず確認する */
+    /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
+    const vpvl::Vector3 &position = asset->position();
+    m_px->setValue(position.x());
+    m_py->setValue(position.y());
+    m_pz->setValue(position.z());
+    const vpvl::Quaternion &rotation = asset->rotation();
+    m_rx->setValue(vpvl::degree(rotation.x()));
+    m_ry->setValue(vpvl::degree(rotation.y()));
+    m_rz->setValue(vpvl::degree(rotation.z()));
+    m_scale->setValue(asset->scaleFactor());
+    m_opacity->setValue(asset->opacity());
+    /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
     if (m_currentAsset != asset) {
-        /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
-        const vpvl::Vector3 &position = asset->position();
         m_currentAsset = asset;
-        m_px->setValue(position.x());
-        m_py->setValue(position.y());
-        m_pz->setValue(position.z());
-        const vpvl::Quaternion &rotation = asset->rotation();
-        m_rx->setValue(vpvl::degree(rotation.x()));
-        m_ry->setValue(vpvl::degree(rotation.y()));
-        m_rz->setValue(vpvl::degree(rotation.z()));
-        m_scale->setValue(asset->scaleFactor());
-        m_opacity->setValue(asset->opacity());
         emit assetDidSelect(asset);
     }
 }
