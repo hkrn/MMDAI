@@ -288,11 +288,11 @@ protected:
         if (m_renderer->initializeAccelerator())
             m_renderer->scene()->setSoftwareSkinningEnable(false);
 #endif
+        m_renderer->initializeSurface();
 #ifdef VPVL_GL2_RENDERER_H_
         if (!m_renderer->createShadowFrameBuffers())
             exit(-1);
 #endif
-        m_renderer->initializeSurface();
         if (!loadScene())
             qFatal("Unable to load scene");
 

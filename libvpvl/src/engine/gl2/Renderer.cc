@@ -828,6 +828,7 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     updateModel(model);
     m_delegate->log(kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
     m_scene->addModel(model);
+    return true;
 }
 
 void Renderer::deleteModel(PMDModel *&model)
