@@ -1113,11 +1113,13 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
+    connect(loader, SIGNAL(assetDidSelect(vpvl::Asset*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl::Asset*,SceneLoader*)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
     connect(m_actionShowBlackBackground, SIGNAL(triggered(bool)), loader, SLOT(setBlackBackgroundEnabled(bool)));
     connect(assetWidget, SIGNAL(assetDidRemove(vpvl::Asset*)), loader, SLOT(deleteAsset(vpvl::Asset*)));
+    connect(assetWidget, SIGNAL(assetDidSelect(vpvl::Asset*)), loader, SLOT(setSelectedAsset(vpvl::Asset*)));
 }
 
 void MainWindow::connectWidgets()

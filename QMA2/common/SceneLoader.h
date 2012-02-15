@@ -107,20 +107,19 @@ public:
     void setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value);
     vpvl::PMDModel *selectedModel() const;
     bool isModelSelected(const vpvl::PMDModel *value) const;
-    void setSelectedModel(vpvl::PMDModel *value);
     void setModelEdgeColor(vpvl::PMDModel *model, const QColor &value);
     void setModelEdgeOffset(vpvl::PMDModel *model, float value);
+
     const vpvl::Vector3 assetPosition(const vpvl::Asset *asset);
     void setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3 &value);
-    const vpvl::Vector3 assetRotation(const vpvl::Asset *asset);
-    void setAssetRotation(const vpvl::Asset *asset, const vpvl::Vector3 &value);
+    const vpvl::Quaternion assetRotation(const vpvl::Asset *asset);
+    void setAssetRotation(const vpvl::Asset *asset, const vpvl::Quaternion &value);
     float assetOpacity(const vpvl::Asset *asset);
     void setAssetOpacity(const vpvl::Asset *asset, float value);
-    float assetScale(const vpvl::Asset *asset);
-    void setAssetScale(const vpvl::Asset *asset, float value);
+    float assetScaleFactor(const vpvl::Asset *asset);
+    void setAssetScaleFactor(const vpvl::Asset *asset, float value);
     vpvl::Asset *selectedAsset() const;
     bool isAssetSelected(const vpvl::Asset *value) const;
-    void setSelectedAsset(vpvl::Asset *value);
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -139,6 +138,8 @@ public slots:
     void setPhysicsEnabled(bool value);
     void setAccelerationEnabled(bool value);
     void setBlackBackgroundEnabled(bool value);
+    void setSelectedModel(vpvl::PMDModel *value);
+    void setSelectedAsset(vpvl::Asset *value);
 
 signals:
     void projectDidLoad();
@@ -157,6 +158,7 @@ signals:
 private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
     void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void commitAssetProperties();
 
 #ifdef VPVL_ENABLE_GLSL
     vpvl::gl2::Renderer *m_renderer;

@@ -98,6 +98,21 @@ static const vpvl::Vector3 UIGetVector3(const std::string &value, const vpvl::Ve
     return def;
 }
 
+static const vpvl::Quaternion UIGetQuaternion(const std::string &value, const vpvl::Quaternion &def)
+{
+    if (!value.empty()) {
+        QStringList gravity = QString::fromStdString(value).split(",");
+        if (gravity.length() == 4) {
+            float x = gravity.at(0).toFloat();
+            float y = gravity.at(1).toFloat();
+            float z = gravity.at(2).toFloat();
+            float w = gravity.at(3).toFloat();
+            return vpvl::Quaternion(x, y, z, w);
+        }
+    }
+    return def;
+}
+
 }
 
 bool SceneLoader::isAccelerationSupported()
@@ -162,6 +177,16 @@ QList<vpvl::PMDModel *> SceneLoader::allModels() const
         it++;
     }
     return models;
+}
+
+void SceneLoader::commitAssetProperties()
+{
+    if (m_asset) {
+        setAssetPosition(m_asset, m_asset->position());
+        setAssetRotation(m_asset, m_asset->rotation());
+        setAssetOpacity(m_asset, m_asset->opacity());
+        setAssetScaleFactor(m_asset, m_asset->scaleFactor());
+    }
 }
 
 void SceneLoader::createProject()
@@ -280,6 +305,10 @@ vpvl::Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QU
             m_project->setAssetSetting(asset, vpvl::Project::kSettingNameKey, baseName.toStdString());
             m_project->setAssetSetting(asset, vpvl::Project::kSettingURIKey, filename.toStdString());
             m_project->setAssetSetting(asset, "selected", "false");
+            setAssetPosition(asset, asset->position());
+            setAssetRotation(asset, asset->rotation());
+            setAssetOpacity(asset, asset->opacity());
+            setAssetScaleFactor(asset, asset->scaleFactor());
             emit assetDidAdd(asset, uuid);
         }
         else {
@@ -619,6 +648,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
 
 void SceneLoader::saveProject(const QString &path)
 {
+    commitAssetProperties();
     m_project->save(path.toLocal8Bit().constData());
     emit projectDidSave();
 }
@@ -788,15 +818,15 @@ void SceneLoader::setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3
     m_project->setAssetSetting(asset, "position", str.toStdString());
 }
 
-const vpvl::Vector3 SceneLoader::assetRotation(const vpvl::Asset *asset)
+const vpvl::Quaternion SceneLoader::assetRotation(const vpvl::Asset *asset)
 {
-    return UIGetVector3(m_project->assetSetting(asset, "rotation"), vpvl::kZeroV);
+    return UIGetQuaternion(m_project->assetSetting(asset, "rotation"), vpvl::kZeroQ);
 }
 
-void SceneLoader::setAssetRotation(const vpvl::Asset *asset, const vpvl::Vector3 &value)
+void SceneLoader::setAssetRotation(const vpvl::Asset *asset, const vpvl::Quaternion &value)
 {
     QString str;
-    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+    str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
     m_project->setAssetSetting(asset, "rotation", str.toStdString());
 }
 
@@ -813,13 +843,13 @@ void SceneLoader::setAssetOpacity(const vpvl::Asset *asset, float value)
     m_project->setAssetSetting(asset, "opacity", str.toStdString());
 }
 
-float SceneLoader::assetScale(const vpvl::Asset *asset)
+float SceneLoader::assetScaleFactor(const vpvl::Asset *asset)
 {
     float value = QString::fromStdString(m_project->assetSetting(asset, "scale")).toFloat();
     return qBound(0.0001f, value, 10000.0f);
 }
 
-void SceneLoader::setAssetScale(const vpvl::Asset *asset, float value)
+void SceneLoader::setAssetScaleFactor(const vpvl::Asset *asset, float value)
 {
     QString str;
     str.sprintf("%.5f", value);
@@ -838,6 +868,7 @@ bool SceneLoader::isAssetSelected(const vpvl::Asset *value) const
 
 void SceneLoader::setSelectedAsset(vpvl::Asset *value)
 {
+    commitAssetProperties();
     m_asset = value;
     m_project->setAssetSetting(value, "selected", "true");
     emit assetDidSelect(value, this);

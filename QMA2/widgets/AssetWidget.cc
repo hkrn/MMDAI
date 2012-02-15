@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/SceneLoader.h"
 #include "common/util.h"
 #include "widgets/AssetWidget.h"
 
@@ -209,18 +210,22 @@ void AssetWidget::changeCurrentAsset(int index)
 
 void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
 {
-    /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
-    const vpvl::Vector3 &position = asset->position();
-    m_currentAsset = asset;
-    m_px->setValue(position.x());
-    m_py->setValue(position.y());
-    m_pz->setValue(position.z());
-    const vpvl::Quaternion &rotation = asset->rotation();
-    m_rx->setValue(vpvl::degree(rotation.x()));
-    m_ry->setValue(vpvl::degree(rotation.y()));
-    m_rz->setValue(vpvl::degree(rotation.z()));
-    m_scale->setValue(asset->scaleFactor());
-    m_opacity->setValue(asset->opacity());
+    /* setAssetProperty からも呼ばれるので、選択したアセットと同じでないことをまず確認する */
+    if (m_currentAsset != asset) {
+        /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
+        const vpvl::Vector3 &position = asset->position();
+        m_currentAsset = asset;
+        m_px->setValue(position.x());
+        m_py->setValue(position.y());
+        m_pz->setValue(position.z());
+        const vpvl::Quaternion &rotation = asset->rotation();
+        m_rx->setValue(vpvl::degree(rotation.x()));
+        m_ry->setValue(vpvl::degree(rotation.y()));
+        m_rz->setValue(vpvl::degree(rotation.z()));
+        m_scale->setValue(asset->scaleFactor());
+        m_opacity->setValue(asset->opacity());
+        emit assetDidSelect(asset);
+    }
 }
 
 void AssetWidget::changeCurrentModel(int index)
@@ -314,6 +319,15 @@ void AssetWidget::updateOpacity(double value)
 {
     if (m_currentAsset)
         m_currentAsset->setOpacity(static_cast<float>(value));
+}
+
+void AssetWidget::setAssetProperties(vpvl::Asset *asset, SceneLoader *loader)
+{
+    asset->setPosition(loader->assetPosition(asset));
+    asset->setRotation(loader->assetRotation(asset));
+    asset->setScaleFactor(loader->assetScaleFactor(asset));
+    asset->setOpacity(loader->assetOpacity(asset));
+    changeCurrentAsset(asset);
 }
 
 void AssetWidget::setEnable(bool value)

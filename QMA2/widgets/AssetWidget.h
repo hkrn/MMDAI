@@ -51,6 +51,7 @@ class QDoubleSpinBox;
 class QGroupBox;
 class QLabel;
 class QPushButton;
+class SceneLoader;
 
 class AssetWidget : public QWidget
 {
@@ -71,6 +72,7 @@ public slots:
     void retranslate();
 
 signals:
+    void assetDidSelect(vpvl::Asset *asset);
     void assetDidRemove(vpvl::Asset *asset);
 
 private slots:
@@ -87,6 +89,7 @@ private slots:
     void updateRotationZ(double value);
     void updateScaleFactor(double value);
     void updateOpacity(double value);
+    void setAssetProperties(vpvl::Asset *asset, SceneLoader *loader);
 
 private:
     void setEnable(bool value);
