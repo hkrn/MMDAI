@@ -189,6 +189,8 @@ void AssetWidget::removeModel(vpvl::PMDModel *model)
 {
     int index = m_models.indexOf(model);
     if (index >= 0) {
+        /* 最初の要素が地面で、特別枠なため削除してはいけない。そのためインデックスをひとつかさ上げする */
+        index += 1;
         /* モデルが見つかればモデルとそのボーンリストを表示上から削除する。実際にモデルを削除をしない */
         m_models.removeAt(index);
         m_modelComboBox->removeItem(index);
