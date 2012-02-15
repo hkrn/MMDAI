@@ -51,6 +51,18 @@ using namespace vpvl::gl2;
 using namespace vpvl::gl;
 #endif
 
+/*
+ * Renderer と Project の二重管理を行うため、メモリ解放にまつわる実装がややこしいことになっている。
+ * 解放手順として以下を必ず行うようにする。
+ *
+ * 1. Project#remove*() を呼び出す
+ * 2. Renderer#delete*() を呼び出す
+ *^
+ * このようにするのは Renderer が独自のデータを保持しているため。Project は独自のデータを持たないので、
+ * remove*() を呼び出して論理削除しても問題ないが、Renderer は上記の理由により delete*() しか呼び出せない。
+ * また、delete*() は引数のポインタを解放後 0 にするという特性を持つため、先に remove*() を呼び出す理由になっている。
+ */
+
 namespace
 {
 
@@ -202,8 +214,8 @@ void SceneLoader::deleteAsset(vpvl::Asset *asset)
     if (asset && m_project->containsAsset(asset)) {
         const QUuid uuid(m_project->assetUUID(asset).c_str());
         emit assetWillDelete(asset, uuid);
+        m_project->removeAsset(asset);
         m_renderer->deleteAsset(asset);
-        m_project->deleteAsset(asset);
     }
 }
 
@@ -220,10 +232,7 @@ void SceneLoader::deleteCameraMotion()
 void SceneLoader::deleteModel(vpvl::PMDModel *&model)
 {
     /*
-     * まずモデルに紐づいたモーションを全て削除し、その後にモデルをレンダリングエンジンから削除し、
-     * Project クラスから論理削除する。順番が重要でこの順番で行う必要があり、変更してはいけない。
-     * deleteModel の引数は delete した上で 0 にされるので、delete される前のポインタを保持しておき、
-     * Project で論理削除する(二重解放になるので Project クラスで物理削除してはいけない)。
+     * メモリ解放に関しては最初の部分を参照
      *
      * vpvl::Project にひもづけられるモーションの削除の観点を忘れていたので、
      * モデルに属するモーションを Project から解除するように変更
@@ -231,15 +240,14 @@ void SceneLoader::deleteModel(vpvl::PMDModel *&model)
     if (m_project->containsModel(model)) {
         const QUuid uuid(m_project->modelUUID(model).c_str());
         emit modelWillDelete(model, uuid);
-        vpvl::PMDModel *ptr = model;
         const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
         int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             vpvl::VMDMotion *motion = motions[i];
             m_project->deleteMotion(motion, model);
         }
+        m_project->removeModel(model);
         m_renderer->deleteModel(model);
-        m_project->removeModel(ptr);
         m_model = 0;
     }
 }
@@ -460,7 +468,6 @@ vpvl::VMDMotion *SceneLoader::loadModelMotion(const QString &path, vpvl::PMDMode
     return motion;
 }
 
-
 VPDFile *SceneLoader::loadModelPose(const QString &path, vpvl::PMDModel * /* model */)
 {
     /* ポーズをファイルから読み込む。処理の関係上 makePose は呼ばない */
@@ -534,6 +541,7 @@ void SceneLoader::loadProject(const QString &path)
             if (file.open(QFile::ReadOnly)) {
                 const QByteArray &bytes = file.readAll();
                 if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+                    asset->setName(QFileInfo(file).fileName().toUtf8().constData());
                     m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
                     emit assetDidAdd(asset, QUuid(m_project->assetUUID(asset).c_str()));
                     if (isAssetSelected(asset))
@@ -608,6 +616,25 @@ vpvl::VMDMotion *SceneLoader::newModelMotion(vpvl::PMDModel *model) const
 
 void SceneLoader::release()
 {
+    /* やっていることは削除ではなくシグナル発行すること以外 Renderer::releaseProject と同じ */
+    const vpvl::Project::UUIDList &assetUUIDs = m_project->assetUUIDs();
+    for (vpvl::Project::UUIDList::const_iterator it = assetUUIDs.begin(); it != assetUUIDs.end(); it++) {
+        const vpvl::Project::UUID &assetUUID = *it;
+        emit assetWillDelete(m_project->asset(assetUUID), QUuid(assetUUID.c_str()));
+    }
+    const vpvl::Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
+    for (vpvl::Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
+        const vpvl::Project::UUID &modelUUID = *it;
+        vpvl::PMDModel *model = m_project->model(modelUUID);
+        const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            vpvl::VMDMotion *motion = motions[i];
+            const vpvl::Project::UUID &motionUUID = m_project->motionUUID(motion);
+            emit motionWillDelete(motion, QUuid(motionUUID.c_str()));
+        }
+        emit modelWillDelete(model, QUuid(modelUUID.c_str()));
+    }
     /*
       releaseProject は Project 内にある全ての Asset と PMDModel のインスタンスを Renderer クラスから物理削除し、
       Project クラスから論理削除 (remove*) を行う。Project が物理削除 (delete*) を行なってしまうと Renderer クラスで
@@ -670,10 +697,10 @@ void SceneLoader::setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
     const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
-        /* 先に PMDModel#deleteMotion を呼んでから Project#removeMotion を呼ばないとメモリリークになる */
-        vpvl::VMDMotion *motion = motions[i], *ptr = motion;
+        /* 先にプロジェクトからモーションを論理削除した後にモデルから物理削除する */
+        vpvl::VMDMotion *motion = motions[i];
+        m_project->removeMotion(motion, model);
         model->deleteMotion(motion);
-        m_project->removeMotion(ptr, model);
     }
 #endif
     model->addMotion(motion);
