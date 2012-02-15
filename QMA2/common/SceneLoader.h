@@ -168,6 +168,7 @@ private:
     QMap<QString, vpvl::Asset*> m_name2assets;
     vpvl::Project *m_project;
     vpvl::Project::IDelegate *m_delegate;
+    vpvl::PMDModel *m_model;
     vpvl::Asset *m_asset;
     vpvl::VMDMotion *m_camera;
 

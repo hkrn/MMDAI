@@ -125,6 +125,7 @@ SceneLoader::SceneLoader(Renderer *renderer)
       m_renderer(renderer),
       m_project(0),
       m_delegate(0),
+      m_model(0),
       m_asset(0),
       m_camera(0)
 {
@@ -238,8 +239,8 @@ void SceneLoader::deleteModel(vpvl::PMDModel *&model)
             m_project->deleteMotion(motion, model);
         }
         m_renderer->deleteModel(model);
-        m_renderer->setSelectedModel(0);
         m_project->removeModel(ptr);
+        m_model = 0;
     }
 }
 
@@ -363,10 +364,9 @@ vpvl::Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const Q
                 float z = rotation.at(2).toFloat();
                 asset->setRotation(vpvl::Quaternion(x, y, z));
             }
-            vpvl::PMDModel *model = m_renderer->selectedModel();
-            if (!bone.isEmpty() && model) {
+            if (!bone.isEmpty() && m_model) {
                 const QByteArray &bytes = internal::fromQString(name);
-                vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                vpvl::Bone *bone = m_model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 asset->setParentBone(bone);
             }
             Q_UNUSED(enableShadow);
@@ -709,7 +709,7 @@ void SceneLoader::setProjectiveShadowEnable(const vpvl::PMDModel *model, bool va
 
 vpvl::PMDModel *SceneLoader::selectedModel() const
 {
-    return m_renderer->selectedModel();
+    return m_model;
 }
 
 bool SceneLoader::isModelSelected(const vpvl::PMDModel *value) const
@@ -719,7 +719,7 @@ bool SceneLoader::isModelSelected(const vpvl::PMDModel *value) const
 
 void SceneLoader::setSelectedModel(vpvl::PMDModel *value)
 {
-    m_renderer->setSelectedModel(value);
+    m_model = value;
     m_project->setModelSetting(value, "selected", "true");
     emit modelDidSelect(value, this);
 }

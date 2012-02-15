@@ -860,9 +860,6 @@ void SceneWidget::initializeGL()
     m_debugDrawer->setWorld(m_world->mutableWorld());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
-#ifdef VPVL_ENABLE_GLSL
-    m_renderer->createShaderPrograms();
-#endif
     vpvl::Scene *scene = m_renderer->scene();
     /* 物理演算に必要な World が initializeGL でインスタンスを生成するため、setPhysicsEnable はここで有効にする */
     //if (m_playing || m_enablePhysics)

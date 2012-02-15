@@ -141,14 +141,7 @@ public:
     Scene *scene() const {
         return m_scene;
     }
-    PMDModel *selectedModel() const {
-        return m_selected;
-    }
-    void setSelectedModel(PMDModel *value) {
-        m_selected = value;
-    }
 
-    bool createShaderPrograms();
     void initializeSurface();
     bool createShadowFrameBuffers();
     void resize(int width, int height);
@@ -176,7 +169,7 @@ public:
     bool initializeAccelerator();
 
 protected:
-    void uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
+    bool uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
     void uploadAsset0(Asset::UserData *userData, Asset *asset, const std::string &dir);
 
     IDelegate *m_delegate;
@@ -191,12 +184,7 @@ private:
     void setAssetMaterial(const aiMaterial *material, const Asset *asset, AssetProgram *program);
 #endif
 
-    EdgeProgram *m_edgeProgram;
-    ModelProgram *m_modelProgram;
-    ShadowProgram *m_shadowProgram;
-    ZPlotProgram *m_zplotProgram;
     Accelerator *m_accelerator;
-    PMDModel *m_selected;
     GLuint m_depthTextureID;
     GLuint m_frameBufferID;
 

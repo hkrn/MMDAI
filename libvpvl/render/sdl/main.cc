@@ -379,11 +379,7 @@ public:
 
         if (!initializeSurface(internal::kWidth, internal::kHeight))
             return false;
-
-#ifdef VPVL_GL2_RENDERER_H_
         m_renderer->initializeSurface();
-        m_renderer->createShaderPrograms();
-#endif
         if (!loadScene())
             return false;
 
