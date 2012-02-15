@@ -1203,14 +1203,14 @@ void Renderer::renderZPlot()
 void Renderer::releaseProject(Project *project)
 {
 #ifdef VPVL_ENABLE_PROJECT
-    const std::vector<std::string> &assetUUIDs = project->assetUUIDs();
-    for (std::vector<std::string>::const_iterator it = assetUUIDs.begin(); it != assetUUIDs.end(); it++) {
+    const Project::UUIDList &assetUUIDs = project->assetUUIDs();
+    for (Project::UUIDList::const_iterator it = assetUUIDs.begin(); it != assetUUIDs.end(); it++) {
         Asset *asset = project->asset(*it);
         project->removeAsset(asset);
         deleteAsset(asset);
     }
-    const std::vector<std::string> &modelUUIDs = project->modelUUIDs();
-    for (std::vector<std::string>::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
+    const Project::UUIDList &modelUUIDs = project->modelUUIDs();
+    for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         PMDModel *model = project->model(*it);
         const Array<VMDMotion *> &motions = model->motions();
         const int nmotions = motions.count();

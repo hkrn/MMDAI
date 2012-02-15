@@ -197,7 +197,7 @@ public:
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("models"), 0));
         for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            const std::string &uuid = (*it).first;
+            const Project::UUID &uuid = (*it).first;
             const PMDModel *model = (*it).second;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("model"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(uuid.c_str())));
@@ -208,7 +208,7 @@ public:
         VPVL_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
         VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("assets"), 0));
         for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            const std::string &uuid = (*it).first;
+            const Project::UUID &uuid = (*it).first;
             const Asset *asset = (*it).second;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("asset"), 0));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(uuid.c_str())));
@@ -886,8 +886,8 @@ public:
     std::map<const PMDModel *, StringMap> localModelSettings;
     std::string version;
     std::string key;
-    std::string uuid;
     std::string parentModel;
+    Project::UUID uuid;
     Asset *currentAsset;
     PMDModel *currentModel;
     VMDMotion *currentMotion;
@@ -994,17 +994,17 @@ const Project::UUIDList Project::motionUUIDs() const
     return uuids;
 }
 
-Asset *Project::asset(const std::string &uuid) const
+Asset *Project::asset(const UUID &uuid) const
 {
     return m_handler->assets[uuid];
 }
 
-PMDModel *Project::model(const std::string &uuid) const
+PMDModel *Project::model(const UUID &uuid) const
 {
     return m_handler->models[uuid];
 }
 
-VMDMotion *Project::motion(const std::string &uuid) const
+VMDMotion *Project::motion(const UUID &uuid) const
 {
     return m_handler->motions[uuid];
 }
@@ -1039,7 +1039,7 @@ bool Project::containsMotion(const VMDMotion *motion) const
     return motionUUID(motion) != kNullUUID;
 }
 
-void Project::addAsset(Asset *asset, const std::string &uuid)
+void Project::addAsset(Asset *asset, const UUID &uuid)
 {
     if (!containsAsset(asset)) {
         m_handler->assets[uuid] = asset;
@@ -1047,7 +1047,7 @@ void Project::addAsset(Asset *asset, const std::string &uuid)
     }
 }
 
-void Project::addModel(PMDModel *model, const std::string &uuid)
+void Project::addModel(PMDModel *model, const UUID &uuid)
 {
     if (!containsModel(model)) {
         m_handler->models[uuid] = model;
@@ -1055,7 +1055,7 @@ void Project::addModel(PMDModel *model, const std::string &uuid)
     }
 }
 
-void Project::addMotion(VMDMotion *motion, PMDModel *model, const std::string &uuid)
+void Project::addMotion(VMDMotion *motion, PMDModel *model, const UUID &uuid)
 {
     if (!containsMotion(motion)) {
         m_handler->motions[uuid] = motion;

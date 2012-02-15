@@ -97,9 +97,9 @@ public:
     const UUIDList assetUUIDs() const;
     const UUIDList modelUUIDs() const;
     const UUIDList motionUUIDs() const;
-    Asset *asset(const std::string &uuid) const;
-    PMDModel *model(const std::string &uuid) const;
-    VMDMotion *motion(const std::string &uuid) const;
+    Asset *asset(const UUID &uuid) const;
+    PMDModel *model(const UUID &uuid) const;
+    VMDMotion *motion(const UUID &uuid) const;
     const UUID &assetUUID(const Asset *asset) const;
     const UUID &modelUUID(const PMDModel *model) const;
     const UUID &motionUUID(const VMDMotion *motion) const;
@@ -109,9 +109,9 @@ public:
     bool isDirty() const { return m_dirty; }
     void setDirty(bool value) { m_dirty = value; }
 
-    void addAsset(Asset *asset, const std::string &uuid);
-    void addModel(PMDModel *model, const std::string &uuid);
-    void addMotion(VMDMotion *motion, PMDModel *model, const std::string &uuid);
+    void addAsset(Asset *asset, const UUID &uuid);
+    void addModel(PMDModel *model, const UUID &uuid);
+    void addMotion(VMDMotion *motion, PMDModel *model, const UUID &uuid);
     void deleteAsset(Asset *&asset);
     void deleteModel(PMDModel *&model);
     void deleteMotion(VMDMotion *&motion, PMDModel *model);

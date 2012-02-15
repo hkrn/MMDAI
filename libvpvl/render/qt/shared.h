@@ -129,8 +129,7 @@ public:
         uint8_t *rawData = 0;
         QImage image = QImage(pathString).rgbSwapped();
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
-                                          image.depth() == 32 ? GL_RGBA : GL_RGB, options);
+        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
         delete[] rawData;
         if (!isToon) {
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -380,7 +379,11 @@ private:
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
         loadAsset(kStageDir, kStageName);
-        loadAsset(kStageDir, kStage2Name);
+        if (vpvl::Asset *asset = loadAsset(kStageDir, kStage2Name)) {
+            asset->setPosition(vpvl::Vector3(0.0f, 4.0f, 0.0f));
+            asset->setScaleFactor(0.6f);
+            asset->setParentBone(model->bones().at(93));
+        }
 #endif
 
         if (!internal::slurpFile(kMotion, bytes) ||
