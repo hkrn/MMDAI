@@ -560,7 +560,11 @@ struct PMDModelMaterialPrivate
     GLuint subTextureID;
 };
 
+#ifdef VPVL_LINK_QT
+class PMDModelUserData : public vpvl::PMDModel::UserData, protected QGLFunctions
+        #else
 class PMDModelUserData : public vpvl::PMDModel::UserData
+        #endif
 {
 public:
     PMDModelUserData()
@@ -619,6 +623,12 @@ public:
         isBufferAllocated = false;
 #endif
     }
+
+#ifdef VPVL_LINK_QT
+    virtual void initializeContext(const QGLContext *context) {
+        initializeGLFunctions(context);
+    }
+#endif
 
     void releaseMaterials(vpvl::PMDModel *model) {
         if (materials) {

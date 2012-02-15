@@ -662,6 +662,9 @@ Renderer::~Renderer()
 
 void Renderer::initializeSurface()
 {
+#ifdef VPVL_LINK_QT
+    initializeGLFunctions(QGLContext::currentContext());
+#endif
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_BLEND);
@@ -728,7 +731,7 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     casted->zplotProgram = new ZPlotProgram(m_delegate);
 #ifdef VPVL_LINK_QT
     const QGLContext *context = QGLContext::currentContext();
-    initializeGLFunctions(context);
+    casted->initializeContext(context);
     casted->edgeProgram->initializeContext(context);
     casted->modelProgram->initializeContext(context);
     casted->shadowProgram->initializeContext(context);
