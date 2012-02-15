@@ -1396,13 +1396,14 @@ void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, cons
     aiVector3D aiS, aiP;
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
-    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation())
-                        .scaled(Vector3(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor)),
+    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
+    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
                         Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
     if (bone) {
         const Transform &boneTransform = bone->localTransform();
-        transform.setBasis(boneTransform.getBasis() * transform.getBasis());
-        transform.setOrigin(boneTransform.getOrigin() + transform.getOrigin());
+        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
+        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
+        transform.setBasis(boneBasis.scaled(scaleVector));
     }
     AssetUserData *userData = static_cast<AssetUserData *>(asset->userData());
     AssetVertex v;
