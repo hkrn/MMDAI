@@ -1039,6 +1039,11 @@ bool Project::containsMotion(const VMDMotion *motion) const
     return motionUUID(motion) != kNullUUID;
 }
 
+void Project::setDirty(bool value)
+{
+    m_dirty = value;
+}
+
 void Project::addAsset(Asset *asset, const UUID &uuid)
 {
     if (!containsAsset(asset)) {

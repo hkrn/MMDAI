@@ -107,7 +107,7 @@ public:
     bool containsModel(const PMDModel *model) const;
     bool containsMotion(const VMDMotion *motion) const;
     bool isDirty() const { return m_dirty; }
-    void setDirty(bool value) { m_dirty = value; }
+    void setDirty(bool value);
 
     void addAsset(Asset *asset, const UUID &uuid);
     void addModel(PMDModel *model, const UUID &uuid);
