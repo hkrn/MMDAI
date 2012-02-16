@@ -51,6 +51,7 @@ namespace vpvl {
 class Asset;
 class Bone;
 class PMDModel;
+class VMDMotion;
 }
 
 class BoneMotionModel;
@@ -99,6 +100,7 @@ private slots:
     void loadProject();
     void saveMotion();
     void saveMotionAs();
+    void saveCameraMotionAs();
     void saveProject();
     void saveProjectAs();
     void selectModel();
@@ -130,6 +132,7 @@ private slots:
 private:
     bool saveMotionAs(QString &filename);
     bool saveMotionFile(const QString &filename);
+    bool saveMotionFile(const QString &filename, vpvl::VMDMotion *motion);
     bool saveProjectAs(QString &filename);
     bool saveProjectFile(const QString &filename);
     bool maybeSaveMotion();
@@ -191,6 +194,7 @@ private:
     QAction *m_actionSaveProjectAs;
     QAction *m_actionSaveMotion;
     QAction *m_actionSaveMotionAs;
+    QAction *m_actionSaveCameraMotionAs;
     QAction *m_actionLoadModelPose;
     QAction *m_actionSaveModelPose;
     QAction *m_actionLoadAssetMetadata;

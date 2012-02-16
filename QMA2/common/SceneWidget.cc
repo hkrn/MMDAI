@@ -311,7 +311,7 @@ void SceneWidget::setInfoPanelVisible(bool value)
 void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
-    vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastPMDDirectory",
+    vpvl::PMDModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
                                                     tr("Open PMD file"),
                                                     tr("PMD file (*.pmd)")));
     if (model && !m_playing) {
@@ -353,7 +353,7 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
 void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために advanceMotion(0.0f) を呼んでおく */
-    vpvl::VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastVMDDirectory",
+    vpvl::VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                                      tr("Open VMD (for model) file"),
                                                                      tr("VMD file (*.vmd)")));
     vpvl::PMDModel *selected = m_loader->selectedModel();
@@ -382,7 +382,7 @@ void SceneWidget::insertMotionToSelectedModel()
 {
     vpvl::PMDModel *model = m_loader->selectedModel();
     if (model) {
-        vpvl::VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastVMDDirectory",
+        vpvl::VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                                              tr("Open VMD (for model) file"),
                                                                              tr("VMD file (*.vmd)")));
         if (motion)
@@ -503,7 +503,7 @@ void SceneWidget::saveMetadataFromAsset(vpvl::Asset *asset)
 void SceneWidget::insertPoseToSelectedModel()
 {
     vpvl::PMDModel *model = m_loader->selectedModel();
-    VPDFile *pose = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastVPDDirectory",
+    VPDFile *pose = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
                                                              tr("Open VPD file"),
                                                              tr("VPD file (*.vpd)")),
                                               model);
@@ -569,7 +569,7 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
 
 void SceneWidget::setCamera()
 {
-    vpvl::VMDMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraDirectory",
+    vpvl::VMDMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
                                                        tr("Open VMD (for camera) file"),
                                                        tr("VMD file (*.vmd)")));
     if (motion)

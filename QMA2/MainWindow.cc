@@ -329,7 +329,7 @@ void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select a model %1").arg(name));
-    connect(action, SIGNAL(triggered()), this, SLOT(selectModel()));
+    connect(action, SIGNAL(triggered()), SLOT(selectModel()));
     m_menuRetainModels->addAction(action);
     m_sceneWidget->setSelectedModel(model);
 }
@@ -359,7 +359,7 @@ void MainWindow::addAsset(vpvl::Asset *asset, const QUuid &uuid)
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select an asset %1").arg(name));
-    //connect(action, SIGNAL(triggered()), this, SLOT(selectCurrentModel()));
+    //connect(action, SIGNAL(triggered()), SLOT(selectCurrentModel()));
     m_menuRetainAssets->addAction(action);
 }
 
@@ -386,11 +386,22 @@ void MainWindow::saveMotionAs()
 
 bool MainWindow::saveMotionAs(QString &filename)
 {
-    filename = openSaveDialog("mainWindow/lastVMDDirectory",
-                              tr("Save motion as a VMD file"),
+    filename = openSaveDialog("mainWindow/lastModelMotionDirectory",
+                              tr("Save model motion as a VMD file"),
                               tr("VMD file (*.vmd)"),
-                              tr("untitiled.vmd"));
+                              tr("untitiled_model_motion.vmd"));
     return !filename.isEmpty() ? saveMotionFile(filename) : false;
+}
+
+void MainWindow::saveCameraMotionAs()
+{
+    const QString &filename = openSaveDialog("mainWindow/lastCameraMotionDirectory",
+                                             tr("Save camera motion as a VMD file"),
+                                             tr("VMD file (*.vmd)"),
+                                             tr("untitiled_camera_motion.vmd"));
+    vpvl::VMDMotion motion;
+    m_sceneMotionModel->saveMotion(&motion);
+    saveMotionFile(filename, &motion);
 }
 
 bool MainWindow::saveMotionFile(const QString &filename)
@@ -399,22 +410,26 @@ bool MainWindow::saveMotionFile(const QString &filename)
     vpvl::VMDMotion motion;
     m_boneMotionModel->saveMotion(&motion);
     m_faceMotionModel->saveMotion(&motion);
-    m_sceneMotionModel->saveMotion(&motion);
-    size_t size = motion.estimateSize();
-    uint8_t *buffer = new uint8_t[size];
-    motion.save(buffer);
+    return saveMotionFile(filename, &motion);
+}
+
+bool MainWindow::saveMotionFile(const QString &filename, vpvl::VMDMotion *motion)
+{
+    typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
+    size_t size = motion->estimateSize();
+    ByteArrayPtr buffer(new uint8_t[size]);
+    motion->save(buffer.data());
     QFile file(filename);
     bool ret = true;
     if (file.open(QFile::WriteOnly)) {
-        file.write(reinterpret_cast<const char *>(buffer), size);
+        file.write(reinterpret_cast<const char *>(buffer.data()), size);
         file.close();
         qDebug("Saved a motion: %s", qPrintable(filename));
     }
     else {
-        qWarning("Failed exporting VMD: %s", qPrintable(file.errorString()));
+        qWarning("Failed exporting VMD to file: %s", qPrintable(file.errorString()));
         ret = false;
     }
-    delete[] buffer;
     return ret;
 }
 
@@ -505,11 +520,11 @@ void MainWindow::buildUI()
     tabifyDockWidget(m_sceneDockWidget, m_modelDockWidget);
 
     m_actionNewProject = new QAction(this);
-    connect(m_actionNewProject, SIGNAL(triggered()), this, SLOT(newProjectFile()));
+    connect(m_actionNewProject, SIGNAL(triggered()), SLOT(newProjectFile()));
     m_actionNewMotion = new QAction(this);
-    connect(m_actionNewMotion, SIGNAL(triggered()), this, SLOT(addNewMotion()));
+    connect(m_actionNewMotion, SIGNAL(triggered()), SLOT(addNewMotion()));
     m_actionLoadProject = new QAction(this);
-    connect(m_actionLoadProject, SIGNAL(triggered()), this, SLOT(loadProject()));
+    connect(m_actionLoadProject, SIGNAL(triggered()), SLOT(loadProject()));
     m_actionAddModel = new QAction(this);
     connect(m_actionAddModel, SIGNAL(triggered()), m_sceneWidget, SLOT(addModel()));
     m_actionAddAsset = new QAction(this);
@@ -523,31 +538,33 @@ void MainWindow::buildUI()
     m_actionLoadModelPose = new QAction(this);
     connect(m_actionLoadModelPose, SIGNAL(triggered()), m_sceneWidget, SLOT(insertPoseToSelectedModel()));
     m_actionSaveModelPose = new QAction(this);
-    connect(m_actionSaveModelPose, SIGNAL(triggered()), this, SLOT(saveModelPose()));
+    connect(m_actionSaveModelPose, SIGNAL(triggered()), SLOT(saveModelPose()));
     m_actionLoadAssetMetadata = new QAction(this);
     connect(m_actionLoadAssetMetadata, SIGNAL(triggered()), m_sceneWidget, SLOT(addAssetFromMetadata()));
     m_actionSaveAssetMetadata = new QAction(this);
-    connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), this, SLOT(saveAssetMetadata()));
+    connect(m_actionSaveAssetMetadata, SIGNAL(triggered()), SLOT(saveAssetMetadata()));
     m_actionSaveProject = new QAction(this);
-    connect(m_actionSaveProject, SIGNAL(triggered()), this, SLOT(saveProject()));
+    connect(m_actionSaveProject, SIGNAL(triggered()), SLOT(saveProject()));
     m_actionSaveProjectAs = new QAction(this);
-    connect(m_actionSaveProjectAs, SIGNAL(triggered()), this, SLOT(saveProjectAs()));
+    connect(m_actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     m_actionSaveMotion = new QAction(this);
-    connect(m_actionSaveMotion, SIGNAL(triggered()), this, SLOT(saveMotion()));
+    connect(m_actionSaveMotion, SIGNAL(triggered()), SLOT(saveMotion()));
     m_actionSaveMotionAs = new QAction(this);
-    connect(m_actionSaveMotionAs, SIGNAL(triggered()), this, SLOT(saveMotionAs()));
+    connect(m_actionSaveMotionAs, SIGNAL(triggered()), SLOT(saveMotionAs()));
+    m_actionSaveCameraMotionAs = new QAction(this);
+    connect(m_actionSaveCameraMotionAs, SIGNAL(triggered()), SLOT(saveCameraMotionAs()));
     m_actionExportImage = new QAction(this);
-    connect(m_actionExportImage, SIGNAL(triggered()), this, SLOT(exportImage()));
+    connect(m_actionExportImage, SIGNAL(triggered()), SLOT(exportImage()));
     m_actionExportVideo = new QAction(this);
-    connect(m_actionExportVideo, SIGNAL(triggered()), this, SLOT(exportVideo()));
+    connect(m_actionExportVideo, SIGNAL(triggered()), SLOT(exportVideo()));
     m_actionExit = new QAction(this);
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
     m_actionPlay = new QAction(this);
-    connect(m_actionPlay, SIGNAL(triggered()), this, SLOT(startPlayingScene()));
+    connect(m_actionPlay, SIGNAL(triggered()), SLOT(startPlayingScene()));
     m_actionPlaySettings = new QAction(this);
-    connect(m_actionPlaySettings, SIGNAL(triggered()), this, SLOT(openPlaySettingDialog()));
+    connect(m_actionPlaySettings, SIGNAL(triggered()), SLOT(openPlaySettingDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
     m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
@@ -588,9 +605,9 @@ void MainWindow::buildUI()
     connect(m_actionResetCamera, SIGNAL(triggered()), m_sceneWidget, SLOT(resetCamera()));
 
     m_actionSelectNextModel = new QAction(this);
-    connect(m_actionSelectNextModel, SIGNAL(triggered()), this, SLOT(selectNextModel()));
+    connect(m_actionSelectNextModel, SIGNAL(triggered()), SLOT(selectNextModel()));
     m_actionSelectPreviousModel = new QAction(this);
-    connect(m_actionSelectPreviousModel, SIGNAL(triggered()), this, SLOT(selectPreviousModel()));
+    connect(m_actionSelectPreviousModel, SIGNAL(triggered()), SLOT(selectPreviousModel()));
     m_actionRevertSelectedModel = new QAction(this);
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
@@ -670,9 +687,9 @@ void MainWindow::buildUI()
     connect(m_actionShowModelDock, SIGNAL(triggered()), m_modelDockWidget, SLOT(show()));
 
     m_actionClearRecentFiles = new QAction(this);
-    connect(m_actionClearRecentFiles, SIGNAL(triggered()), this, SLOT(clearRecentFiles()));
+    connect(m_actionClearRecentFiles, SIGNAL(triggered()), SLOT(clearRecentFiles()));
     m_actionAbout = new QAction(this);
-    connect(m_actionAbout, SIGNAL(triggered()), this, SLOT(showLicenseWidget()));
+    connect(m_actionAbout, SIGNAL(triggered()), SLOT(showLicenseWidget()));
     m_actionAbout->setMenuRole(QAction::AboutRole);
     m_actionAboutQt = new QAction(this);
     connect(m_actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
@@ -698,6 +715,7 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionSaveProjectAs);
     m_menuFile->addAction(m_actionSaveMotion);
     m_menuFile->addAction(m_actionSaveMotionAs);
+    m_menuFile->addAction(m_actionSaveCameraMotionAs);
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionLoadModelPose);
     m_menuFile->addAction(m_actionSaveModelPose);
@@ -710,7 +728,7 @@ void MainWindow::buildUI()
     m_menuRecentFiles = new QMenu(this);
     for (int i = 0; i < kMaxRecentFiles; i++) {
         QAction *action = new QAction(this);
-        connect(action, SIGNAL(triggered()), this, SLOT(openRecentFile()));
+        connect(action, SIGNAL(triggered()), SLOT(openRecentFile()));
         action->setVisible(false);
         m_actionRecentFiles[i] = action;
         m_menuRecentFiles->addAction(action);
@@ -841,6 +859,7 @@ void MainWindow::bindActions()
     m_actionSaveProjectAs->setShortcut(m_settings.value(kPrefix + "saveProjectAs", QKeySequence(QKeySequence::SaveAs).toString()).toString());
     m_actionSaveMotion->setShortcut(m_settings.value(kPrefix + "saveMotion", "").toString());
     m_actionSaveMotionAs->setShortcut(m_settings.value(kPrefix + "saveMotionAs", "").toString());
+    m_actionSaveCameraMotionAs->setShortcut(m_settings.value(kPrefix + "saveCameraMotionAs", "").toString());
     m_actionLoadModelPose->setShortcut(m_settings.value(kPrefix + "loadModelPose").toString());
     m_actionSaveModelPose->setShortcut(m_settings.value(kPrefix + "saveModelPose").toString());
     m_actionLoadAssetMetadata->setShortcut(m_settings.value(kPrefix + "loadAssetMetadata").toString());
@@ -930,13 +949,15 @@ void MainWindow::retranslate()
     m_actionInsertToSelectedModel->setText(tr("Insert motion to selected model"));
     m_actionInsertToSelectedModel->setStatusTip(tr("Insert a motion to the selected model."));
     m_actionSaveProject->setText(tr("Save project"));
-    m_actionSaveProject->setStatusTip(tr("Save current project as a file."));
+    m_actionSaveProject->setStatusTip(tr("Save current project to the current file."));
     m_actionSaveProjectAs->setText(tr("Save project as"));
-    m_actionSaveProjectAs->setStatusTip(tr("Save current project as a new file."));
+    m_actionSaveProjectAs->setStatusTip(tr("Save current project as a new project file."));
     m_actionSaveMotion->setText(tr("Save motion"));
-    m_actionSaveMotion->setStatusTip(tr("Export all key frames as a VMD."));
+    m_actionSaveMotion->setStatusTip(tr("Export all bone and morph key frames to the current file."));
     m_actionSaveMotionAs->setText(tr("Save motion as"));
-    m_actionSaveMotionAs->setStatusTip(tr("Export all key frames as a new VMD."));
+    m_actionSaveMotionAs->setStatusTip(tr("Export all bone and morph key frames as a new motion file."));
+    m_actionSaveCameraMotionAs->setText(tr("Save camera motion as"));
+    m_actionSaveMotionAs->setStatusTip(tr("Export all camera key frames as a new motion file."));
     m_actionLoadModelPose->setText(tr("Load model pose"));
     m_actionLoadModelPose->setStatusTip(tr("Load a model pose to the selected model."));
     m_actionSaveModelPose->setText(tr("Save model pose"));
@@ -1183,7 +1204,7 @@ void MainWindow::deleteSelectedModel()
 
 void MainWindow::saveModelPose()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastVPDDirectory",
+    const QString &filename = openSaveDialog("mainWindow/lastPoseFileDirectory",
                                              tr("Save model pose as a VPD file"),
                                              tr("VPD file (*.vpd)"),
                                              tr("untitled.vpd"));
