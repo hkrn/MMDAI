@@ -44,6 +44,7 @@ class QCheckBox;
 class QComboBox;
 class QSettings;
 class QSpinBox;
+class SceneLoader;
 class SceneWidget;
 
 class PlaySettingDialog : public QDialog
@@ -51,7 +52,7 @@ class PlaySettingDialog : public QDialog
     Q_OBJECT
 
 public:
-    PlaySettingDialog(MainWindow *parent, QSettings *settings, SceneWidget *scene);
+    PlaySettingDialog(MainWindow *parent, SceneWidget *scene);
     ~PlaySettingDialog();
 
     int fromIndex() const;
@@ -66,7 +67,7 @@ private slots:
     void saveSettings();
 
 private:
-    QSettings *m_settings;
+    SceneLoader *m_sceneLoader;
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
     QComboBox *m_sceneFPSBox;

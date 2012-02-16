@@ -1263,7 +1263,7 @@ void MainWindow::exportVideo()
     if (VideoEncoder::isSupported()) {
         if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
             delete m_exportingVideoDialog;
-            m_exportingVideoDialog = new ExportVideoDialog(this, &m_settings, m_sceneWidget);
+            m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
             m_exportingVideoDialog->show();
         }
         else {
@@ -1431,7 +1431,7 @@ void MainWindow::startPlayingScene()
 {
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
         if (!m_playSettingDialog)
-            m_playSettingDialog = new PlaySettingDialog(this, &m_settings, m_sceneWidget);
+            m_playSettingDialog = new PlaySettingDialog(this, m_sceneWidget);
         if (!m_player)
             m_player = new PlayerWidget(m_sceneWidget, m_playSettingDialog);
         if (!m_player->isActive())
@@ -1447,7 +1447,7 @@ void MainWindow::openPlaySettingDialog()
 {
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
         delete m_playSettingDialog;
-        m_playSettingDialog = new PlaySettingDialog(this, &m_settings, m_sceneWidget);
+        m_playSettingDialog = new PlaySettingDialog(this, m_sceneWidget);
         m_playSettingDialog->show();
     }
     else {

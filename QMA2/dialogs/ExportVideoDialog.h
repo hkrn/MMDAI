@@ -44,6 +44,7 @@ class QCheckBox;
 class QComboBox;
 class QSettings;
 class QSpinBox;
+class SceneLoader;
 class SceneWidget;
 
 class ExportVideoDialog : public QDialog
@@ -51,7 +52,7 @@ class ExportVideoDialog : public QDialog
     Q_OBJECT
 
 public:
-    ExportVideoDialog(MainWindow *parent, QSettings *settings, SceneWidget *scene);
+    ExportVideoDialog(MainWindow *parent, SceneWidget *scene);
     ~ExportVideoDialog();
 
     int sceneWidth() const;
@@ -69,6 +70,7 @@ private  slots:
     void saveSettings();
 
 private:
+    SceneLoader *m_sceneLoader;
     QSpinBox *m_widthBox;
     QSpinBox *m_heightBox;
     QSpinBox *m_fromIndexBox;
@@ -76,7 +78,6 @@ private:
     QSpinBox *m_videoBitrateBox;
     QComboBox *m_sceneFPSBox;
     QCheckBox *m_includeGridBox;
-    QSettings *m_settings;
 
     Q_DISABLE_COPY(ExportVideoDialog)
 };

@@ -769,7 +769,7 @@ void SceneLoader::setModelEdgeColor(vpvl::PMDModel *model, const QColor &value)
 
 bool SceneLoader::isGridVisible() const
 {
-    return m_project ? m_project->globalSetting("grid.visible") == "true" : true;
+    return globalSetting("grid.visible", true);
 }
 
 void SceneLoader::setGridVisible(bool value)
@@ -781,7 +781,7 @@ void SceneLoader::setGridVisible(bool value)
 
 bool SceneLoader::isPhysicsEnabled() const
 {
-    return m_project ? m_project->globalSetting("physics.enabled") == "true" : false;
+    return globalSetting("physics.enabled", false);
 }
 
 void SceneLoader::setPhysicsEnabled(bool value)
@@ -793,7 +793,7 @@ void SceneLoader::setPhysicsEnabled(bool value)
 
 bool SceneLoader::isAccelerationEnabled() const
 {
-    return m_project ? m_project->globalSetting("acceleration.enabled") == "true" : false;
+    return globalSetting("acceleration.enabled", false);
 }
 
 void SceneLoader::setAccelerationEnabled(bool value)
@@ -822,7 +822,7 @@ void SceneLoader::setAccelerationEnabled(bool value)
 
 bool SceneLoader::isBlackBackgroundEnabled() const
 {
-    return m_project ? m_project->globalSetting("background.black") == "true" : false;
+    return  globalSetting("background.black", false);
 }
 
 void SceneLoader::setBlackBackgroundEnabled(bool value)
@@ -830,6 +830,117 @@ void SceneLoader::setBlackBackgroundEnabled(bool value)
     /* 値が同じの場合は更新しない (Qt のスロット/シグナル経由での setDirty を抑制する) */
     if (m_project && isBlackBackgroundEnabled() != value)
         m_project->setGlobalSetting("background.black", value ? "true" : "false");
+}
+
+/* 再生設定及びエンコード設定の場合は同値チェックを行わない。こちらは値を確実に保存させる必要があるため */
+int SceneLoader::frameIndexPlayFrom() const
+{
+    return globalSetting("play.frame_index.from", 0);
+}
+
+void SceneLoader::setFrameIndexPlayFrom(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("play.frame_index.from", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::frameIndexPlayTo() const
+{
+    return globalSetting("play.frame_index.to", 0);
+}
+
+void SceneLoader::setFrameIndexPlayTo(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("play.frame_index.to", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::sceneFPSForPlay() const
+{
+    return globalSetting("play.fps", 60);
+}
+
+void SceneLoader::setSceneFPSForPlay(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("play.fps", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::frameIndexEncodeVideoFrom() const
+{
+    return globalSetting("encode_video.frame_index.from", 0);
+}
+
+void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("encode_video.frame_index.from", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::frameIndexEncodeVideoTo() const
+{
+    return globalSetting("encode_video.frame_index.to", 0);
+}
+
+void SceneLoader::setFrameIndexEncodeVideoTo(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("encode_video.frame_index.to", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::sceneFPSForEncodeVideo() const
+{
+    return globalSetting("encode_video.fps", 60);
+}
+
+void SceneLoader::setSceneFPSForEncodeVideo(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("encode_video.fps", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::sceneWidth() const
+{
+    return globalSetting("encode_video.width", 0);
+}
+
+void SceneLoader::setSceneWidth(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("encode_video.width", QVariant(value).toString().toStdString());
+}
+
+int SceneLoader::sceneHeight() const
+{
+    return globalSetting("encode_video.height", 0);
+}
+
+void SceneLoader::setSceneHeight(int value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("encode_video.height", QVariant(value).toString().toStdString());
+}
+
+bool SceneLoader::isLoop() const
+{
+    return globalSetting("play.loop", false);
+}
+
+void SceneLoader::setLoop(bool value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("play.loop", value ? "true" : "false");
+}
+
+bool SceneLoader::isGridIncluded() const
+{
+    return globalSetting("grid.encode_video", false);
+}
+
+void SceneLoader::setGridIncluded(bool value)
+{
+    if (m_project)
+        m_project->setGlobalSetting("grid.encode_video", value ? "true" : "false");
 }
 
 const vpvl::Vector3 SceneLoader::assetPosition(const vpvl::Asset *asset)
@@ -898,4 +1009,14 @@ void SceneLoader::setSelectedAsset(vpvl::Asset *value)
     m_asset = value;
     m_project->setAssetSetting(value, "selected", "true");
     emit assetDidSelect(value, this);
+}
+
+bool SceneLoader::globalSetting(const char *key, bool def) const
+{
+    return m_project ? m_project->globalSetting(key) == "true" : def;
+}
+
+int SceneLoader::globalSetting(const char *key, int def) const
+{
+    return m_project ? QString::fromStdString(m_project->globalSetting(key)).toInt() : def;
 }

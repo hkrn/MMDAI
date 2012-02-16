@@ -1,28 +1,26 @@
 #include "common/SceneWidget.h"
+#include "common/SceneLoader.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "MainWindow.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-ExportVideoDialog::ExportVideoDialog(MainWindow *parent, QSettings *settings, SceneWidget *scene)
+ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *scene)
     : QDialog(parent),
-      m_settings(settings)
+      m_sceneLoader(scene->sceneLoader())
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     int maxFrameIndex = scene->scene()->maxFrameIndex();
     m_widthBox = new QSpinBox();
     m_widthBox->setRange(scene->minimumWidth(), scene->maximumWidth());
-    int width = settings->value("exportVideoDialog/width", scene->minimumWidth()).toInt();
-    m_widthBox->setValue(width);
+    m_widthBox->setValue(m_sceneLoader->sceneWidth());
     m_heightBox = new QSpinBox();
     m_heightBox->setRange(scene->minimumHeight(), scene->maximumHeight());
-    int height = settings->value("exportVideoDialog/height", scene->minimumHeight()).toInt();
-    m_heightBox->setValue(height);
+    m_heightBox->setValue(m_sceneLoader->sceneHeight());
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
-    int fromIndex = settings->value("exportVideoDialog/fromIndex", 0).toInt();
-    m_fromIndexBox->setValue(qBound(0, fromIndex, maxFrameIndex));
+    m_fromIndexBox->setValue(qBound(0, m_sceneLoader->frameIndexEncodeVideoFrom(), maxFrameIndex));
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox->setValue(maxFrameIndex);
@@ -30,16 +28,25 @@ ExportVideoDialog::ExportVideoDialog(MainWindow *parent, QSettings *settings, Sc
     m_videoBitrateBox->setRange(1, 100000);
     /* 現在の実装は PNG の生形式で出力するため、ビットレート設定は反映されない */
     m_videoBitrateBox->setEnabled(false);
-    int videoBitrate = settings->value("exportVideoDialog/videoBitrate", 10000).toInt();
-    m_videoBitrateBox->setValue(videoBitrate);
+    m_videoBitrateBox->setValue(0);
     m_sceneFPSBox = new QComboBox();
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    int sceneFPSIndex = settings->value("exportVideoDialog/sceneFPSIndex", 1).toInt();
-    m_sceneFPSBox->setCurrentIndex(sceneFPSIndex);
+    switch (m_sceneLoader->sceneFPSForEncodeVideo()) {
+    case 120:
+        m_sceneFPSBox->setCurrentIndex(2);
+        break;
+    case 60:
+    default:
+        m_sceneFPSBox->setCurrentIndex(1);
+        break;
+    case 30:
+        m_sceneFPSBox->setCurrentIndex(0);
+        break;
+    }
     m_includeGridBox = new QCheckBox(tr("Include grid field"));
-    m_includeGridBox->setChecked(settings->value("exportVideoDialog/includeGridBox", false).toBool());
+    m_includeGridBox->setChecked(m_sceneLoader->isGridIncluded());
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(new QLabel(tr("Width (px): ")), 0, 0);
     gridLayout->addWidget(m_widthBox, 0, 1);
@@ -70,13 +77,12 @@ ExportVideoDialog::~ExportVideoDialog()
 
 void ExportVideoDialog::saveSettings()
 {
-    m_settings->setValue("exportVideoDialog/width", m_widthBox->value());
-    m_settings->setValue("exportVideoDialog/height", m_heightBox->value());
-    m_settings->setValue("exportVideoDialog/fromIndex", m_fromIndexBox->value());
-    m_settings->setValue("exportVideoDialog/toIndex", m_toIndexBox->value());
-    m_settings->setValue("exportVideoDialog/videoBitrate", m_videoBitrateBox->value());
-    m_settings->setValue("exportVideoDialog/sceneFPSIndex", m_sceneFPSBox->currentIndex());
-    m_settings->setValue("exportVideoDialog/includeGridBox", m_includeGridBox->isChecked());
+    m_sceneLoader->setSceneWidth(sceneWidth());
+    m_sceneLoader->setSceneHeight(sceneHeight());
+    m_sceneLoader->setFrameIndexEncodeVideoFrom(fromIndex());
+    m_sceneLoader->setFrameIndexEncodeVideoTo(toIndex());
+    m_sceneLoader->setSceneFPSForEncodeVideo(sceneFPS());
+    m_sceneLoader->setGridIncluded(includesGrid());
     emit settingsDidSave();
 }
 

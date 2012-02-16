@@ -1,19 +1,55 @@
+/* ----------------------------------------------------------------- */
+/*                                                                   */
+/*  Copyright (c) 2010-2012  hkrn                                    */
+/*                                                                   */
+/* All rights reserved.                                              */
+/*                                                                   */
+/* Redistribution and use in source and binary forms, with or        */
+/* without modification, are permitted provided that the following   */
+/* conditions are met:                                               */
+/*                                                                   */
+/* - Redistributions of source code must retain the above copyright  */
+/*   notice, this list of conditions and the following disclaimer.   */
+/* - Redistributions in binary form must reproduce the above         */
+/*   copyright notice, this list of conditions and the following     */
+/*   disclaimer in the documentation and/or other materials provided */
+/*   with the distribution.                                          */
+/* - Neither the name of the MMDAI project team nor the names of     */
+/*   its contributors may be used to endorse or promote products     */
+/*   derived from this software without specific prior written       */
+/*   permission.                                                     */
+/*                                                                   */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
+/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
+/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
+/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
+/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
+/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
+/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
+/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
+/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
+/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
+/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
+/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
+/* POSSIBILITY OF SUCH DAMAGE.                                       */
+/* ----------------------------------------------------------------- */
+
+#include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "dialogs/PlaySettingDialog.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, QSettings *settings, SceneWidget *scene)
+PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *scene)
     : QDialog(),
-      m_settings(settings)
+      m_sceneLoader(scene->sceneLoader())
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     int maxFrameIndex = scene->scene()->maxFrameIndex();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
-    int fromIndex = settings->value("playSettingDialog/fromIndex", 0).toInt();
-    m_fromIndexBox->setValue(qBound(0, fromIndex, maxFrameIndex));
+    m_fromIndexBox->setValue(qBound(0, m_sceneLoader->frameIndexPlayFrom(), maxFrameIndex));
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox->setValue(maxFrameIndex);
@@ -21,10 +57,20 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, QSettings *setti
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    int sceneFPSIndex = settings->value("playSettingDialog/sceneFPSIndex", 1).toInt();
-    m_sceneFPSBox->setCurrentIndex(sceneFPSIndex);
+    switch (m_sceneLoader->sceneFPSForPlay()) {
+    case 120:
+        m_sceneFPSBox->setCurrentIndex(2);
+        break;
+    case 60:
+    default:
+        m_sceneFPSBox->setCurrentIndex(1);
+        break;
+    case 30:
+        m_sceneFPSBox->setCurrentIndex(0);
+        break;
+    }
     m_loopBox = new QCheckBox(tr("Loop"));
-    m_loopBox->setChecked(settings->value("playSettingDialog/loop", false).toBool());
+    m_loopBox->setChecked(m_sceneLoader->isLoop());
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(tr("Keyframe from: "), m_fromIndexBox);
     formLayout->addRow(tr("Keyframe to: "), m_toIndexBox);
@@ -46,10 +92,10 @@ PlaySettingDialog::~PlaySettingDialog()
 
 void PlaySettingDialog::saveSettings()
 {
-    m_settings->setValue("playSettingDialog/fromIndex", m_fromIndexBox->value());
-    m_settings->setValue("playSettingDialog/toIndex", m_toIndexBox->value());
-    m_settings->setValue("playSettingDialog/sceneFPSIndex", m_sceneFPSBox->currentIndex());
-    m_settings->setValue("playSettingDialog/loop", m_loopBox->isChecked());
+    m_sceneLoader->setFrameIndexPlayFrom(fromIndex());
+    m_sceneLoader->setFrameIndexPlayTo(toIndex());
+    m_sceneLoader->setSceneFPSForPlay(sceneFPS());
+    m_sceneLoader->setLoop(isLoop());
     emit settingsDidSave();
 }
 

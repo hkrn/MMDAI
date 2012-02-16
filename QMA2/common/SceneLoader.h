@@ -103,6 +103,17 @@ public:
     bool isBlackBackgroundEnabled() const;
     const vpvl::Vector3 worldGravity() const;
     void setWorldGravity(const vpvl::Vector3 &value);
+    int frameIndexPlayFrom() const;
+    int frameIndexPlayTo() const;
+    int sceneFPSForPlay() const;
+    int frameIndexEncodeVideoFrom() const;
+    int frameIndexEncodeVideoTo() const;
+    int sceneFPSForEncodeVideo() const;
+    int sceneWidth() const;
+    int sceneHeight() const;
+    bool isLoop() const;
+    bool isGridIncluded() const;
+
     bool isProjectiveShadowEnabled(const vpvl::PMDModel *model) const;
     void setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value);
     vpvl::PMDModel *selectedModel() const;
@@ -138,6 +149,16 @@ public slots:
     void setPhysicsEnabled(bool value);
     void setAccelerationEnabled(bool value);
     void setBlackBackgroundEnabled(bool value);
+    void setFrameIndexPlayFrom(int value);
+    void setFrameIndexPlayTo(int value);
+    void setSceneFPSForPlay(int value);
+    void setFrameIndexEncodeVideoFrom(int value);
+    void setFrameIndexEncodeVideoTo(int value);
+    void setSceneFPSForEncodeVideo(int value);
+    void setSceneWidth(int value);
+    void setSceneHeight(int value);
+    void setLoop(bool value);
+    void setGridIncluded(bool value);
     void setSelectedModel(vpvl::PMDModel *value);
     void setSelectedAsset(vpvl::Asset *value);
 
@@ -159,6 +180,8 @@ private:
     void insertModel(vpvl::PMDModel *model, const QString &name);
     void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void commitAssetProperties();
+    bool globalSetting(const char *key, bool def) const;
+    int globalSetting(const char *key, int def) const;
 
 #ifdef VPVL_ENABLE_GLSL
     vpvl::gl2::Renderer *m_renderer;
