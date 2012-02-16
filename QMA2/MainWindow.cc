@@ -1130,6 +1130,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
     connect(loader, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
     connect(loader, SIGNAL(projectDidLoad()), m_sceneWidget, SLOT(updateGL()));
+    connect(loader, SIGNAL(projectDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
