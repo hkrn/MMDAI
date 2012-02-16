@@ -952,9 +952,9 @@ void MainWindow::retranslate()
     m_actionSaveProject->setStatusTip(tr("Save current project to the current file."));
     m_actionSaveProjectAs->setText(tr("Save project as"));
     m_actionSaveProjectAs->setStatusTip(tr("Save current project as a new project file."));
-    m_actionSaveMotion->setText(tr("Save motion"));
+    m_actionSaveMotion->setText(tr("Save model motion"));
     m_actionSaveMotion->setStatusTip(tr("Export all bone and morph key frames to the current file."));
-    m_actionSaveMotionAs->setText(tr("Save motion as"));
+    m_actionSaveMotionAs->setText(tr("Save model motion as"));
     m_actionSaveMotionAs->setStatusTip(tr("Export all bone and morph key frames as a new motion file."));
     m_actionSaveCameraMotionAs->setText(tr("Save camera motion as"));
     m_actionSaveMotionAs->setStatusTip(tr("Export all camera key frames as a new motion file."));
