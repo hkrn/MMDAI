@@ -123,7 +123,7 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     subLayout->addWidget(m_edgeOffsetSpinBox);
     subLayout->addWidget(m_edgeColorDialogOpenButton);
     mainLayout->addLayout(subLayout);
-    mainLayout->addWidget(m_projectiveShadowCheckbox);
+    mainLayout->addWidget(m_projectiveShadowCheckbox, 0, Qt::AlignCenter);
     mainLayout->addStretch();
     setLayout(mainLayout);
     retranslate();
