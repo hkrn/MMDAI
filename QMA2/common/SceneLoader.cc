@@ -489,8 +489,8 @@ VPDFile *SceneLoader::loadModelPose(const QString &path, vpvl::PMDModel * /* mod
 
 void SceneLoader::loadProject(const QString &path)
 {
-    delete m_project;
-    m_project = new vpvl::Project(m_delegate);
+    release();
+    createProject();
     bool ret = m_project->load(path.toLocal8Bit().constData());
     if (ret) {
         QList<vpvl::PMDModel *> flm;
@@ -641,10 +641,9 @@ void SceneLoader::release()
       物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
      */
     m_renderer->releaseProject(m_project);
+    m_project->deleteMotion(m_camera, 0);
     delete m_project;
     m_project = 0;
-    delete m_camera;
-    m_camera = 0;
 }
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, vpvl::Asset *asset)
