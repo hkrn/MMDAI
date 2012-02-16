@@ -724,13 +724,13 @@ void SceneLoader::setWorldGravity(const vpvl::Vector3 &value)
 
 bool SceneLoader::isProjectiveShadowEnabled(const vpvl::PMDModel *model) const
 {
-    const std::string &value = m_project->modelSetting(model, "projective_shadow");
+    const std::string &value = m_project->modelSetting(model, "shadow.projective");
     return value == "true";
 }
 
 void SceneLoader::setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value)
 {
-    m_project->setModelSetting(model, "projective_shadow", value ? "true" : "false");
+    m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
 }
 
 vpvl::PMDModel *SceneLoader::selectedModel() const
@@ -868,57 +868,57 @@ void SceneLoader::setSceneFPSForPlay(int value)
 
 int SceneLoader::frameIndexEncodeVideoFrom() const
 {
-    return globalSetting("encode_video.frame_index.from", 0);
+    return globalSetting("video.frame_index.from", 0);
 }
 
 void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
 {
     if (m_project)
-        m_project->setGlobalSetting("encode_video.frame_index.from", QVariant(value).toString().toStdString());
+        m_project->setGlobalSetting("video.frame_index.from", QVariant(value).toString().toStdString());
 }
 
 int SceneLoader::frameIndexEncodeVideoTo() const
 {
-    return globalSetting("encode_video.frame_index.to", 0);
+    return globalSetting("video.frame_index.to", 0);
 }
 
 void SceneLoader::setFrameIndexEncodeVideoTo(int value)
 {
     if (m_project)
-        m_project->setGlobalSetting("encode_video.frame_index.to", QVariant(value).toString().toStdString());
+        m_project->setGlobalSetting("video.frame_index.to", QVariant(value).toString().toStdString());
 }
 
 int SceneLoader::sceneFPSForEncodeVideo() const
 {
-    return globalSetting("encode_video.fps", 60);
+    return globalSetting("video.fps", 60);
 }
 
 void SceneLoader::setSceneFPSForEncodeVideo(int value)
 {
     if (m_project)
-        m_project->setGlobalSetting("encode_video.fps", QVariant(value).toString().toStdString());
+        m_project->setGlobalSetting("video.fps", QVariant(value).toString().toStdString());
 }
 
 int SceneLoader::sceneWidth() const
 {
-    return globalSetting("encode_video.width", 0);
+    return globalSetting("video.width", 0);
 }
 
 void SceneLoader::setSceneWidth(int value)
 {
     if (m_project)
-        m_project->setGlobalSetting("encode_video.width", QVariant(value).toString().toStdString());
+        m_project->setGlobalSetting("video.width", QVariant(value).toString().toStdString());
 }
 
 int SceneLoader::sceneHeight() const
 {
-    return globalSetting("encode_video.height", 0);
+    return globalSetting("video.height", 0);
 }
 
 void SceneLoader::setSceneHeight(int value)
 {
     if (m_project)
-        m_project->setGlobalSetting("encode_video.height", QVariant(value).toString().toStdString());
+        m_project->setGlobalSetting("video.height", QVariant(value).toString().toStdString());
 }
 
 bool SceneLoader::isLoop() const
@@ -934,13 +934,13 @@ void SceneLoader::setLoop(bool value)
 
 bool SceneLoader::isGridIncluded() const
 {
-    return globalSetting("grid.encode_video", false);
+    return globalSetting("grid.video", false);
 }
 
 void SceneLoader::setGridIncluded(bool value)
 {
     if (m_project)
-        m_project->setGlobalSetting("grid.encode_video", value ? "true" : "false");
+        m_project->setGlobalSetting("grid.video", value ? "true" : "false");
 }
 
 const vpvl::Vector3 SceneLoader::assetPosition(const vpvl::Asset *asset)
