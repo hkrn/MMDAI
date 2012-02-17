@@ -199,6 +199,8 @@ void SceneLoader::commitAssetProperties()
         setAssetRotation(m_asset, m_asset->rotation());
         setAssetOpacity(m_asset, m_asset->opacity());
         setAssetScaleFactor(m_asset, m_asset->scaleFactor());
+        setAssetParentModel(m_asset, m_asset->parentModel());
+        setAssetParentBone(m_asset, m_asset->parentBone());
     }
 }
 
@@ -991,6 +993,31 @@ void SceneLoader::setAssetScaleFactor(const vpvl::Asset *asset, float value)
     QString str;
     str.sprintf("%.5f", value);
     m_project->setAssetSetting(asset, "scale", str.toStdString());
+}
+
+vpvl::PMDModel *SceneLoader::assetParentModel(vpvl::Asset *asset) const
+{
+    return m_project->model(m_project->assetSetting(asset, "parent.model"));
+}
+
+void SceneLoader::setAssetParentModel(const vpvl::Asset *asset, vpvl::PMDModel *model)
+{
+    m_project->setAssetSetting(asset, "parent.model", m_project->modelUUID(model));
+}
+
+vpvl::Bone *SceneLoader::assetParentBone(vpvl::Asset *asset) const
+{
+    if (vpvl::PMDModel *model = assetParentModel(asset)) {
+        const std::string &name = m_project->assetSetting(asset, "parent.bone");
+        const QByteArray &bytes = internal::fromQString(QString::fromStdString(name));
+        return model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    }
+    return 0;
+}
+
+void SceneLoader::setAssetParentBone(const vpvl::Asset *asset, vpvl::Bone *bone)
+{
+    m_project->setAssetSetting(asset, "parent.bone", internal::toQString(bone).toStdString());
 }
 
 vpvl::Asset *SceneLoader::selectedAsset() const

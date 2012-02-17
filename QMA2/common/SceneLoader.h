@@ -58,6 +58,7 @@ namespace gl
 class Renderer;
 }
 class Asset;
+class Bone;
 class PMDModel;
 class VMDMotion;
 }
@@ -131,6 +132,10 @@ public:
     void setAssetScaleFactor(const vpvl::Asset *asset, float value);
     vpvl::Asset *selectedAsset() const;
     bool isAssetSelected(const vpvl::Asset *value) const;
+    vpvl::PMDModel *assetParentModel(vpvl::Asset *asset) const;
+    void setAssetParentModel(const vpvl::Asset *asset, vpvl::PMDModel *model);
+    vpvl::Bone *assetParentBone(vpvl::Asset *asset) const;
+    void setAssetParentBone(const vpvl::Asset *asset, vpvl::Bone *bone);
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
