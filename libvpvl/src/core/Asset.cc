@@ -53,6 +53,7 @@ bool Asset::isSupported()
 Asset::Asset()
     : m_importer(0),
       m_scene(0),
+      m_parentModel(0),
       m_parentBone(0),
       m_position(0.0f, 0.0f, 0.0f),
       m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
