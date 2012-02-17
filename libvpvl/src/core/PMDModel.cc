@@ -465,12 +465,13 @@ void PMDModel::updateSkinVertices()
     }
 }
 
-void PMDModel::updateToon(const Vector3 &lightDirection)
+void PMDModel::updateToon(const Vector3 &lightPosition)
 {
     const int nvertices = m_vertices.count();
+    const Vector3 &lightPosition2 = -lightPosition;
     for (int i = 0; i < nvertices; i++) {
         SkinVertex &skin = m_skinnedVertices[i];
-        const Scalar &v = (1.0f - lightDirection.dot(skin.normal)) * 0.5f;
+        const Scalar &v = 0.5f + lightPosition2.dot(skin.normal) * 0.5f;
         skin.textureCoord.setW(v);
         if (!m_vertices[i]->isEdgeEnabled())
             skin.edge = skin.position;
