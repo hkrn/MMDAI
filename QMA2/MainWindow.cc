@@ -255,6 +255,8 @@ void MainWindow::loadProject()
             m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
             m_actionShowGrid->setChecked(loader->isGridVisible());
             m_actionShowBlackBackground->setChecked(loader->isBlackBackgroundEnabled());
+            m_currentProjectFilename = filename;
+            updateWindowTitle();
         }
     }
 }
