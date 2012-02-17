@@ -173,6 +173,11 @@ void Asset::setLoadFlags(uint32_t value)
     m_flags = value;
 }
 
+void Asset::setParentModel(PMDModel *value)
+{
+    m_parentModel = value;
+}
+
 void Asset::setParentBone(Bone *value)
 {
     m_parentBone = value;

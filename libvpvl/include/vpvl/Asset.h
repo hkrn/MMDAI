@@ -59,6 +59,7 @@ namespace vpvl
  */
 
 class Bone;
+class PMDModel;
 
 class VPVL_API Asset
 {
@@ -96,6 +97,9 @@ public:
     uint32_t loadFlags() const {
         return m_flags;
     }
+    PMDModel *parentModel() const {
+        return m_parentModel;
+    }
     Bone *parentBone() const {
         return m_parentBone;
     }
@@ -111,6 +115,7 @@ public:
     void setScaleFactor(const Scalar &value);
     void setOpacity(const Scalar &value);
     void setLoadFlags(uint32_t value);
+    void setParentModel(PMDModel *value);
     void setParentBone(Bone *value);
     void setUserData(UserData *value);
 
@@ -118,6 +123,7 @@ private:
     Assimp::Importer *m_importer;
     const aiScene *m_scene;
     UserData *m_userData;
+    PMDModel *m_parentModel;
     Bone *m_parentBone;
     Vector3 m_position;
     Quaternion m_rotation;
