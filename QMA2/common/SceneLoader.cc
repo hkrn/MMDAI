@@ -495,7 +495,7 @@ void SceneLoader::loadProject(const QString &path)
     createProject();
     bool ret = m_project->load(path.toLocal8Bit().constData());
     if (ret) {
-        QList<vpvl::PMDModel *> flm;
+        QList<vpvl::PMDModel *> lostModels;
         /* vpvl::Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         const vpvl::Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         int nmodels = modelUUIDs.size();
@@ -530,10 +530,10 @@ void SceneLoader::loadProject(const QString &path)
                      name.c_str(),
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
-            flm.append(model);
+            lostModels.append(model);
         }
         /* vpvl::Project はアクセサリのインスタンスを作成しか行わないので、ここでアクセサリとそのリソースの読み込みを行う */
-        QList<vpvl::Asset *> fla;
+        QList<vpvl::Asset *> lostAssets;
         const vpvl::Project::UUIDList &assetUUIDs = m_project->assetUUIDs();
         int nassets = assetUUIDs.size();
         for (int i = 0; i < nassets; i++) {
@@ -556,12 +556,12 @@ void SceneLoader::loadProject(const QString &path)
                      qPrintable(internal::toQString(asset)),
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
-            fla.append(asset);
+            lostAssets.append(asset);
         }
         /* 読み込みに失敗したモデルとアクセサリを vpvl::Project から削除する */
-        foreach (vpvl::PMDModel *model, flm)
+        foreach (vpvl::PMDModel *model, lostModels)
             m_project->deleteModel(model);
-        foreach (vpvl::Asset *asset, fla)
+        foreach (vpvl::Asset *asset, lostAssets)
             m_project->deleteAsset(asset);
         m_project->setDirty(false);
         /* FIXME: モデルとアクセサリ、モーションの追加の通知 */
@@ -1008,8 +1008,8 @@ void SceneLoader::setAssetParentModel(const vpvl::Asset *asset, vpvl::PMDModel *
 vpvl::Bone *SceneLoader::assetParentBone(vpvl::Asset *asset) const
 {
     if (vpvl::PMDModel *model = assetParentModel(asset)) {
-        const std::string &name = m_project->assetSetting(asset, "parent.bone");
-        const QByteArray &bytes = internal::fromQString(QString::fromStdString(name));
+        const QString &name = QString::fromStdString(m_project->assetSetting(asset, "parent.bone"));
+        const QByteArray &bytes = internal::fromQString(name);
         return model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
     }
     return 0;

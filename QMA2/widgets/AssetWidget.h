@@ -43,6 +43,7 @@
 
 namespace vpvl {
 class Asset;
+class Bone;
 class PMDModel;
 }
 
@@ -93,6 +94,8 @@ private slots:
 
 private:
     void setEnable(bool value);
+    void updateModelBoneComboBox(vpvl::PMDModel *model);
+    int modelIndexOf(vpvl::PMDModel *model);
 
     QGroupBox *m_assetGroup;
     QGroupBox *m_assignGroup;

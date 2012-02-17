@@ -187,10 +187,8 @@ void AssetWidget::addModel(vpvl::PMDModel *model)
 
 void AssetWidget::removeModel(vpvl::PMDModel *model)
 {
-    int index = m_models.indexOf(model);
+    int index = modelIndexOf(model);
     if (index >= 0) {
-        /* 最初の要素が地面で、特別枠なため削除してはいけない。そのためインデックスをひとつかさ上げする */
-        index += 1;
         /* モデルが見つかればモデルとそのボーンリストを表示上から削除する。実際にモデルを削除をしない */
         m_models.removeAt(index);
         m_modelComboBox->removeItem(index);
@@ -214,6 +212,12 @@ void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
 {
     /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
     const vpvl::Vector3 &position = asset->position();
+    /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
+    bool isAssetChanged = false;
+    if (m_currentAsset != asset) {
+        m_currentAsset = asset;
+        isAssetChanged = true;
+    }
     m_px->setValue(position.x());
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
@@ -223,9 +227,18 @@ void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
     m_rz->setValue(vpvl::degree(rotation.z()));
     m_scale->setValue(asset->scaleFactor());
     m_opacity->setValue(asset->opacity());
-    /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
-    if (m_currentAsset != asset) {
-        m_currentAsset = asset;
+    if (isAssetChanged) {
+        /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
+        vpvl::Bone *bone = asset->parentBone();
+        if (vpvl::PMDModel *model = asset->parentModel()) {
+            updateModelBoneComboBox(model);
+            int index = modelIndexOf(model);
+            m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
+        }
+        const QString &name = internal::toQString(bone);
+        int index = m_modelBonesComboBox->findText(name);
+        if (index >= 0)
+            m_modelBonesComboBox->setCurrentIndex(index);
         emit assetDidSelect(asset);
     }
 }
@@ -236,25 +249,23 @@ void AssetWidget::changeCurrentModel(int index)
         /* モデルのボーンリストを一旦空にして対象のモデルのボーンリストに更新しておく */
         vpvl::PMDModel *model = m_models[index - 1];
         m_currentModel = model;
-        m_modelBonesComboBox->clear();
-        const vpvl::BoneList &bones = model->bones();
-        const int nbones = bones.count();
-        for (int i = 0; i < nbones; i++) {
-            vpvl::Bone *bone = bones[i];
-            m_modelBonesComboBox->addItem(internal::toQString(bone), i);
-        }
+        m_currentAsset->setParentModel(model);
+        updateModelBoneComboBox(model);
     }
     else if (m_currentAsset) {
         /* 「地面」用。こちらは全くボーンを持たないのでボーンリストを削除した上でアセットの親ボーンを無効にしておく */
         m_modelBonesComboBox->clear();
+        m_currentAsset->setParentModel(0);
         m_currentAsset->setParentBone(0);
     }
 }
 
 void AssetWidget::changeParentBone(int index)
 {
-    vpvl::Bone *bone = m_currentModel->bones().at(index);
-    m_currentAsset->setParentBone(bone);
+    if (m_currentModel) {
+        vpvl::Bone *bone = m_currentModel->bones().at(index);
+        m_currentAsset->setParentBone(bone);
+    }
 }
 
 void AssetWidget::updatePositionX(double value)
@@ -329,6 +340,8 @@ void AssetWidget::setAssetProperties(vpvl::Asset *asset, SceneLoader *loader)
     asset->setRotation(loader->assetRotation(asset));
     asset->setScaleFactor(loader->assetScaleFactor(asset));
     asset->setOpacity(loader->assetOpacity(asset));
+    asset->setParentModel(loader->assetParentModel(asset));
+    asset->setParentBone(loader->assetParentBone(asset));
     changeCurrentAsset(asset);
 }
 
@@ -345,4 +358,26 @@ void AssetWidget::setEnable(bool value)
     m_rz->setEnabled(value);
     m_scale->setEnabled(value);
     m_opacity->setEnabled(value);
+}
+
+void AssetWidget::updateModelBoneComboBox(vpvl::PMDModel *model)
+{
+    m_modelBonesComboBox->clear();
+    if (model) {
+        const vpvl::BoneList &bones = model->bones();
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            m_modelBonesComboBox->addItem(internal::toQString(bone), i);
+        }
+    }
+}
+
+int AssetWidget::modelIndexOf(vpvl::PMDModel *model)
+{
+    int index = m_models.indexOf(model);
+    /* 最初の要素が地面で、特別枠なため削除してはいけない。そのためインデックスをひとつかさ上げする */
+    if (index >= 0)
+        index += 1;
+    return index;
 }
