@@ -495,6 +495,10 @@ void SceneLoader::loadProject(const QString &path)
     createProject();
     bool ret = m_project->load(path.toLocal8Bit().constData());
     if (ret) {
+        if (isAccelerationEnabled()) {
+            if (m_renderer->initializeAccelerator())
+                m_renderer->scene()->setSoftwareSkinningEnable(false);
+        }
         QList<vpvl::PMDModel *> lostModels;
         /* vpvl::Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         const vpvl::Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
