@@ -565,24 +565,48 @@ That's all there is to it!
 
 # MacOSX for i386 binary
 ./configure \
-   --disable-static \
-   --enable-shared \
-   --disable-outdev=sdl \
-   --disable-bzlib \
-   --disable-libfreetype \
-   --disable-libopenjpeg \
-   --enable-zlib \
-   --arch=i386 \
-   --cc="clang -m32"
+    --disable-static \
+    --enable-shared \
+    --disable-bzlib \
+    --disable-libfreetype \
+    --disable-libopenjpeg \
+    --disable-decoders \
+    --disable-encoders \
+    --enable-encoder="png" \
+    --disable-parsers \
+    --disable-demuxers \
+    --disable-muxers \
+    --enable-muxer="mov" \
+    --disable-protocols \
+    --enable-protocol="file" \
+    --disable-filters \
+    --disable-bsfs \
+    --disable-indevs \
+    --disable-outdevs \
+    --enable-zlib \
+    --arch=i386 \
+    --cc="clang -m32"
 
 # MacOSX for x86_64 binary
 ./configure \
-   --disable-static \
-   --enable-shared \
-   --disable-outdev=sdl \
-   --disable-bzlib \
-   --disable-libfreetype \
-   --disable-libopenjpeg \
-   --enable-zlib \
-   --arch=x86_64
+    --disable-static \
+    --enable-shared \
+    --disable-bzlib \
+    --disable-libfreetype \
+    --disable-libopenjpeg \
+    --disable-decoders \
+    --disable-encoders \
+    --enable-encoder="png" \
+    --disable-parsers \
+    --disable-demuxers \
+    --disable-muxers \
+    --enable-muxer="mov" \
+    --disable-protocols \
+    --enable-protocol="file" \
+    --disable-filters \
+    --disable-bsfs \
+    --disable-indevs \
+    --disable-outdevs \
+    --enable-zlib \
+    --arch=x86_64
 
