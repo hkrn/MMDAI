@@ -1216,15 +1216,16 @@ void Renderer::releaseProject(Project *project)
     }
     const Project::UUIDList &modelUUIDs = project->modelUUIDs();
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
-        PMDModel *model = project->model(*it);
-        const Array<VMDMotion *> &motions = model->motions();
-        const int nmotions = motions.count();
-        for (int i = 0; i < nmotions; i++) {
-            VMDMotion *motion = motions[i];
-            project->deleteMotion(motion, model);
+        if (PMDModel *model = project->model(*it)) {
+            const Array<VMDMotion *> &motions = model->motions();
+            const int nmotions = motions.count();
+            for (int i = 0; i < nmotions; i++) {
+                VMDMotion *motion = motions[i];
+                project->deleteMotion(motion, model);
+            }
+            project->removeModel(model);
+            deleteModel(model);
         }
-        project->removeModel(model);
-        deleteModel(model);
     }
 #else
     (void) project;

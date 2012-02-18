@@ -646,15 +646,16 @@ void SceneLoader::release()
     const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         const Project::UUID &modelUUID = *it;
-        PMDModel *model = m_project->model(modelUUID);
-        const Array<VMDMotion *> &motions = model->motions();
-        const int nmotions = motions.count();
-        for (int i = 0; i < nmotions; i++) {
-            VMDMotion *motion = motions[i];
-            const Project::UUID &motionUUID = m_project->motionUUID(motion);
-            emit motionWillDelete(motion, QUuid(motionUUID.c_str()));
+        if (PMDModel *model = m_project->model(modelUUID)) {
+            const Array<VMDMotion *> &motions = model->motions();
+            const int nmotions = motions.count();
+            for (int i = 0; i < nmotions; i++) {
+                VMDMotion *motion = motions[i];
+                const Project::UUID &motionUUID = m_project->motionUUID(motion);
+                emit motionWillDelete(motion, QUuid(motionUUID.c_str()));
+            }
+            emit modelWillDelete(model, QUuid(modelUUID.c_str()));
         }
-        emit modelWillDelete(model, QUuid(modelUUID.c_str()));
     }
     /*
       releaseProject は Project 内にある全ての Asset と PMDModel のインスタンスを Renderer クラスから物理削除し、
