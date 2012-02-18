@@ -108,6 +108,7 @@ void PlayerWidget::stop()
     /* 再生が終わったら物理を無効にする */
     m_sceneWidget->stopPhysicsSimulation();
     m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
+    m_sceneWidget->updateSceneMotion();
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
     delete m_progress;
