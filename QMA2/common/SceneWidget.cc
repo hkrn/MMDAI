@@ -71,25 +71,13 @@ using namespace internal;
 
 namespace {
 
-typedef QSharedPointer<QProgressDialog> ProgressDialogPtr;
-
-ProgressDialogPtr UIGetProgressDialog(const QString &label, int max)
-{
-    QProgressDialog *progress = new QProgressDialog(label, QApplication::tr("Cancel"), 0, max);
-    progress->setMinimumDuration(0);
-    progress->setRange(0, 1);
-    progress->setValue(0);
-    progress->setWindowModality(Qt::WindowModal);
-    return ProgressDialogPtr(progress);
-}
-
 #ifdef GL_MULTISAMPLE
-static inline void EnableMultisample()
+static inline void UIEnableMultisample()
 {
     glEnable(GL_MULTISAMPLE);
 }
 #else
-#define EnableMultisample() (void) 0
+#define UIEnableMultisample() (void) 0
 #endif
 
 }
@@ -235,8 +223,15 @@ void SceneWidget::stopPhysicsSimulation()
 
 void SceneWidget::loadProject(const QString &filename)
 {
+    QProgressDialog *dialog = new QProgressDialog();
+    connect(m_loader, SIGNAL(projectDidLoad(bool)), dialog, SLOT(close()));
+    connect(m_loader, SIGNAL(projectDidCount(int)), dialog, SLOT(setMaximum(int)));
+    connect(m_loader, SIGNAL(projectDidProceed(int)), dialog, SLOT(setValue(int)));
+    dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
+    dialog->setWindowModality(Qt::WindowModal);
     m_loader->loadProject(filename);
     m_world->setGravity(m_loader->worldGravity());
+    delete dialog;
 }
 
 void SceneWidget::saveProject(const QString &filename)
@@ -331,10 +326,8 @@ vpvl::PMDModel *SceneWidget::addModel(const QString &path, bool skipDialog)
         model = m_loader->loadModel(base, dir);
         if (model) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
-                ProgressDialogPtr progress = UIGetProgressDialog("Loading the model...", 0);
                 QUuid uuid;
                 m_loader->addModel(model, base, dir, uuid);
-                progress.data()->setValue(1);
                 emit fileDidLoad(path);
             }
             else {
@@ -448,11 +441,9 @@ vpvl::Asset *SceneWidget::addAsset(const QString &path)
     QFileInfo fi(path);
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
-        ProgressDialogPtr progress = UIGetProgressDialog("Loading the asset...", 0);
         QUuid uuid;
         asset = m_loader->loadAsset(fi.fileName(), fi.dir(), uuid);
         if (asset) {
-            progress.data()->setValue(1);
             emit fileDidLoad(path);
         }
         else {
@@ -477,10 +468,9 @@ vpvl::Asset *SceneWidget::addAssetFromMetadata(const QString &path)
     vpvl::Asset *asset = 0;
     if (fi.exists()) {
         QUuid uuid;
-        ProgressDialogPtr progress = UIGetProgressDialog("Loading the asset...", 0);
         asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid);
         if (asset) {
-            progress.data()->setValue(1);
+            setFocus();
         }
         else {
             QMessageBox::warning(this, tr("Loading asset error"),
@@ -853,7 +843,7 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-    EnableMultisample();
+    UIEnableMultisample();
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     m_renderer = new Renderer(m_delegate, width(), height(), vpvl::Scene::kFPS);
     m_loader = new SceneLoader(m_renderer);
@@ -995,7 +985,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     qglClearColor(m_loader->isBlackBackgroundEnabled() ? Qt::black : Qt::white);
-    EnableMultisample();
+    UIEnableMultisample();
     m_renderer->clear();
     {
         size_t size = 0;

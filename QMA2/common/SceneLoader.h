@@ -168,7 +168,9 @@ public slots:
     void setSelectedAsset(vpvl::Asset *value);
 
 signals:
-    void projectDidLoad();
+    void projectDidCount(int value);
+    void projectDidProceed(int value);
+    void projectDidLoad(bool loaded);
     void projectDidSave();
     void modelDidSelect(vpvl::PMDModel *model, SceneLoader *loader);
     void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);

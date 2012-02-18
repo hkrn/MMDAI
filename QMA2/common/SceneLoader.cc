@@ -499,9 +499,13 @@ void SceneLoader::loadProject(const QString &path)
             if (m_renderer->initializeAccelerator())
                 m_renderer->scene()->setSoftwareSkinningEnable(false);
         }
+        int progress = 0;
         QList<vpvl::PMDModel *> lostModels;
-        /* vpvl::Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
+        QList<vpvl::Asset *> lostAssets;
         const vpvl::Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
+        const vpvl::Project::UUIDList &assetUUIDs = m_project->assetUUIDs();
+        emit projectDidCount(modelUUIDs.size() + assetUUIDs.size());
+        /* vpvl::Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
         for (int i = 0; i < nmodels; i++) {
             vpvl::PMDModel *model = m_project->model(modelUUIDs[i]);
@@ -526,6 +530,7 @@ void SceneLoader::loadProject(const QString &path)
                         motion->reload();
                         emit motionDidAdd(motion, model, QUuid(m_project->motionUUID(motion).c_str()));
                     }
+                    emit projectDidProceed(++progress);
                     continue;
                 }
             }
@@ -535,10 +540,9 @@ void SceneLoader::loadProject(const QString &path)
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
             lostModels.append(model);
+            emit projectDidProceed(++progress);
         }
         /* vpvl::Project はアクセサリのインスタンスを作成しか行わないので、ここでアクセサリとそのリソースの読み込みを行う */
-        QList<vpvl::Asset *> lostAssets;
-        const vpvl::Project::UUIDList &assetUUIDs = m_project->assetUUIDs();
         int nassets = assetUUIDs.size();
         for (int i = 0; i < nassets; i++) {
             vpvl::Asset *asset = m_project->asset(assetUUIDs[i]);
@@ -552,6 +556,7 @@ void SceneLoader::loadProject(const QString &path)
                     emit assetDidAdd(asset, QUuid(m_project->assetUUID(asset).c_str()));
                     if (isAssetSelected(asset))
                         setSelectedAsset(asset);
+                    emit projectDidProceed(++progress);
                     continue;
                 }
             }
@@ -561,6 +566,7 @@ void SceneLoader::loadProject(const QString &path)
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
             lostAssets.append(asset);
+            emit projectDidProceed(++progress);
         }
         /* 読み込みに失敗したモデルとアクセサリを vpvl::Project から削除する */
         foreach (vpvl::PMDModel *model, lostModels)
@@ -568,8 +574,11 @@ void SceneLoader::loadProject(const QString &path)
         foreach (vpvl::Asset *asset, lostAssets)
             m_project->deleteAsset(asset);
         m_project->setDirty(false);
-        /* FIXME: モデルとアクセサリ、モーションの追加の通知 */
-        emit projectDidLoad();
+        emit projectDidLoad(true);
+    }
+    else {
+        qDebug("Failed loading project %s", qPrintable(path));
+        emit projectDidLoad(false);
     }
 }
 
