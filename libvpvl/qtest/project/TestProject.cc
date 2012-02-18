@@ -61,6 +61,8 @@ private Q_SLOTS:
     void handleAssets();
     void handleModels();
     void handleMotions();
+    void handleMotionsWithoutParent();
+    void handleNullUUID();
 
 private:
     static void testGlobalSettings(const Project &project);
@@ -143,11 +145,13 @@ void TestProject::handleAssets()
     project.addAsset(asset, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsAsset(ptr));
+    QCOMPARE(project.assetUUIDs().size(), size_t(1));
     QCOMPARE(project.assetUUID(asset), uuid.toStdString());
     QCOMPARE(project.asset(uuid.toStdString()), asset);
     QCOMPARE(project.asset(Project::kNullUUID), static_cast<Asset*>(0));
     project.deleteAsset(asset);
     QVERIFY(!project.containsAsset(ptr));
+    QCOMPARE(project.assetUUIDs().size(), size_t(0));
     QVERIFY(project.isDirty());
     QVERIFY(!asset);
     project.setDirty(false);
@@ -166,10 +170,13 @@ void TestProject::handleModels()
     project.addModel(model, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsModel(ptr));
+    QCOMPARE(project.modelUUIDs().size(), size_t(1));
+    QCOMPARE(project.modelUUID(model), uuid.toStdString());
     QCOMPARE(project.model(uuid.toStdString()), model);
     QCOMPARE(project.model(Project::kNullUUID), static_cast<PMDModel*>(0));
     project.deleteModel(model);
     QVERIFY(!project.containsModel(ptr));
+    QCOMPARE(project.modelUUIDs().size(), size_t(0));
     QVERIFY(project.isDirty());
     QVERIFY(!model);
     project.setDirty(false);
@@ -191,17 +198,83 @@ void TestProject::handleMotions()
     QVERIFY(project.isDirty());
     QVERIFY(project.containsMotion(ptr));
     QVERIFY(model->containsMotion(motion));
+    QCOMPARE(project.motionUUIDs().size(), size_t(1));
+    QCOMPARE(project.motionUUID(motion), uuid.toStdString());
     QCOMPARE(project.motion(uuid.toStdString()), motion);
     QCOMPARE(project.motion(Project::kNullUUID), static_cast<VMDMotion*>(0));
     project.setDirty(false);
     project.deleteMotion(motion, model);
     QVERIFY(!project.containsMotion(ptr));
+    QCOMPARE(project.motionUUIDs().size(), size_t(0));
     QVERIFY(project.isDirty());
     QVERIFY(!model->containsMotion(motion));
     QVERIFY(!motion);
     project.setDirty(false);
     project.deleteMotion(ptr, model);
     QVERIFY(!project.isDirty());
+}
+
+void TestProject::handleMotionsWithoutParent()
+{
+    const QString &uuid = QUuid::createUuid().toString();
+    Delegate delegate;
+    Project project(&delegate);
+    VMDMotion *motion = new VMDMotion(), *ptr = motion;
+    QVERIFY(!project.containsMotion(ptr));
+    QCOMPARE(project.motionUUID(0), Project::kNullUUID);
+    project.addMotion(motion, 0, uuid.toStdString());
+    QVERIFY(project.isDirty());
+    QVERIFY(project.containsMotion(ptr));
+    QCOMPARE(project.motion(uuid.toStdString()), motion);
+    QCOMPARE(project.motion(Project::kNullUUID), static_cast<VMDMotion*>(0));
+    project.setDirty(false);
+    project.deleteMotion(motion, 0);
+    QVERIFY(!project.containsMotion(ptr));
+    QVERIFY(project.isDirty());
+    QVERIFY(!motion);
+}
+
+void TestProject::handleNullUUID()
+{
+    Delegate delegate;
+    Project project(&delegate);
+    Asset *asset = new Asset();
+    project.addAsset(asset, Project::kNullUUID);
+    project.deleteAsset(asset);
+    QVERIFY(asset);
+    QCOMPARE(project.assetUUIDs().size(), size_t(1));
+    project.removeAsset(asset);
+    QCOMPARE(project.assetUUIDs().size(), size_t(0));
+    delete asset;
+    PMDModel *model = new PMDModel();
+    project.addModel(model, Project::kNullUUID);
+    project.deleteModel(model);
+    QVERIFY(model);
+    QCOMPARE(project.modelUUIDs().size(), size_t(1));
+    project.removeModel(model);
+    QCOMPARE(project.modelUUIDs().size(), size_t(0));
+    delete model;
+    VMDMotion *motion = new VMDMotion();
+    project.addMotion(motion, 0, Project::kNullUUID);
+    project.deleteMotion(motion, 0);
+    QVERIFY(motion);
+    QCOMPARE(project.motionUUIDs().size(), size_t(1));
+    project.removeMotion(motion, 0);
+    QCOMPARE(project.motionUUIDs().size(), size_t(0));
+    delete motion;
+    PMDModel *model2 = new PMDModel();
+    VMDMotion *motion2 = new VMDMotion();
+    project.addModel(model2, Project::kNullUUID);
+    project.addMotion(motion2, model, Project::kNullUUID);
+    project.deleteMotion(motion2, model2);
+    QCOMPARE(project.motionUUIDs().size(), size_t(1));
+    QVERIFY(model2->containsMotion(motion2));
+    project.removeMotion(motion2, model2);
+    QCOMPARE(project.motionUUIDs().size(), size_t(0));
+    QVERIFY(!model2->containsMotion(motion2));
+    project.removeModel(model2);
+    delete model2;
+    delete motion2;
 }
 
 void TestProject::testGlobalSettings(const Project &project)

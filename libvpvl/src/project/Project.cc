@@ -996,17 +996,17 @@ const Project::UUIDList Project::motionUUIDs() const
 
 Asset *Project::asset(const UUID &uuid) const
 {
-    return m_handler->assets[uuid];
+    return uuid != kNullUUID ? m_handler->assets[uuid] : 0;
 }
 
 PMDModel *Project::model(const UUID &uuid) const
 {
-    return m_handler->models[uuid];
+    return uuid != kNullUUID ? m_handler->models[uuid] : 0;
 }
 
 VMDMotion *Project::motion(const UUID &uuid) const
 {
-    return m_handler->motions[uuid];
+    return uuid != kNullUUID ? m_handler->motions[uuid] : 0;
 }
 
 const Project::UUID &Project::assetUUID(const Asset *asset) const
@@ -1094,8 +1094,13 @@ void Project::deleteMotion(VMDMotion *&motion, PMDModel *model)
 {
     if (containsMotion(motion)) {
         m_handler->removeMotion(motion);
-        if (model)
+        if (model) {
             model->deleteMotion(motion);
+        }
+        else {
+            delete motion;
+            motion = 0;
+        }
         setDirty(true);
     }
 }
