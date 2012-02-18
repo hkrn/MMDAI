@@ -34,46 +34,23 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VIDEOENCODER_H
-#define VIDEOENCODER_H
+#include "AudioDecoder.h"
+#include "AVCommon.h"
 
 #include <QtCore/QtCore>
-#include <QtGui/QImage>
+#include <QtGui/QtGui>
 
-class VideoEncoder : public QThread
+using namespace internal;
+
+AudioDecoder::AudioDecoder(const QString &filename)
+    : m_filename(filename)
 {
-    Q_OBJECT
+}
 
-public:
-    static bool isSupported();
-    static void initialize();
+AudioDecoder::~AudioDecoder()
+{
+}
 
-    explicit VideoEncoder(const QString &filename,
-                          const QSize &size,
-                          int fps,
-                          int videoBitrate,
-                          int audioBitrate,
-                          int audioSampleRate,
-                          QObject *parent = 0);
-    ~VideoEncoder();
-
-protected:
-    virtual void run();
-
-private slots:
-    void enqueueImage(const QImage &image);
-    void stop();
-
-private:
-    QString m_filename;
-    QMutex m_mutex;
-    QQueue<QImage> m_images;
-    QSize m_size;
-    int m_fps;
-    int m_videoBitrate;
-    int m_audioBitrate;
-    int m_audioSampleRate;
-    bool m_running;
-};
-
-#endif // VIDEOENCODER_H
+void AudioDecoder::run()
+{
+}

@@ -34,46 +34,63 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VIDEOENCODER_H
-#define VIDEOENCODER_H
+#ifndef AVCOMMON_H
+#define AVCOMMON_H
 
-#include <QtCore/QtCore>
-#include <QtGui/QImage>
+#ifndef INT64_C
+#define INT64_C(c) (c ## LL)
+#define UINT64_C(c) (c ## ULL)
+#endif
 
-class VideoEncoder : public QThread
-{
-    Q_OBJECT
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+}
 
-public:
-    static bool isSupported();
-    static void initialize();
+#include <QtCore/QSize>
+#include <QtCore/QString>
 
-    explicit VideoEncoder(const QString &filename,
-                          const QSize &size,
-                          int fps,
-                          int videoBitrate,
-                          int audioBitrate,
-                          int audioSampleRate,
-                          QObject *parent = 0);
-    ~VideoEncoder();
+namespace internal {
 
-protected:
-    virtual void run();
+double ComputePresentTimeStamp(AVStream *stream);
 
-private slots:
-    void enqueueImage(const QImage &image);
-    void stop();
+void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet);
 
-private:
-    QString m_filename;
-    QMutex m_mutex;
-    QQueue<QImage> m_images;
-    QSize m_size;
-    int m_fps;
-    int m_videoBitrate;
-    int m_audioBitrate;
-    int m_audioSampleRate;
-    bool m_running;
-};
+void OpenEncodingCodec(AVCodecContext *codecContext);
 
-#endif // VIDEOENCODER_H
+AVStream *OpenAudioStream(AVFormatContext *formatContext,
+                                 AVOutputFormat *outputFormat,
+                                 CodecID codecID,
+                                 int bitrate,
+                                 int sampleRate);
+
+void WriteAudioFrame(AVFormatContext *formatContext,
+                            AVStream *stream,
+                            const int16_t *samples,
+                            uint8_t *encodedFrameBuffer,
+                            size_t encodedFrameBufferSize);
+
+AVStream *OpenVideoStream(AVFormatContext *formatContext,
+                                 AVOutputFormat *outputFormat,
+                                 CodecID codecID,
+                                 PixelFormat pixelFormat,
+                                 const QSize &size,
+                                 int bitrate,
+                                 int fps);
+
+void WriteVideoFrame(AVFormatContext *formatContext,
+                            AVStream *stream,
+                            AVFrame *frame,
+                            uint8_t *encodedFrameBuffer,
+                            size_t encodedFrameBufferSize);
+
+AVOutputFormat *CreateVideoFormat(const QString &filename);
+
+AVFormatContext *CreateVideoFormatContext(AVOutputFormat *videoFormat, const QString &filename);
+
+AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format);
+
+}
+
+#endif // AVCOMMON_H
