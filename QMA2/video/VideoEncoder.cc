@@ -78,6 +78,15 @@ VideoEncoder::~VideoEncoder()
     m_running = false;
 }
 
+int VideoEncoder::sizeOfQueue() const
+{
+    int size;
+    m_mutex.lock();
+    size = m_images.size();
+    m_mutex.unlock();
+    return size;
+}
+
 void VideoEncoder::run()
 {
     CodecID videoCodecID = CODEC_ID_PNG;
@@ -126,13 +135,13 @@ void VideoEncoder::run()
         double audioPTS = 0.0, videoPTS = 0.0;
         bool remainQueue = true;
         while (m_running || remainQueue) {
-            m_mutex.lock();
-            if (m_images.size() > 0) {
+            if (sizeOfQueue() > 0) {
                 const QImage &image = m_images.dequeue();
                 m_mutex.unlock();
                 audioPTS = ComputePresentTimeStamp(audioStream);
                 videoPTS = ComputePresentTimeStamp(videoStream);
                 const int w = image.width(), h = image.height();
+                qDebug() << w << h << width << height;
                 uint8_t *data = tmpFrame->data[0];
                 int stride = tmpFrame->linesize[0];
                 for (int y = 0; y < h; y++) {
@@ -167,7 +176,6 @@ void VideoEncoder::run()
                 }
             }
             else {
-                m_mutex.unlock();
                 remainQueue = false;
             }
         }

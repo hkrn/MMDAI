@@ -1308,7 +1308,7 @@ void MainWindow::startExportingVideo()
                                              tr("Video (*.mov)"),
                                              tr("untitled.mov"));
     if (!filename.isEmpty()) {
-        QProgressDialog *progress = new QProgressDialog(this);
+        QProgressDialog *progress = new QProgressDialog();
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::WindowModal);
         int fps = m_sceneWidget->scene()->preferredFPS();
@@ -1327,95 +1327,102 @@ void MainWindow::startExportingVideo()
                                           64000,
                                           44100);
         m_sceneWidget->setPreferredFPS(sceneFPS);
-        if (true) {
-            const Scene *scene = m_sceneWidget->scene();
-            const QString &format = tr("Exporting frame %1 of %2...");
-            int maxRangeIndex = toIndex - fromIndex;
-            progress->setRange(0, maxRangeIndex);
-            /* 画面を復元するために一時的に情報を保持。mainGeometry はコピーを持たないといけないので参照であってはならない */
-            const QRect mainGeomtry = geometry();
-            const QSize minSize = minimumSize(), maxSize = maximumSize(),
-                    videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
-            QSizePolicy policy = sizePolicy();
-            m_mainToolBar->hide();
-            m_timelineDockWidget->hide();
-            m_sceneDockWidget->hide();
-            m_modelDockWidget->hide();
-            statusBar()->hide();
-            /* 動画書き出し用の設定に変更 */
-            resize(videoSize);
-            setMinimumSize(videoSize);
-            setMaximumSize(videoSize);
-            adjustSize();
-            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-            SceneLoader *loader = m_sceneWidget->sceneLoader();
-            PMDModel *selected = loader->selectedModel();
-            bool isGridVisible = loader->isGridVisible();
-            /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
-            m_sceneWidget->stop();
-            m_sceneWidget->stopAutomaticRendering();
-            m_sceneWidget->startPhysicsSimulation();
-            m_sceneWidget->seekMotion(0.0f, true);
-            m_sceneWidget->advanceMotion(fromIndex);
-            loader->setGridVisible(m_exportingVideoDialog->includesGrid());
-            m_sceneWidget->setHandlesVisible(false);
-            m_sceneWidget->setInfoPanelVisible(false);
-            m_sceneWidget->setSelectedModel(0);
-            m_sceneWidget->resize(videoSize);
-            progress->setLabelText(format.arg(0).arg(maxRangeIndex));
-            connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
-            connect(this, SIGNAL(encodingDidStopped()), m_videoEncoder, SLOT(stop()));
-            /* 画面乱れが発生することがあるのでウィンドウがリサイズするのを一旦待つ */
-            QThread::currentThread()->wait(1000);
-            /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
-            m_videoEncoder->start();
-            float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
-            while (!scene->isMotionReachedTo(toIndex)) {
-                if (progress->wasCanceled())
-                    break;
-                QImage image = m_sceneWidget->grabFrameBuffer();
-                if (image.width() != width || image.height() != height)
-                    image = image.scaled(width, height);
-                emit sceneDidRendered(image);
-                int value = progress->value();
-                if (totalAdvanced >= 1.0f) {
-                    value += 1;
-                    totalAdvanced = 0.0f;
-                }
-                progress->setValue(value);
-                progress->setLabelText(format.arg(value).arg(maxRangeIndex));
-                m_sceneWidget->advanceMotion(advanceSecond);
-                m_sceneWidget->resize(videoSize);
-                totalAdvanced += advanceSecond;
-            }
+        const Scene *scene = m_sceneWidget->scene();
+        const QString &exportingFormat = tr("Exporting frame %1 of %2...");
+        int maxRangeIndex = toIndex - fromIndex;
+        progress->setRange(0, maxRangeIndex);
+        /* 画面を復元するために一時的に情報を保持。mainGeometry はコピーを持たないといけないので参照であってはならない */
+        const QRect mainGeomtry = geometry();
+        const QSize minSize = minimumSize(), maxSize = maximumSize(),
+                videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
+        QSizePolicy policy = sizePolicy();
+        m_mainToolBar->hide();
+        m_timelineDockWidget->hide();
+        m_sceneDockWidget->hide();
+        m_modelDockWidget->hide();
+        statusBar()->hide();
+        /* 動画書き出し用の設定に変更 */
+        resize(videoSize);
+        setMinimumSize(videoSize);
+        setMaximumSize(videoSize);
+        adjustSize();
+        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        SceneLoader *loader = m_sceneWidget->sceneLoader();
+        PMDModel *selected = loader->selectedModel();
+        bool isGridVisible = loader->isGridVisible();
+        /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
+        m_sceneWidget->stop();
+        m_sceneWidget->stopAutomaticRendering();
+        m_sceneWidget->startPhysicsSimulation();
+        m_sceneWidget->seekMotion(0.0f, true);
+        m_sceneWidget->advanceMotion(fromIndex);
+        loader->setGridVisible(m_exportingVideoDialog->includesGrid());
+        m_sceneWidget->setHandlesVisible(false);
+        m_sceneWidget->setInfoPanelVisible(false);
+        m_sceneWidget->setSelectedModel(0);
+        m_sceneWidget->resize(videoSize);
+        progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
+        connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
+        connect(this, SIGNAL(encodingDidStopped()), m_videoEncoder, SLOT(stop()));
+        /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
+        m_videoEncoder->start();
+        float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
+        while (!scene->isMotionReachedTo(toIndex)) {
+            if (progress->wasCanceled())
+                break;
             QImage image = m_sceneWidget->grabFrameBuffer();
             if (image.width() != width || image.height() != height)
                 image = image.scaled(width, height);
             emit sceneDidRendered(image);
-            emit encodingDidStopped();
-            /* 画面情報を復元 */
-            loader->setGridVisible(isGridVisible);
-            m_sceneWidget->setHandlesVisible(true);
-            m_sceneWidget->setInfoPanelVisible(true);
-            m_sceneWidget->setSelectedModel(selected);
-            m_sceneWidget->setPreferredFPS(fps);
-            m_sceneWidget->resize(sceneSize);
-            m_sceneWidget->stopPhysicsSimulation();
-            m_sceneWidget->startAutomaticRendering();
-            m_mainToolBar->show();
-            m_timelineDockWidget->show();
-            m_sceneDockWidget->show();
-            m_modelDockWidget->show();
-            statusBar()->show();
-            setSizePolicy(policy);
-            setMinimumSize(minSize);
-            setMaximumSize(maxSize);
-            setGeometry(mainGeomtry);
+            int value = progress->value();
+            if (totalAdvanced >= 1.0f) {
+                value += 1;
+                totalAdvanced = 0.0f;
+            }
+            progress->setValue(value);
+            progress->setLabelText(exportingFormat.arg(value).arg(maxRangeIndex));
+            m_sceneWidget->advanceMotion(advanceSecond);
+            m_sceneWidget->resize(videoSize);
+            totalAdvanced += advanceSecond;
         }
-        else {
-            QMessageBox::warning(this, tr("Failed exporting video."),
-                                 tr("Specified filepath cannot write to export a video."));
+        QImage image = m_sceneWidget->grabFrameBuffer();
+        if (image.width() != width || image.height() != height)
+            image = image.scaled(width, height);
+        emit sceneDidRendered(image);
+        /* エンコードが完了するまで待機 */
+        const QString &encodingFormat = tr("Encoding remain frame %1 of %2...");
+        int remain = m_videoEncoder->sizeOfQueue();
+        progress->setValue(0);
+        progress->setMaximum(remain);
+        progress->setLabelText(encodingFormat.arg(0).arg(remain));
+        int size = 0;
+        while (remain > size) {
+            if (progress->wasCanceled())
+                break;
+            size = remain - m_videoEncoder->sizeOfQueue();
+            progress->setValue(size);
+            progress->setLabelText(encodingFormat.arg(size).arg(remain));
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
+        emit encodingDidStopped();
+        /* 画面情報を復元 */
+        loader->setGridVisible(isGridVisible);
+        m_sceneWidget->setHandlesVisible(true);
+        m_sceneWidget->setInfoPanelVisible(true);
+        m_sceneWidget->setSelectedModel(selected);
+        m_sceneWidget->setPreferredFPS(fps);
+        m_sceneWidget->resize(sceneSize);
+        m_sceneWidget->stopPhysicsSimulation();
+        m_sceneWidget->startAutomaticRendering();
+        m_timelineDockWidget->show();
+        m_sceneDockWidget->show();
+        m_modelDockWidget->show();
+        m_mainToolBar->show();
+        statusBar()->show();
+        setSizePolicy(policy);
+        setMinimumSize(minSize);
+        setMaximumSize(maxSize);
+        setGeometry(mainGeomtry);
         delete progress;
     }
 }

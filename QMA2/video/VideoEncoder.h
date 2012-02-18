@@ -57,6 +57,8 @@ public:
                           QObject *parent = 0);
     ~VideoEncoder();
 
+    int sizeOfQueue() const;
+
 protected:
     virtual void run();
 
@@ -65,8 +67,8 @@ private slots:
     void stop();
 
 private:
+    mutable QMutex m_mutex;
     QString m_filename;
-    QMutex m_mutex;
     QQueue<QImage> m_images;
     QSize m_size;
     int m_fps;
