@@ -45,6 +45,8 @@
 #include <vpvl/vpvl.h>
 #include <aiScene.h>
 
+using namespace vpvl;
+
 class HandlesStaticWorld {
 public:
     HandlesStaticWorld()
@@ -133,10 +135,10 @@ public:
 
     void setWorldTransform(const btTransform & /* worldTrans */) {
     }
-    void setBone(vpvl::Bone *value) { m_bone = value; }
+    void setBone(Bone *value) { m_bone = value; }
 
 protected:
-    vpvl::Bone *m_bone;
+    Bone *m_bone;
 };
 
 class RotationHandleMotionState : public BoneHandleMotionState
@@ -197,7 +199,7 @@ static void LoadTrackableModel(const aiMesh *mesh,
     /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
     LoadStaticModel(mesh, model);
     btTriangleMesh *triangleMesh = new btTriangleMesh();
-    const vpvl::Array<Handles::Vertex> &vertices = model.vertices;
+    const Array<Handles::Vertex> &vertices = model.vertices;
     const int nfaces = vertices.count() / 3;
     for (int i = 0; i < nfaces; i++) {
         int index = i * 3;
@@ -316,11 +318,11 @@ void Handles::resize(int width, int height)
     m_local.rect.setSize(m_local.size);
 }
 
-bool Handles::testHitModel(const vpvl::Vector3 &rayFrom,
-                           const vpvl::Vector3 &rayTo,
+bool Handles::testHitModel(const Vector3 &rayFrom,
+                           const Vector3 &rayTo,
                            bool setTracked,
                            int &flags,
-                           vpvl::Vector3 &pick)
+                           Vector3 &pick)
 {
     flags = kNone;
     if (m_bone) {
@@ -432,12 +434,12 @@ bool Handles::testHitImage(const QPointF &p,
     return flags != kNone;
 }
 
-const btScalar Handles::angle(const vpvl::Vector3 &pos) const
+const btScalar Handles::angle(const Vector3 &pos) const
 {
     return pos.angle(m_bone->localTransform().getOrigin());
 }
 
-void Handles::setPoint3D(const vpvl::Vector3 &value)
+void Handles::setPoint3D(const Vector3 &value)
 {
     m_prevPos3D = value;
 }
@@ -452,7 +454,7 @@ void Handles::setAngle(float value)
     m_prevAngle = value;
 }
 
-const vpvl::Vector3 Handles::diffPoint3D(const vpvl::Vector3 &value) const
+const Vector3 Handles::diffPoint3D(const Vector3 &value) const
 {
     return value - m_prevPos3D;
 }
@@ -467,7 +469,7 @@ float Handles::diffAngle(float value) const
     return value - m_prevAngle;
 }
 
-void Handles::setBone(vpvl::Bone *value)
+void Handles::setBone(Bone *value)
 {
     m_bone = value;
     btDiscreteDynamicsWorld *world = m_world->world();
@@ -573,7 +575,7 @@ void Handles::drawModelHandles()
     if (!m_visible || !m_program.isLinked() || !m_bone)
         return;
     float matrix[16];
-    const vpvl::Scene *scene = m_widget->scene();
+    const Scene *scene = m_widget->scene();
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
     int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
@@ -584,8 +586,8 @@ void Handles::drawModelHandles()
     func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
     scene->getProjectionMatrix(matrix);
     func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
-    const vpvl::Transform &boneTransform = m_bone->localTransform();
-    vpvl::Transform transform = vpvl::Transform::getIdentity();
+    const Transform &boneTransform = m_bone->localTransform();
+    Transform transform = Transform::getIdentity();
     transform.setOrigin(m_bone->localTransform().getOrigin());
     transform.getOpenGLMatrix(matrix);
     func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
@@ -677,7 +679,7 @@ void Handles::loadModelHandles()
     QFile rotationHandleFile(":models/rotation.3ds");
     if (rotationHandleFile.open(QFile::ReadOnly)) {
         const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
-        vpvl::Asset *asset = new vpvl::Asset();
+        Asset *asset = new Asset();
         asset->load(reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData()), rotationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
         LoadTrackableModel(meshes[1], m_world, new RotationHandleMotionState(), m_rotationHandle.x);
@@ -689,7 +691,7 @@ void Handles::loadModelHandles()
     QFile translationHandleFile(":models/translation.3ds");
     if (translationHandleFile.open(QFile::ReadOnly)) {
         const QByteArray &translationHandleBytes = translationHandleFile.readAll();
-        vpvl::Asset *asset = new vpvl::Asset();
+        Asset *asset = new Asset();
         asset->load(reinterpret_cast<const uint8_t *>(translationHandleBytes.constData()), translationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
         LoadTrackableModel(meshes[0], m_world, new TranslationHandleMotionState(), m_translationHandle.x);

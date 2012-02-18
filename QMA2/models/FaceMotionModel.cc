@@ -38,13 +38,15 @@
 #include "models/FaceMotionModel.h"
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 namespace
 {
 
 class TreeItem : public MotionBaseModel::ITreeItem
 {
 public:
-    TreeItem(const QString &name, vpvl::Face *face, bool isRoot, bool isCategory, TreeItem *parent)
+    TreeItem(const QString &name, Face *face, bool isRoot, bool isCategory, TreeItem *parent)
         : m_name(name),
           m_parent(parent),
           m_face(face),
@@ -68,7 +70,7 @@ public:
     const QString &name() const {
         return m_name;
     }
-    vpvl::Face *face() const {
+    Face *face() const {
         return m_face;
     }
     bool isRoot() const {
@@ -89,7 +91,7 @@ private:
     QList<TreeItem *> m_children;
     QString m_name;
     TreeItem *m_parent;
-    vpvl::Face *m_face;
+    Face *m_face;
     bool m_isRoot;
     bool m_isCategory;
 };
@@ -130,7 +132,7 @@ public:
     virtual void undo() {
         /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
         const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
-        vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
+        FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyframes(frameIndex);
             foreach (PMDMotionModel::ITreeItem *item, items) {
@@ -142,7 +144,7 @@ public:
         foreach (const ModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.second;
             m_fmm->setData(index.first, bytes, Qt::EditRole);
-            vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
+            FaceKeyframe *frame = new FaceKeyframe();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyframe(frame);
         }
@@ -155,14 +157,14 @@ public:
     }
     virtual void redo() {
         QString key;
-        vpvl::FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
+        FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
         const FaceMotionModel::Keys &keys = m_fmm->keys();
-        vpvl::Face *selected = m_fmm->selectedFace();
+        Face *selected = m_fmm->selectedFace();
         /* すべてのキーフレーム情報を登録する */
         foreach (const FaceMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
             FaceMotionModel::KeyFramePtr ptr = pair.second;
-            vpvl::FaceKeyframe *frame = ptr.data();
+            FaceKeyframe *frame = ptr.data();
             /* キーフレームの対象頂点モーフ名を取得する */
             if (frame) {
                 key = internal::toQString(frame);
@@ -182,8 +184,8 @@ public:
                  * (前のキーフレームの情報が入ってる可能性があるので、それ故に重複が発生することを防ぐ)
                  */
                 const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(keys[key], frameIndex);
-                QByteArray bytes(vpvl::BoneKeyframe::strideSize(), '0');
-                vpvl::FaceKeyframe *newFrame = static_cast<vpvl::FaceKeyframe *>(frame->clone());
+                QByteArray bytes(BoneKeyframe::strideSize(), '0');
+                FaceKeyframe *newFrame = static_cast<FaceKeyframe *>(frame->clone());
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 animation->replaceKeyframe(newFrame);
                 m_fmm->setData(modelIndex, bytes, Qt::EditRole);
@@ -208,7 +210,7 @@ private:
 class ResetAllCommand : public QUndoCommand
 {
 public:
-    ResetAllCommand(vpvl::PMDModel *model)
+    ResetAllCommand(PMDModel *model)
         : QUndoCommand(),
           m_model(model)
     {
@@ -232,14 +234,14 @@ public:
     }
 
 private:
-    vpvl::PMDModel *m_model;
-    vpvl::PMDModel::State *m_state;
+    PMDModel *m_model;
+    PMDModel::State *m_state;
 };
 
 class SetFaceCommand : public QUndoCommand
 {
 public:
-    SetFaceCommand(vpvl::PMDModel *model, vpvl::PMDModel::State *state)
+    SetFaceCommand(PMDModel *model, PMDModel::State *state)
         : QUndoCommand(),
           m_model(model),
           m_newState(0),
@@ -266,14 +268,14 @@ public:
     }
 
 private:
-    vpvl::PMDModel *m_model;
-    vpvl::PMDModel::State *m_newState;
-    vpvl::PMDModel::State *m_oldState;
+    PMDModel *m_model;
+    PMDModel::State *m_newState;
+    PMDModel::State *m_oldState;
 };
 
-static vpvl::Face *FaceFromModelIndex(const QModelIndex &index, vpvl::PMDModel *model)
+static Face *FaceFromModelIndex(const QModelIndex &index, PMDModel *model)
 {
-    /* QModelIndex -> TreeIndex -> ByteArray -> vpvl::Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
+    /* QModelIndex -> TreeIndex -> ByteArray -> Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     QByteArray bytes = internal::fromQString(item->name());
     return model->findFace(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -292,13 +294,13 @@ FaceMotionModel::~FaceMotionModel()
     m_frames.releaseAll();
 }
 
-void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
+void FaceMotionModel::saveMotion(VMDMotion *motion)
 {
     if (m_model) {
-        /* モデルの ByteArray を vpvl::BoneKeyFrame に読ませて積んでおくだけの簡単な処理 */
-        vpvl::FaceAnimation *animation = motion->mutableFaceAnimation();
+        /* モデルの ByteArray を BoneKeyFrame に読ませて積んでおくだけの簡単な処理 */
+        FaceAnimation *animation = motion->mutableFaceAnimation();
         foreach (QVariant value, values()) {
-            vpvl::FaceKeyframe *newFrame = new vpvl::FaceKeyframe();
+            FaceKeyframe *newFrame = new FaceKeyframe();
             const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->addKeyframe(newFrame);
@@ -313,15 +315,15 @@ void FaceMotionModel::saveMotion(vpvl::VMDMotion *motion)
 void FaceMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList faceFrames;
-    vpvl::PMDModel *model = selectedModel();
+    PMDModel *model = selectedModel();
     /* モデルのインデックスを参照し、存在する頂点モーフに対して頂点モーフの現在の重み係数から頂点モーフのキーフレームにコピーする */
     foreach (const QModelIndex &index, indices) {
         int frameIndex = toFrameIndex(index);
         if (frameIndex >= 0) {
             const QByteArray &name = nameFromModelIndex(index);
-            vpvl::Face *face = model->findFace(reinterpret_cast<const uint8_t *>(name.constData()));
+            Face *face = model->findFace(reinterpret_cast<const uint8_t *>(name.constData()));
             if (face) {
-                vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
+                FaceKeyframe *frame = new FaceKeyframe();
                 frame->setName(face->name());
                 frame->setWeight(face->weight());
                 faceFrames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
@@ -340,7 +342,7 @@ void FaceMotionModel::copyKeyframes(int frameIndex)
             QVariant variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 QByteArray bytes = variant.toByteArray();
-                vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
+                FaceKeyframe *frame = new FaceKeyframe();
                 frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 m_frames.add(frame);
             }
@@ -354,7 +356,7 @@ void FaceMotionModel::pasteKeyframes(int frameIndex)
         FaceMotionModel::KeyFramePairList frames;
         const int nframes = m_frames.count();
         for (int i = 0; i < nframes; i++) {
-            vpvl::FaceKeyframe *frame = static_cast<vpvl::FaceKeyframe *>(m_frames[i]->clone());
+            FaceKeyframe *frame = static_cast<FaceKeyframe *>(m_frames[i]->clone());
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
@@ -385,10 +387,10 @@ void FaceMotionModel::commitTransform()
 void FaceMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
-        QList<vpvl::Face *> faces;
+        QList<Face *> faces;
         foreach (const QModelIndex &index, indices) {
             if (index.isValid()) {
-                vpvl::Face *face = FaceFromModelIndex(index, m_model);
+                Face *face = FaceFromModelIndex(index, m_model);
                 if (face)
                     faces.append(face);
             }
@@ -421,7 +423,7 @@ void FaceMotionModel::resetAllFaces()
         addUndoCommand(new ResetAllCommand(m_model));
 }
 
-void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
+void FaceMotionModel::setPMDModel(PMDModel *model)
 {
     /* 引数のモデルが現在選択中のものであれば二重処理になってしまうので、スキップする */
     if (m_model == model)
@@ -437,25 +439,25 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
             TreeItem *eye = new TreeItem(tr("Eye"), 0, false, true, static_cast<TreeItem *>(r));
             TreeItem *lip = new TreeItem(tr("Lip"), 0, false, true, static_cast<TreeItem *>(r));
             TreeItem *other = new TreeItem(tr("Other"), 0, false, true, static_cast<TreeItem *>(r));
-            const vpvl::FaceList &faces = model->facesForUI();
+            const FaceList &faces = model->facesForUI();
             const int nfaces = faces.count();
             Keys keys;
             for (int i = 0; i < nfaces; i++) {
-                vpvl::Face *face = faces[i];
+                Face *face = faces[i];
                 const QString &name = internal::toQString(face);
                 TreeItem *child, *parent = 0;
                 /* カテゴリ毎に頂点モーフを追加して整理する */
                 switch (face->type()) {
-                case vpvl::Face::kEyeblow:
+                case Face::kEyeblow:
                     parent = eyeblow;
                     break;
-                case vpvl::Face::kEye:
+                case Face::kEye:
                     parent = eye;
                     break;
-                case vpvl::Face::kLip:
+                case Face::kLip:
                     parent = lip;
                     break;
-                case vpvl::Face::kOther:
+                case Face::kOther:
                     parent = other;
                     break;
                 default:
@@ -490,25 +492,25 @@ void FaceMotionModel::setPMDModel(vpvl::PMDModel *model)
     reset();
 }
 
-void FaceMotionModel::loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model)
+void FaceMotionModel::loadMotion(VMDMotion *motion, PMDModel *model)
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {
-        const vpvl::FaceAnimation &animation = motion->faceAnimation();
+        const FaceAnimation &animation = motion->faceAnimation();
         const int nFaceFrames = animation.countKeyframes();
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nFaceFrames; i++) {
-            vpvl::FaceKeyframe *frame = animation.frameAt(i);
+            FaceKeyframe *frame = animation.frameAt(i);
             const uint8_t *name = frame->name();
             const QString &key = internal::toQString(name);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
                 int frameIndex = static_cast<int>(frame->frameIndex());
-                QByteArray bytes(vpvl::BoneKeyframe::strideSize(), '0');
+                QByteArray bytes(BoneKeyframe::strideSize(), '0');
                 ITreeItem *item = keys[key];
                 /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
-                vpvl::FaceKeyframe newFrame;
+                FaceKeyframe newFrame;
                 newFrame.setName(name);
                 newFrame.setWeight(frame->weight());
                 newFrame.setFrameIndex(frameIndex);
@@ -550,12 +552,12 @@ void FaceMotionModel::removeModel()
 
 void FaceMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    vpvl::FaceAnimation *animation = m_motion->mutableFaceAnimation();
+    FaceAnimation *animation = m_motion->mutableFaceAnimation();
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを削除する */
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (vpvl::Face *face = item->face())
+            if (Face *face = item->face())
                 animation->deleteKeyframe(toFrameIndex(index), face->name());
             setData(index, QVariant());
         }
@@ -569,8 +571,8 @@ void FaceMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
         if (index.isValid()) {
             /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを取得し、値を補正する */
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (vpvl::Face *face = item->face()) {
-                vpvl::FaceKeyframe *keyframe = new vpvl::FaceKeyframe();
+            if (Face *face = item->face()) {
+                FaceKeyframe *keyframe = new FaceKeyframe();
                 keyframe->setName(face->name());
                 keyframe->setWeight(face->weight() * value);
                 keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
@@ -580,18 +582,18 @@ void FaceMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
     setFrames(keyframes);
 }
 
-void FaceMotionModel::selectFaces(const QList<vpvl::Face *> &faces)
+void FaceMotionModel::selectFaces(const QList<Face *> &faces)
 {
     m_selected = faces;
     emit facesDidSelect(faces);
 }
 
-vpvl::Face *FaceMotionModel::findFace(const QString &name)
+Face *FaceMotionModel::findFace(const QString &name)
 {
     /* QString を扱っていること以外 PMDModel#findFace と同じ */
     const QByteArray &bytes = internal::getTextCodec()->fromUnicode(name);
     foreach (ITreeItem *item, keys()) {
-        vpvl::Face *face = static_cast<TreeItem *>(item)->face();
+        Face *face = static_cast<TreeItem *>(item)->face();
         if (!qstrcmp(reinterpret_cast<const char *>(face->name()), bytes))
             return face;
     }
@@ -604,7 +606,7 @@ void FaceMotionModel::setWeight(float value)
         setWeight(value, m_selected.last());
 }
 
-void FaceMotionModel::setWeight(float value, vpvl::Face *face)
+void FaceMotionModel::setWeight(float value, Face *face)
 {
     if (face) {
         face->setWeight(value);

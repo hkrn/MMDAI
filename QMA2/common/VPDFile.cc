@@ -39,6 +39,8 @@
 #include <vpvl/vpvl.h>
 #include <QtCore/QtCore>
 
+using namespace vpvl;
+
 enum InternalParseState
 {
     kNone,
@@ -181,8 +183,8 @@ void VPDFile::save(QTextStream &stream)
     stream << headerTemplate.arg(m_bones.size());
     uint32_t i = 0;
     foreach (Bone *bone, m_bones) {
-        const vpvl::Vector3 &pos = bone->position;
-        const vpvl::Vector4 &rot = bone->rotation;
+        const Vector3 &pos = bone->position;
+        const Vector4 &rot = bone->rotation;
 #ifdef VPVL_COORDINATE_OPENGL
         stream << QString().sprintf(boneTemplate, i, qPrintable(bone->name),
                                     pos.x(), pos.y(), -pos.z(),
@@ -196,7 +198,7 @@ void VPDFile::save(QTextStream &stream)
     }
 }
 
-void VPDFile::makePose(vpvl::PMDModel *model)
+void VPDFile::makePose(PMDModel *model)
 {
     QByteArray bytes;
     QTextCodec *codec = internal::getTextCodec();
@@ -204,9 +206,9 @@ void VPDFile::makePose(vpvl::PMDModel *model)
         bytes = codec->fromUnicode(b->name);
         vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
         if (bone) {
-            vpvl::Vector3 pos = b->position;
-            vpvl::Vector4 rot = b->rotation;
-            const vpvl::Quaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
+            Vector3 pos = b->position;
+            Vector4 rot = b->rotation;
+            const Quaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
             bone->setPosition(pos);
             bone->setRotation(rotation);
         }

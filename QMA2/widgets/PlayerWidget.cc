@@ -42,6 +42,8 @@
 
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
     : QObject(),
       m_sceneWidget(sceneWidget),
@@ -66,7 +68,7 @@ void PlayerWidget::start()
     int sceneFPS = m_dialog->sceneFPS();
     m_selected = m_sceneWidget->sceneLoader()->selectedModel();
     m_prevSceneFPS = m_sceneWidget->scene()->preferredFPS();
-    m_frameStep = 1.0f / (sceneFPS / static_cast<float>(vpvl::Scene::kFPS));
+    m_frameStep = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS));
     m_totalStep = 0.0f;
     m_sceneWidget->stop();
     /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
@@ -124,7 +126,7 @@ void PlayerWidget::renderSceneFrame()
         m_elapsed.restart();
     }
     m_countForFPS++;
-    vpvl::Scene *scene = m_sceneWidget->mutableScene();
+    Scene *scene = m_sceneWidget->mutableScene();
     bool isReached = scene->isMotionReachedTo(m_dialog->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
     if ((!m_dialog->isLoop() && isReached) || m_progress->wasCanceled()) {

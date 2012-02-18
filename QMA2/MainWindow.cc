@@ -66,9 +66,11 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 namespace {
 
-static int FindIndexOfActions(vpvl::PMDModel *model, const QList<QAction *> &actions)
+static int FindIndexOfActions(PMDModel *model, const QList<QAction *> &actions)
 {
     const QString &name = internal::toQString(model);
     int i = 0, found = -1;
@@ -112,7 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_undo = new QUndoGroup(this);
     m_sceneWidget = new SceneWidget(&m_settings);
-    /* SceneWidget で渡しているのは vpvl::Scene が initializeGL で初期化されるという特性のため */
+    /* SceneWidget で渡しているのは Scene が initializeGL で初期化されるという特性のため */
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
     m_faceMotionModel = new FaceMotionModel(m_undo, this);
     m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
@@ -208,7 +210,7 @@ void MainWindow::selectModel()
     }
 }
 
-void MainWindow::setCurrentModel(vpvl::PMDModel *model)
+void MainWindow::setCurrentModel(PMDModel *model)
 {
     m_model = model;
 }
@@ -218,7 +220,7 @@ void MainWindow::newMotionFile()
     if (maybeSaveMotion()) {
         /*
          * PMDMotionModel のデータを空にしてから新規のモーションを作成する
-         * なお、PMDMotionModel のデータは vpvl::VMDMotion とは独立している
+         * なお、PMDMotionModel のデータは VMDMotion とは独立している
          */
         m_boneMotionModel->removeMotion();
         m_faceMotionModel->removeMotion();
@@ -325,7 +327,7 @@ void MainWindow::clearRecentFiles()
     updateRecentFiles();
 }
 
-void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
+void MainWindow::addModel(PMDModel *model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
     QString name = internal::toQString(model);
@@ -337,7 +339,7 @@ void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
     m_sceneWidget->setSelectedModel(model);
 }
 
-void MainWindow::deleteModel(vpvl::PMDModel *model, const QUuid &uuid)
+void MainWindow::deleteModel(PMDModel *model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
     if (model == m_sceneWidget->sceneLoader()->selectedModel())
@@ -355,7 +357,7 @@ void MainWindow::deleteModel(vpvl::PMDModel *model, const QUuid &uuid)
         m_menuRetainModels->removeAction(actionToRemove);
 }
 
-void MainWindow::addAsset(vpvl::Asset *asset, const QUuid &uuid)
+void MainWindow::addAsset(Asset *asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
     QString name = internal::toQString(asset);
@@ -366,7 +368,7 @@ void MainWindow::addAsset(vpvl::Asset *asset, const QUuid &uuid)
     m_menuRetainAssets->addAction(action);
 }
 
-void MainWindow::deleteAsset(vpvl::Asset * /* asset */, const QUuid &uuid)
+void MainWindow::deleteAsset(Asset * /* asset */, const QUuid &uuid)
 {
     /* 削除されたアクセサリをアクセサリ選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -402,7 +404,7 @@ void MainWindow::saveCameraMotionAs()
                                              tr("Save camera motion as a VMD file"),
                                              tr("VMD file (*.vmd)"),
                                              tr("untitiled_camera_motion.vmd"));
-    vpvl::VMDMotion motion;
+    VMDMotion motion;
     m_sceneMotionModel->saveMotion(&motion);
     saveMotionFile(filename, &motion);
 }
@@ -410,13 +412,13 @@ void MainWindow::saveCameraMotionAs()
 bool MainWindow::saveMotionFile(const QString &filename)
 {
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
-    vpvl::VMDMotion motion;
+    VMDMotion motion;
     m_boneMotionModel->saveMotion(&motion);
     m_faceMotionModel->saveMotion(&motion);
     return saveMotionFile(filename, &motion);
 }
 
-bool MainWindow::saveMotionFile(const QString &filename, vpvl::VMDMotion *motion)
+bool MainWindow::saveMotionFile(const QString &filename, VMDMotion *motion)
 {
     typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
     size_t size = motion->estimateSize();
@@ -776,7 +778,7 @@ void MainWindow::buildUI()
     m_menuRetainModels = new QMenu(this);
     m_menuModel->addMenu(m_menuRetainModels);
     m_menuRetainAssets = new QMenu(this);
-    if (vpvl::Asset::isSupported())
+    if (Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
     m_menuModel->addAction(m_actionSelectNextModel);
     m_menuModel->addAction(m_actionSelectPreviousModel);
@@ -952,7 +954,7 @@ void MainWindow::retranslate()
     m_actionAddModel->setStatusTip(tr("Add a model to the scene."));
     m_actionAddAsset->setText(tr("Add asset"));
     m_actionAddAsset->setStatusTip(tr("Add an asset to the scene."));
-    m_actionAddAsset->setEnabled(vpvl::Asset::isSupported());
+    m_actionAddAsset->setEnabled(Asset::isSupported());
     m_actionInsertToAllModels->setText(tr("Insert motion to all models"));
     m_actionInsertToAllModels->setStatusTip(tr("Insert a motion to the all models."));
     m_actionInsertToSelectedModel->setText(tr("Insert motion to selected model"));
@@ -1125,11 +1127,9 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    //connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
-    //connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_modelTabWidget->interpolationWidget(), SLOT(disable()));
@@ -1249,7 +1249,7 @@ void MainWindow::exportImage()
                                              tr("untitled.png"));
     if (!filename.isEmpty()) {
         SceneLoader *loader = m_sceneWidget->sceneLoader();
-        vpvl::PMDModel *selected = loader->selectedModel();
+        PMDModel *selected = loader->selectedModel();
         bool isGridVisible = loader->isGridVisible();
         loader->setGridVisible(false);
         m_sceneWidget->setHandlesVisible(false);
@@ -1328,7 +1328,7 @@ void MainWindow::startExportingVideo()
                                           44100);
         m_sceneWidget->setPreferredFPS(sceneFPS);
         if (true) {
-            const vpvl::Scene *scene = m_sceneWidget->scene();
+            const Scene *scene = m_sceneWidget->scene();
             const QString &format = tr("Exporting frame %1 of %2...");
             int maxRangeIndex = toIndex - fromIndex;
             progress->setRange(0, maxRangeIndex);
@@ -1349,7 +1349,7 @@ void MainWindow::startExportingVideo()
             adjustSize();
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
             SceneLoader *loader = m_sceneWidget->sceneLoader();
-            vpvl::PMDModel *selected = loader->selectedModel();
+            PMDModel *selected = loader->selectedModel();
             bool isGridVisible = loader->isGridVisible();
             /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
             m_sceneWidget->stop();
@@ -1369,7 +1369,7 @@ void MainWindow::startExportingVideo()
             QThread::currentThread()->wait(1000);
             /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
             m_videoEncoder->start();
-            float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(vpvl::Scene::kFPS)), totalAdvanced = 0.0f;
+            float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
             while (!scene->isMotionReachedTo(toIndex)) {
                 if (progress->wasCanceled())
                     break;
@@ -1423,8 +1423,8 @@ void MainWindow::startExportingVideo()
 void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
-        vpvl::PMDModel *model = m_sceneWidget->sceneLoader()->selectedModel();
-        vpvl::VMDMotion *motion = m_boneMotionModel->currentMotion();
+        PMDModel *model = m_sceneWidget->sceneLoader()->selectedModel();
+        VMDMotion *motion = m_boneMotionModel->currentMotion();
         if (model && motion) {
             model->deleteMotion(motion);
             m_boneMotionModel->removeMotion();

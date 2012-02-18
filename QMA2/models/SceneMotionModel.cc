@@ -40,6 +40,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 namespace {
 
 class RootTreeItem : public MotionBaseModel::ITreeItem
@@ -148,7 +150,7 @@ public:
     }
 
     virtual void undo() {
-        vpvl::CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
+        CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
         foreach (int frameIndex, m_frameIndices) {
             animation->deleteKeyframes(frameIndex);
             const QModelIndex &index = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
@@ -157,7 +159,7 @@ public:
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(SceneMotionModel::kBinaryDataRole).toByteArray();
             m_smm->setData(index, bytes, Qt::EditRole);
-            vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
+            CameraKeyframe *frame = new CameraKeyframe();
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->replaceKeyframe(frame);
         }
@@ -165,20 +167,20 @@ public:
         m_smm->refreshScene();
     }
     virtual void redo() {
-        vpvl::CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
+        CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
         foreach (const SceneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
             SceneMotionModel::KeyFramePtr ptr = pair.second;
-            vpvl::CameraKeyframe *frame = static_cast<vpvl::CameraKeyframe *>(ptr.data());
+            CameraKeyframe *frame = static_cast<CameraKeyframe *>(ptr.data());
             const QModelIndex &modelIndex = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
-            QByteArray bytes(vpvl::CameraKeyframe::strideSize(), '0');
-            vpvl::CameraKeyframe *newFrame = static_cast<vpvl::CameraKeyframe *>(frame->clone());
-            newFrame->setInterpolationParameter(vpvl::CameraKeyframe::kX, m_parameter.x);
-            newFrame->setInterpolationParameter(vpvl::CameraKeyframe::kY, m_parameter.y);
-            newFrame->setInterpolationParameter(vpvl::CameraKeyframe::kZ, m_parameter.z);
-            newFrame->setInterpolationParameter(vpvl::CameraKeyframe::kRotation, m_parameter.rotation);
-            newFrame->setInterpolationParameter(vpvl::CameraKeyframe::kFovy, m_parameter.fovy);
-            newFrame->setInterpolationParameter(vpvl::CameraKeyframe::kDistance, m_parameter.distance);
+            QByteArray bytes(CameraKeyframe::strideSize(), '0');
+            CameraKeyframe *newFrame = static_cast<CameraKeyframe *>(frame->clone());
+            newFrame->setInterpolationParameter(CameraKeyframe::kX, m_parameter.x);
+            newFrame->setInterpolationParameter(CameraKeyframe::kY, m_parameter.y);
+            newFrame->setInterpolationParameter(CameraKeyframe::kZ, m_parameter.z);
+            newFrame->setInterpolationParameter(CameraKeyframe::kRotation, m_parameter.rotation);
+            newFrame->setInterpolationParameter(CameraKeyframe::kFovy, m_parameter.fovy);
+            newFrame->setInterpolationParameter(CameraKeyframe::kDistance, m_parameter.distance);
             newFrame->setFrameIndex(frameIndex);
             newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
             animation->replaceKeyframe(newFrame);
@@ -194,7 +196,7 @@ private:
     SceneMotionModel::KeyFramePairList m_frames;
     SceneMotionModel *m_smm;
     SceneMotionModel::ITreeItem *m_cameraTreeItem;
-    vpvl::CameraKeyframe::InterpolationParameter m_parameter;
+    CameraKeyframe::InterpolationParameter m_parameter;
 };
 
 }
@@ -285,12 +287,12 @@ const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int 
     return modelIndex;
 }
 
-void SceneMotionModel::saveMotion(vpvl::VMDMotion *motion)
+void SceneMotionModel::saveMotion(VMDMotion *motion)
 {
-    vpvl::CameraAnimation *animation = motion->mutableCameraAnimation();
+    CameraAnimation *animation = motion->mutableCameraAnimation();
     if (m_cameraData.size() > 1) {
         foreach (const QVariant &value, m_cameraData) {
-            vpvl::CameraKeyframe *newFrame = new vpvl::CameraKeyframe();
+            CameraKeyframe *newFrame = new CameraKeyframe();
             const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             animation->addKeyframe(newFrame);
@@ -307,8 +309,8 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
         int frameIndex = toFrameIndex(index);
         if (frameIndex >= 0) {
             if (index.row() == m_cameraTreeItem->rowIndex() && item->isCategory()) {
-                vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
-                const vpvl::Scene *scene = m_sceneWidget->scene();
+                CameraKeyframe *frame = new CameraKeyframe();
+                const Scene *scene = m_sceneWidget->scene();
                 frame->setDefaultInterpolationParameter();
                 frame->setPosition(scene->cameraPosition());
                 frame->setAngle(scene->cameraAngle());
@@ -332,7 +334,7 @@ void SceneMotionModel::pasteKeyframes(int frameIndex)
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
             KeyFramePairList frames;
-            vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
+            CameraKeyframe *frame = new CameraKeyframe();
             frame->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
             frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
             addUndoCommand(new SetFramesCommand(this, frames, m_cameraTreeItem));
@@ -347,7 +349,7 @@ void SceneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indi
         if (index.isValid()) {
             const QVariant &data = index.data(kBinaryDataRole);
             if (data.canConvert(QVariant::ByteArray)) {
-                vpvl::CameraKeyframe *frame = new vpvl::CameraKeyframe();
+                CameraKeyframe *frame = new CameraKeyframe();
                 frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
                 frames.append(KeyFramePtr(frame));
             }
@@ -362,27 +364,27 @@ const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* ind
     return QByteArray();
 }
 
-void SceneMotionModel::loadMotion(vpvl::VMDMotion *motion)
+void SceneMotionModel::loadMotion(VMDMotion *motion)
 {
     m_cameraData.clear();
     if (motion) {
-        const vpvl::CameraAnimation &animation = motion->cameraAnimation();
+        const CameraAnimation &animation = motion->cameraAnimation();
         const int nCameraFrames = animation.countKeyframes();
         for (int i = 0; i < nCameraFrames; i++) {
-            const vpvl::CameraKeyframe *frame = animation.frameAt(i);
+            const CameraKeyframe *frame = animation.frameAt(i);
             int frameIndex = static_cast<int>(frame->frameIndex());
-            QByteArray bytes(vpvl::CameraKeyframe::strideSize(), '0');
+            QByteArray bytes(CameraKeyframe::strideSize(), '0');
             const QModelIndex &modelIndex = frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
             // It seems to use CameraKeyFrame#clone()
-            vpvl::CameraKeyframe newFrame;
+            CameraKeyframe newFrame;
             newFrame.setPosition(frame->position());
             newFrame.setAngle(frame->angle());
             newFrame.setFovy(frame->fovy());
             newFrame.setDistance(frame->distance());
             newFrame.setFrameIndex(frameIndex);
-            vpvl::QuadWord v;
-            for (int i = 0; i < vpvl::CameraKeyframe::kMax; i++) {
-                vpvl::CameraKeyframe::InterpolationType type = static_cast<vpvl::CameraKeyframe::InterpolationType>(i);
+            QuadWord v;
+            for (int i = 0; i < CameraKeyframe::kMax; i++) {
+                CameraKeyframe::InterpolationType type = static_cast<CameraKeyframe::InterpolationType>(i);
                 frame->getInterpolationParameter(type, v);
                 newFrame.setInterpolationParameter(type, v);
             }
@@ -417,7 +419,7 @@ void SceneMotionModel::removeMotion()
 void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
     static const uint8_t *kNoName = reinterpret_cast<const uint8_t *>("");
-    vpvl::CameraAnimation *animation = m_motion->mutableCameraAnimation();
+    CameraAnimation *animation = m_motion->mutableCameraAnimation();
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());

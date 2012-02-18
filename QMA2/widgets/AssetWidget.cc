@@ -41,6 +41,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 AssetWidget::AssetWidget(QWidget *parent) :
     QWidget(parent),
     m_currentAsset(0),
@@ -75,15 +77,15 @@ AssetWidget::AssetWidget(QWidget *parent) :
     /* 位置(X,Y,Z) */
     QFormLayout *formLayout = new QFormLayout();
     m_px = new QDoubleSpinBox();
-    m_px->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    m_px->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     formLayout->addRow("X", m_px);
     m_py = new QDoubleSpinBox();
-    m_py->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    m_py->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
     formLayout->addRow("Y", m_py);
     m_pz = new QDoubleSpinBox();
-    m_pz->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    m_pz->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     formLayout->addRow("Z", m_pz);
     m_positionGroup = new QGroupBox();
@@ -151,7 +153,7 @@ void AssetWidget::retranslate()
     m_modelComboBox->setItemText(0, tr("Ground"));
 }
 
-void AssetWidget::addAsset(vpvl::Asset *asset)
+void AssetWidget::addAsset(Asset *asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
     m_assets.append(asset);
@@ -161,12 +163,12 @@ void AssetWidget::addAsset(vpvl::Asset *asset)
     setEnable(true);
 }
 
-void AssetWidget::removeAsset(vpvl::Asset *asset)
+void AssetWidget::removeAsset(Asset *asset)
 {
     int index = m_assets.indexOf(asset);
     if (index >= 0) {
         /* 該当するアセットが見つかったら表示項目から削除し、実際にアセットを削除。アセットが空なら表示を無効にしておく */
-        vpvl::Asset *asset = m_assets[index];
+        Asset *asset = m_assets[index];
         m_assets.removeAt(index);
         m_assetComboBox->removeItem(index);
         if (m_assets.count() == 0)
@@ -175,7 +177,7 @@ void AssetWidget::removeAsset(vpvl::Asset *asset)
     }
 }
 
-void AssetWidget::addModel(vpvl::PMDModel *model)
+void AssetWidget::addModel(PMDModel *model)
 {
     /*
      * アセットがモデルの特定ボーンに対して選択できるようにするための処理
@@ -185,7 +187,7 @@ void AssetWidget::addModel(vpvl::PMDModel *model)
     m_modelComboBox->addItem(internal::toQString(model));
 }
 
-void AssetWidget::removeModel(vpvl::PMDModel *model)
+void AssetWidget::removeModel(PMDModel *model)
 {
     int index = modelIndexOf(model);
     if (index >= 0) {
@@ -208,10 +210,10 @@ void AssetWidget::changeCurrentAsset(int index)
         changeCurrentAsset(m_assets[index]);
 }
 
-void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
+void AssetWidget::changeCurrentAsset(Asset *asset)
 {
     /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
-    const vpvl::Vector3 &position = asset->position();
+    const Vector3 &position = asset->position();
     /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
     bool isAssetChanged = false;
     if (m_currentAsset != asset) {
@@ -221,16 +223,16 @@ void AssetWidget::changeCurrentAsset(vpvl::Asset *asset)
     m_px->setValue(position.x());
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
-    const vpvl::Quaternion &rotation = asset->rotation();
-    m_rx->setValue(vpvl::degree(rotation.x()));
-    m_ry->setValue(vpvl::degree(rotation.y()));
-    m_rz->setValue(vpvl::degree(rotation.z()));
+    const Quaternion &rotation = asset->rotation();
+    m_rx->setValue(degree(rotation.x()));
+    m_ry->setValue(degree(rotation.y()));
+    m_rz->setValue(degree(rotation.z()));
     m_scale->setValue(asset->scaleFactor());
     m_opacity->setValue(asset->opacity());
     if (isAssetChanged) {
         /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
-        vpvl::Bone *bone = asset->parentBone();
-        if (vpvl::PMDModel *model = asset->parentModel()) {
+        Bone *bone = asset->parentBone();
+        if (PMDModel *model = asset->parentModel()) {
             updateModelBoneComboBox(model);
             int index = modelIndexOf(model);
             m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
@@ -247,7 +249,7 @@ void AssetWidget::changeCurrentModel(int index)
 {
     if (index > 0) {
         /* モデルのボーンリストを一旦空にして対象のモデルのボーンリストに更新しておく */
-        vpvl::PMDModel *model = m_models[index - 1];
+        PMDModel *model = m_models[index - 1];
         m_currentModel = model;
         m_currentAsset->setParentModel(model);
         updateModelBoneComboBox(model);
@@ -263,7 +265,7 @@ void AssetWidget::changeCurrentModel(int index)
 void AssetWidget::changeParentBone(int index)
 {
     if (m_currentModel) {
-        vpvl::Bone *bone = m_currentModel->bones().at(index);
+        Bone *bone = m_currentModel->bones().at(index);
         m_currentAsset->setParentBone(bone);
     }
 }
@@ -271,7 +273,7 @@ void AssetWidget::changeParentBone(int index)
 void AssetWidget::updatePositionX(double value)
 {
     if (m_currentAsset) {
-        vpvl::Vector3 position = m_currentAsset->position();
+        Vector3 position = m_currentAsset->position();
         position.setX(value);
         m_currentAsset->setPosition(position);
     }
@@ -280,7 +282,7 @@ void AssetWidget::updatePositionX(double value)
 void AssetWidget::updatePositionY(double value)
 {
     if (m_currentAsset) {
-        vpvl::Vector3 position = m_currentAsset->position();
+        Vector3 position = m_currentAsset->position();
         position.setY(value);
         m_currentAsset->setPosition(position);
     }
@@ -289,7 +291,7 @@ void AssetWidget::updatePositionY(double value)
 void AssetWidget::updatePositionZ(double value)
 {
     if (m_currentAsset) {
-        vpvl::Vector3 position = m_currentAsset->position();
+        Vector3 position = m_currentAsset->position();
         position.setZ(value);
         m_currentAsset->setPosition(position);
     }
@@ -298,8 +300,8 @@ void AssetWidget::updatePositionZ(double value)
 void AssetWidget::updateRotationX(double value)
 {
     if (m_currentAsset) {
-        vpvl::Quaternion rotation = m_currentAsset->rotation();
-        rotation.setX(vpvl::radian(value));
+        Quaternion rotation = m_currentAsset->rotation();
+        rotation.setX(radian(value));
         m_currentAsset->setRotation(rotation);
     }
 }
@@ -307,8 +309,8 @@ void AssetWidget::updateRotationX(double value)
 void AssetWidget::updateRotationY(double value)
 {
     if (m_currentAsset) {
-        vpvl::Quaternion rotation = m_currentAsset->rotation();
-        rotation.setY(vpvl::radian(value));
+        Quaternion rotation = m_currentAsset->rotation();
+        rotation.setY(radian(value));
         m_currentAsset->setRotation(rotation);
     }
 }
@@ -316,8 +318,8 @@ void AssetWidget::updateRotationY(double value)
 void AssetWidget::updateRotationZ(double value)
 {
     if (m_currentAsset) {
-        vpvl::Quaternion rotation = m_currentAsset->rotation();
-        rotation.setZ(vpvl::radian(value));
+        Quaternion rotation = m_currentAsset->rotation();
+        rotation.setZ(radian(value));
         m_currentAsset->setRotation(rotation);
     }
 }
@@ -334,7 +336,7 @@ void AssetWidget::updateOpacity(double value)
         m_currentAsset->setOpacity(static_cast<float>(value));
 }
 
-void AssetWidget::setAssetProperties(vpvl::Asset *asset, SceneLoader *loader)
+void AssetWidget::setAssetProperties(Asset *asset, SceneLoader *loader)
 {
     asset->setPosition(loader->assetPosition(asset));
     asset->setRotation(loader->assetRotation(asset));
@@ -360,20 +362,20 @@ void AssetWidget::setEnable(bool value)
     m_opacity->setEnabled(value);
 }
 
-void AssetWidget::updateModelBoneComboBox(vpvl::PMDModel *model)
+void AssetWidget::updateModelBoneComboBox(PMDModel *model)
 {
     m_modelBonesComboBox->clear();
     if (model) {
-        const vpvl::BoneList &bones = model->bones();
+        const BoneList &bones = model->bones();
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
-            vpvl::Bone *bone = bones[i];
+            Bone *bone = bones[i];
             m_modelBonesComboBox->addItem(internal::toQString(bone), i);
         }
     }
 }
 
-int AssetWidget::modelIndexOf(vpvl::PMDModel *model)
+int AssetWidget::modelIndexOf(PMDModel *model)
 {
     int index = m_models.indexOf(model);
     /* 最初の要素が地面で、特別枠なため削除してはいけない。そのためインデックスをひとつかさ上げする */

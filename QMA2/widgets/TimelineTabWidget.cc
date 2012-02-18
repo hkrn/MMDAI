@@ -48,6 +48,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
                                      FaceMotionModel *fmm,
@@ -112,7 +114,7 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
     currentSelectedTimelineWidget()->treeView()->addKeyframesBySelectedIndices();
 }
 
-void TimelineTabWidget::loadPose(VPDFile *pose, vpvl::PMDModel *model)
+void TimelineTabWidget::loadPose(VPDFile *pose, PMDModel *model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
     m->loadPose(pose, model, m_boneTimeline->frameIndex());
@@ -129,13 +131,13 @@ void TimelineTabWidget::retranslate()
     setWindowTitle(tr("Motion Timeline"));
 }
 
-void TimelineTabWidget::savePose(VPDFile *pose, vpvl::PMDModel *model)
+void TimelineTabWidget::savePose(VPDFile *pose, PMDModel *model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
     m->savePose(pose, model, m_boneTimeline->frameIndex());
 }
 
-void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
+void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(Bone *bone)
 {
     /*
      * 渡されたボーンの名前と位置と回転情報を元に新しいボーンのキーフレームとして登録する処理
@@ -143,7 +145,7 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
      */
     if (bone) {
         BoneMotionModel::KeyFramePairList keyframes;
-        vpvl::BoneKeyframe *keyframe = new vpvl::BoneKeyframe();
+        BoneKeyframe *keyframe = new BoneKeyframe();
         keyframe->setDefaultInterpolationParameter();
         keyframe->setName(bone->name());
         keyframe->setPosition(bone->position());
@@ -154,7 +156,7 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone)
     }
 }
 
-void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face)
+void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(Face *face)
 {
     /*
      * 渡された頂点モーフの名前と重み係数を元に新しい頂点モーフのキーフレームとして登録する処理
@@ -162,7 +164,7 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face)
      */
     if (face) {
         FaceMotionModel::KeyFramePairList keyframes;
-        vpvl::FaceKeyframe *keyframe = new vpvl::FaceKeyframe();
+        FaceKeyframe *keyframe = new FaceKeyframe();
         keyframe->setName(face->name());
         keyframe->setWeight(face->weight());
         keyframes.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(keyframe)));
@@ -188,7 +190,7 @@ void TimelineTabWidget::insertFrame()
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         BoneMotionModel::KeyFramePairList boneFrames;
         foreach (const QModelIndex &index, indices) {
-            vpvl::BoneKeyframe *frame = new vpvl::BoneKeyframe();
+            BoneKeyframe *frame = new BoneKeyframe();
             QByteArray name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toFrameIndex(index);
             frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
@@ -205,7 +207,7 @@ void TimelineTabWidget::insertFrame()
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         FaceMotionModel::KeyFramePairList faceFrames;
         foreach (const QModelIndex &index, indices) {
-            vpvl::FaceKeyframe *frame = new vpvl::FaceKeyframe();
+            FaceKeyframe *frame = new FaceKeyframe();
             QByteArray name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toFrameIndex(index);
             frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
@@ -281,7 +283,7 @@ void TimelineTabWidget::notifyCurrentTabIndex()
     setCurrentTabIndex(m_tabWidget->currentIndex());
 }
 
-void TimelineTabWidget::toggleBoneEnable(vpvl::PMDModel *model)
+void TimelineTabWidget::toggleBoneEnable(PMDModel *model)
 {
     bool value = model ? true : false;
     m_boneTimeline->setEnableFrameIndexSpinBox(value);
@@ -291,15 +293,15 @@ void TimelineTabWidget::toggleBoneEnable(vpvl::PMDModel *model)
     m_boneMoveButton->setEnabled(false);
 }
 
-void TimelineTabWidget::toggleFaceEnable(vpvl::PMDModel *model)
+void TimelineTabWidget::toggleFaceEnable(PMDModel *model)
 {
     m_faceTimeline->setEnableFrameIndexSpinBox(model ? true : false);
 }
 
-void TimelineTabWidget::toggleBoneButtonsByBone(const QList<vpvl::Bone *> &bones)
+void TimelineTabWidget::toggleBoneButtonsByBone(const QList<Bone *> &bones)
 {
     if (!bones.isEmpty()) {
-        vpvl::Bone *bone = bones.first();
+        Bone *bone = bones.first();
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
         m_boneRotateButton->setCheckable(rotateable);
         m_boneRotateButton->setEnabled(rotateable);

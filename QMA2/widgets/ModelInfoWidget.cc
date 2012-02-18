@@ -41,6 +41,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     QWidget(parent),
     m_edgeColorDialog(0)
@@ -157,7 +159,7 @@ void ModelInfoWidget::openEdgeColorDialog()
     m_edgeColorDialog->show();
 }
 
-void ModelInfoWidget::setModel(vpvl::PMDModel *model, SceneLoader *loader)
+void ModelInfoWidget::setModel(PMDModel *model, SceneLoader *loader)
 {
     if (model) {
         createEdgeColorDialog();
@@ -174,7 +176,7 @@ void ModelInfoWidget::setModel(vpvl::PMDModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setValue(model->edgeOffset());
         m_edgeOffsetSpinBox->setEnabled(true);
         m_projectiveShadowCheckbox->setEnabled(true);
-        const vpvl::Vector3 &color = model->edgeColor();
+        const Vector3 &color = model->edgeColor();
         QColor c;
         c.setRedF(color.x());
         c.setGreenF(color.y());

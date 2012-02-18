@@ -42,6 +42,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent),
       m_boneMotionModel(bmm),
@@ -74,11 +76,11 @@ void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::Key
 {
     bool enabled = false;
     if (frames.count() == 1) {
-        vpvl::BoneKeyframe *frame = frames.first().data();
-        frame->getInterpolationParameter(vpvl::BoneKeyframe::kX, m_boneIP.x);
-        frame->getInterpolationParameter(vpvl::BoneKeyframe::kY, m_boneIP.y);
-        frame->getInterpolationParameter(vpvl::BoneKeyframe::kZ, m_boneIP.z);
-        frame->getInterpolationParameter(vpvl::BoneKeyframe::kRotation, m_boneIP.rotation);
+        BoneKeyframe *frame = frames.first().data();
+        frame->getInterpolationParameter(BoneKeyframe::kX, m_boneIP.x);
+        frame->getInterpolationParameter(BoneKeyframe::kY, m_boneIP.y);
+        frame->getInterpolationParameter(BoneKeyframe::kZ, m_boneIP.z);
+        frame->getInterpolationParameter(BoneKeyframe::kRotation, m_boneIP.rotation);
         updateValues(true);
         enabled = true;
     }
@@ -87,13 +89,13 @@ void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::Key
 
 void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)
 {
-    vpvl::CameraKeyframe *frame = static_cast<vpvl::CameraKeyframe *>(frames.last().data());
-    frame->getInterpolationParameter(vpvl::CameraKeyframe::kX, m_cameraIP.x);
-    frame->getInterpolationParameter(vpvl::CameraKeyframe::kY, m_cameraIP.y);
-    frame->getInterpolationParameter(vpvl::CameraKeyframe::kZ, m_cameraIP.z);
-    frame->getInterpolationParameter(vpvl::CameraKeyframe::kRotation, m_cameraIP.rotation);
-    frame->getInterpolationParameter(vpvl::CameraKeyframe::kFovy, m_cameraIP.fovy);
-    frame->getInterpolationParameter(vpvl::CameraKeyframe::kDistance, m_cameraIP.distance);
+    CameraKeyframe *frame = static_cast<CameraKeyframe *>(frames.last().data());
+    frame->getInterpolationParameter(CameraKeyframe::kX, m_cameraIP.x);
+    frame->getInterpolationParameter(CameraKeyframe::kY, m_cameraIP.y);
+    frame->getInterpolationParameter(CameraKeyframe::kZ, m_cameraIP.z);
+    frame->getInterpolationParameter(CameraKeyframe::kRotation, m_cameraIP.rotation);
+    frame->getInterpolationParameter(CameraKeyframe::kFovy, m_cameraIP.fovy);
+    frame->getInterpolationParameter(CameraKeyframe::kDistance, m_cameraIP.distance);
     updateValues(true);
 }
 
@@ -250,7 +252,7 @@ void InterpolationGraphWidget::updateValues(bool import)
     update();
 }
 
-void InterpolationGraphWidget::setValue(vpvl::QuadWord &q, bool import)
+void InterpolationGraphWidget::setValue(QuadWord &q, bool import)
 {
     if (import) {
         m_p1.setX(q.x());
@@ -267,7 +269,7 @@ void InterpolationGraphWidget::setValue(vpvl::QuadWord &q, bool import)
     }
 }
 
-void InterpolationGraphWidget::setDefault(vpvl::QuadWord &q)
+void InterpolationGraphWidget::setDefault(QuadWord &q)
 {
     q.setValue(20, 20, 107, 107);
 }

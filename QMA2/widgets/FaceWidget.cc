@@ -41,6 +41,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 FaceWidget::FaceWidget(FaceMotionModel *fmm, QWidget *parent) :
     QWidget(parent),
     m_faceMotionModel(fmm)
@@ -124,30 +126,30 @@ void FaceWidget::retranslate()
     m_otherGroup->setTitle(tr("Other"));
 }
 
-void FaceWidget::setPMDModel(vpvl::PMDModel *model)
+void FaceWidget::setPMDModel(PMDModel *model)
 {
     m_eyes->clear();
     m_lips->clear();
     m_eyeblows->clear();
     m_others->clear();
     if (model) {
-        const vpvl::FaceList &faces = m_faceMotionModel->selectedModel()->facesForUI();
+        const FaceList &faces = m_faceMotionModel->selectedModel()->facesForUI();
         const int nfaces = faces.count();
         for (int i = 0; i < nfaces; i++) {
-            vpvl::Face *face = faces[i];
+            Face *face = faces[i];
             const uint8_t *name = face->name();
             const QString &utf8Name = internal::toQString(face);
             switch (face->type()) {
-            case vpvl::Face::kEye:
+            case Face::kEye:
                 m_eyes->addItem(utf8Name, name);
                 break;
-            case vpvl::Face::kLip:
+            case Face::kLip:
                 m_lips->addItem(utf8Name, name);
                 break;
-            case vpvl::Face::kEyeblow:
+            case Face::kEyeblow:
                 m_eyeblows->addItem(utf8Name, name);
                 break;
-            case vpvl::Face::kOther:
+            case Face::kOther:
                 m_others->addItem(utf8Name, name);
                 break;
             default:
@@ -205,7 +207,7 @@ void FaceWidget::registerBase(const QComboBox *comboBox)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
+        Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
         if (face)
             emit faceDidRegister(face);
     }
@@ -224,7 +226,7 @@ void FaceWidget::updateFaceWeight(const QComboBox *comboBox, QSlider *slider)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
+        Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
         if (face)
             slider->setValue(face->weight() * 100.0f);
     }
@@ -234,7 +236,7 @@ void FaceWidget::setFaceWeight(const QComboBox *comboBox, int value)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        vpvl::Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
+        Face *face = m_faceMotionModel->findFace(comboBox->itemText(index));
         if (face) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             float weight = value / static_cast<float>(kSliderMaximumValue);

@@ -40,6 +40,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
     m_model(0),
@@ -138,7 +140,7 @@ int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
     return m_model ? maxFrameCount() + 2 : 1;
 }
 
-void PMDMotionModel::markAsNew(vpvl::PMDModel *model)
+void PMDMotionModel::markAsNew(PMDModel *model)
 {
     if (model == m_model)
         setModified(false);
@@ -170,7 +172,7 @@ void PMDMotionModel::updateModel()
     }
 }
 
-void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys)
+void PMDMotionModel::addPMDModel(PMDModel *model, const RootPtr &root, const Keys &keys)
 {
     /* モデルが新規の場合はそのモデルの巻き戻しスタックを作成し、そうでない場合は該当のモデルの巻戻しスタックを有効にする */
     if (!m_stacks.contains(model)) {
@@ -191,7 +193,7 @@ void PMDMotionModel::addPMDModel(vpvl::PMDModel *model, const RootPtr &root, con
         m_values.insert(model, Values());
 }
 
-void PMDMotionModel::removePMDModel(vpvl::PMDModel *model)
+void PMDMotionModel::removePMDModel(PMDModel *model)
 {
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_model = 0;
@@ -202,7 +204,7 @@ void PMDMotionModel::removePMDModel(vpvl::PMDModel *model)
     m_roots.remove(model);
 }
 
-void PMDMotionModel::removePMDMotion(vpvl::PMDModel *model)
+void PMDMotionModel::removePMDMotion(PMDModel *model)
 {
     /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))

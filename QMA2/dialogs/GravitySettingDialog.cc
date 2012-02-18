@@ -40,10 +40,12 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent) :
     QDialog(parent)
 {
-    const vpvl::Vector3 &gravity = loader->worldGravity();
+    const Vector3 &gravity = loader->worldGravity();
     QHBoxLayout *subLayout = new QHBoxLayout();
     subLayout->addWidget(new QLabel("X"));
     m_axisX = createSpinBox(gravity.x());
@@ -68,9 +70,9 @@ GravitySettingDialog::~GravitySettingDialog()
 {
 }
 
-const vpvl::Vector3 GravitySettingDialog::value() const
+const Vector3 GravitySettingDialog::value() const
 {
-    return vpvl::Vector3(m_axisX->value(), m_axisY->value(), m_axisZ->value());
+    return Vector3(m_axisX->value(), m_axisY->value(), m_axisZ->value());
 }
 
 QDoubleSpinBox *GravitySettingDialog::createSpinBox(double value) const

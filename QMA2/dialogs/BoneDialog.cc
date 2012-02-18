@@ -41,11 +41,13 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 namespace {
 
 static void UISetPositionSpinBoxRange(QDoubleSpinBox *spinbox)
 {
-    spinbox->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    spinbox->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     spinbox->setSingleStep(0.1);
 }
 
@@ -62,7 +64,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm,
     QDialog(parent),
     m_boneMotionModel(bmm)
 {
-    vpvl::Bone *bone = m_boneMotionModel->selectedBone();
+    Bone *bone = m_boneMotionModel->selectedBone();
     m_xPositionLabel = new QLabel();
     m_yPositionLabel = new QLabel();
     m_zPositionLabel = new QLabel();
@@ -130,18 +132,18 @@ void BoneDialog::retranslate()
     setWindowTitle(tr("Bone dialog of %1").arg(internal::toQString(m_boneMotionModel->selectedBone())));
 }
 
-void BoneDialog::setPosition(const vpvl::Vector3 &position)
+void BoneDialog::setPosition(const Vector3 &position)
 {
     m_xPosition->setValue(position.x());
     m_yPosition->setValue(position.y());
     m_zPosition->setValue(position.z());
 }
 
-void BoneDialog::setRotation(const vpvl::Quaternion &rotation)
+void BoneDialog::setRotation(const Quaternion &rotation)
 {
-    m_xAngle->setValue(vpvl::degree(rotation.x()));
-    m_yAngle->setValue(vpvl::degree(rotation.y()));
-    m_zAngle->setValue(vpvl::degree(rotation.z()));
+    m_xAngle->setValue(degree(rotation.x()));
+    m_yAngle->setValue(degree(rotation.y()));
+    m_zAngle->setValue(degree(rotation.z()));
 }
 
 void BoneDialog::setXPosition(double value)
@@ -161,17 +163,17 @@ void BoneDialog::setZPosition(double value)
 
 void BoneDialog::setXAngle(double value)
 {
-    m_boneMotionModel->setRotation('X', vpvl::radian(value));
+    m_boneMotionModel->setRotation('X', radian(value));
 }
 
 void BoneDialog::setYAngle(double value)
 {
-    m_boneMotionModel->setRotation('Y', vpvl::radian(value));
+    m_boneMotionModel->setRotation('Y', radian(value));
 }
 
 void BoneDialog::setZAngle(double value)
 {
-    m_boneMotionModel->setRotation('Z', vpvl::radian(value));
+    m_boneMotionModel->setRotation('Z', radian(value));
 }
 
 void BoneDialog::dialogAccepted()

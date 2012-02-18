@@ -39,6 +39,8 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     QWidget(parent),
     m_currentPosition(0.0f, 0.0f, 0.0f),
@@ -78,15 +80,15 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     /* 位置(X,Y,Z) */
     QFormLayout *formLayout = new QFormLayout();
     m_px = new QDoubleSpinBox();
-    m_px->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    m_px->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     formLayout->addRow("X", m_px);
     m_py = new QDoubleSpinBox();
-    m_py->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    m_py->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
     formLayout->addRow("Y", m_py);
     m_pz = new QDoubleSpinBox();
-    m_pz->setRange(-vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+    m_pz->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
     connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     formLayout->addRow("Z", m_pz);
     m_positionGroup = new QGroupBox();
@@ -128,7 +130,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     subLayout->addWidget(m_distanceLabel);
     m_distance = new QDoubleSpinBox();
     m_distance->setSingleStep(1.0);
-    m_distance->setRange(0.01, vpvl::Scene::kFrustumFar);
+    m_distance->setRange(0.01, Scene::kFrustumFar);
     connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
     subLayout->addWidget(m_distance);
     mainLayout->addLayout(subLayout);
@@ -137,7 +139,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     setLayout(mainLayout);
 }
 
-void CameraPerspectiveWidget::setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance)
+void CameraPerspectiveWidget::setCameraPerspective(const Vector3 &pos, const Vector3 &angle, float fovy, float distance)
 {
     m_currentPosition = pos;
     m_currentAngle = angle;
@@ -170,31 +172,31 @@ void CameraPerspectiveWidget::retranslate()
 
 void CameraPerspectiveWidget::setCameraPerspectiveFront()
 {
-    vpvl::Vector3 angle(0, 0, 0);
+    Vector3 angle(0, 0, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveBack()
 {
-    vpvl::Vector3 angle(0, 180, 0);
+    Vector3 angle(0, 180, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveTop()
 {
-    vpvl::Vector3 angle(90, 0, 0);
+    Vector3 angle(90, 0, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveLeft()
 {
-    vpvl::Vector3 angle(0, -90, 0);
+    Vector3 angle(0, -90, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveRight()
 {
-    vpvl::Vector3 angle(0, 90, 0);
+    Vector3 angle(0, 90, 0);
     emit cameraPerspectiveDidChange(0, &angle, 0, 0);
 }
 

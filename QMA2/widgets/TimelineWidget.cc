@@ -40,7 +40,6 @@
 #include "widgets/TimelineTreeView.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
 
 namespace {
 
