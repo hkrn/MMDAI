@@ -231,6 +231,7 @@ void SceneWidget::loadProject(const QString &filename)
     connect(m_loader, SIGNAL(projectDidProceed(int)), dialog, SLOT(setValue(int)));
     dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
     dialog->setWindowModality(Qt::WindowModal);
+    dialog->setCancelButton(0);
     m_loader->loadProject(filename);
     m_world->setGravity(m_loader->worldGravity());
     delete dialog;

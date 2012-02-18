@@ -571,10 +571,14 @@ void SceneLoader::loadProject(const QString &path)
             emit projectDidProceed(++progress);
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
-        foreach (PMDModel *model, lostModels)
-            m_project->deleteModel(model);
-        foreach (Asset *asset, lostAssets)
-            m_project->deleteAsset(asset);
+        foreach (PMDModel *model, lostModels) {
+            m_project->removeModel(model);
+            delete model;
+        }
+        foreach (Asset *asset, lostAssets) {
+            m_project->removeAsset(asset);
+            delete asset;
+        }
         m_project->setDirty(false);
         emit projectDidLoad(true);
     }
@@ -661,6 +665,8 @@ void SceneLoader::release()
     m_project->deleteMotion(m_camera, 0);
     delete m_project;
     m_project = 0;
+    m_asset = 0;
+    m_model = 0;
 }
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, Asset *asset)
