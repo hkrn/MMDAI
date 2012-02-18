@@ -128,6 +128,7 @@ private slots:
     void selectNextModel();
     void selectPreviousModel();
     void showLicenseWidget();
+    void openGravitySettingDialog();
 
 private:
     bool saveMotionAs(QString &filename);
@@ -206,10 +207,10 @@ private:
     QAction *m_actionAboutQt;
     QAction *m_actionPlay;
     QAction *m_actionPlaySettings;
+    QAction *m_actionGravitySettings;
     QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;
-    QAction *m_actionShowModelDialog;
     QAction *m_actionShowBlackBackground;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
@@ -258,6 +259,7 @@ private:
     QAction *m_actionShowTimelineDock;
     QAction *m_actionShowSceneDock;
     QAction *m_actionShowModelDock;
+    QAction *m_actionShowModelDialog;
     QAction *m_actionAddModelOnToolBar;
     QAction *m_actionAddAssetOnToolBar;
     QAction *m_actionSelectModelOnToolBar;

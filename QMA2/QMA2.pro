@@ -139,7 +139,8 @@ SOURCES += main.cc \
     dialogs/FrameSelectionDialog.cc \
     widgets/ModelInfoWidget.cc \
     VideoEncoder.cc \
-    widgets/PlayerWidget.cc
+    widgets/PlayerWidget.cc \
+    dialogs/GravitySettingDialog.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -179,11 +180,14 @@ HEADERS  += \
     widgets/ModelInfoWidget.h \
     VideoEncoder.h \
     widgets/PlayerWidget.h \
-    common/TextureDrawHelper.h
+    common/TextureDrawHelper.h \
+    dialogs/GravitySettingDialog.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
+
+
 
 
 

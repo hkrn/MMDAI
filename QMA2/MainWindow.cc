@@ -46,6 +46,7 @@
 #include "common/util.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/ExportVideoDialog.h"
+#include "dialogs/GravitySettingDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "models/BoneMotionModel.h"
@@ -567,6 +568,8 @@ void MainWindow::buildUI()
     connect(m_actionPlay, SIGNAL(triggered()), SLOT(startPlayingScene()));
     m_actionPlaySettings = new QAction(this);
     connect(m_actionPlaySettings, SIGNAL(triggered()), SLOT(openPlaySettingDialog()));
+    m_actionGravitySettings = new QAction(this);
+    connect(m_actionGravitySettings, SIGNAL(triggered()), SLOT(openGravitySettingDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
     m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
@@ -576,10 +579,6 @@ void MainWindow::buildUI()
     m_actionShowGrid = new QAction(this);
     m_actionShowGrid->setCheckable(true);
     m_actionShowGrid->setChecked(true);
-    m_actionShowModelDialog = new QAction(this);
-    m_actionShowModelDialog->setCheckable(true);
-    m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
-    connect(m_actionShowModelDialog, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setShowModelDialog(bool)));
     m_actionShowBlackBackground = new QAction(this);
     m_actionShowBlackBackground->setCheckable(true);
 
@@ -687,6 +686,10 @@ void MainWindow::buildUI()
     connect(m_actionShowSceneDock, SIGNAL(triggered()), m_sceneDockWidget, SLOT(show()));
     m_actionShowModelDock = new QAction(this);
     connect(m_actionShowModelDock, SIGNAL(triggered()), m_modelDockWidget, SLOT(show()));
+    m_actionShowModelDialog = new QAction(this);
+    m_actionShowModelDialog->setCheckable(true);
+    m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
+    connect(m_actionShowModelDialog, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setShowModelDialog(bool)));
 
     m_actionClearRecentFiles = new QAction(this);
     connect(m_actionClearRecentFiles, SIGNAL(triggered()), SLOT(clearRecentFiles()));
@@ -745,11 +748,12 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionPlay);
     m_menuProject->addAction(m_actionPlaySettings);
     m_menuProject->addSeparator();
+    m_menuProject->addAction(m_actionGravitySettings);
+    m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionEnableAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionShowGrid);
-    m_menuProject->addAction(m_actionShowModelDialog);
     m_menuProject->addAction(m_actionShowBlackBackground);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
@@ -822,6 +826,8 @@ void MainWindow::buildUI()
     m_menuView->addAction(m_actionShowSceneDock);
     m_menuView->addAction(m_actionShowModelDock);
     m_menuView->addSeparator();
+    m_menuView->addAction(m_actionShowModelDialog);
+    m_menuView->addSeparator();
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);
     m_menuView->addAction(m_actionEnableScaleGesture);
@@ -872,10 +878,10 @@ void MainWindow::bindActions()
     m_actionExit->setShortcut(m_settings.value(kPrefix + "exit", QKeySequence(QKeySequence::Quit).toString()).toString());
     m_actionPlay->setShortcut(m_settings.value(kPrefix + "play").toString());
     m_actionPlaySettings->setShortcut(m_settings.value(kPrefix + "playSettings").toString());
+    m_actionGravitySettings->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
     m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
-    m_actionShowModelDialog->setShortcut(m_settings.value(kPrefix + "showModelDialog").toString());
     m_actionShowBlackBackground->setShortcut(m_settings.value(kPrefix + "showBlackBackground").toString());
     m_actionZoomIn->setShortcut(m_settings.value(kPrefix + "zoomIn", QKeySequence(QKeySequence::ZoomIn).toString()).toString());
     m_actionZoomOut->setShortcut(m_settings.value(kPrefix + "zoomOut", QKeySequence(QKeySequence::ZoomOut).toString()).toString());
@@ -924,6 +930,7 @@ void MainWindow::bindActions()
     m_actionShowTimelineDock->setShortcut(m_settings.value(kPrefix + "showTimelineDock").toString());
     m_actionShowSceneDock->setShortcut(m_settings.value(kPrefix + "showSceneDock").toString());
     m_actionShowModelDock->setShortcut(m_settings.value(kPrefix + "showModelDock").toString());
+    m_actionShowModelDialog->setShortcut(m_settings.value(kPrefix + "showModelDialog").toString());
     m_actionAbout->setShortcut(m_settings.value(kPrefix + "about", "Alt+Q, Alt+/").toString());
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
@@ -980,14 +987,14 @@ void MainWindow::retranslate()
     m_actionPlay->setStatusTip(tr("Play current scene."));
     m_actionPlaySettings->setText(tr("Play settings"));
     m_actionPlaySettings->setStatusTip(tr("Open a dialog to set settings of playing scene."));
+    m_actionGravitySettings->setText(tr("Gravity setting"));
+    m_actionGravitySettings->setStatusTip(tr("Open a dialog to set gravity for physics simulation."));
     m_actionEnableAcceleration->setText(tr("Enable acceleration"));
     m_actionEnableAcceleration->setStatusTip(tr("Enable or disable acceleration using OpenCL if supported."));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
-    m_actionShowModelDialog->setText(tr("Show model dialog"));
-    m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
     m_actionShowBlackBackground->setText(tr("Set scene background black"));
     m_actionShowBlackBackground->setStatusTip(tr("Toggle scene background black/white."));
     m_actionZoomIn->setText(tr("Zoom in"));
@@ -1080,6 +1087,8 @@ void MainWindow::retranslate()
     m_actionShowSceneDock->setStatusTip(tr("Show scene tab if it's closed."));
     m_actionShowModelDock->setText(tr("Show model tab"));
     m_actionShowModelDock->setStatusTip(tr("Show model tab if it's closed."));
+    m_actionShowModelDialog->setText(tr("Show model dialog"));
+    m_actionShowModelDialog->setStatusTip(tr("Show or hide model dialog when the model is loaded."));
     m_actionAbout->setText(tr("About"));
     m_actionAbout->setStatusTip(tr("About this application."));
     m_actionAboutQt->setText(tr("About Qt"));
@@ -1489,6 +1498,14 @@ void MainWindow::showLicenseWidget()
     if (!m_licenseWidget)
         m_licenseWidget = new LicenseWidget();
     m_licenseWidget->show();
+}
+
+void MainWindow::openGravitySettingDialog()
+{
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    GravitySettingDialog *dialog = new GravitySettingDialog(loader, this);
+    if (dialog->exec() == QDialog::Accepted)
+        loader->setWorldGravity(dialog->value());
 }
 
 void MainWindow::updateWindowTitle()
