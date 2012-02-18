@@ -1102,18 +1102,14 @@ void Project::deleteMotion(VMDMotion *&motion, PMDModel *model)
 
 void Project::removeAsset(Asset *asset)
 {
-    if (containsAsset(asset)) {
-        m_handler->removeAsset(asset);
-        setDirty(true);
-    }
+    m_handler->removeAsset(asset);
+    setDirty(true);
 }
 
 void Project::removeModel(PMDModel *model)
 {
-    if (containsModel(model)) {
-        m_handler->removeModel(model);
-        setDirty(true);
-    }
+    m_handler->removeModel(model);
+    setDirty(true);
 }
 
 void Project::removeMotion(VMDMotion *motion, PMDModel *model)
