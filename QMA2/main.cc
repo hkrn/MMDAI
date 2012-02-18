@@ -38,8 +38,8 @@
 #include <vpvl/vpvl.h>
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
+#include "video/VideoEncoder.h"
 #include "MainWindow.h"
-#include "VideoEncoder.h"
 
 static void SetSearchPaths(const QCoreApplication &app)
 {

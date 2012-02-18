@@ -138,7 +138,7 @@ SOURCES += main.cc \
     common/Handles.cc \
     dialogs/FrameSelectionDialog.cc \
     widgets/ModelInfoWidget.cc \
-    VideoEncoder.cc \
+    video/VideoEncoder.cc \
     widgets/PlayerWidget.cc \
     dialogs/GravitySettingDialog.cc
 
@@ -178,7 +178,7 @@ HEADERS  += \
     BoneUIDelegate.h \
     dialogs/FrameSelectionDialog.h \
     widgets/ModelInfoWidget.h \
-    VideoEncoder.h \
+    video/VideoEncoder.h \
     widgets/PlayerWidget.h \
     common/TextureDrawHelper.h \
     dialogs/GravitySettingDialog.h

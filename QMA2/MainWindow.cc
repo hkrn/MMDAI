@@ -36,7 +36,6 @@
 
 #include "BoneUIDelegate.h"
 #include "MainWindow.h"
-#include "VideoEncoder.h"
 
 #include "common/Handles.h"
 #include "common/LoggerWidget.h"
@@ -52,6 +51,7 @@
 #include "models/BoneMotionModel.h"
 #include "models/FaceMotionModel.h"
 #include "models/SceneMotionModel.h"
+#include "video/VideoEncoder.h"
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
 #include "widgets/FaceWidget.h"
