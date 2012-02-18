@@ -55,11 +55,11 @@ using namespace vpvl::gl;
 
 /*
  * Renderer と Project の二重管理を行うため、メモリ解放にまつわる実装がややこしいことになっている。
- * 解放手順として以下を必ず行うようにする。
+ * 解放手順として以下を必ず行うようにする ( Asset と Model のみ)。
  *
  * 1. Project#remove*() を呼び出す
  * 2. Renderer#delete*() を呼び出す
- *^
+ *
  * このようにするのは Renderer が独自のデータを保持しているため。Project は独自のデータを持たないので、
  * remove*() を呼び出して論理削除しても問題ないが、Renderer は上記の理由により delete*() しか呼び出せない。
  * また、delete*() は引数のポインタを解放後 0 にするという特性を持つため、先に remove*() を呼び出す理由になっている。
@@ -229,6 +229,7 @@ void SceneLoader::deleteCameraMotion()
     Scene *scene = m_renderer->scene();
     scene->setCameraMotion(0);
     scene->resetCamera();
+    m_project->removeMotion(m_camera, 0);
     delete m_camera;
     m_camera = 0;
 }
@@ -402,6 +403,7 @@ VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
                 && motion->cameraAnimation().countKeyframes() > 0) {
             setCameraMotion(motion);
+            m_project->addMotion(motion, 0, QUuid::createUuid().toString().toStdString());
         }
         else {
             delete motion;
@@ -506,6 +508,7 @@ void SceneLoader::loadProject(const QString &path)
         QList<Asset *> lostAssets;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         const Project::UUIDList &assetUUIDs = m_project->assetUUIDs();
+        const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
         emit projectDidCount(modelUUIDs.size() + assetUUIDs.size());
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
@@ -569,6 +572,13 @@ void SceneLoader::loadProject(const QString &path)
                      qPrintable(file.errorString()));
             lostAssets.append(asset);
             emit projectDidProceed(++progress);
+        }
+        /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
+        int nmotions = motionUUIDs.size();
+        for (int i = 0; i < nmotions; i++) {
+            VMDMotion *motion = m_project->motion(motionUUIDs[i]);
+            if (!motion->parentModel() && motion->cameraAnimation().countKeyframes() > 1)
+                setCameraMotion(motion);
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
         foreach (PMDModel *model, lostModels) {
@@ -663,7 +673,7 @@ void SceneLoader::release()
       物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
      */
     m_renderer->releaseProject(m_project);
-    m_project->deleteMotion(m_camera, 0);
+    deleteCameraMotion();
     delete m_project;
     m_project = 0;
     m_asset = 0;
@@ -706,7 +716,7 @@ void SceneLoader::saveProject(const QString &path)
 void SceneLoader::setCameraMotion(VMDMotion *motion)
 {
     const QUuid &uuid = QUuid::createUuid();
-    m_project->deleteMotion(m_camera, 0);
+    deleteCameraMotion();
     m_camera = motion;
     m_project->addMotion(motion, 0, uuid.toString().toStdString());
     m_renderer->scene()->setCameraMotion(motion);
