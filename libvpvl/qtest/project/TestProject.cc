@@ -92,7 +92,6 @@ void TestProject::load()
     QVERIFY(project.load("../../../docs/project.xml"));
     QVERIFY(!project.isDirty());
     QCOMPARE(project.version().c_str(), "0.1");
-    QVERIFY(project.isPhysicsEnabled());
     QCOMPARE(project.assetUUIDs().size(), size_t(2));
     QCOMPARE(project.modelUUIDs().size(), size_t(2));
     QCOMPARE(project.motionUUIDs().size(), size_t(1));
@@ -120,7 +119,6 @@ void TestProject::save()
     Project project2(&delegate);
     QVERIFY(project2.load(file.fileName().toUtf8()));
     QCOMPARE(project2.version().c_str(), libraryVersionString());
-    QVERIFY(project2.isPhysicsEnabled());
     QCOMPARE(project2.assetUUIDs().size(), size_t(2));
     QCOMPARE(project2.modelUUIDs().size(), size_t(2));
     QCOMPARE(project2.motionUUIDs().size(), size_t(1));
