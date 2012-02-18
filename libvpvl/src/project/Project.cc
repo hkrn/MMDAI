@@ -807,13 +807,13 @@ public:
                 break;
             case kAnimation:
                 if (equals(prefix, localname, "motion")) {
-                    if (!self->uuid.empty() && !self->parentModel.empty()) {
-                        PMDModel *model = self->models[self->parentModel];
-                        if (model) {
-                            model->addMotion(self->currentMotion);
-                            self->motions[self->uuid] = self->currentMotion;
-                            self->currentMotion = 0;
+                    if (!self->uuid.empty()) {
+                        self->motions[self->uuid] = self->currentMotion;
+                        if (!self->parentModel.empty()) {
+                            if (PMDModel *model = self->models[self->parentModel])
+                                model->addMotion(self->currentMotion);
                         }
+                        self->currentMotion = 0;
                     }
                     self->uuid = self->parentModel = "";
                     self->popState(kMotions);
@@ -1114,11 +1114,9 @@ void Project::removeModel(PMDModel *model)
 
 void Project::removeMotion(VMDMotion *motion, PMDModel *model)
 {
-    if (containsMotion(motion)) {
-        m_handler->removeMotion(motion);
-        if (model)
-            model->removeMotion(motion);
-    }
+    m_handler->removeMotion(motion);
+    if (model)
+        model->removeMotion(motion);
 }
 
 void Project::setGlobalSetting(const std::string &key, const std::string &value)
