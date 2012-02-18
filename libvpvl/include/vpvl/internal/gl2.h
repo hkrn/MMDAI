@@ -640,6 +640,7 @@ public:
                 glDeleteTextures(1, &materialPrivate.subTextureID);
             }
             delete[] materials;
+            materials = 0;
         }
     }
 

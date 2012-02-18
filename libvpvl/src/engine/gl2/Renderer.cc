@@ -834,9 +834,10 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
 void Renderer::deleteModel(PMDModel *&model)
 {
     if (model) {
-        PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
-        userData->releaseMaterials(model);
-        delete userData;
+        if (PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData())) {
+            userData->releaseMaterials(model);
+            delete userData;
+        }
         m_delegate->log(kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
         m_scene->removeModel(model);
         delete model;

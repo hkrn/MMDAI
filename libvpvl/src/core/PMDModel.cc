@@ -1233,6 +1233,7 @@ void PMDModel::release()
     m_indicesPointer = 0;
     m_edgeIndicesPointer = 0;
     m_edgeIndicesCount = 0;
+    m_userData = 0;
     m_error = kNoError;
     m_visible = false;
 }
