@@ -151,7 +151,7 @@ void Scene::removeModel(PMDModel *model)
 
 void Scene::resetCamera()
 {
-    setCameraPerspective(Vector3(0.0f, 10.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
+    setCameraPerspective(Vector3(0.0f, 10.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 30.0f, 50.0f);
 }
 
 void Scene::seekMotion(float frameIndex)
