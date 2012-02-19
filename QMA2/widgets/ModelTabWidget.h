@@ -41,7 +41,7 @@
 
 class BoneMotionModel;
 class MorphMotionModel;
-class FaceWidget;
+class MorphWidget;
 class InterpolationWidget;
 class ModelInfoWidget;
 class QCloseEvent;
@@ -61,7 +61,7 @@ public:
                             QWidget *parent = 0);
     ~ModelTabWidget();
 
-    FaceWidget *faceWidget() const { return m_faceWidget; }
+    MorphWidget *morphWidget() const { return m_morphWidget; }
     InterpolationWidget *interpolationWidget() const { return m_interpolationWidget; }
     ModelInfoWidget *modelInfoWidget() const { return m_modelInfoWidget; }
 
@@ -74,7 +74,7 @@ private slots:
 private:
     QTabWidget *m_tabWidget;
     QSettings *m_settings;
-    FaceWidget *m_faceWidget;
+    MorphWidget *m_morphWidget;
     InterpolationWidget *m_interpolationWidget;
     ModelInfoWidget *m_modelInfoWidget;
 

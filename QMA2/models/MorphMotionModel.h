@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef FACEMOTIONMODEL_H
-#define FACEMOTIONMODEL_H
+#ifndef MORPHMOTIONMODEL_H
+#define MORPHMOTIONMODEL_H
 
 #include "models/PMDMotionModel.h"
 
@@ -94,4 +94,4 @@ private:
     Q_DISABLE_COPY(MorphMotionModel)
 };
 
-#endif // FACEMOTIONMODEL_H
+#endif // MORPHMOTIONMODEL_H

@@ -36,14 +36,14 @@
 
 #include "common/util.h"
 #include "models/MorphMotionModel.h"
-#include "widgets/FaceWidget.h"
+#include "widgets/MorphWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
 using namespace vpvl;
 
-FaceWidget::FaceWidget(MorphMotionModel *mmm, QWidget *parent) :
+MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QWidget(parent),
     m_morphMotionModel(mmm)
 {
@@ -113,7 +113,7 @@ FaceWidget::FaceWidget(MorphMotionModel *mmm, QWidget *parent) :
             this, SLOT(setPMDModel(vpvl::PMDModel*)));
 }
 
-void FaceWidget::retranslate()
+void MorphWidget::retranslate()
 {
     QString buttonText = tr("Regist");
     m_eyeRegistButton->setText(buttonText);
@@ -126,7 +126,7 @@ void FaceWidget::retranslate()
     m_otherGroup->setTitle(tr("Other"));
 }
 
-void FaceWidget::setPMDModel(PMDModel *model)
+void MorphWidget::setPMDModel(PMDModel *model)
 {
     m_eyes->clear();
     m_lips->clear();
@@ -163,66 +163,66 @@ void FaceWidget::setPMDModel(PMDModel *model)
     }
 }
 
-void FaceWidget::setEyeWeight(int value)
+void MorphWidget::setEyeWeight(int value)
 {
-    setFaceWeight(m_eyes, value);
+    setMorphWeight(m_eyes, value);
 }
 
-void FaceWidget::setLipWeight(int value)
+void MorphWidget::setLipWeight(int value)
 {
-    setFaceWeight(m_lips, value);
+    setMorphWeight(m_lips, value);
 }
 
-void FaceWidget::setEyeblowWeight(int value)
+void MorphWidget::setEyeblowWeight(int value)
 {
-    setFaceWeight(m_eyeblows, value);
+    setMorphWeight(m_eyeblows, value);
 }
 
-void FaceWidget::setOtherWeight(int value)
+void MorphWidget::setOtherWeight(int value)
 {
-    setFaceWeight(m_others, value);
+    setMorphWeight(m_others, value);
 }
 
-void FaceWidget::registerEye()
+void MorphWidget::registerEye()
 {
     registerBase(m_eyes);
 }
 
-void FaceWidget::registerLip()
+void MorphWidget::registerLip()
 {
     registerBase(m_lips);
 }
 
-void FaceWidget::registerEyeblow()
+void MorphWidget::registerEyeblow()
 {
     registerBase(m_eyeblows);
 }
 
-void FaceWidget::registerOther()
+void MorphWidget::registerOther()
 {
     registerBase(m_others);
 }
 
-void FaceWidget::registerBase(const QComboBox *comboBox)
+void MorphWidget::registerBase(const QComboBox *comboBox)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
         Face *face = m_morphMotionModel->findFace(comboBox->itemText(index));
         if (face)
-            emit faceDidRegister(face);
+            emit morphDidRegister(face);
     }
 }
 
-void FaceWidget::updateFaceWeightValues()
+void MorphWidget::updateMorphWeightValues()
 {
     /* SceneWidget#seekMotion でモデルのモーフ値が変更済みなので、その値を取り出してスライダーに反映させる */
-    updateFaceWeight(m_eyes, m_eyeSlider);
-    updateFaceWeight(m_lips, m_lipSlider);
-    updateFaceWeight(m_eyeblows, m_eyeblowSlider);
-    updateFaceWeight(m_others, m_otherSlider);
+    updateMorphWeight(m_eyes, m_eyeSlider);
+    updateMorphWeight(m_lips, m_lipSlider);
+    updateMorphWeight(m_eyeblows, m_eyeblowSlider);
+    updateMorphWeight(m_others, m_otherSlider);
 }
 
-void FaceWidget::updateFaceWeight(const QComboBox *comboBox, QSlider *slider)
+void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
@@ -232,7 +232,7 @@ void FaceWidget::updateFaceWeight(const QComboBox *comboBox, QSlider *slider)
     }
 }
 
-void FaceWidget::setFaceWeight(const QComboBox *comboBox, int value)
+void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
@@ -245,7 +245,7 @@ void FaceWidget::setFaceWeight(const QComboBox *comboBox, int value)
     }
 }
 
-QSlider *FaceWidget::createSlider()
+QSlider *MorphWidget::createSlider()
 {
     QSlider *slider = new QSlider(Qt::Horizontal);
     slider->setTickInterval(20);

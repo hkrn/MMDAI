@@ -36,7 +36,7 @@
 
 #include "ModelTabWidget.h"
 
-#include "FaceWidget.h"
+#include "MorphWidget.h"
 #include "InterpolationWidget.h"
 #include "ModelInfoWidget.h"
 #include "models/BoneMotionModel.h"
@@ -53,16 +53,16 @@ ModelTabWidget::ModelTabWidget(QSettings *settings,
     QWidget(parent),
     m_tabWidget(0),
     m_settings(settings),
-    m_faceWidget(0),
+    m_morphWidget(0),
     m_interpolationWidget(0),
     m_modelInfoWidget(0)
 {
-    m_faceWidget = new FaceWidget(mmm);
+    m_morphWidget = new MorphWidget(mmm);
     m_interpolationWidget = new InterpolationWidget(bmm, smm);
     m_modelInfoWidget = new ModelInfoWidget();
     m_tabWidget = new QTabWidget();
     m_tabWidget->addTab(m_modelInfoWidget, "");
-    m_tabWidget->addTab(m_faceWidget, "");
+    m_tabWidget->addTab(m_morphWidget, "");
     m_tabWidget->addTab(m_interpolationWidget, "");
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);

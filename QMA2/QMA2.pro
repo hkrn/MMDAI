@@ -122,7 +122,7 @@ SOURCES += main.cc \
     dialogs/FrameWeightDialog.cc \
     dialogs/PlaySettingDialog.cc \
     widgets/TimelineWidget.cc \
-    widgets/FaceWidget.cc \
+    widgets/MorphWidget.cc \
     widgets/CameraPerspectiveWidget.cc \
     widgets/TabWidget.cc \
     widgets/TimelineTabWidget.cc \
@@ -165,7 +165,7 @@ HEADERS  += \
     dialogs/FrameWeightDialog.h \
     dialogs/PlaySettingDialog.h \
     widgets/TimelineWidget.h \
-    widgets/FaceWidget.h \
+    widgets/MorphWidget.h \
     widgets/CameraPerspectiveWidget.h \
     widgets/TabWidget.h \
     widgets/TimelineTabWidget.h \

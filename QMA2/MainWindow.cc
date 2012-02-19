@@ -54,7 +54,7 @@
 #include "video/VideoEncoder.h"
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
-#include "widgets/FaceWidget.h"
+#include "widgets/MorphWidget.h"
 #include "widgets/InterpolationWidget.h"
 #include "widgets/LicenseWidget.h"
 #include "widgets/ModelInfoWidget.h"
@@ -1175,7 +1175,7 @@ void MainWindow::connectWidgets()
     connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-    connect(m_modelTabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
+    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl::Bone*,vpvl::Vector3)), handles, SLOT(updateBone()));
@@ -1185,7 +1185,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->faceWidget(), SLOT(updateFaceWeightValues()));
+    connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));

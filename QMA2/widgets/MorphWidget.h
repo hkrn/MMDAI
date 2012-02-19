@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef FACEWIDGET_H
-#define FACEWIDGET_H
+#ifndef MORPHWIDGET_H
+#define MORPHWIDGET_H
 
 #include <QtGui/QWidget>
 
@@ -50,17 +50,17 @@ class QGroupBox;
 class QPushButton;
 class QSlider;
 
-class FaceWidget : public QWidget
+class MorphWidget : public QWidget
 {
     Q_OBJECT
 
 public:
     static const int kSliderMaximumValue = 100;
 
-    explicit FaceWidget(MorphMotionModel *fmm, QWidget *parent = 0);
+    explicit MorphWidget(MorphMotionModel *fmm, QWidget *parent = 0);
 
 signals:
-    void faceDidRegister(vpvl::Face *face);
+    void morphDidRegister(vpvl::Face *face);
 
 private slots:
     void retranslate();
@@ -73,13 +73,13 @@ private slots:
     void registerLip();
     void registerEyeblow();
     void registerOther();
-    void updateFaceWeightValues();
+    void updateMorphWeightValues();
 
 private:
-    void setFaceWeight(const QComboBox *comboBox, int value);
+    void setMorphWeight(const QComboBox *comboBox, int value);
     void registerBase(const QComboBox *comboBox);
-    void updateFaceWeight(const QComboBox *comboBox, QSlider *slider);
-    vpvl::Face *findFace(const QString &name);
+    void updateMorphWeight(const QComboBox *comboBox, QSlider *slider);
+    vpvl::Face *findMorph(const QString &name);
     QSlider *createSlider();
 
     QGroupBox *m_eyeGroup;
@@ -100,7 +100,7 @@ private:
     QPushButton *m_otherRegistButton;
     MorphMotionModel *m_morphMotionModel;
 
-    Q_DISABLE_COPY(FaceWidget)
+    Q_DISABLE_COPY(MorphWidget)
 };
 
-#endif // FACEWIDGET_H
+#endif // MORPHWIDGET_H
