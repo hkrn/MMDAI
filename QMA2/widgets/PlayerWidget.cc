@@ -55,10 +55,13 @@ PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
       m_totalStep(0.0f),
       m_prevSceneFPS(0)
 {
+    m_progress = new QProgressDialog();
+    m_progress->setWindowModality(Qt::ApplicationModal);
 }
 
 PlayerWidget::~PlayerWidget()
 {
+    delete m_progress;
 }
 
 void PlayerWidget::start()
@@ -84,9 +87,8 @@ void PlayerWidget::start()
     m_sceneWidget->setInfoPanelVisible(false);
     m_sceneWidget->setSelectedModel(0);
     /* 進捗ダイアログ作成 */
-    m_progress = new QProgressDialog();
-    m_progress->setCancelButtonText(QApplication::tr("Cancel"));
-    m_progress->setWindowModality(Qt::WindowModal);
+    m_progress->reset();
+    m_progress->setCancelButtonText(tr("Cancel"));
     int maxRangeIndex = m_dialog->toIndex() - m_dialog->fromIndex();
     m_progress->setRange(0, maxRangeIndex);
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
@@ -101,6 +103,7 @@ void PlayerWidget::start()
 void PlayerWidget::stop()
 {
     m_timer.stop();
+    m_progress->reset();
     /* ハンドルと情報パネルを復帰させる */
     m_sceneWidget->setHandlesVisible(true);
     m_sceneWidget->setInfoPanelVisible(true);
@@ -111,8 +114,6 @@ void PlayerWidget::stop()
     m_sceneWidget->updateSceneMotion();
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
-    delete m_progress;
-    m_progress = 0;
 }
 
 bool PlayerWidget::isActive() const
