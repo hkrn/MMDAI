@@ -19,6 +19,14 @@ rm -rf ${app_name}.zip ${package_name}
 make
 make install
 mkdir ${package_name}
+cd plugins
+rm -rf bearer
+rm -rf graphicssystems
+rm -rf qmltooling
+rm -rf designer
+rm -rf iconengines
+rm -rf sqldrivers
+cd ..
 mv ${app_name} lib locales plugins ${package_name}
 find ${package_name} -exec touch -t `date +%Y%m%d0000` {} \;
 zip -r ${app_name}.zip ${package_name}
