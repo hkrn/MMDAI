@@ -1186,7 +1186,7 @@ void SceneWidget::updateFPS()
 const QString SceneWidget::openFileDialog(const QString &name, const QString &desc, const QString &exts)
 {
     /* ファイルが選択されている場合はファイルが格納されているディレクトリを指す絶対パスを設定に保存しておく */
-    const QString &path = m_settings->value(name).toString();
+    const QString &path = m_settings->value(name, QDir::homePath()).toString();
     const QString &fileName = QFileDialog::getOpenFileName(this, desc, path, exts);
     if (!fileName.isEmpty()) {
         QDir dir(fileName);
