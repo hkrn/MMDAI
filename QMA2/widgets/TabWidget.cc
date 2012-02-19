@@ -36,8 +36,8 @@
 
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
-#include "widgets/FaceWidget.h"
 #include "widgets/InterpolationWidget.h"
+#include "widgets/MorphWidget.h"
 #include "widgets/TabWidget.h"
 
 #include <QtGui/QtGui>
