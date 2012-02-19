@@ -141,7 +141,6 @@ void VideoEncoder::run()
                 audioPTS = ComputePresentTimeStamp(audioStream);
                 videoPTS = ComputePresentTimeStamp(videoStream);
                 const int w = image.width(), h = image.height();
-                qDebug() << w << h << width << height;
                 uint8_t *data = tmpFrame->data[0];
                 int stride = tmpFrame->linesize[0];
                 for (int y = 0; y < h; y++) {
