@@ -44,7 +44,7 @@ class PMDModel;
 class Face;
 }
 
-class FaceMotionModel;
+class MorphMotionModel;
 class QComboBox;
 class QGroupBox;
 class QPushButton;
@@ -57,7 +57,7 @@ class FaceWidget : public QWidget
 public:
     static const int kSliderMaximumValue = 100;
 
-    explicit FaceWidget(FaceMotionModel *fmm, QWidget *parent = 0);
+    explicit FaceWidget(MorphMotionModel *fmm, QWidget *parent = 0);
 
 signals:
     void faceDidRegister(vpvl::Face *face);
@@ -98,7 +98,7 @@ private:
     QPushButton *m_lipRegistButton;
     QPushButton *m_eyeblowRegistButton;
     QPushButton *m_otherRegistButton;
-    FaceMotionModel *m_faceMotionModel;
+    MorphMotionModel *m_morphMotionModel;
 
     Q_DISABLE_COPY(FaceWidget)
 };

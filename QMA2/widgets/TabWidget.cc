@@ -34,7 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "models/FaceMotionModel.h"
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
 #include "widgets/FaceWidget.h"

@@ -85,8 +85,8 @@ private:
     QLabel *m_bonesCountValueLabel;
     QLabel *m_IKsCountLabel;
     QLabel *m_IKsCountValueLabel;
-    QLabel *m_facesCountLabel;
-    QLabel *m_facesCountValueLabel;
+    QLabel *m_morphsCountLabel;
+    QLabel *m_morphsCountValueLabel;
     QLabel *m_rigidBodiesCountLabel;
     QLabel *m_rigidBodiesCountValueLabel;
     QLabel *m_constrantsCountLabel;

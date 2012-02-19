@@ -57,7 +57,7 @@ class FrameSelectionDialog;
 class FrameWeightDialog;
 class TimelineWidget;
 class BoneMotionModel;
-class FaceMotionModel;
+class MorphMotionModel;
 class MotionBaseModel;
 class SceneMotionModel;
 class VPDFile;
@@ -69,17 +69,17 @@ class TimelineTabWidget : public QWidget
 public:
     enum Type {
         kBone,
-        kFace,
+        kMorph,
         kScene
     };
 
     static const int kSceneTabIndex = 0;
     static const int kBoneTabIndex = 1;
-    static const int kFaceTabIndex = 2;
+    static const int kMorphTabIndex = 2;
 
     explicit TimelineTabWidget(QSettings *settings,
                                BoneMotionModel *bmm,
-                               FaceMotionModel *fmm,
+                               MorphMotionModel *mmm,
                                SceneMotionModel *smm,
                                QWidget *parent = 0);
     ~TimelineTabWidget();
@@ -129,7 +129,7 @@ private:
     QSettings *m_settings;
     QTabWidget *m_tabWidget;
     TimelineWidget *m_boneTimeline;
-    TimelineWidget *m_faceTimeline;
+    TimelineWidget *m_morphTimeline;
     TimelineWidget *m_sceneTimeline;
     QButtonGroup *m_boneButtonGroup;
     QRadioButton *m_boneSelectButton;

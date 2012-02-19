@@ -40,14 +40,14 @@
 #include "InterpolationWidget.h"
 #include "ModelInfoWidget.h"
 #include "models/BoneMotionModel.h"
-#include "models/FaceMotionModel.h"
+#include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
 
 #include <QtGui/QtGui>
 
 ModelTabWidget::ModelTabWidget(QSettings *settings,
                                BoneMotionModel *bmm,
-                               FaceMotionModel *fmm,
+                               MorphMotionModel *mmm,
                                SceneMotionModel *smm,
                                QWidget *parent) :
     QWidget(parent),
@@ -57,7 +57,7 @@ ModelTabWidget::ModelTabWidget(QSettings *settings,
     m_interpolationWidget(0),
     m_modelInfoWidget(0)
 {
-    m_faceWidget = new FaceWidget(fmm);
+    m_faceWidget = new FaceWidget(mmm);
     m_interpolationWidget = new InterpolationWidget(bmm, smm);
     m_modelInfoWidget = new ModelInfoWidget();
     m_tabWidget = new QTabWidget();
@@ -79,7 +79,7 @@ ModelTabWidget::~ModelTabWidget()
 void ModelTabWidget::retranslate()
 {
     m_tabWidget->setTabText(0, tr("Information"));
-    m_tabWidget->setTabText(1, tr("Face"));
+    m_tabWidget->setTabText(1, tr("Morph"));
     m_tabWidget->setTabText(2, tr("Interpolation"));
     setWindowTitle(tr("Model Tabs"));
 }

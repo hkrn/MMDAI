@@ -40,7 +40,7 @@
 #include <QtGui/QWidget>
 
 class BoneMotionModel;
-class FaceMotionModel;
+class MorphMotionModel;
 class FaceWidget;
 class InterpolationWidget;
 class ModelInfoWidget;
@@ -56,7 +56,7 @@ class ModelTabWidget : public QWidget
 public:
     explicit ModelTabWidget(QSettings *settings,
                             BoneMotionModel *bmm,
-                            FaceMotionModel *fmm,
+                            MorphMotionModel *mmm,
                             SceneMotionModel *smm,
                             QWidget *parent = 0);
     ~ModelTabWidget();

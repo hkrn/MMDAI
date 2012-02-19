@@ -57,7 +57,7 @@ class VMDMotion;
 class BoneMotionModel;
 class BoneUIDelegate;
 class ExportVideoDialog;
-class FaceMotionModel;
+class MorphMotionModel;
 class LicenseWidget;
 class LoggerWidget;
 class ModelTabWidget;
@@ -159,7 +159,7 @@ private:
     ModelTabWidget *m_modelTabWidget;
     TimelineTabWidget *m_timelineTabWidget;
     BoneMotionModel *m_boneMotionModel;
-    FaceMotionModel *m_faceMotionModel;
+    MorphMotionModel *m_morphMotionModel;
     SceneMotionModel *m_sceneMotionModel;
     ExportVideoDialog *m_exportingVideoDialog;
     PlaySettingDialog *m_playSettingDialog;

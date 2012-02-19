@@ -49,7 +49,7 @@
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "models/BoneMotionModel.h"
-#include "models/FaceMotionModel.h"
+#include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
 #include "video/VideoEncoder.h"
 #include "widgets/AssetWidget.h"
@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_modelTabWidget(0),
     m_timelineTabWidget(0),
     m_boneMotionModel(0),
-    m_faceMotionModel(0),
+    m_morphMotionModel(0),
     m_sceneMotionModel(0),
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
@@ -116,11 +116,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sceneWidget = new SceneWidget(&m_settings);
     /* SceneWidget で渡しているのは Scene が initializeGL で初期化されるという特性のため */
     m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
-    m_faceMotionModel = new FaceMotionModel(m_undo, this);
+    m_morphMotionModel = new MorphMotionModel(m_undo, this);
     m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
     m_sceneTabWidget = new TabWidget(&m_settings);
-    m_modelTabWidget = new ModelTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
-    m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_faceMotionModel, m_sceneMotionModel);
+    m_modelTabWidget = new ModelTabWidget(&m_settings, m_boneMotionModel, m_morphMotionModel, m_sceneMotionModel);
+    m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_morphMotionModel, m_sceneMotionModel);
     m_boneUIDelegate = new BoneUIDelegate(m_boneMotionModel, this);
     m_loggerWidget = LoggerWidget::createInstance(&m_settings);
     buildUI();
@@ -138,7 +138,7 @@ MainWindow::~MainWindow()
     delete m_licenseWidget;
     delete m_sceneWidget;
     delete m_boneMotionModel;
-    delete m_faceMotionModel;
+    delete m_morphMotionModel;
     delete m_sceneMotionModel;
     delete m_sceneTabWidget;
     delete m_modelTabWidget;
@@ -223,7 +223,7 @@ void MainWindow::newMotionFile()
          * なお、PMDMotionModel のデータは VMDMotion とは独立している
          */
         m_boneMotionModel->removeMotion();
-        m_faceMotionModel->removeMotion();
+        m_morphMotionModel->removeMotion();
         m_sceneWidget->setEmptyMotion();
     }
 }
@@ -236,7 +236,7 @@ void MainWindow::newProjectFile()
          * SceneWidget#clear は内部的に削除と同時に新しい空のプロジェクトが作成される
          */
         m_boneMotionModel->removeMotion();
-        m_faceMotionModel->removeMotion();
+        m_morphMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
         m_sceneWidget->clear();
     }
@@ -250,7 +250,7 @@ void MainWindow::loadProject()
                                                                 tr("VPVM file (*.xml)"));
         if (!filename.isEmpty()) {
             m_boneMotionModel->removeMotion();
-            m_faceMotionModel->removeMotion();
+            m_morphMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
             m_sceneWidget->loadProject(filename);
             SceneLoader *loader = m_sceneWidget->sceneLoader();
@@ -414,7 +414,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
     VMDMotion motion;
     m_boneMotionModel->saveMotion(&motion);
-    m_faceMotionModel->saveMotion(&motion);
+    m_morphMotionModel->saveMotion(&motion);
     return saveMotionFile(filename, &motion);
 }
 
@@ -467,7 +467,7 @@ bool MainWindow::saveProjectFile(const QString &filename)
 bool MainWindow::maybeSaveMotion()
 {
     bool cancel, cond = m_boneMotionModel->isModified()
-            || m_faceMotionModel->isModified()
+            || m_morphMotionModel->isModified()
             || m_sceneMotionModel->isModified();
     if (confirmSave(cond, cancel))
         saveMotion();
@@ -477,7 +477,7 @@ bool MainWindow::maybeSaveMotion()
 bool MainWindow::maybeSaveProject()
 {
     bool cancel, cond = m_boneMotionModel->isModified()
-            || m_faceMotionModel->isModified()
+            || m_morphMotionModel->isModified()
             || m_sceneMotionModel->isModified()
             || m_sceneWidget->sceneLoader()->isProjectModified();
     if (confirmSave(cond, cancel))
@@ -1130,8 +1130,8 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_faceMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_modelTabWidget->interpolationWidget(), SLOT(disable()));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), assetWidget, SLOT(addAsset(vpvl::Asset*)));
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), assetWidget, SLOT(removeAsset(vpvl::Asset*)));
@@ -1144,7 +1144,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_faceMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
     connect(loader, SIGNAL(assetDidSelect(vpvl::Asset*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl::Asset*,SceneLoader*)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
@@ -1167,12 +1167,12 @@ void MainWindow::connectWidgets()
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_modelTabWidget->interpolationWidget(), SLOT(setMode(int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
-    connect(m_faceMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
+    connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_faceMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_morphMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
-    connect(m_faceMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
+    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_modelTabWidget->faceWidget(), SIGNAL(faceDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
@@ -1442,11 +1442,11 @@ void MainWindow::addNewMotion()
         if (model && motion) {
             model->deleteMotion(motion);
             m_boneMotionModel->removeMotion();
-            m_faceMotionModel->removeMotion();
+            m_morphMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
             m_sceneWidget->setEmptyMotion(model);
             m_boneMotionModel->markAsNew(model);
-            m_faceMotionModel->markAsNew(model);
+            m_morphMotionModel->markAsNew(model);
             m_sceneMotionModel->setModified(false);
         }
     }

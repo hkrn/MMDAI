@@ -39,7 +39,7 @@
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/FrameWeightDialog.h"
 #include "models/BoneMotionModel.h"
-#include "models/FaceMotionModel.h"
+#include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
 #include "widgets/TimelineTabWidget.h"
 #include "widgets/TimelineTreeView.h"
@@ -52,13 +52,13 @@ using namespace vpvl;
 
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
-                                     FaceMotionModel *fmm,
+                                     MorphMotionModel *mmm,
                                      SceneMotionModel *smm,
                                      QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
     m_boneTimeline(0),
-    m_faceTimeline(0),
+    m_morphTimeline(0),
     m_sceneTimeline(0),
     m_frameSelectionDialog(0),
     m_frameWeightDialog(0)
@@ -86,18 +86,18 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     /* hack bone timeline layout */
     reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(mainLayout);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
-    m_faceTimeline = new TimelineWidget(fmm, this);
-    m_faceTimeline->setEnableFrameIndexSpinBox(false);
-    m_tabWidget->insertTab(kFaceTabIndex, m_faceTimeline, "");
+    m_morphTimeline = new TimelineWidget(mmm, this);
+    m_morphTimeline->setEnableFrameIndexSpinBox(false);
+    m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline, "");
     m_sceneTimeline = new TimelineWidget(smm, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(m_faceTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
     connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneEnable(vpvl::PMDModel*)));
     connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), this, SLOT(toggleBoneButtonsByBone(QList<vpvl::Bone*>)));
-    connect(fmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceEnable(vpvl::PMDModel*)));
+    connect(mmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceEnable(vpvl::PMDModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -126,7 +126,7 @@ void TimelineTabWidget::retranslate()
     m_boneRotateButton->setText(tr("Rotate"));
     m_boneMoveButton->setText(tr("Move"));
     m_tabWidget->setTabText(kBoneTabIndex, tr("Bone"));
-    m_tabWidget->setTabText(kFaceTabIndex, tr("Face"));
+    m_tabWidget->setTabText(kMorphTabIndex, tr("Morph"));
     m_tabWidget->setTabText(kSceneTabIndex, tr("Scene"));
     setWindowTitle(tr("Motion Timeline"));
 }
@@ -163,12 +163,12 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(Face *face)
      * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (face) {
-        FaceMotionModel::KeyFramePairList keyframes;
+        MorphMotionModel::KeyFramePairList keyframes;
         FaceKeyframe *keyframe = new FaceKeyframe();
         keyframe->setName(face->name());
         keyframe->setWeight(face->weight());
-        keyframes.append(FaceMotionModel::KeyFramePair(m_faceTimeline->frameIndex(), FaceMotionModel::KeyFramePtr(keyframe)));
-        FaceMotionModel *model = static_cast<FaceMotionModel *>(m_faceTimeline->treeView()->model());
+        keyframes.append(MorphMotionModel::KeyFramePair(m_morphTimeline->frameIndex(), MorphMotionModel::KeyFramePtr(keyframe)));
+        MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeView()->model());
         model->setFrames(keyframes);
     }
 }
@@ -176,7 +176,7 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(Face *face)
 void TimelineTabWidget::setCurrentFrameIndexZero()
 {
     m_boneTimeline->setCurrentFrameIndex(0);
-    m_faceTimeline->setCurrentFrameIndex(0);
+    m_morphTimeline->setCurrentFrameIndex(0);
     m_sceneTimeline->setCurrentFrameIndex(0);
 }
 
@@ -200,19 +200,19 @@ void TimelineTabWidget::insertFrame()
         model->setFrames(boneFrames);
         break;
     }
-    case kFaceTabIndex:
+    case kMorphTabIndex:
     {
-        TimelineTreeView *view = m_faceTimeline->treeView();
-        FaceMotionModel *model = static_cast<FaceMotionModel *>(view->model());
+        TimelineTreeView *view = m_morphTimeline->treeView();
+        MorphMotionModel *model = static_cast<MorphMotionModel *>(view->model());
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
-        FaceMotionModel::KeyFramePairList faceFrames;
+        MorphMotionModel::KeyFramePairList faceFrames;
         foreach (const QModelIndex &index, indices) {
             FaceKeyframe *frame = new FaceKeyframe();
             QByteArray name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toFrameIndex(index);
             frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
             frame->setWeight(0);
-            faceFrames.append(FaceMotionModel::KeyFramePair(frameIndex, FaceMotionModel::KeyFramePtr(frame)));
+            faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame)));
         }
         model->setFrames(faceFrames);
         break;
@@ -269,8 +269,8 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     case kBoneTabIndex:
         emit currentTabDidChange(kBone);
         break;
-    case kFaceTabIndex:
-        emit currentTabDidChange(kFace);
+    case kMorphTabIndex:
+        emit currentTabDidChange(kMorph);
         break;
     case kSceneTabIndex:
         emit currentTabDidChange(kScene);
@@ -295,7 +295,7 @@ void TimelineTabWidget::toggleBoneEnable(PMDModel *model)
 
 void TimelineTabWidget::toggleFaceEnable(PMDModel *model)
 {
-    m_faceTimeline->setEnableFrameIndexSpinBox(model ? true : false);
+    m_morphTimeline->setEnableFrameIndexSpinBox(model ? true : false);
 }
 
 void TimelineTabWidget::toggleBoneButtonsByBone(const QList<Bone *> &bones)
@@ -382,8 +382,8 @@ TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidget() const
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
         return m_boneTimeline;
-    case kFaceTabIndex:
-        return m_faceTimeline;
+    case kMorphTabIndex:
+        return m_morphTimeline;
     case kSceneTabIndex:
         return m_sceneTimeline;
     default:

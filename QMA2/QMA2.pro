@@ -115,7 +115,7 @@ SOURCES += main.cc \
     common/LoggerWidget.cc \
     models/PMDMotionModel.cc \
     models/BoneMotionModel.cc \
-    models/FaceMotionModel.cc \
+    models/MorphMotionModel.cc \
     models/SceneMotionModel.cc \
     dialogs/BoneDialog.cc \
     dialogs/ExportVideoDialog.cc \
@@ -157,7 +157,7 @@ HEADERS  += \
     common/LoggerWidget.h \
     models/MotionBaseModel.h \
     models/BoneMotionModel.h \
-    models/FaceMotionModel.h \
+    models/MorphMotionModel.h \
     models/SceneMotionModel.h \
     models/PMDMotionModel.h \
     dialogs/BoneDialog.h \

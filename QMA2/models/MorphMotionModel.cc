@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "common/util.h"
-#include "models/FaceMotionModel.h"
+#include "models/MorphMotionModel.h"
 #include <vpvl/vpvl.h>
 
 using namespace vpvl;
@@ -101,7 +101,7 @@ class SetFramesCommand : public QUndoCommand
 public:
     typedef QPair<QModelIndex, QByteArray> ModelIndex;
 
-    SetFramesCommand(FaceMotionModel *bmm, const FaceMotionModel::KeyFramePairList &frames)
+    SetFramesCommand(MorphMotionModel *bmm, const MorphMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
           m_fmm(bmm)
     {
@@ -109,14 +109,14 @@ public:
         /* 現在選択中のモデルにある全ての頂点モーフを取り出す */
         const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
-        foreach (const FaceMotionModel::KeyFramePair &frame, frames) {
+        foreach (const MorphMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
             /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded[frameIndex]) {
                 /* モデルの全ての頂点モーフを対象にデータがあるか確認し、存在している場合のみボーンのキーフレームの生データを保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
-                    const QVariant &data = index.data(FaceMotionModel::kBinaryDataRole);
+                    const QVariant &data = index.data(MorphMotionModel::kBinaryDataRole);
                     if (data.canConvert(QVariant::ByteArray))
                         m_modelIndices.append(ModelIndex(index, data.toByteArray()));
                 }
@@ -158,12 +158,12 @@ public:
     virtual void redo() {
         QString key;
         FaceAnimation *animation = m_fmm->currentMotion()->mutableFaceAnimation();
-        const FaceMotionModel::Keys &keys = m_fmm->keys();
+        const MorphMotionModel::Keys &keys = m_fmm->keys();
         Face *selected = m_fmm->selectedFace();
         /* すべてのキーフレーム情報を登録する */
-        foreach (const FaceMotionModel::KeyFramePair &pair, m_frames) {
+        foreach (const MorphMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
-            FaceMotionModel::KeyFramePtr ptr = pair.second;
+            MorphMotionModel::KeyFramePtr ptr = pair.second;
             FaceKeyframe *frame = ptr.data();
             /* キーフレームの対象頂点モーフ名を取得する */
             if (frame) {
@@ -203,8 +203,8 @@ public:
 private:
     QList<int> m_frameIndices;
     QList<ModelIndex> m_modelIndices;
-    FaceMotionModel::KeyFramePairList m_frames;
-    FaceMotionModel *m_fmm;
+    MorphMotionModel::KeyFramePairList m_frames;
+    MorphMotionModel *m_fmm;
 };
 
 class ResetAllCommand : public QUndoCommand
@@ -283,18 +283,18 @@ static Face *FaceFromModelIndex(const QModelIndex &index, PMDModel *model)
 
 }
 
-FaceMotionModel::FaceMotionModel(QUndoGroup *undo, QObject *parent)
+MorphMotionModel::MorphMotionModel(QUndoGroup *undo, QObject *parent)
     : PMDMotionModel(undo, parent),
       m_state(0)
 {
 }
 
-FaceMotionModel::~FaceMotionModel()
+MorphMotionModel::~MorphMotionModel()
 {
     m_frames.releaseAll();
 }
 
-void FaceMotionModel::saveMotion(VMDMotion *motion)
+void MorphMotionModel::saveMotion(VMDMotion *motion)
 {
     if (m_model) {
         /* モデルの ByteArray を BoneKeyFrame に読ませて積んでおくだけの簡単な処理 */
@@ -312,7 +312,7 @@ void FaceMotionModel::saveMotion(VMDMotion *motion)
     }
 }
 
-void FaceMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
+void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList faceFrames;
     PMDModel *model = selectedModel();
@@ -333,7 +333,7 @@ void FaceMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
     setFrames(faceFrames);
 }
 
-void FaceMotionModel::copyKeyframes(int frameIndex)
+void MorphMotionModel::copyKeyframes(int frameIndex)
 {
     if (m_model && m_motion) {
         m_frames.releaseAll();
@@ -350,10 +350,10 @@ void FaceMotionModel::copyKeyframes(int frameIndex)
     }
 }
 
-void FaceMotionModel::pasteKeyframes(int frameIndex)
+void MorphMotionModel::pasteKeyframes(int frameIndex)
 {
     if (m_model && m_motion && m_frames.count() != 0) {
-        FaceMotionModel::KeyFramePairList frames;
+        MorphMotionModel::KeyFramePairList frames;
         const int nframes = m_frames.count();
         for (int i = 0; i < nframes; i++) {
             FaceKeyframe *frame = static_cast<FaceKeyframe *>(m_frames[i]->clone());
@@ -363,7 +363,7 @@ void FaceMotionModel::pasteKeyframes(int frameIndex)
     }
 }
 
-void FaceMotionModel::saveTransform()
+void MorphMotionModel::saveTransform()
 {
     if (m_model) {
         /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */
@@ -372,7 +372,7 @@ void FaceMotionModel::saveTransform()
     }
 }
 
-void FaceMotionModel::commitTransform()
+void MorphMotionModel::commitTransform()
 {
     if (m_model && m_state) {
         /*
@@ -384,7 +384,7 @@ void FaceMotionModel::commitTransform()
     }
 }
 
-void FaceMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
+void MorphMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
 {
     if (m_model) {
         QList<Face *> faces;
@@ -400,13 +400,13 @@ void FaceMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indic
     }
 }
 
-const QByteArray FaceMotionModel::nameFromModelIndex(const QModelIndex &index) const
+const QByteArray MorphMotionModel::nameFromModelIndex(const QModelIndex &index) const
 {
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     return internal::fromQString(item->name());
 }
 
-void FaceMotionModel::setFrames(const KeyFramePairList &frames)
+void MorphMotionModel::setFrames(const KeyFramePairList &frames)
 {
     if (m_model && m_motion) {
         addUndoCommand(new SetFramesCommand(this, frames));
@@ -417,13 +417,13 @@ void FaceMotionModel::setFrames(const KeyFramePairList &frames)
     }
 }
 
-void FaceMotionModel::resetAllFaces()
+void MorphMotionModel::resetAllFaces()
 {
     if (m_model)
         addUndoCommand(new ResetAllCommand(m_model));
 }
 
-void FaceMotionModel::setPMDModel(PMDModel *model)
+void MorphMotionModel::setPMDModel(PMDModel *model)
 {
     /* 引数のモデルが現在選択中のものであれば二重処理になってしまうので、スキップする */
     if (m_model == model)
@@ -482,7 +482,7 @@ void FaceMotionModel::setPMDModel(PMDModel *model)
         }
         m_model = model;
         emit modelDidChange(model);
-        qDebug("Set a model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
+        qDebug("Set a model in MorphMotionModel: %s", qPrintable(internal::toQString(model)));
     }
     else {
         m_model = 0;
@@ -492,7 +492,7 @@ void FaceMotionModel::setPMDModel(PMDModel *model)
     reset();
 }
 
-void FaceMotionModel::loadMotion(VMDMotion *motion, PMDModel *model)
+void MorphMotionModel::loadMotion(VMDMotion *motion, PMDModel *model)
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {
@@ -522,14 +522,14 @@ void FaceMotionModel::loadMotion(VMDMotion *motion, PMDModel *model)
         m_motion = motion;
         refreshModel();
         setModified(false);
-        qDebug("Loaded a motion to the model in FaceMotionModel: %s", qPrintable(internal::toQString(model)));
+        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(internal::toQString(model)));
     }
     else {
         qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQString(model)));
     }
 }
 
-void FaceMotionModel::removeMotion()
+void MorphMotionModel::removeMotion()
 {
     /* 選択された頂点モーフとモデルに登録されているデータが削除される。頂点モーフ名は削除されない */
     m_selected.clear();
@@ -538,7 +538,7 @@ void FaceMotionModel::removeMotion()
     reset();
 }
 
-void FaceMotionModel::removeModel()
+void MorphMotionModel::removeModel()
 {
     /*
      * モーション削除に加えて PMD を論理削除する。巻き戻し情報も削除されるため巻戻しが不可になる
@@ -550,7 +550,7 @@ void FaceMotionModel::removeModel()
     emit modelDidChange(0);
 }
 
-void FaceMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
+void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
     FaceAnimation *animation = m_motion->mutableFaceAnimation();
     foreach (const QModelIndex &index, indices) {
@@ -564,7 +564,7 @@ void FaceMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
     }
 }
 
-void FaceMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
+void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
 {
     KeyFramePairList keyframes;
     foreach (const QModelIndex &index, indices) {
@@ -582,13 +582,13 @@ void FaceMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
     setFrames(keyframes);
 }
 
-void FaceMotionModel::selectFaces(const QList<Face *> &faces)
+void MorphMotionModel::selectFaces(const QList<Face *> &faces)
 {
     m_selected = faces;
     emit facesDidSelect(faces);
 }
 
-Face *FaceMotionModel::findFace(const QString &name)
+Face *MorphMotionModel::findFace(const QString &name)
 {
     /* QString を扱っていること以外 PMDModel#findFace と同じ */
     const QByteArray &bytes = internal::getTextCodec()->fromUnicode(name);
@@ -600,13 +600,13 @@ Face *FaceMotionModel::findFace(const QString &name)
     return 0;
 }
 
-void FaceMotionModel::setWeight(float value)
+void MorphMotionModel::setWeight(float value)
 {
     if (!m_selected.isEmpty())
         setWeight(value, m_selected.last());
 }
 
-void FaceMotionModel::setWeight(float value, Face *face)
+void MorphMotionModel::setWeight(float value, Face *face)
 {
     if (face) {
         face->setWeight(value);

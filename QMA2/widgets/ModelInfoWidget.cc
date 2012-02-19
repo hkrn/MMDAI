@@ -73,10 +73,10 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     m_IKsCountValueLabel = new QLabel();
     m_IKsCountValueLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     m_IKsCountValueLabel->setAlignment(Qt::AlignRight);
-    m_facesCountLabel = new QLabel();
-    m_facesCountValueLabel = new QLabel();
-    m_facesCountValueLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-    m_facesCountValueLabel->setAlignment(Qt::AlignRight);
+    m_morphsCountLabel = new QLabel();
+    m_morphsCountValueLabel = new QLabel();
+    m_morphsCountValueLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    m_morphsCountValueLabel->setAlignment(Qt::AlignRight);
     m_rigidBodiesCountLabel = new QLabel();
     m_rigidBodiesCountValueLabel = new QLabel();
     m_rigidBodiesCountValueLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
@@ -112,8 +112,8 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     gridLayout->addWidget(m_bonesCountValueLabel, 3, 1);
     gridLayout->addWidget(m_IKsCountLabel, 4, 0);
     gridLayout->addWidget(m_IKsCountValueLabel, 5, 0);
-    gridLayout->addWidget(m_facesCountLabel, 4, 1);
-    gridLayout->addWidget(m_facesCountValueLabel, 5, 1);
+    gridLayout->addWidget(m_morphsCountLabel, 4, 1);
+    gridLayout->addWidget(m_morphsCountValueLabel, 5, 1);
     gridLayout->addWidget(m_rigidBodiesCountLabel, 6, 0);
     gridLayout->addWidget(m_rigidBodiesCountValueLabel, 7, 0);
     gridLayout->addWidget(m_constrantsCountLabel, 6, 1);
@@ -145,7 +145,7 @@ void ModelInfoWidget::retranslate()
     m_materialsCountLabel->setText(tr("Number of materials:"));
     m_bonesCountLabel->setText(tr("Number of bones:"));
     m_IKsCountLabel->setText(tr("Number of IKs:"));
-    m_facesCountLabel->setText(tr("Number of morphs:"));
+    m_morphsCountLabel->setText(tr("Number of morphs:"));
     m_rigidBodiesCountLabel->setText(tr("Number of rigid bodies:"));
     m_constrantsCountLabel->setText(tr("Number of constraints:"));
     m_edgeOffsetLabel->setText(tr("Edge offset:"));
@@ -170,7 +170,7 @@ void ModelInfoWidget::setModel(PMDModel *model, SceneLoader *loader)
         m_materialsCountValueLabel->setText(QString().sprintf("%d", model->materials().count()));
         m_bonesCountValueLabel->setText(QString().sprintf("%d", model->bones().count()));
         m_IKsCountValueLabel->setText(QString().sprintf("%d", model->IKs().count()));
-        m_facesCountValueLabel->setText(QString().sprintf("%d", model->faces().count()));
+        m_morphsCountValueLabel->setText(QString().sprintf("%d", model->faces().count()));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->rigidBodies().count()));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->constraints().count()));
         m_edgeOffsetSpinBox->setValue(model->edgeOffset());
@@ -198,7 +198,7 @@ void ModelInfoWidget::setModel(PMDModel *model, SceneLoader *loader)
         m_materialsCountValueLabel->setText("0");
         m_bonesCountValueLabel->setText("0");
         m_IKsCountValueLabel->setText("0");
-        m_facesCountValueLabel->setText("0");
+        m_morphsCountValueLabel->setText("0");
         m_rigidBodiesCountValueLabel->setText("0");
         m_constrantsCountValueLabel->setText("0");
         m_edgeOffsetSpinBox->setValue(0.0f);

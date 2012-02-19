@@ -45,7 +45,7 @@ namespace vpvl {
 class FaceKeyframe;
 }
 
-class FaceMotionModel : public PMDMotionModel
+class MorphMotionModel : public PMDMotionModel
 {
     Q_OBJECT
 
@@ -54,8 +54,8 @@ public:
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    explicit FaceMotionModel(QUndoGroup *undo, QObject *parent = 0);
-    ~FaceMotionModel();
+    explicit MorphMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    ~MorphMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
     void copyKeyframes(int frameIndex);
@@ -91,7 +91,7 @@ private:
     vpvl::BaseKeyFrameList m_frames;
     vpvl::PMDModel::State *m_state;
 
-    Q_DISABLE_COPY(FaceMotionModel)
+    Q_DISABLE_COPY(MorphMotionModel)
 };
 
 #endif // FACEMOTIONMODEL_H
