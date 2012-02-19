@@ -73,11 +73,11 @@ private:
     static void testLightAnimation(const VMDMotion *motion);
 };
 
-const std::string TestProject::kAsset1UUID = "EEBC6A85-F333-429A-ADF8-B6188908A517";
-const std::string TestProject::kAsset2UUID = "D4403C60-3D6C-4051-9B28-51DEFE021F59";
-const std::string TestProject::kModel1UUID = "D41F00F2-FB75-4BFC-8DE8-0B1390F862F6";
-const std::string TestProject::kModel2UUID = "B18ACADC-89FD-4945-9192-8E8FBC849E52";
-const std::string TestProject::kMotionUUID = "E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6";
+const std::string TestProject::kAsset1UUID = "{EEBC6A85-F333-429A-ADF8-B6188908A517}";
+const std::string TestProject::kAsset2UUID = "{D4403C60-3D6C-4051-9B28-51DEFE021F59}";
+const std::string TestProject::kModel1UUID = "{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}";
+const std::string TestProject::kModel2UUID = "{B18ACADC-89FD-4945-9192-8E8FBC849E52}";
+const std::string TestProject::kMotionUUID = "{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}";
 
 TestProject::TestProject()
 {

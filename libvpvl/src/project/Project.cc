@@ -786,7 +786,10 @@ public:
             case kAsset:
                 if (equals(prefix, localname, "asset")) {
                     if (!self->uuid.empty()) {
-                        self->assets[self->uuid] = self->currentAsset;
+                        if (self->uuid != Project::kNullUUID)
+                            self->assets[self->uuid] = self->currentAsset;
+                        else
+                            delete self->currentAsset;
                         self->currentAsset = 0;
                     }
                     self->popState(kAssets);
@@ -797,7 +800,10 @@ public:
             case kModel:
                 if (equals(prefix, localname, "model")) {
                     if (!self->uuid.empty()) {
-                        self->models[self->uuid] = self->currentModel;
+                        if (self->uuid != Project::kNullUUID)
+                            self->models[self->uuid] = self->currentModel;
+                        else
+                            delete self->currentModel;
                         self->currentModel = 0;
                     }
                     self->popState(kModels);
@@ -808,10 +814,15 @@ public:
             case kAnimation:
                 if (equals(prefix, localname, "motion")) {
                     if (!self->uuid.empty()) {
-                        self->motions[self->uuid] = self->currentMotion;
-                        if (!self->parentModel.empty()) {
-                            if (PMDModel *model = self->models[self->parentModel])
-                                model->addMotion(self->currentMotion);
+                        if (self->uuid != Project::kNullUUID) {
+                            self->motions[self->uuid] = self->currentMotion;
+                            if (!self->parentModel.empty()) {
+                                if (PMDModel *model = self->models[self->parentModel])
+                                    model->addMotion(self->currentMotion);
+                            }
+                        }
+                        else {
+                            delete self->currentMotion;
                         }
                         self->currentMotion = 0;
                     }
