@@ -117,8 +117,8 @@ public:
     vpvl::VMDMotion *setCamera(const QString &path);
     void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
     Handles *handles() const { return m_handles; }
-    vpvl::Bone *selectedBone() const { return m_bone; }
     EditMode editMode() const { return m_editMode; }
+    const QList<vpvl::Bone *> &selectedBones() const { return m_bones; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
@@ -248,9 +248,9 @@ private:
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
-    vpvl::Bone *m_bone;
     Handles *m_handles;
     QSettings *m_settings;
+    QList<vpvl::Bone *> m_bones;
     QElapsedTimer m_timer;
     EditMode m_editMode;
     float m_lastDistance;

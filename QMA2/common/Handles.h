@@ -123,9 +123,11 @@ public:
                       int &flags,
                       vpvl::Vector3 &pick);
     bool testHitImage(const QPointF &p,
+                      bool movable,
+                      bool rotateable,
                       int &flags,
                       QRectF &rect);
-    void drawImageHandles();
+    void drawImageHandles(bool movable, bool rotateable);
     void drawModelHandles();
     const btScalar angle(const vpvl::Vector3 &pos) const;
 
@@ -141,8 +143,6 @@ public:
 
     bool isLocal() const { return m_isLocal; }
     void setBone(vpvl::Bone *value);
-    void setMovable(bool value);
-    void setRotateable(bool value);
     void setLocal(bool value);
     void setVisible(bool value);
     void setVisibilityFlags(int value);
@@ -176,8 +176,6 @@ private:
     int m_width;
     int m_height;
     int m_visibilityFlags;
-    bool m_enableMove;
-    bool m_enableRotate;
     bool m_isLocal;
     bool m_visible;
 

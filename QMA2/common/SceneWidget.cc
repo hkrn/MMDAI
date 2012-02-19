@@ -93,7 +93,6 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
-    m_bone(0),
     m_handles(0),
     m_settings(settings),
     m_editMode(kSelect),
@@ -310,8 +309,8 @@ void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
     PMDModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
-                                                    tr("Open PMD file"),
-                                                    tr("PMD file (*.pmd)")));
+                                              tr("Open PMD file"),
+                                              tr("PMD file (*.pmd)")));
     if (model && !m_playing) {
         setEmptyMotion(model);
         model->advanceMotion(0.0f);
@@ -350,8 +349,8 @@ void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために advanceMotion(0.0f) を呼んでおく */
     VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                                     tr("Open VMD (for model) file"),
-                                                                     tr("VMD file (*.vmd)")));
+                                                               tr("Open VMD (for model) file"),
+                                                               tr("VMD file (*.vmd)")));
     PMDModel *selected = m_loader->selectedModel();
     if (motion && selected)
         selected->advanceMotion(0.0f);
@@ -379,8 +378,8 @@ void SceneWidget::insertMotionToSelectedModel()
     PMDModel *model = m_loader->selectedModel();
     if (model) {
         VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                                             tr("Open VMD (for model) file"),
-                                                                             tr("VMD file (*.vmd)")));
+                                                                       tr("Open VMD (for model) file"),
+                                                                       tr("VMD file (*.vmd)")));
         if (motion)
             advanceMotion(0.0f);
     }
@@ -563,8 +562,8 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
 void SceneWidget::setCamera()
 {
     VMDMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
-                                                       tr("Open VMD (for camera) file"),
-                                                       tr("VMD file (*.vmd)")));
+                                                 tr("Open VMD (for camera) file"),
+                                                 tr("VMD file (*.vmd)")));
     if (motion)
         advanceMotion(0.0f);
 }
@@ -660,19 +659,8 @@ void SceneWidget::selectBones(const QList<Bone *> &bones)
 {
     m_info->setBones(bones, tr("(multiple)"));
     m_info->update();
-    if (!bones.isEmpty()) {
-        Bone *bone = bones.first();
-        m_handles->setMovable(bone->isMovable());
-        m_handles->setRotateable(bone->isRotateable());
-        m_handles->setBone(bone);
-        m_bone = bone;
-    }
-    else {
-        m_handles->setMovable(false);
-        m_handles->setRotateable(false);
-        m_handles->setBone(0);
-        m_bone = 0;
-    }
+    m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
+    m_bones = bones;
 }
 
 void SceneWidget::rotateScene(const Vector3 &delta)
@@ -881,7 +869,13 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_lockTouchEvent = true;
     m_handles->setPoint2D(pos);
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
-    if (m_handles->testHitImage(pos, flags, rect)) {
+    bool movable = false, rotateable = false;
+    if (m_bones.count() == 1) {
+        vpvl::Bone *bone = m_bones.first();
+        movable = bone->isMovable();
+        rotateable = bone->isRotateable();
+    }
+    if (m_handles->testHitImage(pos, movable, rotateable, flags, rect)) {
         switch (flags) {
         /*
          * ローカルとグローバルの切り替えなので、値を反転して設定する必要がある
@@ -1005,11 +999,17 @@ void SceneWidget::paintGL()
     m_renderer->renderAllAssets();
     m_grid->draw(m_renderer->scene(), m_loader->isGridVisible());
     if (m_editMode == kSelect)
-        m_debugDrawer->drawModelBones(m_loader->selectedModel(), true, true);
-    m_handles->drawImageHandles();
+        m_debugDrawer->drawModelBones(m_loader->selectedModel());
+    if (m_bones.count() == 1) {
+        vpvl::Bone *bone = m_bones.first();
+        m_debugDrawer->drawBoneTransform(bone);
+        m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
+    }
+    else {
+        m_handles->drawImageHandles(false, false);
+    }
     if (m_editMode == kRotate)
         m_handles->drawModelHandles();
-    m_debugDrawer->drawBoneTransform(selectedBone());
     m_info->draw();
 }
 
@@ -1074,7 +1074,8 @@ void SceneWidget::panTriggered(QPanGesture *event)
     }
     const QPointF &delta = event->delta();
     const Vector3 newDelta(delta.x() * -0.25, delta.y() * 0.25, 0.0f);
-    if (Bone *bone = selectedBone()) {
+    if (!m_bones.isEmpty()) {
+        vpvl::Bone *bone = m_bones.last();
         switch (state) {
         case Qt::GestureStarted:
             emit handleDidGrab();
@@ -1107,7 +1108,8 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         Scalar radian = vpvl::radian(value);
         Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
         /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
-        if (Bone *bone = selectedBone()) {
+        if (!m_bones.isEmpty()) {
+            vpvl::Bone *bone = m_bones.last();
             rotation.setEulerZYX(0.0f, -radian, 0.0f);
             switch (state) {
             case Qt::GestureStarted:
@@ -1201,7 +1203,13 @@ void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
     int flags;
     QRectF rect;
     /* ハンドルアイコンの中に入っているか? */
-    if (m_handles->testHitImage(pos, flags, rect) && flags & Handles::kEnable) {
+    bool movable = false, rotateable = false;
+    if (m_bones.count() == 1) {
+        vpvl::Bone *bone = m_bones.first();
+        movable = bone->isMovable();
+        rotateable = bone->isRotateable();
+    }
+    if (m_handles->testHitImage(pos, movable, rotateable, flags, rect) && flags & Handles::kEnable) {
         setCursor(Qt::SizeVerCursor);
     }
     /* 回転モードの場合は回転ハンドルに入っているか? */

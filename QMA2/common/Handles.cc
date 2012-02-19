@@ -237,8 +237,6 @@ Handles::Handles(SceneWidget *parent)
       m_width(0),
       m_height(0),
       m_visibilityFlags(kVisibleAll),
-      m_enableMove(false),
-      m_enableRotate(false),
       m_isLocal(true),
       m_visible(true)
 {
@@ -358,12 +356,14 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
 }
 
 bool Handles::testHitImage(const QPointF &p,
+                           bool movable,
+                           bool rotateable,
                            int &flags,
                            QRectF &rect)
 {
     const QPointF pos(p.x(), m_height - p.y());
     flags = kNone;
-    if (m_enableMove) {
+    if (movable) {
         if (m_x.enableMove.rect.contains(pos)) {
             rect = m_x.enableMove.rect;
             flags = kEnable | kMove | kX;
@@ -391,7 +391,7 @@ bool Handles::testHitImage(const QPointF &p,
             flags = kDisable | kMove | kZ;
         }
     }
-    if (m_enableRotate) {
+    if (rotateable) {
         if (m_x.enableRotate.rect.contains(pos)) {
             rect = m_x.enableRotate.rect;
             flags = kEnable | kRotate | kX;
@@ -484,16 +484,6 @@ void Handles::setBone(Bone *value)
     updateBone();
 }
 
-void Handles::setMovable(bool value)
-{
-    m_enableMove = value;
-}
-
-void Handles::setRotateable(bool value)
-{
-    m_enableRotate = value;
-}
-
 void Handles::setLocal(bool value)
 {
     m_isLocal = value;
@@ -538,12 +528,12 @@ void Handles::updateBone()
     m_world->world()->stepSimulation(1);
 }
 
-void Handles::drawImageHandles()
+void Handles::drawImageHandles(bool movable, bool rotateable)
 {
     if (!m_visible)
         return;
     glDisable(GL_DEPTH_TEST);
-    if (m_enableMove) {
+    if (movable) {
         m_helper->draw(m_x.enableMove.rect, m_x.enableMove.textureID);
         m_helper->draw(m_y.enableMove.rect, m_y.enableMove.textureID);
         m_helper->draw(m_z.enableMove.rect, m_z.enableMove.textureID);
@@ -553,7 +543,7 @@ void Handles::drawImageHandles()
         m_helper->draw(m_y.disableMove.rect, m_y.disableMove.textureID);
         m_helper->draw(m_z.disableMove.rect, m_z.disableMove.textureID);
     }
-    if (m_enableRotate) {
+    if (rotateable) {
         m_helper->draw(m_x.enableRotate.rect, m_x.enableRotate.textureID);
         m_helper->draw(m_y.enableRotate.rect, m_y.enableRotate.textureID);
         m_helper->draw(m_z.enableRotate.rect, m_z.enableRotate.textureID);

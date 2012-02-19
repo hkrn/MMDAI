@@ -110,7 +110,7 @@ public:
         m_world = value;
     }
 
-    void drawModelBones(const vpvl::PMDModel *model, bool /* drawSpheres */, bool /* drawLines */) {
+    void drawModelBones(const vpvl::PMDModel *model) {
         if (!model || !m_program.isLinked())
             return;
         vpvl::Array<vpvl::Vector3> vertices;
@@ -121,7 +121,7 @@ public:
         const int nbones = bones.count();
         float matrix[16];
         const vpvl::Scene *scene = m_sceneWidget->scene();
-        const vpvl::Bone *selected = m_sceneWidget->selectedBone();
+        const QList<vpvl::Bone *> &selected = m_sceneWidget->selectedBones();
         vpvl::Transform tr = vpvl::Transform::getIdentity();
         QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
@@ -150,7 +150,7 @@ public:
             tr.setOrigin(vpvl::Vector3(-s, 0.0f, 0.0f));
             vertices.add(tr * origin);
             vertices.add(childOrigin);
-            if (bone == selected) {
+            if (selected.contains(const_cast<vpvl::Bone *>(bone))) {
                 drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.0f, 0.0f));
                 m_program.setUniformValue("color", QColor::fromRgbF(1.0f, 0.0f, 0.0f));
             }
