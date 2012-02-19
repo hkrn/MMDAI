@@ -49,10 +49,10 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *sce
     int maxFrameIndex = scene->scene()->maxFrameIndex();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
-    m_fromIndexBox->setValue(qBound(0, m_sceneLoader->frameIndexPlayFrom(), maxFrameIndex));
+    m_fromIndexBox->setValue(m_sceneLoader->frameIndexPlayFrom());
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexBox->setValue(maxFrameIndex);
+    m_toIndexBox->setValue(m_sceneLoader->frameIndexPlayTo());
     m_sceneFPSBox = new QComboBox();
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
