@@ -55,6 +55,7 @@ public:
             QItemDelegate::paint(painter, option, index);
             return;
         }
+        painter->save();
         /* キーフレームのインデックスが5で割り切れる場合は背景を白ではない色にする */
         if (MotionBaseModel::toFrameIndex(index) % 5 == 0)
             painter->fillRect(option.rect, qApp->palette().alternateBase());
@@ -72,38 +73,27 @@ public:
                     break;
                 }
             }
-            if (dataFound)
-                drawRedDiamond(painter, option, false);
+            if (dataFound) {
+                painter->setBrush(Qt::NoBrush);
+                if (option.state & QStyle::State_Selected)
+                    painter->setPen(option.state & QStyle::State_Selected ? Qt::NoBrush : Qt::black);
+                drawDiamond(painter, option);
+            }
         }
         /* モデルのデータにキーフレームのバイナリが含まれていればダイアモンドマークを表示する */
+        painter->setPen(Qt::NoPen);
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
-            drawRedDiamond(painter, option, true);
+            painter->setBrush(option.state & QStyle::State_Selected ? Qt::red : option.palette.foreground());
+            drawDiamond(painter, option);
         }
         else if (option.state & QStyle::State_Selected) {
-            painter->setPen(Qt::NoPen);
             painter->setBrush(option.palette.highlight());
             drawDiamond(painter, option);
         }
+        painter->restore();
     }
 
 private:
-    void drawRedDiamond(QPainter *painter, const QStyleOptionViewItem &option, bool fill) const {
-        if (option.state & QStyle::State_Selected) {
-            painter->setBrush(Qt::red);
-            painter->setPen(Qt::NoPen);
-        }
-        else {
-            if (fill) {
-                painter->setBrush(option.palette.foreground());
-                painter->setPen(Qt::NoPen);
-            }
-            else {
-                painter->setBrush(Qt::NoBrush);
-                painter->setPen(Qt::black);
-            }
-        }
-        drawDiamond(painter, option);
-    }
     void drawDiamond(QPainter *painter, const QStyleOptionViewItem &option) const {
         const QRect &rect = option.rect;
         int width = rect.height();
