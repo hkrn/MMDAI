@@ -1350,21 +1350,23 @@ void MainWindow::startExportingVideo()
         SceneLoader *loader = m_sceneWidget->sceneLoader();
         PMDModel *selected = loader->selectedModel();
         bool isGridVisible = loader->isGridVisible();
-        /* 一旦止めてゼロにシークする。その後指定のキーフレームのインデックスに advance で移動させる */
+        /* レンダリングモードを自動更新から手動更新に変更 */
         m_sceneWidget->stop();
         m_sceneWidget->stopAutomaticRendering();
         m_sceneWidget->startPhysicsSimulation();
-        m_sceneWidget->seekMotion(0.0f, true);
-        m_sceneWidget->advanceMotion(fromIndex);
         loader->setGridVisible(m_exportingVideoDialog->includesGrid());
+        /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
         m_sceneWidget->setSelectedModel(0);
         m_sceneWidget->resize(videoSize);
+        /* モーションを0フレーム目に移動し、その後指定のキーフレームのインデックスに advance で移動させる */
+        m_sceneWidget->seekMotion(0.0f, true);
+        m_sceneWidget->advanceMotion(fromIndex);
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
         connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
         connect(this, SIGNAL(encodingDidStopped()), m_videoEncoder, SLOT(stop()));
-        /* 指定のキーフレームまで動画にフレームの書き出しを行う。キャンセルに対応している */
+        /* 指定のキーフレームまで動画にフレームの書き出しを行う */
         m_videoEncoder->start();
         float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
         while (!scene->isMotionReachedTo(toIndex)) {
@@ -1385,6 +1387,7 @@ void MainWindow::startExportingVideo()
             m_sceneWidget->resize(videoSize);
             totalAdvanced += advanceSecond;
         }
+        /* 最後のフレームを書き出し */
         QImage image = m_sceneWidget->grabFrameBuffer();
         if (image.width() != width || image.height() != height)
             image = image.scaled(width, height);
@@ -1407,22 +1410,26 @@ void MainWindow::startExportingVideo()
         emit encodingDidStopped();
         /* 画面情報を復元 */
         loader->setGridVisible(isGridVisible);
-        m_sceneWidget->setHandlesVisible(true);
-        m_sceneWidget->setInfoPanelVisible(true);
-        m_sceneWidget->setSelectedModel(selected);
-        m_sceneWidget->setPreferredFPS(fps);
-        m_sceneWidget->resize(sceneSize);
-        m_sceneWidget->stopPhysicsSimulation();
-        m_sceneWidget->startAutomaticRendering();
-        m_timelineDockWidget->show();
-        m_sceneDockWidget->show();
-        m_modelDockWidget->show();
-        m_mainToolBar->show();
-        statusBar()->show();
         setSizePolicy(policy);
         setMinimumSize(minSize);
         setMaximumSize(maxSize);
         setGeometry(mainGeomtry);
+        statusBar()->show();
+        /* ドック復元 */
+        m_timelineDockWidget->show();
+        m_sceneDockWidget->show();
+        m_modelDockWidget->show();
+        m_mainToolBar->show();
+        /* 情報パネルとハンドルを再表示 */
+        m_sceneWidget->resize(sceneSize);
+        m_sceneWidget->setHandlesVisible(true);
+        m_sceneWidget->setInfoPanelVisible(true);
+        m_sceneWidget->setSelectedModel(selected);
+        m_sceneWidget->setPreferredFPS(fps);
+        /* レンダリングを手動更新から自動更新に戻す */
+        m_sceneWidget->stopPhysicsSimulation();
+        m_sceneWidget->updateSceneMotion();
+        m_sceneWidget->startAutomaticRendering();
         delete progress;
     }
 }
