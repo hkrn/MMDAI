@@ -70,7 +70,7 @@ using namespace vpvl;
 
 namespace {
 
-static int FindIndexOfActions(PMDModel *model, const QList<QAction *> &actions)
+static int UIFindIndexOfActions(PMDModel *model, const QList<QAction *> &actions)
 {
     const QString &name = internal::toQString(model);
     int i = 0, found = -1;
@@ -82,6 +82,15 @@ static int FindIndexOfActions(PMDModel *model, const QList<QAction *> &actions)
         i++;
     }
     return found;
+}
+
+
+static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
+                                             SceneWidget *sceneWidget,
+                                             PlaySettingDialog *&dialog)
+{
+    if (!dialog)
+        dialog = new PlaySettingDialog(mainWindow, sceneWidget);
 }
 
 }
@@ -1308,9 +1317,9 @@ void MainWindow::startExportingVideo()
                                              tr("Video (*.mov)"),
                                              tr("untitled.mov"));
     if (!filename.isEmpty()) {
-        QProgressDialog *progress = new QProgressDialog();
+        QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
-        progress->setWindowModality(Qt::WindowModal);
+        progress->setWindowModality(Qt::ApplicationModal);
         int fps = m_sceneWidget->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
@@ -1455,8 +1464,7 @@ void MainWindow::addNewMotion()
 void MainWindow::startPlayingScene()
 {
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
-        if (!m_playSettingDialog)
-            m_playSettingDialog = new PlaySettingDialog(this, m_sceneWidget);
+        UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
         if (!m_player)
             m_player = new PlayerWidget(m_sceneWidget, m_playSettingDialog);
         if (!m_player->isActive())
@@ -1471,8 +1479,7 @@ void MainWindow::startPlayingScene()
 void MainWindow::openPlaySettingDialog()
 {
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
-        delete m_playSettingDialog;
-        m_playSettingDialog = new PlaySettingDialog(this, m_sceneWidget);
+        UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
         m_playSettingDialog->show();
     }
     else {
@@ -1486,7 +1493,7 @@ void MainWindow::selectNextModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = FindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
+        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
         if (index == -1 || index == actions.length() - 1)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
@@ -1499,7 +1506,7 @@ void MainWindow::selectPreviousModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = FindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
+        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
         if (index == -1 || index == 0)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else
