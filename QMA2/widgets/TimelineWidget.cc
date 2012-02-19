@@ -76,7 +76,9 @@ public:
             if (dataFound) {
                 painter->setBrush(Qt::NoBrush);
                 if (option.state & QStyle::State_Selected)
-                    painter->setPen(option.state & QStyle::State_Selected ? Qt::NoBrush : Qt::black);
+                    painter->setPen(Qt::NoPen);
+                else
+                    painter->setPen(Qt::black);
                 drawDiamond(painter, option);
             }
         }
