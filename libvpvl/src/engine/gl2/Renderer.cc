@@ -627,9 +627,7 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       #endif /* VPVL_LINK_QT */
       m_delegate(delegate),
       m_scene(0),
-      m_accelerator(0),
-      m_frameBufferID(0),
-      m_depthTextureID(0)
+      m_accelerator(0)
 {
     m_scene = new Scene(width, height, fps);
 }
@@ -650,10 +648,6 @@ Renderer::~Renderer()
         Asset *asset = assets[i];
         deleteAsset(asset);
     }
-    glDeleteFramebuffers(1, &m_frameBufferID);
-    m_frameBufferID = 0;
-    glDeleteTextures(1, &m_depthTextureID);
-    m_depthTextureID = 0;
     delete m_accelerator;
     m_accelerator = 0;
     delete m_scene;
@@ -669,42 +663,6 @@ void Renderer::initializeSurface()
     glCullFace(GL_BACK);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-bool Renderer::createShadowFrameBuffers()
-{
-    bool ret = true;
-#ifndef  VPVL_BUILD_IOS
-    glGenTextures(1, &m_depthTextureID);
-    glBindTexture(GL_TEXTURE_2D, m_depthTextureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, kShadowMappingTextureWidth, kShadowMappingTextureHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glGenFramebuffers(1, &m_frameBufferID);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureID, 0);
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status == GL_FRAMEBUFFER_COMPLETE) {
-        m_delegate->log(kLogInfo,
-                        "Created a framebuffer (textureID = %d, frameBufferID = %d)",
-                        m_depthTextureID,
-                        m_frameBufferID);
-    }
-    else {
-        m_delegate->log(kLogWarning, "Failed creating a framebuffer: %d", status);
-        ret = false;
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-    return ret;
 }
 
 void Renderer::resize(int width, int height)
@@ -902,9 +860,6 @@ void Renderer::renderModel(const PMDModel *model)
     modelProgram->setNormalMatrix(matrix3x3);
     modelProgram->setLightColor(m_scene->lightColor());
     modelProgram->setLightPosition(m_scene->lightPosition());
-    if (m_depthTextureID) {
-        static_cast<ExtendedModelProgram *>(modelProgram)->setShadowTexture(m_depthTextureID);
-    }
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
         modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                       model->strideSize(PMDModel::kToonTextureStride));
@@ -991,30 +946,27 @@ void Renderer::renderModelZPlot(const PMDModel *model)
     if (!userData)
         return;
     float modelViewMatrix[16], projectionMatrix[16];
-    m_scene->getProjectionMatrix(projectionMatrix);
-    m_scene->getModelViewMatrix(modelViewMatrix);
-    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     Vector3 center;
     Scalar radius, angle = 15.0f;
     model->getBoundingSphere(center, radius);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     Scalar eye = radius / btSin(radian(angle * 0.5f));
-    //gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
+    gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
     Vector3 eyev = m_scene->lightPosition() * eye + center;
-    //gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
+    gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
     glGetFloatv(GL_MODELVIEW, modelViewMatrix);
     ZPlotProgram *zplotProgram = userData->zplotProgram;
+    m_scene->getProjectionMatrix(projectionMatrix);
+    m_scene->getModelViewMatrix(modelViewMatrix);
     zplotProgram->bind();
     zplotProgram->setModelViewMatrix(modelViewMatrix);
     zplotProgram->setProjectionMatrix(projectionMatrix);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(4.0f, 4.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                               model->strideSize(PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
-    glDisable(GL_POLYGON_OFFSET_FILL);
     zplotProgram->unbind();
 #endif
 }
@@ -1186,23 +1138,15 @@ void Renderer::renderProjectiveShadow()
 
 void Renderer::renderZPlot()
 {
-    if (m_depthTextureID && m_frameBufferID) {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
-        glViewport(0, 0, kShadowMappingTextureWidth, kShadowMappingTextureHeight);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glCullFace(GL_FRONT);
-        size_t size = 0;
-        PMDModel **models = m_scene->getRenderingOrder(size);
-        for (size_t i = 0; i < size; i++) {
-            PMDModel *model = models[i];
-            if (model->isVisible())
-                renderModelZPlot(model);
-        }
-        glCullFace(GL_BACK);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glCullFace(GL_FRONT);
+    size_t size = 0;
+    PMDModel **models = m_scene->getRenderingOrder(size);
+    for (size_t i = 0; i < size; i++) {
+        PMDModel *model = models[i];
+        if (model->isVisible())
+            renderModelZPlot(model);
     }
+    glCullFace(GL_BACK);
 }
 
 void Renderer::releaseProject(Project *project)

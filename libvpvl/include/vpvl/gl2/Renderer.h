@@ -143,7 +143,6 @@ public:
     }
 
     void initializeSurface();
-    bool createShadowFrameBuffers();
     void resize(int width, int height);
     void uploadModel(PMDModel *model, const std::string &dir);
     void deleteModel(PMDModel *&model);
@@ -185,8 +184,6 @@ private:
 #endif
 
     Accelerator *m_accelerator;
-    GLuint m_depthTextureID;
-    GLuint m_frameBufferID;
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

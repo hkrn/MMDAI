@@ -80,7 +80,7 @@ namespace
     static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
     static const std::string kModelDir = "render/res/lat";
     static const std::string kStageDir = "render/res/stage";
-    static const std::string kMotion = "render/res/motion.vmd";
+    static const std::string kMotion = "render/res/motion.vmd.404";
     static const std::string kCamera = "render/res/camera.vmd.404";
     static const std::string kModelName = "normal.pmd";
     static const std::string kStageName = "stage.x";
@@ -242,6 +242,7 @@ class UI : public QGLWidget
 public:
     UI()
         : QGLWidget(QGLFormat(QGL::SampleBuffers), 0),
+          m_fbo(0),
           m_world(0),
       #ifndef VPVL_NO_BULLET
           m_dispatcher(&m_config),
@@ -264,6 +265,7 @@ public:
 #endif
         delete m_renderer;
         delete m_world;
+        delete m_fbo;
     }
 
     void rotate(float x, float y) {
@@ -282,6 +284,7 @@ public:
 protected:
     virtual void initializeGL() {
         bool shaderSkinning = false;
+        m_fbo = new QGLFramebufferObject(1024, 1024, QGLFramebufferObject::Depth);
         m_delegate.setShaderSkinningEnable(shaderSkinning);
         m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
 #ifdef VPVL_ENABLE_OPENCL
@@ -289,10 +292,6 @@ protected:
             m_renderer->scene()->setSoftwareSkinningEnable(false);
 #endif
         m_renderer->initializeSurface();
-#ifdef VPVL_GL2_RENDERER_H_
-        if (!m_renderer->createShadowFrameBuffers())
-            exit(-1);
-#endif
         if (!loadScene())
             qFatal("Unable to load scene");
 
@@ -352,11 +351,15 @@ protected:
     }
     virtual void paintGL() {
         glClearColor(0, 0, 1, 1);
-        //m_renderer->renderZPlot();
         m_renderer->clear();
         m_renderer->renderProjectiveShadow();
         m_renderer->renderAllModels();
         m_renderer->renderAllAssets();
+        m_fbo->bind();
+        glViewport(0, 0, m_fbo->width(), m_fbo->height());
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        m_renderer->renderZPlot();
+        m_fbo->release();
     }
 
 private:
@@ -418,6 +421,7 @@ private:
 
     QElapsedTimer m_timer;
     QPoint m_prevPos;
+    QGLFramebufferObject *m_fbo;
     btDiscreteDynamicsWorld *m_world;
 #ifndef VPVL_NO_BULLET
     btDefaultCollisionConfiguration m_config;
