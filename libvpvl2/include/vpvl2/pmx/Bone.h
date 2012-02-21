@@ -57,7 +57,7 @@ namespace pmx
 class VPVL2_API Bone
 {
 public:
-    struct IK;
+    struct IKLink;
 
     /**
      * Constructor
@@ -77,6 +77,7 @@ public:
     void write(uint8_t *data) const;
     void mergeMorph(Morph::Bone *morph, float weight);
     void performTransform();
+    void performInverseKinematics();
     const Vector3 &offset() const;
     const Transform localTransform() const;
 
@@ -98,7 +99,7 @@ public:
     bool isMovable() const { return m_flags & 0x0004; }
     bool isVisible() const { return m_flags & 0x0008; }
     bool isOperatable() const { return m_flags & 0x0010; }
-    bool hasIKFeature() const { return m_flags & 0x0020; }
+    bool hasIKLinks() const { return m_flags & 0x0020; }
     bool hasPositionBias() const { return m_flags & 0x0100; }
     bool hasRotationBias() const { return m_flags & 0x0200; }
     bool isAxisFixed() const { return m_flags & 0x0400; }
@@ -107,7 +108,7 @@ public:
     bool isTransformedByExternalParent() const { return m_flags & 0x2000; }
 
 private:
-    Array<IK *> m_ik;
+    Array<IKLink *> m_IKLinks;
     Bone *m_parentBone;
     Bone *m_offsetBone;
     Bone *m_targetBone;
@@ -115,14 +116,15 @@ private:
     StaticString *m_name;
     StaticString *m_englishName;
     Quaternion m_rotation;
-    Quaternion m_extraRotation;
-    Quaternion m_morphRotation;
+    Quaternion m_rotationExtra;
+    Quaternion m_rotationMorph;
+    Quaternion m_rotationIKLink;
     Transform m_localTransform;
-    Transform m_localToOrigin;
+    Transform m_IKLinkTransform;
     Vector3 m_origin;
     Vector3 m_position;
-    Vector3 m_extraPosition;
-    Vector3 m_morphPosition;
+    Vector3 m_positionExtra;
+    Vector3 m_positionMorph;
     Vector3 m_offset;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;

@@ -48,6 +48,45 @@ struct BoneUnit {
 
 #pragma pack(pop)
 
+using namespace vpvl2;
+
+static inline void SetLowerConstraint(const Scalar &lower,
+                                      const Scalar &upper,
+                                      bool beforeCenter,
+                                      Scalar &output)
+{
+    if (output < lower) {
+        const Scalar &value = 2.0 * lower - output;
+        output = (value <= upper && beforeCenter) ? value : lower;
+    }
+}
+
+static inline void SetUpperConstraint(const Scalar &lower,
+                                      const Scalar &upper,
+                                      bool beforeCenter,
+                                      Scalar &output)
+{
+    if (output > upper) {
+        const Scalar &value = 2.0 * upper - output;
+        output = (value >= lower && beforeCenter) ? value : upper;
+    }
+}
+
+static inline void SetConstraint(const Vector3 &lower,
+                                 const Vector3 &upper,
+                                 bool beforeCenter,
+                                 Scalar &x,
+                                 Scalar &y,
+                                 Scalar &z)
+{
+    SetLowerConstraint(lower.x(), upper.x(), beforeCenter, x);
+    SetUpperConstraint(lower.x(), upper.x(), beforeCenter, x);
+    SetLowerConstraint(lower.y(), upper.y(), beforeCenter, y);
+    SetUpperConstraint(lower.y(), upper.y(), beforeCenter, y);
+    SetLowerConstraint(lower.z(), upper.z(), beforeCenter, z);
+    SetUpperConstraint(lower.z(), upper.z(), beforeCenter, z);
+}
+
 }
 
 namespace vpvl2
@@ -55,8 +94,9 @@ namespace vpvl2
 namespace pmx
 {
 
-struct Bone::IK {
-    int targetBoneID;
+struct Bone::IKLink {
+    Bone *destinationBone;
+    int destinationBoneID;
     bool hasAngleConstraint;
     Vector3 lowerLimit;
     Vector3 upperLimit;
@@ -70,14 +110,15 @@ Bone::Bone()
       m_name(0),
       m_englishName(0),
       m_rotation(Quaternion::getIdentity()),
-      m_extraRotation(Quaternion::getIdentity()),
-      m_morphRotation(Quaternion::getIdentity()),
+      m_rotationExtra(Quaternion::getIdentity()),
+      m_rotationMorph(Quaternion::getIdentity()),
+      m_rotationIKLink(Quaternion::getIdentity()),
       m_localTransform(Transform::getIdentity()),
-      m_localToOrigin(Transform::getIdentity()),
+      m_IKLinkTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_position(kZeroV3),
-      m_extraPosition(kZeroV3),
-      m_morphPosition(kZeroV3),
+      m_positionExtra(kZeroV3),
+      m_positionMorph(kZeroV3),
       m_offset(kZeroV3),
       m_fixedAxis(kZeroV3),
       m_axisX(kZeroV3),
@@ -104,9 +145,8 @@ Bone::~Bone()
     m_targetBone = 0;
     m_parentBiasBone = 0;
     m_position.setZero();
-    m_morphPosition.setZero();
+    m_positionMorph.setZero();
     m_localTransform.setIdentity();
-    m_localToOrigin.setIdentity();
     m_offset.setZero();
     m_fixedAxis.setZero();
     m_axisX.setZero();
@@ -225,12 +265,25 @@ bool Bone::loadBones(const Array<Bone *> &bones)
             else
                 bone->m_targetBone = bones[targetBoneID];
         }
-        int parentBoneBiasID = bone->m_parentBoneBiasIndex;
+        const int parentBoneBiasID = bone->m_parentBoneBiasIndex;
         if (parentBoneBiasID >= 0) {
             if (parentBoneBiasID >= nbones)
                 return false;
             else
                 bone->m_parentBiasBone = bones[parentBoneBiasID];
+        }
+        if (bone->hasIKLinks()) {
+            const int nIK = bone->m_IKLinks.count();
+            for (int j = 0; j < nIK; j++) {
+                IKLink *ik = bone->m_IKLinks[j];
+                const int ikTargetBoneID = ik->destinationBoneID;
+                if (ikTargetBoneID >= 0) {
+                    if (ikTargetBoneID >= nbones)
+                        return false;
+                    else
+                        ik->destinationBone = bones[ikTargetBoneID];
+                }
+            }
         }
     }
     return true;
@@ -248,7 +301,6 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
     m_localTransform.setOrigin(m_origin);
-    m_localToOrigin.setOrigin(-m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
     m_priority = *reinterpret_cast<int *>(ptr);
@@ -276,8 +328,8 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_nlinks = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
         for (int i = 0; i < m_nlinks; i++) {
-            IK *ik = new IK();
-            ik->targetBoneID = internal::variantIndex(ptr, info.boneIndexSize);
+            IKLink *ik = new IKLink();
+            ik->destinationBoneID = internal::variantIndex(ptr, info.boneIndexSize);
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
             ptr += sizeof(ik->hasAngleConstraint);
             if (ik->hasAngleConstraint) {
@@ -325,30 +377,171 @@ void Bone::write(uint8_t *data) const
 
 void Bone::mergeMorph(Morph::Bone *morph, float weight)
 {
-    m_morphPosition = morph->position * weight;
-    m_morphRotation = morph->rotation * weight;
+    m_positionMorph = morph->position * weight;
+    m_rotationMorph = morph->rotation * weight;
 }
 
 void Bone::performTransform()
 {
-    // TODO: rotation transform
     Quaternion rotation = Quaternion::getIdentity();
+    if (hasRotationBias()) {
+        Quaternion internal = Quaternion::getIdentity();
+        if (m_parentBone) {
+            if (m_parentBone->hasRotationBias())
+                internal *= m_parentBone->m_rotationExtra;
+            else
+                internal *= m_parentBone->m_rotation * m_parentBone->m_rotationMorph;
+        }
+        if (m_bias != 1.0)
+            rotation = rotation.slerp(internal, m_bias);
+        if (m_parentBone->hasIKLinks())
+            rotation *= m_parentBone->m_rotationIKLink;
+        m_rotationExtra = rotation.slerp((internal * m_parentBone->m_rotationIKLink), m_bias) * m_rotation * m_rotationMorph;
+    }
+    rotation *= m_rotation * m_rotationMorph;
+    if (hasIKLinks())
+        rotation *= m_rotationIKLink;
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
     if (hasPositionBias()) {
         if (m_parentBone) {
             if (m_parentBone->hasPositionBias())
-                position += m_parentBone->m_extraPosition + m_parentBone->m_morphPosition;
+                position += m_parentBone->m_positionExtra + m_parentBone->m_positionMorph;
             else
-                position += m_parentBone->m_position + m_parentBone->m_morphPosition;
+                position += m_parentBone->m_position + m_parentBone->m_positionMorph;
         }
-        position *= m_bias;
-        m_extraPosition = position + m_position + m_morphPosition;
+        if (m_bias != 1.0)
+            position *= m_bias;
+        m_positionExtra = position + m_position + m_positionMorph;
     }
-    position += m_position + m_morphPosition;
+    position += m_position + m_positionMorph;
     m_localTransform.setOrigin(position + offset());
     if (m_parentBone)
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+}
+
+void Bone::performInverseKinematics()
+{
+    if (!hasIKLinks())
+        return;
+    /* source based on original MMD's IK transformation */
+    static const Vector3 kUnitX(1, 0, 0), kUnitY(0, 1, 0), kUnitZ(0, 0, 1);
+    static const Scalar &kHalfRadian = btRadians(45.0), &kLimitRadian = btRadians(88.0f);
+    const int nlinks = m_IKLinks.count();
+    const int nloops = m_nloop;
+    Quaternion rotation, rx, ry, rz;
+    for (int i = 0; i < nloops; i++) {
+        int t = m_nloop / 2;
+        for (int j = 0; j < nlinks; j++) {
+            IKLink *link = m_IKLinks[i];
+            Bone *destinationBone = link->destinationBone;
+            const Vector3 &targetPosition = (m_targetBone->m_localTransform * m_targetBone->m_position);
+            const Vector3 &destinationPosition = (destinationBone->m_localTransform * destinationBone->m_position);
+            const Vector3 &v1 = (destinationPosition - targetPosition).normalized();
+            const Vector3 &v2 = (destinationPosition - m_position).normalized();
+            const Vector3 &v3 = v1 - v2;
+            if (btFuzzyZero(v3.dot(v3)))
+                break;
+            Vector3 v4 = v1.cross(v2);
+            const Vector3 &lowerLimit = link->lowerLimit;
+            const Vector3 &upperLimit = link->upperLimit;
+            if (link->hasAngleConstraint && i < t) {
+                // limit x axis
+                if (lowerLimit.y() == 0 && upperLimit.y() == 0 && lowerLimit.z() == 0 && upperLimit.z() == 0) {
+                    const Scalar &vx = m_targetBone->m_localTransform.getBasis().tdotx(v4);
+                    v4.setZero();
+                    v4.setX(vx >= 0.0 ? 1.0 : -1.0);
+                }
+                // limit y axis
+                else if (lowerLimit.x() == 0 && upperLimit.x() == 0 && lowerLimit.z() == 0 && upperLimit.z() == 0) {
+                    const Scalar &vy = m_targetBone->m_localTransform.getBasis().tdoty(v4);
+                    v4.setZero();
+                    v4.setY(vy >= 0.0 ? 1.0 : -1.0);
+                }
+                // limit z axis
+                else if (lowerLimit.x() == 0 && upperLimit.x() == 0 && lowerLimit.y() == 0 && upperLimit.y() == 0) {
+                    const Scalar &vz = m_targetBone->m_localTransform.getBasis().tdotz(v4);
+                    v4.setZero();
+                    v4.setZ(vz >= 0.0 ? 1.0 : -1.0);
+                }
+            }
+            else {
+                v4 = (m_targetBone->m_localTransform.getBasis() * v4).normalized();
+            }
+            const Scalar &nais = btClamped(v1.dot(v2), -1.0f, 1.0f);
+            const Scalar &constraintAngleRadian = m_constraintAngle * (j + 1) * 2;
+            const Scalar &radianIK = btMin(btAcos(nais), constraintAngleRadian);
+            const Scalar &sinIK = btSin(radianIK);
+            rotation.setValue(v4.x() * sinIK, v4.y() * sinIK, v4.z() * sinIK, btCos(radianIK));
+            m_targetBone->m_rotationIKLink *= rotation;
+            if (j == 0)
+                m_targetBone->m_rotationIKLink = m_targetBone->m_rotation * m_targetBone->m_rotationIKLink;
+            btMatrix3x3 matrix(m_targetBone->m_rotationIKLink);
+            if (link->hasAngleConstraint) {
+                Scalar x, y, z;
+                if (lowerLimit.x() > -kHalfRadian && upperLimit.x() < kHalfRadian) {
+                    // x axis rotation
+                    const Vector3 &m3 = matrix.getRow(2);
+                    x = btAsin(-m3.y());
+                    if (btFabs(x) > kLimitRadian)
+                        x = x < 0 ? -kLimitRadian : kLimitRadian;
+                    const Scalar &cosX = btCos(x);
+                    y = btAtan2(m3.x() / cosX, m3.z() / cosX);
+                    const Vector3 &m1 = matrix.getRow(0);
+                    z = btAtan2(m1.x() / cosX, m1.z() / cosX);
+                    SetConstraint(lowerLimit, upperLimit, i < t, x, y, z);
+                    rx.setRotation(kUnitX, x);
+                    ry.setRotation(kUnitY, y);
+                    rz.setRotation(kUnitZ, z);
+                    matrix.setRotation(rz * rx * ry);
+                }
+                else if (lowerLimit.y() > -kHalfRadian && upperLimit.y() < kHalfRadian) {
+                    // y axis rotation
+                    const Vector3 &m1 = matrix.getRow(0);
+                    y = btAsin(-m1.z());
+                    if (btFabs(y) > kLimitRadian)
+                        y = y < 0 ? -kLimitRadian : kLimitRadian;
+                    const Scalar &cosY = btCos(y);
+                    z = btAtan2(m1.y() / cosY, m1.x() / cosY);
+                    x = btAtan2(matrix.getRow(1).z() / cosY, matrix.getRow(2).z() / cosY);
+                    SetConstraint(lowerLimit, upperLimit, i < t, x, y, z);
+                    rx.setRotation(kUnitX, x);
+                    ry.setRotation(kUnitY, y);
+                    rz.setRotation(kUnitZ, z);
+                    matrix.setRotation(rx * ry * rz);
+                }
+                else {
+                    // z axis rotation
+                    const Vector3 &m2 = matrix.getRow(1);
+                    z = btAsin(-m2.x());
+                    if (btFabs(z) > kLimitRadian)
+                        z = z < 0 ? -kLimitRadian : kLimitRadian;
+                    const Scalar &cosZ = btCos(y);
+                    x = btAtan2(m2.z() / cosZ, m2.y() / cosZ);
+                    y = btAtan2(matrix.getRow(2).x() / cosZ, matrix.getRow(0).x() / cosZ);
+                    SetConstraint(lowerLimit, upperLimit, i < t, x, y, z);
+                    rx.setRotation(kUnitX, x);
+                    ry.setRotation(kUnitY, y);
+                    rz.setRotation(kUnitZ, z);
+                    matrix.setRotation(ry * rz * rx);
+                }
+            }
+            Transform matrixLocal(matrix), temp(matrix);
+            temp.setOrigin(-m_targetBone->m_position);
+            matrixLocal = temp * matrixLocal;
+            temp.setOrigin(m_position);
+            matrixLocal *= temp;
+            temp.setOrigin(m_targetBone->m_position);
+            matrixLocal *= temp;
+            m_targetBone->m_IKLinkTransform = matrixLocal;
+            for (int k = j; k >= 0; k--) {
+                IKLink *ik = m_IKLinks[k];
+                Bone *destinationBone = ik->destinationBone;
+                destinationBone->m_localTransform = destinationBone->m_IKLinkTransform * destinationBone->m_parentBone->m_localTransform;
+            }
+            m_targetBone->m_localTransform = m_targetBone->m_IKLinkTransform * m_targetBone->m_parentBone->m_localTransform;
+        }
+    }
 }
 
 const Vector3 &Bone::offset() const

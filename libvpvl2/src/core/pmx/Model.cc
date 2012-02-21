@@ -291,7 +291,6 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
                 return false;
             }
         }
-        // TODO:
     }
     info.displayNamesCount = nDisplayNames;
 
