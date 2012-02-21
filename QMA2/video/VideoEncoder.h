@@ -75,7 +75,7 @@ private:
     int m_videoBitrate;
     int m_audioBitrate;
     int m_audioSampleRate;
-    bool m_running;
+    volatile bool m_running;
 };
 
 #endif // VIDEOENCODER_H

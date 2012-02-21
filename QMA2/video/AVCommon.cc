@@ -49,20 +49,27 @@ void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, 
         packet.pts = av_rescale_q(codedFrame->pts, stream->codec->time_base, stream->time_base);
 }
 
-void OpenEncodingCodec(AVCodecContext *codecContext)
+void OpenAVCodec(AVCodecContext *context, AVCodec *codec)
 {
-    AVCodec *codec = avcodec_find_encoder(codecContext->codec_id);
-    if (!codec)
-        throw std::bad_exception();
-    if (avcodec_open2(codecContext, codec, 0) < 0)
+    if (!context || !codec || avcodec_open2(context, codec, 0) < 0)
         throw std::bad_exception();
 }
 
+void OpenEncodingCodec(AVCodecContext *codecContext)
+{
+    OpenAVCodec(codecContext, avcodec_find_encoder(codecContext->codec_id));
+}
+
+void OpenDecodingCodec(AVCodecContext *codecContext)
+{
+    OpenAVCodec(codecContext, avcodec_find_decoder(codecContext->codec_id));
+}
+
 AVStream *OpenAudioStream(AVFormatContext *formatContext,
-                                 AVOutputFormat *outputFormat,
-                                 CodecID codecID,
-                                 int bitrate,
-                                 int sampleRate)
+                          AVOutputFormat *outputFormat,
+                          CodecID codecID,
+                          int bitrate,
+                          int sampleRate)
 {
     AVStream *stream = av_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
@@ -79,10 +86,10 @@ AVStream *OpenAudioStream(AVFormatContext *formatContext,
 }
 
 void WriteAudioFrame(AVFormatContext *formatContext,
-                            AVStream *stream,
-                            const int16_t *samples,
-                            uint8_t *encodedFrameBuffer,
-                            size_t encodedFrameBufferSize)
+                     AVStream *stream,
+                     const int16_t *samples,
+                     uint8_t *encodedFrameBuffer,
+                     size_t encodedFrameBufferSize)
 {
     if (!samples)
         return;
@@ -97,12 +104,12 @@ void WriteAudioFrame(AVFormatContext *formatContext,
 }
 
 AVStream *OpenVideoStream(AVFormatContext *formatContext,
-                                 AVOutputFormat *outputFormat,
-                                 CodecID codecID,
-                                 PixelFormat pixelFormat,
-                                 const QSize &size,
-                                 int bitrate,
-                                 int fps)
+                          AVOutputFormat *outputFormat,
+                          CodecID codecID,
+                          PixelFormat pixelFormat,
+                          const QSize &size,
+                          int bitrate,
+                          int fps)
 {
     AVStream *stream = av_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
@@ -123,10 +130,10 @@ AVStream *OpenVideoStream(AVFormatContext *formatContext,
 }
 
 void WriteVideoFrame(AVFormatContext *formatContext,
-                            AVStream *stream,
-                            AVFrame *frame,
-                            uint8_t *encodedFrameBuffer,
-                            size_t encodedFrameBufferSize)
+                     AVStream *stream,
+                     AVFrame *frame,
+                     uint8_t *encodedFrameBuffer,
+                     size_t encodedFrameBufferSize)
 {
     AVPacket packet;
     av_init_packet(&packet);
@@ -187,6 +194,17 @@ AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format)
     }
     avpicture_fill(reinterpret_cast<AVPicture *>(frame), buffer, format, width, height);
     return frame;
+}
+
+AVFormatContext *OpenInputFormat(const QString &filename, const char *shortname)
+{
+    AVFormatContext *formatContext = 0;
+    AVInputFormat *inputFormat = av_find_input_format(shortname);
+    if (!inputFormat)
+        throw std::bad_exception();
+    if (avformat_open_input(&formatContext, filename.toLocal8Bit().constData(), inputFormat, 0) < 0)
+        throw std::bad_exception();
+    return formatContext;
 }
 
 }

@@ -57,7 +57,11 @@ double ComputePresentTimeStamp(AVStream *stream);
 
 void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet);
 
+void OpenAVCodec(AVCodecContext *context, AVCodec *codec);
+
 void OpenEncodingCodec(AVCodecContext *codecContext);
+
+void OpenDecodingCodec(AVCodecContext *codecContext);
 
 AVStream *OpenAudioStream(AVFormatContext *formatContext,
                                  AVOutputFormat *outputFormat,
@@ -88,6 +92,8 @@ void WriteVideoFrame(AVFormatContext *formatContext,
 AVOutputFormat *CreateVideoFormat(const QString &filename);
 
 AVFormatContext *CreateVideoFormatContext(AVOutputFormat *videoFormat, const QString &filename);
+
+AVFormatContext *OpenInputFormat(const QString &filename, const char *shortname);
 
 AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format);
 

@@ -50,11 +50,16 @@ public:
 protected:
     virtual void run();
 
+signals:
+    void audioDidDecode(const QByteArray &bytes);
+
+private slots:
+    void stop();
+
 private:
+    mutable QMutex m_mutex;
     QString m_filename;
-    QMutex m_mutex;
-    QQueue<QByteArray> m_buffer;
-    bool m_running;
+    volatile bool m_running;
 };
 
 #endif // AUDIODECODER_H

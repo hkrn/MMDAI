@@ -43,14 +43,55 @@
 using namespace internal;
 
 AudioDecoder::AudioDecoder(const QString &filename)
-    : m_filename(filename)
+    : m_filename(filename),
+      m_running(true)
 {
 }
 
 AudioDecoder::~AudioDecoder()
 {
+    m_running = false;
 }
 
 void AudioDecoder::run()
 {
+    AVFormatContext *formatContext = 0;
+    AVCodecContext *audioContext = 0;
+    int16_t *samples = 0;
+    AVPacket packet;
+    av_init_packet(&packet);
+    try {
+        formatContext = OpenInputFormat(m_filename, "wav");
+        if (formatContext->nb_streams  < 1)
+            throw std::bad_exception();
+        audioContext = formatContext->streams[0]->codec;
+        if (audioContext->codec_type != AVMEDIA_TYPE_AUDIO)
+            throw std::bad_exception();
+        OpenAVCodec(audioContext, avcodec_find_decoder(CODEC_ID_PCM_S16LE));
+        samples = new int16_t[AVCODEC_MAX_AUDIO_FRAME_SIZE];
+        if (!samples)
+            throw std::bad_alloc();
+        while (m_running) {
+            int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+            if (av_read_frame(formatContext, &packet) < 0)
+                break;
+            int len = avcodec_decode_audio3(audioContext, samples, &size, &packet);
+            if (len < 0)
+                break;
+            emit audioDidDecode(QByteArray(reinterpret_cast<const char *>(samples), size));
+        }
+    } catch (std::exception &e) {
+        qWarning() << e.what();
+    }
+    if (samples)
+        delete[] samples;
+    if (audioContext)
+        avcodec_close(audioContext);
+    if (formatContext)
+        av_free(formatContext);
+}
+
+void AudioDecoder::stop()
+{
+    m_running = false;
 }
