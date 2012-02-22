@@ -97,6 +97,7 @@ public:
     const vpvl::Scene *scene() const;
     vpvl::Scene *mutableScene();
     void setSelectedModel(vpvl::PMDModel *value);
+    void setWorldGravity(const vpvl::Vector3 &value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);

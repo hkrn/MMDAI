@@ -1526,7 +1526,7 @@ void MainWindow::openGravitySettingDialog()
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     GravitySettingDialog *dialog = new GravitySettingDialog(loader, this);
     if (dialog->exec() == QDialog::Accepted)
-        loader->setWorldGravity(dialog->value());
+        m_sceneWidget->setWorldGravity(dialog->value());
 }
 
 void MainWindow::updateWindowTitle()

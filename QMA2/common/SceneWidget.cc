@@ -236,6 +236,12 @@ void SceneWidget::loadProject(const QString &filename)
     delete dialog;
 }
 
+void SceneWidget::setWorldGravity(const vpvl::Vector3 &value)
+{
+    m_world->setGravity(value);
+    m_loader->setWorldGravity(value);
+}
+
 void SceneWidget::saveProject(const QString &filename)
 {
     m_loader->setWorldGravity(m_world->gravity());
