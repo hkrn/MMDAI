@@ -55,6 +55,8 @@ PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
       m_totalStep(0.0f),
       m_prevSceneFPS(0)
 {
+    connect(&m_timer, SIGNAL(timeout()), this, SLOT(renderSceneFrame()));
+    m_timer.setSingleShot(false);
     m_progress = new QProgressDialog();
     m_progress->setWindowModality(Qt::ApplicationModal);
 }
@@ -93,8 +95,6 @@ void PlayerWidget::start()
     m_progress->setRange(0, maxRangeIndex);
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
     /* 再生用タイマー起動 */
-    connect(&m_timer, SIGNAL(timeout()), this, SLOT(renderSceneFrame()));
-    m_timer.setSingleShot(false);
     m_timer.start(1000.0f / sceneFPS);
     m_elapsed.start();
     m_countForFPS = 0;
