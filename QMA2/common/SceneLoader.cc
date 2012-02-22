@@ -880,7 +880,7 @@ void SceneLoader::setFrameIndexPlayFrom(int value)
 
 int SceneLoader::frameIndexPlayTo() const
 {
-    return globalSetting("play.frame_index.to", 0);
+    return globalSetting("play.frame_index.to", int(m_renderer->scene()->maxFrameIndex()));
 }
 
 void SceneLoader::setFrameIndexPlayTo(int value)
@@ -913,7 +913,7 @@ void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
 
 int SceneLoader::frameIndexEncodeVideoTo() const
 {
-    return globalSetting("video.frame_index.to", 0);
+    return globalSetting("video.frame_index.to", int(m_renderer->scene()->maxFrameIndex()));
 }
 
 void SceneLoader::setFrameIndexEncodeVideoTo(int value)
@@ -1077,5 +1077,10 @@ bool SceneLoader::globalSetting(const char *key, bool def) const
 
 int SceneLoader::globalSetting(const char *key, int def) const
 {
-    return m_project ? QString::fromStdString(m_project->globalSetting(key)).toInt() : def;
+    if (m_project) {
+        bool ok = false;
+        int value = QString::fromStdString(m_project->globalSetting(key)).toInt(&ok);
+        return ok ? value : def;
+    }
+    return def;
 }
