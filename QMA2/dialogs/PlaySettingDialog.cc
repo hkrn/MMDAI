@@ -49,28 +49,13 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *sce
     int maxFrameIndex = scene->scene()->maxFrameIndex();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
-    m_fromIndexBox->setValue(m_sceneLoader->frameIndexPlayFrom());
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexBox->setValue(m_sceneLoader->frameIndexPlayTo());
     m_sceneFPSBox = new QComboBox();
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    switch (m_sceneLoader->sceneFPSForPlay()) {
-    case 120:
-        m_sceneFPSBox->setCurrentIndex(2);
-        break;
-    case 60:
-    default:
-        m_sceneFPSBox->setCurrentIndex(1);
-        break;
-    case 30:
-        m_sceneFPSBox->setCurrentIndex(0);
-        break;
-    }
     m_loopBox = new QCheckBox(tr("Loop"));
-    m_loopBox->setChecked(m_sceneLoader->isLoop());
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(tr("Keyframe from: "), m_fromIndexBox);
     formLayout->addRow(tr("Keyframe to: "), m_toIndexBox);
@@ -117,4 +102,24 @@ int PlaySettingDialog::sceneFPS() const
 bool PlaySettingDialog::isLoop() const
 {
     return m_loopBox->isChecked();
+}
+
+void PlaySettingDialog::showEvent(QShowEvent * /* event */)
+{
+    SceneLoader *loader = m_sceneLoader;
+    m_fromIndexBox->setValue(loader->frameIndexPlayFrom());
+    m_toIndexBox->setValue(loader->frameIndexPlayTo());
+    switch (m_sceneLoader->sceneFPSForPlay()) {
+    case 120:
+        m_sceneFPSBox->setCurrentIndex(2);
+        break;
+    case 60:
+    default:
+        m_sceneFPSBox->setCurrentIndex(1);
+        break;
+    case 30:
+        m_sceneFPSBox->setCurrentIndex(0);
+        break;
+    }
+    m_loopBox->setChecked(loader->isLoop());
 }

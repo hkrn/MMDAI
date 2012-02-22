@@ -1282,8 +1282,8 @@ void MainWindow::exportVideo()
 {
     if (VideoEncoder::isSupported()) {
         if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
-            delete m_exportingVideoDialog;
-            m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
+            if (!m_exportingVideoDialog)
+                m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
             m_exportingVideoDialog->show();
         }
         else {

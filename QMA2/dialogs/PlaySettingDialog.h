@@ -63,6 +63,9 @@ public:
 signals:
     void settingsDidSave();
 
+protected:
+    void showEvent(QShowEvent *event);
+
 private slots:
     void saveSettings();
 

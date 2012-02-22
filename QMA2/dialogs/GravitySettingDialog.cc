@@ -43,7 +43,8 @@
 using namespace vpvl;
 
 GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent) :
-    QDialog(parent)
+    QDialog(parent),
+    m_sceneLoader(loader)
 {
     const Vector3 &gravity = loader->worldGravity();
     QHBoxLayout *subLayout = new QHBoxLayout();
@@ -73,6 +74,14 @@ GravitySettingDialog::~GravitySettingDialog()
 const Vector3 GravitySettingDialog::value() const
 {
     return Vector3(m_axisX->value(), m_axisY->value(), m_axisZ->value());
+}
+
+void GravitySettingDialog::showEvent(QShowEvent * /* event */)
+{
+    const Vector3 &gravity = m_sceneLoader->worldGravity();
+    m_axisX->setValue(gravity.x());
+    m_axisY->setValue(gravity.y());
+    m_axisZ->setValue(gravity.z());
 }
 
 QDoubleSpinBox *GravitySettingDialog::createSpinBox(double value) const

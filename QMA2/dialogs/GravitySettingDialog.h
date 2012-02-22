@@ -54,9 +54,13 @@ public:
 
     const vpvl::Vector3 value() const;
 
+protected:
+    void showEvent(QShowEvent *event);
+
 private:
     QDoubleSpinBox *createSpinBox(double value) const;
 
+    SceneLoader *m_sceneLoader;
     QDoubleSpinBox *m_axisX;
     QDoubleSpinBox *m_axisY;
     QDoubleSpinBox *m_axisZ;
