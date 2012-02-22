@@ -53,6 +53,8 @@ PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
       m_selected(0),
       m_frameStep(0.0f),
       m_totalStep(0.0f),
+      m_countForFPS(0),
+      m_currentFPS(0),
       m_prevSceneFPS(0)
 {
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(renderSceneFrame()));
@@ -124,6 +126,7 @@ bool PlayerWidget::isActive() const
 void PlayerWidget::renderSceneFrame()
 {
     if (m_elapsed.elapsed() > 1000) {
+        m_currentFPS = m_countForFPS;
         m_countForFPS = 0;
         m_elapsed.restart();
     }
@@ -155,5 +158,9 @@ void PlayerWidget::renderSceneFrame()
         }
         m_progress->setValue(value);
         m_progress->setLabelText(m_format.arg(value).arg(m_dialog->toIndex() - m_dialog->fromIndex()));
+        if (m_currentFPS > 0)
+            m_progress->setWindowTitle(tr("Current FPS: %1").arg(m_currentFPS));
+        else
+            m_progress->setWindowTitle(tr("Current FPS: N/A"));
     }
 }

@@ -65,7 +65,6 @@ private slots:
 
 private:
     QElapsedTimer m_elapsed;
-    int m_countForFPS;
     QTimer m_timer;
     SceneWidget *m_sceneWidget;
     PlaySettingDialog *m_dialog;
@@ -74,6 +73,8 @@ private:
     vpvl::PMDModel *m_selected;
     float m_frameStep;
     float m_totalStep;
+    int m_countForFPS;
+    int m_currentFPS;
     int m_prevSceneFPS;
 };
 
