@@ -67,9 +67,16 @@ public:
     size_t estimateSize() const;
     void write(uint8_t *data) const;
     void solve();
+    bool isSimulated() const;
 
-    bool isSimulated() const {
-        return m_bones.count() > 0 ? m_bones[0]->isSimulated() : false;
+    Bone *destinationBone() const {
+        return m_destination;
+    }
+    Bone *targetBone() const {
+        return m_target;
+    }
+    const BoneList &linkedBones() const {
+        return m_bones;
     }
 
     void setBones(Bone *destination, Bone *target, const BoneList &boneIKs);

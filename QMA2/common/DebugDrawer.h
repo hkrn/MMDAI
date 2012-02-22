@@ -134,6 +134,20 @@ public:
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
+        QSet<vpvl::Bone *> linkedIKBones;
+        const vpvl::IKList &IKs = model->IKs();
+        int nIKs = IKs.count();
+        for (int i = 0; i < nIKs; i++) {
+            vpvl::IK *ik = IKs[i];
+            const vpvl::BoneList &bones = ik->linkedBones();
+            int nbones = bones.count();
+            linkedIKBones.insert(ik->targetBone());
+            linkedIKBones.insert(ik->destinationBone());
+            for (int j = 0; j < nbones; j++) {
+                vpvl::Bone *bone = bones[j];
+                linkedIKBones.insert(bone);
+            }
+        }
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *child = bone->child();
             if (!bone->isMovable() && !bone->isRotateable())
@@ -150,10 +164,17 @@ public:
             tr.setOrigin(vpvl::Vector3(-s, 0.0f, 0.0f));
             vertices.add(tr * origin);
             vertices.add(childOrigin);
-            if (selected.contains(const_cast<vpvl::Bone *>(bone))) {
+            vpvl::Bone *mutableBone = const_cast<vpvl::Bone *>(bone);
+            if (selected.contains(mutableBone)) {
                 drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.0f, 0.0f));
                 m_program.setUniformValue("color", QColor::fromRgbF(1.0f, 0.0f, 0.0f));
             }
+            /*
+            else if (linkedIKBones.contains(mutableBone)) {
+                drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.75f, 0.0f));
+                m_program.setUniformValue("color", QColor::fromRgbF(1.0f, 0.75f, 0.0f));
+            }
+            */
             else {
                 drawSphere(origin, 0.1f, vpvl::Vector3(0.0f, 0.0f, 1.0f));
                 m_program.setUniformValue("color", QColor::fromRgbF(0.0f, 0.0f, 1.0f));

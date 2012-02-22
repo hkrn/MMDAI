@@ -247,6 +247,11 @@ void IK::solve()
     m_target->updateTransform();
 }
 
+bool IK::isSimulated() const
+{
+    return m_bones.count() > 0 ? m_bones[0]->isSimulated() : false;
+}
+
 void IK::setBones(Bone *destination, Bone *target, const BoneList &boneIKs)
 {
     m_destination = destination;
