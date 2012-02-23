@@ -93,7 +93,7 @@ public:
         : QAbstractTableModel(parent),
           m_motion(0),
           m_undo(undo),
-          m_frameIndex(0),
+          m_frameIndex(0.0),
           m_modified(false)
     {
     }
@@ -150,17 +150,17 @@ public:
     virtual int maxFrameIndex() const = 0;
 
     vpvl::VMDMotion *currentMotion() const { return m_motion; }
-    void setFrameIndex(int value) {
-        int old = m_frameIndex;
-        m_frameIndex = value;
-        emit frameIndexDidChange(value, old);
+    void setFrameIndex(float newIndex) {
+        float oldIndex = m_frameIndex;
+        m_frameIndex = newIndex;
+        emit frameIndexDidChange(newIndex, oldIndex);
     }
     void setModified(bool value) {
         m_modified = value;
         emit motionDidModify(value);
     }
     bool isModified() const { return m_modified; }
-    int frameIndex() const { return m_frameIndex; }
+    float frameIndex() const { return m_frameIndex; }
 
 public slots:
     virtual void removeMotion() = 0;
@@ -183,7 +183,7 @@ protected:
 
     vpvl::VMDMotion *m_motion;
     QUndoGroup *m_undo;
-    int m_frameIndex;
+    float m_frameIndex;
     bool m_modified;
 
 private:

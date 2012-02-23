@@ -125,7 +125,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     connect(treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             treeView, SLOT(selectModelIndices(QItemSelection,QItemSelection)));
     TimelineHeaderView *header = new TimelineHeaderView(Qt::Horizontal);
-    connect(header, SIGNAL(frameIndexDidSelect(int)), this, SLOT(setCurrentFrameIndex(int)));
+    connect(header, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentFrameIndex(int)));
     treeView->setHeader(header);
     header->setResizeMode(0, QHeaderView::ResizeToContents);
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
@@ -133,7 +133,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->maxFrameCount());
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
-    connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setCurrentFrameIndex(int)));
+    connect(m_spinBox, SIGNAL(valueChanged(int)), SLOT(setCurrentFrameIndex(int)));
     m_label = new QLabel();
     m_button = new QPushButton();
     /* キーフレームの登録処理 */
@@ -192,16 +192,21 @@ void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
     setCurrentFrameIndex(frameIndex);
 }
 
-void TimelineWidget::setCurrentFrameIndex(int frameIndex)
+void TimelineWidget::setCurrentFrameIndex(float frameIndex)
 {
     /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
     model->setFrameIndex(frameIndex);
     m_treeView->selectFrameIndex(frameIndex);
-    m_treeView->scrollTo(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
+    m_treeView->scrollTo(model->index(0, MotionBaseModel::toModelIndex(frameIndex)), QAbstractItemView::PositionAtCenter);
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
-    emit motionDidSeek(static_cast<float>(frameIndex));
+    emit motionDidSeek(frameIndex);
+}
+
+void TimelineWidget::setCurrentFrameIndex(int frameIndex)
+{
+    setCurrentFrameIndex(float(frameIndex));
 }
 
 void TimelineWidget::setCurrentFrameIndexBySpinBox()

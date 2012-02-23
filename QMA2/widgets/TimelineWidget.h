@@ -64,6 +64,7 @@ public:
     TimelineTreeView *treeView() const { return m_treeView; }
 
 public slots:
+    void setCurrentFrameIndex(float frameIndex);
     void setCurrentFrameIndex(int frameIndex);
 
 signals:
