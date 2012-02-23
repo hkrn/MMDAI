@@ -311,6 +311,11 @@ void SceneWidget::setInfoPanelVisible(bool value)
     m_info->setVisible(value);
 }
 
+void SceneWidget::setBoneWireFramesVisible(bool value)
+{
+    m_debugDrawer->setVisible(value);
+}
+
 void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */

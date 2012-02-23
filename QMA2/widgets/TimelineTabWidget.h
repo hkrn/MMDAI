@@ -99,6 +99,7 @@ private slots:
     void retranslate();
     void addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone);
     void addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face);
+    void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
     void insertFrame();
     void deleteFrame();

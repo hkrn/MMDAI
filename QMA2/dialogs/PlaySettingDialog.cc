@@ -45,29 +45,48 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *sce
     : QDialog(),
       m_sceneLoader(scene->sceneLoader())
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
     int maxFrameIndex = scene->scene()->maxFrameIndex();
+    m_fromIndexLabel = new QLabel();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
+    m_toIndexLabel = new QLabel();
     m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
+    m_sceneFPSLabel = new QLabel();
     m_sceneFPSBox = new QComboBox();
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    m_loopBox = new QCheckBox(tr("Loop"));
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(tr("Keyframe from: "), m_fromIndexBox);
-    formLayout->addRow(tr("Keyframe to: "), m_toIndexBox);
-    formLayout->addRow(tr("Scene FPS: "), m_sceneFPSBox);
-    mainLayout->addLayout(formLayout);
-    mainLayout->addWidget(m_loopBox, 0, Qt::AlignCenter);
+    m_loopBox = new QCheckBox();
+    m_selectModelBox = new QCheckBox();
+    m_boneWireFramesBox = new QCheckBox();
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QLayout *subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_fromIndexLabel);
+    subLayout->addWidget(m_fromIndexBox);
+    subLayout->addWidget(m_toIndexLabel);
+    subLayout->addWidget(m_toIndexBox);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
+    subLayout->setAlignment(Qt::AlignCenter);
+    subLayout->addWidget(m_sceneFPSLabel);
+    subLayout->addWidget(m_sceneFPSBox);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QVBoxLayout();
+    subLayout->setAlignment(Qt::AlignCenter);
+    subLayout->addWidget(m_loopBox);
+    subLayout->addWidget(m_selectModelBox);
+    subLayout->addWidget(m_boneWireFramesBox);
+    mainLayout->addLayout(subLayout);
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+    m_playButton = new QPushButton(tr("Play"));
+    connect(m_playButton, SIGNAL(clicked()), SIGNAL(playingDidStart()));
+    buttons->addButton(m_playButton, QDialogButtonBox::ActionRole);
     connect(this, SIGNAL(settingsDidSave()), this, SLOT(close()));
     connect(buttons, SIGNAL(accepted()), this, SLOT(saveSettings()));
     connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
     mainLayout->addWidget(buttons);
-    setWindowTitle(tr("Playing scene setting"));
+    retranslate();
     setLayout(mainLayout);
 }
 
@@ -80,7 +99,7 @@ void PlaySettingDialog::saveSettings()
     m_sceneLoader->setFrameIndexPlayFrom(fromIndex());
     m_sceneLoader->setFrameIndexPlayTo(toIndex());
     m_sceneLoader->setSceneFPSForPlay(sceneFPS());
-    m_sceneLoader->setLoop(isLoop());
+    m_sceneLoader->setLoop(isLoopEnabled());
     emit settingsDidSave();
 }
 
@@ -99,9 +118,19 @@ int PlaySettingDialog::sceneFPS() const
     return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
 }
 
-bool PlaySettingDialog::isLoop() const
+bool PlaySettingDialog::isLoopEnabled() const
 {
     return m_loopBox->isChecked();
+}
+
+bool PlaySettingDialog::isModelSelected() const
+{
+    return m_selectModelBox->isChecked();
+}
+
+bool PlaySettingDialog::isBoneWireframesVisible() const
+{
+    return m_boneWireFramesBox->isChecked();
 }
 
 void PlaySettingDialog::showEvent(QShowEvent * /* event */)
@@ -122,4 +151,15 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
         break;
     }
     m_loopBox->setChecked(loader->isLoop());
+}
+
+void PlaySettingDialog::retranslate()
+{
+    m_fromIndexLabel->setText(tr("Keyframe from: "));
+    m_toIndexLabel->setText(tr("Keyframe to: "));
+    m_sceneFPSLabel->setText(tr("Scene FPS: "));
+    m_loopBox->setText(tr("Loop"));
+    m_selectModelBox->setText(tr("Be model selected"));
+    m_boneWireFramesBox->setText(tr("Draw bone wireframes"));
+    setWindowTitle(tr("Playing scene setting"));
 }

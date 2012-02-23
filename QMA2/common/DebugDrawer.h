@@ -51,7 +51,9 @@ class DebugDrawer : public btIDebugDraw
 public:
     DebugDrawer(SceneWidget *sceneWidget)
         : m_sceneWidget(sceneWidget),
-          m_world(0)
+          m_world(0),
+          m_flags(0),
+          m_visible(true)
     {}
     virtual ~DebugDrawer() {}
 
@@ -109,9 +111,12 @@ public:
     void setWorld(btDynamicsWorld *value) {
         m_world = value;
     }
+    void setVisible(bool value) {
+        m_visible = value;
+    }
 
     void drawModelBones(const vpvl::PMDModel *model) {
-        if (!model || !m_program.isLinked())
+        if (!m_visible || !model || !m_program.isLinked())
             return;
         vpvl::Array<vpvl::Vector3> vertices;
         static const int indices[] = {
@@ -189,65 +194,65 @@ public:
         glEnable(GL_DEPTH_TEST);
     }
     void drawBoneTransform(vpvl::Bone *bone) {
-        if (bone && m_program.isLinked()) {
-            float matrix[16];
-            const vpvl::Scene *scene = m_sceneWidget->scene();
-            QGLFunctions func(QGLContext::currentContext());
-            glDisable(GL_DEPTH_TEST);
-            m_program.bind();
-            scene->getModelViewMatrix(matrix);
-            int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
-            func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-            scene->getProjectionMatrix(matrix);
-            int projectionMatrix = m_program.uniformLocation("projectionMatrix");
-            func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
-            m_program.setUniformValue("boneMatrix", QMatrix4x4());
-            m_program.enableAttributeArray("inPosition");
-            const QString &name = internal::toQString(bone);
-            const vpvl::Bone *child = bone->child();
-            if ((name.indexOf("指") != -1
-                 || name.endsWith("腕")
-                 || name.endsWith("ひじ")
-                 || name.endsWith("手首")
-                 ) && child) {
-                /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-                const vpvl::Vector3 &boneOrigin = bone->originPosition();
-                const vpvl::Vector3 &childOrigin = child->originPosition();
-                /* 外積を使ってそれぞれの軸を求める */
-                const vpvl::Vector3 &axisX = (childOrigin - boneOrigin).normalized();
-                vpvl::Vector3 tmp1 = axisX;
-                name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
-                vpvl::Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
-                tmp2.setZ(-axisZ.z());
-                vpvl::Vector3 axisY = tmp2.cross(-axisX).normalized();
+        if (!m_visible || !bone || !m_program.isLinked())
+            return;
+        float matrix[16];
+        const vpvl::Scene *scene = m_sceneWidget->scene();
+        QGLFunctions func(QGLContext::currentContext());
+        glDisable(GL_DEPTH_TEST);
+        m_program.bind();
+        scene->getModelViewMatrix(matrix);
+        int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
+        func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+        scene->getProjectionMatrix(matrix);
+        int projectionMatrix = m_program.uniformLocation("projectionMatrix");
+        func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+        m_program.setUniformValue("boneMatrix", QMatrix4x4());
+        m_program.enableAttributeArray("inPosition");
+        const QString &name = internal::toQString(bone);
+        const vpvl::Bone *child = bone->child();
+        if ((name.indexOf("指") != -1
+             || name.endsWith("腕")
+             || name.endsWith("ひじ")
+             || name.endsWith("手首")
+             ) && child) {
+            /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
+            const vpvl::Vector3 &boneOrigin = bone->originPosition();
+            const vpvl::Vector3 &childOrigin = child->originPosition();
+            /* 外積を使ってそれぞれの軸を求める */
+            const vpvl::Vector3 &axisX = (childOrigin - boneOrigin).normalized();
+            vpvl::Vector3 tmp1 = axisX;
+            name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+            vpvl::Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
+            tmp2.setZ(-axisZ.z());
+            vpvl::Vector3 axisY = tmp2.cross(-axisX).normalized();
 #if 1
-                const vpvl::Transform &transform = bone->localTransform();
-                const vpvl::Vector3 &origin = transform.getOrigin();
-                drawLine(origin, transform * (axisX * 2), vpvl::Vector3(1, 0, 0));
-                drawLine(origin, transform * (axisY * 2), vpvl::Vector3(0, 1, 0));
-                drawLine(origin, transform * (axisZ * 2), vpvl::Vector3(0, 0, 1));
+            const vpvl::Transform &transform = bone->localTransform();
+            const vpvl::Vector3 &origin = transform.getOrigin();
+            drawLine(origin, transform * (axisX * 2), vpvl::Vector3(1, 0, 0));
+            drawLine(origin, transform * (axisY * 2), vpvl::Vector3(0, 1, 0));
+            drawLine(origin, transform * (axisZ * 2), vpvl::Vector3(0, 0, 1));
 #else
-                btMatrix3x3 matrix(
-                            axisX.x(), axisX.y(), axisX.z(),
-                            axisY.x(), axisY.y(), axisY.z(),
-                            axisZ.x(), axisZ.y(), axisZ.z()
-                            );
-                const vpvl::Vector3 &origin = bone->localTransform().getOrigin();
-                vpvl::Transform transform(matrix, pos);
-                drawLine(origin, transform * vpvl::Vector3(1, 0, 0), vpvl::Vector3(1, 0, 0));
-                drawLine(origin, transform * vpvl::Vector3(0, 1, 0), vpvl::Vector3(0, 1, 0));
-                drawLine(origin, transform * vpvl::Vector3(0, 0, 1), vpvl::Vector3(0, 0, 1));
+            btMatrix3x3 matrix(
+                        axisX.x(), axisX.y(), axisX.z(),
+                        axisY.x(), axisY.y(), axisY.z(),
+                        axisZ.x(), axisZ.y(), axisZ.z()
+                        );
+            const vpvl::Vector3 &origin = bone->localTransform().getOrigin();
+            vpvl::Transform transform(matrix, pos);
+            drawLine(origin, transform * vpvl::Vector3(1, 0, 0), vpvl::Vector3(1, 0, 0));
+            drawLine(origin, transform * vpvl::Vector3(0, 1, 0), vpvl::Vector3(0, 1, 0));
+            drawLine(origin, transform * vpvl::Vector3(0, 0, 1), vpvl::Vector3(0, 0, 1));
 #endif
-            }
-            else {
-                const vpvl::Transform &transform = bone->localTransform();
-                const vpvl::Vector3 &origin = transform.getOrigin();
-                drawLine(origin, transform * vpvl::Vector3(2, 0, 0), vpvl::Vector3(1, 0, 0));
-                drawLine(origin, transform * vpvl::Vector3(0, 2, 0), vpvl::Vector3(0, 1, 0));
-                drawLine(origin, transform * vpvl::Vector3(0, 0, 2), vpvl::Vector3(0, 0, 1));
-            }
-            m_program.release();
         }
+        else {
+            const vpvl::Transform &transform = bone->localTransform();
+            const vpvl::Vector3 &origin = transform.getOrigin();
+            drawLine(origin, transform * vpvl::Vector3(2, 0, 0), vpvl::Vector3(1, 0, 0));
+            drawLine(origin, transform * vpvl::Vector3(0, 2, 0), vpvl::Vector3(0, 1, 0));
+            drawLine(origin, transform * vpvl::Vector3(0, 0, 2), vpvl::Vector3(0, 0, 1));
+        }
+        m_program.release();
     }
 
 private:
@@ -255,6 +260,7 @@ private:
     SceneWidget *m_sceneWidget;
     btDynamicsWorld *m_world;
     int m_flags;
+    bool m_visible;
 
     Q_DISABLE_COPY(DebugDrawer)
 };

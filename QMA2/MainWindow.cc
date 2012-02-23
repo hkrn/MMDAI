@@ -89,8 +89,10 @@ static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
                                              SceneWidget *sceneWidget,
                                              PlaySettingDialog *&dialog)
 {
-    if (!dialog)
+    if (!dialog) {
         dialog = new PlaySettingDialog(mainWindow, sceneWidget);
+        QObject::connect(dialog, SIGNAL(playingDidStart()), mainWindow, SLOT(startPlayingScene()));
+    }
 }
 
 }
@@ -1258,18 +1260,15 @@ void MainWindow::exportImage()
                                              tr("untitled.png"));
     if (!filename.isEmpty()) {
         SceneLoader *loader = m_sceneWidget->sceneLoader();
-        PMDModel *selected = loader->selectedModel();
         bool isGridVisible = loader->isGridVisible();
         loader->setGridVisible(false);
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
-        m_sceneWidget->setSelectedModel(0);
         m_sceneWidget->updateGL();
         QImage image = m_sceneWidget->grabFrameBuffer(true);
         loader->setGridVisible(isGridVisible);
         m_sceneWidget->setHandlesVisible(true);
         m_sceneWidget->setInfoPanelVisible(true);
-        m_sceneWidget->setSelectedModel(selected);
         m_sceneWidget->updateGL();
         if (!image.isNull())
             image.save(filename);
@@ -1357,7 +1356,6 @@ void MainWindow::startExportingVideo()
         adjustSize();
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         SceneLoader *loader = m_sceneWidget->sceneLoader();
-        PMDModel *selected = loader->selectedModel();
         bool isGridVisible = loader->isGridVisible();
         /* レンダリングモードを自動更新から手動更新に変更 */
         m_sceneWidget->stop();
@@ -1367,7 +1365,6 @@ void MainWindow::startExportingVideo()
         /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
-        m_sceneWidget->setSelectedModel(0);
         m_sceneWidget->resize(videoSize);
         /* モーションを0フレーム目に移動し、その後指定のキーフレームのインデックスに advance で移動させる */
         m_sceneWidget->seekMotion(0.0f, true);
@@ -1433,7 +1430,6 @@ void MainWindow::startExportingVideo()
         m_sceneWidget->resize(sceneSize);
         m_sceneWidget->setHandlesVisible(true);
         m_sceneWidget->setInfoPanelVisible(true);
-        m_sceneWidget->setSelectedModel(selected);
         m_sceneWidget->setPreferredFPS(fps);
         /* レンダリングを手動更新から自動更新に戻す */
         m_sceneWidget->stopPhysicsSimulation();
@@ -1465,10 +1461,11 @@ void MainWindow::startPlayingScene()
 {
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
-        if (!m_player)
+        if (!m_player) {
             m_player = new PlayerWidget(m_sceneWidget, m_playSettingDialog);
-        if (!m_player->isActive())
-            m_player->start();
+            connect(m_player, SIGNAL(motionDidSeek(int)), m_timelineTabWidget, SLOT(setCurrentFrameIndex(int)));
+        }
+        m_player->start();
     }
     else {
         QMessageBox::warning(this, tr("No motion to export."),

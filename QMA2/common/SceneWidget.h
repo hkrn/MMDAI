@@ -101,6 +101,7 @@ public:
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
+    void setBoneWireFramesVisible(bool value);
     void startAutomaticRendering();
     void stopAutomaticRendering();
     void startPhysicsSimulation();

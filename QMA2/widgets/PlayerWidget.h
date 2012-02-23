@@ -48,7 +48,7 @@ class PMDModel;
 class SceneWidget;
 class PlaySettingDialog;
 
-class PlayerWidget : QObject
+class PlayerWidget : public QObject
 {
     Q_OBJECT
 
@@ -59,6 +59,10 @@ public:
     void start();
     void stop();
     bool isActive() const;
+
+    /* この motionDidSeek は int 型な点に注意 (他は float 型) */
+signals:
+    void motionDidSeek(int frameIndex);
 
 private slots:
     void renderSceneFrame();

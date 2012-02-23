@@ -89,7 +89,9 @@ void PlayerWidget::start()
     /* ハンドルも情報パネルも消す */
     m_sceneWidget->setHandlesVisible(false);
     m_sceneWidget->setInfoPanelVisible(false);
-    m_sceneWidget->setSelectedModel(0);
+    m_sceneWidget->setBoneWireFramesVisible(m_dialog->isBoneWireframesVisible());
+    if (!m_dialog->isModelSelected())
+        m_sceneWidget->setSelectedModel(0);
     /* 進捗ダイアログ作成 */
     m_progress->reset();
     m_progress->setCancelButtonText(tr("Cancel"));
@@ -134,7 +136,7 @@ void PlayerWidget::renderSceneFrame()
     Scene *scene = m_sceneWidget->mutableScene();
     bool isReached = scene->isMotionReachedTo(m_dialog->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
-    if ((!m_dialog->isLoop() && isReached) || m_progress->wasCanceled()) {
+    if ((!m_dialog->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
         stop();
     }
     else {
@@ -162,5 +164,7 @@ void PlayerWidget::renderSceneFrame()
             m_progress->setWindowTitle(tr("Current FPS: %1").arg(m_currentFPS));
         else
             m_progress->setWindowTitle(tr("Current FPS: N/A"));
+        if (m_dialog->isModelSelected())
+            emit motionDidSeek(value);
     }
 }

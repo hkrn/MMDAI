@@ -42,6 +42,7 @@
 class MainWindow;
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QSettings;
 class QSpinBox;
 class SceneLoader;
@@ -58,23 +59,33 @@ public:
     int fromIndex() const;
     int toIndex() const;
     int sceneFPS() const;
-    bool isLoop() const;
+    bool isLoopEnabled() const;
+    bool isModelSelected() const;
+    bool isBoneWireframesVisible() const;
 
 signals:
     void settingsDidSave();
+    void playingDidStart();
 
 protected:
     void showEvent(QShowEvent *event);
 
 private slots:
+    void retranslate();
     void saveSettings();
 
 private:
     SceneLoader *m_sceneLoader;
+    QLabel *m_fromIndexLabel;
+    QLabel *m_toIndexLabel;
+    QLabel *m_sceneFPSLabel;
     QSpinBox *m_fromIndexBox;
     QSpinBox *m_toIndexBox;
     QComboBox *m_sceneFPSBox;
     QCheckBox *m_loopBox;
+    QCheckBox *m_selectModelBox;
+    QCheckBox *m_boneWireFramesBox;
+    QPushButton *m_playButton;
 
     Q_DISABLE_COPY(PlaySettingDialog)
 };

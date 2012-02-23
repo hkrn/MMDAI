@@ -121,6 +121,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     treeView->setModel(base);
     treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
     treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    /* 専用の選択処理を行うようにスロットを追加する */
     connect(treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             treeView, SLOT(selectModelIndices(QItemSelection,QItemSelection)));
     TimelineHeaderView *header = new TimelineHeaderView(Qt::Horizontal);
@@ -131,9 +132,11 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     treeView->setItemDelegate(delegate);
     m_spinBox = new QSpinBox();
     m_spinBox->setMaximum(base->maxFrameCount());
+    /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(setCurrentFrameIndex(int)));
     m_label = new QLabel();
     m_button = new QPushButton();
+    /* キーフレームの登録処理 */
     connect(m_button, SIGNAL(clicked()), treeView, SLOT(addKeyframesBySelectedIndices()));
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
     spinboxLayout->addWidget(m_label);
@@ -145,9 +148,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     mainLayout->addWidget(treeView);
     mainLayout->setContentsMargins(QMargins());
     QItemSelectionModel *sm = treeView->selectionModel();
-    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), this, SLOT(setCurrentColumnIndex(QModelIndex)));
-    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(reexpand()));
-    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), this, SLOT(setCurrentFrameIndexBySpinBox()));
+    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentColumnIndex(QModelIndex)));
+    /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
+    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), SLOT(reexpand()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), SLOT(setCurrentFrameIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout);
     m_treeView = treeView;

@@ -92,12 +92,13 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_sceneTimeline = new TimelineWidget(smm, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
-    connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleBoneEnable(vpvl::PMDModel*)));
-    connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), this, SLOT(toggleBoneButtonsByBone(QList<vpvl::Bone*>)));
-    connect(mmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), this, SLOT(toggleFaceEnable(vpvl::PMDModel*)));
+    /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
+    connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), SLOT(toggleBoneEnable(vpvl::PMDModel*)));
+    connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl::Bone*>)));
+    connect(mmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), SLOT(toggleFaceEnable(vpvl::PMDModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -173,11 +174,23 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(Face *face)
     }
 }
 
+void TimelineTabWidget::setCurrentFrameIndex(int value)
+{
+    /* 二重呼出になってしまうため、一時的に motionDidSeek シグナルを止める */
+    disconnect(m_boneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    disconnect(m_morphTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    disconnect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), this, SIGNAL(motionDidSeek(float)));
+    m_boneTimeline->setCurrentFrameIndex(value);
+    m_morphTimeline->setCurrentFrameIndex(value);
+    m_sceneTimeline->setCurrentFrameIndex(value);
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
+}
+
 void TimelineTabWidget::setCurrentFrameIndexZero()
 {
-    m_boneTimeline->setCurrentFrameIndex(0);
-    m_morphTimeline->setCurrentFrameIndex(0);
-    m_sceneTimeline->setCurrentFrameIndex(0);
+    setCurrentFrameIndex(0);
 }
 
 void TimelineTabWidget::insertFrame()
