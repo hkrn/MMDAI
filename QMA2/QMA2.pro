@@ -18,6 +18,11 @@ exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
+# PortAudio
+exists(../portaudio/lib):LIBS += -L../portaudio/lib -lportaudio
+exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin -lportaudio
+exists(../portaudio/include):INCLUDEPATH += ../portaudio/include
+
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src
 win32:INCLUDEPATH += ../libvpvl/msvc-build/include
@@ -25,20 +30,19 @@ win32:INCLUDEPATH += ../libvpvl/msvc-build/include
 # configuration by build type
 CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
-  macx:LIBS        += -framework Cg -framework OpenCL
-  linux-*:LIBS     += -lGLU
+  macx:LIBS        += -framework Cg
   unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
   unix:INCLUDEPATH += ../libvpvl/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
-  macx:LIBS        += -framework OpenCL
-  linux-*:LIBS     += -lGLU
   unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl -lxml2
   unix:INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
 }
+macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
+linux-*:LIBS += -lGLU
 
 # Basic Configuration
 LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lavcodec -lavformat -lavutil -lswscale

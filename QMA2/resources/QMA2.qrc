@@ -8,6 +8,7 @@
         <file alias="libiconv">licenses/libiconv</file>
         <file alias="zlib">licenses/zlib</file>
         <file alias="libav">licenses/libav</file>
+        <file alias="PortAudio">licenses/PortAudio</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>

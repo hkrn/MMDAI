@@ -36,6 +36,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include <portaudio.h>
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
 #include "video/VideoEncoder.h"
@@ -116,6 +117,7 @@ int main(int argc, char *argv[])
     xmlInitCharEncodingHandlers();
     xmlInitGlobals();
     xmlInitParser();
+    Pa_Initialize();
     VideoEncoder::initialize();
 
     Application a(argc, argv);
@@ -149,6 +151,7 @@ int main(int argc, char *argv[])
                              QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     LoggerWidget::destroyInstance();
+    Pa_Terminate();
     xmlCleanupParser();
     xmlMemoryDump();
 

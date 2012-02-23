@@ -86,6 +86,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+    addLibrary("PortAudio", "MIT", "http://portaudio.com", "PortAudio");
     addLibrary("libav", "LGPL", "http://libav.org", "libav");
     addLibrary("zlib", "zlib", "http://zlib.net", "zlib");
     addLibrary("libiconv", "LGPL", "http://www.gnu.org/software/libiconv/", "libiconv");
