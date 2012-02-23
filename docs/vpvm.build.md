@@ -182,6 +182,55 @@ lrelease MMDAI2.ts -qm MMDAI2_ja.qm
 </code></pre>
 
 ## ビルド
+まず QMA2 で依存しているライブラリである libav と PortAudio をビルドする必要があります。
+
+### libav のビルド
+libav は http://libav.org/download.html からダウンロード可能。0.7.4 を用いること。
+MacOSX の場合 configure の引数に x86 向けに '--arch=i386 --cc="clang -m32"' を、x64 向けに '--arch=x86_64' を入れる。一発でユニバーサルバイナリを作ることができないため、個々にビルドし、lipo でバイナリを結合すること。
+
+<pre><code>cd $MMDAI_SRC_DIR
+cd libav
+./configure \
+  --disable-static \
+  --enable-shared \
+  --disable-bzlib \
+  --disable-libfreetype \
+  --disable-libopenjpeg \
+  --disable-decoders \
+  --enable-decoder="pcm_s16le" \
+  --disable-encoders \
+  --enable-encoder="png" \
+  --enable-encoder="pcm_s16le" \
+  --disable-parsers \
+  --disable-demuxers \
+  --enable-demuxer="pcm_s16le" \
+  --enable-demuxer="wav" \
+  --disable-muxers \
+  --enable-muxer="mov" \
+  --disable-protocols \
+  --enable-protocol="file" \
+  --disable-filters \
+  --disable-bsfs \
+  --disable-indevs \
+  --disable-outdevs \
+  --enable-zlib
+make
+make install
+</code></pre>
+
+### PortAudio のビルド
+PortAudio は http://portaudio.com/download.html からダウンロード可能。V19 の 20111121 (記述時点) を用いること。
+また、PortAudio のビルドは scons を用いるため、予め scons をインストールしておく必要がある。
+MacOSX の場合は scons の引数に 'customCFlags="-arch i386 -arch x86_64" customCxxFlags="-arch i386 -arch x86_64" customLinkFlags="-arch i386 -arch x86_64"' を追加する
+
+<pre><code># scons はビルドも自動的に行なってくれるので、make を行う必要はない
+cd $MMDAI_SRC_DIR
+cd portaudio
+scons enableOptimize=1 enableDebug=0 enableTests=0 enableAsserts=0
+</code></pre>
+
+上記のライブラリを構築したら QMA2 をビルドします。
+
 qmake を使った方法です。QtCreator を使う場合は QMA2.pro を読み込ませてください。ここでは QMA2 があるディレクトリに
 事前にビルドするディレクトリを作成します。MacOSX の場合はパッケージングを行うスクリプトの関係で QMA2-release-desktop か
 QMA2-debug-desktop という名前でディレクトリを作成する必要があります。
