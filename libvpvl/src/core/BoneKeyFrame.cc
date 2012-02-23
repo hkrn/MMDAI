@@ -69,7 +69,8 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
 BoneKeyframe::BoneKeyframe()
     : BaseKeyframe(),
       m_position(0.0f, 0.0f, 0.0f),
-      m_rotation(0.0f, 0.0f, 0.0f, 1.0f)
+      m_rotation(0.0f, 0.0f, 0.0f, 1.0f),
+      m_enableIK(true)
 {
     internal::zerofill(m_name, sizeof(m_name));
     internal::zerofill(m_linear, sizeof(m_linear));
@@ -270,6 +271,11 @@ void BoneKeyframe::setPosition(const Vector3 &value)
 void BoneKeyframe::setRotation(const Quaternion &value)
 {
     m_rotation = value;
+}
+
+void BoneKeyframe::setIKEnable(bool value)
+{
+    m_enableIK = value;
 }
 
 }

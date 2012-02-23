@@ -60,7 +60,6 @@ public:
         kAssets,
         kAsset,
         kMotions,
-        kIKMotion,
         kAssetMotion,
         kAnimation,
         kBoneMotion,
@@ -246,6 +245,7 @@ public:
                 internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
                                    -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("rotation"), VPVL_CAST_XC(buffer)));
+                VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("ik"), VPVL_CAST_XC(frame->isIKEnabled() ? "true" : "false")));
                 frame->getInterpolationParameter(BoneKeyframe::kX, ix);
                 frame->getInterpolationParameter(BoneKeyframe::kY, iy);
                 frame->getInterpolationParameter(BoneKeyframe::kZ, iz);
@@ -376,8 +376,6 @@ public:
             return "kAsset";
         case kMotions:
             return "kMotions";
-        case kIKMotion:
-            return "kIKMotion";
         case kAssetMotion:
             return "kAssetMotion";
         case kAnimation:
@@ -533,11 +531,7 @@ public:
                     }
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index + 3]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "ik", 2) == 0) {
-                        self->pushState(kIKMotion);
-                        found = true;
-                    }
-                    else if (strncmp(attributeName, "asset", 5) == 0) {
+                    if (strncmp(attributeName, "asset", 5) == 0) {
                         self->pushState(kAssetMotion);
                         found = true;
                     }
@@ -579,8 +573,6 @@ public:
             }
             else if (equals(prefix, localname, "keyframe")) {
                 switch (self->state) {
-                case kIKMotion:
-                    break;
                 case kAssetMotion:
                     break;
                 }
@@ -599,7 +591,11 @@ public:
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "name", 4) == 0) {
+                    if (strncmp(attributeName, "ik", 2) == 0) {
+                        newString(attributes, index, value);
+                        keyframe->setIKEnable(value == "true");
+                    }
+                    else if (strncmp(attributeName, "name", 4) == 0) {
                         newString(attributes, index, value);
                         keyframe->setName(reinterpret_cast<const uint8_t *>(self->delegate->fromUnicode(value).c_str()));
                     }
@@ -831,7 +827,6 @@ public:
                 }
                 break;
             case kAssetMotion:
-            case kIKMotion:
                 if (equals(prefix, localname, "motion")) {
                     self->popState(kMotions);
                 }

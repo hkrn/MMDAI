@@ -305,6 +305,7 @@ void TestProject::testBoneAnimation(const VMDMotion *motion)
     QCOMPARE(reinterpret_cast<const char *>(ba.frameAt(0)->name()), "bar");
     QCOMPARE(ba.frameAt(0)->position(), Vector3(1, 2, -3));
     QCOMPARE(ba.frameAt(0)->rotation(), Quaternion(-1, -2, 3, 4));
+    QVERIFY(ba.frameAt(0)->isIKEnabled());
     for (int i = 0; i < BoneKeyframe::kMax; i++) {
         int offset = i * 4;
         ba.frameAt(0)->getInterpolationParameter(static_cast<BoneKeyframe::InterpolationType>(i), q);
@@ -314,6 +315,7 @@ void TestProject::testBoneAnimation(const VMDMotion *motion)
     QCOMPARE(reinterpret_cast<const char *>(ba.frameAt(1)->name()), "baz");
     QCOMPARE(ba.frameAt(1)->position(), Vector3(3, 1, -2));
     QCOMPARE(ba.frameAt(1)->rotation(), Quaternion(-4, -3, 2, 1));
+    QVERIFY(!ba.frameAt(1)->isIKEnabled());
     for (int i = BoneKeyframe::kMax - 1; i >= 0; i--) {
         int offset = (BoneKeyframe::kMax - 1 - i) * 4;
         ba.frameAt(1)->getInterpolationParameter(static_cast<BoneKeyframe::InterpolationType>(i), q);

@@ -143,6 +143,10 @@ public:
         return m_interpolationTable;
     }
 
+    bool isIKEnabled() const {
+        return m_enableIK;
+    }
+
     /**
      * Set the target bone name of this keyframe.
      *
@@ -164,6 +168,8 @@ public:
      */
     void setRotation(const Quaternion &value);
 
+    void setIKEnable(bool value);
+
 private:
     void setInterpolationTable(const int8_t *table);
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
@@ -173,6 +179,7 @@ private:
     Vector3 m_position;
     Quaternion m_rotation;
     bool m_linear[4];
+    bool m_enableIK;
     float *m_interpolationTable[4];
     int8_t m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
