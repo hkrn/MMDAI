@@ -62,6 +62,8 @@ public:
 
     /* この motionDidSeek は int 型な点に注意 (他は float 型) */
 signals:
+    void renderFrameDidStart();
+    void renderFrameDidStop();
     void motionDidSeek(int frameIndex);
 
 private slots:

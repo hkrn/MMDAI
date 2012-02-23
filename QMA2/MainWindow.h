@@ -121,14 +121,15 @@ private slots:
     void saveAssetMetadata();
     void exportImage();
     void exportVideo();
-    void startExportingVideo();
+    void invokeVideoEncoder();
     void addNewMotion();
-    void startPlayingScene();
+    void invokePlayer();
     void openPlaySettingDialog();
     void selectNextModel();
     void selectPreviousModel();
     void showLicenseWidget();
     void openGravitySettingDialog();
+    void makeBonesSelectable();
 
 private:
     bool saveMotionAs(QString &filename);

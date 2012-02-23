@@ -102,6 +102,7 @@ void PlayerWidget::start()
     m_timer.start(1000.0f / sceneFPS);
     m_elapsed.start();
     m_countForFPS = 0;
+    emit renderFrameDidStart();
 }
 
 void PlayerWidget::stop()
@@ -118,6 +119,7 @@ void PlayerWidget::stop()
     m_sceneWidget->updateSceneMotion();
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
+    emit renderFrameDidStop();
 }
 
 bool PlayerWidget::isActive() const

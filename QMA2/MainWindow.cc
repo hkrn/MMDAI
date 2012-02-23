@@ -91,7 +91,7 @@ static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
 {
     if (!dialog) {
         dialog = new PlaySettingDialog(mainWindow, sceneWidget);
-        QObject::connect(dialog, SIGNAL(playingDidStart()), mainWindow, SLOT(startPlayingScene()));
+        QObject::connect(dialog, SIGNAL(playingDidStart()), mainWindow, SLOT(invokePlayer()));
     }
 }
 
@@ -578,7 +578,7 @@ void MainWindow::buildUI()
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
     m_actionPlay = new QAction(this);
-    connect(m_actionPlay, SIGNAL(triggered()), SLOT(startPlayingScene()));
+    connect(m_actionPlay, SIGNAL(triggered()), SLOT(invokePlayer()));
     m_actionPlaySettings = new QAction(this);
     connect(m_actionPlaySettings, SIGNAL(triggered()), SLOT(openPlaySettingDialog()));
     m_actionGravitySettings = new QAction(this);
@@ -1179,7 +1179,6 @@ void MainWindow::connectWidgets()
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
-    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_morphMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
     connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
@@ -1205,6 +1204,7 @@ void MainWindow::connectWidgets()
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
     connect(modelInfoWidget, SIGNAL(projectiveShadowDidChange(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelInfoWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
+    makeBonesSelectable();
 }
 
 void MainWindow::insertMotionToAllModels()
@@ -1264,11 +1264,13 @@ void MainWindow::exportImage()
         loader->setGridVisible(false);
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
+        m_sceneWidget->setBoneWireFramesVisible(false);
         m_sceneWidget->updateGL();
-        QImage image = m_sceneWidget->grabFrameBuffer(true);
+        const QImage &image = m_sceneWidget->grabFrameBuffer();
         loader->setGridVisible(isGridVisible);
         m_sceneWidget->setHandlesVisible(true);
         m_sceneWidget->setInfoPanelVisible(true);
+        m_sceneWidget->setBoneWireFramesVisible(true);
         m_sceneWidget->updateGL();
         if (!image.isNull())
             image.save(filename);
@@ -1296,7 +1298,7 @@ void MainWindow::exportVideo()
     }
 }
 
-void MainWindow::startExportingVideo()
+void MainWindow::invokeVideoEncoder()
 {
     m_exportingVideoDialog->close();
     int fromIndex = m_exportingVideoDialog->fromIndex();
@@ -1457,14 +1459,16 @@ void MainWindow::addNewMotion()
     }
 }
 
-void MainWindow::startPlayingScene()
+void MainWindow::invokePlayer()
 {
     if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
         if (!m_player) {
             m_player = new PlayerWidget(m_sceneWidget, m_playSettingDialog);
             connect(m_player, SIGNAL(motionDidSeek(int)), m_timelineTabWidget, SLOT(setCurrentFrameIndex(int)));
+            connect(m_player, SIGNAL(renderFrameDidStop()), SLOT(makeBonesSelectable()));
         }
+        disconnect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
         m_player->start();
     }
     else {
@@ -1542,6 +1546,11 @@ void MainWindow::updateWindowTitle()
     else
         value += " - " + qAppName();
     setWindowTitle(value);
+}
+
+void MainWindow::makeBonesSelectable()
+{
+    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
 }
 
 const QString MainWindow::openSaveDialog(const QString &name,
