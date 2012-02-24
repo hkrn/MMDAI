@@ -114,6 +114,7 @@ public:
     int sceneHeight() const;
     bool isLoop() const;
     bool isGridIncluded() const;
+    const QString backgroundAudio() const;
 
     bool isProjectiveShadowEnabled(const vpvl::PMDModel *model) const;
     void setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value);
@@ -166,6 +167,7 @@ public slots:
     void setGridIncluded(bool value);
     void setSelectedModel(vpvl::PMDModel *value);
     void setSelectedAsset(vpvl::Asset *value);
+    void setBackgroundAudio(const QString &path);
 
 signals:
     void projectDidCount(int value);

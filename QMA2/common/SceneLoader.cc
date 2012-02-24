@@ -758,13 +758,13 @@ void SceneLoader::setWorldGravity(const Vector3 &value)
 
 bool SceneLoader::isProjectiveShadowEnabled(const PMDModel *model) const
 {
-    const std::string &value = m_project->modelSetting(model, "shadow.projective");
-    return value == "true";
+    return m_project ? m_project->modelSetting(model, "shadow.projective") == "true" : false;
 }
 
 void SceneLoader::setProjectiveShadowEnable(const PMDModel *model, bool value)
 {
-    m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
+    if (m_project)
+        m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
 }
 
 PMDModel *SceneLoader::selectedModel() const
@@ -774,31 +774,37 @@ PMDModel *SceneLoader::selectedModel() const
 
 bool SceneLoader::isModelSelected(const PMDModel *value) const
 {
-    return m_project->modelSetting(value, "selected") == "true";
+    return m_project ? m_project->modelSetting(value, "selected") == "true" : false;
 }
 
 void SceneLoader::setSelectedModel(PMDModel *value)
 {
-    m_model = value;
-    m_project->setModelSetting(value, "selected", "true");
-    emit modelDidSelect(value, this);
+    if (m_project) {
+        m_model = value;
+        m_project->setModelSetting(value, "selected", "true");
+        emit modelDidSelect(value, this);
+    }
 }
 
 void SceneLoader::setModelEdgeOffset(PMDModel *model, float value)
 {
-    QString str;
-    str.sprintf("%.5f", value);
-    model->setEdgeOffset(value);
-    m_project->setModelSetting(model, "edge.offset", str.toStdString());
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f", value);
+        model->setEdgeOffset(value);
+        m_project->setModelSetting(model, "edge.offset", str.toStdString());
+    }
 }
 
 void SceneLoader::setModelEdgeColor(PMDModel *model, const QColor &value)
 {
-    QString str;
-    float red = value.redF(), green = value.greenF(), blue = value.blueF();
-    str.sprintf("%.5f,%.5f,%.5f", red, green, blue);
-    model->setEdgeColor(Color(red, green, blue, 1.0));
-    m_project->setModelSetting(model, "edge.color", str.toStdString());
+    if (m_project) {
+        QString str;
+        float red = value.redF(), green = value.greenF(), blue = value.blueF();
+        str.sprintf("%.5f,%.5f,%.5f", red, green, blue);
+        model->setEdgeColor(Color(red, green, blue, 1.0));
+        m_project->setModelSetting(model, "edge.color", str.toStdString());
+    }
 }
 
 bool SceneLoader::isGridVisible() const
@@ -977,69 +983,96 @@ void SceneLoader::setGridIncluded(bool value)
         m_project->setGlobalSetting("grid.video", value ? "true" : "false");
 }
 
+const QString SceneLoader::backgroundAudio() const
+{
+    return m_project ? QString::fromStdString(m_project->globalSetting("audio.path")) : "";
+}
+
+void SceneLoader::setBackgroundAudio(const QString &path)
+{
+    if (m_project)
+        m_project->setGlobalSetting("audio.path", path.toStdString());
+}
+
 const Vector3 SceneLoader::assetPosition(const Asset *asset)
 {
-    return UIGetVector3(m_project->assetSetting(asset, "position"), kZeroV);
+    return m_project ? UIGetVector3(m_project->assetSetting(asset, "position"), kZeroV) : kZeroV;
 }
 
 void SceneLoader::setAssetPosition(const Asset *asset, const Vector3 &value)
 {
-    QString str;
-    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-    m_project->setAssetSetting(asset, "position", str.toStdString());
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+        m_project->setAssetSetting(asset, "position", str.toStdString());
+    }
 }
 
 const Quaternion SceneLoader::assetRotation(const Asset *asset)
 {
-    return UIGetQuaternion(m_project->assetSetting(asset, "rotation"), kZeroQ);
+    return m_project ? UIGetQuaternion(m_project->assetSetting(asset, "rotation"), kZeroQ) : kZeroQ;
 }
 
 void SceneLoader::setAssetRotation(const Asset *asset, const Quaternion &value)
 {
-    QString str;
-    str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
-    m_project->setAssetSetting(asset, "rotation", str.toStdString());
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
+        m_project->setAssetSetting(asset, "rotation", str.toStdString());
+    }
 }
 
 float SceneLoader::assetOpacity(const Asset *asset)
 {
-    float value = QString::fromStdString(m_project->assetSetting(asset, "opacity")).toFloat();
-    return qBound(0.0f, value, 1.0f);
+    if (m_project) {
+        float value = QString::fromStdString(m_project->assetSetting(asset, "opacity")).toFloat();
+        return qBound(0.0f, value, 1.0f);
+    }
+    return 1.0f;
 }
 
 void SceneLoader::setAssetOpacity(const Asset *asset, float value)
 {
-    QString str;
-    str.sprintf("%.5f", value);
-    m_project->setAssetSetting(asset, "opacity", str.toStdString());
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f", value);
+        m_project->setAssetSetting(asset, "opacity", str.toStdString());
+    }
 }
 
 float SceneLoader::assetScaleFactor(const Asset *asset)
 {
-    float value = QString::fromStdString(m_project->assetSetting(asset, "scale")).toFloat();
-    return qBound(0.0001f, value, 10000.0f);
+    if (m_project) {
+        float value = QString::fromStdString(m_project->assetSetting(asset, "scale")).toFloat();
+        return qBound(0.0001f, value, 10000.0f);
+    }
+    return 10.0f;
 }
 
 void SceneLoader::setAssetScaleFactor(const Asset *asset, float value)
 {
-    QString str;
-    str.sprintf("%.5f", value);
-    m_project->setAssetSetting(asset, "scale", str.toStdString());
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f", value);
+        m_project->setAssetSetting(asset, "scale", str.toStdString());
+    }
 }
 
 PMDModel *SceneLoader::assetParentModel(Asset *asset) const
 {
-    return m_project->model(m_project->assetSetting(asset, "parent.model"));
+    return m_project ? m_project->model(m_project->assetSetting(asset, "parent.model")) : 0;
 }
 
 void SceneLoader::setAssetParentModel(const Asset *asset, PMDModel *model)
 {
-    m_project->setAssetSetting(asset, "parent.model", m_project->modelUUID(model));
+    if (m_project)
+        m_project->setAssetSetting(asset, "parent.model", m_project->modelUUID(model));
 }
 
 Bone *SceneLoader::assetParentBone(Asset *asset) const
 {
-    if (PMDModel *model = assetParentModel(asset)) {
+    PMDModel *model = 0;
+    if (m_project && (model = assetParentModel(asset))) {
         const QString &name = QString::fromStdString(m_project->assetSetting(asset, "parent.bone"));
         const QByteArray &bytes = internal::fromQString(name);
         return model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -1049,7 +1082,8 @@ Bone *SceneLoader::assetParentBone(Asset *asset) const
 
 void SceneLoader::setAssetParentBone(const Asset *asset, Bone *bone)
 {
-    m_project->setAssetSetting(asset, "parent.bone", internal::toQString(bone).toStdString());
+    if (m_project)
+        m_project->setAssetSetting(asset, "parent.bone", internal::toQString(bone).toStdString());
 }
 
 Asset *SceneLoader::selectedAsset() const
@@ -1059,15 +1093,17 @@ Asset *SceneLoader::selectedAsset() const
 
 bool SceneLoader::isAssetSelected(const Asset *value) const
 {
-    return m_project->assetSetting(value, "selected") == "true";
+    return m_project ? m_project->assetSetting(value, "selected") == "true" : false;
 }
 
 void SceneLoader::setSelectedAsset(Asset *value)
 {
-    commitAssetProperties();
-    m_asset = value;
-    m_project->setAssetSetting(value, "selected", "true");
-    emit assetDidSelect(value, this);
+    if (m_project) {
+        commitAssetProperties();
+        m_asset = value;
+        m_project->setAssetSetting(value, "selected", "true");
+        emit assetDidSelect(value, this);
+    }
 }
 
 bool SceneLoader::globalSetting(const char *key, bool def) const
