@@ -121,6 +121,7 @@ public:
     Handles *handles() const { return m_handles; }
     EditMode editMode() const { return m_editMode; }
     const QList<vpvl::Bone *> &selectedBones() const { return m_bones; }
+    float currentFrameIndex() const { return m_frameIndex; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
@@ -157,6 +158,7 @@ public slots:
     void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex, bool force = false);
+    void resetMotion();
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
