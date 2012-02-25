@@ -19,7 +19,7 @@ exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
 # PortAudio
-exists(../portaudio/lib):LIBS += -L../portaudio/lib -lportaudio
+exists(../portaudio/build/scons/posix):LIBS += -L../portaudio/build/scons/posix -lportaudio
 exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin -lportaudio
 exists(../portaudio/include):INCLUDEPATH += ../portaudio/include
 
@@ -96,6 +96,7 @@ linux-* {
                     ../bullet/release/lib/libLinearMath.so.* \
                     ../libvpvl/release/lib/libvpvl.so.* \
                     ../assimp/lib/libassimp.so.2 \
+                    ../portaudio/build/scons/posix/libportaudio.so \
                     ../libav/libavcodec/libavcodec.so.* \
                     ../libav/libavformat/libavformat.so.* \
                     ../libav/libavutil/libavutil.so.* \
