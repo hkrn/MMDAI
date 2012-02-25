@@ -54,6 +54,7 @@ class PMDModel;
 class VMDMotion;
 }
 
+class AudioDecoder;
 class BoneMotionModel;
 class BoneUIDelegate;
 class ExportVideoDialog;
@@ -87,7 +88,6 @@ public:
 
 signals:
     void sceneDidRendered(const QImage &image);
-    void encodingDidStopped();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -161,6 +161,7 @@ private:
     ExportVideoDialog *m_exportingVideoDialog;
     PlaySettingDialog *m_playSettingDialog;
     BoneUIDelegate *m_boneUIDelegate;
+    AudioDecoder *m_audioDecoder;
     VideoEncoder *m_videoEncoder;
     PlayerWidget *m_player;
     QString m_currentProjectFilename;

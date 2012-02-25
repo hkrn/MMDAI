@@ -51,6 +51,7 @@
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
+#include "video/AudioDecoder.h"
 #include "video/VideoEncoder.h"
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
@@ -113,6 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_exportingVideoDialog(0),
     m_playSettingDialog(0),
     m_boneUIDelegate(0),
+    m_audioDecoder(0),
     m_videoEncoder(0),
     m_player(0),
     m_model(0),
@@ -1331,18 +1333,33 @@ void MainWindow::invokeVideoEncoder()
         int fps = m_sceneWidget->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
+        /* 終了するまで待つ */
+        if (m_audioDecoder && !m_audioDecoder->isFinished()) {
+            m_audioDecoder->stop();
+            m_audioDecoder->wait();
+        }
         if (m_videoEncoder && !m_videoEncoder->isFinished()) {
-            emit encodingDidStopped();
+            m_videoEncoder->stop();
             m_videoEncoder->wait();
         }
+        delete m_audioDecoder;
         delete m_videoEncoder;
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
+        m_audioDecoder = new AudioDecoder();
+        m_audioDecoder->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
+        int sampleRate = 0, bitRate = 0;
+        if (m_audioDecoder->canOpen()) {
+            sampleRate = 44100;
+            bitRate = 64000;
+        }
         m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(),
                                           QSize(width, height),
                                           sceneFPS,
                                           m_exportingVideoDialog->videoBitrate(),
-                                          64000,
-                                          44100);
+                                          bitRate,
+                                          sampleRate);
+        connect(m_audioDecoder, SIGNAL(audioDidDecode(QByteArray)), m_videoEncoder, SLOT(enqueueAudioBuffer(QByteArray)));
+        connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
         m_sceneWidget->setPreferredFPS(sceneFPS);
         const Scene *scene = m_sceneWidget->scene();
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
@@ -1379,9 +1396,8 @@ void MainWindow::invokeVideoEncoder()
         m_sceneWidget->seekMotion(0.0f, true);
         m_sceneWidget->advanceMotion(fromIndex);
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
-        connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
-        connect(this, SIGNAL(encodingDidStopped()), m_videoEncoder, SLOT(stop()));
         /* 指定のキーフレームまで動画にフレームの書き出しを行う */
+        m_audioDecoder->start();
         m_videoEncoder->start();
         float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
         while (!scene->isMotionReachedTo(toIndex)) {
@@ -1409,7 +1425,7 @@ void MainWindow::invokeVideoEncoder()
         emit sceneDidRendered(image);
         /* エンコードが完了するまで待機 */
         const QString &encodingFormat = tr("Encoding remain frame %1 of %2...");
-        int remain = m_videoEncoder->sizeOfQueue();
+        int remain = m_videoEncoder->sizeOfVideoQueue();
         progress->setValue(0);
         progress->setMaximum(remain);
         progress->setLabelText(encodingFormat.arg(0).arg(remain));
@@ -1417,12 +1433,13 @@ void MainWindow::invokeVideoEncoder()
         while (remain > size) {
             if (progress->wasCanceled())
                 break;
-            size = remain - m_videoEncoder->sizeOfQueue();
+            size = remain - m_videoEncoder->sizeOfVideoQueue();
             progress->setValue(size);
             progress->setLabelText(encodingFormat.arg(size).arg(remain));
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
-        emit encodingDidStopped();
+        m_audioDecoder->stop();
+        m_videoEncoder->stop();
         /* 画面情報を復元 */
         loader->setGridVisible(isGridVisible);
         setSizePolicy(policy);

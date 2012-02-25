@@ -136,3 +136,8 @@ void AudioDecoder::run()
         delete[] samples;
     UICloseAudio(formatContext, audioContext);
 }
+
+void AudioDecoder::decodeBuffer(const QByteArray &bytes, float /* position */, int /* channels */)
+{
+    emit audioDidDecode(bytes);
+}
