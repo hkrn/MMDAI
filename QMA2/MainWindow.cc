@@ -1468,6 +1468,10 @@ void MainWindow::invokePlayer()
             connect(m_player, SIGNAL(motionDidSeek(int)), m_timelineTabWidget, SLOT(setCurrentFrameIndex(int)));
             connect(m_player, SIGNAL(renderFrameDidStop()), SLOT(makeBonesSelectable()));
         }
+        /*
+         * 再生中はボーンが全選択になるのでワイヤーフレーム表示のオプションの関係からシグナルを一時的に解除する。
+         * 停止後に makeBonesSelectable 経由でシグナルを復活させる
+         */
         disconnect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
         m_player->start();
     }
