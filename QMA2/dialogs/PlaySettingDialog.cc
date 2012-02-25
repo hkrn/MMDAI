@@ -88,6 +88,8 @@ PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *sce
     mainLayout->addWidget(buttons);
     retranslate();
     setLayout(mainLayout);
+    /* 開いてから設定を行う関係で、ダイアログを開かずにそのまま再生して即終了を防ぐため、空のイベントを発行する */
+    showEvent(0);
 }
 
 PlaySettingDialog::~PlaySettingDialog()
