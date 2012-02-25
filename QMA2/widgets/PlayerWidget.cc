@@ -139,7 +139,6 @@ void PlayerWidget::stop()
     m_sceneWidget->resetMotion();
     m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
     /* フレーム位置を再生前に戻す */
-    m_sceneWidget->mutableScene()->resetMotion();
     m_sceneWidget->seekMotion(m_prevFrameIndex, true);
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
@@ -186,7 +185,7 @@ void PlayerWidget::renderSceneFrame0(float step)
             m_sceneWidget->startPhysicsSimulation();
             m_sceneWidget->seekMotion(value, true);
             m_totalStep = 0.0f;
-            value = 0.0f;
+            value = 0;
         }
         else {
             value = int(m_totalStep);
