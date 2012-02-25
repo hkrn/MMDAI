@@ -147,6 +147,40 @@ static inline const QMatrix4x4 toMatrix4x4(float matrixf[16])
     return QMatrix4x4(matrixd);
 }
 
+static inline const QString openFileDialog(const QString &name,
+                                           const QString &desc,
+                                           const QString &exts,
+                                           QSettings *settings)
+{
+    /* ファイルが選択されている場合はファイルが格納されているディレクトリを指す絶対パスを設定に保存しておく */
+    const QString &path = settings->value(name, QDir::homePath()).toString();
+    const QString &fileName = QFileDialog::getOpenFileName(0, desc, path, exts);
+    if (!fileName.isEmpty()) {
+        QDir dir(fileName);
+        dir.cdUp();
+        settings->setValue(name, dir.absolutePath());
+    }
+    return fileName;
+}
+
+static const inline QString openSaveDialog(const QString &name,
+                                           const QString &desc,
+                                           const QString &exts,
+                                           const QString &defaultFilename,
+                                           QSettings *settings)
+{
+    const QDir base(settings->value(name, QDir::homePath()).toString());
+    const QString &path = base.absoluteFilePath(defaultFilename);
+    const QString &fileName = QFileDialog::getSaveFileName(0, desc, path, exts);
+    if (!fileName.isEmpty()) {
+        QDir dir(fileName);
+        dir.cdUp();
+        settings->setValue(name, dir.absolutePath());
+    }
+    return fileName;
+}
+
+
 }
 
 #endif // UTIL_H

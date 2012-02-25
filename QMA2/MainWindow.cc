@@ -256,9 +256,10 @@ void MainWindow::newProjectFile()
 void MainWindow::loadProject()
 {
     if (maybeSaveProject()) {
-        const QString &filename = m_sceneWidget->openFileDialog("mainWindow/lastProjectDirectory",
-                                                                tr("Open VPVM file"),
-                                                                tr("VPVM file (*.xml)"));
+        const QString &filename = internal::openFileDialog("mainWindow/lastProjectDirectory",
+                                                           tr("Open VPVM file"),
+                                                           tr("VPVM file (*.xml)"),
+                                                           &m_settings);
         if (!filename.isEmpty()) {
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
@@ -402,19 +403,21 @@ void MainWindow::saveMotionAs()
 
 bool MainWindow::saveMotionAs(QString &filename)
 {
-    filename = openSaveDialog("mainWindow/lastModelMotionDirectory",
-                              tr("Save model motion as a VMD file"),
-                              tr("VMD file (*.vmd)"),
-                              tr("untitiled_model_motion.vmd"));
+    filename = internal::openSaveDialog("mainWindow/lastModelMotionDirectory",
+                                        tr("Save model motion as a VMD file"),
+                                        tr("VMD file (*.vmd)"),
+                                        tr("untitiled_model_motion.vmd"),
+                                        &m_settings);
     return !filename.isEmpty() ? saveMotionFile(filename) : false;
 }
 
 void MainWindow::saveCameraMotionAs()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastCameraMotionDirectory",
-                                             tr("Save camera motion as a VMD file"),
-                                             tr("VMD file (*.vmd)"),
-                                             tr("untitiled_camera_motion.vmd"));
+    const QString &filename = internal::openSaveDialog("mainWindow/lastCameraMotionDirectory",
+                                                       tr("Save camera motion as a VMD file"),
+                                                       tr("VMD file (*.vmd)"),
+                                                       tr("untitiled_camera_motion.vmd"),
+                                                       &m_settings);
     VMDMotion motion;
     m_sceneMotionModel->saveMotion(&motion);
     saveMotionFile(filename, &motion);
@@ -457,10 +460,11 @@ void MainWindow::saveProjectAs()
 
 bool MainWindow::saveProjectAs(QString &filename)
 {
-    filename = openSaveDialog("mainWindow/lastProjectDirectory",
-                              tr("Save projct as a VPVM project file"),
-                              tr("VPVM project file (*.xml)"),
-                              tr("untitled.xml"));
+    filename = internal::openSaveDialog("mainWindow/lastProjectDirectory",
+                                        tr("Save projct as a VPVM project file"),
+                                        tr("VPVM project file (*.xml)"),
+                                        tr("untitled.xml"),
+                                        &m_settings);
     return !filename.isEmpty() ? saveProjectFile(filename) : false;
 }
 
@@ -1227,10 +1231,11 @@ void MainWindow::deleteSelectedModel()
 
 void MainWindow::saveModelPose()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastPoseFileDirectory",
-                                             tr("Save model pose as a VPD file"),
-                                             tr("VPD file (*.vpd)"),
-                                             tr("untitled.vpd"));
+    const QString &filename = internal::openSaveDialog("mainWindow/lastPoseFileDirectory",
+                                                       tr("Save model pose as a VPD file"),
+                                                       tr("VPD file (*.vpd)"),
+                                                       tr("untitled.vpd"),
+                                                       &m_settings);
     if (!filename.isEmpty()) {
         QFile file(filename);
         if (file.open(QFile::WriteOnly)) {
@@ -1254,10 +1259,11 @@ void MainWindow::saveAssetMetadata()
 
 void MainWindow::exportImage()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastImageDirectory",
-                                             tr("Export scene as an image"),
-                                             tr("Image (*.bmp, *.jpg, *.png)"),
-                                             tr("untitled.png"));
+    const QString &filename = internal::openSaveDialog("mainWindow/lastImageDirectory",
+                                                       tr("Export scene as an image"),
+                                                       tr("Image (*.bmp, *.jpg, *.png)"),
+                                                       tr("untitled.png"),
+                                                       &m_settings);
     if (!filename.isEmpty()) {
         SceneLoader *loader = m_sceneWidget->sceneLoader();
         bool isGridVisible = loader->isGridVisible();
@@ -1313,10 +1319,11 @@ void MainWindow::invokeVideoEncoder()
                              tr("\"Index from\" must be less than \"Index to\"."));
         return;
     }
-    const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
-                                             tr("Export scene as a video"),
-                                             tr("Video (*.mov)"),
-                                             tr("untitled.mov"));
+    const QString &filename = internal::openSaveDialog("mainWindow/lastVideoDirectory",
+                                                       tr("Export scene as a video"),
+                                                       tr("Video (*.mov)"),
+                                                       tr("untitled.mov"),
+                                                       &m_settings);
     if (!filename.isEmpty()) {
         QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
@@ -1555,20 +1562,4 @@ void MainWindow::updateWindowTitle()
 void MainWindow::makeBonesSelectable()
 {
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
-}
-
-const QString MainWindow::openSaveDialog(const QString &name,
-                                         const QString &desc,
-                                         const QString &exts,
-                                         const QString &defaultFilename)
-{
-    const QDir base(m_settings.value(name, QDir::homePath()).toString());
-    const QString &path = base.absoluteFilePath(defaultFilename);
-    const QString &fileName = QFileDialog::getSaveFileName(this, desc, path, exts);
-    if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
-        m_settings.setValue(name, dir.absolutePath());
-    }
-    return fileName;
 }

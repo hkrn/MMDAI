@@ -146,10 +146,6 @@ private:
     void connectWidgets();
     void updateInformation();
     void updateWindowTitle();
-    const QString openSaveDialog(const QString &name,
-                                 const QString &desc,
-                                 const QString &exts,
-                                 const QString &defaultFilename);
 
     QSettings m_settings;
     QUndoGroup *m_undo;

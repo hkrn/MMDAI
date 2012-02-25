@@ -321,7 +321,8 @@ void SceneWidget::addModel()
     /* モデル追加と共に空のモーションを作成する */
     PMDModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
                                               tr("Open PMD file"),
-                                              tr("PMD file (*.pmd)")));
+                                              tr("PMD file (*.pmd)"),
+                                              m_settings));
     if (model && !m_playing) {
         setEmptyMotion(model);
         model->advanceMotion(0.0f);
@@ -361,7 +362,8 @@ void SceneWidget::insertMotionToAllModels()
     /* モーションを追加したら即座に反映させるために advanceMotion(0.0f) を呼んでおく */
     VMDMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                                tr("Open VMD (for model) file"),
-                                                               tr("VMD file (*.vmd)")));
+                                                               tr("VMD file (*.vmd)"),
+                                                               m_settings));
     PMDModel *selected = m_loader->selectedModel();
     if (motion && selected)
         selected->advanceMotion(0.0f);
@@ -390,7 +392,8 @@ void SceneWidget::insertMotionToSelectedModel()
     if (model) {
         VMDMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                                        tr("Open VMD (for model) file"),
-                                                                       tr("VMD file (*.vmd)")));
+                                                                       tr("VMD file (*.vmd)"),
+                                                                       m_settings));
         if (motion)
             advanceMotion(0.0f);
     }
@@ -446,7 +449,8 @@ void SceneWidget::addAsset()
 {
     addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
                             tr("Open X file"),
-                            tr("DirectX mesh file (*.x)")));
+                            tr("DirectX mesh file (*.x)"),
+                            m_settings));
 }
 
 Asset *SceneWidget::addAsset(const QString &path)
@@ -472,7 +476,8 @@ void SceneWidget::addAssetFromMetadata()
 {
     addAssetFromMetadata(openFileDialog("sceneWidget/lastAssetDirectory",
                                         tr("Open VAC file"),
-                                        tr("MMD accessory metadata (*.vac)")));
+                                        tr("MMD accessory metadata (*.vac)"),
+                                        m_settings));
 }
 
 Asset *SceneWidget::addAssetFromMetadata(const QString &path)
@@ -508,7 +513,8 @@ void SceneWidget::insertPoseToSelectedModel()
     PMDModel *model = m_loader->selectedModel();
     VPDFile *pose = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
                                                              tr("Open VPD file"),
-                                                             tr("VPD file (*.vpd)")),
+                                                             tr("VPD file (*.vpd)"),
+                                                             m_settings),
                                               model);
     if (pose && model)
         model->updateImmediate();
@@ -588,7 +594,8 @@ void SceneWidget::setCamera()
 {
     VMDMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
                                                  tr("Open VMD (for camera) file"),
-                                                 tr("VMD file (*.vmd)")));
+                                                 tr("VMD file (*.vmd)"),
+                                                 m_settings));
     if (motion)
         advanceMotion(0.0f);
 }
@@ -1208,19 +1215,6 @@ void SceneWidget::updateFPS()
         emit fpsDidUpdate(m_currentFPS);
     }
     m_frameCount++;
-}
-
-const QString SceneWidget::openFileDialog(const QString &name, const QString &desc, const QString &exts)
-{
-    /* ファイルが選択されている場合はファイルが格納されているディレクトリを指す絶対パスを設定に保存しておく */
-    const QString &path = m_settings->value(name, QDir::homePath()).toString();
-    const QString &fileName = QFileDialog::getOpenFileName(this, desc, path, exts);
-    if (!fileName.isEmpty()) {
-        QDir dir(fileName);
-        dir.cdUp();
-        m_settings->setValue(name, dir.absolutePath());
-    }
-    return fileName;
 }
 
 void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)

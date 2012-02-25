@@ -128,7 +128,6 @@ public:
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
     bool isUndoGestureEnabled() const { return m_enableUndoGesture; }
     bool showModelDialog() const { return m_showModelDialog; }
-    const QString openFileDialog(const QString &name, const QString &desc, const QString &exts);
 
 public slots:
     void play();
