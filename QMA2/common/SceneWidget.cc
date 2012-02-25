@@ -572,12 +572,13 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
 
 void SceneWidget::resetMotion()
 {
-    /* resetMotion のラッパーで、seekMotion と違って前のフレーム位置を保存しない */
+    /* resetMotion のラッパー */
     Scene *scene = m_renderer->scene();
     scene->resetMotion();
     scene->updateModelView();
     scene->updateProjection();
     m_renderer->updateAllModel();
+    m_frameIndex = 0;
     updateGL();
     emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     emit motionDidSeek(0.0f);
