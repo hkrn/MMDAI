@@ -34,36 +34,69 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef AUDIODECODER_H
-#define AUDIODECODER_H
+#include "AudioPlayer.h"
 
-#include <QtCore/QtCore>
-
-class AudioDecoder : public QThread
+AudioPlayer::AudioPlayer()
+    : AudioDecoder(),
+      m_stream(0),
+      m_position(0)
 {
-    Q_OBJECT
+}
 
-public:
-    AudioDecoder();
-    ~AudioDecoder();
+AudioPlayer::~AudioPlayer()
+{
+    AudioDecoder::stop();
+    if (m_stream) {
+        Pa_CloseStream(m_stream);
+        m_stream = 0;
+    }
+}
 
-    bool canOpen() const;
-    void setFilename(const QString &filename);
-    void stop();
+bool AudioPlayer::initalize()
+{
+    PaStreamParameters parameters;
+    parameters.device = Pa_GetDefaultOutputDevice();
+    if (canOpen() && parameters.device != paNoDevice) {
+        const PaDeviceInfo *info = Pa_GetDeviceInfo(parameters.device);
+        parameters.channelCount = 2;
+        parameters.sampleFormat = paInt16;
+        parameters.suggestedLatency = info->defaultLowOutputLatency;
+        parameters.hostApiSpecificStreamInfo = 0;
+        qDebug("name: %s", info->name);
+        qDebug() << "sampleRate:" << info->defaultSampleRate;
+        qDebug() << "defaultLowInputLatency:" << info->defaultLowInputLatency;
+        qDebug() << "defualtLowOutputLatency:" << info->defaultLowOutputLatency;
+        PaError err = Pa_OpenStream(&m_stream, 0, &parameters, 44100.0, 1024, paClipOff, 0, 0);
+        if (err == paNoError) {
+            return true;
+        }
+        else {
+            qWarning("%s: %s", qPrintable(tr("Cannot open stream from device")), Pa_GetErrorText(err));
+        }
+    }
+    else {
+        qWarning("%s", qPrintable(tr("Cannot open audio file or not found audio device")));
+    }
+    return false;
+}
 
-protected:
-    virtual void run();
-    virtual void decodeBuffer(const QByteArray &bytes, float position, int channels) = 0;
+void AudioPlayer::stop()
+{
+    AudioDecoder::stop();
+    if (m_stream)
+        Pa_StopStream(m_stream);
+}
 
-signals:
-    void audioDidDecodeComplete();
-    void audioDidDecodeError();
+void AudioPlayer::run()
+{
+    Pa_StartStream(m_stream);
+    AudioDecoder::run();
+}
 
-private:
-    QString m_filename;
-    volatile bool m_running;
-
-    Q_DISABLE_COPY(AudioDecoder)
-};
-
-#endif // AUDIODECODER_H
+void AudioPlayer::decodeBuffer(const QByteArray &bytes, float position, int channels)
+{
+    int size = bytes.length() / (channels * sizeof(int16_t));
+    Pa_WriteStream(m_stream, bytes.constData(), size);
+    emit positionDidAdvance(position - m_position);
+    m_position = position;
+}

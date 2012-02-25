@@ -34,36 +34,36 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef AUDIODECODER_H
-#define AUDIODECODER_H
+#ifndef AUDIOPLAYER_H
+#define AUDIOPLAYER_H
 
-#include <QtCore/QtCore>
+#include "AudioDecoder.h"
 
-class AudioDecoder : public QThread
+#include <portaudio.h>
+
+class AudioPlayer : public AudioDecoder
 {
     Q_OBJECT
 
 public:
-    AudioDecoder();
-    ~AudioDecoder();
+    AudioPlayer();
+    ~AudioPlayer();
 
-    bool canOpen() const;
-    void setFilename(const QString &filename);
+    bool initalize();
     void stop();
 
 protected:
-    virtual void run();
-    virtual void decodeBuffer(const QByteArray &bytes, float position, int channels) = 0;
+    void run();
+    void decodeBuffer(const QByteArray &bytes, float position, int channels);
 
 signals:
-    void audioDidDecodeComplete();
-    void audioDidDecodeError();
+    void positionDidAdvance(float diff);
 
 private:
-    QString m_filename;
-    volatile bool m_running;
+    PaStream *m_stream;
+    float m_position;
 
-    Q_DISABLE_COPY(AudioDecoder)
+    Q_DISABLE_COPY(AudioPlayer)
 };
 
-#endif // AUDIODECODER_H
+#endif // AUDIOPLAYER_H

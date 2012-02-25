@@ -76,6 +76,8 @@ private:
     int m_audioBitrate;
     int m_audioSampleRate;
     volatile bool m_running;
+
+    Q_DISABLE_COPY(VideoEncoder)
 };
 
 #endif // VIDEOENCODER_H

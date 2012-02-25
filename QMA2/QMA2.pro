@@ -144,7 +144,8 @@ SOURCES += main.cc \
     widgets/PlayerWidget.cc \
     dialogs/GravitySettingDialog.cc \
     video/AudioDecoder.cc \
-    video/AVCommon.cc
+    video/AVCommon.cc \
+    video/AudioPlayer.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -187,8 +188,11 @@ HEADERS  += \
     common/TextureDrawHelper.h \
     dialogs/GravitySettingDialog.h \
     video/AudioDecoder.h \
-    video/AVCommon.h
+    video/AVCommon.h \
+    video/AudioPlayer.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
+
+

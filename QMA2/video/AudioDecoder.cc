@@ -42,9 +42,32 @@
 
 using namespace internal;
 
-AudioDecoder::AudioDecoder(const QString &filename)
-    : m_filename(filename),
-      m_running(true)
+namespace {
+
+void UIOpenAudio(const QString &filename, AVFormatContext *&formatContext, AVCodecContext *&audioContext, AVStream *&stream)
+{
+    formatContext = OpenInputFormat(filename, "wav");
+    if (formatContext->nb_streams  < 1)
+        throw std::bad_exception();
+    stream = formatContext->streams[0];
+    audioContext = stream->codec;
+    if (audioContext->codec_type != AVMEDIA_TYPE_AUDIO)
+        throw std::bad_exception();
+    OpenAVCodec(audioContext, avcodec_find_decoder(audioContext->codec_id));
+}
+
+void UICloseAudio(AVFormatContext *formatContext, AVCodecContext *audioContext)
+{
+    if (audioContext)
+        avcodec_close(audioContext);
+    if (formatContext)
+        av_free(formatContext);
+}
+
+}
+
+AudioDecoder::AudioDecoder()
+    : m_running(true)
 {
 }
 
@@ -53,24 +76,46 @@ AudioDecoder::~AudioDecoder()
     m_running = false;
 }
 
+bool AudioDecoder::canOpen() const
+{
+    bool ret = true;
+    AVFormatContext *formatContext = 0;
+    AVCodecContext *audioContext = 0;
+    try {
+        AVStream *stream = 0;
+        UIOpenAudio(m_filename, formatContext, audioContext, stream);
+    }
+    catch (std::exception &e) {
+        ret = false;
+    }
+    UICloseAudio(formatContext, audioContext);
+    return ret;
+}
+
+void AudioDecoder::setFilename(const QString &filename)
+{
+    m_filename = filename;
+}
+
+void AudioDecoder::stop()
+{
+    m_running = false;
+}
+
 void AudioDecoder::run()
 {
     AVFormatContext *formatContext = 0;
     AVCodecContext *audioContext = 0;
+    AVStream *stream = 0;
     int16_t *samples = 0;
     AVPacket packet;
     av_init_packet(&packet);
     try {
-        formatContext = OpenInputFormat(m_filename, "wav");
-        if (formatContext->nb_streams  < 1)
-            throw std::bad_exception();
-        audioContext = formatContext->streams[0]->codec;
-        if (audioContext->codec_type != AVMEDIA_TYPE_AUDIO)
-            throw std::bad_exception();
-        OpenAVCodec(audioContext, avcodec_find_decoder(CODEC_ID_PCM_S16LE));
+        UIOpenAudio(m_filename, formatContext, audioContext, stream);
         samples = new int16_t[AVCODEC_MAX_AUDIO_FRAME_SIZE];
         if (!samples)
             throw std::bad_alloc();
+        float sampleRate = audioContext->sample_rate;
         while (m_running) {
             int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
             if (av_read_frame(formatContext, &packet) < 0)
@@ -78,20 +123,16 @@ void AudioDecoder::run()
             int len = avcodec_decode_audio3(audioContext, samples, &size, &packet);
             if (len < 0)
                 break;
-            emit audioDidDecode(QByteArray(reinterpret_cast<const char *>(samples), size));
+            const QByteArray bytes(reinterpret_cast<const char *>(samples), size);
+            float position = packet.pts / sampleRate;
+            decodeBuffer(bytes, position, audioContext->channels);
         }
+        emit audioDidDecodeComplete();
     } catch (std::exception &e) {
         qWarning() << e.what();
+        emit audioDidDecodeError();
     }
     if (samples)
         delete[] samples;
-    if (audioContext)
-        avcodec_close(audioContext);
-    if (formatContext)
-        av_free(formatContext);
-}
-
-void AudioDecoder::stop()
-{
-    m_running = false;
+    UICloseAudio(formatContext, audioContext);
 }
