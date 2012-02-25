@@ -153,6 +153,16 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
         break;
     }
     m_loopBox->setChecked(loader->isLoop());
+    /* 現時点でシークの実装が無いので、開始位置指定とループは無効にする */
+    const QString &audio = loader->backgroundAudio();
+    if (!audio.isEmpty()) {
+        m_fromIndexBox->setValue(0);
+        m_fromIndexBox->setDisabled(true);
+        m_loopBox->setChecked(false);
+        m_loopBox->setDisabled(true);
+        m_selectModelBox->setChecked(false);
+        m_selectModelBox->setDisabled(true);
+    }
 }
 
 void PlaySettingDialog::retranslate()
