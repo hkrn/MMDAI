@@ -45,6 +45,7 @@ namespace vpvl {
 class PMDModel;
 }
 
+class AudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
 
@@ -57,26 +58,34 @@ public:
     ~PlayerWidget();
 
     void start();
-    void stop();
     bool isActive() const;
 
-    /* この motionDidSeek は int 型な点に注意 (他は float 型) */
+public slots:
+    void stop();
+
 signals:
     void renderFrameDidStart();
     void renderFrameDidStop();
+    /* motionDidSeek は int 型な点に注意 (他は float 型) */
     void motionDidSeek(int frameIndex);
 
 private slots:
     void renderSceneFrame();
+    void renderSceneFrame(float step);
 
 private:
+    void renderSceneFrame0(float step);
+
     QElapsedTimer m_elapsed;
-    QTimer m_timer;
+    QTimer m_renderTimer;
     SceneWidget *m_sceneWidget;
     PlaySettingDialog *m_dialog;
     QProgressDialog *m_progress;
     QString m_format;
+    QByteArray m_buffer;
+    AudioPlayer *m_player;
     vpvl::PMDModel *m_selected;
+    float m_prevFrameIndex;
     float m_frameStep;
     float m_totalStep;
     int m_countForFPS;
