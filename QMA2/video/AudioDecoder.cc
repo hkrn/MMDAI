@@ -81,12 +81,17 @@ bool AudioDecoder::canOpen() const
     bool ret = true;
     AVFormatContext *formatContext = 0;
     AVCodecContext *audioContext = 0;
-    try {
-        AVStream *stream = 0;
-        UIOpenAudio(m_filename, formatContext, audioContext, stream);
-        ret = audioContext->channels == 2 && audioContext->sample_rate == 44100;
+    if (!m_filename.isEmpty()) {
+        try {
+            AVStream *stream = 0;
+            UIOpenAudio(m_filename, formatContext, audioContext, stream);
+            ret = audioContext->channels == 2 && audioContext->sample_rate == 44100;
+        }
+        catch (std::exception &e) {
+            ret = false;
+        }
     }
-    catch (std::exception &e) {
+    else {
         ret = false;
     }
     UICloseAudio(formatContext, audioContext);
@@ -117,6 +122,7 @@ void AudioDecoder::run()
         if (!samples)
             throw std::bad_alloc();
         float sampleRate = audioContext->sample_rate;
+        /* フォーマットからパケット単位で読み取り、その音声パケットをデコードするの繰り返しを行う */
         while (m_running) {
             int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
             if (av_read_frame(formatContext, &packet) < 0)
@@ -130,6 +136,7 @@ void AudioDecoder::run()
         }
         emit audioDidDecodeComplete();
     } catch (std::exception &e) {
+        /* TODO: エラーメッセージをわかりやすくしたい... */
         qWarning() << e.what();
         emit audioDidDecodeError();
     }

@@ -71,8 +71,10 @@ private slots:
     void enqueueAudioBuffer(const QByteArray &bytes);
 
 private:
+    void enqueueAudioBufferWithoutLock(const QByteArray &bytes);
     void dequeueImage(QImage &image);
-    void dequeueAudioBuffer(QByteArray &bytes);
+    void dequeueAudioBufferWithoutLock(QByteArray &bytes);
+    int sizeOfAudioQueueWithoutLock() const;
 
     mutable QMutex m_videoQueueMutex;
     mutable QMutex m_audioQueueMutex;

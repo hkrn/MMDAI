@@ -1348,8 +1348,9 @@ void MainWindow::invokeVideoEncoder()
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
         m_audioDecoder = new AudioDecoder();
         m_audioDecoder->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
+        bool canOpenAudio = m_audioDecoder->canOpen();
         int sampleRate = 0, bitRate = 0;
-        if (m_audioDecoder->canOpen()) {
+        if (canOpenAudio) {
             sampleRate = 44100;
             bitRate = 64000;
         }
@@ -1399,8 +1400,9 @@ void MainWindow::invokeVideoEncoder()
         m_sceneWidget->advanceMotion(fromIndex);
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
         /* 指定のキーフレームまで動画にフレームの書き出しを行う */
-        m_audioDecoder->start();
         m_videoEncoder->start();
+        if (canOpenAudio)
+            m_audioDecoder->start();
         float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
         /* 全てのモーションが終了するまでエンコード処理 */
         while (!scene->isMotionReachedTo(toIndex)) {
