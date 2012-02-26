@@ -46,7 +46,7 @@ ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *sceneWidge
     mainLayout->addLayout(gridLayout);
     mainLayout->addWidget(m_includeGridBox, 0, Qt::AlignCenter);
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    connect(this, SIGNAL(settingsDidSave()), parent, SLOT(startExportingVideo()));
+    connect(this, SIGNAL(settingsDidSave()), parent, SLOT(invokeVideoEncoder()));
     connect(buttons, SIGNAL(accepted()), this, SLOT(saveSettings()));
     connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
     mainLayout->addWidget(buttons);
