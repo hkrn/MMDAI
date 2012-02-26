@@ -1333,6 +1333,7 @@ void MainWindow::invokeVideoEncoder()
         int fps = m_sceneWidget->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
+        int frameIndex = m_sceneWidget->currentFrameIndex();
         /* 終了するまで待つ */
         if (m_audioDecoder && !m_audioDecoder->isFinished()) {
             m_audioDecoder->stop();
@@ -1391,6 +1392,7 @@ void MainWindow::invokeVideoEncoder()
         /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
         m_sceneWidget->setHandlesVisible(false);
         m_sceneWidget->setInfoPanelVisible(false);
+        m_sceneWidget->setBoneWireFramesVisible(false);
         m_sceneWidget->resize(videoSize);
         /* モーションを0フレーム目に移動し、その後指定のキーフレームのインデックスに advance で移動させる */
         m_sceneWidget->seekMotion(0.0f, true);
@@ -1400,13 +1402,15 @@ void MainWindow::invokeVideoEncoder()
         m_audioDecoder->start();
         m_videoEncoder->start();
         float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
+        /* 全てのモーションが終了するまでエンコード処理 */
         while (!scene->isMotionReachedTo(toIndex)) {
             if (progress->wasCanceled())
                 break;
-            QImage image = m_sceneWidget->grabFrameBuffer();
+            const QImage &image = m_sceneWidget->grabFrameBuffer();
             if (image.width() != width || image.height() != height)
-                image = image.scaled(width, height);
-            emit sceneDidRendered(image);
+                emit sceneDidRendered(image.scaled(width, height));
+            else
+                emit sceneDidRendered(image);
             int value = progress->value();
             if (totalAdvanced >= 1.0f) {
                 value += 1;
@@ -1419,10 +1423,13 @@ void MainWindow::invokeVideoEncoder()
             totalAdvanced += advanceSecond;
         }
         /* 最後のフレームを書き出し */
-        QImage image = m_sceneWidget->grabFrameBuffer();
+        const QImage &image = m_sceneWidget->grabFrameBuffer();
         if (image.width() != width || image.height() != height)
-            image = image.scaled(width, height);
-        emit sceneDidRendered(image);
+            emit sceneDidRendered(image.scaled(width, height));
+        else
+            emit sceneDidRendered(image);
+        /* エンコードを終了させるための空のフレーム */
+        emit sceneDidRendered(QImage());
         /* エンコードが完了するまで待機 */
         const QString &encodingFormat = tr("Encoding remain frame %1 of %2...");
         int remain = m_videoEncoder->sizeOfVideoQueue();
@@ -1430,6 +1437,7 @@ void MainWindow::invokeVideoEncoder()
         progress->setMaximum(remain);
         progress->setLabelText(encodingFormat.arg(0).arg(remain));
         int size = 0;
+        /* 残りフレームをエンコード */
         while (remain > size) {
             if (progress->wasCanceled())
                 break;
@@ -1456,10 +1464,11 @@ void MainWindow::invokeVideoEncoder()
         m_sceneWidget->resize(sceneSize);
         m_sceneWidget->setHandlesVisible(true);
         m_sceneWidget->setInfoPanelVisible(true);
+        m_sceneWidget->setBoneWireFramesVisible(true);
         m_sceneWidget->setPreferredFPS(fps);
         /* レンダリングを手動更新から自動更新に戻す */
         m_sceneWidget->stopPhysicsSimulation();
-        m_sceneWidget->updateSceneMotion();
+        m_sceneWidget->seekMotion(frameIndex, true);
         m_sceneWidget->startAutomaticRendering();
         delete progress;
     }
