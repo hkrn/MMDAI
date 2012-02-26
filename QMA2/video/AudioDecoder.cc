@@ -84,6 +84,7 @@ bool AudioDecoder::canOpen() const
     try {
         AVStream *stream = 0;
         UIOpenAudio(m_filename, formatContext, audioContext, stream);
+        ret = audioContext->channels == 2 && audioContext->sample_rate == 44100;
     }
     catch (std::exception &e) {
         ret = false;
