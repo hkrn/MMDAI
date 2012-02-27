@@ -430,6 +430,7 @@ void Bone::performInverseKinematics()
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
     Quaternion rotation, rx, ry, rz;
+    Transform localMatrix = Transform::getIdentity(), translateMatrix = Transform::getIdentity();
     for (int i = 0; i < nloops; i++) {
         int t = m_nloop / 2;
         for (int j = 0; j < nlinks; j++) {
@@ -526,14 +527,15 @@ void Bone::performInverseKinematics()
                     matrix.setRotation(ry * rz * rx);
                 }
             }
-            Transform matrixLocal(matrix), temp(matrix);
-            temp.setOrigin(-m_targetBone->m_position);
-            matrixLocal = temp * matrixLocal;
-            temp.setOrigin(m_position);
-            matrixLocal *= temp;
-            temp.setOrigin(m_targetBone->m_position);
-            matrixLocal *= temp;
-            m_targetBone->m_IKLinkTransform = matrixLocal;
+            localMatrix.setIdentity();
+            localMatrix.setBasis(matrix);
+            translateMatrix.setOrigin(-m_targetBone->m_position);
+            localMatrix = translateMatrix * localMatrix;
+            translateMatrix.setOrigin(m_position);
+            localMatrix *= translateMatrix;
+            translateMatrix.setOrigin(m_targetBone->m_position);
+            localMatrix *= translateMatrix;
+            m_targetBone->m_IKLinkTransform = localMatrix;
             for (int k = j; k >= 0; k--) {
                 IKLink *ik = m_IKLinks[k];
                 Bone *destinationBone = ik->destinationBone;
