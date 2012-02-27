@@ -571,10 +571,16 @@ That's all there is to it!
     --disable-libfreetype \
     --disable-libopenjpeg \
     --disable-decoders \
+    --enable-decoder="flac" \
+    --enable-decoder="pcm_s16le" \
     --disable-encoders \
     --enable-encoder="png" \
+    --enable-encoder="pcm_s16le" \
     --disable-parsers \
     --disable-demuxers \
+    --enable-demuxer="aiff" \
+    --enable-demuxer="flac" \
+    --enable-demuxer="wav" \
     --disable-muxers \
     --enable-muxer="mov" \
     --disable-protocols \
@@ -595,10 +601,16 @@ That's all there is to it!
     --disable-libfreetype \
     --disable-libopenjpeg \
     --disable-decoders \
+    --enable-decoder="flac" \
+    --enable-decoder="pcm_s16le" \
     --disable-encoders \
     --enable-encoder="png" \
+    --enable-encoder="pcm_s16le" \
     --disable-parsers \
     --disable-demuxers \
+    --enable-demuxer="aiff" \
+    --enable-demuxer="flac" \
+    --enable-demuxer="wav" \
     --disable-muxers \
     --enable-muxer="mov" \
     --disable-protocols \
