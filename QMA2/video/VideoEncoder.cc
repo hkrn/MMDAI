@@ -100,24 +100,22 @@ VideoEncoder::VideoEncoder(const QString &filename,
 VideoEncoder::~VideoEncoder()
 {
     m_images.clear();
-    m_audioBuffer.clear();
     m_running = false;
 }
 
 int VideoEncoder::sizeOfVideoQueue() const
 {
-    int size;
     m_videoQueueMutex.lock();
-    size = m_images.size();
+    int size = m_images.size();
     m_videoQueueMutex.unlock();
     return size;
 }
 
-int VideoEncoder::sizeOfAudioQueue() const
+int VideoEncoder::sizeOfAudioBuffer() const
 {
-    m_audioQueueMutex.lock();
-    int size = sizeOfAudioQueueWithoutLock();
-    m_audioQueueMutex.unlock();
+    m_audioBufferMutex.lock();
+    int size = m_audioBuffer.size();
+    m_audioBufferMutex.unlock();
     return size;
 }
 
@@ -139,11 +137,6 @@ void VideoEncoder::run()
     uint8_t *encodedAudioFrameBuffer = 0, *encodedVideoFrameBuffer = 0;
     try {
         /* 動画と音声のフォーマット(AVFormatContext)をまず先に作成し、それからコーデック(AVCodecContext)を作成する */
-        int width = m_size.width(), height = m_size.height();
-        size_t encodedAudioFrameBufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-        size_t encodedVideoFrameBufferSize = width * height * 4;
-        encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
-        encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
         videoOutputFormat = CreateVideoFormat(m_filename);
         videoFormatContext = CreateVideoFormatContext(videoOutputFormat, m_filename);
         if (m_audioBitrate > 0 && m_audioSampleRate > 0)
@@ -159,6 +152,16 @@ void VideoEncoder::run()
                                       m_size,
                                       m_videoBitrate,
                                       m_fps);
+        /* エンコード用のフレームを確保 */
+        AVCodecContext *audioCodec = audioStream->codec;
+        int width = m_size.width(), height = m_size.height();
+        int encodedAudioFrameBufferSize = audioCodec->sample_rate
+                * audioCodec->frame_size
+                * audioCodec->channels
+                * av_get_bytes_per_sample(audioCodec->sample_fmt);
+        int encodedVideoFrameBufferSize = width * height * 4;
+        encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
+        encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
         /* 書き出し準備を行う。ファイルなので常に true になる */
         if (!(videoOutputFormat->flags & AVFMT_NOFILE)) {
             if (avio_open(&videoFormatContext->pb, m_filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0)
@@ -181,64 +184,46 @@ void VideoEncoder::run()
         while (m_running || remainQueue) {
             double audioPTS = ComputePresentTimeStamp(audioStream);
             double videoPTS = ComputePresentTimeStamp(videoStream);
-            /* XXX: まだオーディオ処理について不完全 */
-            if (audioStream) {
-                int audioQueueSize = sizeOfAudioQueue();
-                while (audioQueueSize > 0) {
-                    /* 音声フレーム取り出し */
-                    m_audioQueueMutex.lock();
-                    dequeueAudioBufferWithoutLock(bytes);
-                    /* 音声フレーム書き出し */
-                    if (audioPTS < videoPTS) {
-                        WriteAudioFrame(videoFormatContext,
-                                        audioStream,
-                                        reinterpret_cast<const int16_t *>(bytes.constData()),
-                                        encodedAudioFrameBuffer,
-                                        encodedAudioFrameBufferSize);
-                        audioPTS = ComputePresentTimeStamp(audioStream);
-                    }
-                    else {
-                        /* バッファを戻してロックを解除して抜ける。解除しないと次回時デッドロックの原因になる */
-                        enqueueAudioBufferWithoutLock(bytes);
-                        m_audioQueueMutex.unlock();
-                        break;
-                    }
-                    audioQueueSize = sizeOfAudioQueueWithoutLock();
-                    m_audioQueueMutex.unlock();
-                }
+            /* 音声バッファが残っている */
+            if (audioPTS < videoPTS && sizeOfAudioBuffer() > encodedAudioFrameBufferSize) {
+                /* 音声フレーム取り出し */
+                dequeueAudioBuffer(bytes, encodedAudioFrameBufferSize);
+                /* 音声フレーム書き出し */
+                WriteAudioFrame(videoFormatContext,
+                                audioStream,
+                                reinterpret_cast<const int16_t *>(bytes.constData()),
+                                encodedAudioFrameBuffer,
+                                encodedAudioFrameBufferSize);
             }
-            int videoQueueSize = sizeOfVideoQueue();
-            /* 音声キューまたは画像キューに残りがある */
-            if (videoStream && videoQueueSize > 0) {
-                /* 画像フレーム取り出し */
-                if (videoQueueSize > 0) {
-                    dequeueImage(image);
-                    /* 空フレームがきたらエンコードを終了させる */
-                    if (image.isNull()) {
-                        remainQueue = false;
-                        break;
+            /* 画像キューが残っている */
+            else if (sizeOfVideoQueue() > 0) {
+                /* キューから画像取り出し */
+                dequeueImage(image);
+                /* 空フレームがきたらエンコードを終了させる */
+                if (image.isNull()) {
+                    remainQueue = false;
+                    break;
+                }
+                /* 仮フレームを作成し、そこに画像データを埋める */
+                const int w = image.width(), h = image.height();
+                uint8_t *data = tmpFrame->data[0];
+                int stride = tmpFrame->linesize[0];
+                for (int y = 0; y < h; y++) {
+                    const int ystride = y * stride;
+                    for (int x = 0; x < w; x++) {
+                        int index = ystride + x * 4;
+                        const QRgb &rgb = image.pixel(x, y);
+                        data[index + 0] = qRed(rgb);
+                        data[index + 1] = qGreen(rgb);
+                        data[index + 2] = qBlue(rgb);
+                        data[index + 3] = qAlpha(rgb);
                     }
-                    const int w = image.width(), h = image.height();
-                    uint8_t *data = tmpFrame->data[0];
-                    int stride = tmpFrame->linesize[0];
-                    /* 画像データを仮のフレームに埋める */
-                    for (int y = 0; y < h; y++) {
-                        const int ystride = y * stride;
-                        for (int x = 0; x < w; x++) {
-                            int index = ystride + x * 4;
-                            const QRgb &rgb = image.pixel(x, y);
-                            data[index + 0] = qRed(rgb);
-                            data[index + 1] = qGreen(rgb);
-                            data[index + 2] = qBlue(rgb);
-                            data[index + 3] = qAlpha(rgb);
-                        }
-                    }
-                    /* 画像フレームを指定されたサイズとフォーマットでスケーリング */
-                    if (scaleContext) {
-                        sws_scale(scaleContext,
-                                  tmpFrame->data, tmpFrame->linesize, 0, h,
-                                  videoFrame->data, videoFrame->linesize);
-                    }
+                }
+                /* 画像フレームを指定されたサイズとフォーマットでスケーリング */
+                if (scaleContext) {
+                    sws_scale(scaleContext,
+                              tmpFrame->data, tmpFrame->linesize, 0, h,
+                              videoFrame->data, videoFrame->linesize);
                 }
                 /* 画像フレーム書き出し */
                 WriteVideoFrame(videoFormatContext,
@@ -289,14 +274,9 @@ void VideoEncoder::enqueueImage(const QImage &image)
 
 void VideoEncoder::enqueueAudioBuffer(const QByteArray &bytes)
 {
-    m_audioQueueMutex.lock();
-    enqueueAudioBufferWithoutLock(bytes);
-    m_audioQueueMutex.unlock();
-}
-
-void VideoEncoder::enqueueAudioBufferWithoutLock(const QByteArray &bytes)
-{
-    m_audioBuffer.enqueue(bytes);
+    m_audioBufferMutex.lock();
+    m_audioBuffer.append(bytes);
+    m_audioBufferMutex.unlock();
 }
 
 void VideoEncoder::dequeueImage(QImage &image)
@@ -306,12 +286,9 @@ void VideoEncoder::dequeueImage(QImage &image)
     m_videoQueueMutex.unlock();
 }
 
-void VideoEncoder::dequeueAudioBufferWithoutLock(QByteArray &bytes)
+void VideoEncoder::dequeueAudioBuffer(QByteArray &bytes, int size)
 {
-    bytes = m_audioBuffer.dequeue();
-}
-
-int VideoEncoder::sizeOfAudioQueueWithoutLock() const
-{
-    return m_audioBuffer.size();
+    m_audioBufferMutex.lock();
+    bytes = m_audioBuffer.remove(0, size);
+    m_audioBufferMutex.unlock();
 }

@@ -58,7 +58,7 @@ public:
     ~VideoEncoder();
 
     int sizeOfVideoQueue() const;
-    int sizeOfAudioQueue() const;
+    int sizeOfAudioBuffer() const;
 
 public slots:
     void stop();
@@ -71,16 +71,14 @@ private slots:
     void enqueueAudioBuffer(const QByteArray &bytes);
 
 private:
-    void enqueueAudioBufferWithoutLock(const QByteArray &bytes);
     void dequeueImage(QImage &image);
-    void dequeueAudioBufferWithoutLock(QByteArray &bytes);
-    int sizeOfAudioQueueWithoutLock() const;
+    void dequeueAudioBuffer(QByteArray &bytes, int size);
 
     mutable QMutex m_videoQueueMutex;
-    mutable QMutex m_audioQueueMutex;
+    mutable QMutex m_audioBufferMutex;
     QString m_filename;
+    QByteArray m_audioBuffer;
     QQueue<QImage> m_images;
-    QQueue<QByteArray> m_audioBuffer;
     QSize m_size;
     int m_fps;
     int m_videoBitrate;
