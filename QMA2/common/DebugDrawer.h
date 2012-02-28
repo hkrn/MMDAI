@@ -139,20 +139,23 @@ public:
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
-        QSet<vpvl::Bone *> linkedIKBones;
+        QSet<vpvl::Bone *> linkedIKBones, targetBones, destinationBones;
         const vpvl::IKList &IKs = model->IKs();
         int nIKs = IKs.count();
         for (int i = 0; i < nIKs; i++) {
             vpvl::IK *ik = IKs[i];
             const vpvl::BoneList &bones = ik->linkedBones();
             int nbones = bones.count();
-            linkedIKBones.insert(ik->targetBone());
-            linkedIKBones.insert(ik->destinationBone());
+            targetBones.insert(ik->targetBone());
+            destinationBones.insert(ik->destinationBone());
             for (int j = 0; j < nbones; j++) {
                 vpvl::Bone *bone = bones[j];
                 linkedIKBones.insert(bone);
             }
         }
+        static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
+        static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
+        static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *child = bone->child();
             if (!bone->isMovable() && !bone->isRotateable())
@@ -172,17 +175,15 @@ public:
             vpvl::Bone *mutableBone = const_cast<vpvl::Bone *>(bone);
             if (selected.contains(mutableBone)) {
                 drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.0f, 0.0f));
-                m_program.setUniformValue("color", QColor::fromRgbF(1.0f, 0.0f, 0.0f));
+                m_program.setUniformValue("color", kColorRed);
             }
-            /*
             else if (linkedIKBones.contains(mutableBone)) {
                 drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.75f, 0.0f));
-                m_program.setUniformValue("color", QColor::fromRgbF(1.0f, 0.75f, 0.0f));
+                m_program.setUniformValue("color", kColorOrange);
             }
-            */
             else {
                 drawSphere(origin, 0.1f, vpvl::Vector3(0.0f, 0.0f, 1.0f));
-                m_program.setUniformValue("color", QColor::fromRgbF(0.0f, 0.0f, 1.0f));
+                m_program.setUniformValue("color", kColorBlue);
             }
             m_program.setAttributeArray("inPosition",
                                         reinterpret_cast<const GLfloat *>(&vertices[0]),
