@@ -55,7 +55,6 @@ class Bone;
 class btBvhTriangleMeshShape;
 class btRigidBody;
 class btTriangleMesh;
-class HandlesStaticWorld;
 class SceneWidget;
 
 class Handles : public QObject
@@ -63,6 +62,7 @@ class Handles : public QObject
     Q_OBJECT
 
 public:
+    class StaticWorld;
     struct Texture {
         QSize size;
         QRectF rect;
@@ -98,18 +98,20 @@ public:
     };
 
     enum Flags {
-        kNone       = 0x0,
-        kEnable     = 0x1,
-        kDisable    = 0x2,
-        kMove       = 0x4,
-        kRotate     = 0x8,
-        kX          = 0x10,
-        kY          = 0x20,
-        kZ          = 0x40,
-        kGlobal     = 0x80,
-        kLocal      = 0x100,
-        kView       = 0x200,
-        kVisibleAll = kMove | kRotate | kX | kY | kZ | kView
+        kNone          = 0x0,
+        kEnable        = 0x1,
+        kDisable       = 0x2,
+        kMove          = 0x4,
+        kRotate        = 0x8,
+        kX             = 0x10,
+        kY             = 0x20,
+        kZ             = 0x40,
+        kGlobal        = 0x80,
+        kLocal         = 0x100,
+        kView          = 0x200,
+        kVisibleMove   = kMove   | kX | kY | kZ | kView,
+        kVisibleRotate = kRotate | kX | kY | kZ | kView,
+        kVisibleAll    = kMove   | kRotate | kX | kY | kZ | kView
     };
 
     Handles(SceneWidget *parent);
@@ -128,7 +130,8 @@ public:
                       int &flags,
                       QRectF &rect);
     void drawImageHandles(bool movable, bool rotateable);
-    void drawModelHandles();
+    void drawRotationHandle();
+    void drawMoveHandle();
     const btScalar angle(const vpvl::Vector3 &pos) const;
 
     void setPoint3D(const vpvl::Vector3 &value);
@@ -138,6 +141,7 @@ public:
     const vpvl::Vector3 diffPoint3D(const vpvl::Vector3 &value) const;
     const QPointF diffPoint2D(const QPointF &value) const;
     float diffAngle(float value) const;
+    vpvl::Bone *currentBone() const { return m_bone; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
 
@@ -159,7 +163,7 @@ private:
 
     internal::TextureDrawHelper *m_helper;
     vpvl::Bone *m_bone;
-    HandlesStaticWorld *m_world;
+    StaticWorld *m_world;
     SceneWidget *m_widget;
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;

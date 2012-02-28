@@ -47,16 +47,15 @@
 
 using namespace vpvl;
 
-class HandlesStaticWorld {
+class Handles::StaticWorld {
 public:
-    HandlesStaticWorld()
+    StaticWorld()
         : m_dispatcher(&m_config),
           m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
-          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
-          m_filtered(false)
+          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
     }
-    ~HandlesStaticWorld()
+    ~StaticWorld()
     {
         const btCollisionObjectArray &objects = m_world.getCollisionObjectArray();
         const int nobjects = m_world.getNumCollisionObjects();
@@ -91,11 +90,8 @@ public:
             if (!visibles.contains(body))
                 m_world.removeCollisionObject(body);
         }
-        m_filtered = true;
     }
     void restoreObjects() {
-        if (!m_filtered)
-            return;
         const btCollisionObjectArray &objects = m_world.getCollisionObjectArray();
         const int nobjects = m_world.getNumCollisionObjects();
         for (int i = nobjects - 1; i >= 0; i--)
@@ -107,7 +103,6 @@ public:
          * stepSimulation で MotionState を経由して新しい位置情報に更新させる必要がある
          */
         m_world.stepSimulation(1);
-        m_filtered = false;
     }
 
 private:
@@ -117,7 +112,6 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
-    bool m_filtered;
 };
 
 namespace {
@@ -166,7 +160,7 @@ public:
     }
 };
 
-static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
+static void UILoadStaticModel(const aiMesh *mesh, Handles::Model &model)
 {
     /* Open Asset Import Library を使って読み込んだモデルを VBO が利用出来る形に再構築 */
     const aiVector3D *meshVertices = mesh->mVertices;
@@ -191,13 +185,13 @@ static void LoadStaticModel(const aiMesh *mesh, Handles::Model &model)
     model.body = 0;
 }
 
-static void LoadTrackableModel(const aiMesh *mesh,
-                               HandlesStaticWorld *world,
-                               BoneHandleMotionState *state,
-                               Handles::Model &model)
+static void UILoadTrackableModel(const aiMesh *mesh,
+                                 Handles::StaticWorld *world,
+                                 BoneHandleMotionState *state,
+                                 Handles::Model &model)
 {
     /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
-    LoadStaticModel(mesh, model);
+    UILoadStaticModel(mesh, model);
     btTriangleMesh *triangleMesh = new btTriangleMesh();
     const Array<Handles::Vertex> &vertices = model.vertices;
     const int nfaces = vertices.count() / 3;
@@ -223,6 +217,23 @@ static void LoadTrackableModel(const aiMesh *mesh,
     model.body = body;
 }
 
+static void UIInitializeRenderingModel(const Scene *scene,
+                                       const Transform &transform,
+                                       QGLShaderProgram *program)
+{
+    QGLFunctions func(QGLContext::currentContext());
+    float matrix[16];
+    scene->getModelViewMatrix(matrix);
+    int modelViewMatrix = program->uniformLocation("modelViewMatrix");
+    func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+    scene->getProjectionMatrix(matrix);
+    int projectionMatrix = program->uniformLocation("projectionMatrix");
+    func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+    int boneMatrix = program->uniformLocation("boneMatrix");
+    transform.getOpenGLMatrix(matrix);
+    func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
+}
+
 }
 
 Handles::Handles(SceneWidget *parent)
@@ -241,7 +252,7 @@ Handles::Handles(SceneWidget *parent)
       m_visible(true)
 {
     m_helper = new internal::TextureDrawHelper(parent);
-    m_world = new HandlesStaticWorld();
+    m_world = new Handles::StaticWorld();
     m_rotationHandle.asset = 0;
     m_translationHandle.asset = 0;
 }
@@ -472,12 +483,15 @@ float Handles::diffAngle(float value) const
 void Handles::setBone(Bone *value)
 {
     m_bone = value;
+    /* setVisiblity(0) で衝突オブジェクトが全くないケースがあるので、まず先に衝突オブジェクトを全て復活させる */
+    m_world->restoreObjects();
     btDiscreteDynamicsWorld *world = m_world->world();
     int nobjects = world->getNumCollisionObjects();
     for (int i = 0; i < nobjects; i++) {
         btCollisionObject *object = world->getCollisionObjectArray().at(i);
         btRigidBody *body = btRigidBody::upcast(object);
         btMotionState *state = 0;
+        /* MotionState にボーンの位置情報を設定させる */
         if (body && (state = body->getMotionState()))
             static_cast<BoneHandleMotionState *>(state)->setBone(value);
     }
@@ -496,25 +510,24 @@ void Handles::setVisible(bool value)
 
 void Handles::setVisibilityFlags(int value)
 {
-    if (value == kVisibleAll) {
-        m_world->restoreObjects();
-    }
-    else {
+    /* 一回全ての剛体を物理世界にいれておき、表示オブジェクトがあればそれのみあたるよう剛体をフィルタリングする手法を取る */
+    m_world->restoreObjects();
+    if (value != kVisibleAll) {
         QList<btRigidBody *> bodies;
         if (value & kMove) {
             if (value & kX)
                 bodies.append(m_translationHandle.x.body);
-            else if (value & kY)
+            if (value & kY)
                 bodies.append(m_translationHandle.y.body);
-            else if (value & kZ)
+            if (value & kZ)
                 bodies.append(m_translationHandle.z.body);
         }
         if (value & kRotate) {
             if (value & kX)
                 bodies.append(m_rotationHandle.x.body);
-            else if (value & kY)
+            if (value & kY)
                 bodies.append(m_rotationHandle.y.body);
-            else if (value & kZ)
+            if (value & kZ)
                 bodies.append(m_rotationHandle.z.body);
         }
         m_world->filterObjects(bodies);
@@ -560,34 +573,31 @@ void Handles::drawImageHandles(bool movable, bool rotateable)
     glEnable(GL_DEPTH_TEST);
 }
 
-void Handles::drawModelHandles()
+void Handles::drawRotationHandle()
 {
     if (!m_visible || !m_program.isLinked() || !m_bone)
         return;
-    float matrix[16];
-    const Scene *scene = m_widget->scene();
-    glDisable(GL_DEPTH_TEST);
-    m_program.bind();
-    int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
-    int projectionMatrix = m_program.uniformLocation("projectionMatrix");
-    int boneMatrix = m_program.uniformLocation("boneMatrix");
-    QGLFunctions func(QGLContext::currentContext());
-    scene->getModelViewMatrix(matrix);
-    func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-    scene->getProjectionMatrix(matrix);
-    func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
-    const Transform &boneTransform = m_bone->localTransform();
     Transform transform = Transform::getIdentity();
     transform.setOrigin(m_bone->localTransform().getOrigin());
-    transform.getOpenGLMatrix(matrix);
-    func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
+    glDisable(GL_DEPTH_TEST);
+    m_program.bind();
+    UIInitializeRenderingModel(m_widget->scene(), transform, &m_program);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
         drawModel(m_rotationHandle.z, kBlue, kZ);
     }
-    boneTransform.getOpenGLMatrix(matrix);
-    func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
+    m_program.release();
+    glEnable(GL_DEPTH_TEST);
+}
+
+void Handles::drawMoveHandle()
+{
+    if (!m_visible || !m_program.isLinked() || !m_bone)
+        return;
+    glDisable(GL_DEPTH_TEST);
+    m_program.bind();
+    UIInitializeRenderingModel(m_widget->scene(), m_bone->localTransform(), &m_program);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
@@ -672,9 +682,9 @@ void Handles::loadModelHandles()
         Asset *asset = new Asset();
         asset->load(reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData()), rotationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
-        LoadTrackableModel(meshes[1], m_world, new RotationHandleMotionState(), m_rotationHandle.x);
-        LoadTrackableModel(meshes[0], m_world, new RotationHandleMotionState(), m_rotationHandle.y);
-        LoadTrackableModel(meshes[2], m_world, new RotationHandleMotionState(), m_rotationHandle.z);
+        UILoadTrackableModel(meshes[1], m_world, new RotationHandleMotionState(), m_rotationHandle.x);
+        UILoadTrackableModel(meshes[0], m_world, new RotationHandleMotionState(), m_rotationHandle.y);
+        UILoadTrackableModel(meshes[2], m_world, new RotationHandleMotionState(), m_rotationHandle.z);
         m_rotationHandle.asset = asset;
     }
     /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
@@ -684,12 +694,12 @@ void Handles::loadModelHandles()
         Asset *asset = new Asset();
         asset->load(reinterpret_cast<const uint8_t *>(translationHandleBytes.constData()), translationHandleBytes.size());
         aiMesh **meshes = asset->getScene()->mMeshes;
-        LoadTrackableModel(meshes[0], m_world, new TranslationHandleMotionState(), m_translationHandle.x);
-        LoadTrackableModel(meshes[2], m_world, new TranslationHandleMotionState(), m_translationHandle.y);
-        LoadTrackableModel(meshes[1], m_world, new TranslationHandleMotionState(), m_translationHandle.z);
-        LoadStaticModel(meshes[3], m_translationHandle.axisX);
-        LoadStaticModel(meshes[5], m_translationHandle.axisY);
-        LoadStaticModel(meshes[4], m_translationHandle.axisZ);
+        UILoadTrackableModel(meshes[0], m_world, new TranslationHandleMotionState(), m_translationHandle.x);
+        UILoadTrackableModel(meshes[2], m_world, new TranslationHandleMotionState(), m_translationHandle.y);
+        UILoadTrackableModel(meshes[1], m_world, new TranslationHandleMotionState(), m_translationHandle.z);
+        UILoadStaticModel(meshes[3], m_translationHandle.axisX);
+        UILoadStaticModel(meshes[5], m_translationHandle.axisY);
+        UILoadStaticModel(meshes[4], m_translationHandle.axisZ);
         m_translationHandle.asset = asset;
     }
 }
