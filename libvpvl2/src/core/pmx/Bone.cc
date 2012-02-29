@@ -385,34 +385,28 @@ void Bone::performTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
     if (hasRotationBias()) {
-        Quaternion internal = Quaternion::getIdentity();
-        if (m_parentBone) {
-            if (m_parentBone->hasRotationBias())
-                internal *= m_parentBone->m_rotationExtra;
-            else
-                internal *= m_parentBone->m_rotation * m_parentBone->m_rotationMorph;
+        Bone *parentBone = m_parentBiasBone;
+        if (parentBone) {
+            const Quaternion &parentRotation = parentBone->hasRotationBias() ? parentBone->m_rotationExtra : parentBone->m_rotation * parentBone->m_rotationMorph;
+            rotation *= parentRotation;
+            if (m_bias != 1.0)
+                rotation = Quaternion::getIdentity().slerp(rotation, m_bias);
+            rotation *= parentBone->m_rotationIKLink;
+            m_rotationExtra = Quaternion::getIdentity().slerp(parentRotation * parentBone->m_rotationIKLink, m_bias) * m_rotation * m_rotationMorph;
         }
-        if (m_bias != 1.0)
-            rotation = rotation.slerp(internal, m_bias);
-        if (m_parentBone->hasIKLinks())
-            rotation *= m_parentBone->m_rotationIKLink;
-        m_rotationExtra = rotation.slerp((internal * m_parentBone->m_rotationIKLink), m_bias) * m_rotation * m_rotationMorph;
     }
-    rotation *= m_rotation * m_rotationMorph;
-    if (hasIKLinks())
-        rotation *= m_rotationIKLink;
+    rotation *= m_rotation * m_rotationMorph * m_rotationIKLink;
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
     if (hasPositionBias()) {
-        if (m_parentBone) {
-            if (m_parentBone->hasPositionBias())
-                position += m_parentBone->m_positionExtra + m_parentBone->m_positionMorph;
-            else
-                position += m_parentBone->m_position + m_parentBone->m_positionMorph;
+        Bone *parentBone = m_parentBiasBone;
+        if (parentBone) {
+            const Vector3 &parentPosition = parentBone->hasPositionBias() ? parentBone->m_positionExtra : parentBone->m_position + parentBone->m_positionMorph;
+            position += parentPosition;
+            if (m_bias != 1.0)
+                position *= m_bias;
+            m_positionExtra = parentPosition + m_position + m_positionMorph;
         }
-        if (m_bias != 1.0)
-            position *= m_bias;
-        m_positionExtra = position + m_position + m_positionMorph;
     }
     position += m_position + m_positionMorph;
     m_localTransform.setOrigin(position + offset());
