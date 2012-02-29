@@ -165,10 +165,11 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Material::loadMaterials(const Array<Material *> &materials, const Array<StaticString *> &textures)
+bool Material::loadMaterials(const Array<Material *> &materials, const Array<StaticString *> &textures, int expectedIndices)
 {
     const int nmaterials = materials.count();
     const int ntextures = textures.count();
+    int actualIndices = 0;
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
         const int textureIndex = material->m_textureIndex;
@@ -192,8 +193,9 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<Sta
             else
                 material->m_toonTexture = textures[toonTextureIndex];
         }
+        actualIndices += material->indices();
     }
-    return true;
+    return actualIndices == expectedIndices;
 }
 
 void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)

@@ -72,7 +72,8 @@ public:
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,
-                              const Array<StaticString *> &textures);
+                              const Array<StaticString *> &textures,
+                              int expectedIndices);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

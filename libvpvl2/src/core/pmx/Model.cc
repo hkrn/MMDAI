@@ -327,7 +327,7 @@ bool Model::load(const uint8_t *data, size_t size)
         parseRigidBodies(info);
         parseJoints(info);
         if (!Bone::loadBones(m_bones, m_orderedBones)
-                || !Material::loadMaterials(m_materials, m_textures)
+                || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
                 || !Vertex::loadVertices(m_vertices, m_bones)
                 || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
                 || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
