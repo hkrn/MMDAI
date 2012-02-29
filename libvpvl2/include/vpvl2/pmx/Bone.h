@@ -66,7 +66,7 @@ public:
     ~Bone();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadBones(const Array<Bone *> &bones);
+    static bool loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -94,6 +94,7 @@ public:
     float constraintAngle() const { return m_constraintAngle; }
     float bias() const { return m_bias; }
     float priority() const { return m_priority; }
+    int id() const { return m_id; }
 
     bool isRotateable() const { return m_flags & 0x0002; }
     bool isMovable() const { return m_flags & 0x0004; }
@@ -131,6 +132,7 @@ private:
     Vector3 m_axisZ;
     float m_constraintAngle;
     float m_bias;
+    int m_id;
     int m_parentBoneIndex;
     int m_priority;
     int m_offsetBoneIndex;

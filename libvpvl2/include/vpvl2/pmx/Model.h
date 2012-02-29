@@ -181,6 +181,7 @@ public:
     const Array<StaticString *> &textures() const { return m_textures; }
     const Array<Material *> &materials() const { return m_materials; }
     const Array<Bone *> &bones() const { return m_bones; }
+    const Array<Bone *> &orderedBones() const { return m_orderedBones; }
     const Array<Morph *> &morphs() const { return m_morphs; }
     const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
     const Array<Joint *> &joints() const { return m_joints; }
@@ -210,6 +211,7 @@ private:
     Array<StaticString *> m_textures;
     Array<Material *> m_materials;
     Array<Bone *> m_bones;
+    Array<Bone *> m_orderedBones;
     Array<Morph *> m_morphs;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;

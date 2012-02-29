@@ -87,6 +87,14 @@ static inline void SetConstraint(const Vector3 &lower,
     SetUpperConstraint(lower.z(), upper.z(), beforeCenter, z);
 }
 
+class BoneOrderPredication
+{
+public:
+    bool operator()(const pmx::Bone *left, const pmx::Bone *right) {
+        return right->isTransformedAfterPhysicsSimulation() && left->priority() < right->priority() && left->id() < left->id();
+    }
+};
+
 }
 
 namespace vpvl2
@@ -123,10 +131,14 @@ Bone::Bone()
       m_fixedAxis(kZeroV3),
       m_axisX(kZeroV3),
       m_axisZ(kZeroV3),
-      m_bias(0),
+      m_constraintAngle(0.0),
+      m_bias(1.0),
+      m_id(-1),
       m_parentBoneIndex(-1),
       m_priority(0),
       m_offsetBoneIndex(-1),
+      m_targetBoneIndex(-1),
+      m_nloop(0),
       m_nlinks(0),
       m_parentBoneBiasIndex(-1),
       m_globalID(0),
@@ -239,7 +251,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Bone::loadBones(const Array<Bone *> &bones)
+bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered)
 {
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -285,7 +297,10 @@ bool Bone::loadBones(const Array<Bone *> &bones)
                 }
             }
         }
+        bone->m_id = i;
     }
+    ordered.copy(bones);
+    ordered.sort(BoneOrderPredication());
     return true;
 }
 
