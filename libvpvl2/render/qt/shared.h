@@ -269,6 +269,95 @@ private:
 
 }
 
+QDebug operator<<(QDebug debug, const Vector3 &v)
+{
+    debug.nospace() << "(x=" << v.x() << ", y=" << v.y() << ", z=" << v.z() << ")";
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const Color &v)
+{
+    debug.nospace() << "(r=" << v.x() << ", g=" << v.y() << ", b=" << v.z() << ", a=" << v.w() << ")";
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const StaticString *str)
+{
+    if (str) {
+        const bool isUTF8 = str->encoding() == StaticString::kUTF8;
+        const QTextCodec *codec = QTextCodec::codecForName(isUTF8 ? "UTF-8" : "UTF-16");
+        debug.nospace() << codec->toUnicode(str->ptr());
+    }
+    else {
+        debug.nospace() << "\"\"";
+    }
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const pmx::Bone *bone)
+{
+    debug.nospace()
+            << "Bone id=" << bone->id()
+            << " name=" << bone->name()
+            << " english=" << bone->englishName()
+            << " origin=" << bone->origin();
+    if (bone->parentBone())
+        debug << " parent=" << bone->parentBone()->name();
+    debug << " index=" << bone->index() << "\n" << " offset=" << bone->origin();
+    if (bone->hasIKLinks()) {
+        debug << " targetBone=" << bone->targetBone()->name()
+              << " constraintAngle=" << bone->constraintAngle();
+    }
+    if (bone->hasPositionInherence()) {
+        debug << " parentPositionInherenceBone=" << bone->parentInherenceBone()->name()
+              << " weight=" << bone->weight();
+    }
+    if (bone->hasRotationInherence()) {
+        debug << " parentRotationInherenceBone=" << bone->parentInherenceBone()->name()
+              << " weight=" << bone->weight();
+    }
+    if (bone->isAxisFixed())
+        debug << " axis=" << bone->axis();
+    if (bone->hasLocalAxis())
+        debug << " axisX=" << bone->axisX() << " axisZ=" << bone->axisZ();
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const pmx::Material *material)
+{
+    debug.nospace()
+            << "Material name=" << material->name()
+            << " english=" << material->englishName()
+            << " mainTexture=" << material->mainTexture()
+            << " sphereTexture=" << material->sphereTexture()
+            << " toonTexture=" << material->toonTexture()
+            << "\n"
+            << " ambient=" << material->ambient()
+            << " diffuse=" << material->diffuse()
+            << " specular=" << material->specular()
+            << " edgeColor=" << material->edgeColor()
+            << "\n"
+            << " shininess=" << material->shininess()
+            << " edgeSize=" << material->edgeSize()
+            << " indices=" << material->indices()
+            << " isSharedToonTextureUsed=" << material->isSharedToonTextureUsed()
+            << " isCullDisabled=" << material->isCullFaceDisabled()
+            << " hasShadow=" << material->hasShadow()
+            << " isShadowMapDrawin=" << material->isShadowMapDrawn()
+            << " isEdgeDrawn=" << material->isEdgeDrawn()
+               ;
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const pmx::Morph *morph)
+{
+    debug.nospace()
+            << "Morph name=" << morph->name()
+            << " english=" << morph->englishName()
+               ;
+    return debug.space();
+}
+
 class UI : public QGLWidget
 {
 public:
@@ -417,12 +506,17 @@ private:
     bool loadScene() {
         QByteArray bytes;
         pmx::Model *model = new pmx::Model();
-        if (!internal::slurpFile(internal::concatPath(kModelDir, kModelName), bytes) ||
-                !model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+        if (!internal::slurpFile(internal::concatPath(kModelDir, kModelName), bytes)) {
+            m_delegate.log(Renderer::kLogWarning, "Failed loading the model");
+            delete model;
+            return false;
+        }
+        if (!model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             m_delegate.log(Renderer::kLogWarning, "Failed parsing the model: %d", model->error());
             delete model;
             return false;
         }
+
         /*
         vpvl::Scene *scene = m_renderer->scene();
         //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
@@ -453,14 +547,12 @@ private:
         m_renderer->updateAllModel();
 
 #if 1
-        for (int i = 0; i < model->materials().count(); i++) {
-            qDebug("material%d: %s", i, m_delegate.toUnicode(model->materials()[i]->name()).c_str());
-            //qDebug("mdata%d: %s", i, m_delegate.toUnicode(model->materials()[i]->userDataArea()).c_str());
-        }
-        for (int i = 0; i < model->bones().count(); i++)
-            qDebug("bone%d: %s", i, m_delegate.toUnicode(model->bones()[i]->name()).c_str());
+        for (int i = 0; i < model->materials().count(); i++)
+            qDebug() << model->materials().at(i);
+        for (int i = 0; i < model->orderedBones().count(); i++)
+            qDebug() << model->orderedBones().at(i);
         for (int i = 0; i < model->morphs().count(); i++)
-            qDebug("morph%d: %s", i, m_delegate.toUnicode(model->morphs()[i]->name()).c_str());
+            qDebug() << model->morphs().at(i);
         for (int i = 0; i < model->rigidBodies().count(); i++)
             qDebug("rbody%d: %s", i, m_delegate.toUnicode(model->rigidBodies()[i]->name()).c_str());
         for (int i = 0; i < model->joints().count(); i++)
