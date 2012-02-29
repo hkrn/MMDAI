@@ -93,7 +93,7 @@ public:
     const Vector3 &axisZ() const { return m_axisZ; }
     float constraintAngle() const { return m_constraintAngle; }
     float bias() const { return m_bias; }
-    float priority() const { return m_priority; }
+    int index() const { return m_priority; }
     int id() const { return m_id; }
 
     bool isRotateable() const { return m_flags & 0x0002; }

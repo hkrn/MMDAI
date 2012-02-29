@@ -90,8 +90,13 @@ static inline void SetConstraint(const Vector3 &lower,
 class BoneOrderPredication
 {
 public:
-    bool operator()(const pmx::Bone *left, const pmx::Bone *right) {
-        return right->isTransformedAfterPhysicsSimulation() && left->priority() < right->priority() && left->id() < left->id();
+    inline bool operator()(const pmx::Bone *left, const pmx::Bone *right) const {
+        if (left->isTransformedAfterPhysicsSimulation() == right->isTransformedAfterPhysicsSimulation()) {
+            if (left->index() == right->index())
+                return left->id() < right->id();
+            return left->index() < right->index();
+        }
+        return right->isTransformedAfterPhysicsSimulation();
     }
 };
 
