@@ -84,7 +84,7 @@ public:
     Bone *parentBone() const { return m_parentBone; }
     Bone *offsetBone() const { return m_offsetBone; }
     Bone *targetBone() const { return m_targetBone; }
-    Bone *parentBiasBone() const { return m_parentBiasBone; }
+    Bone *parentInherenceBone() const { return m_parentInherenceBone; }
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }
     const Vector3 &origin() const { return m_origin; }
@@ -92,8 +92,8 @@ public:
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }
     float constraintAngle() const { return m_constraintAngle; }
-    float bias() const { return m_bias; }
-    int index() const { return m_priority; }
+    float weight() const { return m_weight; }
+    int index() const { return m_index; }
     int id() const { return m_id; }
 
     bool isRotateable() const { return m_flags & 0x0002; }
@@ -101,8 +101,8 @@ public:
     bool isVisible() const { return m_flags & 0x0008; }
     bool isOperatable() const { return m_flags & 0x0010; }
     bool hasIKLinks() const { return m_flags & 0x0020; }
-    bool hasPositionBias() const { return m_flags & 0x0100; }
-    bool hasRotationBias() const { return m_flags & 0x0200; }
+    bool hasPositionInherence() const { return m_flags & 0x0100; }
+    bool hasRotationInherence() const { return m_flags & 0x0200; }
     bool isAxisFixed() const { return m_flags & 0x0400; }
     bool hasLocalAxis() const { return m_flags & 0x0800; }
     bool isTransformedAfterPhysicsSimulation() const { return m_flags & 0x1000; }
@@ -113,28 +113,28 @@ private:
     Bone *m_parentBone;
     Bone *m_offsetBone;
     Bone *m_targetBone;
-    Bone *m_parentBiasBone;
+    Bone *m_parentInherenceBone;
     StaticString *m_name;
     StaticString *m_englishName;
     Quaternion m_rotation;
-    Quaternion m_rotationExtra;
+    Quaternion m_rotationInherence;
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
     Transform m_localTransform;
     Transform m_IKLinkTransform;
     Vector3 m_origin;
     Vector3 m_position;
-    Vector3 m_positionExtra;
+    Vector3 m_positionInherence;
     Vector3 m_positionMorph;
     Vector3 m_offset;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;
     Vector3 m_axisZ;
     float m_constraintAngle;
-    float m_bias;
+    float m_weight;
     int m_id;
     int m_parentBoneIndex;
-    int m_priority;
+    int m_index;
     int m_offsetBoneIndex;
     int m_targetBoneIndex;
     int m_nloop;

@@ -119,28 +119,28 @@ Bone::Bone()
     : m_parentBone(0),
       m_offsetBone(0),
       m_targetBone(0),
-      m_parentBiasBone(0),
+      m_parentInherenceBone(0),
       m_name(0),
       m_englishName(0),
       m_rotation(Quaternion::getIdentity()),
-      m_rotationExtra(Quaternion::getIdentity()),
+      m_rotationInherence(Quaternion::getIdentity()),
       m_rotationMorph(Quaternion::getIdentity()),
       m_rotationIKLink(Quaternion::getIdentity()),
       m_localTransform(Transform::getIdentity()),
       m_IKLinkTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_position(kZeroV3),
-      m_positionExtra(kZeroV3),
+      m_positionInherence(kZeroV3),
       m_positionMorph(kZeroV3),
       m_offset(kZeroV3),
       m_fixedAxis(kZeroV3),
       m_axisX(kZeroV3),
       m_axisZ(kZeroV3),
       m_constraintAngle(0.0),
-      m_bias(1.0),
+      m_weight(1.0),
       m_id(-1),
       m_parentBoneIndex(-1),
-      m_priority(0),
+      m_index(0),
       m_offsetBoneIndex(-1),
       m_targetBoneIndex(-1),
       m_nloop(0),
@@ -160,7 +160,7 @@ Bone::~Bone()
     m_parentBone = 0;
     m_offsetBone = 0;
     m_targetBone = 0;
-    m_parentBiasBone = 0;
+    m_parentInherenceBone = 0;
     m_position.setZero();
     m_positionMorph.setZero();
     m_localTransform.setIdentity();
@@ -168,9 +168,9 @@ Bone::~Bone()
     m_fixedAxis.setZero();
     m_axisX.setZero();
     m_axisZ.setZero();
-    m_bias = 0;
+    m_weight = 0;
     m_parentBoneIndex = -1;
-    m_priority = 0;
+    m_index = 0;
     m_offsetBoneIndex = -1;
     m_nlinks = 0;
     m_parentBoneBiasIndex = -1;
@@ -287,7 +287,7 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered)
             if (parentBoneBiasID >= nbones)
                 return false;
             else
-                bone->m_parentBiasBone = bones[parentBoneBiasID];
+                bone->m_parentInherenceBone = bones[parentBoneBiasID];
         }
         if (bone->hasIKLinks()) {
             const int nIK = bone->m_IKLinks.count();
@@ -323,7 +323,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     m_localTransform.setOrigin(m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
-    m_priority = *reinterpret_cast<int *>(ptr);
+    m_index = *reinterpret_cast<int *>(ptr);
     ptr += sizeof(int);
     uint16_t flags = m_flags = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(uint16_t);
@@ -365,7 +365,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone has additional bias */
     if ((flags & 0x0100 || flags & 0x200)) {
         m_parentBoneBiasIndex = internal::variantIndex(ptr, info.boneIndexSize);
-        m_bias = *reinterpret_cast<float *>(ptr);
+        m_weight = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
     }
     /* axis of bone is fixed */
@@ -404,28 +404,28 @@ void Bone::mergeMorph(Morph::Bone *morph, float weight)
 void Bone::performTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
-    if (hasRotationBias()) {
-        Bone *parentBone = m_parentBiasBone;
+    if (hasRotationInherence()) {
+        Bone *parentBone = m_parentInherenceBone;
         if (parentBone) {
-            const Quaternion &parentRotation = parentBone->hasRotationBias() ? parentBone->m_rotationExtra : parentBone->m_rotation * parentBone->m_rotationMorph;
+            const Quaternion &parentRotation = parentBone->hasRotationInherence() ? parentBone->m_rotationInherence : parentBone->m_rotation * parentBone->m_rotationMorph;
             rotation *= parentRotation;
-            if (m_bias != 1.0)
-                rotation = Quaternion::getIdentity().slerp(rotation, m_bias);
+            if (m_weight != 1.0)
+                rotation = Quaternion::getIdentity().slerp(rotation, m_weight);
             rotation *= parentBone->m_rotationIKLink;
-            m_rotationExtra = Quaternion::getIdentity().slerp(parentRotation * parentBone->m_rotationIKLink, m_bias) * m_rotation * m_rotationMorph;
+            m_rotationInherence = Quaternion::getIdentity().slerp(parentRotation * parentBone->m_rotationIKLink, m_weight) * m_rotation * m_rotationMorph;
         }
     }
     rotation *= m_rotation * m_rotationMorph * m_rotationIKLink;
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
-    if (hasPositionBias()) {
-        Bone *parentBone = m_parentBiasBone;
+    if (hasPositionInherence()) {
+        Bone *parentBone = m_parentInherenceBone;
         if (parentBone) {
-            const Vector3 &parentPosition = parentBone->hasPositionBias() ? parentBone->m_positionExtra : parentBone->m_position + parentBone->m_positionMorph;
+            const Vector3 &parentPosition = parentBone->hasPositionInherence() ? parentBone->m_positionInherence : parentBone->m_position + parentBone->m_positionMorph;
             position += parentPosition;
-            if (m_bias != 1.0)
-                position *= m_bias;
-            m_positionExtra = parentPosition + m_position + m_positionMorph;
+            if (m_weight != 1.0)
+                position *= m_weight;
+            m_positionInherence = parentPosition + m_position + m_positionMorph;
         }
     }
     position += m_position + m_positionMorph;
