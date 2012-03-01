@@ -57,11 +57,12 @@ PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
       m_prevFrameIndex(0.0f),
       m_frameStep(0.0f),
       m_totalStep(0.0f),
+      m_audioFrameIndex(0.0f),
+      m_prevAudioFrameIndex(0.0f),
       m_countForFPS(0),
       m_currentFPS(0),
       m_prevSceneFPS(0)
 {
-    connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrame()));
     m_renderTimer.setSingleShot(false);
     m_progress = new QProgressDialog();
     m_progress->setWindowModality(Qt::ApplicationModal);
@@ -85,6 +86,8 @@ void PlayerWidget::start()
     m_prevFrameIndex = m_sceneWidget->currentFrameIndex();
     m_frameStep = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS));
     m_totalStep = 0.0f;
+    m_audioFrameIndex = 0.0f;
+    m_prevAudioFrameIndex = 0.0f;
     m_sceneWidget->stop();
     /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
     m_sceneWidget->stopAutomaticRendering();
@@ -109,15 +112,16 @@ void PlayerWidget::start()
     /* 音声出力準備 */
     m_player->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
     if (m_player->initalize()) {
-        /* 進捗ダイアログ暴走を防ぐため、シグナルは再生時に登録、停止時に解除しておく */
+        connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameVariant()));
         connect(m_player, SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
-        connect(m_player, SIGNAL(positionDidAdvance(float)), SLOT(renderSceneFrame(float)));
+        connect(m_player, SIGNAL(positionDidAdvance(float)), SLOT(advanceAudioFrame(float)));
         m_player->start();
     }
     else {
-        /* 再生用タイマー起動 */
-        m_renderTimer.start(renderTimerInterval);
+        connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameFixed()));
     }
+    /* 再生用タイマー起動 */
+    m_renderTimer.start(renderTimerInterval);
     /* FPS 計測タイマー起動 */
     m_countForFPS = 0;
     m_elapsed.start();
@@ -126,14 +130,19 @@ void PlayerWidget::start()
 
 void PlayerWidget::stop()
 {
+    /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
     disconnect(m_player, SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
-    disconnect(m_player, SIGNAL(positionDidAdvance(float)), this, SLOT(renderSceneFrame(float)));
+    disconnect(m_player, SIGNAL(positionDidAdvance(float)), this, SLOT(advanceAudioFrame(float)));
+    disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameFixed()));
+    disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameVariant()));
+    /* タイマーと音声出力オブジェクトの停止 */
     m_player->stop();
     m_renderTimer.stop();
     m_progress->reset();
     /* ハンドルと情報パネルを復帰させる */
     m_sceneWidget->setHandlesVisible(true);
     m_sceneWidget->setInfoPanelVisible(true);
+    m_sceneWidget->setBoneWireFramesVisible(true);
     m_sceneWidget->setSelectedModel(m_selected);
     /* 再生が終わったら物理を無効にする */
     m_sceneWidget->stopPhysicsSimulation();
@@ -144,6 +153,8 @@ void PlayerWidget::stop()
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
     m_totalStep = 0.0f;
+    m_audioFrameIndex = 0.0f;
+    m_prevAudioFrameIndex = 0.0f;
     emit renderFrameDidStop();
 }
 
@@ -152,14 +163,26 @@ bool PlayerWidget::isActive() const
     return m_renderTimer.isActive();
 }
 
-void PlayerWidget::renderSceneFrame()
+void PlayerWidget::renderSceneFrameFixed()
 {
+    /* start() 時に計算して固定値でモーションをすすめる */
     renderSceneFrame0(m_frameStep);
 }
 
-void PlayerWidget::renderSceneFrame(float step)
+void PlayerWidget::renderSceneFrameVariant()
 {
-    renderSceneFrame0(step * vpvl::Scene::kFPS);
+    /* advanceStep で増えた分を加算するため、値は可変 */
+    float diff = m_audioFrameIndex - m_prevAudioFrameIndex;
+    if (diff > 0) {
+        renderSceneFrame0(diff);
+        m_prevAudioFrameIndex = m_audioFrameIndex;
+    }
+}
+
+void PlayerWidget::advanceAudioFrame(float step)
+{
+    if (step >= 0)
+        m_audioFrameIndex += step * Scene::kFPS;
 }
 
 void PlayerWidget::renderSceneFrame0(float step)

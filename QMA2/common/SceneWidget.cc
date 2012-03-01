@@ -521,6 +521,8 @@ VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, PMDMode
 
 void SceneWidget::advanceMotion(float frameIndex)
 {
+    if (frameIndex <= 0)
+        return;
     Scene *scene = m_loader->renderEngine()->scene();
     scene->updateModelView();
     scene->updateProjection();

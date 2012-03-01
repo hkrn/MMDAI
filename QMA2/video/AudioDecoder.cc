@@ -123,6 +123,7 @@ void AudioDecoder::run()
             throw std::bad_alloc();
         float sampleRate = audioContext->sample_rate;
         /* フォーマットからパケット単位で読み取り、その音声パケットをデコードするの繰り返しを行う */
+        m_running = true;
         while (m_running) {
             int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
             if (av_read_frame(formatContext, &packet) < 0)

@@ -70,8 +70,9 @@ signals:
     void motionDidSeek(int frameIndex);
 
 private slots:
-    void renderSceneFrame();
-    void renderSceneFrame(float step);
+    void renderSceneFrameFixed();
+    void renderSceneFrameVariant();
+    void advanceAudioFrame(float step);
 
 private:
     void renderSceneFrame0(float step);
@@ -88,6 +89,8 @@ private:
     float m_prevFrameIndex;
     float m_frameStep;
     float m_totalStep;
+    float m_audioFrameIndex;
+    float m_prevAudioFrameIndex;
     int m_countForFPS;
     int m_currentFPS;
     int m_prevSceneFPS;

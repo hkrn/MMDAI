@@ -53,7 +53,7 @@ public:
 
 protected:
     virtual void run();
-    void decodeBuffer(const QByteArray &bytes, float position, int channels);
+    virtual void decodeBuffer(const QByteArray &bytes, float position, int channels);
 
 signals:
     void audioDidDecode(const QByteArray &bytes);
