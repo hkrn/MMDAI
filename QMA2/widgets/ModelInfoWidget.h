@@ -47,7 +47,9 @@ class QCheckBox;
 class QColorDialog;
 class QDoubleSpinBox;
 class QLabel;
+class QLineEdit;
 class QPushButton;
+class QTextEdit;
 class SceneLoader;
 
 class ModelInfoWidget : public QWidget
@@ -72,25 +74,25 @@ private:
     void createEdgeColorDialog();
 
     QLabel *m_nameLabel;
-    QLabel *m_nameValueLabel;
+    QLineEdit *m_nameValueLabel;
     QLabel *m_commentLabel;
-    QLabel *m_commentValueLabel;
+    QTextEdit *m_commentValueLabel;
     QLabel *m_verticesCountLabel;
-    QLabel *m_verticesCountValueLabel;
+    QLineEdit *m_verticesCountValueLabel;
     QLabel *m_indicesCountLabel;
-    QLabel *m_indicesCountValueLabel;
+    QLineEdit *m_indicesCountValueLabel;
     QLabel *m_materialsCountLabel;
-    QLabel *m_materialsCountValueLabel;
+    QLineEdit *m_materialsCountValueLabel;
     QLabel *m_bonesCountLabel;
-    QLabel *m_bonesCountValueLabel;
+    QLineEdit *m_bonesCountValueLabel;
     QLabel *m_IKsCountLabel;
-    QLabel *m_IKsCountValueLabel;
+    QLineEdit *m_IKsCountValueLabel;
     QLabel *m_morphsCountLabel;
-    QLabel *m_morphsCountValueLabel;
+    QLineEdit *m_morphsCountValueLabel;
     QLabel *m_rigidBodiesCountLabel;
-    QLabel *m_rigidBodiesCountValueLabel;
+    QLineEdit *m_rigidBodiesCountValueLabel;
     QLabel *m_constrantsCountLabel;
-    QLabel *m_constrantsCountValueLabel;
+    QLineEdit *m_constrantsCountValueLabel;
     QLabel *m_edgeOffsetLabel;
     QDoubleSpinBox *m_edgeOffsetSpinBox;
     QPushButton *m_edgeColorDialogOpenButton;
