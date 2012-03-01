@@ -43,7 +43,6 @@
 
 #include "Application.h"
 #include "DebugDrawer.h"
-#include "Delegate.h"
 #include "Grid.h"
 #include "Handles.h"
 #include "InfoPanel.h"
@@ -112,11 +111,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableScaleGesture(false),
     m_enableUndoGesture(false)
 {
-    m_debugDrawer = new DebugDrawer(this);
     m_grid = new Grid();
-    m_info = new InfoPanel(this);
     m_world = new World(Scene::kFPS);
-    m_handles = new Handles(this);
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
@@ -870,7 +866,11 @@ void SceneWidget::initializeGL()
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     UIEnableMultisample();
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    m_loader = new SceneLoader(width(), height(), Scene::kFPS);
+    const QSize &s = size();
+    m_loader = new SceneLoader(s.width(), s.height(), Scene::kFPS);
+    m_handles = new Handles(m_loader, s);
+    m_info = new InfoPanel(s);
+    m_debugDrawer = new DebugDrawer(m_loader->renderEngine()->scene());
     m_debugDrawer->setWorld(m_world->mutableWorld());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
@@ -1043,7 +1043,7 @@ void SceneWidget::paintGL()
     m_info->draw();
     switch (m_editMode) {
     case kSelect:
-        m_debugDrawer->drawModelBones(m_loader->selectedModel());
+        m_debugDrawer->drawModelBones(m_loader->selectedModel(), selectedBones());
         m_debugDrawer->drawBoneTransform(bone);
         break;
     case kRotate:

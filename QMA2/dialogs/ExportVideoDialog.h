@@ -52,7 +52,10 @@ class ExportVideoDialog : public QDialog
     Q_OBJECT
 
 public:
-    ExportVideoDialog(MainWindow *parent, SceneWidget *sceneWidget);
+    ExportVideoDialog(SceneLoader *loader,
+                      const QSize &min,
+                      const QSize &max,
+                      MainWindow *parent);
     ~ExportVideoDialog();
 
     int sceneWidth() const;
@@ -73,7 +76,7 @@ private  slots:
     void saveSettings();
 
 private:
-    SceneWidget *m_sceneWidget;
+    SceneLoader *m_loader;
     QSpinBox *m_widthBox;
     QSpinBox *m_heightBox;
     QSpinBox *m_fromIndexBox;

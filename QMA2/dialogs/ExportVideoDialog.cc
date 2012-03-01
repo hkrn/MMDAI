@@ -43,16 +43,19 @@
 #include <vpvl/vpvl.h>
 #include <vpvl/gl2/Renderer.h>
 
-ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *sceneWidget)
+ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
+                                     const QSize &min,
+                                     const QSize &max,
+                                     MainWindow *parent)
     : QDialog(parent),
-      m_sceneWidget(sceneWidget)
+      m_loader(loader)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    int maxFrameIndex = sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex();
+    int maxFrameIndex = loader->renderEngine()->scene()->maxFrameIndex();
     m_widthBox = new QSpinBox();
-    m_widthBox->setRange(sceneWidget->minimumWidth(), sceneWidget->maximumWidth());
+    m_widthBox->setRange(min.width(), max.width());
     m_heightBox = new QSpinBox();
-    m_heightBox->setRange(sceneWidget->minimumHeight(), sceneWidget->maximumHeight());
+    m_heightBox->setRange(min.height(), max.height());
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox = new QSpinBox();
@@ -97,13 +100,12 @@ ExportVideoDialog::~ExportVideoDialog()
 
 void ExportVideoDialog::saveSettings()
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
-    loader->setSceneWidth(sceneWidth());
-    loader->setSceneHeight(sceneHeight());
-    loader->setFrameIndexEncodeVideoFrom(fromIndex());
-    loader->setFrameIndexEncodeVideoTo(toIndex());
-    loader->setSceneFPSForEncodeVideo(sceneFPS());
-    loader->setGridIncluded(includesGrid());
+    m_loader->setSceneWidth(sceneWidth());
+    m_loader->setSceneHeight(sceneHeight());
+    m_loader->setFrameIndexEncodeVideoFrom(fromIndex());
+    m_loader->setFrameIndexEncodeVideoTo(toIndex());
+    m_loader->setSceneFPSForEncodeVideo(sceneFPS());
+    m_loader->setGridIncluded(includesGrid());
     emit settingsDidSave();
 }
 
@@ -144,13 +146,12 @@ bool ExportVideoDialog::includesGrid() const
 
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
-    int maxFrameIndex = loader->renderEngine()->scene()->maxFrameIndex();
-    m_widthBox->setValue(loader->sceneWidth());
-    m_heightBox->setValue(loader->sceneHeight());
-    m_fromIndexBox->setValue(qBound(0, loader->frameIndexEncodeVideoFrom(), maxFrameIndex));
+    int maxFrameIndex = m_loader->renderEngine()->scene()->maxFrameIndex();
+    m_widthBox->setValue(m_loader->sceneWidth());
+    m_heightBox->setValue(m_loader->sceneHeight());
+    m_fromIndexBox->setValue(qBound(0, m_loader->frameIndexEncodeVideoFrom(), maxFrameIndex));
     m_toIndexBox->setValue(maxFrameIndex);
-    switch (loader->sceneFPSForEncodeVideo()) {
+    switch (m_loader->sceneFPSForEncodeVideo()) {
     case 120:
         m_sceneFPSBox->setCurrentIndex(2);
         break;
@@ -162,5 +163,5 @@ void ExportVideoDialog::showEvent(QShowEvent * /* event */)
         m_sceneFPSBox->setCurrentIndex(0);
         break;
     }
-    m_includeGridBox->setChecked(loader->isGridIncluded());
+    m_includeGridBox->setChecked(m_loader->isGridIncluded());
 }

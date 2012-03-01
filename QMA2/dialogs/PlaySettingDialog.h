@@ -53,7 +53,7 @@ class PlaySettingDialog : public QDialog
     Q_OBJECT
 
 public:
-    PlaySettingDialog(MainWindow *parent, SceneWidget *scene);
+    PlaySettingDialog(SceneLoader *loader, QWidget *parent = 0);
     ~PlaySettingDialog();
 
     int fromIndex() const;
@@ -75,7 +75,7 @@ private slots:
     void saveSettings();
 
 private:
-    SceneLoader *m_sceneLoader;
+    SceneLoader *m_loader;
     QLabel *m_fromIndexLabel;
     QLabel *m_toIndexLabel;
     QLabel *m_sceneFPSLabel;

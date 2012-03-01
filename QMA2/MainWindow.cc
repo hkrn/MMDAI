@@ -92,7 +92,7 @@ static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
                                              PlaySettingDialog *&dialog)
 {
     if (!dialog) {
-        dialog = new PlaySettingDialog(mainWindow, sceneWidget);
+        dialog = new PlaySettingDialog(sceneWidget->sceneLoader(), mainWindow);
         QObject::connect(dialog, SIGNAL(playingDidStart()), mainWindow, SLOT(invokePlayer()));
     }
 }
@@ -1291,9 +1291,13 @@ void MainWindow::exportImage()
 void MainWindow::exportVideo()
 {
     if (VideoEncoder::isSupported()) {
-        if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
-            if (!m_exportingVideoDialog)
-                m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
+        SceneLoader *loader = m_sceneWidget->sceneLoader();
+        if (loader->renderEngine()->scene()->maxFrameIndex() > 0) {
+            if (!m_exportingVideoDialog) {
+                const QSize min(160, 160);
+                const QSize &max = m_sceneWidget->maximumSize();
+                m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, this);
+            }
             m_exportingVideoDialog->show();
         }
         else {

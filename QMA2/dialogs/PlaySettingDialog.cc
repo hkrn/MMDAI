@@ -42,11 +42,11 @@
 #include <vpvl/vpvl.h>
 #include <vpvl/gl2/Renderer.h>
 
-PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *scene)
-    : QDialog(),
-      m_sceneLoader(scene->sceneLoader())
+PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QWidget *parent)
+    : QDialog(parent),
+      m_loader(loader)
 {
-    int maxFrameIndex = m_sceneLoader->renderEngine()->scene()->maxFrameIndex();
+    int maxFrameIndex = m_loader->renderEngine()->scene()->maxFrameIndex();
     m_fromIndexLabel = new QLabel();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
@@ -99,10 +99,10 @@ PlaySettingDialog::~PlaySettingDialog()
 
 void PlaySettingDialog::saveSettings()
 {
-    m_sceneLoader->setFrameIndexPlayFrom(fromIndex());
-    m_sceneLoader->setFrameIndexPlayTo(toIndex());
-    m_sceneLoader->setSceneFPSForPlay(sceneFPS());
-    m_sceneLoader->setLoop(isLoopEnabled());
+    m_loader->setFrameIndexPlayFrom(fromIndex());
+    m_loader->setFrameIndexPlayTo(toIndex());
+    m_loader->setSceneFPSForPlay(sceneFPS());
+    m_loader->setLoop(isLoopEnabled());
     emit settingsDidSave();
 }
 
@@ -138,10 +138,9 @@ bool PlaySettingDialog::isBoneWireframesVisible() const
 
 void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 {
-    SceneLoader *loader = m_sceneLoader;
-    m_fromIndexBox->setValue(loader->frameIndexPlayFrom());
-    m_toIndexBox->setValue(loader->frameIndexPlayTo());
-    switch (m_sceneLoader->sceneFPSForPlay()) {
+    m_fromIndexBox->setValue(m_loader->frameIndexPlayFrom());
+    m_toIndexBox->setValue(m_loader->frameIndexPlayTo());
+    switch (m_loader->sceneFPSForPlay()) {
     case 120:
         m_sceneFPSBox->setCurrentIndex(2);
         break;
@@ -153,9 +152,9 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
         m_sceneFPSBox->setCurrentIndex(0);
         break;
     }
-    m_loopBox->setChecked(loader->isLoop());
+    m_loopBox->setChecked(m_loader->isLoop());
     /* 現時点でシークの実装が無いので、開始位置指定とループは無効にする */
-    const QString &audio = loader->backgroundAudio();
+    const QString &audio = m_loader->backgroundAudio();
     if (!audio.isEmpty()) {
         m_fromIndexBox->setValue(0);
         m_fromIndexBox->setDisabled(true);

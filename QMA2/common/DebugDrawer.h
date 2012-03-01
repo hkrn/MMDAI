@@ -51,9 +51,9 @@ namespace internal {
 class DebugDrawer : public btIDebugDraw
 {
 public:
-    DebugDrawer(SceneWidget *sceneWidget)
-        : m_sceneWidget(sceneWidget),
-          m_world(0),
+    DebugDrawer(vpvl::Scene *scene)
+        : m_world(0),
+          m_scene(scene),
           m_flags(0),
           m_visible(true)
     {}
@@ -117,7 +117,7 @@ public:
         m_visible = value;
     }
 
-    void drawModelBones(const vpvl::PMDModel *model) {
+    void drawModelBones(const vpvl::PMDModel *model, const QList<vpvl::Bone *> &selected) {
         if (!m_visible || !model || !m_program.isLinked())
             return;
         vpvl::Array<vpvl::Vector3> vertices;
@@ -127,16 +127,14 @@ public:
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
         float matrix[16];
-        const vpvl::Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
-        const QList<vpvl::Bone *> &selected = m_sceneWidget->selectedBones();
         vpvl::Transform tr = vpvl::Transform::getIdentity();
         QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
         m_program.bind();
-        scene->getModelViewMatrix(matrix);
+        m_scene->getModelViewMatrix(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
         func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-        scene->getProjectionMatrix(matrix);
+        m_scene->getProjectionMatrix(matrix);
         int projectionMatrix = m_program.uniformLocation("projectionMatrix");
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
@@ -200,14 +198,13 @@ public:
         if (!m_visible || !bone || !m_program.isLinked())
             return;
         float matrix[16];
-        const vpvl::Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
         QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
         m_program.bind();
-        scene->getModelViewMatrix(matrix);
+        m_scene->getModelViewMatrix(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
         func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-        scene->getProjectionMatrix(matrix);
+        m_scene->getProjectionMatrix(matrix);
         int projectionMatrix = m_program.uniformLocation("projectionMatrix");
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
@@ -260,8 +257,8 @@ public:
 
 private:
     QGLShaderProgram m_program;
-    SceneWidget *m_sceneWidget;
     btDynamicsWorld *m_world;
+    vpvl::Scene *m_scene;
     int m_flags;
     bool m_visible;
 

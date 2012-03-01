@@ -55,7 +55,7 @@ class Bone;
 class btBvhTriangleMeshShape;
 class btRigidBody;
 class btTriangleMesh;
-class SceneWidget;
+class SceneLoader;
 
 class Handles : public QObject
 {
@@ -114,7 +114,7 @@ public:
         kVisibleAll    = kMove   | kRotate | kX | kY | kZ | kView
     };
 
-    Handles(SceneWidget *parent);
+    Handles(SceneLoader *loader, const QSize &size);
     ~Handles();
 
     void load();
@@ -164,7 +164,7 @@ private:
     internal::TextureDrawHelper *m_helper;
     vpvl::Bone *m_bone;
     StaticWorld *m_world;
-    SceneWidget *m_widget;
+    SceneLoader *m_loader;
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;
     TranslationHandle m_translationHandle;

@@ -238,12 +238,12 @@ static void UIInitializeRenderingModel(const Scene *scene,
 
 }
 
-Handles::Handles(SceneWidget *parent)
-    : QObject(parent),
+Handles::Handles(SceneLoader *loader, const QSize &size)
+    : QObject(),
       m_helper(0),
       m_bone(0),
       m_world(0),
-      m_widget(parent),
+      m_loader(loader),
       m_trackedHandle(0),
       m_prevPos3D(0.0f, 0.0f, 0.0f),
       m_prevAngle(0.0f),
@@ -253,7 +253,7 @@ Handles::Handles(SceneWidget *parent)
       m_isLocal(true),
       m_visible(true)
 {
-    m_helper = new internal::TextureDrawHelper(parent);
+    m_helper = new internal::TextureDrawHelper(size);
     m_world = new Handles::StaticWorld();
     m_rotationHandle.asset = 0;
     m_translationHandle.asset = 0;
@@ -261,20 +261,21 @@ Handles::Handles(SceneWidget *parent)
 
 Handles::~Handles()
 {
-    m_widget->deleteTexture(m_x.enableMove.textureID);
-    m_widget->deleteTexture(m_y.enableMove.textureID);
-    m_widget->deleteTexture(m_z.enableMove.textureID);
-    m_widget->deleteTexture(m_x.disableMove.textureID);
-    m_widget->deleteTexture(m_y.disableMove.textureID);
-    m_widget->deleteTexture(m_z.disableMove.textureID);
-    m_widget->deleteTexture(m_x.enableRotate.textureID);
-    m_widget->deleteTexture(m_y.enableRotate.textureID);
-    m_widget->deleteTexture(m_z.enableRotate.textureID);
-    m_widget->deleteTexture(m_x.disableRotate.textureID);
-    m_widget->deleteTexture(m_y.disableRotate.textureID);
-    m_widget->deleteTexture(m_z.disableRotate.textureID);
-    m_widget->deleteTexture(m_global.textureID);
-    m_widget->deleteTexture(m_local.textureID);
+    QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+    context->deleteTexture(m_x.enableMove.textureID);
+    context->deleteTexture(m_y.enableMove.textureID);
+    context->deleteTexture(m_z.enableMove.textureID);
+    context->deleteTexture(m_x.disableMove.textureID);
+    context->deleteTexture(m_y.disableMove.textureID);
+    context->deleteTexture(m_z.disableMove.textureID);
+    context->deleteTexture(m_x.enableRotate.textureID);
+    context->deleteTexture(m_y.enableRotate.textureID);
+    context->deleteTexture(m_z.enableRotate.textureID);
+    context->deleteTexture(m_x.disableRotate.textureID);
+    context->deleteTexture(m_y.disableRotate.textureID);
+    context->deleteTexture(m_z.disableRotate.textureID);
+    context->deleteTexture(m_global.textureID);
+    context->deleteTexture(m_local.textureID);
     delete m_helper;
     delete m_world;
     delete m_rotationHandle.asset;
@@ -583,7 +584,7 @@ void Handles::drawRotationHandle()
     transform.setOrigin(m_bone->localTransform().getOrigin());
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_widget->sceneLoader()->renderEngine()->scene(), transform, &m_program);
+    UIInitializeRenderingModel(m_loader->renderEngine()->scene(), transform, &m_program);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
@@ -599,7 +600,7 @@ void Handles::drawMoveHandle()
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_widget->sceneLoader()->renderEngine()->scene(), m_bone->localTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader->renderEngine()->scene(), m_bone->localTransform(), &m_program);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
@@ -631,48 +632,49 @@ void Handles::drawModel(const Handles::Model &model,
 void Handles::loadImageHandles()
 {
     QImage image;
+    QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
     image.load(":icons/x-enable-move.png");
     m_x.enableMove.size = image.size();
-    m_x.enableMove.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_x.enableMove.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/x-enable-rotate.png");
     m_x.enableRotate.size = image.size();
-    m_x.enableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_x.enableRotate.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/y-enable-move.png");
     m_y.enableMove.size = image.size();
-    m_y.enableMove.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_y.enableMove.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/y-enable-rotate.png");
     m_y.enableRotate.size = image.size();
-    m_y.enableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_y.enableRotate.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/z-enable-move.png");
     m_z.enableMove.size = image.size();
-    m_z.enableMove.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_z.enableMove.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/z-enable-rotate.png");
     m_z.enableRotate.size = image.size();
-    m_z.enableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_z.enableRotate.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/x-disable-move.png");
     m_x.disableMove.size = image.size();
-    m_x.disableMove.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_x.disableMove.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/x-disable-rotate.png");
     m_x.disableRotate.size = image.size();
-    m_x.disableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_x.disableRotate.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/y-disable-move.png");
     m_y.disableMove.size = image.size();
-    m_y.disableMove.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_y.disableMove.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/y-disable-rotate.png");
     m_y.disableRotate.size = image.size();
-    m_y.disableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_y.disableRotate.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/z-disable-move.png");
     m_z.disableMove.size = image.size();
-    m_z.disableMove.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_z.disableMove.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/z-disable-rotate.png");
     m_z.disableRotate.size = image.size();
-    m_z.disableRotate.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_z.disableRotate.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/global.png");
     m_global.size = image.size();
-    m_global.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_global.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
     image.load(":icons/local.png");
     m_local.size = image.size();
-    m_local.textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    m_local.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
 }
 
 void Handles::loadModelHandles()

@@ -52,9 +52,8 @@ namespace internal {
 class InfoPanel
 {
 public:
-    InfoPanel(QGLWidget *widget)
-        : m_widget(widget),
-          m_helper(0),
+    InfoPanel(const QSize &size)
+        : m_helper(0),
           m_rect(0, 0, 256, 256),
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
@@ -65,7 +64,7 @@ public:
           m_height(0),
           m_visible(true)
     {
-        m_helper = new TextureDrawHelper(widget);
+        m_helper = new TextureDrawHelper(size);
     }
     ~InfoPanel() {
         delete m_helper;
@@ -102,7 +101,8 @@ public:
         }
         painter.end();
         deleteTexture();
-        m_textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(m_texture.rgbSwapped()));
+        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+        m_textureID = context->bindTexture(QGLWidget::convertToGLFormat(m_texture.rgbSwapped()));
     }
     void draw() {
         if (!m_visible)
@@ -133,12 +133,12 @@ public:
 private:
     void deleteTexture() {
         if (m_textureID) {
-            m_widget->deleteTexture(m_textureID);
+            QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+            context->deleteTexture(m_textureID);
             m_textureID = 0;
         }
     }
 
-    QGLWidget *m_widget;
     TextureDrawHelper *m_helper;
     QRect m_rect;
     QImage m_texture;

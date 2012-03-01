@@ -45,8 +45,8 @@ namespace internal {
 class TextureDrawHelper
 {
 public:
-    TextureDrawHelper(QGLWidget *parent)
-        : m_parent(parent)
+    TextureDrawHelper(const QSize &size)
+        : m_size(size)
     {
     }
     ~TextureDrawHelper() {
@@ -69,7 +69,7 @@ public:
         glDisable(GL_DEPTH_TEST);
         m_program.bind();
         QMatrix4x4 modelview, projection;
-        projection.ortho(0.0, m_parent->width(), 0.0, m_parent->height(), -1.0, 1.0);
+        projection.ortho(0.0, m_size.width(), 0.0, m_size.height(), -1.0, 1.0);
         m_program.setUniformValue("projectionMatrix", projection);
         modelview.translate(pos);
         m_program.setUniformValue("modelViewMatrix", modelview);
@@ -99,8 +99,8 @@ private:
         vertices2D[3].setY(rect.bottom());
     }
 
-    QGLWidget *m_parent;
     QGLShaderProgram m_program;
+    QSize m_size;
 };
 
 }
