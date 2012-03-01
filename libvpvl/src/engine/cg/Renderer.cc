@@ -258,9 +258,9 @@ void Renderer::uploadModel(PMDModel *model, const std::string &dir)
         }
         else {
             const char *message = cgGetErrorString(cgGetError());
-            m_delegate->log(Renderer::kLogWarning,
-                            "Loading an effect (%s) error: %s",
-                            m_delegate->toUnicode(model->name()).c_str(), message);
+            log0(Renderer::kLogWarning,
+                 "Loading an effect (%s) error: %s",
+                 m_delegate->toUnicode(model->name()).c_str(), message);
         }
     }
     gl2::Renderer::uploadModel0(userData, model, dir);

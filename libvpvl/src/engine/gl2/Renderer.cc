@@ -87,29 +87,29 @@ public:
         cl_uint nplatforms;
         err = clGetPlatformIDs(0, 0, &nplatforms);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
+            log0(Renderer::kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
             return false;
         }
         cl_platform_id *platforms = new cl_platform_id[nplatforms];
         err = clGetPlatformIDs(nplatforms, platforms, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed getting OpenCL platforms: %d", err);
+            log0(Renderer::kLogWarning, "Failed getting OpenCL platforms: %d", err);
             delete[] platforms;
             return false;
         }
         for (int i = 0; i < nplatforms; i++) {
             cl_char buffer[BUFSIZ];
             clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
             clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
             clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
         }
         cl_platform_id firstPlatform = platforms[0];
         err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed getting a OpenCL device: %d", err);
+            log0(Renderer::kLogWarning, "Failed getting a OpenCL device: %d", err);
             delete[] platforms;
             return false;
         }
@@ -118,19 +118,19 @@ public:
             cl_uint frequency, addressBits;
             cl_device_type type;
             clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
             clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DEVICE_NAME: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_DEVICE_NAME: %s", buffer);
             clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
             clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DEVICE_TYPE: %d", type);
+            log0(Renderer::kLogInfo, "CL_DEVICE_TYPE: %d", type);
             clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
+            log0(Renderer::kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
             clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
+            log0(Renderer::kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
             clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
-            m_delegate->log(Renderer::kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
+            log0(Renderer::kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
         }
         cl_context_properties props[] = {
             CL_CONTEXT_PLATFORM,
@@ -144,14 +144,14 @@ public:
         clReleaseContext(m_context);
         m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed initialize a OpenCL context: %d", err);
+            log0(Renderer::kLogWarning, "Failed initialize a OpenCL context: %d", err);
             delete[] platforms;
             return false;
         }
         clReleaseCommandQueue(m_queue);
         m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
+            log0(Renderer::kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
             delete[] platforms;
             return false;
         }
@@ -168,7 +168,7 @@ public:
         clReleaseProgram(m_program);
         m_program = clCreateProgramWithSource(m_context, 1, &sourceText, &sourceSize, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating an OpenCL program: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating an OpenCL program: %d", err);
             return false;
         }
         const char *flags = "-cl-mad-enable -DMAC -DGUID_ARG";
@@ -179,20 +179,20 @@ public:
             cl_char *buildLog = new cl_char[buildLogSize + 1];
             clGetProgramBuildInfo(m_program, m_device, CL_PROGRAM_BUILD_LOG, buildLogSize, buildLog, 0);
             buildLog[buildLogSize] = 0;
-            m_delegate->log(Renderer::kLogWarning, "Failed building a program: %s", buildLog);
+            log0(Renderer::kLogWarning, "Failed building a program: %s", buildLog);
             delete[] buildLog;
             return false;
         }
         clReleaseKernel(m_updateBoneMatricesKernel);
         m_updateBoneMatricesKernel = clCreateKernel(m_program, "updateBoneMatrices", &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating a kernel: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating a kernel: %d", err);
             return false;
         }
         clReleaseKernel(m_performSkinningKernel);
         m_performSkinningKernel = clCreateKernel(m_program, "performSkinning", &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating a kernel: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating a kernel: %d", err);
             return false;
         }
         return true;
@@ -206,7 +206,7 @@ public:
                                                            userData->vertexBufferObjects[kModelVertices],
                                                            &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
             return;
         }
         const int nBoneMatricesAllocs = model->bones().count() << 4;
@@ -226,31 +226,31 @@ public:
         }
         userData->boneMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
             return;
         }
         userData->originMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating originMatricesBuffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating originMatricesBuffer: %d", err);
             return;
         }
         userData->outputMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_WRITE, nBoneMatricesSize, 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating outputMatricesBuffer %d", err);
+            log0(Renderer::kLogWarning, "Failed creating outputMatricesBuffer %d", err);
             return;
         }
         userData->weightsBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(float), 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating weightsBuffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating weightsBuffer: %d", err);
             return;
         }
         userData->bone1IndicesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating bone1IndicesBuffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating bone1IndicesBuffer: %d", err);
         }
         userData->bone2IndicesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed creating bone2IndicesBuffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed creating bone2IndicesBuffer: %d", err);
             return;
         }
         err = clGetKernelWorkGroupInfo(m_updateBoneMatricesKernel,
@@ -260,7 +260,7 @@ public:
                                        &userData->localWGSizeForUpdateBoneMatrices,
                                        0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
+            log0(Renderer::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
             return;
         }
         err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
@@ -270,7 +270,7 @@ public:
                                        &userData->localWGSizeForPerformSkinning,
                                        0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
+            log0(Renderer::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
             return;
         }
         userData->isBufferAllocated = true;
@@ -299,39 +299,39 @@ public:
 #ifndef SOFTWARE_BONE_TRANSFORM
         err = clEnqueueWriteBuffer(m_queue, userData->boneMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue a command to write bone matrices buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue a command to write bone matrices buffer: %d", err);
             return;
         }
         err = clEnqueueWriteBuffer(m_queue, userData->originMatricesBuffer, CL_TRUE, 0, nsize, userData->originTransform, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue a command to write origin matrices buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue a command to write origin matrices buffer: %d", err);
             return;
         }
         err = clSetKernelArg(m_updateBoneMatricesKernel, 0, sizeof(userData->boneMatricesBuffer), &userData->boneMatricesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 1st argument of kernel (boneMatricesBuffer): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 1st argument of kernel (boneMatricesBuffer): %d", err);
             return;
         }
         err = clSetKernelArg(m_updateBoneMatricesKernel, 1, sizeof(userData->originMatricesBuffer), &userData->originMatricesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 2nd argument of kernel (originMatricesBuffer): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 2nd argument of kernel (originMatricesBuffer): %d", err);
             return;
         }
         err = clSetKernelArg(m_updateBoneMatricesKernel, 2, sizeof(int), &nbones);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 3th argument of kernel (nbones): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 3th argument of kernel (nbones): %d", err);
             return;
         }
         err = clSetKernelArg(m_updateBoneMatricesKernel, 3, sizeof(userData->outputMatricesBuffer), &userData->outputMatricesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 4rd argument of kernel (outputMatricesBuffer): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 4rd argument of kernel (outputMatricesBuffer): %d", err);
             return;
         }
         size_t local = userData->localWGSizeForUpdateBoneMatrices;
         size_t global = local * ((nbones + (local - 1)) / local);
         err = clEnqueueNDRangeKernel(m_queue, m_updateBoneMatricesKernel, 1, 0, &global, &local, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue executing kernel");
+            log0(Renderer::kLogWarning, "Failed enqueue executing kernel");
             return;
         }
         clFinish(m_queue);
@@ -339,7 +339,7 @@ public:
         size_t local, global;
         err = clEnqueueWriteBuffer(m_queue, userData->outputMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue a command to write output matrices buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue a command to write output matrices buffer: %d", err);
             return;
         }
 #endif
@@ -349,94 +349,100 @@ public:
         int nvertices = model->vertices().count();
         err = clEnqueueWriteBuffer(m_queue, userData->bone1IndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int), userData->bone1Indices, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue a command to write bone1 indices buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue a command to write bone1 indices buffer: %d", err);
             return;
         }
         err = clEnqueueWriteBuffer(m_queue, userData->bone2IndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int), userData->bone2Indices, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue a command to write bone2 indices buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue a command to write bone2 indices buffer: %d", err);
             return;
         }
         err = clEnqueueWriteBuffer(m_queue, userData->weightsBuffer, CL_TRUE, 0, nvertices * sizeof(float), userData->weights, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue a command to write weights buffer: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue a command to write weights buffer: %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 0, sizeof(userData->outputMatricesBuffer), &userData->outputMatricesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 1st argument of kernel (skinningMatrices): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 1st argument of kernel (skinningMatrices): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 1, sizeof(userData->weightsBuffer), &userData->weightsBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 2nd argument of kernel (weights): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 2nd argument of kernel (weights): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 2, sizeof(userData->bone1IndicesBuffer), &userData->bone1IndicesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 3rd argument of kernel (bone1Indices): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 3rd argument of kernel (bone1Indices): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 3, sizeof(userData->bone2IndicesBuffer), &userData->bone2IndicesBuffer);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 4th argument of kernel (bone2Indices): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 4th argument of kernel (bone2Indices): %d", err);
             return;
         }
         const Vector3 &lightPosition = model->lightPosition();
         err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightPosition), &lightPosition);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 5th argument of kernel (lightPosition): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 5th argument of kernel (lightPosition): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 5, sizeof(nvertices), &nvertices);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 6th argument of kernel (nvertices): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 6th argument of kernel (nvertices): %d", err);
             return;
         }
         size_t strideSize = model->strideSize(PMDModel::kVerticesStride) >> 4;
         err = clSetKernelArg(m_performSkinningKernel, 6, sizeof(strideSize), &strideSize);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 7th argument of kernel (strideSize): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 7th argument of kernel (strideSize): %d", err);
             return;
         }
         size_t offsetPosition = model->strideOffset(PMDModel::kVerticesStride) >> 4;
         err = clSetKernelArg(m_performSkinningKernel, 7, sizeof(offsetPosition), &offsetPosition);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 8th argument of kernel (offsetPosition): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 8th argument of kernel (offsetPosition): %d", err);
             return;
         }
         size_t offsetNormal = model->strideOffset(PMDModel::kNormalsStride) >> 4;
         err = clSetKernelArg(m_performSkinningKernel, 8, sizeof(offsetNormal), &offsetNormal);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 9th argument of kernel (offsetNormal): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 9th argument of kernel (offsetNormal): %d", err);
             return;
         }
         size_t offsetToonTexture = model->strideOffset(PMDModel::kToonTextureStride) >> 4;
         err = clSetKernelArg(m_performSkinningKernel, 9, sizeof(offsetToonTexture), &offsetToonTexture);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 10th argument of kernel (offsetTexCoord): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 10th argument of kernel (offsetTexCoord): %d", err);
             return;
         }
         size_t offsetEdge = model->strideOffset(PMDModel::kEdgeVerticesStride) >> 4;
         err = clSetKernelArg(m_performSkinningKernel, 10, sizeof(offsetEdge), &offsetEdge);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 11th argument of kernel (offsetEdge): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 11th argument of kernel (offsetEdge): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 11, sizeof(userData->vertexBufferForCL), &userData->vertexBufferForCL);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed setting 12th argument of kernel (vertices): %d", err);
+            log0(Renderer::kLogWarning, "Failed setting 12th argument of kernel (vertices): %d", err);
             return;
         }
         local = userData->localWGSizeForUpdateBoneMatrices;
         global = local * ((nvertices + (local - 1)) / local);
         err = clEnqueueNDRangeKernel(m_queue, m_performSkinningKernel, 1, 0, &global, &local, 0, 0, 0);
         if (err != CL_SUCCESS) {
-            m_delegate->log(Renderer::kLogWarning, "Failed enqueue executing kernel: %d", err);
+            log0(Renderer::kLogWarning, "Failed enqueue executing kernel: %d", err);
             return;
         }
         clEnqueueReleaseGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
         clFinish(m_queue);
+    }
+    void log0(Renderer::LogLevel level, const char *format...) {
+        va_list ap;
+        va_start(ap, format);
+        m_delegate->log(level, format, ap);
+        va_end(ap);
     }
 
 private:
@@ -728,13 +734,13 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
         if (!primary.empty()) {
             if (m_delegate->uploadTexture(dir + "/" + primary, textureID, false)) {
                 materialPrivate.mainTextureID = textureID;
-                m_delegate->log(kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
+                log0(kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
             }
         }
         if (!second.empty()) {
             if (m_delegate->uploadTexture(dir + "/" + second, textureID, false)) {
                 materialPrivate.subTextureID = textureID;
-                m_delegate->log(kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
+                log0(kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
             }
         }
         hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
@@ -742,7 +748,7 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     }
     casted->hasSingleSphereMap = hasSingleSphere;
     casted->hasMultipleSphereMap = hasMultipleSphere;
-    m_delegate->log(kLogInfo,
+    log0(kLogInfo,
                     "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
                     hasSingleSphere ? "true" : "false",
                     hasMultipleSphere ? "true" : "false");
@@ -750,30 +756,30 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
-    m_delegate->log(kLogInfo,
+    log0(kLogInfo,
                     "Binding edge indices to the vertex buffer object (ID=%d)",
                     casted->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kShadowIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
-    m_delegate->log(kLogInfo,
+    log0(kLogInfo,
                     "Binding indices to the vertex buffer object (ID=%d)",
                     casted->vertexBufferObjects[kShadowIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, casted->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
-    m_delegate->log(kLogInfo,
+    log0(kLogInfo,
                     "Binding model vertices to the vertex buffer object (ID=%d)",
                     casted->vertexBufferObjects[kModelVertices]);
     if (m_delegate->uploadToonTexture("toon0.bmp", dir, textureID)) {
         casted->toonTextureID[0] = textureID;
-        m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+        log0(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->uploadToonTexture(reinterpret_cast<const char *>(name), dir, textureID)) {
             casted->toonTextureID[i + 1] = textureID;
-            m_delegate->log(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+            log0(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
     casted->materials = materialPrivates;
@@ -784,7 +790,7 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     model->setUserData(casted);
     model->updateImmediate();
     updateModel(model);
-    m_delegate->log(kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
+    log0(kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
     m_scene->addModel(model);
     return true;
 }
@@ -796,7 +802,7 @@ void Renderer::deleteModel(PMDModel *&model)
             userData->releaseMaterials(model);
             delete userData;
         }
-        m_delegate->log(kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
+        log0(kLogInfo, "Destroyed the model: %s", m_delegate->toUnicode(model->name()).c_str());
         m_scene->removeModel(model);
         delete model;
         model = 0;
@@ -1048,7 +1054,7 @@ void Renderer::uploadAsset0(Asset::UserData *userData, Asset *asset, const std::
                 filename = dir + "/" + canonicalized;
                 if (m_delegate->uploadTexture(filename, textureID, false)) {
                     casted->textures[path] = textureID;
-                    m_delegate->log(kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
+                    log0(kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;
@@ -1419,6 +1425,14 @@ bool Renderer::initializeAccelerator()
         return m_accelerator->initializeContext() && m_accelerator->createKernelPrograms();
     }
     return false;
+}
+
+void Renderer::log0(LogLevel level, const char *format...)
+{
+    va_list ap;
+    va_start(ap, format);
+    m_delegate->log(level, format, ap);
+    va_end(ap);
 }
 
 }

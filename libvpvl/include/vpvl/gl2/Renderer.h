@@ -129,10 +129,10 @@ public:
     public:
         virtual bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
         virtual bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
-        virtual void log(LogLevel level, const char *format, ...) = 0;
+        virtual void log(LogLevel level, const char *format, va_list ap) = 0;
         virtual const std::string loadShader(ShaderType type) = 0;
         virtual const std::string loadKernel(KernelType type) = 0;
-        virtual const std::string toUnicode(const uint8_t *value) = 0;
+        virtual const std::string toUnicode(const uint8_t *value) const = 0;
     };
 
     Renderer(IDelegate *delegate, int width, int height, int fps);
@@ -170,6 +170,7 @@ public:
 protected:
     bool uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
     void uploadAsset0(Asset::UserData *userData, Asset *asset, const std::string &dir);
+    void log0(LogLevel level, const char *format ...);
 
     IDelegate *m_delegate;
     Scene *m_scene;

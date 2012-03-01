@@ -199,12 +199,15 @@ public:
         }
         return uploadTexture(path, textureID, true);
     }
-    void log(Renderer::LogLevel /* level */, const char *format, ...) {
+    void log(Renderer::LogLevel level, const char *format, ...) {
         va_list ap;
         va_start(ap, format);
+        log(level, format, ap);
+        va_end(ap);
+    }
+    void log(Renderer::LogLevel, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
-        va_end(ap);
     }
     bool loadEffect(vpvl::PMDModel * /* model */, const std::string & /* dir */, std::string & /* source */) {
         return false;
@@ -268,7 +271,7 @@ public:
         delete[] data;
         return content;
     }
-    const std::string toUnicode(const uint8_t *value) {
+    const std::string toUnicode(const uint8_t *value) const {
 #if defined(VPVL_HAS_ICU)
         UnicodeString str(reinterpret_cast<const char *>(value), "shift_jis");
         size_t inlen = str.length(), outlen = inlen * 3;

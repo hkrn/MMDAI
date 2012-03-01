@@ -145,7 +145,7 @@ public:
                     delete[] m_message;
                     m_message = new char[len];
                     glGetProgramInfoLog(program, len, NULL, m_message);
-                    m_delegate->log(Renderer::kLogWarning, "%s", m_message);
+                    log0(Renderer::kLogWarning, "%s", m_message);
                 }
                 glDeleteProgram(program);
                 return false;
@@ -155,7 +155,7 @@ public:
             m_positionAttributeLocation = glGetAttribLocation(program, "inPosition");
             m_normalAttributeLocation = glGetAttribLocation(program, "inNormal");
             m_program = program;
-            m_delegate->log(Renderer::kLogInfo, "Created a shader program (ID=%d)", m_program);
+            log0(Renderer::kLogInfo, "Created a shader program (ID=%d)", m_program);
             return true;
         }
         else {
@@ -186,6 +186,13 @@ public:
     }
 
 protected:
+    void log0(Renderer::LogLevel level, const char *format...) {
+        va_list ap;
+        va_start(ap, format);
+        m_delegate->log(level, format, ap);
+        va_end(ap);
+    }
+
     GLuint m_program;
 
 private:
@@ -202,7 +209,7 @@ private:
                 delete[] m_message;
                 m_message = new char[len];
                 glGetShaderInfoLog(shader, len, NULL, m_message);
-                m_delegate->log(Renderer::kLogWarning, "%s", m_message);
+                log0(Renderer::kLogWarning, "%s", m_message);
             }
             glDeleteShader(shader);
             return 0;

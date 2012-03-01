@@ -149,12 +149,15 @@ public:
         }
         return uploadTexture(std::string(info.absoluteFilePath().toUtf8()), textureID, true);
     }
-    void log(Renderer::LogLevel /* level */, const char *format, ...) {
+    void log(Renderer::LogLevel level, const char *format, ...) {
         va_list ap;
         va_start(ap, format);
+        log(level, format, ap);
+        va_end(ap);
+    }
+    void log(Renderer::LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
-        va_end(ap);
     }
     bool loadEffect(vpvl::PMDModel * /* model */, const std::string & /* dir */, std::string & /* source */) {
         return false;
@@ -220,7 +223,7 @@ public:
             return std::string();
         }
     }
-    const std::string toUnicode(const uint8_t *value) {
+    const std::string toUnicode(const uint8_t *value) const {
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         QString s = codec->toUnicode(reinterpret_cast<const char *>(value));
         return std::string(s.toUtf8());
