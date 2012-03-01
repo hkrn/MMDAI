@@ -213,7 +213,7 @@ void SceneWidget::startPhysicsSimulation()
 void SceneWidget::stopPhysicsSimulation()
 {
     mutableScene()->setWorld(0);
-    const Array<PMDModel *> &models = scene()->models();
+    const Array<PMDModel *> &models = scene()->getRenderingOrder();
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
@@ -792,6 +792,22 @@ void SceneWidget::loadFile(const QString &file)
     }
 }
 
+void SceneWidget::setEditMode(SceneWidget::EditMode value)
+{
+    switch (value) {
+    case kRotate:
+        m_handles->setVisibilityFlags(Handles::kVisibleRotate);
+        break;
+    case kMove:
+        m_handles->setVisibilityFlags(Handles::kVisibleMove);
+        break;
+    default:
+        m_handles->setVisibilityFlags(Handles::kNone);
+        break;
+    }
+    m_editMode = value;
+}
+
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
     Scene *scene = m_renderer->scene();
@@ -952,12 +968,11 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 emit boneDidSelect(bones);
             }
         }
-        else if (m_editMode == kRotate) { /* only in move or rotate mode */
+        else if (m_editMode == kRotate || m_editMode == kMove) {
             Vector3 rayFrom, rayTo, pick;
             makeRay(pos, rayFrom, rayTo);
             if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
                 m_handleFlags = flags;
-                m_handles->setVisibilityFlags(flags);
                 setCursor(Qt::ClosedHandCursor);
                 emit handleDidGrab();
             }
@@ -973,7 +988,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         const QPointF &diff = m_handles->diffPoint2D(pos);
         /* モデルのハンドルがクリックされた */
         if (m_handleFlags & Handles::kView)
-            grabModelHandleByRaycast(pos);
+            grabModelHandleByRaycast(pos, diff, m_handleFlags);
         /* 有効な右下のハンドルがクリックされた */
         else if (m_handleFlags & Handles::kEnable)
             grabImageHandle(diff);
@@ -1003,7 +1018,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     changeCursorIfHandlesHit(event->posF());
-    m_handles->setVisibilityFlags(Handles::kVisibleAll);
+    setEditMode(m_editMode);
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(Vector3(0.0f, 0.0f, 0.0f));
@@ -1017,10 +1032,10 @@ void SceneWidget::paintGL()
     UIEnableMultisample();
     m_renderer->clear();
     {
-        size_t size = 0;
-        PMDModel **models = m_renderer->scene()->getRenderingOrder(size);
         glCullFace(GL_FRONT);
-        for (size_t i = 0; i < size; i++) {
+        const Array<PMDModel *> &models = m_renderer->scene()->getRenderingOrder();
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
             PMDModel *model = models[i];
             if (m_loader->isProjectiveShadowEnabled(model))
                 m_renderer->renderModelShadow(model);
@@ -1029,20 +1044,28 @@ void SceneWidget::paintGL()
     }
     m_renderer->renderAllModels();
     m_renderer->renderAllAssets();
+    /* FIXME: rendering order should be drawn after drawing handles */
+    vpvl::Bone *bone = 0;
+    if (m_bones.count() == 1)
+        bone = m_bones.first();
     m_grid->draw(m_renderer->scene(), m_loader->isGridVisible());
-    if (m_editMode == kSelect)
-        m_debugDrawer->drawModelBones(m_loader->selectedModel());
-    if (m_bones.count() == 1) {
-        vpvl::Bone *bone = m_bones.first();
-        m_debugDrawer->drawBoneTransform(bone);
+    if (bone)
         m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
-    }
-    else {
+    else
         m_handles->drawImageHandles(false, false);
-    }
-    if (m_editMode == kRotate)
-        m_handles->drawModelHandles();
     m_info->draw();
+    switch (m_editMode) {
+    case kSelect:
+        m_debugDrawer->drawModelBones(m_loader->selectedModel());
+        m_debugDrawer->drawBoneTransform(bone);
+        break;
+    case kRotate:
+        m_handles->drawRotationHandle();
+        break;
+    case kMove:
+        m_handles->drawMoveHandle();
+        break;
+    }
 }
 
 void SceneWidget::resizeGL(int w, int h)
@@ -1232,7 +1255,7 @@ void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
         setCursor(Qt::SizeVerCursor);
     }
     /* 回転モードの場合は回転ハンドルに入っているか? */
-    else if (m_editMode == kRotate) {
+    else if (m_editMode == kRotate || m_editMode == kMove) {
         Vector3 rayFrom, rayTo, pick;
         makeRay(pos, rayFrom, rayTo);
         if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
@@ -1284,36 +1307,31 @@ void SceneWidget::grabImageHandle(const QPointF &diff)
     }
 }
 
-void SceneWidget::grabModelHandleByRaycast(const QPointF &pos)
+void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags)
 {
-#if 1
-    int flags, mode = 'V';
-    Vector3 rayFrom, rayTo, pick;
-    makeRay(pos, rayFrom, rayTo);
+    int mode = 'V';
+    Vector3 rayFrom, rayTo, pick, delta;
     /* モデルのハンドルに当たっている場合のみモデルを動かす */
-    if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
-        const Vector3 directionX(-1.0f, 0.0f, 0.0f),
-                directionY(0.0f, -1.0f, 0.0f),
-                directionZ(0.0f, 0.0f, 1.0f),
-                &diff = m_handles->diffPoint3D(pick);
+    if (flags & Handles::kMove) {
+        const QPointF &diff2 = diff * 0.1;
+        Bone *bone = m_handles->currentBone();
+        const Transform &transform = bone->localTransform();
+        if (flags & Handles::kX) {
+            delta = transform.getBasis() * Vector3(diff2.x(), 0, 0);
+        }
+        else if (flags & Handles::kY) {
+            delta = transform.getBasis() * Vector3(0, diff2.y(), 0);
+        }
+        else if (flags & Handles::kZ) {
+            delta = transform.getBasis() * Vector3(0, 0, diff2.y());
+        }
+        emit handleDidMove(delta, 0, mode);
+    }
+    else if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
         mode = 'L';
         /* 移動ハンドルである(矢印の先端) */
-        if (flags & Handles::kMove && !diff.isZero()) {
-            float value = m_handles->isPoint3DZero() ? 0.0f : diff.length();
-            Vector3 delta(0.0f, 0.0f, 0.0f);
-            if (flags & Handles::kX) {
-                delta.setX(value);
-            }
-            else if (flags & Handles::kY) {
-                delta.setY(value);
-            }
-            else if (flags & Handles::kZ) {
-                delta.setZ(value);
-            }
-            emit handleDidMove(delta, 0, mode);
-        }
         /* 回転ハンドルである(ドーナツ) */
-        else if (flags & Handles::kRotate) {
+        if (flags & Handles::kRotate) {
             const btScalar &angle = m_handles->angle(pick);
             Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
             if (!m_handles->isAngleZero()) {
@@ -1330,21 +1348,4 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos)
         }
         m_handles->setPoint3D(pick);
     }
-#else
-    int mode = 'V';
-    const QPointF &diff = m_handles->diffPoint2D(pos);
-    if (m_handleFlags & Handles::kMove && !diff.isNull()) {
-        Vector3 delta(0.0f, 0.0f, 0.0f);
-        if (m_handleFlags & Handles::kX) {
-            delta.setX(diff.x() * 0.1);
-        }
-        else if (m_handleFlags & Handles::kY) {
-            delta.setY(diff.y() * 0.1);
-        }
-        else if (m_handleFlags & Handles::kZ) {
-            delta.setZ(diff.y() * 0.1);
-        }
-        emit handleDidMove(delta, 0, mode);
-    }
-#endif
 }

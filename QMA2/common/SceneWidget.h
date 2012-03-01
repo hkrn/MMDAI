@@ -165,6 +165,7 @@ public slots:
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void loadFile(const QString &file);
+    void setEditMode(SceneWidget::EditMode value);
 
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
@@ -188,7 +189,6 @@ public slots:
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
-    void setEditMode(SceneWidget::EditMode value) { m_editMode = value; }
 
 signals:
     void initailizeGLContextDidDone();
@@ -246,7 +246,7 @@ private:
     void updateFPS();
     void changeCursorIfHandlesHit(const QPointF &pos);
     void grabImageHandle(const QPointF &diff);
-    void grabModelHandleByRaycast(const QPointF &pos);
+    void grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags);
 
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
