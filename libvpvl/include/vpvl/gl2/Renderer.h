@@ -41,6 +41,8 @@
 
 #include <string>
 #include "vpvl/Common.h"
+#include "vpvl/Asset.h"
+#include "vpvl/PMDModel.h"
 
 #ifdef VPVL_LINK_ASSIMP
 #include <aiMaterial.h>

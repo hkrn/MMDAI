@@ -37,12 +37,14 @@
 #ifndef DEBUGDRAWER_H
 #define DEBUGDRAWER_H
 
+#include "SceneLoader.h"
 #include "SceneWidget.h"
 #include "util.h"
 
 #include <QtCore/QObject>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 namespace internal {
 
@@ -125,7 +127,7 @@ public:
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
         float matrix[16];
-        const vpvl::Scene *scene = m_sceneWidget->scene();
+        const vpvl::Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
         const QList<vpvl::Bone *> &selected = m_sceneWidget->selectedBones();
         vpvl::Transform tr = vpvl::Transform::getIdentity();
         QGLFunctions func(QGLContext::currentContext());
@@ -198,7 +200,7 @@ public:
         if (!m_visible || !bone || !m_program.isLinked())
             return;
         float matrix[16];
-        const vpvl::Scene *scene = m_sceneWidget->scene();
+        const vpvl::Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
         QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
         m_program.bind();

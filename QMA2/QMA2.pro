@@ -152,7 +152,6 @@ HEADERS  += \
     common/SceneWidget.h \
     common/Handles.h \
     common/util.h \
-    common/Delegate.h \
     common/World.h \
     common/SceneLoader.h \
     common/Grid.h \

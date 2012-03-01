@@ -66,6 +66,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 using namespace vpvl;
 
@@ -1290,7 +1291,7 @@ void MainWindow::exportImage()
 void MainWindow::exportVideo()
 {
     if (VideoEncoder::isSupported()) {
-        if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+        if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
             if (!m_exportingVideoDialog)
                 m_exportingVideoDialog = new ExportVideoDialog(this, m_sceneWidget);
             m_exportingVideoDialog->show();
@@ -1330,7 +1331,7 @@ void MainWindow::invokeVideoEncoder()
         QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::ApplicationModal);
-        int fps = m_sceneWidget->scene()->preferredFPS();
+        int fps = m_sceneWidget->sceneLoader()->renderEngine()->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
         int frameIndex = m_sceneWidget->currentFrameIndex();
@@ -1363,7 +1364,7 @@ void MainWindow::invokeVideoEncoder()
         connect(m_audioDecoder, SIGNAL(audioDidDecode(QByteArray)), m_videoEncoder, SLOT(enqueueAudioBuffer(QByteArray)));
         connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
         m_sceneWidget->setPreferredFPS(sceneFPS);
-        const Scene *scene = m_sceneWidget->scene();
+        const Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
         int maxRangeIndex = toIndex - fromIndex;
         progress->setRange(0, maxRangeIndex);
@@ -1496,7 +1497,7 @@ void MainWindow::addNewMotion()
 
 void MainWindow::invokePlayer()
 {
-    if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
         if (!m_player) {
             m_player = new PlayerWidget(m_sceneWidget, m_playSettingDialog);
@@ -1518,7 +1519,7 @@ void MainWindow::invokePlayer()
 
 void MainWindow::openPlaySettingDialog()
 {
-    if (m_sceneWidget->scene()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
         m_playSettingDialog->show();
     }

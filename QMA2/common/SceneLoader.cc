@@ -41,6 +41,7 @@
 #include "util.h"
 
 #include <QtCore/QtCore>
+#include <QtOpenGL/QtOpenGL>
 #include <vpvl/vpvl.h>
 
 using namespace vpvl;
@@ -68,7 +69,9 @@ using namespace vpvl::gl;
 namespace
 {
 
-class Delegate : public Project::IDelegate
+typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
+
+class Delegate : public Project::IDelegate, public Renderer::IDelegate
 {
 public:
     Delegate()
@@ -80,8 +83,132 @@ public:
     {
     }
 
+    bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
+        QString pathString = QString::fromLocal8Bit(path.c_str());
+        pathString.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
+        QFileInfo info(pathString);
+        if (info.isDir() || !info.exists()) {
+            qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
+            return false;
+        }
+        QScopedArrayPointer<uint8_t> ptr;
+        QImage image = QImage(pathString).rgbSwapped();
+        if (image.isNull() && pathString.endsWith(".tga", Qt::CaseInsensitive)) {
+            image = loadTGA(pathString, ptr);
+        }
+        if (image.isNull()) {
+            qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
+            return false;
+        }
+        if (pathString.endsWith(".sph") || pathString.endsWith(".spa")) {
+            QTransform transform;
+            transform.scale(1, -1);
+            image = image.transformed(transform);
+        }
+        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        textureID = context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
+                                          image.depth() == 32 ? GL_RGBA : GL_RGB, options);
+        if (!isToon) {
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
+        return textureID != 0;
+    }
+    bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) {
+        const QString &filename = QString::fromLocal8Bit(name.c_str());
+        QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
+        path.replace("\\", "/");
+        if (!QFile::exists(path))
+            path = QString(":/textures/%1").arg(filename);
+        return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
+    }
+    const std::string loadShader(Renderer::ShaderType type) {
+        QString filename;
+        switch (type) {
+        case Renderer::kAssetVertexShader:
+            filename = "asset.vsh";
+            break;
+        case Renderer::kAssetFragmentShader:
+            filename = "asset.fsh";
+            break;
+        case Renderer::kEdgeVertexShader:
+            filename = "edge.vsh";
+            break;
+        case Renderer::kEdgeFragmentShader:
+            filename = "edge.fsh";
+            break;
+        case Renderer::kModelVertexShader:
+            filename = "model.vsh";
+            break;
+        case Renderer::kModelFragmentShader:
+            filename = "model.fsh";
+            break;
+        case Renderer::kShadowVertexShader:
+            filename = "shadow.vsh";
+            break;
+        case Renderer::kShadowFragmentShader:
+            filename = "shadow.fsh";
+            break;
+        case Renderer::kZPlotVertexShader:
+            filename = "zplot.vsh";
+            break;
+        case Renderer::kZPlotFragmentShader:
+            filename = "zplot.fsh";
+            break;
+        }
+        const QString path = QString(":/shaders/%1").arg(filename);
+        QFile file(path);
+        if (file.open(QFile::ReadOnly)) {
+            const QByteArray &bytes = file.readAll();
+            file.close();
+            qDebug("Loaded a shader: %s", qPrintable(path));
+            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+        }
+        else {
+            qWarning("Failed loading a shader: %s", qPrintable(path));
+            return std::string();
+        }
+    }
+    const std::string loadKernel(Renderer::KernelType type) {
+        QString filename;
+        switch (type) {
+        case Renderer::kModelSkinningKernel:
+            filename = "skinning.cl";
+            break;
+        }
+        const QString path = QString(":/kernels/%1").arg(filename);
+        QFile file(path);
+        if (file.open(QFile::ReadOnly)) {
+            const QByteArray &bytes = file.readAll();
+            file.close();
+            qDebug("Loaded a kernel: %s", qPrintable(path));
+            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+        }
+        else {
+            qWarning("Failed loading a kernel: %s", qPrintable(path));
+            return std::string();
+        }
+    }
+    void log(Renderer::LogLevel level, const char *format, va_list ap) {
+        QString message;
+        message.vsprintf(format, ap);
+        switch (level) {
+        case Renderer::kLogInfo:
+        default:
+            qDebug("%s", qPrintable(message));
+            break;
+        case Renderer::kLogWarning:
+            qWarning("%s", qPrintable(message));
+            break;
+        }
+    }
     const std::string toUnicode(const std::string &value) const {
         return m_codec->toUnicode(value.c_str()).toStdString();
+    }
+    const std::string toUnicode(const uint8_t *value) const {
+        return std::string(internal::toQString(value).toUtf8());
     }
     const std::string fromUnicode(const std::string &value) const {
         const QByteArray &bytes = m_codec->fromUnicode(value.c_str());
@@ -95,6 +222,86 @@ public:
     }
 
 private:
+    QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr) {
+        QFile file(path);
+        if (file.open(QFile::ReadOnly) && file.size() > 18) {
+            QByteArray data = file.readAll();
+            uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
+            uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
+            uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
+            if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
+                qWarning("Loaded TGA image type is not full color: %s", qPrintable(path));
+                return QImage();
+            }
+            uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
+            uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
+            uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
+            uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
+            if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
+                qWarning("Invalid TGA image (width=%d, height=%d, depth=%d): %s",
+                         width, height, depth, qPrintable(path));
+                return QImage();
+            }
+            int component = depth >> 3;
+            uint8_t *body = ptr + 18 + field;
+            /* if RLE compressed, uncompress it */
+            size_t datalen = width * height * component;
+            ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
+            if (type == 10) {
+                uint8_t *uncompressed = uncompressedPtr.data();
+                uint8_t *src = body;
+                uint8_t *dst = uncompressed;
+                while (static_cast<size_t>(dst - uncompressed) < datalen) {
+                    int16_t len = (*src & 0x7f) + 1;
+                    if (*src & 0x80) {
+                        src++;
+                        for (int i = 0; i < len; i++) {
+                            memcpy(dst, src, component);
+                            dst += component;
+                        }
+                        src += component;
+                    }
+                    else {
+                        src++;
+                        memcpy(dst, src, component * len);
+                        dst += component * len;
+                        src += component * len;
+                    }
+                }
+                /* will load from uncompressed data */
+                body = uncompressed;
+            }
+            /* prepare texture data area */
+            datalen = (width * height) * 4;
+            dataPtr.reset(new uint8_t[datalen]);
+            ptr = dataPtr.data();
+            for (uint16_t h = 0; h < height; h++) {
+                uint8_t *line = NULL;
+                if (flags & 0x20) /* from up to bottom */
+                    line = body + h * width * component;
+                else /* from bottom to up */
+                    line = body + (height - 1 - h) * width * component;
+                for (uint16_t w = 0; w < width; w++) {
+                    uint32_t index = 0;
+                    if (flags & 0x10)/* from right to left */
+                        index = (width - 1 - w) * component;
+                    else /* from left to right */
+                        index = w * component;
+                    /* BGR or BGRA -> ARGB */
+                    *ptr++ = line[index + 2];
+                    *ptr++ = line[index + 1];
+                    *ptr++ = line[index + 0];
+                    *ptr++ = (depth == 32) ? line[index + 3] : 255;
+                }
+            }
+            return QImage(dataPtr.data(), width, height, QImage::Format_ARGB32);
+        }
+        else {
+            qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
+            return QImage();
+        }
+    }
+
     QTextCodec *m_codec;
 };
 
@@ -134,17 +341,20 @@ bool SceneLoader::isAccelerationSupported()
     return Renderer::isAcceleratorSupported();
 }
 
-SceneLoader::SceneLoader(Renderer *renderer)
+SceneLoader::SceneLoader(int width, int height, int fps)
     : QObject(),
-      m_renderer(renderer),
+      m_renderer(0),
+      m_renderDelegate(0),
       m_project(0),
-      m_delegate(0),
+      m_projectDelegate(0),
       m_model(0),
       m_asset(0),
       m_camera(0)
 {
-    m_delegate = new Delegate();
-    m_project = new Project(m_delegate);
+    m_renderDelegate = new Delegate();
+    m_renderer = new Renderer(m_renderDelegate, width, height, fps);
+    m_projectDelegate = new Delegate();
+    m_project = new Project(m_projectDelegate);
     /*
      * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
      * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
@@ -157,6 +367,12 @@ SceneLoader::SceneLoader(Renderer *renderer)
 SceneLoader::~SceneLoader()
 {
     release();
+    delete m_renderer;
+    m_renderer = 0;
+    delete m_renderDelegate;
+    m_renderDelegate = 0;
+    delete m_projectDelegate;
+    m_projectDelegate = 0;
 }
 
 void SceneLoader::addModel(PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
@@ -209,7 +425,7 @@ void SceneLoader::commitAssetProperties()
 void SceneLoader::createProject()
 {
     if (!m_project)
-        m_project = new Project(m_delegate);
+        m_project = new Project(m_projectDelegate);
 }
 
 void SceneLoader::deleteAsset(Asset *asset)

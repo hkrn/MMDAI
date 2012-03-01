@@ -42,6 +42,7 @@
 #include "video/AudioPlayer.h"
 
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 using namespace vpvl;
 
@@ -80,7 +81,7 @@ void PlayerWidget::start()
         return;
     int sceneFPS = m_dialog->sceneFPS();
     m_selected = m_sceneWidget->sceneLoader()->selectedModel();
-    m_prevSceneFPS = m_sceneWidget->scene()->preferredFPS();
+    m_prevSceneFPS = m_sceneWidget->sceneLoader()->renderEngine()->scene()->preferredFPS();
     m_prevFrameIndex = m_sceneWidget->currentFrameIndex();
     m_frameStep = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS));
     m_totalStep = 0.0f;
@@ -169,7 +170,7 @@ void PlayerWidget::renderSceneFrame0(float step)
         m_elapsed.restart();
     }
     m_countForFPS++;
-    Scene *scene = m_sceneWidget->mutableScene();
+    Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
     bool isReached = scene->isMotionReachedTo(m_dialog->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
     if ((!m_dialog->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {

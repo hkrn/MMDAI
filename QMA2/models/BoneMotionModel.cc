@@ -34,11 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
 #include "models/BoneMotionModel.h"
+
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 using namespace vpvl;
 
@@ -897,7 +900,7 @@ void BoneMotionModel::translate(const Vector3 &delta, Bone *bone, int flags)
     const Vector3 &lastPosition = bone->position();
     switch (flags & 0xff) {
     case 'V': {
-        const Transform &modelViewTransform = m_sceneWidget->scene()->modelViewTransform();
+        const Transform &modelViewTransform = m_sceneWidget->sceneLoader()->renderEngine()->scene()->modelViewTransform();
         const Vector3 &value2 = modelViewTransform.getBasis() * delta;
         bone->setPosition(Transform(bone->rotation(), lastPosition) * value2);
         break;
@@ -931,7 +934,7 @@ void BoneMotionModel::rotate(const Quaternion &delta, Bone *bone, int flags, flo
     switch (flags & 0xff) {
     case 'V': {
         float matrixf[16];
-        m_sceneWidget->scene()->getModelViewMatrix(matrixf);
+        m_sceneWidget->sceneLoader()->renderEngine()->scene()->getModelViewMatrix(matrixf);
         const QMatrix4x4 &matrix = internal::toMatrix4x4(matrixf);
         const QVector4D &r = (matrix * QVector4D(delta.x(), delta.y(), delta.z(), delta.w())).normalized();
         bone->setRotation(lastRotation * Quaternion(r.x(), r.y(), r.z(), value < 0 ? r.w() : -r.w()));

@@ -1,3 +1,39 @@
+/* ----------------------------------------------------------------- */
+/*                                                                   */
+/*  Copyright (c) 2010-2012  hkrn                                    */
+/*                                                                   */
+/* All rights reserved.                                              */
+/*                                                                   */
+/* Redistribution and use in source and binary forms, with or        */
+/* without modification, are permitted provided that the following   */
+/* conditions are met:                                               */
+/*                                                                   */
+/* - Redistributions of source code must retain the above copyright  */
+/*   notice, this list of conditions and the following disclaimer.   */
+/* - Redistributions in binary form must reproduce the above         */
+/*   copyright notice, this list of conditions and the following     */
+/*   disclaimer in the documentation and/or other materials provided */
+/*   with the distribution.                                          */
+/* - Neither the name of the MMDAI project team nor the names of     */
+/*   its contributors may be used to endorse or promote products     */
+/*   derived from this software without specific prior written       */
+/*   permission.                                                     */
+/*                                                                   */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
+/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
+/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
+/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
+/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
+/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
+/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
+/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
+/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
+/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
+/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
+/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
+/* POSSIBILITY OF SUCH DAMAGE.                                       */
+/* ----------------------------------------------------------------- */
+
 #include "common/SceneWidget.h"
 #include "common/SceneLoader.h"
 #include "dialogs/ExportVideoDialog.h"
@@ -5,13 +41,14 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 ExportVideoDialog::ExportVideoDialog(MainWindow *parent, SceneWidget *sceneWidget)
     : QDialog(parent),
       m_sceneWidget(sceneWidget)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    int maxFrameIndex = sceneWidget->scene()->maxFrameIndex();
+    int maxFrameIndex = sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex();
     m_widthBox = new QSpinBox();
     m_widthBox->setRange(sceneWidget->minimumWidth(), sceneWidget->maximumWidth());
     m_heightBox = new QSpinBox();
@@ -108,7 +145,7 @@ bool ExportVideoDialog::includesGrid() const
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
-    int maxFrameIndex = m_sceneWidget->scene()->maxFrameIndex();
+    int maxFrameIndex = loader->renderEngine()->scene()->maxFrameIndex();
     m_widthBox->setValue(loader->sceneWidth());
     m_heightBox->setValue(loader->sceneHeight());
     m_fromIndexBox->setValue(qBound(0, loader->frameIndexEncodeVideoFrom(), maxFrameIndex));

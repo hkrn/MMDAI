@@ -46,14 +46,11 @@
 
 #include <vpvl/Common.h>
 #include <vpvl/Project.h>
+#include <vpvl/gl2/Renderer.h>
 
 namespace vpvl
 {
-#ifdef VPVL_ENABLE_GLSL
 namespace gl2
-#else
-namespace gl
-#endif
 {
 class Renderer;
 }
@@ -72,11 +69,7 @@ class SceneLoader : public QObject
 public:
     static bool isAccelerationSupported();
 
-#ifdef VPVL_ENABLE_GLSL
-    explicit SceneLoader(vpvl::gl2::Renderer *renderer);
-#else
-    explicit SceneLoader(vpvl::gl::Renderer *renderer);
-#endif
+    explicit SceneLoader(int width, int height, int fps);
     ~SceneLoader();
 
     QList<vpvl::PMDModel *> allModels() const;
@@ -138,6 +131,10 @@ public:
     vpvl::Bone *assetParentBone(vpvl::Asset *asset) const;
     void setAssetParentBone(const vpvl::Asset *asset, vpvl::Bone *bone);
 
+    vpvl::gl2::Renderer *renderEngine() const {
+        return m_renderer;
+    }
+
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
@@ -192,14 +189,11 @@ private:
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
 
-#ifdef VPVL_ENABLE_GLSL
     vpvl::gl2::Renderer *m_renderer;
-#else
-    vpvl::gl::Renderer *m_renderer;
-#endif
+    vpvl::gl2::Renderer::IDelegate *m_renderDelegate;
     QMap<QString, vpvl::Asset*> m_name2assets;
     vpvl::Project *m_project;
-    vpvl::Project::IDelegate *m_delegate;
+    vpvl::Project::IDelegate *m_projectDelegate;
     vpvl::PMDModel *m_model;
     vpvl::Asset *m_asset;
     vpvl::VMDMotion *m_camera;

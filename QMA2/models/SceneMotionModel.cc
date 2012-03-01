@@ -34,11 +34,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "models/SceneMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 using namespace vpvl;
 
@@ -310,7 +312,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
         if (frameIndex >= 0) {
             if (index.row() == m_cameraTreeItem->rowIndex() && item->isCategory()) {
                 CameraKeyframe *frame = new CameraKeyframe();
-                const Scene *scene = m_sceneWidget->scene();
+                const Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
                 frame->setDefaultInterpolationParameter();
                 frame->setPosition(scene->cameraPosition());
                 frame->setAngle(scene->cameraAngle());

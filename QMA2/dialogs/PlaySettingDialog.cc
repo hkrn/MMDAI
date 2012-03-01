@@ -40,12 +40,13 @@
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 
 PlaySettingDialog::PlaySettingDialog(MainWindow * /* parent */, SceneWidget *scene)
     : QDialog(),
       m_sceneLoader(scene->sceneLoader())
 {
-    int maxFrameIndex = scene->scene()->maxFrameIndex();
+    int maxFrameIndex = m_sceneLoader->renderEngine()->scene()->maxFrameIndex();
     m_fromIndexLabel = new QLabel();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);

@@ -36,6 +36,7 @@
 
 #include <qglobal.h>
 
+#include "SceneLoader.h"
 #include "Handles.h"
 #include "SceneWidget.h"
 #include "TextureDrawHelper.h"
@@ -43,6 +44,7 @@
 #include "util.h"
 
 #include <vpvl/vpvl.h>
+#include <vpvl/gl2/Renderer.h>
 #include <aiScene.h>
 
 using namespace vpvl;
@@ -581,7 +583,7 @@ void Handles::drawRotationHandle()
     transform.setOrigin(m_bone->localTransform().getOrigin());
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_widget->scene(), transform, &m_program);
+    UIInitializeRenderingModel(m_widget->sceneLoader()->renderEngine()->scene(), transform, &m_program);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
@@ -597,7 +599,7 @@ void Handles::drawMoveHandle()
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_widget->scene(), m_bone->localTransform(), &m_program);
+    UIInitializeRenderingModel(m_widget->sceneLoader()->renderEngine()->scene(), m_bone->localTransform(), &m_program);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);

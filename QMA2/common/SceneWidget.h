@@ -94,8 +94,6 @@ public:
     ~SceneWidget();
 
     SceneLoader *sceneLoader() const;
-    const vpvl::Scene *scene() const;
-    vpvl::Scene *mutableScene();
     void setSelectedModel(vpvl::PMDModel *value);
     void setWorldGravity(const vpvl::Vector3 &value);
     void setPreferredFPS(int value);
@@ -232,12 +230,6 @@ protected:
     void pinchTriggered(QPinchGesture *event);
     void swipeTriggered(QSwipeGesture *event);
 
-#ifdef VPVL_ENABLE_GLSL
-    vpvl::gl2::Renderer *m_renderer;
-#else
-    vpvl::gl::Renderer *m_renderer;
-#endif
-    internal::Delegate *m_delegate;
     internal::World *m_world;
     SceneLoader *m_loader;
 
