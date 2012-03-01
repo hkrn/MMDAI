@@ -110,17 +110,15 @@ Scene::~Scene()
 void Scene::addModel(PMDModel *model)
 {
     m_models.add(model);
-    sortRenderingOrder();
     model->setLightPosition(m_lightPosition);
     model->joinWorld(m_world);
     model->setSoftwareSkinningEnable(m_enableSoftwareSkinning);
     model->setVisible(true);
 }
 
-PMDModel **Scene::getRenderingOrder(size_t &size)
+const Array<PMDModel *> &Scene::getRenderingOrder() const
 {
-    size = m_models.count();
-    return &m_models[0];
+    return m_models;
 }
 
 void Scene::getModelViewMatrix(float matrix[]) const
@@ -223,6 +221,18 @@ void Scene::setLightSource(const Vector4 &color, const Vector3 &position)
         PMDModel *model = m_models[i];
         model->setLightPosition(position);
     }
+}
+
+void Scene::setRenderingOrder(const Array<PMDModel *> &models)
+{
+    Array<PMDModel *> newModels;
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        PMDModel *model = models.at(i);
+        if (m_models.contains(model))
+            newModels.add(model);
+    }
+    m_models.copy(newModels);
 }
 
 void Scene::setSoftwareSkinningEnable(bool value)

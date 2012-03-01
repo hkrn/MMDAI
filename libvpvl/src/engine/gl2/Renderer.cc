@@ -635,7 +635,7 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
 Renderer::~Renderer()
 {
     Array<PMDModel *> models;
-    models.copy(m_scene->models());
+    models.copy(m_scene->getRenderingOrder());
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
@@ -805,9 +805,9 @@ void Renderer::deleteModel(PMDModel *&model)
 
 void Renderer::updateAllModel()
 {
-    size_t size = 0;
-    PMDModel **models = m_scene->getRenderingOrder(size);
-    for (size_t i = 0; i < size; i++) {
+    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
         if (model->isVisible())
             updateModel(model);
@@ -1112,9 +1112,9 @@ void Renderer::renderAllAssets()
 
 void Renderer::renderAllModels()
 {
-    size_t size = 0;
-    PMDModel **models = m_scene->getRenderingOrder(size);
-    for (size_t i = 0; i < size; i++) {
+    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
         if (model->isVisible()) {
             renderModel(model);
@@ -1125,10 +1125,10 @@ void Renderer::renderAllModels()
 
 void Renderer::renderProjectiveShadow()
 {
-    size_t size = 0;
-    PMDModel **models = m_scene->getRenderingOrder(size);
+    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
+    const int nmodels = models.count();
     glCullFace(GL_FRONT);
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
         if (model->isVisible())
             renderModelShadow(model);
@@ -1138,10 +1138,10 @@ void Renderer::renderProjectiveShadow()
 
 void Renderer::renderZPlot()
 {
+    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
+    const int nmodels = models.count();
     glCullFace(GL_FRONT);
-    size_t size = 0;
-    PMDModel **models = m_scene->getRenderingOrder(size);
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
         if (model->isVisible())
             renderModelZPlot(model);

@@ -72,7 +72,7 @@ public:
     ~Scene();
 
     void addModel(PMDModel *model);
-    PMDModel **getRenderingOrder(size_t &size);
+    const Array<PMDModel *> &getRenderingOrder() const;
     void getModelViewMatrix(float matrix[16]) const;
     void getNormalMatrix(float matrix[9]) const;
     void getProjectionMatrix(float matrix[16]) const;
@@ -87,10 +87,12 @@ public:
     void setLightSource(LightAnimation *light);
     void setLightSource(const Color &color, const Vector3 &cameraPosition);
     void setPreferredFPS(int value);
+    void setRenderingOrder(const Array<PMDModel *> &models);
     void setSoftwareSkinningEnable(bool value);
     void setViewMove(int viewMoveTime);
     void setWidth(int value);
     void setWorld(btDiscreteDynamicsWorld *world);
+    void sortRenderingOrder();
     void advanceMotion(float deltaFrame);
     void resetMotion();
     float maxFrameIndex() const;
@@ -99,9 +101,6 @@ public:
     void updateModelView();
     void updateProjection();
 
-    const Array<PMDModel *> &models() const {
-        return m_models;
-    }
     VMDMotion *cameraMotion() const {
         return m_cameraMotion;
     }
@@ -143,7 +142,6 @@ public:
     }
 
 private:
-    void sortRenderingOrder();
     void updateRotationFromAngle();
 
     btDiscreteDynamicsWorld *m_world;
