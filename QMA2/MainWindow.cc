@@ -34,8 +34,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "BoneUIDelegate.h"
 #include "MainWindow.h"
+#include "BoneUIDelegate.h"
+#include "ScenePlayer.h"
 
 #include "common/Handles.h"
 #include "common/LoggerWidget.h"
@@ -60,7 +61,6 @@
 #include "widgets/LicenseWidget.h"
 #include "widgets/ModelInfoWidget.h"
 #include "widgets/ModelTabWidget.h"
-#include "widgets/PlayerWidget.h"
 #include "widgets/TabWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
@@ -1504,7 +1504,7 @@ void MainWindow::invokePlayer()
     if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
         if (!m_player) {
-            m_player = new PlayerWidget(m_sceneWidget, m_playSettingDialog);
+            m_player = new ScenePlayer(m_sceneWidget, m_playSettingDialog);
             connect(m_player, SIGNAL(motionDidSeek(int)), m_timelineTabWidget, SLOT(setCurrentFrameIndex(int)));
             connect(m_player, SIGNAL(renderFrameDidStop()), SLOT(makeBonesSelectable()));
         }

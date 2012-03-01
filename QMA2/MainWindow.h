@@ -62,10 +62,10 @@ class MorphMotionModel;
 class LicenseWidget;
 class LoggerWidget;
 class ModelTabWidget;
-class PlayerWidget;
 class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
+class ScenePlayer;
 class TabWidget;
 class TimelineTabWidget;
 class VideoEncoder;
@@ -163,7 +163,7 @@ private:
     BoneUIDelegate *m_boneUIDelegate;
     AudioDecoder *m_audioDecoder;
     VideoEncoder *m_videoEncoder;
-    PlayerWidget *m_player;
+    ScenePlayer *m_player;
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
 

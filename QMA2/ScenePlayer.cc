@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "PlayerWidget.h"
+#include "ScenePlayer.h"
 
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
@@ -46,7 +46,7 @@
 
 using namespace vpvl;
 
-PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
+ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
     : QObject(),
       m_sceneWidget(sceneWidget),
       m_dialog(dialog),
@@ -70,13 +70,13 @@ PlayerWidget::PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
     /* ※ renderSceneFrame(float) は絶対値によるシークではなく差分更新 */
 }
 
-PlayerWidget::~PlayerWidget()
+ScenePlayer::~ScenePlayer()
 {
     delete m_player;
     delete m_progress;
 }
 
-void PlayerWidget::start()
+void ScenePlayer::start()
 {
     if (isActive())
         return;
@@ -128,7 +128,7 @@ void PlayerWidget::start()
     emit renderFrameDidStart();
 }
 
-void PlayerWidget::stop()
+void ScenePlayer::stop()
 {
     /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
     disconnect(m_player, SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
@@ -158,18 +158,18 @@ void PlayerWidget::stop()
     emit renderFrameDidStop();
 }
 
-bool PlayerWidget::isActive() const
+bool ScenePlayer::isActive() const
 {
     return m_renderTimer.isActive();
 }
 
-void PlayerWidget::renderSceneFrameFixed()
+void ScenePlayer::renderSceneFrameFixed()
 {
     /* start() 時に計算して固定値でモーションをすすめる */
     renderSceneFrame0(m_frameStep);
 }
 
-void PlayerWidget::renderSceneFrameVariant()
+void ScenePlayer::renderSceneFrameVariant()
 {
     /* advanceStep で増えた分を加算するため、値は可変 */
     float diff = m_audioFrameIndex - m_prevAudioFrameIndex;
@@ -179,13 +179,13 @@ void PlayerWidget::renderSceneFrameVariant()
     }
 }
 
-void PlayerWidget::advanceAudioFrame(float step)
+void ScenePlayer::advanceAudioFrame(float step)
 {
     if (step >= 0)
         m_audioFrameIndex += step * Scene::kFPS;
 }
 
-void PlayerWidget::renderSceneFrame0(float step)
+void ScenePlayer::renderSceneFrame0(float step)
 {
     if (m_elapsed.elapsed() > 1000) {
         m_currentFPS = m_countForFPS;

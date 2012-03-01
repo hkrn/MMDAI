@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef PLAYERWIDGET_H
-#define PLAYERWIDGET_H
+#ifndef SCENEPLAYER_H
+#define SCENEPLAYER_H
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
@@ -49,13 +49,13 @@ class AudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
 
-class PlayerWidget : public QObject
+class ScenePlayer : public QObject
 {
     Q_OBJECT
 
 public:
-    PlayerWidget(SceneWidget *sceneWidget, PlaySettingDialog *dialog);
-    ~PlayerWidget();
+    ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog);
+    ~ScenePlayer();
 
     void start();
     bool isActive() const;
@@ -96,4 +96,4 @@ private:
     int m_prevSceneFPS;
 };
 
-#endif // PLAYERWIDGET_H
+#endif // SCENEPLAYER_H

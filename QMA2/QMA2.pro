@@ -142,7 +142,7 @@ SOURCES += main.cc \
     dialogs/FrameSelectionDialog.cc \
     widgets/ModelInfoWidget.cc \
     video/VideoEncoder.cc \
-    widgets/PlayerWidget.cc \
+    ScenePlayer.cc \
     dialogs/GravitySettingDialog.cc \
     video/AudioDecoder.cc \
     video/AVCommon.cc \
@@ -184,7 +184,7 @@ HEADERS  += \
     dialogs/FrameSelectionDialog.h \
     widgets/ModelInfoWidget.h \
     video/VideoEncoder.h \
-    widgets/PlayerWidget.h \
+    ScenePlayer.h \
     common/TextureDrawHelper.h \
     dialogs/GravitySettingDialog.h \
     video/AudioDecoder.h \
