@@ -118,6 +118,13 @@ public:
     void clear() {
         m_values.clear();
     }
+    bool contains(const T &item) const {
+        int n = m_values.size();
+        for (int i = 0; i < n; i++)
+            if (m_values[i] == item)
+                return true;
+        return false;
+    }
     void copy(const Array &items) {
         m_values.copyFromArray(items.m_values);
     }
