@@ -934,8 +934,8 @@ void MainWindow::bindActions()
     m_actionBoneDialog->setShortcut(m_settings.value(kPrefix + "boneDialog").toString());
     m_actionRegisterFrame->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
     m_actionSelectAllFrames->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
-    m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog").toString());
-    m_actionFrameWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog").toString());
+    m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog", "Ctrl+Alt+S").toString());
+    m_actionFrameWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog", "Ctrl+Alt+W").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
