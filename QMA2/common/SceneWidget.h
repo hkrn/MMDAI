@@ -131,18 +131,13 @@ public slots:
     void pause();
     void stop();
     void clear();
-    void addModel();
+    void setEmptyMotion();
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
-    void setEmptyMotion();
-    void setEmptyMotion(vpvl::PMDModel *model);
-    void addAsset();
-    void addAssetFromMetadata();
-    void saveMetadataFromAsset(vpvl::Asset *asset);
-    void insertPoseToSelectedModel();
-    void setCamera();
     void deleteSelectedModel();
-    void resetCamera();
+    void loadFile(const QString &file);
+    void setEmptyMotion(vpvl::PMDModel *model);
+    void saveMetadataFromAsset(vpvl::Asset *asset);
     void setLightColor(const vpvl::Color &color);
     void setLightPosition(const vpvl::Vector3 &position);
     void rotateScene(const vpvl::Vector3 &delta);
@@ -151,7 +146,6 @@ public slots:
     void translateScene(const vpvl::Vector3 &delta);
     void translateModel(const vpvl::Vector3 &delta);
     void translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta);
-    void resetModelPosition();
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex, bool force = false);
     void resetMotion();
@@ -159,33 +153,8 @@ public slots:
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
     void setModelProjectiveShadowEnable(bool value);
-    void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void selectBones(const QList<vpvl::Bone *> &bones);
-    void loadFile(const QString &file);
     void setEditMode(SceneWidget::EditMode value);
-
-    void zoomIn() { zoom(true, Qt::NoModifier); }
-    void zoomOut() { zoom(false, Qt::NoModifier); }
-    void rotateUp() { rotateScene(vpvl::Vector3(10.0f, 0.0f, 0.0f)); }
-    void rotateDown() { rotateScene(vpvl::Vector3(-10.0f, 0.0f, 0.0f)); }
-    void rotateLeft() { rotateScene(vpvl::Vector3(0.0f, 10.0f, 0.0f)); }
-    void rotateRight() { rotateScene(vpvl::Vector3(0.0f, -10.0f, 0.0f)); }
-    void translateUp() { translateScene(vpvl::Vector3(0.0f, 1.0f, 0.0f)); }
-    void translateDown() { translateScene(vpvl::Vector3(0.0f, -1.0f, 0.0f)); }
-    void translateLeft() { translateScene(vpvl::Vector3(-1.0f, 0.0f, 0.0f)); }
-    void translateRight() { translateScene(vpvl::Vector3(1.0f, 0.0f, 0.0f)); }
-    void translateModelUp() { translateModel(vpvl::Vector3(0.0f, 0.5f, 0.0f)); }
-    void translateModelDown() { translateModel(vpvl::Vector3(0.0f, -0.5f, 0.0f)); }
-    void translateModelLeft() { translateModel(vpvl::Vector3(-0.5f, 0.0f, 0.0f)); }
-    void translateModelRight() { translateModel(vpvl::Vector3(0.5f, 0.0f, 0.0f)); }
-    void revertSelectedModel() { setSelectedModel(0); }
-    void updateSceneMotion() { seekMotion(m_frameIndex, true); }
-    void updateMotion() { seekMotion(m_frameIndex, false); }
-    void setShowModelDialog(bool value) { m_showModelDialog = value; }
-    void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
-    void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
-    void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
-    void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 signals:
     void initailizeGLContextDidDone();
@@ -230,6 +199,39 @@ protected:
     void swipeTriggered(QSwipeGesture *event);
 
     SceneLoader *m_loader;
+
+private slots:
+    void addModel();
+    void addAsset();
+    void addAssetFromMetadata();
+    void insertPoseToSelectedModel();
+    void setCamera();
+    void resetCamera();
+    void resetModelPosition();
+    void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
+    void openErrorDialogIfFailed(bool loadingProjectFailed);
+    void zoomIn() { zoom(true, Qt::NoModifier); }
+    void zoomOut() { zoom(false, Qt::NoModifier); }
+    void rotateUp() { rotateScene(vpvl::Vector3(10.0f, 0.0f, 0.0f)); }
+    void rotateDown() { rotateScene(vpvl::Vector3(-10.0f, 0.0f, 0.0f)); }
+    void rotateLeft() { rotateScene(vpvl::Vector3(0.0f, 10.0f, 0.0f)); }
+    void rotateRight() { rotateScene(vpvl::Vector3(0.0f, -10.0f, 0.0f)); }
+    void translateUp() { translateScene(vpvl::Vector3(0.0f, 1.0f, 0.0f)); }
+    void translateDown() { translateScene(vpvl::Vector3(0.0f, -1.0f, 0.0f)); }
+    void translateLeft() { translateScene(vpvl::Vector3(-1.0f, 0.0f, 0.0f)); }
+    void translateRight() { translateScene(vpvl::Vector3(1.0f, 0.0f, 0.0f)); }
+    void translateModelUp() { translateModel(vpvl::Vector3(0.0f, 0.5f, 0.0f)); }
+    void translateModelDown() { translateModel(vpvl::Vector3(0.0f, -0.5f, 0.0f)); }
+    void translateModelLeft() { translateModel(vpvl::Vector3(-0.5f, 0.0f, 0.0f)); }
+    void translateModelRight() { translateModel(vpvl::Vector3(0.5f, 0.0f, 0.0f)); }
+    void revertSelectedModel() { setSelectedModel(0); }
+    void updateSceneMotion() { seekMotion(m_frameIndex, true); }
+    void updateMotion() { seekMotion(m_frameIndex, false); }
+    void setShowModelDialog(bool value) { m_showModelDialog = value; }
+    void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
+    void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
+    void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
+    void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 private:
     bool acceptAddingModel(vpvl::PMDModel *model);
