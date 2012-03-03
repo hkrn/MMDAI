@@ -72,7 +72,6 @@ using namespace internal;
 
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    m_world(0),
     m_loader(0),
     m_debugDrawer(0),
     m_grid(0),
@@ -99,7 +98,6 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableUndoGesture(false)
 {
     m_grid = new Grid();
-    m_world = new World(Scene::kFPS);
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
@@ -124,8 +122,6 @@ SceneWidget::~SceneWidget()
     m_info = 0;
     delete m_grid;
     m_grid = 0;
-    delete m_world;
-    m_world = 0;
 }
 
 SceneLoader *SceneWidget::sceneLoader() const
@@ -176,29 +172,6 @@ void SceneWidget::stopAutomaticRendering()
     m_internalTimerID = 0;
 }
 
-void SceneWidget::startPhysicsSimulation()
-{
-    /* 物理暴走を防ぐために少し進めてから開始する */
-    if (m_loader && m_loader->isPhysicsEnabled()) {
-        btDiscreteDynamicsWorld *world = m_world->mutableWorld();
-        m_loader->renderEngine()->scene()->setWorld(world);
-        world->stepSimulation(1, 60);
-    }
-}
-
-void SceneWidget::stopPhysicsSimulation()
-{
-    Scene *scene = m_loader->renderEngine()->scene();
-    scene->setWorld(0);
-    const Array<PMDModel *> &models = scene->getRenderingOrder();
-    const int nmodels = models.count();
-    for (int i = 0; i < nmodels; i++) {
-        PMDModel *model = models[i];
-        model->resetAllBones();
-    }
-    updateMotion();
-}
-
 void SceneWidget::loadProject(const QString &filename)
 {
     QProgressDialog *dialog = new QProgressDialog();
@@ -209,19 +182,11 @@ void SceneWidget::loadProject(const QString &filename)
     dialog->setWindowModality(Qt::WindowModal);
     dialog->setCancelButton(0);
     m_loader->loadProject(filename);
-    m_world->setGravity(m_loader->worldGravity());
     delete dialog;
-}
-
-void SceneWidget::setWorldGravity(const vpvl::Vector3 &value)
-{
-    m_world->setGravity(value);
-    m_loader->setWorldGravity(value);
 }
 
 void SceneWidget::saveProject(const QString &filename)
 {
-    m_loader->setWorldGravity(m_world->gravity());
     m_loader->saveProject(filename);
 }
 
@@ -230,8 +195,7 @@ void SceneWidget::setPreferredFPS(int value)
     /* 一旦前のタイマーを止めてから新しい FPS に基づく間隔でタイマーを開始する */
     if (value > 0) {
         m_interval = 1000.0f / value;
-        m_world->setPreferredFPS(value);
-        m_loader->renderEngine()->scene()->setPreferredFPS(value);
+        m_loader->setPreferredFPS(value);
         if (m_internalTimerID) {
             stopAutomaticRendering();
             startAutomaticRendering();
@@ -859,7 +823,6 @@ void SceneWidget::initializeGL()
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
     m_debugDrawer = new DebugDrawer(m_loader->renderEngine()->scene());
-    m_debugDrawer->setWorld(m_world->mutableWorld());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
     Scene *scene = m_loader->renderEngine()->scene();

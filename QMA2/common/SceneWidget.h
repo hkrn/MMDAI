@@ -65,7 +65,6 @@ class DebugDrawer;
 class Delegate;
 class Grid;
 class InfoPanel;
-class World;
 }
 
 class Handles;
@@ -230,7 +229,6 @@ protected:
     void pinchTriggered(QPinchGesture *event);
     void swipeTriggered(QSwipeGesture *event);
 
-    internal::World *m_world;
     SceneLoader *m_loader;
 
 private:

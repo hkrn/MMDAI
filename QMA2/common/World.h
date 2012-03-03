@@ -46,13 +46,13 @@ namespace internal {
 
 class World {
 public:
-    explicit World(int defaultFPS)
+    explicit World()
         : m_dispatcher(&m_config),
           m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
         setGravity(btVector3(0.0f, -9.8f, 0.0f));
-        setPreferredFPS(defaultFPS);
+        setPreferredFPS(vpvl::Scene::kFPS);
     }
     ~World()
     {

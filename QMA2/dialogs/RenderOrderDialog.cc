@@ -34,36 +34,50 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef GRAVITYSETTINGDIALOG_H
-#define GRAVITYSETTINGDIALOG_H
+#include "RenderOrderDialog.h"
+#include "common/SceneLoader.h"
 
-#include <QtGui/QDialog>
-#include <vpvl/Common.h>
+#include <QtGui/QtGui>
 
-class QDoubleSpinBox;
-class QLabel;
-class SceneLoader;
-
-class GravitySettingDialog : public QDialog
+RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
+    : QDialog(parent)
 {
-    Q_OBJECT
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    m_listWidget = new QListWidget();
+    QDialogButtonBox *buttons = new QDialogButtonBox();
+    connect(buttons, SIGNAL(accepted()), SLOT(accept()));
+    connect(buttons, SIGNAL(rejected()), SLOT(reject()));
+    connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
+    connect(this, SIGNAL(renderOrderListDidSet(QList<QUuid>)), loader, SLOT(setRenderOrderList(QList<QUuid>)));
+    mainLayout->addWidget(buttons);
+    mainLayout->addWidget(m_listWidget);
+    setRenderOrder(loader);
+    setLayout(mainLayout);
+}
 
-public:
-    explicit GravitySettingDialog(SceneLoader *loader, QWidget *parent = 0);
-    ~GravitySettingDialog();
+RenderOrderDialog::~RenderOrderDialog()
+{
+}
 
-signals:
-    void worldGravityDidSet(const vpvl::Vector3 &value);
+void RenderOrderDialog::emitSignal()
+{
+    QList<QUuid> value;
+    int nitems = m_listWidget->count();
+    for (int i = 0; i < nitems; i++) {
+        QListWidgetItem *item = m_listWidget->item(i);
+        const QVariant &var = item->data(0);
+        value.append(QUuid(var.toString()));
+    }
+    emit renderOrderListDidSet(value);
+}
 
-private slots:
-    void emitSignal();
-
-private:
-    QDoubleSpinBox *createSpinBox(double value) const;
-
-    QDoubleSpinBox *m_axisX;
-    QDoubleSpinBox *m_axisY;
-    QDoubleSpinBox *m_axisZ;
-};
-
-#endif // GRAVITYSETTINGDIALOG_H
+void RenderOrderDialog::setRenderOrder(SceneLoader *loader)
+{
+    const QList<QUuid> &value = loader->renderOrderList();
+    m_listWidget->clear();
+    foreach (const QUuid &uuid, value) {
+        QListWidgetItem *item = new QListWidgetItem(m_listWidget);
+        item->setText(uuid);
+        item->setData(0, QVariant(uuid));
+    }
+}

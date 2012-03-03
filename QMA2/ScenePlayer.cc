@@ -93,7 +93,7 @@ void ScenePlayer::start()
     m_sceneWidget->stopAutomaticRendering();
     /* FPS を設定してから物理エンジンを有効にする(FPS設定を反映させるため) */
     m_sceneWidget->setPreferredFPS(sceneFPS);
-    m_sceneWidget->startPhysicsSimulation();
+    m_sceneWidget->sceneLoader()->startPhysicsSimulation();
     /* 場面を開始位置にシーク */
     m_sceneWidget->seekMotion(m_dialog->fromIndex());
     /* ハンドルも情報パネルも消す */
@@ -145,7 +145,7 @@ void ScenePlayer::stop()
     m_sceneWidget->setBoneWireFramesVisible(true);
     m_sceneWidget->setSelectedModel(m_selected);
     /* 再生が終わったら物理を無効にする */
-    m_sceneWidget->stopPhysicsSimulation();
+    m_sceneWidget->sceneLoader()->stopPhysicsSimulation();
     m_sceneWidget->resetMotion();
     m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
     /* フレーム位置を再生前に戻す */
@@ -203,10 +203,11 @@ void ScenePlayer::renderSceneFrame0(float step)
         int value;
         if (isReached) {
             /* ループする場合はモーションと物理演算をリセットしてから開始位置に移動する */
+            SceneLoader *loader = m_sceneWidget->sceneLoader();
             value = m_dialog->fromIndex();
-            m_sceneWidget->stopPhysicsSimulation();
+            loader->stopPhysicsSimulation();
             m_sceneWidget->resetMotion();
-            m_sceneWidget->startPhysicsSimulation();
+            loader->startPhysicsSimulation();
             m_sceneWidget->seekMotion(value, true);
             m_totalStep = 0.0f;
             value = 0;

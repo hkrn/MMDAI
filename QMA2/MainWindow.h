@@ -129,6 +129,7 @@ private slots:
     void selectPreviousModel();
     void showLicenseWidget();
     void openGravitySettingDialog();
+    void openRenderOrderDialog();
     void makeBonesSelectable();
 
 private:
@@ -205,7 +206,8 @@ private:
     QAction *m_actionAboutQt;
     QAction *m_actionPlay;
     QAction *m_actionPlaySettings;
-    QAction *m_actionGravitySettings;
+    QAction *m_actionOpenGravitySettingsDialog;
+    QAction *m_actionOpenRenderOrderDialog;
     QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;

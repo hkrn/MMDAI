@@ -34,36 +34,33 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef GRAVITYSETTINGDIALOG_H
-#define GRAVITYSETTINGDIALOG_H
+#ifndef RENDERORDERDIALOG_H
+#define RENDERORDERDIALOG_H
 
+#include <QtCore/QUuid>
 #include <QtGui/QDialog>
-#include <vpvl/Common.h>
 
-class QDoubleSpinBox;
-class QLabel;
+class QListWidget;
 class SceneLoader;
 
-class GravitySettingDialog : public QDialog
+class RenderOrderDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit GravitySettingDialog(SceneLoader *loader, QWidget *parent = 0);
-    ~GravitySettingDialog();
+    explicit RenderOrderDialog(SceneLoader *loader, QWidget *parent = 0);
+    ~RenderOrderDialog();
 
 signals:
-    void worldGravityDidSet(const vpvl::Vector3 &value);
+    void renderOrderListDidSet(const QList<QUuid> &uuid);
 
 private slots:
     void emitSignal();
 
 private:
-    QDoubleSpinBox *createSpinBox(double value) const;
+    void setRenderOrder(SceneLoader *loader);
 
-    QDoubleSpinBox *m_axisX;
-    QDoubleSpinBox *m_axisY;
-    QDoubleSpinBox *m_axisZ;
+    QListWidget *m_listWidget;
 };
 
-#endif // GRAVITYSETTINGDIALOG_H
+#endif // RENDERORDERDIALOG_H

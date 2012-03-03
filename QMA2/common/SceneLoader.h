@@ -48,6 +48,10 @@
 #include <vpvl/Project.h>
 #include <vpvl/gl2/Renderer.h>
 
+namespace internal {
+class World;
+}
+
 namespace vpvl
 {
 namespace gl2
@@ -91,13 +95,13 @@ public:
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
     void render();
+    const QList<QUuid> renderOrderList() const;
 
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
     bool isAccelerationEnabled() const;
     bool isBlackBackgroundEnabled() const;
     const vpvl::Vector3 worldGravity() const;
-    void setWorldGravity(const vpvl::Vector3 &value);
     int frameIndexPlayFrom() const;
     int frameIndexPlayTo() const;
     int sceneFPSForPlay() const;
@@ -148,7 +152,11 @@ public slots:
     void saveProject(const QString &path);
     void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void setRenderOrderList(const QList<QUuid> &value);
+    void setWorldGravity(const vpvl::Vector3 &value);
     void sort(bool reorder = false);
+    void startPhysicsSimulation();
+    void stopPhysicsSimulation();
 
     void setGridVisible(bool value);
     void setPhysicsEnabled(bool value);
@@ -167,6 +175,7 @@ public slots:
     void setSelectedModel(vpvl::PMDModel *value);
     void setSelectedAsset(vpvl::Asset *value);
     void setBackgroundAudio(const QString &path);
+    void setPreferredFPS(int value);
 
 signals:
     void projectDidCount(int value);
@@ -191,6 +200,7 @@ private:
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
 
+    internal::World *m_world;
     vpvl::gl2::Renderer *m_renderer;
     vpvl::gl2::Renderer::IDelegate *m_renderDelegate;
     QMap<QString, vpvl::Asset*> m_name2assets;
@@ -199,7 +209,7 @@ private:
     vpvl::PMDModel *m_model;
     vpvl::Asset *m_asset;
     vpvl::VMDMotion *m_camera;
-    vpvl::Array<QUuid> m_renderOrder;
+    vpvl::Array<QUuid> m_renderOrderList;
 
     Q_DISABLE_COPY(SceneLoader)
 };

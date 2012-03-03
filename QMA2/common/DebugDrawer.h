@@ -52,8 +52,7 @@ class DebugDrawer : public btIDebugDraw
 {
 public:
     DebugDrawer(vpvl::Scene *scene)
-        : m_world(0),
-          m_scene(scene),
+        : m_scene(scene),
           m_flags(0),
           m_visible(true)
     {}
@@ -105,13 +104,6 @@ public:
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
         m_program.link();
-    }
-    void render() {
-        if (m_world)
-            m_world->debugDrawWorld();
-    }
-    void setWorld(btDynamicsWorld *value) {
-        m_world = value;
     }
     void setVisible(bool value) {
         m_visible = value;
@@ -257,7 +249,6 @@ public:
 
 private:
     QGLShaderProgram m_program;
-    btDynamicsWorld *m_world;
     vpvl::Scene *m_scene;
     int m_flags;
     bool m_visible;

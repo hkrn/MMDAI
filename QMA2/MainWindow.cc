@@ -49,6 +49,7 @@
 #include "dialogs/GravitySettingDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/PlaySettingDialog.h"
+#include "dialogs/RenderOrderDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -588,8 +589,10 @@ void MainWindow::buildUI()
     connect(m_actionPlay, SIGNAL(triggered()), SLOT(invokePlayer()));
     m_actionPlaySettings = new QAction(this);
     connect(m_actionPlaySettings, SIGNAL(triggered()), SLOT(openPlaySettingDialog()));
-    m_actionGravitySettings = new QAction(this);
-    connect(m_actionGravitySettings, SIGNAL(triggered()), SLOT(openGravitySettingDialog()));
+    m_actionOpenGravitySettingsDialog = new QAction(this);
+    connect(m_actionOpenGravitySettingsDialog, SIGNAL(triggered()), SLOT(openGravitySettingDialog()));
+    m_actionOpenRenderOrderDialog = new QAction(this);
+    connect(m_actionOpenRenderOrderDialog, SIGNAL(triggered()), SLOT(openRenderOrderDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
     m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
@@ -787,7 +790,8 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionPlay);
     m_menuProject->addAction(m_actionPlaySettings);
     m_menuProject->addSeparator();
-    m_menuProject->addAction(m_actionGravitySettings);
+    m_menuProject->addAction(m_actionOpenGravitySettingsDialog);
+    m_menuProject->addAction(m_actionOpenRenderOrderDialog);
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionEnableAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
@@ -898,7 +902,8 @@ void MainWindow::bindActions()
     m_actionExit->setShortcut(m_settings.value(kPrefix + "exit", QKeySequence(QKeySequence::Quit).toString()).toString());
     m_actionPlay->setShortcut(m_settings.value(kPrefix + "play").toString());
     m_actionPlaySettings->setShortcut(m_settings.value(kPrefix + "playSettings").toString());
-    m_actionGravitySettings->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
+    m_actionOpenGravitySettingsDialog->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
+    m_actionOpenRenderOrderDialog->setShortcut(m_settings.value(kPrefix + "renderOrderDialog").toString());
     m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
@@ -1007,8 +1012,10 @@ void MainWindow::retranslate()
     m_actionPlay->setStatusTip(tr("Play current scene."));
     m_actionPlaySettings->setText(tr("Play settings"));
     m_actionPlaySettings->setStatusTip(tr("Open a dialog to set settings of playing scene."));
-    m_actionGravitySettings->setText(tr("Gravity setting"));
-    m_actionGravitySettings->setStatusTip(tr("Open a dialog to set gravity for physics simulation."));
+    m_actionOpenGravitySettingsDialog->setText(tr("Gravity setting"));
+    m_actionOpenGravitySettingsDialog->setStatusTip(tr("Open a dialog to set gravity for physics simulation."));
+    m_actionOpenRenderOrderDialog->setText(tr("Render order setting"));
+    m_actionOpenRenderOrderDialog->setStatusTip(tr("Open a dialog to set order of rendering assets and models."));
     m_actionEnableAcceleration->setText(tr("Enable acceleration"));
     m_actionEnableAcceleration->setStatusTip(tr("Enable or disable acceleration using OpenCL if supported."));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
@@ -1393,7 +1400,7 @@ void MainWindow::invokeVideoEncoder()
         /* レンダリングモードを自動更新から手動更新に変更 */
         m_sceneWidget->stop();
         m_sceneWidget->stopAutomaticRendering();
-        m_sceneWidget->startPhysicsSimulation();
+        loader->startPhysicsSimulation();
         loader->setGridVisible(m_exportingVideoDialog->includesGrid());
         /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
         m_sceneWidget->setHandlesVisible(false);
@@ -1474,7 +1481,7 @@ void MainWindow::invokeVideoEncoder()
         m_sceneWidget->setBoneWireFramesVisible(true);
         m_sceneWidget->setPreferredFPS(fps);
         /* レンダリングを手動更新から自動更新に戻す */
-        m_sceneWidget->stopPhysicsSimulation();
+        loader->stopPhysicsSimulation();
         m_sceneWidget->seekMotion(frameIndex, true);
         m_sceneWidget->startAutomaticRendering();
         delete progress;
@@ -1568,10 +1575,14 @@ void MainWindow::showLicenseWidget()
 
 void MainWindow::openGravitySettingDialog()
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
-    GravitySettingDialog *dialog = new GravitySettingDialog(loader, this);
-    if (dialog->exec() == QDialog::Accepted)
-        m_sceneWidget->setWorldGravity(dialog->value());
+    GravitySettingDialog *dialog = new GravitySettingDialog(m_sceneWidget->sceneLoader(), this);
+    dialog->exec();
+}
+
+void MainWindow::openRenderOrderDialog()
+{
+    RenderOrderDialog *dialog = new RenderOrderDialog(m_sceneWidget->sceneLoader(), this);
+    dialog->exec();
 }
 
 void MainWindow::updateWindowTitle()

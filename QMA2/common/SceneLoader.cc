@@ -38,6 +38,7 @@
 
 #include "SceneLoader.h"
 #include "VPDFile.h"
+#include "World.h"
 #include "util.h"
 
 #include <QtCore/QtCore>
@@ -399,6 +400,7 @@ bool SceneLoader::isAccelerationSupported()
 
 SceneLoader::SceneLoader(int width, int height, int fps)
     : QObject(),
+      m_world(0),
       m_renderer(0),
       m_renderDelegate(0),
       m_project(0),
@@ -407,6 +409,7 @@ SceneLoader::SceneLoader(int width, int height, int fps)
       m_asset(0),
       m_camera(0)
 {
+    m_world = new internal::World();
     m_renderDelegate = new UIDelegate();
     m_renderer = new Renderer(m_renderDelegate, width, height, fps);
     m_projectDelegate = new UIDelegate();
@@ -451,7 +454,7 @@ void SceneLoader::addModel(PMDModel *model, const QString &baseName, const QDir 
     m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
     m_project->setModelSetting(model, "selected", "false");
-    m_renderOrder.add(uuid);
+    m_renderOrderList.add(uuid);
     emit modelDidAdd(model, uuid);
 }
 
@@ -493,7 +496,7 @@ void SceneLoader::deleteAsset(Asset *asset)
         emit assetWillDelete(asset, uuid);
         m_project->removeAsset(asset);
         m_renderer->deleteAsset(asset);
-        m_renderOrder.remove(uuid);
+        m_renderOrderList.remove(uuid);
     }
 }
 
@@ -527,7 +530,7 @@ void SceneLoader::deleteModel(PMDModel *&model)
         }
         m_project->removeModel(model);
         m_renderer->deleteModel(model);
-        m_renderOrder.remove(uuid);
+        m_renderOrderList.remove(uuid);
         m_model = 0;
     }
 }
@@ -594,7 +597,7 @@ Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QUuid &u
             m_project->setAssetSetting(asset, Project::kSettingNameKey, baseName.toStdString());
             m_project->setAssetSetting(asset, Project::kSettingURIKey, filename.toStdString());
             m_project->setAssetSetting(asset, "selected", "false");
-            m_renderOrder.add(uuid);
+            m_renderOrderList.add(uuid);
             setAssetPosition(asset, asset->position());
             setAssetRotation(asset, asset->rotation());
             setAssetOpacity(asset, asset->opacity());
@@ -802,7 +805,7 @@ void SceneLoader::loadProject(const QString &path)
                     model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
                     model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
                     const QUuid modelUUID(m_project->modelUUID(model).c_str());
-                    m_renderOrder.add(modelUUID);
+                    m_renderOrderList.add(modelUUID);
                     emit modelDidAdd(model, modelUUID);
                     if (isModelSelected(model))
                         setSelectedModel(model);
@@ -838,7 +841,7 @@ void SceneLoader::loadProject(const QString &path)
                     asset->setName(QFileInfo(file).fileName().toUtf8().constData());
                     m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
                     const QUuid assetUUID(m_project->assetUUID(asset).c_str());
-                    m_renderOrder.add(assetUUID);
+                    m_renderOrderList.add(assetUUID);
                     emit assetDidAdd(asset, assetUUID);
                     if (isAssetSelected(asset))
                         setSelectedAsset(asset);
@@ -955,7 +958,7 @@ void SceneLoader::release()
       物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
      */
     m_renderer->releaseProject(m_project);
-    m_renderOrder.clear();
+    m_renderOrderList.clear();
     deleteCameraMotion();
     delete m_project;
     m_project = 0;
@@ -967,9 +970,9 @@ void SceneLoader::render()
 {
     UIEnableMultisample();
     m_renderer->clear();
-    const int nobjects = m_renderOrder.count();
+    const int nobjects = m_renderOrderList.count();
     for (int i = 0; i < nobjects; i++) {
-        const QUuid &uuid = m_renderOrder[i];
+        const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (PMDModel *model = m_project->model(uuidString)) {
             if (isProjectiveShadowEnabled(model)) {
@@ -982,6 +985,15 @@ void SceneLoader::render()
         else if (Asset *asset = m_project->asset(uuidString))
             m_renderer->renderAsset(asset);
     }
+}
+
+const QList<QUuid> SceneLoader::renderOrderList() const
+{
+    QList<QUuid> r;
+    int n = m_renderOrderList.count();
+    for (int i = 0; i < n; i++)
+        r.append(m_renderOrderList[i]);
+    return r;
 }
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, Asset *asset)
@@ -1045,10 +1057,48 @@ void SceneLoader::setModelMotion(VMDMotion *motion, PMDModel *model)
     emit motionDidAdd(motion, model, uuid);
 }
 
+void SceneLoader::setRenderOrderList(const QList<QUuid> &value)
+{
+    int i = 1;
+    foreach (const QUuid &uuid, value) {
+        const Project::UUID &u = uuid.toString().toStdString();
+        const std::string &n = QVariant(i).toString().toStdString();
+        if (PMDModel *model = m_project->model(u)) {
+            m_project->setModelSetting(model, "order", n);
+        }
+        else if (Asset *asset = m_project->asset(u)) {
+            m_project->setAssetSetting(asset, "order", n);
+        }
+        i++;
+    }
+}
+
 void SceneLoader::sort(bool reorder)
 {
     if (m_project)
-        m_renderOrder.sort(UIRenderOrderPredication(m_project, m_renderer->scene()->modelViewTransform(), reorder));
+        m_renderOrderList.sort(UIRenderOrderPredication(m_project, m_renderer->scene()->modelViewTransform(), reorder));
+}
+
+void SceneLoader::startPhysicsSimulation()
+{
+    /* 物理暴走を防ぐために少し進めてから開始する */
+    if (isPhysicsEnabled()) {
+        btDiscreteDynamicsWorld *world = m_world->mutableWorld();
+        m_renderer->scene()->setWorld(world);
+        world->stepSimulation(1, 60);
+    }
+}
+
+void SceneLoader::stopPhysicsSimulation()
+{
+    Scene *scene = m_renderer->scene();
+    scene->setWorld(0);
+    const Array<PMDModel *> &models = scene->getRenderingOrder();
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        PMDModel *model = models[i];
+        model->resetAllBones();
+    }
 }
 
 const Vector3 SceneLoader::worldGravity() const
@@ -1062,6 +1112,7 @@ void SceneLoader::setWorldGravity(const Vector3 &value)
     if (m_project) {
         QString str;
         str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+        m_world->setGravity(value);
         m_project->setGlobalSetting("physics.gravity", str.toStdString());
     }
 }
@@ -1414,6 +1465,12 @@ void SceneLoader::setSelectedAsset(Asset *value)
         m_project->setAssetSetting(value, "selected", "true");
         emit assetDidSelect(value, this);
     }
+}
+
+void SceneLoader::setPreferredFPS(int value)
+{
+    m_world->setPreferredFPS(value);
+    m_renderer->scene()->setPreferredFPS(value);
 }
 
 bool SceneLoader::globalSetting(const char *key, bool def) const
