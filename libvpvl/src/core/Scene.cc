@@ -144,7 +144,6 @@ void Scene::removeModel(PMDModel *model)
 {
     m_models.remove(model);
     model->leaveWorld(m_world);
-    sortRenderingOrder();
 }
 
 void Scene::resetCamera()
@@ -154,7 +153,6 @@ void Scene::resetCamera()
 
 void Scene::seekMotion(float frameIndex)
 {
-    sortRenderingOrder();
     const int nmodels = m_models.count();
     // Updating (Seeking) models and each motions
     for (int i = 0; i < nmodels; i++) {
@@ -267,7 +265,6 @@ void Scene::setWorld(btDiscreteDynamicsWorld *world)
 
 void Scene::advanceMotion(float deltaFrame)
 {
-    sortRenderingOrder();
     const int nmodels = m_models.count();
     // Updating (Advance) models and each motions
     for (int i = 0; i < nmodels; i++) {
@@ -306,7 +303,6 @@ void Scene::advanceMotion(float deltaFrame)
 
 void Scene::resetMotion()
 {
-    sortRenderingOrder();
     const int nmodels = m_models.count();
     // Updating (Resetting) models and each motions
     for (int i = 0; i < nmodels; i++) {
