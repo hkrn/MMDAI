@@ -772,19 +772,20 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
     Quaternion newRotation;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
-            /* QModelIndex にあるボーンとフレームインデックスからキーフレームを取得し、値を補正する */
-            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (Bone *bone = item->bone()) {
+            /* QModelIndex からキーフレームを取得し、その中に入っている値を補正する */
+            const QVariant &variant = index.data(kBinaryDataRole);
+            if (variant.canConvert(QVariant::ByteArray)) {
+                const QByteArray &bytes = variant.toByteArray();
                 BoneKeyframe *keyframe = new BoneKeyframe();
-                const Quaternion &oldRotation = bone->rotation();
+                keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                const Quaternion &oldRotation = keyframe->rotation();
                 newRotation.setX(oldRotation.x() * rotation.x());
                 newRotation.setY(oldRotation.y() * rotation.y());
                 newRotation.setZ(oldRotation.z() * rotation.z());
                 newRotation.setW(oldRotation.w());
                 if (newRotation.x() > 1 || newRotation.y() > 1 || newRotation.z() > 1)
                     newRotation.normalize();
-                keyframe->setName(bone->name());
-                keyframe->setPosition(bone->position() * position);
+                keyframe->setPosition(keyframe->position() * position);
                 keyframe->setRotation(newRotation);
                 keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
             }

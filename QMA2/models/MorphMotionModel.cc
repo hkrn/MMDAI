@@ -569,12 +569,13 @@ void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
     KeyFramePairList keyframes;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
-            /* QModelIndex にある頂点モーフとフレームインデックスからキーフレームを取得し、値を補正する */
-            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (Face *face = item->face()) {
+            /* QModelIndex からキーフレームを取得し、その中に入っている値を補正する */
+            const QVariant &variant = index.data(kBinaryDataRole);
+            if (variant.canConvert(QVariant::ByteArray)) {
+                const QByteArray &bytes = variant.toByteArray();
                 FaceKeyframe *keyframe = new FaceKeyframe();
-                keyframe->setName(face->name());
-                keyframe->setWeight(face->weight() * value);
+                keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                keyframe->setWeight(keyframe->weight() * value);
                 keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
             }
         }
