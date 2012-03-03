@@ -90,6 +90,7 @@ public:
     vpvl::VMDMotion *newCameraMotion() const;
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
+    void render();
 
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
@@ -147,6 +148,7 @@ public slots:
     void saveProject(const QString &path);
     void setCameraMotion(vpvl::VMDMotion *motion);
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void sort(bool reorder = false);
 
     void setGridVisible(bool value);
     void setPhysicsEnabled(bool value);
@@ -197,6 +199,7 @@ private:
     vpvl::PMDModel *m_model;
     vpvl::Asset *m_asset;
     vpvl::VMDMotion *m_camera;
+    vpvl::Array<QUuid> m_renderOrder;
 
     Q_DISABLE_COPY(SceneLoader)
 };

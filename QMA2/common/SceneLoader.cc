@@ -45,14 +45,7 @@
 #include <vpvl/vpvl.h>
 
 using namespace vpvl;
-
-#ifdef VPVL_ENABLE_GLSL
-#include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
-#else
-#include <vpvl/gl/Renderer.h>
-using namespace vpvl::gl;
-#endif
 
 /*
  * Renderer と Project の二重管理を行うため、メモリ解放にまつわる実装がややこしいことになっている。
@@ -71,15 +64,15 @@ namespace
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
-class Delegate : public Project::IDelegate, public Renderer::IDelegate
+class UIDelegate : public Project::IDelegate, public Renderer::IDelegate
 {
 public:
-    Delegate()
+    UIDelegate()
         : m_codec(0)
     {
         m_codec = QTextCodec::codecForName("Shift-JIS");
     }
-    ~Delegate()
+    ~UIDelegate()
     {
     }
 
@@ -108,7 +101,7 @@ public:
         QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
         textureID = context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D,
-                                          image.depth() == 32 ? GL_RGBA : GL_RGB, options);
+                                         image.depth() == 32 ? GL_RGBA : GL_RGB, options);
         if (!isToon) {
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -334,6 +327,69 @@ static const Quaternion UIGetQuaternion(const std::string &value, const Quaterni
     return def;
 }
 
+#ifdef GL_MULTISAMPLE
+static inline void UIEnableMultisample()
+{
+    glEnable(GL_MULTISAMPLE);
+}
+#else
+#define UIEnableMultisample() (void) 0
+#endif
+
+class UIRenderOrderPredication
+{
+public:
+    UIRenderOrderPredication(Project *project, const Transform &modelViewTransform, bool forceReorder)
+        : m_project(project),
+          m_modelViewTransform(modelViewTransform),
+          m_forceReorder(forceReorder)
+    {
+    }
+    ~UIRenderOrderPredication() {
+    }
+
+    bool operator()(const QUuid &left, const QUuid &right) {
+        const Project::UUID &luuid = left.toString().toStdString(), &ruuid = right.toString().toStdString();
+        Asset *lasset = m_project->asset(luuid), *rasset = m_project->asset(ruuid);
+        PMDModel *lmodel = m_project->model(luuid), *rmodel = m_project->model(ruuid);
+        bool lok, rok;
+        if (lasset && rasset) {
+            int lorder = QString::fromStdString(m_project->assetSetting(lasset, "order")).toInt(&lok);
+            int rorder = QString::fromStdString(m_project->assetSetting(rasset, "order")).toInt(&rok);
+            return lok && rok && !m_forceReorder ? lorder < rorder : false;
+        }
+        else if (lasset && rmodel) {
+            int lorder = QString::fromStdString(m_project->assetSetting(lasset, "order")).toInt(&lok);
+            int rorder = QString::fromStdString(m_project->modelSetting(rmodel, "order")).toInt(&rok);
+            return lok && rok && !m_forceReorder ? lorder < rorder : false;
+        }
+        else if (lmodel && lasset) {
+            int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
+            int rorder = QString::fromStdString(m_project->assetSetting(rasset, "order")).toInt(&rok);
+            return lok && rok && !m_forceReorder ? lorder < rorder : false;
+        }
+        else if (lmodel && rmodel) {
+            int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
+            int rorder = QString::fromStdString(m_project->assetSetting(rasset, "order")).toInt(&rok);
+            if (lok && rok && !m_forceReorder) {
+                return lorder < rorder;
+            }
+            else {
+                Bone *lcenter = Bone::centerBone(&lmodel->bones()), *rcenter = Bone::centerBone(&rmodel->bones());
+                const Vector3 &positionLeft = m_modelViewTransform * lcenter->localTransform().getOrigin();
+                const Vector3 &positionRight = m_modelViewTransform * rcenter->localTransform().getOrigin();
+                return positionLeft.z() < positionRight.z();
+            }
+        }
+        return false;
+    }
+
+private:
+    Project *m_project;
+    const Transform m_modelViewTransform;
+    const bool m_forceReorder;
+};
+
 }
 
 bool SceneLoader::isAccelerationSupported()
@@ -351,9 +407,9 @@ SceneLoader::SceneLoader(int width, int height, int fps)
       m_asset(0),
       m_camera(0)
 {
-    m_renderDelegate = new Delegate();
+    m_renderDelegate = new UIDelegate();
     m_renderer = new Renderer(m_renderDelegate, width, height, fps);
-    m_projectDelegate = new Delegate();
+    m_projectDelegate = new UIDelegate();
     m_project = new Project(m_projectDelegate);
     /*
      * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
@@ -395,6 +451,7 @@ void SceneLoader::addModel(PMDModel *model, const QString &baseName, const QDir 
     m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
     m_project->setModelSetting(model, "selected", "false");
+    m_renderOrder.add(uuid);
     emit modelDidAdd(model, uuid);
 }
 
@@ -436,6 +493,7 @@ void SceneLoader::deleteAsset(Asset *asset)
         emit assetWillDelete(asset, uuid);
         m_project->removeAsset(asset);
         m_renderer->deleteAsset(asset);
+        m_renderOrder.remove(uuid);
     }
 }
 
@@ -469,6 +527,7 @@ void SceneLoader::deleteModel(PMDModel *&model)
         }
         m_project->removeModel(model);
         m_renderer->deleteModel(model);
+        m_renderOrder.remove(uuid);
         m_model = 0;
     }
 }
@@ -535,6 +594,7 @@ Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QUuid &u
             m_project->setAssetSetting(asset, Project::kSettingNameKey, baseName.toStdString());
             m_project->setAssetSetting(asset, Project::kSettingURIKey, filename.toStdString());
             m_project->setAssetSetting(asset, "selected", "false");
+            m_renderOrder.add(uuid);
             setAssetPosition(asset, asset->position());
             setAssetRotation(asset, asset->rotation());
             setAssetOpacity(asset, asset->opacity());
@@ -741,15 +801,18 @@ void SceneLoader::loadProject(const QString &path)
                     const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV);
                     model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
                     model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
-                    emit modelDidAdd(model, QUuid(m_project->modelUUID(model).c_str()));
+                    const QUuid modelUUID(m_project->modelUUID(model).c_str());
+                    m_renderOrder.add(modelUUID);
+                    emit modelDidAdd(model, modelUUID);
                     if (isModelSelected(model))
                         setSelectedModel(model);
                     const Array<VMDMotion *> &motions = model->motions();
                     const int nmotions = motions.count();
                     for (int i = 0; i < nmotions; i++) {
                         VMDMotion *motion = motions[i];
+                        const QUuid motionUUID(m_project->motionUUID(motion).c_str());
                         motion->reload();
-                        emit motionDidAdd(motion, model, QUuid(m_project->motionUUID(motion).c_str()));
+                        emit motionDidAdd(motion, model, motionUUID);
                     }
                     emit projectDidProceed(++progress);
                     continue;
@@ -774,7 +837,9 @@ void SceneLoader::loadProject(const QString &path)
                 if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     asset->setName(QFileInfo(file).fileName().toUtf8().constData());
                     m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
-                    emit assetDidAdd(asset, QUuid(m_project->assetUUID(asset).c_str()));
+                    const QUuid assetUUID(m_project->assetUUID(asset).c_str());
+                    m_renderOrder.add(assetUUID);
+                    emit assetDidAdd(asset, assetUUID);
                     if (isAssetSelected(asset))
                         setSelectedAsset(asset);
                     emit projectDidProceed(++progress);
@@ -805,6 +870,7 @@ void SceneLoader::loadProject(const QString &path)
             m_project->removeAsset(asset);
             delete asset;
         }
+        sort(false);
         m_project->setDirty(false);
         emit projectDidLoad(true);
     }
@@ -889,11 +955,33 @@ void SceneLoader::release()
       物理削除した時二重削除となってしまい不正なアクセスが発生するため、Project 側は論理削除だけにとどめておく必要がある。
      */
     m_renderer->releaseProject(m_project);
+    m_renderOrder.clear();
     deleteCameraMotion();
     delete m_project;
     m_project = 0;
     m_asset = 0;
     m_model = 0;
+}
+
+void SceneLoader::render()
+{
+    UIEnableMultisample();
+    m_renderer->clear();
+    const int nobjects = m_renderOrder.count();
+    for (int i = 0; i < nobjects; i++) {
+        const QUuid &uuid = m_renderOrder[i];
+        const Project::UUID &uuidString = uuid.toString().toStdString();
+        if (PMDModel *model = m_project->model(uuidString)) {
+            if (isProjectiveShadowEnabled(model)) {
+                glCullFace(GL_FRONT);
+                m_renderer->renderModelShadow(model);
+                glCullFace(GL_BACK);
+            }
+            m_renderer->renderModel(model);
+        }
+        else if (Asset *asset = m_project->asset(uuidString))
+            m_renderer->renderAsset(asset);
+    }
 }
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, Asset *asset)
@@ -955,6 +1043,12 @@ void SceneLoader::setModelMotion(VMDMotion *motion, PMDModel *model)
     model->addMotion(motion);
     m_project->addMotion(motion, model, uuid.toString().toStdString());
     emit motionDidAdd(motion, model, uuid);
+}
+
+void SceneLoader::sort(bool reorder)
+{
+    if (m_project)
+        m_renderOrder.sort(UIRenderOrderPredication(m_project, m_renderer->scene()->modelViewTransform(), reorder));
 }
 
 const Vector3 SceneLoader::worldGravity() const

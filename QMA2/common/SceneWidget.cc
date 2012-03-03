@@ -70,19 +70,6 @@ using namespace vpvl::gl;
 #endif /* VPVL_ENABLE_GLSL */
 using namespace internal;
 
-namespace {
-
-#ifdef GL_MULTISAMPLE
-static inline void UIEnableMultisample()
-{
-    glEnable(GL_MULTISAMPLE);
-}
-#else
-#define UIEnableMultisample() (void) 0
-#endif
-
-}
-
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_world(0),
@@ -866,7 +853,6 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-    UIEnableMultisample();
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     const QSize &s = size();
     m_loader = new SceneLoader(s.width(), s.height(), Scene::kFPS);
@@ -1019,28 +1005,12 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     qglClearColor(m_loader->isBlackBackgroundEnabled() ? Qt::black : Qt::white);
-    UIEnableMultisample();
-    Renderer *renderEngine = m_loader->renderEngine();
-    renderEngine->clear();
-    {
-        glCullFace(GL_FRONT);
-        Renderer *renderEngine = m_loader->renderEngine();
-        const Array<PMDModel *> &models = renderEngine->scene()->getRenderingOrder();
-        const int nmodels = models.count();
-        for (int i = 0; i < nmodels; i++) {
-            PMDModel *model = models[i];
-            if (m_loader->isProjectiveShadowEnabled(model))
-                renderEngine->renderModelShadow(model);
-        }
-        glCullFace(GL_BACK);
-    }
-    renderEngine->renderAllModels();
-    renderEngine->renderAllAssets();
+    m_loader->render();
     /* FIXME: rendering order should be drawn after drawing handles */
     vpvl::Bone *bone = 0;
     if (m_bones.count() == 1)
         bone = m_bones.first();
-    m_grid->draw(renderEngine->scene(), m_loader->isGridVisible());
+    m_grid->draw(m_loader->renderEngine()->scene(), m_loader->isGridVisible());
     if (bone)
         m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
     else
