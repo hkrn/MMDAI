@@ -154,7 +154,7 @@ public slots:
     void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void setRenderOrderList(const QList<QUuid> &value);
     void setWorldGravity(const vpvl::Vector3 &value);
-    void sort(bool reorder = false);
+    void sort(bool useOrderAttr = false);
     void startPhysicsSimulation();
     void stopPhysicsSimulation();
 

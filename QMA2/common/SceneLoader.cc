@@ -340,10 +340,10 @@ static inline void UIEnableMultisample()
 class UIRenderOrderPredication
 {
 public:
-    UIRenderOrderPredication(Project *project, const Transform &modelViewTransform, bool forceReorder)
+    UIRenderOrderPredication(Project *project, const Transform &modelViewTransform, bool useOrderAttr)
         : m_project(project),
           m_modelViewTransform(modelViewTransform),
-          m_forceReorder(forceReorder)
+          m_useOrderAttr(useOrderAttr)
     {
     }
     ~UIRenderOrderPredication() {
@@ -357,22 +357,25 @@ public:
         if (lasset && rasset) {
             int lorder = QString::fromStdString(m_project->assetSetting(lasset, "order")).toInt(&lok);
             int rorder = QString::fromStdString(m_project->assetSetting(rasset, "order")).toInt(&rok);
-            return lok && rok && !m_forceReorder ? lorder < rorder : false;
+            if (lok && rok && m_useOrderAttr)
+                return lorder < rorder;
         }
         else if (lasset && rmodel) {
             int lorder = QString::fromStdString(m_project->assetSetting(lasset, "order")).toInt(&lok);
             int rorder = QString::fromStdString(m_project->modelSetting(rmodel, "order")).toInt(&rok);
-            return lok && rok && !m_forceReorder ? lorder < rorder : false;
+            if (lok && rok && m_useOrderAttr)
+                return lorder < rorder;
         }
-        else if (lmodel && lasset) {
+        else if (lmodel && rasset) {
             int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
             int rorder = QString::fromStdString(m_project->assetSetting(rasset, "order")).toInt(&rok);
-            return lok && rok && !m_forceReorder ? lorder < rorder : false;
+            if (lok && rok && m_useOrderAttr)
+                return lorder < rorder;
         }
         else if (lmodel && rmodel) {
             int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
-            int rorder = QString::fromStdString(m_project->assetSetting(rasset, "order")).toInt(&rok);
-            if (lok && rok && !m_forceReorder) {
+            int rorder = QString::fromStdString(m_project->modelSetting(rmodel, "order")).toInt(&rok);
+            if (lok && rok && m_useOrderAttr) {
                 return lorder < rorder;
             }
             else {
@@ -388,7 +391,7 @@ public:
 private:
     Project *m_project;
     const Transform m_modelViewTransform;
-    const bool m_forceReorder;
+    const bool m_useOrderAttr;
 };
 
 }
@@ -879,7 +882,7 @@ void SceneLoader::loadProject(const QString &path)
             m_project->removeAsset(asset);
             delete asset;
         }
-        sort(false);
+        sort(true);
         m_project->setDirty(false);
         emit projectDidLoad(true);
     }
@@ -1080,12 +1083,13 @@ void SceneLoader::setRenderOrderList(const QList<QUuid> &value)
         }
         i++;
     }
+    sort(true);
 }
 
-void SceneLoader::sort(bool reorder)
+void SceneLoader::sort(bool useOrderAttr)
 {
     if (m_project)
-        m_renderOrderList.sort(UIRenderOrderPredication(m_project, m_renderer->scene()->modelViewTransform(), reorder));
+        m_renderOrderList.sort(UIRenderOrderPredication(m_project, m_renderer->scene()->modelViewTransform(), useOrderAttr));
 }
 
 void SceneLoader::startPhysicsSimulation()

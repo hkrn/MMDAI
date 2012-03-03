@@ -37,6 +37,7 @@
 #ifndef RENDERORDERDIALOG_H
 #define RENDERORDERDIALOG_H
 
+#include <QtCore/QString>
 #include <QtCore/QUuid>
 #include <QtGui/QDialog>
 
@@ -48,6 +49,8 @@ class RenderOrderDialog : public QDialog
     Q_OBJECT
 
 public:
+    typedef QPair<QString, QUuid> NameUUID;
+
     explicit RenderOrderDialog(SceneLoader *loader, QWidget *parent = 0);
     ~RenderOrderDialog();
 
@@ -55,12 +58,21 @@ signals:
     void renderOrderListDidSet(const QList<QUuid> &uuid);
 
 private slots:
+    void retranslate();
     void emitSignal();
+    void setOrderUp();
+    void setOrderDown();
+    void resetOrder();
 
 private:
-    void setRenderOrder(SceneLoader *loader);
+    void buildOriginFromRenderOrder(const SceneLoader *loader);
+    void setRenderOrder(const QList<NameUUID> &pairs);
 
     QListWidget *m_listWidget;
+    QList<NameUUID> m_origin;
+    QPushButton *m_upButton;
+    QPushButton *m_downBotton;
+    QPushButton *m_resetButton;
 };
 
 #endif // RENDERORDERDIALOG_H

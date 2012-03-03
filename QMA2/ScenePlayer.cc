@@ -67,7 +67,6 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
     m_progress = new QProgressDialog();
     m_progress->setWindowModality(Qt::ApplicationModal);
     m_player = new AudioPlayer();
-    /* ※ renderSceneFrame(float) は絶対値によるシークではなく差分更新 */
 }
 
 ScenePlayer::~ScenePlayer()
