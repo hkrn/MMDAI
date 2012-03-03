@@ -1575,14 +1575,14 @@ void MainWindow::showLicenseWidget()
 
 void MainWindow::openGravitySettingDialog()
 {
-    GravitySettingDialog *dialog = new GravitySettingDialog(m_sceneWidget->sceneLoader(), this);
-    dialog->exec();
+    GravitySettingDialog dialog(m_sceneWidget->sceneLoader());
+    dialog.exec();
 }
 
 void MainWindow::openRenderOrderDialog()
 {
-    RenderOrderDialog *dialog = new RenderOrderDialog(m_sceneWidget->sceneLoader(), this);
-    dialog->exec();
+    RenderOrderDialog dialog(m_sceneWidget->sceneLoader());
+    dialog.exec();
 }
 
 void MainWindow::updateWindowTitle()
