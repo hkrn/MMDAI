@@ -125,6 +125,7 @@ public:
 
 private:
     bool save0(xmlTextWriterPtr ptr);
+    bool validate(bool result);
 
     Handler *m_handler;
     xmlSAXHandler m_sax;

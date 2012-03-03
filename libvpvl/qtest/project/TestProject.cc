@@ -91,6 +91,7 @@ void TestProject::load()
 {
     Delegate delegate;
     Project project(&delegate);
+    QVERIFY(!Project(&delegate).load("../../../docs/project_uuid_dup.xml"));
     QVERIFY(project.load("../../../docs/project.xml"));
     QVERIFY(!project.isDirty());
     QCOMPARE(project.version().c_str(), "0.1");

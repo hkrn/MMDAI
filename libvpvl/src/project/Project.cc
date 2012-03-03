@@ -38,6 +38,7 @@
 #include "vpvl/internal/util.h"
 
 #include <libxml/xmlwriter.h>
+#include <set>
 #include <string>
 #include <sstream>
 #include <map>
@@ -104,6 +105,28 @@ public:
         currentMotion = 0;
     }
 
+    bool isDuplicatedUUID(const Project::UUID &uuid, std::set<Project::UUID> &set) const {
+        if (set.find(uuid) != set.end())
+            return true;
+        set.insert(uuid);
+        return false;
+    }
+    bool checkDuplicateUUID() const {
+        std::set<Project::UUID> set;
+        for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            if (isDuplicatedUUID((*it).first, set))
+                return false;
+        }
+        for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            if (isDuplicatedUUID((*it).first, set))
+                return false;
+        }
+        for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            if (isDuplicatedUUID((*it).first, set))
+                return false;
+        }
+        return true;
+    }
     void pushState(State s) {
         state = s;
         depth++;
@@ -114,29 +137,53 @@ public:
         depth--;
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
-    const Project::UUID &assetUUID(const Asset *asset) const {
-        if (!asset)
+    Asset *findAsset(const Project::UUID &value) const {
+        if (value == Project::kNullUUID)
+            return 0;
+        AssetMap::const_iterator it = assets.find(value);
+        if (it != assets.end())
+            return (*it).second;
+        return 0;
+    }
+    const Project::UUID &findAssetUUID(const Asset *value) const {
+        if (!value)
             return Project::kNullUUID;
         for (AssetMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            if ((*it).second == asset)
+            if ((*it).second == value)
                 return (*it).first;
         }
         return Project::kNullUUID;
     }
-    const Project::UUID &modelUUID(const PMDModel *model) const {
-        if (!model)
+    PMDModel *findModel(const Project::UUID &value) const {
+        if (value == Project::kNullUUID)
+            return 0;
+        PMDModelMap::const_iterator it = models.find(value);
+        if (it != models.end())
+            return (*it).second;
+        return 0;
+    }
+    const Project::UUID &findModelUUID(const PMDModel *value) const {
+        if (!value)
             return Project::kNullUUID;
         for (PMDModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            if ((*it).second == model)
+            if ((*it).second == value)
                 return (*it).first;
         }
         return Project::kNullUUID;
     }
-    const Project::UUID &motionUUID(const VMDMotion *motion) const {
-        if (!motion)
+    VMDMotion *findMotion(const Project::UUID &value) const {
+        if (value == Project::kNullUUID)
+            return 0;
+        VMDMotionMap::const_iterator it = motions.find(value);
+        if (it != motions.end())
+            return (*it).second;
+        return 0;
+    }
+    const Project::UUID &findMotionUUID(const VMDMotion *value) const {
+        if (!value)
             return Project::kNullUUID;
         for (VMDMotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            if ((*it).second == motion)
+            if ((*it).second == value)
                 return (*it).first;
         }
         return Project::kNullUUID;
@@ -223,7 +270,7 @@ public:
             const std::string &motionUUID = (*it).first;
             const VMDMotion *motion = (*it).second;
             VPVL_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL_CAST_XC("motion"), 0));
-            const std::string &modelUUID = this->modelUUID(motion->parentModel());
+            const std::string &modelUUID = this->findModelUUID(motion->parentModel());
             if (modelUUID != Project::kNullUUID)
                 VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("model"), VPVL_CAST_XC(modelUUID.c_str())));
             VPVL_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL_CAST_XC("uuid"), VPVL_CAST_XC(motionUUID.c_str())));
@@ -812,9 +859,13 @@ public:
                     if (!self->uuid.empty()) {
                         if (self->uuid != Project::kNullUUID) {
                             self->motions[self->uuid] = self->currentMotion;
-                            if (!self->parentModel.empty()) {
-                                if (PMDModel *model = self->models[self->parentModel])
-                                    model->addMotion(self->currentMotion);
+                            const std::string &parentModel = self->parentModel;
+                            if (!parentModel.empty()) {
+                                PMDModelMap::const_iterator it = self->models.find(parentModel);
+                                if (it != self->models.end()) {
+                                    if (PMDModel *model = self->models[parentModel])
+                                        model->addMotion(self->currentMotion);
+                                }
                             }
                         }
                         else {
@@ -935,12 +986,12 @@ Project::~Project()
 
 bool Project::load(const char *path)
 {
-    return xmlSAXUserParseFile(&m_sax, m_handler, path) == 0 && m_handler->depth == 0;
+    return validate(xmlSAXUserParseFile(&m_sax, m_handler, path) == 0);
 }
 
 bool Project::load(const uint8_t *data, size_t size)
 {
-    return xmlSAXUserParseMemory(&m_sax, m_handler, reinterpret_cast<const char *>(data), size) == 0;
+    return validate(xmlSAXUserParseMemory(&m_sax, m_handler, reinterpret_cast<const char *>(data), size) == 0);
 }
 
 bool Project::save(const char *path)
@@ -1002,32 +1053,32 @@ const Project::UUIDList Project::motionUUIDs() const
 
 Asset *Project::asset(const UUID &uuid) const
 {
-    return uuid != kNullUUID ? m_handler->assets[uuid] : 0;
+    return m_handler->findAsset(uuid);
 }
 
 PMDModel *Project::model(const UUID &uuid) const
 {
-    return uuid != kNullUUID ? m_handler->models[uuid] : 0;
+    return m_handler->findModel(uuid);
 }
 
 VMDMotion *Project::motion(const UUID &uuid) const
 {
-    return uuid != kNullUUID ? m_handler->motions[uuid] : 0;
+    return m_handler->findMotion(uuid);
 }
 
 const Project::UUID &Project::assetUUID(const Asset *asset) const
 {
-    return m_handler->assetUUID(asset);
+    return m_handler->findAssetUUID(asset);
 }
 
 const Project::UUID &Project::modelUUID(const PMDModel *model) const
 {
-    return m_handler->modelUUID(model);
+    return m_handler->findModelUUID(model);
 }
 
 const Project::UUID &Project::motionUUID(const VMDMotion *motion) const
 {
-    return m_handler->motionUUID(motion);
+    return m_handler->findMotionUUID(motion);
 }
 
 bool Project::containsAsset(const Asset *asset) const
@@ -1159,6 +1210,11 @@ bool Project::save0(xmlTextWriterPtr ptr)
     if (ret)
         m_dirty = false;
     return ret;
+}
+
+bool Project::validate(bool result)
+{
+    return result && m_handler->depth == 0 && m_handler->checkDuplicateUUID();
 }
 
 } /* namespace vpvl */
