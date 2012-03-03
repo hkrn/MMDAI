@@ -413,14 +413,7 @@ SceneLoader::SceneLoader(int width, int height, int fps)
     m_renderDelegate = new UIDelegate();
     m_renderer = new Renderer(m_renderDelegate, width, height, fps);
     m_projectDelegate = new UIDelegate();
-    m_project = new Project(m_projectDelegate);
-    /*
-     * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
-     * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
-     */
-    m_project->setGlobalSetting("grid.visible", "true");
-    m_project->setGlobalSetting("physics.enabled", "true");
-    m_project->setDirty(false);
+    createProject();
 }
 
 SceneLoader::~SceneLoader()
@@ -484,8 +477,16 @@ void SceneLoader::commitAssetProperties()
 
 void SceneLoader::createProject()
 {
-    if (!m_project)
+    if (!m_project) {
         m_project = new Project(m_projectDelegate);
+        /*
+         * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
+         * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
+         */
+        m_project->setGlobalSetting("grid.visible", "true");
+        m_project->setGlobalSetting("physics.enabled", "true");
+        m_project->setDirty(false);
+    }
 }
 
 void SceneLoader::deleteAsset(Asset *asset)
@@ -792,7 +793,8 @@ void SceneLoader::loadProject(const QString &path)
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
         for (int i = 0; i < nmodels; i++) {
-            PMDModel *model = m_project->model(modelUUIDs[i]);
+            const Project::UUID &modelUUIDString = modelUUIDs[i];
+            PMDModel *model = m_project->model(modelUUIDString);
             const std::string &name = m_project->modelSetting(model, Project::kSettingNameKey);
             const std::string &uri = m_project->modelSetting(model, Project::kSettingURIKey);
             QFile file(QString::fromStdString(uri));
@@ -804,7 +806,7 @@ void SceneLoader::loadProject(const QString &path)
                     const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV);
                     model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
                     model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
-                    const QUuid modelUUID(m_project->modelUUID(model).c_str());
+                    const QUuid modelUUID(modelUUIDString.c_str());
                     m_renderOrderList.add(modelUUID);
                     emit modelDidAdd(model, modelUUID);
                     if (isModelSelected(model))
@@ -813,7 +815,8 @@ void SceneLoader::loadProject(const QString &path)
                     const int nmotions = motions.count();
                     for (int i = 0; i < nmotions; i++) {
                         VMDMotion *motion = motions[i];
-                        const QUuid motionUUID(m_project->motionUUID(motion).c_str());
+                        const Project::UUID &motionUUIDString = m_project->motionUUID(motion);
+                        const QUuid motionUUID(motionUUIDString.c_str());
                         motion->reload();
                         emit motionDidAdd(motion, model, motionUUID);
                     }
@@ -822,7 +825,8 @@ void SceneLoader::loadProject(const QString &path)
                 }
             }
             /* 読み込みに失敗したモデルは後で Project から削除するため失敗したリストに追加する */
-            qWarning("Model \"%s\" at \"%s\" cannot be loaded: %s",
+            qWarning("Model(uuid=%s, name=%s, path=%s) cannot be loaded: %s",
+                     modelUUIDString.c_str(),
                      name.c_str(),
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
@@ -832,7 +836,8 @@ void SceneLoader::loadProject(const QString &path)
         /* Project はアクセサリのインスタンスを作成しか行わないので、ここでアクセサリとそのリソースの読み込みを行う */
         int nassets = assetUUIDs.size();
         for (int i = 0; i < nassets; i++) {
-            Asset *asset = m_project->asset(assetUUIDs[i]);
+            const Project::UUID &assetUUIDString = assetUUIDs[i];
+            Asset *asset = m_project->asset(assetUUIDString);
             const std::string &uri = m_project->assetSetting(asset, Project::kSettingURIKey);
             QFile file(QString::fromStdString(uri));
             if (file.open(QFile::ReadOnly)) {
@@ -840,7 +845,7 @@ void SceneLoader::loadProject(const QString &path)
                 if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
                     asset->setName(QFileInfo(file).fileName().toUtf8().constData());
                     m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
-                    const QUuid assetUUID(m_project->assetUUID(asset).c_str());
+                    const QUuid assetUUID(assetUUIDString.c_str());
                     m_renderOrderList.add(assetUUID);
                     emit assetDidAdd(asset, assetUUID);
                     if (isAssetSelected(asset))
@@ -850,7 +855,8 @@ void SceneLoader::loadProject(const QString &path)
                 }
             }
             /* 読み込みに失敗したアクセサリは後で Project から削除するため失敗したリストに追加する */
-            qWarning("Asset %s at %s cannot be loaded: %s",
+            qWarning("Asset(uuid=%s, name=%s, path=%s) cannot be loaded: %s",
+                     assetUUIDString.c_str(),
                      qPrintable(internal::toQString(asset)),
                      qPrintable(file.fileName()),
                      qPrintable(file.errorString()));
@@ -879,6 +885,9 @@ void SceneLoader::loadProject(const QString &path)
     }
     else {
         qDebug("Failed loading project %s", qPrintable(path));
+        delete m_project;
+        m_project = 0;
+        createProject();
         emit projectDidLoad(false);
     }
 }
