@@ -820,6 +820,7 @@ void SceneWidget::initializeGL()
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     const QSize &s = size();
     m_loader = new SceneLoader(s.width(), s.height(), Scene::kFPS);
+    connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
     m_debugDrawer = new DebugDrawer(m_loader->renderEngine()->scene());
@@ -1138,6 +1139,15 @@ void SceneWidget::swipeTriggered(QSwipeGesture *event)
         else if (hdir == QSwipeGesture::Right || vdir == QSwipeGesture::Down) {
             emit redoDidRequest();
         }
+    }
+}
+
+void SceneWidget::openErrorDialogIfFailed(bool loadingProjectFailed)
+{
+    if (!loadingProjectFailed) {
+        QMessageBox::warning(this,
+                             tr("Failed loading the project"),
+                             tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
     }
 }
 
