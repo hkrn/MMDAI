@@ -266,10 +266,10 @@ private:
     QAction *m_actionDeleteModelOnToolBar;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
+    QMenu *m_menuEdit;
     QMenu *m_menuProject;
     QMenu *m_menuScene;
     QMenu *m_menuModel;
-    QMenu *m_menuBone;
     QMenu *m_menuFrame;
     QMenu *m_menuView;
     QMenu *m_menuRetainModels;
