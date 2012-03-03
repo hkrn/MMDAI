@@ -47,12 +47,6 @@ using namespace vpvl;
 RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
     : QDialog(parent)
 {
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    connect(buttons, SIGNAL(accepted()), SLOT(accept()));
-    connect(buttons, SIGNAL(rejected()), SLOT(reject()));
-    connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
-    connect(this, SIGNAL(renderOrderListDidSet(QList<QUuid>)), loader, SLOT(setRenderOrderList(QList<QUuid>)));
-    QHBoxLayout *subLayout = new QHBoxLayout();
     /* アイテムのドラッグ・アンド・ドロップを有効にする */
     m_listWidget = new QListWidget();
     m_listWidget->setSelectionMode(QListWidget::SingleSelection);
@@ -60,6 +54,7 @@ RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
     m_listWidget->viewport()->setAcceptDrops(true);
     m_listWidget->setDropIndicatorShown(true);
     m_listWidget->setDragDropMode(QListWidget::InternalMove);
+    QHBoxLayout *subLayout = new QHBoxLayout();
     subLayout->addWidget(m_listWidget);
     QVBoxLayout *buttonLayout = new QVBoxLayout();
     m_upButton = new QPushButton();
@@ -75,7 +70,13 @@ RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
     subLayout->addLayout(buttonLayout);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(subLayout);
-    mainLayout->addWidget(buttons);
+    m_dialogButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
+    connect(m_dialogButtonBox, SIGNAL(accepted()), SLOT(accept()));
+    connect(m_dialogButtonBox, SIGNAL(rejected()), SLOT(reject()));
+    connect(m_dialogButtonBox, SIGNAL(clicked(QAbstractButton*)), SLOT(handleButton(QAbstractButton*)));
+    connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
+    connect(this, SIGNAL(renderOrderListDidSet(QList<QUuid>)), loader, SLOT(setRenderOrderList(QList<QUuid>)));
+    mainLayout->addWidget(m_dialogButtonBox);
     retranslate();
     setLayout(mainLayout);
     buildOriginFromRenderOrder(loader);
@@ -124,6 +125,12 @@ void RenderOrderDialog::setOrderDown()
         m_listWidget->insertItem(row + 1, item);
         m_listWidget->setCurrentItem(item);
     }
+}
+
+void RenderOrderDialog::handleButton(QAbstractButton *button)
+{
+    if (m_dialogButtonBox->buttonRole(button) == QDialogButtonBox::ApplyRole)
+        emitSignal();
 }
 
 void RenderOrderDialog::resetOrder()

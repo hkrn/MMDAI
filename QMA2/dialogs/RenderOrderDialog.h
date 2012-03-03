@@ -41,6 +41,8 @@
 #include <QtCore/QUuid>
 #include <QtGui/QDialog>
 
+class QAbstractButton;
+class QDialogButtonBox;
 class QListWidget;
 class SceneLoader;
 
@@ -63,16 +65,18 @@ private slots:
     void setOrderUp();
     void setOrderDown();
     void resetOrder();
+    void handleButton(QAbstractButton *button);
 
 private:
     void buildOriginFromRenderOrder(const SceneLoader *loader);
     void setRenderOrder(const QList<NameUUID> &pairs);
 
     QListWidget *m_listWidget;
-    QList<NameUUID> m_origin;
+    QDialogButtonBox *m_dialogButtonBox;
     QPushButton *m_upButton;
     QPushButton *m_downBotton;
     QPushButton *m_resetButton;
+    QList<NameUUID> m_origin;
 };
 
 #endif // RENDERORDERDIALOG_H
