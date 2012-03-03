@@ -37,6 +37,8 @@
 #ifndef FRAMEWEIGHTDIALOG_H
 #define FRAMEWEIGHTDIALOG_H
 
+#include "widgets/TimelineTabWidget.h" /* for TimelineTabWidget::Type */
+
 #include <QtGui/QDialog>
 
 class QSettings;
@@ -48,20 +50,30 @@ class FrameWeightDialog : public QDialog
     Q_OBJECT
 
 public:
-    FrameWeightDialog(QWidget *parent);
+    FrameWeightDialog(TimelineTabWidget::Type type, QWidget *parent = 0);
     ~FrameWeightDialog();
 
-    void resetValue();
+private slots:
+    void setPositionXWeight(double value);
+    void setPositionYWeight(double value);
+    void setPositionZWeight(double value);
+    void setRotationXWeight(double value);
+    void setRotationYWeight(double value);
+    void setRotationZWeight(double value);
+    void setMorphWeight(double value);
+    void emitBoneWeightSignal();
+    void emitMorphWeightSignal();
 
 signals:
-    void keyframeWeightDidSet(float weight);
-
-private slots:
-    void emitKeyframeWeight();
+    void boneWeightDidSet(const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
+    void morphKeyframeWeightDidSet(float weight);
 
 private:
-    QSettings *m_settings;
-    QDoubleSpinBox *m_weightBox;
+    QDoubleSpinBox *createSpinBox(const char *slot);
+
+    vpvl::Vector3 m_position;
+    vpvl::Vector3 m_rotation;
+    float m_morphWeight;
 
     Q_DISABLE_COPY(FrameWeightDialog)
 };

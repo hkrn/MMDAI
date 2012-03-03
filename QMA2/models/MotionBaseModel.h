@@ -167,7 +167,6 @@ public slots:
     virtual void addKeyframesByModelIndices(const QModelIndexList &indices) = 0;
     virtual void selectKeyframesByModelIndices(const QModelIndexList &indices) = 0;
     virtual void deleteKeyframesByModelIndices(const QModelIndexList &indices) = 0;
-    virtual void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value) = 0;
 
 signals:
     void motionDidModify(bool value);

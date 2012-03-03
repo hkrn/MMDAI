@@ -764,18 +764,28 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
     }
 }
 
-void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
+void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices,
+                                                        const vpvl::Vector3 &position,
+                                                        const vpvl::Vector3 &rotation)
 {
     KeyFramePairList keyframes;
+    Quaternion newRotation;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
             /* QModelIndex にあるボーンとフレームインデックスからキーフレームを取得し、値を補正する */
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (Bone *bone = item->bone()) {
                 BoneKeyframe *keyframe = new BoneKeyframe();
+                const Quaternion &oldRotation = bone->rotation();
+                newRotation.setX(oldRotation.x() * rotation.x());
+                newRotation.setY(oldRotation.y() * rotation.y());
+                newRotation.setZ(oldRotation.z() * rotation.z());
+                newRotation.setW(oldRotation.w());
+                if (newRotation.x() > 1 || newRotation.y() > 1 || newRotation.z() > 1)
+                    newRotation.normalize();
                 keyframe->setName(bone->name());
-                keyframe->setPosition(bone->position() * value);
-                keyframe->setRotation(bone->rotation() * value);
+                keyframe->setPosition(bone->position() * position);
+                keyframe->setRotation(newRotation);
                 keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
             }
         }

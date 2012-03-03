@@ -349,13 +349,26 @@ void TimelineTabWidget::openFrameSelectionDialog()
 
 void TimelineTabWidget::openFrameWeightDialog()
 {
-    if (!m_frameWeightDialog) {
-        m_frameWeightDialog = new FrameWeightDialog(this);
-        connect(m_frameWeightDialog, SIGNAL(keyframeWeightDidSet(float)),
-                this, SLOT(setKeyframeWeight(float)));
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex: {
+        FrameWeightDialog dialog(kBone);
+        connect(&dialog, SIGNAL(boneWeightDidSet(vpvl::Vector3,vpvl::Vector3)),
+                m_boneTimeline->treeView(), SLOT(setBoneKeyframesWeightBySelectedIndices(vpvl::Vector3,vpvl::Vector3)));
+        dialog.exec();
+        break;
     }
-    m_frameWeightDialog->resetValue();
-    m_frameWeightDialog->show();
+    case kMorphTabIndex: {
+        FrameWeightDialog dialog(kMorph);
+        connect(&dialog, SIGNAL(morphKeyframeWeightDidSet(float)),
+                m_morphTimeline->treeView(), SLOT(setMorphKeyframesWeightBySelectedIndices(float)));
+        dialog.exec();
+        break;
+    }
+    default:
+        QMessageBox::warning(this, tr("Not supported operation"),
+                             tr("The timeline is not supported adjusting keyframe weight."));
+        break;
+    }
 }
 
 void TimelineTabWidget::selectButton(QAbstractButton *button)
@@ -377,11 +390,6 @@ void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
     for (int i = fromIndex; i <= toIndex; i++)
         frameIndices.append(i);
     currentSelectedTimelineWidget()->treeView()->selectFrameIndices(frameIndices, true);
-}
-
-void TimelineTabWidget::setKeyframeWeight(float value)
-{
-    currentSelectedTimelineWidget()->treeView()->setKeyframeWeightBySelectedIndices(value);
 }
 
 void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)

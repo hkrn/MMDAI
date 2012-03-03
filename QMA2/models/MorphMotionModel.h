@@ -62,6 +62,7 @@ public:
     void pasteKeyframes(int frameIndex);
     void saveTransform();
     void commitTransform();
+    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
@@ -76,7 +77,6 @@ public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
     void selectKeyframesByModelIndices(const QModelIndexList &indices);
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
-    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void removeModel();
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);

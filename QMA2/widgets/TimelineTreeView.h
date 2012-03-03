@@ -41,6 +41,8 @@
 #include <QtGui/QHeaderView>
 #include <QtGui/QTreeView>
 
+#include <vpvl/Common.h>
+
 class TimelineTreeView : public QTreeView
 {
     Q_OBJECT
@@ -54,7 +56,6 @@ public:
     void deleteKeyframesBySelectedIndices();
     void copyKeyframes(int frameIndex);
     void pasteKeyframes(int frameIndex);
-    void setKeyframeWeightBySelectedIndices(float value);
     const QModelIndexList &expandedModelIndices() const;
 
 public slots:
@@ -64,6 +65,8 @@ private slots:
     void addCollapsed(const QModelIndex &index);
     void addExpanded(const QModelIndex &index);
     void selectModelIndices(const QItemSelection &selected, const QItemSelection &deselected);
+    void setBoneKeyframesWeightBySelectedIndices(const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
+    void setMorphKeyframesWeightBySelectedIndices(float value);
 
 private:
     QModelIndexList m_expanded;

@@ -89,7 +89,6 @@ public slots:
     void loadPose(VPDFile *pose, vpvl::PMDModel *model);
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
     void selectFrameIndices(int fromIndex, int toIndex);
-    void setKeyframeWeight(float value);
 
 signals:
     void motionDidSeek(float frameIndex);

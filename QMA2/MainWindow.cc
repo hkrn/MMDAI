@@ -836,13 +836,12 @@ void MainWindow::buildUI()
     m_menuFrame = new QMenu(this);
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
-    //m_menuFrame->addAction(m_actionFrameWeightDialog);
+    m_menuFrame->addAction(m_actionFrameWeightDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionNextFrame);
     m_menuFrame->addAction(m_actionPreviousFrame);
     m_menuBar->addMenu(m_menuFrame);
     m_menuView = new QMenu(this);
-    //m_menuView->addAction(m_actionViewTransform);
     m_menuView->addAction(m_actionViewLogMessage);
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionShowTimelineDock);

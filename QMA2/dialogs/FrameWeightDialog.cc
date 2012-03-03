@@ -40,36 +40,101 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
-FrameWeightDialog::FrameWeightDialog(QWidget *parent) :
-    QDialog(parent)
+FrameWeightDialog::FrameWeightDialog(TimelineTabWidget::Type type, QWidget *parent) :
+    QDialog(parent),
+    m_position(1.0, 1.0, 1.0),
+    m_rotation(1.0, 1.0, 1.0),
+    m_morphWeight(1.0)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    m_weightBox = new QDoubleSpinBox();
-    m_weightBox->setMinimum(0.01);
-    m_weightBox->setSingleStep(0.01);
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(tr("Keyframe weight"), m_weightBox);
-    mainLayout->addLayout(formLayout);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
+    if (type == TimelineTabWidget::kBone) {
+        QHBoxLayout *subLayout = new QHBoxLayout();
+        QFormLayout *formLayout = new QFormLayout();
+        formLayout->addRow(tr("X"), createSpinBox(SLOT(setPositionXWeight(double))));
+        formLayout->addRow(tr("Y"), createSpinBox(SLOT(setPositionYWeight(double))));
+        formLayout->addRow(tr("Z"), createSpinBox(SLOT(setPositionZWeight(double))));
+        QGroupBox *groupBox = new QGroupBox(tr("Position"));
+        groupBox->setLayout(formLayout);
+        subLayout->addWidget(groupBox);
+        formLayout = new QFormLayout();
+        formLayout->addRow(tr("X"), createSpinBox(SLOT(setRotationXWeight(double))));
+        formLayout->addRow(tr("Y"), createSpinBox(SLOT(setRotationYWeight(double))));
+        formLayout->addRow(tr("Z"), createSpinBox(SLOT(setRotationZWeight(double))));
+        groupBox = new QGroupBox(tr("Rotation"));
+        groupBox->setLayout(formLayout);
+        subLayout->addWidget(groupBox);
+        mainLayout->addLayout(subLayout);
+        connect(this, SIGNAL(accepted()), SLOT(emitBoneWeightSignal()));
+    }
+    else if (type == TimelineTabWidget::kMorph) {
+        QFormLayout *subLayout = new QFormLayout();
+        subLayout->addRow(tr("Keyframe weight"), createSpinBox(SLOT(setMorphWeight(double))));
+        mainLayout->addLayout(subLayout);
+        connect(this, SIGNAL(accepted()), SLOT(emitMorphWeightSignal()));
+    }
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     mainLayout->addWidget(buttons);
-    connect(buttons, SIGNAL(accepted()), this, SLOT(emitKeyframeWeight()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
-    connect(this, SIGNAL(keyframeWeightDidSet(float)), this, SLOT(close()));
-    resetValue();
-    setWindowTitle(tr("Keyframe weight dialog"));
+    connect(buttons, SIGNAL(accepted()), SLOT(accept()));
+    connect(buttons, SIGNAL(rejected()), SLOT(reject()));
     setLayout(mainLayout);
+    setWindowTitle(tr("Keyframe weight dialog"));
 }
 
 FrameWeightDialog::~FrameWeightDialog()
 {
 }
 
-void FrameWeightDialog::resetValue()
+void FrameWeightDialog::setPositionXWeight(double value)
 {
-    m_weightBox->setValue(1.0);
+    m_position.setX(value);
 }
 
-void FrameWeightDialog::emitKeyframeWeight()
+void FrameWeightDialog::setPositionYWeight(double value)
 {
-    emit keyframeWeightDidSet(m_weightBox->value());
+    m_position.setY(value);
+}
+
+void FrameWeightDialog::setPositionZWeight(double value)
+{
+    m_position.setZ(value);
+}
+
+void FrameWeightDialog::setRotationXWeight(double value)
+{
+    m_rotation.setX(value);
+}
+
+void FrameWeightDialog::setRotationYWeight(double value)
+{
+    m_rotation.setY(value);
+}
+
+void FrameWeightDialog::setRotationZWeight(double value)
+{
+    m_rotation.setZ(value);
+}
+
+void FrameWeightDialog::setMorphWeight(double value)
+{
+    m_morphWeight = value;
+}
+
+void FrameWeightDialog::emitBoneWeightSignal()
+{
+    emit boneWeightDidSet(m_position, m_rotation);
+}
+
+void FrameWeightDialog::emitMorphWeightSignal()
+{
+    emit morphKeyframeWeightDidSet(m_morphWeight);
+}
+
+QDoubleSpinBox *FrameWeightDialog::createSpinBox(const char *slot)
+{
+    QDoubleSpinBox *weightBox = new QDoubleSpinBox();
+    connect(weightBox, SIGNAL(valueChanged(double)), slot);
+    weightBox->setMinimum(0.01);
+    weightBox->setSingleStep(0.01);
+    weightBox->setValue(1.0);
+    return weightBox;
 }

@@ -68,6 +68,7 @@ public:
     void copyKeyframes(int frameIndex);
     void pasteKeyframes(int frameIndex);
     void pasteReversedFrame(int frameIndex);
+    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
@@ -77,6 +78,7 @@ public:
     void resetAllBones();
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
+
     vpvl::Bone *findBone(const QString &name);
     vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
@@ -87,7 +89,6 @@ public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
     void selectKeyframesByModelIndices(const QModelIndexList &indices);
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
-    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void selectBonesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();

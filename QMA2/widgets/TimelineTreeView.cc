@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "models/BoneMotionModel.h"
+#include "models/MorphMotionModel.h"
 #include "models/PMDMotionModel.h"
 #include "models/SceneMotionModel.h"
 #include "widgets/TimelineTreeView.h"
@@ -111,10 +112,17 @@ void TimelineTreeView::pasteKeyframes(int frameIndex)
     static_cast<MotionBaseModel *>(model())->pasteKeyframes(frameIndex);
 }
 
-void TimelineTreeView::setKeyframeWeightBySelectedIndices(float value)
+void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl::Vector3 &position,
+                                                               const vpvl::Vector3 &rotation)
 {
-    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
-    m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), value);
+    if (BoneMotionModel *m = qobject_cast<BoneMotionModel *>(model()))
+        m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), position, rotation);
+}
+
+void TimelineTreeView::setMorphKeyframesWeightBySelectedIndices(float value)
+{
+    if (MorphMotionModel *m = qobject_cast<MorphMotionModel *>(model()))
+        m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), value);
 }
 
 const QModelIndexList &TimelineTreeView::expandedModelIndices() const
