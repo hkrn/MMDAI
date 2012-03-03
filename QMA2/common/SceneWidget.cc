@@ -944,13 +944,16 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 Bone *bone = bones[i];
                 const Vector3 &o = bone->localTransform().getOrigin(),
                         min = o - size, max = o + size;
-                if (btRayAabb(znear, zfar, min, max, hitLambda, normal)) {
+                if (btRayAabb(znear, zfar, min, max, hitLambda, normal)
+                        && (bone->isMovable() || bone->isRotateable())) {
                     nearestBone = bone;
                     break;
                 }
             }
-            if (nearestBone && (nearestBone->isMovable() || nearestBone->isRotateable())) {
+            if (nearestBone) {
                 QList<Bone *> bones;
+                if (event->modifiers() & Qt::CTRL)
+                    bones.append(m_bones);
                 bones.append(nearestBone);
                 emit boneDidSelect(bones);
             }
