@@ -585,6 +585,35 @@ void MainWindow::buildUI()
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
+    m_actionRegisterFrame = new QAction(this);
+    connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
+    m_actionInsertEmptyFrame = new QAction(this);
+    connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertFrame()));
+    m_actionDeleteSelectedFrame = new QAction(this);
+    connect(m_actionDeleteSelectedFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(deleteFrame()));
+    m_actionCopy = new QAction(this);
+    connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
+    m_actionPaste = new QAction(this);
+    connect(m_actionPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteFrame()));
+    m_actionReversedPaste = new QAction(this);
+    connect(m_actionReversedPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteReversedFrame()));
+    m_actionUndoFrame = m_undo->createUndoAction(this);
+    m_actionRedoFrame = m_undo->createRedoAction(this);
+    m_actionBoneXPosZero = new QAction(this);
+    connect(m_actionBoneXPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneX()));
+    m_actionBoneYPosZero = new QAction(this);
+    connect(m_actionBoneYPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneY()));
+    m_actionBoneZPosZero = new QAction(this);
+    connect(m_actionBoneZPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneZ()));
+    m_actionBoneRotationZero = new QAction(this);
+    connect(m_actionBoneRotationZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneRotation()));
+    m_actionBoneResetAll = new QAction(this);
+    connect(m_actionBoneResetAll, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetAllBones()));
+    m_actionBoneDialog = new QAction(this);
+    connect(m_actionBoneDialog, SIGNAL(triggered()), m_boneUIDelegate, SLOT(openBoneDialog()));
+    connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
+    m_actionTranslateModelUp = new QAction(this);
+
     m_actionPlay = new QAction(this);
     connect(m_actionPlay, SIGNAL(triggered()), SLOT(invokePlayer()));
     m_actionPlaySettings = new QAction(this);
@@ -635,8 +664,6 @@ void MainWindow::buildUI()
     m_actionRevertSelectedModel = new QAction(this);
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
     m_actionDeleteSelectedModel = new QAction(this);
-    connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
-    m_actionTranslateModelUp = new QAction(this);
     connect(m_actionTranslateModelUp, SIGNAL(triggered()), m_sceneWidget, SLOT(translateModelUp()));
     m_actionTranslateModelDown = new QAction(this);
     connect(m_actionTranslateModelDown, SIGNAL(triggered()), m_sceneWidget, SLOT(translateModelDown()));
@@ -647,43 +674,16 @@ void MainWindow::buildUI()
     m_actionResetModelPosition = new QAction(this);
     connect(m_actionResetModelPosition, SIGNAL(triggered()), m_sceneWidget, SLOT(resetModelPosition()));
 
-    m_actionBoneXPosZero = new QAction(this);
-    connect(m_actionBoneXPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneX()));
-    m_actionBoneYPosZero = new QAction(this);
-    connect(m_actionBoneYPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneY()));
-    m_actionBoneZPosZero = new QAction(this);
-    connect(m_actionBoneZPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneZ()));
-    m_actionBoneRotationZero = new QAction(this);
-    connect(m_actionBoneRotationZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneRotation()));
-    m_actionBoneResetAll = new QAction(this);
-    connect(m_actionBoneResetAll, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetAllBones()));
-    m_actionBoneDialog = new QAction(this);
-    connect(m_actionBoneDialog, SIGNAL(triggered()), m_boneUIDelegate, SLOT(openBoneDialog()));
-
-    m_actionRegisterFrame = new QAction(this);
-    connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
     m_actionSelectAllFrames = new QAction(this);
     connect(m_actionSelectAllFrames, SIGNAL(triggered()), m_timelineTabWidget, SLOT(selectAllRegisteredKeyframes()));
     m_actionSelectFrameDialog = new QAction(this);
     connect(m_actionSelectFrameDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameSelectionDialog()));
     m_actionFrameWeightDialog = new QAction(this);
     connect(m_actionFrameWeightDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameWeightDialog()));
-    m_actionCopy = new QAction(this);
-    connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyFrame()));
-    m_actionPaste = new QAction(this);
-    connect(m_actionPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteFrame()));
-    m_actionReversedPaste = new QAction(this);
-    connect(m_actionReversedPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteReversedFrame()));
-    m_actionInsertEmptyFrame = new QAction(this);
-    connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertFrame()));
-    m_actionDeleteSelectedFrame = new QAction(this);
-    connect(m_actionDeleteSelectedFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(deleteFrame()));
     m_actionNextFrame = new QAction(this);
     connect(m_actionNextFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(nextFrame()));
     m_actionPreviousFrame = new QAction(this);
     connect(m_actionPreviousFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(previousFrame()));
-    m_actionUndoFrame = m_undo->createUndoAction(this);
-    m_actionRedoFrame = m_undo->createRedoAction(this);
 
     m_actionViewLogMessage = new QAction(this);
     connect(m_actionViewLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
@@ -783,6 +783,7 @@ void MainWindow::buildUI()
     m_menuEdit->addAction(m_actionBoneYPosZero);
     m_menuEdit->addAction(m_actionBoneZPosZero);
     m_menuEdit->addAction(m_actionBoneResetAll);
+    m_menuEdit->addAction(m_actionBoneDialog);
     m_menuEdit->addSeparator();
     m_menuEdit->addAction(m_actionDeleteSelectedModel);
     m_menuBar->addMenu(m_menuEdit);
@@ -839,8 +840,6 @@ void MainWindow::buildUI()
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionNextFrame);
     m_menuFrame->addAction(m_actionPreviousFrame);
-    m_menuFrame->addSeparator();
-    m_menuFrame->addAction(m_actionBoneDialog);
     m_menuBar->addMenu(m_menuFrame);
     m_menuView = new QMenu(this);
     //m_menuView->addAction(m_actionViewTransform);
