@@ -612,8 +612,8 @@ void MainWindow::buildUI()
     connect(m_actionBoneResetAll, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetAllBones()));
     m_actionBoneDialog = new QAction(this);
     connect(m_actionBoneDialog, SIGNAL(triggered()), m_boneUIDelegate, SLOT(openBoneDialog()));
+    m_actionDeleteSelectedModel = new QAction(this);
     connect(m_actionDeleteSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(deleteSelectedModel()));
-    m_actionTranslateModelUp = new QAction(this);
 
     m_actionPlay = new QAction(this);
     connect(m_actionPlay, SIGNAL(triggered()), SLOT(invokePlayer()));
@@ -664,7 +664,7 @@ void MainWindow::buildUI()
     connect(m_actionSelectPreviousModel, SIGNAL(triggered()), SLOT(selectPreviousModel()));
     m_actionRevertSelectedModel = new QAction(this);
     connect(m_actionRevertSelectedModel, SIGNAL(triggered()), m_sceneWidget, SLOT(revertSelectedModel()));
-    m_actionDeleteSelectedModel = new QAction(this);
+    m_actionTranslateModelUp = new QAction(this);
     connect(m_actionTranslateModelUp, SIGNAL(triggered()), m_sceneWidget, SLOT(translateModelUp()));
     m_actionTranslateModelDown = new QAction(this);
     connect(m_actionTranslateModelDown, SIGNAL(triggered()), m_sceneWidget, SLOT(translateModelDown()));
