@@ -36,17 +36,22 @@
 
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
+#include "common/util.h"
 #include "dialogs/PlaySettingDialog.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 #include <vpvl/gl2/Renderer.h>
 
-PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QWidget *parent)
+PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, QWidget *parent)
     : QDialog(parent),
-      m_loader(loader)
+      m_loader(loader),
+      m_settings(settings)
 {
     int maxFrameIndex = m_loader->renderEngine()->scene()->maxFrameIndex();
+    m_pathEdit = new QLineEdit();
+    m_openFileButton = new QPushButton();
+    connect(m_openFileButton, SIGNAL(clicked()), SLOT(openFileDialog()));
     m_fromIndexLabel = new QLabel();
     m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
@@ -63,6 +68,10 @@ PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QWidget *parent)
     m_boneWireFramesBox = new QCheckBox();
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QLayout *subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_pathEdit);
+    subLayout->addWidget(m_openFileButton);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
     subLayout->addWidget(m_fromIndexLabel);
     subLayout->addWidget(m_fromIndexBox);
     subLayout->addWidget(m_toIndexLabel);
@@ -97,13 +106,29 @@ PlaySettingDialog::~PlaySettingDialog()
 {
 }
 
+void PlaySettingDialog::openFileDialog()
+{
+    const QString &filename = internal::openFileDialog("playSettingDialog/lastAudioDirectory",
+                                                       tr("Open audio file"),
+                                                       tr("WAV file (*.wav)"),
+                                                       m_settings);
+    if (!filename.isEmpty())
+        m_pathEdit->setText(filename);
+}
+
 void PlaySettingDialog::saveSettings()
 {
+    m_loader->setBackgroundAudio(backgroundAudio());
     m_loader->setFrameIndexPlayFrom(fromIndex());
     m_loader->setFrameIndexPlayTo(toIndex());
     m_loader->setSceneFPSForPlay(sceneFPS());
     m_loader->setLoop(isLoopEnabled());
     emit settingsDidSave();
+}
+
+const QString PlaySettingDialog::backgroundAudio() const
+{
+    return m_pathEdit->text();
 }
 
 int PlaySettingDialog::fromIndex() const
@@ -138,6 +163,7 @@ bool PlaySettingDialog::isBoneWireframesVisible() const
 
 void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 {
+    m_pathEdit->setText(m_loader->backgroundAudio());
     m_fromIndexBox->setValue(m_loader->frameIndexPlayFrom());
     m_toIndexBox->setValue(m_loader->frameIndexPlayTo());
     switch (m_loader->sceneFPSForPlay()) {
@@ -167,6 +193,7 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 
 void PlaySettingDialog::retranslate()
 {
+    m_openFileButton->setText(tr("Open"));
     m_fromIndexLabel->setText(tr("Keyframe from: "));
     m_toIndexLabel->setText(tr("Keyframe to: "));
     m_sceneFPSLabel->setText(tr("Scene FPS: "));

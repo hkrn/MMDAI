@@ -36,6 +36,7 @@
 
 #include "common/SceneWidget.h"
 #include "common/SceneLoader.h"
+#include "common/util.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "MainWindow.h"
 
@@ -46,11 +47,20 @@
 ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
                                      const QSize &min,
                                      const QSize &max,
+                                     QSettings *settings,
                                      MainWindow *parent)
-    : QDialog(parent),
-      m_loader(loader)
+    : QDialog(),
+      m_loader(loader),
+      m_settings(settings)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
+    QHBoxLayout *subLayout = new QHBoxLayout();
+    m_pathEdit = new QLineEdit();
+    m_openFileButton = new QPushButton(tr("Open"));
+    connect(m_openFileButton, SIGNAL(clicked()), SLOT(openFileDialog()));
+    subLayout->addWidget(m_pathEdit);
+    subLayout->addWidget(m_openFileButton);
+    mainLayout->addLayout(subLayout);
     int maxFrameIndex = loader->renderEngine()->scene()->maxFrameIndex();
     m_widthBox = new QSpinBox();
     m_widthBox->setRange(min.width(), max.width());
@@ -98,8 +108,19 @@ ExportVideoDialog::~ExportVideoDialog()
 {
 }
 
+void ExportVideoDialog::openFileDialog()
+{
+    const QString &filename = internal::openFileDialog("exportVideoDialog/lastAudioDirectory",
+                                                       tr("Open audio file"),
+                                                       tr("WAV file (*.wav)"),
+                                                       m_settings);
+    if (!filename.isEmpty())
+        m_pathEdit->setText(filename);
+}
+
 void ExportVideoDialog::saveSettings()
 {
+    m_loader->setBackgroundAudio(backgroundAudio());
     m_loader->setSceneWidth(sceneWidth());
     m_loader->setSceneHeight(sceneHeight());
     m_loader->setFrameIndexEncodeVideoFrom(fromIndex());
@@ -107,6 +128,11 @@ void ExportVideoDialog::saveSettings()
     m_loader->setSceneFPSForEncodeVideo(sceneFPS());
     m_loader->setGridIncluded(includesGrid());
     emit settingsDidSave();
+}
+
+const QString ExportVideoDialog::backgroundAudio() const
+{
+    return m_pathEdit->text();
 }
 
 int ExportVideoDialog::sceneWidth() const
@@ -147,6 +173,7 @@ bool ExportVideoDialog::includesGrid() const
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
     int maxFrameIndex = m_loader->renderEngine()->scene()->maxFrameIndex();
+    m_pathEdit->setText(m_loader->backgroundAudio());
     m_widthBox->setValue(m_loader->sceneWidth());
     m_heightBox->setValue(m_loader->sceneHeight());
     m_fromIndexBox->setValue(qBound(0, m_loader->frameIndexEncodeVideoFrom(), maxFrameIndex));

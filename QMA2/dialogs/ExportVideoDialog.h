@@ -42,6 +42,8 @@
 class MainWindow;
 class QCheckBox;
 class QComboBox;
+class QLineEdit;
+class QPushButton;
 class QSettings;
 class QSpinBox;
 class SceneLoader;
@@ -55,9 +57,11 @@ public:
     ExportVideoDialog(SceneLoader *loader,
                       const QSize &min,
                       const QSize &max,
+                      QSettings *settings,
                       MainWindow *parent);
     ~ExportVideoDialog();
 
+    const QString backgroundAudio() const;
     int sceneWidth() const;
     int sceneHeight() const;
     int fromIndex() const;
@@ -73,10 +77,14 @@ protected:
     void showEvent(QShowEvent *event);
 
 private  slots:
+    void openFileDialog();
     void saveSettings();
 
 private:
     SceneLoader *m_loader;
+    QSettings *m_settings;
+    QLineEdit *m_pathEdit;
+    QPushButton *m_openFileButton;
     QSpinBox *m_widthBox;
     QSpinBox *m_heightBox;
     QSpinBox *m_fromIndexBox;

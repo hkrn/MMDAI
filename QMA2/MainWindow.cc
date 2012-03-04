@@ -89,11 +89,12 @@ static int UIFindIndexOfActions(PMDModel *model, const QList<QAction *> &actions
 
 
 static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
+                                             QSettings *settings,
                                              SceneWidget *sceneWidget,
                                              PlaySettingDialog *&dialog)
 {
     if (!dialog) {
-        dialog = new PlaySettingDialog(sceneWidget->sceneLoader(), mainWindow);
+        dialog = new PlaySettingDialog(sceneWidget->sceneLoader(), settings, mainWindow);
         QObject::connect(dialog, SIGNAL(playingDidStart()), mainWindow, SLOT(invokePlayer()));
     }
 }
@@ -1301,7 +1302,7 @@ void MainWindow::exportVideo()
             if (!m_exportingVideoDialog) {
                 const QSize min(160, 160);
                 const QSize &max = m_sceneWidget->maximumSize();
-                m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, this);
+                m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, &m_settings, this);
             }
             m_exportingVideoDialog->show();
         }
@@ -1507,7 +1508,7 @@ void MainWindow::addNewMotion()
 void MainWindow::invokePlayer()
 {
     if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
-        UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
+        UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         if (!m_player) {
             m_player = new ScenePlayer(m_sceneWidget, m_playSettingDialog);
             connect(m_player, SIGNAL(motionDidSeek(int)), m_timelineTabWidget, SLOT(setCurrentFrameIndex(int)));
@@ -1529,7 +1530,7 @@ void MainWindow::invokePlayer()
 void MainWindow::openPlaySettingDialog()
 {
     if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
-        UICreatePlaySettingDialog(this, m_sceneWidget, m_playSettingDialog);
+        UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         m_playSettingDialog->show();
     }
     else {

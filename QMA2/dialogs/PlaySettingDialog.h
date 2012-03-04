@@ -43,6 +43,7 @@ class MainWindow;
 class QCheckBox;
 class QComboBox;
 class QLabel;
+class QLineEdit;
 class QSettings;
 class QSpinBox;
 class SceneLoader;
@@ -53,9 +54,10 @@ class PlaySettingDialog : public QDialog
     Q_OBJECT
 
 public:
-    PlaySettingDialog(SceneLoader *loader, QWidget *parent = 0);
+    PlaySettingDialog(SceneLoader *loader, QSettings *settings, QWidget *parent = 0);
     ~PlaySettingDialog();
 
+    const QString backgroundAudio() const;
     int fromIndex() const;
     int toIndex() const;
     int sceneFPS() const;
@@ -71,11 +73,15 @@ protected:
     void showEvent(QShowEvent *event);
 
 private slots:
+    void openFileDialog();
     void retranslate();
     void saveSettings();
 
 private:
     SceneLoader *m_loader;
+    QSettings *m_settings;
+    QLineEdit *m_pathEdit;
+    QPushButton *m_openFileButton;
     QLabel *m_fromIndexLabel;
     QLabel *m_toIndexLabel;
     QLabel *m_sceneFPSLabel;

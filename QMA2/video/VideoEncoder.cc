@@ -153,14 +153,18 @@ void VideoEncoder::run()
                                       m_videoBitrate,
                                       m_fps);
         /* エンコード用のフレームを確保 */
-        AVCodecContext *audioCodec = audioStream->codec;
+        AVCodecContext *audioCodec = 0;
+        int encodedAudioFrameBufferSize = 0;
+        if (audioStream) {
+            audioCodec = audioStream->codec;
+            encodedAudioFrameBufferSize = audioCodec->sample_rate
+                    * audioCodec->frame_size
+                    * audioCodec->channels
+                    * av_get_bytes_per_sample(audioCodec->sample_fmt);
+            encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
+        }
         int width = m_size.width(), height = m_size.height();
-        int encodedAudioFrameBufferSize = audioCodec->sample_rate
-                * audioCodec->frame_size
-                * audioCodec->channels
-                * av_get_bytes_per_sample(audioCodec->sample_fmt);
         int encodedVideoFrameBufferSize = width * height * 4;
-        encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
         encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
         /* 書き出し準備を行う。ファイルなので常に true になる */
         if (!(videoOutputFormat->flags & AVFMT_NOFILE)) {
@@ -185,7 +189,7 @@ void VideoEncoder::run()
             double audioPTS = ComputePresentTimeStamp(audioStream);
             double videoPTS = ComputePresentTimeStamp(videoStream);
             /* 音声バッファが残っている */
-            if (audioPTS < videoPTS && sizeOfAudioBuffer() > encodedAudioFrameBufferSize) {
+            if (audioCodec && audioPTS < videoPTS && sizeOfAudioBuffer() > encodedAudioFrameBufferSize) {
                 /* 音声フレーム取り出し */
                 dequeueAudioBuffer(bytes, encodedAudioFrameBufferSize);
                 /* 音声フレーム書き出し */
