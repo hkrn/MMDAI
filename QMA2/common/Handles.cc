@@ -448,7 +448,7 @@ bool Handles::testHitImage(const QPointF &p,
     return flags != kNone;
 }
 
-const btScalar Handles::angle(const Vector3 &pos) const
+btScalar Handles::angle(const Vector3 &pos) const
 {
     return pos.angle(m_bone->localTransform().getOrigin());
 }

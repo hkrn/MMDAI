@@ -218,7 +218,7 @@ SceneMotionModel::SceneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWid
 
 SceneMotionModel::~SceneMotionModel()
 {
-    delete m_cameraTreeItem;
+    // m_cameraTreeItem は m_rootTreeItem を delete するときに同時に delete される
     delete m_rootTreeItem;
 }
 

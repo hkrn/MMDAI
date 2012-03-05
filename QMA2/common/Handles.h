@@ -132,7 +132,7 @@ public:
     void drawImageHandles(bool movable, bool rotateable);
     void drawRotationHandle();
     void drawMoveHandle();
-    const btScalar angle(const vpvl::Vector3 &pos) const;
+    btScalar angle(const vpvl::Vector3 &pos) const;
 
     void setPoint3D(const vpvl::Vector3 &value);
     void setPoint2D(const QPointF &value);

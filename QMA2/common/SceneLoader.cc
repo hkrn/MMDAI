@@ -73,7 +73,7 @@ public:
     {
         m_codec = QTextCodec::codecForName("Shift-JIS");
     }
-    ~UIDelegate()
+    virtual ~UIDelegate()
     {
     }
 
@@ -85,7 +85,7 @@ public:
             qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
             return false;
         }
-        QScopedArrayPointer<uint8_t> ptr;
+        QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
         QImage image = QImage(pathString).rgbSwapped();
         if (image.isNull() && pathString.endsWith(".tga", Qt::CaseInsensitive)) {
             image = loadTGA(pathString, ptr);
