@@ -291,6 +291,22 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         break;
     }
     case kBdef4: {
+        const Transform &transformA = m_bones[0]->localTransform();
+        const Transform &transformB = m_bones[1]->localTransform();
+        const Transform &transformC = m_bones[2]->localTransform();
+        const Transform &transformD = m_bones[3]->localTransform();
+        const Vector3 &v1 = transformA * m_position;
+        const Vector3 &n1 = transformA.getBasis() * m_normal;
+        const Vector3 &v2 = transformB * m_position;
+        const Vector3 &n2 = transformB.getBasis() * m_normal;
+        const Vector3 &v3 = transformC * m_position;
+        const Vector3 &n3 = transformC.getBasis() * m_normal;
+        const Vector3 &v4 = transformD * m_position;
+        const Vector3 &n4 = transformD.getBasis() * m_normal;
+        float w1 = m_weight[0], w2 = m_weight[1], w3 = m_weight[2], w4 = m_weight[3];
+        float s  = w1 + w2 + w3 + w4, w1s = w1 / s, w2s = w2 / s, w3s = w3 / s, w4s = w4 / s;
+        position = v1 * w1s + v2 * w2s + v3 * w3s + v4 * w4s;
+        normal   = n1 * w1s + n2 * w2s + n3 * w3s + n4 * w4s;
         break;
     }
     }
