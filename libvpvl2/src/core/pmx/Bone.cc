@@ -117,7 +117,6 @@ struct Bone::IKLink {
 
 Bone::Bone()
     : m_parentBone(0),
-      m_offsetBone(0),
       m_targetBone(0),
       m_parentInherenceBone(0),
       m_name(0),
@@ -132,7 +131,7 @@ Bone::Bone()
       m_position(kZeroV3),
       m_positionInherence(kZeroV3),
       m_positionMorph(kZeroV3),
-      m_offset(kZeroV3),
+      m_destinationOrigin(kZeroV3),
       m_fixedAxis(kZeroV3),
       m_axisX(kZeroV3),
       m_axisZ(kZeroV3),
@@ -141,7 +140,7 @@ Bone::Bone()
       m_id(-1),
       m_parentBoneIndex(-1),
       m_index(0),
-      m_offsetBoneIndex(-1),
+      m_destinationOriginBoneIndex(-1),
       m_targetBoneIndex(-1),
       m_nloop(0),
       m_nlinks(0),
@@ -158,20 +157,19 @@ Bone::~Bone()
     delete m_englishName;
     m_englishName = 0;
     m_parentBone = 0;
-    m_offsetBone = 0;
     m_targetBone = 0;
     m_parentInherenceBone = 0;
     m_position.setZero();
     m_positionMorph.setZero();
     m_localTransform.setIdentity();
-    m_offset.setZero();
+    m_destinationOrigin.setZero();
     m_fixedAxis.setZero();
     m_axisX.setZero();
     m_axisZ.setZero();
     m_weight = 0;
     m_parentBoneIndex = -1;
     m_index = 0;
-    m_offsetBoneIndex = -1;
+    m_destinationOriginBoneIndex = -1;
     m_nlinks = 0;
     m_parentBoneBiasIndex = -1;
     m_globalID = 0;
@@ -268,12 +266,12 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered)
             else
                 bone->m_parentBone = bones[parentBoneID];
         }
-        const int offsetBoneID = bone->m_offsetBoneIndex;
+        const int offsetBoneID = bone->m_destinationOriginBoneIndex;
         if (offsetBoneID >= 0) {
             if (offsetBoneID >= nbones)
                 return false;
             else
-                bone->m_offsetBone = bones[offsetBoneID];
+                bone->m_destinationOrigin = bones[offsetBoneID]->m_origin;
         }
         const int targetBoneID = bone->m_targetBoneIndex;
         if (targetBoneID >= 0) {
@@ -330,11 +328,11 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone has destination */
     bool isRelative = flags & 0x0001 == 1;
     if (isRelative) {
-        m_offsetBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
+        m_destinationOriginBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
     }
     else {
         const BoneUnit &offset = *reinterpret_cast<const BoneUnit *>(ptr);
-        internal::setPosition(offset.vector3, m_offset);
+        internal::setPosition(offset.vector3, m_destinationOrigin);
         ptr += sizeof(offset);
     }
     /* bone is IK */
@@ -429,7 +427,7 @@ void Bone::performTransform()
         }
     }
     position += m_position + m_positionMorph;
-    m_localTransform.setOrigin(position + offset());
+    m_localTransform.setOrigin(position);// + offset());
     if (m_parentBone)
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
 }
@@ -558,11 +556,6 @@ void Bone::performInverseKinematics()
             m_targetBone->m_localTransform = m_targetBone->m_IKLinkTransform * m_targetBone->m_parentBone->m_localTransform;
         }
     }
-}
-
-const Vector3 &Bone::offset() const
-{
-    return m_offsetBone ? m_offsetBone->m_offset : m_offset;
 }
 
 const Transform Bone::localTransform() const

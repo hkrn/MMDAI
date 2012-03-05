@@ -86,7 +86,6 @@ public:
     void setRotation(const Quaternion &value);
 
     Bone *parentBone() const { return m_parentBone; }
-    Bone *offsetBone() const { return m_offsetBone; }
     Bone *targetBone() const { return m_targetBone; }
     Bone *parentInherenceBone() const { return m_parentInherenceBone; }
     const StaticString *name() const { return m_name; }
@@ -115,7 +114,6 @@ public:
 private:
     Array<IKLink *> m_IKLinks;
     Bone *m_parentBone;
-    Bone *m_offsetBone;
     Bone *m_targetBone;
     Bone *m_parentInherenceBone;
     StaticString *m_name;
@@ -132,7 +130,7 @@ private:
     Vector3 m_positionInherence;
     Vector3 m_positionMorph;
     Vector3 m_positionMotion;
-    Vector3 m_offset;
+    Vector3 m_destinationOrigin;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;
     Vector3 m_axisZ;
@@ -141,7 +139,7 @@ private:
     int m_id;
     int m_parentBoneIndex;
     int m_index;
-    int m_offsetBoneIndex;
+    int m_destinationOriginBoneIndex;
     int m_targetBoneIndex;
     int m_nloop;
     int m_nlinks;
