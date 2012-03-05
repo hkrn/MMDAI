@@ -55,6 +55,7 @@ public:
     class ITreeItem
     {
     public:
+        virtual ~ITreeItem() {}
         virtual void addChild(ITreeItem *item) = 0;
         virtual ITreeItem *parent() const = 0;
         virtual ITreeItem *child(int row) const = 0;

@@ -129,6 +129,7 @@ public:
     class VPVL_API IDelegate
     {
     public:
+        virtual ~IDelegate() {}
         virtual bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) = 0;
         virtual bool uploadToonTexture(const std::string &name, const std::string &dir, GLuint &textureID) = 0;
         virtual void log(LogLevel level, const char *format, va_list ap) = 0;

@@ -47,6 +47,7 @@ class IModel;
 class VPVL2_API IMotion
 {
 public:
+    virtual ~IMotion() {}
     virtual bool load(const uint8_t *data, size_t size) = 0;
     virtual void save(uint8_t *data) const = 0;
 };

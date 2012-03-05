@@ -45,6 +45,7 @@ namespace vpvl2
 class VPVL2_API IMorph
 {
 public:
+    virtual ~IMorph() {}
     virtual const StaticString *name() const = 0;
     virtual void setWeight(float value) = 0;
 };

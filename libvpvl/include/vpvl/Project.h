@@ -67,6 +67,7 @@ public:
     class IDelegate
     {
     public:
+        virtual ~IDelegate() {}
         virtual const std::string fromUnicode(const std::string &value) const = 0;
         virtual const std::string toUnicode(const std::string &value) const = 0;
         virtual void error(const char *format, va_list ap) = 0;

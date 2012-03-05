@@ -45,6 +45,7 @@ namespace vpvl2
 class VPVL2_API IBone
 {
 public:
+    virtual ~IBone() {}
     virtual const StaticString *name() const = 0;
     virtual void setPosition(const Vector3 &value) = 0;
     virtual void setRotation(const Quaternion &value) = 0;
