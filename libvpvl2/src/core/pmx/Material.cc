@@ -69,11 +69,8 @@ Material::Material()
       m_sphereTexture(0),
       m_toonTexture(0),
       m_sphereTextureRenderMode(kNone),
-      m_ambient(kZeroC),
-      m_diffuse(kZeroC),
-      m_specular(kZeroC),
-      m_shininess(0),
-      m_edgeSize(0),
+      m_shininess(0, 1, 0),
+      m_edgeSize(0, 1, 0),
       m_textureIndex(0),
       m_sphereTextureIndex(0),
       m_toonTextureIndex(0),
@@ -95,12 +92,9 @@ Material::~Material()
     m_sphereTexture = 0;
     m_toonTexture = 0;
     m_sphereTextureRenderMode = kNone;
-    m_ambient.setZero();
-    m_diffuse.setZero();
-    m_specular.setZero();
     m_userDataArea = 0;
-    m_shininess = 0;
-    m_edgeSize = 0;
+    m_shininess.setZero();
+    m_edgeSize.setZero();
     m_textureIndex = 0;
     m_sphereTextureIndex = 0;
     m_toonTextureIndex = 0;
@@ -208,12 +202,12 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     m_englishName = new StaticString(namePtr, nNameSize, encoding);
     const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
-    m_ambient.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
-    m_diffuse.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
-    m_specular.setValue(unit.specular[0], unit.specular[1], unit.specular[2], 0);
-    m_edgeColor.setValue(unit.edgeColor[0], unit.edgeColor[1], unit.edgeColor[2], unit.edgeColor[3]);
-    m_shininess = unit.shininess;
-    m_edgeSize = unit.edgeSize;
+    m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
+    m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
+    m_specular.base.setValue(unit.specular[0], unit.specular[1], unit.specular[2], 0);
+    m_edgeColor.base.setValue(unit.edgeColor[0], unit.edgeColor[1], unit.edgeColor[2], unit.edgeColor[3]);
+    m_shininess.setX(unit.shininess);
+    m_edgeSize.setX(unit.edgeSize);
     m_flags = unit.flags;
     ptr += sizeof(unit);
     m_textureIndex = internal::variantIndex(ptr, info.textureIndexSize);
@@ -242,13 +236,28 @@ void Material::write(uint8_t *data) const
 
 void Material::mergeMorph(Morph::Material *morph, float weight)
 {
-    // TODO: morph->operation
-    m_ambient += morph->ambient * weight;
-    m_diffuse += morph->diffuse * weight;
-    m_specular += morph->specular * weight;
-    m_shininess += morph->shininess * weight;
-    m_edgeColor += morph->edgeColor * weight;
-    m_edgeSize += morph->edgeSize * weight;
+    const Vector3 &ambient = morph->ambient,
+            &diffuse = morph->diffuse,
+            &specular = morph->specular,
+            &edgeColor = morph->edgeColor;
+    switch (morph->operation) {
+    case 0:
+        m_ambient.mod *= ambient * ambient.w() * weight;
+        m_diffuse.mod *= diffuse * diffuse.w() * weight;
+        m_specular.mod *= specular * specular.w() * weight;
+        m_shininess.setY(m_shininess.y() * morph->shininess * weight);
+        m_edgeColor.mod *= edgeColor * edgeColor.w() * weight;
+        m_edgeSize.setY(m_edgeSize.y() * morph->edgeSize * weight);
+        break;
+    case 1:
+        m_ambient.add += ambient * ambient.w() * weight;
+        m_diffuse.add += diffuse * diffuse.w() * weight;
+        m_specular.add += specular * specular.w() * weight;
+        m_shininess.setZ(m_shininess.z() + morph->shininess * weight);
+        m_edgeColor.add += edgeColor * edgeColor.w() * weight;
+        m_edgeSize.setZ(m_edgeSize.z() + morph->edgeSize * weight);
+        break;
+    }
 }
 
 } /* namespace pmx */

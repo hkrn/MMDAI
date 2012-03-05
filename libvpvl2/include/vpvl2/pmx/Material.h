@@ -63,6 +63,16 @@ public:
         kAdditive,
         kSubTexture
     };
+    struct Color3 {
+        Color base;
+        Vector3 mod;
+        Vector3 add;
+        Color3() : base(kZeroC), mod(1.0, 1.0, 1.0), add(kZeroV3) {}
+        const Color calculate() const {
+            const Vector3 &mixed = base * mod + add;
+            return Color(mixed.x(), mixed.y(), mixed.z(), base.w());
+        }
+    };
 
     /**
      * Constructor
@@ -93,12 +103,12 @@ public:
     const StaticString *sphereTexture() const { return m_sphereTexture; }
     const StaticString *toonTexture() const { return m_toonTexture; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    const Color &ambient() const { return m_ambient; }
-    const Color &diffuse() const { return m_diffuse; }
-    const Color &specular() const { return m_specular; }
-    const Color &edgeColor() const { return m_edgeColor; }
-    float shininess() const { return m_shininess; }
-    float edgeSize() const { return m_edgeSize; }
+    const Color ambient() const { return m_ambient.calculate(); }
+    const Color diffuse() const { return m_diffuse.calculate(); }
+    const Color specular() const { return m_specular.calculate(); }
+    const Color edgeColor() const { return m_edgeColor.calculate(); }
+    float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
+    float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_shininess.z(); }
     int textureIndex() const { return m_textureIndex; }
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
@@ -118,12 +128,12 @@ private:
     StaticString *m_sphereTexture;
     StaticString *m_toonTexture;
     SphereTextureRenderMode m_sphereTextureRenderMode;
-    Color m_ambient;
-    Color m_diffuse;
-    Color m_specular;
-    Color m_edgeColor;
-    float m_shininess;
-    float m_edgeSize;
+    Color3 m_ambient;
+    Color3 m_diffuse;
+    Color3 m_specular;
+    Color3 m_edgeColor;
+    Vector3 m_shininess;
+    Vector3 m_edgeSize;
     int m_textureIndex;
     int m_sphereTextureIndex;
     int m_toonTextureIndex;
