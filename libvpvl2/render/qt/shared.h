@@ -242,7 +242,7 @@ public:
     const std::string toUnicode(const StaticString *value) {
         if (value) {
             QTextCodec *codec = 0;
-            switch (value->encoding()) {
+            switch (value->codec()) {
             case StaticString::kUTF16:
                 codec = QTextCodec::codecForName("UTF-16");
                 break;
@@ -284,7 +284,7 @@ QDebug operator<<(QDebug debug, const Color &v)
 QDebug operator<<(QDebug debug, const StaticString *str)
 {
     if (str) {
-        const bool isUTF8 = str->encoding() == StaticString::kUTF8;
+        const bool isUTF8 = str->codec() == StaticString::kUTF8;
         const QTextCodec *codec = QTextCodec::codecForName(isUTF8 ? "UTF-8" : "UTF-16");
         debug.nospace() << codec->toUnicode(str->ptr());
     }

@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,31 +36,89 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
-#include "vpvl2/Common.h"
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
+namespace vpvl2
+{
+namespace vmd
+{
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+#pragma pack(push, 1)
+
+struct FaceKeyFrameChunk
+{
+    uint8_t name[MorphKeyframe::kNameSize];
+    int frameIndex;
+    float weight;
+};
+
+#pragma pack(pop)
+
+MorphKeyframe::MorphKeyframe(IEncoding *encoding, StaticString::Codec codec)
+    : BaseKeyframe(),
+      m_encoding(encoding),
+      m_codec(codec),
+      m_weight(0.0f)
+{
+    internal::zerofill(m_name, sizeof(m_name));
+}
+MorphKeyframe::~MorphKeyframe()
+{
+    internal::zerofill(m_name, sizeof(m_name));
+}
+
+size_t MorphKeyframe::strideSize()
+{
+    return sizeof(FaceKeyFrameChunk);
+}
+
+size_t MorphKeyframe::stride() const
+{
+    return strideSize();
+}
+
+void MorphKeyframe::read(const uint8_t *data)
+{
+    FaceKeyFrameChunk chunk;
+    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    /* FIXME: string conversion */
+    if (m_codec == StaticString::kUTF8)
+        setName(m_encoding->toUTF8FromShiftJIS(chunk.name, sizeof(chunk.name)));
+    else
+        setName(m_encoding->toUTF16FromShiftJIS(chunk.name, sizeof(chunk.name)));
+    setFrameIndex(static_cast<float>(chunk.frameIndex));
+#ifdef VPVL_BUILD_IOS
+    float weight;
+    memcpy(&weight, &chunk.weight, sizeof(weight));
+    setWeight(weight);
+#else
+    setWeight(chunk.weight);
 #endif
+}
 
-#endif /* vpvl2_vpvl2_H_ */
+void MorphKeyframe::write(uint8_t *data) const
+{
+    FaceKeyFrameChunk chunk;
+    internal::copyBytes(chunk.name, m_encoding->toShiftJISFromStaticString(m_name), sizeof(chunk.name));
+    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    chunk.weight = m_weight;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+BaseKeyframe *MorphKeyframe::clone() const
+{
+    MorphKeyframe *frame = new MorphKeyframe(m_encoding, m_codec);
+    frame->setName(m_name);
+    frame->setFrameIndex(m_frameIndex);
+    frame->setWeight(m_weight);
+    return frame;
+}
+
+void MorphKeyframe::setWeight(float value)
+{
+    m_weight = value;
+}
+
+}
+}

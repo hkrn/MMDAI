@@ -1,0 +1,327 @@
+/* ----------------------------------------------------------------- */
+/*                                                                   */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
+/*                                                                   */
+/* All rights reserved.                                              */
+/*                                                                   */
+/* Redistribution and use in source and binary forms, with or        */
+/* without modification, are permitted provided that the following   */
+/* conditions are met:                                               */
+/*                                                                   */
+/* - Redistributions of source code must retain the above copyright  */
+/*   notice, this list of conditions and the following disclaimer.   */
+/* - Redistributions in binary form must reproduce the above         */
+/*   copyright notice, this list of conditions and the following     */
+/*   disclaimer in the documentation and/or other materials provided */
+/*   with the distribution.                                          */
+/* - Neither the name of the MMDAI project team nor the names of     */
+/*   its contributors may be used to endorse or promote products     */
+/*   derived from this software without specific prior written       */
+/*   permission.                                                     */
+/*                                                                   */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
+/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
+/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
+/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
+/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
+/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
+/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
+/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
+/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
+/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
+/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
+/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
+/* POSSIBILITY OF SUCH DAMAGE.                                       */
+/* ----------------------------------------------------------------- */
+
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
+
+namespace vpvl2
+{
+namespace vmd
+{
+
+const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
+
+Motion::Motion(IModel *model, IEncoding *encoding, StaticString::Codec codec)
+    : m_model(model),
+      m_encoding(encoding),
+      m_boneMotion(m_encoding, codec),
+      m_morphMotion(m_encoding, codec),
+      m_error(kNoError),
+      m_active(false)
+{
+    internal::zerofill(&m_name, sizeof(m_name));
+}
+
+Motion::~Motion()
+{
+    release();
+}
+
+bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
+{
+    size_t rest = size;
+    // Header(30) + Name(20)
+    if (kSignatureSize + kNameSize > rest) {
+        m_error = kInvalidHeaderError;
+        return false;
+    }
+
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    info.basePtr = ptr;
+
+    // Check the signature is valid
+    if (memcmp(ptr, kSignature, sizeof(kSignature)) != 0) {
+        m_error = kInvalidSignatureError;
+        return false;
+    }
+    ptr += kSignatureSize;
+    info.namePtr = ptr;
+    ptr += kNameSize;
+    rest -= kSignatureSize + kNameSize;
+
+    // Bone key frame
+    size_t nBoneKeyFrames, nMorphFrames, nCameraKeyFrames, nLightKeyFrames;
+    if (!internal::size32(ptr, rest, nBoneKeyFrames)) {
+        m_error = kBoneKeyFramesSizeError;
+        return false;
+    }
+    info.boneKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, BoneKeyframe::strideSize(), nBoneKeyFrames, rest)) {
+        m_error = kBoneKeyFramesError;
+        return false;
+    }
+    info.boneKeyframeCount = nBoneKeyFrames;
+
+    // Morph key frame
+    if (!internal::size32(ptr, rest, nMorphFrames)) {
+        m_error = kMorphKeyFramesSizeError;
+        return false;
+    }
+    info.morphKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, MorphKeyframe::strideSize(), nMorphFrames, rest)) {
+        m_error = kMorphKeyFramesError;
+        return false;
+    }
+    info.morphKeyframeCount = nMorphFrames;
+
+    // Camera key frame
+    if (!internal::size32(ptr, rest, nCameraKeyFrames)) {
+        m_error = kCameraKeyFramesSizeError;
+        return false;
+    }
+    info.cameraKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, CameraKeyframe::strideSize(), nCameraKeyFrames, rest)) {
+        m_error = kCameraKeyFramesError;
+        return false;
+    }
+    info.cameraKeyframeCount = nCameraKeyFrames;
+
+    // Light key frame
+    if (!internal::size32(ptr, rest, nLightKeyFrames)) {
+        m_error = kLightKeyFramesSizeError;
+        return false;
+    }
+    info.lightKeyframePtr = ptr;
+    if (!internal::validateSize(ptr, LightKeyframe::strideSize(), nLightKeyFrames, rest)) {
+        m_error = kCameraKeyFramesError;
+        return false;
+    }
+    info.lightKeyframeCount = nLightKeyFrames;
+
+    return true;
+}
+
+bool Motion::load(const uint8_t *data, size_t size)
+{
+    DataInfo info;
+    internal::zerofill(&info, sizeof(info));
+    if (preparse(data, size, info)) {
+        release();
+        parseHeader(info);
+        parseBoneFrames(info);
+        parseMorphFrames(info);
+        parseCameraFrames(info);
+        parseLightFrames(info);
+        parseSelfShadowFrames(info);
+        return true;
+    }
+    return false;
+}
+
+size_t Motion::estimateSize()
+{
+    /*
+     * header[30]
+     * name[20]
+     * bone size
+     * morph size
+     * camera size
+     * light size (empty)
+     * selfshadow size (empty)
+     */
+    return kSignatureSize + kNameSize + sizeof(int) * 5
+            + m_boneMotion.countKeyframes() * BoneKeyframe::strideSize()
+            + m_morphMotion.countKeyframes() * MorphKeyframe::strideSize()
+            + m_cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
+            + m_lightMotion.countKeyframes() * LightKeyframe::strideSize();
+}
+
+void Motion::save(uint8_t *data) const
+{
+    internal::copyBytes(data, kSignature, kSignatureSize);
+    data += kSignatureSize;
+    internal::copyBytes(data, m_name->bytes(), sizeof(m_name));
+    data += kNameSize;
+    int nBoneFrames = m_boneMotion.countKeyframes();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
+    data += sizeof(nBoneFrames);
+    for (int i = 0; i < nBoneFrames; i++) {
+        BoneKeyframe *frame = m_boneMotion.frameAt(i);
+        frame->write(data);
+        data += BoneKeyframe::strideSize();
+    }
+    int nMorphFrames = m_morphMotion.countKeyframes();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nMorphFrames), sizeof(nMorphFrames));
+    data += sizeof(nMorphFrames);
+    for (int i = 0; i < nMorphFrames; i++) {
+        MorphKeyframe *frame = m_morphMotion.frameAt(i);
+        frame->write(data);
+        data += MorphKeyframe::strideSize();
+    }
+    int nCameraFrames = m_cameraMotion.countKeyframes();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
+    data += sizeof(nCameraFrames);
+    for (int i = 0; i < nCameraFrames; i++) {
+        CameraKeyframe *frame = m_cameraMotion.frameAt(i);
+        frame->write(data);
+        data += CameraKeyframe::strideSize();
+    }
+    int nLightFrames = m_lightMotion.countKeyframes();
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames));
+    data += sizeof(nLightFrames);
+    for (int i = 0; i < nLightFrames; i++) {
+        LightKeyframe *frame = m_lightMotion.frameAt(i);
+        frame->write(data);
+        data += LightKeyframe::strideSize();
+    }
+    int empty = 0;
+    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
+    data += sizeof(empty);
+}
+
+void Motion::seek(float frameIndex)
+{
+    m_boneMotion.seek(frameIndex);
+    m_morphMotion.seek(frameIndex);
+    m_active = maxFrameIndex() > frameIndex;
+}
+
+void Motion::advance(float deltaFrame)
+{
+    if (deltaFrame == 0.0f) {
+        m_boneMotion.advance(deltaFrame);
+        m_morphMotion.advance(deltaFrame);
+    }
+    else if (m_active) {
+        // The motion is active and continue to advance
+        m_boneMotion.advance(deltaFrame);
+        m_morphMotion.advance(deltaFrame);
+        if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
+                m_morphMotion.currentIndex() >= m_morphMotion.maxIndex()) {
+            m_active = false;
+        }
+    }
+}
+
+void Motion::reload()
+{
+    m_boneMotion.refresh();
+    m_morphMotion.refresh();
+    reset();
+}
+
+void Motion::reset()
+{
+    m_boneMotion.seek(0.0f);
+    m_morphMotion.seek(0.0f);
+    m_boneMotion.reset();
+    m_morphMotion.reset();
+    m_active = true;
+}
+
+float Motion::maxFrameIndex() const
+{
+    return btMax(m_boneMotion.maxIndex(), m_morphMotion.maxIndex());
+}
+
+bool Motion::isReachedTo(float atEnd) const
+{
+    // force inactive motion is reached
+    return !m_active || (m_boneMotion.currentIndex() >= atEnd && m_morphMotion.currentIndex() >= atEnd);
+}
+
+bool Motion::isNullFrameEnabled() const
+{
+    return m_boneMotion.isNullFrameEnabled() && m_morphMotion.isNullFrameEnabled();
+}
+
+void Motion::setNullFrameEnable(bool value)
+{
+    m_boneMotion.setNullFrameEnable(value);
+    m_morphMotion.setNullFrameEnable(value);
+}
+
+void Motion::parseHeader(const DataInfo &info)
+{
+    if (m_model) {
+        if (m_model->name()->codec() == StaticString::kUTF8)
+            m_name = m_encoding->toUTF8FromShiftJIS(info.namePtr, sizeof(info.namePtr));
+        else
+            m_name = m_encoding->toUTF16FromShiftJIS(info.namePtr, sizeof(info.namePtr));
+    }
+    else {
+        m_name = m_encoding->toUTF16FromShiftJIS(info.namePtr, sizeof(info.namePtr));
+    }
+}
+
+void Motion::parseBoneFrames(const DataInfo &info)
+{
+    m_boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
+    m_boneMotion.setParentModel(m_model);
+}
+
+void Motion::parseMorphFrames(const DataInfo &info)
+{
+    m_morphMotion.read(info.morphKeyframePtr, info.morphKeyframeCount);
+    m_morphMotion.setParentModel(m_model);
+}
+
+void Motion::parseCameraFrames(const DataInfo &info)
+{
+    m_cameraMotion.read(info.cameraKeyframePtr, info.cameraKeyframeCount);
+}
+
+void Motion::parseLightFrames(const DataInfo &info)
+{
+    m_lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
+}
+
+void Motion::parseSelfShadowFrames(const DataInfo & /* info */)
+{
+}
+
+void Motion::release()
+{
+    delete m_name;
+    m_name = 0;
+    m_model = 0;
+    m_active = false;
+}
+
+}
+}

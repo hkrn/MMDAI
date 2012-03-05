@@ -38,6 +38,7 @@
 #define VPVL2_PMX_MODEL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IModel.h"
 
 namespace vpvl2
 {
@@ -60,7 +61,7 @@ class Morph;
 class RigidBody;
 class Vertex;
 
-class VPVL2_API Model
+class VPVL2_API Model : public IModel
 {
 public:
     class UserData {
@@ -114,7 +115,7 @@ public:
     {
         uint8_t *basePtr;
         uint8_t *namePtr;
-        StaticString::Encoding encoding;
+        StaticString::Codec encoding;
         size_t additionalUVSize;
         size_t vertexIndexSize;
         size_t textureIndexSize;
@@ -159,8 +160,6 @@ public:
     static size_t strideOffset(StrideType type);
     static size_t strideSize(StrideType type);
 
-    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
-
     /**
      * Read and parse the buffer with id and sets it's result to the class.
      *
@@ -168,7 +167,10 @@ public:
      */
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
+    IBone *findBone(const StaticString *value) const;
+    IMorph *findMorph(const StaticString *value) const;
 
+    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setUserData(UserData *value);
     void setVisible(bool value);
     void updateImmediate();
@@ -215,6 +217,8 @@ private:
     Array<Morph *> m_morphs;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
+    Hash<HashString, IBone *> m_name2bones;
+    Hash<HashString, IMorph *> m_name2morphs;
     SkinnedVertex *m_skinnedVertices;
     int *m_skinnedIndices;
     StaticString *m_name;

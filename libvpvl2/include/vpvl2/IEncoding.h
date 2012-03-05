@@ -34,31 +34,23 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_IENCODING_H_
+#define VPVL2_IENCODING_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+
+class VPVL2_API IEncoding
+{
+public:
+    virtual StaticString *toUTF8FromShiftJIS(const uint8_t *value, size_t len) const = 0;
+    virtual StaticString *toUTF16FromShiftJIS(const uint8_t *value, size_t len) const = 0;
+    virtual const uint8_t *toShiftJISFromStaticString(const StaticString *value) const = 0;
+};
+
+}
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */

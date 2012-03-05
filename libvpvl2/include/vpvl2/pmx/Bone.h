@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_BONE_H_
 #define VPVL2_PMX_BONE_H_
 
+#include "vpvl2/IBone.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -54,7 +55,7 @@ namespace pmx
  * Bone class represents a bone of a Polygon Model Extended object.
  */
 
-class VPVL2_API Bone
+class VPVL2_API Bone : public IBone
 {
 public:
     struct IKLink;
@@ -80,6 +81,9 @@ public:
     void performInverseKinematics();
     const Vector3 &offset() const;
     const Transform localTransform() const;
+
+    void setPosition(const Vector3 &value);
+    void setRotation(const Quaternion &value);
 
     Bone *parentBone() const { return m_parentBone; }
     Bone *offsetBone() const { return m_offsetBone; }
@@ -120,12 +124,14 @@ private:
     Quaternion m_rotationInherence;
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
+    Quaternion m_rotationMotion;
     Transform m_localTransform;
     Transform m_IKLinkTransform;
     Vector3 m_origin;
     Vector3 m_position;
     Vector3 m_positionInherence;
     Vector3 m_positionMorph;
+    Vector3 m_positionMotion;
     Vector3 m_offset;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;

@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,31 +36,111 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_VMD_BASEKEYFRAME_H_
+#define VPVL2_VMD_BASEKEYFRAME_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+namespace vmd
+{
+
+class VPVL2_API BaseKeyframe
+{
+public:
+    BaseKeyframe()
+        : m_name(0),
+          m_frameIndex(0)
+    {
+    }
+    virtual ~BaseKeyframe() {
+        delete m_name;
+        m_name = 0;
+        m_frameIndex = 0;
+    }
+
+    /**
+     * Stride length of a keyframe structure.
+     *
+     * @return Stride length
+     */
+    virtual size_t stride() const = 0;
+
+    /**
+     * Read and parse the buffer and sets it's result to the class.
+     *
+     * @param data The buffer to read and parse
+     */
+    virtual void read(const uint8_t *data) = 0;
+
+    /**
+     * Write the current value to the buffer.
+     *
+     * You should allocate the buffer size with stride.
+     *
+     * @param data The buffer to write
+     * @see stride
+     */
+    virtual void write(uint8_t *data) const = 0;
+
+    /**
+     * Clone a key frame
+     *
+     * You must manage a copied keyframe and free it at destruction.
+     *
+     * @return copied key frame
+     */
+    virtual BaseKeyframe *clone() const = 0;
+
+    /**
+     * Get the target bone name of this keyframe.
+     *
+     * @return name the bone name
+     */
+    virtual const StaticString *name() const {
+        return m_name;
+    }
+
+    /**
+     * Get the frame index of this keyframe.
+     *
+     * @return A value of frame index
+     */
+    float frameIndex() const {
+        return m_frameIndex;
+    }
+
+    /**
+     * Set the target bone name of this keyframe.
+     *
+     * @param value the bone name
+     */
+    virtual void setName(const StaticString *value) {
+        if (m_name != value) {
+            delete m_name;
+            m_name = value->clone();
+        }
+    }
+
+    /**
+     * Set the frame index of this keyframe.
+     *
+     * @param value A value of frame index
+     */
+    void setFrameIndex(float value) {
+        m_frameIndex = value;
+    }
+
+protected:
+    StaticString *m_name;
+    float m_frameIndex;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseKeyframe)
+};
+
+}
+}
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */

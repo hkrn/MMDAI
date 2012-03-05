@@ -136,6 +136,50 @@ size_t Model::strideSize(StrideType type)
     }
 }
 
+bool Model::load(const uint8_t *data, size_t size)
+{
+    DataInfo info;
+    internal::zerofill(&info, sizeof(info));
+    if (preparse(data, size, info)) {
+        release();
+        parseNamesAndComments(info);
+        parseVertices(info);
+        parseIndices(info);
+        parseTextures(info);
+        parseMaterials(info);
+        parseBones(info);
+        parseMorphs(info);
+        parseDisplayNames(info);
+        parseRigidBodies(info);
+        parseJoints(info);
+        if (!Bone::loadBones(m_bones, m_orderedBones)
+                || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
+                || !Vertex::loadVertices(m_vertices, m_bones)
+                || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
+                || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
+                || !Joint::loadJoints(m_joints, m_rigidBodies))
+            return false;
+        return true;
+    }
+    return false;
+}
+
+void Model::save(uint8_t *data) const
+{
+}
+
+IBone *Model::findBone(const StaticString *value) const
+{
+    IBone **bone = const_cast<IBone **>(m_name2bones.find(value->ptr()));
+    return bone ? *bone : 0;
+}
+
+IMorph *Model::findMorph(const StaticString *value) const
+{
+    IMorph **morph = const_cast<IMorph **>(m_name2morphs.find(value->ptr()));
+    return morph ? *morph : 0;
+}
+
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
@@ -310,38 +354,6 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     return rest == 0;
 }
 
-bool Model::load(const uint8_t *data, size_t size)
-{
-    DataInfo info;
-    internal::zerofill(&info, sizeof(info));
-    if (preparse(data, size, info)) {
-        release();
-        parseNamesAndComments(info);
-        parseVertices(info);
-        parseIndices(info);
-        parseTextures(info);
-        parseMaterials(info);
-        parseBones(info);
-        parseMorphs(info);
-        parseDisplayNames(info);
-        parseRigidBodies(info);
-        parseJoints(info);
-        if (!Bone::loadBones(m_bones, m_orderedBones)
-                || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
-                || !Vertex::loadVertices(m_vertices, m_bones)
-                || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
-                || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
-                || !Joint::loadJoints(m_joints, m_rigidBodies))
-            return false;
-        return true;
-    }
-    return false;
-}
-
-void Model::save(uint8_t *data) const
-{
-}
-
 void Model::setUserData(UserData *value)
 {
     m_userData = value;
@@ -409,7 +421,7 @@ void Model::release()
 
 void Model::parseNamesAndComments(const DataInfo &info)
 {
-    StaticString::Encoding encoding = info.encoding;
+    StaticString::Codec encoding = info.encoding;
     m_name = new StaticString(info.namePtr, info.nameSize, encoding);
     m_englishName = new StaticString(info.englishNamePtr, info.englishNameSize, encoding);
     m_comment = new StaticString(info.commentPtr, info.commentSize, encoding);
@@ -455,7 +467,7 @@ void Model::parseTextures(const DataInfo &info)
     uint8_t *ptr = info.texturesPtr;
     uint8_t *texturePtr;
     size_t nTextureSize, rest = SIZE_MAX;
-    StaticString::Encoding encoding = info.encoding;
+    StaticString::Codec encoding = info.encoding;
     for(int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
         m_textures.add(new StaticString(texturePtr, nTextureSize, encoding));
@@ -484,6 +496,8 @@ void Model::parseBones(const DataInfo &info)
         Bone *bone = new Bone();
         bone->read(ptr, info, size);
         m_bones.add(bone);
+        m_name2bones.insert(bone->name()->ptr(), bone);
+        m_name2bones.insert(bone->englishName()->ptr(), bone);
         ptr += size;
     }
 }
@@ -497,6 +511,8 @@ void Model::parseMorphs(const DataInfo &info)
         Morph *morph = new Morph();
         morph->read(ptr, info, size);
         m_morphs.add(morph);
+        m_name2morphs.insert(morph->name()->ptr(), morph);
+        m_name2morphs.insert(morph->englishName()->ptr(), morph);
         ptr += size;
     }
 }

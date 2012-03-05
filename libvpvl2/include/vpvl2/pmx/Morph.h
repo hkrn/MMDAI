@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_MORPH_H_
 #define VPVL2_PMX_MORPH_H_
 
+#include "vpvl2/IMorph.h"
 #include "vpvl2/pmx/Model.h"
 
 namespace vpvl2
@@ -53,7 +54,7 @@ namespace pmx
  * Morph class represents a morph of a Polygon Model Extended object.
  */
 
-class VPVL2_API Morph
+class VPVL2_API Morph : public IMorph
 {
 public:
     struct Bone {
@@ -115,6 +116,7 @@ public:
     void write(uint8_t *data) const;
 
     void performTransform(float weight);
+    void setWeight(float value);
 
     const StaticString *name() const { return m_name; }
     const StaticString *englishName() const { return m_englishName; }

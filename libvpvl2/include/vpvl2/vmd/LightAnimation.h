@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,31 +36,76 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_VMD_LIGHTANIMATION_H_
+#define VPVL2_VMD_LIGHTANIMATION_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+namespace vmd
+{
+
+class LightKeyframe;
+
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * CameraAnimation class represents a camera Animation that includes many camera key frames
+ * of a Vocaloid Motion Data object inherits BaseAnimation.
+ */
+
+class VPVL2_API LightAnimation : public BaseAnimation
+{
+public:
+    LightAnimation();
+    ~LightAnimation();
+
+    void read(const uint8_t *data, int size);
+    void seek(float frameAt);
+    void takeSnap(const Vector3 &center);
+    void reset();
+    void refresh();
+
+    /**
+     * Get a light key frame associated with index.
+     *
+     * @param i A frame index to get key frame
+     * @return A light key frame associated with index
+     */
+    LightKeyframe *frameAt(int i) const;
+
+    /**
+     * Returns light color.
+     *
+     * @return A color value (R, G, B)
+     */
+    const Vector3 &color() const {
+        return m_color;
+    }
+
+    /**
+     * Returns light direction.
+     *
+     * @return A direction value (X, Y, Z)
+     */
+    const Vector3 &direction() const {
+        return m_direction;
+    }
+
+private:
+    Vector3 m_color;
+    Vector3 m_direction;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(LightAnimation)
+};
+
+}
+}
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */

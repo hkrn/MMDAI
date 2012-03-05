@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,31 +36,106 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL_CAMERAANIMATION_H_
+#define VPVL_CAMERAANIMATION_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+namespace vmd
+{
+
+class CameraKeyframe;
+
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * CameraAnimation class represents a camera Animation that includes many camera key frames
+ * of a Vocaloid Motion Data object inherits BaseAnimation.
+ */
+
+class VPVL2_API CameraAnimation : public BaseAnimation
+{
+public:
+    CameraAnimation();
+    ~CameraAnimation();
+
+    void read(const uint8_t *data, int size);
+    void seek(float frameAt);
+    void takeSnap(const Vector3 &center);
+    void reset();
+    void refresh();
+
+    /**
+     * Get a camera key frame associated with index.
+     *
+     * @param i A frame index to get key frame
+     * @return A camera key frame associated with index
+     */
+    CameraKeyframe *frameAt(int i) const;
+
+    /**
+     * Get a position of camera work.
+     *
+     * @return A position (X, Y, Z)
+     */
+    const Vector3 &position() const {
+        return m_position;
+    }
+
+    /**
+     * Get an angle of camera work.
+     *
+     * @return An angle (X, Y, Z) in degree
+     */
+    const Vector3 &angle() const {
+        return m_angle;
+    }
+
+    /**
+     * Get distance of camera work.
+     *
+     * @return A value of distance
+     */
+    float distance() const {
+        return m_distance;
+    }
+
+    /**
+     * Get fovy of camera work.
+     *
+     * @return A value of fovy
+     */
+    float fovy() const {
+        return m_fovy;
+    }
+
+private:
+    static float weightValue(const CameraKeyframe *keyFrame,
+                             float w,
+                             int at);
+    static void lerpVector3(const CameraKeyframe *keyFrame,
+                            const Vector3 &from,
+                            const Vector3 &to,
+                            float w,
+                            int at,
+                            float &value);
+
+    Vector3 m_position;
+    Vector3 m_angle;
+    float m_distance;
+    float m_fovy;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(CameraAnimation)
+};
+
+}
+}
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */

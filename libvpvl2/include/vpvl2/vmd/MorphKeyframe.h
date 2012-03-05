@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,31 +36,58 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_VMD_MORPHKEYFRAME_H_
+#define VPVL2_VMD_MORPHKEYFRAME_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
+#include "vpvl2/vmd/BaseKeyFrame.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+class IEncoding;
+
+namespace vmd
+{
+
+class VPVL2_API MorphKeyframe : public BaseKeyframe
+{
+public:
+    MorphKeyframe(IEncoding *encoding, StaticString::Codec codec);
+    ~MorphKeyframe();
+
+    static const int kNameSize = 15;
+
+    static size_t strideSize();
+
+    size_t stride() const;
+    void read(const uint8_t *data);
+    void write(uint8_t *data) const;
+    BaseKeyframe *clone() const;
+
+    /**
+     * Get the face weight of this keyframe.
+     *
+     * @return A value of face weight
+     */
+    float weight() const {
+        return m_weight;
+    }
+
+    /**
+     * Set weight of the face of this keyframe.
+     *
+     * @param A value of weight of the face
+     */
+    void setWeight(float value);
+
+private:
+    IEncoding *m_encoding;
+    StaticString::Codec m_codec;
+    float m_weight;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)
+};
+
+}
+}
+
 #endif
-
-#endif /* vpvl2_vpvl2_H_ */

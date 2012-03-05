@@ -300,7 +300,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    StaticString::Encoding encoding = info.encoding;
+    StaticString::Codec encoding = info.encoding;
     m_name = new StaticString(namePtr, nNameSize, encoding);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     m_englishName = new StaticString(namePtr, nNameSize, encoding);
@@ -388,6 +388,11 @@ void Morph::performTransform(float weight)
     default:
         assert(0);
     }
+}
+
+void Morph::setWeight(float value)
+{
+    performTransform(value);
 }
 
 void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)

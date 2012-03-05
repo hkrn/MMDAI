@@ -204,14 +204,14 @@ private:
 
 class StaticString {
 public:
-    enum Encoding {
+    enum Codec {
         kUTF8,
         kUTF16
     };
-    StaticString(const uint8_t *value, size_t length, Encoding encoding)
+    StaticString(const uint8_t *value, size_t length, Codec encoding)
         : m_bytes(0),
           m_length(0),
-          m_encoding(encoding)
+          m_codec(encoding)
     {
         m_bytes = new uint8_t[length + 1];
         memcpy(m_bytes, value, length);
@@ -223,15 +223,22 @@ public:
         m_length = 0;
     }
 
+    StaticString *clone() const {
+        return new StaticString(m_bytes, m_length, m_codec);
+    }
+    bool operator==(const StaticString *other) const {
+        return strcmp(ptr(), other->ptr()) == 0;
+    }
+
     const uint8_t *bytes() const { return m_bytes; }
     const char *ptr() const { return reinterpret_cast<const char *>(m_bytes); }
     size_t length() const { return m_length; }
-    Encoding encoding() const { return m_encoding; }
+    Codec codec() const { return m_codec; }
 
 private:
     uint8_t *m_bytes;
     size_t m_length;
-    Encoding m_encoding;
+    Codec m_codec;
 };
 
 typedef btHashString HashString;

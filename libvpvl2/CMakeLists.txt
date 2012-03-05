@@ -12,9 +12,15 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 project(libvpvl2)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
 set(vpvl2_public_headers
     include/vpvl2/Common.h
     include/vpvl2/vpvl2.h
+    include/vpvl2/IBone.h
+    include/vpvl2/IEncoding.h
+    include/vpvl2/IModel.h
+    include/vpvl2/IMorph.h
+    include/vpvl2/IMotion.h
     include/vpvl2/pmx/Bone.h
     include/vpvl2/pmx/Joint.h
     include/vpvl2/pmx/Material.h
@@ -22,6 +28,17 @@ set(vpvl2_public_headers
     include/vpvl2/pmx/Morph.h
     include/vpvl2/pmx/RigidBody.h
     include/vpvl2/pmx/Vertex.h
+    include/vpvl2/vmd/BaseAnimation.h
+    include/vpvl2/vmd/BaseKeyframe.h
+    include/vpvl2/vmd/BoneAnimation.h
+    include/vpvl2/vmd/BoneKeyframe.h
+    include/vpvl2/vmd/CameraAnimation.h
+    include/vpvl2/vmd/CameraKeyframe.h
+    include/vpvl2/vmd/LightAnimation.h
+    include/vpvl2/vmd/LightKeyframe.h
+    include/vpvl2/vmd/MorphAnimation.h
+    include/vpvl2/vmd/MorphKeyframe.h
+    include/vpvl2/vmd/Motion.h
 )
 set(vpvl2_internal_headers
     include/vpvl2/internal/util.h
