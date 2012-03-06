@@ -221,16 +221,16 @@ void Motion::seek(float frameIndex)
     m_active = maxFrameIndex() > frameIndex;
 }
 
-void Motion::advance(float deltaFrame)
+void Motion::advance(float delta)
 {
-    if (deltaFrame == 0.0f) {
-        m_boneMotion.advance(deltaFrame);
-        m_morphMotion.advance(deltaFrame);
+    if (delta == 0.0f) {
+        m_boneMotion.advance(delta);
+        m_morphMotion.advance(delta);
     }
     else if (m_active) {
         // The motion is active and continue to advance
-        m_boneMotion.advance(deltaFrame);
-        m_morphMotion.advance(deltaFrame);
+        m_boneMotion.advance(delta);
+        m_morphMotion.advance(delta);
         if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
                 m_morphMotion.currentIndex() >= m_morphMotion.maxIndex()) {
             m_active = false;
@@ -319,7 +319,6 @@ void Motion::release()
 {
     delete m_name;
     m_name = 0;
-    m_model = 0;
     m_active = false;
 }
 

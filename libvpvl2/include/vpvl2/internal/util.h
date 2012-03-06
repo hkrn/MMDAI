@@ -129,7 +129,7 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_
     size_t required = stride * size;
     if (required > rest)
         return false;
-    internal::drain(size, ptr, rest);
+    internal::drain(required, ptr, rest);
     return true;
 }
 

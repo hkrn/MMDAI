@@ -61,11 +61,10 @@ MorphKeyframe::MorphKeyframe(IEncoding *encoding, StaticString::Codec codec)
       m_codec(codec),
       m_weight(0.0f)
 {
-    internal::zerofill(m_name, sizeof(m_name));
 }
+
 MorphKeyframe::~MorphKeyframe()
 {
-    internal::zerofill(m_name, sizeof(m_name));
 }
 
 size_t MorphKeyframe::strideSize()
