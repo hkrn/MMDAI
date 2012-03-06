@@ -1100,7 +1100,7 @@ void Renderer::uploadModel0(pmx::Model::UserData *userData, pmx::Model *model, c
         materialPrivate.mainTextureID = 0;
         materialPrivate.sphereTextureID = 0;
         materialPrivate.toonTextureID = 0;
-        const StaticString *path = 0;
+        const IString *path = 0;
         path = material->mainTexture();
         if (path && m_delegate->uploadTexture(m_delegate->toUnicode(path), dir, textureID, false)) {
             m_delegate->log(kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);

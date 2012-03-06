@@ -134,7 +134,7 @@ public:
         virtual const std::string loadShader(ShaderType type) = 0;
         virtual const std::string loadKernel(KernelType type) = 0;
         virtual const std::string toUnicode(const uint8_t *value) = 0;
-        virtual const std::string toUnicode(const StaticString *value) = 0;
+        virtual const std::string toUnicode(const IString *value) = 0;
     };
 
     Renderer(IDelegate *delegate, int width, int height, int fps);

@@ -77,8 +77,8 @@ public:
     void write(uint8_t *data) const;
 
     Bone *bone() const { return m_bone; }
-    const StaticString *name() const { return m_name; }
-    const StaticString *englishName() const { return m_englishName; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
     const Vector3 &size() const { return m_size; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &rotation() const { return m_rotation; }
@@ -92,8 +92,8 @@ private:
     Transform m_invertedTransform;
     btMotionState *m_kinematicMotionState;
     Bone *m_bone;
-    StaticString *m_name;
-    StaticString *m_englishName;
+    IString *m_name;
+    IString *m_englishName;
     int m_boneIndex;
     Vector3 m_size;
     Vector3 m_position;

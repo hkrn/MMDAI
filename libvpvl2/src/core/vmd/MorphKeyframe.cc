@@ -55,10 +55,9 @@ struct FaceKeyFrameChunk
 
 #pragma pack(pop)
 
-MorphKeyframe::MorphKeyframe(IEncoding *encoding, StaticString::Codec codec)
+MorphKeyframe::MorphKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
       m_encoding(encoding),
-      m_codec(codec),
       m_weight(0.0f)
 {
 }
@@ -81,11 +80,7 @@ void MorphKeyframe::read(const uint8_t *data)
 {
     FaceKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    /* FIXME: string conversion */
-    if (m_codec == StaticString::kUTF8)
-        setName(m_encoding->toUTF8FromShiftJIS(chunk.name, sizeof(chunk.name)));
-    else
-        setName(m_encoding->toUTF16FromShiftJIS(chunk.name, sizeof(chunk.name)));
+    setName(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)));
     setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL_BUILD_IOS
     float weight;
@@ -99,7 +94,9 @@ void MorphKeyframe::read(const uint8_t *data)
 void MorphKeyframe::write(uint8_t *data) const
 {
     FaceKeyFrameChunk chunk;
-    internal::copyBytes(chunk.name, m_encoding->toShiftJISFromStaticString(m_name), sizeof(chunk.name));
+    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(chunk.name, name, sizeof(chunk.name));
+    m_encoding->disposeByteArray(name);
     chunk.frameIndex = static_cast<int>(m_frameIndex);
     chunk.weight = m_weight;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
@@ -107,7 +104,7 @@ void MorphKeyframe::write(uint8_t *data) const
 
 BaseKeyframe *MorphKeyframe::clone() const
 {
-    MorphKeyframe *frame = new MorphKeyframe(m_encoding, m_codec);
+    MorphKeyframe *frame = new MorphKeyframe(m_encoding);
     frame->setName(m_name);
     frame->setFrameIndex(m_frameIndex);
     frame->setWeight(m_weight);

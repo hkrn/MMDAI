@@ -74,8 +74,9 @@ struct Model::SkinnedVertex {
     Vector4 uva4;
 };
 
-Model::Model()
-    : m_skinnedVertices(0),
+Model::Model(IEncoding *encoding)
+    : m_encoding(encoding),
+      m_skinnedVertices(0),
       m_skinnedIndices(0),
       m_name(0),
       m_englishName(0),
@@ -168,15 +169,15 @@ void Model::save(uint8_t *data) const
 {
 }
 
-IBone *Model::findBone(const StaticString *value) const
+IBone *Model::findBone(const IString *value) const
 {
-    IBone **bone = const_cast<IBone **>(m_name2bones.find(value->ptr()));
+    IBone **bone = const_cast<IBone **>(m_name2bones.find(value->toHashString()));
     return bone ? *bone : 0;
 }
 
-IMorph *Model::findMorph(const StaticString *value) const
+IMorph *Model::findMorph(const IString *value) const
 {
-    IMorph **morph = const_cast<IMorph **>(m_name2morphs.find(value->ptr()));
+    IMorph **morph = const_cast<IMorph **>(m_name2morphs.find(value->toHashString()));
     return morph ? *morph : 0;
 }
 
@@ -211,7 +212,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidFlagSizeError;
         return false;
     }
-    info.encoding = *reinterpret_cast<uint8_t *>(ptr) == 1 ? StaticString::kUTF8 : StaticString::kUTF16;
+    info.codec = *reinterpret_cast<uint8_t *>(ptr) == 1 ? IString::kUTF8 : IString::kUTF16;
     info.additionalUVSize = *reinterpret_cast<uint8_t *>(ptr + 1);
     info.vertexIndexSize = *reinterpret_cast<uint8_t *>(ptr + 2);
     info.textureIndexSize = *reinterpret_cast<uint8_t *>(ptr + 3);
@@ -350,6 +351,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.endPtr = ptr;
+    info.encoding = m_encoding;
 
     return rest == 0;
 }
@@ -421,11 +423,10 @@ void Model::release()
 
 void Model::parseNamesAndComments(const DataInfo &info)
 {
-    StaticString::Codec encoding = info.encoding;
-    m_name = new StaticString(info.namePtr, info.nameSize, encoding);
-    m_englishName = new StaticString(info.englishNamePtr, info.englishNameSize, encoding);
-    m_comment = new StaticString(info.commentPtr, info.commentSize, encoding);
-    m_englishComment = new StaticString(info.englishCommentPtr, info.englishCommentSize, encoding);
+    m_name = m_encoding->toString(info.namePtr, info.nameSize, info.codec);
+    m_englishName = m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec);
+    m_comment = m_encoding->toString(info.commentPtr, info.commentSize, info.codec);
+    m_englishComment = m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec);
 }
 
 void Model::parseVertices(const DataInfo &info)
@@ -467,10 +468,9 @@ void Model::parseTextures(const DataInfo &info)
     uint8_t *ptr = info.texturesPtr;
     uint8_t *texturePtr;
     size_t nTextureSize, rest = SIZE_MAX;
-    StaticString::Codec encoding = info.encoding;
     for(int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
-        m_textures.add(new StaticString(texturePtr, nTextureSize, encoding));
+        m_textures.add(m_encoding->toString(texturePtr, nTextureSize, info.codec));
     }
 }
 
@@ -496,8 +496,8 @@ void Model::parseBones(const DataInfo &info)
         Bone *bone = new Bone();
         bone->read(ptr, info, size);
         m_bones.add(bone);
-        m_name2bones.insert(bone->name()->ptr(), bone);
-        m_name2bones.insert(bone->englishName()->ptr(), bone);
+        m_name2bones.insert(bone->name()->toHashString(), bone);
+        m_name2bones.insert(bone->englishName()->toHashString(), bone);
         ptr += size;
     }
 }
@@ -511,8 +511,8 @@ void Model::parseMorphs(const DataInfo &info)
         Morph *morph = new Morph();
         morph->read(ptr, info, size);
         m_morphs.add(morph);
-        m_name2morphs.insert(morph->name()->ptr(), morph);
-        m_name2morphs.insert(morph->englishName()->ptr(), morph);
+        m_name2morphs.insert(morph->name()->toHashString(), morph);
+        m_name2morphs.insert(morph->englishName()->toHashString(), morph);
         ptr += size;
     }
 }

@@ -118,8 +118,8 @@ public:
     void performTransform(float weight);
     void setWeight(float value);
 
-    const StaticString *name() const { return m_name; }
-    const StaticString *englishName() const { return m_englishName; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
 
 private:
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);
@@ -138,8 +138,8 @@ private:
     Array<Bone> m_bones;
     Array<Material> m_materials;
     Array<Group> m_groups;
-    StaticString *m_name;
-    StaticString *m_englishName;
+    IString *m_name;
+    IString *m_englishName;
     uint8_t m_category;
     uint8_t m_type;
 

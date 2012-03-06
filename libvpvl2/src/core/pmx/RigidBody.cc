@@ -151,10 +151,9 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    StaticString::Codec encoding = info.encoding;
-    m_name = new StaticString(namePtr, nNameSize, encoding);
+    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize, encoding);
+    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
     m_boneIndex = internal::variantIndex(ptr, info.boneIndexSize);
     const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
     m_collisionGroupID = unit.collisionGroupID;

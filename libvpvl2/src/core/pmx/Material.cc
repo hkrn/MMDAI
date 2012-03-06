@@ -159,7 +159,7 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Material::loadMaterials(const Array<Material *> &materials, const Array<StaticString *> &textures, int expectedIndices)
+bool Material::loadMaterials(const Array<Material *> &materials, const Array<IString *> &textures, int expectedIndices)
 {
     const int nmaterials = materials.count();
     const int ntextures = textures.count();
@@ -197,10 +197,9 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    StaticString::Codec encoding = info.encoding;
-    m_name = new StaticString(namePtr, nNameSize, encoding);
+    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = new StaticString(namePtr, nNameSize, encoding);
+    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
     const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
@@ -224,7 +223,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
         m_toonTextureIndex = internal::variantIndex(ptr, info.textureIndexSize);
     }
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_userDataArea = new StaticString(namePtr, nNameSize, info.encoding);
+    m_userDataArea = info.encoding->toString(namePtr, nNameSize, info.codec);
     internal::size32(ptr, rest, nNameSize);
     m_indices = nNameSize;
     size = ptr - start;

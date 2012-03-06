@@ -38,6 +38,7 @@
 #define VPVL2_PMX_MODEL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 #include "vpvl2/IModel.h"
 
 namespace vpvl2
@@ -66,7 +67,6 @@ class VPVL2_API Model : public IModel
 public:
     class UserData {
     public:
-        UserData() {}
         virtual ~UserData() {}
     };
     struct SkinnedVertex;
@@ -113,9 +113,10 @@ public:
 
     struct DataInfo
     {
+        IEncoding *encoding;
         uint8_t *basePtr;
         uint8_t *namePtr;
-        StaticString::Codec encoding;
+        IString::Codec codec;
         size_t additionalUVSize;
         size_t vertexIndexSize;
         size_t textureIndexSize;
@@ -154,7 +155,7 @@ public:
     /**
      * Constructor
      */
-    Model();
+    Model(IEncoding *encoding);
     ~Model();
 
     static size_t strideOffset(StrideType type);
@@ -167,8 +168,8 @@ public:
      */
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
-    IBone *findBone(const StaticString *value) const;
-    IMorph *findMorph(const StaticString *value) const;
+    IBone *findBone(const IString *value) const;
+    IMorph *findMorph(const IString *value) const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setUserData(UserData *value);
@@ -180,17 +181,17 @@ public:
 
     const Array<Vertex *> &vertices() const { return m_vertices; }
     const Array<int> &indices() const { return m_indices; }
-    const Array<StaticString *> &textures() const { return m_textures; }
+    const Array<IString *> &textures() const { return m_textures; }
     const Array<Material *> &materials() const { return m_materials; }
     const Array<Bone *> &bones() const { return m_bones; }
     const Array<Bone *> &orderedBones() const { return m_orderedBones; }
     const Array<Morph *> &morphs() const { return m_morphs; }
     const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
     const Array<Joint *> &joints() const { return m_joints; }
-    const StaticString *name() const { return m_name; }
-    const StaticString *englishName() const { return m_englishName; }
-    const StaticString *comment() const { return m_comment; }
-    const StaticString *englishComment() const { return m_englishComment; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
+    const IString *comment() const { return m_comment; }
+    const IString *englishComment() const { return m_englishComment; }
     UserData *userData() const { return m_userData; }
     Error error() const { return m_error; }
     bool isVisible() const { return m_visible; }
@@ -208,9 +209,10 @@ private:
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
 
+    IEncoding *m_encoding;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
-    Array<StaticString *> m_textures;
+    Array<IString *> m_textures;
     Array<Material *> m_materials;
     Array<Bone *> m_bones;
     Array<Bone *> m_orderedBones;
@@ -221,10 +223,10 @@ private:
     Hash<HashString, IMorph *> m_name2morphs;
     SkinnedVertex *m_skinnedVertices;
     int *m_skinnedIndices;
-    StaticString *m_name;
-    StaticString *m_englishName;
-    StaticString *m_comment;
-    StaticString *m_englishComment;
+    IString *m_name;
+    IString *m_englishName;
+    IString *m_comment;
+    IString *m_englishComment;
     UserData *m_userData;
     Error m_error;
     bool m_visible;

@@ -70,10 +70,9 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
     v.setW(btMax(table[i + 12], zero)); // y2
 }
 
-BoneKeyframe::BoneKeyframe(IEncoding *encoding, StaticString::Codec codec)
+BoneKeyframe::BoneKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
       m_encoding(encoding),
-      m_codec(codec),
       m_position(0.0f, 0.0f, 0.0f),
       m_rotation(Quaternion::getIdentity()),
       m_enableIK(true)
@@ -116,11 +115,7 @@ void BoneKeyframe::read(const uint8_t *data)
 {
     BoneKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    /* FIXME: string conversion */
-    if (m_codec == StaticString::kUTF8)
-        setName(m_encoding->toUTF8FromShiftJIS(chunk.name, sizeof(chunk.name)));
-    else
-        setName(m_encoding->toUTF16FromShiftJIS(chunk.name, sizeof(chunk.name)));
+    setName(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)));
 #ifdef VPVL_BUILD_IOS
     float pos[3], rot[4];
     memcpy(pos, &chunk.position, sizeof(pos));
@@ -152,7 +147,9 @@ void BoneKeyframe::read(const uint8_t *data)
 void BoneKeyframe::write(uint8_t *data) const
 {
     BoneKeyFrameChunk chunk;
-    internal::copyBytes(chunk.name, m_encoding->toShiftJISFromStaticString(m_name), sizeof(chunk.name));
+    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(chunk.name, name, sizeof(chunk.name));
+    m_encoding->disposeByteArray(name);
     chunk.frameIndex = static_cast<int>(m_frameIndex);
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
@@ -175,7 +172,7 @@ void BoneKeyframe::write(uint8_t *data) const
 
 BaseKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *frame = new BoneKeyframe(m_encoding, m_codec);
+    BoneKeyframe *frame = new BoneKeyframe(m_encoding);
     frame->setName(m_name->clone());
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),

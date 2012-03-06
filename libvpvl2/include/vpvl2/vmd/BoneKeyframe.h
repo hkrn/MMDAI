@@ -69,7 +69,7 @@ public:
         QuadWord rotation;
     };
 
-    BoneKeyframe(IEncoding *encoding, StaticString::Codec codec);
+    BoneKeyframe(IEncoding *encoding);
     ~BoneKeyframe();
 
     static const int kNameSize = 15;
@@ -166,7 +166,6 @@ private:
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     IEncoding *m_encoding;
-    StaticString::Codec m_codec;
     Vector3 m_position;
     Quaternion m_rotation;
     bool m_linear[4];

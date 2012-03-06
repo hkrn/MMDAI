@@ -95,7 +95,14 @@ typedef btScalar Scalar;
 typedef btTransform Transform;
 typedef btVector3 Vector3;
 typedef btVector4 Vector4;
+typedef btHashString HashString;
+typedef btHashPtr HashPtr;
 typedef Vector4 Color;
+
+static const float kPI = 3.14159265358979323846f;
+static const Vector3 &kZeroV3 = Vector3(0.0f, 0.0f, 0.0f);
+static const Vector4 &kZeroV4 = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+static const Color &kZeroC = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 
 template<typename T>
 class Array
@@ -202,52 +209,18 @@ private:
     btHashMap<K, V> m_values;
 };
 
-class StaticString {
+class IString {
 public:
     enum Codec {
+        kShiftJIS,
         kUTF8,
         kUTF16
     };
-    StaticString(const uint8_t *value, size_t length, Codec encoding)
-        : m_bytes(0),
-          m_length(0),
-          m_codec(encoding)
-    {
-        m_bytes = new uint8_t[length + 1];
-        memcpy(m_bytes, value, length);
-        m_bytes[length] = 0;
-        m_length = length;
-    }
-    ~StaticString() {
-        delete[] m_bytes;
-        m_length = 0;
-    }
-
-    StaticString *clone() const {
-        return new StaticString(m_bytes, m_length, m_codec);
-    }
-    bool operator==(const StaticString *other) const {
-        return strcmp(ptr(), other->ptr()) == 0;
-    }
-
-    const uint8_t *bytes() const { return m_bytes; }
-    const char *ptr() const { return reinterpret_cast<const char *>(m_bytes); }
-    size_t length() const { return m_length; }
-    Codec codec() const { return m_codec; }
-
-private:
-    uint8_t *m_bytes;
-    size_t m_length;
-    Codec m_codec;
+    virtual ~IString() {}
+    virtual IString *clone() const = 0;
+    virtual const HashString toHashString() const = 0;
+    virtual bool equals(const IString *value) const = 0;
 };
-
-typedef btHashString HashString;
-typedef btHashPtr HashPtr;
-
-static const float kPI = 3.14159265358979323846f;
-static const Vector3 &kZeroV3 = Vector3(0.0f, 0.0f, 0.0f);
-static const Vector4 &kZeroV4 = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
-static const Color &kZeroC = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 
 /**
  * Get whether current library version is compatible with specified version.

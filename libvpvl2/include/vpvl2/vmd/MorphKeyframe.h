@@ -51,7 +51,7 @@ namespace vmd
 class VPVL2_API MorphKeyframe : public BaseKeyframe
 {
 public:
-    MorphKeyframe(IEncoding *encoding, StaticString::Codec codec);
+    MorphKeyframe(IEncoding *encoding);
     ~MorphKeyframe();
 
     static const int kNameSize = 15;
@@ -81,7 +81,6 @@ public:
 
 private:
     IEncoding *m_encoding;
-    StaticString::Codec m_codec;
     float m_weight;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)

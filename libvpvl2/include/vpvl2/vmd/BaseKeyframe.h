@@ -98,7 +98,7 @@ public:
      *
      * @return name the bone name
      */
-    virtual const StaticString *name() const {
+    virtual const IString *name() const {
         return m_name;
     }
 
@@ -116,7 +116,7 @@ public:
      *
      * @param value the bone name
      */
-    virtual void setName(const StaticString *value) {
+    virtual void setName(const IString *value) {
         if (m_name != value) {
             delete m_name;
             m_name = value->clone();
@@ -133,7 +133,7 @@ public:
     }
 
 protected:
-    StaticString *m_name;
+    IString *m_name;
     float m_frameIndex;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseKeyframe)

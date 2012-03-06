@@ -110,6 +110,93 @@ static bool slurpFile(const std::string &path, QByteArray &bytes) {
     }
 }
 
+class String : public IString {
+public:
+    String(const QString &s) : m_value(s) {
+    }
+    ~String() {
+    }
+
+    IString *clone() const {
+        return new String(m_value);
+    }
+    const HashString toHashString() const {
+        const QByteArray &bytes = m_value.toAscii();
+        return HashString(bytes.constData());
+    }
+    bool equals(const IString *value) const {
+        return m_value == static_cast<const String *>(value)->value();
+    }
+    const QString &value() const {
+        return m_value;
+    }
+
+private:
+    QString m_value;
+};
+
+class Encoding : public IEncoding {
+public:
+    Encoding()
+        : m_sjis(QTextCodec::codecForName("Shift-JIS")),
+          m_utf8(QTextCodec::codecForName("UTF-8")),
+          m_utf16(QTextCodec::codecForName("UTF-16"))
+    {
+    }
+    ~Encoding() {
+    }
+
+    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
+        IString *s = 0;
+        const char *str = reinterpret_cast<const char *>(value);
+        switch (codec) {
+        case IString::kShiftJIS:
+            s = new String(m_sjis->toUnicode(str, size));
+            break;
+        case IString::kUTF8:
+            s = new String(m_utf8->toUnicode(str, size));
+            break;
+        case IString::kUTF16:
+            s = new String(m_utf16->toUnicode(str, size));
+            break;
+        }
+        return s;
+    }
+    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
+        size_t size = qstrnlen(reinterpret_cast<const char *>(value), maxlen);
+        return toString(value, size, codec);
+    }
+    uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
+        const String *s = static_cast<const String *>(value);
+        QByteArray bytes;
+        switch (codec) {
+        case IString::kShiftJIS:
+            bytes = m_sjis->fromUnicode(s->value());
+            break;
+        case IString::kUTF8:
+            bytes = m_utf8->fromUnicode(s->value());
+            break;
+        case IString::kUTF16:
+            bytes = m_utf16->fromUnicode(s->value());
+            break;
+        }
+        size_t size = bytes.length();
+        uint8_t *data = new uint8_t[size + 1];
+        memcpy(data, bytes.constData(), size);
+        data[size] = 0;
+        return data;
+    }
+    void disposeByteArray(uint8_t *value) const {
+        delete[] value;
+    }
+    pmx::Model *m_model;
+
+private:
+    QTextCodec *m_sjis;
+    QTextCodec *m_utf8;
+    QTextCodec *m_utf16;
+};
+
 class Delegate : public Renderer::IDelegate
 {
 public:
@@ -239,20 +326,9 @@ public:
         QString s = codec->toUnicode(reinterpret_cast<const char *>(value));
         return std::string(s.toUtf8());
     }
-    const std::string toUnicode(const StaticString *value) {
+    const std::string toUnicode(const IString *value) {
         if (value) {
-            QTextCodec *codec = 0;
-            switch (value->codec()) {
-            case StaticString::kUTF16:
-                codec = QTextCodec::codecForName("UTF-16");
-                break;
-            case StaticString::kUTF8:
-                codec = QTextCodec::codecForName("UTF-8");
-                break;
-            default:
-                return "";
-            }
-            const QString &s = codec->toUnicode(value->ptr(), value->length());
+            const QString &s = static_cast<const String *>(value)->value();
             return std::string(s.toUtf8());
         }
         return "";
@@ -281,12 +357,14 @@ QDebug operator<<(QDebug debug, const Color &v)
     return debug;
 }
 
-QDebug operator<<(QDebug debug, const StaticString *str)
+QDebug operator<<(QDebug debug, const IString *str)
 {
     if (str) {
+        /*
         const bool isUTF8 = str->codec() == StaticString::kUTF8;
         const QTextCodec *codec = QTextCodec::codecForName(isUTF8 ? "UTF-8" : "UTF-16");
         debug.nospace() << codec->toUnicode(str->ptr());
+        */
     }
     else {
         debug.nospace() << "\"\"";
@@ -372,14 +450,22 @@ public:
           m_fovy(30.0),
           m_distance(50.0),
           m_world(0),
+          m_encoding(0),
+          m_model(0),
+          m_motion(0),
       #ifndef VPVL_NO_BULLET
           m_dispatcher(&m_config),
           m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
       #endif /* VPVL_NO_BULLET */
           m_delegate(this),
           m_renderer(0),
-          m_prevElapsed(0)
+          m_prevElapsed(0),
+          m_currentFrameIndex(0)
     {
+        internal::Encoding *encoding = new internal::Encoding();
+        m_encoding = encoding;
+        m_model = new pmx::Model(encoding);
+        encoding->m_model = m_model;
         m_renderer = new Renderer(&m_delegate, kWidth, kHeight, kFPS);
 #ifndef VPVL_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
@@ -393,6 +479,8 @@ public:
 #endif
         delete m_renderer;
         delete m_world;
+        delete m_encoding;
+        delete m_motion;
     }
 
     void rotate(float x, float y) {
@@ -409,7 +497,7 @@ public:
     }
 
 protected:
-    virtual void initializeGL() {
+    void initializeGL() {
         bool shaderSkinning = false;
         m_delegate.setShaderSkinningEnable(shaderSkinning);
         //m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
@@ -429,7 +517,7 @@ protected:
         startTimer(1000.0f / 60.0f);
         m_timer.start();
     }
-    virtual void timerEvent(QTimerEvent *) {
+    void timerEvent(QTimerEvent *) {
         float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
         float diff = elapsed - m_prevElapsed;
         m_prevElapsed = elapsed;
@@ -438,10 +526,10 @@ protected:
         m_renderer->updateAllModel();
         updateGL();
     }
-    virtual void mousePressEvent(QMouseEvent *event) {
+    void mousePressEvent(QMouseEvent *event) {
         m_prevPos = event->pos();
     }
-    virtual void mouseMoveEvent(QMouseEvent *event) {
+    void mouseMoveEvent(QMouseEvent *event) {
         if (event->buttons() & Qt::LeftButton) {
             Qt::KeyboardModifiers modifiers = event->modifiers();
             const QPoint &diff = event->pos() - m_prevPos;
@@ -454,7 +542,27 @@ protected:
             m_prevPos = event->pos();
         }
     }
-    virtual void wheelEvent(QWheelEvent *event) {
+    void keyPressEvent(QKeyEvent *event) {
+        if (m_motion && event->modifiers() & Qt::SHIFT) {
+            switch (event->key()) {
+            case Qt::Key_Left:
+                m_currentFrameIndex -= 1.0f;
+                btSetMax(m_currentFrameIndex, 0.0f);
+                m_motion->seek(m_currentFrameIndex);
+                break;
+            case Qt::Key_Right:
+                m_currentFrameIndex += 1.0;
+                btSetMin(m_currentFrameIndex, m_motion->maxFrameIndex());
+                m_motion->seek(m_currentFrameIndex);
+                break;
+            }
+            qDebug() << m_currentFrameIndex;
+            if (m_motion->isReachedTo(m_motion->maxFrameIndex()))
+                m_motion->reset();
+            m_model->updateImmediate();
+        }
+    }
+    void wheelEvent(QWheelEvent *event) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             const qreal fovyStep = 1.0;
@@ -470,10 +578,10 @@ protected:
                 m_distance = event->delta() > 0 ? m_distance - distanceStep : m_distance + distanceStep;
         }
     }
-    virtual void resizeGL(int w, int h) {
+    void resizeGL(int w, int h) {
         m_renderer->resize(w, h);
     }
-    virtual void paintGL() {
+    void paintGL() {
         glClearColor(0, 0, 1, 1);
         m_renderer->clear();
         updateModelViewMatrix();
@@ -505,15 +613,12 @@ private:
     }
     bool loadScene() {
         QByteArray bytes;
-        pmx::Model *model = new pmx::Model();
         if (!internal::slurpFile(internal::concatPath(kModelDir, kModelName), bytes)) {
             m_delegate.log(Renderer::kLogWarning, "Failed loading the model");
-            delete model;
             return false;
         }
-        if (!model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-            m_delegate.log(Renderer::kLogWarning, "Failed parsing the model: %d", model->error());
-            delete model;
+        if (!m_model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+            m_delegate.log(Renderer::kLogWarning, "Failed parsing the model: %d", m_model->error());
             return false;
         }
 
@@ -523,21 +628,24 @@ private:
         scene->setWorld(m_world);
         */
 
-        m_renderer->uploadModel(model, kModelDir);
-        //model->setEdgeOffset(0.5f);
+        m_renderer->uploadModel(m_model, kModelDir);
+        //m_model->setEdgeOffset(0.5f);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
         loadAsset(kStageDir, kStageName);
         loadAsset(kStageDir, kStage2Name);
 #endif
-        /*
-        if (!internal::slurpFile(kMotion, bytes) ||
-                !m_motion.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
+        if (internal::slurpFile(kMotion, bytes)) {
+            m_motion = new vmd::Motion(m_model, m_encoding);
+            qDebug() << "Loaded motion:" << m_motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
+            qDebug() << "maxFrameIndex:" << m_motion->maxFrameIndex();
+        }
+        else {
             m_delegate.log(Renderer::kLogWarning, "Failed parsing the model motion, skipped...");
-        else
-            model->addMotion(&m_motion);
+        }
 
+        /*
         if (!internal::slurpFile(kCamera, bytes) ||
                 !m_camera.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
             m_delegate.log(Renderer::kLogWarning, "Failed parsing the camera motion, skipped...");
@@ -547,16 +655,16 @@ private:
         m_renderer->updateAllModel();
 
 #if 1
-        for (int i = 0; i < model->materials().count(); i++)
-            qDebug() << model->materials().at(i);
-        for (int i = 0; i < model->orderedBones().count(); i++)
-            qDebug() << model->orderedBones().at(i);
-        for (int i = 0; i < model->morphs().count(); i++)
-            qDebug() << model->morphs().at(i);
-        for (int i = 0; i < model->rigidBodies().count(); i++)
-            qDebug("rbody%d: %s", i, m_delegate.toUnicode(model->rigidBodies()[i]->name()).c_str());
-        for (int i = 0; i < model->joints().count(); i++)
-            qDebug("joint%d: %s", i, m_delegate.toUnicode(model->joints()[i]->name()).c_str());
+        for (int i = 0; i < m_model->materials().count(); i++)
+            qDebug() << m_model->materials().at(i);
+        for (int i = 0; i < m_model->orderedBones().count(); i++)
+            qDebug() << m_model->orderedBones().at(i);
+        for (int i = 0; i < m_model->morphs().count(); i++)
+            qDebug() << m_model->morphs().at(i);
+        for (int i = 0; i < m_model->rigidBodies().count(); i++)
+            qDebug("rbody%d: %s", i, m_delegate.toUnicode(m_model->rigidBodies()[i]->name()).c_str());
+        for (int i = 0; i < m_model->joints().count(); i++)
+            qDebug("joint%d: %s", i, m_delegate.toUnicode(m_model->joints()[i]->name()).c_str());
 #endif
 
         return true;
@@ -588,6 +696,9 @@ private:
     qreal m_fovy;
     qreal m_distance;
     btDiscreteDynamicsWorld *m_world;
+    IEncoding *m_encoding;
+    pmx::Model *m_model;
+    IMotion *m_motion;
 #ifndef VPVL_NO_BULLET
     btDefaultCollisionConfiguration m_config;
     btCollisionDispatcher m_dispatcher;
@@ -596,8 +707,8 @@ private:
 #endif /* VPVL_NO_BULLET */
     internal::Delegate m_delegate;
     Renderer *m_renderer;
-    //VMDMotion m_motion;
     //VMDMotion m_camera;
     float m_prevElapsed;
+    float m_currentFrameIndex;
 };
 

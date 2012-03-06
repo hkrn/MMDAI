@@ -88,8 +88,8 @@ public:
     Bone *parentBone() const { return m_parentBone; }
     Bone *targetBone() const { return m_targetBone; }
     Bone *parentInherenceBone() const { return m_parentInherenceBone; }
-    const StaticString *name() const { return m_name; }
-    const StaticString *englishName() const { return m_englishName; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
@@ -116,8 +116,8 @@ private:
     Bone *m_parentBone;
     Bone *m_targetBone;
     Bone *m_parentInherenceBone;
-    StaticString *m_name;
-    StaticString *m_englishName;
+    IString *m_name;
+    IString *m_englishName;
     Quaternion m_rotation;
     Quaternion m_rotationInherence;
     Quaternion m_rotationMorph;

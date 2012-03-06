@@ -68,7 +68,7 @@ class VPVL2_API BoneAnimation : public BaseAnimation
 public:
     typedef struct InternalBoneKeyFrameList InternalBoneKeyFarmeList;
 
-    BoneAnimation(IEncoding *encoding, StaticString::Codec codec);
+    BoneAnimation(IEncoding *encoding);
     ~BoneAnimation();
 
     void read(const uint8_t *data, int size);
@@ -120,7 +120,6 @@ private:
     void calculateFrames(float frameAt, InternalBoneKeyFrameList *keyFrames);
 
     IEncoding *m_encoding;
-    StaticString::Codec m_codec;
     Hash<HashString, InternalBoneKeyFrameList *> m_name2keyframes;
     IModel *m_model;
     bool m_enableNullFrame;

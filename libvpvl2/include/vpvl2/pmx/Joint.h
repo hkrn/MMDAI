@@ -74,14 +74,14 @@ public:
 
     RigidBody *rigidBody1() const { return m_rigidBody1; }
     RigidBody *rigidBody2() const { return m_rigidBody2; }
-    const StaticString *name() const { return m_name; }
-    const StaticString *englishName() const { return m_englishName; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
 
 private:
     RigidBody *m_rigidBody1;
     RigidBody *m_rigidBody2;
-    StaticString *m_name;
-    StaticString *m_englishName;
+    IString *m_name;
+    IString *m_englishName;
     Vector3 m_position;
     Vector3 m_rotation;
     Vector3 m_positionLowerLimit;

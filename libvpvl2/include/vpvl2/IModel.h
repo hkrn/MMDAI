@@ -50,11 +50,12 @@ class VPVL2_API IModel
 {
 public:
     virtual ~IModel() {}
-    virtual const StaticString *name() const = 0;
+    virtual const IString *name() const = 0;
+    virtual const IString *englishName() const = 0;
     virtual bool load(const uint8_t *data, size_t size) = 0;
     virtual void save(uint8_t *data) const = 0;
-    virtual IBone *findBone(const StaticString *value) const = 0;
-    virtual IMorph *findMorph(const StaticString *value) const = 0;
+    virtual IBone *findBone(const IString *value) const = 0;
+    virtual IMorph *findMorph(const IString *value) const = 0;
 };
 
 }

@@ -67,10 +67,9 @@ public:
     }
 };
 
-MorphAnimation::MorphAnimation(IEncoding *encoding, StaticString::Codec codec)
+MorphAnimation::MorphAnimation(IEncoding *encoding)
     : BaseAnimation(),
       m_encoding(encoding),
-      m_codec(codec),
       m_model(0),
       m_enableNullFrame(false)
 {
@@ -87,7 +86,7 @@ void MorphAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
     for (int i = 0; i < size; i++) {
-        MorphKeyframe *frame = new MorphKeyframe(m_encoding, m_codec);
+        MorphKeyframe *frame = new MorphKeyframe(m_encoding);
         frame->read(ptr);
         ptr += frame->stride();
         m_frames.add(frame);

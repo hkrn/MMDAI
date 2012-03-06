@@ -94,10 +94,9 @@ void BoneAnimation::lerpVector3(const BoneKeyframe *keyFrame,
     }
 }
 
-BoneAnimation::BoneAnimation(IEncoding *encoding, StaticString::Codec codec)
+BoneAnimation::BoneAnimation(IEncoding *encoding)
     : BaseAnimation(),
       m_encoding(encoding),
-      m_codec(codec),
       m_model(0),
       m_enableNullFrame(false)
 {
@@ -114,7 +113,7 @@ void BoneAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_frames.reserve(size);
     for (int i = 0; i < size; i++) {
-        BoneKeyframe *frame = new BoneKeyframe(m_encoding, m_codec);
+        BoneKeyframe *frame = new BoneKeyframe(m_encoding);
         frame->read(ptr);
         ptr += frame->stride();
         m_frames.add(frame);

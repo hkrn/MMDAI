@@ -82,7 +82,7 @@ public:
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,
-                              const Array<StaticString *> &textures,
+                              const Array<IString *> &textures,
                               int expectedIndices);
 
     /**
@@ -96,12 +96,12 @@ public:
     void write(uint8_t *data) const;
     void mergeMorph(Morph::Material *morph, float weight);
 
-    const StaticString *name() const { return m_name; }
-    const StaticString *englishName() const { return m_englishName; }
-    const StaticString *userDataArea() const { return m_userDataArea; }
-    const StaticString *mainTexture() const { return m_mainTexture; }
-    const StaticString *sphereTexture() const { return m_sphereTexture; }
-    const StaticString *toonTexture() const { return m_toonTexture; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
+    const IString *userDataArea() const { return m_userDataArea; }
+    const IString *mainTexture() const { return m_mainTexture; }
+    const IString *sphereTexture() const { return m_sphereTexture; }
+    const IString *toonTexture() const { return m_toonTexture; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
     const Color ambient() const { return m_ambient.calculate(); }
     const Color diffuse() const { return m_diffuse.calculate(); }
@@ -121,12 +121,12 @@ public:
     bool isEdgeDrawn() const { return m_flags & 0x10; }
 
 private:
-    StaticString *m_name;
-    StaticString *m_englishName;
-    StaticString *m_userDataArea;
-    StaticString *m_mainTexture;
-    StaticString *m_sphereTexture;
-    StaticString *m_toonTexture;
+    IString *m_name;
+    IString *m_englishName;
+    IString *m_userDataArea;
+    IString *m_mainTexture;
+    IString *m_sphereTexture;
+    IString *m_toonTexture;
     SphereTextureRenderMode m_sphereTextureRenderMode;
     Color3 m_ambient;
     Color3 m_diffuse;

@@ -46,9 +46,10 @@ class VPVL2_API IEncoding
 {
 public:
     virtual ~IEncoding() {}
-    virtual StaticString *toUTF8FromShiftJIS(const uint8_t *value, size_t len) const = 0;
-    virtual StaticString *toUTF16FromShiftJIS(const uint8_t *value, size_t len) const = 0;
-    virtual const uint8_t *toShiftJISFromStaticString(const StaticString *value) const = 0;
+    virtual IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const = 0;
+    virtual IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const = 0;
+    virtual uint8_t *toByteArray(const IString *value, IString::Codec codec) const = 0;
+    virtual void disposeByteArray(uint8_t *value) const = 0;
 };
 
 }

@@ -104,7 +104,7 @@ public:
     static const int kSignatureSize = 30;
     static const int kNameSize = 20;
 
-    Motion(IModel *model, IEncoding *encoding, StaticString::Codec codec);
+    Motion(IModel *model, IEncoding *encoding);
     ~Motion();
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
@@ -120,7 +120,7 @@ public:
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
 
-    const StaticString *name() const {
+    const IString *name() const {
         return m_name;
     }
     IModel *parentModel() const {
@@ -171,7 +171,7 @@ private:
 
     IModel *m_model;
     IEncoding *m_encoding;
-    StaticString *m_name;
+    IString *m_name;
     DataInfo m_result;
     BoneAnimation m_boneMotion;
     CameraAnimation m_cameraMotion;

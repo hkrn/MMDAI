@@ -94,13 +94,13 @@ void BaseAnimation::replaceKeyframe(BaseKeyframe *frame)
     addKeyframe(frame);
 }
 
-void BaseAnimation::deleteKeyframe(float frameIndex, const StaticString *value)
+void BaseAnimation::deleteKeyframe(float frameIndex, const IString *value)
 {
     const int nframes = m_frames.count();
     BaseKeyframe *frameToRemove = 0;
     for (int i = 0; i < nframes; i++) {
         BaseKeyframe *frame = m_frames[i];
-        if (frame->frameIndex() == frameIndex && value == frame->name()) {
+        if (frame->frameIndex() == frameIndex && value->equals(frame->name())) {
             frameToRemove = frame;
             break;
         }

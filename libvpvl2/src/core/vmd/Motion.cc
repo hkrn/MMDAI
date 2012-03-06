@@ -46,11 +46,11 @@ namespace vmd
 
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
 
-Motion::Motion(IModel *model, IEncoding *encoding, StaticString::Codec codec)
+Motion::Motion(IModel *model, IEncoding *encoding)
     : m_model(model),
       m_encoding(encoding),
-      m_boneMotion(m_encoding, codec),
-      m_morphMotion(m_encoding, codec),
+      m_boneMotion(encoding),
+      m_morphMotion(encoding),
       m_error(kNoError),
       m_active(false)
 {
@@ -175,7 +175,9 @@ void Motion::save(uint8_t *data) const
 {
     internal::copyBytes(data, kSignature, kSignatureSize);
     data += kSignatureSize;
-    internal::copyBytes(data, m_name->bytes(), sizeof(m_name));
+    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(data, name, sizeof(m_name));
+    m_encoding->disposeByteArray(name);
     data += kNameSize;
     int nBoneFrames = m_boneMotion.countKeyframes();
     internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
@@ -278,15 +280,7 @@ void Motion::setNullFrameEnable(bool value)
 
 void Motion::parseHeader(const DataInfo &info)
 {
-    if (m_model) {
-        if (m_model->name()->codec() == StaticString::kUTF8)
-            m_name = m_encoding->toUTF8FromShiftJIS(info.namePtr, sizeof(info.namePtr));
-        else
-            m_name = m_encoding->toUTF16FromShiftJIS(info.namePtr, sizeof(info.namePtr));
-    }
-    else {
-        m_name = m_encoding->toUTF16FromShiftJIS(info.namePtr, sizeof(info.namePtr));
-    }
+    m_name = m_encoding->toString(info.namePtr, IString::kShiftJIS, kNameSize);
 }
 
 void Motion::parseBoneFrames(const DataInfo &info)

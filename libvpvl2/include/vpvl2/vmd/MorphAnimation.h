@@ -67,7 +67,7 @@ class VPVL2_API MorphAnimation : public BaseAnimation
 public:
     typedef struct InternalMorphKeyFrameList InternalMorphKeyFrameList;
 
-    MorphAnimation(IEncoding *encoding, StaticString::Codec codec);
+    MorphAnimation(IEncoding *encoding);
     ~MorphAnimation();
 
     void read(const uint8_t *data, int size);
@@ -132,7 +132,6 @@ private:
     void calculateFrames(float frameAt, InternalMorphKeyFrameList *keyFrames);
 
     IEncoding *m_encoding;
-    StaticString::Codec m_codec;
     Hash<HashString, InternalMorphKeyFrameList *> m_name2keyframes;
     IModel *m_model;
     bool m_enableNullFrame;
