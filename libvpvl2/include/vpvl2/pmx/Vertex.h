@@ -87,6 +87,7 @@ public:
     void mergeMorph(Morph::Vertex *morph, float weight);
     void performSkinning(Vector3 &position, Vector3 &normal);
 
+    const Vector3 &origin() const { return m_origin; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &normal() const { return m_normal; }
     const Vector3 &texcoord() const { return m_texcoord; }
@@ -97,6 +98,7 @@ public:
 private:
     Bone *m_bones[4];
     Vector4 m_uvs[4];
+    Vector3 m_origin;
     Vector3 m_position;
     Vector3 m_normal;
     Vector3 m_texcoord;

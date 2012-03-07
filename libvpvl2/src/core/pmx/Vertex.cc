@@ -77,7 +77,14 @@ namespace pmx
 {
 
 Vertex::Vertex()
-    : m_type(kBdef1),
+    : m_origin(kZeroV3),
+      m_position(kZeroV3),
+      m_normal(kZeroV3),
+      m_texcoord(kZeroV3),
+      m_c(kZeroV3),
+      m_r0(kZeroV3),
+      m_r1(kZeroV3),
+      m_type(kBdef1),
       m_edge(0)
 {
     for (int i = 0; i < 4; i++) {
@@ -200,8 +207,9 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
 {
     uint8_t *ptr = const_cast<uint8_t *>(data), *start = ptr;
     const VertexUnit &vertex = *reinterpret_cast<VertexUnit *>(ptr);
-    internal::setPosition(vertex.position, m_position);
+    internal::setPosition(vertex.position, m_origin);
     internal::setPosition(vertex.normal, m_normal);
+    m_position = m_origin;
     m_texcoord.setValue(vertex.texcoord[0], vertex.texcoord[1], 0);
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
@@ -265,7 +273,7 @@ void Vertex::mergeMorph(Morph::UV *morph, float weight)
 
 void Vertex::mergeMorph(Morph::Vertex *morph, float weight)
 {
-    m_position += morph->position * weight;
+    m_position = m_origin + morph->position * weight;
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
