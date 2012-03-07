@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_BONE_H_
 #define VPVL2_PMX_BONE_H_
 
+#include "vpvl2/IBone.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -143,7 +144,6 @@ private:
     int m_destinationOriginBoneIndex;
     int m_targetBoneIndex;
     int m_nloop;
-    int m_nlinks;
     int m_parentBoneBiasIndex;
     int m_globalID;
     uint16_t m_flags;

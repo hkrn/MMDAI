@@ -144,7 +144,6 @@ Bone::Bone()
       m_destinationOriginBoneIndex(-1),
       m_targetBoneIndex(-1),
       m_nloop(0),
-      m_nlinks(0),
       m_parentBoneBiasIndex(-1),
       m_globalID(0),
       m_flags(0)
@@ -172,7 +171,6 @@ Bone::~Bone()
     m_parentBoneIndex = -1;
     m_index = 0;
     m_destinationOriginBoneIndex = -1;
-    m_nlinks = 0;
     m_parentBoneBiasIndex = -1;
     m_globalID = 0;
     m_flags = 0;
@@ -353,9 +351,9 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         ptr += sizeof(int);
         m_constraintAngle = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
-        m_nlinks = *reinterpret_cast<int *>(ptr);
+        int nlinks = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
-        for (int i = 0; i < m_nlinks; i++) {
+        for (int i = 0; i < nlinks; i++) {
             IKLink *ik = new IKLink();
             ik->destinationBoneID = internal::variantIndex(ptr, info.boneIndexSize);
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
@@ -368,6 +366,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
                 ik->upperLimit.setValue(upper.vector3[0], upper.vector3[1], upper.vector3[2]);
                 ptr += sizeof(upper);
             }
+            m_IKLinks.add(ik);
         }
     }
     /* bone has additional bias */
@@ -458,7 +457,7 @@ void Bone::performInverseKinematics()
     for (int i = 0; i < nloops; i++) {
         int t = m_nloop / 2;
         for (int j = 0; j < nlinks; j++) {
-            IKLink *link = m_IKLinks[i];
+            IKLink *link = m_IKLinks[j];
             Bone *destinationBone = link->destinationBone;
             const Vector3 &targetPosition = (m_targetBone->m_localTransform * m_targetBone->m_position);
             const Vector3 &destinationPosition = (destinationBone->m_localTransform * destinationBone->m_position);
