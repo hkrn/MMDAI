@@ -44,13 +44,6 @@ namespace vpvl
 
 #pragma pack(push, 1)
 
-struct FaceVertex
-{
-    int id;
-    int rawID;
-    Vector3 position;
-};
-
 struct FaceVertexChunk
 {
     int vertexID;
@@ -65,6 +58,14 @@ struct FaceChunk
 };
 
 #pragma pack(pop)
+
+// must be in there to prevent a bug by alignment (#pragma push(pop)...pack(pop))
+struct FaceVertex
+{
+    int id;
+    int rawID;
+    Vector3 position;
+};
 
 size_t Face::totalSize(const uint8_t *data, size_t rest, size_t count, bool &ok)
 {
