@@ -82,7 +82,7 @@ void MorphKeyframe::read(const uint8_t *data)
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     setName(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)));
     setFrameIndex(static_cast<float>(chunk.frameIndex));
-#ifdef VPVL_BUILD_IOS
+#ifdef VPVL2_BUILD_IOS
     float weight;
     memcpy(&weight, &chunk.weight, sizeof(weight));
     setWeight(weight);

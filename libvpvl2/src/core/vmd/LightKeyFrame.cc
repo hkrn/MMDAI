@@ -84,7 +84,7 @@ void LightKeyframe::read(const uint8_t *data)
     LightKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     m_frameIndex = static_cast<float>(chunk.frameIndex);
-#ifdef VPVL_BUILD_IOS
+#ifdef VPVL2_BUILD_IOS
     float color[3], direction[4];
     memcpy(color, &chunk.color, sizeof(color));
     memcpy(direction, &chunk.direction, sizeof(direction));
@@ -93,7 +93,7 @@ void LightKeyframe::read(const uint8_t *data)
     float *direction = chunk.direction;
 #endif
     setColor(Vector3(color[0], color[1], color[2]));
-#ifdef VPVL_COORDINATE_OPENGL
+#ifdef VPVL2_COORDINATE_OPENGL
     setDirection(Vector3(-direction[0], -direction[1], direction[2]));
 #else
     setDirection(Vector3(direction[0], direction[1], direction[2]));
@@ -107,7 +107,7 @@ void LightKeyframe::write(uint8_t *data) const
     chunk.color[0] = m_color.x();
     chunk.color[1] = m_color.y();
     chunk.color[2] = m_color.z();
-#ifdef VPVL_COORDINATE_OPENGL
+#ifdef VPVL2_COORDINATE_OPENGL
     chunk.direction[0] = -m_direction.x();
     chunk.direction[1] = -m_direction.y();
 #else

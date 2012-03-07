@@ -121,7 +121,7 @@ void CameraKeyframe::read(const uint8_t *data)
 {
     CameraKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-#ifdef VPVL_BUILD_IOS
+#ifdef VPVL2_BUILD_IOS
     float pos[3], angle[3];
     memcpy(pos, &chunk.position, sizeof(pos));
     memcpy(angle, &chunk.angle, sizeof(angle));
@@ -133,7 +133,7 @@ void CameraKeyframe::read(const uint8_t *data)
     setFrameIndex(static_cast<float>(chunk.frameIndex));
     setFovy(static_cast<float>(chunk.viewAngle));
     setPerspective(chunk.noPerspective == 0);
-#ifdef VPVL_COORDINATE_OPENGL
+#ifdef VPVL2_COORDINATE_OPENGL
     setDistance(-chunk.distance);
     setPosition(Vector3(pos[0], pos[1], -pos[2]));
     setAngle(Vector3(-degree(angle[0]), -degree(angle[1]), degree(angle[2])));
@@ -162,7 +162,7 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
     chunk.angle[2] = radian(m_angle.z());
-#ifdef VPVL_COORDINATE_OPENGL
+#ifdef VPVL2_COORDINATE_OPENGL
     chunk.distance = -m_distance;
     chunk.angle[0] = -radian(m_angle.x());
     chunk.angle[1] = -radian(m_angle.y());
