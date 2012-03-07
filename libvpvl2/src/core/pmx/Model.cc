@@ -368,6 +368,12 @@ void Model::setVisible(bool value)
 
 void Model::update()
 {
+    // reset all bone states
+    const int nbones = m_bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        bone->reset();
+    }
     // before physics simulation
     const int nBPSBones = m_BPSOrderedBones.count();
     for (int i = 0; i < nBPSBones; i++) {
@@ -383,7 +389,6 @@ void Model::update()
         bone->performInverseKinematics();
     }
     // update local transform matrix
-    const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
         bone->performUpdateLocalTransform();
@@ -463,14 +468,21 @@ void Model::parseVertices(const DataInfo &info)
 void Model::parseIndices(const DataInfo &info)
 {
     const int nindices = info.indicesCount;
+    const int nvertices = info.verticesCount;
     uint8_t *ptr = info.indicesPtr;
     size_t size = info.vertexIndexSize;
     delete[] m_skinnedIndices;
     m_skinnedIndices = new int[nindices];
     for(int i = 0; i < nindices; i++) {
         int index = internal::variantIndexUnsigned(ptr, size);
-        m_indices.add(index);
-        m_skinnedIndices[i] = index;
+        if (index >= 0 && index < nvertices) {
+            m_indices.add(index);
+            m_skinnedIndices[i] = index;
+        }
+        else {
+            m_indices.add(0);
+            m_skinnedIndices[i] = 0;
+        }
     }
 #ifdef VPVL2_COORDINATE_OPENGL
     for (int i = 0; i < nindices; i += 3)

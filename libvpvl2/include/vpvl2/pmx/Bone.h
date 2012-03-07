@@ -80,6 +80,7 @@ public:
     void performTransform();
     void performInverseKinematics();
     void performUpdateLocalTransform();
+    void reset();
     const Vector3 &offset() const;
     const Transform localTransform() const;
 

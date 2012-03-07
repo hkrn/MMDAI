@@ -455,7 +455,7 @@ void Bone::performInverseKinematics()
     Quaternion rotation, rx, ry, rz;
     Transform localMatrix = Transform::getIdentity(), translateMatrix = Transform::getIdentity();
     for (int i = 0; i < nloops; i++) {
-        int t = m_nloop / 2;
+        int t = nloops / 2;
         for (int j = 0; j < nlinks; j++) {
             IKLink *link = m_IKLinks[j];
             Bone *destinationBone = link->destinationBone;
@@ -466,42 +466,44 @@ void Bone::performInverseKinematics()
             const Vector3 &v3 = v1 - v2;
             if (btFuzzyZero(v3.dot(v3)))
                 break;
-            Vector3 v4 = v1.cross(v2);
+            Vector3 rotationAxis = v1.cross(v2);
             const Vector3 &lowerLimit = link->lowerLimit;
             const Vector3 &upperLimit = link->upperLimit;
             if (link->hasAngleConstraint && i < t) {
                 // limit x axis
                 if (lowerLimit.y() == 0 && upperLimit.y() == 0 && lowerLimit.z() == 0 && upperLimit.z() == 0) {
-                    const Scalar &vx = m_targetBone->m_localTransform.getBasis().tdotx(v4);
-                    v4.setZero();
-                    v4.setX(vx >= 0.0 ? 1.0 : -1.0);
+                    const Scalar &vx = destinationBone->m_localTransform.getBasis().tdotx(rotationAxis);
+                    rotationAxis.setZero();
+                    rotationAxis.setX(vx >= 0.0 ? 1.0 : -1.0);
                 }
                 // limit y axis
                 else if (lowerLimit.x() == 0 && upperLimit.x() == 0 && lowerLimit.z() == 0 && upperLimit.z() == 0) {
-                    const Scalar &vy = m_targetBone->m_localTransform.getBasis().tdoty(v4);
-                    v4.setZero();
-                    v4.setY(vy >= 0.0 ? 1.0 : -1.0);
+                    const Scalar &vy = destinationBone->m_localTransform.getBasis().tdoty(rotationAxis);
+                    rotationAxis.setZero();
+                    rotationAxis.setY(vy >= 0.0 ? 1.0 : -1.0);
                 }
                 // limit z axis
                 else if (lowerLimit.x() == 0 && upperLimit.x() == 0 && lowerLimit.y() == 0 && upperLimit.y() == 0) {
-                    const Scalar &vz = m_targetBone->m_localTransform.getBasis().tdotz(v4);
-                    v4.setZero();
-                    v4.setZ(vz >= 0.0 ? 1.0 : -1.0);
+                    const Scalar &vz = destinationBone->m_localTransform.getBasis().tdotz(rotationAxis);
+                    rotationAxis.setZero();
+                    rotationAxis.setZ(vz >= 0.0 ? 1.0 : -1.0);
                 }
             }
             else {
-                v4 = (m_targetBone->m_localTransform.getBasis() * v4).normalized();
+                rotationAxis = (destinationBone->m_localTransform.getBasis() * rotationAxis).normalized();
             }
             const Scalar &nais = btClamped(v1.dot(v2), -1.0f, 1.0f);
             const Scalar &constraintAngleRadian = m_constraintAngle * (j + 1) * 2;
-            const Scalar &radianIK = btMin(btAcos(nais), constraintAngleRadian);
+            const Scalar &radianIK = btMin(btAcos(nais) * 0.5f, constraintAngleRadian);
             const Scalar &sinIK = btSin(radianIK);
-            rotation.setValue(v4.x() * sinIK, v4.y() * sinIK, v4.z() * sinIK, btCos(radianIK));
-            m_targetBone->m_rotationIKLink *= rotation;
-            if (j == 0)
-                m_targetBone->m_rotationIKLink = m_targetBone->m_rotation * m_targetBone->m_rotationIKLink;
-            btMatrix3x3 matrix(m_targetBone->m_rotationIKLink);
-            if (link->hasAngleConstraint) {
+            rotation.setValue(rotationAxis.x() * sinIK, rotationAxis.y() * sinIK, rotationAxis.z() * sinIK, btCos(radianIK));
+            //fprintf(stderr, "%.3f,%.3f,%.3f,%.3f\n", rotation.x(), rotation.y(), rotation.z(), rotation.w());
+            destinationBone->m_rotationIKLink *= rotation;
+            //if (i == 0)
+            //    destinationBone->m_rotationIKLink = destinationBone->m_rotation * destinationBone->m_rotationIKLink;
+            btMatrix3x3 matrix(destinationBone->m_rotationIKLink);
+            if (false) {
+            //if (link->hasAngleConstraint) {
                 Scalar x, y, z;
                 if (lowerLimit.x() > -kHalfRadian && upperLimit.x() < kHalfRadian) {
                     // x axis rotation
@@ -552,19 +554,21 @@ void Bone::performInverseKinematics()
             }
             localMatrix.setIdentity();
             localMatrix.setBasis(matrix);
-            translateMatrix.setOrigin(-m_targetBone->m_position);
+            translateMatrix.setOrigin(-destinationBone->m_position);
             localMatrix = translateMatrix * localMatrix;
             translateMatrix.setOrigin(m_position);
             localMatrix *= translateMatrix;
-            translateMatrix.setOrigin(m_targetBone->m_position);
+            translateMatrix.setOrigin(destinationBone->m_position);
             localMatrix *= translateMatrix;
-            m_targetBone->m_IKLinkTransform = localMatrix;
+            destinationBone->m_IKLinkTransform = localMatrix;
+            /*
             for (int k = j; k >= 0; k--) {
                 IKLink *ik = m_IKLinks[k];
                 Bone *destinationBone = ik->destinationBone;
                 destinationBone->m_localTransform = destinationBone->m_IKLinkTransform * destinationBone->m_parentBone->m_localTransform;
             }
             m_targetBone->m_localTransform = m_targetBone->m_IKLinkTransform * m_targetBone->m_parentBone->m_localTransform;
+            */
         }
     }
 }
@@ -572,6 +576,17 @@ void Bone::performInverseKinematics()
 void Bone::performUpdateLocalTransform()
 {
     m_localTransform *= m_localToOrigin;
+}
+
+void Bone::reset()
+{
+    m_position = kZeroV3;
+    m_positionInherence = kZeroV3;
+    m_positionMorph = kZeroV3;
+    m_rotation = Quaternion::getIdentity();
+    m_rotationInherence = Quaternion::getIdentity();
+    m_rotationMorph = Quaternion::getIdentity();
+    m_localTransform.setIdentity();
 }
 
 const Transform Bone::localTransform() const
