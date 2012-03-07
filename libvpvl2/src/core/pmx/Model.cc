@@ -153,7 +153,7 @@ bool Model::load(const uint8_t *data, size_t size)
         parseDisplayNames(info);
         parseRigidBodies(info);
         parseJoints(info);
-        if (!Bone::loadBones(m_bones, m_orderedBones)
+        if (!Bone::loadBones(m_bones, m_BPSOrderedBones, m_APSOrderedBones)
                 || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
                 || !Vertex::loadVertices(m_vertices, m_bones)
                 || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
@@ -368,16 +368,27 @@ void Model::setVisible(bool value)
 
 void Model::update()
 {
-    const int nbones = m_bones.count();
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
+    // before physics simulation
+    const int nBPSBones = m_BPSOrderedBones.count();
+    for (int i = 0; i < nBPSBones; i++) {
+        Bone *bone = m_BPSOrderedBones[i];
         bone->performTransform();
         bone->performInverseKinematics();
     }
+    // after physics simulation
+    const int nAPSBones = m_APSOrderedBones.count();
+    for (int i = 0; i < nAPSBones; i++) {
+        Bone *bone = m_APSOrderedBones[i];
+        bone->performTransform();
+        bone->performInverseKinematics();
+    }
+    // update local transform matrix
+    const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
         bone->performUpdateLocalTransform();
     }
+    // skinning
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = m_vertices[i];

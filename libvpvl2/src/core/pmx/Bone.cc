@@ -256,7 +256,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered)
+bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones)
 {
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -304,8 +304,16 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered)
         }
         bone->m_id = i;
     }
+    Array<Bone *> ordered;
     ordered.copy(bones);
     ordered.sort(BoneOrderPredication());
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = ordered[i];
+        if (bone->isTransformedAfterPhysicsSimulation())
+            apsBones.add(bone);
+        else
+            bpsBones.add(bone);
+    }
     return true;
 }
 

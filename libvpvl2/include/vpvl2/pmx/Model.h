@@ -38,8 +38,6 @@
 #define VPVL2_PMX_MODEL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
 
 namespace vpvl2
 {
@@ -184,7 +182,6 @@ public:
     const Array<IString *> &textures() const { return m_textures; }
     const Array<Material *> &materials() const { return m_materials; }
     const Array<Bone *> &bones() const { return m_bones; }
-    const Array<Bone *> &orderedBones() const { return m_orderedBones; }
     const Array<Morph *> &morphs() const { return m_morphs; }
     const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
     const Array<Joint *> &joints() const { return m_joints; }
@@ -215,7 +212,8 @@ private:
     Array<IString *> m_textures;
     Array<Material *> m_materials;
     Array<Bone *> m_bones;
-    Array<Bone *> m_orderedBones;
+    Array<Bone *> m_BPSOrderedBones;
+    Array<Bone *> m_APSOrderedBones;
     Array<Morph *> m_morphs;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;

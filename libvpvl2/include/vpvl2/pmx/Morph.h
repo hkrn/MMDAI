@@ -37,7 +37,6 @@
 #ifndef VPVL2_PMX_MORPH_H_
 #define VPVL2_PMX_MORPH_H_
 
-#include "vpvl2/IMorph.h"
 #include "vpvl2/pmx/Model.h"
 
 namespace vpvl2

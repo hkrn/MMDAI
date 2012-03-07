@@ -163,14 +163,15 @@ void BoneAnimation::buildInternalKeyFrameList(IModel *model)
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
         BoneKeyframe *frame = static_cast<BoneKeyframe *>(m_frames.at(i));
-        HashString name(reinterpret_cast<const char *>(frame->name()));
-        InternalBoneKeyFrameList **ptr = m_name2keyframes[name], *node;
+        const IString *name = frame->name();
+        const HashString &key = name->toHashString();
+        InternalBoneKeyFrameList **ptr = m_name2keyframes[key], *node;
         if (ptr) {
             node = *ptr;
             node->keyframes.add(frame);
         }
         else {
-            IBone *bone = model->findBone(frame->name());
+            IBone *bone = model->findBone(name);
             if (bone) {
                 node = new InternalBoneKeyFrameList();
                 node->keyframes.add(frame);
@@ -178,7 +179,7 @@ void BoneAnimation::buildInternalKeyFrameList(IModel *model)
                 node->lastIndex = 0;
                 node->position.setZero();
                 node->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-                m_name2keyframes.insert(name, node);
+                m_name2keyframes.insert(key, node);
             }
         }
     }

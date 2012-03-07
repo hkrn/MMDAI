@@ -21,6 +21,7 @@ set(vpvl2_public_headers
     include/vpvl2/IModel.h
     include/vpvl2/IMorph.h
     include/vpvl2/IMotion.h
+    include/vpvl2/IString.h
     include/vpvl2/pmx/Bone.h
     include/vpvl2/pmx/Joint.h
     include/vpvl2/pmx/Material.h

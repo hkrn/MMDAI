@@ -52,7 +52,7 @@ Motion::Motion(IModel *model, IEncoding *encoding)
       m_boneMotion(encoding),
       m_morphMotion(encoding),
       m_error(kNoError),
-      m_active(false)
+      m_active(true)
 {
     internal::zerofill(&m_name, sizeof(m_name));
 }
@@ -313,7 +313,6 @@ void Motion::release()
 {
     delete m_name;
     m_name = 0;
-    m_active = false;
 }
 
 }

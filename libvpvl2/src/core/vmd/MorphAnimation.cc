@@ -130,21 +130,22 @@ void MorphAnimation::buildInternalNodes(IModel *model)
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
         MorphKeyframe *frame = static_cast<MorphKeyframe *>(m_frames.at(i));
-        HashString name(reinterpret_cast<const char *>(frame->name()));
-        InternalMorphKeyFrameList **ptr = m_name2keyframes[name], *node;
+        const IString *name = frame->name();
+        const HashString &key = name->toHashString();
+        InternalMorphKeyFrameList **ptr = m_name2keyframes[key], *node;
         if (ptr) {
             node = *ptr;
             node->keyframes.add(frame);
         }
         else {
-            IMorph *morph = model->findMorph(frame->name());
+            IMorph *morph = model->findMorph(name);
             if (morph) {
                 node = new InternalMorphKeyFrameList();
                 node->keyframes.add(frame);
                 node->morph = morph;
                 node->lastIndex = 0;
                 node->weight = 0.0f;
-                m_name2keyframes.insert(name, node);
+                m_name2keyframes.insert(key, node);
             }
         }
     }

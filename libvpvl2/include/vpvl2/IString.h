@@ -34,39 +34,28 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_ISTRING_H_
+#define VPVL2_ISTRING_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IString.h"
 
-/* internals and will be private */
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
+namespace vpvl2
+{
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+class VPVL2_API IString {
+public:
+    enum Codec {
+        kShiftJIS,
+        kUTF8,
+        kUTF16
+    };
+    virtual ~IString() {}
+    virtual IString *clone() const = 0;
+    virtual const HashString toHashString() const = 0;
+    virtual bool equals(const IString *value) const = 0;
+};
+
+}
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */

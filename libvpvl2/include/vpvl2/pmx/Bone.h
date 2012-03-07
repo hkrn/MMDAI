@@ -37,7 +37,6 @@
 #ifndef VPVL2_PMX_BONE_H_
 #define VPVL2_PMX_BONE_H_
 
-#include "vpvl2/IBone.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -67,7 +66,7 @@ public:
     ~Bone();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadBones(const Array<Bone *> &bones, Array<Bone *> &ordered);
+    static bool loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -91,7 +90,9 @@ public:
     Bone *parentInherenceBone() const { return m_parentInherenceBone; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
+    const Quaternion &rotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
+    const Vector3 &position() const { return m_position; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }
