@@ -366,12 +366,17 @@ void Model::setVisible(bool value)
     m_visible = value;
 }
 
-void Model::updateImmediate()
+void Model::update()
 {
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
         bone->performTransform();
+        bone->performInverseKinematics();
+    }
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        bone->performUpdateLocalTransform();
     }
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {

@@ -79,6 +79,7 @@ public:
     void mergeMorph(Morph::Bone *morph, float weight);
     void performTransform();
     void performInverseKinematics();
+    void performUpdateLocalTransform();
     const Vector3 &offset() const;
     const Transform localTransform() const;
 
@@ -122,14 +123,13 @@ private:
     Quaternion m_rotationInherence;
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
-    Quaternion m_rotationMotion;
     Transform m_localTransform;
+    Transform m_localToOrigin;
     Transform m_IKLinkTransform;
     Vector3 m_origin;
     Vector3 m_position;
     Vector3 m_positionInherence;
     Vector3 m_positionMorph;
-    Vector3 m_positionMotion;
     Vector3 m_destinationOrigin;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;

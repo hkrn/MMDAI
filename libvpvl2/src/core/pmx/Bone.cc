@@ -126,6 +126,7 @@ Bone::Bone()
       m_rotationMorph(Quaternion::getIdentity()),
       m_rotationIKLink(Quaternion::getIdentity()),
       m_localTransform(Transform::getIdentity()),
+      m_localToOrigin(Transform::getIdentity()),
       m_IKLinkTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_position(kZeroV3),
@@ -162,6 +163,7 @@ Bone::~Bone()
     m_position.setZero();
     m_positionMorph.setZero();
     m_localTransform.setIdentity();
+    m_localToOrigin.setIdentity();
     m_destinationOrigin.setZero();
     m_fixedAxis.setZero();
     m_axisX.setZero();
@@ -318,6 +320,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
     m_localTransform.setOrigin(m_origin);
+    m_localToOrigin.setOrigin(-m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
     m_index = *reinterpret_cast<int *>(ptr);
@@ -426,9 +429,11 @@ void Bone::performTransform()
         }
     }
     position += m_position + m_positionMorph;
-    m_localTransform.setOrigin(position);// + offset());
-    if (m_parentBone)
+    m_localTransform.setOrigin(m_origin + position);
+    if (m_parentBone) {
+        m_localTransform.setOrigin(m_localTransform.getOrigin() - m_parentBone->m_origin);
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+    }
 }
 
 void Bone::performInverseKinematics()
@@ -557,19 +562,24 @@ void Bone::performInverseKinematics()
     }
 }
 
+void Bone::performUpdateLocalTransform()
+{
+    m_localTransform *= m_localToOrigin;
+}
+
 const Transform Bone::localTransform() const
 {
-    return m_localTransform;// * m_localToOrigin;
+    return m_localTransform;
 }
 
 void Bone::setPosition(const Vector3 &value)
 {
-    m_positionMotion = value;
+    m_position = value;
 }
 
 void Bone::setRotation(const Quaternion &value)
 {
-    m_rotationMotion = value;
+    m_rotation = value;
 }
 
 } /* namespace pmx */

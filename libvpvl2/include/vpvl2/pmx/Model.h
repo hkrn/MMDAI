@@ -174,7 +174,7 @@ public:
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setUserData(UserData *value);
     void setVisible(bool value);
-    void updateImmediate();
+    void update();
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;
