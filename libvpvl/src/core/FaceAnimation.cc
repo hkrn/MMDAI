@@ -60,7 +60,7 @@ struct InternalFaceKeyFrameList {
 class FaceAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
+    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) const {
         return left->frameIndex() < right->frameIndex();
     }
 };

@@ -349,7 +349,7 @@ public:
     ~UIRenderOrderPredication() {
     }
 
-    bool operator()(const QUuid &left, const QUuid &right) {
+    bool operator()(const QUuid &left, const QUuid &right) const {
         const Project::UUID &luuid = left.toString().toStdString(), &ruuid = right.toString().toStdString();
         Asset *lasset = m_project->asset(luuid), *rasset = m_project->asset(ruuid);
         PMDModel *lmodel = m_project->model(luuid), *rmodel = m_project->model(ruuid);

@@ -57,7 +57,7 @@ public:
     SceneModelDistancePredication(const Transform &transform)
         : m_transform(transform) {
     }
-    bool operator()(const PMDModel *left, const PMDModel *right) {
+    bool operator()(const PMDModel *left, const PMDModel *right) const {
         const Vector3 &positionLeft = m_transform * Bone::centerBone(&left->bones())->localTransform().getOrigin();
         const Vector3 &positionRight = m_transform * Bone::centerBone(&right->bones())->localTransform().getOrigin();
         return positionLeft.z() < positionRight.z();

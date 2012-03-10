@@ -3,8 +3,8 @@ TARGET = MMDAI2
 TEMPLATE = app
 
 # CMake prefix path (mainly for win32)
-exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include
-exists(-L$$(CMAKE_PREFIX_PATH)/lib):LIBS += -L$$(CMAKE_PREFIX_PATH)/lib
+exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
+exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
 
 # Linux, Darwin(OSX), etc...
 exists(/usr/local/lib):LIBS += -L/usr/local/lib
@@ -19,26 +19,24 @@ exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
 exists(../assimp/include):INCLUDEPATH += ../assimp/include
 
 # PortAudio
-exists(../portaudio/build/scons/posix):LIBS += -L../portaudio/build/scons/posix -lportaudio
-exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin -lportaudio
+exists(../portaudio/build/scons/posix):LIBS += -L../portaudio/build/scons/posix
+exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin
 exists(../portaudio/include):INCLUDEPATH += ../portaudio/include
+LIBS += -lportaudio
 
 # VPVL and others configuration
 INCLUDEPATH += ../libvpvl/include ../bullet/src
-win32:INCLUDEPATH += ../libvpvl/msvc-build/include
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug -lvpvl
-  macx:LIBS        += -framework Cg
-  unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
-  unix:INCLUDEPATH += ../libvpvl/debug/include
+  LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
+  INCLUDEPATH += ../libvpvl/debug/include
+  macx:LIBS   += -framework Cg
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
 CONFIG(release, debug|release) {
-  win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release -lvpvl
-  unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl -lxml2
-  unix:INCLUDEPATH += ../libvpvl/release/include
+  LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl -lxml2
+  INCLUDEPATH += ../libvpvl/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
 }
 macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
@@ -196,7 +194,3 @@ HEADERS  += \
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc
 TRANSLATIONS += resources/translations/MMDAI2.ts
-
-
-
-

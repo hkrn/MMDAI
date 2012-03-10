@@ -945,9 +945,9 @@ void Renderer::renderModelShadow(const PMDModel *model)
     shadowProgram->unbind();
 }
 
-void Renderer::renderModelZPlot(const PMDModel *model)
+void Renderer::renderModelZPlot(const PMDModel * /* model */)
 {
-#ifndef VPVL_BUILD_IOS
+#if 0
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
         return;

@@ -62,7 +62,7 @@ struct InternalBoneKeyFrameList {
 class BoneAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BoneKeyframe *left, const BoneKeyframe *right) {
+    bool operator()(const BoneKeyframe *left, const BoneKeyframe *right) const {
         return left->frameIndex() < right->frameIndex();
     }
 };
