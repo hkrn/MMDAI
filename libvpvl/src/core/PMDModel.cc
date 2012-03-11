@@ -92,7 +92,7 @@ PMDModel::PMDModel()
       m_positionOffset(0.0f, 0.0f, 0.0f),
       m_lightPosition(0.0f, 0.0f, 0.0f),
       m_error(kNoError),
-      m_edgeOffset(0.03f),
+      m_edgeOffset(0.0f),
       m_selfShadowDensityCoef(0.0f),
       m_enableSimulation(false),
       m_enableSoftwareSkinning(true),
