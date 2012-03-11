@@ -970,16 +970,10 @@ void SceneWidget::paintGL()
 {
     qglClearColor(m_loader->isBlackBackgroundEnabled() ? Qt::black : Qt::white);
     m_loader->render();
-    /* FIXME: rendering order should be drawn after drawing handles */
+    m_grid->draw(m_loader->renderEngine()->scene(), m_loader->isGridVisible());
     vpvl::Bone *bone = 0;
     if (m_bones.count() == 1)
         bone = m_bones.first();
-    m_grid->draw(m_loader->renderEngine()->scene(), m_loader->isGridVisible());
-    if (bone)
-        m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
-    else
-        m_handles->drawImageHandles(false, false);
-    m_info->draw();
     switch (m_editMode) {
     case kSelect:
         m_debugDrawer->drawModelBones(m_loader->selectedModel(), selectedBones());
@@ -992,6 +986,11 @@ void SceneWidget::paintGL()
         m_handles->drawMoveHandle();
         break;
     }
+    if (bone)
+        m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
+    else
+        m_handles->drawImageHandles(false, false);
+    m_info->draw();
 }
 
 void SceneWidget::resizeGL(int w, int h)
