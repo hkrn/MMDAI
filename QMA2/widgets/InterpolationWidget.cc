@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "models/BoneMotionModel.h"
-#include "models/SceneMotionModel.h"s
+#include "models/SceneMotionModel.h"
 #include "widgets/InterpolationWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
