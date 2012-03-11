@@ -619,10 +619,13 @@ public:
                 }
             }
             else if (equals(prefix, localname, "keyframe")) {
+#if 0
+                // currently do nothing
                 switch (self->state) {
                 case kAssetMotion:
                     break;
                 }
+#endif
             }
         }
         else if (self->depth == 4 && equals(localname, "keyframe")) {
@@ -794,6 +797,19 @@ public:
                 self->currentMotion->mutableLightAnimation()->addKeyframe(keyframe);
                 break;
             }
+            case kInitial:
+            case kProject:
+            case kSettings:
+            case kPhysics:
+            case kModels:
+            case kModel:
+            case kAssets:
+            case kAsset:
+            case kMotions:
+            case kAssetMotion:
+            case kAnimation:
+            default:
+                break;
             }
         }
     }
@@ -882,6 +898,17 @@ public:
                     self->popState(kMotions);
                 }
                 break;
+            case kInitial:
+            case kProject:
+            case kSettings:
+            case kPhysics:
+            case kModels:
+            case kAssets:
+            case kMotions:
+            case kBoneMotion:
+            case kMorphMotion:
+            case kCameraMotion:
+            case kLightMotion:
             default:
                 break;
             }
@@ -909,6 +936,16 @@ public:
                 if (equals(prefix, localname, "physics"))
                     self->popState(kProject);
                 break;
+            case kInitial:
+            case kProject:
+            case kModel:
+            case kAsset:
+            case kAssetMotion:
+            case kAnimation:
+            case kBoneMotion:
+            case kMorphMotion:
+            case kCameraMotion:
+            case kLightMotion:
             default:
                 break;
             }

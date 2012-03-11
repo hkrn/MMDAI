@@ -820,7 +820,7 @@ bool PMDModel::load(const uint8_t *data, size_t size)
         parseRigidBodies(info);
         parseConstraints(info);
         prepare();
-        return indices == info.indicesCount;
+        return size_t(indices) == info.indicesCount;
     }
     return false;
 }

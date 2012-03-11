@@ -257,6 +257,7 @@ QuadWord &BoneKeyframe::getInterpolationParameterInternal(InterpolationType type
         return const_cast<QuadWord &>(m_parameter.z);
     case kRotation:
         return const_cast<QuadWord &>(m_parameter.rotation);
+    case kMax:
     default:
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);
         return q;

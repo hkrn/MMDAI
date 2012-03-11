@@ -253,6 +253,14 @@ void Bone::updateRotation()
         q = m_rotation * kZeroQ.slerp(m_childBone->m_rotation, m_rotateCoef);
         updateTransform(q);
         break;
+    case kRotate:
+    case kRotateAndMove:
+    case kIKDestination:
+    case kUnknown:
+    case kUnderIK:
+    case kIKTarget:
+    case kInvisible:
+    case kTwist:
     default:
         break;
     }
@@ -323,6 +331,13 @@ bool Bone::isMovable() const
     case kIKDestination:
     case kUnderIK:
         return true;
+    case kRotate:
+    case kUnknown:
+    case kUnderRotate:
+    case kIKTarget:
+    case kInvisible:
+    case kTwist:
+    case kFollowRotate:
     default:
         return false;
     }
@@ -341,6 +356,12 @@ bool Bone::isVisible() const
     case kInvisible:
     case kFollowRotate:
         return false;
+    case kRotate:
+    case kRotateAndMove:
+    case kIKDestination:
+    case kUnderIK:
+    case kUnderRotate:
+    case kTwist:
     default:
         return true;
     }

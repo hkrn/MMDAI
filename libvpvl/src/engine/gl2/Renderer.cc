@@ -97,7 +97,7 @@ public:
             delete[] platforms;
             return false;
         }
-        for (int i = 0; i < nplatforms; i++) {
+        for (cl_uint i = 0; i < nplatforms; i++) {
             cl_char buffer[BUFSIZ];
             clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
             log0(Renderer::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);

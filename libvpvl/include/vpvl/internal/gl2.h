@@ -585,18 +585,19 @@ public:
           materials(0)
     #ifdef VPVL_ENABLE_OPENCL
         ,
-          boneTransform(0),
-          originTransform(0),
-          bone1Indices(0),
-          bone2Indices(0),
-          weights(0),
           vertexBufferForCL(0),
           boneMatricesBuffer(0),
           originMatricesBuffer(0),
           outputMatricesBuffer(0),
+          weightsBuffer(0),
           bone1IndicesBuffer(0),
           bone2IndicesBuffer(0),
-          weightsBuffer(0),
+          weights(0),
+          boneTransform(0),
+          originTransform(0),
+          bone1Indices(0),
+          bone2Indices(0),
+
           isBufferAllocated(false)
     #endif
     {

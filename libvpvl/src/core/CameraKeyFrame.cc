@@ -277,6 +277,7 @@ QuadWord &CameraKeyframe::getInterpolationParameterInternal(InterpolationType ty
         return const_cast<QuadWord &>(m_parameter.distance);
     case kFovy:
         return const_cast<QuadWord &>(m_parameter.fovy);
+    case kMax:
     default:
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);
         return q;
