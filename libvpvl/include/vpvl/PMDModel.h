@@ -701,7 +701,7 @@ private:
     void parseHeader(const DataInfo &info);
     void parseVertices(const DataInfo &info);
     void parseIndices(const DataInfo &info);
-    void parseMaterials(const DataInfo &info);
+    void parseMaterials(const DataInfo &info, int &indices);
     void parseBones(const DataInfo &info);
     void parseIKs(const DataInfo &info);
     void parseFaces(const DataInfo &info);

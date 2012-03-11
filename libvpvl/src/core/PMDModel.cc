@@ -511,6 +511,12 @@ void PMDModel::updateIndices()
         internal::copyBytes(reinterpret_cast<uint8_t *>(m_indicesPointer),
                             reinterpret_cast<const uint8_t *>(&m_indices[0]),
                             sizeof(uint16_t) * nindices);
+        int nvertices = m_vertices.count();
+        for (int i = 0; i < nindices; i++) {
+            uint16_t i = m_indicesPointer[i];
+            if (i >= nvertices)
+                m_indicesPointer[i] = 0;
+        }
 #ifdef VPVL_COORDINATE_OPENGL
         for (int i = 0; i < nindices; i += 3) {
             const uint16_t index = m_indicesPointer[i];
@@ -797,11 +803,12 @@ bool PMDModel::load(const uint8_t *data, size_t size)
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
+        int indices = 0;
         release();
         parseHeader(info);
         parseVertices(info);
         parseIndices(info);
-        parseMaterials(info);
+        parseMaterials(info, indices);
         parseBones(info);
         parseIKs(info);
         parseFaces(info);
@@ -813,7 +820,7 @@ bool PMDModel::load(const uint8_t *data, size_t size)
         parseRigidBodies(info);
         parseConstraints(info);
         prepare();
-        return true;
+        return indices == info.indicesCount;
     }
     return false;
 }
@@ -1019,7 +1026,7 @@ void PMDModel::parseIndices(const DataInfo &info)
     updateIndices();
 }
 
-void PMDModel::parseMaterials(const DataInfo &info)
+void PMDModel::parseMaterials(const DataInfo &info, int &indices)
 {
     uint8_t *ptr = const_cast<uint8_t *>(info.materialsPtr);
     const int nmaterials = info.materialsCount;
@@ -1027,6 +1034,7 @@ void PMDModel::parseMaterials(const DataInfo &info)
     for (int i = 0; i < nmaterials; i++) {
         Material *material = new Material();
         material->read(ptr);
+        indices += material->countIndices();
         ptr += Material::stride();
         m_materials.add(material);
     }
