@@ -52,9 +52,17 @@ public:
         vpvl::Vector3 color;
     };
 
-    static const int kLimit = 50;
-
-    Grid() : m_vbo(0), m_ibo(0), m_list(0) {}
+    Grid()
+        : m_size(50.0, 50.0, 50.0, 5.0),
+          m_lineColor(0.5, 0.5, 0.5),
+          m_axisXColor(1.0, 0.0, 0.0),
+          m_axisYColor(0.0, 1.0, 0.0),
+          m_axisZColor(0.0, 0.0, 1.0),
+          m_vbo(0),
+          m_ibo(0),
+          m_list(0)
+    {
+    }
     ~Grid() {
         QGLFunctions func(QGLContext::currentContext());
         if (m_vbo) {
@@ -73,19 +81,18 @@ public:
 
     void load() {
         // draw black grid
-        static const vpvl::Vector3 zero(0.0f, 0.0f, 0.0f);
-        static const vpvl::Vector3 lineColor(0.5f, 0.5f, 0.5f);
+        vpvl::Scalar width = m_size.x(), height = m_size.y(), depth = m_size.z(), gridSize = m_size.w();
         uint8_t index = 0;
-        for (int x = -kLimit; x <= kLimit; x += 5)
-            addLine(vpvl::Vector3(x, 0.0, -kLimit), vpvl::Vector3(x, 0.0, x == 0 ? 0.0 : kLimit), lineColor, index);
-        for (int z = -kLimit; z <= kLimit; z += 5)
-            addLine(vpvl::Vector3(-kLimit, 0.0f, z), vpvl::Vector3(z == 0 ? 0.0f : kLimit, 0.0f, z), lineColor, index);
+        for (vpvl::Scalar x = -width; x <= width; x += gridSize)
+            addLine(vpvl::Vector3(x, 0.0, -width), vpvl::Vector3(x, 0.0, x == 0 ? 0.0 : width), m_lineColor, index);
+        for (vpvl::Scalar z = -height; z <= height; z += gridSize)
+            addLine(vpvl::Vector3(-height, 0.0f, z), vpvl::Vector3(z == 0 ? 0.0f : height, 0.0f, z), m_lineColor, index);
         // X coordinate (red)
-        addLine(zero, vpvl::Vector3(kLimit, 0.0f, 0.0f), vpvl::Vector3(1.0f, 0.0f, 0.0f), index);
+        addLine(vpvl::kZeroV, vpvl::Vector3(width, 0.0f, 0.0f), m_axisXColor, index);
         // Y coordinate (green)
-        addLine(zero, vpvl::Vector3(0.0f, kLimit, 0.0f), vpvl::Vector3(0.0f, 1.0f, 0.0f), index);
+        addLine(vpvl::kZeroV, vpvl::Vector3(0.0f, height, 0.0f), m_axisYColor, index);
         // Z coordinate (blue)
-        addLine(zero, vpvl::Vector3(0.0f, 0.0f, kLimit), vpvl::Vector3(0.0f, 0.0f, 1.0f), index);
+        addLine(vpvl::kZeroV, vpvl::Vector3(0.0f, 0.0f, depth), m_axisZColor, index);
         QGLFunctions func(QGLContext::currentContext());
         func.glGenBuffers(1, &m_vbo);
         func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -124,6 +131,12 @@ public:
         }
     }
 
+    void setGridSize(const vpvl::Vector4 &value) { m_size = value; }
+    void setLineColor(const vpvl::Vector3 &value) { m_lineColor = value; }
+    void setAxisXColor(const vpvl::Vector3 &value) { m_axisXColor = value; }
+    void setAxisYColor(const vpvl::Vector3 &value) { m_axisYColor = value; }
+    void setAxisZColor(const vpvl::Vector3 &value) { m_axisZColor = value; }
+
 private:
     void addLine(const vpvl::Vector3 &from, const vpvl::Vector3 &to, const vpvl::Vector3 &color, uint8_t &index) {
         Vertex f, t;
@@ -140,6 +153,11 @@ private:
     QGLShaderProgram m_program;
     vpvl::Array<Vertex> m_vertices;
     vpvl::Array<uint8_t> m_indices;
+    vpvl::Vector4 m_size;
+    vpvl::Vector3 m_lineColor;
+    vpvl::Vector3 m_axisXColor;
+    vpvl::Vector3 m_axisYColor;
+    vpvl::Vector3 m_axisZColor;
     GLuint m_vbo;
     GLuint m_ibo;
     GLuint m_list;
