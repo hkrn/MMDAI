@@ -992,6 +992,7 @@ void SceneLoader::render()
                 m_renderer->renderModelShadow(model);
                 glCullFace(GL_BACK);
             }
+            m_renderer->renderModelEdge(model);
             m_renderer->renderModel(model);
         }
         else if (Asset *asset = m_project->asset(uuidString))
