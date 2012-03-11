@@ -60,8 +60,6 @@ public:
           m_fontMetrics(m_font),
           m_textureID(0),
           m_fps(0.0f),
-          m_width(0),
-          m_height(0),
           m_visible(true)
     {
         m_helper = new TextureDrawHelper(size);
@@ -72,9 +70,8 @@ public:
         deleteTexture();
     }
 
-    void resize(int width, int height) {
-        m_width = width;
-        m_height = height;
+    void resize(const QSize &size) {
+        m_helper->resize(size);
     }
     void load() {
         m_helper->load();
@@ -108,7 +105,7 @@ public:
         if (!m_visible)
             return;
         glDisable(GL_DEPTH_TEST);
-        m_helper->draw(m_rect, QVector3D(0, m_height - m_rect.height(), 0), m_textureID);
+        m_helper->draw(m_rect, QVector3D(0, m_helper->size().height() - m_rect.height(), 0), m_textureID);
         glEnable(GL_DEPTH_TEST);
     }
 
@@ -148,8 +145,6 @@ private:
     QString m_bone;
     GLuint m_textureID;
     float m_fps;
-    int m_width;
-    int m_height;
     bool m_visible;
 
     Q_DISABLE_COPY(InfoPanel)

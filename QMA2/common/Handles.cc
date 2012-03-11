@@ -247,8 +247,6 @@ Handles::Handles(SceneLoader *loader, const QSize &size)
       m_trackedHandle(0),
       m_prevPos3D(0.0f, 0.0f, 0.0f),
       m_prevAngle(0.0f),
-      m_width(0),
-      m_height(0),
       m_visibilityFlags(kVisibleAll),
       m_isLocal(true),
       m_visible(true)
@@ -294,12 +292,12 @@ void Handles::load()
         loadModelHandles();
 }
 
-void Handles::resize(int width, int height)
+void Handles::resize(const QSize &size)
 {
     /* ウィンドウの大きさが変わったら判定がずれないように全ての画像のハンドルの位置情報を更新しておく */
+    int width = size.width();
     qreal baseX = width - 104, baseY = 4, xoffset = 32, yoffset = 40;
-    m_width = width;
-    m_height = height;
+    m_helper->resize(size);
     m_x.enableMove.rect.setTopLeft(QPointF(baseX, baseY));
     m_x.enableMove.rect.setSize(m_x.enableMove.size);
     m_y.enableMove.rect.setTopLeft(QPointF(baseX + xoffset, baseY));
@@ -375,7 +373,7 @@ bool Handles::testHitImage(const QPointF &p,
                            int &flags,
                            QRectF &rect)
 {
-    const QPointF pos(p.x(), m_height - p.y());
+    const QPointF pos(p.x(), m_helper->size().height() - p.y());
     flags = kNone;
     if (movable) {
         if (m_x.enableMove.rect.contains(pos)) {

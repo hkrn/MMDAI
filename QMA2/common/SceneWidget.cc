@@ -997,8 +997,9 @@ void SceneWidget::paintGL()
 void SceneWidget::resizeGL(int w, int h)
 {
     m_loader->renderEngine()->resize(w, h);
-    m_handles->resize(w, h);
-    m_info->resize(w, h);
+    const QSize s(w, h);
+    m_handles->resize(s);
+    m_info->resize(s);
 }
 
 void SceneWidget::timerEvent(QTimerEvent *event)

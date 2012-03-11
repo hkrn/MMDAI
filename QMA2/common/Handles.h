@@ -118,7 +118,7 @@ public:
     ~Handles();
 
     void load();
-    void resize(int width, int height);
+    void resize(const QSize &size);
     bool testHitModel(const vpvl::Vector3 &rayFrom,
                       const vpvl::Vector3 &rayTo,
                       bool setTracked,
@@ -177,8 +177,6 @@ private:
     vpvl::Vector3 m_prevPos3D;
     QPointF m_prevPos2D;
     float m_prevAngle;
-    int m_width;
-    int m_height;
     int m_visibilityFlags;
     bool m_isLocal;
     bool m_visible;

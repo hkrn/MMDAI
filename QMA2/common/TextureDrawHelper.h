@@ -57,6 +57,9 @@ public:
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/texture.fsh");
         m_program.link();
     }
+    void resize(const QSize &size) {
+        m_size = size;
+    }
     void draw(const QRectF &rect, GLuint textureID) {
         draw(rect, QVector3D(), textureID);
     }
@@ -85,6 +88,9 @@ public:
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
         m_program.release();
         glEnable(GL_DEPTH_TEST);
+    }
+    const QSize &size() {
+        return m_size;
     }
 
 private:
