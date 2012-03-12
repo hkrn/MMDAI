@@ -233,6 +233,8 @@ void RigidBody::read(const uint8_t *data, BoneList *bones)
     }
     else if (boneID < bones->count()) {
         m_bone = bone = bones->at(boneID);
+        if (type != 0)
+            bone->setSimulated(true);
     }
 
     switch (shapeType) {
