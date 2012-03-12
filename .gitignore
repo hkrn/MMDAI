@@ -8,8 +8,7 @@ CMakeLists.txt.user*
 CMakeScripts
 cmake_install.cmake*
 config.h
-Debug
-debug
+debug*
 *.dir
 hts_engine_API-*
 install_manifest.txt
@@ -22,8 +21,7 @@ opencv*
 open_jtalk-*
 QMACustom.pri
 portaudio*
-release
-Release
+release*
 UpgradeLog*.XML
 _UpgradeReport_Files
 vpvl_*
