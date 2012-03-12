@@ -982,6 +982,25 @@ void SceneLoader::render()
 {
     UIEnableMultisample();
     m_renderer->clear();
+    /* モデル行列とビュー行列の乗算を QMatrix4x4 を用いて行う */
+    QMatrix4x4 modelView4x4, projection4x4;
+    vpvl::Scene *scene = m_renderer->scene();
+    float modelViewMatrixf[16], projectionMatrixf[16], normalMatrixf[9];
+    scene->getModelViewMatrix(modelViewMatrixf);
+    scene->getProjectionMatrix(projectionMatrixf);
+    m_renderer->setModelViewMatrix(modelViewMatrixf);
+    m_renderer->setProjectionMatrix(projectionMatrixf);
+    for (int i = 0; i < 16; i++) {
+        modelView4x4.data()[i] = modelViewMatrixf[i];
+        projection4x4.data()[i] = projectionMatrixf[i];
+    }
+    scene->getNormalMatrix(normalMatrixf);
+    const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
+    for (int i = 0; i < 16; i++)
+        modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
+    m_renderer->setModelViewProjectionMatrix(modelViewMatrixf);
+    m_renderer->setNormalMatrix(normalMatrixf);
+    /* 順番にそってレンダリング開始 */
     const int nobjects = m_renderOrderList.count();
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];

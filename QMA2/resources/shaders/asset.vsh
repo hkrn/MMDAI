@@ -1,5 +1,4 @@
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+uniform mat4 modelViewProjectionMatrix;
 uniform mat4 transformMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
@@ -20,8 +19,6 @@ const float kOne = 1.0;
 const float kZero = 0.0;
 
 void main() {
-    mat4 transformedModelViewMatrix = modelViewMatrix * transformMatrix;
-    vec4 position = transformedModelViewMatrix * inPosition;
 #if 1
     vec4 color = vec4(materialAmbient * lightColor + materialDiffuse.rgb * lightColor, materialDiffuse.a);
 #else
@@ -49,6 +46,6 @@ void main() {
 #endif
     outColor = color;
     outTexCoord = inTexCoord;
-    gl_Position = projectionMatrix * position;
+    gl_Position = modelViewProjectionMatrix * transformMatrix * inPosition;
 }
 

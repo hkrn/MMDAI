@@ -159,16 +159,17 @@ public:
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
     void releaseProject(Project *project);
-
     void clear();
-    void renderAllAssets();
-    void renderAllModels();
-    void renderProjectiveShadow();
-    void renderZPlot();
 
     static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
     bool initializeAccelerator();
+
+    void setModelViewProjectionMatrix(float *value);
+    void setModelViewMatrix(float *value);
+    void setProjectionMatrix(float *value);
+    void setNormalMatrix(float *value);
+    const Array<Asset *> &assets() const { return m_assets; }
 
 protected:
     bool uploadModel0(PMDModel::UserData *userData, PMDModel *model, const std::string &dir);
@@ -188,6 +189,10 @@ private:
 #endif
 
     Accelerator *m_accelerator;
+    float m_modelViewProjectionMatrix[16];
+    float m_modelViewMatrix[16];
+    float m_projectionMatrix[16];
+    float m_normalMatrix[9];
 
     VPVL_DISABLE_COPY_AND_ASSIGN(Renderer)
 };

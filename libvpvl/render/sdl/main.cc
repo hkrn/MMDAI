@@ -409,8 +409,28 @@ protected:
         m_renderer->updateAllModel();
         m_renderer->initializeSurface();
         m_renderer->clear();
-        m_renderer->renderAllModels();
-        m_renderer->renderAllAssets();
+        vpvl::Scene *scene = m_renderer->scene();
+        float modelViewMatrixf[16], projectionMatrixf[16], normalMatrixf[9];
+        scene->getModelViewMatrix(modelViewMatrixf);
+        scene->getProjectionMatrix(projectionMatrixf);
+        scene->getNormalMatrix(normalMatrixf);
+        m_renderer->setModelViewMatrix(modelViewMatrixf);
+        m_renderer->setProjectionMatrix(projectionMatrixf);
+        m_renderer->setNormalMatrix(normalMatrixf);
+        // FIXME: multiply modelview matrix and projection matrix
+        m_renderer->setModelViewProjectionMatrix(modelViewMatrixf);
+        const vpvl::Array<vpvl::PMDModel *> &models = scene->getRenderingOrder();
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = models[i];
+            m_renderer->renderModel(model);
+        }
+        const vpvl::Array<vpvl::Asset *> &assets = m_renderer->assets();
+        const int nassets = assets.count();
+        for (int i = 0; i < nassets; i++) {
+            vpvl::Asset *asset = assets[i];
+            m_renderer->renderAsset(asset);
+        }
     }
 
 private:

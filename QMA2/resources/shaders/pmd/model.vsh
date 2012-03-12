@@ -1,7 +1,4 @@
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform mat4 lightViewMatrix;
-uniform mat4 biasMatrix;
+uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
 uniform vec3 materialAmbient;
@@ -29,18 +26,14 @@ vec2 makeSphereMap(vec3 position, vec3 normal) {
 }
 
 void main() {
-    vec4 position = modelViewMatrix * inPosition;
-    vec4 lightPosition = projectionMatrix * lightViewMatrix * inPosition;
-    vec3 view = normalize(position.xyz);
+    vec3 view = normalize(inPosition.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 outPosition = projectionMatrix * position;
+    vec4 outPosition = modelViewProjectionMatrix * inPosition;
     vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     outColor.rgb = min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3);
     outColor.a = materialDiffuse.a;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
-    outShadowTexCoord = biasMatrix * lightPosition;
-    outDepth = lightPosition;
     outToonTexCoord = inToonTexCoord;
     gl_Position = outPosition;
 }

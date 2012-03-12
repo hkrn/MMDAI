@@ -635,6 +635,21 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       m_scene(0),
       m_accelerator(0)
 {
+    static const float kIdentityMatrix3x3[] = {
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    };
+    static const float kIdentityMatrix4x4[] = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    };
+    memcpy(m_normalMatrix, kIdentityMatrix3x3, sizeof(m_normalMatrix));
+    memcpy(m_modelViewProjectionMatrix, kIdentityMatrix4x4, sizeof(m_modelViewProjectionMatrix));
+    memcpy(m_modelViewMatrix, kIdentityMatrix4x4, sizeof(m_modelViewMatrix));
+    memcpy(m_projectionMatrix, kIdentityMatrix4x4, sizeof(m_projectionMatrix));
     m_scene = new Scene(width, height, fps);
 }
 
@@ -857,13 +872,8 @@ void Renderer::renderModel(const PMDModel *model)
         //m_modelProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
     }
 
-    float matrix4x4[16], matrix3x3[9];
-    m_scene->getModelViewMatrix(matrix4x4);
-    modelProgram->setModelViewMatrix(matrix4x4);
-    m_scene->getProjectionMatrix(matrix4x4);
-    modelProgram->setProjectionMatrix(matrix4x4);
-    m_scene->getNormalMatrix(matrix3x3);
-    modelProgram->setNormalMatrix(matrix3x3);
+    modelProgram->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
+    modelProgram->setNormalMatrix(m_normalMatrix);
     modelProgram->setLightColor(m_scene->lightColor());
     modelProgram->setLightPosition(m_scene->lightPosition());
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
@@ -917,13 +927,11 @@ void Renderer::renderModelShadow(const PMDModel *model)
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
         return;
-    const Vector3 &light = m_scene->lightPosition();
-    const Scalar dot = plane.dot(light);
-    float modelViewMatrix[16], projectionMatrix[16], shadowMatrix[16];
-    m_scene->getModelViewMatrix(modelViewMatrix);
-    m_scene->getProjectionMatrix(projectionMatrix);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    const Vector3 &light = m_scene->lightPosition();
+    const Scalar dot = plane.dot(light);
+    float shadowMatrix[16];
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             int index = (i << 2) + j;
@@ -934,8 +942,7 @@ void Renderer::renderModelShadow(const PMDModel *model)
     }
     ShadowProgram *shadowProgram = userData->shadowProgram;
     shadowProgram->bind();
-    shadowProgram->setModelViewMatrix(modelViewMatrix);
-    shadowProgram->setProjectionMatrix(projectionMatrix);
+    shadowProgram->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
     shadowProgram->setShadowMatrix(shadowMatrix);
     shadowProgram->setLightColor(m_scene->lightColor());
     shadowProgram->setLightPosition(m_scene->lightPosition());
@@ -945,36 +952,20 @@ void Renderer::renderModelShadow(const PMDModel *model)
     shadowProgram->unbind();
 }
 
-void Renderer::renderModelZPlot(const PMDModel * /* model */)
+void Renderer::renderModelZPlot(const PMDModel *model)
 {
-#if 0
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
         return;
-    float modelViewMatrix[16], projectionMatrix[16];
-    Vector3 center;
-    Scalar radius, angle = 15.0f;
-    model->getBoundingSphere(center, radius);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    Scalar eye = radius / btSin(radian(angle * 0.5f));
-    gluPerspective(angle, 1.0f, 1.0f, eye + radius + 50.0f);
-    Vector3 eyev = m_scene->lightPosition() * eye + center;
-    gluLookAt(eyev.x(), eyev.y(), eyev.z(), center.x(), center.y(), center.z(), 0.0, 1.0, 0.0);
-    glGetFloatv(GL_MODELVIEW, modelViewMatrix);
     ZPlotProgram *zplotProgram = userData->zplotProgram;
-    m_scene->getProjectionMatrix(projectionMatrix);
-    m_scene->getModelViewMatrix(modelViewMatrix);
     zplotProgram->bind();
-    zplotProgram->setModelViewMatrix(modelViewMatrix);
-    zplotProgram->setProjectionMatrix(projectionMatrix);
+    zplotProgram->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
     zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                               model->strideSize(PMDModel::kVerticesStride));
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     zplotProgram->unbind();
-#endif
 }
 
 void Renderer::renderModelEdge(const PMDModel *model)
@@ -982,16 +973,12 @@ void Renderer::renderModelEdge(const PMDModel *model)
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData || model->edgeOffset() == 0.0f)
         return;
-    float modelViewMatrix[16], projectionMatrix[16];
-    m_scene->getModelViewMatrix(modelViewMatrix);
-    m_scene->getProjectionMatrix(projectionMatrix);
     EdgeProgram *edgeProgram = userData->edgeProgram;
     edgeProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kEdgeIndices]);
     edgeProgram->setColor(model->edgeColor());
-    edgeProgram->setModelViewMatrix(modelViewMatrix);
-    edgeProgram->setProjectionMatrix(projectionMatrix);
+    edgeProgram->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
     if (!model->isSoftwareSkinningEnabled() && !(m_accelerator && m_accelerator->isAvailable())) {
         edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                                  model->strideSize(PMDModel::kVerticesStride));
@@ -1107,52 +1094,6 @@ void Renderer::clear()
     glViewport(0, 0, m_scene->width(), m_scene->height());
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void Renderer::renderAllAssets()
-{
-    const int nassets = m_assets.count();
-    for (int i = 0; i < nassets; i++)
-        renderAsset(m_assets[i]);
-}
-
-void Renderer::renderAllModels()
-{
-    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
-    const int nmodels = models.count();
-    for (int i = 0; i < nmodels; i++) {
-        PMDModel *model = models[i];
-        if (model->isVisible()) {
-            renderModel(model);
-            renderModelEdge(model);
-        }
-    }
-}
-
-void Renderer::renderProjectiveShadow()
-{
-    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
-    const int nmodels = models.count();
-    glCullFace(GL_FRONT);
-    for (int i = 0; i < nmodels; i++) {
-        PMDModel *model = models[i];
-        if (model->isVisible())
-            renderModelShadow(model);
-    }
-    glCullFace(GL_BACK);
-}
-
-void Renderer::renderZPlot()
-{
-    const Array<PMDModel *> &models = m_scene->getRenderingOrder();
-    const int nmodels = models.count();
-    glCullFace(GL_FRONT);
-    for (int i = 0; i < nmodels; i++) {
-        PMDModel *model = models[i];
-        if (model->isVisible())
-            renderModelZPlot(model);
-    }
-    glCullFace(GL_BACK);
 }
 
 void Renderer::releaseProject(Project *project)
@@ -1348,7 +1289,7 @@ void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, cons
 {
     const btScalar &scaleFactor = asset->scaleFactor();
     const Bone *bone = asset->parentBone();
-    float matrix4x4[16], matrix3x3[9];
+    float matrix4x4[16];
     aiVector3D aiS, aiP;
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
@@ -1371,12 +1312,8 @@ void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, cons
     const size_t stride = sizeof(AssetVertex);
     AssetProgram *program = userData->programs[node];
     program->bind();
-    m_scene->getModelViewMatrix(matrix4x4);
-    program->setModelViewMatrix(matrix4x4);
-    m_scene->getProjectionMatrix(matrix4x4);
-    program->setProjectionMatrix(matrix4x4);
-    m_scene->getNormalMatrix(matrix3x3);
-    program->setNormalMatrix(matrix3x3);
+    program->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
+    program->setNormalMatrix(m_normalMatrix);
     transform.getOpenGLMatrix(matrix4x4);
     program->setTransformMatrix(matrix4x4);
     program->setLightColor(m_scene->lightColor());
@@ -1425,6 +1362,26 @@ bool Renderer::initializeAccelerator()
         return m_accelerator->initializeContext() && m_accelerator->createKernelPrograms();
     }
     return false;
+}
+
+void Renderer::setModelViewProjectionMatrix(float *value)
+{
+    memcpy(m_modelViewProjectionMatrix, value, sizeof(m_modelViewProjectionMatrix));
+}
+
+void Renderer::setModelViewMatrix(float *value)
+{
+    memcpy(m_modelViewMatrix, value, sizeof(m_modelViewMatrix));
+}
+
+void Renderer::setProjectionMatrix(float *value)
+{
+    memcpy(m_projectionMatrix, value, sizeof(m_projectionMatrix));
+}
+
+void Renderer::setNormalMatrix(float *value)
+{
+    memcpy(m_normalMatrix, value, sizeof(m_normalMatrix));
 }
 
 void Renderer::log0(LogLevel level, const char *format...)

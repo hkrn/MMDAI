@@ -67,28 +67,6 @@ namespace gl2
 const GLsizei kShadowMappingTextureWidth = 1024;
 const GLsizei kShadowMappingTextureHeight = 1024;
 
-static void CreateLookAt(const Vector3 &eye, float matrix[16])
-{
-#ifndef VPVL_BUILD_IOS
-    glMatrixMode(GL_MODELVIEW);
-    //gluLookAt(eye.x(), eye.y(), eye.z(), 0, 0, 0, 0, 1, 0);
-    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-    /*
-    static const Vector3 zero(0.0f, 0.0f, 0.0f), up(0.0f, 1.0f, 0.0f);
-    const Vector3 &z = (zero - eye).normalized();
-    const Vector3 &x = z.cross(up).normalized();
-    const Vector3 &y = x.cross(z);
-    float m[] = {
-        x.x(), x.y(), x.z(), 0.0f,
-        y.x(), y.y(), y.z(), 0.0f,
-        -z.z(), -z.z(), -z.z(), 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-    memcpy(matrix, m, sizeof(float) * 16);
-    */
-#endif
-}
-
 #ifdef VPVL_LINK_QT
 class ShaderProgram : protected QGLFunctions
         #else
@@ -99,8 +77,7 @@ public:
     ShaderProgram(Renderer::IDelegate *delegate)
         : m_program(0),
           m_delegate(delegate),
-          m_modelViewUniformLocation(0),
-          m_projectionUniformLocation(0),
+          m_modelViewProjectionUniformLocation(0),
           m_positionAttributeLocation(0),
           m_normalAttributeLocation(0),
           m_message(0)
@@ -113,8 +90,7 @@ public:
         }
         delete[] m_message;
         m_message = 0;
-        m_modelViewUniformLocation = 0;
-        m_projectionUniformLocation = 0;
+        m_modelViewProjectionUniformLocation = 0;
         m_positionAttributeLocation = 0;
         m_normalAttributeLocation = 0;
     }
@@ -150,8 +126,7 @@ public:
                 glDeleteProgram(program);
                 return false;
             }
-            m_modelViewUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
-            m_projectionUniformLocation = glGetUniformLocation(program, "projectionMatrix");
+            m_modelViewProjectionUniformLocation = glGetUniformLocation(program, "modelViewProjectionMatrix");
             m_positionAttributeLocation = glGetAttribLocation(program, "inPosition");
             m_normalAttributeLocation = glGetAttribLocation(program, "inNormal");
             m_program = program;
@@ -170,11 +145,8 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
-    void setModelViewMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_modelViewUniformLocation, 1, GL_FALSE, value);
-    }
-    void setProjectionMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_projectionUniformLocation, 1, GL_FALSE, value);
+    void setModelViewProjectionMatrix(const float value[16]) {
+        glUniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
     }
     void setPosition(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_positionAttributeLocation);
@@ -218,8 +190,7 @@ private:
     }
 
     Renderer::IDelegate *m_delegate;
-    GLuint m_modelViewUniformLocation;
-    GLuint m_projectionUniformLocation;
+    GLuint m_modelViewProjectionUniformLocation;
     GLuint m_positionAttributeLocation;
     GLuint m_normalAttributeLocation;
     char *m_message;
@@ -455,7 +426,6 @@ public:
     }
     void setLightPosition(const Vector3 &value) {
         float matrix[16];
-        CreateLookAt(value, matrix);
         glUniformMatrix4fv(m_lightViewMatrixUniformLocation, 1, GL_FALSE, matrix);
         ObjectProgram::setLightPosition(value);
     }
