@@ -238,9 +238,11 @@ void MainWindow::newMotionFile()
          * PMDMotionModel のデータを空にしてから新規のモーションを作成する
          * なお、PMDMotionModel のデータは VMDMotion とは独立している
          */
+        m_currentMotionFilename = "";
         m_boneMotionModel->removeMotion();
         m_morphMotionModel->removeMotion();
         m_sceneWidget->setEmptyMotion();
+        updateWindowTitle();
     }
 }
 
@@ -251,10 +253,12 @@ void MainWindow::newProjectFile()
          * カメラを含むモーションとモデルを全て削除してからプロジェクトを新規に作成する
          * SceneWidget#clear は内部的に削除と同時に新しい空のプロジェクトが作成される
          */
+        m_currentProjectFilename = "";
         m_boneMotionModel->removeMotion();
         m_morphMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
         m_sceneWidget->clear();
+        updateWindowTitle();
     }
 }
 
