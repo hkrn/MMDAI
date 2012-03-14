@@ -501,6 +501,7 @@ void SceneLoader::deleteAsset(Asset *asset)
         m_project->removeAsset(asset);
         m_renderer->deleteAsset(asset);
         m_renderOrderList.remove(uuid);
+        m_asset = 0;
     }
 }
 
@@ -591,7 +592,7 @@ Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QUuid &u
             const QByteArray &assetName = baseName.toUtf8();
             int len = assetName.size();
             char *rawName = new char[len + 1];
-            strncpy(rawName, assetName.constData(), len);
+            qstrcpy(rawName, assetName.constData());
             asset->setName(rawName);
             const std::string &name = std::string(dir.absolutePath().toLocal8Bit());
             m_renderer->uploadAsset(asset, name);
