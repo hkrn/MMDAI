@@ -325,12 +325,12 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
     setFrames(sceneFrames);
 }
 
-void SceneMotionModel::copyKeyframes(const QModelIndexList & /* indices */, int frameIndex)
+void SceneMotionModel::copyKeyframesByModelIndices(const QModelIndexList & /* indices */, int frameIndex)
 {
     m_cameraIndex = frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
 }
 
-void SceneMotionModel::pasteKeyframes(int frameIndex)
+void SceneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
 {
     if (m_cameraIndex.isValid()) {
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
@@ -425,8 +425,10 @@ void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
-            if (index.row() == m_cameraTreeItem->rowIndex() && item->isCategory())
-                animation->deleteKeyframe(toFrameIndex(index), kNoName);
+            if (index.row() == m_cameraTreeItem->rowIndex() && item->isCategory()) {
+                BaseKeyframe *frameToDelete = animation->findKeyframe(toFrameIndex(index), kNoName);
+                animation->deleteKeyframe(frameToDelete);
+            }
             setData(index, QVariant());
         }
     }

@@ -65,8 +65,8 @@ public:
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void copyKeyframes(const QModelIndexList &indices, int frameIndex);
-    void pasteKeyframes(int frameIndex);
+    void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
+    void pasteKeyframesByFrameIndex(int frameIndex);
     void pasteReversedFrame(int frameIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;

@@ -243,7 +243,7 @@ void TimelineTabWidget::copyKeyframes()
     TimelineWidget *widget = currentSelectedTimelineWidget();
     TimelineTreeView *treeView = widget->treeView();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
-    model->copyKeyframes(treeView->selectionModel()->selectedIndexes(), widget->frameIndex());
+    model->copyKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->frameIndex());
 }
 
 void TimelineTabWidget::cutKeyframes()
@@ -251,7 +251,7 @@ void TimelineTabWidget::cutKeyframes()
     TimelineWidget *widget = currentSelectedTimelineWidget();
     TimelineTreeView *treeView = widget->treeView();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
-    model->cutKeyframes(treeView->selectionModel()->selectedIndexes(), widget->frameIndex());
+    model->cutKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->frameIndex());
 }
 
 void TimelineTabWidget::pasteKeyframes()
@@ -259,7 +259,7 @@ void TimelineTabWidget::pasteKeyframes()
     TimelineWidget *widget = currentSelectedTimelineWidget();
     TimelineTreeView *treeView = widget->treeView();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
-    model->pasteKeyframes(widget->frameIndex());
+    model->pasteKeyframesByFrameIndex(widget->frameIndex());
 }
 
 void TimelineTabWidget::pasteKeyframesWithReverse()

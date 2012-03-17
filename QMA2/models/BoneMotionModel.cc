@@ -252,6 +252,7 @@ public:
         BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &keys = m_bmm->keys();
         Bone *selected = m_bmm->selectedBone();
+        BaseKeyframe *frameToDelete = 0;
         /* すべてのキーフレーム情報を登録する */
         foreach (const BoneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
@@ -271,21 +272,30 @@ public:
             /* モデルにボーン名が存在するかを確認する */
             if (keys.contains(key)) {
                 /*
-                 * キーフレームをコピーし、対象のモデルのインデックスに移す。
-                 * そしてモデルにデータを登録した上で現在登録されているキーフレームを置換する
-                 * (前のキーフレームの情報が入ってる可能性があるので、それ故に重複が発生することを防ぐ)
+                 * キーフレームをコピーし、モデルにデータを登録した上で現在登録されているキーフレームを置換する
+                 * (前のキーフレームの情報が入ってる可能性があるので、置換することで重複が発生することを防ぐ)
+                 *
+                 * ※ 置換の現実装は find => delete => add なので find の探索コストがネックになるため多いと時間がかかる
                  */
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(keys[key], frameIndex);
-                QByteArray bytes(BoneKeyframe::strideSize(), '0');
-                BoneKeyframe *newFrame = static_cast<BoneKeyframe *>(frame->clone());
-                newFrame->setInterpolationParameter(BoneKeyframe::kX, m_parameter.x);
-                newFrame->setInterpolationParameter(BoneKeyframe::kY, m_parameter.y);
-                newFrame->setInterpolationParameter(BoneKeyframe::kZ, m_parameter.z);
-                newFrame->setInterpolationParameter(BoneKeyframe::kRotation, m_parameter.rotation);
-                newFrame->setFrameIndex(frameIndex);
-                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                animation->replaceKeyframe(newFrame);
-                m_bmm->setData(modelIndex, bytes);
+                if (frame->frameIndex() >= 0) {
+                    QByteArray bytes(BoneKeyframe::strideSize(), '0');
+                    BoneKeyframe *newFrame = static_cast<BoneKeyframe *>(frame->clone());
+                    newFrame->setInterpolationParameter(BoneKeyframe::kX, m_parameter.x);
+                    newFrame->setInterpolationParameter(BoneKeyframe::kY, m_parameter.y);
+                    newFrame->setInterpolationParameter(BoneKeyframe::kZ, m_parameter.z);
+                    newFrame->setInterpolationParameter(BoneKeyframe::kRotation, m_parameter.rotation);
+                    newFrame->setFrameIndex(frameIndex);
+                    newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                    animation->replaceKeyframe(newFrame);
+                    m_bmm->setData(modelIndex, bytes);
+                }
+                else {
+                    /* 元フレームのインデックスが 0 未満の時は削除 */
+                    frameToDelete = animation->findKeyframe(frame->frameIndex(), frame->name());
+                    animation->deleteKeyframe(frameToDelete);
+                    m_bmm->setData(modelIndex, QVariant());
+                }
             }
             else {
                 qWarning("Tried registering not bone key frame: %s", qPrintable(key));
@@ -437,7 +447,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
     setFrames(boneFrames);
 }
 
-void BoneMotionModel::copyKeyframes(const QModelIndexList &indices, int frameIndex)
+void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex)
 {
     if (m_model && m_motion) {
         /* 前回呼ばれた copyFrames で作成したデータを破棄しておく */
@@ -459,7 +469,7 @@ void BoneMotionModel::copyKeyframes(const QModelIndexList &indices, int frameInd
     }
 }
 
-void BoneMotionModel::pasteKeyframes(int frameIndex)
+void BoneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
 {
     /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && !m_copiedKeyframes.isEmpty()) {
@@ -809,15 +819,21 @@ void BoneMotionModel::removeModel()
 void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
     BoneAnimation *animation = m_motion->mutableBoneAnimation();
+    KeyFramePairList frames;
+    /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
-            /* QModelIndex にあるボーンとフレームインデックスからキーフレームを削除する */
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (Bone *bone = item->bone())
-                animation->deleteKeyframe(toFrameIndex(index), bone->name());
-            setData(index, QVariant());
+            if (Bone *bone = item->bone()) {
+                BaseKeyframe *frameToDelete = animation->findKeyframe(toFrameIndex(index), bone->name());
+                BoneKeyframe *clonedFrame = static_cast<BoneKeyframe *>(frameToDelete->clone());
+                /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                clonedFrame->setFrameIndex(-1);
+                frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
+            }
         }
     }
+    addUndoCommand(new SetFramesCommand(this, frames));
 }
 
 void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices,

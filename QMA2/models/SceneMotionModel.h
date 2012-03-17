@@ -68,8 +68,8 @@ public:
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void copyKeyframes(const QModelIndexList &indices, int frameIndex);
-    void pasteKeyframes(int frameIndex);
+    void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
+    void pasteKeyframesByFrameIndex(int frameIndex);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
