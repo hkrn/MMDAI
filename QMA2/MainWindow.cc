@@ -205,8 +205,8 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
         menu.addAction(m_actionSelectAllFrames);
         menu.addAction(m_actionSelectFrameDialog);
         menu.addSeparator();
-        menu.addAction(m_actionCopy);
         menu.addAction(m_actionCut);
+        menu.addAction(m_actionCopy);
         menu.addAction(m_actionPaste);
         menu.addAction(m_actionReversedPaste);
         menu.addSeparator();
@@ -597,10 +597,10 @@ void MainWindow::buildUI()
     connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertFrame()));
     m_actionDeleteSelectedFrame = new QAction(this);
     connect(m_actionDeleteSelectedFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(deleteFrame()));
-    m_actionCopy = new QAction(this);
-    connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyKeyframes()));
     m_actionCut = new QAction(this);
     connect(m_actionCut, SIGNAL(triggered()), m_timelineTabWidget, SLOT(cutKeyframes()));
+    m_actionCopy = new QAction(this);
+    connect(m_actionCopy, SIGNAL(triggered()), m_timelineTabWidget, SLOT(copyKeyframes()));
     m_actionPaste = new QAction(this);
     connect(m_actionPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteKeyframes()));
     m_actionReversedPaste = new QAction(this);
@@ -779,8 +779,8 @@ void MainWindow::buildUI()
     m_menuEdit->addAction(m_actionUndoFrame);
     m_menuEdit->addAction(m_actionRedoFrame);
     m_menuEdit->addSeparator();
-    m_menuEdit->addAction(m_actionCopy);
     m_menuEdit->addAction(m_actionCut);
+    m_menuEdit->addAction(m_actionCopy);
     m_menuEdit->addAction(m_actionPaste);
     m_menuEdit->addAction(m_actionReversedPaste);
     m_menuBar->addMenu(m_menuEdit);
@@ -949,8 +949,8 @@ void MainWindow::bindActions()
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
     m_actionPreviousFrame->setShortcut(m_settings.value(kPrefix + "previousFrame", QKeySequence(QKeySequence::Back).toString()).toString());
-    m_actionCopy->setShortcut(m_settings.value(kPrefix + "copy", QKeySequence(QKeySequence::Copy).toString()).toString());
     m_actionCut->setShortcut(m_settings.value(kPrefix + "cut", QKeySequence(QKeySequence::Cut).toString()).toString());
+    m_actionCopy->setShortcut(m_settings.value(kPrefix + "copy", QKeySequence(QKeySequence::Copy).toString()).toString());
     m_actionPaste->setShortcut(m_settings.value(kPrefix + "paste", QKeySequence(QKeySequence::Paste).toString()).toString());
     m_actionReversedPaste->setShortcut(m_settings.value(kPrefix + "reversedPaste", "Alt+Ctrl+V").toString());
     m_actionUndoFrame->setShortcut(m_settings.value(kPrefix + "undoFrame", QKeySequence(QKeySequence::Undo).toString()).toString());
@@ -1100,10 +1100,10 @@ void MainWindow::retranslate()
     m_actionNextFrame->setStatusTip(tr("Select a next keyframe from the current keyframe."));
     m_actionPreviousFrame->setText(tr("Previous keyframe"));
     m_actionPreviousFrame->setStatusTip(tr("Select a previous keyframe from the current keyframe."));
-    m_actionCopy->setText(tr("Copy"));
-    m_actionCopy->setStatusTip(tr("Copy a selected keyframe."));
     m_actionCut->setText(tr("Cut"));
     m_actionCut->setStatusTip(tr("Cut a selected keyframe."));
+    m_actionCopy->setText(tr("Copy"));
+    m_actionCopy->setStatusTip(tr("Copy a selected keyframe."));
     m_actionPaste->setText(tr("Paste"));
     m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
     m_actionReversedPaste->setText(tr("Paste with reversed"));
