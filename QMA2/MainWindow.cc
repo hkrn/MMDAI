@@ -206,6 +206,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
         menu.addAction(m_actionSelectFrameDialog);
         menu.addSeparator();
         menu.addAction(m_actionCopy);
+        menu.addAction(m_actionCut);
         menu.addAction(m_actionPaste);
         menu.addAction(m_actionReversedPaste);
         menu.addSeparator();
