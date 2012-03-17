@@ -66,6 +66,11 @@ namespace
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
+static const QRegExp &kAssetLoadable = QRegExp(".(bmp|jpe?g|png|sp[ah]|tga|x)$");
+static const QRegExp &kAssetExtensions = QRegExp(".x$");
+static const QRegExp &kModelLoadable = QRegExp(".(bmp|jpe?g|pmd|png|sp[ah]|tga)$");
+static const QRegExp &kModelExtensions = QRegExp(".pmd$");
+
 class UIDelegate : public Project::IDelegate, public Renderer::IDelegate
 {
 public:
@@ -432,6 +437,37 @@ private:
     const bool m_useOrderAttr;
 };
 
+const QByteArray UILoadFile(const QString &filename,
+                            const QRegExp &loadable,
+                            const QRegExp &ext,
+                            UIDelegate *delegate)
+{
+    QByteArray bytes;
+    if (filename.endsWith(".zip")) {
+        QStringList files;
+        Archive *archive = new Archive();
+        if (archive->open(filename, files)) {
+            const QStringList &filtered = files.filter(loadable);
+            if (!filtered.isEmpty() && archive->uncompress(filtered)) {
+                const QStringList &models = files.filter(ext);
+                if (!models.isEmpty()) {
+                    const QString &modelFilename = files.filter(ext).first();
+                    bytes = archive->data(modelFilename);
+                    QFileInfo modelFileInfo(modelFilename), fileInfo(filename);
+                    archive->replaceFilePath(modelFileInfo.path(), fileInfo.path() + "/");
+                    delegate->setArchive(archive);
+                }
+            }
+        }
+    }
+    else {
+        QFile file(filename);
+        if (file.open(QFile::ReadOnly))
+            bytes = file.readAll();
+    }
+    return bytes;
+}
+
 }
 
 bool SceneLoader::isAccelerationSupported()
@@ -616,26 +652,31 @@ bool SceneLoader::isProjectModified() const
     return m_project->isDirty();
 }
 
-Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QUuid &uuid)
+bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, Asset *&asset)
 {
-    QFile file(dir.absoluteFilePath(baseName));
-    Asset *asset = 0;
+    UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
+    const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, delegate);
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
-    if (file.open(QFile::ReadOnly)) {
-        const QByteArray &data = file.readAll();
-        asset = new Asset();
-        if (asset->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+    bool isNullData = bytes.isNull();
+    if (!isNullData) {
+        bool allocated = false;
+        if (!asset) {
+            asset = new Asset();
+            allocated = true;
+        }
+        if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
-            const QByteArray &assetName = baseName.toUtf8();
+            QFileInfo fileInfo(filename);
+            const QByteArray &assetName = fileInfo.baseName().toUtf8();
             asset->setName(assetName.constData());
-            const std::string &name = std::string(dir.absolutePath().toLocal8Bit());
+            const std::string &name = std::string(fileInfo.absolutePath().toLocal8Bit());
             m_renderer->uploadAsset(asset, name);
-            const QString &filename = dir.absoluteFilePath(baseName);
+            delegate->setArchive(0);
             uuid = QUuid::createUuid();
             m_project->addAsset(asset, uuid.toString().toStdString());
-            m_project->setAssetSetting(asset, Project::kSettingNameKey, baseName.toStdString());
+            m_project->setAssetSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
             m_project->setAssetSetting(asset, Project::kSettingURIKey, filename.toStdString());
             m_project->setAssetSetting(asset, "selected", "false");
             m_renderOrderList.add(uuid);
@@ -645,12 +686,12 @@ Asset *SceneLoader::loadAsset(const QString &baseName, const QDir &dir, QUuid &u
             setAssetScaleFactor(asset, asset->scaleFactor());
             emit assetDidAdd(asset, uuid);
         }
-        else {
+        else if (allocated) {
             delete asset;
             asset = 0;
         }
     }
-    return asset;
+    return !isNullData && asset != 0;
 }
 
 Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid)
@@ -674,8 +715,8 @@ Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &d
         const QString &bone = stream.readLine();
         /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
-        Asset *asset = loadAsset(filename, dir, uuid);
-        if (asset) {
+        Asset *asset = 0;
+        if (loadAsset(dir.absoluteFilePath(filename), uuid, asset)) {
             if (!name.isEmpty()) {
                 const QByteArray &bytes = internal::fromQString(name);
                 asset->setName(bytes.constData());
@@ -739,27 +780,8 @@ bool SceneLoader::loadModel(const QString &filename, PMDModel *&model)
      * モデルをファイルから読み込む。レンダリングエンジンに送るには addModel を呼び出す必要がある
      * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
      */
-    QByteArray bytes;
     UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
-    if (filename.endsWith(".zip")) {
-        QStringList files;
-        Archive *archive = new Archive();
-        if (archive->open(filename, files)) {
-            const QStringList &filtered = files.filter(QRegExp(".(bmp|jpe?g|pmd|png|sp[ah]|tga)$"));
-            if (!filtered.isEmpty() && archive->uncompress(filtered)) {
-                const QString &modelFilename = files.filter(QRegExp(".pmd$")).first();
-                bytes = archive->data(modelFilename);
-                QFileInfo modelFileInfo(modelFilename), fileInfo(filename);
-                archive->replaceFilePath(modelFileInfo.path(), fileInfo.path() + "/");
-                delegate->setArchive(archive);
-            }
-        }
-    }
-    else {
-        QFile file(filename);
-        if (file.open(QFile::ReadOnly))
-            bytes = file.readAll();
-    }
+    const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, delegate);
     bool isNullData = bytes.isNull();
     if (!isNullData) {
         bool allocated = false;
@@ -851,6 +873,7 @@ void SceneLoader::loadProject(const QString &path)
         int progress = 0;
         QList<PMDModel *> lostModels;
         QList<Asset *> lostAssets;
+        UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         const Project::UUIDList &assetUUIDs = m_project->assetUUIDs();
         const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
@@ -865,7 +888,7 @@ void SceneLoader::loadProject(const QString &path)
             const QString &filename = QString::fromStdString(uri);
             if (loadModel(filename, model)) {
                 m_renderer->uploadModel(model, QFileInfo(filename).dir().absolutePath().toStdString());
-                static_cast<UIDelegate *>(m_renderDelegate)->setArchive(0);
+                delegate->setArchive(0);
                 /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
                 const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV);
                 model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
@@ -901,28 +924,27 @@ void SceneLoader::loadProject(const QString &path)
             const Project::UUID &assetUUIDString = assetUUIDs[i];
             Asset *asset = m_project->asset(assetUUIDString);
             const std::string &uri = m_project->assetSetting(asset, Project::kSettingURIKey);
-            QFile file(QString::fromStdString(uri));
-            if (file.open(QFile::ReadOnly)) {
-                const QByteArray &bytes = file.readAll();
-                if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-                    const QByteArray &bytes = QFileInfo(file).fileName().toUtf8();
-                    asset->setName(bytes.constData());
-                    m_renderer->uploadAsset(asset, QFileInfo(file).dir().absolutePath().toStdString());
-                    const QUuid assetUUID(assetUUIDString.c_str());
-                    m_renderOrderList.add(assetUUID);
-                    emit assetDidAdd(asset, assetUUID);
-                    if (isAssetSelected(asset))
-                        setSelectedAsset(asset);
-                    emit projectDidProceed(++progress);
-                    continue;
-                }
+            const QString &filename = QString::fromStdString(uri);
+            const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, delegate);
+            if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+                const QFileInfo fileInfo(filename);
+                const QByteArray &baseName = fileInfo.baseName().toUtf8();
+                asset->setName(baseName.constData());
+                m_renderer->uploadAsset(asset, fileInfo.dir().absolutePath().toStdString());
+                delegate->setArchive(0);
+                const QUuid assetUUID(assetUUIDString.c_str());
+                m_renderOrderList.add(assetUUID);
+                emit assetDidAdd(asset, assetUUID);
+                if (isAssetSelected(asset))
+                    setSelectedAsset(asset);
+                emit projectDidProceed(++progress);
+                continue;
             }
             /* 読み込みに失敗したアクセサリは後で Project から削除するため失敗したリストに追加する */
-            qWarning("Asset(uuid=%s, name=%s, path=%s) cannot be loaded: %s",
+            qWarning("Asset(uuid=%s, name=%s, path=%s) cannot be loaded",
                      assetUUIDString.c_str(),
                      qPrintable(internal::toQString(asset)),
-                     qPrintable(file.fileName()),
-                     qPrintable(file.errorString()));
+                     qPrintable(filename));
             lostAssets.append(asset);
             emit projectDidProceed(++progress);
         }

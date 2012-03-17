@@ -377,18 +377,17 @@ void SceneWidget::addAsset()
 {
     addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
                             tr("Open X file"),
-                            tr("DirectX mesh file (*.x)"),
+                            tr("DirectX mesh file (*.x; *.zip)"),
                             m_settings));
 }
 
 Asset *SceneWidget::addAsset(const QString &path)
 {
-    QFileInfo fi(path);
     Asset *asset = 0;
+    QFileInfo fi(path);
     if (fi.exists()) {
         QUuid uuid;
-        asset = m_loader->loadAsset(fi.fileName(), fi.dir(), uuid);
-        if (asset) {
+        if (m_loader->loadAsset(path, uuid, asset)) {
             emit fileDidLoad(path);
         }
         else {

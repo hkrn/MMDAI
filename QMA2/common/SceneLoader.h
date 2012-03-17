@@ -83,7 +83,7 @@ public:
     const QUuid findUUID(vpvl::Asset *asset) const;
     const QUuid findUUID(vpvl::PMDModel *model) const;
     bool isProjectModified() const;
-    vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir, QUuid &uuid);
+    bool loadAsset(const QString &filename, QUuid &uuid, vpvl::Asset *&asset);
     vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
     bool loadModel(const QString &filename, vpvl::PMDModel *&model);
