@@ -110,7 +110,7 @@ public:
                 qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
                 return false;
             }
-            if (image.isNull() && pathString.endsWith(".tga", Qt::CaseInsensitive)) {
+            if (image.isNull() && info.suffix().toLower() == "tga") {
                 image = loadTGA(pathString, ptr);
             }
             else {
@@ -745,7 +745,7 @@ bool SceneLoader::loadModel(const QString &filename, PMDModel *&model)
         QStringList files;
         Archive *archive = new Archive();
         if (archive->open(filename, files)) {
-            const QStringList &filtered = files.filter(QRegExp(".(bmp|jpe?g|png|pmd|tga)$"));
+            const QStringList &filtered = files.filter(QRegExp(".(bmp|jpe?g|pmd|png|sp[ah]|tga)$"));
             if (!filtered.isEmpty() && archive->uncompress(filtered)) {
                 const QString &modelFilename = files.filter(QRegExp(".pmd$")).first();
                 bytes = archive->data(modelFilename);

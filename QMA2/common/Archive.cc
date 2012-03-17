@@ -124,17 +124,17 @@ bool Archive::uncompress(const QStringList &entries)
                     data.resize(info.uncompressed_size);
                     err = unzOpenCurrentFile(m_file);
                     if (err != Z_OK) {
-                        m_error = kOpenCurrentFile;
+                        m_error = kOpenCurrentFileError;
                         break;
                     }
                     err = unzReadCurrentFile(m_file, data.data(), info.uncompressed_size);
                     if (err < 0) {
-                        m_error = kReadCurrentFile;
+                        m_error = kReadCurrentFileError;
                         break;
                     }
                     err = unzCloseCurrentFile(m_file);
                     if (err != Z_OK) {
-                        m_error = kCloseCurrentFile;
+                        m_error = kCloseCurrentFileError;
                         break;
                     }
                     m_entries.insert(name, data);

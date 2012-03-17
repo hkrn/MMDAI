@@ -51,9 +51,9 @@ public:
         kGetCurrentFileError,
         kGoToNextFileError,
         kGoToFirstFileError,
-        kOpenCurrentFile,
-        kReadCurrentFile,
-        kCloseCurrentFile
+        kOpenCurrentFileError,
+        kReadCurrentFileError,
+        kCloseCurrentFileError
     };
 
     Archive();
