@@ -111,7 +111,11 @@ public:
         }
         /* 通常の読み込み */
         else {
-            if (info.isDir() || !info.exists()) {
+            if (info.isDir()) {
+                /* ディレクトリの場合は警告は出さない */
+                return false;
+            }
+            else if (!info.exists()) {
                 qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
                 return false;
             }
@@ -342,6 +346,7 @@ private:
     QTextCodec *m_codec;
 };
 
+/* 文字列を解析して Vector3 を構築する */
 static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
 {
     if (!value.empty()) {
@@ -356,6 +361,7 @@ static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
     return def;
 }
 
+/* 文字列を解析して Quaternion を構築する */
 static const Quaternion UIGetQuaternion(const std::string &value, const Quaternion &def)
 {
     if (!value.empty()) {
@@ -380,6 +386,7 @@ static inline void UIEnableMultisample()
 #define UIEnableMultisample() (void) 0
 #endif
 
+/* レンダリング順序を決定するためのクラス。基本的にプロジェクトの order の設定に依存する */
 class UIRenderOrderPredication
 {
 public:
@@ -437,9 +444,13 @@ private:
     const bool m_useOrderAttr;
 };
 
+/*
+ * ZIP またはファイルを読み込む。複数のファイルが入る ZIP の場合 extensions に
+ * 該当するもので一番先に見つかったファイルのみを読み込む
+ */
 const QByteArray UILoadFile(const QString &filename,
                             const QRegExp &loadable,
-                            const QRegExp &ext,
+                            const QRegExp &extensions,
                             UIDelegate *delegate)
 {
     QByteArray bytes;
@@ -449,12 +460,12 @@ const QByteArray UILoadFile(const QString &filename,
         if (archive->open(filename, files)) {
             const QStringList &filtered = files.filter(loadable);
             if (!filtered.isEmpty() && archive->uncompress(filtered)) {
-                const QStringList &models = files.filter(ext);
-                if (!models.isEmpty()) {
-                    const QString &modelFilename = files.filter(ext).first();
-                    bytes = archive->data(modelFilename);
-                    QFileInfo modelFileInfo(modelFilename), fileInfo(filename);
-                    archive->replaceFilePath(modelFileInfo.path(), fileInfo.path() + "/");
+                const QStringList &target = files.filter(extensions);
+                if (!target.isEmpty()) {
+                    const QString &filenameToLoad = target.first();
+                    bytes = archive->data(filenameToLoad);
+                    QFileInfo fileToLoadInfo(filenameToLoad), fileInfo(filename);
+                    archive->replaceFilePath(fileToLoadInfo.path(), fileInfo.path() + "/");
                     delegate->setArchive(archive);
                 }
             }
