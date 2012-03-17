@@ -105,14 +105,14 @@ public:
         : QUndoCommand(),
           m_fmm(bmm)
     {
-        QHash<int, bool> indexProceeded;
+        QSet<int> indexProceeded;
         /* 現在選択中のモデルにある全ての頂点モーフを取り出す */
         const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
         foreach (const MorphMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
             /* フレーム単位での重複を避けるためにスキップ処理を設ける */
-            if (!indexProceeded[frameIndex]) {
+            if (!indexProceeded.contains(frameIndex)) {
                 /* モデルの全ての頂点モーフを対象にデータがあるか確認し、存在している場合のみボーンのキーフレームの生データを保存する */
                 foreach (PMDMotionModel::ITreeItem *item, items) {
                     const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
@@ -120,11 +120,11 @@ public:
                     if (data.canConvert(QVariant::ByteArray))
                         m_modelIndices.append(ModelIndex(index, data.toByteArray()));
                 }
-                indexProceeded[frameIndex] = true;
+                indexProceeded.insert(frameIndex);
             }
         }
         m_frames = frames;
-        m_frameIndices = indexProceeded.keys();
+        m_frameIndices = indexProceeded.toList();
     }
     virtual ~SetFramesCommand() {
     }
@@ -202,8 +202,11 @@ public:
     }
 
 private:
+    /* undo で復元する対象のキーフレームの番号 */
     QList<int> m_frameIndices;
+    /* m_frameIndices に加えて undo で復元する用のキーフレームの集合 */
     QList<ModelIndex> m_modelIndices;
+    /* 実際に登録する用のキーフレームの集合 */
     MorphMotionModel::KeyFramePairList m_frames;
     MorphMotionModel *m_fmm;
 };
