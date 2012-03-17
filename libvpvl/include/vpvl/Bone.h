@@ -95,6 +95,7 @@ public:
      * @return The center bone name in Shift_JIS
      */
     static const uint8_t *centerBoneName();
+    static const uint8_t *rootBoneName();
 
     /**
      * Get the center bone from a bone list that is not empty.

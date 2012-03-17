@@ -62,6 +62,12 @@ const uint8_t *Bone::centerBoneName()
     return centerBoneName;
 }
 
+const uint8_t *Bone::rootBoneName()
+{
+    static const uint8_t rootBoneName[] = { 0x91, 0x53, 0x82, 0xc4, 0x82, 0xcc, 0x90, 0x65, 0x0 };
+    return rootBoneName;
+}
+
 Bone *Bone::centerBone(const BoneList *bones)
 {
     const uint8_t *name = centerBoneName();
@@ -227,11 +233,11 @@ void Bone::build(BoneList *bones, Bone *rootBone)
         return;
     }
     // check if the bone is a special root bone
-    static const uint8_t allParent[] = { 0x91, 0x53, 0x82, 0xc4, 0x82, 0xcc, 0x90, 0x65, 0x0 };
     static const uint8_t legsOffset[] = { 0x97, 0xbc, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
     static const uint8_t rightLegOffset[] = { 0x89, 0x45, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
     static const uint8_t leftLegOffset[] = { 0x8d, 0xb6, 0x91, 0xab, 0x83, 0x49, 0x83, 0x74, 0x83, 0x5a, 0x0 };
-    if (internal::stringEquals(m_name, allParent, sizeof(allParent)) ||
+    const uint8_t *rbname = rootBoneName();
+    if (internal::stringEquals(m_name, rbname, strlen(reinterpret_cast<const char *>(rbname))) ||
             internal::stringEquals(m_name, legsOffset, sizeof(legsOffset)) ||
             internal::stringEquals(m_name, rightLegOffset, sizeof(rightLegOffset)) ||
             internal::stringEquals(m_name, leftLegOffset, sizeof(leftLegOffset))) {
