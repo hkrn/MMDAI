@@ -292,7 +292,6 @@ MorphMotionModel::MorphMotionModel(QUndoGroup *undo, QObject *parent)
 
 MorphMotionModel::~MorphMotionModel()
 {
-    m_frames.releaseAll();
 }
 
 void MorphMotionModel::saveMotion(VMDMotion *motion)
@@ -334,18 +333,20 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
     setFrames(faceFrames);
 }
 
-void MorphMotionModel::copyKeyframes(int frameIndex)
+void MorphMotionModel::copyKeyframes(const QModelIndexList &indices, int frameIndex)
 {
     if (m_model && m_motion) {
-        m_frames.releaseAll();
-        foreach (PMDMotionModel::ITreeItem *item, keys().values()) {
-            const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
-            QVariant variant = index.data(kBinaryDataRole);
+        /* 前回呼ばれた copyFrames で作成したデータを破棄しておく */
+        m_copiedKeyframes.clear();
+        foreach (const QModelIndex &index, indices) {
+            const QVariant &variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
-                QByteArray bytes = variant.toByteArray();
+                const QByteArray &bytes = variant.toByteArray();
                 FaceKeyframe *frame = new FaceKeyframe();
                 frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-                m_frames.add(frame);
+                /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
+                int diff = frame->frameIndex() - frameIndex;
+                m_copiedKeyframes.append(KeyFramePair(diff, KeyFramePtr(frame)));
             }
         }
     }
@@ -353,12 +354,13 @@ void MorphMotionModel::copyKeyframes(int frameIndex)
 
 void MorphMotionModel::pasteKeyframes(int frameIndex)
 {
-    if (m_model && m_motion && m_frames.count() != 0) {
+    if (m_model && m_motion && !m_copiedKeyframes.isEmpty()) {
         MorphMotionModel::KeyFramePairList frames;
-        const int nframes = m_frames.count();
-        for (int i = 0; i < nframes; i++) {
-            FaceKeyframe *frame = static_cast<FaceKeyframe *>(m_frames[i]->clone());
-            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+        foreach (const KeyFramePair &pair, m_copiedKeyframes) {
+            FaceKeyframe *frame = static_cast<FaceKeyframe *>(pair.second->clone());
+            /* コピー先にフレームインデックスを更新する */
+            int newFrameIndex = frameIndex + pair.first;
+            frames.append(KeyFramePair(newFrameIndex, KeyFramePtr(frame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
     }
@@ -532,8 +534,9 @@ void MorphMotionModel::loadMotion(VMDMotion *motion, PMDModel *model)
 
 void MorphMotionModel::removeMotion()
 {
-    /* 選択された頂点モーフとモデルに登録されているデータが削除される。頂点モーフ名は削除されない */
-    m_selected.clear();
+    /* コピーしたキーフレーム、選択された頂点モーフとモデルに登録されているデータが削除される。頂点モーフ名は削除されない */
+    m_selectedMorphs.clear();
+    m_copiedKeyframes.clear();
     setModified(false);
     removePMDMotion(m_model);
     reset();
@@ -586,7 +589,7 @@ void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
 
 void MorphMotionModel::selectFaces(const QList<Face *> &faces)
 {
-    m_selected = faces;
+    m_selectedMorphs = faces;
     emit facesDidSelect(faces);
 }
 
@@ -604,8 +607,8 @@ Face *MorphMotionModel::findFace(const QString &name)
 
 void MorphMotionModel::setWeight(float value)
 {
-    if (!m_selected.isEmpty())
-        setWeight(value, m_selected.last());
+    if (!m_selectedMorphs.isEmpty())
+        setWeight(value, m_selectedMorphs.last());
 }
 
 void MorphMotionModel::setWeight(float value, Face *face)

@@ -102,16 +102,6 @@ void TimelineTreeView::deleteKeyframesBySelectedIndices()
     m->deleteKeyframesByModelIndices(selectionModel()->selectedIndexes());
 }
 
-void TimelineTreeView::copyKeyframes(int frameIndex)
-{
-    static_cast<MotionBaseModel *>(model())->copyKeyframes(frameIndex);
-}
-
-void TimelineTreeView::pasteKeyframes(int frameIndex)
-{
-    static_cast<MotionBaseModel *>(model())->pasteKeyframes(frameIndex);
-}
-
 void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl::Vector3 &position,
                                                                const vpvl::Vector3 &rotation)
 {

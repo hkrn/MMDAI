@@ -65,7 +65,7 @@ public:
     ~BoneMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void copyKeyframes(int frameIndex);
+    void copyKeyframes(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframes(int frameIndex);
     void pasteReversedFrame(int frameIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
@@ -80,7 +80,7 @@ public:
     void setRotation(int coordinate, float value);
 
     vpvl::Bone *findBone(const QString &name);
-    vpvl::Bone *selectedBone() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
+    vpvl::Bone *selectedBone() const { return m_selectedBones.isEmpty() ? 0 : m_selectedBones.first(); }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
     const vpvl::BoneKeyframe::InterpolationParameter &interpolationParameter() const { return m_interpolationParameter; }
     void setInterpolationParameter(const vpvl::BoneKeyframe::InterpolationParameter &value) { m_interpolationParameter = value; }
@@ -108,8 +108,8 @@ signals:
 
 private:
     const SceneWidget *m_sceneWidget;
-    QList<vpvl::Bone *> m_selected;
-    vpvl::BaseKeyFrameList m_frames;
+    KeyFramePairList m_copiedKeyframes;
+    QList<vpvl::Bone *> m_selectedBones;
     vpvl::PMDModel::State *m_state;
     vpvl::BoneKeyframe::InterpolationParameter m_interpolationParameter;
 

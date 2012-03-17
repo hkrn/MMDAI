@@ -54,8 +54,6 @@ public:
     void selectFrameIndex(int frameIndex);
     void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     void deleteKeyframesBySelectedIndices();
-    void copyKeyframes(int frameIndex);
-    void pasteKeyframes(int frameIndex);
     const QModelIndexList &expandedModelIndices() const;
 
 public slots:

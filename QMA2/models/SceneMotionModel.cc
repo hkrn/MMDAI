@@ -325,7 +325,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
     setFrames(sceneFrames);
 }
 
-void SceneMotionModel::copyKeyframes(int frameIndex)
+void SceneMotionModel::copyKeyframes(const QModelIndexList & /* indices */, int frameIndex)
 {
     m_cameraIndex = frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
 }

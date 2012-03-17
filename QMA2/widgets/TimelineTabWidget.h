@@ -102,9 +102,10 @@ private slots:
     void setCurrentFrameIndexZero();
     void insertFrame();
     void deleteFrame();
-    void copyFrame();
-    void pasteFrame();
-    void pasteReversedFrame();
+    void copyKeyframes();
+    void cutKeyframes();
+    void pasteKeyframes();
+    void pasteKeyframesWithReverse();
     void nextFrame();
     void previousFrame();
     void setCurrentTabIndex(int index);

@@ -58,7 +58,7 @@ public:
     ~MorphMotionModel();
 
     void saveMotion(vpvl::VMDMotion *motion);
-    void copyKeyframes(int frameIndex);
+    void copyKeyframes(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframes(int frameIndex);
     void saveTransform();
     void commitTransform();
@@ -70,7 +70,7 @@ public:
     vpvl::Face *findFace(const QString &name);
     void setWeight(float value);
     void setWeight(float value, vpvl::Face *face);
-    vpvl::Face *selectedFace() const { return m_selected.isEmpty() ? 0 : m_selected.first(); }
+    vpvl::Face *selectedFace() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
     bool isFaceSelected() const { return m_model != 0 && selectedFace() != 0; }
 
 public slots:
@@ -87,8 +87,8 @@ signals:
     void facesDidSelect(const QList<vpvl::Face *> &faces);
 
 private:
-    QList<vpvl::Face *> m_selected;
-    vpvl::BaseKeyFrameList m_frames;
+    QList<vpvl::Face *> m_selectedMorphs;
+    KeyFramePairList m_copiedKeyframes;
     vpvl::PMDModel::State *m_state;
 
     Q_DISABLE_COPY(MorphMotionModel)

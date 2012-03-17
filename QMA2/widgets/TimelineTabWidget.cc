@@ -238,31 +238,42 @@ void TimelineTabWidget::deleteFrame()
     currentSelectedTimelineWidget()->treeView()->deleteKeyframesBySelectedIndices();
 }
 
-void TimelineTabWidget::copyFrame()
+void TimelineTabWidget::copyKeyframes()
 {
-    TimelineWidget *timeline = currentSelectedTimelineWidget();
-    timeline->treeView()->copyKeyframes(timeline->frameIndex());
+    TimelineWidget *widget = currentSelectedTimelineWidget();
+    TimelineTreeView *treeView = widget->treeView();
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
+    model->copyKeyframes(treeView->selectionModel()->selectedIndexes(), widget->frameIndex());
 }
 
-void TimelineTabWidget::pasteFrame()
+void TimelineTabWidget::cutKeyframes()
 {
-    TimelineWidget *timeline = currentSelectedTimelineWidget();
-    timeline->treeView()->pasteKeyframes(timeline->frameIndex());
+    TimelineWidget *widget = currentSelectedTimelineWidget();
+    TimelineTreeView *treeView = widget->treeView();
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
+    model->cutKeyframes(treeView->selectionModel()->selectedIndexes(), widget->frameIndex());
 }
 
-void TimelineTabWidget::pasteReversedFrame()
+void TimelineTabWidget::pasteKeyframes()
 {
+    TimelineWidget *widget = currentSelectedTimelineWidget();
+    TimelineTreeView *treeView = widget->treeView();
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
+    model->pasteKeyframes(widget->frameIndex());
+}
+
+void TimelineTabWidget::pasteKeyframesWithReverse()
+{
+    TimelineTreeView *treeView;
+    BoneMotionModel *model;
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-    {
-        BoneMotionModel *model = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+        treeView = m_boneTimeline->treeView();
+        model = static_cast<BoneMotionModel *>(treeView->model());
         model->pasteReversedFrame(m_boneTimeline->frameIndex());
         break;
-    }
     default:
-    {
-        pasteFrame();
-    }
+        pasteKeyframes();
     }
 }
 

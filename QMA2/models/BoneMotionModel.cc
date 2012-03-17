@@ -390,7 +390,6 @@ BoneMotionModel::BoneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidge
 
 BoneMotionModel::~BoneMotionModel()
 {
-    m_frames.releaseAll();
 }
 
 void BoneMotionModel::saveMotion(VMDMotion *motion)
@@ -435,20 +434,23 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
     setFrames(boneFrames);
 }
 
-void BoneMotionModel::copyKeyframes(int frameIndex)
+void BoneMotionModel::copyKeyframes(const QModelIndexList &indices, int frameIndex)
 {
     if (m_model && m_motion) {
-        /* メモリリーク防止のため、前回呼ばれた copyFrames で作成したデータを破棄しておく */
-        m_frames.releaseAll();
+        /* 前回呼ばれた copyFrames で作成したデータを破棄しておく */
+        m_copiedKeyframes.clear();
         /* モデル内のすべてのボーン名を参照し、データがあるものだけを BoneKeyFrame に移しておく */
-        foreach (PMDMotionModel::ITreeItem *item, keys().values()) {
-            const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
-            QVariant variant = index.data(kBinaryDataRole);
-            if (variant.canConvert(QVariant::ByteArray)) {
-                QByteArray bytes = variant.toByteArray();
-                BoneKeyframe *frame = new BoneKeyframe();
-                frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-                m_frames.add(frame);
+        foreach (const QModelIndex &index, indices) {
+            if (index.isValid()) {
+                const QVariant &variant = index.data(kBinaryDataRole);
+                if (variant.canConvert(QVariant::ByteArray)) {
+                    const QByteArray &bytes = variant.toByteArray();
+                    BoneKeyframe *frame = new BoneKeyframe();
+                    frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                    /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
+                    int diff = frame->frameIndex() - frameIndex;
+                    m_copiedKeyframes.append(KeyFramePair(diff, KeyFramePtr(frame)));
+                }
             }
         }
     }
@@ -457,16 +459,17 @@ void BoneMotionModel::copyKeyframes(int frameIndex)
 void BoneMotionModel::pasteKeyframes(int frameIndex)
 {
     /* m_frames が #copyFrames でコピーされていること前提 */
-    if (m_model && m_motion && m_frames.count() != 0) {
+    if (m_model && m_motion && !m_copiedKeyframes.isEmpty()) {
         /*
          * m_frames のデータを引数のフレームインデックスと一緒に積ませて SetFramesCommand として作成する
          * m_frames のデータは破棄されないので、#copyFrames で破棄するようになってる
          */
         KeyFramePairList frames;
-        const int nframes = m_frames.count();
-        for (int i = 0; i < nframes; i++) {
-            BoneKeyframe *frame = static_cast<BoneKeyframe *>(m_frames[i]->clone());
-            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+        foreach (const KeyFramePair &pair, m_copiedKeyframes) {
+            BoneKeyframe *frame = static_cast<BoneKeyframe *>(pair.second->clone());
+            /* コピー先にフレームインデックスを更新する */
+            int newFrameIndex = frameIndex + pair.first;
+            frames.append(KeyFramePair(newFrameIndex, KeyFramePtr(frame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
     }
@@ -478,12 +481,11 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
     const QString &left = "左";
     QHash<QString, int> registered;
     /* m_frames が #copyFrames でコピーされていること前提 */
-    if (m_model && m_motion && m_frames.count() != 0) {
+    if (m_model && m_motion && !m_copiedKeyframes.isEmpty()) {
         KeyFramePairList frames;
-        const int nframes = m_frames.count();
         /* 基本的な処理は pasteFrame と同等だが、「左」「右」の名前を持つボーンは特別扱い */
-        for (int i = 0; i < nframes; i++) {
-            BoneKeyframe *frame = static_cast<BoneKeyframe *>(m_frames[i]), *newFrame = 0;
+        foreach (const KeyFramePair &pair, m_copiedKeyframes) {
+            BoneKeyframe *frame = static_cast<BoneKeyframe *>(pair.second->clone()), *newFrame = 0;
             const QString &name = internal::toQString(frame);
             /* 二重登録防止のため、「左」「右」はどちらか出てきたら処理は一回のみ */
             if (!registered.contains(name)) {
@@ -509,9 +511,11 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
                 }
             }
             else {
-                newFrame = static_cast<BoneKeyframe *>(m_frames[i]->clone());
+                newFrame = static_cast<BoneKeyframe *>(pair.second->clone());
             }
-            frames.append(KeyFramePair(frameIndex, KeyFramePtr(newFrame)));
+            /* コピー先にフレームインデックスを更新する */
+            int newFrameIndex = frameIndex + pair.first;
+            frames.append(KeyFramePair(newFrameIndex, KeyFramePtr(newFrame)));
         }
         addUndoCommand(new SetFramesCommand(this, frames));
     }
@@ -778,8 +782,9 @@ void BoneMotionModel::loadMotion(VMDMotion *motion, PMDModel *model)
 
 void BoneMotionModel::removeMotion()
 {
-    /* 選択されたボーンとモデルに登録されているデータが削除される。ボーン名は削除されない */
-    m_selected.clear();
+    /* コピーしたキーフレーム、選択されたボーンとモデルに登録されているデータが削除される。ボーン名は削除されない */
+    m_copiedKeyframes.clear();
+    m_selectedBones.clear();
     m_motion = 0;
     setModified(false);
     removePMDMotion(m_model);
@@ -852,13 +857,13 @@ void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
                 bones.append(bone);
         }
     }
-    m_selected = bones;
+    m_selectedBones = bones;
     emit bonesDidSelect(bones);
 }
 
 void BoneMotionModel::resetBone(ResetType type)
 {
-    foreach (Bone *selected, m_selected) {
+    foreach (Bone *selected, m_selectedBones) {
         Vector3 pos = selected->position();
         Quaternion rot = selected->rotation();
         switch (type) {
@@ -895,7 +900,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
 {
     if (!isBoneSelected())
         return;
-    foreach (Bone *selected, m_selected) {
+    foreach (Bone *selected, m_selectedBones) {
         const Vector3 &lastPosition = selected->position();
         Vector3 position = lastPosition;
         switch (coordinate) {
@@ -924,7 +929,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
 {
     if (!isBoneSelected())
         return;
-    Bone *selected = m_selected.last();
+    Bone *selected = m_selectedBones.last();
     const Quaternion &lastRotation = selected->rotation();
     Quaternion rotation = lastRotation;
     switch (coordinate) {
@@ -1071,7 +1076,7 @@ void BoneMotionModel::rotate(const Quaternion &delta, Bone *bone, int flags, flo
 
 void BoneMotionModel::selectBones(const QList<Bone *> &bones)
 {
-    m_selected = bones;
+    m_selectedBones = bones;
     emit bonesDidSelect(bones);
 }
 

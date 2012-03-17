@@ -141,11 +141,21 @@ public:
         indices.append(index);
         selectKeyframesByModelIndices(indices);
     }
+    virtual void cutKeyframes(const QModelIndexList &indices, int frameIndex) {
+        copyKeyframes(indices, frameIndex);
+        foreach (const QModelIndex &index, indices) {
+            if (index.isValid()) {
+                const QVariant &variant = index.data(kBinaryDataRole);
+                if (variant.canConvert(QVariant::ByteArray))
+                    setData(index, QVariant(), kBinaryDataRole);
+            }
+        }
+    }
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
     virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
     virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
-    virtual void copyKeyframes(int frameIndex) = 0;
+    virtual void copyKeyframes(const QModelIndexList &indices, int frameIndex) = 0;
     virtual void pasteKeyframes(int frameIndex) = 0;
     virtual int maxFrameCount() const = 0;
     virtual int maxFrameIndex() const = 0;
