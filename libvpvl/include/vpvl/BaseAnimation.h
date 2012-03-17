@@ -120,6 +120,8 @@ public:
      */
     void addKeyframe(BaseKeyframe *frame);
 
+    BaseKeyframe *findKeyframe(float frameIndex, const uint8_t *name) const;
+
     /**
      * Replace a key frame.
      *
@@ -148,7 +150,7 @@ public:
      * @param frameIndex A frame index to delete
      * @param name A name to delete
      */
-    void deleteKeyframe(float frameIndex, const uint8_t *name);
+    void deleteKeyframe(BaseKeyframe *&frame);
 
     /**
      * Delete key frames associated with an index.

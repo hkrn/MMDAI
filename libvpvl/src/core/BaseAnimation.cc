@@ -86,27 +86,34 @@ void BaseAnimation::addKeyframe(BaseKeyframe *frame)
         refresh();
 }
 
-void BaseAnimation::replaceKeyframe(BaseKeyframe *frame)
-{
-    deleteKeyframe(frame->frameIndex(), frame->name());
-    addKeyframe(frame);
-}
-
-void BaseAnimation::deleteKeyframe(float frameIndex, const uint8_t *value)
+BaseKeyframe *BaseAnimation::findKeyframe(float frameIndex, const uint8_t *name) const
 {
     const int nframes = m_frames.count();
-    const size_t len = strlen(reinterpret_cast<const char *>(value));
-    BaseKeyframe *frameToRemove = 0;
+    const size_t len = strlen(reinterpret_cast<const char *>(name));
+    BaseKeyframe *foundFrame = 0;
     for (int i = 0; i < nframes; i++) {
         BaseKeyframe *frame = m_frames[i];
-        if (frame->frameIndex() == frameIndex && internal::stringEquals(value, frame->name(), len)) {
-            frameToRemove = frame;
+        if (frame->frameIndex() == frameIndex && internal::stringEquals(name, frame->name(), len)) {
+            foundFrame = frame;
             break;
         }
     }
-    if (frameToRemove) {
-        m_frames.remove(frameToRemove);
-        delete frameToRemove;
+    return foundFrame;
+}
+
+void BaseAnimation::replaceKeyframe(BaseKeyframe *frame)
+{
+    BaseKeyframe *frameToDelete = findKeyframe(frame->frameIndex(), frame->name());
+    deleteKeyframe(frameToDelete);
+    addKeyframe(frame);
+}
+
+void BaseAnimation::deleteKeyframe(BaseKeyframe *&frame)
+{
+    if (m_frames.contains(frame)) {
+        m_frames.remove(frame);
+        delete frame;
+        frame = 0;
         if (m_enableAutomaticRefresh)
             refresh();
     }
