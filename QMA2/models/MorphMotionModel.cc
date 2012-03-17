@@ -186,6 +186,7 @@ public:
                 const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(keys[key], frameIndex);
                 QByteArray bytes(BoneKeyframe::strideSize(), '0');
                 FaceKeyframe *newFrame = static_cast<FaceKeyframe *>(frame->clone());
+                newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 animation->replaceKeyframe(newFrame);
                 m_fmm->setData(modelIndex, bytes, Qt::EditRole);
