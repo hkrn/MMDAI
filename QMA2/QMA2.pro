@@ -73,6 +73,7 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   translations.path = Contents/Resources
   QMAKE_BUNDLE_DATA += translations
+  DEFINES += USE_FILE32API
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -145,7 +146,10 @@ SOURCES += main.cc \
     video/AudioDecoder.cc \
     video/AVCommon.cc \
     video/AudioPlayer.cc \
-    dialogs/RenderOrderDialog.cc
+    dialogs/RenderOrderDialog.cc \
+    unzip/unzip.c \
+    unzip/ioapi.c \
+    common/Archive.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -189,7 +193,10 @@ HEADERS  += \
     video/AudioDecoder.h \
     video/AVCommon.h \
     video/AudioPlayer.h \
-    dialogs/RenderOrderDialog.h
+    dialogs/RenderOrderDialog.h \
+    unzip/unzip.h \
+    unzip/ioapi.h \
+    common/Archive.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc

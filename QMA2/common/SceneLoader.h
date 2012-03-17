@@ -86,7 +86,7 @@ public:
     vpvl::Asset *loadAsset(const QString &baseName, const QDir &dir, QUuid &uuid);
     vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
     vpvl::VMDMotion *loadCameraMotion(const QString &path);
-    vpvl::PMDModel *loadModel(const QString &baseName, const QDir &dir);
+    bool loadModel(const QString &filename, vpvl::PMDModel *&model);
     vpvl::VMDMotion *loadModelMotion(const QString &path);
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
