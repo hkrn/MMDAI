@@ -973,8 +973,11 @@ void MainWindow::retranslate()
 {
     m_mainToolBar->setWindowTitle(tr("Toolbar"));
     m_timelineDockWidget->setWindowTitle(tr("Timeline"));
+    m_timelineDockWidget->setObjectName(m_timelineDockWidget->windowTitle());
     m_sceneDockWidget->setWindowTitle(tr("Scene"));
+    m_sceneDockWidget->setObjectName(m_sceneDockWidget->windowTitle());
     m_modelDockWidget->setWindowTitle(tr("Model"));
+    m_modelDockWidget->setObjectName(m_modelDockWidget->windowTitle());
     m_actionNewProject->setText(tr("New project"));
     m_actionNewProject->setStatusTip(tr("Create a new project."));
     m_actionNewMotion->setText(tr("New motion"));
