@@ -152,6 +152,9 @@ public:
             const vpvl::Bone *bone = bones[i], *child = bone->child();
             if (!bone->isMovable() && !bone->isRotateable())
                 continue;
+            /* 子ボーンが「全ての親」の場合はスキップしておく */
+            if (child->originPosition() == vpvl::kZeroV)
+                continue;
             const vpvl::Transform &boneTransform = bone->localTransform(),
                     &childTransform = child->localTransform();
             const vpvl::Vector3 &origin = boneTransform.getOrigin(),
