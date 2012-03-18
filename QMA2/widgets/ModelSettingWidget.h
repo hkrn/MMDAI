@@ -71,10 +71,13 @@ private slots:
     void retranslate();
     void openEdgeColorDialog();
     void setModel(vpvl::PMDModel *model, SceneLoader *loader);
+    void setPositionOffset(const vpvl::Vector3 &position);
     void updatePosition();
     void updateRotation();
 
 private:
+    void disableSignals();
+    void enableSignals();
     void createEdgeColorDialog();
     QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
 

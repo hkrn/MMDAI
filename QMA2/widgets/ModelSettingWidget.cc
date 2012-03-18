@@ -119,12 +119,7 @@ void ModelSettingWidget::openEdgeColorDialog()
 void ModelSettingWidget::setModel(PMDModel *model, SceneLoader *loader)
 {
     /* 予期せぬ値変更を伴うシグナル発行防止のため、一時的に無効にする */
-    disconnect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    disconnect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    disconnect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    disableSignals();
     if (model) {
         createEdgeColorDialog();
         m_edgeOffsetSpinBox->setValue(model->edgeOffset());
@@ -170,12 +165,16 @@ void ModelSettingWidget::setModel(PMDModel *model, SceneLoader *loader)
         m_ry->setValue(0.0);
         m_rz->setValue(0.0);
     }
-    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    enableSignals();
+}
+
+void ModelSettingWidget::setPositionOffset(const Vector3 &position)
+{
+    disableSignals();
+    m_px->setValue(position.x());
+    m_py->setValue(position.y());
+    m_pz->setValue(position.z());
+    enableSignals();
 }
 
 void ModelSettingWidget::createEdgeColorDialog()
@@ -197,6 +196,26 @@ void ModelSettingWidget::updateRotation()
 {
     const vpvl::Vector3 rotation(m_rx->value(), m_ry->value(), m_rz->value());
     emit rotationOffsetDidChange(rotation);
+}
+
+void ModelSettingWidget::disableSignals()
+{
+    disconnect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    disconnect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    disconnect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+}
+
+void ModelSettingWidget::enableSignals()
+{
+    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
 }
 
 QDoubleSpinBox *ModelSettingWidget::createSpinBox(const char *slot, double min, double max, double step) const

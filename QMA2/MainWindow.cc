@@ -1247,6 +1247,7 @@ void MainWindow::connectWidgets()
     connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
     connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(vpvl::Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(vpvl::Vector3)));
     connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(vpvl::Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(vpvl::Vector3)));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), modelSettingWidget, SLOT(setPositionOffset(vpvl::Vector3)));
     makeBonesSelectable();
 }
 

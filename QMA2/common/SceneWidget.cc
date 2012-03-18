@@ -653,7 +653,6 @@ void SceneWidget::rotateModel(PMDModel *model, const Quaternion &delta)
 
 void SceneWidget::translateScene(const Vector3 &delta)
 {
-    // FIXME: direction
     Scene *scene = m_loader->renderEngine()->scene();
     Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
     float fovy = scene->fovy(), distance = scene->cameraDistance();
@@ -669,7 +668,6 @@ void SceneWidget::translateModel(const Vector3 &delta)
 
 void SceneWidget::translateModel(PMDModel *model, const Vector3 &delta)
 {
-    // FIXME: direction
     if (model) {
         const Vector3 &position = model->positionOffset();
         model->setPositionOffset(position + delta);
