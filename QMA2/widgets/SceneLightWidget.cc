@@ -44,28 +44,31 @@ SceneLightWidget::SceneLightWidget(QWidget *parent) :
     QHBoxLayout *subLayout = new QHBoxLayout();
     /* 色(R,G,B) */
     QFormLayout *formLayout = new QFormLayout();
-    m_r = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005);
+    m_r = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005, 3);
     formLayout->addRow("R", m_r);
-    m_g = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005);
+    m_g = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005, 3);
     formLayout->addRow("G", m_g);
-    m_b = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005);
+    m_b = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005, 3);
     formLayout->addRow("B", m_b);
     m_colorGroup = new QGroupBox();
     m_colorGroup->setLayout(formLayout);
     subLayout->addWidget(m_colorGroup);
     /* 位置(X,Y,Z) */
     formLayout = new QFormLayout();
-    m_x = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01);
+    m_x = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01, 3);
     formLayout->addRow("X", m_x);
-    m_y = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01);
+    m_y = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01, 3);
     formLayout->addRow("Y", m_y);
-    m_z = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01);
+    m_z = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01, 3);
     formLayout->addRow("Z", m_z);
     m_directionGroup = new QGroupBox();
     m_directionGroup->setLayout(formLayout);
     subLayout->addWidget(m_directionGroup);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(subLayout);
+    m_openColorDialog = new QPushButton();
+    connect(m_openColorDialog, SIGNAL(clicked()), SLOT(openColorDialog()));
+    mainLayout->addWidget(m_openColorDialog, 0, Qt::AlignCenter);
     mainLayout->addStretch();
     setLayout(mainLayout);
     retranslate();
@@ -105,6 +108,7 @@ void SceneLightWidget::retranslate()
 {
     m_colorGroup->setTitle(tr("Color"));
     m_directionGroup->setTitle(tr("Direction"));
+    m_openColorDialog->setText(tr("Open color dialog"));
 }
 
 void SceneLightWidget::updateColor()
@@ -119,11 +123,29 @@ void SceneLightWidget::updatePosition()
     emit lightPositionDidSet(position);
 }
 
-QDoubleSpinBox *SceneLightWidget::createSpinBox(const char *slot, double min, double max, double step) const
+void SceneLightWidget::openColorDialog()
+{
+    QColorDialog dialog;
+    vpvl::Color colorToRestore(m_r->value(), m_g->value(), m_b->value(), 1.0);
+    connect(&dialog, SIGNAL(currentColorChanged(QColor)), SLOT(setColor(QColor)));
+    if (dialog.exec() == QColorDialog::Rejected) {
+        setColor(colorToRestore);
+        updateColor();
+    }
+}
+
+void SceneLightWidget::setColor(const QColor &value)
+{
+    setColor(vpvl::Color(value.redF(), value.blueF(), value.greenF(), 1.0));
+    updateColor();
+}
+
+QDoubleSpinBox *SceneLightWidget::createSpinBox(const char *slot, double min, double max, double step, int prec) const
 {
     QDoubleSpinBox *spinBox = new QDoubleSpinBox();
     spinBox->setRange(min, max);
     spinBox->setSingleStep(step);
+    spinBox->setDecimals(prec);
     connect(spinBox, SIGNAL(valueChanged(double)), slot);
     return spinBox;
 }

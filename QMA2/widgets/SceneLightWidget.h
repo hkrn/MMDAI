@@ -42,6 +42,7 @@
 
 class QDoubleSpinBox;
 class QGroupBox;
+class QPushButton;
 
 class SceneLightWidget : public QWidget
 {
@@ -63,11 +64,13 @@ private slots:
     void retranslate();
     void updateColor();
     void updatePosition();
+    void openColorDialog();
+    void setColor(const QColor &value);
 
 private:
     void emitColorDidChange();
     void emitPositionDidChange();
-    QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step) const;
+    QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step, int prec) const;
 
     QGroupBox *m_colorGroup;
     QGroupBox *m_directionGroup;
@@ -77,6 +80,7 @@ private:
     QDoubleSpinBox *m_x;
     QDoubleSpinBox *m_y;
     QDoubleSpinBox *m_z;
+    QPushButton *m_openColorDialog;
 };
 
 #endif // SCENELIGHTWIDGET_H
