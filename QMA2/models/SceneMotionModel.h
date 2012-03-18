@@ -101,9 +101,11 @@ private:
     const SceneWidget *m_sceneWidget;
     QModelIndex m_cameraIndex;
     Values m_cameraData;
+    Values m_lightData;
     vpvl::CameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
     ITreeItem *m_rootTreeItem;
     ITreeItem *m_cameraTreeItem;
+    ITreeItem *m_lightTreeItem;
 
     Q_DISABLE_COPY(SceneMotionModel)
 };

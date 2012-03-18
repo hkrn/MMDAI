@@ -818,14 +818,14 @@ void BoneMotionModel::removeModel()
 
 void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    BoneAnimation *animation = m_motion->mutableBoneAnimation();
+    const BoneAnimation &animation = m_motion->boneAnimation();
     KeyFramePairList frames;
     /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (Bone *bone = item->bone()) {
-                BaseKeyframe *frameToDelete = animation->findKeyframe(toFrameIndex(index), bone->name());
+                BaseKeyframe *frameToDelete = animation.findKeyframe(toFrameIndex(index), bone->name());
                 BoneKeyframe *clonedFrame = static_cast<BoneKeyframe *>(frameToDelete->clone());
                 /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
                 clonedFrame->setFrameIndex(-1);
