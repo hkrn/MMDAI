@@ -214,18 +214,26 @@ public:
             SceneMotionModel::KeyFramePtr ptr = pair.second;
             CameraKeyframe *frame = static_cast<CameraKeyframe *>(ptr.data());
             const QModelIndex &modelIndex = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
-            QByteArray bytes(CameraKeyframe::strideSize(), '0');
-            CameraKeyframe *newFrame = static_cast<CameraKeyframe *>(frame->clone());
-            newFrame->setInterpolationParameter(CameraKeyframe::kX, m_parameter.x);
-            newFrame->setInterpolationParameter(CameraKeyframe::kY, m_parameter.y);
-            newFrame->setInterpolationParameter(CameraKeyframe::kZ, m_parameter.z);
-            newFrame->setInterpolationParameter(CameraKeyframe::kRotation, m_parameter.rotation);
-            newFrame->setInterpolationParameter(CameraKeyframe::kFovy, m_parameter.fovy);
-            newFrame->setInterpolationParameter(CameraKeyframe::kDistance, m_parameter.distance);
-            newFrame->setFrameIndex(frameIndex);
-            newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-            animation->replaceKeyframe(newFrame);
-            m_smm->setData(modelIndex, bytes);
+            if (frame->frameIndex() >= 0) {
+                QByteArray bytes(CameraKeyframe::strideSize(), '0');
+                CameraKeyframe *newFrame = static_cast<CameraKeyframe *>(frame->clone());
+                newFrame->setInterpolationParameter(CameraKeyframe::kX, m_parameter.x);
+                newFrame->setInterpolationParameter(CameraKeyframe::kY, m_parameter.y);
+                newFrame->setInterpolationParameter(CameraKeyframe::kZ, m_parameter.z);
+                newFrame->setInterpolationParameter(CameraKeyframe::kRotation, m_parameter.rotation);
+                newFrame->setInterpolationParameter(CameraKeyframe::kFovy, m_parameter.fovy);
+                newFrame->setInterpolationParameter(CameraKeyframe::kDistance, m_parameter.distance);
+                newFrame->setFrameIndex(frameIndex);
+                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                animation->replaceKeyframe(newFrame);
+                m_smm->setData(modelIndex, bytes);
+            }
+            else {
+                /* 元フレームのインデックスが 0 未満の時は削除 */
+                BaseKeyframe *frameToDelete = animation->findKeyframe(frame->frameIndex(), frame->name());
+                animation->deleteKeyframe(frameToDelete);
+                m_smm->setData(modelIndex, QVariant());
+            }
         }
         animation->refresh();
         m_smm->refreshScene();

@@ -185,12 +185,20 @@ public:
                  * ※ 置換の現実装は find => delete => add なので find の探索コストがネックになるため多いと時間がかかる
                  */
                 const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(keys[key], frameIndex);
-                QByteArray bytes(BoneKeyframe::strideSize(), '0');
-                FaceKeyframe *newFrame = static_cast<FaceKeyframe *>(frame->clone());
-                newFrame->setFrameIndex(frameIndex);
-                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                animation->replaceKeyframe(newFrame);
-                m_fmm->setData(modelIndex, bytes, Qt::EditRole);
+                if (frame->frameIndex() >= 0) {
+                    QByteArray bytes(BoneKeyframe::strideSize(), '0');
+                    FaceKeyframe *newFrame = static_cast<FaceKeyframe *>(frame->clone());
+                    newFrame->setFrameIndex(frameIndex);
+                    newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                    animation->replaceKeyframe(newFrame);
+                    m_fmm->setData(modelIndex, bytes, Qt::EditRole);
+                }
+                else {
+                    /* 元フレームのインデックスが 0 未満の時は削除 */
+                    BaseKeyframe *frameToDelete = animation->findKeyframe(frameIndex, frame->name());
+                    animation->deleteKeyframe(frameToDelete);
+                    m_fmm->setData(modelIndex, QVariant());
+                }
             }
             else {
                 qWarning("Tried registering not face key frame: %s", qPrintable(key));
@@ -560,22 +568,24 @@ void MorphMotionModel::removeModel()
 
 void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    FaceAnimation *animation = m_motion->mutableFaceAnimation();
+    const FaceAnimation &animation = m_motion->faceAnimation();
     KeyFramePairList frames;
     /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (Face *face = item->face()) {
-                BaseKeyframe *frameToDelete = animation->findKeyframe(toFrameIndex(index), face->name());
-                FaceKeyframe *clonedFrame = static_cast<FaceKeyframe *>(frameToDelete->clone());
-                /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                clonedFrame->setFrameIndex(-1);
-                frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
+                if (BaseKeyframe *frameToDelete = animation.findKeyframe(toFrameIndex(index), face->name())) {
+                    FaceKeyframe *clonedFrame = static_cast<FaceKeyframe *>(frameToDelete->clone());
+                    /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                    clonedFrame->setFrameIndex(-1);
+                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
+                }
             }
         }
     }
-    addUndoCommand(new SetFramesCommand(this, frames));
+    if (!frames.isEmpty())
+        addUndoCommand(new SetFramesCommand(this, frames));
 }
 
 void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)

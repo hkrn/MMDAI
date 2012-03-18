@@ -252,7 +252,6 @@ public:
         BoneAnimation *animation = m_bmm->currentMotion()->mutableBoneAnimation();
         const BoneMotionModel::Keys &keys = m_bmm->keys();
         Bone *selected = m_bmm->selectedBone();
-        BaseKeyframe *frameToDelete = 0;
         /* すべてのキーフレーム情報を登録する */
         foreach (const BoneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
@@ -292,7 +291,7 @@ public:
                 }
                 else {
                     /* 元フレームのインデックスが 0 未満の時は削除 */
-                    frameToDelete = animation->findKeyframe(frame->frameIndex(), frame->name());
+                    BaseKeyframe *frameToDelete = animation->findKeyframe(frameIndex, frame->name());
                     animation->deleteKeyframe(frameToDelete);
                     m_bmm->setData(modelIndex, QVariant());
                 }
@@ -825,11 +824,12 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (Bone *bone = item->bone()) {
-                BaseKeyframe *frameToDelete = animation.findKeyframe(toFrameIndex(index), bone->name());
-                BoneKeyframe *clonedFrame = static_cast<BoneKeyframe *>(frameToDelete->clone());
-                /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                clonedFrame->setFrameIndex(-1);
-                frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
+                if (BaseKeyframe *frameToDelete = animation.findKeyframe(toFrameIndex(index), bone->name())) {
+                    BoneKeyframe *clonedFrame = static_cast<BoneKeyframe *>(frameToDelete->clone());
+                    /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                    clonedFrame->setFrameIndex(-1);
+                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
+                }
             }
         }
     }
