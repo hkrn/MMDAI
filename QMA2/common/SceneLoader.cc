@@ -152,8 +152,11 @@ public:
         const QString &filename = QString::fromLocal8Bit(name.c_str());
         QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
         path.replace("\\", "/");
-        /* ファイルが存在しない(または圧縮ファイル内にない)場合はシステム側の toon テクスチャと仮定 */
-        if (!QFile::exists(path) && (m_archive && m_archive->data(path).isEmpty()))
+        /* アーカイブ内にある場合はシステム側のテクスチャ処理とごっちゃにならないように uploadTexture に流して返す */
+        if (m_archive && !m_archive->data(path).isEmpty())
+            return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
+        /* ファイルが存在しない場合はシステム側のテクスチャと仮定 */
+        if (!QFile::exists(path))
             path = QString(":/textures/%1").arg(filename);
         return uploadTexture(std::string(path.toLocal8Bit()), textureID, true);
     }
