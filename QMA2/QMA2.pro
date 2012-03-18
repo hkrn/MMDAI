@@ -150,7 +150,8 @@ SOURCES += main.cc \
     unzip/unzip.c \
     unzip/ioapi.c \
     common/Archive.cc \
-    widgets/SceneLightWidget.cc
+    widgets/SceneLightWidget.cc \
+    widgets/ModelSettingWidget.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -198,7 +199,8 @@ HEADERS  += \
     unzip/unzip.h \
     unzip/ioapi.h \
     common/Archive.h \
-    widgets/SceneLightWidget.h
+    widgets/SceneLightWidget.h \
+    widgets/ModelSettingWidget.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc

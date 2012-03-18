@@ -225,6 +225,20 @@ void SceneWidget::setModelEdgeColor(const QColor &color)
     updateMotion();
 }
 
+void SceneWidget::setModelPositionOffset(const Vector3 &value)
+{
+    if (PMDModel *model = m_loader->selectedModel())
+        m_loader->setModelPosition(model, value);
+    updateMotion();
+}
+
+void SceneWidget::setModelRotationOffset(const Vector3 &value)
+{
+    if (PMDModel *model = m_loader->selectedModel())
+        m_loader->setModelRotation(model, value);
+    updateMotion();
+}
+
 void SceneWidget::setModelProjectiveShadowEnable(bool value)
 {
     if (PMDModel *model = m_loader->selectedModel())

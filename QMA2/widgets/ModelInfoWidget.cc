@@ -44,58 +44,57 @@
 using namespace vpvl;
 
 ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
-    QWidget(parent),
-    m_edgeColorDialog(0)
+    QWidget(parent)
 {
+    /* モデル名 */
     m_nameLabel = new QLabel();
     m_nameValueLabel = new QLineEdit();
     m_nameValueLabel->setReadOnly(true);
+    /* モデルのコメント */
     m_commentLabel = new QLabel();
     m_commentValueLabel = new QTextEdit();
     m_commentValueLabel->setReadOnly(true);
+    /* 頂点数 */
     m_verticesCountLabel = new QLabel();
     m_verticesCountValueLabel = new QLineEdit();
     m_verticesCountValueLabel->setReadOnly(true);
     m_verticesCountValueLabel->setAlignment(Qt::AlignRight);
+    /* インデックス数 */
     m_indicesCountLabel = new QLabel();
     m_indicesCountValueLabel = new QLineEdit();
     m_indicesCountValueLabel->setReadOnly(true);
     m_indicesCountValueLabel->setAlignment(Qt::AlignRight);
+    /* 材質数 */
     m_materialsCountLabel = new QLabel();
     m_materialsCountValueLabel = new QLineEdit();
     m_materialsCountValueLabel->setReadOnly(true);
     m_materialsCountValueLabel->setAlignment(Qt::AlignRight);
+    /* ボーン数 */
     m_bonesCountLabel = new QLabel();
     m_bonesCountValueLabel = new QLineEdit();
     m_bonesCountValueLabel->setReadOnly(true);
     m_bonesCountValueLabel->setAlignment(Qt::AlignRight);
+    /* IK 数 */
     m_IKsCountLabel = new QLabel();
     m_IKsCountValueLabel = new QLineEdit();
     m_IKsCountValueLabel->setReadOnly(true);
     m_IKsCountValueLabel->setAlignment(Qt::AlignRight);
+    /* モーフ数 */
     m_morphsCountLabel = new QLabel();
     m_morphsCountValueLabel = new QLineEdit();
     m_morphsCountValueLabel->setReadOnly(true);
     m_morphsCountValueLabel->setAlignment(Qt::AlignRight);
+    /* 剛体数 */
     m_rigidBodiesCountLabel = new QLabel();
     m_rigidBodiesCountValueLabel = new QLineEdit();
     m_rigidBodiesCountValueLabel->setReadOnly(true);
     m_rigidBodiesCountValueLabel->setAlignment(Qt::AlignRight);
+    /* コンストレイント(拘束条件)数 */
     m_constrantsCountLabel = new QLabel();
     m_constrantsCountValueLabel = new QLineEdit();
     m_constrantsCountValueLabel->setReadOnly(true);
     m_constrantsCountValueLabel->setAlignment(Qt::AlignRight);
-    m_edgeOffsetLabel = new QLabel();
-    m_edgeOffsetSpinBox = new QDoubleSpinBox();
-    connect(m_edgeOffsetSpinBox, SIGNAL(valueChanged(double)), SIGNAL(edgeOffsetDidChange(double)));
-    m_edgeOffsetSpinBox->setEnabled(false);
-    m_edgeOffsetSpinBox->setSingleStep(0.1);
-    m_edgeOffsetSpinBox->setRange(0.0, 2.0);
-    m_edgeColorDialogOpenButton = new QPushButton();
-    connect(m_edgeColorDialogOpenButton, SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
-    m_projectiveShadowCheckbox = new QCheckBox();
-    connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidChange(bool)));
-    m_projectiveShadowCheckbox->setEnabled(false);
+    /* 構築 */
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(m_nameLabel);
     mainLayout->addWidget(m_nameValueLabel);
@@ -119,17 +118,10 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     gridLayout->addWidget(m_constrantsCountLabel, 6, 1);
     gridLayout->addWidget(m_constrantsCountValueLabel, 7, 1);
     mainLayout->addLayout(gridLayout);
-    QHBoxLayout *subLayout = new QHBoxLayout();
-    subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_edgeOffsetLabel);
-    subLayout->addWidget(m_edgeOffsetSpinBox);
-    subLayout->addWidget(m_edgeColorDialogOpenButton);
-    mainLayout->addLayout(subLayout);
-    mainLayout->addWidget(m_projectiveShadowCheckbox, 0, Qt::AlignCenter);
     mainLayout->addStretch();
     setLayout(mainLayout);
     retranslate();
-    setModel(0, 0);
+    setModel(0);
 }
 
 ModelInfoWidget::~ModelInfoWidget()
@@ -148,21 +140,11 @@ void ModelInfoWidget::retranslate()
     m_morphsCountLabel->setText(tr("Number of morphs:"));
     m_rigidBodiesCountLabel->setText(tr("Number of rigid bodies:"));
     m_constrantsCountLabel->setText(tr("Number of constraints:"));
-    m_edgeOffsetLabel->setText(tr("Edge offset:"));
-    m_edgeColorDialogOpenButton->setText(tr("Color"));
-    m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
 }
 
-void ModelInfoWidget::openEdgeColorDialog()
-{
-    createEdgeColorDialog();
-    m_edgeColorDialog->show();
-}
-
-void ModelInfoWidget::setModel(PMDModel *model, SceneLoader *loader)
+void ModelInfoWidget::setModel(PMDModel *model)
 {
     if (model) {
-        createEdgeColorDialog();
         m_nameValueLabel->setText(internal::toQString(model->name()));
         m_commentValueLabel->setText(internal::toQString(model->comment()));
         m_verticesCountValueLabel->setText(QString().sprintf("%d", model->vertices().count()));
@@ -173,22 +155,6 @@ void ModelInfoWidget::setModel(PMDModel *model, SceneLoader *loader)
         m_morphsCountValueLabel->setText(QString().sprintf("%d", model->faces().count()));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->rigidBodies().count()));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->constraints().count()));
-        m_edgeOffsetSpinBox->setValue(model->edgeOffset());
-        m_edgeOffsetSpinBox->setEnabled(true);
-        m_projectiveShadowCheckbox->setEnabled(true);
-        const Vector3 &color = model->edgeColor();
-        QColor c;
-        c.setRedF(color.x());
-        c.setGreenF(color.y());
-        c.setBlueF(color.z());
-        c.setAlphaF(1.0);
-        m_edgeColorDialog->setCurrentColor(c);
-        if (loader) {
-            m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
-        }
-        else {
-            m_projectiveShadowCheckbox->setChecked(false);
-        }
     }
     else {
         m_nameValueLabel->setText("N/A");
@@ -201,17 +167,5 @@ void ModelInfoWidget::setModel(PMDModel *model, SceneLoader *loader)
         m_morphsCountValueLabel->setText("0");
         m_rigidBodiesCountValueLabel->setText("0");
         m_constrantsCountValueLabel->setText("0");
-        m_edgeOffsetSpinBox->setValue(0.0f);
-        m_edgeOffsetSpinBox->setEnabled(false);
-        m_projectiveShadowCheckbox->setEnabled(false);
-    }
-}
-
-void ModelInfoWidget::createEdgeColorDialog()
-{
-    if (!m_edgeColorDialog) {
-        m_edgeColorDialog = new QColorDialog(this);
-        connect(m_edgeColorDialog, SIGNAL(currentColorChanged(QColor)), SIGNAL(edgeColorDidChange(QColor)));
-        m_edgeColorDialog->setOption(QColorDialog::NoButtons);
     }
 }

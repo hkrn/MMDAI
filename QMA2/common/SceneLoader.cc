@@ -894,6 +894,7 @@ void SceneLoader::loadProject(const QString &path)
         emit projectDidCount(modelUUIDs.size() + assetUUIDs.size());
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
+        Quaternion rotation;
         for (int i = 0; i < nmodels; i++) {
             const Project::UUID &modelUUIDString = modelUUIDs[i];
             PMDModel *model = m_project->model(modelUUIDString);
@@ -907,11 +908,17 @@ void SceneLoader::loadProject(const QString &path)
                 const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV);
                 model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
                 model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
+                model->setPositionOffset(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV));
+                /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
+                const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV);
+                rotation.setEulerZYX(vpvl::radian(angle.x()), vpvl::radian(angle.y()), vpvl::radian(angle.z()));
+                model->setRotationOffset(rotation);
                 const QUuid modelUUID(modelUUIDString.c_str());
                 m_renderOrderList.add(modelUUID);
                 emit modelDidAdd(model, modelUUID);
                 if (isModelSelected(model))
                     setSelectedModel(model);
+                /* モデルに属するモーションを取得し、追加する */
                 const Array<VMDMotion *> &motions = model->motions();
                 const int nmotions = motions.count();
                 for (int i = 0; i < nmotions; i++) {
@@ -1292,11 +1299,38 @@ void SceneLoader::setSelectedModel(PMDModel *value)
 
 void SceneLoader::setModelEdgeOffset(PMDModel *model, float value)
 {
-    if (m_project) {
+    if (m_project && model) {
         QString str;
         str.sprintf("%.5f", value);
         model->setEdgeOffset(value);
         m_project->setModelSetting(model, "edge.offset", str.toStdString());
+    }
+}
+
+void SceneLoader::setModelPosition(PMDModel *model, const Vector3 &value)
+{
+    if (m_project && model) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+        model->setPositionOffset(value);
+        m_project->setModelSetting(model, "offset.position", str.toStdString());
+    }
+}
+
+const vpvl::Vector3 SceneLoader::modelRotation(PMDModel *value) const
+{
+    return m_project ? UIGetVector3(m_project->modelSetting(value, "offset.rotation"), kZeroV) : kZeroV;
+}
+
+void SceneLoader::setModelRotation(PMDModel *model, const Vector3 &value)
+{
+    if (m_project && model) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+        m_project->setModelSetting(model, "offset.rotation", str.toStdString());
+        Quaternion rotation;
+        rotation.setEulerZYX(vpvl::radian(value.x()), vpvl::radian(value.y()), vpvl::radian(value.z()));
+        model->setRotationOffset(rotation);
     }
 }
 

@@ -61,6 +61,7 @@
 #include "widgets/InterpolationWidget.h"
 #include "widgets/LicenseWidget.h"
 #include "widgets/ModelInfoWidget.h"
+#include "widgets/ModelSettingWidget.h"
 #include "widgets/ModelTabWidget.h"
 #include "widgets/SceneLightWidget.h"
 #include "widgets/TabWidget.h"
@@ -1184,7 +1185,8 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
+    connect(loader ,SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
     connect(loader, SIGNAL(assetDidSelect(vpvl::Asset*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl::Asset*,SceneLoader*)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
@@ -1209,8 +1211,8 @@ void MainWindow::connectSceneLoader()
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
     lightWidget->setColor(scene->lightColor());
     lightWidget->setPosition(scene->lightPosition());
-    connect(loader, SIGNAL(lightColorDidSet(vpvl::Color)), lightWidget, SLOT(setLightColor(vpvl::Color)));
-    connect(loader, SIGNAL(lightPositionDidSet(vpvl::Vector3)), lightWidget, SLOT(setLightPosition(vpvl::Vector3)));
+    connect(loader, SIGNAL(lightColorDidSet(vpvl::Color)), lightWidget, SLOT(setColor(vpvl::Color)));
+    connect(loader, SIGNAL(lightPositionDidSet(vpvl::Vector3)), lightWidget, SLOT(setPosition(vpvl::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl::Color)), loader, SLOT(setLightColor(vpvl::Color)));
     connect(lightWidget, SIGNAL(lightPositionDidSet(vpvl::Vector3)), loader, SLOT(setLightPosition(vpvl::Vector3)));
 }
@@ -1238,11 +1240,13 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
-    ModelInfoWidget *modelInfoWidget = m_modelTabWidget->modelInfoWidget();
-    connect(modelInfoWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
-    connect(modelInfoWidget, SIGNAL(projectiveShadowDidChange(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
-    connect(modelInfoWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
+    ModelSettingWidget *modelSettingWidget = m_modelTabWidget->modelSettingWidget();
+    connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
+    connect(modelSettingWidget, SIGNAL(projectiveShadowDidChange(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
+    connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
+    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(vpvl::Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(vpvl::Vector3)));
+    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(vpvl::Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(vpvl::Vector3)));
     makeBonesSelectable();
 }
 

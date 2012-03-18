@@ -120,6 +120,9 @@ public:
     bool isModelSelected(const vpvl::PMDModel *value) const;
     void setModelEdgeColor(vpvl::PMDModel *model, const QColor &value);
     void setModelEdgeOffset(vpvl::PMDModel *model, float value);
+    void setModelPosition(vpvl::PMDModel *model, const vpvl::Vector3 &value);
+    const vpvl::Vector3 modelRotation(vpvl::PMDModel *value) const;
+    void setModelRotation(vpvl::PMDModel *model, const vpvl::Vector3 &value);
 
     const vpvl::Vector3 assetPosition(const vpvl::Asset *asset);
     void setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3 &value);

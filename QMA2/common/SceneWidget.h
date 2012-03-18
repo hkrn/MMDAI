@@ -150,6 +150,8 @@ public slots:
     void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
+    void setModelPositionOffset(const vpvl::Vector3 &value);
+    void setModelRotationOffset(const vpvl::Vector3 &value);
     void setModelProjectiveShadowEnable(bool value);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void setEditMode(SceneWidget::EditMode value);

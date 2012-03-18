@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELINFOWIDGET_H
-#define MODELINFOWIDGET_H
+#ifndef MODELSETTINGWIDGET_H
+#define MODELSETTINGWIDGET_H
 
 #include <QtGui/QWidget>
 #include <vpvl/Common.h>
@@ -44,44 +44,53 @@ namespace vpvl {
 class PMDModel;
 }
 
+class QCheckBox;
+class QColorDialog;
+class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
-class QLineEdit;
-class QTextEdit;
+class QPushButton;
 class SceneLoader;
 
-class ModelInfoWidget : public QWidget
+class ModelSettingWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ModelInfoWidget(QWidget *parent = 0);
-    ~ModelInfoWidget();
+    explicit ModelSettingWidget(QWidget *parent = 0);
+    ~ModelSettingWidget();
+
+signals:
+    void edgeOffsetDidChange(double value);
+    void edgeColorDidChange(const QColor &color);
+    void positionOffsetDidChange(const vpvl::Vector3 &value);
+    void rotationOffsetDidChange(const vpvl::Vector3 &value);
+    void projectiveShadowDidChange(bool value);
 
 private slots:
     void retranslate();
-    void setModel(vpvl::PMDModel *model);
+    void openEdgeColorDialog();
+    void setModel(vpvl::PMDModel *model, SceneLoader *loader);
+    void updatePosition();
+    void updateRotation();
 
 private:
-    QLabel *m_nameLabel;
-    QLineEdit *m_nameValueLabel;
-    QLabel *m_commentLabel;
-    QTextEdit *m_commentValueLabel;
-    QLabel *m_verticesCountLabel;
-    QLineEdit *m_verticesCountValueLabel;
-    QLabel *m_indicesCountLabel;
-    QLineEdit *m_indicesCountValueLabel;
-    QLabel *m_materialsCountLabel;
-    QLineEdit *m_materialsCountValueLabel;
-    QLabel *m_bonesCountLabel;
-    QLineEdit *m_bonesCountValueLabel;
-    QLabel *m_IKsCountLabel;
-    QLineEdit *m_IKsCountValueLabel;
-    QLabel *m_morphsCountLabel;
-    QLineEdit *m_morphsCountValueLabel;
-    QLabel *m_rigidBodiesCountLabel;
-    QLineEdit *m_rigidBodiesCountValueLabel;
-    QLabel *m_constrantsCountLabel;
-    QLineEdit *m_constrantsCountValueLabel;
+    void createEdgeColorDialog();
+    QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
+
+    QLabel *m_edgeOffsetLabel;
+    QDoubleSpinBox *m_edgeOffsetSpinBox;
+    QPushButton *m_edgeColorDialogOpenButton;
+    QColorDialog *m_edgeColorDialog;
+    QCheckBox *m_projectiveShadowCheckbox;
+    QDoubleSpinBox *m_px;
+    QDoubleSpinBox *m_py;
+    QDoubleSpinBox *m_pz;
+    QGroupBox *m_positionGroup;
+    QDoubleSpinBox *m_rx;
+    QDoubleSpinBox *m_ry;
+    QDoubleSpinBox *m_rz;
+    QGroupBox *m_rotationGroup;
 };
 
-#endif // MODELINFOWIDGET_H
+#endif // MODELSETTINGWIDGET_H
