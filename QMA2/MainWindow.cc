@@ -62,6 +62,7 @@
 #include "widgets/LicenseWidget.h"
 #include "widgets/ModelInfoWidget.h"
 #include "widgets/ModelTabWidget.h"
+#include "widgets/SceneLightWidget.h"
 #include "widgets/TabWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
@@ -1197,16 +1198,29 @@ void MainWindow::connectSceneLoader()
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
+    Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
+    /* カメラの初期値を設定。シグナル発行前に行う */
+    CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
+    cameraWidget->setCameraPerspective(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
+    /* 光源の初期値を設定。シグナル発行前に行う */
+    SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
+    lightWidget->setColor(scene->lightColor());
+    lightWidget->setPosition(scene->lightPosition());
+    connect(loader, SIGNAL(lightColorDidSet(vpvl::Color)), lightWidget, SLOT(setLightColor(vpvl::Color)));
+    connect(loader, SIGNAL(lightPositionDidSet(vpvl::Vector3)), lightWidget, SLOT(setLightPosition(vpvl::Vector3)));
+    connect(lightWidget, SIGNAL(lightColorDidSet(vpvl::Color)), loader, SLOT(setLightColor(vpvl::Color)));
+    connect(lightWidget, SIGNAL(lightPositionDidSet(vpvl::Vector3)), loader, SLOT(setLightPosition(vpvl::Vector3)));
 }
 
 void MainWindow::connectWidgets()
 {
-    CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translate(vpvl::Vector3,vpvl::Bone*,int)));
     connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Quaternion,vpvl::Bone*,int,float)), m_boneMotionModel, SLOT(rotate(vpvl::Quaternion,vpvl::Bone*,int,float)));
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_modelTabWidget->interpolationWidget(), SLOT(setMode(int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
@@ -1218,14 +1232,12 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
     connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
     ModelInfoWidget *modelInfoWidget = m_modelTabWidget->modelInfoWidget();
     connect(modelInfoWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));

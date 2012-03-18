@@ -569,20 +569,6 @@ void SceneWidget::resetCamera()
     emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
 }
 
-void SceneWidget::setLightColor(const Color &color)
-{
-    Scene *scene = m_loader->renderEngine()->scene();
-    scene->setLightSource(color, scene->lightPosition());
-    emit lightColorDidSet(color);
-}
-
-void SceneWidget::setLightPosition(const Vector3 &position)
-{
-    Scene *scene = m_loader->renderEngine()->scene();
-    scene->setLightSource(scene->lightColor(), position);
-    emit lightPositionDidSet(position);
-}
-
 void SceneWidget::setCameraPerspective(Vector3 *pos, Vector3 *angle, float *fovy, float *distance)
 {
     /* 変更しないことを示す NULL かどうかを判定するために引数をポインタに設定している */
@@ -822,7 +808,6 @@ void SceneWidget::initializeGL()
     m_debugDrawer = new DebugDrawer(m_loader->renderEngine()->scene());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
-    Scene *scene = m_loader->renderEngine()->scene();
     /* 物理演算に必要な World が initializeGL でインスタンスを生成するため、setPhysicsEnable はここで有効にする */
     //if (m_playing || m_enablePhysics)
     //    setPhysicsEnable(true);
@@ -838,7 +823,6 @@ void SceneWidget::initializeGL()
     m_loader->renderEngine()->initializeSurface();
     m_timer.start();
     startAutomaticRendering();
-    emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     emit initailizeGLContextDidDone();
 }
 

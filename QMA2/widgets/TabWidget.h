@@ -39,12 +39,9 @@
 
 #include <QtGui/QTabWidget>
 
-namespace Ui {
-    class TabWidget;
-}
-
 class AssetWidget;
 class CameraPerspectiveWidget;
+class SceneLightWidget;
 class QSettings;
 
 class TabWidget : public QWidget
@@ -58,6 +55,7 @@ public:
 
     AssetWidget *assetWidget() const { return m_asset; }
     CameraPerspectiveWidget *cameraPerspectiveWidget() const { return m_camera; }
+    SceneLightWidget *sceneLightWidget() const { return m_light; }
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -70,6 +68,7 @@ private:
     QSettings *m_settings;
     AssetWidget *m_asset;
     CameraPerspectiveWidget *m_camera;
+    SceneLightWidget *m_light;
 
     Q_DISABLE_COPY(TabWidget)
 };

@@ -149,7 +149,8 @@ SOURCES += main.cc \
     dialogs/RenderOrderDialog.cc \
     unzip/unzip.c \
     unzip/ioapi.c \
-    common/Archive.cc
+    common/Archive.cc \
+    widgets/SceneLightWidget.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -196,7 +197,8 @@ HEADERS  += \
     dialogs/RenderOrderDialog.h \
     unzip/unzip.h \
     unzip/ioapi.h \
-    common/Archive.h
+    common/Archive.h \
+    widgets/SceneLightWidget.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc

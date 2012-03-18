@@ -138,8 +138,6 @@ public slots:
     void loadFile(const QString &file);
     void setEmptyMotion(vpvl::PMDModel *model);
     void saveMetadataFromAsset(vpvl::Asset *asset);
-    void setLightColor(const vpvl::Color &color);
-    void setLightPosition(const vpvl::Vector3 &position);
     void rotateScene(const vpvl::Vector3 &delta);
     void rotateModel(const vpvl::Quaternion &delta);
     void rotateModel(vpvl::PMDModel *model, const vpvl::Quaternion &delta);
@@ -160,8 +158,6 @@ signals:
     void initailizeGLContextDidDone();
     void fileDidLoad(const QString &filename);
     void newMotionDidSet(vpvl::PMDModel *model);
-    void lightColorDidSet(const vpvl::Color &color);
-    void lightPositionDidSet(const vpvl::Vector3 &position);
     void modelDidMove(const vpvl::Vector3 &lastPosition);
     void modelDidRotate(const vpvl::Quaternion &lastRotation);
     void cameraPerspectiveDidSet(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);

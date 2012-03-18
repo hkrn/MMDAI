@@ -34,52 +34,49 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "widgets/AssetWidget.h"
-#include "widgets/CameraPerspectiveWidget.h"
-#include "widgets/InterpolationWidget.h"
-#include "widgets/MorphWidget.h"
-#include "widgets/SceneLightWidget.h"
-#include "widgets/TabWidget.h"
+#ifndef SCENELIGHTWIDGET_H
+#define SCENELIGHTWIDGET_H
 
-#include <QtGui/QtGui>
+#include <QtGui/QWidget>
+#include <vpvl/Common.h>
 
-TabWidget::TabWidget(QSettings *settings,
-                     QWidget *parent) :
-    QWidget(parent),
-    m_settings(settings),
-    m_asset(0),
-    m_camera(0),
-    m_light(0)
+class QDoubleSpinBox;
+class QGroupBox;
+
+class SceneLightWidget : public QWidget
 {
-    m_asset = new AssetWidget();
-    m_camera = new CameraPerspectiveWidget();
-    m_light = new SceneLightWidget();
-    m_tabWidget = new QTabWidget();
-    m_tabWidget->addTab(m_asset, "");
-    m_tabWidget->addTab(m_camera, "");
-    m_tabWidget->addTab(m_light, "");
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(m_tabWidget);
-    retranslate();
-    setMinimumWidth(350);
-    setLayout(layout);
-    restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
-}
+    Q_OBJECT
 
-TabWidget::~TabWidget()
-{
-}
+public:
+    explicit SceneLightWidget(QWidget *parent = 0);
+    ~SceneLightWidget();
 
-void TabWidget::retranslate()
-{
-    m_tabWidget->setTabText(0, tr("Asset"));
-    m_tabWidget->setTabText(1, tr("Camera"));
-    m_tabWidget->setTabText(2, tr("Light"));
-    setWindowTitle(tr("Scene Tabs"));
-}
+public slots:
+    void setColor(const vpvl::Color &value);
+    void setPosition(const vpvl::Vector3 &value);
 
-void TabWidget::closeEvent(QCloseEvent *event)
-{
-    m_settings->setValue("tabWidget/geometry", saveGeometry());
-    event->accept();
-}
+signals:
+    void lightColorDidSet(const vpvl::Color &value);
+    void lightPositionDidSet(const vpvl::Vector3 &value);
+
+private slots:
+    void retranslate();
+    void updateColor();
+    void updatePosition();
+
+private:
+    void emitColorDidChange();
+    void emitPositionDidChange();
+    QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step) const;
+
+    QGroupBox *m_colorGroup;
+    QGroupBox *m_directionGroup;
+    QDoubleSpinBox *m_r;
+    QDoubleSpinBox *m_g;
+    QDoubleSpinBox *m_b;
+    QDoubleSpinBox *m_x;
+    QDoubleSpinBox *m_y;
+    QDoubleSpinBox *m_z;
+};
+
+#endif // SCENELIGHTWIDGET_H

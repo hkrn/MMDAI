@@ -1167,6 +1167,20 @@ void SceneLoader::setCameraMotion(VMDMotion *motion)
     emit cameraMotionDidSet(motion, uuid);
 }
 
+void SceneLoader::setLightColor(const Color &color)
+{
+    Scene *scene = renderEngine()->scene();
+    scene->setLightSource(color, scene->lightPosition());
+    emit lightColorDidSet(color);
+}
+
+void SceneLoader::setLightPosition(const Vector3 &position)
+{
+    Scene *scene = renderEngine()->scene();
+    scene->setLightSource(scene->lightColor(), position);
+    emit lightPositionDidSet(position);
+}
+
 void SceneLoader::setModelMotion(VMDMotion *motion, PMDModel *model)
 {
     const QUuid &uuid = QUuid::createUuid();
