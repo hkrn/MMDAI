@@ -966,6 +966,12 @@ void SceneWidget::paintGL()
     vpvl::Bone *bone = 0;
     if (m_bones.count() == 1)
         bone = m_bones.first();
+    /* ハンドルのレンダリングに問題があるようで一旦このレンダリング順になっている */
+    if (bone)
+        m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
+    else
+        m_handles->drawImageHandles(false, false);
+    m_info->draw();
     switch (m_editMode) {
     case kSelect:
         m_debugDrawer->drawModelBones(m_loader->selectedModel(), selectedBones());
@@ -978,11 +984,6 @@ void SceneWidget::paintGL()
         m_handles->drawMoveHandle();
         break;
     }
-    if (bone)
-        m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
-    else
-        m_handles->drawImageHandles(false, false);
-    m_info->draw();
 }
 
 void SceneWidget::resizeGL(int w, int h)
