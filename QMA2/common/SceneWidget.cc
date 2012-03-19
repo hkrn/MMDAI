@@ -960,7 +960,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
-    qglClearColor(m_loader->isBlackBackgroundEnabled() ? Qt::black : Qt::white);
+    qglClearColor(m_loader->screenColor());
     m_loader->render();
     m_grid->draw(m_loader->renderEngine()->scene(), m_loader->isGridVisible());
     vpvl::Bone *bone = 0;

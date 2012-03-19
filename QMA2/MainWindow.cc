@@ -281,7 +281,6 @@ void MainWindow::loadProject()
             m_actionEnableAcceleration->setChecked(loader->isAccelerationEnabled());
             m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
             m_actionShowGrid->setChecked(loader->isGridVisible());
-            m_actionShowBlackBackground->setChecked(loader->isBlackBackgroundEnabled());
             m_currentProjectFilename = filename;
             updateWindowTitle();
         }
@@ -486,7 +485,6 @@ bool MainWindow::saveProjectFile(const QString &filename)
     loader->setAccelerationEnabled(m_actionEnableAcceleration->isChecked());
     loader->setPhysicsEnabled(m_actionEnablePhysics->isChecked());
     loader->setGridVisible(m_actionShowGrid->isChecked());
-    loader->setBlackBackgroundEnabled(m_actionShowBlackBackground->isChecked());
     m_sceneWidget->saveProject(filename);
     return true;
 }
@@ -632,6 +630,8 @@ void MainWindow::buildUI()
     connect(m_actionOpenGravitySettingsDialog, SIGNAL(triggered()), SLOT(openGravitySettingDialog()));
     m_actionOpenRenderOrderDialog = new QAction(this);
     connect(m_actionOpenRenderOrderDialog, SIGNAL(triggered()), SLOT(openRenderOrderDialog()));
+    m_actionOpenScreenColorDialog = new QAction(this);
+    connect(m_actionOpenScreenColorDialog, SIGNAL(triggered()), SLOT(openScreenColorDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
     m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
@@ -641,8 +641,6 @@ void MainWindow::buildUI()
     m_actionShowGrid = new QAction(this);
     m_actionShowGrid->setCheckable(true);
     m_actionShowGrid->setChecked(true);
-    m_actionShowBlackBackground = new QAction(this);
-    m_actionShowBlackBackground->setCheckable(true);
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -792,12 +790,11 @@ void MainWindow::buildUI()
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionOpenGravitySettingsDialog);
     m_menuProject->addAction(m_actionOpenRenderOrderDialog);
+    m_menuProject->addAction(m_actionOpenScreenColorDialog);
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionEnableAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
-    m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionShowGrid);
-    m_menuProject->addAction(m_actionShowBlackBackground);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -913,10 +910,10 @@ void MainWindow::bindActions()
     m_actionPlaySettings->setShortcut(m_settings.value(kPrefix + "playSettings").toString());
     m_actionOpenGravitySettingsDialog->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
     m_actionOpenRenderOrderDialog->setShortcut(m_settings.value(kPrefix + "renderOrderDialog").toString());
+    m_actionOpenScreenColorDialog->setShortcut(m_settings.value(kPrefix + "screenColorDialog").toString());
     m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
-    m_actionShowBlackBackground->setShortcut(m_settings.value(kPrefix + "showBlackBackground").toString());
     m_actionZoomIn->setShortcut(m_settings.value(kPrefix + "zoomIn", QKeySequence(QKeySequence::ZoomIn).toString()).toString());
     m_actionZoomOut->setShortcut(m_settings.value(kPrefix + "zoomOut", QKeySequence(QKeySequence::ZoomOut).toString()).toString());
     m_actionRotateUp->setShortcut(m_settings.value(kPrefix + "rotateUp", "Ctrl+Up").toString());
@@ -1029,14 +1026,14 @@ void MainWindow::retranslate()
     m_actionOpenGravitySettingsDialog->setStatusTip(tr("Open a dialog to set gravity for physics simulation."));
     m_actionOpenRenderOrderDialog->setText(tr("Render order setting"));
     m_actionOpenRenderOrderDialog->setStatusTip(tr("Open a dialog to set order of rendering assets and models."));
+    m_actionOpenScreenColorDialog->setText(tr("Screen color setting"));
+    m_actionOpenScreenColorDialog->setStatusTip(tr("Open a dialog to set screen color."));
     m_actionEnableAcceleration->setText(tr("Enable acceleration"));
     m_actionEnableAcceleration->setStatusTip(tr("Enable or disable acceleration using OpenCL if supported."));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
-    m_actionShowBlackBackground->setText(tr("Set scene background black"));
-    m_actionShowBlackBackground->setStatusTip(tr("Toggle scene background black/white."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomOut->setText(tr("Zoom out"));
@@ -1191,7 +1188,6 @@ void MainWindow::connectSceneLoader()
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
-    connect(m_actionShowBlackBackground, SIGNAL(triggered(bool)), loader, SLOT(setBlackBackgroundEnabled(bool)));
     connect(assetWidget, SIGNAL(assetDidRemove(vpvl::Asset*)), loader, SLOT(deleteAsset(vpvl::Asset*)));
     connect(assetWidget, SIGNAL(assetDidSelect(vpvl::Asset*)), loader, SLOT(setSelectedAsset(vpvl::Asset*)));
     Handles *handles = m_sceneWidget->handles();
@@ -1613,6 +1609,16 @@ void MainWindow::openRenderOrderDialog()
 {
     RenderOrderDialog dialog(m_sceneWidget->sceneLoader());
     dialog.exec();
+}
+
+void MainWindow::openScreenColorDialog()
+{
+    QColorDialog dialog;
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    const QColor &before = loader->screenColor();
+    connect(&dialog, SIGNAL(currentColorChanged(QColor)), loader, SLOT(setScreenColor(QColor)));
+    if (dialog.exec() == QColorDialog::Rejected)
+        loader->setScreenColor(before);
 }
 
 void MainWindow::updateWindowTitle()

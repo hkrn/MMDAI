@@ -130,6 +130,7 @@ private slots:
     void showLicenseWidget();
     void openGravitySettingDialog();
     void openRenderOrderDialog();
+    void openScreenColorDialog();
     void makeBonesSelectable();
 
 private:
@@ -208,10 +209,10 @@ private:
     QAction *m_actionPlaySettings;
     QAction *m_actionOpenGravitySettingsDialog;
     QAction *m_actionOpenRenderOrderDialog;
+    QAction *m_actionOpenScreenColorDialog;
     QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;
-    QAction *m_actionShowBlackBackground;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;

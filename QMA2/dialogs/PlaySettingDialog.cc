@@ -118,7 +118,7 @@ void PlaySettingDialog::openFileDialog()
 
 void PlaySettingDialog::saveSettings()
 {
-    m_loader->setBackgroundAudio(backgroundAudio());
+    m_loader->setBackgroundAudioPath(backgroundAudio());
     m_loader->setFrameIndexPlayFrom(fromIndex());
     m_loader->setFrameIndexPlayTo(toIndex());
     m_loader->setSceneFPSForPlay(sceneFPS());

@@ -120,7 +120,7 @@ void ExportVideoDialog::openFileDialog()
 
 void ExportVideoDialog::saveSettings()
 {
-    m_loader->setBackgroundAudio(backgroundAudio());
+    m_loader->setBackgroundAudioPath(backgroundAudio());
     m_loader->setSceneWidth(sceneWidth());
     m_loader->setSceneHeight(sceneHeight());
     m_loader->setFrameIndexEncodeVideoFrom(fromIndex());

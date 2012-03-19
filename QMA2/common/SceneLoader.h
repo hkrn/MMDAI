@@ -102,6 +102,7 @@ public:
     bool isAccelerationEnabled() const;
     bool isBlackBackgroundEnabled() const;
     const vpvl::Vector3 worldGravity() const;
+    const QColor screenColor() const;
     int frameIndexPlayFrom() const;
     int frameIndexPlayTo() const;
     int sceneFPSForPlay() const;
@@ -166,7 +167,6 @@ public slots:
     void setGridVisible(bool value);
     void setPhysicsEnabled(bool value);
     void setAccelerationEnabled(bool value);
-    void setBlackBackgroundEnabled(bool value);
     void setFrameIndexPlayFrom(int value);
     void setFrameIndexPlayTo(int value);
     void setSceneFPSForPlay(int value);
@@ -179,8 +179,9 @@ public slots:
     void setGridIncluded(bool value);
     void setSelectedModel(vpvl::PMDModel *value);
     void setSelectedAsset(vpvl::Asset *value);
-    void setBackgroundAudio(const QString &path);
+    void setBackgroundAudioPath(const QString &value);
     void setPreferredFPS(int value);
+    void setScreenColor(const QColor &value);
 
 signals:
     void projectDidCount(int value);

@@ -1257,6 +1257,18 @@ const Vector3 SceneLoader::worldGravity() const
     return m_project ? UIGetVector3(m_project->globalSetting("physics.gravity"), defaultGravity) : defaultGravity;
 }
 
+const QColor SceneLoader::screenColor() const
+{
+    QColor color(255, 255, 255);
+    if (m_project) {
+        const Vector3 &value = UIGetVector3(m_project->globalSetting("screen.color"), Vector3(1.0, 1.0, 1.0));
+        color.setRedF(value.x());
+        color.setGreenF(value.y());
+        color.setBlueF(value.z());
+    }
+    return color;
+}
+
 void SceneLoader::setWorldGravity(const Vector3 &value)
 {
     if (m_project) {
@@ -1398,18 +1410,6 @@ void SceneLoader::setAccelerationEnabled(bool value)
         m_project->setGlobalSetting("acceleration.enabled", "false");
 }
 
-bool SceneLoader::isBlackBackgroundEnabled() const
-{
-    return  globalSetting("background.black", false);
-}
-
-void SceneLoader::setBlackBackgroundEnabled(bool value)
-{
-    /* 値が同じの場合は更新しない (Qt のスロット/シグナル経由での setDirty を抑制する) */
-    if (m_project && isBlackBackgroundEnabled() != value)
-        m_project->setGlobalSetting("background.black", value ? "true" : "false");
-}
-
 /* 再生設定及びエンコード設定の場合は同値チェックを行わない。こちらは値を確実に保存させる必要があるため */
 int SceneLoader::frameIndexPlayFrom() const
 {
@@ -1526,10 +1526,10 @@ const QString SceneLoader::backgroundAudio() const
     return m_project ? QString::fromStdString(m_project->globalSetting("audio.path")) : "";
 }
 
-void SceneLoader::setBackgroundAudio(const QString &path)
+void SceneLoader::setBackgroundAudioPath(const QString &value)
 {
     if (m_project)
-        m_project->setGlobalSetting("audio.path", path.toStdString());
+        m_project->setGlobalSetting("audio.path", value.toStdString());
 }
 
 const Vector3 SceneLoader::assetPosition(const Asset *asset)
@@ -1648,6 +1648,15 @@ void SceneLoader::setPreferredFPS(int value)
 {
     m_world->setPreferredFPS(value);
     m_renderer->scene()->setPreferredFPS(value);
+}
+
+void SceneLoader::setScreenColor(const QColor &value)
+{
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", value.redF(), value.greenF(), value.blueF());
+        m_project->setGlobalSetting("screen.color", str.toStdString());
+    }
 }
 
 bool SceneLoader::globalSetting(const char *key, bool def) const
