@@ -94,8 +94,8 @@ public slots:
     void removeMotion();
     void setPMDModel(vpvl::PMDModel *model);
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void translate(const vpvl::Vector3 &delta, vpvl::Bone *bone, int flags);
-    void rotate(const vpvl::Quaternion &delta, vpvl::Bone *bone, int flags, float value);
+    void rotateAngle(const vpvl::Scalar &value, vpvl::Bone *bone, int flags);
+    void translateDelta(const vpvl::Vector3 &delta, vpvl::Bone *bone, int flags);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void saveTransform();
     void commitTransform();
@@ -112,6 +112,7 @@ private:
     QList<vpvl::Bone *> m_selectedBones;
     vpvl::PMDModel::State *m_state;
     vpvl::BoneKeyframe::InterpolationParameter m_interpolationParameter;
+    QHash<vpvl::Bone *, QPair<vpvl::Vector3, vpvl::Quaternion> > m_boneTransformStates;
 
     Q_DISABLE_COPY(BoneMotionModel)
 };

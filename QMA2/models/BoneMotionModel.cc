@@ -536,9 +536,18 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
 void BoneMotionModel::saveTransform()
 {
     if (m_model) {
-        /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */
+        /*
+         * TODO: discardState/saveState を消す
+         * モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく
+         */
         m_model->discardState(m_state);
         m_state = m_model->saveState();
+        const BoneList &bones = m_model->bones();
+        int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            vpvl::Bone *bone = bones[i];
+            m_boneTransformStates.insert(bone, QPair<Vector3, Quaternion>(bone->position(), bone->rotation()));
+        }
     }
 }
 
@@ -550,6 +559,7 @@ void BoneMotionModel::commitTransform()
          * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
          */
         addUndoCommand(new SetBoneCommand(m_model, m_state));
+        m_boneTransformStates.clear();
         m_state = 0;
     }
 }
@@ -812,6 +822,7 @@ void BoneMotionModel::removeModel()
     removeMotion();
     removePMDModel(m_model);
     reset();
+    m_boneTransformStates.clear();
     emit modelDidChange(0);
 }
 
@@ -972,7 +983,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
     emit rotationDidChange(selected, lastRotation);
 }
 
-void BoneMotionModel::translate(const Vector3 &delta, Bone *bone, int flags)
+void BoneMotionModel::translateDelta(const Vector3 &delta, Bone *bone, int flags)
 {
     if (!bone) {
         if (isBoneSelected())
@@ -982,30 +993,85 @@ void BoneMotionModel::translate(const Vector3 &delta, Bone *bone, int flags)
     }
     const Vector3 &lastPosition = bone->position();
     switch (flags & 0xff) {
-    case 'V': {
+    case 'V': { /* ビュー変形 (カメラ視点) */
         const Transform &modelViewTransform = m_sceneWidget->sceneLoader()->renderEngine()->scene()->modelViewTransform();
         const Vector3 &value2 = modelViewTransform.getBasis() * delta;
         bone->setPosition(Transform(bone->rotation(), lastPosition) * value2);
         break;
     }
-    case 'L': {
+    case 'L': /* ローカル変形 */
         bone->setPosition(Transform(bone->rotation(), lastPosition) * delta);
         break;
-    }
-    case 'G': {
+    case 'G': /* グローバル変形 */
         bone->setPosition(lastPosition + delta);
         break;
-    }
-    default: {
+    default:
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
-    }
     }
     m_model->updateImmediate();
     emit positionDidChange(bone, lastPosition);
 }
 
-void BoneMotionModel::rotate(const Quaternion &delta, Bone *bone, int flags, float value)
+static const Quaternion UIRotateGlobalAxisAngle(const Scalar &value, int flags)
+{
+    Quaternion rot = Quaternion::getIdentity();
+    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
+    switch ((flags & 0xff00) >> 8) {
+    case 'X':
+        rot.setRotation(Vector3(1, 0, 0), -radian(value));
+        break;
+    case 'Y':
+        rot.setRotation(Vector3(0, 1, 0), -radian(value));
+        break;
+    case 'Z':
+        rot.setRotation(Vector3(0, 0, 1), radian(value));
+        break;
+    }
+    return rot;
+}
+
+static const Quaternion UIRotateLocalAxisAngle(const Bone *bone, const Scalar &value, int flags)
+{
+    /* 座標系の関係でX軸とY軸は値を反転させる */
+    const QString &name = internal::toQString(bone);
+    const Bone *child = bone->child();
+    Quaternion rot = Quaternion::getIdentity();
+    Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
+    /* ボーン名によって特別扱いする必要がある */
+    if ((name.indexOf("指") != -1
+         || name.endsWith("腕")
+         || name.endsWith("ひじ")
+         || name.endsWith("手首")
+         ) && child) {
+        /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
+        const Vector3 &boneOrigin = bone->originPosition();
+        const Vector3 &childOrigin = child->originPosition();
+        /* 外積を使ってそれぞれの軸を求める */
+        axisX = (childOrigin - boneOrigin).normalized();
+        Vector3 tmp1 = axisX;
+        name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+        axisZ = axisX.cross(tmp1).normalized();
+        Vector3 tmp2 = axisX;
+        tmp2.setZ(-axisZ.z());
+        axisY = tmp2.cross(-axisX).normalized();
+    }
+    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
+    switch ((flags & 0xff00) >> 8) {
+    case 'X':
+        rot.setRotation(axisX, -radian(value));
+        break;
+    case 'Y':
+        rot.setRotation(axisY, -radian(value));
+        break;
+    case 'Z':
+        rot.setRotation(axisZ, radian(value));
+        break;
+    }
+    return rot;
+}
+
+void BoneMotionModel::rotateAngle(const Scalar &value, Bone *bone, int flags)
 {
     if (!bone) {
         if (isBoneSelected())
@@ -1013,81 +1079,29 @@ void BoneMotionModel::rotate(const Quaternion &delta, Bone *bone, int flags, flo
         else
             return;
     }
-    const Quaternion &lastRotation = bone->rotation();
+    Quaternion lastRotation = Quaternion::getIdentity();
+    if (m_boneTransformStates.contains(bone))
+        lastRotation = m_boneTransformStates[bone].second;
     switch (flags & 0xff) {
-    case 'V': {
+    case 'V': { /* ビュー変形 (カメラ視点) */
+        /*
         float matrixf[16];
         m_sceneWidget->sceneLoader()->renderEngine()->scene()->getModelViewMatrix(matrixf);
         const QMatrix4x4 &matrix = internal::toMatrix4x4(matrixf);
         const QVector4D &r = (matrix * QVector4D(delta.x(), delta.y(), delta.z(), delta.w())).normalized();
         bone->setRotation(lastRotation * Quaternion(r.x(), r.y(), r.z(), value < 0 ? r.w() : -r.w()));
+        */
         break;
     }
-    case 'L': {
-        /* 座標系の関係でX軸とY軸は値を反転させる */
-        Quaternion rot = Quaternion::getIdentity();
-        const QString &name = internal::toQString(bone);
-        const Bone *child = bone->child();
-        /* ボーン名によって特別扱いする必要がある */
-        if ((name.indexOf("指") != -1
-             || name.endsWith("腕")
-             || name.endsWith("ひじ")
-             || name.endsWith("手首")
-             ) && child) {
-            /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-            const Vector3 &boneOrigin = bone->originPosition();
-            const Vector3 &childOrigin = child->originPosition();
-            /* 外積を使ってそれぞれの軸を求める */
-            const Vector3 &axisX = (childOrigin - boneOrigin).normalized();
-            Vector3 tmp1 = axisX;
-            name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
-            Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
-            tmp2.setZ(-axisZ.z());
-            Vector3 axisY = tmp2.cross(-axisX).normalized();
-            /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
-            switch ((flags & 0xff00) >> 8) {
-            case 'X': {
-                rot.setRotation(axisX, -radian(value));
-                break;
-            }
-            case 'Y': {
-                rot.setRotation(axisY, -radian(value));
-                break;
-            }
-            case 'Z': {
-                rot.setRotation(axisZ, radian(value));
-                break;
-            }
-            }
-            bone->setRotation(lastRotation * rot);
-        }
-        else {
-            switch ((flags & 0xff00) >> 8) {
-            case 'X': {
-                rot.setRotation(Vector3(1, 0, 0), -radian(value));
-                break;
-            }
-            case 'Y': {
-                rot.setRotation(Vector3(0, 1, 0), -radian(value));
-                break;
-            }
-            case 'Z': {
-                rot.setRotation(Vector3(0, 0, 1), radian(value));
-                break;
-            }
-            }
-            bone->setRotation(lastRotation * rot);
-        }
+    case 'L': /* ローカル変形 */
+        bone->setRotation(lastRotation * UIRotateLocalAxisAngle(bone, value, flags));
         break;
-    }
-    case 'G': {
-        bone->setRotation(lastRotation * delta);
+    case 'G': /* グローバル変形 */
+        bone->setRotation(lastRotation * UIRotateGlobalAxisAngle(value, flags));
         break;
-    }
-    default: {
+    default:
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
-    }
     }
     m_model->updateImmediate();
     emit rotationDidChange(bone, lastRotation);

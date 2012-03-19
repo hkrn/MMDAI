@@ -845,6 +845,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     int flags;
     m_lockTouchEvent = true;
     m_handles->setPoint2D(pos);
+    m_clickOrigin = pos;
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     bool movable = false, rotateable = false;
     if (m_bones.count() == 1) {
@@ -923,7 +924,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             grabModelHandleByRaycast(pos, diff, m_handleFlags);
         /* 有効な右下のハンドルがクリックされた */
         else if (m_handleFlags & Handles::kEnable)
-            grabImageHandle(diff);
+            grabImageHandle(pos, diff);
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             Scene *scene = m_loader->renderEngine()->scene();
@@ -1085,13 +1086,13 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
         if (!m_bones.isEmpty()) {
             vpvl::Bone *bone = m_bones.last();
-            rotation.setEulerZYX(0.0f, -radian, 0.0f);
+            int mode = (m_handles->isLocal() ? 'L' : 'G'), axis = 'Y' << 8;
             switch (state) {
             case Qt::GestureStarted:
                 emit handleDidGrab();
                 break;
             case Qt::GestureUpdated:
-                emit handleDidRotate(rotation, bone, 'V', float(value));
+                emit handleDidRotate(event->rotationAngle(), bone, mode | axis);
                 break;
             case Qt::GestureFinished:
                 emit handleDidRelease();
@@ -1197,15 +1198,14 @@ void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
     }
 }
 
-void SceneWidget::grabImageHandle(const QPointF &diff)
+void SceneWidget::grabImageHandle(const QPointF &pos, const QPointF &diff)
 {
     int flags = m_handleFlags;
     int mode = m_handles->isLocal() ? 'L' : 'G';
-    /* 意図する向きと実際の値が逆なので、反転させる */
-    float diffValue = -diff.y();
     /* 移動ハンドルである */
     if (flags & Handles::kMove) {
-        const float &value = diffValue * 0.1f;
+        /* 意図する向きと実際の値が逆なので、反転させる */
+        const Scalar &value = -diff.y() * 0.1f;
         Vector3 delta(0.0f, 0.0f, 0.0f);
         if (flags & Handles::kX)
             delta.setX(value);
@@ -1217,26 +1217,27 @@ void SceneWidget::grabImageHandle(const QPointF &diff)
     }
     /* 回転ハンドルである */
     else if (flags & Handles::kRotate) {
-        const float &value = radian(diffValue) * 0.1f;
-        Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
+        const QPointF &diff = pos - m_clickOrigin;
+        Scalar angle = diff.manhattanLength();
+        /* 上にいくとマイナスになるように変更する */
+        if (diff.y() >= 0)
+            angle = -angle;
         int axis = 0;
         if (flags & Handles::kX) {
-            delta.setX(value);
             axis = 'X' << 8;
         }
         else if (flags & Handles::kY) {
-            delta.setY(value);
             axis = 'Y' << 8;
         }
         else if (flags & Handles::kZ) {
-            delta.setZ(-value);
             axis = 'Z' << 8;
         }
-        emit handleDidRotate(delta, 0, mode | axis, diffValue);
+        qDebug() << angle;
+        emit handleDidRotate(angle, 0, mode | axis);
     }
 }
 
-void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags)
+void SceneWidget::grabModelHandleByRaycast(const QPointF & /* pos */, const QPointF &diff, int flags)
 {
     int mode = 'V';
     Vector3 rayFrom, rayTo, pick, delta;
@@ -1262,16 +1263,17 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &di
         /* 回転ハンドルである(ドーナツ) */
         if (flags & Handles::kRotate) {
             const btScalar &angle = m_handles->angle(pick);
-            Quaternion delta(0.0f, 0.0f, 0.0f, 1.0f);
             if (!m_handles->isAngleZero()) {
-                float diff = m_handles->diffAngle(angle);
+                //float diff = m_handles->diffAngle(angle);
+                int axis = 0;
                 if (flags & Handles::kX)
-                    delta.setEulerZYX(0.0f, 0.0f, btFabs(diff));
+                    axis = 'X' << 8;
                 else if (flags & Handles::kY)
-                    delta.setEulerZYX(0.0f, btFabs(diff), 0.0f);
+                    axis = 'Y' << 8;
                 else if (flags & Handles::kZ)
-                    delta.setEulerZYX(btFabs(diff), 0.0f, 0.0f);
-                emit handleDidRotate(delta, 0, mode, diff);
+                    axis = 'Z' << 8;
+                // FIXME: angle
+                emit handleDidRotate(angle, 0, mode | axis);
             }
             m_handles->setAngle(angle);
         }
