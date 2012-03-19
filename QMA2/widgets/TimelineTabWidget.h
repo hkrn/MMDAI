@@ -40,6 +40,7 @@
 #include <QtGui/QWidget>
 #include <QtGui/QAbstractItemView>
 #include "common/SceneWidget.h"
+#include "common/VPDFile.h"
 
 namespace vpvl {
 class Bone;
@@ -61,7 +62,6 @@ class BoneMotionModel;
 class MorphMotionModel;
 class MotionBaseModel;
 class SceneMotionModel;
-class VPDFile;
 
 class TimelineTabWidget : public QWidget
 {
@@ -90,7 +90,7 @@ public:
 
 public slots:
     void addKeyFramesFromSelectedIndices();
-    void loadPose(VPDFile *pose, vpvl::PMDModel *model);
+    void loadPose(VPDFilePtr pose, vpvl::PMDModel *model);
     void savePose(VPDFile *pose, vpvl::PMDModel *model);
     void selectFrameIndices(int fromIndex, int toIndex);
 

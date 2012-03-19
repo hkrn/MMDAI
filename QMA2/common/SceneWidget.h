@@ -42,6 +42,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QUuid>
 #include <QtOpenGL/QtOpenGL>
+#include "VPDFile.h"
 
 #include <vpvl/Bone.h>
 #include <vpvl/Common.h>
@@ -112,7 +113,7 @@ public:
     vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
     vpvl::Asset *addAsset(const QString &path);
     vpvl::Asset *addAssetFromMetadata(const QString &path);
-    VPDFile *insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
+    VPDFilePtr insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
     vpvl::VMDMotion *setCamera(const QString &path);
     void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
     Handles *handles() const { return m_handles; }

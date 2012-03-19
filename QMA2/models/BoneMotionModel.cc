@@ -106,7 +106,7 @@ typedef QPair<QModelIndex, QByteArray> ModelIndex;
 class LoadPoseCommand : public QUndoCommand
 {
 public:
-    LoadPoseCommand(BoneMotionModel *bmm, VPDFile *pose, int frameIndex)
+    LoadPoseCommand(BoneMotionModel *bmm, VPDFilePtr pose, int frameIndex)
         : QUndoCommand(),
           m_bmm(bmm),
           m_pose(0),
@@ -119,7 +119,7 @@ public:
             if (data.canConvert(QVariant::ByteArray))
                 m_modelIndices.append(ModelIndex(index, data.toByteArray()));
         }
-        m_pose = pose->clone();
+        m_pose = pose.data()->clone();
     }
     virtual ~LoadPoseCommand() {
         delete m_pose;
@@ -592,7 +592,7 @@ const QByteArray BoneMotionModel::nameFromModelIndex(const QModelIndex &index) c
     return internal::fromQString(item->name());
 }
 
-void BoneMotionModel::loadPose(VPDFile *pose, PMDModel *model, int frameIndex)
+void BoneMotionModel::loadPose(VPDFilePtr pose, PMDModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
         addUndoCommand(new LoadPoseCommand(this, pose, frameIndex));

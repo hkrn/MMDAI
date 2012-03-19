@@ -44,6 +44,8 @@
 #include <QtCore/QUuid>
 #include <QtGui/QColor>
 
+#include "VPDFile.h"
+
 #include <vpvl/Common.h>
 #include <vpvl/Project.h>
 #include <vpvl/gl2/Renderer.h>
@@ -63,8 +65,6 @@ class Bone;
 class PMDModel;
 class VMDMotion;
 }
-
-class VPDFile;
 
 class SceneLoader : public QObject
 {
@@ -90,7 +90,7 @@ public:
     vpvl::VMDMotion *loadModelMotion(const QString &path);
     vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
     vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
-    VPDFile *loadModelPose(const QString &path, vpvl::PMDModel *model);
+    VPDFilePtr loadModelPose(const QString &path, vpvl::PMDModel *model);
     vpvl::VMDMotion *newCameraMotion() const;
     vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
     void release();
@@ -191,7 +191,7 @@ signals:
     void modelDidSelect(vpvl::PMDModel *model, SceneLoader *loader);
     void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);
     void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
-    void modelDidMakePose(VPDFile *pose, vpvl::PMDModel *model);
+    void modelDidMakePose(VPDFilePtr pose, vpvl::PMDModel *model);
     void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QUuid &uuid);
     void motionWillDelete(vpvl::VMDMotion *motion, const QUuid &uuid);
     void assetDidSelect(vpvl::Asset *asset, SceneLoader *loader);

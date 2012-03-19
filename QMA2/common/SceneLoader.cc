@@ -38,7 +38,6 @@
 
 #include "Archive.h"
 #include "SceneLoader.h"
-#include "VPDFile.h"
 #include "World.h"
 #include "util.h"
 
@@ -855,23 +854,21 @@ VMDMotion *SceneLoader::loadModelMotion(const QString &path, PMDModel *model)
     return motion;
 }
 
-VPDFile *SceneLoader::loadModelPose(const QString &path, PMDModel * /* model */)
+VPDFilePtr SceneLoader::loadModelPose(const QString &path, PMDModel *model)
 {
     /* ポーズをファイルから読み込む。処理の関係上 makePose は呼ばない */
     QFile file(path);
-    VPDFile *pose = 0;
+    VPDFilePtr ptr(new VPDFile());
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
-        pose = new VPDFile();
-        if (pose->load(stream)) {
-            // pose->makePose(model);
+        if (ptr.data()->load(stream)) {
+            emit modelDidMakePose(ptr, model);
         }
         else {
-            delete pose;
-            pose = 0;
+            ptr.clear();
         }
     }
-    return pose;
+    return ptr;
 }
 
 void SceneLoader::loadProject(const QString &path)

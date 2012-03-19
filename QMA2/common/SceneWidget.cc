@@ -452,22 +452,22 @@ void SceneWidget::saveMetadataFromAsset(Asset *asset)
 void SceneWidget::insertPoseToSelectedModel()
 {
     PMDModel *model = m_loader->selectedModel();
-    VPDFile *pose = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
+    VPDFilePtr ptr = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
                                                              tr("Open VPD file"),
                                                              tr("VPD file (*.vpd)"),
                                                              m_settings),
                                               model);
-    if (pose && model)
+    if (!ptr.isNull() && model)
         model->updateImmediate();
 }
 
-VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, PMDModel *model)
+VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, PMDModel *model)
 {
-    VPDFile *pose = 0;
+    VPDFilePtr ptr;
     if (model) {
         if (QFile::exists(filename)) {
-            pose = m_loader->loadModelPose(filename, model);
-            if (!pose) {
+            ptr = m_loader->loadModelPose(filename, model);
+            if (ptr.isNull()) {
                 QMessageBox::warning(this, tr("Loading model pose error"),
                                      tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
             }
@@ -477,7 +477,7 @@ VPDFile *SceneWidget::insertPoseToSelectedModel(const QString &filename, PMDMode
         QMessageBox::warning(this,
                              tr("The model is not selected."),
                              tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
-    return pose;
+    return ptr;
 }
 
 void SceneWidget::advanceMotion(float frameIndex)
@@ -713,8 +713,8 @@ void SceneWidget::loadFile(const QString &file)
     /* ポーズファイル */
     else if (extension == "vpd") {
         PMDModel *model = m_loader->selectedModel();
-        VPDFile *pose = insertPoseToSelectedModel(file, model);
-        if (pose && model)
+        VPDFilePtr ptr = insertPoseToSelectedModel(file, model);
+        if (!ptr.isNull() && model)
             model->updateImmediate();
     }
     /* アクセサリ情報ファイル */

@@ -37,13 +37,13 @@
 #ifndef BONEMOTIONMODEL_H
 #define BONEMOTIONMODEL_H
 
+#include "common/VPDFile.h"
 #include "models/PMDMotionModel.h"
 
 #include <vpvl/BaseAnimation.h>
 #include <vpvl/BoneKeyFrame.h>
 
 class SceneWidget;
-class VPDFile;
 
 class BoneMotionModel : public PMDMotionModel
 {
@@ -71,7 +71,7 @@ public:
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
     const QByteArray nameFromModelIndex(const QModelIndex &index) const;
 
-    void loadPose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
+    void loadPose(VPDFilePtr pose, vpvl::PMDModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl::PMDModel *model, int frameIndex);
     void setFrames(const KeyFramePairList &frames);
     void resetBone(ResetType type);

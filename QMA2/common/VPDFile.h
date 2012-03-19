@@ -38,6 +38,7 @@
 #define VPDFILE_H
 
 #include <QtCore/QList>
+#include <QtCore/QSharedPointer>
 #include <QtCore/QString>
 #include <QtCore/QTextStream>
 #include <vpvl/Common.h>
@@ -90,5 +91,7 @@ private:
 
     Q_DISABLE_COPY(VPDFile)
 };
+
+typedef QSharedPointer<VPDFile> VPDFilePtr;
 
 #endif // VPDFILE_H

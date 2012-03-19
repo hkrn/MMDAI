@@ -120,7 +120,7 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
     currentSelectedTimelineWidget()->treeView()->addKeyframesBySelectedIndices();
 }
 
-void TimelineTabWidget::loadPose(VPDFile *pose, PMDModel *model)
+void TimelineTabWidget::loadPose(VPDFilePtr pose, PMDModel *model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
     m->loadPose(pose, model, m_boneTimeline->frameIndex());

@@ -1182,7 +1182,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFilePtr,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_timelineTabWidget->interpolationWidget(), SLOT(disable()));
