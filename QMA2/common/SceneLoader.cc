@@ -877,6 +877,12 @@ void SceneLoader::loadProject(const QString &path)
     createProject();
     bool ret = m_project->load(path.toLocal8Bit().constData());
     if (ret) {
+        /* 光源設定 */
+        const vpvl::Vector3 &color = UIGetVector3(m_project->globalSetting("light.color"), Vector3(0.6, 0.6, 0.6));
+        const vpvl::Vector3 &position = UIGetVector3(m_project->globalSetting("light.position"), Vector3(0.5, 1.0, 0.5));
+        setLightColor(Color(color.x(), color.y(), color.z(), 1.0));
+        setLightPosition(position);
+        /* アクセラレーションの有効化(有効にしている場合) */
         if (isAccelerationEnabled()) {
             if (m_renderer->initializeAccelerator())
                 m_renderer->scene()->setSoftwareSkinningEnable(false);
@@ -1175,6 +1181,11 @@ void SceneLoader::setLightColor(const Color &color)
 {
     Scene *scene = renderEngine()->scene();
     scene->setLightSource(color, scene->lightPosition());
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", color.x(), color.y(), color.z());
+        m_project->setGlobalSetting("light.color", str.toStdString());
+    }
     emit lightColorDidSet(color);
 }
 
@@ -1182,6 +1193,11 @@ void SceneLoader::setLightPosition(const Vector3 &position)
 {
     Scene *scene = renderEngine()->scene();
     scene->setLightSource(scene->lightColor(), position);
+    if (m_project) {
+        QString str;
+        str.sprintf("%.5f,%.5f,%.5f", position.x(), position.y(), position.z());
+        m_project->setGlobalSetting("light.position", str.toStdString());
+    }
     emit lightPositionDidSet(position);
 }
 
