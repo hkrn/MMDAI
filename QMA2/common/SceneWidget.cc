@@ -266,7 +266,7 @@ void SceneWidget::addModel()
     /* モデル追加と共に空のモーションを作成する */
     PMDModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
                                               tr("Open PMD file"),
-                                              tr("PMD file (*.pmd; *.zip)"),
+                                              tr("PMD file (*.pmd *.zip)"),
                                               m_settings));
     if (model && !m_playing) {
         setEmptyMotion(model);
@@ -391,7 +391,7 @@ void SceneWidget::addAsset()
 {
     addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
                             tr("Open X file"),
-                            tr("DirectX mesh file (*.x; *.zip)"),
+                            tr("DirectX mesh file (*.x *.zip)"),
                             m_settings));
 }
 
