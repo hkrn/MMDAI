@@ -62,10 +62,13 @@ public:
 
 public slots:
     void stop();
+    /* これを呼ぶと再生終了時 renderFrameDidStop ではなく renderFrameDidStopAndRestoreState が呼ばれる */
+    void setRestoreState() { m_restoreState = true; }
 
 signals:
     void renderFrameDidStart();
     void renderFrameDidStop();
+    void renderFrameDidStopAndRestoreState();
     /* motionDidSeek は int 型な点に注意 (他は float 型) */
     void motionDidSeek(int frameIndex);
 
@@ -94,6 +97,7 @@ private:
     int m_countForFPS;
     int m_currentFPS;
     int m_prevSceneFPS;
+    bool m_restoreState;
 };
 
 #endif // SCENEPLAYER_H

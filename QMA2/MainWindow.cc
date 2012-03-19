@@ -101,6 +101,22 @@ static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
     }
 }
 
+static inline void UICreateScenePlayer(MainWindow *mainWindow,
+                                       SceneWidget *sceneWidget,
+                                       PlaySettingDialog *dialog,
+                                       TimelineTabWidget *timeline,
+                                       ScenePlayer *&player)
+{
+    if (!player) {
+        player = new ScenePlayer(sceneWidget, dialog);
+        QObject::connect(dialog, SIGNAL(playingDidStart()), dialog, SLOT(hide()));
+        QObject::connect(dialog, SIGNAL(playingDidStart()), player, SLOT(setRestoreState()));
+        QObject::connect(player, SIGNAL(motionDidSeek(int)), timeline, SLOT(setCurrentFrameIndex(int)));
+        QObject::connect(player, SIGNAL(renderFrameDidStop()), mainWindow, SLOT(makeBonesSelectable()));
+        QObject::connect(player, SIGNAL(renderFrameDidStopAndRestoreState()), dialog, SLOT(show()));
+    }
+}
+
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -1535,11 +1551,7 @@ void MainWindow::invokePlayer()
 {
     if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
-        if (!m_player) {
-            m_player = new ScenePlayer(m_sceneWidget, m_playSettingDialog);
-            connect(m_player, SIGNAL(motionDidSeek(int)), m_timelineTabWidget, SLOT(setCurrentFrameIndex(int)));
-            connect(m_player, SIGNAL(renderFrameDidStop()), SLOT(makeBonesSelectable()));
-        }
+        UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         /*
          * 再生中はボーンが全選択になるのでワイヤーフレーム表示のオプションの関係からシグナルを一時的に解除する。
          * 停止後に makeBonesSelectable 経由でシグナルを復活させる
@@ -1557,6 +1569,7 @@ void MainWindow::openPlaySettingDialog()
 {
     if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
+        UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         m_playSettingDialog->show();
     }
     else {

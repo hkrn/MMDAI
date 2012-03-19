@@ -61,7 +61,8 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
       m_prevAudioFrameIndex(0.0f),
       m_countForFPS(0),
       m_currentFPS(0),
-      m_prevSceneFPS(0)
+      m_prevSceneFPS(0),
+      m_restoreState(false)
 {
     m_renderTimer.setSingleShot(false);
     m_progress = new QProgressDialog();
@@ -154,7 +155,13 @@ void ScenePlayer::stop()
     m_totalStep = 0.0f;
     m_audioFrameIndex = 0.0f;
     m_prevAudioFrameIndex = 0.0f;
-    emit renderFrameDidStop();
+    if (m_restoreState) {
+        m_restoreState = false;
+        emit renderFrameDidStopAndRestoreState();
+    }
+    else {
+        emit renderFrameDidStop();
+    }
 }
 
 bool ScenePlayer::isActive() const
