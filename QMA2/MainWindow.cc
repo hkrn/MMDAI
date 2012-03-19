@@ -137,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_morphMotionModel = new MorphMotionModel(m_undo, this);
     m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
     m_sceneTabWidget = new TabWidget(&m_settings);
-    m_modelTabWidget = new ModelTabWidget(&m_settings, m_boneMotionModel, m_morphMotionModel, m_sceneMotionModel);
+    m_modelTabWidget = new ModelTabWidget(&m_settings, m_morphMotionModel, this);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_morphMotionModel, m_sceneMotionModel);
     m_boneUIDelegate = new BoneUIDelegate(m_boneMotionModel, this);
     m_loggerWidget = LoggerWidget::createInstance(&m_settings);
@@ -1169,7 +1169,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidMakePose(VPDFile*,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFile*,vpvl::PMDModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_modelTabWidget->interpolationWidget(), SLOT(disable()));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_timelineTabWidget->interpolationWidget(), SLOT(disable()));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), assetWidget, SLOT(addAsset(vpvl::Asset*)));
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), assetWidget, SLOT(removeAsset(vpvl::Asset*)));
     connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), assetWidget, SLOT(addModel(vpvl::PMDModel*)));
@@ -1219,7 +1219,6 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl::Vector3,vpvl::Bone*,int)));
     connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Scalar,vpvl::Bone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl::Scalar,vpvl::Bone*,int)));
-    connect(m_timelineTabWidget, SIGNAL(currentTabDidChange(int)), m_modelTabWidget->interpolationWidget(), SLOT(setMode(int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));

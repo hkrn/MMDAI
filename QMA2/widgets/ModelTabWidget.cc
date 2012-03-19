@@ -37,7 +37,6 @@
 #include "ModelTabWidget.h"
 
 #include "MorphWidget.h"
-#include "InterpolationWidget.h"
 #include "ModelInfoWidget.h"
 #include "ModelSettingWidget.h"
 #include "models/BoneMotionModel.h"
@@ -47,27 +46,22 @@
 #include <QtGui/QtGui>
 
 ModelTabWidget::ModelTabWidget(QSettings *settings,
-                               BoneMotionModel *bmm,
                                MorphMotionModel *mmm,
-                               SceneMotionModel *smm,
                                QWidget *parent) :
     QWidget(parent),
     m_tabWidget(0),
     m_settings(settings),
     m_morphWidget(0),
-    m_interpolationWidget(0),
     m_modelInfoWidget(0),
     m_modelSettingWidget(0)
 {
     m_morphWidget = new MorphWidget(mmm);
-    m_interpolationWidget = new InterpolationWidget(bmm, smm);
     m_modelInfoWidget = new ModelInfoWidget();
     m_modelSettingWidget = new ModelSettingWidget();
     m_tabWidget = new QTabWidget();
     m_tabWidget->addTab(m_modelInfoWidget, "");
     m_tabWidget->addTab(m_modelSettingWidget, "");
     m_tabWidget->addTab(m_morphWidget, "");
-    m_tabWidget->addTab(m_interpolationWidget, "");
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -85,7 +79,6 @@ void ModelTabWidget::retranslate()
     m_tabWidget->setTabText(0, tr("Info"));
     m_tabWidget->setTabText(1, tr("Setting"));
     m_tabWidget->setTabText(2, tr("Morph"));
-    m_tabWidget->setTabText(3, tr("Interpolation"));
     setWindowTitle(tr("Model Tabs"));
 }
 

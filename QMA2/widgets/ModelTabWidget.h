@@ -42,7 +42,6 @@
 class BoneMotionModel;
 class MorphMotionModel;
 class MorphWidget;
-class InterpolationWidget;
 class ModelInfoWidget;
 class ModelSettingWidget;
 class QCloseEvent;
@@ -56,14 +55,11 @@ class ModelTabWidget : public QWidget
 
 public:
     explicit ModelTabWidget(QSettings *settings,
-                            BoneMotionModel *bmm,
                             MorphMotionModel *mmm,
-                            SceneMotionModel *smm,
-                            QWidget *parent = 0);
+                            QWidget *parent);
     ~ModelTabWidget();
 
     MorphWidget *morphWidget() const { return m_morphWidget; }
-    InterpolationWidget *interpolationWidget() const { return m_interpolationWidget; }
     ModelInfoWidget *modelInfoWidget() const { return m_modelInfoWidget; }
     ModelSettingWidget *modelSettingWidget() const { return m_modelSettingWidget; }
 
@@ -77,7 +73,6 @@ private:
     QTabWidget *m_tabWidget;
     QSettings *m_settings;
     MorphWidget *m_morphWidget;
-    InterpolationWidget *m_interpolationWidget;
     ModelInfoWidget *m_modelInfoWidget;
     ModelSettingWidget *m_modelSettingWidget;
 

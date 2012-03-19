@@ -41,6 +41,7 @@
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
+#include "widgets/InterpolationWidget.h"
 #include "widgets/TimelineTabWidget.h"
 #include "widgets/TimelineTreeView.h"
 #include "widgets/TimelineWidget.h"
@@ -60,6 +61,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_boneTimeline(0),
     m_morphTimeline(0),
     m_sceneTimeline(0),
+    m_interpolationWidget(0),
     m_frameSelectionDialog(0),
     m_frameWeightDialog(0)
 {
@@ -91,6 +93,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline, "");
     m_sceneTimeline = new TimelineWidget(smm, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
+    m_interpolationWidget = new InterpolationWidget(bmm, smm);
+    connect(this, SIGNAL(currentTabDidChange(int)), m_interpolationWidget, SLOT(setMode(int)));
+    m_tabWidget->insertTab(kInterpolationTabIndex, m_interpolationWidget, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
@@ -129,6 +134,7 @@ void TimelineTabWidget::retranslate()
     m_tabWidget->setTabText(kBoneTabIndex, tr("Bone"));
     m_tabWidget->setTabText(kMorphTabIndex, tr("Morph"));
     m_tabWidget->setTabText(kSceneTabIndex, tr("Scene"));
+    m_tabWidget->setTabText(kInterpolationTabIndex, tr("Interpolation"));
     setWindowTitle(tr("Motion Timeline"));
 }
 

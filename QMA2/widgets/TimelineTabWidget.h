@@ -55,6 +55,7 @@ class QSettings;
 class QTabWidget;
 class FrameSelectionDialog;
 class FrameWeightDialog;
+class InterpolationWidget;
 class TimelineWidget;
 class BoneMotionModel;
 class MorphMotionModel;
@@ -76,6 +77,7 @@ public:
     static const int kSceneTabIndex = 0;
     static const int kBoneTabIndex = 1;
     static const int kMorphTabIndex = 2;
+    static const int kInterpolationTabIndex = 3;
 
     explicit TimelineTabWidget(QSettings *settings,
                                BoneMotionModel *bmm,
@@ -83,6 +85,8 @@ public:
                                SceneMotionModel *smm,
                                QWidget *parent = 0);
     ~TimelineTabWidget();
+
+    InterpolationWidget *interpolationWidget() const { return m_interpolationWidget; }
 
 public slots:
     void addKeyFramesFromSelectedIndices();
@@ -132,6 +136,7 @@ private:
     TimelineWidget *m_boneTimeline;
     TimelineWidget *m_morphTimeline;
     TimelineWidget *m_sceneTimeline;
+    InterpolationWidget *m_interpolationWidget;
     QButtonGroup *m_boneButtonGroup;
     QRadioButton *m_boneSelectButton;
     QRadioButton *m_boneRotateButton;
