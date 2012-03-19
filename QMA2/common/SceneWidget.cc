@@ -906,6 +906,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             makeRay(pos, rayFrom, rayTo);
             if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
                 m_handleFlags = flags;
+                m_handles->setVisibilityFlags(flags);
                 setCursor(Qt::ClosedHandCursor);
                 emit handleDidGrab();
             }
@@ -955,6 +956,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(Vector3(0.0f, 0.0f, 0.0f));
+    m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_lockTouchEvent = false;
     emit handleDidRelease();
 }
@@ -1048,6 +1050,7 @@ void SceneWidget::panTriggered(QPanGesture *event)
         setCursor(Qt::ArrowCursor);
         break;
     }
+    /* 移動のジェスチャー */
     const QPointF &delta = event->delta();
     const Vector3 newDelta(delta.x() * -0.25, delta.y() * 0.25, 0.0f);
     if (!m_bones.isEmpty()) {
@@ -1079,11 +1082,11 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
     Scene *scene = m_loader->renderEngine()->scene();
     const Vector3 &pos = scene->cameraPosition(), &angle = scene->cameraAngle();
     float distance = scene->cameraDistance(), fovy = scene->fovy();
+    /* 回転ジェスチャー */
     if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();
-        Scalar radian = vpvl::radian(value);
-        Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
-        /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
+        const Scalar &radian = vpvl::radian(value);
+        /* ボーンが選択されている場合はボーンの回転 (現時点でY軸のみ) */
         if (!m_bones.isEmpty()) {
             vpvl::Bone *bone = m_bones.last();
             int mode = (m_handles->isLocal() ? 'L' : 'G'), axis = 'Y' << 8;
@@ -1101,7 +1104,9 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
                 break;
             }
         }
+        /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
         else if (PMDModel *model = m_loader->selectedModel()) {
+            Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
             rotation.setEulerZYX(0.0f, -radian, 0.0f);
             rotateModel(model, rotation);
         }
@@ -1109,6 +1114,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
             rotateScene(Vector3(0.0f, value, 0.0f));
         }
     }
+    /* 拡大縮小のジェスチャー */
     qreal scaleFactor = 1.0;
     if (state == Qt::GestureStarted)
         m_lastDistance = distance;
@@ -1124,6 +1130,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
 
 void SceneWidget::swipeTriggered(QSwipeGesture *event)
 {
+    /* 左か上の場合は巻き戻し、右か下の場合はやり直しを実行する */
     if (m_enableUndoGesture && event->state() == Qt::GestureFinished) {
         const QSwipeGesture::SwipeDirection hdir = event->horizontalDirection();
         const QSwipeGesture::SwipeDirection vdir = event->verticalDirection();
@@ -1237,7 +1244,7 @@ void SceneWidget::grabImageHandle(const QPointF &pos, const QPointF &diff)
     }
 }
 
-void SceneWidget::grabModelHandleByRaycast(const QPointF & /* pos */, const QPointF &diff, int flags)
+void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags)
 {
     int mode = 'V';
     Vector3 rayFrom, rayTo, pick, delta;
@@ -1246,6 +1253,7 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF & /* pos */, const QPoi
         const QPointF &diff2 = diff * 0.1;
         Bone *bone = m_handles->currentBone();
         const Transform &transform = bone->localTransform();
+        /* 移動ハンドルである(矢印の先端) */
         if (flags & Handles::kX) {
             delta = transform.getBasis() * Vector3(diff2.x(), 0, 0);
         }
@@ -1256,26 +1264,37 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF & /* pos */, const QPoi
             delta = transform.getBasis() * Vector3(0, 0, diff2.y());
         }
         emit handleDidMove(delta, 0, mode);
+        return;
     }
-    else if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
-        mode = 'L';
-        /* 移動ハンドルである(矢印の先端) */
+    makeRay(pos, rayFrom, rayTo);
+    if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
+        mode = 'G';
         /* 回転ハンドルである(ドーナツ) */
         if (flags & Handles::kRotate) {
-            const btScalar &angle = m_handles->angle(pick);
-            if (!m_handles->isAngleZero()) {
-                //float diff = m_handles->diffAngle(angle);
-                int axis = 0;
-                if (flags & Handles::kX)
-                    axis = 'X' << 8;
-                else if (flags & Handles::kY)
-                    axis = 'Y' << 8;
-                else if (flags & Handles::kZ)
-                    axis = 'Z' << 8;
-                // FIXME: angle
-                emit handleDidRotate(angle, 0, mode | axis);
+            const vpvl::Vector3 &origin = m_handles->currentBone()->localTransform().getOrigin();
+            const Vector3 &delta = (pick - origin).normalize();
+            Scalar angle = 0.0;
+            int axis = 0;
+            if (flags & Handles::kX) {
+                angle = btAtan2(delta.y(), delta.z());
+                axis = 'X' << 8;
             }
-            m_handles->setAngle(angle);
+            else if (flags & Handles::kY) {
+                angle = -btAtan2(delta.x(), delta.z());
+                axis = 'Y' << 8;
+            }
+            else if (flags & Handles::kZ) {
+                angle = -btAtan2(delta.x(), delta.y());
+                axis = 'Z' << 8;
+            }
+            if (m_handles->isAngleZero()) {
+                m_handles->setAngle(angle);
+                angle = 0.0;
+            }
+            else {
+                angle = btDegrees(m_handles->diffAngle(angle));
+            }
+            emit handleDidRotate(angle, 0, mode | axis);
         }
         m_handles->setPoint3D(pick);
     }
