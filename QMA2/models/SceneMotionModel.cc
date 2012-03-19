@@ -105,7 +105,8 @@ public:
         return 0;
     }
     const QString &name() const {
-        static const QString &name = QApplication::tr("Camera");
+        /* 参照にしないこと */
+        static const QString name = QApplication::tr("Camera");
         return name;
     }
     bool isRoot() const {
