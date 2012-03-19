@@ -690,7 +690,9 @@ void SceneWidget::resetModelPosition()
 void SceneWidget::loadFile(const QString &file)
 {
     /* モデルファイル */
-    if (file.endsWith(".pmd", Qt::CaseInsensitive)) {
+    QFileInfo fileInfo(file);
+    const QString &extension = fileInfo.suffix().toLower();
+    if (extension == "pmd" || extension == "zip") {
         PMDModel *model = addModel(file);
         if (model && !m_playing) {
             setEmptyMotion(model);
@@ -699,24 +701,24 @@ void SceneWidget::loadFile(const QString &file)
         }
     }
     /* モーションファイル */
-    else if (file.endsWith(".vmd", Qt::CaseInsensitive)) {
+    else if (extension == "vmd") {
         VMDMotion *motion = insertMotionToModel(file, m_loader->selectedModel());
         if (motion)
             advanceMotion(0.0f);
     }
     /* アクセサリファイル */
-    else if (file.endsWith(".x", Qt::CaseInsensitive)) {
+    else if (extension == "x") {
         addAsset(file);
     }
     /* ポーズファイル */
-    else if (file.endsWith(".vpd", Qt::CaseInsensitive)) {
+    else if (extension == "vpd") {
         PMDModel *model = m_loader->selectedModel();
         VPDFile *pose = insertPoseToSelectedModel(file, model);
         if (pose && model)
             model->updateImmediate();
     }
     /* アクセサリ情報ファイル */
-    else if (file.endsWith(".vac", Qt::CaseInsensitive)) {
+    else if (extension == "vac") {
         addAssetFromMetadata(file);
     }
 }
