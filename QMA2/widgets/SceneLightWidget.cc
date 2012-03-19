@@ -44,22 +44,22 @@ SceneLightWidget::SceneLightWidget(QWidget *parent) :
     QHBoxLayout *subLayout = new QHBoxLayout();
     /* 色(R,G,B) */
     QFormLayout *formLayout = new QFormLayout();
-    m_r = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005, 3);
+    m_r = createSpinBox(SLOT(updateColor()));
     formLayout->addRow("R", m_r);
-    m_g = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005, 3);
+    m_g = createSpinBox(SLOT(updateColor()));
     formLayout->addRow("G", m_g);
-    m_b = createSpinBox(SLOT(updateColor()), 0.0, 1.0, 0.005, 3);
+    m_b = createSpinBox(SLOT(updateColor()));
     formLayout->addRow("B", m_b);
     m_colorGroup = new QGroupBox();
     m_colorGroup->setLayout(formLayout);
     subLayout->addWidget(m_colorGroup);
     /* 位置(X,Y,Z) */
     formLayout = new QFormLayout();
-    m_x = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01, 3);
+    m_x = createDoubleSpinBox(SLOT(updatePosition()));
     formLayout->addRow("X", m_x);
-    m_y = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01, 3);
+    m_y = createDoubleSpinBox(SLOT(updatePosition()));
     formLayout->addRow("Y", m_y);
-    m_z = createSpinBox(SLOT(updatePosition()), -1.0, 1.0, 0.01, 3);
+    m_z = createDoubleSpinBox(SLOT(updatePosition()));
     formLayout->addRow("Z", m_z);
     m_directionGroup = new QGroupBox();
     m_directionGroup->setLayout(formLayout);
@@ -80,15 +80,15 @@ SceneLightWidget::~SceneLightWidget()
 
 void SceneLightWidget::setColor(const vpvl::Color &value)
 {
-    disconnect(m_r, SIGNAL(valueChanged(double)), this, SLOT(updateColor()));
-    disconnect(m_g, SIGNAL(valueChanged(double)), this, SLOT(updateColor()));
-    disconnect(m_b, SIGNAL(valueChanged(double)), this, SLOT(updateColor()));
-    m_r->setValue(value.x());
-    m_g->setValue(value.y());
-    m_b->setValue(value.z());
-    connect(m_r, SIGNAL(valueChanged(double)), this, SLOT(updateColor()));
-    connect(m_g, SIGNAL(valueChanged(double)), this, SLOT(updateColor()));
-    connect(m_b, SIGNAL(valueChanged(double)), this, SLOT(updateColor()));
+    disconnect(m_r, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    disconnect(m_g, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    disconnect(m_b, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    m_r->setValue(value.x() * m_r->maximum());
+    m_g->setValue(value.y() * m_g->maximum());
+    m_b->setValue(value.z() * m_b->maximum());
+    connect(m_r, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    connect(m_g, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    connect(m_b, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
 }
 
 void SceneLightWidget::setPosition(const vpvl::Vector3 &value)
@@ -113,7 +113,11 @@ void SceneLightWidget::retranslate()
 
 void SceneLightWidget::updateColor()
 {
-    const vpvl::Color color(m_r->value(), m_g->value(), m_b->value(), 1.0);
+    vpvl::Color color;
+    color.setX(m_r->value() / float(m_r->maximum()));
+    color.setY(m_g->value() / float(m_g->maximum()));
+    color.setZ(m_b->value() / float(m_b->maximum()));
+    color.setW(1.0);
     emit lightColorDidSet(color);
 }
 
@@ -126,26 +130,33 @@ void SceneLightWidget::updatePosition()
 void SceneLightWidget::openColorDialog()
 {
     QColorDialog dialog;
-    vpvl::Color colorToRestore(m_r->value(), m_g->value(), m_b->value(), 1.0);
-    connect(&dialog, SIGNAL(currentColorChanged(QColor)), SLOT(setColor(QColor)));
-    if (dialog.exec() == QColorDialog::Rejected) {
-        setColor(colorToRestore);
-        updateColor();
-    }
+    const QColor colorToRestore(m_r->value(), m_g->value(), m_b->value());
+    connect(&dialog, SIGNAL(currentColorChanged(QColor)), SLOT(setQColor(QColor)));
+    if (dialog.exec() == QColorDialog::Rejected)
+        setQColor(colorToRestore);
 }
 
-void SceneLightWidget::setColor(const QColor &value)
+void SceneLightWidget::setQColor(const QColor &value)
 {
     setColor(vpvl::Color(value.redF(), value.blueF(), value.greenF(), 1.0));
     updateColor();
 }
 
-QDoubleSpinBox *SceneLightWidget::createSpinBox(const char *slot, double min, double max, double step, int prec) const
+QSpinBox *SceneLightWidget::createSpinBox(const char *slot) const
+{
+    QSpinBox *spinBox = new QSpinBox();
+    spinBox->setRange(0, 255);
+    spinBox->setSingleStep(1);
+    connect(spinBox, SIGNAL(valueChanged(int)), slot);
+    return spinBox;
+}
+
+QDoubleSpinBox *SceneLightWidget::createDoubleSpinBox(const char *slot) const
 {
     QDoubleSpinBox *spinBox = new QDoubleSpinBox();
-    spinBox->setRange(min, max);
-    spinBox->setSingleStep(step);
-    spinBox->setDecimals(prec);
+    spinBox->setRange(-1.0, 1.0);
+    spinBox->setSingleStep(0.01);
+    spinBox->setDecimals(3);
     connect(spinBox, SIGNAL(valueChanged(double)), slot);
     return spinBox;
 }
