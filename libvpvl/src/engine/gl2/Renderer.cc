@@ -774,12 +774,12 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     log0(kLogInfo,
                     "Binding edge indices to the vertex buffer object (ID=%d)",
                     casted->vertexBufferObjects[kEdgeIndices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kModelIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
     log0(kLogInfo,
                     "Binding indices to the vertex buffer object (ID=%d)",
-                    casted->vertexBufferObjects[kShadowIndices]);
+                    casted->vertexBufferObjects[kModelIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, casted->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
@@ -889,7 +889,7 @@ void Renderer::renderModel(const PMDModel *model)
     Color ambient, diffuse;
     size_t offset = 0;
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
@@ -928,7 +928,7 @@ void Renderer::renderModelShadow(const PMDModel *model)
     if (!userData)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelIndices]);
     const Vector3 &light = m_scene->lightPosition();
     const Scalar dot = plane.dot(light);
     float shadowMatrix[16];
@@ -948,7 +948,9 @@ void Renderer::renderModelShadow(const PMDModel *model)
     shadowProgram->setLightPosition(m_scene->lightPosition());
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                                model->strideSize(PMDModel::kVerticesStride));
+    glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
+    glCullFace(GL_BACK);
     shadowProgram->unbind();
 }
 
@@ -961,10 +963,12 @@ void Renderer::renderModelZPlot(const PMDModel *model)
     zplotProgram->bind();
     zplotProgram->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelIndices]);
     zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                               model->strideSize(PMDModel::kVerticesStride));
+    glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
+    glCullFace(GL_BACK);
     zplotProgram->unbind();
 }
 
@@ -1092,7 +1096,6 @@ void Renderer::deleteAsset(Asset *&asset)
 void Renderer::clear()
 {
     glViewport(0, 0, m_scene->width(), m_scene->height());
-    glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

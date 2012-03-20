@@ -353,69 +353,89 @@ protected:
         m_renderer->resize(w, h);
     }
     virtual void paintGL() {
-        glClearColor(0, 0, 1, 1);
-        m_renderer->clear();
-        QMatrix4x4 modelView4x4, lightView4x4, projection4x4;
-        vpvl::Scene *scene = m_renderer->scene();
-        float modelViewMatrixf[16], projectionMatrixf[16], normalMatrixf[9];
-        scene->getModelViewMatrix(modelViewMatrixf);
-        scene->getProjectionMatrix(projectionMatrixf);
-        m_renderer->setModelViewMatrix(modelViewMatrixf);
-        m_renderer->setProjectionMatrix(projectionMatrixf);
-        for (int i = 0; i < 16; i++) {
-            modelView4x4.data()[i] = modelViewMatrixf[i];
-            projection4x4.data()[i] = projectionMatrixf[i];
-        }
-        scene->getNormalMatrix(normalMatrixf);
-        const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
-        for (int i = 0; i < 16; i++)
-            modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
-        m_renderer->setModelViewProjectionMatrix(modelViewMatrixf);
-        m_renderer->setNormalMatrix(normalMatrixf);
+        QMatrix4x4 modelView4x4, modelProjection4x4, modelViewProjection4x4,
+                lightView4x4, lightProjection4x4, lightViewProjection4x4;
+        float modelViewMatrixf[16], projectionMatrixf[16], modelViewProjectionMatrixf[16],
+                normalMatrixf[9], lightViewProjectionMatrixf[16];
+        const vpvl::Scene *scene = m_renderer->scene();
         const vpvl::Array<vpvl::PMDModel *> &models = scene->getRenderingOrder();
         const int nmodels = models.count();
-        for (int i = 0; i < nmodels; i++) {
-            vpvl::PMDModel *model = models[i];
-            m_renderer->renderModelShadow(model);
-            m_renderer->renderModel(model);
+        /* 行列の設定 */
+        scene->getModelViewMatrix(modelViewMatrixf);
+        scene->getProjectionMatrix(projectionMatrixf);
+        scene->getNormalMatrix(normalMatrixf);
+        m_renderer->setModelViewMatrix(modelViewMatrixf);
+        m_renderer->setProjectionMatrix(projectionMatrixf);
+        m_renderer->setNormalMatrix(normalMatrixf);
+        for (int i = 0; i < 16; i++) {
+            modelView4x4.data()[i] = modelViewMatrixf[i];
+            modelProjection4x4.data()[i] = projectionMatrixf[i];
         }
-        const vpvl::Array<vpvl::Asset *> &assets = m_renderer->assets();
-        const int nassets = assets.count();
-        for (int i = 0; i < nassets; i++) {
-            vpvl::Asset *asset = assets[i];
-            m_renderer->renderAsset(asset);
+        glEnable(GL_DEPTH_TEST);
+        {
+            /* シャドウマッピング用のテクスチャ描写 */
+            // const QVector3D upQV3(0.0, 1.0, 0.0);
+            QVector3D eyeQV3, centerQV3;
+            m_fbo->bind();
+            glViewport(0, 0, m_fbo->width(), m_fbo->height());
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            QMatrix4x4 view4x4 = modelView4x4;
+            view4x4.setColumn(3, QVector4D(0, 0, 0, 1));
+            for (int i = 0; i < nmodels; i++) {
+                vpvl::PMDModel *model = models[i];
+                if (!model->isVisible())
+                    continue;
+                vpvl::Scalar radius, angle = 15.0;
+                vpvl::Vector3 center;
+                model->getBoundingSphere(center, radius);
+                vpvl::Scalar eye = radius / btSin(btRadians(angle * 0.5f));
+                lightProjection4x4.setToIdentity();
+                lightProjection4x4.perspective(25.0, 1.0, 1.0, 120.0);
+                //lightProjection4x4.perspective(angle, 1.0, 1.0, eye + radius + 5.0);
+                const vpvl::Vector3 &ev = m_renderer->scene()->lightPosition() * eye + center;
+                eyeQV3.setX(ev.x());
+                eyeQV3.setY(ev.y());
+                eyeQV3.setZ(ev.z());
+                centerQV3.setX(center.x());
+                centerQV3.setY(center.y());
+                centerQV3.setZ(center.z());
+                lightView4x4.setToIdentity();
+                lightView4x4.lookAt(QVector3D(30, 77, 30), QVector3D(0, 17, 0), QVector3D(0, 1, 0));
+                //lightView4x4.lookAt(eyeQV3, centerQV3, upQV3);
+                lightViewProjection4x4 = view4x4.inverted() * lightProjection4x4 * lightView4x4;
+                for (int i = 0; i < 16; i++)
+                    lightViewProjectionMatrixf[i] = lightViewProjection4x4.constData()[i];
+                m_renderer->setModelViewProjectionMatrix(lightViewProjectionMatrixf);
+                m_renderer->renderModelZPlot(model);
+            }
+            m_fbo->release();
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         }
-        m_fbo->bind();
-        glViewport(0, 0, m_fbo->width(), m_fbo->height());
+        glClearColor(0, 0, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        QVector3D eyeQV3, centerQV3;
-        // const QVector3D upQV3(0.0, 1.0, 0.0);
-        for (int i = 0; i < nmodels; i++) {
-            vpvl::PMDModel *model = models[i];
-            vpvl::Scalar radius, angle = 15.0;
-            vpvl::Vector3 center;
-            model->getBoundingSphere(center, radius);
-            vpvl::Scalar eye = radius / btSin(btRadians(angle * 0.5f));
-            projection4x4.setToIdentity();
-            projection4x4.perspective(25.0, 1.0, 1.0, 120.0);
-            //projection.perspective(angle, 1.0, 1.0, eye + radius + 5.0);
-            const vpvl::Vector3 &ev = m_renderer->scene()->lightPosition() * eye + center;
-            eyeQV3.setX(ev.x());
-            eyeQV3.setY(ev.y());
-            eyeQV3.setZ(ev.z());
-            centerQV3.setX(center.x());
-            centerQV3.setY(center.y());
-            centerQV3.setZ(center.z());
-            lightView4x4.setToIdentity();
-            lightView4x4.lookAt(QVector3D(30, 77, 30), QVector3D(0, 17, 0), QVector3D(0, 1, 0));
-            //lightView.lookAt(eyeQV3, centerQV3, upQV3);
-            const QMatrix4x4 &lightViewProjection4x4 = projection4x4 * lightView4x4;
+        m_renderer->clear();
+        {
+            /* モデル描写 */
+            modelViewProjection4x4 = modelProjection4x4 * modelView4x4;
             for (int i = 0; i < 16; i++)
-                modelViewMatrixf[i] = lightViewProjection4x4.constData()[i];
-            m_renderer->setModelViewProjectionMatrix(modelViewMatrixf);
-            m_renderer->renderModelZPlot(model);
+                modelViewProjectionMatrixf[i] = modelViewProjection4x4.constData()[i];
+            m_renderer->setModelViewProjectionMatrix(modelViewProjectionMatrixf);
+            for (int i = 0; i < nmodels; i++) {
+                vpvl::PMDModel *model = models[i];
+                if (model->isVisible()) {
+                    m_renderer->renderModelShadow(model);
+                    m_renderer->renderModel(model);
+                }
+            }
+            /* アクセサリ描写 */
+            const vpvl::Array<vpvl::Asset *> &assets = m_renderer->assets();
+            const int nassets = assets.count();
+            for (int i = 0; i < nassets; i++) {
+                vpvl::Asset *asset = assets[i];
+                m_renderer->renderAsset(asset);
+            }
         }
-        m_fbo->release();
     }
 
 private:

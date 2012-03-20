@@ -312,7 +312,7 @@ void Renderer::renderModel0(const cg::PMDModelUserData *userData, const PMDModel
     p->setVertexCount(vsize);
     p->setSubsetCount(nmaterials);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[gl2::kShadowIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[gl2::kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const gl2::PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];

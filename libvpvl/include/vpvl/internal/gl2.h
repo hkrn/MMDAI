@@ -527,7 +527,7 @@ enum VertexBufferObjectType
 {
     kModelVertices,
     kEdgeIndices,
-    kShadowIndices,
+    kModelIndices,
     kVertexBufferObjectMax
 };
 
