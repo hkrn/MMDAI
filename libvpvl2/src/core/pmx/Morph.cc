@@ -261,7 +261,7 @@ bool Morph::loadMaterials(const Array<pmx::Material *> &materials, Morph *morph)
     return true;
 }
 
-bool Morph::loadUVs(const Array<pmx::Vertex *> &uv, int offset, Morph *morph)
+bool Morph::loadUVs(const Array<pmx::Vertex *> &uv, int /* offset */, Morph *morph)
 {
     const int nMorphVertices = morph->m_vertices.count();
     const int nvertices = uv.count();
@@ -341,7 +341,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Morph::write(uint8_t *data) const
+void Morph::write(uint8_t * /* data */) const
 {
 }
 

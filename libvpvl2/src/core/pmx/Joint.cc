@@ -194,7 +194,7 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Joint::write(uint8_t *data) const
+void Joint::write(uint8_t * /* data */) const
 {
 }
 

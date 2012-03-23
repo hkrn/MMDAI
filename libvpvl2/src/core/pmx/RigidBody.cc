@@ -168,7 +168,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     size = ptr - start;
 }
 
-void RigidBody::write(uint8_t *data) const
+void RigidBody::write(uint8_t * /* data */) const
 {
 }
 

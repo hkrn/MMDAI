@@ -229,7 +229,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     size = ptr - start;
 }
 
-void Material::write(uint8_t *data) const
+void Material::write(uint8_t * /* data */) const
 {
 }
 

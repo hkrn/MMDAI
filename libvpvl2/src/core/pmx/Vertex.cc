@@ -107,7 +107,7 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     }
     info.verticesPtr = ptr;
     size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         if (!internal::validateSize(ptr, baseSize, rest)) {
             return false;
         }
@@ -201,6 +201,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             break;
         }
     }
+    return true;
 }
 
 void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
@@ -262,7 +263,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     size = ptr - start;
 }
 
-void Vertex::write(uint8_t *data) const
+void Vertex::write(uint8_t * /* data */) const
 {
 }
 

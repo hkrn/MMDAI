@@ -138,7 +138,7 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
     return validateSize(ptr, 1, stride, rest);
 }
 
-static int variantIndex(uint8_t *&ptr, size_t size)
+static inline int variantIndex(uint8_t *&ptr, size_t size)
 {
     int result = 0;
     switch (size) {
@@ -160,7 +160,7 @@ static int variantIndex(uint8_t *&ptr, size_t size)
     return result;
 }
 
-static int variantIndexUnsigned(uint8_t *&ptr, size_t size)
+static inline int variantIndexUnsigned(uint8_t *&ptr, size_t size)
 {
     int result = 0;
     switch (size) {
@@ -200,7 +200,7 @@ static void inline setRotation(const float *input, Quaternion &output)
 #endif
 }
 
-static void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
+static inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
     assert(table && size > 0);
     for (int i = 0; i < size; i++) {
@@ -208,10 +208,10 @@ static void buildInterpolationTable(float x1, float x2, float y1, float y2, int 
         float t = in;
         while (1) {
             const float v = spline1(t, x1, x2) - in;
-            if (fabs(v) < 0.0001f)
+            if (btFuzzyZero(btFabs(v)))
                 break;
             const float tt = spline2(t, x1, x2);
-            if (tt == 0.0f)
+            if (btFuzzyZero(tt))
                 break;
             t -= v / tt;
         }

@@ -64,6 +64,7 @@ namespace pmx
 {
 
 struct Model::SkinnedVertex {
+    SkinnedVertex() {}
     Vector3 position;
     Vector3 normal;
     Vector3 texcoord;
@@ -165,7 +166,7 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Model::save(uint8_t *data) const
+void Model::save(uint8_t * /* data */) const
 {
 }
 
@@ -368,12 +369,6 @@ void Model::setVisible(bool value)
 
 void Model::update()
 {
-    // reset all bone states
-    const int nbones = m_bones.count();
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
-        bone->reset();
-    }
     // before physics simulation
     const int nBPSBones = m_BPSOrderedBones.count();
     for (int i = 0; i < nBPSBones; i++) {
@@ -389,6 +384,7 @@ void Model::update()
         bone->performInverseKinematics();
     }
     // update local transform matrix
+    const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
         bone->performUpdateLocalTransform();
@@ -545,7 +541,7 @@ void Model::parseMorphs(const DataInfo &info)
     }
 }
 
-void Model::parseDisplayNames(const DataInfo &info)
+void Model::parseDisplayNames(const DataInfo & /* info */)
 {
 }
 
