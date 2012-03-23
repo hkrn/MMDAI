@@ -121,7 +121,8 @@ public:
         return new String(m_value);
     }
     const HashString toHashString() const {
-        const QByteArray &bytes = m_value.toAscii();
+        const QByteArray &bytes = m_value.toUtf8();
+        m_keys.insert(bytes);
         return HashString(bytes.constData());
     }
     bool equals(const IString *value) const {
@@ -130,8 +131,12 @@ public:
     const QString &value() const {
         return m_value;
     }
+    const uint8_t *toByteArray() const {
+        return reinterpret_cast<const uint8_t *>(m_value.toUtf8().constData());
+    }
 
 private:
+    mutable QSet<QByteArray> m_keys;
     QString m_value;
 };
 
@@ -360,11 +365,7 @@ QDebug operator<<(QDebug debug, const Color &v)
 QDebug operator<<(QDebug debug, const IString *str)
 {
     if (str) {
-        /*
-        const bool isUTF8 = str->codec() == StaticString::kUTF8;
-        const QTextCodec *codec = QTextCodec::codecForName(isUTF8 ? "UTF-8" : "UTF-16");
-        debug.nospace() << codec->toUnicode(str->ptr());
-        */
+        debug.nospace() << reinterpret_cast<const internal::String *>(str)->value();
     }
     else {
         debug.nospace() << "\"\"";
@@ -559,7 +560,7 @@ protected:
             qDebug() << m_currentFrameIndex;
             if (m_motion->isReachedTo(m_motion->maxFrameIndex()))
                 m_motion->reset();
-            m_model->updateImmediate();
+            m_model->update();
         }
     }
     void wheelEvent(QWheelEvent *event) {
@@ -636,10 +637,28 @@ private:
         loadAsset(kStageDir, kStageName);
         loadAsset(kStageDir, kStage2Name);
 #endif
+
+#if 1
+        for (int i = 0; i < m_model->materials().count(); i++)
+            qDebug() << m_model->materials().at(i);
+        for (int i = 0; i < m_model->bones().count(); i++)
+            qDebug() << m_model->bones().at(i);
+        for (int i = 0; i < m_model->morphs().count(); i++)
+            qDebug() << m_model->morphs().at(i);
+        /*
+        for (int i = 0; i < m_model->rigidBodies().count(); i++)
+            qDebug("rbody%d: %s", i, m_delegate.toUnicode(m_model->rigidBodies()[i]->name()).c_str());
+        for (int i = 0; i < m_model->joints().count(); i++)
+            qDebug("joint%d: %s", i, m_delegate.toUnicode(m_model->joints()[i]->name()).c_str());
+            */
+#endif
+
         if (internal::slurpFile(kMotion, bytes)) {
             m_motion = new vmd::Motion(m_model, m_encoding);
             qDebug() << "Loaded motion:" << m_motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
             qDebug() << "maxFrameIndex:" << m_motion->maxFrameIndex();
+            m_motion->seek(0.0);
+            m_model->update();
         }
         else {
             m_delegate.log(Renderer::kLogWarning, "Failed parsing the model motion, skipped...");
@@ -653,19 +672,6 @@ private:
             scene->setCameraMotion(&m_camera);
             */
         m_renderer->updateAllModel();
-
-#if 1
-        for (int i = 0; i < m_model->materials().count(); i++)
-            qDebug() << m_model->materials().at(i);
-        for (int i = 0; i < m_model->orderedBones().count(); i++)
-            qDebug() << m_model->orderedBones().at(i);
-        for (int i = 0; i < m_model->morphs().count(); i++)
-            qDebug() << m_model->morphs().at(i);
-        for (int i = 0; i < m_model->rigidBodies().count(); i++)
-            qDebug("rbody%d: %s", i, m_delegate.toUnicode(m_model->rigidBodies()[i]->name()).c_str());
-        for (int i = 0; i < m_model->joints().count(); i++)
-            qDebug("joint%d: %s", i, m_delegate.toUnicode(m_model->joints()[i]->name()).c_str());
-#endif
 
         return true;
     }
