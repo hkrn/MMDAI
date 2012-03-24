@@ -77,6 +77,7 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
     void mergeMorph(Morph::Bone *morph, float weight);
+    void performFullTransform();
     void performTransform();
     void performInverseKinematics();
     void performUpdateLocalTransform();
@@ -97,7 +98,7 @@ public:
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }
-    float constraintAngle() const { return m_constraintAngle; }
+    float constraintAngle() const { return m_angleConstraint; }
     float weight() const { return m_weight; }
     int index() const { return m_index; }
     int id() const { return m_id; }
@@ -129,6 +130,7 @@ private:
     Transform m_localToOrigin;
     Transform m_IKLinkTransform;
     Vector3 m_origin;
+    Vector3 m_offset;
     Vector3 m_position;
     Vector3 m_positionInherence;
     Vector3 m_positionMorph;
@@ -136,7 +138,7 @@ private:
     Vector3 m_fixedAxis;
     Vector3 m_axisX;
     Vector3 m_axisZ;
-    float m_constraintAngle;
+    float m_angleConstraint;
     float m_weight;
     int m_id;
     int m_parentBoneIndex;

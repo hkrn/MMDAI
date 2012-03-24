@@ -97,7 +97,8 @@ public:
 
 private:
     Bone *m_bones[4];
-    Vector4 m_uvs[4];
+    Vector4 m_originUVs[4];
+    Vector4 m_positionUVs[4];
     Vector3 m_origin;
     Vector3 m_position;
     Vector3 m_normal;
