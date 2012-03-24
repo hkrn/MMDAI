@@ -373,14 +373,14 @@ void Model::update()
     const int nBPSBones = m_BPSOrderedBones.count();
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
-        bone->performTransform();
+        bone->performFullTransform();
         bone->performInverseKinematics();
     }
     // after physics simulation
     const int nAPSBones = m_APSOrderedBones.count();
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];
-        bone->performTransform();
+        bone->performFullTransform();
         bone->performInverseKinematics();
     }
     // update local transform matrix
