@@ -513,8 +513,8 @@ void PMDModel::updateIndices()
                             sizeof(uint16_t) * nindices);
         int nvertices = m_vertices.count();
         for (int i = 0; i < nindices; i++) {
-            uint16_t i = m_indicesPointer[i];
-            if (i >= nvertices)
+            const uint16_t index = m_indicesPointer[i];
+            if (index >= nvertices)
                 m_indicesPointer[i] = 0;
         }
 #ifdef VPVL_COORDINATE_OPENGL
