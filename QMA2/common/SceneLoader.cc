@@ -1087,6 +1087,7 @@ void SceneLoader::release()
 void SceneLoader::render()
 {
     UIEnableMultisample();
+    glEnable(GL_DEPTH_TEST);
     m_renderer->clear();
     /* モデル行列とビュー行列の乗算を QMatrix4x4 を用いて行う */
     QMatrix4x4 modelView4x4, projection4x4;
