@@ -265,6 +265,7 @@ private:
     bool m_enableRotateGesture;
     bool m_enableScaleGesture;
     bool m_enableUndoGesture;
+    bool m_isImageHandleRectIntersect;
 
     Q_DISABLE_COPY(SceneWidget)
 };

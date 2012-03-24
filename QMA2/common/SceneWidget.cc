@@ -95,7 +95,8 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_enableMoveGesture(false),
     m_enableRotateGesture(false),
     m_enableScaleGesture(false),
-    m_enableUndoGesture(false)
+    m_enableUndoGesture(false),
+    m_isImageHandleRectIntersect(false)
 {
     m_grid = new Grid();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
@@ -453,10 +454,10 @@ void SceneWidget::insertPoseToSelectedModel()
 {
     PMDModel *model = m_loader->selectedModel();
     VPDFilePtr ptr = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
-                                                             tr("Open VPD file"),
-                                                             tr("VPD file (*.vpd)"),
-                                                             m_settings),
-                                              model);
+                                                              tr("Open VPD file"),
+                                                              tr("VPD file (*.vpd)"),
+                                                              m_settings),
+                                               model);
     if (!ptr.isNull() && model)
         model->updateImmediate();
 }
@@ -850,32 +851,34 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_clickOrigin = pos;
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     bool movable = false, rotateable = false;
-    if (m_bones.count() == 1) {
-        vpvl::Bone *bone = m_bones.first();
+    if (!m_bones.isEmpty()) {
+        vpvl::Bone *bone = m_bones.last();
         movable = bone->isMovable();
         rotateable = bone->isRotateable();
-    }
-    if (m_handles->testHitImage(pos, movable, rotateable, flags, rect)) {
-        switch (flags) {
-        /*
+        if (m_handles->testHitImage(pos, movable, rotateable, flags, rect)) {
+            switch (flags) {
+            /*
          * ローカルとグローバルの切り替えなので、値を反転して設定する必要がある
          * また、ローカルとグローバル、移動回転ハンドルはそれぞれフラグ値は排他的
          */
-        case Handles::kLocal:
-            m_handles->setLocal(false);
-            break;
-        case Handles::kGlobal:
-            m_handles->setLocal(true);
-            break;
-        default:
-            setCursor(Qt::SizeVerCursor);
-            break;
+            case Handles::kLocal:
+                m_handles->setLocal(false);
+                break;
+            case Handles::kGlobal:
+                m_handles->setLocal(true);
+                break;
+            default:
+                setCursor(Qt::SizeVerCursor);
+                break;
+            }
+            m_handleFlags = flags;
+            emit handleDidGrab();
+            return;
         }
-        m_handleFlags = flags;
-        emit handleDidGrab();
-        return;
     }
+    /* モデルが選択状態にある */
     if (PMDModel *model = m_loader->selectedModel()) {
+        /* ボーン選択モードである */
         if (m_editMode == kSelect) {
             static const Vector3 size(0.1f, 0.1f, 0.1f);
             const QPointF &pos = event->posF();
@@ -885,6 +888,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             const int nbones = bones.count();
             Bone *nearestBone = 0;
             Scalar hitLambda = 1.0f;
+            /* 操作可能なボーンを探す */
             for (int i = 0; i < nbones; i++) {
                 Bone *bone = bones[i];
                 const Vector3 &o = bone->localTransform().getOrigin(),
@@ -895,6 +899,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                     break;
                 }
             }
+            /* 操作可能で最も近いボーンを選択状態にする */
             if (nearestBone) {
                 QList<Bone *> bones;
                 if (event->modifiers() & Qt::CTRL)
@@ -903,6 +908,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 emit boneDidSelect(bones);
             }
         }
+        /* 回転または移動モードの場合モデルがクリックされたかどうかで操作判定を行う */
         else if (m_editMode == kRotate || m_editMode == kMove) {
             Vector3 rayFrom, rayTo, pick;
             makeRay(pos, rayFrom, rayTo);
@@ -919,15 +925,19 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const QPointF &pos = event->posF();
+    m_isImageHandleRectIntersect = false;
     if (event->buttons() & Qt::LeftButton) {
         const Qt::KeyboardModifiers modifiers = event->modifiers();
         const QPointF &diff = m_handles->diffPoint2D(pos);
         /* モデルのハンドルがクリックされた */
-        if (m_handleFlags & Handles::kView)
+        if (m_handleFlags & Handles::kView) {
             grabModelHandleByRaycast(pos, diff, m_handleFlags);
+        }
         /* 有効な右下のハンドルがクリックされた */
-        else if (m_handleFlags & Handles::kEnable)
+        else if (m_handleFlags & Handles::kEnable) {
             grabImageHandle(pos, diff);
+            m_isImageHandleRectIntersect = true;
+        }
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             Scene *scene = m_loader->renderEngine()->scene();
@@ -946,9 +956,17 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             rotateScene(Vector3(diff.y() * 0.5f, diff.x() * 0.5f, 0.0f));
         }
         m_handles->setPoint2D(event->posF());
-        return;
     }
-    changeCursorIfHandlesHit(pos);
+    else if (!m_bones.isEmpty()) {
+        QRectF rect;
+        int flags;
+        vpvl::Bone *bone = m_bones.last();
+        bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+        m_isImageHandleRectIntersect = m_handles->testHitImage(pos, movable, rotateable, flags, rect);
+    }
+    else {
+        changeCursorIfHandlesHit(pos);
+    }
 }
 
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -969,7 +987,7 @@ void SceneWidget::paintGL()
     m_loader->render();
     m_grid->draw(m_loader->renderEngine()->scene(), m_loader->isGridVisible());
     vpvl::Bone *bone = 0;
-    if (m_bones.count() == 1)
+    if (!m_bones.isEmpty())
         bone = m_bones.first();
     /* ハンドルのレンダリングに問題があるようで一旦このレンダリング順になっている */
     if (bone)
@@ -979,8 +997,10 @@ void SceneWidget::paintGL()
     m_info->draw();
     switch (m_editMode) {
     case kSelect:
-        m_debugDrawer->drawModelBones(m_loader->selectedModel(), selectedBones());
-        m_debugDrawer->drawBoneTransform(bone);
+        if (!(m_handleFlags & Handles::kEnable))
+            m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_bones);
+        if (m_isImageHandleRectIntersect)
+            m_debugDrawer->drawBoneTransform(bone, m_handles->isLocal());
         break;
     case kRotate:
         m_handles->drawRotationHandle();
@@ -1185,8 +1205,8 @@ void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
     QRectF rect;
     /* ハンドルアイコンの中に入っているか? */
     bool movable = false, rotateable = false;
-    if (m_bones.count() == 1) {
-        vpvl::Bone *bone = m_bones.first();
+    if (!m_bones.isEmpty()) {
+        vpvl::Bone *bone = m_bones.last();
         movable = bone->isMovable();
         rotateable = bone->isRotateable();
     }
