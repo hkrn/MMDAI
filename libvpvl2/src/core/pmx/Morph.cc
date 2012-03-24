@@ -347,6 +347,8 @@ void Morph::write(uint8_t * /* data */) const
 
 void Morph::performTransform(float weight)
 {
+    if (btFuzzyZero(weight))
+        return;
     int nmorphs;
     switch (m_type) {
     case 0: /* group */
