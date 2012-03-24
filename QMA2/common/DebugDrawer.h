@@ -159,25 +159,26 @@ public:
                     &childTransform = child->localTransform();
             const vpvl::Vector3 &origin = boneTransform.getOrigin(),
                     &childOrigin = childTransform.getOrigin();
-            const vpvl::Scalar &s = 0.075f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+            const vpvl::Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+            const vpvl::Scalar &sphereRadius = 0.2f;
             vertices.clear();
-            tr.setOrigin(vpvl::Vector3(s, 0.0f, 0.0f));
+            tr.setOrigin(vpvl::Vector3(coneRadius, 0.0f, 0.0f));
             vertices.add(tr * origin);
             vertices.add(childOrigin);
-            tr.setOrigin(vpvl::Vector3(-s, 0.0f, 0.0f));
+            tr.setOrigin(vpvl::Vector3(-coneRadius, 0.0f, 0.0f));
             vertices.add(tr * origin);
             vertices.add(childOrigin);
             vpvl::Bone *mutableBone = const_cast<vpvl::Bone *>(bone);
             if (selected.contains(mutableBone)) {
-                drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.0f, 0.0f));
+                drawSphere(origin, sphereRadius, vpvl::Vector3(1.0f, 0.0f, 0.0f));
                 m_program.setUniformValue("color", kColorRed);
             }
             else if (linkedIKBones.contains(mutableBone)) {
-                drawSphere(origin, 0.1f, vpvl::Vector3(1.0f, 0.75f, 0.0f));
+                drawSphere(origin, sphereRadius, vpvl::Vector3(1.0f, 0.75f, 0.0f));
                 m_program.setUniformValue("color", kColorOrange);
             }
             else {
-                drawSphere(origin, 0.1f, vpvl::Vector3(0.0f, 0.0f, 1.0f));
+                drawSphere(origin, sphereRadius, vpvl::Vector3(0.0f, 0.0f, 1.0f));
                 m_program.setUniformValue("color", kColorBlue);
             }
             m_program.setAttributeArray("inPosition",
@@ -189,7 +190,7 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawBoneTransform(vpvl::Bone *bone) {
+    void drawBoneTransform(vpvl::Bone *bone, bool isLocal) {
         if (!m_visible || !bone || !m_program.isLinked())
             return;
         float matrix[16];
@@ -206,11 +207,8 @@ public:
         m_program.enableAttributeArray("inPosition");
         const QString &name = internal::toQString(bone);
         const vpvl::Bone *child = bone->child();
-        if ((name.indexOf("指") != -1
-             || name.endsWith("腕")
-             || name.endsWith("ひじ")
-             || name.endsWith("手首")
-             ) && child) {
+        bool hasLocalAxis = (name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首"));
+        if (isLocal && child && hasLocalAxis) {
             /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
             const vpvl::Vector3 &boneOrigin = bone->originPosition();
             const vpvl::Vector3 &childOrigin = child->originPosition();
