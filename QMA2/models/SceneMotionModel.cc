@@ -231,7 +231,7 @@ public:
             }
             else {
                 /* 元フレームのインデックスが 0 未満の時は削除 */
-                BaseKeyframe *frameToDelete = animation->findKeyframe(frame->frameIndex(), frame->name());
+                BaseKeyframe *frameToDelete = animation->findKeyframe(frameIndex, frame->name());
                 animation->deleteKeyframe(frameToDelete);
                 m_smm->setData(modelIndex, QVariant());
             }
