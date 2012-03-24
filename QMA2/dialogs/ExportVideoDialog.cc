@@ -176,7 +176,9 @@ void ExportVideoDialog::showEvent(QShowEvent * /* event */)
     m_pathEdit->setText(m_loader->backgroundAudio());
     m_widthBox->setValue(m_loader->sceneWidth());
     m_heightBox->setValue(m_loader->sceneHeight());
+    m_fromIndexBox->setMaximum(maxFrameIndex);
     m_fromIndexBox->setValue(qBound(0, m_loader->frameIndexEncodeVideoFrom(), maxFrameIndex));
+    m_toIndexBox->setMaximum(maxFrameIndex);
     m_toIndexBox->setValue(maxFrameIndex);
     switch (m_loader->sceneFPSForEncodeVideo()) {
     case 120:

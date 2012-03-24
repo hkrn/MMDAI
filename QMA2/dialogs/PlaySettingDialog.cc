@@ -163,8 +163,11 @@ bool PlaySettingDialog::isBoneWireframesVisible() const
 
 void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 {
+    int maxIndex = m_loader->renderEngine()->scene()->maxFrameIndex();
     m_pathEdit->setText(m_loader->backgroundAudio());
+    m_fromIndexBox->setMaximum(maxIndex);
     m_fromIndexBox->setValue(m_loader->frameIndexPlayFrom());
+    m_toIndexBox->setMaximum(maxIndex);
     m_toIndexBox->setValue(m_loader->frameIndexPlayTo());
     switch (m_loader->sceneFPSForPlay()) {
     case 120:
