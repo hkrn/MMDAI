@@ -88,7 +88,8 @@ Vertex::Vertex()
       m_edge(0)
 {
     for (int i = 0; i < 4; i++) {
-        m_uvs[i].setZero();
+        m_originUVs[i].setZero();
+        m_positionUVs[i].setZero();
         m_bones[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
@@ -216,7 +217,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     int additionalUVSize = info.additionalUVSize;
     for (int i = 0; i < additionalUVSize; i++) {
         const AdditinalUVUnit &uv = *reinterpret_cast<AdditinalUVUnit *>(ptr);
-        m_uvs[i].setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
+        m_originUVs[i].setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
         ptr += sizeof(uv);
     }
     m_type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
@@ -269,7 +270,15 @@ void Vertex::write(uint8_t * /* data */) const
 
 void Vertex::mergeMorph(Morph::UV *morph, float weight)
 {
-    m_uvs[morph->offset] += morph->position * weight;
+    int offset = morph->offset;
+    if (offset >= 0 && offset < 4) {
+        const Vector4 &m = morph->position, &o = m_originUVs[offset];
+        Vector4 v(o.x() + m.x() * weight,
+                  o.y() + m.y() * weight,
+                  o.z() + m.z() * weight,
+                  o.w() + m.w() * weight);
+        m_positionUVs[offset] = v;
+    }
 }
 
 void Vertex::mergeMorph(Morph::Vertex *morph, float weight)
@@ -324,7 +333,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
 
 const Vector4 &Vertex::uv(int index) const
 {
-    return index >= 0 && index < 4 ? m_uvs[index] : kZeroV4;
+    return index >= 0 && index < 4 ? m_positionUVs[index] : kZeroV4;
 }
 
 } /* namespace pmx */
