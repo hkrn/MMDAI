@@ -273,6 +273,7 @@ void MainWindow::newProjectFile()
          * SceneWidget#clear は内部的に削除と同時に新しい空のプロジェクトが作成される
          */
         m_currentProjectFilename = "";
+        m_currentMotionFilename = "";
         m_boneMotionModel->removeMotion();
         m_morphMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
