@@ -14,8 +14,8 @@
    height="297mm"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
-   sodipodi:docname="test.svg">
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="ui.svg">
   <defs
      id="defs4">
     <marker
@@ -580,9 +580,9 @@
      inkscape:snap-global="false"
      inkscape:snap-bbox="false"
      inkscape:window-width="1366"
-     inkscape:window-height="678"
+     inkscape:window-height="744"
      inkscape:window-x="0"
-     inkscape:window-y="32"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      inkscape:bbox-paths="true">
     <inkscape:grid
@@ -597,7 +597,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -783,7 +783,25 @@
            y="153.69551"
            style="fill:#4d4d4d" /></flowRegion><flowPara
          id="flowPara3524">Global</flowPara><flowPara
-         id="flowPara3526" /></flowRoot>  </g>
+         id="flowPara3526" /></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3506-3"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Sans"
+       transform="translate(107.39128,-0.457479)"
+       inkscape:export-filename="/home/hkrn/src/MMDAI/QMA2/resources/view.png"
+       inkscape:export-xdpi="307.20001"
+       inkscape:export-ydpi="307.20001"><flowRegion
+         id="flowRegion3508-0"><rect
+           id="rect3510-7"
+           width="204.33333"
+           height="48"
+           x="429.33334"
+           y="194.36218"
+           style="fill:#4d4d4d" /></flowRegion><flowPara
+         id="flowPara3512-9">View</flowPara><flowPara
+         id="flowPara3190" /><flowPara
+         id="flowPara3516-1" /><flowPara
+         id="flowPara3514-6" /></flowRoot>  </g>
   <g
      inkscape:groupmode="layer"
      id="layer2"
