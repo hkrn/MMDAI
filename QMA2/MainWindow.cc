@@ -1234,7 +1234,8 @@ void MainWindow::connectWidgets()
 {
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
-    connect(m_sceneWidget, SIGNAL(handleDidMove(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl::Vector3,vpvl::Bone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidMoveAbsolute(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translateTo(vpvl::Vector3,vpvl::Bone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl::Vector3,vpvl::Bone*,int)));
     connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Scalar,vpvl::Bone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl::Scalar,vpvl::Bone*,int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));

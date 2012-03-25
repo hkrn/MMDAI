@@ -79,6 +79,7 @@ SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     m_handles(0),
     m_settings(settings),
     m_editMode(kSelect),
+    m_totalDelta(0.0f),
     m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
     m_frameIndex(0.0f),
@@ -412,7 +413,6 @@ Asset *SceneWidget::addAsset(const QString &path)
     }
     return asset;
 }
-
 
 void SceneWidget::addAssetFromMetadata()
 {
@@ -856,11 +856,11 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         movable = bone->isMovable();
         rotateable = bone->isRotateable();
         if (m_handles->testHitImage(pos, movable, rotateable, flags, rect)) {
-            switch (flags) {
             /*
-         * ローカルとグローバルの切り替えなので、値を反転して設定する必要がある
-         * また、ローカルとグローバル、移動回転ハンドルはそれぞれフラグ値は排他的
-         */
+             * ローカルとグローバルの切り替えなので、値を反転して設定する必要がある
+             * また、ローカルとグローバル、移動回転ハンドルはそれぞれフラグ値は排他的
+             */
+            switch (flags) {
             case Handles::kLocal:
                 m_handles->setLocal(false);
                 break;
@@ -868,9 +868,11 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 m_handles->setLocal(true);
                 break;
             default:
-                setCursor(Qt::SizeVerCursor);
                 break;
             }
+            QPixmap npixmap(32, 32);
+            npixmap.fill(Qt::transparent);
+            setCursor(QCursor(npixmap));
             m_handleFlags = flags;
             emit handleDidGrab();
             return;
@@ -933,10 +935,12 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         if (m_handleFlags & Handles::kView) {
             grabModelHandleByRaycast(pos, diff, m_handleFlags);
         }
-        /* 有効な右下のハンドルがクリックされた */
+        /* 有効な右下のハンドルがクリックされた (かつ操作切り替えボタンではないこと) */
         else if (m_handleFlags & Handles::kEnable) {
-            grabImageHandle(pos, diff);
             m_isImageHandleRectIntersect = true;
+            m_totalDelta = m_totalDelta + (pos.y() - m_clickOrigin.y()) * 0.1f;
+            grabImageHandle(m_totalDelta);
+            QCursor::setPos(mapToGlobal(m_clickOrigin.toPoint()));
         }
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
@@ -955,14 +959,27 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         else {
             rotateScene(Vector3(diff.y() * 0.5f, diff.x() * 0.5f, 0.0f));
         }
-        m_handles->setPoint2D(event->posF());
+        m_handles->setPoint2D(pos);
     }
     else if (!m_bones.isEmpty()) {
         QRectF rect;
         int flags;
         vpvl::Bone *bone = m_bones.last();
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+        /* 操作ハンドル(右下の画像)にマウスカーソルが入ってるか? */
         m_isImageHandleRectIntersect = m_handles->testHitImage(pos, movable, rotateable, flags, rect);
+        /* ハンドル操作中ではない場合のみ */
+        if (m_handleFlags == Handles::kNone) {
+            if (m_isImageHandleRectIntersect) {
+                if (flags & Handles::kLocal || flags & Handles::kGlobal)
+                    setCursor(Qt::PointingHandCursor);
+                else
+                    setCursor(Qt::SizeVerCursor);
+            }
+            else {
+                unsetCursor();
+            }
+        }
     }
     else {
         changeCursorIfHandlesHit(pos);
@@ -973,6 +990,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     changeCursorIfHandlesHit(event->posF());
     setEditMode(m_editMode);
+    m_totalDelta = 0.0f;
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(Vector3(0.0f, 0.0f, 0.0f));
@@ -1082,7 +1100,7 @@ void SceneWidget::panTriggered(QPanGesture *event)
             emit handleDidGrab();
             break;
         case Qt::GestureUpdated:
-            emit handleDidMove(newDelta, bone, 'V');
+            emit handleDidMoveRelative(newDelta, bone, 'V');
             break;
         case Qt::GestureFinished:
             emit handleDidRelease();
@@ -1201,56 +1219,39 @@ void SceneWidget::updateFPS()
 
 void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
 {
-    int flags;
-    QRectF rect;
-    /* ハンドルアイコンの中に入っているか? */
-    bool movable = false, rotateable = false;
-    if (!m_bones.isEmpty()) {
-        vpvl::Bone *bone = m_bones.last();
-        movable = bone->isMovable();
-        rotateable = bone->isRotateable();
-    }
-    if (m_handles->testHitImage(pos, movable, rotateable, flags, rect) && flags & Handles::kEnable) {
-        setCursor(Qt::SizeVerCursor);
-    }
     /* 回転モードの場合は回転ハンドルに入っているか? */
-    else if (m_editMode == kRotate || m_editMode == kMove) {
+    if (m_editMode == kRotate || m_editMode == kMove) {
         Vector3 rayFrom, rayTo, pick;
+        int flags;
         makeRay(pos, rayFrom, rayTo);
         if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
             setCursor(Qt::OpenHandCursor);
         else
             unsetCursor();
     }
-    else {
-        unsetCursor();
-    }
 }
 
-void SceneWidget::grabImageHandle(const QPointF &pos, const QPointF &diff)
+void SceneWidget::grabImageHandle(const Scalar &deltaValue)
 {
     int flags = m_handleFlags;
     int mode = m_handles->isLocal() ? 'L' : 'G';
     /* 移動ハンドルである */
     if (flags & Handles::kMove) {
         /* 意図する向きと実際の値が逆なので、反転させる */
-        const Scalar &value = -diff.y() * 0.1f;
         Vector3 delta(0.0f, 0.0f, 0.0f);
+        const Scalar &kDeltaBias = -0.2;
         if (flags & Handles::kX)
-            delta.setX(value);
+            delta.setX(deltaValue * kDeltaBias);
         else if (flags & Handles::kY)
-            delta.setY(value);
+            delta.setY(deltaValue * kDeltaBias);
         else if (flags & Handles::kZ)
-            delta.setZ(value);
-        emit handleDidMove(delta, 0, mode);
+            delta.setZ(deltaValue * kDeltaBias);
+        emit handleDidMoveAbsolute(delta, 0, mode);
     }
     /* 回転ハンドルである */
     else if (flags & Handles::kRotate) {
-        const QPointF &diff = pos - m_clickOrigin;
-        Scalar angle = diff.manhattanLength();
         /* 上にいくとマイナスになるように変更する */
-        if (diff.y() >= 0)
-            angle = -angle;
+        const Scalar &angle = -deltaValue;
         int axis = 0;
         if (flags & Handles::kX) {
             axis = 'X' << 8;
@@ -1261,7 +1262,6 @@ void SceneWidget::grabImageHandle(const QPointF &pos, const QPointF &diff)
         else if (flags & Handles::kZ) {
             axis = 'Z' << 8;
         }
-        qDebug() << angle;
         emit handleDidRotate(angle, 0, mode | axis);
     }
 }
@@ -1285,7 +1285,7 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &di
         else if (flags & Handles::kZ) {
             delta = transform.getBasis() * Vector3(0, 0, diff2.y());
         }
-        emit handleDidMove(delta, 0, mode);
+        emit handleDidMoveRelative(delta, 0, mode);
         return;
     }
     makeRay(pos, rayFrom, rayTo);

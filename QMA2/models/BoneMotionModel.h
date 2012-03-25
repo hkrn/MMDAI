@@ -96,6 +96,7 @@ public slots:
     void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
     void rotateAngle(const vpvl::Scalar &value, vpvl::Bone *bone, int flags);
     void translateDelta(const vpvl::Vector3 &delta, vpvl::Bone *bone, int flags);
+    void translateTo(const vpvl::Vector3 &position, vpvl::Bone *bone, int flags);
     void selectBones(const QList<vpvl::Bone *> &bones);
     void saveTransform();
     void commitTransform();
@@ -107,11 +108,14 @@ signals:
     void keyframesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
+    void translateInternal(const vpvl::Vector3 &position, const vpvl::Vector3 &delta, vpvl::Bone *bone, int flags);
+
     const SceneWidget *m_sceneWidget;
     KeyFramePairList m_copiedKeyframes;
     QList<vpvl::Bone *> m_selectedBones;
     vpvl::PMDModel::State *m_state;
     vpvl::BoneKeyframe::InterpolationParameter m_interpolationParameter;
+    /* 操作時のボーンの位置と回転量を保存する。操作中は変化しない (vpvl::PMDModel::State と重複するが...) */
     QHash<vpvl::Bone *, QPair<vpvl::Vector3, vpvl::Quaternion> > m_boneTransformStates;
 
     Q_DISABLE_COPY(BoneMotionModel)

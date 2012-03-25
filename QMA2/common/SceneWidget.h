@@ -170,7 +170,8 @@ signals:
     void sceneDidStop();
     void handleDidGrab();
     void handleDidRelease();
-    void handleDidMove(const vpvl::Vector3 &delta, vpvl::Bone *bone, int mode);
+    void handleDidMoveAbsolute(const vpvl::Vector3 &position, vpvl::Bone *bone, int mode);
+    void handleDidMoveRelative(const vpvl::Vector3 &position, vpvl::Bone *bone, int mode);
     void handleDidRotate(const vpvl::Scalar &angle, vpvl::Bone *bone, int mode);
     void boneDidSelect(const QList<vpvl::Bone *> &bones);
     void motionDidSeek(float frameIndex);
@@ -236,7 +237,7 @@ private:
     bool acceptAddingModel(vpvl::PMDModel *model);
     void updateFPS();
     void changeCursorIfHandlesHit(const QPointF &pos);
-    void grabImageHandle(const QPointF &pos, const QPointF &diff);
+    void grabImageHandle(const vpvl::Scalar &deltaValue);
     void grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags);
 
     internal::DebugDrawer *m_debugDrawer;
@@ -248,6 +249,7 @@ private:
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
     EditMode m_editMode;
+    vpvl::Scalar m_totalDelta;
     float m_lastDistance;
     float m_prevElapsed;
     float m_frameIndex;

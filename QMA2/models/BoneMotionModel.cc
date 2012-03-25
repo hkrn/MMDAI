@@ -383,12 +383,70 @@ private:
     PMDModel::State *m_oldState;
 };
 
-static Bone *BoneFromModelIndex(const QModelIndex &index, PMDModel *model)
+static Bone *UIBoneFromModelIndex(const QModelIndex &index, PMDModel *model)
 {
     /* QModelIndex -> TreeIndex -> ByteArray -> Bone の順番で対象のボーンを求めて選択状態にする作業 */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     QByteArray bytes = internal::fromQString(item->name());
     return model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+}
+
+static const Quaternion UIRotateGlobalAxisAngle(const Scalar &value, int flags)
+{
+    Quaternion rot = Quaternion::getIdentity();
+    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
+    switch ((flags & 0xff00) >> 8) {
+    case 'X':
+        rot.setRotation(Vector3(1, 0, 0), -radian(value));
+        break;
+    case 'Y':
+        rot.setRotation(Vector3(0, 1, 0), -radian(value));
+        break;
+    case 'Z':
+        rot.setRotation(Vector3(0, 0, 1), radian(value));
+        break;
+    }
+    return rot;
+}
+
+static const Quaternion UIRotateLocalAxisAngle(const Bone *bone, const Scalar &value, int flags)
+{
+    /* 座標系の関係でX軸とY軸は値を反転させる */
+    const QString &name = internal::toQString(bone);
+    const Bone *child = bone->child();
+    Quaternion rot = Quaternion::getIdentity();
+    Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
+    /* ボーン名によって特別扱いする必要がある */
+    if ((name.indexOf("指") != -1
+         || name.endsWith("腕")
+         || name.endsWith("ひじ")
+         || name.endsWith("手首")
+         ) && child) {
+        /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
+        const Vector3 &boneOrigin = bone->originPosition();
+        const Vector3 &childOrigin = child->originPosition();
+        /* 外積を使ってそれぞれの軸を求める */
+        axisX = (childOrigin - boneOrigin).normalized();
+        Vector3 tmp1 = axisX;
+        name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+        axisZ = axisX.cross(tmp1).normalized();
+        Vector3 tmp2 = axisX;
+        tmp2.setZ(-axisZ.z());
+        axisY = tmp2.cross(-axisX).normalized();
+    }
+    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
+    switch ((flags & 0xff00) >> 8) {
+    case 'X':
+        rot.setRotation(axisX, -radian(value));
+        break;
+    case 'Y':
+        rot.setRotation(axisY, -radian(value));
+        break;
+    case 'Z':
+        rot.setRotation(axisZ, radian(value));
+        break;
+    }
+    return rot;
 }
 
 }
@@ -571,7 +629,7 @@ void BoneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indic
         QList<KeyFramePtr> frames;
         foreach (const QModelIndex &index, indices) {
             if (index.isValid()) {
-                Bone *bone = BoneFromModelIndex(index, m_model);
+                Bone *bone = UIBoneFromModelIndex(index, m_model);
                 if (bone)
                     bones.append(bone);
                 const QVariant &data = index.data(kBinaryDataRole);
@@ -985,90 +1043,31 @@ void BoneMotionModel::setRotation(int coordinate, float value)
 
 void BoneMotionModel::translateDelta(const Vector3 &delta, Bone *bone, int flags)
 {
+    /* ボーン指定がない場合は BoneMotionModel が持ってる選択状態のボーンにする */
     if (!bone) {
         if (isBoneSelected())
             bone = selectedBone();
         else
             return;
     }
-    const Vector3 &lastPosition = bone->position();
-    switch (flags & 0xff) {
-    case 'V': { /* ビュー変形 (カメラ視点) */
-        const Transform &modelViewTransform = m_sceneWidget->sceneLoader()->renderEngine()->scene()->modelViewTransform();
-        const Vector3 &value2 = modelViewTransform.getBasis() * delta;
-        bone->setPosition(Transform(bone->rotation(), lastPosition) * value2);
-        break;
-    }
-    case 'L': /* ローカル変形 */
-        bone->setPosition(Transform(bone->rotation(), lastPosition) * delta);
-        break;
-    case 'G': /* グローバル変形 */
-        bone->setPosition(lastPosition + delta);
-        break;
-    default:
-        qFatal("Unexpected mode: %c", flags & 0xff);
-        break;
-    }
-    m_model->updateImmediate();
-    emit positionDidChange(bone, lastPosition);
+    /* 差分値による更新 */
+    translateInternal(bone->position(), delta, bone, flags);
 }
 
-static const Quaternion UIRotateGlobalAxisAngle(const Scalar &value, int flags)
+void BoneMotionModel::translateTo(const Vector3 &position, Bone *bone, int flags)
 {
-    Quaternion rot = Quaternion::getIdentity();
-    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
-    switch ((flags & 0xff00) >> 8) {
-    case 'X':
-        rot.setRotation(Vector3(1, 0, 0), -radian(value));
-        break;
-    case 'Y':
-        rot.setRotation(Vector3(0, 1, 0), -radian(value));
-        break;
-    case 'Z':
-        rot.setRotation(Vector3(0, 0, 1), radian(value));
-        break;
+    /* ボーン指定がない場合は BoneMotionModel が持ってる選択状態のボーンにする */
+    if (!bone) {
+        if (isBoneSelected())
+            bone = selectedBone();
+        else
+            return;
     }
-    return rot;
-}
-
-static const Quaternion UIRotateLocalAxisAngle(const Bone *bone, const Scalar &value, int flags)
-{
-    /* 座標系の関係でX軸とY軸は値を反転させる */
-    const QString &name = internal::toQString(bone);
-    const Bone *child = bone->child();
-    Quaternion rot = Quaternion::getIdentity();
-    Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
-    /* ボーン名によって特別扱いする必要がある */
-    if ((name.indexOf("指") != -1
-         || name.endsWith("腕")
-         || name.endsWith("ひじ")
-         || name.endsWith("手首")
-         ) && child) {
-        /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-        const Vector3 &boneOrigin = bone->originPosition();
-        const Vector3 &childOrigin = child->originPosition();
-        /* 外積を使ってそれぞれの軸を求める */
-        axisX = (childOrigin - boneOrigin).normalized();
-        Vector3 tmp1 = axisX;
-        name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
-        axisZ = axisX.cross(tmp1).normalized();
-        Vector3 tmp2 = axisX;
-        tmp2.setZ(-axisZ.z());
-        axisY = tmp2.cross(-axisX).normalized();
-    }
-    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
-    switch ((flags & 0xff00) >> 8) {
-    case 'X':
-        rot.setRotation(axisX, -radian(value));
-        break;
-    case 'Y':
-        rot.setRotation(axisY, -radian(value));
-        break;
-    case 'Z':
-        rot.setRotation(axisZ, radian(value));
-        break;
-    }
-    return rot;
+    /* 絶対値による更新 */
+    Vector3 lastPosition = kZeroV;
+    if (m_boneTransformStates.contains(bone))
+        lastPosition = m_boneTransformStates[bone].first;
+    translateInternal(lastPosition, position, bone, flags);
 }
 
 void BoneMotionModel::rotateAngle(const Scalar &value, Bone *bone, int flags)
@@ -1123,4 +1122,27 @@ Bone *BoneMotionModel::findBone(const QString &name)
             return bone;
     }
     return 0;
+}
+
+void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &delta, Bone *bone, int flags)
+{
+    switch (flags & 0xff) {
+    case 'V': { /* ビュー変形 (カメラ視点) */
+        const Transform &modelViewTransform = m_sceneWidget->sceneLoader()->renderEngine()->scene()->modelViewTransform();
+        const Vector3 &value2 = modelViewTransform.getBasis() * delta;
+        bone->setPosition(Transform(bone->rotation(), position) * value2);
+        break;
+    }
+    case 'L': /* ローカル変形 */
+        bone->setPosition(Transform(bone->rotation(), position) * delta);
+        break;
+    case 'G': /* グローバル変形 */
+        bone->setPosition(position + delta);
+        break;
+    default:
+        qFatal("Unexpected mode: %c", flags & 0xff);
+        break;
+    }
+    m_model->updateImmediate();
+    emit positionDidChange(bone, position);
 }
