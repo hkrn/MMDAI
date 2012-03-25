@@ -145,7 +145,7 @@ public:
         return 0;
     }
     const QString &name() const {
-        static const QString &name = QApplication::tr("Light");
+        static const QString name = QApplication::tr("Light");
         return name;
     }
     bool isRoot() const {

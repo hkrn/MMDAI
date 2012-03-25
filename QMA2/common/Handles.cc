@@ -245,16 +245,21 @@ Handles::Handles(SceneLoader *loader, const QSize &size)
       m_world(0),
       m_loader(loader),
       m_trackedHandle(0),
+      m_state(kLocal),
       m_prevPos3D(0.0f, 0.0f, 0.0f),
       m_prevAngle(0.0f),
       m_visibilityFlags(kVisibleAll),
-      m_isLocal(true),
       m_visible(true)
 {
     m_helper = new internal::TextureDrawHelper(size);
     m_world = new Handles::StaticWorld();
     m_rotationHandle.asset = 0;
     m_translationHandle.asset = 0;
+}
+
+bool Handles::hasOperationFlag(int value)
+{
+    return value & kGlobal || value & kLocal || value & kView;
 }
 
 Handles::~Handles()
@@ -274,6 +279,7 @@ Handles::~Handles()
     context->deleteTexture(m_z.disableRotate.textureID);
     context->deleteTexture(m_global.textureID);
     context->deleteTexture(m_local.textureID);
+    context->deleteTexture(m_view.textureID);
     delete m_helper;
     delete m_world;
     delete m_rotationHandle.asset;
@@ -326,6 +332,8 @@ void Handles::resize(const QSize &size)
     m_global.rect.setSize(m_global.size);
     m_local.rect.setTopLeft(QPointF(baseX + (m_global.size.width() - m_local.size.width()) / 2, baseY + yoffset * 2));
     m_local.rect.setSize(m_local.size);
+    m_view.rect.setTopLeft(QPointF(baseX + (m_global.size.width() - m_view.size.width()) / 2, baseY + yoffset * 2));
+    m_view.rect.setSize(m_view.size);
 }
 
 bool Handles::testHitModel(const Vector3 &rayFrom,
@@ -344,19 +352,19 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
             Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
             if (m_bone->isMovable() && m_visibilityFlags & kMove) {
                 if (model == &m_translationHandle.x && (m_visibilityFlags & kX))
-                    flags = kView | kMove | kX;
+                    flags = kModel | kMove | kX;
                 else if (model == &m_translationHandle.y && (m_visibilityFlags & kY))
-                    flags = kView | kMove | kY;
+                    flags = kModel | kMove | kY;
                 else if (model == &m_translationHandle.z && (m_visibilityFlags & kZ))
-                    flags = kView | kMove | kZ;
+                    flags = kModel | kMove | kZ;
             }
             if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
                 if (model == &m_rotationHandle.x && (m_visibilityFlags & kX))
-                    flags = kView | kRotate | kX;
+                    flags = kModel | kRotate | kX;
                 else if (model == &m_rotationHandle.y && (m_visibilityFlags & kY))
-                    flags = kView | kRotate | kY;
+                    flags = kModel | kRotate | kY;
                 else if (model == &m_rotationHandle.z && (m_visibilityFlags & kZ))
-                    flags = kView | kRotate | kZ;
+                    flags = kModel | kRotate | kZ;
             }
             if (setTracked)
                 m_trackedHandle = model;
@@ -431,17 +439,39 @@ bool Handles::testHitImage(const QPointF &p,
             flags = kDisable | kRotate | kZ;
         }
     }
-    if (m_isLocal) {
+    switch (m_state) {
+    case kView:
+        if (m_view.rect.contains(pos)) {
+            rect = m_local.rect;
+            flags = kView;
+        }
+        break;
+    case kLocal:
         if (m_local.rect.contains(pos)) {
             rect = m_local.rect;
             flags = kLocal;
         }
-    }
-    else {
+        break;
+    case kGlobal:
         if (m_global.rect.contains(pos)) {
             rect = m_global.rect;
             flags = kGlobal;
         }
+        break;
+    case Handles::kNone:
+    case Handles::kEnable:
+    case Handles::kDisable:
+    case Handles::kMove:
+    case Handles::kRotate:
+    case Handles::kX:
+    case Handles::kY:
+    case Handles::kZ:
+    case Handles::kModel:
+    case Handles::kVisibleMove:
+    case Handles::kVisibleRotate:
+    case Handles::kVisibleAll:
+    default:
+        break;
     }
     return flags != kNone;
 }
@@ -449,6 +479,32 @@ bool Handles::testHitImage(const QPointF &p,
 btScalar Handles::angle(const Vector3 &pos) const
 {
     return pos.angle(m_bone->localTransform().getOrigin());
+}
+
+int Handles::modeFromState() const
+{
+    switch (m_state) {
+    case kView:
+        return 'V';
+    case kLocal:
+        return 'L';
+    case kGlobal:
+        return 'G';
+    case Handles::kNone:
+    case Handles::kEnable:
+    case Handles::kDisable:
+    case Handles::kMove:
+    case Handles::kRotate:
+    case Handles::kX:
+    case Handles::kY:
+    case Handles::kZ:
+    case Handles::kModel:
+    case Handles::kVisibleMove:
+    case Handles::kVisibleRotate:
+    case Handles::kVisibleAll:
+    default:
+        return 'L';
+    }
 }
 
 void Handles::setPoint3D(const Vector3 &value)
@@ -499,9 +555,9 @@ void Handles::setBone(Bone *value)
     updateBone();
 }
 
-void Handles::setLocal(bool value)
+void Handles::setState(Flags value)
 {
-    m_isLocal = value;
+    m_state = value;
 }
 
 void Handles::setVisible(bool value)
@@ -567,10 +623,31 @@ void Handles::drawImageHandles(bool movable, bool rotateable)
         m_helper->draw(m_y.disableRotate.rect, m_y.disableRotate.textureID);
         m_helper->draw(m_z.disableRotate.rect, m_z.disableRotate.textureID);
     }
-    if (m_isLocal)
+    switch (m_state) {
+    case kView:
+        m_helper->draw(m_view.rect, m_view.textureID);
+        break;
+    case kLocal:
         m_helper->draw(m_local.rect, m_local.textureID);
-    else
+        break;
+    case kGlobal:
         m_helper->draw(m_global.rect, m_global.textureID);
+        break;
+    case Handles::kNone:
+    case Handles::kEnable:
+    case Handles::kDisable:
+    case Handles::kMove:
+    case Handles::kRotate:
+    case Handles::kX:
+    case Handles::kY:
+    case Handles::kZ:
+    case Handles::kModel:
+    case Handles::kVisibleMove:
+    case Handles::kVisibleRotate:
+    case Handles::kVisibleAll:
+    default:
+        break;
+    }
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -673,6 +750,9 @@ void Handles::loadImageHandles()
     image.load(":icons/local.png");
     m_local.size = image.size();
     m_local.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    image.load(":icons/view.png");
+    m_view.size = image.size();
+    m_view.textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
 }
 
 void Handles::loadModelHandles()

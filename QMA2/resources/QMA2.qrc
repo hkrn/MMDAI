@@ -57,6 +57,7 @@
         <file alias="z-enable-rotate.png">images/icons/z-enable-rotate.png</file>
         <file alias="global.png">images/icons/global.png</file>
         <file alias="local.png">images/icons/local.png</file>
+        <file alias="view.png">images/icons/view.png</file>
     </qresource>
     <qresource prefix="/models">
         <file alias="rotation.3ds">blender/rotation.3ds</file>

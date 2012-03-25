@@ -857,24 +857,38 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         rotateable = bone->isRotateable();
         if (m_handles->testHitImage(pos, movable, rotateable, flags, rect)) {
             /*
-             * ローカルとグローバルの切り替えなので、値を反転して設定する必要がある
-             * また、ローカルとグローバル、移動回転ハンドルはそれぞれフラグ値は排他的
+             * kView => kLocal => kGlobal => kView の順番で切り替えを行う
              */
-            switch (flags) {
-            case Handles::kLocal:
-                m_handles->setLocal(false);
-                break;
-            case Handles::kGlobal:
-                m_handles->setLocal(true);
-                break;
-            default:
-                break;
-            }
             QPixmap npixmap(32, 32);
             npixmap.fill(Qt::transparent);
-            setCursor(QCursor(npixmap));
-            m_handleFlags = flags;
-            emit handleDidGrab();
+            switch (flags) {
+            case Handles::kView:
+                m_handles->setState(Handles::kLocal);
+                break;
+            case Handles::kLocal:
+                m_handles->setState(Handles::kGlobal);
+                break;
+            case Handles::kGlobal:
+                m_handles->setState(Handles::kView);
+                break;
+            case Handles::kNone:
+            case Handles::kEnable:
+            case Handles::kDisable:
+            case Handles::kMove:
+            case Handles::kRotate:
+            case Handles::kX:
+            case Handles::kY:
+            case Handles::kZ:
+            case Handles::kModel:
+            case Handles::kVisibleMove:
+            case Handles::kVisibleRotate:
+            case Handles::kVisibleAll:
+            default:
+                setCursor(QCursor(npixmap));
+                m_handleFlags = flags;
+                emit handleDidGrab();
+                break;
+            }
             return;
         }
     }
@@ -932,11 +946,11 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         const Qt::KeyboardModifiers modifiers = event->modifiers();
         const QPointF &diff = m_handles->diffPoint2D(pos);
         /* モデルのハンドルがクリックされた */
-        if (m_handleFlags & Handles::kView) {
+        if (m_handleFlags & Handles::kModel) {
             grabModelHandleByRaycast(pos, diff, m_handleFlags);
         }
         /* 有効な右下のハンドルがクリックされた (かつ操作切り替えボタンではないこと) */
-        else if (m_handleFlags & Handles::kEnable) {
+        else if (m_handleFlags & Handles::kEnable && !Handles::hasOperationFlag(m_handleFlags)) {
             m_isImageHandleRectIntersect = true;
             m_totalDelta = m_totalDelta + (pos.y() - m_clickOrigin.y()) * 0.1f;
             grabImageHandle(m_totalDelta);
@@ -971,7 +985,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         /* ハンドル操作中ではない場合のみ */
         if (m_handleFlags == Handles::kNone) {
             if (m_isImageHandleRectIntersect) {
-                if (flags & Handles::kLocal || flags & Handles::kGlobal)
+                if (Handles::hasOperationFlag(flags))
                     setCursor(Qt::PointingHandCursor);
                 else
                     setCursor(Qt::SizeVerCursor);
@@ -1018,7 +1032,7 @@ void SceneWidget::paintGL()
         if (!(m_handleFlags & Handles::kEnable))
             m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_bones);
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, m_handles->isLocal());
+            m_debugDrawer->drawBoneTransform(bone, m_handles->modeFromState());
         break;
     case kRotate:
         m_handles->drawRotationHandle();
@@ -1129,7 +1143,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         /* ボーンが選択されている場合はボーンの回転 (現時点でY軸のみ) */
         if (!m_bones.isEmpty()) {
             vpvl::Bone *bone = m_bones.last();
-            int mode = (m_handles->isLocal() ? 'L' : 'G'), axis = 'Y' << 8;
+            int mode = m_handles->modeFromState(), axis = 'Y' << 8;
             switch (state) {
             case Qt::GestureStarted:
                 emit handleDidGrab();
@@ -1234,7 +1248,7 @@ void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)
 {
     int flags = m_handleFlags;
-    int mode = m_handles->isLocal() ? 'L' : 'G';
+    int mode = m_handles->modeFromState();
     /* 移動ハンドルである */
     if (flags & Handles::kMove) {
         /* 意図する向きと実際の値が逆なので、反転させる */

@@ -133,7 +133,7 @@ public:
         m_program.enableAttributeArray("inPosition");
         QSet<vpvl::Bone *> linkedIKBones, targetBones, destinationBones;
         const vpvl::IKList &IKs = model->IKs();
-        int nIKs = IKs.count();
+        const int nIKs = IKs.count();
         for (int i = 0; i < nIKs; i++) {
             vpvl::IK *ik = IKs[i];
             const vpvl::BoneList &bones = ik->linkedBones();
@@ -190,7 +190,7 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawBoneTransform(vpvl::Bone *bone, bool isLocal) {
+    void drawBoneTransform(vpvl::Bone *bone, int mode) {
         if (!m_visible || !bone || !m_program.isLinked())
             return;
         float matrix[16];
@@ -207,8 +207,21 @@ public:
         m_program.enableAttributeArray("inPosition");
         const QString &name = internal::toQString(bone);
         const vpvl::Bone *child = bone->child();
+        static const vpvl::Scalar kLength = 2.0;
+        static const vpvl::Vector3 kRed   = vpvl::Vector3(1, 0, 0);
+        static const vpvl::Vector3 kGreen = vpvl::Vector3(0, 1, 0);
+        static const vpvl::Vector3 kBlue  = vpvl::Vector3(0, 0, 1);
         bool hasLocalAxis = (name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首"));
-        if (isLocal && child && hasLocalAxis) {
+        if (mode == 'V') {
+            /* モデルビュー行列を元に軸表示 */
+            const vpvl::Transform &transform = bone->localTransform();
+            const btMatrix3x3 &modelView = m_scene->modelViewTransform().getBasis();
+            const vpvl::Vector3 &origin = bone->localTransform().getOrigin();
+            drawLine(origin, transform * (modelView.getRow(0) * kLength), kRed);
+            drawLine(origin, transform * (modelView.getRow(1) * kLength), kGreen);
+            drawLine(origin, transform * (modelView.getRow(2) * kLength), kBlue);
+        }
+        else if (mode == 'L' && child && hasLocalAxis) {
             /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
             const vpvl::Vector3 &boneOrigin = bone->originPosition();
             const vpvl::Vector3 &childOrigin = child->originPosition();
@@ -219,31 +232,19 @@ public:
             vpvl::Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
             tmp2.setZ(-axisZ.z());
             vpvl::Vector3 axisY = tmp2.cross(-axisX).normalized();
-#if 1
             const vpvl::Transform &transform = bone->localTransform();
             const vpvl::Vector3 &origin = transform.getOrigin();
-            drawLine(origin, transform * (axisX * 2), vpvl::Vector3(1, 0, 0));
-            drawLine(origin, transform * (axisY * 2), vpvl::Vector3(0, 1, 0));
-            drawLine(origin, transform * (axisZ * 2), vpvl::Vector3(0, 0, 1));
-#else
-            btMatrix3x3 matrix(
-                        axisX.x(), axisX.y(), axisX.z(),
-                        axisY.x(), axisY.y(), axisY.z(),
-                        axisZ.x(), axisZ.y(), axisZ.z()
-                        );
-            const vpvl::Vector3 &origin = bone->localTransform().getOrigin();
-            vpvl::Transform transform(matrix, pos);
-            drawLine(origin, transform * vpvl::Vector3(1, 0, 0), vpvl::Vector3(1, 0, 0));
-            drawLine(origin, transform * vpvl::Vector3(0, 1, 0), vpvl::Vector3(0, 1, 0));
-            drawLine(origin, transform * vpvl::Vector3(0, 0, 1), vpvl::Vector3(0, 0, 1));
-#endif
+            drawLine(origin, transform * (axisX * kLength), kRed);
+            drawLine(origin, transform * (axisY * kLength), kGreen);
+            drawLine(origin, transform * (axisZ * kLength), kBlue);
         }
         else {
+            /* 固定軸に回転量を乗算 */
             const vpvl::Transform &transform = bone->localTransform();
             const vpvl::Vector3 &origin = transform.getOrigin();
-            drawLine(origin, transform * vpvl::Vector3(2, 0, 0), vpvl::Vector3(1, 0, 0));
-            drawLine(origin, transform * vpvl::Vector3(0, 2, 0), vpvl::Vector3(0, 1, 0));
-            drawLine(origin, transform * vpvl::Vector3(0, 0, 2), vpvl::Vector3(0, 0, 1));
+            drawLine(origin, transform * vpvl::Vector3(kLength, 0, 0), kRed);
+            drawLine(origin, transform * vpvl::Vector3(0, kLength, 0), kGreen);
+            drawLine(origin, transform * vpvl::Vector3(0, 0, kLength), kBlue);
         }
         m_program.release();
     }

@@ -109,10 +109,14 @@ public:
         kGlobal        = 0x80,
         kLocal         = 0x100,
         kView          = 0x200,
-        kVisibleMove   = kMove   | kX | kY | kZ | kView,
-        kVisibleRotate = kRotate | kX | kY | kZ | kView,
-        kVisibleAll    = kMove   | kRotate | kX | kY | kZ | kView
+        kModel         = 0x400,
+        kOperation     = kGlobal | kLocal | kView,
+        kVisibleMove   = kMove   | kX | kY | kZ | kModel,
+        kVisibleRotate = kRotate | kX | kY | kZ | kModel,
+        kVisibleAll    = kMove   | kRotate | kX | kY | kZ | kModel
     };
+
+    static bool hasOperationFlag(int value);
 
     Handles(SceneLoader *loader, const QSize &size);
     ~Handles();
@@ -144,8 +148,10 @@ public:
     vpvl::Bone *currentBone() const { return m_bone; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
+    Flags state() const { return m_state; }
+    int modeFromState() const;
 
-    bool isLocal() const { return m_isLocal; }
+    void setState(Flags value);
     void setBone(vpvl::Bone *value);
     void setLocal(bool value);
     void setVisible(bool value);
@@ -174,11 +180,12 @@ private:
     ImageHandle m_z;
     Texture m_global;
     Texture m_local;
+    Texture m_view;
+    Flags m_state;
     vpvl::Vector3 m_prevPos3D;
     QPointF m_prevPos2D;
     float m_prevAngle;
     int m_visibilityFlags;
-    bool m_isLocal;
     bool m_visible;
 
     Q_DISABLE_COPY(Handles)
