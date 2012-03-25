@@ -1,20 +1,20 @@
-#define ENABLE_SHADOW 0
 #ifdef GL_ES
 precision highp float;
-#define ENABLE_ALPHA_TEST 0
-#else
-#define ENABLE_ALPHA_TEST 1
 #endif
 
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
+uniform bool hasDepthTexture;
 uniform bool isMainAdditive;
 uniform bool isSubAdditive;
 uniform sampler2D mainTexture;
 uniform sampler2D subTexture;
 uniform sampler2D toonTexture;
+uniform sampler2D depthTexture;
 varying vec4 outColor;
 varying vec4 outTexCoord;
+varying vec4 outPosition;
+varying vec4 outShadowTexCoord;
 varying vec2 outToonTexCoord;
 const float kAlphaThreshold = 0.05;
 const float kOne = 1.0;
@@ -40,13 +40,19 @@ void main() {
             color *= texture2D(subTexture, outTexCoord.zw);
         }
     }
-#if ENABLE_ALPHA_TEST
-    if (color.a >= kAlphaThreshold)
-        gl_FragColor = color;
-    else
-        discard;
+    if (hasDepthTexture) {
+#if 0
+        float depth = texture2DProj(depthTexture, outShadowTexCoord).x;
+        if ((outShadowTexCoord.z / outShadowTexCoord.w) >= depth)
+            color.rgb *= 0.5;
 #else
-    gl_FragColor = color;
+        vec4 divided = outPosition / outPosition.w;
+        divided.z += 0.0005;
+        float depth = texture2D(depthTexture, divided.st).z;
+        if (outShadowTexCoord.w > 0.0 && depth < divided.z)
+            color.rgb *= 0.5;
 #endif
+    }
+    gl_FragColor = color;
 }
 

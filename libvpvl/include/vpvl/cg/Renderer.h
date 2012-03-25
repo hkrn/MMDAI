@@ -57,7 +57,7 @@ namespace vpvl
 namespace cg
 {
 
-struct PMDModelUserData;
+class PMDModelUserData;
 
 /**
  * @file

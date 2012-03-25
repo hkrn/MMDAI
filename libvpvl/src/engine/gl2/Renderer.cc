@@ -50,6 +50,18 @@ namespace vpvl
 namespace gl2
 {
 
+static const float kIdentityMatrix3x3[] = {
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1
+};
+static const float kIdentityMatrix4x4[] = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+
 #ifdef VPVL_ENABLE_OPENCL
 class Accelerator
 {
@@ -481,125 +493,6 @@ public:
 };
 
 #endif
-
-class AssetProgram : public ObjectProgram
-{
-public:
-    AssetProgram(Renderer::IDelegate *delegate)
-        : ObjectProgram(delegate),
-          m_texCoordAttributeLocation(0),
-          m_colorAttributeLocation(0),
-          m_normalMatrixUniformLocation(0),
-          m_transformMatrixUniformLocation(0),
-          m_materialAmbientUniformLocation(0),
-          m_materialDiffuseUniformLocation(0),
-          m_materialSpecularUniformLocation(0),
-          m_materialShininessUniformLocation(0),
-          m_hasTextureUniformLocation(0),
-          m_hasColorVertexUniformLocation(0),
-          m_textureUniformLocation(0),
-          m_opacityUniformLocation(0)
-    {
-    }
-    ~AssetProgram() {
-        m_texCoordAttributeLocation = 0;
-        m_colorAttributeLocation = 0;
-        m_normalMatrixUniformLocation = 0;
-        m_transformMatrixUniformLocation = 0;
-        m_materialAmbientUniformLocation = 0;
-        m_materialDiffuseUniformLocation = 0;
-        m_materialEmissionUniformLocation = 0;
-        m_materialSpecularUniformLocation = 0;
-        m_materialShininessUniformLocation = 0;
-        m_hasTextureUniformLocation = 0;
-        m_hasColorVertexUniformLocation = 0;
-        m_textureUniformLocation = 0;
-        m_opacityUniformLocation = 0;
-    }
-
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource);
-        if (ret) {
-            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
-            m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
-            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
-            m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
-            m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
-            m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-            m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
-            m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
-            m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-            m_hasTextureUniformLocation = glGetUniformLocation(m_program, "hasTexture");
-            m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
-            m_textureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
-            m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
-        }
-        return ret;
-    }
-
-    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_texCoordAttributeLocation);
-        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setColor(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_colorAttributeLocation);
-        glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setHasColor(bool value) {
-        glUniform1i(m_hasColorVertexUniformLocation, value ? 1 : 0);
-    }
-    void setNormalMatrix(const float value[16]) {
-        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setTransformMatrix(const float value[9]) {
-        glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setMaterialAmbient(const Color &value) {
-        glUniform3fv(m_materialAmbientUniformLocation, 1, value);
-    }
-    void setMaterialDiffuse(const Color &value) {
-        glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
-    }
-    void setMaterialEmission(const Color &value) {
-        glUniform3fv(m_materialEmissionUniformLocation, 1, value);
-    }
-    void setMaterialSpecular(const Color &value) {
-        glUniform3fv(m_materialSpecularUniformLocation, 1, value);
-    }
-    void setMaterialShininess(float value) {
-        glUniform1f(m_materialShininessUniformLocation, value);
-    }
-    void setOpacity(float value) {
-        glUniform1f(m_opacityUniformLocation, value);
-    }
-    void setTexture(GLuint value) {
-        if (value) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_textureUniformLocation, 0);
-            glUniform1i(m_hasTextureUniformLocation, 1);
-        }
-        else {
-            glUniform1i(m_hasTextureUniformLocation, 0);
-        }
-    }
-
-private:
-    GLuint m_texCoordAttributeLocation;
-    GLuint m_colorAttributeLocation;
-    GLuint m_normalMatrixUniformLocation;
-    GLuint m_transformMatrixUniformLocation;
-    GLuint m_materialAmbientUniformLocation;
-    GLuint m_materialDiffuseUniformLocation;
-    GLuint m_materialEmissionUniformLocation;
-    GLuint m_materialSpecularUniformLocation;
-    GLuint m_materialShininessUniformLocation;
-    GLuint m_hasTextureUniformLocation;
-    GLuint m_hasColorVertexUniformLocation;
-    GLuint m_textureUniformLocation;
-    GLuint m_opacityUniformLocation;
-};
-
 }
 }
 
@@ -633,20 +526,11 @@ Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
       #endif /* VPVL_LINK_QT */
       m_delegate(delegate),
       m_scene(0),
-      m_accelerator(0)
+      m_accelerator(0),
+      m_depthTexture(0)
 {
-    static const float kIdentityMatrix3x3[] = {
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1
-    };
-    static const float kIdentityMatrix4x4[] = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    };
     memcpy(m_normalMatrix, kIdentityMatrix3x3, sizeof(m_normalMatrix));
+    memcpy(m_lightViewProjectionMatrix, kIdentityMatrix4x4, sizeof(m_lightViewProjectionMatrix));
     memcpy(m_modelViewProjectionMatrix, kIdentityMatrix4x4, sizeof(m_modelViewProjectionMatrix));
     memcpy(m_modelViewMatrix, kIdentityMatrix4x4, sizeof(m_modelViewMatrix));
     memcpy(m_projectionMatrix, kIdentityMatrix4x4, sizeof(m_projectionMatrix));
@@ -669,6 +553,7 @@ Renderer::~Renderer()
         Asset *asset = assets[i];
         deleteAsset(asset);
     }
+    m_depthTexture = 0;
     delete m_accelerator;
     m_accelerator = 0;
     delete m_scene;
@@ -764,28 +649,28 @@ bool Renderer::uploadModel0(PMDModel::UserData *userData, PMDModel *model, const
     casted->hasSingleSphereMap = hasSingleSphere;
     casted->hasMultipleSphereMap = hasMultipleSphere;
     log0(kLogInfo,
-                    "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
-                    hasSingleSphere ? "true" : "false",
-                    hasMultipleSphere ? "true" : "false");
+         "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
+         hasSingleSphere ? "true" : "false",
+         hasMultipleSphere ? "true" : "false");
     glGenBuffers(kVertexBufferObjectMax, casted->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
                  model->edgeIndicesPointer(), GL_STATIC_DRAW);
     log0(kLogInfo,
-                    "Binding edge indices to the vertex buffer object (ID=%d)",
-                    casted->vertexBufferObjects[kEdgeIndices]);
+         "Binding edge indices to the vertex buffer object (ID=%d)",
+         casted->vertexBufferObjects[kEdgeIndices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kModelIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
                  model->indicesPointer(), GL_STATIC_DRAW);
     log0(kLogInfo,
-                    "Binding indices to the vertex buffer object (ID=%d)",
-                    casted->vertexBufferObjects[kModelIndices]);
+         "Binding indices to the vertex buffer object (ID=%d)",
+         casted->vertexBufferObjects[kModelIndices]);
     glBindBuffer(GL_ARRAY_BUFFER, casted->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
     log0(kLogInfo,
-                    "Binding model vertices to the vertex buffer object (ID=%d)",
-                    casted->vertexBufferObjects[kModelVertices]);
+         "Binding model vertices to the vertex buffer object (ID=%d)",
+         casted->vertexBufferObjects[kModelVertices]);
     if (m_delegate->uploadToonTexture("toon0.bmp", dir, textureID)) {
         casted->toonTextureID[0] = textureID;
         log0(kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
@@ -830,13 +715,14 @@ void Renderer::updateAllModel()
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         PMDModel *model = models[i];
-        if (model->isVisible())
-            updateModel(model);
+        updateModel(model);
     }
 }
 
 void Renderer::updateModel(PMDModel *model)
 {
+    if (!model || !model->isVisible())
+        return;
     PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
         return;
@@ -851,6 +737,8 @@ void Renderer::updateModel(PMDModel *model)
 
 void Renderer::renderModel(const PMDModel *model)
 {
+    if (!model || !model->isVisible())
+        return;
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
         return;
@@ -864,6 +752,7 @@ void Renderer::renderModel(const PMDModel *model)
                             model->strideSize(PMDModel::kNormalsStride));
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
                               model->strideSize(PMDModel::kTextureCoordsStride));
+    modelProgram->setDepthTexture(m_depthTexture);
 
     if (!model->isSoftwareSkinningEnabled()) {
         modelProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
@@ -876,6 +765,7 @@ void Renderer::renderModel(const PMDModel *model)
     modelProgram->setNormalMatrix(m_normalMatrix);
     modelProgram->setLightColor(m_scene->lightColor());
     modelProgram->setLightPosition(m_scene->lightPosition());
+    modelProgram->setLightViewProjectionMatrix(m_lightViewProjectionMatrix);
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
         modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                       model->strideSize(PMDModel::kToonTextureStride));
@@ -923,6 +813,8 @@ void Renderer::renderModel(const PMDModel *model)
 
 void Renderer::renderModelShadow(const PMDModel *model)
 {
+    if (!model || !model->isVisible())
+        return;
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
@@ -956,12 +848,15 @@ void Renderer::renderModelShadow(const PMDModel *model)
 
 void Renderer::renderModelZPlot(const PMDModel *model)
 {
+    if (!model || !model->isVisible())
+        return;
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
     if (!userData)
         return;
     ZPlotProgram *zplotProgram = userData->zplotProgram;
     zplotProgram->bind();
-    zplotProgram->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
+    zplotProgram->setModelViewProjectionMatrix(m_lightViewProjectionMatrix);
+    zplotProgram->setTransformMatrix(kIdentityMatrix4x4);
     glBindBuffer(GL_ARRAY_BUFFER, userData->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, userData->vertexBufferObjects[kModelIndices]);
     zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
@@ -974,8 +869,10 @@ void Renderer::renderModelZPlot(const PMDModel *model)
 
 void Renderer::renderModelEdge(const PMDModel *model)
 {
+    if (!model || !model->isVisible())
+        return;
     const PMDModelUserData *userData = static_cast<PMDModelUserData *>(model->userData());
-    if (!userData || model->edgeOffset() == 0.0f)
+    if (!userData || btFuzzyZero(model->edgeOffset()))
         return;
     EdgeProgram *edgeProgram = userData->edgeProgram;
     edgeProgram->bind();
@@ -1008,8 +905,20 @@ void Renderer::renderModelEdge(const PMDModel *model)
 void Renderer::renderAsset(const Asset *asset)
 {
 #ifdef VPVL_LINK_ASSIMP
+    if (!asset || btFuzzyZero(asset->opacity()))
+        return;
     const aiScene *a = asset->getScene();
     renderAssetRecurse(a, a->mRootNode, asset);
+#endif
+}
+
+void Renderer::renderAssetZPlot(const Asset *asset)
+{
+#ifdef VPVL_LINK_ASSIMP
+    if (!asset || btFuzzyZero(asset->opacity()))
+        return;
+    const aiScene *a = asset->getScene();
+    renderAssetZPlotRecurse(a, a->mRootNode, asset);
 #endif
 }
 
@@ -1132,13 +1041,18 @@ void Renderer::uploadAssetRecurse(const aiScene *scene, const aiNode *node, Asse
     const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
     AssetUserData *casted = static_cast<AssetUserData *>(userData);
-    AssetProgram *program = new AssetProgram(m_delegate);
+    AssetProgram *assetProgram = new AssetProgram(m_delegate);
+    ZPlotProgram *zplotProgram = new ZPlotProgram(m_delegate);
 #ifdef VPVL_LINK_QT
     program->initializeContext(QGLContext::currentContext());
+    program->initializeContext(QGLContext::currentContext());
 #endif
-    program->load(m_delegate->loadShader(Renderer::kAssetVertexShader).c_str(),
-                  m_delegate->loadShader(Renderer::kAssetFragmentShader).c_str());
-    casted->programs[node] = program;
+    assetProgram->load(m_delegate->loadShader(Renderer::kAssetVertexShader).c_str(),
+                       m_delegate->loadShader(Renderer::kAssetFragmentShader).c_str());
+    zplotProgram->load(m_delegate->loadShader(Renderer::kZPlotVertexShader).c_str(),
+                       m_delegate->loadShader(Renderer::kZPlotFragmentShader).c_str());
+    casted->assetPrograms[node] = assetProgram;
+    casted->zplotPrograms[node] = zplotProgram;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
@@ -1210,7 +1124,8 @@ void Renderer::deleteAssetRecurse(const aiScene *scene, const aiNode *node, Asse
         glDeleteBuffers(1, &vbo.vertices);
         glDeleteBuffers(1, &vbo.indices);
     }
-    delete casted->programs[node];
+    delete casted->assetPrograms[node];
+    delete casted->zplotPrograms[node];
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         deleteAssetRecurse(scene, node->mChildren[i], casted);
@@ -1291,33 +1206,33 @@ void Renderer::setAssetMaterial(const aiMaterial *material, const Asset *asset, 
 void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, const Asset *asset)
 {
     const btScalar &scaleFactor = asset->scaleFactor();
-    const Bone *bone = asset->parentBone();
-    float matrix4x4[16];
     aiVector3D aiS, aiP;
     aiQuaternion aiQ;
     node->mTransformation.Decompose(aiS, aiQ, aiP);
     const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
     Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
                         Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (bone) {
+    if (const Bone *bone = asset->parentBone()) {
         const Transform &boneTransform = bone->localTransform();
         const btMatrix3x3 &boneBasis = boneTransform.getBasis();
         transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
         transform.setBasis(boneBasis.scaled(scaleVector));
     }
     AssetUserData *userData = static_cast<AssetUserData *>(asset->userData());
-    AssetVertex v;
+    static const AssetVertex v;
     const GLvoid *vertexPtr = 0;
     const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
     const unsigned int nmeshes = node->mNumMeshes;
     const size_t stride = sizeof(AssetVertex);
-    AssetProgram *program = userData->programs[node];
+    float matrix4x4[16];
+    transform.getOpenGLMatrix(matrix4x4);
+    AssetProgram *program = userData->assetPrograms[node];
     program->bind();
     program->setModelViewProjectionMatrix(m_modelViewProjectionMatrix);
+    program->setLightViewProjectionMatrix(m_lightViewProjectionMatrix);
     program->setNormalMatrix(m_normalMatrix);
-    transform.getOpenGLMatrix(matrix4x4);
     program->setTransformMatrix(matrix4x4);
     program->setLightColor(m_scene->lightColor());
     program->setLightPosition(m_scene->lightPosition());
@@ -1339,6 +1254,48 @@ void Renderer::renderAssetRecurse(const aiScene *scene, const aiNode *node, cons
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderAssetRecurse(scene, node->mChildren[i], asset);
+}
+
+void Renderer::renderAssetZPlotRecurse(const aiScene *scene, const aiNode *node, const Asset *asset)
+{
+    const btScalar &scaleFactor = asset->scaleFactor();
+    aiVector3D aiS, aiP;
+    aiQuaternion aiQ;
+    node->mTransformation.Decompose(aiS, aiQ, aiP);
+    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
+    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
+                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
+    if (const Bone *bone = asset->parentBone()) {
+        const Transform &boneTransform = bone->localTransform();
+        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
+        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
+        transform.setBasis(boneBasis.scaled(scaleVector));
+    }
+    AssetUserData *userData = static_cast<AssetUserData *>(asset->userData());
+    const GLvoid *vertexPtr = 0;
+    const unsigned int nmeshes = node->mNumMeshes;
+    const size_t stride = sizeof(AssetVertex);
+    float matrix4x4[16];
+    transform.getOpenGLMatrix(matrix4x4);
+    ZPlotProgram *program = userData->zplotPrograms[node];
+    program->bind();
+    program->setModelViewProjectionMatrix(m_lightViewProjectionMatrix);
+    program->setTransformMatrix(matrix4x4);
+    glCullFace(GL_FRONT);
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const AssetVBO &vbo = userData->vbo[mesh];
+        const AssetIndices &indices = userData->indices[mesh];
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        program->setPosition(vertexPtr, stride);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    }
+    glCullFace(GL_BACK);
+    program->unbind();
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        renderAssetZPlotRecurse(scene, node->mChildren[i], asset);
 }
 #endif
 
@@ -1385,6 +1342,16 @@ void Renderer::setProjectionMatrix(float *value)
 void Renderer::setNormalMatrix(float *value)
 {
     memcpy(m_normalMatrix, value, sizeof(m_normalMatrix));
+}
+
+void Renderer::setLightViewProjectionMatrix(float *value)
+{
+    memcpy(m_lightViewProjectionMatrix, value, sizeof(m_lightViewProjectionMatrix));
+}
+
+void Renderer::setDepthTexture(GLuint value)
+{
+    m_depthTexture = value;
 }
 
 void Renderer::log0(LogLevel level, const char *format...)

@@ -156,6 +156,7 @@ public:
     void renderModelShadow(const PMDModel *model);
     void renderModelZPlot(const PMDModel *model);
     void renderAsset(const Asset *asset);
+    void renderAssetZPlot(const Asset *asset);
     void uploadAsset(Asset *asset, const std::string &dir);
     void deleteAsset(Asset *&asset);
     void releaseProject(Project *project);
@@ -169,6 +170,8 @@ public:
     void setModelViewMatrix(float *value);
     void setProjectionMatrix(float *value);
     void setNormalMatrix(float *value);
+    void setLightViewProjectionMatrix(float *value);
+    void setDepthTexture(GLuint value);
     const Array<Asset *> &assets() const { return m_assets; }
 
 protected:
@@ -185,10 +188,13 @@ private:
     void uploadAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData);
     void deleteAssetRecurse(const aiScene *scene, const aiNode *node, Asset::UserData *userData);
     void renderAssetRecurse(const aiScene *scene, const aiNode *node, const Asset *asset);
+    void renderAssetZPlotRecurse(const aiScene *scene, const aiNode *node, const Asset *asset);
     void setAssetMaterial(const aiMaterial *material, const Asset *asset, AssetProgram *program);
 #endif
 
     Accelerator *m_accelerator;
+    GLuint m_depthTexture;
+    float m_lightViewProjectionMatrix[16];
     float m_modelViewProjectionMatrix[16];
     float m_modelViewMatrix[16];
     float m_projectionMatrix[16];

@@ -82,10 +82,12 @@ VPVL_DECLARE_HANDLE(aiScene)
 #endif
 
 #ifndef VPVL_HAS_ICONV
+#undef iconv_open
 #define iconv_open(to, from) 0
+#undef iconv_close
 #define iconv_close(iconv)
 typedef void* iconv_t;
-#endif
+#endif /* VPVL_HAS_ICONV */
 
 namespace internal
 {

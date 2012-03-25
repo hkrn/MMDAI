@@ -1,18 +1,20 @@
 uniform mat4 modelViewProjectionMatrix;
+uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
 uniform vec3 materialAmbient;
 uniform vec4 materialDiffuse;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
+uniform bool hasDepthTexture;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonTexCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
+varying vec4 outPosition;
 varying vec4 outShadowTexCoord;
-varying vec4 outDepth;
 varying vec2 outToonTexCoord;
 const float kTwo = 2.0;
 const float kOne = 1.0;
@@ -28,13 +30,17 @@ vec2 makeSphereMap(vec3 position, vec3 normal) {
 void main() {
     vec3 view = normalize(inPosition.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 outPosition = modelViewProjectionMatrix * inPosition;
+    vec4 position = modelViewProjectionMatrix * inPosition;
     vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     outColor.rgb = min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3);
     outColor.a = materialDiffuse.a;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
     outToonTexCoord = inToonTexCoord;
-    gl_Position = outPosition;
+    if (hasDepthTexture) {
+        outShadowTexCoord = lightViewProjectionMatrix * inPosition;
+        outPosition = position;
+    }
+    gl_Position = position;
 }
 

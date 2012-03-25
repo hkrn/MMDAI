@@ -299,6 +299,7 @@ protected:
             qFatal("Unable to load scene");
 
         resize(kWidth, kHeight);
+        /* 60FPS */
         startTimer(1000.0f / (vpvl::Scene::kFPS * 2));
         m_timer.start();
     }
@@ -353,13 +354,9 @@ protected:
         m_renderer->resize(w, h);
     }
     virtual void paintGL() {
-        QMatrix4x4 modelView4x4, modelProjection4x4, modelViewProjection4x4,
-                lightView4x4, lightProjection4x4, lightViewProjection4x4;
-        float modelViewMatrixf[16], projectionMatrixf[16], modelViewProjectionMatrixf[16],
-                normalMatrixf[9], lightViewProjectionMatrixf[16];
+        QMatrix4x4 modelView, projection, lightViewProjection;
+        float modelViewMatrixf[16], projectionMatrixf[16], normalMatrixf[9];
         const vpvl::Scene *scene = m_renderer->scene();
-        const vpvl::Array<vpvl::PMDModel *> &models = scene->getRenderingOrder();
-        const int nmodels = models.count();
         /* 行列の設定 */
         scene->getModelViewMatrix(modelViewMatrixf);
         scene->getProjectionMatrix(projectionMatrixf);
@@ -368,78 +365,137 @@ protected:
         m_renderer->setProjectionMatrix(projectionMatrixf);
         m_renderer->setNormalMatrix(normalMatrixf);
         for (int i = 0; i < 16; i++) {
-            modelView4x4.data()[i] = modelViewMatrixf[i];
-            modelProjection4x4.data()[i] = projectionMatrixf[i];
+            modelView.data()[i] = modelViewMatrixf[i];
+            projection.data()[i] = projectionMatrixf[i];
         }
+        /* シャドウマッピングの描写 */
         glEnable(GL_DEPTH_TEST);
-        {
-            /* シャドウマッピング用のテクスチャ描写 */
-            // const QVector3D upQV3(0.0, 1.0, 0.0);
-            QVector3D eyeQV3, centerQV3;
-            m_fbo->bind();
-            glViewport(0, 0, m_fbo->width(), m_fbo->height());
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            QMatrix4x4 view4x4 = modelView4x4;
-            view4x4.setColumn(3, QVector4D(0, 0, 0, 1));
-            for (int i = 0; i < nmodels; i++) {
-                vpvl::PMDModel *model = models[i];
-                if (!model->isVisible())
-                    continue;
-                vpvl::Scalar radius, angle = 15.0;
-                vpvl::Vector3 center;
-                model->getBoundingSphere(center, radius);
-                vpvl::Scalar eye = radius / btSin(btRadians(angle * 0.5f));
-                lightProjection4x4.setToIdentity();
-                lightProjection4x4.perspective(25.0, 1.0, 1.0, 120.0);
-                //lightProjection4x4.perspective(angle, 1.0, 1.0, eye + radius + 5.0);
-                const vpvl::Vector3 &ev = m_renderer->scene()->lightPosition() * eye + center;
-                eyeQV3.setX(ev.x());
-                eyeQV3.setY(ev.y());
-                eyeQV3.setZ(ev.z());
-                centerQV3.setX(center.x());
-                centerQV3.setY(center.y());
-                centerQV3.setZ(center.z());
-                lightView4x4.setToIdentity();
-                lightView4x4.lookAt(QVector3D(30, 77, 30), QVector3D(0, 17, 0), QVector3D(0, 1, 0));
-                //lightView4x4.lookAt(eyeQV3, centerQV3, upQV3);
-                lightViewProjection4x4 = view4x4.inverted() * lightProjection4x4 * lightView4x4;
-                for (int i = 0; i < 16; i++)
-                    lightViewProjectionMatrixf[i] = lightViewProjection4x4.constData()[i];
-                m_renderer->setModelViewProjectionMatrix(lightViewProjectionMatrixf);
-                m_renderer->renderModelZPlot(model);
-            }
-            m_fbo->release();
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        }
+        renderShadow(lightViewProjection);
+        /* 場面の描写 */
         glClearColor(0, 0, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_renderer->clear();
-        {
-            /* モデル描写 */
-            modelViewProjection4x4 = modelProjection4x4 * modelView4x4;
-            for (int i = 0; i < 16; i++)
-                modelViewProjectionMatrixf[i] = modelViewProjection4x4.constData()[i];
-            m_renderer->setModelViewProjectionMatrix(modelViewProjectionMatrixf);
-            for (int i = 0; i < nmodels; i++) {
-                vpvl::PMDModel *model = models[i];
-                if (model->isVisible()) {
-                    m_renderer->renderModelShadow(model);
-                    m_renderer->renderModel(model);
-                }
-            }
-            /* アクセサリ描写 */
-            const vpvl::Array<vpvl::Asset *> &assets = m_renderer->assets();
-            const int nassets = assets.count();
-            for (int i = 0; i < nassets; i++) {
-                vpvl::Asset *asset = assets[i];
-                m_renderer->renderAsset(asset);
-            }
-        }
+        renderScene(modelView, projection, lightViewProjection);
     }
 
 private:
+    void getBoundingSphere(vpvl::Vector3 &center, vpvl::Scalar &radius) {
+        const vpvl::Scene *scene = m_renderer->scene();
+        const vpvl::Array<vpvl::PMDModel *> &models = scene->getRenderingOrder();
+        const int nmodels = models.count();
+        vpvl::Array<vpvl::Scalar> aradius;
+        aradius.resize(nmodels);
+        vpvl::Array<vpvl::Vector3> acenter;
+        acenter.resize(nmodels);
+        center.setZero();
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = models[i];
+            if (model->isVisible()) {
+                model->getBoundingSphere(acenter[i], aradius[i]);
+                center += acenter[i];
+            }
+        }
+        center /= nmodels;
+        radius = 0.0;
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = models[i];
+            if (model->isVisible()) {
+                const vpvl::Scalar &distance = center.distance(acenter[i]) + aradius[i];
+                btSetMax(radius, distance);
+            }
+        }
+    }
+    void renderShadow(QMatrix4x4 &lightViewProjection) {
+        /* シャドウマッピング用のテクスチャ作成 */
+        m_fbo->bind();
+        glBindTexture(GL_TEXTURE_2D, m_fbo->texture());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glViewport(0, 0, m_fbo->width(), m_fbo->height());
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        /* 視差の設定 */
+        const vpvl::Scene *scene = m_renderer->scene();
+        vpvl::Vector3 center;
+        vpvl::Scalar radius, angle = scene->fovy();
+        getBoundingSphere(center, radius);
+        /* 視点行列の設定 */
+        QMatrix4x4 lightView4x4, lightProjection4x4;
+        QVector3D eyeQV3, centerQV3;
+        float lightViewProjectionMatrixf[16];
+        vpvl::Scalar eye = radius / btSin(btRadians(angle * 0.5f));
+        lightProjection4x4.setToIdentity();
+        lightProjection4x4.perspective(angle, 1.0, vpvl::Scene::kFrustumNear, vpvl::Scene::kFrustumFar);
+        const vpvl::Vector3 &ev = scene->lightPosition() * eye + center;
+        eyeQV3.setX(ev.x());
+        eyeQV3.setY(ev.y());
+        eyeQV3.setZ(ev.z());
+        centerQV3.setX(center.x());
+        centerQV3.setY(center.y());
+        centerQV3.setZ(center.z());
+        lightView4x4.setToIdentity();
+        lightView4x4.lookAt(eyeQV3, centerQV3, QVector3D(0, 1, 0));
+        lightViewProjection = lightProjection4x4 * lightView4x4;
+        for (int i = 0; i < 16; i++)
+            lightViewProjectionMatrixf[i] = lightViewProjection.constData()[i];
+        m_renderer->setLightViewProjectionMatrix(lightViewProjectionMatrixf);
+        /* シャドウマッピングに描写 */
+        const vpvl::Array<vpvl::PMDModel *> &models = scene->getRenderingOrder();
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = models[i];
+            m_renderer->renderModelZPlot(model);
+        }
+        const vpvl::Array<vpvl::Asset *> &assets = m_renderer->assets();
+        const int nassets = assets.count();
+        for (int i = 0; i < nassets; i++) {
+            vpvl::Asset *asset = assets[i];
+            m_renderer->renderAssetZPlot(asset);
+        }
+        m_fbo->release();
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
+    void renderScene(const QMatrix4x4 &modelView, const QMatrix4x4 &projection, const QMatrix4x4 &lightViewProjection) {
+        /* モデルビュー行列と射影行列を乗算した行列を設定 */
+        const QMatrix4x4 &modelViewProjection4x4 = projection * modelView;
+        float modelViewProjectionMatrixf[16], lightViewProjectionMatrixf[16];
+        for (int i = 0; i < 16; i++)
+            modelViewProjectionMatrixf[i] = modelViewProjection4x4.constData()[i];
+        m_renderer->setModelViewProjectionMatrix(modelViewProjectionMatrixf);
+        /* シャドウマッピング用の行列を設定 */
+        QMatrix4x4 bias;
+        bias.scale(0.5);
+        bias.translate(1, 1, 1);
+        const QMatrix4x4& lightViewProjection4x4 = lightViewProjection * bias;
+        for (int i = 0; i < 16; i++)
+            lightViewProjectionMatrixf[i] = lightViewProjection4x4.constData()[i];
+        m_renderer->setLightViewProjectionMatrix(lightViewProjectionMatrixf);
+        /* 本当はシャドウマッピングを行いたいのだがまだ正しく描写できていないので無効化している */
+        //m_renderer->setDepthTexture(m_fbo->texture());
+        const vpvl::Scene *scene = m_renderer->scene();
+        const vpvl::Array<vpvl::PMDModel *> &models = scene->getRenderingOrder();
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            vpvl::PMDModel *model = models[i];
+            //m_renderer->renderModelShadow(model);
+            m_renderer->renderModel(model);
+        }
+        /* アクセサリ描写 */
+        const vpvl::Array<vpvl::Asset *> &assets = m_renderer->assets();
+        const int nassets = assets.count();
+        for (int i = 0; i < nassets; i++) {
+            vpvl::Asset *asset = assets[i];
+            m_renderer->renderAsset(asset);
+        }
+    }
+
     bool loadScene() {
+        /* 場面の設定 */
+        vpvl::Scene *scene = m_renderer->scene();
+        //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
+        scene->setWorld(m_world);
+
+        /* モデルの読み込み */
         QByteArray bytes;
         vpvl::PMDModel *model = new vpvl::PMDModel();
         if (!internal::slurpFile(internal::concatPath(kModelDir, kModelName), bytes) ||
@@ -448,13 +504,12 @@ private:
             delete model;
             return false;
         }
-        vpvl::Scene *scene = m_renderer->scene();
-        //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
-        scene->setWorld(m_world);
-
+        /* モデルのアップロード */
         m_renderer->uploadModel(model, kModelDir);
         model->setEdgeOffset(0.5f);
+
 #ifdef VPVL_LINK_ASSIMP
+        /* モデルの読み込み(ログ出力を行う) */
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
         loadAsset(kStageDir, kStageName);
@@ -465,6 +520,7 @@ private:
         }
 #endif
 
+        /* モデルとカメラのモーション読み込み */
         if (!internal::slurpFile(kMotion, bytes) ||
                 !m_motion.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
             m_delegate.log(Renderer::kLogWarning, "Failed parsing the model motion, skipped...");
