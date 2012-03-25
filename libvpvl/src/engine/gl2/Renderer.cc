@@ -1044,8 +1044,8 @@ void Renderer::uploadAssetRecurse(const aiScene *scene, const aiNode *node, Asse
     AssetProgram *assetProgram = new AssetProgram(m_delegate);
     ZPlotProgram *zplotProgram = new ZPlotProgram(m_delegate);
 #ifdef VPVL_LINK_QT
-    program->initializeContext(QGLContext::currentContext());
-    program->initializeContext(QGLContext::currentContext());
+    assetProgram->initializeContext(QGLContext::currentContext());
+    zplotProgram->initializeContext(QGLContext::currentContext());
 #endif
     assetProgram->load(m_delegate->loadShader(Renderer::kAssetVertexShader).c_str(),
                        m_delegate->loadShader(Renderer::kAssetFragmentShader).c_str());
