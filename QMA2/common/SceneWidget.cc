@@ -1030,7 +1030,7 @@ void SceneWidget::paintGL()
     switch (m_editMode) {
     case kSelect:
         if (!(m_handleFlags & Handles::kEnable))
-            m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_bones);
+            m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_bones.toSet());
         if (m_isImageHandleRectIntersect)
             m_debugDrawer->drawBoneTransform(bone, m_handles->modeFromState());
         break;

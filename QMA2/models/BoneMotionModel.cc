@@ -439,30 +439,21 @@ static const Quaternion UIRotateViewAxisAngle(const SceneWidget *sceneWidget, co
     return rot;
 }
 
-static const Quaternion UIRotateLocalAxisAngle(const Bone *bone, const Scalar &value, int flags)
+static const Quaternion UIRotateLocalAxisAngle(const Bone *bone, const Quaternion &rotation, const Scalar &value, int flags)
 {
     /* 座標系の関係でX軸とY軸は値を反転させる */
-    const QString &name = internal::toQString(bone);
     const Bone *child = bone->child();
     Quaternion rot = Quaternion::getIdentity();
     Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
     /* ボーン名によって特別扱いする必要がある */
-    if ((name.indexOf("指") != -1
-         || name.endsWith("腕")
-         || name.endsWith("ひじ")
-         || name.endsWith("手首")
-         ) && child) {
-        /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-        const Vector3 &boneOrigin = bone->originPosition();
-        const Vector3 &childOrigin = child->originPosition();
-        /* 外積を使ってそれぞれの軸を求める */
-        axisX = (childOrigin - boneOrigin).normalized();
-        Vector3 tmp1 = axisX;
-        name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
-        axisZ = axisX.cross(tmp1).normalized();
-        Vector3 tmp2 = axisX;
-        tmp2.setZ(-axisZ.z());
-        axisY = tmp2.cross(-axisX).normalized();
+    if (child && internal::hasOwnLocalAxis(bone)) {
+        internal::getOwnLocalAxis(bone, child, axisX, axisY, axisZ);
+    }
+    else {
+        btMatrix3x3 matrix(rotation);
+        axisX = matrix.getRow(0) * axisX;
+        axisY = matrix.getRow(1) * axisY;
+        axisZ = matrix.getRow(2) * axisZ;
     }
     /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
     switch ((flags & 0xff00) >> 8) {
@@ -1117,7 +1108,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, Bone *bone, int flags)
         break;
     }
     case 'L': /* ローカル変形 */
-        bone->setRotation(lastRotation * UIRotateLocalAxisAngle(bone, value, flags));
+        bone->setRotation(lastRotation * UIRotateLocalAxisAngle(bone, lastRotation, value, flags));
         break;
     case 'G': /* グローバル変形 */
         bone->setRotation(lastRotation * UIRotateGlobalAxisAngle(value, flags));

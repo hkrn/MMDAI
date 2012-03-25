@@ -109,19 +109,15 @@ public:
         m_visible = value;
     }
 
-    void drawModelBones(const vpvl::PMDModel *model, const QList<vpvl::Bone *> &selected) {
+    void drawModelBones(const vpvl::PMDModel *model, const QSet<vpvl::Bone *> &selectedBones) {
         if (!m_visible || !model || !m_program.isLinked())
             return;
-        vpvl::Array<vpvl::Vector3> vertices;
-        static const int indices[] = {
-            0, 1, 2, 3
-        };
         const vpvl::BoneList &bones = model->bones();
         const int nbones = bones.count();
         float matrix[16];
-        vpvl::Transform tr = vpvl::Transform::getIdentity();
         QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
+        /* シェーダのパラメータ設定 */
         m_program.bind();
         m_scene->getModelViewMatrix(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
@@ -132,6 +128,7 @@ public:
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
         QSet<vpvl::Bone *> linkedIKBones, targetBones, destinationBones;
+        /* IK ボーンを収集 */
         const vpvl::IKList &IKs = model->IKs();
         const int nIKs = IKs.count();
         for (int i = 0; i < nIKs; i++) {
@@ -145,9 +142,6 @@ public:
                 linkedIKBones.insert(bone);
             }
         }
-        static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
-        static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
-        static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
         for (int i = 0; i < nbones; i++) {
             const vpvl::Bone *bone = bones[i], *child = bone->child();
             if (!bone->isMovable() && !bone->isRotateable())
@@ -155,37 +149,7 @@ public:
             /* 子ボーンが「全ての親」の場合はスキップしておく */
             if (child->originPosition() == vpvl::kZeroV)
                 continue;
-            const vpvl::Transform &boneTransform = bone->localTransform(),
-                    &childTransform = child->localTransform();
-            const vpvl::Vector3 &origin = boneTransform.getOrigin(),
-                    &childOrigin = childTransform.getOrigin();
-            const vpvl::Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-            const vpvl::Scalar &sphereRadius = 0.2f;
-            vertices.clear();
-            tr.setOrigin(vpvl::Vector3(coneRadius, 0.0f, 0.0f));
-            vertices.add(tr * origin);
-            vertices.add(childOrigin);
-            tr.setOrigin(vpvl::Vector3(-coneRadius, 0.0f, 0.0f));
-            vertices.add(tr * origin);
-            vertices.add(childOrigin);
-            vpvl::Bone *mutableBone = const_cast<vpvl::Bone *>(bone);
-            if (selected.contains(mutableBone)) {
-                drawSphere(origin, sphereRadius, vpvl::Vector3(1.0f, 0.0f, 0.0f));
-                m_program.setUniformValue("color", kColorRed);
-            }
-            else if (linkedIKBones.contains(mutableBone)) {
-                drawSphere(origin, sphereRadius, vpvl::Vector3(1.0f, 0.75f, 0.0f));
-                m_program.setUniformValue("color", kColorOrange);
-            }
-            else {
-                drawSphere(origin, sphereRadius, vpvl::Vector3(0.0f, 0.0f, 1.0f));
-                m_program.setUniformValue("color", kColorBlue);
-            }
-            m_program.setAttributeArray("inPosition",
-                                        reinterpret_cast<const GLfloat *>(&vertices[0]),
-                                        3,
-                                        sizeof(vpvl::Vector3));
-            glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
+            drawBone(bone, child, selectedBones, linkedIKBones);
         }
         m_program.release();
         glEnable(GL_DEPTH_TEST);
@@ -196,6 +160,7 @@ public:
         float matrix[16];
         QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
+        /* シェーダのパラメータ設定 */
         m_program.bind();
         m_scene->getModelViewMatrix(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
@@ -205,13 +170,18 @@ public:
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
-        const QString &name = internal::toQString(bone);
         const vpvl::Bone *child = bone->child();
+        /* ボーン表示 */
+        if (child) {
+            QSet<vpvl::Bone *> selectedBones, linkedBones;
+            selectedBones.insert(bone);
+            drawBone(bone, child, selectedBones, linkedBones);
+        }
+        /* 軸表示 */
         static const vpvl::Scalar kLength = 2.0;
         static const vpvl::Vector3 kRed   = vpvl::Vector3(1, 0, 0);
         static const vpvl::Vector3 kGreen = vpvl::Vector3(0, 1, 0);
         static const vpvl::Vector3 kBlue  = vpvl::Vector3(0, 0, 1);
-        bool hasLocalAxis = (name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首"));
         if (mode == 'V') {
             /* モデルビュー行列を元に軸表示 */
             const vpvl::Transform &transform = bone->localTransform();
@@ -221,35 +191,87 @@ public:
             drawLine(origin, transform * (modelView.getRow(1) * kLength), kGreen);
             drawLine(origin, transform * (modelView.getRow(2) * kLength), kBlue);
         }
-        else if (mode == 'L' && child && hasLocalAxis) {
-            /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-            const vpvl::Vector3 &boneOrigin = bone->originPosition();
-            const vpvl::Vector3 &childOrigin = child->originPosition();
-            /* 外積を使ってそれぞれの軸を求める */
-            const vpvl::Vector3 &axisX = (childOrigin - boneOrigin).normalized();
-            vpvl::Vector3 tmp1 = axisX;
-            name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
-            vpvl::Vector3 axisZ = axisX.cross(tmp1).normalized(), tmp2 = axisX;
-            tmp2.setZ(-axisZ.z());
-            vpvl::Vector3 axisY = tmp2.cross(-axisX).normalized();
-            const vpvl::Transform &transform = bone->localTransform();
-            const vpvl::Vector3 &origin = transform.getOrigin();
-            drawLine(origin, transform * (axisX * kLength), kRed);
-            drawLine(origin, transform * (axisY * kLength), kGreen);
-            drawLine(origin, transform * (axisZ * kLength), kBlue);
+        else if (mode == 'L') {
+            if (child && hasOwnLocalAxis(bone)) {
+                /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
+                const vpvl::Transform &transform = bone->localTransform();
+                const vpvl::Vector3 &origin = transform.getOrigin();
+                vpvl::Vector3 axisX, axisY, axisZ;
+                getOwnLocalAxis(bone, child, axisX, axisY, axisZ);
+                drawLine(origin, transform * (axisX * kLength), kRed);
+                drawLine(origin, transform * (axisY * kLength), kGreen);
+                drawLine(origin, transform * (axisZ * kLength), kBlue);
+            }
+            else {
+                /* 現在のボーン位置と回転量を乗算した軸を表示 */
+                const vpvl::Transform &transform = bone->localTransform();
+                const vpvl::Vector3 &origin = transform.getOrigin();
+                drawLine(origin, transform * vpvl::Vector3(kLength, 0, 0), kRed);
+                drawLine(origin, transform * vpvl::Vector3(0, kLength, 0), kGreen);
+                drawLine(origin, transform * vpvl::Vector3(0, 0, kLength), kBlue);
+            }
         }
         else {
-            /* 固定軸に回転量を乗算 */
-            const vpvl::Transform &transform = bone->localTransform();
-            const vpvl::Vector3 &origin = transform.getOrigin();
-            drawLine(origin, transform * vpvl::Vector3(kLength, 0, 0), kRed);
-            drawLine(origin, transform * vpvl::Vector3(0, kLength, 0), kGreen);
-            drawLine(origin, transform * vpvl::Vector3(0, 0, kLength), kBlue);
+            /* 現在のボーン位置に対する固定軸を表示 */
+            const vpvl::Vector3 &origin = bone->localTransform().getOrigin();
+            drawLine(origin, origin + vpvl::Vector3(kLength, 0, 0), kRed);
+            drawLine(origin, origin + vpvl::Vector3(0, kLength, 0), kGreen);
+            drawLine(origin, origin + vpvl::Vector3(0, 0, kLength), kBlue);
         }
         m_program.release();
     }
 
 private:
+    void drawBone(const vpvl::Bone *bone,
+                  const vpvl::Bone *child,
+                  const QSet<vpvl::Bone *> &selectedBones,
+                  const QSet<vpvl::Bone *> &linkedIKBones)
+    {
+        vpvl::Transform tr = vpvl::Transform::getIdentity();
+        vpvl::Array<vpvl::Vector3> vertices;
+        static const int indices[] = {
+            0, 1, 2, 3
+        };
+        static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
+        static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
+        static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
+        const vpvl::Transform &boneTransform = bone->localTransform(),
+                &childTransform = child->localTransform();
+        const vpvl::Vector3 &origin = boneTransform.getOrigin(),
+                &childOrigin = childTransform.getOrigin();
+        const vpvl::Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+        const vpvl::Scalar &sphereRadius = 0.2f;
+        /* ボーン接続を表示するための頂点設定 */
+        tr.setOrigin(vpvl::Vector3(coneRadius, 0.0f, 0.0f));
+        vertices.add(tr * origin);
+        vertices.add(childOrigin);
+        tr.setOrigin(vpvl::Vector3(-coneRadius, 0.0f, 0.0f));
+        vertices.add(tr * origin);
+        vertices.add(childOrigin);
+        vpvl::Bone *mutableBone = const_cast<vpvl::Bone *>(bone);
+        /* 選択中の場合は赤色で表示 */
+        if (selectedBones.contains(mutableBone)) {
+            drawSphere(origin, sphereRadius, vpvl::Vector3(1.0f, 0.0f, 0.0f));
+            m_program.setUniformValue("color", kColorRed);
+        }
+        /* IK ボーンの場合は橙色で表示 */
+        else if (linkedIKBones.contains(mutableBone)) {
+            drawSphere(origin, sphereRadius, vpvl::Vector3(1.0f, 0.75f, 0.0f));
+            m_program.setUniformValue("color", kColorOrange);
+        }
+        /* 上記以外の場合は青色で表示 */
+        else {
+            drawSphere(origin, sphereRadius, vpvl::Vector3(0.0f, 0.0f, 1.0f));
+            m_program.setUniformValue("color", kColorBlue);
+        }
+        /* 描写 */
+        m_program.setAttributeArray("inPosition",
+                                    reinterpret_cast<const GLfloat *>(&vertices[0]),
+                                    3,
+                                    sizeof(vpvl::Vector3));
+        glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
+    }
+
     QGLShaderProgram m_program;
     vpvl::Scene *m_scene;
     int m_flags;

@@ -97,6 +97,32 @@ static inline const QString toQString(const vpvl::FaceKeyframe *value)
     return value ? toQString(value->name()) : noneString();
 }
 
+static inline bool hasOwnLocalAxis(const vpvl::Bone *bone)
+{
+    const QString &name = toQString(bone);
+    return name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首");
+}
+
+static inline void getOwnLocalAxis(const vpvl::Bone *bone,
+                                   const vpvl::Bone *child,
+                                   vpvl::Vector3 &axisX,
+                                   vpvl::Vector3 &axisY,
+                                   vpvl::Vector3 &axisZ)
+{
+    /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
+    const vpvl::Vector3 &boneOrigin = bone->originPosition();
+    const vpvl::Vector3 &childOrigin = child->originPosition();
+    /* 外積を使ってそれぞれの軸を求める */
+    axisX = (childOrigin - boneOrigin).normalized();
+    vpvl::Vector3 tmp1 = axisX;
+    const QString &name = toQString(bone);
+    name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+    axisZ = axisX.cross(tmp1).normalized();
+    vpvl::Vector3 tmp2 = axisX;
+    tmp2.setZ(-axisZ.z());
+    axisY = tmp2.cross(-axisX).normalized();
+}
+
 static inline void dumpBones(vpvl::PMDModel *model)
 {
     const vpvl::BoneList &bones = model->bones();
