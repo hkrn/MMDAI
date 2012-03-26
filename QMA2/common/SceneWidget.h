@@ -235,8 +235,8 @@ private slots:
 
 private:
     bool acceptAddingModel(vpvl::PMDModel *model);
+    bool testHitModelHandle(const QPointF &pos);
     void updateFPS();
-    void changeCursorIfHandlesHit(const QPointF &pos);
     void grabImageHandle(const vpvl::Scalar &deltaValue);
     void grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags);
 

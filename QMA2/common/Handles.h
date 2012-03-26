@@ -148,8 +148,9 @@ public:
     vpvl::Bone *currentBone() const { return m_bone; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
-    Flags state() const { return m_state; }
-    int modeFromState() const;
+    Flags constraint() const { return m_constraint; }
+    int modeFromConstraint() const;
+    const vpvl::Transform modelHandleTransform() const;
 
     void setState(Flags value);
     void setBone(vpvl::Bone *value);
@@ -181,7 +182,7 @@ private:
     Texture m_global;
     Texture m_local;
     Texture m_view;
-    Flags m_state;
+    Flags m_constraint;
     vpvl::Vector3 m_prevPos3D;
     QPointF m_prevPos2D;
     float m_prevAngle;

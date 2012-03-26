@@ -930,7 +930,8 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             makeRay(pos, rayFrom, rayTo);
             if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
                 m_handleFlags = flags;
-                m_handles->setVisibilityFlags(flags);
+                if (m_editMode == kRotate)
+                    m_handles->setVisibilityFlags(flags);
                 setCursor(Qt::ClosedHandCursor);
                 emit handleDidGrab();
             }
@@ -990,19 +991,25 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                 else
                     setCursor(Qt::SizeVerCursor);
             }
+            /* 回転モードの場合は回転ハンドルに入っているか? */
+            else if (testHitModelHandle(pos)) {
+                setCursor(Qt::OpenHandCursor);
+            }
             else {
                 unsetCursor();
             }
         }
     }
-    else {
-        changeCursorIfHandlesHit(pos);
-    }
 }
 
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    changeCursorIfHandlesHit(event->posF());
+    /* 回転モードの場合は回転ハンドルに入っているか? */
+    if (testHitModelHandle(event->posF()))
+        setCursor(Qt::OpenHandCursor);
+    else
+        unsetCursor();
+    /* 状態をリセットする */
     setEditMode(m_editMode);
     m_totalDelta = 0.0f;
     m_handleFlags = Handles::kNone;
@@ -1032,7 +1039,7 @@ void SceneWidget::paintGL()
         if (!(m_handleFlags & Handles::kEnable))
             m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_bones.toSet());
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, m_handles->modeFromState());
+            m_debugDrawer->drawBoneTransform(bone, m_handles->modeFromConstraint());
         break;
     case kRotate:
         m_handles->drawRotationHandle();
@@ -1143,7 +1150,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         /* ボーンが選択されている場合はボーンの回転 (現時点でY軸のみ) */
         if (!m_bones.isEmpty()) {
             vpvl::Bone *bone = m_bones.last();
-            int mode = m_handles->modeFromState(), axis = 'Y' << 8;
+            int mode = m_handles->modeFromConstraint(), axis = 'Y' << 8;
             switch (state) {
             case Qt::GestureStarted:
                 emit handleDidGrab();
@@ -1217,6 +1224,17 @@ bool SceneWidget::acceptAddingModel(PMDModel *model)
     return mbox.exec() == QMessageBox::Ok;
 }
 
+bool SceneWidget::testHitModelHandle(const QPointF &pos)
+{
+    if (m_editMode == SceneWidget::kRotate || m_editMode == SceneWidget::kMove) {
+        Vector3 rayFrom, rayTo, pick;
+        int flags;
+        makeRay(pos, rayFrom, rayTo);
+        return m_handles->testHitModel(rayFrom, rayTo, true, flags, pick);
+    }
+    return false;
+}
+
 void SceneWidget::updateFPS()
 {
     /* 1秒ごとの FPS はここで計算しておく。1秒過ぎたら updateFPS を呼んだ回数を求め、タイマーを再起動させる */
@@ -1231,24 +1249,10 @@ void SceneWidget::updateFPS()
     m_frameCount++;
 }
 
-void SceneWidget::changeCursorIfHandlesHit(const QPointF &pos)
-{
-    /* 回転モードの場合は回転ハンドルに入っているか? */
-    if (m_editMode == kRotate || m_editMode == kMove) {
-        Vector3 rayFrom, rayTo, pick;
-        int flags;
-        makeRay(pos, rayFrom, rayTo);
-        if (m_handles->testHitModel(rayFrom, rayTo, true, flags, pick))
-            setCursor(Qt::OpenHandCursor);
-        else
-            unsetCursor();
-    }
-}
-
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)
 {
     int flags = m_handleFlags;
-    int mode = m_handles->modeFromState();
+    int mode = m_handles->modeFromConstraint();
     /* 移動ハンドルである */
     if (flags & Handles::kMove) {
         /* 意図する向きと実際の値が逆なので、反転させる */
@@ -1282,29 +1286,28 @@ void SceneWidget::grabImageHandle(const Scalar &deltaValue)
 
 void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags)
 {
-    int mode = 'V';
-    Vector3 rayFrom, rayTo, pick, delta;
+    int mode = m_handles->modeFromConstraint();
+    Vector3 rayFrom, rayTo, pick, delta = kZeroV;
     /* モデルのハンドルに当たっている場合のみモデルを動かす */
     if (flags & Handles::kMove) {
-        const QPointF &diff2 = diff * 0.1;
-        Bone *bone = m_handles->currentBone();
-        const Transform &transform = bone->localTransform();
+        /* カメラ距離で移動量を変化させる。分母値は適当気味 */
+        const Scalar &d = m_loader->renderEngine()->scene()->modelViewTransform().getOrigin().z() / -1000.0f;
+        const QPointF &diff2 = diff * d;
         /* 移動ハンドルである(矢印の先端) */
         if (flags & Handles::kX) {
-            delta = transform.getBasis() * Vector3(diff2.x(), 0, 0);
+            delta.setValue(diff2.x(), 0, 0);
         }
         else if (flags & Handles::kY) {
-            delta = transform.getBasis() * Vector3(0, diff2.y(), 0);
+            delta.setValue(0, -diff2.y(), 0);
         }
         else if (flags & Handles::kZ) {
-            delta = transform.getBasis() * Vector3(0, 0, diff2.y());
+            delta.setValue(0, 0, diff2.y());
         }
         emit handleDidMoveRelative(delta, 0, mode);
         return;
     }
     makeRay(pos, rayFrom, rayTo);
     if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
-        mode = 'G';
         /* 回転ハンドルである(ドーナツ) */
         if (flags & Handles::kRotate) {
             const vpvl::Vector3 &origin = m_handles->currentBone()->localTransform().getOrigin();
