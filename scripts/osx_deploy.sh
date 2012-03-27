@@ -12,9 +12,10 @@ else
 fi
 
 package_app_name=${app_name}.app
-package_dmg_name=${app_name}.dmg
+package_dmg_name="${app_name}-osx-intel.dmg"
+package_zip_name="${app_name}-osx-intel.zip"
 
-rm -rf ${package_app_name} ${package_dmg_name};
+rm -rf ${package_app_name} ${package_dmg_name} ${package_zip_name};
 make || exit;
 macdeployqt ${package_app_name};
 echo "deployed ${package_app_name}";
@@ -34,4 +35,5 @@ cd ../../.. || exit
 echo 'removed unused Qt plugins';
 find ${package_app_name} -exec touch -t `date +%Y%m%d0000` {} \;
 hdiutil create ${package_dmg_name} -srcfolder ${package_app_name} -format UDZO -volname $app_name
+zip ${package_zip_name} ${package_dmg_name}
 
