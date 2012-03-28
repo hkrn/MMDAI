@@ -83,6 +83,7 @@ public:
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
+    void reset();
     void mergeMorph(Morph::UV *morph, float weight);
     void mergeMorph(Morph::Vertex *morph, float weight);
     void performSkinning(Vector3 &position, Vector3 &normal);

@@ -166,6 +166,7 @@ public:
      */
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
+    void resetVertices();
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
 

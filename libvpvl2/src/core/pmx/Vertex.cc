@@ -268,6 +268,13 @@ void Vertex::write(uint8_t * /* data */) const
 {
 }
 
+void Vertex::reset()
+{
+    m_position = m_origin;
+    for (int i = 0; i < 4; i++)
+        m_positionUVs[i] = m_originUVs[i];
+}
+
 void Vertex::mergeMorph(Morph::UV *morph, float weight)
 {
     int offset = morph->offset;
@@ -283,7 +290,7 @@ void Vertex::mergeMorph(Morph::UV *morph, float weight)
 
 void Vertex::mergeMorph(Morph::Vertex *morph, float weight)
 {
-    m_position = m_origin + morph->position * weight;
+    m_position += morph->position * weight;
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal)

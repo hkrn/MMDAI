@@ -96,6 +96,7 @@ void MorphAnimation::read(const uint8_t *data, int size)
 void MorphAnimation::seek(float frameAt)
 {
     const int nnodes = m_name2keyframes.count();
+    m_model->resetVertices();
     for (int i = 0; i < nnodes; i++) {
         InternalMorphKeyFrameList *frames = *m_name2keyframes.value(i);
         if (m_enableNullFrame && frames->isNull())

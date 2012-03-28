@@ -170,6 +170,15 @@ void Model::save(uint8_t * /* data */) const
 {
 }
 
+void Model::resetVertices()
+{
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertices[i];
+        vertex->reset();
+    }
+}
+
 IBone *Model::findBone(const IString *value) const
 {
     IBone **bone = const_cast<IBone **>(m_name2bones.find(value->toHashString()));
