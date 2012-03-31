@@ -197,8 +197,8 @@ void IK::solve()
                 i = m_iteration;
                 break;
             }
-            localDestination.normalize();
-            localTarget.normalize();
+            localDestination.safeNormalize();
+            localTarget.safeNormalize();
             const Scalar &dot = localDestination.dot(localTarget);
             if (dot > 1.0f)
                 continue;
