@@ -34,7 +34,7 @@ void main() {
         if (isSPHTexture)
             color.rgb *= texture2D(sphereTexture, outTexCoord.zw).rgb;
         else if (isSPATexture)
-            color.rgb *= texture2D(sphereTexture, outTexCoord.zw).rgb;
+            color.rgb += texture2D(sphereTexture, outTexCoord.zw).rgb;
         else if (isSubTexture)
             color.rgb *= texture2D(sphereTexture, outUVA0.xy).rgb;
     }
