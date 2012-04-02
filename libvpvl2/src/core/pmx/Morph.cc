@@ -317,20 +317,12 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     case 2: /* bone */
         readBones(info, unit.size, ptr);
         break;
-    case 3: /* UV */
-        readUVs(info, unit.size, 0, ptr);
-        break;
+    case 3: /* UV0 */
     case 4: /* UV1 */
-        readUVs(info, unit.size, 1, ptr);
-        break;
     case 5: /* UV2 */
-        readUVs(info, unit.size, 2, ptr);
-        break;
     case 6: /* UV3 */
-        readUVs(info, unit.size, 3, ptr);
-        break;
     case 7: /* UV4 */
-        readUVs(info, unit.size, 4, ptr);
+        readUVs(info, unit.size, m_type - 3, ptr);
         break;
     case 8: /* material */
         readMaterials(info, unit.size, ptr);
@@ -349,31 +341,31 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
     mu.category = m_category;
     mu.type = m_type;
     switch (m_type) {
-    case 0:
+    case 0: /* group */
         mu.size = m_groups.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeGroups(info, data);
         break;
-    case 1:
+    case 1: /* vertex */
         mu.size = m_vertices.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeVertices(info, data);
         break;
-    case 2:
+    case 2: /* bone */
         mu.size = m_bones.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeBones(info, data);
         break;
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
+    case 3: /* UV0 */
+    case 4: /* UV1 */
+    case 5: /* UV2 */
+    case 6: /* UV3 */
+    case 7: /* UV4 */
         mu.size = m_uvs.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeUVs(info, data);
         break;
-    case 8:
+    case 8: /* material */
         mu.size = m_materials.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeMaterials(info, data);
@@ -386,28 +378,28 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
 size_t Morph::estimateSize(const Model::DataInfo &info) const
 {
     size_t size = 0;
-    size += sizeof(int) + m_name->length();
-    size += sizeof(int) + m_englishName->length();
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_englishName);
     size += sizeof(MorphUnit);
     switch (m_type) {
     case 0:
-        size += m_groups.count() * (sizeof(Morph::Group) + info.morphIndexSize);
+        size += m_groups.count() * (sizeof(GroupMorph) + info.morphIndexSize);
         break;
     case 1:
-        size += m_vertices.count() * (sizeof(Morph::Vertex) + info.vertexIndexSize);
+        size += m_vertices.count() * (sizeof(VertexMorph) + info.vertexIndexSize);
         break;
     case 2:
-        size += m_bones.count() * (sizeof(Morph::Bone) + info.boneIndexSize);
+        size += m_bones.count() * (sizeof(BoneMorph) + info.boneIndexSize);
         break;
     case 3:
     case 4:
     case 5:
     case 6:
     case 7:
-        size += m_uvs.count() * (sizeof(Morph::UV) + info.vertexIndexSize);
+        size += m_uvs.count() * (sizeof(UVMorph) + info.vertexIndexSize);
         break;
     case 8:
-        size += m_materials.count() * (sizeof(Morph::Material) + info.materialIndexSize);
+        size += m_materials.count() * (sizeof(MaterialMorph) + info.materialIndexSize);
         break;
     default:
         assert(0);
@@ -465,6 +457,41 @@ void Morph::performTransform(float weight)
 void Morph::setWeight(float value)
 {
     performTransform(value);
+}
+
+void Morph::addBoneMorph(const Bone &value)
+{
+    m_bones.add(value);
+}
+
+void Morph::addGroupMorph(const Group &value)
+{
+    m_groups.add(value);
+}
+
+void Morph::addMaterialMorph(const Material &value)
+{
+    m_materials.add(value);
+}
+
+void Morph::addUVMorph(const UV &value)
+{
+    m_uvs.add(value);
+}
+
+void Morph::addVertexMorph(const Vertex &value)
+{
+    m_vertices.add(value);
+}
+
+void Morph::setCategory(uint8_t value)
+{
+    m_category = value;
+}
+
+void Morph::setType(uint8_t value)
+{
+    m_type = value;
 }
 
 void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)
@@ -587,6 +614,7 @@ void Morph::writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const
         internal::getColor(material.edgeColor, morph.edgeColor);
         morph.operation = material.operation;
         morph.shininess = material.shininess;
+        morph.edgeSize = material.edgeSize;
         internal::getColor(material.specular, morph.specular);
         internal::getColor(material.sphereTextureWeight, morph.sphereTextureWeight);
         internal::getColor(material.textureWeight, morph.textureWeight);
@@ -617,9 +645,7 @@ void Morph::writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const
     int nvertices = m_vertices.count(), vertexIndexSize = info.vertexIndexSize;
     for (int i = 0; i < nvertices; i++) {
         const Morph::Vertex &vertex = m_vertices[i];
-        morph.position[0] = vertex.position.x();
-        morph.position[1] = vertex.position.y();
-        morph.position[2] = vertex.position.z();
+        internal::getPosition(vertex.position, morph.position);
         internal::writeUnsignedIndex(vertex.index, vertexIndexSize, ptr);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
     }

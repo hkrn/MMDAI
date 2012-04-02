@@ -121,6 +121,22 @@ public:
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
+    uint8_t category() const { return m_category; }
+    uint8_t type() const { return m_type; }
+
+    void addBoneMorph(const Bone &value);
+    void addGroupMorph(const Group &value);
+    void addMaterialMorph(const Material &value);
+    void addUVMorph(const UV &value);
+    void addVertexMorph(const Vertex &value);
+    void setCategory(uint8_t value);
+    void setType(uint8_t value);
+
+    const Array<Bone> &bones() const { return m_bones; }
+    const Array<Group> &groups() const { return m_groups; }
+    const Array<Material> &materials() const { return m_materials; }
+    const Array<UV> &uvs() const { return m_uvs; }
+    const Array<Vertex> &vertices() const { return m_vertices; }
 
 private:
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);

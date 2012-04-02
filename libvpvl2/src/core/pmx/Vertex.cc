@@ -331,7 +331,7 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
     size_t size = 0;
     size += sizeof(VertexUnit);
     size += sizeof(AdditinalUVUnit) * info.additionalUVSize;
-    size += sizeof(m_type);
+    size += sizeof(uint8_t);
     size += sizeof(m_edgeSize);
     switch (m_type) {
     case kBdef1: /* BDEF1 */
