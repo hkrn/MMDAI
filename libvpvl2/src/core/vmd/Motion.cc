@@ -173,47 +173,41 @@ size_t Motion::estimateSize()
 
 void Motion::save(uint8_t *data) const
 {
-    internal::copyBytes(data, kSignature, kSignatureSize);
-    data += kSignatureSize;
+    internal::writeBytes(kSignature, kSignatureSize, data);
     uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(data, name, sizeof(m_name));
     m_encoding->disposeByteArray(name);
     data += kNameSize;
     int nBoneFrames = m_boneMotion.countKeyframes();
-    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames));
-    data += sizeof(nBoneFrames);
+    internal::writeBytes(reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames), data);
     for (int i = 0; i < nBoneFrames; i++) {
         BoneKeyframe *frame = m_boneMotion.frameAt(i);
         frame->write(data);
         data += BoneKeyframe::strideSize();
     }
     int nMorphFrames = m_morphMotion.countKeyframes();
-    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nMorphFrames), sizeof(nMorphFrames));
-    data += sizeof(nMorphFrames);
+    internal::writeBytes(reinterpret_cast<uint8_t *>(&nMorphFrames), sizeof(nMorphFrames), data);
     for (int i = 0; i < nMorphFrames; i++) {
         MorphKeyframe *frame = m_morphMotion.frameAt(i);
         frame->write(data);
         data += MorphKeyframe::strideSize();
     }
     int nCameraFrames = m_cameraMotion.countKeyframes();
-    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames));
-    data += sizeof(nCameraFrames);
+    internal::writeBytes(reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames), data);
     for (int i = 0; i < nCameraFrames; i++) {
         CameraKeyframe *frame = m_cameraMotion.frameAt(i);
         frame->write(data);
         data += CameraKeyframe::strideSize();
     }
     int nLightFrames = m_lightMotion.countKeyframes();
-    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames));
-    data += sizeof(nLightFrames);
+    internal::writeBytes(reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames), data);
     for (int i = 0; i < nLightFrames; i++) {
         LightKeyframe *frame = m_lightMotion.frameAt(i);
         frame->write(data);
         data += LightKeyframe::strideSize();
     }
     int empty = 0;
-    internal::copyBytes(data, reinterpret_cast<uint8_t *>(&empty), sizeof(empty));
-    data += sizeof(empty);
+    internal::writeBytes(reinterpret_cast<uint8_t *>(&empty), sizeof(empty), data);
 }
 
 void Motion::seek(float frameIndex)

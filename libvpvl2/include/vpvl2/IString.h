@@ -53,6 +53,7 @@ public:
     virtual IString *clone() const = 0;
     virtual const HashString toHashString() const = 0;
     virtual bool equals(const IString *value) const = 0;
+    virtual size_t length() const = 0;
     virtual const uint8_t *toByteArray() const = 0;
 };
 

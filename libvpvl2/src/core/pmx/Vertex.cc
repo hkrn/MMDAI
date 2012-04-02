@@ -78,18 +78,18 @@ namespace pmx
 
 Vertex::Vertex()
     : m_origin(kZeroV3),
-      m_position(kZeroV3),
+      m_morphPosition(kZeroV3),
       m_normal(kZeroV3),
       m_texcoord(kZeroV3),
       m_c(kZeroV3),
       m_r0(kZeroV3),
       m_r1(kZeroV3),
       m_type(kBdef1),
-      m_edge(0)
+      m_edgeSize(0)
 {
     for (int i = 0; i < 4; i++) {
         m_originUVs[i].setZero();
-        m_positionUVs[i].setZero();
+        m_morphUVs[i].setZero();
         m_bones[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
@@ -211,7 +211,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     const VertexUnit &vertex = *reinterpret_cast<VertexUnit *>(ptr);
     internal::setPosition(vertex.position, m_origin);
     internal::setPosition(vertex.normal, m_normal);
-    m_position = m_origin;
+    m_morphPosition = m_origin;
     m_texcoord.setValue(vertex.texcoord[0], vertex.texcoord[1], 0);
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
@@ -224,12 +224,12 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     ptr += sizeof(uint8_t);
     switch (m_type) {
     case kBdef1: { /* BDEF1 */
-        m_boneIndices[0] = internal::variantIndex(ptr, info.boneIndexSize);
+        m_boneIndices[0] = internal::readSignedIndex(ptr, info.boneIndexSize);
         break;
     }
     case kBdef2: { /* BDEF2 */
         for (int i = 0; i < 2; i++)
-            m_boneIndices[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         const Bdef2Unit &unit = *reinterpret_cast<Bdef2Unit *>(ptr);
         m_weight[0] = unit.weight;
         ptr += sizeof(Bdef2Unit);
@@ -237,7 +237,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     }
     case kBdef4: { /* BDEF4 */
         for (int i = 0; i < 4; i++)
-            m_boneIndices[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         const Bdef4Unit &unit = *reinterpret_cast<Bdef4Unit *>(ptr);
         for (int i = 0; i < 4; i++)
             m_weight[i] = unit.weight[i];
@@ -246,7 +246,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     }
     case kSdef: { /* SDEF */
         for (int i = 0; i < 2; i++)
-            m_boneIndices[i] = internal::variantIndex(ptr, info.boneIndexSize);
+            m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         const SdefUnit &unit = *reinterpret_cast<SdefUnit *>(ptr);
         m_c.setValue(unit.c[0], unit.c[1], unit.c[2]);
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
@@ -259,46 +259,132 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         assert(0);
         return;
     }
-    m_edge = *reinterpret_cast<float *>(ptr);
-    ptr += sizeof(m_edge);
+    m_edgeSize = *reinterpret_cast<float *>(ptr);
+    ptr += sizeof(m_edgeSize);
     size = ptr - start;
 }
 
-void Vertex::write(uint8_t * /* data */) const
+void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
 {
+    VertexUnit vu;
+    internal::getPosition(m_origin, vu.position);
+    internal::getPosition(m_normal, vu.normal);
+    vu.texcoord[0] = m_texcoord.x();
+    vu.texcoord[1] = m_texcoord.y();
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&vu), sizeof(vu), data);
+    int additionalUVSize = info.additionalUVSize;
+    AdditinalUVUnit avu;
+    for (int i = 0; i < additionalUVSize; i++) {
+        const Vector4 &uv = m_originUVs[i];
+        avu.value[0] = uv.x();
+        avu.value[1] = uv.y();
+        avu.value[2] = uv.z();
+        avu.value[3] = uv.w();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&avu), sizeof(avu), data);
+    }
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_type), sizeof(uint8_t), data);
+    int boneIndexSize = info.boneIndexSize;
+    switch (m_type) {
+    case kBdef1: { /* BDEF1 */
+        internal::writeSignedIndex(m_boneIndices[0], boneIndexSize, data);
+        break;
+    }
+    case kBdef2: { /* BDEF2 */
+        for (int i = 0; i < 2; i++)
+            internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[0]), sizeof(m_weight[0]), data);
+        break;
+    }
+    case kBdef4: { /* BDEF4 */
+        for (int i = 0; i < 4; i++)
+            internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
+        for (int i = 0; i < 4; i++)
+            internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[i]), sizeof(m_weight[i]), data);
+        break;
+    }
+    case kSdef: { /* SDEF */
+        for (int i = 0; i < 2; i++)
+            internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
+        SdefUnit unit;
+        unit.c[0] = m_c.x();
+        unit.c[1] = m_c.y();
+        unit.c[2] = m_c.z();
+        unit.r0[0] = m_r0.x();
+        unit.r0[1] = m_r0.y();
+        unit.r0[2] = m_r0.z();
+        unit.r1[0] = m_r1.x();
+        unit.r1[1] = m_r1.y();
+        unit.r1[2] = m_r1.z();
+        unit.weight = m_weight[0];
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&unit), sizeof(unit), data);
+        break;
+    }
+    default: /* unexpected value */
+        assert(0);
+        return;
+    }
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_edgeSize), sizeof(m_edgeSize), data);
+}
+
+size_t Vertex::estimateSize(const Model::DataInfo &info) const
+{
+    size_t size = 0;
+    size += sizeof(VertexUnit);
+    size += sizeof(AdditinalUVUnit) * info.additionalUVSize;
+    size += sizeof(m_type);
+    size += sizeof(m_edgeSize);
+    switch (m_type) {
+    case kBdef1: /* BDEF1 */
+        size += info.boneIndexSize;
+        break;
+    case kBdef2: /* BDEF2 */
+        size += info.boneIndexSize * 2 + sizeof(m_weight[0]);
+        break;
+    case kBdef4: /* BDEF4 */
+        size += info.boneIndexSize * 4 + sizeof(m_weight);
+        break;
+    case kSdef: /* SDEF */
+        size += info.boneIndexSize * 2 + sizeof(SdefUnit);
+        break;
+    default: /* unexpected value */
+        assert(0);
+        return 0;
+    }
+    return size;
 }
 
 void Vertex::reset()
 {
-    m_position = m_origin;
+    m_morphPosition.setZero();
     for (int i = 0; i < 4; i++)
-        m_positionUVs[i] = m_originUVs[i];
+        m_morphUVs[i].setZero();
 }
 
 void Vertex::mergeMorph(Morph::UV *morph, float weight)
 {
     int offset = morph->offset;
     if (offset >= 0 && offset < 4) {
-        const Vector4 &m = morph->position, &o = m_originUVs[offset];
+        const Vector4 &m = morph->position, &o = m_morphUVs[offset];
         Vector4 v(o.x() + m.x() * weight,
                   o.y() + m.y() * weight,
                   o.z() + m.z() * weight,
                   o.w() + m.w() * weight);
-        m_positionUVs[offset] = v;
+        m_morphUVs[offset] = v;
     }
 }
 
 void Vertex::mergeMorph(Morph::Vertex *morph, float weight)
 {
-    m_position += morph->position * weight;
+    m_morphPosition += morph->position * weight;
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
 {
+    const Vector3 &vertexPosition = m_origin + m_morphPosition;
     switch (m_type) {
     case kBdef1: {
         const Transform &transform = m_bones[0]->localTransform();
-        position = transform * m_position;
+        position = transform * vertexPosition;
         normal = transform.getBasis() * m_normal;
         break;
     }
@@ -306,9 +392,9 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
     case kSdef: {
         const Transform &transformA = m_bones[0]->localTransform();
         const Transform &transformB = m_bones[1]->localTransform();
-        const Vector3 &v1 = transformA * m_position;
+        const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
-        const Vector3 &v2 = transformB * m_position;
+        const Vector3 &v2 = transformB * vertexPosition;
         const Vector3 &n2 = transformB.getBasis() * m_normal;
         float weight = m_weight[0];
         position.setInterpolate3(v2, v1, weight);
@@ -320,13 +406,13 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         const Transform &transformB = m_bones[1]->localTransform();
         const Transform &transformC = m_bones[2]->localTransform();
         const Transform &transformD = m_bones[3]->localTransform();
-        const Vector3 &v1 = transformA * m_position;
+        const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
-        const Vector3 &v2 = transformB * m_position;
+        const Vector3 &v2 = transformB * vertexPosition;
         const Vector3 &n2 = transformB.getBasis() * m_normal;
-        const Vector3 &v3 = transformC * m_position;
+        const Vector3 &v3 = transformC * vertexPosition;
         const Vector3 &n3 = transformC.getBasis() * m_normal;
-        const Vector3 &v4 = transformD * m_position;
+        const Vector3 &v4 = transformD * vertexPosition;
         const Vector3 &n4 = transformD.getBasis() * m_normal;
         float w1 = m_weight[0], w2 = m_weight[1], w3 = m_weight[2], w4 = m_weight[3];
         float s  = w1 + w2 + w3 + w4, w1s = w1 / s, w2s = w2 / s, w3s = w3 / s, w4s = w4 / s;
@@ -340,7 +426,77 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
 
 const Vector4 &Vertex::uv(int index) const
 {
-    return index >= 0 && index < 4 ? m_positionUVs[index] : kZeroV4;
+    return index >= 0 && index < 4 ? m_morphUVs[index] : kZeroV4;
+}
+
+float Vertex::weight(int index) const
+{
+    return index >= 0 && index < 4 ? m_weight[index] : 0.0f;
+}
+
+IBone *Vertex::bone(int index) const
+{
+    return index >= 0 && index < 4 ? m_bones[index] : 0;
+}
+
+void Vertex::setOrigin(const Vector3 &value)
+{
+    m_origin = value;
+}
+
+void Vertex::setNormal(const Vector3 &value)
+{
+    m_normal = value;
+}
+
+void Vertex::setTexCoord(const Vector3 &value)
+{
+    m_texcoord = value;
+}
+
+void Vertex::setUV(int index, const Vector4 &value)
+{
+    if (index >= 0 && index < 4)
+        m_originUVs[index] = value;
+}
+
+void Vertex::setType(Type value)
+{
+    m_type = value;
+}
+
+void Vertex::setEdgeSize(float value)
+{
+    m_edgeSize = value;
+}
+
+void Vertex::setWeight(int index, float weight)
+{
+    if (index >= 0 && index < 4)
+        m_weight[index] = weight;
+}
+
+void Vertex::setBone(int index, IBone *value)
+{
+    if (index >= 0 && index < 4) {
+        m_bones[index] = value;
+        m_boneIndices[index] = value->id();
+    }
+}
+
+void Vertex::setSdefC(const Vector3 &value)
+{
+    m_c = value;
+}
+
+void Vertex::setSdefR0(const Vector3 &value)
+{
+    m_r0 = value;
+}
+
+void Vertex::setSdefR1(const Vector3 &value)
+{
+    m_r1 = value;
 }
 
 } /* namespace pmx */

@@ -133,7 +133,7 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             return false;
         }
         bool isSharedToonTexture = *(ptr + sizeof(uint8_t)) == 1;
-        internal::drain(sizeof(uint16_t), ptr, rest);
+        internal::readBytes(sizeof(uint16_t), ptr, rest);
         /* shared toon texture index */
         if (isSharedToonTexture) {
             if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
@@ -209,8 +209,8 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     m_edgeSize.setX(unit.edgeSize);
     m_flags = unit.flags;
     ptr += sizeof(unit);
-    m_textureIndex = internal::variantIndex(ptr, info.textureIndexSize);
-    m_sphereTextureIndex = internal::variantIndex(ptr, info.textureIndexSize);
+    m_textureIndex = internal::readSignedIndex(ptr, info.textureIndexSize);
+    m_sphereTextureIndex = internal::readSignedIndex(ptr, info.textureIndexSize);
     internal::size8(ptr, rest, nNameSize);
     m_sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(nNameSize);
     internal::size8(ptr, rest, nNameSize);
@@ -220,7 +220,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
         m_toonTextureIndex = nNameSize;
     }
     else {
-        m_toonTextureIndex = internal::variantIndex(ptr, info.textureIndexSize);
+        m_toonTextureIndex = internal::readSignedIndex(ptr, info.textureIndexSize);
     }
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     m_userDataArea = info.encoding->toString(namePtr, nNameSize, info.codec);
@@ -229,8 +229,44 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     size = ptr - start;
 }
 
-void Material::write(uint8_t * /* data */) const
+void Material::write(uint8_t *data, const Model::DataInfo &info) const
 {
+    internal::writeString(m_name, data);
+    internal::writeString(m_englishName, data);
+    MaterialUnit mu;
+    internal::getColor(m_ambient.base, mu.ambient);
+    internal::getColor(m_diffuse.base, mu.diffuse);
+    internal::getColor(m_specular.base, mu.specular);
+    internal::getColor(m_edgeColor.base, mu.edgeColor);
+    mu.shininess = m_shininess.x();
+    mu.edgeSize = m_edgeSize.x();
+    mu.flags = m_flags;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+    size_t textureIndexSize = info.textureIndexSize;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_textureIndex), textureIndexSize, data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_sphereTextureIndex), textureIndexSize, data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_sphereTextureRenderMode), sizeof(uint8_t), data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_useSharedToonTexture), sizeof(uint8_t), data);
+    if (m_useSharedToonTexture)
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), sizeof(uint8_t), data);
+    else
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), textureIndexSize, data);
+    internal::writeString(m_userDataArea, data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indices), sizeof(int), data);
+}
+
+size_t Material::estimateSize(const Model::DataInfo &info) const
+{
+    size_t size = 0;
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_englishName);
+    size += sizeof(MaterialUnit);
+    size += info.textureIndexSize * 2;
+    size += sizeof(uint16_t);
+    size += m_useSharedToonTexture ? sizeof(uint8_t) : info.textureIndexSize;
+    size += internal::estimateSize(m_userDataArea);
+    size += sizeof(int);
+    return size;
 }
 
 void Material::mergeMorph(Morph::Material *morph, float weight)
@@ -257,6 +293,114 @@ void Material::mergeMorph(Morph::Material *morph, float weight)
         m_edgeSize.setZ(m_edgeSize.z() + morph->edgeSize * weight);
         break;
     }
+}
+
+void Material::setName(const IString *value)
+{
+    if (value != m_name) {
+        delete m_name;
+        m_name = value->clone();
+    }
+}
+
+void Material::setEnglishName(const IString *value)
+{
+    if (value != m_englishName) {
+        delete m_englishName;
+        m_englishName = value->clone();
+    }
+}
+
+void Material::setUserDataArea(const IString *value)
+{
+    if (value != m_userDataArea) {
+        delete m_userDataArea;
+        m_userDataArea = value->clone();
+    }
+}
+
+void Material::setMainTexture(const IString *value)
+{
+    if (value != m_mainTexture) {
+        delete m_mainTexture;
+        m_mainTexture = value->clone();
+    }
+}
+
+void Material::setSphereTexture(const IString *value)
+{
+    if (value != m_sphereTexture) {
+        delete m_sphereTexture;
+        m_sphereTexture = value->clone();
+    }
+}
+
+void Material::setToonTexture(const IString *value)
+{
+    if (value != m_toonTexture) {
+        delete m_toonTexture;
+        m_toonTexture = value->clone();
+    }
+}
+
+void Material::setSphereTextureRenderMode(SphereTextureRenderMode value)
+{
+    m_sphereTextureRenderMode = value;
+}
+
+void Material::setAmbient(const Color &value)
+{
+    m_ambient.base = value;
+}
+
+void Material::setDiffuse(const Color &value)
+{
+    m_diffuse.base = value;
+}
+
+void Material::setSpecular(const Color &value)
+{
+    m_specular.base = value;
+}
+
+void Material::setEdgeColor(const Color &value)
+{
+    m_edgeColor.base = value;
+}
+
+void Material::setShininess(float value)
+{
+    m_shininess.setX(value);
+}
+
+void Material::setEdgeSize(float value)
+{
+    m_edgeSize.setX(value);
+}
+
+void Material::setMainTextureIndex(int value)
+{
+    m_textureIndex = value;
+}
+
+void Material::setSphereTextureIndex(int value)
+{
+    m_sphereTextureIndex = value;
+}
+
+void Material::setToonTextureIndex(int value)
+{
+    m_toonTextureIndex = value;
+}
+
+void Material::setIndices(int value)
+{
+    m_indices = value;
+}
+
+void Material::setFlags(int value)
+{
+    m_flags = value;
 }
 
 } /* namespace pmx */

@@ -122,7 +122,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             return false;
         }
         MorphUnit *morph = reinterpret_cast<MorphUnit *>(ptr);
-        internal::drain(sizeof(MorphUnit), ptr, rest);
+        internal::readBytes(sizeof(MorphUnit), ptr, rest);
         int nmorphs = morph->size;
         size_t extraSize;
         switch (morph->type) {
@@ -341,8 +341,79 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Morph::write(uint8_t * /* data */) const
+void Morph::write(uint8_t *data, const Model::DataInfo &info) const
 {
+    internal::writeString(m_name, data);
+    internal::writeString(m_englishName, data);
+    MorphUnit mu;
+    mu.category = m_category;
+    mu.type = m_type;
+    switch (m_type) {
+    case 0:
+        mu.size = m_groups.count();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        writeGroups(info, data);
+        break;
+    case 1:
+        mu.size = m_vertices.count();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        writeVertices(info, data);
+        break;
+    case 2:
+        mu.size = m_bones.count();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        writeBones(info, data);
+        break;
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        mu.size = m_uvs.count();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        writeUVs(info, data);
+        break;
+    case 8:
+        mu.size = m_materials.count();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        writeMaterials(info, data);
+        break;
+    default:
+        assert(0);
+    }
+}
+
+size_t Morph::estimateSize(const Model::DataInfo &info) const
+{
+    size_t size = 0;
+    size += sizeof(int) + m_name->length();
+    size += sizeof(int) + m_englishName->length();
+    size += sizeof(MorphUnit);
+    switch (m_type) {
+    case 0:
+        size += m_groups.count() * (sizeof(Morph::Group) + info.morphIndexSize);
+        break;
+    case 1:
+        size += m_vertices.count() * (sizeof(Morph::Vertex) + info.vertexIndexSize);
+        break;
+    case 2:
+        size += m_bones.count() * (sizeof(Morph::Bone) + info.boneIndexSize);
+        break;
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        size += m_uvs.count() * (sizeof(Morph::UV) + info.vertexIndexSize);
+        break;
+    case 8:
+        size += m_materials.count() * (sizeof(Morph::Material) + info.materialIndexSize);
+        break;
+    default:
+        assert(0);
+        return 0;
+    }
+    return size;
 }
 
 void Morph::performTransform(float weight)
@@ -398,10 +469,10 @@ void Morph::setWeight(float value)
 
 void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
+    Morph::Bone bone;
     for (int i = 0; i < count; i++) {
-        int boneIndex = internal::variantIndex(ptr, info.boneIndexSize);
+        int boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
         const BoneMorph &morph = *reinterpret_cast<const BoneMorph *>(ptr);
-        Morph::Bone bone;
         internal::setPosition(morph.position, bone.position);
         internal::setRotation(morph.rotation, bone.rotation);
         bone.bone = 0;
@@ -413,10 +484,10 @@ void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)
 
 void Morph::readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
+    Morph::Group group;
     for (int i = 0; i < count; i++) {
-        int morphIndex = internal::variantIndex(ptr, info.morphIndexSize);
+        int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
         const GroupMorph &morph = *reinterpret_cast<const GroupMorph *>(ptr);
-        Morph::Group group;
         group.morph = 0;
         group.weight = morph.weight;
         group.index = morphIndex;
@@ -427,12 +498,25 @@ void Morph::readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr)
 
 void Morph::readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
+    Morph::Material material;
     for (int i = 0; i < count; i++) {
-        int materialIndex = internal::variantIndex(ptr, info.materialIndexSize);
+        int materialIndex = internal::readSignedIndex(ptr, info.materialIndexSize);
         const MaterialMorph &morph = *reinterpret_cast<const MaterialMorph *>(ptr);
-        Morph::Material material;
         material.material = 0;
+        material.ambient.setValue(morph.ambient[0], morph.ambient[1], morph.ambient[2]);
+        material.diffuse.setValue(morph.diffuse[0], morph.diffuse[1], morph.diffuse[2], morph.diffuse[3]);
+        material.edgeColor.setValue(morph.edgeColor[0], morph.edgeColor[1], morph.edgeColor[2], morph.edgeColor[3]);
+        material.edgeSize = morph.edgeSize;
         material.index = materialIndex;
+        material.operation = morph.operation;
+        material.shininess = morph.shininess;
+        material.specular.setValue(morph.specular[0], morph.specular[1], morph.specular[2]);
+        material.sphereTextureWeight.setValue(morph.sphereTextureWeight[0], morph.sphereTextureWeight[1],
+                                              morph.sphereTextureWeight[2], morph.sphereTextureWeight[3]);
+        material.textureWeight.setValue(morph.textureWeight[0], morph.textureWeight[1],
+                                        morph.textureWeight[2], morph.textureWeight[3]);
+        material.toonTextureWeight.setValue(morph.toonTextureWeight[0], morph.toonTextureWeight[1],
+                                            morph.toonTextureWeight[2], morph.toonTextureWeight[3]);
         m_materials.add(material);
         ptr += sizeof(morph);
     }
@@ -440,10 +524,10 @@ void Morph::readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr)
 
 void Morph::readUVs(const Model::DataInfo &info, int count, int offset, uint8_t *&ptr)
 {
+    Morph::UV uv;
     for (int i = 0; i < count; i++) {
-        int vertexIndex = internal::variantIndexUnsigned(ptr, info.vertexIndexSize);
+        int vertexIndex = internal::readUnsignedIndex(ptr, info.vertexIndexSize);
         const UVMorph &morph = *reinterpret_cast<const UVMorph *>(ptr);
-        Morph::UV uv;
         uv.vertex = 0;
         uv.position.setValue(morph.position[0], morph.position[1], morph.position[2], morph.position[3]);
         uv.index = vertexIndex;
@@ -455,15 +539,89 @@ void Morph::readUVs(const Model::DataInfo &info, int count, int offset, uint8_t 
 
 void Morph::readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
+    Morph::Vertex vertex;
     for (int i = 0; i < count; i++) {
-        int vertexIndex = internal::variantIndexUnsigned(ptr, info.vertexIndexSize);
+        int vertexIndex = internal::readUnsignedIndex(ptr, info.vertexIndexSize);
         const VertexMorph &morph = *reinterpret_cast<const VertexMorph *>(ptr);
-        Morph::Vertex vertex;
         internal::setPosition(morph.position, vertex.position);
         vertex.vertex = 0;
         vertex.index = vertexIndex;
         m_vertices.add(vertex);
         ptr += sizeof(morph);
+    }
+}
+
+void Morph::writeBones(const Model::DataInfo &info, uint8_t *&ptr) const
+{
+    BoneMorph morph;
+    int nbones = m_bones.count(), boneIndexSize = info.boneIndexSize;
+    for (int i = 0; i < nbones; i++) {
+        const Morph::Bone &bone = m_bones[i];
+        internal::getPosition(bone.position, morph.position);
+        internal::getRotation(bone.rotation, morph.rotation);
+        internal::writeSignedIndex(bone.index, boneIndexSize, ptr);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+    }
+}
+
+void Morph::writeGroups(const Model::DataInfo &info, uint8_t *&ptr) const
+{
+    GroupMorph morph;
+    int ngroups = m_groups.count(), morphIndexSize = info.morphIndexSize;
+    for (int i = 0; i < ngroups; i++) {
+        const Morph::Group &group = m_groups[i];
+        morph.weight = group.weight;
+        internal::writeSignedIndex(group.index, morphIndexSize, ptr);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+    }
+}
+
+void Morph::writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const
+{
+    MaterialMorph morph;
+    int nmaterials = m_materials.count(), materialIndexSize = info.materialIndexSize;
+    for (int i = 0; i < nmaterials; i++) {
+        const Morph::Material &material = m_materials[i];
+        internal::getColor(material.ambient, morph.ambient);
+        internal::getColor(material.diffuse, morph.diffuse);
+        internal::getColor(material.edgeColor, morph.edgeColor);
+        morph.operation = material.operation;
+        morph.shininess = material.shininess;
+        internal::getColor(material.specular, morph.specular);
+        internal::getColor(material.sphereTextureWeight, morph.sphereTextureWeight);
+        internal::getColor(material.textureWeight, morph.textureWeight);
+        internal::getColor(material.toonTextureWeight, morph.toonTextureWeight);
+        internal::writeSignedIndex(material.index, materialIndexSize, ptr);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+    }
+}
+
+void Morph::writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const
+{
+    UVMorph morph;
+    int nuvs = m_uvs.count(), vertexIndexSize = info.vertexIndexSize;
+    for (int i = 0; i < nuvs; i++) {
+        const Morph::UV &uv = m_uvs[i];
+        morph.position[0] = uv.position.x();
+        morph.position[1] = uv.position.y();
+        morph.position[2] = uv.position.z();
+        morph.position[3] = uv.position.w();
+        internal::writeUnsignedIndex(uv.index, vertexIndexSize, ptr);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+    }
+}
+
+void Morph::writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const
+{
+    VertexMorph morph;
+    int nvertices = m_vertices.count(), vertexIndexSize = info.vertexIndexSize;
+    for (int i = 0; i < nvertices; i++) {
+        const Morph::Vertex &vertex = m_vertices[i];
+        morph.position[0] = vertex.position.x();
+        morph.position[1] = vertex.position.y();
+        morph.position[2] = vertex.position.z();
+        internal::writeUnsignedIndex(vertex.index, vertexIndexSize, ptr);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
     }
 }
 

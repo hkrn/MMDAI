@@ -93,7 +93,8 @@ public:
      * @param size Size of vertex to be output
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(Morph::Material *morph, float weight);
 
     const IString *name() const { return m_name; }
@@ -119,6 +120,25 @@ public:
     bool isShadowMapDrawn() const { return m_flags & 0x04; }
     bool isSelfShadowDrawn() const { return m_flags & 0x08; }
     bool isEdgeDrawn() const { return m_flags & 0x10; }
+
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+    void setUserDataArea(const IString *value);
+    void setMainTexture(const IString *value);
+    void setSphereTexture(const IString *value);
+    void setToonTexture(const IString *value);
+    void setSphereTextureRenderMode(SphereTextureRenderMode value);
+    void setAmbient(const Color &value);
+    void setDiffuse(const Color &value);
+    void setSpecular(const Color &value);
+    void setEdgeColor(const Color &value);
+    void setShininess(float value);
+    void setEdgeSize(float value);
+    void setMainTextureIndex(int value);
+    void setSphereTextureIndex(int value);
+    void setToonTextureIndex(int value);
+    void setIndices(int value);
+    void setFlags(int value);
 
 private:
     IString *m_name;

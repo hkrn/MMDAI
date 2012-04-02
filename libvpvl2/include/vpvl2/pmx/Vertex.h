@@ -42,6 +42,9 @@
 
 namespace vpvl2
 {
+
+class IBone;
+
 namespace pmx
 {
 
@@ -82,33 +85,51 @@ public:
      * @param size Size of vertex to be output
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
     void reset();
     void mergeMorph(Morph::UV *morph, float weight);
     void mergeMorph(Morph::Vertex *morph, float weight);
     void performSkinning(Vector3 &position, Vector3 &normal);
 
     const Vector3 &origin() const { return m_origin; }
-    const Vector3 &position() const { return m_position; }
+    const Vector3 &position() const { return m_morphPosition; }
     const Vector3 &normal() const { return m_normal; }
     const Vector3 &texcoord() const { return m_texcoord; }
     const Vector4 &uv(int index) const;
     Type type() const { return m_type; }
-    float edge() const { return m_edge; }
+    float edgeSize() const { return m_edgeSize; }
+    float weight(int index) const;
+    IBone *bone(int index) const;
+    const Vector3 &sdefC() const { return m_c; }
+    const Vector3 &sdefR0() const { return m_r0; }
+    const Vector3 &sdefR1() const { return m_r1; }
+
+    void setOrigin(const Vector3 &value);
+    void setNormal(const Vector3 &value);
+    void setTexCoord(const Vector3 &value);
+    void setUV(int index, const Vector4 &value);
+    void setType(Type value);
+    void setEdgeSize(float value);
+    void setWeight(int index, float weight);
+    void setBone(int index, IBone *value);
+    void setSdefC(const Vector3 &value);
+    void setSdefR0(const Vector3 &value);
+    void setSdefR1(const Vector3 &value);
 
 private:
-    Bone *m_bones[4];
+    IBone *m_bones[4];
     Vector4 m_originUVs[4];
-    Vector4 m_positionUVs[4];
+    Vector4 m_morphUVs[4];
     Vector3 m_origin;
-    Vector3 m_position;
+    Vector3 m_morphPosition;
     Vector3 m_normal;
     Vector3 m_texcoord;
     Vector3 m_c;
     Vector3 m_r0;
     Vector3 m_r1;
     Type m_type;
-    float m_edge;
+    float m_edgeSize;
     float m_weight[4];
     int m_boneIndices[4];
 

@@ -113,7 +113,8 @@ public:
      * @param data The buffer to read and parse
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
 
     void performTransform(float weight);
     void setWeight(float value);
@@ -132,6 +133,11 @@ private:
     void readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void readUVs(const Model::DataInfo &info, int count, int offset, uint8_t *&ptr);
     void readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr);
+    void writeBones(const Model::DataInfo &info, uint8_t *&ptr) const;
+    void writeGroups(const Model::DataInfo &info, uint8_t *&ptr) const;
+    void writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const;
+    void writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const;
+    void writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const;
 
     Array<Vertex> m_vertices;
     Array<UV> m_uvs;

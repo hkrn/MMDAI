@@ -217,7 +217,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* flags */
     size_t flagSize;
-    internal::drain(sizeof(Header), ptr, rest);
+    internal::readBytes(sizeof(Header), ptr, rest);
     if (!internal::size8(ptr, rest, flagSize) || flagSize != 8) {
         m_error = kInvalidFlagSizeError;
         return false;
@@ -230,7 +230,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.boneIndexSize = *reinterpret_cast<uint8_t *>(ptr + 5);
     info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
     info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
-    internal::drain(flagSize, ptr, rest);
+    internal::readBytes(flagSize, ptr, rest);
 
     /* name in Japanese */
     if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
@@ -267,7 +267,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     info.indicesPtr = ptr;
     info.indicesCount = nindices;
-    internal::drain(nindices * info.vertexIndexSize, ptr, rest);
+    internal::readBytes(nindices * info.vertexIndexSize, ptr, rest);
 
     /* texture lookup table */
     size_t ntextures;
@@ -479,7 +479,7 @@ void Model::parseIndices(const DataInfo &info)
     delete[] m_skinnedIndices;
     m_skinnedIndices = new int[nindices];
     for(int i = 0; i < nindices; i++) {
-        int index = internal::variantIndexUnsigned(ptr, size);
+        int index = internal::readUnsignedIndex(ptr, size);
         if (index >= 0 && index < nvertices) {
             m_indices.add(index);
             m_skinnedIndices[i] = index;

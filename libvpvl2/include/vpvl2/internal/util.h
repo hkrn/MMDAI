@@ -41,6 +41,7 @@
 
 #include "vpvl2/config.h"
 #include "vpvl2/Common.h"
+#include "vpvl2/IString.h"
 #include <string.h>
 
 #if defined(WIN32)
@@ -65,19 +66,12 @@ static inline float spline2(const float t, const float p1, const float p2)
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
 }
 
-inline float lerp(float x, float y, float t)
+static inline float lerp(float x, float y, float t)
 {
     return x * (1.0f - t) + y * t;
 }
 
-inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
-{
-    assert(dst != NULL && src != NULL && max > 0);
-    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
-    return ptr;
-}
-
-static inline void drain(size_t size, uint8_t *&ptr, size_t &rest)
+static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
 {
     ptr += size;
     rest -= size;
@@ -89,7 +83,7 @@ static inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
     if (sizeof(uint8_t) > rest)
         return false;
     size = *reinterpret_cast<uint8_t *>(ptr);
-    drain(sizeof(uint8_t), ptr, rest);
+    readBytes(sizeof(uint8_t), ptr, rest);
     return true;
 }
 
@@ -99,7 +93,7 @@ static inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
     if (sizeof(uint16_t) > rest)
         return false;
     size = *reinterpret_cast<uint16_t *>(ptr);
-    drain(sizeof(uint16_t), ptr, rest);
+    readBytes(sizeof(uint16_t), ptr, rest);
     return true;
 }
 
@@ -109,7 +103,7 @@ static inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
     if (sizeof(int) > rest)
         return false;
     size = *reinterpret_cast<int *>(ptr);
-    drain(sizeof(int), ptr, rest);
+    readBytes(sizeof(int), ptr, rest);
     return true;
 }
 
@@ -119,7 +113,7 @@ static inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t 
     if (!internal::size32(ptr, rest, size) || size > rest)
         return false;
     text = ptr;
-    internal::drain(size, ptr, rest);
+    internal::readBytes(size, ptr, rest);
     return true;
 }
 
@@ -129,7 +123,7 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_
     size_t required = stride * size;
     if (required > rest)
         return false;
-    internal::drain(required, ptr, rest);
+    internal::readBytes(required, ptr, rest);
     return true;
 }
 
@@ -138,7 +132,7 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
     return validateSize(ptr, 1, stride, rest);
 }
 
-static inline int variantIndex(uint8_t *&ptr, size_t size)
+static inline int readSignedIndex(uint8_t *&ptr, size_t size)
 {
     int result = 0;
     switch (size) {
@@ -160,7 +154,7 @@ static inline int variantIndex(uint8_t *&ptr, size_t size)
     return result;
 }
 
-static inline int variantIndexUnsigned(uint8_t *&ptr, size_t size)
+static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
 {
     int result = 0;
     switch (size) {
@@ -191,6 +185,17 @@ static void inline setPosition(const float *input, Vector3 &output)
 #endif
 }
 
+static void inline getPosition(const Vector3 &input, float *output)
+{
+    output[0] = input.x();
+    output[1] = input.y();
+#ifdef VPVL2_COORDINATE_OPENGL
+    output[2] = -input.z();
+#else
+    output[2] = input.z();
+#endif
+}
+
 static void inline setRotation(const float *input, Quaternion &output)
 {
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -198,6 +203,106 @@ static void inline setRotation(const float *input, Quaternion &output)
 #else
     output.setValue(input[0], input[1], input[2], input[3]);
 #endif
+}
+
+static void inline getRotation(const Quaternion &input, float *output)
+{
+    output[0] = input.x();
+#ifdef VPVL2_COORDINATE_OPENGL
+    output[1] = -input.y();
+    output[2] = -input.z();
+#else
+    output[1] = input.y();
+    output[2] = input.z();
+#endif
+    output[3] = input.w();
+}
+
+static void inline getColor(const Vector3 &input, float *output)
+{
+    output[0] = input.x();
+    output[1] = input.y();
+    output[2] = input.z();
+}
+
+static void inline getColor(const Vector4 &input, float *output)
+{
+    output[0] = input.x();
+    output[1] = input.y();
+    output[2] = input.z();
+    output[3] = input.w();
+}
+
+static inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
+{
+    assert(dst != NULL && max > 0);
+    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
+    return ptr;
+}
+
+static inline void writeBytes(const uint8_t *src, size_t size, uint8_t *&dst)
+{
+    copyBytes(dst, src, size);
+    dst += size;
+}
+
+static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
+{
+    switch (size) {
+    case 1: {
+        int8_t v = value;
+        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        break;
+    }
+    case 2: {
+        int16_t v = value;
+        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        break;
+    }
+    case 4: {
+        int v = value;
+        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        break;
+    }
+    default:
+        assert(0);
+    }
+}
+
+static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
+{
+    switch (size) {
+    case 1: {
+        uint8_t v = value;
+        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        break;
+    }
+    case 2: {
+        uint16_t v = value;
+        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        break;
+    }
+    case 4: {
+        int v = value;
+        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        break;
+    }
+    default:
+        assert(0);
+    }
+}
+
+static inline void writeString(const IString *string, uint8_t *&dst)
+{
+    size_t s = string ? string->length() : 0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&s), sizeof(int), dst);
+    if (s > 0)
+        internal::writeBytes(string->toByteArray(), s, dst);
+}
+
+static inline size_t estimateSize(const IString *string)
+{
+    return sizeof(int) + (string ? string->length() : 0);
 }
 
 static inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)

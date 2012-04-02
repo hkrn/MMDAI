@@ -336,7 +336,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     m_localTransform.setOrigin(m_origin);
     m_localToOrigin.setOrigin(-m_origin);
     ptr += sizeof(unit);
-    m_parentBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
+    m_parentBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     m_index = *reinterpret_cast<int *>(ptr);
     ptr += sizeof(int);
     uint16_t flags = m_flags = *reinterpret_cast<uint16_t *>(ptr);
@@ -344,7 +344,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone has destination */
     bool isRelative = ((flags & 0x0001) == 1);
     if (isRelative) {
-        m_destinationOriginBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
+        m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     }
     else {
         const BoneUnit &offset = *reinterpret_cast<const BoneUnit *>(ptr);
@@ -354,7 +354,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone is IK */
     if (flags & 0x0020) {
         /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
-        m_targetBoneIndex = internal::variantIndex(ptr, info.boneIndexSize);
+        m_targetBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
         m_nloop = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
         m_angleConstraint = *reinterpret_cast<float *>(ptr);
@@ -363,7 +363,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         ptr += sizeof(int);
         for (int i = 0; i < nlinks; i++) {
             IKLink *ik = new IKLink();
-            ik->boneID = internal::variantIndex(ptr, info.boneIndexSize);
+            ik->boneID = internal::readSignedIndex(ptr, info.boneIndexSize);
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
             ptr += sizeof(ik->hasAngleConstraint);
             if (ik->hasAngleConstraint) {
@@ -379,7 +379,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     }
     /* bone has additional bias */
     if ((flags & 0x0100 || flags & 0x200)) {
-        m_parentBoneBiasIndex = internal::variantIndex(ptr, info.boneIndexSize);
+        m_parentBoneBiasIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
         m_weight = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
     }
