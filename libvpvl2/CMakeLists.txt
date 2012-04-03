@@ -24,6 +24,7 @@ set(vpvl2_public_headers
     include/vpvl2/IString.h
     include/vpvl2/pmx/Bone.h
     include/vpvl2/pmx/Joint.h
+    include/vpvl2/pmx/Label.h
     include/vpvl2/pmx/Material.h
     include/vpvl2/pmx/Model.h
     include/vpvl2/pmx/Morph.h

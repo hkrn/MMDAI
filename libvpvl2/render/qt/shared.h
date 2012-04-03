@@ -134,6 +134,9 @@ public:
     const uint8_t *toByteArray() const {
         return reinterpret_cast<const uint8_t *>(m_value.toUtf8().constData());
     }
+    size_t length() const {
+        return m_value.length();
+    }
 
 private:
     mutable QSet<QByteArray> m_keys;

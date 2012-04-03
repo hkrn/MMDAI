@@ -151,7 +151,7 @@ bool Model::load(const uint8_t *data, size_t size)
         parseMaterials(info);
         parseBones(info);
         parseMorphs(info);
-        parseDisplayNames(info);
+        parseLabels(info);
         parseRigidBodies(info);
         parseJoints(info);
         if (!Bone::loadBones(m_bones, m_BPSOrderedBones, m_APSOrderedBones)
@@ -276,9 +276,9 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.texturesPtr = ptr;
-    size_t nNameSize;
-    uint8_t *namePtr;
     for (size_t i = 0; i < ntextures; i++) {
+        size_t nNameSize;
+        uint8_t *namePtr;
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             m_error = kInvalidTextureError;
             return false;
@@ -305,49 +305,10 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     /* display name table */
-    size_t nDisplayNames;
-    if (!internal::size32(ptr, rest, nDisplayNames)) {
-        m_error = kInvalidDisplayNameSizeError;
+    if (!Label::preparse(ptr, rest, info)) {
+        m_error = kInvalidLabelsError;
         return false;
     }
-    info.displayNamesPtr = ptr;
-    for (size_t i = 0; i < nDisplayNames; i++) {
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-            m_error = kInvalidTextureError;
-            return false;
-        }
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-            m_error = kInvalidTextureError;
-            return false;
-        }
-        if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
-            return false;
-        }
-        if (!internal::size32(ptr, rest, size)) {
-            return false;
-        }
-        for (size_t j = 0; j < size; j++) {
-            size_t type;
-            if (!internal::size8(ptr, rest, type)) {
-                return false;
-            }
-            switch (type) {
-            case 0:
-                if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
-                    return false;
-                }
-                break;
-            case 1:
-                if (!internal::validateSize(ptr, info.morphIndexSize, rest)) {
-                    return false;
-                }
-                break;
-            default:
-                return false;
-            }
-        }
-    }
-    info.displayNamesCount = nDisplayNames;
 
     /* rigid body */
     if (!RigidBody::preparse(ptr, rest, info)) {
@@ -550,8 +511,17 @@ void Model::parseMorphs(const DataInfo &info)
     }
 }
 
-void Model::parseDisplayNames(const DataInfo & /* info */)
+void Model::parseLabels(const DataInfo &info)
 {
+    const int nlabels = info.displayNamesCount;
+    uint8_t *ptr = info.displayNamesPtr;
+    size_t size;
+    for(int i = 0; i < nlabels; i++) {
+        Label *label = new Label();
+        label->read(ptr, info, size);
+        m_labels.add(label);
+        ptr += size;
+    }
 }
 
 void Model::parseRigidBodies(const DataInfo &info)

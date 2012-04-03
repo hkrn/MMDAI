@@ -34,40 +34,71 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_PMX_LABEL_H_
+#define VPVL2_PMX_LABEL_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMotion.h"
 #include "vpvl2/IString.h"
-
-/* internals and will be private */
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Label.h"
-#include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphAnimation.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
-#include "vpvl2/vmd/Motion.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+namespace pmx
+{
+
+/**
+ * @file
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Label class represents a label of a Polygon Model Extended object.
+ */
+
+class VPVL2_API Label
+{
+public:
+    struct Pair {
+        int id;
+        int type;
+        Bone *bone;
+        Morph *morph;
+    };
+
+    /**
+     * Constructor
+     */
+    Label();
+    ~Label();
+
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+
+    /**
+     * Read and parse the buffer with id and sets it's result to the class.
+     *
+     * @param data The buffer to read and parse
+     */
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
+
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_englishName; }
+    bool isSpecial() const { return m_special; }
+    Bone *bone(int index) const;
+    Morph *morph(int index) const;
+    int count() const;
+
+private:
+    IString *m_name;
+    IString *m_englishName;
+    Array<Pair> m_pairs;
+    bool m_special;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Label)
+};
+
+} /* namespace pmx */
+} /* namespace vpvl2 */
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */

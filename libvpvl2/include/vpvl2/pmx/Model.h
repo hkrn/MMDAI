@@ -38,6 +38,9 @@
 #define VPVL2_PMX_MODEL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IBone.h"
+#include "vpvl2/IMorph.h"
+#include "vpvl2/IString.h"
 
 namespace vpvl2
 {
@@ -54,6 +57,7 @@ namespace pmx
  */
 
 class Bone;
+class Label;
 class Joint;
 class Material;
 class Morph;
@@ -90,9 +94,7 @@ public:
         kInvalidMaterialsError,
         kInvalidBonesError,
         kInvalidMorphsError,
-        kInvalidDisplayNameSizeError,
-        kInvalidDisplayNameError,
-        kInvalidDisplayEnglishNameError,
+        kInvalidLabelsError,
         kInvalidRigidBodiesError,
         kInvalidJointsError,
         kMaxErrors
@@ -203,7 +205,7 @@ private:
     void parseMaterials(const DataInfo &info);
     void parseBones(const DataInfo &info);
     void parseMorphs(const DataInfo &info);
-    void parseDisplayNames(const DataInfo &info);
+    void parseLabels(const DataInfo &info);
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
 
@@ -216,6 +218,7 @@ private:
     Array<Bone *> m_BPSOrderedBones;
     Array<Bone *> m_APSOrderedBones;
     Array<Morph *> m_morphs;
+    Array<Label *> m_labels;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
     Hash<HashString, IBone *> m_name2bones;
