@@ -112,7 +112,10 @@ static bool slurpFile(const std::string &path, QByteArray &bytes) {
 
 class String : public IString {
 public:
-    String(const QString &s) : m_value(s) {
+    String(const QString &s)
+        : m_bytes(s.toUtf8()),
+          m_value(s)
+    {
     }
     ~String() {
     }
@@ -121,9 +124,7 @@ public:
         return new String(m_value);
     }
     const HashString toHashString() const {
-        const QByteArray &bytes = m_value.toUtf8();
-        m_keys.insert(bytes);
-        return HashString(bytes.constData());
+        return HashString(m_bytes.constData());
     }
     bool equals(const IString *value) const {
         return m_value == static_cast<const String *>(value)->value();
@@ -132,14 +133,14 @@ public:
         return m_value;
     }
     const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_value.toUtf8().constData());
+        return reinterpret_cast<const uint8_t *>(m_bytes.constData());
     }
     size_t length() const {
-        return m_value.length();
+        return m_bytes.length();
     }
 
 private:
-    mutable QSet<QByteArray> m_keys;
+    QByteArray m_bytes;
     QString m_value;
 };
 
@@ -428,6 +429,20 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
             << " isShadowMapDrawin=" << material->isShadowMapDrawn()
             << " isEdgeDrawn=" << material->isEdgeDrawn()
                ;
+    switch (material->sphereTextureRenderMode()) {
+    case pmx::Material::kAdditive:
+        qDebug() << "sphere=add";
+        break;
+    case pmx::Material::kModulate:
+        qDebug() << "sphere=modulate";
+        break;
+    case pmx::Material::kNone:
+        qDebug() << "sphere=none";
+        break;
+    case pmx::Material::kSubTexture:
+        qDebug() << "sphere=sub";
+        break;
+    }
     return debug.space();
 }
 
