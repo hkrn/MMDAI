@@ -37,6 +37,11 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#if IK_DEBUG
+#include <QtCore>
+#include <QDebug>
+#endif
+
 namespace
 {
 
@@ -357,7 +362,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_targetBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
         m_nloop = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
-        m_angleConstraint = *reinterpret_cast<float *>(ptr);
+        m_angleConstraint = ((*reinterpret_cast<float *>(ptr)) / 4.0) * kPI;
         ptr += sizeof(float);
         int nlinks = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
@@ -368,11 +373,16 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
             ptr += sizeof(ik->hasAngleConstraint);
             if (ik->hasAngleConstraint) {
                 const BoneUnit &lower = *reinterpret_cast<const BoneUnit *>(ptr);
-                ik->lowerLimit.setValue(lower.vector3[0], lower.vector3[1], lower.vector3[2]);
                 ptr += sizeof(lower);
                 const BoneUnit &upper = *reinterpret_cast<const BoneUnit *>(ptr);
-                ik->upperLimit.setValue(upper.vector3[0], upper.vector3[1], upper.vector3[2]);
                 ptr += sizeof(upper);
+#ifdef VPVL2_COORDINATE_OPENGL
+                ik->lowerLimit.setValue(-upper.vector3[0], -upper.vector3[1], lower.vector3[2]);
+                ik->upperLimit.setValue(-lower.vector3[0], -lower.vector3[1], upper.vector3[2]);
+#else
+                ik->lowerLimit.setValue(lower.vector3[0], lower.vector3[1], lower.vector3[2]);
+                ik->upperLimit.setValue(upper.vector3[0], upper.vector3[1], upper.vector3[2]);
+#endif
             }
             m_IKLinks.add(ik);
         }
@@ -420,36 +430,39 @@ void Bone::performFullTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
     if (hasRotationInherence()) {
-        Bone *parentBone = m_parentInherenceBone;
-        if (parentBone) {
+        if (Bone *parentBone = m_parentInherenceBone) {
             const Quaternion &parentRotation = parentBone->hasRotationInherence() ? parentBone->m_rotationInherence : parentBone->m_rotation * parentBone->m_rotationMorph;
             rotation *= parentRotation;
-            if (m_weight != 1.0)
+            if (!btFuzzyZero(m_weight - 1.0))
                 rotation = Quaternion::getIdentity().slerp(rotation, m_weight);
             rotation *= parentBone->m_rotationIKLink;
             m_rotationInherence = Quaternion::getIdentity().slerp(parentRotation * parentBone->m_rotationIKLink, m_weight) * m_rotation * m_rotationMorph;
+            m_rotationInherence.normalize();
         }
     }
     rotation *= m_rotation * m_rotationMorph * m_rotationIKLink;
+    //rotation.normalize();
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
     if (hasPositionInherence()) {
-        Bone *parentBone = m_parentInherenceBone;
-        if (parentBone) {
+        if (Bone *parentBone = m_parentInherenceBone) {
             const Vector3 &parentPosition = parentBone->hasPositionInherence() ? parentBone->m_positionInherence : parentBone->m_position + parentBone->m_positionMorph;
             position += parentPosition;
-            if (m_weight != 1.0)
+            if (!btFuzzyZero(m_weight - 1.0))
                 position *= m_weight;
             m_positionInherence = parentPosition + m_position + m_positionMorph;
         }
     }
     position += m_position + m_positionMorph;
     m_localTransform.setOrigin(m_offset + m_position + m_positionMorph);
-    performTransform();
+    if (m_parentBone)
+        m_localTransform = m_parentBone->m_localTransform * m_localTransform;
 }
 
 void Bone::performTransform()
 {
+    m_localTransform.setRotation(m_rotationIKLink);
+    m_localTransform.setOrigin(m_position);
     if (m_parentBone)
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
 }
@@ -462,7 +475,6 @@ void Bone::performInverseKinematics()
     const int nloops = m_nloop;
     Quaternion rotation;
     btMatrix3x3 matrix;
-    Scalar x1, y1, z1;
     for (int i = 0; i < nloops; i++) {
         for (int j = 0; j < nlinks; j++) {
             IKLink *link = m_IKLinks[j];
@@ -472,58 +484,110 @@ void Bone::performInverseKinematics()
             const Transform &transform = bone->m_localTransform.inverse();
             Vector3 v1 = transform * targetPosition;
             Vector3 v2 = transform * destinationPosition;
-            v1.normalize();
-            v2.normalize();
             if (btFuzzyZero(v1.distance2(v2))) {
                 i = nloops;
                 break;
             }
+#if IK_DEBUG
+            qDebug() << "transo:" << transform.getOrigin().x() << transform.getOrigin().y() << transform.getOrigin().z();
+            qDebug() << "transr:" << transform.getRotation().w() << transform.getRotation().x() << transform.getRotation().y() << transform.getRotation().z();
+            qDebug() << "target:" << targetPosition.x() << targetPosition.y() << targetPosition.z();
+            qDebug() << "dest:  " << destinationPosition.x() << destinationPosition.y() << destinationPosition.z();
+#endif
+            v1.safeNormalize();
+            v2.safeNormalize();
+#if IK_DEBUG
+            qDebug() << "v1:    " << v1.x() << v1.y() << v1.z();
+            qDebug() << "v2:    " << v2.x() << v2.y() << v2.z();
+#endif
             Vector3 rotationAxis = v1.cross(v2);
-            const Vector3 &lowerLimit = link->lowerLimit;
-            const Vector3 &upperLimit = link->upperLimit;
-            if (link->hasAngleConstraint) {
-                // limit x axis
-                if (lowerLimit.y() == 0 && upperLimit.y() == 0 && lowerLimit.z() == 0 && upperLimit.z() == 0) {
-                    const Scalar &vx = bone->m_localTransform.getBasis().tdotx(rotationAxis);
-                    rotationAxis.setZero();
-                    rotationAxis.setX(btFsel(vx, 1.0, -1.0));
-                }
-                // limit y axis
-                else if (lowerLimit.x() == 0 && upperLimit.x() == 0 && lowerLimit.z() == 0 && upperLimit.z() == 0) {
-                    const Scalar &vy = bone->m_localTransform.getBasis().tdoty(rotationAxis);
-                    rotationAxis.setZero();
-                    rotationAxis.setY(btFsel(vy, 1.0, -1.0));
-                }
-                // limit z axis
-                else if (lowerLimit.x() == 0 && upperLimit.x() == 0 && lowerLimit.y() == 0 && upperLimit.y() == 0) {
-                    const Scalar &vz = bone->m_localTransform.getBasis().tdotz(rotationAxis);
-                    rotationAxis.setZero();
-                    rotationAxis.setZ(btFsel(vz, 1.0, -1.0));
-                }
-            }
-            const Scalar &dot = btClamped(v1.dot(v2), -1.0f, 1.0f);
-            const Scalar &angle = btClamped(btAcos(dot), -m_angleConstraint, m_angleConstraint);
+            const Scalar &angle = btClamped(btAcos(v1.dot(v2)), -m_angleConstraint, m_angleConstraint);
             if (btFuzzyZero(angle))
                 continue;
             rotation.setRotation(rotationAxis, angle);
-            bone->m_rotationIKLink *= rotation;
-            if (i == 0)
-                bone->m_rotationIKLink = bone->m_rotation * bone->m_rotationIKLink;
+#if IK_DEBUG
+            qDebug("I:J=%d:%d", i, j);
+            qDebug("target: %s", m_targetBone->name()->toByteArray());
+            qDebug("linked: %s", bone->name()->toByteArray());
+#endif
             if (link->hasAngleConstraint) {
-                matrix.setRotation(bone->m_rotationIKLink);
-                matrix.getEulerZYX(z1, y1, x1);
-                btClamp(x1, lowerLimit.x(), upperLimit.x());
-                btClamp(y1, lowerLimit.y(), upperLimit.y());
-                btClamp(z1, lowerLimit.z(), upperLimit.z());
-                matrix.setEulerZYX(z1, y1, x1);
-                matrix.getRotation(bone->m_rotationIKLink);
+                const Vector3 &lowerLimit = link->lowerLimit;
+                const Vector3 &upperLimit = link->upperLimit;
+                if (i == 0) {
+                    if (btFuzzyZero(lowerLimit.y()) && btFuzzyZero(upperLimit.y())
+                            && btFuzzyZero(lowerLimit.z()) && btFuzzyZero(upperLimit.z())) {
+                        rotationAxis.setValue(1.0, 0.0, 0.0);
+                    }
+                    else if (btFuzzyZero(lowerLimit.x()) && btFuzzyZero(upperLimit.x())
+                             && btFuzzyZero(lowerLimit.z()) && btFuzzyZero(upperLimit.z())) {
+                        rotationAxis.setValue(0.0, 1.0, 0.0);
+                    }
+                    else if (btFuzzyZero(lowerLimit.x()) && btFuzzyZero(upperLimit.x())
+                             && btFuzzyZero(lowerLimit.y()) && btFuzzyZero(upperLimit.y())) {
+                        rotationAxis.setValue(0.0, 0.0, 1.0);
+                    }
+                    rotation.setRotation(rotationAxis, btFabs(angle));
+                }
+                else {
+                    Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
+                    matrix.setRotation(rotation);
+                    matrix.getEulerZYX(z1, y1, x1);
+                    matrix.setRotation(bone->m_rotationIKLink);
+                    matrix.getEulerZYX(z2, y2, x2);
+                    x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
+
+#if IK_DEBUG
+                    if (x3 < lowerLimit.x() || x3 > upperLimit.x()) {
+                        qDebug() << x3 << x1 << x2;
+                    }
+                    /*
+                    qDebug() << "I:J" << i << j;
+                    qDebug() << "IK:   " << x1 << y1 << z1;
+                    qDebug() << "upper:" << upperLimit.x() << upperLimit.y() << upperLimit.z();
+                    qDebug() << "lower:" << lowerLimit.x() << lowerLimit.y() << lowerLimit.z();
+                    qDebug() << "rot:  " << x2 << y2 << z2;
+                    */
+#endif
+                    rotation.setEulerZYX(0, 0, x1);
+                }
+#if IK_DEBUG
+                qDebug() << "rot:   " << rotation.w() << rotation.x() << rotation.y() << rotation.z();
+#endif
+                bone->m_rotationIKLink = rotation * bone->m_rotationIKLink;
             }
+            else {
+#if IK_DEBUG
+                qDebug() << "rot:   " << rotation.w() << rotation.x() << rotation.y() << rotation.z();
+#endif
+                bone->m_rotationIKLink *= rotation;
+            }
+            //bone->m_rotationIKLink.normalize();
             for (int k = j; k >= 0; k--) {
                 IKLink *ik = m_IKLinks[k];
                 Bone *destinationBone = ik->bone;
                 destinationBone->performFullTransform();
+#if IK_DEBUG
+                qDebug("k=%d: %s", k, destinationBone->name()->toByteArray());
+                qDebug() << destinationBone->m_localTransform.getOrigin().x()
+                         << destinationBone->m_localTransform.getOrigin().y()
+                         << destinationBone->m_localTransform.getOrigin().z();
+                qDebug() << destinationBone->m_localTransform.getRotation().w()
+                         << destinationBone->m_localTransform.getRotation().x()
+                         << destinationBone->m_localTransform.getRotation().y()
+                         << destinationBone->m_localTransform.getRotation().z();
+#endif
             }
             m_targetBone->performFullTransform();
+#if IK_DEBUG
+            qDebug("target: %s", m_targetBone->name()->toByteArray());
+            qDebug() << m_targetBone->m_localTransform.getOrigin().x()
+                     << m_targetBone->m_localTransform.getOrigin().y()
+                     << m_targetBone->m_localTransform.getOrigin().z();
+            qDebug() << m_targetBone->m_localTransform.getRotation().w()
+                     << m_targetBone->m_localTransform.getRotation().x()
+                     << m_targetBone->m_localTransform.getRotation().y()
+                     << m_targetBone->m_localTransform.getRotation().z();
+#endif
         }
     }
 }
