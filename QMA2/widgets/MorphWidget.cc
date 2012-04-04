@@ -52,8 +52,9 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     m_eyeRegistButton = new QPushButton();
     m_eyes = new QComboBox();
     m_eyeSlider = createSlider();
-    connect(m_eyeRegistButton, SIGNAL(clicked()), this, SLOT(registerEye()));
-    connect(m_eyeSlider, SIGNAL(valueChanged(int)), this, SLOT(setEyeWeight(int)));
+    connect(m_eyes, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_eyeRegistButton, SIGNAL(clicked()), SLOT(registerEye()));
+    connect(m_eyeSlider, SIGNAL(valueChanged(int)), SLOT(setEyeWeight(int)));
     eyeVBoxLayout->addWidget(m_eyes);
     eyeVBoxLayout->addWidget(m_eyeSlider);
     eyeVBoxLayout->addWidget(m_eyeRegistButton);
@@ -64,8 +65,9 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     m_lipRegistButton = new QPushButton();
     m_lips = new QComboBox();
     m_lipSlider = createSlider();
-    connect(m_lipRegistButton, SIGNAL(clicked()), this, SLOT(registerLip()));
-    connect(m_lipSlider, SIGNAL(valueChanged(int)), this, SLOT(setLipWeight(int)));
+    connect(m_lips, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_lipRegistButton, SIGNAL(clicked()), SLOT(registerLip()));
+    connect(m_lipSlider, SIGNAL(valueChanged(int)), SLOT(setLipWeight(int)));
     lipVBoxLayout->addWidget(m_lips);
     lipVBoxLayout->addWidget(m_lipSlider);
     lipVBoxLayout->addWidget(m_lipRegistButton);
@@ -76,8 +78,9 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     m_eyeblowRegistButton = new QPushButton();
     m_eyeblows = new QComboBox();
     m_eyeblowSlider = createSlider();
-    connect(m_eyeblowRegistButton, SIGNAL(clicked()), this, SLOT(registerEyeblow()));
-    connect(m_eyeblowSlider, SIGNAL(valueChanged(int)), this, SLOT(setEyeblowWeight(int)));
+    connect(m_eyeblows, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_eyeblowRegistButton, SIGNAL(clicked()), SLOT(registerEyeblow()));
+    connect(m_eyeblowSlider, SIGNAL(valueChanged(int)), SLOT(setEyeblowWeight(int)));
     eyeblowVBoxLayout->addWidget(m_eyeblows);
     eyeblowVBoxLayout->addWidget(m_eyeblowSlider);
     eyeblowVBoxLayout->addWidget(m_eyeblowRegistButton);
@@ -88,8 +91,9 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     m_otherRegistButton = new QPushButton();
     m_others = new QComboBox();
     m_otherSlider = createSlider();
-    connect(m_otherRegistButton, SIGNAL(clicked()), this, SLOT(registerOther()));
-    connect(m_otherSlider, SIGNAL(valueChanged(int)), this, SLOT(setOtherWeight(int)));
+    connect(m_others, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_otherRegistButton, SIGNAL(clicked()), SLOT(registerOther()));
+    connect(m_otherSlider, SIGNAL(valueChanged(int)), SLOT(setOtherWeight(int)));
     otherVBoxLayout->addWidget(m_others);
     otherVBoxLayout->addWidget(m_otherSlider);
     otherVBoxLayout->addWidget(m_otherRegistButton);
@@ -109,8 +113,7 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     retranslate();
     setLayout(mainLayout);
     setEnabled(false);
-    connect(m_morphMotionModel, SIGNAL(modelDidChange(vpvl::PMDModel*)),
-            this, SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(m_morphMotionModel, SIGNAL(modelDidChange(vpvl::PMDModel*)), SLOT(setPMDModel(vpvl::PMDModel*)));
 }
 
 void MorphWidget::retranslate()
