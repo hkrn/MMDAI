@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_VMD_BONEKEYFRAME_H_
-#define VPVL_VMD_BONEKEYFRAME_H_
+#ifndef VPVL2_VMD_BONEKEYFRAME_H_
+#define VPVL2_VMD_BONEKEYFRAME_H_
 
 #include "vpvl2/vmd/BaseKeyFrame.h"
 

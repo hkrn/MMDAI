@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_CAMERAKEYFRAME_H_
-#define VPVL_CAMERAKEYFRAME_H_
+#ifndef VPVL2_VMD_CAMERAKEYFRAME_H_
+#define VPVL2_VMD_CAMERAKEYFRAME_H_
 
 #include "vpvl2/vmd/BaseKeyFrame.h"
 

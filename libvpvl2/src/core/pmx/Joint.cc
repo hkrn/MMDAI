@@ -37,22 +37,29 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#ifndef VPVL2_NO_BULLET
+#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
+#else
+BT_DECLARE_HANDLE(btGeneric6DofConstraint)
+BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint)
+#endif
+
 namespace
 {
 
 #pragma pack(push, 1)
 
-struct JointUnit
-{
-    float position[3];
-    float rotation[3];
-    float positionLowerLimit[3];
-    float positionUpperLimit[3];
-    float rotationLowerLimit[3];
-    float rotationUpperLimit[3];
-    float positionStiffness[3];
-    float rotationStiffness[3];
-};
+    struct JointUnit
+    {
+        float position[3];
+        float rotation[3];
+        float positionLowerLimit[3];
+        float positionUpperLimit[3];
+        float rotationLowerLimit[3];
+        float rotationUpperLimit[3];
+        float positionStiffness[3];
+        float rotationStiffness[3];
+    };
 
 #pragma pack(pop)
 
@@ -64,7 +71,8 @@ namespace pmx
 {
 
 Joint::Joint()
-    : m_rigidBody1(0),
+    : m_constraint(0),
+      m_rigidBody1(0),
       m_rigidBody2(0),
       m_name(0),
       m_englishName(0),
@@ -83,6 +91,8 @@ Joint::Joint()
 
 Joint::~Joint()
 {
+    delete m_constraint;
+    m_constraint = 0;
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -157,6 +167,8 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
             else
                 joint->m_rigidBody2 = rigidBodies[rigidBodyIndex2];
         }
+        if (joint->m_rigidBody1 && joint->m_rigidBody2)
+            joint->m_constraint = joint->createConstraint();
     }
     return true;
 }
@@ -186,16 +198,66 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         ptr += sizeof(unit);
         break;
     }
-    default: {
+    default:
         assert(0);
         return;
-    }
     }
     size = ptr - start;
 }
 
 void Joint::write(uint8_t * /* data */) const
 {
+}
+
+btGeneric6DofSpringConstraint *Joint::createConstraint() const
+{
+#ifndef VPVL2_NO_BULLET
+    Transform transform = Transform::getIdentity();
+    btMatrix3x3 basis;
+    const Vector3 &position = m_position;
+    const Vector3 &rotation = m_rotation;
+#ifdef VPVL2_COORDINATE_OPENGL
+    btMatrix3x3 mx, my, mz;
+    mx.setEulerZYX(-rotation[0], 0.0f, 0.0f);
+    my.setEulerZYX(0.0f, -rotation[1], 0.0f);
+    mz.setEulerZYX(0.0f, 0.0f, rotation[2]);
+    basis = my * mz * mx;
+    transform.setOrigin(Vector3(position[0], position[1], -position[2]));
+#else  /* VPVL2_COORDINATE_OPENGL */
+    basis.setEulerZYX(rotation[0], rotation[1], rotation[2]);
+    transform.setOrigin(m_position);
+#endif /* VPVL2_COORDINATE_OPENGL */
+    transform.setBasis(basis);
+    btRigidBody *bodyA = m_rigidBody1->body(), *bodyB = m_rigidBody2->body();
+    Transform transformA = bodyA->getWorldTransform().inverse() * transform,
+            transformB = bodyB->getWorldTransform().inverse() * transform;
+    btGeneric6DofSpringConstraint *constraint = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
+    const Vector3 &positionLowerLimit = m_positionLowerLimit;
+    const Vector3 &positionUpperLimit = m_positionUpperLimit;
+    const Vector3 &rotationLowerLimit = m_positionLowerLimit;
+    const Vector3 &rotationUpperLimit = m_positionUpperLimit;
+#ifdef VPVL2_COORDINATE_OPENGL
+    constraint->setLinearUpperLimit(Vector3(positionUpperLimit[0], positionUpperLimit[1], -positionLowerLimit[2]));
+    constraint->setLinearLowerLimit(Vector3(positionLowerLimit[0], positionLowerLimit[1], -positionUpperLimit[2]));
+    constraint->setAngularUpperLimit(Vector3(-rotationLowerLimit[0], -rotationLowerLimit[1], rotationUpperLimit[2]));
+    constraint->setAngularLowerLimit(Vector3(-rotationUpperLimit[0], -rotationUpperLimit[1], rotationLowerLimit[2]));
+#else  /* VPVL2_COORDINATE_OPENGL */
+    constraint->setLinearUpperLimit(m_positionLowerLimit);
+    constraint->setLinearLowerLimit(m_positionUpperLimit);
+    constraint->setAngularUpperLimit(m_rotationLowerLimit);
+    constraint->setAngularLowerLimit(m_rotationUpperLimit);
+#endif /* VPVL2_COORDINATE_OPENGL */
+    for (int i = 0; i < 3; i++) {
+        if (const Scalar &value = m_rotationStiffness[i]) {
+            int index = i + 3;
+            constraint->enableSpring(index, true);
+            constraint->setStiffness(index, value);
+        }
+    }
+    return constraint;
+#else /* VPVL2_NO_BULLET */
+    return 0;
+#endif
 }
 
 } /* namespace pmx */

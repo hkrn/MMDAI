@@ -75,7 +75,13 @@ public:
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
+    void performTransformBone();
+    void setKinematic(bool value);
+    const Transform createStartTransform(Transform &base) const;
+    btCollisionShape *createShape() const;
+    btRigidBody *createRigidBody(btCollisionShape *shape);
 
+    btRigidBody *body() const { return m_body; }
     Bone *bone() const { return m_bone; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -83,14 +89,20 @@ public:
     const Vector3 &position() const { return m_position; }
     const Vector3 &rotation() const { return m_rotation; }
     float mass() const { return m_mass; }
+    float linearDamping() const { return m_linearDamping; }
+    float angularDamping() const { return m_angularDamping; }
+    float restitution() const { return m_restitution; }
+    float friction() const { return m_friction; }
+    uint16_t groupID() const { return m_groupID; }
+    uint16_t groupMask() const { return m_groupMask; }
 
 private:
-    btCollisionShape *m_shape;
     btRigidBody *m_body;
+    btCollisionShape *m_shape;
     btMotionState *m_motionState;
+    btMotionState *m_kinematicMotionState;
     Transform m_transform;
     Transform m_invertedTransform;
-    btMotionState *m_kinematicMotionState;
     Bone *m_bone;
     IString *m_name;
     IString *m_englishName;
@@ -99,6 +111,10 @@ private:
     Vector3 m_position;
     Vector3 m_rotation;
     float m_mass;
+    float m_linearDamping;
+    float m_angularDamping;
+    float m_restitution;
+    float m_friction;
     uint16_t m_groupID;
     uint16_t m_groupMask;
     uint8_t m_collisionGroupID;

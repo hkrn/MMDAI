@@ -79,9 +79,6 @@ typedef unsigned int uint32_t;
  #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
 #endif
 
-#define VPVL2_DECLARE_HANDLE(TypeName) \
-    struct TypeName { int unused; };
-
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName &); \
     void operator=(const TypeName &);

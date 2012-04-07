@@ -39,6 +39,8 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IBone.h"
+#include "vpvl2/IEncoding.h"
+#include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IString.h"
 
@@ -169,6 +171,8 @@ public:
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
     void resetVertices();
+    void joinWorld(btDiscreteDynamicsWorld *world);
+    void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
 
@@ -209,6 +213,7 @@ private:
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
 
+    btDiscreteDynamicsWorld *m_world;
     IEncoding *m_encoding;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;

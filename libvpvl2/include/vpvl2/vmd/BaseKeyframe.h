@@ -40,6 +40,7 @@
 #define VPVL2_VMD_BASEKEYFRAME_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IString.h"
 
 namespace vpvl2
 {

@@ -71,13 +71,16 @@ public:
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
+    btGeneric6DofSpringConstraint *createConstraint() const;
 
+    btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
     RigidBody *rigidBody1() const { return m_rigidBody1; }
     RigidBody *rigidBody2() const { return m_rigidBody2; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
 
 private:
+    btGeneric6DofSpringConstraint *m_constraint;
     RigidBody *m_rigidBody1;
     RigidBody *m_rigidBody2;
     IString *m_name;

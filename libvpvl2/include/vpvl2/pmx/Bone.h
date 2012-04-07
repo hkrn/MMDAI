@@ -83,10 +83,11 @@ public:
     void performUpdateLocalTransform();
     void resetIKLink();
     const Vector3 &offset() const;
-    const Transform localTransform() const;
+    const Transform &localTransform() const;
 
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
+    void setLocalTransform(const Transform &value);
 
     Bone *parentBone() const { return m_parentBone; }
     Bone *targetBone() const { return m_targetBone; }

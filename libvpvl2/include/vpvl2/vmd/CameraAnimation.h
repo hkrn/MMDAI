@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL_CAMERAANIMATION_H_
-#define VPVL_CAMERAANIMATION_H_
+#ifndef VPVL2_VMD_CAMERAANIMATION_H_
+#define VPVL2_VMD_CAMERAANIMATION_H_
 
 #include "vpvl2/vmd/BaseAnimation.h"
 

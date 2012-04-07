@@ -67,7 +67,7 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #include <Logger.h>
 #include <aiPostProcess.h>
 #else
-VPVL2_DECLARE_HANDLE(aiScene)
+BT_DECLARE_HANDLE(aiScene);
 #endif
 
 namespace
@@ -79,7 +79,7 @@ namespace
     static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
     static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders/pmx";
     static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
-    static const std::string kModelDir = "render/res/miku";
+    static const std::string kModelDir = "render/res/miku2";
     static const std::string kStageDir = "render/res/stage";
     static const std::string kMotion = "render/res/motion.vmd";
     static const std::string kCamera = "render/res/camera.vmd.404";

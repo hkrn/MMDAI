@@ -607,7 +607,7 @@ void Bone::resetIKLink()
     m_rotationIKLink = Quaternion::getIdentity();
 }
 
-const Transform Bone::localTransform() const
+const Transform &Bone::localTransform() const
 {
     return m_localTransform;
 }
@@ -621,6 +621,11 @@ void Bone::setRotation(const Quaternion &value)
 {
     m_rotation = value;
     //qDebug("%s(rotate): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
+}
+
+void Bone::setLocalTransform(const Transform &value)
+{
+    m_localTransform = value;
 }
 
 } /* namespace pmx */

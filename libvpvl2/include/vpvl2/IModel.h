@@ -40,6 +40,8 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IString.h"
 
+class btDiscreteDynamicsWorld;
+
 namespace vpvl2
 {
 
@@ -56,6 +58,8 @@ public:
     virtual bool load(const uint8_t *data, size_t size) = 0;
     virtual void save(uint8_t *data) const = 0;
     virtual void resetVertices() = 0;
+    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
+    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
     virtual IBone *findBone(const IString *value) const = 0;
     virtual IMorph *findMorph(const IString *value) const = 0;
 };

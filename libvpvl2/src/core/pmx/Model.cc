@@ -37,10 +37,10 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#ifndef vpvl2_NO_BULLET
+#ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else
-vpvl2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
+BT_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
 namespace
@@ -76,7 +76,8 @@ struct Model::SkinnedVertex {
 };
 
 Model::Model(IEncoding *encoding)
-    : m_encoding(encoding),
+    : m_world(0),
+      m_encoding(encoding),
       m_skinnedVertices(0),
       m_skinnedIndices(0),
       m_name(0),
@@ -177,6 +178,46 @@ void Model::resetVertices()
         Vertex *vertex = m_vertices[i];
         vertex->reset();
     }
+}
+
+void Model::joinWorld(btDiscreteDynamicsWorld *world)
+{
+#ifndef VPVL2_NO_BULLET
+    if (!world)
+        return;
+    const int nRigidBodies = m_rigidBodies.count();
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = m_rigidBodies[i];
+        rigidBody->setKinematic(false);
+        world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->groupMask());
+    }
+    const int njoints = m_joints.count();
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = m_joints[i];
+        world->addConstraint(joint->constraint());
+    }
+    m_world = world;
+#endif /* VPVL2_NO_BULLET */
+}
+
+void Model::leaveWorld(btDiscreteDynamicsWorld *world)
+{
+#ifndef VPVL2_NO_BULLET
+    if (!world)
+        return;
+    const int nRigidBodies = m_rigidBodies.count();
+    for (int i = nRigidBodies - 1; i >= 0; i--) {
+        RigidBody *rigidBody = m_rigidBodies[i];
+        rigidBody->setKinematic(true);
+        world->removeCollisionObject(rigidBody->body());
+    }
+    const int njoints = m_joints.count();
+    for (int i = njoints - 1; i >= 0; i--) {
+        Joint *joint = m_joints[i];
+        world->removeConstraint(joint->constraint());
+    }
+    m_world = 0;
+#endif /* VPVL2_NO_BULLET */
 }
 
 IBone *Model::findBone(const IString *value) const
